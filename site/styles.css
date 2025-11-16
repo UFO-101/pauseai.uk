@@ -328,13 +328,24 @@ nav a:hover {
   border: 1px solid var(--border);
   border-radius: 14px;
   padding: 16px;
+  display: grid;
+  gap: 10px;
+}
+.news-logo-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #9d9d9d;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  height: 72px;
+  padding: 8px 10px;
 }
 .news-logo {
-  height: 32px;
+  max-height: 32px;
+  max-width: 150px;
   width: auto;
-  margin-bottom: 8px;
-  display: block;
-  filter: drop-shadow(0 2px 6px rgba(0,0,0,0.25));
+  object-fit: contain;
 }
 .news-source {
   text-transform: uppercase;
