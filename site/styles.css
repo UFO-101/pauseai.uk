@@ -75,6 +75,13 @@ a:hover { color: var(--accent-strong); }
   color: var(--muted);
   font-size: 13px;
 }
+.brand-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  color: inherit;
+  text-decoration: none;
+}
 nav {
   display: flex;
   align-items: center;
