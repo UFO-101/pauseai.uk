@@ -175,14 +175,6 @@ nav a:hover {
 .btn.small { padding: 9px 12px; font-size: 14px; }
 .btn.large { padding: 14px 18px; }
 
-.hero-meta {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 10px;
-  color: var(--muted);
-  font-size: 14px;
-  margin-top: 18px;
-}
 .hero-visual {
   position: relative;
 }
