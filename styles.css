@@ -190,7 +190,7 @@ nav a:hover {
   border-radius: 18px;
   min-height: 320px;
   background: linear-gradient(135deg, rgba(255, 148, 22, 0.35), rgba(0, 0, 0, 0.6)),
-    url("images/Front page/london-2025-protest.jpg?v=2") center/cover no-repeat;
+    url("images/front-page/london-2025-protest.jpg?v=2") center/cover no-repeat;
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
 }
 .hero-badge {
