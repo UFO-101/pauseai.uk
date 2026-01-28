@@ -221,6 +221,9 @@ nav a:hover {
   color: var(--muted);
   max-width: 720px;
 }
+#people .section-lede {
+  max-width: none;
+}
 
 .feature-grid {
   display: grid;
