@@ -114,6 +114,34 @@ nav a:hover {
   color: #000;
 }
 
+.next-event {
+  padding: 48px 24px;
+  text-align: center;
+  background: linear-gradient(135deg, rgba(255, 148, 22, 0.15), rgba(255, 122, 0, 0.08));
+  border-bottom: 1px solid var(--border);
+  max-width: none;
+}
+.next-event .eyebrow {
+  margin-bottom: 16px;
+}
+.event-banner {
+  display: block;
+  max-width: 800px;
+  margin: 0 auto;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+.event-banner img {
+  width: 100%;
+  height: auto;
+  display: block;
+  transition: transform 0.2s ease;
+}
+.event-banner:hover img {
+  transform: scale(1.02);
+}
+
 .hero {
   padding: 96px 0 64px;
 }
