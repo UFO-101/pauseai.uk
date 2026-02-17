@@ -38,6 +38,7 @@ body {
   line-height: 1.65;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
 }
 
 h1, h2 {
@@ -178,7 +179,7 @@ nav a:hover {
 }
 .hero-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr));
   gap: 40px;
   align-items: center;
 }
@@ -560,11 +561,77 @@ nav a:hover {
   font-size: 14px;
 }
 
+/* ── Burger Menu ───────────────────────────────── */
+
+.burger {
+  display: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  z-index: 20;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+}
+.burger span {
+  display: block;
+  width: 24px;
+  height: 2px;
+  background: #f7f7f7;
+  border-radius: 2px;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+.burger[aria-expanded="true"] span:nth-child(1) {
+  transform: translateY(7px) rotate(45deg);
+}
+.burger[aria-expanded="true"] span:nth-child(2) {
+  opacity: 0;
+}
+.burger[aria-expanded="true"] span:nth-child(3) {
+  transform: translateY(-7px) rotate(-45deg);
+}
+
 /* ── Responsive ────────────────────────────────── */
 
 @media (max-width: 720px) {
-  nav { display: none; }
+  .burger { display: flex; }
+
+  nav {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: rgba(28, 28, 30, 0.98);
+    flex-direction: column;
+    padding: 12px 24px 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  nav.open { display: flex; }
+  nav a {
+    padding: 12px 0;
+    font-size: 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  }
+  nav a:last-child { border-bottom: none; }
+  nav .pill {
+    margin-top: 8px;
+    text-align: center;
+    border-bottom: none;
+  }
+
   .callout-inner { flex-direction: column; align-items: flex-start; }
   .hero { padding: 48px 0 40px; }
   .section { padding: 56px 0; }
+
+  .footer-grid { flex-direction: column; align-items: flex-start; gap: 20px; }
+  .people-grid { grid-template-columns: 1fr; }
+  .person-card { grid-template-columns: 1fr; text-align: center; justify-items: center; }
+  .feature-grid { grid-template-columns: 1fr; }
+  .news-grid { grid-template-columns: 1fr; }
+  .chapter-grid { grid-template-columns: 1fr; }
+
+  .btn { width: 100%; }
+  .actions { flex-direction: column; }
 }
