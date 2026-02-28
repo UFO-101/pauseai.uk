@@ -147,31 +147,76 @@ nav a:hover {
 /* ── Next Event Banner ─────────────────────────── */
 
 .next-event {
-  padding: 48px 24px;
+  padding: 48px 0;
   text-align: center;
-  background: var(--accent-bg);
-  border-bottom: 1px solid var(--accent-light);
-  max-width: none;
+  background: linear-gradient(135deg, rgba(255, 148, 22, 0.15), rgba(255, 122, 0, 0.08));
+  border-bottom: 1px solid var(--border);
 }
 .next-event .eyebrow {
   margin-bottom: 16px;
 }
-.event-banner {
-  display: block;
-  max-width: 800px;
+.event-card {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  max-width: 560px;
   margin: 0 auto;
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 8px 32px var(--shadow-strong);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
-.event-banner img {
+.event-card:hover {
+  border-color: var(--accent);
+  box-shadow: 0 8px 32px rgba(255, 148, 22, 0.15);
+}
+.event-card-image {
+  overflow: hidden;
+}
+.event-card-image img {
   width: 100%;
-  height: auto;
+  height: 100%;
+  object-fit: cover;
   display: block;
   transition: transform 0.2s ease;
 }
-.event-banner:hover img {
-  transform: scale(1.02);
+.event-card:hover .event-card-image img {
+  transform: scale(1.03);
+}
+.event-card-info {
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  text-align: left;
+  gap: 4px;
+}
+.event-card-title {
+  font-family: "Montserrat", sans-serif;
+  font-size: 18px;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+.event-card-detail {
+  color: var(--muted);
+  margin: 0;
+  font-size: 14px;
+}
+.event-card-info .btn {
+  margin-top: 8px;
+  align-self: flex-start;
+  font-size: 13px;
+  padding: 8px 14px;
+}
+@media (max-width: 600px) {
+  .event-card {
+    grid-template-columns: 1fr;
+  }
+  .event-card-image img {
+    max-height: 200px;
+  }
 }
 
 /* ── Hero ──────────────────────────────────────── */
