@@ -472,22 +472,62 @@ nav a:hover {
   gap: 12px;
   box-shadow: 0 1px 3px var(--shadow);
 }
+/* News logos — base styles */
 .news-logo-box {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--surface-2);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  height: 72px;
-  padding: 8px 12px;
+  height: 50px;
+  padding: 4px 12px;
 }
+
 .news-logo {
-  max-height: 32px;
-  max-width: 150px;
+  max-height: 100%;
+  max-width: 160px;
   width: auto;
+  height: auto;
   object-fit: contain;
 }
+
+/* Individual logo calibrations */
+.news-logo-box img.news-logo[alt="The Independent"] {
+  max-height: none;
+  max-width: none;
+  height: 35px;
+  width: auto;
+}
+
+img.news-logo[alt="MIT Technology Review"] {
+  max-height: 130%;
+}
+
+img.news-logo[alt="Futurism"] {
+  max-height: 230%;
+}
+
+img.news-logo[alt="Real Media"] {
+  max-height: 210%;
+  object-fit: cover;
+  object-position: center;
+  clip-path: inset(22% 0);
+}
+
+img.news-logo[alt="TIME"] {
+  max-height: 70%;
+}
+
+img.news-logo[alt="Fortune"] {
+  max-height: 70%;
+}
+
+.news-logo-text--bbc {
+  font-size: 1.8rem;
+}
+
+.news-logo-text--swlondoner {
+  font-size: 2rem;
+}
+
 .news-source {
   text-transform: uppercase;
   color: var(--accent);
@@ -694,13 +734,11 @@ nav a:hover {
 
 .news-logo-text--bbc {
   font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-  font-size: 1.5rem;
   letter-spacing: -0.02em;
 }
 
 .news-logo-text--swlondoner {
   font-family: Georgia, 'Times New Roman', serif;
-  font-size: 1.1rem;
   letter-spacing: -0.01em;
 }
 
