@@ -471,8 +471,7 @@ nav a:hover {
   display: grid;
   gap: 12px;
   box-shadow: 0 1px 3px var(--shadow);
-}
-/* News logos — base styles */
+}/* News logos — base styles */
 .news-logo-box {
   display: flex;
   align-items: center;
@@ -546,6 +545,13 @@ img.news-logo[alt="Fortune"] {
 .news-card a {
   font-weight: 600;
   text-decoration: none;
+}
+
+/* Ensure consistent logo sizing */
+.news-logo {
+  max-height: 40px;
+  max-width: 100%;
+  object-fit: contain;
 }
 
 /* ── People ────────────────────────────────────── */
