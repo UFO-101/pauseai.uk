@@ -752,3 +752,8 @@ img.news-logo[alt="Fortune"] {
   color: #2B7BBC;
   font-style: italic;
 }
+
+.news-card h3 {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
