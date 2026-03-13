@@ -508,6 +508,13 @@ nav a:hover {
   text-decoration: none;
 }
 
+/* Ensure consistent logo sizing */
+.news-logo {
+  max-height: 40px;
+  max-width: 100%;
+  object-fit: contain;
+}
+
 /* ── People ────────────────────────────────────── */
 
 .people-grid {
