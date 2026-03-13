@@ -683,3 +683,28 @@ nav a:hover {
   .btn { width: 100%; }
   .actions { flex-direction: column; }
 }
+/* Text-based logo fallback for outlets without image assets */
+.news-logo-text {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  font-weight: bold;
+}
+
+.news-logo-text--bbc {
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 1.5rem;
+  letter-spacing: -0.02em;
+}
+
+.news-logo-text--swlondoner {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 1.1rem;
+  letter-spacing: -0.01em;
+}
+
+.news-logo-text--swlondoner .sw {
+  color: #2B7BBC;
+  font-style: italic;
+}
