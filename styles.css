@@ -708,3 +708,14 @@ nav a:hover {
   color: #2B7BBC;
   font-style: italic;
 }
+
+/* Luma calendar embed container */
+.luma-calendar-embed {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.luma-calendar-embed iframe {
+  width: 100%;
+  min-height: 450px;
+}
