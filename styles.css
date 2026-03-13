@@ -717,5 +717,5 @@ nav a:hover {
 
 .luma-calendar-embed iframe {
   width: 100%;
-  min-height: 450px;
+  min-height: 300px;
 }
