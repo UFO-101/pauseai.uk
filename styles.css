@@ -63,8 +63,7 @@ a:hover { color: var(--accent-strong); }
   position: sticky;
   top: 0;
   z-index: 10;
-  backdrop-filter: blur(12px);
-  background: rgba(28, 28, 30, 0.97);
+  background: #000;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   color: #f7f7f7;
 }
