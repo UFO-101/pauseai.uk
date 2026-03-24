@@ -142,6 +142,15 @@ nav a:hover {
   color: #fff !important;
   border-color: var(--accent);
 }
+.pill-primary {
+  background: var(--accent) !important;
+  color: #fff !important;
+  border-color: var(--accent) !important;
+}
+.pill-primary:hover {
+  background: var(--accent-strong) !important;
+  border-color: var(--accent-strong) !important;
+}
 
 /* ── Next Event Banner ─────────────────────────── */
 
@@ -764,4 +773,10 @@ img.news-logo[alt="Fortune"] {
 .luma-calendar-embed iframe {
   width: 100%;
   min-height: 300px;
+}
+
+/* Tally join form embed */
+.tally-embed {
+  max-width: 720px;
+  margin-top: 32px;
 }
