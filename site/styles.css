@@ -596,6 +596,22 @@ img.news-logo[alt="Fortune"] {
   border-top: 1px solid var(--accent-light);
   border-bottom: 1px solid var(--accent-light);
 }
+.shop-image-link {
+  flex-shrink: 0;
+  border-radius: 12px;
+  overflow: hidden;
+  transition: transform 0.2s ease;
+}
+.shop-image-link:hover {
+  transform: scale(1.03);
+}
+.shop-image {
+  display: block;
+  width: 280px;
+  height: auto;
+  border-radius: 12px;
+  object-fit: cover;
+}
 
 /* ── Callout ───────────────────────────────────── */
 
@@ -724,6 +740,7 @@ img.news-logo[alt="Fortune"] {
   }
 
   .callout-inner { flex-direction: column; align-items: flex-start; }
+  .shop-image { width: 100%; }
   .hero { padding: 48px 0 40px; }
   .section { padding-top: 56px; padding-bottom: 56px; }
 
