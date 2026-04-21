@@ -621,7 +621,7 @@ img.news-logo[alt="Fortune"] {
 }
 .story-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(440px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(440px, 100%), 1fr));
   gap: 24px;
   margin-top: 32px;
 }
