@@ -13,7 +13,26 @@ Single-page static site deployed to GitHub Pages via a separate `gh-pages` branc
 
 ## Local development
 
-Open `site/index.html` in a browser (no build step required).
+```bash
+npm run dev        # starts a hot-reload server at http://localhost:8080
+npm run lighthouse # run Lighthouse against the live site (pauseai.uk)
+npm run lighthouse:dev # run Lighthouse against the local dev server
+```
+
+No build step is required — `site/` is served as-is.
+
+## Fonts
+
+Fonts are self-hosted for performance. The woff2 files in `site/fonts/` are committed to the repo, so no action is needed after cloning.
+
+They are sourced from the [`@fontsource-variable`](https://fontsource.org) npm packages. To update to a newer font version:
+
+```bash
+npm install         # update packages
+npm run fonts:update  # copy new woff2 files into site/fonts/
+```
+
+The `@font-face` declarations in `site/styles.css` reference these files directly.
 
 ## Deployment
 
