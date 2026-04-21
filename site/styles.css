@@ -612,6 +612,69 @@ img.news-logo[alt="Fortune"] {
   flex-wrap: wrap;
 }
 
+/* ── Stories ───────────────────────────────────── */
+
+.section.stories {
+  background: var(--accent-bg);
+  border-top: 1px solid var(--accent-light);
+  border-bottom: 1px solid var(--accent-light);
+}
+.story-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(440px, 1fr));
+  gap: 24px;
+  margin-top: 32px;
+}
+.story-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 32px;
+  box-shadow: 0 1px 3px var(--shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.story-card-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.story-avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background-color: var(--accent-light);
+  background-size: cover;
+  background-position: center;
+  color: var(--accent-strong);
+  border: 2px solid var(--accent-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: "Inter", system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 20px;
+  letter-spacing: 0.02em;
+  flex-shrink: 0;
+}
+.story-name {
+  font-family: "Inter", system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 20px;
+  margin: 0;
+  color: var(--text);
+}
+.story-body p {
+  color: var(--text-secondary);
+  margin: 0 0 14px;
+  font-size: 16px;
+  line-height: 1.7;
+}
+.story-body p:last-child {
+  margin-bottom: 0;
+}
+
 /* ── Footer ────────────────────────────────────── */
 
 .site-footer {
@@ -733,6 +796,8 @@ img.news-logo[alt="Fortune"] {
   .feature-grid { grid-template-columns: 1fr; }
   .news-grid { grid-template-columns: 1fr; }
   .chapter-grid { grid-template-columns: 1fr; }
+  .story-grid { grid-template-columns: 1fr; }
+  .story-card { padding: 24px; }
 
   .btn { width: 100%; }
   .actions { flex-direction: column; }
