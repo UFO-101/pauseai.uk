@@ -17,6 +17,14 @@ yarn-error.log*
 *.swp
 *.swo
 
+# Playwright
+.playwright/
+.playwright-mcp/
+
+# Lighthouse
+lighthouse-report.report.html
+lighthouse-report.report.json
+
 # Node
 node_modules/
 dist/
