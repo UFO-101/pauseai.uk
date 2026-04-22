@@ -95,9 +95,12 @@ jobs:
               const fs = require('fs');
               const report = JSON.parse(fs.readFileSync('./lighthouse-reports/preview.json', 'utf8'));
               const cats = report.categories;
+              const audits = report.audits;
               const s = (key) => Math.round(cats[key].score * 100);
-              const lcp = report.audits['largest-contentful-paint'].displayValue;
-              scores = `\n\n**Lighthouse scores:**\n| Perf | A11y | Best Practices | SEO | LCP |\n|---|---|---|---|---|\n| ${s('performance')} | ${s('accessibility')} | ${s('best-practices')} | ${s('seo')} | ${lcp} |`;
+              const v = (key) => audits[key].displayValue;
+              const scoreEmoji = (n) => n >= 90 ? '🟢' : n >= 50 ? '🟠' : '🔴';
+              const perfScore = s('performance');
+              scores = `\n\n**Lighthouse scores:**\n| Category | Score |\n|---|---|\n| Performance | ${scoreEmoji(perfScore)} ${perfScore} |\n| Accessibility | ${scoreEmoji(s('accessibility'))} ${s('accessibility')} |\n| Best Practices | ${scoreEmoji(s('best-practices'))} ${s('best-practices')} |\n| SEO | ${scoreEmoji(s('seo'))} ${s('seo')} |\n\n**Performance metrics:**\n| Metric | Value |\n|---|---|\n| FCP | ${v('first-contentful-paint')} |\n| LCP | ${v('largest-contentful-paint')} |\n| TBT | ${v('total-blocking-time')} |\n| Speed Index | ${v('speed-index')} |\n| TTI | ${v('interactive')} |\n| CLS | ${v('cumulative-layout-shift')} |`;
             } else {
               scores = '\n\n_Lighthouse did not complete._';
             }
