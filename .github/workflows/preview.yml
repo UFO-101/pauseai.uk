@@ -32,7 +32,68 @@ jobs:
           script: |
             const marker = '<!-- pr-preview -->';
             const url = `https://pauseai.uk/preview/pr-${{ github.event.number }}/`;
-            const body = `${marker}\n🔍 **Preview:** ${url}`;
+            const body = `${marker}\n🔍 **Preview:** ${url}\n\n_Lighthouse running…_`;
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            const existing = comments.find(c => c.body.includes(marker));
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body,
+              });
+            }
+
+      - name: Wait for preview to go live
+        run: |
+          url="https://pauseai.uk/preview/pr-${{ github.event.number }}/"
+          for i in $(seq 1 12); do
+            status=$(curl -s -o /dev/null -w "%{http_code}" "$url")
+            if [ "$status" = "200" ]; then echo "Live"; exit 0; fi
+            echo "Attempt $i: $status — retrying in 10s"
+            sleep 10
+          done
+          echo "Timed out waiting for preview" && exit 1
+
+      - name: Run Lighthouse
+        id: lighthouse
+        continue-on-error: true
+        run: |
+          npx lighthouse "https://pauseai.uk/preview/pr-${{ github.event.number }}/" \
+            --output=json \
+            --output-path=./lighthouse-report.json \
+            --chrome-flags="--headless --no-sandbox --disable-dev-shm-usage" \
+            --only-categories=performance,accessibility,best-practices,seo
+
+      - name: Update comment with Lighthouse scores
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const marker = '<!-- pr-preview -->';
+            const url = `https://pauseai.uk/preview/pr-${{ github.event.number }}/`;
+            let scores = '';
+            if ('${{ steps.lighthouse.outcome }}' === 'success') {
+              const fs = require('fs');
+              const report = JSON.parse(fs.readFileSync('./lighthouse-report.json', 'utf8'));
+              const cats = report.categories;
+              const s = (key) => Math.round(cats[key].score * 100);
+              const lcp = report.audits['largest-contentful-paint'].displayValue;
+              scores = `\n\n**Lighthouse scores:**\n| Perf | A11y | Best Practices | SEO | LCP |\n|---|---|---|---|---|\n| ${s('performance')} | ${s('accessibility')} | ${s('best-practices')} | ${s('seo')} | ${lcp} |`;
+            } else {
+              scores = '\n\n_Lighthouse did not complete._';
+            }
+            const body = `${marker}\n🔍 **Preview:** ${url}${scores}`;
             const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
