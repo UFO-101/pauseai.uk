@@ -3,9 +3,9 @@
   "private": true,
   "scripts": {
     "dev": "npx live-server site",
-    "lighthouse": "mkdir -p lighthouse-reports && npx lighthouse https://pauseai.uk --output=html --output=json --output-path=lighthouse-reports/prod --view",
-    "lighthouse:dev": "npx start-server-and-test 'npx serve site -p 3001' http://localhost:3001 'mkdir -p lighthouse-reports && npx lighthouse http://localhost:3001 --output=html --output=json --output-path=lighthouse-reports/dev --view'",
-    "lighthouse:branch": "slug=$(git rev-parse --abbrev-ref HEAD | sed 's/[^a-zA-Z0-9_-]/-/g' | tr '[:upper:]' '[:lower:]') && url=\"https://pauseai.uk/preview/$slug/\" && status=$(curl -s -o /dev/null -w \"%{http_code}\" \"$url\") && if [ \"$status\" = \"200\" ]; then mkdir -p lighthouse-reports && npx lighthouse \"$url\" --output=html --output=json --output-path=lighthouse-reports/branch --view; else echo \"No preview found at $url (HTTP $status)\"; fi",
+    "lighthouse": "mkdir -p lighthouse-reports && npx lighthouse https://pauseai.uk --output=html --output=json --output-path=\"lighthouse-reports/prod-$(git rev-parse --short HEAD)-$(date +%Y-%m-%dT%H-%M-%S)\" --view",
+    "lighthouse:dev": "npx start-server-and-test 'npx serve site -p 3001' http://localhost:3001 \"mkdir -p lighthouse-reports && npx lighthouse http://localhost:3001 --output=html --output=json --output-path=lighthouse-reports/dev-$(git rev-parse --short HEAD)-$(date +%Y-%m-%dT%H-%M-%S) --view\"",
+    "lighthouse:branch": "slug=$(git rev-parse --abbrev-ref HEAD | sed 's/[^a-zA-Z0-9_-]/-/g' | tr '[:upper:]' '[:lower:]') && sha=$(git rev-parse --short HEAD) && ts=$(date +%Y-%m-%dT%H-%M-%S) && url=\"https://pauseai.uk/preview/$slug/\" && status=$(curl -s -o /dev/null -w \"%{http_code}\" \"$url\") && if [ \"$status\" = \"200\" ]; then mkdir -p lighthouse-reports && npx lighthouse \"$url\" --output=html --output=json --output-path=\"lighthouse-reports/branch-$sha-$ts\" --view; else echo \"No preview found at $url (HTTP $status)\"; fi",
     "fonts:update": "cp node_modules/@fontsource-variable/fraunces/files/fraunces-latin-wght-normal.woff2 node_modules/@fontsource-variable/fraunces/files/fraunces-latin-ext-wght-normal.woff2 node_modules/@fontsource-variable/inter/files/inter-latin-wght-normal.woff2 node_modules/@fontsource-variable/inter/files/inter-latin-ext-wght-normal.woff2 site/fonts/"
   },
   "dependencies": {
