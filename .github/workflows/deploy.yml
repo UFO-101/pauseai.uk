@@ -22,3 +22,37 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./site
           cname: pauseai.uk
+
+      - name: Wait for deploy to go live
+        run: |
+          for i in $(seq 1 18); do
+            deployed=$(curl -sf "https://pauseai.uk/version.txt" || echo "")
+            if [ "$deployed" = "${{ github.sha }}" ]; then echo "Live"; exit 0; fi
+            echo "Attempt $i: not yet live, waiting 10s..."
+            sleep 10
+          done
+          echo "Timed out waiting for deploy" && exit 1
+
+      - name: Run Lighthouse baseline
+        id: lighthouse
+        continue-on-error: true
+        run: |
+          mkdir -p lighthouse-reports
+          npx lighthouse https://pauseai.uk \
+            --output=json \
+            --output-path=./lighthouse-reports/baseline.json \
+            --chrome-flags="--headless --no-sandbox --disable-dev-shm-usage" \
+            --only-categories=performance,accessibility,best-practices,seo
+
+      - name: Store baseline in gh-pages
+        if: steps.lighthouse.outcome == 'success'
+        run: |
+          git fetch origin gh-pages
+          git worktree add /tmp/gh-pages gh-pages
+          cp lighthouse-reports/baseline.json /tmp/gh-pages/lighthouse-baseline.json
+          cd /tmp/gh-pages
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add lighthouse-baseline.json
+          git diff --cached --quiet || git commit -m "Update Lighthouse baseline [skip ci]"
+          git push origin gh-pages

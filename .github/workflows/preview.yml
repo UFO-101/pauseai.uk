@@ -97,10 +97,36 @@ jobs:
               const cats = report.categories;
               const audits = report.audits;
               const s = (key) => Math.round(cats[key].score * 100);
-              const v = (key) => audits[key].displayValue;
               const scoreEmoji = (n) => n >= 90 ? '🟢' : n >= 50 ? '🟠' : '🔴';
-              const perfScore = s('performance');
-              scores = `\n\n**Lighthouse scores:**\n| Category | Score |\n|---|---|\n| Performance | ${scoreEmoji(perfScore)} ${perfScore} |\n| Accessibility | ${scoreEmoji(s('accessibility'))} ${s('accessibility')} |\n| Best Practices | ${scoreEmoji(s('best-practices'))} ${s('best-practices')} |\n| SEO | ${scoreEmoji(s('seo'))} ${s('seo')} |\n\n**Performance metrics:**\n| Metric | Value |\n|---|---|\n| FCP | ${v('first-contentful-paint')} |\n| LCP | ${v('largest-contentful-paint')} |\n| TBT | ${v('total-blocking-time')} |\n| Speed Index | ${v('speed-index')} |\n| TTI | ${v('interactive')} |\n| CLS | ${v('cumulative-layout-shift')} |`;
+
+              let baseline = null;
+              try {
+                const res = await fetch('https://pauseai.uk/lighthouse-baseline.json');
+                if (res.ok) baseline = await res.json();
+              } catch (e) {}
+
+              const bv = (key) => baseline ? baseline.audits[key].displayValue : '—';
+              const bs = (key) => baseline ? Math.round(baseline.categories[key].score * 100) : null;
+              const deltaMs = (key) => {
+                if (!baseline) return '';
+                const diff = audits[key].numericValue - baseline.audits[key].numericValue;
+                const sign = diff > 0 ? '+' : '';
+                const better = diff < 0;
+                return ` (${better ? '✅' : '⚠️'} ${sign}${(diff / 1000).toFixed(2)}s)`;
+              };
+              const deltaCls = () => {
+                if (!baseline) return '';
+                const diff = audits['cumulative-layout-shift'].numericValue - baseline.audits['cumulative-layout-shift'].numericValue;
+                const sign = diff > 0 ? '+' : '';
+                return ` (${diff < 0 ? '✅' : '⚠️'} ${sign}${diff.toFixed(3)})`;
+              };
+              const scoreRow = (label, key) => {
+                const cur = s(key); const base = bs(key);
+                const delta = base !== null ? ` (${cur > base ? '✅ +' : cur < base ? '⚠️ ' : ''}${base !== null && cur !== base ? cur - base : '±0'})` : '';
+                return `| ${label} | ${scoreEmoji(cur)} ${cur}${delta} | ${base !== null ? `${scoreEmoji(base)} ${base}` : '—'} |`;
+              };
+
+              scores = `\n\n**Lighthouse scores:**\n| Category | Preview | Baseline |\n|---|---|---|\n${scoreRow('Performance', 'performance')}\n${scoreRow('Accessibility', 'accessibility')}\n${scoreRow('Best Practices', 'best-practices')}\n${scoreRow('SEO', 'seo')}\n\n**Performance metrics:**\n| Metric | Preview | Baseline |\n|---|---|---|\n| FCP | ${audits['first-contentful-paint'].displayValue}${deltaMs('first-contentful-paint')} | ${bv('first-contentful-paint')} |\n| LCP | ${audits['largest-contentful-paint'].displayValue}${deltaMs('largest-contentful-paint')} | ${bv('largest-contentful-paint')} |\n| TBT | ${audits['total-blocking-time'].displayValue}${deltaMs('total-blocking-time')} | ${bv('total-blocking-time')} |\n| Speed Index | ${audits['speed-index'].displayValue}${deltaMs('speed-index')} | ${bv('speed-index')} |\n| TTI | ${audits['interactive'].displayValue}${deltaMs('interactive')} | ${bv('interactive')} |\n| CLS | ${audits['cumulative-layout-shift'].displayValue}${deltaCls()} | ${bv('cumulative-layout-shift')} |`;
             } else {
               scores = '\n\n_Lighthouse did not complete._';
             }
