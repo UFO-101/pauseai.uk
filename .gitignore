@@ -22,8 +22,7 @@ yarn-error.log*
 .playwright-mcp/
 
 # Lighthouse
-lighthouse-report.report.html
-lighthouse-report.report.json
+lighthouse-reports/
 
 # Node
 node_modules/
