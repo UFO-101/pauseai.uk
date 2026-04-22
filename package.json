@@ -3,9 +3,9 @@
   "private": true,
   "scripts": {
     "dev": "npx live-server site",
-    "lighthouse": "npx lighthouse https://pauseai.uk --output=html --output=json --output-path=lighthouse-report --view",
-    "lighthouse:dev": "npx start-server-and-test 'npx serve site -p 3001' http://localhost:3001 'npx lighthouse http://localhost:3001 --output=html --output=json --output-path=lighthouse-report --view'",
-    "lighthouse:branch": "slug=$(git rev-parse --abbrev-ref HEAD | sed 's/[^a-zA-Z0-9_-]/-/g' | tr '[:upper:]' '[:lower:]') && url=\"https://pauseai.uk/preview/$slug/\" && status=$(curl -s -o /dev/null -w \"%{http_code}\" \"$url\") && if [ \"$status\" = \"200\" ]; then npx lighthouse \"$url\" --output=html --output=json --output-path=lighthouse-report --view; else echo \"No preview found at $url (HTTP $status)\"; fi",
+    "lighthouse": "npx lighthouse https://pauseai.uk --output=html --output=json --output-path=lighthouse-reports/prod --view",
+    "lighthouse:dev": "npx start-server-and-test 'npx serve site -p 3001' http://localhost:3001 'npx lighthouse http://localhost:3001 --output=html --output=json --output-path=lighthouse-reports/dev --view'",
+    "lighthouse:branch": "slug=$(git rev-parse --abbrev-ref HEAD | sed 's/[^a-zA-Z0-9_-]/-/g' | tr '[:upper:]' '[:lower:]') && url=\"https://pauseai.uk/preview/$slug/\" && status=$(curl -s -o /dev/null -w \"%{http_code}\" \"$url\") && if [ \"$status\" = \"200\" ]; then npx lighthouse \"$url\" --output=html --output=json --output-path=lighthouse-reports/branch --view; else echo \"No preview found at $url (HTTP $status)\"; fi",
     "fonts:update": "cp node_modules/@fontsource-variable/fraunces/files/fraunces-latin-wght-normal.woff2 node_modules/@fontsource-variable/fraunces/files/fraunces-latin-ext-wght-normal.woff2 node_modules/@fontsource-variable/inter/files/inter-latin-wght-normal.woff2 node_modules/@fontsource-variable/inter/files/inter-latin-ext-wght-normal.woff2 site/fonts/"
   },
   "dependencies": {

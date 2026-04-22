@@ -77,9 +77,10 @@ jobs:
         id: lighthouse
         continue-on-error: true
         run: |
+          mkdir -p lighthouse-reports
           npx lighthouse "https://pauseai.uk/preview/${{ steps.slug.outputs.value }}/" \
             --output=json \
-            --output-path=./lighthouse-report.json \
+            --output-path=./lighthouse-reports/preview.json \
             --chrome-flags="--headless --no-sandbox --disable-dev-shm-usage" \
             --only-categories=performance,accessibility,best-practices,seo
 
@@ -92,7 +93,7 @@ jobs:
             let scores = '';
             if ('${{ steps.lighthouse.outcome }}' === 'success') {
               const fs = require('fs');
-              const report = JSON.parse(fs.readFileSync('./lighthouse-report.json', 'utf8'));
+              const report = JSON.parse(fs.readFileSync('./lighthouse-reports/preview.json', 'utf8'));
               const cats = report.categories;
               const s = (key) => Math.round(cats[key].score * 100);
               const lcp = report.audits['largest-contentful-paint'].displayValue;
