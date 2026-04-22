@@ -15,6 +15,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Set preview slug
+        id: slug
+        run: |
+          echo "value=$(echo '${{ github.head_ref }}' | sed 's/[^a-zA-Z0-9_-]/-/g' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
+
       - name: Write version
         run: echo "${{ github.sha }}" > ./site/version.txt
 
@@ -23,7 +28,7 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./site
-          destination_dir: preview/pr-${{ github.event.number }}
+          destination_dir: preview/${{ steps.slug.outputs.value }}
           keep_files: true
 
       - name: Post preview URL comment
@@ -31,7 +36,7 @@ jobs:
         with:
           script: |
             const marker = '<!-- pr-preview -->';
-            const url = `https://pauseai.uk/preview/pr-${{ github.event.number }}/`;
+            const url = `https://pauseai.uk/preview/${{ steps.slug.outputs.value }}/`;
             const body = `${marker}\n🔍 **Preview:** ${url}\n\n_Lighthouse running…_`;
             const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
@@ -57,7 +62,7 @@ jobs:
 
       - name: Wait for preview to go live
         run: |
-          url="https://pauseai.uk/preview/pr-${{ github.event.number }}/"
+          url="https://pauseai.uk/preview/${{ steps.slug.outputs.value }}/"
           for i in $(seq 1 12); do
             status=$(curl -s -o /dev/null -w "%{http_code}" "$url")
             if [ "$status" = "200" ]; then echo "Live"; exit 0; fi
@@ -70,7 +75,7 @@ jobs:
         id: lighthouse
         continue-on-error: true
         run: |
-          npx lighthouse "https://pauseai.uk/preview/pr-${{ github.event.number }}/" \
+          npx lighthouse "https://pauseai.uk/preview/${{ steps.slug.outputs.value }}/" \
             --output=json \
             --output-path=./lighthouse-report.json \
             --chrome-flags="--headless --no-sandbox --disable-dev-shm-usage" \
@@ -81,7 +86,7 @@ jobs:
         with:
           script: |
             const marker = '<!-- pr-preview -->';
-            const url = `https://pauseai.uk/preview/pr-${{ github.event.number }}/`;
+            const url = `https://pauseai.uk/preview/${{ steps.slug.outputs.value }}/`;
             let scores = '';
             if ('${{ steps.lighthouse.outcome }}' === 'success') {
               const fs = require('fs');
@@ -120,6 +125,11 @@ jobs:
     if: github.event.action == 'closed'
     runs-on: ubuntu-latest
     steps:
+      - name: Set preview slug
+        id: slug
+        run: |
+          echo "value=$(echo '${{ github.head_ref }}' | sed 's/[^a-zA-Z0-9_-]/-/g' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
+
       - uses: actions/checkout@v4
         with:
           ref: gh-pages
@@ -128,6 +138,6 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git rm -rf preview/pr-${{ github.event.number }} || true
-          git diff --cached --quiet || git commit -m "Remove preview for PR #${{ github.event.number }}"
+          git rm -rf preview/${{ steps.slug.outputs.value }} || true
+          git diff --cached --quiet || git commit -m "Remove preview for ${{ github.head_ref }}"
           git push
