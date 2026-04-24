@@ -27,6 +27,17 @@ jobs:
       - name: Write version
         run: echo "${{ github.sha }}" > ./site/version.txt
 
+      # Root-relative paths (e.g. href="/images/...") break when served from a
+      # subdirectory. Rewrite them to include the preview prefix so assets and
+      # links resolve correctly.
+      - name: Rewrite root-relative paths for preview
+        run: |
+          slug="${{ steps.slug.outputs.value }}"
+          find ./site -name "*.html" -exec sed -i \
+            -e "s|href=\"/|href=\"/preview/$slug/|g" \
+            -e "s|src=\"/|src=\"/preview/$slug/|g" \
+            {} +
+
       - name: Deploy preview
         uses: peaceiris/actions-gh-pages@v3
         with:
@@ -79,12 +90,38 @@ jobs:
         id: lighthouse
         continue-on-error: true
         run: |
+          slug="${{ steps.slug.outputs.value }}"
           mkdir -p lighthouse-reports
-          npx lighthouse "https://pauseai.uk/preview/${{ steps.slug.outputs.value }}/" \
-            --output=json \
-            --output-path=./lighthouse-reports/preview.json \
-            --chrome-flags="--headless --no-sandbox --disable-dev-shm-usage" \
-            --only-categories=performance,accessibility,best-practices,seo
+
+          # Detect HTML files changed in this PR; fall back to root if only
+          # non-HTML files changed (e.g. CSS/JS/images affect all pages so
+          # root is the most representative sample).
+          git fetch origin ${{ github.base_ref }} --depth=1
+          changed_html=$(git diff --name-only origin/${{ github.base_ref }}...HEAD -- '*.html' | grep '^site/' | head -5)
+          [ -z "$changed_html" ] && changed_html="site/index.html"
+
+          while IFS= read -r file; do
+            [ -z "$file" ] && continue
+            path="${file#site/}"
+            if [ "$path" = "index.html" ]; then
+              url="https://pauseai.uk/preview/$slug/"
+              name="home"
+            elif [[ "$path" == */index.html ]]; then
+              dir="${path%/index.html}"
+              url="https://pauseai.uk/preview/$slug/$dir/"
+              name="${dir//\//-}"
+            else
+              url="https://pauseai.uk/preview/$slug/$path"
+              name="${path%.html}"
+              name="${name//\//-}"
+            fi
+            echo "Lighthouse: $url → lighthouse-reports/$name.json"
+            npx lighthouse "$url" \
+              --output=json \
+              --output-path="./lighthouse-reports/$name.json" \
+              --chrome-flags="--headless --no-sandbox --disable-dev-shm-usage" \
+              --only-categories=performance,accessibility,best-practices,seo || true
+          done <<< "$changed_html"
 
       - name: Update comment with Lighthouse scores
         uses: actions/github-script@v7
@@ -95,40 +132,53 @@ jobs:
             let scores = '';
             if ('${{ steps.lighthouse.outcome }}' === 'success') {
               const fs = require('fs');
-              const report = JSON.parse(fs.readFileSync('./lighthouse-reports/preview.json', 'utf8'));
-              const cats = report.categories;
-              const audits = report.audits;
-              const s = (key) => Math.round(cats[key].score * 100);
+              const path = require('path');
               const scoreEmoji = (n) => n >= 90 ? '🟢' : n >= 50 ? '🟠' : '🔴';
 
-              let baseline = null;
-              try {
-                const res = await fetch('https://pauseai.uk/lighthouse-baseline.json');
-                if (res.ok) baseline = await res.json();
-              } catch (e) {}
+              const reportFiles = fs.readdirSync('./lighthouse-reports').filter(f => f.endsWith('.json'));
+              const pageSections = [];
 
-              const bv = (key) => baseline ? baseline.audits[key].displayValue : '—';
-              const bs = (key) => baseline ? Math.round(baseline.categories[key].score * 100) : null;
-              const deltaMs = (key) => {
-                if (!baseline) return '';
-                const diff = audits[key].numericValue - baseline.audits[key].numericValue;
-                const sign = diff > 0 ? '+' : '';
-                const better = diff < 0;
-                return ` (${better ? '✅' : '⚠️'} ${sign}${(diff / 1000).toFixed(2)}s)`;
-              };
-              const deltaCls = () => {
-                if (!baseline) return '';
-                const diff = audits['cumulative-layout-shift'].numericValue - baseline.audits['cumulative-layout-shift'].numericValue;
-                const sign = diff > 0 ? '+' : '';
-                return ` (${diff < 0 ? '✅' : '⚠️'} ${sign}${diff.toFixed(3)})`;
-              };
-              const scoreRow = (label, key) => {
-                const cur = s(key); const base = bs(key);
-                const delta = base !== null ? ` (${cur > base ? '✅ +' : cur < base ? '⚠️ ' : ''}${base !== null && cur !== base ? cur - base : '±0'})` : '';
-                return `| ${label} | ${scoreEmoji(cur)} ${cur}${delta} | ${base !== null ? `${scoreEmoji(base)} ${base}` : '—'} |`;
-              };
+              for (const file of reportFiles) {
+                const pageName = file.replace('.json', '');
+                const report = JSON.parse(fs.readFileSync(path.join('./lighthouse-reports', file), 'utf8'));
+                const cats = report.categories;
+                const audits = report.audits;
+                const s = (key) => Math.round(cats[key].score * 100);
 
-              scores = `\n\n**Lighthouse scores:**\n| Category | Preview | Baseline |\n|---|---|---|\n${scoreRow('Performance', 'performance')}\n${scoreRow('Accessibility', 'accessibility')}\n${scoreRow('Best Practices', 'best-practices')}\n${scoreRow('SEO', 'seo')}\n\n**Performance metrics:**\n| Metric | Preview | Baseline |\n|---|---|---|\n| FCP | ${audits['first-contentful-paint'].displayValue}${deltaMs('first-contentful-paint')} | ${bv('first-contentful-paint')} |\n| LCP | ${audits['largest-contentful-paint'].displayValue}${deltaMs('largest-contentful-paint')} | ${bv('largest-contentful-paint')} |\n| TBT | ${audits['total-blocking-time'].displayValue}${deltaMs('total-blocking-time')} | ${bv('total-blocking-time')} |\n| Speed Index | ${audits['speed-index'].displayValue}${deltaMs('speed-index')} | ${bv('speed-index')} |\n| TTI | ${audits['interactive'].displayValue}${deltaMs('interactive')} | ${bv('interactive')} |\n| CLS | ${audits['cumulative-layout-shift'].displayValue}${deltaCls()} | ${bv('cumulative-layout-shift')} |`;
+                let b = null;
+                try {
+                  const res = await fetch(`https://pauseai.uk/lighthouse-baselines/${pageName}.json`);
+                  if (res.ok) b = await res.json();
+                } catch (e) {}
+                const bv = (key) => b ? b.audits[key].displayValue : '—';
+                const bs = (key) => b ? Math.round(b.categories[key].score * 100) : null;
+                const deltaMs = (key) => {
+                  if (!b) return '';
+                  const diff = audits[key].numericValue - b.audits[key].numericValue;
+                  const sign = diff > 0 ? '+' : '';
+                  return ` (${diff < 0 ? '✅' : '⚠️'} ${sign}${(diff / 1000).toFixed(2)}s)`;
+                };
+                const deltaCls = () => {
+                  if (!b) return '';
+                  const diff = audits['cumulative-layout-shift'].numericValue - b.audits['cumulative-layout-shift'].numericValue;
+                  const sign = diff > 0 ? '+' : '';
+                  return ` (${diff < 0 ? '✅' : '⚠️'} ${sign}${diff.toFixed(3)})`;
+                };
+                const scoreRow = (label, key) => {
+                  const cur = s(key); const base = bs(key);
+                  const delta = base !== null ? ` (${cur > base ? '✅ +' : cur < base ? '⚠️ ' : ''}${base !== null && cur !== base ? cur - base : '±0'})` : '';
+                  return `| ${label} | ${scoreEmoji(cur)} ${cur}${delta} | ${base !== null ? `${scoreEmoji(base)} ${base}` : '—'} |`;
+                };
+
+                const displayName = pageName === 'home' ? 'Home' : pageName.split('-').map(w => w[0].toUpperCase() + w.slice(1)).join(' ');
+                pageSections.push(
+                  `**${displayName}** — Lighthouse scores:\n| Category | Preview | Baseline |\n|---|---|---|\n${scoreRow('Performance', 'performance')}\n${scoreRow('Accessibility', 'accessibility')}\n${scoreRow('Best Practices', 'best-practices')}\n${scoreRow('SEO', 'seo')}\n\nPerformance metrics:\n| Metric | Preview | Baseline |\n|---|---|---|\n| FCP | ${audits['first-contentful-paint'].displayValue}${deltaMs('first-contentful-paint')} | ${bv('first-contentful-paint')} |\n| LCP | ${audits['largest-contentful-paint'].displayValue}${deltaMs('largest-contentful-paint')} | ${bv('largest-contentful-paint')} |\n| TBT | ${audits['total-blocking-time'].displayValue}${deltaMs('total-blocking-time')} | ${bv('total-blocking-time')} |\n| Speed Index | ${audits['speed-index'].displayValue}${deltaMs('speed-index')} | ${bv('speed-index')} |\n| TTI | ${audits['interactive'].displayValue}${deltaMs('interactive')} | ${bv('interactive')} |\n| CLS | ${audits['cumulative-layout-shift'].displayValue}${deltaCls()} | ${bv('cumulative-layout-shift')} |`
+                );
+              }
+
+              scores = pageSections.length > 0
+                ? '\n\n' + pageSections.join('\n\n---\n\n')
+                : '\n\n_No Lighthouse reports found._';
             } else {
               scores = '\n\n_Lighthouse did not complete._';
             }
