@@ -4,7 +4,7 @@
   "scripts": {
     "dev": "npx live-server site",
     "lighthouse": "bash scripts/lighthouse.sh prod https://pauseai.uk",
-    "lighthouse:dev": "npx start-server-and-test 'npx serve site -p 3001' http://localhost:3001 'bash scripts/lighthouse.sh dev http://localhost:3001'",
+    "lighthouse:dev": "bash scripts/lighthouse-dev.sh",
     "lighthouse:branch": "bash scripts/lighthouse.sh branch",
     "fonts:update": "cp node_modules/@fontsource-variable/fraunces/files/fraunces-latin-wght-normal.woff2 node_modules/@fontsource-variable/fraunces/files/fraunces-latin-ext-wght-normal.woff2 node_modules/@fontsource-variable/inter/files/inter-latin-wght-normal.woff2 node_modules/@fontsource-variable/inter/files/inter-latin-ext-wght-normal.woff2 site/fonts/"
   },
