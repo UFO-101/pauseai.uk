@@ -41,6 +41,11 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  // Hydrate deferred iframes after initial render
+  document
+    .querySelectorAll("iframe[data-src]")
+    .forEach((el) => (el.src = el.dataset.src));
+
   // Update URL hash on scroll based on visible section
   const sections = document.querySelectorAll("section[id]");
   let scrollTimer;
