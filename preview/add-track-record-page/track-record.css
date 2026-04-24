@@ -259,6 +259,7 @@
   transition: transform 0.25s ease, box-shadow 0.25s ease;
 }
 .shot img {
+  display: block;
   width: 100%;
   height: 100%;
   object-fit: cover;
