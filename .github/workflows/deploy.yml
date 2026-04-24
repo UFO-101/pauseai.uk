@@ -38,21 +38,40 @@ jobs:
         continue-on-error: true
         run: |
           mkdir -p lighthouse-reports
-          npx lighthouse https://pauseai.uk \
-            --output=json \
-            --output-path=./lighthouse-reports/baseline.json \
-            --chrome-flags="--headless --no-sandbox --disable-dev-shm-usage" \
-            --only-categories=performance,accessibility,best-practices,seo
 
-      - name: Store baseline in gh-pages
+          # Run Lighthouse on every HTML page in the site
+          find ./site -name "*.html" -not -name "404.html" | while IFS= read -r file; do
+            path="${file#./site/}"
+            if [ "$path" = "index.html" ]; then
+              url="https://pauseai.uk/"
+              name="home"
+            elif [[ "$path" == */index.html ]]; then
+              dir="${path%/index.html}"
+              url="https://pauseai.uk/$dir/"
+              name="${dir//\//-}"
+            else
+              url="https://pauseai.uk/$path"
+              name="${path%.html}"
+              name="${name//\//-}"
+            fi
+            echo "Lighthouse: $url → lighthouse-reports/$name.json"
+            npx lighthouse "$url" \
+              --output=json \
+              --output-path="./lighthouse-reports/$name.json" \
+              --chrome-flags="--headless --no-sandbox --disable-dev-shm-usage" \
+              --only-categories=performance,accessibility,best-practices,seo || true
+          done
+
+      - name: Store baselines in gh-pages
         if: steps.lighthouse.outcome == 'success'
         run: |
           git fetch origin gh-pages
           git worktree add /tmp/gh-pages gh-pages
-          cp lighthouse-reports/baseline.json /tmp/gh-pages/lighthouse-baseline.json
+          mkdir -p /tmp/gh-pages/lighthouse-baselines
+          cp lighthouse-reports/*.json /tmp/gh-pages/lighthouse-baselines/
           cd /tmp/gh-pages
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add lighthouse-baseline.json
-          git diff --cached --quiet || git commit -m "Update Lighthouse baseline [skip ci]"
+          git add lighthouse-baselines/
+          git diff --cached --quiet || git commit -m "Update Lighthouse baselines [skip ci]"
           git push origin gh-pages
