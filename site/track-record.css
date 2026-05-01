@@ -242,6 +242,13 @@
   grid-template-columns: 1.3fr 1fr 1fr;
   grid-auto-rows: 260px;
 }
+/* When a gallery-3 contains a wide shot, switch to 2-up + full-width row */
+.gallery-3:has(.shot-wide) {
+  grid-template-columns: 1fr 1fr;
+}
+.gallery-3 .shot-wide {
+  grid-column: 1 / -1;
+}
 .gallery-4 {
   grid-template-columns: 1fr 1fr 1fr;
   grid-auto-rows: 190px;
