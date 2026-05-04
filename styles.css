@@ -944,6 +944,26 @@ img.news-logo[alt="Fortune"] {
   font-size: 14px;
 }
 
+.footer-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.footer-bottom a {
+  color: rgba(255, 255, 255, 0.7);
+  text-decoration: none;
+}
+
+.footer-bottom a:hover {
+  color: var(--accent);
+}
+
 /* ── Burger Menu ───────────────────────────────── */
 
 .burger {
