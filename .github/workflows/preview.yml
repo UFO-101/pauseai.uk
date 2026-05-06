@@ -10,6 +10,12 @@ permissions:
   contents: write
   pull-requests: write
 
+# Serialise pushes to gh-pages so we don't race against the deploy or cleanup
+# workflows (peaceiris doesn't retry on non-fast-forward).
+concurrency:
+  group: gh-pages
+  cancel-in-progress: false
+
 jobs:
   deploy:
     if: github.event.action != 'closed'

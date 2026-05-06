@@ -6,6 +6,12 @@ on:
 permissions:
   contents: write
 
+# Serialise pushes to gh-pages so this workflow doesn't race against PR
+# preview deploys / cleanups (peaceiris doesn't retry on non-fast-forward).
+concurrency:
+  group: gh-pages
+  cancel-in-progress: false
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
