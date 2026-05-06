@@ -192,6 +192,65 @@ nav a:hover {
   color: #fff;
 }
 
+/* Dropdown nav item */
+.nav-item.has-dropdown {
+  position: relative;
+}
+.dropdown-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.dropdown-trigger .caret {
+  width: 10px;
+  height: 7px;
+  flex-shrink: 0;
+  opacity: 0.85;
+  transition: transform 0.2s ease;
+}
+.nav-item.has-dropdown:hover .dropdown-trigger .caret,
+.nav-item.has-dropdown:focus-within .dropdown-trigger .caret,
+.nav-item.has-dropdown.is-open .dropdown-trigger .caret {
+  transform: rotate(180deg);
+}
+.dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  min-width: 200px;
+  background: rgba(28, 28, 30, 0.98);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(4px);
+  transition: opacity 0.15s ease, transform 0.15s ease, visibility 0.15s;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+  z-index: 10;
+}
+.nav-item.has-dropdown:hover .dropdown,
+.nav-item.has-dropdown:focus-within .dropdown,
+.nav-item.has-dropdown.is-open .dropdown {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+.dropdown a {
+  display: block;
+  padding: 10px 14px;
+  border-radius: 6px;
+  white-space: nowrap;
+  color: rgba(255, 255, 255, 0.85);
+}
+.dropdown a:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+
 .pill {
   border: 1.5px solid var(--accent);
   color: var(--accent) !important;
@@ -345,6 +404,23 @@ nav a:hover {
   flex-wrap: wrap;
   gap: 12px;
   margin: 24px 0 12px;
+}
+
+.hero-actions {
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.hero-actions-secondary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.hero-actions-secondary .btn.ghost {
+  padding: 10px 18px;
+  font-size: 14px;
+  font-weight: 500;
 }
 
 /* ── Buttons ───────────────────────────────────── */
@@ -1014,27 +1090,80 @@ img.news-logo[alt="Fortune"] {
     right: 0;
     background: rgba(28, 28, 30, 0.98);
     flex-direction: column;
-    padding: 12px 24px 20px;
+    padding: 8px 0 16px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    align-items: stretch;
   }
 
   nav.open {
     display: flex;
   }
 
-  nav a {
-    padding: 12px 16px;
-    font-size: 16px;
+  nav > a,
+  nav > .nav-item {
+    width: 100%;
     border-bottom: 1px solid rgba(255, 255, 255, 0.06);
   }
+  nav > a:last-child,
+  nav > .nav-item:last-child {
+    border-bottom: none;
+  }
 
-  nav a:last-child {
+  nav a {
+    display: block;
+    padding: 14px 24px;
+    font-size: 16px;
+    text-align: left;
+    border-radius: 0;
     border-bottom: none;
   }
 
   nav .pill {
-    margin-top: 8px;
+    margin: 14px 24px 0;
+    padding: 12px 18px;
     text-align: center;
+    border: 1.5px solid var(--accent);
+    border-radius: 999px;
+  }
+
+  /* Mobile: tap "About" to expand sub-items inline */
+  .nav-item.has-dropdown .dropdown-trigger {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+  }
+  .dropdown-trigger .caret {
+    width: 12px;
+    height: 8px;
+    opacity: 0.85;
+  }
+  .dropdown {
+    position: static;
+    opacity: 1;
+    visibility: visible;
+    transform: none;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    padding: 0;
+    transition: none;
+    display: none;
+    flex-direction: column;
+  }
+  .nav-item.has-dropdown.is-open .dropdown {
+    display: flex;
+    background: rgba(255, 255, 255, 0.03);
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+  }
+  .dropdown a {
+    padding: 12px 24px 12px 40px;
+    font-size: 15px;
+    color: rgba(255, 255, 255, 0.7);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  }
+  .dropdown a:last-child {
     border-bottom: none;
   }
 
