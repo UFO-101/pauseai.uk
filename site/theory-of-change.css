@@ -85,6 +85,17 @@
   color: inherit;
 }
 
+.theory-of-change .toc-figure {
+  margin: 18px 0 24px;
+  max-width: 420px;
+}
+.theory-of-change .toc-figure img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
+}
+
 .theory-of-change .toc-list {
   padding-left: 22px;
   margin: 14px 0 18px;

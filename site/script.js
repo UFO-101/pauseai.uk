@@ -11,14 +11,43 @@ document.addEventListener("DOMContentLoaded", () => {
       burger.setAttribute("aria-expanded", !open);
       nav.classList.toggle("open", !open);
     });
-    // Close menu when a nav link is clicked
+    // Close menu when a nav link is clicked (but not when toggling a dropdown)
     nav.querySelectorAll("a").forEach((link) => {
       link.addEventListener("click", () => {
+        if (link.classList.contains("dropdown-trigger")) return;
         burger.setAttribute("aria-expanded", "false");
         nav.classList.remove("open");
       });
     });
   }
+
+  // Dropdown nav toggle (works for click, touch, and keyboard)
+  document.querySelectorAll(".dropdown-trigger").forEach((trigger) => {
+    const parent = trigger.closest(".nav-item.has-dropdown");
+    if (!parent) return;
+    trigger.addEventListener("click", (e) => {
+      e.preventDefault();
+      const isOpen = parent.classList.contains("is-open");
+      document.querySelectorAll(".nav-item.has-dropdown.is-open").forEach((p) => {
+        if (p !== parent) {
+          p.classList.remove("is-open");
+          p.querySelector(".dropdown-trigger")?.setAttribute("aria-expanded", "false");
+        }
+      });
+      parent.classList.toggle("is-open", !isOpen);
+      trigger.setAttribute("aria-expanded", String(!isOpen));
+    });
+  });
+
+  // Close any open dropdown when clicking outside
+  document.addEventListener("click", (e) => {
+    if (!e.target.closest(".nav-item.has-dropdown")) {
+      document.querySelectorAll(".nav-item.has-dropdown.is-open").forEach((p) => {
+        p.classList.remove("is-open");
+        p.querySelector(".dropdown-trigger")?.setAttribute("aria-expanded", "false");
+      });
+    }
+  });
 
   // Smooth scroll for internal links + update URL hash
   document.querySelectorAll('a[href^="#"]').forEach((link) => {
