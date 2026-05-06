@@ -21,21 +21,32 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Dropdown nav toggle (works for click, touch, and keyboard)
+  // Dropdown nav toggle.
+  // - Hover-capable devices (desktop): the dropdown reveals on hover via CSS,
+  //   so clicking the trigger should navigate normally.
+  // - Touch devices: first tap opens the dropdown (preventDefault); a second
+  //   tap on the same trigger navigates. Tapping a sub-item always navigates.
   document.querySelectorAll(".dropdown-trigger").forEach((trigger) => {
     const parent = trigger.closest(".nav-item.has-dropdown");
     if (!parent) return;
     trigger.addEventListener("click", (e) => {
-      e.preventDefault();
+      const isTouch = window.matchMedia("(hover: none)").matches;
+      if (!isTouch) return;
       const isOpen = parent.classList.contains("is-open");
-      document.querySelectorAll(".nav-item.has-dropdown.is-open").forEach((p) => {
-        if (p !== parent) {
-          p.classList.remove("is-open");
-          p.querySelector(".dropdown-trigger")?.setAttribute("aria-expanded", "false");
-        }
-      });
-      parent.classList.toggle("is-open", !isOpen);
-      trigger.setAttribute("aria-expanded", String(!isOpen));
+      if (!isOpen) {
+        e.preventDefault();
+        document.querySelectorAll(".nav-item.has-dropdown.is-open").forEach((p) => {
+          if (p !== parent) {
+            p.classList.remove("is-open");
+            p.querySelector(".dropdown-trigger")?.setAttribute("aria-expanded", "false");
+          }
+        });
+        parent.classList.add("is-open");
+        trigger.setAttribute("aria-expanded", "true");
+      } else {
+        parent.classList.remove("is-open");
+        trigger.setAttribute("aria-expanded", "false");
+      }
     });
   });
 

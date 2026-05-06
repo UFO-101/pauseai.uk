@@ -27,9 +27,9 @@
   <body>
     <header class="site-header">
       <div class="container">
-        <div class="brand">
+        <a class="brand brand-link" href="/preview/homepage-nav-restructure/">
           <img src="../images/chapters/leicester/leicester_logoBanner_tp_tp_darkmode.svg" alt="" class="brand-mark" />
-        </div>
+        </a>
         <button class="burger" aria-label="Menu" aria-expanded="false">
           <span></span><span></span><span></span>
         </button>
@@ -41,7 +41,15 @@
               <a href="/preview/homepage-nav-restructure/theory-of-change/" role="menuitem">Theory of change</a>
             </div>
           </div>
-          <a href="/preview/homepage-nav-restructure/#chapters">Chapters</a>
+          <div class="nav-item has-dropdown">
+            <a href="/preview/homepage-nav-restructure/#chapters" class="dropdown-trigger" aria-haspopup="true" aria-expanded="false">Chapters<svg class="caret" viewBox="0 0 12 8" aria-hidden="true" focusable="false"><path d="M1 1.5l5 5 5-5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+            <div class="dropdown" role="menu">
+              <a href="/preview/homepage-nav-restructure/london/" role="menuitem">London</a>
+              <a href="/preview/homepage-nav-restructure/glasgow/" role="menuitem">Glasgow</a>
+              <a href="/preview/homepage-nav-restructure/oxford/" role="menuitem">Oxford</a>
+              <a href="/preview/homepage-nav-restructure/leicester/" role="menuitem">Leicester</a>
+            </div>
+          </div>
           <a href="/preview/homepage-nav-restructure/#news">In the News</a>
           <a href="/preview/homepage-nav-restructure/#stories">Stories</a>
           <a href="/preview/homepage-nav-restructure/#people">People</a>
