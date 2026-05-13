@@ -1,0 +1,76 @@
+/* ========================================================================
+   CAMPAIGNS PAGE
+   Loaded after styles.css on campaigns.html only. Hosts a small intro
+   followed by a tall iframe that embeds an external campaign page.
+   ======================================================================== */
+
+.campaigns-hero {
+  padding: 56px 0 24px;
+  background: var(--bg);
+}
+.campaigns-hero .eyebrow {
+  margin: 0 0 8px;
+}
+.campaigns-hero h1 {
+  font-family: "Fraunces", Georgia, serif;
+  font-size: clamp(40px, 5vw, 64px);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  margin: 0 0 14px;
+  color: var(--text);
+}
+.campaigns-hero .lede {
+  font-size: clamp(16px, 1.3vw, 18px);
+  line-height: 1.55;
+  color: var(--text-secondary);
+  max-width: 640px;
+  margin: 0;
+}
+
+.campaigns-embed {
+  padding: 16px 0 80px;
+  background: var(--bg);
+}
+
+.campaigns-embed .embed-frame {
+  position: relative;
+  width: 100%;
+  height: min(1400px, calc(100vh - 120px));
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  overflow: hidden;
+  box-shadow: 0 1px 2px var(--shadow), 0 12px 32px var(--shadow);
+}
+
+.campaigns-embed .embed-frame iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+.campaigns-embed .embed-fallback {
+  margin: 18px 0 0;
+  font-size: 14px;
+  color: var(--muted);
+  text-align: center;
+}
+.campaigns-embed .embed-fallback a {
+  color: var(--accent);
+}
+
+@media (max-width: 720px) {
+  .campaigns-hero {
+    padding: 40px 0 16px;
+  }
+  .campaigns-embed {
+    padding: 12px 0 56px;
+  }
+  .campaigns-embed .embed-frame {
+    height: calc(100vh - 80px);
+    border-radius: 8px;
+  }
+}
