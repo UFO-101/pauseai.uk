@@ -87,7 +87,8 @@
         <div class="container">
           <div class="embed-frame">
             <iframe
-              src="https://pauseai.info/uk-email-mp"
+              id="campaigns-embed"
+              src="https://pauseai.info/embed/uk-email-mp"
               title="Email your MP — PauseAI"
               loading="lazy"
               referrerpolicy="no-referrer-when-downgrade"
@@ -150,5 +151,20 @@
     </footer>
 
     <script src="../script.js"></script>
+    <script>
+      // Resize the embedded campaign iframe in response to height messages
+      // posted by the PauseAI embed (pauseai-embed-resize).
+      (function () {
+        const iframe = document.getElementById("campaigns-embed");
+        if (!iframe) return;
+        window.addEventListener("message", (e) => {
+          const data = e.data;
+          if (!data || typeof data !== "object") return;
+          if (data.type !== "pauseai-embed-resize") return;
+          if (typeof data.height !== "number" || !isFinite(data.height)) return;
+          iframe.style.height = data.height + "px";
+        });
+      })();
+    </script>
   </body>
 </html>

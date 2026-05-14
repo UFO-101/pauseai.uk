@@ -34,9 +34,7 @@
 }
 
 .campaigns-embed .embed-frame {
-  position: relative;
   width: 100%;
-  height: min(1400px, calc(100vh - 120px));
   border: 1px solid var(--border);
   border-radius: 12px;
   background: var(--surface);
@@ -45,10 +43,9 @@
 }
 
 .campaigns-embed .embed-frame iframe {
-  position: absolute;
-  inset: 0;
+  display: block;
   width: 100%;
-  height: 100%;
+  height: 200px; /* initial — overridden by pauseai-embed-resize messages */
   border: 0;
 }
 
@@ -69,8 +66,18 @@
   .campaigns-embed {
     padding: 12px 0 56px;
   }
+  /* Let the embed go edge-to-edge on mobile */
+  .campaigns-embed .container {
+    padding-left: 0;
+    padding-right: 0;
+  }
   .campaigns-embed .embed-frame {
-    height: calc(100vh - 80px);
-    border-radius: 8px;
+    border-radius: 0;
+    border-left: 0;
+    border-right: 0;
+    box-shadow: none;
+  }
+  .campaigns-embed .embed-fallback {
+    padding: 0 24px;
   }
 }

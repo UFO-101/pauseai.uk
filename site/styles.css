@@ -70,6 +70,8 @@
 body {
   margin: 0;
   min-height: 100vh;
+  display: flex;
+  flex-direction: column;
   color: var(--text);
   background: var(--bg);
   font-family: "Inter", system-ui, sans-serif;
@@ -78,6 +80,14 @@ body {
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
+}
+
+body > main {
+  flex: 1 0 auto;
+}
+
+body > .site-footer {
+  flex-shrink: 0;
 }
 
 h1,
