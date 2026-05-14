@@ -45,7 +45,7 @@
 .campaigns-embed .embed-frame iframe {
   display: block;
   width: 100%;
-  height: 200px; /* initial — overridden by pauseai-embed-resize messages */
+  height: min(1400px, calc(100vh - 120px));
   border: 0;
 }
 
