@@ -844,7 +844,7 @@ img.news-logo[alt="Fortune"] {
   display: block;
 }
 
-@media (max-width: 820px) {
+@media (max-width: 720px) {
   .donate-intro {
     padding: 40px 0 56px;
   }
@@ -882,8 +882,8 @@ img.news-logo[alt="Fortune"] {
 .freq-toggle {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  background: var(--surface-2);
-  border: 1px solid var(--border);
+  background: #FFEDD5;          /* warm light-orange wash */
+  border: 1.5px solid #FF9416;  /* orange frame */
   border-radius: 14px;
   padding: 6px;
   gap: 4px;
@@ -906,7 +906,7 @@ img.news-logo[alt="Fortune"] {
 .freq-name {
   font-size: 15px;
   font-weight: 700;
-  color: var(--text-secondary);
+  color: #A84E1A;
   letter-spacing: -0.005em;
 }
 .freq-method {
@@ -917,11 +917,11 @@ img.news-logo[alt="Fortune"] {
   line-height: 1.3;
 }
 .freq-option:hover .freq-name {
-  color: var(--text);
+  color: #FF9416;
 }
 .freq-option.is-active {
-  background: var(--cta-orange);
-  box-shadow: 0 4px 12px var(--cta-orange-soft);
+  background: #FF9416;
+  box-shadow: 0 4px 12px rgba(255, 148, 22, 0.4);
 }
 .freq-option.is-active .freq-name   { color: #fff; }
 .freq-option.is-active .freq-method { color: rgba(255, 255, 255, 0.9); }
@@ -948,32 +948,30 @@ img.news-logo[alt="Fortune"] {
 }
 .amount-option {
   appearance: none;
-  background: var(--surface);
-  border: 1.5px solid var(--border);
+  background: #FFF5EC;            /* very light orange wash */
+  border: 2px solid #FF9416;      /* orange border at rest */
   border-radius: 12px;
   padding: 14px 8px;
   font-family: inherit;
   font-size: 18px;
   font-weight: 700;
-  color: var(--text);
+  color: #A84E1A;                 /* deep orange text */
   cursor: pointer;
   transition: border-color 0.15s ease, background 0.15s ease,
               color 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease;
 }
 .amount-option:hover {
-  border-color: var(--cta-orange);
-  color: var(--cta-orange);
-  background: #FFF5EC;
+  background: #FFE3C9;
   transform: translateY(-1px);
 }
 .amount-option:active {
   transform: translateY(0);
 }
 .amount-option.is-active {
-  background: var(--cta-orange);
-  border-color: var(--cta-orange);
+  background: #FF9416;
+  border-color: #FF9416;
   color: #fff;
-  box-shadow: 0 4px 14px var(--cta-orange-soft);
+  box-shadow: 0 4px 14px rgba(255, 148, 22, 0.45);
   transform: translateY(-1px);
 }
 /* "Other" spans the bottom row, styled as a softer prompt */
@@ -984,7 +982,6 @@ img.news-logo[alt="Fortune"] {
   letter-spacing: 0.08em;
   text-transform: uppercase;
   padding: 12px 8px;
-  color: var(--text-secondary);
 }
 .amount-other.is-active {
   letter-spacing: 0.08em;
@@ -1104,7 +1101,7 @@ img.news-logo[alt="Fortune"] {
   margin: 0 0 8px;
 }
 
-@media (max-width: 820px) {
+@media (max-width: 720px) {
   .donate-bottom-grid {
     grid-template-columns: 1fr;
     gap: 40px;
