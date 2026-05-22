@@ -53,102 +53,117 @@
     </header>
 
     <main>
-      <section class="donate-hero">
-        <div class="container donate-hero-grid">
-          <div>
-            <p class="eyebrow">Support our work</p>
-            <h1>Help us press pause on unsafe AI</h1>
-            <!-- COPY PLACEHOLDER: case for support — user will provide -->
-            <p class="lede">
-              PauseAI UK runs on the time and money of people who believe the
-              public deserves a say in how powerful AI is built and deployed.
-              Your regular gift funds protests, organising, and the staff who
-              keep this movement growing. <em>[Placeholder — final copy to come.]</em>
-            </p>
-          </div>
-        </div>
-      </section>
-
-      <section class="donate-form-section">
+      <section class="donate-intro">
         <div class="container">
-          <form class="donate-form" id="donate-form" novalidate>
-            <!-- Frequency toggle -->
-            <div class="freq-toggle" role="radiogroup" aria-label="Donation frequency">
-              <button
-                type="button"
-                role="radio"
-                aria-checked="true"
-                data-freq="monthly"
-                class="freq-option is-active"
-              >
-                Monthly
-              </button>
-              <button
-                type="button"
-                role="radio"
-                aria-checked="false"
-                data-freq="oneoff"
-                class="freq-option"
-              >
-                One-off
-              </button>
+          <div class="donate-intro-grid">
+            <div class="donate-intro-head">
+              <p class="eyebrow">Support our work</p>
+              <h1>Help us press pause on unsafe AI</h1>
             </div>
 
-            <!-- Amount selector -->
-            <fieldset class="amount-selector">
-              <legend>Choose an amount</legend>
-              <div class="amount-grid">
-                <button type="button" class="amount-option" data-amount="3">£3</button>
-                <button type="button" class="amount-option is-active" data-amount="5">£5</button>
-                <button type="button" class="amount-option" data-amount="10">£10</button>
-                <button type="button" class="amount-option" data-amount="25">£25</button>
-                <button type="button" class="amount-option" data-amount="other">Other</button>
-              </div>
-              <div class="amount-custom" hidden>
-                <label for="custom-amount">Enter amount</label>
-                <div class="amount-input-wrap">
-                  <span class="currency-prefix">£</span>
-                  <input
-                    type="number"
-                    id="custom-amount"
-                    name="custom-amount"
-                    min="3"
-                    step="1"
-                    inputmode="numeric"
-                    placeholder="3 or more"
-                  />
-                  <span class="amount-suffix" data-freq-suffix>per month</span>
+            <div class="donate-intro-photo">
+              <!--
+                TODO(image): replace src with site/images/donate/community.jpg
+                once user uploads the chosen photo. Until then, this uses an
+                existing community photo from the repo as a stand-in.
+              -->
+              <img
+                src="../images/letter-writing/G2DG8xBXMAABxmR.jpeg"
+                alt="PauseAI UK volunteers at a community event"
+              />
+            </div>
+
+            <div class="donate-intro-text">
+              <!-- COPY PLACEHOLDER: case for support — user will provide -->
+              <p class="lede">
+                PauseAI UK runs on the time and money of people who believe the
+                public deserves a say in how powerful AI is built and deployed.
+                Your regular gift funds protests, organising, and the staff who
+                keep this movement growing. <em>[Placeholder — final copy to come.]</em>
+              </p>
+            </div>
+
+            <div class="donate-intro-form">
+              <form class="donate-form" id="donate-form" novalidate>
+                <!-- Frequency toggle -->
+                <div class="freq-toggle" role="radiogroup" aria-label="Donation frequency">
+                  <button
+                    type="button"
+                    role="radio"
+                    aria-checked="true"
+                    data-freq="monthly"
+                    class="freq-option is-active"
+                  >
+                    Monthly
+                  </button>
+                  <button
+                    type="button"
+                    role="radio"
+                    aria-checked="false"
+                    data-freq="oneoff"
+                    class="freq-option"
+                  >
+                    One-off
+                  </button>
                 </div>
-                <p class="amount-help">Minimum £3 per month.</p>
-              </div>
-            </fieldset>
 
-            <!-- CTAs -->
-            <div class="donate-ctas">
-              <button
-                type="submit"
-                class="btn primary large donate-btn"
-                data-method="bacs_debit"
-              >
-                <span class="btn-label">Donate by Direct Debit</span>
-                <span class="btn-sub">Lower fees · Helps us plan ahead</span>
-              </button>
-              <button
-                type="submit"
-                class="btn ghost large donate-btn"
-                data-method="card"
-              >
-                <span class="btn-label">Donate by Card</span>
-                <span class="btn-sub">Apple Pay &amp; Google Pay supported</span>
-              </button>
+                <!-- Amount selector -->
+                <fieldset class="amount-selector">
+                  <legend>Choose an amount</legend>
+                  <div class="amount-grid">
+                    <button type="button" class="amount-option" data-amount="3">£3</button>
+                    <button type="button" class="amount-option is-active" data-amount="5">£5</button>
+                    <button type="button" class="amount-option" data-amount="10">£10</button>
+                    <button type="button" class="amount-option" data-amount="25">£25</button>
+                    <button type="button" class="amount-option" data-amount="50">£50</button>
+                    <button type="button" class="amount-option" data-amount="100">£100</button>
+                    <button type="button" class="amount-option amount-other" data-amount="other">Other</button>
+                  </div>
+                  <div class="amount-custom" hidden>
+                    <label for="custom-amount">Enter amount</label>
+                    <div class="amount-input-wrap">
+                      <span class="currency-prefix">£</span>
+                      <input
+                        type="number"
+                        id="custom-amount"
+                        name="custom-amount"
+                        min="3"
+                        step="1"
+                        inputmode="numeric"
+                        placeholder="3 or more"
+                      />
+                      <span class="amount-suffix" data-freq-suffix>per month</span>
+                    </div>
+                    <p class="amount-help">Minimum £3 per month.</p>
+                  </div>
+                </fieldset>
+
+                <!-- CTAs -->
+                <div class="donate-ctas">
+                  <button
+                    type="submit"
+                    class="btn primary large donate-btn"
+                    data-method="bacs_debit"
+                  >
+                    Donate by Direct Debit
+                  </button>
+                  <button
+                    type="submit"
+                    class="btn ghost large donate-btn"
+                    data-method="card"
+                  >
+                    Donate by Card
+                  </button>
+                </div>
+
+                <p class="form-footnote">
+                  Apple Pay and Google Pay are supported on the card option.
+                  Payments are processed securely by
+                  <a href="https://stripe.com/en-gb/privacy" target="_blank" rel="noreferrer">Stripe</a>.
+                </p>
+              </form>
             </div>
-
-            <p class="form-footnote">
-              Payments are processed securely by
-              <a href="https://stripe.com/en-gb/privacy" target="_blank" rel="noreferrer">Stripe</a>.
-              You'll be taken to Stripe's secure checkout to complete your donation.
-            </p>
-          </form>
+          </div>
         </div>
       </section>
 
@@ -177,8 +192,8 @@
             <article class="feature-card">
               <h3>US-based donors</h3>
               <p>
-                We're working on enabling tax-deductible giving for US supporters
-                via Manifund. <em>Coming soon.</em>
+                We're working on enabling tax-deductible giving for US
+                supporters. <em>Coming soon.</em>
               </p>
             </article>
           </div>
