@@ -764,6 +764,8 @@ img.news-logo[alt="Fortune"] {
 .news-card h3 {
   word-wrap: break-word;
   overflow-wrap: break-word;
+}
+
 /* Luma calendar embed container */
 .luma-calendar-embed {
   max-width: 800px;
