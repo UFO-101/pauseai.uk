@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Donate — PauseAI UK</title>
+    <meta
+      name="description"
+      content="Support PauseAI UK — community-led action for safe and accountable AI."
+    />
+    <link rel="canonical" href="/preview/claude-donate-page-iteration-1/donate" />
+    <link rel="stylesheet" href="../styles.css" />
+    <meta property="og:title" content="Donate to PauseAI UK" />
+    <meta property="og:description" content="Support community-led action for safe and accountable AI across the UK." />
+    <meta property="og:image" content="/images/open-graph/open-graph-1200-630.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://pauseai.uk/donate" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Donate to PauseAI UK" />
+    <meta name="twitter:description" content="Support community-led action for safe and accountable AI across the UK." />
+    <meta name="twitter:image" content="/images/open-graph/open-graph-1600-840.jpg" />
+    <link rel="icon" type="image/png" href="/preview/claude-donate-page-iteration-1/favicon/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/svg+xml" href="/preview/claude-donate-page-iteration-1/favicon/favicon.svg" />
+    <link rel="shortcut icon" href="/preview/claude-donate-page-iteration-1/favicon/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/preview/claude-donate-page-iteration-1/favicon/apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-title" content="PauseAI UK" />
+    <link rel="manifest" href="/preview/claude-donate-page-iteration-1/favicon/site.webmanifest" />
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container">
+        <a class="brand brand-link" href="/preview/claude-donate-page-iteration-1/">
+          <img
+            src="../images/logos/PauseAI Logo Transparent.svg"
+            alt="PauseAI UK"
+            class="brand-mark"
+          />
+          <span class="brand-uk">UK</span>
+        </a>
+        <button class="burger" aria-label="Menu" aria-expanded="false">
+          <span></span><span></span><span></span>
+        </button>
+        <nav>
+          <a href="/preview/claude-donate-page-iteration-1/#mission">Mission</a>
+          <a href="/preview/claude-donate-page-iteration-1/#activities">Activities</a>
+          <a href="/preview/claude-donate-page-iteration-1/#chapters">Chapters</a>
+          <a href="/preview/claude-donate-page-iteration-1/#people">People</a>
+          <a href="/preview/claude-donate-page-iteration-1/donate" class="pill pill-primary" aria-current="page">Donate</a>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <section class="donate-intro">
+        <div class="container">
+          <div class="donate-intro-grid">
+            <div class="donate-intro-head">
+              <p class="eyebrow">Support our work</p>
+              <h1>Let's press pause on unsafe AI together</h1>
+            </div>
+
+            <div class="donate-intro-photo">
+              <!--
+                TODO(image): replace src with site/images/donate/community.jpg
+                once user uploads the chosen photo. Until then, this uses an
+                existing community photo from the repo as a stand-in.
+              -->
+              <img
+                src="../images/letter-writing/G2DG8xBXMAABxmR.jpeg"
+                alt="PauseAI UK volunteers at a community event"
+              />
+            </div>
+
+            <div class="donate-intro-text">
+              <p class="lede">
+                PauseAI UK runs on the time and money of citizens across the
+                country who believe the public deserves a say in how powerful
+                AI is built and deployed. Your regular gift funds protests,
+                organising, and the staff who keep this movement growing.
+              </p>
+            </div>
+
+            <div class="donate-intro-form">
+              <form class="donate-form" id="donate-form" novalidate>
+                <!-- Frequency + payment method picker (combined) -->
+                <div class="freq-toggle" role="radiogroup" aria-label="How you'd like to give">
+                  <button
+                    type="button"
+                    role="radio"
+                    aria-checked="true"
+                    data-freq="monthly"
+                    data-method="bacs_debit"
+                    class="freq-option is-active"
+                  >
+                    <span class="freq-name">Monthly</span>
+                    <span class="freq-method">Direct Debit</span>
+                  </button>
+                  <button
+                    type="button"
+                    role="radio"
+                    aria-checked="false"
+                    data-freq="oneoff"
+                    data-method="card"
+                    class="freq-option"
+                  >
+                    <span class="freq-name">One-off</span>
+                    <span class="freq-method">Card · Apple Pay · Google Pay</span>
+                  </button>
+                </div>
+
+                <!-- Amount selector -->
+                <fieldset class="amount-selector">
+                  <legend>Choose an amount</legend>
+                  <div class="amount-grid">
+                    <button type="button" class="amount-option" data-amount="3">£3</button>
+                    <button type="button" class="amount-option is-active" data-amount="5">£5</button>
+                    <button type="button" class="amount-option" data-amount="10">£10</button>
+                    <button type="button" class="amount-option" data-amount="25">£25</button>
+                    <button type="button" class="amount-option" data-amount="50">£50</button>
+                    <button type="button" class="amount-option" data-amount="100">£100</button>
+                    <button type="button" class="amount-option amount-other" data-amount="other">Other</button>
+                  </div>
+                  <div class="amount-custom" hidden>
+                    <label for="custom-amount">Enter amount</label>
+                    <div class="amount-input-wrap">
+                      <span class="currency-prefix">£</span>
+                      <input
+                        type="number"
+                        id="custom-amount"
+                        name="custom-amount"
+                        min="3"
+                        step="1"
+                        inputmode="numeric"
+                        placeholder="3 or more"
+                      />
+                      <span class="amount-suffix" data-freq-suffix>per month</span>
+                    </div>
+                    <p class="amount-help">Minimum £3 per month.</p>
+                  </div>
+                </fieldset>
+
+                <!-- Single CTA — text updates with state -->
+                <button
+                  type="submit"
+                  class="btn primary large donate-btn"
+                  id="donate-submit"
+                >
+                  <span id="donate-cta-label">Donate £5 a month</span>
+                </button>
+
+                <p class="form-footnote">
+                  Payments are processed securely by
+                  <a href="https://stripe.com/en-gb/privacy" target="_blank" rel="noreferrer">Stripe</a>.
+                </p>
+              </form>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="other-ways" class="section muted">
+        <div class="container">
+          <div class="section-header">
+            <p class="eyebrow">Other ways to give</p>
+            <h2>Major gifts &amp; bank transfer</h2>
+            <p class="section-lede">
+              If you're considering a larger gift, prefer to give by bank transfer,
+              or represent a foundation, please get in touch.
+            </p>
+          </div>
+          <div class="other-ways-grid">
+            <article class="feature-card">
+              <h3>Bank transfer &amp; major donors</h3>
+              <p>
+                For UK bank transfers (Faster Payments / BACS) and gifts above £500,
+                please email us so we can share account details directly.
+              </p>
+              <a
+                class="inline-link"
+                href="mailto:joseph@pauseai.info?subject=PauseAI%20UK%20donation%20enquiry"
+              >joseph@pauseai.info →</a>
+            </article>
+            <article class="feature-card">
+              <h3>US-based donors</h3>
+              <p>
+                We're working on enabling tax-deductible giving for US
+                supporters. <em>Coming soon.</em>
+              </p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section id="transparency" class="section">
+        <div class="container">
+          <div class="section-header">
+            <p class="eyebrow">Trust &amp; transparency</p>
+            <h2>Where your money goes</h2>
+            <p class="section-lede">
+              PauseAI UK's work is done for and by citizens and communities
+              across the country. We have already achieved a lot (see our
+              <a class="inline-link" href="https://pauseai.uk/track-record/">Track Record page</a>)
+              with very limited resources, and we need to be doing a lot more
+              and to scale fast. Your support is an important part of our
+              capacity to act effectively. By donating, you empower every
+              volunteer, every local group, and our small core team — allowing
+              us to run protests and other events, engage with decision makers
+              and the press, support our community, produce outreach materials,
+              build advocacy infrastructure and more. We're glad you're a part
+              of this movement alongside each of us.
+            </p>
+            <p class="section-lede">
+              Because our work meaningfully engages with policy, donations to
+              us are not eligible for Gift Aid.
+            </p>
+            <p class="section-lede">
+              Read our <a class="inline-link" href="/preview/claude-donate-page-iteration-1/privacy">privacy policy</a>
+              for how we handle your information.
+            </p>
+          </div>
+
+          <div class="registered-details">
+            <p>
+              <strong>Safe AI Alliance Ltd</strong> is the legal entity operating
+              PauseAI UK. It is a private company limited by guarantee, registered
+              in England and Wales (company number <strong>17137345</strong>),
+              with registered office at 128 City Road, London EC1V 2NX, United
+              Kingdom.
+            </p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-grid">
+        <div class="brand footer-brand">
+          <img
+            src="../images/logos/PauseAI Logo Transparent.svg"
+            alt="PauseAI UK"
+            class="brand-mark"
+          />
+          <span class="brand-uk">UK</span>
+        </div>
+        <div class="footer-links">
+          <a href="mailto:uk@pauseai.info">uk@pauseai.info</a>
+          <a href="/preview/claude-donate-page-iteration-1/">Home</a>
+          <a href="/preview/claude-donate-page-iteration-1/donate">Donate</a>
+        </div>
+        <small>© <span id="year"></span> PauseAI UK</small>
+      </div>
+    </footer>
+
+    <script src="./donate.js"></script>
+    <script>
+      // Footer year — matches behaviour of the main site.
+      document.getElementById('year').textContent = new Date().getFullYear();
+    </script>
+  </body>
+</html>
