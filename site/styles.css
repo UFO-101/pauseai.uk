@@ -864,6 +864,13 @@ img.news-logo[alt="Fortune"] {
 
 /* Form card */
 .donate-form {
+  /* Bright orange used on selected-state buttons inside the form. This is
+     the older PauseAI brand orange — it pops more than the burnt-terracotta
+     site accent and reads as a clear "selection" against the warm cream UI. */
+  --cta-orange: #FF9416;
+  --cta-orange-strong: #E07A0E;
+  --cta-orange-soft: rgba(255, 148, 22, 0.4);
+
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 16px;
@@ -913,11 +920,11 @@ img.news-logo[alt="Fortune"] {
   color: var(--text);
 }
 .freq-option.is-active {
-  background: var(--surface);
-  box-shadow: 0 2px 8px var(--shadow);
+  background: var(--cta-orange);
+  box-shadow: 0 4px 12px var(--cta-orange-soft);
 }
-.freq-option.is-active .freq-name { color: var(--accent); }
-.freq-option.is-active .freq-method { color: var(--text-secondary); }
+.freq-option.is-active .freq-name   { color: #fff; }
+.freq-option.is-active .freq-method { color: rgba(255, 255, 255, 0.9); }
 
 /* Amount selector */
 .amount-selector {
@@ -954,18 +961,19 @@ img.news-logo[alt="Fortune"] {
               color 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease;
 }
 .amount-option:hover {
-  border-color: var(--accent-light);
-  background: var(--accent-bg);
+  border-color: var(--cta-orange);
+  color: var(--cta-orange);
+  background: #FFF5EC;
   transform: translateY(-1px);
 }
 .amount-option:active {
   transform: translateY(0);
 }
 .amount-option.is-active {
-  background: var(--accent);
-  border-color: var(--accent);
+  background: var(--cta-orange);
+  border-color: var(--cta-orange);
   color: #fff;
-  box-shadow: 0 4px 14px rgba(200, 101, 42, 0.35);
+  box-shadow: 0 4px 14px var(--cta-orange-soft);
   transform: translateY(-1px);
 }
 /* "Other" spans the bottom row, styled as a softer prompt */
@@ -1082,17 +1090,19 @@ img.news-logo[alt="Fortune"] {
   margin: 0 0 8px;
 }
 
-/* Registered company details — required by UK Trading Disclosures regs */
+/* Registered company details — required by UK Trading Disclosures regs.
+   Kept small and unobtrusive — fine-print style. */
 .registered-details {
   margin-top: 32px;
   padding-top: 24px;
   border-top: 1px solid var(--border);
   color: var(--muted);
-  font-size: 14px;
+  font-size: 12px;
+  line-height: 1.5;
   max-width: 720px;
 }
 .registered-details p {
-  margin: 0 0 6px;
+  margin: 0;
 }
 .registered-details strong {
   color: var(--text-secondary);
