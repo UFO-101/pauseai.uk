@@ -800,24 +800,24 @@ img.news-logo[alt="Fortune"] {
 }
 .donate-intro-grid {
   display: grid;
-  /* Right column kept narrow so the photo reads as an accent. */
-  grid-template-columns: 1.5fr 1fr;
+  grid-template-columns: 1.1fr 0.9fr;
   grid-template-areas:
-    "head  photo"
-    "text  form";
-  column-gap: 40px;
-  row-gap: 28px;
+    "head  head"
+    "text  form"
+    "photo form";
+  column-gap: 48px;
+  row-gap: 24px;
   align-items: start;
 }
 .donate-intro-head  { grid-area: head; }
-.donate-intro-photo { grid-area: photo; }
 .donate-intro-text  { grid-area: text; }
+.donate-intro-photo { grid-area: photo; }
 .donate-intro-form  { grid-area: form; }
 
 .donate-intro h1 {
-  font-size: clamp(56px, 7.5vw, 88px);
-  letter-spacing: -0.025em;
-  line-height: 1.0;
+  font-size: clamp(40px, 5vw, 62px);
+  letter-spacing: -0.02em;
+  line-height: 1.05;
   margin: 12px 0 0;
   color: var(--text);
 }
@@ -827,22 +827,21 @@ img.news-logo[alt="Fortune"] {
   color: var(--text-secondary);
   margin: 0;
 }
+.donate-intro-text .lede + .lede {
+  margin-top: 16px;
+}
 
-/* Photo — small accent next to the title, not a hero image. */
+/* Photo — shown at its natural aspect ratio (no cropping). */
 .donate-intro-photo {
   border-radius: 14px;
   overflow: hidden;
   box-shadow: 0 6px 24px var(--shadow-strong);
-  width: 100%;
-  height: 140px;
+  line-height: 0;
   background: var(--surface-2);
 }
 .donate-intro-photo img {
   width: 100%;
-  height: 100%;
-  object-fit: cover;
-  /* Shifts visible area down ~15% so banners at the top are cropped out. */
-  object-position: 50% 65%;
+  height: auto;
   display: block;
 }
 
@@ -854,13 +853,10 @@ img.news-logo[alt="Fortune"] {
     grid-template-columns: 1fr;
     grid-template-areas:
       "head"
-      "photo"
       "text"
-      "form";
+      "form"
+      "photo";
     row-gap: 24px;
-  }
-  .donate-intro-photo {
-    height: 160px;
   }
 }
 
