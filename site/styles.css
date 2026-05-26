@@ -1282,3 +1282,460 @@ img.news-logo[alt="Fortune"] {
     margin-top: 32px;
   }
 }
+/* ── Donate page ───────────────────────────────── */
+/*
+ * Type scale on this page (kept deliberately tight):
+ *   h1                          clamp(44, 6vw, 68) — hero
+ *   h2                          clamp(28, 4vw, 40) — section headings
+ *   .lede                       18 — intro paragraph
+ *   amount button label         18
+ *   .btn (CTAs)                 16
+ *   body / form-footnote / etc. 14
+ *   .eyebrow (tracked caps)     13
+ */
+
+.donate-intro {
+  padding: 32px 0 44px;
+}
+.donate-intro-grid {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  grid-template-areas:
+    "head  head"
+    "text  form"
+    "photo form";
+  column-gap: 48px;
+  row-gap: 16px;
+  align-items: start;
+}
+.donate-intro-head  { grid-area: head; }
+.donate-intro-text  { grid-area: text; }
+.donate-intro-photo { grid-area: photo; }
+.donate-intro-form  { grid-area: form; align-self: stretch; display: flex; }
+
+.donate-intro h1 {
+  font-size: clamp(38px, 4.6vw, 56px);
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+  margin: 6px 0 0;
+  color: var(--text);
+}
+.donate-intro .lede {
+  font-size: 17px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  margin: 0;
+}
+.donate-intro-text .lede + .lede {
+  margin-top: 12px;
+}
+
+/* Photo — landscape frame, height-capped so it can't dominate the fold. */
+.donate-intro-photo {
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 6px 24px var(--shadow-strong);
+  line-height: 0;
+  background: var(--surface-2);
+}
+.donate-intro-photo img {
+  width: 100%;
+  height: auto;
+  max-height: 280px;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+}
+
+/* Desktop: fill the viewport so the next section doesn't peek above the fold. */
+@media (min-width: 721px) {
+  .donate-intro {
+    min-height: calc(100vh - 77px);
+  }
+}
+
+@media (max-width: 720px) {
+  .donate-intro {
+    padding: 40px 0 56px;
+  }
+  .donate-intro-grid {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "head"
+      "text"
+      "form"
+      "photo";
+    row-gap: 24px;
+  }
+}
+
+/* Form card */
+.donate-form {
+  /* Bright orange used on selected-state buttons inside the form. This is
+     the older PauseAI brand orange — it pops more than the burnt-terracotta
+     site accent and reads as a clear "selection" against the warm cream UI. */
+  --cta-orange: #FF9416;
+  --cta-orange-strong: #E07A0E;
+  --cta-orange-soft: rgba(255, 148, 22, 0.4);
+
+  background: var(--accent-bg);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 28px;
+  box-shadow: 0 4px 24px var(--shadow);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+/* Frequency + payment method picker */
+.freq-toggle {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  background: #FFEDD5;          /* warm light-orange wash */
+  border: 1.5px solid #FF9416;  /* orange frame */
+  border-radius: 14px;
+  padding: 6px;
+  gap: 4px;
+  margin-bottom: 18px;
+}
+.freq-option {
+  appearance: none;
+  border: none;
+  background: transparent;
+  padding: 12px 12px;
+  border-radius: 10px;
+  font-family: inherit;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: center;
+  transition: background 0.2s ease, box-shadow 0.2s ease;
+}
+.freq-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: #A84E1A;
+  letter-spacing: -0.005em;
+}
+.freq-method {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--muted);
+  letter-spacing: 0.02em;
+  line-height: 1.3;
+}
+.freq-option:hover .freq-name {
+  color: #FF9416;
+}
+.freq-option.is-active {
+  background: #FF9416;
+  box-shadow: 0 4px 12px rgba(255, 148, 22, 0.4);
+}
+.freq-option.is-active .freq-name   { color: #fff; }
+.freq-option.is-active .freq-method { color: rgba(255, 255, 255, 0.9); }
+
+/* Amount selector */
+.amount-selector {
+  border: none;
+  padding: 0;
+  margin: 0 0 18px;
+}
+.amount-selector legend {
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--accent);
+  margin-bottom: 8px;
+  padding: 0;
+}
+.amount-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.amount-option {
+  appearance: none;
+  background: #FFF5EC;            /* very light orange wash */
+  border: 2px solid #FF9416;      /* orange border at rest */
+  border-radius: 12px;
+  padding: 13px 8px;
+  font-family: inherit;
+  font-size: 17px;
+  font-weight: 700;
+  color: #A84E1A;                 /* deep orange text */
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease,
+              color 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease;
+}
+.amount-option:hover {
+  background: #FFE3C9;
+  transform: translateY(-1px);
+}
+.amount-option:active {
+  transform: translateY(0);
+}
+.amount-option.is-active {
+  background: #FF9416;
+  border-color: #FF9416;
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(255, 148, 22, 0.45);
+  transform: translateY(-1px);
+}
+/* "Other" spans the bottom row, styled as a softer prompt */
+.amount-other {
+  grid-column: 1 / -1;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 9px 8px;
+}
+.amount-other.is-active {
+  letter-spacing: 0.08em;
+}
+@media (max-width: 420px) {
+  .amount-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Custom amount input */
+.amount-custom {
+  margin-top: 16px;
+}
+.amount-custom[hidden] {
+  display: none;
+}
+.amount-custom label {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+.amount-input-wrap {
+  display: flex;
+  align-items: center;
+  background: var(--surface);
+  border: 1.5px solid var(--border-strong);
+  border-radius: 10px;
+  padding: 0 14px;
+  transition: border-color 0.15s ease;
+}
+.amount-input-wrap:focus-within {
+  border-color: var(--accent);
+}
+.currency-prefix {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--muted);
+  margin-right: 4px;
+}
+.amount-input-wrap input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  padding: 14px 0;
+  font-family: inherit;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text);
+  outline: none;
+  min-width: 0;
+}
+.amount-suffix {
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 500;
+  margin-left: 8px;
+  white-space: nowrap;
+}
+.amount-help {
+  color: var(--muted);
+  font-size: 14px;
+  margin: 6px 2px 0;
+}
+
+/* Donate CTA */
+.donate-btn {
+  width: 100%;
+  padding: 15px 20px;
+  font-size: 16px;
+  line-height: 1.2;
+}
+.donate-btn[disabled] {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.form-footnote {
+  margin-top: 10px;
+  font-size: 14px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+.form-footnote a {
+  color: var(--text-secondary);
+  text-decoration: underline;
+}
+.form-footnote a:hover {
+  color: var(--accent);
+}
+
+/* Bottom section: major gifts + transparency as side-by-side columns */
+.donate-bottom-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 48px;
+  align-items: start;
+}
+.donate-bottom-col h2 {
+  margin: 6px 0 12px;
+}
+.donate-bottom-col .section-lede {
+  max-width: none;
+}
+
+/* Cards inside the major-gifts column stack vertically at half-width */
+.other-ways-cards {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  margin-top: 20px;
+}
+.other-ways-cards .feature-card h3 {
+  font-size: 18px;
+  margin: 0 0 8px;
+}
+
+@media (max-width: 720px) {
+  .donate-bottom-grid {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+}
+
+/* Registered company details — required by UK Trading Disclosures regs.
+   Kept small and unobtrusive — fine-print style. */
+.registered-details {
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+  max-width: 720px;
+}
+.registered-details p {
+  margin: 0;
+}
+.registered-details strong {
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+@media (max-width: 600px) {
+  .donate-form {
+    padding: 24px 20px;
+    border-radius: 12px;
+  }
+  .donate-hero {
+    padding: 48px 0 16px;
+  }
+}
+
+/* ── Legal / prose pages (privacy policy etc.) ─── */
+
+.legal {
+  padding: 64px 0 80px;
+}
+.legal-container {
+  max-width: 760px;
+}
+.legal h1 {
+  font-size: clamp(36px, 5vw, 52px);
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  margin: 8px 0 4px;
+  color: var(--text);
+}
+.legal-meta {
+  color: var(--muted);
+  font-size: 14px;
+  margin: 0 0 32px;
+}
+.legal h2 {
+  font-size: clamp(22px, 3vw, 28px);
+  line-height: 1.2;
+  margin: 40px 0 12px;
+  color: var(--text);
+}
+.legal h3 {
+  font-family: "Inter", system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 18px;
+  margin: 24px 0 8px;
+  color: var(--text);
+}
+.legal p,
+.legal li {
+  color: var(--text-secondary);
+  font-size: 16px;
+  line-height: 1.7;
+}
+.legal p {
+  margin: 0 0 16px;
+}
+.legal ul {
+  margin: 0 0 16px;
+  padding-left: 22px;
+}
+.legal li {
+  margin: 0 0 6px;
+}
+.legal strong {
+  color: var(--text);
+  font-weight: 600;
+}
+.legal a.inline-link {
+  text-decoration: underline;
+}
+
+/* ── Cookie consent banner ─────────────────────── */
+
+.cookie-banner {
+  position: fixed;
+  bottom: 16px;
+  left: 16px;
+  right: 16px;
+  max-width: 520px;
+  margin: 0 auto;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px var(--shadow-strong);
+  padding: 18px 20px;
+  z-index: 1000;
+}
+.cookie-banner-text {
+  margin: 0 0 14px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+.cookie-banner-text a {
+  color: var(--accent);
+  text-decoration: underline;
+}
+.cookie-banner-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+.cookie-banner-actions .btn {
+  width: auto;
+}
