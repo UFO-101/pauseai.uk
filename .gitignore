@@ -30,3 +30,6 @@ dist/
 build/
 coverage/
 
+# Eleventy output
+_site/
+

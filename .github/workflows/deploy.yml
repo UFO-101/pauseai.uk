@@ -13,14 +13,23 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Build
+        run: npm ci && npm run build
+
       - name: Write version
-        run: echo "${{ github.sha }}" > ./site/version.txt
+        run: echo "${{ github.sha }}" > ./_site/version.txt
 
       - name: Publish to gh-pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./site
+          publish_dir: ./_site
           cname: pauseai.uk
 
       - name: Wait for deploy to go live
@@ -40,8 +49,8 @@ jobs:
           mkdir -p lighthouse-reports
 
           # Run Lighthouse on every HTML page in the site
-          find ./site -name "*.html" -not -name "404.html" | while IFS= read -r file; do
-            path="${file#./site/}"
+          find ./_site -name "*.html" -not -name "404.html" | while IFS= read -r file; do
+            path="${file#./_site/}"
             if [ "$path" = "index.html" ]; then
               url="https://pauseai.uk/"
               name="home"

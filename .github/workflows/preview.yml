@@ -4,7 +4,7 @@ on:
   pull_request_target:
     types: [opened, synchronize, reopened]
     paths:
-      - "site/**"
+      - "src/**"
 
 permissions:
   contents: write
@@ -19,13 +19,22 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
 
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Build
+        run: npm ci && npm run build
+
       - name: Set preview slug
         id: slug
         run: |
           echo "value=$(echo '${{ github.head_ref }}' | sed 's/[^a-zA-Z0-9_-]/-/g' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
 
       - name: Write version
-        run: echo "${{ github.sha }}" > ./site/version.txt
+        run: echo "${{ github.sha }}" > ./_site/version.txt
 
       # Root-relative paths (e.g. href="/images/...") break when served from a
       # subdirectory. Rewrite them to include the preview prefix so assets and
@@ -33,7 +42,7 @@ jobs:
       - name: Rewrite root-relative paths for preview
         run: |
           slug="${{ steps.slug.outputs.value }}"
-          find ./site -name "*.html" -exec sed -i \
+          find ./_site -name "*.html" -exec sed -i \
             -e "s|href=\"/|href=\"/preview/$slug/|g" \
             -e "s|src=\"/|src=\"/preview/$slug/|g" \
             {} +
@@ -42,7 +51,7 @@ jobs:
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./site
+          publish_dir: ./_site
           destination_dir: preview/${{ steps.slug.outputs.value }}
           keep_files: true
 
@@ -97,12 +106,13 @@ jobs:
           # non-HTML files changed (e.g. CSS/JS/images affect all pages so
           # root is the most representative sample).
           git fetch origin ${{ github.base_ref }} --depth=1
-          changed_html=$(git diff --name-only origin/${{ github.base_ref }}...HEAD -- '*.html' | grep '^site/' | head -5)
-          [ -z "$changed_html" ] && changed_html="site/index.html"
+          changed_html=$(git diff --name-only origin/${{ github.base_ref }}...HEAD -- '*.html' | grep '^src/' | head -5)
+          [ -z "$changed_html" ] && changed_html="src/index.njk"
 
           while IFS= read -r file; do
             [ -z "$file" ] && continue
-            path="${file#site/}"
+            path="${file#src/}"
+            path="${path%.njk}.html"
             if [ "$path" = "index.html" ]; then
               url="https://pauseai.uk/preview/$slug/"
               name="home"
@@ -204,4 +214,3 @@ jobs:
                 body,
               });
             }
-
