@@ -7,6 +7,12 @@ on:
 permissions:
   contents: write
 
+# Serialise pushes to gh-pages so we don't race against the deploy or preview
+# workflows.
+concurrency:
+  group: gh-pages
+  cancel-in-progress: false
+
 jobs:
   cleanup:
     runs-on: ubuntu-latest
