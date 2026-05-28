@@ -4,6 +4,10 @@ module.exports = function (eleventyConfig) {
   eleventyConfig.addPassthroughCopy("src/track-record.css");
   eleventyConfig.addPassthroughCopy("src/track-record.js");
   eleventyConfig.addPassthroughCopy("src/theory-of-change.css");
+  eleventyConfig.addPassthroughCopy("src/campaigns.css");
+  eleventyConfig.addPassthroughCopy("src/donate/donate.js");
+  eleventyConfig.addPassthroughCopy("src/campaigns/campaign-page-qr-code.png");
+  eleventyConfig.addPassthroughCopy("src/pdfs");
   eleventyConfig.addPassthroughCopy("src/fonts");
   eleventyConfig.addPassthroughCopy("src/favicon");
   eleventyConfig.addPassthroughCopy("src/images");

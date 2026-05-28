@@ -5,16 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{{ title or "PauseAI UK" }}</title>
     {% if description %}<meta name="description" content="{{ description }}" />{% endif %}
-    {% if ga %}
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id={{ site.gaId }}"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag() { dataLayer.push(arguments); }
-      gtag("js", new Date());
-      gtag("config", "{{ site.gaId }}");
-    </script>
-    {% endif %}
     {% if fontPreloads %}
     <link rel="preload" href="/fonts/fraunces-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="preload" href="/fonts/inter-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin />
@@ -41,7 +31,7 @@
     <meta name="apple-mobile-web-app-title" content="PauseAI UK" />
     <link rel="manifest" href="/favicon/site.webmanifest" />
   </head>
-  <body>
+  <body{% if noAnalytics %} data-no-analytics{% endif %}>
     <header class="site-header">
       <div class="container">
         {% if chapterName %}
@@ -88,11 +78,13 @@
               <a href="/leicester/" role="menuitem">Leicester</a>
             </div>
           </div>
+          <a href="/campaigns/">Campaigns</a>
           <a href="{{ navPrefix }}#news">In the News</a>
           <a href="{{ navPrefix }}#stories">Stories</a>
           <a href="{{ navPrefix }}#people">People</a>
           <a href="{{ site.shopUrl }}" target="_blank" rel="noreferrer">Shop</a>
-          <a href="{{ navPrefix }}#join" class="pill pill-primary">Join</a>
+          <a href="{{ navPrefix }}#join" class="pill">Join</a>
+          <a href="/donate" class="pill pill-primary">Donate</a>
         </nav>
       </div>
     </header>
@@ -117,9 +109,12 @@
         </div>
         <div class="footer-links">
           <a href="mailto:{{ site.contactEmail }}">{{ site.contactEmail }}</a>
+          <a href="/donate">Donate</a>
           <a href="{{ site.openLetterUrl }}" target="_blank" rel="noreferrer">Open letter</a>
           <a href="{{ site.whatsappUrl }}" target="_blank" rel="noreferrer">WhatsApp community</a>
           <a href="{{ site.shopUrl }}" target="_blank" rel="noreferrer">Shop merch</a>
+          <a href="/privacy">Privacy</a>
+          <a href="#" class="js-cookie-settings">Cookie settings</a>
         </div>
         <div class="social-links">
           <a href="{{ site.social.instagram }}" target="_blank" rel="noreferrer" aria-label="Instagram">

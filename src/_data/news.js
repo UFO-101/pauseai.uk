@@ -100,4 +100,11 @@ module.exports = [
     url: "https://www.theguardian.com/technology/2026/mar/06/uk-arts-must-not-be-sacrificed-for-speculative-ai-gains-peers-say",
     linkText: "Read story",
   },
+  {
+    logoSrc: "/images/media-coverage/Gizmodo_logo.svg",
+    logoAlt: "Gizmodo",
+    title: "The OpenAI-Anthropic Cold War Comes to Illinois",
+    url: "https://gizmodo.com/the-openai-anthropic-cold-war-comes-to-illinois-2000746324",
+    linkText: "Read story",
+  },
 ];

@@ -1,3 +1,67 @@
+// ── Cookie consent + Google Analytics (consent-gated) ──────────────
+(function () {
+  if (document.body && document.body.hasAttribute("data-no-analytics")) return;
+
+  const GA_MEASUREMENT_ID = "G-DLLRWZCYD7";
+  const CONSENT_KEY = "pauseai-cookie-consent";
+
+  function loadGoogleAnalytics() {
+    if (window.__gaLoaded) return;
+    window.__gaLoaded = true;
+    const s = document.createElement("script");
+    s.async = true;
+    s.src = "https://www.googletagmanager.com/gtag/js?id=" + GA_MEASUREMENT_ID;
+    document.head.appendChild(s);
+    window.dataLayer = window.dataLayer || [];
+    window.gtag = function () { window.dataLayer.push(arguments); };
+    window.gtag("js", new Date());
+    window.gtag("config", GA_MEASUREMENT_ID);
+  }
+
+  function buildBanner() {
+    const banner = document.createElement("div");
+    banner.className = "cookie-banner";
+    banner.setAttribute("role", "dialog");
+    banner.setAttribute("aria-label", "Cookie consent");
+    banner.innerHTML =
+      '<p class="cookie-banner-text">Cookies help PauseAI UK understand how this ' +
+      "site is used, so we can make it work better for you. You can accept or " +
+      'decline these analytics cookies — see our <a href="/privacy">privacy policy</a>.</p>' +
+      '<div class="cookie-banner-actions">' +
+      '<button type="button" class="btn ghost small js-cookie-decline">Decline</button>' +
+      '<button type="button" class="btn primary small js-cookie-accept">Accept</button>' +
+      "</div>";
+    document.body.appendChild(banner);
+    banner.querySelector(".js-cookie-accept").addEventListener("click", () => {
+      localStorage.setItem(CONSENT_KEY, "accepted");
+      loadGoogleAnalytics();
+      banner.remove();
+    });
+    banner.querySelector(".js-cookie-decline").addEventListener("click", () => {
+      localStorage.setItem(CONSENT_KEY, "declined");
+      banner.remove();
+    });
+  }
+
+  const consent = localStorage.getItem(CONSENT_KEY);
+  if (consent === "accepted") {
+    loadGoogleAnalytics();
+  } else if (consent === null) {
+    document.addEventListener("DOMContentLoaded", () => {
+      if (!document.querySelector(".cookie-banner")) buildBanner();
+    });
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    document.querySelectorAll(".js-cookie-settings").forEach((el) => {
+      el.addEventListener("click", (e) => {
+        e.preventDefault();
+        if (!document.querySelector(".cookie-banner")) buildBanner();
+      });
+    });
+  });
+})();
+
 document.addEventListener("DOMContentLoaded", () => {
   const yearEl = document.getElementById("year");
   if (yearEl) yearEl.textContent = new Date().getFullYear().toString();
