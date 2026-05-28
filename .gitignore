@@ -33,3 +33,7 @@ coverage/
 # Eleventy output
 _site/
 
+# Next.js
+.next/
+out/
+
