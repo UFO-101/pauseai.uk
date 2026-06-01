@@ -20,7 +20,7 @@ export default function PrivacyPage() {
           <div className="container legal-container">
             <p className="eyebrow">Legal</p>
             <h1>Privacy Policy</h1>
-            <p className="legal-meta">Last updated: 25 May 2026</p>
+            <p className="legal-meta">Last updated: 1 June 2026</p>
 
             <p>
               PauseAI UK is part of the global PauseAI movement and is run in the UK by{" "}
