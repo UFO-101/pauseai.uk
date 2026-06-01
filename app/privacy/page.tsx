@@ -71,8 +71,8 @@ export default function PrivacyPage() {
                 <a className="inline-link" href="https://stripe.com/en-gb/privacy" target="_blank" rel="noreferrer">Stripe&apos;s privacy policy</a>.
               </li>
               <li>
-                <strong>GitHub Pages</strong> — website hosting.{" "}
-                <a className="inline-link" href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement" target="_blank" rel="noreferrer">GitHub&apos;s privacy statement</a>.
+                <strong>Netlify</strong> — website hosting.{" "}
+                <a className="inline-link" href="https://www.netlify.com/privacy/" target="_blank" rel="noreferrer">Netlify&apos;s privacy policy</a>.
               </li>
             </ul>
             <p>
