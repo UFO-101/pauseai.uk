@@ -41,6 +41,7 @@
 
   const freqOptions = form.querySelectorAll('.freq-option');
   const amountOptions = form.querySelectorAll('.amount-option');
+  const amountSelector = form.querySelector('.amount-selector');
   const otherBtn = form.querySelector('.amount-other');
   const customWrap = form.querySelector('.amount-custom');
   const customInput = form.querySelector('#custom-amount');
@@ -50,14 +51,22 @@
 
   // ── Helpers ────────────────────────────────────────────
   function updateCtaLabel() {
-    const amountText = state.amount && state.amount >= MIN_AMOUNT
-      ? '£' + state.amount
-      : '£…';
-    const tail = state.frequency === 'monthly' ? ' a month' : '';
-    if (ctaLabel) ctaLabel.textContent = 'Donate ' + amountText + tail;
+    if (!ctaLabel) return;
+    if (state.frequency === 'oneoff') {
+      ctaLabel.textContent = 'Donate one-off →';
+    } else {
+      const amountText = state.amount && state.amount >= MIN_AMOUNT
+        ? '£' + state.amount
+        : '£…';
+      ctaLabel.textContent = 'Donate ' + amountText + ' a month';
+    }
     if (customSuffix) {
       customSuffix.textContent = state.frequency === 'monthly' ? 'per month' : 'one-off';
     }
+  }
+
+  function setAmountSelectorVisible(visible) {
+    if (amountSelector) amountSelector.hidden = !visible;
   }
 
   function setOtherVisible(visible) {
@@ -86,13 +95,15 @@
         b.classList.toggle('is-active', active);
         b.setAttribute('aria-checked', active ? 'true' : 'false');
       });
-      // Monthly has no custom amount (Payment Links are fixed for recurring),
-      // so hide Other and snap back to a preset if it was selected.
+      // Monthly: show preset grid (no custom recurring), hide Other.
+      // One-off: hide the grid entirely — the donor picks the amount on
+      // Stripe's "customer chooses price" page.
       if (freq === 'monthly') {
+        setAmountSelectorVisible(true);
         setOtherVisible(false);
         if (state.isCustom) activatePreset(5);
       } else {
-        setOtherVisible(true);
+        setAmountSelectorVisible(false);
       }
       updateCtaLabel();
     });
@@ -125,6 +136,8 @@
 
   // ── Submit → redirect to the matching Stripe Payment Link ─
   function validate() {
+    // One-off: Stripe's "customer chooses price" page enforces the amount.
+    if (state.frequency === 'oneoff') return null;
     if (!Number.isFinite(state.amount) || state.amount < MIN_AMOUNT) {
       return `Please enter an amount of £${MIN_AMOUNT} or more.`;
     }
@@ -154,7 +167,8 @@
     window.location.href = url;
   });
 
-  // Initial render — default is Monthly, so hide the "Other" amount.
+  // Initial render — default is Monthly: show preset grid, hide Other.
+  setAmountSelectorVisible(true);
   setOtherVisible(false);
   updateCtaLabel();
 })();
