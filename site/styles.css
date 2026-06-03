@@ -1330,6 +1330,64 @@ img.news-logo[alt="Fortune"] {
   margin-top: 12px;
 }
 
+/* Prominent links to supporting pages / prospectus */
+.donate-links {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 20px;
+}
+.donate-link {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 13px 16px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+}
+.donate-link:hover {
+  border-color: var(--accent);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px var(--shadow), 0 8px 20px var(--shadow);
+}
+.donate-link-title {
+  font-weight: 600;
+  color: var(--text);
+}
+.donate-link-title::after {
+  content: " →";
+  color: var(--accent);
+}
+.donate-link-desc {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+/* Prospectus link: cover thumbnail beside the label */
+.donate-link-doc {
+  flex-direction: row;
+  align-items: center;
+  gap: 14px;
+}
+.donate-link-thumb {
+  width: 52px;
+  height: 68px;
+  object-fit: cover;
+  object-position: top center;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.donate-link-doc-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
 /* Photo — landscape frame, height-capped so it can't dominate the fold. */
 .donate-intro-photo {
   border-radius: 14px;
@@ -1345,13 +1403,6 @@ img.news-logo[alt="Fortune"] {
   object-fit: cover;
   object-position: center;
   display: block;
-}
-
-/* Desktop: fill the viewport so the next section doesn't peek above the fold. */
-@media (min-width: 721px) {
-  .donate-intro {
-    min-height: calc(100vh - 77px);
-  }
 }
 
 @media (max-width: 720px) {
