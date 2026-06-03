@@ -1311,7 +1311,7 @@ img.news-logo[alt="Fortune"] {
 .donate-intro-head  { grid-area: head; }
 .donate-intro-text  { grid-area: text; }
 .donate-intro-photo { grid-area: photo; }
-.donate-intro-form  { grid-area: form; align-self: stretch; display: flex; }
+.donate-intro-form  { grid-area: form; align-self: start; display: flex; }
 
 .donate-intro h1 {
   font-size: clamp(38px, 4.6vw, 56px);
@@ -1319,6 +1319,9 @@ img.news-logo[alt="Fortune"] {
   line-height: 1.05;
   margin: 6px 0 0;
   color: var(--text);
+}
+@media (min-width: 721px) {
+  .donate-intro h1 { margin-bottom: 24px; }
 }
 .donate-intro .lede {
   font-size: 17px;
@@ -1437,7 +1440,6 @@ img.news-logo[alt="Fortune"] {
   flex: 1;
   display: flex;
   flex-direction: column;
-  justify-content: center;
 }
 
 /* Frequency + payment method picker */
