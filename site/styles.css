@@ -616,8 +616,7 @@ nav a:hover {
   }
 }
 
-.chapter-grid,
-.news-grid {
+.chapter-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: 24px;
@@ -712,28 +711,119 @@ nav a:hover {
   text-decoration: underline;
 }
 
-/* ── News Cards ────────────────────────────────── */
+/* ── News marquee ──────────────────────────────── */
+/* Two-row infinite horizontal scroll of media logos. Each row scrolls in
+   the opposite direction. Logos render greyscale + dimmed by default and
+   come into full colour on hover (which also pauses the row). Items are
+   duplicated in the markup so translateX(-50%) loops seamlessly. */
 
-.news-grid {
-  margin-top: 24px;
+.news-marquee {
+  --marquee-gap: 72px;
+  --marquee-duration: 80s;
+  --marquee-item-height: 64px;
+
+  margin-top: 36px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 64px, #000 calc(100% - 64px), transparent);
+          mask-image: linear-gradient(90deg, transparent, #000 64px, #000 calc(100% - 64px), transparent);
 }
 
-.news-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 20px;
-  display: grid;
-  gap: 12px;
-  box-shadow: 0 1px 3px var(--shadow);
+.news-marquee-row {
+  overflow: hidden;
+  padding: 14px 0;
 }
 
-/* News logos — base styles */
+.news-marquee-track {
+  display: flex;
+  gap: var(--marquee-gap);
+  width: max-content;
+  align-items: center;
+  animation: news-marquee-scroll var(--marquee-duration) linear infinite;
+  will-change: transform;
+}
+
+.news-marquee-row--reverse .news-marquee-track {
+  animation-direction: reverse;
+}
+
+@keyframes news-marquee-scroll {
+  from { transform: translate3d(0, 0, 0); }
+  to   { transform: translate3d(calc(-50% - var(--marquee-gap) / 2), 0, 0); }
+}
+
+.news-marquee-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  padding: 0;
+  text-decoration: none;
+  border-radius: 8px;
+  opacity: 0.75;
+  filter: grayscale(85%) contrast(0.95);
+  transition: opacity 0.25s ease, filter 0.25s ease;
+}
+
+/* In the marquee, items shrink-to-fit their logo so the gap between any
+   two logos is the marquee gap rather than the leftover space inside a
+   wider fixed-width slot. Wide wordmarks (WSJ, Business Insider) get a
+   hard 180px cap so they don't dominate the row. */
+.news-marquee-item .news-logo-box {
+  padding: 0;
+  width: auto;
+}
+
+.news-marquee-item .news-logo {
+  max-width: 180px;
+  max-height: 100%;
+  width: auto;
+}
+
+.news-marquee-item:hover,
+.news-marquee-item:focus-visible {
+  opacity: 1;
+  filter: grayscale(0%) contrast(1);
+  outline: none;
+}
+
+.news-marquee-item:focus-visible {
+  box-shadow: 0 0 0 3px var(--accent-light, rgba(255,148,22,0.5));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .news-marquee-track {
+    animation: none;
+  }
+  .news-marquee-row {
+    overflow-x: auto;
+  }
+  .news-marquee {
+    -webkit-mask-image: none;
+            mask-image: none;
+  }
+}
+
+@media (max-width: 600px) {
+  .news-marquee {
+    --marquee-gap: 36px;
+    --marquee-item-height: 44px;
+    --marquee-duration: 40s;
+  }
+  .news-marquee-item {
+    min-width: 130px;
+    padding: 0 8px;
+  }
+}
+
+/* News logos — base styles (shared with the marquee items) */
 .news-logo-box {
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 50px;
+  height: var(--marquee-item-height, 50px);
   padding: 4px 12px;
 }
 
@@ -753,9 +843,6 @@ nav a:hover {
   width: auto;
 }
 
-img.news-logo[alt="MIT Technology Review"] {
-  max-height: 130%;
-}
 
 img.news-logo[alt="Futurism"] {
   max-height: 230%;
@@ -793,25 +880,6 @@ img.news-logo[alt="Fortune"] {
   margin: 0;
 }
 
-.news-card h3 {
-  margin: 4px 0 8px;
-  font-size: 18px;
-  font-family: "Inter", system-ui, sans-serif;
-  font-weight: 700;
-  line-height: 1.3;
-}
-
-.news-card a {
-  font-weight: 600;
-  text-decoration: none;
-}
-
-/* Ensure consistent logo sizing */
-.news-logo {
-  max-height: 40px;
-  max-width: 100%;
-  object-fit: contain;
-}
 
 /* ── People ────────────────────────────────────── */
 
@@ -1212,10 +1280,6 @@ img.news-logo[alt="Fortune"] {
     grid-template-columns: 1fr;
   }
 
-  .news-grid {
-    grid-template-columns: 1fr;
-  }
-
   .chapter-grid {
     grid-template-columns: 1fr;
   }
@@ -1261,26 +1325,21 @@ img.news-logo[alt="Fortune"] {
   font-style: italic;
 }
 
-.news-card h3 {
-  word-wrap: break-word;
-  overflow-wrap: break-word;
+/* Luma calendar embed container */
+.luma-calendar-embed {
+  max-width: 800px;
+  margin: 0 auto;
+}
 
-  /* Luma calendar embed container */
-  .luma-calendar-embed {
-    max-width: 800px;
-    margin: 0 auto;
-  }
+.luma-calendar-embed iframe {
+  width: 100%;
+  min-height: 300px;
+}
 
-  .luma-calendar-embed iframe {
-    width: 100%;
-    min-height: 300px;
-  }
-
-  /* Tally join form embed */
-  .tally-embed {
-    max-width: 720px;
-    margin-top: 32px;
-  }
+/* Tally join form embed */
+.tally-embed {
+  max-width: 720px;
+  margin-top: 32px;
 }
 /* ── Donate page ───────────────────────────────── */
 /*
