@@ -214,7 +214,6 @@ export default async function HomePage() {
         <section id="stories" className="section stories">
           <div className="container">
             <div className="section-header">
-              <p className="eyebrow">Why we&apos;re here</p>
               <h2>Personal stories</h2>
               <p className="section-lede">Each of us found PauseAI for our own reasons. Here are a few.</p>
             </div>
@@ -245,7 +244,6 @@ export default async function HomePage() {
         <section className="section shop-banner">
           <div className="container callout-inner">
             <div>
-              <p className="eyebrow">Wear the message</p>
               <h2>Get PauseAI merch</h2>
               <p className="section-lede">
                 T-shirts, hoodies, stickers and more – every purchase helps spread the word and supports our mission.
@@ -260,7 +258,6 @@ export default async function HomePage() {
 
         <section id="join" className="section container">
           <div className="section-header">
-            <p className="eyebrow">Get on board</p>
             <h2>Join PauseAI UK</h2>
             <p className="section-lede">Fill out the form below to get involved.</p>
           </div>
@@ -281,7 +278,6 @@ export default async function HomePage() {
         <section id="get-involved" className="section callout">
           <div className="container callout-inner">
             <div>
-              <p className="eyebrow">Stay connected</p>
               <h2>Join the conversation</h2>
               <p className="section-lede">
                 Our WhatsApp community is where we coordinate protests, share news, and plan what&apos;s next. It&apos;s the fastest way to stay in the loop.
@@ -299,7 +295,6 @@ export default async function HomePage() {
 
         <section id="people" className="section container">
           <div className="section-header">
-            <p className="eyebrow">People</p>
             <h2>Meet the organisers</h2>
             <p className="section-lede">
               PauseAI UK is volunteer-driven, supported by two paid staff. Get in touch to collaborate or{" "}
