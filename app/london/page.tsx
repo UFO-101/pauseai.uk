@@ -68,7 +68,7 @@ export default function LondonPage() {
               </div>
             </article>
             <article className="activity-card">
-              <div className="image-frame" style={{ backgroundImage: "url('/images/front-page/Protest London 02-2025.jpg')" }}></div>
+              <div className="image-frame" style={{ backgroundImage: "url('/images/chapters/london/london-feb-2025-protest.jpg')" }}></div>
               <div className="card-copy">
                 <h3>Direct action</h3>
                 <p>Peaceful protests at AI hubs to keep public pressure on labs and regulators.</p>

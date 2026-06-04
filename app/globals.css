@@ -1,22 +1,4 @@
 @font-face {
-  font-family: "Fraunces";
-  font-style: normal;
-  font-display: swap;
-  font-weight: 100 900;
-  src: url("/fonts/fraunces-latin-ext-wght-normal.woff2") format("woff2-variations");
-  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
-}
-
-@font-face {
-  font-family: "Fraunces";
-  font-style: normal;
-  font-display: swap;
-  font-weight: 100 900;
-  src: url("/fonts/fraunces-latin-wght-normal.woff2") format("woff2-variations");
-  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
-}
-
-@font-face {
   font-family: "Inter";
   font-style: normal;
   font-display: swap;
@@ -92,7 +74,7 @@ body > .site-footer {
 
 h1,
 h2 {
-  font-family: "Fraunces", Georgia, serif;
+  font-family: var(--font-display), "Lato", system-ui, sans-serif;
   font-weight: 900;
 }
 
@@ -285,6 +267,12 @@ nav a:hover {
   border-color: var(--accent-strong) !important;
 }
 
+/* Anchor-link scroll offset so #events / #news / #chapters etc. don't
+   land underneath the sticky 77px-tall nav. */
+section[id] {
+  scroll-margin-top: 90px;
+}
+
 /* ── Next Event Banner ─────────────────────────── */
 
 .next-event {
@@ -303,6 +291,36 @@ nav a:hover {
   line-height: 1.15;
   margin: 0 0 20px;
   color: var(--text);
+}
+
+.next-event .section-heading-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.next-event .section-heading-row .section-heading {
+  margin: 0;
+}
+
+.section-heading-cta {
+  white-space: nowrap;
+}
+
+@media (max-width: 520px) {
+  .next-event .section-heading-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .section-heading-cta {
+    width: 100%;
+    text-align: center;
+    justify-content: center;
+  }
 }
 
 /* ── Luma Events Strip ─────────────────────────── */
@@ -518,6 +536,11 @@ nav a:hover {
   padding: 80px 0 64px;
 }
 
+/* Homepage hero is a full-width photo mosaic; suppress section padding. */
+#about.hero {
+  padding: 0;
+}
+
 .hero-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr));
@@ -633,6 +656,172 @@ nav a:hover {
   position: relative;
   overflow: hidden;
   box-shadow: 0 8px 32px var(--shadow-strong);
+}
+
+/* Hero marquee — 4 rows of photos scrolling in alternating directions
+   at their natural aspect ratios. Gaps between photos by design; the
+   row scrolls infinitely (track is duplicated for a seamless loop). */
+.hero-marquee {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px 0;
+  /* Fill the viewport minus the sticky nav so the last row's bottom
+     edge sits flush with the viewport bottom on first load. */
+  height: calc(100dvh - 77px);
+  background: var(--bg);
+  overflow: hidden;
+}
+
+.hero-marquee-row {
+  flex: 1;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.hero-marquee-track {
+  --marquee-gap: 12px;
+  --marquee-duration: 90s;
+  display: flex;
+  gap: var(--marquee-gap);
+  height: 100%;
+  width: max-content;
+  animation: hero-marquee-scroll var(--marquee-duration) linear infinite;
+  will-change: transform;
+}
+
+.hero-marquee-row--rtl .hero-marquee-track {
+  animation-direction: reverse;
+}
+
+/* Slightly different duration per row so they don't move in lockstep */
+.hero-marquee-row:nth-child(1) .hero-marquee-track { --marquee-duration: 110s; }
+.hero-marquee-row:nth-child(2) .hero-marquee-track { --marquee-duration: 180s; }
+.hero-marquee-row:nth-child(3) .hero-marquee-track { --marquee-duration: 100s; }
+
+/* Track contains 4 copies of each row's photos so loop is -25%; the
+   gap correction keeps the seamless join aligned. With 4 copies the
+   track is always wide enough that no row ever shows trailing space
+   even when several photos happen to be narrow. */
+@keyframes hero-marquee-scroll {
+  from { transform: translate3d(0, 0, 0); }
+  to   { transform: translate3d(calc(-25% - var(--marquee-gap) * 0.25), 0, 0); }
+}
+
+.hero-marquee-track img {
+  height: 100%;
+  width: auto;
+  display: block;
+  flex-shrink: 0;
+  border-radius: 8px;
+  object-fit: contain;
+}
+
+/* Overlay text — no full scrim. Just the text itself, with strong
+   layered text-shadow so it stays legible over varied photo content.
+   pointer-events: none on the wrapper lets users still see the
+   photos through the gaps; the text itself can be selected. */
+.hero-marquee-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.hero-marquee-text {
+  max-width: 900px;
+  text-align: center;
+  pointer-events: auto;
+  /* No panel — the title is rendered as outlined letters that sit
+     directly on the photo marquee. Lede + buttons get their own
+     legibility treatment below. */
+}
+
+.hero-marquee-text h1 {
+  font-size: clamp(56px, 9.5vw, 140px);
+  line-height: 0.98;
+  letter-spacing: -0.025em;
+  margin: 0;
+  color: rgba(0, 0, 0, 0.1);
+  -webkit-text-stroke: 2.5px #fff;
+  text-stroke: 2.5px #fff;
+  paint-order: stroke fill;
+  /* Heavy layered shadow — dense dark halo right behind the strokes
+     so they read against any photo, plus a wider soft drop. */
+  filter:
+    drop-shadow(0 0 2px rgba(0, 0, 0, 0.95))
+    drop-shadow(0 0 6px rgba(0, 0, 0, 0.85))
+    drop-shadow(0 4px 18px rgba(0, 0, 0, 0.7))
+    drop-shadow(0 12px 36px rgba(0, 0, 0, 0.4));
+}
+
+.hero-marquee-text .hero-lede {
+  margin: 22px auto 30px;
+  color: #fff;
+  font-size: clamp(16px, 1.4vw, 19px);
+  max-width: 560px;
+  line-height: 1.4;
+  /* Heavy layered shadow so the lede reads against any photo */
+  filter:
+    drop-shadow(0 0 2px rgba(0, 0, 0, 0.95))
+    drop-shadow(0 0 6px rgba(0, 0, 0, 0.85))
+    drop-shadow(0 4px 18px rgba(0, 0, 0, 0.7))
+    drop-shadow(0 12px 36px rgba(0, 0, 0, 0.4));
+}
+
+.hero-marquee-text .actions {
+  align-items: center;
+}
+
+.hero-marquee-text .hero-actions-secondary {
+  justify-content: center;
+}
+
+/* No panel anymore — buttons sit directly on the photos, so they
+   need their own background for legibility. Primary keeps its orange;
+   ghost gets a frosted dark backdrop. */
+.hero-marquee-text .btn.ghost {
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.45);
+  background: rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.hero-marquee-text .btn.ghost:hover {
+  background: rgba(0, 0, 0, 0.5);
+  border-color: rgba(255, 255, 255, 0.8);
+  color: #fff;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-marquee-track {
+    animation: none;
+  }
+}
+
+/* Tablet */
+@media (max-width: 1024px) {
+  .hero-marquee {
+    height: min(85vh, 700px);
+  }
+}
+
+/* Phone — fewer rows worth of vertical space, smaller photos */
+@media (max-width: 640px) {
+  .hero-marquee {
+    height: 100vh;
+    gap: 8px;
+    padding: 8px 0;
+  }
+  .hero-marquee-text h1 {
+    font-size: clamp(34px, 10vw, 56px);
+  }
 }
 
 .hero-photo img {

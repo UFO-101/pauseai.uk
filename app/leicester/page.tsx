@@ -42,7 +42,7 @@ export default function LeicesterPage() {
             <div className="hero-visual">
               <div
                 className="hero-photo"
-                style={{ backgroundImage: "linear-gradient(135deg, rgba(255, 148, 22, 0.35), rgba(0,0,0,0.65)), url('/images/front-page/london-2025-protest.jpg')" }}
+                style={{ backgroundImage: "linear-gradient(135deg, rgba(255, 148, 22, 0.35), rgba(0,0,0,0.65)), url('/images/chapters/leicester/london-2025-protest.jpg')" }}
               ></div>
               <div className="hero-badge">Join in on protests!</div>
             </div>

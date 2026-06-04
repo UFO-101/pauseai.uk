@@ -1,16 +1,15 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
+import { Lato } from "next/font/google";
 import "./globals.css";
 import Footer from "@/components/Footer";
 import CookieConsent from "@/components/CookieConsent";
 import ScrollInit from "@/components/ScrollInit";
 
-const fraunces = localFont({
-  src: [
-    { path: "../public/fonts/fraunces-latin-wght-normal.woff2", weight: "100 900", style: "normal" },
-    { path: "../public/fonts/fraunces-latin-ext-wght-normal.woff2", weight: "100 900", style: "normal" },
-  ],
-  variable: "--font-fraunces",
+const lato = Lato({
+  subsets: ["latin"],
+  weight: ["700", "900"],
+  variable: "--font-display",
   display: "swap",
 });
 
@@ -56,7 +55,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${fraunces.variable} ${inter.variable}`} suppressHydrationWarning>
+    <html lang="en" className={`${lato.variable} ${inter.variable}`} suppressHydrationWarning>
       <body suppressHydrationWarning>
         {children}
         <Footer />

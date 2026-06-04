@@ -30,7 +30,7 @@
 }
 .tr-hero-inner { position: relative; z-index: 1; max-width: 880px; }
 .tr-hero-title {
-  font-family: "Fraunces", Georgia, serif;
+  font-family: var(--font-display), "Lato", system-ui, sans-serif;
   font-weight: 700;
   font-size: clamp(44px, 6.5vw, 84px);
   line-height: 0.98;
@@ -60,7 +60,7 @@
 }
 .track-record .foreword-inner { max-width: 920px; }
 .track-record .foreword-title {
-  font-family: "Fraunces", Georgia, serif;
+  font-family: var(--font-display), "Lato", system-ui, sans-serif;
   font-size: clamp(28px, 3.2vw, 38px);
   font-weight: 700;
   line-height: 1.1;
@@ -75,7 +75,7 @@
   margin: 0 0 18px;
 }
 .track-record .foreword-body p:first-child::first-letter {
-  font-family: "Fraunces", Georgia, serif;
+  font-family: var(--font-display), "Lato", system-ui, sans-serif;
   font-size: 4.4em;
   font-weight: 500;
   float: left;
@@ -91,7 +91,7 @@
   text-align: right;
 }
 .track-record .sig-name {
-  font-family: "Fraunces", Georgia, serif;
+  font-family: var(--font-display), "Lato", system-ui, sans-serif;
   font-style: italic;
   font-size: 22px;
   color: var(--text);
@@ -167,7 +167,7 @@
   padding-right: 28px;
 }
 .entry-date .month {
-  font-family: "Fraunces", Georgia, serif;
+  font-family: var(--font-display), "Lato", system-ui, sans-serif;
   font-weight: 600;
   font-style: italic;
   font-size: 26px;
@@ -190,7 +190,7 @@
 
 .entry-body { min-width: 0; }
 .entry-title {
-  font-family: "Fraunces", Georgia, serif;
+  font-family: var(--font-display), "Lato", system-ui, sans-serif;
   font-size: clamp(24px, 2.4vw, 30px);
   font-weight: 700;
   line-height: 1.1;
@@ -299,7 +299,7 @@
 }
 .closing-inner { max-width: 680px; }
 .closing-quote {
-  font-family: "Fraunces", Georgia, serif;
+  font-family: var(--font-display), "Lato", system-ui, sans-serif;
   font-size: clamp(22px, 2.4vw, 30px);
   font-style: italic;
   font-weight: 400;

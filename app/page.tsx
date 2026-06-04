@@ -33,133 +33,109 @@ export const metadata: Metadata = {
   },
 };
 
+const HERO_PHOTOS: [string, string][] = [
+  ["alistair-june-2025-protest.JPG", "Alistair at the June 2025 London protest"],
+  ["alistair-reading.jpg", "Alistair Reith at a PauseAI event"],
+  ["benifei-russell-panel.jpg", "Benifei and Russell at the PauseCon Brussels panel"],
+  ["book-launch-joseph.jpeg", "Joseph at the PauseAI UK book launch"],
+  ["connor-leahy.jpg", "Connor Leahy speaking at a PauseCon"],
+  ["deepmind-close-up.jpg", "Protester outside Google DeepMind"],
+  ["june-2025-protest-closeup.jpg", "June 2025 protest close-up"],
+  ["laiba-brussels.jpg", "Laiba at PauseCon Brussels"],
+  ["letter-writing.jpeg", "PauseAI UK letter-writing session"],
+  ["london-june-2025-protest-group.jpg", "London June 2025 protest group"],
+  ["maxime-speech-audience.jpg", "Maxime delivering a speech to a London audience"],
+  ["pausecon-brussels-2026-panel.jpg", "PauseCon Brussels 2026 panel"],
+  ["pausecon-brussels-discussion.jpg", "PauseCon Brussels discussion"],
+  ["pausecon-london-2025-people-talking.jpg", "PauseCon London 2025 discussion"],
+  ["pausecon-london-ella-workshop.jpg", "Ella's workshop at PauseCon London"],
+  ["scott-wiener-on-screen.jpg", "Scott Wiener on screen at a PauseAI event"],
+  ["stuart-russell-interview.jpg", "Stuart Russell interview at PauseCon Brussels"],
+  ["westminster-hall.jpg", "Westminster Hall event"],
+];
+
+function shuffle<T>(arr: readonly T[]): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
 export default async function HomePage() {
   const events = await getEvents();
+
+  // Server-component shuffle: a new order each render. Sent to the
+  // client as part of the rendered HTML so hydration matches.
+  const shuffled = shuffle(HERO_PHOTOS);
+  const heroRows = [
+    { dir: "ltr" as const, photos: shuffled.slice(0, 6) },
+    { dir: "rtl" as const, photos: shuffled.slice(6, 12) },
+    { dir: "ltr" as const, photos: shuffled.slice(12, 18) },
+  ];
 
   return (
     <>
       <Nav />
       <main>
         <section id="about" className="hero">
-          <div className="container hero-grid">
-            <div className="hero-copy">
-              <h1>PauseAI UK</h1>
-              <p className="lede">
-                We mobilise communities, challenge industry, and press leaders to pause unsafe AI development until real safeguards exist.
-              </p>
-              <div className="actions hero-actions">
-                <a className="btn primary" href={site.whatsappUrl} target="_blank" rel="noreferrer">
-                  Join the WhatsApp community
-                </a>
-                <div className="hero-actions-secondary">
-                  <a className="btn ghost" href="/track-record/">Track record →</a>
-                  <a className="btn ghost" href="/theory-of-change/">Theory of change →</a>
+          <div className="hero-marquee">
+            {heroRows.map((row, ri) => (
+              <div key={ri} className={`hero-marquee-row hero-marquee-row--${row.dir}`}>
+                <div className="hero-marquee-track">
+                  {[...row.photos, ...row.photos, ...row.photos, ...row.photos].map(([src, alt], i) => (
+                    <img
+                      key={i}
+                      src={`/images/front-page-hero/${src}`}
+                      alt={alt}
+                      aria-hidden={i >= row.photos.length || undefined}
+                      loading={ri === 0 && i === 0 ? undefined : "lazy"}
+                      {...(ri === 0 && i === 0 ? { fetchPriority: "high" as const } : {})}
+                    />
+                  ))}
                 </div>
               </div>
-            </div>
-            <div className="hero-visual">
-              <div className="hero-photo">
-                <img
-                  src="images/front-page/london-2025-protest.jpg"
-                  alt="PauseAI UK protest in London"
-                  width={800}
-                  height={450}
-                  fetchPriority="high"
-                />
+            ))}
+
+            <div className="hero-marquee-overlay">
+              <div className="hero-marquee-text">
+                <h1>Organising for a safer future</h1>
+                <p className="hero-lede">
+                  We are the civic movement dedicated to preventing the risks of future artificial intelligence.
+                </p>
+                <div className="actions hero-actions">
+                  <a className="btn primary" href={site.whatsappUrl} target="_blank" rel="noreferrer">
+                    Join the WhatsApp community
+                  </a>
+                  <div className="hero-actions-secondary">
+                    <a className="btn ghost" href="#events">Upcoming events ↓</a>
+                    <a className="btn ghost" href="/track-record/">Track record →</a>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </section>
 
-        <section className="next-event">
+        <section id="events" className="next-event">
           <div className="container">
-            <h2 className="section-heading">Upcoming events</h2>
+            <div className="section-heading-row">
+              <h2 className="section-heading">Upcoming events</h2>
+              <a
+                className="btn primary section-heading-cta"
+                href={site.social.luma}
+                target="_blank"
+                rel="noreferrer"
+              >
+                View full calendar →
+              </a>
+            </div>
             <EventList events={events} lumaUrl={site.social.luma} />
           </div>
         </section>
 
-        <section id="chapters" className="section muted">
-          <div className="container">
-            <div className="section-header">
-              <h2>Organising across the UK</h2>
-              <p className="section-lede">
-                Find your city and get involved. Each chapter runs its own events, campaigns, and outreach.
-              </p>
-            </div>
-            <div className="chapter-grid">
-              <a className="chapter-card" href="/london">
-                <div className="image-frame" style={{ backgroundImage: `url("images/letter-writing/G2DG8xBXMAABxmR.jpeg")` }}></div>
-                <div className="card-copy">
-                  <div className="card-header">
-                    <h3>London</h3>
-                    <span className="card-link">Explore London →</span>
-                  </div>
-                  <p>Book launches, letter-writing nights, and regular meetups in central London.</p>
-                </div>
-              </a>
-              <a className="chapter-card" href="/leicester">
-                <div className="image-frame" style={{ backgroundImage: `url("images/front-page/london-2025-protest.jpg")` }}></div>
-                <div className="card-copy">
-                  <div className="card-header">
-                    <h3>Leicester</h3>
-                    <span className="card-link">Explore Leicester →</span>
-                  </div>
-                  <p>Growing community taking action locally and online.</p>
-                </div>
-              </a>
-              <a className="chapter-card" href="/oxford">
-                <div className="image-frame" style={{ backgroundImage: `url("images/chapters/oxford/PauseAI Oxford.jpg")` }}></div>
-                <div className="card-copy">
-                  <div className="card-header">
-                    <h3>Oxford</h3>
-                    <span className="card-link">Explore Oxford →</span>
-                  </div>
-                  <p>University-driven dialogue on AI risk with researchers and students.</p>
-                </div>
-              </a>
-              <a className="chapter-card" href="/glasgow">
-                <div className="image-frame" style={{ backgroundImage: `url("images/documentary-screening/G4W9UyLXwAA9ISl.jpeg")` }}></div>
-                <div className="card-copy">
-                  <div className="card-header">
-                    <h3>Glasgow</h3>
-                    <span className="card-link">Explore Glasgow →</span>
-                  </div>
-                  <p>Building momentum with public events and community outreach.</p>
-                </div>
-              </a>
-              <a className="chapter-card" href="/manchester">
-                <div className="image-frame" style={{ backgroundImage: `url("images/chapters/manchester/manchester_public.jpg")`, backgroundSize: "110% auto", backgroundPosition: "center 22%" }}></div>
-                <div className="card-copy">
-                  <div className="card-header">
-                    <h3>Manchester</h3>
-                    <span className="card-link">Explore Manchester →</span>
-                  </div>
-                  <p>New chapter bringing AI safety conversations and action to the North West.</p>
-                </div>
-              </a>
-              <a
-                className="chapter-card"
-                href="https://docs.google.com/document/d/1wVqsjGatoP3ltspkeqnyeye7I1d_V8XYRPQGaGyvitQ/edit?usp=sharing"
-                target="_blank"
-                rel="noreferrer"
-              >
-                <div className="image-frame" style={{ backgroundImage: `url("images/front-page/DSCF9617.jpg")` }}></div>
-                <div className="card-copy">
-                  <div className="card-header">
-                    <h3>Start a chapter</h3>
-                    <span className="card-link">Get started →</span>
-                  </div>
-                  <p>Bring PauseAI to your city. We&apos;ll share playbooks, visuals, and support to launch local actions.</p>
-                </div>
-              </a>
-            </div>
-          </div>
-        </section>
-
-        <section id="news" className="section container">
-          <div className="section-header">
-            <h2>In the news</h2>
-          </div>
+        <section id="news" className="section">
           <div className="news-marquee" aria-label="Press coverage of PauseAI UK">
             <div className="news-marquee-row">
               <div className="news-marquee-track">
@@ -208,6 +184,84 @@ export default async function HomePage() {
                   </a>
                 ))}
               </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="chapters" className="section muted">
+          <div className="container">
+            <div className="section-header">
+              <h2>Organising across the UK</h2>
+              <p className="section-lede">
+                Find your city and get involved. Each chapter runs its own events, campaigns, and outreach.
+              </p>
+            </div>
+            <div className="chapter-grid">
+              <a className="chapter-card" href="/london">
+                <div className="image-frame" style={{ backgroundImage: `url("images/letter-writing/G2DG8xBXMAABxmR.jpeg")` }}></div>
+                <div className="card-copy">
+                  <div className="card-header">
+                    <h3>London</h3>
+                    <span className="card-link">Explore London →</span>
+                  </div>
+                  <p>Book launches, letter-writing nights, and regular meetups in central London.</p>
+                </div>
+              </a>
+              <a className="chapter-card" href="/leicester">
+                <div className="image-frame" style={{ backgroundImage: `url("/images/chapters/leicester/london-2025-protest.jpg")` }}></div>
+                <div className="card-copy">
+                  <div className="card-header">
+                    <h3>Leicester</h3>
+                    <span className="card-link">Explore Leicester →</span>
+                  </div>
+                  <p>Growing community taking action locally and online.</p>
+                </div>
+              </a>
+              <a className="chapter-card" href="/oxford">
+                <div className="image-frame" style={{ backgroundImage: `url("images/chapters/oxford/PauseAI Oxford.jpg")` }}></div>
+                <div className="card-copy">
+                  <div className="card-header">
+                    <h3>Oxford</h3>
+                    <span className="card-link">Explore Oxford →</span>
+                  </div>
+                  <p>University-driven dialogue on AI risk with researchers and students.</p>
+                </div>
+              </a>
+              <a className="chapter-card" href="/glasgow">
+                <div className="image-frame" style={{ backgroundImage: `url("images/documentary-screening/G4W9UyLXwAA9ISl.jpeg")` }}></div>
+                <div className="card-copy">
+                  <div className="card-header">
+                    <h3>Glasgow</h3>
+                    <span className="card-link">Explore Glasgow →</span>
+                  </div>
+                  <p>Building momentum with public events and community outreach.</p>
+                </div>
+              </a>
+              <a className="chapter-card" href="/manchester">
+                <div className="image-frame" style={{ backgroundImage: `url("images/chapters/manchester/manchester_public.jpg")`, backgroundSize: "110% auto", backgroundPosition: "center 22%" }}></div>
+                <div className="card-copy">
+                  <div className="card-header">
+                    <h3>Manchester</h3>
+                    <span className="card-link">Explore Manchester →</span>
+                  </div>
+                  <p>New chapter bringing AI safety conversations and action to the North West.</p>
+                </div>
+              </a>
+              <a
+                className="chapter-card"
+                href="https://docs.google.com/document/d/1wVqsjGatoP3ltspkeqnyeye7I1d_V8XYRPQGaGyvitQ/edit?usp=sharing"
+                target="_blank"
+                rel="noreferrer"
+              >
+                <div className="image-frame" style={{ backgroundImage: `url("/images/chapters/start-a-chapter/treasury-protest.jpg")` }}></div>
+                <div className="card-copy">
+                  <div className="card-header">
+                    <h3>Start a chapter</h3>
+                    <span className="card-link">Get started →</span>
+                  </div>
+                  <p>Bring PauseAI to your city. We&apos;ll share playbooks, visuals, and support to launch local actions.</p>
+                </div>
+              </a>
             </div>
           </div>
         </section>

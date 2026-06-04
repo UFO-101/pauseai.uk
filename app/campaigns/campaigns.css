@@ -12,7 +12,7 @@
   margin: 0 0 12px;
 }
 .campaigns-hero h1 {
-  font-family: "Fraunces", Georgia, serif;
+  font-family: var(--font-display), "Lato", system-ui, sans-serif;
   font-size: clamp(38px, 5vw, 60px);
   font-weight: 700;
   line-height: 1.05;
@@ -44,7 +44,7 @@
   margin: 0 0 28px;
   padding: 4px 0 4px 22px;
   border-left: 3px solid var(--pause-orange);
-  font-family: "Fraunces", Georgia, serif;
+  font-family: var(--font-display), "Lato", system-ui, sans-serif;
   font-style: italic;
   font-size: clamp(19px, 1.8vw, 22px);
   line-height: 1.45;
@@ -78,7 +78,7 @@
 }
 .campaigns-docs h2,
 .campaigns-embed h2 {
-  font-family: "Fraunces", Georgia, serif;
+  font-family: var(--font-display), "Lato", system-ui, sans-serif;
   font-size: clamp(26px, 3vw, 34px);
   font-weight: 700;
   line-height: 1.1;
@@ -133,7 +133,7 @@
   margin: 0;
 }
 .doc-card h3 {
-  font-family: "Fraunces", Georgia, serif;
+  font-family: var(--font-display), "Lato", system-ui, sans-serif;
   font-size: 22px;
   font-weight: 600;
   line-height: 1.2;

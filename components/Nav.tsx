@@ -119,7 +119,7 @@ export default function Nav({ chapterName, chapterLogoSrc }: NavProps) {
         </button>
         <nav>
           <div className="nav-item has-dropdown">
-            <a href={`${navPrefix}#about`} className="dropdown-trigger" aria-haspopup="true" aria-expanded="false">
+            <a href="/track-record/" className="dropdown-trigger" aria-haspopup="true" aria-expanded="false">
               About
               <svg className="caret" viewBox="0 0 12 8" aria-hidden="true" focusable={false}>
                 <path d="M1 1.5l5 5 5-5" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
@@ -146,7 +146,6 @@ export default function Nav({ chapterName, chapterLogoSrc }: NavProps) {
             </div>
           </div>
           <a href="/campaigns/">Campaigns</a>
-          <a href={`${navPrefix}#news`}>In the News</a>
           <a href={`${navPrefix}#stories`}>Stories</a>
           <a href={`${navPrefix}#people`}>People</a>
           <a href={site.shopUrl} target="_blank" rel="noreferrer">Shop</a>

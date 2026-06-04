@@ -28,7 +28,7 @@
 }
 
 .theory-of-change .toc-section h2 {
-  font-family: "Fraunces", Georgia, serif;
+  font-family: var(--font-display), "Lato", system-ui, sans-serif;
   font-size: clamp(28px, 3.2vw, 38px);
   font-weight: 700;
   line-height: 1.1;
@@ -38,7 +38,7 @@
 }
 
 .theory-of-change .toc-section h3 {
-  font-family: "Fraunces", Georgia, serif;
+  font-family: var(--font-display), "Lato", system-ui, sans-serif;
   font-size: clamp(20px, 2.1vw, 24px);
   font-weight: 600;
   font-style: italic;
@@ -74,7 +74,7 @@
   margin: 18px 0 24px;
   padding: 6px 0 6px 22px;
   border-left: 2px solid var(--pause-orange);
-  font-family: "Fraunces", Georgia, serif;
+  font-family: var(--font-display), "Lato", system-ui, sans-serif;
   font-style: italic;
   color: var(--text-secondary);
 }
