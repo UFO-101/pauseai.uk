@@ -27,7 +27,6 @@ export default function DonatePage() {
           <div className="container">
             <div className="donate-intro-grid">
               <div className="donate-intro-head">
-                <p className="eyebrow">Support our work</p>
                 <h1>Let&apos;s press pause on unsafe AI together</h1>
               </div>
 
@@ -40,12 +39,25 @@ export default function DonatePage() {
 
               <div className="donate-intro-text">
                 <p className="lede">
-                  PauseAI UK&apos;s work is done for and by citizens and communities across the country. We have already achieved a lot (see our{" "}
-                  <a className="inline-link" href="/track-record/">Track Record page</a>) with very limited resources, and we need to be doing a lot more and to scale fast.
+                  PauseAI UK runs on donations from people like you — funding protests, organising, outreach, and the small team holding AI companies to account. PauseAI Global has covered our costs so far, but from mid-2026 we need to fund ourselves.
                 </p>
-                <p className="lede">
-                  Your support is an important part of our capacity to act effectively. By donating, you empower every volunteer, our local groups and our small core team to run protests and other events, engage with decision makers and the press, support our community, produce outreach materials, build advocacy infrastructure and more. We&apos;re glad you&apos;re a part of this movement alongside us.
-                </p>
+                <div className="donate-links">
+                  <a className="donate-link" href="/track-record/">
+                    <span className="donate-link-title">Track record</span>
+                    <span className="donate-link-desc">What we&apos;ve achieved in our first year</span>
+                  </a>
+                  <a className="donate-link" href="/theory-of-change/">
+                    <span className="donate-link-title">Theory of change</span>
+                    <span className="donate-link-desc">The strategy behind our work</span>
+                  </a>
+                  <a className="donate-link donate-link-doc" href="/pdfs/Donor%20Prospectus.pdf" target="_blank" rel="noreferrer">
+                    <img className="donate-link-thumb" src="/pdfs/Donor%20Prospectus-thumb.jpg" alt="Donor prospectus cover" width={500} height={707} loading="lazy" />
+                    <span className="donate-link-doc-text">
+                      <span className="donate-link-title">Donor prospectus (PDF)</span>
+                      <span className="donate-link-desc">Our plans, finances and funding targets</span>
+                    </span>
+                  </a>
+                </div>
               </div>
 
               <div className="donate-intro-form">
@@ -59,41 +71,32 @@ export default function DonatePage() {
           <div className="container">
             <div className="donate-bottom-grid">
               <div id="other-ways" className="donate-bottom-col">
-                <p className="eyebrow">Other ways to give</p>
                 <h2>Major gifts &amp; bank transfer</h2>
                 <p className="section-lede">
-                  If you&apos;re considering a larger gift, prefer to give by bank transfer, or represent a foundation, please get in touch.
+                  Prefer to give by bank transfer, making a large one-off gift, or giving on behalf of a foundation? Get in touch and we&apos;ll help directly — and say a proper thank-you.
                 </p>
                 <div className="other-ways-cards">
                   <article className="feature-card">
-                    <h3>Bank transfer &amp; major donors</h3>
+                    <h3>Bank transfer &amp; major gifts</h3>
                     <p>
-                      For UK bank transfers (Faster Payments / BACS) and gifts above £500, please email us so we can share account details directly.
+                      For UK bank transfers (Faster Payments / BACS) or larger one-off donations, email us and we&apos;ll share account details directly. (Regular gifts of any size are easy above — Direct Debit keeps our fees low.)
                     </p>
                     <a className="inline-link" href="mailto:hello@pauseai.uk?subject=PauseAI%20UK%20donation%20enquiry">
                       hello@pauseai.uk →
                     </a>
                   </article>
-                  <article className="feature-card">
-                    <h3>US-based donors</h3>
-                    <p>
-                      We&apos;re working on enabling tax-deductible giving for US supporters. <em>Coming soon.</em>
-                    </p>
-                  </article>
                 </div>
               </div>
 
               <div id="transparency" className="donate-bottom-col">
-                <p className="eyebrow">Trust &amp; transparency</p>
                 <h2>Where your money goes</h2>
                 <p className="section-lede">
-                  Your regular gift funds protests, organising, outreach materials, and the small staff team keeping this movement growing across the UK.
+                  Your gift funds protests, organising, outreach, and our small staff team. For a full breakdown of our finances and funding targets, see the{" "}
+                  <a className="inline-link" href="/pdfs/Donor%20Prospectus.pdf" target="_blank" rel="noreferrer">donor prospectus</a>.
                 </p>
                 <p className="section-lede">
-                  Because our work meaningfully engages with policy, donations to us are not eligible for Gift Aid.
-                </p>
-                <p className="section-lede">
-                  Read our <a className="inline-link" href="/privacy">privacy policy</a> to learn how we handle your information.
+                  Because our work meaningfully engages with policy, donations are not eligible for Gift Aid. Read our{" "}
+                  <a className="inline-link" href="/privacy">privacy policy</a> to see how we handle your information.
                 </p>
                 <div className="registered-details">
                   <p>
