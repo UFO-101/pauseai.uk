@@ -175,8 +175,11 @@ nav a {
   font-size: 14px;
   font-weight: 500;
   padding: 8px 12px;
+  /* Transparent 1.5px border reserves the same space pills use; without
+     this the pills would sit 3px taller than the plain links. */
+  border: 1.5px solid transparent;
   border-radius: 8px;
-  transition: color 0.2s ease, background 0.2s ease;
+  transition: color 0.2s ease, background 0.2s ease, border-color 0.2s ease;
 }
 
 nav a:hover {
@@ -243,8 +246,10 @@ nav a:hover {
   color: #fff;
 }
 
+/* Pills inherit nav a's padding + transparent border slot; we just
+   colour the border, swap the text colour, round the corners. */
 .pill {
-  border: 1.5px solid var(--accent);
+  border-color: var(--accent);
   color: var(--accent) !important;
   border-radius: 999px;
   font-weight: 600;
@@ -1510,12 +1515,22 @@ section[id] {
     border-bottom: none;
   }
 
+  /* On mobile, pills follow the same block layout as every other nav
+     link in the dropped-down menu; only the accent colour distinguishes
+     them. Drop the special inset/centred-pill treatment. */
   nav .pill {
-    margin: 14px 24px 0;
-    padding: 12px 18px;
-    text-align: center;
-    border: 1.5px solid var(--accent);
-    border-radius: 999px;
+    margin: 0;
+    padding: 14px 24px;
+    text-align: left;
+    border-radius: 0;
+    border-color: transparent;
+    color: var(--accent) !important;
+  }
+  nav .pill-primary {
+    background: transparent !important;
+  }
+  nav .pill:hover {
+    background: rgba(255, 148, 22, 0.1);
   }
 
   /* Mobile: tap "About" to expand sub-items inline */
