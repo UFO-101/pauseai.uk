@@ -70,6 +70,8 @@
 body {
   margin: 0;
   min-height: 100vh;
+  display: flex;
+  flex-direction: column;
   color: var(--text);
   background: var(--bg);
   font-family: "Inter", system-ui, sans-serif;
@@ -78,6 +80,14 @@ body {
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
+}
+
+body > main {
+  flex: 1 0 auto;
+}
+
+body > .site-footer {
+  flex-shrink: 0;
 }
 
 h1,
@@ -606,8 +616,7 @@ nav a:hover {
   }
 }
 
-.chapter-grid,
-.news-grid {
+.chapter-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: 24px;
@@ -702,28 +711,127 @@ nav a:hover {
   text-decoration: underline;
 }
 
-/* ── News Cards ────────────────────────────────── */
+/* ── News marquee ──────────────────────────────── */
+/* Two-row infinite horizontal scroll of media logos. Each row scrolls in
+   the opposite direction. Logos render greyscale + dimmed by default and
+   come into full colour on hover (which also pauses the row). Items are
+   duplicated in the markup so translateX(-50%) loops seamlessly. */
 
-.news-grid {
-  margin-top: 24px;
+.news-marquee {
+  --marquee-gap: 72px;
+  --marquee-duration: 80s;
+  --marquee-item-height: 64px;
+
+  margin-top: 36px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 64px, #000 calc(100% - 64px), transparent);
+          mask-image: linear-gradient(90deg, transparent, #000 64px, #000 calc(100% - 64px), transparent);
 }
 
-.news-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 20px;
-  display: grid;
-  gap: 12px;
-  box-shadow: 0 1px 3px var(--shadow);
+.news-marquee-row {
+  overflow: hidden;
+  padding: 14px 0;
 }
 
-/* News logos — base styles */
+.news-marquee-track {
+  display: flex;
+  gap: var(--marquee-gap);
+  width: max-content;
+  align-items: center;
+  animation: news-marquee-scroll var(--marquee-duration) linear infinite;
+  will-change: transform;
+}
+
+.news-marquee-row--reverse .news-marquee-track {
+  animation-direction: reverse;
+}
+
+@keyframes news-marquee-scroll {
+  from { transform: translate3d(0, 0, 0); }
+  to   { transform: translate3d(calc(-50% - var(--marquee-gap) / 2), 0, 0); }
+}
+
+.news-marquee-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  padding: 0;
+  text-decoration: none;
+  border-radius: 8px;
+  opacity: 0.75;
+  filter: grayscale(85%) contrast(0.95);
+  transition: opacity 0.25s ease, filter 0.25s ease;
+}
+
+/* In the marquee, items shrink-to-fit their logo so the gap between any
+   two logos is the marquee gap rather than the leftover space inside a
+   wider fixed-width slot. Wide wordmarks (WSJ, Business Insider) get a
+   hard 180px cap so they don't dominate the row. */
+.news-marquee-item .news-logo-box {
+  padding: 0;
+  width: auto;
+}
+
+.news-marquee-item .news-logo {
+  max-width: 160px;
+  max-height: 44px;
+  width: auto;
+  object-fit: contain;
+}
+
+/* The FT corporate mark is a tall stacked logo (~0.79:1). At the
+   shared 44px height cap it looks tiny next to horizontal wordmarks,
+   so give it more vertical room. */
+.news-marquee-item img.news-logo[alt="Financial Times"] {
+  max-height: 60px;
+}
+
+.news-marquee-item:hover,
+.news-marquee-item:focus-visible {
+  opacity: 1;
+  filter: grayscale(0%) contrast(1);
+  outline: none;
+}
+
+.news-marquee-item:focus-visible {
+  box-shadow: 0 0 0 3px var(--accent-light, rgba(255,148,22,0.5));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .news-marquee-track {
+    animation: none;
+  }
+  .news-marquee-row {
+    overflow-x: auto;
+  }
+  .news-marquee {
+    -webkit-mask-image: none;
+            mask-image: none;
+  }
+}
+
+@media (max-width: 600px) {
+  .news-marquee {
+    --marquee-gap: 36px;
+    --marquee-item-height: 44px;
+    --marquee-duration: 40s;
+  }
+  .news-marquee-item {
+    min-width: 130px;
+    padding: 0 8px;
+  }
+}
+
+/* News logos — base styles (shared with the marquee items) */
 .news-logo-box {
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 50px;
+  height: var(--marquee-item-height, 50px);
   padding: 4px 12px;
 }
 
@@ -733,37 +841,6 @@ nav a:hover {
   width: auto;
   height: auto;
   object-fit: contain;
-}
-
-/* Individual logo calibrations */
-.news-logo-box img.news-logo[alt="The Independent"] {
-  max-height: none;
-  max-width: none;
-  height: 25px;
-  width: auto;
-}
-
-img.news-logo[alt="MIT Technology Review"] {
-  max-height: 130%;
-}
-
-img.news-logo[alt="Futurism"] {
-  max-height: 230%;
-}
-
-img.news-logo[alt="Real Media"] {
-  max-height: 210%;
-  object-fit: cover;
-  object-position: center;
-  clip-path: inset(22% 0);
-}
-
-img.news-logo[alt="TIME"] {
-  max-height: 70%;
-}
-
-img.news-logo[alt="Fortune"] {
-  max-height: 70%;
 }
 
 .news-logo-text--bbc {
@@ -783,25 +860,6 @@ img.news-logo[alt="Fortune"] {
   margin: 0;
 }
 
-.news-card h3 {
-  margin: 4px 0 8px;
-  font-size: 18px;
-  font-family: "Inter", system-ui, sans-serif;
-  font-weight: 700;
-  line-height: 1.3;
-}
-
-.news-card a {
-  font-weight: 600;
-  text-decoration: none;
-}
-
-/* Ensure consistent logo sizing */
-.news-logo {
-  max-height: 40px;
-  max-width: 100%;
-  object-fit: contain;
-}
 
 /* ── People ────────────────────────────────────── */
 
@@ -1202,10 +1260,6 @@ img.news-logo[alt="Fortune"] {
     grid-template-columns: 1fr;
   }
 
-  .news-grid {
-    grid-template-columns: 1fr;
-  }
-
   .chapter-grid {
     grid-template-columns: 1fr;
   }
@@ -1251,24 +1305,529 @@ img.news-logo[alt="Fortune"] {
   font-style: italic;
 }
 
-.news-card h3 {
-  word-wrap: break-word;
-  overflow-wrap: break-word;
+/* Luma calendar embed container */
+.luma-calendar-embed {
+  max-width: 800px;
+  margin: 0 auto;
+}
 
-  /* Luma calendar embed container */
-  .luma-calendar-embed {
-    max-width: 800px;
-    margin: 0 auto;
-  }
+.luma-calendar-embed iframe {
+  width: 100%;
+  min-height: 300px;
+}
 
-  .luma-calendar-embed iframe {
-    width: 100%;
-    min-height: 300px;
-  }
+/* Tally join form embed */
+.tally-embed {
+  max-width: 720px;
+  margin-top: 32px;
+}
+/* ── Donate page ───────────────────────────────── */
+/*
+ * Type scale on this page (kept deliberately tight):
+ *   h1                          clamp(44, 6vw, 68) — hero
+ *   h2                          clamp(28, 4vw, 40) — section headings
+ *   .lede                       18 — intro paragraph
+ *   amount button label         18
+ *   .btn (CTAs)                 16
+ *   body / form-footnote / etc. 14
+ *   .eyebrow (tracked caps)     13
+ */
 
-  /* Tally join form embed */
-  .tally-embed {
-    max-width: 720px;
-    margin-top: 32px;
+.donate-intro {
+  padding: 32px 0 44px;
+}
+.donate-intro-grid {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  grid-template-areas:
+    "head  head"
+    "text  form"
+    "photo form";
+  column-gap: 48px;
+  row-gap: 16px;
+  align-items: start;
+}
+.donate-intro-head  { grid-area: head; }
+.donate-intro-text  { grid-area: text; }
+.donate-intro-photo { grid-area: photo; }
+.donate-intro-form  { grid-area: form; align-self: start; display: flex; }
+
+.donate-intro h1 {
+  font-size: clamp(38px, 4.6vw, 56px);
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+  margin: 6px 0 0;
+  color: var(--text);
+}
+@media (min-width: 721px) {
+  .donate-intro h1 { margin-bottom: 24px; }
+}
+.donate-intro .lede {
+  font-size: 17px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  margin: 0;
+}
+.donate-intro-text .lede + .lede {
+  margin-top: 12px;
+}
+
+/* Prominent links to supporting pages / prospectus */
+.donate-links {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 20px;
+}
+.donate-link {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 13px 16px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+}
+.donate-link:hover {
+  border-color: var(--accent);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px var(--shadow), 0 8px 20px var(--shadow);
+}
+.donate-link-title {
+  font-weight: 600;
+  color: var(--text);
+}
+.donate-link-title::after {
+  content: " →";
+  color: var(--accent);
+}
+.donate-link-desc {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+/* Prospectus link: cover thumbnail beside the label */
+.donate-link-doc {
+  flex-direction: row;
+  align-items: center;
+  gap: 14px;
+}
+.donate-link-thumb {
+  width: 52px;
+  height: 68px;
+  object-fit: cover;
+  object-position: top center;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.donate-link-doc-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* Photo — landscape frame, height-capped so it can't dominate the fold. */
+.donate-intro-photo {
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 6px 24px var(--shadow-strong);
+  line-height: 0;
+  background: var(--surface-2);
+}
+.donate-intro-photo img {
+  width: 100%;
+  height: auto;
+  max-height: 280px;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+}
+
+@media (max-width: 720px) {
+  .donate-intro {
+    padding: 40px 0 56px;
   }
+  .donate-intro-grid {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "head"
+      "text"
+      "form"
+      "photo";
+    row-gap: 24px;
+  }
+}
+
+/* Form card */
+.donate-form {
+  /* Bright orange used on selected-state buttons inside the form. This is
+     the older PauseAI brand orange — it pops more than the burnt-terracotta
+     site accent and reads as a clear "selection" against the warm cream UI. */
+  --cta-orange: #FF9416;
+  --cta-orange-strong: #E07A0E;
+  --cta-orange-soft: rgba(255, 148, 22, 0.4);
+
+  background: var(--accent-bg);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 28px;
+  box-shadow: 0 4px 24px var(--shadow);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Frequency + payment method picker */
+.freq-toggle {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  background: #FFEDD5;          /* warm light-orange wash */
+  border: 1.5px solid #FF9416;  /* orange frame */
+  border-radius: 14px;
+  padding: 6px;
+  gap: 4px;
+  margin-bottom: 18px;
+}
+.freq-option {
+  appearance: none;
+  border: none;
+  background: transparent;
+  padding: 12px 12px;
+  border-radius: 10px;
+  font-family: inherit;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: center;
+  transition: background 0.2s ease, box-shadow 0.2s ease;
+}
+.freq-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: #A84E1A;
+  letter-spacing: -0.005em;
+}
+.freq-method {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--muted);
+  letter-spacing: 0.02em;
+  line-height: 1.3;
+}
+.freq-option:hover .freq-name {
+  color: #FF9416;
+}
+.freq-option.is-active {
+  background: #FF9416;
+  box-shadow: 0 4px 12px rgba(255, 148, 22, 0.4);
+}
+.freq-option.is-active .freq-name   { color: #fff; }
+.freq-option.is-active .freq-method { color: rgba(255, 255, 255, 0.9); }
+
+/* Amount selector */
+.amount-selector {
+  border: none;
+  padding: 0;
+  margin: 0 0 18px;
+}
+.amount-selector legend {
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--accent);
+  margin-bottom: 8px;
+  padding: 0;
+}
+.amount-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.amount-option {
+  appearance: none;
+  background: #FFF5EC;            /* very light orange wash */
+  border: 2px solid #FF9416;      /* orange border at rest */
+  border-radius: 12px;
+  padding: 13px 8px;
+  font-family: inherit;
+  font-size: 17px;
+  font-weight: 700;
+  color: #A84E1A;                 /* deep orange text */
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease,
+              color 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease;
+}
+.amount-option:hover {
+  background: #FFE3C9;
+  transform: translateY(-1px);
+}
+.amount-option:active {
+  transform: translateY(0);
+}
+.amount-option.is-active {
+  background: #FF9416;
+  border-color: #FF9416;
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(255, 148, 22, 0.45);
+  transform: translateY(-1px);
+}
+/* "Other" spans the bottom row, styled as a softer prompt */
+.amount-other {
+  grid-column: 1 / -1;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 9px 8px;
+}
+.amount-other.is-active {
+  letter-spacing: 0.08em;
+}
+@media (max-width: 420px) {
+  .amount-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Custom amount input */
+.amount-custom {
+  margin-top: 16px;
+}
+.amount-custom[hidden] {
+  display: none;
+}
+.amount-custom label {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+.amount-input-wrap {
+  display: flex;
+  align-items: center;
+  background: var(--surface);
+  border: 1.5px solid var(--border-strong);
+  border-radius: 10px;
+  padding: 0 14px;
+  transition: border-color 0.15s ease;
+}
+.amount-input-wrap:focus-within {
+  border-color: var(--accent);
+}
+.currency-prefix {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--muted);
+  margin-right: 4px;
+}
+.amount-input-wrap input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  padding: 14px 0;
+  font-family: inherit;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text);
+  outline: none;
+  min-width: 0;
+}
+.amount-suffix {
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 500;
+  margin-left: 8px;
+  white-space: nowrap;
+}
+.amount-help {
+  color: var(--muted);
+  font-size: 14px;
+  margin: 6px 2px 0;
+}
+
+/* Donate CTA */
+.donate-btn {
+  width: 100%;
+  padding: 15px 20px;
+  font-size: 16px;
+  line-height: 1.2;
+}
+.donate-btn[disabled] {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.form-footnote {
+  margin-top: 10px;
+  font-size: 14px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+.form-footnote a {
+  color: var(--text-secondary);
+  text-decoration: underline;
+}
+.form-footnote a:hover {
+  color: var(--accent);
+}
+
+/* Bottom section: major gifts + transparency as side-by-side columns */
+.donate-bottom-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 48px;
+  align-items: start;
+}
+.donate-bottom-col h2 {
+  margin: 6px 0 12px;
+}
+.donate-bottom-col .section-lede {
+  max-width: none;
+}
+
+/* Cards inside the major-gifts column stack vertically at half-width */
+.other-ways-cards {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  margin-top: 20px;
+}
+.other-ways-cards .feature-card h3 {
+  font-size: 18px;
+  margin: 0 0 8px;
+}
+
+@media (max-width: 720px) {
+  .donate-bottom-grid {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+}
+
+/* Registered company details — required by UK Trading Disclosures regs.
+   Kept small and unobtrusive — fine-print style. */
+.registered-details {
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+  max-width: 720px;
+}
+.registered-details p {
+  margin: 0;
+}
+.registered-details strong {
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+@media (max-width: 600px) {
+  .donate-form {
+    padding: 24px 20px;
+    border-radius: 12px;
+  }
+  .donate-hero {
+    padding: 48px 0 16px;
+  }
+}
+
+/* ── Legal / prose pages (privacy policy etc.) ─── */
+
+.legal {
+  padding: 64px 0 80px;
+}
+.legal-container {
+  max-width: 760px;
+}
+.legal h1 {
+  font-size: clamp(36px, 5vw, 52px);
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  margin: 8px 0 4px;
+  color: var(--text);
+}
+.legal-meta {
+  color: var(--muted);
+  font-size: 14px;
+  margin: 0 0 32px;
+}
+.legal h2 {
+  font-size: clamp(22px, 3vw, 28px);
+  line-height: 1.2;
+  margin: 40px 0 12px;
+  color: var(--text);
+}
+.legal h3 {
+  font-family: "Inter", system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 18px;
+  margin: 24px 0 8px;
+  color: var(--text);
+}
+.legal p,
+.legal li {
+  color: var(--text-secondary);
+  font-size: 16px;
+  line-height: 1.7;
+}
+.legal p {
+  margin: 0 0 16px;
+}
+.legal ul {
+  margin: 0 0 16px;
+  padding-left: 22px;
+}
+.legal li {
+  margin: 0 0 6px;
+}
+.legal strong {
+  color: var(--text);
+  font-weight: 600;
+}
+.legal a.inline-link {
+  text-decoration: underline;
+}
+
+/* ── Cookie consent banner ─────────────────────── */
+
+.cookie-banner {
+  position: fixed;
+  bottom: 16px;
+  left: 16px;
+  right: 16px;
+  max-width: 520px;
+  margin: 0 auto;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px var(--shadow-strong);
+  padding: 18px 20px;
+  z-index: 1000;
+}
+.cookie-banner-text {
+  margin: 0 0 14px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+.cookie-banner-text a {
+  color: var(--accent);
+  text-decoration: underline;
+}
+.cookie-banner-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+.cookie-banner-actions .btn {
+  width: auto;
 }
