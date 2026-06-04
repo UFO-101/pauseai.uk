@@ -815,12 +815,24 @@ section[id] {
 /* Phone — fewer rows worth of vertical space, smaller photos */
 @media (max-width: 640px) {
   .hero-marquee {
-    height: 100vh;
+    /* svh = smallest viewport height (URL bar visible) — guarantees the
+       bottom row's edge sits inside the visible viewport on first load
+       instead of slipping below the browser chrome. */
+    height: calc(100svh - 77px);
     gap: 8px;
     padding: 8px 0;
   }
   .hero-marquee-text h1 {
-    font-size: clamp(34px, 10vw, 56px);
+    font-size: clamp(36px, 10vw, 56px);
+    /* Stroke that's 2.5px on a 140px headline becomes proportionally
+       4-5x heavier on a 56px headline, which reads as a clumsy outline.
+       Scale it back at this size. */
+    -webkit-text-stroke-width: 1.4px;
+    letter-spacing: -0.02em;
+  }
+  .hero-marquee-text .hero-lede {
+    font-size: 15px;
+    margin: 16px auto 22px;
   }
 }
 
