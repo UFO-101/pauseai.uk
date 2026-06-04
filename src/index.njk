@@ -1,0 +1,382 @@
+---
+title: PauseAI UK
+description: Community-led action for safe and accountable AI.
+ogTitle: PauseAI UK
+ogDescription: Community-led action for safe and accountable AI across the UK.
+ogImage: /images/open-graph/open-graph-1200-630.jpg
+ogImageWidth: 1200
+ogImageHeight: 630
+ogUrl: https://pauseai.uk/
+twitterImage: /images/open-graph/open-graph-1600-840.jpg
+---
+{% extends "layouts/base.njk" %}
+
+{% block content %}
+  <section id="about" class="hero">
+    <div class="container hero-grid">
+      <div class="hero-copy">
+        <p class="eyebrow">Community-led AI safety</p>
+        <h1>PauseAI UK</h1>
+        <p class="lede">
+          We mobilise communities, challenge industry, and press leaders to
+          pause unsafe AI development until real safeguards exist.
+        </p>
+        <div class="actions hero-actions">
+          <a
+            class="btn primary"
+            href="{{ site.whatsappUrl }}"
+            target="_blank"
+            rel="noreferrer"
+            >Join the WhatsApp community</a
+          >
+          <div class="hero-actions-secondary">
+            <a class="btn ghost" href="/track-record/">Track record →</a>
+            <a class="btn ghost" href="/theory-of-change/">Theory of change →</a>
+          </div>
+        </div>
+      </div>
+      <div class="hero-visual">
+        <div class="hero-photo">
+          <img
+            src="images/front-page/london-2025-protest.jpg?v=2"
+            alt="PauseAI UK protest in London"
+            width="800"
+            height="450"
+            fetchpriority="high"
+          />
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="next-event">
+    <div class="container">
+      <p class="eyebrow">
+        <a href="{{ site.social.luma }}" target="_blank" rel="noreferrer"
+          >Upcoming events</a
+        >
+      </p>
+      {% if events.length %}
+      <div class="luma-events-scroll">
+        {% for entry in events %}
+        {% if loop.index0 < 4 %}
+        {% set event = entry.event %}
+        <a href="https://lu.ma/{{ event.url }}" target="_blank" rel="noreferrer" class="luma-event-card" data-event-start="{{ event.start_at }}" data-event-tz="{{ event.timezone or 'Europe/London' }}">
+          {% if event.cover_url %}
+          <img class="luma-event-card-img" src="{{ event.cover_url }}" alt="" loading="lazy">
+          {% else %}
+          <div class="luma-event-card-img luma-event-card-img--placeholder"></div>
+          {% endif %}
+          <div class="luma-event-card-body">
+            <p class="luma-event-card-date">{{ event.start_at | eventDate(event.timezone) }} · {{ event.start_at | eventTime(event.timezone) }}</p>
+            <h3 class="luma-event-card-title">{{ event.name }}</h3>
+            <p class="luma-event-card-location">
+              {% if event.location_type == "geo" and event.geo_address_info %}
+                {{ event.geo_address_info.city or event.geo_address_info.full_address or "In person" }}
+              {% else %}
+                Online
+              {% endif %}
+            </p>
+          </div>
+        </a>
+        {% endif %}
+        {% endfor %}
+      </div>
+      {% if events.length > 4 %}
+      <div class="luma-events-extra" id="luma-events-extra">
+        <div class="luma-events-extra-inner">
+          {% for entry in events %}
+          {% if loop.index0 >= 4 %}
+          {% set event = entry.event %}
+          <a href="https://lu.ma/{{ event.url }}" target="_blank" rel="noreferrer" class="luma-event-card" data-event-start="{{ event.start_at }}" data-event-tz="{{ event.timezone or 'Europe/London' }}">
+            {% if event.cover_url %}
+            <img class="luma-event-card-img" src="{{ event.cover_url }}" alt="" loading="lazy">
+            {% else %}
+            <div class="luma-event-card-img luma-event-card-img--placeholder"></div>
+            {% endif %}
+            <div class="luma-event-card-body">
+              <p class="luma-event-card-date">{{ event.start_at | eventDate(event.timezone) }} · {{ event.start_at | eventTime(event.timezone) }}</p>
+              <h3 class="luma-event-card-title">{{ event.name }}</h3>
+              <p class="luma-event-card-location">
+                {% if event.location_type == "geo" and event.geo_address_info %}
+                  {{ event.geo_address_info.city or event.geo_address_info.full_address or "In person" }}
+                {% else %}
+                  Online
+                {% endif %}
+              </p>
+            </div>
+          </a>
+          {% endif %}
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+      {% else %}
+      <p class="luma-events-empty">See our <a href="{{ site.social.luma }}" target="_blank" rel="noreferrer">event calendar</a> for upcoming events.</p>
+      {% endif %}
+      {% if events.length > 4 %}
+      <div class="luma-events-more">
+        <button class="btn ghost small" id="luma-show-more">
+          <span>Show more events</span>
+          <svg class="luma-show-more-icon" viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" focusable="false"><path d="M3 5.5l5 5 5-5" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
+      {% endif %}
+    </div>
+  </section>
+
+  <section id="chapters" class="section muted">
+    <div class="container">
+      <div class="section-header">
+        <p class="eyebrow">Local chapters</p>
+        <h2>Organising across the UK</h2>
+        <p class="section-lede">
+          Find your city and get involved. Each chapter runs its own events,
+          campaigns, and outreach.
+        </p>
+      </div>
+      <div class="chapter-grid">
+        <a class="chapter-card" href="/london">
+          <div class="image-frame" style="background-image: url(&quot;images/letter-writing/G2DG8xBXMAABxmR.jpeg&quot;);"></div>
+          <div class="card-copy">
+            <div class="card-header">
+              <h3>London</h3>
+              <span class="card-link">Explore London →</span>
+            </div>
+            <p>Book launches, letter-writing nights, and regular meetups in central London.</p>
+          </div>
+        </a>
+        <a class="chapter-card" href="/leicester">
+          <div class="image-frame" style="background-image: url(&quot;images/front-page/london-2025-protest.jpg&quot;);"></div>
+          <div class="card-copy">
+            <div class="card-header">
+              <h3>Leicester</h3>
+              <span class="card-link">Explore Leicester →</span>
+            </div>
+            <p>Growing community taking action locally and online.</p>
+          </div>
+        </a>
+        <a class="chapter-card" href="/oxford">
+          <div class="image-frame" style="background-image: url(&quot;images/chapters/oxford/PauseAI Oxford.jpg&quot;);"></div>
+          <div class="card-copy">
+            <div class="card-header">
+              <h3>Oxford</h3>
+              <span class="card-link">Explore Oxford →</span>
+            </div>
+            <p>University-driven dialogue on AI risk with researchers and students.</p>
+          </div>
+        </a>
+        <a class="chapter-card" href="/glasgow">
+          <div class="image-frame" style="background-image: url(&quot;images/documentary-screening/G4W9UyLXwAA9ISl.jpeg&quot;);"></div>
+          <div class="card-copy">
+            <div class="card-header">
+              <h3>Glasgow</h3>
+              <span class="card-link">Explore Glasgow →</span>
+            </div>
+            <p>Building momentum with public events and community outreach.</p>
+          </div>
+        </a>
+        <a
+          class="chapter-card"
+          href="https://docs.google.com/document/d/1wVqsjGatoP3ltspkeqnyeye7I1d_V8XYRPQGaGyvitQ/edit?usp=sharing"
+          target="_blank"
+          rel="noreferrer"
+        >
+          <div class="image-frame" style="background-image: url(&quot;images/front-page/DSCF9617.jpg&quot;);"></div>
+          <div class="card-copy">
+            <div class="card-header">
+              <h3>Start a chapter</h3>
+              <span class="card-link">Get started →</span>
+            </div>
+            <p>Bring PauseAI to your city. We'll share playbooks, visuals, and support to launch local actions.</p>
+          </div>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <section id="news" class="section container">
+    <div class="section-header">
+      <p class="eyebrow">In the media</p>
+      <h2>News coverage</h2>
+      <p class="section-lede">Journalists are taking notice as we hold AI labs to account.</p>
+    </div>
+    <div class="news-grid">
+      {% for item in news %}
+      <article class="news-card">
+        <div class="news-logo-box">
+          {% if item.logoSrc %}
+          <img
+            class="news-logo"
+            src="{{ item.logoSrc }}"
+            alt="{{ item.logoAlt }}"
+            {% if item.logoWidth %}width="{{ item.logoWidth }}"{% endif %}
+            {% if item.logoHeight %}height="{{ item.logoHeight }}"{% endif %}
+            loading="lazy"
+          />
+          {% else %}
+          <div class="news-logo-box">{{ item.logoHtml | safe }}</div>
+          {% endif %}
+        </div>
+        <h3>{{ item.title }}</h3>
+        <a href="{{ item.url }}" target="_blank" rel="noreferrer">{{ item.linkText }}</a>
+      </article>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section id="stories" class="section stories">
+    <div class="container">
+      <div class="section-header">
+        <p class="eyebrow">Why we're here</p>
+        <h2>Personal stories</h2>
+        <p class="section-lede">Each of us found PauseAI for our own reasons. Here are a few.</p>
+      </div>
+      <div class="story-grid">
+        {% for story in stories %}
+        <article class="story-card">
+          <header class="story-card-header">
+            <div
+              class="story-avatar"
+              style="background-image: url(&quot;{{ story.imageSrc }}&quot;); {{ story.imageStyle }}"
+            ></div>
+            <h3 class="story-name">{{ story.name }}</h3>
+          </header>
+          <div class="story-body">
+            {% for para in story.paragraphs %}
+            <p>{{ para | safe }}</p>
+            {% endfor %}
+          </div>
+        </article>
+        {% endfor %}
+        <p class="section-lede">
+          <i>Tag us on social media with your extinction risk realisation if you want to be spotlighted!</i>
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section shop-banner">
+    <div class="container callout-inner">
+      <div>
+        <p class="eyebrow">Wear the message</p>
+        <h2>Get PauseAI merch</h2>
+        <p class="section-lede">
+          T-shirts, hoodies, stickers and more – every purchase helps spread the word and supports our mission.
+        </p>
+        <a class="btn primary large" href="{{ site.shopUrl }}" target="_blank" rel="noreferrer">Browse the shop →</a>
+      </div>
+      <a class="shop-image-link" href="{{ site.shopUrl }}" target="_blank" rel="noreferrer">
+        <img src="images/fourthwall.avif" alt="PauseAI merchandise" class="shop-image" width="1536" height="2048" loading="lazy" />
+      </a>
+    </div>
+  </section>
+
+  <section id="join" class="section container">
+    <div class="section-header">
+      <p class="eyebrow">Get on board</p>
+      <h2>Join PauseAI UK</h2>
+      <p class="section-lede">Fill out the form below to get involved.</p>
+    </div>
+    <div class="tally-embed">
+      <iframe
+        data-tally-src="https://tally.so/embed/wbGvKe?alignLeft=1&hideTitle=1&transparentBackground=1&dynamicHeight=1"
+        loading="lazy"
+        width="100%"
+        height="1749"
+        frameborder="0"
+        marginheight="0"
+        marginwidth="0"
+        title="Get involved!"
+      ></iframe>
+    </div>
+  </section>
+
+  <section id="get-involved" class="section callout">
+    <div class="container callout-inner">
+      <div>
+        <p class="eyebrow">Stay connected</p>
+        <h2>Join the conversation</h2>
+        <p class="section-lede">
+          Our WhatsApp community is where we coordinate protests, share
+          news, and plan what's next. It's the fastest way to stay in the
+          loop.
+        </p>
+        <p class="section-lede">
+          You can also browse upcoming meetups and actions on our
+          <a
+            class="inline-link"
+            href="{{ site.social.luma }}"
+            target="_blank"
+            rel="noreferrer"
+            >event calendar</a
+          >.
+        </p>
+      </div>
+      <a
+        class="btn primary large"
+        href="{{ site.whatsappUrl }}"
+        target="_blank"
+        rel="noreferrer"
+        >Join the WhatsApp community</a
+      >
+    </div>
+  </section>
+
+  <section id="people" class="section container">
+    <div class="section-header">
+      <p class="eyebrow">People</p>
+      <h2>Meet the organisers</h2>
+      <p class="section-lede">
+        PauseAI UK is volunteer-driven, supported by two paid staff. Get in
+        touch to collaborate or
+        <a
+          class="inline-link"
+          href="https://docs.google.com/document/d/1wVqsjGatoP3ltspkeqnyeye7I1d_V8XYRPQGaGyvitQ/edit?usp=sharing"
+          target="_blank"
+          rel="noreferrer"
+          >start a new chapter</a
+        >.
+      </p>
+    </div>
+    <div class="people-grid">
+      {% for person in people %}
+      <article class="person-card">
+        <div
+          class="avatar"
+          style="background-image: url(&quot;{{ person.imageSrc }}&quot;);"
+        ></div>
+        <div>
+          <h3>{{ person.name }}</h3>
+          <p class="role">{{ person.role }}</p>
+          <p class="bio">{{ person.bio }}</p>
+        </div>
+      </article>
+      {% endfor %}
+    </div>
+    <div style="display: flex; justify-content: center; margin-top: 36px;">
+      <a class="btn primary large" href="/theory-of-change/">Read our theory of change →</a>
+    </div>
+  </section>
+{% endblock %}
+
+{% block bodyScripts %}
+<script>
+  var d = document,
+    w = "https://tally.so/widgets/embed.js",
+    v = function () {
+      "undefined" != typeof Tally
+        ? Tally.loadEmbeds()
+        : d
+            .querySelectorAll("iframe[data-tally-src]:not([src])")
+            .forEach(function (e) {
+              e.src = e.dataset.tallySrc;
+            });
+    };
+  if ("undefined" != typeof Tally) v();
+  else if (d.querySelector('script[src="' + w + '"]') == null) {
+    var s = d.createElement("script");
+    ((s.src = w), (s.onload = v), (s.onerror = v), d.body.appendChild(s));
+  }
+</script>
+{% endblock %}

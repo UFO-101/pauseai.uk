@@ -30,3 +30,11 @@ dist/
 build/
 coverage/
 
+# Eleventy output
+_site/
+
+# Next.js
+.next/
+out/
+next-env.d.ts
+
