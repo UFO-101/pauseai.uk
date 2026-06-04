@@ -3,7 +3,6 @@
 import { useState } from "react";
 
 type Frequency = "monthly" | "oneoff";
-type PaymentMethod = "bacs_debit" | "card";
 
 const ONE_OFF_URL = "https://donate.stripe.com/14AaEY7J69wKgTAaSlcbC02";
 const MONTHLY_URLS: Record<number, string> = {
@@ -22,12 +21,9 @@ const AMOUNTS = [3, 5, 10, 25, 50, 100, 250, 500];
 
 export default function DonateForm() {
   const [frequency, setFrequency] = useState<Frequency>("monthly");
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("bacs_debit");
   const [selectedAmount, setSelectedAmount] = useState<number>(5);
-  const [isCustom, setIsCustom] = useState(false);
-  const [customAmount, setCustomAmount] = useState("");
-  const amount = isCustom ? (parseInt(customAmount, 10) || null) : selectedAmount;
   const isMonthly = frequency === "monthly";
+  const amount = selectedAmount;
 
   const ctaLabel = isMonthly
     ? amount && amount >= MIN_AMOUNT
@@ -35,20 +31,16 @@ export default function DonateForm() {
       : "Donate £…"
     : "Donate one-off →";
 
-  function handleFreqClick(freq: Frequency, method: PaymentMethod) {
+  function handleFreqClick(freq: Frequency) {
     if (freq === frequency) return;
     setFrequency(freq);
-    setPaymentMethod(method);
+    if (freq === "monthly") {
+      setSelectedAmount(5);
+    }
   }
 
-  function handleAmountClick(val: number | "other") {
-    if (val === "other") {
-      setIsCustom(true);
-      setSelectedAmount(0);
-    } else {
-      setIsCustom(false);
-      setSelectedAmount(val);
-    }
+  function handleAmountClick(val: number) {
+    setSelectedAmount(val);
   }
 
   function handleSubmit(e: React.FormEvent) {
@@ -57,13 +49,9 @@ export default function DonateForm() {
       window.location.href = ONE_OFF_URL;
       return;
     }
-    if (!amount || !isFinite(amount) || amount < MIN_AMOUNT) {
-      alert(`Please enter an amount of £${MIN_AMOUNT} or more.`);
-      return;
-    }
     const url = MONTHLY_URLS[amount];
     if (!url) {
-      alert(`No payment link for £${amount}/month. Please choose a preset amount.`);
+      alert("Sorry — that amount is not available. Please pick a preset or email hello@pauseai.uk.");
       return;
     }
     window.location.href = url;
@@ -78,7 +66,7 @@ export default function DonateForm() {
           aria-checked={frequency === "monthly"}
           data-freq="monthly"
           className={`freq-option${frequency === "monthly" ? " is-active" : ""}`}
-          onClick={() => handleFreqClick("monthly", "bacs_debit")}
+          onClick={() => handleFreqClick("monthly")}
         >
           <span className="freq-name">Monthly</span>
           <span className="freq-method">Direct Debit</span>
@@ -89,57 +77,30 @@ export default function DonateForm() {
           aria-checked={frequency === "oneoff"}
           data-freq="oneoff"
           className={`freq-option${frequency === "oneoff" ? " is-active" : ""}`}
-          onClick={() => handleFreqClick("oneoff", "card")}
+          onClick={() => handleFreqClick("oneoff")}
         >
           <span className="freq-name">One-off</span>
           <span className="freq-method">Card · Apple Pay · Google Pay</span>
         </button>
       </div>
 
-      <fieldset className="amount-selector">
-        <legend>Choose an amount</legend>
-        <div className="amount-grid">
-          {AMOUNTS.map((val) => (
-            <button
-              key={val}
-              type="button"
-              className={`amount-option${!isCustom && selectedAmount === val ? " is-active" : ""}`}
-              onClick={() => handleAmountClick(val)}
-            >
-              £{val}
-            </button>
-          ))}
-          <button
-            type="button"
-            className={`amount-option amount-other${isCustom ? " is-active" : ""}`}
-            onClick={() => handleAmountClick("other")}
-          >
-            Other
-          </button>
-        </div>
-        {isCustom && (
-          <div className="amount-custom">
-            <label htmlFor="custom-amount">Enter amount</label>
-            <div className="amount-input-wrap">
-              <span className="currency-prefix">£</span>
-              <input
-                type="number"
-                id="custom-amount"
-                name="custom-amount"
-                min={3}
-                step={1}
-                inputMode="numeric"
-                placeholder="3 or more"
-                value={customAmount}
-                onChange={(e) => setCustomAmount(e.target.value)}
-                autoFocus
-              />
-              <span className="amount-suffix">{isMonthly ? "per month" : "one-off"}</span>
-            </div>
-            <p className="amount-help">Minimum £3 per month.</p>
+      {isMonthly && (
+        <fieldset className="amount-selector">
+          <legend>Choose an amount</legend>
+          <div className="amount-grid">
+            {AMOUNTS.map((val) => (
+              <button
+                key={val}
+                type="button"
+                className={`amount-option${selectedAmount === val ? " is-active" : ""}`}
+                onClick={() => handleAmountClick(val)}
+              >
+                £{val}
+              </button>
+            ))}
           </div>
-        )}
-      </fieldset>
+        </fieldset>
+      )}
 
       <button
         type="submit"
