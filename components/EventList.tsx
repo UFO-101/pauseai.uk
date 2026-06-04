@@ -18,10 +18,12 @@ function EventCard({ entry, isExtra = false }: { entry: LumaEntry; isExtra?: boo
   if (eventDay === today) badge = { label: "Happening today", cls: "luma-event-badge--today" };
   else if (eventDay === tomorrow) badge = { label: "Happening tomorrow", cls: "luma-event-badge--tomorrow" };
 
-  const location =
-    event.location_type === "geo" && event.geo_address_info
-      ? event.geo_address_info.city || event.geo_address_info.full_address || "In person"
-      : "Online";
+  // Luma distinguishes in-person from online via the presence of
+  // geo_address_info. location_type is "offline" for in-person events
+  // and "meet"/"zoom"/etc. for online — never "geo".
+  const location = event.geo_address_info
+    ? event.geo_address_info.city || event.geo_address_info.address || "In person"
+    : "Online";
 
   return (
     <a

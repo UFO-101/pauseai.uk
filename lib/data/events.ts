@@ -1,6 +1,8 @@
 export type LumaGeoAddressInfo = {
   city?: string;
-  full_address?: string;
+  address?: string;
+  region?: string;
+  country?: string;
 };
 
 export type LumaEvent = {
