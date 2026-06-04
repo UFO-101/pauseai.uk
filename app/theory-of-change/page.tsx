@@ -28,8 +28,7 @@ export default function TheoryOfChangePage() {
             <g fill="none" stroke="currentColor" strokeWidth="0.6" opacity="0.55"></g>
           </svg>
           <div className="container tr-hero-inner">
-            <p className="eyebrow">Strategy</p>
-            <h1 className="tr-hero-title">Theory of <span className="tr-title-accent">Change</span></h1>
+            <h1 className="tr-hero-title">Theory of Change</h1>
             <p className="tr-hero-lede">Creating the political momentum for a pause.</p>
           </div>
         </section>

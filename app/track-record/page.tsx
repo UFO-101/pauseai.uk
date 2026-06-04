@@ -28,8 +28,7 @@ export default function TrackRecordPage() {
             <g fill="none" stroke="currentColor" strokeWidth="0.6" opacity="0.55"></g>
           </svg>
           <div className="container tr-hero-inner">
-            <p className="eyebrow">April 2026</p>
-            <h1 className="tr-hero-title">Track <span className="tr-title-accent">Record</span></h1>
+            <h1 className="tr-hero-title">Track Record</h1>
           </div>
         </section>
 
