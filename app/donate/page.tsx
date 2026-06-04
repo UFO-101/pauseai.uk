@@ -32,7 +32,7 @@ export default function DonatePage() {
 
               <div className="donate-intro-photo">
                 <img
-                  src="/images/community.jpeg"
+                  src="/images/bristol-launch.jpeg"
                   alt="PauseAI UK volunteers at a community event"
                 />
               </div>
