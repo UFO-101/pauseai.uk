@@ -28,7 +28,7 @@
   pointer-events: none;
   z-index: 0;
 }
-.tr-hero-inner { position: relative; z-index: 1; max-width: 880px; }
+.tr-hero-inner { position: relative; z-index: 1; max-width: 920px; }
 .tr-hero-title {
   font-family: "Fraunces", Georgia, serif;
   font-weight: 700;
