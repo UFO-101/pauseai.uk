@@ -1391,6 +1391,25 @@ section[id] {
   width: auto;
 }
 
+.footer-social-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  flex: 1 1 320px;
+  min-width: 0;
+}
+
+.footer-email {
+  color: rgba(255, 255, 255, 0.7);
+  text-decoration: none;
+  font-size: 14px;
+}
+
+.footer-email:hover {
+  color: var(--accent);
+}
+
 .social-links {
   display: flex;
   gap: 12px;
@@ -1594,6 +1613,14 @@ section[id] {
     align-items: flex-start;
     gap: 20px;
   }
+  .footer-social-row {
+    flex: 0 0 auto;
+    width: 100%;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: 14px;
+  }
 
   .people-grid {
     grid-template-columns: 1fr;
@@ -1699,7 +1726,7 @@ section[id] {
   font-size: clamp(38px, 4.6vw, 56px);
   letter-spacing: -0.02em;
   line-height: 1.05;
-  margin: 6px 0 0;
+  margin: 6px 0 24px;
   color: var(--text);
 }
 .donate-intro .lede {
@@ -1790,6 +1817,7 @@ section[id] {
       "photo";
     row-gap: 24px;
   }
+  .donate-intro h1 { margin-bottom: 0; }
 }
 .donate-form {
   --form-accent: #C8652A;
