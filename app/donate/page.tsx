@@ -81,8 +81,8 @@ export default function DonatePage() {
                     <p>
                       For UK bank transfers (Faster Payments / BACS) or larger one-off donations, email us and we&apos;ll share account details directly. (Regular gifts of any size are easy above — Direct Debit keeps our fees low.)
                     </p>
-                    <a className="inline-link" href="mailto:hello@pauseai.uk?subject=PauseAI%20UK%20donation%20enquiry">
-                      hello@pauseai.uk →
+                    <a className="inline-link" href="mailto:donate@pauseai.uk?subject=PauseAI%20UK%20donation%20enquiry">
+                      donate@pauseai.uk →
                     </a>
                   </article>
                 </div>
