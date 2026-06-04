@@ -35,10 +35,6 @@ export default function CampaignsPage() {
 
         <section className="campaigns-context">
           <div className="container">
-            <blockquote>
-              AI developers face no meaningful financial or other punitive consequences for foreseeable harms to British citizens.
-              <cite>&mdash; Open letter to the Prime Minister</cite>
-            </blockquote>
             <p>In February 2026, a single operator used commercially available AI to breach nine Mexican government agencies and exfiltrate the personal data of 195 million citizens. The UK&rsquo;s own AI Security Institute has found that today&rsquo;s most advanced models can <em>&ldquo;discover and exploit vulnerabilities autonomously &mdash; tasks that would take human professionals days of work&rdquo;</em>. Britain depends on the same critical infrastructure these tools can now attack.</p>
             <p>Liability is a simple, technology-neutral way to align AI developers&rsquo; incentives with public safety: those who profit from creating catastrophic risk must bear meaningful responsibility when that risk materialises.</p>
           </div>

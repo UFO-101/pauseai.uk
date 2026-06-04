@@ -6,7 +6,7 @@ export type NewsItem = {
   url: string;
 };
 
-export const newsRow1: NewsItem[] = [
+const ALL_NEWS: NewsItem[] = [
   {
     logoSrc: "/images/media-coverage/Financial_Times_corporate_logo.svg",
     logoAlt: "Financial Times",
@@ -61,9 +61,6 @@ export const newsRow1: NewsItem[] = [
     title: "I checked out one of the biggest anti-AI protests yet",
     url: "https://www.technologyreview.com/2026/03/02/1133814/i-checked-out-londons-biggest-ever-anti-ai-protest/",
   },
-];
-
-export const newsRow2: NewsItem[] = [
   {
     logoSrc: "/images/media-coverage/The_Guardian_Logo.svg",
     logoAlt: "The Guardian",
@@ -108,4 +105,13 @@ export const newsRow2: NewsItem[] = [
   },
 ];
 
-export const news = [...newsRow1, ...newsRow2];
+// Desktop: 2 rows (9 + 7). Mobile (handled in page.tsx): 3 rows so
+// each row is shorter and easier to scan on a narrow viewport.
+export const newsRow1 = ALL_NEWS.slice(0, 9);
+export const newsRow2 = ALL_NEWS.slice(9);
+
+export const newsMobileRow1 = ALL_NEWS.slice(0, 6);
+export const newsMobileRow2 = ALL_NEWS.slice(6, 11);
+export const newsMobileRow3 = ALL_NEWS.slice(11);
+
+export const news = ALL_NEWS;

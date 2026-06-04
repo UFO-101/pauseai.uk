@@ -14,7 +14,7 @@ function parseCssStyle(css: string): CSSProperties {
 import Nav from "@/components/Nav";
 import EventList from "@/components/EventList";
 import { getEvents } from "@/lib/data/events";
-import { newsRow1, newsRow2 } from "@/lib/data/news";
+import { newsRow1, newsRow2, newsMobileRow1, newsMobileRow2, newsMobileRow3, type NewsItem } from "@/lib/data/news";
 import { stories } from "@/lib/data/stories";
 import { people } from "@/lib/data/people";
 import { site } from "@/lib/data/site";
@@ -32,6 +32,36 @@ export const metadata: Metadata = {
     images: ["/images/open-graph/open-graph-1600-840.jpg"],
   },
 };
+
+function renderNewsRow(items: NewsItem[], reverse = false) {
+  const doubled = [...items, ...items];
+  return (
+    <div className={`news-marquee-row${reverse ? " news-marquee-row--reverse" : ""}`}>
+      <div className="news-marquee-track">
+        {doubled.map((item, i) => (
+          <a
+            key={i}
+            className="news-marquee-item"
+            href={item.url}
+            target="_blank"
+            rel="noreferrer"
+            title={item.title}
+            aria-label={`${item.logoAlt}: ${item.title}`}
+            {...(i >= items.length ? { "aria-hidden": true, tabIndex: -1 } : {})}
+          >
+            <div className="news-logo-box">
+              {item.logoSrc ? (
+                <img className="news-logo" src={item.logoSrc} alt={item.logoAlt} loading="lazy" />
+              ) : (
+                <span dangerouslySetInnerHTML={{ __html: item.logoHtml! }} />
+              )}
+            </div>
+          </a>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 const HERO_PHOTOS: [string, string][] = [
   ["alistair-june-2025-protest.JPG", "Alistair at the June 2025 London protest"],
@@ -137,53 +167,14 @@ export default async function HomePage() {
 
         <section id="news" className="section">
           <div className="news-marquee" aria-label="Press coverage of PauseAI UK">
-            <div className="news-marquee-row">
-              <div className="news-marquee-track">
-                {[...newsRow1, ...newsRow1].map((item, i) => (
-                  <a
-                    key={i}
-                    className="news-marquee-item"
-                    href={item.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    title={item.title}
-                    aria-label={`${item.logoAlt}: ${item.title}`}
-                    {...(i >= newsRow1.length ? { "aria-hidden": true, tabIndex: -1 } : {})}
-                  >
-                    <div className="news-logo-box">
-                      {item.logoSrc ? (
-                        <img className="news-logo" src={item.logoSrc} alt={item.logoAlt} loading="lazy" />
-                      ) : (
-                        <span dangerouslySetInnerHTML={{ __html: item.logoHtml! }} />
-                      )}
-                    </div>
-                  </a>
-                ))}
-              </div>
+            <div className="news-marquee-set news-marquee-set--desktop" aria-hidden={false}>
+              {renderNewsRow(newsRow1)}
+              {renderNewsRow(newsRow2, true)}
             </div>
-            <div className="news-marquee-row news-marquee-row--reverse">
-              <div className="news-marquee-track">
-                {[...newsRow2, ...newsRow2].map((item, i) => (
-                  <a
-                    key={i}
-                    className="news-marquee-item"
-                    href={item.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    title={item.title}
-                    aria-label={`${item.logoAlt}: ${item.title}`}
-                    {...(i >= newsRow2.length ? { "aria-hidden": true, tabIndex: -1 } : {})}
-                  >
-                    <div className="news-logo-box">
-                      {item.logoSrc ? (
-                        <img className="news-logo" src={item.logoSrc} alt={item.logoAlt} loading="lazy" />
-                      ) : (
-                        <span dangerouslySetInnerHTML={{ __html: item.logoHtml! }} />
-                      )}
-                    </div>
-                  </a>
-                ))}
-              </div>
+            <div className="news-marquee-set news-marquee-set--mobile" aria-hidden={true}>
+              {renderNewsRow(newsMobileRow1)}
+              {renderNewsRow(newsMobileRow2, true)}
+              {renderNewsRow(newsMobileRow3)}
             </div>
           </div>
         </section>

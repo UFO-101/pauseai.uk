@@ -1054,6 +1054,30 @@ section[id] {
 
 /* ── News marquee ──────────────────────────────── */
 
+/* Desktop renders 2 longer marquee rows; phone gets 3 shorter rows
+   so each strip is easier to scan on a narrow viewport. Only one set
+   is visible at a time. */
+.news-marquee-set--mobile {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  .news-marquee-set--desktop {
+    display: none;
+  }
+  .news-marquee-set--mobile {
+    display: block;
+  }
+  /* Tighter vertical padding for the news section on phone */
+  #news.section {
+    padding-top: 32px;
+    padding-bottom: 32px;
+  }
+  .news-marquee {
+    margin-top: 16px;
+  }
+}
+
 .news-marquee {
   --marquee-gap: 72px;
   --marquee-duration: 80s;
