@@ -1801,7 +1801,7 @@ section[id] {
   height: auto;
   max-height: 280px;
   object-fit: cover;
-  object-position: center;
+  object-position: top;
   display: block;
 }
 @media (max-width: 720px) {
