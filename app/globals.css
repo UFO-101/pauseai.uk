@@ -298,6 +298,13 @@ nav a:hover {
   text-align: center;
 }
 
+.next-event .section-heading {
+  font-size: clamp(28px, 4vw, 44px);
+  line-height: 1.15;
+  margin: 0 0 20px;
+  color: var(--text);
+}
+
 /* ── Luma Events Strip ─────────────────────────── */
 
 @keyframes luma-card-in {
@@ -392,31 +399,41 @@ nav a:hover {
 }
 
 .luma-event-card {
+  position: relative;
   min-width: 0;
   scroll-snap-align: start;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: 16px;
   overflow: hidden;
   text-decoration: none;
   color: inherit;
   display: flex;
   flex-direction: column;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
-  box-shadow: 0 1px 3px var(--shadow);
+  transition: border-color 0.25s ease, box-shadow 0.3s ease, transform 0.25s ease;
+  box-shadow:
+    0 1px 2px rgba(20, 14, 8, 0.04),
+    0 2px 6px rgba(20, 14, 8, 0.03);
 }
 
 .luma-event-card:hover {
-  border-color: var(--accent);
-  box-shadow: 0 8px 24px var(--shadow-strong);
-  transform: translateY(-2px);
+  border-color: rgba(20, 14, 8, 0.16);
+  box-shadow:
+    0 4px 14px rgba(20, 14, 8, 0.06),
+    0 16px 36px rgba(20, 14, 8, 0.09);
+  transform: translateY(-3px);
 }
 
 .luma-event-card-img {
   width: 100%;
-  aspect-ratio: 3 / 2;
+  aspect-ratio: 1 / 1;
   object-fit: cover;
   display: block;
+  transition: transform 0.5s ease;
+}
+
+.luma-event-card:hover .luma-event-card-img {
+  transform: scale(1.04);
 }
 
 .luma-event-card-img--placeholder {
@@ -424,34 +441,41 @@ nav a:hover {
 }
 
 .luma-event-card-body {
-  padding: 16px 18px;
+  padding: 16px 18px 18px;
   display: flex;
   flex-direction: column;
+  gap: 6px;
   flex: 1;
 }
 
 .luma-event-card-date {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--accent);
-  font-weight: 600;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
-  margin: 0 0 6px;
+  letter-spacing: 0.12em;
+  margin: 0;
 }
 
 .luma-event-card-title {
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 700;
-  margin: 0 0 6px;
+  margin: 0;
   font-family: "Inter", system-ui, sans-serif;
-  line-height: 1.35;
+  line-height: 1.3;
+  letter-spacing: -0.005em;
   color: var(--text);
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .luma-event-card-location {
   font-size: 13px;
   color: var(--muted);
-  margin: 0;
+  margin: auto 0 0;
+  padding-top: 4px;
 }
 
 .luma-events-empty {
@@ -459,15 +483,23 @@ nav a:hover {
   margin: 0;
 }
 
+/* Badge floats over the top-left of the image so it doesn't push the
+   body content of badged vs unbadged cards out of alignment. */
 .luma-event-badge {
-  display: inline-block;
-  font-size: 11px;
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 1;
+  font-size: 10px;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.07em;
-  padding: 3px 8px;
-  border-radius: 4px;
-  margin-bottom: 8px;
+  letter-spacing: 0.08em;
+  padding: 5px 10px;
+  border-radius: 999px;
+  margin: 0;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  box-shadow: 0 2px 8px rgba(20, 14, 8, 0.18);
 }
 
 .luma-event-badge--today {
@@ -476,7 +508,7 @@ nav a:hover {
 }
 
 .luma-event-badge--tomorrow {
-  background: var(--accent-bg);
+  background: rgba(255, 255, 255, 0.92);
   color: var(--accent);
 }
 

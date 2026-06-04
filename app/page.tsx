@@ -73,6 +73,7 @@ export default async function HomePage() {
 
         <section className="next-event">
           <div className="container">
+            <h2 className="section-heading">Upcoming events</h2>
             <EventList events={events} lumaUrl={site.social.luma} />
           </div>
         </section>
