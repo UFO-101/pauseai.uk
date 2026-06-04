@@ -26,7 +26,6 @@ export default function OxfordPage() {
         <section className="hero" style={{ paddingBottom: 48 }}>
           <div className="container hero-grid">
             <div className="hero-copy">
-              <p className="eyebrow">Oxford</p>
               <h1>PauseAI Oxford</h1>
               <p className="lede">
                 University-driven conversations on AI risk, grounded in collaboration between students, researchers, and local residents.
@@ -48,7 +47,6 @@ export default function OxfordPage() {
 
         <section className="section container">
           <div className="section-header">
-            <p className="eyebrow">What we do</p>
             <h2>Oxford chapter focus</h2>
             <p className="section-lede">
               Oxford brings together safety researchers, policy thinkers, and students for talks, reading groups, and public engagement.
@@ -76,7 +74,6 @@ export default function OxfordPage() {
         <section className="section muted">
           <div className="container">
             <div className="section-header">
-              <p className="eyebrow">Past events</p>
               <h2>What we&apos;ve done</h2>
             </div>
             <div className="activity-grid" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))" }}>
@@ -103,7 +100,6 @@ export default function OxfordPage() {
         <section className="section">
           <div className="container">
             <div className="section-header">
-              <p className="eyebrow">Stay connected</p>
               <h2>Contact the Oxford team</h2>
               <p className="section-lede">
                 Email us to join the mailing list, attend the next meet, or host an event on campus.

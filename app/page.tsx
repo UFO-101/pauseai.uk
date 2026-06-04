@@ -14,7 +14,7 @@ function parseCssStyle(css: string): CSSProperties {
 import Nav from "@/components/Nav";
 import EventList from "@/components/EventList";
 import { getEvents } from "@/lib/data/events";
-import { news } from "@/lib/data/news";
+import { newsRow1, newsRow2 } from "@/lib/data/news";
 import { stories } from "@/lib/data/stories";
 import { people } from "@/lib/data/people";
 import { site } from "@/lib/data/site";
@@ -43,7 +43,6 @@ export default async function HomePage() {
         <section id="about" className="hero">
           <div className="container hero-grid">
             <div className="hero-copy">
-              <p className="eyebrow">Community-led AI safety</p>
               <h1>PauseAI UK</h1>
               <p className="lede">
                 We mobilise communities, challenge industry, and press leaders to pause unsafe AI development until real safeguards exist.
@@ -74,9 +73,6 @@ export default async function HomePage() {
 
         <section className="next-event">
           <div className="container">
-            <p className="eyebrow">
-              <a href={site.social.luma} target="_blank" rel="noreferrer">Upcoming events</a>
-            </p>
             <EventList events={events} lumaUrl={site.social.luma} />
           </div>
         </section>
@@ -84,7 +80,6 @@ export default async function HomePage() {
         <section id="chapters" className="section muted">
           <div className="container">
             <div className="section-header">
-              <p className="eyebrow">Local chapters</p>
               <h2>Organising across the UK</h2>
               <p className="section-lede">
                 Find your city and get involved. Each chapter runs its own events, campaigns, and outreach.
@@ -131,6 +126,16 @@ export default async function HomePage() {
                   <p>Building momentum with public events and community outreach.</p>
                 </div>
               </a>
+              <a className="chapter-card" href="/manchester">
+                <div className="image-frame" style={{ backgroundImage: `url("images/chapters/manchester/manchester_public.jpg")`, backgroundSize: "110% auto", backgroundPosition: "center 22%" }}></div>
+                <div className="card-copy">
+                  <div className="card-header">
+                    <h3>Manchester</h3>
+                    <span className="card-link">Explore Manchester →</span>
+                  </div>
+                  <p>New chapter bringing AI safety conversations and action to the North West.</p>
+                </div>
+              </a>
               <a
                 className="chapter-card"
                 href="https://docs.google.com/document/d/1wVqsjGatoP3ltspkeqnyeye7I1d_V8XYRPQGaGyvitQ/edit?usp=sharing"
@@ -152,34 +157,57 @@ export default async function HomePage() {
 
         <section id="news" className="section container">
           <div className="section-header">
-            <p className="eyebrow">In the media</p>
-            <h2>News coverage</h2>
-            <p className="section-lede">Journalists are taking notice as we hold AI labs to account.</p>
+            <h2>In the news</h2>
           </div>
-          <div className="news-grid">
-            {news.map((item, i) => (
-              <article key={i} className="news-card">
-                <div className="news-logo-box">
-                  {item.logoSrc ? (
-                    <img
-                      className="news-logo"
-                      src={item.logoSrc}
-                      alt={item.logoAlt}
-                      width={item.logoWidth}
-                      height={item.logoHeight}
-                      loading="lazy"
-                    />
-                  ) : (
-                    <div
-                      className="news-logo-box"
-                      dangerouslySetInnerHTML={{ __html: item.logoHtml! }}
-                    />
-                  )}
-                </div>
-                <h3>{item.title}</h3>
-                <a href={item.url} target="_blank" rel="noreferrer">{item.linkText}</a>
-              </article>
-            ))}
+          <div className="news-marquee" aria-label="Press coverage of PauseAI UK">
+            <div className="news-marquee-row">
+              <div className="news-marquee-track">
+                {[...newsRow1, ...newsRow1].map((item, i) => (
+                  <a
+                    key={i}
+                    className="news-marquee-item"
+                    href={item.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    title={item.title}
+                    aria-label={`${item.logoAlt}: ${item.title}`}
+                    {...(i >= newsRow1.length ? { "aria-hidden": true, tabIndex: -1 } : {})}
+                  >
+                    <div className="news-logo-box">
+                      {item.logoSrc ? (
+                        <img className="news-logo" src={item.logoSrc} alt={item.logoAlt} loading="lazy" />
+                      ) : (
+                        <span dangerouslySetInnerHTML={{ __html: item.logoHtml! }} />
+                      )}
+                    </div>
+                  </a>
+                ))}
+              </div>
+            </div>
+            <div className="news-marquee-row news-marquee-row--reverse">
+              <div className="news-marquee-track">
+                {[...newsRow2, ...newsRow2].map((item, i) => (
+                  <a
+                    key={i}
+                    className="news-marquee-item"
+                    href={item.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    title={item.title}
+                    aria-label={`${item.logoAlt}: ${item.title}`}
+                    {...(i >= newsRow2.length ? { "aria-hidden": true, tabIndex: -1 } : {})}
+                  >
+                    <div className="news-logo-box">
+                      {item.logoSrc ? (
+                        <img className="news-logo" src={item.logoSrc} alt={item.logoAlt} loading="lazy" />
+                      ) : (
+                        <span dangerouslySetInnerHTML={{ __html: item.logoHtml! }} />
+                      )}
+                    </div>
+                  </a>
+                ))}
+              </div>
+            </div>
           </div>
         </section>
 

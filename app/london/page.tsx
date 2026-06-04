@@ -26,7 +26,6 @@ export default function LondonPage() {
         <section className="hero" style={{ paddingBottom: 48 }}>
           <div className="container hero-grid">
             <div className="hero-copy">
-              <p className="eyebrow">London</p>
               <h1>PauseAI London</h1>
               <p className="lede">
                 We gather researchers, students, campaigners, and neighbours to push for safer AI development through public action and dialogue.
@@ -48,7 +47,6 @@ export default function LondonPage() {
 
         <section className="section container">
           <div className="section-header">
-            <p className="eyebrow">Highlights</p>
             <h2>What we&apos;re doing in London</h2>
             <p className="section-lede">
               We combine public education with visible action to keep AI safety on the agenda.
@@ -82,7 +80,6 @@ export default function LondonPage() {
         <section className="section muted">
           <div className="container">
             <div className="section-header">
-              <p className="eyebrow">Get involved</p>
               <h2>Join or host the next meetup</h2>
               <p className="section-lede">
                 We meet regularly in central London for talks, workshops, and campaign planning.

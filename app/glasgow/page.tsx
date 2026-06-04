@@ -28,7 +28,6 @@ export default function GlasgowPage() {
         <section className="hero" style={{ paddingBottom: 48 }}>
           <div className="container hero-grid">
             <div className="hero-copy">
-              <p className="eyebrow">Glasgow</p>
               <h1>PauseAI Glasgow</h1>
               <p className="lede">
                 Bringing AI safety conversations to Scotland with public events, panels, and community organising.
@@ -49,7 +48,6 @@ export default function GlasgowPage() {
 
         <section className="section container">
           <div className="section-header">
-            <p className="eyebrow">Past events</p>
             <h2>What we&apos;ve done</h2>
           </div>
           <div className="activity-grid" style={{ gridTemplateColumns: "1fr" }}>
@@ -67,7 +65,6 @@ export default function GlasgowPage() {
         <section className="section muted">
           <div className="container">
             <div className="section-header">
-              <p className="eyebrow">Stay involved</p>
               <h2>Link up with the chapter</h2>
               <p className="section-lede">
                 Join the Scotland chat to connect with local organisers, or the UK chat for UK-wide events and campaigns.

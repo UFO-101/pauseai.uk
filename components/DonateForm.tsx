@@ -5,10 +5,20 @@ import { useState } from "react";
 type Frequency = "monthly" | "oneoff";
 type PaymentMethod = "bacs_debit" | "card";
 
-const CHECKOUT_ENDPOINT = "/api/create-checkout-session";
+const ONE_OFF_URL = "https://donate.stripe.com/14AaEY7J69wKgTAaSlcbC02";
+const MONTHLY_URLS: Record<number, string> = {
+  3:   "https://donate.stripe.com/3cI3cwgfCgZc46O4tXcbC03",
+  5:   "https://donate.stripe.com/3cIdRa7J610ebzg4tXcbC00",
+  10:  "https://donate.stripe.com/cNi3cwd3q24i5aS1hLcbC01",
+  25:  "https://donate.stripe.com/14AcN61kI7oCbzgaSlcbC04",
+  50:  "https://donate.stripe.com/7sYeVebZmcIW8n41hLcbC05",
+  100: "https://donate.stripe.com/9B6bJ2d3qeR446O9OhcbC06",
+  250: "https://donate.stripe.com/dRmfZi1kIfV8bzg2lPcbC07",
+  500: "https://donate.stripe.com/cNi28s5AY5gucDkbWpcbC08",
+};
 const MIN_AMOUNT = 3;
 
-const AMOUNTS = [3, 5, 10, 25, 50, 100];
+const AMOUNTS = [3, 5, 10, 25, 50, 100, 250, 500];
 
 export default function DonateForm() {
   const [frequency, setFrequency] = useState<Frequency>("monthly");
@@ -16,15 +26,14 @@ export default function DonateForm() {
   const [selectedAmount, setSelectedAmount] = useState<number>(5);
   const [isCustom, setIsCustom] = useState(false);
   const [customAmount, setCustomAmount] = useState("");
-  const [submitting, setSubmitting] = useState(false);
-
   const amount = isCustom ? (parseInt(customAmount, 10) || null) : selectedAmount;
   const isMonthly = frequency === "monthly";
 
-  const ctaLabel =
-    amount && amount >= MIN_AMOUNT
-      ? `Donate £${amount}${isMonthly ? " a month" : ""}`
-      : "Donate £…";
+  const ctaLabel = isMonthly
+    ? amount && amount >= MIN_AMOUNT
+      ? `Donate £${amount} a month`
+      : "Donate £…"
+    : "Donate one-off →";
 
   function handleFreqClick(freq: Frequency, method: PaymentMethod) {
     if (freq === frequency) return;
@@ -42,29 +51,22 @@ export default function DonateForm() {
     }
   }
 
-  async function handleSubmit(e: React.FormEvent) {
+  function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (frequency === "oneoff") {
+      window.location.href = ONE_OFF_URL;
+      return;
+    }
     if (!amount || !isFinite(amount) || amount < MIN_AMOUNT) {
       alert(`Please enter an amount of £${MIN_AMOUNT} or more.`);
       return;
     }
-    setSubmitting(true);
-    try {
-      const payload = {
-        amount_pounds: amount,
-        frequency,
-        payment_method: paymentMethod,
-      };
-      console.log("[donate] would POST to", CHECKOUT_ENDPOINT, payload);
-      alert(
-        `Stripe is not wired up yet. This would create a ${frequency} £${amount} donation via ${paymentMethod === "bacs_debit" ? "Direct Debit" : "card / wallet"}.`
-      );
-    } catch (err) {
-      console.error(err);
-      alert("Something went wrong. Please try again or email joseph@pauseai.info.");
-    } finally {
-      setSubmitting(false);
+    const url = MONTHLY_URLS[amount];
+    if (!url) {
+      alert(`No payment link for £${amount}/month. Please choose a preset amount.`);
+      return;
     }
+    window.location.href = url;
   }
 
   return (
@@ -142,9 +144,8 @@ export default function DonateForm() {
       <button
         type="submit"
         className="btn primary large donate-btn"
-        disabled={submitting}
       >
-        <span>{submitting ? "Redirecting…" : ctaLabel}</span>
+        <span>{ctaLabel}</span>
       </button>
 
       <p className="form-footnote">

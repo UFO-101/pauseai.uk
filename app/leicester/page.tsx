@@ -28,7 +28,6 @@ export default function LeicesterPage() {
         <section className="hero" style={{ paddingBottom: 48 }}>
           <div className="container hero-grid">
             <div className="hero-copy">
-              <p className="eyebrow">Leicester</p>
               <h1>PauseAI Leicester</h1>
               <p className="lede">
                 Building a local network to campaign for AI safety, host discussions, and support national actions.
@@ -52,7 +51,6 @@ export default function LeicesterPage() {
 
         <section className="section container">
           <div className="section-header">
-            <p className="eyebrow">Focus</p>
             <h2>Growing the Leicester chapter</h2>
             <p className="section-lede">
               Want to help? We&apos;re looking for organisers, hosts, and partners to kickstart regular meetups.
@@ -75,7 +73,6 @@ export default function LeicesterPage() {
         <section className="section muted">
           <div className="container">
             <div className="section-header">
-              <p className="eyebrow">Goings on</p>
               <h2>Past events</h2>
             </div>
             <div className="activity-grid" style={{ gridTemplateColumns: "1fr" }}>
@@ -94,7 +91,6 @@ export default function LeicesterPage() {
         <section className="section">
           <div className="container">
             <div className="section-header">
-              <p className="eyebrow">Get in touch</p>
               <h2>Help shape the chapter</h2>
               <p className="section-lede">
                 Contact us through the above methods if you can host an event, promote a meetup, or want to collaborate on outreach.
