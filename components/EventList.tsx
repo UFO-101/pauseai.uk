@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import type { LumaEntry } from "@/lib/data/events";
 import { formatEventDate, formatEventTime } from "@/lib/data/events";
 
@@ -8,7 +8,7 @@ function getDateStr(d: Date, tz: string): string {
   return d.toLocaleDateString("en-CA", { timeZone: tz, year: "numeric", month: "2-digit", day: "2-digit" });
 }
 
-function EventCard({ entry }: { entry: LumaEntry }) {
+function EventCard({ entry, isExtra = false }: { entry: LumaEntry; isExtra?: boolean }) {
   const { event } = entry;
   const tz = event.timezone || "Europe/London";
   const today = getDateStr(new Date(), "Europe/London");
@@ -28,7 +28,7 @@ function EventCard({ entry }: { entry: LumaEntry }) {
       href={`https://lu.ma/${event.url}`}
       target="_blank"
       rel="noreferrer"
-      className="luma-event-card"
+      className={`luma-event-card${isExtra ? " luma-event-card--extra" : ""}`}
     >
       {event.cover_url ? (
         <img className="luma-event-card-img" src={event.cover_url} alt="" loading="lazy" />
@@ -48,48 +48,8 @@ function EventCard({ entry }: { entry: LumaEntry }) {
 }
 
 export default function EventList({ events, lumaUrl }: { events: LumaEntry[]; lumaUrl: string }) {
-  const first4 = events.slice(0, 4);
-  const rest = events.slice(4);
-  const hasMore = rest.length > 0;
-
   const [expanded, setExpanded] = useState(false);
-  const extraRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const el = extraRef.current;
-    if (!el) return;
-    if (expanded) {
-      el.querySelectorAll<HTMLElement>(".luma-event-card").forEach((card, i) => {
-        card.style.animationDelay = `${i * 60}ms`;
-      });
-      el.classList.remove("overflow-visible");
-      el.style.maxHeight = el.scrollHeight + "px";
-      el.classList.add("is-expanded");
-      const onEnd = (e: TransitionEvent) => {
-        if (e.propertyName !== "max-height") return;
-        el.style.maxHeight = "";
-        el.classList.add("overflow-visible");
-      };
-      el.addEventListener("transitionend", onEnd, { once: true });
-    } else {
-      el.classList.remove("overflow-visible");
-      el.style.maxHeight = el.scrollHeight + "px";
-      requestAnimationFrame(() =>
-        requestAnimationFrame(() => {
-          el.style.maxHeight = "0";
-          el.classList.remove("is-expanded");
-        })
-      );
-      const onEnd = (e: TransitionEvent) => {
-        if (e.propertyName !== "max-height") return;
-        el.style.maxHeight = "";
-      };
-      el.addEventListener("transitionend", onEnd, { once: true });
-      el.querySelectorAll<HTMLElement>(".luma-event-card").forEach((card) => {
-        card.style.animationDelay = "";
-      });
-    }
-  }, [expanded]);
+  const hasMore = events.length > 4;
 
   if (events.length === 0) {
     return (
@@ -105,20 +65,11 @@ export default function EventList({ events, lumaUrl }: { events: LumaEntry[]; lu
 
   return (
     <>
-      <div className="luma-events-scroll">
-        {first4.map((entry) => (
-          <EventCard key={entry.event.url} entry={entry} />
+      <div className={`luma-events-list${expanded ? " is-expanded" : ""}`}>
+        {events.map((entry, i) => (
+          <EventCard key={entry.event.url} entry={entry} isExtra={i >= 4} />
         ))}
       </div>
-      {hasMore && (
-        <div className="luma-events-extra" ref={extraRef}>
-          <div className="luma-events-extra-inner">
-            {rest.map((entry) => (
-              <EventCard key={entry.event.url} entry={entry} />
-            ))}
-          </div>
-        </div>
-      )}
       {hasMore && (
         <div className="luma-events-more">
           <button

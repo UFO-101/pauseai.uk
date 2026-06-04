@@ -300,7 +300,14 @@ nav a:hover {
 
 /* ── Luma Events Strip ─────────────────────────── */
 
-.luma-events-scroll {
+@keyframes luma-card-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* Desktop default: 4-column grid. Cards beyond the first 4 are hidden
+   until "Show more" toggles .is-expanded. */
+.luma-events-list {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 20px;
@@ -308,8 +315,37 @@ nav a:hover {
   margin: -6px -2px -12px;
 }
 
+@media (min-width: 901px) {
+  .luma-events-list .luma-event-card--extra {
+    display: none;
+  }
+  .luma-events-list.is-expanded .luma-event-card--extra {
+    display: flex;
+    animation: luma-card-in 0.3s ease both;
+  }
+  .luma-events-list.is-expanded .luma-event-card--extra:nth-child(5)  { animation-delay: 0ms; }
+  .luma-events-list.is-expanded .luma-event-card--extra:nth-child(6)  { animation-delay: 60ms; }
+  .luma-events-list.is-expanded .luma-event-card--extra:nth-child(7)  { animation-delay: 120ms; }
+  .luma-events-list.is-expanded .luma-event-card--extra:nth-child(8)  { animation-delay: 180ms; }
+  .luma-events-list.is-expanded .luma-event-card--extra:nth-child(9)  { animation-delay: 240ms; }
+  .luma-events-list.is-expanded .luma-event-card--extra:nth-child(10) { animation-delay: 300ms; }
+  .luma-events-list.is-expanded .luma-event-card--extra:nth-child(11) { animation-delay: 360ms; }
+  .luma-events-list.is-expanded .luma-event-card--extra:nth-child(12) { animation-delay: 420ms; }
+}
+
+/* Tablet: 2 columns; all events visible (no show-more) */
 @media (max-width: 900px) {
-  .luma-events-scroll {
+  .luma-events-list {
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    padding: 6px 0 12px;
+    margin: 0;
+  }
+}
+
+/* Phone: horizontal carousel of all events, scroll-snap per card */
+@media (max-width: 600px) {
+  .luma-events-list {
     display: flex;
     overflow-x: auto;
     overflow-y: visible;
@@ -317,43 +353,13 @@ nav a:hover {
     -webkit-overflow-scrolling: touch;
     scrollbar-width: thin;
     scrollbar-color: var(--border-strong) transparent;
+    gap: 14px;
+    padding: 6px 4px 14px;
+    margin: 0;
   }
-  .luma-event-card {
-    flex: 0 0 260px;
-  }
-}
-
-@keyframes luma-card-in {
-  from { opacity: 0; transform: translateY(10px); }
-  to   { opacity: 1; transform: none; }
-}
-
-.luma-events-extra {
-  display: contents;
-}
-.luma-events-extra-inner {
-  display: contents;
-}
-
-@media (min-width: 901px) {
-  .luma-events-extra {
-    display: block;
-    max-height: 0;
-    overflow: hidden;
-    transition: max-height 0.45s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-  .luma-events-extra.overflow-visible {
-    overflow: visible;
-  }
-  .luma-events-extra-inner {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 20px;
-    padding: 20px 2px 12px;
-    margin: 0 -2px -12px;
-  }
-  .luma-events-extra.is-expanded .luma-event-card {
-    animation: luma-card-in 0.3s ease both;
+  .luma-events-list .luma-event-card {
+    flex: 0 0 86%;
+    scroll-snap-align: start;
   }
 }
 
