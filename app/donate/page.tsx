@@ -39,7 +39,7 @@ export default function DonatePage() {
 
               <div className="donate-intro-text">
                 <p className="lede">
-                  PauseAI UK runs on donations from people like you — funding protests, organising, outreach, and the small team holding AI companies to account. PauseAI Global has covered our costs so far, but from mid-2026 we need to fund ourselves.
+                  PauseAI UK runs entirely on donations. We use our funding to pay for event venues, merchandise, administrative software and staff salaries. PauseAI Global has covered our costs so far, but from mid-2026 we need to fund ourselves. You can see our full expenses and projected costs in our <a className="inline-link" href="/pdfs/Donor%20Prospectus.pdf" target="_blank" rel="noreferrer">Donor Prospectus</a>.
                 </p>
                 <div className="donate-links">
                   <a className="donate-link" href="/track-record/">
@@ -73,13 +73,13 @@ export default function DonatePage() {
               <div id="other-ways" className="donate-bottom-col">
                 <h2>Major gifts &amp; bank transfer</h2>
                 <p className="section-lede">
-                  Prefer to give by bank transfer, making a large one-off gift, or giving on behalf of a foundation? Get in touch and we&apos;ll help directly — and say a proper thank-you.
+                  If you prefer to give by bank transfer, please get in touch and we&apos;ll provide our bank details. You may want to do this to avoid fees on large one-off donations. For recurring donations this may not be necessary as Direct Debit fees are small.
                 </p>
                 <div className="other-ways-cards">
                   <article className="feature-card">
-                    <h3>Bank transfer &amp; major gifts</h3>
+                    <h3>Any questions?</h3>
                     <p>
-                      For UK bank transfers (Faster Payments / BACS) or larger one-off donations, email us and we&apos;ll share account details directly. (Regular gifts of any size are easy above — Direct Debit keeps our fees low.)
+                      Get in touch and we&apos;ll be happy to help.
                     </p>
                     <a className="inline-link" href="mailto:donate@pauseai.uk?subject=PauseAI%20UK%20donation%20enquiry">
                       donate@pauseai.uk →
@@ -89,11 +89,7 @@ export default function DonatePage() {
               </div>
 
               <div id="transparency" className="donate-bottom-col">
-                <h2>Where your money goes</h2>
-                <p className="section-lede">
-                  Your gift funds protests, organising, outreach, and our small staff team. For a full breakdown of our finances and funding targets, see the{" "}
-                  <a className="inline-link" href="/pdfs/Donor%20Prospectus.pdf" target="_blank" rel="noreferrer">donor prospectus</a>.
-                </p>
+                <h2>Can I claim Gift Aid?</h2>
                 <p className="section-lede">
                   Because our work meaningfully engages with policy, donations are not eligible for Gift Aid. Read our{" "}
                   <a className="inline-link" href="/privacy">privacy policy</a> to see how we handle your information.
