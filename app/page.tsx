@@ -148,9 +148,9 @@ export default async function HomePage() {
 
             <div className="hero-marquee-overlay">
               <div className="hero-marquee-text">
-                <h1>Organising for a safer future</h1>
+                <h1>Organising for<br/>our future</h1>
                 <p className="hero-lede">
-                  We are the civic movement dedicated to preventing the risks of future artificial intelligence.
+                  We are the civic movement dedicated to averting<br/>the risks of superhuman artificial intelligence.
                 </p>
                 <div className="actions hero-actions">
                   <a className="btn primary" href={site.whatsappUrl} target="_blank" rel="noreferrer">
