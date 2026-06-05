@@ -1,69 +1,38 @@
 # Pause AI UK Website
 
-Single-page static site deployed to GitHub Pages via a separate `gh-pages` branch.
+The [pauseai.uk](https://pauseai.uk) website — a [Next.js](https://nextjs.org) (App Router) app deployed to Netlify.
 
-## Structure
+## Stack
 
-- `site/`: Source for the static site
-  - `index.html`: Main page
-  - `styles.css`: Site styles
-  - `script.js`: Minimal behavior
-  - `CNAME`: Custom domain configuration (`pauseai.uk`)
-- `.github/workflows/deploy.yml`: Optional manual deployment workflow to publish `site/` to `gh-pages`.
+- **Next.js 16** (App Router) with **React 19** and **TypeScript**
+- Self-hosted Inter (`next/font/local` + `@font-face`) and Google-hosted Lato (`next/font/google`)
+- Deployed to **Netlify** via `@netlify/plugin-nextjs`
+
+## Layout
+
+- `app/` — routes, layouts, and per-route CSS (App Router)
+- `components/` — shared React components
+- `lib/data/` — typed content modules; shared config (social links, emails, GA ID, external URLs) is in `lib/data/site.ts`
+- `public/` — static assets (`fonts/`, `images/`, `pdfs/`, favicons)
 
 ## Local development
 
 ```bash
-npm run dev        # starts a hot-reload server at http://localhost:8080
-npm run lighthouse # run Lighthouse against the live site (pauseai.uk)
-npm run lighthouse:dev # run Lighthouse against the local dev server
+npm install
+npm run dev    # Next dev server (Turbopack) at http://localhost:3000
+npm run build  # Production build
+npm run lint   # ESLint
 ```
 
-No build step is required — `site/` is served as-is.
+See `package.json` for the full script list, including the `lighthouse*` scripts.
 
-## Fonts
+## Things that aren't obvious from the code
 
-Fonts are self-hosted for performance. The woff2 files in `site/fonts/` are committed to the repo, so no action is needed after cloning.
-
-They are sourced from the [`@fontsource-variable`](https://fontsource.org) npm packages. To update to a newer font version:
-
-```bash
-npm install         # update packages
-npm run fonts:update  # copy new woff2 files into site/fonts/
-```
-
-The `@font-face` declarations in `site/styles.css` reference these files directly.
+- **Events** are fetched at request time from the Luma calendar API (`lib/data/events.ts`), not hardcoded.
+- **Donations** use prebuilt Stripe payment links hardcoded in `components/DonateForm.tsx` — there is no payment backend.
+- **Fonts** are committed as woff2 in `public/fonts/`, so there is no font download/build step after cloning.
+- **`public/CNAME`** is a leftover from the old GitHub Pages setup. Netlify ignores it; the domain is managed in the Netlify dashboard.
 
 ## Deployment
 
-There are two ways to publish to `gh-pages`:
-
-1) Deploy script (recommended)
-
-```bash
-# From repo root
-./scripts/deploy.sh               # safe push (no force)
-./scripts/deploy.sh --force       # force push using split branch
-# Options: --remote, --branch, --prefix, --allow-dirty
-```
-
-2) Manual subtree push (keeps deploy branch independent of `main`)
-
-```bash
-# From repo root
-git subtree split --prefix site -b gh-pages
-# Push the generated branch to origin
-git push -u origin gh-pages --force
-# Optional: delete local temp branch
-git branch -D gh-pages
-```
-
-3) GitHub Actions (manual trigger)
-
-Run the "Deploy to GitHub Pages" workflow from the Actions tab. It publishes `site/` to the `gh-pages` branch using the built-in `GITHUB_TOKEN`.
-
-## GitHub Pages settings
-
-- Set Pages source to the `gh-pages` branch (root).
-- Custom domain: `pauseai.uk` (the `CNAME` file is included so it persists).
-- Point your domain’s DNS to GitHub Pages (ALIAS/ANAME or A records to GitHub and CNAME for `www` if desired).
+Netlify, configured in `netlify.toml` (build `npm run build`, publish `.next`, Node 22). Pushes to the default branch deploy to production; pull requests get deploy previews automatically.
