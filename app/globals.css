@@ -34,7 +34,7 @@
   --accent-strong: #e57226;
 
   --accent-light: #F0D4BC;
-  --accent-bg: #FFF1E5;
+  --accent-bg: #ffffff;
 
   /* Borders & shadows */
   --border: #E8DDD1;
@@ -1291,7 +1291,7 @@ section[id] {
 /* ── Shop banner ──────────────────────────────── */
 
 .shop-banner {
-  background: var(--surface);
+  background: var(--surface-2);
   border-top: 1px solid var(--accent-light);
   border-bottom: 1px solid var(--accent-light);
 }
@@ -1751,6 +1751,10 @@ section[id] {
 
 .donate-intro {
   padding: 32px 0 44px;
+  background: var(--accent-bg);
+}
+.donate-bottom {
+  background: var(--bg);
 }
 .donate-intro-grid {
   display: grid;
