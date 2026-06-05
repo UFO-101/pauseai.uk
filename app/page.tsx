@@ -34,29 +34,36 @@ export const metadata: Metadata = {
 };
 
 function renderNewsRow(items: NewsItem[], reverse = false) {
-  const doubled = [...items, ...items];
   return (
     <div className={`news-marquee-row${reverse ? " news-marquee-row--reverse" : ""}`}>
       <div className="news-marquee-track">
-        {doubled.map((item, i) => (
-          <a
-            key={i}
-            className="news-marquee-item"
-            href={item.url}
-            target="_blank"
-            rel="noreferrer"
-            title={item.title}
-            aria-label={`${item.logoAlt}: ${item.title}`}
-            {...(i >= items.length ? { "aria-hidden": true, tabIndex: -1 } : {})}
+        {[0, 1].map((copyIdx) => (
+          <div
+            key={copyIdx}
+            className="news-marquee-copy"
+            {...(copyIdx > 0 ? { "aria-hidden": true } : {})}
           >
-            <div className="news-logo-box">
-              {item.logoSrc ? (
-                <img className="news-logo" src={item.logoSrc} alt={item.logoAlt} loading="lazy" />
-              ) : (
-                <span dangerouslySetInnerHTML={{ __html: item.logoHtml! }} />
-              )}
-            </div>
-          </a>
+            {items.map((item, i) => (
+              <a
+                key={i}
+                className="news-marquee-item"
+                href={item.url}
+                target="_blank"
+                rel="noreferrer"
+                title={item.title}
+                aria-label={`${item.logoAlt}: ${item.title}`}
+                {...(copyIdx > 0 ? { tabIndex: -1 } : {})}
+              >
+                <div className="news-logo-box">
+                  {item.logoSrc ? (
+                    <img className="news-logo" src={item.logoSrc} alt={item.logoAlt} loading="lazy" />
+                  ) : (
+                    <span dangerouslySetInnerHTML={{ __html: item.logoHtml! }} />
+                  )}
+                </div>
+              </a>
+            ))}
+          </div>
         ))}
       </div>
     </div>
@@ -64,24 +71,24 @@ function renderNewsRow(items: NewsItem[], reverse = false) {
 }
 
 const HERO_PHOTOS: [string, string][] = [
-  ["alistair-june-2025-protest.JPG", "Alistair at the June 2025 London protest"],
-  ["alistair-reading.jpg", "Alistair Reith at a PauseAI event"],
-  ["benifei-russell-panel.jpg", "Benifei and Russell at the PauseCon Brussels panel"],
-  ["book-launch-joseph.jpeg", "Joseph at the PauseAI UK book launch"],
-  ["connor-leahy.jpg", "Connor Leahy speaking at a PauseCon"],
-  ["deepmind-close-up.jpg", "Protester outside Google DeepMind"],
-  ["june-2025-protest-closeup.jpg", "June 2025 protest close-up"],
-  ["laiba-brussels.jpg", "Laiba at PauseCon Brussels"],
-  ["letter-writing.jpeg", "PauseAI UK letter-writing session"],
-  ["london-june-2025-protest-group.jpg", "London June 2025 protest group"],
-  ["maxime-speech-audience.jpg", "Maxime delivering a speech to a London audience"],
-  ["pausecon-brussels-2026-panel.jpg", "PauseCon Brussels 2026 panel"],
-  ["pausecon-brussels-discussion.jpg", "PauseCon Brussels discussion"],
-  ["pausecon-london-2025-people-talking.jpg", "PauseCon London 2025 discussion"],
-  ["pausecon-london-ella-workshop.jpg", "Ella's workshop at PauseCon London"],
-  ["scott-wiener-on-screen.jpg", "Scott Wiener on screen at a PauseAI event"],
-  ["stuart-russell-interview.jpg", "Stuart Russell interview at PauseCon Brussels"],
-  ["westminster-hall.jpg", "Westminster Hall event"],
+  ["alistair-june-2025-protest.webp", "Alistair at the June 2025 London protest"],
+  ["alistair-reading.webp", "Alistair Reith at a PauseAI event"],
+  ["benifei-russell-panel.webp", "Benifei and Russell at the PauseCon Brussels panel"],
+  ["book-launch-joseph.webp", "Joseph at the PauseAI UK book launch"],
+  ["connor-leahy.webp", "Connor Leahy speaking at a PauseCon"],
+  ["deepmind-close-up.webp", "Protester outside Google DeepMind"],
+  ["june-2025-protest-closeup.webp", "June 2025 protest close-up"],
+  ["laiba-brussels.webp", "Laiba at PauseCon Brussels"],
+  ["letter-writing.webp", "PauseAI UK letter-writing session"],
+  ["london-june-2025-protest-group.webp", "London June 2025 protest group"],
+  ["maxime-speech-audience.webp", "Maxime delivering a speech to a London audience"],
+  ["pausecon-brussels-2026-panel.webp", "PauseCon Brussels 2026 panel"],
+  ["pausecon-brussels-discussion.webp", "PauseCon Brussels discussion"],
+  ["pausecon-london-2025-people-talking.webp", "PauseCon London 2025 discussion"],
+  ["pausecon-london-ella-workshop.webp", "Ella's workshop at PauseCon London"],
+  ["scott-wiener-on-screen.webp", "Scott Wiener on screen at a PauseAI event"],
+  ["stuart-russell-interview.webp", "Stuart Russell interview at PauseCon Brussels"],
+  ["westminster-hall.webp", "Westminster Hall event"],
 ];
 
 function shuffle<T>(arr: readonly T[]): T[] {
@@ -114,15 +121,26 @@ export default async function HomePage() {
             {heroRows.map((row, ri) => (
               <div key={ri} className={`hero-marquee-row hero-marquee-row--${row.dir}`}>
                 <div className="hero-marquee-track">
-                  {[...row.photos, ...row.photos, ...row.photos, ...row.photos].map(([src, alt], i) => (
-                    <img
-                      key={i}
-                      src={`/images/front-page-hero/${src}`}
-                      alt={alt}
-                      aria-hidden={i >= row.photos.length || undefined}
-                      loading={ri === 0 && i === 0 ? undefined : "lazy"}
-                      {...(ri === 0 && i === 0 ? { fetchPriority: "high" as const } : {})}
-                    />
+                  {[0, 1].map((copyIdx) => (
+                    <div
+                      key={copyIdx}
+                      className="hero-marquee-copy"
+                      {...(copyIdx > 0 ? { "aria-hidden": true } : {})}
+                    >
+                      {[...row.photos, ...row.photos].map(([src, alt], i) => {
+                        const isPrimary = copyIdx === 0 && i < row.photos.length;
+                        return (
+                          <img
+                            key={i}
+                            src={`/images/front-page-hero-optimized/${src}`}
+                            alt={isPrimary ? alt : ""}
+                            aria-hidden={!isPrimary || undefined}
+                            loading={ri === 0 && copyIdx === 0 && i === 0 ? undefined : "lazy"}
+                            {...(ri === 0 && copyIdx === 0 && i === 0 ? { fetchPriority: "high" as const } : {})}
+                          />
+                        );
+                      })}
+                    </div>
                   ))}
                 </div>
               </div>
@@ -371,6 +389,11 @@ export default async function HomePage() {
           </div>
         </section>
       </main>
+      <script
+        dangerouslySetInnerHTML={{
+          __html: `(function(){function setup(){document.querySelectorAll('.hero-marquee-track,.news-marquee-track').forEach(function(track){var copy=track.querySelector('.hero-marquee-copy,.news-marquee-copy');if(!copy)return;function update(){var w=copy.getBoundingClientRect().width;if(w>0)track.style.setProperty('--copy-shift','-'+w+'px')}update();if(window.ResizeObserver)new ResizeObserver(update).observe(copy);else window.addEventListener('resize',update);copy.querySelectorAll('img').forEach(function(img){if(!img.complete)img.addEventListener('load',update,{once:true})})})}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',setup);else setup()})();`,
+        }}
+      />
       <script
         dangerouslySetInnerHTML={{
           __html: `var d=document,w="https://tally.so/widgets/embed.js",v=function(){"undefined"!=typeof Tally?Tally.loadEmbeds():d.querySelectorAll("iframe[data-tally-src]:not([src])").forEach(function(e){e.src=e.dataset.tallySrc})};if("undefined"!=typeof Tally)v();else if(d.querySelector('script[src="'+w+'"]')==null){var s=d.createElement("script");s.src=w;s.onload=v;s.onerror=v;d.body.appendChild(s)}`,

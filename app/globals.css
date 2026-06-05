@@ -689,11 +689,21 @@ section[id] {
   --marquee-gap: 12px;
   --marquee-duration: 90s;
   display: flex;
-  gap: var(--marquee-gap);
+  flex-wrap: nowrap;
   height: 100%;
   width: max-content;
   animation: hero-marquee-scroll var(--marquee-duration) linear infinite;
-  will-change: transform;
+}
+
+/* Two sibling copies per track. Spacing lives on each image as
+   margin-right so the trailing gap is part of the image's intrinsic
+   width — Safari under-counts a child's padding-right in width:
+   max-content calculations on flex parents, which would otherwise
+   drift the seam by one gap each loop. */
+.hero-marquee-copy {
+  display: flex;
+  flex-shrink: 0;
+  height: 100%;
 }
 
 .hero-marquee-row--rtl .hero-marquee-track {
@@ -705,13 +715,15 @@ section[id] {
 .hero-marquee-row:nth-child(2) .hero-marquee-track { --marquee-duration: 180s; }
 .hero-marquee-row:nth-child(3) .hero-marquee-track { --marquee-duration: 100s; }
 
-/* Track contains 4 copies of each row's photos so loop is -25%; the
-   gap correction keeps the seamless join aligned. With 4 copies the
-   track is always wide enough that no row ever shows trailing space
-   even when several photos happen to be narrow. */
+/* --copy-shift is set in pixels by the inline marquee script in
+   app/page.tsx after measuring one copy's actual width. Until that
+   runs (or if JS is disabled), fall back to -50% which is correct
+   when the track's max-content is computed correctly — Safari has a
+   long-standing bug where it under-counts child padding/margin in
+   max-content on a flex parent, which is why we override in pixels. */
 @keyframes hero-marquee-scroll {
   from { transform: translate3d(0, 0, 0); }
-  to   { transform: translate3d(calc(-25% - var(--marquee-gap) * 0.25), 0, 0); }
+  to   { transform: translate3d(var(--copy-shift, -50%), 0, 0); }
 }
 
 .hero-marquee-track img {
@@ -719,8 +731,16 @@ section[id] {
   width: auto;
   display: block;
   flex-shrink: 0;
+  margin-right: var(--marquee-gap);
   border-radius: 8px;
   object-fit: contain;
+  /* Safari intermittently drops textures during long transforms on
+     elements that aren't on their own compositor layer. Promote each
+     image and keep its backface from being culled so the texture stays
+     resident for the lifetime of the animation. */
+  transform: translateZ(0);
+  -webkit-backface-visibility: hidden;
+          backface-visibility: hidden;
 }
 
 /* Overlay text — no full scrim. Just the text itself, with strong
@@ -827,17 +847,27 @@ section[id] {
     gap: 8px;
     padding: 8px 0;
   }
+  /* On phone, the outlined-text-on-photos treatment is too fragile.
+     Sit the title + lede + buttons on a tinted, blurred panel and
+     drop the per-text shadows — the panel does the legibility work. */
+  .hero-marquee-text {
+    background: rgba(0, 0, 0, 0.42);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: 18px;
+    padding: 22px 20px 24px;
+  }
   .hero-marquee-text h1 {
     font-size: clamp(36px, 10vw, 56px);
-    /* Stroke that's 2.5px on a 140px headline becomes proportionally
-       4-5x heavier on a 56px headline, which reads as a clumsy outline.
-       Scale it back at this size. */
-    -webkit-text-stroke-width: 1.4px;
     letter-spacing: -0.02em;
+    color: #fff;
+    -webkit-text-stroke: 0;
+    filter: none;
   }
   .hero-marquee-text .hero-lede {
     font-size: 15px;
-    margin: 16px auto 22px;
+    margin: 14px auto 20px;
+    filter: none;
   }
 }
 
@@ -1104,11 +1134,21 @@ section[id] {
 
 .news-marquee-track {
   display: flex;
-  gap: var(--marquee-gap);
+  flex-wrap: nowrap;
   width: max-content;
   align-items: center;
   animation: news-marquee-scroll var(--marquee-duration) linear infinite;
-  will-change: transform;
+}
+
+/* Two siblings tile under a clean -50%. Spacing lives on each item as
+   margin-right so the trailing gap is part of the item's intrinsic
+   width — Safari has a long-standing bug where width: max-content on a
+   flex parent under-counts a child's padding-right, which makes a
+   gap+padding-right copy pattern drift by exactly one gap each loop. */
+.news-marquee-copy {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
 }
 
 .news-marquee-row--reverse .news-marquee-track {
@@ -1117,14 +1157,19 @@ section[id] {
 
 @keyframes news-marquee-scroll {
   from { transform: translate3d(0, 0, 0); }
-  to   { transform: translate3d(calc(-50% - var(--marquee-gap) / 2), 0, 0); }
+  to   { transform: translate3d(var(--copy-shift, -50%), 0, 0); }
 }
 
 .news-marquee-item {
   flex: 0 0 auto;
+  margin-right: var(--marquee-gap);
   padding: 0;
   text-decoration: none;
   border-radius: 8px;
+  /* Some logo SVGs (notably Cosmopolitan) declare width/height with no
+     viewBox; Safari then paints SVG content past the IMG's constrained
+     box, visually overlapping the next item. Clip at the slot. */
+  overflow: hidden;
   opacity: 0.75;
   filter: grayscale(85%) contrast(0.95);
   transition: opacity 0.25s ease, filter 0.25s ease;
