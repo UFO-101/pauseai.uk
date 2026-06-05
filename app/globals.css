@@ -774,7 +774,6 @@ section[id] {
   margin: 0;
   color: rgba(0, 0, 0, 0.1);
   -webkit-text-stroke: 2.5px #fff;
-  text-stroke: 2.5px #fff;
   paint-order: stroke fill;
   /* Heavy layered shadow — dense dark halo right behind the strokes
      so they read against any photo, plus a wider soft drop. */
