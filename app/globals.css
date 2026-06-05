@@ -30,11 +30,11 @@
   /* Accent — burnt terracotta */
   --pause-orange: #C8652A;
   --pause-orange-rgb: 200 101 42;
-  --accent: #994E1D;
-  --accent-strong: #8C461A;
+  --accent: #e57226;
+  --accent-strong: #e57226;
 
   --accent-light: #F0D4BC;
-  --accent-bg: #FFF5EC;
+  --accent-bg: #FFF1E5;
 
   /* Borders & shadows */
   --border: #E8DDD1;
@@ -1865,8 +1865,6 @@ section[id] {
   .donate-intro h1 { margin-bottom: 0; }
 }
 .donate-form {
-  --form-accent: #C8652A;
-  --form-accent-bg: rgba(200, 101, 42, 0.06);
   --form-surface: #fff;
   --form-track: #F2F1EE;
   --form-border: #E8E6E1;
@@ -1964,10 +1962,10 @@ section[id] {
   background: #FAF9F7;
 }
 .amount-option.is-active {
-  background: var(--form-accent-bg);
-  border-color: var(--form-accent);
-  color: var(--form-accent);
-  box-shadow: 0 0 0 1px var(--form-accent);
+  background: color-mix(in srgb, var(--accent) 8%, white);
+  border-color: var(--accent);
+  color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
 }
 .amount-other {
   grid-column: 1 / -1;
@@ -2038,15 +2036,15 @@ section[id] {
   letter-spacing: -0.005em;
   line-height: 1.2;
   border-radius: 9px;
-  background: var(--form-accent, #C8652A);
-  border: 1px solid var(--form-accent, #C8652A);
+  background: var(--accent);
+  border: 1px solid var(--accent);
   color: #fff;
-  box-shadow: 0 1px 2px rgba(20, 14, 8, 0.08), 0 2px 6px rgba(200, 101, 42, 0.18);
+  box-shadow: 0 1px 2px rgba(20, 14, 8, 0.08), 0 2px 6px rgba(153, 78, 29, 0.2);
 }
 .btn.donate-btn:hover {
-  background: #B05821;
-  border-color: #B05821;
-  box-shadow: 0 2px 4px rgba(20, 14, 8, 0.1), 0 4px 10px rgba(200, 101, 42, 0.25);
+  background: var(--accent-strong);
+  border-color: var(--accent-strong);
+  box-shadow: 0 2px 4px rgba(20, 14, 8, 0.1), 0 4px 10px rgba(153, 78, 29, 0.28);
   transform: translateY(-1px);
 }
 .btn.donate-btn:active {
