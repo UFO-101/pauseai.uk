@@ -32,8 +32,9 @@ export default function DonatePage() {
 
               <div className="donate-intro-photo">
                 <img
-                  src="/images/bristol-launch.jpeg"
+                  src="/images/bristol-launch.webp"
                   alt="PauseAI UK volunteers at a community event"
+                  fetchPriority="high"
                 />
               </div>
 
