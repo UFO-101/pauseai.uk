@@ -44,16 +44,16 @@ export default function CampaignsPage() {
           <div className="container">
             <h2>Read the case in full</h2>
             <div className="docs-grid">
-              <a className="doc-card" href="/pdfs/AI%20Liability%20Open%20Letter.pdf" target="_blank" rel="noreferrer">
-                <img src="/pdfs/AI%20Liability%20Open%20Letter.jpg" alt="" loading="lazy" />
+              <a className="doc-card" href="/pdfs/AI-Liability-Open-Letter.pdf" target="_blank" rel="noreferrer">
+                <img src="/pdfs/AI-Liability-Open-Letter.jpg" alt="" loading="lazy" />
                 <div className="doc-meta">
                   <p className="doc-kind">Open letter &mdash; June 2026</p>
                   <h3>To the Prime Minister</h3>
                   <span className="doc-cta">Read the letter &rarr;</span>
                 </div>
               </a>
-              <a className="doc-card" href="/pdfs/AI%20Liability%20Policy%20Briefing.pdf" target="_blank" rel="noreferrer">
-                <img src="/pdfs/AI%20Liability%20Policy%20Briefing.jpg" alt="" loading="lazy" />
+              <a className="doc-card" href="/pdfs/AI-Liability-Policy-Briefing.pdf" target="_blank" rel="noreferrer">
+                <img src="/pdfs/AI-Liability-Policy-Briefing.jpg" alt="" loading="lazy" />
                 <div className="doc-meta">
                   <p className="doc-kind">Policy briefing &mdash; June 2026</p>
                   <h3>AI Developer Liability for Severe Harms</h3>

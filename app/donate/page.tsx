@@ -40,7 +40,7 @@ export default function DonatePage() {
 
               <div className="donate-intro-text">
                 <p className="lede">
-                  PauseAI UK runs entirely on donations. We use our funding to pay for event venues, merchandise, administrative software and staff salaries. PauseAI Global has covered our costs so far, but from mid-2026 we need to fund ourselves. You can see our full expenses and projected costs in our <a className="inline-link" href="/pdfs/Donor%20Prospectus.pdf" target="_blank" rel="noreferrer">Donor Prospectus</a>.
+                  PauseAI UK runs entirely on donations. We use our funding to pay for event venues, merchandise, administrative software and staff salaries. PauseAI Global has covered our costs so far, but from mid-2026 we need to fund ourselves. You can see our full expenses and projected costs in our <a className="inline-link" href="/pdfs/Donor-Prospectus.pdf" target="_blank" rel="noreferrer">Donor Prospectus</a>.
                 </p>
                 <div className="donate-links">
                   <a className="donate-link" href="/track-record/">
@@ -51,8 +51,8 @@ export default function DonatePage() {
                     <span className="donate-link-title">Theory of change</span>
                     <span className="donate-link-desc">The strategy behind our work</span>
                   </a>
-                  <a className="donate-link donate-link-doc" href="/pdfs/Donor%20Prospectus.pdf" target="_blank" rel="noreferrer">
-                    <img className="donate-link-thumb" src="/pdfs/Donor%20Prospectus-thumb.jpg" alt="Donor prospectus cover" width={500} height={707} loading="lazy" />
+                  <a className="donate-link donate-link-doc" href="/pdfs/Donor-Prospectus.pdf" target="_blank" rel="noreferrer">
+                    <img className="donate-link-thumb" src="/pdfs/Donor-Prospectus-thumb.jpg" alt="Donor prospectus cover" width={500} height={707} loading="lazy" />
                     <span className="donate-link-doc-text">
                       <span className="donate-link-title">Donor prospectus (PDF)</span>
                       <span className="donate-link-desc">Our plans, finances and funding targets</span>
