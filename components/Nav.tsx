@@ -92,7 +92,7 @@ export default function Nav({ chapterName, chapterLogoSrc }: NavProps) {
               <img src={chapterLogoSrc} alt="" className="brand-mark" />
             ) : (
               <>
-                <img src="/images/logos/Pause Symbol.svg" alt="" className="brand-mark" />
+                <img src="/images/logos/Pause-Symbol.svg" alt="" className="brand-mark" />
                 <div className="brand-text">
                   <span className="brand-pretitle">PauseAI UK</span>
                   <span className="brand-tagline">{chapterName} Chapter</span>
@@ -103,7 +103,7 @@ export default function Nav({ chapterName, chapterLogoSrc }: NavProps) {
         ) : (
           <a className="brand brand-link" href="/">
             <img
-              src="/images/logos/PauseAI Logo Transparent.svg"
+              src="/images/logos/PauseAI-Logo-Transparent.svg"
               alt="PauseAI UK"
               width={178}
               height={48}

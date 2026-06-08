@@ -77,7 +77,7 @@ export default function TheoryOfChangePage() {
 
               <h3>Brand and messaging</h3>
               <figure className="toc-figure">
-                <img src="/images/logos/%5BSquare%5D%20Safety%20Before%20Superintelligence.jpg" alt="Safety Before Superintelligence — PauseAI campaign image" loading="lazy" />
+                <img src="/images/logos/Square-Safety-Before-Superintelligence.jpg" alt="Safety Before Superintelligence — PauseAI campaign image" loading="lazy" />
               </figure>
               <p>PauseAI UK positions itself as a movement focused on the risks of human-level and superhuman AI, rather than the current harms of AI. This allows us to direct our efforts towards the most severe issues, while also letting us scale faster than movements focused on the existing harms of AI. PauseAI&rsquo;s strong SEO and name recognition are crucial assets because we automatically grow when more people become concerned about AI risk. This turns AI companies and the progress of AI itself into our most effective marketing tool.</p>
               <p>A large fraction of our members have never been involved in grassroots advocacy before and we see this as a strength. It makes our protests more interesting to the media and makes the organisation more appealing to the silent majority who are not very politically active &mdash; unless, perhaps, they feel their lives are directly threatened.</p>

@@ -6,7 +6,7 @@ export default function Footer() {
       <div className="container footer-grid">
         <div className="brand footer-brand">
           <img
-            src="/images/logos/PauseAI Logo Transparent.svg"
+            src="/images/logos/PauseAI-Logo-Transparent.svg"
             alt="PauseAI UK"
             width={178}
             height={48}
