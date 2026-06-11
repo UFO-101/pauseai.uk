@@ -741,6 +741,18 @@ section[id] {
   transform: translateZ(0);
   -webkit-backface-visibility: hidden;
           backface-visibility: hidden;
+  /* Start invisible and fade in once decoded — softens the "pop" as
+     photos land. JS adds .is-loaded on the img's load event; the
+     safety animation at 2.4s ensures images appear even if JS fails. */
+  opacity: 0;
+  transition: opacity 380ms ease-out;
+  animation: hero-img-safety 0s linear 2.4s forwards;
+}
+.hero-marquee-track img.is-loaded {
+  opacity: 1;
+}
+@keyframes hero-img-safety {
+  to { opacity: 1; }
 }
 
 /* Overlay text — no full scrim. Just the text itself, with strong
@@ -847,25 +859,30 @@ section[id] {
     padding: 8px 0;
   }
   /* On phone, the outlined-text-on-photos treatment is too fragile.
-     Sit the title + lede + buttons on a tinted, blurred panel and
-     drop the per-text shadows — the panel does the legibility work. */
+     Sit the title + lede + buttons on a warm-dark blurred panel and
+     drop the per-text shadows — the panel does the legibility work.
+     Warm-dark (rgba 20/14/8) instead of pure black for brand cohesion,
+     subtle saturate on backdrop, top inset highlight for some weight. */
   .hero-marquee-text {
-    background: rgba(0, 0, 0, 0.42);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    border-radius: 18px;
-    padding: 22px 20px 24px;
+    background: rgba(20, 14, 8, 0.36);
+    backdrop-filter: blur(14px) saturate(115%);
+    -webkit-backdrop-filter: blur(14px) saturate(115%);
+    border-radius: 22px;
+    padding: 24px 22px 26px;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
   }
   .hero-marquee-text h1 {
-    font-size: clamp(36px, 10vw, 56px);
-    letter-spacing: -0.02em;
+    font-size: clamp(40px, 11vw, 64px);
+    letter-spacing: -0.035em;
+    line-height: 0.96;
     color: #fff;
     -webkit-text-stroke: 0;
     filter: none;
   }
   .hero-marquee-text .hero-lede {
-    font-size: 15px;
+    font-size: 15.5px;
     margin: 14px auto 20px;
+    color: rgba(255, 255, 255, 0.92);
     filter: none;
   }
 }
