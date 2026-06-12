@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import type { CSSProperties } from "react";
+import OnboardingFormEmbed from "./OnboardingFormEmbed";
 
 function parseCssStyle(css: string): CSSProperties {
   const result: Record<string, string> = {};
@@ -326,16 +327,7 @@ export default async function HomePage() {
             <p className="section-lede">Fill out the form below to get involved.</p>
           </div>
           <div className="tally-embed">
-            <iframe
-              data-tally-src="https://tally.so/embed/wbGvKe?alignLeft=1&hideTitle=1&transparentBackground=1&dynamicHeight=1"
-              loading="lazy"
-              width="100%"
-              height={1749}
-              frameBorder={0}
-              marginHeight={0}
-              marginWidth={0}
-              title="Get involved!"
-            ></iframe>
+            <OnboardingFormEmbed />
           </div>
         </section>
 
@@ -392,11 +384,6 @@ export default async function HomePage() {
       <script
         dangerouslySetInnerHTML={{
           __html: `(function(){function setup(){document.querySelectorAll('.hero-marquee-track,.news-marquee-track').forEach(function(track){var copy=track.querySelector('.hero-marquee-copy,.news-marquee-copy');if(!copy)return;function update(){var w=copy.getBoundingClientRect().width;if(w>0)track.style.setProperty('--copy-shift','-'+w+'px')}update();if(window.ResizeObserver)new ResizeObserver(update).observe(copy);else window.addEventListener('resize',update);copy.querySelectorAll('img').forEach(function(img){if(!img.complete)img.addEventListener('load',update,{once:true})})});document.querySelectorAll('.hero-marquee-track img').forEach(function(img){function mark(){img.classList.add('is-loaded')}if(img.complete&&img.naturalWidth>0)mark();else{img.addEventListener('load',mark,{once:true});img.addEventListener('error',mark,{once:true})}})}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',setup);else setup()})();`,
-        }}
-      />
-      <script
-        dangerouslySetInnerHTML={{
-          __html: `var d=document,w="https://tally.so/widgets/embed.js",v=function(){"undefined"!=typeof Tally?Tally.loadEmbeds():d.querySelectorAll("iframe[data-tally-src]:not([src])").forEach(function(e){e.src=e.dataset.tallySrc})};if("undefined"!=typeof Tally)v();else if(d.querySelector('script[src="'+w+'"]')==null){var s=d.createElement("script");s.src=w;s.onload=v;s.onerror=v;d.body.appendChild(s)}`,
         }}
       />
     </>
