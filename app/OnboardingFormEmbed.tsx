@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 
 const EMBED_ORIGIN = "https://pauseai.info";
-const EMBED_URL = `${EMBED_ORIGIN}/embed/onboarding-form/?country=United+Kingdom`;
+const EMBED_URL = `${EMBED_ORIGIN}/embed/onboarding-form/?country=United+Kingdom&bg=FDF8F3`;
 const DEFAULT_HEIGHT = 600;
 
 export default function OnboardingFormEmbed() {
