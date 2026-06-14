@@ -1196,16 +1196,16 @@ section[id] {
   width: auto;
 }
 
+/* Logos are sized per item via --logo-h (set inline from news.ts) so
+   every mark carries roughly equal visual area — wide wordmarks render
+   shorter, square marks taller. --logo-scale shrinks the whole set on
+   phone. Explicit height (not max-height) means no letterboxing, so
+   the gap between visible marks stays optically constant. */
 .news-marquee-item .news-logo {
-  max-height: 44px;
-  max-width: 180px;
+  height: calc(var(--logo-h, 44) * var(--logo-scale, 1) * 1px);
   width: auto;
-  height: auto;
-  object-fit: contain;
-}
-
-.news-marquee-item img.news-logo[alt="Financial Times"] {
-  max-height: 60px;
+  max-width: none;
+  max-height: none;
 }
 
 .news-marquee-item:hover,
@@ -1234,13 +1234,13 @@ section[id] {
 
 @media (max-width: 600px) {
   .news-marquee {
-    --marquee-gap: 36px;
+    --marquee-gap: 40px;
     --marquee-item-height: 44px;
     --marquee-duration: 40s;
-  }
-  .news-marquee-item {
-    min-width: 130px;
-    padding: 0 8px;
+    /* Scale every logo down proportionally; gaps stay even because the
+       old min-width hack (which padded narrow logos with invisible
+       slack) is gone. */
+    --logo-scale: 0.72;
   }
 }
 
@@ -1254,7 +1254,8 @@ section[id] {
 }
 
 .news-logo-text--swlondoner {
-  font-size: 2rem;
+  font-size: calc(2rem * var(--logo-scale, 1));
+  white-space: nowrap;
 }
 
 .news-logo-text--bbc {

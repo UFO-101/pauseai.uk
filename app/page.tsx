@@ -56,7 +56,13 @@ function renderNewsRow(items: NewsItem[], reverse = false) {
               >
                 <div className="news-logo-box">
                   {item.logoSrc ? (
-                    <img className="news-logo" src={item.logoSrc} alt={item.logoAlt} loading="lazy" />
+                    <img
+                      className="news-logo"
+                      src={item.logoSrc}
+                      alt={item.logoAlt}
+                      loading="lazy"
+                      style={item.logoHeight ? ({ "--logo-h": item.logoHeight } as CSSProperties) : undefined}
+                    />
                   ) : (
                     <span dangerouslySetInnerHTML={{ __html: item.logoHtml! }} />
                   )}
@@ -391,7 +397,7 @@ export default async function HomePage() {
       </main>
       <script
         dangerouslySetInnerHTML={{
-          __html: `(function(){function setup(){document.querySelectorAll('.hero-marquee-track,.news-marquee-track').forEach(function(track){var copy=track.querySelector('.hero-marquee-copy,.news-marquee-copy');if(!copy)return;function update(){var w=copy.getBoundingClientRect().width;if(w>0)track.style.setProperty('--copy-shift','-'+w+'px')}update();if(window.ResizeObserver)new ResizeObserver(update).observe(copy);else window.addEventListener('resize',update);copy.querySelectorAll('img').forEach(function(img){if(!img.complete)img.addEventListener('load',update,{once:true})})});document.querySelectorAll('.hero-marquee-track img').forEach(function(img){function mark(){img.classList.add('is-loaded')}if(img.complete&&img.naturalWidth>0)mark();else{img.addEventListener('load',mark,{once:true});img.addEventListener('error',mark,{once:true})}})}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',setup);else setup()})();`,
+          __html: `(function(){function setup(){document.querySelectorAll('.hero-marquee-track,.news-marquee-track').forEach(function(track){var copy=track.querySelector('.hero-marquee-copy,.news-marquee-copy');if(!copy)return;function update(){var w=copy.getBoundingClientRect().width;if(w>0)track.style.setProperty('--copy-shift','-'+w+'px')}update();if(window.ResizeObserver)new ResizeObserver(update).observe(copy);else window.addEventListener('resize',update);if(document.fonts&&document.fonts.ready)document.fonts.ready.then(update);copy.querySelectorAll('img').forEach(function(img){if(!img.complete)img.addEventListener('load',update,{once:true})})});document.querySelectorAll('.hero-marquee-track img').forEach(function(img){function mark(){img.classList.add('is-loaded')}if(img.complete&&img.naturalWidth>0)mark();else{img.addEventListener('load',mark,{once:true});img.addEventListener('error',mark,{once:true})}})}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',setup);else setup()})();`,
         }}
       />
       <script
