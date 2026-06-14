@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import Nav from "@/components/Nav";
-import NoAnalytics from "@/components/NoAnalytics";
 import DonateForm from "@/components/DonateForm";
 
 export const metadata: Metadata = {
@@ -105,7 +104,6 @@ export default function DonatePage() {
           </div>
         </section>
       </main>
-      <NoAnalytics />
     </>
   );
 }

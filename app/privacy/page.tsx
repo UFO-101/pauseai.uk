@@ -58,9 +58,9 @@ export default function PrivacyPage() {
 
             <h2>Website analytics</h2>
             <p>
-              This site uses <strong>Google Analytics</strong>, run by <strong>Stichting PauseAI</strong> (the global PauseAI foundation), which owns the Google Workspace it lives in — so for analytics, Stichting PauseAI is the data controller. It sets cookies that collect information such as the pages you visit, your approximate location (by country/region), and your device and browser type. These cookies are only set <strong>after you accept them</strong> via our cookie banner; you can change your choice at any time using the &ldquo;Cookie settings&rdquo; link in the footer.
+              This site uses <strong>Google Analytics</strong>, run by <strong>Stichting PauseAI</strong> (the global PauseAI foundation), which owns the Google Workspace it lives in — so for analytics, Stichting PauseAI is the data controller. It sets cookies that collect information such as the pages you visit, your approximate location (by country/region), and your device and browser type. Analytics is enabled by default, but you can <strong>opt out at any time</strong> using the &ldquo;Cookie settings&rdquo; link in the footer — this stops the tracking and deletes the analytics cookies, and we remember your choice on future visits.
             </p>
-            <p><strong>Legal basis:</strong> your consent.</p>
+            <p><strong>Legal basis:</strong> our legitimate interest in understanding how the site is used.</p>
 
             <h2>Who we share donation data with</h2>
             <p>We do not sell your personal data. We share donation data only with the providers that help us operate, each acting on our behalf or under their own privacy terms:</p>
@@ -112,7 +112,7 @@ export default function PrivacyPage() {
 
             <h2>Cookies</h2>
             <p>
-              With your consent, this site uses <strong>Google Analytics cookies</strong> (managed by Stichting PauseAI) to understand how the site is used, plus a small preference cookie that remembers your cookie choice. When you donate, <strong>Stripe&apos;s</strong> secure checkout also sets its own cookies, which are necessary to process payments and are governed by Stripe&apos;s privacy policy. You can change your choice using the &ldquo;Cookie settings&rdquo; link in the footer, or block cookies in your browser.
+              By default, this site uses <strong>Google Analytics cookies</strong> (managed by Stichting PauseAI) to understand how the site is used, and we store your cookie choice in your browser so we can remember it. When you donate, <strong>Stripe&apos;s</strong> secure checkout also sets its own cookies, which are necessary to process payments and are governed by Stripe&apos;s privacy policy. You can opt out of analytics at any time using the &ldquo;Cookie settings&rdquo; link in the footer, or block cookies in your browser.
             </p>
 
             <h2>Changes to this policy</h2>
