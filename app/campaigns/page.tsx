@@ -24,9 +24,9 @@ export default function CampaignsPage() {
       <main className="campaigns">
         <section className="campaigns-hero">
           <div className="container">
-            <p className="eyebrow">UK AI Liability Campaign</p>
-            <h1>Hold AI developers liable for severe harm</h1>
-            <p className="lede">We&rsquo;re calling on the UK government to introduce legislation that makes AI companies legally responsible when their models enable critical harms &mdash; from cyber attacks on national infrastructure to biosecurity threats.</p>
+            <p className="eyebrow">UK AI Legislation Campaign</p>
+            <h1>Regulate AI developers now</h1>
+            <p className="lede">We&rsquo;re calling on the UK government to introduce legislation to protect British people from AI risks &mdash; from cyber attacks on national infrastructure to biosecurity threats.</p>
             <p className="hero-cta-row">
               <a className="btn primary" href="#email-your-mp">Email your MP &rarr;</a>
             </p>
@@ -36,7 +36,6 @@ export default function CampaignsPage() {
         <section className="campaigns-context">
           <div className="container">
             <p>In February 2026, a single operator used commercially available AI to breach nine Mexican government agencies and exfiltrate the personal data of 195 million citizens. The UK&rsquo;s own AI Security Institute has found that today&rsquo;s most advanced models can <em>&ldquo;discover and exploit vulnerabilities autonomously &mdash; tasks that would take human professionals days of work&rdquo;</em>. Britain depends on the same critical infrastructure these tools can now attack.</p>
-            <p>Liability is a simple, technology-neutral way to align AI developers&rsquo; incentives with public safety: those who profit from creating catastrophic risk must bear meaningful responsibility when that risk materialises.</p>
           </div>
         </section>
 

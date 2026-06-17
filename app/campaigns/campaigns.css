@@ -19,7 +19,7 @@
   letter-spacing: -0.02em;
   margin: 0 0 18px;
   color: var(--text);
-  max-width: 18ch;
+  max-width: 27ch;
 }
 .campaigns-hero .lede {
   font-size: clamp(16px, 1.3vw, 19px);
