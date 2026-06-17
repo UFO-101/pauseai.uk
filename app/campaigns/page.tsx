@@ -55,7 +55,7 @@ export default function CampaignsPage() {
                 <img src="/pdfs/AI-Liability-Policy-Briefing.jpg" alt="" loading="lazy" />
                 <div className="doc-meta">
                   <p className="doc-kind">Policy briefing &mdash; June 2026</p>
-                  <h3>AI Developer Liability for Severe Harms</h3>
+                  <h3>Policy Briefing</h3>
                   <span className="doc-cta">Read the briefing &rarr;</span>
                 </div>
               </a>
