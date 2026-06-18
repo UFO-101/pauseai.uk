@@ -35,9 +35,9 @@ export default function CampaignsPage() {
 
         <section className="campaigns-context">
           <div className="container">
-            <p>In February 2026, a single operator used commercially available AI to breach nine Mexican government agencies and exfiltrate the personal data of 195 million citizens. The UK&rsquo;s own AI Security Institute has found that today&rsquo;s most advanced models can <em>&ldquo;discover and exploit vulnerabilities autonomously &mdash; tasks that would take human professionals days of work&rdquo;</em>. Britain depends on the same critical infrastructure these tools can now attack.</p>
-            <p>Under the existing legal framework, there is substantial doubt as to whether AI model developers can be held liable for even the most severe and foreseeable harms, including cases in which their models were clearly decisive in enabling the harm. The UK does not have specific legal standards or a regulator for AI systems. As a result, <strong>AI developers face no meaningful financial incentives and no requirements to put in place adequate safety measures for their AI systems.</strong></p>
-            <p>Given the pace at which AI capabilities are advancing, this cannot wait. We urge the Prime Minister to introduce legislation to guard against the risks of frontier AI systems.</p>
+            <p>In February of this year, a lone criminal used commercially available AI tools to carry out cyber attacks on nine Mexican government agencies and exfiltrate hundreds of millions of citizen records. The UK&rsquo;s own AI Security Institute has found that today&rsquo;s most advanced models can <em>&ldquo;discover and exploit vulnerabilities autonomously &mdash; tasks that would take human professionals days of work&rdquo;</em>. Britain depends on the same critical infrastructure these tools can now attack.</p>
+            <p>The UK has no specific legal standards for AI. No regulator oversees frontier AI development. And UK law does not reliably hold developers liable for damage or deaths caused by their models, even when the danger is predictable, preventable and uniquely enabled by AI. In short, <strong>UK law neither requires developers to guard against frontier AI risks, nor exposes them to any financial consequence if they fail to do so.</strong></p>
+            <p>Given the pace at which AI capabilities are advancing, this matter cannot wait. We urge the Prime Minister to introduce legislation to guard against the risks of frontier AI systems.</p>
           </div>
         </section>
 
