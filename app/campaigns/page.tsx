@@ -24,9 +24,9 @@ export default function CampaignsPage() {
       <main className="campaigns">
         <section className="campaigns-hero">
           <div className="container">
-            <p className="eyebrow">UK AI Legislation Campaign</p>
+            <p className="eyebrow">Frontier AI Legislation Campaign</p>
             <h1>Regulate AI developers now</h1>
-            <p className="lede">We&rsquo;re calling on the UK government to introduce legislation to protect British people from AI risks &mdash; from cyber attacks on national infrastructure to biosecurity threats.</p>
+            <p className="lede">We&rsquo;re calling on the UK government to introduce legislation to protect British people from frontier AI risks: from cyber attacks on national infrastructure to bioweapons.</p>
             <p className="hero-cta-row">
               <a className="btn primary" href="#email-your-mp">Email your MP &rarr;</a>
             </p>
@@ -36,6 +36,8 @@ export default function CampaignsPage() {
         <section className="campaigns-context">
           <div className="container">
             <p>In February 2026, a single operator used commercially available AI to breach nine Mexican government agencies and exfiltrate the personal data of 195 million citizens. The UK&rsquo;s own AI Security Institute has found that today&rsquo;s most advanced models can <em>&ldquo;discover and exploit vulnerabilities autonomously &mdash; tasks that would take human professionals days of work&rdquo;</em>. Britain depends on the same critical infrastructure these tools can now attack.</p>
+            <p>Under the existing legal framework, there is substantial doubt as to whether AI model developers can be held liable for even the most severe and foreseeable harms, including cases in which their models were clearly decisive in enabling the harm. The UK does not have specific legal standards or a regulator for AI systems. As a result, <strong>AI developers face no meaningful financial incentives and no requirements to put in place adequate safety measures for their AI systems.</strong></p>
+            <p>Given the pace at which AI capabilities are advancing, this cannot wait. We urge the Prime Minister to introduce legislation to guard against the risks of frontier AI systems.</p>
           </div>
         </section>
 
@@ -43,19 +45,19 @@ export default function CampaignsPage() {
           <div className="container">
             <h2>Read the case in full</h2>
             <div className="docs-grid">
-              <a className="doc-card" href="/pdfs/AI-Liability-Open-Letter.pdf" target="_blank" rel="noreferrer">
-                <img src="/pdfs/AI-Liability-Open-Letter.jpg" alt="" loading="lazy" />
+              <a className="doc-card" href="/pdfs/Frontier-AI-Open-Letter.pdf" target="_blank" rel="noreferrer">
+                <img src="/pdfs/Frontier-AI-Open-Letter.jpg" alt="" loading="lazy" />
                 <div className="doc-meta">
                   <p className="doc-kind">Open letter &mdash; June 2026</p>
                   <h3>To the Prime Minister</h3>
                   <span className="doc-cta">Read the letter &rarr;</span>
                 </div>
               </a>
-              <a className="doc-card" href="/pdfs/AI-Liability-Policy-Briefing.pdf" target="_blank" rel="noreferrer">
-                <img src="/pdfs/AI-Liability-Policy-Briefing.jpg" alt="" loading="lazy" />
+              <a className="doc-card" href="/pdfs/Frontier-AI-Risks-Policy-Briefing.pdf" target="_blank" rel="noreferrer">
+                <img src="/pdfs/Frontier-AI-Risks-Policy-Briefing.jpg" alt="" loading="lazy" />
                 <div className="doc-meta">
                   <p className="doc-kind">Policy briefing &mdash; June 2026</p>
-                  <h3>Policy Briefing</h3>
+                  <h3>Frontier AI Risks</h3>
                   <span className="doc-cta">Read the briefing &rarr;</span>
                 </div>
               </a>
