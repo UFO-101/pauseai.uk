@@ -177,7 +177,7 @@ export default function GovernancePage() {
               <section className="gov-policy">
                 <h3>2. Approval by the board</h3>
                 <ul className="gov-list">
-                  <li>The board will approve donors giving above &pound;10,000 cumulatively in any 12-month period.</li>
+                  <li>The board will approve donors (and major donor advisors) giving (or recommending, in the case of advisors) above &pound;10,000 cumulatively in any 12-month period.</li>
                   <li>
                     The board will have access to all the KYD info above to decide whether to accept or reject the
                     donation.
