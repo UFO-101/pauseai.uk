@@ -75,13 +75,19 @@ export default function LeicesterPage() {
             <div className="section-header">
               <h2>Past events</h2>
             </div>
-            <div className="activity-grid" style={{ gridTemplateColumns: "1fr" }}>
-              <article className="activity-card" style={{ maxWidth: 480 }}>
+            <div className="activity-grid" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))" }}>
+              <article className="activity-card">
                 <div className="image-frame" style={{ backgroundImage: "url('/images/chapters/leicester/SirBobBurgessBuilding.jpg')" }}></div>
                 <div className="card-copy">
                   <h3>PauseAI Leicester Launch</h3>
                   <p>The launch event for the Leicester chapter, bringing together students and locals to discuss AI safety.</p>
-                  <a className="btn primary" href="https://luma.com/plmfr5nz" target="_blank" rel="noreferrer">RSVP on Luma</a>
+                </div>
+              </article>
+              <article className="activity-card">
+                <div className="image-frame" style={{ backgroundImage: "url('/images/chapters/leicester/the-ai-doc-poster.jpg')" }}></div>
+                <div className="card-copy">
+                  <h3>Film Night: The AI Doc</h3>
+                  <p>We watched The AI Doc together in the cosy cinema room with popcorn and discussion.</p>
                 </div>
               </article>
             </div>
