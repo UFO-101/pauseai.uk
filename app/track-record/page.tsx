@@ -631,13 +631,13 @@ export default function TrackRecordPage() {
                     </a>
                     <a
                       className="shot"
-                      href="/images/parliament-june-2026/jeremy-corbyn.jpeg"
+                      href="/images/parliament-june-2026/jeremy-corbyn.jpg"
                     >
                       <Image
                         fill
                         sizes="(max-width: 768px) 100vw, 33vw"
                         style={{ objectFit: "cover" }}
-                        src="/images/parliament-june-2026/jeremy-corbyn.jpeg"
+                        src="/images/parliament-june-2026/jeremy-corbyn.jpg"
                         alt="PauseAI UK Board member David Wood with MP Jeremy Corbyn"
                       />
                     </a>
