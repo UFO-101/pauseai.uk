@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import Image from "next/image";
+import Link from "next/link";
 import type { CSSProperties } from "react";
 import OnboardingFormEmbed from "./OnboardingFormEmbed";
 import HeroMarqueeEffects from "./HeroMarqueeEffects";
@@ -48,10 +50,12 @@ function renderNewsRow(items: NewsItem[], reverse = false) {
               >
                 <div className="news-logo-box">
                   {item.logoSrc ? (
-                    <img
+                    <Image
                       className="news-logo"
                       src={item.logoSrc}
                       alt={item.logoAlt}
+                      width={item.logoIntrinsicWidth ?? 100}
+                      height={item.logoIntrinsicHeight ?? 44}
                       loading="lazy"
                       style={item.logoHeight ? ({ "--logo-h": item.logoHeight } as CSSProperties) : undefined}
                     />
@@ -68,25 +72,28 @@ function renderNewsRow(items: NewsItem[], reverse = false) {
   );
 }
 
-const HERO_PHOTOS: [string, string][] = [
-  ["alistair-june-2025-protest.webp", "Alistair at the June 2025 London protest"],
-  ["alistair-reading.webp", "Alistair Reith at a PauseAI event"],
-  ["benifei-russell-panel.webp", "Benifei and Russell at the PauseCon Brussels panel"],
-  ["book-launch-joseph.webp", "Joseph at the PauseAI UK book launch"],
-  ["connor-leahy.webp", "Connor Leahy speaking at a PauseCon"],
-  ["deepmind-close-up.webp", "Protester outside Google DeepMind"],
-  ["june-2025-protest-closeup.webp", "June 2025 protest close-up"],
-  ["laiba-brussels.webp", "Laiba at PauseCon Brussels"],
-  ["letter-writing.webp", "PauseAI UK letter-writing session"],
-  ["london-june-2025-protest-group.webp", "London June 2025 protest group"],
-  ["maxime-speech-audience.webp", "Maxime delivering a speech to a London audience"],
-  ["pausecon-brussels-2026-panel.webp", "PauseCon Brussels 2026 panel"],
-  ["pausecon-brussels-discussion.webp", "PauseCon Brussels discussion"],
-  ["pausecon-london-2025-people-talking.webp", "PauseCon London 2025 discussion"],
-  ["pausecon-london-ella-workshop.webp", "Ella's workshop at PauseCon London"],
-  ["scott-wiener-on-screen.webp", "Scott Wiener on screen at a PauseAI event"],
-  ["stuart-russell-interview.webp", "Stuart Russell interview at PauseCon Brussels"],
-  ["westminster-hall.webp", "Westminster Hall event"],
+// [src, alt, intrinsic width, intrinsic height] — the dimensions are
+// required by next/image for aspect ratio; actual display size is driven
+// by the CSS (height: 100%; width: auto) on .hero-marquee-track img.
+const HERO_PHOTOS: [string, string, number, number][] = [
+  ["alistair-june-2025-protest.webp", "Alistair at the June 2025 London protest", 800, 450],
+  ["alistair-reading.webp", "Alistair Reith at a PauseAI event", 800, 416],
+  ["benifei-russell-panel.webp", "Benifei and Russell at the PauseCon Brussels panel", 800, 449],
+  ["book-launch-joseph.webp", "Joseph at the PauseAI UK book launch", 800, 600],
+  ["connor-leahy.webp", "Connor Leahy speaking at a PauseCon", 800, 908],
+  ["deepmind-close-up.webp", "Protester outside Google DeepMind", 800, 450],
+  ["june-2025-protest-closeup.webp", "June 2025 protest close-up", 800, 450],
+  ["laiba-brussels.webp", "Laiba at PauseCon Brussels", 800, 606],
+  ["letter-writing.webp", "PauseAI UK letter-writing session", 800, 837],
+  ["london-june-2025-protest-group.webp", "London June 2025 protest group", 800, 360],
+  ["maxime-speech-audience.webp", "Maxime delivering a speech to a London audience", 800, 282],
+  ["pausecon-brussels-2026-panel.webp", "PauseCon Brussels 2026 panel", 800, 450],
+  ["pausecon-brussels-discussion.webp", "PauseCon Brussels discussion", 800, 534],
+  ["pausecon-london-2025-people-talking.webp", "PauseCon London 2025 discussion", 800, 533],
+  ["pausecon-london-ella-workshop.webp", "Ella's workshop at PauseCon London", 800, 533],
+  ["scott-wiener-on-screen.webp", "Scott Wiener on screen at a PauseAI event", 800, 450],
+  ["stuart-russell-interview.webp", "Stuart Russell interview at PauseCon Brussels", 800, 534],
+  ["westminster-hall.webp", "Westminster Hall event", 800, 448],
 ];
 
 function shuffle<T>(arr: readonly T[]): T[] {
@@ -125,16 +132,19 @@ export default async function HomePage() {
                       className="hero-marquee-copy"
                       {...(copyIdx > 0 ? { "aria-hidden": true } : {})}
                     >
-                      {[...row.photos, ...row.photos].map(([src, alt], i) => {
+                      {[...row.photos, ...row.photos].map(([src, alt, width, height], i) => {
                         const isPrimary = copyIdx === 0 && i < row.photos.length;
+                        const isLcp = ri === 0 && copyIdx === 0 && i === 0;
                         return (
-                          <img
+                          <Image
                             key={i}
                             src={`/images/front-page-hero-optimized/${src}`}
                             alt={isPrimary ? alt : ""}
+                            width={width}
+                            height={height}
                             aria-hidden={!isPrimary || undefined}
-                            loading={ri === 0 && copyIdx === 0 && i === 0 ? undefined : "lazy"}
-                            {...(ri === 0 && copyIdx === 0 && i === 0 ? { fetchPriority: "high" as const } : {})}
+                            loading={isLcp ? undefined : "lazy"}
+                            priority={isLcp}
                           />
                         );
                       })}
@@ -156,7 +166,7 @@ export default async function HomePage() {
                   </a>
                   <div className="hero-actions-secondary">
                     <a className="btn ghost" href="#events">Upcoming events ↓</a>
-                    <a className="btn ghost" href="/track-record/">Track record →</a>
+                    <Link className="btn ghost" href="/track-record/">Track record →</Link>
                   </div>
                 </div>
               </div>
@@ -204,7 +214,7 @@ export default async function HomePage() {
               </p>
             </div>
             <div className="chapter-grid">
-              <a className="chapter-card" href="/london">
+              <Link className="chapter-card" href="/london">
                 <div className="image-frame" style={{ backgroundImage: `url("images/letter-writing/G2DG8xBXMAABxmR.jpeg")` }}></div>
                 <div className="card-copy">
                   <div className="card-header">
@@ -213,8 +223,8 @@ export default async function HomePage() {
                   </div>
                   <p>Book launches, letter-writing nights, and regular meetups in central London.</p>
                 </div>
-              </a>
-              <a className="chapter-card" href="/leicester">
+              </Link>
+              <Link className="chapter-card" href="/leicester">
                 <div className="image-frame" style={{ backgroundImage: `url("/images/chapters/leicester/london-2025-protest.jpg")` }}></div>
                 <div className="card-copy">
                   <div className="card-header">
@@ -223,8 +233,8 @@ export default async function HomePage() {
                   </div>
                   <p>Growing community taking action locally and online.</p>
                 </div>
-              </a>
-              <a className="chapter-card" href="/oxford">
+              </Link>
+              <Link className="chapter-card" href="/oxford">
                 <div className="image-frame" style={{ backgroundImage: `url("images/chapters/oxford/PauseAI Oxford.jpg")` }}></div>
                 <div className="card-copy">
                   <div className="card-header">
@@ -233,8 +243,8 @@ export default async function HomePage() {
                   </div>
                   <p>University-driven dialogue on AI risk with researchers and students.</p>
                 </div>
-              </a>
-              <a className="chapter-card" href="/glasgow">
+              </Link>
+              <Link className="chapter-card" href="/glasgow">
                 <div className="image-frame" style={{ backgroundImage: `url("images/documentary-screening/G4W9UyLXwAA9ISl.jpeg")` }}></div>
                 <div className="card-copy">
                   <div className="card-header">
@@ -243,8 +253,8 @@ export default async function HomePage() {
                   </div>
                   <p>Building momentum with public events and community outreach.</p>
                 </div>
-              </a>
-              <a className="chapter-card" href="/manchester">
+              </Link>
+              <Link className="chapter-card" href="/manchester">
                 <div className="image-frame" style={{ backgroundImage: `url("images/chapters/manchester/manchester_public.jpg")`, backgroundSize: "110% auto", backgroundPosition: "center 22%" }}></div>
                 <div className="card-copy">
                   <div className="card-header">
@@ -253,8 +263,8 @@ export default async function HomePage() {
                   </div>
                   <p>New chapter bringing AI safety conversations and action to the North West.</p>
                 </div>
-              </a>
-              <a className="chapter-card" href="/west-of-england">
+              </Link>
+              <Link className="chapter-card" href="/west-of-england">
                 <div className="image-frame" style={{ backgroundImage: `url("/images/chapters/west-of-england/bristol-launch.jpg")` }}></div>
                 <div className="card-copy">
                   <div className="card-header">
@@ -263,7 +273,7 @@ export default async function HomePage() {
                   </div>
                   <p>New chapter bringing AI safety conversations and action to Bristol and beyond.</p>
                 </div>
-              </a>
+              </Link>
               <a
                 className="chapter-card"
                 href="https://docs.google.com/document/d/1wVqsjGatoP3ltspkeqnyeye7I1d_V8XYRPQGaGyvitQ/edit?usp=sharing"
@@ -293,8 +303,8 @@ export default async function HomePage() {
             </div>
             <StoriesCarousel stories={stories} />
             <div className="story-teaser-cta">
-              <a className="btn primary large" href="/stories/">Read all {stories.length} stories →</a>
-              <a className="btn ghost large" href="/stories/#share-your-story">Share your story →</a>
+              <Link className="btn primary large" href="/stories/">Read all {stories.length} stories →</Link>
+              <Link className="btn ghost large" href="/stories/#share-your-story">Share your story →</Link>
             </div>
           </div>
         </section>
@@ -309,7 +319,7 @@ export default async function HomePage() {
               <a className="btn primary large" href={site.shopUrl} target="_blank" rel="noreferrer">Browse the shop →</a>
             </div>
             <a className="shop-image-link" href={site.shopUrl} target="_blank" rel="noreferrer">
-              <img src="images/fourthwall.avif" alt="PauseAI merchandise" className="shop-image" width={1536} height={2048} loading="lazy" />
+              <Image src="/images/fourthwall.avif" alt="PauseAI merchandise" className="shop-image" width={1536} height={2048} loading="lazy" />
             </a>
           </div>
         </section>
@@ -370,7 +380,7 @@ export default async function HomePage() {
             ))}
           </div>
           <div style={{ display: "flex", justifyContent: "center", marginTop: 36 }}>
-            <a className="btn primary large" href="/theory-of-change/">Read our theory of change →</a>
+            <Link className="btn primary large" href="/theory-of-change/">Read our theory of change →</Link>
           </div>
         </section>
       </main>

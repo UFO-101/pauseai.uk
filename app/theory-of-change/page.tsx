@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import Image from "next/image";
+import Link from "next/link";
 import Nav from "@/components/Nav";
 import { site } from "@/lib/data/site";
 import "../track-record/track-record.css";
@@ -77,7 +79,7 @@ export default function TheoryOfChangePage() {
 
               <h3>Brand and messaging</h3>
               <figure className="toc-figure">
-                <img src="/images/logos/Square-Safety-Before-Superintelligence.jpg" alt="Safety Before Superintelligence — PauseAI campaign image" loading="lazy" />
+                <Image src="/images/logos/Square-Safety-Before-Superintelligence.jpg" alt="Safety Before Superintelligence — PauseAI campaign image" width={1080} height={1080} loading="lazy" />
               </figure>
               <p>PauseAI UK positions itself as a movement focused on the risks of human-level and superhuman AI, rather than the current harms of AI. This allows us to direct our efforts towards the most severe issues, while also letting us scale faster than movements focused on the existing harms of AI. PauseAI&rsquo;s strong SEO and name recognition are crucial assets because we automatically grow when more people become concerned about AI risk. This turns AI companies and the progress of AI itself into our most effective marketing tool.</p>
               <p>A large fraction of our members have never been involved in grassroots advocacy before and we see this as a strength. It makes our protests more interesting to the media and makes the organisation more appealing to the silent majority who are not very politically active &mdash; unless, perhaps, they feel their lives are directly threatened.</p>
@@ -114,7 +116,7 @@ export default function TheoryOfChangePage() {
             <p className="closing-sub">Help us build the movement.</p>
             <div className="closing-actions">
               <a className="btn primary" href={site.whatsappUrl} target="_blank" rel="noreferrer">Join the WhatsApp community</a>
-              <a className="btn ghost" href="/#join">More ways to get involved</a>
+              <Link className="btn ghost" href="/#join">More ways to get involved</Link>
             </div>
           </div>
         </section>

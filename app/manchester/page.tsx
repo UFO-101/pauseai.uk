@@ -21,7 +21,12 @@ export const metadata: Metadata = {
 export default function ManchesterPage() {
   return (
     <>
-      <Nav chapterName="Manchester" chapterLogoSrc="/images/chapters/manchester/manchester_logo.png" />
+      <Nav
+        chapterName="Manchester"
+        chapterLogoSrc="/images/chapters/manchester/manchester_logo.png"
+        chapterLogoWidth={300}
+        chapterLogoHeight={86}
+      />
       <main>
         <section className="hero" style={{ paddingBottom: 48 }}>
           <div className="container hero-grid">

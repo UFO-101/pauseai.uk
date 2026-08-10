@@ -1,5 +1,7 @@
 "use client";
 
+import Image from "next/image";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect } from "react";
 import { site } from "@/lib/data/site";
@@ -7,9 +9,14 @@ import { site } from "@/lib/data/site";
 type NavProps = {
   chapterName?: string;
   chapterLogoSrc?: string;
+  /** Intrinsic pixel dimensions of chapterLogoSrc — required by next/image
+      for aspect ratio; actual display size is driven by the .brand-mark
+      CSS (height: 48px; width: auto). */
+  chapterLogoWidth?: number;
+  chapterLogoHeight?: number;
 };
 
-export default function Nav({ chapterName, chapterLogoSrc }: NavProps) {
+export default function Nav({ chapterName, chapterLogoSrc, chapterLogoWidth, chapterLogoHeight }: NavProps) {
   const pathname = usePathname();
   const isHomepage = pathname === "/";
   const navPrefix = isHomepage ? "" : "/";
@@ -100,22 +107,28 @@ export default function Nav({ chapterName, chapterLogoSrc }: NavProps) {
     <header className="site-header">
       <div className="container">
         {chapterName ? (
-          <a className="brand brand-link" href="/">
+          <Link className="brand brand-link" href="/">
             {chapterLogoSrc ? (
-              <img src={chapterLogoSrc} alt="" className="brand-mark" />
+              <Image
+                src={chapterLogoSrc}
+                alt=""
+                width={chapterLogoWidth ?? 178}
+                height={chapterLogoHeight ?? 48}
+                className="brand-mark"
+              />
             ) : (
               <>
-                <img src="/images/logos/Pause-Symbol.svg" alt="" className="brand-mark" />
+                <Image src="/images/logos/Pause-Symbol.svg" alt="" width={616} height={616} className="brand-mark" />
                 <div className="brand-text">
                   <span className="brand-pretitle">PauseAI UK</span>
                   <span className="brand-tagline">{chapterName} Chapter</span>
                 </div>
               </>
             )}
-          </a>
+          </Link>
         ) : (
-          <a className="brand brand-link" href="/">
-            <img
+          <Link className="brand brand-link" href="/">
+            <Image
               src="/images/logos/PauseAI-Logo-Transparent.svg"
               alt="PauseAI UK"
               width={178}
@@ -123,7 +136,7 @@ export default function Nav({ chapterName, chapterLogoSrc }: NavProps) {
               className="brand-mark"
             />
             <span className="brand-uk">UK</span>
-          </a>
+          </Link>
         )}
         <button className="burger" aria-label="Menu" aria-expanded="false">
           <span></span>
@@ -132,53 +145,53 @@ export default function Nav({ chapterName, chapterLogoSrc }: NavProps) {
         </button>
         <nav>
           <div className="nav-item has-dropdown">
-            <a href="/what-is-pauseai-uk/" className="dropdown-trigger" aria-haspopup="true" aria-expanded="false">
+            <Link href="/what-is-pauseai-uk/" className="dropdown-trigger" aria-haspopup="true" aria-expanded="false">
               About
               <svg className="caret" viewBox="0 0 12 8" aria-hidden="true" focusable={false}>
                 <path d="M1 1.5l5 5 5-5" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
-            </a>
+            </Link>
             <div className="dropdown" role="menu">
-              <a href="/what-is-pauseai-uk/" role="menuitem">What is PauseAI UK?</a>
-              <a href="/track-record/" role="menuitem">Track record</a>
-              <a href="/theory-of-change/" role="menuitem">Theory of change</a>
-              <a href="/governance/" role="menuitem">Governance</a>
-              <a href="/global-ai-sentiment-2026/" role="menuitem">Global AI sentiment 2026</a>
+              <Link href="/what-is-pauseai-uk/" role="menuitem">What is PauseAI UK?</Link>
+              <Link href="/track-record/" role="menuitem">Track record</Link>
+              <Link href="/theory-of-change/" role="menuitem">Theory of change</Link>
+              <Link href="/governance/" role="menuitem">Governance</Link>
+              <Link href="/global-ai-sentiment-2026/" role="menuitem">Global AI sentiment 2026</Link>
             </div>
           </div>
           <div className="nav-item has-dropdown">
-            <a href={`${navPrefix}#chapters`} className="dropdown-trigger" aria-haspopup="true" aria-expanded="false">
+            <Link href={`${navPrefix}#chapters`} className="dropdown-trigger" aria-haspopup="true" aria-expanded="false">
               Chapters
               <svg className="caret" viewBox="0 0 12 8" aria-hidden="true" focusable={false}>
                 <path d="M1 1.5l5 5 5-5" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
-            </a>
+            </Link>
             <div className="dropdown" role="menu">
-              <a href="/london/" role="menuitem">London</a>
-              <a href="/glasgow/" role="menuitem">Glasgow</a>
-              <a href="/oxford/" role="menuitem">Oxford</a>
-              <a href="/leicester/" role="menuitem">Leicester</a>
-              <a href="/manchester/" role="menuitem">Manchester</a>
-              <a href="/west-of-england/" role="menuitem">West of England</a>
+              <Link href="/london/" role="menuitem">London</Link>
+              <Link href="/glasgow/" role="menuitem">Glasgow</Link>
+              <Link href="/oxford/" role="menuitem">Oxford</Link>
+              <Link href="/leicester/" role="menuitem">Leicester</Link>
+              <Link href="/manchester/" role="menuitem">Manchester</Link>
+              <Link href="/west-of-england/" role="menuitem">West of England</Link>
             </div>
           </div>
           <div className="nav-item has-dropdown">
-            <a href="/campaigns/" className="dropdown-trigger" aria-haspopup="true" aria-expanded="false">
+            <Link href="/campaigns/" className="dropdown-trigger" aria-haspopup="true" aria-expanded="false">
               Campaigns
               <svg className="caret" viewBox="0 0 12 8" aria-hidden="true" focusable={false}>
                 <path d="M1 1.5l5 5 5-5" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
-            </a>
+            </Link>
             <div className="dropdown" role="menu">
-              <a href="/campaigns/" role="menuitem">Frontier AI Legislation</a>
-              <a href="/future-of-workforce-inquiry/" role="menuitem">Future of the Workforce Inquiry</a>
+              <Link href="/campaigns/" role="menuitem">Frontier AI Legislation</Link>
+              <Link href="/future-of-workforce-inquiry/" role="menuitem">Future of the Workforce Inquiry</Link>
             </div>
           </div>
-          <a href="/stories/">Stories</a>
-          <a href={`${navPrefix}#people`}>People</a>
+          <Link href="/stories/">Stories</Link>
+          <Link href={`${navPrefix}#people`}>People</Link>
           <a href={site.shopUrl} target="_blank" rel="noreferrer">Shop</a>
-          <a href={`${navPrefix}#join`} className="pill">Join</a>
-          <a href="/donate" className="pill pill-primary">Donate</a>
+          <Link href={`${navPrefix}#join`} className="pill">Join</Link>
+          <Link href="/donate" className="pill pill-primary">Donate</Link>
         </nav>
       </div>
     </header>

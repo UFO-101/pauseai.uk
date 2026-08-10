@@ -35,11 +35,20 @@ export default function Dropdown({ id, label, value, options, onChange }: Dropdo
 
   useEffect(() => {
     if (open) {
-      const idx = options.findIndex((o) => o.value === value);
-      setActiveIndex(idx === -1 ? 0 : idx);
-      requestAnimationFrame(() => optionRefs.current[idx === -1 ? 0 : idx]?.focus());
+      requestAnimationFrame(() => optionRefs.current[activeIndex]?.focus());
     }
-  }, [open, options, value]);
+  }, [open, activeIndex]);
+
+  function toggleOpen() {
+    setOpen((wasOpen) => {
+      const willOpen = !wasOpen;
+      if (willOpen) {
+        const idx = options.findIndex((o) => o.value === value);
+        setActiveIndex(idx === -1 ? 0 : idx);
+      }
+      return willOpen;
+    });
+  }
 
   function commit(index: number) {
     const option = options[index];
@@ -83,7 +92,7 @@ export default function Dropdown({ id, label, value, options, onChange }: Dropdo
         aria-haspopup="listbox"
         aria-expanded={open}
         aria-labelledby={`${id}-label ${id}`}
-        onClick={() => setOpen((o) => !o)}
+        onClick={toggleOpen}
       >
         <span>{selected?.label}</span>
         <svg className="gas-dropdown-caret" viewBox="0 0 12 8" aria-hidden="true">

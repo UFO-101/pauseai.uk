@@ -167,7 +167,7 @@ export default function WorldMap() {
               const fill = data ? rampColor((metricValue(data, metric) - domainMin) / (domainMax - domainMin || 1)) : "var(--border)";
               return (
                 <path
-                  key={f.properties.name + Math.random()}
+                  key={f.properties.name}
                   d={d}
                   fill={fill}
                   className={data ? "gas-map-country" : "gas-map-country gas-map-country-nodata"}

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Nav from "@/components/Nav";
 import { board } from "@/lib/data/board";
 import "../track-record/track-record.css";
@@ -36,7 +37,7 @@ export default function GovernancePage() {
             <div className="board-grid">
               {board.map((member) => (
                 <article key={member.name} className="board-card">
-                  <img className="board-photo" src={member.imageSrc} alt={member.name} width={320} height={320} />
+                  <Image className="board-photo" src={member.imageSrc} alt={member.name} width={320} height={320} />
                   <h3 className="board-name">{member.name}</h3>
                   <p className="board-role">{member.role}</p>
                   <div className="board-links">

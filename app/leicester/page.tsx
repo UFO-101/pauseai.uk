@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import Nav from "@/components/Nav";
 
 export const metadata: Metadata = {
@@ -23,6 +24,8 @@ export default function LeicesterPage() {
       <Nav
         chapterName="Leicester"
         chapterLogoSrc="/images/chapters/leicester/leicester_logoBanner_tp_tp_darkmode.svg"
+        chapterLogoWidth={289}
+        chapterLogoHeight={84}
       />
       <main>
         <section className="hero" style={{ paddingBottom: 48 }}>
@@ -36,7 +39,7 @@ export default function LeicesterPage() {
                 <a className="btn primary" href="mailto:leicester@pauseai.info">Email leicester@pauseai.info</a>
                 <a className="btn ghost" href="https://www.instagram.com/pauseai_leicester/">Follow us on Instagram</a>
                 <a className="btn ghost" href="https://discord.com">Join our Discord</a>
-                <a className="btn ghost" href="/#get-involved">Join the WhatsApp community</a>
+                <Link className="btn ghost" href="/#get-involved">Join the WhatsApp community</Link>
               </div>
             </div>
             <div className="hero-visual">

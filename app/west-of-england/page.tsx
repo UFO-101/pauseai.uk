@@ -27,6 +27,8 @@ export default function WestOfEnglandPage() {
       <Nav
         chapterName="West of England"
         chapterLogoSrc="/images/chapters/west-of-england/west-of-england-rondel.png"
+        chapterLogoWidth={240}
+        chapterLogoHeight={240}
       />
       <main>
         <section className="hero" style={{ paddingBottom: 48 }}>

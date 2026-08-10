@@ -1,3 +1,4 @@
+import Image from "next/image";
 import type { CSSProperties, ReactNode } from "react";
 
 export function parseCssStyle(css: string): CSSProperties {
@@ -25,7 +26,7 @@ export function initials(name: string): string {
 // PauseAI pause symbol for anonymous submissions (no initials to show).
 export function avatarFallback(name: string): ReactNode {
   if (!name.trim()) {
-    return <img src="/images/logos/Pause-Symbol.svg" alt="" className="story-avatar-pause-icon" />;
+    return <Image src="/images/logos/Pause-Symbol.svg" alt="" width={616} height={616} className="story-avatar-pause-icon" />;
   }
   return initials(name);
 }

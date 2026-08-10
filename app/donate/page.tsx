@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import Image from "next/image";
+import Link from "next/link";
 import Nav from "@/components/Nav";
 import DonateForm from "@/components/DonateForm";
 
@@ -30,10 +32,12 @@ export default function DonatePage() {
               </div>
 
               <div className="donate-intro-photo">
-                <img
+                <Image
                   src="/images/bristol-launch.webp"
                   alt="PauseAI UK volunteers at a community event"
-                  fetchPriority="high"
+                  width={1200}
+                  height={685}
+                  priority
                 />
               </div>
 
@@ -42,16 +46,16 @@ export default function DonatePage() {
                   PauseAI UK runs entirely on donations. We use our funding to pay for event venues, merchandise, administrative software and staff salaries. PauseAI Global has covered our costs so far, but from mid-2026 we need to fund ourselves. You can see our full expenses and projected costs in our <a className="inline-link" href="/pdfs/Donor-Prospectus.pdf" target="_blank" rel="noreferrer">Donor Prospectus</a>.
                 </p>
                 <div className="donate-links">
-                  <a className="donate-link" href="/track-record/">
+                  <Link className="donate-link" href="/track-record/">
                     <span className="donate-link-title">Track record</span>
                     <span className="donate-link-desc">What we&apos;ve achieved in our first year</span>
-                  </a>
-                  <a className="donate-link" href="/theory-of-change/">
+                  </Link>
+                  <Link className="donate-link" href="/theory-of-change/">
                     <span className="donate-link-title">Theory of change</span>
                     <span className="donate-link-desc">The strategy behind our work</span>
-                  </a>
+                  </Link>
                   <a className="donate-link donate-link-doc" href="/pdfs/Donor-Prospectus.pdf" target="_blank" rel="noreferrer">
-                    <img className="donate-link-thumb" src="/pdfs/Donor-Prospectus-thumb.jpg" alt="Donor prospectus cover" width={500} height={707} loading="lazy" />
+                    <Image className="donate-link-thumb" src="/pdfs/Donor-Prospectus-thumb.jpg" alt="Donor prospectus cover" width={500} height={707} loading="lazy" />
                     <span className="donate-link-doc-text">
                       <span className="donate-link-title">Donor prospectus (PDF)</span>
                       <span className="donate-link-desc">Our plans, finances and funding targets</span>
@@ -92,7 +96,7 @@ export default function DonatePage() {
                 <h2>Can I claim Gift Aid?</h2>
                 <p className="section-lede">
                   Because our work meaningfully engages with policy, donations are not eligible for Gift Aid. Read our{" "}
-                  <a className="inline-link" href="/privacy">privacy policy</a> to see how we handle your information.
+                  <Link className="inline-link" href="/privacy">privacy policy</Link> to see how we handle your information.
                 </p>
                 <div className="registered-details">
                   <p>
