@@ -174,9 +174,9 @@ export default function StoryCard({
       )}
       {truncate && useJsClamp && <div className="story-body story-body-measure" ref={measureRef} aria-hidden="true" />}
       {showLink && (
-        <a className="story-read-more" href={`/stories/${slug}`}>
+        <Link className="story-read-more" href={`/stories/${slug}`}>
           Read more →
-        </a>
+        </Link>
       )}
     </article>
   );

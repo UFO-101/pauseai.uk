@@ -26,6 +26,12 @@ npm run lint   # ESLint
 
 See `package.json` for the full script list, including the `lighthouse*` scripts.
 
+## Testing
+
+- **Unit tests** (`npm test`, Vitest) cover `lib/` and `app/api/`. They run automatically as part of `npm run build`, so a failing test blocks deploy.
+- **Airtable access is locked to `lib/airtable.ts`**: an ESLint rule (`no-restricted-syntax` in `eslint.config.mjs`) bans any other file from referencing `api.airtable.com`, so the signed-only filter and field whitelist there can't be bypassed by a new call site. `npm run check:airtable-filter` runs just that rule, isolated from the rest of ESLint, and is also part of `npm run build` — a bypass fails the build the same way a failing test does.
+- **Visual regression** (`npm run test:visual`, Playwright) screenshots every page on the live site and this local build side by side and pixel-diffs them — no stored baseline to keep up to date, since site content (news, events, stories) changes too often for one to stay meaningful. `npm run test:visual:report` opens the HTML report with live/local/diff images per page. See `tests/visual/pages.spec.ts`.
+
 ## Things that aren't obvious from the code
 
 - **Events** are fetched at request time from the Luma calendar API (`lib/data/events.ts`), not hardcoded.

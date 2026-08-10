@@ -495,9 +495,9 @@ export default function TrackRecordPage() {
                         The Wall Street Journal
                       </a>{" "}
                       and{" "}
-                      <a href="/#news" className="inline-link">
+                      <Link href="/#news" className="inline-link">
                         others
-                      </a>
+                      </Link>
                       .
                     </p>
                     <p>
@@ -604,7 +604,7 @@ export default function TrackRecordPage() {
                       Our conversations were broadly successful, resulting in
                       Chris Vince and Siân Berry writing letters to Kanishka
                       Narayan MP (Minister for Artificial Intelligence),
-                      Anneliese Dodds and Siân Berry signing PauseAI UK's{" "}
+                      Anneliese Dodds and Siân Berry signing PauseAI UK&apos;s{" "}
                       <a
                         href="https://pauseai.uk/campaigns"
                         className="inline-link"

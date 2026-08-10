@@ -20,6 +20,9 @@ yarn-error.log*
 # Playwright
 .playwright/
 .playwright-mcp/
+test-results/
+playwright-report/
+blob-report/
 
 # Lighthouse
 lighthouse-reports/

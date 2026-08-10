@@ -1,3 +1,5 @@
+import Image from "next/image";
+import Link from "next/link";
 import { site } from "@/lib/data/site";
 
 export default function Footer() {
@@ -5,7 +7,7 @@ export default function Footer() {
     <footer className="site-footer">
       <div className="container footer-grid">
         <div className="brand footer-brand">
-          <img
+          <Image
             src="/images/logos/PauseAI-Logo-Transparent.svg"
             alt="PauseAI UK"
             width={178}
@@ -15,11 +17,11 @@ export default function Footer() {
           <span className="brand-uk">UK</span>
         </div>
         <div className="footer-links">
-          <a href="/donate">Donate</a>
+          <Link href="/donate">Donate</Link>
           <a href={site.openLetterUrl} target="_blank" rel="noreferrer">Open letter</a>
           <a href={site.whatsappUrl} target="_blank" rel="noreferrer">WhatsApp community</a>
           <a href={site.shopUrl} target="_blank" rel="noreferrer">Shop</a>
-          <a href="/privacy">Privacy</a>
+          <Link href="/privacy">Privacy</Link>
           <a href="#" className="js-cookie-settings">Cookie settings</a>
         </div>
         <div className="footer-social-row">

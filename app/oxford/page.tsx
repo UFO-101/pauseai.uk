@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import Nav from "@/components/Nav";
 import { site } from "@/lib/data/site";
 
@@ -32,7 +33,7 @@ export default function OxfordPage() {
               </p>
               <div className="actions">
                 <a className="btn primary" href="mailto:oxford@pauseai.info">Email oxford@pauseai.info</a>
-                <a className="btn ghost" href="/#get-involved">Join national chat</a>
+                <Link className="btn ghost" href="/#get-involved">Join national chat</Link>
               </div>
             </div>
             <div className="hero-visual">

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import Nav from "@/components/Nav";
 
 export default function NotFound() {
@@ -12,7 +13,7 @@ export default function NotFound() {
             <p className="lede">
               Sorry, we couldn&apos;t find what you were looking for.
             </p>
-            <a className="btn primary" href="/">Go to homepage</a>
+            <Link className="btn primary" href="/">Go to homepage</Link>
           </div>
         </section>
       </main>

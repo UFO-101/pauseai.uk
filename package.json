@@ -3,9 +3,14 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "next build",
+    "build": "vitest run && node scripts/check-airtable-filter.mjs && next build",
     "start": "next start",
     "lint": "eslint",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "check:airtable-filter": "node scripts/check-airtable-filter.mjs",
+    "test:visual": "playwright test",
+    "test:visual:report": "playwright show-report",
     "lighthouse": "bash scripts/lighthouse.sh prod https://pauseai.uk",
     "lighthouse:dev": "bash scripts/lighthouse-dev.sh",
     "lighthouse:branch": "bash scripts/lighthouse.sh branch",
@@ -20,19 +25,24 @@
     "topojson-client": "^3.1.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.62.1",
     "@tensorflow-models/blazeface": "^0.1.0",
     "@tensorflow/tfjs": "^4.22.0",
     "@tensorflow/tfjs-backend-cpu": "^4.22.0",
     "@types/d3-geo": "^3.1.0",
     "@types/geojson": "^7946.0.16",
     "@types/node": "^20",
+    "@types/pngjs": "^6.0.5",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/topojson-client": "^3.1.5",
     "eslint": "^9",
     "eslint-config-next": "16.2.6",
+    "pixelmatch": "^7.2.0",
+    "pngjs": "^7.0.0",
     "sharp": "^0.35.3",
     "typescript": "^5",
+    "vitest": "^3.2.7",
     "world-atlas": "^2.0.2"
   }
 }

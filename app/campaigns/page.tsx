@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Nav from "@/components/Nav";
 import CampaignsClient from "./CampaignsClient";
 import SignatoriesList from "./SignatoriesList";
@@ -50,7 +51,7 @@ export default function CampaignsPage() {
             <h2>Read the case in full</h2>
             <div className="docs-grid">
               <a className="doc-card" href="/pdfs/Frontier-AI-Open-Letter.pdf" target="_blank" rel="noreferrer">
-                <img src="/pdfs/Frontier-AI-Open-Letter.jpg" alt="" loading="lazy" />
+                <Image src="/pdfs/Frontier-AI-Open-Letter.jpg" alt="" width={2550} height={3300} loading="lazy" />
                 <div className="doc-meta">
                   <p className="doc-kind">Open letter &mdash; June 2026</p>
                   <h3>To the Prime Minister</h3>
@@ -58,7 +59,7 @@ export default function CampaignsPage() {
                 </div>
               </a>
               <a className="doc-card" href="/pdfs/Frontier-AI-Risks-Policy-Briefing.pdf" target="_blank" rel="noreferrer">
-                <img src="/pdfs/Frontier-AI-Risks-Policy-Briefing.jpg" alt="" loading="lazy" />
+                <Image src="/pdfs/Frontier-AI-Risks-Policy-Briefing.jpg" alt="" width={2550} height={3300} loading="lazy" />
                 <div className="doc-meta">
                   <p className="doc-kind">Policy briefing &mdash; June 2026</p>
                   <h3>Frontier AI Risks</h3>
@@ -110,7 +111,7 @@ export default function CampaignsPage() {
         <section className="campaigns-share">
           <div className="container">
             <button type="button" className="qr-thumb" aria-label="Show QR code larger">
-              <img src="/campaign-page-qr-code.png" alt="QR code linking to this campaign page" width={180} height={180} loading="lazy" />
+              <Image src="/campaign-page-qr-code.png" alt="QR code linking to this campaign page" width={180} height={180} loading="lazy" />
               <span>Scan to share this page</span>
             </button>
           </div>
@@ -119,7 +120,7 @@ export default function CampaignsPage() {
 
       <div className="qr-lightbox" id="qr-lightbox" aria-hidden="true" role="dialog" aria-label="QR code">
         <button className="qr-lightbox-close" type="button" aria-label="Close">&times;</button>
-        <img src="/campaign-page-qr-code.png" alt="QR code linking to this campaign page" />
+        <Image src="/campaign-page-qr-code.png" alt="QR code linking to this campaign page" width={1147} height={1147} />
       </div>
 
       <CampaignsClient />
