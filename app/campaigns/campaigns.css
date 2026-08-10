@@ -198,6 +198,23 @@
   font-size: 14px;
   color: var(--text-secondary);
 }
+/* Fallback iframe shown when AIRTABLE_TOKEN isn't set. The Airtable share
+   renders its own grid and can't post resize messages, so the height is
+   fixed. */
+.signatories-frame {
+  max-width: 900px;
+}
+.signatories-frame iframe {
+  display: block;
+  width: 100%;
+  height: 520px;
+  border: 0;
+}
+@media (max-width: 720px) {
+  .signatories-frame iframe {
+    height: 460px;
+  }
+}
 
 /* ─── Email tool (iframe) ─── */
 .campaigns-embed {

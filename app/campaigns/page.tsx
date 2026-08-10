@@ -4,6 +4,10 @@ import CampaignsClient from "./CampaignsClient";
 import SignatoriesList from "./SignatoriesList";
 import "./campaigns.css";
 
+// Fallback for local/preview environments without AIRTABLE_TOKEN set — the
+// original public share link, scoped to the same signatory columns.
+const SIGNATORIES_EMBED = "https://airtable.com/embed/appBInVvIm6opJ1Ob/shrQ4CTHTx5VrLPnp";
+
 export const metadata: Metadata = {
   title: "PauseAI UK | Campaigns",
   description: "Take action on AI safety. Email your MP, join campaigns, and help build pressure for a global pause.",
@@ -87,7 +91,18 @@ export default function CampaignsPage() {
         <section id="signatories" className="campaigns-signatories">
           <div className="container">
             <h2>Parliamentary signatories</h2>
-            <SignatoriesList />
+            {process.env.AIRTABLE_TOKEN ? (
+              <SignatoriesList />
+            ) : (
+              <div className="embed-frame signatories-frame">
+                <iframe
+                  src={SIGNATORIES_EMBED}
+                  title="Parliamentary signatories to the Frontier AI open letter"
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                ></iframe>
+              </div>
+            )}
           </div>
         </section>
 
