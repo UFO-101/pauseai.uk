@@ -3,6 +3,13 @@ import Nav from "@/components/Nav";
 import CampaignsClient from "./CampaignsClient";
 import "./campaigns.css";
 
+// Public Airtable share. Deliberately an embed rather than an API read: the
+// share exposes only the signatory names and four columns, whereas any
+// Airtable token would grant read access to the whole base (1,300+ rows
+// including MP emails and internal notes) — Airtable cannot scope tokens
+// below base level.
+const SIGNATORIES_EMBED = "https://airtable.com/embed/appBInVvIm6opJ1Ob/shrQ4CTHTx5VrLPnp";
+
 export const metadata: Metadata = {
   title: "PauseAI UK | Campaigns",
   description: "Take action on AI safety. Email your MP, join campaigns, and help build pressure for a global pause.",
@@ -80,6 +87,20 @@ export default function CampaignsPage() {
               Having trouble loading the form?{" "}
               <a href="https://pauseai.info/uk-email-mp" target="_blank" rel="noreferrer">Open it on pauseai.info &rarr;</a>
             </p>
+          </div>
+        </section>
+
+        <section id="signatories" className="campaigns-signatories">
+          <div className="container">
+            <h2>Parliamentary signatories</h2>
+            <div className="embed-frame signatories-frame">
+              <iframe
+                src={SIGNATORIES_EMBED}
+                title="Parliamentary signatories to the Frontier AI open letter"
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+              ></iframe>
+            </div>
           </div>
         </section>
 
