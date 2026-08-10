@@ -157,10 +157,53 @@
   margin: 0 0 14px;
   color: var(--text);
 }
-/* The Airtable share renders its own grid, so this frame just needs to give
-   it room; unlike the MP-email embed it can't post resize messages, so the
-   height is fixed. (The width: 100% rule further down is scoped to
-   .campaigns-embed, hence repeating it here.) */
+.signatories-embargo {
+  margin: 0 0 20px;
+}
+.signatories-status {
+  color: var(--text-secondary);
+  font-size: 15px;
+}
+.signatories-group {
+  max-width: 900px;
+}
+.signatories-group + .signatories-group {
+  margin-top: 28px;
+}
+.signatories-group h3 {
+  font-family: "Inter", system-ui, sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  margin: 0 0 10px;
+}
+.signatories-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.signatories-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.signatories-name {
+  font-weight: 700;
+  font-size: 17px;
+  color: var(--text);
+}
+.signatories-subtitle {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+/* Fallback iframe shown when AIRTABLE_TOKEN isn't set. The Airtable share
+   renders its own grid and can't post resize messages, so the height is
+   fixed. */
 .signatories-frame {
   max-width: 900px;
 }
