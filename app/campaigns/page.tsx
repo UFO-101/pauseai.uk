@@ -1,14 +1,8 @@
 import type { Metadata } from "next";
 import Nav from "@/components/Nav";
 import CampaignsClient from "./CampaignsClient";
+import SignatoriesList from "./SignatoriesList";
 import "./campaigns.css";
-
-// Public Airtable share. Deliberately an embed rather than an API read: the
-// share exposes only the signatory names and four columns, whereas any
-// Airtable token would grant read access to the whole base (1,300+ rows
-// including MP emails and internal notes) — Airtable cannot scope tokens
-// below base level.
-const SIGNATORIES_EMBED = "https://airtable.com/embed/appBInVvIm6opJ1Ob/shrQ4CTHTx5VrLPnp";
 
 export const metadata: Metadata = {
   title: "PauseAI UK | Campaigns",
@@ -93,14 +87,7 @@ export default function CampaignsPage() {
         <section id="signatories" className="campaigns-signatories">
           <div className="container">
             <h2>Parliamentary signatories</h2>
-            <div className="embed-frame signatories-frame">
-              <iframe
-                src={SIGNATORIES_EMBED}
-                title="Parliamentary signatories to the Frontier AI open letter"
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
-              ></iframe>
-            </div>
+            <SignatoriesList />
           </div>
         </section>
 
