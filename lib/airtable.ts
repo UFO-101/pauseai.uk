@@ -5,7 +5,7 @@ const BASE_ID = "appBInVvIm6opJ1Ob";
 const TABLE_ID = "tblH3ks9wqQHLpYx3";
 
 const FIELDS = ["Full name or Title", "Party", "Constituency"] as const;
-const FILTER_FORMULA = "{Signed Frontier AI Letter}=TRUE()";
+const FILTER_FORMULA = "{Signed}=TRUE()";
 
 export type Signatory = {
   name: string;
