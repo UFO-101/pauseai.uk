@@ -157,6 +157,9 @@
   margin: 0 0 14px;
   color: var(--text);
 }
+.signatories-embargo {
+  margin: 0 0 20px;
+}
 .signatories-status {
   color: var(--text-secondary);
   font-size: 15px;

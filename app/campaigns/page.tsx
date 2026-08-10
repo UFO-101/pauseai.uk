@@ -91,6 +91,7 @@ export default function CampaignsPage() {
         <section id="signatories" className="campaigns-signatories">
           <div className="container">
             <h2>Parliamentary signatories</h2>
+            <p className="signatories-embargo">This list of names is currently under a media embargo.</p>
             {process.env.AIRTABLE_TOKEN ? (
               <SignatoriesList />
             ) : (
