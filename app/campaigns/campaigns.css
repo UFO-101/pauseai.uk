@@ -161,36 +161,42 @@
   color: var(--text-secondary);
   font-size: 15px;
 }
-.signatories-table-wrap {
+.signatories-group {
   max-width: 900px;
-  max-height: 520px;
-  overflow: auto;
-  border: 1px solid var(--border);
-  border-radius: 12px;
 }
-.signatories-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 15px;
+.signatories-group + .signatories-group {
+  margin-top: 28px;
 }
-.signatories-table th,
-.signatories-table td {
-  text-align: left;
-  padding: 10px 16px;
-  border-bottom: 1px solid var(--border);
-}
-.signatories-table th {
-  position: sticky;
-  top: 0;
-  background: var(--surface-2);
-  color: var(--text);
+.signatories-group h3 {
+  font-family: "Inter", system-ui, sans-serif;
+  font-size: 13px;
   font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  margin: 0 0 10px;
 }
-.signatories-table td {
+.signatories-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.signatories-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.signatories-name {
+  font-weight: 700;
+  font-size: 17px;
+  color: var(--text);
+}
+.signatories-subtitle {
+  font-size: 14px;
   color: var(--text-secondary);
-}
-.signatories-table tbody tr:last-child td {
-  border-bottom: 0;
 }
 
 /* ─── Email tool (iframe) ─── */

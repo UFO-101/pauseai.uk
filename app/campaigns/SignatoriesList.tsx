@@ -38,26 +38,41 @@ export default function SignatoriesList() {
     return <p className="signatories-status">No signatories yet.</p>;
   }
 
+  const mps = signatories.filter((s) => s.constituency);
+  const lords = signatories.filter((s) => !s.constituency);
+
   return (
-    <div className="signatories-table-wrap">
-      <table className="signatories-table">
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Party</th>
-            <th>Constituency</th>
-          </tr>
-        </thead>
-        <tbody>
-          {signatories.map((s, i) => (
-            <tr key={i}>
-              <td>{s.name}</td>
-              <td>{s.party}</td>
-              <td>{s.constituency}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+    <>
+      {mps.length > 0 && (
+        <div className="signatories-group">
+          <h3>MPs</h3>
+          <SignatoriesGroup signatories={mps} isMP />
+        </div>
+      )}
+      {lords.length > 0 && (
+        <div className="signatories-group">
+          <h3>Lords</h3>
+          <SignatoriesGroup signatories={lords} />
+        </div>
+      )}
+    </>
+  );
+}
+
+function SignatoriesGroup({ signatories, isMP }: { signatories: Signatory[]; isMP?: boolean }) {
+  return (
+    <ul className="signatories-list">
+      {signatories.map((s, i) => {
+        const subtitle = isMP
+          ? [s.constituency && `MP for ${s.constituency}`, s.party].filter(Boolean).join(", ")
+          : s.party;
+        return (
+          <li key={i} className="signatories-item">
+            <span className="signatories-name">{s.name}</span>
+            {subtitle && <span className="signatories-subtitle">{subtitle}</span>}
+          </li>
+        );
+      })}
+    </ul>
   );
 }
