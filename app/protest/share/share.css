@@ -1,0 +1,325 @@
+/* ========================================================================
+   PROTEST SHARE PAGE
+   Loaded after globals.css on /protest/share/ only. The step after
+   registering: .share-head, then the .share-panel of channels.
+   ======================================================================== */
+
+.share-head {
+  padding: 56px 0 32px;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
+}
+.share-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 14px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--pause-orange);
+}
+.share-head h1 {
+  font-family: var(--font-display), "Lato", system-ui, sans-serif;
+  font-size: clamp(34px, 4.6vw, 56px);
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  margin: 0 0 18px;
+  color: var(--text);
+}
+.share-head .lede {
+  max-width: 56ch;
+  font-size: clamp(17px, 1.4vw, 19px);
+  line-height: 1.55;
+  color: var(--text-secondary);
+  margin: 0 0 16px;
+}
+.share-head-ask {
+  max-width: 56ch;
+  margin: 0;
+  font-size: 17px;
+  line-height: 1.6;
+  color: var(--text);
+}
+
+.share-body {
+  padding: 32px 0 72px;
+}
+.share-panel {
+  max-width: 760px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 28px;
+  box-shadow: 0 10px 30px var(--shadow);
+}
+
+/* ─── The "where else?" nudge, shown each time someone comes back ─── */
+.share-nudge {
+  margin: 0 0 26px;
+  padding: 16px 18px;
+  border: 1px solid var(--accent-light);
+  border-left: 3px solid var(--pause-orange);
+  border-radius: 10px;
+  background: #FFF5EC;
+}
+.share-nudge-title {
+  margin: 0 0 4px;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+}
+.share-nudge-body {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--text-secondary);
+}
+
+/* ─── The main button ─── */
+.share-main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+.share-primary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 15px 20px;
+  font: inherit;
+  font-size: 17px;
+  font-weight: 700;
+  color: #fff;
+  background: var(--accent);
+  border: none;
+  border-radius: 16px;
+  cursor: pointer;
+  box-shadow: 0 2px 10px rgb(var(--pause-orange-rgb) / 0.25);
+  transition: box-shadow 0.15s ease, filter 0.15s ease;
+}
+.share-primary:hover {
+  filter: brightness(1.06);
+  box-shadow: 0 6px 20px rgb(var(--pause-orange-rgb) / 0.32);
+}
+.share-primary:focus-visible {
+  outline: 3px solid var(--text);
+  outline-offset: 3px;
+}
+.share-primary .share-icon {
+  width: 1.15em;
+  height: 1.15em;
+}
+
+.share-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  padding: 8px 12px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: none;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+.share-secondary:hover {
+  color: var(--pause-orange);
+}
+.share-secondary .share-icon {
+  width: 16px;
+  height: 16px;
+}
+
+.share-icon {
+  flex: 0 0 auto;
+}
+
+/* ─── The app row: scrolls sideways, on desktop too ─── */
+.share-apps {
+  --gap: 6px;
+  --fade: 52px;
+  display: flex;
+  gap: var(--gap);
+  margin: 26px 0 0;
+  padding: 0 0 10px;
+  list-style: none;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
+}
+/* Whichever side has more icons off-screen fades out, so the row reads as
+   scrollable even when the last visible icon isn't clipped. data-fade is set
+   from the row's own scroll position. */
+.share-apps[data-fade="end"] {
+  mask-image: linear-gradient(to right, #000 calc(100% - var(--fade)), transparent);
+}
+.share-apps[data-fade="start"] {
+  mask-image: linear-gradient(to left, #000 calc(100% - var(--fade)), transparent);
+}
+.share-apps[data-fade="both"] {
+  mask-image: linear-gradient(
+    to right,
+    transparent,
+    #000 var(--fade),
+    #000 calc(100% - var(--fade)),
+    transparent
+  );
+}
+.share-apps::-webkit-scrollbar {
+  height: 6px;
+}
+.share-apps::-webkit-scrollbar-track {
+  background: transparent;
+}
+.share-apps::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 999px;
+}
+.share-apps::-webkit-scrollbar-thumb:hover {
+  background: var(--muted);
+}
+.share-apps > li {
+  flex: 0 0 auto;
+}
+.share-app {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 78px;
+  padding: 12px 4px 10px;
+  text-decoration: none;
+  border-radius: 12px;
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+.share-app:hover {
+  background: var(--surface-2);
+  transform: translateY(-2px);
+}
+.share-app:focus-visible {
+  outline: none;
+  background: var(--surface-2);
+  box-shadow: 0 0 0 3px rgb(var(--pause-orange-rgb) / 0.18);
+}
+.share-app-icon {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  color: var(--brand);
+  background: var(--surface-2);
+}
+.share-app:hover .share-app-icon {
+  background: var(--bg);
+}
+.share-app-icon svg {
+  width: 23px;
+  height: 23px;
+}
+.share-app-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+/* The two actions behave identically: full width while the panel is narrow,
+   then the same fixed width from the page's mobile breakpoint up. Stated for
+   both rather than left to the global .btn rule, which only fills to 720px. */
+.share-primary,
+.share-finish .btn {
+  width: 100%;
+}
+@media (min-width: 621px) {
+  .share-primary,
+  .share-finish .btn {
+    width: 272px;
+  }
+}
+
+.share-finish {
+  display: flex;
+  justify-content: center;
+  margin: 32px 0 0;
+  padding: 22px 0 0;
+  border-top: 1px solid var(--border);
+}
+
+/* ─── Closing panel ─── */
+.share-panel-done h2 {
+  font-family: var(--font-display), "Lato", system-ui, sans-serif;
+  font-size: clamp(24px, 3vw, 32px);
+  font-weight: 700;
+  line-height: 1.15;
+  margin: 0 0 16px;
+  color: var(--text);
+}
+.share-panel-done p {
+  max-width: 56ch;
+  margin: 0 0 14px;
+  font-size: 17px;
+  line-height: 1.65;
+  color: var(--text-secondary);
+}
+.share-done-note {
+  font-size: 15px !important;
+  color: var(--muted) !important;
+}
+.share-done-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 24px 0 0;
+}
+
+/* ─── Mobile ─── */
+@media (max-width: 620px) {
+  .share-head {
+    padding: 36px 0 28px;
+  }
+  .share-body {
+    padding: 24px 0 56px;
+  }
+  .share-panel {
+    padding: 20px;
+  }
+  /* Let the row bleed to the panel edge so it's obvious there's more to
+     the right of it. */
+  .share-apps {
+    --fade: 40px;
+    margin-inline: -20px;
+    padding-inline: 20px;
+  }
+  /* Roughly four icons to a screen, whatever the screen is. The icon the edge
+     cuts through is what actually says "this scrolls" — the fade alone can't,
+     because where the last icon stops short of the edge it's white fading
+     into white. The fractions are picked so the edge lands near the middle of
+     an icon rather than in the space between two. */
+  .share-apps > li {
+    flex: 0 0 calc((100% - 4 * var(--gap)) / 4.2);
+  }
+  .share-app {
+    width: 100%;
+  }
+}
+
+/* Narrow phones: one fewer icon on screen, and the fraction retuned so the
+   edge still cuts through an icon rather than between them. */
+@media (max-width: 379px) {
+  .share-apps > li {
+    flex: 0 0 calc((100% - 3 * var(--gap)) / 3.2);
+  }
+  .share-done-actions .btn {
+    width: 100%;
+  }
+}
