@@ -108,8 +108,8 @@ export default function GovernancePage() {
                   astroturf campaign
                 </a>
                 , so we implement two important policies that help to ensure that we are never acting on behalf of,
-                or influenced by, any interest other than the constituency that we claim to represent (our volunteers
-                and citizens concerned about AI safety).
+                or influenced by, any interest other than the constituency that we claim to represent: our volunteers
+                and citizens concerned about AI safety.
               </p>
 
               <p>The first policy is to ensure that we know the identity of any major donors.</p>
