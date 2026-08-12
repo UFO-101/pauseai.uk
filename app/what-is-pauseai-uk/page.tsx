@@ -53,7 +53,7 @@ export default function WhatIsPauseAIUKPage() {
                 <li>job loss and concentration of power</li>
                 <li>autonomous weapons</li>
                 <li>surveillance and authoritarianism</li>
-                <li>human addiction, enfeeblement and psychosis</li>
+                <li>addiction, enfeeblement and psychosis</li>
               </ul>
 
               <p>
