@@ -6,11 +6,11 @@ import OnboardingFormEmbed from "./OnboardingFormEmbed";
 import HeroMarqueeEffects from "./HeroMarqueeEffects";
 import Nav from "@/components/Nav";
 import EventList from "@/components/EventList";
-import StoriesCarousel from "@/components/StoriesCarousel";
+import PeopleCarousel from "@/components/PeopleCarousel";
 import { getEvents } from "@/lib/data/events";
 import { newsRow1, newsRow2, newsMobileRow1, newsMobileRow2, newsMobileRow3, type NewsItem } from "@/lib/data/news";
-import { stories } from "@/lib/data/stories";
 import { people } from "@/lib/data/people";
+import { staff } from "@/lib/data/staff";
 import { site } from "@/lib/data/site";
 
 export const metadata: Metadata = {
@@ -293,18 +293,18 @@ export default async function HomePage() {
           </div>
         </section>
 
-        <section id="stories" className="section stories">
+        <section id="people" className="section people">
           <div className="container">
             <div className="section-header">
-              <h2>Personal stories</h2>
+              <h2>People of PauseAI</h2>
               <p className="section-lede">
                 Stories from volunteers about their journey to joining PauseAI.
               </p>
             </div>
-            <StoriesCarousel stories={stories} />
+            <PeopleCarousel people={people} />
             <div className="story-teaser-cta">
-              <Link className="btn primary large" href="/stories/">Read all {stories.length} stories →</Link>
-              <Link className="btn ghost large" href="/stories/#share-your-story">Share your story →</Link>
+              <Link className="btn primary large" href="/people/">Read all {people.length} stories →</Link>
+              <Link className="btn ghost large" href="/people/#share-your-story">Share your story →</Link>
             </div>
           </div>
         </section>
@@ -352,7 +352,7 @@ export default async function HomePage() {
           </div>
         </section>
 
-        <section id="people" className="section container">
+        <section id="staff" className="section container">
           <div className="section-header">
             <h2>Meet the organisers</h2>
             <p className="section-lede">
@@ -367,9 +367,9 @@ export default async function HomePage() {
               </a>.
             </p>
           </div>
-          <div className="people-grid">
-            {people.map((person) => (
-              <article key={person.name} className="person-card">
+          <div className="staff-grid">
+            {staff.map((person) => (
+              <article key={person.name} className="staff-card">
                 <div className="avatar" style={{ backgroundImage: `url("${person.imageSrc}")` }}></div>
                 <div>
                   <h3>{person.name}</h3>

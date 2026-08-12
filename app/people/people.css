@@ -1,39 +1,39 @@
 /* ========================================================================
    STORIES PAGE
    Loaded after globals.css and track-record.css. Reuses the .tr-hero
-   pattern from track-record and the .story-card / .btn patterns from
+   pattern from track-record and the .person-card / .btn patterns from
    globals.css; only the section padding and grid layout are page-specific.
    ======================================================================== */
 
-.stories-page .stories-page-grid {
+.people-page .people-page-grid {
   padding: 48px 0 88px;
   background: var(--surface);
 }
 
-.stories-page .story-grid {
+.people-page .people-grid {
   display: block;
   column-count: 1;
   column-gap: 24px;
   margin-top: 0;
 }
 
-.stories-page .story-card {
+.people-page .person-card {
   break-inside: avoid;
   margin-bottom: 24px;
 }
 
 @media (min-width: 900px) {
-  .stories-page .story-grid {
+  .people-page .people-grid {
     column-count: 2;
   }
 }
 
-.stories-page .stories-page-share {
+.people-page .people-page-share {
   padding: 80px 0 88px;
   background: transparent;
 }
 
-.stories-page .story-share-form {
+.people-page .story-share-form {
   max-width: 720px;
   width: 100%;
   margin: 0 auto;
@@ -41,7 +41,7 @@
 
 /* ─── Individual story page ─── */
 
-.story-detail-page .story-back-link {
+.person-detail-page .story-back-link {
   display: inline-block;
   margin-bottom: 24px;
   font-family: "Inter", system-ui, sans-serif;
@@ -51,27 +51,27 @@
   text-decoration: none;
 }
 
-.story-detail-page .story-back-link:hover {
+.person-detail-page .story-back-link:hover {
   text-decoration: underline;
 }
 
-.story-detail-page .story-detail-heading {
+.person-detail-page .person-detail-heading {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
   gap: 24px;
 }
 
-.story-detail-page .story-detail-title-wrap {
+.person-detail-page .person-detail-title-wrap {
   flex: 1;
   min-width: 0;
 }
 
-.story-detail-page .story-detail-heading .tr-hero-title {
+.person-detail-page .person-detail-heading .tr-hero-title {
   margin: 0;
 }
 
-.story-detail-page .story-detail-avatar {
+.person-detail-page .person-detail-avatar {
   width: 120px;
   height: 120px;
   border-radius: 50%;
@@ -92,13 +92,13 @@
 }
 
 @media (max-width: 640px) {
-  .story-detail-page .story-detail-avatar {
+  .person-detail-page .person-detail-avatar {
     width: 80px;
     height: 80px;
     font-size: 26px;
   }
 }
 
-.story-detail-page .story-detail-grid {
+.person-detail-page .person-detail-grid {
   max-width: 720px;
 }

@@ -1,30 +1,30 @@
 "use client";
 
 import { useRef } from "react";
-import type { Story } from "@/lib/data/stories";
-import StoryCard from "./StoryCard";
+import type { Person } from "@/lib/data/people";
+import PersonCard from "./PersonCard";
 
-export default function StoriesCarousel({ stories }: { stories: Story[] }) {
+export default function PeopleCarousel({ people }: { people: Person[] }) {
   const trackRef = useRef<HTMLDivElement>(null);
 
   function scrollByCard(direction: 1 | -1) {
     const track = trackRef.current;
     if (!track) return;
-    const card = track.querySelector<HTMLElement>(".story-card");
+    const card = track.querySelector<HTMLElement>(".person-card");
     const amount = card ? card.getBoundingClientRect().width + 24 : track.clientWidth;
     track.scrollBy({ left: amount * direction, behavior: "smooth" });
   }
 
   return (
-    <div className="story-carousel">
-      <div className="story-carousel-track" ref={trackRef}>
-        {stories.map((story, i) => (
-          <StoryCard key={`${story.name}-${i}`} story={story} index={i} truncate />
+    <div className="people-carousel">
+      <div className="people-carousel-track" ref={trackRef}>
+        {people.map((person, i) => (
+          <PersonCard key={`${person.name}-${i}`} person={person} index={i} truncate />
         ))}
       </div>
       <button
         type="button"
-        className="story-carousel-btn story-carousel-btn-prev"
+        className="people-carousel-btn people-carousel-btn-prev"
         aria-label="Previous story"
         onClick={() => scrollByCard(-1)}
       >
@@ -32,7 +32,7 @@ export default function StoriesCarousel({ stories }: { stories: Story[] }) {
       </button>
       <button
         type="button"
-        className="story-carousel-btn story-carousel-btn-next"
+        className="people-carousel-btn people-carousel-btn-next"
         aria-label="Next story"
         onClick={() => scrollByCard(1)}
       >

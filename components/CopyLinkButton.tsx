@@ -18,7 +18,7 @@ export default function CopyLinkButton({
   const [copied, setCopied] = useState(false);
 
   async function handleCopy() {
-    const url = `${window.location.origin}/stories/${slug}`;
+    const url = `${window.location.origin}/people/${slug}`;
     try {
       await navigator.clipboard.writeText(url);
     } catch {

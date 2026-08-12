@@ -4,20 +4,20 @@ import { notFound } from "next/navigation";
 import CopyLinkButton from "@/components/CopyLinkButton";
 import Nav from "@/components/Nav";
 import StoryShareForm from "@/components/StoryShareForm";
-import { stories, storySlug } from "@/lib/data/stories";
+import { people, personSlug } from "@/lib/data/people";
 import { site } from "@/lib/data/site";
 import { avatarFallback, parseCssStyle, renderBody } from "@/lib/storyRender";
 import "../../track-record/track-record.css";
-import "../stories.css";
+import "../people.css";
 
-function findStory(slug: string) {
-  const index = stories.findIndex((story, i) => storySlug(story, i) === slug);
+function findPerson(slug: string) {
+  const index = people.findIndex((person, i) => personSlug(person, i) === slug);
   if (index === -1) return null;
-  return { story: stories[index], index };
+  return { person: people[index], index };
 }
 
 export function generateStaticParams() {
-  return stories.map((story, i) => ({ slug: storySlug(story, i) }));
+  return people.map((person, i) => ({ slug: personSlug(person, i) }));
 }
 
 export async function generateMetadata({
@@ -26,12 +26,12 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const found = findStory(slug);
+  const found = findPerson(slug);
   if (!found) return {};
 
-  const { story } = found;
-  const title = `${story.name || "Anonymous submission"} | PauseAI UK Stories`;
-  const plainFirstParagraph = story.paragraphs[0]?.replace(/<[^>]+>/g, "") ?? "";
+  const { person } = found;
+  const title = `${person.name || "Anonymous submission"} | PauseAI UK People`;
+  const plainFirstParagraph = person.paragraphs[0]?.replace(/<[^>]+>/g, "") ?? "";
   const description =
     plainFirstParagraph.length > 160 ? `${plainFirstParagraph.slice(0, 157).trimEnd()}…` : plainFirstParagraph;
 
@@ -42,59 +42,59 @@ export async function generateMetadata({
       title,
       description,
       images: [{ url: "/images/open-graph/open-graph-1200-630.jpg", width: 1200, height: 630 }],
-      url: `https://pauseai.uk/stories/${slug}/`,
+      url: `https://pauseai.uk/people/${slug}/`,
     },
     twitter: {
       images: ["/images/open-graph/open-graph-1600-840.jpg"],
     },
-    alternates: { canonical: `/stories/${slug}` },
+    alternates: { canonical: `/people/${slug}` },
   };
 }
 
 export default async function StoryDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const found = findStory(slug);
+  const found = findPerson(slug);
   if (!found) notFound();
 
-  const { story } = found;
+  const { person } = found;
 
   return (
     <>
       <Nav />
-      <main className="track-record stories-page story-detail-page">
+      <main className="track-record people-page person-detail-page">
         <section className="tr-hero">
           <div className="container tr-hero-inner">
-            <Link className="story-back-link" href="/stories">
+            <Link className="story-back-link" href="/people">
               ← Back to all stories
             </Link>
-            <div className="story-detail-heading">
-              {story.imageSrc ? (
+            <div className="person-detail-heading">
+              {person.imageSrc ? (
                 <div
-                  className="story-detail-avatar"
-                  style={{ backgroundImage: `url("${story.imageSrc}")`, ...parseCssStyle(story.imageStyle ?? "") }}
+                  className="person-detail-avatar"
+                  style={{ backgroundImage: `url("${person.imageSrc}")`, ...parseCssStyle(person.imageStyle ?? "") }}
                 ></div>
               ) : (
-                <div className="story-detail-avatar story-avatar-initials" aria-hidden="true">
-                  {avatarFallback(story.name)}
+                <div className="person-detail-avatar person-avatar-initials" aria-hidden="true">
+                  {avatarFallback(person.name)}
                 </div>
               )}
-              <div className="story-detail-title-wrap">
-                <h1 className="tr-hero-title">{story.name || "Anonymous submission"}</h1>
+              <div className="person-detail-title-wrap">
+                <h1 className="tr-hero-title">{person.name || "Anonymous submission"}</h1>
               </div>
             </div>
           </div>
         </section>
 
-        <section className="stories-page-grid">
-          <div className="container story-detail-grid">
-            <div className="story-body">{renderBody(story.paragraphs, true)}</div>
+        <section className="people-page-grid">
+          <div className="container person-detail-grid">
+            <div className="story-body">{renderBody(person.paragraphs, true)}</div>
             <div className="story-teaser-cta">
               <CopyLinkButton slug={slug} label="Share this story" />
             </div>
           </div>
         </section>
 
-        <section className="stories-page-share">
+        <section className="people-page-share">
           <div className="container">
             <div className="section-header">
               <h2>Share your story</h2>

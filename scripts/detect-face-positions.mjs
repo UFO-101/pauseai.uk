@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 // Detects the largest face in each photo under public/images/people/ and
-// writes a suggested `background-position` into the matching story's
-// `imageStyle` in lib/data/stories.json (the .story-avatar /
-// .story-detail-avatar square crop). Re-run after adding/replacing a story
+// writes a suggested `background-position` into the matching person's
+// `imageStyle` in lib/data/people.json (the .person-avatar /
+// .person-detail-avatar square crop). Re-run after adding/replacing a
 // photo. Pass --dry-run to only print suggestions without writing.
 import "@tensorflow/tfjs-backend-cpu";
 import * as tf from "@tensorflow/tfjs";
@@ -28,14 +28,14 @@ async function decodeImage(filePath) {
 
 const rootDir = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const peopleDir = path.join(rootDir, "public/images/people");
-const storiesJsonPath = path.join(rootDir, "lib/data/stories.json");
+const peopleJsonPath = path.join(rootDir, "lib/data/people.json");
 
 const args = process.argv.slice(2);
 const write = !args.includes("--dry-run");
 const files = args.filter((a) => a !== "--dry-run");
 const targets = files.length > 0 ? files : readdirSync(peopleDir).filter((f) => /\.(jpe?g|png)$/i.test(f));
 
-const stories = write ? JSON.parse(readFileSync(storiesJsonPath, "utf8")) : null;
+const persons = write ? JSON.parse(readFileSync(peopleJsonPath, "utf8")) : null;
 let updated = 0;
 
 const model = await blazeface.load();
@@ -67,20 +67,20 @@ for (const file of targets) {
 
   if (write) {
     const basename = path.basename(filePath);
-    const story = stories.find((s) => s.imageSrc && path.basename(s.imageSrc) === basename);
-    if (!story) {
-      console.log(`${basename}: ${width}x${height}, ${predictions.length} face(s) -> no matching story in stories.json, skipped`);
+    const person = persons.find((s) => s.imageSrc && path.basename(s.imageSrc) === basename);
+    if (!person) {
+      console.log(`${basename}: ${width}x${height}, ${predictions.length} face(s) -> no matching person in people.json, skipped`);
       continue;
     }
-    story.imageStyle = imageStyle;
+    person.imageStyle = imageStyle;
     updated++;
-    console.log(`${basename}: ${width}x${height}, ${predictions.length} face(s) -> updated "${story.name}" imageStyle: "${imageStyle}"`);
+    console.log(`${basename}: ${width}x${height}, ${predictions.length} face(s) -> updated "${person.name}" imageStyle: "${imageStyle}"`);
   } else {
     console.log(`${path.basename(filePath)}: ${width}x${height}, ${predictions.length} face(s) -> imageStyle: "${imageStyle}"`);
   }
 }
 
 if (write && updated > 0) {
-  writeFileSync(storiesJsonPath, JSON.stringify(stories, null, 2) + "\n");
-  console.log(`\nWrote ${updated} update(s) to lib/data/stories.json`);
+  writeFileSync(peopleJsonPath, JSON.stringify(persons, null, 2) + "\n");
+  console.log(`\nWrote ${updated} update(s) to lib/data/people.json`);
 }

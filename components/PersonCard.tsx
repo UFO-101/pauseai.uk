@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { useLayoutEffect, useRef, useState } from "react";
 import CopyLinkButton from "@/components/CopyLinkButton";
-import type { Story } from "@/lib/data/stories";
-import { storySlug } from "@/lib/data/stories";
+import type { Person } from "@/lib/data/people";
+import { personSlug } from "@/lib/data/people";
 import { avatarFallback, bulletText, isBulletLine, parseCssStyle, renderBody } from "@/lib/storyRender";
 
 // Server-rendered/pre-hydration fallback, so there's no giant flash of text
@@ -72,11 +72,11 @@ function buildMeasureNodes(paragraphs: string[]): HTMLElement[] {
   return nodes;
 }
 
-function useClampedExcerpt(story: Story, enabled: boolean) {
+function useClampedExcerpt(person: Person, enabled: boolean) {
   const bodyRef = useRef<HTMLDivElement>(null);
   const measureRef = useRef<HTMLDivElement>(null);
   const [shown, setShown] = useState<string[]>(() =>
-    enabled ? excerptParagraphs(story.paragraphs, FALLBACK_EXCERPT_LENGTH) : plainParagraphs(story.paragraphs)
+    enabled ? excerptParagraphs(person.paragraphs, FALLBACK_EXCERPT_LENGTH) : plainParagraphs(person.paragraphs)
   );
 
   useLayoutEffect(() => {
@@ -86,7 +86,7 @@ function useClampedExcerpt(story: Story, enabled: boolean) {
     if (!measureEl || !bodyEl) return;
 
     function measure() {
-      const plain = plainParagraphs(story.paragraphs);
+      const plain = plainParagraphs(person.paragraphs);
       measureEl!.style.width = `${bodyEl!.clientWidth}px`;
 
       const fits = (paragraphs: string[]) => {
@@ -104,63 +104,63 @@ function useClampedExcerpt(story: Story, enabled: boolean) {
       let hi = totalChars;
       while (lo < hi) {
         const mid = Math.ceil((lo + hi) / 2);
-        if (fits(excerptParagraphs(story.paragraphs, mid))) {
+        if (fits(excerptParagraphs(person.paragraphs, mid))) {
           lo = mid;
         } else {
           hi = mid - 1;
         }
       }
-      setShown(excerptParagraphs(story.paragraphs, lo));
+      setShown(excerptParagraphs(person.paragraphs, lo));
     }
 
     measure();
     window.addEventListener("resize", measure);
     return () => window.removeEventListener("resize", measure);
-  }, [enabled, story]);
+  }, [enabled, person]);
 
   return { bodyRef, measureRef, shown };
 }
 
-export default function StoryCard({
-  story,
+export default function PersonCard({
+  person,
   index = 0,
   truncate = false,
   maxChars,
   showLink = truncate,
 }: {
-  story: Story;
+  person: Person;
   index?: number;
   truncate?: boolean;
-  // Fixed character-count excerpt (e.g. capping the /stories grid to the
-  // length of the 3rd-longest story). When omitted, truncate falls back to
+  // Fixed character-count excerpt (e.g. capping the /people grid to the
+  // length of the 3rd-longest person). When omitted, truncate falls back to
   // the JS pixel-height clamp used by the homepage carousel.
   maxChars?: number;
-  // Show the "Read more" link to this story's own page even when the full
-  // text is already shown (e.g. every card in the /stories grid, not just
+  // Show the "Read more" link to this person's own page even when the full
+  // text is already shown (e.g. every card in the /people grid, not just
   // the truncated ones). Defaults to matching `truncate`.
   showLink?: boolean;
 }) {
-  const slug = storySlug(story, index);
+  const slug = personSlug(person, index);
   const useJsClamp = truncate && maxChars === undefined;
-  const { bodyRef, measureRef, shown } = useClampedExcerpt(story, useJsClamp);
-  const staticExcerpt = truncate && maxChars !== undefined ? excerptParagraphs(story.paragraphs, maxChars) : null;
+  const { bodyRef, measureRef, shown } = useClampedExcerpt(person, useJsClamp);
+  const staticExcerpt = truncate && maxChars !== undefined ? excerptParagraphs(person.paragraphs, maxChars) : null;
 
   return (
-    <article className="story-card">
-      <header className="story-card-header">
-        {story.imageSrc ? (
+    <article className="person-card">
+      <header className="person-card-header">
+        {person.imageSrc ? (
           <div
-            className="story-avatar"
-            style={{ backgroundImage: `url("${story.imageSrc}")`, ...parseCssStyle(story.imageStyle ?? "") }}
+            className="person-avatar"
+            style={{ backgroundImage: `url("${person.imageSrc}")`, ...parseCssStyle(person.imageStyle ?? "") }}
           ></div>
         ) : (
-          <div className="story-avatar story-avatar-initials" aria-hidden="true">
-            {avatarFallback(story.name)}
+          <div className="person-avatar person-avatar-initials" aria-hidden="true">
+            {avatarFallback(person.name)}
           </div>
         )}
-        <div className="story-name-wrap">
-          <h3 className="story-name">
-            <Link href={`/stories/${slug}`}>{story.name || <em>Anonymous submission</em>}</Link>
+        <div className="person-name-wrap">
+          <h3 className="person-name">
+            <Link href={`/people/${slug}`}>{person.name || <em>Anonymous submission</em>}</Link>
           </h3>
         </div>
         <CopyLinkButton slug={slug} />
@@ -170,11 +170,11 @@ export default function StoryCard({
           {renderBody(useJsClamp ? shown : staticExcerpt!, false)}
         </div>
       ) : (
-        <div className="story-body">{renderBody(story.paragraphs, true)}</div>
+        <div className="story-body">{renderBody(person.paragraphs, true)}</div>
       )}
       {truncate && useJsClamp && <div className="story-body story-body-measure" ref={measureRef} aria-hidden="true" />}
       {showLink && (
-        <Link className="story-read-more" href={`/stories/${slug}`}>
+        <Link className="story-read-more" href={`/people/${slug}`}>
           Read more →
         </Link>
       )}

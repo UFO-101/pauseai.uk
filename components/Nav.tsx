@@ -187,8 +187,8 @@ export default function Nav({ chapterName, chapterLogoSrc, chapterLogoWidth, cha
               <Link href="/future-of-workforce-inquiry/" role="menuitem">Future of the Workforce Inquiry</Link>
             </div>
           </div>
-          <Link href="/stories/">Stories</Link>
-          <Link href={`${navPrefix}#people`}>People</Link>
+          <Link href="/people/">People</Link>
+          <Link href="/blog/">Blog</Link>
           <a href={site.shopUrl} target="_blank" rel="noreferrer">Shop</a>
           <Link href={`${navPrefix}#join`} className="pill">Join</Link>
           <Link href="/donate" className="pill pill-primary">Donate</Link>
