@@ -36,6 +36,10 @@
   color: var(--text-secondary);
   margin: 0 0 16px;
 }
+/* Trailing margins would stack on the section's own bottom padding. */
+.share-head .lede:last-child {
+  margin-bottom: 0;
+}
 .share-head-ask {
   max-width: 56ch;
   margin: 0;
@@ -271,15 +275,10 @@
   line-height: 1.65;
   color: var(--text-secondary);
 }
-.share-done-note {
-  font-size: 15px !important;
-  color: var(--muted) !important;
-}
-.share-done-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin: 24px 0 0;
+/* The trailing margin would otherwise stack on the panel's padding and leave
+   the card visibly deeper at the bottom than the top. */
+.share-panel-done p:last-child {
+  margin-bottom: 0;
 }
 
 /* ─── Mobile ─── */
@@ -318,8 +317,5 @@
 @media (max-width: 379px) {
   .share-apps > li {
     flex: 0 0 calc((100% - 3 * var(--gap)) / 3.2);
-  }
-  .share-done-actions .btn {
-    width: 100%;
   }
 }

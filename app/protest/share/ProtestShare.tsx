@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import {
   type CSSProperties,
   type ReactNode,
@@ -13,7 +14,7 @@ import {
 const PROTEST_URL = "https://pauseai.uk/protest";
 const MESSAGE = `[TO DO: share message] \n\n` + //TODO: share message
     `Register here: ${PROTEST_URL} \n\n` +
-    `(Can't go? Help us spread the word instead: https://pauseai.uk/protest/share - thank you!)`;
+    `(Can't go? Help us spread the word instead by forwarding this message - thank you!)`;
 const EMAIL_SUBJECT = "The biggest ever AI protest - London, 5 December";
 const SHARE_TITLE = "The biggest ever AI protest - London, 5 December";
 
@@ -197,7 +198,7 @@ const hasNativeShare = () =>
 const noNativeShare = () => false;
 
 export default function ProtestShare() {
-  const { count, done } = useSyncExternalStore(subscribe, getProgress, getServerProgress);
+  const { done } = useSyncExternalStore(subscribe, getProgress, getServerProgress);
   const canNativeShare = useSyncExternalStore(subscribeToPointer, hasNativeShare, noNativeShare);
   const [prompt, setPrompt] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -278,27 +279,22 @@ export default function ProtestShare() {
   if (done) {
     return (
       <div className="share-panel share-panel-done">
-        <h2>Thank you. That&rsquo;s the hard part done.</h2>
+        <h2>Thank you for registering</h2>
         <p>
-          {count > 0 ? `You shared the march ${count} ${count === 1 ? "time" : "times"}. ` : ""}
-          We&rsquo;ll email you the exact location as soon as it&rsquo;s confirmed. Put Saturday 5
-          December, 12:00&ndash;15:00 in your calendar now so nothing else takes the slot.
+          You should receive an email shortly with a calendar invite.
+          We&rsquo;ll send you an update with the exact location and more info closer to the date.
         </p>
-        <p className="share-done-note">
-          If someone comes to mind later, this page will still be here.
-        </p>
-        <div className="share-done-actions">
-          <button
-            type="button"
-            className="btn primary"
-            onClick={() => saveProgress({ ...getProgress(), done: false })}
-          >
-            I thought of somewhere else
-          </button>
-          <a className="btn ghost" href="/protest/">
-            Back to the march
+        <p>
+          In the meantime, you can read more about{" "}
+          <Link className="inline-link" href="/">
+            who we are
+          </Link>
+          , or learn more about the risks of AI and our proposal at{" "}
+          <a className="inline-link" href="https://pauseai.info" target="_blank" rel="noreferrer">
+            PauseAI.info
           </a>
-        </div>
+          .
+        </p>
       </div>
     );
   }

@@ -121,6 +121,11 @@ export default function ProtestPage() {
                 Registering takes under a minute. It helps us know how many people to expect and
                 allows us to send you the precise location once it&rsquo;s decided.
               </p>
+              <p>
+                In 2025, our biggest protest had just 60&ndash;70 people. Last February (our
+                most recent protest), we had several hundred. This December, let&rsquo;s get that
+                number up to 1000!
+              </p>
               <h3>What to expect</h3>
               <ul className="protest-next">
                 <li>The protest is organised by PauseAI UK and <a href="https://pulltheplug.uk/"
@@ -129,11 +134,7 @@ export default function ProtestPage() {
                 <li>PauseAI is a big tent movement. Everyone is encouraged to attend, regardless of
                 political affiliation.</li>
               </ul>
-              <p>
-                In 2025, our biggest protest had just 60&ndash;70 people. Last February (our
-                most recent protest), we had several hundred. This December, let&rsquo;s get that
-                number up to 1000!
-              </p>
+
             </div>
             <ProtestSignupForm />
           </div>

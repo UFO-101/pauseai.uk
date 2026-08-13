@@ -121,6 +121,9 @@
   color: var(--text-secondary);
   margin: 0 0 18px;
 }
+.protest-context p:last-child {
+  margin-bottom: 0;
+}
 .protest-context strong {
   color: var(--text);
 }
