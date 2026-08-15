@@ -70,11 +70,40 @@
   color: var(--text);
 }
 
+.blog .blog-body h2 {
+  font-family: var(--font-display), "Lato", system-ui, sans-serif;
+  font-size: clamp(24px, 2.6vw, 30px);
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.015em;
+  color: var(--text);
+  margin: 36px 0 14px;
+}
+
 .blog .blog-body p {
   font-size: 17px;
   line-height: 1.7;
   color: var(--text);
   margin: 0 0 18px;
+}
+
+.blog .blog-body figure {
+  margin: 26px 0;
+}
+.blog .blog-body figure img {
+  display: block;
+  width: 100%;
+  height: auto;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px;
+}
+.blog .blog-body figcaption {
+  margin-top: 10px;
+  font-size: 14.5px;
+  line-height: 1.5;
+  color: var(--text-secondary);
 }
 .blog .blog-body p:last-child {
   margin-bottom: 0;

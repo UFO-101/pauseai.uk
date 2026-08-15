@@ -69,9 +69,11 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
 
         <article className="blog-article">
           <div className="container blog-inner">
-            <p className="blog-tldr">
-              <strong>TL;DR</strong> {post.tldrContent ?? <em>{post.tldr}</em>}
-            </p>
+            {post.tldrContent && (
+              <p className="blog-tldr">
+                <strong>TL;DR</strong> {post.tldrContent}
+              </p>
+            )}
             <div className="blog-body">{post.content}</div>
           </div>
         </article>
