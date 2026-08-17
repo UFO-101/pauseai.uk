@@ -38,7 +38,10 @@ const PEOPLE_ARRAY_PATTERN = /(export const people: Person\[\] =\n)([\s\S]*?\n\]
 function readPeople(source) {
   const match = source.match(PEOPLE_ARRAY_PATTERN);
   if (!match) throw new Error(`Could not find the people array literal in ${peopleTsPath}`);
-  return JSON.parse(match[2]);
+  // It's a .ts file, so an editor's format-on-save happily leaves trailing
+  // commas (valid JS, not valid JSON) before a closing `}` or `]`.
+  const withoutTrailingCommas = match[2].replace(/,(\s*[}\]])/g, "$1");
+  return JSON.parse(withoutTrailingCommas);
 }
 
 function writePeople(source, persons) {
