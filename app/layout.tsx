@@ -48,6 +48,11 @@ export const metadata: Metadata = {
     apple: { url: "/favicon/apple-touch-icon.png", sizes: "180x180" },
   },
   manifest: "/favicon/site.webmanifest",
+  verification: {
+    // Google search console - with Harry's pauseai.uk email address
+    // TODO: link to google analytics
+    google: "TceK59CQQ__dVDNJqOhnEuYi7WHOdIQx6MClmzJSRT8",
+  },
   other: {
     "apple-mobile-web-app-title": "PauseAI UK",
   },
