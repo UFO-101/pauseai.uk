@@ -7,7 +7,7 @@ import "../track-record/track-record.css";
 import "./theory-of-change.css";
 
 export const metadata: Metadata = {
-  title: "PauseAI UK | Theory of Change",
+  title: "Theory of Change",
   description: "How PauseAI UK plans to convert public concern about AI risk into political pressure for a global pause.",
   openGraph: {
     title: "PauseAI UK | Theory of Change",
@@ -18,6 +18,7 @@ export const metadata: Metadata = {
   twitter: {
     images: ["/images/open-graph/open-graph-1600-840.jpg"],
   },
+  alternates: { canonical: "/theory-of-change" },
 };
 
 export default function TheoryOfChangePage() {

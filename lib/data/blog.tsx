@@ -20,10 +20,9 @@ export type BlogPost = {
 };
 
 export function postAuthor(post: BlogPost): { person: Person; slug: string } | null {
-  const index = people.findIndex((p) => p.name === post.author);
-  if (index === -1) return null;
-  const person = people[index];
-  return { person, slug: personSlug(person, index) };
+  const person = people.find((p) => p.name === post.author);
+  if (!person) return null;
+  return { person, slug: personSlug(person) };
 }
 
 export function formatPostDate(iso: string): string {

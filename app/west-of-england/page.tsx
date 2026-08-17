@@ -3,7 +3,7 @@ import Nav from "@/components/Nav";
 import { site } from "@/lib/data/site";
 
 export const metadata: Metadata = {
-  title: "PauseAI UK — West of England Chapter",
+  title: "West of England Chapter",
   openGraph: {
     title: "PauseAI West of England",
     description: "Join the West of England chapter of PauseAI for meetups, outreach, and AI safety action around Bristol and the wider region.",

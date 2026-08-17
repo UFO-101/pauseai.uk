@@ -8,7 +8,7 @@ import "../track-record/track-record.css";
 import "./people.css";
 
 export const metadata: Metadata = {
-  title: "PauseAI UK | People",
+  title: "People",
   description: "Why our volunteers and members got involved with PauseAI UK, in their own words.",
   openGraph: {
     title: "PauseAI UK | People",
@@ -43,7 +43,6 @@ export default function PeoplePage() {
                 <PersonCard
                   key={`${person.name}-${i}`}
                   person={person}
-                  index={i}
                   truncate={isLongStory(person)}
                   maxChars={LONG_STORY_CHAR_THRESHOLD}
                   showLink

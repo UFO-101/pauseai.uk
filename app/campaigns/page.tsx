@@ -10,7 +10,7 @@ import "./campaigns.css";
 const SIGNATORIES_EMBED = "https://airtable.com/embed/appBInVvIm6opJ1Ob/shrQ4CTHTx5VrLPnp";
 
 export const metadata: Metadata = {
-  title: "PauseAI UK | Campaigns",
+  title: "Campaigns",
   description: "Take action on AI safety. Email your MP, join campaigns, and help build pressure for a global pause.",
   openGraph: {
     title: "PauseAI UK | Campaigns",
@@ -21,6 +21,7 @@ export const metadata: Metadata = {
   twitter: {
     images: ["/images/open-graph/open-graph-1600-840.jpg"],
   },
+  alternates: { canonical: "/campaigns" },
 };
 
 export default function CampaignsPage() {

@@ -6,7 +6,7 @@ import "../track-record/track-record.css";
 import "./governance.css";
 
 export const metadata: Metadata = {
-  title: "PauseAI UK | Governance",
+  title: "Governance",
   description: "The board that oversees PauseAI UK, and the due diligence we carry out before accepting donations.",
   openGraph: {
     title: "PauseAI UK | Governance",

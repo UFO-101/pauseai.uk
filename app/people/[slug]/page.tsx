@@ -11,13 +11,12 @@ import "../../track-record/track-record.css";
 import "../people.css";
 
 function findPerson(slug: string) {
-  const index = people.findIndex((person, i) => personSlug(person, i) === slug);
-  if (index === -1) return null;
-  return { person: people[index], index };
+  const person = people.find((p) => personSlug(p) === slug);
+  return person ? { person } : null;
 }
 
 export function generateStaticParams() {
-  return people.map((person, i) => ({ slug: personSlug(person, i) }));
+  return people.map((person) => ({ slug: personSlug(person) }));
 }
 
 export async function generateMetadata({
@@ -30,7 +29,7 @@ export async function generateMetadata({
   if (!found) return {};
 
   const { person } = found;
-  const title = `${person.name || "Anonymous submission"} | PauseAI UK People`;
+  const title = person.name || "Anonymous submission";
   const plainFirstParagraph = person.paragraphs[0]?.replace(/<[^>]+>/g, "") ?? "";
   const description =
     plainFirstParagraph.length > 160 ? `${plainFirstParagraph.slice(0, 157).trimEnd()}…` : plainFirstParagraph;

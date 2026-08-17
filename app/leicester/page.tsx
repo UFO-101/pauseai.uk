@@ -3,7 +3,7 @@ import Link from "next/link";
 import Nav from "@/components/Nav";
 
 export const metadata: Metadata = {
-  title: "PauseAI UK — Leicester Chapter",
+  title: "Leicester Chapter",
   openGraph: {
     title: "PauseAI Leicester",
     description: "Join the Leicester chapter of PauseAI for meetups, outreach, and AI safety action.",

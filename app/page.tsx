@@ -14,7 +14,6 @@ import { staff } from "@/lib/data/staff";
 import { site } from "@/lib/data/site";
 
 export const metadata: Metadata = {
-  title: "PauseAI UK",
   description: "Community-led action for safe and accountable AI.",
   openGraph: {
     title: "PauseAI UK",
@@ -25,6 +24,7 @@ export const metadata: Metadata = {
   twitter: {
     images: ["/images/open-graph/open-graph-1600-840.jpg"],
   },
+  alternates: { canonical: "/" },
 };
 
 function renderNewsRow(items: NewsItem[], reverse = false) {

@@ -19,7 +19,7 @@ export default function PeopleCarousel({ people }: { people: Person[] }) {
     <div className="people-carousel">
       <div className="people-carousel-track" ref={trackRef}>
         {people.map((person, i) => (
-          <PersonCard key={`${person.name}-${i}`} person={person} index={i} truncate />
+          <PersonCard key={`${person.name}-${i}`} person={person} truncate />
         ))}
       </div>
       <button

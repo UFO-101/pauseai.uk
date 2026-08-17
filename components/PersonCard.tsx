@@ -123,13 +123,11 @@ function useClampedExcerpt(person: Person, enabled: boolean) {
 
 export default function PersonCard({
   person,
-  index = 0,
   truncate = false,
   maxChars,
   showLink = truncate,
 }: {
   person: Person;
-  index?: number;
   truncate?: boolean;
   // Fixed character-count excerpt (e.g. capping the /people grid to the
   // length of the 3rd-longest person). When omitted, truncate falls back to
@@ -140,7 +138,7 @@ export default function PersonCard({
   // the truncated ones). Defaults to matching `truncate`.
   showLink?: boolean;
 }) {
-  const slug = personSlug(person, index);
+  const slug = personSlug(person);
   const useJsClamp = truncate && maxChars === undefined;
   const { bodyRef, measureRef, shown } = useClampedExcerpt(person, useJsClamp);
   const staticExcerpt = truncate && maxChars !== undefined ? excerptParagraphs(person.paragraphs, maxChars) : null;

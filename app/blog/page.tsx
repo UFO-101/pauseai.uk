@@ -8,7 +8,7 @@ import "../track-record/track-record.css";
 import "./blog.css";
 
 export const metadata: Metadata = {
-  title: "PauseAI UK | Blog",
+  title: "Blog",
   description: "Writing from the PauseAI UK community on AI risk and what you can do about it.",
   openGraph: {
     title: "PauseAI UK | Blog",

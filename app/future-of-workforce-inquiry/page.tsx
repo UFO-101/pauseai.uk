@@ -5,7 +5,7 @@ import "../track-record/track-record.css";
 import "./page.css";
 
 export const metadata: Metadata = {
-  title: "PauseAI UK | Evidence: AI, Business and the Future of the Workforce",
+  title: "Evidence: AI, Business and the Future of the Workforce",
   description:
     "PauseAI UK's written submission to the House of Commons Business and Trade Committee inquiry into Artificial Intelligence, business and the future of the workforce.",
   openGraph: {

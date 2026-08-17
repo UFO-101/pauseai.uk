@@ -19,7 +19,7 @@ const DESCRIPTION =
   "How 377,458 people across 104 countries feel about the development of superintelligent AI: an interactive look at the Nira Data Spring 2026 World Omnibus.";
 
 export const metadata: Metadata = {
-  title: `PauseAI UK | ${TITLE}`,
+  title: TITLE,
   description: DESCRIPTION,
   openGraph: {
     title: `PauseAI UK | ${TITLE}`,

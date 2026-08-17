@@ -24,8 +24,8 @@ export function initials(name: string): string {
 
 // Content for the avatar circle when there's no photo: initials, or the
 // PauseAI pause symbol for anonymous submissions (no initials to show).
-export function avatarFallback(name: string): ReactNode {
-  if (!name.trim()) {
+export function avatarFallback(name: string | undefined): ReactNode {
+  if (!name?.trim()) {
     return <Image src="/images/logos/Pause-Symbol.svg" alt="" width={616} height={616} className="person-avatar-pause-icon" />;
   }
   return initials(name);

@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import JsonLd from "@/components/JsonLd";
 import Nav from "@/components/Nav";
 import { findPost, formatPostDate, postAuthor, posts } from "@/lib/data/blog";
+import { site } from "@/lib/data/site";
 import { parseCssStyle } from "@/lib/storyRender";
 import "../../track-record/track-record.css";
 import "../blog.css";
@@ -16,7 +18,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const post = findPost(slug);
   if (!post) return {};
   return {
-    title: `${post.title} — PauseAI UK`,
+    title: post.title,
     description: post.tldr,
     openGraph: {
       title: post.title,
@@ -39,8 +41,28 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
 
   const author = postAuthor(post);
 
+  const articleJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: post.title,
+    description: post.tldr,
+    datePublished: post.date,
+    url: `${site.url}/blog/${slug}`,
+    mainEntityOfPage: `${site.url}/blog/${slug}`,
+    image: `${site.url}/images/open-graph/open-graph-1200-630.jpg`,
+    author: author
+      ? { "@type": "Person", name: post.author, url: `${site.url}/people/${author.slug}` }
+      : { "@type": "Organization", name: "PauseAI UK" },
+    publisher: {
+      "@type": "Organization",
+      name: "PauseAI UK",
+      logo: { "@type": "ImageObject", url: `${site.url}/favicon/web-app-manifest-512x512.png` },
+    },
+  };
+
   return (
     <>
+      <JsonLd data={articleJsonLd} />
       <Nav />
       <main className="track-record blog">
         <section className="tr-hero">
