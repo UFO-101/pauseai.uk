@@ -54,7 +54,7 @@ export const metadata: Metadata = {
     google: "TceK59CQQ__dVDNJqOhnEuYi7WHOdIQx6MClmzJSRT8",
     other: {
       // Bing Webmaster Tools - with Harry's pauseai.uk email address
-      "msvalidate.01": "bing.com/webmasters", 
+      "msvalidate.01": "801F2DA452AC275FC856A5215057FA55",
     },
   },
   other: {
