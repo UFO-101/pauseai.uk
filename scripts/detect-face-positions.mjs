@@ -8,6 +8,7 @@ import "@tensorflow/tfjs-backend-cpu";
 import * as tf from "@tensorflow/tfjs";
 import * as blazeface from "@tensorflow-models/blazeface";
 import sharp from "sharp";
+import ts from "typescript";
 import { readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
@@ -30,22 +31,39 @@ const rootDir = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const peopleDir = path.join(rootDir, "public/images/people");
 const peopleTsPath = path.join(rootDir, "lib/data/people.ts");
 
-// The `people` array is a plain JSON-compatible literal inside people.ts —
-// pull it out by its surrounding markers, JSON.parse it, and splice the
-// updated JSON back in, leaving the type defs and helper functions as-is.
-const PEOPLE_ARRAY_PATTERN = /(export const people: Person\[\] =\n)([\s\S]*?\n\])(;)/;
+// The `people` array is a plain JSON-compatible literal inside people.ts.
+// Rather than pattern-match the surrounding text (fragile to reformatting),
+// parse the file and find the array literal by its actual syntax: the
+// initializer of the exported `people` declaration. JSON.parse it, and
+// splice the updated JSON back into that same span, leaving the type defs
+// and helper functions as-is.
+function findPeopleArrayLiteral(source) {
+  const sourceFile = ts.createSourceFile(peopleTsPath, source, ts.ScriptTarget.Latest, true);
+  for (const statement of sourceFile.statements) {
+    if (!ts.isVariableStatement(statement)) continue;
+    for (const decl of statement.declarationList.declarations) {
+      if (ts.isIdentifier(decl.name) && decl.name.text === "people" && decl.initializer && ts.isArrayLiteralExpression(decl.initializer)) {
+        return { sourceFile, node: decl.initializer };
+      }
+    }
+  }
+  throw new Error(`Could not find the "people" array literal in ${peopleTsPath}`);
+}
 
 function readPeople(source) {
-  const match = source.match(PEOPLE_ARRAY_PATTERN);
-  if (!match) throw new Error(`Could not find the people array literal in ${peopleTsPath}`);
+  const { sourceFile, node } = findPeopleArrayLiteral(source);
+  const arrayText = source.slice(node.getStart(sourceFile), node.getEnd());
   // It's a .ts file, so an editor's format-on-save happily leaves trailing
   // commas (valid JS, not valid JSON) before a closing `}` or `]`.
-  const withoutTrailingCommas = match[2].replace(/,(\s*[}\]])/g, "$1");
+  const withoutTrailingCommas = arrayText.replace(/,(\s*[}\]])/g, "$1");
   return JSON.parse(withoutTrailingCommas);
 }
 
 function writePeople(source, persons) {
-  return source.replace(PEOPLE_ARRAY_PATTERN, (_, before, _array, after) => `${before}${JSON.stringify(persons, null, 2)}${after}`);
+  const { sourceFile, node } = findPeopleArrayLiteral(source);
+  const start = node.getStart(sourceFile);
+  const end = node.getEnd();
+  return source.slice(0, start) + JSON.stringify(persons, null, 2) + source.slice(end);
 }
 
 const args = process.argv.slice(2);
