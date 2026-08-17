@@ -33,6 +33,7 @@
   },
   {
     "name": "",
+    "slug": "story-4",
     "paragraphs": [
       "With the current infrastructure, the UK will lose it's natural splendor. We'll be struggling to supply electricity and water to average citizens before 2030. Everyone will be impacted and the scum at the top won't care because their pockets will be lined from the exploitation. AI is not the future, in its current form, it is spelling the end of humanity far quicker than anyone has predicted."
     ]
@@ -53,6 +54,7 @@
   },
   {
     "name": "",
+    "slug": "story-7",
     "paragraphs": [
       "I am worried because no one knows how AI works or how to control it. I am concerned about the following:",
       "- loss of control leading to human extinction",
@@ -102,6 +104,7 @@
   },
   {
     "name": "",
+    "slug": "story-12",
     "paragraphs": [
       "By trade, I'm a lawyer specialising in cyber-incident response and contentious data privacy. I've spent my career working for and against the world's biggest tech platforms, and have worked for UK regulatory bodies.",
       "I've seen first hand (and investigated) the terrifying power wielded by tech giants. These powers have been insufficiently constrained by regulation, and we have paid the consequence through the fracturing of our shared sense of truth, increasing political polarisation, and grave harms to public mental health.",
