@@ -18,7 +18,7 @@ const RAMP_STOPS: [number, number, number][] = [
   [243, 205, 166], // #F3CDA6
   [233, 173, 121], // #E9AD79
   [219, 137, 82], // #DB8952
-  [200, 101, 42], // #C8652A (site accent)
+  [229, 114, 38], // #e57226 (site accent)
   [168, 78, 26], // #A84E1A (site accent-strong)
   [122, 54, 16], // #7A3610
 ];

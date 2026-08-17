@@ -301,7 +301,9 @@ export default async function HomePage() {
                 Stories from volunteers about their journey to joining PauseAI.
               </p>
             </div>
-            <PeopleCarousel people={people} />
+          </div>
+          <PeopleCarousel people={people} />
+          <div className="container">
             <div className="story-teaser-cta">
               <Link className="btn primary large" href="/people/">Read all {people.length} stories →</Link>
               <Link className="btn ghost large" href="/people/#share-your-story">Share your story →</Link>

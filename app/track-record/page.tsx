@@ -91,7 +91,7 @@ export default function TrackRecordPage() {
         <section className="timeline">
           <div className="container">
             <ol className="timeline-list">
-              <li className="entry">
+              <li className="entry" id="pausecon-london">
                 <aside className="entry-date">
                   <span className="month">June</span>
                   <span className="year">2025</span>
@@ -168,7 +168,7 @@ export default function TrackRecordPage() {
                 </div>
               </li>
 
-              <li className="entry">
+              <li className="entry" id="open-letter-to-demis-hassabis">
                 <aside className="entry-date">
                   <span className="month">August</span>
                   <span className="year">2025</span>
@@ -226,7 +226,7 @@ export default function TrackRecordPage() {
                 </div>
               </li>
 
-              <li className="entry">
+              <li className="entry" id="book-launch-party">
                 <aside className="entry-date">
                   <span className="month">September</span>
                   <span className="year">2025</span>
@@ -260,7 +260,7 @@ export default function TrackRecordPage() {
                 </div>
               </li>
 
-              <li className="entry">
+              <li className="entry" id="documentary-screening-in-parliament">
                 <aside className="entry-date">
                   <span className="month">October</span>
                   <span className="year">2025</span>
@@ -306,7 +306,7 @@ export default function TrackRecordPage() {
                 </div>
               </li>
 
-              <li className="entry">
+              <li className="entry" id="westminster-hall-debate">
                 <aside className="entry-date">
                   <span className="month">December</span>
                   <span className="year">2025</span>
@@ -349,7 +349,7 @@ export default function TrackRecordPage() {
                 </div>
               </li>
 
-              <li className="entry">
+              <li className="entry" id="pausecon-brussels">
                 <aside className="entry-date">
                   <span className="month">February</span>
                   <span className="year">2026</span>
@@ -452,7 +452,7 @@ export default function TrackRecordPage() {
                 </div>
               </li>
 
-              <li className="entry">
+              <li className="entry" id="march-for-ai-safety">
                 <aside className="entry-date">
                   <span className="month">February</span>
                   <span className="year">2026</span>
@@ -558,7 +558,7 @@ export default function TrackRecordPage() {
                 </div>
               </li>
 
-              <li className="entry entry-finale">
+              <li className="entry entry-finale" id="parliamentary-meetings">
                 <aside className="entry-date">
                   <span className="month">June</span>
                   <span className="year">2026</span>

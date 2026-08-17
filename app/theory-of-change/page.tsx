@@ -31,15 +31,32 @@ export default function TheoryOfChangePage() {
           </svg>
           <div className="container tr-hero-inner">
             <h1 className="tr-hero-title">Theory of Change</h1>
-            <p className="tr-hero-lede">Creating the political momentum for a pause.</p>
           </div>
         </section>
 
         <section className="foreword">
           <div className="container foreword-inner">
             <div className="foreword-body">
-              <p>Organising large numbers of citizens to boldly advocate for an AI pause will robustly help make the future go better. Public pressure for serious action on AI risks increases the likelihood of useful legislation and might be the only way that humanity avoids extinction.</p>
-              <p>PauseAI UK exists to transform loose public concern into a focused political force in the UK, and to hold that pressure in place long enough to matter. Deep buy-in across the public is necessary to overcome industry lobbying. The work of converting awareness into durable political will is the community organising work that PauseAI UK specialises in.</p>
+              <p>Thousands of people in the UK believe that humanity might soon build dangerous superintelligent AI. And yet many of these people haven&rsquo;t even taken 10 seconds to email their MP about it.</p>
+              <p>Political intervention is currently the most plausible way that humanity can avoid catastrophe and there are many easy ways that anyone can help to improve the chance of useful AI legislation.</p>
+              <ul>
+                <li>You can <a href="/campaigns/#email-your-mp" className="inline-link">email your MP</a> in about 10 seconds and there&rsquo;s a decent chance they will agree to sign a statement supporting frontier AI legislation.</li>
+                <li>You can just <a href="/track-record/#parliamentary-meetings" className="inline-link">go to Parliament</a> and ask to meet with your MP and there&rsquo;s a decent chance they will talk to you about your concerns for up to an hour.</li>
+                <li>
+                  You can just march down the street in protest and newspapers{" "}
+                  <a href="https://www.wsj.com/tech/ai/ai-companies-public-relations-ae312d79" className="inline-link" target="_blank" rel="noreferrer">will</a>{" "}
+                  <a href="https://www.businessinsider.com/protesters-accuse-google-deepmind-breaking-promises-ai-safety-2025-6" className="inline-link" target="_blank" rel="noreferrer">publish</a>{" "}
+                  <a href="https://www.technologyreview.com/2026/03/02/1133814/i-checked-out-londons-biggest-ever-anti-ai-protest/" className="inline-link" target="_blank" rel="noreferrer">photos</a>{" "}
+                  <a href="https://www.the-independent.com/tech/ai-safety-declaration-steve-bannon-b2932570.html" className="inline-link" target="_blank" rel="noreferrer">of</a>{" "}
+                  <a href="https://gizmodo.com/the-openai-anthropic-cold-war-comes-to-illinois-2000746324" className="inline-link" target="_blank" rel="noreferrer">it</a>{" "}
+                  <a href="https://www.theguardian.com/technology/2026/mar/06/uk-arts-must-not-be-sacrificed-for-speculative-ai-gains-peers-say" className="inline-link" target="_blank" rel="noreferrer">across</a>{" "}
+                  <a href="https://www.wired.it/article/movimenti-contro-intelligenza-artificiale-mappa-nomi-pauseai-stopai-controlai/" className="inline-link" target="_blank" rel="noreferrer">the</a>{" "}
+                  <a href="https://futurism.com/artificial-intelligence/rage-openai-protests" className="inline-link" target="_blank" rel="noreferrer">world</a>.
+                </li>
+              </ul>
+              <p>If the thousands of people already concerned about superintelligence were well organised as a political force, they could wield substantial power to influence British AI policy.</p>
+              <p>And every month many more people notice how dangerous our current trajectory is. Awareness is accelerating rapidly as we get closer to catastrophe. PauseAI exists to provide useful structures and organise these people to have the most political impact as efficiently as possible.</p>
+              <p>The window of political possibilities is opening rapidly as AI warning shots start to pile up. With the right execution, we can soon pass useful AI legislation that actually helps to decrease the threat.</p>
             </div>
           </div>
         </section>
@@ -113,7 +130,6 @@ export default function TheoryOfChangePage() {
 
         <section className="closing">
           <div className="container closing-inner">
-            <p className="closing-sub">Help us build the movement.</p>
             <div className="closing-actions">
               <a className="btn primary" href={site.whatsappUrl} target="_blank" rel="noreferrer">Join the WhatsApp community</a>
               <Link className="btn ghost" href="/#join">More ways to get involved</Link>

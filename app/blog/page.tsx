@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import Nav from "@/components/Nav";
 import { formatPostDate, postAuthor, posts } from "@/lib/data/blog";
+import { site } from "@/lib/data/site";
 import { parseCssStyle } from "@/lib/storyRender";
 import "../track-record/track-record.css";
 import "./blog.css";
@@ -29,6 +30,10 @@ export default function BlogIndexPage() {
         <section className="tr-hero">
           <div className="container tr-hero-inner">
             <h1 className="tr-hero-title">Blog</h1>
+            <p className="tr-hero-lede">
+              This blog is written by PauseAI Volunteers. If you would like to contribute a piece, email{" "}
+              <a href={`mailto:${site.contactEmail}`}>{site.contactEmail}</a> to chat with us about your ideas.
+            </p>
           </div>
         </section>
 

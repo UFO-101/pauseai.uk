@@ -28,8 +28,8 @@
   --muted: #8A7F73;
 
   /* Accent — burnt terracotta */
-  --pause-orange: #C8652A;
-  --pause-orange-rgb: 200 101 42;
+  --pause-orange: #e57226;
+  --pause-orange-rgb: 229 114 38;
   --accent: #e57226;
   --accent-strong: #e57226;
 
@@ -282,7 +282,7 @@ section[id] {
 
 .next-event {
   padding: 48px 0;
-  background: linear-gradient(135deg, rgba(255, 148, 22, 0.15), rgba(255, 122, 0, 0.08));
+  background: var(--surface);
   border-bottom: 1px solid var(--border);
 }
 
@@ -924,6 +924,7 @@ section[id] {
   background: var(--surface-2);
 }
 
+
 .section-header h2 {
   font-size: clamp(28px, 4vw, 44px);
   line-height: 1.15;
@@ -942,6 +943,16 @@ section[id] {
   position: relative;
   max-width: 800px;
   margin: 0 auto;
+}
+
+/* On phones the form is cramped by the container's 24px gutters; let the
+   embed bleed into them, keeping a slim 8px effective margin. The section
+   heading above stays aligned with the rest of the page. */
+@media (max-width: 640px) {
+  #join .tally-embed {
+    margin-left: -16px;
+    margin-right: -16px;
+  }
 }
 
 .onboarding-embed-skeleton {
@@ -1457,7 +1468,11 @@ section[id] {
   scrollbar-width: thin;
   scrollbar-color: var(--border-strong) transparent;
   gap: 24px;
-  padding: 4px 4px 12px;
+  /* The carousel spans the full section width (outside .container); this
+     inline padding aligns the first card with the container's content
+     edge on wide screens and falls back to the page gutter on small. */
+  padding: 4px max(24px, calc((100% - 1092px) / 2)) 12px;
+  scroll-padding-inline: max(24px, calc((100% - 1092px) / 2));
 }
 
 .people-carousel-track .person-card {
@@ -1485,11 +1500,11 @@ section[id] {
 }
 
 .people-carousel-btn-prev {
-  left: -22px;
+  left: 16px;
 }
 
 .people-carousel-btn-next {
-  right: -22px;
+  right: 16px;
 }
 
 @media (min-width: 900px) {

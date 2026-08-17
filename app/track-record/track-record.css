@@ -14,7 +14,7 @@
   padding: 72px 0 56px;
   overflow: hidden;
   background:
-    radial-gradient(ellipse 80% 60% at 100% 0%, rgba(200, 101, 42, 0.06), transparent 60%),
+    radial-gradient(ellipse 80% 60% at 100% 0%, rgba(229, 114, 38, 0.06), transparent 60%),
     var(--bg);
 }
 .tr-hero-swirl {
@@ -102,6 +102,12 @@
   margin-top: 2px;
 }
 
+/* Timeline entries that serve as link targets need the same sticky-nav
+   scroll offset that globals.css gives to section[id]. */
+.track-record .entry[id] {
+  scroll-margin-top: 90px;
+}
+
 /* ─── Timeline ─── */
 .track-record .timeline {
   padding: 80px 0 100px;
@@ -154,7 +160,7 @@
   background: var(--pause-orange);
   border-color: var(--pause-orange);
   transform: scale(1.6);
-  box-shadow: 0 0 0 6px rgba(200, 101, 42, 0.12);
+  box-shadow: 0 0 0 6px rgba(229, 114, 38, 0.12);
 }
 
 .entry-date {
@@ -292,7 +298,7 @@
 .track-record .closing {
   padding: 96px 0 104px;
   background:
-    radial-gradient(ellipse 70% 90% at 50% 100%, rgba(200, 101, 42, 0.09), transparent 70%),
+    radial-gradient(ellipse 70% 90% at 50% 100%, rgba(229, 114, 38, 0.09), transparent 70%),
     var(--surface);
   border-top: 1px solid var(--border);
   text-align: center;

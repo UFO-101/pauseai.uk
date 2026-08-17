@@ -6,6 +6,37 @@
    `main.theory-of-change`.
    ======================================================================== */
 
+/* Undo track-record's drop-cap on the opening paragraph — it doesn't suit
+   this foreword. */
+.theory-of-change .foreword-body p:first-child::first-letter {
+  float: none;
+  font-family: inherit;
+  font-size: inherit;
+  font-style: normal;
+  font-weight: inherit;
+  line-height: inherit;
+  color: inherit;
+  padding: 0;
+}
+
+/* The foreword now includes a bullet list; track-record.css (where the
+   .foreword styles live) never needed one. */
+.theory-of-change .foreword-body ul {
+  padding-left: 22px;
+  margin: 14px 0 18px;
+}
+.theory-of-change .foreword-body li {
+  font-size: 17px;
+  line-height: 1.7;
+  color: var(--text);
+  margin-bottom: 10px;
+  padding-left: 6px;
+}
+.theory-of-change .foreword-body li::marker {
+  color: var(--pause-orange);
+  font-weight: 600;
+}
+
 .theory-of-change .toc-article {
   padding: 64px 0 88px;
   background: var(--bg);
