@@ -11,13 +11,12 @@ import "../../track-record/track-record.css";
 import "../people.css";
 
 function findPerson(slug: string) {
-  const index = people.findIndex((person, i) => personSlug(person, i) === slug);
-  if (index === -1) return null;
-  return { person: people[index], index };
+  const person = people.find((p) => personSlug(p) === slug);
+  return person ? { person } : null;
 }
 
 export function generateStaticParams() {
-  return people.map((person, i) => ({ slug: personSlug(person, i) }));
+  return people.map((person) => ({ slug: personSlug(person) }));
 }
 
 export async function generateMetadata({

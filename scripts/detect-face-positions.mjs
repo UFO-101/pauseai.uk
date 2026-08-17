@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Detects the largest face in each photo under public/images/people/ and
 // writes a suggested `background-position` into the matching person's
-// `imageStyle` in lib/data/people.json (the .person-avatar /
+// `imageStyle` in lib/data/people.ts (the .person-avatar /
 // .person-detail-avatar square crop). Re-run after adding/replacing a
 // photo. Pass --dry-run to only print suggestions without writing.
 import "@tensorflow/tfjs-backend-cpu";
@@ -28,14 +28,30 @@ async function decodeImage(filePath) {
 
 const rootDir = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const peopleDir = path.join(rootDir, "public/images/people");
-const peopleJsonPath = path.join(rootDir, "lib/data/people.json");
+const peopleTsPath = path.join(rootDir, "lib/data/people.ts");
+
+// The `people` array is a plain JSON-compatible literal inside people.ts —
+// pull it out by its surrounding markers, JSON.parse it, and splice the
+// updated JSON back in, leaving the type defs and helper functions as-is.
+const PEOPLE_ARRAY_PATTERN = /(export const people: Person\[\] =\n)([\s\S]*?\n\])(;)/;
+
+function readPeople(source) {
+  const match = source.match(PEOPLE_ARRAY_PATTERN);
+  if (!match) throw new Error(`Could not find the people array literal in ${peopleTsPath}`);
+  return JSON.parse(match[2]);
+}
+
+function writePeople(source, persons) {
+  return source.replace(PEOPLE_ARRAY_PATTERN, (_, before, _array, after) => `${before}${JSON.stringify(persons, null, 2)}${after}`);
+}
 
 const args = process.argv.slice(2);
 const write = !args.includes("--dry-run");
 const files = args.filter((a) => a !== "--dry-run");
 const targets = files.length > 0 ? files : readdirSync(peopleDir).filter((f) => /\.(jpe?g|png)$/i.test(f));
 
-const persons = write ? JSON.parse(readFileSync(peopleJsonPath, "utf8")) : null;
+const peopleTsSource = write ? readFileSync(peopleTsPath, "utf8") : null;
+const persons = write ? readPeople(peopleTsSource) : null;
 let updated = 0;
 
 const model = await blazeface.load();
@@ -81,6 +97,6 @@ for (const file of targets) {
 }
 
 if (write && updated > 0) {
-  writeFileSync(peopleJsonPath, JSON.stringify(persons, null, 2) + "\n");
-  console.log(`\nWrote ${updated} update(s) to lib/data/people.json`);
+  writeFileSync(peopleTsPath, writePeople(peopleTsSource, persons));
+  console.log(`\nWrote ${updated} update(s) to lib/data/people.ts`);
 }

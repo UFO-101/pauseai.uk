@@ -43,7 +43,6 @@ export default function PeoplePage() {
                 <PersonCard
                   key={`${person.name}-${i}`}
                   person={person}
-                  index={i}
                   truncate={isLongStory(person)}
                   maxChars={LONG_STORY_CHAR_THRESHOLD}
                   showLink

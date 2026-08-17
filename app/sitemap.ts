@@ -34,8 +34,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     lastModified: new Date(post.date),
   }));
 
-  const peopleEntries: MetadataRoute.Sitemap = people.map((person, i) => ({
-    url: `${site.url}/people/${personSlug(person, i)}`,
+  const peopleEntries: MetadataRoute.Sitemap = people.map((person) => ({
+    url: `${site.url}/people/${personSlug(person)}`,
   }));
 
   return [...staticEntries, ...postEntries, ...peopleEntries];
