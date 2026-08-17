@@ -5,6 +5,18 @@ import "./globals.css";
 import Footer from "@/components/Footer";
 import CookieConsent from "@/components/CookieConsent";
 import ScrollInit from "@/components/ScrollInit";
+import JsonLd from "@/components/JsonLd";
+import { site } from "@/lib/data/site";
+
+const organizationJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  name: "PauseAI UK",
+  url: site.url,
+  logo: `${site.url}/favicon/web-app-manifest-512x512.png`,
+  email: site.contactEmail,
+  sameAs: [site.social.instagram, site.social.tiktok, site.social.x, site.social.facebook, site.social.youtube],
+};
 
 const lato = Lato({
   subsets: ["latin"],
@@ -69,6 +81,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={`${lato.variable} ${inter.variable}`} suppressHydrationWarning>
       <body suppressHydrationWarning>
+        <JsonLd data={organizationJsonLd} />
         {children}
         <Footer />
         <CookieConsent />
