@@ -24,7 +24,10 @@ const inter = localFont({
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://pauseai.uk"),
-  title: "PauseAI UK",
+  title: {
+    template: "%s | PauseAI UK",
+    default: "PauseAI UK",
+  },
   description: "Community-led action for safe and accountable AI across the UK.",
   openGraph: {
     title: "PauseAI UK",

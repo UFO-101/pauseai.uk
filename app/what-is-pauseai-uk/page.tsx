@@ -4,7 +4,7 @@ import "../track-record/track-record.css";
 import "./what-is-pauseai-uk.css";
 
 export const metadata: Metadata = {
-  title: "What is PauseAI UK?",
+  title: { absolute: "What is PauseAI UK?" },
   description:
     "PauseAI UK is focused on the risks of superhuman AI — and why a narrow focus makes it easier for people with a wide range of beliefs to collaborate.",
   openGraph: {

@@ -14,7 +14,6 @@ import { staff } from "@/lib/data/staff";
 import { site } from "@/lib/data/site";
 
 export const metadata: Metadata = {
-  title: "PauseAI UK",
   description: "Community-led action for safe and accountable AI.",
   openGraph: {
     title: "PauseAI UK",

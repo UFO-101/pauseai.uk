@@ -3,7 +3,7 @@ import Nav from "@/components/Nav";
 import { site } from "@/lib/data/site";
 
 export const metadata: Metadata = {
-  title: "PauseAI UK — Manchester Chapter",
+  title: "Manchester Chapter",
   openGraph: {
     title: "PauseAI Manchester",
     description: "Join the Manchester chapter of PauseAI for meetups, outreach, and AI safety action.",

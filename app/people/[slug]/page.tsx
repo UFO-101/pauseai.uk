@@ -30,7 +30,7 @@ export async function generateMetadata({
   if (!found) return {};
 
   const { person } = found;
-  const title = `${person.name || "Anonymous submission"} | PauseAI UK People`;
+  const title = person.name || "Anonymous submission";
   const plainFirstParagraph = person.paragraphs[0]?.replace(/<[^>]+>/g, "") ?? "";
   const description =
     plainFirstParagraph.length > 160 ? `${plainFirstParagraph.slice(0, 157).trimEnd()}…` : plainFirstParagraph;

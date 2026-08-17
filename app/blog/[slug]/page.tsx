@@ -16,7 +16,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const post = findPost(slug);
   if (!post) return {};
   return {
-    title: `${post.title} — PauseAI UK`,
+    title: post.title,
     description: post.tldr,
     openGraph: {
       title: post.title,

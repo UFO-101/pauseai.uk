@@ -4,7 +4,7 @@ import Nav from "@/components/Nav";
 import { site } from "@/lib/data/site";
 
 export const metadata: Metadata = {
-  title: "PauseAI UK — Oxford Chapter",
+  title: "Oxford Chapter",
   openGraph: {
     title: "PauseAI Oxford",
     description: "PauseAI Oxford links students, researchers, and locals to discuss and act on AI safety.",

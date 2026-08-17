@@ -5,7 +5,7 @@ import Nav from "@/components/Nav";
 import DonateForm from "@/components/DonateForm";
 
 export const metadata: Metadata = {
-  title: "Donate — PauseAI UK",
+  title: "Donate",
   description: "Support PauseAI UK — community-led action for safe and accountable AI.",
   openGraph: {
     title: "Donate to PauseAI UK",

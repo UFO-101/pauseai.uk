@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Nav from "@/components/Nav";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy — PauseAI UK",
+  title: "Privacy Policy",
   description: "How PauseAI UK (Safe AI Alliance Ltd) collects, uses, and protects your personal data.",
   openGraph: {
     title: "Privacy Policy — PauseAI UK",

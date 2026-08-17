@@ -7,7 +7,7 @@ import { site } from "@/lib/data/site";
 import "./track-record.css";
 
 export const metadata: Metadata = {
-  title: "PauseAI UK | Track Record",
+  title: "Track Record",
   description:
     "One year of PauseAI UK: two conferences, an open letter signed by 60+ politicians, a European Parliament event, and the largest AI protest in the world.",
   openGraph: {
