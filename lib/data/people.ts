@@ -191,6 +191,14 @@ export const people: Person[] =
   }
 ];
 
+for (const person of people) {
+  if (person.name === "") {
+    throw new Error(
+      `people.ts: found an entry with name: "" — omit the "name" key entirely for an anonymous entry and set "slug" instead.`,
+    );
+  }
+}
+
 export function personSlug(person: Person): string {
   if (person.name === undefined) return person.slug;
   return (
