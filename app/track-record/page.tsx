@@ -8,10 +8,12 @@ import "./track-record.css";
 
 export const metadata: Metadata = {
   title: "PauseAI UK | Track Record",
-  description: "One year of PauseAI UK.",
+  description:
+    "One year of PauseAI UK: two conferences, an open letter signed by 60+ politicians, a European Parliament event, and the largest AI protest in the world.",
   openGraph: {
     title: "PauseAI UK | Track Record",
-    description: "One year of PauseAI UK.",
+    description:
+    "One year of PauseAI UK: two conferences, an open letter signed by 60+ politicians, a European Parliament event, and the largest AI protest in the world.",
     images: [
       {
         url: "/images/open-graph/open-graph-1200-630.jpg",
@@ -24,6 +26,7 @@ export const metadata: Metadata = {
   twitter: {
     images: ["/images/open-graph/open-graph-1600-840.jpg"],
   },
+  alternates: { canonical: "/track-record" },
 };
 
 export default function TrackRecordPage() {

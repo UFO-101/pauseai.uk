@@ -1,4 +1,5 @@
 export const site = {
+  url: "https://pauseai.uk",
   gaId: "G-DLLRWZCYD7",
   whatsappUrl: "https://chat.whatsapp.com/F0nj2RjLNeB1P1hyoDFsTz",
   shopUrl: "https://pauseai-shop.fourthwall.com/en-gbp",

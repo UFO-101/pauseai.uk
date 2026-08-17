@@ -18,6 +18,7 @@ export const metadata: Metadata = {
   twitter: {
     images: ["/images/open-graph/open-graph-1600-840.jpg"],
   },
+  alternates: { canonical: "/theory-of-change" },
 };
 
 export default function TheoryOfChangePage() {

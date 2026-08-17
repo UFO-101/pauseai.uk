@@ -25,6 +25,7 @@ export const metadata: Metadata = {
   twitter: {
     images: ["/images/open-graph/open-graph-1600-840.jpg"],
   },
+  alternates: { canonical: "/" },
 };
 
 function renderNewsRow(items: NewsItem[], reverse = false) {
