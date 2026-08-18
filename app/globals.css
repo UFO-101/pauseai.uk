@@ -1458,6 +1458,10 @@ section[id] {
 .people-carousel {
   position: relative;
   margin-top: 32px;
+  /* Distance from the section's outer edge to the container's content
+     edge — mirrors .container's max-width/padding so cards and the fade
+     mask line up with the rest of the page. */
+  --people-carousel-bleed: max(24px, calc((100% - 1092px) / 2));
 }
 
 .people-carousel-track {
@@ -1465,14 +1469,42 @@ section[id] {
   overflow-x: auto;
   scroll-snap-type: x mandatory;
   -webkit-overflow-scrolling: touch;
-  scrollbar-width: thin;
-  scrollbar-color: var(--border-strong) transparent;
+  scrollbar-width: none;
   gap: 24px;
   /* The carousel spans the full section width (outside .container); this
-     inline padding aligns the first card with the container's content
-     edge on wide screens and falls back to the page gutter on small. */
-  padding: 4px max(24px, calc((100% - 1092px) / 2)) 12px;
-  scroll-padding-inline: max(24px, calc((100% - 1092px) / 2));
+     inline padding aligns the first card with the container's content edge
+     on wide screens and falls back to the page gutter on small. The mask
+     fades out over the same distance, so the fade lives entirely in that
+     bleed area outside the container rather than over card content. */
+  padding: 4px var(--people-carousel-bleed) 12px;
+  scroll-padding-inline: var(--people-carousel-bleed);
+  cursor: grab;
+  mask-image: linear-gradient(
+    to right,
+    transparent,
+    transparent calc(var(--people-carousel-bleed) - 16px),
+    black var(--people-carousel-bleed),
+    black calc(100% - var(--people-carousel-bleed)),
+    transparent calc(100% - var(--people-carousel-bleed) + 16px)
+  );
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent,
+    transparent calc(var(--people-carousel-bleed) - 16px),
+    black var(--people-carousel-bleed),
+    black calc(100% - var(--people-carousel-bleed)),
+    transparent calc(100% - var(--people-carousel-bleed) + 16px)
+  );
+}
+
+.people-carousel-track::-webkit-scrollbar {
+  display: none;
+}
+
+.people-carousel-track.dragging {
+  cursor: grabbing;
+  user-select: none;
+  scroll-snap-type: none;
 }
 
 .people-carousel-track .person-card {
@@ -1500,11 +1532,11 @@ section[id] {
 }
 
 .people-carousel-btn-prev {
-  left: 16px;
+  left: calc(var(--people-carousel-bleed) - 22px);
 }
 
 .people-carousel-btn-next {
-  right: 16px;
+  right: calc(var(--people-carousel-bleed) - 22px);
 }
 
 @media (min-width: 900px) {
