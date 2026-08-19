@@ -1,23 +1,33 @@
 "use client";
 
+import { usePathname } from "next/navigation";
 import { useEffect } from "react";
 
 export default function ScrollInit() {
+  // Re-run per route: Next navigations swap the page content client-side,
+  // so anything snapshotted at first load (section lists, per-anchor
+  // listeners) goes stale and starts acting on detached nodes — which is
+  // how scrolling /track-record used to stamp the homepage's last section
+  // id into the URL.
+  const pathname = usePathname();
+
   useEffect(() => {
     const yearEl = document.getElementById("year");
     if (yearEl) yearEl.textContent = new Date().getFullYear().toString();
 
-    document.querySelectorAll<HTMLAnchorElement>('a[href^="#"]').forEach((link) => {
-      link.addEventListener("click", (e) => {
-        const targetId = link.getAttribute("href");
-        if (!targetId || targetId === "#") return;
-        const target = document.querySelector(targetId);
-        if (!target) return;
-        e.preventDefault();
-        target.scrollIntoView({ behavior: "smooth" });
-        history.pushState(null, "", targetId);
-      });
-    });
+    // Delegated so it also covers anchors rendered after this effect runs.
+    const handleAnchorClick = (e: MouseEvent) => {
+      const link = (e.target as Element).closest?.('a[href^="#"]') as HTMLAnchorElement | null;
+      if (!link) return;
+      const targetId = link.getAttribute("href");
+      if (!targetId || targetId === "#") return;
+      const target = document.querySelector(targetId);
+      if (!target) return;
+      e.preventDefault();
+      target.scrollIntoView({ behavior: "smooth" });
+      history.pushState(null, "", targetId);
+    };
+    document.addEventListener("click", handleAnchorClick);
 
     if (window.location.hash) {
       try {
@@ -30,11 +40,12 @@ export default function ScrollInit() {
       }
     }
 
-    const sections = document.querySelectorAll<HTMLElement>("section[id]");
     let scrollTimer: ReturnType<typeof setTimeout>;
     const handleScroll = () => {
       clearTimeout(scrollTimer);
       scrollTimer = setTimeout(() => {
+        // Query live on every pass — the set of sections changes per page.
+        const sections = document.querySelectorAll<HTMLElement>("section[id]");
         let current = "";
         for (const section of sections) {
           const top = section.getBoundingClientRect().top;
@@ -51,10 +62,11 @@ export default function ScrollInit() {
 
     window.addEventListener("scroll", handleScroll);
     return () => {
+      document.removeEventListener("click", handleAnchorClick);
       window.removeEventListener("scroll", handleScroll);
       clearTimeout(scrollTimer);
     };
-  }, []);
+  }, [pathname]);
 
   return null;
 }
