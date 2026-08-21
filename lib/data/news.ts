@@ -175,15 +175,24 @@ const ALL_NEWS: NewsItem[] = [
     title: "When given a choice, AI opts for self-preservation over human life — and that should terrify us all",
     url: "https://www.dailymail.com/debate/article-16032063/AI-opts-self-preservation-human-life.html",
   },
+  {
+    logoSrc: "/images/media-coverage/New_Statesman_magazine_logo.svg",
+    logoAlt: "New Statesman",
+    logoHeight: 30,
+    logoIntrinsicWidth: 524,
+    logoIntrinsicHeight: 80,
+    title: "The anti-AI revolt is here",
+    url: "https://www.newstatesman.com/politics/society/2026/08/the-anti-ai-revolt-is-here",
+  },
 ];
 
-// Desktop: 2 rows (10 + 9). Mobile (handled in page.tsx): 3 rows so
+// Desktop: 2 rows (10 + 10). Mobile (handled in page.tsx): 3 rows so
 // each row is shorter and easier to scan on a narrow viewport.
 export const newsRow1 = ALL_NEWS.slice(0, 10);
 export const newsRow2 = ALL_NEWS.slice(10);
 
-export const newsMobileRow1 = ALL_NEWS.slice(0, 6);
-export const newsMobileRow2 = ALL_NEWS.slice(6, 12);
-export const newsMobileRow3 = ALL_NEWS.slice(12);
+export const newsMobileRow1 = ALL_NEWS.slice(0, 7);
+export const newsMobileRow2 = ALL_NEWS.slice(7, 14);
+export const newsMobileRow3 = ALL_NEWS.slice(14);
 
 export const news = ALL_NEWS;
