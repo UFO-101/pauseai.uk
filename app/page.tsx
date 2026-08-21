@@ -95,6 +95,8 @@ const HERO_PHOTOS: [string, string, number, number][] = [
   ["scott-wiener-on-screen.webp", "Scott Wiener on screen at a PauseAI event", 800, 450],
   ["stuart-russell-interview.webp", "Stuart Russell interview at PauseCon Brussels", 800, 534],
   ["westminster-hall.webp", "Westminster Hall event", 800, 448],
+  ["parliament-group-landscape.webp", "PauseAI UK volunteers outside Parliament, June 2026", 800, 326],
+  ["jeremy-corbyn.webp", "PauseAI UK board member David Wood with MP Jeremy Corbyn", 800, 507],
 ];
 
 function shuffle<T>(arr: readonly T[]): T[] {
@@ -113,9 +115,9 @@ export default async function HomePage() {
   // client as part of the rendered HTML so hydration matches.
   const shuffled = shuffle(HERO_PHOTOS);
   const heroRows = [
-    { dir: "ltr" as const, photos: shuffled.slice(0, 6) },
-    { dir: "rtl" as const, photos: shuffled.slice(6, 12) },
-    { dir: "ltr" as const, photos: shuffled.slice(12, 18) },
+    { dir: "ltr" as const, photos: shuffled.slice(0, 7) },
+    { dir: "rtl" as const, photos: shuffled.slice(7, 14) },
+    { dir: "ltr" as const, photos: shuffled.slice(14, 20) },
   ];
 
   return (
