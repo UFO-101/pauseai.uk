@@ -122,7 +122,7 @@ const ALL_NEWS: NewsItem[] = [
     logoIntrinsicWidth: 560,
     logoIntrinsicHeight: 160,
     title: "Hundreds of people march for tighter controls on AI",
-    url: "https://www.youtube.com/watch?v=-0CRojvk1FE",
+    url: "https://youtu.be/-0CRojvk1FE?t=146",
   },
   {
     logoSrc: "/images/media-coverage/The_Independent_Logo.png",
