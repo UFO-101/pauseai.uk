@@ -68,12 +68,13 @@ export default function DivergingBar({ label, row, meta, rank, showNotSure = tru
         <div
           className="gas-bar-track"
           role="img"
-          aria-label={`${label}: ${options.map((o) => `${o.shortLabel} ${row[o.key]}%`).join(", ")}`}
+          aria-label={`${label}: ${options.map((o) => `${o.shortLabel} ${Math.round(row[o.key] * scale)}%`).join(", ")}`}
         >
           {options.map((option) => {
             const value = row[option.key];
             if (value <= 0) return null;
             const width = value * scale;
+            const displayValue = Math.round(width);
             return (
               <div
                 key={option.key}
@@ -82,7 +83,7 @@ export default function DivergingBar({ label, row, meta, rank, showNotSure = tru
                 onMouseEnter={(e) => showTooltip(e.currentTarget, option, value)}
                 onClick={(e) => showTooltip(e.currentTarget, option, value)}
               >
-                {width >= 4 && <span className="gas-bar-segment-value">{value}</span>}
+                {width >= 4 && <span className="gas-bar-segment-value">{displayValue}</span>}
               </div>
             );
           })}
