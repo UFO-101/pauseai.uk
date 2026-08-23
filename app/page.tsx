@@ -218,7 +218,7 @@ export default async function HomePage() {
             </div>
             <div className="chapter-grid">
               <Link className="chapter-card" href="/london">
-                <div className="image-frame" style={{ backgroundImage: `url("images/letter-writing/G2DG8xBXMAABxmR.jpeg")` }}></div>
+                <div className="image-frame" style={{ backgroundImage: `url("/images/letter-writing/G2DG8xBXMAABxmR.jpeg")` }}></div>
                 <div className="card-copy">
                   <div className="card-header">
                     <h3>London</h3>
@@ -238,7 +238,7 @@ export default async function HomePage() {
                 </div>
               </Link>
               <Link className="chapter-card" href="/oxford">
-                <div className="image-frame" style={{ backgroundImage: `url("images/chapters/oxford/PauseAI Oxford.jpg")` }}></div>
+                <div className="image-frame" style={{ backgroundImage: `url("/images/chapters/oxford/PauseAI Oxford.jpg")` }}></div>
                 <div className="card-copy">
                   <div className="card-header">
                     <h3>Oxford</h3>
@@ -248,7 +248,7 @@ export default async function HomePage() {
                 </div>
               </Link>
               <Link className="chapter-card" href="/glasgow">
-                <div className="image-frame" style={{ backgroundImage: `url("images/documentary-screening/G4W9UyLXwAA9ISl.jpeg")` }}></div>
+                <div className="image-frame" style={{ backgroundImage: `url("/images/documentary-screening/G4W9UyLXwAA9ISl.jpeg")` }}></div>
                 <div className="card-copy">
                   <div className="card-header">
                     <h3>Glasgow</h3>
@@ -258,7 +258,7 @@ export default async function HomePage() {
                 </div>
               </Link>
               <Link className="chapter-card" href="/manchester">
-                <div className="image-frame" style={{ backgroundImage: `url("images/chapters/manchester/manchester_public.jpg")`, backgroundSize: "110% auto", backgroundPosition: "center 22%" }}></div>
+                <div className="image-frame" style={{ backgroundImage: `url("/images/chapters/manchester/manchester_public.jpg")`, backgroundSize: "110% auto", backgroundPosition: "center 22%" }}></div>
                 <div className="card-copy">
                   <div className="card-header">
                     <h3>Manchester</h3>
