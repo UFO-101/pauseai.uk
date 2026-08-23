@@ -15,11 +15,20 @@ export type Signatory = {
 
 export class AirtableRequestError extends Error {}
 
+// Well past any realistic number of signatories (each page holds up to 100
+// records), so a repeated/looping offset can't spin the request forever.
+const MAX_PAGES = 100;
+
 export async function fetchFrontierLetterSignatories(token: string): Promise<Signatory[]> {
   const signatories: Signatory[] = [];
   let offset: string | undefined;
+  let pages = 0;
 
   do {
+    if (++pages > MAX_PAGES) {
+      throw new AirtableRequestError(`Airtable pagination exceeded ${MAX_PAGES} pages`);
+    }
+
     const params = new URLSearchParams();
     params.set("filterByFormula", FILTER_FORMULA);
     for (const field of FIELDS) params.append("fields[]", field);
@@ -38,6 +47,9 @@ export async function fetchFrontierLetterSignatories(token: string): Promise<Sig
     }
 
     const data = await res.json();
+    if (!Array.isArray(data.records)) {
+      throw new AirtableRequestError("Airtable response missing records array");
+    }
     for (const record of data.records) {
       signatories.push({
         name: record.fields["Full name or Title"] ?? "",

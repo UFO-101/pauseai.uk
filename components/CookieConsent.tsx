@@ -73,18 +73,37 @@ function buildBanner() {
     "</div>";
   document.body.appendChild(banner);
   banner.querySelector(".js-cookie-accept")!.addEventListener("click", () => {
-    localStorage.setItem(CONSENT_KEY, "accepted");
+    writeConsent("accepted");
     setGADisabled(false);
     loadGA();
     banner.remove();
   });
   banner.querySelector(".js-cookie-decline")!.addEventListener("click", () => {
-    localStorage.setItem(CONSENT_KEY, "declined");
+    writeConsent("declined");
     // Stop any already-running tracking and drop the cookies immediately.
     setGADisabled(true);
     clearGACookies();
     banner.remove();
   });
+}
+
+// localStorage throws in contexts where site data is blocked (e.g. some
+// private-browsing modes, or cookies disabled) — a read/write shouldn't
+// take down the whole consent effect.
+function readConsent(): string | null {
+  try {
+    return localStorage.getItem(CONSENT_KEY);
+  } catch {
+    return null;
+  }
+}
+
+function writeConsent(value: string) {
+  try {
+    localStorage.setItem(CONSENT_KEY, value);
+  } catch {
+    // Best effort — if storage is blocked, the choice just won't persist.
+  }
 }
 
 export default function CookieConsent() {
@@ -94,18 +113,22 @@ export default function CookieConsent() {
     // Analytics loads by default. The banner isn't shown on first visit,
     // but the footer "Cookie settings" link can open it on demand, and a
     // prior "declined" choice is honoured: GA stays disabled and unloaded.
-    if (localStorage.getItem(CONSENT_KEY) === "declined") {
+    if (readConsent() === "declined") {
       setGADisabled(true);
     } else {
       loadGA();
     }
 
-    document.querySelectorAll(".js-cookie-settings").forEach((el) => {
-      el.addEventListener("click", (e) => {
-        e.preventDefault();
-        buildBanner();
-      });
-    });
+    const handleSettingsClick = (e: Event) => {
+      e.preventDefault();
+      buildBanner();
+    };
+    const settingsLinks = document.querySelectorAll(".js-cookie-settings");
+    settingsLinks.forEach((el) => el.addEventListener("click", handleSettingsClick));
+
+    return () => {
+      settingsLinks.forEach((el) => el.removeEventListener("click", handleSettingsClick));
+    };
   }, []);
 
   return null;
