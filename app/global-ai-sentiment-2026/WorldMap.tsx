@@ -37,6 +37,12 @@ function rampColor(t: number): string {
   return `rgb(${r}, ${g}, ${b})`;
 }
 
+// Matches rampColor's own stops so the legend gradient is the same
+// non-linear ramp used to fill the countries, not a straight 2-stop blend.
+const LEGEND_GRADIENT = `linear-gradient(90deg, ${RAMP_STOPS.map(
+  ([r, g, b], i) => `rgb(${r}, ${g}, ${b}) ${(i / (RAMP_STOPS.length - 1)) * 100}%`
+).join(", ")})`;
+
 const COUNTRY_LOOKUP = new Map<string, CountryRow>(COUNTRIES.map((c) => [c.country, c]));
 
 // A synthetic metric ("opposed_combined") alongside the five real response
@@ -110,6 +116,10 @@ export default function WorldMap() {
         if (cancelled) return;
         const geo = feature(topology, topology.objects.countries) as unknown as FeatureCollection<Geometry, { name: string }>;
         setFeatures(geo);
+      })
+      .catch(() => {
+        // Leave features null — the "Loading map…" placeholder stays put
+        // instead of an unhandled rejection.
       });
     return () => {
       cancelled = true;
@@ -205,7 +215,7 @@ export default function WorldMap() {
           <span>{domainMin}%</span>
           <div
             className="gas-map-legend-gradient"
-            style={{ background: `linear-gradient(90deg, ${rampColor(0)}, ${rampColor(1)})` }}
+            style={{ background: LEGEND_GRADIENT }}
           />
           <span>{domainMax}%</span>
         </div>
