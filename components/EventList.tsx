@@ -6,7 +6,13 @@ import type { LumaEntry } from "@/lib/data/events";
 import { formatEventDate, formatEventTime } from "@/lib/data/events";
 
 function getDateStr(d: Date, tz: string): string {
-  return d.toLocaleDateString("en-CA", { timeZone: tz, year: "numeric", month: "2-digit", day: "2-digit" });
+  // An unrecognised IANA timezone throws RangeError here; fall back rather
+  // than crashing the render (see lib/data/events.ts formatEventDate).
+  try {
+    return d.toLocaleDateString("en-CA", { timeZone: tz, year: "numeric", month: "2-digit", day: "2-digit" });
+  } catch {
+    return d.toLocaleDateString("en-CA", { timeZone: "Europe/London", year: "numeric", month: "2-digit", day: "2-digit" });
+  }
 }
 
 function EventCard({ entry, isExtra = false }: { entry: LumaEntry; isExtra?: boolean }) {
