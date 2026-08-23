@@ -8,11 +8,41 @@ import path from "node:path";
 const rootDir = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const dataDir = path.join(rootDir, "data");
 
+// Naive split(",") corrupts silently if a field contains a comma (e.g. a
+// country name written as "Korea, South"), so parse quoted fields properly.
+function splitCsvLine(line) {
+  const cells = [];
+  let cell = "";
+  let inQuotes = false;
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i];
+    if (inQuotes) {
+      if (char === '"' && line[i + 1] === '"') {
+        cell += '"';
+        i++;
+      } else if (char === '"') {
+        inQuotes = false;
+      } else {
+        cell += char;
+      }
+    } else if (char === '"') {
+      inQuotes = true;
+    } else if (char === ",") {
+      cells.push(cell);
+      cell = "";
+    } else {
+      cell += char;
+    }
+  }
+  cells.push(cell);
+  return cells;
+}
+
 function parseCsv(filePath) {
   const lines = readFileSync(filePath, "utf8").trim().split(/\r?\n/);
-  const headers = lines[0].split(",").map((h) => h.trim());
+  const headers = splitCsvLine(lines[0]).map((h) => h.trim());
   return lines.slice(1).map((line) => {
-    const cells = line.split(",").map((c) => c.trim());
+    const cells = splitCsvLine(line).map((c) => c.trim());
     const row = {};
     headers.forEach((header, i) => {
       const raw = cells[i];
