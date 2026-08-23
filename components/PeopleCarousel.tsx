@@ -25,7 +25,11 @@ export default function PeopleCarousel({ people }: { people: Person[] }) {
     if (e.pointerType !== "mouse" || e.button !== 0) return;
     const track = trackRef.current;
     if (!track) return;
+    // preventDefault (needed to stop text selection while dragging) also
+    // suppresses the native focus a mousedown would otherwise give the
+    // clicked link/button, so restore that manually.
     e.preventDefault();
+    (e.target as HTMLElement).closest<HTMLElement>("a, button, [tabindex]")?.focus();
     dragState.current = { startX: e.clientX, startScrollLeft: track.scrollLeft, moved: false };
     track.setPointerCapture(e.pointerId);
   }
@@ -46,6 +50,14 @@ export default function PeopleCarousel({ people }: { people: Person[] }) {
     const track = trackRef.current;
     if (track?.hasPointerCapture(e.pointerId)) track.releasePointerCapture(e.pointerId);
     setDragging(false);
+    // A "pointerup" is followed by a click on the same element, and
+    // handleClickCapture needs dragState.current still set to know whether
+    // to suppress it. "pointercancel"/"pointerleave" have no following
+    // click, so clear here — otherwise a drag ending outside the track
+    // leaves moved: true and swallows the next real click.
+    if (e.type !== "pointerup") {
+      dragState.current = null;
+    }
   }
 
   function handleClickCapture(e: React.MouseEvent<HTMLDivElement>) {
