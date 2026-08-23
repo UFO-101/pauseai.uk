@@ -17,11 +17,19 @@ export default function ScrollInit() {
 
     // Delegated so it also covers anchors rendered after this effect runs.
     const handleAnchorClick = (e: MouseEvent) => {
+      // Let modifier-clicks (open in new tab/window) through untouched.
+      if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
       const link = (e.target as Element).closest?.('a[href^="#"]') as HTMLAnchorElement | null;
       if (!link) return;
       const targetId = link.getAttribute("href");
       if (!targetId || targetId === "#") return;
-      const target = document.querySelector(targetId);
+      let target: Element | null;
+      try {
+        target = document.querySelector(targetId);
+      } catch {
+        // Malformed selector (e.g. a query string appended after the hash).
+        return;
+      }
       if (!target) return;
       e.preventDefault();
       target.scrollIntoView({ behavior: "smooth" });
