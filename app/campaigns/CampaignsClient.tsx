@@ -2,11 +2,17 @@
 
 import { useEffect } from "react";
 
+// The only origin allowed to drive the embed's height. Without this check any
+// page framing us — or any window we opened — could post a resize and hide the
+// campaign form. Matches EMBED_ORIGIN in app/OnboardingFormEmbed.tsx.
+const EMBED_ORIGIN = "https://pauseai.info";
+
 export default function CampaignsClient() {
   useEffect(() => {
     const iframe = document.getElementById("campaigns-embed") as HTMLIFrameElement | null;
     if (iframe) {
       const handleMessage = (e: MessageEvent) => {
+        if (e.origin !== EMBED_ORIGIN) return;
         const data = e.data;
         if (!data || typeof data !== "object") return;
         if (data.type !== "pauseai-embed-resize") return;
