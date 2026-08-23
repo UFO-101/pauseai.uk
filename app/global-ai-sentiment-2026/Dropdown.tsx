@@ -33,11 +33,16 @@ export default function Dropdown({ id, label, value, options, onChange }: Dropdo
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
 
+  // Focus the active option only when the menu opens. Keyboard navigation
+  // (ArrowUp/ArrowDown below) moves focus itself; if this also ran on every
+  // activeIndex change, onMouseEnter's setActiveIndex would yank keyboard
+  // focus to whatever option the mouse happens to be hovering.
   useEffect(() => {
     if (open) {
       requestAnimationFrame(() => optionRefs.current[activeIndex]?.focus());
     }
-  }, [open, activeIndex]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
 
   function toggleOpen() {
     setOpen((wasOpen) => {
