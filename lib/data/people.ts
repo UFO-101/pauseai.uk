@@ -188,6 +188,14 @@ export const people: Person[] =
       "I learned about the risks of AI at university, and the more I read, the more I was convinced that this was one of the biggest issues we face today as a species. I am worried that super-powerful AI will come in a very short time, maybe before 2035, and I don't think we are currently on track to control it sufficiently - we are facing a real risk of extinction. I think that doing anything to nudge our trajectory towards a more safe future is absolutely worth it, and I am hopeful that we can all make it through."
     ],
     "imageStyle": "background-position: 55% 59%;"
+  },
+  {
+    "name": "Abi Palmer",
+    "imageSrc": "/images/people/Abi-Palmer-Stories.jpg",
+    "paragraphs": [
+      "Hi, I’m Abi and I’m a researcher based in Wales. When I talk to my loved ones about AI, the conversation is often filled with a sense of loss: loss of opportunity, loss of nature, loss of human agency and imagination, and most of all, loss of control. People are being told that they don’t have a say in their own futures – that they have no choice but to accept whatever AI companies unleash on us. I don’t accept that. The rise of AI affects us all, and so we should all demand a voice in the conversation. That’s why I’m volunteering for Pause AI."
+    ],
+    "imageStyle": "background-position: 64% 50%;"
   }
 ];
 
