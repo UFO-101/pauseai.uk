@@ -171,22 +171,15 @@ export default function GlobalAiSentiment2026Page() {
 
         <section className="gas-section">
           <div className="container">
-            <h2>All 104 countries</h2>
-            <p className="gas-section-intro">
-              Filter by region, sort by opinion, or search for a country.
-            </p>
-            <CountryExplorer />
+            <h2>By demographic</h2>
+            <DemographicsExplorer />
           </div>
         </section>
 
         <section className="gas-section gas-section-muted">
           <div className="container">
-            <h2>By demographic</h2>
-            <p className="gas-section-intro">
-              Regional averages and demographic breakdowns from the survey,
-              including a UK/US deep dive.
-            </p>
-            <DemographicsExplorer />
+            <h2>All 104 countries</h2>
+            <CountryExplorer />
           </div>
         </section>
 
