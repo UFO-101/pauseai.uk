@@ -3,7 +3,6 @@ import Image from "next/image";
 import Link from "next/link";
 import Nav from "@/components/Nav";
 import DonateForm from "@/components/DonateForm";
-import NoAnalytics from "@/components/NoAnalytics";
 
 export const metadata: Metadata = {
   title: "Donate",
@@ -23,7 +22,6 @@ export const metadata: Metadata = {
 export default function DonatePage() {
   return (
     <>
-      <NoAnalytics />
       <Nav />
       <main>
         <section className="donate-intro">

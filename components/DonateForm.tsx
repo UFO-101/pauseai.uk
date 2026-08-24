@@ -43,6 +43,10 @@ export default function DonateForm() {
     setSelectedAmount(val);
   }
 
+  // Deliberately a programmatic navigation from a <button>, never an
+  // <a href> to Stripe: GA4 enhanced measurement auto-tracks clicks on
+  // outbound anchor elements, and we don't want Google Analytics to see
+  // who clicks through to donate. Page views on /donate are fine.
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (frequency === "oneoff") {
