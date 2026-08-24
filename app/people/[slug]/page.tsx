@@ -64,7 +64,7 @@ export default async function StoryDetailPage({ params }: { params: Promise<{ sl
         <section className="tr-hero">
           <div className="container tr-hero-inner">
             <Link className="story-back-link" href="/people">
-              ← Back to all stories
+              ← Back to all people
             </Link>
             <div className="person-detail-heading">
               {person.imageSrc ? (
