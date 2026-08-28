@@ -121,7 +121,7 @@ export default function JobsPage() {
                 <ul className="jobs-skill-tags">
                   <li>Software engineering</li>
                 </ul>
-                <p className="jobs-skills-label">Nice to have skills</p>
+                <p className="jobs-skills-label">Nice-to-have skills</p>
                 <ul className="jobs-skill-tags">
                   <li>Web design</li>
                 </ul>
@@ -145,7 +145,7 @@ export default function JobsPage() {
                   convey the enormous impact that AI could have on our society, grow our audience and funnel people
                   into taking action, while communicating the key messages that PauseAI wants to convey.
                 </p>
-                <p className="jobs-skills-label">Nice to have skills</p>
+                <p className="jobs-skills-label">Nice-to-have skills</p>
                 <ul className="jobs-skill-tags">
                   <li>Content writing / script writing (in at least one medium) / tweeting</li>
                   <li>Public speaking / Performance / Talent</li>
@@ -178,7 +178,7 @@ export default function JobsPage() {
                   <li>Community organising</li>
                   <li>Personal skills</li>
                 </ul>
-                <p className="jobs-skills-label">Nice to have skills</p>
+                <p className="jobs-skills-label">Nice-to-have skills</p>
                 <ul className="jobs-skill-tags">
                   <li>Event management</li>
                 </ul>
@@ -211,7 +211,7 @@ export default function JobsPage() {
                 <ul className="jobs-skill-tags">
                   <li>Graphic design</li>
                 </ul>
-                <p className="jobs-skills-label">Nice to have skills</p>
+                <p className="jobs-skills-label">Nice-to-have skills</p>
                 <ul className="jobs-skill-tags">
                   <li>Web design</li>
                 </ul>
@@ -236,7 +236,7 @@ export default function JobsPage() {
                 <ul className="jobs-skill-tags">
                   <li>Politics and lobbying</li>
                 </ul>
-                <p className="jobs-skills-label">Nice to have skills</p>
+                <p className="jobs-skills-label">Nice-to-have skills</p>
                 <ul className="jobs-skill-tags">
                   <li>AI or legal expertise</li>
                   <li>Marketing</li>
