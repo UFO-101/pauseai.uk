@@ -4,7 +4,7 @@ import Nav from "@/components/Nav";
 import "../track-record/track-record.css";
 import "./jobs.css";
 
-const APPLY_URL = "https://pauseai.fillout.com/t/suaaZBeJDous";
+const APPLY_URL = "https://pauseai.fillout.com/uk_job_apply";
 
 export const metadata: Metadata = {
   title: "Jobs",
