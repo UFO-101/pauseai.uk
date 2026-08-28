@@ -21,6 +21,7 @@ export default function Footer() {
           <a href={site.openLetterUrl} target="_blank" rel="noreferrer">Open letter</a>
           <a href={site.whatsappUrl} target="_blank" rel="noreferrer">WhatsApp community</a>
           <a href={site.shopUrl} target="_blank" rel="noreferrer">Shop</a>
+          <Link href="/jobs">Jobs</Link>
           <Link href="/privacy">Privacy</Link>
           <a href="#" className="js-cookie-settings">Cookie settings</a>
         </div>

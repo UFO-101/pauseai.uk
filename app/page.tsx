@@ -385,7 +385,7 @@ export default async function HomePage() {
             ))}
           </div>
           <div style={{ display: "flex", justifyContent: "center", marginTop: 36 }}>
-            <Link className="btn primary large" href="/theory-of-change/">Read our theory of change →</Link>
+            <Link className="btn primary large" href="/jobs/">We&rsquo;re hiring →</Link>
           </div>
         </section>
       </main>

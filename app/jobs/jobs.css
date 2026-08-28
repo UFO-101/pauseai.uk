@@ -1,0 +1,204 @@
+/* ========================================================================
+   JOBS PAGE
+   Loaded after globals.css and track-record.css. Reuses the .tr-hero
+   pattern from track-record. Intro and "All roles" are straight prose;
+   the six roles sit in a two-column card layout between them, followed
+   by a closing CTA band. All selectors are scoped under `main.jobs-page`.
+   ======================================================================== */
+
+.jobs-page .intro-article {
+  padding: 40px 0 56px;
+  background: var(--bg);
+}
+
+.jobs-page .tr-hero {
+  padding-bottom: 32px;
+}
+
+.jobs-page .intro-inner {
+  max-width: 880px;
+}
+
+.jobs-page .intro-section p {
+  font-size: 17px;
+  line-height: 1.7;
+  color: var(--text);
+  margin: 0 0 18px;
+}
+
+.jobs-page .intro-section a:not(.btn) {
+  color: var(--accent);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  transition: color 0.15s ease;
+}
+.jobs-page .intro-section a:not(.btn):hover {
+  color: var(--pause-orange);
+}
+
+.jobs-page .intro-list {
+  padding-left: 22px;
+  margin: 14px 0 22px;
+}
+
+.jobs-page .intro-list li {
+  font-size: 17px;
+  line-height: 1.7;
+  color: var(--text);
+  margin-bottom: 10px;
+  padding-left: 6px;
+}
+
+.jobs-page .intro-list li::marker {
+  color: var(--pause-orange);
+  font-weight: 600;
+}
+
+.jobs-page .intro-section > :last-child {
+  margin-bottom: 0;
+}
+
+/* --- Intro text + photo ------------------------------------------------
+   The photo floats right so the prose wraps around it; the float's top
+   sits level with the first line of text. Clearfix so the float can't
+   spill into the card grid below. */
+
+.jobs-page .jobs-intro::after {
+  content: "";
+  display: table;
+  clear: both;
+}
+
+.jobs-page .jobs-photo {
+  float: right;
+  width: min(42%, 380px);
+  margin: 0 0 18px 32px;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px var(--shadow), 0 10px 30px var(--shadow);
+}
+
+.jobs-page .jobs-photo img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* --- Role cards --------------------------------------------------------
+   CSS columns rather than grid so cards pack to their natural height
+   (masonry) instead of stretching to the tallest card in a row. */
+
+.jobs-page .jobs-roles {
+  columns: 2;
+  column-gap: 24px;
+  margin: 34px 0 32px;
+}
+
+.jobs-page .jobs-role-card {
+  break-inside: avoid;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 14px;
+  padding: 26px 28px 26px;
+  box-shadow: 0 1px 3px var(--shadow);
+  margin: 0 0 24px;
+  transition: box-shadow 0.2s ease;
+}
+
+.jobs-page .jobs-role-card:hover {
+  box-shadow: 0 4px 16px var(--shadow);
+}
+
+.jobs-page .jobs-role-card h2 {
+  font-family: var(--font-display), "Lato", system-ui, sans-serif;
+  font-size: 23px;
+  line-height: 1.25;
+  margin: 0 0 14px;
+}
+
+.jobs-page .jobs-role-card p {
+  font-size: 16px;
+  line-height: 1.65;
+  color: var(--text);
+  margin: 0 0 14px;
+}
+
+.jobs-page .jobs-salary {
+  background: rgb(var(--pause-orange-rgb) / 0.07);
+  border-radius: 10px;
+  padding: 12px 16px;
+  margin: 0 0 16px;
+}
+
+.jobs-page .jobs-salary p {
+  font-size: 15px;
+  line-height: 1.55;
+  margin: 0;
+}
+
+/* Element+class to outweigh the `.jobs-role-card p` margin rule above. */
+.jobs-page .jobs-role-card p.jobs-skills-label {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+  margin: 20px 0 10px;
+}
+
+.jobs-page .jobs-skill-tags {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 0;
+  margin: 0;
+}
+
+.jobs-page .jobs-card-apply {
+  margin-top: 24px;
+}
+
+.jobs-page .jobs-skill-tags li {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 5px 13px;
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--text);
+}
+
+.jobs-page .jobs-role-card > :last-child {
+  margin-bottom: 0;
+}
+
+@media (max-width: 860px) {
+  .jobs-page .intro-article {
+    padding: 48px 0 48px;
+  }
+
+  .jobs-page .jobs-roles {
+    columns: 1;
+  }
+
+  .jobs-page .jobs-role-card {
+    padding: 22px 20px 22px;
+    margin-bottom: 18px;
+  }
+
+  /* Stacked on mobile: flex (floats don't apply to flex items) with the
+     photo re-ordered below the text. */
+  .jobs-page .jobs-intro {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .jobs-page .jobs-photo {
+    float: none;
+    order: 2;
+    width: 100%;
+    margin: 8px 0 0;
+    border-radius: 12px;
+  }
+}

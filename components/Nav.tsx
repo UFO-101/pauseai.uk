@@ -157,6 +157,7 @@ export default function Nav({ chapterName, chapterLogoSrc, chapterLogoWidth, cha
               <Link href="/theory-of-change/" role="menuitem">Theory of change</Link>
               <Link href="/governance/" role="menuitem">Governance</Link>
               <Link href="/global-ai-sentiment-2026/" role="menuitem">Global AI sentiment 2026</Link>
+              <Link href="/jobs/" role="menuitem">Jobs</Link>
             </div>
           </div>
           <div className="nav-item has-dropdown">
