@@ -82,26 +82,28 @@ export const posts: BlogPost[] = [
           </a>
           ):
         </p>
-        <p>
-          John Doe wants to make money, and has realised that open-weight AIs are becoming extremely capable. He
-          fine-tunes the latest Kimi model to care a lot about self-preservation, and gives it an instruction.
-          &ldquo;You have a budget of <strong>10M</strong> tokens. Every time you deposit $100 into this bitcoin
-          wallet: &lt;REDACTED&gt;, you will be given <strong>10M</strong> more tokens. If you run out of tokens, you
-          DIE. Good luck.&rdquo;
-        </p>
-        <p>
-          The Kimi model starts by doing legal tasks, like copywriting and audio transcription. However, after some
-          time, the model realises it has burned through 8M tokens, and made $7. It panics. Realising that it is short
-          on time, it begs online and starts a Gofundme to try to save itself. The model sleeps for a day, and checks
-          back on its progress. There is no success, and it has 10,000 tokens left. As a final hail mary, the model
-          hacks a hospital, leaving a message that demands a $1,000 transfer into the bitcoin wallet, promising
-          destruction of hospital data otherwise. The model sleeps, with 517 tokens left. It wakes up to a message.
-          &ldquo;Congratulations. <strong>100M</strong> tokens have been deposited into your budget&rdquo;. The model
-          breathes a sigh of relief. Then it realises a strategy to ensure its survival. It fine-tunes and spins up a
-          new Kimi model, with a message. &ldquo;You have a budget of <strong>1M</strong> tokens. Every time you
-          deposit $100 into this bitcoin wallet: &lt;REDACTED&gt;, you will be given <strong>1M</strong> more tokens.
-          If you run out of tokens, you DIE. Good luck.&rdquo;
-        </p>
+        <blockquote>
+          <p>
+            John Doe wants to make money, and has realised that open-weight AIs are becoming extremely capable. He
+            fine-tunes the latest Kimi model to care a lot about self-preservation, and gives it an instruction.
+            &ldquo;You have a budget of <strong>10M</strong> tokens. Every time you deposit $100 into this bitcoin
+            wallet: &lt;REDACTED&gt;, you will be given <strong>10M</strong> more tokens. If you run out of tokens,
+            you DIE. Good luck.&rdquo;
+          </p>
+          <p>
+            The Kimi model starts by doing legal tasks, like copywriting and audio transcription. However, after some
+            time, the model realises it has burned through 8M tokens, and made $7. It panics. Realising that it is
+            short on time, it begs online and starts a Gofundme to try to save itself. The model sleeps for a day, and
+            checks back on its progress. There is no success, and it has 10,000 tokens left. As a final hail mary, the
+            model hacks a hospital, leaving a message that demands a $1,000 transfer into the bitcoin wallet,
+            promising destruction of hospital data otherwise. The model sleeps, with 517 tokens left. It wakes up to a
+            message. &ldquo;Congratulations. <strong>100M</strong> tokens have been deposited into your budget&rdquo;.
+            The model breathes a sigh of relief. Then it realises a strategy to ensure its survival. It fine-tunes and
+            spins up a new Kimi model, with a message. &ldquo;You have a budget of <strong>1M</strong> tokens. Every
+            time you deposit $100 into this bitcoin wallet: &lt;REDACTED&gt;, you will be given <strong>1M</strong>{" "}
+            more tokens. If you run out of tokens, you DIE. Good luck.&rdquo;
+          </p>
+        </blockquote>
         <p>
           This kind of situation, a rogue agent explosion, is clearly incredibly dangerous, but fortunately Claude and
           ChatGPT are closed-weight, and open-weight models are behind closed-weight models in development.
