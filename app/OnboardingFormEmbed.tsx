@@ -1,14 +1,18 @@
 "use client";
 
+import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 const EMBED_ORIGIN = "https://pauseai.info";
-const EMBED_URL = `${EMBED_ORIGIN}/embed/onboarding-form/?country=United+Kingdom&bg=FDF8F3`;
+const EMBED_BASE = `${EMBED_ORIGIN}/embed/onboarding-form/`;
 const DEFAULT_HEIGHT = 871;
 const SETTLE_DELAY_MS = 400;
 const LOAD_TIMEOUT_MS = 8000;
 
 export default function OnboardingFormEmbed() {
+  const pathname = usePathname();
+  const source = `pauseai.uk${pathname}`;
+  const embedUrl = `${EMBED_BASE}?country=United+Kingdom&bg=FDF8F3&source=${encodeURIComponent(source)}`;
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [height, setHeight] = useState(DEFAULT_HEIGHT);
   const [messageReceived, setMessageReceived] = useState(false);
@@ -80,7 +84,8 @@ export default function OnboardingFormEmbed() {
       )}
       <iframe
         ref={iframeRef}
-        src={EMBED_URL}
+        src={embedUrl}
+        referrerPolicy="no-referrer-when-downgrade"
         width="100%"
         height={height}
         frameBorder={0}
@@ -93,7 +98,7 @@ export default function OnboardingFormEmbed() {
       {showFallback && (
         <p className="onboarding-embed-fallback">
           {iframeLoaded ? "Form is taking a while to load." : "Form didn't load."}{" "}
-          <a href={EMBED_URL} target="_blank" rel="noopener noreferrer">
+          <a href={embedUrl} target="_blank" rel="noopener noreferrer">
             Open it in a new tab
           </a>
           .
