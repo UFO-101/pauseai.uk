@@ -147,7 +147,7 @@ export default function JobsPage() {
                 </p>
                 <p className="jobs-skills-label">Nice-to-have skills</p>
                 <ul className="jobs-skill-tags">
-                  <li>Content writing / script writing (in at least one medium) / tweeting</li>
+                  <li>Content writing / Script writing (in at least one medium) / Tweeting</li>
                   <li>Public speaking / Performance / Talent</li>
                   <li>Video creating</li>
                 </ul>
