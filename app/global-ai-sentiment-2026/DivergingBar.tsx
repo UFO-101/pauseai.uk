@@ -26,11 +26,6 @@ type SegmentTooltip = {
 // with the CSS max-width on .gas-bar-tooltip.
 const TOOLTIP_HALF_WIDTH = 85;
 
-// Minimum flex-grow share (equivalent to a raw percentage point, since each
-// side of the axis is scaled 0-100) a segment needs before its number label
-// has room to render without overflowing.
-const LABEL_MIN_VALUE = 8;
-
 function optionFor(key: ResponseOption["key"]) {
   return RESPONSE_OPTIONS.find((o) => o.key === key)!;
 }
@@ -118,7 +113,7 @@ export default function DivergingBar({ label, row, meta, rank, showNotSure = tru
               onMouseEnter={(e) => showTooltip(e.currentTarget, option, value)}
               onClick={(e) => showTooltip(e.currentTarget, option, value)}
             >
-              {value >= LABEL_MIN_VALUE && <span className="gas-bar-segment-value">{Math.round(value)}</span>}
+              {value > 0 && <span className="gas-bar-segment-value">{Math.round(value)}</span>}
             </div>
           ))}
           <div className="gas-bar-spacer" style={{ flex: spacerRight }} aria-hidden="true" />
