@@ -330,130 +330,6 @@
   border-bottom: 1px dotted currentColor;
 }
 
-/* ---- Global average header (title + n/moe) ---- */
-
-.gas-global-header {
-  display: flex;
-  align-items: baseline;
-  gap: 10px;
-  margin-bottom: 12px;
-}
-
-.gas-global-title {
-  font-family: "Inter", system-ui, sans-serif;
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--text);
-}
-
-.gas-global-meta {
-  font-family: "Inter", system-ui, sans-serif;
-  font-size: 11px;
-  color: var(--muted);
-}
-
-/* ---- Global average vertical bar + right-side legend ---- */
-
-.gas-global-display {
-  display: flex;
-  gap: 32px;
-  align-items: flex-start;
-  margin-bottom: 24px;
-}
-
-.gas-vbar-col {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  flex-shrink: 0;
-}
-
-.gas-vbar-wrap {
-  display: flex;
-  flex-direction: column;
-  width: 80px;
-  height: 300px;
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-.gas-vbar-segment {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 2px;
-}
-
-.gas-vbar-segment-value {
-  font-family: "Inter", system-ui, sans-serif;
-  font-size: 11px;
-  font-weight: 600;
-  color: #fff;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
-}
-
-.gas-vbar-right {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  flex: 1;
-  min-width: 0;
-}
-
-.gas-vbar-legend {
-  position: relative;
-  height: 300px;
-}
-
-.gas-vbar-legend-item {
-  position: absolute;
-  left: 0;
-  right: 0;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  transform: translateY(-50%);
-}
-
-.gas-vbar-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.gas-vbar-label {
-  font-family: "Inter", system-ui, sans-serif;
-  font-size: 14px;
-  color: var(--text);
-  flex: 1;
-}
-
-.gas-vbar-pct {
-  font-family: "Inter", system-ui, sans-serif;
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--muted);
-  font-variant-numeric: tabular-nums;
-  flex-shrink: 0;
-}
-
-@media (max-width: 600px) {
-  .gas-global-display {
-    flex-direction: row;
-    gap: 20px;
-    align-items: flex-start;
-  }
-  .gas-vbar-wrap {
-    width: 60px;
-    height: 260px;
-  }
-  .gas-vbar-legend {
-    height: 260px;
-  }
-}
-
 .gas-source-note {
   font-family: "Inter", system-ui, sans-serif;
   font-size: 14px;
@@ -569,6 +445,42 @@
   justify-content: center;
   height: 100%;
   min-width: 2px;
+}
+
+.gas-bar-spacer {
+  height: 100%;
+}
+
+.gas-bar-centerline {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 2px;
+  background: var(--text);
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+.gas-bar-axis {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+  font-family: "Inter", system-ui, sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.gas-bar-list > .gas-bar-axis {
+  grid-column: 2;
+}
+
+@media (max-width: 720px) {
+  .gas-bar-list > .gas-bar-axis {
+    grid-column: 1;
+  }
 }
 
 .gas-bar-segment-value {
@@ -965,7 +877,7 @@
   border-radius: 8px;
   font-family: "Inter", system-ui, sans-serif;
   font-size: 12px;
-  width: 200px;
+  width: 240px;
   pointer-events: none;
   z-index: 10;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
@@ -1013,6 +925,62 @@
 }
 
 .gas-map-tooltip-value {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.gas-map-tooltip-list li.gas-map-tooltip-group {
+  display: flex;
+  align-items: stretch;
+  gap: 6px;
+}
+
+.gas-map-tooltip-group-items {
+  flex: 1;
+  min-width: 0;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* A plain (non-replaced) box is what actually gets stretched reliably by
+   align-items:stretch - the svg just fills it via inset, rather than being
+   the stretched flex item itself, since replaced elements with an
+   intrinsic aspect ratio (like an svg with a viewBox) don't stretch the
+   same way in every browser. */
+.gas-map-tooltip-brace-box {
+  position: relative;
+  width: 8px;
+  flex-shrink: 0;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.gas-map-tooltip-brace-box svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.gas-map-tooltip-total {
+  flex: 0 0 44px;
+  align-self: center;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  line-height: 1.2;
+}
+
+.gas-map-tooltip-total-label {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.gas-map-tooltip-total-value {
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }

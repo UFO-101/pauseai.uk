@@ -5,7 +5,15 @@ import { geoNaturalEarth1, geoPath } from "d3-geo";
 import { feature } from "topojson-client";
 import type { FeatureCollection, Geometry } from "geojson";
 import type { Topology } from "topojson-specification";
-import { COUNTRIES, RESPONSE_OPTIONS, slowOrStopPct, type ResponseKey, type CountryRow } from "@/lib/data/aiSentiment2026";
+import { COUNTRIES, RESPONSE_OPTIONS, slowOrStopPct, type ResponseKey, type CountryRow, type ResponseOption } from "@/lib/data/aiSentiment2026";
+
+// Tooltip order: the three "against" options (braced together with their
+// subtotal), then "not sure" directly above "as quickly as possible" - the
+// only "for" option.
+const AGAINST_KEYS: ResponseKey[] = ["stop_permanently_pct", "pause_until_safe_pct", "continue_oversight_pct"];
+const REST_KEYS: ResponseKey[] = ["not_sure_pct", "continue_rapidly_pct"];
+const AGAINST_OPTIONS: ResponseOption[] = AGAINST_KEYS.map((key) => RESPONSE_OPTIONS.find((o) => o.key === key)!);
+const REST_OPTIONS: ResponseOption[] = REST_KEYS.map((key) => RESPONSE_OPTIONS.find((o) => o.key === key)!);
 
 const WIDTH = 960;
 const HEIGHT = 500;
@@ -197,7 +205,27 @@ export default function WorldMap() {
             <div className="gas-map-tooltip-title">{tooltip.country.country}</div>
             <div className="gas-map-tooltip-region">{tooltip.country.region} &middot; n={tooltip.country.n.toLocaleString()}</div>
             <ul className="gas-map-tooltip-list">
-              {RESPONSE_OPTIONS.map((option) => (
+              <li className="gas-map-tooltip-group">
+                <ul className="gas-map-tooltip-group-items">
+                  {AGAINST_OPTIONS.map((option) => (
+                    <li key={option.key}>
+                      <span className="gas-map-tooltip-dot" style={{ background: option.light }} />
+                      <span className="gas-map-tooltip-label">{option.shortLabel}</span>
+                      <span className="gas-map-tooltip-value">{tooltip.country[option.key]}%</span>
+                    </li>
+                  ))}
+                </ul>
+                <div className="gas-map-tooltip-brace-box" aria-hidden="true">
+                  <svg viewBox="0 0 10 100" preserveAspectRatio="none">
+                    <path d="M1,1 C7,1 5,45 9,50 C5,55 7,99 1,99" fill="none" stroke="currentColor" strokeWidth="1.2" vectorEffect="non-scaling-stroke" />
+                  </svg>
+                </div>
+                <div className="gas-map-tooltip-total">
+                  <span className="gas-map-tooltip-total-label">Total against</span>
+                  <span className="gas-map-tooltip-total-value">{slowOrStopPct(tooltip.country)}%</span>
+                </div>
+              </li>
+              {REST_OPTIONS.map((option) => (
                 <li key={option.key}>
                   <span className="gas-map-tooltip-dot" style={{ background: option.light }} />
                   <span className="gas-map-tooltip-label">{option.shortLabel}</span>

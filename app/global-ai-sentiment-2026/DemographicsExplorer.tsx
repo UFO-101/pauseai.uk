@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { DEMOGRAPHICS, regionLabel } from "@/lib/data/aiSentiment2026";
-import DivergingBar from "./DivergingBar";
+import DivergingBar, { BarAxisLabels } from "./DivergingBar";
 
 const SECTIONS: { key: string; label: string }[] = [
   { key: "region_average", label: "Region" },
@@ -54,6 +54,7 @@ export default function DemographicsExplorer() {
       </div>
 
       <div className="gas-bar-list">
+        <BarAxisLabels />
         {rows.map((row) => (
           <DivergingBar key={row.group} label={section === "region_average" ? regionLabel(row.group) : row.group} row={row} showNotSure={showNotSure} />
         ))}
