@@ -89,7 +89,7 @@ export default function GlobalAiSentiment2026Page() {
           <div className="container">
             <h2>Explore the map</h2>
             <p className="gas-section-intro">
-              Hover any country to see its full breakdown.
+              Select a country to see its full breakdown.
             </p>
             <WorldMap />
           </div>
