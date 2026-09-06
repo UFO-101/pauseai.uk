@@ -118,6 +118,23 @@ export function approxMoePp(n: number): number {
 
 export const GLOBAL_MOE_PP = approxMoePp(GLOBAL_N);
 
+// Shared axis scale for the diverging opinion bars (DivergingBar.tsx). Both
+// sides of the axis use the same max so a given percentage-point length
+// means the same thing on the left and right - only the actual furthest
+// bar (across every country and demographic cut, "against" = stop + pause
+// + oversight, "for" = rapid, each plus half of "not sure") should reach
+// the edge, with a little padding so its label isn't flush against it.
+function axisExtent(row: { stop_permanently_pct: number; pause_until_safe_pct: number; continue_oversight_pct: number; continue_rapidly_pct: number; not_sure_pct: number }) {
+  const against = row.stop_permanently_pct + row.pause_until_safe_pct + row.continue_oversight_pct;
+  const forDev = row.continue_rapidly_pct;
+  const half = row.not_sure_pct / 2;
+  return Math.max(against + half, forDev + half);
+}
+
+const MAX_AXIS_EXTENT = Math.max(...COUNTRIES.map(axisExtent), ...DEMOGRAPHICS.map(axisExtent));
+
+export const AXIS_MAX_PCT = Math.ceil(MAX_AXIS_EXTENT);
+
 export const REGIONS = [...new Set(COUNTRIES.map((c) => c.region))].sort();
 
 const REGION_FULL_NAMES: Record<string, string> = {
