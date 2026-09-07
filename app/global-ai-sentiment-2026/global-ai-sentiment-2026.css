@@ -868,74 +868,160 @@
   stroke-width: 0.5;
 }
 
-.gas-map-tooltip {
-  position: absolute;
-  transform: translate(-50%, -110%);
-  background: var(--text);
-  color: #fff;
-  padding: 12px 14px;
-  border-radius: 8px;
+/* stroke, not outline: CSS outline always draws a bounding-box rectangle
+   on an SVG path (it isn't shape-aware), which looks like a stray blue
+   square over an irregular country shape. stroke follows the actual path
+   outline instead, so it's used for focus too, matching the "selected"
+   look below. Zero out plain :focus as well - some browsers paint the
+   native ring there rather than (or in addition to) :focus-visible for a
+   tabindex'd, non-form element like an SVG path. */
+.gas-map-country:focus {
+  outline: none;
+}
+
+.gas-map-country:focus-visible {
+  outline: none;
+  stroke: var(--accent-strong);
+  stroke-width: 2;
+}
+
+.gas-map-selection-outline {
+  pointer-events: none;
+}
+
+.gas-map-selection-outline-halo,
+.gas-map-selection-outline-line {
+  fill: none;
+  stroke-linejoin: round;
+}
+
+.gas-map-selection-outline-halo {
+  stroke: var(--surface);
+  stroke-width: 5;
+}
+
+.gas-map-selection-outline-line {
+  stroke: var(--accent-strong);
+  stroke-width: 2;
+}
+
+/* Static panel, click/tap-pinned rather than hover-positioned, so it works
+   on touch and stays put for comparing countries without chasing the
+   cursor. Reserves its own space at a min-height regardless of state so
+   selecting a country doesn't jump the page layout. */
+.gas-map-panel {
+  position: relative;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 16px;
   font-family: "Inter", system-ui, sans-serif;
   font-size: 12px;
-  width: 240px;
-  pointer-events: none;
-  z-index: 10;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  min-height: 64px;
 }
 
-.gas-map-tooltip-flip {
-  transform: translate(-50%, 14px);
+.gas-map-panel-placeholder {
+  display: flex;
+  align-items: center;
+  color: var(--muted);
+  font-size: 13px;
 }
 
-.gas-map-tooltip-title {
+/* Bar variant (desktop) vs. detail-list variant (mobile) - see the two
+   blocks in WorldMap.tsx. Mobile-first default, switched at the same
+   720px breakpoint the rest of this page collapses the bar list at. */
+.gas-map-panel-bar {
+  display: none;
+}
+
+.gas-map-panel-detail {
+  display: block;
+}
+
+@media (min-width: 721px) {
+  .gas-map-panel-bar {
+    display: block;
+  }
+  .gas-map-panel-detail {
+    display: none;
+  }
+}
+
+.gas-map-panel-bar .gas-bar-list {
+  padding-right: 28px;
+}
+
+.gas-map-panel-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  border-radius: 6px;
+}
+
+.gas-map-panel-close:hover {
+  background: var(--border);
+  color: var(--text);
+}
+
+.gas-map-panel-title {
   font-weight: 700;
   font-size: 14px;
   margin-bottom: 2px;
+  padding-right: 24px;
 }
 
-.gas-map-tooltip-region {
-  color: rgba(255, 255, 255, 0.65);
+.gas-map-panel-region {
+  color: var(--muted);
   margin-bottom: 8px;
 }
 
-.gas-map-tooltip-list {
+.gas-map-panel-list {
   list-style: none;
   padding: 0;
   margin: 0;
   display: flex;
   flex-direction: column;
   gap: 4px;
+  max-width: 320px;
 }
 
-.gas-map-tooltip-list li {
+.gas-map-panel-list li {
   display: flex;
   align-items: center;
   gap: 6px;
 }
 
-.gas-map-tooltip-dot {
+.gas-map-panel-dot {
   width: 8px;
   height: 8px;
   border-radius: 50%;
   flex-shrink: 0;
 }
 
-.gas-map-tooltip-label {
+.gas-map-panel-label {
   flex: 1;
 }
 
-.gas-map-tooltip-value {
+.gas-map-panel-value {
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
 
-.gas-map-tooltip-list li.gas-map-tooltip-group {
+.gas-map-panel-list li.gas-map-panel-group {
   display: flex;
   align-items: stretch;
   gap: 6px;
 }
 
-.gas-map-tooltip-group-items {
+.gas-map-panel-group-items {
   flex: 1;
   min-width: 0;
   list-style: none;
@@ -951,14 +1037,14 @@
    the stretched flex item itself, since replaced elements with an
    intrinsic aspect ratio (like an svg with a viewBox) don't stretch the
    same way in every browser. */
-.gas-map-tooltip-brace-box {
+.gas-map-panel-brace-box {
   position: relative;
   width: 8px;
   flex-shrink: 0;
-  color: rgba(255, 255, 255, 0.45);
+  color: var(--border-strong);
 }
 
-.gas-map-tooltip-brace-box svg {
+.gas-map-panel-brace-box svg {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -966,7 +1052,7 @@
   display: block;
 }
 
-.gas-map-tooltip-total {
+.gas-map-panel-total {
   flex: 0 0 44px;
   align-self: center;
   display: flex;
@@ -975,12 +1061,12 @@
   line-height: 1.2;
 }
 
-.gas-map-tooltip-total-label {
+.gas-map-panel-total-label {
   font-size: 10px;
-  color: rgba(255, 255, 255, 0.65);
+  color: var(--muted);
 }
 
-.gas-map-tooltip-total-value {
+.gas-map-panel-total-value {
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
@@ -1044,4 +1130,151 @@
   .gas-stats-inner {
     grid-template-columns: repeat(2, 1fr);
   }
+}
+
+/* ---- Vertical diverging bar (global average, "The question asked") ---- */
+
+.gas-vbar {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  max-width: 560px;
+  width: 100%;
+  margin: 24px 0 0;
+}
+
+.gas-vbar-axis-label {
+  font-family: "Inter", system-ui, sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+/* Track (fixed, shrinks a bit on a small screen via clamp()) and the
+   label column (flexible, takes whatever's left) side by side. Because
+   the label column's width is fluid rather than a fixed px value, label
+   positions/widths below are all %s against it - the same markup scales
+   down to a phone instead of needing a separate mobile layout. */
+.gas-vbar-body {
+  display: flex;
+  align-items: stretch;
+  gap: 14px;
+  width: 100%;
+}
+
+.gas-vbar-track-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.gas-vbar-track {
+  display: flex;
+  flex-direction: column;
+  width: clamp(68px, 22vw, 120px);
+  height: clamp(220px, 68vw, 320px);
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--border);
+}
+
+.gas-vbar-segment {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 2px;
+}
+
+/* Marks the start of a new group in the stack (not sure / as quickly as
+   possible), separating it from the "slow or stop" cluster above with a
+   sliver of the track's own background showing through. */
+.gas-vbar-segment-gap-before {
+  margin-top: 6px;
+}
+
+.gas-vbar-segment-value {
+  font-family: "Inter", system-ui, sans-serif;
+  font-size: clamp(12px, 3.4vw, 16px);
+  font-weight: 700;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+}
+
+.gas-vbar-labels {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.gas-vbar-label-item {
+  position: absolute;
+  left: 0;
+  width: 58%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-family: "Inter", system-ui, sans-serif;
+  font-size: clamp(10.5px, 2.6vw, 12px);
+  line-height: 1.25;
+  color: var(--text-secondary);
+}
+
+.gas-vbar-label-tick {
+  width: 9px;
+  height: 2px;
+  flex-shrink: 0;
+}
+
+.gas-vbar-label-text strong {
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Braces the "slow or stop" cluster (stop + pause + oversight) together
+   with its combined total - same visual language as the map's tooltip
+   panel (.gas-map-panel-brace-box) for the same three-option grouping. */
+.gas-vbar-brace {
+  position: absolute;
+  left: 62%;
+  right: 0;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.gas-vbar-brace-svg-box {
+  position: relative;
+  width: 9px;
+  height: 100%;
+  flex-shrink: 0;
+  color: var(--muted);
+}
+
+.gas-vbar-brace-svg-box svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.gas-vbar-brace-total {
+  font-family: "Inter", system-ui, sans-serif;
+  font-size: clamp(10.5px, 2.6vw, 12px);
+  line-height: 1.25;
+  color: var(--text-secondary);
+}
+
+.gas-vbar-brace-total strong {
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.gas-vbar-meta {
+  font-family: "Inter", system-ui, sans-serif;
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 4px;
 }
