@@ -768,9 +768,6 @@ section[id] {
   max-width: 900px;
   text-align: center;
   pointer-events: auto;
-  /* No panel — the title is rendered as outlined letters that sit
-     directly on the photo marquee. Lede + buttons get their own
-     legibility treatment below. */
 }
 
 .hero-marquee-text h1 {
@@ -778,30 +775,27 @@ section[id] {
   line-height: 0.98;
   letter-spacing: -0.025em;
   margin: 0;
-  color: rgba(0, 0, 0, 0.1);
-  -webkit-text-stroke: 2.5px #fff;
-  paint-order: stroke fill;
-  /* Heavy layered shadow — dense dark halo right behind the strokes
-     so they read against any photo, plus a wider soft drop. */
+  color: #fff;
+  /* Heavy layered shadow so the solid fill still reads against any photo. */
   filter:
-    drop-shadow(0 0 2px rgba(0, 0, 0, 0.95))
-    drop-shadow(0 0 6px rgba(0, 0, 0, 0.85))
-    drop-shadow(0 4px 18px rgba(0, 0, 0, 0.7))
-    drop-shadow(0 12px 36px rgba(0, 0, 0, 0.4));
+    drop-shadow(0 0 3px rgba(0, 0, 0, 1))
+    drop-shadow(0 0 10px rgba(0, 0, 0, 0.95))
+    drop-shadow(0 6px 22px rgba(0, 0, 0, 0.85))
+    drop-shadow(0 16px 40px rgba(0, 0, 0, 0.55));
 }
 
 .hero-marquee-text .hero-lede {
   margin: 22px auto 30px;
   color: #fff;
-  font-size: clamp(16px, 1.4vw, 19px);
-  max-width: 460px;
+  font-weight: 600;
+  font-size: clamp(19px, 1.9vw, 24px);
+  max-width: 560px;
   line-height: 1.4;
   /* Heavy layered shadow so the lede reads against any photo */
   filter:
-    drop-shadow(0 0 2px rgba(0, 0, 0, 0.95))
-    drop-shadow(0 0 6px rgba(0, 0, 0, 0.85))
-    drop-shadow(0 4px 18px rgba(0, 0, 0, 0.7))
-    drop-shadow(0 12px 36px rgba(0, 0, 0, 0.4));
+    drop-shadow(0 0 3px rgba(0, 0, 0, 1))
+    drop-shadow(0 0 10px rgba(0, 0, 0, 0.95))
+    drop-shadow(0 4px 18px rgba(0, 0, 0, 0.85));
 }
 
 .hero-marquee-text .actions {
@@ -812,21 +806,26 @@ section[id] {
   justify-content: center;
 }
 
-/* No panel anymore — buttons sit directly on the photos, so they
-   need their own background for legibility. Primary keeps its orange;
-   ghost gets a frosted dark backdrop. */
+.hero-marquee-text .btn.primary {
+  padding: 17px 30px;
+  font-size: 16px;
+}
+
+/* Buttons sit directly on the photos, so they need their own background
+   for legibility: white fill, dark text, orange border/ring. */
 .hero-marquee-text .btn.ghost {
-  color: #fff;
-  border-color: rgba(255, 255, 255, 0.45);
-  background: rgba(0, 0, 0, 0.35);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  background: #fff;
+  color: rgb(20, 14, 8);
+  border-color: var(--pause-orange);
+  padding: 13px 22px;
+  font-size: 15px;
 }
 
 .hero-marquee-text .btn.ghost:hover {
-  background: rgba(0, 0, 0, 0.5);
-  border-color: rgba(255, 255, 255, 0.8);
-  color: #fff;
+  background: #fff;
+  color: rgb(20, 14, 8);
+  border-color: var(--pause-orange);
+  box-shadow: 0 0 0 2px rgb(var(--pause-orange-rgb) / 0.35);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -852,9 +851,8 @@ section[id] {
     gap: 8px;
     padding: 8px 0;
   }
-  /* On phone, the outlined-text-on-photos treatment is too fragile.
-     Sit the title + lede + buttons on a warm-dark blurred panel and
-     drop the per-text shadows — the panel does the legibility work.
+  /* On phone, sit the title + lede + buttons on a warm-dark blurred panel
+     and drop the per-text shadows — the panel does the legibility work.
      Warm-dark (rgba 20/14/8) instead of pure black for brand cohesion,
      subtle saturate on backdrop, top inset highlight for some weight. */
   .hero-marquee-text {
@@ -869,8 +867,6 @@ section[id] {
     font-size: clamp(40px, 11vw, 64px);
     letter-spacing: -0.035em;
     line-height: 0.96;
-    color: #fff;
-    -webkit-text-stroke: 0;
     filter: none;
   }
   .hero-marquee-text .hero-lede {
@@ -878,6 +874,14 @@ section[id] {
     margin: 14px auto 20px;
     color: rgba(255, 255, 255, 0.92);
     filter: none;
+  }
+  .hero-marquee-text .btn.primary {
+    padding: 16px 26px;
+    font-size: 16px;
+  }
+  .hero-marquee-text .hero-actions-secondary .btn.ghost {
+    padding: 13px 20px;
+    font-size: 15px;
   }
 }
 
