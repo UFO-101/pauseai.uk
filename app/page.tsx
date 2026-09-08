@@ -7,6 +7,7 @@ import HeroMarqueeEffects from "./HeroMarqueeEffects";
 import Nav from "@/components/Nav";
 import EventList from "@/components/EventList";
 import PeopleCarousel from "@/components/PeopleCarousel";
+import ChaptersMap from "@/components/ChaptersMap";
 import { getEvents } from "@/lib/data/events";
 import { newsRow1, newsRow2, newsMobileRow1, newsMobileRow2, newsMobileRow3, type NewsItem } from "@/lib/data/news";
 import { people } from "@/lib/data/people";
@@ -216,81 +217,19 @@ export default async function HomePage() {
                 Find your city and get involved. Each chapter runs its own events, campaigns, and outreach.
               </p>
             </div>
-            <div className="chapter-grid">
-              <Link className="chapter-card" href="/london">
-                <div className="image-frame" style={{ backgroundImage: `url("/images/letter-writing/G2DG8xBXMAABxmR.jpeg")` }}></div>
-                <div className="card-copy">
-                  <div className="card-header">
-                    <h3>London</h3>
-                    <span className="card-link">Explore London →</span>
-                  </div>
-                  <p>Book launches, letter-writing nights, and regular meetups in central London.</p>
-                </div>
-              </Link>
-              <Link className="chapter-card" href="/leicester">
-                <div className="image-frame" style={{ backgroundImage: `url("/images/chapters/leicester/london-2025-protest.jpg")` }}></div>
-                <div className="card-copy">
-                  <div className="card-header">
-                    <h3>Leicester</h3>
-                    <span className="card-link">Explore Leicester →</span>
-                  </div>
-                  <p>Growing community taking action locally and online.</p>
-                </div>
-              </Link>
-              <Link className="chapter-card" href="/oxford">
-                <div className="image-frame" style={{ backgroundImage: `url("/images/chapters/oxford/PauseAI Oxford.jpg")` }}></div>
-                <div className="card-copy">
-                  <div className="card-header">
-                    <h3>Oxford</h3>
-                    <span className="card-link">Explore Oxford →</span>
-                  </div>
-                  <p>University-driven dialogue on AI risk with researchers and students.</p>
-                </div>
-              </Link>
-              <Link className="chapter-card" href="/glasgow">
-                <div className="image-frame" style={{ backgroundImage: `url("/images/documentary-screening/G4W9UyLXwAA9ISl.jpeg")` }}></div>
-                <div className="card-copy">
-                  <div className="card-header">
-                    <h3>Glasgow</h3>
-                    <span className="card-link">Explore Glasgow →</span>
-                  </div>
-                  <p>Building momentum with public events and community outreach.</p>
-                </div>
-              </Link>
-              <Link className="chapter-card" href="/manchester">
-                <div className="image-frame" style={{ backgroundImage: `url("/images/chapters/manchester/manchester_public.jpg")`, backgroundSize: "110% auto", backgroundPosition: "center 22%" }}></div>
-                <div className="card-copy">
-                  <div className="card-header">
-                    <h3>Manchester</h3>
-                    <span className="card-link">Explore Manchester →</span>
-                  </div>
-                  <p>New chapter bringing AI safety conversations and action to the North West.</p>
-                </div>
-              </Link>
-              <Link className="chapter-card" href="/west-of-england">
-                <div className="image-frame" style={{ backgroundImage: `url("/images/chapters/west-of-england/bristol-launch.jpg")` }}></div>
-                <div className="card-copy">
-                  <div className="card-header">
-                    <h3>West of England</h3>
-                    <span className="card-link">Explore West of England →</span>
-                  </div>
-                  <p>New chapter bringing AI safety conversations and action to Bristol and beyond.</p>
-                </div>
-              </Link>
+            <ChaptersMap />
+            <div className="start-chapter-cta">
+              <div className="start-chapter-cta-copy">
+                <h3>Don&apos;t see your city?</h3>
+                <p>Bring PauseAI to your city. We&apos;ll share playbooks, visuals, and support to launch local actions.</p>
+              </div>
               <a
-                className="chapter-card"
+                className="btn primary large"
                 href="https://docs.google.com/document/d/1wVqsjGatoP3ltspkeqnyeye7I1d_V8XYRPQGaGyvitQ/edit?usp=sharing"
                 target="_blank"
                 rel="noreferrer"
               >
-                <div className="image-frame" style={{ backgroundImage: `url("/images/chapters/start-a-chapter/treasury-protest.jpg")` }}></div>
-                <div className="card-copy">
-                  <div className="card-header">
-                    <h3>Start a chapter</h3>
-                    <span className="card-link">Get started →</span>
-                  </div>
-                  <p>Bring PauseAI to your city. We&apos;ll share playbooks, visuals, and support to launch local actions.</p>
-                </div>
+                Start a chapter →
               </a>
             </div>
           </div>
