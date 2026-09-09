@@ -272,8 +272,23 @@ nav a:hover {
   border-color: var(--accent-strong) !important;
 }
 
+/* Smooth in-page scrolling is the browser's job, so a fragment link can
+   stay plain anchor navigation: it sets the hash itself, pushes one
+   history entry, and moves focus to the target. Intercepting the click in
+   JS to call scrollIntoView did none of the last two. */
+html {
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
 /* Anchor-link scroll offset so #events / #news / #chapters etc. don't
-   land underneath the sticky 77px-tall nav. */
+   land underneath the sticky 77px-tall nav. Applies to native fragment
+   navigation and scrollIntoView alike. */
 section[id] {
   scroll-margin-top: 90px;
 }
