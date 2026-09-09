@@ -47,10 +47,31 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # Keyed on the Playwright version rather than the lockfile hash, so an
+      # unrelated dependency bump does not throw the browser away.
+      - name: Resolve Playwright version
+        id: playwright
+        run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Playwright browser
+        id: playwright-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.playwright.outputs.version }}
+
       # Only Chromium: the behaviour project runs a single browser, and
       # downloading the rest costs more than it proves.
       - name: Install Playwright browser
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: npx playwright install --with-deps chromium
+
+      # The cache holds the browser but not the apt packages it links against,
+      # which live outside ~/.cache/ms-playwright — so a cache hit still needs
+      # the system libraries installing.
+      - name: Install Playwright system dependencies
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        run: npx playwright install-deps chromium
 
       # playwright.config.ts's webServer builds and starts the app itself, so
       # there is no separate build step here. The visual suite is deliberately
