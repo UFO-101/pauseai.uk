@@ -789,7 +789,8 @@ section[id] {
   color: #fff;
   font-weight: 600;
   font-size: clamp(19px, 1.9vw, 24px);
-  max-width: 560px;
+  /* Wide enough that the lede sets on two lines instead of three. */
+  max-width: 740px;
   line-height: 1.4;
   /* Heavy layered shadow so the lede reads against any photo */
   filter:
