@@ -9,6 +9,8 @@ export default defineConfig({
   },
   test: {
     environment: "node",
-    exclude: ["**/node_modules/**", "**/tests/visual/**"],
+    // tests/ is the Playwright suite (visual and behaviour); Vitest's own
+    // tests live next to the code they cover, in lib/ and app/.
+    exclude: ["**/node_modules/**", "**/tests/**"],
   },
 });

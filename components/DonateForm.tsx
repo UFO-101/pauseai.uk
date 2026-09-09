@@ -5,6 +5,9 @@ import { useState } from "react";
 type Frequency = "monthly" | "oneoff";
 
 const ONE_OFF_URL = "https://donate.stripe.com/14AaEY7J69wKgTAaSlcbC02";
+// The single source of truth for the monthly tiers: the amount buttons are
+// derived from these keys below, so a preset can't appear in the UI without a
+// payment link behind it.
 const MONTHLY_URLS: Record<number, string> = {
   3:   "https://donate.stripe.com/3cI3cwgfCgZc46O4tXcbC03",
   5:   "https://donate.stripe.com/3cIdRa7J610ebzg4tXcbC00",
@@ -15,13 +18,17 @@ const MONTHLY_URLS: Record<number, string> = {
   250: "https://donate.stripe.com/dRmfZi1kIfV8bzg2lPcbC07",
   500: "https://donate.stripe.com/cNi28s5AY5gucDkbWpcbC08",
 };
-const MIN_AMOUNT = 3;
-
-const AMOUNTS = [3, 5, 10, 25, 50, 100, 250, 500];
+const AMOUNTS = Object.keys(MONTHLY_URLS)
+  .map(Number)
+  .sort((a, b) => a - b);
+const MIN_AMOUNT = AMOUNTS[0];
+// Preferred default, falling back to the cheapest tier if the £5 preset is
+// ever dropped from the map above.
+const DEFAULT_AMOUNT = AMOUNTS.includes(5) ? 5 : MIN_AMOUNT;
 
 export default function DonateForm() {
   const [frequency, setFrequency] = useState<Frequency>("monthly");
-  const [selectedAmount, setSelectedAmount] = useState<number>(5);
+  const [selectedAmount, setSelectedAmount] = useState<number>(DEFAULT_AMOUNT);
   const isMonthly = frequency === "monthly";
   const amount = selectedAmount;
 
@@ -35,7 +42,7 @@ export default function DonateForm() {
     if (freq === frequency) return;
     setFrequency(freq);
     if (freq === "monthly") {
-      setSelectedAmount(5);
+      setSelectedAmount(DEFAULT_AMOUNT);
     }
   }
 

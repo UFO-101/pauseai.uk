@@ -5,10 +5,18 @@ import type { NextConfig } from "next";
 const GA = ["https://www.googletagmanager.com", "https://www.google-analytics.com"];
 const GA_COLLECT = [...GA, "https://analytics.google.com", "https://*.analytics.google.com", "https://*.google-analytics.com"];
 
-// Shipped as Content-Security-Policy-Report-Only: violations show up in the
-// browser console without breaking anything, so the allowlist can be proven
-// against real traffic before it's enforced. Switch the header name in
-// securityHeaders() to enforce.
+// Where violation reports are sent. Relative, so reports stay in whatever
+// environment produced them — a deploy preview reports to itself, not to
+// production. app/api/csp-report handles both wire formats.
+const REPORT_PATH = "/api/csp-report";
+// Reporting-Endpoints (the report-to directive) needs an absolute URL, which we
+// only know for certain in production. Netlify sets URL to the site's address.
+const REPORT_ORIGIN = process.env.URL ?? (process.env.NODE_ENV === "production" ? "https://pauseai.uk" : null);
+
+// Shipped as Content-Security-Policy-Report-Only: violations are reported
+// without breaking anything, so the allowlist can be proven against real
+// traffic before it's enforced. Switch the header name in securityHeaders() to
+// enforce.
 //
 // 'unsafe-inline' in script-src is required while this is report-only: Next
 // emits inline bootstrap/hydration scripts, and nonces need a per-request
@@ -24,12 +32,18 @@ const contentSecurityPolicy = [
   // blob:/data: cover next/image; images.lumacdn.com is the Luma event covers.
   `img-src 'self' data: blob: https://images.lumacdn.com ${GA.join(" ")}`,
   `connect-src 'self' ${GA_COLLECT.join(" ")}`,
-  // The MP-email and onboarding embeds, and the Tally story form.
-  "frame-src https://pauseai.info https://tally.so",
+  // The MP-email and onboarding embeds, the Tally story form, and the
+  // Airtable signatories embed that campaigns/page.tsx falls back to when
+  // AIRTABLE_TOKEN is unset (local and preview builds).
+  "frame-src https://pauseai.info https://tally.so https://airtable.com",
   "frame-ancestors 'none'",
   "base-uri 'self'",
   "form-action 'self'",
   "object-src 'none'",
+  // report-uri is deprecated but still the only one Firefox and Safari honour;
+  // report-to is the replacement, and Chrome prefers it when both are present.
+  `report-uri ${REPORT_PATH}`,
+  ...(REPORT_ORIGIN ? ["report-to csp-endpoint"] : []),
 ].join("; ");
 
 function securityHeaders() {
@@ -42,6 +56,16 @@ function securityHeaders() {
     { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), payment=()" },
     // Report-only for now — see the note above contentSecurityPolicy.
     { key: "Content-Security-Policy-Report-Only", value: contentSecurityPolicy },
+    // Defines the group the report-to directive above refers to. Omitted when
+    // we can't build an absolute URL, in which case report-uri carries it.
+    ...(REPORT_ORIGIN
+      ? [
+          {
+            key: "Reporting-Endpoints",
+            value: `csp-endpoint="${REPORT_ORIGIN}${REPORT_PATH}"`,
+          },
+        ]
+      : []),
   ];
 }
 
