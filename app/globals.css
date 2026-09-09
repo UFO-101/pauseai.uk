@@ -1115,10 +1115,129 @@ section[id] {
   }
 }
 
-.chapter-grid {
+.chapters-map {
+  position: relative;
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: 24px;
+}
+
+.chapters-map-card {
+  position: relative;
+  z-index: 1;
+}
+
+/* ── UK chapters map ──────────────────────────── */
+
+.chapters-map-canvas {
+  position: relative;
+  z-index: 1;
+  grid-column: 2;
+  grid-row: 1 / span 3;
+  align-self: center;
+  justify-self: center;
+  /* Gives width back to the cards on smaller desktops rather than holding
+     the map at a fixed size and squeezing them. */
+  width: clamp(290px, 28vw, 380px);
+  aspect-ratio: 380 / 608;
+}
+
+.chapters-map-canvas svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* Above the map (z-index 1) so a connector stays visible where it crosses
+   land, but under nothing else — the paths start at a card's own edge and
+   run outwards, so they never cover card content. */
+.chapters-map-links {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 2;
+  pointer-events: none;
+  overflow: visible;
+}
+
+.chapters-map-link {
+  fill: none;
+  stroke: var(--border-strong);
+  stroke-width: 1.5;
+  transition: stroke 0.15s ease;
+}
+
+.chapters-map-link.active {
+  stroke: var(--accent);
+  stroke-width: 2;
+}
+
+.uk-map-outline {
+  fill: var(--surface);
+  stroke: var(--border-strong);
+  stroke-width: 1.2;
+}
+
+.uk-map-pin {
+  cursor: pointer;
+}
+
+.uk-map-pin-halo {
+  fill: var(--accent);
+  opacity: 0.18;
+  transition: r 0.15s ease, opacity 0.15s ease;
+}
+
+.uk-map-pin.active .uk-map-pin-halo {
+  opacity: 0.3;
+}
+
+.uk-map-pin-dot {
+  fill: var(--accent);
+  stroke: var(--surface);
+  stroke-width: 1.5;
+}
+
+/* Three columns — cards, map, cards — only where there is room for them.
+   Below this the map and its connectors are dropped entirely and the cards
+   fall back to the plain responsive grid above. */
+@media (min-width: 1024px) {
+  .chapters-map {
+    grid-template-columns: 1fr auto 1fr;
+    column-gap: 40px;
+    row-gap: 24px;
+    align-items: center;
+  }
+
+  .chapters-map-card {
+    grid-column: var(--card-col);
+    grid-row: var(--card-row);
+  }
+}
+
+.start-chapter-cta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 24px;
+  margin-top: 24px;
+  padding: 32px;
+  background: var(--accent-bg);
+  border: 1px solid var(--accent-light);
+  border-radius: 12px;
+}
+
+.start-chapter-cta-copy h3 {
+  font-family: "Inter", system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 20px;
+  margin: 0 0 6px;
+}
+
+.start-chapter-cta-copy p {
+  margin: 0;
+  color: var(--text-secondary);
 }
 
 .activity-card,
@@ -1176,6 +1295,8 @@ section[id] {
   color: var(--accent);
   font-weight: 600;
   font-size: 14px;
+  /* Keeps the arrow on the same line as its label in narrow cards. */
+  white-space: nowrap;
 }
 
 .card-link:hover {
@@ -2017,7 +2138,7 @@ section[id] {
     grid-template-columns: 1fr;
   }
 
-  .chapter-grid {
+  .chapters-map {
     grid-template-columns: 1fr;
   }
 
