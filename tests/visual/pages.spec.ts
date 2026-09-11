@@ -27,6 +27,7 @@ const ROUTES = [
   "/manchester/",
   "/oxford/",
   "/privacy/",
+  "/protest/",
   "/stories/",
   "/stories/harry-turnbull/",
   "/theory-of-change/",
