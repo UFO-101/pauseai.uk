@@ -34,7 +34,7 @@
 
 .blog .blog-post-title {
   font-size: clamp(34px, 4.6vw, 56px);
-  max-width: 22ch;
+  text-wrap: pretty;
 }
 
 /* ─── Byline ─── */
@@ -57,9 +57,12 @@
   font-size: 15.5px;
   color: var(--text-secondary);
 }
-.blog .blog-byline-text a {
+.blog .blog-byline-text a,
+.blog .blog-byline-name {
   color: var(--text);
   font-weight: 600;
+}
+.blog .blog-byline-text a {
   text-decoration: none;
 }
 .blog .blog-byline-text a:hover {

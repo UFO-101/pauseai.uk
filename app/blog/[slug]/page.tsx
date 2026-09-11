@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import JsonLd from "@/components/JsonLd";
 import Nav from "@/components/Nav";
-import { findPost, formatPostDate, postAuthor, posts } from "@/lib/data/blog";
+import { findPost, formatPostDate, ORGANISATION_AVATAR, postAuthor, posts } from "@/lib/data/blog";
 import { site } from "@/lib/data/site";
 import { parseCssStyle } from "@/lib/storyRender";
 import "../../track-record/track-record.css";
@@ -52,7 +52,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
     image: `${site.url}/images/open-graph/open-graph-1200-630.jpg`,
     author: author
       ? { "@type": "Person", name: post.author, url: `${site.url}/people/${author.slug}` }
-      : { "@type": "Organization", name: "PauseAI UK" },
+      : { "@type": "Organization", name: post.author },
     publisher: {
       "@type": "Organization",
       name: "PauseAI UK",
@@ -72,16 +72,28 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
             </Link>
             <h1 className="tr-hero-title blog-post-title">{post.title}</h1>
             <div className="blog-byline">
-              {author?.person.imageSrc && (
-                <Link
-                  href={`/people/${author.slug}/`}
+              {author ? (
+                author.person.imageSrc && (
+                  <Link
+                    href={`/people/${author.slug}/`}
+                    className="blog-byline-avatar"
+                    style={{ backgroundImage: `url("${author.person.imageSrc}")`, ...parseCssStyle(author.person.imageStyle ?? "") }}
+                    aria-label={`Read ${post.author}'s story`}
+                  />
+                )
+              ) : (
+                <span
                   className="blog-byline-avatar"
-                  style={{ backgroundImage: `url("${author.person.imageSrc}")`, ...parseCssStyle(author.person.imageStyle ?? "") }}
-                  aria-label={`Read ${post.author}'s story`}
+                  style={{ backgroundImage: `url("${ORGANISATION_AVATAR}")` }}
+                  aria-hidden="true"
                 />
               )}
               <span className="blog-byline-text">
-                {author ? <Link href={`/people/${author.slug}/`}>{post.author}</Link> : post.author}
+                {author ? (
+                  <Link href={`/people/${author.slug}/`}>{post.author}</Link>
+                ) : (
+                  <span className="blog-byline-name">{post.author}</span>
+                )}
                 {" · "}
                 <time dateTime={post.date}>{formatPostDate(post.date)}</time>
               </span>

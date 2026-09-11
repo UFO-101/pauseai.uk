@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import Nav from "@/components/Nav";
-import { formatPostDate, postAuthor, posts } from "@/lib/data/blog";
+import { formatPostDate, ORGANISATION_AVATAR, postAuthor, posts } from "@/lib/data/blog";
 import { site } from "@/lib/data/site";
 import { parseCssStyle } from "@/lib/storyRender";
 import "../track-record/track-record.css";
@@ -47,13 +47,21 @@ export default function BlogIndexPage() {
                     <Link href={`/blog/${post.slug}/`} className="blog-list-link">
                       <h2 className="blog-list-title">{post.title}</h2>
                       <p className="blog-list-meta">
-                        {author?.person.imageSrc && (
+                        {author ? (
+                          author.person.imageSrc && (
+                            <span
+                              className="blog-list-avatar"
+                              style={{
+                                backgroundImage: `url("${author.person.imageSrc}")`,
+                                ...parseCssStyle(author.person.imageStyle ?? ""),
+                              }}
+                              aria-hidden="true"
+                            />
+                          )
+                        ) : (
                           <span
                             className="blog-list-avatar"
-                            style={{
-                              backgroundImage: `url("${author.person.imageSrc}")`,
-                              ...parseCssStyle(author.person.imageStyle ?? ""),
-                            }}
+                            style={{ backgroundImage: `url("${ORGANISATION_AVATAR}")` }}
                             aria-hidden="true"
                           />
                         )}
