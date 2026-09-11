@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import JsonLd from "@/components/JsonLd";
 import Nav from "@/components/Nav";
-import { findPost, formatPostDate, ORGANISATION_AVATAR, postAuthor, posts } from "@/lib/data/blog";
+import { findPost, firstPostImage, formatPostDate, ORGANISATION_AVATAR, postAuthor, posts } from "@/lib/data/blog";
 import { site } from "@/lib/data/site";
 import { parseCssStyle } from "@/lib/storyRender";
 import "../../track-record/track-record.css";
@@ -17,18 +17,24 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const post = findPost(slug);
   if (!post) return {};
+  // A post's first image is its social preview; posts without one use the site-wide card.
+  const image = firstPostImage(post);
   return {
     title: post.title,
     description: post.tldr,
     openGraph: {
       title: post.title,
       description: post.tldr,
-      images: [{ url: "/images/open-graph/open-graph-1200-630.jpg", width: 1200, height: 630 }],
+      images: [
+        image
+          ? { url: image.src, width: image.width, height: image.height, alt: image.alt }
+          : { url: "/images/open-graph/open-graph-1200-630.jpg", width: 1200, height: 630 },
+      ],
       url: `https://pauseai.uk/blog/${slug}/`,
       type: "article",
     },
     twitter: {
-      images: ["/images/open-graph/open-graph-1600-840.jpg"],
+      images: [image ? image.src : "/images/open-graph/open-graph-1600-840.jpg"],
     },
     alternates: { canonical: `/blog/${slug}` },
   };
@@ -40,6 +46,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
   if (!post) notFound();
 
   const author = postAuthor(post);
+  const image = firstPostImage(post);
 
   const articleJsonLd = {
     "@context": "https://schema.org",
@@ -49,7 +56,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
     datePublished: post.date,
     url: `${site.url}/blog/${slug}`,
     mainEntityOfPage: `${site.url}/blog/${slug}`,
-    image: `${site.url}/images/open-graph/open-graph-1200-630.jpg`,
+    image: `${site.url}${image?.src ?? "/images/open-graph/open-graph-1200-630.jpg"}`,
     author: author
       ? { "@type": "Person", name: post.author, url: `${site.url}/people/${author.slug}` }
       : { "@type": "Organization", name: post.author },

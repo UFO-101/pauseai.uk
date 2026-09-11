@@ -1,5 +1,5 @@
 import Image from "next/image";
-import type { ReactNode } from "react";
+import { isValidElement, type ReactNode } from "react";
 import { people, personSlug, type Person } from "./people";
 import { site } from "./site";
 
@@ -72,7 +72,7 @@ export const posts: BlogPost[] = [
         </p>
         <p>
           <strong>Stuart Russell</strong>, Professor of Computer Science at UC Berkeley, argued that although it is
-          hard to believe, there is a real risk of AI leading to human extinction, we should think in terms of
+          hard to believe there is a real risk of AI leading to human extinction, we should think in terms of
           incompatible kinds of intelligence:
         </p>
         <p>
@@ -762,4 +762,46 @@ for (const post of posts) {
 
 export function findPost(slug: string): BlogPost | undefined {
   return posts.find((p) => p.slug === slug);
+}
+
+export type PostImage = { src: string; width?: number; height?: number; alt?: string };
+
+/**
+ * The first image in a post's content, used as the social preview card and
+ * the article's structured-data image. Walks the JSX tree so a post doesn't
+ * have to declare it separately; null when the post has no images, in which
+ * case the page falls back to the site-wide Open Graph image.
+ */
+export function firstPostImage(post: BlogPost): PostImage | null {
+  return findFirstImage(post.content);
+}
+
+function findFirstImage(node: ReactNode): PostImage | null {
+  if (node == null || typeof node !== "object") return null;
+  if (Array.isArray(node)) {
+    for (const child of node) {
+      const found = findFirstImage(child);
+      if (found) return found;
+    }
+    return null;
+  }
+  if (!isValidElement(node)) return null;
+  const props = node.props as Record<string, unknown>;
+  if (node.type === Image || node.type === "img") {
+    const alt = typeof props.alt === "string" ? props.alt : undefined;
+    // Static imports (`import photo from "./photo.jpg"`) carry their own dimensions.
+    const src = props.src;
+    if (src && typeof src === "object" && "src" in src && typeof src.src === "string") {
+      const data = src as { src: string; width?: number; height?: number };
+      return { src: data.src, width: data.width, height: data.height, alt };
+    }
+    if (typeof src !== "string") return null;
+    return { src, width: toNumber(props.width), height: toNumber(props.height), alt };
+  }
+  return findFirstImage(props.children as ReactNode);
+}
+
+function toNumber(value: unknown): number | undefined {
+  const n = typeof value === "string" ? Number(value) : value;
+  return typeof n === "number" && Number.isFinite(n) ? n : undefined;
 }
