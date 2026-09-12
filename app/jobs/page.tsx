@@ -1,19 +1,24 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Nav from "@/components/Nav";
+import { site } from "@/lib/data/site";
 import "../track-record/track-record.css";
 import "./jobs.css";
 
 const APPLY_URL = "https://pauseai.fillout.com/uk_job_apply";
+// Linked from the Head of Public Affairs role: the September 2026 discussion in
+// the UK Parliament and the PauseCon Brussels conference in the European Parliament.
+const UK_PARLIAMENT_EVENT_URL = "https://x.com/PauseAI_UK/status/2097102594908803088";
+const EU_PARLIAMENT_EVENT_URL = "https://pauseai.substack.com/p/eu-parliamentarians-acknowledge-the";
 
 export const metadata: Metadata = {
   title: "Jobs",
   description:
-    "PauseAI UK is hiring: operations, software engineering, content, community organising, design and campaigning roles.",
+    "PauseAI UK is hiring: operations, software engineering, content, community organising, design and public affairs roles.",
   openGraph: {
     title: "Jobs at PauseAI UK",
     description:
-      "PauseAI UK is hiring: operations, software engineering, content, community organising, design and campaigning roles.",
+      "PauseAI UK is hiring: operations, software engineering, content, community organising, design and public affairs roles.",
     images: [{ url: "/images/open-graph/open-graph-1200-630.jpg", width: 1200, height: 630 }],
     url: "https://pauseai.uk/jobs/",
   },
@@ -221,16 +226,44 @@ export default function JobsPage() {
               </article>
 
               <article className="jobs-role-card">
-                <h2>Lobbyist / Campaign lead</h2>
+                <h2>Head of Public Affairs</h2>
                 <div className="jobs-salary">
                   <p>
                     <strong>Expected salary range: £50k - £100k</strong>
                   </p>
                 </div>
                 <p>
-                  PauseAI is advocating for international treaties and changes in UK law. In this role you would bring
-                  your expertise and connections in the UK political system to help PauseAI achieve our legislative and
-                  political goals.
+                  Last year, PauseAI wrote an{" "}
+                  <a href={site.openLetterUrl} target="_blank" rel="noreferrer">
+                    open letter
+                  </a>{" "}
+                  to Demis Hassabis signed by over 60 UK politicians. This year we have held conferences in the{" "}
+                  <a href={UK_PARLIAMENT_EVENT_URL} target="_blank" rel="noreferrer">
+                    UK Parliament
+                  </a>{" "}
+                  and the{" "}
+                  <a href={EU_PARLIAMENT_EVENT_URL} target="_blank" rel="noreferrer">
+                    European Parliament
+                  </a>{" "}
+                  with speakers including:
+                </p>
+                <ul className="jobs-role-list">
+                  <li>
+                    <strong>Victor Negrescu MEP</strong>, Vice-President of the European Parliament.
+                  </li>
+                  <li>
+                    <strong>Dame Chi Onwurah MP</strong>, Chair of the House of Commons Science, Innovation &amp;
+                    Technology Committee.
+                  </li>
+                  <li>
+                    <strong>Brando Benifei MEP</strong>, Co-rapporteur of the EU AI Act.
+                  </li>
+                </ul>
+                <p>
+                  We are advocating for regulation and stronger liability for frontier AI development and, ultimately,
+                  an international treaty to pause the race to superintelligent AI. In this role you would bring your
+                  expertise and connections in the UK political system to help PauseAI build our relationships in
+                  Westminster and determine the best legislative strategies for improving AI safety.
                 </p>
                 <p className="jobs-skills-label">Essential skills</p>
                 <ul className="jobs-skill-tags">
@@ -239,7 +272,6 @@ export default function JobsPage() {
                 <p className="jobs-skills-label">Nice-to-have skills</p>
                 <ul className="jobs-skill-tags">
                   <li>AI or legal expertise</li>
-                  <li>Marketing</li>
                 </ul>
                 <a className="btn primary jobs-card-apply" href={APPLY_URL} target="_blank" rel="noreferrer">
                   Apply now

@@ -202,3 +202,34 @@
     border-radius: 12px;
   }
 }
+
+/* Plain bullet list inside a role card (e.g. conference speakers), sized to
+   match the card's paragraphs rather than the larger intro list. */
+.jobs-page .jobs-role-list {
+  padding-left: 22px;
+  margin: 0 0 14px;
+}
+
+.jobs-page .jobs-role-list li {
+  font-size: 16px;
+  line-height: 1.65;
+  color: var(--text);
+  margin-bottom: 6px;
+  padding-left: 4px;
+}
+
+.jobs-page .jobs-role-list li::marker {
+  color: var(--pause-orange);
+}
+
+.jobs-page .jobs-role-card p a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  transition: color 0.15s ease;
+}
+
+.jobs-page .jobs-role-card p a:hover {
+  color: var(--pause-orange);
+}
