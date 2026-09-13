@@ -29,6 +29,12 @@ export type BlogPost = {
   /** Rich version of the summary for the post page's TL;DR callout. */
   tldrContent?: ReactNode;
   content: ReactNode;
+  /**
+   * Image for the blog index card and the social preview. Optional: without it
+   * the first image in `content` is used, and a post with neither renders as a
+   * text-only card.
+   */
+  cover?: PostImage;
 };
 
 export function postAuthor(post: BlogPost): { person: Person; slug: string } | null {
@@ -54,6 +60,12 @@ export const posts: BlogPost[] = [
     author: "Riley Hall",
     tldr:
       "Britain can't build frontier AI, but it can use its soft power and diplomatic position to push for an international treaty that pauses the race to superintelligence.",
+    cover: {
+      src: "/images/chapters/london/london-feb-2025-protest.jpg",
+      alt: "PauseAI UK protesters jumping with placards in Parliament Square, the Elizabeth Tower behind them",
+      width: 800,
+      height: 533,
+    },
     content: (
       <>
         <p>
@@ -445,6 +457,12 @@ export const posts: BlogPost[] = [
     author: "Abi Palmer",
     tldr:
       "AI companies possess substantial non-public information about the risks of their products. Here are three examples of when they knew about a problem, and kept it to themselves.",
+    cover: {
+      src: "/images/front-page-hero-optimized/deepmind-close-up.webp",
+      alt: "Protesters outside Google DeepMind, one holding a sign reading: If you can't steer, don't race",
+      width: 800,
+      height: 450,
+    },
     content: (
       <>
         <p>
@@ -798,6 +816,12 @@ export const posts: BlogPost[] = [
         minutes, and is significantly impactful.
       </em>
     ),
+    cover: {
+      src: "/images/front-page-hero-optimized/letter-writing.webp",
+      alt: "Volunteers writing letters to their MPs around a table at a PauseAI UK letter-writing session",
+      width: 800,
+      height: 837,
+    },
     content: (
       <>
         <p>
@@ -882,6 +906,11 @@ export type PostImage = { src: string; width?: number; height?: number; alt?: st
  */
 export function firstPostImage(post: BlogPost): PostImage | null {
   return findFirstImage(post.content);
+}
+
+/** The image that represents a post: its cover if set, otherwise the first image in its content. */
+export function postImage(post: BlogPost): PostImage | null {
+  return post.cover ?? firstPostImage(post);
 }
 
 function findFirstImage(node: ReactNode): PostImage | null {

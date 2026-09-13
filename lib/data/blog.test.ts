@@ -1,7 +1,7 @@
 import Image from "next/image";
 import { createElement, Fragment } from "react";
 import { describe, expect, it } from "vitest";
-import { findPost, firstPostImage, posts, type BlogPost } from "./blog";
+import { findPost, firstPostImage, postImage, posts, type BlogPost } from "./blog";
 
 const base: Omit<BlogPost, "content"> = {
   slug: "test",
@@ -46,6 +46,25 @@ describe("firstPostImage", () => {
       expect(image.src, post.slug).toMatch(/^\/images\//);
       expect(image.width, post.slug).toBeGreaterThan(0);
       expect(image.height, post.slug).toBeGreaterThan(0);
+    }
+  });
+});
+
+describe("postImage", () => {
+  it("prefers an explicit cover over the first content image, and falls back to it", () => {
+    const content = createElement("figure", null, createElement(Image, { src: "/a.jpg", alt: "A", width: 10, height: 5 }));
+    const cover = { src: "/cover.jpg", width: 800, height: 450, alt: "Cover" };
+    expect(postImage({ ...base, content, cover })).toEqual(cover);
+    expect(postImage({ ...base, content })).toEqual({ src: "/a.jpg", width: 10, height: 5, alt: "A" });
+    expect(postImage({ ...base, content: createElement("p", null, "text") })).toBeNull();
+  });
+
+  it("every cover points at a site-relative image with dimensions", () => {
+    for (const post of posts) {
+      if (!post.cover) continue;
+      expect(post.cover.src, post.slug).toMatch(/^\/images\//);
+      expect(post.cover.width, post.slug).toBeGreaterThan(0);
+      expect(post.cover.height, post.slug).toBeGreaterThan(0);
     }
   });
 });

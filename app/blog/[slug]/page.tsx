@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import JsonLd from "@/components/JsonLd";
 import Nav from "@/components/Nav";
-import { findPost, firstPostImage, formatPostDate, ORGANISATION_AVATAR, postAuthor, posts } from "@/lib/data/blog";
+import { findPost, formatPostDate, ORGANISATION_AVATAR, postAuthor, postImage, posts } from "@/lib/data/blog";
 import { site } from "@/lib/data/site";
 import { parseCssStyle } from "@/lib/storyRender";
 import "../../track-record/track-record.css";
@@ -17,8 +17,8 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const post = findPost(slug);
   if (!post) return {};
-  // A post's first image is its social preview; posts without one use the site-wide card.
-  const image = firstPostImage(post);
+  // A post's cover, or failing that its first image, is its social preview; posts with neither use the site-wide card.
+  const image = postImage(post);
   return {
     title: post.title,
     description: post.tldr,
@@ -46,7 +46,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
   if (!post) notFound();
 
   const author = postAuthor(post);
-  const image = firstPostImage(post);
+  const image = postImage(post);
 
   const articleJsonLd = {
     "@context": "https://schema.org",
