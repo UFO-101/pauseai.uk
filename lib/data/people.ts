@@ -196,6 +196,14 @@ export const people: Person[] =
       "Hi, I’m Abi and I’m a researcher based in Wales. When I talk to my loved ones about AI, the conversation is often filled with a sense of loss: loss of opportunity, loss of nature, loss of human agency and imagination, and most of all, loss of control. People are being told that they don’t have a say in their own futures – that they have no choice but to accept whatever AI companies unleash on us. I don’t accept that. The rise of AI affects us all, and so we should all demand a voice in the conversation. That’s why I’m volunteering for Pause AI."
     ],
     "imageStyle": "background-position: 64% 50%;"
+  },
+  {
+    "name": "Riley Hall",
+    "imageSrc": "/images/people/Riley-Hall-Stories.jpg",
+    "paragraphs": [
+      "I think AI's rapid development is a very serious threat our institutions should be taking more seriously. I joined PauseAI because I see that superintelligence would likely be misaligned and lead to catastrophe. We cannot afford to take that risk, and PauseAI are pushing for real action to pause frontier development. I also love being creative, and find AI's increasingly intrusive demolition of human artistry deeply tragic, and want to help build a better framework for AI governance as a whole."
+    ],
+    "imageStyle": "background-position: 50% 25%;"
   }
 ];
 

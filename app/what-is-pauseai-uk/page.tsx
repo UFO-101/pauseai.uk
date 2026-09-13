@@ -89,6 +89,16 @@ export default function WhatIsPauseAIUKPage() {
                   current harms of AI, or the climate, or any other issue.
                 </li>
               </ol>
+
+              {/* Company details required on the website by the Companies Act
+                  (registered name, number, place of registration, registered office). */}
+              <div className="registered-details">
+                <p>
+                  PauseAI UK is operated by <strong>Safe AI Alliance Ltd</strong>, a private company limited by
+                  guarantee registered in England and Wales, company number <strong>17137345</strong>. Registered
+                  office: 128 City Road, London EC1V 2NX, United Kingdom.
+                </p>
+              </div>
             </section>
           </div>
         </article>
