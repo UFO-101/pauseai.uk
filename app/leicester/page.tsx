@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import ChapterEvents from "@/components/ChapterEvents";
 import Nav from "@/components/Nav";
 
 export const metadata: Metadata = {
@@ -72,6 +73,8 @@ export default function LeicesterPage() {
             </article>
           </div>
         </section>
+
+        <ChapterEvents chapterName="Leicester" />
 
         <section className="section muted">
           <div className="container">
