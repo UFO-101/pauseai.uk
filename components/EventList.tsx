@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import type { LumaEntry } from "@/lib/data/events";
 import { formatEventDate, formatEventTime } from "@/lib/data/events";
 
@@ -75,18 +75,35 @@ function EventCard({ entry, isExtra = false }: { entry: LumaEntry; isExtra?: boo
   );
 }
 
-export default function EventList({ events, lumaUrl }: { events: LumaEntry[]; lumaUrl: string }) {
+export default function EventList({
+  events,
+  lumaUrl,
+  empty,
+}: {
+  events: LumaEntry[];
+  lumaUrl: string;
+  /**
+   * What to say when there is nothing to list. A chapter page has already
+   * named its city in the heading above, so the default reads as a non-answer
+   * there and it passes a line that says the city itself is quiet.
+   */
+  empty?: ReactNode;
+}) {
   const [expanded, setExpanded] = useState(false);
   const hasMore = events.length > 4;
 
   if (events.length === 0) {
     return (
       <p className="luma-events-empty">
-        See our{" "}
-        <a href={lumaUrl} target="_blank" rel="noreferrer">
-          event calendar
-        </a>{" "}
-        for upcoming events.
+        {empty ?? (
+          <>
+            See our{" "}
+            <a href={lumaUrl} target="_blank" rel="noreferrer">
+              event calendar
+            </a>{" "}
+            for upcoming events.
+          </>
+        )}
       </p>
     );
   }

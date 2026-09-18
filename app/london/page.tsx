@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import ChapterEvents from "@/components/ChapterEvents";
 import Nav from "@/components/Nav";
 import { site } from "@/lib/data/site";
 
@@ -76,6 +77,8 @@ export default function LondonPage() {
             </article>
           </div>
         </section>
+
+        <ChapterEvents chapterName="London" />
 
         <section className="section muted">
           <div className="container">

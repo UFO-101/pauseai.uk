@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import ChapterEvents from "@/components/ChapterEvents";
 import Nav from "@/components/Nav";
 import { site } from "@/lib/data/site";
 
@@ -71,6 +72,8 @@ export default function OxfordPage() {
             </article>
           </div>
         </section>
+
+        <ChapterEvents chapterName="Oxford" />
 
         <section className="section muted">
           <div className="container">
