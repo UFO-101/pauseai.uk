@@ -121,7 +121,7 @@ export default function Nav({ chapterName, chapterLogoSrc, chapterLogoWidth, cha
                 <Image src="/images/logos/Pause-Symbol.svg" alt="" width={616} height={616} className="brand-mark" />
                 <div className="brand-text">
                   <span className="brand-pretitle">PauseAI UK</span>
-                  <span className="brand-tagline">{chapterName} Chapter</span>
+                  <span className="brand-tagline">{chapterName} Group</span>
                 </div>
               </>
             )}
@@ -161,8 +161,8 @@ export default function Nav({ chapterName, chapterLogoSrc, chapterLogoWidth, cha
             </div>
           </div>
           <div className="nav-item has-dropdown">
-            <Link href={`${navPrefix}#chapters`} className="dropdown-trigger" aria-haspopup="true" aria-expanded="false">
-              Chapters
+            <Link href={`${navPrefix}#local-groups`} className="dropdown-trigger" aria-haspopup="true" aria-expanded="false">
+              Local groups
               <svg className="caret" viewBox="0 0 12 8" aria-hidden="true" focusable={false}>
                 <path d="M1 1.5l5 5 5-5" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
               </svg>

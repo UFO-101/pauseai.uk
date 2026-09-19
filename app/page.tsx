@@ -212,12 +212,13 @@ export default async function HomePage() {
           </div>
         </section>
 
-        <section id="chapters" className="section muted">
+        <span id="chapters" className="anchor-alias" aria-hidden="true" />
+        <section id="local-groups" className="section muted">
           <div className="container">
             <div className="section-header">
               <h2>Organising across the UK</h2>
               <p className="section-lede">
-                Find your city and get involved. Each chapter runs its own events, campaigns, and outreach.
+                Find your city and get involved. Each local group runs its own events, campaigns, and outreach.
               </p>
             </div>
             <ChaptersMap />
@@ -232,7 +233,7 @@ export default async function HomePage() {
                 target="_blank"
                 rel="noreferrer"
               >
-                Start a chapter →
+                Start a local group →
               </a>
             </div>
           </div>
@@ -310,7 +311,7 @@ export default async function HomePage() {
                 target="_blank"
                 rel="noreferrer"
               >
-                start a new chapter
+                start a new local group
               </a>.
             </p>
           </div>

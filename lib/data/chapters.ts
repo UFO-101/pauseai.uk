@@ -30,7 +30,7 @@ export const chapters: Chapter[] = [
   {
     name: "Manchester",
     href: "/manchester",
-    blurb: "New chapter bringing AI safety conversations and action to the North West.",
+    blurb: "New local group bringing AI safety conversations and action to the North West.",
     imageSrc: "/images/chapters/manchester/manchester_public.jpg",
     imageStyle: { backgroundSize: "110% auto", backgroundPosition: "center 22%" },
     lng: -2.2426,
@@ -40,7 +40,7 @@ export const chapters: Chapter[] = [
   {
     name: "West of England",
     href: "/west-of-england",
-    blurb: "New chapter bringing AI safety conversations and action to Bristol and beyond.",
+    blurb: "New local group bringing AI safety conversations and action to Bristol and beyond.",
     imageSrc: "/images/chapters/west-of-england/bristol-launch.jpg",
     lng: -2.5879,
     lat: 51.4545,

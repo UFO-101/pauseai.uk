@@ -159,7 +159,7 @@ export default function ChaptersMap() {
 
       {isDesktop && ukFeature && path && projection && (
         <div className="chapters-map-canvas">
-          <svg viewBox={`0 0 ${MAP_W} ${MAP_H}`} preserveAspectRatio="xMidYMid meet" role="img" aria-label="Map of the UK showing where PauseAI chapters are based">
+          <svg viewBox={`0 0 ${MAP_W} ${MAP_H}`} preserveAspectRatio="xMidYMid meet" role="img" aria-label="Map of the UK showing where PauseAI local groups are based">
             {ukFeature.features.map((f, i) => (
               <path key={i} d={path(f) || undefined} className="uk-map-outline" />
             ))}

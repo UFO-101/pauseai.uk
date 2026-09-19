@@ -65,7 +65,7 @@ export default function PressPage() {
               <h2>Boilerplate</h2>
               <p>
                 PauseAI UK is the civic movement dedicated to averting the risks of superhuman AI. Volunteers organise
-                across chapters in London, Glasgow, Oxford, Leicester, Manchester, and the West of England, engaging MPs,
+                across local groups in London, Glasgow, Oxford, Leicester, Manchester, and the West of England, engaging MPs,
                 joining conferences in the UK and European Parliaments, and marching in protests to push for a global
                 pause on the development of AI systems more powerful than humans. PauseAI UK is strictly non-violent and
                 is operated by Safe AI Alliance Ltd, a private company limited by guarantee.

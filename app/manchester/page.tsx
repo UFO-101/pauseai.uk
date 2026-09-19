@@ -3,16 +3,16 @@ import Nav from "@/components/Nav";
 import { site } from "@/lib/data/site";
 
 export const metadata: Metadata = {
-  title: "Manchester Chapter",
+  title: "Manchester Group",
   openGraph: {
     title: "PauseAI Manchester",
-    description: "Join the Manchester chapter of PauseAI for meetups, outreach, and AI safety action.",
+    description: "Join the Manchester group of PauseAI for meetups, outreach, and AI safety action.",
     images: [{ url: "/images/open-graph/open-graph-1200-630.jpg", width: 1200, height: 630 }],
     url: "https://pauseai.uk/manchester",
   },
   twitter: {
     title: "PauseAI Manchester",
-    description: "Join the Manchester chapter of PauseAI for meetups, outreach, and AI safety action.",
+    description: "Join the Manchester group of PauseAI for meetups, outreach, and AI safety action.",
     images: ["/images/open-graph/open-graph-1080-1080.jpg"],
   },
   alternates: { canonical: "/manchester" },
@@ -117,7 +117,7 @@ export default function ManchesterPage() {
         <section className="section muted">
           <div className="container">
             <div className="section-header">
-              <h2>Link up with the chapter</h2>
+              <h2>Link up with the group</h2>
               <p className="section-lede">
                 Join the WhatsApp community to connect with local organisers and hear about UK-wide events and campaigns. Want to learn more? Book a 1-on-1 chat.
               </p>

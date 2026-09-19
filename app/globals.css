@@ -286,11 +286,19 @@ html {
   }
 }
 
-/* Anchor-link scroll offset so #events / #news / #chapters etc. don't
+/* Anchor-link scroll offset so #events / #news / #local-groups etc. don't
    land underneath the sticky 77px-tall nav. Applies to native fragment
    navigation and scrollIntoView alike. */
-section[id] {
+section[id],
+.anchor-alias {
   scroll-margin-top: 90px;
+}
+
+/* Zero-height target that keeps a renamed anchor (e.g. old #chapters
+   links in PDFs) working. */
+.anchor-alias {
+  display: block;
+  height: 0;
 }
 
 /* ── Next Event Banner ─────────────────────────── */

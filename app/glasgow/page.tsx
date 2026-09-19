@@ -3,7 +3,7 @@ import Nav from "@/components/Nav";
 import { site } from "@/lib/data/site";
 
 export const metadata: Metadata = {
-  title: "Glasgow Chapter",
+  title: "Glasgow Group",
   openGraph: {
     title: "PauseAI Glasgow",
     description: "PauseAI Glasgow hosts events and conversations on AI risk in Scotland.",
@@ -63,7 +63,7 @@ export default function GlasgowPage() {
         <section className="section muted">
           <div className="container">
             <div className="section-header">
-              <h2>Link up with the chapter</h2>
+              <h2>Link up with the group</h2>
               <p className="section-lede">
                 Join the WhatsApp community to connect with local organisers and hear about UK-wide events and campaigns.
               </p>

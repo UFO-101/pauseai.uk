@@ -4,7 +4,7 @@ import Nav from "@/components/Nav";
 import { site } from "@/lib/data/site";
 
 export const metadata: Metadata = {
-  title: "Oxford Chapter",
+  title: "Oxford Group",
   openGraph: {
     title: "PauseAI Oxford",
     description: "PauseAI Oxford links students, researchers, and locals to discuss and act on AI safety.",
@@ -48,7 +48,7 @@ export default function OxfordPage() {
 
         <section className="section container">
           <div className="section-header">
-            <h2>Oxford chapter focus</h2>
+            <h2>Oxford group focus</h2>
             <p className="section-lede">
               Oxford brings together safety researchers, policy thinkers, and students for talks, reading groups, and public engagement.
             </p>
