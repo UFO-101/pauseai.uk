@@ -1,7 +1,16 @@
 import type { CSSProperties } from "react";
 
+/** Every local group with a page, so a page cannot ask for one that does not exist. */
+export type LocalGroupName =
+  | "Glasgow"
+  | "Manchester"
+  | "West of England"
+  | "Leicester"
+  | "Oxford"
+  | "London";
+
 export type LocalGroup = {
-  name: string;
+  name: LocalGroupName;
   href: string;
   blurb: string;
   imageSrc: string;
@@ -12,6 +21,13 @@ export type LocalGroup = {
   lat: number;
   /** Which side of the map the local group's card sits on in the desktop layout. */
   side: "left" | "right";
+  /**
+   * Place names that mark a calendar event as this local group's, matched
+   * word-bounded against the event name, city and free-text address by
+   * eventMatchesLocalGroup in lib/data/events.ts. Add the surrounding county or
+   * region where the local group organises beyond its host city.
+   */
+  eventMatchers: string[];
 };
 
 // Sides follow geography — north and west on the left, the southern and
@@ -26,6 +42,7 @@ export const localGroups: LocalGroup[] = [
     lng: -4.2518,
     lat: 55.8642,
     side: "left",
+    eventMatchers: ["Glasgow", "Scotland", "Edinburgh"],
   },
   {
     name: "Manchester",
@@ -36,6 +53,7 @@ export const localGroups: LocalGroup[] = [
     lng: -2.2426,
     lat: 53.4808,
     side: "left",
+    eventMatchers: ["Manchester", "Salford"],
   },
   {
     name: "West of England",
@@ -45,6 +63,7 @@ export const localGroups: LocalGroup[] = [
     lng: -2.5879,
     lat: 51.4545,
     side: "left",
+    eventMatchers: ["Bristol", "Bath", "West of England"],
   },
   {
     name: "Leicester",
@@ -54,6 +73,7 @@ export const localGroups: LocalGroup[] = [
     lng: -1.1398,
     lat: 52.6369,
     side: "right",
+    eventMatchers: ["Leicester", "Leicestershire"],
   },
   {
     name: "Oxford",
@@ -63,6 +83,7 @@ export const localGroups: LocalGroup[] = [
     lng: -1.2577,
     lat: 51.752,
     side: "right",
+    eventMatchers: ["Oxford", "Oxfordshire"],
   },
   {
     name: "London",
@@ -72,5 +93,6 @@ export const localGroups: LocalGroup[] = [
     lng: -0.1276,
     lat: 51.5072,
     side: "right",
+    eventMatchers: ["London"],
   },
 ];

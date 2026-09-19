@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import LocalGroupEvents from "@/components/LocalGroupEvents";
 import Nav from "@/components/Nav";
 import { site } from "@/lib/data/site";
 
@@ -113,6 +114,8 @@ export default function ManchesterPage() {
             </article>
           </div>
         </section>
+
+        <LocalGroupEvents localGroupName="Manchester" />
 
         <section className="section muted">
           <div className="container">

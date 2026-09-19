@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import LocalGroupEvents from "@/components/LocalGroupEvents";
 import Nav from "@/components/Nav";
 
 export const metadata: Metadata = {
@@ -72,6 +73,8 @@ export default function LeicesterPage() {
             </article>
           </div>
         </section>
+
+        <LocalGroupEvents localGroupName="Leicester" />
 
         <section className="section muted">
           <div className="container">
