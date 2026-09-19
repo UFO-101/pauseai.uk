@@ -1,23 +1,23 @@
 import type { CSSProperties } from "react";
 
-export type Chapter = {
+export type LocalGroup = {
   name: string;
   href: string;
   blurb: string;
   imageSrc: string;
   /** Extra background rules where the default cover crop misses the subject. */
   imageStyle?: CSSProperties;
-  /** City centre, used to place the chapter's pin on the UK map. */
+  /** City centre, used to place the local group's pin on the UK map. */
   lng: number;
   lat: number;
-  /** Which side of the map the chapter's card sits on in the desktop layout. */
+  /** Which side of the map the local group's card sits on in the desktop layout. */
   side: "left" | "right";
 };
 
 // Sides follow geography — north and west on the left, the southern and
 // eastern cluster on the right — so no connector has to cross the map to
 // reach its own card. Within each side the cards run north to south.
-export const chapters: Chapter[] = [
+export const localGroups: LocalGroup[] = [
   {
     name: "Glasgow",
     href: "/glasgow",
@@ -31,7 +31,7 @@ export const chapters: Chapter[] = [
     name: "Manchester",
     href: "/manchester",
     blurb: "New local group bringing AI safety conversations and action to the North West.",
-    imageSrc: "/images/chapters/manchester/manchester_public.jpg",
+    imageSrc: "/images/local-groups/manchester/manchester_public.jpg",
     imageStyle: { backgroundSize: "110% auto", backgroundPosition: "center 22%" },
     lng: -2.2426,
     lat: 53.4808,
@@ -41,7 +41,7 @@ export const chapters: Chapter[] = [
     name: "West of England",
     href: "/west-of-england",
     blurb: "New local group bringing AI safety conversations and action to Bristol and beyond.",
-    imageSrc: "/images/chapters/west-of-england/bristol-launch.jpg",
+    imageSrc: "/images/local-groups/west-of-england/bristol-launch.jpg",
     lng: -2.5879,
     lat: 51.4545,
     side: "left",
@@ -50,7 +50,7 @@ export const chapters: Chapter[] = [
     name: "Leicester",
     href: "/leicester",
     blurb: "Growing community taking action locally and online.",
-    imageSrc: "/images/chapters/leicester/london-2025-protest.jpg",
+    imageSrc: "/images/local-groups/leicester/london-2025-protest.jpg",
     lng: -1.1398,
     lat: 52.6369,
     side: "right",
@@ -59,7 +59,7 @@ export const chapters: Chapter[] = [
     name: "Oxford",
     href: "/oxford",
     blurb: "University-driven dialogue on AI risk with researchers and students.",
-    imageSrc: "/images/chapters/oxford/PauseAI Oxford.jpg",
+    imageSrc: "/images/local-groups/oxford/PauseAI Oxford.jpg",
     lng: -1.2577,
     lat: 51.752,
     side: "right",

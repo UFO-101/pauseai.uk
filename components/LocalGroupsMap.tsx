@@ -7,7 +7,7 @@ import { geoMercator, geoPath } from "d3-geo";
 import { feature } from "topojson-client";
 import type { FeatureCollection, Geometry } from "geojson";
 import type { Topology } from "topojson-specification";
-import { chapters } from "@/lib/data/chapters";
+import { localGroups } from "@/lib/data/local-groups";
 
 const MAP_W = 380;
 const MAP_H = 608;
@@ -18,7 +18,7 @@ const PIN_CLEARANCE = 9;
 // never fetched and no connectors are drawn.
 const DESKTOP_QUERY = "(min-width: 1024px)";
 
-export default function ChaptersMap() {
+export default function LocalGroupsMap() {
   const [isDesktop, setIsDesktop] = useState(false);
   const [ukFeature, setUkFeature] = useState<FeatureCollection<Geometry> | null>(null);
   const [links, setLinks] = useState<{ name: string; d: string }[]>([]);
@@ -42,7 +42,7 @@ export default function ChaptersMap() {
     // A dedicated UK-only topology (Natural Earth 10m, simplified ~12% with
     // mapshaper): the site's world-countries-50m file is coarse enough to
     // turn the coastline into a blocky silhouette at this zoom.
-    fetch("/data/uk-chapters-map.topo.json")
+    fetch("/data/uk-local-groups-map.topo.json")
       .then((res) => res.json())
       .then((topology: Topology) => {
         if (cancelled) return;
@@ -76,13 +76,13 @@ export default function ChaptersMap() {
     if (!wrap) return;
     const w = wrap.getBoundingClientRect();
     const next: { name: string; d: string }[] = [];
-    for (const chapter of chapters) {
-      const card = cardRefs.current[chapter.name];
-      const pin = pinRefs.current[chapter.name];
+    for (const localGroup of localGroups) {
+      const card = cardRefs.current[localGroup.name];
+      const pin = pinRefs.current[localGroup.name];
       if (!card || !pin) continue;
       const c = card.getBoundingClientRect();
       const p = pin.getBoundingClientRect();
-      const isLeft = chapter.side === "left";
+      const isLeft = localGroup.side === "left";
       const cx = (isLeft ? c.right : c.left) - w.left;
       const cy = c.top + c.height / 2 - w.top;
       const px = p.left + p.width / 2 - w.left;
@@ -95,7 +95,7 @@ export default function ChaptersMap() {
       const dist = Math.hypot(dx, dy) || 1;
       const endX = px - (dx / dist) * PIN_CLEARANCE;
       const endY = py - (dy / dist) * PIN_CLEARANCE;
-      next.push({ name: chapter.name, d: `M${cx},${cy} H${stubX} L${endX},${endY}` });
+      next.push({ name: localGroup.name, d: `M${cx},${cy} H${stubX} L${endX},${endY}` });
     }
     setLinks(next);
   }, []);
@@ -117,74 +117,74 @@ export default function ChaptersMap() {
   }, [isDesktop, ukFeature, measure]);
 
   return (
-    <div className="chapters-map" ref={wrapRef}>
+    <div className="local-groups-map" ref={wrapRef}>
       {links.length > 0 && (
-        <svg className="chapters-map-links" aria-hidden="true">
+        <svg className="local-groups-map-links" aria-hidden="true">
           {links.map((l) => (
-            <path key={l.name} d={l.d} className={`chapters-map-link ${hovered === l.name ? "active" : ""}`} />
+            <path key={l.name} d={l.d} className={`local-groups-map-link ${hovered === l.name ? "active" : ""}`} />
           ))}
         </svg>
       )}
 
-      {chapters.map((chapter, i) => {
+      {localGroups.map((localGroup, i) => {
         const row = (i % 3) + 1;
-        const column = chapter.side === "left" ? 1 : 3;
+        const column = localGroup.side === "left" ? 1 : 3;
         return (
           <Link
-            key={chapter.name}
-            href={chapter.href}
+            key={localGroup.name}
+            href={localGroup.href}
             ref={(el) => {
-              cardRefs.current[chapter.name] = el;
+              cardRefs.current[localGroup.name] = el;
             }}
-            className="chapter-card chapters-map-card"
+            className="local-group-card local-groups-map-card"
             style={{ "--card-col": column, "--card-row": row } as CSSProperties}
-            onMouseEnter={() => setHovered(chapter.name)}
-            onMouseLeave={() => setHovered((prev) => (prev === chapter.name ? null : prev))}
+            onMouseEnter={() => setHovered(localGroup.name)}
+            onMouseLeave={() => setHovered((prev) => (prev === localGroup.name ? null : prev))}
           >
-            <div className="image-frame" style={{ backgroundImage: `url("${chapter.imageSrc}")`, ...chapter.imageStyle }}></div>
+            <div className="image-frame" style={{ backgroundImage: `url("${localGroup.imageSrc}")`, ...localGroup.imageStyle }}></div>
             <div className="card-copy">
               <div className="card-header">
-                <h3>{chapter.name}</h3>
+                <h3>{localGroup.name}</h3>
                 {/* Just "Explore" rather than "Explore <name>": the cards are
                     narrower in this layout and the longer names wrapped the
                     header onto two lines. The card is one link, so the name
                     in the heading beside it still carries the context. */}
                 <span className="card-link">Explore →</span>
               </div>
-              <p>{chapter.blurb}</p>
+              <p>{localGroup.blurb}</p>
             </div>
           </Link>
         );
       })}
 
       {isDesktop && ukFeature && path && projection && (
-        <div className="chapters-map-canvas">
+        <div className="local-groups-map-canvas">
           <svg viewBox={`0 0 ${MAP_W} ${MAP_H}`} preserveAspectRatio="xMidYMid meet" role="img" aria-label="Map of the UK showing where PauseAI local groups are based">
             {ukFeature.features.map((f, i) => (
               <path key={i} d={path(f) || undefined} className="uk-map-outline" />
             ))}
-            {chapters.map((chapter) => {
-              const point = projection([chapter.lng, chapter.lat]);
+            {localGroups.map((localGroup) => {
+              const point = projection([localGroup.lng, localGroup.lat]);
               if (!point) return null;
               const [x, y] = point;
-              const isActive = hovered === chapter.name;
+              const isActive = hovered === localGroup.name;
               return (
-                // The card is the accessible control for each chapter; the
+                // The card is the accessible control for each local group; the
                 // pin repeats that link for mouse users without adding a
                 // second tab stop or a duplicate screen-reader entry.
                 <Link
-                  key={chapter.name}
-                  href={chapter.href}
+                  key={localGroup.name}
+                  href={localGroup.href}
                   tabIndex={-1}
                   aria-hidden="true"
                   className={`uk-map-pin ${isActive ? "active" : ""}`}
-                  onMouseEnter={() => setHovered(chapter.name)}
-                  onMouseLeave={() => setHovered((prev) => (prev === chapter.name ? null : prev))}
+                  onMouseEnter={() => setHovered(localGroup.name)}
+                  onMouseLeave={() => setHovered((prev) => (prev === localGroup.name ? null : prev))}
                 >
                   <circle cx={x} cy={y} r={isActive ? 10 : 8} className="uk-map-pin-halo" />
                   <circle
                     ref={(el) => {
-                      pinRefs.current[chapter.name] = el;
+                      pinRefs.current[localGroup.name] = el;
                     }}
                     cx={x}
                     cy={y}

@@ -151,14 +151,14 @@ test.describe("mobile nav", () => {
     await burger(page).click();
     const items = nav(page).locator(".nav-item.has-dropdown");
     const about = items.first();
-    const chapters = items.nth(1);
+    const localGroups = items.nth(1);
 
     await about.locator(".dropdown-trigger").click();
     await expect(about).toHaveClass(/is-open/);
 
-    await chapters.locator(".dropdown-trigger").click();
+    await localGroups.locator(".dropdown-trigger").click();
 
-    await expect(chapters).toHaveClass(/is-open/);
+    await expect(localGroups).toHaveClass(/is-open/);
     await expect(about).not.toHaveClass(/is-open/);
     await expect(about.locator(".dropdown-trigger")).toHaveAttribute("aria-expanded", "false");
 

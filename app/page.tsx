@@ -7,7 +7,7 @@ import HeroMarqueeEffects from "./HeroMarqueeEffects";
 import Nav from "@/components/Nav";
 import EventList from "@/components/EventList";
 import PeopleCarousel from "@/components/PeopleCarousel";
-import ChaptersMap from "@/components/ChaptersMap";
+import LocalGroupsMap from "@/components/LocalGroupsMap";
 import { getEvents } from "@/lib/data/events";
 import { newsRow1, newsRow2, newsMobileRow1, newsMobileRow2, newsMobileRow3, type CoverageItem } from "@/lib/data/press-coverage";
 import { people } from "@/lib/data/people";
@@ -221,9 +221,9 @@ export default async function HomePage() {
                 Find your city and get involved. Each local group runs its own events, campaigns, and outreach.
               </p>
             </div>
-            <ChaptersMap />
-            <div className="start-chapter-cta">
-              <div className="start-chapter-cta-copy">
+            <LocalGroupsMap />
+            <div className="start-local-group-cta">
+              <div className="start-local-group-cta-copy">
                 <h3>Don&apos;t see your city?</h3>
                 <p>Bring PauseAI to your city. We&apos;ll share playbooks, visuals, and support to launch local actions.</p>
               </div>

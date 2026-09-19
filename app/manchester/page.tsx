@@ -22,10 +22,10 @@ export default function ManchesterPage() {
   return (
     <>
       <Nav
-        chapterName="Manchester"
-        chapterLogoSrc="/images/chapters/manchester/manchester_logo.png"
-        chapterLogoWidth={300}
-        chapterLogoHeight={86}
+        localGroupName="Manchester"
+        localGroupLogoSrc="/images/local-groups/manchester/manchester_logo.png"
+        localGroupLogoWidth={300}
+        localGroupLogoHeight={86}
       />
       <main>
         <section className="hero" style={{ paddingBottom: 48 }}>
@@ -46,7 +46,7 @@ export default function ManchesterPage() {
               <div
                 className="hero-photo"
                 style={{
-                  backgroundImage: "linear-gradient(135deg, rgba(255, 148, 22, 0.35), rgba(0,0,0,0.65)), url('/images/chapters/manchester/manchester_public.jpg')",
+                  backgroundImage: "linear-gradient(135deg, rgba(255, 148, 22, 0.35), rgba(0,0,0,0.65)), url('/images/local-groups/manchester/manchester_public.jpg')",
                   backgroundSize: "cover, 110% auto",
                   backgroundPosition: "center, center 22%",
                   backgroundRepeat: "no-repeat",
@@ -89,7 +89,7 @@ export default function ManchesterPage() {
           </div>
           <div className="activity-grid">
             <article className="activity-card">
-              <div className="image-frame" style={{ backgroundImage: "url('/images/chapters/manchester/movie_night.jpg')" }}></div>
+              <div className="image-frame" style={{ backgroundImage: "url('/images/local-groups/manchester/movie_night.jpg')" }}></div>
               <div className="card-copy">
                 <h3>PauseAI Manchester Film Night</h3>
                 <p>A screening of an AI x-risk video with popcorn and vegan snacks, followed by group conversation about how we respond to advanced AI.</p>
@@ -97,7 +97,7 @@ export default function ManchesterPage() {
               </div>
             </article>
             <article className="activity-card">
-              <div className="image-frame" style={{ backgroundImage: "url('/images/chapters/manchester/discussion_group.jpg')", backgroundPosition: "center 42%" }}></div>
+              <div className="image-frame" style={{ backgroundImage: "url('/images/local-groups/manchester/discussion_group.jpg')", backgroundPosition: "center 42%" }}></div>
               <div className="card-copy">
                 <h3>PauseAI x EA: Discussion Group</h3>
                 <p>A friendly intro discussion on political solutions to existential risk from AI — covering whether pausing development and political action are effective strategies for reducing AI risk.</p>
@@ -105,7 +105,7 @@ export default function ManchesterPage() {
               </div>
             </article>
             <article className="activity-card">
-              <div className="image-frame" style={{ backgroundImage: "url('/images/chapters/manchester/coworking_event.jpg')" }}></div>
+              <div className="image-frame" style={{ backgroundImage: "url('/images/local-groups/manchester/coworking_event.jpg')" }}></div>
               <div className="card-copy">
                 <h3>PauseAI Manchester Coworking</h3>
                 <p>Casual coworking sessions where members come together to work on outreach, write to MPs, plan campaigns, and chat about AI safety over coffee.</p>

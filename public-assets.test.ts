@@ -85,7 +85,7 @@ describe("public assets", () => {
     expect(absent, "hero photos listed in app/page.tsx but missing from public/").toEqual([]);
   });
 
-  it("every chapter and person image exists", () => {
+  it("every local group and person image exists", () => {
     // These come from data modules as whole paths, so the literal scan does
     // cover them — this asserts the data is actually being read, so a future
     // move to a CMS or a dynamic path does not silently drop the coverage.

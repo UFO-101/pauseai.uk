@@ -22,10 +22,10 @@ export default function LeicesterPage() {
   return (
     <>
       <Nav
-        chapterName="Leicester"
-        chapterLogoSrc="/images/chapters/leicester/leicester_logoBanner_tp_tp_darkmode.svg"
-        chapterLogoWidth={289}
-        chapterLogoHeight={84}
+        localGroupName="Leicester"
+        localGroupLogoSrc="/images/local-groups/leicester/leicester_logoBanner_tp_tp_darkmode.svg"
+        localGroupLogoWidth={289}
+        localGroupLogoHeight={84}
       />
       <main>
         <section className="hero" style={{ paddingBottom: 48 }}>
@@ -45,7 +45,7 @@ export default function LeicesterPage() {
             <div className="hero-visual">
               <div
                 className="hero-photo"
-                style={{ backgroundImage: "linear-gradient(135deg, rgba(255, 148, 22, 0.35), rgba(0,0,0,0.65)), url('/images/chapters/leicester/london-2025-protest.jpg')" }}
+                style={{ backgroundImage: "linear-gradient(135deg, rgba(255, 148, 22, 0.35), rgba(0,0,0,0.65)), url('/images/local-groups/leicester/london-2025-protest.jpg')" }}
               ></div>
               <div className="hero-badge">Join in on protests!</div>
             </div>
@@ -80,14 +80,14 @@ export default function LeicesterPage() {
             </div>
             <div className="activity-grid" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))" }}>
               <article className="activity-card">
-                <div className="image-frame" style={{ backgroundImage: "url('/images/chapters/leicester/SirBobBurgessBuilding.jpg')" }}></div>
+                <div className="image-frame" style={{ backgroundImage: "url('/images/local-groups/leicester/SirBobBurgessBuilding.jpg')" }}></div>
                 <div className="card-copy">
                   <h3>PauseAI Leicester Launch</h3>
                   <p>The launch event for the Leicester group, bringing together students and locals to discuss AI safety.</p>
                 </div>
               </article>
               <article className="activity-card">
-                <div className="image-frame" style={{ backgroundImage: "url('/images/chapters/leicester/the-ai-doc-poster.jpg')" }}></div>
+                <div className="image-frame" style={{ backgroundImage: "url('/images/local-groups/leicester/the-ai-doc-poster.jpg')" }}></div>
                 <div className="card-copy">
                   <h3>Film Night: The AI Doc</h3>
                   <p>We watched The AI Doc together in the cosy cinema room with popcorn and discussion.</p>

@@ -24,10 +24,10 @@ export default function WestOfEnglandPage() {
   return (
     <>
       <Nav
-        chapterName="West of England"
-        chapterLogoSrc="/images/chapters/west-of-england/west-of-england-rondel.png"
-        chapterLogoWidth={240}
-        chapterLogoHeight={240}
+        localGroupName="West of England"
+        localGroupLogoSrc="/images/local-groups/west-of-england/west-of-england-rondel.png"
+        localGroupLogoWidth={240}
+        localGroupLogoHeight={240}
       />
       <main>
         <section className="hero" style={{ paddingBottom: 48 }}>
@@ -46,7 +46,7 @@ export default function WestOfEnglandPage() {
               <div
                 className="hero-photo"
                 style={{
-                  backgroundImage: "linear-gradient(135deg, rgba(255, 148, 22, 0.35), rgba(0,0,0,0.65)), url('/images/chapters/west-of-england/bristol-launch.jpg')",
+                  backgroundImage: "linear-gradient(135deg, rgba(255, 148, 22, 0.35), rgba(0,0,0,0.65)), url('/images/local-groups/west-of-england/bristol-launch.jpg')",
                   backgroundSize: "cover, cover",
                   backgroundPosition: "center, center",
                   backgroundRepeat: "no-repeat",

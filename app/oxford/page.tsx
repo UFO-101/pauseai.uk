@@ -22,7 +22,7 @@ export const metadata: Metadata = {
 export default function OxfordPage() {
   return (
     <>
-      <Nav chapterName="Oxford" />
+      <Nav localGroupName="Oxford" />
       <main>
         <section className="hero" style={{ paddingBottom: 48 }}>
           <div className="container hero-grid">
@@ -39,7 +39,7 @@ export default function OxfordPage() {
             <div className="hero-visual">
               <div
                 className="hero-photo"
-                style={{ backgroundImage: "linear-gradient(135deg, rgba(255, 148, 22, 0.35), rgba(0,0,0,0.65)), url('/images/chapters/oxford/PauseAI Oxford.jpg')" }}
+                style={{ backgroundImage: "linear-gradient(135deg, rgba(255, 148, 22, 0.35), rgba(0,0,0,0.65)), url('/images/local-groups/oxford/PauseAI Oxford.jpg')" }}
               ></div>
               <div className="hero-badge">Academic &amp; community bridge</div>
             </div>
@@ -79,7 +79,7 @@ export default function OxfordPage() {
             </div>
             <div className="activity-grid" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))" }}>
               <article className="activity-card">
-                <div className="image-frame" style={{ backgroundImage: "url('/images/chapters/oxford/ReubenCollege.jpg')" }}></div>
+                <div className="image-frame" style={{ backgroundImage: "url('/images/local-groups/oxford/ReubenCollege.jpg')" }}></div>
                 <div className="card-copy">
                   <h3>PauseAI Oxford Launch: Why AI will cause human extinction</h3>
                   <p>The inaugural PauseAI Oxford event, exploring existential risk from advanced AI systems.</p>
@@ -87,7 +87,7 @@ export default function OxfordPage() {
                 </div>
               </article>
               <article className="activity-card">
-                <div className="image-frame" style={{ backgroundImage: "url('/images/chapters/oxford/ReubenBar.jpg')" }}></div>
+                <div className="image-frame" style={{ backgroundImage: "url('/images/local-groups/oxford/ReubenBar.jpg')" }}></div>
                 <div className="card-copy">
                   <h3>How to Pause AI Development – Talk + social</h3>
                   <p>A talk on practical strategies for slowing unsafe AI development, followed by drinks and discussion.</p>

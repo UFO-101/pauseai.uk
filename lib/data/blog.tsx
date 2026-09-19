@@ -162,7 +162,7 @@ export const posts: BlogPost[] = [
     tldr:
       "Britain can't build frontier AI, but it can use its soft power and diplomatic position to push for an international treaty that pauses the race to superintelligence.",
     cover: {
-      src: "/images/chapters/london/london-feb-2025-protest.jpg",
+      src: "/images/local-groups/london/london-feb-2025-protest.jpg",
       alt: "PauseAI UK protesters jumping with placards in Parliament Square, the Elizabeth Tower behind them",
       width: 800,
       height: 533,

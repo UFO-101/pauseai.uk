@@ -162,7 +162,7 @@ Shadows are warm-toned (brown-black, not blue-black) to maintain palette consist
 
 ## Cards
 
-### Standard Card (activity, chapter)
+### Standard Card (activity, local group)
 - Background: `var(--surface)` (white)
 - Border: `1px solid var(--border)`
 - Border-radius: `12px`

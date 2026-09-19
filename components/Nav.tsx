@@ -7,16 +7,16 @@ import { useEffect } from "react";
 import { site } from "@/lib/data/site";
 
 type NavProps = {
-  chapterName?: string;
-  chapterLogoSrc?: string;
-  /** Intrinsic pixel dimensions of chapterLogoSrc — required by next/image
+  localGroupName?: string;
+  localGroupLogoSrc?: string;
+  /** Intrinsic pixel dimensions of localGroupLogoSrc — required by next/image
       for aspect ratio; actual display size is driven by the .brand-mark
       CSS (height: 48px; width: auto). */
-  chapterLogoWidth?: number;
-  chapterLogoHeight?: number;
+  localGroupLogoWidth?: number;
+  localGroupLogoHeight?: number;
 };
 
-export default function Nav({ chapterName, chapterLogoSrc, chapterLogoWidth, chapterLogoHeight }: NavProps) {
+export default function Nav({ localGroupName, localGroupLogoSrc, localGroupLogoWidth, localGroupLogoHeight }: NavProps) {
   const pathname = usePathname();
   const isHomepage = pathname === "/";
   const navPrefix = isHomepage ? "" : "/";
@@ -106,14 +106,14 @@ export default function Nav({ chapterName, chapterLogoSrc, chapterLogoWidth, cha
   return (
     <header className="site-header">
       <div className="container">
-        {chapterName ? (
+        {localGroupName ? (
           <Link className="brand brand-link" href="/">
-            {chapterLogoSrc ? (
+            {localGroupLogoSrc ? (
               <Image
-                src={chapterLogoSrc}
+                src={localGroupLogoSrc}
                 alt=""
-                width={chapterLogoWidth ?? 178}
-                height={chapterLogoHeight ?? 48}
+                width={localGroupLogoWidth ?? 178}
+                height={localGroupLogoHeight ?? 48}
                 className="brand-mark"
               />
             ) : (
@@ -121,7 +121,7 @@ export default function Nav({ chapterName, chapterLogoSrc, chapterLogoWidth, cha
                 <Image src="/images/logos/Pause-Symbol.svg" alt="" width={616} height={616} className="brand-mark" />
                 <div className="brand-text">
                   <span className="brand-pretitle">PauseAI UK</span>
-                  <span className="brand-tagline">{chapterName} Group</span>
+                  <span className="brand-tagline">{localGroupName} Group</span>
                 </div>
               </>
             )}
