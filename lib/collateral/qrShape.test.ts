@@ -45,6 +45,14 @@ describe("qrShape", () => {
     }
   });
 
+  it("lets dots touch the logo instead of keeping a gap around it", () => {
+    const shape = qrShape(target, 1000, true);
+    const gaps = shape.dots.map((d) => Math.hypot(d.x - shape.centre.x, d.y - shape.centre.y) - d.r - shape.logoRadius!);
+    // Nothing overlaps, and at least one dot sits within a hair of the logo's edge.
+    expect(Math.min(...gaps)).toBeGreaterThanOrEqual(0);
+    expect(Math.min(...gaps)).toBeLessThan(shape.size * 0.01);
+  });
+
   it("keeps the logo small enough for error correction to cover the gap", () => {
     const withLogo = qrShape(target, 500, true);
     const without = qrShape(target, 500, false);
