@@ -1,0 +1,73 @@
+.tools-page {
+  padding: 40px 0 72px;
+}
+
+.tools-title {
+  margin: 0 0 8px;
+  font-size: clamp(2rem, 4vw, 2.75rem);
+  line-height: 1.1;
+}
+
+.tools-lede {
+  margin: 0 0 32px;
+  max-width: 60ch;
+  color: var(--text-secondary);
+}
+
+.tools-grid {
+  display: grid;
+  gap: 20px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+@media (min-width: 720px) {
+  .tools-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.tools-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  height: 100%;
+  padding: 24px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--text);
+  text-decoration: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.tools-card:hover,
+.tools-card:focus-visible {
+  border-color: var(--accent);
+  box-shadow: 0 4px 16px var(--shadow-strong);
+  transform: translateY(-1px);
+  color: var(--text);
+}
+
+.tools-card:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.tools-card h2 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.tools-card p {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.tools-card-cta {
+  margin-top: auto;
+  padding-top: 8px;
+  font-weight: 600;
+  color: var(--accent);
+}

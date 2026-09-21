@@ -2,7 +2,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "fs";
 import { tmpdir } from "os";
 import { join } from "path";
 import { afterEach, describe, expect, it } from "vitest";
-import { discoverStaticRoutes } from "./sitemap";
+import { discoverStaticRoutes, HIDDEN_ROUTES } from "./sitemap";
 import sitemap from "./sitemap";
 import { people, personSlug } from "@/lib/data/people";
 import { posts } from "@/lib/data/blog";
@@ -117,6 +117,22 @@ describe("sitemap", () => {
 
     for (const post of posts) {
       expect(urls).toContain(`${site.url}/blog/${post.slug}`);
+    }
+  });
+
+  it("only lists hidden routes that are real pages, so the list cannot go stale", () => {
+    const real = discoverStaticRoutes(join(process.cwd(), "app"));
+
+    for (const path of HIDDEN_ROUTES) {
+      expect(real).toContain(path);
+    }
+  });
+
+  it("leaves out hidden routes even though their page.tsx exists", () => {
+    const urls = sitemap().map((entry) => entry.url);
+
+    for (const path of HIDDEN_ROUTES) {
+      expect(urls).not.toContain(`${site.url}${path}`);
     }
   });
 

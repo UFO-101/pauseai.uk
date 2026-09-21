@@ -1,0 +1,396 @@
+/* Fonts drawn into the canvas. Separate family names so they never clash with next/font. */
+@font-face {
+  font-family: "PAI Lato";
+  font-style: normal;
+  font-weight: 700;
+  font-display: block;
+  src: url("/fonts/lato-latin-700-normal.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "PAI Lato";
+  font-style: normal;
+  font-weight: 900;
+  font-display: block;
+  src: url("/fonts/lato-latin-900-normal.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "PAI Inter";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: block;
+  src: url("/fonts/inter-latin-wght-normal.woff2") format("woff2-variations");
+}
+
+.collateral-page {
+  padding: 40px 0 72px;
+}
+
+.collateral-back {
+  display: inline-block;
+  margin-bottom: 16px;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.collateral-back:hover {
+  text-decoration: underline;
+}
+
+.collateral-title {
+  margin: 0 0 8px;
+  font-size: clamp(2rem, 4vw, 2.75rem);
+  line-height: 1.1;
+}
+
+.collateral-lede {
+  margin: 0 0 32px;
+  max-width: 60ch;
+  color: var(--text-secondary);
+}
+
+.collateral-studio {
+  display: grid;
+  gap: 32px;
+  align-items: start;
+}
+
+@media (min-width: 900px) {
+  .collateral-studio {
+    grid-template-columns: minmax(0, 1fr) 380px;
+    gap: 48px;
+  }
+
+  .collateral-preview {
+    position: sticky;
+    top: 88px;
+  }
+}
+
+/* ── Preview ───────────────────────────────────── */
+
+.collateral-preview-frame {
+  display: flex;
+  justify-content: center;
+  min-height: 200px;
+}
+
+/* Intrinsic canvas size keeps the aspect ratio while both max-* limits apply. */
+.collateral-preview-frame canvas {
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: 78vh;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  box-shadow: 0 4px 24px var(--shadow);
+}
+
+.collateral-preview-frame canvas.is-draggable {
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+.collateral-preview-frame canvas.is-draggable:active {
+  cursor: grabbing;
+}
+
+.collateral-preview-frame canvas[hidden] {
+  display: none;
+}
+
+.collateral-loading {
+  display: grid;
+  place-items: center;
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.collateral-preview-meta {
+  margin: 12px 0 0;
+  font-size: 14px;
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+/* ── Controls ──────────────────────────────────── */
+
+.collateral-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.collateral-controls h2 {
+  margin: 0 0 12px;
+  font-size: 1.05rem;
+}
+
+.collateral-label {
+  display: block;
+  margin: 0 0 6px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.collateral-label span {
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.collateral-controls select,
+.collateral-controls input[type="text"],
+.collateral-controls textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 15px;
+}
+
+.collateral-controls textarea {
+  resize: vertical;
+}
+
+.collateral-controls select:focus-visible,
+.collateral-controls input:focus-visible,
+.collateral-controls textarea:focus-visible,
+.collateral-controls button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.collateral-field {
+  margin-bottom: 14px;
+}
+
+.collateral-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 14px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.collateral-qr-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.collateral-qr-fields {
+  display: grid;
+  flex: 1;
+  gap: 6px;
+}
+
+.collateral-qr-remove {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.collateral-qr-remove:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.collateral-qr-track {
+  margin: 14px 0 0;
+}
+
+.collateral-choice-grid {
+  display: grid;
+  gap: 8px;
+}
+
+.collateral-choice {
+  display: grid;
+  gap: 2px;
+  padding: 12px 14px;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.collateral-choice span {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.collateral-choice[aria-checked="true"],
+.collateral-swatch[aria-checked="true"] {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent);
+}
+
+.collateral-swatches {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.collateral-swatch {
+  display: grid;
+  gap: 8px;
+  justify-items: center;
+  padding: 10px 8px;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.collateral-swatch-chip {
+  display: flex;
+  align-items: flex-end;
+  width: 100%;
+  height: 56px;
+  padding: 8px;
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+}
+
+.collateral-swatch-chip i {
+  display: block;
+  width: 40%;
+  height: 10px;
+  border-radius: 999px;
+}
+
+.collateral-hint {
+  margin: 10px 0 0;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.collateral-photo-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.collateral-photo-thumb {
+  aspect-ratio: 4 / 3;
+  padding: 0;
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  background-color: var(--surface-2);
+  background-size: cover;
+  background-position: center;
+  cursor: pointer;
+}
+
+.collateral-photo-thumb[aria-pressed="true"] {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent);
+}
+
+.collateral-link {
+  margin-left: 10px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.collateral-slider {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.collateral-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.collateral-actions .btn {
+  cursor: pointer;
+}
+
+.collateral-actions .btn[disabled] {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.collateral-message {
+  flex-basis: 100%;
+  margin: 0;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+/* ── QR generator ──────────────────────────────── */
+
+.collateral-qr-preview {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
+}
+
+.collateral-qr-image {
+  display: block;
+  width: 100%;
+  max-width: 440px;
+  height: auto;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 4px 24px var(--shadow);
+}
+
+/* Checkerboard so a transparent background is visible. */
+.collateral-qr-image.is-transparent {
+  background-color: #fff;
+  background-image: conic-gradient(#e8e8e8 25%, transparent 0 50%, #e8e8e8 0 75%, transparent 0);
+  background-size: 20px 20px;
+}
+
+.collateral-qr-downloads {
+  margin-top: 14px;
+}
+
+.collateral-tips {
+  margin: 0;
+  padding-left: 20px;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.collateral-tips li + li {
+  margin-top: 6px;
+}
