@@ -1,0 +1,8 @@
+Fonts served from this folder and their licences.
+
+Inter                inter-latin-*.woff2               SIL Open Font License 1.1
+Lato                 lato-latin-*.woff2                SIL Open Font License 1.1
+Montserrat           montserrat-latin-800-normal.woff2 SIL Open Font License 1.1
+Permanent Marker     permanent-marker-latin-*.woff2    Apache License 2.0 (Font Diner, via Google Fonts)
+
+Lato, Montserrat and Permanent Marker are used by the volunteer collateral maker (/tools/collateral).

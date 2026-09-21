@@ -23,6 +23,22 @@
   src: url("/fonts/inter-latin-wght-normal.woff2") format("woff2-variations");
 }
 
+@font-face {
+  font-family: "PAI Permanent Marker";
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+  src: url("/fonts/permanent-marker-latin-400-normal.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "PAI Montserrat";
+  font-style: normal;
+  font-weight: 800;
+  font-display: block;
+  src: url("/fonts/montserrat-latin-800-normal.woff2") format("woff2");
+}
+
 .collateral-page {
   padding: 40px 0 72px;
 }

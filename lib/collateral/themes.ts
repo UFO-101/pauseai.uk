@@ -35,7 +35,7 @@ export const THEMES: Theme[] = [
     accent: INK,
     onAccent: CREAM,
     accentText: INK,
-    logoSrc: `${LOGO_DIR}/logo-mono-black.svg`,
+    logoSrc: `${LOGO_DIR}/logo-white-black-white.svg`,
   },
   {
     id: "cream",

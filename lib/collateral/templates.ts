@@ -6,7 +6,15 @@ import { coverRect, fitText, type Measure } from "./text";
 
 export const DISPLAY_FONT = '"PAI Lato", Lato, system-ui, sans-serif';
 export const BODY_FONT = '"PAI Inter", Inter, system-ui, sans-serif';
-export const FONT_LOADS = ['900 40px "PAI Lato"', '700 40px "PAI Lato"', '500 40px "PAI Inter"', '700 40px "PAI Inter"', '800 40px "PAI Inter"'];
+/** Brush lettering for the Brush layout, and the wide tracked sans that sits under it. */
+export const BRUSH_FONT = '"PAI Permanent Marker", "Permanent Marker", "Lato", system-ui, sans-serif';
+/** Letter spacing for brush lettering, in em. Negative pulls the letters closer. */
+export const BRUSH_TRACKING = -0.02;
+export const WIDE_FONT = '"PAI Montserrat", Montserrat, "Inter", system-ui, sans-serif';
+export const FONT_LOADS = [
+  '400 40px "PAI Permanent Marker"',
+  '800 40px "PAI Montserrat"',
+  '900 40px "PAI Lato"', '700 40px "PAI Lato"', '500 40px "PAI Inter"', '700 40px "PAI Inter"', '800 40px "PAI Inter"'];
 
 export type Values = Record<string, string>;
 
@@ -290,6 +298,27 @@ function drawLines(ctx: CanvasRenderingContext2D, lines: string[], x: number, y:
   ctx.textAlign = "left";
   ctx.textBaseline = "top";
   lines.forEach((line, i) => ctx.fillText(line, x, y + i * lineHeightPx));
+}
+
+/**
+ * Brush lettering, with the capitals centred in each line box. `x` is where the visible left edge of each
+ * line's ink goes, so a letter's own side bearing does not leave a gap at the margin or the page edge.
+ */
+function drawBrushLines(a: DrawArgs, lines: string[], x: number, y: number, size: number, lineHeightPx: number) {
+  const { ctx, theme } = a;
+  ctx.save();
+  ctx.font = font(400, size, BRUSH_FONT);
+  ctx.textAlign = "left";
+  ctx.textBaseline = "alphabetic";
+  setTracking(ctx, size * BRUSH_TRACKING);
+  ctx.fillStyle = theme.text;
+  const capHeight = ctx.measureText("H").actualBoundingBoxAscent;
+  lines.forEach((line, i) => {
+    // actualBoundingBoxLeft is how far the ink extends left of the origin (negative when it starts to the right).
+    const inkLeft = ctx.measureText(line).actualBoundingBoxLeft;
+    ctx.fillText(line, x + inkLeft, y + i * lineHeightPx + (lineHeightPx + capHeight) / 2);
+  });
+  ctx.restore();
 }
 
 function drawKicker(a: DrawArgs, g: Geometry, text: string, x: number, y: number): number {
@@ -576,7 +605,115 @@ const quote: Template = {
   },
 };
 
-export const TEMPLATES: Template[] = [announcement, event, quote];
+const brush: Template = {
+  id: "brush",
+  label: "Brush",
+  description: "One huge brush-lettered word with a spaced-out line beneath. Bold, campaign style.",
+  fields: [
+    { key: "headline", label: "Big word", kind: "textarea", maxLength: 30, hint: "Short works best", default: "Safety" },
+    { key: "uppercase", label: "Uppercase", kind: "toggle", default: "true" },
+    { key: "edge", label: "Run the big word to the edges", kind: "toggle", default: "true" },
+    { key: "sub", label: "Line beneath", kind: "textarea", maxLength: 60, default: "Before\nsuperintelligence" },
+    ...FOOTER_FIELDS,
+  ],
+  draw(a) {
+    const g = geometry(a);
+    paintBackground(a);
+    const zone = bodyZone(a, g);
+    const { ctx, theme, values } = a;
+
+    const headlineText = values.uppercase === "true" ? (values.headline ?? "").toUpperCase() : (values.headline ?? "");
+    const subText = (values.sub ?? "").trim().toUpperCase();
+    const tracking = 0.16;
+
+    // Measure the tracked line as it will be drawn, so wrapping and fitting are accurate.
+    const measureSub: Measure = (text, size) => {
+      ctx.font = font(800, size, WIDE_FONT);
+      setTracking(ctx, size * tracking);
+      const w = ctx.measureText(text).width;
+      setTracking(ctx, 0);
+      return w;
+    };
+
+    const gapH = 30 * g.u;
+    const subReserve = subText ? Math.min(zone.height * 0.34, 210 * g.u) : 0;
+    const sub = subText
+      ? fitText(measureSub, subText, {
+          maxWidth: g.cw,
+          maxHeight: Math.max(0, subReserve - gapH),
+          maxFont: (g.cls === "banner" ? 40 : 64) * g.u,
+          minFont: 20 * g.u,
+          lineHeight: 1.3,
+        })
+      : null;
+    const subH = sub ? sub.height + gapH : 0;
+
+    // Width of the visible ink, not the advance width, so the word can reach an edge exactly.
+    const measureBrush: Measure = (text, size) => {
+      ctx.font = font(400, size, BRUSH_FONT);
+      setTracking(ctx, size * BRUSH_TRACKING);
+      const m = ctx.measureText(text);
+      setTracking(ctx, 0);
+      return m.actualBoundingBoxLeft + m.actualBoundingBoxRight;
+    };
+    // "Run to the edges": the word spans the whole canvas, bleed included, and overshoots a hair so it
+    // is cropped by the edge like the Safety artwork. Fitting uses the visible ink, so letters reach the edge. Otherwise it stays inside the margins.
+    const edge = values.edge === "true";
+    const overshoot = edge ? a.width * 0.006 : 0;
+    const boxW = edge ? a.width + overshoot * 2 : g.cw;
+    const boxX = edge ? -overshoot : g.left;
+    const boxH = Math.max(0, zone.height - subH);
+    let headline = fitText(measureBrush, headlineText, {
+      maxWidth: boxW,
+      maxHeight: boxH,
+      maxFont: edge ? boxH : (g.cls === "story" ? 520 : g.cls === "banner" ? 240 : 460) * g.u,
+      minFont: 60 * g.u,
+      lineHeight: 0.98,
+    });
+    if (edge && headline.height > 0) {
+      // fitText steps down in whole percentages, so grow the word to reach the edges exactly.
+      const widest = Math.max(...headline.lines.map((l) => measureBrush(l, headline.fontSize)));
+      const grow = Math.min(widest > 0 ? boxW / widest : 1, boxH / headline.height);
+      if (grow > 1) {
+        headline = {
+          ...headline,
+          fontSize: headline.fontSize * grow,
+          lineHeightPx: headline.lineHeightPx * grow,
+          height: headline.height * grow,
+        };
+      }
+    }
+
+    const total = headline.height + subH;
+    let y = zone.top + Math.max(0, (zone.height - total) / 2);
+
+    drawBrushLines(a, headline.lines, boxX, y, headline.fontSize, headline.lineHeightPx);
+    y += headline.height;
+
+    if (sub) {
+      y += gapH;
+      // A light outline keeps the line readable over photos, as on the Safety artwork.
+      const outline = theme.text === INK ? "#FFFFFF" : INK;
+      ctx.save();
+      ctx.font = font(800, sub.fontSize, WIDE_FONT);
+      setTracking(ctx, sub.fontSize * tracking);
+      ctx.textAlign = "left";
+      ctx.textBaseline = "top";
+      ctx.lineJoin = "round";
+      ctx.lineWidth = sub.fontSize * 0.2;
+      sub.lines.forEach((line, i) => {
+        const ly = y + i * sub.lineHeightPx;
+        ctx.strokeStyle = outline;
+        ctx.strokeText(line, g.left, ly);
+        ctx.fillStyle = theme.text;
+        ctx.fillText(line, g.left, ly);
+      });
+      ctx.restore();
+    }
+  },
+};
+
+export const TEMPLATES: Template[] = [announcement, event, quote, brush];
 export const DEFAULT_TEMPLATE_ID = "announcement";
 
 export function getTemplate(id: string): Template {

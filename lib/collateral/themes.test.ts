@@ -1,3 +1,5 @@
+import { existsSync } from "fs";
+import { join } from "path";
 import { describe, expect, it } from "vitest";
 import { contrastRatio, getTheme, THEMES } from "./themes";
 
@@ -26,5 +28,11 @@ describe.each(THEMES)("theme $id", (theme) => {
 describe("getTheme", () => {
   it("falls back to orange", () => {
     expect(getTheme("nope").id).toBe("orange");
+  });
+});
+
+describe("theme logos", () => {
+  it.each(THEMES)("$id logo file exists in public/", (theme) => {
+    expect(existsSync(join(process.cwd(), "public", theme.logoSrc))).toBe(true);
   });
 });
