@@ -29,6 +29,7 @@
 }
 
 .tools-card {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -70,4 +71,17 @@
   padding-top: 8px;
   font-weight: 600;
   color: var(--accent);
+}
+
+.tools-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
 }
