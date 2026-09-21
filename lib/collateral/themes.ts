@@ -17,9 +17,11 @@ export interface Theme {
   logoSrc: string;
 }
 
-// The logo and QR mark use #FF9416. The site UI uses #e57226 for accents.
+// The orange in the logo (see public/images/logos). Every orange in the collateral tools comes from here,
+// except the darker shade below that is used for small text.
 export const BRAND_ORANGE = "#FF9416";
-export const SITE_ORANGE = "#e57226";
+/** The same hue as the logo orange, darkened until it reads as text on cream (WCAG AA). */
+const ORANGE_TEXT = "#A65A00";
 export const INK = "#1A1612";
 export const CREAM = "#FDF8F3";
 
@@ -43,9 +45,9 @@ export const THEMES: Theme[] = [
     bg: CREAM,
     text: INK,
     muted: "#5C544A",
-    accent: SITE_ORANGE,
+    accent: BRAND_ORANGE,
     onAccent: INK,
-    accentText: "#A94F1A",
+    accentText: ORANGE_TEXT,
     logoSrc: `${LOGO_DIR}/logo-color-on-light.svg`,
   },
   {
