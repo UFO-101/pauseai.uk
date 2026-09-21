@@ -32,7 +32,7 @@ export default function QrGenerator() {
     if (!target) return null;
     try {
       const shape = qrShape(target, 1000, logo);
-      return { modules: shape.modules, src: svgDataUrl(qrSvg(shape, { background })) };
+      return { modules: shape.modules, src: svgDataUrl(qrSvg(shape, { background, roundedPanel: false })) };
     } catch {
       return null;
     }
@@ -43,7 +43,7 @@ export default function QrGenerator() {
   function onDownloadSvg() {
     if (!target) return;
     setMessage(null);
-    downloadText(qrSvg(qrShape(target, 1000, logo), { background }), `${stem}.svg`, "image/svg+xml");
+    downloadText(qrSvg(qrShape(target, 1000, logo), { background, roundedPanel: false }), `${stem}.svg`, "image/svg+xml");
   }
 
   async function onDownloadPng() {
@@ -51,7 +51,7 @@ export default function QrGenerator() {
     setBusy(true);
     setMessage(null);
     try {
-      const svg = qrSvg(qrShape(target, pngSize, logo), { background });
+      const svg = qrSvg(qrShape(target, pngSize, logo), { background, roundedPanel: false });
       const image = await loadDataUrl(svgDataUrl(svg));
       const canvas = document.createElement("canvas");
       canvas.width = pngSize;

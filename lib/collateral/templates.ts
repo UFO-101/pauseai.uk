@@ -1,6 +1,6 @@
 import { aspectClass, layoutMarginUnits, type AspectClass } from "./formats";
 import { QR_GAP_UNITS, qrPlan, qrTarget, usableQrCodes, type QrCode } from "./qr";
-import { pauseBars, qrShape } from "./qrShape";
+import { pauseBars, QR_INK, qrShape } from "./qrShape";
 import { BRAND_ORANGE, INK, LOGO_ASPECT, type Theme } from "./themes";
 import { coverRect, fitText, type Measure } from "./text";
 
@@ -155,7 +155,7 @@ function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: numbe
   ctx.closePath();
 }
 
-/** Scannable QR on a light panel, with the pause symbol in the middle. */
+/** Scannable QR on a light panel: round dots, ring-and-square corner marks, the pause symbol in the middle. */
 function drawQr(a: DrawArgs, target: string, x: number, y: number, size: number) {
   const { ctx } = a;
   const shape = qrShape(target, size, true);
@@ -164,16 +164,21 @@ function drawQr(a: DrawArgs, target: string, x: number, y: number, size: number)
   roundRect(ctx, x, y, size, size, shape.panelRadius);
   ctx.fill();
 
-  ctx.fillStyle = INK;
-  for (const c of shape.cells) {
-    roundRect(ctx, x + c.x, y + c.y, c.s, c.s, shape.cellRadius);
-    ctx.fill();
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.fillStyle = QR_INK;
+  ctx.beginPath();
+  for (const d of shape.dots) {
+    ctx.moveTo(d.x + d.r, d.y);
+    ctx.arc(d.x, d.y, d.r, 0, Math.PI * 2);
   }
+  ctx.fill();
+  ctx.fill(new Path2D(shape.finderRings), "evenodd");
+  for (const e of shape.finderEyes) ctx.fillRect(e.x, e.y, e.s, e.s);
 
   // Pause symbol
   const r = shape.logoRadius ?? 0;
-  const cx = x + shape.centre.x;
-  const cy = y + shape.centre.y;
+  const { x: cx, y: cy } = shape.centre;
   ctx.fillStyle = BRAND_ORANGE;
   ctx.beginPath();
   ctx.arc(cx, cy, r, 0, Math.PI * 2);
@@ -182,6 +187,7 @@ function drawQr(a: DrawArgs, target: string, x: number, y: number, size: number)
   const bars = pauseBars(r);
   ctx.fillRect(cx + bars.leftX, cy + bars.y, bars.w, bars.h);
   ctx.fillRect(cx + bars.rightX, cy + bars.y, bars.w, bars.h);
+  ctx.restore();
 }
 
 interface QrLayout {

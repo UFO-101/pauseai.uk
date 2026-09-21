@@ -1,39 +1,70 @@
 import { describe, expect, it } from "vitest";
 import { qrMatrix } from "./qr";
-import { pauseBars, qrShape, qrSvg } from "./qrShape";
+import { pauseBars, QR_INK, qrShape, qrSvg } from "./qrShape";
 
 const target = "https://pauseai.uk";
 
+/** Dark modules outside the three 7x7 corner marks. */
+function dataModules(text: string): number {
+  const m = qrMatrix(text);
+  const n = m.length;
+  const inFinder = (r: number, c: number) => (r < 7 && c < 7) || (r < 7 && c >= n - 7) || (r >= n - 7 && c < 7);
+  return m.flatMap((row, r) => row.filter((dark, c) => dark && !inFinder(r, c))).length;
+}
+
 describe("qrShape", () => {
-  it("draws one cell per dark module when there is no logo", () => {
-    const dark = qrMatrix(target).flat().filter(Boolean).length;
-    expect(qrShape(target, 500, false).cells).toHaveLength(dark);
+  it("draws one round dot per data module when there is no logo", () => {
+    expect(qrShape(target, 500, false).dots).toHaveLength(dataModules(target));
+  });
+
+  it("draws the corner marks as rings and solid squares, not as dots", () => {
+    const shape = qrShape(target, 500, false);
+    expect(shape.finderEyes).toHaveLength(3);
+    // Two rounded rectangles per corner mark: the ring's outside and its hole.
+    expect(shape.finderRings.match(/M/g)).toHaveLength(6);
+    const n = shape.modules;
+    const cell = shape.finderEyes[0].s / 3;
+    const pad = shape.size * 0.07;
+    for (const d of shape.dots) {
+      const col = (d.x - pad) / cell;
+      const row = (d.y - pad) / cell;
+      const inFinder = (row < 7 && col < 7) || (row < 7 && col > n - 7) || (row > n - 7 && col < 7);
+      expect(inFinder).toBe(false);
+    }
   });
 
   it("leaves a gap in the middle for the logo", () => {
     const withLogo = qrShape(target, 500, true);
     const without = qrShape(target, 500, false);
-    expect(withLogo.cells.length).toBeLessThan(without.cells.length);
+    expect(withLogo.dots.length).toBeLessThan(without.dots.length);
     expect(withLogo.logoRadius).toBeGreaterThan(0);
-    // No module overlaps the logo circle.
-    for (const c of withLogo.cells) {
-      const d = Math.hypot(c.x + c.s / 2 - withLogo.centre.x, c.y + c.s / 2 - withLogo.centre.y);
-      expect(d).toBeGreaterThanOrEqual(withLogo.logoRadius!);
+    // No dot overlaps the logo circle.
+    for (const d of withLogo.dots) {
+      const dist = Math.hypot(d.x - withLogo.centre.x, d.y - withLogo.centre.y);
+      expect(dist - d.r).toBeGreaterThanOrEqual(withLogo.logoRadius!);
     }
   });
 
-  it("keeps every module inside the panel with a quiet margin", () => {
+  it("keeps the logo small enough for error correction to cover the gap", () => {
+    const withLogo = qrShape(target, 500, true);
+    const without = qrShape(target, 500, false);
+    const removed = 1 - withLogo.dots.length / without.dots.length;
+    // Level H recovers about 30% of the code. Stay well inside that.
+    expect(removed).toBeLessThan(0.2);
+  });
+
+  it("keeps every dot inside the panel with a quiet margin", () => {
     const shape = qrShape(target, 500, true);
-    for (const c of shape.cells) {
-      expect(c.x).toBeGreaterThan(0);
-      expect(c.y).toBeGreaterThan(0);
-      expect(c.x + c.s).toBeLessThan(shape.size);
-      expect(c.y + c.s).toBeLessThan(shape.size);
+    for (const d of shape.dots) {
+      expect(d.x - d.r).toBeGreaterThan(0);
+      expect(d.y - d.r).toBeGreaterThan(0);
+      expect(d.x + d.r).toBeLessThan(shape.size);
+      expect(d.y + d.r).toBeLessThan(shape.size);
     }
   });
 
   it("scales with the requested size", () => {
-    expect(qrShape(target, 1000, false).cells[0].s).toBeCloseTo(qrShape(target, 500, false).cells[0].s * 2, 5);
+    expect(qrShape(target, 1000, false).dots[0].r).toBeCloseTo(qrShape(target, 500, false).dots[0].r * 2, 5);
   });
 
   it("keeps the logo bars inside the logo circle", () => {
@@ -54,6 +85,21 @@ describe("qrSvg", () => {
     expect(svg).not.toMatch(/<script|href=|<image|<text/i);
   });
 
+  it("draws corner rings with the even-odd rule so the hole shows", () => {
+    expect(qrSvg(qrShape(target, 400, false), { background: null })).toContain('fill-rule="evenodd"');
+  });
+
+  it("can draw a square panel for the standalone generator", () => {
+    const shape = qrShape(target, 400, false);
+    expect(qrSvg(shape, { background: "#FFFFFF" })).toContain("rx=");
+    expect(qrSvg(shape, { background: "#FFFFFF", roundedPanel: false })).not.toContain("rx=");
+  });
+
+  it("draws the dots in pure black", () => {
+    expect(qrSvg(qrShape(target, 400, false), { background: null })).toContain(`fill="${QR_INK}"`);
+    expect(QR_INK).toBe("#000000");
+  });
+
   it("has a background panel only when asked", () => {
     const shape = qrShape(target, 400, false);
     expect(qrSvg(shape, { background: "#FFFFFF" })).toContain('fill="#FFFFFF"');
@@ -61,7 +107,9 @@ describe("qrSvg", () => {
   });
 
   it("includes the pause symbol only with a logo", () => {
-    expect(qrSvg(qrShape(target, 400, true), { background: null })).toContain("<circle");
-    expect(qrSvg(qrShape(target, 400, false), { background: null })).not.toContain("<circle");
+    const withLogo = qrSvg(qrShape(target, 400, true), { background: null });
+    const without = qrSvg(qrShape(target, 400, false), { background: null });
+    expect(withLogo).toContain(`fill="#FF9416"`);
+    expect(without).not.toContain(`fill="#FF9416"`);
   });
 });
