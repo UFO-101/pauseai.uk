@@ -36,6 +36,8 @@ export interface DesignState {
   photo: PhotoState | null;
   /** See DesignData.photoClear. */
   photoClear: boolean;
+  /** See DesignData.coverTitle. */
+  coverTitle: boolean;
   partnerLogos: PartnerLogoState[];
 }
 
@@ -49,6 +51,7 @@ export function newDesign(templateId = DEFAULT_TEMPLATE_ID): DesignState {
     qrSize: "m",
     photo: null,
     photoClear: false,
+    coverTitle: true,
     partnerLogos: [],
   };
 }
@@ -91,6 +94,7 @@ export function designToData(design: DesignState, embedUploads: boolean): Design
     qrSize: design.qrSize,
     photo,
     photoClear: design.photoClear,
+    coverTitle: design.coverTitle,
     partnerLogos: design.partnerLogos.map(({ name, dataUrl }) => ({ name, dataUrl })),
   };
 }
@@ -132,6 +136,7 @@ export async function designFromData(data: DesignData): Promise<{ design: Design
       qrSize: data.qrSize,
       photo,
       photoClear: data.photoClear,
+      coverTitle: data.coverTitle,
       partnerLogos,
     },
   };

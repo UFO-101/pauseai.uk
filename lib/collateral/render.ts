@@ -74,6 +74,8 @@ export interface RenderOptions {
   screenQr?: boolean;
   /** Leave the photo untinted on a logo cover (see DigitalFormat.logoCover). Other formats always tint it. */
   photoClear?: boolean;
+  /** Draw the title on a logo cover. */
+  coverTitle?: boolean;
   /** The logo for an untinted photo (CLEAR_PHOTO_LOGO_SRC), since the style's own may be dark lettering. */
   clearPhotoLogo?: Drawable;
   /** Include bleed (print formats only). */
@@ -158,7 +160,7 @@ function draw(canvas: HTMLCanvasElement, opts: DrawOptions, lint: LintCollector 
   };
   if (isLogoCover(opts.format)) {
     const clear = opts.photo && opts.photoSettings.visible >= 1;
-    drawLogoCover({ ...args, logo: (clear && opts.clearPhotoLogo) || args.logo });
+    drawLogoCover({ ...args, logo: (clear && opts.clearPhotoLogo) || args.logo }, opts.coverTitle ? (opts.values.headline ?? "") : "");
     return { width, height, dpi: size.dpi };
   }
   opts.template.draw(args);

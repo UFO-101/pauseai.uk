@@ -14,8 +14,8 @@ import { defaultValues, type Drawable } from "@/lib/collateral/templates";
 import { CLEAR_PHOTO_LOGO_SRC, getTheme } from "@/lib/collateral/themes";
 import Checks from "./Checks";
 import CropControls from "./CropControls";
-import PhotoTintControl from "./PhotoTintControl";
 import DesignControls from "./DesignControls";
+import LogoCoverControls from "./LogoCoverControls";
 import { designFromData, designQrCodes, designTemplate, designToData, designValues, newDesign, withQrCodes, type DesignState } from "./designState";
 import ProjectMenu from "./ProjectMenu";
 import TitleSizeControl from "./TitleSizeControl";
@@ -139,6 +139,7 @@ export default function CollateralStudio({ events }: { events: CalendarEvent[] }
       trackQr: design.trackQr,
       qrSize: design.qrSize,
       photoClear: design.photoClear,
+      coverTitle: design.coverTitle,
       clearPhotoLogo: logos[CLEAR_PHOTO_LOGO_SRC],
       screenQr,
       headlineScale,
@@ -296,6 +297,7 @@ export default function CollateralStudio({ events }: { events: CalendarEvent[] }
             ))}
           </select>
           {format.note && <p className="collateral-hint">{format.note}</p>}
+          {format.kind === "digital" && format.logoCover && <LogoCoverControls design={design} update={update} />}
         </section>
 
         <DesignControls
@@ -307,14 +309,7 @@ export default function CollateralStudio({ events }: { events: CalendarEvent[] }
           onQrAdded={() => setScreenQr(true)}
           onMessage={setMessage}
           headlineExtras={<TitleSizeControl value={headlineScale} onChange={setHeadlineScale} flagged={titleFlagged} />}
-          photoExtras={
-            <>
-              {format.kind === "digital" && format.logoCover && (
-                <PhotoTintControl clear={design.photoClear} onChange={(photoClear) => update((d) => ({ ...d, photoClear }))} />
-              )}
-              <CropControls view={photoView} onChange={(patch) => setPhotoView((v) => ({ ...v, ...patch }))} />
-            </>
-          }
+          photoExtras={<CropControls view={photoView} onChange={(patch) => setPhotoView((v) => ({ ...v, ...patch }))} />}
         />
       </div>
     </div>

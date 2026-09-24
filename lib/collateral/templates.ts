@@ -5,7 +5,7 @@ import { aspectClass, layoutMarginUnits, type AspectClass } from "./formats";
 import type { LintCollector } from "./lint";
 import { normaliseUrl, QR_GAP_UNITS, qrPlan, qrTarget, usableQrCodes, type QrCode } from "./qr";
 import { pauseBars, QR_INK, qrShape } from "./qrShape";
-import { BRAND_ORANGE, INK, LOGO_ASPECT, type Theme } from "./themes";
+import { BRAND_ORANGE, CREAM, INK, LOGO_ASPECT, type Theme } from "./themes";
 import { coverRect, fitText, type FitResult, type Measure } from "./text";
 
 export const DISPLAY_FONT = '"PAI Lato", Lato, system-ui, sans-serif';
@@ -230,7 +230,7 @@ function drawHeader(a: DrawArgs, g: Geometry): number {
 }
 
 /** Share of the width the logo spans on a logo cover (see DigitalFormat.logoCover). */
-const LOGO_COVER_WIDTH = 2 / 3;
+const LOGO_COVER_WIDTH = 1 / 2;
 
 /** Where a logo cover puts the logo: bottom-left, inside the usual margin, spanning LOGO_COVER_WIDTH of the width. */
 export function logoCoverRect(width: number, height: number): { x: number; y: number; w: number; h: number } {
@@ -241,21 +241,51 @@ export function logoCoverRect(width: number, height: number): { x: number; y: nu
   return { x: m, y: height - m - h, w, h };
 }
 
+/** A soft dark shadow, so light lettering holds up on a bright or busy patch of an untinted photo. */
+function darkShadow(ctx: CanvasRenderingContext2D, size: number) {
+  ctx.shadowColor = "rgba(0, 0, 0, 0.45)";
+  ctx.shadowBlur = size * 0.18;
+  ctx.shadowOffsetY = size * 0.03;
+}
+
 /**
- * A logo cover: the photo and the logo, nothing else. Over an untinted photo the logo gets a soft dark shadow, so
- * it holds up on a bright or busy patch.
+ * A logo cover: the photo and the logo, and the title above the logo when `title` is given. Over an untinted photo
+ * both are light, with a dark shadow; over a tinted one the title takes the style's text colour.
  */
-export function drawLogoCover(a: DrawArgs) {
+export function drawLogoCover(a: DrawArgs, title = "") {
   paintBackground(a);
   const { ctx } = a;
+  const clear = !!a.photo && a.photoSettings.visible >= 1;
   const r = logoCoverRect(a.width, a.height);
   ctx.save();
-  if (a.photo && a.photoSettings.visible >= 1) {
-    ctx.shadowColor = "rgba(0, 0, 0, 0.45)";
-    ctx.shadowBlur = r.h * 0.18;
-    ctx.shadowOffsetY = r.h * 0.03;
-  }
+  if (clear) darkShadow(ctx, r.h);
   ctx.drawImage(a.logo.source, r.x, r.y, r.w, r.h);
+  ctx.restore();
+
+  if (!title.trim()) return;
+  const u = Math.sqrt(a.width * a.height) / 1000;
+  const gap = 36 * u;
+  const fit = fitText(measurer(ctx, 900, DISPLAY_FONT), title, {
+    maxWidth: a.width - 2 * r.x,
+    maxHeight: Math.max(0, r.y - gap - r.x),
+    maxFont: 130 * u,
+    minFont: 56 * u,
+    lineHeight: 1.02,
+  });
+  const y = r.y - gap - fit.height;
+  ctx.save();
+  ctx.font = font(900, fit.fontSize, DISPLAY_FONT);
+  if (clear) {
+    // Drawn directly rather than through fillText, whose halo is in the style's colour, for a tinted photo.
+    ctx.fillStyle = CREAM;
+    ctx.textAlign = "left";
+    ctx.textBaseline = "top";
+    darkShadow(ctx, fit.fontSize);
+    fit.lines.forEach((line, i) => ctx.fillText(line, r.x, y + i * fit.lineHeightPx));
+  } else {
+    ctx.fillStyle = a.theme.text;
+    drawLines(a, fit.lines, r.x, y, fit.lineHeightPx);
+  }
   ctx.restore();
 }
 

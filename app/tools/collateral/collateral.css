@@ -960,3 +960,10 @@
     max-height: 56vh;
   }
 }
+
+/* Luma cover options, under the format picker. */
+.collateral-logo-cover {
+  display: grid;
+  gap: 10px;
+  margin-top: 16px;
+}
