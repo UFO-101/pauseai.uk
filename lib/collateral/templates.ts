@@ -229,6 +229,36 @@ function drawHeader(a: DrawArgs, g: Geometry): number {
   return g.top + logoH;
 }
 
+/** Share of the width the logo spans on a logo cover (see DigitalFormat.logoCover). */
+const LOGO_COVER_WIDTH = 2 / 3;
+
+/** Where a logo cover puts the logo: bottom-left, inside the usual margin, spanning LOGO_COVER_WIDTH of the width. */
+export function logoCoverRect(width: number, height: number): { x: number; y: number; w: number; h: number } {
+  const cls = aspectClass(width, height);
+  const m = layoutMarginUnits(cls) * (Math.sqrt(width * height) / 1000);
+  const w = width * LOGO_COVER_WIDTH;
+  const h = w / LOGO_ASPECT;
+  return { x: m, y: height - m - h, w, h };
+}
+
+/**
+ * A logo cover: the photo and the logo, nothing else. Over an untinted photo the logo gets a soft dark shadow, so
+ * it holds up on a bright or busy patch.
+ */
+export function drawLogoCover(a: DrawArgs) {
+  paintBackground(a);
+  const { ctx } = a;
+  const r = logoCoverRect(a.width, a.height);
+  ctx.save();
+  if (a.photo && a.photoSettings.visible >= 1) {
+    ctx.shadowColor = "rgba(0, 0, 0, 0.45)";
+    ctx.shadowBlur = r.h * 0.18;
+    ctx.shadowOffsetY = r.h * 0.03;
+  }
+  ctx.drawImage(a.logo.source, r.x, r.y, r.w, r.h);
+  ctx.restore();
+}
+
 /** Partner logos may shrink to this share of the PauseAI logo's height before one is left out. */
 const MIN_PARTNER_SCALE = 0.6;
 

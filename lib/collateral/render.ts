@@ -1,7 +1,7 @@
 import { PHOTO_TINTS, type QrSize } from "./design";
 import { renderSize, showsQrCodes, type Format } from "./formats";
 import { LintCollector, lintLinksInText, lintUnreadableUrl, type LintIssue } from "./lint";
-import { FONT_LOADS, type Drawable, type PhotoSettings, type Template, type Values } from "./templates";
+import { drawLogoCover, FONT_LOADS, type DrawArgs, type Drawable, type PhotoSettings, type Template, type Values } from "./templates";
 import type { QrCode } from "./qr";
 import type { Theme } from "./themes";
 
@@ -72,6 +72,10 @@ export interface RenderOptions {
   partnerLogos?: Drawable[];
   /** Show QR codes on a screen format, where they are left out by default (see showsQrCodes). */
   screenQr?: boolean;
+  /** Leave the photo untinted on a logo cover (see DigitalFormat.logoCover). Other formats always tint it. */
+  photoClear?: boolean;
+  /** The logo for an untinted photo (CLEAR_PHOTO_LOGO_SRC), since the style's own may be dark lettering. */
+  clearPhotoLogo?: Drawable;
   /** Include bleed (print formats only). */
   bleed?: boolean;
   /** Scale output down so its longest side is at most this many px. Used for the live preview. */
@@ -109,10 +113,14 @@ function forFormat(opts: RenderOptions): RenderOptions {
   return showsQrCodes(format, opts.screenQr ?? false) ? opts : { ...opts, qrCodes: [] };
 }
 
+function isLogoCover(format: Format): boolean {
+  return format.kind === "digital" && !!format.logoCover;
+}
+
 /** Draws the collateral into `canvas`, sizing the canvas to match. Returns the final pixel size, and any problems when asked. */
 export function renderCollateral(canvas: HTMLCanvasElement, requested: RenderOptions): { width: number; height: number; issues: LintIssue[] } {
   const opts = forFormat(requested);
-  const visible = opts.photoSettings.visible ?? autoPhotoVisible(opts);
+  const visible = isLogoCover(opts.format) && opts.photoClear ? 1 : (opts.photoSettings.visible ?? autoPhotoVisible(opts));
   const drawn: DrawOptions = { ...opts, photoSettings: { ...opts.photoSettings, visible } };
   const lint = drawn.lint ? new LintCollector() : undefined;
   const size = draw(canvas, drawn, lint);
@@ -128,7 +136,7 @@ function draw(canvas: HTMLCanvasElement, opts: DrawOptions, lint: LintCollector 
   canvas.height = height;
   const ctx = canvas.getContext("2d");
   if (!ctx) throw new Error("Canvas is not supported in this browser");
-  opts.template.draw({
+  const args: DrawArgs = {
     ctx,
     width,
     height,
@@ -147,7 +155,13 @@ function draw(canvas: HTMLCanvasElement, opts: DrawOptions, lint: LintCollector 
     headlineScale: opts.headlineScale,
     partnerLogos: opts.partnerLogos,
     lint,
-  });
+  };
+  if (isLogoCover(opts.format)) {
+    const clear = opts.photo && opts.photoSettings.visible >= 1;
+    drawLogoCover({ ...args, logo: (clear && opts.clearPhotoLogo) || args.logo });
+    return { width, height, dpi: size.dpi };
+  }
+  opts.template.draw(args);
   if (lint) {
     lintLinksInText(lint, opts.template.fields, opts.values);
     lintUnreadableUrl(lint, opts.values);

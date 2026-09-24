@@ -75,6 +75,9 @@ export const THEMES: Theme[] = [
 
 export const DEFAULT_THEME_ID: ThemeId = "orange";
 
+/** The logo drawn straight onto an untinted photo: light lettering, which reads on most photos with a shadow behind it. */
+export const CLEAR_PHOTO_LOGO_SRC = `${LOGO_DIR}/logo-color-on-dark.svg`;
+
 /** Styles that were retired, and the style that now looks the same. Clear was Cream with no colour over the photo. */
 const RETIRED_THEMES: Record<string, ThemeId> = { clear: "cream" };
 

@@ -39,6 +39,8 @@ export interface DesignData {
   trackQr: boolean;
   qrSize: QrSize;
   photo: ProjectPhoto | null;
+  /** Leave the photo untinted on a logo cover, such as the Luma cover. Other formats always tint it. */
+  photoClear: boolean;
   partnerLogos: PartnerLogoData[];
 }
 
@@ -188,6 +190,7 @@ export function parseDesignData(raw: Record<string, unknown>): DesignData {
     trackQr: raw.trackQr === true,
     qrSize: isQrSize(raw.qrSize) ? raw.qrSize : "m",
     photo: parseProjectPhoto(raw.photo),
+    photoClear: raw.photoClear === true,
     partnerLogos,
   };
 }

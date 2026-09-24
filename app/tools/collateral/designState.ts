@@ -34,6 +34,8 @@ export interface DesignState {
   trackQr: boolean;
   qrSize: QrSize;
   photo: PhotoState | null;
+  /** See DesignData.photoClear. */
+  photoClear: boolean;
   partnerLogos: PartnerLogoState[];
 }
 
@@ -46,6 +48,7 @@ export function newDesign(templateId = DEFAULT_TEMPLATE_ID): DesignState {
     trackQr: false,
     qrSize: "m",
     photo: null,
+    photoClear: false,
     partnerLogos: [],
   };
 }
@@ -87,6 +90,7 @@ export function designToData(design: DesignState, embedUploads: boolean): Design
     trackQr: design.trackQr,
     qrSize: design.qrSize,
     photo,
+    photoClear: design.photoClear,
     partnerLogos: design.partnerLogos.map(({ name, dataUrl }) => ({ name, dataUrl })),
   };
 }
@@ -127,6 +131,7 @@ export async function designFromData(data: DesignData): Promise<{ design: Design
       trackQr: data.trackQr,
       qrSize: data.qrSize,
       photo,
+      photoClear: data.photoClear,
       partnerLogos,
     },
   };

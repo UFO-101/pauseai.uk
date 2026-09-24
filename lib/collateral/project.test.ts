@@ -16,6 +16,7 @@ const project: Project = {
   trackQr: false,
   qrSize: "l",
   photo: { kind: "library", id: "westminster" },
+  photoClear: true,
   partnerLogos: [{ name: "partner.png", dataUrl: "data:image/png;base64,iVBORw0KGgo=" }],
   photoSettings: { zoom: 2, focalX: 0.2, focalY: 0.8 },
   headlineScale: 1.2,

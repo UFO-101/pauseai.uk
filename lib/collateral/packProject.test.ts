@@ -9,6 +9,7 @@ const pack: PackProject = {
   trackQr: false,
   qrSize: "m",
   photo: { kind: "library", id: "deepmind" },
+  photoClear: false,
   partnerLogos: [],
   // In format list order: social formats come before print.
   outputs: [
