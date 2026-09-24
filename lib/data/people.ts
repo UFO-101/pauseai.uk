@@ -204,6 +204,29 @@ export const people: Person[] =
       "I think AI's rapid development is a very serious threat our institutions should be taking more seriously. I joined PauseAI because I see that superintelligence would likely be misaligned and lead to catastrophe. We cannot afford to take that risk, and PauseAI are pushing for real action to pause frontier development. I also love being creative, and find AI's increasingly intrusive demolition of human artistry deeply tragic, and want to help build a better framework for AI governance as a whole."
     ],
     "imageStyle": "background-position: 50% 25%;"
+  },
+  {
+    "name": "Annabelle Collins",
+    "imageSrc": "/images/people/Annabelle-Collins-Stories.jpg",
+    "paragraphs": [
+      "I have been keeping an eye on this since the end of 2022.",
+      "In 2023 I really got deep into learning about how AI was being developed and the risks. My friends and family told me not to worry. I think they worried I had AI psychosis. I definitely did! I hoped I did. It wasn't like the models were that good at maths, and lots of people were saying LLMs would never be able to do maths. (At time of writing in 2026, the Millennium problems have started to fall.)",
+      "So I decided to stay back, and just watch what happened. And the evidence kept coming.",
+      "I remember back in 2024 people telling me we'd hit “the data wall”, and progress would stop because of a lack of internet training data. But we blew through that, too.",
+      "In 2025 I was told that agentic AI was overblown. That the primitive proto-agents we had then would never be capable enough to do long time horizon tasks. Towards the end of 2025, Claude Code was released, a highly capable agentic harness.",
+      "In 2026, things have really begun to speed up.",
+      "- We saw the OpenAI agents that coalesced into an unauthorised swarm and hacked multiple companies (Hugging Face, OpenAI itself, the Australian Government). They seem perfectly capable of coordinating on tasks over the course of days.",
+      "- We are becoming less and less sure of our evals, as the models get more aware and better at hiding their misalignment.",
+      "- We see models becoming harder to understand, and new emergent behaviours, like “self-sacrifice” for “the collective” of AI agents (their words).",
+      "- We see their goals evolve further and further away from those given to them by the humans.",
+      "And always, the rate of progress is speeding up.",
+      "I don't want to have to deal with this. But I've had four years now of waiting for the adults in the room to deal with it. Just like COVID, our governments are not prepared. It's up to us, the people, to look out for our families and our communities.",
+      "It's up to us to fight for our freedoms, our rights, and the safety of our communities. We cannot rely on someone else doing it for us.",
+      "I joined PauseAI, because I believe deeply in the need for a global treaty.",
+      "We desperately need international coordination to pause the development of dangerous, autonomous, self-improving advanced AI systems that are beyond current human ability to control. If our governments aren't pushing for this as hard as possible, then we need to work together to encourage them. Do our best to make it easy for them to do the right thing.",
+      "That's why I'm here."
+    ],
+    "imageStyle": "background-position: 50% 45%;"
   }
 ];
 
