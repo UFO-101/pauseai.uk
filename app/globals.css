@@ -1159,6 +1159,7 @@ section[id],
 /* ── UK local groups map ──────────────────────────── */
 
 .local-groups-map-canvas {
+  display: none;
   position: relative;
   z-index: 1;
   grid-column: 2;
@@ -1241,6 +1242,10 @@ section[id],
   .local-groups-map-card {
     grid-column: var(--card-col);
     grid-row: var(--card-row);
+  }
+
+  .local-groups-map-canvas {
+    display: block;
   }
 }
 
