@@ -1,3 +1,4 @@
+import { LOGO_COVER_TITLE_CHARS } from "@/lib/collateral/templates";
 import type { DesignState } from "./designState";
 
 /**
@@ -11,6 +12,9 @@ export default function LogoCoverControls({ design, update }: { design: DesignSt
         <input type="checkbox" checked={design.coverTitle} onChange={(e) => update((d) => ({ ...d, coverTitle: e.target.checked }))} />
         Show the event title on the Luma cover
       </label>
+      {design.coverTitle && (
+        <p className="collateral-hint">Keep it to {LOGO_COVER_TITLE_CHARS} characters or fewer, so it reads at Luma&apos;s size.</p>
+      )}
       {design.photo && (
         <>
           <span className="collateral-label">Photo on the Luma cover</span>

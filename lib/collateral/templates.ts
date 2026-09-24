@@ -229,6 +229,9 @@ function drawHeader(a: DrawArgs, g: Geometry): number {
   return g.top + logoH;
 }
 
+/** Longest title that still reads at Luma's ~280px on a logo cover. Longer ones are flagged, not cut. */
+export const LOGO_COVER_TITLE_CHARS = 20;
+
 /** Share of the width the logo spans on a logo cover (see DigitalFormat.logoCover). */
 const LOGO_COVER_WIDTH = 1 / 2;
 
@@ -263,6 +266,14 @@ export function drawLogoCover(a: DrawArgs, title = "") {
   ctx.restore();
 
   if (!title.trim()) return;
+  const length = title.trim().length;
+  if (length > LOGO_COVER_TITLE_CHARS) {
+    a.lint?.add({
+      id: "cover-title-long",
+      level: "info",
+      message: `On the Luma cover, a title of ${LOGO_COVER_TITLE_CHARS} characters or fewer reads best. This one is ${length}.`,
+    });
+  }
   const u = Math.sqrt(a.width * a.height) / 1000;
   const gap = 36 * u;
   const fit = fitText(measurer(ctx, 900, DISPLAY_FONT), title, {
