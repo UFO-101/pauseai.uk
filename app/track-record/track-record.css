@@ -261,8 +261,16 @@
   max-width: 760px;
 }
 .gallery-4 .shot-tall { grid-row: span 2; }
-/* Four shots with no tall one: a 2x2 grid instead of 3 + an orphan */
-.gallery-4:not(:has(.shot-tall)) { grid-template-columns: 1fr 1fr; }
+/* Four shots with no tall one: a 2x2 grid instead of 3 + an orphan. These
+   cells are far wider than a three-up row, so size them by aspect ratio
+   rather than a fixed row height — a 190px row letterboxes a landscape
+   shot at this width. Outranks the responsive row heights further down on
+   specificity, so the ratio holds at every width. */
+.gallery-4:not(:has(.shot-tall)) {
+  grid-template-columns: 1fr 1fr;
+  grid-auto-rows: auto;
+}
+.gallery-4:not(:has(.shot-tall)) .shot { aspect-ratio: 3 / 2; }
 
 .shot {
   position: relative;
@@ -420,6 +428,9 @@
     grid-auto-rows: auto;
   }
   .gallery-3 .shot, .gallery-4 .shot { aspect-ratio: 16 / 10; }
+  /* One column here too — the 2x2 rule above would otherwise hold and
+     leave two thumbnails per phone-width row. */
+  .gallery-4:not(:has(.shot-tall)) { grid-template-columns: 1fr; }
   .track-record .closing { padding: 72px 0 80px; }
   .closing-actions { flex-direction: column; align-items: stretch; }
 }
