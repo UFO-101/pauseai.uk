@@ -71,8 +71,6 @@
   display: flex;
   gap: 8px;
   margin-bottom: 24px;
-  /* Clears the sticky nav when scrolled into view. */
-  scroll-margin-top: 100px;
 }
 
 .collateral-mode-switch button {
@@ -922,11 +920,13 @@
     margin-top: 0;
   }
 
-  /* Keep a focused field clear of the pinned preview when the browser scrolls it into view. */
+  /* Keep a focused field clear of the pinned preview when the browser
+     scrolls it into view. Adds to html's scroll-padding-top, which already
+     clears the nav: together they come to nav + 32vh + 40px. */
   .collateral-controls input,
   .collateral-controls textarea,
   .collateral-controls select {
-    scroll-margin-top: calc(77px + 32vh + 40px);
+    scroll-margin-top: calc(32vh + 27px);
   }
 
   /* The QR code is not pinned: the address field comes straight after a smaller code, with where it opens. */

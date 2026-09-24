@@ -1,14 +1,19 @@
 import { test, expect, type Page } from "@playwright/test";
 
 // In-page scrolling is deliberately all browser behaviour: `scroll-behavior`
-// in globals.css animates it, `scroll-margin-top` keeps the target clear of
-// the sticky nav, and fragment links stay plain anchor navigation so they set
-// the hash, push one history entry, and move focus themselves.
+// in globals.css animates it, `scroll-padding-top` on the root keeps the
+// target clear of the sticky nav, and fragment links stay plain anchor
+// navigation so they set the hash, push one history entry, and move focus
+// themselves. `data-scroll-behavior="smooth"` on <html> makes Next jump
+// rather than animate on a route change.
+//
+// There is no JS correction after load, so these tests also guard that the
+// homepage doesn't shift under a target once the browser has scrolled to it.
 //
 // These tests exist because the previous JS implementation (a delegated click
-// handler plus a scroll listener in components/ScrollInit.tsx) also rewrote
-// location.hash on every scroll, so copying the URL after scrolling shared
-// "/#staff" rather than the page.
+// handler plus a scroll listener in the former components/ScrollInit.tsx)
+// also rewrote location.hash on every scroll, so copying the URL after
+// scrolling shared "/#staff" rather than the page.
 
 const BASE = process.env.LOCAL_URL ?? "http://localhost:3000";
 
@@ -47,7 +52,7 @@ async function headerHeight(page: Page): Promise<number> {
   return page.evaluate(() => (document.querySelector(".site-header") as HTMLElement).offsetHeight);
 }
 
-/** Scroll-margin should land the target below the sticky nav, not under it. */
+/** Scroll-padding should land the target below the sticky nav, not under it. */
 async function expectClearOfNav(page: Page, id: string) {
   const [top, header] = await Promise.all([targetOffset(page, id), headerHeight(page)]);
   expect(top, `#${id} sits under the ${header}px sticky nav`).toBeGreaterThanOrEqual(header - 5);
@@ -136,6 +141,46 @@ test.describe("in-page scrolling", () => {
     await expectClearOfNav(page, "share-your-story");
   });
 
+  test("a deep link far down the homepage lands and stays on its target", async ({ page }) => {
+    // #staff sits below the local groups map, the people carousel and the
+    // onboarding embed, each of which used to change height after load.
+    // Nothing re-scrolls afterwards, so any late shift shows up as drift.
+    await gotoSettled(page, "/#staff");
+    await page.waitForTimeout(1500);
+    await expectClearOfNav(page, "staff");
+
+    const settled = await targetOffset(page, "staff");
+    await page.waitForTimeout(2000);
+    expect(Math.abs((await targetOffset(page, "staff")) - settled)).toBeLessThan(2);
+  });
+
+  test("a link to another page's fragment jumps rather than animates", async ({ page }) => {
+    await gotoSettled(page, "/theory-of-change");
+    // Record scrollY every frame across the route change. The window
+    // survives a client-side navigation, so the recorder keeps running.
+    await page.evaluate(() => {
+      const w = window as typeof window & { __scrollYs?: number[] };
+      w.__scrollYs = [];
+      const start = performance.now();
+      const tick = () => {
+        w.__scrollYs!.push(Math.round(window.scrollY));
+        if (performance.now() - start < 20_000) requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    });
+    await page.click('a[href="/#join"]');
+    await expect.poll(() => page.url(), { timeout: 15_000 }).toMatch(/\/#join$/);
+    await page.waitForTimeout(2000);
+    await expectClearOfNav(page, "join");
+
+    // A jump goes from the top straight to the target. An animation passes
+    // through positions in between, which a check of where it ended misses.
+    const ys = await page.evaluate(() => (window as typeof window & { __scrollYs: number[] }).__scrollYs);
+    const final = ys[ys.length - 1];
+    const inBetween = new Set(ys.filter((y) => y > 0 && Math.abs(y - final) > 2));
+    expect([...inBetween], "scrolled through intermediate positions").toEqual([]);
+  });
+
   test("the footer cookie settings link does not jump to the top", async ({ page }) => {
     // It is an href="#", which used to be swallowed by ScrollInit's delegated
     // handler. CookieConsent calls preventDefault itself, so removing that
@@ -161,5 +206,40 @@ test.describe("reduced motion", () => {
       () => getComputedStyle(document.documentElement).scrollBehavior,
     );
     expect(behavior).toBe("auto");
+  });
+});
+
+test.describe("onboarding embed", () => {
+  test("a shrinking form does not scroll a reader who hasn't used it", async ({ page }) => {
+    // The embed brings its own top back into view when a step gets shorter.
+    // A reflow before anyone has touched the form (a late font, the iOS
+    // toolbar resizing the viewport) also shrinks it, and used to yank the
+    // page down to the form unprompted.
+    await gotoSettled(page);
+    await page.evaluate(() => window.scrollTo(0, document.getElementById("staff")!.offsetTop));
+    await page.waitForTimeout(800);
+    const before = await page.evaluate(() => window.scrollY);
+
+    // Stand in for the embed's own height reports. The origin check means a
+    // postMessage from this page is ignored, so dispatch a MessageEvent that
+    // claims the embed's origin; this reaches the same listener.
+    await page.evaluate(() => {
+      const send = (height: number) =>
+        window.dispatchEvent(new MessageEvent("message", { data: { height }, origin: "https://pauseai.info" }));
+      send(1200);
+      return new Promise<void>((resolve) =>
+        setTimeout(() => {
+          send(700);
+          resolve();
+        }, 600),
+      );
+    });
+    await page.waitForTimeout(800);
+
+    // The form above got 500px shorter, so the page may shift by that much;
+    // what must not happen is a scroll back up to the form itself.
+    const formTop = await targetOffset(page, "join");
+    expect(formTop, "page scrolled back to the form").toBeLessThan(-200);
+    expect(await page.evaluate(() => window.scrollY)).toBeGreaterThan(before - 600);
   });
 });
