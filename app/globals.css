@@ -1682,6 +1682,18 @@ section[id],
   scroll-snap-align: start;
 }
 
+/* Fixed at PersonCard's TARGET_BODY_HEIGHT so the card is its final height
+   from the server render: the excerpt is re-cut to fit after hydration, and
+   letting its length drive the height moved every anchor below the
+   carousel. The clip only shows on the rough pre-hydration excerpt.
+   flex: none because .story-body's flex: 1 would otherwise let the
+   height grow back from its content. */
+.people-carousel-track .story-body:not(.story-body-measure) {
+  flex: none;
+  height: 220px;
+  overflow: hidden;
+}
+
 .people-carousel-btn {
   display: none;
   position: absolute;
