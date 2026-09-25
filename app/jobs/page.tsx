@@ -106,7 +106,7 @@ export default function JobsPage() {
 
               <article className="jobs-role-card">
                 <h2>
-                  Software engineer <span className="jobs-closed-tag">[Application Closed]</span>
+                  Software engineer <span className="jobs-closed-tag">[Applications Closed]</span>
                 </h2>
                 <div className="jobs-closed-notice">
                   <p>
