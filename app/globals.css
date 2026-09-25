@@ -992,6 +992,16 @@ html {
   }
 }
 
+/* On narrow screens the form's first step wraps taller than DEFAULT_HEIGHT in
+   OnboardingFormEmbed.tsx. Hold that space only until the form reports its
+   real height, so a later, shorter step can still shrink the embed. */
+@media (max-width: 640px) {
+  .onboarding-embed-wrap.is-loading { min-height: 1240px; }
+}
+@media (max-width: 380px) {
+  .onboarding-embed-wrap.is-loading { min-height: 1260px; }
+}
+
 .onboarding-embed-skeleton {
   position: absolute;
   inset: 0;
