@@ -233,3 +233,24 @@
 .jobs-page .jobs-role-card p a:hover {
   color: var(--pause-orange);
 }
+
+/* ─── Closed role ─── */
+.jobs-page .jobs-closed-tag {
+  color: var(--muted);
+  font-weight: 700;
+  white-space: nowrap;
+}
+.jobs-page .jobs-closed-notice {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin: 0 0 18px;
+}
+.jobs-page .jobs-role-card .jobs-closed-notice p {
+  font-size: 15px;
+  margin: 0 0 8px;
+}
+.jobs-page .jobs-role-card .jobs-closed-notice p:last-child {
+  margin: 0;
+}

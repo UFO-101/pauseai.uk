@@ -105,7 +105,18 @@ export default function JobsPage() {
               </article>
 
               <article className="jobs-role-card">
-                <h2>Software engineer</h2>
+                <h2>
+                  Software engineer <span className="jobs-closed-tag">[Application Closed]</span>
+                </h2>
+                <div className="jobs-closed-notice">
+                  <p>
+                    <strong>Applications for this position are now closed.</strong>
+                  </p>
+                  <p>
+                    However, software engineering skills are highly valuable for many of the other roles we are hiring
+                    for, so if you have those skills, consider if any of the other roles may be of interest to you.
+                  </p>
+                </div>
                 <div className="jobs-salary">
                   <p>
                     <strong>Expected salary range: £50k - £100k</strong>
@@ -130,9 +141,6 @@ export default function JobsPage() {
                 <ul className="jobs-skill-tags">
                   <li>Web design</li>
                 </ul>
-                <a className="btn primary jobs-card-apply" href={APPLY_URL} target="_blank" rel="noreferrer">
-                  Apply now
-                </a>
               </article>
 
               <article className="jobs-role-card">
