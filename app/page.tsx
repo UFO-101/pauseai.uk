@@ -98,6 +98,12 @@ const HERO_PHOTOS: [string, string, number, number][] = [
   ["westminster-hall.webp", "Westminster Hall event", 800, 448],
   ["parliament-group-landscape.webp", "PauseAI UK volunteers outside Parliament, June 2026", 800, 326],
   ["jeremy-corbyn.webp", "PauseAI UK board member David Wood with MP Jeremy Corbyn", 800, 507],
+
+  ["parliament-conference-sep-2026-audience.webp", "A packed committee room at the PauseAI UK discussion in Parliament, September 2026", 800, 533],
+  ["parliament-conference-sep-2026-speakers.webp", "Speakers and organisers at the PauseAI UK discussion in Parliament, September 2026", 800, 400],
+  ["pausecon-london-sept-2026-group.webp", "Group photo of attendees at PauseCon London, September 2026", 800, 314],
+  ["downing-street-sept-2026-banner.webp", "Protesters holding a PauseAI banner and placards on Whitehall, September 2026", 800, 535],
+  ["downing-street-sept-2026-gates-crowd.webp", "PauseAI protesters with placards at the Downing Street gates, September 2026", 800, 534],
 ];
 
 function shuffle<T>(arr: readonly T[]): T[] {
@@ -115,10 +121,12 @@ export default async function HomePage() {
   // Server-component shuffle: a new order each render. Sent to the
   // client as part of the rendered HTML so hydration matches.
   const shuffled = shuffle(HERO_PHOTOS);
+  // Share the photos across three rows so none are dropped as the list grows.
+  const perRow = Math.ceil(shuffled.length / 3);
   const heroRows = [
-    { dir: "ltr" as const, photos: shuffled.slice(0, 7) },
-    { dir: "rtl" as const, photos: shuffled.slice(7, 14) },
-    { dir: "ltr" as const, photos: shuffled.slice(14, 20) },
+    { dir: "ltr" as const, photos: shuffled.slice(0, perRow) },
+    { dir: "rtl" as const, photos: shuffled.slice(perRow, perRow * 2) },
+    { dir: "ltr" as const, photos: shuffled.slice(perRow * 2) },
   ];
 
   return (
