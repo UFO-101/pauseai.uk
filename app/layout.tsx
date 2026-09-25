@@ -4,7 +4,7 @@ import { Lato } from "next/font/google";
 import "./globals.css";
 import Footer from "@/components/Footer";
 import CookieConsent from "@/components/CookieConsent";
-import ScrollInit from "@/components/ScrollInit";
+import FooterYear from "@/components/FooterYear";
 import JsonLd from "@/components/JsonLd";
 import { site } from "@/lib/data/site";
 
@@ -79,7 +79,12 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${lato.variable} ${inter.variable}`} suppressHydrationWarning>
+    <html
+      lang="en"
+      className={`${lato.variable} ${inter.variable}`}
+      data-scroll-behavior="smooth"
+      suppressHydrationWarning
+    >
       <body suppressHydrationWarning>
         {/* Google Tag Manager (noscript) - the JS snippet is loaded by CookieConsent */}
         <noscript>
@@ -94,7 +99,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {children}
         <Footer />
         <CookieConsent />
-        <ScrollInit />
+        <FooterYear />
       </body>
     </html>
   );

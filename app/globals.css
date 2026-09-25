@@ -272,26 +272,29 @@ nav a:hover {
   border-color: var(--accent-strong) !important;
 }
 
-/* Smooth in-page scrolling is the browser's job, so a fragment link can
-   stay plain anchor navigation: it sets the hash itself, pushes one
-   history entry, and moves focus to the target. Intercepting the click in
-   JS to call scrollIntoView did none of the last two. */
+/* Scrolling is the browser's job, so a fragment link can stay plain anchor
+   navigation: it sets the hash itself, pushes one history entry, and moves
+   focus to the target. Intercepting the click in JS to call scrollIntoView
+   did none of the last two.
+
+   scroll-padding-top keeps every scroll target clear of the sticky nav:
+   fragment links, scrollIntoView, and a focused field alike. It tracks the
+   nav's measured height (set by Nav); 77px is that height at every width,
+   for the browser's first scroll to a fragment before hydration.
+
+   Smooth only for links within a page. data-scroll-behavior="smooth" on
+   <html> has Next jump instantly on a route change instead, which also
+   covers a link to another page's fragment: an animation there would run
+   while that page is still laying out, and land wherever its target was
+   when it started. */
 html {
-  scroll-behavior: smooth;
+  scroll-padding-top: calc(var(--site-header-h, 77px) + 13px);
 }
 
-@media (prefers-reduced-motion: reduce) {
+@media (prefers-reduced-motion: no-preference) {
   html {
-    scroll-behavior: auto;
+    scroll-behavior: smooth;
   }
-}
-
-/* Anchor-link scroll offset so #events / #news / #local-groups etc. don't
-   land underneath the sticky 77px-tall nav. Applies to native fragment
-   navigation and scrollIntoView alike. */
-section[id],
-.anchor-alias {
-  scroll-margin-top: 90px;
 }
 
 /* Zero-height target that keeps a renamed anchor (e.g. old #chapters
@@ -1159,6 +1162,7 @@ section[id],
 /* ── UK local groups map ──────────────────────────── */
 
 .local-groups-map-canvas {
+  display: none;
   position: relative;
   z-index: 1;
   grid-column: 2;
@@ -1241,6 +1245,10 @@ section[id],
   .local-groups-map-card {
     grid-column: var(--card-col);
     grid-row: var(--card-row);
+  }
+
+  .local-groups-map-canvas {
+    display: block;
   }
 }
 
@@ -1675,6 +1683,18 @@ section[id],
 .people-carousel-track .person-card {
   flex: 0 0 min(440px, 85vw);
   scroll-snap-align: start;
+}
+
+/* Fixed at PersonCard's TARGET_BODY_HEIGHT so the card is its final height
+   from the server render: the excerpt is re-cut to fit after hydration, and
+   letting its length drive the height moved every anchor below the
+   carousel. The clip only shows on the rough pre-hydration excerpt.
+   flex: none because .story-body's flex: 1 would otherwise let the
+   height grow back from its content. */
+.people-carousel-track .story-body:not(.story-body-measure) {
+  flex: none;
+  height: 220px;
+  overflow: hidden;
 }
 
 .people-carousel-btn {

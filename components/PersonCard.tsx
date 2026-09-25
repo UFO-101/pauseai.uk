@@ -16,6 +16,7 @@ const FALLBACK_EXCERPT_LENGTH = 300;
 // this regardless of character count, so a story broken into many short
 // paragraphs/bullets (which takes up more vertical space per character than
 // a dense single paragraph) still ends up the same visual size as the rest.
+// Mirrored as the carousel's fixed .story-body height in globals.css.
 const TARGET_BODY_HEIGHT = 220;
 
 function plainParagraphs(paragraphs: string[]): string[] {
@@ -87,7 +88,9 @@ function useClampedExcerpt(person: Person, enabled: boolean) {
 
     function measure() {
       const plain = plainParagraphs(person.paragraphs);
-      measureEl!.style.width = `${bodyEl!.clientWidth}px`;
+      // Unrounded: clientWidth rounds a fractional width (85vw cards) up, and
+      // a measure even half a pixel wider fits an extra word per line.
+      measureEl!.style.width = `${bodyEl!.getBoundingClientRect().width}px`;
 
       const fits = (paragraphs: string[]) => {
         measureEl!.replaceChildren(...buildMeasureNodes(paragraphs));
@@ -114,8 +117,17 @@ function useClampedExcerpt(person: Person, enabled: boolean) {
     }
 
     measure();
+    // The first pass can run on the fallback font; the web font wraps
+    // differently, so cut again once it has swapped in.
+    let cancelled = false;
+    document.fonts?.ready.then(() => {
+      if (!cancelled) measure();
+    });
     window.addEventListener("resize", measure);
-    return () => window.removeEventListener("resize", measure);
+    return () => {
+      cancelled = true;
+      window.removeEventListener("resize", measure);
+    };
   }, [enabled, person]);
 
   return { bodyRef, measureRef, shown };

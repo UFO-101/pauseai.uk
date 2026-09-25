@@ -3,16 +3,17 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { CalendarEvent } from "@/lib/collateral/eventText";
 import { canvasToPngBlob, downloadFilesZip, downloadText, exportFilename, pdfBytesForPrint } from "@/lib/collateral/export";
-import { BLEED_MM, FORMAT_GROUPS, FORMATS, formatDimensionLabel, type Format } from "@/lib/collateral/formats";
+import { BLEED_MM, FORMAT_GROUPS, FORMATS, formatDimensionLabel, previewStyle, type Format } from "@/lib/collateral/formats";
 import { sameIssues, splitByScope, type LintIssue } from "@/lib/collateral/lint";
 import { DEFAULT_PACK_FORMAT_IDS, DEFAULT_PHOTO_VIEW, parsePackProject, serializePackProject, type PackProject } from "@/lib/collateral/packProject";
 import type { PhotoView } from "@/lib/collateral/photoTransform";
 import { renderCollateral, type RenderOptions } from "@/lib/collateral/render";
 import { defaultValues, type Drawable } from "@/lib/collateral/templates";
-import { getTheme } from "@/lib/collateral/themes";
+import { CLEAR_PHOTO_LOGO_SRC, getTheme } from "@/lib/collateral/themes";
 import Checks from "./Checks";
 import CropControls from "./CropControls";
 import DesignControls from "./DesignControls";
+import LogoCoverControls from "./LogoCoverControls";
 import { designFromData, designQrCodes, designTemplate, designToData, designValues, newDesign, withQrCodes, type DesignState } from "./designState";
 import ProjectMenu from "./ProjectMenu";
 import QrFormatNote from "./QrFormatNote";
@@ -159,6 +160,9 @@ export default function PackStudio({ events }: { events: CalendarEvent[] }) {
       qrCodes: designQrCodes(design),
       trackQr: design.trackQr,
       qrSize: design.qrSize,
+      photoClear: design.photoClear,
+      coverTitle: design.coverTitle,
+      clearPhotoLogo: logos[CLEAR_PHOTO_LOGO_SRC],
       screenQr: screenQrs[formatId] ?? false,
       headlineScale: headlineScales[formatId] ?? 1,
       partnerLogos: design.partnerLogos.map((l) => l.drawable),
@@ -317,6 +321,7 @@ export default function PackStudio({ events }: { events: CalendarEvent[] }) {
                 role="img"
                 aria-label={`Preview of ${active.label}`}
                 hidden={!logo || !fontsReady}
+                style={previewStyle(active)}
                 className={design.photo ? "is-draggable" : undefined}
                 {...photoGestures}
               />
@@ -349,6 +354,7 @@ export default function PackStudio({ events }: { events: CalendarEvent[] }) {
               ))}
             </fieldset>
           ))}
+          {formats.some((f) => f.kind === "digital" && f.logoCover) && <LogoCoverControls design={design} update={update} />}
         </section>
 
         {active && (

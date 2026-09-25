@@ -24,6 +24,13 @@ export interface DigitalFormat extends FormatBase {
    * QR codes, the button and the web address are always left out.
    */
   onPage?: boolean;
+  /**
+   * Just the photo, a big PauseAI logo and optionally the title, whatever the layout: for a cover shown small beside
+   * the event's own title, date and place (Luma's), where smaller text would repeat the page and be too small to read.
+   */
+  logoCover?: boolean;
+  /** Width, in CSS px, the platform actually shows it at. The preview shows it at this size, so what reads there reads there. */
+  shownAtPx?: number;
 }
 
 export interface PrintFormat extends FormatBase {
@@ -60,7 +67,10 @@ export const FORMATS: Format[] = [
     width: 1080,
     height: 1080,
     onPage: true,
-    note: "Shown on the event page itself, so it leaves out QR codes, the button and the web address.",
+    logoCover: true,
+    shownAtPx: 280,
+    note:
+      "Luma shows this about 280px wide, next to the event's title, date and place, so it is your photo, the PauseAI logo and, if you like, the title. The date and place are left out: Luma shows them, and keeps them right if the event changes.",
   },
   { id: "slide", label: "Slide / Zoom background (16:9)", group: "Slides", kind: "digital", width: 1920, height: 1080 },
   { id: "a6", label: "A6 handout", group: "Print", kind: "print", widthMm: 105, heightMm: 148 },
@@ -136,7 +146,12 @@ export function layoutMarginUnits(cls: AspectClass): number {
 export const FORMAT_GROUPS: FormatGroup[] = ["Social", "Events", "Slides", "Print"];
 
 export function formatDimensionLabel(format: Format): string {
-  return format.kind === "digital"
-    ? `${format.width} × ${format.height} px`
-    : `${format.widthMm} × ${format.heightMm} mm`;
+  if (format.kind === "print") return `${format.widthMm} × ${format.heightMm} mm`;
+  const size = `${format.width} × ${format.height} px`;
+  return format.shownAtPx ? `${size} · shown ~${format.shownAtPx} px` : size;
+}
+
+/** Inline style for a preview canvas: the size the platform shows it at, when the format says. */
+export function previewStyle(format: Format): { width: number } | undefined {
+  return format.kind === "digital" && format.shownAtPx ? { width: format.shownAtPx } : undefined;
 }

@@ -22,8 +22,17 @@ export default function OnboardingFormEmbed() {
   // Read via ref inside the timeout below so it sees the latest value
   // without re-registering the message listener on every height update.
   const messageReceivedRef = useRef(false);
+  const heightRef = useRef(DEFAULT_HEIGHT);
+  // Set once the user has clicked or tabbed into the form. Clicks inside a
+  // cross-origin iframe don't reach this page; the page just loses focus to
+  // the iframe, so that blur is the signal.
+  const interactedRef = useRef(false);
 
   useEffect(() => {
+    function handleBlur() {
+      if (document.activeElement === iframeRef.current) interactedRef.current = true;
+    }
+
     function handleMessage(event: MessageEvent) {
       if (event.origin !== EMBED_ORIGIN) return;
       const data = event.data;
@@ -46,15 +55,29 @@ export default function OnboardingFormEmbed() {
           settledRef.current = true;
         }, SETTLE_DELAY_MS);
 
-        setHeight((prev) => {
-          if (settledRef.current && data.height < prev && iframeRef.current) {
-            iframeRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
-          }
-          return data.height;
-        });
+        // A shorter step can leave the user looking at the space below the
+        // form, so bring its top back into view. Only after they've used the
+        // form: a reflow on its own (a font arriving late, the iOS toolbar
+        // resizing the viewport) also shrinks it, and used to pull the page
+        // away from wherever the reader was.
+        const iframe = iframeRef.current;
+        if (
+          iframe &&
+          settledRef.current &&
+          interactedRef.current &&
+          data.height < heightRef.current &&
+          iframe.getBoundingClientRect().top < 0
+        ) {
+          // No behavior option, so it follows the stylesheet's
+          // scroll-behavior and stays instant under reduced motion.
+          iframe.scrollIntoView({ block: "start" });
+        }
+        heightRef.current = data.height;
+        setHeight(data.height);
       }
     }
     window.addEventListener("message", handleMessage);
+    window.addEventListener("blur", handleBlur);
 
     const timeoutId = setTimeout(() => {
       if (!messageReceivedRef.current) setShowFallback(true);
@@ -62,6 +85,7 @@ export default function OnboardingFormEmbed() {
 
     return () => {
       window.removeEventListener("message", handleMessage);
+      window.removeEventListener("blur", handleBlur);
       clearTimeout(settleTimerRef.current);
       clearTimeout(timeoutId);
     };

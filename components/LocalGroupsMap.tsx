@@ -157,46 +157,50 @@ export default function LocalGroupsMap() {
         );
       })}
 
-      {isDesktop && ukFeature && path && projection && (
-        <div className="local-groups-map-canvas">
-          <svg viewBox={`0 0 ${MAP_W} ${MAP_H}`} preserveAspectRatio="xMidYMid meet" role="img" aria-label="Map of the UK showing where PauseAI local groups are based">
-            {ukFeature.features.map((f, i) => (
-              <path key={i} d={path(f) || undefined} className="uk-map-outline" />
-            ))}
-            {localGroups.map((localGroup) => {
-              const point = projection([localGroup.lng, localGroup.lat]);
-              if (!point) return null;
-              const [x, y] = point;
-              const isActive = hovered === localGroup.name;
-              return (
-                // The card is the accessible control for each local group; the
-                // pin repeats that link for mouse users without adding a
-                // second tab stop or a duplicate screen-reader entry.
-                <Link
-                  key={localGroup.name}
-                  href={localGroup.href}
-                  tabIndex={-1}
-                  aria-hidden="true"
-                  className={`uk-map-pin ${isActive ? "active" : ""}`}
-                  onMouseEnter={() => setHovered(localGroup.name)}
-                  onMouseLeave={() => setHovered((prev) => (prev === localGroup.name ? null : prev))}
-                >
-                  <circle cx={x} cy={y} r={isActive ? 10 : 8} className="uk-map-pin-halo" />
-                  <circle
-                    ref={(el) => {
-                      pinRefs.current[localGroup.name] = el;
-                    }}
-                    cx={x}
-                    cy={y}
-                    r={4.5}
-                    className="uk-map-pin-dot"
-                  />
-                </Link>
-              );
-            })}
-          </svg>
-        </div>
-      )}
+      {/* Rendered from the server so the grid reserves the map's column and
+          height before the topology arrives; filling it in later then moves
+          nothing below, including the section anchors further down the page.
+          The stylesheet hides it below the three-column breakpoint. */}
+      <div className="local-groups-map-canvas">
+        {isDesktop && ukFeature && path && projection && (
+            <svg viewBox={`0 0 ${MAP_W} ${MAP_H}`} preserveAspectRatio="xMidYMid meet" role="img" aria-label="Map of the UK showing where PauseAI local groups are based">
+              {ukFeature.features.map((f, i) => (
+                <path key={i} d={path(f) || undefined} className="uk-map-outline" />
+              ))}
+              {localGroups.map((localGroup) => {
+                const point = projection([localGroup.lng, localGroup.lat]);
+                if (!point) return null;
+                const [x, y] = point;
+                const isActive = hovered === localGroup.name;
+                return (
+                  // The card is the accessible control for each local group; the
+                  // pin repeats that link for mouse users without adding a
+                  // second tab stop or a duplicate screen-reader entry.
+                  <Link
+                    key={localGroup.name}
+                    href={localGroup.href}
+                    tabIndex={-1}
+                    aria-hidden="true"
+                    className={`uk-map-pin ${isActive ? "active" : ""}`}
+                    onMouseEnter={() => setHovered(localGroup.name)}
+                    onMouseLeave={() => setHovered((prev) => (prev === localGroup.name ? null : prev))}
+                  >
+                    <circle cx={x} cy={y} r={isActive ? 10 : 8} className="uk-map-pin-halo" />
+                    <circle
+                      ref={(el) => {
+                        pinRefs.current[localGroup.name] = el;
+                      }}
+                      cx={x}
+                      cy={y}
+                      r={4.5}
+                      className="uk-map-pin-dot"
+                    />
+                  </Link>
+                );
+              })}
+            </svg>
+        )}
+      </div>
     </div>
   );
 }

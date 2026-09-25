@@ -102,12 +102,6 @@
   margin-top: 2px;
 }
 
-/* Timeline entries that serve as link targets need the same sticky-nav
-   scroll offset that globals.css gives to section[id]. */
-.track-record .entry[id] {
-  scroll-margin-top: 90px;
-}
-
 /* ─── Timeline ─── */
 .track-record .timeline {
   padding: 80px 0 100px;

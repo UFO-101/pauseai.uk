@@ -241,7 +241,6 @@
 .campaigns-embed {
   padding: 48px 0 80px;
   background: var(--bg);
-  scroll-margin-top: 80px;
 }
 .campaigns-embed .embed-instructions {
   font-size: 16px;
