@@ -1,5 +1,6 @@
 import { QR_PANEL_PAD, qrMatrix } from "./qr";
-import { BRAND_ORANGE } from "./themes";
+import { captionFont, type CaptionLayout } from "./qrCaption";
+import { BRAND_ORANGE, INK } from "./themes";
 
 /** One round data module, in px relative to the top-left of the QR panel. */
 export interface QrDot {
@@ -116,15 +117,29 @@ export function pauseBars(r: number) {
   return { w, h, leftX: -w * 1.5, rightX: w * 0.5, y: -h / 2 };
 }
 
+const escapeXml = (text: string) =>
+  text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+
+export interface QrSvgOptions {
+  background: string | null;
+  roundedPanel?: boolean;
+  /** Text under the code, from captionLayout at the same size. The image grows taller to fit it. */
+  caption?: CaptionLayout;
+  /** @font-face rules to embed, so the caption keeps its fonts outside the site (see captionFontCss). */
+  fontCss?: string;
+}
+
 /** Standalone SVG for the QR code. Vector, so it stays sharp at any print size. */
-export function qrSvg(shape: QrShape, opts: { background: string | null; roundedPanel?: boolean }): string {
+export function qrSvg(shape: QrShape, opts: QrSvgOptions): string {
   const { size, dots, finderRings, finderEyes, centre, logoRadius, panelRadius } = shape;
+  const height = opts.caption?.height ?? size;
   const parts = [
-    `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${n(size)} ${n(size)}">`,
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${height}" viewBox="0 0 ${n(size)} ${n(height)}">`,
   ];
+  if (opts.fontCss && opts.caption?.lines.length) parts.push(`<defs><style>${opts.fontCss}</style></defs>`);
   if (opts.background) {
     const rx = opts.roundedPanel === false ? "" : ` rx="${n(panelRadius)}"`;
-    parts.push(`<rect width="${n(size)}" height="${n(size)}"${rx} fill="${opts.background}"/>`);
+    parts.push(`<rect width="${n(size)}" height="${n(height)}"${rx} fill="${opts.background}"/>`);
   }
   parts.push(`<g fill="${QR_INK}">`);
   for (const d of dots) parts.push(`<circle cx="${n(d.x)}" cy="${n(d.y)}" r="${n(d.r)}"/>`);
@@ -137,6 +152,12 @@ export function qrSvg(shape: QrShape, opts: { background: string | null; rounded
     parts.push(
       `<g fill="#FFFFFF"><rect x="${n(centre.x + bars.leftX)}" y="${n(centre.y + bars.y)}" width="${n(bars.w)}" height="${n(bars.h)}"/>` +
         `<rect x="${n(centre.x + bars.rightX)}" y="${n(centre.y + bars.y)}" width="${n(bars.w)}" height="${n(bars.h)}"/></g>`,
+    );
+  }
+  for (const line of opts.caption?.lines ?? []) {
+    parts.push(
+      `<text x="${n(size / 2)}" y="${n(line.baseline)}" text-anchor="middle" fill="${INK}" ` +
+        `style="font:${escapeXml(captionFont(line.kind, n(line.fontSize)))}">${escapeXml(line.text)}</text>`,
     );
   }
   parts.push("</svg>");

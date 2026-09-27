@@ -101,10 +101,12 @@ const yieldToBrowser = () => new Promise((resolve) => setTimeout(resolve, 0));
 async function findInPhoto(jsQr: JsQr, bitmap: ImageBitmap): Promise<string | null> {
   const canvas = document.createElement("canvas");
   const deadline = Date.now() + PHOTO_BUDGET_MS;
-  // The first pass is the biggest and slowest, so it skips the inverted image. The 800px pass covers that case.
+  // Small first: the decoder misreads round-dot codes, like our own, when each dot is many pixels wide. The big pass is
+  // for codes that are small in the shot, and skips the inverted image as it is the slowest.
   const attempts: [Region, DecodeOptions][] = [
-    [WHOLE, { size: PHOTO_MAX, thorough: false }],
     [WHOLE, { size: 800, thorough: true }],
+    [WHOLE, { size: REGION_SMALL, thorough: true }],
+    [WHOLE, { size: PHOTO_MAX, thorough: false }],
     ...tiles(2, 0.6).map((r): [Region, DecodeOptions] => [r, { size: REGION_MAX, thorough: true }]),
     ...tiles(3, 0.45).map((r): [Region, DecodeOptions] => [r, { size: REGION_MAX, thorough: true }]),
   ];
