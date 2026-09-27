@@ -135,17 +135,32 @@ interface Props {
 
 /** Reads an existing QR code from the camera, or from a photo when there is no camera or it is blocked. */
 export default function QrScanner({ onResult }: Props) {
+  // Camera running.
   const [open, setOpen] = useState(false);
+  // Below the buttons, for photos that could not be opened at all.
   const [message, setMessage] = useState<string | null>(null);
+  // Inside the modal: camera problems, and boxes with no code in them.
+  const [modalMessage, setModalMessage] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   // A photo the code could not be found in automatically, shown so the person can draw a box round the code.
   // Its object URL. The box is read from the <img> showing it.
   const [photo, setPhoto] = useState<string | null>(null);
   const [box, setBox] = useState<Region | null>(null);
+  const dialogRef = useRef<HTMLDialogElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
   const dragStart = useRef<{ x: number; y: number } | null>(null);
+
+  const modalOpen = open || photo !== null;
+
+  // showModal gives the focus trap, Escape to close and the backdrop, so the dialog is opened through it, not the open attribute.
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+    if (modalOpen && !dialog.open) dialog.showModal();
+    if (!modalOpen && dialog.open) dialog.close();
+  }, [modalOpen]);
 
   useEffect(() => {
     if (!open) return;
@@ -156,7 +171,7 @@ export default function QrScanner({ onResult }: Props) {
 
     async function start() {
       if (!navigator.mediaDevices?.getUserMedia) {
-        setMessage("This browser cannot use the camera here. Choose a photo of the code instead.");
+        setModalMessage("This browser cannot use the camera here. Choose a photo of the code instead.");
         return;
       }
       try {
@@ -192,7 +207,7 @@ export default function QrScanner({ onResult }: Props) {
       } catch (e) {
         if (stopped) return;
         const denied = e instanceof DOMException && (e.name === "NotAllowedError" || e.name === "SecurityError");
-        setMessage(
+        setModalMessage(
           denied
             ? "Camera access was blocked. Allow it in your browser settings, or choose a photo of the code instead."
             : "Could not start the camera. Choose a photo of the code instead.",
@@ -212,6 +227,13 @@ export default function QrScanner({ onResult }: Props) {
     if (photo) URL.revokeObjectURL(photo);
     setPhoto(null);
     setBox(null);
+  }
+
+  /** Runs however the modal closes: a button, Escape, or a code being found. */
+  function onModalClose() {
+    setOpen(false);
+    closePhoto();
+    setModalMessage(null);
   }
 
   function found(text: string) {
@@ -238,7 +260,6 @@ export default function QrScanner({ onResult }: Props) {
         return;
       }
       setPhoto(URL.createObjectURL(file));
-      setMessage("Could not find the code by itself. Drag a box round the QR code in the photo.");
     } catch {
       setMessage("Could not read that image. Try a different photo.");
     } finally {
@@ -280,7 +301,7 @@ export default function QrScanner({ onResult }: Props) {
     const jsQr = await loadJsQr();
     const text = findInRegion(jsQr, image, box);
     if (text) found(text);
-    else setMessage("No code in that box. Try drawing it again, a little bigger than the code.");
+    else setModalMessage("No code in that box. Try drawing it again, a little bigger than the code.");
   }
 
   return (
@@ -291,27 +312,34 @@ export default function QrScanner({ onResult }: Props) {
           className="btn ghost small"
           onClick={() => {
             setMessage(null);
-            closePhoto();
-            setOpen((o) => !o);
+            setOpen(true);
           }}
         >
-          {open ? "Stop scanning" : "Scan an existing code"}
+          Scan an existing code
         </button>
         <button type="button" className="btn ghost small" onClick={() => fileRef.current?.click()} disabled={busy}>
           {busy ? "Looking for the code…" : "Use a photo"}
         </button>
         <input ref={fileRef} type="file" accept="image/*" hidden onChange={onPhoto} />
       </div>
-      {open && (
-        <video ref={videoRef} className="collateral-qr-video" muted playsInline aria-label="Camera view. Point it at a QR code." />
-      )}
       {message && (
         <p className="collateral-field-error" role="status">
           {message}
         </p>
       )}
-      {photo && (
-        <>
+
+      <dialog ref={dialogRef} className="collateral-qr-dialog" aria-labelledby="qr-scan-title" onClose={onModalClose}>
+        <h2 id="qr-scan-title">{photo ? "Find the QR code" : "Scan a QR code"}</h2>
+        <p className="collateral-hint">
+          {photo
+            ? "Could not find the code by itself. Drag a box round the QR code in the photo."
+            : "Point your camera at the code. It reads it by itself."}
+        </p>
+        {/* Hidden once the camera fails, rather than leaving an empty black box. */}
+        {open && !modalMessage && (
+          <video ref={videoRef} className="collateral-qr-video" muted playsInline aria-label="Camera view. Point it at a QR code." />
+        )}
+        {photo && (
           <div
             className="collateral-qr-crop"
             onPointerDown={onPointerDown}
@@ -331,13 +359,23 @@ export default function QrScanner({ onResult }: Props) {
               />
             )}
           </div>
-          <div className="collateral-qr-scan-actions">
-            <button type="button" className="btn ghost small" onClick={closePhoto}>
-              Cancel
+        )}
+        {modalMessage && (
+          <p className="collateral-field-error" role="status">
+            {modalMessage}
+          </p>
+        )}
+        <div className="collateral-qr-scan-actions collateral-qr-dialog-actions">
+          {open && modalMessage && (
+            <button type="button" className="btn ghost small" onClick={() => fileRef.current?.click()} disabled={busy}>
+              Use a photo instead
             </button>
-          </div>
-        </>
-      )}
+          )}
+          <button type="button" className="btn ghost small" onClick={() => dialogRef.current?.close()}>
+            Cancel
+          </button>
+        </div>
+      </dialog>
     </div>
   );
 }
