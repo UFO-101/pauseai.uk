@@ -81,7 +81,15 @@ function securityHeaders() {
 
 const nextConfig: NextConfig = {
   async headers() {
-    return [{ source: "/:path*", headers: securityHeaders() }];
+    return [
+      { source: "/:path*", headers: securityHeaders() },
+      // The QR tool reads existing codes with the camera. Listed last so it
+      // overrides the site-wide camera=() for this page only.
+      {
+        source: "/tools/qr",
+        headers: [{ key: "Permissions-Policy", value: "camera=(self), microphone=(), geolocation=(), payment=()" }],
+      },
+    ];
   },
   images: {
     remotePatterns: [

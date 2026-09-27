@@ -1,10 +1,11 @@
 "use client";
 
-import { useMemo, useState, useSyncExternalStore } from "react";
+import { useCallback, useMemo, useState, useSyncExternalStore } from "react";
 import { canvasToPngBlob, downloadCanvasPng, downloadText } from "@/lib/collateral/export";
 import { isWebAddress, qrFilenameStem, qrMinPrintMm, qrTarget } from "@/lib/collateral/qr";
 import { qrShape, qrSvg } from "@/lib/collateral/qrShape";
 import { loadDataUrl } from "@/lib/collateral/render";
+import QrScanner from "./QrScanner";
 
 /** Big enough for print and slides. The SVG covers anything larger. */
 const PNG_SIZE = 2048;
@@ -33,8 +34,20 @@ export default function QrGenerator() {
   const [logo, setLogo] = useState(true);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [scanned, setScanned] = useState<string | null>(null);
   // Browser features, so unknown while rendering on the server. They never change, so there is nothing to subscribe to.
   const handoff = useSyncExternalStore(noSubscribe, detectHandoff, () => null);
+
+  // Stable, so the scanner does not restart the camera on every render.
+  const onScan = useCallback((text: string) => {
+    const trimmed = text.trim();
+    if (isWebAddress(trimmed)) {
+      setUrl(trimmed);
+      setScanned(null);
+    } else {
+      setScanned(trimmed);
+    }
+  }, []);
 
   const valid = isWebAddress(url);
   const target = valid ? qrTarget(url, track) : "";
@@ -145,11 +158,20 @@ export default function QrGenerator() {
             value={url}
             aria-invalid={invalid || undefined}
             aria-describedby={invalid ? "qr-url-error" : undefined}
-            onChange={(e) => setUrl(e.target.value)}
+            onChange={(e) => {
+              setUrl(e.target.value);
+              setScanned(null);
+            }}
           />
           {invalid && (
             <p id="qr-url-error" className="collateral-field-error">
               That does not look like a web address. Try something like pauseai.uk/join.
+            </p>
+          )}
+          <QrScanner onResult={onScan} />
+          {scanned !== null && (
+            <p className="collateral-field-error" role="status">
+              That code does not hold a web address{scanned ? <>. It says: <q>{scanned.slice(0, 120)}</q></> : "."}
             </p>
           )}
           <label className="collateral-toggle collateral-qr-logo" htmlFor="qr-logo">
