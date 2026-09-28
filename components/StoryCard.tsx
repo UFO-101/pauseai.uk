@@ -36,14 +36,7 @@ export default function StoryCard({ story }: { story: Story }) {
             {initials(story.name)}
           </div>
         )}
-        <div>
-          <h3 className="story-name">{story.name}</h3>
-          {(story.role || story.chapter) && (
-            <p className="story-meta">
-              {[story.role, story.chapter].filter(Boolean).join(" · ")}
-            </p>
-          )}
-        </div>
+        <h3 className="story-name">{story.name}</h3>
       </header>
       <div className="story-body">
         {story.paragraphs.map((para, j) => (
