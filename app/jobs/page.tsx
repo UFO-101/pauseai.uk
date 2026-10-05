@@ -70,7 +70,7 @@ export default function JobsPage() {
                 <h2>Operations specialist</h2>
                 <div className="jobs-salary">
                   <p>
-                    <strong>Expected salary range: £30k - £80k</strong>
+                    <strong>Expected salary range: £50k - £100k</strong>
                     <br />
                     <strong>This can potentially be a part time role. But full time applicants are preferred.</strong>
                   </p>
