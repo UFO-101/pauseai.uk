@@ -7,12 +7,12 @@ const EMBED_ORIGIN = "https://pauseai.info";
 // from document.referrer and self-attribute the signup to this page — no source
 // param needed. See pauseai-website/docs/ONBOARDING_EMBED.md.
 const EMBED_URL = `${EMBED_ORIGIN}/embed/onboarding-form/?country=United+Kingdom&bg=FDF8F3`;
-// The first step's height as the embed reports it at desktop and tablet widths
-// (checked September 2026). Reserving it up front stops the page growing under
-// a reader who deep-linked further down, e.g. /#staff, mid-scroll. Phones need
-// a little more; see .onboarding-embed-wrap.is-loading in globals.css. If the
+// The form's first step at desktop width, as the embed reports it (checked
+// October 2026). Narrower screens need more; .onboarding-embed-wrap.is-pristine
+// in globals.css reserves each width's height until the reader uses the form,
+// so the page doesn't grow under a deep link like /#staff mid-scroll. If the
 // form's first step changes height, update both.
-const DEFAULT_HEIGHT = 1146;
+const DEFAULT_HEIGHT = 1483;
 const SETTLE_DELAY_MS = 400;
 const LOAD_TIMEOUT_MS = 8000;
 
@@ -32,10 +32,14 @@ export default function OnboardingFormEmbed() {
   // cross-origin iframe don't reach this page; the page just loses focus to
   // the iframe, so that blur is the signal.
   const interactedRef = useRef(false);
+  const [interacted, setInteracted] = useState(false);
 
   useEffect(() => {
     function handleBlur() {
-      if (document.activeElement === iframeRef.current) interactedRef.current = true;
+      if (document.activeElement === iframeRef.current) {
+        interactedRef.current = true;
+        setInteracted(true);
+      }
     }
 
     function handleMessage(event: MessageEvent) {
@@ -97,7 +101,7 @@ export default function OnboardingFormEmbed() {
   }, []);
 
   return (
-    <div className={messageReceived ? "onboarding-embed-wrap" : "onboarding-embed-wrap is-loading"}>
+    <div className={interacted ? "onboarding-embed-wrap" : "onboarding-embed-wrap is-pristine"}>
       {!messageReceived && (
         <div className="onboarding-embed-skeleton" aria-hidden="true">
           <div className="onboarding-embed-skeleton-steps">

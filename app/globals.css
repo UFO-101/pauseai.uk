@@ -992,15 +992,22 @@ html {
   }
 }
 
-/* On narrow screens the form's first step wraps taller than DEFAULT_HEIGHT in
-   OnboardingFormEmbed.tsx. Hold that space only until the form reports its
-   real height, so a later, shorter step can still shrink the embed. */
-@media (max-width: 640px) {
-  .onboarding-embed-wrap.is-loading { min-height: 1240px; }
-}
-@media (max-width: 380px) {
-  .onboarding-embed-wrap.is-loading { min-height: 1260px; }
-}
+/* Reserve the form's first-step height at each width until the reader uses
+   it. The embed reports its full height almost at once, but only after the
+   browser has started scrolling to a deep link, so without this the page
+   grows under the reader. Each band uses the height at its narrowest width
+   (measured October 2026): too tall leaves a gap below the form until it is
+   used, too short brings back the jump. Keep DEFAULT_HEIGHT in
+   OnboardingFormEmbed.tsx in step with the first value. */
+.onboarding-embed-wrap.is-pristine { min-height: 1483px; }
+@media (max-width: 819px) { .onboarding-embed-wrap.is-pristine { min-height: 1530px; } }
+@media (max-width: 700px) { .onboarding-embed-wrap.is-pristine { min-height: 1567px; } }
+@media (max-width: 640px) { .onboarding-embed-wrap.is-pristine { min-height: 1630px; } }
+@media (max-width: 520px) { .onboarding-embed-wrap.is-pristine { min-height: 1762px; } }
+@media (max-width: 440px) { .onboarding-embed-wrap.is-pristine { min-height: 1858px; } }
+@media (max-width: 380px) { .onboarding-embed-wrap.is-pristine { min-height: 1926px; } }
+@media (max-width: 360px) { .onboarding-embed-wrap.is-pristine { min-height: 2045px; } }
+@media (max-width: 340px) { .onboarding-embed-wrap.is-pristine { min-height: 2223px; } }
 
 .onboarding-embed-skeleton {
   position: absolute;
@@ -2168,7 +2175,14 @@ html {
     flex-direction: column;
     align-items: flex-start;
   }
-  .shop-image { width: 100%; }
+  /* Give the link a definite width and the photo its 3:4 shape, so the
+     banner's height is known before the lazy image loads. Otherwise the
+     link stays 0px tall until the file arrives (a percentage-width image
+     contributes no height before then) and the banner grows ~480px under
+     anyone deep-linking past it. Keep the ratio in step with the image's
+     width/height in app/page.tsx. */
+  .shop-image-link { width: 100%; }
+  .shop-image { width: 100%; aspect-ratio: 1536 / 2048; }
 
   .hero {
     padding: 48px 0 40px;
