@@ -237,6 +237,13 @@ export const people: Person[] =
       "This was the year I became compelled to try and make a meaningful difference so I decided to join PauseAI."
     ],
     "imageStyle": "background-position: 50% 30%;"
+  },
+  {
+    "name": "Erin Gruenberg",
+    "paragraphs": [
+      "A friend once gave me an analogy explaining the threat from AGI. Imagine an alien spaceship is hurtling towards Earth and we have no idea what's inside the ship. Should we assume that whatever's inside is benevolent and friendly or should we prepare for the worst? AI development is accelerating exponentially because too many of us are assuming the first option.",
+      "History tells us that we need strength in numbers in order to create meaningful social change, which is why I want to do what I can to ensure AI is integrated safely into our society."
+    ]
   }
 ];
 
