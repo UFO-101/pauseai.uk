@@ -227,6 +227,16 @@ export const people: Person[] =
       "That's why I'm here."
     ],
     "imageStyle": "background-position: 50% 45%;"
+  },
+  {
+    "name": "Philip Johnstone",
+    "imageSrc": "/images/people/Philip-Johnstone-Stories.jpg",
+    "paragraphs": [
+      "I work as an electrical engineering lecturer with screenwriting as a creative outlet.",
+      "I was first awakened to the potential impact of AI on society when I read Ray Kurzweil's The Singularity is Near. I continued my research on the subject over the years, becoming increasingly alarmed as reality started to catch up with prediction.",
+      "This was the year I became compelled to try and make a meaningful difference so I decided to join PauseAI."
+    ],
+    "imageStyle": "background-position: 50% 30%;"
   }
 ];
 
