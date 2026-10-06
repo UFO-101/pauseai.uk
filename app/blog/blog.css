@@ -434,3 +434,7 @@
   color: var(--pause-orange);
   font-weight: 600;
 }
+/* Paragraphs that continue a list item: space them like body paragraphs. */
+.blog .blog-body li > p {
+  margin: 12px 0 0;
+}
