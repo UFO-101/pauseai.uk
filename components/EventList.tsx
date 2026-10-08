@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useEffect, useState, type ReactNode } from "react";
 import type { LumaEntry } from "@/lib/data/events";
 import { formatEventDate, formatEventTime } from "@/lib/data/events";
+import { isAllowedEventImage } from "@/lib/data/event-image-hosts";
 
 function getDateStr(d: Date, tz: string): string {
   // An unrecognised IANA timezone throws RangeError here; fall back rather
@@ -50,13 +51,16 @@ function EventCard({ entry, isExtra = false }: { entry: LumaEntry; isExtra?: boo
       className={`luma-event-card${isExtra ? " luma-event-card--extra" : ""}`}
     >
       <div className="luma-event-card-img-wrap">
-        {event.cover_url ? (
+        {event.cover_url && isAllowedEventImage(event.cover_url) ? (
           <Image
             className="luma-event-card-img"
             src={event.cover_url}
             alt=""
             fill
-            sizes="(max-width: 600px) 86vw, (max-width: 900px) 50vw, 25vw"
+            // Matches the list's layout in globals.css: an 86% carousel card
+            // under 600px, two columns to 900px, then four in a container
+            // capped at 1092px, so a card never exceeds ~260px.
+            sizes="(max-width: 600px) 75vw, (max-width: 900px) 48vw, (max-width: 1140px) 25vw, 260px"
             loading="lazy"
           />
         ) : (

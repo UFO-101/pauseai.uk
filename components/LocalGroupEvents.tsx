@@ -1,7 +1,12 @@
 import type { ReactNode } from "react";
 import EventList from "@/components/EventList";
 import { localGroups, type LocalGroupName } from "@/lib/data/local-groups";
-import { filterEventsForLocalGroup, getEvents, type LumaEntry } from "@/lib/data/events";
+import {
+  filterEventsForLocalGroup,
+  filterOnlineEvents,
+  getEvents,
+  type LumaEntry,
+} from "@/lib/data/events";
 import { site } from "@/lib/data/site";
 
 // Enough to show a local group is active without turning its page into an
@@ -61,6 +66,10 @@ export default async function LocalGroupEvents({ localGroupName }: { localGroupN
 
   const [future, past] = await Promise.all([getEvents("future"), getEvents("past")]);
   const upcoming = filterEventsForLocalGroup(future, localGroup.eventMatchers);
+  const online = filterOnlineEvents(
+    future,
+    localGroups.map((group) => group.eventMatchers)
+  );
   const previous = filterEventsForLocalGroup(past, localGroup.eventMatchers).slice(0, PAST_EVENTS_SHOWN);
 
   return (
@@ -80,6 +89,10 @@ export default async function LocalGroupEvents({ localGroupName }: { localGroupN
           </>
         }
       />
+
+      {/* Online events aren't claimed by any local group's eventMatchers, but
+          they're open UK-wide, so every local group page carries them too. */}
+      {online.length > 0 && <EventsSection heading="Online events" events={online} />}
 
       {/* Only when there is something to show: a local group that has not met yet
           should not open with an empty archive. */}
