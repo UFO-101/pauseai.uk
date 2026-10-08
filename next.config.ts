@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { EVENT_IMAGE_HOSTS } from "./lib/data/event-image-hosts";
 
 // Third-party origins the site actually depends on. Kept here as one list so
 // adding an embed means updating the policy in the same place.
@@ -38,8 +39,8 @@ const contentSecurityPolicy = [
   "style-src 'self' 'unsafe-inline'",
   // next/font self-hosts both Lato and Inter at build time, so no font CDN.
   "font-src 'self' data:",
-  // blob:/data: cover next/image; images.lumacdn.com is the Luma event covers.
-  `img-src 'self' data: blob: https://images.lumacdn.com ${[...GA, ...GOOGLE_ADS].join(" ")}`,
+  // blob:/data: cover next/image; EVENT_IMAGE_HOSTS are the Luma event covers.
+  `img-src 'self' data: blob: ${[...EVENT_IMAGE_HOSTS.map((host) => `https://${host}`), ...GA, ...GOOGLE_ADS].join(" ")}`,
   `connect-src 'self' ${[...GA_COLLECT, ...GOOGLE_ADS].join(" ")}`,
   // The MP-email and onboarding embeds, the Tally story form, and the
   // Airtable signatories embed that campaigns/page.tsx falls back to when
@@ -92,10 +93,8 @@ const nextConfig: NextConfig = {
     ];
   },
   images: {
-    remotePatterns: [
-      // Luma event cover images (components/EventList.tsx)
-      { protocol: "https", hostname: "images.lumacdn.com" },
-    ],
+    // Luma event cover images (components/EventList.tsx).
+    remotePatterns: EVENT_IMAGE_HOSTS.map((hostname) => ({ protocol: "https" as const, hostname })),
   },
   async redirects() {
     return [

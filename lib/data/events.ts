@@ -79,6 +79,28 @@ export function filterEventsForLocalGroup(
   });
 }
 
+/**
+ * Events with no `geo_address_info` — Luma's signal for "online" rather than
+ * pinned to a place (see the "Online" fallback in EventList) — that aren't
+ * already claimed by a specific local group's `eventMatchers` (e.g. "PauseAI
+ * Scotland Meeting" belongs on Glasgow's page via its own eventMatchers, not
+ * in every other group's generic online list too). What's left is open to
+ * everyone in the UK, so local group pages show it alongside their local
+ * events rather than only on the homepage.
+ */
+export function filterOnlineEvents(
+  entries: LumaEntry[],
+  allEventMatchers: readonly (readonly string[])[]
+): LumaEntry[] {
+  return entries.filter((entry) => {
+    if (entry.event.geo_address_info) return false;
+    const haystack = normalise(entry.event.name);
+    return !allEventMatchers.some((matchers) =>
+      matchers.some((matcher) => haystack.includes(normalise(matcher)))
+    );
+  });
+}
+
 // An invalid/unrecognised IANA timezone throws RangeError from
 // toLocaleDateString/toLocaleTimeString — seen in practice from bad Luma
 // records — so fall back to Europe/London rather than 500ing the page.
