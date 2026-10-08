@@ -335,6 +335,18 @@ export const OUTLETS: Outlet[] = [
         date: "2026-09-18",
         medium: "Article",
       },
+      {
+        // theguardian.com blocks our fetch tooling outright, so this links
+        // the AOL syndication copy instead — same Robert Booth byline, same
+        // text. Quotes Joseph Miller at length, described as having
+        // suspended his Oxford doctorate "to run Pause AI's UK branch", plus
+        // PauseAI Global CEO Maxime Fournes. Covers the post-16-Sep surge in
+        // sign-ups and direct-action sentiment.
+        title: "'Pull the plug': protesters resort to direct action against AI firms",
+        url: "https://aol.co.uk/articles/pull-plug-protesters-resort-direct-060004000.html",
+        date: "2026-10-06",
+        medium: "Article",
+      },
     ],
   },
   {
@@ -758,6 +770,25 @@ export const OUTLETS: Outlet[] = [
         url: "https://www.islingtontribune.co.uk/article/tech-firms-urged-to-put-the-brakes-on-ai",
         date: "2025-06-27",
       },
+      {
+        // Names the "Pause AI" movement and quotes Kabir Kumar, identified
+        // as "a PauseAI protester", at the Bletchley Park AI Safety Summit
+        // demonstration.
+        medium: "Article",
+        title: "What happens in Bletchley, stays in\u2026",
+        url: "https://www.islingtontribune.co.uk/article/what-happens-in-bletchley-stays-in",
+        date: "2023-11-03",
+      },
+      {
+        // Covers a Pause AI mock trial outside Google DeepMind's King's Cross
+        // office. Quotes communications lead Tom Bibby ("if anyone builds
+        // it, everyone is going to die") and organiser Ella Hughes; mentions
+        // Joseph Miller without labelling him Pause AI.
+        medium: "Article",
+        title: "Stark warning from protesters calling for AI pause: It's going to turn out bad",
+        url: "https://www.islingtontribune.co.uk/article/stark-warning-from-protesters-calling-for-ai-pause-its-going-to-turn-out-bad",
+        date: "2025-07-04",
+      },
     ],
   },
   {
@@ -773,6 +804,23 @@ export const OUTLETS: Outlet[] = [
         url: "https://www.westminsterextra.co.uk/article/warning-governments-are-racing-ahead-with-ai",
         date: "2025-02-14",
       },
+      {
+        // Quotes Alistair Stewart, named as "one of the founders of Pause AI
+        // in this country", ahead of the Bletchley Park summit.
+        medium: "Article",
+        title: "New Pause AI demand for moratorium",
+        url: "https://www.westminsterextra.co.uk/article/new-pause-ai-demand-for-moratorium",
+        date: "2023-10-20",
+      },
+      {
+        // Calls the group "Pause AI UK" and quotes director Joseph Miller at
+        // length ("We are just asking not to develop the next generation of
+        // AI"), tying growth in sign-ups to the 16 Sep Downing Street protest.
+        medium: "Article",
+        title: "Extinction fear boost for Pause AI",
+        url: "https://www.westminsterextra.co.uk/article/extinction-fear-boost-for-pause-ai",
+        date: "2026-09-18",
+      },
     ],
   },
   {
@@ -787,6 +835,21 @@ export const OUTLETS: Outlet[] = [
         title: "AI concerns beginning to mirror Y2K-era as push for regulation continues",
         url: "https://krcrtv.com/news/nation-world/ai-concerns-beginning-to-mirror-y2k-era-as-push-for-regulation-continues",
         date: "2026-09-18",
+      },
+    ],
+  },
+  {
+    name: "The Japan Times",
+    articles: [
+      {
+        // Body text is Dambisa Moyo's syndicated Project Syndicate column —
+        // no PauseAI mention. Hero image caption does: "Demonstrators take
+        // part in a civic protest organized by the group PauseAI UK outside
+        // Downing Street in central London on Sept. 16." Credit: AFP-JIJI.
+        medium: "Article",
+        title: "Hedging the AI doomsday risk",
+        url: "https://www.japantimes.co.jp/commentary/2026/10/07/world/ai-doomsday-risk/",
+        date: "2026-10-07",
       },
     ],
   },
