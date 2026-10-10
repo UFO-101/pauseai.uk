@@ -27,7 +27,7 @@ export function discoverStaticRoutes(dir: string, base = ""): string[] {
 }
 
 // Real pages that should stay out of the sitemap (unlisted volunteer tools).
-export const HIDDEN_ROUTES = ["/tools", "/tools/collateral", "/tools/qr", "/trackers", "/trackers/2026-09-26-flyering"];
+export const HIDDEN_ROUTES = ["/tools", "/tools/collateral", "/tools/qr", "/trackers", "/trackers/2026-09-26-flyering", "/trackers/2026-10-10-flyering"];
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const staticRoutes = discoverStaticRoutes(join(process.cwd(), "app"))
