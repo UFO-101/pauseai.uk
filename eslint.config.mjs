@@ -58,10 +58,10 @@ const eslintConfig = defineConfig([
       "no-restricted-syntax": ["error", { selector: AIRTABLE_DOMAIN_PATTERN, message: "Airtable API calls must go through lib/server/airtable.ts." }, DATABASE_URL_RULE],
     },
   },
-  // The database's one connection, and the test helper that gives each test
-  // file its own database.
+  // The database's one connection, the test helper that gives each test
+  // file its own database, and the script that makes the local one.
   {
-    files: ["lib/server/db.ts", "lib/server/db.test.ts", "tests/database.ts", "playwright.config.ts"],
+    files: ["lib/server/db.ts", "lib/server/db.test.ts", "tests/database.ts", "playwright.config.ts", "scripts/db-reset.mjs"],
     rules: {
       "no-restricted-imports": "off",
       "no-restricted-syntax": [
