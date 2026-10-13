@@ -81,35 +81,44 @@ own.
 
 ### Make a database for the dev server
 
+Your local settings live in `.env.local`, which git ignores. Start from the
+example, and set the database URL:
+
 ```bash
-export NETLIFY_DB_URL=$(node scripts/fresh-database.mjs pauseai_dev --test-mp you@example.com)
+cp .env.example .env.local
+```
+
+In `.env.local`, `NETLIFY_DB_URL` names the database to use:
+
+| Postgres from | `NETLIFY_DB_URL` |
+| --- | --- |
+| Postgres.app (Mac) | `postgresql://localhost/pauseai_dev` (the example's) |
+| apt (Linux) | `postgresql:///pauseai_dev?host=/var/run/postgresql` |
+| Docker | `postgresql://postgres:postgres@localhost/pauseai_dev` |
+
+Set `TEST_MP_EMAIL` to your email too. Then make the database:
+
+```bash
+npm run db:reset
 ```
 
 This:
 
-- drops `pauseai_dev` if it exists, and creates it empty;
+- drops the database `NETLIFY_DB_URL` names, if it exists, and creates it
+  empty;
 - applies every migration in `netlify/database/migrations/`, in order, as
   Netlify does;
 - adds the test MP, Testy McTestface MP, found by postcode ZZ99ZZ, whose
-  letters go to the address you give;
-- prints the database's URL, which `NETLIFY_DB_URL` then holds.
+  letters go to `TEST_MP_EMAIL`.
 
 Run it again whenever you want a clean database, or after pulling a new
-migration. It wipes everything.
-
-To keep the same database between terminals, save the URL in `.env.local`
-(git ignores it), which `npm run dev` reads:
-
-```bash
-echo "NETLIFY_DB_URL=$(node scripts/fresh-database.mjs pauseai_dev --test-mp you@example.com)" >> .env.local
-```
-
-Only keep one `NETLIFY_DB_URL` line in it.
+migration. It wipes everything. It refuses a URL that isn't on your own
+machine, so it can't touch the live database.
 
 ### Looking inside
 
 ```bash
-psql "$NETLIFY_DB_URL"
+psql postgresql://localhost/pauseai_dev   # your NETLIFY_DB_URL
 ```
 
 ```sql
@@ -125,10 +134,10 @@ There are two ways to run it: with fake outside services, or with real ones.
 ### With fake outside services (start here)
 
 ```bash
-DATA_FIXTURES=1 OUTBOX_DIR=tmp/outbox POSTMARK_SERVER_TOKEN=fixture npm run dev
+npm run dev
 ```
 
-With `DATA_FIXTURES=1`, every call to an outside service gets a canned
+The example `.env.local` sets `DATA_FIXTURES=1`. With it, every call to an outside service gets a canned
 answer from `tests/fixtures/outside-services.ts` instead. Nothing leaves
 your machine. You need no keys:
 
@@ -138,12 +147,9 @@ your machine. You need no keys:
 | postcodes.io | Knows only SW1A 1AA (Cities of London and Westminster); every other postcode is "not found". ZZ99ZZ never asks it. |
 | Parliament's Members API | Two MPs: Diane Abbott and Rachel Blake |
 | Turnstile | Accepts every token |
-| Postmark | Accepts every email. With `OUTBOX_DIR`, writes each one to a JSON file there. |
+| Postmark | Accepts every email, without needing a token. With `OUTBOX_DIR`, writes each one to a JSON file there. |
 | Google login | Accepts the codes `fixture-staff` (staff@pauseai.uk) and `fixture-outsider` (a Gmail account) |
 | Airtable | Two made-up signatories |
-
-`POSTMARK_SERVER_TOKEN=fixture` is needed because the code checks a token
-is set before it calls Postmark. The fixture doesn't check its value.
 
 #### Send a letter to the test MP
 
@@ -168,7 +174,7 @@ real MPs up but not send to them. That's on purpose.
 To look them up with fixtures, add the two fixture MPs first:
 
 ```bash
-# Add CRON_SECRET=dev to the dev server's command, then:
+# With CRON_SECRET=dev in .env.local (restart the dev server after editing it):
 curl -X POST -H "Authorization: Bearer dev" localhost:3000/api/cron/sync-mps
 ```
 
@@ -176,11 +182,12 @@ Then postcode `SW1A 1AA` finds Rachel Blake.
 
 #### Log in to the staff interface
 
-The fixture Google can log you in as staff@pauseai.uk. Add these to the dev
-server's command:
+The fixture Google can log you in as staff@pauseai.uk. Set these in
+`.env.local`, and restart the dev server:
 
 ```bash
-GOOGLE_CLIENT_ID=fixture-client-id GOOGLE_CLIENT_SECRET=fixture
+GOOGLE_CLIENT_ID=fixture-client-id
+GOOGLE_CLIENT_SECRET=fixture
 ```
 
 Then:
@@ -195,14 +202,13 @@ login code: only the answers from Google are fixtures.
 
 ### With real outside services
 
-Leave out `DATA_FIXTURES`, copy `.env.example` to `.env.local`, and fill
-in the keys you need. Each is explained there. Things to know:
+Delete `DATA_FIXTURES` from `.env.local`, and fill in the keys you need. Each is explained there. Things to know:
 
 - **MPs.** The database starts with only the test MP. Copy the real MPs from
   Parliament (about 650, which takes a minute):
 
   ```bash
-  # With CRON_SECRET=dev set:
+  # With CRON_SECRET=dev in .env.local:
   curl -X POST -H "Authorization: Bearer dev" localhost:3000/api/cron/sync-mps
   ```
 
@@ -226,7 +232,7 @@ in the keys you need. Each is explained there. Things to know:
 None of these run under `npm run dev` by themselves. Call them by hand.
 
 **The daily jobs.** On Netlify, scheduled functions in `netlify/functions/`
-call these routes. Locally, with `CRON_SECRET=dev`:
+call these routes. Locally, with `CRON_SECRET=dev` in `.env.local`:
 
 ```bash
 curl -X POST -H "Authorization: Bearer dev" localhost:3000/api/cron/sync-mps
@@ -295,14 +301,14 @@ See [testing.md](testing.md) for the rules.
 
 | Problem | Fix |
 | --- | --- |
-| `NETLIFY_DB_URL is not set` | Export it in the terminal running the server, or put it in `.env.local` (section 3). |
+| `NETLIFY_DB_URL is not set` | Copy `.env.example` to `.env.local` (section 3). |
 | `psql: command not found` | Install the Postgres client, and make sure it's on your path. |
 | `connection to server on socket ... failed` | Postgres isn't running, or `PGHOST` points to the wrong place (section 3). |
 | `role "..." does not exist` | Create a superuser for yourself (`createuser --superuser`), or set `PGUSER`. |
 | `permission denied to create database` | Your Postgres user needs `CREATEDB`: `alter user <you> createdb;`. |
 | `relation "letters" does not exist` | The database is older than a migration. Make a fresh one (section 3). |
-| ZZ99ZZ says no MP found | The database has no test MP. Make it with `--test-mp`, or run the MP sync. |
-| The test MP shows "no email listed" | The test MP was added without an email. Remake the database with `--test-mp <email>`. |
-| Sending says it failed | Without `DATA_FIXTURES`, check `POSTMARK_SERVER_TOKEN`. With it, set `POSTMARK_SERVER_TOKEN=fixture`. |
+| ZZ99ZZ says no MP found | The database has no test MP. Set `TEST_MP_EMAIL` and run `npm run db:reset`, or run the MP sync. |
+| The test MP shows "no email listed" | The test MP was added without an email. Set `TEST_MP_EMAIL` and run `npm run db:reset`. |
+| Sending says it failed | Without `DATA_FIXTURES`, check `POSTMARK_SERVER_TOKEN`. |
 | Letters to a real MP are refused | Expected: outside production, only the test MP. |
 | `Executable doesn't exist` from Playwright | `npx playwright install chromium`. |

@@ -25,7 +25,8 @@ export class PostmarkError extends Error {}
 
 /** Sends one email on the transactional stream. Returns Postmark's MessageID. */
 export async function sendEmail(email: Email): Promise<string> {
-  const token = process.env.POSTMARK_SERVER_TOKEN;
+  // The fixture Postmark (DATA_FIXTURES=1) doesn't check the token.
+  const token = process.env.POSTMARK_SERVER_TOKEN || (process.env.DATA_FIXTURES === "1" ? "fixture" : "");
   if (!token) throw new PostmarkError("POSTMARK_SERVER_TOKEN is not set");
   const res = await outsideFetch(SEND_URL, {
     method: "POST",

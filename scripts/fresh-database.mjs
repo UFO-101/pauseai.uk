@@ -17,6 +17,13 @@ import { fileURLToPath } from "node:url";
 
 const MIGRATIONS = fileURLToPath(new URL("../netlify/database/migrations/", import.meta.url));
 
+/** Whether a database URL points at this machine: localhost, or a Unix socket. */
+export function isLocal(url) {
+  const { hostname, searchParams } = new URL(url);
+  const host = searchParams.get("host") ?? hostname;
+  return host === "" || host.startsWith("/") || ["localhost", "127.0.0.1", "[::1]", "::1"].includes(host);
+}
+
 /** Where a local server listens when PGHOST doesn't say. */
 export function defaultHost(port = process.env.PGPORT ?? "5432", places = ["/var/run/postgresql", "/tmp"]) {
   return places.find((dir) => existsSync(join(dir, `.s.PGSQL.${port}`))) ?? "localhost";
@@ -58,10 +65,22 @@ export function dropDatabase(name) {
  * migrations must work either way.
  */
 export function freshDatabase(name, { singleTransaction = false } = {}) {
+  return resetDatabase(databaseUrl(name), { singleTransaction });
+}
+
+/**
+ * Drops and recreates the database `url` names, on the server it names, and
+ * applies the migrations. Returns `url`.
+ */
+export function resetDatabase(url, { singleTransaction = false } = {}) {
+  const target = new URL(url);
+  const name = decodeURIComponent(target.pathname.slice(1));
   if (!/^[a-z0-9_]+$/.test(name)) throw new Error(`Bad database name: ${name}`);
-  dropDatabase(name);
-  psql(databaseUrl("postgres"), "-c", `CREATE DATABASE "${name}"`);
-  const url = databaseUrl(name);
+  // The same server, its "postgres" database, to drop and create from.
+  const server = new URL(url);
+  server.pathname = "/postgres";
+  psql(server.toString(), "-c", `DROP DATABASE IF EXISTS "${name}" WITH (FORCE)`);
+  psql(server.toString(), "-c", `CREATE DATABASE "${name}"`);
   for (const file of migrationFiles()) psql(url, ...(singleTransaction ? ["-1"] : []), "-f", file);
   return url;
 }

@@ -27,6 +27,12 @@ describe("sendEmail", () => {
     expect(await sendEmail(EMAIL)).toMatch(/^[0-9a-f-]{36}$/);
   });
 
+  it("needs no token with fixtures on", async () => {
+    vi.stubEnv("POSTMARK_SERVER_TOKEN", "");
+    vi.stubEnv("DATA_FIXTURES", "1");
+    expect(await sendEmail(EMAIL)).toMatch(/^[0-9a-f-]{36}$/);
+  });
+
   it("throws when Postmark refuses, answers oddly, or there's no token", async () => {
     server.use(http.post(POSTMARK, () => HttpResponse.json({ ErrorCode: 406, Message: "Inactive recipient" }, { status: 422 })));
     await expect(sendEmail(EMAIL)).rejects.toThrow("422 406 Inactive recipient");

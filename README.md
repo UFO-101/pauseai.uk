@@ -21,22 +21,26 @@ node --version   # v22 or later
 psql --version   # psql (PostgreSQL) 18.x
 ```
 
-### 2. Run the site
+### 2. Set up and run
 
 ```bash
 npm install
-
-# A fresh database, with the test MP. Running it again wipes the database.
-export NETLIFY_DB_URL=$(node scripts/fresh-database.mjs pauseai_dev --test-mp you@example.com)
-
-# Dev server at http://localhost:3000, with outside services faked.
-# Emails are written to tmp/outbox/ instead of sent.
-DATA_FIXTURES=1 OUTBOX_DIR=tmp/outbox POSTMARK_SERVER_TOKEN=fixture npm run dev
+cp .env.example .env.local   # your local settings: edit it, see below
+npm run db:reset             # makes the database NETLIFY_DB_URL names
+npm run dev                  # http://localhost:3000
 ```
+
+In `.env.local`:
+
+- **`NETLIFY_DB_URL`** is your local database. The example suits Postgres.app on a Mac. On Linux, use `postgresql:///pauseai_dev?host=/var/run/postgresql`.
+- **`TEST_MP_EMAIL`**: your email. Letters to the test MP go there.
+- **`DATA_FIXTURES=1`** fakes every outside service, so you need no other keys. Emails are written to files in `tmp/outbox/` instead of sent.
 
 Try Email your MP at http://localhost:3000/email-your-mp-v2 with postcode ZZ99ZZ. The confirmation link is in the newest file in `tmp/outbox/`.
 
-For real data, leave out `DATA_FIXTURES`, then `cp .env.example .env.local` and fill it in: [.env.example](.env.example) lists every environment variable, and Netlify needs the same ones. [docs/development.md](docs/development.md) covers the rest: installing Postgres, what the fixtures fake, logging in as staff, the daily jobs and webhooks, and running the Playwright suites.
+`npm run db:reset` wipes the database and makes it again, with the latest migrations. It only works on a database on your own machine.
+
+To use real services, delete `DATA_FIXTURES` and fill in the rest of `.env.local`. [.env.example](.env.example) explains each variable; Netlify needs the same ones. [docs/development.md](docs/development.md) covers the rest: what the fixtures fake, logging in as staff, the daily jobs and webhooks, and running the Playwright suites.
 
 ## Tests
 
@@ -47,8 +51,6 @@ npm run test:behaviour   # Playwright, on a fixture build
 npm run test:visual      # Playwright, the local build against pauseai.uk
 npm run lint
 ```
-
-`npm run build` runs the unit tests first, so a failing test blocks a deploy. See [docs/testing.md](docs/testing.md).
 
 ## Docs
 
