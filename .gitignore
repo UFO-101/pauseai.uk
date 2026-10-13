@@ -45,3 +45,4 @@ next-env.d.ts
 # Local temporary files
 tmp/
 /.vitest/
+orca.yaml
