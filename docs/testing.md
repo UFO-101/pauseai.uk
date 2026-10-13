@@ -10,7 +10,7 @@ here is `plans/test-coverage.md`.
 | Logic | Vitest, `node` project | `lib/`, `app/api/`, `sitemap.ts`, `next.config.ts` | `*.test.ts` (or `.tsx`) next to the code |
 | Components | Vitest, `browser` project (real Chromium) | every component | `*.browser.test.tsx` next to the component |
 | Pages and flows | Playwright, `behaviour` project | every route loads cleanly; things that span pages | `tests/behaviour/` |
-| Appearance | Playwright, `visual` projects | the local build against the live site, every route, desktop and mobile | `tests/visual/` |
+| Appearance | Playwright, `public-vs-live` projects | public pages: the local build against the live site, every route but `/staff`, desktop and mobile | `tests/public-vs-live/` |
 
 **Vitest Node** is for anything that doesn't need a DOM. **Vitest Browser
 Mode** renders a component on its own in real Chromium, so layout, canvas,
@@ -124,6 +124,10 @@ not a mock.
   fresh by the `webServer` command. Behaviour tests that need MPs call
   `syncFixtureMps()` (`tests/behaviour/setup.ts`), which runs the nightly
   sync's route against the Parliament fixture.
+- **Staff screens** aren't in the public-vs-live diff: they need a login,
+  and their data differs between hosts. Instead, the behaviour suite
+  attaches a full-page screenshot of each, at desktop and phone widths, to
+  the Playwright report (`npm run test:report`) for a person to look over.
 - **Staff screens** are tested by logging in through the fixture Google
   (`tests/behaviour/staff.spec.ts`). The fixture's ID tokens were signed once
   for the client `fixture-client-id`, and the key that signed them wasn't
@@ -143,7 +147,9 @@ not a mock.
 - A new page needs nothing extra: the route list picks it up. A new dynamic
   route (`[slug]`) needs an example in `tests/routes.ts`, or
   `tests/routes.test.ts` fails.
-- Run the visual diff on any PR that changes layout or CSS.
+- Run `npm run test:public-vs-live` on any PR that changes layout or CSS,
+  and look over the staff screenshots in the behaviour report if it changes
+  the staff interface.
 
 ## Commands
 
@@ -153,19 +159,19 @@ npm run test:browser      # Vitest browser project
 npm run test:coverage     # both, with the coverage gate (what CI runs)
 npm run test:watch        # Vitest in watch mode
 npm run test:behaviour    # Playwright behaviour tests, on fixture data
-npm run test:visual       # Playwright visual diff against pauseai.uk
-npm run test:visual:report
+npm run test:public-vs-live  # Playwright: public pages, local build against pauseai.uk
+npm run test:report          # open the last Playwright report
 ```
 
 - `npm run build` runs only the Node project, because Netlify's build has no
   browser.
 - The Playwright suites build and start the site themselves, or reuse a
-  server already on port 3000 (except in CI). The visual diff needs a build
+  server already on port 3000 (except in CI). The public-vs-live diff needs a build
   with live data (`DATA_FIXTURES=0`), and the behaviour suite needs one with
   fixtures, so stop any running server when switching between them.
-- The visual diff also follows the Email your MP form on both hosts: ZZ99ZZ,
+- The public-vs-live diff also follows the Email your MP form on both hosts: ZZ99ZZ,
   the drafted letter, and the confirm box, never sending
-  (`tests/visual/email-your-mp.spec.ts`). Its local build gets a database
+  (`tests/public-vs-live/email-your-mp.spec.ts`). Its local build gets a database
   with only the test MP in it. Live needs the MP sync run and
   `TEST_MP_EMAIL` set.
 - Run one Playwright file with `npm run test:behaviour -- <name>`, or point at

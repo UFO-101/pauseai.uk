@@ -3,11 +3,12 @@ import { OUTBOX_DIR } from "./tests/behaviour/setup";
 
 // Two suites:
 //
-// - "visual" / "visual-mobile" compare the live site against a local build,
-//   page by page, at desktop and phone widths — not a stored-baseline
+// - "public-vs-live" / "public-vs-live-mobile" compare the public pages of
+//   the live site against a local build, page by page, at desktop and phone
+//   widths (never /staff, which needs a login) — not a stored-baseline
 //   snapshot test. LIVE_URL/LOCAL_URL are overridable so it can also compare
 //   a preview deploy against local, or two arbitrary hosts. It needs the
-//   local build to use live data too, so `npm run test:visual` sets
+//   local build to use live data too, so `npm run test:public-vs-live` sets
 //   DATA_FIXTURES=0.
 // - "behaviour" drives the local build directly to assert interaction that a
 //   pixel diff cannot see: every route loading cleanly, scrolling, URL
@@ -19,8 +20,8 @@ const DATA_FIXTURES = process.env.DATA_FIXTURES ?? "1";
 // built. scripts/fresh-database.mjs prints its URL, for the build and the
 // server to use. Never the real one.
 const BEHAVIOUR_DATABASE = "pauseai_behaviour";
-// The visual diff's local build has its own, with only the test MP in it:
-// enough for tests/visual/email-your-mp.spec.ts, without copying every MP
+// The public-vs-live diff's local build has its own, with only the test MP in it:
+// enough for tests/public-vs-live/email-your-mp.spec.ts, without copying every MP
 // from Parliament.
 const VISUAL_DATABASE = "pauseai_visual";
 // Only so the local test MP has an email, like live's, and shows the form.
@@ -38,13 +39,13 @@ export default defineConfig({
   },
   projects: [
     {
-      name: "visual",
-      testDir: "./tests/visual",
+      name: "public-vs-live",
+      testDir: "./tests/public-vs-live",
       use: { ...devices["Desktop Chrome"], viewport: { width: 1280, height: 800 } },
     },
     {
-      name: "visual-mobile",
-      testDir: "./tests/visual",
+      name: "public-vs-live-mobile",
+      testDir: "./tests/public-vs-live",
       // Chromium at an iPhone's size and touch settings, so it can share the
       // one installed browser.
       use: { ...devices["iPhone 13"], defaultBrowserType: "chromium" },

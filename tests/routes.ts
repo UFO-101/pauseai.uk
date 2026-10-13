@@ -1,4 +1,5 @@
-// Every page on the site, for the Playwright smoke test and visual diff.
+// Every page on the site, for the Playwright smoke test and the public-vs-live
+// diff (which leaves out /staff).
 //
 // Static routes come from the filesystem (the same walk app/sitemap.ts does),
 // including the unlisted tools and trackers. Dynamic routes are represented by

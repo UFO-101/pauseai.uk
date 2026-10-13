@@ -263,7 +263,7 @@ npm test                 # Vitest, Node: logic, routes, database code
 npm run test:browser     # Vitest, real Chromium: components
 npm run test:coverage    # both, held at 100% per file, as CI runs it
 npm run test:behaviour   # Playwright: every page and the main flows
-npm run test:visual      # Playwright: the local build against pauseai.uk
+npm run test:public-vs-live   # Playwright: public pages, the local build against pauseai.uk
 npm run lint
 npm run check:airtable-filter   # outside services and the database in their one file
 npm run check:staff-auth        # every staff page, route and action calls requireStaff()

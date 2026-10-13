@@ -102,6 +102,44 @@ test("staff log in, set a status that shows on /campaigns, add a signer, and log
   await expect(page).toHaveURL(`${BASE}/staff/login`);
 });
 
+// Not a pass or fail: a full-page screenshot of each staff screen, at desktop
+// and phone widths, attached to the Playwright report for a person to look
+// over. The public pages are diffed against live (tests/public-vs-live/); the
+// staff interface can't be, as it needs a login.
+test("screenshots of each staff screen, for the report", async ({ page }, testInfo) => {
+  const shoot = async (name: string) => {
+    for (const [width, height, size] of [[1280, 800, "desktop"], [390, 844, "mobile"]] as const) {
+      await page.setViewportSize({ width, height });
+      await testInfo.attach(`${name} (${size}).png`, { body: await page.screenshot({ fullPage: true, animations: "disabled" }), contentType: "image/png" });
+    }
+    await page.setViewportSize({ width: 1280, height: 800 });
+  };
+
+  await page.goto(`${BASE}/staff/login`);
+  await shoot("login");
+
+  await logIn(page);
+  await expect(page).toHaveURL(`${BASE}/staff`);
+  await shoot("politicians");
+
+  await page.getByRole("link", { name: "Testy McTestface MP" }).click();
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Testy McTestface MP");
+  await shoot("politician");
+
+  for (const [path, name] of [
+    ["/staff/politicians/new", "add signer"],
+    ["/staff/letters", "letters"],
+    ["/staff/mp-sync", "MP syncs"],
+    ["/staff/import", "import"],
+    ["/staff/changes", "changes"],
+  ] as const) {
+    await page.goto(`${BASE}${path}`);
+    await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+    await shoot(name);
+  }
+  expect(testInfo.attachments.filter((a) => a.name.endsWith(".png"))).toHaveLength(16);
+});
+
 test("staff pages are kept out of search and the sitemap", async ({ page, request }) => {
   await page.goto(`${BASE}/staff/login`);
   await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", /noindex/);
