@@ -1,7 +1,7 @@
 # Test coverage plan
 
-Written 2026-10-13. Status: phases 1 and 2 done on 2026-10-13 (see git log);
-phase 3 in progress.
+Written 2026-10-13. Status: all three phases done on 2026-10-13 (see git log).
+Every file is now held at 100% per file.
 
 ## Goal
 
@@ -40,6 +40,7 @@ Today: 27% of lines overall. Pages and components are at 0%.
 
 - Browser Mode tests for every component, to 100% per file.
 - Split `LocalGroupEvents`, which is async, into a loader plus a component.
+  (Not needed in the end: its test awaits it and renders the result.)
 - Keep Playwright only for flows across pages.
 - Raise the global threshold to 100%.
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import type { CSSProperties } from "react";
 import Link from "next/link";
 import { geoMercator, geoPath } from "d3-geo";
@@ -8,18 +8,29 @@ import { feature } from "topojson-client";
 import type { FeatureCollection, Geometry } from "geojson";
 import type { Topology } from "topojson-specification";
 import { localGroups } from "@/lib/content/local-groups";
+import { connectorPath } from "@/lib/map-connector";
 
 const MAP_W = 380;
 const MAP_H = 608;
-const PIN_CLEARANCE = 9;
 
 // Matches the breakpoint the stylesheet uses to drop the three-column
 // arrangement. Below it the cards stand on their own, so the map data is
 // never fetched and no connectors are drawn.
 const DESKTOP_QUERY = "(min-width: 1024px)";
 
+function subscribeToDesktop(onChange: () => void) {
+  const mq = window.matchMedia(DESKTOP_QUERY);
+  mq.addEventListener("change", onChange);
+  return () => mq.removeEventListener("change", onChange);
+}
+
+function isDesktopNow() {
+  return window.matchMedia(DESKTOP_QUERY).matches;
+}
+
 export default function LocalGroupsMap() {
-  const [isDesktop, setIsDesktop] = useState(false);
+  // False on the server and during hydration, then whether the window is wide enough.
+  const isDesktop = useSyncExternalStore(subscribeToDesktop, isDesktopNow, () => false);
   const [ukFeature, setUkFeature] = useState<FeatureCollection<Geometry> | null>(null);
   const [links, setLinks] = useState<{ name: string; d: string }[]>([]);
   const [hovered, setHovered] = useState<string | null>(null);
@@ -27,14 +38,6 @@ export default function LocalGroupsMap() {
   const wrapRef = useRef<HTMLDivElement | null>(null);
   const cardRefs = useRef<Record<string, HTMLElement | null>>({});
   const pinRefs = useRef<Record<string, SVGCircleElement | null>>({});
-
-  useEffect(() => {
-    const mq = window.matchMedia(DESKTOP_QUERY);
-    const update = () => setIsDesktop(mq.matches);
-    update();
-    mq.addEventListener("change", update);
-    return () => mq.removeEventListener("change", update);
-  }, []);
 
   useEffect(() => {
     if (!isDesktop || ukFeature) return;
@@ -66,49 +69,37 @@ export default function LocalGroupsMap() {
         ukFeature
       )
     : null;
-  const path = projection ? geoPath(projection) : null;
+  const path = projection && geoPath(projection);
 
   // The cards are placed by CSS grid and the pins by the map projection, so
   // the only reliable way to join the two is to measure both after layout
   // and draw the connectors in a pixel-space overlay.
   const measure = useCallback(() => {
-    const wrap = wrapRef.current;
-    if (!wrap) return;
-    const w = wrap.getBoundingClientRect();
-    const next: { name: string; d: string }[] = [];
-    for (const localGroup of localGroups) {
-      const card = cardRefs.current[localGroup.name];
-      const pin = pinRefs.current[localGroup.name];
-      if (!card || !pin) continue;
-      const c = card.getBoundingClientRect();
-      const p = pin.getBoundingClientRect();
-      const isLeft = localGroup.side === "left";
-      const cx = (isLeft ? c.right : c.left) - w.left;
-      const cy = c.top + c.height / 2 - w.top;
-      const px = p.left + p.width / 2 - w.left;
-      const py = p.top + p.height / 2 - w.top;
-      const stubX = cx + (isLeft ? 14 : -14);
-      // Stop the line short of the dot: the connectors are painted over the
-      // map, so running them to the pin's centre would bisect it.
-      const dx = px - stubX;
-      const dy = py - cy;
-      const dist = Math.hypot(dx, dy) || 1;
-      const endX = px - (dx / dist) * PIN_CLEARANCE;
-      const endY = py - (dy / dist) * PIN_CLEARANCE;
-      next.push({ name: localGroup.name, d: `M${cx},${cy} H${stubX} L${endX},${endY}` });
-    }
-    setLinks(next);
+    const w = wrapRef.current!.getBoundingClientRect();
+    setLinks(
+      localGroups.flatMap((localGroup) => {
+        const card = cardRefs.current[localGroup.name];
+        const pin = pinRefs.current[localGroup.name];
+        // When the window narrows past the breakpoint, React removes the pins
+        // before this effect's cleanup stops the ResizeObserver, so a resize
+        // in between finds no pin.
+        if (!card || !pin) return [];
+        return [
+          {
+            name: localGroup.name,
+            d: connectorPath(card.getBoundingClientRect(), pin.getBoundingClientRect(), w, localGroup.side === "left"),
+          },
+        ];
+      }),
+    );
   }, []);
 
   useEffect(() => {
-    if (!isDesktop || !ukFeature) {
-      setLinks([]);
-      return;
-    }
+    if (!isDesktop || !ukFeature) return;
     measure();
     const ro = new ResizeObserver(measure);
-    if (wrapRef.current) ro.observe(wrapRef.current);
-    for (const el of Object.values(cardRefs.current)) if (el) ro.observe(el);
+    ro.observe(wrapRef.current!);
+    for (const el of Object.values(cardRefs.current)) ro.observe(el!);
     window.addEventListener("resize", measure);
     return () => {
       ro.disconnect();
@@ -118,7 +109,7 @@ export default function LocalGroupsMap() {
 
   return (
     <div className="local-groups-map" ref={wrapRef}>
-      {links.length > 0 && (
+      {isDesktop && ukFeature && links.length > 0 && (
         <svg className="local-groups-map-links" aria-hidden="true">
           {links.map((l) => (
             <path key={l.name} d={l.d} className={`local-groups-map-link ${hovered === l.name ? "active" : ""}`} />
@@ -162,15 +153,14 @@ export default function LocalGroupsMap() {
           nothing below, including the section anchors further down the page.
           The stylesheet hides it below the three-column breakpoint. */}
       <div className="local-groups-map-canvas">
-        {isDesktop && ukFeature && path && projection && (
+        {isDesktop && path && (
             <svg viewBox={`0 0 ${MAP_W} ${MAP_H}`} preserveAspectRatio="xMidYMid meet" role="img" aria-label="Map of the UK showing where PauseAI local groups are based">
-              {ukFeature.features.map((f, i) => (
+              {ukFeature!.features.map((f, i) => (
                 <path key={i} d={path(f) || undefined} className="uk-map-outline" />
               ))}
               {localGroups.map((localGroup) => {
-                const point = projection([localGroup.lng, localGroup.lat]);
-                if (!point) return null;
-                const [x, y] = point;
+                // Mercator projects every point on Earth, so this is never null.
+                const [x, y] = projection!([localGroup.lng, localGroup.lat])!;
                 const isActive = hovered === localGroup.name;
                 return (
                   // The card is the accessible control for each local group; the

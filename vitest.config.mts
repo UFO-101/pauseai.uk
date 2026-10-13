@@ -36,16 +36,47 @@ export default defineConfig({
         // Next's client modules (next/link, next/image) read build-time
         // flags from process.env, which only exists when Next compiles them.
         define: { "process.env": JSON.stringify({ NODE_ENV: "test" }) },
-        // Pre-bundle these up front. If Vite discovers one mid-run it
-        // re-optimises and can load a second copy of React into the page.
+        // Next's own ES module builds of these. The default entry points are
+        // CommonJS, and Vite's interop around a CommonJS import shows up in
+        // coverage as a branch, taken one way or the other depending on how
+        // Vite happened to bundle the dependency.
+        resolve: {
+          alias: {
+            "next/link": path.resolve(import.meta.dirname, "node_modules/next/dist/esm/client/link.js"),
+            "next/image": path.resolve(import.meta.dirname, "node_modules/next/dist/esm/shared/lib/image-external.js"),
+            "next/script": path.resolve(import.meta.dirname, "node_modules/next/dist/esm/client/script.js"),
+          },
+        },
+        // Pre-bundle every browser dependency up front. If Vite discovers one
+        // mid-run it re-optimises, which can load a second copy of React into
+        // the page or lose track of the test runner.
         optimizeDeps: {
-          include: ["react", "react-dom", "react-dom/client", "react/jsx-dev-runtime", "next/link", "next/image", "next/navigation"],
+          include: [
+            "react",
+            "react-dom",
+            "react-dom/client",
+            "react-dom/server",
+            "react/jsx-dev-runtime",
+            "next/link",
+            "next/image",
+            "next/navigation",
+            "next/script",
+            "vitest-browser-react",
+            "d3-geo",
+            "topojson-client",
+            "pdf-lib",
+            "jszip",
+            "qrcode-generator",
+            "jsqr",
+          ],
         },
         test: {
           name: "browser",
           include: ["**/*.browser.test.{ts,tsx}"],
           exclude: ["**/node_modules/**", "tests/**", "plans/**", "tmp/**"],
           setupFiles: ["./vitest.setup.browser.tsx"],
+          // Drawing and exporting images is slow when every file runs at once, so waits get longer than the default second.
+          expect: { poll: { timeout: 5000 } },
           browser: {
             enabled: true,
             provider: playwright(),
@@ -73,20 +104,8 @@ export default defineConfig({
       // (scripts/check-no-coverage-ignores.mjs).
       exclude: ["**/*.test.{ts,tsx}", "**/page.tsx", "**/layout.tsx"],
       reporter: ["text-summary", "json-summary", "html"],
-      // The logic layer is held at 100%. The overall numbers are a ratchet:
-      // raised as component tests land, never lowered, until every file is
-      // at 100 (then `perFile: true` with 100 everywhere).
-      thresholds: {
-        lines: 42,
-        branches: 43,
-        functions: 32,
-        statements: 42,
-        "lib/**": { 100: true },
-        "app/api/**": { 100: true },
-        "app/{sitemap,robots}.ts": { 100: true },
-        "tests/fixtures/**": { 100: true },
-        "next.config.ts": { 100: true },
-      },
+      // Every file, on its own, at 100%.
+      thresholds: { 100: true, perFile: true },
     },
   },
 });

@@ -7,7 +7,8 @@ import { DEFAULT_TEMPLATE_ID, defaultValues, getTemplate, TEMPLATES, type Drawab
 import { DEFAULT_THEME_ID } from "@/lib/collateral/themes";
 
 // Caption is a gallery slide (photo-forward, no logo), so single designs offer the other layouts and point to the gallery.
-// Brush is suspended for now: its code stays in templates.ts so it can come back.
+// Brush is suspended for now: its code stays in templates.ts so it can come back. Its "toggle" fields will need a
+// checkbox in DesignControls again; the last version with one is in git history (before October 2026).
 const HIDDEN_TEMPLATE_IDS = ["caption", "brush"];
 // Event goes last, so "fill in from one of our events" can sit right under it (see DesignControls).
 export const DESIGN_TEMPLATES = TEMPLATES.filter((t) => !HIDDEN_TEMPLATE_IDS.includes(t.id)).sort(
@@ -107,8 +108,8 @@ export async function designFromData(data: DesignData): Promise<{ design: Design
     try {
       if (data.photo.kind === "library") {
         const id = data.photo.id;
-        const item = LIBRARY_PHOTOS.find((p) => p.id === id);
-        if (!item) throw new Error("Unknown library photo");
+        // parseProject only accepts ids in the library.
+        const item = LIBRARY_PHOTOS.find((p) => p.id === id)!;
         photo = { drawable: await loadImage(item.src), name: item.label, source: { kind: "library", id } };
       } else {
         photo = { drawable: await loadDataUrl(data.photo.dataUrl), name: data.photo.name, source: { kind: "upload" } };

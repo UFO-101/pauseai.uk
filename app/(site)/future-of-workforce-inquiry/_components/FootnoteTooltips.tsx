@@ -29,12 +29,10 @@ export default function FootnoteTooltips() {
       tip.style.top = `${top}px`;
     };
 
-    const note = (sup: Element) => document.getElementById(`fn${sup.textContent?.trim()}`);
+    const note = (sup: Element) => document.getElementById(`fn${sup.textContent!.trim()}`);
 
-    const show = (sup: Element) => {
+    const show = (sup: Element, fn: Element) => {
       clearTimeout(hideTimer);
-      const fn = note(sup);
-      if (!fn) return;
       tip.innerHTML = fn.innerHTML;
       tip.classList.add("fn-tooltip--visible");
       reposition(sup);
@@ -44,10 +42,15 @@ export default function FootnoteTooltips() {
     };
     const keep = () => clearTimeout(hideTimer);
 
-    const refs = Array.from(document.querySelectorAll("sup")).filter((sup) => note(sup));
-    const handlers = refs.map((sup) => {
+    // Only markers with a note get a tooltip.
+    const notes = Array.from(document.querySelectorAll("sup")).flatMap((sup) => {
+      const fn = note(sup);
+      return fn ? [{ sup, fn }] : [];
+    });
+    const refs = notes.map((n) => n.sup);
+    const handlers = notes.map(({ sup, fn }) => {
       sup.classList.add("fn-ref");
-      const enter = () => show(sup);
+      const enter = () => show(sup, fn);
       sup.addEventListener("mouseenter", enter);
       sup.addEventListener("mouseleave", hide);
       return enter;

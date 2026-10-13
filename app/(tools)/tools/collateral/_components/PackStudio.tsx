@@ -46,8 +46,7 @@ function PackThumb(props: {
   const { format, options, issues, active, onSelect, onIssues } = props;
   const ref = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
-    if (!ref.current) return;
-    onIssues(renderCollateral(ref.current, { ...options, format, maxSide: THUMB_MAX_SIDE, lint: true }).issues);
+    onIssues(renderCollateral(ref.current!, { ...options, format, maxSide: THUMB_MAX_SIDE, lint: true }).issues);
   });
   const warnings = issues.filter((i) => i.level === "warn").length;
   return (
@@ -89,9 +88,9 @@ export default function PackStudio({ events }: { events: CalendarEvent[] }) {
   const currentPhoto = design.photo?.drawable ?? null;
   const viewFor = (id: string) => (viewsState.photo === currentPhoto ? viewsState.views[id] : undefined) ?? DEFAULT_PHOTO_VIEW;
   const activeView = active ? viewFor(active.id) : DEFAULT_PHOTO_VIEW;
+  // Only the preview and crop controls call this, and they are only shown for an active format.
   function setActiveView(fn: (v: PhotoView) => PhotoView) {
-    if (!active) return;
-    const id = active.id;
+    const id = active!.id;
     setViewsState((s) => {
       const views = s.photo === currentPhoto ? s.views : {};
       return { photo: currentPhoto, views: { ...views, [id]: fn(views[id] ?? DEFAULT_PHOTO_VIEW) } };
@@ -172,9 +171,10 @@ export default function PackStudio({ events }: { events: CalendarEvent[] }) {
 
   // The large preview of the format being adjusted. Its checks come from the thumbnails.
   useEffect(() => {
+    // No canvas when no format is ticked.
     const canvas = canvasRef.current;
-    if (!canvas || !logo || !fontsReady || !active) return;
-    renderCollateral(canvas, { ...optionsFor(active.id), format: active, maxSide: PREVIEW_MAX_SIDE });
+    if (!canvas || !logo || !fontsReady) return;
+    renderCollateral(canvas, { ...optionsFor(active!.id), format: active!, maxSide: PREVIEW_MAX_SIDE });
   });
 
   const onIssues = useCallback((id: string, found: LintIssue[]) => {
@@ -185,8 +185,8 @@ export default function PackStudio({ events }: { events: CalendarEvent[] }) {
     setSelected((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
   }
 
+  // The download button is disabled until the logo and fonts have loaded, and while no format is ticked.
   async function onDownloadPack() {
-    if (!logo || formats.length === 0) return;
     setBusy(true);
     setMessage(null);
     try {
@@ -260,7 +260,7 @@ export default function PackStudio({ events }: { events: CalendarEvent[] }) {
   const { design: designIssues, own } = splitByScope(formats.map((f) => issuesById[f.id] ?? []));
   const ownIssues = Object.fromEntries(formats.map((f, i) => [f.id, own[i]]));
   const needAttention = formats.filter((f) => ownIssues[f.id].some((i) => i.level === "warn")).length;
-  const activeIssues = active ? (ownIssues[active.id] ?? []) : [];
+  const activeIssues = active ? ownIssues[active.id] : [];
   const designWarnings = designIssues.filter((i) => i.level === "warn").length;
   const summary =
     formats.length === 0
@@ -289,7 +289,7 @@ export default function PackStudio({ events }: { events: CalendarEvent[] }) {
                 format={f}
                 options={optionsFor(f.id)}
                 issues={ownIssues[f.id]}
-                active={f.id === active?.id}
+                active={f.id === active!.id}
                 onSelect={() => setActiveId(f.id)}
                 onIssues={(found) => onIssues(f.id, found)}
               />

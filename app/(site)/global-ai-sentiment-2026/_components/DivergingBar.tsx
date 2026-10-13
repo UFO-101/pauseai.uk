@@ -69,9 +69,9 @@ export default function DivergingBar({ label, row, meta, rank, showNotSure = tru
   ];
 
   function showTooltip(segment: HTMLElement, option: ResponseOption, value: number) {
-    const wrapRect = trackRef.current?.getBoundingClientRect();
+    // Only called from the bar's own segments, so the track is mounted.
+    const wrapRect = trackRef.current!.getBoundingClientRect();
     const segRect = segment.getBoundingClientRect();
-    if (!wrapRect) return;
     const x = segRect.left + segRect.width / 2 - wrapRect.left;
     const y = segRect.top - wrapRect.top;
     const align = x < TOOLTIP_HALF_WIDTH ? "start" : x > wrapRect.width - TOOLTIP_HALF_WIDTH ? "end" : "center";
@@ -83,7 +83,7 @@ export default function DivergingBar({ label, row, meta, rank, showNotSure = tru
   useEffect(() => {
     if (!tooltip) return;
     function handleOutside(e: MouseEvent | TouchEvent) {
-      if (trackRef.current && !trackRef.current.contains(e.target as Node)) {
+      if (!trackRef.current!.contains(e.target as Node)) {
         setTooltip(null);
       }
     }

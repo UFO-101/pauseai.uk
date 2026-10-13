@@ -6,6 +6,7 @@ import { feature } from "topojson-client";
 import type { FeatureCollection, Geometry } from "geojson";
 import type { Topology } from "topojson-specification";
 import { COUNTRIES, RESPONSE_OPTIONS, slowOrStopPct, type ResponseKey, type CountryRow, type ResponseOption } from "@/lib/content/aiSentiment2026";
+import { domainPosition, legendGradient, metricValue, rampColor, rampStopsFor, type MapMetric } from "@/lib/sentiment-map";
 import DivergingBar, { BarAxisLabels } from "./DivergingBar";
 
 // Tooltip order: the three "against" options (braced together with their
@@ -19,77 +20,8 @@ const REST_OPTIONS: ResponseOption[] = REST_KEYS.map((key) => RESPONSE_OPTIONS.f
 const WIDTH = 960;
 const HEIGHT = 500;
 
-// Sequential ramps, light -> dark, monotone lightness. Used for map
-// magnitude only, so each is exempt from the categorical CVD validator per
-// the dataviz skill. Three hue families rather than one: every "opposed to
-// rapid development" metric (including the combined total) shares the
-// terracotta ramp, since dark consistently means "more opposed" across all
-// of them. "Continue rapidly" is the one metric on the opposite side of the
-// question, so it gets its own blue ramp (anchored on its own categorical
-// colour, #1868a0) - otherwise dark orange would appear on that tab too and
-// read as "more opposed" when it actually means "more want it fast", the
-// opposite of what the colour means everywhere else on the page. "Not sure"
-// isn't on the spectrum at all, so it gets a neutral ramp of its own too.
-const WARM_RAMP_STOPS: [number, number, number][] = [
-  [251, 234, 217], // #FBEAD9
-  [243, 205, 166], // #F3CDA6
-  [233, 173, 121], // #E9AD79
-  [219, 137, 82], // #DB8952
-  [229, 114, 38], // #e57226 (site accent)
-  [168, 78, 26], // #A84E1A (site accent-strong)
-  [122, 54, 16], // #7A3610
-];
-
-const BLUE_RAMP_STOPS: [number, number, number][] = [
-  [230, 240, 247], // #E6F0F7
-  [196, 219, 235], // #C4DBEB
-  [148, 189, 216], // #94BDD8
-  [88, 152, 191], // #5898BF
-  [24, 104, 160], // #1868A0 (continue_rapidly categorical colour)
-  [14, 68, 107], // #0E446B
-];
-
-const GRAY_RAMP_STOPS: [number, number, number][] = [
-  [247, 244, 240], // #F7F4F0
-  [225, 217, 206], // #E1D9CE
-  [198, 187, 172], // #C6BBAC
-  [172, 158, 141], // #AC9E8D
-  [156, 144, 134], // #9C9086 (not_sure categorical colour)
-  [110, 99, 88], // #6E6358
-];
-
-function rampStopsFor(metric: MapMetric): [number, number, number][] {
-  if (metric === "continue_rapidly_pct") return BLUE_RAMP_STOPS;
-  if (metric === "not_sure_pct") return GRAY_RAMP_STOPS;
-  return WARM_RAMP_STOPS;
-}
-
-function rampColor(t: number, stops: [number, number, number][]): string {
-  const clamped = Math.max(0, Math.min(1, t));
-  const segments = stops.length - 1;
-  const pos = clamped * segments;
-  const i = Math.min(Math.floor(pos), segments - 1);
-  const localT = pos - i;
-  const [r1, g1, b1] = stops[i];
-  const [r2, g2, b2] = stops[i + 1];
-  const r = Math.round(r1 + (r2 - r1) * localT);
-  const g = Math.round(g1 + (g2 - g1) * localT);
-  const b = Math.round(b1 + (b2 - b1) * localT);
-  return `rgb(${r}, ${g}, ${b})`;
-}
-
-// Matches rampColor's own stops so the legend gradient is the same
-// non-linear ramp used to fill the countries, not a straight 2-stop blend.
-function legendGradient(stops: [number, number, number][]): string {
-  return `linear-gradient(90deg, ${stops.map(([r, g, b], i) => `rgb(${r}, ${g}, ${b}) ${(i / (stops.length - 1)) * 100}%`).join(", ")})`;
-}
-
 const COUNTRY_LOOKUP = new Map<string, CountryRow>(COUNTRIES.map((c) => [c.country, c]));
 
-// A synthetic metric ("opposed_combined") alongside the five real response
-// keys, standing for the combined share who want development stopped,
-// paused, or placed under strict oversight (see slowOrStopPct).
-type MapMetric = ResponseKey | "opposed_combined";
 type MetricOption = { key: MapMetric; label: string; shortLabel: string; light: string };
 
 const OPPOSED_COMBINED_OPTION: MetricOption = {
@@ -101,10 +33,6 @@ const OPPOSED_COMBINED_OPTION: MetricOption = {
 
 function optionFor(key: ResponseKey): MetricOption {
   return RESPONSE_OPTIONS.find((o) => o.key === key)!;
-}
-
-function metricValue(row: CountryRow, metric: MapMetric): number {
-  return metric === "opposed_combined" ? slowOrStopPct(row) : row[metric];
 }
 
 // The metric picker is organised the same way the source report frames the
@@ -159,19 +87,14 @@ export default function WorldMap() {
     };
   }, []);
 
-  const path = useMemo(() => {
-    if (!features) return null;
-    const projection = geoNaturalEarth1().fitSize([WIDTH, HEIGHT], features);
-    return geoPath(projection);
-  }, [features]);
+  const path = useMemo(() => features && geoPath(geoNaturalEarth1().fitSize([WIDTH, HEIGHT], features)), [features]);
 
   const activeOption = ALL_METRIC_OPTIONS.find((o) => o.key === metric)!;
   const [domainMin, domainMax] = metric === "opposed_combined" ? [COMBINED_MIN, COMBINED_MAX] : [DOMAIN_MIN, DOMAIN_MAX];
   const stops = rampStopsFor(metric);
 
-  function selectCountry(countryName: string) {
-    const data = COUNTRY_LOOKUP.get(countryName);
-    if (!data) return;
+  // Clicking the selected country again clears the selection.
+  function selectCountry(data: CountryRow) {
     setSelected((prev) => (prev?.country === data.country ? null : data));
   }
 
@@ -214,12 +137,12 @@ export default function WorldMap() {
 
       <div className="gas-map-canvas">
         {!features && <div className="gas-map-loading">Loading map…</div>}
-        {features && path && (
+        {features && (
           <svg viewBox={`0 0 ${WIDTH} ${HEIGHT}`} role="img" aria-label={`World map coloured by: ${activeOption.label}`}>
             {features.features.map((f) => {
               const data = COUNTRY_LOOKUP.get(f.properties.name);
-              const d = path(f) || undefined;
-              const fill = data ? rampColor((metricValue(data, metric) - domainMin) / (domainMax - domainMin || 1), stops) : "var(--border)";
+              const d = path!(f) || undefined;
+              const fill = data ? rampColor(domainPosition(metricValue(data, metric), domainMin, domainMax), stops) : "var(--border)";
               const isSelected = data ? selected?.country === data.country : false;
               return (
                 <path
@@ -227,13 +150,17 @@ export default function WorldMap() {
                   d={d}
                   fill={fill}
                   className={`gas-map-country ${!data ? "gas-map-country-nodata" : ""}`}
-                  onClick={() => data && selectCountry(f.properties.name)}
-                  onKeyDown={(e) => {
-                    if (data && (e.key === "Enter" || e.key === " ")) {
-                      e.preventDefault();
-                      selectCountry(f.properties.name);
-                    }
-                  }}
+                  onClick={data ? () => selectCountry(data) : undefined}
+                  onKeyDown={
+                    data
+                      ? (e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            selectCountry(data);
+                          }
+                        }
+                      : undefined
+                  }
                   tabIndex={data ? 0 : undefined}
                   role={data ? "button" : undefined}
                   aria-pressed={data ? isSelected : undefined}
@@ -253,9 +180,8 @@ export default function WorldMap() {
                 outline stays visible regardless of paint order. */}
             {selected &&
               (() => {
-                const selectedFeature = features.features.find((f) => f.properties.name === selected.country);
-                const selectedD = selectedFeature ? path(selectedFeature) : null;
-                if (!selectedD) return null;
+                // Only countries on the map can be selected, so the feature is there.
+                const selectedD = path!(features.features.find((f) => f.properties.name === selected.country)!) ?? undefined;
                 return (
                   <g className="gas-map-selection-outline" aria-hidden="true">
                     <path d={selectedD} className="gas-map-selection-outline-halo" />

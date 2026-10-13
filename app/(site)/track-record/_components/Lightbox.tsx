@@ -12,9 +12,9 @@ import { useEffect } from "react";
  */
 export default function Lightbox() {
   useEffect(() => {
-    const lb = document.getElementById("lightbox");
-    const lbImg = lb?.querySelector<HTMLImageElement>(".lb-image");
-    if (!lb || !lbImg) return;
+    // Both are rendered below, so they are there once this runs.
+    const lb = document.getElementById("lightbox")!;
+    const lbImg = lb.querySelector<HTMLImageElement>(".lb-image")!;
     const shots = Array.from(document.querySelectorAll<HTMLAnchorElement>(".shot"));
     let idx = 0;
 

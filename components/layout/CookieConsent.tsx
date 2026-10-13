@@ -48,7 +48,7 @@ function loadGA() {
   s.src = `https://www.googletagmanager.com/gtag/js?id=${GA_ID}`;
   document.head.appendChild(s);
 
-  w.dataLayer = w.dataLayer || [];
+  // loadGTM above has made dataLayer.
   w.gtag = function () {
     // gtag.js only executes commands pushed as an Arguments object
     // (it checks Object.prototype.toString === "[object Arguments]").
@@ -60,14 +60,20 @@ function loadGA() {
   w.gtag("config", GA_ID);
 }
 
-// Expire GA's cookies on the current host and every parent domain so the
-// _ga / _gid identifiers don't survive an opt-out.
-function clearGACookies() {
-  const parts = location.hostname.split(".");
-  const domains = [location.hostname];
+/** The host itself, then every parent domain a cookie could be set on: "www.pauseai.uk" gives ".www.pauseai.uk" and ".pauseai.uk" too. */
+export function cookieDomains(hostname: string): string[] {
+  const parts = hostname.split(".");
+  const domains = [hostname];
   for (let i = 0; i < parts.length - 1; i++) {
     domains.push("." + parts.slice(i).join("."));
   }
+  return domains;
+}
+
+// Expire GA's cookies on the current host and every parent domain so the
+// _ga / _gid identifiers don't survive an opt-out.
+function clearGACookies() {
+  const domains = cookieDomains(location.hostname);
   document.cookie.split(";").forEach((cookie) => {
     const name = cookie.split("=")[0].trim();
     if (name.indexOf("_ga") === 0 || name === "_gid") {

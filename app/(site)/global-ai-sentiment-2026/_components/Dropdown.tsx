@@ -25,7 +25,7 @@ export default function Dropdown({ id, label, value, options, onChange }: Dropdo
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
-      if (rootRef.current && !rootRef.current.contains(e.target as Node)) {
+      if (!rootRef.current!.contains(e.target as Node)) {
         setOpen(false);
       }
     }

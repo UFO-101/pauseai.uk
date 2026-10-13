@@ -13,9 +13,9 @@ export default function PeopleCarousel({ people }: { people: Person[] }) {
   const dragState = useRef<{ startX: number; startScrollLeft: number; moved: boolean } | null>(null);
   const [dragging, setDragging] = useState(false);
 
+  // The handlers below only run while the track is mounted, so its ref is set.
   function scrollByCard(direction: 1 | -1) {
-    const track = trackRef.current;
-    if (!track) return;
+    const track = trackRef.current!;
     const card = track.querySelector<HTMLElement>(".person-card");
     const amount = card ? card.getBoundingClientRect().width + 24 : track.clientWidth;
     track.scrollBy({ left: amount * direction, behavior: "smooth" });
@@ -23,8 +23,7 @@ export default function PeopleCarousel({ people }: { people: Person[] }) {
 
   function handlePointerDown(e: React.PointerEvent<HTMLDivElement>) {
     if (e.pointerType !== "mouse" || e.button !== 0) return;
-    const track = trackRef.current;
-    if (!track) return;
+    const track = trackRef.current!;
     // preventDefault (needed to stop text selection while dragging) also
     // suppresses the native focus a mousedown would otherwise give the
     // clicked link/button, so restore that manually.
@@ -36,8 +35,8 @@ export default function PeopleCarousel({ people }: { people: Person[] }) {
 
   function handlePointerMove(e: React.PointerEvent<HTMLDivElement>) {
     const drag = dragState.current;
-    const track = trackRef.current;
-    if (!drag || !track) return;
+    if (!drag) return;
+    const track = trackRef.current!;
     const delta = e.clientX - drag.startX;
     if (!drag.moved && Math.abs(delta) > DRAG_THRESHOLD) {
       drag.moved = true;
@@ -47,8 +46,8 @@ export default function PeopleCarousel({ people }: { people: Person[] }) {
   }
 
   function endDrag(e: React.PointerEvent<HTMLDivElement>) {
-    const track = trackRef.current;
-    if (track?.hasPointerCapture(e.pointerId)) track.releasePointerCapture(e.pointerId);
+    const track = trackRef.current!;
+    if (track.hasPointerCapture(e.pointerId)) track.releasePointerCapture(e.pointerId);
     setDragging(false);
     // A "pointerup" is followed by a click on the same element, and
     // handleClickCapture needs dragState.current still set to know whether

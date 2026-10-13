@@ -2,14 +2,15 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/Button";
+import { navigate } from "@/lib/navigate";
 
 type Frequency = "monthly" | "oneoff";
 
-const ONE_OFF_URL = "https://donate.stripe.com/14AaEY7J69wKgTAaSlcbC02";
+export const ONE_OFF_URL = "https://donate.stripe.com/14AaEY7J69wKgTAaSlcbC02";
 // The single source of truth for the monthly tiers: the amount buttons are
 // derived from these keys below, so a preset can't appear in the UI without a
 // payment link behind it.
-const MONTHLY_URLS: Record<number, string> = {
+export const MONTHLY_URLS: Record<number, string> = {
   3:   "https://donate.stripe.com/3cI3cwgfCgZc46O4tXcbC03",
   5:   "https://donate.stripe.com/3cIdRa7J610ebzg4tXcbC00",
   10:  "https://donate.stripe.com/cNi3cwd3q24i5aS1hLcbC01",
@@ -22,22 +23,14 @@ const MONTHLY_URLS: Record<number, string> = {
 const AMOUNTS = Object.keys(MONTHLY_URLS)
   .map(Number)
   .sort((a, b) => a - b);
-const MIN_AMOUNT = AMOUNTS[0];
-// Preferred default, falling back to the cheapest tier if the £5 preset is
-// ever dropped from the map above.
-const DEFAULT_AMOUNT = AMOUNTS.includes(5) ? 5 : MIN_AMOUNT;
+// The preset selected to begin with. DonateForm.browser.test.tsx checks it is one of the tiers above.
+export const DEFAULT_AMOUNT = 5;
 
 export default function DonateForm() {
   const [frequency, setFrequency] = useState<Frequency>("monthly");
   const [selectedAmount, setSelectedAmount] = useState<number>(DEFAULT_AMOUNT);
   const isMonthly = frequency === "monthly";
-  const amount = selectedAmount;
-
-  const ctaLabel = isMonthly
-    ? amount && amount >= MIN_AMOUNT
-      ? `Donate £${amount} a month`
-      : "Donate £…"
-    : "Donate one-off →";
+  const ctaLabel = isMonthly ? `Donate £${selectedAmount} a month` : "Donate one-off →";
 
   function handleFreqClick(freq: Frequency) {
     if (freq === frequency) return;
@@ -57,16 +50,8 @@ export default function DonateForm() {
   // who clicks through to donate. Page views on /donate are fine.
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (frequency === "oneoff") {
-      window.location.href = ONE_OFF_URL;
-      return;
-    }
-    const url = MONTHLY_URLS[amount];
-    if (!url) {
-      alert("Sorry — that amount is not available. Please pick a preset or email hello@pauseai.uk.");
-      return;
-    }
-    window.location.href = url;
+    // Every selectable amount is a key of MONTHLY_URLS, so there is always a link.
+    navigate(isMonthly ? MONTHLY_URLS[selectedAmount] : ONE_OFF_URL);
   }
 
   return (

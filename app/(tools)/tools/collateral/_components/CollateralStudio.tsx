@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { CalendarEvent } from "@/lib/collateral/eventText";
 import { downloadCanvasPdf, downloadCanvasPng, downloadText, exportFilename } from "@/lib/collateral/export";
-import { BLEED_MM, DEFAULT_FORMAT_ID, FORMAT_GROUPS, FORMATS, formatDimensionLabel, getFormat, previewStyle, renderSize } from "@/lib/collateral/formats";
+import { BLEED_MM, DEFAULT_FORMAT_ID, FORMAT_GROUPS, FORMATS, formatDimensionLabel, getFormat, previewStyle, renderSize, type PrintFormat } from "@/lib/collateral/formats";
 import QrFormatNote from "./QrFormatNote";
 import { sameIssues, type LintIssue } from "@/lib/collateral/lint";
 import type { PhotoView } from "@/lib/collateral/photoTransform";
@@ -153,14 +153,13 @@ export default function CollateralStudio({ events }: { events: CalendarEvent[] }
   // render, and setIssues only fires when the checks actually change, so it cannot loop.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas || !logo || !fontsReady) return;
-    const { issues: found } = renderCollateral(canvas, { ...renderOptions(false), maxSide: PREVIEW_MAX_SIDE, lint: true });
+    if (!logo || !fontsReady) return;
+    const { issues: found } = renderCollateral(canvasRef.current!, { ...renderOptions(false), maxSide: PREVIEW_MAX_SIDE, lint: true });
     setIssues((prev) => (sameIssues(prev, found) ? prev : found));
   });
 
+  // The download buttons are disabled until the logo and fonts have loaded.
   async function onDownloadPng() {
-    if (!logo) return;
     setBusy(true);
     setMessage(null);
     try {
@@ -174,14 +173,13 @@ export default function CollateralStudio({ events }: { events: CalendarEvent[] }
     }
   }
 
-  async function onDownloadPdf() {
-    if (!logo || format.kind !== "print") return;
+  async function onDownloadPdf(print: PrintFormat) {
     setBusy(true);
     setMessage(null);
     try {
       const canvas = document.createElement("canvas");
       renderCollateral(canvas, renderOptions(true));
-      await downloadCanvasPdf(canvas, format, BLEED_MM, exportFilename([template.id, format.id, theme.id], "pdf"));
+      await downloadCanvasPdf(canvas, print, BLEED_MM, exportFilename([template.id, print.id, theme.id], "pdf"));
     } catch {
       setMessage("Could not create the PDF. Try again, or download the PNG instead.");
     } finally {
@@ -262,7 +260,7 @@ export default function CollateralStudio({ events }: { events: CalendarEvent[] }
             {busy ? "Preparing…" : "Download PNG"}
           </Button>
           {format.kind === "print" && (
-            <Button type="button" variant="primary" size="large" onClick={onDownloadPdf} disabled={!ready}>
+            <Button type="button" variant="primary" size="large" onClick={() => onDownloadPdf(format)} disabled={!ready}>
               {busy ? "Preparing…" : `Download print PDF (+${BLEED_MM} mm bleed)`}
             </Button>
           )}

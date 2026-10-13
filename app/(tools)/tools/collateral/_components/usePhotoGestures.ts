@@ -51,9 +51,10 @@ export function usePhotoGestures(
   }
 
   function onPointerMove(e: ReactPointerEvent<HTMLCanvasElement>) {
-    const canvas = canvasRef.current;
+    // These handlers are on the canvas, so it is there.
+    const canvas = canvasRef.current!;
     const prev = pointers.current.get(e.pointerId);
-    if (!photo || !canvas || !prev) return;
+    if (!photo || !prev) return;
     const next = { x: e.clientX, y: e.clientY };
     pointers.current.set(e.pointerId, next);
     const img = { w: photo.width, h: photo.height };

@@ -82,19 +82,19 @@ function useClampedExcerpt(person: Person, enabled: boolean) {
 
   useLayoutEffect(() => {
     if (!enabled) return;
-    const measureEl = measureRef.current;
-    const bodyEl = bodyRef.current;
-    if (!measureEl || !bodyEl) return;
+    // Both are rendered whenever the clamp is enabled.
+    const measureEl = measureRef.current!;
+    const bodyEl = bodyRef.current!;
 
     function measure() {
       const plain = plainParagraphs(person.paragraphs);
       // Unrounded: clientWidth rounds a fractional width (85vw cards) up, and
       // a measure even half a pixel wider fits an extra word per line.
-      measureEl!.style.width = `${bodyEl!.getBoundingClientRect().width}px`;
+      measureEl.style.width = `${bodyEl.getBoundingClientRect().width}px`;
 
       const fits = (paragraphs: string[]) => {
-        measureEl!.replaceChildren(...buildMeasureNodes(paragraphs));
-        return measureEl!.offsetHeight <= TARGET_BODY_HEIGHT;
+        measureEl.replaceChildren(...buildMeasureNodes(paragraphs));
+        return measureEl.offsetHeight <= TARGET_BODY_HEIGHT;
       };
 
       if (fits(plain)) {

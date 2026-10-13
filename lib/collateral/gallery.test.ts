@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { tintVisible } from "./design";
+import { LIBRARY_PHOTOS } from "./photos";
 import { DEFAULT_THEME_ID } from "./themes";
 import { DEFAULT_SLIDE_PHOTO_SETTINGS, EXAMPLE_SLIDE, SLIDE_PHOTO_VISIBLE, newSlide, newSlideId } from "./gallery";
 
@@ -27,7 +28,8 @@ describe("gallery slides", () => {
     expect(DEFAULT_SLIDE_PHOTO_SETTINGS.zoom).toBe(1);
   });
 
-  it("has an example caption", () => {
+  it("has an example caption, on a photo from the library", () => {
     expect(EXAMPLE_SLIDE.caption.length).toBeGreaterThan(0);
+    expect(LIBRARY_PHOTOS.map((p) => p.id)).toContain(EXAMPLE_SLIDE.photoId);
   });
 });

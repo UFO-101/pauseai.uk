@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { PointerEvent as ReactPointerEvent } from "react";
 import {
   canvasToPngBlob,
   downloadPlatformBundleZip,
@@ -29,7 +28,7 @@ import {
   type GallerySlideData,
 } from "@/lib/collateral/galleryProject";
 import { LIBRARY_PHOTOS, type LibraryPhoto } from "@/lib/collateral/photos";
-import { panPhoto, zoomPhoto } from "@/lib/collateral/photoTransform";
+import type { PhotoView } from "@/lib/collateral/photoTransform";
 import { ALL_PLATFORM_IDS, CAROUSEL_PLATFORMS, type PlatformId } from "@/lib/collateral/platforms";
 import type { ProjectPhoto } from "@/lib/collateral/project";
 import { drawableToJpegDataUrl, fileToDrawable, loadDataUrl, loadFonts, loadImage, renderCollateral } from "@/lib/collateral/render";
@@ -39,6 +38,7 @@ import CharCount from "./CharCount";
 import CropControls from "./CropControls";
 import ProjectMenu from "./ProjectMenu";
 import StylePicker from "./StylePicker";
+import { usePhotoGestures } from "./usePhotoGestures";
 import { Button } from "@/components/ui/Button";
 
 const CAPTION_TEMPLATE = getTemplate("caption");
@@ -50,8 +50,8 @@ const RESET_MESSAGE = "Started a new gallery.";
 
 /** Slide 1 filled in with an example, slide 2 empty. Falls back to two empty slides if the photo will not load. */
 async function exampleSlides(): Promise<Slide[]> {
-  const item = LIBRARY_PHOTOS.find((p) => p.id === EXAMPLE_SLIDE.photoId);
-  if (!item) return [newSlide(), newSlide()];
+  // gallery.test.ts checks the example photo is in the library.
+  const item = LIBRARY_PHOTOS.find((p) => p.id === EXAMPLE_SLIDE.photoId)!;
   try {
     const drawable = await loadImage(item.src);
     const first: Slide = {
@@ -82,8 +82,7 @@ function SlideThumb(props: {
   const { slide, format, logo, index, active, onSelect } = props;
   const ref = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
-    if (!ref.current) return;
-    renderCollateral(ref.current, {
+    renderCollateral(ref.current!, {
       format,
       template: CAPTION_TEMPLATE,
       theme: getTheme(slide.themeId),
@@ -118,8 +117,6 @@ export default function GalleryStudio() {
   // Which platform crop the preview shows, when the selected platforms need more than one.
   const [previewFormatId, setPreviewFormatId] = useState<string | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const pointers = useRef(new Map<number, { x: number; y: number }>());
-  const pinch = useRef<{ dist: number; zoom: number } | null>(null);
 
   const previewCrops: PreviewCrop[] = [];
   for (const v of CAROUSEL_PLATFORMS) {
@@ -130,7 +127,7 @@ export default function GalleryStudio() {
   }
   const previewCrop = previewCrops.find((c) => c.formatId === previewFormatId) ?? previewCrops[0];
   const effectiveFormat = getFormat(previewCrop?.formatId ?? DEFAULT_FORMAT_ID);
-  const activeSlide = slides[Math.min(activeIndex, slides.length - 1)] ?? slides[0];
+  const activeSlide = slides[Math.min(activeIndex, slides.length - 1)];
   const activeTheme = getTheme(activeSlide.themeId);
   const photo = activeSlide.photo;
   const photoSettings = activeSlide.photoSettings;
@@ -166,8 +163,8 @@ export default function GalleryStudio() {
         try {
           let drawable, name: string, source: SlidePhoto["source"];
           if (ref.kind === "library") {
-            const item = LIBRARY_PHOTOS.find((p) => p.id === ref.id);
-            if (!item) throw new Error("Unknown library photo");
+            // parseGalleryProject only accepts ids in the library.
+            const item = LIBRARY_PHOTOS.find((p) => p.id === ref.id)!;
             drawable = await loadImage(item.src);
             name = item.label;
             source = { kind: "library", id: ref.id };
@@ -264,67 +261,10 @@ export default function GalleryStudio() {
     });
   });
 
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas || !photo) return;
-    const img = { w: photo.drawable.width, h: photo.drawable.height };
-    const slideId = activeSlide.id;
-    const onWheel = (e: WheelEvent) => {
-      e.preventDefault();
-      const rect = canvas.getBoundingClientRect();
-      const k = canvas.width / rect.width;
-      const anchor = { x: (e.clientX - rect.left) * k, y: (e.clientY - rect.top) * k };
-      const dy = e.deltaMode === 1 ? e.deltaY * 16 : e.deltaY;
-      const factor = Math.exp(-dy * (e.ctrlKey ? 0.01 : 0.0015));
-      updateSlide(slideId, (s) => ({
-        photoSettings: { ...s.photoSettings, ...zoomPhoto(img, { w: canvas.width, h: canvas.height }, s.photoSettings, s.photoSettings.zoom * factor, anchor) },
-      }));
-    };
-    canvas.addEventListener("wheel", onWheel, { passive: false });
-    return () => canvas.removeEventListener("wheel", onWheel);
-  }, [photo, activeSlide.id, updateSlide]);
-
-  function canvasScale(): number {
-    const canvas = canvasRef.current;
-    if (!canvas) return 1;
-    return canvas.width / canvas.getBoundingClientRect().width;
-  }
-
-  function onPointerDown(e: ReactPointerEvent<HTMLCanvasElement>) {
-    if (!photo) return;
-    e.currentTarget.setPointerCapture(e.pointerId);
-    pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
-    if (pointers.current.size === 2) {
-      const [a, b] = [...pointers.current.values()];
-      pinch.current = { dist: Math.hypot(a.x - b.x, a.y - b.y) || 1, zoom: photoSettings.zoom };
-    }
-  }
-
-  function onPointerMove(e: ReactPointerEvent<HTMLCanvasElement>) {
-    const canvas = canvasRef.current;
-    const prev = pointers.current.get(e.pointerId);
-    if (!photo || !canvas || !prev) return;
-    const next = { x: e.clientX, y: e.clientY };
-    pointers.current.set(e.pointerId, next);
-    const img = { w: photo.drawable.width, h: photo.drawable.height };
-    const box = { w: canvas.width, h: canvas.height };
-    const k = canvasScale();
-    const slideId = activeSlide.id;
-    if (pointers.current.size === 1) {
-      updateSlide(slideId, (s) => ({ photoSettings: { ...s.photoSettings, ...panPhoto(img, box, s.photoSettings, (next.x - prev.x) * k, (next.y - prev.y) * k) } }));
-    } else if (pointers.current.size === 2 && pinch.current) {
-      const [a, b] = [...pointers.current.values()];
-      const rect = canvas.getBoundingClientRect();
-      const mid = { x: ((a.x + b.x) / 2 - rect.left) * k, y: ((a.y + b.y) / 2 - rect.top) * k };
-      const zoom = (pinch.current.zoom * Math.hypot(a.x - b.x, a.y - b.y)) / pinch.current.dist;
-      updateSlide(slideId, (s) => ({ photoSettings: { ...s.photoSettings, ...zoomPhoto(img, box, s.photoSettings, zoom, mid) } }));
-    }
-  }
-
-  function onPointerEnd(e: ReactPointerEvent<HTMLCanvasElement>) {
-    pointers.current.delete(e.pointerId);
-    pinch.current = null;
-  }
+  // Drag, pinch and scroll the photo on the preview, for the active slide.
+  const setPhotoView = (fn: (v: PhotoView) => PhotoView) =>
+    updateSlide(activeSlide.id, (s) => ({ photoSettings: { ...s.photoSettings, ...fn(s.photoSettings) } }));
+  const photoGestures = usePhotoGestures(canvasRef, photo?.drawable ?? null, photoSettings, setPhotoView);
 
   /**
    * One photo replaces the current slide's. Several fill the current slide, then the later slides that have
@@ -373,21 +313,19 @@ export default function GalleryStudio() {
     }
   }
 
+  // The slide buttons below are disabled at the limits, so these never go past them.
   function addSlide() {
-    if (slides.length >= MAX_SLIDES) return;
     setSlides((prev) => [...prev, newSlide()]);
     setActiveIndex(slides.length);
   }
 
   function removeSlide(index: number) {
-    if (slides.length <= MIN_SLIDES) return;
     setSlides((prev) => prev.filter((_, i) => i !== index));
     setActiveIndex((i) => Math.min(i, slides.length - 2));
   }
 
   function moveSlide(index: number, dir: -1 | 1) {
     const target = index + dir;
-    if (target < 0 || target >= slides.length) return;
     setSlides((prev) => {
       const next = [...prev];
       [next[index], next[target]] = [next[target], next[index]];
@@ -422,8 +360,8 @@ export default function GalleryStudio() {
     });
   }
 
+  // The download button is disabled until the logo and fonts have loaded, and while no platform is ticked.
   async function onDownloadForPlatforms() {
-    if (!logo || platforms.size === 0) return;
     setBusy(true);
     setMessage(null);
     try {
@@ -433,11 +371,9 @@ export default function GalleryStudio() {
         const fmt = getFormat(variant.formatId);
         const used = slides.slice(0, variant.maxSlides);
         const canvases = await Promise.all(used.map((s) => renderSlideCanvas(s, fmt, false)));
-        if (variant.export === "images" || variant.export === "both") {
-          const blobs = await Promise.all(canvases.map(canvasToPngBlob));
-          groups.push({ folder: variant.platform, kind: "images", pngBlobs: blobs });
-        }
-        if (variant.export === "pdf" || variant.export === "both") {
+        const blobs = await Promise.all(canvases.map(canvasToPngBlob));
+        groups.push({ folder: variant.platform, kind: "images", pngBlobs: blobs });
+        if (variant.export === "both") {
           const bytes = await pdfBytesDigital(canvases);
           groups.push({ folder: variant.platform, kind: "pdf", pdfBytes: bytes, pdfName: exportFilename([variant.platform, "carousel"], "pdf") });
         }
@@ -505,10 +441,7 @@ export default function GalleryStudio() {
               aria-label={`Preview of slide ${activeIndex + 1} of ${slides.length}`}
               hidden={!logo || !fontsReady}
               className={photo ? "is-draggable" : undefined}
-              onPointerDown={onPointerDown}
-              onPointerMove={onPointerMove}
-              onPointerUp={onPointerEnd}
-              onPointerCancel={onPointerEnd}
+              {...photoGestures}
             />
             {(!logo || !fontsReady) && <p className="collateral-loading">Loading…</p>}
           </div>
@@ -539,7 +472,7 @@ export default function GalleryStudio() {
               <button
                 key={c.formatId}
                 type="button"
-                aria-pressed={c.formatId === previewCrop?.formatId}
+                aria-pressed={c.formatId === previewCrop!.formatId}
                 onClick={() => setPreviewFormatId(c.formatId)}
               >
                 {c.label}
@@ -654,7 +587,7 @@ export default function GalleryStudio() {
             aria-label="Upload photos"
             onChange={(e) => {
               // Copy the files before clearing the input, so picking the same files again still fires.
-              const files = Array.from(e.target.files ?? []);
+              const files = Array.from(e.target.files!);
               e.target.value = "";
               void onPhotos(files);
             }}

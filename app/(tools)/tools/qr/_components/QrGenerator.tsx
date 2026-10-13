@@ -104,16 +104,13 @@ export default function QrGenerator() {
   }, [hasCaption, fontCss]);
 
   // The preview is the same SVG that gets downloaded.
+  // The web address is capped at 200 characters, which always fits in a code, even with the pause symbol.
   const preview = useMemo(() => {
     if (!target) return null;
-    try {
-      const shape = qrShape(target, 1000, logo);
-      const layout = captionLayout(1000, caption, measureCaption);
-      const svg = qrSvg(shape, { background: PANEL, roundedPanel: false, caption: layout, fontCss: fontCss ?? undefined });
-      return { modules: shape.modules, src: svgDataUrl(svg), overflow: layout.overflow };
-    } catch {
-      return null;
-    }
+    const shape = qrShape(target, 1000, logo);
+    const layout = captionLayout(1000, caption, measureCaption);
+    const svg = qrSvg(shape, { background: PANEL, roundedPanel: false, caption: layout, fontCss: fontCss ?? undefined });
+    return { modules: shape.modules, src: svgDataUrl(svg), overflow: layout.overflow };
     // fontCss is a dependency because measurements change once the fonts have loaded.
   }, [target, logo, caption, fontCss]);
 
@@ -141,8 +138,8 @@ export default function QrGenerator() {
     return canvas;
   }
 
+  // The buttons below are disabled until there is a preview, which needs a target.
   async function onDownloadSvg() {
-    if (!target) return;
     setMessage(null);
     try {
       const css = hasCaption ? await loadCaptionFonts() : undefined;
@@ -155,7 +152,6 @@ export default function QrGenerator() {
   }
 
   async function onDownloadPng() {
-    if (!target) return;
     setBusy(true);
     setMessage(null);
     try {
@@ -168,7 +164,6 @@ export default function QrGenerator() {
   }
 
   async function onShare() {
-    if (!target) return;
     setMessage(null);
     try {
       const blob = await canvasToPngBlob(await pngCanvas());
@@ -180,7 +175,6 @@ export default function QrGenerator() {
   }
 
   async function onCopy() {
-    if (!target) return;
     setMessage(null);
     try {
       // Safari only allows the write if the promise for the image is handed over straight away.

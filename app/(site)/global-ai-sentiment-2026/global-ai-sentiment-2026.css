@@ -101,128 +101,6 @@
   margin-bottom: 24px;
 }
 
-/* ---- Annotated callout diagram (global average, "how to read" demo) ---- */
-
-.gas-annotated-row {
-  display: contents;
-}
-
-/* height must match HEADER_HEIGHT in AnnotatedBar.tsx, which the connector
-   curves are drawn to (the container's bottom edge = the bar's top edge). */
-.gas-annotated {
-  position: relative;
-  height: 170px;
-  display: none;
-}
-
-@media (min-width: 901px) {
-  .gas-annotated {
-    display: block;
-  }
-}
-
-/* Box x-positions are set inline in px (see declutter() in AnnotatedBar.tsx),
-   measured/computed so boxes never overlap regardless of how close their
-   real targets are; the curved SVG connector bridges box to target. */
-.gas-annotated-callout {
-  position: absolute;
-  top: 0;
-  transform: translateX(-50%);
-}
-
-.gas-annotated-svg {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  overflow: visible;
-  pointer-events: none;
-}
-
-.gas-annotated-connector {
-  stroke: var(--border-strong);
-  stroke-width: 1;
-  fill: none;
-}
-
-.gas-annotated-box {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  width: 100%;
-  min-height: 68px;
-  box-sizing: border-box;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  box-shadow: 0 2px 8px var(--shadow, rgba(26, 22, 18, 0.08));
-  padding: 8px 10px;
-  text-align: center;
-  z-index: 2;
-}
-
-.gas-annotated-box-head {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.gas-annotated-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.gas-annotated-label {
-  font-family: "Inter", system-ui, sans-serif;
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--text);
-  line-height: 1.3;
-}
-
-.gas-annotated-value {
-  font-family: "Inter", system-ui, sans-serif;
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--muted);
-}
-
-.gas-annotated-desc {
-  font-family: "Inter", system-ui, sans-serif;
-  font-size: 10.5px;
-  line-height: 1.35;
-  color: var(--text-secondary);
-}
-
-/* Below-bar callouts (n, moe): the curved connector runs from
-   the bar down to the box, with the arrowhead pointing back up at it.
-   Positions are set inline in px, measured from the real DOM elements they
-   annotate (see AnnotatedBarFooter), so this wrap spans the full width of
-   the demo bar rather than following the bar's own grid columns. */
-.gas-annotated-below-wrap {
-  position: relative;
-  height: 145px;
-  display: none;
-}
-
-@media (min-width: 901px) {
-  .gas-annotated-below-wrap {
-    display: block;
-  }
-}
-
-/* top must match FOOTER_BOX_TOP in AnnotatedBar.tsx, which the connector
-   curves are drawn to. Width is set inline per-box. */
-.gas-annotated-callout-below {
-  position: absolute;
-  top: 46px;
-  transform: translateX(-50%);
-}
-
 .gas-legend-key {
   display: flex;
   flex-wrap: wrap;
@@ -235,8 +113,8 @@
   color: var(--text-secondary);
 }
 
-/* The annotated diagram replaces this legend from 901px up; below that
-   there isn't room for the callout boxes, so this list is the fallback. */
+/* Shown below 901px only. It was the small-screen fallback for an
+   annotated diagram the page no longer uses. */
 .gas-legend-key-mobile {
   display: none;
 }
@@ -520,8 +398,7 @@
    wider than a typical list row, so its grid column can't shrink below
    its content width even with the 220px minimum, breaking the layout
    before the general 720px breakpoint kicks in. Switch it to the same
-   stacked flex layout early, at the point the annotated diagrams (which
-   need real horizontal space) already hide. */
+   stacked flex layout early, at 900px. */
 @media (max-width: 900px) {
   .gas-global-bar.gas-bar-list {
     grid-template-columns: 1fr;

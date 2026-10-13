@@ -46,8 +46,8 @@ export default function DesignControls({ design, update, events, firstSection, p
   }
 
   function importEvent(id: string) {
-    const ev = events.find((e) => e.id === id);
-    if (!ev) return;
+    // The select only offers these events, and its placeholder never fires a change.
+    const ev = events.find((e) => e.id === id)!;
     const filled = eventFieldValues(ev);
     const link = eventLink(ev);
     update((d) => {
@@ -74,7 +74,7 @@ export default function DesignControls({ design, update, events, firstSection, p
   // Later codes start blank, so two codes never quietly point at the same place.
   function newQr(): QrCode {
     if (qrCodes.length > 0) return { label: "", url: "" };
-    return { label: template.id === "event" ? "Scan to RSVP" : "Scan to join", url: values.url?.trim() || "pauseai.uk" };
+    return { label: template.id === "event" ? "Scan to RSVP" : "Scan to join", url: values.url.trim() || "pauseai.uk" };
   }
 
   function updateQr(index: number, patch: Partial<QrCode>) {
@@ -162,15 +162,9 @@ export default function DesignControls({ design, update, events, firstSection, p
         <h2>{n(2)}. Text</h2>
         {template.fields.map((field) => {
           const id = `collateral-${template.id}-${field.key}`;
-          const value = values[field.key] ?? "";
-          if (field.kind === "toggle") {
-            return (
-              <label key={field.key} className="collateral-toggle" htmlFor={id}>
-                <input id={id} type="checkbox" checked={value === "true"} onChange={(e) => setValue(field.key, e.target.checked ? "true" : "false")} />
-                {field.label}
-              </label>
-            );
-          }
+          // designValues fills in every field's default.
+          const value = values[field.key];
+          // No layout offered here has toggle fields (only Brush does, and it is hidden; see designState.ts).
           return (
             <div key={field.key} className="collateral-field">
               <label className="collateral-label" htmlFor={id}>
@@ -270,7 +264,7 @@ export default function DesignControls({ design, update, events, firstSection, p
           ))}
         </div>
         <p className="collateral-hint">Or upload your own:</p>
-        <input type="file" accept="image/*" aria-label="Upload a photo" onChange={(e) => onPhoto(e.target.files?.[0])} />
+        <input type="file" accept="image/*" aria-label="Upload a photo" onChange={(e) => onPhoto(e.target.files![0])} />
         {design.photo && (
           <div className="collateral-photo-controls">
             <p className="collateral-hint">
@@ -307,7 +301,7 @@ export default function DesignControls({ design, update, events, firstSection, p
             accept="image/png,image/jpeg,image/webp"
             aria-label="Upload a partner logo"
             onChange={(e) => {
-              void onPartnerLogo(e.target.files?.[0]);
+              void onPartnerLogo(e.target.files![0]);
               e.target.value = "";
             }}
           />

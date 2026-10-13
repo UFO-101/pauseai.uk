@@ -25,7 +25,7 @@ export default function ProjectMenu({ noun, onSave, onOpen, onReset, saveDisable
   useEffect(() => {
     if (!open) return;
     const onPointer = (e: PointerEvent) => {
-      if (!rootRef.current?.contains(e.target as Node)) setOpen(false);
+      if (!rootRef.current!.contains(e.target as Node)) setOpen(false);
     };
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") setOpen(false);
@@ -53,7 +53,7 @@ export default function ProjectMenu({ noun, onSave, onOpen, onReset, saveDisable
           <button type="button" onClick={() => run(onSave)} disabled={saveDisabled}>
             Save {noun} file
           </button>
-          <button type="button" onClick={() => run(() => fileRef.current?.click())}>
+          <button type="button" onClick={() => run(() => fileRef.current!.click())}>
             Open {noun} file
           </button>
           <button type="button" onClick={() => run(onReset)}>
@@ -68,7 +68,8 @@ export default function ProjectMenu({ noun, onSave, onOpen, onReset, saveDisable
         hidden
         aria-label={`Open a saved ${noun}`}
         onChange={(e) => {
-          const file = e.target.files?.[0];
+          // No file when the person cancels the picker.
+          const file = e.target.files![0];
           e.target.value = "";
           onOpen(file);
         }}

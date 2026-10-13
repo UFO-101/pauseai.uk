@@ -15,10 +15,10 @@ export default function Nav() {
   const localGroup = localGroups.find((group) => group.href === pathname.replace(/\/$/, ""));
 
   useEffect(() => {
-    const header = document.querySelector(".site-header") as HTMLElement | null;
-    const burger = document.querySelector(".burger") as HTMLButtonElement | null;
-    const nav = document.querySelector("nav") as HTMLElement | null;
-    if (!burger || !nav || !header) return;
+    // All three are rendered below, so they are there once this runs.
+    const header = document.querySelector(".site-header") as HTMLElement;
+    const burger = document.querySelector(".burger") as HTMLButtonElement;
+    const nav = document.querySelector("nav") as HTMLElement;
 
     const syncHeaderHeight = () => {
       document.documentElement.style.setProperty("--site-header-h", `${header.offsetHeight}px`);
@@ -51,18 +51,17 @@ export default function Nav() {
     const triggers = document.querySelectorAll<HTMLElement>(".dropdown-trigger");
     const handleTriggerClick = (e: Event) => {
       const trigger = e.currentTarget as HTMLElement;
-      const parent = trigger.closest(".nav-item.has-dropdown") as HTMLElement | null;
-      if (!parent) return;
+      // Every trigger sits in a dropdown item.
+      const parent = trigger.closest(".nav-item.has-dropdown") as HTMLElement;
       const isTouch = window.matchMedia("(hover: none)").matches;
       if (!isTouch) return;
       const isOpen = parent.classList.contains("is-open");
       if (!isOpen) {
         e.preventDefault();
+        // Close any other open dropdown. This one isn't open, so it isn't among them.
         document.querySelectorAll<HTMLElement>(".nav-item.has-dropdown.is-open").forEach((p) => {
-          if (p !== parent) {
-            p.classList.remove("is-open");
-            p.querySelector(".dropdown-trigger")?.setAttribute("aria-expanded", "false");
-          }
+          p.classList.remove("is-open");
+          p.querySelector(".dropdown-trigger")!.setAttribute("aria-expanded", "false");
         });
         parent.classList.add("is-open");
         trigger.setAttribute("aria-expanded", "true");
@@ -76,7 +75,7 @@ export default function Nav() {
       if (!(e.target as Element).closest(".nav-item.has-dropdown")) {
         document.querySelectorAll<HTMLElement>(".nav-item.has-dropdown.is-open").forEach((p) => {
           p.classList.remove("is-open");
-          p.querySelector(".dropdown-trigger")?.setAttribute("aria-expanded", "false");
+          p.querySelector(".dropdown-trigger")!.setAttribute("aria-expanded", "false");
         });
       }
     };
@@ -100,12 +99,12 @@ export default function Nav() {
   // Start each new page with the menu and dropdowns closed, as a freshly
   // mounted header would be.
   useEffect(() => {
-    document.querySelector(".burger")?.setAttribute("aria-expanded", "false");
-    document.querySelector("header.site-header nav")?.classList.remove("open");
+    document.querySelector(".burger")!.setAttribute("aria-expanded", "false");
+    document.querySelector("header.site-header nav")!.classList.remove("open");
     document.body.classList.remove("mobile-nav-open");
     document.querySelectorAll<HTMLElement>(".nav-item.has-dropdown.is-open").forEach((item) => {
       item.classList.remove("is-open");
-      item.querySelector(".dropdown-trigger")?.setAttribute("aria-expanded", "false");
+      item.querySelector(".dropdown-trigger")!.setAttribute("aria-expanded", "false");
     });
   }, [pathname]);
 

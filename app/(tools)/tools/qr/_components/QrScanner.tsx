@@ -34,7 +34,7 @@ const WHOLE: Region = { x: 0, y: 0, w: 1, h: 1 };
 let jsQrPromise: Promise<JsQr> | null = null;
 /** Loaded on first use so the decoder stays out of the page bundle for people who never scan. */
 function loadJsQr(): Promise<JsQr> {
-  jsQrPromise ??= import("jsqr").then((m) => m.default);
+  jsQrPromise ??= import("./jsqr").then((m) => m.jsQR);
   return jsQrPromise;
 }
 
@@ -70,9 +70,9 @@ function decode(
   return jsQr(data, width, height, { inversionAttempts: thorough ? "attemptBoth" : "dontInvert" })?.data ?? null;
 }
 
-/** Overlapping tiles across the image, so a code that is small in the shot fills more of what the decoder sees. */
+/** Overlapping tiles across the image, so a code that is small in the shot fills more of what the decoder sees. `perSide` is at least 2. */
 function tiles(perSide: number, tileSize: number): Region[] {
-  const step = perSide > 1 ? (1 - tileSize) / (perSide - 1) : 0;
+  const step = (1 - tileSize) / (perSide - 1);
   const out: Region[] = [];
   for (let row = 0; row < perSide; row++) {
     for (let col = 0; col < perSide; col++) out.push({ x: col * step, y: row * step, w: tileSize, h: tileSize });
@@ -159,8 +159,7 @@ export default function QrScanner({ onResult }: Props) {
 
   // showModal gives the focus trap, Escape to close and the backdrop, so the dialog is opened through it, not the open attribute.
   useEffect(() => {
-    const dialog = dialogRef.current;
-    if (!dialog) return;
+    const dialog = dialogRef.current!;
     if (modalOpen && !dialog.open) dialog.showModal();
     if (!modalOpen && dialog.open) dialog.close();
   }, [modalOpen]);
@@ -183,14 +182,15 @@ export default function QrScanner({ onResult }: Props) {
           navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false }),
         ]);
         stream = media;
-        const video = videoRef.current;
-        if (stopped || !video) return;
+        if (stopped) return;
+        // Rendered while the camera is open and has not failed, which it hasn't if we got here.
+        const video = videoRef.current!;
         video.srcObject = media;
         await video.play();
 
         let last = 0;
+        // Closing cancels the next frame, so a tick never runs after it.
         const tick = (now: number) => {
-          if (stopped) return;
           if (now - last >= SCAN_EVERY_MS && video.videoWidth) {
             last = now;
             // Printed codes are dark on light, so the camera skips the inverted pass to keep up with the frames.
@@ -247,7 +247,8 @@ export default function QrScanner({ onResult }: Props) {
   }
 
   async function onPhoto(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
+    // No file when the person cancels the picker.
+    const file = e.target.files![0];
     e.target.value = "";
     if (!file) return;
     closePhoto();
@@ -271,16 +272,15 @@ export default function QrScanner({ onResult }: Props) {
   }
 
   /** Where the pointer is over the photo, as fractions of its size. */
-  function pointAt(e: React.PointerEvent): { x: number; y: number } | null {
-    const rect = imageRef.current?.getBoundingClientRect();
-    if (!rect) return null;
+  // The pointer handlers are on the box round the photo, so the photo is there.
+  function pointAt(e: React.PointerEvent): { x: number; y: number } {
+    const rect = imageRef.current!.getBoundingClientRect();
     const clamp = (n: number) => Math.min(1, Math.max(0, n));
     return { x: clamp((e.clientX - rect.left) / rect.width), y: clamp((e.clientY - rect.top) / rect.height) };
   }
 
   function onPointerDown(e: React.PointerEvent<HTMLDivElement>) {
     const p = pointAt(e);
-    if (!p) return;
     e.currentTarget.setPointerCapture(e.pointerId);
     dragStart.current = p;
     setBox({ x: p.x, y: p.y, w: 0, h: 0 });
@@ -288,15 +288,16 @@ export default function QrScanner({ onResult }: Props) {
 
   function onPointerMove(e: React.PointerEvent<HTMLDivElement>) {
     const start = dragStart.current;
-    const p = start && pointAt(e);
-    if (!start || !p) return;
+    if (!start) return;
+    const p = pointAt(e);
     setBox({ x: Math.min(start.x, p.x), y: Math.min(start.y, p.y), w: Math.abs(p.x - start.x), h: Math.abs(p.y - start.y) });
   }
 
   async function onPointerUp() {
     dragStart.current = null;
-    const image = imageRef.current;
-    if (!image || !box) return;
+    // No box when the press started outside the photo.
+    if (!box) return;
+    const image = imageRef.current!;
     if (box.w < MIN_BOX || box.h < MIN_BOX) {
       setBox(null);
       return;
@@ -321,7 +322,7 @@ export default function QrScanner({ onResult }: Props) {
         >
           Scan an existing code
         </Button>
-        <Button type="button" variant="ghost" size="small" onClick={() => fileRef.current?.click()} disabled={busy}>
+        <Button type="button" variant="ghost" size="small" onClick={() => fileRef.current!.click()} disabled={busy}>
           {busy ? "Looking for the code…" : "Use a photo"}
         </Button>
         <input ref={fileRef} type="file" accept="image/*" hidden onChange={onPhoto} />
@@ -371,11 +372,11 @@ export default function QrScanner({ onResult }: Props) {
         )}
         <div className="collateral-qr-scan-actions collateral-qr-dialog-actions">
           {open && modalMessage && (
-            <Button type="button" variant="ghost" size="small" onClick={() => fileRef.current?.click()} disabled={busy}>
+            <Button type="button" variant="ghost" size="small" onClick={() => fileRef.current!.click()} disabled={busy}>
               Use a photo instead
             </Button>
           )}
-          <Button type="button" variant="ghost" size="small" onClick={() => dialogRef.current?.close()}>
+          <Button type="button" variant="ghost" size="small" onClick={() => dialogRef.current!.close()}>
             Cancel
           </Button>
         </div>

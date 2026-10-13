@@ -3,7 +3,7 @@ import Link from "next/link";
 import type { CSSProperties } from "react";
 import { newsRow1, newsRow2, newsMobileRow1, newsMobileRow2, newsMobileRow3, type CoverageItem } from "@/lib/content/press-coverage";
 
-function NewsRow({ items, reverse = false }: { items: CoverageItem[]; reverse?: boolean }) {
+export function NewsRow({ items, reverse = false }: { items: CoverageItem[]; reverse?: boolean }) {
   return (
     <div className={`news-marquee-row${reverse ? " news-marquee-row--reverse" : ""}`}>
       <div className="news-marquee-track">

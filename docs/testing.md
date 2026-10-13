@@ -32,10 +32,8 @@ run start`), so it is slower. Use it only for what Vitest can't see:
 `coverage/`. CI fails if it drops below the thresholds in
 `vitest.config.mts`.
 
-- **The goal is 100% per file.** The logic layer (`lib/`, `app/api/`,
-  `sitemap.ts`, `robots.ts`, `next.config.ts`, `tests/fixtures/`) is held at
-  100% already. The overall thresholds are a ratchet: raise them when
-  coverage goes up, never lower them.
+- **Every file is held at 100%**: statements, branches, functions and
+  lines, each file on its own (`perFile: true`).
 - **Code that needs a browser is tested in the browser project**, even when
   it isn't a component: the collateral tool's canvas drawing, its PDF and
   zip exports, and its font embedding all have `*.browser.test.ts` files.
@@ -65,15 +63,18 @@ live in one place: `tests/fixtures/outside-services.ts`.
   request from the fixtures. A request with no fixture fails the test. To
   test a different response, use `server.use(http.get(...))` in the test.
 - **Vitest Browser:** components receive data as props, so pass fixture data
-  in. Mock modules only where Next itself is missing (`next/navigation`,
-  `next/image`).
+  in. `next/navigation` is mocked in `vitest.setup.browser.tsx`, since there
+  is no Next router.
 - **Playwright:** the build runs with `DATA_FIXTURES=1`, so `outsideFetch`
   returns the fixtures instead of calling Luma or Airtable. Use `page.route`
   only for browser requests that mustn't really happen (analytics, form
   submits to other sites).
 
 Don't stub `fetch` globally, and don't mock our own modules to make a test
-pass.
+pass. Mocking one of our modules is fine at an edge the test can't
+otherwise watch or break: the collateral tool's file downloads, an image
+that fails to load, or a check result a real design can't easily produce.
+Wrap the real module (`importActual`) and replace only that one function.
 
 ## Rules for new code
 

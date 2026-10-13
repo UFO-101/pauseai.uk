@@ -26,7 +26,7 @@ export default function CollateralApp({ events }: { events: CalendarEvent[] }) {
           </button>
         ))}
       </div>
-      <p className="collateral-mode-hint">{MODES.find((m) => m.id === mode)?.hint}</p>
+      <p className="collateral-mode-hint">{MODES.find((m) => m.id === mode)!.hint}</p>
       {mode === "single" && <CollateralStudio events={events} />}
       {mode === "pack" && <PackStudio events={events} />}
       {mode === "gallery" && <GalleryStudio />}
