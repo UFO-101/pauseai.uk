@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 type PersonBase = {
   imageSrc?: string;
   imageStyle?: string;
@@ -282,4 +283,33 @@ export const LONG_STORY_CHAR_THRESHOLD = [...people]
 
 export function isLongStory(person: Person): boolean {
   return storyLength(person) > LONG_STORY_CHAR_THRESHOLD;
+}
+
+/** The person whose story is at /people/<slug>, wrapped so a miss is null. */
+export function findPerson(slug: string) {
+  const person = people.find((p) => personSlug(p) === slug);
+  return person ? { person } : null;
+}
+
+/** A story page's metadata: the name, and the start of the story as the description. */
+export function personMetadata(person: Person): Metadata {
+  const title = person.name || "Anonymous submission";
+  const plainFirstParagraph = person.paragraphs[0]?.replace(/<[^>]+>/g, "") ?? "";
+  const description =
+    plainFirstParagraph.length > 160 ? `${plainFirstParagraph.slice(0, 157).trimEnd()}…` : plainFirstParagraph;
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      images: [{ url: "/images/open-graph/open-graph-1200-630.jpg", width: 1200, height: 630 }],
+      url: `https://pauseai.uk/people/${personSlug(person)}/`,
+    },
+    twitter: {
+      images: ["/images/open-graph/open-graph-1600-840.jpg"],
+    },
+    alternates: { canonical: `/people/${personSlug(person)}` },
+  };
 }

@@ -6,6 +6,8 @@ import DemographicsExplorer from "./_components/DemographicsExplorer";
 import GlobalAverageBar from "./_components/GlobalAverageBar";
 import "../track-record/track-record.css";
 import "./global-ai-sentiment-2026.css";
+import HeadlineStats from "./_components/HeadlineStats";
+import Methodology from "./_components/Methodology";
 
 const TITLE = "Global Attitudes to AI 2026";
 const DESCRIPTION =
@@ -28,26 +30,7 @@ export default function GlobalAiSentiment2026Page() {
           </div>
         </section>
 
-        <section className="gas-stats">
-          <div className="container gas-stats-inner">
-            <div className="gas-stat">
-              <span className="gas-stat-value">
-                {SURVEY_META.respondents.toLocaleString()}
-              </span>
-              <span className="gas-stat-label">Respondents</span>
-            </div>
-            <div className="gas-stat">
-              <span className="gas-stat-value">{SURVEY_META.countries}</span>
-              <span className="gas-stat-label">Countries surveyed</span>
-            </div>
-            <div className="gas-stat">
-              <span className="gas-stat-value">60%</span>
-              <span className="gas-stat-label">
-                Want development slowed, paused or stopped
-              </span>
-            </div>
-          </div>
-        </section>
+        <HeadlineStats />
 
         <section className="gas-section">
           <div className="container">
@@ -92,28 +75,7 @@ export default function GlobalAiSentiment2026Page() {
           </div>
         </section>
 
-        <section className="gas-section gas-methodology">
-          <div className="container">
-            <h2>Methodology</h2>
-            <p>
-              Data from {SURVEY_META.publisher}&rsquo;s Spring 2026 World
-              Omnibus: {SURVEY_META.respondents.toLocaleString()} respondents
-              across {SURVEY_META.countries} countries, surveyed online and
-              weighted to national benchmarks, fieldwork performed from{" "}
-              {SURVEY_META.fieldwork}. Margins of error per country are shown
-              alongside each result. PauseAI UK did not commission this survey.
-              We are republishing it because it is the most comprehensive recent
-              look at global public opinion on AI development.
-            </p>
-            <p>
-              <a href={SURVEY_META.reportUrl} target="_blank" rel="noreferrer">
-                View the full report
-              </a>{" "}
-              for the executive summary, questionnaire and full regional
-              analysis.
-            </p>
-          </div>
-        </section>
+        <Methodology />
       </main>
     </>
   );

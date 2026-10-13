@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { isValidElement, type ReactNode } from "react";
@@ -1947,4 +1948,58 @@ function findFirstImage(node: ReactNode): PostImage | null {
 function toNumber(value: unknown): number | undefined {
   const n = typeof value === "string" ? Number(value) : value;
   return typeof n === "number" && Number.isFinite(n) ? n : undefined;
+}
+
+/** Every post, newest first. */
+export function postsNewestFirst(): BlogPost[] {
+  return [...posts].sort((a, b) => b.date.localeCompare(a.date));
+}
+
+/** A post's page metadata. */
+export function postMetadata(post: BlogPost): Metadata {
+  // A post's cover, or failing that its first image, is its social preview; posts with neither use the site-wide card.
+  const image = postImage(post);
+  return {
+    title: post.title,
+    description: post.tldr,
+    openGraph: {
+      title: post.title,
+      description: post.tldr,
+      images: [
+        image
+          ? { url: image.src, width: image.width, height: image.height, alt: image.alt }
+          : { url: "/images/open-graph/open-graph-1200-630.jpg", width: 1200, height: 630 },
+      ],
+      url: `https://pauseai.uk/blog/${post.slug}/`,
+      type: "article",
+    },
+    twitter: {
+      images: [image ? image.src : "/images/open-graph/open-graph-1600-840.jpg"],
+    },
+    alternates: { canonical: `/blog/${post.slug}` },
+  };
+}
+
+/** Schema.org Article data for a post, for search engines. */
+export function postJsonLd(post: BlogPost) {
+  const author = postAuthor(post);
+  const image = postImage(post);
+  return {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: post.title,
+    description: post.tldr,
+    datePublished: post.date,
+    url: `${site.url}/blog/${post.slug}`,
+    mainEntityOfPage: `${site.url}/blog/${post.slug}`,
+    image: `${site.url}${image?.src ?? "/images/open-graph/open-graph-1200-630.jpg"}`,
+    author: author
+      ? { "@type": "Person", name: post.author, url: `${site.url}/people/${author.slug}` }
+      : { "@type": "Organization", name: post.author },
+    publisher: {
+      "@type": "Organization",
+      name: "PauseAI UK",
+      logo: { "@type": "ImageObject", url: `${site.url}/favicon/web-app-manifest-512x512.png` },
+    },
+  };
 }

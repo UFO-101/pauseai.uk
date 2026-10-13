@@ -1,8 +1,6 @@
 import { pageMetadata } from "@/lib/metadata";
-import PersonCard from "@/components/people/PersonCard";
-import StoryShareForm from "@/components/people/StoryShareForm";
-import { isLongStory, LONG_STORY_CHAR_THRESHOLD, people } from "@/lib/content/people";
-import { site } from "@/lib/content/site";
+import ShareYourStory from "./_components/ShareYourStory";
+import StoryGrid from "./_components/StoryGrid";
 import "../track-record/track-record.css";
 import "./people.css";
 
@@ -25,40 +23,9 @@ export default function PeoplePage() {
           </div>
         </section>
 
-        <section className="people-page-grid">
-          <div className="container">
-            <div className="people-grid">
-              {people.map((person, i) => (
-                <PersonCard
-                  key={`${person.name}-${i}`}
-                  person={person}
-                  truncate={isLongStory(person)}
-                  maxChars={LONG_STORY_CHAR_THRESHOLD}
-                  showLink
-                />
-              ))}
-            </div>
-          </div>
-        </section>
+        <StoryGrid />
 
-        <section id="share-your-story" className="people-page-share">
-          <div className="container">
-            <div className="section-header">
-              <h2>Share your story</h2>
-              <p className="section-lede">
-                Why did you get involved, or what are your own concerns about AI?
-              </p>
-              <p className="section-lede">
-                Tell us in your own words, we may feature it on this page. Connect with others who have similar stories in{" "}
-                <a className="inline-link" href={site.whatsappUrl} target="_blank" rel="noreferrer">
-                  our community
-                </a>
-                .
-              </p>
-            </div>
-            <StoryShareForm />
-          </div>
-        </section>
+        <ShareYourStory id="share-your-story" />
       </main>
     </>
   );

@@ -971,3 +971,15 @@ export const newsRow2 = tileToMinLength(CAROUSEL_ITEMS.slice(desktopSplit), 14);
 export const newsMobileRow1 = tileToMinLength(CAROUSEL_ITEMS.slice(0, mobileSplit), 10);
 export const newsMobileRow2 = tileToMinLength(CAROUSEL_ITEMS.slice(mobileSplit, mobileSplit * 2), 10);
 export const newsMobileRow3 = tileToMinLength(CAROUSEL_ITEMS.slice(mobileSplit * 2), 10);
+
+/** "3 Mar 2026" for a coverage item's ISO date, or a dash when it has none. */
+export function formatCoverageDate(date?: string) {
+  return date
+    ? new Date(`${date}T00:00:00Z`).toLocaleDateString("en-GB", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+        timeZone: "UTC",
+      })
+    : "—";
+}
