@@ -4,7 +4,24 @@ The [pauseai.uk](https://pauseai.uk) website: Next.js 16 and React 19, deployed 
 
 ## Run it locally
 
-You need Node 22 and Postgres 18, with `psql` on your path. On a Mac, install [Postgres.app](https://postgresapp.com) and follow its setup steps. Postgres holds Email your MP's data, and some unit tests use it.
+### 1. Install Node and Postgres
+
+- **Node 22.**
+- **Postgres 18**, the version the live site runs, including its command-line tool `psql`. Postgres holds Email your MP's data, and some unit tests use it.
+  - **Mac:** install [Postgres.app](https://postgresapp.com). Open it and click **Initialize**. Then run this, and open a new terminal:
+    ```bash
+    sudo mkdir -p /etc/paths.d && echo /Applications/Postgres.app/Contents/Versions/latest/bin | sudo tee /etc/paths.d/postgresapp
+    ```
+  - **Debian or Ubuntu:** `sudo apt install postgresql`, then `sudo -u postgres createuser --superuser "$(whoami)"`. If your release's package is older than 18, add [PostgreSQL's own apt repository](https://www.postgresql.org/download/linux/ubuntu/) first.
+
+Check both:
+
+```bash
+node --version   # v22 or later
+psql --version   # psql (PostgreSQL) 18.x
+```
+
+### 2. Run the site
 
 ```bash
 npm install
