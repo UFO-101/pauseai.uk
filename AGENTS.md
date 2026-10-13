@@ -1,6 +1,6 @@
 # Agent notes
 
-Read `README.md` first. It links the docs in `docs/`, including the test policy (`docs/testing.md`), and the plans in `plans/`.
+Read `README.md` first. It links the docs in `docs/`, including the code structure (`docs/code-structure.md`) and test policy (`docs/testing.md`), and the plans in `plans/`.
 
 ## Next.js version may be beyond your knowledge cutoff
 

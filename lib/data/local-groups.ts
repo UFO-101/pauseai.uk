@@ -28,6 +28,13 @@ export type LocalGroup = {
    * region where the local group organises beyond its host city.
    */
   eventMatchers: string[];
+  /**
+   * The local group's own logo, shown in place of the PauseAI UK logo in the
+   * header on its page. Width and height are intrinsic pixels, which
+   * next/image needs for the aspect ratio; the display size comes from the
+   * .brand-mark CSS (height: 48px; width: auto).
+   */
+  logo?: { src: string; width: number; height: number };
 };
 
 // Sides follow geography — north and west on the left, the southern and
@@ -54,6 +61,7 @@ export const localGroups: LocalGroup[] = [
     lat: 53.4808,
     side: "left",
     eventMatchers: ["Manchester", "Salford"],
+    logo: { src: "/images/local-groups/manchester/manchester_logo.png", width: 300, height: 86 },
   },
   {
     name: "West of England",
@@ -64,6 +72,7 @@ export const localGroups: LocalGroup[] = [
     lat: 51.4545,
     side: "left",
     eventMatchers: ["Bristol", "Bath", "West of England"],
+    logo: { src: "/images/local-groups/west-of-england/west-of-england-rondel.png", width: 240, height: 240 },
   },
   {
     name: "Leicester",
@@ -74,6 +83,7 @@ export const localGroups: LocalGroup[] = [
     lat: 52.6369,
     side: "right",
     eventMatchers: ["Leicester", "Leicestershire"],
+    logo: { src: "/images/local-groups/leicester/leicester_logoBanner_tp_tp_darkmode.svg", width: 289, height: 84 },
   },
   {
     name: "Oxford",

@@ -10,10 +10,7 @@ The [pauseai.uk](https://pauseai.uk) website — a [Next.js](https://nextjs.org)
 
 ## Layout
 
-- `app/` — routes, layouts, and per-route CSS (App Router)
-- `components/` — shared React components
-- `lib/data/` — typed content modules; shared config (social links, emails, GA ID, external URLs) is in `lib/data/site.ts`
-- `public/` — static assets (`fonts/`, `images/`, `pdfs/`, favicons)
+See [docs/code-structure.md](docs/code-structure.md). In short: `app/` holds routes (public pages in `app/(site)/`, unlisted tools in `app/(tools)/`), `components/` shared React components, `lib/` logic and data (shared config such as social links, emails and external URLs is in `lib/data/site.ts`), and `public/` static assets.
 
 ## Local development
 
@@ -34,6 +31,7 @@ See [docs/testing.md](docs/testing.md) for the test policy, coverage gate, mocki
 
 ## Docs
 
+- [docs/code-structure.md](docs/code-structure.md): where code lives, and the rules for adding more
 - [docs/testing.md](docs/testing.md): test policy, coverage gate, mocking, commands
 - [docs/style-guide.md](docs/style-guide.md): design style guide
 - [docs/google-ads/stakeholder-summary.md](docs/google-ads/stakeholder-summary.md): Google Ads conversion tracking, for stakeholders

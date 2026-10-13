@@ -7,7 +7,7 @@ import { ROUTES } from "../routes";
 //
 // Hydration mismatches are silent by design here: app/layout.tsx sets
 // suppressHydrationWarning on both <html> and <body>, which hides the warning
-// that would otherwise announce one. Meanwhile app/page.tsx shuffles the hero
+// that would otherwise announce one. Meanwhile app/(site)/page.tsx shuffles the hero
 // photos on the server on every render, and components/EventList.tsx computes
 // "Happening today" after mount specifically to avoid a day-boundary mismatch.
 // So the conditions for one exist and the usual alarm is muted. This fails on

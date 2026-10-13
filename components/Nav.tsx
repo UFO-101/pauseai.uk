@@ -4,22 +4,15 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect } from "react";
+import { localGroups } from "@/lib/data/local-groups";
 import { site } from "@/lib/data/site";
 
-type NavProps = {
-  localGroupName?: string;
-  localGroupLogoSrc?: string;
-  /** Intrinsic pixel dimensions of localGroupLogoSrc — required by next/image
-      for aspect ratio; actual display size is driven by the .brand-mark
-      CSS (height: 48px; width: auto). */
-  localGroupLogoWidth?: number;
-  localGroupLogoHeight?: number;
-};
-
-export default function Nav({ localGroupName, localGroupLogoSrc, localGroupLogoWidth, localGroupLogoHeight }: NavProps) {
+export default function Nav() {
   const pathname = usePathname();
   const isHomepage = pathname === "/";
   const navPrefix = isHomepage ? "" : "/";
+  // A local group's page carries its branding in the header.
+  const localGroup = localGroups.find((group) => group.href === pathname.replace(/\/$/, ""));
 
   useEffect(() => {
     const header = document.querySelector(".site-header") as HTMLElement | null;
@@ -103,17 +96,30 @@ export default function Nav({ localGroupName, localGroupLogoSrc, localGroupLogoW
     };
   }, []);
 
+  // The header lives in a layout, so it stays mounted across navigation.
+  // Start each new page with the menu and dropdowns closed, as a freshly
+  // mounted header would be.
+  useEffect(() => {
+    document.querySelector(".burger")?.setAttribute("aria-expanded", "false");
+    document.querySelector("header.site-header nav")?.classList.remove("open");
+    document.body.classList.remove("mobile-nav-open");
+    document.querySelectorAll<HTMLElement>(".nav-item.has-dropdown.is-open").forEach((item) => {
+      item.classList.remove("is-open");
+      item.querySelector(".dropdown-trigger")?.setAttribute("aria-expanded", "false");
+    });
+  }, [pathname]);
+
   return (
     <header className="site-header">
       <div className="container">
-        {localGroupName ? (
+        {localGroup ? (
           <Link className="brand brand-link" href="/">
-            {localGroupLogoSrc ? (
+            {localGroup.logo ? (
               <Image
-                src={localGroupLogoSrc}
+                src={localGroup.logo.src}
                 alt=""
-                width={localGroupLogoWidth ?? 178}
-                height={localGroupLogoHeight ?? 48}
+                width={localGroup.logo.width}
+                height={localGroup.logo.height}
                 className="brand-mark"
               />
             ) : (
@@ -121,7 +127,7 @@ export default function Nav({ localGroupName, localGroupLogoSrc, localGroupLogoW
                 <Image src="/images/logos/Pause-Symbol.svg" alt="" width={616} height={616} className="brand-mark" />
                 <div className="brand-text">
                   <span className="brand-pretitle">PauseAI UK</span>
-                  <span className="brand-tagline">{localGroupName} Group</span>
+                  <span className="brand-tagline">{localGroup.name} Group</span>
                 </div>
               </>
             )}

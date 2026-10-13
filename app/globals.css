@@ -742,7 +742,7 @@ html {
 .hero-marquee-row:nth-child(3) .hero-marquee-track { --marquee-duration: 100s; }
 
 /* --copy-shift is set in pixels by the inline marquee script in
-   app/page.tsx after measuring one copy's actual width. Until that
+   app/(site)/page.tsx after measuring one copy's actual width. Until that
    runs (or if JS is disabled), fall back to -50% which is correct
    when the track's max-content is computed correctly — Safari has a
    long-standing bug where it under-counts child padding/margin in
@@ -2180,7 +2180,7 @@ html {
      link stays 0px tall until the file arrives (a percentage-width image
      contributes no height before then) and the banner grows ~480px under
      anyone deep-linking past it. Keep the ratio in step with the image's
-     width/height in app/page.tsx. */
+     width/height in app/(site)/page.tsx. */
   .shop-image-link { width: 100%; }
   .shop-image { width: 100%; aspect-ratio: 1536 / 2048; }
 

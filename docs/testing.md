@@ -43,7 +43,7 @@ run start`), so it is slower. Use it only for what Vitest can't see:
   tested.
 - **The one scope rule:** `page.tsx` and `layout.tsx` are outside the
   report. Async server components can't render in Vitest, and `layout.tsx`
-  needs `next/font`. Keep them thin (see `plans/code-organisation.md`); the route
+  needs `next/font`. Keep them thin (see `docs/code-structure.md`); the route
   smoke test is their gate.
 
 ## Mocking
