@@ -61,7 +61,9 @@ export default defineConfig({
       // fetch — that several workers loading it at once starve the server
       // and time tests out on a site that is working perfectly well.
       fullyParallel: false,
-      use: { ...devices["Desktop Chrome"], viewport: { width: 1280, height: 800 } },
+      // A trace of every test, passing or not, to step through in the report
+      // (`npm run test:report`; the trace viewer needs that server).
+      use: { ...devices["Desktop Chrome"], viewport: { width: 1280, height: 800 }, trace: "on" },
     },
   ],
   webServer: {
