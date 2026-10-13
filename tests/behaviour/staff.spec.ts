@@ -2,35 +2,19 @@ import { test, expect, type Page } from "@playwright/test";
 import { campaigns } from "@/lib/content/email-your-mp";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { ROUTES } from "../routes";
+import { logInAsStaff } from "../steps";
 import { BASE, syncFixtureMps } from "./setup";
 
 // The staff interface, on the behaviour build's own database. Staff log in
-// through the fixture Google: the browser's trip to Google is answered here,
-// and the server's requests to Google by the fixtures. There's no login
-// bypass: our login route makes the state and its cookie as usual.
+// through the fixture Google (logInAsStaff in tests/steps.ts): there's no
+// login bypass. Screenshots of each screen, against main's, are in
+// tests/fixtures-vs-main/.
 
 const STAFF_PAGES = ROUTES.filter((route) => route.startsWith("/staff") && route !== "/staff/login");
 const [pm] = campaigns;
 
-/**
- * Logs in as `code`'s account (tests/fixtures/outside-services.ts). Playwright
- * can't intercept a request that follows a redirect, so this takes our login
- * route's redirect to Google and sends the browser straight back, as Google
- * would once the account is chosen.
- */
-async function logIn(page: Page, code = "fixture-staff") {
-  await page.route("https://accounts.google.com/**", (route) => route.abort());
-  await page.route(`${BASE}/staff/api/login`, async (route) => {
-    const response = await route.fetch({ maxRedirects: 0 });
-    const google = new URL(response.headers().location);
-    const back = new URL(google.searchParams.get("redirect_uri")!);
-    back.searchParams.set("code", code);
-    back.searchParams.set("state", google.searchParams.get("state")!);
-    await route.fulfill({ response, headers: { ...response.headers(), location: back.toString() } });
-  });
-  await page.goto(`${BASE}/staff/login`);
-  await page.getByRole("link", { name: staffCopy.login.button }).click();
-}
+/** Logs in as `code`'s account, through the fixture Google (tests/steps.ts). */
+const logIn = (page: Page, code = "fixture-staff") => logInAsStaff(page, BASE, code);
 
 test.beforeAll(async ({ request }) => syncFixtureMps(request));
 
@@ -100,44 +84,6 @@ test("staff log in, set a status that shows on /campaigns, add a signer, and log
   await expect(page).toHaveURL(`${BASE}/staff/login`);
   await page.goto(`${BASE}/staff`);
   await expect(page).toHaveURL(`${BASE}/staff/login`);
-});
-
-// Not a pass or fail: a full-page screenshot of each staff screen, at desktop
-// and phone widths, attached to the Playwright report for a person to look
-// over. The public pages are diffed against live (tests/public-vs-live/); the
-// staff interface can't be, as it needs a login.
-test("screenshots of each staff screen, for the report", async ({ page }, testInfo) => {
-  const shoot = async (name: string) => {
-    for (const [width, height, size] of [[1280, 800, "desktop"], [390, 844, "mobile"]] as const) {
-      await page.setViewportSize({ width, height });
-      await testInfo.attach(`${name} (${size}).png`, { body: await page.screenshot({ fullPage: true, animations: "disabled" }), contentType: "image/png" });
-    }
-    await page.setViewportSize({ width: 1280, height: 800 });
-  };
-
-  await page.goto(`${BASE}/staff/login`);
-  await shoot("login");
-
-  await logIn(page);
-  await expect(page).toHaveURL(`${BASE}/staff`);
-  await shoot("politicians");
-
-  await page.getByRole("link", { name: "Testy McTestface MP" }).click();
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Testy McTestface MP");
-  await shoot("politician");
-
-  for (const [path, name] of [
-    ["/staff/politicians/new", "add signer"],
-    ["/staff/letters", "letters"],
-    ["/staff/mp-sync", "MP syncs"],
-    ["/staff/import", "import"],
-    ["/staff/changes", "changes"],
-  ] as const) {
-    await page.goto(`${BASE}${path}`);
-    await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
-    await shoot(name);
-  }
-  expect(testInfo.attachments.filter((a) => a.name.endsWith(".png"))).toHaveLength(16);
 });
 
 test("staff pages are kept out of search and the sitemap", async ({ page, request }) => {

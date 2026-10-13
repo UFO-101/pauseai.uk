@@ -1,6 +1,4 @@
 import type { APIRequestContext } from "@playwright/test";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
 import { readOutbox } from "../fixtures/outbox";
 
 // Helpers shared by the behaviour tests that need data in the database.
@@ -15,8 +13,9 @@ export async function syncFixtureMps(request: APIRequestContext) {
   if (!res.ok()) throw new Error(`MP sync failed: ${res.status()} ${await res.text()}`);
 }
 
-/** Where the behaviour build writes each email it sends (tests/fixtures/outbox.ts). */
-export const OUTBOX_DIR = join(tmpdir(), "pauseai-behaviour-outbox");
+// Where the behaviour build writes each email it sends (tests/fixtures/outbox.ts).
+import { OUTBOX_DIR } from "../fixture-env.mjs";
+export { OUTBOX_DIR };
 
 type OutboxEmail = { From: string; To: string; ReplyTo?: string; Subject: string; TextBody: string; Attachments?: { Name: string; Content: string }[] };
 

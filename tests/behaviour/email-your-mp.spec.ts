@@ -1,5 +1,6 @@
 import { test, expect, type Page } from "@playwright/test";
 import { campaigns, copy } from "@/lib/content/email-your-mp";
+import { fakeTurnstile } from "../steps";
 import { BASE, newestEmailTo, syncFixtureMps, WEBHOOK_AUTH } from "./setup";
 
 // Email your MP, version 2, end to end on fixture data. ZZ99ZZ finds the test
@@ -8,22 +9,7 @@ import { BASE, newestEmailTo, syncFixtureMps, WEBHOOK_AUTH } from "./setup";
 
 test.beforeAll(async ({ request }) => syncFixtureMps(request));
 
-// Cloudflare's real widget mustn't load in a test. This stands in for its
-// script: it draws nothing and hands over a token at once, which the
-// Turnstile fixture on the server then accepts.
-const FAKE_TURNSTILE = `
-  window.turnstile = {
-    render: (el, options) => { setTimeout(() => options.callback("fixture-token")); return "fake"; },
-    remove: () => {},
-  };
-  window.onTurnstileLoad();
-`;
-
-test.beforeEach(async ({ page }) => {
-  await page.route("https://challenges.cloudflare.com/**", (route) =>
-    route.fulfill({ contentType: "text/javascript", body: FAKE_TURNSTILE }),
-  );
-});
+test.beforeEach(async ({ page }) => fakeTurnstile(page));
 
 type AdsWindow = Window & { dataLayer?: Record<string, unknown>[] };
 

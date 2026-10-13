@@ -49,6 +49,7 @@ npm test                 # unit tests (needs Postgres, as above)
 npm run test:coverage    # unit and component tests, held at 100% coverage
 npm run test:behaviour   # Playwright, on a fixture build
 npm run test:public-vs-live   # Playwright, public pages: the local build against pauseai.uk
+npm run test:fixtures-vs-main # Playwright, screenshots of this branch against main
 npm run lint
 ```
 

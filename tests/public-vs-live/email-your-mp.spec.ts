@@ -1,5 +1,5 @@
 import { test, type Page } from "@playwright/test";
-import { copy } from "@/lib/content/email-your-mp";
+import { fakeTurnstile, fillLetter, lookUpTestMp, TOOL_PAGE } from "../steps";
 import { compareWithLive } from "./compare";
 
 // The Email your MP form, local against live, at each step up to sending:
@@ -10,46 +10,26 @@ import { compareWithLive } from "./compare";
 // or it shows a 404 or "no email listed" and the diff fails, rightly. The
 // local build's database has only the test MP (playwright.config.ts).
 
-const PAGE = "/email-your-mp-v2";
+const PAGE = TOOL_PAGE;
 
-// Fails fast, saying why, rather than waiting out the test's timeout for a
-// field or a heading that will never appear.
-async function lookUpTestMp(page: Page, base: string) {
-  const response = await page.goto(`${base}${PAGE}`);
-  if (!response?.ok()) throw new Error(`${base}${PAGE} returned ${response?.status()}: is the tool deployed there?`);
-  await page.waitForLoadState("load");
-  await page.getByLabel(copy.lookup.nameLabel).fill("Jane Smith");
-  await page.getByLabel(copy.lookup.postcodeLabel).fill("ZZ9 9ZZ");
-  await page.getByRole("button", { name: copy.lookup.button }).click();
-
-  const found = page.getByRole("heading", { name: "Testy McTestface MP" });
-  const refused = page.locator("p[role=alert]");
-  await found.or(refused).first().waitFor({ timeout: 10_000 });
-  if (await refused.isVisible()) {
-    throw new Error(`ZZ99ZZ on ${base} said: "${await refused.textContent()}". Does its database have the test MP?`);
-  }
-  if (await page.getByText(copy.lookup.noEmail).isVisible()) {
-    throw new Error(`The test MP on ${base} has no email, so there's no form: set TEST_MP_EMAIL there.`);
-  }
-}
+// Cloudflare's real widget draws whatever its own checks decide, and can fail
+// to load; both sides get the same stand-in instead.
+test.beforeEach(async ({ page }) => fakeTurnstile(page));
 
 // The test MP's inbox, the footer year, and Cloudflare's widget, which draws
 // whatever its own checks decide.
 const masks = (page: Page) => [page.locator("[data-mp-email]"), page.locator("#year"), page.locator("[data-turnstile]")];
 
 test("visual diff: ZZ99ZZ finds the test MP and drafts the letter", async ({ page }, testInfo) => {
-  await compareWithLive(page, testInfo, `${PAGE} after looking up ZZ99ZZ`, { prepare: lookUpTestMp, masks });
+  await compareWithLive(page, testInfo, `${PAGE} after looking up ZZ99ZZ`, { prepare: (page, base) => lookUpTestMp(page, base), masks });
 });
 
 test("visual diff: ZZ99ZZ, filled in and asking to confirm", async ({ page }, testInfo) => {
   await compareWithLive(page, testInfo, `${PAGE} asking to confirm`, {
     prepare: async (page, base) => {
       await lookUpTestMp(page, base);
-      await page.getByLabel(copy.form.emailLabel).fill("jane@example.com");
-      await page.getByRole("textbox", { name: copy.form.addressLabel }).fill("1 High Street\nTestville");
       // Only opens the confirm box: nothing is sent until "confirm and send".
-      await page.getByRole("button", { name: copy.form.send }).click();
-      await page.getByRole("button", { name: copy.form.confirmSend }).waitFor();
+      await fillLetter(page, "jane@example.com");
     },
     masks,
   });

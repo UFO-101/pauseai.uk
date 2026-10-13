@@ -59,9 +59,9 @@ const eslintConfig = defineConfig([
     },
   },
   // The database's one connection, the test helper that gives each test
-  // file its own database, and the script that makes the local one.
+  // file its own database, and the scripts that make the local ones.
   {
-    files: ["lib/server/db.ts", "lib/server/db.test.ts", "tests/database.ts", "playwright.config.ts", "scripts/db-reset.mjs"],
+    files: ["lib/server/db.ts", "lib/server/db.test.ts", "tests/database.ts", "playwright.config.ts", "scripts/db-reset.mjs", "scripts/serve-main.mjs"],
     rules: {
       "no-restricted-imports": "off",
       "no-restricted-syntax": [

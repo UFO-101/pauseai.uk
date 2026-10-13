@@ -11,6 +11,7 @@ here is `plans/test-coverage.md`.
 | Components | Vitest, `browser` project (real Chromium) | every component | `*.browser.test.tsx` next to the component |
 | Pages and flows | Playwright, `behaviour` project | every route loads cleanly; things that span pages | `tests/behaviour/` |
 | Appearance | Playwright, `public-vs-live-desktop` and `-mobile` projects | public pages: the local build against the live site, every route but `/staff`, desktop and mobile | `tests/public-vs-live/` |
+| Changes against main | Playwright, `fixtures-vs-main-desktop` and `-mobile` projects | every public page, each step of the Email your MP flow and each staff screen, this branch against main, both on fixture data; never fails on a difference | `tests/fixtures-vs-main/` |
 
 **Vitest Node** is for anything that doesn't need a DOM. **Vitest Browser
 Mode** renders a component on its own in real Chromium, so layout, canvas,
@@ -104,6 +105,30 @@ through `outsideFetch` like any other outside service.
   `bounce-testing.postmarkapp.com`, such as `hardbounce@` and `softbounce@`,
   produce real bounce webhooks. Neither is used in CI.
 
+## Changes against main
+
+`npm run test:fixtures-vs-main` screenshots every public page, each step of
+the Email your MP flow (up to the letter being sent) and each staff screen,
+on this branch and on main, and attaches both and their diff to the report.
+
+- **Both sides are fixture builds**: this branch on port 3000, with its own
+  fresh database (`pauseai_fixtures_branch`), and main on port 3001, built by
+  `scripts/serve-main.mjs` (a git worktree of main kept in your temp folder,
+  with its own `npm ci` when its lockfile changes, and its own database if
+  it has one). Playwright starts both; the first run takes a few minutes.
+  `node scripts/serve-main.mjs --ref <branch>` compares with another branch.
+- **It never fails on a difference.** Each test says in the report whether
+  the screenshots are identical, or what fraction of pixels differs. Only
+  the behaviour checks along the way fail a test, and only on this branch:
+  a step main can't take (a page this branch adds) is noted as "no
+  comparison" instead.
+- **Stable on purpose**: fixture data, the same steps on both sides, the
+  same sender each run, and dates, times and the hero photos masked.
+- **Not in CI.** It builds the site twice; run it by hand.
+- **Open the report** with `npm run test:report`. The screenshots also open
+  from `playwright-report/index.html` as a file; traces need the report
+  server.
+
 ## The database
 
 Code that reads or writes the database is tested against a real Postgres,
@@ -125,9 +150,8 @@ not a mock.
   `syncFixtureMps()` (`tests/behaviour/setup.ts`), which runs the nightly
   sync's route against the Parliament fixture.
 - **Staff screens** aren't in the public-vs-live diff: they need a login,
-  and their data differs between hosts. Instead, the behaviour suite
-  attaches a full-page screenshot of each, at desktop and phone widths, to
-  the Playwright report (`npm run test:report`) for a person to look over.
+  and their data differs between hosts. `npm run test:fixtures-vs-main`
+  screenshots them instead (below).
 - **Staff screens** are tested by logging in through the fixture Google
   (`tests/behaviour/staff.spec.ts`). The fixture's ID tokens were signed once
   for the client `fixture-client-id`, and the key that signed them wasn't
@@ -147,9 +171,8 @@ not a mock.
 - A new page needs nothing extra: the route list picks it up. A new dynamic
   route (`[slug]`) needs an example in `tests/routes.ts`, or
   `tests/routes.test.ts` fails.
-- Run `npm run test:public-vs-live` on any PR that changes layout or CSS,
-  and look over the staff screenshots in the behaviour report if it changes
-  the staff interface.
+- Run `npm run test:public-vs-live` and `npm run test:fixtures-vs-main` on
+  any PR that changes layout or CSS, and look over the diffs in the report.
 
 ## Commands
 
@@ -160,6 +183,7 @@ npm run test:coverage     # both, with the coverage gate (what CI runs)
 npm run test:watch        # Vitest in watch mode
 npm run test:behaviour    # Playwright behaviour tests, on fixture data
 npm run test:public-vs-live  # Playwright: public pages, local build against pauseai.uk
+npm run test:fixtures-vs-main  # Playwright: screenshots of this branch against main, on fixture data
 npm run test:report          # open the last Playwright report
 ```
 
