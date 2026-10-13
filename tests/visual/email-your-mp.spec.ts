@@ -12,13 +12,25 @@ import { compareWithLive } from "./compare";
 
 const PAGE = "/email-your-mp-v2";
 
+// Fails fast, saying why, rather than waiting out the test's timeout for a
+// field or a heading that will never appear.
 async function lookUpTestMp(page: Page, base: string) {
-  await page.goto(`${base}${PAGE}`);
+  const response = await page.goto(`${base}${PAGE}`);
+  if (!response?.ok()) throw new Error(`${base}${PAGE} returned ${response?.status()}: is the tool deployed there?`);
   await page.waitForLoadState("load");
   await page.getByLabel(copy.lookup.nameLabel).fill("Jane Smith");
   await page.getByLabel(copy.lookup.postcodeLabel).fill("ZZ9 9ZZ");
   await page.getByRole("button", { name: copy.lookup.button }).click();
-  await page.getByRole("heading", { name: "Testy McTestface MP" }).waitFor();
+
+  const found = page.getByRole("heading", { name: "Testy McTestface MP" });
+  const refused = page.locator("p[role=alert]");
+  await found.or(refused).first().waitFor({ timeout: 10_000 });
+  if (await refused.isVisible()) {
+    throw new Error(`ZZ99ZZ on ${base} said: "${await refused.textContent()}". Does its database have the test MP?`);
+  }
+  if (await page.getByText(copy.lookup.noEmail).isVisible()) {
+    throw new Error(`The test MP on ${base} has no email, so there's no form: set TEST_MP_EMAIL there.`);
+  }
 }
 
 // The test MP's inbox, the footer year, and Cloudflare's widget, which draws
