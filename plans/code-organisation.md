@@ -1,6 +1,7 @@
 # Code organisation plan
 
-Written 2026-10-13. Status: proposed, not started.
+Written 2026-10-13. Status: phases 0–8 done on 2026-10-13 (see git log); the
+`Section` component from phase 3 and phase 9 are not done yet.
 
 ## Scope
 

@@ -31,6 +31,7 @@ lib/                      logic and data, no React state
   content/                the site's content as typed data (people, blog, ...)
   collateral/             the collateral tool's drawing engine
   events.ts, trackers.ts  pure helpers for one feature each
+  metadata.ts             pageMetadata()
 styles/                   global CSS: tokens and base styles
 tests/                    Playwright suites, the route list, fixtures
 docs/, plans/
@@ -72,3 +73,24 @@ Route groups like `(site)` don't appear in URLs. Folders starting with `_`
 - **Imports** use the `@/` alias for anything outside the current folder.
 - **Tests** sit next to the code they test (`*.test.ts`,
   `*.browser.test.tsx`); see `docs/testing.md`.
+
+## Styling
+
+- `styles/tokens.css` (fonts and CSS variables) and `styles/base.css`
+  (reset, element defaults, `.container`) load first, from the root layout.
+- UI kit components (`components/ui/`) have CSS modules, imported by the
+  root layout before `app/globals.css`. To restyle one in context, target
+  its data attribute (`[data-button][data-variant="ghost"]`,
+  `[data-card]`), which keeps the same specificity as the old global class.
+- `app/globals.css` still holds the rest of the site's shared styles, and
+  some pages import plain global stylesheets (`track-record.css` is shared
+  by several). New components get a `.module.css`; move a page's styles to
+  modules when you next work on it, rather than adding to the global files.
+
+## Still to do
+
+From `plans/code-organisation.md`, not done yet:
+
+- A `Section` component for the repeated `section` / `section-header` /
+  `section-lede` markup.
+- Page stylesheets to CSS modules, page by page (see Styling).
