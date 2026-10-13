@@ -42,3 +42,5 @@ out/
 next-env.d.ts
 *.tsbuildinfo
 
+# Local temporary files
+tmp/
