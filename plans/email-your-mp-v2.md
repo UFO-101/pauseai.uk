@@ -67,7 +67,7 @@ The cap on confirmation emails is a count over the letters table.
 
 For the policy team to edit campaign status, add signers from outside the Commons, set the test MP's status, and see letters and bounces.
 
-- **Where**: under `app/(staff)/staff/`, so the URLs are `/staff/...`, with staff API routes at `/staff/api/...`. It has its own root layout, without the site's header, analytics or consent banner. Nothing links to it, it's not in the sitemap or `robots.txt`, and it sends `noindex`.
+- **Where**: under `app/(staff)/staff/`, so the URLs are `/staff/...`, with staff API routes at `/staff/api/...`. Its layout leaves out `<Nav>` and turns analytics off with `<NoAnalytics />`, as `app/(tools)/layout.tsx` does. It stays under the root layout (`app/layout.tsx`), so the footer and consent banner still show. A separate root layout would mean splitting the site's root layout across every route group. Nothing links to it, it's not in the sitemap or `robots.txt`, and it sends `noindex`.
 - **Login**: Google, pauseai.uk Workspace accounts only.
   - The OAuth client is set to "Internal", so Google refuses outside accounts. Joseph sets it up in the pauseai.uk Workspace's Google Cloud project, and is the first staff user.
   - The server checks the token's signature, `email_verified`, and that `hd` is exactly `pauseai.uk`.
