@@ -1,103 +1,12 @@
-import type { Metadata } from "next";
-import LocalGroupEvents from "@/components/events/LocalGroupEvents";
-import { site } from "@/lib/content/site";
-import { ButtonAnchor } from "@/components/ui/Button";
+import LocalGroupPage from "@/components/local-groups/LocalGroupPage";
+import { localGroupMetadata, localGroupPages } from "@/lib/content/local-group-pages";
 
-export const metadata: Metadata = {
-  title: "West of England Group",
-  openGraph: {
-    title: "PauseAI West of England",
-    description: "Join the West of England group of PauseAI for meetups, outreach, and AI safety action around Bristol and the wider region.",
-    images: [{ url: "/images/open-graph/open-graph-1200-630.jpg", width: 1200, height: 630 }],
-    url: "https://pauseai.uk/west-of-england",
-  },
-  twitter: {
-    title: "PauseAI West of England",
-    description: "Join the West of England group of PauseAI for meetups, outreach, and AI safety action around Bristol and the wider region.",
-    images: ["/images/open-graph/open-graph-1080-1080.jpg"],
-  },
-  alternates: { canonical: "/west-of-england" },
-};
-
-const WEST_OF_ENGLAND_LINKTREE = "https://linktr.ee/PauseAI_West_of_England";
+export const metadata = localGroupMetadata(
+  "West of England",
+  "/west-of-england",
+  "Join the West of England group of PauseAI for meetups, outreach, and AI safety action around Bristol and the wider region.",
+);
 
 export default function WestOfEnglandPage() {
-  return (
-    <>
-      <main>
-        <section className="hero" style={{ paddingBottom: 48 }}>
-          <div className="container hero-grid">
-            <div className="hero-copy">
-              <h1>PauseAI West of England</h1>
-              <p className="lede">
-                A new group bringing AI safety conversations and action to Bristol and the wider West of England.
-              </p>
-              <div className="actions">
-                <ButtonAnchor variant="primary" href={site.whatsappUrl} target="_blank" rel="noreferrer">Join the WhatsApp group</ButtonAnchor>
-                <ButtonAnchor variant="ghost" href={WEST_OF_ENGLAND_LINKTREE} target="_blank" rel="noreferrer">All our links</ButtonAnchor>
-              </div>
-            </div>
-            <div className="hero-visual">
-              <div
-                className="hero-photo"
-                style={{
-                  backgroundImage: "linear-gradient(135deg, rgba(255, 148, 22, 0.35), rgba(0,0,0,0.65)), url('/images/local-groups/west-of-england/bristol-launch.jpg')",
-                  backgroundSize: "cover, cover",
-                  backgroundPosition: "center, center",
-                  backgroundRepeat: "no-repeat",
-                }}
-              ></div>
-              <div className="hero-badge">Just getting started</div>
-            </div>
-          </div>
-        </section>
-
-        <section className="section container">
-          <div className="section-header">
-            <h2>What we&apos;re building in the West of England</h2>
-            <p className="section-lede">
-              A brand new group — get in early and help shape how we campaign locally.
-            </p>
-          </div>
-          <div className="feature-grid">
-            <article className="feature-card">
-              <div className="dot"></div>
-              <h3>Discussion groups &amp; socials</h3>
-              <p>Bringing people together to talk through the case for a pause and the future we want.</p>
-            </article>
-            <article className="feature-card">
-              <div className="dot"></div>
-              <h3>Public outreach</h3>
-              <p>Flyering, stalls, and posters to engage the public on AI risk.</p>
-            </article>
-            <article className="feature-card">
-              <div className="dot"></div>
-              <h3>Letters to MPs</h3>
-              <p>Group emailing and letter-writing to put AI safety on our representatives&apos; desks.</p>
-            </article>
-          </div>
-        </section>
-
-        <LocalGroupEvents localGroupName="West of England" />
-
-        <section className="section muted">
-          <div className="container">
-            <div className="section-header">
-              <h2>Link up with the group</h2>
-              <p className="section-lede">
-                Join the UK-wide WhatsApp to connect with organisers and hear about national events and campaigns.
-              </p>
-            </div>
-            <div className="callout-inner">
-              <div>
-                <p className="section-lede">WhatsApp: <a href={site.whatsappUrl} target="_blank" rel="noreferrer">PauseAI UK WhatsApp</a></p>
-                <p className="section-lede">All our links: <a href={WEST_OF_ENGLAND_LINKTREE} target="_blank" rel="noreferrer">linktr.ee/PauseAI_West_of_England</a></p>
-              </div>
-              <ButtonAnchor variant="primary" size="large" href={site.whatsappUrl} target="_blank" rel="noreferrer">Join the WhatsApp group</ButtonAnchor>
-            </div>
-          </div>
-        </section>
-      </main>
-    </>
-  );
+  return <LocalGroupPage content={localGroupPages["West of England"]} />;
 }

@@ -38,3 +38,16 @@ export async function getSourceCounts(
   }
   return tallySources(entries, tags, since, until);
 }
+
+/**
+ * A flyering race's two windows over the same guest list (Next dedupes the
+ * identical Luma fetches): the race itself, and everything after it.
+ */
+export function getRaceCounts(
+  eventApiId: string,
+  tags: readonly string[],
+  open: Date,
+  close: Date
+): Promise<[SourceCounts | null, SourceCounts | null]> {
+  return Promise.all([getSourceCounts(eventApiId, tags, open, close), getSourceCounts(eventApiId, tags, close)]);
+}

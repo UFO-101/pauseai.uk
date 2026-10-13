@@ -965,37 +965,6 @@ html {
   margin-top: 32px;
 }
 
-.feature-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-left: 3px solid var(--accent);
-  border-radius: 12px;
-  padding: 24px;
-  position: relative;
-  box-shadow: 0 1px 3px var(--shadow);
-  transition: box-shadow 0.2s ease;
-}
-
-.feature-card:hover {
-  box-shadow: 0 4px 16px var(--shadow);
-}
-
-.feature-card h3 {
-  font-family: "Inter", system-ui, sans-serif;
-  font-weight: 700;
-  font-size: 18px;
-  margin: 0 0 8px;
-}
-
-.feature-card p {
-  color: var(--text-secondary);
-  margin: 0;
-}
-
-.dot {
-  display: none;
-}
-
 /* ── Activity / Local Group Cards ──────────────────── */
 
 .activity-grid {
@@ -2117,32 +2086,6 @@ html {
   margin-left: 2px;
 }
 
-/* ── Feature card ─────────────────────────────── */
-
-.feature-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-left: 3px solid var(--accent);
-  border-radius: 12px;
-  padding: 24px;
-  position: relative;
-  box-shadow: 0 1px 3px var(--shadow);
-  transition: box-shadow 0.2s ease;
-}
-.feature-card:hover {
-  box-shadow: 0 4px 16px var(--shadow);
-}
-.feature-card h3 {
-  font-family: "Inter", system-ui, sans-serif;
-  font-weight: 700;
-  font-size: 18px;
-  margin: 0 0 8px;
-}
-.feature-card p {
-  color: var(--text-secondary);
-  margin: 0;
-}
-
 /* ── Donate page ───────────────────────────────── */
 
 .donate-intro {
@@ -2477,7 +2420,7 @@ html {
   gap: 16px;
   margin-top: 20px;
 }
-.other-ways-cards .feature-card h3 { font-size: 18px; margin: 0 0 8px; }
+.other-ways-cards [data-card] h3 { font-size: 18px; margin: 0 0 8px; }
 @media (max-width: 720px) {
   .donate-bottom-grid { grid-template-columns: 1fr; gap: 40px; }
 }

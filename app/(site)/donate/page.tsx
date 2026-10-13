@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
+import FeatureCard from "@/components/ui/FeatureCard";
 import DonateForm from "./_components/DonateForm";
 
 export const metadata: Metadata = {
@@ -78,7 +79,7 @@ export default function DonatePage() {
                   If you prefer to give by bank transfer, please get in touch and we&apos;ll provide our bank details. You may want to do this to avoid fees on large one-off donations. For recurring donations this may not be necessary as Direct Debit fees are small.
                 </p>
                 <div className="other-ways-cards">
-                  <article className="feature-card">
+                  <FeatureCard>
                     <h3>Any questions?</h3>
                     <p>
                       Get in touch and we&apos;ll be happy to help.
@@ -86,7 +87,7 @@ export default function DonatePage() {
                     <a className="inline-link" href="mailto:donate@pauseai.uk?subject=PauseAI%20UK%20donation%20enquiry">
                       donate@pauseai.uk →
                     </a>
-                  </article>
+                  </FeatureCard>
                 </div>
               </div>
 
@@ -97,7 +98,7 @@ export default function DonatePage() {
                   <Link className="inline-link" href="/privacy">privacy policy</Link> to see how we handle your information.
                 </p>
                 <div className="other-ways-cards">
-                  <article className="feature-card">
+                  <FeatureCard>
                     <h3>Can I donate anonymously?</h3>
                     <p>
                       Yes. We never publish a donor&apos;s name without their permission, and we understand there are good reasons to keep your support private. To make sure we are never acting for any outside interest, we ask donors giving over &pound;1,000 for their name, email and country of residence, hold that in confidence, and have our board approve anyone giving more than &pound;10,000 in a year.
@@ -105,7 +106,7 @@ export default function DonatePage() {
                     <Link className="inline-link" href="/governance/#donation-policies">
                       Read our donation policies →
                     </Link>
-                  </article>
+                  </FeatureCard>
                 </div>
                 <div className="registered-details">
                   <p>

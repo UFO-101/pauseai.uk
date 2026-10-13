@@ -22,9 +22,10 @@ app/
   sitemap.ts, robots.ts
 components/               React components used by more than one route
   layout/                 Nav, Footer, CookieConsent and the rest of the chrome
-  ui/                     Button, CopyLinkButton: small building blocks
+  ui/                     Button, FeatureCard, CopyLinkButton: small building blocks
   events/                 EventList, LocalGroupEvents
   people/                 PersonCard, StoryShareForm
+  local-groups/           LocalGroupPage, which renders every group's page
 lib/                      logic and data, no React state
   server/                 calls to outside services; `import "server-only"`
   content/                the site's content as typed data (people, blog, ...)
@@ -54,6 +55,10 @@ Route groups like `(site)` don't appear in URLs. Folders starting with `_`
   their API hosts anywhere else, and lock Airtable to
   `lib/server/airtable.ts`. Files there import `server-only`, so they can't
   end up in a browser bundle.
+- **Write it once.** Pages that share a shape share a component: each local
+  group page is `LocalGroupPage` plus its content in
+  `lib/content/local-group-pages.tsx`, and each flyering tracker is
+  `FlyeringTracker` plus a short config.
 - **Content vs logic.** Data the site displays (people, posts, press, board)
   goes in `lib/content/`. Logic goes next to the feature it serves
   (`lib/events.ts`, `lib/collateral/`).

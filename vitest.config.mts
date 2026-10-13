@@ -26,7 +26,7 @@ export default defineConfig({
           name: "node",
           environment: "node",
           include: ["**/*.test.ts"],
-          exclude: ["**/node_modules/**", "tests/behaviour/**", "tests/visual/**", "plans/**", "**/*.browser.test.*"],
+          exclude: ["**/node_modules/**", "tests/behaviour/**", "tests/visual/**", "plans/**", "tmp/**", "**/*.browser.test.*"],
           setupFiles: ["./vitest.setup.node.ts"],
         },
       },
@@ -35,10 +35,15 @@ export default defineConfig({
         // Next's client modules (next/link, next/image) read build-time
         // flags from process.env, which only exists when Next compiles them.
         define: { "process.env": JSON.stringify({ NODE_ENV: "test" }) },
+        // Pre-bundle these up front. If Vite discovers one mid-run it
+        // re-optimises and can load a second copy of React into the page.
+        optimizeDeps: {
+          include: ["react", "react-dom", "react-dom/client", "react/jsx-dev-runtime", "next/link", "next/image", "next/navigation"],
+        },
         test: {
           name: "browser",
           include: ["**/*.browser.test.{ts,tsx}"],
-          exclude: ["**/node_modules/**", "tests/**", "plans/**"],
+          exclude: ["**/node_modules/**", "tests/**", "plans/**", "tmp/**"],
           setupFiles: ["./vitest.setup.browser.tsx"],
           browser: {
             enabled: true,
