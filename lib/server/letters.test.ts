@@ -18,9 +18,9 @@ describeWithDatabase("recentLetters", () => {
     await query("INSERT INTO letter_events (letter_id, status, details) VALUES (1, 'unconfirmed', '{}'), (1, 'sent', '{\"messageId\":\"m\"}')");
 
     const letters = await recentLetters();
-    expect(letters.map((l) => [l.id, l.status, l.mpName, l.isTest])).toEqual([
-      [2, "unconfirmed", "Testy McTestface MP", true],
-      [1, "sent", "Testy McTestface MP", true],
+    expect(letters.map((l) => [l.id, l.status, l.mpName, l.isTest, l.contactConsent])).toEqual([
+      [2, "unconfirmed", "Testy McTestface MP", true, false],
+      [1, "sent", "Testy McTestface MP", true, false],
     ]);
     expect(letters[1].events.map((e) => [e.status, e.details])).toEqual([
       ["unconfirmed", {}],

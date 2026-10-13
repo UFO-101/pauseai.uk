@@ -26,7 +26,6 @@ settings it needs.
   click it. Also deletes letters never confirmed.
 - `lib/server/postmark.ts`: the only file that talks to Postmark.
 - `lib/server/postmark-webhooks.ts`: bounces, spam complaints and replies.
-- `lib/server/civicrm.ts`: logs each sent letter in CiviCRM.
 - `app/(site)/email-your-mp-v2/`: the pages and the form.
 - `app/api/email-your-mp/`: the form's lookup and send requests.
 
@@ -66,8 +65,7 @@ The environment variables are listed in the [README](../README.md#environment-va
    (a link scanner that only fetches the page sends nothing). The letter is
    sent through Postmark from `"Jane Smith via PauseAI"
    <reply+<hash>@mp.pauseai.uk>`, with Reply-To the sender and that address,
-   and the campaign's PDFs attached. The token then stops working. It's
-   logged in CiviCRM.
+   and the campaign's PDFs attached. The token then stops working.
 3. Outside production, letters go only to the test MP, checked both when the
    form is sent and when the letter is.
 4. Unconfirmed letters are deleted after 7 days, by
@@ -82,16 +80,12 @@ Postmark's webhooks, each with the basic auth credentials in the URL, e.g.
   The reply is forwarded to `REPLIES_INBOX`, and to the sender unless their
   address was already in its To or Cc. Nothing about it is stored.
 
-### Assumed about CiviCRM
+### Records
 
-Its URL, API version and activity types aren't known yet, so this assumes
-the standard APIv4 REST interface: `POST <CIVICRM_URL>/civicrm/ajax/api4/
-<Entity>/<action>` with `params=<JSON>`, and an API key sent as
-`X-Civi-Auth: Bearer <key>`. Each sent letter finds the sender's contact by
-email (or makes one), and adds a Completed activity of type
-`CIVICRM_ACTIVITY_TYPE`. Contact consent is noted in the activity's
-details, not as a CiviCRM opt-in. A failure here is logged and never stops
-a letter.
+Every letter is kept in the `letters` table: sender, email, address,
+contact consent, campaign, MP, the letter as sent, and each change of
+status in `letter_events`. Sent letters are kept indefinitely for now. Staff
+see them, with contact consent, at `/staff/letters`.
 
 ## Staff interface
 

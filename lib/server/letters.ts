@@ -11,6 +11,8 @@ export type LetterSummary = {
   status: string;
   senderName: string;
   senderEmail: string;
+  /** Whether they agreed to hear about events and ways to help. */
+  contactConsent: boolean;
   mpName: string;
   isTest: boolean;
   subject: string;
@@ -23,7 +25,7 @@ export type LetterSummary = {
 export async function recentLetters({ status, limit = 200 }: { status?: string; limit?: number } = {}): Promise<LetterSummary[]> {
   return query<LetterSummary>(
     `SELECT l.id::int AS id, l.campaign, l.status, l.sender_name AS "senderName", l.sender_email AS "senderEmail",
-       p.name AS "mpName", p.is_test AS "isTest", l.subject, l.created_at AS "createdAt", l.sent_at AS "sentAt",
+       l.contact_consent AS "contactConsent", p.name AS "mpName", p.is_test AS "isTest", l.subject, l.created_at AS "createdAt", l.sent_at AS "sentAt",
        coalesce((SELECT json_agg(json_build_object('at', e.at, 'status', e.status, 'details', e.details) ORDER BY e.at, e.id)
                  FROM letter_events e WHERE e.letter_id = l.id), '[]') AS events
      FROM letters l JOIN politicians p ON p.id = l.politician_id

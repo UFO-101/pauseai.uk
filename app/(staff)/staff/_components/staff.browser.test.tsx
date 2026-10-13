@@ -166,6 +166,7 @@ describe("LettersTable", () => {
     status: "bounced",
     senderName: "Jane Smith",
     senderEmail: "jane@example.com",
+    contactConsent: true,
     mpName: "Testy McTestface MP",
     isTest: true,
     subject: "S",
@@ -178,11 +179,13 @@ describe("LettersTable", () => {
   };
 
   it("lists letters with their status and history", async () => {
-    await render(<LettersTable letters={[letter, { ...letter, id: 2, campaign: "gone", status: "odd", isTest: false, events: [{ at: letter.createdAt, status: "strange", details: {} }] }]} />);
+    await render(<LettersTable letters={[letter, { ...letter, id: 2, campaign: "gone", status: "odd", isTest: false, contactConsent: false, events: [{ at: letter.createdAt, status: "strange", details: {} }] }]} />);
     await expect.element(page.getByText("jane@example.com").first()).toBeInTheDocument();
     await expect.element(page.getByText(pm.title).first()).toBeInTheDocument();
     await expect.element(page.getByText("gone")).toBeInTheDocument();
     await expect.element(page.getByText("odd")).toBeInTheDocument();
+    await expect.element(page.getByRole("cell", { name: staffCopy.letters.consent.yes, exact: true })).toBeInTheDocument();
+    await expect.element(page.getByRole("cell", { name: staffCopy.letters.consent.no, exact: true })).toBeInTheDocument();
     await expect.element(page.getByText(/strange/)).toBeInTheDocument();
     await expect.element(page.getByText('{"type":"HardBounce"}', { exact: false })).toBeInTheDocument();
     expect(page.getByText(staffCopy.politicians.testMp).all()).toHaveLength(1);

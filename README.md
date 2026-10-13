@@ -40,7 +40,6 @@ Set in Netlify for the live site. None are needed for `DATA_FIXTURES=1` except t
 | `TEST_MP_EMAIL` | The test MP's inbox (postcode ZZ99ZZ) | The test MP has no email, so no form |
 | `MP_MAIL_DOMAIN` | The domain letters come from and replies go to | `mp.pauseai.uk` |
 | `CONFIRMATION_FROM` | The confirmation email's From | `PauseAI UK <confirm@mp.pauseai.uk>` |
-| `CIVICRM_URL`, `CIVICRM_API_KEY`, `CIVICRM_ACTIVITY_TYPE` | Logs each sent letter in CiviCRM. All three are needed | Nothing is logged; sending still works |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Staff login at `/staff`, with a pauseai.uk Google account | Staff can't log in |
 | `CRON_SECRET` | Lets the daily jobs (MP sync, deleting unconfirmed letters) call the site | The daily jobs fail |
 | `AIRTABLE_TOKEN` | The one-off import of signatories from Airtable | The import page says it isn't set up |

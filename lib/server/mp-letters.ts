@@ -4,7 +4,6 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { copy } from "@/lib/content/email-your-mp";
 import { campaignBySlug, fullLetter, looksLikeEmail, signatureAddress } from "@/lib/email-your-mp";
-import { logLetterSent } from "./civicrm";
 import { query, transaction, type Queryable } from "./db";
 import { findMp } from "./find-mp";
 import { headerName, sendEmail } from "./postmark";
@@ -149,8 +148,6 @@ type ClaimedLetter = {
   campaign: string;
   senderName: string;
   senderEmail: string;
-  senderAddress: string;
-  contactConsent: boolean;
   subject: string;
   body: string;
   replyHash: string;
@@ -184,7 +181,7 @@ export async function confirmLetter(token: string): Promise<ConfirmResult> {
      FROM politicians p
      WHERE l.token_hash = $1 AND l.status = 'unconfirmed' AND p.id = l.politician_id
      RETURNING l.id::int AS id, l.campaign, l.sender_name AS "senderName", l.sender_email AS "senderEmail",
-       l.sender_address AS "senderAddress", l.contact_consent AS "contactConsent", l.subject, l.body,
+       l.subject, l.body,
        l.reply_hash AS "replyHash", p.name AS "mpName", p.email AS "mpEmail", p.is_test AS "isTest"`,
     [hash(token)],
   );
@@ -220,7 +217,6 @@ export async function confirmLetter(token: string): Promise<ConfirmResult> {
 
   await query("UPDATE letters SET status = 'sent', postmark_message_id = $2, sent_at = now() WHERE id = $1", [letter.id, messageId]);
   await logEvent(letter.id, "sent", { messageId });
-  await logLetterSent({ ...letter, mpEmail: letter.mpEmail });
   return { ok: true, mpName: letter.mpName };
 }
 

@@ -15,6 +15,7 @@ export default function LettersTable({ letters }: { letters: LetterSummary[] }) 
           <tr>
             <th>{staffCopy.letters.columns.created}</th>
             <th>{staffCopy.letters.columns.from}</th>
+            <th>{staffCopy.letters.columns.consent}</th>
             <th>{staffCopy.letters.columns.to}</th>
             <th>{staffCopy.letters.columns.campaign}</th>
             <th>{staffCopy.letters.columns.status}</th>
@@ -30,6 +31,7 @@ export default function LettersTable({ letters }: { letters: LetterSummary[] }) 
                 <br />
                 <span className={styles.muted}>{letter.senderEmail}</span>
               </td>
+              <td>{letter.contactConsent ? staffCopy.letters.consent.yes : staffCopy.letters.consent.no}</td>
               <td>
                 {letter.mpName} {letter.isTest && <span className={styles.tag}>{staffCopy.politicians.testMp}</span>}
               </td>
