@@ -3,7 +3,7 @@ import { OUTBOX_DIR } from "./tests/behaviour/setup";
 
 // Two suites:
 //
-// - "public-vs-live" / "public-vs-live-mobile" compare the public pages of
+// - "public-vs-live-desktop" / "public-vs-live-mobile" compare the public pages of
 //   the live site against a local build, page by page, at desktop and phone
 //   widths (never /staff, which needs a login) — not a stored-baseline
 //   snapshot test. LIVE_URL/LOCAL_URL are overridable so it can also compare
@@ -39,7 +39,7 @@ export default defineConfig({
   },
   projects: [
     {
-      name: "public-vs-live",
+      name: "public-vs-live-desktop",
       testDir: "./tests/public-vs-live",
       use: { ...devices["Desktop Chrome"], viewport: { width: 1280, height: 800 } },
     },

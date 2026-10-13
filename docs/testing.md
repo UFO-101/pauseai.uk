@@ -10,7 +10,7 @@ here is `plans/test-coverage.md`.
 | Logic | Vitest, `node` project | `lib/`, `app/api/`, `sitemap.ts`, `next.config.ts` | `*.test.ts` (or `.tsx`) next to the code |
 | Components | Vitest, `browser` project (real Chromium) | every component | `*.browser.test.tsx` next to the component |
 | Pages and flows | Playwright, `behaviour` project | every route loads cleanly; things that span pages | `tests/behaviour/` |
-| Appearance | Playwright, `public-vs-live` projects | public pages: the local build against the live site, every route but `/staff`, desktop and mobile | `tests/public-vs-live/` |
+| Appearance | Playwright, `public-vs-live-desktop` and `-mobile` projects | public pages: the local build against the live site, every route but `/staff`, desktop and mobile | `tests/public-vs-live/` |
 
 **Vitest Node** is for anything that doesn't need a DOM. **Vitest Browser
 Mode** renders a component on its own in real Chromium, so layout, canvas,
