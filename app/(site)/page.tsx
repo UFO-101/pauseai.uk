@@ -1,345 +1,42 @@
-import type { Metadata } from "next";
-import Image from "next/image";
-import Link from "next/link";
-import type { CSSProperties } from "react";
-import OnboardingFormEmbed from "./_components/OnboardingFormEmbed";
-import HeroMarqueeEffects from "./_components/HeroMarqueeEffects";
-import EventList from "@/components/events/EventList";
-import PeopleCarousel from "./_components/PeopleCarousel";
-import LocalGroupsMap from "./_components/LocalGroupsMap";
+import { pageMetadata } from "@/lib/metadata";
 import { getEvents } from "@/lib/server/luma-calendar";
-import { newsRow1, newsRow2, newsMobileRow1, newsMobileRow2, newsMobileRow3, type CoverageItem } from "@/lib/content/press-coverage";
-import { people } from "@/lib/content/people";
-import { staff } from "@/lib/content/staff";
-import { site } from "@/lib/content/site";
-import { ButtonAnchor, ButtonLink } from "@/components/ui/Button";
+import GetInvolved from "./_components/GetInvolved";
+import HeroMarqueeEffects from "./_components/HeroMarqueeEffects";
+import HomeHero from "./_components/HomeHero";
+import JoinSection from "./_components/JoinSection";
+import LocalGroupsSection from "./_components/LocalGroupsSection";
+import PeopleSection from "./_components/PeopleSection";
+import PressMarquee from "./_components/PressMarquee";
+import ShopBanner from "./_components/ShopBanner";
+import StaffSection from "./_components/StaffSection";
+import UpcomingEvents from "./_components/UpcomingEvents";
 
-export const metadata: Metadata = {
-  title: { absolute: "PauseAI UK | Civic action on AI" },
+export const metadata = pageMetadata({
+  title: "PauseAI UK | Civic action on AI",
   description: "Community-led action for safe and accountable AI.",
+  path: "/",
+  absoluteTitle: true,
   openGraph: {
     title: "PauseAI UK",
     description: "Community-led action for safe and accountable AI across the UK.",
-    images: [{ url: "/images/open-graph/open-graph-1200-630.jpg", width: 1200, height: 630 }],
-    url: "https://pauseai.uk/",
   },
-  twitter: {
-    images: ["/images/open-graph/open-graph-1600-840.jpg"],
-  },
-  alternates: { canonical: "/" },
-};
-
-function renderNewsRow(items: CoverageItem[], reverse = false) {
-  return (
-    <div className={`news-marquee-row${reverse ? " news-marquee-row--reverse" : ""}`}>
-      <div className="news-marquee-track">
-        {[0, 1].map((copyIdx) => (
-          <div
-            key={copyIdx}
-            className="news-marquee-copy"
-            {...(copyIdx > 0 ? { "aria-hidden": true } : {})}
-          >
-            {items.map((item, i) => (
-              <a
-                key={i}
-                className="news-marquee-item"
-                href={item.url}
-                target="_blank"
-                rel="noreferrer"
-                title={item.title}
-                aria-label={`${item.outlet}: ${item.title}`}
-                {...(copyIdx > 0 ? { tabIndex: -1 } : {})}
-              >
-                <div className="news-logo-box">
-                  {item.logoSrc ? (
-                    <Image
-                      className="news-logo"
-                      src={item.logoSrc}
-                      alt={item.outlet}
-                      width={item.logoIntrinsicWidth ?? 100}
-                      height={item.logoIntrinsicHeight ?? 44}
-                      loading="lazy"
-                      style={item.logoHeight ? ({ "--logo-h": item.logoHeight } as CSSProperties) : undefined}
-                    />
-                  ) : (
-                    <span dangerouslySetInnerHTML={{ __html: item.logoHtml! }} />
-                  )}
-                </div>
-              </a>
-            ))}
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// [src, alt, intrinsic width, intrinsic height] — the dimensions are
-// required by next/image for aspect ratio; actual display size is driven
-// by the CSS (height: 100%; width: auto) on .hero-marquee-track img.
-const HERO_PHOTOS: [string, string, number, number][] = [
-  ["alistair-june-2025-protest.webp", "Alistair at the June 2025 London protest", 800, 450],
-  ["alistair-reading.webp", "Alistair Reith at a PauseAI event", 800, 416],
-  ["benifei-russell-panel.webp", "Benifei and Russell at the PauseCon Brussels panel", 800, 449],
-  ["book-launch-joseph.webp", "Joseph at the PauseAI UK book launch", 800, 600],
-  ["connor-leahy.webp", "Connor Leahy speaking at a PauseCon", 800, 908],
-  ["deepmind-close-up.webp", "Protester outside Google DeepMind", 800, 450],
-  ["june-2025-protest-closeup.webp", "June 2025 protest close-up", 800, 450],
-  ["laiba-brussels.webp", "Laiba at PauseCon Brussels", 800, 606],
-  ["letter-writing.webp", "PauseAI UK letter-writing session", 800, 837],
-  ["london-june-2025-protest-group.webp", "London June 2025 protest group", 800, 360],
-  ["maxime-speech-audience.webp", "Maxime delivering a speech to a London audience", 800, 282],
-  ["pausecon-brussels-2026-panel.webp", "PauseCon Brussels 2026 panel", 800, 450],
-  ["pausecon-brussels-discussion.webp", "PauseCon Brussels discussion", 800, 534],
-  ["pausecon-london-2025-people-talking.webp", "PauseCon London 2025 discussion", 800, 533],
-  ["pausecon-london-ella-workshop.webp", "Ella's workshop at PauseCon London", 800, 533],
-  ["scott-wiener-on-screen.webp", "Scott Wiener on screen at a PauseAI event", 800, 450],
-  ["stuart-russell-interview.webp", "Stuart Russell interview at PauseCon Brussels", 800, 534],
-  ["westminster-hall.webp", "Westminster Hall event", 800, 448],
-  ["parliament-group-landscape.webp", "PauseAI UK volunteers outside Parliament, June 2026", 800, 326],
-  ["jeremy-corbyn.webp", "PauseAI UK board member David Wood with MP Jeremy Corbyn", 800, 507],
-
-  ["parliament-conference-sep-2026-audience.webp", "A packed committee room at the PauseAI UK discussion in Parliament, September 2026", 800, 533],
-  ["parliament-conference-sep-2026-speakers.webp", "Speakers and organisers at the PauseAI UK discussion in Parliament, September 2026", 800, 400],
-  ["pausecon-london-sept-2026-group.webp", "Group photo of attendees at PauseCon London, September 2026", 800, 314],
-  ["downing-street-sept-2026-banner.webp", "Protesters holding a PauseAI banner and placards on Whitehall, September 2026", 800, 535],
-  ["downing-street-sept-2026-gates-crowd.webp", "PauseAI protesters with placards at the Downing Street gates, September 2026", 800, 534],
-];
-
-function shuffle<T>(arr: readonly T[]): T[] {
-  const a = [...arr];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-}
+});
 
 export default async function HomePage() {
   const events = await getEvents();
 
-  // Server-component shuffle: a new order each render. Sent to the
-  // client as part of the rendered HTML so hydration matches.
-  const shuffled = shuffle(HERO_PHOTOS);
-  // Share the photos across three rows so none are dropped as the list grows.
-  const perRow = Math.ceil(shuffled.length / 3);
-  const heroRows = [
-    { dir: "ltr" as const, photos: shuffled.slice(0, perRow) },
-    { dir: "rtl" as const, photos: shuffled.slice(perRow, perRow * 2) },
-    { dir: "ltr" as const, photos: shuffled.slice(perRow * 2) },
-  ];
-
   return (
     <>
       <main>
-        <section id="about" className="hero">
-          <div className="hero-marquee">
-            {heroRows.map((row, ri) => (
-              <div key={ri} className={`hero-marquee-row hero-marquee-row--${row.dir}`}>
-                <div className="hero-marquee-track">
-                  {[0, 1].map((copyIdx) => (
-                    <div
-                      key={copyIdx}
-                      className="hero-marquee-copy"
-                      {...(copyIdx > 0 ? { "aria-hidden": true } : {})}
-                    >
-                      {[...row.photos, ...row.photos].map(([src, alt, width, height], i) => {
-                        const isPrimary = copyIdx === 0 && i < row.photos.length;
-                        const isLcp = ri === 0 && copyIdx === 0 && i === 0;
-                        return (
-                          <Image
-                            key={i}
-                            src={`/images/front-page-hero-optimized/${src}`}
-                            alt={isPrimary ? alt : ""}
-                            width={width}
-                            height={height}
-                            aria-hidden={!isPrimary || undefined}
-                            loading={isLcp ? undefined : "lazy"}
-                            priority={isLcp}
-                          />
-                        );
-                      })}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
-
-            <div className="hero-marquee-overlay">
-              <div className="hero-marquee-text">
-                <h1>Organising for<br/>our future</h1>
-                <p className="hero-lede">
-                  We are the civic movement dedicated to averting the risks of superhuman artificial intelligence.
-                </p>
-                <div className="actions hero-actions">
-                  <ButtonAnchor variant="primary" href="#join">
-                    Join PauseAI UK
-                  </ButtonAnchor>
-                  <div className="hero-actions-secondary">
-                    <ButtonAnchor variant="ghost" href="#events">Upcoming events ↓</ButtonAnchor>
-                    <ButtonLink variant="ghost" href="/track-record/">Track record →</ButtonLink>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section id="events" className="next-event">
-          <div className="container">
-            <div className="section-heading-row">
-              <h2 className="section-heading">Upcoming events</h2>
-              <ButtonAnchor
-                variant="primary"
-                className="section-heading-cta"
-                href={site.social.luma}
-                target="_blank"
-                rel="noreferrer"
-              >
-                View full calendar →
-              </ButtonAnchor>
-            </div>
-            <EventList events={events} lumaUrl={site.social.luma} />
-          </div>
-        </section>
-
-        <section id="news" className="section">
-          <div className="news-marquee" aria-label="Press coverage of PauseAI UK">
-            <div className="news-marquee-set news-marquee-set--desktop" aria-hidden={false}>
-              {renderNewsRow(newsRow1)}
-              {renderNewsRow(newsRow2, true)}
-            </div>
-            <div className="news-marquee-set news-marquee-set--mobile" aria-hidden={true}>
-              {renderNewsRow(newsMobileRow1)}
-              {renderNewsRow(newsMobileRow2, true)}
-              {renderNewsRow(newsMobileRow3)}
-            </div>
-          </div>
-          <div className="container news-marquee-cta">
-            <Link className="inline-link" href="/press/">See our press page →</Link>
-          </div>
-        </section>
-
-        <span id="chapters" className="anchor-alias" aria-hidden="true" />
-        <section id="local-groups" className="section muted">
-          <div className="container">
-            <div className="section-header">
-              <h2>Organising across the UK</h2>
-              <p className="section-lede">
-                Find your city and get involved. Each local group runs its own events, campaigns, and outreach.
-              </p>
-            </div>
-            <LocalGroupsMap />
-            <div className="start-local-group-cta">
-              <div className="start-local-group-cta-copy">
-                <h3>Don&apos;t see your city?</h3>
-                <p>Bring PauseAI to your city. We&apos;ll share playbooks, visuals, and support to launch local actions.</p>
-              </div>
-              <ButtonAnchor
-                variant="primary"
-                size="large"
-                href="https://docs.google.com/document/d/1wVqsjGatoP3ltspkeqnyeye7I1d_V8XYRPQGaGyvitQ/edit?usp=sharing"
-                target="_blank"
-                rel="noreferrer"
-              >
-                Start a local group →
-              </ButtonAnchor>
-            </div>
-          </div>
-        </section>
-
-        <section id="people" className="section people">
-          <div className="container">
-            <div className="section-header">
-              <h2>People of PauseAI</h2>
-              <p className="section-lede">
-                Stories from volunteers about their journey to joining PauseAI.
-              </p>
-            </div>
-          </div>
-          <PeopleCarousel people={people} />
-          <div className="container">
-            <div className="story-teaser-cta">
-              <ButtonLink variant="primary" size="large" href="/people/">Read all {people.length} stories →</ButtonLink>
-              <ButtonLink variant="ghost" size="large" href="/people/#share-your-story">Share your story →</ButtonLink>
-            </div>
-          </div>
-        </section>
-
-        <section className="section shop-banner">
-          <div className="container callout-inner">
-            <div>
-              <h2>Get PauseAI merch</h2>
-              <p className="section-lede">
-                T-shirts, hoodies, stickers and more – every purchase helps spread the word and supports our mission.
-              </p>
-              <ButtonAnchor variant="primary" size="large" href={site.shopUrl} target="_blank" rel="noreferrer">Browse the shop →</ButtonAnchor>
-            </div>
-            <a className="shop-image-link" href={site.shopUrl} target="_blank" rel="noreferrer">
-              <Image src="/images/fourthwall.avif" alt="PauseAI merchandise" className="shop-image" width={1536} height={2048} loading="lazy" />
-            </a>
-          </div>
-        </section>
-
-        <section id="join" className="section container">
-          <div className="section-header">
-            <h2>Join PauseAI UK</h2>
-            <p className="section-lede">Fill out the form below to get involved.</p>
-          </div>
-          <div className="tally-embed">
-            <OnboardingFormEmbed />
-          </div>
-        </section>
-
-        <section id="get-involved" className="section callout">
-          <div className="container callout-inner">
-            <div>
-              <h2>Join the conversation</h2>
-              <p className="section-lede">
-                Our WhatsApp community is where we coordinate protests, share news, and plan what&apos;s next. It&apos;s the fastest way to stay in the loop.
-              </p>
-              <p className="section-lede">
-                You can also browse upcoming meetups and actions on our{" "}
-                <a className="inline-link" href={site.social.luma} target="_blank" rel="noreferrer">event calendar</a>.
-              </p>
-            </div>
-            <ButtonAnchor variant="primary" size="large" href={site.whatsappUrl} target="_blank" rel="noreferrer">
-              Join the WhatsApp community
-            </ButtonAnchor>
-          </div>
-        </section>
-
-        <section id="staff" className="section container">
-          <div className="section-header">
-            <h2>Meet the organisers</h2>
-            <p className="section-lede">
-              PauseAI UK is volunteer-driven, supported by two paid staff. Get in touch to collaborate or{" "}
-              <a
-                className="inline-link"
-                href="https://docs.google.com/document/d/1wVqsjGatoP3ltspkeqnyeye7I1d_V8XYRPQGaGyvitQ/edit?usp=sharing"
-                target="_blank"
-                rel="noreferrer"
-              >
-                start a new local group
-              </a>.
-            </p>
-          </div>
-          <div className="staff-grid">
-            {staff.map((person) => (
-              <article key={person.name} className="staff-card">
-                <div className="avatar" style={{ backgroundImage: `url("${person.imageSrc}")` }}></div>
-                <div>
-                  <h3>{person.name}</h3>
-                  <p className="role">{person.role}</p>
-                  <p className="bio">{person.bio}</p>
-                </div>
-              </article>
-            ))}
-          </div>
-          <div style={{ display: "flex", justifyContent: "center", marginTop: 36 }}>
-            <ButtonLink variant="primary" size="large" href="/jobs/">We&rsquo;re hiring →</ButtonLink>
-          </div>
-        </section>
+        <HomeHero />
+        <UpcomingEvents events={events} />
+        <PressMarquee />
+        <LocalGroupsSection />
+        <PeopleSection />
+        <ShopBanner />
+        <JoinSection />
+        <GetInvolved />
+        <StaffSection />
       </main>
       <HeroMarqueeEffects />
     </>

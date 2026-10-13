@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/metadata";
 import Image from "next/image";
 import { allCoverage } from "@/lib/content/press-coverage";
 import { site } from "@/lib/content/site";
@@ -17,20 +17,11 @@ function formatCoverageDate(date?: string) {
     : "—";
 }
 
-export const metadata: Metadata = {
+export const metadata = pageMetadata({
   title: "Press",
   description: "Media contact, boilerplate, brand assets, and press coverage of PauseAI UK.",
-  openGraph: {
-    title: "PauseAI UK | Press",
-    description: "Media contact, boilerplate, brand assets, and press coverage of PauseAI UK.",
-    images: [{ url: "/images/open-graph/open-graph-1200-630.jpg", width: 1200, height: 630 }],
-    url: "https://pauseai.uk/press/",
-  },
-  twitter: {
-    images: ["/images/open-graph/open-graph-1600-840.jpg"],
-  },
-  alternates: { canonical: "/press" },
-};
+  path: "/press",
+});
 
 export default function PressPage() {
   return (

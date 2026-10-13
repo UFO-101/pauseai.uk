@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/metadata";
 import Image from "next/image";
 import Link from "next/link";
 import type { CSSProperties } from "react";
@@ -8,20 +8,11 @@ import { parseCssStyle } from "@/lib/storyRender";
 import "../track-record/track-record.css";
 import "./blog.css";
 
-export const metadata: Metadata = {
+export const metadata = pageMetadata({
   title: "Blog",
   description: "Writing from the PauseAI UK community on AI risk and what you can do about it.",
-  openGraph: {
-    title: "PauseAI UK | Blog",
-    description: "Writing from the PauseAI UK community on AI risk and what you can do about it.",
-    images: [{ url: "/images/open-graph/open-graph-1200-630.jpg", width: 1200, height: 630 }],
-    url: "https://pauseai.uk/blog/",
-  },
-  twitter: {
-    images: ["/images/open-graph/open-graph-1600-840.jpg"],
-  },
-  alternates: { canonical: "/blog" },
-};
+  path: "/blog",
+});
 
 // Newest post is the lead story, the next two sit beneath it as a pair, and
 // everything older is a compact thumbnail list.

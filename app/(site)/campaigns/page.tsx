@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/metadata";
 import Image from "next/image";
 import CampaignsClient from "./_components/CampaignsClient";
 import SignatoriesList from "./_components/SignatoriesList";
@@ -10,20 +10,11 @@ import { ButtonAnchor } from "@/components/ui/Button";
 // original public share link, scoped to the same signatory columns.
 const SIGNATORIES_EMBED = "https://airtable.com/embed/appBInVvIm6opJ1Ob/shrQ4CTHTx5VrLPnp";
 
-export const metadata: Metadata = {
+export const metadata = pageMetadata({
   title: "Campaigns",
   description: "Take action on AI safety. Email your MP, join campaigns, and help build pressure for a global pause.",
-  openGraph: {
-    title: "PauseAI UK | Campaigns",
-    description: "Take action on AI safety. Email your MP, join campaigns, and help build pressure for a global pause.",
-    images: [{ url: "/images/open-graph/open-graph-1200-630.jpg", width: 1200, height: 630 }],
-    url: "https://pauseai.uk/campaigns/",
-  },
-  twitter: {
-    images: ["/images/open-graph/open-graph-1600-840.jpg"],
-  },
-  alternates: { canonical: "/campaigns" },
-};
+  path: "/campaigns",
+});
 
 export default function CampaignsPage() {
   return (

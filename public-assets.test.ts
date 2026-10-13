@@ -70,9 +70,9 @@ describe("public assets", () => {
   });
 
   it("every hero marquee photo exists", () => {
-    // app/(site)/page.tsx builds these as `/images/front-page-hero-optimized/${src}`
+    // HomeHero builds these as `/images/front-page-hero-optimized/${src}`
     // from a list of bare filenames, so the literal scan above cannot see them.
-    const source = readFileSync(join("app", "(site)", "page.tsx"), "utf8");
+    const source = readFileSync(join("lib", "content", "hero-photos.ts"), "utf8");
     const block = source.match(/HERO_PHOTOS[\s\S]*?\n\];/);
     expect(block, "HERO_PHOTOS moved or was renamed — update this test").not.toBeNull();
 
@@ -82,7 +82,7 @@ describe("public assets", () => {
     const absent = files.filter(
       (name) => !existsSync(join(PUBLIC_DIR, "images", "front-page-hero-optimized", name)),
     );
-    expect(absent, "hero photos listed in app/(site)/page.tsx but missing from public/").toEqual([]);
+    expect(absent, "hero photos listed in lib/content/hero-photos.ts but missing from public/").toEqual([]);
   });
 
   it("every local group and person image exists", () => {

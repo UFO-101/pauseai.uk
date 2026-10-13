@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/metadata";
 import Link from "next/link";
 import EventList from "@/components/events/EventList";
 import { getEvents } from "@/lib/server/luma-calendar";
@@ -8,20 +8,12 @@ import { ButtonAnchor } from "@/components/ui/Button";
 
 // A short, readable address for our events, used on printed collateral. The calendar itself lives on Luma,
 // so this page lists it (via getEvents, cached for an hour) and links through to subscribe.
-export const metadata: Metadata = {
+export const metadata = pageMetadata({
   title: "Events",
   description: "Upcoming PauseAI UK events: meetups, talks, letter writing and protests, in person across the UK and online.",
-  openGraph: {
-    title: "PauseAI UK events",
-    description: "Upcoming PauseAI UK events: meetups, talks, letter writing and protests, in person across the UK and online.",
-    images: [{ url: "/images/open-graph/open-graph-1200-630.jpg", width: 1200, height: 630 }],
-    url: "https://pauseai.uk/events/",
-  },
-  twitter: {
-    images: ["/images/open-graph/open-graph-1600-840.jpg"],
-  },
-  alternates: { canonical: "/events" },
-};
+  path: "/events",
+  openGraph: { title: "PauseAI UK events" },
+});
 
 export default async function EventsPage() {
   const events = await getEvents("future");

@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/metadata";
 import PersonCard from "@/components/people/PersonCard";
 import StoryShareForm from "@/components/people/StoryShareForm";
 import { isLongStory, LONG_STORY_CHAR_THRESHOLD, people } from "@/lib/content/people";
@@ -6,20 +6,11 @@ import { site } from "@/lib/content/site";
 import "../track-record/track-record.css";
 import "./people.css";
 
-export const metadata: Metadata = {
+export const metadata = pageMetadata({
   title: "People",
   description: "Why our volunteers and members got involved with PauseAI UK, in their own words.",
-  openGraph: {
-    title: "PauseAI UK | People",
-    description: "Why our volunteers and members got involved with PauseAI UK, in their own words.",
-    images: [{ url: "/images/open-graph/open-graph-1200-630.jpg", width: 1200, height: 630 }],
-    url: "https://pauseai.uk/people/",
-  },
-  twitter: {
-    images: ["/images/open-graph/open-graph-1600-840.jpg"],
-  },
-  alternates: { canonical: "/people" },
-};
+  path: "/people",
+});
 
 export default function PeoplePage() {
   return (

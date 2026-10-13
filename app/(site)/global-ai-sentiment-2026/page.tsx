@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/metadata";
 import { QUESTION_TEXT, SURVEY_META } from "@/lib/content/aiSentiment2026";
 import WorldMap from "./_components/WorldMap";
 import CountryExplorer from "./_components/CountryExplorer";
@@ -11,26 +11,11 @@ const TITLE = "Global Attitudes to AI 2026";
 const DESCRIPTION =
   "How 377,458 people across 104 countries feel about the development of superintelligent AI: an interactive look at the Nira Data Spring 2026 World Omnibus.";
 
-export const metadata: Metadata = {
+export const metadata = pageMetadata({
   title: TITLE,
   description: DESCRIPTION,
-  openGraph: {
-    title: `PauseAI UK | ${TITLE}`,
-    description: DESCRIPTION,
-    images: [
-      {
-        url: "/images/open-graph/open-graph-1200-630.jpg",
-        width: 1200,
-        height: 630,
-      },
-    ],
-    url: "https://pauseai.uk/global-ai-sentiment-2026/",
-  },
-  twitter: {
-    images: ["/images/open-graph/open-graph-1600-840.jpg"],
-  },
-  alternates: { canonical: "/global-ai-sentiment-2026" },
-};
+  path: "/global-ai-sentiment-2026",
+});
 
 export default function GlobalAiSentiment2026Page() {
   return (

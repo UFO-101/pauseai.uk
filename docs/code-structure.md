@@ -47,6 +47,13 @@ Route groups like `(site)` don't appear in URLs. Folders starting with `_`
 - **Pages are thin.** A `page.tsx` holds its metadata, its data loading
   (calling `lib/`) and the order of its sections. Content and markup belong
   in components, and helper functions in `lib/`, where they can be tested.
+  Repeated markup becomes a component for one item (`TimelineEntry`,
+  `JobRole`); one-off prose can stay as JSX inside a section component.
+- **Metadata** comes from `pageMetadata()` (`lib/metadata.ts`), which fills in
+  the social preview images, the "PauseAI UK | <title>" social title and the
+  canonical path.
+- **No scripts in `public/`.** Browser behaviour goes in a typed
+  `"use client"` component, like the track record's `Lightbox`.
 - **Layouts own the chrome.** Pages don't render `<Nav>`; their route
   group's layout does.
 - **Outside services** (Luma, Airtable) are only called from `lib/server/`,

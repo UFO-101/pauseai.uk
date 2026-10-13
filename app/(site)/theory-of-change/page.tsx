@@ -1,24 +1,15 @@
-import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/metadata";
 import Image from "next/image";
 import { site } from "@/lib/content/site";
 import "../track-record/track-record.css";
 import "./theory-of-change.css";
 import { ButtonAnchor, ButtonLink } from "@/components/ui/Button";
 
-export const metadata: Metadata = {
+export const metadata = pageMetadata({
   title: "Theory of Change",
   description: "How PauseAI UK plans to convert public concern about AI risk into political pressure for a global pause.",
-  openGraph: {
-    title: "PauseAI UK | Theory of Change",
-    description: "How PauseAI UK plans to convert public concern about AI risk into political pressure for a global pause.",
-    images: [{ url: "/images/open-graph/open-graph-1200-630.jpg", width: 1200, height: 630 }],
-    url: "https://pauseai.uk/theory-of-change/",
-  },
-  twitter: {
-    images: ["/images/open-graph/open-graph-1600-840.jpg"],
-  },
-  alternates: { canonical: "/theory-of-change" },
-};
+  path: "/theory-of-change",
+});
 
 export default function TheoryOfChangePage() {
   return (

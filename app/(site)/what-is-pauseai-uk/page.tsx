@@ -1,23 +1,14 @@
-import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/metadata";
 import "../track-record/track-record.css";
 import "./what-is-pauseai-uk.css";
 
-export const metadata: Metadata = {
-  title: { absolute: "What is PauseAI UK?" },
-  description:
-    "We are the civic movement dedicated to averting the risks of superhuman AI.",
-  openGraph: {
-    title: "What is PauseAI UK?",
-    description:
-      "We are the civic movement dedicated to averting the risks of superhuman AI.",
-    images: [{ url: "/images/open-graph/open-graph-1200-630.jpg", width: 1200, height: 630 }],
-    url: "https://pauseai.uk/what-is-pauseai-uk/",
-  },
-  twitter: {
-    images: ["/images/open-graph/open-graph-1600-840.jpg"],
-  },
-  alternates: { canonical: "/what-is-pauseai-uk" },
-};
+export const metadata = pageMetadata({
+  title: "What is PauseAI UK?",
+  description: "We are the civic movement dedicated to averting the risks of superhuman AI.",
+  path: "/what-is-pauseai-uk",
+  absoluteTitle: true,
+  openGraph: { title: "What is PauseAI UK?" },
+});
 
 export default function WhatIsPauseAIUKPage() {
   return (

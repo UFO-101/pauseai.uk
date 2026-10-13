@@ -1,23 +1,19 @@
-import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/metadata";
 import Image from "next/image";
 import Link from "next/link";
 import FeatureCard from "@/components/ui/FeatureCard";
 import DonateForm from "./_components/DonateForm";
 
-export const metadata: Metadata = {
+export const metadata = pageMetadata({
   title: "Donate",
   description: "Support PauseAI UK — community-led action for safe and accountable AI.",
+  path: "/donate",
   openGraph: {
     title: "Donate to PauseAI UK",
     description: "Support community-led action for safe and accountable AI across the UK.",
-    images: [{ url: "/images/open-graph/open-graph-1200-630.jpg", width: 1200, height: 630 }],
     url: "https://pauseai.uk/donate",
   },
-  twitter: {
-    images: ["/images/open-graph/open-graph-1600-840.jpg"],
-  },
-  alternates: { canonical: "/donate" },
-};
+});
 
 export default function DonatePage() {
   return (
