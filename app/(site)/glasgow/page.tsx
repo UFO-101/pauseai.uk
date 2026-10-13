@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import LocalGroupEvents from "@/components/LocalGroupEvents";
 import { site } from "@/lib/data/site";
+import { ButtonAnchor } from "@/components/ui/Button";
 
 export const metadata: Metadata = {
   title: "Glasgow Group",
@@ -30,8 +31,8 @@ export default function GlasgowPage() {
                 Bringing AI safety conversations to Scotland with public events, panels, and community organising.
               </p>
               <div className="actions">
-                <a className="btn primary" href={site.social.luma} target="_blank" rel="noreferrer">View event calendar</a>
-                <a className="btn ghost" href={site.whatsappUrl} target="_blank" rel="noreferrer">Join the WhatsApp community</a>
+                <ButtonAnchor variant="primary" href={site.social.luma} target="_blank" rel="noreferrer">View event calendar</ButtonAnchor>
+                <ButtonAnchor variant="ghost" href={site.whatsappUrl} target="_blank" rel="noreferrer">Join the WhatsApp community</ButtonAnchor>
               </div>
             </div>
             <div className="hero-visual">
@@ -73,7 +74,7 @@ export default function GlasgowPage() {
               <div>
                 <p className="section-lede">WhatsApp: <a href={site.whatsappUrl} target="_blank" rel="noreferrer">PauseAI UK WhatsApp</a></p>
               </div>
-              <a className="btn primary large" href={site.whatsappUrl} target="_blank" rel="noreferrer">Join the WhatsApp community</a>
+              <ButtonAnchor variant="primary" size="large" href={site.whatsappUrl} target="_blank" rel="noreferrer">Join the WhatsApp community</ButtonAnchor>
             </div>
           </div>
         </section>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { Button } from "@/components/ui/Button";
 
 /** Frames are shrunk to this width before decoding. Plenty for a code that fills part of the view, and quick on phones. */
 const SCAN_WIDTH = 640;
@@ -309,19 +310,20 @@ export default function QrScanner({ onResult }: Props) {
   return (
     <div className="collateral-qr-scan">
       <div className="collateral-qr-scan-actions">
-        <button
+        <Button
           type="button"
-          className="btn ghost small"
+          variant="ghost"
+          size="small"
           onClick={() => {
             setMessage(null);
             setOpen(true);
           }}
         >
           Scan an existing code
-        </button>
-        <button type="button" className="btn ghost small" onClick={() => fileRef.current?.click()} disabled={busy}>
+        </Button>
+        <Button type="button" variant="ghost" size="small" onClick={() => fileRef.current?.click()} disabled={busy}>
           {busy ? "Looking for the code…" : "Use a photo"}
-        </button>
+        </Button>
         <input ref={fileRef} type="file" accept="image/*" hidden onChange={onPhoto} />
       </div>
       {message && (
@@ -369,13 +371,13 @@ export default function QrScanner({ onResult }: Props) {
         )}
         <div className="collateral-qr-scan-actions collateral-qr-dialog-actions">
           {open && modalMessage && (
-            <button type="button" className="btn ghost small" onClick={() => fileRef.current?.click()} disabled={busy}>
+            <Button type="button" variant="ghost" size="small" onClick={() => fileRef.current?.click()} disabled={busy}>
               Use a photo instead
-            </button>
+            </Button>
           )}
-          <button type="button" className="btn ghost small" onClick={() => dialogRef.current?.close()}>
+          <Button type="button" variant="ghost" size="small" onClick={() => dialogRef.current?.close()}>
             Cancel
-          </button>
+          </Button>
         </div>
       </dialog>
     </div>

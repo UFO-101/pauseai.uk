@@ -4,6 +4,7 @@ import Link from "next/link";
 import { site } from "@/lib/data/site";
 import "../track-record/track-record.css";
 import "./theory-of-change.css";
+import { ButtonAnchor, ButtonLink } from "@/components/ui/Button";
 
 export const metadata: Metadata = {
   title: "Theory of Change",
@@ -130,8 +131,8 @@ export default function TheoryOfChangePage() {
         <section className="closing">
           <div className="container closing-inner">
             <div className="closing-actions">
-              <a className="btn primary" href={site.whatsappUrl} target="_blank" rel="noreferrer">Join the WhatsApp community</a>
-              <Link className="btn ghost" href="/#join">More ways to get involved</Link>
+              <ButtonAnchor variant="primary" href={site.whatsappUrl} target="_blank" rel="noreferrer">Join the WhatsApp community</ButtonAnchor>
+              <ButtonLink variant="ghost" href="/#join">More ways to get involved</ButtonLink>
             </div>
           </div>
         </section>

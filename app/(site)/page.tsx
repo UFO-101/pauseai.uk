@@ -12,6 +12,7 @@ import { newsRow1, newsRow2, newsMobileRow1, newsMobileRow2, newsMobileRow3, typ
 import { people } from "@/lib/data/people";
 import { staff } from "@/lib/data/staff";
 import { site } from "@/lib/data/site";
+import { ButtonAnchor, ButtonLink } from "@/components/ui/Button";
 
 export const metadata: Metadata = {
   title: { absolute: "PauseAI UK | Civic action on AI" },
@@ -171,12 +172,12 @@ export default async function HomePage() {
                   We are the civic movement dedicated to averting the risks of superhuman artificial intelligence.
                 </p>
                 <div className="actions hero-actions">
-                  <a className="btn primary" href="#join">
+                  <ButtonAnchor variant="primary" href="#join">
                     Join PauseAI UK
-                  </a>
+                  </ButtonAnchor>
                   <div className="hero-actions-secondary">
-                    <a className="btn ghost" href="#events">Upcoming events ↓</a>
-                    <Link className="btn ghost" href="/track-record/">Track record →</Link>
+                    <ButtonAnchor variant="ghost" href="#events">Upcoming events ↓</ButtonAnchor>
+                    <ButtonLink variant="ghost" href="/track-record/">Track record →</ButtonLink>
                   </div>
                 </div>
               </div>
@@ -188,14 +189,15 @@ export default async function HomePage() {
           <div className="container">
             <div className="section-heading-row">
               <h2 className="section-heading">Upcoming events</h2>
-              <a
-                className="btn primary section-heading-cta"
+              <ButtonAnchor
+                variant="primary"
+                className="section-heading-cta"
                 href={site.social.luma}
                 target="_blank"
                 rel="noreferrer"
               >
                 View full calendar →
-              </a>
+              </ButtonAnchor>
             </div>
             <EventList events={events} lumaUrl={site.social.luma} />
           </div>
@@ -233,14 +235,15 @@ export default async function HomePage() {
                 <h3>Don&apos;t see your city?</h3>
                 <p>Bring PauseAI to your city. We&apos;ll share playbooks, visuals, and support to launch local actions.</p>
               </div>
-              <a
-                className="btn primary large"
+              <ButtonAnchor
+                variant="primary"
+                size="large"
                 href="https://docs.google.com/document/d/1wVqsjGatoP3ltspkeqnyeye7I1d_V8XYRPQGaGyvitQ/edit?usp=sharing"
                 target="_blank"
                 rel="noreferrer"
               >
                 Start a local group →
-              </a>
+              </ButtonAnchor>
             </div>
           </div>
         </section>
@@ -257,8 +260,8 @@ export default async function HomePage() {
           <PeopleCarousel people={people} />
           <div className="container">
             <div className="story-teaser-cta">
-              <Link className="btn primary large" href="/people/">Read all {people.length} stories →</Link>
-              <Link className="btn ghost large" href="/people/#share-your-story">Share your story →</Link>
+              <ButtonLink variant="primary" size="large" href="/people/">Read all {people.length} stories →</ButtonLink>
+              <ButtonLink variant="ghost" size="large" href="/people/#share-your-story">Share your story →</ButtonLink>
             </div>
           </div>
         </section>
@@ -270,7 +273,7 @@ export default async function HomePage() {
               <p className="section-lede">
                 T-shirts, hoodies, stickers and more – every purchase helps spread the word and supports our mission.
               </p>
-              <a className="btn primary large" href={site.shopUrl} target="_blank" rel="noreferrer">Browse the shop →</a>
+              <ButtonAnchor variant="primary" size="large" href={site.shopUrl} target="_blank" rel="noreferrer">Browse the shop →</ButtonAnchor>
             </div>
             <a className="shop-image-link" href={site.shopUrl} target="_blank" rel="noreferrer">
               <Image src="/images/fourthwall.avif" alt="PauseAI merchandise" className="shop-image" width={1536} height={2048} loading="lazy" />
@@ -300,9 +303,9 @@ export default async function HomePage() {
                 <a className="inline-link" href={site.social.luma} target="_blank" rel="noreferrer">event calendar</a>.
               </p>
             </div>
-            <a className="btn primary large" href={site.whatsappUrl} target="_blank" rel="noreferrer">
+            <ButtonAnchor variant="primary" size="large" href={site.whatsappUrl} target="_blank" rel="noreferrer">
               Join the WhatsApp community
-            </a>
+            </ButtonAnchor>
           </div>
         </section>
 
@@ -334,7 +337,7 @@ export default async function HomePage() {
             ))}
           </div>
           <div style={{ display: "flex", justifyContent: "center", marginTop: 36 }}>
-            <Link className="btn primary large" href="/jobs/">We&rsquo;re hiring →</Link>
+            <ButtonLink variant="primary" size="large" href="/jobs/">We&rsquo;re hiring →</ButtonLink>
           </div>
         </section>
       </main>

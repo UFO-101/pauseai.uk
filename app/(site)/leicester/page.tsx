@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import LocalGroupEvents from "@/components/LocalGroupEvents";
+import { ButtonAnchor, ButtonLink } from "@/components/ui/Button";
 
 export const metadata: Metadata = {
   title: "Leicester Group",
@@ -30,10 +31,10 @@ export default function LeicesterPage() {
                 Building a local network to campaign for AI safety, host discussions, and support national actions.
               </p>
               <div className="actions">
-                <a className="btn primary" href="mailto:leicester@pauseai.info">Email leicester@pauseai.info</a>
-                <a className="btn ghost" href="https://www.instagram.com/pauseai_leicester/">Follow us on Instagram</a>
-                <a className="btn ghost" href="https://discord.com">Join our Discord</a>
-                <Link className="btn ghost" href="/#get-involved">Join the WhatsApp community</Link>
+                <ButtonAnchor variant="primary" href="mailto:leicester@pauseai.info">Email leicester@pauseai.info</ButtonAnchor>
+                <ButtonAnchor variant="ghost" href="https://www.instagram.com/pauseai_leicester/">Follow us on Instagram</ButtonAnchor>
+                <ButtonAnchor variant="ghost" href="https://discord.com">Join our Discord</ButtonAnchor>
+                <ButtonLink variant="ghost" href="/#get-involved">Join the WhatsApp community</ButtonLink>
               </div>
             </div>
             <div className="hero-visual">
@@ -102,7 +103,7 @@ export default function LeicesterPage() {
               </p>
             </div>
             <div className="callout-inner">
-              <a className="btn primary large" href="mailto:leicester@pauseai.info">Email Leicester</a>
+              <ButtonAnchor variant="primary" size="large" href="mailto:leicester@pauseai.info">Email Leicester</ButtonAnchor>
             </div>
           </div>
         </section>

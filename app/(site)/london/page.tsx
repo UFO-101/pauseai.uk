@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import LocalGroupEvents from "@/components/LocalGroupEvents";
 import { site } from "@/lib/data/site";
+import { ButtonAnchor } from "@/components/ui/Button";
 
 export const metadata: Metadata = {
   title: "London Group",
@@ -30,8 +31,8 @@ export default function LondonPage() {
                 We gather researchers, students, campaigners, and neighbours to push for safer AI development through public action and dialogue.
               </p>
               <div className="actions">
-                <a className="btn primary" href={site.whatsappUrl} target="_blank" rel="noreferrer">Join the WhatsApp community</a>
-                <a className="btn ghost" href={`mailto:${site.contactEmail}`}>Email the team</a>
+                <ButtonAnchor variant="primary" href={site.whatsappUrl} target="_blank" rel="noreferrer">Join the WhatsApp community</ButtonAnchor>
+                <ButtonAnchor variant="ghost" href={`mailto:${site.contactEmail}`}>Email the team</ButtonAnchor>
               </div>
             </div>
             <div className="hero-visual">
@@ -93,7 +94,7 @@ export default function LondonPage() {
                 </p>
                 <p><strong>Contact:</strong> <a href={`mailto:${site.contactEmail}`}>{site.contactEmail}</a></p>
               </div>
-              <a className="btn primary large" href={site.whatsappUrl} target="_blank" rel="noreferrer">Join the WhatsApp community</a>
+              <ButtonAnchor variant="primary" size="large" href={site.whatsappUrl} target="_blank" rel="noreferrer">Join the WhatsApp community</ButtonAnchor>
             </div>
           </div>
         </section>

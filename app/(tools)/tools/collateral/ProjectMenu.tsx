@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { Button } from "@/components/ui/Button";
 
 interface Props {
   /** What a saved file is called here: "project" or "pack". */
@@ -44,9 +45,9 @@ export default function ProjectMenu({ noun, onSave, onOpen, onReset, saveDisable
 
   return (
     <div ref={rootRef} className="collateral-menu">
-      <button type="button" className="btn ghost large collateral-menu-button" aria-label="More options" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
+      <Button type="button" variant="ghost" size="large" className="collateral-menu-button" aria-label="More options" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
         ⋯
-      </button>
+      </Button>
       {open && (
         <div className="collateral-menu-list">
           <button type="button" onClick={() => run(onSave)} disabled={saveDisabled}>

@@ -492,11 +492,11 @@
   gap: 10px;
 }
 
-.collateral-actions .btn {
+.collateral-actions [data-button] {
   cursor: pointer;
 }
 
-.collateral-actions .btn[disabled] {
+.collateral-actions [data-button][disabled] {
   opacity: 0.6;
   cursor: not-allowed;
 }
@@ -530,11 +530,11 @@
   margin-top: 16px;
 }
 
-.collateral-preview-actions .btn {
+.collateral-preview-actions [data-button] {
   cursor: pointer;
 }
 
-.collateral-preview-actions .btn[disabled] {
+.collateral-preview-actions [data-button][disabled] {
   opacity: 0.6;
   cursor: not-allowed;
 }
@@ -885,13 +885,13 @@
   }
 
   /* Download fills the row beside the ⋯ menu, rather than every button taking a full row. */
-  .collateral-preview-actions .btn.primary {
+  .collateral-preview-actions [data-button][data-variant="primary"] {
     flex: 1 1 0;
     min-width: 0;
     width: auto;
   }
 
-  .collateral-menu-button.btn {
+  .collateral-menu-button[data-button] {
     width: auto;
   }
 

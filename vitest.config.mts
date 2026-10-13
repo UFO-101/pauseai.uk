@@ -29,6 +29,9 @@ export default defineConfig({
       },
       {
         extends: true,
+        // Next's client modules (next/link, next/image) read build-time
+        // flags from process.env, which only exists when Next compiles them.
+        define: { "process.env": JSON.stringify({ NODE_ENV: "test" }) },
         test: {
           name: "browser",
           include: ["**/*.browser.test.{ts,tsx}"],

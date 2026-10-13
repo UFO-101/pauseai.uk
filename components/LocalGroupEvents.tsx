@@ -8,6 +8,7 @@ import {
   type LumaEntry,
 } from "@/lib/data/events";
 import { site } from "@/lib/data/site";
+import { ButtonAnchor } from "@/components/ui/Button";
 
 // Enough to show a local group is active without turning its page into an
 // archive. EventList shows four and puts the rest behind "Show more".
@@ -32,14 +33,15 @@ function EventsSection({
         <div className="section-heading-row">
           <h2 className="section-heading">{heading}</h2>
           {showCalendarLink && (
-            <a
-              className="btn primary section-heading-cta"
+            <ButtonAnchor
+              variant="primary"
+              className="section-heading-cta"
               href={site.social.luma}
               target="_blank"
               rel="noreferrer"
             >
               View the full UK calendar →
-            </a>
+            </ButtonAnchor>
           )}
         </div>
         <EventList events={events} lumaUrl={site.social.luma} empty={empty} />

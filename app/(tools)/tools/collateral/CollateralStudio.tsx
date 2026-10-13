@@ -21,6 +21,7 @@ import ProjectMenu from "./ProjectMenu";
 import TitleSizeControl from "./TitleSizeControl";
 import { usePhotoGestures } from "./usePhotoGestures";
 import { useStudioAssets } from "./useStudioAssets";
+import { Button } from "@/components/ui/Button";
 
 const RESET_MESSAGE = "Reset to the example text.";
 const STORAGE_KEY = "pauseai-collateral-v2";
@@ -257,13 +258,13 @@ export default function CollateralStudio({ events }: { events: CalendarEvent[] }
         </p>
         <div className="collateral-preview-actions">
           <Checks issues={issues} />
-          <button type="button" className="btn primary large" onClick={onDownloadPng} disabled={!ready}>
+          <Button type="button" variant="primary" size="large" onClick={onDownloadPng} disabled={!ready}>
             {busy ? "Preparing…" : "Download PNG"}
-          </button>
+          </Button>
           {format.kind === "print" && (
-            <button type="button" className="btn primary large" onClick={onDownloadPdf} disabled={!ready}>
+            <Button type="button" variant="primary" size="large" onClick={onDownloadPdf} disabled={!ready}>
               {busy ? "Preparing…" : `Download print PDF (+${BLEED_MM} mm bleed)`}
-            </button>
+            </Button>
           )}
           <ProjectMenu noun="project" onSave={onSaveProject} onOpen={onOpenProject} onReset={onReset} saveDisabled={!restored} />
           {shown && (

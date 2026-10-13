@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { buttonAttributes } from "@/components/ui/Button";
 
 export default function CopyLinkButton({
   slug,
@@ -34,10 +35,15 @@ export default function CopyLinkButton({
     setTimeout(() => setCopied(false), 1500);
   }
 
+  // Labelled, it is an ordinary ghost button; otherwise an icon-only circle.
+  const look = label
+    ? buttonAttributes({ variant: "ghost", className: ["story-share-cta", className].filter(Boolean).join(" ") })
+    : { className: ["story-share-btn", className].filter(Boolean).join(" ") };
+
   return (
     <button
       type="button"
-      className={[label ? "btn ghost story-share-cta" : "story-share-btn", className].filter(Boolean).join(" ")}
+      {...look}
       onClick={handleCopy}
       aria-label={copied ? "Link copied" : title}
       title={copied ? "Link copied" : title}

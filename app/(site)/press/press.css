@@ -75,7 +75,7 @@
   margin: 0;
 }
 
-.press .press-contact .btn {
+.press .press-contact [data-button] {
   flex-shrink: 0;
 }
 

@@ -4,6 +4,7 @@ import { allCoverage } from "@/lib/data/press-coverage";
 import { site } from "@/lib/data/site";
 import "../track-record/track-record.css";
 import "./press.css";
+import { ButtonAnchor } from "@/components/ui/Button";
 
 function formatCoverageDate(date?: string) {
   return date
@@ -53,9 +54,9 @@ export default function PressPage() {
                   For interviews, comment, or background on PauseAI UK, contact <strong>Joseph Miller</strong>, UK Director,
                   at <a href={`mailto:${site.pressEmail}`}>{site.pressEmail}</a>.
                 </p>
-                <a className="btn primary" href={`mailto:${site.pressEmail}?subject=Press%20enquiry`}>
+                <ButtonAnchor variant="primary" href={`mailto:${site.pressEmail}?subject=Press%20enquiry`}>
                   Email press team
-                </a>
+                </ButtonAnchor>
               </div>
             </section>
 

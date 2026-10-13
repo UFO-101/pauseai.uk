@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import LocalGroupEvents from "@/components/LocalGroupEvents";
 import { site } from "@/lib/data/site";
+import { ButtonAnchor, ButtonLink } from "@/components/ui/Button";
 
 export const metadata: Metadata = {
   title: "Oxford Group",
@@ -31,8 +32,8 @@ export default function OxfordPage() {
                 University-driven conversations on AI risk, grounded in collaboration between students, researchers, and local residents.
               </p>
               <div className="actions">
-                <a className="btn primary" href="mailto:oxford@pauseai.info">Email oxford@pauseai.info</a>
-                <Link className="btn ghost" href="/#get-involved">Join national chat</Link>
+                <ButtonAnchor variant="primary" href="mailto:oxford@pauseai.info">Email oxford@pauseai.info</ButtonAnchor>
+                <ButtonLink variant="ghost" href="/#get-involved">Join national chat</ButtonLink>
               </div>
             </div>
             <div className="hero-visual">
@@ -112,7 +113,7 @@ export default function OxfordPage() {
                 <p className="section-lede">Email: <a href="mailto:oxford@pauseai.info">oxford@pauseai.info</a></p>
                 <p className="section-lede">National chat: <a href={site.whatsappUrl} target="_blank" rel="noreferrer">WhatsApp community</a></p>
               </div>
-              <a className="btn primary large" href="mailto:oxford@pauseai.info">Email Oxford</a>
+              <ButtonAnchor variant="primary" size="large" href="mailto:oxford@pauseai.info">Email Oxford</ButtonAnchor>
             </div>
           </div>
         </section>

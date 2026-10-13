@@ -5,6 +5,7 @@ import Script from "next/script";
 import CopyLinkButton from "@/components/CopyLinkButton";
 import { site } from "@/lib/data/site";
 import "./track-record.css";
+import { ButtonAnchor, ButtonLink } from "@/components/ui/Button";
 
 export const metadata: Metadata = {
   title: "Track Record",
@@ -858,17 +859,17 @@ export default function TrackRecordPage() {
           <div className="container closing-inner">
             <p className="closing-sub">Join us for what comes next.</p>
             <div className="closing-actions">
-              <a
-                className="btn primary"
+              <ButtonAnchor
+                variant="primary"
                 href={site.whatsappUrl}
                 target="_blank"
                 rel="noreferrer"
               >
                 Join the WhatsApp community
-              </a>
-              <Link className="btn ghost" href="/#join">
+              </ButtonAnchor>
+              <ButtonLink variant="ghost" href="/#join">
                 More ways to get involved
-              </Link>
+              </ButtonLink>
             </div>
           </div>
         </section>

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import LocalGroupEvents from "@/components/LocalGroupEvents";
 import { site } from "@/lib/data/site";
+import { ButtonAnchor } from "@/components/ui/Button";
 
 export const metadata: Metadata = {
   title: "Manchester Group",
@@ -30,10 +31,10 @@ export default function ManchesterPage() {
                 Building a local network in the North West to campaign for AI safety, host discussions, and support national actions.
               </p>
               <div className="actions">
-                <a className="btn primary" href={site.whatsappUrl} target="_blank" rel="noreferrer">Join the WhatsApp community</a>
-                <a className="btn ghost" href="https://www.instagram.com/pauseai.manchester" target="_blank" rel="noreferrer">Follow us on Instagram</a>
-                <a className="btn ghost" href="https://www.facebook.com/profile.php?id=61577650457496" target="_blank" rel="noreferrer">Follow us on Facebook</a>
-                <a className="btn ghost" href="https://calendly.com/adr-skapars/pauseai-manchester-1-on-1" target="_blank" rel="noreferrer">Book a 1-on-1 chat</a>
+                <ButtonAnchor variant="primary" href={site.whatsappUrl} target="_blank" rel="noreferrer">Join the WhatsApp community</ButtonAnchor>
+                <ButtonAnchor variant="ghost" href="https://www.instagram.com/pauseai.manchester" target="_blank" rel="noreferrer">Follow us on Instagram</ButtonAnchor>
+                <ButtonAnchor variant="ghost" href="https://www.facebook.com/profile.php?id=61577650457496" target="_blank" rel="noreferrer">Follow us on Facebook</ButtonAnchor>
+                <ButtonAnchor variant="ghost" href="https://calendly.com/adr-skapars/pauseai-manchester-1-on-1" target="_blank" rel="noreferrer">Book a 1-on-1 chat</ButtonAnchor>
               </div>
             </div>
             <div className="hero-visual">
@@ -123,8 +124,8 @@ export default function ManchesterPage() {
                 <p className="section-lede">WhatsApp: <a href={site.whatsappUrl} target="_blank" rel="noreferrer">PauseAI UK WhatsApp</a></p>
               </div>
               <div className="actions">
-                <a className="btn primary large" href="https://calendly.com/adr-skapars/pauseai-manchester-1-on-1" target="_blank" rel="noreferrer">Book a 1-on-1 chat</a>
-                <a className="btn ghost large" href="mailto:Adr.Skapars@gmail.com">Email us</a>
+                <ButtonAnchor variant="primary" size="large" href="https://calendly.com/adr-skapars/pauseai-manchester-1-on-1" target="_blank" rel="noreferrer">Book a 1-on-1 chat</ButtonAnchor>
+                <ButtonAnchor variant="ghost" size="large" href="mailto:Adr.Skapars@gmail.com">Email us</ButtonAnchor>
               </div>
             </div>
           </div>

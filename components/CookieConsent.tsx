@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { buttonAttributes } from "@/components/ui/Button";
 
 const GA_ID = "G-DLLRWZCYD7";
 const GTM_ID = "GTM-K7P36Q7F";
@@ -78,6 +79,13 @@ function clearGACookies() {
   });
 }
 
+// The banner is plain DOM (built on demand outside React), so it borrows the
+// Button component's attributes as an HTML string.
+function buttonHtml(variant: "primary" | "ghost", jsClass: string, label: string) {
+  const { className, "data-variant": dataVariant } = buttonAttributes({ variant, size: "small", className: jsClass });
+  return `<button type="button" class="${className}" data-button data-variant="${dataVariant}">${label}</button>`;
+}
+
 function buildBanner() {
   if (document.querySelector(".cookie-banner")) return;
   const banner = document.createElement("div");
@@ -87,8 +95,8 @@ function buildBanner() {
   banner.innerHTML =
     '<p class="cookie-banner-text">Cookies help PauseAI UK understand how this site is used, so we can make it work better for you. You can accept or decline these analytics cookies — see our <a href="/privacy">privacy policy</a>.</p>' +
     '<div class="cookie-banner-actions">' +
-    '<button type="button" class="btn ghost small js-cookie-decline">Decline</button>' +
-    '<button type="button" class="btn primary small js-cookie-accept">Accept</button>' +
+    buttonHtml("ghost", "js-cookie-decline", "Decline") +
+    buttonHtml("primary", "js-cookie-accept", "Accept") +
     "</div>";
   document.body.appendChild(banner);
   banner.querySelector(".js-cookie-accept")!.addEventListener("click", () => {

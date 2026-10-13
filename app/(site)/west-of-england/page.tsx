@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import LocalGroupEvents from "@/components/LocalGroupEvents";
 import { site } from "@/lib/data/site";
+import { ButtonAnchor } from "@/components/ui/Button";
 
 export const metadata: Metadata = {
   title: "West of England Group",
@@ -32,8 +33,8 @@ export default function WestOfEnglandPage() {
                 A new group bringing AI safety conversations and action to Bristol and the wider West of England.
               </p>
               <div className="actions">
-                <a className="btn primary" href={site.whatsappUrl} target="_blank" rel="noreferrer">Join the WhatsApp group</a>
-                <a className="btn ghost" href={WEST_OF_ENGLAND_LINKTREE} target="_blank" rel="noreferrer">All our links</a>
+                <ButtonAnchor variant="primary" href={site.whatsappUrl} target="_blank" rel="noreferrer">Join the WhatsApp group</ButtonAnchor>
+                <ButtonAnchor variant="ghost" href={WEST_OF_ENGLAND_LINKTREE} target="_blank" rel="noreferrer">All our links</ButtonAnchor>
               </div>
             </div>
             <div className="hero-visual">
@@ -92,7 +93,7 @@ export default function WestOfEnglandPage() {
                 <p className="section-lede">WhatsApp: <a href={site.whatsappUrl} target="_blank" rel="noreferrer">PauseAI UK WhatsApp</a></p>
                 <p className="section-lede">All our links: <a href={WEST_OF_ENGLAND_LINKTREE} target="_blank" rel="noreferrer">linktr.ee/PauseAI_West_of_England</a></p>
               </div>
-              <a className="btn primary large" href={site.whatsappUrl} target="_blank" rel="noreferrer">Join the WhatsApp group</a>
+              <ButtonAnchor variant="primary" size="large" href={site.whatsappUrl} target="_blank" rel="noreferrer">Join the WhatsApp group</ButtonAnchor>
             </div>
           </div>
         </section>

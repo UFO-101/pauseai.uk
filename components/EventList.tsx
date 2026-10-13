@@ -5,6 +5,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import type { LumaEntry } from "@/lib/data/events";
 import { formatEventDate, formatEventTime } from "@/lib/data/events";
 import { isAllowedEventImage } from "@/lib/data/event-image-hosts";
+import { Button } from "@/components/ui/Button";
 
 function getDateStr(d: Date, tz: string): string {
   // An unrecognised IANA timezone throws RangeError here; fall back rather
@@ -124,8 +125,9 @@ export default function EventList({
       </div>
       {hasMore && (
         <div className="luma-events-more">
-          <button
-            className="btn ghost small"
+          <Button
+            variant="ghost"
+            size="small"
             onClick={() => setExpanded((e) => !e)}
           >
             <span>{expanded ? "Show fewer events" : "Show more events"}</span>
@@ -139,7 +141,7 @@ export default function EventList({
             >
               <path d="M3 5.5l5 5 5-5" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
-          </button>
+          </Button>
         </div>
       )}
     </>

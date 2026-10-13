@@ -3,6 +3,7 @@ import Image from "next/image";
 import { site } from "@/lib/data/site";
 import "../track-record/track-record.css";
 import "./jobs.css";
+import { ButtonAnchor } from "@/components/ui/Button";
 
 const APPLY_URL = "https://pauseai.fillout.com/uk_job_apply";
 // Linked from the Head of Public Affairs role: the September 2026 discussion in
@@ -97,9 +98,9 @@ export default function JobsPage() {
                   <li>Event management</li>
                   <li>General competence using software</li>
                 </ul>
-                <a className="btn primary jobs-card-apply" href={APPLY_URL} target="_blank" rel="noreferrer">
+                <ButtonAnchor variant="primary" className="jobs-card-apply" href={APPLY_URL} target="_blank" rel="noreferrer">
                   Apply now
-                </a>
+                </ButtonAnchor>
               </article>
 
               <article className="jobs-role-card">
@@ -162,9 +163,9 @@ export default function JobsPage() {
                   <li>Public speaking / Performance / Talent</li>
                   <li>Video creating</li>
                 </ul>
-                <a className="btn primary jobs-card-apply" href={APPLY_URL} target="_blank" rel="noreferrer">
+                <ButtonAnchor variant="primary" className="jobs-card-apply" href={APPLY_URL} target="_blank" rel="noreferrer">
                   Apply now
-                </a>
+                </ButtonAnchor>
               </article>
 
               <article className="jobs-role-card">
@@ -193,9 +194,9 @@ export default function JobsPage() {
                 <ul className="jobs-skill-tags">
                   <li>Event management</li>
                 </ul>
-                <a className="btn primary jobs-card-apply" href={APPLY_URL} target="_blank" rel="noreferrer">
+                <ButtonAnchor variant="primary" className="jobs-card-apply" href={APPLY_URL} target="_blank" rel="noreferrer">
                   Apply now
-                </a>
+                </ButtonAnchor>
               </article>
 
               <article className="jobs-role-card">
@@ -226,9 +227,9 @@ export default function JobsPage() {
                 <ul className="jobs-skill-tags">
                   <li>Web design</li>
                 </ul>
-                <a className="btn primary jobs-card-apply" href={APPLY_URL} target="_blank" rel="noreferrer">
+                <ButtonAnchor variant="primary" className="jobs-card-apply" href={APPLY_URL} target="_blank" rel="noreferrer">
                   Apply now
-                </a>
+                </ButtonAnchor>
               </article>
 
               <article className="jobs-role-card">
@@ -279,9 +280,9 @@ export default function JobsPage() {
                 <ul className="jobs-skill-tags">
                   <li>AI or legal expertise</li>
                 </ul>
-                <a className="btn primary jobs-card-apply" href={APPLY_URL} target="_blank" rel="noreferrer">
+                <ButtonAnchor variant="primary" className="jobs-card-apply" href={APPLY_URL} target="_blank" rel="noreferrer">
                   Apply now
-                </a>
+                </ButtonAnchor>
               </article>
 
               <article className="jobs-role-card">
@@ -290,9 +291,9 @@ export default function JobsPage() {
                   We also encourage general expressions of interest for people who don&rsquo;t fit neatly into any of
                   these roles.
                 </p>
-                <a className="btn primary jobs-card-apply" href={APPLY_URL} target="_blank" rel="noreferrer">
+                <ButtonAnchor variant="primary" className="jobs-card-apply" href={APPLY_URL} target="_blank" rel="noreferrer">
                   Apply now
-                </a>
+                </ButtonAnchor>
               </article>
             </div>
           </div>

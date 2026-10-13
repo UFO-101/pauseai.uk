@@ -4,6 +4,7 @@ import EventList from "@/components/EventList";
 import { getEvents } from "@/lib/data/events";
 import { site } from "@/lib/data/site";
 import "../track-record/track-record.css";
+import { ButtonAnchor } from "@/components/ui/Button";
 
 // A short, readable address for our events, used on printed collateral. The calendar itself lives on Luma,
 // so this page lists it (via getEvents, cached for an hour) and links through to subscribe.
@@ -41,9 +42,9 @@ export default async function EventsPage() {
           <div className="container">
             <div className="section-heading-row">
               <h2 className="section-heading">Upcoming events</h2>
-              <a className="btn primary section-heading-cta" href={site.social.luma} target="_blank" rel="noreferrer">
+              <ButtonAnchor variant="primary" className="section-heading-cta" href={site.social.luma} target="_blank" rel="noreferrer">
                 Subscribe on Luma →
-              </a>
+              </ButtonAnchor>
             </div>
             <EventList events={events} lumaUrl={site.social.luma} showAll />
             <p className="events-page-note">

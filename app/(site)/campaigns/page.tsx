@@ -4,6 +4,7 @@ import CampaignsClient from "./CampaignsClient";
 import SignatoriesList from "./SignatoriesList";
 import { site } from "@/lib/data/site";
 import "./campaigns.css";
+import { ButtonAnchor } from "@/components/ui/Button";
 
 // Fallback for local/preview environments without AIRTABLE_TOKEN set — the
 // original public share link, scoped to the same signatory columns.
@@ -32,7 +33,7 @@ export default function CampaignsPage() {
           <div className="container">
             <h1>Regulate AI developers now</h1>
             <p className="hero-cta-row">
-              <a className="btn primary" href="#email-your-mp">Email your MP &rarr;</a>
+              <ButtonAnchor variant="primary" href="#email-your-mp">Email your MP &rarr;</ButtonAnchor>
             </p>
           </div>
         </section>

@@ -16,6 +16,7 @@ import { qrShape, qrSvg } from "@/lib/collateral/qrShape";
 import { loadDataUrl } from "@/lib/collateral/render";
 import { INK } from "@/lib/collateral/themes";
 import QrScanner from "./QrScanner";
+import { Button } from "@/components/ui/Button";
 
 /** Big enough for print and slides. The SVG covers anything larger. */
 const PNG_SIZE = 2048;
@@ -269,21 +270,21 @@ export default function QrGenerator() {
 
         <section>
           <div className="collateral-actions">
-            <button type="button" className="btn primary large" onClick={onDownloadPng} disabled={!preview || busy}>
+            <Button type="button" variant="primary" size="large" onClick={onDownloadPng} disabled={!preview || busy}>
               {busy ? "Preparing…" : "Download PNG"}
-            </button>
-            <button type="button" className="btn ghost large" onClick={onDownloadSvg} disabled={!preview}>
+            </Button>
+            <Button type="button" variant="ghost" size="large" onClick={onDownloadSvg} disabled={!preview}>
               Download SVG
-            </button>
+            </Button>
             {handoff === "share" && (
-              <button type="button" className="btn ghost large" onClick={onShare} disabled={!preview}>
+              <Button type="button" variant="ghost" size="large" onClick={onShare} disabled={!preview}>
                 Share
-              </button>
+              </Button>
             )}
             {handoff === "copy" && (
-              <button type="button" className="btn ghost large" onClick={onCopy} disabled={!preview}>
+              <Button type="button" variant="ghost" size="large" onClick={onCopy} disabled={!preview}>
                 Copy image
-              </button>
+              </Button>
             )}
             {message && (
               <p className="collateral-message" role="status">

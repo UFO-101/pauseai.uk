@@ -12,6 +12,7 @@ import { defaultValues, getTemplate } from "@/lib/collateral/templates";
 import CharCount from "./CharCount";
 import StylePicker from "./StylePicker";
 import { DESIGN_TEMPLATES, designQrCodes, designTemplate, designValues, withQrCodes, type DesignState } from "./designState";
+import { Button } from "@/components/ui/Button";
 
 interface Props {
   design: DesignState;
@@ -223,9 +224,10 @@ export default function DesignControls({ design, update, events, firstSection, p
             </button>
           </div>
         ))}
-        <button
+        <Button
           type="button"
-          className="btn ghost small"
+          variant="ghost"
+          size="small"
           disabled={qrCodes.length >= MAX_QR_CODES}
           onClick={() => {
             const code = newQr();
@@ -234,7 +236,7 @@ export default function DesignControls({ design, update, events, firstSection, p
           }}
         >
           {qrCodes.length === 0 ? "Add a QR code" : `Add another (${qrCodes.length} of ${MAX_QR_CODES})`}
-        </button>
+        </Button>
         {qrCodes.length > 0 && (
           <>
             <span className="collateral-label collateral-qr-size-label">Size</span>

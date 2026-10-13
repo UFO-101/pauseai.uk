@@ -39,6 +39,7 @@ import CharCount from "./CharCount";
 import CropControls from "./CropControls";
 import ProjectMenu from "./ProjectMenu";
 import StylePicker from "./StylePicker";
+import { Button } from "@/components/ui/Button";
 
 const CAPTION_TEMPLATE = getTemplate("caption");
 const STORAGE_KEY = "pauseai-collateral-gallery-v1";
@@ -547,9 +548,9 @@ export default function GalleryStudio() {
           </div>
         )}
         <div className="collateral-preview-actions">
-          <button type="button" className="btn primary large" onClick={onDownloadForPlatforms} disabled={!ready || platforms.size === 0}>
+          <Button type="button" variant="primary" size="large" onClick={onDownloadForPlatforms} disabled={!ready || platforms.size === 0}>
             {busy ? "Preparing…" : "Download slides"}
-          </button>
+          </Button>
           <ProjectMenu noun="project" onSave={onSaveProject} onOpen={onOpenProject} onReset={onReset} saveDisabled={!restored} />
           {message && (
             <p className="collateral-message" role="status">
@@ -595,18 +596,18 @@ export default function GalleryStudio() {
           </h2>
           <p className="collateral-hint">Pick a slide from the strip under the preview.</p>
           <div className="collateral-actions collateral-slide-actions">
-            <button type="button" className="btn ghost small" disabled={activeIndex === 0} onClick={() => moveSlide(activeIndex, -1)}>
+            <Button type="button" variant="ghost" size="small" disabled={activeIndex === 0} onClick={() => moveSlide(activeIndex, -1)}>
               ← Move earlier
-            </button>
-            <button type="button" className="btn ghost small" disabled={activeIndex === slides.length - 1} onClick={() => moveSlide(activeIndex, 1)}>
+            </Button>
+            <Button type="button" variant="ghost" size="small" disabled={activeIndex === slides.length - 1} onClick={() => moveSlide(activeIndex, 1)}>
               Move later →
-            </button>
-            <button type="button" className="btn ghost small" disabled={slides.length <= MIN_SLIDES} onClick={() => removeSlide(activeIndex)}>
+            </Button>
+            <Button type="button" variant="ghost" size="small" disabled={slides.length <= MIN_SLIDES} onClick={() => removeSlide(activeIndex)}>
               Remove
-            </button>
-            <button type="button" className="btn ghost small" disabled={slides.length >= MAX_SLIDES} onClick={addSlide}>
+            </Button>
+            <Button type="button" variant="ghost" size="small" disabled={slides.length >= MAX_SLIDES} onClick={addSlide}>
               {`Add a slide (${slides.length} of ${MAX_SLIDES})`}
-            </button>
+            </Button>
           </div>
         </section>
 

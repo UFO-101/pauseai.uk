@@ -26,12 +26,21 @@ describe("CopyLinkButton", () => {
     await render(<CopyLinkButton href="/track-record/#x" title="Copy entry" label="Share" className="extra" />);
 
     const button = page.getByRole("button", { name: "Copy entry" });
-    await expect.element(button).toHaveClass("btn ghost story-share-cta extra");
+    await expect.element(button).toHaveAttribute("data-variant", "ghost");
+    await expect.element(button).toHaveClass("story-share-cta");
+    await expect.element(button).toHaveClass("extra");
     await expect.element(button).toHaveTextContent("Share");
     await button.click();
 
     expect(write).toHaveBeenCalledWith(`${location.origin}/track-record/#x`);
     await expect.element(page.getByRole("button", { name: "Link copied" })).toHaveTextContent("Copied!");
+  });
+
+  it("renders as an icon-only circle without a label", async () => {
+    await render(<CopyLinkButton slug="x" className="extra" />);
+    const button = page.getByRole("button", { name: "Copy link to this story" });
+    await expect.element(button).toHaveClass("story-share-btn extra");
+    await expect.element(button).not.toHaveAttribute("data-button");
   });
 
   it("stays idle when the clipboard refuses", async () => {

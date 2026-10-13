@@ -20,6 +20,7 @@ import QrFormatNote from "./QrFormatNote";
 import TitleSizeControl from "./TitleSizeControl";
 import { usePhotoGestures } from "./usePhotoGestures";
 import { useStudioAssets } from "./useStudioAssets";
+import { Button } from "@/components/ui/Button";
 
 const RESET_MESSAGE = "Reset to the example text.";
 const STORAGE_KEY = "pauseai-collateral-pack-v1";
@@ -298,9 +299,9 @@ export default function PackStudio({ events }: { events: CalendarEvent[] }) {
         <div className="collateral-preview-actions">
           {designIssues.length > 0 && <Checks issues={designIssues} title="Checks for every format" />}
           <p className="collateral-hint collateral-actions-summary">{summary}</p>
-          <button type="button" className="btn primary large" onClick={onDownloadPack} disabled={!ready || formats.length === 0}>
+          <Button type="button" variant="primary" size="large" onClick={onDownloadPack} disabled={!ready || formats.length === 0}>
             {busy ? "Preparing…" : `Download ${formats.length} ${formats.length === 1 ? "format" : "formats"} (.zip)`}
-          </button>
+          </Button>
           <ProjectMenu noun="pack" onSave={onSaveProject} onOpen={onOpenProject} onReset={onReset} saveDisabled={!restored} />
           {shown && (
             <p className="collateral-message" role="status">

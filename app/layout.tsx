@@ -1,6 +1,11 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import { Lato } from "next/font/google";
+import "@/styles/tokens.css";
+import "@/styles/base.css";
+// Before globals.css, so context overrides there (e.g. .hero-marquee-text
+// [data-button]) still come later in the cascade, as the old .btn rules did.
+import "@/components/ui/Button.module.css";
 import "./globals.css";
 import Footer from "@/components/Footer";
 import CookieConsent from "@/components/CookieConsent";
