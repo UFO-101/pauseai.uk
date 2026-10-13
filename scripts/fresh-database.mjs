@@ -32,11 +32,14 @@ function psql(url, ...args) {
   });
 }
 
-/** Migration files in the order Netlify applies them: by their number. */
+/**
+ * Migration files in the order Netlify applies them: sorted as text, so
+ * numbers must be zero-padded (0001, 0002, ...).
+ */
 export function migrationFiles() {
   return readdirSync(MIGRATIONS)
-    .filter((file) => /^\d+_.+\.sql$/.test(file))
-    .sort((a, b) => parseInt(a, 10) - parseInt(b, 10))
+    .filter((file) => /^\d+_[a-z0-9_-]+\.sql$/.test(file))
+    .sort()
     .map((file) => join(MIGRATIONS, file));
 }
 

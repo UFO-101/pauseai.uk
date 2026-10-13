@@ -3,6 +3,11 @@ import { dropDatabase, freshDatabase, migrationFiles } from "@/scripts/fresh-dat
 import { describeWithDatabase } from "@/tests/database";
 
 describe("migrations", () => {
+  it("are named <number>_<slug>.sql, zero-padded so text order is number order", () => {
+    const names = migrationFiles().map((file) => file.split("/").pop()!);
+    for (const name of names) expect(name).toMatch(/^\d{4}_[a-z0-9_-]+\.sql$/);
+  });
+
   it("are numbered once each", () => {
     const numbers = migrationFiles().map((file) => parseInt(file.split("/").pop()!, 10));
     expect(new Set(numbers).size).toBe(numbers.length);
