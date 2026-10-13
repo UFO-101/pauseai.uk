@@ -1,83 +1,79 @@
-# Pause AI UK Website
+# PauseAI UK website
 
-The [pauseai.uk](https://pauseai.uk) website — a [Next.js](https://nextjs.org) (App Router) app deployed to Netlify.
+The [pauseai.uk](https://pauseai.uk) website: Next.js 16 and React 19, deployed to Netlify.
 
-## Stack
+## Run it locally
 
-- **Next.js 16** (App Router) with **React 19** and **TypeScript**
-- Self-hosted Inter (`next/font/local` + `@font-face`) and Google-hosted Lato (`next/font/google`)
-- Deployed to **Netlify** via `@netlify/plugin-nextjs`
-
-## Layout
-
-See [docs/code-structure.md](docs/code-structure.md). In short: `app/` holds routes (public pages in `app/(site)/`, unlisted tools in `app/(tools)/`), `components/` shared React components, `lib/` logic and data (shared config such as social links, emails and external URLs is in `lib/content/site.ts`), and `public/` static assets.
-
-## Local development
+You need Node 22 and Postgres (with `psql`). Postgres holds Email your MP's data, and some unit tests use it.
 
 ```bash
 npm install
-npm run dev    # Next dev server (Turbopack) at http://localhost:3000
-npm run build  # Production build
-npm run lint   # ESLint
-```
 
-### Postgres
-
-Email your MP, the staff interface and the signatories list use a Postgres
-database, and so do some unit tests. You need Postgres running (any recent
-version, e.g. `brew install postgresql && brew services start postgresql`
-on a Mac, or `apt install postgresql` on Linux), with `psql` on your path.
-
-```bash
-# Where Postgres is. Without PGHOST, the scripts use the Unix socket in
-# /var/run/postgresql; Homebrew's is in /tmp. Add PGPASSWORD if you need one.
+# Where Postgres is (here, Homebrew's socket). Add PGPASSWORD if you need one.
 export PGHOST=/tmp PGUSER=$(whoami)
 
-# Make a database with the migrations applied and the test MP added, and
-# point the dev server at it. Run again to start over: it wipes the database.
+# A fresh database, with the test MP. Running it again wipes the database.
 export NETLIFY_DB_URL=$(node scripts/fresh-database.mjs pauseai_dev --test-mp you@example.com)
 
-# Fake outside services, so the form works without keys. Emails it would
-# send are written to tmp/outbox/ instead, confirmation link and all.
+# Dev server at http://localhost:3000, with outside services faked.
+# Emails are written to tmp/outbox/ instead of sent.
 DATA_FIXTURES=1 OUTBOX_DIR=tmp/outbox POSTMARK_SERVER_TOKEN=fixture npm run dev
 ```
 
-Then open http://localhost:3000/email-your-mp-v2 and use postcode ZZ99ZZ.
+Try Email your MP at http://localhost:3000/email-your-mp-v2 with postcode ZZ99ZZ. The confirmation link is in the newest file in `tmp/outbox/`.
 
-- **Unit tests** (`npm test`) need Postgres too, with the same `PG*`
-  variables; each test file makes its own database.
-- **Real MPs**: run the dev server with `CRON_SECRET=dev` and without
-  `DATA_FIXTURES`, then
-  `curl -X POST -H "Authorization: Bearer dev" localhost:3000/api/cron/sync-mps`.
-- **Staff login** locally needs your own Google OAuth client
-  (`GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`) with
-  `http://localhost:3000/staff/api/callback` as a redirect URI.
+For real data, leave out `DATA_FIXTURES` and set the variables below in `.env.local`.
 
-See `package.json` for the full script list, including the `lighthouse*` scripts.
+## Environment variables
 
-## Testing
+Set in Netlify for the live site. None are needed for `DATA_FIXTURES=1` except those above.
 
-See [docs/testing.md](docs/testing.md) for the test policy, coverage gate, mocking rules and commands. In short: `npm test` runs the Vitest unit tests (also part of `npm run build`, so a failing test blocks deploy), `npm run test:coverage` runs unit and component tests with the coverage gate, and `npm run test:behaviour` / `npm run test:visual` run the Playwright suites.
+| Variable | What it's for | If it's missing |
+| --- | --- | --- |
+| `LUMA_API_KEY` | Registrations on the flyering trackers | The trackers can't load registrations |
+| `NETLIFY_DB_URL` | The Postgres database. Netlify sets it when Netlify Database is on | Email your MP, staff pages and the signatories list fail |
+| `TURNSTILE_SECRET_KEY` | Checks the anti-spam token on the Email your MP form | Every letter is refused (except in `npm run dev`) |
+| `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | Draws the anti-spam widget. Read at build time | Every letter is refused |
+| `POSTMARK_SERVER_TOKEN` | Sends letters, confirmation emails and forwarded replies | No letters can be sent |
+| `POSTMARK_WEBHOOK_USER`, `POSTMARK_WEBHOOK_PASSWORD` | The basic auth on Postmark's bounce and inbound webhooks | Bounces and replies are refused |
+| `REPLIES_INBOX` | The PauseAI inbox that gets a copy of every MP's reply | Replies go only to the sender |
+| `TEST_MP_EMAIL` | The test MP's inbox (postcode ZZ99ZZ) | The test MP has no email, so no form |
+| `MP_MAIL_DOMAIN` | The domain letters come from and replies go to | `mp.pauseai.uk` |
+| `CONFIRMATION_FROM` | The confirmation email's From | `PauseAI UK <confirm@mp.pauseai.uk>` |
+| `CIVICRM_URL`, `CIVICRM_API_KEY`, `CIVICRM_ACTIVITY_TYPE` | Logs each sent letter in CiviCRM. All three are needed | Nothing is logged; sending still works |
+| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Staff login at `/staff`, with a pauseai.uk Google account | Staff can't log in |
+| `CRON_SECRET` | Lets the daily jobs (MP sync, deleting unconfirmed letters) call the site | The daily jobs fail |
+| `AIRTABLE_TOKEN` | The one-off import of signatories from Airtable | The import page says it isn't set up |
 
-**Airtable access is locked to `lib/server/airtable.ts`**: an ESLint rule (`no-restricted-syntax` in `eslint.config.mjs`) bans any other file from referencing `api.airtable.com`, so the signed-only filter and field whitelist there can't be bypassed by a new call site. `npm run check:airtable-filter` runs just that rule, isolated from the rest of ESLint, and is also part of `npm run build` — a bypass fails the build the same way a failing test does. The same check keeps the database connection (`pg`, `NETLIFY_DB_URL`) in `lib/server/db.ts`.
+Netlify sets `URL` and `CONTEXT` itself. Only a `CONTEXT` of `production` can send letters to real MPs; everywhere else, only to the test MP.
+
+For staff login locally, make your own Google OAuth client with `http://localhost:3000/staff/api/callback` as a redirect URI. For real MPs locally, run the dev server with `CRON_SECRET=dev`, then:
+
+```bash
+curl -X POST -H "Authorization: Bearer dev" localhost:3000/api/cron/sync-mps
+```
+
+## Tests
+
+```bash
+npm test                 # unit tests (needs Postgres, as above)
+npm run test:coverage    # unit and component tests, held at 100% coverage
+npm run test:behaviour   # Playwright, on a fixture build
+npm run test:visual      # Playwright, the local build against pauseai.uk
+npm run lint
+```
+
+`npm run build` runs the unit tests first, so a failing test blocks a deploy. See [docs/testing.md](docs/testing.md).
 
 ## Docs
 
-- [docs/code-structure.md](docs/code-structure.md): where code lives, and the rules for adding more
-- [docs/testing.md](docs/testing.md): test policy, coverage gate, mocking, commands
-- [docs/style-guide.md](docs/style-guide.md): design style guide
-- [docs/email-your-mp.md](docs/email-your-mp.md): the Email your MP tool, and the settings it needs
-- [plans/](plans/): plans for work in progress or not started yet
-- [AGENTS.md](AGENTS.md): notes for coding agents (`CLAUDE.md` links to it)
-
-## Things that aren't obvious from the code
-
-- **Events** are fetched at request time from the Luma calendar API (`lib/server/luma-calendar.ts`), not hardcoded.
-- **Data in Postgres**: the Email your MP tool's politicians, campaign statuses and staff sessions are in Netlify Database (`lib/server/db.ts`, migrations in `netlify/database/migrations/`). See [docs/email-your-mp.md](docs/email-your-mp.md).
-- **Donations** use prebuilt Stripe payment links hardcoded in `app/(site)/donate/_components/DonateForm.tsx` — there is no payment backend.
-- **Fonts** are committed as woff2 in `public/fonts/`, so there is no font download/build step after cloning.
-- **`public/CNAME`** is a leftover from the old GitHub Pages setup. Netlify ignores it; the domain is managed in the Netlify dashboard.
+- [docs/code-structure.md](docs/code-structure.md): where code lives
+- [docs/testing.md](docs/testing.md): how it's tested
+- [docs/email-your-mp.md](docs/email-your-mp.md): the Email your MP tool and staff interface
+- [docs/style-guide.md](docs/style-guide.md): design
+- [plans/](plans/): work planned or in progress
+- [AGENTS.md](AGENTS.md): notes for coding agents
 
 ## Deployment
 
-Netlify, configured in `netlify.toml` (build `npm run build`, publish `.next`, Node 22). Pushes to the default branch deploy to production; pull requests get deploy previews automatically.
+Netlify, configured in `netlify.toml`. Pushing to `main` deploys the live site; pull requests get previews. Database migrations in `netlify/database/migrations/` are applied by Netlify on deploy.

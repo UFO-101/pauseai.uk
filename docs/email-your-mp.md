@@ -50,24 +50,10 @@ Parliament's salutation is the full name ("Stephen Kinnock"), it is kept.
 
 ## Settings
 
-Environment variables, set in Netlify.
+The environment variables are listed in the [README](../README.md#environment-variables). Two need setting up first:
 
-| Variable | What it's for |
-| --- | --- |
-| `TEST_MP_EMAIL` | Where the test MP's letters go. Copied to the test MP at each sync. Without it, the test MP shows "no email listed". |
-| `NETLIFY_DB_URL` | The database. Set by Netlify when Netlify Database is on. |
-| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Staff login: an "Internal" OAuth client in the pauseai.uk Workspace's Google Cloud project, with `https://pauseai.uk/staff/api/callback` (and `http://localhost:3000/staff/api/callback` for local development, in a separate client) as redirect URIs. |
-| `CRON_SECRET` | A long random string. The scheduled functions send it to `/api/cron/*`. |
-| `AIRTABLE_TOKEN` | The one-off import of signatories (already set). |
-| `POSTMARK_SERVER_TOKEN` | Sends letters, confirmation emails and forwarded replies. |
-| `POSTMARK_WEBHOOK_USER`, `POSTMARK_WEBHOOK_PASSWORD` | The basic auth credentials in the webhook URLs set in Postmark. Without them, every webhook request is refused. |
-| `MP_MAIL_DOMAIN` | The domain letters come from and replies go to. Defaults to `mp.pauseai.uk`. |
-| `CONFIRMATION_FROM` | The confirmation email's From. Defaults to `PauseAI UK <confirm@mp.pauseai.uk>`. |
-| `REPLIES_INBOX` | The shared PauseAI inbox that gets a copy of every reply. |
-| `CIVICRM_URL`, `CIVICRM_API_KEY`, `CIVICRM_ACTIVITY_TYPE` | Logging each sent letter in CiviCRM. All three, or nothing is logged. |
-| `DEPLOY_CONTEXT` | Set at build time from Netlify's `CONTEXT` (`next.config.ts`); don't set it by hand. Only `production` may write to real MPs. |
-| `TURNSTILE_SECRET_KEY` | Checks the anti-spam token. Without it the form refuses every letter, except in `next dev`. |
-| `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | Draws the anti-spam widget. Read at build time. |
+- **Google login**: an "Internal" OAuth client in the pauseai.uk Workspace's Google Cloud project, with `https://pauseai.uk/staff/api/callback` as a redirect URI. Previews can't log in, since Google won't accept wildcard redirect URIs.
+- **`CRON_SECRET`**: any long random string.
 
 ## Sending
 
