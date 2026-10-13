@@ -1,21 +1,24 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { expect, it } from "vitest";
 import { copy } from "@/lib/content/email-your-mp";
+import { setStatus } from "@/lib/server/politicians";
+import { addTestPolitician, describeWithDatabase, useTestDatabase } from "@/tests/database";
 import { POST } from "./route";
-
-afterEach(() => vi.unstubAllEnvs());
 
 function lookup(body: unknown) {
   return POST(new Request("http://localhost/api/email-your-mp/lookup", { method: "POST", body: JSON.stringify(body) }));
 }
 
-describe("POST /api/email-your-mp/lookup", () => {
+describeWithDatabase("POST /api/email-your-mp/lookup", () => {
+  useTestDatabase();
+
   it("returns the MP and their statuses", async () => {
-    vi.stubEnv("AIRTABLE_TOKEN", "");
+    const id = await addTestPolitician();
+    await setStatus(id, "letter-to-the-prime-minister", { status: "signed", date: null, note: "" }, "jo@pauseai.uk");
     const res = await lookup({ postcode: "SW1A 1AA" });
     expect(await res.json()).toEqual({
       ok: true,
-      mp: { name: "Rachel Blake", salutation: "Ms Blake", constituency: "Cities of London and Westminster", email: "rachel.blake.mp@parliament.uk" },
-      statuses: {},
+      mp: { id, name: "Rachel Blake", salutation: "Ms Blake", constituency: "Cities of London and Westminster", email: "rachel.blake.mp@parliament.uk" },
+      statuses: { "letter-to-the-prime-minister": "signed" },
     });
   });
 

@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { http, HttpResponse } from "msw";
 import { server } from "@/tests/fixtures/msw";
 import { copy } from "@/lib/content/email-your-mp";
+import { addTestMp, addTestPolitician, describeWithDatabase, useTestDatabase } from "@/tests/database";
 import { parseLetterForm, submitLetter, type LetterForm } from "./mp-letters";
 
 // Airtable's API, matched without naming its host, which only lib/server/airtable.ts may do.
@@ -59,7 +60,12 @@ describe("parseLetterForm", () => {
   });
 });
 
-describe("submitLetter", () => {
+describeWithDatabase("submitLetter", () => {
+  useTestDatabase();
+  beforeEach(async () => {
+    await addTestPolitician();
+  });
+
   it("adds the letter to Airtable for the MP the postcode finds, signed with name and postcode", async () => {
     const posted = letters();
 
@@ -99,7 +105,7 @@ describe("submitLetter", () => {
 
   it("refuses a postcode with no MP, or an MP with no email", async () => {
     expect(await submitLetter({ ...FORM, postcode: "XX1 1XX" }, "localhost")).toMatchObject({ status: 400, message: copy.errors.noRecipient });
-    vi.stubEnv("TEST_MP_EMAIL", "");
+    await addTestMp(null);
     expect(await submitLetter({ ...FORM, postcode: "ZZ99ZZ" }, "localhost")).toMatchObject({ status: 400, message: copy.errors.noRecipient });
   });
 

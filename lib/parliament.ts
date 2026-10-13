@@ -1,8 +1,6 @@
 // MPs from Parliament's Members API (https://members-api.parliament.uk/,
 // no key needed), in the shape the Email your MP tool stores them.
-//
-// No imports, and the caller passes in how to fetch: scripts/sync-mps.mts
-// runs this file in plain Node, and the server runs it through outsideFetch.
+// The caller passes in how to fetch: lib/server/mp-sync.ts uses outsideFetch.
 
 export const MEMBERS_API = "https://members-api.parliament.uk/api";
 

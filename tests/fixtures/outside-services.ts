@@ -13,6 +13,7 @@ import lumaPast from "./luma-calendar-past.json";
 import lumaGuests from "./luma-guests.json";
 import airtableSignatories from "./airtable-signatories.json";
 import parliamentMembers from "./parliament-members.json";
+import googleLogin from "./google-login.json";
 
 function json(body: unknown): Response {
   return new Response(JSON.stringify(body), { headers: { "Content-Type": "application/json" } });
@@ -47,6 +48,18 @@ export function fixtureResponse(url: string, init?: RequestInit): Response | und
   if (contact) {
     // Every fixture MP's office address, in the API's own pattern.
     return json({ value: [{ type: "Parliamentary office", typeId: 1, email: `mp${contact[1]}.office@parliament.uk ` }] });
+  }
+  // Google's side of staff login. The code names the account: fixture-staff
+  // is staff@pauseai.uk, fixture-outsider a Gmail account. Its ID tokens were
+  // signed once, for the client ID "fixture-client-id", and expire in 2100;
+  // the key that signed them wasn't kept.
+  if (hostname === "oauth2.googleapis.com" && pathname === "/token") {
+    const code = new URLSearchParams(String(init?.body ?? "")).get("code") ?? "";
+    const idToken = (googleLogin.tokens as Record<string, string>)[code];
+    return idToken ? json({ id_token: idToken, token_type: "Bearer" }) : new Response(JSON.stringify({ error: "invalid_grant" }), { status: 400 });
+  }
+  if (hostname === "www.googleapis.com" && pathname === "/oauth2/v3/certs") {
+    return json(googleLogin.keys);
   }
   if (hostname === "challenges.cloudflare.com" && pathname === "/turnstile/v0/siteverify") {
     return json({ success: true, hostname: "localhost" });

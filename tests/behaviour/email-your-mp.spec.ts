@@ -1,9 +1,11 @@
 import { test, expect, type Page } from "@playwright/test";
 import { campaigns, copy } from "@/lib/content/email-your-mp";
+import { BASE, syncFixtureMps } from "./setup";
 
 // Email your MP, version 2, end to end on fixture data. ZZ99ZZ finds the test
 // MP, so the whole flow runs as it would for a real one.
-const BASE = process.env.LOCAL_URL ?? "http://localhost:3000";
+
+test.beforeAll(async ({ request }) => syncFixtureMps(request));
 
 type AdsWindow = Window & { dataLayer?: Record<string, unknown>[] };
 

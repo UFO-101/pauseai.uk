@@ -132,3 +132,38 @@ export async function createLetterRecord(token: string, letter: LetterRecord): P
   const data = await res.json();
   return data.id;
 }
+
+export type SignatoryToImport = Signatory & { email: string };
+
+/**
+ * Everyone who signed, with their email, for the one-off import into the
+ * database (lib/server/signatory-import.ts). Same signed-only filter.
+ */
+export async function fetchSignatoriesForImport(token: string): Promise<SignatoryToImport[]> {
+  const params = new URLSearchParams();
+  params.set("filterByFormula", FILTER_FORMULA);
+  for (const field of [...FIELDS, "Email"]) params.append("fields[]", field);
+  const found: SignatoryToImport[] = [];
+  let offset: string | undefined;
+  let pages = 0;
+  do {
+    if (++pages > MAX_PAGES) throw new AirtableRequestError(`Airtable pagination exceeded ${MAX_PAGES} pages`);
+    if (offset) params.set("offset", offset);
+    const res = await outsideFetch(`${API}/${TABLE_ID}?${params.toString()}`, {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: "no-store",
+    });
+    if (!res.ok) throw new AirtableRequestError(`Airtable request failed with status ${res.status}`);
+    const data = await res.json();
+    for (const record of data.records ?? []) {
+      found.push({
+        name: record.fields["Full name or Title"] ?? "",
+        party: record.fields["Party"] ?? "",
+        constituency: record.fields["Constituency"] ?? "",
+        email: record.fields["Email"] ?? "",
+      });
+    }
+    offset = data.offset;
+  } while (offset);
+  return found;
+}

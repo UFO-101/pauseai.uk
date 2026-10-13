@@ -34,6 +34,14 @@ describe("fixtureResponse", () => {
     expect(contact.value[0].email).toBe("mp172.office@parliament.uk ");
   });
 
+  it("logs in staff@pauseai.uk through the fixture Google, and nobody it doesn't know", async () => {
+    const token = (code: string) => fixtureResponse("https://oauth2.googleapis.com/token", { method: "POST", body: new URLSearchParams({ code }) })!;
+    expect((await token("fixture-staff").json()).id_token).toMatch(/^ey/);
+    expect(token("unknown").status).toBe(400);
+    expect(fixtureResponse("https://oauth2.googleapis.com/token")!.status).toBe(400);
+    expect((await fixtureResponse("https://www.googleapis.com/oauth2/v3/certs")!.json()).keys).toHaveLength(1);
+  });
+
   it("has nothing for other URLs", () => {
     expect(fixtureResponse("https://api2.luma.com/other")).toBeUndefined();
     expect(fixtureResponse("https://public-api.luma.com/other")).toBeUndefined();

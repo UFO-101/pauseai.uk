@@ -30,9 +30,14 @@ export function discoverStaticRoutes(dir: string, base = ""): string[] {
 // and Email your MP version 2 while it's being built.
 export const HIDDEN_ROUTES = ["/email-your-mp-v2", "/tools", "/tools/collateral", "/tools/qr", "/trackers", "/trackers/2026-09-26-flyering", "/trackers/2026-10-10-flyering"];
 
+/** The staff interface, which nothing links to. */
+export function isStaffRoute(path: string): boolean {
+  return path === "/staff" || path.startsWith("/staff/");
+}
+
 export default function sitemap(): MetadataRoute.Sitemap {
   const staticRoutes = discoverStaticRoutes(join(process.cwd(), "app"))
-    .filter((path) => !HIDDEN_ROUTES.includes(path))
+    .filter((path) => !HIDDEN_ROUTES.includes(path) && !isStaffRoute(path))
     .sort();
 
   const staticEntries: MetadataRoute.Sitemap = staticRoutes.map((path) => ({

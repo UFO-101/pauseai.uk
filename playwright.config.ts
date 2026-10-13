@@ -14,6 +14,11 @@ import { defineConfig, devices } from "@playwright/test";
 //   lib/outside-fetch.ts) so results don't depend on Luma or Airtable.
 const DATA_FIXTURES = process.env.DATA_FIXTURES ?? "1";
 
+// The behaviour suite's own database, made fresh each time the server is
+// built. scripts/fresh-database.mjs prints its URL, for the build and the
+// server to use. Never the real one.
+const BEHAVIOUR_DATABASE = "pauseai_behaviour";
+
 export default defineConfig({
   testDir: "./tests",
   fullyParallel: true,
@@ -51,7 +56,10 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: "npm run build && npm run start",
+    command:
+      DATA_FIXTURES === "1"
+        ? `export NETLIFY_DB_URL="$(node scripts/fresh-database.mjs ${BEHAVIOUR_DATABASE})" && npm run build && npm run start`
+        : "npm run build && npm run start",
     // Fixture data needs the keys set too, or the pages that check for them
     // (trackers, campaigns) show their "not configured" fallback instead.
     env:
@@ -67,6 +75,10 @@ export default defineConfig({
             // Draws the widget, from a stand-in script (tests/behaviour/email-your-mp.spec.ts).
             NEXT_PUBLIC_TURNSTILE_SITE_KEY: "fixture",
             TEST_MP_EMAIL: "test-mp@example.org",
+            // The fixture Google's ID tokens are for this client.
+            GOOGLE_CLIENT_ID: "fixture-client-id",
+            GOOGLE_CLIENT_SECRET: "fixture",
+            CRON_SECRET: "fixture-cron-secret",
           }
         : { DATA_FIXTURES },
     url: process.env.LOCAL_URL ?? "http://localhost:3000",

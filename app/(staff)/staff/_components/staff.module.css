@@ -1,0 +1,119 @@
+.page {
+  padding-block: 2rem 4rem;
+}
+
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.25rem;
+  align-items: center;
+  padding-block: 1rem;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 1.5rem;
+}
+
+.header nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+}
+
+.who {
+  margin-left: auto;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.filters,
+.form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: end;
+  margin-block: 1rem;
+}
+
+.form {
+  flex-direction: column;
+  align-items: stretch;
+  max-width: 32rem;
+}
+
+.filters label,
+.form label {
+  display: grid;
+  gap: 0.25rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.filters input,
+.filters select,
+.form input,
+.form select,
+.form textarea {
+  padding: 0.5rem 0.6rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  font: inherit;
+  font-weight: 400;
+  background: var(--surface);
+  color: inherit;
+}
+
+/* Wide tables scroll sideways on a phone, rather than the page. */
+.scroll {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.table th,
+.table td {
+  padding: 0.45rem 0.6rem;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  vertical-align: top;
+}
+
+.tag {
+  display: inline-block;
+  padding: 0.05rem 0.45rem;
+  border-radius: 999px;
+  background: var(--surface-2);
+  font-size: 0.8rem;
+  margin-right: 0.25rem;
+}
+
+.muted {
+  color: var(--text-secondary);
+}
+
+.error {
+  color: #b00020;
+}
+
+.statuses {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.sync {
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin-block: 1rem;
+}
+
+.sync ul {
+  margin: 0.25rem 0 0.75rem;
+}
+
+.actions {
+  display: flex;
+  gap: 0.75rem;
+}

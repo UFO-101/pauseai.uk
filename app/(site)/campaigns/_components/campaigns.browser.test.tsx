@@ -34,12 +34,10 @@ describe("campaign sections", () => {
     await expect.element(page.getByRole("link", { name: "Open it on pauseai.info →" })).toHaveAttribute("href", "https://pauseai.info/uk-email-mp");
   });
 
-  it("lists signatories from Airtable when the site has a token, and Airtable's own embed otherwise", async () => {
+  it("lists the signatories, with a note for journalists", async () => {
     vi.spyOn(window, "fetch").mockResolvedValue(new Response("[]"));
-    const { rerender } = await render(<Signatories listFromAirtable />);
+    await render(<Signatories />);
     await expect.element(page.getByText("No signatories yet.")).toBeVisible();
-    await rerender(<Signatories listFromAirtable={false} />);
-    await expect.element(page.getByTitle("Parliamentary signatories to the Frontier AI open letter")).toBeInTheDocument();
     await expect.element(page.getByRole("link", { name: site.pressEmail })).toHaveAttribute("href", `mailto:${site.pressEmail}`);
   });
 
@@ -52,12 +50,13 @@ describe("campaign sections", () => {
 describe("SignatoriesList", () => {
   const respond = (body: unknown, status = 200) => vi.spyOn(window, "fetch").mockResolvedValue(new Response(JSON.stringify(body), { status }));
 
-  it("says it is loading, then lists MPs and Lords separately", async () => {
+  it("says it is loading, then lists each house separately", async () => {
     respond([
-      { name: "Jane MP", party: "Labour", constituency: "Somewhere" },
-      { name: "Sam MP", party: "", constituency: "Elsewhere" },
-      { name: "Lord Example", party: "Crossbench", constituency: "" },
-      { name: "Baroness Plain", party: "", constituency: "" },
+      { name: "Jane MP", party: "Labour", constituency: "Somewhere", house: "commons" },
+      { name: "Sam MP", party: "", constituency: "Elsewhere", house: "commons" },
+      { name: "Lord Example", party: "Crossbench", constituency: "", house: "lords" },
+      { name: "Baroness Plain", party: "", constituency: "", house: "lords" },
+      { name: "Jo MSP", party: "SNP", constituency: "Glasgow Kelvin", house: "scottish-parliament" },
     ]);
     const { container } = await render(<SignatoriesList />);
     expect(container.textContent).toBe("Loading signatories…");
@@ -66,17 +65,20 @@ describe("SignatoriesList", () => {
     await expect.element(page.getByText("MP for Somewhere, Labour")).toBeVisible();
     await expect.element(page.getByText("MP for Elsewhere")).toBeVisible();
     await expect.element(page.getByText("Crossbench")).toBeVisible();
+    // Signers outside Westminster show where they sit, without "MP for".
+    await expect.element(page.getByText("Glasgow Kelvin, SNP")).toBeVisible();
+    expect(container.querySelectorAll(".signatories-group h3")).toHaveLength(3);
     // A Lord with no party has no subtitle.
     const plain = [...container.querySelectorAll(".signatories-item")].find((li) => li.textContent === "Baroness Plain");
     expect(plain?.querySelector(".signatories-subtitle")).toBeNull();
   });
 
   it("leaves out an empty group", async () => {
-    respond([{ name: "Lord Only", party: "Crossbench", constituency: "" }]);
+    respond([{ name: "Lord Only", party: "Crossbench", constituency: "", house: "lords" }]);
     await render(<SignatoriesList />);
     await expect.element(page.getByRole("heading", { name: "Lords" })).toBeVisible();
     expect(document.querySelector(".signatories-group h3")?.textContent).toBe("Lords");
-    respond([{ name: "MP Only", party: "Green", constituency: "Here" }]);
+    respond([{ name: "MP Only", party: "Green", constituency: "Here", house: "commons" }]);
     const second = await render(<SignatoriesList />);
     await expect.poll(() => second.container.querySelector("h3")?.textContent).toBe("MPs");
   });

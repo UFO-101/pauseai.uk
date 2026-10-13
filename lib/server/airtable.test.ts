@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { http, HttpResponse } from "msw";
 import { server } from "@/tests/fixtures/msw";
-import { AirtableRequestError, createLetterRecord, fetchFrontierLetterSignatories, fetchParliamentarian } from "./airtable";
+import { AirtableRequestError, createLetterRecord, fetchFrontierLetterSignatories, fetchParliamentarian, fetchSignatoriesForImport } from "./airtable";
 
 const AIRTABLE = "https://api.airtable.com/v0/*";
 
@@ -190,5 +190,34 @@ describe("createLetterRecord", () => {
     );
     await expect(createLetterRecord("t", { ...letter, contactConsent: false })).rejects.toThrow(AirtableRequestError);
     expect(body!.fields["Contact consent"]).toBe("No");
+  });
+});
+
+describe("fetchSignatoriesForImport", () => {
+  it("pages through everyone who signed, with their email", async () => {
+    const requests = serve(
+      { records: [record({ "Full name or Title": "A", Email: "a@parliament.uk" })], offset: "next" },
+      { records: [record({ "Full name or Title": "B", Party: "P", Constituency: "C" })] },
+    );
+
+    expect(await fetchSignatoriesForImport("t")).toEqual([
+      { name: "A", party: "", constituency: "", email: "a@parliament.uk" },
+      { name: "B", party: "P", constituency: "C", email: "" },
+    ]);
+    const url = new URL(requests[1].url);
+    expect(url.searchParams.get("offset")).toBe("next");
+    expect(url.searchParams.get("filterByFormula")).toBe("{Signed Frontier AI Letter}=TRUE()");
+    expect(url.searchParams.getAll("fields[]")).toEqual(["Full name or Title", "Party", "Constituency", "Email"]);
+  });
+
+  it("copes with a page without records, and throws on errors or endless paging", async () => {
+    serve({});
+    expect(await fetchSignatoriesForImport("t")).toEqual([]);
+
+    server.use(http.get(AIRTABLE, () => new HttpResponse(null, { status: 500 })));
+    await expect(fetchSignatoriesForImport("t")).rejects.toThrow(AirtableRequestError);
+
+    server.use(http.get(AIRTABLE, () => HttpResponse.json({ records: [], offset: "again" })));
+    await expect(fetchSignatoriesForImport("t")).rejects.toThrow("exceeded 100 pages");
   });
 });

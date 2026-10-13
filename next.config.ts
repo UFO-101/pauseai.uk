@@ -46,11 +46,10 @@ const contentSecurityPolicy = [
   // blob:/data: cover next/image; EVENT_IMAGE_HOSTS are the Luma event covers.
   `img-src 'self' data: blob: ${[...EVENT_IMAGE_HOSTS.map((host) => `https://${host}`), ...GA, ...GOOGLE_ADS].join(" ")}`,
   `connect-src 'self' ${[...GA_COLLECT, ...GOOGLE_ADS, TURNSTILE].join(" ")}`,
-  // The MP-email and onboarding embeds, the Tally story form, and the
-  // Airtable signatories embed that campaigns/page.tsx falls back to when
-  // AIRTABLE_TOKEN is unset (local and preview builds). GTM's <noscript> iframe
-  // is in app/layout.tsx; td.doubleclick.net is used by Ads tags in the container.
-  `frame-src https://pauseai.info https://tally.so https://airtable.com https://www.googletagmanager.com https://td.doubleclick.net ${TURNSTILE}`,
+  // The MP-email and onboarding embeds, the Tally story form, and Turnstile's
+  // widget. GTM's <noscript> iframe is in app/layout.tsx; td.doubleclick.net
+  // is used by Ads tags in the container.
+  `frame-src https://pauseai.info https://tally.so https://www.googletagmanager.com https://td.doubleclick.net ${TURNSTILE}`,
   "frame-ancestors 'none'",
   "base-uri 'self'",
   "form-action 'self'",

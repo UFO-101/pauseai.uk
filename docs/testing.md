@@ -76,10 +76,42 @@ otherwise watch or break: the collateral tool's file downloads, an image
 that fails to load, or a check result a real design can't easily produce.
 Wrap the real module (`importActual`) and replace only that one function.
 
+## The database
+
+Code that reads or writes the database is tested against a real Postgres,
+not a mock.
+
+- **Each test file gets its own database.** Wrap the tests in
+  `describeWithDatabase` and call `useTestDatabase()` (`tests/database.ts`).
+  It makes a fresh database, applies the migrations with `psql`
+  (`scripts/fresh-database.mjs`, the same way Netlify does), empties the
+  tables before each test, and drops the database afterwards.
+  `addTestPolitician()` and `addTestMp()` add rows.
+- **Where Postgres is.** The usual `PG*` variables; without them, the
+  devcontainer's Postgres on the Unix socket (run `pg-start` first). CI runs
+  a Postgres service.
+- **Netlify's build has no Postgres**, so `npm run build` skips these tests
+  there (`NETLIFY=true`). CI runs them.
+- **Playwright** builds against its own database, `pauseai_behaviour`, made
+  fresh by the `webServer` command. Behaviour tests that need MPs call
+  `syncFixtureMps()` (`tests/behaviour/setup.ts`), which runs the nightly
+  sync's route against the Parliament fixture.
+- **Staff screens** are tested by logging in through the fixture Google
+  (`tests/behaviour/staff.spec.ts`). The fixture's ID tokens were signed once
+  for the client `fixture-client-id`, and the key that signed them wasn't
+  kept. There's no login bypass.
+- **`next/headers`** can't run outside a request, so Node tests of code
+  that calls `requireStaff()` use `vi.mock("next/headers", () =>
+  import("@/tests/next-headers"))` and put the session cookie in
+  `requestCookies`.
+
 ## Rules for new code
 
 - A new component ships with its `*.browser.test.tsx` in the same PR.
 - New logic in `lib/` ships with its `*.test.ts`.
+- A new staff page, route handler or Server Action file under
+  `app/(staff)/` must call `requireStaff()`, or `npm run check:staff-auth`
+  fails.
 - A new page needs nothing extra: the route list picks it up. A new dynamic
   route (`[slug]`) needs an example in `tests/routes.ts`, or
   `tests/routes.test.ts` fails.
