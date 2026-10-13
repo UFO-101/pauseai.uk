@@ -4,13 +4,10 @@ The [pauseai.uk](https://pauseai.uk) website: Next.js 16 and React 19, deployed 
 
 ## Run it locally
 
-You need Node 22 and Postgres (with `psql`). Postgres holds Email your MP's data, and some unit tests use it.
+You need Node 22 and Postgres 18, with `psql` on your path. On a Mac, install [Postgres.app](https://postgresapp.com) and follow its setup steps. Postgres holds Email your MP's data, and some unit tests use it.
 
 ```bash
 npm install
-
-# Where Postgres is (here, Homebrew's socket). Add PGPASSWORD if you need one.
-export PGHOST=/tmp PGUSER=$(whoami)
 
 # A fresh database, with the test MP. Running it again wipes the database.
 export NETLIFY_DB_URL=$(node scripts/fresh-database.mjs pauseai_dev --test-mp you@example.com)

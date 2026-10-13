@@ -116,7 +116,7 @@ not a mock.
   tables before each test, and drops the database afterwards.
   `addTestPolitician()` and `addTestMp()` add rows.
 - **Where Postgres is.** The usual `PG*` variables; without `PGHOST`, the
-  Unix socket in `/var/run/postgresql`. See the README for setting it up
+  local server's socket in `/var/run/postgresql` or `/tmp`, else localhost. See the README for setting it up
   locally. CI runs a Postgres service.
 - **Netlify's build has no Postgres**, so `npm run build` skips these tests
   there (`NETLIFY=true`). CI runs them.

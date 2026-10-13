@@ -6,21 +6,27 @@
 //   node scripts/fresh-database.mjs <name>   prints the new database's URL
 //   ... --test-mp <email>                    and adds the test MP, with that inbox
 //
-// Connects with the usual PG* variables. Without PGHOST it uses the Unix
-// socket at /var/run/postgresql (Debian and Ubuntu's default).
+// Connects with the usual PG* variables. Without PGHOST it finds the local
+// server's Unix socket: /var/run/postgresql on Debian and Ubuntu, /tmp on a
+// Mac (Postgres.app, Homebrew), else it tries localhost.
 import { execFileSync } from "node:child_process";
-import { readdirSync } from "node:fs";
+import { existsSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { userInfo } from "node:os";
 import { fileURLToPath } from "node:url";
 
 const MIGRATIONS = fileURLToPath(new URL("../netlify/database/migrations/", import.meta.url));
 
+/** Where a local server listens when PGHOST doesn't say. */
+export function defaultHost(port = process.env.PGPORT ?? "5432", places = ["/var/run/postgresql", "/tmp"]) {
+  return places.find((dir) => existsSync(join(dir, `.s.PGSQL.${port}`))) ?? "localhost";
+}
+
 /** The URL of database `name` on the configured server. */
 export function databaseUrl(name) {
   const user = process.env.PGUSER ?? userInfo().username;
   const password = process.env.PGPASSWORD ? `:${encodeURIComponent(process.env.PGPASSWORD)}` : "";
-  const host = process.env.PGHOST ?? "/var/run/postgresql";
+  const host = process.env.PGHOST ?? defaultHost();
   const port = process.env.PGPORT ?? "5432";
   return `postgresql://${encodeURIComponent(user)}${password}@localhost/${name}?host=${encodeURIComponent(host)}&port=${port}`;
 }

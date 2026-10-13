@@ -31,15 +31,16 @@ works without one.
 
 ### Install and start it
 
-**macOS (Homebrew):**
+**macOS:** install [Postgres.app](https://postgresapp.com). Move it to
+Applications, open it, and click **Initialize**. Then put its tools on your
+path, with the command from its site, and open a new terminal:
 
 ```bash
-brew install postgresql@18
-brew services start postgresql@18
+sudo mkdir -p /etc/paths.d && echo /Applications/Postgres.app/Contents/Versions/latest/bin | sudo tee /etc/paths.d/postgresapp
 ```
 
-Homebrew makes a superuser named after your login, and puts the socket in
-`/tmp`.
+It makes a superuser named after your login. (Homebrew's
+`postgresql@18` works too, but you have to add it to your path yourself.)
 
 **Debian or Ubuntu:**
 
@@ -61,14 +62,13 @@ You still need `psql` on your machine (`brew install libpq`, or
 
 ### Tell the scripts where it is
 
-The scripts and tests connect with the usual `PG*` variables. Put these in
-your shell profile, or export them in each terminal:
+Usually you don't need to. The scripts and tests find a local server's
+socket by themselves: in `/var/run/postgresql` (Linux) or `/tmp` (Mac).
+Otherwise they use the usual `PG*` variables. For Docker, set:
 
-| Postgres from | Set |
-| --- | --- |
-| Homebrew | `export PGHOST=/tmp` |
-| apt | nothing: the default socket is right |
-| Docker | `export PGHOST=localhost PGUSER=postgres PGPASSWORD=postgres` |
+```bash
+export PGHOST=localhost PGUSER=postgres PGPASSWORD=postgres
+```
 
 Check it works:
 
