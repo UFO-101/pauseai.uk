@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { toCalendarEvents } from "@/lib/collateral/eventText";
 import { getEvents } from "@/lib/server/luma-calendar";
-import CollateralApp from "./CollateralApp";
+import CollateralApp from "./_components/CollateralApp";
 import "./collateral.css";
 
 // Volunteer tool: unlisted, kept out of search results and the sitemap (see HIDDEN_ROUTES in app/sitemap.ts).

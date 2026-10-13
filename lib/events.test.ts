@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { localGroups } from "./content/local-groups";
+import { localGroups } from "@/lib/content/local-groups";
 import { filterEventsForLocalGroup, type LumaEntry } from "./events";
 
 function entry(name: string, geo?: { city?: string; address?: string; region?: string }): LumaEntry {
