@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { copy, type Campaign } from "@/lib/content/email-your-mp";
-import { draftLetter, fullLetter, isDone, type Mp, type MpStatuses } from "@/lib/email-your-mp";
+import { draftLetter, fullLetter, isDone, signatureAddress, type Mp, type MpStatuses } from "@/lib/email-your-mp";
 import Turnstile from "./Turnstile";
 import styles from "./EmailYourMp.module.css";
 
@@ -16,7 +16,11 @@ type Props = {
   turnstileSiteKey?: string;
 };
 
-/** Tells Google Tag Manager a letter was accepted; its trigger fires the Ads conversion. */
+/**
+ * Tells Google Tag Manager a letter was accepted; its trigger fires the Ads
+ * conversion. Counted when the server accepts the form, before the sender
+ * confirms, so it slightly overcounts.
+ */
 function countConversion() {
   const w = window as typeof window & { dataLayer?: unknown[] };
   w.dataLayer = w.dataLayer || [];
@@ -26,7 +30,9 @@ function countConversion() {
 /** The letter to one MP for one campaign: edit it, then send it. */
 export default function LetterForm({ campaign, mp, statuses, senderName, postcode, turnstileSiteKey }: Props) {
   const done = isDone(campaign, statuses);
+  const addressHint = useId();
   const [email, setEmail] = useState("");
+  const [address, setAddress] = useState("");
   const [subject, setSubject] = useState(campaign.subject);
   const [letter, setLetter] = useState(() =>
     draftLetter(campaign, statuses, { salutation: mp.salutation, constituency: mp.constituency, senderName }),
@@ -42,10 +48,11 @@ export default function LetterForm({ campaign, mp, statuses, senderName, postcod
   const [turnstileRound, setTurnstileRound] = useState(0);
 
   // The server adds the sender's name and address under the letter.
-  const signature = fullLetter("", senderName, [postcode.toUpperCase()]).trimStart();
+  const signature = fullLetter("", senderName, signatureAddress(address, postcode)).trimStart();
 
   function askToConfirm() {
     if (!email.trim()) return setError(copy.form.emailRequired);
+    if (!address.trim()) return setError(copy.form.addressRequired);
     setError("");
     setConfirming(true);
   }
@@ -57,7 +64,7 @@ export default function LetterForm({ campaign, mp, statuses, senderName, postcod
       const res = await fetch("/api/email-your-mp/letters", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ campaign: campaign.slug, name: senderName, postcode, email, subject, letter, consent, nickname, turnstileToken }),
+        body: JSON.stringify({ campaign: campaign.slug, name: senderName, postcode, address, email, subject, letter, consent, nickname, turnstileToken }),
       });
       const result = await res.json();
       if (result.ok) {
@@ -80,7 +87,7 @@ export default function LetterForm({ campaign, mp, statuses, senderName, postcod
   if (sent) {
     return (
       <p className={styles.success} role="status">
-        {copy.form.sent(mp.name)}
+        {copy.form.checkInbox}
       </p>
     );
   }
@@ -100,6 +107,20 @@ export default function LetterForm({ campaign, mp, statuses, senderName, postcod
         {copy.form.emailLabel}
         <input name="email" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} />
       </label>
+      <div className={styles.field}>
+        <label>
+          {copy.form.addressLabel}
+          <textarea
+            name="address"
+            rows={3}
+            autoComplete="street-address"
+            aria-describedby={addressHint}
+            value={address}
+            onChange={(e) => setAddress(e.target.value)}
+          />
+        </label>
+        <small id={addressHint}>{copy.form.addressHint}</small>
+      </div>
       <label>
         {copy.form.subjectLabel}
         <input name="subject" value={subject} onChange={(e) => setSubject(e.target.value)} />
@@ -127,6 +148,8 @@ export default function LetterForm({ campaign, mp, statuses, senderName, postcod
           </ul>
         </div>
       )}
+
+      <p className={styles.small}>{copy.form.replyNotice}</p>
 
       <label className={styles.consent}>
         <input type="checkbox" name="consent" checked={consent} onChange={(e) => setConsent(e.target.checked)} />

@@ -1,4 +1,5 @@
 import { defineConfig, devices } from "@playwright/test";
+import { OUTBOX_DIR } from "./tests/behaviour/setup";
 
 // Two suites:
 //
@@ -68,7 +69,6 @@ export default defineConfig({
             DATA_FIXTURES,
             LUMA_API_KEY: "fixture",
             AIRTABLE_TOKEN: "fixture",
-            AIRTABLE_WRITE_API_KEY: "fixture",
             // Not one of Cloudflare's test secrets, which are refused outside
             // development. The Turnstile fixture passes every token.
             TURNSTILE_SECRET_KEY: "fixture",
@@ -79,6 +79,12 @@ export default defineConfig({
             GOOGLE_CLIENT_ID: "fixture-client-id",
             GOOGLE_CLIENT_SECRET: "fixture",
             CRON_SECRET: "fixture-cron-secret",
+            POSTMARK_SERVER_TOKEN: "fixture",
+            POSTMARK_WEBHOOK_USER: "postmark",
+            POSTMARK_WEBHOOK_PASSWORD: "fixture-webhook-password",
+            REPLIES_INBOX: "replies@example.org",
+            // Each email sent is also written here (tests/fixtures/outbox.ts).
+            OUTBOX_DIR,
           }
         : { DATA_FIXTURES },
     url: process.env.LOCAL_URL ?? "http://localhost:3000",

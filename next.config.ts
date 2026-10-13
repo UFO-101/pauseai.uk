@@ -84,6 +84,16 @@ function securityHeaders() {
 }
 
 const nextConfig: NextConfig = {
+  env: {
+    // Netlify's deploy context ("production", "deploy-preview", ...), fixed
+    // at build time. Outside production, letters go only to the test MP
+    // (lib/server/mp-letters.ts).
+    DEPLOY_CONTEXT: process.env.CONTEXT ?? "local",
+  },
+  // The PDFs attached to letters, read from disk when one is sent.
+  outputFileTracingIncludes: {
+    "/api/email-your-mp/confirm": ["./public/pdfs/*.pdf"],
+  },
   async headers() {
     return [
       { source: "/:path*", headers: securityHeaders() },

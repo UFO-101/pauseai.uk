@@ -1,0 +1,33 @@
+import { expect, it } from "vitest";
+import { addTestMp, describeWithDatabase, useTestDatabase } from "@/tests/database";
+import { query } from "./db";
+import { recentLetters } from "./letters";
+
+describeWithDatabase("recentLetters", () => {
+  useTestDatabase();
+
+  it("lists letters newest first, with their history, filtered by status", async () => {
+    const mp = await addTestMp();
+    for (const [hash, status] of [["a", "sent"], ["b", "unconfirmed"]]) {
+      await query(
+        `INSERT INTO letters (campaign, politician_id, sender_name, sender_email, sender_address, sender_postcode, contact_consent, subject, body, reply_hash, status)
+         VALUES ('letter-to-the-prime-minister', $1, 'Jane', 'jane@example.com', 'x', 'ZZ9 9ZZ', false, 'S', 'B', $2, $3)`,
+        [mp, hash, status],
+      );
+    }
+    await query("INSERT INTO letter_events (letter_id, status, details) VALUES (1, 'unconfirmed', '{}'), (1, 'sent', '{\"messageId\":\"m\"}')");
+
+    const letters = await recentLetters();
+    expect(letters.map((l) => [l.id, l.status, l.mpName, l.isTest])).toEqual([
+      [2, "unconfirmed", "Testy McTestface MP", true],
+      [1, "sent", "Testy McTestface MP", true],
+    ]);
+    expect(letters[1].events.map((e) => [e.status, e.details])).toEqual([
+      ["unconfirmed", {}],
+      ["sent", { messageId: "m" }],
+    ]);
+    expect(letters[0].events).toEqual([]);
+    expect((await recentLetters({ status: "sent" })).map((l) => l.id)).toEqual([1]);
+    expect(await recentLetters({ limit: 1 })).toHaveLength(1);
+  });
+});

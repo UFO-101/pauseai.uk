@@ -42,6 +42,12 @@ describe("fixtureResponse", () => {
     expect((await fixtureResponse("https://www.googleapis.com/oauth2/v3/certs")!.json()).keys).toHaveLength(1);
   });
 
+  it("accepts every email sent through Postmark", async () => {
+    const sent = await fixtureResponse("https://api.postmarkapp.com/email", { method: "POST" })!.json();
+    expect(sent.ErrorCode).toBe(0);
+    expect(sent.MessageID).toMatch(/^[0-9a-f-]{36}$/);
+  });
+
   it("has nothing for other URLs", () => {
     expect(fixtureResponse("https://api2.luma.com/other")).toBeUndefined();
     expect(fixtureResponse("https://public-api.luma.com/other")).toBeUndefined();

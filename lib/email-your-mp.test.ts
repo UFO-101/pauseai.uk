@@ -10,6 +10,7 @@ import {
   isTestPostcode,
   looksLikeEmail,
   normalisePostcode,
+  signatureAddress,
 } from "./email-your-mp";
 
 const [letterToPm, bill] = campaigns;
@@ -61,6 +62,11 @@ describe("letters", () => {
     expect(fullLetter("Dear MP,\n\nThanks,\n\n", "Jane Smith", ["1 High St", "SW1A 1AA"])).toBe(
       "Dear MP,\n\nThanks,\n\nJane Smith\n1 High St\nSW1A 1AA",
     );
+  });
+
+  it("ends the address with the postcode, unless it's already there", () => {
+    expect(signatureAddress("1 High St\nLondon", "sw1a 1aa ")).toEqual(["1 High St", "London", "SW1A 1AA"]);
+    expect(signatureAddress("1 High St\nLondon SW1A1AA", "SW1A 1AA")).toEqual(["1 High St", "London SW1A1AA"]);
   });
 
   it("turns a typed address into lines", () => {

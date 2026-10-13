@@ -91,6 +91,20 @@ export const staffCopy = {
     result: (r: { matched: number; added: number; alreadySet: number }) =>
       `⁂ Inventi: ${r.matched}. Additi: ${r.added}. Iam signati: ${r.alreadySet}.`,
   },
+  letters: {
+    title: "⁂ Epistulae",
+    allStatuses: "⁂ Omnes",
+    filter: "⁂ Filtra",
+    none: "⁂ Nullae epistulae.",
+    status: {
+      unconfirmed: "⁂ Non confirmata",
+      sending: "⁂ Mittitur",
+      sent: "⁂ Missa",
+      bounced: "⁂ Reiecta",
+      spam_complaint: "⁂ Querela spam",
+    } as Record<string, string>,
+    columns: { created: "⁂ Scripta", from: "⁂ A", to: "⁂ Ad", campaign: "⁂ Causa", status: "⁂ Status", history: "⁂ Historia" },
+  },
   changes: {
     title: "⁂ Mutationes",
     at: "⁂ Quando",

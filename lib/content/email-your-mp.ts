@@ -122,9 +122,28 @@ export const copy = {
     confirmSend: "⁂ Confirma et mitte",
     emailRequired: "⁂ Inscriptionem electronicam scribe.",
     addressRequired: "⁂ Inscriptionem postalem scribe.",
-    sent: (mpName: string) => `⁂ Epistula tua ad ${mpName} missa est.`,
     checkInbox: "⁂ Inspice cistam tuam: nexum ibi clicca ut epistulam mittas.",
     networkError: "⁂ Retis erravit. Iterum conare.",
+  },
+  // The email that asks the sender to confirm, with the link that sends the letter.
+  confirmationEmail: {
+    subject: "⁂ Confirma epistulam tuam",
+    body: (senderName: string, mpName: string, link: string) =>
+      `⁂ Salve ${senderName},\n\nUt epistulam tuam ad ${mpName} mittas, hunc nexum clicca:\n\n${link}\n\nSi hanc epistulam non scripsisti, hunc nuntium neglege.\n\nPauseAI UK`,
+  },
+  // The page the confirmation link opens.
+  confirm: {
+    title: "⁂ Epistulam mittimus",
+    sending: "⁂ Epistulam tuam mittimus...",
+    sent: (mpName: string) => `⁂ Epistula tua ad ${mpName} missa est. Gratias!`,
+    invalid: "⁂ Hic nexus iam usus est aut exspiravit.",
+    failed: "⁂ Epistulam mittere non potuimus. Nexum iterum clicca.",
+  },
+  // The note on a copy of an MP's reply, sent to the shared inbox and the sender.
+  forwardedReply: {
+    subject: (subject: string) => `⁂ Responsum: ${subject}`,
+    note: (mpName: string, senderName: string) =>
+      `⁂ ${mpName} ad epistulam quam ${senderName} misit respondit. Ecce responsum.`,
   },
   // Errors the server sends back to the form.
   errors: {
@@ -132,6 +151,7 @@ export const copy = {
     invalidEmail: "⁂ Inscriptio electronica non valet.",
     unknownCampaign: "⁂ Hanc causam non novimus.",
     noRecipient: "⁂ Huic senatori scribere non possumus.",
+    testMpOnly: "⁂ Hic tantum ad senatorem probationis scribere licet.",
     tooManyConfirmations: "⁂ Nimis multae epistulae hodie. Cras iterum conare.",
     failed: "⁂ Epistulam mittere non potuimus. Iterum conare.",
     spamUnavailable: "⁂ Tutela contra spam abest. Scribe ad hello@pauseai.uk.",

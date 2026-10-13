@@ -32,18 +32,22 @@ afterEach(() => {
 
 async function fillAndSend() {
   await userEvent.fill(page.getByLabelText(copy.form.emailLabel), "jane@example.com");
+  await userEvent.fill(page.getByRole("textbox", { name: copy.form.addressLabel }), "1 High St\nLondon");
   await page.getByRole("button", { name: copy.form.send }).click();
   await page.getByRole("button", { name: copy.form.confirmSend }).click();
 }
 
 describe("LetterForm", () => {
-  it("drafts the letter for the MP, signed with the sender's name and postcode", async () => {
+  it("drafts the letter for the MP, signed with the sender's name and postcode, then their address", async () => {
     await render(<LetterForm {...PROPS} />);
     await expect.element(page.getByLabelText(copy.form.subjectLabel)).toHaveValue(letterToPm.subject);
     await expect.element(page.getByRole("textbox", { name: copy.form.letterLabel, exact: true })).toHaveValue(
       letterToPm.letter({ salutation: "Ms Blake", constituency: MP.constituency, senderName: "Jane Smith" }),
     );
     await expect.element(page.getByText("Jane Smith SW1A 1AA")).toBeVisible();
+    await expect.element(page.getByText(copy.form.replyNotice)).toBeVisible();
+    await userEvent.fill(page.getByRole("textbox", { name: copy.form.addressLabel }), "1 High St\nLondon");
+    await expect.element(page.getByText("Jane Smith 1 High St London SW1A 1AA")).toBeVisible();
     await expect.element(page.getByText(letterToPm.alreadyDone)).not.toBeInTheDocument();
     for (const attachment of letterToPm.attachments) {
       await expect.element(page.getByRole("link", { name: new RegExp(attachment.title) })).toHaveAttribute("href", `/pdfs/${attachment.file}`);
@@ -67,12 +71,13 @@ describe("LetterForm", () => {
     await expect.element(page.getByText(copy.form.confirmPrompt("Rachel Blake"))).not.toBeInTheDocument();
     await fillAndSend();
 
-    await expect.element(page.getByRole("status")).toHaveTextContent(copy.form.sent("Rachel Blake"));
+    await expect.element(page.getByRole("status")).toHaveTextContent(copy.form.checkInbox);
     expect(sent).toEqual([
       {
         campaign: letterToPm.slug,
         name: "Jane Smith",
         postcode: "sw1a 1aa",
+        address: "1 High St\nLondon",
         email: "jane@example.com",
         subject: "My subject",
         letter: "My letter",
@@ -92,11 +97,14 @@ describe("LetterForm", () => {
     expect(w.dataLayer).toEqual(["gtm", { event: "mp_email_sent" }]);
   });
 
-  it("needs an email before asking to confirm, and can cancel", async () => {
+  it("needs an email and an address before asking to confirm, and can cancel", async () => {
     await render(<LetterForm {...PROPS} />);
     await page.getByRole("button", { name: copy.form.send }).click();
     await expect.element(page.getByRole("alert")).toHaveTextContent(copy.form.emailRequired);
     await userEvent.fill(page.getByLabelText(copy.form.emailLabel), "jane@example.com");
+    await page.getByRole("button", { name: copy.form.send }).click();
+    await expect.element(page.getByRole("alert")).toHaveTextContent(copy.form.addressRequired);
+    await userEvent.fill(page.getByRole("textbox", { name: copy.form.addressLabel }), "1 High St");
     await page.getByRole("button", { name: copy.form.send }).click();
     await expect.element(page.getByText(copy.form.confirmPrompt("Rachel Blake"))).toBeVisible();
     await page.getByRole("button", { name: copy.form.cancel }).click();
@@ -131,6 +139,7 @@ describe("LetterForm", () => {
     respond = async () => Response.json({ ok: false, message: copy.errors.spamFailed }, { status: 403 });
     await render(<LetterForm {...PROPS} turnstileSiteKey="site-key" />);
     await userEvent.fill(page.getByLabelText(copy.form.emailLabel), "jane@example.com");
+    await userEvent.fill(page.getByRole("textbox", { name: copy.form.addressLabel }), "1 High St");
     await page.getByRole("button", { name: copy.form.send }).click();
 
     const confirm = page.getByRole("button", { name: copy.form.confirmSend });

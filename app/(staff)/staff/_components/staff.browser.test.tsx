@@ -6,6 +6,7 @@ import { staffCopy } from "@/lib/content/staff-interface";
 import type { Politician } from "@/lib/server/politicians";
 import type { MpSync } from "@/lib/server/mp-sync";
 import ChangesTable from "./ChangesTable";
+import LettersTable from "./LettersTable";
 import PoliticianFilters from "./PoliticianFilters";
 import PoliticianForm from "./PoliticianForm";
 import PoliticianTable from "./PoliticianTable";
@@ -38,17 +39,14 @@ function action() {
 
 describe("StaffHeader", () => {
   it("links the staff pages, says who's logged in, and logs out with a POST", async () => {
-    const { rerender } = await render(<StaffHeader email="jo@pauseai.uk" />);
+    await render(<StaffHeader email="jo@pauseai.uk" />);
     await expect.element(page.getByRole("link", { name: staffCopy.nav.politicians })).toHaveAttribute("href", "/staff");
     await expect.element(page.getByRole("link", { name: staffCopy.nav.syncs })).toHaveAttribute("href", "/staff/mp-sync");
-    await expect.element(page.getByRole("link", { name: staffCopy.nav.letters })).not.toBeInTheDocument();
+    await expect.element(page.getByRole("link", { name: staffCopy.nav.letters })).toHaveAttribute("href", "/staff/letters");
     await expect.element(page.getByText(staffCopy.nav.signedInAs("jo@pauseai.uk"))).toBeVisible();
     const form = page.getByRole("button", { name: staffCopy.nav.logout }).element().closest("form")!;
     expect(form.getAttribute("method")).toBe("post");
     expect(form.getAttribute("action")).toBe("/staff/api/logout");
-
-    await rerender(<StaffHeader email="jo@pauseai.uk" letters />);
-    await expect.element(page.getByRole("link", { name: staffCopy.nav.letters })).toHaveAttribute("href", "/staff/letters");
   });
 });
 
@@ -158,5 +156,40 @@ describe("ChangesTable", () => {
     await render(<ChangesTable changes={[{ id: 1, at: "2026-10-12T09:00:00Z", actor: "jo@pauseai.uk", action: "set status", details: { politicianId: 7 } }]} />);
     await expect.element(page.getByRole("cell", { name: "jo@pauseai.uk" })).toBeVisible();
     await expect.element(page.getByText('{"politicianId":7}')).toBeVisible();
+  });
+});
+
+describe("LettersTable", () => {
+  const letter = {
+    id: 1,
+    campaign: pm.slug,
+    status: "bounced",
+    senderName: "Jane Smith",
+    senderEmail: "jane@example.com",
+    mpName: "Testy McTestface MP",
+    isTest: true,
+    subject: "S",
+    createdAt: "2026-10-12T09:00:00Z",
+    sentAt: "2026-10-12T09:05:00Z",
+    events: [
+      { at: "2026-10-12T09:00:00Z", status: "unconfirmed", details: {} },
+      { at: "2026-10-12T09:10:00Z", status: "bounced", details: { type: "HardBounce" } },
+    ],
+  };
+
+  it("lists letters with their status and history", async () => {
+    await render(<LettersTable letters={[letter, { ...letter, id: 2, campaign: "gone", status: "odd", isTest: false, events: [{ at: letter.createdAt, status: "strange", details: {} }] }]} />);
+    await expect.element(page.getByText("jane@example.com").first()).toBeInTheDocument();
+    await expect.element(page.getByText(pm.title).first()).toBeInTheDocument();
+    await expect.element(page.getByText("gone")).toBeInTheDocument();
+    await expect.element(page.getByText("odd")).toBeInTheDocument();
+    await expect.element(page.getByText(/strange/)).toBeInTheDocument();
+    await expect.element(page.getByText('{"type":"HardBounce"}', { exact: false })).toBeInTheDocument();
+    expect(page.getByText(staffCopy.politicians.testMp).all()).toHaveLength(1);
+  });
+
+  it("says when there are none", async () => {
+    await render(<LettersTable letters={[]} />);
+    await expect.element(page.getByText(staffCopy.letters.none)).toBeVisible();
   });
 });

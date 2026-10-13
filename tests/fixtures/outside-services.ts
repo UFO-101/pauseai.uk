@@ -61,6 +61,11 @@ export function fixtureResponse(url: string, init?: RequestInit): Response | und
   if (hostname === "www.googleapis.com" && pathname === "/oauth2/v3/certs") {
     return json(googleLogin.keys);
   }
+  // Postmark accepts every email. What was sent is checked from the request
+  // (Vitest) or the outbox (Playwright, tests/fixtures/outbox.ts).
+  if (hostname === "api.postmarkapp.com" && pathname === "/email") {
+    return json({ To: "", SubmittedAt: new Date().toISOString(), MessageID: crypto.randomUUID(), ErrorCode: 0, Message: "OK" });
+  }
   if (hostname === "challenges.cloudflare.com" && pathname === "/turnstile/v0/siteverify") {
     return json({ success: true, hostname: "localhost" });
   }

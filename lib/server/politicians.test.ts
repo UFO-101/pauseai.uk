@@ -38,6 +38,7 @@ describeWithDatabase("politicians", () => {
       salutation: "Ms Blake",
       constituency: "Cities of London and Westminster",
       email: "rachel.blake.mp@parliament.uk",
+      isTest: false,
     });
     expect(await findSittingMp("Ipswich")).toBeUndefined();
     expect(await findSittingMp("Testshire")).toBeUndefined();

@@ -76,6 +76,34 @@ otherwise watch or break: the collateral tool's file downloads, an image
 that fails to load, or a check result a real design can't easily produce.
 Wrap the real module (`importActual`) and replace only that one function.
 
+## Email
+
+Emails go through Postmark's HTTP API, from `lib/server/postmark.ts` only,
+through `outsideFetch` like any other outside service.
+
+- **No Postmark library.** The `postmark` npm package makes its own HTTP
+  requests, which would bypass the fixtures in Playwright builds.
+- **Vitest checks what we sent.** The Postmark fixture just returns a
+  `MessageID`. Tests read the request MSW received and check From,
+  Reply-To, the text, the attachments and the confirmation link
+  (`lib/server/mp-letters.test.ts`).
+- **Playwright reads an outbox.** With `DATA_FIXTURES=1`, `outsideFetch` also
+  writes each outgoing email to a file in `OUTBOX_DIR`
+  (`tests/fixtures/outbox.ts`). The flow test takes the confirmation link
+  from the newest email to the sender. This is test-only plumbing, with no
+  production route or table.
+- **Webhooks are posted directly.** Tests post bounce, spam complaint and
+  inbound payloads, in Postmark's format, straight to our routes with test
+  basic auth credentials, and check that wrong or missing credentials are
+  refused, and that a reply is forwarded and not stored.
+- **No Mailpit or other mail catcher.** We send through Postmark's API, not
+  SMTP, so a mail catcher would test a different path from production.
+- **Checking real sending by hand.** On previews and the live site, use the
+  test MP (postcode ZZ99ZZ). Postmark's test token `POSTMARK_API_TEST`
+  accepts messages without delivering them. Its addresses at
+  `bounce-testing.postmarkapp.com`, such as `hardbounce@` and `softbounce@`,
+  produce real bounce webhooks. Neither is used in CI.
+
 ## The database
 
 Code that reads or writes the database is tested against a real Postgres,

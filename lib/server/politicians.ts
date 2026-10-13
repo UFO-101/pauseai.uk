@@ -39,9 +39,9 @@ export type Politician = {
 };
 
 /** An MP the form can write to, with their row's ID. */
-export type FoundMp = Mp & { id: number };
+export type FoundMp = Mp & { id: number; isTest: boolean };
 
-const MP_COLUMNS = "id::int AS id, name, salutation, constituency, email";
+const MP_COLUMNS = `id::int AS id, name, salutation, constituency, email, is_test AS "isTest"`;
 
 /** The sitting MP for a constituency. */
 export async function findSittingMp(constituency: string): Promise<FoundMp | undefined> {

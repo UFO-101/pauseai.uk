@@ -55,6 +55,16 @@ export function fullLetter(body: string, senderName: string, address: string[]):
   return `${body.trimEnd()}\n\n${[senderName, ...address].join("\n")}`;
 }
 
+/**
+ * The lines under the sender's name: their address, then the postcode their
+ * MP was found from, unless they've already typed it.
+ */
+export function signatureAddress(address: string, postcode: string): string[] {
+  const lines = addressLines(address);
+  const typed = lines.some((line) => normalisePostcode(line).endsWith(normalisePostcode(postcode)));
+  return typed ? lines : [...lines, postcode.trim().toUpperCase()];
+}
+
 /** A typed address, as signature lines: trimmed, without blank lines. */
 export function addressLines(address: string): string[] {
   return address

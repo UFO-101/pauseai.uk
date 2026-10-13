@@ -60,6 +60,21 @@
   background: var(--surface-2);
 }
 
+.small {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.field {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.field small {
+  color: var(--text-secondary);
+}
+
 .signature {
   margin: 0;
   font: inherit;
