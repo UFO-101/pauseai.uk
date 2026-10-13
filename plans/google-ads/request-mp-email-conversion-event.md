@@ -1,6 +1,6 @@
 # Request for pauseai.info: emit an "MP email sent" event from the UK email-MP embed
 
-Same pattern as the onboarding embed change (`onboarding_signup_complete`), now for the Email your MP form. For an agent working in the **pauseai.info** repo (`pauseai-website`).
+Same pattern as the onboarding embed change (`onboarding_signup_complete`, [PauseAI/pauseai-website#1145](https://github.com/PauseAI/pauseai-website/pull/1145)), now for the Email your MP form. For an agent working in the **pauseai.info** repo (`pauseai-website`).
 
 ## Why
 
@@ -43,6 +43,6 @@ Requirements:
 2. Load a scratch page with `<iframe src="http://localhost:PORT/embed/uk-email-mp">` and `window.addEventListener("message", e => console.log(e.origin, e.data))`.
 3. Complete a send and confirm one `mp_email_sent` log. Trigger a validation error and confirm none.
 
-## Open questions
+## Notes
 
-1. Does the embed send the email itself, or hand off to the user's mail client (`mailto:`)? If it hands off, "sent" cannot be confirmed. In that case fire on the handoff click and say so in the docs, since it inflates conversions slightly.
+1. The embed sends the email itself: `src/lib/components/UKMPEmailForm.svelte` posts to `/api/uk-send-mp-email`. So fire when that request succeeds. As of 2026-10-13 nothing on pauseai-website `main` posts this event yet.

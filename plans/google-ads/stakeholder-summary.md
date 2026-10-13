@@ -2,21 +2,21 @@
 
 ## Summary
 
-We are adding conversion tracking so Google Ads can tell which ads lead to real actions (signups, emails to MPs, donations). Without it, Ads can only optimise for clicks, which usually means paying for people who never do anything. Both primary actions (signups and emails to MPs) are built. Donations are tracked as a secondary goal via visits to the donate page only, with no click tracking.
+We are adding conversion tracking so Google Ads can tell which ads lead to real actions (signups, emails to MPs, donations). Without it, Ads can only optimise for clicks, which usually means paying for people who never do anything. Signups are tracked end to end. Emails to MPs are built on pauseai.uk and waiting on a change to pauseai.info. Donations are tracked as a secondary goal via visits to the donate page only, with no click tracking.
 
 ## What has been done
 
 - **Google Tag Manager (GTM) is installed on pauseai.uk.** GTM is a single container on the site. Ads tags are configured in its web UI, so future changes don't need a developer or a redeploy.
 - **It respects cookie consent.** GTM loads only for visitors who haven't declined analytics, using the same consent logic the site already has for Google Analytics.
-- **Signups** are tracked when someone completes the onboarding form. The form lives on pauseai.info, so that site now sends pauseai.uk a "signup complete" signal (pull request in progress, no personal data is sent).
+- **Signups** are tracked when someone completes the onboarding form. The form lives on pauseai.info, so that site sends pauseai.uk a "signup complete" signal, with no personal data ([PauseAI/pauseai-website#1145](https://github.com/PauseAI/pauseai-website/pull/1145), merged 2026-09-19).
 - **Emails to MPs** will be tracked the same way. The request for the pauseai.info side is written; the pauseai.uk side is done.
 
 ## Proposed conversions
 
 | Goal | Role in Ads | Status |
 |---|---|---|
-| Onboarding signup | Primary (Ads bids on this) | Built, awaiting pauseai.info deploy |
-| Email your MP | Primary | pauseai.uk side built, pauseai.info side requested |
+| Onboarding signup | Primary (Ads bids on this) | Built on both sites |
+| Email your MP | Primary | pauseai.uk side built, pauseai.info side requested ([request](request-mp-email-conversion-event.md)) |
 | Visit the donate page | Secondary (reporting and audiences only) | No code needed, page view trigger in GTM |
 | Join WhatsApp, view Luma events, shop | Secondary | No code needed, configured in GTM |
 
@@ -35,7 +35,7 @@ Donations go to Stripe, a different website, so pauseai.uk can't see whether one
 
 ## Rough timeline
 
-- Code and GTM setup: about half a day once the pauseai.info changes are deployed.
+- GTM setup: about half a day. Signups can go first; MP emails once pauseai.info deploys its change.
 - Conversions need a few days of live data before Ads bidding can use them.
 
 ## Signup form is also tracked by pauseai.info

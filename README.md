@@ -34,12 +34,7 @@ See [docs/testing.md](docs/testing.md) for the test policy, coverage gate, mocki
 - [docs/code-structure.md](docs/code-structure.md): where code lives, and the rules for adding more
 - [docs/testing.md](docs/testing.md): test policy, coverage gate, mocking, commands
 - [docs/style-guide.md](docs/style-guide.md): design style guide
-- [docs/google-ads/stakeholder-summary.md](docs/google-ads/stakeholder-summary.md): Google Ads conversion tracking, for stakeholders
-- [docs/google-ads/request-signup-conversion-event.md](docs/google-ads/request-signup-conversion-event.md): request to pauseai.info for a signup event
-- [docs/google-ads/request-mp-email-conversion-event.md](docs/google-ads/request-mp-email-conversion-event.md): request to pauseai.info for an MP email event
-- [plans/test-coverage.md](plans/test-coverage.md): plan for 100% test coverage
-- [plans/code-organisation.md](plans/code-organisation.md): plan for reorganising the code
-- [plans/visual-baselines.md](plans/visual-baselines.md): later plan for committed visual baselines
+- [plans/](plans/): plans for work in progress or not started yet
 - [AGENTS.md](AGENTS.md): notes for coding agents (`CLAUDE.md` links to it)
 
 ## Things that aren't obvious from the code
