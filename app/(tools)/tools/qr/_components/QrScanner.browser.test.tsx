@@ -150,7 +150,7 @@ describe("the camera", () => {
     const onResult = vi.fn();
     await render(<QrScanner onResult={onResult} />);
     await page.getByRole("button", { name: "Scan an existing code" }).click();
-    await expect.element(page.getByRole("heading", { name: "Scan a QR code" })).toBeVisible();
+    // No check for the scanner's heading first: a quick read closes the scanner before the check can see it.
     await expect.poll(() => onResult.mock.calls[0]?.[0], { timeout: 10000 }).toBe("from the camera");
     expect(cam.getUserMedia).toHaveBeenCalledWith({ video: { facingMode: "environment" }, audio: false });
     cam.stop();

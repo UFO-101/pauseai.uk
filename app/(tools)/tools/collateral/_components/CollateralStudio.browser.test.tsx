@@ -101,7 +101,9 @@ describe("CollateralStudio", () => {
     await ready();
     await page.getByRole("button", { name: "Add a QR code" }).click();
     await expect.element(page.getByRole("checkbox", { name: /Show QR codes on the/ })).toBeChecked();
-    await page.getByLabelText("Headline").fill("An extremely long headline that goes on and on and on and on about everything at all");
+    // One word as long as the field allows, of the widest letter: it overflows in any font, so the check
+    // doesn't depend on text measurement.
+    await page.getByLabelText("Headline").fill("W".repeat(90));
     await expect.poll(() => (container.querySelector(".collateral-title-size") as HTMLDetailsElement).open).toBe(true);
   });
 

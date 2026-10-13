@@ -12,11 +12,14 @@ Every file is now held at 100% per file.
   every route covers them.
 - Playwright also covers behaviour that spans pages: redirects, navigation,
   the iframes, consent.
-- Mock only the three outside-service files (`lib/airtable.ts`,
-  `lib/data/luma-sources.ts`, `lib/data/events.ts`): MSW in Vitest,
-  `DATA_FIXTURES=1` in Playwright.
+- Mock only the outside services, which are all reached through
+  `outsideFetch` (`lib/server/`): MSW in Vitest, `DATA_FIXTURES=1` in
+  Playwright. Browser tests may also mock one of our modules at an edge a
+  test can't otherwise see or break, such as file downloads (see
+  `docs/testing.md`).
 
-Today: 27% of lines overall. Pages and components are at 0%.
+When this was written, coverage was 27% of lines, and pages and components
+were at 0%.
 
 ## Phase 1: foundations (before `plans/code-organisation.md`)
 
@@ -41,7 +44,8 @@ Today: 27% of lines overall. Pages and components are at 0%.
 - Browser Mode tests for every component, to 100% per file.
 - Split `LocalGroupEvents`, which is async, into a loader plus a component.
   (Not needed in the end: its test awaits it and renders the result.)
-- Keep Playwright only for flows across pages.
+- Keep Playwright only for flows across pages, such as consent being
+  remembered from page to page (`tests/behaviour/consent.spec.ts`).
 - Raise the global threshold to 100%.
 
 Committed visual baselines are a separate, later plan:
