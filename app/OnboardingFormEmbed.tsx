@@ -87,6 +87,15 @@ export default function OnboardingFormEmbed() {
     }
     window.addEventListener("message", handleMessage);
     window.addEventListener("blur", handleBlur);
+    // Only point the iframe at the embed now that we're listening. The embed
+    // posts its height only when it changes, so if the iframe were in the
+    // server-rendered HTML with its src it could finish loading before
+    // hydration, every message would be missed and the skeleton would never
+    // clear. Set directly rather than via state so React never touches it,
+    // and only once: dev StrictMode re-runs this effect, and assigning src
+    // again would reload the form.
+    const iframe = iframeRef.current;
+    if (iframe && !iframe.getAttribute("src")) iframe.src = EMBED_URL;
 
     const timeoutId = setTimeout(() => {
       if (!messageReceivedRef.current) setShowFallback(true);
@@ -102,7 +111,9 @@ export default function OnboardingFormEmbed() {
 
   return (
     <div className={interacted ? "onboarding-embed-wrap" : "onboarding-embed-wrap is-pristine"}>
-      {!messageReceived && (
+      {/* Once the load timeout gives up, show the real form at its default
+          height rather than leaving the skeleton over it indefinitely. */}
+      {!messageReceived && !showFallback && (
         <div className="onboarding-embed-skeleton" aria-hidden="true">
           <div className="onboarding-embed-skeleton-steps">
             <span className="onboarding-embed-skeleton-step" />
@@ -124,7 +135,6 @@ export default function OnboardingFormEmbed() {
       )}
       <iframe
         ref={iframeRef}
-        src={EMBED_URL}
         referrerPolicy="no-referrer-when-downgrade"
         width="100%"
         height={height}
