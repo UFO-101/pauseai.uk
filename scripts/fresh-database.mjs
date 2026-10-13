@@ -4,9 +4,10 @@
 // For tests and local development only: Netlify applies them in production.
 //
 //   node scripts/fresh-database.mjs <name>   prints the new database's URL
+//   ... --test-mp <email>                    and adds the test MP, with that inbox
 //
-// Connects with the usual PG* variables. Without them it uses the
-// devcontainer's Postgres, on the Unix socket at /var/run/postgresql.
+// Connects with the usual PG* variables. Without PGHOST it uses the Unix
+// socket at /var/run/postgresql (Debian and Ubuntu's default).
 import { execFileSync } from "node:child_process";
 import { readdirSync } from "node:fs";
 import { join } from "node:path";
@@ -56,6 +57,21 @@ export function freshDatabase(name, { singleTransaction = false } = {}) {
   return url;
 }
 
+/**
+ * Adds just Testy McTestface MP (postcode ZZ99ZZ), as the nightly sync
+ * would, for a database that needs no real MPs.
+ */
+export function addTestMp(url, email) {
+  // A SQL string literal: psql -c doesn't substitute variables.
+  const literal = `'${String(email).replace(/'/g, "''")}'`;
+  psql(url, "-c",
+    `INSERT INTO politicians (house, name, salutation, constituency, email, is_test) VALUES ('commons', 'Testy McTestface MP', 'Mr McTestface', 'Testshire', ${literal}, true)`);
+}
+
+//   node scripts/fresh-database.mjs <name> [--test-mp <email>]
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  console.log(freshDatabase(process.argv[2] ?? "pauseai_dev"));
+  const url = freshDatabase(process.argv[2] ?? "pauseai_dev");
+  const testMp = process.argv.indexOf("--test-mp");
+  if (testMp !== -1) addTestMp(url, process.argv[testMp + 1]);
+  console.log(url);
 }

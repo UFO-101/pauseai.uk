@@ -74,7 +74,8 @@ export default function EmailYourMpTool({ campaignSlug, turnstileSiteKey }: { ca
           <div className={styles.mp}>
             <h2>{found.mp.name}</h2>
             <p>{copy.lookup.mpOf(found.mp.constituency)}</p>
-            <p>{found.mp.email ?? copy.lookup.noEmail}</p>
+            {/* data-mp-email: the visual diff masks it, as the test MP's inbox differs between hosts. */}
+            <p data-mp-email>{found.mp.email ?? copy.lookup.noEmail}</p>
           </div>
           {found.mp.email && (
             <LetterForm

@@ -8,10 +8,21 @@ import { outsideFetch } from "./outside-fetch";
 // (app/api/cron/sync-mps) or when staff ask. A sync that would change more
 // than MAX_UNCHECKED_CHANGES MPs is held for a person to check.
 
+// Parliament's API answers 429 when asked too much at once, which ~650
+// contact lookups can do. Wait as it says (Retry-After, in seconds), or
+// longer each time, and try again.
+const ATTEMPTS = 5;
+
+const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
 async function getJson(url: string): Promise<unknown> {
-  const res = await outsideFetch(url, { headers: { Accept: "application/json" }, cache: "no-store" });
-  if (!res.ok) throw new Error(`${url} returned ${res.status}`);
-  return res.json();
+  for (let attempt = 1; ; attempt++) {
+    const res = await outsideFetch(url, { headers: { Accept: "application/json" }, cache: "no-store" });
+    if (res.ok) return res.json();
+    if ((res.status !== 429 && res.status !== 503) || attempt === ATTEMPTS) throw new Error(`${url} returned ${res.status}`);
+    const retryAfter = Number(res.headers.get("retry-after"));
+    await wait(Number.isFinite(retryAfter) && res.headers.has("retry-after") ? retryAfter * 1000 : 1000 * 2 ** (attempt - 1));
+  }
 }
 
 export type SyncResult = { status: "applied" | "held" | "unchanged"; changes: MpChanges };

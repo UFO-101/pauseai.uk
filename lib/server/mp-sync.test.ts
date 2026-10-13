@@ -83,9 +83,33 @@ describeWithDatabase("syncMps", () => {
     expect((await query<{ action: string }>("SELECT action FROM audit_log ORDER BY id")).map((r) => r.action)).toEqual(["hold MP sync", "discard held MP sync"]);
   });
 
+  it("waits and tries again when Parliament's API is busy", async () => {
+    let calls = 0;
+    server.use(
+      http.get(`${MEMBERS_API}/Members/Search`, () =>
+        ++calls === 1 ? new HttpResponse(null, { status: 429, headers: { "Retry-After": "0" } }) : undefined,
+      ),
+      http.get(`${MEMBERS_API}/Members/172/Contact`, () => (++calls === 3 ? new HttpResponse(null, { status: 503, headers: { "Retry-After": "0" } }) : undefined)),
+    );
+    expect((await syncMps()).status).toBe("applied");
+    expect(calls).toBeGreaterThanOrEqual(4);
+  });
+
+  it("gives up after five busy answers, waiting longer each time without Retry-After", async () => {
+    vi.useFakeTimers({ toFake: ["setTimeout"] });
+    let calls = 0;
+    server.use(http.get(`${MEMBERS_API}/Members/Search`, () => (calls++, new HttpResponse(null, { status: 429 }))));
+    const sync = syncMps();
+    const failed = expect(sync).rejects.toThrow("returned 429");
+    await vi.runAllTimersAsync();
+    await failed;
+    vi.useRealTimers();
+    expect(calls).toBe(5);
+  });
+
   it("fails, changing nothing, if Parliament's API fails", async () => {
-    server.use(http.get(`${MEMBERS_API}/Members/Search`, () => new HttpResponse(null, { status: 503 })));
-    await expect(syncMps()).rejects.toThrow("returned 503");
+    server.use(http.get(`${MEMBERS_API}/Members/Search`, () => new HttpResponse(null, { status: 500 })));
+    await expect(syncMps()).rejects.toThrow("returned 500");
     expect(await politicians()).toEqual([]);
   });
 });

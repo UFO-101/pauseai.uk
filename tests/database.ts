@@ -6,7 +6,7 @@ import { dropDatabase, freshDatabase } from "@/scripts/fresh-database.mjs";
 
 /**
  * describe() for tests that need the database. Netlify's build runs the unit
- * tests with no Postgres, so they're skipped there; CI and the devcontainer
+ * tests with no Postgres, so they're skipped there; CI and local machines
  * have one, and run them.
  */
 export const describeWithDatabase = describe.skipIf(process.env.NETLIFY === "true");

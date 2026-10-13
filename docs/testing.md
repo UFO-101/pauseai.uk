@@ -115,9 +115,9 @@ not a mock.
   (`scripts/fresh-database.mjs`, the same way Netlify does), empties the
   tables before each test, and drops the database afterwards.
   `addTestPolitician()` and `addTestMp()` add rows.
-- **Where Postgres is.** The usual `PG*` variables; without them, the
-  devcontainer's Postgres on the Unix socket (run `pg-start` first). CI runs
-  a Postgres service.
+- **Where Postgres is.** The usual `PG*` variables; without `PGHOST`, the
+  Unix socket in `/var/run/postgresql`. See the README for setting it up
+  locally. CI runs a Postgres service.
 - **Netlify's build has no Postgres**, so `npm run build` skips these tests
   there (`NETLIFY=true`). CI runs them.
 - **Playwright** builds against its own database, `pauseai_behaviour`, made
@@ -163,6 +163,11 @@ npm run test:visual:report
   server already on port 3000 (except in CI). The visual diff needs a build
   with live data (`DATA_FIXTURES=0`), and the behaviour suite needs one with
   fixtures, so stop any running server when switching between them.
+- The visual diff also follows the Email your MP form on both hosts: ZZ99ZZ,
+  the drafted letter, and the confirm box, never sending
+  (`tests/visual/email-your-mp.spec.ts`). Its local build gets a database
+  with only the test MP in it. Live needs the MP sync run and
+  `TEST_MP_EMAIL` set.
 - Run one Playwright file with `npm run test:behaviour -- <name>`, or point at
   another host with `LOCAL_URL=https://pauseai.uk`.
 - Browser tests need Chromium: `npx playwright install chromium`.

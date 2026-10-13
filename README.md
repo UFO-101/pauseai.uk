@@ -21,9 +21,37 @@ npm run build  # Production build
 npm run lint   # ESLint
 ```
 
-Pages that use the database (Email your MP, the staff interface, the
-signatories list) need Postgres. In the devcontainer: `pg-start`, then
-`export NETLIFY_DB_URL=$(node scripts/fresh-database.mjs pauseai_dev)`.
+### Postgres
+
+Email your MP, the staff interface and the signatories list use a Postgres
+database, and so do some unit tests. You need Postgres running (any recent
+version, e.g. `brew install postgresql && brew services start postgresql`
+on a Mac, or `apt install postgresql` on Linux), with `psql` on your path.
+
+```bash
+# Where Postgres is. Without PGHOST, the scripts use the Unix socket in
+# /var/run/postgresql; Homebrew's is in /tmp. Add PGPASSWORD if you need one.
+export PGHOST=/tmp PGUSER=$(whoami)
+
+# Make a database with the migrations applied and the test MP added, and
+# point the dev server at it. Run again to start over: it wipes the database.
+export NETLIFY_DB_URL=$(node scripts/fresh-database.mjs pauseai_dev --test-mp you@example.com)
+
+# Fake outside services, so the form works without keys. Emails it would
+# send are written to tmp/outbox/ instead, confirmation link and all.
+DATA_FIXTURES=1 OUTBOX_DIR=tmp/outbox POSTMARK_SERVER_TOKEN=fixture npm run dev
+```
+
+Then open http://localhost:3000/email-your-mp-v2 and use postcode ZZ99ZZ.
+
+- **Unit tests** (`npm test`) need Postgres too, with the same `PG*`
+  variables; each test file makes its own database.
+- **Real MPs**: run the dev server with `CRON_SECRET=dev` and without
+  `DATA_FIXTURES`, then
+  `curl -X POST -H "Authorization: Bearer dev" localhost:3000/api/cron/sync-mps`.
+- **Staff login** locally needs your own Google OAuth client
+  (`GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`) with
+  `http://localhost:3000/staff/api/callback` as a redirect URI.
 
 See `package.json` for the full script list, including the `lighthouse*` scripts.
 

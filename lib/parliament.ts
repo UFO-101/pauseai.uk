@@ -100,7 +100,7 @@ export async function fetchCurrentMps(getJson: GetJson): Promise<SyncedMp[]> {
     members.push(...data.items.map((item) => item.value));
     if (data.items.length < PAGE_SIZE || members.length >= (data.totalResults ?? 0)) break;
   }
-  const mps = await mapLimited(members, 8, async (member) => {
+  const mps = await mapLimited(members, 4, async (member) => {
     const data = (await getJson(`${MEMBERS_API}/Members/${member.id}/Contact`)) as { value?: Contact[] };
     return toSyncedMp(member, data.value ?? []);
   });

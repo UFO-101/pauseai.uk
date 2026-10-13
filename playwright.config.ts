@@ -19,6 +19,13 @@ const DATA_FIXTURES = process.env.DATA_FIXTURES ?? "1";
 // built. scripts/fresh-database.mjs prints its URL, for the build and the
 // server to use. Never the real one.
 const BEHAVIOUR_DATABASE = "pauseai_behaviour";
+// The visual diff's local build has its own, with only the test MP in it:
+// enough for tests/visual/email-your-mp.spec.ts, without copying every MP
+// from Parliament.
+const VISUAL_DATABASE = "pauseai_visual";
+// Only so the local test MP has an email, like live's, and shows the form.
+// The diff masks the address itself.
+const VISUAL_TEST_MP_EMAIL = "test-mp@example.org";
 
 export default defineConfig({
   testDir: "./tests",
@@ -57,10 +64,9 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command:
-      DATA_FIXTURES === "1"
-        ? `export NETLIFY_DB_URL="$(node scripts/fresh-database.mjs ${BEHAVIOUR_DATABASE})" && npm run build && npm run start`
-        : "npm run build && npm run start",
+    command: `export NETLIFY_DB_URL="$(node scripts/fresh-database.mjs ${
+      DATA_FIXTURES === "1" ? BEHAVIOUR_DATABASE : `${VISUAL_DATABASE} --test-mp ${VISUAL_TEST_MP_EMAIL}`
+    })" && npm run build && npm run start`,
     // Fixture data needs the keys set too, or the pages that check for them
     // (trackers, campaigns) show their "not configured" fallback instead.
     env:
