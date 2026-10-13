@@ -13,7 +13,7 @@ jobs:
     # (tests/database.ts, scripts/fresh-database.mjs).
     services:
       postgres:
-        image: postgres:17
+        image: postgres:18
         env:
           POSTGRES_PASSWORD: postgres
         ports:
@@ -67,7 +67,7 @@ jobs:
     # (tests/database.ts, scripts/fresh-database.mjs).
     services:
       postgres:
-        image: postgres:17
+        image: postgres:18
         env:
           POSTGRES_PASSWORD: postgres
         ports:

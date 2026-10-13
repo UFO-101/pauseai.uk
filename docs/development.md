@@ -7,8 +7,9 @@ the short version, and `.env.example` lists the environment variables.
 ## 1. What you need
 
 - **Node 22**, as Netlify uses (`netlify.toml`). Newer versions also work.
-- **Postgres 13 or later**, with `psql` on your path. Production runs
-  Netlify Database (Postgres, powered by Neon); CI uses Postgres 17.
+- **Postgres 18**, with `psql` on your path, to match production: Netlify
+  Database runs PostgreSQL 18.6, and CI uses 18 too. (The scripts need at
+  least 13, but use 18 so nothing works locally that fails live.)
 - **Chromium for Playwright**, for the browser tests:
   `npx playwright install chromium`.
 
@@ -33,8 +34,8 @@ works without one.
 **macOS (Homebrew):**
 
 ```bash
-brew install postgresql@17
-brew services start postgresql@17
+brew install postgresql@18
+brew services start postgresql@18
 ```
 
 Homebrew makes a superuser named after your login, and puts the socket in
@@ -52,7 +53,7 @@ The socket is in `/var/run/postgresql`, which the scripts use by default.
 **Docker:**
 
 ```bash
-docker run -d --name pauseai-postgres -p 5432:5432 -e POSTGRES_PASSWORD=postgres postgres:17
+docker run -d --name pauseai-postgres -p 5432:5432 -e POSTGRES_PASSWORD=postgres postgres:18
 ```
 
 You still need `psql` on your machine (`brew install libpq`, or
