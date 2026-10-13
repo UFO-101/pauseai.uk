@@ -1,47 +1,43 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
+import { http, HttpResponse } from "msw";
+import { server } from "@/tests/fixtures/msw";
 import { AirtableRequestError, fetchFrontierLetterSignatories } from "./airtable";
 
-function airtableResponse(records: Record<string, unknown>[], offset?: string, status = 200) {
-  return new Response(JSON.stringify({ records, offset }), {
-    status,
-    headers: { "Content-Type": "application/json" },
-  });
-}
+const AIRTABLE = "https://api.airtable.com/v0/*";
 
 function record(fields: Record<string, unknown>) {
   return { id: "rec1", createdTime: "2024-01-01T00:00:00.000Z", fields };
 }
 
-afterEach(() => {
-  vi.unstubAllGlobals();
-});
+/** Serves `pages` in order and records each request. */
+function serve(...pages: unknown[]) {
+  const requests: Request[] = [];
+  server.use(
+    http.get(AIRTABLE, ({ request }) => {
+      requests.push(request);
+      return HttpResponse.json(pages[requests.length - 1] as object);
+    }),
+  );
+  return requests;
+}
 
 describe("fetchFrontierLetterSignatories", () => {
   it("sends the exact filterByFormula, fields[], and auth header", async () => {
-    const fetchMock = vi.fn().mockResolvedValue(
-      airtableResponse([record({ "Full name or Title": "A", Party: "B", Constituency: "C" })]),
-    );
-    vi.stubGlobal("fetch", fetchMock);
+    const requests = serve({ records: [record({ "Full name or Title": "A", Party: "B", Constituency: "C" })] });
 
     await fetchFrontierLetterSignatories("test-token");
 
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    const [urlArg, init] = fetchMock.mock.calls[0];
-    const url = new URL(String(urlArg));
-
+    expect(requests).toHaveLength(1);
+    const url = new URL(requests[0].url);
     expect(url.hostname).toBe("api.airtable.com");
     expect(url.searchParams.get("filterByFormula")).toBe("{Signed Frontier AI Letter}=TRUE()");
-    expect(url.searchParams.getAll("fields[]")).toEqual([
-      "Full name or Title",
-      "Party",
-      "Constituency",
-    ]);
-    expect((init!.headers as Record<string, string>).Authorization).toBe("Bearer test-token");
+    expect(url.searchParams.getAll("fields[]")).toEqual(["Full name or Title", "Party", "Constituency"]);
+    expect(requests[0].headers.get("Authorization")).toBe("Bearer test-token");
   });
 
   it("only returns name/party/constituency even if Airtable sends extra fields", async () => {
-    const fetchMock = vi.fn().mockResolvedValue(
-      airtableResponse([
+    serve({
+      records: [
         record({
           "Full name or Title": "Jane MP",
           Party: "Independent",
@@ -49,9 +45,8 @@ describe("fetchFrontierLetterSignatories", () => {
           "MP Email": "jane@parliament.uk",
           "Internal Notes": "do not publish",
         }),
-      ]),
-    );
-    vi.stubGlobal("fetch", fetchMock);
+      ],
+    });
 
     const signatories = await fetchFrontierLetterSignatories("test-token");
 
@@ -60,34 +55,26 @@ describe("fetchFrontierLetterSignatories", () => {
   });
 
   it("falls back to empty string for missing fields on a record", async () => {
-    const fetchMock = vi.fn().mockResolvedValue(
-      airtableResponse([record({ "Full name or Title": "Solo" })]),
-    );
-    vi.stubGlobal("fetch", fetchMock);
+    serve({ records: [record({ "Full name or Title": "Solo" }), record({})] });
 
     const signatories = await fetchFrontierLetterSignatories("test-token");
 
-    expect(signatories).toEqual([{ name: "Solo", party: "", constituency: "" }]);
+    expect(signatories).toEqual([
+      { name: "Solo", party: "", constituency: "" },
+      { name: "", party: "", constituency: "" },
+    ]);
   });
 
   it("paginates using the offset param until Airtable stops returning one", async () => {
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValueOnce(
-        airtableResponse(
-          [record({ "Full name or Title": "First", Party: "P1", Constituency: "C1" })],
-          "offset-1",
-        ),
-      )
-      .mockResolvedValueOnce(
-        airtableResponse([record({ "Full name or Title": "Second", Party: "P2", Constituency: "C2" })]),
-      );
-    vi.stubGlobal("fetch", fetchMock);
+    const requests = serve(
+      { records: [record({ "Full name or Title": "First", Party: "P1", Constituency: "C1" })], offset: "offset-1" },
+      { records: [record({ "Full name or Title": "Second", Party: "P2", Constituency: "C2" })] },
+    );
 
     const signatories = await fetchFrontierLetterSignatories("test-token");
 
-    expect(fetchMock).toHaveBeenCalledTimes(2);
-    const secondUrl = new URL(String(fetchMock.mock.calls[1][0]));
+    expect(requests).toHaveLength(2);
+    const secondUrl = new URL(requests[1].url);
     expect(secondUrl.searchParams.get("offset")).toBe("offset-1");
     expect(secondUrl.searchParams.get("filterByFormula")).toBe("{Signed Frontier AI Letter}=TRUE()");
     expect(signatories).toEqual([
@@ -97,11 +84,34 @@ describe("fetchFrontierLetterSignatories", () => {
   });
 
   it("throws AirtableRequestError when the Airtable request fails", async () => {
-    const fetchMock = vi.fn().mockResolvedValue(new Response("nope", { status: 401 }));
-    vi.stubGlobal("fetch", fetchMock);
+    server.use(http.get(AIRTABLE, () => new HttpResponse("nope", { status: 401 })));
 
-    await expect(fetchFrontierLetterSignatories("test-token")).rejects.toBeInstanceOf(
-      AirtableRequestError,
+    await expect(fetchFrontierLetterSignatories("test-token")).rejects.toBeInstanceOf(AirtableRequestError);
+  });
+
+  it("throws AirtableRequestError when the response has no records array", async () => {
+    serve({ error: "something" });
+
+    await expect(fetchFrontierLetterSignatories("test-token")).rejects.toThrow("missing records array");
+  });
+
+  it("gives up rather than looping forever on a repeating offset", async () => {
+    let calls = 0;
+    server.use(
+      http.get(AIRTABLE, () => {
+        calls++;
+        return HttpResponse.json({ records: [], offset: "same" });
+      }),
     );
+
+    await expect(fetchFrontierLetterSignatories("test-token")).rejects.toThrow("pagination exceeded 100 pages");
+    expect(calls).toBe(100);
+  });
+
+  it("reads the shared fixture by default", async () => {
+    expect(await fetchFrontierLetterSignatories("t")).toEqual([
+      { name: "Alex Example MP", party: "Independent", constituency: "Exampleton" },
+      { name: "Sam Sample MP", party: "Example Party", constituency: "Sampleford" },
+    ]);
   });
 });

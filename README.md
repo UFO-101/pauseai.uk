@@ -28,10 +28,21 @@ See `package.json` for the full script list, including the `lighthouse*` scripts
 
 ## Testing
 
-- **Unit tests** (`npm test`, Vitest) cover `lib/` and `app/api/`. They run automatically as part of `npm run build`, so a failing test blocks deploy.
-- **Behaviour tests** (`npm run test:behaviour`, Playwright) drive a local production build (built and started for you, or an existing server on port 3000) to check interactions. Run one file with `npm run test:behaviour -- <name>`, or point at another host with `LOCAL_URL=https://pauseai.uk`. See `tests/behaviour/`.
-- **Visual regression** (`npm run test:visual`, Playwright) screenshots every page on the live site and this local build side by side and pixel-diffs them — no stored baseline to keep up to date, since site content (news, events, stories) changes too often for one to stay meaningful. `npm run test:visual:report` opens the HTML report with live/local/diff images per page. See `tests/visual/pages.spec.ts`.
-- **Airtable access is locked to `lib/airtable.ts`**: an ESLint rule (`no-restricted-syntax` in `eslint.config.mjs`) bans any other file from referencing `api.airtable.com`, so the signed-only filter and field whitelist there can't be bypassed by a new call site. `npm run check:airtable-filter` runs just that rule, isolated from the rest of ESLint, and is also part of `npm run build` — a bypass fails the build the same way a failing test does.
+See [docs/testing.md](docs/testing.md) for the test policy, coverage gate, mocking rules and commands. In short: `npm test` runs the Vitest unit tests (also part of `npm run build`, so a failing test blocks deploy), `npm run test:coverage` runs unit and component tests with the coverage gate, and `npm run test:behaviour` / `npm run test:visual` run the Playwright suites.
+
+**Airtable access is locked to `lib/airtable.ts`**: an ESLint rule (`no-restricted-syntax` in `eslint.config.mjs`) bans any other file from referencing `api.airtable.com`, so the signed-only filter and field whitelist there can't be bypassed by a new call site. `npm run check:airtable-filter` runs just that rule, isolated from the rest of ESLint, and is also part of `npm run build` — a bypass fails the build the same way a failing test does.
+
+## Docs
+
+- [docs/testing.md](docs/testing.md): test policy, coverage gate, mocking, commands
+- [docs/style-guide.md](docs/style-guide.md): design style guide
+- [docs/google-ads/stakeholder-summary.md](docs/google-ads/stakeholder-summary.md): Google Ads conversion tracking, for stakeholders
+- [docs/google-ads/request-signup-conversion-event.md](docs/google-ads/request-signup-conversion-event.md): request to pauseai.info for a signup event
+- [docs/google-ads/request-mp-email-conversion-event.md](docs/google-ads/request-mp-email-conversion-event.md): request to pauseai.info for an MP email event
+- [plans/test-coverage.md](plans/test-coverage.md): plan for 100% test coverage
+- [plans/code-organisation.md](plans/code-organisation.md): plan for reorganising the code
+- [plans/visual-baselines.md](plans/visual-baselines.md): later plan for committed visual baselines
+- [AGENTS.md](AGENTS.md): notes for coding agents (`CLAUDE.md` links to it)
 
 ## Things that aren't obvious from the code
 

@@ -1,3 +1,5 @@
+import { outsideFetch } from "@/lib/outside-fetch";
+
 export type LumaGeoAddressInfo = {
   city?: string;
   address?: string;
@@ -28,7 +30,7 @@ export type EventPeriod = "future" | "past";
  */
 export async function getEvents(period: EventPeriod = "future"): Promise<LumaEntry[]> {
   try {
-    const res = await fetch(
+    const res = await outsideFetch(
       `https://api2.luma.com/calendar/get-items?calendar_api_id=cal-Z327EhtiFdHuVie&pagination_limit=50&period=${period}`,
       { next: { revalidate: 3600 } }
     );

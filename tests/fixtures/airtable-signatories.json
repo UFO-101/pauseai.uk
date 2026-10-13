@@ -1,0 +1,6 @@
+{
+  "records": [
+    { "id": "recFixture1", "createdTime": "2026-01-01T00:00:00.000Z", "fields": { "Full name or Title": "Alex Example MP", "Party": "Independent", "Constituency": "Exampleton" } },
+    { "id": "recFixture2", "createdTime": "2026-01-02T00:00:00.000Z", "fields": { "Full name or Title": "Sam Sample MP", "Party": "Example Party", "Constituency": "Sampleford" } }
+  ]
+}

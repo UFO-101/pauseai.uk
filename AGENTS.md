@@ -1,5 +1,7 @@
 # Agent notes
 
+Read `README.md` first. It links the docs in `docs/`, including the test policy (`docs/testing.md`), and the plans in `plans/`.
+
 ## Next.js version may be beyond your knowledge cutoff
 
 This project pins a Next.js version in `package.json` that may be newer than your training data (e.g. Next.js 16+). Do **not** assume APIs, defaults, or best practices from an older version you remember. When working with Next.js here:

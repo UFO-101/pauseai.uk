@@ -1,3 +1,5 @@
+import { outsideFetch } from "@/lib/outside-fetch";
+
 // Only file allowed to talk to api.airtable.com (enforced by the
 // no-restricted-syntax rule in eslint.config.mjs) so the signed-only filter
 // and field whitelist below can't be bypassed by a new call site elsewhere.
@@ -34,7 +36,7 @@ export async function fetchFrontierLetterSignatories(token: string): Promise<Sig
     for (const field of FIELDS) params.append("fields[]", field);
     if (offset) params.set("offset", offset);
 
-    const res = await fetch(
+    const res = await outsideFetch(
       `https://api.airtable.com/v0/${BASE_ID}/${TABLE_ID}?${params.toString()}`,
       {
         headers: { Authorization: `Bearer ${token}` },

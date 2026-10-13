@@ -1,0 +1,6 @@
+{
+  "entries": [
+    { "event": { "url": "fixture-past-london-march", "name": "PauseAI London March", "start_at": "2026-02-14T12:00:00.000Z", "timezone": "Europe/London", "location_type": "offline", "geo_address_info": { "city": "London", "address": "Whitehall, London", "region": "England", "country": "United Kingdom" } } },
+    { "event": { "url": "fixture-past-glasgow-stall", "name": "Glasgow street stall", "start_at": "2026-01-24T11:00:00.000Z", "timezone": "Europe/London", "location_type": "offline", "geo_address_info": { "city": "Glasgow", "region": "Scotland", "country": "United Kingdom" } } }
+  ]
+}

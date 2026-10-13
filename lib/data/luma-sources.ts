@@ -1,3 +1,5 @@
+import { outsideFetch } from "@/lib/outside-fetch";
+
 export type SourceCounts = {
   /** Registrations per requested tag, every tag present (0 if none). */
   counts: Record<string, number>;
@@ -88,7 +90,7 @@ export async function getSourceCounts(
     do {
       const params = new URLSearchParams({ event_api_id: eventApiId, pagination_limit: "100" });
       if (cursor) params.set("pagination_cursor", cursor);
-      const res = await fetch(`https://public-api.luma.com/v1/event/get-guests?${params}`, {
+      const res = await outsideFetch(`https://public-api.luma.com/v1/event/get-guests?${params}`, {
         headers: { "x-luma-api-key": key, accept: "application/json" },
         next: { revalidate: 60 },
       });

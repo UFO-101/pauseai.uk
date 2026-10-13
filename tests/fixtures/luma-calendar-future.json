@@ -1,0 +1,11 @@
+{
+  "entries": [
+    { "event": { "url": "fixture-london-protest", "name": "PauseAI London: Protest at Parliament", "start_at": "2030-03-02T13:00:00.000Z", "timezone": "Europe/London", "location_type": "offline", "geo_address_info": { "city": "London", "address": "Parliament Square, London", "region": "England", "country": "United Kingdom" } } },
+    { "event": { "url": "fixture-online-intro", "name": "Introduction to PauseAI UK (online)", "start_at": "2030-03-04T19:00:00.000Z", "timezone": "Europe/London", "location_type": "zoom" } },
+    { "event": { "url": "fixture-manchester-social", "name": "PauseAI Manchester Social", "start_at": "2030-03-07T18:30:00.000Z", "timezone": "Europe/London", "location_type": "offline", "geo_address_info": { "city": "Manchester", "address": "Oxford Road, Manchester", "region": "England", "country": "United Kingdom" } } },
+    { "event": { "url": "fixture-scotland-meeting", "name": "PauseAI Scotland Meeting", "start_at": "2030-03-10T18:00:00.000Z", "timezone": "Europe/London", "location_type": "offline", "geo_address_info": { "address": "Venue TBD", "region": "Scotland", "country": "United Kingdom" } } },
+    { "event": { "url": "fixture-oxford-talk", "name": "AI risk talk", "start_at": "2030-03-12T18:00:00.000Z", "timezone": "Europe/London", "location_type": "offline", "geo_address_info": { "city": "Oxford", "address": "Broad Street, Oxford", "region": "England", "country": "United Kingdom" } } },
+    { "event": { "url": "fixture-bristol-leafleting", "name": "Leafleting in Bristol", "start_at": "2030-03-14T11:00:00.000Z", "timezone": "Europe/London", "location_type": "offline", "geo_address_info": { "city": "Bristol", "address": "Broadmead, Bristol", "region": "England", "country": "United Kingdom" } } },
+    { "event": { "url": "fixture-leicester-meetup", "name": "PauseAI Leicester meetup", "start_at": "2030-03-18T18:30:00.000Z", "timezone": "Europe/London", "location_type": "offline", "geo_address_info": { "city": "Leicester", "region": "England", "country": "United Kingdom" } } }
+  ]
+}

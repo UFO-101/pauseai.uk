@@ -2,11 +2,18 @@ import { defineConfig, devices } from "@playwright/test";
 
 // Two suites:
 //
-// - "visual" compares the live site against a local build, page by page — not
-//   a stored-baseline snapshot test. LIVE_URL/LOCAL_URL are overridable so it
-//   can also compare a preview deploy against local, or two arbitrary hosts.
+// - "visual" / "visual-mobile" compare the live site against a local build,
+//   page by page, at desktop and phone widths — not a stored-baseline
+//   snapshot test. LIVE_URL/LOCAL_URL are overridable so it can also compare
+//   a preview deploy against local, or two arbitrary hosts. It needs the
+//   local build to use live data too, so `npm run test:visual` sets
+//   DATA_FIXTURES=0.
 // - "behaviour" drives the local build directly to assert interaction that a
-//   pixel diff cannot see: scrolling, URL integrity, the mobile nav.
+//   pixel diff cannot see: every route loading cleanly, scrolling, URL
+//   integrity, the mobile nav. It runs on fixture data (DATA_FIXTURES=1, see
+//   lib/outside-fetch.ts) so results don't depend on Luma or Airtable.
+const DATA_FIXTURES = process.env.DATA_FIXTURES ?? "1";
+
 export default defineConfig({
   testDir: "./tests",
   fullyParallel: true,
@@ -21,6 +28,13 @@ export default defineConfig({
       name: "visual",
       testDir: "./tests/visual",
       use: { ...devices["Desktop Chrome"], viewport: { width: 1280, height: 800 } },
+    },
+    {
+      name: "visual-mobile",
+      testDir: "./tests/visual",
+      // Chromium at an iPhone's size and touch settings, so it can share the
+      // one installed browser.
+      use: { ...devices["iPhone 13"], defaultBrowserType: "chromium" },
     },
     {
       name: "behaviour",
@@ -38,6 +52,12 @@ export default defineConfig({
   ],
   webServer: {
     command: "npm run build && npm run start",
+    // Fixture data needs the keys set too, or the pages that check for them
+    // (trackers, campaigns) show their "not configured" fallback instead.
+    env:
+      DATA_FIXTURES === "1"
+        ? { DATA_FIXTURES, LUMA_API_KEY: "fixture", AIRTABLE_TOKEN: "fixture" }
+        : { DATA_FIXTURES },
     url: process.env.LOCAL_URL ?? "http://localhost:3000",
     reuseExistingServer: !process.env.CI,
     // CI always builds from cold (reuseExistingServer is off there), and a
