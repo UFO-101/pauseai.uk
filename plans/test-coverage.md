@@ -1,6 +1,7 @@
 # Test coverage plan
 
-Written 2026-10-13. Status: proposed, not started.
+Written 2026-10-13. Status: phases 1 and 2 done on 2026-10-13 (see git log);
+phase 3 in progress.
 
 ## Goal
 

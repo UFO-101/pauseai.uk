@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { localGroups } from "@/lib/content/local-groups";
-import { filterEventsForLocalGroup, type LumaEntry } from "./events";
+import { filterEventsForLocalGroup, filterOnlineEvents, formatEventDate, formatEventTime, type LumaEntry } from "./events";
 
 function entry(name: string, geo?: { city?: string; address?: string; region?: string }): LumaEntry {
   return {
@@ -86,5 +86,38 @@ describe("local group event matchers", () => {
     for (const localGroup of localGroups) {
       expect(localGroup.eventMatchers.length, localGroup.name).toBeGreaterThan(0);
     }
+  });
+});
+
+describe("filterOnlineEvents", () => {
+  const online = (name: string): LumaEntry => ({ event: { url: name, name, start_at: "2030-01-01T18:00:00Z" } });
+
+  it("keeps events with no address that no local group claims", () => {
+    const entries = [online("Introduction to PauseAI UK"), online("PauseAI Scotland Meeting"), entry("London social", { city: "London" })];
+    const allMatchers = localGroups.map((group) => group.eventMatchers);
+    expect(filterOnlineEvents(entries, allMatchers).map((e) => e.event.name)).toEqual(["Introduction to PauseAI UK"]);
+  });
+
+  it("keeps every addressless event when there are no matchers", () => {
+    expect(filterOnlineEvents([online("A"), online("B")], [])).toHaveLength(2);
+  });
+});
+
+describe("formatEventDate and formatEventTime", () => {
+  const startAt = "2030-03-02T13:00:00.000Z";
+
+  it("formats in the event's own timezone", () => {
+    expect(formatEventDate(startAt, "Europe/London")).toBe("Sat 2 Mar");
+    expect(formatEventTime(startAt, "Europe/London")).toBe("13:00");
+    expect(formatEventTime(startAt, "America/New_York")).toBe("08:00");
+  });
+
+  it("defaults to UK time", () => {
+    expect(formatEventTime("2030-07-01T12:00:00.000Z")).toBe("13:00");
+  });
+
+  it("falls back to UK time for a timezone the browser doesn't know", () => {
+    expect(formatEventDate(startAt, "Mars/Olympus_Mons")).toBe("Sat 2 Mar");
+    expect(formatEventTime(startAt, "Mars/Olympus_Mons")).toBe("13:00");
   });
 });

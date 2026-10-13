@@ -7,7 +7,7 @@ here is `plans/test-coverage.md`.
 
 | Layer | Tool | Tests | Files |
 | --- | --- | --- | --- |
-| Logic | Vitest, `node` project | `lib/`, `app/api/`, `sitemap.ts`, `next.config.ts` | `*.test.ts` next to the code |
+| Logic | Vitest, `node` project | `lib/`, `app/api/`, `sitemap.ts`, `next.config.ts` | `*.test.ts` (or `.tsx`) next to the code |
 | Components | Vitest, `browser` project (real Chromium) | every component | `*.browser.test.tsx` next to the component |
 | Pages and flows | Playwright, `behaviour` project | every route loads cleanly; things that span pages | `tests/behaviour/` |
 | Appearance | Playwright, `visual` projects | the local build against the live site, every route, desktop and mobile | `tests/visual/` |
@@ -32,8 +32,17 @@ run start`), so it is slower. Use it only for what Vitest can't see:
 `coverage/`. CI fails if it drops below the thresholds in
 `vitest.config.mts`.
 
-- **The goal is 100% per file.** The thresholds are a ratchet: raise them
-  when coverage goes up, never lower them.
+- **The goal is 100% per file.** The logic layer (`lib/`, `app/api/`,
+  `sitemap.ts`, `robots.ts`, `next.config.ts`, `tests/fixtures/`) is held at
+  100% already. The overall thresholds are a ratchet: raise them when
+  coverage goes up, never lower them.
+- **Code that needs a browser is tested in the browser project**, even when
+  it isn't a component: the collateral tool's canvas drawing, its PDF and
+  zip exports, and its font embedding all have `*.browser.test.ts` files.
+- **Defensive data checks are functions.** A module-level guard over static
+  data (`checkPeople`, `checkPostAuthors`, `assertOutletsValid`) can't fail
+  in a test, so it lives in an exported function that tests call with bad
+  input.
 - **Every source file is in the report**, including files no test imports
   (they show as 0%). So an untested component fails the gate rather than
   going unnoticed.

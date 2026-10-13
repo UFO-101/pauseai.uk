@@ -1889,15 +1889,22 @@ export const posts: BlogPost[] = [
   },
 ];
 
-// Mirrors the guard in people.ts. Without it a misspelt author name would
-// silently fall through to the organisation byline.
-for (const post of posts) {
-  if (post.author !== ORGANISATION_AUTHOR && !people.some((p) => p.name === post.author)) {
-    throw new Error(
-      `blog.tsx: post "${post.slug}" has author "${post.author}", which is neither "${ORGANISATION_AUTHOR}" nor a name in lib/content/people.ts.`,
-    );
+/**
+ * Throws on a post whose author is neither the organisation nor a person in
+ * people.ts. Mirrors checkPeople: without it a misspelt author name would
+ * silently fall through to the organisation byline.
+ */
+export function checkPostAuthors(list: BlogPost[]): void {
+  for (const post of list) {
+    if (post.author !== ORGANISATION_AUTHOR && !people.some((p) => p.name === post.author)) {
+      throw new Error(
+        `blog.tsx: post "${post.slug}" has author "${post.author}", which is neither "${ORGANISATION_AUTHOR}" nor a name in lib/content/people.ts.`,
+      );
+    }
   }
 }
+
+checkPostAuthors(posts);
 
 export function findPost(slug: string): BlogPost | undefined {
   return posts.find((p) => p.slug === slug);

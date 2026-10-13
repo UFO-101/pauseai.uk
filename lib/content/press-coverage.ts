@@ -901,10 +901,15 @@ export function findOutletProblems(outlets: Outlet[]): string[] {
   return problems;
 }
 
-const problems = findOutletProblems(OUTLETS);
-if (problems.length > 0) {
-  throw new Error(`Invalid press coverage data in lib/content/press-coverage.ts:\n- ${problems.join("\n- ")}`);
+/** Throws, listing every problem, if `outlets` is malformed. */
+export function assertOutletsValid(outlets: Outlet[]): void {
+  const problems = findOutletProblems(outlets);
+  if (problems.length > 0) {
+    throw new Error(`Invalid press coverage data in lib/content/press-coverage.ts:\n- ${problems.join("\n- ")}`);
+  }
 }
+
+assertOutletsValid(OUTLETS);
 
 // Fold an outlet's shared fields into each of its articles, giving the
 // flat `CoverageItem` shape the pages render. `inCarousel` and `articles`
@@ -926,17 +931,19 @@ function flattenOutlet(outlet: Outlet): CoverageItem[] {
 // Full, dated table for the /press page — newest first, undated items
 // (most social/wire links are blocked to automated date lookups) sorted
 // to the bottom in their original list order.
-export const allCoverage: CoverageItem[] = OUTLETS.flatMap(flattenOutlet).sort((a, b) => {
+export function newestFirst(a: { date?: string }, b: { date?: string }): number {
   if (a.date && b.date) return b.date.localeCompare(a.date);
   if (a.date) return -1;
   if (b.date) return 1;
   return 0;
-});
+}
+
+export const allCoverage: CoverageItem[] = OUTLETS.flatMap(flattenOutlet).sort(newestFirst);
 
 // The article an outlet's marquee slot links to: the one pinned with
 // `featured`, else the most recent with a single `url` (multi-platform
 // `links` items have no one URL to point at). Undated articles rank last.
-function marqueeItem(outlet: Outlet): CoverageItem {
+export function marqueeItem(outlet: Outlet): CoverageItem {
   const linkable = flattenOutlet(outlet).filter((item) => item.url);
   const pinned = linkable.find((item) => item.featured);
   if (pinned) return pinned;
@@ -958,7 +965,7 @@ const mobileSplit = Math.ceil(CAROUSEL_ITEMS.length / 3);
 // instead of looping. Repeat a short row's items until the count is
 // safely above what any realistic screen width needs, rather than
 // shrinking the curation to fit.
-function tileToMinLength<T>(items: T[], minLength: number): T[] {
+export function tileToMinLength<T>(items: T[], minLength: number): T[] {
   if (items.length === 0) return items;
   const tiled: T[] = [];
   while (tiled.length < minLength) tiled.push(...items);

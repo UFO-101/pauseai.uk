@@ -248,13 +248,18 @@ export const people: Person[] =
   }
 ];
 
-for (const person of people) {
-  if (person.name === "") {
-    throw new Error(
-      `people.ts: found an entry with name: "" — omit the "name" key entirely for an anonymous entry and set "slug" instead.`,
-    );
+/** Throws on an entry with `name: ""`, which would slugify to an empty URL. */
+export function checkPeople(list: Person[]): void {
+  for (const person of list) {
+    if (person.name === "") {
+      throw new Error(
+        `people.ts: found an entry with name: "" — omit the "name" key entirely for an anonymous entry and set "slug" instead.`,
+      );
+    }
   }
 }
+
+checkPeople(people);
 
 export function personSlug(person: Person): string {
   if (person.name === undefined) return person.slug;
@@ -277,9 +282,11 @@ function storyLength(person: Person): number {
 // so one or two outliers don't leave a column much taller than the rest.
 // Derived from the data (rather than a fixed number) so it stays sensible
 // as stories are added or removed.
-export const LONG_STORY_CHAR_THRESHOLD = [...people]
-  .map(storyLength)
-  .sort((a, b) => b - a)[2] ?? Infinity;
+export function longStoryThreshold(list: Person[]): number {
+  return [...list].map(storyLength).sort((a, b) => b - a)[2] ?? Infinity;
+}
+
+export const LONG_STORY_CHAR_THRESHOLD = longStoryThreshold(people);
 
 export function isLongStory(person: Person): boolean {
   return storyLength(person) > LONG_STORY_CHAR_THRESHOLD;

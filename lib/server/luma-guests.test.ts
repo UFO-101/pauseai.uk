@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { http, HttpResponse } from "msw";
 import { server } from "@/tests/fixtures/msw";
-import { getSourceCounts } from "./luma-guests";
+import { getRaceCounts, getSourceCounts } from "./luma-guests";
 
 const TAGS = ["stratford", "brixton"] as const;
 
@@ -70,5 +70,26 @@ describe("getSourceCounts", () => {
   it("reads the shared fixture by default", async () => {
     vi.stubEnv("LUMA_API_KEY", "k");
     expect(await getSourceCounts("evt-x", TAGS)).toEqual({ counts: { stratford: 1, brixton: 2 }, other: 1, total: 4 });
+  });
+});
+
+describe("getRaceCounts", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it("counts the race window and everything after it", async () => {
+    vi.stubEnv("LUMA_API_KEY", "k");
+    const open = new Date("2026-10-10T12:00:00Z");
+    const close = new Date("2026-10-10T12:45:00Z");
+    // Fixture guests registered at 12:00, 12:30, 13:00 (one declined) on 10 October.
+    const [during, after] = await getRaceCounts("evt-x", TAGS, open, close);
+    expect(during).toEqual({ counts: { stratford: 0, brixton: 1 }, other: 0, total: 1 });
+    expect(after).toEqual({ counts: { stratford: 0, brixton: 0 }, other: 1, total: 1 });
+  });
+
+  it("returns nulls without an API key", async () => {
+    vi.stubEnv("LUMA_API_KEY", "");
+    expect(await getRaceCounts("evt-x", TAGS, new Date(0), new Date(1))).toEqual([null, null]);
   });
 });

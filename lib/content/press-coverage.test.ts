@@ -1,7 +1,19 @@
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { OUTLETS, allCoverage, findOutletProblems, newsRow1, newsRow2, type Outlet } from "./press-coverage";
+import {
+  OUTLETS,
+  allCoverage,
+  assertOutletsValid,
+  findOutletProblems,
+  formatCoverageDate,
+  marqueeItem,
+  newestFirst,
+  newsRow1,
+  newsRow2,
+  tileToMinLength,
+  type Outlet,
+} from "./press-coverage";
 
 const article = { title: "A piece", medium: "Article" as const, url: "https://example.com/a", date: "2026-01-01" };
 const carouselOutlet: Outlet = {
@@ -90,5 +102,83 @@ describe("findOutletProblems", () => {
 
     const notCarousel: Outlet = { name: "Plain", articles: [{ ...article, featured: true }] };
     expect(findOutletProblems([notCarousel]).some((p) => p.includes("featured only applies to inCarousel outlets"))).toBe(true);
+  });
+});
+
+describe("findOutletProblems, the remaining checks", () => {
+  it("flags an empty name and an empty title", () => {
+    const problems = findOutletProblems([{ name: "", articles: [{ ...article, title: " " }] }]);
+    expect(problems).toContain("(unnamed outlet): name is empty");
+    expect(problems.some((p) => p.includes("title is empty"))).toBe(true);
+  });
+
+  it("flags a featured article without a single url", () => {
+    const outlet: Outlet = {
+      ...carouselOutlet,
+      articles: [article, { title: "Clip", medium: "Video", featured: true, links: [{ label: "X", url: "https://x.com/a" }] }],
+    };
+    expect(findOutletProblems([outlet]).some((p) => p.includes("featured needs a single url"))).toBe(true);
+  });
+
+  it("flags two kinds of logo at once, and accepts an HTML logo alone", () => {
+    const both: Outlet = { ...carouselOutlet, logoHtml: "<b>Ex</b>" };
+    expect(findOutletProblems([both])).toContain("Example: has both logoSrc and logoHtml — use one");
+    const htmlOnly: Outlet = { name: "Html", logoHtml: "<b>H</b>", inCarousel: true, articles: [article] };
+    expect(findOutletProblems([htmlOnly])).toEqual([]);
+  });
+});
+
+describe("assertOutletsValid", () => {
+  it("throws with every problem listed", () => {
+    expect(() => assertOutletsValid([{ name: "Empty", articles: [] }])).toThrow(/- Empty: has no articles/);
+    expect(() => assertOutletsValid(OUTLETS)).not.toThrow();
+  });
+});
+
+describe("newestFirst", () => {
+  it("puts newer dates first and undated items last, keeping their order", () => {
+    const items = [{ date: undefined, n: 1 }, { date: "2026-01-01", n: 2 }, { date: undefined, n: 3 }, { date: "2026-05-01", n: 4 }];
+    expect([...items].sort(newestFirst).map((i) => i.n)).toEqual([4, 2, 1, 3]);
+  });
+});
+
+describe("marqueeItem", () => {
+  it("links to the featured article when one is pinned", () => {
+    const outlet: Outlet = { ...carouselOutlet, articles: [{ ...article, date: "2026-05-01" }, { ...article, title: "Pinned", featured: true }] };
+    expect(marqueeItem(outlet).title).toBe("Pinned");
+  });
+
+  it("otherwise links to the newest article with a url, undated ones last", () => {
+    const outlet: Outlet = {
+      ...carouselOutlet,
+      articles: [
+        { ...article, title: "Undated", date: undefined },
+        { ...article, title: "Old", date: "2025-01-01" },
+        { ...article, title: "New", date: "2026-02-01" },
+        { title: "Links only", medium: "Video", date: "2027-01-01", links: [{ label: "X", url: "https://x.com" }] },
+      ],
+    };
+    expect(marqueeItem(outlet).title).toBe("New");
+    expect(marqueeItem({ ...carouselOutlet, articles: [{ ...article, date: undefined }, { ...article, title: "B", date: undefined }] }).title).toBe(
+      "A piece",
+    );
+  });
+});
+
+describe("tileToMinLength", () => {
+  it("repeats a short row until it is long enough", () => {
+    expect(tileToMinLength([1, 2, 3], 7)).toEqual([1, 2, 3, 1, 2, 3, 1, 2, 3]);
+    expect(tileToMinLength([1, 2], 2)).toEqual([1, 2]);
+  });
+
+  it("leaves an empty row empty", () => {
+    expect(tileToMinLength([], 10)).toEqual([]);
+  });
+});
+
+describe("formatCoverageDate", () => {
+  it("formats a date, or shows a dash without one", () => {
+    expect(formatCoverageDate("2026-03-03")).toBe("3 Mar 2026");
+    expect(formatCoverageDate()).toBe("—");
   });
 });

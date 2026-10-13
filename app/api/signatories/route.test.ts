@@ -58,4 +58,10 @@ describe("GET /api/signatories", () => {
 
     expect(res.status).toBe(502);
   });
+
+  it("lets any other error through", async () => {
+    fetchFrontierLetterSignatoriesMock.mockRejectedValue(new TypeError("bug"));
+
+    await expect(GET()).rejects.toThrow("bug");
+  });
 });

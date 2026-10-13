@@ -4,7 +4,8 @@ import path from "node:path";
 
 // Two projects, one coverage report (see docs/testing.md):
 //
-// - "node" runs logic tests (*.test.ts) in Node: lib/, app/api/, sitemap.
+// - "node" runs logic tests (*.test.ts, or .tsx for JSX) in Node: lib/,
+//   app/api/, sitemap.
 // - "browser" runs component tests (*.browser.test.tsx) in real Chromium via
 //   Playwright, so layout, canvas and matchMedia are the real thing.
 //
@@ -25,7 +26,7 @@ export default defineConfig({
         test: {
           name: "node",
           environment: "node",
-          include: ["**/*.test.ts"],
+          include: ["**/*.test.{ts,tsx}"],
           exclude: ["**/node_modules/**", "tests/behaviour/**", "tests/visual/**", "plans/**", "tmp/**", "**/*.browser.test.*"],
           setupFiles: ["./vitest.setup.node.ts"],
         },
@@ -72,13 +73,19 @@ export default defineConfig({
       // (scripts/check-no-coverage-ignores.mjs).
       exclude: ["**/*.test.{ts,tsx}", "**/page.tsx", "**/layout.tsx"],
       reporter: ["text-summary", "json-summary", "html"],
-      // A ratchet: today's levels, raised as tests land, until every file
-      // is at 100 (then `perFile: true` with 100 everywhere).
+      // The logic layer is held at 100%. The overall numbers are a ratchet:
+      // raised as component tests land, never lowered, until every file is
+      // at 100 (then `perFile: true` with 100 everywhere).
       thresholds: {
-        lines: 22,
-        branches: 25,
-        functions: 20,
-        statements: 22,
+        lines: 42,
+        branches: 43,
+        functions: 32,
+        statements: 42,
+        "lib/**": { 100: true },
+        "app/api/**": { 100: true },
+        "app/{sitemap,robots}.ts": { 100: true },
+        "tests/fixtures/**": { 100: true },
+        "next.config.ts": { 100: true },
       },
     },
   },
