@@ -624,6 +624,11 @@ html {
      safety animation at 2.4s ensures images appear even if JS fails. */
   opacity: 0;
   transition: opacity 380ms ease-out;
+}
+/* The safety animation stops once .is-loaded lands. Firefox holds opacity at
+   0 for the whole of a pending animation's delay, overriding .is-loaded, so
+   leaving it on would keep every photo hidden until 2.4s. */
+.hero-marquee-track img:not(.is-loaded) {
   animation: hero-img-safety 0s linear 2.4s forwards;
 }
 .hero-marquee-track img.is-loaded {
