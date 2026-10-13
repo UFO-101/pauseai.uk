@@ -22,10 +22,18 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Test
-        run: npm test
+      # The browser Vitest project renders components in real Chromium.
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
 
-      - name: Check Airtable access is confined to lib/airtable.ts
+      # Both Vitest projects (node and browser), gated on coverage.
+      - name: Test with coverage
+        run: npm run test:coverage
+
+      - name: Check there are no coverage-ignore comments
+        run: npm run check:coverage-ignores
+
+      - name: Check Airtable access is confined to lib/server/airtable.ts
         run: npm run check:airtable-filter
 
       - name: Build

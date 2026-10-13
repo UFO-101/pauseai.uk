@@ -1,0 +1,33 @@
+/*
+ * A small card with an accent edge: a heading and a line or two of text.
+ * Restyle it in context through [data-card], e.g.
+ * `.other-ways-cards [data-card] h3`. The root layout imports this file
+ * before app/globals.css, so those overrides still win ties.
+ */
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 12px;
+  padding: 24px;
+  position: relative;
+  box-shadow: 0 1px 3px var(--shadow);
+  transition: box-shadow 0.2s ease;
+}
+
+.card:hover {
+  box-shadow: 0 4px 16px var(--shadow);
+}
+
+.card h3 {
+  font-family: "Inter", system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 18px;
+  margin: 0 0 8px;
+}
+
+.card p {
+  color: var(--text-secondary);
+  margin: 0;
+}

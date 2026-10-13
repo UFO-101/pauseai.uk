@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { AirtableRequestError } from "@/lib/airtable";
+import { AirtableRequestError } from "@/lib/server/airtable";
 import { GET } from "./route";
 
 const ORIGINAL_TOKEN = process.env.AIRTABLE_TOKEN;
@@ -8,8 +8,8 @@ const { fetchFrontierLetterSignatoriesMock } = vi.hoisted(() => ({
   fetchFrontierLetterSignatoriesMock: vi.fn(),
 }));
 
-vi.mock("@/lib/airtable", async () => {
-  const actual = await vi.importActual<typeof import("@/lib/airtable")>("@/lib/airtable");
+vi.mock("@/lib/server/airtable", async () => {
+  const actual = await vi.importActual<typeof import("@/lib/server/airtable")>("@/lib/server/airtable");
   return {
     ...actual,
     fetchFrontierLetterSignatories: fetchFrontierLetterSignatoriesMock,
@@ -35,7 +35,7 @@ describe("GET /api/signatories", () => {
     expect(fetchFrontierLetterSignatoriesMock).not.toHaveBeenCalled();
   });
 
-  it("returns the signatories from lib/airtable with a cache header", async () => {
+  it("returns the signatories from lib/server/airtable with a cache header", async () => {
     fetchFrontierLetterSignatoriesMock.mockResolvedValue([
       { name: "Jane MP", party: "Independent", constituency: "Somewhere" },
     ]);
@@ -51,11 +51,17 @@ describe("GET /api/signatories", () => {
     expect(body).toEqual([{ name: "Jane MP", party: "Independent", constituency: "Somewhere" }]);
   });
 
-  it("returns 502 when lib/airtable throws AirtableRequestError", async () => {
+  it("returns 502 when lib/server/airtable throws AirtableRequestError", async () => {
     fetchFrontierLetterSignatoriesMock.mockRejectedValue(new AirtableRequestError("boom"));
 
     const res = await GET();
 
     expect(res.status).toBe(502);
+  });
+
+  it("lets any other error through", async () => {
+    fetchFrontierLetterSignatoriesMock.mockRejectedValue(new TypeError("bug"));
+
+    await expect(GET()).rejects.toThrow("bug");
   });
 });

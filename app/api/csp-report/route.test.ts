@@ -115,4 +115,22 @@ describe("POST /api/csp-report", () => {
 
     expect(warn).not.toHaveBeenCalled();
   });
+
+  it("reads the kebab-case effective-directive some browsers send", async () => {
+    await POST(post({ "csp-report": { "document-uri": "https://pauseai.uk/", "effective-directive": "img-src", "blocked-uri": "https://x.example/a.png" } }));
+
+    expect(JSON.parse(warn.mock.calls[0][1] as string)).toMatchObject({ directive: "img-src" });
+  });
+
+  it("logs a report with a directive but no blocked URI, leaving empty fields out", async () => {
+    await POST(post({ "csp-report": { "violated-directive": "script-src", "blocked-uri": "", disposition: 7 } }));
+
+    expect(JSON.parse(warn.mock.calls[0][1] as string)).toEqual({ directive: "script-src" });
+  });
+
+  it("skips a report that names neither a directive nor what was blocked", async () => {
+    await POST(post({ "csp-report": { "document-uri": "https://pauseai.uk/" } }));
+
+    expect(warn).not.toHaveBeenCalled();
+  });
 });

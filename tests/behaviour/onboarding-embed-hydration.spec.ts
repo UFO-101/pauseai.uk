@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 
-// app/OnboardingFormEmbed.tsx covers the form with a skeleton until the embed
+// app/(site)/_components/OnboardingFormEmbed.tsx covers the form with a skeleton until the embed
 // posts its height. The embed only posts when its height changes: a burst while
 // it loads, then nothing. The iframe is in the server-rendered HTML, so it can
 // finish that burst before hydration has added our message listener, and then

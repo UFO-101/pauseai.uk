@@ -1,0 +1,59 @@
+/*
+ * Buttons. Other stylesheets restyle a button in context through its data
+ * attributes, e.g. `.hero-marquee-text [data-button][data-variant="ghost"]`,
+ * which has the same specificity the old `.hero-marquee-text .btn.ghost` had.
+ * The root layout imports this file before app/globals.css, so those
+ * overrides still come later in the cascade.
+ */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 15px;
+  text-decoration: none;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+  border: 1px solid transparent;
+}
+
+.btn.primary {
+  background: var(--accent);
+  color: #fff;
+  box-shadow: 0 2px 8px rgb(var(--pause-orange-rgb) / 0.25);
+}
+
+.btn.primary:hover {
+  background: var(--accent-strong);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgb(var(--pause-orange-rgb) / 0.3);
+}
+
+.btn.ghost {
+  border-color: var(--border-strong);
+  background: transparent;
+  color: var(--text);
+}
+
+.btn.ghost:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.btn.small {
+  padding: 9px 14px;
+  font-size: 14px;
+}
+
+.btn.large {
+  padding: 16px 28px;
+  font-size: 16px;
+}
+
+@media (max-width: 720px) {
+  .btn {
+    width: 100%;
+  }
+}

@@ -1,6 +1,7 @@
 #!/usr/bin/env node
-// Reuses the no-restricted-syntax rule already defined in eslint.config.mjs
-// (the single source of truth for the "api.airtable.com" pattern) but only
+// Reuses the no-restricted-syntax rules already defined in eslint.config.mjs
+// (the single source of truth for the "api.airtable.com" and Luma API
+// patterns) but only
 // fails on that rule, so this doesn't get blocked by unrelated pre-existing
 // lint debt elsewhere in the repo.
 import { ESLint } from "eslint";
@@ -19,9 +20,9 @@ if (violations.length > 0) {
     console.error(`${v.filePath}:${v.line}:${v.column}  ${v.message}`);
   }
   console.error(
-    `\n${violations.length} Airtable API reference(s) found outside lib/airtable.ts — the signed-only filter could be bypassed.`,
+    `\n${violations.length} outside-service API reference(s) found outside lib/server/ — Airtable's signed-only filter could be bypassed, or a call could skip the test fixtures.`,
   );
   process.exit(1);
 }
 
-console.log("OK: Airtable API access confined to lib/airtable.ts");
+console.log("OK: Airtable and Luma API access confined to lib/server/");

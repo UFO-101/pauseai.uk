@@ -384,8 +384,8 @@ function drawQr(a: DrawArgs, target: string, x: number, y: number, size: number)
   ctx.fill(new Path2D(shape.finderRings), "evenodd");
   for (const e of shape.finderEyes) ctx.fillRect(e.x, e.y, e.s, e.s);
 
-  // Pause symbol
-  const r = shape.logoRadius ?? 0;
+  // Pause symbol. qrShape(…, true) always makes room for it, so logoRadius is set.
+  const r = shape.logoRadius!;
   const { x: cx, y: cy } = shape.centre;
   ctx.fillStyle = BRAND_ORANGE;
   ctx.beginPath();

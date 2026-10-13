@@ -4,9 +4,9 @@ import { join } from "path";
 import { afterEach, describe, expect, it } from "vitest";
 import { discoverStaticRoutes, HIDDEN_ROUTES } from "./sitemap";
 import sitemap from "./sitemap";
-import { people, personSlug } from "@/lib/data/people";
-import { posts } from "@/lib/data/blog";
-import { site } from "@/lib/data/site";
+import { people, personSlug } from "@/lib/content/people";
+import { posts } from "@/lib/content/blog";
+import { site } from "@/lib/content/site";
 
 let dir: string | undefined;
 
@@ -102,7 +102,7 @@ describe("sitemap", () => {
     }
   });
 
-  it("includes every person from lib/data/people at their computed slug", () => {
+  it("includes every person from lib/content/people at their computed slug", () => {
     const entries = sitemap();
     const urls = entries.map((entry) => entry.url);
 

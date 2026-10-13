@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Detects the largest face in each photo under public/images/people/ and
 // writes a suggested `background-position` into the matching person's
-// `imageStyle` in lib/data/people.ts (the .person-avatar /
+// `imageStyle` in lib/content/people.ts (the .person-avatar /
 // .person-detail-avatar square crop). Re-run after adding/replacing a
 // photo. Pass --dry-run to only print suggestions without writing.
 import "@tensorflow/tfjs-backend-cpu";
@@ -29,7 +29,7 @@ async function decodeImage(filePath) {
 
 const rootDir = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const peopleDir = path.join(rootDir, "public/images/people");
-const peopleTsPath = path.join(rootDir, "lib/data/people.ts");
+const peopleTsPath = path.join(rootDir, "lib/content/people.ts");
 
 // The `people` array is a plain JSON-compatible literal inside people.ts.
 // Rather than pattern-match the surrounding text (fragile to reformatting),
@@ -119,5 +119,5 @@ for (const file of targets) {
 
 if (write && updated > 0) {
   writeFileSync(peopleTsPath, writePeople(peopleTsSource, persons));
-  console.log(`\nWrote ${updated} update(s) to lib/data/people.ts`);
+  console.log(`\nWrote ${updated} update(s) to lib/content/people.ts`);
 }

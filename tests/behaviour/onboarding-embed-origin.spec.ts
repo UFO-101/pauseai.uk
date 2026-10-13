@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 
-// app/OnboardingFormEmbed.tsx resizes its iframe from postMessage events, and
+// app/(site)/_components/OnboardingFormEmbed.tsx resizes its iframe from postMessage events, and
 // guards them with a single line:
 //
 //   if (event.origin !== EMBED_ORIGIN) return;

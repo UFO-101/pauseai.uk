@@ -1,12 +1,12 @@
 import type { NextConfig } from "next";
-import { EVENT_IMAGE_HOSTS } from "./lib/data/event-image-hosts";
+import { EVENT_IMAGE_HOSTS } from "@/lib/event-image-hosts";
 
 // Third-party origins the site actually depends on. Kept here as one list so
 // adding an embed means updating the policy in the same place.
 const GA = ["https://www.googletagmanager.com", "https://www.google-analytics.com"];
 const GA_COLLECT = [...GA, "https://analytics.google.com", "https://*.analytics.google.com", "https://*.google-analytics.com"];
 // Google Ads conversion / remarketing tags, loaded through the GTM container
-// (see components/CookieConsent.tsx). The container is edited outside this repo,
+// (see components/layout/CookieConsent.tsx). The container is edited outside this repo,
 // so this is the usual set for Ads tags; tune it from CSP reports.
 const GOOGLE_ADS = [
   "https://www.googleadservices.com",
@@ -93,7 +93,7 @@ const nextConfig: NextConfig = {
     ];
   },
   images: {
-    // Luma event cover images (components/EventList.tsx).
+    // Luma event cover images (components/events/EventList.tsx).
     remotePatterns: EVENT_IMAGE_HOSTS.map((hostname) => ({ protocol: "https" as const, hostname })),
   },
   async redirects() {

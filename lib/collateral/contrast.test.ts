@@ -67,6 +67,21 @@ describe("worstFailure", () => {
     expect(worstFailure(grey, [sample(INK)], ORANGE, 0.25)).toBeNull();
   });
 
+  it("skips lines that sit off the photo", () => {
+    const off = { ...sample(INK), rect: { x: 20, y: 20, w: 5, h: 5 } };
+    expect(worstFailure(grey, [off], WHITE, 1)).toBeNull();
+    expect(busySample(grey, [off], WHITE, 1)).toBeNull();
+  });
+
+  it("reports the line furthest short of its pass mark", () => {
+    const dark = backdrop(() => [40, 40, 40]);
+    const bad = { ...sample(INK), text: "Worse" };
+    const lessBad = { ...sample(INK, true), text: "Large" };
+    // Ink on near-black fails both, but normal text is held to the higher mark, so it is further short.
+    expect(worstFailure(dark, [lessBad, bad], WHITE, 1)?.sample.text).toBe("Worse");
+    expect(worstFailure(dark, [bad, lessBad], WHITE, 1)?.sample.text).toBe("Worse");
+  });
+
   it("counts a halo behind the text as extra style colour", () => {
     // Large orange text on the Black style over a light photo: about 2.7:1 bare, about 4.3:1 with the halo.
     const light = backdrop(() => [200, 200, 200]);

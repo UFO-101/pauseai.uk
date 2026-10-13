@@ -8,7 +8,8 @@ export interface CarouselVariant {
   /** References an existing Format id in formats.ts. */
   formatId: string;
   maxSlides: number;
-  export: "images" | "pdf" | "both";
+  /** Every platform takes the slides as images. LinkedIn also takes one PDF, which it shows as a document carousel. */
+  export: "images" | "both";
 }
 
 export const CAROUSEL_PLATFORMS: CarouselVariant[] = [

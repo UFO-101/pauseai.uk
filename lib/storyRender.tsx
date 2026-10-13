@@ -32,7 +32,7 @@ export function avatarFallback(name: string | undefined): ReactNode {
 }
 
 // Story text originates in public submissions (the Tally form) and is pasted
-// into lib/data/people.ts by hand, so the paragraphs rendered as real HTML go
+// into lib/content/people.ts by hand, so the paragraphs rendered as real HTML go
 // through this allowlist first — a careless paste shouldn't be able to become
 // persistent XSS. Allowed tags are rendered stripped of every attribute;
 // anything else has its tags dropped and its text kept and escaped.

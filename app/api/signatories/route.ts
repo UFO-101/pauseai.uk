@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { AirtableRequestError, fetchFrontierLetterSignatories } from "@/lib/airtable";
+import { AirtableRequestError, fetchFrontierLetterSignatories } from "@/lib/server/airtable";
 
 export async function GET() {
   const token = process.env.AIRTABLE_TOKEN;

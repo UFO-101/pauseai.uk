@@ -2,6 +2,7 @@ import { test, expect, type Page } from "@playwright/test";
 import { PNG } from "pngjs";
 import pixelmatch from "pixelmatch";
 import fs from "node:fs";
+import { ROUTES } from "../routes";
 
 // Compares each page as currently deployed (LIVE_URL) against this local
 // build (LOCAL_URL, started by playwright.config.ts's webServer) — no
@@ -11,29 +12,9 @@ const LIVE_URL = process.env.LIVE_URL ?? "https://pauseai.uk";
 const LOCAL_URL = process.env.LOCAL_URL ?? "http://localhost:3000";
 const MISMATCH_THRESHOLD = Number(process.env.MISMATCH_THRESHOLD ?? 0.02); // fraction of pixels
 
-// One entry per app/**/page.tsx route. The dynamic /stories/[slug] route is
-// represented by a single example slug — it's the same template for every
-// story, so one instance is enough to catch template regressions.
-const ROUTES = [
-  "/",
-  "/campaigns/",
-  "/donate/",
-  "/future-of-workforce-inquiry/",
-  "/glasgow/",
-  "/global-ai-sentiment-2026/",
-  "/governance/",
-  "/leicester/",
-  "/london/",
-  "/manchester/",
-  "/oxford/",
-  "/privacy/",
-  "/stories/",
-  "/stories/harry-turnbull/",
-  "/theory-of-change/",
-  "/track-record/",
-  "/west-of-england/",
-  "/what-is-pauseai-uk/",
-];
+// Every page (tests/routes.ts): static routes from the filesystem, plus one
+// example per dynamic route — the same template for every post or person, so
+// one instance is enough to catch template regressions.
 
 // Footer's "© <year>" changes automatically on Jan 1 regardless of any code
 // change — always masked so that alone never fails a comparison.
