@@ -56,7 +56,18 @@ export default defineConfig({
     // (trackers, campaigns) show their "not configured" fallback instead.
     env:
       DATA_FIXTURES === "1"
-        ? { DATA_FIXTURES, LUMA_API_KEY: "fixture", AIRTABLE_TOKEN: "fixture" }
+        ? {
+            DATA_FIXTURES,
+            LUMA_API_KEY: "fixture",
+            AIRTABLE_TOKEN: "fixture",
+            AIRTABLE_WRITE_API_KEY: "fixture",
+            // Not one of Cloudflare's test secrets, which are refused outside
+            // development. The Turnstile fixture passes every token.
+            TURNSTILE_SECRET_KEY: "fixture",
+            // Draws the widget, from a stand-in script (tests/behaviour/email-your-mp.spec.ts).
+            NEXT_PUBLIC_TURNSTILE_SITE_KEY: "fixture",
+            TEST_MP_EMAIL: "test-mp@example.org",
+          }
         : { DATA_FIXTURES },
     url: process.env.LOCAL_URL ?? "http://localhost:3000",
     reuseExistingServer: !process.env.CI,

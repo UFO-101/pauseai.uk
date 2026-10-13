@@ -34,6 +34,7 @@ See [docs/testing.md](docs/testing.md) for the test policy, coverage gate, mocki
 - [docs/code-structure.md](docs/code-structure.md): where code lives, and the rules for adding more
 - [docs/testing.md](docs/testing.md): test policy, coverage gate, mocking, commands
 - [docs/style-guide.md](docs/style-guide.md): design style guide
+- [docs/email-your-mp.md](docs/email-your-mp.md): the Email your MP tool, and the settings it needs
 - [plans/](plans/): plans for work in progress or not started yet
 - [AGENTS.md](AGENTS.md): notes for coding agents (`CLAUDE.md` links to it)
 

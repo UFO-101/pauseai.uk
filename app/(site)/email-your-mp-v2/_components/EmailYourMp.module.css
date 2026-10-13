@@ -1,0 +1,124 @@
+.page {
+  padding-block: 3rem;
+}
+
+.tool {
+  display: grid;
+  gap: 1.5rem;
+  max-width: 44rem;
+}
+
+.lookup,
+.letter {
+  display: grid;
+  gap: 1rem;
+}
+
+.lookup label,
+.letter label {
+  display: grid;
+  gap: 0.35rem;
+  font-weight: 600;
+}
+
+.lookup input,
+.letter input:not([type="checkbox"]),
+.letter textarea {
+  width: 100%;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  font: inherit;
+  font-weight: 400;
+  background: var(--surface);
+  color: inherit;
+}
+
+.letter textarea {
+  resize: vertical;
+  line-height: 1.5;
+}
+
+@media (min-width: 640px) {
+  .lookup {
+    grid-template-columns: 1fr 1fr auto;
+    align-items: end;
+  }
+}
+
+.mp h2 {
+  margin: 0 0 0.25rem;
+}
+
+.mp p {
+  margin: 0;
+}
+
+.notice {
+  padding: 0.8rem 1rem;
+  border-left: 4px solid var(--accent);
+  background: var(--surface-2);
+}
+
+.signature {
+  margin: 0;
+  font: inherit;
+  white-space: pre-wrap;
+}
+
+.attachments {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding: 0;
+  list-style: none;
+}
+
+.attachments a {
+  display: grid;
+  gap: 0.25rem;
+  width: 140px;
+  font-size: 0.85rem;
+}
+
+.consent {
+  grid-template-columns: auto 1fr;
+  align-items: start;
+  font-weight: 400 !important;
+}
+
+.honeypot {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+.confirm {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1rem;
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+}
+
+.confirm p {
+  margin: 0;
+}
+
+.actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.error {
+  margin: 0;
+  color: #b00020;
+}
+
+.success {
+  padding: 1rem;
+  border-radius: 8px;
+  background: #e8f5e9;
+}

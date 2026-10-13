@@ -9,12 +9,14 @@ import { join } from "node:path";
 import { discoverStaticRoutes } from "../app/sitemap";
 import { posts } from "@/lib/content/blog";
 import { people, personSlug } from "@/lib/content/people";
+import { campaigns } from "@/lib/content/email-your-mp";
 
 const APP_DIR = join(__dirname, "..", "app");
 
 export const DYNAMIC_EXAMPLES: Record<string, string> = {
   "/blog/[slug]": `/blog/${posts[0].slug}`,
   "/people/[slug]": `/people/${personSlug(people[0])}`,
+  "/email-your-mp-v2/[slug]": `/email-your-mp-v2/${campaigns[0].slug}`,
 };
 
 /** Route patterns with a dynamic segment, e.g. "/blog/[slug]". */

@@ -1,0 +1,69 @@
+// Pure helpers for the Email your MP tool: picking a campaign and writing
+// the letter. Used by the form in the browser and by the server, which
+// checks what it's sent against the same campaigns.
+import { campaigns, type Campaign, type CampaignStatus, type LetterDetails } from "@/lib/content/email-your-mp";
+
+/** An MP as the form sees them. */
+export type Mp = {
+  name: string;
+  /** "Ms Abbott", or built from the name when Parliament has none. */
+  salutation: string;
+  constituency: string;
+  /** null when Parliament lists no email for them. */
+  email: string | null;
+};
+
+/** Each campaign's status for one MP, keyed by campaign slug. */
+export type MpStatuses = Partial<Record<string, CampaignStatus>>;
+
+/** The test MP's postcode. postcodes.io doesn't know it, so it never gets that far. */
+export const TEST_POSTCODE = "ZZ99ZZ";
+
+/** "sw1a 1aa " → "SW1A1AA", for comparing postcodes. */
+export function normalisePostcode(postcode: string): string {
+  return postcode.replace(/\s+/g, "").toUpperCase();
+}
+
+export function isTestPostcode(postcode: string): boolean {
+  return normalisePostcode(postcode) === TEST_POSTCODE;
+}
+
+export function campaignBySlug(slug: string): Campaign | undefined {
+  return campaigns.find((campaign) => campaign.slug === slug);
+}
+
+export function isDone(campaign: Campaign, statuses: MpStatuses): boolean {
+  return statuses[campaign.slug] === campaign.done;
+}
+
+/**
+ * The campaign plain /email-your-mp-v2 opens: the first, in priority order,
+ * that this MP hasn't done. If they've done them all, the first, which then
+ * thanks them.
+ */
+export function chooseCampaign(statuses: MpStatuses): Campaign {
+  return campaigns.find((campaign) => !isDone(campaign, statuses)) ?? campaigns[0];
+}
+
+/** The letter the form starts with: a request, or thanks if it's done. */
+export function draftLetter(campaign: Campaign, statuses: MpStatuses, details: LetterDetails): string {
+  return isDone(campaign, statuses) ? campaign.thanks(details) : campaign.letter(details);
+}
+
+/** The letter as sent: the body the sender edited, then their name and address. */
+export function fullLetter(body: string, senderName: string, address: string[]): string {
+  return `${body.trimEnd()}\n\n${[senderName, ...address].join("\n")}`;
+}
+
+/** A typed address, as signature lines: trimmed, without blank lines. */
+export function addressLines(address: string): string[] {
+  return address
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
+}
+
+/** A loose check that catches typos; the confirmation email is the real test. */
+export function looksLikeEmail(email: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}

@@ -33,20 +33,24 @@ const REPORT_ORIGIN = process.env.URL ?? (process.env.NODE_ENV === "production" 
 // (dynamic) response, which this mostly-static site doesn't have. Enforcing
 // the policy with 'unsafe-inline' still present would buy little against XSS,
 // so treat nonces as a prerequisite for flipping this to enforcing.
+// Cloudflare Turnstile, the anti-spam check on the Email your MP form: its
+// script, the frame it draws the widget in, and the requests it makes.
+const TURNSTILE = "https://challenges.cloudflare.com";
+
 const contentSecurityPolicy = [
   "default-src 'self'",
-  `script-src 'self' 'unsafe-inline' ${[...GA, "https://www.googleadservices.com", "https://googleads.g.doubleclick.net", "https://tally.so"].join(" ")}`,
+  `script-src 'self' 'unsafe-inline' ${[...GA, "https://www.googleadservices.com", "https://googleads.g.doubleclick.net", "https://tally.so", TURNSTILE].join(" ")}`,
   "style-src 'self' 'unsafe-inline'",
   // next/font self-hosts both Lato and Inter at build time, so no font CDN.
   "font-src 'self' data:",
   // blob:/data: cover next/image; EVENT_IMAGE_HOSTS are the Luma event covers.
   `img-src 'self' data: blob: ${[...EVENT_IMAGE_HOSTS.map((host) => `https://${host}`), ...GA, ...GOOGLE_ADS].join(" ")}`,
-  `connect-src 'self' ${[...GA_COLLECT, ...GOOGLE_ADS].join(" ")}`,
+  `connect-src 'self' ${[...GA_COLLECT, ...GOOGLE_ADS, TURNSTILE].join(" ")}`,
   // The MP-email and onboarding embeds, the Tally story form, and the
   // Airtable signatories embed that campaigns/page.tsx falls back to when
   // AIRTABLE_TOKEN is unset (local and preview builds). GTM's <noscript> iframe
   // is in app/layout.tsx; td.doubleclick.net is used by Ads tags in the container.
-  "frame-src https://pauseai.info https://tally.so https://airtable.com https://www.googletagmanager.com https://td.doubleclick.net",
+  `frame-src https://pauseai.info https://tally.so https://airtable.com https://www.googletagmanager.com https://td.doubleclick.net ${TURNSTILE}`,
   "frame-ancestors 'none'",
   "base-uri 'self'",
   "form-action 'self'",

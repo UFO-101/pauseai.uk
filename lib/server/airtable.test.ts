@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { http, HttpResponse } from "msw";
 import { server } from "@/tests/fixtures/msw";
-import { AirtableRequestError, fetchFrontierLetterSignatories } from "./airtable";
+import { AirtableRequestError, createLetterRecord, fetchFrontierLetterSignatories, fetchParliamentarian } from "./airtable";
 
 const AIRTABLE = "https://api.airtable.com/v0/*";
 
@@ -113,5 +113,82 @@ describe("fetchFrontierLetterSignatories", () => {
       { name: "Alex Example MP", party: "Independent", constituency: "Exampleton" },
       { name: "Sam Sample MP", party: "Example Party", constituency: "Sampleford" },
     ]);
+  });
+});
+
+describe("fetchParliamentarian", () => {
+  it("finds the MP by email, reading only the status field", async () => {
+    const requests = serve({ records: [{ id: "recMp", fields: { "Signed Frontier AI Letter": true } }] });
+
+    const found = await fetchParliamentarian("test-token", "jane.mp@parliament.uk");
+
+    expect(found).toEqual({ recordId: "recMp", statuses: { "letter-to-the-prime-minister": "signed" } });
+    const url = new URL(requests[0].url);
+    expect(url.searchParams.get("filterByFormula")).toBe('{Email} = "jane.mp@parliament.uk"');
+    expect(url.searchParams.getAll("fields[]")).toEqual(["Signed Frontier AI Letter"]);
+    expect(requests[0].headers.get("Authorization")).toBe("Bearer test-token");
+  });
+
+  it("gives no statuses to an MP who hasn't signed, and nothing for an unknown MP", async () => {
+    serve({ records: [{ id: "recMp", fields: {} }] }, {});
+    expect(await fetchParliamentarian("t", "a@parliament.uk")).toEqual({ recordId: "recMp", statuses: {} });
+    expect(await fetchParliamentarian("t", "b@parliament.uk")).toBeUndefined();
+  });
+
+  it("throws when Airtable fails", async () => {
+    server.use(http.get(AIRTABLE, () => new HttpResponse(null, { status: 403 })));
+    await expect(fetchParliamentarian("t", "a@parliament.uk")).rejects.toThrow(AirtableRequestError);
+  });
+});
+
+describe("createLetterRecord", () => {
+  const letter = {
+    senderEmail: "jane@example.com",
+    senderName: "Jane Smith",
+    senderPostcode: "SW1A 1AA",
+    mpRecordId: "recMp",
+    subject: "Subject",
+    message: "Letter",
+    campaign: "Frontier AI letter",
+    contactConsent: true,
+  };
+
+  it("adds the letter to the Emails table, linked to the MP", async () => {
+    let request: Request | undefined;
+    server.use(
+      http.post(AIRTABLE, ({ request: r }) => {
+        request = r;
+        return HttpResponse.json({ id: "recLetter" });
+      }),
+    );
+
+    expect(await createLetterRecord("write-token", letter)).toBe("recLetter");
+    expect(new URL(request!.url).pathname).toBe("/v0/appBInVvIm6opJ1Ob/tblkzjrRHiZiqMDGR");
+    expect(request!.headers.get("Authorization")).toBe("Bearer write-token");
+    expect(await request!.json()).toEqual({
+      typecast: true,
+      fields: {
+        "Sender email": "jane@example.com",
+        "Sender name": "Jane Smith",
+        "Sender postcode": "SW1A 1AA",
+        Recipient: ["recMp"],
+        Subject: "Subject",
+        Message: "Letter",
+        Campaign: "Frontier AI letter",
+        "Contact consent": "Yes",
+      },
+    });
+  });
+
+  it("records a No for contact consent, and throws when Airtable fails", async () => {
+    let body: { fields: Record<string, unknown> } | undefined;
+    server.use(
+      http.post(AIRTABLE, async ({ request }) => {
+        body = (await request.json()) as typeof body;
+        return new HttpResponse(null, { status: 422 });
+      }),
+    );
+    await expect(createLetterRecord("t", { ...letter, contactConsent: false })).rejects.toThrow(AirtableRequestError);
+    expect(body!.fields["Contact consent"]).toBe("No");
   });
 });

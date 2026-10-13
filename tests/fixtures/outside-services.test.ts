@@ -14,6 +14,20 @@ describe("fixtureResponse", () => {
     expect((await fixtureResponse("https://eu.airtable.com/v0/app/tbl")!.json()).records).toHaveLength(2);
   });
 
+  it("answers an Airtable write with a new record", async () => {
+    expect((await fixtureResponse("https://eu.airtable.com/v0/app/tbl", { method: "POST" })!.json()).id).toBe("recFixtureLetter");
+  });
+
+  it("knows one postcode, and 404s the rest", async () => {
+    const found = await fixtureResponse("https://api.postcodes.io/postcodes/sw1a%201aa")!.json();
+    expect(found.result.parliamentary_constituency).toBe("Cities of London and Westminster");
+    expect(fixtureResponse("https://api.postcodes.io/postcodes/XX11XX")!.status).toBe(404);
+  });
+
+  it("passes every Turnstile token", async () => {
+    expect((await fixtureResponse("https://challenges.cloudflare.com/turnstile/v0/siteverify")!.json()).success).toBe(true);
+  });
+
   it("has nothing for other URLs", () => {
     expect(fixtureResponse("https://api2.luma.com/other")).toBeUndefined();
     expect(fixtureResponse("https://public-api.luma.com/other")).toBeUndefined();
