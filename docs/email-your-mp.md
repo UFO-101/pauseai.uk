@@ -49,7 +49,7 @@ Parliament's salutation is the full name ("Stephen Kinnock"), it is kept.
 
 ## Settings
 
-The environment variables are listed in the [README](../README.md#environment-variables). Two need setting up first:
+The environment variables are listed, with what each is for, in [.env.example](../.env.example). Two need setting up first:
 
 - **Google login**: an "Internal" OAuth client in the pauseai.uk Workspace's Google Cloud project, with `https://pauseai.uk/staff/api/callback` as a redirect URI. Previews can't log in, since Google won't accept wildcard redirect URIs.
 - **`CRON_SECRET`**: any long random string.

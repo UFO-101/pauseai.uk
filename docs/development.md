@@ -2,7 +2,7 @@
 
 How to set up and run everything on your own machine: the site, the
 database, Email your MP, the staff interface, and the tests. The README has
-the short version and the list of environment variables.
+the short version, and `.env.example` lists the environment variables.
 
 ## 1. What you need
 
@@ -194,8 +194,8 @@ login code: only the answers from Google are fixtures.
 
 ### With real outside services
 
-Leave out `DATA_FIXTURES`, and set the keys you need in `.env.local`. The
-README lists them all. Things to know:
+Leave out `DATA_FIXTURES`, copy `.env.example` to `.env.local`, and fill
+in the keys you need. Each is explained there. Things to know:
 
 - **MPs.** The database starts with only the test MP. Copy the real MPs from
   Parliament (about 650, which takes a minute):
