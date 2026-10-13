@@ -22,7 +22,7 @@ DATA_FIXTURES=1 OUTBOX_DIR=tmp/outbox POSTMARK_SERVER_TOKEN=fixture npm run dev
 
 Try Email your MP at http://localhost:3000/email-your-mp-v2 with postcode ZZ99ZZ. The confirmation link is in the newest file in `tmp/outbox/`.
 
-For real data, leave out `DATA_FIXTURES` and set the variables below in `.env.local`.
+For real data, leave out `DATA_FIXTURES` and set the variables below in `.env.local`. [docs/development.md](docs/development.md) covers the rest: installing Postgres, what the fixtures fake, logging in as staff, the daily jobs and webhooks, and running the Playwright suites.
 
 ## Environment variables
 
@@ -66,6 +66,7 @@ npm run lint
 
 ## Docs
 
+- [docs/development.md](docs/development.md): setting up local development in full
 - [docs/code-structure.md](docs/code-structure.md): where code lives
 - [docs/testing.md](docs/testing.md): how it's tested
 - [docs/email-your-mp.md](docs/email-your-mp.md): the Email your MP tool and staff interface
