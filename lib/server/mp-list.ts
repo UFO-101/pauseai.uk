@@ -1,33 +1,20 @@
 import "server-only";
 import type { Mp } from "@/lib/email-your-mp";
-import records from "@/data/uk-mps.json";
+import type { SyncedMp } from "@/lib/parliament";
+import synced from "@/data/mps.json";
 
-// The MPs letters can go to, by constituency. Recipients must be on this
-// list: the server looks the MP up again from the sender's postcode, and
-// never takes an address from the form.
+// The MPs letters can go to, by constituency: Parliament's list, copied into
+// data/mps.json by `npm run data:mps`. Recipients must be on it: the server
+// looks the MP up again from the sender's postcode, and never takes an
+// address from the form.
 
-type MpRecord = {
-  Email: string;
-  "Full name or Title": string;
-  Salutation: string;
-  Constituency: string;
-};
-
-export function mpsFromRecords(list: MpRecord[]): Map<string, Mp> {
+export function mpsByConstituency(list: SyncedMp[]): Map<string, Mp> {
   return new Map(
-    list.map((record) => [
-      record.Constituency,
-      {
-        name: record["Full name or Title"],
-        salutation: record.Salutation,
-        constituency: record.Constituency,
-        email: record.Email.trim() || null,
-      },
-    ]),
+    list.map(({ name, salutation, constituency, email }) => [constituency, { name, salutation, constituency, email }]),
   );
 }
 
-const byConstituency = mpsFromRecords(records);
+const byConstituency = mpsByConstituency(synced);
 
 export function mpForConstituency(constituency: string): Mp | undefined {
   return byConstituency.get(constituency);

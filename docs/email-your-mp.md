@@ -12,9 +12,23 @@ settings it needs.
 - `lib/email-your-mp.ts`: choosing a campaign and drafting the letter, shared
   by the form and the server.
 - `lib/server/find-mp.ts`: postcode to MP. ZZ99ZZ finds the test MP.
+- `lib/parliament.ts`: reads the sitting MPs from Parliament's Members API,
+  and compares two lists of them.
 - `lib/server/mp-letters.ts`: checks a letter from the form and sends it on.
 - `app/(site)/email-your-mp-v2/`: the pages and the form.
 - `app/api/email-your-mp/`: the form's lookup and send requests.
+
+## MPs
+
+`npm run data:mps` copies the sitting MPs from Parliament's Members API into
+`data/mps.json`, which the tool reads. Check the diff and commit it. If more
+than 20 MPs change at once, it stops and lists them for a person to check;
+run it again with `-- --force` to write them.
+
+Emails are the parliamentary office's where there is one, trimmed. Where
+Parliament gives no salutation, one is built from the name: "Sir Iain" or
+"Dame Margaret", else Mr or Ms and the surname, else the full name. Where
+Parliament's salutation is the full name ("Stephen Kinnock"), it is kept.
 
 ## Settings
 

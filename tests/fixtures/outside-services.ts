@@ -12,6 +12,7 @@ import lumaFuture from "./luma-calendar-future.json";
 import lumaPast from "./luma-calendar-past.json";
 import lumaGuests from "./luma-guests.json";
 import airtableSignatories from "./airtable-signatories.json";
+import parliamentMembers from "./parliament-members.json";
 
 function json(body: unknown): Response {
   return new Response(JSON.stringify(body), { headers: { "Content-Type": "application/json" } });
@@ -38,6 +39,14 @@ export function fixtureResponse(url: string, init?: RequestInit): Response | und
     return constituency
       ? json({ status: 200, result: { postcode, parliamentary_constituency: constituency } })
       : new Response(JSON.stringify({ status: 404, error: "Postcode not found" }), { status: 404 });
+  }
+  if (hostname === "members-api.parliament.uk" && pathname === "/api/Members/Search") {
+    return json(parliamentMembers);
+  }
+  const contact = hostname === "members-api.parliament.uk" && pathname.match(/^\/api\/Members\/(\d+)\/Contact$/);
+  if (contact) {
+    // Every fixture MP's office address, in the API's own pattern.
+    return json({ value: [{ type: "Parliamentary office", typeId: 1, email: `mp${contact[1]}.office@parliament.uk ` }] });
   }
   if (hostname === "challenges.cloudflare.com" && pathname === "/turnstile/v0/siteverify") {
     return json({ success: true, hostname: "localhost" });

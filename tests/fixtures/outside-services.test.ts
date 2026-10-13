@@ -28,10 +28,17 @@ describe("fixtureResponse", () => {
     expect((await fixtureResponse("https://challenges.cloudflare.com/turnstile/v0/siteverify")!.json()).success).toBe(true);
   });
 
+  it("lists two MPs, each with an office email", async () => {
+    expect((await fixtureResponse("https://members-api.parliament.uk/api/Members/Search?House=1")!.json()).items).toHaveLength(2);
+    const contact = await fixtureResponse("https://members-api.parliament.uk/api/Members/172/Contact")!.json();
+    expect(contact.value[0].email).toBe("mp172.office@parliament.uk ");
+  });
+
   it("has nothing for other URLs", () => {
     expect(fixtureResponse("https://api2.luma.com/other")).toBeUndefined();
     expect(fixtureResponse("https://public-api.luma.com/other")).toBeUndefined();
     expect(fixtureResponse("https://eu.airtable.com/other")).toBeUndefined();
+    expect(fixtureResponse("https://members-api.parliament.uk/api/Members/172")).toBeUndefined();
     expect(fixtureResponse("https://example.com/")).toBeUndefined();
   });
 });
