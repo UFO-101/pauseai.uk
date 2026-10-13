@@ -1,5 +1,3 @@
-import { outsideFetch } from "@/lib/outside-fetch";
-
 export type LumaGeoAddressInfo = {
   city?: string;
   address?: string;
@@ -21,30 +19,6 @@ export type LumaEntry = {
   event: LumaEvent;
 };
 
-/** Luma's own names for the two halves of a calendar. */
-export type EventPeriod = "future" | "past";
-
-/**
- * Luma returns "future" soonest-first and "past" most-recent-first, so both
- * arrive nearest-to-today first and neither needs sorting here.
- */
-export async function getEvents(period: EventPeriod = "future"): Promise<LumaEntry[]> {
-  try {
-    const res = await outsideFetch(
-      `https://api2.luma.com/calendar/get-items?calendar_api_id=cal-Z327EhtiFdHuVie&pagination_limit=50&period=${period}`,
-      { next: { revalidate: 3600 } }
-    );
-    if (!res.ok) return [];
-    const data = await res.json();
-    const entries: LumaEntry[] = data.entries ?? [];
-    // Guard against malformed Luma records: rendering assumes event.url and
-    // event.start_at exist (EventList key, links, date formatting).
-    return entries.filter((entry) => entry?.event?.url && entry.event?.start_at);
-  } catch {
-    return [];
-  }
-}
-
 /**
  * Lower-cased, punctuation-stripped and space-padded, so a matcher can be
  * tested with plain containment and still only match a whole word: " bath "
@@ -56,7 +30,7 @@ function normalise(value: string): string {
 
 /**
  * The events belonging to a local group, matched against its `eventMatchers`
- * (see lib/data/local-groups.ts).
+ * (see lib/content/local-groups.ts).
  *
  * Luma only fills `geo_address_info.city` for events pinned to a mapped
  * address; plenty of real entries leave it empty and carry the place in the

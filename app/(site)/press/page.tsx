@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
-import { allCoverage } from "@/lib/data/press-coverage";
-import { site } from "@/lib/data/site";
+import { allCoverage } from "@/lib/content/press-coverage";
+import { site } from "@/lib/content/site";
 import "../track-record/track-record.css";
 import "./press.css";
 import { ButtonAnchor } from "@/components/ui/Button";

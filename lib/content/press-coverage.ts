@@ -903,7 +903,7 @@ export function findOutletProblems(outlets: Outlet[]): string[] {
 
 const problems = findOutletProblems(OUTLETS);
 if (problems.length > 0) {
-  throw new Error(`Invalid press coverage data in lib/data/press-coverage.ts:\n- ${problems.join("\n- ")}`);
+  throw new Error(`Invalid press coverage data in lib/content/press-coverage.ts:\n- ${problems.join("\n- ")}`);
 }
 
 // Fold an outlet's shared fields into each of its articles, giving the

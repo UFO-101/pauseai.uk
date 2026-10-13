@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { toCalendarEvents } from "@/lib/collateral/eventText";
-import { getEvents } from "@/lib/data/events";
+import { getEvents } from "@/lib/server/luma-calendar";
 import CollateralApp from "./CollateralApp";
 import "./collateral.css";
 

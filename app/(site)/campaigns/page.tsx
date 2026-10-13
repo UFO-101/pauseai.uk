@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import Image from "next/image";
-import CampaignsClient from "./CampaignsClient";
-import SignatoriesList from "./SignatoriesList";
-import { site } from "@/lib/data/site";
+import CampaignsClient from "./_components/CampaignsClient";
+import SignatoriesList from "./_components/SignatoriesList";
+import { site } from "@/lib/content/site";
 import "./campaigns.css";
 import { ButtonAnchor } from "@/components/ui/Button";
 

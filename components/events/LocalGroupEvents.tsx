@@ -1,13 +1,9 @@
 import type { ReactNode } from "react";
-import EventList from "@/components/EventList";
-import { localGroups, type LocalGroupName } from "@/lib/data/local-groups";
-import {
-  filterEventsForLocalGroup,
-  filterOnlineEvents,
-  getEvents,
-  type LumaEntry,
-} from "@/lib/data/events";
-import { site } from "@/lib/data/site";
+import EventList from "./EventList";
+import { localGroups, type LocalGroupName } from "@/lib/content/local-groups";
+import { filterEventsForLocalGroup, filterOnlineEvents, type LumaEntry } from "@/lib/events";
+import { getEvents } from "@/lib/server/luma-calendar";
+import { site } from "@/lib/content/site";
 import { ButtonAnchor } from "@/components/ui/Button";
 
 // Enough to show a local group is active without turning its page into an

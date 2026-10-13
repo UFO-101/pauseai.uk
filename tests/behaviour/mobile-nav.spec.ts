@@ -2,7 +2,7 @@ import { test, expect, devices, type Browser, type Page } from "@playwright/test
 
 // The burger menu is the only navigation below 1024px, so a regression here
 // strands every phone visitor on whatever page they landed on. It is also the
-// most imperative code in the app — components/Nav.tsx wires it with
+// most imperative code in the app — components/layout/Nav.tsx wires it with
 // querySelector and addEventListener inside an effect, outside React's state
 // model — so the DOM contract it depends on is asserted here explicitly:
 //

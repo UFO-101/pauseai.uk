@@ -1,4 +1,4 @@
-import { GLOBAL_AVERAGE, GLOBAL_MOE_PP, GLOBAL_N } from "@/lib/data/aiSentiment2026";
+import { GLOBAL_AVERAGE, GLOBAL_MOE_PP, GLOBAL_N } from "@/lib/content/aiSentiment2026";
 import VerticalDivergingBar from "./VerticalDivergingBar";
 
 export default function GlobalAverageBar() {

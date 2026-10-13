@@ -4,8 +4,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect } from "react";
-import { localGroups } from "@/lib/data/local-groups";
-import { site } from "@/lib/data/site";
+import { localGroups } from "@/lib/content/local-groups";
+import { site } from "@/lib/content/site";
 
 export default function Nav() {
   const pathname = usePathname();

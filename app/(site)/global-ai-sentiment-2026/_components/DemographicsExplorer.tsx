@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { DEMOGRAPHICS, regionLabel } from "@/lib/data/aiSentiment2026";
+import { DEMOGRAPHICS, regionLabel } from "@/lib/content/aiSentiment2026";
 import DivergingBar, { BarAxisLabels } from "./DivergingBar";
 
 const SECTIONS: { key: string; label: string }[] = [

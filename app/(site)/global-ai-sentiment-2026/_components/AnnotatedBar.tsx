@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { RESPONSE_OPTIONS, type DemographicRow } from "@/lib/data/aiSentiment2026";
+import { RESPONSE_OPTIONS, type DemographicRow } from "@/lib/content/aiSentiment2026";
 
 type DeclutterTarget = { key: string; targetX: number };
 type Placed<T extends DeclutterTarget> = T & { boxX: number };

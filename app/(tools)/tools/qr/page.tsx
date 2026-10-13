@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import "../collateral/collateral.css";
-import QrGenerator from "./QrGenerator";
+import QrGenerator from "./_components/QrGenerator";
 
 // Volunteer tool: unlisted, kept out of search results and the sitemap (see HIDDEN_ROUTES in app/sitemap.ts).
 export const metadata: Metadata = {

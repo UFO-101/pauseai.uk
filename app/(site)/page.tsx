@@ -2,16 +2,16 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import type { CSSProperties } from "react";
-import OnboardingFormEmbed from "@/app/OnboardingFormEmbed";
-import HeroMarqueeEffects from "@/app/HeroMarqueeEffects";
-import EventList from "@/components/EventList";
-import PeopleCarousel from "@/components/PeopleCarousel";
-import LocalGroupsMap from "@/components/LocalGroupsMap";
-import { getEvents } from "@/lib/data/events";
-import { newsRow1, newsRow2, newsMobileRow1, newsMobileRow2, newsMobileRow3, type CoverageItem } from "@/lib/data/press-coverage";
-import { people } from "@/lib/data/people";
-import { staff } from "@/lib/data/staff";
-import { site } from "@/lib/data/site";
+import OnboardingFormEmbed from "./_components/OnboardingFormEmbed";
+import HeroMarqueeEffects from "./_components/HeroMarqueeEffects";
+import EventList from "@/components/events/EventList";
+import PeopleCarousel from "./_components/PeopleCarousel";
+import LocalGroupsMap from "./_components/LocalGroupsMap";
+import { getEvents } from "@/lib/server/luma-calendar";
+import { newsRow1, newsRow2, newsMobileRow1, newsMobileRow2, newsMobileRow3, type CoverageItem } from "@/lib/content/press-coverage";
+import { people } from "@/lib/content/people";
+import { staff } from "@/lib/content/staff";
+import { site } from "@/lib/content/site";
 import { ButtonAnchor, ButtonLink } from "@/components/ui/Button";
 
 export const metadata: Metadata = {

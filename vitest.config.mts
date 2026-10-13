@@ -13,6 +13,9 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(import.meta.dirname, "."),
+      // lib/server/* imports "server-only", which throws outside a React
+      // server build. Tests run that code directly, so give them the no-op.
+      "server-only": path.resolve(import.meta.dirname, "node_modules/server-only/empty.js"),
     },
   },
   test: {

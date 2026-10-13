@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import DonateForm from "@/components/DonateForm";
+import DonateForm from "./_components/DonateForm";
 
 export const metadata: Metadata = {
   title: "Donate",

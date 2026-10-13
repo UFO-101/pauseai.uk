@@ -7,8 +7,8 @@
 import { readdirSync } from "node:fs";
 import { join } from "node:path";
 import { discoverStaticRoutes } from "../app/sitemap";
-import { posts } from "../lib/data/blog";
-import { people, personSlug } from "../lib/data/people";
+import { posts } from "@/lib/content/blog";
+import { people, personSlug } from "@/lib/content/people";
 
 const APP_DIR = join(__dirname, "..", "app");
 

@@ -49,7 +49,7 @@ run start`), so it is slower. Use it only for what Vitest can't see:
 ## Mocking
 
 Mock only where the site calls an outside service. All such calls go
-through `outsideFetch` (`lib/outside-fetch.ts`), and the canned responses
+through `outsideFetch` (`lib/server/outside-fetch.ts`), and the canned responses
 live in one place: `tests/fixtures/outside-services.ts`.
 
 - **Vitest Node:** MSW (`tests/fixtures/msw.ts`) answers every outside

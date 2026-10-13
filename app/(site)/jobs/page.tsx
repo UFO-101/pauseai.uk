@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Image from "next/image";
-import { site } from "@/lib/data/site";
+import { site } from "@/lib/content/site";
 import "../track-record/track-record.css";
 import "./jobs.css";
 import { ButtonAnchor } from "@/components/ui/Button";

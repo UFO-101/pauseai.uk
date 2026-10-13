@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
-import { QUESTION_TEXT, SURVEY_META } from "@/lib/data/aiSentiment2026";
-import WorldMap from "./WorldMap";
-import CountryExplorer from "./CountryExplorer";
-import DemographicsExplorer from "./DemographicsExplorer";
-import GlobalAverageBar from "./GlobalAverageBar";
+import { QUESTION_TEXT, SURVEY_META } from "@/lib/content/aiSentiment2026";
+import WorldMap from "./_components/WorldMap";
+import CountryExplorer from "./_components/CountryExplorer";
+import DemographicsExplorer from "./_components/DemographicsExplorer";
+import GlobalAverageBar from "./_components/GlobalAverageBar";
 import "../track-record/track-record.css";
 import "./global-ai-sentiment-2026.css";
 

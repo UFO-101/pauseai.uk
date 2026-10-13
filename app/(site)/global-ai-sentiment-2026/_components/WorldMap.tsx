@@ -5,7 +5,7 @@ import { geoNaturalEarth1, geoPath } from "d3-geo";
 import { feature } from "topojson-client";
 import type { FeatureCollection, Geometry } from "geojson";
 import type { Topology } from "topojson-specification";
-import { COUNTRIES, RESPONSE_OPTIONS, slowOrStopPct, type ResponseKey, type CountryRow, type ResponseOption } from "@/lib/data/aiSentiment2026";
+import { COUNTRIES, RESPONSE_OPTIONS, slowOrStopPct, type ResponseKey, type CountryRow, type ResponseOption } from "@/lib/content/aiSentiment2026";
 import DivergingBar, { BarAxisLabels } from "./DivergingBar";
 
 // Tooltip order: the three "against" options (braced together with their

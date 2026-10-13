@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { RESPONSE_OPTIONS, type CountryRow, type DemographicRow, type ResponseOption } from "@/lib/data/aiSentiment2026";
+import { RESPONSE_OPTIONS, type CountryRow, type DemographicRow, type ResponseOption } from "@/lib/content/aiSentiment2026";
 
 type Row = CountryRow | DemographicRow;
 

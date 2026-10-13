@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Image from "next/image";
-import Link from "next/link";
-import { site } from "@/lib/data/site";
+import { site } from "@/lib/content/site";
 import "../track-record/track-record.css";
 import "./theory-of-change.css";
 import { ButtonAnchor, ButtonLink } from "@/components/ui/Button";

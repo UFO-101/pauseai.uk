@@ -1,4 +1,5 @@
-import { outsideFetch } from "@/lib/outside-fetch";
+import "server-only";
+import { outsideFetch } from "./outside-fetch";
 
 // Only file allowed to talk to api.airtable.com (enforced by the
 // no-restricted-syntax rule in eslint.config.mjs) so the signed-only filter

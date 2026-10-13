@@ -1,5 +1,5 @@
-import Nav from "@/components/Nav";
-import NoAnalytics from "@/components/NoAnalytics";
+import Nav from "@/components/layout/Nav";
+import NoAnalytics from "@/components/layout/NoAnalytics";
 
 // Unlisted volunteer tools and trackers (hidden from the sitemap): the site
 // header, and no analytics.

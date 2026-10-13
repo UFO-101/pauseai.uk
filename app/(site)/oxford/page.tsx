@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import LocalGroupEvents from "@/components/LocalGroupEvents";
-import { site } from "@/lib/data/site";
+import LocalGroupEvents from "@/components/events/LocalGroupEvents";
+import { site } from "@/lib/content/site";
 import { ButtonAnchor, ButtonLink } from "@/components/ui/Button";
 
 export const metadata: Metadata = {

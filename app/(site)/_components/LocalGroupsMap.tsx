@@ -7,7 +7,7 @@ import { geoMercator, geoPath } from "d3-geo";
 import { feature } from "topojson-client";
 import type { FeatureCollection, Geometry } from "geojson";
 import type { Topology } from "topojson-specification";
-import { localGroups } from "@/lib/data/local-groups";
+import { localGroups } from "@/lib/content/local-groups";
 
 const MAP_W = 380;
 const MAP_H = 608;

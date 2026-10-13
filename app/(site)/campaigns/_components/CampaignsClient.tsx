@@ -4,7 +4,7 @@ import { useEffect } from "react";
 
 // The only origin allowed to drive the embed's height. Without this check any
 // page framing us — or any window we opened — could post a resize and hide the
-// campaign form. Matches EMBED_ORIGIN in app/OnboardingFormEmbed.tsx.
+// campaign form. Matches EMBED_ORIGIN in app/(site)/_components/OnboardingFormEmbed.tsx.
 const EMBED_ORIGIN = "https://pauseai.info";
 
 export default function CampaignsClient() {

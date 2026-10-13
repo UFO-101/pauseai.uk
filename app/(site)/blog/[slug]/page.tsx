@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import JsonLd from "@/components/JsonLd";
-import { findPost, formatPostDate, ORGANISATION_AVATAR, postAuthor, postImage, posts } from "@/lib/data/blog";
-import { site } from "@/lib/data/site";
+import JsonLd from "@/components/layout/JsonLd";
+import { findPost, formatPostDate, ORGANISATION_AVATAR, postAuthor, postImage, posts } from "@/lib/content/blog";
+import { site } from "@/lib/content/site";
 import { parseCssStyle } from "@/lib/storyRender";
 import "../../track-record/track-record.css";
 import "../blog.css";

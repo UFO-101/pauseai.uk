@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import PersonCard from "@/components/PersonCard";
-import StoryShareForm from "@/components/StoryShareForm";
-import { isLongStory, LONG_STORY_CHAR_THRESHOLD, people } from "@/lib/data/people";
-import { site } from "@/lib/data/site";
+import PersonCard from "@/components/people/PersonCard";
+import StoryShareForm from "@/components/people/StoryShareForm";
+import { isLongStory, LONG_STORY_CHAR_THRESHOLD, people } from "@/lib/content/people";
+import { site } from "@/lib/content/site";
 import "../track-record/track-record.css";
 import "./people.css";
 

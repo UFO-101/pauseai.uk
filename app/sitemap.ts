@@ -1,9 +1,9 @@
 import { readdirSync } from "fs";
 import { join } from "path";
 import type { MetadataRoute } from "next";
-import { posts } from "@/lib/data/blog";
-import { people, personSlug } from "@/lib/data/people";
-import { site } from "@/lib/data/site";
+import { posts } from "@/lib/content/blog";
+import { people, personSlug } from "@/lib/content/people";
+import { site } from "@/lib/content/site";
 
 // Walks app/ for page.tsx files, skipping api/ (not a page), dynamic
 // segments like [slug] (those are added separately below, from the data

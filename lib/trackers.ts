@@ -1,5 +1,3 @@
-import { outsideFetch } from "@/lib/outside-fetch";
-
 export type SourceCounts = {
   /** Registrations per requested tag, every tag present (0 if none). */
   counts: Record<string, number>;
@@ -9,7 +7,7 @@ export type SourceCounts = {
   total: number;
 };
 
-type GuestEntry = { guest?: { approval_status?: string; utm_source?: string | null; registered_at?: string } };
+export type GuestEntry = { guest?: { approval_status?: string; utm_source?: string | null; registered_at?: string } };
 
 /**
  * Tallies an event's registrations by utm_source. Tags are matched
@@ -68,41 +66,4 @@ export function ranks(counts: Record<string, number>): Record<string, number | n
   return Object.fromEntries(
     Object.entries(counts).map(([tag, count]) => [tag, count > 0 ? 1 + values.filter((other) => other > count).length : null])
   );
-}
-
-/**
- * Pages through Luma's authenticated guest list for an event. Returns null when
- * LUMA_API_KEY is missing or Luma errors, so the page can say so rather than
- * show a misleading zero.
- */
-export async function getSourceCounts(
-  eventApiId: string,
-  tags: readonly string[],
-  since?: Date,
-  until?: Date
-): Promise<SourceCounts | null> {
-  const key = process.env.LUMA_API_KEY;
-  if (!key) return null;
-
-  const entries: GuestEntry[] = [];
-  let cursor: string | undefined;
-  try {
-    do {
-      const params = new URLSearchParams({ event_api_id: eventApiId, pagination_limit: "100" });
-      if (cursor) params.set("pagination_cursor", cursor);
-      const res = await outsideFetch(`https://public-api.luma.com/v1/event/get-guests?${params}`, {
-        headers: { "x-luma-api-key": key, accept: "application/json" },
-        next: { revalidate: 60 },
-      });
-      if (!res.ok) return null;
-      const data = await res.json();
-      // The list endpoint returns entries as { api_id, guest } or bare guests
-      // depending on version; normalise so tallySources sees one shape.
-      for (const entry of data.entries ?? []) entries.push(entry.guest ? entry : { guest: entry });
-      cursor = data.has_more ? data.next_cursor : undefined;
-    } while (cursor);
-  } catch {
-    return null;
-  }
-  return tallySources(entries, tags, since, until);
 }

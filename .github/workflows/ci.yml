@@ -33,7 +33,7 @@ jobs:
       - name: Check there are no coverage-ignore comments
         run: npm run check:coverage-ignores
 
-      - name: Check Airtable access is confined to lib/airtable.ts
+      - name: Check Airtable access is confined to lib/server/airtable.ts
         run: npm run check:airtable-filter
 
       - name: Build

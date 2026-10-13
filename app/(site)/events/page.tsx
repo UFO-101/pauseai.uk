@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import EventList from "@/components/EventList";
-import { getEvents } from "@/lib/data/events";
-import { site } from "@/lib/data/site";
+import EventList from "@/components/events/EventList";
+import { getEvents } from "@/lib/server/luma-calendar";
+import { site } from "@/lib/content/site";
 import "../track-record/track-record.css";
 import { ButtonAnchor } from "@/components/ui/Button";
 

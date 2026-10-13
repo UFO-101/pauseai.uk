@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import Script from "next/script";
-import CopyLinkButton from "@/components/CopyLinkButton";
-import { site } from "@/lib/data/site";
+import CopyLinkButton from "@/components/ui/CopyLinkButton";
+import { site } from "@/lib/content/site";
 import "./track-record.css";
 import { ButtonAnchor, ButtonLink } from "@/components/ui/Button";
 

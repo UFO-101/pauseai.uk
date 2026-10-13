@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { buttonAttributes } from "@/components/ui/Button";
+import { buttonAttributes } from "./Button";
 
 export default function CopyLinkButton({
   slug,

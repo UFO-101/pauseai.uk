@@ -2,14 +2,14 @@
 
 import Image from "next/image";
 import { useEffect, useState, type ReactNode } from "react";
-import type { LumaEntry } from "@/lib/data/events";
-import { formatEventDate, formatEventTime } from "@/lib/data/events";
-import { isAllowedEventImage } from "@/lib/data/event-image-hosts";
+import type { LumaEntry } from "@/lib/events";
+import { formatEventDate, formatEventTime } from "@/lib/events";
+import { isAllowedEventImage } from "@/lib/event-image-hosts";
 import { Button } from "@/components/ui/Button";
 
 function getDateStr(d: Date, tz: string): string {
   // An unrecognised IANA timezone throws RangeError here; fall back rather
-  // than crashing the render (see lib/data/events.ts formatEventDate).
+  // than crashing the render (see lib/events.ts formatEventDate).
   try {
     return d.toLocaleDateString("en-CA", { timeZone: tz, year: "numeric", month: "2-digit", day: "2-digit" });
   } catch {

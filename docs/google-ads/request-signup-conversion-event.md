@@ -33,7 +33,7 @@ Requirements:
 
 ## How pauseai.uk will consume it (for context, already planned)
 
-`app/OnboardingFormEmbed.tsx` in pauseai.uk already has a `message` listener that checks `event.origin === "https://pauseai.info"` and reads `data.height`. It will be extended:
+`app/(site)/_components/OnboardingFormEmbed.tsx` in pauseai.uk already has a `message` listener that checks `event.origin === "https://pauseai.info"` and reads `data.height`. It will be extended:
 
 ```ts
 if (data?.event === "onboarding_signup_complete") {

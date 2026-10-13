@@ -1,8 +1,8 @@
 "use client";
 
 import { useRef, useState } from "react";
-import type { Person } from "@/lib/data/people";
-import PersonCard from "./PersonCard";
+import type { Person } from "@/lib/content/people";
+import PersonCard from "@/components/people/PersonCard";
 
 // Movement past this many pixels counts as a drag rather than a click, so a
 // drag ending over a card's link/button doesn't also fire that click.

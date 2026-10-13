@@ -89,9 +89,9 @@ describe("public assets", () => {
     // These come from data modules as whole paths, so the literal scan does
     // cover them — this asserts the data is actually being read, so a future
     // move to a CMS or a dynamic path does not silently drop the coverage.
-    const fromData = referencedAssets().filter(({ file }) => file.startsWith(join("lib", "data")));
+    const fromData = referencedAssets().filter(({ file }) => file.startsWith(join("lib", "content")));
 
-    expect(fromData.length, "no asset paths found in lib/data — did the data move?").toBeGreaterThan(5);
+    expect(fromData.length, "no asset paths found in lib/content — did the data move?").toBeGreaterThan(5);
     expect(missing(fromData)).toEqual([]);
   });
 });

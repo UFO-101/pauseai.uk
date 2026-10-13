@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { site } from "@/lib/data/site";
+import { site } from "@/lib/content/site";
 
 export default function Footer() {
   return (

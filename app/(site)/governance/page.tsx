@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Image from "next/image";
-import { board } from "@/lib/data/board";
+import { board } from "@/lib/content/board";
 import "../track-record/track-record.css";
 import "./governance.css";
 

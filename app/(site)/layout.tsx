@@ -1,4 +1,4 @@
-import Nav from "@/components/Nav";
+import Nav from "@/components/layout/Nav";
 
 // Public pages: the site header, then the page. The footer and cookie
 // consent are in the root layout.

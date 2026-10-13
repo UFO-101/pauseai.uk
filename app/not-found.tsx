@@ -1,5 +1,4 @@
-import Link from "next/link";
-import Nav from "@/components/Nav";
+import Nav from "@/components/layout/Nav";
 import { ButtonLink } from "@/components/ui/Button";
 
 export default function NotFound() {

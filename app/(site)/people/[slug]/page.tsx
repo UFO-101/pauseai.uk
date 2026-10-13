@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import CopyLinkButton from "@/components/CopyLinkButton";
-import StoryShareForm from "@/components/StoryShareForm";
-import { people, personSlug } from "@/lib/data/people";
-import { site } from "@/lib/data/site";
+import CopyLinkButton from "@/components/ui/CopyLinkButton";
+import StoryShareForm from "@/components/people/StoryShareForm";
+import { people, personSlug } from "@/lib/content/people";
+import { site } from "@/lib/content/site";
 import { avatarFallback, parseCssStyle, renderBody } from "@/lib/storyRender";
 import "../../track-record/track-record.css";
 import "../people.css";

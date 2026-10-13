@@ -1,3 +1,4 @@
+import "server-only";
 import { fixtureResponse } from "@/tests/fixtures/outside-services";
 
 /**

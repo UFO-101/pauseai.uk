@@ -21,7 +21,7 @@ export type BlogPost = {
   /** ISO date, e.g. "2026-08-11" */
   date: string;
   /**
-   * Either a `name` in lib/data/people.ts (the byline links to their story),
+   * Either a `name` in lib/content/people.ts (the byline links to their story),
    * or ORGANISATION_AUTHOR for pieces published in PauseAI UK's own name.
    */
   author: string;
@@ -1893,7 +1893,7 @@ export const posts: BlogPost[] = [
 for (const post of posts) {
   if (post.author !== ORGANISATION_AUTHOR && !people.some((p) => p.name === post.author)) {
     throw new Error(
-      `blog.tsx: post "${post.slug}" has author "${post.author}", which is neither "${ORGANISATION_AUTHOR}" nor a name in lib/data/people.ts.`,
+      `blog.tsx: post "${post.slug}" has author "${post.author}", which is neither "${ORGANISATION_AUTHOR}" nor a name in lib/content/people.ts.`,
     );
   }
 }

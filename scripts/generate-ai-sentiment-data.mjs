@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Converts the raw AI Sentiment 2026 CSVs into JSON consumed by
-// lib/data/aiSentiment2026.ts. Re-run after editing the CSVs in data/.
+// lib/content/aiSentiment2026.ts. Re-run after editing the CSVs in data/.
 import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import path from "node:path";

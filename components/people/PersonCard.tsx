@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import { useLayoutEffect, useRef, useState } from "react";
-import CopyLinkButton from "@/components/CopyLinkButton";
-import type { Person } from "@/lib/data/people";
-import { personSlug } from "@/lib/data/people";
+import CopyLinkButton from "@/components/ui/CopyLinkButton";
+import type { Person } from "@/lib/content/people";
+import { personSlug } from "@/lib/content/people";
 import { avatarFallback, bulletText, isBulletLine, parseCssStyle, renderBody } from "@/lib/storyRender";
 
 // Server-rendered/pre-hydration fallback, so there's no giant flash of text

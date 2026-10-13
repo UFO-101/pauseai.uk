@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { AXIS_MAX_PCT, RESPONSE_OPTIONS, type CountryRow, type DemographicRow, type ResponseOption } from "@/lib/data/aiSentiment2026";
+import { AXIS_MAX_PCT, RESPONSE_OPTIONS, type CountryRow, type DemographicRow, type ResponseOption } from "@/lib/content/aiSentiment2026";
 
 type Row = CountryRow | DemographicRow;
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { COUNTRIES, REGIONS, netOpinion, regionLabel } from "@/lib/data/aiSentiment2026";
+import { COUNTRIES, REGIONS, netOpinion, regionLabel } from "@/lib/content/aiSentiment2026";
 import DivergingBar, { BarAxisLabels } from "./DivergingBar";
 import Dropdown from "./Dropdown";
 

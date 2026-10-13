@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { getSourceCounts, lastPlace, leaders, ranks, type SourceCounts } from "@/lib/data/luma-sources";
+import { lastPlace, leaders, ranks, type SourceCounts } from "@/lib/trackers";
+import { getSourceCounts } from "@/lib/server/luma-guests";
 import "../trackers.css";
 
 // Volunteer tracker: unlisted, kept out of search results and the sitemap (see HIDDEN_ROUTES in app/sitemap.ts).
