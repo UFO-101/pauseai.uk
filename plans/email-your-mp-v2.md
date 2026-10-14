@@ -26,7 +26,7 @@ Built entirely in pauseai.uk. When it works, the old tool is deleted from pausea
 - **Replies**: Postmark receives mail for the subdomain (an MX record pointing to `inbound.postmarkapp.com`) and posts the whole message to a webhook. That includes the text, the To and Cc lists, and the part after `reply+` as `MailboxHash`, so we don't need to fetch anything. We forward the reply to a shared PauseAI inbox, and to Jane if her address isn't in its To or Cc (the office replied only to From). Nothing about the reply is stored. Before relying on this, test a reply from Outlook, which Parliament uses. The form tells senders that a copy of any reply comes to PauseAI UK.
 - **Bounces and spam complaints** don't go to the From address. Postmark handles them and reports them to a webhook on pauseai.uk, with its `MessageID`.
 - **Webhook security**: Postmark doesn't sign webhooks. Each webhook URL carries a secret username and password (basic auth) over HTTPS, and our routes reject requests without them.
-- **CiviCRM**: each send is logged there as an activity.
+- **Records**: each letter is kept in our own database. CiviCRM has no API for logging them there.
 - **Spam**:
   - Turnstile and the honeypot field, as today.
   - Recipients must be on the MP list.
@@ -149,11 +149,10 @@ Things the code can't do. Claude writes the code.
 - Changes to the pauseai.uk privacy policy: postal addresses, copies of replies going to PauseAI, and keeping letters indefinitely.
 
 **Accounts and settings:**
-- **Netlify:** turn on Netlify Database for the site. Set the environment variables (Postmark server token and webhook credentials, Google login client, Turnstile keys, CiviCRM key, Airtable write key).
+- **Netlify:** turn on Netlify Database for the site. Set the environment variables (Postmark server token and webhook credentials, Google login client, Turnstile keys, Airtable write key).
 - **Postmark:** create the account and a server, pay for Basic, add the `mp.pauseai.uk` domain and its inbound domain, and apply for approval.
 - **DNS:** add Postmark's records for `mp.pauseai.uk`: DKIM, the Return-Path CNAME, DMARC, and an MX record pointing to `inbound.postmarkapp.com` for replies.
 - **Turnstile:** a site key that works on pauseai.uk. The pauseai.info one may be limited to that domain.
-- **CiviCRM:** an API key, and an activity type for logged letters.
 - **Google:** Joseph creates the staff login client in the pauseai.uk Workspace's Google Cloud project.
 
 **Checks:**
