@@ -3,18 +3,18 @@ import { campaigns } from "@/lib/content/email-your-mp";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { ROUTES } from "../routes";
 import { logInAsStaff } from "../steps";
-import { BASE, syncFixtureMps } from "./setup";
+import { BASE, newestEmailTo, OUTBOX_DIR, syncFixtureMps } from "./setup";
 
 // The staff interface, on the behaviour build's own database. Staff log in
-// through the fixture Google (logInAsStaff in tests/steps.ts): there's no
-// login bypass. Screenshots of each screen, against main's, are in
+// with the link emailed to them, taken from the build's outbox (logInAsStaff
+// in tests/steps.ts): there's no login bypass. Screenshots of each screen, against main's, are in
 // tests/fixtures-vs-main/.
 
-const STAFF_PAGES = ROUTES.filter((route) => route.startsWith("/staff") && route !== "/staff/login");
+const STAFF_PAGES = ROUTES.filter((route) => route.startsWith("/staff") && !route.startsWith("/staff/login"));
 const [pm] = campaigns;
 
-/** Logs in as `code`'s account, through the fixture Google (tests/steps.ts). */
-const logIn = (page: Page, code = "fixture-staff") => logInAsStaff(page, BASE, code);
+/** Logs in as `email`, with the link emailed to them (tests/steps.ts). */
+const logIn = (page: Page, email?: string) => logInAsStaff(page, BASE, OUTBOX_DIR, email);
 
 test.beforeAll(async ({ request }) => syncFixtureMps(request));
 
@@ -45,8 +45,28 @@ test("staff API routes and Server Actions, without a session, change nothing", a
   expect(forged.status()).toBe(307);
 });
 
-test("an account outside pauseai.uk can't log in", async ({ page }) => {
-  await logIn(page, "fixture-outsider");
+test("an address outside pauseai.uk gets no link, though the page doesn't say so", async ({ page }) => {
+  expect(await logIn(page, "someone@gmail.com")).toBe(false);
+  expect(await logIn(page, "someone@pauseai.uk.evil.example")).toBe(false);
+});
+
+test("a login link works once, and only from its button", async ({ page, request }) => {
+  await page.goto(`${BASE}/staff/login`);
+  await page.getByLabel(staffCopy.login.emailLabel).fill("once@pauseai.uk");
+  await page.getByRole("button", { name: staffCopy.login.button }).click();
+  await expect(page.getByRole("status")).toHaveText(staffCopy.login.sent);
+  const link = newestEmailTo("once@pauseai.uk")!.TextBody.match(/https?:\/\/\S+\/staff\/login\/confirm\?token=[\w-]+/)![0];
+
+  // Opening the link, as a mail scanner would, logs nobody in.
+  expect((await request.get(link)).ok()).toBe(true);
+  await page.goto(link);
+  await page.getByRole("button", { name: staffCopy.login.confirm }).click();
+  await expect(page).toHaveURL(`${BASE}/staff`);
+  await expect(page.getByText(staffCopy.nav.signedInAs("once@pauseai.uk"))).toBeVisible();
+
+  await page.context().clearCookies();
+  await page.goto(link);
+  await page.getByRole("button", { name: staffCopy.login.confirm }).click();
   await expect(page).toHaveURL(/\/staff\/login\?failed=1$/);
   await expect(page.getByText(staffCopy.login.failed)).toBeVisible();
 });

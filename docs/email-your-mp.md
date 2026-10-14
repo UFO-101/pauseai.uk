@@ -37,7 +37,7 @@ At the swap (stage 5 of the plan) these replace `/campaigns`:
 - `lib/parliament.ts`, `lib/mp-check.ts`, `lib/server/mp-check.ts`: the
   nightly check of those MPs against Parliament's Members API.
 - `lib/server/politicians.ts`: politicians and their campaign statuses.
-- `lib/server/staff-auth.ts`, `lib/server/google-login.ts`, `proxy.ts`: staff
+- `lib/server/staff-auth.ts`, `lib/server/staff-login.ts`, `proxy.ts`: staff
   login.
 - `app/(staff)/staff/`: the staff interface.
 - `netlify/database/migrations/`: the database's tables.
@@ -87,16 +87,13 @@ if the nightly check starts failing with a timeout, that's why.
 
 ## Settings
 
-The environment variables are listed, with what each is for, in [.env.example](../.env.example). Two need setting up first:
-
-- **Google login**: an "Internal" OAuth client in the pauseai.uk Workspace's Google Cloud project, with `https://pauseai.uk/staff/api/callback` as a redirect URI. Previews can't log in, since Google won't accept wildcard redirect URIs.
-- **`CRON_SECRET`**: any long random string.
+The environment variables are listed, with what each is for, in [.env.example](../.env.example). `CRON_SECRET` needs setting up first: any long random string.
 
 ## Sending
 
 1. The form posts to `/api/email-your-mp/letters`. The letter is saved and
    sent straight away through Postmark, as HTML and as plain text, from `"Jane Smith via PauseAI"
-   <reply+<hash>@mp.pauseai.uk>`, with Reply-To the sender and that address,
+   <reply+<hash>@letters.pauseai.uk>`, with Reply-To the sender and that address,
    and the campaign's PDFs attached. If Postmark refuses it, nothing is
    kept, so the sender can try again. The form pushes `mp_email_sent` to
    `dataLayer` once it's sent.
@@ -109,8 +106,8 @@ Postmark's webhooks, each with the basic auth credentials in the URL, e.g.
 
 - **Bounce** and **Spam complaint**: `/api/postmark/bounce`. The letter's
   status changes, shown in `/staff/letters`.
-- **Inbound** (the `mp.pauseai.uk` inbound domain): `/api/postmark/inbound`.
-  The reply is forwarded to `REPLIES_INBOX`, and to the sender unless their
+- **Inbound** (the `letters.pauseai.uk` inbound domain): `/api/postmark/inbound`.
+  The reply is forwarded, from `noreply@notify.pauseai.uk`, to `REPLIES_INBOX`, and to the sender unless their
   address was already in its To or Cc. The letter gets a "replied" event,
   with who it came from but not its text, and `/staff/letters` shows when
   the first reply from anyone but the sender came.
@@ -124,7 +121,13 @@ see them, with contact consent, at `/staff/letters`.
 
 ## Staff interface
 
-`/staff`, for pauseai.uk Google accounts. Edit each politician's status for
+`/staff`, for anyone with a pauseai.uk email address. They type it at
+`/staff/login` and are emailed a link, which works once, for 15 minutes; at
+most 5 are sent an hour to one address. The link opens a page whose button
+logs them in, so a mail scanner that follows it logs nobody in. Its address
+is this deploy's own, from Netlify at build time (`SITE_ORIGIN` in
+`next.config.ts`), never the request's, so a forged Host header can't send
+the token elsewhere. Logins work on previews too. Edit each politician's status for
 each campaign (including the test MP's), add signers from outside the
 Commons, check held MP syncs, import the signatories from Airtable once, and
 see who changed what.
@@ -135,7 +138,8 @@ see who changed what.
   `/staff/mp-sync`, then the import from `/staff/import`, then check the
   signatories list.
 
-- Postmark: a server, the `mp.pauseai.uk` sending domain (DKIM, Return-Path,
-  DMARC) and inbound domain (MX to `inbound.postmarkapp.com`), and the
-  webhooks above.
+- Postmark: a server, two sending domains (DKIM, Return-Path, DMARC), and
+  the webhooks above. `letters.pauseai.uk` is for letters to representatives,
+  and is also the inbound domain (MX to `inbound.postmarkapp.com`).
+  `notify.pauseai.uk` is for the site's other email, such as forwarded replies.
 - After stage 4 is live, turn off the Airtable 8am automation.

@@ -11,7 +11,7 @@ import { dropDatabase, freshDatabase } from "@/scripts/fresh-database.mjs";
  */
 export const describeWithDatabase = describe.skipIf(process.env.NETLIFY === "true");
 
-const TABLES = ["audit_log", "campaign_statuses", "letter_events", "letters", "mp_checks", "mp_syncs", "politicians", "staff_sessions"];
+const TABLES = ["audit_log", "campaign_statuses", "letter_events", "letters", "mp_checks", "mp_syncs", "politicians", "staff_login_links", "staff_sessions"];
 
 /**
  * Gives this test file its own database, empty before each test. Call at the

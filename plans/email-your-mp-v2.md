@@ -20,10 +20,10 @@ Built entirely in pauseai.uk. When it works, the old tool is deleted from pausea
 
 ## Sending
 
-- **Through Postmark**, because it allows sending to people who haven't subscribed, which letters to MPs need. New accounts have to pass Postmark's approval before they can send to outside addresses. Letters are one-to-one and triggered by the sender, so they go on the transactional stream. Francis signs up and pays for Basic, $15 a month for 10,000 emails. Letters go out from their own subdomain (e.g. `mp.pauseai.uk`) with SPF, DKIM, DMARC and a custom Return-Path, which keeps their sending reputation separate.
-- **Addresses**: each letter gets its own address, `reply+<hash>@mp.pauseai.uk`, where the hash identifies the letter.
-  - From: "Jane Smith via PauseAI" `<reply+<hash>@mp.pauseai.uk>`.
-  - Reply-To: `jane@example.com, reply+<hash>@mp.pauseai.uk`. Most mail clients reply to both, so Jane gets the reply directly and we get a copy.
+- **Through Postmark**, because it allows sending to people who haven't subscribed, which letters to MPs need. New accounts have to pass Postmark's approval before they can send to outside addresses. Letters are one-to-one and triggered by the sender, so they go on the transactional stream. Francis signs up and pays for Basic, $15 a month for 10,000 emails. Letters go out from their own subdomain, `letters.pauseai.uk`, which can later carry letters to MSPs, the PM and others. The site's other email, such as forwarded replies and login confirmations, goes from `notify.pauseai.uk`. Each has SPF, DKIM, DMARC and a custom Return-Path, which keeps their sending reputations separate.
+- **Addresses**: each letter gets its own address, `reply+<hash>@letters.pauseai.uk`, where the hash identifies the letter.
+  - From: "Jane Smith via PauseAI" `<reply+<hash>@letters.pauseai.uk>`.
+  - Reply-To: `jane@example.com, reply+<hash>@letters.pauseai.uk`. Most mail clients reply to both, so Jane gets the reply directly and we get a copy.
 - **Replies**: Postmark receives mail for the subdomain (an MX record pointing to `inbound.postmarkapp.com`) and posts the whole message to a webhook. That includes the text, the To and Cc lists, and the part after `reply+` as `MailboxHash`, so we don't need to fetch anything. We forward the reply to `policy@pauseai.uk`, and to Jane if her address isn't in its To or Cc (the office replied only to From). Each reply is logged against its letter: when it came and who from, but not its text. Staff see it with the letter, at `/staff/letters`. A reply that doesn't reach us, such as a letter by post, isn't recorded. Before relying on this, test a reply from Outlook, which Parliament uses. The form tells senders that a copy of any reply comes to PauseAI UK.
 - **Bounces and spam complaints** don't go to the From address. Postmark handles them and reports them to a webhook on pauseai.uk, with its `MessageID`.
 - **Webhook security**: Postmark doesn't sign webhooks. Each webhook URL carries a secret username and password (basic auth) over HTTPS, and our routes reject requests without them.
@@ -65,17 +65,17 @@ The one-letter-per-campaign check is a count over the letters table.
 For the policy team to edit campaign status, add signers from outside the Commons, set the test MP's status, and see letters and bounces.
 
 - **Where**: under `app/(staff)/staff/`, so the URLs are `/staff/...`, with staff API routes at `/staff/api/...`. Its layout leaves out `<Nav>` and turns analytics off with `<NoAnalytics />`, as `app/(tools)/layout.tsx` does. It stays under the root layout (`app/layout.tsx`), so the footer and consent banner still show. A separate root layout would mean splitting the site's root layout across every route group. Nothing links to it, it's not in the sitemap or `robots.txt`, and it sends `noindex`.
-- **Login**: Google, pauseai.uk Workspace accounts only.
-  - The OAuth client is set to "Internal", so Google refuses outside accounts. Joseph sets it up in the pauseai.uk Workspace's Google Cloud project, and is the first staff user.
-  - The server checks the token's signature, `email_verified`, and that `hd` is exactly `pauseai.uk`.
-  - Sessions are kept in the database. The cookie is `HttpOnly`, `Secure`, `SameSite=Lax`, works only under `/staff`, and lasts 12 hours.
-  - The library is Arctic with our own session table, or Better Auth.
-  - Login starts from a link, because the site's `form-action 'self'` would block a form that redirects to Google.
+- **Login**: by email, for any pauseai.uk address (changed from Google on 14 Oct 2026).
+  - The login page asks only for an email address, and says the same whatever is typed. A pauseai.uk address is emailed a link.
+  - The link works once, for 15 minutes. At most 5 are sent an hour to one address.
+  - The link opens a page whose button logs in, so a mail scanner that follows the link logs nobody in.
+  - The link's address is fixed at build time from Netlify's settings, never taken from the request.
+  - Sessions are kept in the database. The cookie is `HttpOnly`, `Secure`, `SameSite=Lax`, works only under `/staff`, and lasts 12 hours. The link logs in whichever browser opens it.
 - **Every route requires login.** Next.js 16's guide (`node_modules/next/dist/docs/01-app/02-guides/authentication.md`) says a check in the layout isn't enough. So:
   - `proxy.ts` sends anyone on `/staff/:path*` without a session cookie to login.
   - Every staff page, Server Action and route handler first calls `requireStaff()` (`lib/server/staff-auth.ts`), which checks the session in the database.
   - A CI check fails if a file under `app/(staff)/` doesn't call `requireStaff()`.
-- **Previews**: Google won't accept wildcard return addresses, so staff login works on production and locally only. Local development needs its own OAuth client.
+- **Previews**: staff can log in on previews too.
 
 ## Rollout
 
@@ -100,7 +100,7 @@ Be sure to add appropriate behaviour tests of flows, and new visual test pages.
 - **Ads event**: one `mp_email_sent` per accepted form, and none on an error.
 - **Campaign URLs**: each campaign URL and an unknown slug are in `tests/routes.ts`.
 - **Staff routes locked**: every `/staff` route, without a session, redirects to login or returns 401, and Server Actions change nothing.
-- **Staff screens**: tested by logging in through the fixture Google flow. There's no login bypass.
+- **Staff screens**: tested by logging in with the emailed link, taken from the outbox. There's no login bypass.
 - **Before and after the swap**: before, the v2 URL is `noindex` and unlinked. After, it redirects, and `/campaigns` has no iframe. pauseai.info stays in `frame-src` for the onboarding form.
 - **Visual tests** of the new and changed pages. Their baselines only settle after the swap.
 
@@ -130,19 +130,14 @@ None for now.
 
 Things the code can't do. Claude writes the code.
 
-**Words** (Joseph approves):
-- Each campaign's letter, subject and "already done" wording, including the exact name of Alex Sobel's bill.
-- The PDF attachments for the bill campaign.
-- The form text, including the consent wording and the notice that a copy of any reply comes to PauseAI UK.
-- The note sent with a forwarded reply, and the "already sent" message.
-- Changes to the pauseai.uk privacy policy: postal addresses, copies of replies going to PauseAI, and keeping letters indefinitely.
+**Words**:
+- Approve everything marked with the asterism in the code
 
 **Accounts and settings:**
-- **Netlify:** turn on Netlify Database for the site. Set the environment variables (Postmark server token and webhook credentials, Google login client, Turnstile keys, Airtable read-only token).
-- **Postmark:** create the account and a server, pay for Basic, add the `mp.pauseai.uk` domain and its inbound domain, and apply for approval.
-- **DNS:** add Postmark's records for `mp.pauseai.uk`: DKIM, the Return-Path CNAME, DMARC, and an MX record pointing to `inbound.postmarkapp.com` for replies.
+- **Netlify:** turn on Netlify Database for the site. Set the environment variables (Postmark server token and webhook credentials, Turnstile keys, Airtable read-only token).
+- **Postmark:** create the account and a server, pay for Basic, add the `letters.pauseai.uk` and `notify.pauseai.uk` domains and the `letters.pauseai.uk` inbound domain, and apply for approval.
+- **DNS:** add Postmark's records for `letters.pauseai.uk` and `notify.pauseai.uk`: DKIM, the Return-Path CNAME and DMARC for each, and an MX record on `letters.pauseai.uk` pointing to `inbound.postmarkapp.com` for replies.
 - **Turnstile:** a site key that works on pauseai.uk. The pauseai.info one may be limited to that domain.
-- **Google:** Joseph creates the staff login client in the pauseai.uk Workspace's Google Cloud project.
 
 **Checks:**
 - Reply to a test letter from Outlook, and check the reply reaches both Jane and us.

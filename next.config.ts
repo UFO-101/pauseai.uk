@@ -89,6 +89,9 @@ const nextConfig: NextConfig = {
     // at build time. Outside production, letters go only to the test MP
     // (lib/server/mp-letters.ts).
     DEPLOY_CONTEXT: process.env.CONTEXT ?? "local",
+    // This deploy's own address, from Netlify, for the links in staff login
+    // emails (lib/server/staff-login.ts). Empty for a local build.
+    SITE_ORIGIN: (process.env.CONTEXT === "production" ? process.env.URL : process.env.DEPLOY_PRIME_URL) ?? "",
   },
   // The PDFs attached to letters, read from disk when one is sent.
   outputFileTracingIncludes: {

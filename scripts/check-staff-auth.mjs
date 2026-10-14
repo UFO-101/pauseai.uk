@@ -5,13 +5,14 @@
 // session in the database (plans/email-your-mp-v2.md, "Staff interface").
 //
 // Components (_components/) and the layout only render what a page hands
-// them, so they're not entry points. The login page and the two login
-// routes are how staff get a session, so they can't require one.
+// them, so they're not entry points. The login page, the page the emailed
+// link opens, and the two login routes are how staff get a session, so they
+// can't require one.
 import { readdirSync, readFileSync } from "node:fs";
 import { join, relative } from "node:path";
 
 const ROOT = "app/(staff)";
-const OPEN = new Set(["staff/login/page.tsx", "staff/api/login/route.ts", "staff/api/callback/route.ts"]);
+const OPEN = new Set(["staff/login/page.tsx", "staff/login/confirm/page.tsx", "staff/api/login/route.ts", "staff/api/callback/route.ts"]);
 
 function files(dir) {
   return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {

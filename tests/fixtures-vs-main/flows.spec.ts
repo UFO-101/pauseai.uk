@@ -1,7 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { fakeTurnstile, fillLetter, logInAsStaff, lookUpTestMp, sendLetter, syncMps } from "../steps";
-import { BRANCH_URL, compareWithMain, MAIN_URL } from "./compare";
+import { BRANCH_URL, compareWithMain, MAIN_URL, outboxFor } from "./compare";
 
 // Each step of the flows that need fixtures, this branch against main:
 // Email your MP up to the letter being sent, and each staff screen after
@@ -61,9 +61,13 @@ test("branch vs main: the staff login page", async ({ page }, testInfo) => {
   });
 });
 
+// Each screen logs in as its own address, new each run, so the cap of five
+// login emails an hour to one address never stops a step.
+const RUN = Date.now().toString(36);
+
 /** Logs in on `base`, opens `path`, and waits for its heading. */
 async function staffScreen(page: Page, base: string, path: string) {
-  await logInAsStaff(page, base);
+  await logInAsStaff(page, base, outboxFor(base), `staff+${RUN}${path.replace(/\W+/g, "-")}@pauseai.uk`);
   await expect(page).toHaveURL(`${base}/staff`);
   if (path !== "/staff") await page.goto(`${base}${path}`);
   await expect(page.getByRole("heading", { level: 1 })).toBeVisible();

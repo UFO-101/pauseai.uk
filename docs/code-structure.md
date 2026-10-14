@@ -18,7 +18,7 @@ app/
   (site)/                 public pages; layout.tsx renders <Nav>
   (tools)/                unlisted volunteer tools and trackers; layout.tsx
                           renders <Nav> and turns analytics off
-  (staff)/staff/          the staff interface, behind Google login; no <Nav>,
+  (staff)/staff/          the staff interface, behind email login; no <Nav>,
                           no analytics, noindex
   api/                    route handlers, only for things that need a URL
   sitemap.ts, robots.ts

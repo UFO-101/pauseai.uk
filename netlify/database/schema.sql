@@ -215,6 +215,18 @@ ALTER TABLE public.politicians ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY 
 );
 
 --
+-- Name: staff_login_links; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.staff_login_links (
+    token_hash text NOT NULL,
+    email text NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    expires_at timestamp with time zone NOT NULL,
+    used_at timestamp with time zone
+);
+
+--
 -- Name: staff_sessions; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -303,6 +315,13 @@ ALTER TABLE ONLY public.politicians
     ADD CONSTRAINT politicians_test_postcode_key UNIQUE (test_postcode);
 
 --
+-- Name: staff_login_links staff_login_links_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.staff_login_links
+    ADD CONSTRAINT staff_login_links_pkey PRIMARY KEY (token_hash);
+
+--
 -- Name: staff_sessions staff_sessions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -338,6 +357,12 @@ CREATE INDEX letters_sender_email_campaign ON public.letters USING btree (lower(
 --
 
 CREATE INDEX politicians_sitting_constituency ON public.politicians USING btree (constituency) WHERE (sitting AND (house = 'commons'::text));
+
+--
+-- Name: staff_login_links_email_created_at; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX staff_login_links_email_created_at ON public.staff_login_links USING btree (lower(email), created_at);
 
 --
 -- Name: staff_sessions_expires_at; Type: INDEX; Schema: public; Owner: -

@@ -30,7 +30,6 @@
     "@tiptap/react": "3.31.4",
     "@tiptap/starter-kit": "3.31.4",
     "d3-geo": "^3.1.1",
-    "jose": "^6.2.12",
     "jsqr": "^1.4.0",
     "jszip": "^3.10.2",
     "next": "16.3.2",

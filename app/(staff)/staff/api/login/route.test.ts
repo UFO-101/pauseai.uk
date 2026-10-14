@@ -1,31 +1,40 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { GET } from "./route";
+import { afterEach, beforeEach, expect, it, vi } from "vitest";
+import { http, HttpResponse } from "msw";
+import { server } from "@/tests/fixtures/msw";
+import { describeWithDatabase, useTestDatabase } from "@/tests/database";
+import { POST } from "./route";
 
 beforeEach(() => {
-  vi.stubEnv("GOOGLE_CLIENT_ID", "client-1");
-  vi.stubEnv("GOOGLE_CLIENT_SECRET", "secret-1");
+  vi.stubEnv("POSTMARK_SERVER_TOKEN", "server-token");
+  vi.stubEnv("SITE_ORIGIN", "https://pauseai.uk");
 });
 afterEach(() => vi.unstubAllEnvs());
 
-describe("GET /staff/api/login", () => {
-  it("sends staff to Google, remembering the state and verifier for the callback only", async () => {
-    const res = await GET(new Request("https://pauseai.uk/staff/api/login"));
-    const google = new URL(res.headers.get("location")!);
-    expect(google.origin).toBe("https://accounts.google.com");
-    expect(google.searchParams.get("redirect_uri")).toBe("https://pauseai.uk/staff/api/callback");
+function post(body: BodyInit | null) {
+  return POST(new Request("https://pauseai.uk/staff/api/login", { method: "POST", body }));
+}
 
-    const cookie = res.headers.get("set-cookie")!;
-    expect(cookie).toContain(`staff_login=${google.searchParams.get("state")}.`);
-    expect(cookie).toMatch(/Path=\/staff\/api\/callback/);
-    expect(cookie).toMatch(/HttpOnly/);
-    expect(cookie).toMatch(/Secure/);
-    expect(cookie).toMatch(/SameSite=lax/i);
-    expect(cookie).toMatch(/Max-Age=600/);
-  });
+describeWithDatabase("POST /staff/api/login", () => {
+  useTestDatabase();
 
-  it("says so when Google login isn't set up", async () => {
-    vi.stubEnv("GOOGLE_CLIENT_ID", "");
-    const res = await GET(new Request("https://pauseai.uk/staff/api/login"));
-    expect(res.status).toBe(500);
+  it("emails a link to a pauseai.uk address, and says the same whatever was typed", async () => {
+    const to: string[] = [];
+    server.use(
+      http.post("https://api.postmarkapp.com/email", async ({ request }) => {
+        to.push(((await request.json()) as { To: string }).To);
+        return HttpResponse.json({ ErrorCode: 0, MessageID: "m" });
+      }),
+    );
+    const form = (email: string) => {
+      const data = new FormData();
+      data.set("email", email);
+      return data;
+    };
+
+    for (const res of [await post(form("jo@pauseai.uk")), await post(form("jo@gmail.com")), await post(null)]) {
+      expect(res.status).toBe(303);
+      expect(res.headers.get("location")).toBe("https://pauseai.uk/staff/login?sent=1");
+    }
+    expect(to).toEqual(["jo@pauseai.uk"]);
   });
 });

@@ -6,9 +6,17 @@ export const staffCopy = {
   metaTitle: "⁂ Officium",
   login: {
     title: "⁂ Intra",
-    intro: "⁂ Tantum rationes pauseai.uk intrare possunt.",
-    button: "⁂ Intra cum Google",
-    failed: "⁂ Intrare non potuisti. Ratione pauseai.uk utere.",
+    intro: "⁂ Inscriptionem tuam pauseai.uk scribe: nexum tibi mittemus.",
+    emailLabel: "⁂ Inscriptio electronica",
+    button: "⁂ Mitte nexum",
+    sent: "⁂ Si inscriptio pauseai.uk est, nexum in cista tua invenies.",
+    failed: "⁂ Hic nexus iam usus est aut exspiravit. Novum pete.",
+    confirm: "⁂ Intra",
+  },
+  // The email with the login link.
+  loginEmail: {
+    subject: "⁂ Nexus ad intrandum",
+    body: (link: string, minutes: number) => `⁂ Hunc nexum clicca ut intres:\n\n${link}\n\nPer ${minutes} minuta valet, semel.\n\nSi non petivisti, hunc nuntium neglege.`,
   },
   nav: {
     politicians: "⁂ Politici",

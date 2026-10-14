@@ -49,3 +49,25 @@ describe("redirects", () => {
     expect(redirects.every((r) => r.permanent)).toBe(true);
   });
 });
+
+describe("SITE_ORIGIN, for staff login links", () => {
+  async function siteOrigin(env: Record<string, string | undefined>) {
+    vi.resetModules();
+    for (const [key, value] of Object.entries(env)) {
+      vi.stubEnv(key, value ?? "");
+      if (value === undefined) delete process.env[key];
+    }
+    return (await import("./next.config")).default.env!.SITE_ORIGIN;
+  }
+
+  it("is the live site's URL in production, and a preview's own address elsewhere on Netlify", async () => {
+    expect(await siteOrigin({ CONTEXT: "production", URL: "https://pauseai.uk", DEPLOY_PRIME_URL: "https://main--pauseai.netlify.app" })).toBe("https://pauseai.uk");
+    expect(await siteOrigin({ CONTEXT: "deploy-preview", URL: "https://pauseai.uk", DEPLOY_PRIME_URL: "https://deploy-preview-1--pauseai.netlify.app" })).toBe(
+      "https://deploy-preview-1--pauseai.netlify.app",
+    );
+  });
+
+  it("is empty for a local build", async () => {
+    expect(await siteOrigin({ CONTEXT: undefined, DEPLOY_PRIME_URL: undefined })).toBe("");
+  });
+});

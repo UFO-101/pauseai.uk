@@ -153,7 +153,6 @@ your machine. You need no keys:
 | Parliament's Members API | The same two MPs, with an office email each. Rachel Blake's differs from Airtable's, so the MP check has something to show. |
 | Turnstile | Accepts every token |
 | Postmark | Accepts every email, without needing a token. With `OUTBOX_DIR`, writes each one to a JSON file there. |
-| Google login | Accepts the codes `fixture-staff` (staff@pauseai.uk) and `fixture-outsider` (a Gmail account) |
 
 #### Send a letter to the test MP
 
@@ -188,23 +187,14 @@ Then postcode `SW1A 1AA` finds Rachel Blake.
 
 #### Log in to the staff interface
 
-The fixture Google can log you in as staff@pauseai.uk. Set these in
-`.env.local`, and restart the dev server:
-
-```bash
-GOOGLE_CLIENT_ID=fixture-client-id
-GOOGLE_CLIENT_SECRET=fixture
-```
-
-Then:
-
-1. Open http://localhost:3000/staff/api/login. You'll land on a Google
-   error page, because the client isn't real, but the login has started.
-2. Copy the `state=` value from that Google URL.
-3. Open `http://localhost:3000/staff/api/callback?code=fixture-staff&state=<the state>`.
+1. Open http://localhost:3000/staff/login, and type any address at
+   pauseai.uk, such as staff@pauseai.uk.
+2. The login email is the newest file in `tmp/outbox/`. Open the
+   `/staff/login/confirm?token=…` link from its `TextBody`, and press the
+   button.
 
 You're at `/staff`, logged in for 12 hours. This goes through the real
-login code: only the answers from Google are fixtures.
+login code: only Postmark is a fixture.
 
 ### With real outside services
 
@@ -229,9 +219,9 @@ Delete `DATA_FIXTURES` from `.env.local`, and fill in the keys you need. Each is
 - **Postmark.** Use the test token `POSTMARK_API_TEST`, which accepts emails
   without sending them. A real server token sends real emails, so only use
   one with the test MP and an inbox you own.
-- **Staff login.** Make your own OAuth client in a Google Cloud project
-  (type "Web application"), with `http://localhost:3000/staff/api/callback`
-  as an authorised redirect URI. Only pauseai.uk accounts can log in.
+- **Staff login.** The link is emailed through Postmark, so with the test
+  token it never arrives. Use fixtures to log in, or a real server token and
+  your own pauseai.uk address.
 - **Airtable.** `AIRTABLE_TOKEN` needs only read access to the "UK
   Parliamentarians" table. It's for the MP sync and the one-off signatory
   import at `/staff/import`.
@@ -293,7 +283,7 @@ npm run check:staff-auth        # every staff page, route and action calls requi
   export NETLIFY_DB_URL=$(node scripts/fresh-database.mjs pauseai_behaviour)
   DATA_FIXTURES=1 LUMA_API_KEY=fixture AIRTABLE_TOKEN=fixture TURNSTILE_SECRET_KEY=fixture \
     NEXT_PUBLIC_TURNSTILE_SITE_KEY=fixture TEST_MP_EMAIL=test-mp@example.org \
-    GOOGLE_CLIENT_ID=fixture-client-id GOOGLE_CLIENT_SECRET=fixture CRON_SECRET=fixture-cron-secret \
+    CRON_SECRET=fixture-cron-secret \
     POSTMARK_SERVER_TOKEN=fixture POSTMARK_WEBHOOK_USER=postmark POSTMARK_WEBHOOK_PASSWORD=fixture-webhook-password \
     REPLIES_INBOX=replies@example.org OUTBOX_DIR=/tmp/pauseai-behaviour-outbox \
     npx next build

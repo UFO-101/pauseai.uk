@@ -1,31 +1,17 @@
-import { NextResponse, type NextRequest } from "next/server";
-import { finishLogin, googleClient } from "@/lib/server/google-login";
+import { NextResponse } from "next/server";
 import { createSession, sessionCookie } from "@/lib/server/staff-auth";
-import { LOGIN_COOKIE, LOGIN_PATH } from "@/lib/staff-session";
+import { redeemLoginLink } from "@/lib/server/staff-login";
+import { LOGIN_PATH } from "@/lib/staff-session";
 
-// Step two of logging in: Google sends the staff member back here. Open to
-// anyone, so it doesn't call requireStaff(); it starts a session only for a
-// checked pauseai.uk account.
-export async function GET(request: NextRequest) {
-  const url = new URL(request.url);
-  const failed = (reason: string) => {
-    console.warn(`Staff login refused: ${reason}`);
-    const response = NextResponse.redirect(new URL(`${LOGIN_PATH}?failed=1`, url));
-    response.cookies.delete({ name: LOGIN_COOKIE, path: "/staff/api/callback" });
-    return response;
-  };
-
-  const client = googleClient();
-  if (!client) return failed("Google client not configured");
-  const [state, verifier] = (request.cookies.get(LOGIN_COOKIE)?.value ?? "").split(".");
-  const code = url.searchParams.get("code");
-  if (!state || !verifier || url.searchParams.get("state") !== state || !code) return failed("state doesn't match");
-
-  const result = await finishLogin(client, url.origin, code, verifier);
-  if (!result.ok) return failed(result.reason);
-
-  const response = NextResponse.redirect(new URL("/staff", url));
-  response.cookies.set(sessionCookie(await createSession(result.email)));
-  response.cookies.delete({ name: LOGIN_COOKIE, path: "/staff/api/callback" });
+// Step two of logging in: the button on the page the emailed link opens
+// posts its token here. Open to anyone, so it doesn't call requireStaff();
+// it starts a session only for a current, unused link.
+export async function POST(request: Request) {
+  const form = await request.formData().catch(() => undefined);
+  const token = form?.get("token");
+  const email = await redeemLoginLink(typeof token === "string" ? token : "");
+  if (!email) return NextResponse.redirect(new URL(`${LOGIN_PATH}?failed=1`, request.url), 303);
+  const response = NextResponse.redirect(new URL("/staff", request.url), 303);
+  response.cookies.set(sessionCookie(await createSession(email)));
   return response;
 }

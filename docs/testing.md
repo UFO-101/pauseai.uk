@@ -153,10 +153,9 @@ not a mock.
 - **Staff screens** aren't in the public-vs-live diff: they need a login,
   and their data differs between hosts. `npm run test:fixtures-vs-main`
   screenshots them instead (below).
-- **Staff screens** are tested by logging in through the fixture Google
-  (`tests/behaviour/staff.spec.ts`). The fixture's ID tokens were signed once
-  for the client `fixture-client-id`, and the key that signed them wasn't
-  kept. There's no login bypass.
+- **Staff screens** are tested by logging in as staff do: asking for a
+  link, taking it from the build's outbox, opening it and pressing the
+  button (`logInAsStaff` in `tests/steps.ts`). There's no login bypass.
 - **`next/headers`** can't run outside a request, so Node tests of code
   that calls `requireStaff()` use `vi.mock("next/headers", () =>
   import("@/tests/next-headers"))` and put the session cookie in

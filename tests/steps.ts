@@ -3,6 +3,7 @@
 import { expect, type APIRequestContext, type Page } from "@playwright/test";
 import { copy } from "@/lib/content/email-your-mp";
 import { staffCopy } from "@/lib/content/staff-interface";
+import { readOutbox } from "./fixtures/outbox";
 
 // Redirects to the first campaign.
 export const TOOL_PAGE = "/campaigns-v2";
@@ -71,23 +72,22 @@ export async function sendLetter(page: Page) {
 }
 
 /**
- * Logs in on `base` as `code`'s account through the fixture Google
- * (tests/fixtures/outside-services.ts). Playwright can't intercept a request
- * that follows a redirect, so this takes the login route's redirect to
- * Google and sends the browser straight back, as Google would once the
- * account is chosen. The login route still makes the state and its cookie.
+ * Logs in on `base` as `email`, as staff do: asks for a link, takes it from
+ * the build's outbox (tests/fixtures/outbox.ts), opens it and presses the
+ * button. There's no login bypass. For an address that gets no link, stops
+ * at "check your inbox" and returns false.
  */
-export async function logInAsStaff(page: Page, base: string, code = "fixture-staff") {
-  await page.route("https://accounts.google.com/**", (route) => route.abort());
-  await page.route(`${base}/staff/api/login`, async (route) => {
-    const response = await route.fetch({ maxRedirects: 0 });
-    const google = new URL(response.headers().location);
-    const back = new URL(google.searchParams.get("redirect_uri")!);
-    back.searchParams.set("code", code);
-    back.searchParams.set("state", google.searchParams.get("state")!);
-    await route.fulfill({ response, headers: { ...response.headers(), location: back.toString() } });
-  });
+export async function logInAsStaff(page: Page, base: string, outboxDir: string, email = "staff@pauseai.uk"): Promise<boolean> {
   const login = await page.goto(`${base}/staff/login`);
   if (!login?.ok()) throw new Error(`${base}/staff/login returned ${login?.status()}: is the staff interface there?`);
-  await page.getByRole("link", { name: staffCopy.login.button }).click();
+  const before = readOutbox(outboxDir).length;
+  await page.getByLabel(staffCopy.login.emailLabel).fill(email);
+  await page.getByRole("button", { name: staffCopy.login.button }).click();
+  await expect(page.getByRole("status")).toHaveText(staffCopy.login.sent);
+  const sent = (readOutbox(outboxDir).slice(before) as { To: string; TextBody: string }[]).filter((e) => e.To === email).at(-1);
+  const link = sent?.TextBody.match(/https?:\/\/\S+\/staff\/login\/confirm\?token=[\w-]+/)?.[0];
+  if (!link) return false;
+  await page.goto(link);
+  await page.getByRole("button", { name: staffCopy.login.confirm }).click();
+  return true;
 }

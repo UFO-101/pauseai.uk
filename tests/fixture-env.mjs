@@ -25,9 +25,6 @@ export function fixtureEnv({ outboxDir }) {
     // Draws the widget, from a stand-in script the tests serve.
     NEXT_PUBLIC_TURNSTILE_SITE_KEY: "fixture",
     TEST_MP_EMAIL: "test-mp@example.org",
-    // The fixture Google's ID tokens are for this client.
-    GOOGLE_CLIENT_ID: "fixture-client-id",
-    GOOGLE_CLIENT_SECRET: "fixture",
     CRON_SECRET: "fixture-cron-secret",
     POSTMARK_SERVER_TOKEN: "fixture",
     POSTMARK_WEBHOOK_USER: "postmark",
