@@ -16,11 +16,13 @@ describeWithDatabase("findMp", () => {
     });
   });
 
-  it("finds the test MP from ZZ99ZZ without asking postcodes.io", async () => {
+  it("finds each test MP from their postcode without asking postcodes.io", async () => {
     server.use(http.all("*", () => HttpResponse.error()));
     expect(await findMp("zz9 9zz")).toEqual({ ok: false, reason: "no_mp" });
     await addTestMp();
+    await addTestPolitician({ parliamentId: null, name: "Signy McTestface MP", constituency: "Signshire", testPostcode: "ZZ99ZS" });
     expect(await findMp("zz9 9zz")).toMatchObject({ ok: true, mp: { name: "Testy McTestface MP", email: "test-mp@example.org" } });
+    expect(await findMp("ZZ99ZS")).toMatchObject({ ok: true, mp: { name: "Signy McTestface MP", isTest: true } });
   });
 
   it("passes on postcodes.io's failures, and says when no MP sits for the constituency", async () => {

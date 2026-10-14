@@ -23,17 +23,11 @@ export function campaignPath(campaign: Campaign): string {
   return `${CAMPAIGNS_PATH}/${campaign.slug}`;
 }
 
-/** The test MP's postcode. postcodes.io doesn't know it, so it never gets that far. */
-export const TEST_POSTCODE = "ZZ99ZZ";
-
 /** "sw1a 1aa " → "SW1A1AA", for comparing postcodes. */
 export function normalisePostcode(postcode: string): string {
   return postcode.replace(/\s+/g, "").toUpperCase();
 }
 
-export function isTestPostcode(postcode: string): boolean {
-  return normalisePostcode(postcode) === TEST_POSTCODE;
-}
 
 export function campaignBySlug(slug: string): Campaign | undefined {
   return campaigns.find((campaign) => campaign.slug === slug);

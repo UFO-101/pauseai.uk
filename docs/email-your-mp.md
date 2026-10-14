@@ -23,8 +23,9 @@ At the swap (stage 5 of the plan) these replace `/campaigns`:
   placeholders for now.
 - `lib/email-your-mp.ts`: the pages' paths, which campaign to move on to,
   and drafting the letter, shared by the form and the server.
-- `lib/server/find-mp.ts`: postcode to MP, from the database. ZZ99ZZ finds
-  the test MP.
+- `lib/server/find-mp.ts`: postcode to MP, from the database. A test
+  MP's postcode finds them (`lib/test-mps.json`: ZZ99ZZ, and ZZ99ZS, who
+  has signed the letter to the PM).
 - `lib/parliament.ts`: reads the sitting MPs from Parliament's Members API,
   and compares two lists of them.
 - `lib/server/mp-sync.ts`: the nightly copy of MPs into the database.
@@ -48,8 +49,8 @@ by the scheduled function `netlify/functions/sync-mps/`, which calls
 `/api/cron/sync-mps`. Staff can also run it from `/staff/mp-sync`. If more
 than 20 MPs would change at once, the sync is held there for a person to
 apply or discard. MPs who leave stay in the table, marked as no longer
-sitting, with their statuses. The sync also adds the test MP, with
-`TEST_MP_EMAIL` as their email.
+sitting, with their statuses. The sync also adds the test MPs, with
+`TEST_MP_EMAIL` as their email, and their statuses when it first adds them.
 
 After the first deploy with the database, run the sync once from
 `/staff/mp-sync`: until then the tool finds no MPs.
@@ -78,7 +79,7 @@ The environment variables are listed, with what each is for, in [.env.example](.
    sent through Postmark from `"Jane Smith via PauseAI"
    <reply+<hash>@mp.pauseai.uk>`, with Reply-To the sender and that address,
    and the campaign's PDFs attached. The token then stops working.
-3. Outside production, letters go only to the test MP, checked both when the
+3. Outside production, letters go only to the test MPs, checked both when the
    form is sent and when the letter is.
 4. Unconfirmed letters are deleted after 7 days, by
    `netlify/functions/delete-unconfirmed-letters/`.

@@ -4,7 +4,7 @@
 // For tests and local development only: Netlify applies them in production.
 //
 //   node scripts/fresh-database.mjs <name>   prints the new database's URL
-//   ... --test-mp <email>                    and adds the test MP, with that inbox
+//   ... --test-mp <email>                    and adds the test MPs, with that inbox
 //
 // Makes them on the server TEST_DATABASE_URL names, from the environment or
 // .env.local: `db-test` in docker-compose.yml, say. Without it, it connects
@@ -16,6 +16,7 @@ import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { userInfo } from "node:os";
 import { fileURLToPath } from "node:url";
+import TEST_MPS from "../lib/test-mps.json" with { type: "json" };
 
 const MIGRATIONS = fileURLToPath(new URL("../netlify/database/migrations/", import.meta.url));
 
@@ -106,20 +107,24 @@ export function resetDatabase(url, { singleTransaction = false } = {}) {
 }
 
 /**
- * Adds just Testy McTestface MP (postcode ZZ99ZZ), as the nightly sync
- * would, for a database that needs no real MPs.
+ * Adds just the test MPs (lib/test-mps.json), with their statuses, as the
+ * nightly sync would, for a database that needs no real MPs.
  */
-export function addTestMp(url, email) {
-  // A SQL string literal: psql -c doesn't substitute variables.
-  const literal = `'${String(email).replace(/'/g, "''")}'`;
-  psql(url, "-c",
-    `INSERT INTO politicians (house, name, salutation, constituency, email, is_test) VALUES ('commons', 'Testy McTestface MP', 'Mr McTestface', 'Testshire', ${literal}, true)`);
+export function addTestMps(url, email) {
+  // SQL string literals: psql -c doesn't substitute variables.
+  const literal = (value) => `'${String(value).replace(/'/g, "''")}'`;
+  const sql = TEST_MPS.map((mp) => [
+    `INSERT INTO politicians (house, name, salutation, constituency, email, is_test, test_postcode) VALUES ('commons', ${[mp.name, mp.salutation, mp.constituency, email].map(literal).join(", ")}, true, ${literal(mp.postcode)});`,
+    ...Object.entries(mp.statuses).map(([campaign, status]) =>
+      `INSERT INTO campaign_statuses (politician_id, campaign, status, updated_by) SELECT id, ${literal(campaign)}, ${literal(status)}, 'sync' FROM politicians WHERE test_postcode = ${literal(mp.postcode)};`),
+  ]).flat();
+  psql(url, "-c", sql.join("\n"));
 }
 
 //   node scripts/fresh-database.mjs <name> [--test-mp <email>]
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const url = freshDatabase(process.argv[2] ?? "pauseai_dev");
   const testMp = process.argv.indexOf("--test-mp");
-  if (testMp !== -1) addTestMp(url, process.argv[testMp + 1]);
+  if (testMp !== -1) addTestMps(url, process.argv[testMp + 1]);
   console.log(url);
 }

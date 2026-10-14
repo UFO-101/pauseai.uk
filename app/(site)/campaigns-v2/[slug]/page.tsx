@@ -28,5 +28,12 @@ export async function generateMetadata({ params }: Params) {
 export default async function Page({ params }: Params) {
   const campaign = campaignBySlug((await params).slug);
   if (!campaign) notFound();
-  return <EmailYourMpPage campaign={campaign} turnstileSiteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY} />;
+  return (
+    <EmailYourMpPage
+      campaign={campaign}
+      turnstileSiteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY}
+      // Outside production, letters only go to the test MPs, so say how to find them.
+      showTestMps={process.env.DEPLOY_CONTEXT !== "production"}
+    />
+  );
 }

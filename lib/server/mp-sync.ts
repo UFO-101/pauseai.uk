@@ -1,5 +1,6 @@
 import "server-only";
 import { changeCount, compareMps, fetchCurrentMps, MAX_UNCHECKED_CHANGES, type MpChanges, type SyncedMp } from "@/lib/parliament";
+import { TEST_MPS } from "@/lib/test-mps";
 import { logChange } from "./audit";
 import { query, transaction, type Queryable } from "./db";
 import { outsideFetch } from "./outside-fetch";
@@ -37,18 +38,27 @@ async function sittingMps(db?: Queryable): Promise<SyncedMp[]> {
 }
 
 /**
- * Testy McTestface MP, whose letters go to TEST_MP_EMAIL. Kept in step with
- * that setting on every sync.
+ * The test MPs, whose letters go to TEST_MP_EMAIL: kept in step with that
+ * setting on every sync. Their statuses are set only when they're added, so
+ * staff can change them.
  */
-async function ensureTestMp(db?: Queryable): Promise<void> {
+async function ensureTestMps(db?: Queryable): Promise<void> {
   const email = process.env.TEST_MP_EMAIL?.trim() || null;
-  await query(
-    `INSERT INTO politicians (house, name, salutation, constituency, email, is_test)
-     VALUES ('commons', 'Testy McTestface MP', 'Mr McTestface', 'Testshire', $1, true)
-     ON CONFLICT (is_test) WHERE is_test DO UPDATE SET email = $1, updated_at = now()`,
-    [email],
-    db,
-  );
+  for (const mp of TEST_MPS) {
+    const [{ id, added }] = await query<{ id: number; added: boolean }>(
+      `INSERT INTO politicians (house, name, salutation, constituency, email, is_test, test_postcode)
+       VALUES ('commons', $1, $2, $3, $4, true, $5)
+       ON CONFLICT (test_postcode) DO UPDATE SET email = $4, updated_at = now()
+       -- xmax is 0 on a row this statement inserted, not on one it updated.
+       RETURNING id::int AS id, xmax = 0 AS added`,
+      [mp.name, mp.salutation, mp.constituency, email, mp.postcode],
+      db,
+    );
+    if (!added) continue;
+    for (const [campaign, status] of Object.entries(mp.statuses)) {
+      await query("INSERT INTO campaign_statuses (politician_id, campaign, status, updated_by) VALUES ($1, $2, $3, 'sync')", [id, campaign, status], db);
+    }
+  }
 }
 
 /** Makes the table match `mps`: adds and updates them, and marks the rest as no longer sitting. */
@@ -75,7 +85,7 @@ async function applyMps(mps: SyncedMp[], db: Queryable): Promise<void> {
 export async function syncMps(): Promise<SyncResult> {
   const fetched = await fetchCurrentMps(getJson);
   return transaction(async (db) => {
-    await ensureTestMp(db);
+    await ensureTestMps(db);
     const before = await sittingMps(db);
     const changes = compareMps(before, fetched);
     const count = changeCount(changes);

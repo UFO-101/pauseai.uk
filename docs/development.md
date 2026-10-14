@@ -97,8 +97,10 @@ This:
   empty;
 - applies every migration in `netlify/database/migrations/`, in order, as
   Netlify does;
-- adds the test MP, Testy McTestface MP, found by postcode ZZ99ZZ, whose
-  letters go to `TEST_MP_EMAIL`.
+- adds the test MPs, whose letters go to `TEST_MP_EMAIL`: Testy McTestface
+  MP, found by postcode ZZ99ZZ, and Signy McTestface MP (ZZ99ZS), who has
+  already signed the letter to the PM. They're listed in
+  `lib/test-mps.json`.
 
 Run it again whenever you want a clean database, or after pulling a new
 migration. It wipes everything. It refuses a URL that isn't on your own
@@ -146,7 +148,7 @@ your machine. You need no keys:
 | Service | What the fixture does |
 | --- | --- |
 | Luma | A few made-up events and guests |
-| postcodes.io | Knows only SW1A 1AA (Cities of London and Westminster); every other postcode is "not found". ZZ99ZZ never asks it. |
+| postcodes.io | Knows only SW1A 1AA (Cities of London and Westminster); every other postcode is "not found". The test postcodes never ask it. |
 | Parliament's Members API | Two MPs: Diane Abbott and Rachel Blake |
 | Turnstile | Accepts every token |
 | Postmark | Accepts every email, without needing a token. With `OUTBOX_DIR`, writes each one to a JSON file there. |
@@ -167,8 +169,9 @@ your machine. You need no keys:
 
 `/staff/letters` shows it, once you've logged in.
 
-To see a campaign's page move on to the next, mark the test MP as having
-done the first campaign in `/staff`, then look up ZZ99ZZ again.
+To see a campaign's page move on to the next, look up ZZ99ZS instead: that
+MP has already signed, so the letter to the PM moves on to the bill. Outside
+production, the form lists both test postcodes under it.
 
 #### Write to a real MP
 

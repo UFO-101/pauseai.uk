@@ -94,6 +94,13 @@ describe("EmailYourMpTool", () => {
     expect(navigate).not.toHaveBeenCalled();
   });
 
+  it("lists the test MPs' postcodes, only when asked to", async () => {
+    const { rerender } = await render(<EmailYourMpTool campaignSlug={letterToPm.slug} />);
+    await expect.element(page.getByText(/ZZ9 9ZZ/)).not.toBeInTheDocument();
+    await rerender(<EmailYourMpTool campaignSlug={letterToPm.slug} showTestMps />);
+    await expect.element(page.getByText(copy.lookup.testPostcodes("ZZ9 9ZZ (Testy McTestface MP), ZZ9 9ZS (Signy McTestface MP)"))).toBeVisible();
+  });
+
   it("shows an MP with no email, without a form", async () => {
     respond = async () => Response.json({ ok: true, mp: { ...MP, email: null }, statuses: {} });
     await render(<EmailYourMpTool campaignSlug={letterToPm.slug} />);

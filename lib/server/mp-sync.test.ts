@@ -7,7 +7,10 @@ import { query } from "./db";
 import { decideHeldSync, recentSyncs, syncMps } from "./mp-sync";
 
 type Row = { parliament_id: number | null; name: string; email: string | null; sitting: boolean; is_test: boolean };
-const politicians = () => query<Row>("SELECT parliament_id, name, email, sitting, is_test FROM politicians ORDER BY is_test, parliament_id");
+const politicians = () => query<Row>("SELECT parliament_id, name, email, sitting, is_test FROM politicians ORDER BY is_test, parliament_id, name");
+
+const testStatuses = () =>
+  query("SELECT p.test_postcode, s.campaign, s.status FROM campaign_statuses s JOIN politicians p ON p.id = s.politician_id WHERE p.is_test");
 
 beforeEach(() => vi.stubEnv("TEST_MP_EMAIL", "test-mp@example.org"));
 afterEach(() => vi.unstubAllEnvs());
@@ -15,7 +18,7 @@ afterEach(() => vi.unstubAllEnvs());
 describeWithDatabase("syncMps", () => {
   useTestDatabase();
 
-  it("fills an empty table, adds the test MP, and records the sync", async () => {
+  it("fills an empty table, adds the test MPs, and records the sync", async () => {
     const result = await syncMps();
 
     expect(result.status).toBe("applied");
@@ -23,20 +26,29 @@ describeWithDatabase("syncMps", () => {
     expect(await politicians()).toEqual([
       { parliament_id: 172, name: "Ms Diane Abbott", email: "mp172.office@parliament.uk", sitting: true, is_test: false },
       { parliament_id: 5257, name: "Rachel Blake", email: "mp5257.office@parliament.uk", sitting: true, is_test: false },
+      { parliament_id: null, name: "Signy McTestface MP", email: "test-mp@example.org", sitting: true, is_test: true },
       { parliament_id: null, name: "Testy McTestface MP", email: "test-mp@example.org", sitting: true, is_test: true },
     ]);
+    expect(await testStatuses()).toEqual([{ test_postcode: "ZZ99ZS", campaign: "regulate-pm-letter", status: "signed" }]);
     const [sync] = await recentSyncs();
     expect(sync).toMatchObject({ status: "applied", decidedBy: null });
     expect(sync.changes.added.map((mp) => mp.parliamentId)).toEqual([5257, 172]);
     expect(await query("SELECT actor, action FROM audit_log")).toEqual([{ actor: "sync", action: "apply MP sync" }]);
   });
 
-  it("does nothing when nothing has changed, except keep the test MP's inbox up to date", async () => {
+  it("does nothing when nothing has changed, except keep the test MPs' inbox up to date", async () => {
     await syncMps();
     vi.stubEnv("TEST_MP_EMAIL", "");
     expect((await syncMps()).status).toBe("unchanged");
     expect(await recentSyncs()).toHaveLength(1);
-    expect((await politicians()).find((p) => p.is_test)!.email).toBeNull();
+    expect((await politicians()).filter((p) => p.is_test).map((p) => p.email)).toEqual([null, null]);
+  });
+
+  it("leaves the test MPs' statuses to staff once they're added", async () => {
+    await syncMps();
+    await query("DELETE FROM campaign_statuses");
+    await syncMps();
+    expect(await testStatuses()).toEqual([]);
   });
 
   it("applies a small change: an MP who left stays, no longer sitting", async () => {

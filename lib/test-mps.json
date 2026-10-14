@@ -1,0 +1,18 @@
+[
+  {
+    "postcode": "ZZ99ZZ",
+    "name": "Testy McTestface MP",
+    "salutation": "Mr McTestface",
+    "constituency": "Testshire",
+    "statuses": {}
+  },
+  {
+    "postcode": "ZZ99ZS",
+    "name": "Signy McTestface MP",
+    "salutation": "Ms McTestface",
+    "constituency": "Signshire",
+    "statuses": {
+      "regulate-pm-letter": "signed"
+    }
+  }
+]

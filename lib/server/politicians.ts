@@ -52,9 +52,9 @@ export async function findSittingMp(constituency: string): Promise<FoundMp | und
   return mp;
 }
 
-/** Testy McTestface MP, added by the sync. */
-export async function findTestMp(): Promise<FoundMp | undefined> {
-  const [mp] = await query<FoundMp>(`SELECT ${MP_COLUMNS} FROM politicians WHERE is_test`);
+/** The test MP with this postcode, added by the sync. */
+export async function findTestMp(postcode: string): Promise<FoundMp | undefined> {
+  const [mp] = await query<FoundMp>(`SELECT ${MP_COLUMNS} FROM politicians WHERE test_postcode = $1`, [postcode]);
   return mp;
 }
 

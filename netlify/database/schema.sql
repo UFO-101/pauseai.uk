@@ -172,7 +172,9 @@ CREATE TABLE public.politicians (
     sitting boolean DEFAULT true NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    CONSTRAINT politicians_house_check CHECK ((house = ANY (ARRAY['commons'::text, 'lords'::text, 'scottish-parliament'::text, 'senedd'::text, 'ni-assembly'::text, 'other'::text])))
+    test_postcode text,
+    CONSTRAINT politicians_house_check CHECK ((house = ANY (ARRAY['commons'::text, 'lords'::text, 'scottish-parliament'::text, 'senedd'::text, 'ni-assembly'::text, 'other'::text]))),
+    CONSTRAINT politicians_test_postcode CHECK ((is_test = (test_postcode IS NOT NULL)))
 );
 
 --
@@ -270,6 +272,13 @@ ALTER TABLE ONLY public.politicians
     ADD CONSTRAINT politicians_pkey PRIMARY KEY (id);
 
 --
+-- Name: politicians politicians_test_postcode_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.politicians
+    ADD CONSTRAINT politicians_test_postcode_key UNIQUE (test_postcode);
+
+--
 -- Name: staff_sessions staff_sessions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -305,12 +314,6 @@ CREATE INDEX letters_sender_email_created_at ON public.letters USING btree (lowe
 --
 
 CREATE INDEX letters_unconfirmed_created_at ON public.letters USING btree (created_at) WHERE (status = 'unconfirmed'::text);
-
---
--- Name: politicians_one_test_mp; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE UNIQUE INDEX politicians_one_test_mp ON public.politicians USING btree (is_test) WHERE is_test;
 
 --
 -- Name: politicians_sitting_constituency; Type: INDEX; Schema: public; Owner: -

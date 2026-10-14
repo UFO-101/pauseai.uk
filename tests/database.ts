@@ -42,15 +42,16 @@ type MpRow = {
   constituency?: string | null;
   party?: string;
   email?: string | null;
-  isTest?: boolean;
+  /** Makes them a test MP, found by this postcode. */
+  testPostcode?: string;
   sitting?: boolean;
 };
 
 /** Adds a politician straight into the table, and returns their ID. */
 export async function addTestPolitician(row: MpRow = {}): Promise<number> {
   const [{ id }] = await query<{ id: number }>(
-    `INSERT INTO politicians (parliament_id, house, name, salutation, constituency, party, email, is_test, sitting)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id::int AS id`,
+    `INSERT INTO politicians (parliament_id, house, name, salutation, constituency, party, email, is_test, test_postcode, sitting)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id::int AS id`,
     [
       row.parliamentId === undefined ? 5257 : row.parliamentId,
       row.house ?? "commons",
@@ -59,16 +60,17 @@ export async function addTestPolitician(row: MpRow = {}): Promise<number> {
       row.constituency === undefined ? "Cities of London and Westminster" : row.constituency,
       row.party ?? "Labour (Co-op)",
       row.email === undefined ? "rachel.blake.mp@parliament.uk" : row.email,
-      row.isTest ?? false,
+      row.testPostcode !== undefined,
+      row.testPostcode ?? null,
       row.sitting ?? true,
     ],
   );
   return id;
 }
 
-/** Testy McTestface MP, as the sync adds them. */
+/** Testy McTestface MP (ZZ99ZZ), as the sync adds them, without statuses. */
 export function addTestMp(email: string | null = "test-mp@example.org"): Promise<number> {
-  return addTestPolitician({ parliamentId: null, name: "Testy McTestface MP", salutation: "Mr McTestface", constituency: "Testshire", party: "", email, isTest: true });
+  return addTestPolitician({ parliamentId: null, name: "Testy McTestface MP", salutation: "Mr McTestface", constituency: "Testshire", party: "", email, testPostcode: "ZZ99ZZ" });
 }
 
 /** Runs `work` with the database unreachable, then reconnects. */

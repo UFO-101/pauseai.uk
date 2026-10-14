@@ -102,6 +102,20 @@ test("the Postmark webhooks refuse requests without our credentials", async ({ r
   expect(await bounce.json()).toEqual({ recorded: false });
 });
 
+test("ZZ99ZS has signed, so the PM letter's page moves on to the bill, with the lookup done", async ({ page }) => {
+  await page.goto(`${BASE}/campaigns-v2`);
+  await expect(page.getByText(/ZZ9 9ZS/)).toBeVisible();
+  await page.getByLabel(copy.lookup.nameLabel).fill("Jane Smith");
+  await page.getByLabel(copy.lookup.postcodeLabel).fill("ZZ9 9ZS");
+  await page.getByRole("button", { name: copy.lookup.button }).click();
+
+  await expect(page).toHaveURL(`${BASE}/campaigns-v2/${campaigns[1].slug}`);
+  await expect(page.getByText(campaigns[0].movedOn)).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Signy McTestface MP" })).toBeVisible();
+  await expect(page.getByLabel(copy.lookup.postcodeLabel)).toHaveValue("ZZ9 9ZS");
+  await expect(page.getByLabel(copy.form.subjectLabel)).toHaveValue(campaigns[1].subject);
+});
+
 test("each campaign has its own page, plain /campaigns-v2 opens the first, and an unknown one is a 404", async ({ page, request }) => {
   for (const campaign of campaigns) {
     await page.goto(`${BASE}/campaigns-v2/${campaign.slug}`);

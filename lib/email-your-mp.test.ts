@@ -9,7 +9,6 @@ import {
   draftLetter,
   fullLetter,
   isDone,
-  isTestPostcode,
   looksLikeEmail,
   normalisePostcode,
   signatureAddress,
@@ -21,8 +20,6 @@ const details = { salutation: "Ms Abbott", constituency: "Hackney North", sender
 describe("postcodes", () => {
   it("compares postcodes without spaces or case", () => {
     expect(normalisePostcode(" sw1a  1aa ")).toBe("SW1A1AA");
-    expect(isTestPostcode("zz9 9zz")).toBe(true);
-    expect(isTestPostcode("SW1A 1AA")).toBe(false);
   });
 });
 

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/Button";
 import { copy, type Campaign } from "@/lib/content/email-your-mp";
 import { campaignBySlug, campaignPath, campaignToMoveTo, type Mp, type MpStatuses } from "@/lib/email-your-mp";
 import { navigate } from "@/lib/navigate";
+import { TEST_MPS } from "@/lib/test-mps";
 import { leaveHandoff, takeHandoff } from "./handoff";
 import LetterForm from "./LetterForm";
 import styles from "./EmailYourMp.module.css";
@@ -17,7 +18,14 @@ type Found = { mp: Mp; statuses: MpStatuses; name: string; postcode: string };
  * which opens with the lookup done and says why. (A slug, because campaigns
  * hold functions, which can't be passed from the server.)
  */
-export default function EmailYourMpTool({ campaignSlug, turnstileSiteKey }: { campaignSlug: string; turnstileSiteKey?: string }) {
+type Props = {
+  campaignSlug: string;
+  turnstileSiteKey?: string;
+  /** Lists the test MPs' postcodes under the form: for sites other than production. */
+  showTestMps?: boolean;
+};
+
+export default function EmailYourMpTool({ campaignSlug, turnstileSiteKey, showTestMps }: Props) {
   const campaign = campaignBySlug(campaignSlug)!;
   const [name, setName] = useState("");
   const [postcode, setPostcode] = useState("");
@@ -83,6 +91,11 @@ export default function EmailYourMpTool({ campaignSlug, turnstileSiteKey }: { ca
           {looking ? copy.lookup.looking : copy.lookup.button}
         </Button>
       </form>
+      {showTestMps && (
+        <p className={styles.small}>
+          {copy.lookup.testPostcodes(TEST_MPS.map((mp) => `${mp.postcode.slice(0, -3)} ${mp.postcode.slice(-3)} (${mp.name})`).join(", "))}
+        </p>
+      )}
       {error && (
         <p className={styles.error} role="alert">
           {error}

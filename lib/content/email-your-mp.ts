@@ -117,6 +117,8 @@ export const copy = {
     noMp: "⁂ Nullum senatorem pro hac regione invenimus.",
     failed: "Something went wrong on our end. Please try again in a moment.",
     mpOf: (constituency: string) => `MP for ${constituency}`,
+    // Outside production only, under the form: "ZZ9 9ZZ (Testy McTestface MP), ...".
+    testPostcodes: (mps: string) => `⁂ Codices postales probationis: ${mps}`,
     noEmail: "⁂ Nulla inscriptio electronica nota est.",
   },
   form: {

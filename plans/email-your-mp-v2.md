@@ -15,7 +15,7 @@ Built entirely in pauseai.uk. When it works, the old tool is deleted from pausea
 - **Postal address**: collected from the sender and put in the letter's signature.
 - **Attachments**: the PDFs stay real attachments. There's one copy of each, in pauseai.uk's `public/pdfs/`. Postmark allows 10MB per message after Base64 encoding; today's two PDFs total about 270KB.
 - **Email confirmation**: after the form is submitted, we email the sender a link with a single-use token. Clicking it sends the letter straight away.
-- **Test MP**: postcode ZZ99ZZ finds "Testy McTestface MP", whose email goes to a test inbox. Everything works as for a real MP, including tracking, so it tests the lot.
+- **Test MPs**: postcode ZZ99ZZ finds "Testy McTestface MP", whose email goes to a test inbox. ZZ99ZS finds a second, who has already signed the letter to the PM, to try the move to the next campaign. Outside production, the form lists both postcodes. Everything works as for a real MP, including tracking, so it tests the lot.
 
 ## Sending
 
