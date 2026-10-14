@@ -1,8 +1,10 @@
 // The Email your MP campaigns, and every word the tool shows or sends.
 //
-// All of this is placeholder copy (AGENTS.md: "Never write final copy"),
-// marked with ⁂ and written in Latin. Francis writes the real words and
-// Joseph approves them; placeholder-copy.test.ts fails until they're in.
+// Where the old tool (pauseai.info/uk-email-mp, embedded on /campaigns)
+// already says the same thing, this uses its words. Everything else is
+// placeholder copy (AGENTS.md: "Never write final copy"), marked with ⁂ and
+// written in Latin: Francis writes the real words and Joseph approves them,
+// and placeholder-copy.test.ts fails until they're in.
 
 /** What the MP has done for one campaign, as recorded by the policy team. */
 export type CampaignStatus = "signed" | "supports";
@@ -51,24 +53,25 @@ export const campaigns: Campaign[] = [
     title: "⁂ Epistula ad primum ministrum",
     description: "⁂ Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
     done: "signed",
-    subject: "⁂ Rogamus ut epistulam subscribas",
+    subject: "Request to co-sign letter on frontier AI risks",
+    // The old tool's letter, without its Markdown bold: letters are plain text.
     letter: (d) =>
-      `⁂ Care ${d.salutation},\n\nLorem ipsum dolor sit amet, ${d.constituency} consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.\n\nUt enim ad minim veniam, quis nostrud exercitation ullamco laboris.\n\nGratias tibi ago,`,
+      `Dear ${d.salutation}\n\nI’m a resident of ${d.constituency} and a supporter of PauseAI, a civic movement focused on averting the risks of superhuman AI. I am very concerned that AI development is racing ahead without adequate protection for the public.\n\nAI now poses an extremely serious risk to our national security. Parliamentarians in the United Kingdom, and politicians around the globe are moving to answer the call from AI developers, Nobel Laureates and concerned citizens to regulate AI immediately.\n\nThe UK has no specific legal standards for frontier AI safety. No regulator oversees frontier AI development. And UK law does not reliably hold developers liable for damage or deaths caused by their models, even when the danger is predictable, preventable and uniquely enabled by AI.\n\nPlease could you add your name to PauseAI's open letter (attached) in support of frontier AI legislation? And could we arrange a short meeting to discuss this important matter?\n\nThank you for your consideration,`,
     thanks: (d) =>
       `⁂ Care ${d.salutation},\n\nGratias tibi ago quod epistulam subscripsisti. Lorem ipsum dolor sit amet, ${d.constituency} consectetur adipiscing elit.\n\nVale,`,
-    alreadyDone: "⁂ Senator tuus iam subscripsit.",
+    alreadyDone: "Already signed! This MP has already signed the Frontier AI letter.",
     attachments: [
       {
         file: "Frontier-AI-Open-Letter.pdf",
         thumbnail: "Frontier-AI-Open-Letter.jpg",
-        title: "⁂ Epistula aperta",
-        subtitle: "⁂ Ad primum ministrum",
+        title: "Open Letter",
+        subtitle: "To the Prime Minister",
       },
       {
         file: "Frontier-AI-Risks-Policy-Briefing.pdf",
         thumbnail: "Frontier-AI-Risks-Policy-Briefing.jpg",
-        title: "⁂ Libellus consilii",
-        subtitle: "⁂ De periculis",
+        title: "Policy Briefing",
+        subtitle: "On frontier AI risks",
       },
     ],
   },
@@ -90,40 +93,40 @@ export const campaigns: Campaign[] = [
 
 /** The form, its messages, and the page around it. */
 export const copy = {
-  pageTitle: "⁂ Scribe senatori tuo",
-  pageDescription: "⁂ Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
+  pageTitle: "Email Your MP",
+  pageDescription: "Contact your Member of Parliament about AI safety",
   lookup: {
-    nameLabel: "⁂ Nomen tuum",
-    postcodeLabel: "⁂ Codex postalis",
-    button: "⁂ Quaere senatorem",
-    looking: "⁂ Quaerimus",
-    nameRequired: "⁂ Nomen tuum scribe.",
-    postcodeRequired: "⁂ Codicem postalem scribe.",
-    notFound: "⁂ Codicem postalem non invenimus.",
-    noConstituency: "⁂ Nullam regionem pro hoc codice invenimus.",
+    nameLabel: "Your Name",
+    postcodeLabel: "Your Postcode",
+    button: "Find My MP",
+    looking: "Looking up",
+    nameRequired: "Please enter your name",
+    postcodeRequired: "Please enter a postcode",
+    notFound: "Postcode not found",
+    noConstituency: "No parliamentary constituency found for this postcode",
     noMp: "⁂ Nullum senatorem pro hac regione invenimus.",
-    failed: "⁂ Aliquid erravit. Iterum conare.",
-    mpOf: (constituency: string) => `⁂ Senator pro ${constituency}`,
+    failed: "Something went wrong on our end. Please try again in a moment.",
+    mpOf: (constituency: string) => `MP for ${constituency}`,
     noEmail: "⁂ Nulla inscriptio electronica nota est.",
   },
   form: {
-    emailLabel: "⁂ Inscriptio electronica tua",
+    emailLabel: "Your email",
     addressLabel: "⁂ Inscriptio postalis tua",
     addressHint: "⁂ In subscriptione epistulae ponetur.",
-    subjectLabel: "⁂ Titulus",
-    letterLabel: "⁂ Epistula",
-    attachments: "⁂ Adiuncta",
-    consent: "⁂ Nuntia mihi de eventibus et modis PauseAI adiuvandi.",
+    subjectLabel: "Subject",
+    letterLabel: "Message",
+    attachments: "Attachments",
+    consent: "Tell me about events where I can talk to my MP and ways to help PauseAI",
     replyNotice: "⁂ Exemplar cuiusque responsi ad PauseAI UK veniet.",
-    send: "⁂ Mitte epistulam",
-    sending: "⁂ Mittimus",
-    confirmPrompt: (mpName: string) => `⁂ Epistulamne ad ${mpName} mittis?`,
-    cancel: "⁂ Desine",
-    confirmSend: "⁂ Confirma et mitte",
-    emailRequired: "⁂ Inscriptionem electronicam scribe.",
+    send: "Send Email",
+    sending: "Sending",
+    confirmPrompt: (mpName: string) => `Send this email to ${mpName}?`,
+    cancel: "Cancel",
+    confirmSend: "Confirm & Send",
+    emailRequired: "Please fill in your email address",
     addressRequired: "⁂ Inscriptionem postalem scribe.",
     checkInbox: "⁂ Inspice cistam tuam: nexum ibi clicca ut epistulam mittas.",
-    networkError: "⁂ Retis erravit. Iterum conare.",
+    networkError: "Network error - please try again",
   },
   // The email that asks the sender to confirm, with the link that sends the letter.
   confirmationEmail: {
@@ -147,18 +150,18 @@ export const copy = {
   },
   // Errors the server sends back to the form.
   errors: {
-    missingFields: "⁂ Omnes partes scribe.",
+    missingFields: "All fields are required",
     invalidEmail: "⁂ Inscriptio electronica non valet.",
     unknownCampaign: "⁂ Hanc causam non novimus.",
-    noRecipient: "⁂ Huic senatori scribere non possumus.",
+    noRecipient: "Invalid recipient email",
     testMpOnly: "⁂ Hic tantum ad senatorem probationis scribere licet.",
-    tooManyConfirmations: "⁂ Nimis multae epistulae hodie. Cras iterum conare.",
-    failed: "⁂ Epistulam mittere non potuimus. Iterum conare.",
-    spamUnavailable: "⁂ Tutela contra spam abest. Scribe ad hello@pauseai.uk.",
-    spamMisconfigured: "⁂ Tutela contra spam male parata est. Scribe ad hello@pauseai.uk.",
-    spamWait: "⁂ Exspecta dum probatio finiatur, deinde iterum mitte.",
-    spamFailed: "⁂ Probatio contra spam defecit. Paginam renova et iterum conare.",
-    spamUnreachable: "⁂ Probationem perficere non potuimus. Mox iterum conare.",
-    turnstileLoad: "⁂ Probatio contra spam onerari non potuit. Paginam renova.",
+    tooManyConfirmations: "Too many requests. Please try again later.",
+    failed: "Failed to send email",
+    spamUnavailable: "Spam protection is unavailable. Please email contact@pauseai.info instead.",
+    spamMisconfigured: "Spam protection is misconfigured. Please email contact@pauseai.info instead.",
+    spamWait: "Please wait for the anti-spam check to complete, then send your message again.",
+    spamFailed: "The anti-spam check failed. Please reload the page and try again.",
+    spamUnreachable: "Could not complete the anti-spam check. Please try again in a moment.",
+    turnstileLoad: "The anti-spam check could not load. Please refresh the page and try again.",
   },
 };
