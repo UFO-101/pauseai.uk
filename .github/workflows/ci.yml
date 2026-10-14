@@ -128,6 +128,14 @@ jobs:
         if: steps.playwright-cache.outputs.cache-hit == 'true'
         run: npx playwright install-deps chromium
 
+      # pg_dump 18, to match the server: the build below runs the unit tests,
+      # including the one that checks netlify/database/schema.sql is up to date.
+      - name: Install the Postgres 18 client
+        run: |
+          sudo apt-get install -y postgresql-common
+          sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
+          sudo apt-get install -y postgresql-client-18
+
       # playwright.config.ts's webServer builds and starts the app itself, so
       # there is no separate build step here. The public-vs-live suite is deliberately
       # not run: it compares against the live site, so it fails whenever news or
