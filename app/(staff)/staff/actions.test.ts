@@ -13,7 +13,7 @@ vi.mock("next/headers", () => import("@/tests/next-headers"));
 const { revalidatePath } = vi.hoisted(() => ({ revalidatePath: vi.fn() }));
 vi.mock("next/cache", () => ({ revalidatePath }));
 
-const PM = "letter-to-the-prime-minister";
+const PM = "regulate-pm-letter";
 
 function form(fields: Record<string, string>) {
   const data = new FormData();

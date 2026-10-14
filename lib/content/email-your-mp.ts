@@ -27,7 +27,7 @@ export type Attachment = {
 };
 
 export type Campaign = {
-  /** The URL is /email-your-mp-v2/<slug>. */
+  /** The URL is /campaigns-v2/<slug>. Letters and MP statuses in the database are keyed by it. */
   slug: string;
   title: string;
   description: string;
@@ -43,13 +43,21 @@ export type Campaign = {
   thanks: (details: LetterDetails) => string;
   /** Shown above the form when the MP has already done it. */
   alreadyDone: string;
+  /**
+   * Shown on the next campaign's page when this one's page has moved on to
+   * it, because the MP had already done this.
+   */
+  movedOn: string;
   attachments: Attachment[];
 };
 
-/** In priority order: plain /email-your-mp-v2 picks the first one the MP hasn't done. */
+/**
+ * In priority order. Plain /campaigns-v2 redirects to the first, and a
+ * campaign's page moves on to the first one the MP hasn't done.
+ */
 export const campaigns: Campaign[] = [
   {
-    slug: "letter-to-the-prime-minister",
+    slug: "regulate-pm-letter",
     title: "⁂ Epistula ad primum ministrum",
     description: "⁂ Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
     done: "signed",
@@ -60,6 +68,7 @@ export const campaigns: Campaign[] = [
     thanks: (d) =>
       `⁂ Care ${d.salutation},\n\nGratias tibi ago quod epistulam subscripsisti. Lorem ipsum dolor sit amet, ${d.constituency} consectetur adipiscing elit.\n\nVale,`,
     alreadyDone: "Already signed! This MP has already signed the Frontier AI letter.",
+    movedOn: "⁂ Senator tuus epistulam iam subscripsit, itaque hanc tibi ostendimus.",
     attachments: [
       {
         file: "Frontier-AI-Open-Letter.pdf",
@@ -76,7 +85,7 @@ export const campaigns: Campaign[] = [
     ],
   },
   {
-    slug: "support-the-bill",
+    slug: "support-sobel-bill",
     title: "⁂ Lex Alexandri Sobel",
     description: "⁂ Duis aute irure dolor in reprehenderit in voluptate velit esse.",
     done: "supports",
@@ -86,6 +95,7 @@ export const campaigns: Campaign[] = [
     thanks: (d) =>
       `⁂ Care ${d.salutation},\n\nGratias tibi ago quod legem sustines. Duis aute irure dolor, ${d.constituency} in reprehenderit.\n\nVale,`,
     alreadyDone: "⁂ Senator tuus iam legem sustinet.",
+    movedOn: "⁂ Senator tuus legem iam sustinet, itaque hanc tibi ostendimus.",
     // The bill's PDFs aren't written yet (plans/email-your-mp-v2.md, "Tasks for Francis").
     attachments: [],
   },

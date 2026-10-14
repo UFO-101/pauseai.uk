@@ -5,7 +5,8 @@ import { copy } from "@/lib/content/email-your-mp";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { readOutbox } from "./fixtures/outbox";
 
-export const TOOL_PAGE = "/email-your-mp-v2";
+// Redirects to the first campaign.
+export const TOOL_PAGE = "/campaigns-v2";
 
 // Cloudflare's real widget mustn't load in a test. This stands in for its
 // script: it draws nothing and hands over a token at once, which the

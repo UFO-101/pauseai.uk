@@ -3,6 +3,8 @@ import { campaigns } from "@/lib/content/email-your-mp";
 import {
   addressLines,
   campaignBySlug,
+  campaignPath,
+  campaignToMoveTo,
   chooseCampaign,
   draftLetter,
   fullLetter,
@@ -40,6 +42,17 @@ describe("campaigns", () => {
     expect(chooseCampaign({})).toBe(letterToPm);
     expect(chooseCampaign({ [letterToPm.slug]: "signed" })).toBe(bill);
     expect(chooseCampaign({ [letterToPm.slug]: "signed", [bill.slug]: "supports" })).toBe(letterToPm);
+  });
+
+  it("moves on from a campaign the MP has done to the first they haven't, if any", () => {
+    expect(campaignToMoveTo(letterToPm, {})).toBeUndefined();
+    expect(campaignToMoveTo(letterToPm, { [letterToPm.slug]: "signed" })).toBe(bill);
+    expect(campaignToMoveTo(bill, { [bill.slug]: "supports" })).toBe(letterToPm);
+    expect(campaignToMoveTo(letterToPm, { [letterToPm.slug]: "signed", [bill.slug]: "supports" })).toBeUndefined();
+  });
+
+  it("has a page for each campaign", () => {
+    expect(campaignPath(bill)).toBe("/campaigns-v2/support-sobel-bill");
   });
 });
 

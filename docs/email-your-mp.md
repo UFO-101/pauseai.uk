@@ -1,16 +1,28 @@
 # Email your MP
 
-Version 2 of the tool, built at `/email-your-mp-v2` (plan:
+Version 2 of the tool, built at `/campaigns-v2` (plan:
 `plans/email-your-mp-v2.md`). This page says where its code is and which
 settings it needs.
+
+## Pages
+
+- `/campaigns-v2/<slug>`: one campaign's page. If the MP has already done
+  that campaign, the page moves on to the first one they haven't, with the
+  lookup already done and a note saying why (the campaign's `movedOn`). If
+  they've done them all, it stays and the letter thanks them.
+- `/campaigns-v2`: redirects to the first campaign.
+- `/campaigns-v2/confirm`: where the confirmation email's link goes.
+
+At the swap (stage 5 of the plan) these replace `/campaigns`:
+`CAMPAIGNS_PATH` in `lib/email-your-mp.ts` says where they are.
 
 ## Code
 
 - `lib/content/email-your-mp.ts`: the campaigns (letter, subject, "already
   done" wording, attachments) and every word the tool shows. All
   placeholders for now.
-- `lib/email-your-mp.ts`: choosing a campaign and drafting the letter, shared
-  by the form and the server.
+- `lib/email-your-mp.ts`: the pages' paths, which campaign to move on to,
+  and drafting the letter, shared by the form and the server.
 - `lib/server/find-mp.ts`: postcode to MP, from the database. ZZ99ZZ finds
   the test MP.
 - `lib/parliament.ts`: reads the sitting MPs from Parliament's Members API,
@@ -26,7 +38,7 @@ settings it needs.
   click it. Also deletes letters never confirmed.
 - `lib/server/postmark.ts`: the only file that talks to Postmark.
 - `lib/server/postmark-webhooks.ts`: bounces, spam complaints and replies.
-- `app/(site)/email-your-mp-v2/`: the pages and the form.
+- `app/(site)/campaigns-v2/`: the pages and the form.
 - `app/api/email-your-mp/`: the form's lookup and send requests.
 
 ## MPs
@@ -58,7 +70,7 @@ The environment variables are listed, with what each is for, in [.env.example](.
 
 1. The form posts to `/api/email-your-mp/letters`. The letter is saved
    unconfirmed, and the sender is emailed a link,
-   `/email-your-mp-v2/confirm#<token>`. At most 5 such emails a day go to
+   `/campaigns-v2/confirm#<token>`. At most 5 such emails a day go to
    one address. The form pushes `mp_email_sent` to `dataLayer` when the
    server accepts it.
 2. The confirm page's script posts the token to `/api/email-your-mp/confirm`

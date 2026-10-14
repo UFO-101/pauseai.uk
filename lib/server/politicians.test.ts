@@ -14,8 +14,8 @@ import {
   updatePolitician,
 } from "./politicians";
 
-const PM = "letter-to-the-prime-minister";
-const BILL = "support-the-bill";
+const PM = "regulate-pm-letter";
+const BILL = "support-sobel-bill";
 const PEER = { house: "lords" as const, name: "Lord Example", salutation: "Lord Example", constituency: null, party: "Crossbench", email: null };
 
 describe("isHouse", () => {

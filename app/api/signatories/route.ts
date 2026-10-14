@@ -4,7 +4,7 @@ import { signatories } from "@/lib/server/politicians";
 /** Everyone who signed the letter to the Prime Minister, for the list on /campaigns. */
 export async function GET() {
   try {
-    return NextResponse.json(await signatories("letter-to-the-prime-minister"), {
+    return NextResponse.json(await signatories("regulate-pm-letter"), {
       headers: { "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=86400" },
     });
   } catch (error) {

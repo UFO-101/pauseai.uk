@@ -11,7 +11,7 @@ const POSTMARK = "https://api.postmarkapp.com/email";
 const ORIGIN = "https://pauseai.uk";
 
 const FORM: LetterForm = {
-  campaign: "letter-to-the-prime-minister",
+  campaign: "regulate-pm-letter",
   name: "Jane Smith",
   postcode: "zz9 9zz",
   address: "1 High Street\nTestville",
@@ -89,7 +89,7 @@ describeWithDatabase("submitLetter", () => {
 
     const [letter] = await query<Record<string, unknown>>("SELECT * FROM letters");
     expect(letter).toMatchObject({
-      campaign: "letter-to-the-prime-minister",
+      campaign: "regulate-pm-letter",
       sender_email: "jane@example.com",
       sender_postcode: "ZZ9 9ZZ",
       status: "unconfirmed",
@@ -98,7 +98,7 @@ describeWithDatabase("submitLetter", () => {
     });
     expect(sent).toHaveLength(1);
     expect(sent[0]).toMatchObject({ From: "PauseAI UK <confirm@mp.pauseai.uk>", To: "jane@example.com", Subject: copy.confirmationEmail.subject, MessageStream: "outbound" });
-    expect(sent[0].TextBody).toContain(`${ORIGIN}/email-your-mp-v2/confirm#`);
+    expect(sent[0].TextBody).toContain(`${ORIGIN}/campaigns-v2/confirm#`);
     // Only a hash of the token is kept.
     expect(String(letter.token_hash)).not.toContain(tokenFrom(sent[0]));
     expect(await query("SELECT status FROM letter_events")).toEqual([{ status: "unconfirmed" }]);
@@ -188,7 +188,7 @@ describeWithDatabase("confirmLetter", () => {
       Subject: "Subject",
       TextBody: "Dear Mr McTestface,\n\nPlease sign.\n\nThanks,\n\nJane Smith\n1 High Street\nTestville\nZZ9 9ZZ",
       MessageStream: "outbound",
-      Metadata: { letter: String(letter.id), campaign: "letter-to-the-prime-minister" },
+      Metadata: { letter: String(letter.id), campaign: "regulate-pm-letter" },
     });
     expect(sent[0].Attachments!.map((a) => a.Name)).toEqual(campaigns[0].attachments.map((a) => a.file));
     expect(Buffer.from(sent[0].Attachments![0].Content, "base64").equals(readFileSync("public/pdfs/Frontier-AI-Open-Letter.pdf"))).toBe(true);
@@ -208,7 +208,7 @@ describeWithDatabase("confirmLetter", () => {
   });
 
   it("sends a campaign without attachments without any", async () => {
-    const token = await submitted({ ...FORM, campaign: "support-the-bill" });
+    const token = await submitted({ ...FORM, campaign: "support-sobel-bill" });
     const sent = postmark();
     await confirmLetter(token);
     expect(sent[0].Attachments).toEqual([]);

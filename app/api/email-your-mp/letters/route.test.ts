@@ -18,7 +18,7 @@ describeWithDatabase("POST /api/email-your-mp/letters", () => {
 
   it("accepts a letter, checking Turnstile against this site's host", async () => {
     await addTestMp();
-    const letter = JSON.stringify({ campaign: "letter-to-the-prime-minister", name: "Jane", postcode: "ZZ99ZZ", address: "1 High St", email: "jane@example.com", subject: "S", letter: "L", turnstileToken: "t" });
+    const letter = JSON.stringify({ campaign: "regulate-pm-letter", name: "Jane", postcode: "ZZ99ZZ", address: "1 High St", email: "jane@example.com", subject: "S", letter: "L", turnstileToken: "t" });
     expect(await (await send(letter)).json()).toEqual({ ok: true });
     // The Turnstile fixture issues tokens for localhost, not pauseai.uk.
     expect(await (await send(letter, "https://pauseai.uk")).json()).toEqual({ ok: false, message: copy.errors.spamFailed });

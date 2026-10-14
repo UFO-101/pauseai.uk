@@ -27,8 +27,9 @@ export function discoverStaticRoutes(dir: string, base = ""): string[] {
 }
 
 // Real pages that should stay out of the sitemap: unlisted volunteer tools,
-// and Email your MP version 2 while it's being built.
-export const HIDDEN_ROUTES = ["/email-your-mp-v2", "/email-your-mp-v2/confirm", "/tools", "/tools/collateral", "/tools/qr", "/trackers", "/trackers/2026-09-26-flyering", "/trackers/2026-10-10-flyering"];
+// and Email your MP version 2 while it's being built (its campaign pages
+// aren't in the sitemap anyway, as only static routes are).
+export const HIDDEN_ROUTES = ["/campaigns-v2", "/campaigns-v2/confirm", "/tools", "/tools/collateral", "/tools/qr", "/trackers", "/trackers/2026-09-26-flyering", "/trackers/2026-10-10-flyering"];
 
 /** The staff interface, which nothing links to. */
 export function isStaffRoute(path: string): boolean {

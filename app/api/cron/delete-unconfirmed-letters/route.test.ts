@@ -15,7 +15,7 @@ describeWithDatabase("POST /api/cron/delete-unconfirmed-letters", () => {
     const mp = await addTestMp();
     await query(
       `INSERT INTO letters (campaign, politician_id, sender_name, sender_email, sender_address, sender_postcode, contact_consent, subject, body, reply_hash, status, created_at)
-       VALUES ('letter-to-the-prime-minister', $1, 'Jane', 'jane@example.com', 'x', 'ZZ9 9ZZ', false, 'S', 'B', 'h', 'unconfirmed', now() - interval '8 days')`,
+       VALUES ('regulate-pm-letter', $1, 'Jane', 'jane@example.com', 'x', 'ZZ9 9ZZ', false, 'S', 'B', 'h', 'unconfirmed', now() - interval '8 days')`,
       [mp],
     );
     expect(await (await call("Bearer s3cret")).json()).toEqual({ deleted: 1 });

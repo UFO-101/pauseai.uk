@@ -20,7 +20,7 @@ describeWithDatabase("POST /api/postmark/bounce", () => {
     const mp = await addTestMp();
     await query(
       `INSERT INTO letters (campaign, politician_id, sender_name, sender_email, sender_address, sender_postcode, contact_consent, subject, body, reply_hash, status, postmark_message_id)
-       VALUES ('letter-to-the-prime-minister', $1, 'Jane', 'jane@example.com', 'x', 'ZZ9 9ZZ', false, 'S', 'B', 'h', 'sent', 'msg-1')`,
+       VALUES ('regulate-pm-letter', $1, 'Jane', 'jane@example.com', 'x', 'ZZ9 9ZZ', false, 'S', 'B', 'h', 'sent', 'msg-1')`,
       [mp],
     );
     const res = await POST(webhookRequest("/api/postmark/bounce", bounce));

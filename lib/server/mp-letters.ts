@@ -3,7 +3,7 @@ import { createHash, randomBytes } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { copy } from "@/lib/content/email-your-mp";
-import { campaignBySlug, fullLetter, looksLikeEmail, signatureAddress } from "@/lib/email-your-mp";
+import { campaignBySlug, CAMPAIGNS_PATH, fullLetter, looksLikeEmail, signatureAddress } from "@/lib/email-your-mp";
 import { query, transaction, type Queryable } from "./db";
 import { findMp } from "./find-mp";
 import { headerName, sendEmail } from "./postmark";
@@ -129,7 +129,7 @@ export async function submitLetter(form: LetterForm, origin: string, hostname: s
         From: process.env.CONFIRMATION_FROM ?? `PauseAI UK <confirm@${mailDomain()}>`,
         To: form.email,
         Subject: copy.confirmationEmail.subject,
-        TextBody: copy.confirmationEmail.body(form.name, found.mp.name, `${origin}/email-your-mp-v2/confirm#${token}`),
+        TextBody: copy.confirmationEmail.body(form.name, found.mp.name, `${origin}${CAMPAIGNS_PATH}/confirm#${token}`),
         Tag: "confirmation",
       });
     } catch (error) {

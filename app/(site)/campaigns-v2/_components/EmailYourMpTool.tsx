@@ -1,26 +1,42 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/Button";
-import { copy } from "@/lib/content/email-your-mp";
-import { campaignBySlug, chooseCampaign, type Mp, type MpStatuses } from "@/lib/email-your-mp";
+import { copy, type Campaign } from "@/lib/content/email-your-mp";
+import { campaignBySlug, campaignPath, campaignToMoveTo, type Mp, type MpStatuses } from "@/lib/email-your-mp";
+import { navigate } from "@/lib/navigate";
+import { leaveHandoff, takeHandoff } from "./handoff";
 import LetterForm from "./LetterForm";
 import styles from "./EmailYourMp.module.css";
 
 type Found = { mp: Mp; statuses: MpStatuses; name: string; postcode: string };
 
 /**
- * Name and postcode, then the MP and the letter. With a `campaignSlug` the
- * page is that campaign's; without, the campaign is the first this MP hasn't
- * done. (A slug, because campaigns hold functions, which can't be passed from
- * the server.)
+ * Name and postcode, then the MP and the campaign's letter. If the MP has
+ * already done this campaign, it moves on to the first one they haven't,
+ * which opens with the lookup done and says why. (A slug, because campaigns
+ * hold functions, which can't be passed from the server.)
  */
-export default function EmailYourMpTool({ campaignSlug, turnstileSiteKey }: { campaignSlug?: string; turnstileSiteKey?: string }) {
+export default function EmailYourMpTool({ campaignSlug, turnstileSiteKey }: { campaignSlug: string; turnstileSiteKey?: string }) {
+  const campaign = campaignBySlug(campaignSlug)!;
   const [name, setName] = useState("");
   const [postcode, setPostcode] = useState("");
   const [looking, setLooking] = useState(false);
   const [error, setError] = useState("");
   const [found, setFound] = useState<Found | null>(null);
+  // The campaign whose page moved on to this one.
+  const [movedFrom, setMovedFrom] = useState<Campaign | undefined>();
+
+  // After the page loads, as the server can't see sessionStorage.
+  useEffect(() => {
+    const handoff = takeHandoff(campaignSlug);
+    if (!handoff) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- once, on load, from sessionStorage, which the server render couldn't read
+    setName(handoff.name);
+    setPostcode(handoff.postcode);
+    setFound({ mp: handoff.mp, statuses: handoff.statuses, name: handoff.name, postcode: handoff.postcode });
+    setMovedFrom(campaignBySlug(handoff.from));
+  }, [campaignSlug]);
 
   async function lookUp(event: FormEvent) {
     event.preventDefault();
@@ -28,7 +44,9 @@ export default function EmailYourMpTool({ campaignSlug, turnstileSiteKey }: { ca
     if (!postcode.trim()) return setError(copy.lookup.postcodeRequired);
     setError("");
     setFound(null);
+    setMovedFrom(undefined);
     setLooking(true);
+    let moving = false;
     try {
       const res = await fetch("/api/email-your-mp/lookup", {
         method: "POST",
@@ -36,17 +54,19 @@ export default function EmailYourMpTool({ campaignSlug, turnstileSiteKey }: { ca
         body: JSON.stringify({ postcode }),
       });
       const result = await res.json();
-      if (result.ok) setFound({ mp: result.mp, statuses: result.statuses, name: name.trim(), postcode: postcode.trim() });
-      else setError(result.message);
+      if (!result.ok) return setError(result.message);
+      const lookup = { mp: result.mp, statuses: result.statuses, name: name.trim(), postcode: postcode.trim() };
+      const next = campaignToMoveTo(campaign, lookup.statuses);
+      moving = !!next && leaveHandoff({ from: campaign.slug, to: next.slug, ...lookup });
+      // Still "looking" while the next page loads.
+      if (moving) navigate(campaignPath(next!));
+      else setFound(lookup);
     } catch {
       setError(copy.lookup.failed);
     } finally {
-      setLooking(false);
+      if (!moving) setLooking(false);
     }
   }
-
-  const campaign = campaignSlug ? campaignBySlug(campaignSlug) : undefined;
-  const chosen = found && (campaign ?? chooseCampaign(found.statuses));
 
   return (
     <div className={styles.tool}>
@@ -69,8 +89,9 @@ export default function EmailYourMpTool({ campaignSlug, turnstileSiteKey }: { ca
         </p>
       )}
 
-      {found && chosen && (
+      {found && (
         <>
+          {movedFrom && <p className={styles.notice}>{movedFrom.movedOn}</p>}
           <div className={styles.mp}>
             <h2>{found.mp.name}</h2>
             <p>{copy.lookup.mpOf(found.mp.constituency)}</p>
@@ -79,9 +100,9 @@ export default function EmailYourMpTool({ campaignSlug, turnstileSiteKey }: { ca
           </div>
           {found.mp.email && (
             <LetterForm
-              // A new MP or campaign starts a new letter.
-              key={`${found.mp.constituency}/${chosen.slug}`}
-              campaign={chosen}
+              // A new MP starts a new letter.
+              key={found.mp.constituency}
+              campaign={campaign}
               mp={found.mp}
               statuses={found.statuses}
               senderName={found.name}

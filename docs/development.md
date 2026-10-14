@@ -155,17 +155,20 @@ your machine. You need no keys:
 
 #### Send a letter to the test MP
 
-1. Open http://localhost:3000/email-your-mp-v2.
+1. Open http://localhost:3000/campaigns-v2.
 2. Enter any name, and postcode `ZZ99ZZ`. Testy McTestface MP appears, with
    the letter.
 3. Fill in an email and an address, then Send, then Confirm. Under
    `npm run dev`, Turnstile isn't needed.
 4. The confirmation email is the newest file in `tmp/outbox/`. Copy the
-   `/email-your-mp-v2/confirm#…` link out of its `TextBody` and open it.
+   `/campaigns-v2/confirm#…` link out of its `TextBody` and open it.
 5. The letter is sent: the newest outbox file is now the letter itself,
    with its PDFs base64-encoded.
 
 `/staff/letters` shows it, once you've logged in.
+
+To see a campaign's page move on to the next, mark the test MP as having
+done the first campaign in `/staff`, then look up ZZ99ZZ again.
 
 #### Write to a real MP
 

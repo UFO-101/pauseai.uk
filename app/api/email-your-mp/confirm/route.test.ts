@@ -31,7 +31,7 @@ describeWithDatabase("POST /api/email-your-mp/confirm", () => {
       }),
     );
     await submitLetter(
-      { campaign: "letter-to-the-prime-minister", name: "Jane", postcode: "ZZ99ZZ", address: "1 High St", email: "jane@example.com", subject: "S", letter: "L", consent: false, nickname: "", turnstileToken: "t" },
+      { campaign: "regulate-pm-letter", name: "Jane", postcode: "ZZ99ZZ", address: "1 High St", email: "jane@example.com", subject: "S", letter: "L", consent: false, nickname: "", turnstileToken: "t" },
       "https://pauseai.uk",
       "localhost",
     );

@@ -18,7 +18,7 @@ function adsEvents(page: Page) {
   return page.evaluate(() => ((window as AdsWindow).dataLayer ?? []).filter((e) => e.event === "mp_email_sent").length);
 }
 
-async function lookUpTestMp(page: Page, path = "/email-your-mp-v2") {
+async function lookUpTestMp(page: Page, path = "/campaigns-v2") {
   await page.goto(`${BASE}${path}`);
   await page.getByLabel(copy.lookup.nameLabel).fill("Jane Smith");
   await page.getByLabel(copy.lookup.postcodeLabel).fill("ZZ9 9ZZ");
@@ -45,7 +45,7 @@ test("the ZZ99ZZ flow: postcode, form, confirmation link, sent, and a reply forw
 
   const confirmation = newestEmailTo(sender)!;
   expect(confirmation.Subject).toBe(copy.confirmationEmail.subject);
-  const link = confirmation.TextBody.match(/https?:\/\/\S+\/email-your-mp-v2\/confirm#[\w-]+/)![0];
+  const link = confirmation.TextBody.match(/https?:\/\/\S+\/campaigns-v2\/confirm#[\w-]+/)![0];
   await page.goto(link);
   await expect(page.getByRole("status")).toHaveText(copy.confirm.sent("Testy McTestface MP"));
 
@@ -102,18 +102,20 @@ test("the Postmark webhooks refuse requests without our credentials", async ({ r
   expect(await bounce.json()).toEqual({ recorded: false });
 });
 
-test("each campaign has its own page, and an unknown one is a 404", async ({ page, request }) => {
+test("each campaign has its own page, plain /campaigns-v2 opens the first, and an unknown one is a 404", async ({ page, request }) => {
   for (const campaign of campaigns) {
-    await page.goto(`${BASE}/email-your-mp-v2/${campaign.slug}`);
+    await page.goto(`${BASE}/campaigns-v2/${campaign.slug}`);
     await expect(page.getByRole("heading", { level: 1 })).toHaveText(campaign.title);
   }
-  expect((await request.get(`${BASE}/email-your-mp-v2/no-such-campaign`)).status()).toBe(404);
+  await page.goto(`${BASE}/campaigns-v2`);
+  await expect(page).toHaveURL(`${BASE}/campaigns-v2/${campaigns[0].slug}`);
+  expect((await request.get(`${BASE}/campaigns-v2/no-such-campaign`)).status()).toBe(404);
 });
 
 test("version 2 is unlisted and kept out of search", async ({ page, request }) => {
-  await page.goto(`${BASE}/email-your-mp-v2`);
+  await page.goto(`${BASE}/campaigns-v2`);
   await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", /noindex/);
-  expect(await (await request.get(`${BASE}/sitemap.xml`)).text()).not.toContain("email-your-mp-v2");
+  expect(await (await request.get(`${BASE}/sitemap.xml`)).text()).not.toContain("campaigns-v2");
   await page.goto(`${BASE}/`);
-  await expect(page.locator('a[href*="email-your-mp-v2"]')).toHaveCount(0);
+  await expect(page.locator('a[href*="campaigns-v2"]')).toHaveCount(0);
 });

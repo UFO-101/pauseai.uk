@@ -17,7 +17,7 @@ const APP_DIR = join(__dirname, "..", "app");
 export const DYNAMIC_EXAMPLES: Record<string, string> = {
   "/blog/[slug]": `/blog/${posts[0].slug}`,
   "/people/[slug]": `/people/${personSlug(people[0])}`,
-  "/email-your-mp-v2/[slug]": `/email-your-mp-v2/${campaigns[0].slug}`,
+  "/campaigns-v2/[slug]": `/campaigns-v2/${campaigns[0].slug}`,
   // Without a session this redirects to the login page, which is what the
   // smoke test sees.
   "/staff/politicians/[id]": "/staff/politicians/1",

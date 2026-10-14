@@ -16,6 +16,13 @@ export type Mp = {
 /** Each campaign's status for one MP, keyed by campaign slug. */
 export type MpStatuses = Partial<Record<string, CampaignStatus>>;
 
+/** Where the campaigns' pages are. Stage 5 of the plan moves them to /campaigns. */
+export const CAMPAIGNS_PATH = "/campaigns-v2";
+
+export function campaignPath(campaign: Campaign): string {
+  return `${CAMPAIGNS_PATH}/${campaign.slug}`;
+}
+
 /** The test MP's postcode. postcodes.io doesn't know it, so it never gets that far. */
 export const TEST_POSTCODE = "ZZ99ZZ";
 
@@ -37,12 +44,22 @@ export function isDone(campaign: Campaign, statuses: MpStatuses): boolean {
 }
 
 /**
- * The campaign plain /email-your-mp-v2 opens: the first, in priority order,
- * that this MP hasn't done. If they've done them all, the first, which then
- * thanks them.
+ * The first campaign, in priority order, that this MP hasn't done. If
+ * they've done them all, the first, which then thanks them.
  */
 export function chooseCampaign(statuses: MpStatuses): Campaign {
   return campaigns.find((campaign) => !isDone(campaign, statuses)) ?? campaigns[0];
+}
+
+/**
+ * Where a campaign's page sends someone whose MP has already done it: the
+ * first campaign they haven't. None if they've done them all, so the page
+ * stays and thanks them.
+ */
+export function campaignToMoveTo(campaign: Campaign, statuses: MpStatuses): Campaign | undefined {
+  if (!isDone(campaign, statuses)) return undefined;
+  const next = chooseCampaign(statuses);
+  return isDone(next, statuses) ? undefined : next;
 }
 
 /** The letter the form starts with: a request, or thanks if it's done. */

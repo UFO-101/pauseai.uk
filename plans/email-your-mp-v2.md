@@ -10,8 +10,8 @@ https://pauseai.info/uk-email-mp, embedded on pauseai.uk/campaigns, has one hard
 
 Built entirely in pauseai.uk. When it works, the old tool is deleted from pauseai-website, and there's no iframe any more.
 
-- **Campaigns, defined in code**: title, subject, letter, attachments, and the rule for "done". `/email-your-mp/<slug>` opens a campaign. Plain `/email-your-mp` picks the first campaign, in priority order, that this MP hasn't done. The order for now: sign the letter to the PM, then support Alex Sobel's bill.
-- **Already done**: if the MP has already done the campaign, the page says so ("your MP has already signed") and the letter thanks them. The form isn't hidden.
+- **Campaigns, defined in code**: title, subject, letter, attachments, and the rule for "done". Each campaign has a page, `/campaigns/<slug>`: `regulate-pm-letter` and `support-sobel-bill` for now, in that priority order. Plain `/campaigns` redirects to the first. If the MP has already done a campaign, its page moves on to the first one they haven't, with the name, postcode and MP carried over, and a note saying why ("your MP has already signed the letter, so here's this one"). Going straight to a campaign's link shows it without the note.
+- **Already done**: if the MP has done every campaign, the page says so ("your MP has already signed") and the letter thanks them. The form isn't hidden.
 - **Postal address**: collected from the sender and put in the letter's signature.
 - **Attachments**: the PDFs stay real attachments. There's one copy of each, in pauseai.uk's `public/pdfs/`. Postmark allows 10MB per message after Base64 encoding; today's two PDFs total about 270KB.
 - **Email confirmation**: after the form is submitted, we email the sender a link with a single-use token. Clicking it sends the letter straight away.
@@ -82,15 +82,15 @@ For the policy team to edit campaign status, add signers from outside the Common
 
 ## Rollout
 
-Version 2 is built at `https://pauseai.uk/email-your-mp-v2`, which isn't linked from anywhere, isn't in the sitemap, and sends `noindex`. The old tool keeps running meanwhile. Each stage goes live on that URL when it's ready.
+Version 2 is built at `https://pauseai.uk/campaigns-v2` (and `/campaigns-v2/<slug>`), which isn't linked from anywhere, isn't in the sitemap, and sends `noindex`. There's no separate Email your MP page: `/campaigns-v2` is what becomes `/campaigns`. The old tool keeps running meanwhile. Each stage goes live on that URL when it's ready.
 
 1. **Campaigns**: per-campaign links, the fallback, "already done" wording, attachments and the test MP. Francis writes the copy for each campaign, including the bill's exact name and the "already done" wording, and Joseph approves it. Until then the code uses placeholders (see `AGENTS.md`). Letters still go into Airtable, which needs `AIRTABLE_WRITE_API_KEY` on pauseai.uk.
 2. **MPs** from Parliament's API.
 3. **Database, staff login and staff interface.** Status and signatories move off Airtable.
 4. **Direct sending**: postal address, email confirmation, Postmark, the bounce and reply webhooks, and the confirmation cap. Then the Airtable 8am automation is switched off.
 5. **The swap**:
-   - `/email-your-mp-v2` moves to `/email-your-mp` and redirects there.
-   - `/campaigns` shows the form itself instead of the iframe.
+   - `/campaigns-v2` replaces `/campaigns`: `CAMPAIGNS_PATH` in `lib/email-your-mp.ts` becomes `/campaigns`, the folder moves, and today's `/campaigns` page and its iframe go. Whatever else that page shows (the signatories, the sections around the iframe) moves onto the campaign pages first.
+   - `/campaigns-v2` URLs redirect to their `/campaigns` ones, including confirmation links already emailed.
    - pauseai.info's `uk-email-mp` URLs redirect to pauseai.uk.
    - The old tool is deleted from pauseai-website (Francis does this). The only other link to it there is the button on `dear-sir-demis-2025`, which the redirect covers.
 

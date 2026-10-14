@@ -39,7 +39,7 @@ async function sentLetter(messageId = "msg-1"): Promise<string> {
   const [{ reply_hash }] = await query<{ reply_hash: string }>(
     `INSERT INTO letters (campaign, politician_id, sender_name, sender_email, sender_address, sender_postcode, contact_consent,
        subject, body, reply_hash, status, postmark_message_id)
-     VALUES ('letter-to-the-prime-minister', $1, 'Jane Smith', 'Jane@Example.com', '1 High St', 'ZZ9 9ZZ', true, 'S', 'B', 'hash1', 'sent', $2)
+     VALUES ('regulate-pm-letter', $1, 'Jane Smith', 'Jane@Example.com', '1 High St', 'ZZ9 9ZZ', true, 'S', 'B', 'hash1', 'sent', $2)
      RETURNING reply_hash`,
     [mp, messageId],
   );
