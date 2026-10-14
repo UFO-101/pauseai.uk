@@ -38,7 +38,7 @@ export function fixtureResponse(url: string): Response | undefined {
     const postcode = decodeURIComponent(pathname.slice("/postcodes/".length)).replace(/\s+/g, "").toUpperCase();
     const constituency = POSTCODES[postcode];
     return constituency
-      ? json({ status: 200, result: { postcode, parliamentary_constituency: constituency } })
+      ? json({ status: 200, result: { postcode, parliamentary_constituency: constituency, codes: { parliamentary_constituency: "E14001172" } } })
       : new Response(JSON.stringify({ status: 404, error: "Postcode not found" }), { status: 404 });
   }
   if (hostname === "members-api.parliament.uk" && pathname === "/api/Members/Search") {

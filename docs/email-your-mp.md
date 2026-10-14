@@ -27,7 +27,11 @@ At the swap (stage 5 of the plan) these replace `/campaigns`:
   A new campaign also needs its page, `app/(site)/campaigns-v2/<slug>/page.tsx`.
 - `lib/email-your-mp.ts`: the pages' paths, which campaign to move on to,
   and drafting the letter, shared by the form and the server.
-- `lib/server/find-mp.ts`: postcode to MP, from the database. A test
+- `lib/server/find-mp.ts`: postcode to MP, from the database. postcodes.io
+  gives the postcode's constituency code, `lib/constituencies.ts` (the ONS's
+  official list of the 650) turns it into the official name, and the MP is
+  the one Airtable lists for that name. postcodes.io's own names can differ:
+  it spells Montgomeryshire and Glyndŵr without the circumflex. A test
   MP's postcode finds them (`lib/test-mps.json`: ZZ99ZZ, and ZZ99ZS, who
   has signed the letter to the PM).
 - `lib/server/airtable.ts`: the only file that talks to Airtable. Reads the
@@ -75,7 +79,8 @@ After the first deploy with the database, run the sync once from
 Nightly, `netlify/functions/check-mps/` calls `/api/cron/check-mps`, which
 compares the sitting MPs with Parliament's Members API and keeps what it
 finds. `/staff/mp-check` shows the newest check, and can run one. It lists
-constituencies only one side has, names that differ (not counting titles
+constituencies Airtable doesn't spell as the official list does (no
+postcode would find their MP), constituencies only one side has, names that differ (not counting titles
 such as Dr or Sir), and emails Parliament doesn't list. Where Parliament
 lists no email, Airtable's is taken as right. Nothing is changed: fix
 problems in Airtable, and the next sync copies the fix.

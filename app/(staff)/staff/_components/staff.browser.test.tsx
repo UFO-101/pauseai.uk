@@ -160,6 +160,7 @@ describe("MpCheckList", () => {
           at: "2026-10-14T02:00:00Z",
           problems: [
             { kind: "extra", constituency: "Gone", airtable: "Former MP" },
+            { kind: "unofficial", constituency: "Montgomeryshire and Glyndwr", airtable: "Steve Witherden" },
             { kind: "missing", constituency: "New Seat", parliament: "New MP" },
             { kind: "name", constituency: "North East Derbyshire", airtable: "Louise Jones", parliament: "Louise Sandher-Jones" },
             { kind: "email", constituency: "Wallasey", name: "Angela Eagle", airtable: "eaglea@parliament.uk", parliament: ["angela.eagle.mp@parliament.uk", "a@example.org"] },
@@ -170,6 +171,7 @@ describe("MpCheckList", () => {
     );
     const row = (constituency: string) => page.getByRole("row").filter({ hasText: constituency });
     await expect.element(row("Gone")).toHaveTextContent(`Gone${staffCopy.check.kinds.extra}Former MP`);
+    await expect.element(row("Montgomeryshire")).toHaveTextContent(`Montgomeryshire and Glyndwr${staffCopy.check.kinds.unofficial}Steve Witherden`);
     await expect.element(row("New Seat")).toHaveTextContent(`New Seat${staffCopy.check.kinds.missing}New MP`);
     await expect.element(row("North East Derbyshire")).toHaveTextContent(`North East Derbyshire${staffCopy.check.kinds.name}Louise JonesLouise Sandher-Jones`);
     await expect.element(row("Wallasey")).toHaveTextContent(`Wallasey${staffCopy.check.kinds.email}Angela Eagle: eaglea@parliament.ukangela.eagle.mp@parliament.uk, a@example.org`);

@@ -1,12 +1,19 @@
+import { isOfficialName } from "./constituencies";
 import type { SyncedMp } from "./mps";
 import type { ParliamentMp } from "./parliament";
 
-// Where Airtable's MPs disagree with Parliament's Members API, for the
-// policy team to look at (/staff/mp-check). Nothing is changed by it.
+// Where Airtable's MPs disagree with Parliament's Members API, or with the
+// official constituency names, for the policy team to look at
+// (/staff/mp-check). Nothing is changed by it.
 
 export type MpProblem =
   /** Parliament has an MP for a constituency Airtable hasn't. */
   | { kind: "missing"; constituency: string; parliament: string }
+  /**
+   * Airtable's constituency isn't spelt as the official list has it
+   * (lib/constituencies.ts), so no postcode will find its MP.
+   */
+  | { kind: "unofficial"; constituency: string; airtable: string }
   /** Airtable has an MP for a constituency Parliament hasn't: they may have left. */
   | { kind: "extra"; constituency: string; airtable: string }
   /** Different names, not counting titles such as Dr or Sir. */
@@ -34,6 +41,7 @@ export function checkAgainstParliament(airtable: SyncedMp[], parliament: Parliam
   for (const constituency of [...new Set([...ours.keys(), ...theirs.keys()])].sort((a, b) => a.localeCompare(b))) {
     const a = ours.get(constituency);
     const p = theirs.get(constituency);
+    if (a && !isOfficialName(constituency)) problems.push({ kind: "unofficial", constituency, airtable: a.name });
     if (!a) {
       problems.push({ kind: "missing", constituency, parliament: p!.name });
       continue;

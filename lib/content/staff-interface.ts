@@ -100,6 +100,7 @@ export const staffCopy = {
     allGood: "⁂ Omnia congruunt.",
     columns: { constituency: "⁂ Regio", problem: "⁂ Quaestio", airtable: "⁂ Airtable", parliament: "⁂ Parlamentum" },
     kinds: {
+      unofficial: "⁂ Nomen regionis non officiale",
       missing: "⁂ Deest in Airtable",
       extra: "⁂ Deest in Parlamento",
       name: "⁂ Nomen differt",

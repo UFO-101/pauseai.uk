@@ -8,6 +8,7 @@ function sides(problem: MpProblem): [string, string] {
     case "missing":
       return ["", problem.parliament];
     case "extra":
+    case "unofficial":
       return [problem.airtable, ""];
     case "name":
       return [problem.airtable, problem.parliament];
