@@ -15,6 +15,7 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fixtureEnv, MAIN_OUTBOX_DIR } from "../tests/fixture-env.mjs";
+import { testServerUrl } from "./fresh-database.mjs";
 
 function option(name, fallback) {
   const at = process.argv.indexOf(`--${name}`);
@@ -45,6 +46,10 @@ if (!existsSync(stamp) || readFileSync(stamp, "utf8") !== lock) {
 }
 
 const env = { ...process.env, ...fixtureEnv({ outboxDir: MAIN_OUTBOX_DIR }) };
+// The same test Postgres as this branch's (`db-test`, say), which the
+// worktree's own copy of the database script can't find in our .env.local.
+const testServer = testServerUrl();
+if (testServer) env.TEST_DATABASE_URL = testServer;
 // A fresh database, if this version of the site has one.
 const freshDatabase = join(dir, "scripts", "fresh-database.mjs");
 if (existsSync(freshDatabase)) {

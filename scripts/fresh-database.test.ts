@@ -2,7 +2,7 @@ import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { defaultHost, isLocal } from "./fresh-database.mjs";
+import { defaultHost, isLocal, testServerUrl } from "./fresh-database.mjs";
 
 describe("isLocal", () => {
   it("accepts databases on this machine, and nothing else", () => {
@@ -26,6 +26,23 @@ describe("defaultHost", () => {
     } finally {
       rmSync(linux, { recursive: true });
       rmSync(mac, { recursive: true });
+    }
+  });
+});
+
+describe("testServerUrl", () => {
+  it("prefers the environment, then .env.local, reading only that line", () => {
+    const dir = mkdtempSync(join(tmpdir(), "env-"));
+    const file = join(dir, ".env.local");
+    try {
+      writeFileSync(file, 'DATA_FIXTURES=1\n# TEST_DATABASE_URL=commented\n TEST_DATABASE_URL = "postgresql://postgres:postgres@localhost:5433/postgres" \n');
+      expect(testServerUrl({ TEST_DATABASE_URL: "postgresql://env/x" }, file)).toBe("postgresql://env/x");
+      expect(testServerUrl({}, file)).toBe("postgresql://postgres:postgres@localhost:5433/postgres");
+      writeFileSync(file, "DATA_FIXTURES=1\n");
+      expect(testServerUrl({}, file)).toBeUndefined();
+      expect(testServerUrl({}, join(dir, "missing"))).toBeUndefined();
+    } finally {
+      rmSync(dir, { recursive: true });
     }
   });
 });

@@ -7,9 +7,11 @@ the short version, and `.env.example` lists the environment variables.
 ## 1. What you need
 
 - **Node 22**, as Netlify uses (`netlify.toml`). Newer versions also work.
-- **Postgres 18**, with `psql` on your path, to match production: Netlify
-  Database runs PostgreSQL 18.6, and CI uses 18 too. (The scripts need at
-  least 13, but use 18 so nothing works locally that fails live.)
+- **Docker**, to run Postgres 18 from `docker-compose.yml`, matching
+  production: Netlify Database runs PostgreSQL 18.6, and CI uses 18 too. Or
+  a Postgres 18 installed natively (below).
+- **`psql`**, Postgres's command-line tool, on your path. The scripts use it
+  to make databases and apply migrations.
 - **Chromium for Playwright**, for the browser tests:
   `npx playwright install chromium`.
 
@@ -29,74 +31,61 @@ Email your MP, the staff interface and the signatories list on `/campaigns`
 read and write a Postgres database. So do some unit tests. Every other page
 works without one.
 
-### Install and start it
+### Start it
 
-**macOS:** install [Postgres.app](https://postgresapp.com). Move it to
-Applications, open it, and click **Initialize**. Then put its tools on your
-path, with the command from its site, and open a new terminal:
+**With Docker (the default):**
 
 ```bash
-sudo mkdir -p /etc/paths.d && echo /Applications/Postgres.app/Contents/Versions/latest/bin | sudo tee /etc/paths.d/postgresapp
+docker compose up -d
 ```
 
-It makes a superuser named after your login. (Homebrew's
-`postgresql@18` works too, but you have to add it to your path yourself.)
+That starts two Postgres 18 servers, from `docker-compose.yml`:
 
-**Debian or Ubuntu:**
+| Service | Port | For | Kept |
+| --- | --- | --- | --- |
+| `db` | 5432 | the dev server's database | in a Docker volume, between restarts |
+| `db-test` | 5433 | the throwaway databases tests make | in memory only, with durability off for speed |
 
-```bash
-sudo apt install postgresql
-sudo -u postgres createuser --superuser "$(whoami)"
-```
+You still need `psql` on your machine: `brew install libpq && brew link
+--force libpq` on a Mac, `sudo apt install postgresql-client` on Debian or
+Ubuntu. `docker compose down` stops them; `docker compose down -v` also
+deletes the dev data.
 
-The socket is in `/var/run/postgresql`, which the scripts use by default.
+**Natively, instead:**
 
-**Docker:**
+- **Mac:** install [Postgres.app](https://postgresapp.com). Open it, click
+  **Initialize**, then put its tools on your path and open a new terminal:
+  ```bash
+  sudo mkdir -p /etc/paths.d && echo /Applications/Postgres.app/Contents/Versions/latest/bin | sudo tee /etc/paths.d/postgresapp
+  ```
+- **Debian or Ubuntu:** `sudo apt install postgresql`, then
+  `sudo -u postgres createuser --superuser "$(whoami)"`.
 
-```bash
-docker run -d --name pauseai-postgres -p 5432:5432 -e POSTGRES_PASSWORD=postgres postgres:18
-```
-
-You still need `psql` on your machine (`brew install libpq`, or
-`apt install postgresql-client`).
-
-### Tell the scripts where it is
-
-Usually you don't need to. The scripts and tests find a local server's
-socket by themselves: in `/var/run/postgresql` (Linux) or `/tmp` (Mac).
-Otherwise they use the usual `PG*` variables. For Docker, set:
-
-```bash
-export PGHOST=localhost PGUSER=postgres PGPASSWORD=postgres
-```
-
-Check it works:
-
-```bash
-psql -d postgres -c 'select version()'
-```
-
-The user needs to be able to create databases: every test file makes its
-own.
-
-### Make a database for the dev server
+### Tell the site and the tests where it is
 
 Your local settings live in `.env.local`, which git ignores. Start from the
-example, and set the database URL:
+example:
 
 ```bash
 cp .env.example .env.local
 ```
 
-In `.env.local`, `NETLIFY_DB_URL` names the database to use:
+Two settings in it say where Postgres is:
 
-| Postgres from | `NETLIFY_DB_URL` |
-| --- | --- |
-| Postgres.app (Mac) | `postgresql://localhost/pauseai_dev` (the example's) |
-| apt (Linux) | `postgresql:///pauseai_dev?host=/var/run/postgresql` |
-| Docker | `postgresql://postgres:postgres@localhost/pauseai_dev` |
+| Setting | What it is | Docker (the example's) | Postgres.app | apt |
+| --- | --- | --- | --- | --- |
+| `NETLIFY_DB_URL` | the dev server's database | `postgresql://postgres:postgres@localhost:5432/pauseai_dev` | `postgresql://localhost/pauseai_dev` | `postgresql:///pauseai_dev?host=/var/run/postgresql` |
+| `TEST_DATABASE_URL` | the server tests make their databases on | `postgresql://postgres:postgres@localhost:5433/postgres` | delete it | delete it |
 
-Set `TEST_MP_EMAIL` to your email too. Then make the database:
+Without `TEST_DATABASE_URL`, tests use the usual `PG*` variables, or find a
+local server's socket by themselves: in `/var/run/postgresql` (Linux) or
+`/tmp` (Mac). Tests read only that one line of `.env.local`, so its other
+settings never reach them. The Postgres user needs to be able to create
+databases: every test file makes its own.
+
+### Make a database for the dev server
+
+Set `TEST_MP_EMAIL` in `.env.local` to your email. Then:
 
 ```bash
 npm run db:reset
@@ -118,7 +107,7 @@ machine, so it can't touch the live database.
 ### Looking inside
 
 ```bash
-psql postgresql://localhost/pauseai_dev   # your NETLIFY_DB_URL
+psql postgresql://postgres:postgres@localhost:5432/pauseai_dev   # your NETLIFY_DB_URL
 ```
 
 ```sql
@@ -304,7 +293,7 @@ See [testing.md](testing.md) for the rules.
 | --- | --- |
 | `NETLIFY_DB_URL is not set` | Copy `.env.example` to `.env.local` (section 3). |
 | `psql: command not found` | Install the Postgres client, and make sure it's on your path. |
-| `connection to server on socket ... failed` | Postgres isn't running, or `PGHOST` points to the wrong place (section 3). |
+| `connection to server ... failed` or `Connection refused` | Postgres isn't running (`docker compose up -d`), or `NETLIFY_DB_URL`, `TEST_DATABASE_URL` or `PGHOST` points to the wrong place (section 3). |
 | `role "..." does not exist` | Create a superuser for yourself (`createuser --superuser`), or set `PGUSER`. |
 | `permission denied to create database` | Your Postgres user needs `CREATEDB`: `alter user <you> createdb;`. |
 | `relation "letters" does not exist` | The database is older than a migration. Make a fresh one (section 3). |

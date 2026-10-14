@@ -4,27 +4,27 @@ The [pauseai.uk](https://pauseai.uk) website: Next.js 16 and React 19, deployed 
 
 ## Run it locally
 
-### 1. Install Node and Postgres
+### 1. Install Node, Docker and psql
 
 - **Node 22.**
-- **Postgres 18**, the version the live site runs, including its command-line tool `psql`. Postgres holds Email your MP's data, and some unit tests use it.
-  - **Mac:** install [Postgres.app](https://postgresapp.com). Open it and click **Initialize**. Then run this, and open a new terminal:
-    ```bash
-    sudo mkdir -p /etc/paths.d && echo /Applications/Postgres.app/Contents/Versions/latest/bin | sudo tee /etc/paths.d/postgresapp
-    ```
-  - **Debian or Ubuntu:** `sudo apt install postgresql`, then `sudo -u postgres createuser --superuser "$(whoami)"`. If your release's package is older than 18, add [PostgreSQL's own apt repository](https://www.postgresql.org/download/linux/ubuntu/) first.
+- **Docker**, which runs Postgres 18 (the version the live site runs) from `docker-compose.yml`.
+- **`psql`**, Postgres's command-line tool, which the scripts use to set up databases. Mac: `brew install libpq && brew link --force libpq`. Debian or Ubuntu: `sudo apt install postgresql-client`.
 
-Check both:
+Check them:
 
 ```bash
-node --version   # v22 or later
-psql --version   # psql (PostgreSQL) 18.x
+node --version     # v22 or later
+docker --version
+psql --version     # 18 or later is best
 ```
+
+You can use a Postgres installed natively instead of Docker; see [docs/development.md](docs/development.md).
 
 ### 2. Set up and run
 
 ```bash
 npm install
+docker compose up -d         # starts Postgres: `db` for the site, `db-test` for tests
 cp .env.example .env.local   # your local settings: edit it, see below
 npm run db:reset             # makes the database NETLIFY_DB_URL names
 npm run dev                  # http://localhost:3000
@@ -32,7 +32,8 @@ npm run dev                  # http://localhost:3000
 
 In `.env.local`:
 
-- **`NETLIFY_DB_URL`** is your local database. The example suits Postgres.app on a Mac. On Linux, use `postgresql:///pauseai_dev?host=/var/run/postgresql`.
+- **`NETLIFY_DB_URL`** is your local database: `db` in Docker, as the example has it.
+- **`TEST_DATABASE_URL`** is where tests make their throwaway databases: `db-test` in Docker, which keeps everything in memory.
 - **`TEST_MP_EMAIL`**: your email. Letters to the test MP go there.
 - **`DATA_FIXTURES=1`** fakes every outside service, so you need no other keys. Emails are written to files in `tmp/outbox/` instead of sent.
 
@@ -45,7 +46,7 @@ To use real services, delete `DATA_FIXTURES` and fill in the rest of `.env.local
 ## Tests
 
 ```bash
-npm test                 # unit tests (needs Postgres, as above)
+npm test                 # unit tests (needs Postgres running, as above)
 npm run test:coverage    # unit and component tests, held at 100% coverage
 npm run test:behaviour   # Playwright, on a fixture build
 npm run test:public-vs-live   # Playwright, public pages: the local build against pauseai.uk

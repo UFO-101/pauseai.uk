@@ -140,9 +140,11 @@ not a mock.
   (`scripts/fresh-database.mjs`, the same way Netlify does), empties the
   tables before each test, and drops the database afterwards.
   `addTestPolitician()` and `addTestMp()` add rows.
-- **Where Postgres is.** The usual `PG*` variables; without `PGHOST`, the
-  local server's socket in `/var/run/postgresql` or `/tmp`, else localhost. See the README for setting it up
-  locally. CI runs a Postgres service.
+- **Where Postgres is.** `TEST_DATABASE_URL` (from the environment, or
+  that one line of `.env.local`): `db-test` in `docker-compose.yml`, say.
+  Without it, the usual `PG*` variables; without `PGHOST`, the local
+  server's socket in `/var/run/postgresql` or `/tmp`, else localhost. CI
+  runs a Postgres service.
 - **Netlify's build has no Postgres**, so `npm run build` skips these tests
   there (`NETLIFY=true`). CI runs them.
 - **Playwright** builds against its own database, `pauseai_behaviour`, made

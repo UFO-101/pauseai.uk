@@ -6,11 +6,13 @@
 //   node scripts/fresh-database.mjs <name>   prints the new database's URL
 //   ... --test-mp <email>                    and adds the test MP, with that inbox
 //
-// Connects with the usual PG* variables. Without PGHOST it finds the local
+// Makes them on the server TEST_DATABASE_URL names, from the environment or
+// .env.local: `db-test` in docker-compose.yml, say. Without it, it connects
+// with the usual PG* variables, and without PGHOST it finds the local
 // server's Unix socket: /var/run/postgresql on Debian and Ubuntu, /tmp on a
 // Mac (Postgres.app, Homebrew), else it tries localhost.
 import { execFileSync } from "node:child_process";
-import { existsSync, readdirSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { userInfo } from "node:os";
 import { fileURLToPath } from "node:url";
@@ -29,8 +31,26 @@ export function defaultHost(port = process.env.PGPORT ?? "5432", places = ["/var
   return places.find((dir) => existsSync(join(dir, `.s.PGSQL.${port}`))) ?? "localhost";
 }
 
+/**
+ * TEST_DATABASE_URL, from the environment or else from `envFile`. Only that
+ * one line is read: the rest of .env.local (DATA_FIXTURES, say) is for the
+ * dev server, not the tests.
+ */
+export function testServerUrl(env = process.env, envFile = ".env.local") {
+  if (env.TEST_DATABASE_URL) return env.TEST_DATABASE_URL;
+  if (!existsSync(envFile)) return undefined;
+  const line = readFileSync(envFile, "utf8").match(/^\s*TEST_DATABASE_URL\s*=\s*(.+?)\s*$/m);
+  return line?.[1].replace(/^(["'])(.*)\1$/, "$2") || undefined;
+}
+
 /** The URL of database `name` on the configured server. */
 export function databaseUrl(name) {
+  const server = testServerUrl();
+  if (server) {
+    const url = new URL(server);
+    url.pathname = `/${name}`;
+    return url.toString();
+  }
   const user = process.env.PGUSER ?? userInfo().username;
   const password = process.env.PGPASSWORD ? `:${encodeURIComponent(process.env.PGPASSWORD)}` : "";
   const host = process.env.PGHOST ?? defaultHost();
