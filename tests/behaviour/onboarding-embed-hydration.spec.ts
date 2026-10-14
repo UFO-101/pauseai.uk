@@ -14,7 +14,7 @@ import { test, expect } from "@playwright/test";
 // skeleton goes: the load timeout also gives up on the skeleton, and that alone
 // would pass the first check without the form ever reporting its height.
 
-const BASE = process.env.LOCAL_URL ?? "http://localhost:3000";
+const BASE = process.env.LOCAL_URL ?? "http://localhost:3100";
 const HYDRATION_DELAY_MS = 6000;
 
 test("the onboarding form appears even when hydration is slow", async ({ page }) => {

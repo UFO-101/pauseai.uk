@@ -10,6 +10,7 @@ yarn-error.log*
 # Env
 .env
 .env.*
+!.env.example
 
 # Editor
 .idea/
@@ -46,3 +47,6 @@ next-env.d.ts
 tmp/
 /.vitest/
 orca.yaml
+
+# Local Netlify folder
+.netlify

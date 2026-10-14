@@ -15,7 +15,7 @@ import { test, expect, type Page } from "@playwright/test";
 // also rewrote location.hash on every scroll, so copying the URL after
 // scrolling shared "/#staff" rather than the page.
 
-const BASE = process.env.LOCAL_URL ?? "http://localhost:3000";
+const BASE = process.env.LOCAL_URL ?? "http://localhost:3100";
 
 /**
  * Load a page and wait for it to hydrate before interacting. A click

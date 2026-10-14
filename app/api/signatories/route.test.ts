@@ -1,67 +1,25 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { AirtableRequestError } from "@/lib/server/airtable";
+import { expect, it, vi } from "vitest";
+import { setStatus } from "@/lib/server/politicians";
+import { addTestPolitician, describeWithDatabase, useTestDatabase, withDatabaseDown } from "@/tests/database";
 import { GET } from "./route";
 
-const ORIGINAL_TOKEN = process.env.AIRTABLE_TOKEN;
+describeWithDatabase("GET /api/signatories", () => {
+  useTestDatabase();
 
-const { fetchFrontierLetterSignatoriesMock } = vi.hoisted(() => ({
-  fetchFrontierLetterSignatoriesMock: vi.fn(),
-}));
-
-vi.mock("@/lib/server/airtable", async () => {
-  const actual = await vi.importActual<typeof import("@/lib/server/airtable")>("@/lib/server/airtable");
-  return {
-    ...actual,
-    fetchFrontierLetterSignatories: fetchFrontierLetterSignatoriesMock,
-  };
-});
-
-describe("GET /api/signatories", () => {
-  beforeEach(() => {
-    process.env.AIRTABLE_TOKEN = "test-token";
-    fetchFrontierLetterSignatoriesMock.mockReset();
-  });
-
-  afterEach(() => {
-    process.env.AIRTABLE_TOKEN = ORIGINAL_TOKEN;
-  });
-
-  it("returns 500 and never calls Airtable when AIRTABLE_TOKEN is unset", async () => {
-    delete process.env.AIRTABLE_TOKEN;
+  it("returns who signed the letter to the Prime Minister, with a cache header", async () => {
+    const id = await addTestPolitician();
+    await setStatus(id, "regulate-letter-pm", { status: "signed", date: null, note: "" }, "jo@pauseai.uk");
 
     const res = await GET();
 
-    expect(res.status).toBe(500);
-    expect(fetchFrontierLetterSignatoriesMock).not.toHaveBeenCalled();
-  });
-
-  it("returns the signatories from lib/server/airtable with a cache header", async () => {
-    fetchFrontierLetterSignatoriesMock.mockResolvedValue([
-      { name: "Jane MP", party: "Independent", constituency: "Somewhere" },
-    ]);
-
-    const res = await GET();
-    const body = await res.json();
-
-    expect(fetchFrontierLetterSignatoriesMock).toHaveBeenCalledWith("test-token");
     expect(res.status).toBe(200);
-    expect(res.headers.get("Cache-Control")).toBe(
-      "public, s-maxage=3600, stale-while-revalidate=86400",
-    );
-    expect(body).toEqual([{ name: "Jane MP", party: "Independent", constituency: "Somewhere" }]);
+    expect(res.headers.get("Cache-Control")).toBe("public, s-maxage=3600, stale-while-revalidate=86400");
+    expect(await res.json()).toEqual([{ name: "Rachel Blake", party: "Labour (Co-op)", constituency: "Cities of London and Westminster", house: "commons" }]);
   });
 
-  it("returns 502 when lib/server/airtable throws AirtableRequestError", async () => {
-    fetchFrontierLetterSignatoriesMock.mockRejectedValue(new AirtableRequestError("boom"));
-
-    const res = await GET();
-
-    expect(res.status).toBe(502);
-  });
-
-  it("lets any other error through", async () => {
-    fetchFrontierLetterSignatoriesMock.mockRejectedValue(new TypeError("bug"));
-
-    await expect(GET()).rejects.toThrow("bug");
+  it("returns 500 when the database fails", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    expect((await withDatabaseDown(GET)).status).toBe(500);
+    vi.restoreAllMocks();
   });
 });

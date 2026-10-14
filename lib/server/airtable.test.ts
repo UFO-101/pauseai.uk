@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { http, HttpResponse } from "msw";
 import { server } from "@/tests/fixtures/msw";
-import { AirtableRequestError, fetchFrontierLetterSignatories } from "./airtable";
+import { AirtableRequestError, fetchMps, fetchSignatoriesForImport, MPS_FORMULA } from "./airtable";
 
 const AIRTABLE = "https://api.airtable.com/v0/*";
 
-function record(fields: Record<string, unknown>) {
-  return { id: "rec1", createdTime: "2024-01-01T00:00:00.000Z", fields };
+function record(fields: Record<string, unknown>, id = "rec1") {
+  return { id, createdTime: "2024-01-01T00:00:00.000Z", fields };
 }
 
 /** Serves `pages` in order and records each request. */
@@ -21,97 +21,56 @@ function serve(...pages: unknown[]) {
   return requests;
 }
 
-describe("fetchFrontierLetterSignatories", () => {
-  it("sends the exact filterByFormula, fields[], and auth header", async () => {
-    const requests = serve({ records: [record({ "Full name or Title": "A", Party: "B", Constituency: "C" })] });
+describe("fetchSignatoriesForImport", () => {
+  it("pages through everyone who signed, with only the fields it needs", async () => {
+    const requests = serve(
+      { records: [record({ "Full name or Title": "A", Email: " a@parliament.uk ", "Internal Notes": "not this" })], offset: "next" },
+      { records: [record({ "Full name or Title": "B", Party: "P", Constituency: "C", Body: "House of Lords" }, "rec2")] },
+    );
 
-    await fetchFrontierLetterSignatories("test-token");
-
-    expect(requests).toHaveLength(1);
-    const url = new URL(requests[0].url);
+    expect(await fetchSignatoriesForImport("test-token")).toEqual([
+      { airtableId: "rec1", name: "A", party: "", constituency: "", email: "a@parliament.uk", body: "" },
+      { airtableId: "rec2", name: "B", party: "P", constituency: "C", email: "", body: "House of Lords" },
+    ]);
+    const url = new URL(requests[1].url);
     expect(url.hostname).toBe("api.airtable.com");
+    expect(url.searchParams.get("offset")).toBe("next");
     expect(url.searchParams.get("filterByFormula")).toBe("{Signed Frontier AI Letter}=TRUE()");
-    expect(url.searchParams.getAll("fields[]")).toEqual(["Full name or Title", "Party", "Constituency"]);
+    expect(url.searchParams.getAll("fields[]")).toEqual(["Full name or Title", "Party", "Constituency", "Email", "Body"]);
     expect(requests[0].headers.get("Authorization")).toBe("Bearer test-token");
   });
 
-  it("only returns name/party/constituency even if Airtable sends extra fields", async () => {
-    serve({
+  it("copes with a page without records, and a record without fields", async () => {
+    serve({});
+    expect(await fetchSignatoriesForImport("t")).toEqual([]);
+    serve({ records: [record({})] });
+    expect(await fetchSignatoriesForImport("t")).toEqual([{ airtableId: "rec1", name: "", party: "", constituency: "", email: "", body: "" }]);
+  });
+
+  it("throws on errors, or on endless paging", async () => {
+    server.use(http.get(AIRTABLE, () => new HttpResponse(null, { status: 500 })));
+    await expect(fetchSignatoriesForImport("t")).rejects.toThrow(AirtableRequestError);
+
+    server.use(http.get(AIRTABLE, () => HttpResponse.json({ records: [], offset: "again" })));
+    await expect(fetchSignatoriesForImport("t")).rejects.toThrow("exceeded 100 pages");
+  });
+});
+
+describe("fetchMps", () => {
+  it("reads the sitting MPs, with only the fields it needs, sorted by constituency", async () => {
+    const requests = serve({
       records: [
-        record({
-          "Full name or Title": "Jane MP",
-          Party: "Independent",
-          Constituency: "Somewhere",
-          "MP Email": "jane@parliament.uk",
-          "Internal Notes": "do not publish",
-        }),
+        record({ "Full name or Title": "Zed", Salutation: "Mr Zed", Constituency: "Zetland", Party: "P", Email: "zed@parliament.uk " }, "recZ"),
+        record({ "Full name or Title": "Ann", Constituency: "Ashfield", Email: 5 }, "recA"),
       ],
     });
 
-    const signatories = await fetchFrontierLetterSignatories("test-token");
-
-    expect(signatories).toEqual([{ name: "Jane MP", party: "Independent", constituency: "Somewhere" }]);
-    expect(Object.keys(signatories[0]).sort()).toEqual(["constituency", "name", "party"]);
-  });
-
-  it("falls back to empty string for missing fields on a record", async () => {
-    serve({ records: [record({ "Full name or Title": "Solo" }), record({})] });
-
-    const signatories = await fetchFrontierLetterSignatories("test-token");
-
-    expect(signatories).toEqual([
-      { name: "Solo", party: "", constituency: "" },
-      { name: "", party: "", constituency: "" },
+    expect(await fetchMps("t")).toEqual([
+      { airtableId: "recA", name: "Ann", salutation: "", constituency: "Ashfield", party: "", email: null },
+      { airtableId: "recZ", name: "Zed", salutation: "Mr Zed", constituency: "Zetland", party: "P", email: "zed@parliament.uk" },
     ]);
-  });
-
-  it("paginates using the offset param until Airtable stops returning one", async () => {
-    const requests = serve(
-      { records: [record({ "Full name or Title": "First", Party: "P1", Constituency: "C1" })], offset: "offset-1" },
-      { records: [record({ "Full name or Title": "Second", Party: "P2", Constituency: "C2" })] },
-    );
-
-    const signatories = await fetchFrontierLetterSignatories("test-token");
-
-    expect(requests).toHaveLength(2);
-    const secondUrl = new URL(requests[1].url);
-    expect(secondUrl.searchParams.get("offset")).toBe("offset-1");
-    expect(secondUrl.searchParams.get("filterByFormula")).toBe("{Signed Frontier AI Letter}=TRUE()");
-    expect(signatories).toEqual([
-      { name: "First", party: "P1", constituency: "C1" },
-      { name: "Second", party: "P2", constituency: "C2" },
-    ]);
-  });
-
-  it("throws AirtableRequestError when the Airtable request fails", async () => {
-    server.use(http.get(AIRTABLE, () => new HttpResponse("nope", { status: 401 })));
-
-    await expect(fetchFrontierLetterSignatories("test-token")).rejects.toBeInstanceOf(AirtableRequestError);
-  });
-
-  it("throws AirtableRequestError when the response has no records array", async () => {
-    serve({ error: "something" });
-
-    await expect(fetchFrontierLetterSignatories("test-token")).rejects.toThrow("missing records array");
-  });
-
-  it("gives up rather than looping forever on a repeating offset", async () => {
-    let calls = 0;
-    server.use(
-      http.get(AIRTABLE, () => {
-        calls++;
-        return HttpResponse.json({ records: [], offset: "same" });
-      }),
-    );
-
-    await expect(fetchFrontierLetterSignatories("test-token")).rejects.toThrow("pagination exceeded 100 pages");
-    expect(calls).toBe(100);
-  });
-
-  it("reads the shared fixture by default", async () => {
-    expect(await fetchFrontierLetterSignatories("t")).toEqual([
-      { name: "Alex Example MP", party: "Independent", constituency: "Exampleton" },
-      { name: "Sam Sample MP", party: "Example Party", constituency: "Sampleford" },
-    ]);
+    const url = new URL(requests[0].url);
+    expect(url.searchParams.get("filterByFormula")).toBe(MPS_FORMULA);
+    expect(url.searchParams.getAll("fields[]")).toEqual(["Full name or Title", "Salutation", "Constituency", "Party", "Email"]);
   });
 });

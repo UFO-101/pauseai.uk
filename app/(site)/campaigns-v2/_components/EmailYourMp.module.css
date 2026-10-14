@@ -1,0 +1,354 @@
+/* Looks like the old tool in /campaigns' iframe (pauseai-website's
+   UKMPLookup and UKMPEmailForm), in this site's colours and fonts. */
+
+.page {
+  padding-block: 3rem;
+}
+
+/* Where the iframe's frame was. */
+.tool {
+  display: grid;
+  gap: 1.5rem;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  box-shadow: 0 1px 2px var(--shadow), 0 12px 32px var(--shadow);
+}
+
+.lookup,
+.letter {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.lookup {
+  gap: 1rem;
+  /* The postcode's test MPs line mustn't stretch the name field. */
+  align-items: start;
+}
+
+.lookup label,
+.letter label,
+.field > label {
+  display: grid;
+  gap: 0.5rem;
+  font-weight: 600;
+}
+
+.lookup label {
+  font-size: 0.9rem;
+}
+
+.lookup input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 2px solid var(--accent);
+  border-radius: 8px;
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 400;
+  background: var(--surface);
+  color: inherit;
+}
+
+.lookup input:disabled {
+  opacity: 0.6;
+}
+
+@media (min-width: 640px) {
+  .lookup {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .lookupButton {
+    grid-column: 1 / -1;
+  }
+}
+
+/* The MP, as a card. */
+.mp {
+  padding: 1.5rem;
+  border: 3px solid var(--accent);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--accent) 18%, var(--surface));
+  text-align: center;
+}
+
+.mp h2 {
+  margin: 0 0 0.8rem;
+  font-size: 1.5rem;
+}
+
+.mp p {
+  margin: 0 0 0.5rem;
+  font-size: 1.1rem;
+}
+
+.mp p:last-child {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.mp a {
+  color: var(--accent);
+  font-weight: 500;
+  text-decoration: none;
+  word-break: break-all;
+}
+
+.mp a:hover {
+  text-decoration: underline;
+}
+
+/* The letter, on a tinted panel. */
+.letter {
+  padding: 1.5rem max(1rem, calc((100% - 32rem) / 2));
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--accent) 18%, var(--surface));
+}
+
+.letter input:not([type="checkbox"]),
+.letter textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  font: inherit;
+  font-weight: 400;
+  background: var(--surface);
+  color: inherit;
+}
+
+.letter input:focus,
+.letter textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 20%, transparent);
+}
+
+.letter textarea {
+  resize: vertical;
+  line-height: 1.5;
+}
+
+/* The letter's editor: the old tool's toolbar on top, then the letter,
+   growing to fit it. */
+.editorFrame {
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.editorFrame:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 20%, transparent);
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  border-bottom: 1px solid var(--border-strong);
+}
+
+.toolbar button {
+  min-width: 2.25rem;
+  padding: 0.25rem 0.5rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 4px;
+  font: inherit;
+  font-size: 0.85rem;
+  background: var(--surface);
+  color: inherit;
+  cursor: pointer;
+}
+
+.toolbar button:hover {
+  border-color: var(--accent);
+}
+
+/* As the site's primary button. */
+.toolbar button[aria-pressed="true"] {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.editor {
+  min-height: 12rem;
+  padding: 0.75rem;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  outline: none;
+}
+
+.editor p {
+  margin: 0 0 0.75rem;
+}
+
+.editor ul {
+  margin: 0 0 0.75rem;
+  padding-left: 1.5rem;
+}
+
+.editor li p,
+.editor > :last-child {
+  margin: 0;
+}
+
+.letter h3 {
+  margin: 0 0 1rem;
+  font-size: 1rem;
+}
+
+.notice {
+  margin: 0;
+  padding: 1rem;
+  border: 2px solid var(--accent);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.small {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.field {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.field small {
+  color: var(--text-secondary);
+}
+
+.tips {
+  margin: 0;
+  padding: 0.5rem 0.75rem 0.5rem 1.75rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.signature {
+  margin: 0;
+  font: inherit;
+  font-size: 0.9rem;
+  white-space: pre-wrap;
+}
+
+.attachments {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.attachments a {
+  display: grid;
+  justify-items: center;
+  gap: 0.25rem;
+  width: 200px;
+  padding: 1rem;
+  border: 2px solid var(--accent);
+  border-radius: 8px;
+  background: var(--surface);
+  color: inherit;
+  font-size: 0.8rem;
+  text-align: center;
+  text-decoration: none;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.attachments a:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px var(--shadow);
+}
+
+.attachments img {
+  max-width: 150px;
+  height: auto;
+  margin-bottom: 0.5rem;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px var(--shadow);
+}
+
+.attachments span {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+}
+
+.consent {
+  grid-template-columns: auto 1fr;
+  align-items: start;
+  gap: 0.6rem !important;
+  font-weight: 400 !important;
+}
+
+.consent input {
+  width: 1.2rem;
+  height: 1.2rem;
+  margin: 0.15rem 0 0;
+  accent-color: var(--accent);
+}
+
+.honeypot {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+.send {
+  width: 100%;
+}
+
+.confirm {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1rem;
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.confirm p {
+  margin: 0;
+  text-align: center;
+}
+
+.actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.actions > * {
+  flex: 1;
+}
+
+.error {
+  margin: 0;
+  color: #b00020;
+}
+
+.success {
+  margin: 0;
+  padding: 1rem;
+  border-radius: 8px;
+  background: #e8f5e9;
+}
+
+@media (max-width: 640px) {
+  .tool {
+    padding: 0.75rem;
+  }
+}

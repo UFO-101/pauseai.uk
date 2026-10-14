@@ -18,6 +18,8 @@ app/
   (site)/                 public pages; layout.tsx renders <Nav>
   (tools)/                unlisted volunteer tools and trackers; layout.tsx
                           renders <Nav> and turns analytics off
+  (staff)/staff/          the staff interface, behind email login; no <Nav>,
+                          no analytics, noindex
   api/                    route handlers, only for things that need a URL
   sitemap.ts, robots.ts
 components/               React components used by more than one route
@@ -27,12 +29,15 @@ components/               React components used by more than one route
   people/                 PersonCard, StoryShareForm
   local-groups/           LocalGroupPage, which renders every group's page
 lib/                      logic and data, no React state
-  server/                 calls to outside services; `import "server-only"`
+  server/                 calls to outside services and the database;
+                          `import "server-only"`
   content/                the site's content as typed data (people, blog, ...)
   collateral/             the collateral tool's drawing engine
   events.ts, trackers.ts  pure helpers for one feature each
   metadata.ts             pageMetadata()
 styles/                   global CSS: tokens and base styles
+netlify/                  database migrations, scheduled functions
+proxy.ts                  turns away /staff requests without a session cookie
 tests/                    Playwright suites, the route list, fixtures
 docs/, plans/
 ```
@@ -63,6 +68,22 @@ Route groups like `(site)` don't appear in URLs. Folders starting with `_`
   their API hosts anywhere else, and lock Airtable to
   `lib/server/airtable.ts`. Files there import `server-only`, so they can't
   end up in a browser bundle.
+- **The database** is only reached through `lib/server/db.ts`, which is the
+  only file that may import `pg` or read `NETLIFY_DB_URL` (an ESLint rule,
+  run by `npm run check:airtable-filter`). Queries are plain SQL; no ORM.
+  Schema changes are new files in `netlify/database/migrations/`, which
+  Netlify applies before each production publish and to each preview's copy
+  of the database. They must be backward compatible (expand, then contract)
+  and work with or without a transaction around the file. With each one,
+  run `npm run db:schema` and commit `netlify/database/schema.sql`, the
+  whole schema as the migrations leave it, so the PR shows what changed. A
+  test fails while it's out of date.
+- **Staff pages** each call `requireStaff()` (`lib/server/staff-auth.ts`)
+  first, as does every staff route handler and Server Action
+  (`npm run check:staff-auth`). `proxy.ts` only checks the cookie exists.
+- **Scheduled jobs** are Netlify scheduled functions, each in its own folder
+  in `netlify/functions/`, that POST to a route under `app/api/cron/` with
+  `CRON_SECRET`. The work itself stays in the Next app.
 - **Write it once.** Pages that share a shape share a component: each local
   group page is `LocalGroupPage` plus its content in
   `lib/content/local-group-pages.tsx`, and each flyering tracker is

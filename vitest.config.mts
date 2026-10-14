@@ -27,7 +27,9 @@ export default defineConfig({
           name: "node",
           environment: "node",
           include: ["**/*.test.{ts,tsx}"],
-          exclude: ["**/node_modules/**", "tests/behaviour/**", "tests/visual/**", "plans/**", "tmp/**", "**/*.browser.test.*"],
+          // Test files that need Postgres each make their own database
+          // (tests/database.ts), so they can run in parallel.
+          exclude: ["**/node_modules/**", "tests/behaviour/**", "tests/public-vs-live/**", "plans/**", "tmp/**", "**/*.browser.test.*"],
           setupFiles: ["./vitest.setup.node.ts"],
         },
       },
@@ -68,6 +70,8 @@ export default defineConfig({
             "jszip",
             "qrcode-generator",
             "jsqr",
+            "@tiptap/react",
+            "@tiptap/starter-kit",
           ],
         },
         test: {
@@ -96,6 +100,8 @@ export default defineConfig({
         "lib/**/*.{ts,tsx}",
         "tests/fixtures/**/*.ts",
         "next.config.ts",
+        "proxy.ts",
+        "netlify/functions/**/*.ts",
       ],
       // page.tsx and layout.tsx are the one scope rule: async server
       // components can't render in Vitest and layout.tsx needs next/font.

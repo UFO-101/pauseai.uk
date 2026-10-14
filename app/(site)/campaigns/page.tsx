@@ -34,7 +34,7 @@ export default function CampaignsPage() {
 
         <EmailYourMp />
 
-        <Signatories listFromAirtable={Boolean(process.env.AIRTABLE_TOKEN)} />
+        <Signatories />
 
         <ShareQr />
       </main>

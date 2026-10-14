@@ -1,49 +1,70 @@
-# Pause AI UK Website
+# PauseAI UK website
 
-The [pauseai.uk](https://pauseai.uk) website — a [Next.js](https://nextjs.org) (App Router) app deployed to Netlify.
+The [pauseai.uk](https://pauseai.uk) website: Next.js 16 and React 19, deployed to Netlify.
 
-## Stack
+## Run it locally
 
-- **Next.js 16** (App Router) with **React 19** and **TypeScript**
-- Self-hosted Inter (`next/font/local` + `@font-face`) and Google-hosted Lato (`next/font/google`)
-- Deployed to **Netlify** via `@netlify/plugin-nextjs`
+### 1. Install Node, Docker and psql
 
-## Layout
+- **Node 22.**
+- **Docker**, which runs Postgres 18 (the version the live site runs) from `docker-compose.yml`.
+- **`psql`**, Postgres's command-line tool, which the scripts use to set up databases. Mac: `brew install libpq && brew link --force libpq`. Debian or Ubuntu: `sudo apt install postgresql-client`.
 
-See [docs/code-structure.md](docs/code-structure.md). In short: `app/` holds routes (public pages in `app/(site)/`, unlisted tools in `app/(tools)/`), `components/` shared React components, `lib/` logic and data (shared config such as social links, emails and external URLs is in `lib/content/site.ts`), and `public/` static assets.
+Check them:
 
-## Local development
+```bash
+node --version     # v22 or later
+docker --version
+psql --version     # 18 or later is best
+```
+
+You can use a Postgres installed natively instead of Docker; see [docs/development.md](docs/development.md).
+
+### 2. Set up and run
 
 ```bash
 npm install
-npm run dev    # Next dev server (Turbopack) at http://localhost:3000
-npm run build  # Production build
-npm run lint   # ESLint
+docker compose up -d         # starts Postgres: `db` for the site, `db-test` for tests
+cp .env.example .env.local   # your local settings: edit it, see below
+npm run db:reset             # makes the database NETLIFY_DB_URL names
+npm run dev                  # http://localhost:3000
 ```
 
-See `package.json` for the full script list, including the `lighthouse*` scripts.
+In `.env.local`:
 
-## Testing
+- **`NETLIFY_DB_URL`** is your local database: `db` in Docker, as the example has it.
+- **`TEST_DATABASE_URL`** is where tests make their throwaway databases: `db-test` in Docker, which keeps everything in memory.
+- **`TEST_MP_EMAIL`**: your email. Letters to the test MP go there.
+- **`DATA_FIXTURES=1`** fakes every outside service, so you need no other keys. Emails are written to files in `tmp/outbox/` instead of sent.
 
-See [docs/testing.md](docs/testing.md) for the test policy, coverage gate, mocking rules and commands. In short: `npm test` runs the Vitest unit tests (also part of `npm run build`, so a failing test blocks deploy), `npm run test:coverage` runs unit and component tests with the coverage gate, and `npm run test:behaviour` / `npm run test:visual` run the Playwright suites.
+Try Email your MP at http://localhost:3000/campaigns-v2 with postcode ZZ99ZZ. The letter it sends is the newest file in `tmp/outbox/`.
 
-**Airtable access is locked to `lib/server/airtable.ts`**: an ESLint rule (`no-restricted-syntax` in `eslint.config.mjs`) bans any other file from referencing `api.airtable.com`, so the signed-only filter and field whitelist there can't be bypassed by a new call site. `npm run check:airtable-filter` runs just that rule, isolated from the rest of ESLint, and is also part of `npm run build` — a bypass fails the build the same way a failing test does.
+`npm run db:reset` wipes the database and makes it again, with the latest migrations. It only works on a database on your own machine. The whole schema is in [netlify/database/schema.sql](netlify/database/schema.sql), for reference.
+
+To use real services, delete `DATA_FIXTURES` and fill in the rest of `.env.local`. [.env.example](.env.example) explains each variable; Netlify needs the same ones. [docs/development.md](docs/development.md) covers the rest: what the fixtures fake, logging in as staff, the daily jobs and webhooks, and running the Playwright suites.
+
+## Tests
+
+```bash
+npm test                 # unit and component tests, held at 100% coverage (needs Postgres running, as above)
+npm run test:node        # just the unit tests
+npm run test:browser     # just the component tests, in real Chromium
+npm run test:behaviour   # Playwright, on a fixture build
+npm run test:public-vs-live   # Playwright, public pages: the local build against pauseai.uk
+npm run test:fixtures-vs-main # Playwright, screenshots of this branch against main
+npm run lint
+```
 
 ## Docs
 
-- [docs/code-structure.md](docs/code-structure.md): where code lives, and the rules for adding more
-- [docs/testing.md](docs/testing.md): test policy, coverage gate, mocking, commands
-- [docs/style-guide.md](docs/style-guide.md): design style guide
-- [plans/](plans/): plans for work in progress or not started yet
-- [AGENTS.md](AGENTS.md): notes for coding agents (`CLAUDE.md` links to it)
-
-## Things that aren't obvious from the code
-
-- **Events** are fetched at request time from the Luma calendar API (`lib/server/luma-calendar.ts`), not hardcoded.
-- **Donations** use prebuilt Stripe payment links hardcoded in `app/(site)/donate/_components/DonateForm.tsx` — there is no payment backend.
-- **Fonts** are committed as woff2 in `public/fonts/`, so there is no font download/build step after cloning.
-- **`public/CNAME`** is a leftover from the old GitHub Pages setup. Netlify ignores it; the domain is managed in the Netlify dashboard.
+- [docs/development.md](docs/development.md): setting up local development in full
+- [docs/code-structure.md](docs/code-structure.md): where code lives
+- [docs/testing.md](docs/testing.md): how it's tested
+- [docs/email-your-mp.md](docs/email-your-mp.md): the Email your MP tool and staff interface
+- [docs/style-guide.md](docs/style-guide.md): design
+- [plans/](plans/): work planned or in progress
+- [AGENTS.md](AGENTS.md): notes for coding agents
 
 ## Deployment
 
-Netlify, configured in `netlify.toml` (build `npm run build`, publish `.next`, Node 22). Pushes to the default branch deploy to production; pull requests get deploy previews automatically.
+Netlify, configured in `netlify.toml`. Pushing to `main` deploys the live site; pull requests get previews. Database migrations in `netlify/database/migrations/` are applied by Netlify on deploy.

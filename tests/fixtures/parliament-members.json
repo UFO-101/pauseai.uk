@@ -1,0 +1,31 @@
+{
+  "items": [
+    {
+      "value": {
+        "id": 172,
+        "nameListAs": "Abbott, Ms Diane",
+        "nameDisplayAs": "Ms Diane Abbott",
+        "nameFullTitle": "Rt Hon Diane Abbott MP",
+        "nameAddressAs": "Ms Abbott",
+        "gender": "F",
+        "latestParty": { "id": 15, "name": "Labour" },
+        "latestHouseMembership": { "membershipFrom": "Hackney North and Stoke Newington", "house": 1 }
+      }
+    },
+    {
+      "value": {
+        "id": 5257,
+        "nameListAs": "Blake, Rachel",
+        "nameDisplayAs": "Rachel Blake",
+        "nameFullTitle": "Rachel Blake MP",
+        "nameAddressAs": null,
+        "gender": "F",
+        "latestParty": { "id": 15, "name": "Labour (Co-op)" },
+        "latestHouseMembership": { "membershipFrom": "Cities of London and Westminster", "house": 1 }
+      }
+    }
+  ],
+  "totalResults": 2,
+  "skip": 0,
+  "take": 20
+}

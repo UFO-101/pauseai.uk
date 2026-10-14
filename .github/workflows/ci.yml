@@ -9,6 +9,24 @@ jobs:
   test-build:
     name: Test, build
     runs-on: ubuntu-latest
+    # Tests that need a database make their own in this Postgres
+    # (tests/database.ts, scripts/fresh-database.mjs).
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGHOST: localhost
+      PGUSER: postgres
+      PGPASSWORD: postgres
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -26,15 +44,26 @@ jobs:
       - name: Install Playwright browser
         run: npx playwright install --with-deps chromium
 
+      # pg_dump 18, to match the server, for the test that checks
+      # netlify/database/schema.sql is up to date. The runner's own is older.
+      - name: Install the Postgres 18 client
+        run: |
+          sudo apt-get install -y postgresql-common
+          sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
+          sudo apt-get install -y postgresql-client-18
+
       # Both Vitest projects (node and browser), gated on coverage.
       - name: Test with coverage
-        run: npm run test:coverage
+        run: npm test
 
       - name: Check there are no coverage-ignore comments
         run: npm run check:coverage-ignores
 
-      - name: Check Airtable access is confined to lib/server/airtable.ts
+      - name: Check Airtable access is confined to lib/server/airtable.ts, and the database to lib/server/db.ts
         run: npm run check:airtable-filter
+
+      - name: Check every staff page, route and Server Action calls requireStaff()
+        run: npm run check:staff-auth
 
       - name: Build
         run: npm run build
@@ -42,6 +71,24 @@ jobs:
   behaviour:
     name: Behaviour tests
     runs-on: ubuntu-latest
+    # Tests that need a database make their own in this Postgres
+    # (tests/database.ts, scripts/fresh-database.mjs).
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGHOST: localhost
+      PGUSER: postgres
+      PGPASSWORD: postgres
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -81,9 +128,17 @@ jobs:
         if: steps.playwright-cache.outputs.cache-hit == 'true'
         run: npx playwright install-deps chromium
 
+      # pg_dump 18, to match the server: the build below runs the unit tests,
+      # including the one that checks netlify/database/schema.sql is up to date.
+      - name: Install the Postgres 18 client
+        run: |
+          sudo apt-get install -y postgresql-common
+          sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
+          sudo apt-get install -y postgresql-client-18
+
       # playwright.config.ts's webServer builds and starts the app itself, so
-      # there is no separate build step here. The visual suite is deliberately
-      # not run: it diffs against the live site, so it fails whenever news or
+      # there is no separate build step here. The public-vs-live suite is deliberately
+      # not run: it compares against the live site, so it fails whenever news or
       # events change, which makes it a poor gate.
       - name: Behaviour tests
         run: npm run test:behaviour

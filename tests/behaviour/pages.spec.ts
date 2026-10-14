@@ -13,7 +13,7 @@ import { ROUTES } from "../routes";
 // So the conditions for one exist and the usual alarm is muted. This fails on
 // console errors and on React's hydration messages, which arrive as warnings.
 
-const BASE = process.env.LOCAL_URL ?? "http://localhost:3000";
+const BASE = process.env.LOCAL_URL ?? "http://localhost:3100";
 
 // Matched against the message text. Kept deliberately short — every entry here
 // is a thing we have decided not to look at, so it should have a reason.

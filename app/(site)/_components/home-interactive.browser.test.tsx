@@ -296,6 +296,27 @@ describe("LocalGroupsMap", () => {
     expect(container.querySelectorAll(".local-groups-map-link")).toHaveLength(0);
   });
 
+  it("takes a resize that arrives after it has unmounted in its stride", async () => {
+    await page.viewport(1280, 900);
+    // Keep hold of the resize callback, to call it once the map has gone, as
+    // a resize queued while navigating away (or a hot reload) can.
+    const callbacks: ResizeObserverCallback[] = [];
+    const Real = window.ResizeObserver;
+    vi.stubGlobal(
+      "ResizeObserver",
+      class extends Real {
+        constructor(cb: ResizeObserverCallback) {
+          super(cb);
+          callbacks.push(cb);
+        }
+      },
+    );
+    const { container, unmount } = await render(<LocalGroupsMap />);
+    await expect.poll(() => container.querySelectorAll(".local-groups-map-link").length).toBe(localGroups.length);
+    await unmount();
+    expect(() => callbacks.at(-1)!([], {} as ResizeObserver)).not.toThrow();
+  });
+
   it("drops the map when the screen narrows, and keeps the cards if the map can't load", async () => {
     await page.viewport(1280, 900);
     vi.spyOn(window, "fetch").mockRejectedValue(new Error("offline"));

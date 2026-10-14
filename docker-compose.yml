@@ -1,0 +1,42 @@
+# Local Postgres for development (`db`) and for tests (`db-test`). Run
+# `docker compose up -d`, then point NETLIFY_DB_URL at `db` and
+# TEST_DATABASE_URL at `db-test` in .env.local (see .env.example). The major
+# version matches Netlify Database, which runs PostgreSQL 18.
+services:
+  db:
+    image: postgres:18
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: pauseai_dev
+    ports:
+      - "5432:5432"
+    volumes:
+      # 18+ images want the mount one level up; they create a versioned data dir inside it.
+      - pgdata:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # Throwaway server for the unit tests and the Playwright builds, which each
+  # make their own databases on it. Data lives in memory and durability is off,
+  # which is only safe because nothing here outlives a restart. Never point
+  # NETLIFY_DB_URL at it.
+  db-test:
+    image: postgres:18
+    command: ["postgres", "-c", "fsync=off", "-c", "synchronous_commit=off", "-c", "full_page_writes=off"]
+    environment:
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5433:5432"
+    tmpfs:
+      - /var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  pgdata:

@@ -73,9 +73,11 @@ export default function LocalGroupsMap() {
 
   // The cards are placed by CSS grid and the pins by the map projection, so
   // the only reliable way to join the two is to measure both after layout
-  // and draw the connectors in a pixel-space overlay.
-  const measure = useCallback(() => {
-    const w = wrapRef.current!.getBoundingClientRect();
+  // and draw the connectors in a pixel-space overlay. It takes the wrapper
+  // the effect found, not wrapRef.current: a resize can still call it as the
+  // map unmounts, after React has set the ref to null.
+  const measure = useCallback((wrap: HTMLDivElement) => {
+    const w = wrap.getBoundingClientRect();
     setLinks(
       localGroups.flatMap((localGroup) => {
         const card = cardRefs.current[localGroup.name];
@@ -96,14 +98,16 @@ export default function LocalGroupsMap() {
 
   useEffect(() => {
     if (!isDesktop || !ukFeature) return;
-    measure();
-    const ro = new ResizeObserver(measure);
-    ro.observe(wrapRef.current!);
+    const wrap = wrapRef.current!;
+    const update = () => measure(wrap);
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(wrap);
     for (const el of Object.values(cardRefs.current)) ro.observe(el!);
-    window.addEventListener("resize", measure);
+    window.addEventListener("resize", update);
     return () => {
       ro.disconnect();
-      window.removeEventListener("resize", measure);
+      window.removeEventListener("resize", update);
     };
   }, [isDesktop, ukFeature, measure]);
 

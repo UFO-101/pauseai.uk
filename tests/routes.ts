@@ -1,4 +1,5 @@
-// Every page on the site, for the Playwright smoke test and visual diff.
+// Every page on the site, for the Playwright smoke test and the public-vs-live
+// diff (which leaves out /staff).
 //
 // Static routes come from the filesystem (the same walk app/sitemap.ts does),
 // including the unlisted tools and trackers. Dynamic routes are represented by
@@ -15,6 +16,9 @@ const APP_DIR = join(__dirname, "..", "app");
 export const DYNAMIC_EXAMPLES: Record<string, string> = {
   "/blog/[slug]": `/blog/${posts[0].slug}`,
   "/people/[slug]": `/people/${personSlug(people[0])}`,
+  // Without a session this redirects to the login page, which is what the
+  // smoke test sees.
+  "/staff/politicians/[id]": "/staff/politicians/1",
 };
 
 /** Route patterns with a dynamic segment, e.g. "/blog/[slug]". */

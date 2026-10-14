@@ -1,0 +1,66 @@
+import { expect, it } from "vitest";
+import { http, HttpResponse } from "msw";
+import { server } from "@/tests/fixtures/msw";
+import { addTestMp, addTestPolitician, describeWithDatabase, useTestDatabase } from "@/tests/database";
+import { staffCopy } from "@/lib/content/staff-interface";
+import { query } from "./db";
+import { getPolitician, setStatus } from "./politicians";
+import { importSignatories } from "./signatory-import";
+
+// Airtable's API, matched without naming its host, which only lib/server/airtable.ts may do.
+const AIRTABLE = "https://*.airtable.com/v0/*";
+const PM = "regulate-letter-pm";
+
+function airtable(...people: Record<string, string>[]) {
+  server.use(http.get(AIRTABLE, () => HttpResponse.json({ records: people.map((fields, i) => ({ id: `rec${i}`, fields })) })));
+}
+
+describeWithDatabase("importSignatories", () => {
+  useTestDatabase();
+
+  it("matches MPs by Airtable's ID, then email, then constituency, and adds everyone else to their house", async () => {
+    const byId = await addTestPolitician({ airtableId: "rec0", name: "Rachel Blake", email: "rachel.blake.mp@parliament.uk" });
+    const byEmail = await addTestPolitician({ airtableId: "recX", name: "Sam Smith", constituency: "Bath", email: "sam.smith.mp@parliament.uk" });
+    const bySeat = await addTestPolitician({ airtableId: "recY", name: "Jack Abbott", constituency: "Ipswich", email: "jack@parliament.uk" });
+    await addTestMp();
+    airtable(
+      { "Full name or Title": "Rachel Blake MP", Email: "old@parliament.uk", Constituency: "Somewhere else" },
+      { "Full name or Title": "Sam Smith MP", Email: "Sam.Smith.MP@parliament.uk ", Constituency: "Somewhere else" },
+      { "Full name or Title": "Jack Abbott MP", Email: "old@parliament.uk", Constituency: "Ipswich" },
+      { "Full name or Title": "Lord Example", Party: "Crossbench", Body: "House of Lords" },
+      { "Full name or Title": "Ann MSP", Constituency: "Glasgow", Body: "Scottish Parliament" },
+      { "Full name or Title": "Bryn MS", Constituency: "Cardiff", Body: "Welsh Parliament" },
+      { "Full name or Title": "Ciara MLA", Constituency: "Foyle", Body: "Northern Ireland Assembly" },
+      { "Full name or Title": "Former MP", Constituency: "Gone", Email: "former@example.org", Body: "House of Commons" },
+      { "Full name or Title": "Lord Unlisted" },
+      { "Full name or Title": "Someone", Constituency: "Somewhere" },
+    );
+
+    expect(await importSignatories("token", "jo@pauseai.uk")).toEqual({ matched: 3, added: 7, alreadySet: 0 });
+
+    for (const id of [byId, byEmail, bySeat]) expect((await getPolitician(id))!.statuses[PM]).toMatchObject({ status: "signed", note: staffCopy.import.note, updatedBy: "jo@pauseai.uk" });
+    const added = await query("SELECT house, name, constituency, party, email FROM politicians WHERE airtable_id IS NULL AND NOT is_test ORDER BY id");
+    expect(added).toEqual([
+      { house: "lords", name: "Lord Example", constituency: null, party: "Crossbench", email: null },
+      { house: "scottish-parliament", name: "Ann MSP", constituency: "Glasgow", party: "", email: null },
+      { house: "senedd", name: "Bryn MS", constituency: "Cardiff", party: "", email: null },
+      { house: "ni-assembly", name: "Ciara MLA", constituency: "Foyle", party: "", email: null },
+      { house: "other", name: "Former MP", constituency: "Gone", party: "", email: "former@example.org" },
+      { house: "lords", name: "Lord Unlisted", constituency: null, party: "", email: null },
+      { house: "other", name: "Someone", constituency: "Somewhere", party: "", email: null },
+    ]);
+    expect(await query("SELECT action FROM audit_log WHERE action LIKE 'import%'")).toEqual([{ action: "import signatories from Airtable" }]);
+  });
+
+  it("can run again without adding anyone twice or overwriting a status", async () => {
+    const mp = await addTestPolitician({ airtableId: "recBlake" });
+    await setStatus(mp, PM, { status: "supports", date: null, note: "Checked" }, "sam@pauseai.uk");
+    airtable({ "Full name or Title": "Rachel Blake", Email: "rachel.blake.mp@parliament.uk" }, { "Full name or Title": "Lord Example" });
+
+    await importSignatories("token", "jo@pauseai.uk");
+    expect(await importSignatories("token", "jo@pauseai.uk")).toEqual({ matched: 2, added: 0, alreadySet: 2 });
+
+    expect((await getPolitician(mp))!.statuses[PM]).toMatchObject({ status: "supports", note: "Checked" });
+    expect(await query("SELECT count(*)::int AS n FROM politicians WHERE name = 'Lord Example'")).toEqual([{ n: 1 }]);
+  });
+});
