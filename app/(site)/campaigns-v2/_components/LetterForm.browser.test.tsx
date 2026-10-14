@@ -71,7 +71,7 @@ describe("LetterForm", () => {
     await expect.element(page.getByText(copy.form.confirmPrompt("Rachel Blake"))).not.toBeInTheDocument();
     await fillAndSend();
 
-    await expect.element(page.getByRole("status")).toHaveTextContent(copy.form.checkInbox);
+    await expect.element(page.getByRole("status")).toHaveTextContent(copy.form.sent("Rachel Blake"));
     expect(sent).toEqual([
       {
         campaign: letterToPm.slug,

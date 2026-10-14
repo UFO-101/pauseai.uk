@@ -1,8 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
-import { copy } from "@/lib/content/email-your-mp";
 import { staffCopy } from "@/lib/content/staff-interface";
-import { confirmationLink, fakeTurnstile, fillLetter, logInAsStaff, lookUpTestMp, sendLetter, syncMps } from "../steps";
-import { BRANCH_URL, compareWithMain, MAIN_URL, outboxFor } from "./compare";
+import { fakeTurnstile, fillLetter, logInAsStaff, lookUpTestMp, sendLetter, syncMps } from "../steps";
+import { BRANCH_URL, compareWithMain, MAIN_URL } from "./compare";
 
 // Each step of the flows that need fixtures, this branch against main:
 // Email your MP up to the letter being sent, and each staff screen after
@@ -22,8 +21,8 @@ test.beforeEach(async ({ page }) => fakeTurnstile(page));
 const DATE_TIME = /\d{1,2}\/\d{1,2}\/\d{4}, \d{1,2}:\d{2}(:\d{2})?/;
 const masks = (page: Page) => [page.locator("#year"), page.getByText(DATE_TIME)];
 
-// The same sender on both builds, new each run, so the daily cap on
-// confirmation emails never stops a step.
+// The same sender on both builds, new each run. (Letters to the test MP
+// aren't limited to one per campaign, but main's may be.)
 const sender = (step: string) => `jane+${step}-${Date.now().toString(36)}@example.com`;
 
 test("branch vs main: ZZ99ZZ finds the test MP and drafts the letter", async ({ page }, testInfo) => {
@@ -40,27 +39,13 @@ test("branch vs main: the letter filled in, asking to confirm", async ({ page },
   });
 });
 
-test("branch vs main: the letter accepted, check your inbox", async ({ page }, testInfo) => {
-  const email = sender("inbox");
-  await compareWithMain(page, testInfo, "check your inbox", {
-    prepare: async (page, base) => {
-      await lookUpTestMp(page, base);
-      await fillLetter(page, email);
-      await sendLetter(page);
-    },
-    masks,
-  });
-});
-
-test("branch vs main: the confirmation link sends the letter", async ({ page }, testInfo) => {
+test("branch vs main: the letter sent", async ({ page }, testInfo) => {
   const email = sender("sent");
   await compareWithMain(page, testInfo, "letter sent", {
     prepare: async (page, base) => {
       await lookUpTestMp(page, base);
       await fillLetter(page, email);
       await sendLetter(page);
-      await page.goto(confirmationLink(outboxFor(base), email));
-      await expect(page.getByRole("status")).toHaveText(copy.confirm.sent("Testy McTestface MP"));
     },
     masks,
   });

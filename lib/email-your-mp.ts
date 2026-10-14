@@ -84,7 +84,7 @@ export function addressLines(address: string): string[] {
     .filter(Boolean);
 }
 
-/** A loose check that catches typos; the confirmation email is the real test. */
+/** A loose check that catches some typos. */
 export function looksLikeEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }

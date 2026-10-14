@@ -15,7 +15,6 @@ settings it needs.
   lookup already done and a note saying why (the campaign's `movedOn`). If
   they've done them all, it stays and the letter thanks them.
 - `/campaigns-v2`: redirects to the first campaign.
-- `/campaigns-v2/confirm`: where the confirmation email's link goes.
 
 At the swap (stage 5 of the plan) these replace `/campaigns`:
 `CAMPAIGNS_PATH` in `lib/email-your-mp.ts` says where they are.
@@ -39,9 +38,7 @@ At the swap (stage 5 of the plan) these replace `/campaigns`:
   login.
 - `app/(staff)/staff/`: the staff interface.
 - `netlify/database/migrations/`: the database's tables.
-- `lib/server/mp-letters.ts`: checks a letter from the form, saves it
-  unconfirmed, emails the sender a link, and sends the letter when they
-  click it. Also deletes letters never confirmed.
+- `lib/server/mp-letters.ts`: checks a letter from the form, and sends it.
 - `lib/server/postmark.ts`: the only file that talks to Postmark.
 - `lib/server/postmark-webhooks.ts`: bounces, spam complaints and replies.
 - `app/(site)/campaigns-v2/`: the pages and the form.
@@ -74,20 +71,15 @@ The environment variables are listed, with what each is for, in [.env.example](.
 
 ## Sending
 
-1. The form posts to `/api/email-your-mp/letters`. The letter is saved
-   unconfirmed, and the sender is emailed a link,
-   `/campaigns-v2/confirm#<token>`. At most 5 such emails a day go to
-   one address. The form pushes `mp_email_sent` to `dataLayer` when the
-   server accepts it.
-2. The confirm page's script posts the token to `/api/email-your-mp/confirm`
-   (a link scanner that only fetches the page sends nothing). The letter is
-   sent through Postmark from `"Jane Smith via PauseAI"
+1. The form posts to `/api/email-your-mp/letters`. The letter is saved and
+   sent straight away through Postmark, from `"Jane Smith via PauseAI"
    <reply+<hash>@mp.pauseai.uk>`, with Reply-To the sender and that address,
-   and the campaign's PDFs attached. The token then stops working.
-3. Outside production, letters go only to the test MPs, checked both when the
-   form is sent and when the letter is.
-4. Unconfirmed letters are deleted after 7 days, by
-   `netlify/functions/delete-unconfirmed-letters/`.
+   and the campaign's PDFs attached. If Postmark refuses it, nothing is
+   kept, so the sender can try again. The form pushes `mp_email_sent` to
+   `dataLayer` once it's sent.
+2. Each sender email can send one letter per campaign. Letters to the test
+   MPs don't count, so they can be tried again and again.
+3. Outside production, letters go only to the test MPs.
 
 Postmark's webhooks, each with the basic auth credentials in the URL, e.g.
 `https://postmark:<password>@pauseai.uk/api/postmark/bounce`:

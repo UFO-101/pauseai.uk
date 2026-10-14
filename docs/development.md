@@ -162,10 +162,8 @@ your machine. You need no keys:
    the letter.
 3. Fill in an email and an address, then Send, then Confirm. Under
    `npm run dev`, Turnstile isn't needed.
-4. The confirmation email is the newest file in `tmp/outbox/`. Copy the
-   `/campaigns-v2/confirm#…` link out of its `TextBody` and open it.
-5. The letter is sent: the newest outbox file is now the letter itself,
-   with its PDFs base64-encoded.
+4. The letter is sent: it's the newest file in `tmp/outbox/`, with its PDFs
+   base64-encoded.
 
 `/staff/letters` shows it, once you've logged in.
 
@@ -244,7 +242,6 @@ call these routes. Locally, with `CRON_SECRET=dev` in `.env.local`:
 
 ```bash
 curl -X POST -H "Authorization: Bearer dev" localhost:3000/api/cron/sync-mps
-curl -X POST -H "Authorization: Bearer dev" localhost:3000/api/cron/delete-unconfirmed-letters
 ```
 
 **Postmark's webhooks.** Set `POSTMARK_WEBHOOK_USER=postmark` and

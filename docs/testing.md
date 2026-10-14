@@ -86,12 +86,11 @@ through `outsideFetch` like any other outside service.
   requests, which would bypass the fixtures in Playwright builds.
 - **Vitest checks what we sent.** The Postmark fixture just returns a
   `MessageID`. Tests read the request MSW received and check From,
-  Reply-To, the text, the attachments and the confirmation link
-  (`lib/server/mp-letters.test.ts`).
+  Reply-To, the text and the attachments (`lib/server/mp-letters.test.ts`).
 - **Playwright reads an outbox.** With `DATA_FIXTURES=1`, `outsideFetch` also
   writes each outgoing email to a file in `OUTBOX_DIR`
-  (`tests/fixtures/outbox.ts`). The flow test takes the confirmation link
-  from the newest email to the sender. This is test-only plumbing, with no
+  (`tests/fixtures/outbox.ts`). The flow test checks the letter in the
+  newest email to the test MP. This is test-only plumbing, with no
   production route or table.
 - **Webhooks are posted directly.** Tests post bounce, spam complaint and
   inbound payloads, in Postmark's format, straight to our routes with test

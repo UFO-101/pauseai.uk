@@ -97,7 +97,6 @@ export const staffCopy = {
     filter: "⁂ Filtra",
     none: "⁂ Nullae epistulae.",
     status: {
-      unconfirmed: "⁂ Non confirmata",
       sending: "⁂ Mittitur",
       sent: "⁂ Missa",
       bounced: "⁂ Reiecta",

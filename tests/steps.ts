@@ -3,7 +3,6 @@
 import { expect, type APIRequestContext, type Page } from "@playwright/test";
 import { copy } from "@/lib/content/email-your-mp";
 import { staffCopy } from "@/lib/content/staff-interface";
-import { readOutbox } from "./fixtures/outbox";
 
 // Redirects to the first campaign.
 export const TOOL_PAGE = "/campaigns-v2";
@@ -65,20 +64,10 @@ export async function fillLetter(page: Page, email: string) {
   await page.getByRole("button", { name: copy.form.confirmSend }).waitFor();
 }
 
-/** Sends the letter from the confirm box, and waits for "check your inbox". */
+/** Sends the letter from the confirm box, and waits for "sent". */
 export async function sendLetter(page: Page) {
   await page.getByRole("button", { name: copy.form.confirmSend }).click();
-  await expect(page.getByRole("status")).toHaveText(copy.form.checkInbox);
-}
-
-type OutboxEmail = { To: string; TextBody: string };
-
-/** The confirmation link in the newest email to `to`, in a fixture build's outbox. */
-export function confirmationLink(outboxDir: string, to: string): string {
-  const email = (readOutbox(outboxDir) as OutboxEmail[]).filter((e) => e.To === to).at(-1);
-  const link = email?.TextBody.match(/https?:\/\/\S+\/confirm#[\w-]+/)?.[0];
-  if (!link) throw new Error(`No confirmation email to ${to} in ${outboxDir}`);
-  return link;
+  await expect(page.getByRole("status")).toHaveText(copy.form.sent("Testy McTestface MP"));
 }
 
 /**

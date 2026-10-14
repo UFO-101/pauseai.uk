@@ -37,7 +37,7 @@ In `.env.local`:
 - **`TEST_MP_EMAIL`**: your email. Letters to the test MP go there.
 - **`DATA_FIXTURES=1`** fakes every outside service, so you need no other keys. Emails are written to files in `tmp/outbox/` instead of sent.
 
-Try Email your MP at http://localhost:3000/campaigns-v2 with postcode ZZ99ZZ. The confirmation link is in the newest file in `tmp/outbox/`.
+Try Email your MP at http://localhost:3000/campaigns-v2 with postcode ZZ99ZZ. The letter it sends is the newest file in `tmp/outbox/`.
 
 `npm run db:reset` wipes the database and makes it again, with the latest migrations. It only works on a database on your own machine. The whole schema is in [netlify/database/schema.sql](netlify/database/schema.sql), for reference.
 

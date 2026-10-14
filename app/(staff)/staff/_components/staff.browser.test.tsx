@@ -173,7 +173,7 @@ describe("LettersTable", () => {
     createdAt: "2026-10-12T09:00:00Z",
     sentAt: "2026-10-12T09:05:00Z",
     events: [
-      { at: "2026-10-12T09:00:00Z", status: "unconfirmed", details: {} },
+      { at: "2026-10-12T09:00:00Z", status: "sending", details: {} },
       { at: "2026-10-12T09:10:00Z", status: "bounced", details: { type: "HardBounce" } },
     ],
   };

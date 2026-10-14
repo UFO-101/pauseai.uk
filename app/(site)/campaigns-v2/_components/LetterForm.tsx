@@ -17,9 +17,8 @@ type Props = {
 };
 
 /**
- * Tells Google Tag Manager a letter was accepted; its trigger fires the Ads
- * conversion. Counted when the server accepts the form, before the sender
- * confirms, so it slightly overcounts.
+ * Tells Google Tag Manager a letter was sent; its trigger fires the Ads
+ * conversion.
  */
 function countConversion() {
   const w = window as typeof window & { dataLayer?: unknown[] };
@@ -89,7 +88,7 @@ export default function LetterForm({ campaign, mp, statuses, senderName, postcod
   if (sent) {
     return (
       <p className={styles.success} role="status">
-        {copy.form.checkInbox}
+        {copy.form.sent(mp.name)}
       </p>
     );
   }

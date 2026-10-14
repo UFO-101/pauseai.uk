@@ -1,12 +1,6 @@
 // The Email your MP campaigns: what the form and the server need to know about
 // each, and every word the tool shows or sends. Each campaign's page has its
 // own words (app/(site)/campaigns-v2/<slug>/page.tsx).
-//
-// Where the old tool (pauseai.info/uk-email-mp, embedded on /campaigns)
-// already says the same thing, this uses its words. Everything else is
-// placeholder copy (AGENTS.md: "Never write final copy"), marked with ⁂ and
-// written in Latin: Francis writes the real words and Joseph approves them,
-// and placeholder-copy.test.ts fails until they're in.
 
 /** What the MP has done for one campaign, as recorded by the policy team. */
 export type CampaignStatus = "signed" | "supports";
@@ -141,22 +135,8 @@ export const copy = {
     confirmSend: "Confirm & Send",
     emailRequired: "Please fill in your email address",
     addressRequired: "⁂ Inscriptionem postalem scribe.",
-    checkInbox: "⁂ Inspice cistam tuam: nexum ibi clicca ut epistulam mittas.",
-    networkError: "Network error - please try again",
-  },
-  // The email that asks the sender to confirm, with the link that sends the letter.
-  confirmationEmail: {
-    subject: "⁂ Confirma epistulam tuam",
-    body: (senderName: string, mpName: string, link: string) =>
-      `⁂ Salve ${senderName},\n\nUt epistulam tuam ad ${mpName} mittas, hunc nexum clicca:\n\n${link}\n\nSi hanc epistulam non scripsisti, hunc nuntium neglege.\n\nPauseAI UK`,
-  },
-  // The page the confirmation link opens.
-  confirm: {
-    title: "⁂ Epistulam mittimus",
-    sending: "⁂ Epistulam tuam mittimus...",
     sent: (mpName: string) => `⁂ Epistula tua ad ${mpName} missa est. Gratias!`,
-    invalid: "⁂ Hic nexus iam usus est aut exspiravit.",
-    failed: "⁂ Epistulam mittere non potuimus. Nexum iterum clicca.",
+    networkError: "Network error - please try again",
   },
   // The note on a copy of an MP's reply, sent to the shared inbox and the sender.
   forwardedReply: {
@@ -171,7 +151,7 @@ export const copy = {
     unknownCampaign: "⁂ Hanc causam non novimus.",
     noRecipient: "Invalid recipient email",
     testMpOnly: "⁂ Hic tantum ad senatorem probationis scribere licet.",
-    tooManyConfirmations: "Too many requests. Please try again later.",
+    alreadySent: "⁂ Iam ad senatorem tuum de hac re scripsisti.",
     failed: "Failed to send email",
     spamUnavailable: "Spam protection is unavailable. Please email contact@pauseai.info instead.",
     spamMisconfigured: "Spam protection is misconfigured. Please email contact@pauseai.info instead.",

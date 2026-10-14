@@ -4,7 +4,7 @@ import { compareWithLive } from "./compare";
 
 // The Email your MP form, local against live, at each step up to sending:
 // ZZ99ZZ finds the test MP on both. It stops at the confirm box, so it never
-// sends a letter or a confirmation email from either.
+// sends a letter from either.
 //
 // Live needs the tool deployed, the MP sync run once, and TEST_MP_EMAIL set,
 // or it shows a 404 or "no email listed" and the diff fails, rightly. The

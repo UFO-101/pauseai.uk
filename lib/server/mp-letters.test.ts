@@ -5,10 +5,9 @@ import { server } from "@/tests/fixtures/msw";
 import { campaigns, copy } from "@/lib/content/email-your-mp";
 import { addTestMp, addTestPolitician, describeWithDatabase, useTestDatabase } from "@/tests/database";
 import { query } from "./db";
-import { confirmLetter, deleteUnconfirmedLetters, letterAddress, mayWriteTo, parseLetterForm, submitLetter, type LetterForm } from "./mp-letters";
+import { letterAddress, mayWriteTo, parseLetterForm, submitLetter, type LetterForm } from "./mp-letters";
 
 const POSTMARK = "https://api.postmarkapp.com/email";
-const ORIGIN = "https://pauseai.uk";
 
 const FORM: LetterForm = {
   campaign: "regulate-letter-pm",
@@ -36,9 +35,6 @@ function postmark(answer: () => Response = () => HttpResponse.json({ ErrorCode: 
   );
   return sent;
 }
-
-/** The token from the confirmation link in an email. */
-const tokenFrom = (email: Sent) => email.TextBody.match(/confirm#([\w-]+)/)![1];
 
 beforeEach(() => {
   vi.stubEnv("TURNSTILE_SECRET_KEY", "0xreal");
@@ -82,103 +78,12 @@ describeWithDatabase("submitLetter", () => {
     await addTestPolitician();
   });
 
-  it("saves the letter unconfirmed, and emails the sender a link", async () => {
-    const sent = postmark();
-
-    expect(await submitLetter(FORM, ORIGIN, "localhost")).toEqual({ ok: true });
-
-    const [letter] = await query<Record<string, unknown>>("SELECT * FROM letters");
-    expect(letter).toMatchObject({
-      campaign: "regulate-letter-pm",
-      sender_email: "jane@example.com",
-      sender_postcode: "ZZ9 9ZZ",
-      status: "unconfirmed",
-      contact_consent: true,
-      body: "Dear Mr McTestface,\n\nPlease sign.\n\nThanks,\n\nJane Smith\n1 High Street\nTestville\nZZ9 9ZZ",
-    });
-    expect(sent).toHaveLength(1);
-    expect(sent[0]).toMatchObject({ From: "PauseAI UK <confirm@mp.pauseai.uk>", To: "jane@example.com", Subject: copy.confirmationEmail.subject, MessageStream: "outbound" });
-    expect(sent[0].TextBody).toContain(`${ORIGIN}/campaigns-v2/confirm#`);
-    // Only a hash of the token is kept.
-    expect(String(letter.token_hash)).not.toContain(tokenFrom(sent[0]));
-    expect(await query("SELECT status FROM letter_events")).toEqual([{ status: "unconfirmed" }]);
-  });
-
-  it("sends the confirmation from CONFIRMATION_FROM when it's set", async () => {
-    vi.stubEnv("CONFIRMATION_FROM", "Someone <someone@example.org>");
-    const sent = postmark();
-    await submitLetter(FORM, ORIGIN, "localhost");
-    expect(sent[0].From).toBe("Someone <someone@example.org>");
-  });
-
-  it("pretends to accept a bot's letter, and saves nothing", async () => {
-    const sent = postmark();
-    expect(await submitLetter({ ...FORM, nickname: "bot" }, ORIGIN, "localhost")).toEqual({ ok: true });
-    expect(sent).toEqual([]);
-    expect(await query("SELECT id FROM letters")).toEqual([]);
-  });
-
-  it("refuses a letter that fails the spam check", async () => {
-    expect(await submitLetter({ ...FORM, turnstileToken: "" }, ORIGIN, "localhost")).toEqual({ ok: false, status: 403, message: copy.errors.spamWait });
-  });
-
-  it("refuses missing fields, a bad email, and an unknown campaign", async () => {
-    expect(await submitLetter({ ...FORM, address: "" }, ORIGIN, "localhost")).toMatchObject({ status: 400, message: copy.errors.missingFields });
-    expect(await submitLetter({ ...FORM, email: "jane" }, ORIGIN, "localhost")).toMatchObject({ status: 400, message: copy.errors.invalidEmail });
-    expect(await submitLetter({ ...FORM, campaign: "nope" }, ORIGIN, "localhost")).toMatchObject({ status: 400, message: copy.errors.unknownCampaign });
-  });
-
-  it("refuses a postcode with no MP, or an MP with no email", async () => {
-    expect(await submitLetter({ ...FORM, postcode: "XX1 1XX" }, ORIGIN, "localhost")).toMatchObject({ status: 400, message: copy.errors.noRecipient });
-    await query("UPDATE politicians SET email = NULL WHERE is_test");
-    expect(await submitLetter(FORM, ORIGIN, "localhost")).toMatchObject({ status: 400, message: copy.errors.noRecipient });
-  });
-
-  it("outside production, writes only to the test MP", async () => {
-    const sent = postmark();
-    expect(await submitLetter({ ...FORM, postcode: "SW1A 1AA" }, ORIGIN, "localhost")).toMatchObject({ status: 403, message: copy.errors.testMpOnly });
-    vi.stubEnv("DEPLOY_CONTEXT", "production");
-    expect(await submitLetter({ ...FORM, postcode: "SW1A 1AA" }, ORIGIN, "localhost")).toEqual({ ok: true });
-    expect(sent).toHaveLength(1);
-  });
-
-  it("sends at most 5 confirmation emails a day to one address", async () => {
-    const sent = postmark();
-    for (let i = 0; i < 5; i++) expect(await submitLetter({ ...FORM, email: i % 2 ? "JANE@example.com" : "jane@example.com" }, ORIGIN, "localhost")).toEqual({ ok: true });
-    expect(await submitLetter(FORM, ORIGIN, "localhost")).toEqual({ ok: false, status: 429, message: copy.errors.tooManyConfirmations });
-    expect(await submitLetter({ ...FORM, email: "sam@example.com" }, ORIGIN, "localhost")).toEqual({ ok: true });
-    expect(sent).toHaveLength(6);
-
-    await query("UPDATE letters SET created_at = now() - interval '25 hours'");
-    expect(await submitLetter(FORM, ORIGIN, "localhost")).toEqual({ ok: true });
-  });
-
-  it("keeps nothing if the confirmation email can't be sent", async () => {
-    postmark(() => HttpResponse.json({ ErrorCode: 300, Message: "Invalid email request" }, { status: 422 }));
-    expect(await submitLetter(FORM, ORIGIN, "localhost")).toMatchObject({ status: 500, message: copy.errors.failed });
-    expect(await query("SELECT id FROM letters")).toEqual([]);
-  });
-});
-
-describeWithDatabase("confirmLetter", () => {
-  useTestDatabase();
-  beforeEach(async () => {
-    await addTestMp();
-  });
-
-  async function submitted(form = FORM) {
-    const sent = postmark();
-    await submitLetter(form, ORIGIN, "localhost");
-    return tokenFrom(sent[0]);
-  }
-
   it("sends the letter from its own address, replying to the sender and to us, with the PDFs", async () => {
-    const token = await submitted();
     const sent = postmark(() => HttpResponse.json({ ErrorCode: 0, MessageID: "msg-1" }));
 
-    expect(await confirmLetter(token)).toEqual({ ok: true, mpName: "Testy McTestface MP" });
+    expect(await submitLetter(FORM, "localhost")).toEqual({ ok: true });
 
-    const [letter] = await query<{ id: string; reply_hash: string; status: string; postmark_message_id: string; token_hash: string | null; sent_at: Date | null }>("SELECT * FROM letters");
+    const [letter] = await query<Record<string, unknown>>("SELECT * FROM letters");
     const address = `reply+${letter.reply_hash}@mp.pauseai.uk`;
     expect(sent).toHaveLength(1);
     expect(sent[0]).toMatchObject({
@@ -193,67 +98,83 @@ describeWithDatabase("confirmLetter", () => {
     expect(sent[0].Attachments!.map((a) => a.Name)).toEqual(campaigns[0].attachments.map((a) => a.file));
     expect(Buffer.from(sent[0].Attachments![0].Content, "base64").equals(readFileSync("public/pdfs/Frontier-AI-Open-Letter.pdf"))).toBe(true);
     expect(sent[0].Attachments![0].ContentType).toBe("application/pdf");
-    expect(letter).toMatchObject({ status: "sent", postmark_message_id: "msg-1", token_hash: null });
+    expect(letter).toMatchObject({
+      campaign: "regulate-letter-pm",
+      sender_email: "jane@example.com",
+      sender_postcode: "ZZ9 9ZZ",
+      contact_consent: true,
+      status: "sent",
+      postmark_message_id: "msg-1",
+      body: sent[0].TextBody,
+    });
     expect(letter.sent_at).not.toBeNull();
-    expect((await query<{ status: string }>("SELECT status FROM letter_events ORDER BY id")).map((e) => e.status)).toEqual(["unconfirmed", "sent"]);
-  });
-
-  it("works only once", async () => {
-    const token = await submitted();
-    postmark();
-    expect((await confirmLetter(token)).ok).toBe(true);
-    expect(await confirmLetter(token)).toEqual({ ok: false, reason: "invalid" });
-    expect(await confirmLetter("made-up")).toEqual({ ok: false, reason: "invalid" });
-    expect(await confirmLetter("")).toEqual({ ok: false, reason: "invalid" });
+    expect((await query<{ status: string }>("SELECT status FROM letter_events ORDER BY id")).map((e) => e.status)).toEqual(["sending", "sent"]);
   });
 
   it("sends a campaign without attachments without any", async () => {
-    const token = await submitted({ ...FORM, campaign: "support-sobel-bill" });
     const sent = postmark();
-    await confirmLetter(token);
+    await submitLetter({ ...FORM, campaign: "support-sobel-bill" }, "localhost");
     expect(sent[0].Attachments).toEqual([]);
   });
 
-  it("lets the sender try again if sending fails", async () => {
-    const token = await submitted();
-    postmark(() => new HttpResponse(null, { status: 500 }));
-    expect(await confirmLetter(token)).toEqual({ ok: false, reason: "failed" });
-    expect(await query("SELECT status FROM letters")).toEqual([{ status: "unconfirmed" }]);
-
-    postmark();
-    expect((await confirmLetter(token)).ok).toBe(true);
-  });
-
-  it("won't send outside production to anyone but the test MP, or to an MP without an email", async () => {
-    vi.stubEnv("DEPLOY_CONTEXT", "production");
-    await addTestPolitician();
-    const token = await submitted({ ...FORM, postcode: "SW1A 1AA" });
-    vi.stubEnv("DEPLOY_CONTEXT", "deploy-preview");
+  it("pretends to accept a bot's letter, and sends nothing", async () => {
     const sent = postmark();
-    expect(await confirmLetter(token)).toEqual({ ok: false, reason: "failed" });
-
-    const testToken = await submitted();
-    await query("UPDATE politicians SET email = NULL WHERE is_test");
-    expect(await confirmLetter(testToken)).toEqual({ ok: false, reason: "failed" });
-    // Only the two confirmation emails went.
-    expect(sent.filter((email) => email.To !== "jane@example.com")).toEqual([]);
-    expect(await query("SELECT DISTINCT status FROM letters")).toEqual([{ status: "unconfirmed" }]);
+    expect(await submitLetter({ ...FORM, nickname: "bot" }, "localhost")).toEqual({ ok: true });
+    expect(sent).toEqual([]);
+    expect(await query("SELECT id FROM letters")).toEqual([]);
   });
-});
 
-describeWithDatabase("deleteUnconfirmedLetters", () => {
-  useTestDatabase();
+  it("refuses a letter that fails the spam check", async () => {
+    expect(await submitLetter({ ...FORM, turnstileToken: "" }, "localhost")).toEqual({ ok: false, status: 403, message: copy.errors.spamWait });
+  });
 
-  it("deletes letters left unconfirmed for 7 days, and nothing else", async () => {
-    await addTestMp();
+  it("refuses missing fields, a bad email, and an unknown campaign", async () => {
+    expect(await submitLetter({ ...FORM, address: "" }, "localhost")).toMatchObject({ status: 400, message: copy.errors.missingFields });
+    expect(await submitLetter({ ...FORM, email: "jane" }, "localhost")).toMatchObject({ status: 400, message: copy.errors.invalidEmail });
+    expect(await submitLetter({ ...FORM, campaign: "nope" }, "localhost")).toMatchObject({ status: 400, message: copy.errors.unknownCampaign });
+  });
+
+  it("refuses a postcode with no MP, or an MP with no email", async () => {
+    expect(await submitLetter({ ...FORM, postcode: "XX1 1XX" }, "localhost")).toMatchObject({ status: 400, message: copy.errors.noRecipient });
+    await query("UPDATE politicians SET email = NULL WHERE is_test");
+    expect(await submitLetter(FORM, "localhost")).toMatchObject({ status: 400, message: copy.errors.noRecipient });
+  });
+
+  it("outside production, writes only to the test MP", async () => {
+    const sent = postmark();
+    expect(await submitLetter({ ...FORM, postcode: "SW1A 1AA" }, "localhost")).toMatchObject({ status: 403, message: copy.errors.testMpOnly });
+    expect(sent).toEqual([]);
+    vi.stubEnv("DEPLOY_CONTEXT", "production");
+    expect(await submitLetter({ ...FORM, postcode: "SW1A 1AA" }, "localhost")).toEqual({ ok: true });
+    expect(sent).toHaveLength(1);
+  });
+
+  it("sends one letter per sender email per campaign, except to the test MPs", async () => {
+    vi.stubEnv("DEPLOY_CONTEXT", "production");
+    const sent = postmark();
+    const real = { ...FORM, postcode: "SW1A 1AA" };
+    expect(await submitLetter(real, "localhost")).toEqual({ ok: true });
+    expect(await submitLetter({ ...real, email: "JANE@example.com" }, "localhost")).toEqual({ ok: false, status: 409, message: copy.errors.alreadySent });
+    expect(await submitLetter({ ...real, campaign: "support-sobel-bill" }, "localhost")).toEqual({ ok: true });
+    expect(await submitLetter({ ...real, email: "sam@example.com" }, "localhost")).toEqual({ ok: true });
+    expect(await submitLetter(FORM, "localhost")).toEqual({ ok: true });
+    expect(await submitLetter(FORM, "localhost")).toEqual({ ok: true });
+    expect(sent).toHaveLength(5);
+  });
+
+  it("keeps nothing if Postmark refuses the letter, so the sender can try again", async () => {
+    postmark(() => HttpResponse.json({ ErrorCode: 300, Message: "Invalid email request" }, { status: 422 }));
+    expect(await submitLetter(FORM, "localhost")).toMatchObject({ status: 500, message: copy.errors.failed });
+    expect(await query("SELECT id FROM letters")).toEqual([]);
+
     postmark();
-    await submitLetter(FORM, ORIGIN, "localhost");
-    await submitLetter(FORM, ORIGIN, "localhost");
-    await submitLetter(FORM, ORIGIN, "localhost");
-    const [{ id: sent }] = await query<{ id: number }>("UPDATE letters SET status = 'sent' WHERE id = (SELECT min(id) FROM letters) RETURNING id::int AS id");
-    await query("UPDATE letters SET created_at = now() - interval '8 days' WHERE id <> (SELECT max(id) FROM letters)");
+    expect(await submitLetter(FORM, "localhost")).toEqual({ ok: true });
+  });
 
-    expect(await deleteUnconfirmedLetters()).toBe(1);
-    expect((await query<{ id: number }>("SELECT id::int AS id FROM letters ORDER BY id")).map((l) => l.id)).toEqual([sent, 3]);
+  it("says it failed if the letter can't be saved", async () => {
+    const sent = postmark();
+    await query("DROP TABLE letter_events");
+    expect(await submitLetter(FORM, "localhost")).toMatchObject({ status: 500, message: copy.errors.failed });
+    expect(sent).toEqual([]);
   });
 });

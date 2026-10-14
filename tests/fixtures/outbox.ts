@@ -1,6 +1,6 @@
 // With DATA_FIXTURES=1, every email sent through Postmark is also written to
-// a file in OUTBOX_DIR, so a Playwright test can read it: the confirmation
-// link, the letter, its attachments. Test-only plumbing: there's no route or
+// a file in OUTBOX_DIR, so a Playwright test can read it: the letter, its
+// attachments, a forwarded reply. Test-only plumbing: there's no route or
 // table for it.
 import { mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";

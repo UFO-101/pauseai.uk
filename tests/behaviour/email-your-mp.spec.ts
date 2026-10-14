@@ -33,21 +33,14 @@ async function fillAndSend(page: Page, email: string) {
   await page.getByRole("button", { name: copy.form.confirmSend }).click();
 }
 
-test("the ZZ99ZZ flow: postcode, form, confirmation link, sent, and a reply forwarded", async ({ page, request }) => {
-  // A fresh address each run, so the daily cap and older emails don't get in the way.
+test("the ZZ99ZZ flow: postcode, form, sent, and a reply forwarded", async ({ page, request }) => {
   const sender = `jane+${Date.now()}@example.com`;
   await lookUpTestMp(page);
   await expect(page.getByLabel(copy.form.subjectLabel)).toHaveValue(campaigns[0].subject);
   await fillAndSend(page, sender);
 
-  await expect(page.getByRole("status")).toHaveText(copy.form.checkInbox);
+  await expect(page.getByRole("status")).toHaveText(copy.form.sent("Testy McTestface MP"));
   expect(await adsEvents(page)).toBe(1);
-
-  const confirmation = newestEmailTo(sender)!;
-  expect(confirmation.Subject).toBe(copy.confirmationEmail.subject);
-  const link = confirmation.TextBody.match(/https?:\/\/\S+\/campaigns-v2\/confirm#[\w-]+/)![0];
-  await page.goto(link);
-  await expect(page.getByRole("status")).toHaveText(copy.confirm.sent("Testy McTestface MP"));
 
   const letter = newestEmailTo("test-mp@example.org")!;
   const address = letter.From.match(/<(reply\+(\w+)@mp\.pauseai\.uk)>/)!;
@@ -55,11 +48,6 @@ test("the ZZ99ZZ flow: postcode, form, confirmation link, sent, and a reply forw
   expect(letter.ReplyTo).toBe(`${sender}, ${address[1]}`);
   expect(letter.TextBody).toMatch(/Jane Smith\n1 High Street\nTestville\nZZ9 9ZZ$/);
   expect(letter.Attachments!.map((a) => a.Name)).toEqual(campaigns[0].attachments.map((a) => a.file));
-
-  // The link works once. (Away first: the same URL again is only a jump to its #fragment.)
-  await page.goto("about:blank");
-  await page.goto(link);
-  await expect(page.getByRole("status")).toHaveText(copy.confirm.invalid);
 
   // The MP replies only to the letter's address: both we and the sender get a copy.
   const reply = await request.post(`${BASE}/api/postmark/inbound`, {

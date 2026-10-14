@@ -106,12 +106,11 @@ CREATE TABLE public.letters (
     subject text NOT NULL,
     body text NOT NULL,
     reply_hash text NOT NULL,
-    token_hash text,
     status text NOT NULL,
     postmark_message_id text,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     sent_at timestamp with time zone,
-    CONSTRAINT letters_status_check CHECK ((status = ANY (ARRAY['unconfirmed'::text, 'sending'::text, 'sent'::text, 'bounced'::text, 'spam_complaint'::text])))
+    CONSTRAINT letters_status_check CHECK ((status = ANY (ARRAY['sending'::text, 'sent'::text, 'bounced'::text, 'spam_complaint'::text])))
 );
 
 --
@@ -244,13 +243,6 @@ ALTER TABLE ONLY public.letters
     ADD CONSTRAINT letters_reply_hash_key UNIQUE (reply_hash);
 
 --
--- Name: letters letters_token_hash_key; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.letters
-    ADD CONSTRAINT letters_token_hash_key UNIQUE (token_hash);
-
---
 -- Name: mp_syncs mp_syncs_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -304,16 +296,10 @@ CREATE INDEX campaign_statuses_campaign ON public.campaign_statuses USING btree 
 CREATE INDEX letter_events_letter_id ON public.letter_events USING btree (letter_id, at);
 
 --
--- Name: letters_sender_email_created_at; Type: INDEX; Schema: public; Owner: -
+-- Name: letters_sender_email_campaign; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX letters_sender_email_created_at ON public.letters USING btree (lower(sender_email), created_at);
-
---
--- Name: letters_unconfirmed_created_at; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX letters_unconfirmed_created_at ON public.letters USING btree (created_at) WHERE (status = 'unconfirmed'::text);
+CREATE INDEX letters_sender_email_campaign ON public.letters USING btree (lower(sender_email), campaign);
 
 --
 -- Name: politicians_sitting_constituency; Type: INDEX; Schema: public; Owner: -

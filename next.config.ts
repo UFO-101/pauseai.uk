@@ -92,7 +92,7 @@ const nextConfig: NextConfig = {
   },
   // The PDFs attached to letters, read from disk when one is sent.
   outputFileTracingIncludes: {
-    "/api/email-your-mp/confirm": ["./public/pdfs/*.pdf"],
+    "/api/email-your-mp/letters": ["./public/pdfs/*.pdf"],
   },
   async headers() {
     return [
