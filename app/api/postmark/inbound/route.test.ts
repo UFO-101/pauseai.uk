@@ -27,7 +27,7 @@ describeWithDatabase("POST /api/postmark/inbound", () => {
     TextBody: "Thanks.",
   };
 
-  it("forwards a reply to a letter, and stores nothing about it", async () => {
+  it("forwards a reply to a letter, and records who it came from, not its text", async () => {
     const mp = await addTestMp();
     await query(
       `INSERT INTO letters (campaign, politician_id, sender_name, sender_email, sender_address, sender_postcode, contact_consent, subject, body, reply_hash, status)
@@ -41,13 +41,11 @@ describeWithDatabase("POST /api/postmark/inbound", () => {
         return HttpResponse.json({ ErrorCode: 0, MessageID: "m" });
       }),
     );
-    const before = await query("SELECT * FROM letters");
-
     expect(await (await POST(webhookRequest("/api/postmark/inbound", inbound))).json()).toEqual({ forwarded: 2 });
 
     expect(to).toEqual(["replies@pauseai.uk", "jane@example.com"]);
-    expect(await query("SELECT * FROM letters")).toEqual(before);
-    expect(await query("SELECT * FROM letter_events")).toEqual([]);
+    expect(await query("SELECT status, details FROM letter_events")).toEqual([{ status: "replied", details: { from: "test-mp@example.org", name: "Testy McTestface MP", messageId: null } }]);
+    expect(JSON.stringify(await query("SELECT * FROM letters"))).not.toContain("Thanks.");
   });
 
   it("answers 200 to mail for no letter, or a body that isn't JSON", async () => {

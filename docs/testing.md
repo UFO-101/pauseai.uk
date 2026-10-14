@@ -95,7 +95,7 @@ through `outsideFetch` like any other outside service.
 - **Webhooks are posted directly.** Tests post bounce, spam complaint and
   inbound payloads, in Postmark's format, straight to our routes with test
   basic auth credentials, and check that wrong or missing credentials are
-  refused, and that a reply is forwarded and not stored.
+  refused, and that a reply is forwarded and logged, without its text.
 - **No Mailpit or other mail catcher.** We send through Postmark's API, not
   SMTP, so a mail catcher would test a different path from production.
 - **Checking real sending by hand.** On previews and the live site, use the

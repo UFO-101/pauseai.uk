@@ -1,7 +1,7 @@
 import "server-only";
 import { timingSafeEqual } from "node:crypto";
 import { copy } from "@/lib/content/email-your-mp";
-import { query } from "./db";
+import { query, transaction } from "./db";
 import { sendEmail, type Attachment } from "./postmark";
 
 // What Postmark tells us: bounces and spam complaints about letters, and
@@ -39,7 +39,29 @@ export async function recordDeliveryProblem(payload: DeliveryProblem): Promise<b
 
 type Address = { Email?: string; Name?: string };
 
+/**
+ * Adds a 'replied' event to the letter, once per message (Postmark tries
+ * again if forwarding fails). A reply from anyone but the sender, who may
+ * write back into the thread, marks the letter as replied to.
+ */
+async function recordReply(letter: { id: number; senderEmail: string }, email: InboundEmail): Promise<void> {
+  const from = email.FromFull?.Email ?? "";
+  const details = { from, name: email.FromFull?.Name ?? "", messageId: email.MessageID ?? null };
+  await transaction(async (db) => {
+    await query("SELECT 1 FROM letters WHERE id = $1 FOR UPDATE", [letter.id], db);
+    if (details.messageId) {
+      const [seen] = await query("SELECT 1 FROM letter_events WHERE letter_id = $1 AND status = 'replied' AND details->>'messageId' = $2", [letter.id, details.messageId], db);
+      if (seen) return;
+    }
+    await query("INSERT INTO letter_events (letter_id, status, details) VALUES ($1, 'replied', $2)", [letter.id, JSON.stringify(details)], db);
+    if (from.toLowerCase() !== letter.senderEmail.toLowerCase()) {
+      await query("UPDATE letters SET replied_at = coalesce(replied_at, now()) WHERE id = $1", [letter.id], db);
+    }
+  });
+}
+
 export type InboundEmail = {
+  MessageID?: string;
   MailboxHash?: string;
   FromFull?: Address;
   ToFull?: Address[];
@@ -51,9 +73,9 @@ export type InboundEmail = {
 };
 
 /**
- * Forwards an MP's reply to a letter: to the shared inbox, and to the sender
- * unless they already have it (their address is in its To or Cc). Nothing
- * about the reply is stored. Returns who it went to.
+ * Records a reply to a letter, and forwards it: to the shared inbox, and to
+ * the sender unless they already have it (their address is in its To or Cc).
+ * Only when it came and who from is kept, not its text. Returns who it went to.
  */
 export async function forwardReply(email: InboundEmail): Promise<string[]> {
   const domain = process.env.MP_MAIL_DOMAIN ?? "mp.pauseai.uk";
@@ -61,12 +83,13 @@ export async function forwardReply(email: InboundEmail): Promise<string[]> {
   // Our own mail coming back round, such as a forwarded copy: never forward it again.
   if (!email.MailboxHash || from.toLowerCase().endsWith(`@${domain}`)) return [];
 
-  const [letter] = await query<{ senderName: string; senderEmail: string; mpName: string }>(
-    `SELECT l.sender_name AS "senderName", l.sender_email AS "senderEmail", p.name AS "mpName"
+  const [letter] = await query<{ id: number; senderName: string; senderEmail: string; mpName: string }>(
+    `SELECT l.id::int AS id, l.sender_name AS "senderName", l.sender_email AS "senderEmail", p.name AS "mpName"
      FROM letters l JOIN politicians p ON p.id = l.politician_id WHERE l.reply_hash = $1`,
     [email.MailboxHash],
   );
   if (!letter) return [];
+  await recordReply(letter, email);
 
   const copied = [...(email.ToFull ?? []), ...(email.CcFull ?? [])].map((a) => a.Email?.toLowerCase());
   const recipients = [process.env.REPLIES_INBOX, copied.includes(letter.senderEmail.toLowerCase()) ? undefined : letter.senderEmail].filter(

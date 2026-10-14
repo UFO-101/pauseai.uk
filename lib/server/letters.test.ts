@@ -28,6 +28,11 @@ describeWithDatabase("recentLetters", () => {
     ]);
     expect(letters[0].events).toEqual([]);
     expect((await recentLetters({ status: "sent" })).map((l) => l.id)).toEqual([1]);
+    expect(await recentLetters({ status: "replied" })).toEqual([]);
+    await query("UPDATE letters SET replied_at = '2026-10-13T09:00:00Z' WHERE id = 2");
+    const replied = await recentLetters({ status: "replied" });
+    expect(replied.map((l) => l.id)).toEqual([2]);
+    expect(new Date(replied[0].repliedAt!).toISOString()).toBe("2026-10-13T09:00:00.000Z");
     expect(await recentLetters({ limit: 1 })).toHaveLength(1);
   });
 });

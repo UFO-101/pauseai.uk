@@ -90,6 +90,7 @@ describeWithDatabase("forwardReply", () => {
   }
 
   const reply = (hash: string, extra = {}) => ({
+    MessageID: "inbound-1",
     MailboxHash: hash,
     FromFull: { Email: "test-mp@example.org", Name: "Testy McTestface MP" },
     ToFull: [{ Email: `reply+${hash}@mp.pauseai.uk` }],
@@ -100,10 +101,12 @@ describeWithDatabase("forwardReply", () => {
     ...extra,
   });
 
-  it("forwards the reply to our inbox and to the sender, and stores nothing", async () => {
+  const events = () => query<{ status: string; details: object }>("SELECT status, details FROM letter_events ORDER BY id");
+  const repliedAt = async () => (await query<{ replied_at: Date | null }>("SELECT replied_at FROM letters"))[0].replied_at;
+
+  it("forwards the reply to our inbox and to the sender, and records when it came and who from, not its text", async () => {
     const hash = await sentLetter();
     const sent = postmark();
-    const before = await query("SELECT * FROM letters");
 
     expect(await forwardReply(reply(hash, { Attachments: [{ Name: "a.pdf", Content: "QQ==", ContentType: "application/pdf", ContentLength: 1 }] }))).toEqual([
       "replies@pauseai.uk",
@@ -116,8 +119,27 @@ describeWithDatabase("forwardReply", () => {
     expect(sent[0].TextBody).toContain("From: Testy McTestface MP <test-mp@example.org>");
     expect(sent[0].TextBody).toContain("Thanks for your letter.");
     expect(sent[0].Attachments).toEqual([{ Name: "a.pdf", Content: "QQ==", ContentType: "application/pdf" }]);
-    expect(await query("SELECT * FROM letters")).toEqual(before);
-    expect(await query("SELECT * FROM letter_events")).toEqual([]);
+    expect(await events()).toEqual([{ status: "replied", details: { from: "test-mp@example.org", name: "Testy McTestface MP", messageId: "inbound-1" } }]);
+    expect(await repliedAt()).not.toBeNull();
+  });
+
+  it("records each reply once, however often Postmark sends it, and keeps the first reply's time", async () => {
+    const hash = await sentLetter();
+    postmark();
+    await forwardReply(reply(hash));
+    const first = await repliedAt();
+    await forwardReply(reply(hash));
+    await forwardReply(reply(hash, { MessageID: "inbound-2" }));
+    expect((await events()).map((e) => (e.details as { messageId: string }).messageId)).toEqual(["inbound-1", "inbound-2"]);
+    expect(await repliedAt()).toEqual(first);
+  });
+
+  it("logs the sender writing back into the thread, without counting it as the MP's reply", async () => {
+    const hash = await sentLetter();
+    postmark();
+    await forwardReply(reply(hash, { FromFull: { Email: "jane@example.com" } }));
+    expect(await events()).toEqual([{ status: "replied", details: { from: "jane@example.com", name: "", messageId: "inbound-1" } }]);
+    expect(await repliedAt()).toBeNull();
   });
 
   it("doesn't send the sender a copy they already have", async () => {
@@ -133,6 +155,7 @@ describeWithDatabase("forwardReply", () => {
     const sent = postmark();
     expect(await forwardReply({ MailboxHash: hash })).toEqual(["Jane@Example.com"]);
     expect(sent[0].Subject).toBe(copy.forwardedReply.subject(""));
+    expect(await events()).toEqual([{ status: "replied", details: { from: "", name: "", messageId: null } }]);
   });
 
   it("ignores mail for no letter, unknown letters, and our own mail coming back", async () => {

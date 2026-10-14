@@ -5,7 +5,7 @@ import styles from "./staff.module.css";
 
 const when = (at: string) => new Date(at).toLocaleString("en-GB");
 
-/** Letters, with each change of status: sent, bounced, complained about. */
+/** Letters, with each change of status (sent, bounced, complained about) and each reply. */
 export default function LettersTable({ letters }: { letters: LetterSummary[] }) {
   if (letters.length === 0) return <p>{staffCopy.letters.none}</p>;
   return (
@@ -19,6 +19,7 @@ export default function LettersTable({ letters }: { letters: LetterSummary[] }) 
             <th>{staffCopy.letters.columns.to}</th>
             <th>{staffCopy.letters.columns.campaign}</th>
             <th>{staffCopy.letters.columns.status}</th>
+            <th>{staffCopy.letters.columns.replied}</th>
             <th>{staffCopy.letters.columns.history}</th>
           </tr>
         </thead>
@@ -37,6 +38,7 @@ export default function LettersTable({ letters }: { letters: LetterSummary[] }) 
               </td>
               <td>{campaignBySlug(letter.campaign)?.title ?? letter.campaign}</td>
               <td>{staffCopy.letters.status[letter.status] ?? letter.status}</td>
+              <td>{letter.repliedAt && when(letter.repliedAt)}</td>
               <td>
                 <ul className={styles.events}>
                   {letter.events.map((event, i) => (

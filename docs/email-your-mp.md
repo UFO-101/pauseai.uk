@@ -105,7 +105,9 @@ Postmark's webhooks, each with the basic auth credentials in the URL, e.g.
   status changes, shown in `/staff/letters`.
 - **Inbound** (the `mp.pauseai.uk` inbound domain): `/api/postmark/inbound`.
   The reply is forwarded to `REPLIES_INBOX`, and to the sender unless their
-  address was already in its To or Cc. Nothing about it is stored.
+  address was already in its To or Cc. The letter gets a "replied" event,
+  with who it came from but not its text, and `/staff/letters` shows when
+  the first reply from anyone but the sender came.
 
 ### Records
 

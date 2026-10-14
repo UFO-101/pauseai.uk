@@ -205,6 +205,7 @@ describe("LettersTable", () => {
     subject: "S",
     createdAt: "2026-10-12T09:00:00Z",
     sentAt: "2026-10-12T09:05:00Z",
+    repliedAt: null,
     events: [
       { at: "2026-10-12T09:00:00Z", status: "sending", details: {} },
       { at: "2026-10-12T09:10:00Z", status: "bounced", details: { type: "HardBounce" } },
@@ -212,7 +213,7 @@ describe("LettersTable", () => {
   };
 
   it("lists letters with their status and history", async () => {
-    await render(<LettersTable letters={[letter, { ...letter, id: 2, campaign: "gone", status: "odd", isTest: false, contactConsent: false, events: [{ at: letter.createdAt, status: "strange", details: {} }] }]} />);
+    await render(<LettersTable letters={[letter, { ...letter, id: 2, campaign: "gone", status: "odd", isTest: false, contactConsent: false, repliedAt: "2026-10-13T09:00:00Z", events: [{ at: letter.createdAt, status: "strange", details: {} }] }]} />);
     await expect.element(page.getByText("jane@example.com").first()).toBeInTheDocument();
     await expect.element(page.getByText(pm.title).first()).toBeInTheDocument();
     await expect.element(page.getByText("gone")).toBeInTheDocument();
@@ -222,6 +223,7 @@ describe("LettersTable", () => {
     await expect.element(page.getByText(/strange/)).toBeInTheDocument();
     await expect.element(page.getByText('{"type":"HardBounce"}', { exact: false })).toBeInTheDocument();
     expect(page.getByText(staffCopy.politicians.testMp).all()).toHaveLength(1);
+    await expect.element(page.getByRole("cell", { name: new Date("2026-10-13T09:00:00Z").toLocaleString("en-GB"), exact: true })).toBeInTheDocument();
   });
 
   it("says when there are none", async () => {
