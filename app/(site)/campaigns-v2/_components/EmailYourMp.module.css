@@ -132,10 +132,71 @@
   line-height: 1.5;
 }
 
-/* Grows to fit the letter, as the old tool's did, where browsers can. */
-.letter textarea[name="letter"] {
-  field-sizing: content;
+/* The letter's editor: the old tool's toolbar on top, then the letter,
+   growing to fit it. */
+.editorFrame {
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.editorFrame:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 20%, transparent);
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  border-bottom: 1px solid var(--border-strong);
+}
+
+.toolbar button {
+  min-width: 2.25rem;
+  padding: 0.25rem 0.5rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 4px;
+  font: inherit;
+  font-size: 0.85rem;
+  background: var(--surface);
+  color: inherit;
+  cursor: pointer;
+}
+
+.toolbar button:hover {
+  border-color: var(--accent);
+}
+
+/* As the site's primary button. */
+.toolbar button[aria-pressed="true"] {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.editor {
+  min-height: 12rem;
+  padding: 0.75rem;
   font-size: 0.9rem;
+  line-height: 1.5;
+  outline: none;
+}
+
+.editor p {
+  margin: 0 0 0.75rem;
+}
+
+.editor ul {
+  margin: 0 0 0.75rem;
+  padding-left: 1.5rem;
+}
+
+.editor li p,
+.editor > :last-child {
+  margin: 0;
 }
 
 .letter h3 {

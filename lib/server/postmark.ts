@@ -15,6 +15,7 @@ export type Email = {
   ReplyTo?: string;
   Subject: string;
   TextBody: string;
+  HtmlBody?: string;
   Attachments?: Attachment[];
   /** Shown in Postmark's activity log, and sent back with bounces. */
   Metadata?: Record<string, string>;

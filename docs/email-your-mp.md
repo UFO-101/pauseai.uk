@@ -42,6 +42,12 @@ At the swap (stage 5 of the plan) these replace `/campaigns`:
 - `app/(staff)/staff/`: the staff interface.
 - `netlify/database/migrations/`: the database's tables.
 - `lib/server/mp-letters.ts`: checks a letter from the form, and sends it.
+- `lib/letter-format.ts`: what a letter may hold (paragraphs, bold, italic,
+  bullet lists), checked on the server, which writes the letter's HTML and
+  plain text itself. The form's editor is Tiptap
+  (`app/(site)/campaigns-v2/_components/LetterEditor.tsx`), limited to the
+  same. Campaign letters are written with a little markup: `**bold**`,
+  `_italic_`, and lines starting `- ` for bullets.
 - `lib/server/postmark.ts`: the only file that talks to Postmark.
 - `lib/server/postmark-webhooks.ts`: bounces, spam complaints and replies.
 - `app/(site)/campaigns-v2/`: the pages and the form.
@@ -89,7 +95,7 @@ The environment variables are listed, with what each is for, in [.env.example](.
 ## Sending
 
 1. The form posts to `/api/email-your-mp/letters`. The letter is saved and
-   sent straight away through Postmark, from `"Jane Smith via PauseAI"
+   sent straight away through Postmark, as HTML and as plain text, from `"Jane Smith via PauseAI"
    <reply+<hash>@mp.pauseai.uk>`, with Reply-To the sender and that address,
    and the campaign's PDFs attached. If Postmark refuses it, nothing is
    kept, so the sender can try again. The form pushes `mp_email_sent` to

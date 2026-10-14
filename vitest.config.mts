@@ -70,6 +70,8 @@ export default defineConfig({
             "jszip",
             "qrcode-generator",
             "jsqr",
+            "@tiptap/react",
+            "@tiptap/starter-kit",
           ],
         },
         test: {

@@ -4,6 +4,7 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { copy } from "@/lib/content/email-your-mp";
 import { campaignBySlug, fullLetter, looksLikeEmail, signatureAddress } from "@/lib/email-your-mp";
+import { checkDoc, isBlank, toHtml, toText, type LetterDoc } from "@/lib/letter-format";
 import { query, transaction, type Queryable } from "./db";
 import { findMp } from "./find-mp";
 import { headerName, sendEmail } from "./postmark";
@@ -19,7 +20,8 @@ export type LetterForm = {
   address: string;
   email: string;
   subject: string;
-  letter: string;
+  /** The editor's document, if it holds only what a letter may. */
+  letter: LetterDoc | undefined;
   consent: boolean;
   nickname: string;
   turnstileToken: string;
@@ -41,7 +43,7 @@ export function parseLetterForm(body: unknown): LetterForm {
     address: text(data.address),
     email: text(data.email),
     subject: text(data.subject),
-    letter: text(data.letter),
+    letter: checkDoc(data.letter),
     consent: data.consent === true,
     nickname: text(data.nickname),
     turnstileToken: text(data.turnstileToken),
@@ -97,7 +99,7 @@ export async function submitLetter(form: LetterForm, hostname: string): Promise<
   if (spam.drop) return { ok: true };
   if (spam.message) return fail(403, spam.message);
 
-  if (!form.name || !form.postcode || !form.address || !form.email || !form.subject || !form.letter) {
+  if (!form.name || !form.postcode || !form.address || !form.email || !form.subject || !form.letter || isBlank(form.letter)) {
     return fail(400, copy.errors.missingFields);
   }
   if (!looksLikeEmail(form.email)) return fail(400, copy.errors.invalidEmail);
@@ -110,7 +112,9 @@ export async function submitLetter(form: LetterForm, hostname: string): Promise<
   if (!mp || !to) return fail(400, copy.errors.noRecipient);
   if (!mayWriteTo(mp)) return fail(403, copy.errors.testMpOnly);
 
-  const body = fullLetter(form.letter, form.name, signatureAddress(form.address, form.postcode));
+  const letter = fullLetter(form.letter, form.name, signatureAddress(form.address, form.postcode));
+  const body = toText(letter);
+  const html = toHtml(letter);
   const replyHash = randomBytes(12).toString("hex");
   let id: number | undefined;
   try {
@@ -128,9 +132,9 @@ export async function submitLetter(form: LetterForm, hostname: string): Promise<
       }
       const [{ id }] = await query<{ id: number }>(
         `INSERT INTO letters (campaign, politician_id, sender_name, sender_email, sender_address, sender_postcode,
-           contact_consent, subject, body, reply_hash, status)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'sending') RETURNING id::int AS id`,
-        [campaign.slug, mp.id, form.name, form.email, form.address, form.postcode.toUpperCase(), form.consent, form.subject, body, replyHash],
+           contact_consent, subject, body, body_html, reply_hash, status)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'sending') RETURNING id::int AS id`,
+        [campaign.slug, mp.id, form.name, form.email, form.address, form.postcode.toUpperCase(), form.consent, form.subject, body, html, replyHash],
         db,
       );
       await logEvent(id, "sending", {}, db);
@@ -145,6 +149,7 @@ export async function submitLetter(form: LetterForm, hostname: string): Promise<
       ReplyTo: `${form.email}, ${address}`,
       Subject: form.subject,
       TextBody: body,
+      HtmlBody: html,
       Attachments: await attachments(campaign.slug),
       Metadata: { letter: String(id), campaign: campaign.slug },
       Tag: campaign.slug,

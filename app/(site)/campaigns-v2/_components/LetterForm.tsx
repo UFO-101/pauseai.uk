@@ -3,7 +3,8 @@
 import { useId, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { copy, type Campaign } from "@/lib/content/email-your-mp";
-import { draftLetter, fullLetter, isDone, signatureAddress, type Mp, type MpStatuses } from "@/lib/email-your-mp";
+import { draftLetter, isDone, signatureAddress, type Mp, type MpStatuses } from "@/lib/email-your-mp";
+import LetterEditor from "./LetterEditor";
 import Turnstile from "./Turnstile";
 import styles from "./EmailYourMp.module.css";
 
@@ -49,7 +50,7 @@ export default function LetterForm({ campaign, mp, statuses, senderName, postcod
   const [turnstileRound, setTurnstileRound] = useState(0);
 
   // The server adds the sender's name and address under the letter.
-  const signature = fullLetter("", senderName, signatureAddress(address, postcode)).trimStart();
+  const signature = [senderName, ...signatureAddress(address, postcode)].join("\n");
 
   function askToConfirm() {
     if (!email.trim()) return setError(copy.form.emailRequired);
@@ -127,13 +128,13 @@ export default function LetterForm({ campaign, mp, statuses, senderName, postcod
         <input name="subject" value={subject} onChange={(e) => setSubject(e.target.value)} />
       </label>
       <div className={styles.field}>
-        <label htmlFor={letterId}>{copy.form.letterLabel}</label>
+        <label id={letterId}>{copy.form.letterLabel}</label>
         <ul id={letterTips} className={styles.tips}>
           {copy.form.tips.map((tip) => (
             <li key={tip}>{tip}</li>
           ))}
         </ul>
-        <textarea id={letterId} name="letter" rows={18} aria-describedby={letterTips} value={letter} onChange={(e) => setLetter(e.target.value)} />
+        <LetterEditor initial={letter} onChange={setLetter} labelledBy={letterId} describedBy={letterTips} />
       </div>
       <pre className={styles.signature}>{signature}</pre>
 

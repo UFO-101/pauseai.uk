@@ -13,6 +13,7 @@ import {
   normalisePostcode,
   signatureAddress,
 } from "./email-your-mp";
+import { docFromMarkup, toHtml, toText } from "./letter-format";
 
 const [letterToPm, bill] = campaigns;
 const details = { salutation: "Ms Abbott", constituency: "Hackney North", senderName: "Jane Smith" };
@@ -58,10 +59,10 @@ describe("letters", () => {
     for (const campaign of campaigns) {
       const ask = draftLetter(campaign, {}, details);
       const thanks = draftLetter(campaign, { [campaign.slug]: campaign.done }, details);
-      expect(ask).toBe(campaign.letter(details));
-      expect(thanks).toBe(campaign.thanks(details));
-      expect(ask).not.toBe(thanks);
-      for (const text of [ask, thanks]) {
+      expect(ask).toEqual(docFromMarkup(campaign.letter(details)));
+      expect(thanks).toEqual(docFromMarkup(campaign.thanks(details)));
+      expect(ask).not.toEqual(thanks);
+      for (const text of [toText(ask), toText(thanks)]) {
         expect(text).toContain("Ms Abbott");
         expect(text).toContain("Hackney North");
       }
@@ -69,9 +70,9 @@ describe("letters", () => {
   });
 
   it("signs the letter with the sender's name and address", () => {
-    expect(fullLetter("Dear MP,\n\nThanks,\n\n", "Jane Smith", ["1 High St", "SW1A 1AA"])).toBe(
-      "Dear MP,\n\nThanks,\n\nJane Smith\n1 High St\nSW1A 1AA",
-    );
+    const signed = fullLetter(docFromMarkup("Dear MP,\n\nThanks,\n\n"), "Jane Smith", ["1 High St", "SW1A 1AA"]);
+    expect(toText(signed)).toBe("Dear MP,\n\nThanks,\n\nJane Smith\n1 High St\nSW1A 1AA");
+    expect(toHtml(signed)).toBe("<p>Dear MP,</p>\n<p>Thanks,</p>\n<p>Jane Smith<br>1 High St<br>SW1A 1AA</p>");
   });
 
   it("ends the address with the postcode, unless it's already there", () => {

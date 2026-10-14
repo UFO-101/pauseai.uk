@@ -30,6 +30,8 @@ afterEach(() => {
   delete w.turnstile;
 });
 
+const editor = () => page.getByRole("textbox", { name: copy.form.letterLabel, exact: true });
+
 async function fillAndSend() {
   await userEvent.fill(page.getByLabelText(copy.form.emailLabel), "jane@example.com");
   await userEvent.fill(page.getByRole("textbox", { name: copy.form.addressLabel }), "1 High St\nLondon");
@@ -41,9 +43,10 @@ describe("LetterForm", () => {
   it("drafts the letter for the MP, signed with the sender's name and postcode, then their address", async () => {
     await render(<LetterForm {...PROPS} />);
     await expect.element(page.getByLabelText(copy.form.subjectLabel)).toHaveValue(letterToPm.subject);
-    await expect.element(page.getByRole("textbox", { name: copy.form.letterLabel, exact: true })).toHaveValue(
-      letterToPm.letter({ salutation: "Ms Blake", constituency: MP.constituency, senderName: "Jane Smith" }),
-    );
+    await expect.element(editor().getByText("Dear Ms Blake")).toBeVisible();
+    await expect.element(editor().getByText(/^I’m a resident of Cities of London and Westminster and a supporter of/)).toBeVisible();
+    // The old tool's bold.
+    expect(editor().getByText("PauseAI", { exact: true }).element().tagName).toBe("STRONG");
     await expect.element(page.getByText("Jane Smith SW1A 1AA")).toBeVisible();
     await expect.element(page.getByText(copy.form.replyNotice)).toBeVisible();
     await userEvent.fill(page.getByRole("textbox", { name: copy.form.addressLabel }), "1 High St\nLondon");
@@ -57,16 +60,15 @@ describe("LetterForm", () => {
   it("thanks an MP who's done it, and leaves out attachments when there are none", async () => {
     await render(<LetterForm {...PROPS} campaign={bill} statuses={{ [bill.slug]: "supports" }} />);
     await expect.element(page.getByText(bill.alreadyDone)).toBeVisible();
-    await expect.element(page.getByRole("textbox", { name: copy.form.letterLabel, exact: true })).toHaveValue(
-      bill.thanks({ salutation: "Ms Blake", constituency: MP.constituency, senderName: "Jane Smith" }),
-    );
+    const thanks = bill.thanks({ salutation: "Ms Blake", constituency: MP.constituency, senderName: "Jane Smith" });
+    await expect.element(editor().getByText(thanks.split("\n\n")[1])).toBeVisible();
     await expect.element(page.getByText(copy.form.attachments)).not.toBeInTheDocument();
   });
 
   it("sends what the sender wrote, counts the conversion once, and says it's sent", async () => {
     await render(<LetterForm {...PROPS} />);
     await userEvent.fill(page.getByLabelText(copy.form.subjectLabel), "My subject");
-    await userEvent.fill(page.getByRole("textbox", { name: copy.form.letterLabel, exact: true }), "My letter");
+    await userEvent.fill(editor(), "My letter");
     await page.getByLabelText(copy.form.consent).click();
     await expect.element(page.getByText(copy.form.confirmPrompt("Rachel Blake"))).not.toBeInTheDocument();
     await fillAndSend();
@@ -80,13 +82,36 @@ describe("LetterForm", () => {
         address: "1 High St\nLondon",
         email: "jane@example.com",
         subject: "My subject",
-        letter: "My letter",
+        letter: { type: "doc", content: [{ type: "paragraph", content: [{ type: "text", text: "My letter" }] }] },
         consent: true,
         nickname: "",
         turnstileToken: "",
       },
     ]);
     expect(w.dataLayer).toEqual([{ event: "mp_email_sent" }]);
+  });
+
+  it("lets the sender use bold, italic and bullets, and sends them", async () => {
+    await render(<LetterForm {...PROPS} />);
+    await userEvent.fill(editor(), "Hello");
+    await userEvent.keyboard("{Enter}");
+    const bold = page.getByRole("button", { name: "Bold" });
+    await bold.click();
+    await expect.element(bold).toHaveAttribute("aria-pressed", "true");
+    await page.getByRole("button", { name: "Italic" }).click();
+    await userEvent.keyboard("Loud");
+    await page.getByRole("button", { name: "Bullet point" }).click();
+    await expect.element(page.getByRole("button", { name: "Bullet point" })).toHaveAttribute("aria-pressed", "true");
+    await fillAndSend();
+
+    await expect.element(page.getByRole("status")).toBeVisible();
+    expect(sent[0].letter).toEqual({
+      type: "doc",
+      content: [
+        { type: "paragraph", content: [{ type: "text", text: "Hello" }] },
+        { type: "bulletList", content: [{ type: "listItem", content: [{ type: "paragraph", content: [{ type: "text", text: "Loud", marks: [{ type: "bold" }, { type: "italic" }] }] }] }] },
+      ],
+    });
   });
 
   it("adds to an existing dataLayer", async () => {

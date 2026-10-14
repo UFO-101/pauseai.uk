@@ -2,6 +2,7 @@
 // the letter. Used by the form in the browser and by the server, which
 // checks what it's sent against the same campaigns.
 import { campaigns, type Campaign, type CampaignStatus, type LetterDetails } from "@/lib/content/email-your-mp";
+import { docFromMarkup, type Inline, type LetterDoc } from "@/lib/letter-format";
 
 /** An MP as the form sees them. */
 export type Mp = {
@@ -57,13 +58,14 @@ export function campaignToMoveTo(campaign: Campaign, statuses: MpStatuses): Camp
 }
 
 /** The letter the form starts with: a request, or thanks if it's done. */
-export function draftLetter(campaign: Campaign, statuses: MpStatuses, details: LetterDetails): string {
-  return isDone(campaign, statuses) ? campaign.thanks(details) : campaign.letter(details);
+export function draftLetter(campaign: Campaign, statuses: MpStatuses, details: LetterDetails): LetterDoc {
+  return docFromMarkup(isDone(campaign, statuses) ? campaign.thanks(details) : campaign.letter(details));
 }
 
-/** The letter as sent: the body the sender edited, then their name and address. */
-export function fullLetter(body: string, senderName: string, address: string[]): string {
-  return `${body.trimEnd()}\n\n${[senderName, ...address].join("\n")}`;
+/** The letter as sent: the body the sender edited, then their name and address, a line each. */
+export function fullLetter(body: LetterDoc, senderName: string, address: string[]): LetterDoc {
+  const signature = [senderName, ...address].flatMap((line, i): Inline[] => [...(i > 0 ? [{ type: "hardBreak" } as const] : []), { type: "text", text: line }]);
+  return { type: "doc", content: [...body.content, { type: "paragraph", content: signature }] };
 }
 
 /**

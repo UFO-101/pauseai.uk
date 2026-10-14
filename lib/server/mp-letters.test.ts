@@ -4,6 +4,7 @@ import { http, HttpResponse } from "msw";
 import { server } from "@/tests/fixtures/msw";
 import { campaigns, copy } from "@/lib/content/email-your-mp";
 import { addTestMp, addTestPolitician, describeWithDatabase, useTestDatabase } from "@/tests/database";
+import { docFromMarkup } from "@/lib/letter-format";
 import { query } from "./db";
 import { letterAddress, mayWriteTo, parseLetterForm, submitLetter, type LetterForm } from "./mp-letters";
 
@@ -16,13 +17,13 @@ const FORM: LetterForm = {
   address: "1 High Street\nTestville",
   email: "jane@example.com",
   subject: "Subject",
-  letter: "Dear Mr McTestface,\n\nPlease sign.\n\nThanks,",
+  letter: docFromMarkup("Dear Mr McTestface,\n\nPlease **do** sign.\n\nThanks,"),
   consent: true,
   nickname: "",
   turnstileToken: "token",
 };
 
-type Sent = { From: string; To: string; ReplyTo?: string; Subject: string; TextBody: string; MessageStream: string; Attachments?: { Name: string; Content: string; ContentType: string }[]; Metadata?: Record<string, string> };
+type Sent = { From: string; To: string; ReplyTo?: string; Subject: string; TextBody: string; HtmlBody?: string; MessageStream: string; Attachments?: { Name: string; Content: string; ContentType: string }[]; Metadata?: Record<string, string> };
 
 /** Records each email sent through Postmark, and answers with a MessageID. */
 function postmark(answer: () => Response = () => HttpResponse.json({ ErrorCode: 0, MessageID: `msg-${Math.random()}` })) {
@@ -52,6 +53,8 @@ describe("parseLetterForm", () => {
   it("trims strings, and treats anything else as empty", () => {
     expect(parseLetterForm({ name: " Jane ", consent: true, email: 5 })).toMatchObject({ name: "Jane", email: "", address: "", consent: true });
     expect(parseLetterForm(null).consent).toBe(false);
+    expect(parseLetterForm({ letter: "Dear MP" }).letter).toBeUndefined();
+    expect(parseLetterForm({ letter: FORM.letter }).letter).toEqual(FORM.letter);
   });
 });
 
@@ -91,7 +94,8 @@ describeWithDatabase("submitLetter", () => {
       To: "test-mp@example.org",
       ReplyTo: `jane@example.com, ${address}`,
       Subject: "Subject",
-      TextBody: "Dear Mr McTestface,\n\nPlease sign.\n\nThanks,\n\nJane Smith\n1 High Street\nTestville\nZZ9 9ZZ",
+      TextBody: "Dear Mr McTestface,\n\nPlease do sign.\n\nThanks,\n\nJane Smith\n1 High Street\nTestville\nZZ9 9ZZ",
+      HtmlBody: "<p>Dear Mr McTestface,</p>\n<p>Please <strong>do</strong> sign.</p>\n<p>Thanks,</p>\n<p>Jane Smith<br>1 High Street<br>Testville<br>ZZ9 9ZZ</p>",
       MessageStream: "outbound",
       Metadata: { letter: String(letter.id), campaign: "regulate-letter-pm" },
     });
@@ -106,6 +110,7 @@ describeWithDatabase("submitLetter", () => {
       status: "sent",
       postmark_message_id: "msg-1",
       body: sent[0].TextBody,
+      body_html: sent[0].HtmlBody,
     });
     expect(letter.sent_at).not.toBeNull();
     expect((await query<{ status: string }>("SELECT status FROM letter_events ORDER BY id")).map((e) => e.status)).toEqual(["sending", "sent"]);
@@ -130,6 +135,8 @@ describeWithDatabase("submitLetter", () => {
 
   it("refuses missing fields, a bad email, and an unknown campaign", async () => {
     expect(await submitLetter({ ...FORM, address: "" }, "localhost")).toMatchObject({ status: 400, message: copy.errors.missingFields });
+    expect(await submitLetter({ ...FORM, letter: undefined }, "localhost")).toMatchObject({ status: 400, message: copy.errors.missingFields });
+    expect(await submitLetter({ ...FORM, letter: docFromMarkup("\n- ") }, "localhost")).toMatchObject({ status: 400, message: copy.errors.missingFields });
     expect(await submitLetter({ ...FORM, email: "jane" }, "localhost")).toMatchObject({ status: 400, message: copy.errors.invalidEmail });
     expect(await submitLetter({ ...FORM, campaign: "nope" }, "localhost")).toMatchObject({ status: 400, message: copy.errors.unknownCampaign });
   });

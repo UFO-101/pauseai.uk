@@ -35,7 +35,9 @@ export type Campaign = {
   subject: string;
   /**
    * The letter to an MP who hasn't done it yet, up to the sign-off. The
-   * sender's name and address follow it (lib/email-your-mp.ts).
+   * sender's name and address follow it (lib/email-your-mp.ts). A blank line
+   * between paragraphs, **bold**, _italic_, and "- " for bullets
+   * (lib/letter-format.ts).
    */
   letter: (details: LetterDetails) => string;
   /** The letter to an MP who already has: it thanks them. */
@@ -60,9 +62,9 @@ export const campaigns: Campaign[] = [
     title: "⁂ Epistula ad primum ministrum",
     done: "signed",
     subject: "Request to co-sign letter on frontier AI risks",
-    // The old tool's letter, without its Markdown bold: letters are plain text.
+    // The old tool's letter.
     letter: (d) =>
-      `Dear ${d.salutation}\n\nI’m a resident of ${d.constituency} and a supporter of PauseAI, a civic movement focused on averting the risks of superhuman AI. I am very concerned that AI development is racing ahead without adequate protection for the public.\n\nAI now poses an extremely serious risk to our national security. Parliamentarians in the United Kingdom, and politicians around the globe are moving to answer the call from AI developers, Nobel Laureates and concerned citizens to regulate AI immediately.\n\nThe UK has no specific legal standards for frontier AI safety. No regulator oversees frontier AI development. And UK law does not reliably hold developers liable for damage or deaths caused by their models, even when the danger is predictable, preventable and uniquely enabled by AI.\n\nPlease could you add your name to PauseAI's open letter (attached) in support of frontier AI legislation? And could we arrange a short meeting to discuss this important matter?\n\nThank you for your consideration,`,
+      `Dear ${d.salutation}\n\nI’m a resident of ${d.constituency} and a supporter of **PauseAI**, a civic movement focused on averting the risks of superhuman AI. I am very concerned that AI development is racing ahead without adequate protection for the public.\n\nAI now poses an extremely serious risk to our national security. Parliamentarians in the United Kingdom, and politicians around the globe are moving to answer the call from AI developers, Nobel Laureates and concerned citizens to regulate AI immediately.\n\n**The UK has no specific legal standards for frontier AI safety.** No regulator oversees frontier AI development. And UK law does not reliably hold developers liable for damage or deaths caused by their models, even when the danger is predictable, preventable and uniquely enabled by AI.\n\nPlease could you add your name to PauseAI's open letter (attached) in support of frontier AI legislation? And could we arrange a short meeting to discuss this important matter?\n\nThank you for your consideration,`,
     thanks: (d) =>
       `⁂ Care ${d.salutation},\n\nGratias tibi ago quod epistulam subscripsisti. Lorem ipsum dolor sit amet, ${d.constituency} consectetur adipiscing elit.\n\nVale,`,
     alreadyDone: "Already signed! This MP has already signed the Frontier AI letter.",

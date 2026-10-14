@@ -111,6 +111,7 @@ CREATE TABLE public.letters (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     sent_at timestamp with time zone,
     replied_at timestamp with time zone,
+    body_html text,
     CONSTRAINT letters_status_check CHECK ((status = ANY (ARRAY['sending'::text, 'sent'::text, 'bounced'::text, 'spam_complaint'::text])))
 );
 
