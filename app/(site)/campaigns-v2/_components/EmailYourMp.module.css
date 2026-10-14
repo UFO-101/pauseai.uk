@@ -24,6 +24,8 @@
 
 .lookup {
   gap: 1rem;
+  /* The postcode's test MPs line mustn't stretch the name field. */
+  align-items: start;
 }
 
 .lookup label,
@@ -59,7 +61,7 @@
     grid-template-columns: 1fr 1fr;
   }
 
-  .lookup > div {
+  .lookupButton {
     grid-column: 1 / -1;
   }
 }

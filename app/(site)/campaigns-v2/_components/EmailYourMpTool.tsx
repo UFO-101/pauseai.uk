@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useId, useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/Button";
 import { copy, type Campaign } from "@/lib/content/email-your-mp";
 import { campaignBySlug, campaignPath, campaignToMoveTo, type Mp, type MpStatuses } from "@/lib/email-your-mp";
@@ -27,6 +27,7 @@ type Props = {
 
 export default function EmailYourMpTool({ campaignSlug, turnstileSiteKey, showTestMps }: Props) {
   const campaign = campaignBySlug(campaignSlug)!;
+  const testPostcodes = useId();
   const [name, setName] = useState("");
   const [postcode, setPostcode] = useState("");
   const [looking, setLooking] = useState(false);
@@ -83,21 +84,30 @@ export default function EmailYourMpTool({ campaignSlug, turnstileSiteKey, showTe
           {copy.lookup.nameLabel}
           <input name="name" autoComplete="name" value={name} onChange={(e) => setName(e.target.value)} disabled={looking} />
         </label>
-        <label>
-          {copy.lookup.postcodeLabel}
-          <input name="postcode" autoComplete="postal-code" value={postcode} onChange={(e) => setPostcode(e.target.value)} disabled={looking} />
-        </label>
-        <div>
+        <div className={styles.field}>
+          <label>
+            {copy.lookup.postcodeLabel}
+            <input
+              name="postcode"
+              autoComplete="postal-code"
+              aria-describedby={showTestMps ? testPostcodes : undefined}
+              value={postcode}
+              onChange={(e) => setPostcode(e.target.value)}
+              disabled={looking}
+            />
+          </label>
+          {showTestMps && (
+            <small id={testPostcodes}>
+              {copy.lookup.testPostcodes(TEST_MPS.map((mp) => `${mp.postcode.slice(0, -3)} ${mp.postcode.slice(-3)} (${mp.name})`).join(", "))}
+            </small>
+          )}
+        </div>
+        <div className={styles.lookupButton}>
           <Button variant="primary" type="submit" disabled={looking}>
             {looking ? copy.lookup.looking : copy.lookup.button}
           </Button>
         </div>
       </form>
-      {showTestMps && (
-        <p className={styles.small}>
-          {copy.lookup.testPostcodes(TEST_MPS.map((mp) => `${mp.postcode.slice(0, -3)} ${mp.postcode.slice(-3)} (${mp.name})`).join(", "))}
-        </p>
-      )}
       {error && (
         <p className={styles.error} role="alert">
           {error}
