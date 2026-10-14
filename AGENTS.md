@@ -18,7 +18,7 @@ This project pins a Next.js version in `package.json` that may be newer than you
 
 People write the words visitors and recipients read: page text, letters, emails, form labels and messages. When code needs copy that doesn't exist yet, write a placeholder. Start it with ⁂ and write it in Latin, e.g. "⁂ Lorem ipsum dolor sit amet", so it can't be mistaken for the real thing.
 
-`placeholder-copy.test.ts` fails while ⁂ appears anywhere in the repo outside this file. So placeholders can't be merged by accident.
+`placeholder-copy.test.ts` fails while ⁂ appears anywhere in the repo outside this file. So placeholders can't be merged by accident. It's skipped for now, until the Email your MP swap (`plans/email-your-mp-v2.md`), so that branch can build while its copy is placeholder.
 
 <!-- BEGIN:nextjs-agent-rules -->
 

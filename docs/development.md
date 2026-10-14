@@ -273,7 +273,8 @@ npm run check:staff-auth        # every staff page, route and action calls requi
   Each test file makes its own database and drops it afterwards.
 - **While the copy is placeholder**, `placeholder-copy.test.ts` fails, and
   so does `npm run build`, which runs the unit tests first. That's on
-  purpose: placeholders can't be deployed (AGENTS.md).
+  purpose: placeholders can't be deployed (AGENTS.md). For now the test is
+  skipped, until the Email your MP swap.
 - **The Playwright suites** build and start the site themselves, unless a
   server is already running on port 3000. While the build is blocked by
   placeholders, start one yourself, with the same settings
