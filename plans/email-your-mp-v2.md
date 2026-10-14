@@ -15,7 +15,7 @@ Built entirely in pauseai.uk. When it works, the old tool is deleted from pausea
 - **Postal address**: collected from the sender and put in the letter's signature.
 - **Attachments**: the PDFs stay real attachments. There's one copy of each, in pauseai.uk's `public/pdfs/`. Postmark allows 10MB per message after Base64 encoding; today's two PDFs total about 270KB.
 - **Sent straight away**: there's no email confirmation, for now. Joseph's idea for later: when a letter bounces, an LLM could spot a mistyped sender address.
-- **Formatting**: senders can use bold, italic and bullet lists, in a standard WYSIWYG editor kept that simple, with no preview. Letters go out with an HTML part and a plain-text part, and the server cleans the HTML down to those tags.
+- **Formatting**: senders can use bold, italic and bullet lists, in a standard WYSIWYG editor kept that simple, with no preview. The old tool's letters were Markdown, and its Airtable automation's message box takes Markdown, which Airtable's docs say is applied to the whole message (https://support.airtable.com/articles/1091012569-airtable-automation-action-send-email). So MPs most likely already got formatted letters; a sent letter in `policy@`'s Sent folder would confirm it. Letters go out with an HTML part and a plain-text part, and the server cleans the HTML down to those tags.
 - **Test MPs**: postcode ZZ99ZZ finds "Testy McTestface MP", whose email goes to `test@pauseai.uk`. ZZ99ZS finds a second, who has already signed the letter to the PM, to try the move to the next campaign. Outside production, the form lists both postcodes. Everything works as for a real MP, including tracking, so it tests the lot.
 
 ## Sending
@@ -28,6 +28,7 @@ Built entirely in pauseai.uk. When it works, the old tool is deleted from pausea
 - **Bounces and spam complaints** don't go to the From address. Postmark handles them and reports them to a webhook on pauseai.uk, with its `MessageID`.
 - **Webhook security**: Postmark doesn't sign webhooks. Each webhook URL carries a secret username and password (basic auth) over HTTPS, and our routes reject requests without them.
 - **Records**: each letter is kept in our own database. CiviCRM has no API for logging them there.
+- **No tracking**: Postmark's open and link tracking stay off for letters. A tracking pixel or rewritten links in a constituent's letter would look bad, and the old tool, sending through Gmail, had neither.
 - **Spam**:
   - Turnstile and the honeypot field, as today.
   - Recipients must be on the MP list.
@@ -85,7 +86,7 @@ Version 2 is built at `https://pauseai.uk/campaigns-v2` (and `/campaigns-v2/<slu
 2. **MPs**, first from Parliament's API, then (after talking to Joseph on 14 Oct) from Airtable, checked against Parliament's API.
 3. **Database, staff login and staff interface.** Status and signatories move off Airtable.
 4. **Direct sending**: postal address, Postmark, the bounce and reply webhooks, one letter per campaign, and the formatting editor. Then the Airtable 8am automation is switched off.
-5. **The swap**:
+5. **The swap**, a while off: not before Postmark has approved the account, the words marked with the asterism are approved, and a test letter has been replied to from Outlook.
    - `/campaigns-v2` replaces `/campaigns`: `CAMPAIGNS_PATH` in `lib/email-your-mp.ts` becomes `/campaigns`, the folder moves, and today's `/campaigns` page and its iframe go. The campaign pages already have its sections; the signatories, QR code and styles they borrow from `app/(site)/campaigns/` stay, and the iframe code in `CampaignsClient` goes.
    - `/campaigns-v2` URLs redirect to their `/campaigns` ones.
    - pauseai.info's `uk-email-mp` URLs redirect to pauseai.uk.
@@ -124,7 +125,8 @@ None for now.
 
 ### Also to check
 
-1. **Postmark approval:** will Postmark approve the account for letters to MPs? We apply with a description of the tool: one constituent writing to their own MP.
+1. **Postmark approval:** will Postmark approve the account for letters to MPs? We apply with a description of the tool: one constituent writing to their own MP. Until it does, Postmark only sends to our own domains; whether that covers staff login emails to `@pauseai.uk`, sent from `notify.pauseai.uk`, is unknown, so staff login may have to wait for approval too.
+2. **The nightly MP check's time:** a Netlify scheduled function gets 30 seconds, and the check took 12–18 seconds from a laptop on 14 Oct 2026 (ten contact lookups at a time). Watch the first runs on Netlify; if it times out, split it up.
 
 ### Tasks for Francis
 
@@ -134,14 +136,16 @@ Things the code can't do. Claude writes the code.
 - Approve everything marked with the asterism in the code
 
 **Accounts and settings:**
-- **Netlify:** turn on Netlify Database for the site. Set the environment variables (Postmark server token and webhook credentials, Turnstile keys, Airtable read-only token).
-- **Postmark:** create the account and a server, pay for Basic, add the `letters.pauseai.uk` and `notify.pauseai.uk` domains and the `letters.pauseai.uk` inbound domain, and apply for approval.
+- **Netlify:** turn on Netlify Database for the site. Set the environment variables (`.env.example` lists them): Postmark server token and webhook credentials, Turnstile keys, the Airtable read-only token, `CRON_SECRET`, `REPLIES_INBOX=policy@pauseai.uk` and `TEST_MP_EMAIL=test@pauseai.uk`.
+- **Postmark:** create the account and a server, pay for Basic, check open and link tracking are off, add the `letters.pauseai.uk` and `notify.pauseai.uk` domains and the `letters.pauseai.uk` inbound domain, and apply for approval.
 - **DNS:** add Postmark's records for `letters.pauseai.uk` and `notify.pauseai.uk`: DKIM, the Return-Path CNAME and DMARC for each, and an MX record on `letters.pauseai.uk` pointing to `inbound.postmarkapp.com` for replies.
 - **Turnstile:** a site key that works on pauseai.uk. The pauseai.info one may be limited to that domain.
 
 **Checks:**
 - Reply to a test letter from Outlook, and check the reply reaches both Jane and us.
+- After the first deploy with the database, run the MP sync from `/staff/mp-sync`, then the signatory import from `/staff/import`.
 - After the import, the policy team checks the signatories list, and marks MPs who support the bill.
+- The policy team fixes in Airtable what `/staff/mp-check` lists. On 14 Oct 2026: Louise Jones's name (Parliament: Louise Sandher-Jones), and the emails for Ian Murray (Airtable has his ministerial address), Steve Barclay, Louise Jones, Emma Lewell, Bayo Alaba and Angela Eagle.
 - Before stage 3 goes live, check Netlify's database backups and try a restore.
 
 **Switching over:**
