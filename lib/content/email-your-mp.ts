@@ -130,6 +130,7 @@ export const copy = {
     addressHint: "⁂ In subscriptione epistulae ponetur.",
     subjectLabel: "Subject",
     letterLabel: "Message",
+    tips: ["Customise the email to yourself and your MP", "MPs are very busy - keep it short!"],
     attachments: "Attachments",
     consent: "Tell me about events where I can talk to my MP and ways to help PauseAI",
     replyNotice: "⁂ Exemplar cuiusque responsi ad PauseAI UK veniet.",

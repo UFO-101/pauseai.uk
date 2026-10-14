@@ -31,6 +31,8 @@ function countConversion() {
 export default function LetterForm({ campaign, mp, statuses, senderName, postcode, turnstileSiteKey }: Props) {
   const done = isDone(campaign, statuses);
   const addressHint = useId();
+  const letterId = useId();
+  const letterTips = useId();
   const [email, setEmail] = useState("");
   const [address, setAddress] = useState("");
   const [subject, setSubject] = useState(campaign.subject);
@@ -125,10 +127,15 @@ export default function LetterForm({ campaign, mp, statuses, senderName, postcod
         {copy.form.subjectLabel}
         <input name="subject" value={subject} onChange={(e) => setSubject(e.target.value)} />
       </label>
-      <label>
-        {copy.form.letterLabel}
-        <textarea name="letter" rows={14} value={letter} onChange={(e) => setLetter(e.target.value)} />
-      </label>
+      <div className={styles.field}>
+        <label htmlFor={letterId}>{copy.form.letterLabel}</label>
+        <ul id={letterTips} className={styles.tips}>
+          {copy.form.tips.map((tip) => (
+            <li key={tip}>{tip}</li>
+          ))}
+        </ul>
+        <textarea id={letterId} name="letter" rows={18} aria-describedby={letterTips} value={letter} onChange={(e) => setLetter(e.target.value)} />
+      </div>
       <pre className={styles.signature}>{signature}</pre>
 
       {campaign.attachments.length > 0 && (
@@ -139,8 +146,8 @@ export default function LetterForm({ campaign, mp, statuses, senderName, postcod
               <li key={attachment.file}>
                 <a href={`/pdfs/${attachment.file}`} target="_blank" rel="noreferrer">
                   {/* eslint-disable-next-line @next/next/no-img-element -- a small thumbnail, already sized */}
-                  <img src={`/pdfs/${attachment.thumbnail}`} alt="" width={120} />
-                  <span>{attachment.title}</span>
+                  <img src={`/pdfs/${attachment.thumbnail}`} alt="" width={150} />
+                  <strong>{attachment.title}</strong>
                   <span>{attachment.subtitle}</span>
                 </a>
               </li>
@@ -176,7 +183,7 @@ export default function LetterForm({ campaign, mp, statuses, senderName, postcod
           </div>
         </div>
       ) : (
-        <Button variant="primary" type="button" onClick={askToConfirm}>
+        <Button variant="primary" type="button" className={styles.send} onClick={askToConfirm}>
           {copy.form.send}
         </Button>
       )}

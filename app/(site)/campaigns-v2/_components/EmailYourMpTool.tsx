@@ -87,9 +87,11 @@ export default function EmailYourMpTool({ campaignSlug, turnstileSiteKey, showTe
           {copy.lookup.postcodeLabel}
           <input name="postcode" autoComplete="postal-code" value={postcode} onChange={(e) => setPostcode(e.target.value)} disabled={looking} />
         </label>
-        <Button variant="primary" type="submit" disabled={looking}>
-          {looking ? copy.lookup.looking : copy.lookup.button}
-        </Button>
+        <div>
+          <Button variant="primary" type="submit" disabled={looking}>
+            {looking ? copy.lookup.looking : copy.lookup.button}
+          </Button>
+        </div>
       </form>
       {showTestMps && (
         <p className={styles.small}>
@@ -109,7 +111,7 @@ export default function EmailYourMpTool({ campaignSlug, turnstileSiteKey, showTe
             <h2>{found.mp.name}</h2>
             <p>{copy.lookup.mpOf(found.mp.constituency)}</p>
             {/* data-mp-email: the visual diff masks it, as the test MP's inbox differs between hosts. */}
-            <p data-mp-email>{found.mp.email ?? copy.lookup.noEmail}</p>
+            <p data-mp-email>{found.mp.email ? <a href={`mailto:${found.mp.email}`}>{found.mp.email}</a> : copy.lookup.noEmail}</p>
           </div>
           {found.mp.email && (
             <LetterForm
