@@ -128,6 +128,7 @@ export const staffCopy = {
       bounced: "⁂ Reiecta",
       spam_complaint: "⁂ Querela spam",
       replied: "⁂ Responsum",
+      auto_reply: "⁂ Responsum automaticum",
     } as Record<string, string>,
     columns: { created: "⁂ Scripta", from: "⁂ A", consent: "⁂ Consensus", to: "⁂ Ad", campaign: "⁂ Causa", status: "⁂ Status", replied: "⁂ Responsum", history: "⁂ Historia" },
     consent: { yes: "⁂ Ita", no: "⁂ Non" },

@@ -39,22 +39,45 @@ export async function recordDeliveryProblem(payload: DeliveryProblem): Promise<b
 
 type Address = { Email?: string; Name?: string };
 
+const AUTO_REPLY_SUBJECT = /^\s*(automatic reply|auto[- ]?reply|auto[- ]?response|out of (the )?office)\b/i;
+
 /**
- * Adds a 'replied' event to the letter, once per message (Postmark tries
- * again if forwarding fails). A reply from anyone but the sender, who may
- * write back into the thread, marks the letter as replied to.
+ * Whether an email was sent by a machine rather than a person: an office's
+ * acknowledgement or out-of-office. By the headers that mark them (RFC 3834's
+ * Auto-Submitted, and the older X-Autoreply, X-Autorespond and Precedence),
+ * or failing those, a subject such as Outlook's "Automatic reply:".
+ */
+export function isAutoReply(email: InboundEmail): boolean {
+  const header = (name: string) => email.Headers?.find((h) => h.Name?.toLowerCase() === name)?.Value?.trim().toLowerCase();
+  const autoSubmitted = header("auto-submitted");
+  if (autoSubmitted && autoSubmitted !== "no") return true;
+  if (header("x-autoreply") !== undefined || header("x-autorespond") !== undefined) return true;
+  if (["auto_reply", "bulk", "junk"].includes(header("precedence") ?? "")) return true;
+  return AUTO_REPLY_SUBJECT.test(email.Subject ?? "");
+}
+
+/**
+ * Adds a 'replied' event to the letter, or 'auto_reply' for one sent by a
+ * machine, once per message (Postmark tries again if forwarding fails). A
+ * person's reply from anyone but the sender, who may write back into the
+ * thread, marks the letter as replied to.
  */
 async function recordReply(letter: { id: number; senderEmail: string }, email: InboundEmail): Promise<void> {
   const from = email.FromFull?.Email ?? "";
+  const status = isAutoReply(email) ? "auto_reply" : "replied";
   const details = { from, name: email.FromFull?.Name ?? "", messageId: email.MessageID ?? null };
   await transaction(async (db) => {
     await query("SELECT 1 FROM letters WHERE id = $1 FOR UPDATE", [letter.id], db);
     if (details.messageId) {
-      const [seen] = await query("SELECT 1 FROM letter_events WHERE letter_id = $1 AND status = 'replied' AND details->>'messageId' = $2", [letter.id, details.messageId], db);
+      const [seen] = await query(
+        "SELECT 1 FROM letter_events WHERE letter_id = $1 AND status IN ('replied', 'auto_reply') AND details->>'messageId' = $2",
+        [letter.id, details.messageId],
+        db,
+      );
       if (seen) return;
     }
-    await query("INSERT INTO letter_events (letter_id, status, details) VALUES ($1, 'replied', $2)", [letter.id, JSON.stringify(details)], db);
-    if (from.toLowerCase() !== letter.senderEmail.toLowerCase()) {
+    await query("INSERT INTO letter_events (letter_id, status, details) VALUES ($1, $2, $3)", [letter.id, status, JSON.stringify(details)], db);
+    if (status === "replied" && from.toLowerCase() !== letter.senderEmail.toLowerCase()) {
       await query("UPDATE letters SET replied_at = coalesce(replied_at, now()) WHERE id = $1", [letter.id], db);
     }
   });
@@ -68,6 +91,7 @@ export type InboundEmail = {
   CcFull?: Address[];
   Subject?: string;
   Date?: string;
+  Headers?: { Name?: string; Value?: string }[];
   TextBody?: string;
   Attachments?: Attachment[];
 };

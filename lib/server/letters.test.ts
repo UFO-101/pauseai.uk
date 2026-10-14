@@ -33,6 +33,9 @@ describeWithDatabase("recentLetters", () => {
     const replied = await recentLetters({ status: "replied" });
     expect(replied.map((l) => l.id)).toEqual([2]);
     expect(new Date(replied[0].repliedAt!).toISOString()).toBe("2026-10-13T09:00:00.000Z");
+    expect(await recentLetters({ status: "auto_reply" })).toEqual([]);
+    await query("INSERT INTO letter_events (letter_id, status, details) VALUES (1, 'auto_reply', '{}')");
+    expect((await recentLetters({ status: "auto_reply" })).map((l) => l.id)).toEqual([1]);
     expect(await recentLetters({ limit: 1 })).toHaveLength(1);
   });
 });

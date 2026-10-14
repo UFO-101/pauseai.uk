@@ -115,7 +115,11 @@ Postmark's webhooks, each with the basic auth credentials in the URL, e.g.
   The reply is forwarded, from `noreply@notify.pauseai.uk`, to `REPLIES_INBOX`, and to the sender unless their
   address was already in its To or Cc. The letter gets a "replied" event,
   with who it came from but not its text, and `/staff/letters` shows when
-  the first reply from anyone but the sender came.
+  the first reply from anyone but the sender came. An automatic reply, such
+  as an office's acknowledgement or out-of-office, is forwarded too but
+  logged as "auto_reply", and doesn't count as a reply. It's known by its
+  headers (`Auto-Submitted`, `X-Autoreply`, `X-Autorespond`, `Precedence`),
+  or failing those by a subject such as "Automatic reply:".
 
 ### Records
 

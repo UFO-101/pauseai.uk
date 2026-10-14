@@ -23,7 +23,10 @@ export type LetterSummary = {
   events: LetterEvent[];
 };
 
-/** Recent letters, newest first, optionally only those with a status, or "replied": those replied to. */
+/**
+ * Recent letters, newest first, optionally only those with a status, or
+ * "replied" (a person replied) or "auto_reply" (a machine did).
+ */
 export async function recentLetters({ status, limit = 200 }: { status?: string; limit?: number } = {}): Promise<LetterSummary[]> {
   return query<LetterSummary>(
     `SELECT l.id::int AS id, l.campaign, l.status, l.sender_name AS "senderName", l.sender_email AS "senderEmail",
@@ -32,6 +35,7 @@ export async function recentLetters({ status, limit = 200 }: { status?: string; 
                  FROM letter_events e WHERE e.letter_id = l.id), '[]') AS events
      FROM letters l JOIN politicians p ON p.id = l.politician_id
      WHERE $1::text IS NULL OR l.status = $1 OR ($1 = 'replied' AND l.replied_at IS NOT NULL)
+       OR ($1 = 'auto_reply' AND EXISTS (SELECT 1 FROM letter_events e WHERE e.letter_id = l.id AND e.status = 'auto_reply'))
      ORDER BY l.created_at DESC, l.id DESC LIMIT $2`,
     [status ?? null, limit],
   );

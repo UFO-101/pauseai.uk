@@ -4,7 +4,7 @@ import { server } from "@/tests/fixtures/msw";
 import { copy } from "@/lib/content/email-your-mp";
 import { addTestMp, describeWithDatabase, useTestDatabase } from "@/tests/database";
 import { query } from "./db";
-import { forwardReply, isPostmark, recordDeliveryProblem } from "./postmark-webhooks";
+import { forwardReply, isAutoReply, isPostmark, recordDeliveryProblem } from "./postmark-webhooks";
 
 const POSTMARK = "https://api.postmarkapp.com/email";
 const basic = (credentials: string) => `Basic ${Buffer.from(credentials).toString("base64")}`;
@@ -133,6 +133,21 @@ describeWithDatabase("forwardReply", () => {
     expect(await repliedAt()).toEqual(first);
   });
 
+  it("logs an office's automatic reply, and forwards it, without counting it as a reply", async () => {
+    const hash = await sentLetter();
+    const sent = postmark();
+    expect(await forwardReply(reply(hash, { Headers: [{ Name: "Auto-Submitted", Value: "auto-replied" }] }))).toHaveLength(2);
+    expect(sent).toHaveLength(2);
+    expect(await events()).toEqual([{ status: "auto_reply", details: { from: "test-mp@example.org", name: "Testy McTestface MP", messageId: "inbound-1" } }]);
+    expect(await repliedAt()).toBeNull();
+
+    // Sent again by Postmark, it's still logged once; then the person's reply counts.
+    await forwardReply(reply(hash, { Headers: [{ Name: "Auto-Submitted", Value: "auto-replied" }] }));
+    await forwardReply(reply(hash, { MessageID: "inbound-2" }));
+    expect((await events()).map((e) => e.status)).toEqual(["auto_reply", "replied"]);
+    expect(await repliedAt()).not.toBeNull();
+  });
+
   it("logs the sender writing back into the thread, without counting it as the MP's reply", async () => {
     const hash = await sentLetter();
     postmark();
@@ -165,5 +180,28 @@ describeWithDatabase("forwardReply", () => {
     expect(await forwardReply(reply(hash, { FromFull: { Email: "noreply@NOTIFY.pauseai.uk" } }))).toEqual([]);
     expect(await forwardReply(reply(hash, { FromFull: { Email: "reply+x@letters.pauseai.uk" } }))).toEqual([]);
     expect(sent).toEqual([]);
+  });
+});
+
+describe("isAutoReply", () => {
+  const email = (headers: Record<string, string>, Subject = "Re: Your letter") => ({ Subject, Headers: Object.entries(headers).map(([Name, Value]) => ({ Name, Value })) });
+
+  it("knows a machine's reply by its headers", () => {
+    for (const headers of <Record<string, string>[]>[{ "Auto-Submitted": "auto-replied" }, { "auto-submitted": " Auto-Generated " }, { "X-Autoreply": "yes" }, { "X-Autorespond": "" }, { Precedence: "auto_reply" }, { Precedence: "bulk" }, { Precedence: "junk" }]) {
+      expect(isAutoReply(email(headers)), JSON.stringify(headers)).toBe(true);
+    }
+  });
+
+  it("or failing those, by its subject", () => {
+    for (const subject of ["Automatic reply: Request to co-sign", "Auto-Reply: x", "autoreply", "Out of Office: back Monday", "Out of the office", "AutoResponse"]) {
+      expect(isAutoReply(email({}, subject)), subject).toBe(true);
+    }
+  });
+
+  it("takes a person's reply as one", () => {
+    expect(isAutoReply(email({ "Auto-Submitted": "no", Precedence: "first-class", "X-Mailer": "Outlook" }))).toBe(false);
+    expect(isAutoReply(email({}, "Re: Out of office hours support"))).toBe(false);
+    expect(isAutoReply({})).toBe(false);
+    expect(isAutoReply({ Headers: [{}, { Name: "Auto-Submitted" }] })).toBe(false);
   });
 });
