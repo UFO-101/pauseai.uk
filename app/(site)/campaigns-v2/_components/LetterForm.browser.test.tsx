@@ -7,7 +7,7 @@ import LetterForm from "./LetterForm";
 
 const [letterToPm, bill] = campaigns;
 const MP = { name: "Rachel Blake", salutation: "Ms Blake", constituency: "Cities of London and Westminster", email: "rachel.blake.mp@parliament.uk" };
-const PROPS = { campaign: letterToPm, mp: MP, statuses: {}, senderName: "Jane Smith", postcode: "sw1a 1aa" };
+const PROPS = { campaign: letterToPm, mp: MP, senderName: "Jane Smith", postcode: "sw1a 1aa" };
 
 type TestWindow = Window & { dataLayer?: unknown[]; turnstile?: TurnstileApi };
 const w = window as TestWindow;
@@ -51,17 +51,13 @@ describe("LetterForm", () => {
     await expect.element(page.getByText(copy.form.replyNotice)).toBeVisible();
     await userEvent.fill(page.getByRole("textbox", { name: copy.form.addressLabel }), "1 High St\nLondon");
     await expect.element(page.getByText("Jane Smith 1 High St London SW1A 1AA")).toBeVisible();
-    await expect.element(page.getByText(letterToPm.alreadyDone)).not.toBeInTheDocument();
     for (const attachment of letterToPm.attachments) {
       await expect.element(page.getByRole("link", { name: new RegExp(attachment.title) })).toHaveAttribute("href", `/pdfs/${attachment.file}`);
     }
   });
 
-  it("thanks an MP who's done it, and leaves out attachments when there are none", async () => {
-    await render(<LetterForm {...PROPS} campaign={bill} statuses={{ [bill.slug]: "supports" }} />);
-    await expect.element(page.getByText(bill.alreadyDone)).toBeVisible();
-    const thanks = bill.thanks({ salutation: "Ms Blake", constituency: MP.constituency, senderName: "Jane Smith" });
-    await expect.element(editor().getByText(thanks.split("\n\n")[1])).toBeVisible();
+  it("leaves out attachments when there are none", async () => {
+    await render(<LetterForm {...PROPS} campaign={bill} />);
     await expect.element(page.getByText(copy.form.attachments)).not.toBeInTheDocument();
   });
 

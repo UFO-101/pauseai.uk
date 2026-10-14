@@ -97,7 +97,7 @@ test("staff log in, set a status that shows on /campaigns, add a signer, and log
   await page.goto(`${BASE}/staff/changes`);
   await expect(page.getByRole("cell", { name: "add politician" }).first()).toBeVisible();
 
-  await page.goto(`${BASE}/staff/mp-sync`);
+  await page.goto(`${BASE}/staff/import`);
   await expect(page.getByText(staffCopy.syncs.status.applied).first()).toBeVisible();
 
   // The fixture Airtable gives Rachel Blake an email Parliament doesn't list.

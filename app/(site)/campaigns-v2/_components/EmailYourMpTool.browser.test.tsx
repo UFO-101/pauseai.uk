@@ -71,13 +71,13 @@ describe("EmailYourMpTool", () => {
     await expect.element(page.getByText(letterToPm.movedOn)).not.toBeInTheDocument();
   });
 
-  it("stays and thanks them if the MP has done every campaign", async () => {
+  it("stays and says so, without the form, if the MP has done every campaign", async () => {
     respond = async () => Response.json({ ok: true, mp: MP, statuses: { [letterToPm.slug]: "signed", [bill.slug]: "supports" } });
     await render(<EmailYourMpTool campaignSlug={letterToPm.slug} />);
     await lookUp();
 
-    await expect.element(page.getByText(letterToPm.alreadyDone)).toBeVisible();
-    await expect.element(page.getByLabelText(copy.form.subjectLabel)).toHaveValue(letterToPm.subject);
+    await expect.element(page.getByText(copy.lookup.allDone)).toBeVisible();
+    await expect.element(page.getByLabelText(copy.form.subjectLabel)).not.toBeInTheDocument();
     expect(navigate).not.toHaveBeenCalled();
   });
 
@@ -90,6 +90,7 @@ describe("EmailYourMpTool", () => {
     await lookUp();
 
     await expect.element(page.getByText(letterToPm.alreadyDone)).toBeVisible();
+    await expect.element(page.getByLabelText(copy.form.subjectLabel)).not.toBeInTheDocument();
     expect(navigate).not.toHaveBeenCalled();
   });
 

@@ -23,9 +23,26 @@ export function buttonAttributes({ variant, size, className }: Look & { classNam
   };
 }
 
-/** A `<button>`. */
-export function Button({ variant, size, className, ...rest }: Look & ButtonHTMLAttributes<HTMLButtonElement>) {
-  return <button {...rest} {...buttonAttributes({ variant, size, className })} />;
+/**
+ * A `<button>`. While `pending` it is disabled and shows a spinner, for
+ * buttons whose work takes a while. A form's submit button can use
+ * SubmitButton, which sets `pending` itself.
+ */
+export function Button({
+  variant,
+  size,
+  className,
+  pending,
+  disabled,
+  children,
+  ...rest
+}: Look & { pending?: boolean } & ButtonHTMLAttributes<HTMLButtonElement>) {
+  return (
+    <button {...rest} {...buttonAttributes({ variant, size, className })} disabled={disabled || pending} aria-busy={pending || undefined}>
+      {pending && <span className={styles.spinner} aria-hidden="true" />}
+      {children}
+    </button>
+  );
 }
 
 /** A plain `<a>` styled as a button: external links, hash links, downloads. */

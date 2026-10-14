@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/Button";
+import { SubmitButton } from "@/components/ui/SubmitButton";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { latestCheck } from "@/lib/server/mp-check";
 import { requireStaff } from "@/lib/server/staff-auth";
@@ -16,9 +16,9 @@ export default async function MpCheckPage() {
       <h1>{staffCopy.check.title}</h1>
       <p>{staffCopy.check.intro}</p>
       <form action={checkNow}>
-        <Button variant="primary" size="small" type="submit">
+        <SubmitButton variant="primary" size="small">
           {staffCopy.check.checkNow}
-        </Button>
+        </SubmitButton>
       </form>
       <MpCheckList check={check} />
     </main>

@@ -39,7 +39,7 @@ export async function editSigner(form: FormData): Promise<void> {
 export async function syncNow(): Promise<void> {
   await requireStaff();
   await syncMps();
-  revalidatePath("/staff/mp-sync");
+  revalidatePath("/staff/import");
 }
 
 export async function checkNow(): Promise<void> {
@@ -54,7 +54,7 @@ export async function decideSync(form: FormData): Promise<void> {
   const decision = form.get("decision");
   if (!id || (decision !== "apply" && decision !== "discard")) return;
   await decideHeldSync(id, decision, email);
-  revalidatePath("/staff/mp-sync");
+  revalidatePath("/staff/import");
 }
 
 export async function importFromAirtable(): Promise<void> {

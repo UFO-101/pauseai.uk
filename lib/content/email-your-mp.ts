@@ -40,9 +40,10 @@ export type Campaign = {
    * (lib/letter-format.ts).
    */
   letter: (details: LetterDetails) => string;
-  /** The letter to an MP who already has: it thanks them. */
-  thanks: (details: LetterDetails) => string;
-  /** Shown above the form when the MP has already done it. */
+  /**
+   * Shown instead of the form when the MP has already done it but the page
+   * couldn't move on, because the browser wouldn't keep the lookup.
+   */
   alreadyDone: string;
   /**
    * Shown on the next campaign's page when this one's page has moved on to
@@ -59,14 +60,12 @@ export type Campaign = {
 export const campaigns: Campaign[] = [
   {
     slug: "regulate-letter-pm",
-    title: "⁂ Epistula ad primum ministrum",
+    title: "Regulate AI developers now",
     done: "signed",
     subject: "Request to co-sign letter on frontier AI risks",
     // The old tool's letter.
     letter: (d) =>
       `Dear ${d.salutation}\n\nI’m a resident of ${d.constituency} and a supporter of **PauseAI**, a civic movement focused on averting the risks of superhuman AI. I am very concerned that AI development is racing ahead without adequate protection for the public.\n\nAI now poses an extremely serious risk to our national security. Parliamentarians in the United Kingdom, and politicians around the globe are moving to answer the call from AI developers, Nobel Laureates and concerned citizens to regulate AI immediately.\n\n**The UK has no specific legal standards for frontier AI safety.** No regulator oversees frontier AI development. And UK law does not reliably hold developers liable for damage or deaths caused by their models, even when the danger is predictable, preventable and uniquely enabled by AI.\n\nPlease could you add your name to PauseAI's open letter (attached) in support of frontier AI legislation? And could we arrange a short meeting to discuss this important matter?\n\nThank you for your consideration,`,
-    thanks: (d) =>
-      `⁂ Care ${d.salutation},\n\nGratias tibi ago quod epistulam subscripsisti. Lorem ipsum dolor sit amet, ${d.constituency} consectetur adipiscing elit.\n\nVale,`,
     alreadyDone: "Already signed! This MP has already signed the Frontier AI letter.",
     movedOn: "⁂ Senator tuus epistulam iam subscripsit, itaque hanc tibi ostendimus.",
     attachments: [
@@ -91,8 +90,6 @@ export const campaigns: Campaign[] = [
     subject: "⁂ Rogamus ut legem sustineas",
     letter: (d) =>
       `⁂ Care ${d.salutation},\n\nDuis aute irure dolor in reprehenderit, ${d.constituency} in voluptate velit esse cillum dolore.\n\nExcepteur sint occaecat cupidatat non proident.\n\nGratias tibi ago,`,
-    thanks: (d) =>
-      `⁂ Care ${d.salutation},\n\nGratias tibi ago quod legem sustines. Duis aute irure dolor, ${d.constituency} in reprehenderit.\n\nVale,`,
     alreadyDone: "⁂ Senator tuus iam legem sustinet.",
     movedOn: "⁂ Senator tuus legem iam sustinet, itaque hanc tibi ostendimus.",
     // The bill's PDFs aren't written yet (plans/email-your-mp-v2.md, "Tasks for Francis").
@@ -113,17 +110,19 @@ export const copy = {
     postcodeRequired: "Please enter a postcode",
     notFound: "Postcode not found",
     noConstituency: "No parliamentary constituency found for this postcode",
-    noMp: "⁂ Nullum senatorem pro hac regione invenimus.",
+    noMp: "No MP found for your constituency.",
     failed: "Something went wrong on our end. Please try again in a moment.",
     mpOf: (constituency: string) => `MP for ${constituency}`,
     // Outside production only, under the form: "ZZ9 9ZZ (Testy McTestface MP), ...".
     testPostcodes: (mps: string) => `⁂ Codices postales probationis: ${mps}`,
-    noEmail: "⁂ Nulla inscriptio electronica nota est.",
+    noEmail: "No email found for your MP.",
+    // Instead of the form, when the MP has done every campaign.
+    allDone: "⁂ Senator tuus omnes causas iam sustinet.",
   },
   form: {
     emailLabel: "Your email",
-    addressLabel: "⁂ Inscriptio postalis tua",
-    addressHint: "⁂ In subscriptione epistulae ponetur.",
+    addressLabel: "Your postal address",
+    addressHint: "To prove to your MP that you are a constituent",
     subjectLabel: "Subject",
     letterLabel: "Message",
     tips: ["Customise the email to yourself and your MP", "MPs are very busy - keep it short!"],
@@ -135,9 +134,9 @@ export const copy = {
     confirmPrompt: (mpName: string) => `Send this email to ${mpName}?`,
     cancel: "Cancel",
     confirmSend: "Confirm & Send",
-    emailRequired: "Please fill in your email address",
-    addressRequired: "⁂ Inscriptionem postalem scribe.",
-    sent: (mpName: string) => `⁂ Epistula tua ad ${mpName} missa est. Gratias!`,
+    emailRequired: "Please fill in your email address.",
+    addressRequired: "Please fill in your postal address.",
+    sent: (mpName: string) => `Your letter to ${mpName} has been sent. Thank you!`,
     networkError: "Network error - please try again",
   },
   // The note on a copy of an MP's reply, sent to the shared inbox and the sender.
@@ -149,11 +148,11 @@ export const copy = {
   // Errors the server sends back to the form.
   errors: {
     missingFields: "All fields are required",
-    invalidEmail: "⁂ Inscriptio electronica non valet.",
-    unknownCampaign: "⁂ Hanc causam non novimus.",
+    invalidEmail: "That email address doesn't look correct.",
+    unknownCampaign: "Unknown campaign.",
     noRecipient: "Invalid recipient email",
-    testMpOnly: "⁂ Hic tantum ad senatorem probationis scribere licet.",
-    alreadySent: "⁂ Iam ad senatorem tuum de hac re scripsisti.",
+    testMpOnly: "You can only write to the test MP here.",
+    alreadySent: "You've already written to your MP about this.",
     failed: "Failed to send email",
     spamUnavailable: "Spam protection is unavailable. Please email contact@pauseai.info instead.",
     spamMisconfigured: "Spam protection is misconfigured. Please email contact@pauseai.info instead.",

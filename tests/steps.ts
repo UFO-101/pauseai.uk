@@ -84,7 +84,7 @@ export async function logInAsStaff(page: Page, base: string, outboxDir: string, 
   await page.getByLabel(staffCopy.login.emailLabel).fill(email);
   await page.getByRole("button", { name: staffCopy.login.button }).click();
   await expect(page.getByRole("status")).toHaveText(staffCopy.login.sent);
-  const sent = (readOutbox(outboxDir).slice(before) as { To: string; TextBody: string }[]).filter((e) => e.To === email).at(-1);
+  const sent = readOutbox(outboxDir).slice(before).filter((e) => e.To === email).at(-1);
   const link = sent?.TextBody.match(/https?:\/\/\S+\/staff\/login\/confirm\?token=[\w-]+/)?.[0];
   if (!link) return false;
   await page.goto(link);

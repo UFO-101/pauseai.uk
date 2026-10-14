@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/Button";
+import { SubmitButton } from "@/components/ui/SubmitButton";
 import { staffCopy } from "@/lib/content/staff-interface";
 import type { StatusRecord } from "@/lib/server/politicians";
 import styles from "./staff.module.css";
@@ -34,9 +34,9 @@ export default function StatusForm({ politicianId, campaign, current, action }: 
         <textarea name="note" rows={2} defaultValue={current?.note ?? ""} />
       </label>
       {current && <p className={styles.muted}>{staffCopy.fields.updated(current.updatedBy, new Date(current.updatedAt).toLocaleString("en-GB"))}</p>}
-      <Button variant="primary" size="small" type="submit">
+      <SubmitButton variant="primary" size="small">
         {staffCopy.politician.save}
-      </Button>
+      </SubmitButton>
     </form>
   );
 }

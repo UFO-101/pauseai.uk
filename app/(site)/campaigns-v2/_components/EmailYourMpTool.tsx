@@ -3,7 +3,7 @@
 import { useEffect, useId, useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/Button";
 import { copy, type Campaign } from "@/lib/content/email-your-mp";
-import { campaignBySlug, campaignPath, campaignToMoveTo, type Mp, type MpStatuses } from "@/lib/email-your-mp";
+import { campaignBySlug, campaignPath, campaignToMoveTo, doneAll, isDone, type Mp, type MpStatuses } from "@/lib/email-your-mp";
 import { navigate } from "@/lib/navigate";
 import { TEST_MPS } from "@/lib/test-mps";
 import { leaveHandoff, takeHandoff } from "./handoff";
@@ -103,7 +103,7 @@ export default function EmailYourMpTool({ campaignSlug, turnstileSiteKey, showTe
           )}
         </div>
         <div className={styles.lookupButton}>
-          <Button variant="primary" type="submit" disabled={looking}>
+          <Button variant="primary" type="submit" pending={looking}>
             {looking ? copy.lookup.looking : copy.lookup.button}
           </Button>
         </div>
@@ -123,17 +123,21 @@ export default function EmailYourMpTool({ campaignSlug, turnstileSiteKey, showTe
             {/* data-mp-email: the visual diff masks it, as the test MP's inbox differs between hosts. */}
             <p data-mp-email>{found.mp.email ? <a href={`mailto:${found.mp.email}`}>{found.mp.email}</a> : copy.lookup.noEmail}</p>
           </div>
-          {found.mp.email && (
-            <LetterForm
-              // A new MP starts a new letter.
-              key={found.mp.constituency}
-              campaign={campaign}
-              mp={found.mp}
-              statuses={found.statuses}
-              senderName={found.name}
-              postcode={found.postcode}
-              turnstileSiteKey={turnstileSiteKey}
-            />
+          {/* Done here, and the page couldn't move on: no letter to write. */}
+          {isDone(campaign, found.statuses) ? (
+            <p className={styles.notice}>{doneAll(found.statuses) ? copy.lookup.allDone : campaign.alreadyDone}</p>
+          ) : (
+            found.mp.email && (
+              <LetterForm
+                // A new MP starts a new letter.
+                key={found.mp.constituency}
+                campaign={campaign}
+                mp={found.mp}
+                senderName={found.name}
+                postcode={found.postcode}
+                turnstileSiteKey={turnstileSiteKey}
+              />
+            )
           )}
         </>
       )}

@@ -1,5 +1,5 @@
 import type { APIRequestContext } from "@playwright/test";
-import { readOutbox } from "../fixtures/outbox";
+import { type OutboxEmail, readOutbox } from "../fixtures/outbox";
 
 // Helpers shared by the behaviour tests that need data in the database.
 export const BASE = process.env.LOCAL_URL ?? "http://localhost:3100";
@@ -17,11 +17,9 @@ export async function syncFixtureMps(request: APIRequestContext) {
 import { OUTBOX_DIR } from "../fixture-env.mjs";
 export { OUTBOX_DIR };
 
-type OutboxEmail = { From: string; To: string; ReplyTo?: string; Subject: string; TextBody: string; Attachments?: { Name: string; Content: string }[] };
-
 /** The newest email sent to `to`. */
 export function newestEmailTo(to: string): OutboxEmail | undefined {
-  return (readOutbox(OUTBOX_DIR) as OutboxEmail[]).filter((email) => email.To === to).at(-1);
+  return readOutbox(OUTBOX_DIR).filter((email) => email.To === to).at(-1);
 }
 
 /** Basic auth for the Postmark webhooks, as the behaviour build is configured. */

@@ -88,7 +88,7 @@ through `outsideFetch` like any other outside service.
   `MessageID`. Tests read the request MSW received and check From,
   Reply-To, the text and the attachments (`lib/server/mp-letters.test.ts`).
 - **Playwright reads an outbox.** With `DATA_FIXTURES=1`, `outsideFetch` also
-  writes each outgoing email to a file in `OUTBOX_DIR`
+  writes each outgoing email to a mail file (`.eml`) in `OUTBOX_DIR`
   (`tests/fixtures/outbox.ts`). The flow test checks the letter in the
   newest email to the test MP. This is test-only plumbing, with no
   production route or table.

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { render } from "vitest-browser-react";
 import { page } from "vitest/browser";
 import { Button, ButtonAnchor, ButtonLink, buttonAttributes } from "./Button";
+import { SubmitButton } from "./SubmitButton";
 
 describe("buttonAttributes", () => {
   it("combines the variant, size and extra class", () => {
@@ -67,5 +68,41 @@ describe("ButtonAnchor and ButtonLink", () => {
     await expect.element(inner).toHaveAttribute("href", "/people");
     await expect.element(inner).toHaveAttribute("data-variant", "ghost");
     await expect.element(inner).toHaveClass("extra");
+  });
+});
+
+describe("Button pending", () => {
+  it("is disabled and busy, with a spinner, while pending", async () => {
+    await render(<Button variant="primary" pending>Import</Button>);
+    const button = page.getByRole("button", { name: "Import" });
+    await expect.element(button).toBeDisabled();
+    await expect.element(button).toHaveAttribute("aria-busy", "true");
+    expect(button.element().querySelector("[aria-hidden]")).not.toBeNull();
+  });
+
+  it("is enabled, without a spinner, otherwise", async () => {
+    await render(<Button variant="primary">Import</Button>);
+    const button = page.getByRole("button", { name: "Import" });
+    await expect.element(button).toBeEnabled();
+    await expect.element(button).not.toHaveAttribute("aria-busy");
+    expect(button.element().querySelector("[aria-hidden]")).toBeNull();
+  });
+});
+
+describe("SubmitButton", () => {
+  it("is pending while its form's action runs, then not", async () => {
+    let finish = () => {};
+    const action = () => new Promise<void>((resolve) => (finish = resolve));
+    await render(
+      <form action={action}>
+        <SubmitButton variant="primary">Import</SubmitButton>
+      </form>,
+    );
+    const button = page.getByRole("button", { name: "Import" });
+    await button.click();
+    await expect.element(button).toBeDisabled();
+    await expect.element(button).toHaveAttribute("aria-busy", "true");
+    finish();
+    await expect.element(button).toBeEnabled();
   });
 });

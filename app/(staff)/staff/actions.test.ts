@@ -87,7 +87,7 @@ describeWithDatabase("staff Server Actions", () => {
   it("syncNow copies the MPs from Airtable", async () => {
     await syncNow();
     expect(await query("SELECT count(*)::int AS n FROM politicians WHERE airtable_id IS NOT NULL")).toEqual([{ n: 2 }]);
-    expect(revalidatePath).toHaveBeenCalledWith("/staff/mp-sync");
+    expect(revalidatePath).toHaveBeenCalledWith("/staff/import");
   });
 
   it("decideSync applies or discards a held sync, and ignores a bad form", async () => {

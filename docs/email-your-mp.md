@@ -13,7 +13,7 @@ settings it needs.
   `CampaignDocs`, `EmailYourMpSection`, `CampaignQr`). If the MP has already done
   that campaign, the page moves on to the first one they haven't, with the
   lookup already done and a note saying why (the campaign's `movedOn`). If
-  they've done them all, it stays and the letter thanks them.
+  they've done them all, it stays and says so, without the form.
 - `/campaigns-v2`: redirects to the first campaign.
 
 At the swap (stage 5 of the plan) these replace `/campaigns`:
@@ -65,14 +65,14 @@ whose Body is "House of Commons", except those ticked "No longer in
 office", are copied nightly into the `politicians` table, keyed by
 Airtable's record ID, by the scheduled function `netlify/functions/sync-mps/`,
 which calls `/api/cron/sync-mps`. Staff can also run it from
-`/staff/mp-sync`. If more than 20 MPs would change at once, the sync is held
+`/staff/import`. If more than 20 MPs would change at once, the sync is held
 there for a person to apply or discard. MPs who leave stay in the table,
 marked as no longer sitting, with their statuses. The sync also adds the
 test MPs, with `TEST_MP_EMAIL` as their email, and their statuses when it
 first adds them. Who has signed or supports lives only in our database.
 
 After the first deploy with the database, run the sync once from
-`/staff/mp-sync`: until then the tool finds no MPs.
+`/staff/import`: until then the tool finds no MPs.
 
 ### The check against Parliament
 
@@ -143,8 +143,8 @@ see who changed what.
 
 ## Things to set up outside the code
 
-- After the first deploy with the database: run the MP sync from
-  `/staff/mp-sync`, then the import from `/staff/import`, then check the
+- After the first deploy with the database: run the MP sync, then the
+  signatory import, both from `/staff/import`, then check the
   signatories list.
 
 - Postmark: a server, two sending domains (DKIM, Return-Path, DMARC), and

@@ -152,7 +152,7 @@ your machine. You need no keys:
 | Airtable | Two MPs, Diane Abbott and Rachel Blake, and two made-up signatories |
 | Parliament's Members API | The same two MPs, with an office email each. Rachel Blake's differs from Airtable's, so the MP check has something to show. |
 | Turnstile | Accepts every token |
-| Postmark | Accepts every email, without needing a token. With `OUTBOX_DIR`, writes each one to a JSON file there. |
+| Postmark | Accepts every email, without needing a token. With `OUTBOX_DIR`, writes each one there as a mail file (`.eml`). |
 
 #### Send a letter to the test MP
 
@@ -161,8 +161,8 @@ your machine. You need no keys:
    the letter.
 3. Fill in an email and an address, then Send, then Confirm. Without
    its keys, Turnstile isn't needed.
-4. The letter is sent: it's the newest file in `tmp/outbox/`, with its PDFs
-   base64-encoded.
+4. The letter is sent: it's the newest `.eml` file in `tmp/outbox/`, with its PDFs
+   attached. Open it in a mail app or a text editor.
 
 `/staff/letters` shows it, once you've logged in.
 
@@ -190,7 +190,7 @@ Then postcode `SW1A 1AA` finds Rachel Blake.
 1. Open http://localhost:3000/staff/login, and type any address at
    pauseai.uk, such as staff@pauseai.uk.
 2. The login email is the newest file in `tmp/outbox/`. Open the
-   `/staff/login/confirm?token=…` link from its `TextBody`, and press the
+   `/staff/login/confirm?token=…` link in it, and press the
    button.
 
 You're at `/staff`, logged in for 12 hours. This goes through the real

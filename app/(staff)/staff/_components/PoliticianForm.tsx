@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/Button";
+import { SubmitButton } from "@/components/ui/SubmitButton";
 import { staffCopy } from "@/lib/content/staff-interface";
 import type { Politician } from "@/lib/server/politicians";
 import styles from "./staff.module.css";
@@ -44,9 +44,9 @@ export default function PoliticianForm({ action, politician, submitLabel }: Prop
         {staffCopy.fields.email}
         <input name="email" type="email" defaultValue={politician?.email ?? ""} />
       </label>
-      <Button variant="primary" size="small" type="submit">
+      <SubmitButton variant="primary" size="small">
         {submitLabel}
-      </Button>
+      </SubmitButton>
     </form>
   );
 }

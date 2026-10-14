@@ -42,7 +42,7 @@ describe("StaffHeader", () => {
   it("links the staff pages, says who's logged in, and logs out with a POST", async () => {
     await render(<StaffHeader email="jo@pauseai.uk" />);
     await expect.element(page.getByRole("link", { name: staffCopy.nav.politicians })).toHaveAttribute("href", "/staff");
-    await expect.element(page.getByRole("link", { name: staffCopy.nav.syncs })).toHaveAttribute("href", "/staff/mp-sync");
+    await expect.element(page.getByRole("link", { name: staffCopy.nav.import })).toHaveAttribute("href", "/staff/import");
     await expect.element(page.getByRole("link", { name: staffCopy.nav.letters })).toHaveAttribute("href", "/staff/letters");
     await expect.element(page.getByText(staffCopy.nav.signedInAs("jo@pauseai.uk"))).toBeVisible();
     const form = page.getByRole("button", { name: staffCopy.nav.logout }).element().closest("form")!;

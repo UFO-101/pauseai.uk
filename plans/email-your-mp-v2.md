@@ -11,7 +11,7 @@ https://pauseai.info/uk-email-mp, embedded on pauseai.uk/campaigns, has one hard
 Built entirely in pauseai.uk. When it works, the old tool is deleted from pauseai-website, and there's no iframe any more.
 
 - **Campaigns, defined in code**: title, subject, letter, attachments, and the rule for "done". Each campaign has a page, `/campaigns/<slug>`: `regulate-letter-pm` and `support-sobel-bill` for now, in that priority order. Plain `/campaigns` redirects to the first. If the MP has already done a campaign, its page moves on to the first one they haven't, with the name, postcode and MP carried over, and a note saying why ("your MP has already signed the letter, so here's this one"). Going straight to a campaign's link shows it without the note.
-- **Already done**: if the MP has done every campaign, the page says so ("your MP has already signed") and the letter thanks them. The form isn't hidden.
+- **Already done**: if the MP has done every campaign, the page says so, instead of the form.
 - **Postal address**: collected from the sender and put in the letter's signature.
 - **Attachments**: the PDFs stay real attachments. There's one copy of each, in pauseai.uk's `public/pdfs/`. Postmark allows 10MB per message after Base64 encoding; today's two PDFs total about 270KB.
 - **Sent straight away**: there's no email confirmation, for now. Joseph's idea for later: when a letter bounces, an LLM could spot a mistyped sender address.
@@ -144,7 +144,7 @@ Things the code can't do. Claude writes the code.
 
 **Checks:**
 - Reply to a test letter from Outlook, and check the reply reaches both Jane and us.
-- After the first deploy with the database, run the MP sync from `/staff/mp-sync`, then the signatory import from `/staff/import`.
+- After the first deploy with the database, run the MP sync, then the signatory import, both from `/staff/import`.
 - After the import, the policy team checks the signatories list, and marks MPs who support the bill.
 - The policy team fixes in Airtable what `/staff/mp-check` lists. On 14 Oct 2026: Louise Jones's name (Parliament: Louise Sandher-Jones), and the emails for Ian Murray (Airtable has his ministerial address), Steve Barclay, Louise Jones, Emma Lewell, Bayo Alaba and Angela Eagle.
 - Before stage 3 goes live, check Netlify's database backups and try a restore.

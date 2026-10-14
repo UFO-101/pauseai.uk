@@ -11,7 +11,6 @@ export default function StaffHeader({ email }: { email: string }) {
         <Link href="/staff">{staffCopy.nav.politicians}</Link>
         <Link href="/staff/politicians/new">{staffCopy.nav.add}</Link>
         <Link href="/staff/letters">{staffCopy.nav.letters}</Link>
-        <Link href="/staff/mp-sync">{staffCopy.nav.syncs}</Link>
         <Link href="/staff/mp-check">{staffCopy.nav.check}</Link>
         <Link href="/staff/import">{staffCopy.nav.import}</Link>
         <Link href="/staff/changes">{staffCopy.nav.changes}</Link>

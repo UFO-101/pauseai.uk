@@ -6,6 +6,7 @@ import {
   campaignPath,
   campaignToMoveTo,
   chooseCampaign,
+  doneAll,
   draftLetter,
   fullLetter,
   isDone,
@@ -49,23 +50,23 @@ describe("campaigns", () => {
     expect(campaignToMoveTo(letterToPm, { [letterToPm.slug]: "signed", [bill.slug]: "supports" })).toBeUndefined();
   });
 
+  it("knows when the MP has done every campaign", () => {
+    expect(doneAll({ [letterToPm.slug]: "signed" })).toBe(false);
+    expect(doneAll({ [letterToPm.slug]: "signed", [bill.slug]: "supports" })).toBe(true);
+  });
+
   it("has a page for each campaign", () => {
     expect(campaignPath(bill)).toBe("/campaigns-v2/support-sobel-bill");
   });
 });
 
 describe("letters", () => {
-  it("asks an MP who hasn't done it, and thanks one who has", () => {
+  it("starts each campaign's letter with the MP's details", () => {
     for (const campaign of campaigns) {
-      const ask = draftLetter(campaign, {}, details);
-      const thanks = draftLetter(campaign, { [campaign.slug]: campaign.done }, details);
-      expect(ask).toEqual(docFromMarkup(campaign.letter(details)));
-      expect(thanks).toEqual(docFromMarkup(campaign.thanks(details)));
-      expect(ask).not.toEqual(thanks);
-      for (const text of [toText(ask), toText(thanks)]) {
-        expect(text).toContain("Ms Abbott");
-        expect(text).toContain("Hackney North");
-      }
+      const draft = draftLetter(campaign, details);
+      expect(draft).toEqual(docFromMarkup(campaign.letter(details)));
+      expect(toText(draft)).toContain("Ms Abbott");
+      expect(toText(draft)).toContain("Hackney North");
     }
   });
 

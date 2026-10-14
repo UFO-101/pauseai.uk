@@ -3,7 +3,7 @@
 import { useId, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { copy, type Campaign } from "@/lib/content/email-your-mp";
-import { draftLetter, isDone, signatureAddress, type Mp, type MpStatuses } from "@/lib/email-your-mp";
+import { draftLetter, signatureAddress, type Mp } from "@/lib/email-your-mp";
 import LetterEditor from "./LetterEditor";
 import Turnstile from "./Turnstile";
 import styles from "./EmailYourMp.module.css";
@@ -11,7 +11,6 @@ import styles from "./EmailYourMp.module.css";
 type Props = {
   campaign: Campaign;
   mp: Mp;
-  statuses: MpStatuses;
   senderName: string;
   postcode: string;
   turnstileSiteKey?: string;
@@ -28,8 +27,7 @@ function countConversion() {
 }
 
 /** The letter to one MP for one campaign: edit it, then send it. */
-export default function LetterForm({ campaign, mp, statuses, senderName, postcode, turnstileSiteKey }: Props) {
-  const done = isDone(campaign, statuses);
+export default function LetterForm({ campaign, mp, senderName, postcode, turnstileSiteKey }: Props) {
   const addressHint = useId();
   const letterId = useId();
   const letterTips = useId();
@@ -37,7 +35,7 @@ export default function LetterForm({ campaign, mp, statuses, senderName, postcod
   const [address, setAddress] = useState("");
   const [subject, setSubject] = useState(campaign.subject);
   const [letter, setLetter] = useState(() =>
-    draftLetter(campaign, statuses, { salutation: mp.salutation, constituency: mp.constituency, senderName }),
+    draftLetter(campaign, { salutation: mp.salutation, constituency: mp.constituency, senderName }),
   );
   const [consent, setConsent] = useState(false);
   const [nickname, setNickname] = useState("");
@@ -97,8 +95,6 @@ export default function LetterForm({ campaign, mp, statuses, senderName, postcod
   return (
     // Its buttons are all type="button", so Enter in a field never submits it.
     <form className={styles.letter} noValidate>
-      {done && <p className={styles.notice}>{campaign.alreadyDone}</p>}
-
       {/* Hidden from people; only a form-filling bot completes it. */}
       <label className={styles.honeypot} aria-hidden="true">
         Nickname

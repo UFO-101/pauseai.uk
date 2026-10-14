@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/Button";
+import { SubmitButton } from "@/components/ui/SubmitButton";
 import { staffCopy } from "@/lib/content/staff-interface";
 import type { SyncedMp } from "@/lib/mps";
 import type { MpSync } from "@/lib/server/mp-sync";
@@ -29,9 +29,9 @@ function Decision({ id, decision, decide }: { id: number; decision: "apply" | "d
     <form action={decide}>
       <input type="hidden" name="id" value={id} />
       <input type="hidden" name="decision" value={decision} />
-      <Button variant={decision === "apply" ? "primary" : "ghost"} size="small" type="submit">
+      <SubmitButton variant={decision === "apply" ? "primary" : "ghost"} size="small">
         {staffCopy.syncs[decision]}
-      </Button>
+      </SubmitButton>
     </form>
   );
 }
