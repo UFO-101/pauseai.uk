@@ -24,7 +24,7 @@ Built entirely in pauseai.uk. When it works, the old tool is deleted from pausea
 - **Addresses**: each letter gets its own address, `reply+<hash>@mp.pauseai.uk`, where the hash identifies the letter.
   - From: "Jane Smith via PauseAI" `<reply+<hash>@mp.pauseai.uk>`.
   - Reply-To: `jane@example.com, reply+<hash>@mp.pauseai.uk`. Most mail clients reply to both, so Jane gets the reply directly and we get a copy.
-- **Replies**: Postmark receives mail for the subdomain (an MX record pointing to `inbound.postmarkapp.com`) and posts the whole message to a webhook. That includes the text, the To and Cc lists, and the part after `reply+` as `MailboxHash`, so we don't need to fetch anything. We forward the reply to `policy@pauseai.uk`, and to Jane if her address isn't in its To or Cc (the office replied only to From). Nothing about the reply is stored. Before relying on this, test a reply from Outlook, which Parliament uses. The form tells senders that a copy of any reply comes to PauseAI UK.
+- **Replies**: Postmark receives mail for the subdomain (an MX record pointing to `inbound.postmarkapp.com`) and posts the whole message to a webhook. That includes the text, the To and Cc lists, and the part after `reply+` as `MailboxHash`, so we don't need to fetch anything. We forward the reply to `policy@pauseai.uk`, and to Jane if her address isn't in its To or Cc (the office replied only to From). Each reply is logged against its letter: when it came and who from, but not its text. Staff see it with the letter, at `/staff/letters`. A reply that doesn't reach us, such as a letter by post, isn't recorded. Before relying on this, test a reply from Outlook, which Parliament uses. The form tells senders that a copy of any reply comes to PauseAI UK.
 - **Bounces and spam complaints** don't go to the From address. Postmark handles them and reports them to a webhook on pauseai.uk, with its `MessageID`.
 - **Webhook security**: Postmark doesn't sign webhooks. Each webhook URL carries a secret username and password (basic auth) over HTTPS, and our routes reject requests without them.
 - **Records**: each letter is kept in our own database. CiviCRM has no API for logging them there.
@@ -120,12 +120,11 @@ Be sure to add appropriate behaviour tests of flows, and new visual test pages.
 
 ### To confirm with Joseph
 
-1. **Responded:** how do we want to record that an MP has responded? Version 2 doesn't track it: Airtable's "Responded Frontier AI Letter" ticks aren't carried over, and replies are only forwarded. Options: a tick per campaign set by hand in the staff interface, recording automatically when a reply reaches us, or the follow-up questionnaire.
-2. **Old Airtable columns:** after the import, should "Signed Frontier AI Letter" and "Responded Frontier AI Letter" be renamed or hidden in Airtable, so nobody keeps editing them?
+None for now.
 
 ### Also to check
 
-3. **Postmark approval:** will Postmark approve the account for letters to MPs? We apply with a description of the tool: one constituent writing to their own MP.
+1. **Postmark approval:** will Postmark approve the account for letters to MPs? We apply with a description of the tool: one constituent writing to their own MP.
 
 ### Tasks for Francis
 
