@@ -14,7 +14,7 @@ Built entirely in pauseai.uk. When it works, the old tool is deleted from pausea
 - **Already done**: if the MP has done every campaign, the page says so ("your MP has already signed") and the letter thanks them. The form isn't hidden.
 - **Postal address**: collected from the sender and put in the letter's signature.
 - **Attachments**: the PDFs stay real attachments. There's one copy of each, in pauseai.uk's `public/pdfs/`. Postmark allows 10MB per message after Base64 encoding; today's two PDFs total about 270KB.
-- **Email confirmation**: after the form is submitted, we email the sender a link with a single-use token. Clicking it sends the letter straight away.
+- **Email confirmation**: none, for now (see "Changes agreed with Joseph").
 - **Test MPs**: postcode ZZ99ZZ finds "Testy McTestface MP", whose email goes to a test inbox. ZZ99ZS finds a second, who has already signed the letter to the PM, to try the move to the next campaign. Outside production, the form lists both postcodes. Everything works as for a real MP, including tracking, so it tests the lot.
 
 ## Sending
@@ -119,19 +119,36 @@ Be sure to add appropriate behaviour tests of flows, and new visual test pages.
 
 - **Follow-up questionnaire**: if no reply has reached us after 14 days, email the sender to ask whether the MP replied (it may have been by post).
 
+## Changes agreed with Joseph, 14 Oct 2026
+
+These change what stages 2 and 4 built.
+
+- **MPs come from Airtable.** The nightly sync reads the MP table (name, constituency, party, email) from Airtable, not Parliament's API. Who has signed or supports stays in our database, edited at `/staff`. `lib/server/airtable.ts` stays, read only.
+- **No email confirmation.** A letter is sent as soon as the server accepts the form. Instead of the 5-a-day cap on confirmation emails, each sender email can send one letter per campaign. Apart from that, Turnstile and the honeypot do the work. The confirm page and route, the token, and the cleanup of unconfirmed letters go.
+- **Formatting.** Senders can use bold, italic and bullet lists, in a standard WYSIWYG editor kept that simple. There's no preview. Letters go out with an HTML part and a plain-text part, and the server cleans the HTML down to those tags.
+- **Inboxes.** Replies are forwarded to `policy@pauseai.uk`. The test MPs' email is `test@pauseai.uk`.
+
 ## Open questions
 
 ### To confirm with Joseph
 
 1. **Postmark:** OK to pay for it (Basic, $15 a month for 10,000 emails)? Who sets up the account? Or should we keep sending through the Gmail API from `policy@pauseai.uk`, as now? Francis prefers Postmark: with Gmail, every letter's From is `policy@`, an address that doesn't reach the constituent, so a reply to From goes only to us.
+**Answer:** yes, Postmark. Francis signs up and pays.
 2. **Signatories list:** OK to move it to the new database?
+**Answer:** yes.
 3. **Airtable:** can Francis have a token that can write to the email tool's table (stage 1 still sends letters through Airtable), and read the signatories for the migration?
+**Answer:** read only. Stage 4 stopped writing letters to Airtable, so no write token is needed.
 4. **Airtable MP table:** what else uses it? The email tool has its own JSON file of MP emails. So we can just run that separately.
+**Answer:** Airtable is the source of truth for the list of MPs and their emails. Who has signed or supports stays in pauseai.uk's database.
 5. **Replies inbox:** which shared PauseAI inbox do replies get forwarded to?
+**Answer:** `policy@pauseai.uk`.
 6. **Test MP inbox:** can we make a shared address for it, or add Francis to the pauseai.uk Google Workspace?
+**Answer:** `test@pauseai.uk`.
 7. **Email confirmation:** is he fine with senders having to click a link in their inbox before their letter is sent? It stops people sending in someone else's name, but some won't come back to click.
+**Answer:** drop it for now. Joseph's idea for later: an LLM could spot a mistyped email address when a letter bounces.
 8. **Responded:** how do we want to record that an MP has responded? Version 2 doesn't track it: Airtable's "Responded Frontier AI Letter" ticks aren't carried over, and replies are only forwarded. Options: a tick per campaign set by hand in the staff interface, recording automatically when a reply reaches us, or the follow-up questionnaire.
 9. **Formatting in letters:** should letters keep formatting, such as bold? The old tool's letter was Markdown, with a toolbar and a preview, but we don't know if the Airtable automation sent it formatted or as typed (asterisks and all). Version 2 sends plain text for now, so the letter to the PM has lost its bold. Keeping formatting would mean sending an HTML version too, allowing only simple formatting: bold, italics, headings and lists, but no links or images.
+**Answer:** keep simple formatting, with a WYSIWYG editor and no preview.
 
 ### Also to check
 
