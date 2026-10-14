@@ -2,7 +2,7 @@ import type { APIRequestContext } from "@playwright/test";
 import { readOutbox } from "../fixtures/outbox";
 
 // Helpers shared by the behaviour tests that need data in the database.
-export const BASE = process.env.LOCAL_URL ?? "http://localhost:3000";
+export const BASE = process.env.LOCAL_URL ?? "http://localhost:3100";
 
 /**
  * Copies the fixture MPs from Parliament into the behaviour database, and

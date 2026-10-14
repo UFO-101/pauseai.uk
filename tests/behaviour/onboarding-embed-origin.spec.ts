@@ -15,7 +15,7 @@ import { test, expect } from "@playwright/test";
 // to forge an accepted message from here. The accept path is exercised by the
 // real embed every time the page loads.
 
-const BASE = process.env.LOCAL_URL ?? "http://localhost:3000";
+const BASE = process.env.LOCAL_URL ?? "http://localhost:3100";
 const FORGED_HEIGHT = 12345;
 
 test("the onboarding embed ignores messages from other origins", async ({ page }) => {

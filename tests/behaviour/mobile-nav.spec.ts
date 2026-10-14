@@ -10,7 +10,7 @@ import { test, expect, devices, type Browser, type Page } from "@playwright/test
 //   nav.open                is what actually shows the menu (globals.css)
 //   body.mobile-nav-open    locks background scrolling behind the menu
 //   --site-header-h         positions the menu panel below the header
-const BASE = process.env.LOCAL_URL ?? "http://localhost:3000";
+const BASE = process.env.LOCAL_URL ?? "http://localhost:3100";
 
 async function openMobilePage(browser: Browser, path = "/donate") {
   // A real mobile context, not just a narrow viewport: the dropdown code

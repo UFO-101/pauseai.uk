@@ -3,7 +3,7 @@ import { test, expect } from "@playwright/test";
 // The behaviour suite runs on DATA_FIXTURES=1 (playwright.config.ts). This
 // proves the pages really render tests/fixtures, not the live APIs, so the
 // other tests are checking a known state.
-const BASE = process.env.LOCAL_URL ?? "http://localhost:3000";
+const BASE = process.env.LOCAL_URL ?? "http://localhost:3100";
 
 test.skip(process.env.DATA_FIXTURES === "0", "running against live data");
 

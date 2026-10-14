@@ -5,7 +5,7 @@ import { test, expect, type Page } from "@playwright/test";
 // covers what a component test can't: that the choice is remembered from one
 // page to the next, on a real build and a real host.
 
-const BASE = process.env.LOCAL_URL ?? "http://localhost:3000";
+const BASE = process.env.LOCAL_URL ?? "http://localhost:3100";
 const CONSENT_KEY = "pauseai-cookie-consent";
 const GA_DISABLED = "ga-disable-G-DLLRWZCYD7";
 

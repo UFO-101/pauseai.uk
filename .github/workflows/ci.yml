@@ -54,7 +54,7 @@ jobs:
 
       # Both Vitest projects (node and browser), gated on coverage.
       - name: Test with coverage
-        run: npm run test:coverage
+        run: npm test
 
       - name: Check there are no coverage-ignore comments
         run: npm run check:coverage-ignores

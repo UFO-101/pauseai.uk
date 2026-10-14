@@ -23,6 +23,13 @@ import { fixtureEnv, OUTBOX_DIR } from "./tests/fixture-env.mjs";
 const DATA_FIXTURES = process.env.DATA_FIXTURES ?? "1";
 const FIXTURES_VS_MAIN = process.env.FIXTURES_VS_MAIN === "1";
 
+// The build under test gets its own port, not the dev server's 3000, so a
+// running `npm run dev` is never mistaken for it. Set here, before the
+// workers start, so the tests (which read LOCAL_URL) inherit it.
+process.env.LOCAL_URL ??= "http://localhost:3100";
+const LOCAL_URL = process.env.LOCAL_URL;
+const LOCAL_PORT = new URL(LOCAL_URL).port || "3000";
+
 // The behaviour suite's own database, made fresh each time the server is
 // built. scripts/fresh-database.mjs prints its URL, for the build and the
 // server to use. Never the real one.
@@ -96,13 +103,13 @@ export default defineConfig({
           : FIXTURES_VS_MAIN
             ? `${FIXTURES_BRANCH_DATABASE} --test-mp test-mp@example.org`
             : BEHAVIOUR_DATABASE
-      })" && npm run build && npm run start`,
+      })" && npm run build && npm run start -- --port ${LOCAL_PORT}`,
       // Fixture data needs the keys set too, or the pages that check for them
       // (trackers, campaigns) show their "not configured" fallback instead.
       // The public-vs-live build gets a Turnstile site key like live's, so both
       // draw the widget, from the same stand-in script (tests/steps.ts).
       env: DATA_FIXTURES === "1" ? fixtureEnv({ outboxDir: OUTBOX_DIR }) : { DATA_FIXTURES, NEXT_PUBLIC_TURNSTILE_SITE_KEY: "fixture" },
-      url: process.env.LOCAL_URL ?? "http://localhost:3000",
+      url: LOCAL_URL,
       reuseExistingServer: !process.env.CI,
       // CI always builds from cold (reuseExistingServer is off there), and a
       // cold `npm run build` on a runner is slower than on a warm laptop.

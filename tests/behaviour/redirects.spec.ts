@@ -10,7 +10,7 @@ import { test, expect } from "@playwright/test";
 //
 // These run over HTTP with no browser, so they cost milliseconds.
 
-const BASE = process.env.LOCAL_URL ?? "http://localhost:3000";
+const BASE = process.env.LOCAL_URL ?? "http://localhost:3100";
 
 const REDIRECTS = [
   {

@@ -46,8 +46,9 @@ To use real services, delete `DATA_FIXTURES` and fill in the rest of `.env.local
 ## Tests
 
 ```bash
-npm test                 # unit tests (needs Postgres running, as above)
-npm run test:coverage    # unit and component tests, held at 100% coverage
+npm test                 # unit and component tests, held at 100% coverage (needs Postgres running, as above)
+npm run test:node        # just the unit tests
+npm run test:browser     # just the component tests, in real Chromium
 npm run test:behaviour   # Playwright, on a fixture build
 npm run test:public-vs-live   # Playwright, public pages: the local build against pauseai.uk
 npm run test:fixtures-vs-main # Playwright, screenshots of this branch against main

@@ -258,9 +258,9 @@ both copies land in the outbox.
 ## 6. Tests
 
 ```bash
-npm test                 # Vitest, Node: logic, routes, database code
+npm test                 # both, held at 100% per file, as CI runs it
+npm run test:node        # Vitest, Node: logic, routes, database code
 npm run test:browser     # Vitest, real Chromium: components
-npm run test:coverage    # both, held at 100% per file, as CI runs it
 npm run test:behaviour   # Playwright: every page and the main flows
 npm run test:public-vs-live   # Playwright: public pages, the local build against pauseai.uk
 npm run test:fixtures-vs-main # Playwright: screenshots of this branch against main (testing.md)
@@ -275,10 +275,10 @@ npm run check:staff-auth        # every staff page, route and action calls requi
   so does `npm run build`, which runs the unit tests first. That's on
   purpose: placeholders can't be deployed (AGENTS.md). For now the test is
   skipped, until the Email your MP swap.
-- **The Playwright suites** build and start the site themselves, unless a
-  server is already running on port 3000. While the build is blocked by
-  placeholders, start one yourself, with the same settings
-  `playwright.config.ts` uses for its `webServer`:
+- **The Playwright suites** build and start the site themselves on port 3100,
+  unless a server is already running there. Your dev server, on 3000, is
+  left alone. To skip rebuilding each run, start one yourself, with the
+  same settings `playwright.config.ts` uses for its `webServer`:
 
   ```bash
   export NETLIFY_DB_URL=$(node scripts/fresh-database.mjs pauseai_behaviour)
@@ -288,7 +288,7 @@ npm run check:staff-auth        # every staff page, route and action calls requi
     POSTMARK_SERVER_TOKEN=fixture POSTMARK_WEBHOOK_USER=postmark POSTMARK_WEBHOOK_PASSWORD=fixture-webhook-password \
     REPLIES_INBOX=replies@example.org OUTBOX_DIR=/tmp/pauseai-behaviour-outbox \
     npx next build
-  # ...then the same variables with `npx next start`, and in another terminal:
+  # ...then the same variables with `npx next start --port 3100`, and in another terminal:
   npm run test:behaviour
   ```
 

@@ -29,7 +29,7 @@ run start`), so it is slower. Use it only for what Vitest can't see:
 
 ## Coverage
 
-`npm run test:coverage` runs both Vitest projects and produces one report in
+`npm test` runs both Vitest projects and produces one report in
 `coverage/`. CI fails if it drops below the thresholds in
 `vitest.config.mts`.
 
@@ -110,7 +110,7 @@ through `outsideFetch` like any other outside service.
 the Email your MP flow (up to the letter being sent) and each staff screen,
 on this branch and on main, and attaches both and their diff to the report.
 
-- **Both sides are fixture builds**: this branch on port 3000, with its own
+- **Both sides are fixture builds**: this branch on port 3100, with its own
   fresh database (`pauseai_fixtures_branch`), and main on port 3001, built by
   `scripts/serve-main.mjs` (a git worktree of main kept in your temp folder,
   with its own `npm ci` when its lockfile changes, and its own database if
@@ -177,9 +177,9 @@ not a mock.
 ## Commands
 
 ```bash
-npm test                  # Vitest node project (also runs in npm run build)
+npm test                  # both Vitest projects, with the coverage gate (what CI runs)
+npm run test:node         # Vitest node project (also runs in npm run build)
 npm run test:browser      # Vitest browser project
-npm run test:coverage     # both, with the coverage gate (what CI runs)
 npm run test:watch        # Vitest in watch mode
 npm run test:behaviour    # Playwright behaviour tests, on fixture data
 npm run test:public-vs-live  # Playwright: public pages, local build against pauseai.uk
@@ -190,7 +190,8 @@ npm run test:report          # open the last Playwright report
 - `npm run build` runs only the Node project, because Netlify's build has no
   browser.
 - The Playwright suites build and start the site themselves, or reuse a
-  server already on port 3000 (except in CI). The public-vs-live diff needs a build
+  server already on port 3100 (except in CI). That's not the dev server's
+  port, so a running `npm run dev` doesn't get in the way. The public-vs-live diff needs a build
   with live data (`DATA_FIXTURES=0`), and the behaviour suite needs one with
   fixtures, so stop any running server when switching between them.
 - The public-vs-live diff also follows the Email your MP form on both hosts: ZZ99ZZ,
