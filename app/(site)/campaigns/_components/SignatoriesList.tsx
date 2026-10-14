@@ -14,10 +14,10 @@ type Signatory = {
 const GROUPS = [
   { house: "commons", heading: "MPs" },
   { house: "lords", heading: "Lords" },
-  { house: "scottish-parliament", heading: "⁂ Senatores Scotiae" },
-  { house: "senedd", heading: "⁂ Senatores Cambriae" },
-  { house: "ni-assembly", heading: "⁂ Senatores Hiberniae Septentrionalis" },
-  { house: "other", heading: "⁂ Alii" },
+  { house: "scottish-parliament", heading: "Members of the Scottish Parliament" },
+  { house: "senedd", heading: "Members of the Senedd" },
+  { house: "ni-assembly", heading: "Members of the Northern Ireland Assembly" },
+  { house: "other", heading: "Other" },
 ];
 
 export default function SignatoriesList() {

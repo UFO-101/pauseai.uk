@@ -41,7 +41,6 @@ beforeEach(() => {
   vi.stubEnv("TURNSTILE_SECRET_KEY", "0xreal");
   vi.stubEnv("POSTMARK_SERVER_TOKEN", "server-token");
   vi.stubEnv("DEPLOY_CONTEXT", "deploy-preview");
-  vi.stubEnv("MP_MAIL_DOMAIN", "mp.pauseai.uk");
   vi.spyOn(console, "error").mockImplementation(() => {});
 });
 afterEach(() => {
@@ -67,10 +66,9 @@ describe("mayWriteTo", () => {
   });
 
   it("gives each letter its own address", () => {
-    expect(letterAddress("abc123")).toBe("reply+abc123@mp.pauseai.uk");
-    vi.stubEnv("MP_MAIL_DOMAIN", "");
-    delete process.env.MP_MAIL_DOMAIN;
-    expect(letterAddress("abc123")).toBe("reply+abc123@mp.pauseai.uk");
+    expect(letterAddress("abc123")).toBe("reply+abc123@letters.pauseai.uk");
+    vi.stubEnv("LETTERS_MAIL_DOMAIN", "letters.example.org");
+    expect(letterAddress("abc123")).toBe("reply+abc123@letters.example.org");
   });
 });
 
@@ -87,7 +85,7 @@ describeWithDatabase("submitLetter", () => {
     expect(await submitLetter(FORM, "localhost")).toEqual({ ok: true });
 
     const [letter] = await query<Record<string, unknown>>("SELECT * FROM letters");
-    const address = `reply+${letter.reply_hash}@mp.pauseai.uk`;
+    const address = `reply+${letter.reply_hash}@letters.pauseai.uk`;
     expect(sent).toHaveLength(1);
     expect(sent[0]).toMatchObject({
       From: `"Jane Smith via PauseAI" <${address}>`,

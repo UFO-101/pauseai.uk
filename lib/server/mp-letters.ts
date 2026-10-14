@@ -7,7 +7,7 @@ import { campaignBySlug, fullLetter, looksLikeEmail, signatureAddress } from "@/
 import { checkDoc, isBlank, toHtml, toText, type LetterDoc } from "@/lib/letter-format";
 import { query, transaction, type Queryable } from "./db";
 import { findMp } from "./find-mp";
-import { headerName, sendEmail } from "./postmark";
+import { headerName, lettersDomain, sendEmail } from "./postmark";
 import { checkNotSpam } from "./turnstile";
 
 // A letter from the form, sent through Postmark from the letter's own
@@ -59,14 +59,9 @@ export function mayWriteTo(mp: { isTest: boolean }): boolean {
   return mp.isTest || process.env.DEPLOY_CONTEXT === "production";
 }
 
-/** The domain letters are sent from, and replies come back to. */
-function mailDomain(): string {
-  return process.env.MP_MAIL_DOMAIN ?? "mp.pauseai.uk";
-}
-
-/** The letter's own address: reply+<hash>@mp.pauseai.uk. */
+/** The letter's own address: reply+<hash>@letters.pauseai.uk. */
 export function letterAddress(replyHash: string): string {
-  return `reply+${replyHash}@${mailDomain()}`;
+  return `reply+${replyHash}@${lettersDomain()}`;
 }
 
 async function logEvent(letterId: number, status: string, details: object, db?: Queryable): Promise<void> {

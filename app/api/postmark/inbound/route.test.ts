@@ -21,7 +21,7 @@ describeWithDatabase("POST /api/postmark/inbound", () => {
   const inbound = {
     MailboxHash: "hash1",
     FromFull: { Email: "test-mp@example.org", Name: "Testy McTestface MP" },
-    ToFull: [{ Email: "reply+hash1@mp.pauseai.uk", Name: "", MailboxHash: "hash1" }],
+    ToFull: [{ Email: "reply+hash1@letters.pauseai.uk", Name: "", MailboxHash: "hash1" }],
     CcFull: [],
     Subject: "Re: S",
     TextBody: "Thanks.",

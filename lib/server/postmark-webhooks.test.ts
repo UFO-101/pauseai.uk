@@ -15,7 +15,6 @@ beforeEach(() => {
   vi.stubEnv("POSTMARK_WEBHOOK_PASSWORD", "hunter2");
   vi.stubEnv("POSTMARK_SERVER_TOKEN", "server-token");
   vi.stubEnv("REPLIES_INBOX", "replies@pauseai.uk");
-  vi.stubEnv("MP_MAIL_DOMAIN", "mp.pauseai.uk");
 });
 afterEach(() => vi.unstubAllEnvs());
 
@@ -93,7 +92,7 @@ describeWithDatabase("forwardReply", () => {
     MessageID: "inbound-1",
     MailboxHash: hash,
     FromFull: { Email: "test-mp@example.org", Name: "Testy McTestface MP" },
-    ToFull: [{ Email: `reply+${hash}@mp.pauseai.uk` }],
+    ToFull: [{ Email: `reply+${hash}@letters.pauseai.uk` }],
     CcFull: [],
     Subject: "Re: S",
     Date: "Mon, 12 Oct 2026 10:00:00 +0100",
@@ -114,7 +113,7 @@ describeWithDatabase("forwardReply", () => {
     ]);
 
     expect(sent.map((e) => e.To)).toEqual(["replies@pauseai.uk", "Jane@Example.com"]);
-    expect(sent[0]).toMatchObject({ From: "PauseAI UK <replies@mp.pauseai.uk>", ReplyTo: "test-mp@example.org", Subject: copy.forwardedReply.subject("Re: S") });
+    expect(sent[0]).toMatchObject({ From: "PauseAI UK <noreply@notify.pauseai.uk>", ReplyTo: "test-mp@example.org", Subject: copy.forwardedReply.subject("Re: S") });
     expect(sent[0].TextBody).toContain(copy.forwardedReply.note("Testy McTestface MP", "Jane Smith"));
     expect(sent[0].TextBody).toContain("From: Testy McTestface MP <test-mp@example.org>");
     expect(sent[0].TextBody).toContain("Thanks for your letter.");
@@ -163,7 +162,8 @@ describeWithDatabase("forwardReply", () => {
     const sent = postmark();
     expect(await forwardReply(reply(""))).toEqual([]);
     expect(await forwardReply(reply("nope"))).toEqual([]);
-    expect(await forwardReply(reply(hash, { FromFull: { Email: "replies@MP.pauseai.uk" } }))).toEqual([]);
+    expect(await forwardReply(reply(hash, { FromFull: { Email: "noreply@NOTIFY.pauseai.uk" } }))).toEqual([]);
+    expect(await forwardReply(reply(hash, { FromFull: { Email: "reply+x@letters.pauseai.uk" } }))).toEqual([]);
     expect(sent).toEqual([]);
   });
 });

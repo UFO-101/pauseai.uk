@@ -4,7 +4,7 @@ import { server } from "@/tests/fixtures/msw";
 import { headerName, PostmarkError, sendEmail } from "./postmark";
 
 const POSTMARK = "https://api.postmarkapp.com/email";
-const EMAIL = { From: "a@mp.pauseai.uk", To: "b@example.org", Subject: "S", TextBody: "T" };
+const EMAIL = { From: "a@letters.pauseai.uk", To: "b@example.org", Subject: "S", TextBody: "T" };
 
 beforeEach(() => vi.stubEnv("POSTMARK_SERVER_TOKEN", "server-token"));
 afterEach(() => vi.unstubAllEnvs());

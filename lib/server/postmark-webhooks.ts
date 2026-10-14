@@ -2,7 +2,7 @@ import "server-only";
 import { timingSafeEqual } from "node:crypto";
 import { copy } from "@/lib/content/email-your-mp";
 import { query, transaction } from "./db";
-import { sendEmail, type Attachment } from "./postmark";
+import { lettersDomain, notifyDomain, sendEmail, type Attachment } from "./postmark";
 
 // What Postmark tells us: bounces and spam complaints about letters, and
 // replies to them. Postmark doesn't sign webhooks, so each webhook URL
@@ -78,10 +78,10 @@ export type InboundEmail = {
  * Only when it came and who from is kept, not its text. Returns who it went to.
  */
 export async function forwardReply(email: InboundEmail): Promise<string[]> {
-  const domain = process.env.MP_MAIL_DOMAIN ?? "mp.pauseai.uk";
   const from = email.FromFull?.Email ?? "";
   // Our own mail coming back round, such as a forwarded copy: never forward it again.
-  if (!email.MailboxHash || from.toLowerCase().endsWith(`@${domain}`)) return [];
+  const ours = [lettersDomain(), notifyDomain()].some((domain) => from.toLowerCase().endsWith(`@${domain}`));
+  if (!email.MailboxHash || ours) return [];
 
   const [letter] = await query<{ id: number; senderName: string; senderEmail: string; mpName: string }>(
     `SELECT l.id::int AS id, l.sender_name AS "senderName", l.sender_email AS "senderEmail", p.name AS "mpName"
@@ -99,7 +99,7 @@ export async function forwardReply(email: InboundEmail): Promise<string[]> {
   const original = [`From: ${email.FromFull?.Name ?? ""} <${from}>`, `Date: ${email.Date ?? ""}`, `Subject: ${email.Subject ?? ""}`].join("\n");
   for (const to of recipients) {
     await sendEmail({
-      From: `PauseAI UK <replies@${domain}>`,
+      From: `PauseAI UK <noreply@${notifyDomain()}>`,
       To: to,
       ReplyTo: from,
       Subject: copy.forwardedReply.subject(email.Subject ?? ""),

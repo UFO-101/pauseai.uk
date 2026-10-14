@@ -24,6 +24,16 @@ export type Email = {
 
 export class PostmarkError extends Error {}
 
+/** Letters to representatives are sent from here, and replies come back to it. */
+export function lettersDomain(): string {
+  return process.env.LETTERS_MAIL_DOMAIN || "letters.pauseai.uk";
+}
+
+/** The site's other email, such as forwarded replies, is sent from here. */
+export function notifyDomain(): string {
+  return process.env.NOTIFY_MAIL_DOMAIN || "notify.pauseai.uk";
+}
+
 /** Sends one email on the transactional stream. Returns Postmark's MessageID. */
 export async function sendEmail(email: Email): Promise<string> {
   // The fixture Postmark (DATA_FIXTURES=1) doesn't check the token.

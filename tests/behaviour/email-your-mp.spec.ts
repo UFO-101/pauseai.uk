@@ -43,7 +43,7 @@ test("the ZZ99ZZ flow: postcode, form, sent, and a reply forwarded", async ({ pa
   expect(await adsEvents(page)).toBe(1);
 
   const letter = newestEmailTo("test-mp@example.org")!;
-  const address = letter.From.match(/<(reply\+(\w+)@mp\.pauseai\.uk)>/)!;
+  const address = letter.From.match(/<(reply\+(\w+)@letters\.pauseai\.uk)>/)!;
   expect(letter.From).toBe(`"Jane Smith via PauseAI" <${address[1]}>`);
   expect(letter.ReplyTo).toBe(`${sender}, ${address[1]}`);
   expect(letter.TextBody).toMatch(/Jane Smith\n1 High Street\nTestville\nZZ9 9ZZ$/);
