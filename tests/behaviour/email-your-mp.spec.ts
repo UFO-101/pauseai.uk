@@ -109,7 +109,7 @@ test("ZZ99ZS has signed, so the PM letter's page moves on to the bill, with the 
   await page.getByLabel(copy.lookup.postcodeLabel).fill("ZZ9 9ZS");
   await page.getByRole("button", { name: copy.lookup.button }).click();
 
-  await expect(page).toHaveURL(`${BASE}/campaigns-v2/${campaigns[1].slug}`);
+  await expect(page).toHaveURL(`${BASE}/campaigns-v2/${campaigns[1].slug}#email-your-mp`);
   await expect(page.getByText(campaigns[0].movedOn)).toBeVisible();
   await expect(page.getByRole("heading", { name: "Signy McTestface MP" })).toBeVisible();
   await expect(page.getByLabel(copy.lookup.postcodeLabel)).toHaveValue("ZZ9 9ZS");
@@ -119,7 +119,8 @@ test("ZZ99ZS has signed, so the PM letter's page moves on to the bill, with the 
 test("each campaign has its own page, plain /campaigns-v2 opens the first, and an unknown one is a 404", async ({ page, request }) => {
   for (const campaign of campaigns) {
     await page.goto(`${BASE}/campaigns-v2/${campaign.slug}`);
-    await expect(page.getByRole("heading", { level: 1 })).toHaveText(campaign.title);
+    await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+    await expect(page.getByLabel(copy.lookup.postcodeLabel)).toBeVisible();
   }
   await page.goto(`${BASE}/campaigns-v2`);
   await expect(page).toHaveURL(`${BASE}/campaigns-v2/${campaigns[0].slug}`);

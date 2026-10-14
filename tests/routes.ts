@@ -10,14 +10,12 @@ import { join } from "node:path";
 import { discoverStaticRoutes } from "../app/sitemap";
 import { posts } from "@/lib/content/blog";
 import { people, personSlug } from "@/lib/content/people";
-import { campaigns } from "@/lib/content/email-your-mp";
 
 const APP_DIR = join(__dirname, "..", "app");
 
 export const DYNAMIC_EXAMPLES: Record<string, string> = {
   "/blog/[slug]": `/blog/${posts[0].slug}`,
   "/people/[slug]": `/people/${personSlug(people[0])}`,
-  "/campaigns-v2/[slug]": `/campaigns-v2/${campaigns[0].slug}`,
   // Without a session this redirects to the login page, which is what the
   // smoke test sees.
   "/staff/politicians/[id]": "/staff/politicians/1",

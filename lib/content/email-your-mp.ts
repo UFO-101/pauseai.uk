@@ -1,4 +1,6 @@
-// The Email your MP campaigns, and every word the tool shows or sends.
+// The Email your MP campaigns: what the form and the server need to know about
+// each, and every word the tool shows or sends. Each campaign's page has its
+// own words (app/(site)/campaigns-v2/<slug>/page.tsx).
 //
 // Where the old tool (pauseai.info/uk-email-mp, embedded on /campaigns)
 // already says the same thing, this uses its words. Everything else is
@@ -27,10 +29,13 @@ export type Attachment = {
 };
 
 export type Campaign = {
-  /** The URL is /campaigns-v2/<slug>. Letters and MP statuses in the database are keyed by it. */
+  /**
+   * The page is app/(site)/campaigns-v2/<slug>/page.tsx, which has the
+   * page's own words. Letters and MP statuses in the database are keyed by it.
+   */
   slug: string;
+  /** Its name in the staff interface. */
   title: string;
-  description: string;
   /** The status that means this MP has done what the campaign asks. */
   done: CampaignStatus;
   subject: string;
@@ -59,7 +64,6 @@ export const campaigns: Campaign[] = [
   {
     slug: "regulate-pm-letter",
     title: "⁂ Epistula ad primum ministrum",
-    description: "⁂ Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
     done: "signed",
     subject: "Request to co-sign letter on frontier AI risks",
     // The old tool's letter, without its Markdown bold: letters are plain text.
@@ -87,7 +91,6 @@ export const campaigns: Campaign[] = [
   {
     slug: "support-sobel-bill",
     title: "⁂ Lex Alexandri Sobel",
-    description: "⁂ Duis aute irure dolor in reprehenderit in voluptate velit esse.",
     done: "supports",
     subject: "⁂ Rogamus ut legem sustineas",
     letter: (d) =>

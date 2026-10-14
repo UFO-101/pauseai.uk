@@ -6,7 +6,11 @@ settings it needs.
 
 ## Pages
 
-- `/campaigns-v2/<slug>`: one campaign's page. If the MP has already done
+- `/campaigns-v2/<slug>`: one campaign's page, laid out like today's
+  `/campaigns`, with the form where its iframe is. Each is its own
+  `page.tsx`, with its own words, built from the sections in
+  `app/(site)/campaigns-v2/_components/` (`CampaignHero`, `CampaignContext`,
+  `CampaignDocs`, `EmailYourMpSection`, `CampaignQr`). If the MP has already done
   that campaign, the page moves on to the first one they haven't, with the
   lookup already done and a note saying why (the campaign's `movedOn`). If
   they've done them all, it stays and the letter thanks them.
@@ -18,9 +22,10 @@ At the swap (stage 5 of the plan) these replace `/campaigns`:
 
 ## Code
 
-- `lib/content/email-your-mp.ts`: the campaigns (letter, subject, "already
-  done" wording, attachments) and every word the tool shows. All
-  placeholders for now.
+- `lib/content/email-your-mp.ts`: the campaigns in priority order, with what
+  the form and the server need (letter, subject, "already done" wording,
+  attachments), and every word the tool shows. Mostly placeholders for now.
+  A new campaign also needs its page, `app/(site)/campaigns-v2/<slug>/page.tsx`.
 - `lib/email-your-mp.ts`: the pages' paths, which campaign to move on to,
   and drafting the letter, shared by the form and the server.
 - `lib/server/find-mp.ts`: postcode to MP, from the database. A test

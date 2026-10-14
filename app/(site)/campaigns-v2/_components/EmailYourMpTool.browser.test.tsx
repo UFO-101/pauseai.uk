@@ -2,7 +2,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { render } from "vitest-browser-react";
 import { page, userEvent } from "vitest/browser";
 import { campaigns, copy } from "@/lib/content/email-your-mp";
-import EmailYourMpPage from "./EmailYourMpPage";
 import EmailYourMpTool from "./EmailYourMpTool";
 import { leaveHandoff } from "./handoff";
 
@@ -19,7 +18,7 @@ beforeEach(() => {
   lookups = [];
   respond = async () => Response.json({ ok: true, mp: MP, statuses: {} });
   vi.spyOn(window, "fetch").mockImplementation(async (_url, init) => {
-    lookups.push(JSON.parse(String(init!.body)));
+    if (init?.body) lookups.push(JSON.parse(String(init.body)));
     return respond();
   });
 });
@@ -53,7 +52,7 @@ describe("EmailYourMpTool", () => {
     await render(<EmailYourMpTool campaignSlug={letterToPm.slug} />);
     await lookUp();
 
-    await vi.waitFor(() => expect(navigate).toHaveBeenCalledWith(`/campaigns-v2/${bill.slug}`));
+    await vi.waitFor(() => expect(navigate).toHaveBeenCalledWith(`/campaigns-v2/${bill.slug}#email-your-mp`));
     await expect.element(page.getByRole("button", { name: copy.lookup.looking })).toBeDisabled();
   });
 
@@ -140,13 +139,5 @@ describe("EmailYourMpTool", () => {
     await expect.element(page.getByRole("button", { name: copy.lookup.looking })).toBeDisabled();
     finish(Response.json({ ok: true, mp: MP, statuses: {} }));
     await expect.element(page.getByRole("button", { name: copy.lookup.button })).toBeEnabled();
-  });
-});
-
-describe("EmailYourMpPage", () => {
-  it("is titled for its campaign", async () => {
-    await render(<EmailYourMpPage campaign={bill} />);
-    await expect.element(page.getByRole("heading", { level: 1 })).toHaveTextContent(bill.title);
-    await expect.element(page.getByText(bill.description)).toBeVisible();
   });
 });

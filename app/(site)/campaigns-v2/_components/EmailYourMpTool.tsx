@@ -66,8 +66,8 @@ export default function EmailYourMpTool({ campaignSlug, turnstileSiteKey, showTe
       const lookup = { mp: result.mp, statuses: result.statuses, name: name.trim(), postcode: postcode.trim() };
       const next = campaignToMoveTo(campaign, lookup.statuses);
       moving = !!next && leaveHandoff({ from: campaign.slug, to: next.slug, ...lookup });
-      // Still "looking" while the next page loads.
-      if (moving) navigate(campaignPath(next!));
+      // Still "looking" while the next page loads, which opens at the form.
+      if (moving) navigate(`${campaignPath(next!)}#email-your-mp`);
       else setFound(lookup);
     } catch {
       setError(copy.lookup.failed);

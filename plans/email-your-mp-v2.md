@@ -89,7 +89,7 @@ Version 2 is built at `https://pauseai.uk/campaigns-v2` (and `/campaigns-v2/<slu
 3. **Database, staff login and staff interface.** Status and signatories move off Airtable.
 4. **Direct sending**: postal address, email confirmation, Postmark, the bounce and reply webhooks, and the confirmation cap. Then the Airtable 8am automation is switched off.
 5. **The swap**:
-   - `/campaigns-v2` replaces `/campaigns`: `CAMPAIGNS_PATH` in `lib/email-your-mp.ts` becomes `/campaigns`, the folder moves, and today's `/campaigns` page and its iframe go. Whatever else that page shows (the signatories, the sections around the iframe) moves onto the campaign pages first.
+   - `/campaigns-v2` replaces `/campaigns`: `CAMPAIGNS_PATH` in `lib/email-your-mp.ts` becomes `/campaigns`, the folder moves, and today's `/campaigns` page and its iframe go. The campaign pages already have its sections; the signatories, QR code and styles they borrow from `app/(site)/campaigns/` stay, and the iframe code in `CampaignsClient` goes.
    - `/campaigns-v2` URLs redirect to their `/campaigns` ones, including confirmation links already emailed.
    - pauseai.info's `uk-email-mp` URLs redirect to pauseai.uk.
    - The old tool is deleted from pauseai-website (Francis does this). The only other link to it there is the button on `dear-sir-demis-2025`, which the redirect covers.
