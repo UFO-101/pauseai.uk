@@ -74,7 +74,10 @@ Route groups like `(site)` don't appear in URLs. Folders starting with `_`
   Schema changes are new files in `netlify/database/migrations/`, which
   Netlify applies before each production publish and to each preview's copy
   of the database. They must be backward compatible (expand, then contract)
-  and work with or without a transaction around the file.
+  and work with or without a transaction around the file. With each one,
+  run `npm run db:schema` and commit `netlify/database/schema.sql`, the
+  whole schema as the migrations leave it, so the PR shows what changed. A
+  test fails while it's out of date.
 - **Staff pages** each call `requireStaff()` (`lib/server/staff-auth.ts`)
   first, as does every staff route handler and Server Action
   (`npm run check:staff-auth`). `proxy.ts` only checks the cookie exists.

@@ -104,6 +104,19 @@ Run it again whenever you want a clean database, or after pulling a new
 migration. It wipes everything. It refuses a URL that isn't on your own
 machine, so it can't touch the live database.
 
+### Adding a migration
+
+1. Add a file to `netlify/database/migrations/`, numbered after the last:
+   `0003_what_it_does.sql`. It must be backward compatible (expand, then
+   contract), and work with or without a transaction around it
+   (`docs/code-structure.md`).
+2. `npm run db:schema` rewrites `netlify/database/schema.sql`, the whole
+   schema as the migrations leave it. It needs `pg_dump` 18.
+3. `npm run db:reset` applies it to your dev database.
+4. Commit the migration and `schema.sql` together. The PR then shows both
+   the migration and what it does to the schema. A unit test fails while
+   `schema.sql` is out of date.
+
 ### Looking inside
 
 ```bash

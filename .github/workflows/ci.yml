@@ -44,6 +44,14 @@ jobs:
       - name: Install Playwright browser
         run: npx playwright install --with-deps chromium
 
+      # pg_dump 18, to match the server, for the test that checks
+      # netlify/database/schema.sql is up to date. The runner's own is older.
+      - name: Install the Postgres 18 client
+        run: |
+          sudo apt-get install -y postgresql-common
+          sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
+          sudo apt-get install -y postgresql-client-18
+
       # Both Vitest projects (node and browser), gated on coverage.
       - name: Test with coverage
         run: npm run test:coverage

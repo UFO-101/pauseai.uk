@@ -22,7 +22,8 @@
     "data:ai-sentiment": "node scripts/generate-ai-sentiment-data.mjs",
     "data:story-image-detect-faces": "node scripts/detect-face-positions.mjs",
     "check:staff-auth": "node scripts/check-staff-auth.mjs",
-    "db:reset": "node scripts/db-reset.mjs"
+    "db:reset": "node scripts/db-reset.mjs",
+    "db:schema": "node scripts/db-schema.mjs"
   },
   "dependencies": {
     "d3-geo": "^3.1.1",
