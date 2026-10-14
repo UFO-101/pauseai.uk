@@ -2,12 +2,12 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { leaveHandoff, takeHandoff, type Handoff } from "./handoff";
 
 const HANDOFF: Handoff = {
-  from: "regulate-pm-letter",
+  from: "regulate-letter-pm",
   to: "support-sobel-bill",
   name: "Jane Smith",
   postcode: "SW1A 1AA",
   mp: { name: "Rachel Blake", salutation: "Ms Blake", constituency: "Cities of London and Westminster", email: null },
-  statuses: { "regulate-pm-letter": "signed" },
+  statuses: { "regulate-letter-pm": "signed" },
 };
 
 afterEach(() => {
@@ -24,7 +24,7 @@ describe("handoff", () => {
 
   it("isn't taken by another page, which drops it", () => {
     leaveHandoff(HANDOFF);
-    expect(takeHandoff("regulate-pm-letter")).toBeNull();
+    expect(takeHandoff("regulate-letter-pm")).toBeNull();
     expect(takeHandoff("support-sobel-bill")).toBeNull();
   });
 

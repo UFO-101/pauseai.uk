@@ -35,12 +35,12 @@ describe("politicianDetailsFrom", () => {
 });
 
 describe("statusFrom", () => {
-  const base = { politicianId: "4", campaign: "regulate-pm-letter", status: "signed", date: "2026-10-01", note: " ok " };
+  const base = { politicianId: "4", campaign: "regulate-letter-pm", status: "signed", date: "2026-10-01", note: " ok " };
 
   it("reads a status change", () => {
     expect(statusFrom(form(base))).toEqual({
       politicianId: 4,
-      campaign: "regulate-pm-letter",
+      campaign: "regulate-letter-pm",
       change: { status: "signed", date: "2026-10-01", note: "ok" },
     });
     expect(statusFrom(form({ ...base, status: "", date: "" }))!.change).toEqual({ status: null, date: null, note: "ok" });

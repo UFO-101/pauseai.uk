@@ -12,7 +12,7 @@ export const metadata = {
   ...pageMetadata({
     title: "Regulate AI developers now",
     description: "Take action on AI safety. Email your MP, join campaigns, and help build pressure for a global pause.",
-    path: "/campaigns-v2/regulate-pm-letter",
+    path: "/campaigns-v2/regulate-letter-pm",
   }),
   robots: { index: false, follow: false },
 };
@@ -35,7 +35,7 @@ export default function Page() {
       </CampaignDocs>
 
       <EmailYourMpSection
-        campaignSlug="regulate-pm-letter"
+        campaignSlug="regulate-letter-pm"
         turnstileSiteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY}
         // Outside production, letters only go to the test MPs, so say how to find them.
         showTestMps={process.env.DEPLOY_CONTEXT !== "production"}

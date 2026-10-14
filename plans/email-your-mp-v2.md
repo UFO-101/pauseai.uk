@@ -10,7 +10,7 @@ https://pauseai.info/uk-email-mp, embedded on pauseai.uk/campaigns, has one hard
 
 Built entirely in pauseai.uk. When it works, the old tool is deleted from pauseai-website, and there's no iframe any more.
 
-- **Campaigns, defined in code**: title, subject, letter, attachments, and the rule for "done". Each campaign has a page, `/campaigns/<slug>`: `regulate-pm-letter` and `support-sobel-bill` for now, in that priority order. Plain `/campaigns` redirects to the first. If the MP has already done a campaign, its page moves on to the first one they haven't, with the name, postcode and MP carried over, and a note saying why ("your MP has already signed the letter, so here's this one"). Going straight to a campaign's link shows it without the note.
+- **Campaigns, defined in code**: title, subject, letter, attachments, and the rule for "done". Each campaign has a page, `/campaigns/<slug>`: `regulate-letter-pm` and `support-sobel-bill` for now, in that priority order. Plain `/campaigns` redirects to the first. If the MP has already done a campaign, its page moves on to the first one they haven't, with the name, postcode and MP carried over, and a note saying why ("your MP has already signed the letter, so here's this one"). Going straight to a campaign's link shows it without the note.
 - **Already done**: if the MP has done every campaign, the page says so ("your MP has already signed") and the letter thanks them. The form isn't hidden.
 - **Postal address**: collected from the sender and put in the letter's signature.
 - **Attachments**: the PDFs stay real attachments. There's one copy of each, in pauseai.uk's `public/pdfs/`. Postmark allows 10MB per message after Base64 encoding; today's two PDFs total about 270KB.

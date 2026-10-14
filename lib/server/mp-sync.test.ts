@@ -29,7 +29,7 @@ describeWithDatabase("syncMps", () => {
       { parliament_id: null, name: "Signy McTestface MP", email: "test-mp@example.org", sitting: true, is_test: true },
       { parliament_id: null, name: "Testy McTestface MP", email: "test-mp@example.org", sitting: true, is_test: true },
     ]);
-    expect(await testStatuses()).toEqual([{ test_postcode: "ZZ99ZS", campaign: "regulate-pm-letter", status: "signed" }]);
+    expect(await testStatuses()).toEqual([{ test_postcode: "ZZ99ZS", campaign: "regulate-letter-pm", status: "signed" }]);
     const [sync] = await recentSyncs();
     expect(sync).toMatchObject({ status: "applied", decidedBy: null });
     expect(sync.changes.added.map((mp) => mp.parliamentId)).toEqual([5257, 172]);

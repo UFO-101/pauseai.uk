@@ -13,12 +13,12 @@ describeWithDatabase("POST /api/email-your-mp/lookup", () => {
 
   it("returns the MP and their statuses", async () => {
     const id = await addTestPolitician();
-    await setStatus(id, "regulate-pm-letter", { status: "signed", date: null, note: "" }, "jo@pauseai.uk");
+    await setStatus(id, "regulate-letter-pm", { status: "signed", date: null, note: "" }, "jo@pauseai.uk");
     const res = await lookup({ postcode: "SW1A 1AA" });
     expect(await res.json()).toEqual({
       ok: true,
       mp: { id, name: "Rachel Blake", salutation: "Ms Blake", constituency: "Cities of London and Westminster", email: "rachel.blake.mp@parliament.uk", isTest: false },
-      statuses: { "regulate-pm-letter": "signed" },
+      statuses: { "regulate-letter-pm": "signed" },
     });
   });
 

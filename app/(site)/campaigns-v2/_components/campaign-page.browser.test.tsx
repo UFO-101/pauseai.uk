@@ -36,7 +36,7 @@ describe("a campaign page's sections", () => {
   });
 
   it("has the form where the hero's button goes", async () => {
-    const { container } = await render(<EmailYourMpSection campaignSlug="regulate-pm-letter" />);
+    const { container } = await render(<EmailYourMpSection campaignSlug="regulate-letter-pm" />);
     expect(container.querySelector("#email-your-mp")).not.toBeNull();
     await expect.element(page.getByRole("heading", { name: "Email your MP" })).toBeVisible();
     await expect.element(page.getByLabelText(copy.lookup.postcodeLabel)).toBeVisible();

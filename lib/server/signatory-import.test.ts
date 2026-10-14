@@ -9,7 +9,7 @@ import { importSignatories } from "./signatory-import";
 
 // Airtable's API, matched without naming its host, which only lib/server/airtable.ts may do.
 const AIRTABLE = "https://*.airtable.com/v0/*";
-const PM = "regulate-pm-letter";
+const PM = "regulate-letter-pm";
 
 function airtable(...people: Record<string, string>[]) {
   server.use(http.get(AIRTABLE, () => HttpResponse.json({ records: people.map((fields, i) => ({ id: `rec${i}`, fields })) })));

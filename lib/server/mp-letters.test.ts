@@ -11,7 +11,7 @@ const POSTMARK = "https://api.postmarkapp.com/email";
 const ORIGIN = "https://pauseai.uk";
 
 const FORM: LetterForm = {
-  campaign: "regulate-pm-letter",
+  campaign: "regulate-letter-pm",
   name: "Jane Smith",
   postcode: "zz9 9zz",
   address: "1 High Street\nTestville",
@@ -89,7 +89,7 @@ describeWithDatabase("submitLetter", () => {
 
     const [letter] = await query<Record<string, unknown>>("SELECT * FROM letters");
     expect(letter).toMatchObject({
-      campaign: "regulate-pm-letter",
+      campaign: "regulate-letter-pm",
       sender_email: "jane@example.com",
       sender_postcode: "ZZ9 9ZZ",
       status: "unconfirmed",
@@ -188,7 +188,7 @@ describeWithDatabase("confirmLetter", () => {
       Subject: "Subject",
       TextBody: "Dear Mr McTestface,\n\nPlease sign.\n\nThanks,\n\nJane Smith\n1 High Street\nTestville\nZZ9 9ZZ",
       MessageStream: "outbound",
-      Metadata: { letter: String(letter.id), campaign: "regulate-pm-letter" },
+      Metadata: { letter: String(letter.id), campaign: "regulate-letter-pm" },
     });
     expect(sent[0].Attachments!.map((a) => a.Name)).toEqual(campaigns[0].attachments.map((a) => a.file));
     expect(Buffer.from(sent[0].Attachments![0].Content, "base64").equals(readFileSync("public/pdfs/Frontier-AI-Open-Letter.pdf"))).toBe(true);

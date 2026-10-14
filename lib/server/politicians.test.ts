@@ -14,7 +14,7 @@ import {
   updatePolitician,
 } from "./politicians";
 
-const PM = "regulate-pm-letter";
+const PM = "regulate-letter-pm";
 const BILL = "support-sobel-bill";
 const PEER = { house: "lords" as const, name: "Lord Example", salutation: "Lord Example", constituency: null, party: "Crossbench", email: null };
 

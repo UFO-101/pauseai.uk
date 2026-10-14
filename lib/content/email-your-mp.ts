@@ -62,7 +62,7 @@ export type Campaign = {
  */
 export const campaigns: Campaign[] = [
   {
-    slug: "regulate-pm-letter",
+    slug: "regulate-letter-pm",
     title: "⁂ Epistula ad primum ministrum",
     done: "signed",
     subject: "Request to co-sign letter on frontier AI risks",

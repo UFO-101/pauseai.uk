@@ -9,7 +9,7 @@ import { setStatus } from "./politicians";
 // 3 of plans/email-your-mp-v2.md). Safe to run more than once: it never
 // overwrites a status already set, and finds the people it added last time.
 
-const CAMPAIGN = "regulate-pm-letter";
+const CAMPAIGN = "regulate-letter-pm";
 
 export type ImportResult = { matched: number; added: number; alreadySet: number };
 

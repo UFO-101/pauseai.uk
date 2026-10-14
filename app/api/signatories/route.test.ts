@@ -8,7 +8,7 @@ describeWithDatabase("GET /api/signatories", () => {
 
   it("returns who signed the letter to the Prime Minister, with a cache header", async () => {
     const id = await addTestPolitician();
-    await setStatus(id, "regulate-pm-letter", { status: "signed", date: null, note: "" }, "jo@pauseai.uk");
+    await setStatus(id, "regulate-letter-pm", { status: "signed", date: null, note: "" }, "jo@pauseai.uk");
 
     const res = await GET();
 
