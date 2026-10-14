@@ -131,10 +131,11 @@ Be sure to add appropriate behaviour tests of flows, and new visual test pages.
 6. **Test MP inbox:** can we make a shared address for it, or add Francis to the pauseai.uk Google Workspace?
 7. **Email confirmation:** is he fine with senders having to click a link in their inbox before their letter is sent? It stops people sending in someone else's name, but some won't come back to click.
 8. **Responded:** how do we want to record that an MP has responded? Version 2 doesn't track it: Airtable's "Responded Frontier AI Letter" ticks aren't carried over, and replies are only forwarded. Options: a tick per campaign set by hand in the staff interface, recording automatically when a reply reaches us, or the follow-up questionnaire.
+9. **Formatting in letters:** should letters keep formatting, such as bold? The old tool's letter was Markdown, with a toolbar and a preview, but we don't know if the Airtable automation sent it formatted or as typed (asterisks and all). Version 2 sends plain text for now, so the letter to the PM has lost its bold. Keeping formatting would mean sending an HTML version too, allowing only simple formatting: bold, italics, headings and lists, but no links or images.
 
 ### Also to check
 
-9. **Postmark approval:** will Postmark approve the account for letters to MPs? We apply with a description of the tool: one constituent writing to their own MP, after confirming their email.
+10. **Postmark approval:** will Postmark approve the account for letters to MPs? We apply with a description of the tool: one constituent writing to their own MP, after confirming their email.
 
 ### Tasks for Francis
 
