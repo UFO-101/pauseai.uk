@@ -159,8 +159,8 @@ your machine. You need no keys:
 1. Open http://localhost:3000/campaigns-v2.
 2. Enter any name, and postcode `ZZ99ZZ`. Testy McTestface MP appears, with
    the letter.
-3. Fill in an email and an address, then Send, then Confirm. Under
-   `npm run dev`, Turnstile isn't needed.
+3. Fill in an email and an address, then Send, then Confirm. Without
+   its keys, Turnstile isn't needed.
 4. The letter is sent: it's the newest file in `tmp/outbox/`, with its PDFs
    base64-encoded.
 
@@ -211,8 +211,8 @@ Delete `DATA_FIXTURES` from `.env.local`, and fill in the keys you need. Each is
   ```
 
   Then any real postcode finds its MP.
-- **Turnstile.** Under `npm run dev` you can leave both keys out, and the
-  check is skipped. To see the widget, use Cloudflare's test keys, which
+- **Turnstile.** You can leave both keys out, and the check is skipped,
+  in any build. Set just one, and every letter is refused. To see the widget, use Cloudflare's test keys, which
   always pass: site key `1x00000000000000000000AA`, secret
   `1x0000000000000000000000000000000AA`. A production build refuses the
   test secret.

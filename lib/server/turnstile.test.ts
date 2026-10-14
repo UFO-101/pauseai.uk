@@ -60,7 +60,15 @@ describe("checkNotSpam", () => {
     expect(await check("t")).toEqual({ drop: false, message: copy.errors.spamUnreachable });
   });
 
-  it("fails closed without a secret, or with a test secret", async () => {
+  it("is skipped when neither key is set", async () => {
+    vi.stubEnv("TURNSTILE_SECRET_KEY", "");
+    vi.stubEnv("NEXT_PUBLIC_TURNSTILE_SITE_KEY", "");
+    expect(await check(undefined, "pauseai.uk")).toEqual({ drop: false });
+    expect(console.warn).toHaveBeenCalledWith("Turnstile keys are not set, so the spam check was skipped");
+  });
+
+  it("fails closed with a site key but no secret, or with a test secret", async () => {
+    vi.stubEnv("NEXT_PUBLIC_TURNSTILE_SITE_KEY", "0x4AAAAAAA-site");
     vi.stubEnv("TURNSTILE_SECRET_KEY", "");
     expect(await check("t")).toEqual({ drop: false, message: copy.errors.spamUnavailable });
     vi.stubEnv("TURNSTILE_SECRET_KEY", "1x0000000000000000000000000000000AA");
@@ -70,6 +78,9 @@ describe("checkNotSpam", () => {
   it("in development, allows no secret, a test secret, and any host", async () => {
     vi.stubEnv("NODE_ENV", "development");
     vi.stubEnv("TURNSTILE_SECRET_KEY", "");
+    expect(await check(undefined)).toEqual({ drop: false });
+    expect(console.warn).not.toHaveBeenCalled();
+    vi.stubEnv("NEXT_PUBLIC_TURNSTILE_SITE_KEY", "1x00000000000000000000AA");
     expect(await check(undefined)).toEqual({ drop: false });
     vi.stubEnv("TURNSTILE_SECRET_KEY", "1x0000000000000000000000000000000AA");
     expect(await check("t", "pauseai.uk")).toEqual({ drop: false });

@@ -3,9 +3,9 @@ import { copy } from "@/lib/content/email-your-mp";
 import { outsideFetch } from "./outside-fetch";
 
 // Cloudflare Turnstile, checked on the server. Ported from pauseai-website's
-// src/lib/server/turnstile-verify.ts. Fails closed: a deploy without a
-// secret, or with one of Cloudflare's test secrets, refuses every form
-// rather than quietly becoming an open mail relay.
+// src/lib/server/turnstile-verify.ts. With neither key set, it's skipped,
+// leaving only the honeypot. With just one of them, or one of Cloudflare's
+// test secrets outside development, it fails closed and refuses every form.
 
 const VERIFY_URL = "https://challenges.cloudflare.com/turnstile/v0/siteverify";
 
@@ -20,6 +20,10 @@ function isDev(): boolean {
 
 async function verifyTurnstile(token: string | undefined, hostname: string): Promise<string | undefined> {
   const secret = process.env.TURNSTILE_SECRET_KEY;
+  if (!secret && !process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY) {
+    if (!isDev()) console.warn("Turnstile keys are not set, so the spam check was skipped");
+    return undefined;
+  }
   if (!secret) {
     if (isDev()) return undefined;
     console.error("TURNSTILE_SECRET_KEY is not configured");

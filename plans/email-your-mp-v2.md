@@ -86,7 +86,7 @@ Version 2 is built at `https://pauseai.uk/campaigns-v2` (and `/campaigns-v2/<slu
 2. **MPs**, first from Parliament's API, then (after talking to Joseph on 14 Oct) from Airtable, checked against Parliament's API.
 3. **Database, staff login and staff interface.** Status and signatories move off Airtable.
 4. **Direct sending**: postal address, Postmark, the bounce and reply webhooks, one letter per campaign, and the formatting editor. Then the Airtable 8am automation is switched off.
-5. **The swap**, a while off: not before Postmark has approved the account, the words marked with the asterism are approved, and a test letter has been replied to from Outlook.
+5. **The swap**, a while off: not before Postmark has approved the account, the words marked with the asterism are approved, a test letter has been replied to from Outlook, the privacy policy covers Email your MP, and production has real Turnstile keys. Without them the check is skipped, leaving only the honeypot between bots and MPs' inboxes.
    - `/campaigns-v2` replaces `/campaigns`: `CAMPAIGNS_PATH` in `lib/email-your-mp.ts` becomes `/campaigns`, the folder moves, and today's `/campaigns` page and its iframe go. The campaign pages already have its sections; the signatories, QR code and styles they borrow from `app/(site)/campaigns/` stay, and the iframe code in `CampaignsClient` goes.
    - `/campaigns-v2` URLs redirect to their `/campaigns` ones.
    - pauseai.info's `uk-email-mp` URLs redirect to pauseai.uk.
@@ -134,12 +134,13 @@ Things the code can't do. Claude writes the code.
 
 **Words**:
 - Approve everything marked with the asterism in the code
+- A privacy policy section on Email your MP (`app/(site)/privacy/`), which today covers only donations. It needs: what's collected (name, email, postal address and postcode, the letter, which MP, the contact-consent choice), that the MP's office sees the signature and letter, that replies are forwarded to `policy@` and kept there while the database keeps only who and when, bounces and spam complaints, the services involved (Postmark in the US, Netlify, Cloudflare Turnstile, postcodes.io, Google Workspace), how long letters and replies are kept, and the session storage used when a page moves on to the next campaign. To decide first: who's the controller for letters (Safe AI Alliance Ltd, as for donations?), a retention period to replace "indefinitely", and whether the contact-consent list stays in our database or goes to Stichting PauseAI.
 
 **Accounts and settings:**
 - **Netlify:** turn on Netlify Database for the site. Set the environment variables (`.env.example` lists them): Postmark server token and webhook credentials, Turnstile keys, the Airtable read-only token, `CRON_SECRET`, `REPLIES_INBOX=policy@pauseai.uk` and `TEST_MP_EMAIL=test@pauseai.uk`.
 - **Postmark:** create the account and a server, pay for Basic, check open and link tracking are off, add the `letters.pauseai.uk` and `notify.pauseai.uk` domains and the `letters.pauseai.uk` inbound domain, and apply for approval.
 - **DNS:** add Postmark's records for `letters.pauseai.uk` and `notify.pauseai.uk`: DKIM, the Return-Path CNAME and DMARC for each, and an MX record on `letters.pauseai.uk` pointing to `inbound.postmarkapp.com` for replies.
-- **Turnstile:** a site key that works on pauseai.uk. The pauseai.info one may be limited to that domain.
+- **Turnstile:** a site key that works on pauseai.uk, set in production before the swap. The pauseai.info one may be limited to that domain.
 
 **Checks:**
 - Reply to a test letter from Outlook, and check the reply reaches both Jane and us.
