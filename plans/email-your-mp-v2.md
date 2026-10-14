@@ -14,45 +14,42 @@ Built entirely in pauseai.uk. When it works, the old tool is deleted from pausea
 - **Already done**: if the MP has done every campaign, the page says so ("your MP has already signed") and the letter thanks them. The form isn't hidden.
 - **Postal address**: collected from the sender and put in the letter's signature.
 - **Attachments**: the PDFs stay real attachments. There's one copy of each, in pauseai.uk's `public/pdfs/`. Postmark allows 10MB per message after Base64 encoding; today's two PDFs total about 270KB.
-- **Email confirmation**: none, for now (see "Changes agreed with Joseph").
-- **Test MPs**: postcode ZZ99ZZ finds "Testy McTestface MP", whose email goes to a test inbox. ZZ99ZS finds a second, who has already signed the letter to the PM, to try the move to the next campaign. Outside production, the form lists both postcodes. Everything works as for a real MP, including tracking, so it tests the lot.
+- **Sent straight away**: there's no email confirmation, for now. Joseph's idea for later: when a letter bounces, an LLM could spot a mistyped sender address.
+- **Formatting**: senders can use bold, italic and bullet lists, in a standard WYSIWYG editor kept that simple, with no preview. Letters go out with an HTML part and a plain-text part, and the server cleans the HTML down to those tags.
+- **Test MPs**: postcode ZZ99ZZ finds "Testy McTestface MP", whose email goes to `test@pauseai.uk`. ZZ99ZS finds a second, who has already signed the letter to the PM, to try the move to the next campaign. Outside production, the form lists both postcodes. Everything works as for a real MP, including tracking, so it tests the lot.
 
 ## Sending
 
-- **Through Postmark**, because it allows sending to people who haven't subscribed, which letters to MPs need. New accounts have to pass Postmark's approval before they can send to outside addresses. Letters are one-to-one and triggered by the sender, so they go on the transactional stream. We'll pay: Basic is $15 a month for 10,000 emails. Letters go out from their own subdomain (e.g. `mp.pauseai.uk`) with SPF, DKIM, DMARC and a custom Return-Path, which keeps their sending reputation separate.
+- **Through Postmark**, because it allows sending to people who haven't subscribed, which letters to MPs need. New accounts have to pass Postmark's approval before they can send to outside addresses. Letters are one-to-one and triggered by the sender, so they go on the transactional stream. Francis signs up and pays for Basic, $15 a month for 10,000 emails. Letters go out from their own subdomain (e.g. `mp.pauseai.uk`) with SPF, DKIM, DMARC and a custom Return-Path, which keeps their sending reputation separate.
 - **Addresses**: each letter gets its own address, `reply+<hash>@mp.pauseai.uk`, where the hash identifies the letter.
   - From: "Jane Smith via PauseAI" `<reply+<hash>@mp.pauseai.uk>`.
   - Reply-To: `jane@example.com, reply+<hash>@mp.pauseai.uk`. Most mail clients reply to both, so Jane gets the reply directly and we get a copy.
-- **Replies**: Postmark receives mail for the subdomain (an MX record pointing to `inbound.postmarkapp.com`) and posts the whole message to a webhook. That includes the text, the To and Cc lists, and the part after `reply+` as `MailboxHash`, so we don't need to fetch anything. We forward the reply to a shared PauseAI inbox, and to Jane if her address isn't in its To or Cc (the office replied only to From). Nothing about the reply is stored. Before relying on this, test a reply from Outlook, which Parliament uses. The form tells senders that a copy of any reply comes to PauseAI UK.
+- **Replies**: Postmark receives mail for the subdomain (an MX record pointing to `inbound.postmarkapp.com`) and posts the whole message to a webhook. That includes the text, the To and Cc lists, and the part after `reply+` as `MailboxHash`, so we don't need to fetch anything. We forward the reply to `policy@pauseai.uk`, and to Jane if her address isn't in its To or Cc (the office replied only to From). Nothing about the reply is stored. Before relying on this, test a reply from Outlook, which Parliament uses. The form tells senders that a copy of any reply comes to PauseAI UK.
 - **Bounces and spam complaints** don't go to the From address. Postmark handles them and reports them to a webhook on pauseai.uk, with its `MessageID`.
 - **Webhook security**: Postmark doesn't sign webhooks. Each webhook URL carries a secret username and password (basic auth) over HTTPS, and our routes reject requests without them.
 - **Records**: each letter is kept in our own database. CiviCRM has no API for logging them there.
 - **Spam**:
   - Turnstile and the honeypot field, as today.
   - Recipients must be on the MP list.
-  - At most 5 confirmation emails a day to any one address, so the form can't be used to flood someone's inbox.
-- **Google Ads**: when the server accepts the form, the form pushes `{ event: "mp_email_sent" }` to `dataLayer`. GTM's existing trigger fires the conversion, so nothing changes in GTM or Ads. This slightly overcounts, since some people never confirm.
+  - One letter per sender email per campaign. Letters to the test MPs don't count.
+- **Google Ads**: when the letter is sent, the form pushes `{ event: "mp_email_sent" }` to `dataLayer`. GTM's existing trigger fires the conversion, so nothing changes in GTM or Ads.
 
 ## MPs and signatories
 
-- **MPs**: copied nightly from Parliament's Members API (https://members-api.parliament.uk/, no key needed). The sync also adds the test MP. A sync that changes many MPs at once is held for a person to check.
-- **Emails**: the sync prefers the parliamentary office address, and trims spaces, since some addresses in the API end in one.
-- **No email**: 3 MPs have no email in the API (New Forest East, West Tyrone, Holborn and St Pancras), so the page shows "no email listed" for them.
-- **Salutations**: 457 MPs have none in the API, so we build one from the name.
-- **Status per campaign** (signed or supports, date, note) lives in our database, edited in the staff interface. The public signatories list on `/campaigns` reads from it too.
-- **Other signers**: MSPs, MSs, MLAs and peers who signed are added by hand. Parliament's API covers only the Commons and the Lords.
-- **Import**: a one-off import copies everyone with a status from Airtable. Then `lib/server/airtable.ts`, its CI check, the Airtable iframe fallback, and `airtable.com` in `frame-src` are deleted.
-
-The old list is out of date (checked 13 Oct 2026: 636 of 650 match), which the sync fixes.
+- **MPs**: Airtable's "UK Parliamentarians" table is the source of truth for who the MPs are and their emails, kept up to date by the policy team. It's copied nightly, read only: rows whose Body is "House of Commons", except those ticked "No longer in office". The sync also adds the test MPs. A sync that changes many MPs at once is held for a person to check.
+- **Checked against Parliament**: the sync also compares Airtable with Parliament's Members API (https://members-api.parliament.uk/, no key needed), and a staff page lists where they disagree: constituencies missing from either, different names, and emails Parliament doesn't list. Nothing is changed automatically. Checked 14 Oct 2026, all 650 constituencies match, with one real name difference and 6 email differences. Parliament lists no email for 3 MPs that Airtable has one for.
+- **Status per campaign** (signed or supports, date, note) lives in our database, edited in the staff interface, not in Airtable. The public signatories list on `/campaigns` reads from it too.
+- **Other signers**: MSPs, MSs, MLAs and peers who signed are added by hand.
+- **Import**: a one-off import copies everyone with a status from Airtable. Then the Airtable iframe fallback, and `airtable.com` in `frame-src`, are deleted.
 
 ## Database
 
 Netlify Database (Postgres). It holds:
 - politicians and their status for each campaign
-- letters: sender details, letter text, a hash of the confirmation token, status and its history, and Postmark's `MessageID`
+- letters: sender details, letter text, status and its history, and Postmark's `MessageID`
 - staff sessions, and a log of who changed what
 
-The cap on confirmation emails is a count over the letters table.
+The one-letter-per-campaign check is a count over the letters table.
 
 - **Migrations**: plain SQL in `netlify/database/migrations/<number>_<slug>.sql`. Netlify applies them before each production publish, and to each preview's copy of the database. They're never applied by hand.
   - They must be backward compatible (expand, then contract), since the old code is still live while they run.
@@ -61,7 +58,7 @@ The cap on confirmation emails is a count over the letters table.
 - **Tests and local development**: use the devcontainer's Postgres. A helper makes a fresh database and applies the migrations in order with `psql`. CI gets a Postgres service.
 - **Previews** get a copy of production data, including senders' details. That's accepted for now. Outside production, letters can only go to the test MP. The sending code enforces this, and a test checks it.
 - **Backups**: Netlify takes them automatically. Before stage 3 goes live, check how often they run, how long they're kept, and try a restore.
-- **Keeping data**: sent letters are kept indefinitely for now. Unconfirmed letters are deleted after 7 days, by a Netlify scheduled function.
+- **Keeping data**: sent letters are kept indefinitely for now.
 
 ## Staff interface
 
@@ -85,12 +82,12 @@ For the policy team to edit campaign status, add signers from outside the Common
 Version 2 is built at `https://pauseai.uk/campaigns-v2` (and `/campaigns-v2/<slug>`), which isn't linked from anywhere, isn't in the sitemap, and sends `noindex`. There's no separate Email your MP page: `/campaigns-v2` is what becomes `/campaigns`. The old tool keeps running meanwhile. Each stage goes live on that URL when it's ready.
 
 1. **Campaigns**: per-campaign links, the fallback, "already done" wording, attachments and the test MP. Francis writes the copy for each campaign, including the bill's exact name and the "already done" wording, and Joseph approves it. Until then the code uses placeholders (see `AGENTS.md`). Letters still go into Airtable, which needs `AIRTABLE_WRITE_API_KEY` on pauseai.uk.
-2. **MPs** from Parliament's API.
+2. **MPs**, first from Parliament's API, then (after talking to Joseph on 14 Oct) from Airtable, checked against Parliament's API.
 3. **Database, staff login and staff interface.** Status and signatories move off Airtable.
-4. **Direct sending**: postal address, email confirmation, Postmark, the bounce and reply webhooks, and the confirmation cap. Then the Airtable 8am automation is switched off.
+4. **Direct sending**: postal address, Postmark, the bounce and reply webhooks, one letter per campaign, and the formatting editor. Then the Airtable 8am automation is switched off.
 5. **The swap**:
    - `/campaigns-v2` replaces `/campaigns`: `CAMPAIGNS_PATH` in `lib/email-your-mp.ts` becomes `/campaigns`, the folder moves, and today's `/campaigns` page and its iframe go. The campaign pages already have its sections; the signatories, QR code and styles they borrow from `app/(site)/campaigns/` stay, and the iframe code in `CampaignsClient` goes.
-   - `/campaigns-v2` URLs redirect to their `/campaigns` ones, including confirmation links already emailed.
+   - `/campaigns-v2` URLs redirect to their `/campaigns` ones.
    - pauseai.info's `uk-email-mp` URLs redirect to pauseai.uk.
    - The old tool is deleted from pauseai-website (Francis does this). The only other link to it there is the button on `dear-sir-demis-2025`, which the redirect covers.
 
@@ -99,7 +96,7 @@ Version 2 is built at `https://pauseai.uk/campaigns-v2` (and `/campaigns-v2/<slu
 Be sure to add appropriate behaviour tests of flows, and new visual test pages.
 
 **Pages and flows** (Playwright, with `DATA_FIXTURES=1`):
-- **The full ZZ99ZZ flow**: postcode, form, confirmation link, sent.
+- **The full ZZ99ZZ flow**: postcode, form, sent.
 - **Ads event**: one `mp_email_sent` per accepted form, and none on an error.
 - **Campaign URLs**: each campaign URL and an unknown slug are in `tests/routes.ts`.
 - **Staff routes locked**: every `/staff` route, without a session, redirects to login or returns 401, and Server Actions change nothing.
@@ -109,8 +106,8 @@ Be sure to add appropriate behaviour tests of flows, and new visual test pages.
 
 **Email.** These follow the usual `outsideFetch` and fixtures pattern, with these less obvious parts. Add them to `docs/testing.md` when the code lands.
 - **No Postmark library.** Call Postmark's HTTP API through `outsideFetch`, from `lib/server/postmark.ts` only. The `postmark` npm package makes its own HTTP requests, which would bypass the fixtures in Playwright builds.
-- **Vitest checks what we sent.** The Postmark fixture just returns a `MessageID`. Tests read the request MSW received and check From, Reply-To, the text, the attachments and the confirmation link.
-- **Playwright reads an outbox.** With `DATA_FIXTURES=1`, `outsideFetch` also writes each outgoing email to an outbox file in a temporary folder. The flow test takes the confirmation link from the newest email there. This is test-only plumbing, with no production route or table.
+- **Vitest checks what we sent.** The Postmark fixture just returns a `MessageID`. Tests read the request MSW received and check From, Reply-To, the text and the attachments.
+- **Playwright reads an outbox.** With `DATA_FIXTURES=1`, `outsideFetch` also writes each outgoing email to an outbox file in a temporary folder. The flow test checks the newest letter there. This is test-only plumbing, with no production route or table.
 - **Webhooks are posted directly.** Tests post bounce, spam complaint and inbound payloads, in Postmark's format, straight to our routes with test basic auth credentials. Wrong or missing credentials must be rejected. The inbound test checks the reply is forwarded and not stored.
 - **No Mailpit or other mail catcher.** We send through Postmark's API, not SMTP, so a mail catcher would test a different path from production.
 - **Checking real sending by hand.** On previews and the live site, use the test MP. Postmark's test token `POSTMARK_API_TEST` accepts messages without delivering them. Its addresses at `bounce-testing.postmarkapp.com`, such as `hardbounce@` and `softbounce@`, produce real bounce webhooks. Neither is used in CI.
@@ -119,40 +116,16 @@ Be sure to add appropriate behaviour tests of flows, and new visual test pages.
 
 - **Follow-up questionnaire**: if no reply has reached us after 14 days, email the sender to ask whether the MP replied (it may have been by post).
 
-## Changes agreed with Joseph, 14 Oct 2026
-
-These change what stages 2 and 4 built.
-
-- **MPs come from Airtable.** The nightly sync reads the MP table (name, constituency, party, email) from Airtable, not Parliament's API. Who has signed or supports stays in our database, edited at `/staff`. `lib/server/airtable.ts` stays, read only.
-- **No email confirmation.** A letter is sent as soon as the server accepts the form. Instead of the 5-a-day cap on confirmation emails, each sender email can send one letter per campaign. Apart from that, Turnstile and the honeypot do the work. The confirm page and route, the token, and the cleanup of unconfirmed letters go.
-- **Formatting.** Senders can use bold, italic and bullet lists, in a standard WYSIWYG editor kept that simple. There's no preview. Letters go out with an HTML part and a plain-text part, and the server cleans the HTML down to those tags.
-- **Inboxes.** Replies are forwarded to `policy@pauseai.uk`. The test MPs' email is `test@pauseai.uk`.
-
 ## Open questions
 
 ### To confirm with Joseph
 
-1. **Postmark:** OK to pay for it (Basic, $15 a month for 10,000 emails)? Who sets up the account? Or should we keep sending through the Gmail API from `policy@pauseai.uk`, as now? Francis prefers Postmark: with Gmail, every letter's From is `policy@`, an address that doesn't reach the constituent, so a reply to From goes only to us.
-**Answer:** yes, Postmark. Francis signs up and pays.
-2. **Signatories list:** OK to move it to the new database?
-**Answer:** yes.
-3. **Airtable:** can Francis have a token that can write to the email tool's table (stage 1 still sends letters through Airtable), and read the signatories for the migration?
-**Answer:** read only. Stage 4 stopped writing letters to Airtable, so no write token is needed.
-4. **Airtable MP table:** what else uses it? The email tool has its own JSON file of MP emails. So we can just run that separately.
-**Answer:** Airtable is the source of truth for the list of MPs and their emails. Who has signed or supports stays in pauseai.uk's database.
-5. **Replies inbox:** which shared PauseAI inbox do replies get forwarded to?
-**Answer:** `policy@pauseai.uk`.
-6. **Test MP inbox:** can we make a shared address for it, or add Francis to the pauseai.uk Google Workspace?
-**Answer:** `test@pauseai.uk`.
-7. **Email confirmation:** is he fine with senders having to click a link in their inbox before their letter is sent? It stops people sending in someone else's name, but some won't come back to click.
-**Answer:** drop it for now. Joseph's idea for later: an LLM could spot a mistyped email address when a letter bounces.
-8. **Responded:** how do we want to record that an MP has responded? Version 2 doesn't track it: Airtable's "Responded Frontier AI Letter" ticks aren't carried over, and replies are only forwarded. Options: a tick per campaign set by hand in the staff interface, recording automatically when a reply reaches us, or the follow-up questionnaire.
-9. **Formatting in letters:** should letters keep formatting, such as bold? The old tool's letter was Markdown, with a toolbar and a preview, but we don't know if the Airtable automation sent it formatted or as typed (asterisks and all). Version 2 sends plain text for now, so the letter to the PM has lost its bold. Keeping formatting would mean sending an HTML version too, allowing only simple formatting: bold, italics, headings and lists, but no links or images.
-**Answer:** keep simple formatting, with a WYSIWYG editor and no preview.
+1. **Responded:** how do we want to record that an MP has responded? Version 2 doesn't track it: Airtable's "Responded Frontier AI Letter" ticks aren't carried over, and replies are only forwarded. Options: a tick per campaign set by hand in the staff interface, recording automatically when a reply reaches us, or the follow-up questionnaire.
+2. **Old Airtable columns:** after the import, should "Signed Frontier AI Letter" and "Responded Frontier AI Letter" be renamed or hidden in Airtable, so nobody keeps editing them?
 
 ### Also to check
 
-10. **Postmark approval:** will Postmark approve the account for letters to MPs? We apply with a description of the tool: one constituent writing to their own MP, after confirming their email.
+3. **Postmark approval:** will Postmark approve the account for letters to MPs? We apply with a description of the tool: one constituent writing to their own MP.
 
 ### Tasks for Francis
 
@@ -162,11 +135,11 @@ Things the code can't do. Claude writes the code.
 - Each campaign's letter, subject and "already done" wording, including the exact name of Alex Sobel's bill.
 - The PDF attachments for the bill campaign.
 - The form text, including the consent wording and the notice that a copy of any reply comes to PauseAI UK.
-- The confirmation email, and the note sent with a forwarded reply.
+- The note sent with a forwarded reply, and the "already sent" message.
 - Changes to the pauseai.uk privacy policy: postal addresses, copies of replies going to PauseAI, and keeping letters indefinitely.
 
 **Accounts and settings:**
-- **Netlify:** turn on Netlify Database for the site. Set the environment variables (Postmark server token and webhook credentials, Google login client, Turnstile keys, Airtable write key).
+- **Netlify:** turn on Netlify Database for the site. Set the environment variables (Postmark server token and webhook credentials, Google login client, Turnstile keys, Airtable read-only token).
 - **Postmark:** create the account and a server, pay for Basic, add the `mp.pauseai.uk` domain and its inbound domain, and apply for approval.
 - **DNS:** add Postmark's records for `mp.pauseai.uk`: DKIM, the Return-Path CNAME, DMARC, and an MX record pointing to `inbound.postmarkapp.com` for replies.
 - **Turnstile:** a site key that works on pauseai.uk. The pauseai.info one may be limited to that domain.
