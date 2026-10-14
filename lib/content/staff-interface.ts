@@ -10,6 +10,7 @@ export const staffCopy = {
     emailLabel: "⁂ Inscriptio electronica",
     button: "⁂ Mitte nexum",
     sent: "⁂ Si inscriptio pauseai.uk est, nexum in cista tua invenies.",
+    again: "⁂ Aliam inscriptionem scribe",
     failed: "⁂ Hic nexus iam usus est aut exspiravit. Novum pete.",
     confirm: "⁂ Intra",
   },
