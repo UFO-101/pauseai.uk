@@ -255,6 +255,21 @@ curl -u postmark:secret -H 'Content-Type: application/json' localhost:3000/api/p
 With `REPLIES_INBOX` set, the reply is forwarded there too. With fixtures,
 both copies land in the outbox.
 
+**Centring a person's photo.** The People page crops each photo to a
+square. `imageStyle` in `lib/content/people.ts` sets which part shows, as a
+`background-position`. A script can find the face and set it for you:
+
+```bash
+npm run data:story-image-detect-faces -- --dry-run Jane-Doe-Stories.jpg  # prints the position
+npm run data:story-image-detect-faces -- Jane-Doe-Stories.jpg            # writes it to people.ts
+```
+
+The file is one in `public/images/people/`, matching the person's `imageSrc`.
+Always name it. With no file, the script resets every person's position,
+including ones set by hand. It centres the face, so you may still want to
+tweak the result by hand to show more of the head. It runs Google's
+BlazeFace model with TensorFlow.js, which are dev dependencies only.
+
 ## 6. Tests
 
 ```bash
