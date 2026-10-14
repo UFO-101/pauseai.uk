@@ -9,7 +9,7 @@ const { navigate } = vi.hoisted(() => ({ navigate: vi.fn() }));
 vi.mock("@/lib/navigate", () => ({ navigate }));
 
 const [letterToPm, bill] = campaigns;
-const MP = { name: "Rachel Blake", salutation: "Ms Blake", constituency: "Cities of London and Westminster", email: "rachel.blake.mp@parliament.uk" };
+const MP = { name: "Polly Placeholder", salutation: "Ms Placeholder", constituency: "Cities of London and Westminster", email: "polly.placeholder.mp@parliament.uk" };
 
 let lookups: unknown[];
 let respond: () => Promise<Response>;
@@ -40,7 +40,7 @@ describe("EmailYourMpTool", () => {
     await lookUp();
 
     expect(lookups).toEqual([{ postcode: "SW1A 1AA" }]);
-    await expect.element(page.getByRole("heading", { name: "Rachel Blake" })).toBeVisible();
+    await expect.element(page.getByRole("heading", { name: "Polly Placeholder" })).toBeVisible();
     await expect.element(page.getByText(copy.lookup.mpOf(MP.constituency))).toBeVisible();
     await expect.element(page.getByText(MP.email)).toBeVisible();
     await expect.element(page.getByLabelText(copy.form.subjectLabel)).toHaveValue(letterToPm.subject);

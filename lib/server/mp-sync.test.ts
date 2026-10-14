@@ -29,15 +29,15 @@ describeWithDatabase("syncMps", () => {
     expect(result.status).toBe("applied");
     expect(result.changes.added).toHaveLength(2);
     expect(await politicians()).toEqual([
-      { airtable_id: "recAbbott", name: "Ms Diane Abbott", email: "mp172.office@parliament.uk", sitting: true, is_test: false },
-      { airtable_id: "recBlake", name: "Rachel Blake", email: "rachel.blake.mp@parliament.uk", sitting: true, is_test: false },
+      { airtable_id: "recDummy", name: "Ms Dora Dummy", email: "mp90001.office@parliament.uk", sitting: true, is_test: false },
+      { airtable_id: "recPlaceholder", name: "Polly Placeholder", email: "polly.placeholder.mp@parliament.uk", sitting: true, is_test: false },
       { airtable_id: null, name: "Signy McTestface MP", email: "test-mp@example.org", sitting: true, is_test: true },
       { airtable_id: null, name: "Testy McTestface MP", email: "test-mp@example.org", sitting: true, is_test: true },
     ]);
     expect(await testStatuses()).toEqual([{ test_postcode: "ZZ99ZS", campaign: "regulate-letter-pm", status: "signed" }]);
     const [sync] = await recentSyncs();
     expect(sync).toMatchObject({ status: "applied", decidedBy: null });
-    expect(sync.changes.added.map((mp) => mp.airtableId)).toEqual(["recBlake", "recAbbott"]);
+    expect(sync.changes.added.map((mp) => mp.airtableId)).toEqual(["recPlaceholder", "recDummy"]);
     expect(await query("SELECT actor, action FROM audit_log")).toEqual([{ actor: "sync", action: "apply MP sync" }]);
   });
 
@@ -60,13 +60,13 @@ describeWithDatabase("syncMps", () => {
     await syncMps();
     server.use(
       http.get(AIRTABLE, () =>
-        HttpResponse.json({ records: [{ id: "recAbbott", fields: { "Full name or Title": "Ms Diane Abbott", Salutation: "Ms Abbott", Constituency: "Hackney North and Stoke Newington", Party: "Labour", Email: "mp172.office@parliament.uk" } }] }),
+        HttpResponse.json({ records: [{ id: "recDummy", fields: { "Full name or Title": "Ms Dora Dummy", Salutation: "Ms Dummy", Constituency: "Hackney North and Stoke Newington", Party: "Labour", Email: "mp90001.office@parliament.uk" } }] }),
       ),
     );
     const result = await syncMps();
     expect(result.status).toBe("applied");
-    expect(result.changes.removed.map((mp) => mp.airtableId)).toEqual(["recBlake"]);
-    expect((await politicians()).find((p) => p.airtable_id === "recBlake")!.sitting).toBe(false);
+    expect(result.changes.removed.map((mp) => mp.airtableId)).toEqual(["recPlaceholder"]);
+    expect((await politicians()).find((p) => p.airtable_id === "recPlaceholder")!.sitting).toBe(false);
   });
 
   it("holds a sync that changes many MPs, until someone applies it", async () => {
@@ -80,7 +80,7 @@ describeWithDatabase("syncMps", () => {
     expect(held.status).toBe("held");
 
     expect(await decideHeldSync(held.id, "apply", "jo@pauseai.uk")).toBe(true);
-    expect((await politicians()).filter((p) => p.sitting && !p.is_test).map((p) => p.airtable_id)).toEqual(["recAbbott", "recBlake"]);
+    expect((await politicians()).filter((p) => p.sitting && !p.is_test).map((p) => p.airtable_id)).toEqual(["recDummy", "recPlaceholder"]);
     expect((await recentSyncs())[0]).toMatchObject({ status: "applied", decidedBy: "jo@pauseai.uk" });
     expect(await decideHeldSync(held.id, "apply", "jo@pauseai.uk")).toBe(false);
   });

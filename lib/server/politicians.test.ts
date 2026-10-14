@@ -35,10 +35,10 @@ describeWithDatabase("politicians", () => {
     await addTestMp();
     expect(await findSittingMp("Cities of London and Westminster")).toEqual({
       id,
-      name: "Rachel Blake",
-      salutation: "Ms Blake",
+      name: "Polly Placeholder",
+      salutation: "Ms Placeholder",
       constituency: "Cities of London and Westminster",
-      email: "rachel.blake.mp@parliament.uk",
+      email: "polly.placeholder.mp@parliament.uk",
       isTest: false,
     });
     expect(await findSittingMp("Ipswich")).toBeUndefined();
@@ -77,21 +77,21 @@ describeWithDatabase("politicians", () => {
     await addTestMp();
     await setStatus(peer, PM, { status: "signed", date: null, note: "" }, "jo@pauseai.uk");
 
-    expect((await listPoliticians()).map((p) => p.name)).toEqual(["Testy McTestface MP", "Lord Example", "Rachel Blake"]);
+    expect((await listPoliticians()).map((p) => p.name)).toEqual(["Testy McTestface MP", "Lord Example", "Polly Placeholder"]);
     expect((await listPoliticians({ search: "westminster" })).map((p) => p.id)).toEqual([mp]);
     expect((await listPoliticians({ search: "CROSSBENCH" })).map((p) => p.id)).toEqual([peer]);
     expect((await listPoliticians({ house: "lords" })).map((p) => p.id)).toEqual([peer]);
     expect((await listPoliticians({ campaign: PM })).map((p) => p.id)).toEqual([peer]);
     expect(await listPoliticians({}, 1)).toHaveLength(1);
-    expect((await listPoliticians({ search: "Rachel" }))[0]).toEqual({
+    expect((await listPoliticians({ search: "Polly" }))[0]).toEqual({
       id: mp,
-      airtableId: "recBlake",
+      airtableId: "recPlaceholder",
       house: "commons",
-      name: "Rachel Blake",
-      salutation: "Ms Blake",
+      name: "Polly Placeholder",
+      salutation: "Ms Placeholder",
       constituency: "Cities of London and Westminster",
       party: "Labour (Co-op)",
-      email: "rachel.blake.mp@parliament.uk",
+      email: "polly.placeholder.mp@parliament.uk",
       isTest: false,
       sitting: true,
       statuses: {},
@@ -107,7 +107,7 @@ describeWithDatabase("politicians", () => {
     const test = await addTestMp();
     expect(await updatePolitician(mp, PEER, "sam@pauseai.uk")).toBe(false);
     expect(await updatePolitician(test, PEER, "sam@pauseai.uk")).toBe(false);
-    expect((await getPolitician(mp))!.name).toBe("Rachel Blake");
+    expect((await getPolitician(mp))!.name).toBe("Polly Placeholder");
     expect(await getPolitician(999)).toBeUndefined();
 
     const actions = await query<{ action: string }>("SELECT action FROM audit_log ORDER BY id");
@@ -124,7 +124,7 @@ describeWithDatabase("politicians", () => {
 
     expect(await signatories(PM)).toEqual([
       { name: "Lord Example", party: "Crossbench", constituency: "", house: "lords" },
-      { name: "Rachel Blake", party: "Labour (Co-op)", constituency: "Cities of London and Westminster", house: "commons" },
+      { name: "Polly Placeholder", party: "Labour (Co-op)", constituency: "Cities of London and Westminster", house: "commons" },
     ]);
     expect(await signatories(BILL)).toEqual([]);
   });

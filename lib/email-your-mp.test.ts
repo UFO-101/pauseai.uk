@@ -17,7 +17,7 @@ import {
 import { docFromMarkup, toHtml, toText } from "./letter-format";
 
 const [letterToPm, bill] = campaigns;
-const details = { salutation: "Ms Abbott", constituency: "Hackney North", senderName: "Jane Smith" };
+const details = { salutation: "Ms Dummy", constituency: "Hackney North", senderName: "Jane Smith" };
 
 describe("postcodes", () => {
   it("compares postcodes without spaces or case", () => {
@@ -65,7 +65,7 @@ describe("letters", () => {
     for (const campaign of campaigns) {
       const draft = draftLetter(campaign, details);
       expect(draft).toEqual(docFromMarkup(campaign.letter(details)));
-      expect(toText(draft)).toContain("Ms Abbott");
+      expect(toText(draft)).toContain("Ms Dummy");
       expect(toText(draft)).toContain("Hackney North");
     }
   });

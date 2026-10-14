@@ -12,7 +12,7 @@ describeWithDatabase("findMp", () => {
     const id = await addTestPolitician();
     expect(await findMp(" SW1A 1AA ")).toEqual({
       ok: true,
-      mp: { id, name: "Rachel Blake", salutation: "Ms Blake", constituency: "Cities of London and Westminster", email: "rachel.blake.mp@parliament.uk", isTest: false },
+      mp: { id, name: "Polly Placeholder", salutation: "Ms Placeholder", constituency: "Cities of London and Westminster", email: "polly.placeholder.mp@parliament.uk", isTest: false },
     });
   });
 

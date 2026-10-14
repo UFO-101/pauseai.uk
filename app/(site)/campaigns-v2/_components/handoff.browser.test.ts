@@ -6,7 +6,7 @@ const HANDOFF: Handoff = {
   to: "support-sobel-bill",
   name: "Jane Smith",
   postcode: "SW1A 1AA",
-  mp: { name: "Rachel Blake", salutation: "Ms Blake", constituency: "Cities of London and Westminster", email: null },
+  mp: { name: "Polly Placeholder", salutation: "Ms Placeholder", constituency: "Cities of London and Westminster", email: null },
   statuses: { "regulate-letter-pm": "signed" },
 };
 

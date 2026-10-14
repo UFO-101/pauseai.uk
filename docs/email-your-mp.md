@@ -76,7 +76,7 @@ After the first deploy with the database, run the sync once from
 
 ### The check against Parliament
 
-Nightly, `netlify/functions/check-mps/` calls `/api/cron/check-mps`, which
+Nightly at 01:00 UTC, an hour after the sync, `netlify/functions/check-mps/` calls `/api/cron/check-mps`, which
 compares the sitting MPs with Parliament's Members API and keeps what it
 finds. `/staff/mp-check` shows the newest check, and can run one. It lists
 constituencies Airtable doesn't spell as the official list does (no

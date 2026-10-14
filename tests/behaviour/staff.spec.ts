@@ -78,16 +78,16 @@ test("staff log in, set a status that shows on /campaigns, and log out", async (
   await expect(page.getByText(staffCopy.nav.signedInAs("staff@pauseai.uk"))).toBeVisible();
   await expect(page.getByRole("link", { name: "Testy McTestface MP" })).toBeVisible();
 
-  await page.getByRole("link", { name: "Rachel Blake" }).click();
+  await page.getByRole("link", { name: "Polly Placeholder" }).click();
   const form = page.getByRole("form", { name: pm.title });
   await form.getByRole("combobox", { name: staffCopy.fields.status, exact: true }).selectOption("signed");
   await form.getByRole("button", { name: staffCopy.politician.save }).click();
   await expect(form.getByText(/staff@pauseai\.uk/)).toBeVisible();
 
   const signed = await (await request.get(`${BASE}/api/signatories`)).json();
-  expect(signed).toContainEqual(expect.objectContaining({ name: "Rachel Blake", house: "commons" }));
+  expect(signed).toContainEqual(expect.objectContaining({ name: "Polly Placeholder", house: "commons" }));
   await page.goto(`${BASE}/campaigns`);
-  await expect(page.locator("#signatories").getByText("Rachel Blake")).toBeVisible();
+  await expect(page.locator("#signatories").getByText("Polly Placeholder")).toBeVisible();
 
   await page.goto(`${BASE}/staff/changes`);
   await expect(page.getByRole("cell", { name: "set status" }).first()).toBeVisible();
@@ -95,12 +95,12 @@ test("staff log in, set a status that shows on /campaigns, and log out", async (
   await page.goto(`${BASE}/staff/import`);
   await expect(page.getByText(staffCopy.syncs.status.applied).first()).toBeVisible();
 
-  // The fixture Airtable gives Rachel Blake an email Parliament doesn't list.
+  // The fixture Airtable gives Polly Placeholder an email Parliament doesn't list.
   await page.goto(`${BASE}/staff/mp-check`);
   await page.getByRole("button", { name: staffCopy.check.checkNow }).click();
   const blake = page.getByRole("row").filter({ hasText: "Cities of London and Westminster" });
   await expect(blake).toContainText(staffCopy.check.kinds.email);
-  await expect(blake).toContainText("rachel.blake.mp@parliament.uk");
+  await expect(blake).toContainText("polly.placeholder.mp@parliament.uk");
 
   await page.getByRole("button", { name: staffCopy.nav.logout }).click();
   await expect(page).toHaveURL(`${BASE}/staff/login`);

@@ -149,8 +149,8 @@ your machine. You need no keys:
 | --- | --- |
 | Luma | A few made-up events and guests |
 | postcodes.io | Knows only SW1A 1AA (Cities of London and Westminster); every other postcode is "not found". The test postcodes never ask it. |
-| Airtable | Two MPs, Diane Abbott and Rachel Blake, and two made-up signatories |
-| Parliament's Members API | The same two MPs, with an office email each. Rachel Blake's differs from Airtable's, so the MP check has something to show. |
+| Airtable | Two MPs, Dora Dummy and Polly Placeholder, and two made-up signatories |
+| Parliament's Members API | The same two MPs, with an office email each. Polly Placeholder's differs from Airtable's, so the MP check has something to show. |
 | Turnstile | Accepts every token |
 | Postmark | Accepts every email, without needing a token. With `OUTBOX_DIR`, writes each one there as a mail file (`.eml`). |
 
@@ -183,7 +183,7 @@ To look them up with fixtures, add the two fixture MPs first:
 curl -X POST -H "Authorization: Bearer dev" localhost:3000/api/cron/sync-mps
 ```
 
-Then postcode `SW1A 1AA` finds Rachel Blake.
+Then postcode `SW1A 1AA` finds Polly Placeholder.
 
 #### Log in to the staff interface
 

@@ -8,9 +8,9 @@ const doc = (...content: unknown[]) => ({ type: "doc", content }) as LetterDoc;
 
 describe("docFromMarkup", () => {
   it("makes paragraphs, bold, italic, line breaks and bullet lists", () => {
-    expect(docFromMarkup("Dear **Ms Abbott**,\n\nI _really_ mean it.\nTruly.\n\n- one\n- **two**\n\n\n\nThanks")).toEqual(
+    expect(docFromMarkup("Dear **Ms Dummy**,\n\nI _really_ mean it.\nTruly.\n\n- one\n- **two**\n\n\n\nThanks")).toEqual(
       doc(
-        p(text("Dear "), text("Ms Abbott", "bold"), text(",")),
+        p(text("Dear "), text("Ms Dummy", "bold"), text(",")),
         p(text("I "), text("really", "italic"), text(" mean it."), { type: "hardBreak" }, text("Truly.")),
         list([p(text("one"))], [p(text("two", "bold"))]),
         p(text("Thanks")),

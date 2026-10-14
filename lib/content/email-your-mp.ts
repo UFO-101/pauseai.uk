@@ -7,7 +7,7 @@ export type CampaignStatus = "signed" | "supports";
 
 /** What a letter needs to know about who it's from and who it's to. */
 export type LetterDetails = {
-  /** "Ms Abbott". */
+  /** "Ms Dummy". */
   salutation: string;
   constituency: string;
   senderName: string;

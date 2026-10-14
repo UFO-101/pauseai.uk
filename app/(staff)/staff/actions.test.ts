@@ -47,7 +47,7 @@ describeWithDatabase("staff Server Actions", () => {
     ];
     for (const attempt of attempts) expect(await expectRedirect(attempt)).toBe("/staff/login");
     expect(await statusCount()).toBe(0);
-    expect(await query("SELECT name FROM politicians")).toEqual([{ name: "Rachel Blake" }]);
+    expect(await query("SELECT name FROM politicians")).toEqual([{ name: "Polly Placeholder" }]);
   });
 
   it("saveStatus sets a status as the logged-in staff member", async () => {

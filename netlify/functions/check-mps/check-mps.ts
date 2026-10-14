@@ -13,4 +13,6 @@ export default async function checkMps(): Promise<Response> {
   return new Response(body);
 }
 
-export const config = { schedule: "@daily" };
+// 01:00 UTC, an hour after the sync (@daily, midnight UTC), so it checks
+// that night's copy.
+export const config = { schedule: "0 1 * * *" };

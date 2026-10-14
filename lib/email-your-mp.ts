@@ -7,7 +7,7 @@ import { docFromMarkup, type Inline, type LetterDoc } from "@/lib/letter-format"
 /** An MP as the form sees them. */
 export type Mp = {
   name: string;
-  /** "Ms Abbott", or built from the name when Parliament has none. */
+  /** "Ms Dummy", or built from the name when Parliament has none. */
   salutation: string;
   constituency: string;
   /** null when Parliament lists no email for them. */

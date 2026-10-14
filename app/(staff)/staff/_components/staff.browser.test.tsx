@@ -19,13 +19,13 @@ const [pm, bill] = campaigns;
 
 const MP: Politician = {
   id: 7,
-  airtableId: "rec5257",
+  airtableId: "rec90002",
   house: "commons",
-  name: "Rachel Blake",
-  salutation: "Ms Blake",
+  name: "Polly Placeholder",
+  salutation: "Ms Placeholder",
   constituency: "Cities of London and Westminster",
   party: "Labour (Co-op)",
-  email: "rachel.blake.mp@parliament.uk",
+  email: "polly.placeholder.mp@parliament.uk",
   isTest: false,
   sitting: true,
   statuses: { [pm.slug]: { status: "signed", date: "2026-10-01", note: "", updatedAt: "2026-10-02T10:00:00Z", updatedBy: "jo@pauseai.uk" } },
@@ -66,7 +66,7 @@ describe("PoliticianFilters", () => {
 describe("PoliticianTable", () => {
   it("lists each politician with their status for each campaign", async () => {
     await render(<PoliticianTable politicians={[MP, { ...MP, id: 8, name: "Testy McTestface MP", isTest: true, sitting: false, house: "lords", statuses: {} }]} />);
-    await expect.element(page.getByRole("link", { name: "Rachel Blake" })).toHaveAttribute("href", "/staff/politicians/7");
+    await expect.element(page.getByRole("link", { name: "Polly Placeholder" })).toHaveAttribute("href", "/staff/politicians/7");
     await expect.element(page.getByText(pm.title)).toBeInTheDocument();
     await expect.element(page.getByRole("cell", { name: staffCopy.statuses.signed })).toBeInTheDocument();
     await expect.element(page.getByText(staffCopy.politicians.testMp)).toBeVisible();
@@ -108,10 +108,10 @@ describe("PoliticianForm", () => {
     const { fn, sent } = action();
     await render(<PoliticianForm action={fn} politician={{ ...MP, airtableId: null, constituency: null, email: null, house: "senedd" }} />);
     await expect.element(page.getByRole("combobox", { name: staffCopy.fields.house, exact: true })).toHaveValue("senedd");
-    await expect.element(page.getByRole("textbox", { name: staffCopy.fields.name, exact: true })).toHaveValue("Rachel Blake");
+    await expect.element(page.getByRole("textbox", { name: staffCopy.fields.name, exact: true })).toHaveValue("Polly Placeholder");
     await page.getByRole("button", { name: staffCopy.politician.save }).click();
     await vi.waitFor(() => expect(sent).toHaveLength(1));
-    expect(sent[0]).toMatchObject({ id: "7", house: "senedd", salutation: "Ms Blake", party: "Labour (Co-op)" });
+    expect(sent[0]).toMatchObject({ id: "7", house: "senedd", salutation: "Ms Placeholder", party: "Labour (Co-op)" });
   });
 });
 

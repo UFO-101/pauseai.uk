@@ -72,9 +72,9 @@ export const staffCopy = {
     notFound: "⁂ Hunc politicum non invenimus.",
   },
   syncs: {
-    title: "Import MPs from Airtable",
+    title: "Members of Parliament",
     intro: "They are imported automatically every night.",
-    syncNow: "Import now",
+    syncNow: "Import MPs now",
     none: "Not yet imported.",
     status: { applied: "Applied", held: "Held", discarded: "Discarded", unchanged: "Unchanged" } as Record<string, string>,
     added: "Added",
@@ -85,7 +85,7 @@ export const staffCopy = {
     decidedBy: (by: string) => `⁂ ${by}`,
   },
   check: {
-    title: "⁂ Collatio cum Parlamento",
+    title: "Check MP data",
     intro: "⁂ Quaque nocte senatores ex Airtable cum Parlamento conferuntur. Nihil mutatur: corrige in Airtable.",
     checkNow: "⁂ Confer nunc",
     never: "⁂ Nondum collati sunt.",
@@ -104,9 +104,9 @@ export const staffCopy = {
   import: {
     // The page, with both imports: the MPs (syncs) and the signatories.
     pageTitle: "Import from Airtable",
-    title: "Import signatories from Airtable",
+    title: "Signatories",
     intro: "You can do this safely multiple times.",
-    button: "Import",
+    button: "Import signatories",
     notConfigured: "⁂ AIRTABLE_TOKEN deest.",
     note: "⁂ Ex Airtable",
     result: (r: { matched: number; added: number; alreadySet: number }) =>
