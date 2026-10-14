@@ -71,7 +71,7 @@ test("a login link works once, and only from its button", async ({ page, request
   await expect(page.getByText(staffCopy.login.failed)).toBeVisible();
 });
 
-test("staff log in, set a status that shows on /campaigns, add a signer, and log out", async ({ page, request }) => {
+test("staff log in, set a status that shows on /campaigns, and log out", async ({ page, request }) => {
   await logIn(page);
   await expect(page).toHaveURL(`${BASE}/staff`);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(staffCopy.politicians.title);
@@ -89,13 +89,8 @@ test("staff log in, set a status that shows on /campaigns, add a signer, and log
   await page.goto(`${BASE}/campaigns`);
   await expect(page.locator("#signatories").getByText("Rachel Blake")).toBeVisible();
 
-  await page.goto(`${BASE}/staff/politicians/new`);
-  await page.getByRole("textbox", { name: staffCopy.fields.name, exact: true }).fill("Lord Fixture");
-  await page.getByRole("button", { name: staffCopy.add.button }).click();
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Lord Fixture");
-
   await page.goto(`${BASE}/staff/changes`);
-  await expect(page.getByRole("cell", { name: "add politician" }).first()).toBeVisible();
+  await expect(page.getByRole("cell", { name: "set status" }).first()).toBeVisible();
 
   await page.goto(`${BASE}/staff/import`);
   await expect(page.getByText(staffCopy.syncs.status.applied).first()).toBeVisible();

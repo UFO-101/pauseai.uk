@@ -7,7 +7,7 @@ import { redirect } from "next/navigation";
 import { idFrom, politicianDetailsFrom, statusFrom } from "@/lib/staff-forms";
 import { checkMps } from "@/lib/server/mp-check";
 import { decideHeldSync, syncMps } from "@/lib/server/mp-sync";
-import { addPolitician, setStatus, updatePolitician } from "@/lib/server/politicians";
+import { setStatus, updatePolitician } from "@/lib/server/politicians";
 import { importSignatories } from "@/lib/server/signatory-import";
 import { requireStaff } from "@/lib/server/staff-auth";
 
@@ -17,14 +17,6 @@ export async function saveStatus(form: FormData): Promise<void> {
   if (!parsed) return;
   await setStatus(parsed.politicianId, parsed.campaign, parsed.change, email);
   revalidatePath(`/staff/politicians/${parsed.politicianId}`);
-}
-
-export async function addSigner(form: FormData): Promise<void> {
-  const { email } = await requireStaff();
-  const details = politicianDetailsFrom(form);
-  if (!details) redirect("/staff/politicians/new?missing=1");
-  const id = await addPolitician(details, email);
-  redirect(`/staff/politicians/${id}`);
 }
 
 export async function editSigner(form: FormData): Promise<void> {

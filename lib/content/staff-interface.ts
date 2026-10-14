@@ -21,7 +21,6 @@ export const staffCopy = {
   },
   nav: {
     politicians: "Politicians",
-    add: "Add signatory",
     check: "Check against Parliament data",
     import: "Import from Airtable",
     changes: "Changes",
@@ -71,12 +70,6 @@ export const staffCopy = {
     fromParliament: "⁂ Ex Parlamento quotidie describitur, ergo hic mutari non potest.",
     save: "Save",
     notFound: "⁂ Hunc politicum non invenimus.",
-  },
-  add: {
-    title: "⁂ Adde signatorem",
-    intro: "⁂ Pro senatoribus extra Domum Communium.",
-    button: "Add",
-    nameRequired: "⁂ Nomen scribe.",
   },
   syncs: {
     title: "Import MPs from Airtable",

@@ -30,7 +30,7 @@ export default async function PoliticianPage({ params }: { params: Promise<{ id:
       </div>
       <h2>{staffCopy.politician.detailsTitle}</h2>
       {editable ? (
-        <PoliticianForm action={editSigner} politician={politician} submitLabel={staffCopy.politician.save} />
+        <PoliticianForm action={editSigner} politician={politician} />
       ) : (
         <p>{staffCopy.politician.fromParliament}</p>
       )}

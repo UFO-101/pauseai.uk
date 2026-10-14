@@ -137,8 +137,7 @@ logs them in, so a mail scanner that follows it logs nobody in. Its address
 is this deploy's own, from Netlify at build time (`SITE_ORIGIN` in
 `next.config.ts`), never the request's, so a forged Host header can't send
 the token elsewhere. Logins work on previews too. Edit each politician's status for
-each campaign (including the test MP's), add signers from outside the
-Commons, check held MP syncs, import the signatories from Airtable once, and
+each campaign (including the test MP's), check held MP syncs, import the signatories from Airtable once, and
 see who changed what.
 
 ## Things to set up outside the code

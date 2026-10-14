@@ -67,7 +67,7 @@ export const campaigns: Campaign[] = [
     letter: (d) =>
       `Dear ${d.salutation}\n\nI’m a resident of ${d.constituency} and a supporter of **PauseAI**, a civic movement focused on averting the risks of superhuman AI. I am very concerned that AI development is racing ahead without adequate protection for the public.\n\nAI now poses an extremely serious risk to our national security. Parliamentarians in the United Kingdom, and politicians around the globe are moving to answer the call from AI developers, Nobel Laureates and concerned citizens to regulate AI immediately.\n\n**The UK has no specific legal standards for frontier AI safety.** No regulator oversees frontier AI development. And UK law does not reliably hold developers liable for damage or deaths caused by their models, even when the danger is predictable, preventable and uniquely enabled by AI.\n\nPlease could you add your name to PauseAI's open letter (attached) in support of frontier AI legislation? And could we arrange a short meeting to discuss this important matter?\n\nThank you for your consideration,`,
     alreadyDone: "Already signed! This MP has already signed the Frontier AI letter.",
-    movedOn: "⁂ Senator tuus epistulam iam subscripsit, itaque hanc tibi ostendimus.",
+    movedOn: "Good news! Your MP has already signed the letter to the PM. You can write to them about this instead.",
     attachments: [
       {
         file: "Frontier-AI-Open-Letter.pdf",

@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import { addTestMp, addTestPolitician, describeWithDatabase, useTestDatabase } from "@/tests/database";
 import { query } from "./db";
 import {
-  addPolitician,
   findSittingMp,
   findTestMp,
   getPolitician,
@@ -17,6 +16,8 @@ import {
 const PM = "regulate-letter-pm";
 const BILL = "support-sobel-bill";
 const PEER = { house: "lords" as const, name: "Lord Example", salutation: "Lord Example", constituency: null, party: "Crossbench", email: null };
+/** A peer, as the signatory import adds them. */
+const addPeer = () => addTestPolitician({ ...PEER, airtableId: null });
 
 describe("isHouse", () => {
   it("knows the houses", () => {
@@ -72,7 +73,7 @@ describeWithDatabase("politicians", () => {
 
   it("lists politicians, the test MP first, filtered by search, house and campaign", async () => {
     const mp = await addTestPolitician();
-    const peer = await addPolitician(PEER, "jo@pauseai.uk");
+    const peer = await addPeer();
     await addTestMp();
     await setStatus(peer, PM, { status: "signed", date: null, note: "" }, "jo@pauseai.uk");
 
@@ -97,8 +98,8 @@ describeWithDatabase("politicians", () => {
     });
   });
 
-  it("adds and edits signers by hand, but not MPs from Parliament or the test MP", async () => {
-    const peer = await addPolitician(PEER, "jo@pauseai.uk");
+  it("edits other signers, but not MPs from Parliament or the test MP", async () => {
+    const peer = await addPeer();
     expect(await updatePolitician(peer, { ...PEER, party: "Labour" }, "sam@pauseai.uk")).toBe(true);
     expect((await getPolitician(peer))!.party).toBe("Labour");
 
@@ -110,12 +111,12 @@ describeWithDatabase("politicians", () => {
     expect(await getPolitician(999)).toBeUndefined();
 
     const actions = await query<{ action: string }>("SELECT action FROM audit_log ORDER BY id");
-    expect(actions.map((a) => a.action)).toEqual(["add politician", "edit politician"]);
+    expect(actions.map((a) => a.action)).toEqual(["edit politician"]);
   });
 
   it("lists who signed, by name, never the test MP or those who only support", async () => {
     const mp = await addTestPolitician();
-    const peer = await addPolitician(PEER, "jo@pauseai.uk");
+    const peer = await addPeer();
     const test = await addTestMp();
     const supporter = await addTestPolitician({ airtableId: "rec2", name: "Sam Supporter", constituency: "Ipswich" });
     for (const id of [mp, peer, test]) await setStatus(id, PM, { status: "signed", date: null, note: "" }, "jo@pauseai.uk");

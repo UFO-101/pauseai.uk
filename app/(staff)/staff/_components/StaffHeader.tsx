@@ -9,7 +9,6 @@ export default function StaffHeader({ email }: { email: string }) {
     <header className={styles.header}>
       <nav>
         <Link href="/staff">{staffCopy.nav.politicians}</Link>
-        <Link href="/staff/politicians/new">{staffCopy.nav.add}</Link>
         <Link href="/staff/letters">{staffCopy.nav.letters}</Link>
         <Link href="/staff/mp-check">{staffCopy.nav.check}</Link>
         <Link href="/staff/import">{staffCopy.nav.import}</Link>
