@@ -13,7 +13,8 @@ export const staffCopy = {
   nav: {
     politicians: "⁂ Politici",
     add: "⁂ Adde signatorem",
-    syncs: "⁂ Senatores ex Parlamento",
+    syncs: "⁂ Senatores ex Airtable",
+    check: "⁂ Collatio cum Parlamento",
     import: "⁂ Importa ex Airtable",
     changes: "⁂ Mutationes",
     letters: "⁂ Epistulae",
@@ -70,8 +71,8 @@ export const staffCopy = {
     nameRequired: "⁂ Nomen scribe.",
   },
   syncs: {
-    title: "⁂ Senatores ex Parlamento",
-    intro: "⁂ Quaque nocte ex Parlamento describuntur. Si multi mutantur, hic exspectant.",
+    title: "⁂ Senatores ex Airtable",
+    intro: "⁂ Quaque nocte ex Airtable describuntur. Si multi mutantur, hic exspectant.",
     syncNow: "⁂ Describe nunc",
     none: "⁂ Nondum descripti sunt.",
     status: { applied: "⁂ Applicatum", held: "⁂ Exspectat", discarded: "⁂ Abiectum", unchanged: "⁂ Nihil mutatum" } as Record<string, string>,
@@ -81,6 +82,22 @@ export const staffCopy = {
     apply: "⁂ Applica",
     discard: "⁂ Abice",
     decidedBy: (by: string) => `⁂ ${by}`,
+  },
+  check: {
+    title: "⁂ Collatio cum Parlamento",
+    intro: "⁂ Quaque nocte senatores ex Airtable cum Parlamento conferuntur. Nihil mutatur: corrige in Airtable.",
+    checkNow: "⁂ Confer nunc",
+    never: "⁂ Nondum collati sunt.",
+    checkedAt: (at: string) => `⁂ Collati: ${at}`,
+    allGood: "⁂ Omnia congruunt.",
+    columns: { constituency: "⁂ Regio", problem: "⁂ Quaestio", airtable: "⁂ Airtable", parliament: "⁂ Parlamentum" },
+    kinds: {
+      missing: "⁂ Deest in Airtable",
+      extra: "⁂ Deest in Parlamento",
+      name: "⁂ Nomen differt",
+      email: "⁂ Inscriptio differt",
+    } as Record<string, string>,
+    noEmail: "⁂ Nulla",
   },
   import: {
     title: "⁂ Importa ex Airtable",

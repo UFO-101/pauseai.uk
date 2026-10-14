@@ -149,7 +149,7 @@ not a mock.
 - **Playwright** builds against its own database, `pauseai_behaviour`, made
   fresh by the `webServer` command. Behaviour tests that need MPs call
   `syncFixtureMps()` (`tests/behaviour/setup.ts`), which runs the nightly
-  sync's route against the Parliament fixture.
+  sync's route against the Airtable fixture.
 - **Staff screens** aren't in the public-vs-live diff: they need a login,
   and their data differs between hosts. `npm run test:fixtures-vs-main`
   screenshots them instead (below).

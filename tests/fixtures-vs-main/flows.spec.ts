@@ -73,6 +73,7 @@ for (const [path, name] of [
   ["/staff", "politicians"],
   ["/staff/politicians/new", "add a signer"],
   ["/staff/mp-sync", "MP syncs"],
+  ["/staff/mp-check", "MP check"],
   ["/staff/import", "import"],
 ] as const) {
   test(`branch vs main: staff, ${name}`, async ({ page }, testInfo) => {

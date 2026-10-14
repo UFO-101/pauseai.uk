@@ -14,8 +14,10 @@ describe("fixtureResponse", () => {
     expect((await fixtureResponse("https://eu.airtable.com/v0/app/tbl")!.json()).records).toHaveLength(2);
   });
 
-  it("answers an Airtable write with a new record", async () => {
-    expect((await fixtureResponse("https://eu.airtable.com/v0/app/tbl", { method: "POST" })!.json()).id).toBe("recFixtureLetter");
+  it("serves Airtable's MPs when asked for the House of Commons", async () => {
+    const formula = encodeURIComponent("AND({Body}='House of Commons')");
+    const mps = await fixtureResponse(`https://eu.airtable.com/v0/app/tbl?filterByFormula=${formula}`)!.json();
+    expect(mps.records.map((r: { id: string }) => r.id)).toEqual(["recAbbott", "recBlake"]);
   });
 
   it("knows one postcode, and 404s the rest", async () => {

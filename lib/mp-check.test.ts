@@ -1,0 +1,50 @@
+import { describe, expect, it } from "vitest";
+import { checkAgainstParliament, plainName } from "./mp-check";
+import type { SyncedMp } from "./mps";
+import type { ParliamentMp } from "./parliament";
+
+const ours = (constituency: string, name: string, email: string | null): SyncedMp => ({ airtableId: `rec${constituency}`, name, salutation: "", constituency, party: "", email });
+const theirs = (constituency: string, name: string, emails: string[]): ParliamentMp => ({ parliamentId: 1, name, constituency, emails });
+
+describe("plainName", () => {
+  it("ignores titles, MP, spacing and case", () => {
+    expect(plainName("Dr Ellie Chowns")).toBe("ellie chowns");
+    expect(plainName("The Rt Hon Sir  Iain Duncan Smith MP")).toBe("iain duncan smith");
+    expect(plainName("Mrs. Sureena Brackenridge")).toBe("sureena brackenridge");
+    expect(plainName("Louise Sandher-Jones")).toBe("louise sandher-jones");
+  });
+});
+
+describe("checkAgainstParliament", () => {
+  it("finds nothing wrong when they agree, whatever the titles and case", () => {
+    expect(checkAgainstParliament([ours("Ipswich", "Jack Abbott", "Jack.Abbott.MP@parliament.uk")], [theirs("Ipswich", "Mr Jack Abbott", ["jack.abbott.mp@parliament.uk", "x@example.org"])])).toEqual([]);
+  });
+
+  it("lists constituencies only one side has, different names and emails, by constituency", () => {
+    const problems = checkAgainstParliament(
+      [
+        ours("Zetland", "Zed", "z@parliament.uk"),
+        ours("North East Derbyshire", "Louise Jones", "louise.jones.mp@parliament.uk"),
+        ours("Gone", "Former MP", "f@parliament.uk"),
+        ours("Wallasey", "Angela Eagle", null),
+      ],
+      [
+        theirs("Zetland", "Zed", ["z@parliament.uk"]),
+        theirs("North East Derbyshire", "Louise Sandher-Jones", ["louise.sandherjones.mp@parliament.uk"]),
+        theirs("New Seat", "New MP", []),
+        theirs("Wallasey", "Dame Angela Eagle", ["angela.eagle.mp@parliament.uk"]),
+      ],
+    );
+    expect(problems).toEqual([
+      { kind: "extra", constituency: "Gone", airtable: "Former MP" },
+      { kind: "missing", constituency: "New Seat", parliament: "New MP" },
+      { kind: "name", constituency: "North East Derbyshire", airtable: "Louise Jones", parliament: "Louise Sandher-Jones" },
+      { kind: "email", constituency: "North East Derbyshire", name: "Louise Jones", airtable: "louise.jones.mp@parliament.uk", parliament: ["louise.sandherjones.mp@parliament.uk"] },
+      { kind: "email", constituency: "Wallasey", name: "Angela Eagle", airtable: null, parliament: ["angela.eagle.mp@parliament.uk"] },
+    ]);
+  });
+
+  it("takes Airtable's email where Parliament lists none", () => {
+    expect(checkAgainstParliament([ours("West Tyrone", "Órfhlaith Begley", "o@sinnfein.ie")], [theirs("West Tyrone", "Órfhlaith Begley", [])])).toEqual([]);
+  });
+});

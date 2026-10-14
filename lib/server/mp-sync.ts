@@ -1,37 +1,21 @@
 import "server-only";
-import { changeCount, compareMps, fetchCurrentMps, MAX_UNCHECKED_CHANGES, type MpChanges, type SyncedMp } from "@/lib/parliament";
+import { changeCount, compareMps, MAX_UNCHECKED_CHANGES, type MpChanges, type SyncedMp } from "@/lib/mps";
 import { TEST_MPS } from "@/lib/test-mps";
+import { fetchMps } from "./airtable";
 import { logChange } from "./audit";
 import { query, transaction, type Queryable } from "./db";
-import { outsideFetch } from "./outside-fetch";
 
-// Copies the sitting MPs from Parliament into the politicians table, nightly
+// Copies the sitting MPs from Airtable into the politicians table, nightly
 // (app/api/cron/sync-mps) or when staff ask. A sync that would change more
 // than MAX_UNCHECKED_CHANGES MPs is held for a person to check.
 
-// Parliament's API answers 429 when asked too much at once, which ~650
-// contact lookups can do. Wait as it says (Retry-After, in seconds), or
-// longer each time, and try again.
-const ATTEMPTS = 5;
-
-const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-
-async function getJson(url: string): Promise<unknown> {
-  for (let attempt = 1; ; attempt++) {
-    const res = await outsideFetch(url, { headers: { Accept: "application/json" }, cache: "no-store" });
-    if (res.ok) return res.json();
-    if ((res.status !== 429 && res.status !== 503) || attempt === ATTEMPTS) throw new Error(`${url} returned ${res.status}`);
-    const retryAfter = Number(res.headers.get("retry-after"));
-    await wait(Number.isFinite(retryAfter) && res.headers.has("retry-after") ? retryAfter * 1000 : 1000 * 2 ** (attempt - 1));
-  }
-}
-
 export type SyncResult = { status: "applied" | "held" | "unchanged"; changes: MpChanges };
 
-async function sittingMps(db?: Queryable): Promise<SyncedMp[]> {
+/** The MPs copied from Airtable who are still sitting, by constituency. */
+export async function sittingMps(db?: Queryable): Promise<SyncedMp[]> {
   return query<SyncedMp>(
-    `SELECT parliament_id AS "parliamentId", name, salutation, constituency, party, email
-     FROM politicians WHERE parliament_id IS NOT NULL AND sitting ORDER BY constituency`,
+    `SELECT airtable_id AS "airtableId", name, salutation, constituency, party, email
+     FROM politicians WHERE airtable_id IS NOT NULL AND sitting ORDER BY constituency`,
     [],
     db,
   );
@@ -65,25 +49,27 @@ async function ensureTestMps(db?: Queryable): Promise<void> {
 async function applyMps(mps: SyncedMp[], db: Queryable): Promise<void> {
   for (const mp of mps) {
     await query(
-      `INSERT INTO politicians (parliament_id, house, name, salutation, constituency, party, email)
+      `INSERT INTO politicians (airtable_id, house, name, salutation, constituency, party, email)
        VALUES ($1, 'commons', $2, $3, $4, $5, $6)
-       ON CONFLICT (parliament_id) DO UPDATE
+       ON CONFLICT (airtable_id) DO UPDATE
        SET house = 'commons', name = $2, salutation = $3, constituency = $4, party = $5, email = $6, sitting = true, updated_at = now()`,
-      [mp.parliamentId, mp.name, mp.salutation, mp.constituency, mp.party, mp.email],
+      [mp.airtableId, mp.name, mp.salutation, mp.constituency, mp.party, mp.email],
       db,
     );
   }
   await query(
     `UPDATE politicians SET sitting = false, updated_at = now()
-     WHERE parliament_id IS NOT NULL AND sitting AND NOT (parliament_id = ANY($1::int[]))`,
-    [mps.map((mp) => mp.parliamentId)],
+     WHERE airtable_id IS NOT NULL AND sitting AND NOT (airtable_id = ANY($1::text[]))`,
+    [mps.map((mp) => mp.airtableId)],
     db,
   );
 }
 
-/** Fetches the MPs from Parliament and applies them, or holds them if too much has changed. */
+/** Fetches the MPs from Airtable and applies them, or holds them if too much has changed. */
 export async function syncMps(): Promise<SyncResult> {
-  const fetched = await fetchCurrentMps(getJson);
+  const token = process.env.AIRTABLE_TOKEN;
+  if (!token) throw new Error("AIRTABLE_TOKEN isn't set, so the MPs can't be copied from Airtable");
+  const fetched = await fetchMps(token);
   return transaction(async (db) => {
     await ensureTestMps(db);
     const before = await sittingMps(db);

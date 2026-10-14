@@ -20,7 +20,7 @@ describeWithDatabase("findMp", () => {
     server.use(http.all("*", () => HttpResponse.error()));
     expect(await findMp("zz9 9zz")).toEqual({ ok: false, reason: "no_mp" });
     await addTestMp();
-    await addTestPolitician({ parliamentId: null, name: "Signy McTestface MP", constituency: "Signshire", testPostcode: "ZZ99ZS" });
+    await addTestPolitician({ airtableId: null, name: "Signy McTestface MP", constituency: "Signshire", testPostcode: "ZZ99ZS" });
     expect(await findMp("zz9 9zz")).toMatchObject({ ok: true, mp: { name: "Testy McTestface MP", email: "test-mp@example.org" } });
     expect(await findMp("ZZ99ZS")).toMatchObject({ ok: true, mp: { name: "Signy McTestface MP", isTest: true } });
   });

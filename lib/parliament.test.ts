@@ -1,81 +1,28 @@
 import { describe, expect, it } from "vitest";
 import { http, HttpResponse } from "msw";
 import { server } from "@/tests/fixtures/msw";
-import {
-  changeCount,
-  compareMps,
-  emailFrom,
-  fetchCurrentMps,
-  MEMBERS_API,
-  salutationFor,
-  toSyncedMp,
-  type SyncedMp,
-} from "./parliament";
+import { fetchCurrentMps, MEMBERS_API } from "./parliament";
 
 const getJson = (url: string) => fetch(url).then((res) => res.json());
 
-const member = {
-  id: 1,
-  nameDisplayAs: "Jack Abbott",
-  nameListAs: "Abbott, Jack",
-  nameAddressAs: null,
-  gender: "M",
-  latestParty: { name: "Labour" },
-  latestHouseMembership: { membershipFrom: "Ipswich" },
-};
-
-describe("emailFrom", () => {
-  it("prefers the parliamentary office, and trims the address", () => {
-    expect(
-      emailFrom([
-        { typeId: 4, email: "constituency@example.org" },
-        { typeId: 1, email: "office@parliament.uk " },
-      ]),
-    ).toBe("office@parliament.uk");
-  });
-
-  it("falls back to any address, or none", () => {
-    expect(emailFrom([{ typeId: 6, email: null }, { typeId: 4, email: " " }, { typeId: 4, email: "c@example.org" }])).toBe("c@example.org");
-    expect(emailFrom([{ typeId: 1, email: null }, {}])).toBeNull();
-  });
-});
-
-describe("salutationFor", () => {
-  it("uses Parliament's when there is one", () => {
-    expect(salutationFor({ ...member, nameAddressAs: " Ms Abbott " })).toBe("Ms Abbott");
-  });
-
-  it("otherwise builds one from the name", () => {
-    expect(salutationFor(member)).toBe("Mr Abbott");
-    expect(salutationFor({ ...member, gender: "F", nameListAs: "Blake, Rachel" })).toBe("Ms Blake");
-    expect(salutationFor({ ...member, nameListAs: "Duncan Smith, Sir Iain" })).toBe("Sir Iain");
-    expect(salutationFor({ ...member, gender: "F", nameListAs: "Hodge, Dame Margaret" })).toBe("Dame Margaret");
-    expect(salutationFor({ ...member, gender: null })).toBe("Jack Abbott");
-    expect(salutationFor({ ...member, gender: null, nameListAs: "Cher" })).toBe("Jack Abbott");
-  });
-});
-
-describe("toSyncedMp", () => {
-  it("copies what we keep", () => {
-    expect(toSyncedMp(member, [{ typeId: 1, email: "jack.abbott.mp@parliament.uk" }])).toEqual({
-      parliamentId: 1,
-      name: "Jack Abbott",
-      salutation: "Mr Abbott",
-      constituency: "Ipswich",
-      party: "Labour",
-      email: "jack.abbott.mp@parliament.uk",
-    });
-    expect(toSyncedMp({ ...member, latestParty: null }, []).party).toBe("");
-  });
-});
+const member = { id: 1, nameDisplayAs: "Jack Abbott", latestHouseMembership: { membershipFrom: "Ipswich" } };
 
 describe("fetchCurrentMps", () => {
-  it("reads every sitting MP and their contacts, sorted by constituency", async () => {
-    const mps = await fetchCurrentMps(getJson);
-    expect(mps.map((mp) => [mp.constituency, mp.email])).toEqual([
-      ["Cities of London and Westminster", "mp5257.office@parliament.uk"],
-      ["Hackney North and Stoke Newington", "mp172.office@parliament.uk"],
+  it("reads every sitting MP and their emails, trimmed", async () => {
+    expect(await fetchCurrentMps(getJson)).toEqual([
+      { parliamentId: 172, name: "Ms Diane Abbott", constituency: "Hackney North and Stoke Newington", emails: ["mp172.office@parliament.uk"] },
+      { parliamentId: 5257, name: "Rachel Blake", constituency: "Cities of London and Westminster", emails: ["mp5257.office@parliament.uk"] },
     ]);
+  });
+
+  it("keeps each email once, and skips contacts without one", async () => {
+    server.use(
+      http.get(`${MEMBERS_API}/Members/Search`, () => HttpResponse.json({ items: [{ value: member }], totalResults: 1 })),
+      http.get(`${MEMBERS_API}/Members/1/Contact`, () =>
+        HttpResponse.json({ value: [{ email: "a@parliament.uk" }, { email: " a@parliament.uk " }, { email: null }, {}, { email: "b@example.org" }] }),
+      ),
+    );
+    expect((await fetchCurrentMps(getJson))[0].emails).toEqual(["a@parliament.uk", "b@example.org"]);
   });
 
   it("pages through the list, 20 at a time, and asks only for sitting MPs", async () => {
@@ -126,23 +73,5 @@ describe("fetchCurrentMps", () => {
   it("copes with no MPs at all", async () => {
     server.use(http.get(`${MEMBERS_API}/Members/Search`, () => HttpResponse.json({ items: [], totalResults: 0 })));
     expect(await fetchCurrentMps(getJson)).toEqual([]);
-  });
-});
-
-describe("compareMps", () => {
-  const mp = (id: number, email = "a@parliament.uk"): SyncedMp => ({
-    parliamentId: id,
-    name: `MP ${id}`,
-    salutation: "Mr A",
-    constituency: `Seat ${id}`,
-    party: "P",
-    email,
-  });
-
-  it("finds who joined, who left and whose details changed", () => {
-    const changes = compareMps([mp(1), mp(2), mp(3)], [mp(1), mp(2, "new@parliament.uk"), mp(4)]);
-    expect(changes).toEqual({ added: [mp(4)], removed: [mp(3)], changed: [mp(2, "new@parliament.uk")] });
-    expect(changeCount(changes)).toBe(3);
-    expect(changeCount(compareMps([mp(1)], [mp(1)]))).toBe(0);
   });
 });

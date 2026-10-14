@@ -11,7 +11,7 @@ import { dropDatabase, freshDatabase } from "@/scripts/fresh-database.mjs";
  */
 export const describeWithDatabase = describe.skipIf(process.env.NETLIFY === "true");
 
-const TABLES = ["audit_log", "campaign_statuses", "letter_events", "letters", "mp_syncs", "politicians", "staff_sessions"];
+const TABLES = ["audit_log", "campaign_statuses", "letter_events", "letters", "mp_checks", "mp_syncs", "politicians", "staff_sessions"];
 
 /**
  * Gives this test file its own database, empty before each test. Call at the
@@ -35,7 +35,7 @@ export function useTestDatabase(extraTables: string[] = []) {
 }
 
 type MpRow = {
-  parliamentId?: number | null;
+  airtableId?: string | null;
   house?: string;
   name?: string;
   salutation?: string;
@@ -50,10 +50,10 @@ type MpRow = {
 /** Adds a politician straight into the table, and returns their ID. */
 export async function addTestPolitician(row: MpRow = {}): Promise<number> {
   const [{ id }] = await query<{ id: number }>(
-    `INSERT INTO politicians (parliament_id, house, name, salutation, constituency, party, email, is_test, test_postcode, sitting)
+    `INSERT INTO politicians (airtable_id, house, name, salutation, constituency, party, email, is_test, test_postcode, sitting)
      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id::int AS id`,
     [
-      row.parliamentId === undefined ? 5257 : row.parliamentId,
+      row.airtableId === undefined ? "recBlake" : row.airtableId,
       row.house ?? "commons",
       row.name ?? "Rachel Blake",
       row.salutation ?? "Ms Blake",
@@ -70,7 +70,7 @@ export async function addTestPolitician(row: MpRow = {}): Promise<number> {
 
 /** Testy McTestface MP (ZZ99ZZ), as the sync adds them, without statuses. */
 export function addTestMp(email: string | null = "test-mp@example.org"): Promise<number> {
-  return addTestPolitician({ parliamentId: null, name: "Testy McTestface MP", salutation: "Mr McTestface", constituency: "Testshire", party: "", email, testPostcode: "ZZ99ZZ" });
+  return addTestPolitician({ airtableId: null, name: "Testy McTestface MP", salutation: "Mr McTestface", constituency: "Testshire", party: "", email, testPostcode: "ZZ99ZZ" });
 }
 
 /** Runs `work` with the database unreachable, then reconnects. */

@@ -5,6 +5,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { idFrom, politicianDetailsFrom, statusFrom } from "@/lib/staff-forms";
+import { checkMps } from "@/lib/server/mp-check";
 import { decideHeldSync, syncMps } from "@/lib/server/mp-sync";
 import { addPolitician, setStatus, updatePolitician } from "@/lib/server/politicians";
 import { importSignatories } from "@/lib/server/signatory-import";
@@ -39,6 +40,12 @@ export async function syncNow(): Promise<void> {
   await requireStaff();
   await syncMps();
   revalidatePath("/staff/mp-sync");
+}
+
+export async function checkNow(): Promise<void> {
+  await requireStaff();
+  await checkMps();
+  revalidatePath("/staff/mp-check");
 }
 
 export async function decideSync(form: FormData): Promise<void> {

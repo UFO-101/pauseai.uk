@@ -26,7 +26,8 @@ export type StatusRecord = {
 
 export type Politician = {
   id: number;
-  parliamentId: number | null;
+  /** Airtable's record ID, for MPs copied from it. Null for signers added by hand, and the test MPs. */
+  airtableId: string | null;
   house: House;
   name: string;
   salutation: string;
@@ -70,7 +71,7 @@ export async function statusesOf(politicianId: number): Promise<MpStatuses> {
 type Row = Omit<Politician, "statuses"> & { statuses: Record<string, StatusRecord> | null };
 
 const SELECT_POLITICIANS = `
-  SELECT p.id::int AS id, p.parliament_id AS "parliamentId", p.house, p.name, p.salutation, p.constituency,
+  SELECT p.id::int AS id, p.airtable_id AS "airtableId", p.house, p.name, p.salutation, p.constituency,
     p.party, p.email, p.is_test AS "isTest", p.sitting,
     json_object_agg(s.campaign, json_build_object(
       'status', s.status, 'date', to_char(s.status_date, 'YYYY-MM-DD'), 'note', s.note,
@@ -151,7 +152,7 @@ export async function updatePolitician(id: number, details: PoliticianDetails, s
   return transaction(async (db) => {
     const updated = await query(
       `UPDATE politicians SET house = $2, name = $3, salutation = $4, constituency = $5, party = $6, email = $7, updated_at = now()
-       WHERE id = $1 AND parliament_id IS NULL AND NOT is_test RETURNING id`,
+       WHERE id = $1 AND airtable_id IS NULL AND NOT is_test RETURNING id`,
       [id, details.house, details.name, details.salutation, details.constituency, details.party, details.email],
       db,
     );

@@ -6,7 +6,7 @@ import { getPolitician } from "@/lib/server/politicians";
 import { createSession } from "@/lib/server/staff-auth";
 import { addTestPolitician, describeWithDatabase, useTestDatabase } from "@/tests/database";
 import { expectRedirect, requestCookies } from "@/tests/next-headers";
-import { addSigner, decideSync, editSigner, importFromAirtable, saveStatus, syncNow } from "./actions";
+import { addSigner, checkNow, decideSync, editSigner, importFromAirtable, saveStatus, syncNow } from "./actions";
 
 vi.mock("next/headers", () => import("@/tests/next-headers"));
 // revalidatePath needs a Next request; here it only needs to have been asked.
@@ -30,6 +30,7 @@ describeWithDatabase("staff Server Actions", () => {
     requestCookies.clear();
     revalidatePath.mockClear();
     requestCookies.set("staff_session", await createSession("jo@pauseai.uk"));
+    vi.stubEnv("AIRTABLE_TOKEN", "token");
   });
   afterEach(() => vi.unstubAllEnvs());
 
@@ -41,6 +42,7 @@ describeWithDatabase("staff Server Actions", () => {
       () => addSigner(form({ house: "lords", name: "Lord X" })),
       () => editSigner(form({ id: String(id), house: "lords", name: "X" })),
       () => syncNow(),
+      () => checkNow(),
       () => decideSync(form({ id: "1", decision: "apply" })),
       () => importFromAirtable(),
     ];
@@ -76,14 +78,20 @@ describeWithDatabase("staff Server Actions", () => {
     expect((await getPolitician(id))!.name).toBe("Lord Y");
   });
 
-  it("syncNow copies the MPs from Parliament", async () => {
+  it("checkNow checks the MPs against Parliament's", async () => {
+    await checkNow();
+    expect(await query("SELECT count(*)::int AS n FROM mp_checks")).toEqual([{ n: 1 }]);
+    expect(revalidatePath).toHaveBeenCalledWith("/staff/mp-check");
+  });
+
+  it("syncNow copies the MPs from Airtable", async () => {
     await syncNow();
-    expect(await query("SELECT count(*)::int AS n FROM politicians WHERE parliament_id IS NOT NULL")).toEqual([{ n: 2 }]);
+    expect(await query("SELECT count(*)::int AS n FROM politicians WHERE airtable_id IS NOT NULL")).toEqual([{ n: 2 }]);
     expect(revalidatePath).toHaveBeenCalledWith("/staff/mp-sync");
   });
 
   it("decideSync applies or discards a held sync, and ignores a bad form", async () => {
-    for (let i = 1; i <= 25; i++) await addTestPolitician({ parliamentId: 10000 + i, constituency: `Seat ${i}` });
+    for (let i = 1; i <= 25; i++) await addTestPolitician({ airtableId: `rec${10000 + i}`, constituency: `Seat ${i}` });
     await syncNow();
     const [{ id }] = await query<{ id: number }>("SELECT id::int AS id FROM mp_syncs");
     await decideSync(form({ id: String(id), decision: "maybe" }));

@@ -80,6 +80,13 @@ test("staff log in, set a status that shows on /campaigns, add a signer, and log
   await page.goto(`${BASE}/staff/mp-sync`);
   await expect(page.getByText(staffCopy.syncs.status.applied).first()).toBeVisible();
 
+  // The fixture Airtable gives Rachel Blake an email Parliament doesn't list.
+  await page.goto(`${BASE}/staff/mp-check`);
+  await page.getByRole("button", { name: staffCopy.check.checkNow }).click();
+  const blake = page.getByRole("row").filter({ hasText: "Cities of London and Westminster" });
+  await expect(blake).toContainText(staffCopy.check.kinds.email);
+  await expect(blake).toContainText("rachel.blake.mp@parliament.uk");
+
   await page.getByRole("button", { name: staffCopy.nav.logout }).click();
   await expect(page).toHaveURL(`${BASE}/staff/login`);
   await page.goto(`${BASE}/staff`);

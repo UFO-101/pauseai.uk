@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/Button";
 import { staffCopy } from "@/lib/content/staff-interface";
-import type { SyncedMp } from "@/lib/parliament";
+import type { SyncedMp } from "@/lib/mps";
 import type { MpSync } from "@/lib/server/mp-sync";
 import styles from "./staff.module.css";
 
@@ -13,7 +13,7 @@ function Mps({ heading, mps }: { heading: string; mps: SyncedMp[] }) {
       </h4>
       <ul>
         {mps.map((mp) => (
-          <li key={mp.parliamentId}>
+          <li key={mp.airtableId}>
             {mp.constituency}: {mp.name}
             {mp.email ? "" : ` (${staffCopy.politicians.noEmail})`}
           </li>

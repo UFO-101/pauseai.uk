@@ -30,7 +30,7 @@ describeWithDatabase("politicians", () => {
 
   it("finds the sitting MP for a constituency, never one who has left or the test MP", async () => {
     const id = await addTestPolitician();
-    await addTestPolitician({ parliamentId: 1, name: "Old MP", constituency: "Ipswich", sitting: false });
+    await addTestPolitician({ airtableId: "rec1", name: "Old MP", constituency: "Ipswich", sitting: false });
     await addTestMp();
     expect(await findSittingMp("Cities of London and Westminster")).toEqual({
       id,
@@ -84,7 +84,7 @@ describeWithDatabase("politicians", () => {
     expect(await listPoliticians({}, 1)).toHaveLength(1);
     expect((await listPoliticians({ search: "Rachel" }))[0]).toEqual({
       id: mp,
-      parliamentId: 5257,
+      airtableId: "recBlake",
       house: "commons",
       name: "Rachel Blake",
       salutation: "Ms Blake",
@@ -117,7 +117,7 @@ describeWithDatabase("politicians", () => {
     const mp = await addTestPolitician();
     const peer = await addPolitician(PEER, "jo@pauseai.uk");
     const test = await addTestMp();
-    const supporter = await addTestPolitician({ parliamentId: 2, name: "Sam Supporter", constituency: "Ipswich" });
+    const supporter = await addTestPolitician({ airtableId: "rec2", name: "Sam Supporter", constituency: "Ipswich" });
     for (const id of [mp, peer, test]) await setStatus(id, PM, { status: "signed", date: null, note: "" }, "jo@pauseai.uk");
     await setStatus(supporter, PM, { status: "supports", date: null, note: "" }, "jo@pauseai.uk");
 

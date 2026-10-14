@@ -14,7 +14,7 @@ export default async function PoliticianPage({ params }: { params: Promise<{ id:
   const { id } = await params;
   const politician = /^\d+$/.test(id) ? await getPolitician(Number(id)) : undefined;
   if (!politician) notFound();
-  const editable = politician.parliamentId === null && !politician.isTest;
+  const editable = politician.airtableId === null && !politician.isTest;
   return (
     <main className={`container ${styles.page}`}>
       <StaffHeader email={email} />

@@ -149,11 +149,11 @@ your machine. You need no keys:
 | --- | --- |
 | Luma | A few made-up events and guests |
 | postcodes.io | Knows only SW1A 1AA (Cities of London and Westminster); every other postcode is "not found". The test postcodes never ask it. |
-| Parliament's Members API | Two MPs: Diane Abbott and Rachel Blake |
+| Airtable | Two MPs, Diane Abbott and Rachel Blake, and two made-up signatories |
+| Parliament's Members API | The same two MPs, with an office email each. Rachel Blake's differs from Airtable's, so the MP check has something to show. |
 | Turnstile | Accepts every token |
 | Postmark | Accepts every email, without needing a token. With `OUTBOX_DIR`, writes each one to a JSON file there. |
 | Google login | Accepts the codes `fixture-staff` (staff@pauseai.uk) and `fixture-outsider` (a Gmail account) |
-| Airtable | Two made-up signatories |
 
 #### Send a letter to the test MP
 
@@ -210,12 +210,14 @@ login code: only the answers from Google are fixtures.
 
 Delete `DATA_FIXTURES` from `.env.local`, and fill in the keys you need. Each is explained there. Things to know:
 
-- **MPs.** The database starts with only the test MP. Copy the real MPs from
-  Parliament (about 650, which takes a minute):
+- **MPs.** The database starts with only the test MP. With `AIRTABLE_TOKEN`
+  set, copy the real MPs from Airtable, then check them against Parliament
+  (about 650 lookups, which takes a minute):
 
   ```bash
   # With CRON_SECRET=dev in .env.local:
   curl -X POST -H "Authorization: Bearer dev" localhost:3000/api/cron/sync-mps
+  curl -X POST -H "Authorization: Bearer dev" localhost:3000/api/cron/check-mps
   ```
 
   Then any real postcode finds its MP.
@@ -230,8 +232,9 @@ Delete `DATA_FIXTURES` from `.env.local`, and fill in the keys you need. Each is
 - **Staff login.** Make your own OAuth client in a Google Cloud project
   (type "Web application"), with `http://localhost:3000/staff/api/callback`
   as an authorised redirect URI. Only pauseai.uk accounts can log in.
-- **Airtable.** `AIRTABLE_TOKEN` is only for the one-off signatory import at
-  `/staff/import`.
+- **Airtable.** `AIRTABLE_TOKEN` needs only read access to the "UK
+  Parliamentarians" table. It's for the MP sync and the one-off signatory
+  import at `/staff/import`.
 
 ## 5. Things that run on a schedule, or from outside
 
@@ -242,6 +245,7 @@ call these routes. Locally, with `CRON_SECRET=dev` in `.env.local`:
 
 ```bash
 curl -X POST -H "Authorization: Bearer dev" localhost:3000/api/cron/sync-mps
+curl -X POST -H "Authorization: Bearer dev" localhost:3000/api/cron/check-mps
 ```
 
 **Postmark's webhooks.** Set `POSTMARK_WEBHOOK_USER=postmark` and

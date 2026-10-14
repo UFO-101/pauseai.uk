@@ -30,9 +30,12 @@ At the swap (stage 5 of the plan) these replace `/campaigns`:
 - `lib/server/find-mp.ts`: postcode to MP, from the database. A test
   MP's postcode finds them (`lib/test-mps.json`: ZZ99ZZ, and ZZ99ZS, who
   has signed the letter to the PM).
-- `lib/parliament.ts`: reads the sitting MPs from Parliament's Members API,
-  and compares two lists of them.
-- `lib/server/mp-sync.ts`: the nightly copy of MPs into the database.
+- `lib/server/airtable.ts`: the only file that talks to Airtable. Reads the
+  MPs, and the signatories for their import.
+- `lib/mps.ts`, `lib/server/mp-sync.ts`: the nightly copy of MPs from
+  Airtable into the database.
+- `lib/parliament.ts`, `lib/mp-check.ts`, `lib/server/mp-check.ts`: the
+  nightly check of those MPs against Parliament's Members API.
 - `lib/server/politicians.ts`: politicians and their campaign statuses.
 - `lib/server/staff-auth.ts`, `lib/server/google-login.ts`, `proxy.ts`: staff
   login.
@@ -46,21 +49,35 @@ At the swap (stage 5 of the plan) these replace `/campaigns`:
 
 ## MPs
 
-Copied nightly from Parliament's Members API into the `politicians` table,
-by the scheduled function `netlify/functions/sync-mps/`, which calls
-`/api/cron/sync-mps`. Staff can also run it from `/staff/mp-sync`. If more
-than 20 MPs would change at once, the sync is held there for a person to
-apply or discard. MPs who leave stay in the table, marked as no longer
-sitting, with their statuses. The sync also adds the test MPs, with
-`TEST_MP_EMAIL` as their email, and their statuses when it first adds them.
+Airtable's "UK Parliamentarians" table is the source of truth for who the
+MPs are and their emails; the policy team keeps it up to date. Its rows
+whose Body is "House of Commons", except those ticked "No longer in
+office", are copied nightly into the `politicians` table, keyed by
+Airtable's record ID, by the scheduled function `netlify/functions/sync-mps/`,
+which calls `/api/cron/sync-mps`. Staff can also run it from
+`/staff/mp-sync`. If more than 20 MPs would change at once, the sync is held
+there for a person to apply or discard. MPs who leave stay in the table,
+marked as no longer sitting, with their statuses. The sync also adds the
+test MPs, with `TEST_MP_EMAIL` as their email, and their statuses when it
+first adds them. Who has signed or supports lives only in our database.
 
 After the first deploy with the database, run the sync once from
 `/staff/mp-sync`: until then the tool finds no MPs.
 
-Emails are the parliamentary office's where there is one, trimmed. Where
-Parliament gives no salutation, one is built from the name: "Sir Iain" or
-"Dame Margaret", else Mr or Ms and the surname, else the full name. Where
-Parliament's salutation is the full name ("Stephen Kinnock"), it is kept.
+### The check against Parliament
+
+Nightly, `netlify/functions/check-mps/` calls `/api/cron/check-mps`, which
+compares the sitting MPs with Parliament's Members API and keeps what it
+finds. `/staff/mp-check` shows the newest check, and can run one. It lists
+constituencies only one side has, names that differ (not counting titles
+such as Dr or Sir), and emails Parliament doesn't list. Where Parliament
+lists no email, Airtable's is taken as right. Nothing is changed: fix
+problems in Airtable, and the next sync copies the fix.
+
+The check asks Parliament for each MP's contacts, about 650 requests, ten at
+a time. Tried from a laptop on 14 Oct 2026, that took 12–18 seconds. A
+Netlify scheduled function gets 30 seconds, and it waits for the route, so
+if the nightly check starts failing with a timeout, that's why.
 
 ## Settings
 

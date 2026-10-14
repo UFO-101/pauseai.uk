@@ -7,6 +7,7 @@ import type { Politician } from "@/lib/server/politicians";
 import type { MpSync } from "@/lib/server/mp-sync";
 import ChangesTable from "./ChangesTable";
 import LettersTable from "./LettersTable";
+import MpCheckList from "./MpCheckList";
 import PoliticianFilters from "./PoliticianFilters";
 import PoliticianForm from "./PoliticianForm";
 import PoliticianTable from "./PoliticianTable";
@@ -18,7 +19,7 @@ const [pm, bill] = campaigns;
 
 const MP: Politician = {
   id: 7,
-  parliamentId: 5257,
+  airtableId: "rec5257",
   house: "commons",
   name: "Rachel Blake",
   salutation: "Ms Blake",
@@ -116,7 +117,7 @@ describe("PoliticianForm", () => {
 
   it("edits a signer, filled in with their details", async () => {
     const { fn, sent } = action();
-    await render(<PoliticianForm action={fn} politician={{ ...MP, parliamentId: null, constituency: null, email: null, house: "senedd" }} submitLabel="Save" />);
+    await render(<PoliticianForm action={fn} politician={{ ...MP, airtableId: null, constituency: null, email: null, house: "senedd" }} submitLabel="Save" />);
     await expect.element(page.getByRole("combobox", { name: staffCopy.fields.house, exact: true })).toHaveValue("senedd");
     await expect.element(page.getByRole("textbox", { name: staffCopy.fields.name, exact: true })).toHaveValue("Rachel Blake");
     await page.getByRole("button", { name: "Save" }).click();
@@ -126,7 +127,7 @@ describe("PoliticianForm", () => {
 });
 
 describe("SyncList", () => {
-  const mp = (id: number, email: string | null = "a@parliament.uk") => ({ parliamentId: id, name: `MP ${id}`, salutation: "", constituency: `Seat ${id}`, party: "", email });
+  const mp = (id: number, email: string | null = "a@parliament.uk") => ({ airtableId: `rec${id}`, name: `MP ${id}`, salutation: "", constituency: `Seat ${id}`, party: "", email });
   const held: MpSync = { id: 3, at: "2026-10-12T02:00:00Z", status: "held", changes: { added: [mp(1)], removed: [mp(2, null)], changed: [] }, decidedBy: null };
   const applied: MpSync = { id: 2, at: "2026-10-11T02:00:00Z", status: "applied", changes: { added: [], removed: [], changed: [mp(4)] }, decidedBy: "jo@pauseai.uk" };
 
@@ -148,6 +149,38 @@ describe("SyncList", () => {
   it("says when there are none", async () => {
     await render(<SyncList syncs={[]} decide={() => {}} />);
     await expect.element(page.getByText(staffCopy.syncs.none)).toBeVisible();
+  });
+});
+
+describe("MpCheckList", () => {
+  it("lists each problem, with what Airtable and Parliament say", async () => {
+    await render(
+      <MpCheckList
+        check={{
+          at: "2026-10-14T02:00:00Z",
+          problems: [
+            { kind: "extra", constituency: "Gone", airtable: "Former MP" },
+            { kind: "missing", constituency: "New Seat", parliament: "New MP" },
+            { kind: "name", constituency: "North East Derbyshire", airtable: "Louise Jones", parliament: "Louise Sandher-Jones" },
+            { kind: "email", constituency: "Wallasey", name: "Angela Eagle", airtable: "eaglea@parliament.uk", parliament: ["angela.eagle.mp@parliament.uk", "a@example.org"] },
+            { kind: "email", constituency: "Zetland", name: "Zed", airtable: null, parliament: ["z@parliament.uk"] },
+          ],
+        }}
+      />,
+    );
+    const row = (constituency: string) => page.getByRole("row").filter({ hasText: constituency });
+    await expect.element(row("Gone")).toHaveTextContent(`Gone${staffCopy.check.kinds.extra}Former MP`);
+    await expect.element(row("New Seat")).toHaveTextContent(`New Seat${staffCopy.check.kinds.missing}New MP`);
+    await expect.element(row("North East Derbyshire")).toHaveTextContent(`North East Derbyshire${staffCopy.check.kinds.name}Louise JonesLouise Sandher-Jones`);
+    await expect.element(row("Wallasey")).toHaveTextContent(`Wallasey${staffCopy.check.kinds.email}Angela Eagle: eaglea@parliament.ukangela.eagle.mp@parliament.uk, a@example.org`);
+    await expect.element(row("Zetland")).toHaveTextContent(`Zetland${staffCopy.check.kinds.email}Zed: ${staffCopy.check.noEmail}z@parliament.uk`);
+  });
+
+  it("says when all is well, or when there's been no check", async () => {
+    const { rerender } = await render(<MpCheckList check={{ at: "2026-10-14T02:00:00Z", problems: [] }} />);
+    await expect.element(page.getByText(staffCopy.check.allGood)).toBeVisible();
+    await rerender(<MpCheckList />);
+    await expect.element(page.getByText(staffCopy.check.never)).toBeVisible();
   });
 });
 

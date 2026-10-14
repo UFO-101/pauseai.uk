@@ -127,6 +127,29 @@ ALTER TABLE public.letters ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
 );
 
 --
+-- Name: mp_checks; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.mp_checks (
+    id bigint NOT NULL,
+    at timestamp with time zone DEFAULT now() NOT NULL,
+    problems jsonb NOT NULL
+);
+
+--
+-- Name: mp_checks_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+ALTER TABLE public.mp_checks ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public.mp_checks_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+--
 -- Name: mp_syncs; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -160,7 +183,6 @@ ALTER TABLE public.mp_syncs ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
 
 CREATE TABLE public.politicians (
     id bigint NOT NULL,
-    parliament_id integer,
     house text NOT NULL,
     name text NOT NULL,
     salutation text DEFAULT ''::text NOT NULL,
@@ -172,6 +194,7 @@ CREATE TABLE public.politicians (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     test_postcode text,
+    airtable_id text,
     CONSTRAINT politicians_house_check CHECK ((house = ANY (ARRAY['commons'::text, 'lords'::text, 'scottish-parliament'::text, 'senedd'::text, 'ni-assembly'::text, 'other'::text]))),
     CONSTRAINT politicians_test_postcode CHECK ((is_test = (test_postcode IS NOT NULL)))
 );
@@ -243,6 +266,13 @@ ALTER TABLE ONLY public.letters
     ADD CONSTRAINT letters_reply_hash_key UNIQUE (reply_hash);
 
 --
+-- Name: mp_checks mp_checks_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.mp_checks
+    ADD CONSTRAINT mp_checks_pkey PRIMARY KEY (id);
+
+--
 -- Name: mp_syncs mp_syncs_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -250,11 +280,11 @@ ALTER TABLE ONLY public.mp_syncs
     ADD CONSTRAINT mp_syncs_pkey PRIMARY KEY (id);
 
 --
--- Name: politicians politicians_parliament_id_key; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: politicians politicians_airtable_id_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.politicians
-    ADD CONSTRAINT politicians_parliament_id_key UNIQUE (parliament_id);
+    ADD CONSTRAINT politicians_airtable_id_key UNIQUE (airtable_id);
 
 --
 -- Name: politicians politicians_pkey; Type: CONSTRAINT; Schema: public; Owner: -

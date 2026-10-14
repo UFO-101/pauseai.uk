@@ -11,6 +11,7 @@
 import lumaFuture from "./luma-calendar-future.json";
 import lumaPast from "./luma-calendar-past.json";
 import lumaGuests from "./luma-guests.json";
+import airtableMps from "./airtable-mps.json";
 import airtableSignatories from "./airtable-signatories.json";
 import parliamentMembers from "./parliament-members.json";
 import googleLogin from "./google-login.json";
@@ -19,12 +20,11 @@ function json(body: unknown): Response {
   return new Response(JSON.stringify(body), { headers: { "Content-Type": "application/json" } });
 }
 
-// postcodes.io knows one postcode. Its MP is in data/uk-mps.json.
+// postcodes.io knows one postcode. Its MP is in airtable-mps.json.
 const POSTCODES: Record<string, string> = { SW1A1AA: "Cities of London and Westminster" };
 
 export function fixtureResponse(url: string, init?: RequestInit): Response | undefined {
   const { hostname, pathname, searchParams } = new URL(url);
-  const method = init?.method ?? "GET";
   if (hostname === "api2.luma.com" && pathname === "/calendar/get-items") {
     return json(searchParams.get("period") === "past" ? lumaPast : lumaFuture);
   }
@@ -32,7 +32,8 @@ export function fixtureResponse(url: string, init?: RequestInit): Response | und
     return json(lumaGuests);
   }
   if (hostname.endsWith("airtable.com") && pathname.startsWith("/v0/")) {
-    return json(method === "POST" ? { id: "recFixtureLetter", fields: {} } : airtableSignatories);
+    // The MPs (lib/server/airtable.ts asks for the House of Commons), or the signatories.
+    return json(searchParams.get("filterByFormula")?.includes("House of Commons") ? airtableMps : airtableSignatories);
   }
   if (hostname === "api.postcodes.io" && pathname.startsWith("/postcodes/")) {
     const postcode = decodeURIComponent(pathname.slice("/postcodes/".length)).replace(/\s+/g, "").toUpperCase();
