@@ -19,7 +19,14 @@ describeWithDatabase("POST /api/email-your-mp/lookup", () => {
     const res = await lookup({ postcode: "SW1A 1AA" });
     expect(await res.json()).toEqual({
       ok: true,
-      mp: { id, name: "Polly Placeholder", salutation: "Ms Placeholder", constituency: "Cities of London and Westminster", email: "polly.placeholder.mp@parliament.uk", isTest: false },
+      mp: {
+        id,
+        name: "Polly Placeholder",
+        salutation: "Ms Placeholder",
+        constituency: "Cities of London and Westminster",
+        email: "polly.placeholder.mp@parliament.uk",
+        isTest: false,
+      },
       statuses: { "regulate-letter-pm": "signed" },
       place: { latitude: 51.501009, longitude: -0.141588 },
     });
@@ -27,7 +34,11 @@ describeWithDatabase("POST /api/email-your-mp/lookup", () => {
 
   it("says it doesn't know where the postcode is, if postcodes.io doesn't", async () => {
     await addTestPolitician();
-    server.use(http.get("https://api.postcodes.io/postcodes/:postcode", () => HttpResponse.json({ result: { parliamentary_constituency: "Cities of London and Westminster" } })));
+    server.use(
+      http.get("https://api.postcodes.io/postcodes/:postcode", () =>
+        HttpResponse.json({ result: { parliamentary_constituency: "Cities of London and Westminster" } }),
+      ),
+    );
     expect(await (await lookup({ postcode: "SW1A 1AA" })).json()).toMatchObject({ ok: true, place: null });
   });
 

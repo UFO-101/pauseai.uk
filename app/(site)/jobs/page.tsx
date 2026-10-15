@@ -6,7 +6,8 @@ import "./jobs.css";
 
 export const metadata = pageMetadata({
   title: "Jobs",
-  description: "PauseAI UK is hiring: operations, software engineering, content, community organising, design and public affairs roles.",
+  description:
+    "PauseAI UK is hiring: operations, software engineering, content, community organising, design and public affairs roles.",
   path: "/jobs",
   openGraph: { title: "Jobs at PauseAI UK" },
 });
@@ -34,14 +35,14 @@ export default function JobsPage() {
                 />
               </div>
               <p>
-                We are the UK&rsquo;s civic movement dedicated to averting the risks of superhuman AI. We help
-                citizens organise to take collective actions and make their voice heard. Our volunteers engage with
-                their MPs about AI safety, march in protests, join conferences about AI safety in the European and
-                UK Parliaments and gather signatures for open letters.
+                We are the UK&rsquo;s civic movement dedicated to averting the risks of superhuman AI. We help citizens
+                organise to take collective actions and make their voice heard. Our volunteers engage with their MPs
+                about AI safety, march in protests, join conferences about AI safety in the European and UK Parliaments
+                and gather signatures for open letters.
               </p>
               <p>
-                If you&rsquo;re interested in joining our mission as a paid member of staff or contractor, please
-                apply below.
+                If you&rsquo;re interested in joining our mission as a paid member of staff or contractor, please apply
+                below.
               </p>
             </section>
           </div>
@@ -50,7 +51,9 @@ export default function JobsPage() {
 
           <div className="container intro-inner">
             <section className="intro-section">
-              <p><strong>Important information about all roles:</strong></p>
+              <p>
+                <strong>Important information about all roles:</strong>
+              </p>
               <ul className="intro-list">
                 <li>All salaries are open to negotiation based on skills and experience.</li>
                 <li>All roles will report directly to Joseph Miller, Director of PauseAI UK.</li>

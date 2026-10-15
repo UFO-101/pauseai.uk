@@ -1,7 +1,13 @@
 import { beforeEach, expect, it, vi } from "vitest";
 import { http, HttpResponse } from "msw";
 import { server } from "@/tests/fixtures/msw";
-import { addTestMp, addTestPolitician, describeWithDatabase, useTestDatabase, withDatabaseDown } from "@/tests/database";
+import {
+  addTestMp,
+  addTestPolitician,
+  describeWithDatabase,
+  useTestDatabase,
+  withDatabaseDown,
+} from "@/tests/database";
 import { findMp } from "./find-mp";
 
 describeWithDatabase("findMp", () => {
@@ -12,14 +18,25 @@ describeWithDatabase("findMp", () => {
     const id = await addTestPolitician();
     expect(await findMp(" SW1A 1AA ")).toEqual({
       ok: true,
-      mp: { id, name: "Polly Placeholder", salutation: "Ms Placeholder", constituency: "Cities of London and Westminster", email: "polly.placeholder.mp@parliament.uk", isTest: false },
+      mp: {
+        id,
+        name: "Polly Placeholder",
+        salutation: "Ms Placeholder",
+        constituency: "Cities of London and Westminster",
+        email: "polly.placeholder.mp@parliament.uk",
+        isTest: false,
+      },
       place: { latitude: 51.501009, longitude: -0.141588 },
     });
   });
 
   it("leaves out where the postcode is when postcodes.io doesn't say", async () => {
     await addTestPolitician();
-    server.use(http.get("https://api.postcodes.io/postcodes/:postcode", () => HttpResponse.json({ result: { parliamentary_constituency: "Cities of London and Westminster" } })));
+    server.use(
+      http.get("https://api.postcodes.io/postcodes/:postcode", () =>
+        HttpResponse.json({ result: { parliamentary_constituency: "Cities of London and Westminster" } }),
+      ),
+    );
     expect(await findMp("SW1A 1AA")).not.toHaveProperty("place");
   });
 
@@ -27,8 +44,17 @@ describeWithDatabase("findMp", () => {
     server.use(http.all("*", () => HttpResponse.error()));
     expect(await findMp("zz9 9zz")).toEqual({ ok: false, reason: "no_mp" });
     await addTestMp();
-    await addTestPolitician({ airtableId: null, name: "Signy McTestface MP", constituency: "Signshire", testPostcode: "ZZ99ZS" });
-    expect(await findMp("zz9 9zz")).toMatchObject({ ok: true, mp: { name: "Testy McTestface MP", email: "test-mp@example.org" }, place: { latitude: 51.4995, longitude: -0.1248 } });
+    await addTestPolitician({
+      airtableId: null,
+      name: "Signy McTestface MP",
+      constituency: "Signshire",
+      testPostcode: "ZZ99ZS",
+    });
+    expect(await findMp("zz9 9zz")).toMatchObject({
+      ok: true,
+      mp: { name: "Testy McTestface MP", email: "test-mp@example.org" },
+      place: { latitude: 51.4995, longitude: -0.1248 },
+    });
     expect(await findMp("ZZ99ZS")).toMatchObject({ ok: true, mp: { name: "Signy McTestface MP", isTest: true } });
   });
 

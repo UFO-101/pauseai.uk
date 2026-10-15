@@ -110,7 +110,6 @@
     max-height: calc(100vh - 104px);
     overflow-y: auto;
   }
-
 }
 
 /* ── Preview ───────────────────────────────────── */
@@ -625,7 +624,6 @@
   border-radius: 12px;
   box-shadow: 0 4px 24px var(--shadow);
 }
-
 
 .collateral-tips {
   margin: 0;

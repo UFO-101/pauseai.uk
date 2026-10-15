@@ -27,7 +27,10 @@ const STATUSES: Record<string, string> = { Bounce: "bounced", SpamComplaint: "sp
 export async function recordDeliveryProblem(payload: DeliveryProblem): Promise<boolean> {
   const status = STATUSES[payload.RecordType ?? ""];
   if (!status || !payload.MessageID) return false;
-  const [letter] = await query<{ id: number }>("UPDATE letters SET status = $2 WHERE postmark_message_id = $1 RETURNING id::int AS id", [payload.MessageID, status]);
+  const [letter] = await query<{ id: number }>(
+    "UPDATE letters SET status = $2 WHERE postmark_message_id = $1 RETURNING id::int AS id",
+    [payload.MessageID, status],
+  );
   if (!letter) return false;
   await query("INSERT INTO letter_events (letter_id, status, details) VALUES ($1, $2, $3)", [
     letter.id,
@@ -48,7 +51,10 @@ const AUTO_REPLY_SUBJECT = /^\s*(automatic reply|auto[- ]?reply|auto[- ]?respons
  * or failing those, a subject such as Outlook's "Automatic reply:".
  */
 export function isAutoReply(email: InboundEmail): boolean {
-  const header = (name: string) => email.Headers?.find((h) => h.Name?.toLowerCase() === name)?.Value?.trim().toLowerCase();
+  const header = (name: string) =>
+    email.Headers?.find((h) => h.Name?.toLowerCase() === name)
+      ?.Value?.trim()
+      .toLowerCase();
   const autoSubmitted = header("auto-submitted");
   if (autoSubmitted && autoSubmitted !== "no") return true;
   if (header("x-autoreply") !== undefined || header("x-autorespond") !== undefined) return true;
@@ -76,7 +82,11 @@ async function recordReply(letter: { id: number; senderEmail: string }, email: I
       );
       if (seen) return;
     }
-    await query("INSERT INTO letter_events (letter_id, status, details) VALUES ($1, $2, $3)", [letter.id, status, JSON.stringify(details)], db);
+    await query(
+      "INSERT INTO letter_events (letter_id, status, details) VALUES ($1, $2, $3)",
+      [letter.id, status, JSON.stringify(details)],
+      db,
+    );
     if (status === "replied" && from.toLowerCase() !== letter.senderEmail.toLowerCase()) {
       await query("UPDATE letters SET replied_at = coalesce(replied_at, now()) WHERE id = $1", [letter.id], db);
     }
@@ -116,9 +126,15 @@ export async function forwardReply(email: InboundEmail): Promise<string[]> {
   await recordReply(letter, email);
 
   const copied = [...(email.ToFull ?? []), ...(email.CcFull ?? [])].map((a) => a.Email?.toLowerCase());
-  const recipients = [process.env.REPLIES_INBOX, letter.senderEmail].filter((to): to is string => !!to && !copied.includes(to.toLowerCase()));
+  const recipients = [process.env.REPLIES_INBOX, letter.senderEmail].filter(
+    (to): to is string => !!to && !copied.includes(to.toLowerCase()),
+  );
 
-  const original = [`From: ${email.FromFull?.Name ?? ""} <${from}>`, `Date: ${email.Date ?? ""}`, `Subject: ${email.Subject ?? ""}`].join("\n");
+  const original = [
+    `From: ${email.FromFull?.Name ?? ""} <${from}>`,
+    `Date: ${email.Date ?? ""}`,
+    `Subject: ${email.Subject ?? ""}`,
+  ].join("\n");
   for (const to of recipients) {
     await sendEmail({
       From: `PauseAI UK <noreply@${notifyDomain()}>`,

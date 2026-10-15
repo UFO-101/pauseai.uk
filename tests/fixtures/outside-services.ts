@@ -39,7 +39,16 @@ export function fixtureResponse(url: string): Response | undefined {
     const postcode = decodeURIComponent(pathname.slice("/postcodes/".length)).replace(/\s+/g, "").toUpperCase();
     const constituency = POSTCODES[postcode];
     return constituency
-      ? json({ status: 200, result: { postcode, parliamentary_constituency: constituency, codes: { parliamentary_constituency: "E14001172" }, latitude: 51.501009, longitude: -0.141588 } })
+      ? json({
+          status: 200,
+          result: {
+            postcode,
+            parliamentary_constituency: constituency,
+            codes: { parliamentary_constituency: "E14001172" },
+            latitude: 51.501009,
+            longitude: -0.141588,
+          },
+        })
       : new Response(JSON.stringify({ status: 404, error: "Postcode not found" }), { status: 404 });
   }
   if (hostname === "members-api.parliament.uk" && pathname === "/api/Members/Search") {
@@ -48,12 +57,20 @@ export function fixtureResponse(url: string): Response | undefined {
   const contact = hostname === "members-api.parliament.uk" && pathname.match(/^\/api\/Members\/(\d+)\/Contact$/);
   if (contact) {
     // Every fixture MP's office address, in the API's own pattern.
-    return json({ value: [{ type: "Parliamentary office", typeId: 1, email: `mp${contact[1]}.office@parliament.uk ` }] });
+    return json({
+      value: [{ type: "Parliamentary office", typeId: 1, email: `mp${contact[1]}.office@parliament.uk ` }],
+    });
   }
   // Postmark accepts every email. What was sent is checked from the request
   // (Vitest) or the outbox (Playwright, tests/fixtures/outbox.ts).
   if (hostname === "api.postmarkapp.com" && pathname === "/email") {
-    return json({ To: "", SubmittedAt: new Date().toISOString(), MessageID: crypto.randomUUID(), ErrorCode: 0, Message: "OK" });
+    return json({
+      To: "",
+      SubmittedAt: new Date().toISOString(),
+      MessageID: crypto.randomUUID(),
+      ErrorCode: 0,
+      Message: "OK",
+    });
   }
   if (hostname === "challenges.cloudflare.com" && pathname === "/turnstile/v0/siteverify") {
     return json({ success: true, hostname: "localhost" });

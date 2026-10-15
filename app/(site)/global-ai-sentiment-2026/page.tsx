@@ -37,9 +37,8 @@ export default function GlobalAiSentiment2026Page() {
             <h2>The question asked</h2>
             <blockquote className="gas-question">{QUESTION_TEXT}</blockquote>
             <p className="gas-key-stat">
-              Six in ten people globally want AI development slowed in some
-              form. Fewer than one in five want it developed &ldquo;as quickly
-              as possible&rdquo;.
+              Six in ten people globally want AI development slowed in some form. Fewer than one in five want it
+              developed &ldquo;as quickly as possible&rdquo;.
             </p>
             <GlobalAverageBar />
             <p className="gas-source-note">
@@ -54,9 +53,7 @@ export default function GlobalAiSentiment2026Page() {
         <section className="gas-section gas-section-muted">
           <div className="container">
             <h2>Explore the map</h2>
-            <p className="gas-section-intro">
-              Select a country to see its full breakdown.
-            </p>
+            <p className="gas-section-intro">Select a country to see its full breakdown.</p>
             <WorldMap />
           </div>
         </section>

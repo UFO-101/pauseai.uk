@@ -54,8 +54,17 @@ export async function sendEmail(email: Email): Promise<string> {
   const outbox = process.env.OUTBOX_DIR || (dev ? "tmp/outbox" : "");
   const fixtures = process.env.DATA_FIXTURES === "1";
   const token = process.env.POSTMARK_SERVER_TOKEN ?? "";
-  const unsent = fixtures ? "DATA_FIXTURES=1" : !token ? "POSTMARK_SERVER_TOKEN isn't set" : token === TEST_TOKEN ? "POSTMARK_SERVER_TOKEN is Postmark's test token" : undefined;
-  const saved = () => (outbox ? `Written to ${saveToOutbox(outbox, body)} instead.` : "There's no outbox, so it isn't saved anywhere either.");
+  const unsent = fixtures
+    ? "DATA_FIXTURES=1"
+    : !token
+      ? "POSTMARK_SERVER_TOKEN isn't set"
+      : token === TEST_TOKEN
+        ? "POSTMARK_SERVER_TOKEN is Postmark's test token"
+        : undefined;
+  const saved = () =>
+    outbox
+      ? `Written to ${saveToOutbox(outbox, body)} instead.`
+      : "There's no outbox, so it isn't saved anywhere either.";
 
   // The dev server, without a real token, doesn't ask Postmark at all.
   if (unsent && !fixtures && dev) {
@@ -66,14 +75,24 @@ export async function sendEmail(email: Email): Promise<string> {
   const res = await outsideFetch(SEND_URL, {
     method: "POST",
     // The fixture Postmark (DATA_FIXTURES=1) doesn't check the token.
-    headers: { Accept: "application/json", "Content-Type": "application/json", "X-Postmark-Server-Token": token || "fixture" },
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+      "X-Postmark-Server-Token": token || "fixture",
+    },
     body: JSON.stringify(body),
   });
   const result = await res.json().catch(() => ({}));
   if (!res.ok || result.ErrorCode !== 0 || typeof result.MessageID !== "string") {
-    throw new PostmarkError(`Postmark refused the email: ${res.status} ${result.ErrorCode ?? ""} ${result.Message ?? ""}`.trim());
+    throw new PostmarkError(
+      `Postmark refused the email: ${res.status} ${result.ErrorCode ?? ""} ${result.Message ?? ""}`.trim(),
+    );
   }
-  log(unsent ? `${what}: not sent, as ${unsent}. ${fixtures ? saved() : ""}`.trim() : `${what}: sent through Postmark, MessageID ${result.MessageID}`);
+  log(
+    unsent
+      ? `${what}: not sent, as ${unsent}. ${fixtures ? saved() : ""}`.trim()
+      : `${what}: sent through Postmark, MessageID ${result.MessageID}`,
+  );
   return result.MessageID;
 }
 

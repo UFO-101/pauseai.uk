@@ -6,7 +6,12 @@ import { saveDraft, saveLookup, type Lookup } from "./draft";
 import LetterWrite from "./LetterWrite";
 
 const [letterToPm, bill] = campaigns;
-const MP = { name: "Polly Placeholder", salutation: "Ms Placeholder", constituency: "Cities of London and Westminster", email: "polly.placeholder.mp@parliament.uk" };
+const MP = {
+  name: "Polly Placeholder",
+  salutation: "Ms Placeholder",
+  constituency: "Cities of London and Westminster",
+  email: "polly.placeholder.mp@parliament.uk",
+};
 const LOOKUP: Lookup = { campaign: letterToPm.slug, name: "Jane Smith", postcode: "SW1A 1AA", mp: MP, statuses: {} };
 
 afterEach(() => sessionStorage.clear());
@@ -42,7 +47,9 @@ describe("LetterWrite", () => {
     saveLookup({ ...LOOKUP, campaign: bill.slug });
     await render(<LetterWrite campaignSlug={letterToPm.slug} />);
     await expect.element(page.getByText(copy.write.none)).toBeVisible();
-    await expect.element(page.getByRole("link", { name: copy.preview.backToForm })).toHaveAttribute("href", `/campaigns-v2/${letterToPm.slug}#email-your-mp`);
+    await expect
+      .element(page.getByRole("link", { name: copy.preview.backToForm }))
+      .toHaveAttribute("href", `/campaigns-v2/${letterToPm.slug}#email-your-mp`);
     await expect.element(page.getByLabelText(copy.form.subjectLabel)).not.toBeInTheDocument();
   });
 });

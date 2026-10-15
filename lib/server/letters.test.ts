@@ -8,14 +8,19 @@ describeWithDatabase("recentLetters", () => {
 
   it("lists letters newest first, with their history, filtered by status", async () => {
     const mp = await addTestMp();
-    for (const [hash, status] of [["a", "sent"], ["b", "sending"]]) {
+    for (const [hash, status] of [
+      ["a", "sent"],
+      ["b", "sending"],
+    ]) {
       await query(
         `INSERT INTO letters (campaign, politician_id, sender_name, sender_email, sender_address, sender_postcode, contact_consent, subject, reply_hash, status)
          VALUES ('regulate-letter-pm', $1, 'Jane', 'jane@example.com', 'x', 'ZZ9 9ZZ', false, 'S', $2, $3)`,
         [mp, hash, status],
       );
     }
-    await query("INSERT INTO letter_events (letter_id, status, details) VALUES (1, 'sending', '{}'), (1, 'sent', '{\"messageId\":\"m\"}')");
+    await query(
+      "INSERT INTO letter_events (letter_id, status, details) VALUES (1, 'sending', '{}'), (1, 'sent', '{\"messageId\":\"m\"}')",
+    );
 
     const letters = await recentLetters();
     expect(letters.map((l) => [l.id, l.status, l.mpName, l.isTest, l.contactConsent])).toEqual([

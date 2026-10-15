@@ -1,7 +1,12 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { RESPONSE_OPTIONS, type CountryRow, type DemographicRow, type ResponseOption } from "@/lib/content/aiSentiment2026";
+import {
+  RESPONSE_OPTIONS,
+  type CountryRow,
+  type DemographicRow,
+  type ResponseOption,
+} from "@/lib/content/aiSentiment2026";
 
 type Row = CountryRow | DemographicRow;
 
@@ -99,7 +104,13 @@ export default function VerticalDivergingBar({ row, meta }: VerticalDivergingBar
             <div className="gas-vbar-brace" style={{ top: 0, height: `${againstEndPct}%` }}>
               <div className="gas-vbar-brace-svg-box" aria-hidden="true">
                 <svg viewBox="0 0 10 100" preserveAspectRatio="none">
-                  <path d="M1,1 C7,1 5,45 9,50 C5,55 7,99 1,99" fill="none" stroke="currentColor" strokeWidth="1.75" vectorEffect="non-scaling-stroke" />
+                  <path
+                    d="M1,1 C7,1 5,45 9,50 C5,55 7,99 1,99"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.75"
+                    vectorEffect="non-scaling-stroke"
+                  />
                 </svg>
               </div>
               <span className="gas-vbar-brace-total">

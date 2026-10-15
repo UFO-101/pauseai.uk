@@ -21,7 +21,9 @@ const FAKE_TURNSTILE = `
 
 /** Serves the stand-in Turnstile script to this page, on every host. */
 export async function fakeTurnstile(page: Page) {
-  await page.route("https://challenges.cloudflare.com/**", (route) => route.fulfill({ contentType: "text/javascript", body: FAKE_TURNSTILE }));
+  await page.route("https://challenges.cloudflare.com/**", (route) =>
+    route.fulfill({ contentType: "text/javascript", body: FAKE_TURNSTILE }),
+  );
 }
 
 /**
@@ -29,7 +31,9 @@ export async function fakeTurnstile(page: Page) {
  * own route (the fixture Parliament: two MPs), and adds the test MP.
  */
 export async function syncMps(request: APIRequestContext, base: string) {
-  const res = await request.post(`${base}/api/cron/sync-mps`, { headers: { Authorization: "Bearer fixture-cron-secret" } });
+  const res = await request.post(`${base}/api/cron/sync-mps`, {
+    headers: { Authorization: "Bearer fixture-cron-secret" },
+  });
   if (!res.ok()) throw new Error(`MP sync on ${base} failed: ${res.status()} ${await res.text()}`);
 }
 
@@ -77,14 +81,22 @@ export async function sendLetter(page: Page) {
  * browser. There's no login bypass. For an address that gets no link, stops
  * at "check your inbox" and returns false.
  */
-export async function logInAsStaff(page: Page, base: string, outboxDir: string, email = "staff@pauseai.uk"): Promise<boolean> {
+export async function logInAsStaff(
+  page: Page,
+  base: string,
+  outboxDir: string,
+  email = "staff@pauseai.uk",
+): Promise<boolean> {
   const login = await page.goto(`${base}/staff/login`);
   if (!login?.ok()) throw new Error(`${base}/staff/login returned ${login?.status()}: is the staff interface there?`);
   const before = readOutbox(outboxDir).length;
   await page.getByLabel(staffCopy.login.emailLabel).fill(email);
   await page.getByRole("button", { name: staffCopy.login.button }).click();
   await expect(page.getByRole("status")).toHaveText(staffCopy.login.sent);
-  const sent = readOutbox(outboxDir).slice(before).filter((e) => e.To === email).at(-1);
+  const sent = readOutbox(outboxDir)
+    .slice(before)
+    .filter((e) => e.To === email)
+    .at(-1);
   const link = sent?.TextBody.match(/https?:\/\/\S+\/staff\/api\/callback\?token=[\w-]+/)?.[0];
   if (!link) return false;
   // In the same browser that asked for it, so it logs in.

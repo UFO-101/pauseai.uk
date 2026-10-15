@@ -19,7 +19,10 @@ export default function PostHeader({ post }: { post: BlogPost }) {
               <Link
                 href={`/people/${author.slug}/`}
                 className="blog-byline-avatar"
-                style={{ backgroundImage: `url("${author.person.imageSrc}")`, ...parseCssStyle(author.person.imageStyle ?? "") }}
+                style={{
+                  backgroundImage: `url("${author.person.imageSrc}")`,
+                  ...parseCssStyle(author.person.imageStyle ?? ""),
+                }}
                 aria-label={`Read ${post.author}'s story`}
               />
             )

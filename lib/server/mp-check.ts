@@ -20,9 +20,12 @@ async function getJson(url: string): Promise<unknown> {
   for (let attempt = 1; ; attempt++) {
     const res = await outsideFetch(url, { headers: { Accept: "application/json" }, cache: "no-store" });
     if (res.ok) return res.json();
-    if ((res.status !== 429 && res.status !== 503) || attempt === ATTEMPTS) throw new Error(`${url} returned ${res.status}`);
+    if ((res.status !== 429 && res.status !== 503) || attempt === ATTEMPTS)
+      throw new Error(`${url} returned ${res.status}`);
     const retryAfter = Number(res.headers.get("retry-after"));
-    await wait(Number.isFinite(retryAfter) && res.headers.has("retry-after") ? retryAfter * 1000 : 1000 * 2 ** (attempt - 1));
+    await wait(
+      Number.isFinite(retryAfter) && res.headers.has("retry-after") ? retryAfter * 1000 : 1000 * 2 ** (attempt - 1),
+    );
   }
 }
 

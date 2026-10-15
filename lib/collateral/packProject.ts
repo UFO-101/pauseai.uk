@@ -32,7 +32,11 @@ export function newPackOutput(formatId: string): PackOutput {
 }
 
 export function serializePackProject(project: PackProject, now = new Date()): string {
-  return JSON.stringify({ app: PACK_PROJECT_APP, version: PACK_PROJECT_VERSION, savedAt: now.toISOString(), ...project }, null, 2);
+  return JSON.stringify(
+    { app: PACK_PROJECT_APP, version: PACK_PROJECT_VERSION, savedAt: now.toISOString(), ...project },
+    null,
+    2,
+  );
 }
 
 export type PackParseResult = { ok: true; project: PackProject } | { ok: false; error: string };

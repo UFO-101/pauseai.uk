@@ -23,7 +23,9 @@ export default function CampaignsPage() {
           <div className="container">
             <h1>Regulate AI developers now</h1>
             <p className="hero-cta-row">
-              <ButtonAnchor variant="primary" href="#email-your-mp">Email your MP &rarr;</ButtonAnchor>
+              <ButtonAnchor variant="primary" href="#email-your-mp">
+                Email your MP &rarr;
+              </ButtonAnchor>
             </p>
           </div>
         </section>
@@ -40,8 +42,15 @@ export default function CampaignsPage() {
       </main>
 
       <div className="qr-lightbox" id="qr-lightbox" aria-hidden="true" role="dialog" aria-label="QR code">
-        <button className="qr-lightbox-close" type="button" aria-label="Close">&times;</button>
-        <Image src="/campaign-page-qr-code.png" alt="QR code linking to this campaign page" width={1147} height={1147} />
+        <button className="qr-lightbox-close" type="button" aria-label="Close">
+          &times;
+        </button>
+        <Image
+          src="/campaign-page-qr-code.png"
+          alt="QR code linking to this campaign page"
+          width={1147}
+          height={1147}
+        />
       </div>
 
       <CampaignsClient />

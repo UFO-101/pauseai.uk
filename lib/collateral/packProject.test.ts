@@ -36,7 +36,6 @@ describe("serializePackProject / parsePackProject", () => {
     expect(result.ok && result.project.outputs.map((x) => x.formatId)).toEqual(["story", "a5"]);
   });
 
-
   it("clamps each output's crop and title nudge", () => {
     const o = JSON.parse(serializePackProject(pack));
     o.outputs = [{ formatId: "a5", photoView: { zoom: 50, focalX: 2, focalY: "x" }, headlineScale: 0.1 }];

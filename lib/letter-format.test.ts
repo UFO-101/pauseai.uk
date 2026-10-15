@@ -1,14 +1,20 @@
 import { describe, expect, it } from "vitest";
 import { checkDoc, docFromMarkup, isBlank, toHtml, toText, type LetterDoc } from "./letter-format";
 
-const text = (value: string, ...marks: ("bold" | "italic")[]) => (marks.length ? { type: "text", text: value, marks: marks.map((type) => ({ type })) } : { type: "text", text: value });
+const text = (value: string, ...marks: ("bold" | "italic")[]) =>
+  marks.length ? { type: "text", text: value, marks: marks.map((type) => ({ type })) } : { type: "text", text: value };
 const p = (...content: unknown[]) => (content.length ? { type: "paragraph", content } : { type: "paragraph" });
-const list = (...items: unknown[][]) => ({ type: "bulletList", content: items.map((content) => ({ type: "listItem", content })) });
+const list = (...items: unknown[][]) => ({
+  type: "bulletList",
+  content: items.map((content) => ({ type: "listItem", content })),
+});
 const doc = (...content: unknown[]) => ({ type: "doc", content }) as LetterDoc;
 
 describe("docFromMarkup", () => {
   it("makes paragraphs, bold, italic, line breaks and bullet lists", () => {
-    expect(docFromMarkup("Dear **Ms Dummy**,\n\nI _really_ mean it.\nTruly.\n\n- one\n- **two**\n\n\n\nThanks")).toEqual(
+    expect(
+      docFromMarkup("Dear **Ms Dummy**,\n\nI _really_ mean it.\nTruly.\n\n- one\n- **two**\n\n\n\nThanks"),
+    ).toEqual(
       doc(
         p(text("Dear "), text("Ms Dummy", "bold"), text(",")),
         p(text("I "), text("really", "italic"), text(" mean it."), { type: "hardBreak" }, text("Truly.")),
@@ -19,7 +25,9 @@ describe("docFromMarkup", () => {
   });
 
   it("keeps an empty line as an empty paragraph, and skips blank parts", () => {
-    expect(docFromMarkup("- a\nnot a bullet\n\n   ")).toEqual(doc(p(text("- a"), { type: "hardBreak" }, text("not a bullet"))));
+    expect(docFromMarkup("- a\nnot a bullet\n\n   ")).toEqual(
+      doc(p(text("- a"), { type: "hardBreak" }, text("not a bullet"))),
+    );
     expect(docFromMarkup("- ")).toEqual(doc(list([p()])));
   });
 });
@@ -29,12 +37,18 @@ describe("checkDoc", () => {
     const fromEditor = {
       type: "doc",
       content: [
-        { type: "paragraph", attrs: { textAlign: null }, content: [{ type: "text", text: "Hi", marks: [{ type: "bold", attrs: {} }] }, { type: "hardBreak" }] },
+        {
+          type: "paragraph",
+          attrs: { textAlign: null },
+          content: [{ type: "text", text: "Hi", marks: [{ type: "bold", attrs: {} }] }, { type: "hardBreak" }],
+        },
         { type: "paragraph" },
         list([p(text("a")), list([p(text("b", "italic"))])], []),
       ],
     };
-    expect(checkDoc(fromEditor)).toEqual(doc(p(text("Hi", "bold"), { type: "hardBreak" }), p(), list([p(text("a")), list([p(text("b", "italic"))])], [])));
+    expect(checkDoc(fromEditor)).toEqual(
+      doc(p(text("Hi", "bold"), { type: "hardBreak" }), p(), list([p(text("a")), list([p(text("b", "italic"))])], [])),
+    );
   });
 
   it("refuses anything else", () => {
@@ -64,7 +78,7 @@ describe("checkDoc", () => {
 
 describe("toHtml and toText", () => {
   const letter = doc(
-    p(text("Dear "), text("<Ms> & \"Co\"", "bold", "italic"), text(",")),
+    p(text("Dear "), text('<Ms> & "Co"', "bold", "italic"), text(",")),
     p(),
     list([p(text("one")), p(text("more on one")), list([p(text("nested"))])], [p(text("two"))], []),
     p(text("Name"), { type: "hardBreak" }, text("Street")),

@@ -33,7 +33,12 @@ describe("map colours", () => {
   });
 
   it("draws the legend through the same stops", () => {
-    expect(legendGradient([[0, 0, 0], [255, 255, 255]])).toBe("linear-gradient(90deg, rgb(0, 0, 0) 0%, rgb(255, 255, 255) 100%)");
+    expect(
+      legendGradient([
+        [0, 0, 0],
+        [255, 255, 255],
+      ]),
+    ).toBe("linear-gradient(90deg, rgb(0, 0, 0) 0%, rgb(255, 255, 255) 100%)");
   });
 });
 

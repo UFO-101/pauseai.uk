@@ -8,7 +8,12 @@ import LetterPreview from "./LetterPreview";
 import type { TurnstileApi } from "./Turnstile";
 
 const [letterToPm, bill] = campaigns;
-const MP = { name: "Polly Placeholder", salutation: "Ms Placeholder", constituency: "Cities of London and Westminster", email: "polly.placeholder.mp@parliament.uk" };
+const MP = {
+  name: "Polly Placeholder",
+  salutation: "Ms Placeholder",
+  constituency: "Cities of London and Westminster",
+  email: "polly.placeholder.mp@parliament.uk",
+};
 const DRAFT: Draft = {
   campaign: letterToPm.slug,
   name: "Jane Smith",
@@ -18,7 +23,18 @@ const DRAFT: Draft = {
   email: "jane@example.com",
   address: "1 High St\nLondon",
   subject: "My subject",
-  letter: { type: "doc", content: [{ type: "paragraph", content: [{ type: "text", text: "My " }, { type: "text", text: "letter", marks: [{ type: "bold" }] }] }] },
+  letter: {
+    type: "doc",
+    content: [
+      {
+        type: "paragraph",
+        content: [
+          { type: "text", text: "My " },
+          { type: "text", text: "letter", marks: [{ type: "bold" }] },
+        ],
+      },
+    ],
+  },
   nickname: "",
 };
 
@@ -52,16 +68,26 @@ describe("LetterPreview", () => {
     const { container } = await render(<LetterPreview campaignSlug={letterToPm.slug} />);
     await expect.element(page.getByText(MP.name)).toBeVisible();
     await expect.element(page.getByText("My subject")).toBeVisible();
-    expect(container.querySelector("article div")!.innerHTML).toBe("<p>My <strong>letter</strong></p>\n<p>Jane Smith<br>1 High St<br>London<br>SW1A 1AA</p>");
+    expect(container.querySelector("article div")!.innerHTML).toBe(
+      "<p>My <strong>letter</strong></p>\n<p>Jane Smith<br>1 High St<br>London<br>SW1A 1AA</p>",
+    );
     for (const attachment of letterToPm.attachments) {
-      await expect.element(page.getByRole("link", { name: attachment.file })).toHaveAttribute("href", `/pdfs/${attachment.file}`);
+      await expect
+        .element(page.getByRole("link", { name: attachment.file }))
+        .toHaveAttribute("href", `/pdfs/${attachment.file}`);
     }
     await expect.element(page.getByText(copy.preview.replyNotice)).toBeVisible();
-    await expect.element(page.getByRole("link", { name: copy.preview.edit })).toHaveAttribute("href", `/campaigns-v2/${letterToPm.slug}/write`);
+    await expect
+      .element(page.getByRole("link", { name: copy.preview.edit }))
+      .toHaveAttribute("href", `/campaigns-v2/${letterToPm.slug}/write`);
   });
 
   it("shows what was typed as text, not markup", async () => {
-    saveDraft({ ...DRAFT, address: "<img src=x onerror=alert(1)>", letter: { type: "doc", content: [{ type: "paragraph", content: [{ type: "text", text: "<b>hi</b>" }] }] } });
+    saveDraft({
+      ...DRAFT,
+      address: "<img src=x onerror=alert(1)>",
+      letter: { type: "doc", content: [{ type: "paragraph", content: [{ type: "text", text: "<b>hi</b>" }] }] },
+    });
     const { container } = await render(<LetterPreview campaignSlug={letterToPm.slug} />);
     await expect.element(page.getByText("<b>hi</b>")).toBeVisible();
     expect(container.querySelector("article img, article b")).toBeNull();
@@ -77,7 +103,9 @@ describe("LetterPreview", () => {
   it("says there's nothing to preview without a draft, and links back to the form", async () => {
     await render(<LetterPreview campaignSlug={letterToPm.slug} />);
     await expect.element(page.getByText(copy.preview.none)).toBeVisible();
-    await expect.element(page.getByRole("link", { name: copy.preview.backToForm })).toHaveAttribute("href", `/campaigns-v2/${letterToPm.slug}#email-your-mp`);
+    await expect
+      .element(page.getByRole("link", { name: copy.preview.backToForm }))
+      .toHaveAttribute("href", `/campaigns-v2/${letterToPm.slug}#email-your-mp`);
     await expect.element(send()).not.toBeInTheDocument();
   });
 

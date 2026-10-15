@@ -18,7 +18,16 @@ describeWithDatabase("POST /api/email-your-mp/letters", () => {
 
   it("accepts a letter, whatever host Turnstile issued the token for", async () => {
     await addTestMp();
-    const letter = JSON.stringify({ campaign: "regulate-letter-pm", name: "Jane", postcode: "ZZ99ZZ", address: "1 High St", email: "jane@example.com", subject: "S", letter: { type: "doc", content: [{ type: "paragraph", content: [{ type: "text", text: "L" }] }] }, turnstileToken: "t" });
+    const letter = JSON.stringify({
+      campaign: "regulate-letter-pm",
+      name: "Jane",
+      postcode: "ZZ99ZZ",
+      address: "1 High St",
+      email: "jane@example.com",
+      subject: "S",
+      letter: { type: "doc", content: [{ type: "paragraph", content: [{ type: "text", text: "L" }] }] },
+      turnstileToken: "t",
+    });
     // The Turnstile fixture issues tokens for localhost. On Netlify, the
     // request's URL is the site's netlify.app address, not pauseai.uk.
     expect(await (await send(letter, "https://main--pauseaiuk.netlify.app")).json()).toEqual({ ok: true });

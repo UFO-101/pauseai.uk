@@ -19,11 +19,15 @@ export function qrCanvas(
   ctx.fillRect(0, 0, canvasSize, canvasSize);
   const cell = size / matrix.length;
   ctx.fillStyle = "#000";
-  matrix.forEach((row, r) => row.forEach((dark, c) => dark && ctx.fillRect(x + c * cell, y + r * cell, Math.ceil(cell), Math.ceil(cell))));
+  matrix.forEach((row, r) =>
+    row.forEach((dark, c) => dark && ctx.fillRect(x + c * cell, y + r * cell, Math.ceil(cell), Math.ceil(cell))),
+  );
   return canvas;
 }
 
 /** A canvas as a PNG file, as if chosen from the photo picker. */
 export function canvasFile(canvas: HTMLCanvasElement, name = "photo.png"): Promise<File> {
-  return new Promise((resolve) => canvas.toBlob((blob) => resolve(new File([blob!], name, { type: "image/png" })), "image/png"));
+  return new Promise((resolve) =>
+    canvas.toBlob((blob) => resolve(new File([blob!], name, { type: "image/png" })), "image/png"),
+  );
 }

@@ -85,8 +85,16 @@ function toLumaEvent(event: ApiEvent, url: string, start_at: string): LumaEntry[
     cover_url: event.cover_url,
     location_type: event.location_type,
     geo_address_info: geo
-      ? { address: guestsOnly ? undefined : geo.address, city: geo.city ?? undefined, region: geo.region ?? undefined, country: geo.country ?? undefined }
+      ? {
+          address: guestsOnly ? undefined : geo.address,
+          city: geo.city ?? undefined,
+          region: geo.region ?? undefined,
+          country: geo.country ?? undefined,
+        }
       : undefined,
-    place: typeof coordinate?.latitude === "number" && typeof coordinate.longitude === "number" ? { latitude: coordinate.latitude, longitude: coordinate.longitude } : undefined,
+    place:
+      typeof coordinate?.latitude === "number" && typeof coordinate.longitude === "number"
+        ? { latitude: coordinate.latitude, longitude: coordinate.longitude }
+        : undefined,
   };
 }

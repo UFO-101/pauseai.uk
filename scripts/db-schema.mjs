@@ -63,7 +63,9 @@ export function currentSchema() {
   const name = `schema_${process.pid}`;
   try {
     const url = freshDatabase(name);
-    return normaliseSchema(execFileSync("pg_dump", ["--schema-only", "--no-owner", "--no-privileges", "-d", url], { encoding: "utf8" }));
+    return normaliseSchema(
+      execFileSync("pg_dump", ["--schema-only", "--no-owner", "--no-privileges", "-d", url], { encoding: "utf8" }),
+    );
   } finally {
     dropDatabase(name);
   }

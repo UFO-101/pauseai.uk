@@ -6,7 +6,12 @@ import { tintVisible } from "./design";
 const project: GalleryProject = {
   platforms: ["instagram"],
   slides: [
-    { photo: { kind: "library", id: "deepmind" }, photoSettings: { zoom: 2, focalX: 0.3, focalY: 0.5, visible: SLIDE_PHOTO_VISIBLE }, caption: "One", themeId: "black" },
+    {
+      photo: { kind: "library", id: "deepmind" },
+      photoSettings: { zoom: 2, focalX: 0.3, focalY: 0.5, visible: SLIDE_PHOTO_VISIBLE },
+      caption: "One",
+      themeId: "black",
+    },
     { photo: null, photoSettings: { ...DEFAULT_SLIDE_PHOTO_SETTINGS }, caption: "Two", themeId: "orange" },
   ],
 };

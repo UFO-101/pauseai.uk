@@ -54,5 +54,7 @@ export async function importFromAirtable(): Promise<void> {
   const token = process.env.AIRTABLE_TOKEN;
   if (!token) redirect("/staff/import?unconfigured=1");
   const result = await importSignatories(token, email);
-  redirect(`/staff/import?${new URLSearchParams({ matched: String(result.matched), added: String(result.added), alreadySet: String(result.alreadySet) })}`);
+  redirect(
+    `/staff/import?${new URLSearchParams({ matched: String(result.matched), added: String(result.added), alreadySet: String(result.alreadySet) })}`,
+  );
 }

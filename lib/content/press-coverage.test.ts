@@ -32,7 +32,9 @@ describe("press coverage data", () => {
   });
 
   it("points every logoSrc at a file that exists in public/", () => {
-    const missing = OUTLETS.filter((o) => o.logoSrc && !existsSync(join(process.cwd(), "public", o.logoSrc))).map((o) => o.logoSrc);
+    const missing = OUTLETS.filter((o) => o.logoSrc && !existsSync(join(process.cwd(), "public", o.logoSrc))).map(
+      (o) => o.logoSrc,
+    );
     expect(missing).toEqual([]);
   });
 
@@ -71,7 +73,9 @@ describe("findOutletProblems", () => {
       ...carouselOutlet,
       articles: [{ title: "Clip", medium: "Video", links: [{ label: "X", url: "https://x.com/a" }] }],
     };
-    expect(findOutletProblems([linksOnly])).toContain("Example: inCarousel but no article with a single url to link to");
+    expect(findOutletProblems([linksOnly])).toContain(
+      "Example: inCarousel but no article with a single url to link to",
+    );
   });
 
   it("flags a logoSrc without intrinsic dimensions or a display height", () => {
@@ -97,11 +101,19 @@ describe("findOutletProblems", () => {
   });
 
   it("flags misuse of featured", () => {
-    const twice: Outlet = { ...carouselOutlet, articles: [{ ...article, featured: true }, { ...article, featured: true }] };
+    const twice: Outlet = {
+      ...carouselOutlet,
+      articles: [
+        { ...article, featured: true },
+        { ...article, featured: true },
+      ],
+    };
     expect(findOutletProblems([twice])).toContain("Example: more than one featured article");
 
     const notCarousel: Outlet = { name: "Plain", articles: [{ ...article, featured: true }] };
-    expect(findOutletProblems([notCarousel]).some((p) => p.includes("featured only applies to inCarousel outlets"))).toBe(true);
+    expect(
+      findOutletProblems([notCarousel]).some((p) => p.includes("featured only applies to inCarousel outlets")),
+    ).toBe(true);
   });
 });
 
@@ -115,7 +127,10 @@ describe("findOutletProblems, the remaining checks", () => {
   it("flags a featured article without a single url", () => {
     const outlet: Outlet = {
       ...carouselOutlet,
-      articles: [article, { title: "Clip", medium: "Video", featured: true, links: [{ label: "X", url: "https://x.com/a" }] }],
+      articles: [
+        article,
+        { title: "Clip", medium: "Video", featured: true, links: [{ label: "X", url: "https://x.com/a" }] },
+      ],
     };
     expect(findOutletProblems([outlet]).some((p) => p.includes("featured needs a single url"))).toBe(true);
   });
@@ -137,14 +152,25 @@ describe("assertOutletsValid", () => {
 
 describe("newestFirst", () => {
   it("puts newer dates first and undated items last, keeping their order", () => {
-    const items = [{ date: undefined, n: 1 }, { date: "2026-01-01", n: 2 }, { date: undefined, n: 3 }, { date: "2026-05-01", n: 4 }];
+    const items = [
+      { date: undefined, n: 1 },
+      { date: "2026-01-01", n: 2 },
+      { date: undefined, n: 3 },
+      { date: "2026-05-01", n: 4 },
+    ];
     expect([...items].sort(newestFirst).map((i) => i.n)).toEqual([4, 2, 1, 3]);
   });
 });
 
 describe("marqueeItem", () => {
   it("links to the featured article when one is pinned", () => {
-    const outlet: Outlet = { ...carouselOutlet, articles: [{ ...article, date: "2026-05-01" }, { ...article, title: "Pinned", featured: true }] };
+    const outlet: Outlet = {
+      ...carouselOutlet,
+      articles: [
+        { ...article, date: "2026-05-01" },
+        { ...article, title: "Pinned", featured: true },
+      ],
+    };
     expect(marqueeItem(outlet).title).toBe("Pinned");
   });
 
@@ -159,9 +185,15 @@ describe("marqueeItem", () => {
       ],
     };
     expect(marqueeItem(outlet).title).toBe("New");
-    expect(marqueeItem({ ...carouselOutlet, articles: [{ ...article, date: undefined }, { ...article, title: "B", date: undefined }] }).title).toBe(
-      "A piece",
-    );
+    expect(
+      marqueeItem({
+        ...carouselOutlet,
+        articles: [
+          { ...article, date: undefined },
+          { ...article, title: "B", date: undefined },
+        ],
+      }).title,
+    ).toBe("A piece");
   });
 });
 

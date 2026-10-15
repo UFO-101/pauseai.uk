@@ -109,7 +109,9 @@ describe("sendEmail", () => {
   });
 
   it("throws when Postmark refuses, answers oddly, or there's no token", async () => {
-    server.use(http.post(POSTMARK, () => HttpResponse.json({ ErrorCode: 406, Message: "Inactive recipient" }, { status: 422 })));
+    server.use(
+      http.post(POSTMARK, () => HttpResponse.json({ ErrorCode: 406, Message: "Inactive recipient" }, { status: 422 })),
+    );
     await expect(sendEmail(EMAIL)).rejects.toThrow("422 406 Inactive recipient");
     server.use(http.post(POSTMARK, () => HttpResponse.json({ ErrorCode: 0 })));
     await expect(sendEmail(EMAIL)).rejects.toThrow(PostmarkError);

@@ -25,10 +25,10 @@ export default function PressKit() {
           <h2>Boilerplate</h2>
           <p>
             PauseAI UK is the civic movement dedicated to averting the risks of superhuman AI. Volunteers organise
-            across local groups in London, Glasgow, Oxford, Leicester, Manchester, and the West of England, engaging MPs,
-            joining conferences in the UK and European Parliaments, and marching in protests to push for a global
-            pause on the development of AI systems more powerful than humans. PauseAI UK is strictly non-violent and
-            is operated by Safe AI Alliance Ltd, a private company limited by guarantee.
+            across local groups in London, Glasgow, Oxford, Leicester, Manchester, and the West of England, engaging
+            MPs, joining conferences in the UK and European Parliaments, and marching in protests to push for a global
+            pause on the development of AI systems more powerful than humans. PauseAI UK is strictly non-violent and is
+            operated by Safe AI Alliance Ltd, a private company limited by guarantee.
           </p>
           <p>
             Read more on our <a href="/what-is-pauseai-uk/">what is PauseAI UK</a>,{" "}
@@ -38,24 +38,18 @@ export default function PressKit() {
 
         <section className="press-section">
           <h2>Brand assets</h2>
-          <p>High-resolution logos for editorial use. For photos of events or protests, contact the press team above.</p>
+          <p>
+            High-resolution logos for editorial use. For photos of events or protests, contact the press team above.
+          </p>
           <div className="press-assets">
-            <a
-              className="press-asset-card"
-              href="/images/logos/PauseAI-Logo-Transparent.svg"
-              download
-            >
+            <a className="press-asset-card" href="/images/logos/PauseAI-Logo-Transparent.svg" download>
               <Image src="/images/logos/PauseAI-Logo-Transparent.svg" alt="" width={178} height={48} />
               <span className="press-asset-card-label">
                 Wordmark
                 <span className="press-asset-card-format">SVG, transparent</span>
               </span>
             </a>
-            <a
-              className="press-asset-card"
-              href="/images/logos/Pause-Symbol.svg"
-              download
-            >
+            <a className="press-asset-card" href="/images/logos/Pause-Symbol.svg" download>
               <Image src="/images/logos/Pause-Symbol.svg" alt="" width={616} height={616} />
               <span className="press-asset-card-label">
                 Symbol
@@ -78,7 +72,9 @@ export default function PressKit() {
                       {item.links.map((link, i) => (
                         <span key={link.url}>
                           {i > 0 && ", "}
-                          <a href={link.url} target="_blank" rel="noreferrer">{link.label}</a>
+                          <a href={link.url} target="_blank" rel="noreferrer">
+                            {link.label}
+                          </a>
                         </span>
                       ))}
                     </span>
@@ -94,7 +90,7 @@ export default function PressKit() {
                     <span className="press-coverage-title">{item.title}</span>
                   </a>
                 </li>
-              )
+              ),
             )}
           </ul>
         </section>

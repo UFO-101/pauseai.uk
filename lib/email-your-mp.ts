@@ -29,7 +29,6 @@ export function normalisePostcode(postcode: string): string {
   return postcode.replace(/\s+/g, "").toUpperCase();
 }
 
-
 export function campaignBySlug(slug: string): Campaign | undefined {
   return campaigns.find((campaign) => campaign.slug === slug);
 }
@@ -68,7 +67,10 @@ export function draftLetter(campaign: Campaign, details: LetterDetails): LetterD
 
 /** The letter as sent: the body the sender edited, then their name and address, a line each. */
 export function fullLetter(body: LetterDoc, senderName: string, address: string[]): LetterDoc {
-  const signature = [senderName, ...address].flatMap((line, i): Inline[] => [...(i > 0 ? [{ type: "hardBreak" } as const] : []), { type: "text", text: line }]);
+  const signature = [senderName, ...address].flatMap((line, i): Inline[] => [
+    ...(i > 0 ? [{ type: "hardBreak" } as const] : []),
+    { type: "text", text: line },
+  ]);
   return { type: "doc", content: [...body.content, { type: "paragraph", content: signature }] };
 }
 

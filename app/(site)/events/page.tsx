@@ -10,7 +10,8 @@ import { ButtonAnchor } from "@/components/ui/Button";
 // so this page lists it (via getEvents, cached for an hour) and links through to subscribe.
 export const metadata = pageMetadata({
   title: "Events",
-  description: "Upcoming PauseAI UK events: meetups, talks, letter writing and protests, in person across the UK and online.",
+  description:
+    "Upcoming PauseAI UK events: meetups, talks, letter writing and protests, in person across the UK and online.",
   path: "/events",
   openGraph: { title: "PauseAI UK events" },
 });
@@ -24,8 +25,8 @@ export default async function EventsPage() {
           <div className="container tr-hero-inner">
             <h1 className="tr-hero-title">Events</h1>
             <p className="tr-hero-lede">
-              Meet other people worried about AI, write to your MP, and take action together. Everything here is free and open to
-              everyone.
+              Meet other people worried about AI, write to your MP, and take action together. Everything here is free
+              and open to everyone.
             </p>
           </div>
         </section>
@@ -34,7 +35,13 @@ export default async function EventsPage() {
           <div className="container">
             <div className="section-heading-row">
               <h2 className="section-heading">Upcoming events</h2>
-              <ButtonAnchor variant="primary" className="section-heading-cta" href={site.social.luma} target="_blank" rel="noreferrer">
+              <ButtonAnchor
+                variant="primary"
+                className="section-heading-cta"
+                href={site.social.luma}
+                target="_blank"
+                rel="noreferrer"
+              >
                 Subscribe on Luma →
               </ButtonAnchor>
             </div>

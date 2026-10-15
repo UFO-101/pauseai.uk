@@ -11,7 +11,11 @@ type Search = { q?: string; house?: string; campaign?: string };
 export default async function StaffHome({ searchParams }: { searchParams: Promise<Search> }) {
   const { email } = await requireStaff();
   const { q = "", house = "", campaign = "" } = await searchParams;
-  const politicians = await listPoliticians({ search: q || undefined, house: isHouse(house) ? house : undefined, campaign: campaign || undefined });
+  const politicians = await listPoliticians({
+    search: q || undefined,
+    house: isHouse(house) ? house : undefined,
+    campaign: campaign || undefined,
+  });
   return (
     <main className={`container ${styles.page}`}>
       <StaffHeader email={email} />

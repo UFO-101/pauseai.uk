@@ -16,8 +16,8 @@ export default function ToolsPage() {
         <div className="container">
           <h1 className="tools-title">Tools</h1>
           <p className="tools-lede">
-            We have tools available for our volunteers to create PauseAI branded designs for their online event listings, flyers, and
-            run projects with others.
+            We have tools available for our volunteers to create PauseAI branded designs for their online event
+            listings, flyers, and run projects with others.
           </p>
           <ToolGrid />
         </div>

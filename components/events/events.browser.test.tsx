@@ -15,7 +15,13 @@ afterEach(() => {
 });
 
 const event = (n: number, extra: Partial<LumaEntry["event"]> = {}): LumaEntry => ({
-  event: { url: `evt-${n}`, name: `Event ${n}`, start_at: "2030-03-02T13:00:00.000Z", timezone: "Europe/London", ...extra },
+  event: {
+    url: `evt-${n}`,
+    name: `Event ${n}`,
+    start_at: "2030-03-02T13:00:00.000Z",
+    timezone: "Europe/London",
+    ...extra,
+  },
 });
 
 describe("EventList", () => {
@@ -33,7 +39,12 @@ describe("EventList", () => {
     );
     const cards = container.querySelectorAll("a.luma-event-card");
     expect(cards[0].getAttribute("href")).toBe("https://lu.ma/evt-1");
-    expect([...container.querySelectorAll(".luma-event-card-location")].map((p) => p.textContent)).toEqual(["London", "A hall", "In person", "Online"]);
+    expect([...container.querySelectorAll(".luma-event-card-location")].map((p) => p.textContent)).toEqual([
+      "London",
+      "A hall",
+      "In person",
+      "Online",
+    ]);
     expect(cards[0].querySelector(".luma-event-card-date")?.textContent).toBe("Sat 2 Mar · 13:00");
     expect(container.querySelector(".luma-events-more")).toBeNull();
   });
@@ -42,7 +53,11 @@ describe("EventList", () => {
     const { container } = await render(
       <EventList
         lumaUrl="x"
-        events={[event(1, { cover_url: "https://images.lumacdn.com/a.jpg" }), event(2, { cover_url: "https://evil.example/b.jpg" }), event(3)]}
+        events={[
+          event(1, { cover_url: "https://images.lumacdn.com/a.jpg" }),
+          event(2, { cover_url: "https://evil.example/b.jpg" }),
+          event(3),
+        ]}
       />,
     );
     expect(container.querySelectorAll("img.luma-event-card-img")).toHaveLength(1);
@@ -63,11 +78,9 @@ describe("EventList", () => {
         ]}
       />,
     );
-    await expect.poll(() => [...container.querySelectorAll(".luma-event-badge")].map((b) => b.textContent)).toEqual([
-      "Happening today",
-      "Happening tomorrow",
-      "Happening today",
-    ]);
+    await expect
+      .poll(() => [...container.querySelectorAll(".luma-event-badge")].map((b) => b.textContent))
+      .toEqual(["Happening today", "Happening tomorrow", "Happening today"]);
   });
 
   it("shows four, with the rest behind Show more", async () => {
@@ -77,7 +90,9 @@ describe("EventList", () => {
     const button = () => container.querySelector(".luma-events-more button") as HTMLElement;
     expect(button().textContent).toBe("Show more events");
     button().click();
-    await expect.poll(() => container.querySelector(".luma-events-list")?.className).toBe("luma-events-list is-expanded");
+    await expect
+      .poll(() => container.querySelector(".luma-events-list")?.className)
+      .toBe("luma-events-list is-expanded");
     expect(button().textContent).toBe("Show fewer events");
     button().click();
     await expect.poll(() => container.querySelector(".luma-events-list")?.className).toBe("luma-events-list");
@@ -91,7 +106,9 @@ describe("EventList", () => {
 
   it("points to the calendar when there's nothing to list, or says what it was told to", async () => {
     const { container, rerender } = await render(<EventList lumaUrl="https://lu.ma/cal" events={[]} />);
-    await expect.element(page.getByRole("link", { name: "event calendar" })).toHaveAttribute("href", "https://lu.ma/cal");
+    await expect
+      .element(page.getByRole("link", { name: "event calendar" }))
+      .toHaveAttribute("href", "https://lu.ma/cal");
     await rerender(<EventList lumaUrl="x" events={[]} empty="Nothing here." />);
     expect(container.textContent).toBe("Nothing here.");
   });
@@ -101,7 +118,11 @@ describe("LocalGroupEvents", () => {
   it("lists the group's upcoming, online and past events", async () => {
     getEvents.mockImplementation(async (period: string) =>
       period === "future"
-        ? [event(1, { name: "London social", geo_address_info: { city: "London" } }), event(2, { name: "Online intro" }), event(3, { name: "Glasgow stall", geo_address_info: { city: "Glasgow" } })]
+        ? [
+            event(1, { name: "London social", geo_address_info: { city: "London" } }),
+            event(2, { name: "Online intro" }),
+            event(3, { name: "Glasgow stall", geo_address_info: { city: "Glasgow" } }),
+          ]
         : [event(9, { name: "Old London march", geo_address_info: { city: "London" } })],
     );
     await render(await LocalGroupEvents({ localGroupName: "London" }));
@@ -110,7 +131,9 @@ describe("LocalGroupEvents", () => {
     await expect.element(page.getByRole("heading", { name: "Online events" })).toBeVisible();
     await expect.element(page.getByRole("heading", { name: "Past events in London" })).toBeVisible();
     expect(document.body.textContent).not.toContain("Glasgow stall");
-    await expect.element(page.getByRole("link", { name: "View the full UK calendar →" })).toHaveAttribute("href", site.social.luma);
+    await expect
+      .element(page.getByRole("link", { name: "View the full UK calendar →" }))
+      .toHaveAttribute("href", site.social.luma);
   });
 
   it("says when the group has nothing on, and leaves out empty sections", async () => {

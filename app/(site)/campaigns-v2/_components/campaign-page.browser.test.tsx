@@ -10,7 +10,12 @@ import { saveLookup } from "./draft";
 import EmailYourMpSection from "./EmailYourMpSection";
 
 const [letterToPm, bill] = campaigns;
-const MP = { name: "Polly Placeholder", salutation: "Ms Placeholder", constituency: "Cities of London and Westminster", email: "polly.placeholder.mp@parliament.uk" };
+const MP = {
+  name: "Polly Placeholder",
+  salutation: "Ms Placeholder",
+  constituency: "Cities of London and Westminster",
+  email: "polly.placeholder.mp@parliament.uk",
+};
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -26,7 +31,14 @@ describe("a campaign page's sections", () => {
   });
 
   it("says why, above the heading, when another campaign's page moved on to this one", async () => {
-    saveLookup({ campaign: bill.slug, name: "Jane Smith", postcode: "SW1A 1AA", mp: MP, statuses: { [letterToPm.slug]: "signed" }, movedFrom: letterToPm.slug });
+    saveLookup({
+      campaign: bill.slug,
+      name: "Jane Smith",
+      postcode: "SW1A 1AA",
+      mp: MP,
+      statuses: { [letterToPm.slug]: "signed" },
+      movedFrom: letterToPm.slug,
+    });
     await render(<CampaignHero title="The bill" campaignSlug={bill.slug} />);
     await expect.element(page.getByText(letterToPm.movedOn!)).toBeVisible();
   });
@@ -45,7 +57,12 @@ describe("a campaign page's sections", () => {
           <p>Why it matters.</p>
         </CampaignContext>
         <CampaignDocs>
-          <DocCard file="Frontier-AI-Open-Letter.pdf" kind="Open letter" title="To the Prime Minister" cta="Read the letter →" />
+          <DocCard
+            file="Frontier-AI-Open-Letter.pdf"
+            kind="Open letter"
+            title="To the Prime Minister"
+            cta="Read the letter →"
+          />
         </CampaignDocs>
       </>,
     );

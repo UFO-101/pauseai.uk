@@ -5,7 +5,11 @@ import LetterStep from "../../_components/LetterStep";
 
 // The letter from this campaign's form, before it's sent. Unlisted, and kept out of search.
 export const metadata = {
-  ...pageMetadata({ title: copy.preview.title, description: copy.preview.title, path: "/campaigns-v2/regulate-letter-pm/preview" }),
+  ...pageMetadata({
+    title: copy.preview.title,
+    description: copy.preview.title,
+    path: "/campaigns-v2/regulate-letter-pm/preview",
+  }),
   robots: { index: false, follow: false },
 };
 

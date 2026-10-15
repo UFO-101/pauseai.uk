@@ -18,7 +18,12 @@ export const WIDE_FONT = '"PAI Montserrat", Montserrat, "Inter", system-ui, sans
 export const FONT_LOADS = [
   '400 40px "PAI Permanent Marker"',
   '800 40px "PAI Montserrat"',
-  '900 40px "PAI Lato"', '700 40px "PAI Lato"', '500 40px "PAI Inter"', '700 40px "PAI Inter"', '800 40px "PAI Inter"'];
+  '900 40px "PAI Lato"',
+  '700 40px "PAI Lato"',
+  '500 40px "PAI Inter"',
+  '700 40px "PAI Inter"',
+  '800 40px "PAI Inter"',
+];
 
 export type Values = Record<string, string>;
 
@@ -153,7 +158,15 @@ function fillText(a: DrawArgs, text: string, x: number, y: number, maxWidth?: nu
 const LARGE_TEXT_UNITS = 40;
 
 /** Records a line's size for the print check and its box and colour for the contrast check. */
-function noteTextForLint(a: DrawArgs, lint: LintCollector, text: string, x: number, y: number, size: number, maxWidth?: number) {
+function noteTextForLint(
+  a: DrawArgs,
+  lint: LintCollector,
+  text: string,
+  x: number,
+  y: number,
+  size: number,
+  maxWidth?: number,
+) {
   lint.noteText(size / a.scale);
   if (!a.photo) return;
   const { ctx } = a;
@@ -191,7 +204,15 @@ function paintBackground(a: DrawArgs) {
   ctx.fillStyle = theme.bg;
   ctx.fillRect(0, 0, width, height);
   if (!photo) return;
-  const r = coverRect(photo.width, photo.height, width, height, photoSettings.zoom, photoSettings.focalX, photoSettings.focalY);
+  const r = coverRect(
+    photo.width,
+    photo.height,
+    width,
+    height,
+    photoSettings.zoom,
+    photoSettings.focalX,
+    photoSettings.focalY,
+  );
   ctx.drawImage(photo.source, r.x, r.y, r.w, r.h);
   a.lint?.captureBackdrop(ctx.canvas, { bg: hexToRgb(theme.bg) ?? [255, 255, 255], visible: photoSettings.visible });
   if (photoSettings.visible >= 1) return;
@@ -432,7 +453,16 @@ function qrLayout(a: DrawArgs, g: Geometry): QrLayout | null {
   const labelFont = 22 * g.u;
   const labelH = shown.some((c) => c.label.trim()) ? labelFont * 1.7 : 0;
   const blockW = shown.length * size + (shown.length - 1) * gap;
-  return { codes: shown, size, gap, labelFont, labelH, blockW, blockH: size + labelH, side: shown.length === 1 || blockW <= g.cw * 0.42 };
+  return {
+    codes: shown,
+    size,
+    gap,
+    labelFont,
+    labelH,
+    blockW,
+    blockH: size + labelH,
+    side: shown.length === 1 || blockW <= g.cw * 0.42,
+  };
 }
 
 /** Flags codes that repeat each other, or that all open somewhere other than the web address printed on the design. */
@@ -440,7 +470,12 @@ function lintQrTargets(a: DrawArgs, codes: QrCode[]) {
   if (!a.lint) return;
   const targets = codes.map((c) => normaliseUrl(c.url).toLowerCase().replace(/\/+$/, ""));
   if (new Set(targets).size < targets.length) {
-    a.lint.add({ id: "qr-duplicate", level: "warn", scope: "design", message: "Two of your QR codes open the same address." });
+    a.lint.add({
+      id: "qr-duplicate",
+      level: "warn",
+      scope: "design",
+      message: "Two of your QR codes open the same address.",
+    });
   }
   const shownUrl = a.values.url?.trim();
   const printed = shownUrl ? normaliseUrl(shownUrl).toLowerCase().replace(/\/+$/, "") : "";
@@ -648,7 +683,13 @@ const announcement: Template = {
   fields: [
     { key: "kicker", label: "Kicker", kind: "text", maxLength: 40, default: "Take action" },
     { key: "headline", label: "Headline", kind: "textarea", maxLength: 90, default: "Safety before superintelligence" },
-    { key: "sub", label: "Sub-line", kind: "textarea", maxLength: 140, default: "Community-led action for safe and accountable AI across the UK." },
+    {
+      key: "sub",
+      label: "Sub-line",
+      kind: "textarea",
+      maxLength: 140,
+      default: "Community-led action for safe and accountable AI across the UK.",
+    },
     ...FOOTER_FIELDS,
   ],
   draw(a) {
@@ -715,7 +756,13 @@ const event: Template = {
     { key: "start", label: "Start time", kind: "time", default: "19:00" },
     { key: "end", label: "End time", kind: "time", hint: "Optional", default: "" },
     { key: "venue", label: "Venue", kind: "text", maxLength: 60, default: "Venue name, City" },
-    { key: "blurb", label: "Short description", kind: "textarea", maxLength: 120, default: "Meet local volunteers and write to your MP about AI safety." },
+    {
+      key: "blurb",
+      label: "Short description",
+      kind: "textarea",
+      maxLength: 120,
+      default: "Meet local volunteers and write to your MP about AI safety.",
+    },
     { ...FOOTER_FIELDS[0], default: "RSVP on Luma" },
     { ...FOOTER_FIELDS[1], default: "pauseai.uk/events" },
     ...FOOTER_FIELDS.slice(2),
@@ -729,7 +776,10 @@ const event: Template = {
 
     const kicker = values.kicker?.trim();
     const kickerH = kicker ? 30 * g.u * 1.3 + 22 * g.u : 0;
-    const whenParts = [formatPickedDate(values.date ?? ""), formatPickedTimeRange(values.start ?? "", values.end ?? "")].filter(Boolean);
+    const whenParts = [
+      formatPickedDate(values.date ?? ""),
+      formatPickedTimeRange(values.start ?? "", values.end ?? ""),
+    ].filter(Boolean);
     const venue = values.venue?.trim();
     const blurb = compact ? "" : (values.blurb?.trim() ?? "");
 
@@ -788,7 +838,13 @@ const event: Template = {
 
     // When space runs out, shrink the date and venue a little, then drop the description, then shrink them further.
     // The last step is used even if it still overflows.
-    const steps: [number, boolean][] = [[1, true], [0.8, true], [1, false], [0.8, false], [0.65, false]];
+    const steps: [number, boolean][] = [
+      [1, true],
+      [0.8, true],
+      [1, false],
+      [0.8, false],
+      [0.65, false],
+    ];
     let body = fitBody(...steps[0]);
     for (const step of steps.slice(1)) {
       if (!body.headline.overflow) break;
@@ -846,7 +902,13 @@ const quote: Template = {
   label: "Quote",
   description: "A quote or statistic with attribution. For stories and shareable statements.",
   fields: [
-    { key: "quote", label: "Quote or statistic", kind: "textarea", maxLength: 220, default: "We can still choose to build AI that is safe and accountable." },
+    {
+      key: "quote",
+      label: "Quote or statistic",
+      kind: "textarea",
+      maxLength: 220,
+      default: "We can still choose to build AI that is safe and accountable.",
+    },
     { key: "name", label: "Name or source", kind: "text", maxLength: 40, default: "Volunteer name" },
     { key: "role", label: "Role or detail", kind: "text", maxLength: 48, default: "PauseAI UK volunteer" },
     { ...FOOTER_FIELDS[0], default: "Read more stories" },
@@ -917,7 +979,14 @@ const brush: Template = {
   label: "Brush",
   description: "One huge brush-lettered word with a spaced-out line beneath. Bold, campaign style.",
   fields: [
-    { key: "headline", label: "Big word", kind: "textarea", maxLength: 30, hint: "Short works best", default: "Safety" },
+    {
+      key: "headline",
+      label: "Big word",
+      kind: "textarea",
+      maxLength: 30,
+      hint: "Short works best",
+      default: "Safety",
+    },
     { key: "uppercase", label: "Uppercase", kind: "toggle", default: "true" },
     { key: "edge", label: "Run the big word to the edges", kind: "toggle", default: "true" },
     { key: "sub", label: "Line beneath", kind: "textarea", maxLength: 60, default: "Before\nsuperintelligence" },

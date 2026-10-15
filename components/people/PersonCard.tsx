@@ -77,7 +77,7 @@ function useClampedExcerpt(person: Person, enabled: boolean) {
   const bodyRef = useRef<HTMLDivElement>(null);
   const measureRef = useRef<HTMLDivElement>(null);
   const [shown, setShown] = useState<string[]>(() =>
-    enabled ? excerptParagraphs(person.paragraphs, FALLBACK_EXCERPT_LENGTH) : plainParagraphs(person.paragraphs)
+    enabled ? excerptParagraphs(person.paragraphs, FALLBACK_EXCERPT_LENGTH) : plainParagraphs(person.paragraphs),
   );
 
   useLayoutEffect(() => {

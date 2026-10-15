@@ -14,7 +14,13 @@ describeWithDatabase("POST /api/postmark/bounce", () => {
   useTestDatabase();
 
   // Postmark's bounce webhook payload, trimmed to what we read.
-  const bounce = { RecordType: "Bounce", Type: "HardBounce", MessageID: "msg-1", Description: "The server was unable to deliver your message", Email: "test-mp@example.org" };
+  const bounce = {
+    RecordType: "Bounce",
+    Type: "HardBounce",
+    MessageID: "msg-1",
+    Description: "The server was unable to deliver your message",
+    Email: "test-mp@example.org",
+  };
 
   it("records a bounce on the letter", async () => {
     const mp = await addTestMp();

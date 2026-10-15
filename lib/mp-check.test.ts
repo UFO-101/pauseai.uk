@@ -3,8 +3,20 @@ import { checkAgainstParliament, plainName } from "./mp-check";
 import type { SyncedMp } from "./mps";
 import type { ParliamentMp } from "./parliament";
 
-const ours = (constituency: string, name: string, email: string | null): SyncedMp => ({ airtableId: `rec${constituency}`, name, salutation: "", constituency, party: "", email });
-const theirs = (constituency: string, name: string, emails: string[]): ParliamentMp => ({ parliamentId: 1, name, constituency, emails });
+const ours = (constituency: string, name: string, email: string | null): SyncedMp => ({
+  airtableId: `rec${constituency}`,
+  name,
+  salutation: "",
+  constituency,
+  party: "",
+  email,
+});
+const theirs = (constituency: string, name: string, emails: string[]): ParliamentMp => ({
+  parliamentId: 1,
+  name,
+  constituency,
+  emails,
+});
 
 describe("plainName", () => {
   it("ignores titles, MP, spacing and case", () => {
@@ -17,7 +29,12 @@ describe("plainName", () => {
 
 describe("checkAgainstParliament", () => {
   it("finds nothing wrong when they agree, whatever the titles and case", () => {
-    expect(checkAgainstParliament([ours("Ipswich", "Ian Instance", "Ian.Instance.MP@parliament.uk")], [theirs("Ipswich", "Mr Ian Instance", ["ian.instance.mp@parliament.uk", "x@example.org"])])).toEqual([]);
+    expect(
+      checkAgainstParliament(
+        [ours("Ipswich", "Ian Instance", "Ian.Instance.MP@parliament.uk")],
+        [theirs("Ipswich", "Mr Ian Instance", ["ian.instance.mp@parliament.uk", "x@example.org"])],
+      ),
+    ).toEqual([]);
   });
 
   it("lists constituencies only one side has, different names and emails, by constituency", () => {
@@ -39,20 +56,50 @@ describe("checkAgainstParliament", () => {
       { kind: "unofficial", constituency: "Gone", airtable: "Former MP" },
       { kind: "extra", constituency: "Gone", airtable: "Former MP" },
       { kind: "missing", constituency: "New Seat", parliament: "New MP" },
-      { kind: "name", constituency: "North East Derbyshire", airtable: "Louise Jones", parliament: "Louise Sandher-Jones" },
-      { kind: "email", constituency: "North East Derbyshire", name: "Louise Jones", airtable: "louise.jones.mp@parliament.uk", parliament: ["louise.sandherjones.mp@parliament.uk"] },
-      { kind: "email", constituency: "Wallasey", name: "Angela Eagle", airtable: null, parliament: ["angela.eagle.mp@parliament.uk"] },
+      {
+        kind: "name",
+        constituency: "North East Derbyshire",
+        airtable: "Louise Jones",
+        parliament: "Louise Sandher-Jones",
+      },
+      {
+        kind: "email",
+        constituency: "North East Derbyshire",
+        name: "Louise Jones",
+        airtable: "louise.jones.mp@parliament.uk",
+        parliament: ["louise.sandherjones.mp@parliament.uk"],
+      },
+      {
+        kind: "email",
+        constituency: "Wallasey",
+        name: "Angela Eagle",
+        airtable: null,
+        parliament: ["angela.eagle.mp@parliament.uk"],
+      },
     ]);
   });
 
   it("flags a constituency Airtable doesn't spell as the official list does", () => {
-    expect(checkAgainstParliament([ours("Montgomeryshire and Glyndwr", "Steve Witherden", "s@parliament.uk")], [theirs("Montgomeryshire and Glyndwr", "Steve Witherden", [])])).toEqual([
-      { kind: "unofficial", constituency: "Montgomeryshire and Glyndwr", airtable: "Steve Witherden" },
-    ]);
-    expect(checkAgainstParliament([ours("Montgomeryshire and Glyndŵr", "Steve Witherden", "s@parliament.uk")], [theirs("Montgomeryshire and Glyndŵr", "Steve Witherden", [])])).toEqual([]);
+    expect(
+      checkAgainstParliament(
+        [ours("Montgomeryshire and Glyndwr", "Steve Witherden", "s@parliament.uk")],
+        [theirs("Montgomeryshire and Glyndwr", "Steve Witherden", [])],
+      ),
+    ).toEqual([{ kind: "unofficial", constituency: "Montgomeryshire and Glyndwr", airtable: "Steve Witherden" }]);
+    expect(
+      checkAgainstParliament(
+        [ours("Montgomeryshire and Glyndŵr", "Steve Witherden", "s@parliament.uk")],
+        [theirs("Montgomeryshire and Glyndŵr", "Steve Witherden", [])],
+      ),
+    ).toEqual([]);
   });
 
   it("takes Airtable's email where Parliament lists none", () => {
-    expect(checkAgainstParliament([ours("West Tyrone", "Órfhlaith Begley", "o@sinnfein.ie")], [theirs("West Tyrone", "Órfhlaith Begley", [])])).toEqual([]);
+    expect(
+      checkAgainstParliament(
+        [ours("West Tyrone", "Órfhlaith Begley", "o@sinnfein.ie")],
+        [theirs("West Tyrone", "Órfhlaith Begley", [])],
+      ),
+    ).toEqual([]);
   });
 });

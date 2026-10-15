@@ -42,7 +42,11 @@ describe("check-staff-auth", () => {
   });
 
   it("fails on a page, route or Server Action that doesn't", () => {
-    tree({ "staff/x/page.tsx": "requireStaff", "staff/api/y/route.ts": "", "staff/more.ts": "'use server'\nexport async function f() {}" });
+    tree({
+      "staff/x/page.tsx": "requireStaff",
+      "staff/api/y/route.ts": "",
+      "staff/more.ts": "'use server'\nexport async function f() {}",
+    });
     const { ok, output } = check();
     expect(ok).toBe(false);
     for (const file of ["x/page.tsx", "y/route.ts", "more.ts"]) expect(output).toContain(file);

@@ -69,7 +69,14 @@ export async function fetchMps(token: string): Promise<SyncedMp[]> {
 
 const SIGNATORY_FIELDS = ["Full name or Title", "Party", "Constituency", "Email", "Body"] as const;
 
-export type SignatoryToImport = { airtableId: string; name: string; party: string; constituency: string; email: string; body: string };
+export type SignatoryToImport = {
+  airtableId: string;
+  name: string;
+  party: string;
+  constituency: string;
+  email: string;
+  body: string;
+};
 
 /** Everyone who signed the letter to the Prime Minister. */
 export async function fetchSignatoriesForImport(token: string): Promise<SignatoryToImport[]> {

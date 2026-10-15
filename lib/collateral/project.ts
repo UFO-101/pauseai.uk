@@ -14,9 +14,7 @@ export const QR_URL_MAX = 200;
 /** Uploaded photos are embedded in the file, so cap what a file may carry. */
 export const MAX_EMBEDDED_PHOTO_CHARS = 8_000_000;
 
-export type ProjectPhoto =
-  | { kind: "library"; id: string }
-  | { kind: "upload"; name: string; dataUrl: string };
+export type ProjectPhoto = { kind: "library"; id: string } | { kind: "upload"; name: string; dataUrl: string };
 
 /** A partner organisation's logo, embedded in the file like an uploaded photo. */
 export interface PartnerLogoData {
@@ -57,12 +55,17 @@ export interface Project extends DesignData {
 }
 
 export function serializeProject(project: Project, now = new Date()): string {
-  return JSON.stringify({ app: PROJECT_APP, version: PROJECT_VERSION, savedAt: now.toISOString(), ...project }, null, 2);
+  return JSON.stringify(
+    { app: PROJECT_APP, version: PROJECT_VERSION, savedAt: now.toISOString(), ...project },
+    null,
+    2,
+  );
 }
 
 export type ParseResult = { ok: true; project: Project } | { ok: false; error: string };
 
-export const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === "object" && v !== null && !Array.isArray(v);
+export const isRecord = (v: unknown): v is Record<string, unknown> =>
+  typeof v === "object" && v !== null && !Array.isArray(v);
 export const str = (v: unknown, max: number): string => (typeof v === "string" ? v.slice(0, max) : "");
 export const num = (v: unknown, lo: number, hi: number, fallback: number): number =>
   typeof v === "number" && Number.isFinite(v) ? Math.min(hi, Math.max(lo, v)) : fallback;

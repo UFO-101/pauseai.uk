@@ -1,5 +1,15 @@
 import { describe, expect, it } from "vitest";
-import { busySample, contrastOf, hexToRgb, luminance, sampleContrast, worstFailure, type Backdrop, type Rgb, type TextSample } from "./contrast";
+import {
+  busySample,
+  contrastOf,
+  hexToRgb,
+  luminance,
+  sampleContrast,
+  worstFailure,
+  type Backdrop,
+  type Rgb,
+  type TextSample,
+} from "./contrast";
 
 const INK: Rgb = [26, 22, 18];
 const WHITE: Rgb = [255, 255, 255];
@@ -32,13 +42,19 @@ describe("sampleContrast", () => {
   // The histogram reports contrast to within 0.02, rounding down, so compare to one decimal place.
   it("measures a plain photo like a plain colour", () => {
     const white = backdrop(() => WHITE);
-    expect(sampleContrast(white, whole, INK, ORANGE, 1)!.low).toBeCloseTo(contrastOf(luminance(INK), luminance(WHITE)), 1);
+    expect(sampleContrast(white, whole, INK, ORANGE, 1)!.low).toBeCloseTo(
+      contrastOf(luminance(INK), luminance(WHITE)),
+      1,
+    );
   });
 
   it("blends the style colour over the photo for tinted steps", () => {
     const black = backdrop(() => [0, 0, 0]);
     // At 0 visible the photo is fully covered, so only the style colour counts.
-    expect(sampleContrast(black, whole, INK, ORANGE, 0)!.low).toBeCloseTo(contrastOf(luminance(INK), luminance(ORANGE)), 1);
+    expect(sampleContrast(black, whole, INK, ORANGE, 0)!.low).toBeCloseTo(
+      contrastOf(luminance(INK), luminance(ORANGE)),
+      1,
+    );
   });
 
   it("judges by the worst tenth of pixels, so a small bright spot does not fail a line", () => {
@@ -50,7 +66,15 @@ describe("sampleContrast", () => {
   });
 
   it("ignores boxes outside the backdrop", () => {
-    expect(sampleContrast(backdrop(() => WHITE), { x: 20, y: 20, w: 5, h: 5 }, INK, WHITE, 1)).toBeNull();
+    expect(
+      sampleContrast(
+        backdrop(() => WHITE),
+        { x: 20, y: 20, w: 5, h: 5 },
+        INK,
+        WHITE,
+        1,
+      ),
+    ).toBeNull();
   });
 });
 
@@ -96,6 +120,13 @@ describe("busySample", () => {
     const stripes = backdrop((x) => (x % 2 ? WHITE : [0, 0, 0]));
     expect(busySample(stripes, [sample(INK)], WHITE, 1)).not.toBeNull();
     expect(busySample(stripes, [sample(INK, true)], WHITE, 1)).toBeNull();
-    expect(busySample(backdrop(() => WHITE), [sample(INK)], WHITE, 1)).toBeNull();
+    expect(
+      busySample(
+        backdrop(() => WHITE),
+        [sample(INK)],
+        WHITE,
+        1,
+      ),
+    ).toBeNull();
   });
 });

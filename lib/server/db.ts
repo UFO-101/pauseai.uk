@@ -19,7 +19,11 @@ function getPool(): Pool {
 export type Queryable = { query: PoolClient["query"] };
 
 /** Runs one query and returns its rows. */
-export async function query<Row extends QueryResultRow>(text: string, values: unknown[] = [], db: Queryable = getPool()): Promise<Row[]> {
+export async function query<Row extends QueryResultRow>(
+  text: string,
+  values: unknown[] = [],
+  db: Queryable = getPool(),
+): Promise<Row[]> {
   return (await db.query<Row>(text, values)).rows;
 }
 

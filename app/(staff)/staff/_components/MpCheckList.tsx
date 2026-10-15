@@ -13,25 +13,16 @@ function sides(problem: MpProblem): [string, string] {
     case "name":
       return [problem.airtable, problem.parliament];
     case "email":
-      return [
-        `${problem.name}: ${problem.airtable ?? staffCopy.check.noEmail}`,
-        problem.parliament.join(", "),
-      ];
+      return [`${problem.name}: ${problem.airtable ?? staffCopy.check.noEmail}`, problem.parliament.join(", ")];
   }
 }
 
 /** Where Airtable's MPs disagree with Parliament's, from the newest check. */
-export default function MpCheckList({
-  check,
-}: {
-  check?: { at: string; problems: MpProblem[] };
-}) {
+export default function MpCheckList({ check }: { check?: { at: string; problems: MpProblem[] } }) {
   if (!check) return <p>{staffCopy.check.never}</p>;
   return (
     <>
-      <p className={styles.muted}>
-        {staffCopy.check.checkedAt(new Date(check.at).toLocaleString("en-GB"))}
-      </p>
+      <p className={styles.muted}>{staffCopy.check.checkedAt(new Date(check.at).toLocaleString("en-GB"))}</p>
       {check.problems.length === 0 ? (
         <p>{staffCopy.check.allGood}</p>
       ) : (

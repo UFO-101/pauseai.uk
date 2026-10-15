@@ -98,12 +98,24 @@
   margin: 0;
 }
 
-.evidence-submission .ev-ol[start="3"]  { counter-reset: ev-counter 2; }
-.evidence-submission .ev-ol[start="13"] { counter-reset: ev-counter 12; }
-.evidence-submission .ev-ol[start="14"] { counter-reset: ev-counter 13; }
-.evidence-submission .ev-ol[start="20"] { counter-reset: ev-counter 19; }
-.evidence-submission .ev-ol[start="24"] { counter-reset: ev-counter 23; }
-.evidence-submission .ev-ol[start="28"] { counter-reset: ev-counter 27; }
+.evidence-submission .ev-ol[start="3"] {
+  counter-reset: ev-counter 2;
+}
+.evidence-submission .ev-ol[start="13"] {
+  counter-reset: ev-counter 12;
+}
+.evidence-submission .ev-ol[start="14"] {
+  counter-reset: ev-counter 13;
+}
+.evidence-submission .ev-ol[start="20"] {
+  counter-reset: ev-counter 19;
+}
+.evidence-submission .ev-ol[start="24"] {
+  counter-reset: ev-counter 23;
+}
+.evidence-submission .ev-ol[start="28"] {
+  counter-reset: ev-counter 27;
+}
 
 .evidence-submission .ev-ol li {
   counter-increment: ev-counter;

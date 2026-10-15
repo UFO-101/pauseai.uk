@@ -3,12 +3,18 @@ import type { CSSProperties, ReactNode } from "react";
 
 export function parseCssStyle(css: string): CSSProperties {
   const result: Record<string, string> = {};
-  css.split(";").filter(Boolean).forEach((decl) => {
-    const colonIdx = decl.indexOf(":");
-    if (colonIdx === -1) return;
-    const key = decl.slice(0, colonIdx).trim().replace(/-([a-z])/g, (_, c: string) => c.toUpperCase());
-    result[key] = decl.slice(colonIdx + 1).trim();
-  });
+  css
+    .split(";")
+    .filter(Boolean)
+    .forEach((decl) => {
+      const colonIdx = decl.indexOf(":");
+      if (colonIdx === -1) return;
+      const key = decl
+        .slice(0, colonIdx)
+        .trim()
+        .replace(/-([a-z])/g, (_, c: string) => c.toUpperCase());
+      result[key] = decl.slice(colonIdx + 1).trim();
+    });
   return result as CSSProperties;
 }
 
@@ -26,7 +32,15 @@ export function initials(name: string): string {
 // PauseAI pause symbol for anonymous submissions (no initials to show).
 export function avatarFallback(name: string | undefined): ReactNode {
   if (!name?.trim()) {
-    return <Image src="/images/logos/Pause-Symbol.svg" alt="" width={616} height={616} className="person-avatar-pause-icon" />;
+    return (
+      <Image
+        src="/images/logos/Pause-Symbol.svg"
+        alt=""
+        width={616}
+        height={616}
+        className="person-avatar-pause-icon"
+      />
+    );
   }
   return initials(name);
 }
@@ -73,9 +87,7 @@ export function sanitizeHtml(input: string): string {
       const url = (href?.[1] ?? href?.[2] ?? href?.[3] ?? "").trim();
       // An unsafe or missing href still emits <a> so the matching </a> below
       // doesn't leak into the output as stray text — it just isn't a link.
-      out += SAFE_HREF.test(url)
-        ? `<a href="${escapeAttr(url)}" target="_blank" rel="noreferrer">`
-        : "<a>";
+      out += SAFE_HREF.test(url) ? `<a href="${escapeAttr(url)}" target="_blank" rel="noreferrer">` : "<a>";
     }
     // Everything else: tag dropped, inner text kept (and escaped) by the
     // slices either side of it.
@@ -108,14 +120,14 @@ export function renderBody(paragraphs: string[], asHtml: boolean): ReactNode[] {
       blocks.push(
         <ul key={`ul-${start}`}>
           {items.map((item, j) =>
-            asHtml ? <li key={j} dangerouslySetInnerHTML={{ __html: sanitizeHtml(item) }} /> : <li key={j}>{item}</li>
+            asHtml ? <li key={j} dangerouslySetInnerHTML={{ __html: sanitizeHtml(item) }} /> : <li key={j}>{item}</li>,
           )}
-        </ul>
+        </ul>,
       );
     } else {
       const para = paragraphs[i];
       blocks.push(
-        asHtml ? <p key={i} dangerouslySetInnerHTML={{ __html: sanitizeHtml(para) }} /> : <p key={i}>{para}</p>
+        asHtml ? <p key={i} dangerouslySetInnerHTML={{ __html: sanitizeHtml(para) }} /> : <p key={i}>{para}</p>,
       );
       i++;
     }

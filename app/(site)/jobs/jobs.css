@@ -76,7 +76,9 @@
   margin: 0 0 18px 32px;
   border-radius: 16px;
   overflow: hidden;
-  box-shadow: 0 1px 3px var(--shadow), 0 10px 30px var(--shadow);
+  box-shadow:
+    0 1px 3px var(--shadow),
+    0 10px 30px var(--shadow);
 }
 
 .jobs-page .jobs-photo img {

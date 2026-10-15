@@ -1,7 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { PIN_CLEARANCE, connectorPath } from "./map-connector";
 
-const box = (left: number, top: number, width: number, height: number) => ({ left, top, width, height, right: left + width });
+const box = (left: number, top: number, width: number, height: number) => ({
+  left,
+  top,
+  width,
+  height,
+  right: left + width,
+});
 const wrap = box(100, 50, 1000, 600);
 
 describe("connectorPath", () => {

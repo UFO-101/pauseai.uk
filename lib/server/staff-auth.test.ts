@@ -8,7 +8,15 @@ vi.mock("next/headers", () => import("@/tests/next-headers"));
 
 describe("sessionCookie", () => {
   it("is HttpOnly, Secure, SameSite=Lax, only under /staff, for 12 hours", () => {
-    expect(sessionCookie("t")).toEqual({ name: "staff_session", value: "t", httpOnly: true, secure: true, sameSite: "lax", path: "/staff", maxAge: 43200 });
+    expect(sessionCookie("t")).toEqual({
+      name: "staff_session",
+      value: "t",
+      httpOnly: true,
+      secure: true,
+      sameSite: "lax",
+      path: "/staff",
+      maxAge: 43200,
+    });
   });
 });
 

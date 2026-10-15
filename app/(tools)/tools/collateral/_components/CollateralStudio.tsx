@@ -3,7 +3,17 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { CalendarEvent } from "@/lib/collateral/eventText";
 import { downloadCanvasPdf, downloadCanvasPng, downloadText, exportFilename } from "@/lib/collateral/export";
-import { BLEED_MM, DEFAULT_FORMAT_ID, FORMAT_GROUPS, FORMATS, formatDimensionLabel, getFormat, previewStyle, renderSize, type PrintFormat } from "@/lib/collateral/formats";
+import {
+  BLEED_MM,
+  DEFAULT_FORMAT_ID,
+  FORMAT_GROUPS,
+  FORMATS,
+  formatDimensionLabel,
+  getFormat,
+  previewStyle,
+  renderSize,
+  type PrintFormat,
+} from "@/lib/collateral/formats";
 import QrFormatNote from "./QrFormatNote";
 import { sameIssues, type LintIssue } from "@/lib/collateral/lint";
 import type { PhotoView } from "@/lib/collateral/photoTransform";
@@ -16,7 +26,16 @@ import Checks from "./Checks";
 import CropControls from "./CropControls";
 import DesignControls from "./DesignControls";
 import LogoCoverControls from "./LogoCoverControls";
-import { designFromData, designQrCodes, designTemplate, designToData, designValues, newDesign, withQrCodes, type DesignState } from "./designState";
+import {
+  designFromData,
+  designQrCodes,
+  designTemplate,
+  designToData,
+  designValues,
+  newDesign,
+  withQrCodes,
+  type DesignState,
+} from "./designState";
 import ProjectMenu from "./ProjectMenu";
 import TitleSizeControl from "./TitleSizeControl";
 import { usePhotoGestures } from "./usePhotoGestures";
@@ -35,7 +54,10 @@ export default function CollateralStudio({ events }: { events: CalendarEvent[] }
   const [formatId, setFormatId] = useState(DEFAULT_FORMAT_ID);
   const [design, setDesign] = useState<DesignState>(() => newDesign());
   // A crop belongs to the photo it was set on, so a new photo starts centred and unzoomed.
-  const [photoViewState, setPhotoViewState] = useState<{ photo: Drawable | null; view: PhotoView }>({ photo: null, view: DEFAULT_VIEW });
+  const [photoViewState, setPhotoViewState] = useState<{ photo: Drawable | null; view: PhotoView }>({
+    photo: null,
+    view: DEFAULT_VIEW,
+  });
   const [headlineScale, setHeadlineScale] = useState(1);
   // QR codes on a screen format (social posts), where they are left out unless asked for.
   const [screenQr, setScreenQr] = useState(false);
@@ -154,7 +176,11 @@ export default function CollateralStudio({ events }: { events: CalendarEvent[] }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (!logo || !fontsReady) return;
-    const { issues: found } = renderCollateral(canvasRef.current!, { ...renderOptions(false), maxSide: PREVIEW_MAX_SIDE, lint: true });
+    const { issues: found } = renderCollateral(canvasRef.current!, {
+      ...renderOptions(false),
+      maxSide: PREVIEW_MAX_SIDE,
+      lint: true,
+    });
     setIssues((prev) => (sameIssues(prev, found) ? prev : found));
   });
 
@@ -190,7 +216,11 @@ export default function CollateralStudio({ events }: { events: CalendarEvent[] }
   function onSaveProject() {
     setMessage(null);
     try {
-      downloadText(serializeProject(currentProject(true)), exportFilename([template.id, format.id, "project"], "json"), "application/json");
+      downloadText(
+        serializeProject(currentProject(true)),
+        exportFilename([template.id, format.id, "project"], "json"),
+        "application/json",
+      );
       setMessage("Project file saved. Open it from the ⋯ menu to carry on editing.");
     } catch {
       setMessage("Could not save the project.");
@@ -260,11 +290,23 @@ export default function CollateralStudio({ events }: { events: CalendarEvent[] }
             {busy ? "Preparing…" : "Download PNG"}
           </Button>
           {format.kind === "print" && (
-            <Button type="button" variant="primary" size="large" onClick={() => onDownloadPdf(format)} disabled={!ready}>
+            <Button
+              type="button"
+              variant="primary"
+              size="large"
+              onClick={() => onDownloadPdf(format)}
+              disabled={!ready}
+            >
               {busy ? "Preparing…" : `Download print PDF (+${BLEED_MM} mm bleed)`}
             </Button>
           )}
-          <ProjectMenu noun="project" onSave={onSaveProject} onOpen={onOpenProject} onReset={onReset} saveDisabled={!restored} />
+          <ProjectMenu
+            noun="project"
+            onSave={onSaveProject}
+            onOpen={onOpenProject}
+            onReset={onReset}
+            saveDisabled={!restored}
+          />
           {shown && (
             <p className="collateral-message" role="status">
               {shown}
@@ -308,7 +350,9 @@ export default function CollateralStudio({ events }: { events: CalendarEvent[] }
           onQrAdded={() => setScreenQr(true)}
           onMessage={setMessage}
           headlineExtras={<TitleSizeControl value={headlineScale} onChange={setHeadlineScale} flagged={titleFlagged} />}
-          photoExtras={<CropControls view={photoView} onChange={(patch) => setPhotoView((v) => ({ ...v, ...patch }))} />}
+          photoExtras={
+            <CropControls view={photoView} onChange={(patch) => setPhotoView((v) => ({ ...v, ...patch }))} />
+          }
         />
       </div>
     </div>

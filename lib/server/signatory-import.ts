@@ -36,7 +36,11 @@ async function findPolitician(signatory: SignatoryToImport, db: Queryable): Prom
     db,
   );
   if (byMp) return byMp.id;
-  const [byName] = await query<{ id: number }>("SELECT id::int AS id FROM politicians WHERE airtable_id IS NULL AND NOT is_test AND name = $1 LIMIT 1", [signatory.name], db);
+  const [byName] = await query<{ id: number }>(
+    "SELECT id::int AS id FROM politicians WHERE airtable_id IS NULL AND NOT is_test AND name = $1 LIMIT 1",
+    [signatory.name],
+    db,
+  );
   return byName?.id;
 }
 
@@ -51,14 +55,24 @@ export async function importSignatories(token: string, staff: string): Promise<I
         // (such as a former MP), for the policy team to check.
         [{ id }] = await query<{ id: number }>(
           `INSERT INTO politicians (house, name, constituency, party, email) VALUES ($1, $2, $3, $4, $5) RETURNING id::int AS id`,
-          [houseFor(signatory), signatory.name, signatory.constituency || null, signatory.party, signatory.email || null],
+          [
+            houseFor(signatory),
+            signatory.name,
+            signatory.constituency || null,
+            signatory.party,
+            signatory.email || null,
+          ],
           db,
         );
         result.added++;
       } else {
         result.matched++;
       }
-      const [existing] = await query("SELECT 1 FROM campaign_statuses WHERE politician_id = $1 AND campaign = $2", [id, CAMPAIGN], db);
+      const [existing] = await query(
+        "SELECT 1 FROM campaign_statuses WHERE politician_id = $1 AND campaign = $2",
+        [id, CAMPAIGN],
+        db,
+      );
       if (existing) {
         result.alreadySet++;
         continue;

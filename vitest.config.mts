@@ -29,7 +29,14 @@ export default defineConfig({
           include: ["**/*.test.{ts,tsx}"],
           // Test files that need Postgres each make their own database
           // (tests/database.ts), so they can run in parallel.
-          exclude: ["**/node_modules/**", "tests/behaviour/**", "tests/public-vs-live/**", "plans/**", "tmp/**", "**/*.browser.test.*"],
+          exclude: [
+            "**/node_modules/**",
+            "tests/behaviour/**",
+            "tests/public-vs-live/**",
+            "plans/**",
+            "tmp/**",
+            "**/*.browser.test.*",
+          ],
           setupFiles: ["./vitest.setup.node.ts"],
         },
       },

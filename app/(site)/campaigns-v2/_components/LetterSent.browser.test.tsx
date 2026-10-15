@@ -29,6 +29,8 @@ describe("LetterSent", () => {
     await expect.element(page.getByText(copy.sent.none)).toBeVisible();
     await expect.element(page.getByRole("status")).not.toBeInTheDocument();
     await expect.element(page.getByText(copy.sent.more)).not.toBeInTheDocument();
-    await expect.element(page.getByRole("link", { name: copy.preview.backToForm })).toHaveAttribute("href", `/campaigns-v2/${bill.slug}#email-your-mp`);
+    await expect
+      .element(page.getByRole("link", { name: copy.preview.backToForm }))
+      .toHaveAttribute("href", `/campaigns-v2/${bill.slug}#email-your-mp`);
   });
 });

@@ -1,5 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { aspectClass, BLEED_MM, FORMATS, getFormat, MAX_CANVAS_PIXELS, mmToPx, renderSize, showsQrCodes } from "./formats";
+import {
+  aspectClass,
+  BLEED_MM,
+  FORMATS,
+  getFormat,
+  MAX_CANVAS_PIXELS,
+  mmToPx,
+  renderSize,
+  showsQrCodes,
+} from "./formats";
 
 describe("formats", () => {
   it("has unique ids", () => {

@@ -67,11 +67,17 @@ describe("parseProject rejects bad files", () => {
 describe("parseProject cleans untrusted content", () => {
   it("falls back to defaults for unknown format, layout and style ids", () => {
     const result = parseProject(withEdit((o) => Object.assign(o, { formatId: "??", templateId: "??", themeId: "??" })));
-    expect(result.ok && result.project).toMatchObject({ formatId: "ig-square", templateId: "announcement", themeId: "orange" });
+    expect(result.ok && result.project).toMatchObject({
+      formatId: "ig-square",
+      templateId: "announcement",
+      themeId: "orange",
+    });
   });
 
   it("drops unknown text fields and trims over-long values", () => {
-    const result = parseProject(withEdit((o) => (o.values = { event: { headline: "x".repeat(500), evil: "y", date: 5 } })));
+    const result = parseProject(
+      withEdit((o) => (o.values = { event: { headline: "x".repeat(500), evil: "y", date: 5 } })),
+    );
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.project.values.event.headline).toHaveLength(80);
@@ -99,9 +105,13 @@ describe("parseProject cleans untrusted content", () => {
   });
 
   it("only accepts embedded raster images", () => {
-    const svg = parseProject(withEdit((o) => (o.photo = { kind: "upload", name: "x", dataUrl: "data:image/svg+xml;base64,PHN2Zz4=" })));
+    const svg = parseProject(
+      withEdit((o) => (o.photo = { kind: "upload", name: "x", dataUrl: "data:image/svg+xml;base64,PHN2Zz4=" })),
+    );
     const js = parseProject(withEdit((o) => (o.photo = { kind: "upload", name: "x", dataUrl: "javascript:alert(1)" })));
-    const remote = parseProject(withEdit((o) => (o.photo = { kind: "upload", name: "x", dataUrl: "https://evil.example/a.png" })));
+    const remote = parseProject(
+      withEdit((o) => (o.photo = { kind: "upload", name: "x", dataUrl: "https://evil.example/a.png" })),
+    );
     for (const r of [svg, js, remote]) expect(r.ok && r.project.photo).toBeNull();
   });
 
@@ -112,7 +122,9 @@ describe("parseProject cleans untrusted content", () => {
   });
 
   it("drops free-text dates and times from older saves, so the date and time pickers get their defaults", () => {
-    const result = parseProject(withEdit((o) => (o.values = { event: { date: "Thursday 15 October", start: "7pm", end: "", time: "7pm" } })));
+    const result = parseProject(
+      withEdit((o) => (o.values = { event: { date: "Thursday 15 October", start: "7pm", end: "", time: "7pm" } })),
+    );
     expect(result.ok && result.project.values.event).toEqual({ end: "" });
   });
 

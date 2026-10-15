@@ -15,14 +15,23 @@ import { designQrCodes, designValues, newDesign, withQrCodes, type DesignState }
 const { failImage } = vi.hoisted(() => ({ failImage: { on: false } }));
 vi.mock("@/lib/collateral/render", async (importActual) => {
   const actual = await importActual<typeof import("@/lib/collateral/render")>();
-  return { ...actual, loadImage: (src: string) => (failImage.on ? Promise.reject(new Error("no")) : actual.loadImage(src)) };
+  return {
+    ...actual,
+    loadImage: (src: string) => (failImage.on ? Promise.reject(new Error("no")) : actual.loadImage(src)),
+  };
 });
 
 afterEach(() => {
   failImage.on = false;
 });
 
-const event: CalendarEvent = { id: "evt123", name: "Letter writing", startAt: "2030-03-02T18:00:00Z", venue: "Hall, Leeds", city: "Leeds" };
+const event: CalendarEvent = {
+  id: "evt123",
+  name: "Letter writing",
+  startAt: "2030-03-02T18:00:00Z",
+  venue: "Hall, Leeds",
+  city: "Leeds",
+};
 
 function Harness(props: {
   initial?: DesignState;
@@ -91,7 +100,12 @@ describe("DesignControls", () => {
     await page.getByLabelText("Date").fill("2031-01-02");
     await page.getByLabelText("Start time").fill("18:30");
     await page.getByLabelText(/Venue/).fill("Somewhere");
-    expect(designValues(design)).toMatchObject({ headline: "A new title", date: "2031-01-02", start: "18:30", venue: "Somewhere" });
+    expect(designValues(design)).toMatchObject({
+      headline: "A new title",
+      date: "2031-01-02",
+      start: "18:30",
+      venue: "Somewhere",
+    });
     await expect.element(page.getByText("· Optional").first()).toBeVisible();
     await expect.element(page.getByTestId("headline-extras")).toBeVisible();
   });
@@ -102,7 +116,12 @@ describe("DesignControls", () => {
     await render(<Harness events={[event]} spy={(d) => (design = d)} onMessage={onMessage} />);
     await page.getByLabelText("Start from one of our events").selectOptions("evt123");
     expect(design.templateId).toBe("event");
-    expect(designValues(design)).toMatchObject({ headline: "Letter writing", venue: "Hall, Leeds", group: "Leeds", url: "pauseai.uk/events" });
+    expect(designValues(design)).toMatchObject({
+      headline: "Letter writing",
+      venue: "Hall, Leeds",
+      group: "Leeds",
+      url: "pauseai.uk/events",
+    });
     expect(designQrCodes(design)).toEqual([{ label: "Scan to RSVP", url: "lu.ma/evt123" }]);
     expect(onMessage.mock.lastCall![0]).toMatch(/^Filled in from “Letter writing”/);
   });
@@ -129,11 +148,15 @@ describe("DesignControls", () => {
 
   it("starts the event QR code's label afresh when the replaced one had none, and when there were no codes", async () => {
     let design = newDesign();
-    const initial = withQrCodes({ ...newDesign("event"), valuesByTemplate: { event: { url: "" } } }, [{ label: "", url: "lu.ma/earlier1" }]);
+    const initial = withQrCodes({ ...newDesign("event"), valuesByTemplate: { event: { url: "" } } }, [
+      { label: "", url: "lu.ma/earlier1" },
+    ]);
     const { rerender } = await render(<Harness initial={initial} events={[event]} spy={(d) => (design = d)} />);
     await page.getByLabelText("Start from one of our events").selectOptions("evt123");
     expect(designQrCodes(design)[0].label).toBe("Scan to RSVP");
-    await rerender(<Harness initial={{ ...newDesign("event"), qrCodesByTemplate: {} }} events={[event]} spy={(d) => (design = d)} />);
+    await rerender(
+      <Harness initial={{ ...newDesign("event"), qrCodesByTemplate: {} }} events={[event]} spy={(d) => (design = d)} />,
+    );
   });
 
   it("adds QR codes, the first for the design's own address, up to the limit", async () => {
@@ -171,11 +194,15 @@ describe("DesignControls", () => {
     await render(<Harness extras spy={(d) => (design = d)} />);
     await page.getByRole("button", { name: LIBRARY_PHOTOS[0].label }).click();
     await expect.poll(() => design.photo?.name).toBe(LIBRARY_PHOTOS[0].label);
-    await expect.element(page.getByRole("button", { name: LIBRARY_PHOTOS[0].label })).toHaveAttribute("aria-pressed", "true");
+    await expect
+      .element(page.getByRole("button", { name: LIBRARY_PHOTOS[0].label }))
+      .toHaveAttribute("aria-pressed", "true");
     await expect.element(page.getByTestId("photo-extras")).toBeVisible();
     await upload("Upload a photo", await png());
     await expect.poll(() => design.photo?.source.kind).toBe("upload");
-    await expect.element(page.getByRole("button", { name: LIBRARY_PHOTOS[0].label })).toHaveAttribute("aria-pressed", "false");
+    await expect
+      .element(page.getByRole("button", { name: LIBRARY_PHOTOS[0].label }))
+      .toHaveAttribute("aria-pressed", "false");
     await page.getByText("Remove").click();
     expect(design.photo).toBeNull();
     await upload("Upload a photo", null);
@@ -203,6 +230,8 @@ describe("DesignControls", () => {
     expect(design.partnerLogos).toHaveLength(MAX_PARTNER_LOGOS - 1);
     await upload("Upload a partner logo", null);
     await upload("Upload a partner logo", new File(["nope"], "x.png", { type: "image/png" }));
-    await expect.element(page.getByTestId("message")).toHaveTextContent("Could not read that logo. Try a PNG with a transparent background.");
+    await expect
+      .element(page.getByTestId("message"))
+      .toHaveTextContent("Could not read that logo. Try a PNG with a transparent background.");
   });
 });

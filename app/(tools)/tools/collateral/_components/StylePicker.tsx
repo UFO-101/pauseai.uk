@@ -5,7 +5,14 @@ export default function StylePicker({ themeId, onTheme }: { themeId: string; onT
   return (
     <div className="collateral-swatches" role="radiogroup" aria-label="Style">
       {THEMES.map((t) => (
-        <button key={t.id} type="button" role="radio" aria-checked={t.id === themeId} className="collateral-swatch" onClick={() => onTheme(t.id)}>
+        <button
+          key={t.id}
+          type="button"
+          role="radio"
+          aria-checked={t.id === themeId}
+          className="collateral-swatch"
+          onClick={() => onTheme(t.id)}
+        >
           <span className="collateral-swatch-chip" style={{ background: t.bg, color: t.text }} aria-hidden="true">
             <i style={{ background: t.accent }} />
           </span>

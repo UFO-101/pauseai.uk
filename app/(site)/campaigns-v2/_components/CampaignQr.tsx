@@ -13,7 +13,12 @@ export default function CampaignQr() {
         <button className="qr-lightbox-close" type="button" aria-label="Close">
           &times;
         </button>
-        <Image src="/campaign-page-qr-code.png" alt="QR code linking to this campaign page" width={1147} height={1147} />
+        <Image
+          src="/campaign-page-qr-code.png"
+          alt="QR code linking to this campaign page"
+          width={1147}
+          height={1147}
+        />
       </div>
       <CampaignsClient />
     </>

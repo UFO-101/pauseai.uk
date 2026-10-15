@@ -76,7 +76,10 @@ export const staffCopy = {
     intro: "They are imported automatically every night.",
     syncNow: "Import MPs now",
     none: "Not yet imported.",
-    status: { applied: "Applied", held: "Held", discarded: "Discarded", unchanged: "Unchanged" } as Record<string, string>,
+    status: { applied: "Applied", held: "Held", discarded: "Discarded", unchanged: "Unchanged" } as Record<
+      string,
+      string
+    >,
     added: "Added",
     removed: "Removed",
     changed: "Changed",
@@ -91,7 +94,12 @@ export const staffCopy = {
     never: "Never checked",
     checkedAt: (at: string) => `Checked at: ${at}`,
     allGood: "All good.",
-    columns: { constituency: "Constituency", problem: "Problem", airtable: "Here / Airtable", parliament: "Parliament" },
+    columns: {
+      constituency: "Constituency",
+      problem: "Problem",
+      airtable: "Here / Airtable",
+      parliament: "Parliament",
+    },
     kinds: {
       unofficial: "Unofficial constituency name",
       missing: "Missing from here / Airtable",
@@ -125,7 +133,16 @@ export const staffCopy = {
       replied: "Replied",
       auto_reply: "Auto-reply",
     } as Record<string, string>,
-    columns: { created: "Created", from: "From", consent: "Consent", to: "To", campaign: "Campaign", status: "Status", replied: "Replied", history: "History" },
+    columns: {
+      created: "Created",
+      from: "From",
+      consent: "Consent",
+      to: "To",
+      campaign: "Campaign",
+      status: "Status",
+      replied: "Replied",
+      history: "History",
+    },
     consent: { yes: "Yes", no: "No" },
   },
   changes: {

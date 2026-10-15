@@ -5,7 +5,6 @@ import LocalGroupsMap from "./LocalGroupsMap";
 export default function LocalGroupsSection() {
   return (
     <>
-
       <span id="chapters" className="anchor-alias" aria-hidden="true" />
       <section id="local-groups" className="section muted">
         <div className="container">
@@ -19,7 +18,9 @@ export default function LocalGroupsSection() {
           <div className="start-local-group-cta">
             <div className="start-local-group-cta-copy">
               <h3>Don&apos;t see your city?</h3>
-              <p>Bring PauseAI to your city. We&apos;ll share playbooks, visuals, and support to launch local actions.</p>
+              <p>
+                Bring PauseAI to your city. We&apos;ll share playbooks, visuals, and support to launch local actions.
+              </p>
             </div>
             <ButtonAnchor
               variant="primary"

@@ -8,7 +8,8 @@ beforeEach(() => {
 });
 afterEach(() => vi.unstubAllEnvs());
 
-const call = (authorization: string) => POST(new Request("https://pauseai.uk/api/cron/sync-mps", { method: "POST", headers: { authorization } }));
+const call = (authorization: string) =>
+  POST(new Request("https://pauseai.uk/api/cron/sync-mps", { method: "POST", headers: { authorization } }));
 
 describeWithDatabase("POST /api/cron/sync-mps", () => {
   useTestDatabase();

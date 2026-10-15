@@ -69,7 +69,9 @@ test("the ZZ99ZZ flow: postcode, form, preview, sent, and a reply forwarded", as
   const address = letter.From.match(/<(reply\+(\w+)@letters\.pauseai\.uk)>/)!;
   expect(letter.From).toBe(`"Jane Smith via PauseAI" <${address[1]}>`);
   expect(letter.Bcc).toBe("replies@example.org");
-  expect(letter.ReplyTo).toBe(`"Jane Smith" <${sender}>, "PauseAI Policy Team" <replies@example.org>, "PauseAI Letters" <${address[1]}>`);
+  expect(letter.ReplyTo).toBe(
+    `"Jane Smith" <${sender}>, "PauseAI Policy Team" <replies@example.org>, "PauseAI Letters" <${address[1]}>`,
+  );
   expect(letter.TextBody).toMatch(/Jane Smith\n1 High Street\nTestville\nZZ9 9ZZ$/);
   expect(letter.Attachments!.map((a) => a.Name)).toEqual(campaigns[0].attachments.map((a) => a.file));
 
@@ -93,7 +95,9 @@ test("the ZZ99ZZ flow: postcode, form, preview, sent, and a reply forwarded", as
   }
 });
 
-test("finding the MP opens the page to write the letter, and going back keeps the name and postcode", async ({ page }) => {
+test("finding the MP opens the page to write the letter, and going back keeps the name and postcode", async ({
+  page,
+}) => {
   await lookUpTestMp(page);
   await expect(page).toHaveURL(`${PAGE}/write`);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(copy.write.title);
@@ -121,7 +125,9 @@ test("no Ads event when the server refuses the letter, which can then be edited 
   await expect(page.getByRole("textbox", { name: copy.form.addressLabel })).toHaveValue("1 High Street\nTestville");
 });
 
-test("the write, preview and sent pages, opened without a lookup or a letter, link back to the form", async ({ page }) => {
+test("the write, preview and sent pages, opened without a lookup or a letter, link back to the form", async ({
+  page,
+}) => {
   for (const step of ["write", "preview", "sent"]) {
     await page.goto(`${PAGE}/${step}`);
     await page.getByRole("link", { name: copy.preview.backToForm }).click();
@@ -133,7 +139,9 @@ test("the Postmark webhooks refuse requests without our credentials", async ({ r
   const wrong = `Basic ${Buffer.from("postmark:guess").toString("base64")}`;
   for (const path of ["/api/postmark/bounce", "/api/postmark/inbound"]) {
     expect((await request.post(`${BASE}${path}`, { data: {} })).status(), path).toBe(401);
-    expect((await request.post(`${BASE}${path}`, { headers: { Authorization: wrong }, data: {} })).status(), path).toBe(401);
+    expect((await request.post(`${BASE}${path}`, { headers: { Authorization: wrong }, data: {} })).status(), path).toBe(
+      401,
+    );
   }
   const bounce = await request.post(`${BASE}/api/postmark/bounce`, {
     headers: { Authorization: WEBHOOK_AUTH },
@@ -142,7 +150,9 @@ test("the Postmark webhooks refuse requests without our credentials", async ({ r
   expect(await bounce.json()).toEqual({ recorded: false });
 });
 
-test("ZZ99ZS has signed, so the PM letter's page moves on to the bill's, to write to them about that", async ({ page }) => {
+test("ZZ99ZS has signed, so the PM letter's page moves on to the bill's, to write to them about that", async ({
+  page,
+}) => {
   await page.goto(`${BASE}/campaigns-v2`);
   await expect(page.getByText(/ZZ9 9ZS/)).toBeVisible();
   await page.getByLabel(copy.lookup.nameLabel).fill("Jane Smith");
@@ -171,7 +181,10 @@ test("ZZ99ZN has no email, so there's no letter to write", async ({ page }) => {
   await expect(page).toHaveURL(`${BASE}/campaigns-v2/${campaigns[0].slug}`);
 });
 
-test("each campaign has its own page, plain /campaigns-v2 opens the first, and an unknown one is a 404", async ({ page, request }) => {
+test("each campaign has its own page, plain /campaigns-v2 opens the first, and an unknown one is a 404", async ({
+  page,
+  request,
+}) => {
   for (const campaign of campaigns) {
     await page.goto(`${BASE}/campaigns-v2/${campaign.slug}`);
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();

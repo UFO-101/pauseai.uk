@@ -8,7 +8,8 @@ import { ButtonAnchor, ButtonLink } from "@/components/ui/Button";
 
 export const metadata = pageMetadata({
   title: "Track Record",
-  description: "One year of PauseAI UK: two conferences, an open letter signed by 60+ politicians, a European Parliament event, and the largest AI protest in the world.",
+  description:
+    "One year of PauseAI UK: two conferences, an open letter signed by 60+ politicians, a European Parliament event, and the largest AI protest in the world.",
   path: "/track-record",
 });
 
@@ -29,12 +30,7 @@ export default function TrackRecordPage() {
           <div className="container closing-inner">
             <p className="closing-sub">Join us for what comes next.</p>
             <div className="closing-actions">
-              <ButtonAnchor
-                variant="primary"
-                href={site.whatsappUrl}
-                target="_blank"
-                rel="noreferrer"
-              >
+              <ButtonAnchor variant="primary" href={site.whatsappUrl} target="_blank" rel="noreferrer">
                 Join the WhatsApp community
               </ButtonAnchor>
               <ButtonLink variant="ghost" href="/#join">

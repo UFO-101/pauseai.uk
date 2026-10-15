@@ -1,13 +1,7 @@
 import type { CSSProperties } from "react";
 
 /** Every local group with a page, so a page cannot ask for one that does not exist. */
-export type LocalGroupName =
-  | "Glasgow"
-  | "Manchester"
-  | "West of England"
-  | "Leicester"
-  | "Oxford"
-  | "London";
+export type LocalGroupName = "Glasgow" | "Manchester" | "West of England" | "Leicester" | "Oxford" | "London";
 
 export type LocalGroup = {
   name: LocalGroupName;

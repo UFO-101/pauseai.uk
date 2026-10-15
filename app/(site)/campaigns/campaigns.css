@@ -99,12 +99,17 @@
   overflow: hidden;
   text-decoration: none;
   color: inherit;
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
 }
 .doc-card:hover {
   transform: translateY(-2px);
   border-color: var(--accent);
-  box-shadow: 0 2px 4px var(--shadow), 0 12px 32px var(--shadow);
+  box-shadow:
+    0 2px 4px var(--shadow),
+    0 12px 32px var(--shadow);
 }
 .doc-card img {
   display: block;
@@ -255,7 +260,9 @@
   border-radius: 12px;
   background: var(--surface);
   overflow: hidden;
-  box-shadow: 0 1px 2px var(--shadow), 0 12px 32px var(--shadow);
+  box-shadow:
+    0 1px 2px var(--shadow),
+    0 12px 32px var(--shadow);
 }
 .campaigns-embed .embed-frame iframe {
   display: block;
@@ -289,12 +296,17 @@
   font: inherit;
   color: var(--text-secondary);
   cursor: zoom-in;
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
 }
 .qr-thumb:hover {
   transform: translateY(-2px);
   border-color: var(--accent);
-  box-shadow: 0 2px 4px var(--shadow), 0 12px 32px var(--shadow);
+  box-shadow:
+    0 2px 4px var(--shadow),
+    0 12px 32px var(--shadow);
 }
 .qr-thumb img {
   display: block;

@@ -14,7 +14,14 @@ describeWithDatabase("GET /api/signatories", () => {
 
     expect(res.status).toBe(200);
     expect(res.headers.get("Cache-Control")).toBe("public, s-maxage=3600, stale-while-revalidate=86400");
-    expect(await res.json()).toEqual([{ name: "Polly Placeholder", party: "Labour (Co-op)", constituency: "Cities of London and Westminster", house: "commons" }]);
+    expect(await res.json()).toEqual([
+      {
+        name: "Polly Placeholder",
+        party: "Labour (Co-op)",
+        constituency: "Cities of London and Westminster",
+        house: "commons",
+      },
+    ]);
   });
 
   it("returns 500 when the database fails", async () => {

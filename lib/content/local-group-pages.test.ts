@@ -10,14 +10,20 @@ describe("local group pages", () => {
 
   it("shows each group's upcoming events exactly once", () => {
     for (const page of Object.values(localGroupPages)) {
-      expect(page.sections.filter((s) => s.kind === "events"), page.name).toHaveLength(1);
+      expect(
+        page.sections.filter((s) => s.kind === "events"),
+        page.name,
+      ).toHaveLength(1);
     }
   });
 
   it("gives every page a hero action and a way to get in touch", () => {
     for (const page of Object.values(localGroupPages)) {
       expect(page.hero.actions.length, page.name).toBeGreaterThan(0);
-      expect(page.sections.some((s) => s.kind === "contact"), page.name).toBe(true);
+      expect(
+        page.sections.some((s) => s.kind === "contact"),
+        page.name,
+      ).toBe(true);
     }
   });
 });

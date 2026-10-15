@@ -153,51 +153,111 @@ export default function Nav() {
             <Link href="/what-is-pauseai-uk/" className="dropdown-trigger" aria-haspopup="true" aria-expanded="false">
               About
               <svg className="caret" viewBox="0 0 12 8" aria-hidden="true" focusable={false}>
-                <path d="M1 1.5l5 5 5-5" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                <path
+                  d="M1 1.5l5 5 5-5"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.6"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
               </svg>
             </Link>
             <div className="dropdown" role="menu">
-              <Link href="/what-is-pauseai-uk/" role="menuitem">What is PauseAI UK?</Link>
-              <Link href="/track-record/" role="menuitem">Track record</Link>
-              <Link href="/theory-of-change/" role="menuitem">Theory of change</Link>
-              <Link href="/governance/" role="menuitem">Governance</Link>
-              <Link href="/global-ai-sentiment-2026/" role="menuitem">Global AI sentiment 2026</Link>
-              <Link href="/jobs/" role="menuitem">Jobs</Link>
+              <Link href="/what-is-pauseai-uk/" role="menuitem">
+                What is PauseAI UK?
+              </Link>
+              <Link href="/track-record/" role="menuitem">
+                Track record
+              </Link>
+              <Link href="/theory-of-change/" role="menuitem">
+                Theory of change
+              </Link>
+              <Link href="/governance/" role="menuitem">
+                Governance
+              </Link>
+              <Link href="/global-ai-sentiment-2026/" role="menuitem">
+                Global AI sentiment 2026
+              </Link>
+              <Link href="/jobs/" role="menuitem">
+                Jobs
+              </Link>
             </div>
           </div>
           <div className="nav-item has-dropdown">
-            <Link href={`${navPrefix}#local-groups`} className="dropdown-trigger" aria-haspopup="true" aria-expanded="false">
+            <Link
+              href={`${navPrefix}#local-groups`}
+              className="dropdown-trigger"
+              aria-haspopup="true"
+              aria-expanded="false"
+            >
               Local groups
               <svg className="caret" viewBox="0 0 12 8" aria-hidden="true" focusable={false}>
-                <path d="M1 1.5l5 5 5-5" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                <path
+                  d="M1 1.5l5 5 5-5"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.6"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
               </svg>
             </Link>
             <div className="dropdown" role="menu">
-              <Link href="/london/" role="menuitem">London</Link>
-              <Link href="/glasgow/" role="menuitem">Glasgow</Link>
-              <Link href="/oxford/" role="menuitem">Oxford</Link>
-              <Link href="/leicester/" role="menuitem">Leicester</Link>
-              <Link href="/manchester/" role="menuitem">Manchester</Link>
-              <Link href="/west-of-england/" role="menuitem">West of England</Link>
+              <Link href="/london/" role="menuitem">
+                London
+              </Link>
+              <Link href="/glasgow/" role="menuitem">
+                Glasgow
+              </Link>
+              <Link href="/oxford/" role="menuitem">
+                Oxford
+              </Link>
+              <Link href="/leicester/" role="menuitem">
+                Leicester
+              </Link>
+              <Link href="/manchester/" role="menuitem">
+                Manchester
+              </Link>
+              <Link href="/west-of-england/" role="menuitem">
+                West of England
+              </Link>
             </div>
           </div>
           <div className="nav-item has-dropdown">
             <Link href="/campaigns/" className="dropdown-trigger" aria-haspopup="true" aria-expanded="false">
               Campaigns
               <svg className="caret" viewBox="0 0 12 8" aria-hidden="true" focusable={false}>
-                <path d="M1 1.5l5 5 5-5" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                <path
+                  d="M1 1.5l5 5 5-5"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.6"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
               </svg>
             </Link>
             <div className="dropdown" role="menu">
-              <Link href="/campaigns/" role="menuitem">Regulate AI developers now</Link>
-              <Link href="/future-of-workforce-inquiry/" role="menuitem">Future of the Workforce Inquiry</Link>
+              <Link href="/campaigns/" role="menuitem">
+                Regulate AI developers now
+              </Link>
+              <Link href="/future-of-workforce-inquiry/" role="menuitem">
+                Future of the Workforce Inquiry
+              </Link>
             </div>
           </div>
           <Link href="/people/">People</Link>
           <Link href="/blog/">Blog</Link>
-          <a href={site.shopUrl} target="_blank" rel="noreferrer">Shop</a>
-          <Link href={`${navPrefix}#join`} className="pill">Join</Link>
-          <Link href="/donate" className="pill pill-primary">Donate</Link>
+          <a href={site.shopUrl} target="_blank" rel="noreferrer">
+            Shop
+          </a>
+          <Link href={`${navPrefix}#join`} className="pill">
+            Join
+          </Link>
+          <Link href="/donate" className="pill pill-primary">
+            Donate
+          </Link>
         </nav>
       </div>
     </header>

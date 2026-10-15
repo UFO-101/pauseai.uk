@@ -2,10 +2,29 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { CalendarEvent } from "@/lib/collateral/eventText";
-import { canvasToPngBlob, downloadFilesZip, downloadText, exportFilename, pdfBytesForPrint } from "@/lib/collateral/export";
-import { BLEED_MM, FORMAT_GROUPS, FORMATS, formatDimensionLabel, previewStyle, type Format } from "@/lib/collateral/formats";
+import {
+  canvasToPngBlob,
+  downloadFilesZip,
+  downloadText,
+  exportFilename,
+  pdfBytesForPrint,
+} from "@/lib/collateral/export";
+import {
+  BLEED_MM,
+  FORMAT_GROUPS,
+  FORMATS,
+  formatDimensionLabel,
+  previewStyle,
+  type Format,
+} from "@/lib/collateral/formats";
 import { sameIssues, splitByScope, type LintIssue } from "@/lib/collateral/lint";
-import { DEFAULT_PACK_FORMAT_IDS, DEFAULT_PHOTO_VIEW, parsePackProject, serializePackProject, type PackProject } from "@/lib/collateral/packProject";
+import {
+  DEFAULT_PACK_FORMAT_IDS,
+  DEFAULT_PHOTO_VIEW,
+  parsePackProject,
+  serializePackProject,
+  type PackProject,
+} from "@/lib/collateral/packProject";
 import type { PhotoView } from "@/lib/collateral/photoTransform";
 import { renderCollateral, type RenderOptions } from "@/lib/collateral/render";
 import { defaultValues, type Drawable } from "@/lib/collateral/templates";
@@ -14,7 +33,16 @@ import Checks from "./Checks";
 import CropControls from "./CropControls";
 import DesignControls from "./DesignControls";
 import LogoCoverControls from "./LogoCoverControls";
-import { designFromData, designQrCodes, designTemplate, designToData, designValues, newDesign, withQrCodes, type DesignState } from "./designState";
+import {
+  designFromData,
+  designQrCodes,
+  designTemplate,
+  designToData,
+  designValues,
+  newDesign,
+  withQrCodes,
+  type DesignState,
+} from "./designState";
 import ProjectMenu from "./ProjectMenu";
 import QrFormatNote from "./QrFormatNote";
 import TitleSizeControl from "./TitleSizeControl";
@@ -86,7 +114,8 @@ export default function PackStudio({ events }: { events: CalendarEvent[] }) {
   const active = formats.find((f) => f.id === activeId) ?? formats[0];
 
   const currentPhoto = design.photo?.drawable ?? null;
-  const viewFor = (id: string) => (viewsState.photo === currentPhoto ? viewsState.views[id] : undefined) ?? DEFAULT_PHOTO_VIEW;
+  const viewFor = (id: string) =>
+    (viewsState.photo === currentPhoto ? viewsState.views[id] : undefined) ?? DEFAULT_PHOTO_VIEW;
   const activeView = active ? viewFor(active.id) : DEFAULT_PHOTO_VIEW;
   // Only the preview and crop controls call this, and they are only shown for an active format.
   function setActiveView(fn: (v: PhotoView) => PhotoView) {
@@ -104,7 +133,8 @@ export default function PackStudio({ events }: { events: CalendarEvent[] }) {
       ...designToData(design, embedUploads),
       outputs: FORMATS.filter((f) => selected.includes(f.id)).map((f) => ({
         formatId: f.id,
-        photoView: (viewsState.photo === design.photo?.drawable ? viewsState.views[f.id] : undefined) ?? DEFAULT_PHOTO_VIEW,
+        photoView:
+          (viewsState.photo === design.photo?.drawable ? viewsState.views[f.id] : undefined) ?? DEFAULT_PHOTO_VIEW,
         headlineScale: headlineScales[f.id] ?? 1,
         screenQr: screenQrs[f.id] ?? false,
       })),
@@ -118,7 +148,10 @@ export default function PackStudio({ events }: { events: CalendarEvent[] }) {
     setSelected(project.outputs.map((o) => o.formatId));
     setHeadlineScales(Object.fromEntries(project.outputs.map((o) => [o.formatId, o.headlineScale])));
     setScreenQrs(Object.fromEntries(project.outputs.map((o) => [o.formatId, o.screenQr])));
-    setViewsState({ photo: loaded.photo?.drawable ?? null, views: Object.fromEntries(project.outputs.map((o) => [o.formatId, o.photoView])) });
+    setViewsState({
+      photo: loaded.photo?.drawable ?? null,
+      views: Object.fromEntries(project.outputs.map((o) => [o.formatId, o.photoView])),
+    });
     return ok;
   }, []);
 
@@ -212,7 +245,11 @@ export default function PackStudio({ events }: { events: CalendarEvent[] }) {
   function onSaveProject() {
     setMessage(null);
     try {
-      downloadText(serializePackProject(currentProject(true)), exportFilename([template.id, "pack", "project"], "json"), "application/json");
+      downloadText(
+        serializePackProject(currentProject(true)),
+        exportFilename([template.id, "pack", "project"], "json"),
+        "application/json",
+      );
       setMessage("Pack file saved. Open it from the ⋯ menu to carry on editing.");
     } catch {
       setMessage("Could not save the pack.");
@@ -266,7 +303,8 @@ export default function PackStudio({ events }: { events: CalendarEvent[] }) {
     formats.length === 0
       ? "Tick at least one format."
       : [
-          designWarnings && `${designWarnings} ${designWarnings === 1 ? "problem affects" : "problems affect"} every format.`,
+          designWarnings &&
+            `${designWarnings} ${designWarnings === 1 ? "problem affects" : "problems affect"} every format.`,
           needAttention
             ? `${needAttention} of ${formats.length} formats need a look of their own.`
             : designWarnings
@@ -299,10 +337,22 @@ export default function PackStudio({ events }: { events: CalendarEvent[] }) {
         <div className="collateral-preview-actions">
           {designIssues.length > 0 && <Checks issues={designIssues} title="Checks for every format" />}
           <p className="collateral-hint collateral-actions-summary">{summary}</p>
-          <Button type="button" variant="primary" size="large" onClick={onDownloadPack} disabled={!ready || formats.length === 0}>
+          <Button
+            type="button"
+            variant="primary"
+            size="large"
+            onClick={onDownloadPack}
+            disabled={!ready || formats.length === 0}
+          >
             {busy ? "Preparing…" : `Download ${formats.length} ${formats.length === 1 ? "format" : "formats"} (.zip)`}
           </Button>
-          <ProjectMenu noun="pack" onSave={onSaveProject} onOpen={onOpenProject} onReset={onReset} saveDisabled={!restored} />
+          <ProjectMenu
+            noun="pack"
+            onSave={onSaveProject}
+            onOpen={onOpenProject}
+            onReset={onReset}
+            saveDisabled={!restored}
+          />
           {shown && (
             <p className="collateral-message" role="status">
               {shown}
@@ -355,13 +405,17 @@ export default function PackStudio({ events }: { events: CalendarEvent[] }) {
               ))}
             </fieldset>
           ))}
-          {formats.some((f) => f.kind === "digital" && f.logoCover) && <LogoCoverControls design={design} update={update} />}
+          {formats.some((f) => f.kind === "digital" && f.logoCover) && (
+            <LogoCoverControls design={design} update={update} />
+          )}
         </section>
 
         {active && (
           <section>
             <h2>Adjust {active.label}</h2>
-            <p className="collateral-hint">Changes here only apply to this format. Pick another format from the previews.</p>
+            <p className="collateral-hint">
+              Changes here only apply to this format. Pick another format from the previews.
+            </p>
             <Checks issues={activeIssues} title={`Checks for ${active.label}`} />
             <TitleSizeControl
               value={headlineScales[active.id] ?? 1}
@@ -375,7 +429,9 @@ export default function PackStudio({ events }: { events: CalendarEvent[] }) {
                 onScreenQr={(on) => setScreenQrs((prev) => ({ ...prev, [active.id]: on }))}
               />
             )}
-            {design.photo && <CropControls view={activeView} onChange={(patch) => setActiveView((v) => ({ ...v, ...patch }))} />}
+            {design.photo && (
+              <CropControls view={activeView} onChange={(patch) => setActiveView((v) => ({ ...v, ...patch }))} />
+            )}
           </section>
         )}
       </div>

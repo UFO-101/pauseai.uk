@@ -24,8 +24,13 @@ function serve(...pages: unknown[]) {
 describe("fetchSignatoriesForImport", () => {
   it("pages through everyone who signed, with only the fields it needs", async () => {
     const requests = serve(
-      { records: [record({ "Full name or Title": "A", Email: " a@parliament.uk ", "Internal Notes": "not this" })], offset: "next" },
-      { records: [record({ "Full name or Title": "B", Party: "P", Constituency: "C", Body: "House of Lords" }, "rec2")] },
+      {
+        records: [record({ "Full name or Title": "A", Email: " a@parliament.uk ", "Internal Notes": "not this" })],
+        offset: "next",
+      },
+      {
+        records: [record({ "Full name or Title": "B", Party: "P", Constituency: "C", Body: "House of Lords" }, "rec2")],
+      },
     );
 
     expect(await fetchSignatoriesForImport("test-token")).toEqual([
@@ -36,7 +41,13 @@ describe("fetchSignatoriesForImport", () => {
     expect(url.hostname).toBe("api.airtable.com");
     expect(url.searchParams.get("offset")).toBe("next");
     expect(url.searchParams.get("filterByFormula")).toBe("{Signed Frontier AI Letter}=TRUE()");
-    expect(url.searchParams.getAll("fields[]")).toEqual(["Full name or Title", "Party", "Constituency", "Email", "Body"]);
+    expect(url.searchParams.getAll("fields[]")).toEqual([
+      "Full name or Title",
+      "Party",
+      "Constituency",
+      "Email",
+      "Body",
+    ]);
     expect(requests[0].headers.get("Authorization")).toBe("Bearer test-token");
   });
 
@@ -44,7 +55,9 @@ describe("fetchSignatoriesForImport", () => {
     serve({});
     expect(await fetchSignatoriesForImport("t")).toEqual([]);
     serve({ records: [record({})] });
-    expect(await fetchSignatoriesForImport("t")).toEqual([{ airtableId: "rec1", name: "", party: "", constituency: "", email: "", body: "" }]);
+    expect(await fetchSignatoriesForImport("t")).toEqual([
+      { airtableId: "rec1", name: "", party: "", constituency: "", email: "", body: "" },
+    ]);
   });
 
   it("throws on errors, or on endless paging", async () => {
@@ -60,17 +73,39 @@ describe("fetchMps", () => {
   it("reads the sitting MPs, with only the fields it needs, sorted by constituency", async () => {
     const requests = serve({
       records: [
-        record({ "Full name or Title": "Zed", Salutation: "Mr Zed", Constituency: "Zetland", Party: "P", Email: "zed@parliament.uk " }, "recZ"),
+        record(
+          {
+            "Full name or Title": "Zed",
+            Salutation: "Mr Zed",
+            Constituency: "Zetland",
+            Party: "P",
+            Email: "zed@parliament.uk ",
+          },
+          "recZ",
+        ),
         record({ "Full name or Title": "Ann", Constituency: "Ashfield", Email: 5 }, "recA"),
       ],
     });
 
     expect(await fetchMps("t")).toEqual([
       { airtableId: "recA", name: "Ann", salutation: "", constituency: "Ashfield", party: "", email: null },
-      { airtableId: "recZ", name: "Zed", salutation: "Mr Zed", constituency: "Zetland", party: "P", email: "zed@parliament.uk" },
+      {
+        airtableId: "recZ",
+        name: "Zed",
+        salutation: "Mr Zed",
+        constituency: "Zetland",
+        party: "P",
+        email: "zed@parliament.uk",
+      },
     ]);
     const url = new URL(requests[0].url);
     expect(url.searchParams.get("filterByFormula")).toBe(MPS_FORMULA);
-    expect(url.searchParams.getAll("fields[]")).toEqual(["Full name or Title", "Salutation", "Constituency", "Party", "Email"]);
+    expect(url.searchParams.getAll("fields[]")).toEqual([
+      "Full name or Title",
+      "Salutation",
+      "Constituency",
+      "Party",
+      "Email",
+    ]);
   });
 });

@@ -17,7 +17,13 @@ import {
   slowOrStopPct,
 } from "./aiSentiment2026";
 
-const row = { stop_permanently_pct: 10, pause_until_safe_pct: 20, continue_oversight_pct: 30, continue_rapidly_pct: 25, not_sure_pct: 15 };
+const row = {
+  stop_permanently_pct: 10,
+  pause_until_safe_pct: 20,
+  continue_oversight_pct: 30,
+  continue_rapidly_pct: 25,
+  not_sure_pct: 15,
+};
 
 describe("AI sentiment 2026 data", () => {
   it("covers the survey's 104 countries and 377,458 respondents", () => {

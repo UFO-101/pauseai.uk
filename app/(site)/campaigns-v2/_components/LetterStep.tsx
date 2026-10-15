@@ -6,7 +6,15 @@ import styles from "./EmailYourMp.module.css";
  * preview, or "sent". One centred column, the letter's width: its heading,
  * then what's on it. Then, full width, anything `after` it.
  */
-export default function LetterStep({ title, children, after }: { title: string; children: ReactNode; after?: ReactNode }) {
+export default function LetterStep({
+  title,
+  children,
+  after,
+}: {
+  title: string;
+  children: ReactNode;
+  after?: ReactNode;
+}) {
   return (
     <main className="campaigns">
       <section className={`campaigns-hero ${styles.step}`}>

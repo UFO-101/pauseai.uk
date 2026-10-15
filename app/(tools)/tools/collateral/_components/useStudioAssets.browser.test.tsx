@@ -5,7 +5,10 @@ import { useStudioAssets } from "./useStudioAssets";
 
 // Failures and slow loads, which the real fonts and logos never give.
 const { loads } = vi.hoisted(() => ({
-  loads: { fonts: undefined as undefined | (() => Promise<void>), image: undefined as undefined | (() => Promise<Drawable>) },
+  loads: {
+    fonts: undefined as undefined | (() => Promise<void>),
+    image: undefined as undefined | (() => Promise<Drawable>),
+  },
 }));
 vi.mock("@/lib/collateral/render", async (importActual) => {
   const actual = await importActual<typeof import("@/lib/collateral/render")>();

@@ -220,7 +220,6 @@
   margin: 0;
 }
 
-
 .notice {
   margin: 0;
   padding: 1rem 1.25rem;
@@ -285,7 +284,6 @@
   overflow: hidden;
 }
 
-
 /* The preview and "sent" pages: one centred column, as wide as the form's
    fields, with the heading close above what's on the page. Doubled up to
    win over the campaign hero's own padding and heading margin. */
@@ -318,7 +316,9 @@ section.step {
   border-radius: 8px;
   background: var(--surface);
   color: var(--text);
-  box-shadow: 0 1px 2px var(--shadow), 0 12px 32px var(--shadow);
+  box-shadow:
+    0 1px 2px var(--shadow),
+    0 12px 32px var(--shadow);
 }
 
 .envelope {

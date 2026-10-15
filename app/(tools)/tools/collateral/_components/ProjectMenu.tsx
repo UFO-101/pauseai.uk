@@ -45,7 +45,15 @@ export default function ProjectMenu({ noun, onSave, onOpen, onReset, saveDisable
 
   return (
     <div ref={rootRef} className="collateral-menu">
-      <Button type="button" variant="ghost" size="large" className="collateral-menu-button" aria-label="More options" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
+      <Button
+        type="button"
+        variant="ghost"
+        size="large"
+        className="collateral-menu-button"
+        aria-label="More options"
+        aria-expanded={open}
+        onClick={() => setOpen((o) => !o)}
+      >
         ⋯
       </Button>
       {open && (

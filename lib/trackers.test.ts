@@ -34,7 +34,7 @@ describe("tallySources", () => {
         guest("brixton"),
       ],
       TAGS,
-      since
+      since,
     );
     expect(result.counts.brixton).toBe(2);
     expect(result.total).toBe(2);
@@ -51,7 +51,7 @@ describe("tallySources", () => {
       ],
       TAGS,
       since,
-      until
+      until,
     );
     expect(result.counts.brixton).toBe(1);
     expect(result.total).toBe(1);

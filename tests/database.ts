@@ -11,7 +11,17 @@ import { dropDatabase, freshDatabase } from "@/scripts/fresh-database.mjs";
  */
 export const describeWithDatabase = describe.skipIf(process.env.NETLIFY === "true");
 
-const TABLES = ["audit_log", "campaign_statuses", "letter_events", "letters", "mp_checks", "mp_syncs", "politicians", "staff_login_links", "staff_sessions"];
+const TABLES = [
+  "audit_log",
+  "campaign_statuses",
+  "letter_events",
+  "letters",
+  "mp_checks",
+  "mp_syncs",
+  "politicians",
+  "staff_login_links",
+  "staff_sessions",
+];
 
 /**
  * Gives this test file its own database, empty before each test. Call at the
@@ -70,7 +80,15 @@ export async function addTestPolitician(row: MpRow = {}): Promise<number> {
 
 /** Testy McTestface MP (ZZ99ZZ), as the sync adds them, without statuses. */
 export function addTestMp(email: string | null = "test-mp@example.org"): Promise<number> {
-  return addTestPolitician({ airtableId: null, name: "Testy McTestface MP", salutation: "Mr McTestface", constituency: "Testshire", party: "", email, testPostcode: "ZZ99ZZ" });
+  return addTestPolitician({
+    airtableId: null,
+    name: "Testy McTestface MP",
+    salutation: "Mr McTestface",
+    constituency: "Testshire",
+    party: "",
+    email,
+    testPostcode: "ZZ99ZZ",
+  });
 }
 
 /** Runs `work` with the database unreachable, then reconnects. */

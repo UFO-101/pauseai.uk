@@ -63,7 +63,11 @@ export class LintCollector {
     const ctx = small.getContext("2d", { willReadFrequently: true });
     if (!ctx) return;
     ctx.drawImage(canvas, 0, 0, small.width, small.height);
-    this.backdrop = { pixels: ctx.getImageData(0, 0, small.width, small.height).data, width: small.width, height: small.height };
+    this.backdrop = {
+      pixels: ctx.getImageData(0, 0, small.width, small.height).data,
+      width: small.width,
+      height: small.height,
+    };
     this.backdropScale = scale;
     this.photo = photo;
   }
@@ -144,7 +148,11 @@ export function findLink(text: string): string | null {
  * Flags links typed into text fields other than the web address. On an image a link cannot be clicked,
  * and in running text it is easy to misread, so it belongs in Web address or a QR code.
  */
-export function lintLinksInText(lint: LintCollector, fields: { key: string; label: string; kind: string }[], values: Record<string, string>) {
+export function lintLinksInText(
+  lint: LintCollector,
+  fields: { key: string; label: string; kind: string }[],
+  values: Record<string, string>,
+) {
   for (const field of fields) {
     if (field.key === "url" || (field.kind !== "text" && field.kind !== "textarea")) continue;
     const link = findLink(values[field.key] ?? "");

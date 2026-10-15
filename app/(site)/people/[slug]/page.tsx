@@ -11,11 +11,7 @@ export function generateStaticParams() {
   return people.map((person) => ({ slug: personSlug(person) }));
 }
 
-export async function generateMetadata({
-  params,
-}: {
-  params: Promise<{ slug: string }>;
-}): Promise<Metadata> {
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   const found = findPerson(slug);
   if (!found) return {};

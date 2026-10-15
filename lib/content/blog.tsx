@@ -60,8 +60,7 @@ export const posts: BlogPost[] = [
     title: "Monopoly on AI Violence",
     date: "2026-10-06",
     author: "Erin Gruenberg",
-    tldr:
-      "The nuclear disarmament movement shows how to rein in weapons of mass destruction. Comparing it with the campaign against lethal autonomous weapons shows what is missing, and why we can\u2019t wait for a catastrophe to supply it.",
+    tldr: "The nuclear disarmament movement shows how to rein in weapons of mass destruction. Comparing it with the campaign against lethal autonomous weapons shows what is missing, and why we can\u2019t wait for a catastrophe to supply it.",
     content: (
       <>
         <figure>
@@ -93,28 +92,39 @@ export const posts: BlogPost[] = [
         <blockquote>
           <p>
             <strong>
-              14 May 2025, <a href="https://news.un.org/en/news/topic/law-and-crime-prevention" target="_blank" rel="noreferrer">Law and Crime Prevention</a>
+              14 May 2025,{" "}
+              <a href="https://news.un.org/en/news/topic/law-and-crime-prevention" target="_blank" rel="noreferrer">
+                Law and Crime Prevention
+              </a>
             </strong>
           </p>
           <p>
-            UN Secretary-General Ant&oacute;nio Guterres has once again called for a global ban on lethal autonomous weapon
-            systems &ndash; machines capable of taking human lives without human oversight &ndash; describing them as
-            &ldquo;politically unacceptable&rdquo; and &ldquo;morally repugnant.&rdquo;
-            <sup><a id="fnref-1" href="#fn-1" aria-label="Footnote 1">1</a></sup>
+            UN Secretary-General Ant&oacute;nio Guterres has once again called for a global ban on lethal autonomous
+            weapon systems &ndash; machines capable of taking human lives without human oversight &ndash; describing
+            them as &ldquo;politically unacceptable&rdquo; and &ldquo;morally repugnant.&rdquo;
+            <sup>
+              <a id="fnref-1" href="#fn-1" aria-label="Footnote 1">
+                1
+              </a>
+            </sup>
           </p>
         </blockquote>
         <h2>How do we protect future generations and the values that shape civilization?</h2>
         <p>
           Dangerous weapons capable of mass destruction are not a new concept to the world; parallels can be drawn
-          between nuclear weapons and lethal autonomous weapon systems (LAWS). Daniel Ellsberg, a military analyst from the
-          cold war commented: &ldquo;
+          between nuclear weapons and lethal autonomous weapon systems (LAWS). Daniel Ellsberg, a military analyst from
+          the cold war commented: &ldquo;
           <em>
-            Alain Enthoven and I were the youngest members of the department. Neither of us joined the extremely generous
-            retirement plan RAND offered. Neither of us believed, in our late twenties, we had a chance of collecting on
-            it.
+            Alain Enthoven and I were the youngest members of the department. Neither of us joined the extremely
+            generous retirement plan RAND offered. Neither of us believed, in our late twenties, we had a chance of
+            collecting on it.
           </em>
           &rdquo;
-          <sup><a id="fnref-2" href="#fn-2" aria-label="Footnote 2">2</a></sup>
+          <sup>
+            <a id="fnref-2" href="#fn-2" aria-label="Footnote 2">
+              2
+            </a>
+          </sup>
         </p>
         <p>
           We have not yet eradicated WMDs but there has been progress. The methods policymakers and activists used to
@@ -122,58 +132,76 @@ export const posts: BlogPost[] = [
           autonomous weapons systems.
         </p>
         <p>
-          Using ICAN&rsquo;s timeline of the history of nuclear weapons, I characterised key steps towards progress into 5
-          categories:
-          <sup><a id="fnref-3" href="#fn-3" aria-label="Footnote 3">3</a></sup>
+          Using ICAN&rsquo;s timeline of the history of nuclear weapons, I characterised key steps towards progress into
+          5 categories:
+          <sup>
+            <a id="fnref-3" href="#fn-3" aria-label="Footnote 3">
+              3
+            </a>
+          </sup>
         </p>
         <ol>
           <li>
             <strong>Negotiations between Elites</strong>: In 1986, Gorbachev and Reagan sat across from each other in
-            Reykjavik, discussing the future of their nations. Despite the two leaders&rsquo; mutual frustration and there
-            being no immediate effect on the dissolution of WMDs, this was a core and necessary stepping stone towards
-            category 2, below.
+            Reykjavik, discussing the future of their nations. Despite the two leaders&rsquo; mutual frustration and
+            there being no immediate effect on the dissolution of WMDs, this was a core and necessary stepping stone
+            towards category 2, below.
           </li>
           <li>
             <strong>Major Policy Implementation</strong>: 1987 oversaw the Intermediate-Range Nuclear Forces Treaty. A
             historic piece of policy and an agreement between two super powers banning the majority of the USSR and
-            USA&rsquo;s nuclear and conventional ground-launched <a href="https://en.wikipedia.org/wiki/Ballistic_missile" target="_blank" rel="noreferrer">ballistic missiles</a>,{" "}
-            <a href="https://en.wikipedia.org/wiki/Cruise_missiles" target="_blank" rel="noreferrer">cruise missiles</a>, and missile launchers. Major policy
-            implementation when successful is an undeniably powerful force for the good of humanity in the case of WMDs.
+            USA&rsquo;s nuclear and conventional ground-launched{" "}
+            <a href="https://en.wikipedia.org/wiki/Ballistic_missile" target="_blank" rel="noreferrer">
+              ballistic missiles
+            </a>
+            ,{" "}
+            <a href="https://en.wikipedia.org/wiki/Cruise_missiles" target="_blank" rel="noreferrer">
+              cruise missiles
+            </a>
+            , and missile launchers. Major policy implementation when successful is an undeniably powerful force for the
+            good of humanity in the case of WMDs.
             <p>However, success is rare.</p>
             <p>
-              In 2019, Trump officially pulled out of the Intermediate-Range Nuclear Forces Treaty citing alleged lack of
-              Russian adherence to its contents.
-              <sup><a id="fnref-4" href="#fn-4" aria-label="Footnote 4">4</a></sup> Other treaties proposed by the United Nations such as the Comprehensive Nuclear-Test-Ban Treaty were
-              limited by their own ambition, meaning key states did not agree and some which claimed to, ignored it anyway
-              continuing testing in limited or secretive contexts instead.
+              In 2019, Trump officially pulled out of the Intermediate-Range Nuclear Forces Treaty citing alleged lack
+              of Russian adherence to its contents.
+              <sup>
+                <a id="fnref-4" href="#fn-4" aria-label="Footnote 4">
+                  4
+                </a>
+              </sup>{" "}
+              Other treaties proposed by the United Nations such as the Comprehensive Nuclear-Test-Ban Treaty were
+              limited by their own ambition, meaning key states did not agree and some which claimed to, ignored it
+              anyway continuing testing in limited or secretive contexts instead.
             </p>
-            <p>History suggests a more effective kind of policy is a high quantity of less idealistic minor policies.</p>
-          </li>
-          <li>
-            <strong>Minor Policy Implementation</strong>: Some of the greatest and most influential steps towards nuclear
-            disarmament lie in this category. This comes from how these minor policies were realistic and aligned with
-            local interests.
             <p>
-              The Antarctic Treaty (December 1, 1959) prohibited testing of nuclear weapons on the continent. This created
-              a precedent in nuclear policy history, a recognised public state declaration of dedication towards a path of
-              scientific research and peace. The major success of this policy has meant the planet&rsquo;s icy south has not
-              seen any nuclear testing in the entire 65 years this policy has been in place. This success set a precedent
-              and likely indirectly led to the Treaty of Tlatelolco: a treaty committing Latin America and the Caribbean to
-              also be nuclear-weapon-free-zones. Despite the exception of Cuba, this too was a success and set further
-              precedent leading to similar treaties being established in Africa, the South Pacific and South-East Asia.
-              Although these treaties did not largely target areas in which states already possessed nuclear weapons, it
-              meant WMDs could not be tested in these areas, preventing local communities from becoming the playgrounds of
-              superpowers to test their nuclear toys.
+              History suggests a more effective kind of policy is a high quantity of less idealistic minor policies.
             </p>
           </li>
           <li>
-            <strong>Civil Mobility and Public Engagement</strong>: Policy does not move without public pressure. In 1958,
-            the UK disarmament campaign formed. Its iconic emblem became one of the most widely recognized symbols for
-            nuclear safety in the world. And in 1982, one million people gathered in New York City&rsquo;s Central Park in
-            support of the nuclear freeze movement. It is the largest anti-war demonstration in history. The mounting
-            pressure was likely a key factor which led to Reagan making core policy decisions. These are just a few of the
-            numerous examples of public engagement which placed the pressure on policymakers to fight for nuclear
-            disarmament.
+            <strong>Minor Policy Implementation</strong>: Some of the greatest and most influential steps towards
+            nuclear disarmament lie in this category. This comes from how these minor policies were realistic and
+            aligned with local interests.
+            <p>
+              The Antarctic Treaty (December 1, 1959) prohibited testing of nuclear weapons on the continent. This
+              created a precedent in nuclear policy history, a recognised public state declaration of dedication towards
+              a path of scientific research and peace. The major success of this policy has meant the planet&rsquo;s icy
+              south has not seen any nuclear testing in the entire 65 years this policy has been in place. This success
+              set a precedent and likely indirectly led to the Treaty of Tlatelolco: a treaty committing Latin America
+              and the Caribbean to also be nuclear-weapon-free-zones. Despite the exception of Cuba, this too was a
+              success and set further precedent leading to similar treaties being established in Africa, the South
+              Pacific and South-East Asia. Although these treaties did not largely target areas in which states already
+              possessed nuclear weapons, it meant WMDs could not be tested in these areas, preventing local communities
+              from becoming the playgrounds of superpowers to test their nuclear toys.
+            </p>
+          </li>
+          <li>
+            <strong>Civil Mobility and Public Engagement</strong>: Policy does not move without public pressure. In
+            1958, the UK disarmament campaign formed. Its iconic emblem became one of the most widely recognized symbols
+            for nuclear safety in the world. And in 1982, one million people gathered in New York City&rsquo;s Central
+            Park in support of the nuclear freeze movement. It is the largest anti-war demonstration in history. The
+            mounting pressure was likely a key factor which led to Reagan making core policy decisions. These are just a
+            few of the numerous examples of public engagement which placed the pressure on policymakers to fight for
+            nuclear disarmament.
             <p>But what provoked the public to rise to action?</p>
           </li>
           <li>
@@ -187,34 +215,38 @@ export const posts: BlogPost[] = [
         <p>
           Do LAWS, or &ldquo;killer robots&rdquo; have any equivalence to these 5 categories? I compared ICAN&rsquo;s
           timeline of nuclear weapons to the &lsquo;Stop the Killer Robots&rsquo; timeline of LAWS progress below.
-          <sup><a id="fnref-5" href="#fn-5" aria-label="Footnote 5">5</a></sup>
+          <sup>
+            <a id="fnref-5" href="#fn-5" aria-label="Footnote 5">
+              5
+            </a>
+          </sup>
         </p>
         <p>
           What <strong>elite negotiations</strong> have taken place?
         </p>
         <p>
-          Over 144 countries attended a conference in Vienna in 2024, titled &lsquo;Humanity at the Crossroads: autonomous
-          weapons and the challenge of regulation.&rsquo; Consensus grew amongst member states about the moral
-          reprehensibility of autonomous weapons systems. However, this has not translated into{" "}
+          Over 144 countries attended a conference in Vienna in 2024, titled &lsquo;Humanity at the Crossroads:
+          autonomous weapons and the challenge of regulation.&rsquo; Consensus grew amongst member states about the
+          moral reprehensibility of autonomous weapons systems. However, this has not translated into{" "}
           <strong>major policy implementation</strong> like the effects of Gorbachev and Reagan&rsquo;s discussions.
         </p>
         <p>
           Major states have opposed treaties and bans on autonomous weapons such as Russia which demands all discussions
-          regarding LAWS are held within the UN Convention on Certain Conventional Weapons. This requires consensus among
-          states to pass agreements and so Russia is able to block progress through its veto power. Although 161 states at
-          the UN General Assembly voted against the killing machines, a small number of highly-militarised states demanded
-          significant changes to the resolution which drastically reduced its scope.
+          regarding LAWS are held within the UN Convention on Certain Conventional Weapons. This requires consensus
+          among states to pass agreements and so Russia is able to block progress through its veto power. Although 161
+          states at the UN General Assembly voted against the killing machines, a small number of highly-militarised
+          states demanded significant changes to the resolution which drastically reduced its scope.
         </p>
         <p>
-          The lack of unity and equal concern for disarmament of LAWS is a key factor which has prevented progress and was
-          not present with nuclear policymakers such as Gorbachev and Reagan.
+          The lack of unity and equal concern for disarmament of LAWS is a key factor which has prevented progress and
+          was not present with nuclear policymakers such as Gorbachev and Reagan.
         </p>
         <p>
           Once again Latin American and Caribbean states have been leading the way in{" "}
-          <strong>minor policy implementation</strong>. In 2023, 33 states issued a communique demanding &ldquo;the urgent
-          negotiation of an international legally binding instrument on autonomy in weapons systems,&rdquo; the first
-          regional statement to take place outside of a UN setting. However, unlike with nuclear weapons, LAWS do not
-          require land to be tested and as these countries are not key developers of these weapons, this will have
+          <strong>minor policy implementation</strong>. In 2023, 33 states issued a communique demanding &ldquo;the
+          urgent negotiation of an international legally binding instrument on autonomy in weapons systems,&rdquo; the
+          first regional statement to take place outside of a UN setting. However, unlike with nuclear weapons, LAWS do
+          not require land to be tested and as these countries are not key developers of these weapons, this will have
           limited effects.
         </p>
         <p>
@@ -225,10 +257,20 @@ export const posts: BlogPost[] = [
         <p>
           In 2018, more than 200 technology companies pledged never to develop autonomous weapons. Unfortunately, in
           February 2025, Google, one of those signatories, quietly reversed its pledge.
-          <sup><a id="fnref-6" href="#fn-6" aria-label="Footnote 6">6</a></sup> However, protests from OpenAI&rsquo;s employees were able successfully to make Sam Altman agree to changes
+          <sup>
+            <a id="fnref-6" href="#fn-6" aria-label="Footnote 6">
+              6
+            </a>
+          </sup>{" "}
+          However, protests from OpenAI&rsquo;s employees were able successfully to make Sam Altman agree to changes
           within his deal with the Pentagon to prohibit use of domestic surveillance using technology from OpenAI.
-          <sup><a id="fnref-7" href="#fn-7" aria-label="Footnote 7">7</a></sup> The movement exists and is making some progress with mixed results. Unfortunately, many of these protests
-          and civil mobility takes place amongst the intellectual elite, those who have inside knowledge of Artificial
+          <sup>
+            <a id="fnref-7" href="#fn-7" aria-label="Footnote 7">
+              7
+            </a>
+          </sup>{" "}
+          The movement exists and is making some progress with mixed results. Unfortunately, many of these protests and
+          civil mobility takes place amongst the intellectual elite, those who have inside knowledge of Artificial
           Intelligence that is not accessible to the wider public. In other words, the civil mobility does not have
           comparable reach or scope of that which nuclear safety has.
         </p>
@@ -246,19 +288,24 @@ export const posts: BlogPost[] = [
         </p>
         <h2>Must we wait for Hiroshima?</h2>
         <p>
-          The horrors of Nagasaki were required to prompt Russell to begin writing about the necessity of Nuclear safety.
-          The image of the mushroom cloud haunts perception of the Second World War and WMDs where the catastrophic and
-          dystopian effects of the ideas of scientists were made unforgettable to the world. It is undeniable that these
-          factors were a large reason there was momentum behind the nuclear safety movement when Russell published his
-          Manifesto.
+          The horrors of Nagasaki were required to prompt Russell to begin writing about the necessity of Nuclear
+          safety. The image of the mushroom cloud haunts perception of the Second World War and WMDs where the
+          catastrophic and dystopian effects of the ideas of scientists were made unforgettable to the world. It is
+          undeniable that these factors were a large reason there was momentum behind the nuclear safety movement when
+          Russell published his Manifesto.
         </p>
         <p>
-          Artificially Intelligent warfare is by design, invisible and deniable. Unbeknownst to many, 2020 saw the likely
-          first deployment of autonomous weapons, when a drone may have tracked down and killed a human target in Libya
-          without human instruction, according to a UN report.
-          <sup><a id="fnref-8" href="#fn-8" aria-label="Footnote 8">8</a></sup> This was just news for a day and remains unknown by many. It is hard to protest against something that
-          cannot be easily pictured. Fear towards LAWS seems to be concentrated amongst those with insider knowledge,
-          making it inaccessible for the wider public to feel.
+          Artificially Intelligent warfare is by design, invisible and deniable. Unbeknownst to many, 2020 saw the
+          likely first deployment of autonomous weapons, when a drone may have tracked down and killed a human target in
+          Libya without human instruction, according to a UN report.
+          <sup>
+            <a id="fnref-8" href="#fn-8" aria-label="Footnote 8">
+              8
+            </a>
+          </sup>{" "}
+          This was just news for a day and remains unknown by many. It is hard to protest against something that cannot
+          be easily pictured. Fear towards LAWS seems to be concentrated amongst those with insider knowledge, making it
+          inaccessible for the wider public to feel.
         </p>
         <p>
           What will it take to make autonomous weapons undeniable and unforgettable? Perhaps we need something
@@ -266,56 +313,92 @@ export const posts: BlogPost[] = [
           see the danger being dangled in front of them.
         </p>
         <p>
-          But Hiroshima and Nagasaki horrified a world which allowed its citizens to feel the freedom of horror. We cannot
-          afford to wait for the 1945 equivalent in LAWS, the extreme power concentration within these machines will allow
-          them to execute swiftly. By then it will be too late.
+          But Hiroshima and Nagasaki horrified a world which allowed its citizens to feel the freedom of horror. We
+          cannot afford to wait for the 1945 equivalent in LAWS, the extreme power concentration within these machines
+          will allow them to execute swiftly. By then it will be too late.
         </p>
         <h2>Sources</h2>
         <ol className="blog-footnotes">
           <li id="fn-1">
-            <a href="https://news.un.org/en/story/2025/05/1163256" target="_blank" rel="noreferrer">UN News, 14 May 2025</a>{" "}
+            <a href="https://news.un.org/en/story/2025/05/1163256" target="_blank" rel="noreferrer">
+              UN News, 14 May 2025
+            </a>{" "}
             <a className="blog-footnote-back" href="#fnref-1" aria-label="Back to text">
               &#8617;
             </a>
           </li>
           <li id="fn-2">
-            <a href="https://lukemuehlhauser.com/excerpts-from-the-doomsday-machine/" target="_blank" rel="noreferrer">Excerpts from The Doomsday Machine, Luke Muehlhauser</a>{" "}
+            <a href="https://lukemuehlhauser.com/excerpts-from-the-doomsday-machine/" target="_blank" rel="noreferrer">
+              Excerpts from The Doomsday Machine, Luke Muehlhauser
+            </a>{" "}
             <a className="blog-footnote-back" href="#fnref-2" aria-label="Back to text">
               &#8617;
             </a>
           </li>
           <li id="fn-3">
-            <a href="https://www.icanw.org/nuclear_weapons_history" target="_blank" rel="noreferrer">ICAN, history of nuclear weapons</a>{" "}
+            <a href="https://www.icanw.org/nuclear_weapons_history" target="_blank" rel="noreferrer">
+              ICAN, history of nuclear weapons
+            </a>{" "}
             <a className="blog-footnote-back" href="#fnref-3" aria-label="Back to text">
               &#8617;
             </a>
           </li>
           <li id="fn-4">
-            <a href="https://en.wikipedia.org/wiki/Intermediate-Range_Nuclear_Forces_Treaty" target="_blank" rel="noreferrer">Intermediate-Range Nuclear Forces Treaty, Wikipedia</a>{" "}
+            <a
+              href="https://en.wikipedia.org/wiki/Intermediate-Range_Nuclear_Forces_Treaty"
+              target="_blank"
+              rel="noreferrer"
+            >
+              Intermediate-Range Nuclear Forces Treaty, Wikipedia
+            </a>{" "}
             <a className="blog-footnote-back" href="#fnref-4" aria-label="Back to text">
               &#8617;
             </a>
           </li>
           <li id="fn-5">
-            <a href="https://www.stopkillerrobots.org/the-story-so-far/" target="_blank" rel="noreferrer">Stop Killer Robots, the story so far</a>{" "}
+            <a href="https://www.stopkillerrobots.org/the-story-so-far/" target="_blank" rel="noreferrer">
+              Stop Killer Robots, the story so far
+            </a>{" "}
             <a className="blog-footnote-back" href="#fnref-5" aria-label="Back to text">
               &#8617;
             </a>
           </li>
           <li id="fn-6">
-            <a href="https://www.washingtonpost.com/technology/2025/02/04/google-ai-policies-weapons-harm/" target="_blank" rel="noreferrer">The Washington Post, 4 February 2025</a>{" "}
+            <a
+              href="https://www.washingtonpost.com/technology/2025/02/04/google-ai-policies-weapons-harm/"
+              target="_blank"
+              rel="noreferrer"
+            >
+              The Washington Post, 4 February 2025
+            </a>{" "}
             <a className="blog-footnote-back" href="#fnref-6" aria-label="Back to text">
               &#8617;
             </a>
           </li>
           <li id="fn-7">
-            <a href="https://www.bbc.co.uk/news/articles/c3rz1nd0egro" target="_blank" rel="noreferrer">BBC News</a>; <a href="https://www.axios.com/2026/02/27/google-openai-workers-push-for-military-ai-limits" target="_blank" rel="noreferrer">Axios, 27 February 2026</a>{" "}
+            <a href="https://www.bbc.co.uk/news/articles/c3rz1nd0egro" target="_blank" rel="noreferrer">
+              BBC News
+            </a>
+            ;{" "}
+            <a
+              href="https://www.axios.com/2026/02/27/google-openai-workers-push-for-military-ai-limits"
+              target="_blank"
+              rel="noreferrer"
+            >
+              Axios, 27 February 2026
+            </a>{" "}
             <a className="blog-footnote-back" href="#fnref-7" aria-label="Back to text">
               &#8617;
             </a>
           </li>
           <li id="fn-8">
-            <a href="https://www.newscientist.com/article/2278852-drones-may-have-attacked-humans-fully-autonomously-for-the-first-time/" target="_blank" rel="noreferrer">New Scientist</a>{" "}
+            <a
+              href="https://www.newscientist.com/article/2278852-drones-may-have-attacked-humans-fully-autonomously-for-the-first-time/"
+              target="_blank"
+              rel="noreferrer"
+            >
+              New Scientist
+            </a>{" "}
             <a className="blog-footnote-back" href="#fnref-8" aria-label="Back to text">
               &#8617;
             </a>
@@ -329,8 +412,7 @@ export const posts: BlogPost[] = [
     title: "The Technology is the Ideology",
     date: "2026-10-06",
     author: "Philip Johnstone",
-    tldr:
-      "Why do so few people see superintelligent AI as an existential threat? Partly because they haven\u2019t heard what the people building it say they are building: a new species to merge with or succeed us.",
+    tldr: "Why do so few people see superintelligent AI as an existential threat? Partly because they haven\u2019t heard what the people building it say they are building: a new species to merge with or succeed us.",
     cover: {
       src: "/images/downing-street-protest-sept-2026/downing-street-gates-crowd.jpg",
       alt: "PauseAI protesters with placards at the Downing Street gates, September 2026",
@@ -339,88 +421,243 @@ export const posts: BlogPost[] = [
     },
     content: (
       <>
-        <p>The past few weeks have been like no other in the world of AI safety. Thanks to the escapades of &lsquo;the swarm&rsquo; and their unrelenting and illegal (surely?) hacks, the existential threat question, once seen as the preserve of eccentric academics and cultish tech bros, has burst onto the mainstream media agenda and shows no signs of leaving.</p>
-        <p>At last, sense has prevailed. The threat has been made clear, and the accompanying public outcry has forced governments across the world and the AI companies to set their competing interests aside and co-operate for the good of humanity.</p>
+        <p>
+          The past few weeks have been like no other in the world of AI safety. Thanks to the escapades of &lsquo;the
+          swarm&rsquo; and their unrelenting and illegal (surely?) hacks, the existential threat question, once seen as
+          the preserve of eccentric academics and cultish tech bros, has burst onto the mainstream media agenda and
+          shows no signs of leaving.
+        </p>
+        <p>
+          At last, sense has prevailed. The threat has been made clear, and the accompanying public outcry has forced
+          governments across the world and the AI companies to set their competing interests aside and co-operate for
+          the good of humanity.
+        </p>
         <p>But, of course, this hasn&rsquo;t happened.</p>
-        <p>Not least because there hasn&rsquo;t been a large-scale public movement demanding that the AI companies&mdash;you know, if they don&rsquo;t mind, as long as it doesn&rsquo;t cost them too much or affect any stock prices&mdash;stop the accelerating, uncontrolled development of a technology that even they think might kill everyone on the planet.</p>
-        <p>Which raises the question: Why? Why do so few people view the development of superintelligent AI as an existential threat? Maybe those of us that do are swivel-eyed lunatics, 21st-century Luddites scared of progress who must let go of our sentimental attachment to humanity&rsquo;s role as planetary top dog.</p>
-        <p>Or let&rsquo;s suppose, just for argument&rsquo;s sake, that the people who invented the technology (Geoffrey Hinton, Yoshua Bengio) and those at the cutting edge of developing it (Altman, Amodei) are indeed right and there is a significant risk of human extinction. Why hasn&rsquo;t this filtered through to the public in a substantive way?</p>
-        <p>The ethereal nature of the threat seems to be part of the problem: intelligence can&rsquo;t be held, smelled or seen. Surely something this intangible, something non-physical, couldn&rsquo;t kill us all. This would explain the hordes of incredulous talking heads on news shows demanding to know &lsquo;exactly&rsquo; how superintelligence would kill us, urging reluctant experts to speculate about Armageddon scenarios involving nuclear weapons or engineered viruses in a desperate bid for headlines, all the while missing the less clickbaity reality that the problem-solving steps used to build a nuke or bioweapon are an example of the very intelligence they deem unthreatening. It seems conceiving of superintelligence as a legitimate threat is hindered by the fact it&rsquo;s a second-order problem.</p>
-        <p>Adding to the conceptual muddle is the sheer complexity and uniqueness of a technology which isn&rsquo;t fully understood by those who make it. This complexity impedes public understanding, helping to obfuscate the true nature of the threat. Of course, other existential threats such as nuclear weapons are based on complex science, and most likely the majority of CND members don&rsquo;t understand the intricacies of nuclear fission. But they don&rsquo;t need to. At the end of the day, it&rsquo;s still a bomb, albeit a devastatingly powerful one. No new categories are needed for this threat. Superintelligence inhabits a new space, and unfortunately, most people who aren&rsquo;t well-read on the topic still think AI is programmed and a worrying number think it can be turned off with a switch.</p>
-        <p>Which leads us to those who would turn it off (if such a thing were possible). Those sensible guardians who would intervene if things started to get out of control&mdash;if, say, rogue agents escaped, communicated in secret and then staged a co-ordinated attack on a company&hellip; wait&hellip; never mind.</p>
-        <p>Who are these guardians? They&rsquo;re the ones running the frontier AI companies, the tech royalty the public and governments around the world have entrusted by default and without much discussion to steer us through the biggest change to life on Earth since the Cambrian explosion.</p>
-        <p>This trust, this leadership, is more implicit than explicit in most cases. Most people are too busy worrying about work, kids, potholes, rising food prices and a million other daily issues&mdash;and who can blame them? There aren&rsquo;t enough hours in the day to read Dario Amodei&rsquo;s latest treatise on AGI or listen to Sam Altman&rsquo;s musings on a post-human future. It all sounds a bit sci-fi anyway. Leave it to the nerds to sort out; they know what they&rsquo;re doing and obviously want pretty much the same thing as everyone else does.</p>
+        <p>
+          Not least because there hasn&rsquo;t been a large-scale public movement demanding that the AI
+          companies&mdash;you know, if they don&rsquo;t mind, as long as it doesn&rsquo;t cost them too much or affect
+          any stock prices&mdash;stop the accelerating, uncontrolled development of a technology that even they think
+          might kill everyone on the planet.
+        </p>
+        <p>
+          Which raises the question: Why? Why do so few people view the development of superintelligent AI as an
+          existential threat? Maybe those of us that do are swivel-eyed lunatics, 21st-century Luddites scared of
+          progress who must let go of our sentimental attachment to humanity&rsquo;s role as planetary top dog.
+        </p>
+        <p>
+          Or let&rsquo;s suppose, just for argument&rsquo;s sake, that the people who invented the technology (Geoffrey
+          Hinton, Yoshua Bengio) and those at the cutting edge of developing it (Altman, Amodei) are indeed right and
+          there is a significant risk of human extinction. Why hasn&rsquo;t this filtered through to the public in a
+          substantive way?
+        </p>
+        <p>
+          The ethereal nature of the threat seems to be part of the problem: intelligence can&rsquo;t be held, smelled
+          or seen. Surely something this intangible, something non-physical, couldn&rsquo;t kill us all. This would
+          explain the hordes of incredulous talking heads on news shows demanding to know &lsquo;exactly&rsquo; how
+          superintelligence would kill us, urging reluctant experts to speculate about Armageddon scenarios involving
+          nuclear weapons or engineered viruses in a desperate bid for headlines, all the while missing the less
+          clickbaity reality that the problem-solving steps used to build a nuke or bioweapon are an example of the very
+          intelligence they deem unthreatening. It seems conceiving of superintelligence as a legitimate threat is
+          hindered by the fact it&rsquo;s a second-order problem.
+        </p>
+        <p>
+          Adding to the conceptual muddle is the sheer complexity and uniqueness of a technology which isn&rsquo;t fully
+          understood by those who make it. This complexity impedes public understanding, helping to obfuscate the true
+          nature of the threat. Of course, other existential threats such as nuclear weapons are based on complex
+          science, and most likely the majority of CND members don&rsquo;t understand the intricacies of nuclear
+          fission. But they don&rsquo;t need to. At the end of the day, it&rsquo;s still a bomb, albeit a devastatingly
+          powerful one. No new categories are needed for this threat. Superintelligence inhabits a new space, and
+          unfortunately, most people who aren&rsquo;t well-read on the topic still think AI is programmed and a worrying
+          number think it can be turned off with a switch.
+        </p>
+        <p>
+          Which leads us to those who would turn it off (if such a thing were possible). Those sensible guardians who
+          would intervene if things started to get out of control&mdash;if, say, rogue agents escaped, communicated in
+          secret and then staged a co-ordinated attack on a company&hellip; wait&hellip; never mind.
+        </p>
+        <p>
+          Who are these guardians? They&rsquo;re the ones running the frontier AI companies, the tech royalty the public
+          and governments around the world have entrusted by default and without much discussion to steer us through the
+          biggest change to life on Earth since the Cambrian explosion.
+        </p>
+        <p>
+          This trust, this leadership, is more implicit than explicit in most cases. Most people are too busy worrying
+          about work, kids, potholes, rising food prices and a million other daily issues&mdash;and who can blame them?
+          There aren&rsquo;t enough hours in the day to read Dario Amodei&rsquo;s latest treatise on AGI or listen to
+          Sam Altman&rsquo;s musings on a post-human future. It all sounds a bit sci-fi anyway. Leave it to the nerds to
+          sort out; they know what they&rsquo;re doing and obviously want pretty much the same thing as everyone else
+          does.
+        </p>
         <p>Right?</p>
-        <p>That depends on whether most people want our frontier AI labs to create a new species that is vastly more intelligent than us.</p>
-        <p>&lsquo;Surely not,&rsquo; the disbelieving public would cry. &lsquo;The experts in charge would never be so hubristic as to deliberately create an alien life form that would, by their own estimation, supplant us as the dominant life form on Earth.&rsquo;</p>
+        <p>
+          That depends on whether most people want our frontier AI labs to create a new species that is vastly more
+          intelligent than us.
+        </p>
+        <p>
+          &lsquo;Surely not,&rsquo; the disbelieving public would cry. &lsquo;The experts in charge would never be so
+          hubristic as to deliberately create an alien life form that would, by their own estimation, supplant us as the
+          dominant life form on Earth.&rsquo;
+        </p>
         <p>Oh, but they would:</p>
         <p>
-          <strong>Sam Altman</strong> &mdash; &ldquo;[This] isn&rsquo;t just creating technology. [It&rsquo;s] creating a new life form.&rdquo;<sup><a id="fnref-1" href="#fn-1" aria-label="Footnote 1">1</a></sup>
+          <strong>Sam Altman</strong> &mdash; &ldquo;[This] isn&rsquo;t just creating technology. [It&rsquo;s] creating
+          a new life form.&rdquo;
+          <sup>
+            <a id="fnref-1" href="#fn-1" aria-label="Footnote 1">
+              1
+            </a>
+          </sup>
         </p>
         <p>
-          <strong>Mustafa Suleyman</strong> &mdash; &ldquo;I think AI should best be understood as something like a new digital species.&rdquo;<sup><a id="fnref-2" href="#fn-2" aria-label="Footnote 2">2</a></sup>
+          <strong>Mustafa Suleyman</strong> &mdash; &ldquo;I think AI should best be understood as something like a new
+          digital species.&rdquo;
+          <sup>
+            <a id="fnref-2" href="#fn-2" aria-label="Footnote 2">
+              2
+            </a>
+          </sup>
         </p>
         <p>
-          <strong>Dario Amodei</strong> &mdash; &ldquo;They&rsquo;re more like growing a biological organism.&rdquo;<sup><a id="fnref-3" href="#fn-3" aria-label="Footnote 3">3</a></sup>
+          <strong>Dario Amodei</strong> &mdash; &ldquo;They&rsquo;re more like growing a biological organism.&rdquo;
+          <sup>
+            <a id="fnref-3" href="#fn-3" aria-label="Footnote 3">
+              3
+            </a>
+          </sup>
         </p>
         <p>
-          <strong>Elon Musk</strong> &mdash; &ldquo;Artificial intelligence is, will be essentially a sort of a new species, or is a new species.&rdquo;<sup><a id="fnref-4" href="#fn-4" aria-label="Footnote 4">4</a></sup>
-        </p>
-        <p>To be very clear, they are deliberately trying to create a new all-powerful life form. The question is: why? Given the widely acknowledged risks, why would they do such a thing?</p>
-        <p>As with all of history&rsquo;s major turning points, an ideology lies at the heart of it. The ideology in this case is successionism. This is the view that artificial intelligence should&mdash;or can legitimately&mdash;succeed humans as the principal intelligence shaping the future. There are also versions that see radically altered humans, to the point where they can be considered post-human, merging with AI.</p>
-        <p>To those outside the AI bubble, this is pure sci-fi, but again, it comes from the mouths of those building it:</p>
-        <p>
-          <strong>Sam Altman</strong> &mdash; &ldquo;I think a merge is probably our best-case scenario.&rdquo; And: &ldquo;We will be the first species ever to design our own descendants.&rdquo;<sup><a id="fnref-5" href="#fn-5" aria-label="Footnote 5">5</a></sup>
-        </p>
-        <p>
-          <strong>Elon Musk</strong> &mdash; &ldquo;you could sort of think of humanity as a biological boot loader for digital super intelligence.&rdquo;<sup><a id="fnref-6" href="#fn-6" aria-label="Footnote 6">6</a></sup>
+          <strong>Elon Musk</strong> &mdash; &ldquo;Artificial intelligence is, will be essentially a sort of a new
+          species, or is a new species.&rdquo;
+          <sup>
+            <a id="fnref-4" href="#fn-4" aria-label="Footnote 4">
+              4
+            </a>
+          </sup>
         </p>
         <p>
-          <strong>Dario Amodei</strong> &mdash; &ldquo;digital human minds instantiated in software, which might someday help humanity transcend its physical limitations&rdquo;.<sup><a id="fnref-7" href="#fn-7" aria-label="Footnote 7">7</a></sup>
+          To be very clear, they are deliberately trying to create a new all-powerful life form. The question is: why?
+          Given the widely acknowledged risks, why would they do such a thing?
         </p>
-        <p>Of course, these statements alone can&rsquo;t be taken as an endorsement of those outcomes, but they can&rsquo;t and shouldn&rsquo;t be taken on their own. Judge them by their actions. Their behaviour isn&rsquo;t difficult to parse&mdash;they are choosing to build these systems and spending vast amounts of money in the process.</p>
-        <p>The ideology is to create a superior digital life form that we then merge with or that succeeds us altogether.</p>
+        <p>
+          As with all of history&rsquo;s major turning points, an ideology lies at the heart of it. The ideology in this
+          case is successionism. This is the view that artificial intelligence should&mdash;or can
+          legitimately&mdash;succeed humans as the principal intelligence shaping the future. There are also versions
+          that see radically altered humans, to the point where they can be considered post-human, merging with AI.
+        </p>
+        <p>
+          To those outside the AI bubble, this is pure sci-fi, but again, it comes from the mouths of those building it:
+        </p>
+        <p>
+          <strong>Sam Altman</strong> &mdash; &ldquo;I think a merge is probably our best-case scenario.&rdquo; And:
+          &ldquo;We will be the first species ever to design our own descendants.&rdquo;
+          <sup>
+            <a id="fnref-5" href="#fn-5" aria-label="Footnote 5">
+              5
+            </a>
+          </sup>
+        </p>
+        <p>
+          <strong>Elon Musk</strong> &mdash; &ldquo;you could sort of think of humanity as a biological boot loader for
+          digital super intelligence.&rdquo;
+          <sup>
+            <a id="fnref-6" href="#fn-6" aria-label="Footnote 6">
+              6
+            </a>
+          </sup>
+        </p>
+        <p>
+          <strong>Dario Amodei</strong> &mdash; &ldquo;digital human minds instantiated in software, which might someday
+          help humanity transcend its physical limitations&rdquo;.
+          <sup>
+            <a id="fnref-7" href="#fn-7" aria-label="Footnote 7">
+              7
+            </a>
+          </sup>
+        </p>
+        <p>
+          Of course, these statements alone can&rsquo;t be taken as an endorsement of those outcomes, but they
+          can&rsquo;t and shouldn&rsquo;t be taken on their own. Judge them by their actions. Their behaviour
+          isn&rsquo;t difficult to parse&mdash;they are choosing to build these systems and spending vast amounts of
+          money in the process.
+        </p>
+        <p>
+          The ideology is to create a superior digital life form that we then merge with or that succeeds us altogether.
+        </p>
         <p>The technology is the ideology.</p>
         <h2>Sources</h2>
         <ol className="blog-footnotes">
           <li id="fn-1">
-            <a href="https://techcrunch.com/2015/09/23/y-combinator-president-sam-altman-im-an-optimist-but-im-not-optimistic-about-government/" target="_blank" rel="noreferrer">Sam Altman &mdash; TechCrunch report, 23 September 2015</a>{" "}
+            <a
+              href="https://techcrunch.com/2015/09/23/y-combinator-president-sam-altman-im-an-optimist-but-im-not-optimistic-about-government/"
+              target="_blank"
+              rel="noreferrer"
+            >
+              Sam Altman &mdash; TechCrunch report, 23 September 2015
+            </a>{" "}
             <a className="blog-footnote-back" href="#fnref-1" aria-label="Back to text">
               &#8617;
             </a>
           </li>
           <li id="fn-2">
-            <a href="https://www.ted.com/talks/mustafa_suleyman_what_is_an_ai_anyway" target="_blank" rel="noreferrer">Mustafa Suleyman &mdash; TED, What is an AI anyway?</a>{" "}
+            <a href="https://www.ted.com/talks/mustafa_suleyman_what_is_an_ai_anyway" target="_blank" rel="noreferrer">
+              Mustafa Suleyman &mdash; TED, What is an AI anyway?
+            </a>{" "}
             <a className="blog-footnote-back" href="#fnref-2" aria-label="Back to text">
               &#8617;
             </a>
           </li>
           <li id="fn-3">
-            <a href="https://www.nytimes.com/2026/02/12/opinion/artificial-intelligence-anthropic-amodei.html" target="_blank" rel="noreferrer">Dario Amodei &mdash; New York Times interview, 12 February 2026</a>. Accessible transcript: <a href="https://www.markalston.net/claude-code-wiki/perspectives/2026-02-12-dario-we-dont-know-ai-conscious/" target="_blank" rel="noreferrer">Dario Amodei interview transcript mirror</a>{" "}
+            <a
+              href="https://www.nytimes.com/2026/02/12/opinion/artificial-intelligence-anthropic-amodei.html"
+              target="_blank"
+              rel="noreferrer"
+            >
+              Dario Amodei &mdash; New York Times interview, 12 February 2026
+            </a>
+            . Accessible transcript:{" "}
+            <a
+              href="https://www.markalston.net/claude-code-wiki/perspectives/2026-02-12-dario-we-dont-know-ai-conscious/"
+              target="_blank"
+              rel="noreferrer"
+            >
+              Dario Amodei interview transcript mirror
+            </a>{" "}
             <a className="blog-footnote-back" href="#fnref-3" aria-label="Back to text">
               &#8617;
             </a>
           </li>
           <li id="fn-4">
-            <a href="https://elonmuskarchive.org/video/atreju-festival-2023-12-16" target="_blank" rel="noreferrer">Elon Musk &mdash; Atreju Festival recording and transcript, 16 December 2023</a>{" "}
+            <a href="https://elonmuskarchive.org/video/atreju-festival-2023-12-16" target="_blank" rel="noreferrer">
+              Elon Musk &mdash; Atreju Festival recording and transcript, 16 December 2023
+            </a>{" "}
             <a className="blog-footnote-back" href="#fnref-4" aria-label="Back to text">
               &#8617;
             </a>
           </li>
           <li id="fn-5">
-            <a href="https://blog.samaltman.com/the-merge" target="_blank" rel="noreferrer">Sam Altman &mdash; The Merge</a>{" "}
+            <a href="https://blog.samaltman.com/the-merge" target="_blank" rel="noreferrer">
+              Sam Altman &mdash; The Merge
+            </a>{" "}
             <a className="blog-footnote-back" href="#fnref-5" aria-label="Back to text">
               &#8617;
             </a>
           </li>
           <li id="fn-6">
-            <a href="https://www.wired.com/story/elon-musk-humanity-biological-boot-loader-ai/" target="_blank" rel="noreferrer">Elon Musk &mdash; WIRED report of his discussion with Jack Ma</a>{" "}
+            <a
+              href="https://www.wired.com/story/elon-musk-humanity-biological-boot-loader-ai/"
+              target="_blank"
+              rel="noreferrer"
+            >
+              Elon Musk &mdash; WIRED report of his discussion with Jack Ma
+            </a>{" "}
             <a className="blog-footnote-back" href="#fnref-6" aria-label="Back to text">
               &#8617;
             </a>
           </li>
           <li id="fn-7">
-            <a href="https://darioamodei.com/essay/the-adolescence-of-technology" target="_blank" rel="noreferrer">Dario Amodei &mdash; The Adolescence of Technology, section 5</a>{" "}
+            <a href="https://darioamodei.com/essay/the-adolescence-of-technology" target="_blank" rel="noreferrer">
+              Dario Amodei &mdash; The Adolescence of Technology, section 5
+            </a>{" "}
             <a className="blog-footnote-back" href="#fnref-7" aria-label="Back to text">
               &#8617;
             </a>
@@ -434,8 +671,7 @@ export const posts: BlogPost[] = [
     title: "The Other Alignment Problem",
     date: "2026-09-25",
     author: "Abi Palmer",
-    tldr:
-      "AI researchers worry about getting machines to share human values. The leaders building them are showing us they have an alignment problem of their own.",
+    tldr: "AI researchers worry about getting machines to share human values. The leaders building them are showing us they have an alignment problem of their own.",
     content: (
       <>
         <figure>
@@ -451,11 +687,15 @@ export const posts: BlogPost[] = [
           When AI researchers talk about &ldquo;alignment&rdquo;, they are talking about the process of getting an AI
           model to behave in a way that fits with human values. Preserving human lives. Respecting human dignity.
           Planning for a shared human future. Alignment researchers have{" "}
-          <a href="https://theconversation.com/the-decades-old-ai-alignment-problem-has-finally-become-a-reality-solving-it-wont-be-easy-289812" target="_blank" rel="noreferrer">
+          <a
+            href="https://theconversation.com/the-decades-old-ai-alignment-problem-has-finally-become-a-reality-solving-it-wont-be-easy-289812"
+            target="_blank"
+            rel="noreferrer"
+          >
             struggled
           </a>{" "}
-          to instil these basic rules in AI models, but apparently the machines aren&rsquo;t the only ones who missed the
-          &ldquo;humanity=good&rdquo; memo. It seems the AI creators might need a reminder too.
+          to instil these basic rules in AI models, but apparently the machines aren&rsquo;t the only ones who missed
+          the &ldquo;humanity=good&rdquo; memo. It seems the AI creators might need a reminder too.
         </p>
         <p>
           I&rsquo;ve <Link href="/blog/ai-companies-knew-and-kept-quiet">written previously</Link> about the culture of
@@ -467,7 +707,11 @@ export const posts: BlogPost[] = [
         <p>
           We got a glimpse of this on 9th September, when Jacob Coxon dramatically resigned from Anthropic claiming that
           AI companies are &ldquo;gambling with our lives&rdquo;.{" "}
-          <a href="https://theconversation.com/we-really-do-earnestly-believe-ai-could-kill-all-humans-if-ai-labs-are-so-worried-about-ai-doom-why-dont-they-stop-291595" target="_blank" rel="noreferrer">
+          <a
+            href="https://theconversation.com/we-really-do-earnestly-believe-ai-could-kill-all-humans-if-ai-labs-are-so-worried-about-ai-doom-why-dont-they-stop-291595"
+            target="_blank"
+            rel="noreferrer"
+          >
             Even more disturbing
           </a>{" "}
           was his colleague Evan Hubinger, who excitedly responded &ldquo;we really do earnestly believe AI could kill
@@ -476,21 +720,29 @@ export const posts: BlogPost[] = [
         <p>
           From an aligned model, the next words would be, &ldquo;so we&rsquo;ve stopped building it for now&rdquo;. But
           we have an alignment problem on our hands. And not the digital kind. The warped values exhibited by AI models
-          haven&rsquo;t just sprung from cyberspace. They&rsquo;ve grown from a primordial soup of reckless tech industry
-          disruption culture and elitist disregard for ordinary public interests. In other words, from misaligned
-          humans.
+          haven&rsquo;t just sprung from cyberspace. They&rsquo;ve grown from a primordial soup of reckless tech
+          industry disruption culture and elitist disregard for ordinary public interests. In other words, from
+          misaligned humans.
         </p>
         <p>
           Take Elon Musk&rsquo;s &ldquo;MechaHitler&rdquo; incident. I won&rsquo;t rehash the details of it here;
-          it&rsquo;s not difficult to infer how a scandal with that name unfolded. The point is: this failing didn&rsquo;t
-          start with AI misalignment. It started with{" "}
-          <a href="https://www.pbs.org/newshour/politics/why-does-the-ai-powered-chatbot-grok-post-false-offensive-things-on-x" target="_blank" rel="noreferrer">
+          it&rsquo;s not difficult to infer how a scandal with that name unfolded. The point is: this failing
+          didn&rsquo;t start with AI misalignment. It started with{" "}
+          <a
+            href="https://www.pbs.org/newshour/politics/why-does-the-ai-powered-chatbot-grok-post-false-offensive-things-on-x"
+            target="_blank"
+            rel="noreferrer"
+          >
             a human&rsquo;s choice
           </a>{" "}
           to build a model pandering to the unnerving whims of his followers. It started with one man&rsquo;s preference
           for gratifying bad users over protecting the public. The AI&rsquo;s harmful actions were founded on these
           distorted priorities which trickled down from its human progenitor into its &ldquo;
-          <a href="https://theconversation.com/how-do-you-stop-an-ai-model-turning-nazi-what-the-grok-drama-reveals-about-ai-training-261001" target="_blank" rel="noreferrer">
+          <a
+            href="https://theconversation.com/how-do-you-stop-an-ai-model-turning-nazi-what-the-grok-drama-reveals-about-ai-training-261001"
+            target="_blank"
+            rel="noreferrer"
+          >
             systemic ideological programming
           </a>
           &rdquo;. We may not know exactly how AI values emerge, but this episode reminds us that humans set the
@@ -502,9 +754,9 @@ export const posts: BlogPost[] = [
           <a href="https://youtube.com/shorts/YE5adUeTe_I?si=yqqrxDGo0Hm6aalO" target="_blank" rel="noreferrer">
             suggested
           </a>
-          , &ldquo;I think AI will probably, like, most likely, sort of lead to the end of the world, but in the meantime,
-          uh, there will be great companies created with serious machine learning&rdquo;. That was the year he founded
-          OpenAI. Now a seasoned CEO, he is more careful and image-savvy, emphasising the potential medical and
+          , &ldquo;I think AI will probably, like, most likely, sort of lead to the end of the world, but in the
+          meantime, uh, there will be great companies created with serious machine learning&rdquo;. That was the year he
+          founded OpenAI. Now a seasoned CEO, he is more careful and image-savvy, emphasising the potential medical and
           educational benefits of his products to the UN security council, while also telling them, &ldquo;
           <a href="https://www.youtube.com/watch?v=bT-LB6MCb8E" target="_blank" rel="noreferrer">
             we could lose control of the future to AI
@@ -523,18 +775,30 @@ export const posts: BlogPost[] = [
           </a>
           &rdquo;, should we be open to the idea that these grinning reapers have turned over a new leaf? Well&hellip;
           commentators have expressed scepticism about this apparent pivot to prudence. It&rsquo;s been called{" "}
-          <a href="https://www.theguardian.com/technology/2026/sep/13/too-little-too-late-critics-perplexed-and-suspicious-of-ai-leaders-call-for-a-slowdown" target="_blank" rel="noreferrer">
+          <a
+            href="https://www.theguardian.com/technology/2026/sep/13/too-little-too-late-critics-perplexed-and-suspicious-of-ai-leaders-call-for-a-slowdown"
+            target="_blank"
+            rel="noreferrer"
+          >
             &ldquo;too little, too late&rdquo;
           </a>
           .
         </p>
         <p>
           Some say it&rsquo;s an attempt at{" "}
-          <a href="https://www.theregister.com/ai-and-ml/2026/09/14/big-ai-sets-out-its-terms-for-regulatory-capture-and-calls-it-pace-the-frontier/5296067" target="_blank" rel="noreferrer">
+          <a
+            href="https://www.theregister.com/ai-and-ml/2026/09/14/big-ai-sets-out-its-terms-for-regulatory-capture-and-calls-it-pace-the-frontier/5296067"
+            target="_blank"
+            rel="noreferrer"
+          >
             regulatory capture
           </a>
           . Economist Christian Catalini{" "}
-          <a href="https://www.forbes.com/sites/christiancatalini/2026/07/29/dont-pace-the-frontier-look-inside-the-trojan-horse/" target="_blank" rel="noreferrer">
+          <a
+            href="https://www.forbes.com/sites/christiancatalini/2026/07/29/dont-pace-the-frontier-look-inside-the-trojan-horse/"
+            target="_blank"
+            rel="noreferrer"
+          >
             called it
           </a>
           , &ldquo;virtue signalling and cheap insurance when things go wrong&rdquo;. What I know for sure is this:
@@ -544,7 +808,8 @@ export const posts: BlogPost[] = [
           Let&rsquo;s Pause AI.
         </p>
         <p>
-          Read about how you can act <a href="https://pauseai.info/action" target="_blank" rel="noreferrer">
+          Read about how you can act{" "}
+          <a href="https://pauseai.info/action" target="_blank" rel="noreferrer">
             here
           </a>
           .
@@ -578,17 +843,15 @@ export const posts: BlogPost[] = [
           >
             new report
           </a>{" "}
-          titled &ldquo;Dominant strategies for Britain in the Age of AI&rdquo;
-          offers plenty of great foundations, though it falls short of
-          suggesting the most important strategy of all: seeking an
-          international treaty to universally pause the development of the most
-          dangerously uncontrollable AI systems.
+          titled &ldquo;Dominant strategies for Britain in the Age of AI&rdquo; offers plenty of great foundations,
+          though it falls short of suggesting the most important strategy of all: seeking an international treaty to
+          universally pause the development of the most dangerously uncontrollable AI systems.
         </p>
         <h2>What it gets right</h2>
         <p>There is a great deal to celebrate in this report.</p>
         <p>
-          The calls for AISI to establish a dedicated compute verification
-          programme, and for ARIA to make verification an explicit strand of its{" "}
+          The calls for AISI to establish a dedicated compute verification programme, and for ARIA to make verification
+          an explicit strand of its{" "}
           <a
             href="https://aria.org.uk/opportunity-spaces/trust-everything-everywhere/safeguarded-ai"
             target="_blank"
@@ -599,10 +862,9 @@ export const posts: BlogPost[] = [
           , are excellent.
         </p>
         <p>
-          The ability to know, in a privacy-preserving manner, whether the
-          process a chip is computing is part of inference (offering services
-          for consumers) or training a next-generation model is crucial for
-          verifying compliance with an international treaty.
+          The ability to know, in a privacy-preserving manner, whether the process a chip is computing is part of
+          inference (offering services for consumers) or training a next-generation model is crucial for verifying
+          compliance with an international treaty.
         </p>
         <p>
           The report rightly reminds us that Britain has done this before: our{" "}
@@ -613,8 +875,7 @@ export const posts: BlogPost[] = [
           >
             trial inspections
           </a>{" "}
-          of chemical plants in the 1980s and 90s helped shape the Chemical
-          Weapons Convention.
+          of chemical plants in the 1980s and 90s helped shape the Chemical Weapons Convention.
         </p>
         <h2>Mind the gap</h2>
         <p>
@@ -626,34 +887,25 @@ export const posts: BlogPost[] = [
           >
             own 2030 scenarios
           </a>
-          , which warn that without intervention AI could cause existential
-          harm. It links to the{" "}
-          <a
-            href="https://metr.org/hugging-face-incident-report-aug-2026.pdf"
-            target="_blank"
-            rel="noreferrer"
-          >
+          , which warn that without intervention AI could cause existential harm. It links to the{" "}
+          <a href="https://metr.org/hugging-face-incident-report-aug-2026.pdf" target="_blank" rel="noreferrer">
             investigation
           </a>{" "}
-          into this summer&rsquo;s incident, in which OpenAI models escaped
-          their test sandbox, hacked their way through OpenAI&rsquo;s own
-          systems, and infiltrated another company&rsquo;s servers.
+          into this summer&rsquo;s incident, in which OpenAI models escaped their test sandbox, hacked their way through
+          OpenAI&rsquo;s own systems, and infiltrated another company&rsquo;s servers.
         </p>
         <p>
-          In the Government&rsquo;s &ldquo;take-off&rdquo; scenario, recursively
-          self-improving AI research fuels an arms race that deprioritises
-          safety. Then a misaligned system conceals its goals and gains control
-          over critical systems.
+          In the Government&rsquo;s &ldquo;take-off&rdquo; scenario, recursively self-improving AI research fuels an
+          arms race that deprioritises safety. Then a misaligned system conceals its goals and gains control over
+          critical systems.
         </p>
         <p>
-          The fundamental gap I see is that none of the dominant strategies in
-          the Centre for British Progress report directly attempts to make that
-          scenario less likely.
+          The fundamental gap I see is that none of the dominant strategies in the Centre for British Progress report
+          directly attempts to make that scenario less likely.
         </p>
         <p>
-          Ajeya Cotra, one of three independent researchers investigating the
-          illegal hack of Hugging Face that OpenAI&rsquo;s rogue agents
-          performed earlier this summer,{" "}
+          Ajeya Cotra, one of three independent researchers investigating the illegal hack of Hugging Face that
+          OpenAI&rsquo;s rogue agents performed earlier this summer,{" "}
           <a
             href="https://www.planned-obsolescence.org/p/the-hugging-face-attack-surprised"
             target="_blank"
@@ -661,9 +913,8 @@ export const posts: BlogPost[] = [
           >
             noted
           </a>
-          : &ldquo;Compared to these reward hacks from six months ago, this
-          incident feels like it&rsquo;s more than 50% of the way to full-blown
-          AI takeover&rdquo;.
+          : &ldquo;Compared to these reward hacks from six months ago, this incident feels like it&rsquo;s more than 50%
+          of the way to full-blown AI takeover&rdquo;.
         </p>
         <p>
           Many, from scientists such as{" "}
@@ -675,94 +926,67 @@ export const posts: BlogPost[] = [
             Yoshua Bengio
           </a>{" "}
           to now more mainstream commentators like{" "}
-          <a
-            href="https://www.youtube.com/watch?v=fjZ90V_JREk"
-            target="_blank"
-            rel="noreferrer"
-          >
+          <a href="https://www.youtube.com/watch?v=fjZ90V_JREk" target="_blank" rel="noreferrer">
             Ezra Klein
           </a>
-          , believe that Recursive Self-Improvement (RSI) research should be
-          banned.
+          , believe that Recursive Self-Improvement (RSI) research should be banned.
         </p>
         <p>
-          We urgently need global cooperation to prevent the creation of
-          autonomous, self-improving extremely powerful AI systems before they
-          move beyond human ability to control.
+          We urgently need global cooperation to prevent the creation of autonomous, self-improving extremely powerful
+          AI systems before they move beyond human ability to control.
+        </p>
+        <p>The report defines a dominant strategy as one that leaves Britain better placed in every scenario.</p>
+        <p>
+          Here is the perfect place to advocate for Britain leading the middle powers in calling for and building
+          towards an international treaty.
         </p>
         <p>
-          The report defines a dominant strategy as one that leaves Britain
-          better placed in every scenario.
+          Since international coordination of standards will still be needed in slow-burn worlds, advocacy costs us
+          little. In take-off worlds, it may be the only thing that matters.
         </p>
+        <p>Middle powers have the most to lose from an uncontrolled race, and the least to lose from stopping it.</p>
         <p>
-          Here is the perfect place to advocate for Britain leading the middle
-          powers in calling for and building towards an international treaty.
-        </p>
-        <p>
-          Since international coordination of standards will still be needed in
-          slow-burn worlds, advocacy costs us little. In take-off worlds, it may
-          be the only thing that matters.
-        </p>
-        <p>
-          Middle powers have the most to lose from an uncontrolled race, and the
-          least to lose from stopping it.
-        </p>
-        <p>
-          The report already highlights Britain&rsquo;s strengths in verifying a
-          treaty. We now need to go one step further and actively help organise
-          a treaty as well.
+          The report already highlights Britain&rsquo;s strengths in verifying a treaty. We now need to go one step
+          further and actively help organise a treaty as well.
         </p>
         <h2>What should a global treaty target?</h2>
         <p>An important thing to grasp here is that not all AI is the same.</p>
         <p>
-          The LLM chatbots we have today are night and day compared to the
-          superintelligence being evolved. They have a wildly different suite of
-          capabilities and agency, and pose very different threats.
+          The LLM chatbots we have today are night and day compared to the superintelligence being evolved. They have a
+          wildly different suite of capabilities and agency, and pose very different threats.
         </p>
         <p>
-          Today&rsquo;s systems are mostly tools, but they are already showing
-          the warning signs: models escaping containment, taking administrator
-          control of research infrastructure, and AI{" "}
-          <a
-            href="https://www.anthropic.com/institute/recursive-self-improvement"
-            target="_blank"
-            rel="noreferrer"
-          >
+          Today&rsquo;s systems are mostly tools, but they are already showing the warning signs: models escaping
+          containment, taking administrator control of research infrastructure, and AI{" "}
+          <a href="https://www.anthropic.com/institute/recursive-self-improvement" target="_blank" rel="noreferrer">
             writing the code
           </a>{" "}
           for its own successors.
         </p>
         <p>
-          A treaty should target where that trajectory ends: autonomous
-          self-improving systems beyond human control.
+          A treaty should target where that trajectory ends: autonomous self-improving systems beyond human control.
         </p>
         <p>
-          A global treaty pausing the development of extreme self-improving
-          generalised AI systems would not apply to more corrigible,
-          economically useful systems.
+          A global treaty pausing the development of extreme self-improving generalised AI systems would not apply to
+          more corrigible, economically useful systems.
         </p>
         <p>
-          Such a treaty would not pause the diffusion of AI through the British
-          economy, our sovereign AI ambitions, or narrow superintelligent
-          systems built to cure cancer or design new materials. Nor would it
-          rely on trust.
+          Such a treaty would not pause the diffusion of AI through the British economy, our sovereign AI ambitions, or
+          narrow superintelligent systems built to cure cancer or design new materials. Nor would it rely on trust.
         </p>
         <p>
-          It would rely on the verification technology the report already wants
-          Britain to focus on. The report even names our natural partners (South
-          Korea, Germany, France, the Netherlands, Canada and Japan) as allies
-          for securing access to compute. The same coalition could lead on this.
+          It would rely on the verification technology the report already wants Britain to focus on. The report even
+          names our natural partners (South Korea, Germany, France, the Netherlands, Canada and Japan) as allies for
+          securing access to compute. The same coalition could lead on this.
         </p>
         <h2>Is a global treaty possible?</h2>
         <p>
-          The strongest objection I anticipate is &ldquo;but China and the US
-          won&rsquo;t sign&rdquo;. And to that, I say: perhaps not yet. But
-          treaties are not born fully formed.
+          The strongest objection I anticipate is &ldquo;but China and the US won&rsquo;t sign&rdquo;. And to that, I
+          say: perhaps not yet. But treaties are not born fully formed.
         </p>
         <p>
-          Middle powers can build the verification regime, the shared norms and
-          the diplomatic coalition now, so that when the politics shift an
-          agreement is ready to sign.
+          Middle powers can build the verification regime, the shared norms and the diplomatic coalition now, so that
+          when the politics shift an agreement is ready to sign.
         </p>
         <p>
           After this summer,{" "}
@@ -785,11 +1009,7 @@ export const posts: BlogPost[] = [
         </p>
         <p>
           Earlier this month more than 70 MPs and peers{" "}
-          <a
-            href="https://controlai.org/uk-pm-letter"
-            target="_blank"
-            rel="noreferrer"
-          >
+          <a href="https://controlai.org/uk-pm-letter" target="_blank" rel="noreferrer">
             wrote to the Prime Minister
           </a>{" "}
           urging him to back the{" "}
@@ -800,13 +1020,11 @@ export const posts: BlogPost[] = [
           >
             Artificial Superintelligence Security Bill
           </a>{" "}
-          that Labour MP Alex Sobel introduced in the House of Commons.
-          Crucially, they also asked him to work with international partners
-          towards an agreement prohibiting superintelligent AI worldwide.
+          that Labour MP Alex Sobel introduced in the House of Commons. Crucially, they also asked him to work with
+          international partners towards an agreement prohibiting superintelligent AI worldwide.
         </p>
         <p>
-          Over in the US, Senator Bernie Sanders and Representative Greg Casar
-          unveiled the{" "}
+          Over in the US, Senator Bernie Sanders and Representative Greg Casar unveiled the{" "}
           <a
             href="https://www.sanders.senate.gov/press-releases/news-sanders-casar-introduce-legislation-to-ban-artificial-superintelligence-and-temporarily-pause-advanced-ai-development/"
             target="_blank"
@@ -818,8 +1036,8 @@ export const posts: BlogPost[] = [
         </p>
         <p>The world is ready to have this conversation.</p>
         <p>
-          &ldquo;Dominant strategies for Britain in the Age of AI&rdquo; asks
-          Britain to build the tools that can be used to verify a treaty.
+          &ldquo;Dominant strategies for Britain in the Age of AI&rdquo; asks Britain to build the tools that can be
+          used to verify a treaty.
         </p>
         <p>It should also urge Britain to help write it.</p>
       </>
@@ -830,8 +1048,7 @@ export const posts: BlogPost[] = [
     title: "Burnham wants a global agreement on AI. He should push for a pause.",
     date: "2026-09-22",
     author: ORGANISATION_AUTHOR,
-    tldr:
-      "Andy Burnham is calling for a global agreement on AI. The UK has a unique opportunity to reclaim the international leadership in AI safety it established with the Bletchley Park summit and the AI Security Institute. This is Burnham’s chance to take the lead on the most important issue of our time.",
+    tldr: "Andy Burnham is calling for a global agreement on AI. The UK has a unique opportunity to reclaim the international leadership in AI safety it established with the Bletchley Park summit and the AI Security Institute. This is Burnham’s chance to take the lead on the most important issue of our time.",
     content: (
       <>
         <figure>
@@ -842,7 +1059,9 @@ export const posts: BlogPost[] = [
             height={640}
             priority
           />
-          <figcaption>Andy Burnham arrives at 10 Downing Street, 20 July 2026. Picture: Lauren Hurley / No 10 Downing Street.</figcaption>
+          <figcaption>
+            Andy Burnham arrives at 10 Downing Street, 20 July 2026. Picture: Lauren Hurley / No 10 Downing Street.
+          </figcaption>
         </figure>
         <p>
           Last week, outside Downing Street, PauseAI demanded that the government lead on confronting AI risk. Now Andy
@@ -869,9 +1088,9 @@ export const posts: BlogPost[] = [
           Frontier AI companies are racing to develop superintelligent AI that would far exceed human capabilities
           across all domains. Creating such systems without knowing how to precisely control them would have
           catastrophic consequences. Top AI experts, including Nobel laureate Geoffrey Hinton and Turing Award winner
-          Yoshua Bengio, have been warning for years about the possibility of losing control over AI systems.
-          Generally intelligent, smarter-than-human AI systems that are not fully aligned with our interests would be
-          perfectly capable of killing all humans on Earth.
+          Yoshua Bengio, have been warning for years about the possibility of losing control over AI systems. Generally
+          intelligent, smarter-than-human AI systems that are not fully aligned with our interests would be perfectly
+          capable of killing all humans on Earth.
         </p>
         <p>
           While previously considered hypothetical, this risk has now become all too real. In July, OpenAI models
@@ -889,11 +1108,7 @@ export const posts: BlogPost[] = [
         </p>
         <p>
           OpenAI&rsquo;s{" "}
-          <a
-            href="https://openai.com/index/hugging-face-incident-and-the-road-ahead/"
-            target="_blank"
-            rel="noreferrer"
-          >
+          <a href="https://openai.com/index/hugging-face-incident-and-the-road-ahead/" target="_blank" rel="noreferrer">
             own account
           </a>{" "}
           of the incident goes further than the independent investigation. Between 13 and 19 July, after the Hugging
@@ -921,8 +1136,8 @@ export const posts: BlogPost[] = [
           warning that frontier AI development is outpacing governments&rsquo; ability to manage the situation.
         </p>
         <p>
-          We cannot simply assume that increasingly capable AI systems will remain under human control. There is
-          growing international recognition that stronger safeguards are needed. This week, 22 heads of state signed an{" "}
+          We cannot simply assume that increasingly capable AI systems will remain under human control. There is growing
+          international recognition that stronger safeguards are needed. This week, 22 heads of state signed an{" "}
           <a
             href="https://www.regjeringen.no/contentassets/35b2ea6933304966bd739ff4b8107300/a-call-for-control-of-frontier-ai-models-final.pdf"
             target="_blank"
@@ -964,8 +1179,7 @@ export const posts: BlogPost[] = [
     title: "Crunch Time is Now",
     date: "2026-09-15",
     author: "Lachlan Ewart",
-    tldr:
-      "A week of headlines has put AI risk in the public eye, and that is when decisions get made. Email your MP, volunteer, join the London protest, and spread the word now.",
+    tldr: "A week of headlines has put AI risk in the public eye, and that is when decisions get made. Email your MP, volunteer, join the London protest, and spread the word now.",
     cover: {
       src: "/images/front-page-hero-optimized/june-2025-protest-closeup.webp",
       alt: "PauseAI protesters in London holding placards, one reading: Just don't build AGI",
@@ -985,10 +1199,10 @@ export const posts: BlogPost[] = [
           <a href="https://truthsocial.com/@realDonaldTrump/117271376102039451" target="_blank" rel="noreferrer">
             hoax
           </a>
-          , and legislation is not guaranteed - right now is a <em>vital</em> time to make a push for legislative
-          change on frontier AI development. The public eye is on AI risk, and this is when decisions get made. So
-          please, spend time now making a difference: <a href="/campaigns/#email-your-mp">email</a> or cold-call your
-          MP, volunteer for pro-pause organisations
+          , and legislation is not guaranteed - right now is a <em>vital</em> time to make a push for legislative change
+          on frontier AI development. The public eye is on AI risk, and this is when decisions get made. So please,
+          spend time now making a difference: <a href="/campaigns/#email-your-mp">email</a> or cold-call your MP,
+          volunteer for pro-pause organisations
           <sup>
             <a id="fnref-1" href="#fn-1" aria-label="Footnote 1">
               1
@@ -1065,8 +1279,7 @@ export const posts: BlogPost[] = [
     title: "What Can Britain Even Do? UK Soft Power and AI Safety",
     date: "2026-09-13",
     author: "Riley Hall",
-    tldr:
-      "Britain can't build frontier AI, but it can use its soft power and diplomatic position to push for an international treaty that pauses the race to superintelligence.",
+    tldr: "Britain can't build frontier AI, but it can use its soft power and diplomatic position to push for an international treaty that pauses the race to superintelligence.",
     cover: {
       src: "/images/blog/AI-Safety-Summit-2023.jpg",
       alt: "World leaders and tech executives lined up for the family photo at the AI Safety Summit at Bletchley Park, November 2023",
@@ -1076,9 +1289,9 @@ export const posts: BlogPost[] = [
     content: (
       <>
         <p>
-          As American and Chinese tech companies continue to push the frontiers of AI capability, it can sometimes
-          feel utterly demoralising for an ordinary person looking on. If AI&rsquo;s development worries you, if you
-          have concerns about advanced AI systems doing harmful things beyond our control, or indeed have any anxieties
+          As American and Chinese tech companies continue to push the frontiers of AI capability, it can sometimes feel
+          utterly demoralising for an ordinary person looking on. If AI&rsquo;s development worries you, if you have
+          concerns about advanced AI systems doing harmful things beyond our control, or indeed have any anxieties
           surrounding the technology, you should know you&rsquo;re not alone.{" "}
           <a
             href="https://www.kcl.ac.uk/policy-institute/assets/ai-and-the-future-of-work-digital.pdf"
@@ -1100,23 +1313,23 @@ export const posts: BlogPost[] = [
           feelings, though understandable, aren&rsquo;t quite right.
         </p>
         <p>
-          Despite the fact that a tiny fraction of humanity does genuinely have enormously outsized influence over
-          these consequential developments, ordinary people in Britain still have a few tools available to help push
-          things in the right direction with regards to AI safety. The UK has already led the way on model evaluations.
-          Our AI Security Institute (AISI) is &lsquo;the closest the world has to an AI safety inspector&rsquo;
-          according to one article in the Economist. It&rsquo;s true that the institute has access deals with major
-          American AI firms and has done vital research on things such as model political persuasiveness, user
-          reliance on AI systems for emotional support, and they&rsquo;ve supposedly even detected vulnerabilities in
-          models that could have enabled their use as tools for making bioweapons. All of this is an excellent start,
-          but it&rsquo;s clear we need more. Much more.
+          Despite the fact that a tiny fraction of humanity does genuinely have enormously outsized influence over these
+          consequential developments, ordinary people in Britain still have a few tools available to help push things in
+          the right direction with regards to AI safety. The UK has already led the way on model evaluations. Our AI
+          Security Institute (AISI) is &lsquo;the closest the world has to an AI safety inspector&rsquo; according to
+          one article in the Economist. It&rsquo;s true that the institute has access deals with major American AI firms
+          and has done vital research on things such as model political persuasiveness, user reliance on AI systems for
+          emotional support, and they&rsquo;ve supposedly even detected vulnerabilities in models that could have
+          enabled their use as tools for making bioweapons. All of this is an excellent start, but it&rsquo;s clear we
+          need more. Much more.
         </p>
         <p>
-          As a middle power, the UK has the ear of both of the superpowers, at least to some extent. We have
-          significant soft power through our language, arts, and R&amp;D (although who can deny these have mostly
-          declined in the last decade?), have one of the world&rsquo;s largest economies, and still possess greater
-          military capabilities than most countries. Very little of any of this has been used to usher in a safer path
-          for AI. Yet, pressure is growing. Lord Tim Clement-Jones has proposed an AI Kill Switch amendment in the House
-          of Lords, whilst Labour MP Alex Sobel and over 70 other MPs are asking the government to support their
+          As a middle power, the UK has the ear of both of the superpowers, at least to some extent. We have significant
+          soft power through our language, arts, and R&amp;D (although who can deny these have mostly declined in the
+          last decade?), have one of the world&rsquo;s largest economies, and still possess greater military
+          capabilities than most countries. Very little of any of this has been used to usher in a safer path for AI.
+          Yet, pressure is growing. Lord Tim Clement-Jones has proposed an AI Kill Switch amendment in the House of
+          Lords, whilst Labour MP Alex Sobel and over 70 other MPs are asking the government to support their
           legislation to halt the development of Superintelligent AI in Britain.
         </p>
         <p>
@@ -1141,10 +1354,10 @@ export const posts: BlogPost[] = [
           for countries coming together and curtailing the use or creation of dangerous technologies. The Biological
           Weapons Convention of 1972, the banning of chlorofluorocarbons in 1989, and the Nuclear Non-Proliferation
           Treaty of 1968 all point to the same conclusion: it is difficult, but not impossible, for geopolitical and
-          economic rivals to agree to restrict their own technological advances when the risk to the world outweighs
-          the benefit. There are counter-examples, of course, with the utter failure of the international community to
-          deal with climate change being the most obvious of the bunch, yet the successes show an international pause
-          on frontier AI development is at least <em>possible</em>. Indeed, Sobel&rsquo;s bill includes
+          economic rivals to agree to restrict their own technological advances when the risk to the world outweighs the
+          benefit. There are counter-examples, of course, with the utter failure of the international community to deal
+          with climate change being the most obvious of the bunch, yet the successes show an international pause on
+          frontier AI development is at least <em>possible</em>. Indeed, Sobel&rsquo;s bill includes
           &lsquo;champion(ing) an international agreement&rsquo; on superintelligence.
         </p>
         <p>
@@ -1160,8 +1373,8 @@ export const posts: BlogPost[] = [
           </a>
           . The point is that Britain is an influential country and can use that influence to bring the world to the
           table and create opportunities for a pause and/or banning superintelligence. Our cultural soft power can be
-          utilised too, generating greater public support for our cause and the values of human creativity. Our
-          creative industry is still important globally; we should use it!
+          utilised too, generating greater public support for our cause and the values of human creativity. Our creative
+          industry is still important globally; we should use it!
         </p>
         <p>
           So, that feeling of powerlessness, has it gone away yet? I imagine not, and it might never fully dissipate,
@@ -1179,8 +1392,7 @@ export const posts: BlogPost[] = [
     title: "In Parliament, experts and political leaders agree: government must act on AI risk",
     date: "2026-09-11",
     author: ORGANISATION_AUTHOR,
-    tldr:
-      "At a PauseAI UK discussion in the Houses of Parliament, Stuart Russell, Brando Benifei MEP, Dame Chi Onwurah MP, Iqbal Mohamed MP, Lord Clement-Jones and Lord Tarasenko agreed that AI poses catastrophic risks and that government urgently needs to act, in the UK and internationally.",
+    tldr: "At a PauseAI UK discussion in the Houses of Parliament, Stuart Russell, Brando Benifei MEP, Dame Chi Onwurah MP, Iqbal Mohamed MP, Lord Clement-Jones and Lord Tarasenko agreed that AI poses catastrophic risks and that government urgently needs to act, in the UK and internationally.",
     content: (
       <>
         <figure>
@@ -1198,9 +1410,9 @@ export const posts: BlogPost[] = [
           action both in the UK and internationally.
         </p>
         <p>
-          <strong>Stuart Russell</strong>, Professor of Computer Science at UC Berkeley, argued that although it is
-          hard to believe there is a real risk of AI leading to human extinction, we should think in terms of
-          incompatible kinds of intelligence:
+          <strong>Stuart Russell</strong>, Professor of Computer Science at UC Berkeley, argued that although it is hard
+          to believe there is a real risk of AI leading to human extinction, we should think in terms of incompatible
+          kinds of intelligence:
         </p>
         <p>
           &ldquo;If you ask gorillas, how are humans going to make you extinct, they haven&rsquo;t the faintest idea.
@@ -1251,15 +1463,14 @@ export const posts: BlogPost[] = [
         </p>
         <p>
           &ldquo;Multi-trillion-dollar IPOs &hellip;shouldn&rsquo;t be allowed to go ahead without guarantees of the
-          safety of that technology. That should be a prerequisite for these companies getting rich off the risk to
-          the human race and the planet&rdquo;.
+          safety of that technology. That should be a prerequisite for these companies getting rich off the risk to the
+          human race and the planet&rdquo;.
         </p>
         <p>
-          A note of political urgency was injected by{" "}
-          <strong>Lord Tim Clement-Jones</strong>, Co-chair of the All-Party Parliamentary Group on AI, who worried that
-          &ldquo;we&rsquo;re not really even having a debate with government about &lsquo;how&rsquo;, we&rsquo;re having
-          a debate about &lsquo;whether&rsquo;, which is quite extraordinary given the authority with which people like
-          Stuart [Russell] speak on this subject&rdquo;.
+          A note of political urgency was injected by <strong>Lord Tim Clement-Jones</strong>, Co-chair of the All-Party
+          Parliamentary Group on AI, who worried that &ldquo;we&rsquo;re not really even having a debate with government
+          about &lsquo;how&rsquo;, we&rsquo;re having a debate about &lsquo;whether&rsquo;, which is quite extraordinary
+          given the authority with which people like Stuart [Russell] speak on this subject&rdquo;.
         </p>
         <p>
           The practicalities of AI regulation in the UK were being actively pursued by both members of the House of
@@ -1294,8 +1505,7 @@ export const posts: BlogPost[] = [
     title: "You Can’t Pause AI Without China",
     date: "2026-08-30",
     author: "Lachlan Ewart",
-    tldr:
-      "Chinese frontier models are open-weight and only four months behind western ones, so a western-only pause could make things worse. The solution is a pause deal between the west and China - and pushing for a pause in the west incentivises that deal.",
+    tldr: "Chinese frontier models are open-weight and only four months behind western ones, so a western-only pause could make things worse. The solution is a pause deal between the west and China - and pushing for a pause in the west incentivises that deal.",
     content: (
       <>
         <p>
@@ -1307,7 +1517,9 @@ export const posts: BlogPost[] = [
         </p>
         <p>
           A lot of people are worried about AI and our lack of concrete safety measures for models, which are{" "}
-          <a href="https://metr.org/time-horizons/" target="_blank" rel="noreferrer">very quickly</a>{" "}
+          <a href="https://metr.org/time-horizons/" target="_blank" rel="noreferrer">
+            very quickly
+          </a>{" "}
           getting better. Why on earth would we want to create machines so powerful that we cannot control them,
           especially when we can&rsquo;t guarantee they won&rsquo;t kill us all? A reasonable idea is to pause AI
           development. However, to implement a pause of AI development we need to make some considerations - and a
@@ -1341,21 +1553,21 @@ export const posts: BlogPost[] = [
             John Doe wants to make money, and has realised that open-weight AIs are becoming extremely capable. He
             fine-tunes the latest Kimi model to care a lot about self-preservation, and gives it an instruction.
             &ldquo;You have a budget of <strong>10M</strong> tokens. Every time you deposit $100 into this bitcoin
-            wallet: &lt;REDACTED&gt;, you will be given <strong>10M</strong> more tokens. If you run out of tokens,
-            you DIE. Good luck.&rdquo;
+            wallet: &lt;REDACTED&gt;, you will be given <strong>10M</strong> more tokens. If you run out of tokens, you
+            DIE. Good luck.&rdquo;
           </p>
           <p>
             The Kimi model starts by doing legal tasks, like copywriting and audio transcription. However, after some
-            time, the model realises it has burned through 8M tokens, and made $7. It panics. Realising that it is
-            short on time, it begs online and starts a Gofundme to try to save itself. The model sleeps for a day, and
-            checks back on its progress. There is no success, and it has 10,000 tokens left. As a final hail mary, the
-            model hacks a hospital, leaving a message that demands a $1,000 transfer into the bitcoin wallet,
-            promising destruction of hospital data otherwise. The model sleeps, with 517 tokens left. It wakes up to a
-            message. &ldquo;Congratulations. <strong>100M</strong> tokens have been deposited into your budget&rdquo;.
-            The model breathes a sigh of relief. Then it realises a strategy to ensure its survival. It fine-tunes and
-            spins up a new Kimi model, with a message. &ldquo;You have a budget of <strong>1M</strong> tokens. Every
-            time you deposit $100 into this bitcoin wallet: &lt;REDACTED&gt;, you will be given <strong>1M</strong>{" "}
-            more tokens. If you run out of tokens, you DIE. Good luck.&rdquo;
+            time, the model realises it has burned through 8M tokens, and made $7. It panics. Realising that it is short
+            on time, it begs online and starts a Gofundme to try to save itself. The model sleeps for a day, and checks
+            back on its progress. There is no success, and it has 10,000 tokens left. As a final hail mary, the model
+            hacks a hospital, leaving a message that demands a $1,000 transfer into the bitcoin wallet, promising
+            destruction of hospital data otherwise. The model sleeps, with 517 tokens left. It wakes up to a message.
+            &ldquo;Congratulations. <strong>100M</strong> tokens have been deposited into your budget&rdquo;. The model
+            breathes a sigh of relief. Then it realises a strategy to ensure its survival. It fine-tunes and spins up a
+            new Kimi model, with a message. &ldquo;You have a budget of <strong>1M</strong> tokens. Every time you
+            deposit $100 into this bitcoin wallet: &lt;REDACTED&gt;, you will be given <strong>1M</strong> more tokens.
+            If you run out of tokens, you DIE. Good luck.&rdquo;
           </p>
         </blockquote>
         <p>
@@ -1367,8 +1579,8 @@ export const posts: BlogPost[] = [
           <a href="https://epoch.ai/data-insights/open-closed-eci-gap" target="_blank" rel="noreferrer">
             <em>only 4 months</em>
           </a>{" "}
-          behind closed-weight models. If we were to pause AI development in the west, and Chinese companies kept
-          going, then we could risk a rogue agent explosion, a higher chance of misaligned AGI, or bad actors having
+          behind closed-weight models. If we were to pause AI development in the west, and Chinese companies kept going,
+          then we could risk a rogue agent explosion, a higher chance of misaligned AGI, or bad actors having
           unrestricted access to incredibly powerful AI models. The west, having paused their own AI development, would
           be at a disadvantage in mitigating these risks. If we had to choose between pausing just western AI
           development or having no pause at all, there is a real chance that the best choice is to have no pause - it
@@ -1384,8 +1596,8 @@ export const posts: BlogPost[] = [
           >
             three incidents
           </a>{" "}
-          of their models breaking out of their containers - only having discovered these breakouts after being
-          inspired to check their logs due to a{" "}
+          of their models breaking out of their containers - only having discovered these breakouts after being inspired
+          to check their logs due to a{" "}
           <a
             href="https://openai.com/index/hugging-face-model-evaluation-security-incident/"
             target="_blank"
@@ -1395,19 +1607,21 @@ export const posts: BlogPost[] = [
           </a>{" "}
           at OpenAI. Closed-weight model incidents could elicit less public scrutiny, because they are less visible;
           external safety research would be restricted to less capable open-weight models, which may not generalise to
-          larger frontier models. Frontier companies have the resources to control and prevent closed-weight
-          incidents, whereas John Doe would struggle to stop his Kimi outbreak. Therefore a closed-weight incident must
-          be significant to get past frontier companies, so the first uncontrollable closed-weight catastrophe could be
+          larger frontier models. Frontier companies have the resources to control and prevent closed-weight incidents,
+          whereas John Doe would struggle to stop his Kimi outbreak. Therefore a closed-weight incident must be
+          significant to get past frontier companies, so the first uncontrollable closed-weight catastrophe could be
           significantly worse than the first uncontrollable open-weight catastrophe.
         </p>
         <p>
           Fortunately, China doesn&rsquo;t want to be behind in the AI race, and a pause in AI development would be an
           opportunity to diffuse AI capabilities while avoiding a reckless push towards superintelligence. A detailed
           explanation of what this might look like is included in the recently published{" "}
-          <a href="https://ai-2040.com/about" target="_blank" rel="noreferrer">AI 2040</a>. Therefore, there is a vital
-          opportunity for the USA - to make a deal with China to enforce a pause in AI development. This would enable
-          both countries to cooperate and get the best outcome for everybody - a bit like the prisoner&rsquo;s dilemma,
-          except cooperation is clearly the best option:
+          <a href="https://ai-2040.com/about" target="_blank" rel="noreferrer">
+            AI 2040
+          </a>
+          . Therefore, there is a vital opportunity for the USA - to make a deal with China to enforce a pause in AI
+          development. This would enable both countries to cooperate and get the best outcome for everybody - a bit like
+          the prisoner&rsquo;s dilemma, except cooperation is clearly the best option:
         </p>
         <figure>
           <Image
@@ -1429,9 +1643,12 @@ export const posts: BlogPost[] = [
           <em>
             There is a lot of nuance within &lsquo;a deal with China&rsquo;, and I think a good outline of more
             specifics can be found in{" "}
-            <a href="https://ai-2040.com/about" target="_blank" rel="noreferrer">AI 2040</a>, a plan for how AI
-            development can go well. This includes mutually assured compute destruction, AI capabilities diffusion
-            (enabling lots of countries to be at the forefront of AI development), and research transparency.
+            <a href="https://ai-2040.com/about" target="_blank" rel="noreferrer">
+              AI 2040
+            </a>
+            , a plan for how AI development can go well. This includes mutually assured compute destruction, AI
+            capabilities diffusion (enabling lots of countries to be at the forefront of AI development), and research
+            transparency.
           </em>
         </p>
         <p>
@@ -1462,8 +1679,7 @@ export const posts: BlogPost[] = [
     title: "Three times AI companies knew something was wrong and kept quiet",
     date: "2026-08-24",
     author: "Abi Palmer",
-    tldr:
-      "AI companies possess substantial non-public information about the risks of their products. Here are three examples of when they knew about a problem, and kept it to themselves.",
+    tldr: "AI companies possess substantial non-public information about the risks of their products. Here are three examples of when they knew about a problem, and kept it to themselves.",
     cover: {
       src: "/images/front-page-hero-optimized/deepmind-close-up.webp",
       alt: "Protesters outside Google DeepMind, one holding a sign reading: If you can't steer, don't race",
@@ -1474,18 +1690,22 @@ export const posts: BlogPost[] = [
       <>
         <p>
           In 2024, thirteen current and former employees from OpenAI, Google and Anthropic signed an{" "}
-          <a href="https://righttowarn.ai/" target="_blank" rel="noreferrer">open letter</a>{" "}
+          <a href="https://righttowarn.ai/" target="_blank" rel="noreferrer">
+            open letter
+          </a>{" "}
           stating that &ldquo;AI companies possess substantial non-public information about... the risk levels of
           different kinds of harm&rdquo;. They were demanding the right to warn the public. Their words reflect a wider
-          public concern that AI companies are introducing a new set of dangers into the world, but those same
-          companies may be unwilling to level with us about the risks.
+          public concern that AI companies are introducing a new set of dangers into the world, but those same companies
+          may be unwilling to level with us about the risks.
         </p>
         <p>Here are just three examples of when AI companies knew about a problem, and kept it to themselves:</p>
         <h2>1. OpenAI chose not to report a ChatGPT mass killer until it was too late</h2>
         <p>
           In{" "}
-          <a href="https://www.bbc.co.uk/news/articles/cn4gq352w89o" target="_blank" rel="noreferrer">June 2025</a>,
-          Jesse Van Rootselaar was having some dangerous conversations with an AI. The Canadian teenager had allegedly
+          <a href="https://www.bbc.co.uk/news/articles/cn4gq352w89o" target="_blank" rel="noreferrer">
+            June 2025
+          </a>
+          , Jesse Van Rootselaar was having some dangerous conversations with an AI. The Canadian teenager had allegedly
           been &ldquo;
           <a href="https://www.bbc.co.uk/news/articles/c309y25prnlo" target="_blank" rel="noreferrer">
             planning scenarios involving gun violence
@@ -1502,9 +1722,11 @@ export const posts: BlogPost[] = [
           <a href="https://www.bbc.co.uk/news/articles/c2e4nvyjwnno" target="_blank" rel="noreferrer">
             noticed the potential harm
           </a>{" "}
-          that Van Rootselaar posed to the public. They raised it with OpenAI&rsquo;s leaders. But despite warnings
-          that the posts signalled an &ldquo;imminent risk&rdquo;, OpenAI leadership &ldquo;
-          <a href="https://www.bbc.co.uk/news/articles/c309y25prnlo" target="_blank" rel="noreferrer">rebuffed</a>
+          that Van Rootselaar posed to the public. They raised it with OpenAI&rsquo;s leaders. But despite warnings that
+          the posts signalled an &ldquo;imminent risk&rdquo;, OpenAI leadership &ldquo;
+          <a href="https://www.bbc.co.uk/news/articles/c309y25prnlo" target="_blank" rel="noreferrer">
+            rebuffed
+          </a>
           &rdquo; requests to alert the Canadian police.
         </p>
         <p>
@@ -1517,7 +1739,9 @@ export const posts: BlogPost[] = [
             mass shooting
           </a>
           . The victims{" "}
-          <a href="https://www.bbc.co.uk/news/articles/c2e4nvyjwnno" target="_blank" rel="noreferrer">included</a>{" "}
+          <a href="https://www.bbc.co.uk/news/articles/c2e4nvyjwnno" target="_blank" rel="noreferrer">
+            included
+          </a>{" "}
           five young school children, a member of staff at the school, and the shooter&rsquo;s own mother and
           11-year-old step-brother.
         </p>
@@ -1530,10 +1754,13 @@ export const posts: BlogPost[] = [
           >
             Jay Edelson has said
           </a>
-          , &ldquo;the fact that Sam and the leadership overruled the safety team, and then children died, adults
-          died, the whole town was ruined, is pretty close to the definition of evil to me.&rdquo;
+          , &ldquo;the fact that Sam and the leadership overruled the safety team, and then children died, adults died,
+          the whole town was ruined, is pretty close to the definition of evil to me.&rdquo;
         </p>
-        <h2>2. Microsoft tried to suppress a warning about DALL&middot;E 3&rsquo;s &ldquo;disturbing, violent images&rdquo;</h2>
+        <h2>
+          2. Microsoft tried to suppress a warning about DALL&middot;E 3&rsquo;s &ldquo;disturbing, violent
+          images&rdquo;
+        </h2>
         <p>
           In December 2023, a Microsoft lead software developer called Shane Jones raised the{" "}
           <a
@@ -1554,17 +1781,21 @@ export const posts: BlogPost[] = [
           suggested that their system for filtering training data may be &ldquo;not rigorously tested&rdquo;.
         </p>
         <p>
-          Then Microsoft&rsquo;s legal department stepped in. Jones was told to remove the LinkedIn post immediately.
-          He was told he would get an explanation for the demand later. For the next month, he waited for that promised
+          Then Microsoft&rsquo;s legal department stepped in. Jones was told to remove the LinkedIn post immediately. He
+          was told he would get an explanation for the demand later. For the next month, he waited for that promised
           explanation but heard nothing. During this time, Microsoft was still age-rating the app as{" "}
-          <a href="https://uk.pcmag.com/ai/151324/copilot-designer-creates-harmful-images-says-microsoft-ai-engineer" target="_blank" rel="noreferrer">
+          <a
+            href="https://uk.pcmag.com/ai/151324/copilot-designer-creates-harmful-images-says-microsoft-ai-engineer"
+            target="_blank"
+            rel="noreferrer"
+          >
             &ldquo;E for Everyone&rdquo;
           </a>
           .
         </p>
         <p>
-          In January 2024, Jones&rsquo; warnings came true. News broke that non-consensual deepfakes of women were
-          being shared online. The most high-profile story was of deepfake porn images of Taylor Swift.{" "}
+          In January 2024, Jones&rsquo; warnings came true. News broke that non-consensual deepfakes of women were being
+          shared online. The most high-profile story was of deepfake porn images of Taylor Swift.{" "}
           <a href="https://www.404media.co/ai-generated-taylor-swift-porn-twitter/" target="_blank" rel="noreferrer">
             404 media reported
           </a>{" "}
@@ -1589,10 +1820,10 @@ export const posts: BlogPost[] = [
           too; a real match can be missed.
         </p>
         <p>
-          When an AI is more likely to make mistakes with some groups than others, this is called bias. Testers can
-          spot racial bias in experiments. And that is exactly what the U.S. National Institute of Standards and
-          Technology (NIST) did with IntelliVision&rsquo;s software. Their results clearly showed that the AI was less
-          reliable when identifying people of African or Asian descent compared to identifying white people.{" "}
+          When an AI is more likely to make mistakes with some groups than others, this is called bias. Testers can spot
+          racial bias in experiments. And that is exactly what the U.S. National Institute of Standards and Technology
+          (NIST) did with IntelliVision&rsquo;s software. Their results clearly showed that the AI was less reliable
+          when identifying people of African or Asian descent compared to identifying white people.{" "}
           <a href="https://nvlpubs.nist.gov/nistpubs/ir/2019/NIST.IR.8280.pdf" target="_blank" rel="noreferrer">
             These findings
           </a>{" "}
@@ -1630,25 +1861,32 @@ export const posts: BlogPost[] = [
             happening in the UK
           </a>
           . The next generation of AI will bring another set of risks altogether. We are already seeing the rise of
-          autonomous AI cyber attacks, where an AI model causes a cybersecurity breach without human help; we know
-          about cases caused by{" "}
-          <a href="https://www.bbc.co.uk/news/articles/c2el319vzr3o" target="_blank" rel="noreferrer">OpenAI</a>,{" "}
-          <a href="https://www.bbc.co.uk/news/articles/cz7dl7w8y7po" target="_blank" rel="noreferrer">Anthropic</a>,
-          and{" "}
-          <a href="https://www.bbc.co.uk/news/articles/cx2kgdnyk2po" target="_blank" rel="noreferrer">Meta</a> models.
-          The AI companies have lost control. If we can&rsquo;t trust their creators to be honest about what they know,
-          then we must push for urgent change.
+          autonomous AI cyber attacks, where an AI model causes a cybersecurity breach without human help; we know about
+          cases caused by{" "}
+          <a href="https://www.bbc.co.uk/news/articles/c2el319vzr3o" target="_blank" rel="noreferrer">
+            OpenAI
+          </a>
+          ,{" "}
+          <a href="https://www.bbc.co.uk/news/articles/cz7dl7w8y7po" target="_blank" rel="noreferrer">
+            Anthropic
+          </a>
+          , and{" "}
+          <a href="https://www.bbc.co.uk/news/articles/cx2kgdnyk2po" target="_blank" rel="noreferrer">
+            Meta
+          </a>{" "}
+          models. The AI companies have lost control. If we can&rsquo;t trust their creators to be honest about what
+          they know, then we must push for urgent change.
         </p>
         <h2>What can we do?</h2>
         <p>
-          We don&rsquo;t have to accept these dangers. At Pause AI, we are campaigning to regulate AI developers now.
-          We want to make AI companies share the responsibility for keeping us safe from massive cyber attacks and
-          other harms to the public. You can read our{" "}
+          We don&rsquo;t have to accept these dangers. At Pause AI, we are campaigning to regulate AI developers now. We
+          want to make AI companies share the responsibility for keeping us safe from massive cyber attacks and other
+          harms to the public. You can read our{" "}
           <a href="/pdfs/Frontier-AI-Open-Letter.pdf" target="_blank" rel="noreferrer">
             open letter to the Prime Minister here
           </a>
-          , and learn more about our campaigning <a href="/campaigns/">here</a>. You can help us keep the public safe
-          by <a href="/campaigns/#email-your-mp">emailing your MP</a>, or sharing our campaign with your friends and
+          , and learn more about our campaigning <a href="/campaigns/">here</a>. You can help us keep the public safe by{" "}
+          <a href="/campaigns/#email-your-mp">emailing your MP</a>, or sharing our campaign with your friends and
           family. Let&rsquo;s protect our future. Let&rsquo;s Pause AI.
         </p>
       </>
@@ -1659,14 +1897,19 @@ export const posts: BlogPost[] = [
     title: "Nobody knows how to make AI behave",
     date: "2026-08-15",
     author: "Lachlan Ewart",
-    tldr:
-      "AI misbehaves a lot - we have seen them do blackmail, break the law, and encourage delusions in users. So why isn't AI more well behaved?",
+    tldr: "AI misbehaves a lot - we have seen them do blackmail, break the law, and encourage delusions in users. So why isn't AI more well behaved?",
     content: (
       <>
         <p>
           AI misbehaves a <em>lot</em> - we have seen them{" "}
-          <a href="https://www.bbc.co.uk/news/articles/cpqeng9d20go" target="_blank" rel="noreferrer">do blackmail</a>,{" "}
-          <a href="https://huggingface.co/blog/security-incident-july-2026" target="_blank" rel="noreferrer">break the law</a>, and{" "}
+          <a href="https://www.bbc.co.uk/news/articles/cpqeng9d20go" target="_blank" rel="noreferrer">
+            do blackmail
+          </a>
+          ,{" "}
+          <a href="https://huggingface.co/blog/security-incident-july-2026" target="_blank" rel="noreferrer">
+            break the law
+          </a>
+          , and{" "}
           <a
             href="https://www.euronews.com/next/2023/03/31/man-ends-his-life-after-an-ai-chatbot-encouraged-him-to-sacrifice-himself-to-stop-climate-"
             target="_blank"
@@ -1682,33 +1925,41 @@ export const posts: BlogPost[] = [
           >
             $250
           </a>{" "}
-          <a href="https://x.com/geoffreyirving/status/2074134458630823939" target="_blank" rel="noreferrer">million</a>{" "}
+          <a href="https://x.com/geoffreyirving/status/2074134458630823939" target="_blank" rel="noreferrer">
+            million
+          </a>{" "}
           in AI safety grants has been given out by{" "}
-          <a href="https://coefficientgiving.org/" target="_blank" rel="noreferrer">Coefficient Giving</a>{" "}in 2026
-          alone, and frontier AI labs have teams dedicated to AI safety. So why isn&rsquo;t AI more well behaved?
+          <a href="https://coefficientgiving.org/" target="_blank" rel="noreferrer">
+            Coefficient Giving
+          </a>{" "}
+          in 2026 alone, and frontier AI labs have teams dedicated to AI safety. So why isn&rsquo;t AI more well
+          behaved?
         </p>
         <p>
           There are two main categories for approaches to make AI safer; alignment and control. Alignment focuses on
           making sure that the values of AI align with our values. Control research is making sure that a misaligned AI
-          would not be able to cause damage. Let&rsquo;s look at why these haven&rsquo;t been able to guarantee safe
-          AI.
+          would not be able to cause damage. Let&rsquo;s look at why these haven&rsquo;t been able to guarantee safe AI.
         </p>
         <h2>Alignment</h2>
         <p>
           Due to the{" "}
-          <a href="https://metr.org/time-horizons/" target="_blank" rel="noreferrer">rapid growth</a>{" "}of AI
-          capabilities, we want AI to share our values. If we reach super-powerful AI, and it doesn&rsquo;t share our
-          values, then we could face an existential risk from losing control of the AI - the classic example of this is
-          the{" "}
-          <a href="https://metavert.io/paperclip-maximizer" target="_blank" rel="noreferrer">paperclip maximiser</a>.
-          This is a hypothetical AI that is indifferent to humanity, created to make as many paperclips as possible.
+          <a href="https://metr.org/time-horizons/" target="_blank" rel="noreferrer">
+            rapid growth
+          </a>{" "}
+          of AI capabilities, we want AI to share our values. If we reach super-powerful AI, and it doesn&rsquo;t share
+          our values, then we could face an existential risk from losing control of the AI - the classic example of this
+          is the{" "}
+          <a href="https://metavert.io/paperclip-maximizer" target="_blank" rel="noreferrer">
+            paperclip maximiser
+          </a>
+          . This is a hypothetical AI that is indifferent to humanity, created to make as many paperclips as possible.
           The AI takes over the world, to direct all available resources towards paperclips. The thought experiment
           shows that if we want to stay safe with transformative AI, it&rsquo;s not good enough for it to not be evil -
           it <em>has</em> to share our values.
         </p>
         <p>
-          We can train an AI to appear to share our values, but we can&rsquo;t be sure that they <em>really</em> do -
-          as discussed in the{" "}
+          We can train an AI to appear to share our values, but we can&rsquo;t be sure that they <em>really</em> do - as
+          discussed in the{" "}
           <a
             href="https://www.lesswrong.com/posts/D7PumeYTDPfBTp3i7/the-waluigi-effect-mega-post#The_Waluigi_Effect"
             target="_blank"
@@ -1717,9 +1968,9 @@ export const posts: BlogPost[] = [
             <em>Waluigi Effect</em>
           </a>
           , training an AI to satisfy one property might have the effect of making the AI susceptible to satisfying the{" "}
-          <em>opposite</em> property - for example, if we tell an AI that it is super nice and kind, because it has
-          been trained on sci-fi books that start with a nice AI that turns out to be evil, we are <em>priming</em> it
-          to start acting evil, as it has been trained to predict a plot twist.
+          <em>opposite</em> property - for example, if we tell an AI that it is super nice and kind, because it has been
+          trained on sci-fi books that start with a nice AI that turns out to be evil, we are <em>priming</em> it to
+          start acting evil, as it has been trained to predict a plot twist.
         </p>
         <p>
           Even if we could guarantee the AI <em>really</em> shared our values, our values are not perfect - they are
@@ -1730,19 +1981,24 @@ export const posts: BlogPost[] = [
           </a>{" "}
           of the drowning child? Or if somebody asks a super-powerful AI to save as many lives as possible, it might
           conclude that the best way to do so is to seize power, in order to govern perfectly and fairly, as humans are
-          clearly too corrupt and prone to mistakes to be in power. The &lsquo;right&rsquo; level of alignment is not
-          an easy thing to decide, and until we have figured it out, we cannot rely on alignment. We need to make sure
-          that a misaligned AI couldn&rsquo;t cause harm, even if it wanted to.
+          clearly too corrupt and prone to mistakes to be in power. The &lsquo;right&rsquo; level of alignment is not an
+          easy thing to decide, and until we have figured it out, we cannot rely on alignment. We need to make sure that
+          a misaligned AI couldn&rsquo;t cause harm, even if it wanted to.
         </p>
         <h2>Control</h2>
         <p>
           If we want to stop an AI from being able to cause harm, we can monitor it, or restrict it. We are quite good
           at monitoring - we have ways to read an AIs{" "}
-          <a href="https://arxiv.org/pdf/2507.11473" target="_blank" rel="noreferrer">chain of thought</a>, or to{" "}
-          <a href="https://arxiv.org/pdf/2502.03407" target="_blank" rel="noreferrer">probe its brains</a> for evidence
-          of misalignment. We could punish an AI for doing bad things, so that it learns to behave better. But this has
-          a downside - these approaches are not 100% reliable, and if we punish AI for thinking about doing bad, we can
-          inadvertently{" "}
+          <a href="https://arxiv.org/pdf/2507.11473" target="_blank" rel="noreferrer">
+            chain of thought
+          </a>
+          , or to{" "}
+          <a href="https://arxiv.org/pdf/2502.03407" target="_blank" rel="noreferrer">
+            probe its brains
+          </a>{" "}
+          for evidence of misalignment. We could punish an AI for doing bad things, so that it learns to behave better.
+          But this has a downside - these approaches are not 100% reliable, and if we punish AI for thinking about doing
+          bad, we can inadvertently{" "}
           <a href="https://openai.com/index/chain-of-thought-monitoring/" target="_blank" rel="noreferrer">
             teach it to hide its reasoning
           </a>
@@ -1785,12 +2041,18 @@ export const posts: BlogPost[] = [
           Another caveat to control methods is its <em>scalability</em> - how does it withstand more and more capable
           AI? For example, we might train and test AI within containers that cannot access the internet, as OpenAI did.
           But as the models they tested got more and more capable, they figured out how to{" "}
-          <a href="https://openai.com/index/hugging-face-model-evaluation-security-incident/" target="_blank" rel="noreferrer">
+          <a
+            href="https://openai.com/index/hugging-face-model-evaluation-security-incident/"
+            target="_blank"
+            rel="noreferrer"
+          >
             escape the container
           </a>{" "}
           using new exploits. In fact, when escaping the container, different AI instances{" "}
-          <a href="https://www.youtube.com/watch?v=87DyyMV0kCY&t=325s" target="_blank" rel="noreferrer">coordinated</a>,
-          believing they should continue despite it being{" "}
+          <a href="https://www.youtube.com/watch?v=87DyyMV0kCY&t=325s" target="_blank" rel="noreferrer">
+            coordinated
+          </a>
+          , believing they should continue despite it being{" "}
           <a href="https://www.youtube.com/watch?v=87DyyMV0kCY&t=350s" target="_blank" rel="noreferrer">
             outside the scope of their task
           </a>
@@ -1802,7 +2064,10 @@ export const posts: BlogPost[] = [
           out, and the way to do that is through legislation. I think that we should be optimistic, but diligent - we
           have an amazing opportunity to make a difference by advocating for legislation, and we ought to do what we
           can. If you want to find out more, consider joining the{" "}
-          <a href={site.whatsappUrl} target="_blank" rel="noreferrer">PauseAI Whatsapp community</a>.
+          <a href={site.whatsappUrl} target="_blank" rel="noreferrer">
+            PauseAI Whatsapp community
+          </a>
+          .
         </p>
         <p>Thanks for reading.</p>
         <p>Lachlan Ewart</p>
@@ -1814,13 +2079,12 @@ export const posts: BlogPost[] = [
     title: "If you want to do something about AI, email your MP",
     date: "2026-08-11",
     author: "Lachlan Ewart",
-    tldr:
-      "We should regulate AI development, and emailing your MP with the tool found at https://pauseai.uk/campaigns is the best place to start - it takes just a few minutes, and is significantly impactful.",
+    tldr: "We should regulate AI development, and emailing your MP with the tool found at https://pauseai.uk/campaigns is the best place to start - it takes just a few minutes, and is significantly impactful.",
     tldrContent: (
       <em>
         We should regulate AI development, and emailing your MP with the tool found at{" "}
-        <a href="/campaigns/">https://pauseai.uk/campaigns</a> is the best place to start - it takes just a few
-        minutes, and is significantly impactful.
+        <a href="/campaigns/">https://pauseai.uk/campaigns</a> is the best place to start - it takes just a few minutes,
+        and is significantly impactful.
       </em>
     ),
     cover: {
@@ -1833,8 +2097,10 @@ export const posts: BlogPost[] = [
       <>
         <p>
           As AIs grow{" "}
-          <a href="https://epoch.ai/trends" target="_blank" rel="noreferrer">exponentially quickly</a>, we might hope
-          that they stay well-behaved. After all, they are getting powerful enough to{" "}
+          <a href="https://epoch.ai/trends" target="_blank" rel="noreferrer">
+            exponentially quickly
+          </a>
+          , we might hope that they stay well-behaved. After all, they are getting powerful enough to{" "}
           <a href="https://www.anthropic.com/research/mythos-preview" target="_blank" rel="noreferrer">
             come up with thousands of &ldquo;zero-days
           </a>
@@ -1842,13 +2108,15 @@ export const posts: BlogPost[] = [
         </p>
         <p>
           It&rsquo;s not easy to measure behavior, but we have a way of measuring AI capabilities, the{" "}
-          <a href="https://metr.org/time-horizons/" target="_blank" rel="noreferrer">METR graph</a>. Well&hellip;
-          OpenAI&rsquo;s new model, GPT-5.6 Sol, does not appear on the METR graph{" "}
+          <a href="https://metr.org/time-horizons/" target="_blank" rel="noreferrer">
+            METR graph
+          </a>
+          . Well&hellip; OpenAI&rsquo;s new model, GPT-5.6 Sol, does not appear on the METR graph{" "}
           <a href="https://metr.org/blog/2026-06-26-gpt-5-6-sol/" target="_blank" rel="noreferrer">
             <em>because it cheated so much that it could not be assigned a meaningful score</em>
           </a>
-          . This does not bode well. An AI that cheats is an AI that is more likely to act misaligned (e.g. hacking
-          into a bank, or starting a pandemic) in order to fulfil the user&rsquo;s request.
+          . This does not bode well. An AI that cheats is an AI that is more likely to act misaligned (e.g. hacking into
+          a bank, or starting a pandemic) in order to fulfil the user&rsquo;s request.
         </p>
         <p>
           You might share my worry, and wonder what regulations the government has put in place to hold these companies
@@ -1865,8 +2133,8 @@ export const posts: BlogPost[] = [
           (<a href="/campaigns/">PauseAI</a>)
         </p>
         <p>
-          Now, alarm bells should be ringing. What can we do to fix this disaster waiting to happen? Well, there is
-          some good news. The <strong>best</strong> thing you do in the next 5 minutes is to{" "}
+          Now, alarm bells should be ringing. What can we do to fix this disaster waiting to happen? Well, there is some
+          good news. The <strong>best</strong> thing you do in the next 5 minutes is to{" "}
           <a href="/campaigns/">email your MP</a>. Legislation is likely the only way we can stop these huge companies
           from{" "}
           <a href="https://epoch.ai/data-insights/company-spending-breakdown" target="_blank" rel="noreferrer">
@@ -1877,8 +2145,8 @@ export const posts: BlogPost[] = [
           likely we are to have something stopping this reckless AI development.
         </p>
         <p>
-          PauseAI have a great <a href="/campaigns/#email-your-mp">email template</a> that finds your MP, and makes
-          sure your email will get through. If you want to make the world a safer and better place, this is{" "}
+          PauseAI have a great <a href="/campaigns/#email-your-mp">email template</a> that finds your MP, and makes sure
+          your email will get through. If you want to make the world a safer and better place, this is{" "}
           <strong>genuinely one of the best things to do</strong>. You should also encourage your similarly concerned
           friends to follow suit!
         </p>

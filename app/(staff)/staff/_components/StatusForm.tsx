@@ -32,7 +32,11 @@ export default function StatusForm({ politicianId, campaign, current, action }: 
         {staffCopy.fields.note}
         <textarea name="note" rows={2} defaultValue={current?.note ?? ""} />
       </label>
-      {current && <p className={styles.muted}>{staffCopy.fields.updated(current.updatedBy, new Date(current.updatedAt).toLocaleString("en-GB"))}</p>}
+      {current && (
+        <p className={styles.muted}>
+          {staffCopy.fields.updated(current.updatedBy, new Date(current.updatedAt).toLocaleString("en-GB"))}
+        </p>
+      )}
       <SubmitButton variant="primary" size="small">
         {staffCopy.politician.save}
       </SubmitButton>

@@ -70,7 +70,11 @@ export function letterAddress(replyHash: string): string {
  */
 function replyTo(form: LetterForm, address: string): string {
   const inbox = process.env.REPLIES_INBOX;
-  return [`"${headerName(form.name)}" <${form.email}>`, inbox && `"PauseAI Policy Team" <${inbox}>`, `"PauseAI Letters" <${address}>`]
+  return [
+    `"${headerName(form.name)}" <${form.email}>`,
+    inbox && `"PauseAI Policy Team" <${inbox}>`,
+    `"PauseAI Letters" <${address}>`,
+  ]
     .filter(Boolean)
     .join(", ");
 }
@@ -81,7 +85,11 @@ function bcc(): string | undefined {
 }
 
 async function logEvent(letterId: number, status: string, details: object, db?: Queryable): Promise<void> {
-  await query("INSERT INTO letter_events (letter_id, status, details) VALUES ($1, $2, $3)", [letterId, status, JSON.stringify(details)], db);
+  await query(
+    "INSERT INTO letter_events (letter_id, status, details) VALUES ($1, $2, $3)",
+    [letterId, status, JSON.stringify(details)],
+    db,
+  );
 }
 
 function fail(status: number, message: string): SubmitResult {
@@ -110,7 +118,15 @@ export async function submitLetter(form: LetterForm): Promise<SubmitResult> {
   if (spam.drop) return { ok: true };
   if (spam.message) return fail(403, spam.message);
 
-  if (!form.name || !form.postcode || !form.address || !form.email || !form.subject || !form.letter || isBlank(form.letter)) {
+  if (
+    !form.name ||
+    !form.postcode ||
+    !form.address ||
+    !form.email ||
+    !form.subject ||
+    !form.letter ||
+    isBlank(form.letter)
+  ) {
     return fail(400, copy.errors.missingFields);
   }
   if (!looksLikeEmail(form.email)) return fail(400, copy.errors.invalidEmail);
@@ -145,7 +161,17 @@ export async function submitLetter(form: LetterForm): Promise<SubmitResult> {
         `INSERT INTO letters (campaign, politician_id, sender_name, sender_email, sender_address, sender_postcode,
            contact_consent, subject, reply_hash, status)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'sending') RETURNING id::int AS id`,
-        [campaign.slug, mp.id, form.name, form.email, form.address, form.postcode.toUpperCase(), form.consent, form.subject, replyHash],
+        [
+          campaign.slug,
+          mp.id,
+          form.name,
+          form.email,
+          form.address,
+          form.postcode.toUpperCase(),
+          form.consent,
+          form.subject,
+          replyHash,
+        ],
         db,
       );
       await logEvent(id, "sending", {}, db);
@@ -166,7 +192,10 @@ export async function submitLetter(form: LetterForm): Promise<SubmitResult> {
       Metadata: { letter: String(id), campaign: campaign.slug },
       Tag: campaign.slug,
     });
-    await query("UPDATE letters SET status = 'sent', postmark_message_id = $2, sent_at = now() WHERE id = $1", [id, messageId]);
+    await query("UPDATE letters SET status = 'sent', postmark_message_id = $2, sent_at = now() WHERE id = $1", [
+      id,
+      messageId,
+    ]);
     await logEvent(id, "sent", { messageId });
     return { ok: true };
   } catch (error) {

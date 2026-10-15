@@ -59,7 +59,12 @@ export function qrFilenameStem(input: string): string {
   } catch {
     // Keep the raw text and clean it below.
   }
-  const slug = text.toLowerCase().replace(/^www\./, "").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 40);
+  const slug = text
+    .toLowerCase()
+    .replace(/^www\./, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 40);
   return slug || "code";
 }
 
@@ -118,7 +123,10 @@ export function qrPlan(opts: {
   /** The volunteer's preferred size. Medium when left out. */
   sizePref?: QrSize;
 }): QrPlan {
-  const targets = opts.urls.map((u) => qrTarget(u, opts.track)).filter(Boolean).slice(0, MAX_QR_CODES);
+  const targets = opts.urls
+    .map((u) => qrTarget(u, opts.track))
+    .filter(Boolean)
+    .slice(0, MAX_QR_CODES);
   if (targets.length === 0) return { ok: false, size: 0, shown: 0, reason: "Add a web address to make a QR code." };
 
   const modules = targets.map((t) => qrMatrix(t).length);
@@ -136,18 +144,29 @@ export function qrPlan(opts: {
   for (let k = targets.length; k >= 1; k--) {
     const widest = Math.max(...modules.slice(0, k));
     const min = Math.ceil(Math.max((QR_MIN_MODULE_PX * widest) / (1 - 2 * QR_PANEL_PAD), byPhysical));
-    const cap = Math.min(short * (k === 1 ? QR_MAX_SHARE_SINGLE : QR_MAX_SHARE_MULTI) * shareScale, (contentWidth - (k - 1) * gap) / k);
+    const cap = Math.min(
+      short * (k === 1 ? QR_MAX_SHARE_SINGLE : QR_MAX_SHARE_MULTI) * shareScale,
+      (contentWidth - (k - 1) * gap) / k,
+    );
     // Only the scannable minimum can rule a QR out. The preferred size is just clamped to the cap.
     if (min <= cap) {
       return {
         ok: true,
         size: Math.round(Math.min(Math.max(preferred, min), cap)),
         shown: k,
-        reason: k < targets.length ? `Only ${k} of ${targets.length} QR codes fit at a scannable size on this format.` : undefined,
+        reason:
+          k < targets.length
+            ? `Only ${k} of ${targets.length} QR codes fit at a scannable size on this format.`
+            : undefined,
       };
     }
   }
-  return { ok: false, size: 0, shown: 0, reason: "Too small to scan at this size, so it is hidden. Try a bigger format." };
+  return {
+    ok: false,
+    size: 0,
+    shown: 0,
+    reason: "Too small to scan at this size, so it is hidden. Try a bigger format.",
+  };
 }
 
 /** Dark-module matrix. Uses the highest error correction so a logo can sit in the middle. */

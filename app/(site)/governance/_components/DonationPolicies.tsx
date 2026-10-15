@@ -11,7 +11,9 @@ export default function DonationPolicies() {
             We would prefer to have fully public accounts of all donations that we receive. Unfortunately, a large
             fraction of the funding available to us today is only available on the condition of public anonymity.
           </p>
-          <p>There are several good reasons why a donor to PauseAI UK may not wish to publicly declare their donation:</p>
+          <p>
+            There are several good reasons why a donor to PauseAI UK may not wish to publicly declare their donation:
+          </p>
           <ul className="gov-list">
             <li>They work for an AI company and they are concerned about retaliation from their employer.</li>
             <li>
@@ -37,9 +39,9 @@ export default function DonationPolicies() {
             <a href="https://en.wikipedia.org/wiki/Astroturfing" target="_blank" rel="noreferrer">
               astroturf campaign
             </a>
-            , so we implement two important policies that help to ensure that we are never acting on behalf of,
-            or influenced by, any interest other than the constituency that we claim to represent: our volunteers
-            and citizens concerned about AI safety.
+            , so we implement two important policies that help to ensure that we are never acting on behalf of, or
+            influenced by, any interest other than the constituency that we claim to represent: our volunteers and
+            citizens concerned about AI safety.
           </p>
 
           <p>The first policy is to ensure that we know the identity of any major donors.</p>
@@ -73,8 +75,8 @@ export default function DonationPolicies() {
                 <li>
                   Where does this money come from?
                   <span className="gov-note">
-                    Eg. &ldquo;savings from my career in software engineering&rdquo;, &ldquo;proceeds from selling
-                    my company in 2024&rdquo;, &ldquo;family wealth&rdquo;
+                    Eg. &ldquo;savings from my career in software engineering&rdquo;, &ldquo;proceeds from selling my
+                    company in 2024&rdquo;, &ldquo;family wealth&rdquo;
                   </span>
                 </li>
                 <li>Are you acting on behalf of, or funded by, any third party or foreign power?</li>
@@ -88,8 +90,7 @@ export default function DonationPolicies() {
               </ul>
               <p className="gov-tier-note">
                 If the person has a very specific financial interest in AI, the board will need to ensure that such
-                donations are unrestricted and any attempt to influence our strategy results in the gift being
-                returned.
+                donations are unrestricted and any attempt to influence our strategy results in the gift being returned.
               </p>
             </div>
           </section>
@@ -108,10 +109,12 @@ export default function DonationPolicies() {
           <section className="gov-policy">
             <h3>2. Approval by the board</h3>
             <ul className="gov-list">
-              <li>The board will approve donors (and major donor advisors) giving (or recommending, in the case of advisors) above &pound;10,000 cumulatively in any 12-month period.</li>
               <li>
-                The board will have access to all the KYD info above to decide whether to accept or reject the
-                donation.
+                The board will approve donors (and major donor advisors) giving (or recommending, in the case of
+                advisors) above &pound;10,000 cumulatively in any 12-month period.
+              </li>
+              <li>
+                The board will have access to all the KYD info above to decide whether to accept or reject the donation.
               </li>
             </ul>
           </section>
@@ -137,7 +140,6 @@ export default function DonationPolicies() {
             </a>{" "}
             by our Director.
           </p>
-
         </section>
       </div>
     </article>

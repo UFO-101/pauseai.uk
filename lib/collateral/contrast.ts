@@ -71,7 +71,13 @@ const WORST_SHARE = 0.1;
  * `low` is the contrast the worst 10% of pixels give; `spread` is the standard deviation of their luminance,
  * which is high for a busy background. Null when the box has no pixels on the backdrop.
  */
-export function sampleContrast(backdrop: Backdrop, rect: Rect, textRgb: Rgb, bg: Rgb, visible: number): { low: number; spread: number } | null {
+export function sampleContrast(
+  backdrop: Backdrop,
+  rect: Rect,
+  textRgb: Rgb,
+  bg: Rgb,
+  visible: number,
+): { low: number; spread: number } | null {
   const x0 = Math.max(0, Math.floor(rect.x));
   const y0 = Math.max(0, Math.floor(rect.y));
   const x1 = Math.min(backdrop.width, Math.ceil(rect.x + rect.w));
@@ -120,7 +126,12 @@ export interface ContrastFailure {
 }
 
 /** The line that falls furthest short of its pass mark at `visible`, or null when every line passes. */
-export function worstFailure(backdrop: Backdrop, samples: TextSample[], bg: Rgb, visible: number): ContrastFailure | null {
+export function worstFailure(
+  backdrop: Backdrop,
+  samples: TextSample[],
+  bg: Rgb,
+  visible: number,
+): ContrastFailure | null {
   let worst: ContrastFailure | null = null;
   for (const sample of samples) {
     const result = sampleContrast(backdrop, sample.rect, sample.rgb, bg, visible * (1 - (sample.halo ?? 0)));

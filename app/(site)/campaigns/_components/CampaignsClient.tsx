@@ -37,9 +37,17 @@ export default function CampaignsClient() {
     const lb = document.getElementById("qr-lightbox") as HTMLElement | null;
     if (trigger && lb) {
       const closeBtn = lb.querySelector(".qr-lightbox-close") as HTMLElement | null;
-      const open = () => { lb.classList.add("open"); lb.setAttribute("aria-hidden", "false"); };
-      const close = () => { lb.classList.remove("open"); lb.setAttribute("aria-hidden", "true"); };
-      const handleLbClick = (e: MouseEvent) => { if (e.target === lb) close(); };
+      const open = () => {
+        lb.classList.add("open");
+        lb.setAttribute("aria-hidden", "false");
+      };
+      const close = () => {
+        lb.classList.remove("open");
+        lb.setAttribute("aria-hidden", "true");
+      };
+      const handleLbClick = (e: MouseEvent) => {
+        if (e.target === lb) close();
+      };
       const handleKey = (e: KeyboardEvent) => {
         if (e.key === "Escape" && lb.classList.contains("open")) close();
       };

@@ -47,7 +47,11 @@ const eslintConfig = defineConfig([
   {
     files: ["lib/server/airtable.ts", "lib/server/airtable.test.ts"],
     rules: {
-      "no-restricted-syntax": ["error", { selector: LUMA_API_PATTERN, message: "Luma API calls belong in other lib/server/ files." }, DATABASE_URL_RULE],
+      "no-restricted-syntax": [
+        "error",
+        { selector: LUMA_API_PATTERN, message: "Luma API calls belong in other lib/server/ files." },
+        DATABASE_URL_RULE,
+      ],
     },
   },
   // The Luma clients, their tests, and the shared fixtures that stand in for
@@ -55,13 +59,24 @@ const eslintConfig = defineConfig([
   {
     files: ["lib/server/luma-*.ts", "lib/server/outside-fetch.test.ts", "tests/fixtures/**"],
     rules: {
-      "no-restricted-syntax": ["error", { selector: AIRTABLE_DOMAIN_PATTERN, message: "Airtable API calls must go through lib/server/airtable.ts." }, DATABASE_URL_RULE],
+      "no-restricted-syntax": [
+        "error",
+        { selector: AIRTABLE_DOMAIN_PATTERN, message: "Airtable API calls must go through lib/server/airtable.ts." },
+        DATABASE_URL_RULE,
+      ],
     },
   },
   // The database's one connection, the test helper that gives each test
   // file its own database, and the scripts that make the local ones.
   {
-    files: ["lib/server/db.ts", "lib/server/db.test.ts", "tests/database.ts", "playwright.config.ts", "scripts/db-reset.mjs", "scripts/serve-main.mjs"],
+    files: [
+      "lib/server/db.ts",
+      "lib/server/db.test.ts",
+      "tests/database.ts",
+      "playwright.config.ts",
+      "scripts/db-reset.mjs",
+      "scripts/serve-main.mjs",
+    ],
     rules: {
       "no-restricted-imports": "off",
       "no-restricted-syntax": [

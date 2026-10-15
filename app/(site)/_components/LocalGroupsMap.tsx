@@ -66,7 +66,7 @@ export default function LocalGroupsMap() {
           [6, 6],
           [MAP_W - 6, MAP_H - 6],
         ],
-        ukFeature
+        ukFeature,
       )
     : null;
   const path = projection && geoPath(projection);
@@ -136,7 +136,10 @@ export default function LocalGroupsMap() {
             onMouseEnter={() => setHovered(localGroup.name)}
             onMouseLeave={() => setHovered((prev) => (prev === localGroup.name ? null : prev))}
           >
-            <div className="image-frame" style={{ backgroundImage: `url("${localGroup.imageSrc}")`, ...localGroup.imageStyle }}></div>
+            <div
+              className="image-frame"
+              style={{ backgroundImage: `url("${localGroup.imageSrc}")`, ...localGroup.imageStyle }}
+            ></div>
             <div className="card-copy">
               <div className="card-header">
                 <h3>{localGroup.name}</h3>
@@ -158,41 +161,46 @@ export default function LocalGroupsMap() {
           The stylesheet hides it below the three-column breakpoint. */}
       <div className="local-groups-map-canvas">
         {isDesktop && path && (
-            <svg viewBox={`0 0 ${MAP_W} ${MAP_H}`} preserveAspectRatio="xMidYMid meet" role="img" aria-label="Map of the UK showing where PauseAI local groups are based">
-              {ukFeature!.features.map((f, i) => (
-                <path key={i} d={path(f) || undefined} className="uk-map-outline" />
-              ))}
-              {localGroups.map((localGroup) => {
-                // Mercator projects every point on Earth, so this is never null.
-                const [x, y] = projection!([localGroup.lng, localGroup.lat])!;
-                const isActive = hovered === localGroup.name;
-                return (
-                  // The card is the accessible control for each local group; the
-                  // pin repeats that link for mouse users without adding a
-                  // second tab stop or a duplicate screen-reader entry.
-                  <Link
-                    key={localGroup.name}
-                    href={localGroup.href}
-                    tabIndex={-1}
-                    aria-hidden="true"
-                    className={`uk-map-pin ${isActive ? "active" : ""}`}
-                    onMouseEnter={() => setHovered(localGroup.name)}
-                    onMouseLeave={() => setHovered((prev) => (prev === localGroup.name ? null : prev))}
-                  >
-                    <circle cx={x} cy={y} r={isActive ? 10 : 8} className="uk-map-pin-halo" />
-                    <circle
-                      ref={(el) => {
-                        pinRefs.current[localGroup.name] = el;
-                      }}
-                      cx={x}
-                      cy={y}
-                      r={4.5}
-                      className="uk-map-pin-dot"
-                    />
-                  </Link>
-                );
-              })}
-            </svg>
+          <svg
+            viewBox={`0 0 ${MAP_W} ${MAP_H}`}
+            preserveAspectRatio="xMidYMid meet"
+            role="img"
+            aria-label="Map of the UK showing where PauseAI local groups are based"
+          >
+            {ukFeature!.features.map((f, i) => (
+              <path key={i} d={path(f) || undefined} className="uk-map-outline" />
+            ))}
+            {localGroups.map((localGroup) => {
+              // Mercator projects every point on Earth, so this is never null.
+              const [x, y] = projection!([localGroup.lng, localGroup.lat])!;
+              const isActive = hovered === localGroup.name;
+              return (
+                // The card is the accessible control for each local group; the
+                // pin repeats that link for mouse users without adding a
+                // second tab stop or a duplicate screen-reader entry.
+                <Link
+                  key={localGroup.name}
+                  href={localGroup.href}
+                  tabIndex={-1}
+                  aria-hidden="true"
+                  className={`uk-map-pin ${isActive ? "active" : ""}`}
+                  onMouseEnter={() => setHovered(localGroup.name)}
+                  onMouseLeave={() => setHovered((prev) => (prev === localGroup.name ? null : prev))}
+                >
+                  <circle cx={x} cy={y} r={isActive ? 10 : 8} className="uk-map-pin-halo" />
+                  <circle
+                    ref={(el) => {
+                      pinRefs.current[localGroup.name] = el;
+                    }}
+                    cx={x}
+                    cy={y}
+                    r={4.5}
+                    className="uk-map-pin-dot"
+                  />
+                </Link>
+              );
+            })}
+          </svg>
         )}
       </div>
     </div>

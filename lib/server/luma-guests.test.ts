@@ -45,7 +45,11 @@ describe("getSourceCounts", () => {
       http.get(GUESTS, ({ request }) => {
         requests.push(request);
         return requests.length === 1
-          ? HttpResponse.json({ entries: [{ api_id: "g1", guest: { utm_source: "brixton" } }], has_more: true, next_cursor: "c2" })
+          ? HttpResponse.json({
+              entries: [{ api_id: "g1", guest: { utm_source: "brixton" } }],
+              has_more: true,
+              next_cursor: "c2",
+            })
           : requests.length === 2
             ? HttpResponse.json({ entries: [{ utm_source: "stratford" }], has_more: false })
             : HttpResponse.json({});

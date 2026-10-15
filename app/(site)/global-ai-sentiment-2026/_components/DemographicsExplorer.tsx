@@ -56,7 +56,12 @@ export default function DemographicsExplorer() {
       <div className="gas-bar-list">
         <BarAxisLabels />
         {rows.map((row) => (
-          <DivergingBar key={row.group} label={section === "region_average" ? regionLabel(row.group) : row.group} row={row} showNotSure={showNotSure} />
+          <DivergingBar
+            key={row.group}
+            label={section === "region_average" ? regionLabel(row.group) : row.group}
+            row={row}
+            showNotSure={showNotSure}
+          />
         ))}
       </div>
     </div>

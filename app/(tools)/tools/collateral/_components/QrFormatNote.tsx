@@ -11,7 +11,11 @@ interface Props {
 /** Whether the QR codes show on this format, and why not when they do not. */
 export default function QrFormatNote({ format, screenQr, onScreenQr, reason }: Props) {
   if (format.kind === "digital" && format.onPage) {
-    return <p className="collateral-hint">QR codes are left off the {format.label}, since people are already on the event page.</p>;
+    return (
+      <p className="collateral-hint">
+        QR codes are left off the {format.label}, since people are already on the event page.
+      </p>
+    );
   }
   if (format.kind === "digital" && format.screen) {
     return (
@@ -23,7 +27,9 @@ export default function QrFormatNote({ format, screenQr, onScreenQr, reason }: P
         {screenQr ? (
           reason && <p className="collateral-hint">{reason}</p>
         ) : (
-          <p className="collateral-hint">QR codes are left off social posts by default, since people are already on their phone.</p>
+          <p className="collateral-hint">
+            QR codes are left off social posts by default, since people are already on their phone.
+          </p>
         )}
       </>
     );

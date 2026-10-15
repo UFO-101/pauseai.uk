@@ -9,7 +9,12 @@ afterEach(() => {
   if (dir) rmSync(dir, { recursive: true, force: true });
 });
 
-const email = (n: number) => ({ From: "a@example.org", To: "b@example.org", Subject: `Letter ${n}`, TextBody: "Hello" });
+const email = (n: number) => ({
+  From: "a@example.org",
+  To: "b@example.org",
+  Subject: `Letter ${n}`,
+  TextBody: "Hello",
+});
 
 describe("the test outbox", () => {
   it("keeps each email, in order, as a mail file", () => {

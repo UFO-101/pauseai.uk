@@ -24,11 +24,7 @@ export default function HomeHero() {
           <div key={ri} className={`hero-marquee-row hero-marquee-row--${row.dir}`}>
             <div className="hero-marquee-track">
               {[0, 1].map((copyIdx) => (
-                <div
-                  key={copyIdx}
-                  className="hero-marquee-copy"
-                  {...(copyIdx > 0 ? { "aria-hidden": true } : {})}
-                >
+                <div key={copyIdx} className="hero-marquee-copy" {...(copyIdx > 0 ? { "aria-hidden": true } : {})}>
                   {[...row.photos, ...row.photos].map(([src, alt, width, height], i) => {
                     const isPrimary = copyIdx === 0 && i < row.photos.length;
                     const isLcp = ri === 0 && copyIdx === 0 && i === 0;
@@ -53,7 +49,11 @@ export default function HomeHero() {
 
         <div className="hero-marquee-overlay">
           <div className="hero-marquee-text">
-            <h1>Organising for<br/>our future</h1>
+            <h1>
+              Organising for
+              <br />
+              our future
+            </h1>
             <p className="hero-lede">
               We are the civic movement dedicated to averting the risks of superhuman artificial intelligence.
             </p>
@@ -62,8 +62,12 @@ export default function HomeHero() {
                 Join PauseAI UK
               </ButtonAnchor>
               <div className="hero-actions-secondary">
-                <ButtonAnchor variant="ghost" href="#events">Upcoming events ↓</ButtonAnchor>
-                <ButtonLink variant="ghost" href="/track-record/">Track record →</ButtonLink>
+                <ButtonAnchor variant="ghost" href="#events">
+                  Upcoming events ↓
+                </ButtonAnchor>
+                <ButtonLink variant="ghost" href="/track-record/">
+                  Track record →
+                </ButtonLink>
               </div>
             </div>
           </div>

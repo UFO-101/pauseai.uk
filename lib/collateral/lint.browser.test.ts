@@ -1,5 +1,13 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { LintCollector, MIN_PRINT_PT, isUnreadableLink, lintLinksInText, sameIssues, splitByScope, type LintIssue } from "./lint";
+import {
+  LintCollector,
+  MIN_PRINT_PT,
+  isUnreadableLink,
+  lintLinksInText,
+  sameIssues,
+  splitByScope,
+  type LintIssue,
+} from "./lint";
 import type { Rgb } from "./contrast";
 
 // The contrast checks read pixels from a real canvas, so these run in the browser.

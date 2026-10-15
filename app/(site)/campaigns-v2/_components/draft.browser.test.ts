@@ -5,7 +5,12 @@ const DRAFT: Draft = {
   campaign: "regulate-letter-pm",
   name: "Jane Smith",
   postcode: "SW1A 1AA",
-  mp: { name: "Polly Placeholder", salutation: "Ms Placeholder", constituency: "Cities of London and Westminster", email: "polly@example.org" },
+  mp: {
+    name: "Polly Placeholder",
+    salutation: "Ms Placeholder",
+    constituency: "Cities of London and Westminster",
+    email: "polly@example.org",
+  },
   statuses: {},
   email: "jane@example.com",
   address: "1 High St",
@@ -29,7 +34,14 @@ describe("draft", () => {
 
   it("is dropped by a new lookup, which is kept for its campaign's pages, and for the campaign pages to fill in", () => {
     saveDraft(DRAFT);
-    const lookup = { campaign: "support-sobel-bill", name: "Jane Smith", postcode: "SW1A 1AA", mp: DRAFT.mp, statuses: {}, movedFrom: "regulate-letter-pm" };
+    const lookup = {
+      campaign: "support-sobel-bill",
+      name: "Jane Smith",
+      postcode: "SW1A 1AA",
+      mp: DRAFT.mp,
+      statuses: {},
+      movedFrom: "regulate-letter-pm",
+    };
     expect(saveLookup(lookup)).toBe(true);
     expect(readDraft("regulate-letter-pm")).toBeNull();
     expect(readLookup("support-sobel-bill")).toEqual(lookup);
@@ -56,7 +68,9 @@ describe("draft", () => {
       throw new DOMException("blocked", "SecurityError");
     });
     expect(saveDraft(DRAFT)).toBe(false);
-    expect(saveLookup({ campaign: "regulate-letter-pm", name: "", postcode: "", mp: DRAFT.mp, statuses: {} })).toBe(false);
+    expect(saveLookup({ campaign: "regulate-letter-pm", name: "", postcode: "", mp: DRAFT.mp, statuses: {} })).toBe(
+      false,
+    );
     expect(() => markSent({ campaign: "regulate-letter-pm", mpName: "Polly Placeholder" })).not.toThrow();
   });
 });

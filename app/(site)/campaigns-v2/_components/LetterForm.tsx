@@ -29,7 +29,10 @@ export default function LetterForm({ campaign, mp, statuses, senderName, postcod
   const [email, setEmail] = useState(draft?.email ?? "");
   const [address, setAddress] = useState(draft?.address ?? "");
   const [subject, setSubject] = useState(draft?.subject ?? campaign.subject);
-  const [letter, setLetter] = useState(() => draft?.letter ?? draftLetter(campaign, { salutation: mp.salutation, constituency: mp.constituency, senderName }));
+  const [letter, setLetter] = useState(
+    () =>
+      draft?.letter ?? draftLetter(campaign, { salutation: mp.salutation, constituency: mp.constituency, senderName }),
+  );
   const [nickname, setNickname] = useState(draft?.nickname ?? "");
   const [error, setError] = useState("");
 
@@ -37,7 +40,18 @@ export default function LetterForm({ campaign, mp, statuses, senderName, postcod
     if (!email.trim()) return setError(copy.form.emailRequired);
     if (!looksLikeEmail(email.trim())) return setError(copy.errors.invalidEmail);
     if (!address.trim()) return setError(copy.form.addressRequired);
-    const saved = saveDraft({ campaign: campaign.slug, name: senderName, postcode, mp, statuses, email: email.trim(), address, subject, letter, nickname });
+    const saved = saveDraft({
+      campaign: campaign.slug,
+      name: senderName,
+      postcode,
+      mp,
+      statuses,
+      email: email.trim(),
+      address,
+      subject,
+      letter,
+      nickname,
+    });
     if (!saved) return setError(copy.form.storageFailed);
     setError("");
     router.push(`${campaignPath(campaign)}/preview`);
@@ -49,12 +63,24 @@ export default function LetterForm({ campaign, mp, statuses, senderName, postcod
       {/* Hidden from people; only a form-filling bot completes it. */}
       <label className={styles.honeypot} aria-hidden="true">
         Nickname
-        <input name="nickname" tabIndex={-1} autoComplete="off" value={nickname} onChange={(e) => setNickname(e.target.value)} />
+        <input
+          name="nickname"
+          tabIndex={-1}
+          autoComplete="off"
+          value={nickname}
+          onChange={(e) => setNickname(e.target.value)}
+        />
       </label>
 
       <label>
         {copy.form.emailLabel}
-        <input name="email" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+        <input
+          name="email"
+          type="email"
+          autoComplete="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
       </label>
       <div className={styles.field}>
         <label>

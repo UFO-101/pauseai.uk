@@ -32,8 +32,7 @@ async function openMobilePage(browser: Browser, path = "/donate") {
 
 const burger = (page: Page) => page.locator(".burger");
 const nav = (page: Page) => page.locator("header.site-header nav");
-const bodyHasLock = (page: Page) =>
-  page.evaluate(() => document.body.classList.contains("mobile-nav-open"));
+const bodyHasLock = (page: Page) => page.evaluate(() => document.body.classList.contains("mobile-nav-open"));
 
 test.describe("mobile nav", () => {
   test("starts closed", async ({ browser }) => {

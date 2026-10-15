@@ -19,13 +19,19 @@ function hash(token: string): string {
 export async function createSession(email: string): Promise<string> {
   const token = randomBytes(32).toString("base64url");
   await query("DELETE FROM staff_sessions WHERE expires_at < now()");
-  await query(`INSERT INTO staff_sessions (token_hash, email, expires_at) VALUES ($1, $2, now() + interval '${SESSION_HOURS} hours')`, [hash(token), email]);
+  await query(
+    `INSERT INTO staff_sessions (token_hash, email, expires_at) VALUES ($1, $2, now() + interval '${SESSION_HOURS} hours')`,
+    [hash(token), email],
+  );
   return token;
 }
 
 /** The staff member a session token belongs to, if it's current. */
 export async function sessionEmail(token: string): Promise<string | undefined> {
-  const [row] = await query<{ email: string }>("SELECT email FROM staff_sessions WHERE token_hash = $1 AND expires_at > now()", [hash(token)]);
+  const [row] = await query<{ email: string }>(
+    "SELECT email FROM staff_sessions WHERE token_hash = $1 AND expires_at > now()",
+    [hash(token)],
+  );
   return row?.email;
 }
 

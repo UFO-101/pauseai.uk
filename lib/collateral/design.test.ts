@@ -1,6 +1,14 @@
 import { describe, expect, it } from "vitest";
 import { clampHeadlineScale } from "./design";
-import { findLink, isLumaEventLink, isUnreadableLink, LintCollector, lintLinksInText, lintUnreadableUrl, splitByScope } from "./lint";
+import {
+  findLink,
+  isLumaEventLink,
+  isUnreadableLink,
+  LintCollector,
+  lintLinksInText,
+  lintUnreadableUrl,
+  splitByScope,
+} from "./lint";
 
 describe("clampHeadlineScale", () => {
   it("keeps the nudge on tidy steps within range", () => {
@@ -50,12 +58,14 @@ describe("findLink", () => {
     expect(findLink(text)).toBe(link);
   });
 
-  it.each(["Meet at 7.30pm, e.g. by the fountain", "St. Paul's Cathedral, London", "Version 3.5 of the plan", "Safety before superintelligence"])(
-    "finds no link in %j",
-    (text) => {
-      expect(findLink(text)).toBeNull();
-    },
-  );
+  it.each([
+    "Meet at 7.30pm, e.g. by the fountain",
+    "St. Paul's Cathedral, London",
+    "Version 3.5 of the plan",
+    "Safety before superintelligence",
+  ])("finds no link in %j", (text) => {
+    expect(findLink(text)).toBeNull();
+  });
 });
 
 describe("lintLinksInText", () => {
@@ -68,16 +78,30 @@ describe("lintLinksInText", () => {
 
   it("flags links in text fields, but not in the web address", () => {
     const lint = new LintCollector();
-    lintLinksInText(lint, fields, { headline: "Social", venue: "Online, via www.tiny.cc/mszoom", url: "lu.ma/abc", date: "2026-10-01" });
+    lintLinksInText(lint, fields, {
+      headline: "Social",
+      venue: "Online, via www.tiny.cc/mszoom",
+      url: "lu.ma/abc",
+      date: "2026-10-01",
+    });
     expect(lint.finish()).toEqual([
-      expect.objectContaining({ id: "link-in-venue", level: "warn", message: expect.stringContaining("Venue contains a link (www.tiny.cc/mszoom)") }),
+      expect.objectContaining({
+        id: "link-in-venue",
+        level: "warn",
+        message: expect.stringContaining("Venue contains a link (www.tiny.cc/mszoom)"),
+      }),
     ]);
   });
 });
 
 describe("splitByScope", () => {
   it("lists design problems once and keeps each format's own", () => {
-    const link = { id: "link-in-venue", level: "warn" as const, message: "Venue contains a link", scope: "design" as const };
+    const link = {
+      id: "link-in-venue",
+      level: "warn" as const,
+      message: "Venue contains a link",
+      scope: "design" as const,
+    };
     const overflow = { id: "text-overflow", level: "warn" as const, message: "Does not fit" };
     const { design, own } = splitByScope([[link, overflow], [link], []]);
     expect(design).toEqual([link]);
@@ -86,19 +110,29 @@ describe("splitByScope", () => {
 });
 
 describe("unreadable links", () => {
-  it.each(["lu.ma/eoohwufh", "https://lu.ma/5i8wt2xx", "lu.ma/pauseai-c9wb", "bit.ly/3xYz", "www.tiny.cc/mszoom", "zoom.us/j/123456789", "forms.gle/AbC123"])(
-    "flags %s",
-    (url) => {
-      expect(isUnreadableLink(url)).toBe(true);
-    },
-  );
+  it.each([
+    "lu.ma/eoohwufh",
+    "https://lu.ma/5i8wt2xx",
+    "lu.ma/pauseai-c9wb",
+    "bit.ly/3xYz",
+    "www.tiny.cc/mszoom",
+    "zoom.us/j/123456789",
+    "forms.gle/AbC123",
+  ])("flags %s", (url) => {
+    expect(isUnreadableLink(url)).toBe(true);
+  });
 
-  it.each(["pauseai.uk/events", "luma.com/pauseai.uk", "lu.ma/pauseai", "pauseai.uk/join", "pauseai.uk", "bit.ly", "lu.ma/some-event-name"])(
-    "does not flag %s",
-    (url) => {
-      expect(isUnreadableLink(url)).toBe(false);
-    },
-  );
+  it.each([
+    "pauseai.uk/events",
+    "luma.com/pauseai.uk",
+    "lu.ma/pauseai",
+    "pauseai.uk/join",
+    "pauseai.uk",
+    "bit.ly",
+    "lu.ma/some-event-name",
+  ])("does not flag %s", (url) => {
+    expect(isUnreadableLink(url)).toBe(false);
+  });
 
   it("tells a Luma event from our calendar, whether or not its name is readable", () => {
     expect(isLumaEventLink("lu.ma/eoohwufh")).toBe(true);
@@ -113,4 +147,3 @@ describe("unreadable links", () => {
     expect(lint.finish()).toEqual([expect.objectContaining({ id: "url-unreadable", scope: "design" })]);
   });
 });
-

@@ -5,7 +5,11 @@ import { LOGIN_PATH } from "@/lib/staff-session";
 import styles from "../_components/staff.module.css";
 
 // Open to anyone: it's where staff log in, so it doesn't call requireStaff().
-export default async function LoginPage({ searchParams }: { searchParams: Promise<{ sent?: string; failed?: string; elsewhere?: string }> }) {
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ sent?: string; failed?: string; elsewhere?: string }>;
+}) {
   const { sent, failed, elsewhere } = await searchParams;
   return (
     <main className={`container ${styles.page}`}>

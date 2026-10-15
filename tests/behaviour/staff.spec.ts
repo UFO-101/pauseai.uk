@@ -55,7 +55,9 @@ test("a login link works once, and only in the browser that asked for it", async
   await page.getByLabel(staffCopy.login.emailLabel).fill("once@pauseai.uk");
   await page.getByRole("button", { name: staffCopy.login.button }).click();
   await expect(page.getByRole("status")).toHaveText(staffCopy.login.sent);
-  const link = newestEmailTo("once@pauseai.uk")!.TextBody.match(/https?:\/\/\S+\/staff\/api\/callback\?token=[\w-]+/)![0];
+  const link = newestEmailTo("once@pauseai.uk")!.TextBody.match(
+    /https?:\/\/\S+\/staff\/api\/callback\?token=[\w-]+/,
+  )![0];
 
   // Opened by a mail scanner, or in another browser, the link logs nobody in
   // and says why, and isn't used up.

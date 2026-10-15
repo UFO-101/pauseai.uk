@@ -9,8 +9,7 @@ import { outsideFetch } from "./outside-fetch";
 // And where the postcode is, for suggesting events nearby.
 
 export type ConstituencyResult =
-  | { ok: true; constituency: string; place?: Place }
-  | { ok: false; reason: "not_found" | "no_constituency" | "failed" };
+  { ok: true; constituency: string; place?: Place } | { ok: false; reason: "not_found" | "no_constituency" | "failed" };
 
 export async function constituencyForPostcode(postcode: string): Promise<ConstituencyResult> {
   try {
@@ -24,7 +23,11 @@ export async function constituencyForPostcode(postcode: string): Promise<Constit
     const code = data.result.codes?.parliamentary_constituency;
     const { latitude, longitude } = data.result;
     const place = typeof latitude === "number" && typeof longitude === "number" ? { latitude, longitude } : undefined;
-    return { ok: true, constituency: (typeof code === "string" && constituencyName(code)) || name, ...(place && { place }) };
+    return {
+      ok: true,
+      constituency: (typeof code === "string" && constituencyName(code)) || name,
+      ...(place && { place }),
+    };
   } catch {
     return { ok: false, reason: "failed" };
   }

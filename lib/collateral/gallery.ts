@@ -12,7 +12,12 @@ export const CAPTION_MAX = 200;
  */
 export const SLIDE_PHOTO_VISIBLE = tintVisible("medium");
 
-export const DEFAULT_SLIDE_PHOTO_SETTINGS: PhotoSettings = { zoom: 1, focalX: 0.5, focalY: 0.5, visible: SLIDE_PHOTO_VISIBLE };
+export const DEFAULT_SLIDE_PHOTO_SETTINGS: PhotoSettings = {
+  zoom: 1,
+  focalX: 0.5,
+  focalY: 0.5,
+  visible: SLIDE_PHOTO_VISIBLE,
+};
 
 export interface SlidePhoto {
   drawable: Drawable;
@@ -43,5 +48,11 @@ export const EXAMPLE_SLIDE = {
 };
 
 export function newSlide(): Slide {
-  return { id: newSlideId(), photo: null, photoSettings: { ...DEFAULT_SLIDE_PHOTO_SETTINGS }, caption: "", themeId: DEFAULT_THEME_ID };
+  return {
+    id: newSlideId(),
+    photo: null,
+    photoSettings: { ...DEFAULT_SLIDE_PHOTO_SETTINGS },
+    caption: "",
+    themeId: DEFAULT_THEME_ID,
+  };
 }

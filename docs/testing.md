@@ -5,13 +5,13 @@ here is `plans/test-coverage.md`.
 
 ## The layers
 
-| Layer | Tool | Tests | Files |
-| --- | --- | --- | --- |
-| Logic | Vitest, `node` project | `lib/`, `app/api/`, `sitemap.ts`, `next.config.ts` | `*.test.ts` (or `.tsx`) next to the code |
-| Components | Vitest, `browser` project (real Chromium) | every component | `*.browser.test.tsx` next to the component |
-| Pages and flows | Playwright, `behaviour` project | every route loads cleanly; things that span pages | `tests/behaviour/` |
-| Appearance | Playwright, `public-vs-live-desktop` and `-mobile` projects | public pages: the local build against the live site, every route but `/staff`, desktop and mobile | `tests/public-vs-live/` |
-| Changes against main | Playwright, `fixtures-vs-main-desktop` and `-mobile` projects | every public page, each step of the Email your MP flow and each staff screen, this branch against main, both on fixture data; never fails on a difference | `tests/fixtures-vs-main/` |
+| Layer                | Tool                                                          | Tests                                                                                                                                                     | Files                                      |
+| -------------------- | ------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------ |
+| Logic                | Vitest, `node` project                                        | `lib/`, `app/api/`, `sitemap.ts`, `next.config.ts`                                                                                                        | `*.test.ts` (or `.tsx`) next to the code   |
+| Components           | Vitest, `browser` project (real Chromium)                     | every component                                                                                                                                           | `*.browser.test.tsx` next to the component |
+| Pages and flows      | Playwright, `behaviour` project                               | every route loads cleanly; things that span pages                                                                                                         | `tests/behaviour/`                         |
+| Appearance           | Playwright, `public-vs-live-desktop` and `-mobile` projects   | public pages: the local build against the live site, every route but `/staff`, desktop and mobile                                                         | `tests/public-vs-live/`                    |
+| Changes against main | Playwright, `fixtures-vs-main-desktop` and `-mobile` projects | every public page, each step of the Email your MP flow and each staff screen, this branch against main, both on fixture data; never fails on a difference | `tests/fixtures-vs-main/`                  |
 
 **Vitest Node** is for anything that doesn't need a DOM. **Vitest Browser
 Mode** renders a component on its own in real Chromium, so layout, canvas,
@@ -19,6 +19,7 @@ Mode** renders a component on its own in real Chromium, so layout, canvas,
 
 **Playwright** runs against a real production build (`npm run build && npm
 run start`), so it is slower. Use it only for what Vitest can't see:
+
 - `page.tsx` and `layout.tsx`: `tests/behaviour/pages.spec.ts` loads every
   route (from `tests/routes.ts`) and checks it returns 200, logs no console
   errors or hydration warnings, has one `<h1>` and has no broken same-site
@@ -158,7 +159,7 @@ not a mock.
   browser (`logInAsStaff` in `tests/steps.ts`). There's no login bypass.
 - **`next/headers`** can't run outside a request, so Node tests of code
   that calls `requireStaff()` use `vi.mock("next/headers", () =>
-  import("@/tests/next-headers"))` and put the session cookie in
+import("@/tests/next-headers"))` and put the session cookie in
   `requestCookies`.
 
 ## Rules for new code

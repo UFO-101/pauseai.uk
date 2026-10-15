@@ -20,7 +20,11 @@ describe("people pages", () => {
     expect((container.querySelector(".person-detail-avatar") as HTMLElement).style.backgroundPosition).toBe("");
     await rerender(<PersonHeader person={{ name: "Jane Doe", paragraphs: [] } as Person} />);
     expect(container.querySelector(".person-avatar-initials")?.textContent).toBe("JD");
-    await rerender(<PersonHeader person={{ slug: "anon", paragraphs: [], imageSrc: "/x.jpg", imageStyle: "background-position: top" }} />);
+    await rerender(
+      <PersonHeader
+        person={{ slug: "anon", paragraphs: [], imageSrc: "/x.jpg", imageStyle: "background-position: top" }}
+      />,
+    );
     await expect.element(page.getByRole("heading", { level: 1 })).toHaveTextContent("Anonymous submission");
     await expect.element(page.getByRole("link", { name: "← Back to all people" })).toHaveAttribute("href", "/people");
   });
@@ -28,7 +32,9 @@ describe("people pages", () => {
   it("shows the whole story, with a button to copy its link", async () => {
     const person = people[0];
     await render(<PersonStory person={person} slug={personSlug(person)} />);
-    await expect.element(page.getByRole("button", { name: "Copy link to this story" })).toHaveTextContent("Share this story");
+    await expect
+      .element(page.getByRole("button", { name: "Copy link to this story" }))
+      .toHaveTextContent("Share this story");
   });
 
   it("lists every story as a card", async () => {

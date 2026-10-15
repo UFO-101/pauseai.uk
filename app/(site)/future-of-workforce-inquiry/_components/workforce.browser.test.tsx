@@ -21,7 +21,8 @@ describe("the submission", () => {
     await expect.element(page.getByRole("heading", { name: "About this inquiry" })).toBeVisible();
     await expect.element(page.getByRole("heading", { name: "Notes" })).toBeVisible();
     // Every footnote marker has a note to point at.
-    for (const sup of container.querySelectorAll("sup")) expect(container.querySelector(`#fn${sup.textContent!.trim()}`), sup.textContent!).not.toBeNull();
+    for (const sup of container.querySelectorAll("sup"))
+      expect(container.querySelector(`#fn${sup.textContent!.trim()}`), sup.textContent!).not.toBeNull();
   });
 });
 

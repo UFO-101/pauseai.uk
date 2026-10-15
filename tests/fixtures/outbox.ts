@@ -46,7 +46,9 @@ export function saveToOutbox(dir: string, email: PostmarkEmail): string {
 export function readOutbox(dir: string): OutboxEmail[] {
   let files: string[];
   try {
-    files = readdirSync(dir).filter((file) => file.endsWith(".eml")).sort();
+    files = readdirSync(dir)
+      .filter((file) => file.endsWith(".eml"))
+      .sort();
   } catch {
     return [];
   }
@@ -74,7 +76,10 @@ export function toEml(email: PostmarkEmail): string {
   ].filter((h): h is [string, string] => h[1] !== undefined && h[1] !== "");
 
   const text = (type: string, body: string) =>
-    part([`Content-Type: text/${type}; charset=utf-8`, "Content-Transfer-Encoding: 8bit"], body.replace(/\r?\n/g, CRLF));
+    part(
+      [`Content-Type: text/${type}; charset=utf-8`, "Content-Transfer-Encoding: 8bit"],
+      body.replace(/\r?\n/g, CRLF),
+    );
   const bodies = [text("plain", email.TextBody ?? ""), ...(email.HtmlBody ? [text("html", email.HtmlBody)] : [])];
   const attachments = (email.Attachments ?? []).map((a) =>
     part(
@@ -96,14 +101,20 @@ function part(headers: string[], body: string): string {
 
 function multipart(subtype: string, parts: string[]): string {
   const boundary = `=_${randomUUID()}`;
-  return part([`Content-Type: multipart/${subtype}; boundary="${boundary}"`], parts.map((p) => `--${boundary}${CRLF}${p}${CRLF}`).join("") + `--${boundary}--`);
+  return part(
+    [`Content-Type: multipart/${subtype}; boundary="${boundary}"`],
+    parts.map((p) => `--${boundary}${CRLF}${p}${CRLF}`).join("") + `--${boundary}--`,
+  );
 }
 
 /** Reads back a message written by toEml. */
 export function fromEml(eml: string): OutboxEmail {
   const all = leaves(eml);
   const message = all[0];
-  const body = (type: string) => all.find((p) => p.headers.get("content-type")?.startsWith(`text/${type}`) && !p.headers.has("content-disposition"))?.body.replace(/\r\n/g, "\n");
+  const body = (type: string) =>
+    all
+      .find((p) => p.headers.get("content-type")?.startsWith(`text/${type}`) && !p.headers.has("content-disposition"))
+      ?.body.replace(/\r\n/g, "\n");
   const header = (name: string) => message.headers.get(name.toLowerCase());
   return {
     From: header("From") ?? "",
@@ -130,13 +141,19 @@ type Part = { headers: Map<string, string>; body: string };
 function leaves(raw: string): Part[] {
   const split = raw.indexOf(CRLF + CRLF);
   const headers = new Map<string, string>();
-  for (const line of raw.slice(0, split).replace(/\r\n[ \t]/g, " ").split(CRLF)) {
+  for (const line of raw
+    .slice(0, split)
+    .replace(/\r\n[ \t]/g, " ")
+    .split(CRLF)) {
     const colon = line.indexOf(":");
     headers.set(line.slice(0, colon).toLowerCase(), line.slice(colon + 1).trim());
   }
   const part = { headers, body: raw.slice(split + 4) };
   const boundary = headers.get("content-type")?.match(/boundary="([^"]+)"/)?.[1];
   if (!boundary) return [part];
-  const inner = part.body.split(`--${boundary}`).slice(1, -1).map((p) => p.slice(2, -2));
+  const inner = part.body
+    .split(`--${boundary}`)
+    .slice(1, -1)
+    .map((p) => p.slice(2, -2));
   return [part, ...inner.flatMap(leaves)];
 }

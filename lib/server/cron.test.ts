@@ -3,7 +3,8 @@ import { isCronRequest } from "./cron";
 
 afterEach(() => vi.unstubAllEnvs());
 
-const request = (authorization?: string) => new Request("https://pauseai.uk/api/cron/x", { headers: authorization ? { authorization } : {} });
+const request = (authorization?: string) =>
+  new Request("https://pauseai.uk/api/cron/x", { headers: authorization ? { authorization } : {} });
 
 describe("isCronRequest", () => {
   it("accepts only the right bearer token", () => {

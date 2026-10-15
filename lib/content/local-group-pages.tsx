@@ -45,7 +45,10 @@ export const localGroupPages: Record<LocalGroupName, LocalGroupPageContent> = {
         calloutStyle: { marginTop: 18 },
         details: (
           <p className="section-lede">
-            WhatsApp: <a href={site.whatsappUrl} target="_blank" rel="noreferrer">PauseAI UK WhatsApp</a>
+            WhatsApp:{" "}
+            <a href={site.whatsappUrl} target="_blank" rel="noreferrer">
+              PauseAI UK WhatsApp
+            </a>
           </p>
         ),
         actions: [{ ...WHATSAPP, variant: "primary" }],
@@ -59,12 +62,31 @@ export const localGroupPages: Record<LocalGroupName, LocalGroupPageContent> = {
       lede: "Building a local network in the North West to campaign for AI safety, host discussions, and support national actions.",
       actions: [
         { ...WHATSAPP, variant: "primary" },
-        { label: "Follow us on Instagram", href: "https://www.instagram.com/pauseai.manchester", variant: "ghost", newTab: true },
-        { label: "Follow us on Facebook", href: "https://www.facebook.com/profile.php?id=61577650457496", variant: "ghost", newTab: true },
-        { label: "Book a 1-on-1 chat", href: "https://calendly.com/adr-skapars/pauseai-manchester-1-on-1", variant: "ghost", newTab: true },
+        {
+          label: "Follow us on Instagram",
+          href: "https://www.instagram.com/pauseai.manchester",
+          variant: "ghost",
+          newTab: true,
+        },
+        {
+          label: "Follow us on Facebook",
+          href: "https://www.facebook.com/profile.php?id=61577650457496",
+          variant: "ghost",
+          newTab: true,
+        },
+        {
+          label: "Book a 1-on-1 chat",
+          href: "https://calendly.com/adr-skapars/pauseai-manchester-1-on-1",
+          variant: "ghost",
+          newTab: true,
+        },
       ],
       photo: "/images/local-groups/manchester/manchester_public.jpg",
-      photoStyle: { backgroundSize: "cover, 110% auto", backgroundPosition: "center, center 22%", backgroundRepeat: "no-repeat" },
+      photoStyle: {
+        backgroundSize: "cover, 110% auto",
+        backgroundPosition: "center, center 22%",
+        backgroundRepeat: "no-repeat",
+      },
       badge: "Make your voice heard",
     },
     sections: [
@@ -73,9 +95,18 @@ export const localGroupPages: Record<LocalGroupName, LocalGroupPageContent> = {
         heading: "What we're doing in Manchester",
         lede: "Public outreach, community discussion, and direct pressure on decision-makers.",
         items: [
-          { title: "Letters to MPs", text: "Group emailing and letter-writing to put AI safety on our representatives' desks." },
-          { title: "Public outreach", text: "Flyering and putting up posters in town to engage with the public on AI risk." },
-          { title: "Discussion groups & socials", text: "Bringing people together to talk through the case for a pause and the future we want." },
+          {
+            title: "Letters to MPs",
+            text: "Group emailing and letter-writing to put AI safety on our representatives' desks.",
+          },
+          {
+            title: "Public outreach",
+            text: "Flyering and putting up posters in town to engage with the public on AI risk.",
+          },
+          {
+            title: "Discussion groups & socials",
+            text: "Bringing people together to talk through the case for a pause and the future we want.",
+          },
         ],
       },
       {
@@ -111,11 +142,19 @@ export const localGroupPages: Record<LocalGroupName, LocalGroupPageContent> = {
         calloutStyle: { marginTop: 18 },
         details: (
           <p className="section-lede">
-            WhatsApp: <a href={site.whatsappUrl} target="_blank" rel="noreferrer">PauseAI UK WhatsApp</a>
+            WhatsApp:{" "}
+            <a href={site.whatsappUrl} target="_blank" rel="noreferrer">
+              PauseAI UK WhatsApp
+            </a>
           </p>
         ),
         actions: [
-          { label: "Book a 1-on-1 chat", href: "https://calendly.com/adr-skapars/pauseai-manchester-1-on-1", variant: "primary", newTab: true },
+          {
+            label: "Book a 1-on-1 chat",
+            href: "https://calendly.com/adr-skapars/pauseai-manchester-1-on-1",
+            variant: "primary",
+            newTab: true,
+          },
           { label: "Email us", href: "mailto:Adr.Skapars@gmail.com", variant: "ghost" },
         ],
       },
@@ -131,7 +170,11 @@ export const localGroupPages: Record<LocalGroupName, LocalGroupPageContent> = {
         { label: "All our links", href: WEST_OF_ENGLAND_LINKTREE, variant: "ghost", newTab: true },
       ],
       photo: "/images/local-groups/west-of-england/bristol-launch.jpg",
-      photoStyle: { backgroundSize: "cover, cover", backgroundPosition: "center, center", backgroundRepeat: "no-repeat" },
+      photoStyle: {
+        backgroundSize: "cover, cover",
+        backgroundPosition: "center, center",
+        backgroundRepeat: "no-repeat",
+      },
       badge: "Just getting started",
     },
     sections: [
@@ -140,9 +183,15 @@ export const localGroupPages: Record<LocalGroupName, LocalGroupPageContent> = {
         heading: "What we're building in the West of England",
         lede: "A brand new group — get in early and help shape how we campaign locally.",
         items: [
-          { title: "Discussion groups & socials", text: "Bringing people together to talk through the case for a pause and the future we want." },
+          {
+            title: "Discussion groups & socials",
+            text: "Bringing people together to talk through the case for a pause and the future we want.",
+          },
           { title: "Public outreach", text: "Flyering, stalls, and posters to engage the public on AI risk." },
-          { title: "Letters to MPs", text: "Group emailing and letter-writing to put AI safety on our representatives' desks." },
+          {
+            title: "Letters to MPs",
+            text: "Group emailing and letter-writing to put AI safety on our representatives' desks.",
+          },
         ],
       },
       { kind: "events" },
@@ -154,10 +203,16 @@ export const localGroupPages: Record<LocalGroupName, LocalGroupPageContent> = {
         details: (
           <>
             <p className="section-lede">
-              WhatsApp: <a href={site.whatsappUrl} target="_blank" rel="noreferrer">PauseAI UK WhatsApp</a>
+              WhatsApp:{" "}
+              <a href={site.whatsappUrl} target="_blank" rel="noreferrer">
+                PauseAI UK WhatsApp
+              </a>
             </p>
             <p className="section-lede">
-              All our links: <a href={WEST_OF_ENGLAND_LINKTREE} target="_blank" rel="noreferrer">linktr.ee/PauseAI_West_of_England</a>
+              All our links:{" "}
+              <a href={WEST_OF_ENGLAND_LINKTREE} target="_blank" rel="noreferrer">
+                linktr.ee/PauseAI_West_of_England
+              </a>
             </p>
           </>
         ),
@@ -270,7 +325,10 @@ export const localGroupPages: Record<LocalGroupName, LocalGroupPageContent> = {
               Email: <a href="mailto:oxford@pauseai.info">oxford@pauseai.info</a>
             </p>
             <p className="section-lede">
-              National chat: <a href={site.whatsappUrl} target="_blank" rel="noreferrer">WhatsApp community</a>
+              National chat:{" "}
+              <a href={site.whatsappUrl} target="_blank" rel="noreferrer">
+                WhatsApp community
+              </a>
             </p>
           </>
         ),
@@ -322,7 +380,8 @@ export const localGroupPages: Record<LocalGroupName, LocalGroupPageContent> = {
         details: (
           <>
             <p className="section-lede" style={{ maxWidth: 640 }}>
-              New to the movement? Start by joining the WhatsApp community, then drop us an email if you&apos;d like to host or speak at an event.
+              New to the movement? Start by joining the WhatsApp community, then drop us an email if you&apos;d like to
+              host or speak at an event.
             </p>
             <p>
               <strong>Contact:</strong> <a href={`mailto:${site.contactEmail}`}>{site.contactEmail}</a>

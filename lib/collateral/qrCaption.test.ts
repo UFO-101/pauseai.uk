@@ -18,7 +18,11 @@ describe("displayLink", () => {
 
 describe("captionLayout", () => {
   it("leaves the image square when there is no caption", () => {
-    expect(captionLayout(1000, { label: " ", link: "" }, measure)).toEqual({ height: 1000, lines: [], overflow: false });
+    expect(captionLayout(1000, { label: " ", link: "" }, measure)).toEqual({
+      height: 1000,
+      lines: [],
+      overflow: false,
+    });
   });
 
   it("puts the label above the link, both under the code panel", () => {
@@ -71,8 +75,8 @@ describe("qrSvg with a caption", () => {
 
   it("is unchanged without one", () => {
     const shape = qrShape("https://pauseai.uk", 1000, true);
-    expect(qrSvg(shape, { background: "#FFFFFF", caption: captionLayout(1000, { label: "", link: "" }, measure) })).toBe(
-      qrSvg(shape, { background: "#FFFFFF" }),
-    );
+    expect(
+      qrSvg(shape, { background: "#FFFFFF", caption: captionLayout(1000, { label: "", link: "" }, measure) }),
+    ).toBe(qrSvg(shape, { background: "#FFFFFF" }));
   });
 });

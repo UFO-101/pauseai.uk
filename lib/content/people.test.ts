@@ -11,7 +11,8 @@ import {
   type Person,
 } from "./people";
 
-const named = (name: string, paragraphs = ["Hello."], extra: Partial<Person> = {}) => ({ name, paragraphs, ...extra }) as Person;
+const named = (name: string, paragraphs = ["Hello."], extra: Partial<Person> = {}) =>
+  ({ name, paragraphs, ...extra }) as Person;
 
 describe("personSlug", () => {
   it("derives a URL-safe slug from the name", () => {
