@@ -25,6 +25,13 @@ cd pauseai.uk
 npm install
 ```
 
+Optionally, `npm run hooks:install` sets up a Git hook (with
+[prek](https://prek.j178.dev/)) that runs Prettier, ESLint and Stylelint
+on the files you commit, in a couple of seconds, and stops the commit if
+they fail. Prettier formats the files itself, so after it stops a commit,
+`git add` them and commit again. The hooks are in `.pre-commit-config.yaml`.
+CI runs all of them and more either way.
+
 ## 3. Postgres
 
 Email your MP, the staff interface and the signatories list on `/campaigns`

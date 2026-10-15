@@ -10,6 +10,7 @@
     "lint:unused": "knip",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "hooks:install": "prek install",
     "test": "vitest run --coverage",
     "test:node": "vitest run --project node",
     "test:browser": "vitest run --project browser",
@@ -44,6 +45,7 @@
     "topojson-client": "^3.1.0"
   },
   "devDependencies": {
+    "@j178/prek": "0.5.4",
     "@playwright/test": "^1.64.1",
     "@tensorflow-models/blazeface": "^0.1.0",
     "@tensorflow/tfjs-backend-cpu": "^4.22.0",
