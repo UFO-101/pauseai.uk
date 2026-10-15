@@ -64,13 +64,13 @@ Route groups like `(site)` don't appear in URLs. Folders starting with `_`
   group's layout does.
 - **Outside services** (Luma, Airtable) are only called from `lib/server/`,
   through `outsideFetch` (`lib/server/outside-fetch.ts`), so tests can swap in
-  fixtures. ESLint rules (run by `npm run check:airtable-filter`) fail on
+  fixtures. ESLint rules (`npm run lint`) fail on
   their API hosts anywhere else, and lock Airtable to
   `lib/server/airtable.ts`. Files there import `server-only`, so they can't
   end up in a browser bundle.
 - **The database** is only reached through `lib/server/db.ts`, which is the
   only file that may import `pg` or read `NETLIFY_DB_URL` (an ESLint rule,
-  run by `npm run check:airtable-filter`). Queries are plain SQL; no ORM.
+  in `npm run lint`). Queries are plain SQL; no ORM.
   Schema changes are new files in `netlify/database/migrations/`, which
   Netlify applies before each production publish and to each preview's copy
   of the database. They must be backward compatible (expand, then contract)
@@ -80,7 +80,7 @@ Route groups like `(site)` don't appear in URLs. Folders starting with `_`
   test fails while it's out of date.
 - **Staff pages** each call `requireStaff()` (`lib/server/staff-auth.ts`)
   first, as does every staff route handler and Server Action
-  (`npm run check:staff-auth`). `proxy.ts` only checks the cookie exists.
+  (`staff-auth.test.ts`). `proxy.ts` only checks the cookie exists.
 - **Scheduled jobs** are Netlify scheduled functions, each in its own folder
   in `netlify/functions/`, that POST to a route under `app/api/cron/` with
   `CRON_SECRET`. The work itself stays in the Next app.

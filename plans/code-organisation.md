@@ -138,7 +138,7 @@ One PR each, in this order:
 5. **Split `lib/`.**
    - Move the outside-service code to `lib/server/` with `server-only`.
    - Move static content to `lib/content/`.
-   - Update `scripts/check-airtable-filter.mjs`.
+   - Update the ESLint rules in `eslint.config.mjs`.
 6. **Remove the copy-paste.**
    - Local groups become data in `lib/content/local-groups.ts` plus one
      `LocalGroupPage`. Each route file becomes a few lines, and URLs stay

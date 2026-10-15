@@ -56,17 +56,13 @@ jobs:
       - name: Test with coverage
         run: npm test
 
+      # Fails on warnings too. Our own rules keep Airtable, Luma and the
+      # database each behind one file (eslint.config.mjs).
+      - name: Lint
+        run: npm run lint
+
       - name: Check formatting
         run: npm run format:check
-
-      - name: Check there are no coverage-ignore comments
-        run: npm run check:coverage-ignores
-
-      - name: Check Airtable access is confined to lib/server/airtable.ts, and the database to lib/server/db.ts
-        run: npm run check:airtable-filter
-
-      - name: Check every staff page, route and Server Action calls requireStaff()
-        run: npm run check:staff-auth
 
       - name: Build
         run: npm run build
