@@ -116,10 +116,10 @@ export const copy = {
     yourMp: "Your MP",
     mpOf: (constituency: string) => `MP for ${constituency}`,
     // Outside production only, under the form: "ZZ9 9ZZ (Testy McTestface MP), ...".
-    testPostcodes: (mps: string) => `⁂ Codices postales probationis: ${mps}`,
+    testPostcodes: (mps: string) => `On this test site, you can only use these test postcodes: ${mps}`,
     noEmail: "No email found for your MP.",
     // Instead of the form, when the MP has done every campaign.
-    allDone: "⁂ Senator tuus omnes causas iam sustinet.",
+    allDone: "Your MP has already supported all the campaigns!",
   },
   form: {
     emailLabel: "Your email",
@@ -135,7 +135,7 @@ export const copy = {
     emailRequired: "Please fill in your email address.",
     addressRequired: "Please fill in your postal address.",
     // When the browser won't keep the draft, so there's no preview to go to.
-    storageFailed: "⁂ Navigatrum tuum epistulam servare non potest.",
+    storageFailed: "Sorry! Something went wrong with your browser, the message wasn't saved.",
   },
   // The page for writing the letter, after finding the MP.
   write: {
@@ -154,8 +154,8 @@ export const copy = {
     sending: "Sending",
     networkError: "Network error - please try again",
     // Opened with no letter in this browser: straight from a link, say.
-    none: "⁂ Nulla epistula hic est.",
-    backToForm: "⁂ Ad formam redi",
+    none: "You haven't written a letter yet.",
+    backToForm: "Go back to campaign",
   },
   // The page after sending, in place of the form.
   sent: {
@@ -168,9 +168,9 @@ export const copy = {
   },
   // The note on a copy of an MP's reply, sent to the shared inbox and the sender.
   forwardedReply: {
-    subject: (subject: string) => `⁂ Responsum: ${subject}`,
+    subject: (subject: string) => `Response: ${subject}`,
     note: (mpName: string, senderName: string) =>
-      `⁂ ${mpName} ad epistulam quam ${senderName} misit respondit. Ecce responsum.`,
+      `${mpName} replied to the letter that ${senderName} sent. Here is the response:`,
   },
   // Errors the server sends back to the form.
   errors: {

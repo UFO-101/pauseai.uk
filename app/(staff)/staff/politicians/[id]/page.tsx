@@ -32,7 +32,7 @@ export default async function PoliticianPage({ params }: { params: Promise<{ id:
       {editable ? (
         <PoliticianForm action={editSigner} politician={politician} />
       ) : (
-        <p>{staffCopy.politician.fromParliament}</p>
+        <p>{staffCopy.politician.fromAirtable}</p>
       )}
     </main>
   );

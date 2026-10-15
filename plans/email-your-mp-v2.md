@@ -130,29 +130,8 @@ None for now.
 
 ### Tasks for Francis
 
-Things the code can't do. Claude writes the code.
-
-**Words**:
 - Approve everything marked with the asterism in the code. Then turn `placeholder-copy.test.ts` back on: remove its `describe.skip`.
-
-**Accounts and settings:**
-- **Turnstile:** a site key that works on pauseai.uk, set in production before the swap. The pauseai.info one may be limited to that domain.
-
-**Checks:**
-<<<<<<< Updated upstream
-- Reply to a test letter from Outlook, and check the reply reaches both Jane and us.
-- After the first deploy with the database, run the MP sync, then the signatory import, both from `/staff/import`.
-- After the import, the policy team checks the signatories list, and marks MPs who support the bill.
-- The policy team fixes in Airtable what `/staff/mp-check` lists. On 14 Oct 2026: Louise Jones's name (Parliament: Louise Sandher-Jones), and the emails for Ian Murray (Airtable has his ministerial address), Steve Barclay, Louise Jones, Emma Lewell, Bayo Alaba and Angela Eagle.
-||||||| Stash base
-- Reply to a test letter from Outlook, and check the reply reaches both Jane and us.
-- After the first deploy with the database, run the MP sync from `/staff/mp-sync`, then the signatory import from `/staff/import`.
-- After the import, the policy team checks the signatories list, and marks MPs who support the bill.
-- The policy team fixes in Airtable what `/staff/mp-check` lists. On 14 Oct 2026: Louise Jones's name (Parliament: Louise Sandher-Jones), and the emails for Ian Murray (Airtable has his ministerial address), Steve Barclay, Louise Jones, Emma Lewell, Bayo Alaba and Angela Eagle.
-=======
->>>>>>> Stashed changes
 - Before stage 3 goes live, check Netlify's database backups and try a restore.
 
 **Switching over:**
-- After stage 4, turn off the Airtable 8am automation.
 - At the swap, add the redirects in pauseai-website and delete the old tool.
