@@ -102,7 +102,7 @@ The environment variables are listed, with what each is for, in [.env.example](.
 1. The form posts to `/api/email-your-mp/letters`. The letter is saved and
    sent straight away through Postmark, as HTML and as plain text, from `"Jane Smith via PauseAI"
    <reply+<hash>@letters.pauseai.uk>`, with Reply-To the sender, `REPLIES_INBOX` (named "PauseAI Policy Team") and that address (named "PauseAI Letters"),
-   and the campaign's PDFs attached. If Postmark refuses it, nothing is
+   `REPLIES_INBOX` in Bcc, and the campaign's PDFs attached. If Postmark refuses it, nothing is
    kept, so the sender can try again. The form pushes `mp_email_sent` to
    `dataLayer` once it's sent.
 2. Each sender email can send one letter per campaign. Letters to the test
@@ -127,8 +127,9 @@ Postmark's webhooks, each with the basic auth credentials in the URL, e.g.
 ### Records
 
 Every letter is kept in the `letters` table: sender, email, address,
-contact consent, campaign, MP, the letter as sent, and each change of
-status in `letter_events`. Sent letters are kept indefinitely for now. Staff
+contact consent, campaign, MP, subject, and each change of status in
+`letter_events`. The letter's text isn't kept: the only copy is the Bcc
+in `REPLIES_INBOX`. Sent letters are kept indefinitely for now. Staff
 see them, with contact consent, at `/staff/letters`.
 
 ## Staff interface

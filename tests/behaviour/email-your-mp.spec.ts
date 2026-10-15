@@ -68,6 +68,7 @@ test("the ZZ99ZZ flow: postcode, form, preview, sent, and a reply forwarded", as
   const letter = newestEmailTo("test-mp@example.org")!;
   const address = letter.From.match(/<(reply\+(\w+)@letters\.pauseai\.uk)>/)!;
   expect(letter.From).toBe(`"Jane Smith via PauseAI" <${address[1]}>`);
+  expect(letter.Bcc).toBe("replies@example.org");
   expect(letter.ReplyTo).toBe(`"Jane Smith" <${sender}>, "PauseAI Policy Team" <replies@example.org>, "PauseAI Letters" <${address[1]}>`);
   expect(letter.TextBody).toMatch(/Jane Smith\n1 High Street\nTestville\nZZ9 9ZZ$/);
   expect(letter.Attachments!.map((a) => a.Name)).toEqual(campaigns[0].attachments.map((a) => a.file));

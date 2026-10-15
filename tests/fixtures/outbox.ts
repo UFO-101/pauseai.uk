@@ -13,6 +13,7 @@ export type OutboxEmail = {
   From: string;
   To: string;
   Cc?: string;
+  Bcc?: string;
   ReplyTo?: string;
   Subject: string;
   TextBody: string;
@@ -21,7 +22,6 @@ export type OutboxEmail = {
 };
 
 type PostmarkEmail = Partial<Omit<OutboxEmail, "Attachments">> & {
-  Bcc?: string;
   Tag?: string;
   MessageStream?: string;
   Metadata?: Record<string, string>;
@@ -109,6 +109,7 @@ export function fromEml(eml: string): OutboxEmail {
     From: header("From") ?? "",
     To: header("To") ?? "",
     Cc: header("Cc"),
+    Bcc: header("Bcc"),
     ReplyTo: header("Reply-To"),
     Subject: header("Subject") ?? "",
     TextBody: body("plain") ?? "",

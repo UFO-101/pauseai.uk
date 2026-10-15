@@ -34,6 +34,7 @@ describe("the test outbox", () => {
       From: "",
       To: "",
       Cc: undefined,
+      Bcc: undefined,
       ReplyTo: undefined,
       Subject: "",
       TextBody: "",
@@ -51,6 +52,7 @@ describe("the test outbox", () => {
     const sent = {
       From: '"Jane Smith via PauseAI" <reply+abc@letters.pauseai.uk>',
       To: "test-mp@example.org",
+      Bcc: "replies@pauseai.uk",
       ReplyTo: "jane@example.com, reply+abc@letters.pauseai.uk",
       Subject: "Pause AI — please sign",
       TextBody: "Dear Testy,\n\nPlease sign.\n\nJane Smith\nZZ9 9ZZ",
@@ -66,6 +68,7 @@ describe("the test outbox", () => {
       From: sent.From,
       To: sent.To,
       Cc: undefined,
+      Bcc: sent.Bcc,
       ReplyTo: sent.ReplyTo,
       Subject: sent.Subject,
       TextBody: sent.TextBody,
