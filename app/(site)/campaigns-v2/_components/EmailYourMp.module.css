@@ -326,6 +326,11 @@
   text-align: center;
 }
 
+/* Cloudflare's widget is a fixed-width iframe; centre it like the prompt above. */
+.confirm [data-turnstile] {
+  justify-self: center;
+}
+
 .actions {
   display: flex;
   gap: 0.75rem;
