@@ -62,7 +62,7 @@ CREATE TABLE public.campaign_statuses (
     note text DEFAULT ''::text NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_by text NOT NULL,
-    CONSTRAINT campaign_statuses_status_check CHECK ((status = ANY (ARRAY['signed'::text, 'supports'::text])))
+    CONSTRAINT campaign_statuses_status_check CHECK ((status = 'signed'::text))
 );
 
 --
