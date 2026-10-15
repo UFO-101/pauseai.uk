@@ -26,46 +26,56 @@
     "db:schema": "node scripts/db-schema.mjs"
   },
   "dependencies": {
-    "@netlify/database": "2.0.1",
-    "@tiptap/pm": "3.31.4",
-    "@tiptap/react": "3.31.4",
-    "@tiptap/starter-kit": "3.31.4",
+    "@netlify/database": "^2.0.1",
+    "@tiptap/pm": "^3.32.0",
+    "@tiptap/react": "^3.32.0",
+    "@tiptap/starter-kit": "^3.32.0",
     "d3-geo": "^3.1.1",
     "jsqr": "^1.4.0",
     "jszip": "^3.10.2",
-    "next": "16.3.2",
+    "next": "^16.4.1",
     "pdf-lib": "^1.17.1",
     "pg": "^8.23.1",
     "qrcode-generator": "^2.0.4",
-    "react": "19.2.4",
-    "react-dom": "19.2.4",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
     "server-only": "^0.0.1",
     "topojson-client": "^3.1.0"
   },
   "devDependencies": {
-    "@playwright/test": "^1.62.1",
+    "@playwright/test": "^1.64.1",
     "@tensorflow-models/blazeface": "^0.1.0",
-    "@tensorflow/tfjs": "^4.22.0",
     "@tensorflow/tfjs-backend-cpu": "^4.22.0",
-    "@types/d3-geo": "^3.1.0",
+    "@tensorflow/tfjs-converter": "^4.22.0",
+    "@tensorflow/tfjs-core": "^4.22.0",
+    "@types/d3-geo": "^3.1.1",
     "@types/geojson": "^7946.0.16",
     "@types/node": "^22.20.5",
     "@types/pg": "^8.23.1",
     "@types/pngjs": "^6.0.5",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
     "@types/topojson-client": "^3.1.5",
     "@vitest/browser-playwright": "^5.0.4",
     "@vitest/coverage-v8": "^5.0.4",
-    "eslint": "^9",
-    "eslint-config-next": "16.3.2",
+    "eslint": "^9.39.5",
+    "eslint-config-next": "^16.4.1",
     "msw": "^3.0.3",
-    "pixelmatch": "^7.2.0",
+    "pixelmatch": "^8.0.0",
     "pngjs": "^7.0.0",
-    "sharp": "^0.35.3",
-    "typescript": "^5",
+    "sharp": "^0.35.5",
+    "typescript": "^6.0.3",
     "vitest": "^5.0.4",
     "vitest-browser-react": "^2.3.0",
     "world-atlas": "^2.0.2"
+  },
+  "overrides": {
+    "@next/eslint-plugin-next": {
+      "fast-glob": "npm:tinyglobby@^0.2.17"
+    }
+  },
+  "allowScripts": {
+    "fsevents": false,
+    "unrs-resolver": false
   }
 }

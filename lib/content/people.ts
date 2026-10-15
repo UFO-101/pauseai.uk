@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 type PersonBase = {
   imageSrc?: string;
+  // A `background-position` for the square crop. `npm run
+  // data:story-image-detect-faces -- <file>` sets it from the face; see
+  // docs/development.md.
   imageStyle?: string;
   paragraphs: string[];
   featured?: boolean;

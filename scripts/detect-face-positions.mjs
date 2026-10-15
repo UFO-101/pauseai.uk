@@ -5,7 +5,7 @@
 // .person-detail-avatar square crop). Re-run after adding/replacing a
 // photo. Pass --dry-run to only print suggestions without writing.
 import "@tensorflow/tfjs-backend-cpu";
-import * as tf from "@tensorflow/tfjs";
+import * as tf from "@tensorflow/tfjs-core";
 import * as blazeface from "@tensorflow-models/blazeface";
 import sharp from "sharp";
 import ts from "typescript";
