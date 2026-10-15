@@ -7,6 +7,7 @@ import { Button, ButtonLink } from "@/components/ui/Button";
 import { copy } from "@/lib/content/email-your-mp";
 import { campaignBySlug, campaignPath, fullLetter, signatureAddress } from "@/lib/email-your-mp";
 import { toHtml } from "@/lib/letter-format";
+import AttachmentChips from "./AttachmentChips";
 import { markSent, readDraft, type Draft } from "./draft";
 import Turnstile from "./Turnstile";
 import styles from "./EmailYourMp.module.css";
@@ -119,26 +120,7 @@ export default function LetterPreview({ campaignSlug, turnstileSiteKey }: Props)
         </dl>
         <div className={styles.previewBody} dangerouslySetInnerHTML={{ __html: html }} />
         {campaign.attachments.length > 0 && (
-          <ul className={styles.attached} aria-label={copy.form.attachments}>
-            {campaign.attachments.map((attachment) => (
-              <li key={attachment.file}>
-                <a href={`/pdfs/${attachment.file}`} target="_blank" rel="noreferrer">
-                  {/* A paperclip (Lucide's, ISC licence), as attachments are shown in mail apps. */}
-                  <svg viewBox="0 0 24 24" aria-hidden="true" focusable={false}>
-                    <path
-                      d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                  {attachment.file}
-                </a>
-              </li>
-            ))}
-          </ul>
+          <AttachmentChips attachments={campaign.attachments} label={copy.form.attachments} />
         )}
       </article>
 

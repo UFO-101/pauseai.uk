@@ -36,7 +36,7 @@ describe("LetterForm", () => {
     // The signature is only shown on the preview, in the letter.
     await expect.element(page.getByText("Jane Smith SW1A 1AA")).not.toBeInTheDocument();
     for (const attachment of letterToPm.attachments) {
-      await expect.element(page.getByRole("link", { name: new RegExp(attachment.title) })).toHaveAttribute("href", `/pdfs/${attachment.file}`);
+      await expect.element(page.getByRole("link", { name: attachment.file })).toHaveAttribute("href", `/pdfs/${attachment.file}`);
     }
   });
 

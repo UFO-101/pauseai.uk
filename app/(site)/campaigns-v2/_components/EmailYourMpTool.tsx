@@ -139,8 +139,8 @@ export default function EmailYourMpTool({ campaignSlug, showTestMps }: Props) {
         <>
           {movedFrom && <p className={styles.notice}>{movedFrom.movedOn}</p>}
           <div className={styles.mp}>
-            <h2>{found.mp.name}</h2>
-            <p>{copy.lookup.mpOf(found.mp.constituency)}</p>
+            <p className={styles.kind}>{copy.lookup.mpOf(found.mp.constituency)}</p>
+            <h3>{found.mp.name}</h3>
             {/* data-mp-email: the visual diff masks it, as the test MP's inbox differs between hosts. */}
             <p data-mp-email>{found.mp.email ? <a href={`mailto:${found.mp.email}`}>{found.mp.email}</a> : copy.lookup.noEmail}</p>
           </div>

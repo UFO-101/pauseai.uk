@@ -1,19 +1,28 @@
-/* Looks like the old tool in /campaigns' iframe (pauseai-website's
-   UKMPLookup and UKMPEmailForm), in this site's colours and fonts. */
+/* Email your MP: the form, its preview and "sent" pages. Plain, like the
+   campaign page's sections around it: fields straight on the page, white
+   cards with a thin border, small orange capitals for labels. */
 
 .page {
   padding-block: 3rem;
 }
 
-/* Where the iframe's frame was. */
+/* One column, the letter's width, in line with the section's heading. */
 .tool {
   display: grid;
   gap: 1.5rem;
-  padding: 1rem;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  background: var(--surface);
-  box-shadow: 0 1px 2px var(--shadow), 0 12px 32px var(--shadow);
+  max-width: 44rem;
+}
+
+/* The old iframe ran edge to edge on phones (campaigns.css); the form keeps
+   the page's margins. */
+@media (max-width: 720px) {
+  section.section :global(.container) {
+    padding-inline: 24px;
+  }
+
+  section.section h2 {
+    padding-inline: 0;
+  }
 }
 
 .lookup,
@@ -42,14 +51,20 @@
 
 .lookup input {
   width: 100%;
-  padding: 0.75rem 1rem;
-  border: 2px solid var(--accent);
+  padding: 0.75rem;
+  border: 1px solid var(--border-strong);
   border-radius: 8px;
   font: inherit;
   font-size: 1rem;
   font-weight: 400;
   background: var(--surface);
   color: inherit;
+}
+
+.lookup input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 20%, transparent);
 }
 
 .lookup input:disabled {
@@ -66,28 +81,33 @@
   }
 }
 
-/* The MP, as a card. */
+/* The MP, as a card like the campaign's documents: who, then where, then how. */
 .mp {
-  padding: 1.5rem;
-  border: 3px solid var(--accent);
-  border-radius: 8px;
-  background: color-mix(in srgb, var(--accent) 18%, var(--surface));
-  text-align: center;
-}
-
-.mp h2 {
-  margin: 0 0 0.8rem;
-  font-size: 1.5rem;
+  display: grid;
+  gap: 0.35rem;
+  padding: 1.25rem 1.5rem;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
 }
 
 .mp p {
-  margin: 0 0 0.5rem;
-  font-size: 1.1rem;
+  margin: 0;
 }
 
-.mp p:last-child {
+/* As the documents' "Open letter — June 2026". */
+.mp .kind {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--pause-orange);
+}
+
+.mp h3 {
   margin: 0;
-  font-size: 1rem;
+  font-family: var(--font-display), "Lato", system-ui, sans-serif;
+  font-size: 22px;
 }
 
 .mp a {
@@ -99,14 +119,6 @@
 
 .mp a:hover {
   text-decoration: underline;
-}
-
-/* The letter, on a tinted panel. Its fields are at most 44rem wide, about
-   75 characters a line in the letter, and match the preview's. */
-.letter {
-  padding: 1.5rem max(1rem, calc((100% - 44rem) / 2));
-  border-radius: 8px;
-  background: color-mix(in srgb, var(--accent) 18%, var(--surface));
 }
 
 .letter input:not([type="checkbox"]),
@@ -200,15 +212,12 @@
   margin: 0;
 }
 
-.letter h3 {
-  margin: 0 0 1rem;
-  font-size: 1rem;
-}
 
 .notice {
   margin: 0;
-  padding: 1rem;
-  border: 2px solid var(--accent);
+  padding: 1rem 1.25rem;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
   border-radius: 8px;
   background: var(--surface);
 }
@@ -224,59 +233,24 @@
   gap: 0.5rem;
 }
 
+.fieldLabel {
+  margin: 0;
+  font-weight: 600;
+}
+
+/* Left, like the hero's "Email your MP" button and the lookup's. */
+.next {
+  justify-self: start;
+}
+
 .field small {
   color: var(--text-secondary);
 }
 
 .tips {
   margin: 0;
-  padding: 0.5rem 0.75rem 0.5rem 1.75rem;
-  border: 1px solid var(--border-strong);
-  border-radius: 6px;
+  padding-left: 1.25rem;
   font-size: 0.9rem;
-  color: var(--text-secondary);
-}
-
-.attachments {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.attachments a {
-  display: grid;
-  justify-items: center;
-  gap: 0.25rem;
-  width: 200px;
-  padding: 1rem;
-  border: 2px solid var(--accent);
-  border-radius: 8px;
-  background: var(--surface);
-  color: inherit;
-  font-size: 0.8rem;
-  text-align: center;
-  text-decoration: none;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.attachments a:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px var(--shadow);
-}
-
-.attachments img {
-  max-width: 150px;
-  height: auto;
-  margin-bottom: 0.5rem;
-  border-radius: 4px;
-  box-shadow: 0 2px 8px var(--shadow);
-}
-
-.attachments span {
-  font-size: 0.7rem;
   color: var(--text-secondary);
 }
 
@@ -303,9 +277,6 @@
   overflow: hidden;
 }
 
-.send {
-  width: 100%;
-}
 
 /* The preview and "sent" pages: one centred column, as wide as the form's
    fields, with the heading close above what's on the page. Doubled up to
@@ -385,10 +356,15 @@ section.step {
   flex-wrap: wrap;
   gap: 0.5rem;
   margin: 0;
-  padding: 1rem 0 0;
-  border-top: 1px solid var(--border-strong);
+  padding: 0;
   list-style: none;
   font-size: 0.85rem;
+}
+
+/* On the preview, under the letter, as in a mail app. */
+.preview .attached {
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-strong);
 }
 
 .attached a {
@@ -442,10 +418,6 @@ section.step {
 }
 
 @media (max-width: 640px) {
-  .tool {
-    padding: 0.75rem;
-  }
-
   .preview {
     padding: 1.25rem 1rem;
   }

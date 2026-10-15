@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { copy, type Campaign } from "@/lib/content/email-your-mp";
 import { campaignPath, draftLetter, looksLikeEmail, type Mp, type MpStatuses } from "@/lib/email-your-mp";
+import AttachmentChips from "./AttachmentChips";
 import { saveDraft, type Draft } from "./draft";
 import LetterEditor from "./LetterEditor";
 import styles from "./EmailYourMp.module.css";
@@ -84,20 +85,9 @@ export default function LetterForm({ campaign, mp, statuses, senderName, postcod
       </div>
 
       {campaign.attachments.length > 0 && (
-        <div>
-          <h3>{copy.form.attachments}</h3>
-          <ul className={styles.attachments}>
-            {campaign.attachments.map((attachment) => (
-              <li key={attachment.file}>
-                <a href={`/pdfs/${attachment.file}`} target="_blank" rel="noreferrer">
-                  {/* eslint-disable-next-line @next/next/no-img-element -- a small thumbnail, already sized */}
-                  <img src={`/pdfs/${attachment.thumbnail}`} alt="" width={150} />
-                  <strong>{attachment.title}</strong>
-                  <span>{attachment.subtitle}</span>
-                </a>
-              </li>
-            ))}
-          </ul>
+        <div className={styles.field}>
+          <p className={styles.fieldLabel}>{copy.form.attachments}</p>
+          <AttachmentChips attachments={campaign.attachments} label={copy.form.attachments} />
         </div>
       )}
 
@@ -107,7 +97,7 @@ export default function LetterForm({ campaign, mp, statuses, senderName, postcod
         </p>
       )}
 
-      <Button variant="primary" type="button" className={styles.send} onClick={preview}>
+      <Button variant="primary" type="button" className={styles.next} onClick={preview}>
         {copy.form.preview}
       </Button>
     </form>
