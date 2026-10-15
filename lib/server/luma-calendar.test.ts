@@ -91,6 +91,18 @@ describe("getEvents", () => {
     ]);
   });
 
+  it("copes with an event that has no name, and an address with no city or country", async () => {
+    calendar({
+      url: "untitled",
+      start_at: "2030-01-01T12:00:00Z",
+      visibility: "public",
+      geo_address_json: { address: "Venue TBD", city: null, region: "Scotland", country: null },
+    });
+    expect(await getEvents()).toEqual([
+      { event: { url: "untitled", name: "", start_at: "2030-01-01T12:00:00Z", geo_address_info: { address: "Venue TBD", region: "Scotland" } } },
+    ]);
+  });
+
   it("lists only public events", async () => {
     calendar(
       { url: "public", name: "A", start_at: "2030-01-01T00:00:00Z", visibility: "public" },
