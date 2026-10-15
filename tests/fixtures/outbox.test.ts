@@ -26,6 +26,26 @@ describe("the test outbox", () => {
     expect(readOutbox(join(tmpdir(), "no-such-outbox"))).toEqual([]);
   });
 
+  it("writes an email with only some fields, its extra headers, and an attachment without a type", () => {
+    const eml = toEml({ Headers: [{ Name: "X-Extra", Value: "yes" }], Attachments: [{ Name: "a.bin", Content: "" }] });
+    expect(eml).toContain("X-Extra: yes\r\n");
+    expect(eml).toContain('Content-Type: application/octet-stream; name="a.bin"');
+    expect(fromEml(eml)).toEqual({
+      From: "",
+      To: "",
+      Cc: undefined,
+      ReplyTo: undefined,
+      Subject: "",
+      TextBody: "",
+      HtmlBody: undefined,
+      Attachments: [{ Name: "a.bin", ContentType: "application/octet-stream", Content: "" }],
+    });
+  });
+
+  it("reads a message with no text part as having empty text", () => {
+    expect(fromEml("Subject: S\r\n\r\n").TextBody).toBe("");
+  });
+
   it("reads back what it wrote: addresses, text, HTML and attachments", () => {
     const pdf = Buffer.alloc(300, 7).toString("base64");
     const sent = {

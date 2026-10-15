@@ -96,6 +96,11 @@ describe("StatusForm", () => {
     expect(sent[0]).toEqual({ politicianId: "7", campaign: pm.slug, status: "supports", date: "2026-10-01", note: "Said so on the radio" });
   });
 
+  it("says when the Airtable sync set the status, rather than a person", async () => {
+    await render(<StatusForm politicianId={7} campaign={pm} current={{ ...MP.statuses[pm.slug], updatedBy: "sync" }} action={() => {}} />);
+    await expect.element(page.getByText(/^Set by the Airtable sync, /)).toBeVisible();
+  });
+
   it("starts empty when there's no status", async () => {
     await render(<StatusForm politicianId={7} campaign={bill} action={() => {}} />);
     await expect.element(page.getByRole("combobox", { name: staffCopy.fields.status, exact: true })).toHaveValue("");

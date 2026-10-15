@@ -62,6 +62,21 @@ describe("sendEmail", () => {
     }
   });
 
+  it("in the dev server, uses tmp/outbox when OUTBOX_DIR isn't set, and treats a missing token like an empty one", async () => {
+    const info = vi.spyOn(console, "info").mockImplementation(() => {});
+    vi.stubEnv("NODE_ENV", "development");
+    vi.stubEnv("OUTBOX_DIR", "");
+    vi.stubEnv("POSTMARK_SERVER_TOKEN", undefined);
+    await sendEmail(EMAIL);
+    const file = String(info.mock.calls[0][0]).match(/Written to (\S+\.eml) instead/)![1];
+    try {
+      expect(file.startsWith(join("tmp", "outbox"))).toBe(true);
+      expect(info.mock.calls[0][0]).toContain("not sent, as POSTMARK_SERVER_TOKEN isn't set");
+    } finally {
+      rmSync(file, { force: true });
+    }
+  });
+
   it("with fixtures on, writes the email to the outbox if there is one", async () => {
     const dir = mkdtempSync(join(tmpdir(), "outbox-"));
     vi.stubEnv("DATA_FIXTURES", "1");
