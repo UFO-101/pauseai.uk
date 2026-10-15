@@ -366,13 +366,22 @@
 }
 
 .attached a {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
   padding: 0.25rem 0.75rem;
   border: 1px solid var(--accent);
   border-radius: 999px;
   background: var(--surface);
   color: inherit;
   text-decoration: none;
+}
+
+.attached svg {
+  flex: none;
+  width: 1em;
+  height: 1em;
+  color: var(--accent);
 }
 
 .attached a:hover {
