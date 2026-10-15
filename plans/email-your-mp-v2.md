@@ -119,18 +119,8 @@ Be sure to add appropriate behaviour tests of flows, and new visual test pages.
 
 ## Open questions
 
-### To confirm with Joseph
-
-None for now.
-
-### Also to check
-
-1. **Postmark approval:** will Postmark approve the account for letters to MPs? We apply with a description of the tool: one constituent writing to their own MP. Until it does, Postmark only sends to our own domains; whether that covers staff login emails to `@pauseai.uk`, sent from `notify.pauseai.uk`, is unknown, so staff login may have to wait for approval too.
-2. **The nightly MP check's time:** a Netlify scheduled function gets 30 seconds, and the check took 12–18 seconds from a laptop on 14 Oct 2026 (ten contact lookups at a time). Watch the first runs on Netlify; if it times out, split it up.
-
 ### Tasks for Francis
 
-- Approve everything marked with the asterism in the code. Then turn `placeholder-copy.test.ts` back on: remove its `describe.skip`.
 - Before stage 3 goes live, check Netlify's database backups and try a restore.
 
 **Switching over:**
