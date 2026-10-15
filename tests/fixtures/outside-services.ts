@@ -8,6 +8,7 @@
 //
 // Matched on host and path rather than the full URL, so query strings
 // (dates, pagination, filters) don't need listing.
+import lumaEventsApi from "./luma-events-api.json";
 import lumaFuture from "./luma-calendar-future.json";
 import lumaPast from "./luma-calendar-past.json";
 import lumaGuests from "./luma-guests.json";
@@ -28,6 +29,9 @@ export function fixtureResponse(url: string): Response | undefined {
     // lib/server/luma-calendar.ts asks for past events with "before", upcoming with "after".
     return json(searchParams.has("before") ? lumaPast : lumaFuture);
   }
+  if (hostname === "public-api.luma.com" && pathname === "/v1/calendar/list-events") {
+    return json(lumaEventsApi);
+  }
   if (hostname === "public-api.luma.com" && pathname === "/v1/event/get-guests") {
     return json(lumaGuests);
   }
@@ -39,7 +43,7 @@ export function fixtureResponse(url: string): Response | undefined {
     const postcode = decodeURIComponent(pathname.slice("/postcodes/".length)).replace(/\s+/g, "").toUpperCase();
     const constituency = POSTCODES[postcode];
     return constituency
-      ? json({ status: 200, result: { postcode, parliamentary_constituency: constituency, codes: { parliamentary_constituency: "E14001172" } } })
+      ? json({ status: 200, result: { postcode, parliamentary_constituency: constituency, codes: { parliamentary_constituency: "E14001172" }, latitude: 51.501009, longitude: -0.141588 } })
       : new Response(JSON.stringify({ status: 404, error: "Postcode not found" }), { status: 404 });
   }
   if (hostname === "members-api.parliament.uk" && pathname === "/api/Members/Search") {

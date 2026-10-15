@@ -7,6 +7,7 @@ import { readLookup, saveDraft, saveLookup } from "./draft";
 import EmailYourMpTool from "./EmailYourMpTool";
 
 const [letterToPm, bill] = campaigns;
+const PLACE = { latitude: 51.501, longitude: -0.1416 };
 const MP = { name: "Polly Placeholder", salutation: "Ms Placeholder", constituency: "Cities of London and Westminster", email: "polly.placeholder.mp@parliament.uk" };
 
 let lookups: unknown[];
@@ -14,7 +15,7 @@ let respond: () => Promise<Response>;
 
 beforeEach(() => {
   lookups = [];
-  respond = async () => Response.json({ ok: true, mp: MP, statuses: {} });
+  respond = async () => Response.json({ ok: true, mp: MP, statuses: {}, place: PLACE });
   vi.spyOn(window, "fetch").mockImplementation(async (_url, init) => {
     if (init?.body) lookups.push(JSON.parse(String(init.body)));
     return respond();
@@ -39,7 +40,7 @@ describe("EmailYourMpTool", () => {
 
     await vi.waitFor(() => expect(navigation.pushed).toEqual([`/campaigns-v2/${letterToPm.slug}/write`]));
     expect(lookups).toEqual([{ postcode: " SW1A 1AA " }]);
-    expect(readLookup(letterToPm.slug)).toEqual({ campaign: letterToPm.slug, name: "Jane Smith", postcode: "SW1A 1AA", mp: MP, statuses: {} });
+    expect(readLookup(letterToPm.slug)).toEqual({ campaign: letterToPm.slug, name: "Jane Smith", postcode: "SW1A 1AA", mp: MP, statuses: {}, place: PLACE });
     // A new lookup starts a new letter.
     expect(sessionStorage.getItem("email-your-mp-draft")).toBeNull();
     // Still "looking" while the next page loads.

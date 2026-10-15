@@ -10,7 +10,7 @@ const MESSAGES = {
   failed: copy.lookup.failed,
 };
 
-/** The MP for a postcode, and what they've done for each campaign. */
+/** The MP for a postcode, what they've done for each campaign, and where the postcode is, if known. */
 export async function POST(request: Request) {
   const body = await request.json().catch(() => null);
   const postcode = typeof body?.postcode === "string" ? body.postcode.trim() : "";
@@ -18,5 +18,5 @@ export async function POST(request: Request) {
 
   const found = await findMp(postcode);
   if (!found.ok) return NextResponse.json({ ok: false, message: MESSAGES[found.reason] });
-  return NextResponse.json({ ok: true, mp: found.mp, statuses: await statusesOf(found.mp.id) });
+  return NextResponse.json({ ok: true, mp: found.mp, statuses: await statusesOf(found.mp.id), place: found.place ?? null });
 }

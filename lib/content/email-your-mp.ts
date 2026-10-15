@@ -162,7 +162,7 @@ export const copy = {
     title: "Thank you!",
     body: (mpName: string) => `Your letter has been sent to ${mpName}.`,
     // Under that, a paragraph of its own.
-    more: "⁂ Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore.",
+    more: "Please do ask your friends to write to their MPs too, or come along to a PauseAI event.",
     // Opened without having just sent one.
     none: "No letter has been sent recently.",
   },

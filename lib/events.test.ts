@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { localGroups } from "@/lib/content/local-groups";
-import { filterEventsForLocalGroup, filterOnlineEvents, formatEventDate, formatEventTime, type LumaEntry } from "./events";
+import { distanceKm, eventsNear, filterEventsForLocalGroup, filterOnlineEvents, formatEventDate, formatEventTime, type LumaEntry, type Place } from "./events";
 
 function entry(name: string, geo?: { city?: string; address?: string; region?: string }): LumaEntry {
   return {
@@ -119,5 +119,58 @@ describe("formatEventDate and formatEventTime", () => {
   it("falls back to UK time for a timezone the browser doesn't know", () => {
     expect(formatEventDate(startAt, "Mars/Olympus_Mons")).toBe("Sat 2 Mar");
     expect(formatEventTime(startAt, "Mars/Olympus_Mons")).toBe("13:00");
+  });
+});
+
+describe("events near someone", () => {
+  const WESTMINSTER: Place = { latitude: 51.4995, longitude: -0.1248 };
+  const OXFORD: Place = { latitude: 51.752, longitude: -1.2577 };
+  const MANCHESTER: Place = { latitude: 53.4808, longitude: -2.2426 };
+
+  const at = (name: string, day: number, place?: Place, city?: string): LumaEntry => ({
+    event: {
+      url: name,
+      name,
+      start_at: `2030-01-${String(day).padStart(2, "0")}T18:00:00.000Z`,
+      ...(place || city ? { geo_address_info: { city }, ...(place ? { place } : {}) } : {}),
+    },
+  });
+  // Soonest first, as Luma sends them.
+  const calendar = [
+    at("online-1", 1),
+    at("manchester", 2, MANCHESTER, "Manchester"),
+    at("london-1", 3, WESTMINSTER, "London"),
+    at("oxford-no-venue", 4, undefined, "Oxford"),
+    at("online-2", 5),
+    at("oxford", 6, OXFORD, "Oxford"),
+    at("london-2", 7, WESTMINSTER, "London"),
+    at("london-3", 8, WESTMINSTER, "London"),
+    at("online-3", 9),
+    at("online-4", 10),
+  ];
+  const urls = (entries: LumaEntry[]) => entries.map((e) => e.event.url);
+
+  it("measures distances along the Earth's surface", () => {
+    expect(distanceKm(WESTMINSTER, WESTMINSTER)).toBe(0);
+    expect(distanceKm(WESTMINSTER, OXFORD)).toBeCloseTo(83, 0);
+    expect(distanceKm(OXFORD, WESTMINSTER)).toBeCloseTo(distanceKm(WESTMINSTER, OXFORD), 9);
+    expect(distanceKm(WESTMINSTER, MANCHESTER)).toBeCloseTo(263, 0);
+  });
+
+  it("suggests a row of four: up to three in person within 50km, then online ones, in date order", () => {
+    expect(urls(eventsNear(calendar, WESTMINSTER))).toEqual(["online-1", "london-1", "london-2", "london-3"]);
+    expect(urls(eventsNear(calendar, MANCHESTER))).toEqual(["online-1", "manchester", "online-2", "online-3"]);
+  });
+
+  it("leaves out events too far away, and in-person ones with no place yet", () => {
+    // Oxford's own events are near Oxford; London, at about 83km, isn't, and
+    // nor is the Oxford event with no venue, as its distance isn't known.
+    expect(urls(eventsNear(calendar, OXFORD))).toEqual(["online-1", "online-2", "oxford", "online-3"]);
+  });
+
+  it("suggests the next four online events when none is near, or there's nowhere to measure from", () => {
+    const CARDIFF: Place = { latitude: 51.4816, longitude: -3.1791 };
+    for (const here of [CARDIFF, null, undefined]) expect(urls(eventsNear(calendar, here))).toEqual(["online-1", "online-2", "online-3", "online-4"]);
+    expect(eventsNear([], WESTMINSTER)).toEqual([]);
   });
 });

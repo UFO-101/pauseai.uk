@@ -1,0 +1,11 @@
+{
+  "entries": [
+    { "event": { "url": "https://luma.com/fixture-online-call", "name": "Fixture online call", "start_at": "2027-03-02T19:00:00.000Z", "timezone": "Europe/London", "location_type": "meet", "geo_address_json": null, "geo_latitude": null, "geo_longitude": null } },
+    { "event": { "url": "https://luma.com/fixture-london-meeting", "name": "Fixture London meeting", "start_at": "2027-03-03T18:30:00.000Z", "timezone": "Europe/London", "location_type": "offline", "geo_address_json": { "city": "London", "address": "Conway Hall", "region": "England", "country": "GB" }, "geo_latitude": 51.5184589, "geo_longitude": -0.1127869 } },
+    { "event": { "url": "https://luma.com/fixture-manchester-discussion", "name": "Fixture Manchester discussion", "start_at": "2027-03-04T18:00:00.000Z", "timezone": "Europe/London", "location_type": "offline", "geo_address_json": { "city": "Manchester", "address": "The Wharf", "region": "England", "country": "GB" }, "geo_latitude": "53.4736723", "geo_longitude": "-2.2566363" } },
+    { "event": { "url": "https://luma.com/fixture-oxford-no-venue", "name": "Fixture Oxford evening, venue to come", "start_at": "2027-03-05T18:00:00.000Z", "timezone": "Europe/London", "location_type": "offline", "geo_address_json": { "city": "Oxford" }, "geo_latitude": null, "geo_longitude": null } },
+    { "event": { "url": "https://luma.com/fixture-london-flyering", "name": "Fixture London flyering", "start_at": "2027-03-06T11:00:00.000Z", "timezone": "Europe/London", "location_type": "offline", "geo_address_json": { "city": "London", "address": "Waterloo", "region": "England", "country": "GB" }, "geo_latitude": 51.5019337, "geo_longitude": -0.1104597 } },
+    { "event": { "url": "https://luma.com/fixture-all-hands", "name": "Fixture online all-hands", "start_at": "2027-03-09T19:00:00.000Z", "timezone": "Europe/London", "location_type": "meet", "geo_address_json": null } }
+  ],
+  "has_more": false
+}

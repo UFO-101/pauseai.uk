@@ -3,6 +3,7 @@
 // the next is kept in sessionStorage, so it survives a reload or going back,
 // and never goes in a URL: the lookup, then the letter as written, and once
 // it's sent, only the MP's name.
+import type { Place } from "@/lib/events";
 import type { LetterDoc } from "@/lib/letter-format";
 import type { Mp, MpStatuses } from "@/lib/email-your-mp";
 
@@ -20,6 +21,8 @@ export type Lookup = {
   statuses: MpStatuses;
   /** The campaign whose page moved on to this one, as the MP had done it. */
   movedFrom?: string;
+  /** Where the postcode is, for events nearby, if known. */
+  place?: Place | null;
 };
 
 export type Draft = {

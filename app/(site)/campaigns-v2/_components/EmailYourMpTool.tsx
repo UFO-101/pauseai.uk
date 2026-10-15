@@ -5,12 +5,14 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { copy } from "@/lib/content/email-your-mp";
 import { campaignBySlug, campaignPath, campaignToMoveTo, doneAll, isDone, type Mp, type MpStatuses } from "@/lib/email-your-mp";
+import type { Place } from "@/lib/events";
 import { TEST_MPS } from "@/lib/test-mps";
 import { readLookup, saveLookup } from "./draft";
 import MpCard from "./MpCard";
 import styles from "./EmailYourMp.module.css";
 
 type Found = { mp: Mp; statuses: MpStatuses };
+type LookupResult = Found & { place: Place | null };
 
 /**
  * Name and postcode, to find the MP. Then the page for writing the letter:
@@ -61,11 +63,11 @@ export default function EmailYourMpTool({ campaignSlug, showTestMps }: Props) {
       });
       const result = await res.json();
       if (!result.ok) return setError(result.message);
-      const { mp, statuses }: Found = result;
+      const { mp, statuses, place }: LookupResult = result;
       const target = campaignToMoveTo(campaign, statuses) ?? campaign;
       const canWrite = !!mp.email && !isDone(target, statuses);
       const movedFrom = target === campaign ? undefined : campaign.slug;
-      moving = canWrite && saveLookup({ campaign: target.slug, name: name.trim(), postcode: postcode.trim(), mp, statuses, movedFrom });
+      moving = canWrite && saveLookup({ campaign: target.slug, name: name.trim(), postcode: postcode.trim(), mp, statuses, movedFrom, place });
       // Still "looking" while the next page loads.
       if (moving) return router.push(`${campaignPath(target)}/write`);
       setFound({ mp, statuses });
