@@ -99,6 +99,11 @@ const eslintConfig = defineConfig([
     "coverage/**",
     ".vitest/**",
     "tmp/**",
+    "blob-report/**",
+    "lighthouse-reports/**",
+    // Netlify's build folder: its plugins, and the Deno and Node code they
+    // bring with them. It's there during a Netlify build, which lints.
+    ".netlify/**",
   ]),
 ]);
 

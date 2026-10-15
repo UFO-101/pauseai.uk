@@ -19,6 +19,8 @@ const SKIP_DIRS = new Set([
   "test-results",
   "blob-report",
   "tmp",
+  // Netlify's build folder, with its plugins' own code.
+  ".netlify",
 ]);
 
 const CODE_FILE = /\.[cm]?[jt]sx?$/;

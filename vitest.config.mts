@@ -35,6 +35,7 @@ export default defineConfig({
             "tests/public-vs-live/**",
             "plans/**",
             "tmp/**",
+            ".netlify/**",
             "**/*.browser.test.*",
           ],
           setupFiles: ["./vitest.setup.node.ts"],
@@ -84,7 +85,7 @@ export default defineConfig({
         test: {
           name: "browser",
           include: ["**/*.browser.test.{ts,tsx}"],
-          exclude: ["**/node_modules/**", "tests/**", "plans/**", "tmp/**"],
+          exclude: ["**/node_modules/**", "tests/**", "plans/**", "tmp/**", ".netlify/**"],
           setupFiles: ["./vitest.setup.browser.tsx"],
           // Drawing and exporting images is slow when every file runs at once, so waits get longer than the default second.
           expect: { poll: { timeout: 5000 } },
