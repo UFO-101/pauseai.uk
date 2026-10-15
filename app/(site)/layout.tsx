@@ -1,3 +1,4 @@
+import MarchBanner from "@/components/layout/MarchBanner";
 import Nav from "@/components/layout/Nav";
 
 // Public pages: the site header, then the page. The footer and cookie
@@ -6,6 +7,7 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
   return (
     <>
       <Nav />
+      <MarchBanner />
       {children}
     </>
   );

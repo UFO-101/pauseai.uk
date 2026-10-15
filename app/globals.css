@@ -583,7 +583,7 @@ html {
   padding: 12px 0;
   /* Fill the viewport minus the sticky nav so the last row's bottom
      edge sits flush with the viewport bottom on first load. */
-  height: calc(100dvh - 77px);
+  height: calc(100dvh - 77px - var(--march-banner-h, 0px));
   background: var(--bg);
   overflow: hidden;
 }
@@ -775,7 +775,7 @@ html {
     /* svh = smallest viewport height (URL bar visible) — guarantees the
        bottom row's edge sits inside the visible viewport on first load
        instead of slipping below the browser chrome. */
-    height: calc(100svh - 77px);
+    height: calc(100svh - 77px - var(--march-banner-h, 0px));
     gap: 8px;
     padding: 8px 0;
   }
@@ -2689,4 +2689,111 @@ html {
 }
 .cookie-banner-actions [data-button] {
   width: auto;
+}
+
+/* ── March banner ──────────────────────────────── */
+/* A strip under the header on every page until the march
+   (components/layout/MarchBanner.tsx). The homepage hero fills the first
+   screen, so it takes the banner's height off its own (--march-banner-h).
+   That's set here, not measured, so the hero is the right size from the
+   first paint and a deep link doesn't drift. */
+
+body:has(.march-banner) {
+  --march-banner-h: 52px;
+}
+
+.march-banner {
+  background: var(--pause-orange);
+  color: var(--text);
+}
+
+.march-banner-inner {
+  max-width: 1140px;
+  margin: 0 auto;
+  padding: 8px 24px;
+  min-height: 52px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+}
+
+.march-banner-link {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  color: var(--text);
+  text-decoration: none;
+  min-width: 0;
+}
+
+.march-banner-link:hover {
+  color: var(--text);
+}
+
+.march-banner-link:hover .march-banner-name {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.march-banner-when {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.march-banner-name {
+  font-family: var(--font-display), "Lato", system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 19px;
+  white-space: nowrap;
+}
+
+.march-banner-register {
+  flex-shrink: 0;
+  background: var(--text);
+  color: #fff;
+  padding: 7px 14px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.march-banner-register:hover {
+  background: #000;
+  color: #fff;
+}
+
+@media (max-width: 760px) {
+  body:has(.march-banner) {
+    --march-banner-h: 56px;
+  }
+  .march-banner-inner {
+    justify-content: space-between;
+    gap: 12px;
+    padding: 8px 20px;
+    min-height: 56px;
+  }
+  .march-banner-link {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+  }
+  .march-banner-when {
+    font-size: 11px;
+  }
+  .march-banner-name {
+    font-size: 17px;
+    white-space: normal;
+    line-height: 1.1;
+  }
+  .march-banner-register {
+    padding: 8px 12px;
+    font-size: 13px;
+  }
 }

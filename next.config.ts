@@ -1,5 +1,6 @@
 import type { NextConfig } from "next";
 import { EVENT_IMAGE_HOSTS } from "@/lib/event-image-hosts";
+import { march } from "@/lib/content/march";
 
 // Third-party origins the site actually depends on. Kept here as one list so
 // adding an embed means updating the policy in the same place.
@@ -123,6 +124,9 @@ const nextConfig: NextConfig = {
       // (CopyLinkButton) predate the rename and must keep resolving.
       { source: "/stories", destination: "/people", permanent: true },
       { source: "/stories/:slug", destination: "/people/:slug", permanent: true },
+      // There's no list of protests yet, so /protests goes to the current one.
+      // Temporary, so browsers don't remember it when the next protest comes.
+      { source: "/protests", destination: march.path, permanent: false },
       // Old backlink used a space instead of a hyphen in the filename.
       // Source matches the raw request path, so the space must stay percent-encoded.
       { source: "/pdfs/Donor%20Prospectus.pdf", destination: "/pdfs/Donor-Prospectus.pdf", permanent: true },

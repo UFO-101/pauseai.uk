@@ -1,3 +1,4 @@
+import MarchBanner from "@/components/layout/MarchBanner";
 import Nav from "@/components/layout/Nav";
 import NoAnalytics from "@/components/layout/NoAnalytics";
 
@@ -7,6 +8,7 @@ export default function ToolsLayout({ children }: { children: React.ReactNode })
   return (
     <>
       <Nav />
+      <MarchBanner />
       <NoAnalytics />
       {children}
     </>
