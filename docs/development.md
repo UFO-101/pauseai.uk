@@ -41,9 +41,9 @@ docker compose up -d
 
 That starts two Postgres 18 servers, from `docker-compose.yml`:
 
-| Service | Port | For | Kept |
-| --- | --- | --- | --- |
-| `db` | 5432 | the dev server's database | in a Docker volume, between restarts |
+| Service   | Port | For                                | Kept                                          |
+| --------- | ---- | ---------------------------------- | --------------------------------------------- |
+| `db`      | 5432 | the dev server's database          | in a Docker volume, between restarts          |
 | `db-test` | 5433 | the throwaway databases tests make | in memory only, with durability off for speed |
 
 You still need `psql` on your machine: `brew install libpq && brew link
@@ -72,10 +72,10 @@ cp .env.example .env.local
 
 Two settings in it say where Postgres is:
 
-| Setting | What it is | Docker (the example's) | Postgres.app | apt |
-| --- | --- | --- | --- | --- |
-| `NETLIFY_DB_URL` | the dev server's database | `postgresql://postgres:postgres@localhost:5432/pauseai_dev` | `postgresql://localhost/pauseai_dev` | `postgresql:///pauseai_dev?host=/var/run/postgresql` |
-| `TEST_DATABASE_URL` | the server tests make their databases on | `postgresql://postgres:postgres@localhost:5433/postgres` | delete it | delete it |
+| Setting             | What it is                               | Docker (the example's)                                      | Postgres.app                         | apt                                                  |
+| ------------------- | ---------------------------------------- | ----------------------------------------------------------- | ------------------------------------ | ---------------------------------------------------- |
+| `NETLIFY_DB_URL`    | the dev server's database                | `postgresql://postgres:postgres@localhost:5432/pauseai_dev` | `postgresql://localhost/pauseai_dev` | `postgresql:///pauseai_dev?host=/var/run/postgresql` |
+| `TEST_DATABASE_URL` | the server tests make their databases on | `postgresql://postgres:postgres@localhost:5433/postgres`    | delete it                            | delete it                                            |
 
 Without `TEST_DATABASE_URL`, tests use the usual `PG*` variables, or find a
 local server's socket by themselves: in `/var/run/postgresql` (Linux) or
@@ -146,14 +146,14 @@ The example `.env.local` sets `DATA_FIXTURES=1`. With it, every call to an outsi
 answer from `tests/fixtures/outside-services.ts` instead. Nothing leaves
 your machine. You need no keys:
 
-| Service | What the fixture does |
-| --- | --- |
-| Luma | A few made-up events and guests |
-| postcodes.io | Knows only SW1A 1AA (Cities of London and Westminster); every other postcode is "not found". The test postcodes never ask it. |
-| Airtable | Two MPs, Dora Dummy and Polly Placeholder, and two made-up signatories |
-| Parliament's Members API | The same two MPs, with an office email each. Polly Placeholder's differs from Airtable's, so the MP check has something to show. |
-| Turnstile | Accepts every token |
-| Postmark | Accepts every email, without needing a token, and writes each one to a mail file (`.eml`) in `OUTBOX_DIR`, or `tmp/outbox/` in the dev server. |
+| Service                  | What the fixture does                                                                                                                          |
+| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| Luma                     | A few made-up events and guests                                                                                                                |
+| postcodes.io             | Knows only SW1A 1AA (Cities of London and Westminster); every other postcode is "not found". The test postcodes never ask it.                  |
+| Airtable                 | Two MPs, Dora Dummy and Polly Placeholder, and two made-up signatories                                                                         |
+| Parliament's Members API | The same two MPs, with an office email each. Polly Placeholder's differs from Airtable's, so the MP check has something to show.               |
+| Turnstile                | Accepts every token                                                                                                                            |
+| Postmark                 | Accepts every email, without needing a token, and writes each one to a mail file (`.eml`) in `OUTBOX_DIR`, or `tmp/outbox/` in the dev server. |
 
 #### Send a letter to the test MP
 
@@ -212,6 +212,7 @@ Delete `DATA_FIXTURES` from `.env.local`, and fill in the keys you need. Each is
   ```
 
   Then any real postcode finds its MP.
+
 - **Turnstile.** You can leave both keys out, and the check is skipped,
   in any build. Set just one, and every letter is refused. To see the widget, use Cloudflare's test keys, which
   always pass: site key `1x00000000000000000000AA`, secret
@@ -281,6 +282,7 @@ npm run test:behaviour   # Playwright: every page and the main flows
 npm run test:public-vs-live   # Playwright: public pages, the local build against pauseai.uk
 npm run test:fixtures-vs-main # Playwright: screenshots of this branch against main (testing.md)
 npm run lint
+npm run format                  # Prettier, on everything but plans/ (format:check only checks)
 npm run check:airtable-filter   # outside services and the database in their one file
 npm run check:staff-auth        # every staff page, route and action calls requireStaff()
 ```
@@ -316,17 +318,17 @@ See [testing.md](testing.md) for the rules.
 
 ## 7. When something goes wrong
 
-| Problem | Fix |
-| --- | --- |
-| `NETLIFY_DB_URL is not set` | Copy `.env.example` to `.env.local` (section 3). |
-| `psql: command not found` | Install the Postgres client, and make sure it's on your path. |
-| `connection to server ... failed` or `Connection refused` | Postgres isn't running (`docker compose up -d`), or `NETLIFY_DB_URL`, `TEST_DATABASE_URL` or `PGHOST` points to the wrong place (section 3). |
-| `role "..." does not exist` | Create a superuser for yourself (`createuser --superuser`), or set `PGUSER`. |
-| `permission denied to create database` | Your Postgres user needs `CREATEDB`: `alter user <you> createdb;`. |
-| `relation "letters" does not exist` | The database is older than a migration. Make a fresh one (section 3). |
-| ZZ99ZZ says no MP found | The database has no test MP. Set `TEST_MP_EMAIL` and run `npm run db:reset`, or run the MP sync. |
-| The test MP shows "no email listed" | The test MP was added without an email. Set `TEST_MP_EMAIL` and run `npm run db:reset`. |
-| Sending says it failed | Without `DATA_FIXTURES`, check `POSTMARK_SERVER_TOKEN`. |
-| An email didn't arrive | The server log says what happened to each email: sent through Postmark, with its MessageID, or written to which outbox file. The dev server doesn't send without a real token: with none, or Postmark's test token `POSTMARK_API_TEST`, it writes the email to the outbox instead. |
-| Letters to a real MP are refused | Expected: outside production, only the test MP. |
-| `Executable doesn't exist` from Playwright | `npx playwright install chromium`. |
+| Problem                                                   | Fix                                                                                                                                                                                                                                                                                |
+| --------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `NETLIFY_DB_URL is not set`                               | Copy `.env.example` to `.env.local` (section 3).                                                                                                                                                                                                                                   |
+| `psql: command not found`                                 | Install the Postgres client, and make sure it's on your path.                                                                                                                                                                                                                      |
+| `connection to server ... failed` or `Connection refused` | Postgres isn't running (`docker compose up -d`), or `NETLIFY_DB_URL`, `TEST_DATABASE_URL` or `PGHOST` points to the wrong place (section 3).                                                                                                                                       |
+| `role "..." does not exist`                               | Create a superuser for yourself (`createuser --superuser`), or set `PGUSER`.                                                                                                                                                                                                       |
+| `permission denied to create database`                    | Your Postgres user needs `CREATEDB`: `alter user <you> createdb;`.                                                                                                                                                                                                                 |
+| `relation "letters" does not exist`                       | The database is older than a migration. Make a fresh one (section 3).                                                                                                                                                                                                              |
+| ZZ99ZZ says no MP found                                   | The database has no test MP. Set `TEST_MP_EMAIL` and run `npm run db:reset`, or run the MP sync.                                                                                                                                                                                   |
+| The test MP shows "no email listed"                       | The test MP was added without an email. Set `TEST_MP_EMAIL` and run `npm run db:reset`.                                                                                                                                                                                            |
+| Sending says it failed                                    | Without `DATA_FIXTURES`, check `POSTMARK_SERVER_TOKEN`.                                                                                                                                                                                                                            |
+| An email didn't arrive                                    | The server log says what happened to each email: sent through Postmark, with its MessageID, or written to which outbox file. The dev server doesn't send without a real token: with none, or Postmark's test token `POSTMARK_API_TEST`, it writes the email to the outbox instead. |
+| Letters to a real MP are refused                          | Expected: outside production, only the test MP.                                                                                                                                                                                                                                    |
+| `Executable doesn't exist` from Playwright                | `npx playwright install chromium`.                                                                                                                                                                                                                                                 |
