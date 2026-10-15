@@ -1,6 +1,8 @@
 import Image from "next/image";
 import type { ReactNode } from "react";
 import CopyLinkButton from "@/components/ui/CopyLinkButton";
+import { ShotLink } from "./Gallery";
+import { EntryItem } from "./TimelineList";
 
 /** One dated entry on the timeline, with a link-copy button beside its title. */
 export function TimelineEntry({
@@ -22,7 +24,7 @@ export function TimelineEntry({
   children: ReactNode;
 }) {
   return (
-    <li className={finale ? "entry entry-finale" : "entry"} id={id}>
+    <EntryItem className={finale ? "entry entry-finale" : "entry"} id={id}>
       <aside className="entry-date">
         <span className="month">{month}</span>
         <span className="year">{year}</span>
@@ -34,13 +36,13 @@ export function TimelineEntry({
         </div>
         {children}
       </div>
-    </li>
+    </EntryItem>
   );
 }
 
 /**
  * A gallery thumbnail that opens the full photo in the lightbox (see
- * Lightbox.tsx). Without JavaScript it is a plain link to the photo.
+ * Gallery.tsx). Without JavaScript it is a plain link to the photo.
  */
 export function Shot({
   href,
@@ -59,8 +61,8 @@ export function Shot({
   wide?: boolean;
 }) {
   return (
-    <a className={wide ? "shot shot-wide" : "shot"} href={href}>
+    <ShotLink className={wide ? "shot shot-wide" : "shot"} href={href} alt={alt}>
       <Image fill sizes={sizes} style={{ objectFit: "cover" }} src={src} alt={alt} />
-    </a>
+    </ShotLink>
   );
 }

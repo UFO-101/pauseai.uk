@@ -1,6 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
+import { ShotLink } from "./Gallery";
 import { Shot, TimelineEntry } from "./TimelineEntry";
+import { TimelineList } from "./TimelineList";
 
 // Everything PauseAI UK has done, newest first. Each entry is a TimelineEntry;
 // its text and photos are written out here.
@@ -8,7 +10,7 @@ export default function Timeline() {
   return (
     <section className="timeline">
       <div className="container">
-        <ol className="timeline-list">
+        <TimelineList>
           <TimelineEntry
             id="emergency-protest-downing-street"
             month="September"
@@ -319,7 +321,11 @@ export default function Timeline() {
               </p>
             </div>
             <div className="gallery gallery-4">
-              <a className="shot shot-tall" href="/images/fundraising/brussels-benifei-russell.jpg">
+              <ShotLink
+                className="shot shot-tall"
+                href="/images/fundraising/brussels-benifei-russell.jpg"
+                alt="Panel with Benifei and Russell at PauseCon Brussels"
+              >
                 <Image
                   fill
                   sizes="(max-width: 768px) 100vw, 25vw"
@@ -327,7 +333,7 @@ export default function Timeline() {
                   src="/images/fundraising/brussels-benifei-russell-thumb.jpg"
                   alt="Panel with Benifei and Russell at PauseCon Brussels"
                 />
-              </a>
+              </ShotLink>
               <Shot
                 href="/images/fundraising/brussels-panel.jpg"
                 src="/images/fundraising/brussels-panel-thumb.jpg"
@@ -367,7 +373,11 @@ export default function Timeline() {
               </p>
             </div>
             <div className="gallery gallery-1">
-              <a className="shot shot-wide" href="/images/fundraising/westminster-hall.jpg">
+              <ShotLink
+                className="shot shot-wide"
+                href="/images/fundraising/westminster-hall.jpg"
+                alt="MP speaking during the Westminster Hall debate on AI safety"
+              >
                 <Image
                   width={960}
                   height={538}
@@ -376,7 +386,7 @@ export default function Timeline() {
                   src="/images/fundraising/westminster-hall-thumb.jpg"
                   alt="MP speaking during the Westminster Hall debate on AI safety"
                 />
-              </a>
+              </ShotLink>
             </div>
           </TimelineEntry>
 
@@ -403,7 +413,11 @@ export default function Timeline() {
               </p>
             </div>
             <div className="gallery gallery-1">
-              <a className="shot" href="/images/fundraising/documentary-scott-wiener.jpg">
+              <ShotLink
+                className="shot"
+                href="/images/fundraising/documentary-scott-wiener.jpg"
+                alt="Scott Wiener on screen during the Parliament screening"
+              >
                 <Image
                   width={960}
                   height={540}
@@ -412,7 +426,7 @@ export default function Timeline() {
                   src="/images/fundraising/documentary-scott-wiener-thumb.jpg"
                   alt="Scott Wiener on screen during the Parliament screening"
                 />
-              </a>
+              </ShotLink>
             </div>
           </TimelineEntry>
 
@@ -425,7 +439,11 @@ export default function Timeline() {
               </p>
             </div>
             <div className="gallery gallery-1">
-              <a className="shot" href="/images/fundraising/book-launch-alistair.jpg">
+              <ShotLink
+                className="shot"
+                href="/images/fundraising/book-launch-alistair.jpg"
+                alt="Alistair reading at the September book launch party"
+              >
                 <Image
                   width={960}
                   height={498}
@@ -434,7 +452,7 @@ export default function Timeline() {
                   src="/images/fundraising/book-launch-alistair-thumb.jpg"
                   alt="Alistair reading at the September book launch party"
                 />
-              </a>
+              </ShotLink>
             </div>
           </TimelineEntry>
 
@@ -474,7 +492,11 @@ export default function Timeline() {
               </p>
             </div>
             <div className="gallery gallery-1">
-              <a className="shot shot-wide" href="/images/fundraising/time-article.png">
+              <ShotLink
+                className="shot shot-wide"
+                href="/images/fundraising/time-article.png"
+                alt="TIME article: 60 U.K. Lawmakers Accuse Google of Breaking AI Safety Pledge"
+              >
                 <Image
                   width={1600}
                   height={921}
@@ -483,7 +505,7 @@ export default function Timeline() {
                   src="/images/fundraising/time-article.png"
                   alt="TIME article: 60 U.K. Lawmakers Accuse Google of Breaking AI Safety Pledge"
                 />
-              </a>
+              </ShotLink>
             </div>
           </TimelineEntry>
 
@@ -525,7 +547,7 @@ export default function Timeline() {
               />
             </div>
           </TimelineEntry>
-        </ol>
+        </TimelineList>
       </div>
     </section>
   );

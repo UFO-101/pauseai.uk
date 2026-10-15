@@ -1,9 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { render } from "vitest-browser-react";
-import { page, userEvent } from "vitest/browser";
+import { page } from "vitest/browser";
 import { site } from "@/lib/content/site";
 import { navigation } from "@/tests/browser/navigation";
-import CookieConsent, { cookieDomains } from "./CookieConsent";
+import CookieConsent, { cookieDomains, CookieSettingsLink } from "./CookieConsent";
 import Footer from "./Footer";
 import FooterYear from "./FooterYear";
 import JsonLd from "./JsonLd";
@@ -76,28 +76,27 @@ describe("Nav", () => {
     expect(document.documentElement.style.getPropertyValue("--site-header-h")).toMatch(/px$/);
   });
 
-  it("opens and closes the mobile menu, locking the page behind it", async () => {
+  it("opens and closes the mobile menu", async () => {
     const { container } = await render(<Nav />);
     const burger = container.querySelector(".burger") as HTMLElement;
     const nav = container.querySelector("nav")!;
     burger.click();
+    await expect.element(nav).toHaveClass("open");
     expect(burger.getAttribute("aria-expanded")).toBe("true");
-    expect(nav.classList.contains("open")).toBe(true);
-    expect(document.body.classList.contains("mobile-nav-open")).toBe(true);
     burger.click();
-    expect(nav.classList.contains("open")).toBe(false);
+    await expect.element(nav).not.toHaveClass("open");
+    expect(burger.getAttribute("aria-expanded")).toBe("false");
 
     // A plain link closes the menu; a dropdown trigger doesn't.
     burger.click();
-    (nav.querySelector(".dropdown-trigger") as HTMLElement).addEventListener("click", (e) => e.preventDefault(), {
-      once: true,
-    });
+    await expect.element(nav).toHaveClass("open");
+    container.addEventListener("click", (e) => e.preventDefault());
     (nav.querySelector(".dropdown-trigger") as HTMLElement).click();
+    await new Promise((resolve) => setTimeout(resolve, 50));
     expect(nav.classList.contains("open")).toBe(true);
     const people = [...nav.querySelectorAll("a")].find((a) => a.textContent === "People")!;
-    people.addEventListener("click", (e) => e.preventDefault(), { once: true });
     people.click();
-    expect(nav.classList.contains("open")).toBe(false);
+    await expect.element(nav).not.toHaveClass("open");
   });
 
   it("opens dropdowns with a tap on touch screens, one at a time", async () => {
@@ -106,7 +105,7 @@ describe("Nav", () => {
     );
     const { container } = await render(<Nav />);
     const [about, groups] = [...container.querySelectorAll<HTMLElement>(".dropdown-trigger")];
-    const item = (t: HTMLElement) => t.closest(".nav-item")!;
+    const item = (t: HTMLElement) => t.closest(".nav-item") as HTMLElement;
     const navigated = vi.fn();
     container.addEventListener("click", (e) => {
       if (!e.defaultPrevented) navigated();
@@ -114,25 +113,28 @@ describe("Nav", () => {
     });
 
     about.click();
-    expect(item(about).classList.contains("is-open")).toBe(true);
+    await expect.element(item(about)).toHaveClass("is-open");
     expect(about.getAttribute("aria-expanded")).toBe("true");
     expect(navigated).not.toHaveBeenCalled();
 
     groups.click();
-    expect(item(groups).classList.contains("is-open")).toBe(true);
+    await expect.element(item(groups)).toHaveClass("is-open");
     expect(item(about).classList.contains("is-open")).toBe(false);
+    expect(about.getAttribute("aria-expanded")).toBe("false");
 
     // A second tap closes it, and lets the link through.
     groups.click();
-    expect(item(groups).classList.contains("is-open")).toBe(false);
+    await expect.element(item(groups)).not.toHaveClass("is-open");
     expect(navigated).toHaveBeenCalledTimes(1);
 
     // A tap outside closes an open one; a tap inside a dropdown doesn't.
     about.click();
+    await expect.element(item(about)).toHaveClass("is-open");
     (item(about).querySelector(".dropdown a") as HTMLElement).click();
+    await new Promise((resolve) => setTimeout(resolve, 50));
     expect(item(about).classList.contains("is-open")).toBe(true);
     document.body.click();
-    expect(item(about).classList.contains("is-open")).toBe(false);
+    await expect.element(item(about)).not.toHaveClass("is-open");
   });
 
   it("leaves dropdown links to the mouse on hover screens", async () => {
@@ -146,26 +148,39 @@ describe("Nav", () => {
     });
     about.click();
     expect(prevented).toBe(false);
+    await new Promise((resolve) => setTimeout(resolve, 50));
     expect(about.closest(".nav-item")!.classList.contains("is-open")).toBe(false);
   });
 
   it("closes the menu and dropdowns on a new page", async () => {
     vi.spyOn(window, "matchMedia").mockImplementation((q) => ({ matches: true, media: q }) as MediaQueryList);
     const { container, rerender } = await render(<Nav />);
+    container.addEventListener("click", (e) => e.preventDefault());
     (container.querySelector(".burger") as HTMLElement).click();
     (container.querySelector(".dropdown-trigger") as HTMLElement).click();
+    await expect.element(container.querySelector<HTMLElement>(".nav-item")!).toHaveClass("is-open");
+    expect(container.querySelector("nav")!.classList.contains("open")).toBe(true);
+
     navigation.pathname = "/people";
     await rerender(<Nav />);
     expect(container.querySelector("nav")!.classList.contains("open")).toBe(false);
     expect(container.querySelector(".is-open")).toBeNull();
-    expect(document.body.classList.contains("mobile-nav-open")).toBe(false);
+
+    // A tap on the new page acts on the new page's closed menu.
+    (container.querySelector(".burger") as HTMLElement).click();
+    await expect.element(container.querySelector("nav")!).toHaveClass("open");
+    expect(container.querySelector(".is-open")).toBeNull();
   });
 
-  it("tidies up when it goes", async () => {
+  it("stops listening for taps outside when it goes", async () => {
+    vi.spyOn(window, "matchMedia").mockImplementation((q) => ({ matches: true, media: q }) as MediaQueryList);
     const { container, unmount } = await render(<Nav />);
-    (container.querySelector(".burger") as HTMLElement).click();
+    container.addEventListener("click", (e) => e.preventDefault());
+    (container.querySelector(".dropdown-trigger") as HTMLElement).click();
+    await expect.element(container.querySelector<HTMLElement>(".nav-item")!).toHaveClass("is-open");
     await unmount();
-    expect(document.body.classList.contains("mobile-nav-open")).toBe(false);
+    // A listener left behind would look for the dropdowns, which are gone, and throw.
+    document.body.click();
   });
 });
 
@@ -186,7 +201,6 @@ describe("CookieConsent", () => {
     delete w.__gtmLoaded;
     delete w.dataLayer;
     delete w.gtag;
-    document.querySelector(".cookie-banner")?.remove();
     scripts = [];
     // Record the analytics scripts instead of loading them.
     vi.spyOn(HTMLScriptElement.prototype, "src", "set").mockImplementation((v) => scripts.push(v));
@@ -194,12 +208,9 @@ describe("CookieConsent", () => {
 
   function Page() {
     return (
-      <>
-        <a href="#" className="js-cookie-settings">
-          Cookie settings
-        </a>
-        <CookieConsent />
-      </>
+      <CookieConsent>
+        <CookieSettingsLink />
+      </CookieConsent>
     );
   }
 
@@ -275,14 +286,13 @@ describe("CookieConsent", () => {
     expect(w.dataLayer[0]).toBe("existing");
   });
 
-  it("stops listening to the footer link when it goes", async () => {
-    const { unmount } = await render(<Page />);
-    const link = page.getByRole("link", { name: "Cookie settings" }).element();
-    await unmount();
-    document.body.appendChild(link);
-    (link as HTMLElement).click();
-    expect(document.querySelector(".cookie-banner")).toBeNull();
-    link.remove();
-    await userEvent.keyboard("{Escape}");
+  it("opens from the footer's link", async () => {
+    await render(
+      <CookieConsent>
+        <Footer />
+      </CookieConsent>,
+    );
+    await page.getByRole("link", { name: "Cookie settings" }).click();
+    await expect.element(page.getByRole("dialog", { name: "Cookie consent" })).toBeVisible();
   });
 });

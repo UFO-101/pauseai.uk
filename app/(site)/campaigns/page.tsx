@@ -1,6 +1,4 @@
 import { pageMetadata } from "@/lib/metadata";
-import Image from "next/image";
-import CampaignsClient from "./_components/CampaignsClient";
 import "./campaigns.css";
 import { ButtonAnchor } from "@/components/ui/Button";
 import CampaignContext from "./_components/CampaignContext";
@@ -17,43 +15,27 @@ export const metadata = pageMetadata({
 
 export default function CampaignsPage() {
   return (
-    <>
-      <main className="campaigns">
-        <section className="campaigns-hero">
-          <div className="container">
-            <h1>Regulate AI developers now</h1>
-            <p className="hero-cta-row">
-              <ButtonAnchor variant="primary" href="#email-your-mp">
-                Email your MP &rarr;
-              </ButtonAnchor>
-            </p>
-          </div>
-        </section>
+    <main className="campaigns">
+      <section className="campaigns-hero">
+        <div className="container">
+          <h1>Regulate AI developers now</h1>
+          <p className="hero-cta-row">
+            <ButtonAnchor variant="primary" href="#email-your-mp">
+              Email your MP &rarr;
+            </ButtonAnchor>
+          </p>
+        </div>
+      </section>
 
-        <CampaignContext />
+      <CampaignContext />
 
-        <CampaignDocs />
+      <CampaignDocs />
 
-        <EmailYourMp />
+      <EmailYourMp />
 
-        <Signatories />
+      <Signatories />
 
-        <ShareQr />
-      </main>
-
-      <div className="qr-lightbox" id="qr-lightbox" aria-hidden="true" role="dialog" aria-label="QR code">
-        <button className="qr-lightbox-close" type="button" aria-label="Close">
-          &times;
-        </button>
-        <Image
-          src="/campaign-page-qr-code.png"
-          alt="QR code linking to this campaign page"
-          width={1147}
-          height={1147}
-        />
-      </div>
-
-      <CampaignsClient />
-    </>
+      <ShareQr />
+    </main>
   );
 }

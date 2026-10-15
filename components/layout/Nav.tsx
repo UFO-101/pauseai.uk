@@ -3,9 +3,35 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { localGroups } from "@/lib/content/local-groups";
 import { site } from "@/lib/content/site";
+
+// Each dropdown's links: [href, label].
+const ABOUT_LINKS = [
+  ["/what-is-pauseai-uk/", "What is PauseAI UK?"],
+  ["/track-record/", "Track record"],
+  ["/theory-of-change/", "Theory of change"],
+  ["/governance/", "Governance"],
+  ["/global-ai-sentiment-2026/", "Global AI sentiment 2026"],
+  ["/jobs/", "Jobs"],
+];
+const LOCAL_GROUP_LINKS = [
+  ["/london/", "London"],
+  ["/glasgow/", "Glasgow"],
+  ["/oxford/", "Oxford"],
+  ["/leicester/", "Leicester"],
+  ["/manchester/", "Manchester"],
+  ["/west-of-england/", "West of England"],
+];
+const CAMPAIGN_LINKS = [
+  ["/campaigns/", "Regulate AI developers now"],
+  ["/future-of-workforce-inquiry/", "Future of the Workforce Inquiry"],
+];
+
+/** The mobile menu is open, and which dropdown is, by its place in the nav. */
+const CLOSED = { open: false, dropdown: null as number | null };
+type MenuState = typeof CLOSED & { pathname: string };
 
 export default function Nav() {
   const pathname = usePathname();
@@ -14,102 +40,49 @@ export default function Nav() {
   // A local group's page carries its branding in the header.
   const localGroup = localGroups.find((group) => group.href === pathname.replace(/\/$/, ""));
 
-  useEffect(() => {
-    // All three are rendered below, so they are there once this runs.
-    const header = document.querySelector(".site-header") as HTMLElement;
-    const burger = document.querySelector(".burger") as HTMLButtonElement;
-    const nav = document.querySelector("nav") as HTMLElement;
+  // The header lives in a layout, so it stays mounted across navigation.
+  // The menu's state notes the page it was set on, so each new page starts
+  // with the menu and dropdowns closed, as a freshly mounted header would.
+  const [menu, setMenu] = useState<MenuState>({ ...CLOSED, pathname });
+  const { open, dropdown } = menu.pathname === pathname ? menu : CLOSED;
+  const update = useCallback(
+    (change: Partial<typeof CLOSED>) =>
+      setMenu((current) => ({ ...(current.pathname === pathname ? current : CLOSED), ...change, pathname })),
+    [pathname],
+  );
+  const closeMenu = () => update({ open: false });
 
+  const header = useRef<HTMLElement>(null);
+  useEffect(() => {
+    // The stylesheet positions the mobile menu and in-page anchors below the header.
     const syncHeaderHeight = () => {
-      document.documentElement.style.setProperty("--site-header-h", `${header.offsetHeight}px`);
+      document.documentElement.style.setProperty("--site-header-h", `${header.current!.offsetHeight}px`);
     };
     syncHeaderHeight();
     const resizeObserver = new ResizeObserver(syncHeaderHeight);
-    resizeObserver.observe(header);
-
-    const setOpen = (open: boolean) => {
-      burger.setAttribute("aria-expanded", String(open));
-      nav.classList.toggle("open", open);
-      document.body.classList.toggle("mobile-nav-open", open);
-    };
-
-    const handleBurgerClick = () => {
-      setOpen(burger.getAttribute("aria-expanded") !== "true");
-    };
-
-    const handleNavLinkClick = (e: Event) => {
-      const link = e.currentTarget as HTMLAnchorElement;
-      if (link.classList.contains("dropdown-trigger")) return;
-      setOpen(false);
-    };
-
-    burger.addEventListener("click", handleBurgerClick);
-    nav.querySelectorAll("a").forEach((link) => {
-      link.addEventListener("click", handleNavLinkClick);
-    });
-
-    const triggers = document.querySelectorAll<HTMLElement>(".dropdown-trigger");
-    const handleTriggerClick = (e: Event) => {
-      const trigger = e.currentTarget as HTMLElement;
-      // Every trigger sits in a dropdown item.
-      const parent = trigger.closest(".nav-item.has-dropdown") as HTMLElement;
-      const isTouch = window.matchMedia("(hover: none)").matches;
-      if (!isTouch) return;
-      const isOpen = parent.classList.contains("is-open");
-      if (!isOpen) {
-        e.preventDefault();
-        // Close any other open dropdown. This one isn't open, so it isn't among them.
-        document.querySelectorAll<HTMLElement>(".nav-item.has-dropdown.is-open").forEach((p) => {
-          p.classList.remove("is-open");
-          p.querySelector(".dropdown-trigger")!.setAttribute("aria-expanded", "false");
-        });
-        parent.classList.add("is-open");
-        trigger.setAttribute("aria-expanded", "true");
-      } else {
-        parent.classList.remove("is-open");
-        trigger.setAttribute("aria-expanded", "false");
-      }
-    };
-
-    const handleDocClick = (e: MouseEvent) => {
-      if (!(e.target as Element).closest(".nav-item.has-dropdown")) {
-        document.querySelectorAll<HTMLElement>(".nav-item.has-dropdown.is-open").forEach((p) => {
-          p.classList.remove("is-open");
-          p.querySelector(".dropdown-trigger")!.setAttribute("aria-expanded", "false");
-        });
-      }
-    };
-
-    triggers.forEach((t) => t.addEventListener("click", handleTriggerClick));
-    document.addEventListener("click", handleDocClick);
-
-    return () => {
-      burger.removeEventListener("click", handleBurgerClick);
-      nav.querySelectorAll("a").forEach((link) => {
-        link.removeEventListener("click", handleNavLinkClick);
-      });
-      triggers.forEach((t) => t.removeEventListener("click", handleTriggerClick));
-      document.removeEventListener("click", handleDocClick);
-      resizeObserver.disconnect();
-      document.body.classList.remove("mobile-nav-open");
-    };
+    resizeObserver.observe(header.current!);
+    return () => resizeObserver.disconnect();
   }, []);
 
-  // The header lives in a layout, so it stays mounted across navigation.
-  // Start each new page with the menu and dropdowns closed, as a freshly
-  // mounted header would be.
+  // A tap outside the dropdowns closes an open one.
+  const dropdownItems = useRef<(HTMLDivElement | null)[]>([]);
   useEffect(() => {
-    document.querySelector(".burger")!.setAttribute("aria-expanded", "false");
-    document.querySelector("header.site-header nav")!.classList.remove("open");
-    document.body.classList.remove("mobile-nav-open");
-    document.querySelectorAll<HTMLElement>(".nav-item.has-dropdown.is-open").forEach((item) => {
-      item.classList.remove("is-open");
-      item.querySelector(".dropdown-trigger")!.setAttribute("aria-expanded", "false");
-    });
-  }, [pathname]);
+    if (dropdown === null) return;
+    const handleDocClick = (e: MouseEvent) => {
+      if (!dropdownItems.current.some((item) => item!.contains(e.target as Node))) update({ dropdown: null });
+    };
+    document.addEventListener("click", handleDocClick);
+    return () => document.removeEventListener("click", handleDocClick);
+  }, [dropdown, update]);
+
+  const dropdowns = [
+    { label: "About", href: "/what-is-pauseai-uk/", links: ABOUT_LINKS },
+    { label: "Local groups", href: `${navPrefix}#local-groups`, links: LOCAL_GROUP_LINKS },
+    { label: "Campaigns", href: "/campaigns/", links: CAMPAIGN_LINKS },
+  ];
 
   return (
-    <header className="site-header">
+    <header className="site-header" ref={header}>
       <div className="container">
         {localGroup ? (
           <Link className="brand brand-link" href="/">
@@ -143,119 +116,71 @@ export default function Nav() {
             <span className="brand-uk">UK</span>
           </Link>
         )}
-        <button className="burger" aria-label="Menu" aria-expanded="false">
+        <button className="burger" aria-label="Menu" aria-expanded={open} onClick={() => update({ open: !open })}>
           <span></span>
           <span></span>
           <span></span>
         </button>
-        <nav>
-          <div className="nav-item has-dropdown">
-            <Link href="/what-is-pauseai-uk/" className="dropdown-trigger" aria-haspopup="true" aria-expanded="false">
-              About
-              <svg className="caret" viewBox="0 0 12 8" aria-hidden="true" focusable={false}>
-                <path
-                  d="M1 1.5l5 5 5-5"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.6"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </Link>
-            <div className="dropdown" role="menu">
-              <Link href="/what-is-pauseai-uk/" role="menuitem">
-                What is PauseAI UK?
-              </Link>
-              <Link href="/track-record/" role="menuitem">
-                Track record
-              </Link>
-              <Link href="/theory-of-change/" role="menuitem">
-                Theory of change
-              </Link>
-              <Link href="/governance/" role="menuitem">
-                Governance
-              </Link>
-              <Link href="/global-ai-sentiment-2026/" role="menuitem">
-                Global AI sentiment 2026
-              </Link>
-              <Link href="/jobs/" role="menuitem">
-                Jobs
-              </Link>
-            </div>
-          </div>
-          <div className="nav-item has-dropdown">
-            <Link
-              href={`${navPrefix}#local-groups`}
-              className="dropdown-trigger"
-              aria-haspopup="true"
-              aria-expanded="false"
+        <nav className={open ? "open" : undefined}>
+          {dropdowns.map(({ label, href, links }, i) => (
+            <div
+              key={label}
+              className={dropdown === i ? "nav-item has-dropdown is-open" : "nav-item has-dropdown"}
+              ref={(item) => {
+                dropdownItems.current[i] = item;
+              }}
             >
-              Local groups
-              <svg className="caret" viewBox="0 0 12 8" aria-hidden="true" focusable={false}>
-                <path
-                  d="M1 1.5l5 5 5-5"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.6"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </Link>
-            <div className="dropdown" role="menu">
-              <Link href="/london/" role="menuitem">
-                London
+              <Link
+                href={href}
+                className="dropdown-trigger"
+                aria-haspopup="true"
+                aria-expanded={dropdown === i}
+                onClick={(e) => {
+                  // Touch screens have no hover, so the first tap opens the
+                  // dropdown and a second follows the link.
+                  if (!window.matchMedia("(hover: none)").matches) return;
+                  if (dropdown === i) {
+                    update({ dropdown: null });
+                  } else {
+                    e.preventDefault();
+                    update({ dropdown: i });
+                  }
+                }}
+              >
+                {label}
+                <svg className="caret" viewBox="0 0 12 8" aria-hidden="true" focusable={false}>
+                  <path
+                    d="M1 1.5l5 5 5-5"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.6"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
               </Link>
-              <Link href="/glasgow/" role="menuitem">
-                Glasgow
-              </Link>
-              <Link href="/oxford/" role="menuitem">
-                Oxford
-              </Link>
-              <Link href="/leicester/" role="menuitem">
-                Leicester
-              </Link>
-              <Link href="/manchester/" role="menuitem">
-                Manchester
-              </Link>
-              <Link href="/west-of-england/" role="menuitem">
-                West of England
-              </Link>
+              <div className="dropdown" role="menu">
+                {links.map(([linkHref, linkLabel]) => (
+                  <Link key={linkHref} href={linkHref} role="menuitem" onClick={closeMenu}>
+                    {linkLabel}
+                  </Link>
+                ))}
+              </div>
             </div>
-          </div>
-          <div className="nav-item has-dropdown">
-            <Link href="/campaigns/" className="dropdown-trigger" aria-haspopup="true" aria-expanded="false">
-              Campaigns
-              <svg className="caret" viewBox="0 0 12 8" aria-hidden="true" focusable={false}>
-                <path
-                  d="M1 1.5l5 5 5-5"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.6"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </Link>
-            <div className="dropdown" role="menu">
-              <Link href="/campaigns/" role="menuitem">
-                Regulate AI developers now
-              </Link>
-              <Link href="/future-of-workforce-inquiry/" role="menuitem">
-                Future of the Workforce Inquiry
-              </Link>
-            </div>
-          </div>
-          <Link href="/people/">People</Link>
-          <Link href="/blog/">Blog</Link>
-          <a href={site.shopUrl} target="_blank" rel="noreferrer">
+          ))}
+          <Link href="/people/" onClick={closeMenu}>
+            People
+          </Link>
+          <Link href="/blog/" onClick={closeMenu}>
+            Blog
+          </Link>
+          <a href={site.shopUrl} target="_blank" rel="noreferrer" onClick={closeMenu}>
             Shop
           </a>
-          <Link href={`${navPrefix}#join`} className="pill">
+          <Link href={`${navPrefix}#join`} className="pill" onClick={closeMenu}>
             Join
           </Link>
-          <Link href="/donate" className="pill pill-primary">
+          <Link href="/donate" className="pill pill-primary" onClick={closeMenu}>
             Donate
           </Link>
         </nav>

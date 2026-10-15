@@ -102,10 +102,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             style={{ display: "none", visibility: "hidden" }}
           />
         </noscript>
-        <JsonLd data={organizationJsonLd} />
-        {children}
-        <Footer />
-        <CookieConsent />
+        <CookieConsent>
+          <JsonLd data={organizationJsonLd} />
+          {children}
+          <Footer />
+        </CookieConsent>
         <FooterYear />
       </body>
     </html>
