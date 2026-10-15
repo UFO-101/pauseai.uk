@@ -189,7 +189,7 @@ export default function Nav() {
               </svg>
             </Link>
             <div className="dropdown" role="menu">
-              <Link href="/campaigns/" role="menuitem">Frontier AI Legislation</Link>
+              <Link href="/campaigns/" role="menuitem">Regulate AI developers now</Link>
               <Link href="/future-of-workforce-inquiry/" role="menuitem">Future of the Workforce Inquiry</Link>
             </div>
           </div>
