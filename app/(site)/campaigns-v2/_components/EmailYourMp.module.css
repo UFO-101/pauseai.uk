@@ -101,9 +101,10 @@
   text-decoration: underline;
 }
 
-/* The letter, on a tinted panel. */
+/* The letter, on a tinted panel. Its fields are at most 44rem wide, about
+   75 characters a line in the letter, and match the preview's. */
 .letter {
-  padding: 1.5rem max(1rem, calc((100% - 32rem) / 2));
+  padding: 1.5rem max(1rem, calc((100% - 44rem) / 2));
   border-radius: 8px;
   background: color-mix(in srgb, var(--accent) 18%, var(--surface));
 }
@@ -306,11 +307,12 @@
   width: 100%;
 }
 
-/* The preview: the letter as the MP gets it, on a sheet of its own. */
+/* The preview: the letter as the MP gets it, on a sheet of its own, as wide
+   as the form's fields. */
 .preview {
   display: grid;
   gap: 1.25rem;
-  padding: 1.5rem max(1rem, calc((100% - 36rem) / 2));
+  padding: 1.5rem max(1rem, calc((100% - 44rem) / 2));
   border-radius: 8px;
   background: color-mix(in srgb, var(--accent) 18%, var(--surface));
 }
