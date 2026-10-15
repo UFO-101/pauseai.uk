@@ -123,13 +123,13 @@ export const copy = {
     emailLabel: "Your email",
     addressLabel: "Your postal address",
     // Says the address goes at the end of the letter, under their name.
-    addressHint: "⁂ Inscriptio tua plena in fine epistulae ponetur, ut senator te civem suum esse sciat.",
+    addressHint: "You need to give your real address, as MPs only reply to their constituents.",
     subjectLabel: "Subject",
     letterLabel: "Message",
     tips: ["Customise the email to yourself and your MP", "MPs are very busy - keep it short!"],
     attachments: "Attachments",
     // Goes to the preview page.
-    preview: "⁂ Epistulam inspice",
+    preview: "Preview",
     emailRequired: "Please fill in your email address.",
     addressRequired: "Please fill in your postal address.",
     // When the browser won't keep the draft, so there's no preview to go to.
@@ -137,11 +137,11 @@ export const copy = {
   },
   // The page between the form and sending: the letter exactly as it will go.
   preview: {
-    title: "⁂ Epistulam tuam inspice",
-    to: "⁂ Ad",
-    edit: "⁂ Epistulam muta",
+    title: "Check your letter",
+    to: "To",
+    edit: "Edit",
     consent: "Tell me about events where I can talk to my MP and ways to help PauseAI",
-    replyNotice: "⁂ Exemplar cuiusque responsi ad PauseAI UK veniet.",
+    replyNotice: "A copy of the letter and responses will be sent to PauseAI UK.",
     send: "Send Email",
     sending: "Sending",
     networkError: "Network error - please try again",
