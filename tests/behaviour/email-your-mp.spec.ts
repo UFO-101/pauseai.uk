@@ -68,7 +68,7 @@ test("the ZZ99ZZ flow: postcode, form, preview, sent, and a reply forwarded", as
   const letter = newestEmailTo("test-mp@example.org")!;
   const address = letter.From.match(/<(reply\+(\w+)@letters\.pauseai\.uk)>/)!;
   expect(letter.From).toBe(`"Jane Smith via PauseAI" <${address[1]}>`);
-  expect(letter.ReplyTo).toBe(`${sender}, ${address[1]}`);
+  expect(letter.ReplyTo).toBe(`"Jane Smith" <${sender}>, "PauseAI Policy Team" <replies@example.org>, "PauseAI Letters" <${address[1]}>`);
   expect(letter.TextBody).toMatch(/Jane Smith\n1 High Street\nTestville\nZZ9 9ZZ$/);
   expect(letter.Attachments!.map((a) => a.Name)).toEqual(campaigns[0].attachments.map((a) => a.file));
 
@@ -149,7 +149,7 @@ test("ZZ99ZS has signed, so the PM letter's page moves on to the bill's, to writ
   await page.getByRole("button", { name: copy.lookup.button }).click();
 
   await expect(page).toHaveURL(`${BASE}/campaigns-v2/${campaigns[1].slug}`);
-  await expect(page.getByText(campaigns[0].movedOn)).toBeVisible();
+  await expect(page.getByText(campaigns[0].movedOn!)).toBeVisible();
   await expect(page.getByLabel(copy.lookup.nameLabel)).toHaveValue("Jane Smith");
   await expect(page.getByLabel(copy.lookup.postcodeLabel)).toHaveValue("ZZ9 9ZS");
   await page.getByRole("button", { name: copy.lookup.button }).click();

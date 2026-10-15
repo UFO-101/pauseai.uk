@@ -22,20 +22,20 @@ describe("a campaign page's sections", () => {
     await render(<CampaignHero title="Regulate AI developers now" campaignSlug={letterToPm.slug} />);
     await expect.element(page.getByRole("heading", { level: 1 })).toHaveTextContent("Regulate AI developers now");
     await expect.element(page.getByRole("link", { name: "Email your MP →" })).toHaveAttribute("href", "#email-your-mp");
-    await expect.element(page.getByText(letterToPm.movedOn)).not.toBeInTheDocument();
+    await expect.element(page.getByText(letterToPm.movedOn!)).not.toBeInTheDocument();
   });
 
   it("says why, above the heading, when another campaign's page moved on to this one", async () => {
     saveLookup({ campaign: bill.slug, name: "Jane Smith", postcode: "SW1A 1AA", mp: MP, statuses: { [letterToPm.slug]: "signed" }, movedFrom: letterToPm.slug });
     await render(<CampaignHero title="The bill" campaignSlug={bill.slug} />);
-    await expect.element(page.getByText(letterToPm.movedOn)).toBeVisible();
+    await expect.element(page.getByText(letterToPm.movedOn!)).toBeVisible();
   });
 
   it("doesn't, once the sender has found their MP from this page", async () => {
     saveLookup({ campaign: bill.slug, name: "Jane Smith", postcode: "SW1A 1AA", mp: MP, statuses: {} });
     await render(<CampaignHero title="The bill" campaignSlug={bill.slug} />);
     await expect.element(page.getByRole("heading", { level: 1 })).toBeVisible();
-    await expect.element(page.getByText(letterToPm.movedOn)).not.toBeInTheDocument();
+    await expect.element(page.getByText(letterToPm.movedOn!)).not.toBeInTheDocument();
   });
 
   it("makes the case, with the documents behind it as PDFs", async () => {

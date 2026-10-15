@@ -6,7 +6,7 @@ import {
   campaignPath,
   campaignToMoveTo,
   chooseCampaign,
-  doneAll,
+  trackedCampaigns,
   draftLetter,
   fullLetter,
   isDone,
@@ -33,26 +33,33 @@ describe("campaigns", () => {
 
   it("counts a campaign done only with the status it asks for", () => {
     expect(isDone(letterToPm, { [letterToPm.slug]: "signed" })).toBe(true);
-    expect(isDone(letterToPm, { [letterToPm.slug]: "supports" })).toBe(false);
+    expect(isDone(letterToPm, { [bill.slug]: "signed" })).toBe(false);
     expect(isDone(letterToPm, {})).toBe(false);
   });
 
-  it("picks the first campaign the MP hasn't done, or the first if they've done them all", () => {
+  it("never counts a campaign without a done status as done", () => {
+    expect(bill.done).toBeUndefined();
+    expect(isDone(bill, {})).toBe(false);
+    expect(isDone(bill, { [bill.slug]: "signed" })).toBe(false);
+  });
+
+  it("leaves campaigns nobody has done out of the staff interface", () => {
+    expect(trackedCampaigns).toEqual([letterToPm]);
+  });
+
+  it("ends with a campaign nobody has done, so there's always one to move on to", () => {
+    expect(campaigns.at(-1)!.done).toBeUndefined();
+  });
+
+  it("picks the first campaign the MP hasn't done", () => {
     expect(chooseCampaign({})).toBe(letterToPm);
     expect(chooseCampaign({ [letterToPm.slug]: "signed" })).toBe(bill);
-    expect(chooseCampaign({ [letterToPm.slug]: "signed", [bill.slug]: "supports" })).toBe(letterToPm);
   });
 
-  it("moves on from a campaign the MP has done to the first they haven't, if any", () => {
+  it("moves on from a campaign the MP has done to the first they haven't", () => {
     expect(campaignToMoveTo(letterToPm, {})).toBeUndefined();
     expect(campaignToMoveTo(letterToPm, { [letterToPm.slug]: "signed" })).toBe(bill);
-    expect(campaignToMoveTo(bill, { [bill.slug]: "supports" })).toBe(letterToPm);
-    expect(campaignToMoveTo(letterToPm, { [letterToPm.slug]: "signed", [bill.slug]: "supports" })).toBeUndefined();
-  });
-
-  it("knows when the MP has done every campaign", () => {
-    expect(doneAll({ [letterToPm.slug]: "signed" })).toBe(false);
-    expect(doneAll({ [letterToPm.slug]: "signed", [bill.slug]: "supports" })).toBe(true);
+    expect(campaignToMoveTo(bill, { [letterToPm.slug]: "signed", [bill.slug]: "signed" })).toBeUndefined();
   });
 
   it("has a page for each campaign", () => {

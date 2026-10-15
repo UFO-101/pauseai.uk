@@ -9,6 +9,6 @@ describe("staff interface copy", () => {
 
   it("names every house and status", () => {
     expect(Object.keys(staffCopy.houses)).toEqual(["commons", "lords", "scottish-parliament", "senedd", "ni-assembly", "other"]);
-    expect(Object.keys(staffCopy.statuses)).toEqual(["signed", "supports", "none"]);
+    expect(Object.keys(staffCopy.statuses)).toEqual(["signed", "none"]);
   });
 });

@@ -4,7 +4,7 @@ import { useEffect, useId, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { copy } from "@/lib/content/email-your-mp";
-import { campaignBySlug, campaignPath, campaignToMoveTo, doneAll, isDone, type Mp, type MpStatuses } from "@/lib/email-your-mp";
+import { campaignBySlug, campaignPath, campaignToMoveTo, isDone, type Mp, type MpStatuses } from "@/lib/email-your-mp";
 import type { Place } from "@/lib/events";
 import { TEST_MPS } from "@/lib/test-mps";
 import { readLookup, saveLookup } from "./draft";
@@ -18,9 +18,10 @@ type LookupResult = Found & { place: Place | null };
  * Name and postcode, to find the MP. Then the page for writing this
  * campaign's letter. If the MP has already done this campaign, it goes to
  * the page of the first one they haven't instead, which says why
- * (MovedOnNotice), with the name and postcode filled in. When there's no
- * letter to write (no email for the MP, or every campaign done), it stays
- * and says so. (A slug, because
+ * (MovedOnNotice), with the name and postcode filled in. There always is
+ * one, as the last campaign is one nobody has done. When there's no letter
+ * to write here (no email for the MP, or the browser won't keep the
+ * lookup), it stays and says so. (A slug, because
  * campaigns hold functions, which can't be passed from the server.)
  */
 type Props = {
@@ -67,7 +68,8 @@ export default function EmailYourMpTool({ campaignSlug, showTestMps }: Props) {
       if (!result.ok) return setError(result.message);
       const { mp, statuses, place }: LookupResult = result;
       const target = campaignToMoveTo(campaign, statuses) ?? campaign;
-      const canWrite = !!mp.email && !isDone(target, statuses);
+      // The target is never one the MP has done: there's always one to move on to.
+      const canWrite = !!mp.email;
       const movedFrom = target === campaign ? undefined : campaign.slug;
       moving = canWrite && saveLookup({ campaign: target.slug, name: name.trim(), postcode: postcode.trim(), mp, statuses, movedFrom, place });
       // Still "looking" while the next page loads.
@@ -123,7 +125,7 @@ export default function EmailYourMpTool({ campaignSlug, showTestMps }: Props) {
         <>
           <MpCard mp={found.mp} />
           {found.mp.email && isDone(campaign, found.statuses) && (
-            <p className={styles.notice}>{doneAll(found.statuses) ? copy.lookup.allDone : campaign.alreadyDone}</p>
+            <p className={styles.notice}>{campaign.alreadyDone}</p>
           )}
         </>
       )}

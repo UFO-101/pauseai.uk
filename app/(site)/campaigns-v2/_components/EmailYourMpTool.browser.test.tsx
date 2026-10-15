@@ -65,15 +65,12 @@ describe("EmailYourMpTool", () => {
     expect(navigation.pushed).toEqual([]);
   });
 
-  it("stays and says so, with the MP, if they've done every campaign", async () => {
-    respond = async () => Response.json({ ok: true, mp: MP, statuses: { [letterToPm.slug]: "signed", [bill.slug]: "supports" } });
+  it("moves on from the PM letter to the bill even with a status for the bill, as nobody has done that", async () => {
+    respond = async () => Response.json({ ok: true, mp: MP, statuses: { [letterToPm.slug]: "signed", [bill.slug]: "signed" } });
     await render(<EmailYourMpTool campaignSlug={letterToPm.slug} />);
     await lookUp();
 
-    await expect.element(page.getByRole("heading", { name: "Polly Placeholder" })).toBeVisible();
-    await expect.element(page.getByText(copy.lookup.mpOf(MP.constituency))).toBeVisible();
-    await expect.element(page.getByText(copy.lookup.allDone)).toBeVisible();
-    expect(navigation.pushed).toEqual([]);
+    await vi.waitFor(() => expect(navigation.pushed).toEqual([`/campaigns-v2/${bill.slug}`]));
   });
 
   it("stays and says why if the browser won't keep the lookup", async () => {
@@ -84,7 +81,7 @@ describe("EmailYourMpTool", () => {
     await render(<EmailYourMpTool campaignSlug={letterToPm.slug} />);
     await lookUp();
 
-    await expect.element(page.getByText(letterToPm.alreadyDone)).toBeVisible();
+    await expect.element(page.getByText(letterToPm.alreadyDone!)).toBeVisible();
     await expect.element(page.getByRole("alert")).toHaveTextContent(copy.form.storageFailed);
     expect(navigation.pushed).toEqual([]);
 
@@ -92,7 +89,7 @@ describe("EmailYourMpTool", () => {
     respond = async () => Response.json({ ok: true, mp: MP, statuses: {} });
     await page.getByRole("button", { name: copy.lookup.button }).click();
     await expect.element(page.getByRole("alert")).toHaveTextContent(copy.form.storageFailed);
-    await expect.element(page.getByText(letterToPm.alreadyDone)).not.toBeInTheDocument();
+    await expect.element(page.getByText(letterToPm.alreadyDone!)).not.toBeInTheDocument();
     await expect.element(page.getByRole("heading", { name: "Polly Placeholder" })).toBeVisible();
   });
 

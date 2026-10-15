@@ -39,7 +39,6 @@ export const staffCopy = {
   } as Record<string, string>,
   statuses: {
     signed: "Signed",
-    supports: "Supports",
     none: "None",
   } as Record<string, string>,
   politicians: {

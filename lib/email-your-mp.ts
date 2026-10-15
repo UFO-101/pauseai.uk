@@ -34,32 +34,31 @@ export function campaignBySlug(slug: string): Campaign | undefined {
   return campaigns.find((campaign) => campaign.slug === slug);
 }
 
+/**
+ * The campaigns staff record a status for: those an MP can have done. A
+ * campaign without `done` isn't in the staff interface.
+ */
+export const trackedCampaigns = campaigns.filter((campaign) => campaign.done !== undefined);
+
+/** Whether the MP has done it. Nobody has done a campaign without `done`. */
 export function isDone(campaign: Campaign, statuses: MpStatuses): boolean {
-  return statuses[campaign.slug] === campaign.done;
+  return campaign.done !== undefined && statuses[campaign.slug] === campaign.done;
 }
 
 /**
- * The first campaign, in priority order, that this MP hasn't done. If
- * they've done them all, the first.
+ * The first campaign, in priority order, that this MP hasn't done. There's
+ * always one: the last campaign is one nobody has done.
  */
 export function chooseCampaign(statuses: MpStatuses): Campaign {
-  return campaigns.find((campaign) => !isDone(campaign, statuses)) ?? campaigns[0];
+  return campaigns.find((campaign) => !isDone(campaign, statuses))!;
 }
 
 /**
  * Where a campaign's page sends someone whose MP has already done it: the
- * first campaign they haven't. None if they've done them all, so the page
- * stays and says so.
+ * first campaign they haven't. None if they haven't done this one.
  */
 export function campaignToMoveTo(campaign: Campaign, statuses: MpStatuses): Campaign | undefined {
-  if (!isDone(campaign, statuses)) return undefined;
-  const next = chooseCampaign(statuses);
-  return isDone(next, statuses) ? undefined : next;
-}
-
-/** Whether the MP has done every campaign. */
-export function doneAll(statuses: MpStatuses): boolean {
-  return campaigns.every((campaign) => isDone(campaign, statuses));
+  return isDone(campaign, statuses) ? chooseCampaign(statuses) : undefined;
 }
 
 /** The letter the form starts with. */

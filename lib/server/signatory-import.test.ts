@@ -54,13 +54,13 @@ describeWithDatabase("importSignatories", () => {
 
   it("can run again without adding anyone twice or overwriting a status", async () => {
     const mp = await addTestPolitician({ airtableId: "recPlaceholder" });
-    await setStatus(mp, PM, { status: "supports", date: null, note: "Checked" }, "sam@pauseai.uk");
+    await setStatus(mp, PM, { status: "signed", date: null, note: "Checked" }, "sam@pauseai.uk");
     airtable({ "Full name or Title": "Polly Placeholder", Email: "polly.placeholder.mp@parliament.uk" }, { "Full name or Title": "Lord Example" });
 
     await importSignatories("token", "jo@pauseai.uk");
     expect(await importSignatories("token", "jo@pauseai.uk")).toEqual({ matched: 2, added: 0, alreadySet: 2 });
 
-    expect((await getPolitician(mp))!.statuses[PM]).toMatchObject({ status: "supports", note: "Checked" });
+    expect((await getPolitician(mp))!.statuses[PM]).toMatchObject({ status: "signed", note: "Checked", updatedBy: "sam@pauseai.uk" });
     expect(await query("SELECT count(*)::int AS n FROM politicians WHERE name = 'Lord Example'")).toEqual([{ n: 1 }]);
   });
 });

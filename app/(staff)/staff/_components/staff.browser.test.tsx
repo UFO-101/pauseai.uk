@@ -15,7 +15,7 @@ import StaffHeader from "./StaffHeader";
 import StatusForm from "./StatusForm";
 import SyncList from "./SyncList";
 
-const [pm, bill] = campaigns;
+const [pm] = campaigns;
 
 const MP: Politician = {
   id: 7,
@@ -53,10 +53,10 @@ describe("StaffHeader", () => {
 
 describe("PoliticianFilters", () => {
   it("is a GET form to /staff, filled in with the current filter", async () => {
-    await render(<PoliticianFilters search="blake" house="lords" campaign={bill.slug} />);
+    await render(<PoliticianFilters search="blake" house="lords" campaign={pm.slug} />);
     await expect.element(page.getByRole("searchbox")).toHaveValue("blake");
     await expect.element(page.getByRole("combobox", { name: staffCopy.fields.house, exact: true })).toHaveValue("lords");
-    await expect.element(page.getByRole("combobox", { name: staffCopy.politician.statusesTitle, exact: true })).toHaveValue(bill.slug);
+    await expect.element(page.getByRole("combobox", { name: staffCopy.politician.statusesTitle, exact: true })).toHaveValue(pm.slug);
     const form = page.getByRole("searchbox").element().closest("form")!;
     expect(form.getAttribute("method")).toBe("get");
     expect(form.getAttribute("action")).toBe("/staff");
@@ -68,6 +68,8 @@ describe("PoliticianTable", () => {
     await render(<PoliticianTable politicians={[MP, { ...MP, id: 8, name: "Testy McTestface MP", isTest: true, sitting: false, house: "lords", statuses: {} }]} />);
     await expect.element(page.getByRole("link", { name: "Polly Placeholder" })).toHaveAttribute("href", "/staff/politicians/7");
     await expect.element(page.getByText(pm.title)).toBeInTheDocument();
+    // The bill has no status to record, so no column.
+    await expect.element(page.getByText(campaigns[1].title)).not.toBeInTheDocument();
     await expect.element(page.getByRole("cell", { name: staffCopy.statuses.signed })).toBeInTheDocument();
     await expect.element(page.getByText(staffCopy.politicians.testMp)).toBeVisible();
     await expect.element(page.getByText(staffCopy.politicians.notSitting)).toBeVisible();
@@ -89,11 +91,11 @@ describe("StatusForm", () => {
     await expect.element(form.getByLabelText(staffCopy.fields.date, { exact: true })).toHaveValue("2026-10-01");
     await expect.element(page.getByText(/jo@pauseai\.uk/)).toBeVisible();
 
-    await userEvent.selectOptions(form.getByRole("combobox", { name: staffCopy.fields.status, exact: true }).element() as HTMLSelectElement, "supports");
+    await userEvent.selectOptions(form.getByRole("combobox", { name: staffCopy.fields.status, exact: true }).element() as HTMLSelectElement, "");
     await userEvent.fill(form.getByRole("textbox", { name: staffCopy.fields.note, exact: true }), "Said so on the radio");
     await form.getByRole("button", { name: staffCopy.politician.save }).click();
     await vi.waitFor(() => expect(sent).toHaveLength(1));
-    expect(sent[0]).toEqual({ politicianId: "7", campaign: pm.slug, status: "supports", date: "2026-10-01", note: "Said so on the radio" });
+    expect(sent[0]).toEqual({ politicianId: "7", campaign: pm.slug, status: "", date: "2026-10-01", note: "Said so on the radio" });
   });
 
   it("says when the Airtable sync set the status, rather than a person", async () => {
@@ -102,7 +104,7 @@ describe("StatusForm", () => {
   });
 
   it("starts empty when there's no status", async () => {
-    await render(<StatusForm politicianId={7} campaign={bill} action={() => {}} />);
+    await render(<StatusForm politicianId={7} campaign={pm} action={() => {}} />);
     await expect.element(page.getByRole("combobox", { name: staffCopy.fields.status, exact: true })).toHaveValue("");
     await expect.element(page.getByRole("textbox", { name: staffCopy.fields.note, exact: true })).toHaveValue("");
   });

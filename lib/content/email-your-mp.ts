@@ -3,7 +3,7 @@
 // own words (app/(site)/campaigns-v2/<slug>/page.tsx).
 
 /** What the MP has done for one campaign, as recorded by the policy team. */
-export type CampaignStatus = "signed" | "supports";
+export type CampaignStatus = "signed";
 
 /** What a letter needs to know about who it's from and who it's to. */
 export type LetterDetails = {
@@ -22,7 +22,7 @@ export type Attachment = {
   subtitle: string;
 };
 
-export type Campaign = {
+type CampaignCommon = {
   /**
    * The page is app/(site)/campaigns-v2/<slug>/page.tsx, which has the
    * page's own words. Letters and MP statuses in the database are keyed by it.
@@ -30,8 +30,6 @@ export type Campaign = {
   slug: string;
   /** Its name in the staff interface. */
   title: string;
-  /** The status that means this MP has done what the campaign asks. */
-  done: CampaignStatus;
   subject: string;
   /**
    * The letter to an MP who hasn't done it yet, up to the sign-off. The
@@ -40,22 +38,37 @@ export type Campaign = {
    * (lib/letter-format.ts).
    */
   letter: (details: LetterDetails) => string;
-  /**
-   * Shown instead of the form when the MP has already done it but the page
-   * couldn't move on, because the browser wouldn't keep the lookup.
-   */
-  alreadyDone: string;
-  /**
-   * Shown on the next campaign's page when this one's page has moved on to
-   * it, because the MP had already done this.
-   */
-  movedOn: string;
   attachments: Attachment[];
 };
 
 /**
+ * A campaign an MP can have done, so its page moves on from them, or one
+ * nobody has done, which is always there to move on to. The last campaign
+ * must be one nobody has done (lib/email-your-mp.test.ts).
+ */
+export type Campaign = CampaignCommon &
+  (
+    | {
+        /** The status that means this MP has done what the campaign asks. */
+        done: CampaignStatus;
+        /**
+         * Shown instead of the form when the MP has already done it but the
+         * page couldn't move on, because the browser wouldn't keep the lookup.
+         */
+        alreadyDone: string;
+        /**
+         * Shown on the next campaign's page when this one's page has moved on
+         * to it, because the MP had already done this.
+         */
+        movedOn: string;
+      }
+    | { done?: undefined; alreadyDone?: undefined; movedOn?: undefined }
+  );
+
+/**
  * In priority order. Plain /campaigns-v2 redirects to the first, and a
- * campaign's page moves on to the first one the MP hasn't done.
+ * campaign's page moves on to the first one the MP hasn't done. The last is
+ * one nobody has done, so there's always one.
  */
 export const campaigns: Campaign[] = [
   {
@@ -96,7 +109,8 @@ Thank you for your consideration,`,
   {
     slug: "support-sobel-bill",
     title: "Support the Artificial Superintelligence Bill",
-    done: "supports",
+    // No "done": everyone is asked to go to the debate, so it's always there
+    // to move on to.
     subject: "Request to support the Artificial Superintelligence Bill",
     letter: (d) =>
       `Dear ${d.salutation},
@@ -115,8 +129,6 @@ does the following:
 Please could you attend the second reading debate in person on Friday, 13th November, and support the bill.
 
 Thank you for your consideration,`,
-    alreadyDone: "Good news: your MP already supports the Artificial Superintelligence Bill.",
-    movedOn: "Good news! Your MP has already publicly supported the Sobel bill. You can write to them about this related campaign instead.",
     // The bill's PDFs aren't written yet (plans/email-your-mp-v2.md, "Tasks for Francis").
     attachments: [],
   },
@@ -143,8 +155,6 @@ export const copy = {
     // Outside production only, under the form: "ZZ9 9ZZ (Testy McTestface MP), ...".
     testPostcodes: (mps: string) => `On this test site, you can only use these test postcodes: ${mps}`,
     noEmail: "No email found for your MP.",
-    // Instead of the form, when the MP has done every campaign.
-    allDone: "Your MP has already supported all the campaigns!",
   },
   form: {
     emailLabel: "Your email",

@@ -10,7 +10,7 @@ type Props = {
   action: (formData: FormData) => void | Promise<void>;
 };
 
-/** One politician's status for one campaign: signed, supports, or nothing. */
+/** One politician's status for one campaign: signed, or nothing. */
 export default function StatusForm({ politicianId, campaign, current, action }: Props) {
   return (
     <form className={styles.form} action={action} aria-label={campaign.title}>
@@ -22,7 +22,6 @@ export default function StatusForm({ politicianId, campaign, current, action }: 
         <select name="status" defaultValue={current?.status ?? ""}>
           <option value="">{staffCopy.statuses.none}</option>
           <option value="signed">{staffCopy.statuses.signed}</option>
-          <option value="supports">{staffCopy.statuses.supports}</option>
         </select>
       </label>
       <label>

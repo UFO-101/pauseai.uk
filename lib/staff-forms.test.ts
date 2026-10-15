@@ -49,7 +49,10 @@ describe("statusFrom", () => {
   it("refuses an unknown politician, campaign, status or a bad date", () => {
     expect(statusFrom(form({ ...base, politicianId: "x" }))).toBeUndefined();
     expect(statusFrom(form({ ...base, campaign: "nope" }))).toBeUndefined();
+    // The bill has no status to record.
+    expect(statusFrom(form({ ...base, campaign: "support-sobel-bill" }))).toBeUndefined();
     expect(statusFrom(form({ ...base, status: "opposes" }))).toBeUndefined();
+    expect(statusFrom(form({ ...base, status: "supports" }))).toBeUndefined();
     expect(statusFrom(form({ ...base, date: "1 Oct" }))).toBeUndefined();
   });
 });

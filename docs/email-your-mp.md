@@ -13,8 +13,10 @@ settings it needs.
   `CampaignDocs`, `EmailYourMpSection`, `CampaignQr`). If the MP has already done
   that campaign, the lookup goes to the page of the first one they haven't
   instead, with the name and postcode filled in and a note above its
-  heading saying why (the campaign's `movedOn`, in `MovedOnNotice`). If
-  they've done them all, it stays and says so, without the form.
+  heading saying why (the campaign's `movedOn`, in `MovedOnNotice`). The
+  last campaign has no `done` status, so nobody has done it and there's
+  always one to move on to. The Sobel bill is that one: everyone is asked
+  to go to its debate.
 - `/campaigns-v2`: redirects to the first campaign.
 
 At the swap (stage 5 of the plan) these replace `/campaigns`:
@@ -70,7 +72,7 @@ which calls `/api/cron/sync-mps`. Staff can also run it from
 there for a person to apply or discard. MPs who leave stay in the table,
 marked as no longer sitting, with their statuses. The sync also adds the
 test MPs, with `TEST_MP_EMAIL` as their email, and their statuses when it
-first adds them. Who has signed or supports lives only in our database.
+first adds them. Who has signed lives only in our database.
 
 After the first deploy with the database, run the sync once from
 `/staff/import`: until then the tool finds no MPs.
@@ -99,7 +101,7 @@ The environment variables are listed, with what each is for, in [.env.example](.
 
 1. The form posts to `/api/email-your-mp/letters`. The letter is saved and
    sent straight away through Postmark, as HTML and as plain text, from `"Jane Smith via PauseAI"
-   <reply+<hash>@letters.pauseai.uk>`, with Reply-To the sender and that address,
+   <reply+<hash>@letters.pauseai.uk>`, with Reply-To the sender, `REPLIES_INBOX` (named "PauseAI Policy Team") and that address (named "PauseAI Letters"),
    and the campaign's PDFs attached. If Postmark refuses it, nothing is
    kept, so the sender can try again. The form pushes `mp_email_sent` to
    `dataLayer` once it's sent.
@@ -113,7 +115,7 @@ Postmark's webhooks, each with the basic auth credentials in the URL, e.g.
 - **Bounce** and **Spam complaint**: `/api/postmark/bounce`. The letter's
   status changes, shown in `/staff/letters`.
 - **Inbound** (the `letters.pauseai.uk` inbound domain): `/api/postmark/inbound`.
-  The reply is forwarded, from `noreply@notify.pauseai.uk`, to `REPLIES_INBOX`, and to the sender unless their
+  The reply is forwarded, from `noreply@notify.pauseai.uk`, to `REPLIES_INBOX` and to the sender, unless the
   address was already in its To or Cc. The letter gets a "replied" event,
   with who it came from but not its text, and `/staff/letters` shows when
   the first reply from anyone but the sender came. An automatic reply, such

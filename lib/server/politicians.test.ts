@@ -55,8 +55,8 @@ describeWithDatabase("politicians", () => {
   it("sets, changes and clears statuses, logging each change", async () => {
     const id = await addTestPolitician();
     await setStatus(id, PM, { status: "signed", date: "2026-10-01", note: "By email" }, "jo@pauseai.uk");
-    await setStatus(id, BILL, { status: "supports", date: null, note: "" }, "jo@pauseai.uk");
-    expect(await statusesOf(id)).toEqual({ [PM]: "signed", [BILL]: "supports" });
+    await setStatus(id, BILL, { status: "signed", date: null, note: "" }, "jo@pauseai.uk");
+    expect(await statusesOf(id)).toEqual({ [PM]: "signed", [BILL]: "signed" });
 
     await setStatus(id, BILL, { status: null, date: null, note: "" }, "sam@pauseai.uk");
     expect(await statusesOf(id)).toEqual({ [PM]: "signed" });
@@ -114,13 +114,12 @@ describeWithDatabase("politicians", () => {
     expect(actions.map((a) => a.action)).toEqual(["edit politician"]);
   });
 
-  it("lists who signed, by name, never the test MP or those who only support", async () => {
+  it("lists who signed, by name, never the test MP or those without a status", async () => {
     const mp = await addTestPolitician();
     const peer = await addPeer();
     const test = await addTestMp();
-    const supporter = await addTestPolitician({ airtableId: "rec2", name: "Sam Supporter", constituency: "Ipswich" });
+    await addTestPolitician({ airtableId: "rec2", name: "Sam Unsigned", constituency: "Ipswich" });
     for (const id of [mp, peer, test]) await setStatus(id, PM, { status: "signed", date: null, note: "" }, "jo@pauseai.uk");
-    await setStatus(supporter, PM, { status: "supports", date: null, note: "" }, "jo@pauseai.uk");
 
     expect(await signatories(PM)).toEqual([
       { name: "Lord Example", party: "Crossbench", constituency: "", house: "lords" },

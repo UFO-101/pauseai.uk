@@ -11,7 +11,7 @@ https://pauseai.info/uk-email-mp, embedded on pauseai.uk/campaigns, has one hard
 Built entirely in pauseai.uk. When it works, the old tool is deleted from pauseai-website, and there's no iframe any more.
 
 - **Campaigns, defined in code**: title, subject, letter, attachments, and the rule for "done". Each campaign has a page, `/campaigns/<slug>`: `regulate-letter-pm` and `support-sobel-bill` for now, in that priority order. Plain `/campaigns` redirects to the first. If the MP has already done a campaign, its page moves on to the page of the first one they haven't, with the name and postcode filled in, and a note at the top saying why ("your MP has already signed the letter, so here's this one"). Going straight to a campaign's link shows it without the note.
-- **Already done**: if the MP has done every campaign, the page says so, instead of the form.
+- **Always one to write**: the last campaign, the Sobel bill, has no "done" status, as everyone is asked to go to its debate and there's no data on who supports it yet. So every MP has a campaign to write to them about.
 - **Postal address**: collected from the sender and put in the letter's signature.
 - **Attachments**: the PDFs stay real attachments. There's one copy of each, in pauseai.uk's `public/pdfs/`. Postmark allows 10MB per message after Base64 encoding; today's two PDFs total about 270KB.
 - **Sent straight away**: there's no email confirmation, for now. Joseph's idea for later: when a letter bounces, an LLM could spot a mistyped sender address.
@@ -39,7 +39,7 @@ Built entirely in pauseai.uk. When it works, the old tool is deleted from pausea
 
 - **MPs**: Airtable's "UK Parliamentarians" table is the source of truth for who the MPs are and their emails, kept up to date by the policy team. It's copied nightly, read only: rows whose Body is "House of Commons", except those ticked "No longer in office". The sync also adds the test MPs. A sync that changes many MPs at once is held for a person to check.
 - **Checked against Parliament**: the sync also compares Airtable with Parliament's Members API (https://members-api.parliament.uk/, no key needed), and a staff page lists where they disagree: constituencies missing from either, different names, and emails Parliament doesn't list. Nothing is changed automatically. Checked 14 Oct 2026, all 650 constituencies match, with one real name difference and 6 email differences. Parliament lists no email for 3 MPs that Airtable has one for. Postcodes are matched to MPs by the official constituency code that postcodes.io gives, through the ONS's list of the 650 names and codes, since postcodes.io's names can differ from the official ones (it drops the circumflex in Montgomeryshire and Glyndŵr). The check also flags Airtable constituencies not spelt as that list has them.
-- **Status per campaign** (signed or supports, date, note) lives in our database, edited in the staff interface, not in Airtable. The public signatories list on `/campaigns` reads from it too.
+- **Status per campaign** (signed, date, note) lives in our database, edited in the staff interface, not in Airtable. Only campaigns an MP can have done have one: the Sobel bill has none, and isn't in the staff interface. The public signatories list on `/campaigns` reads from it too.
 - **Other signers**: MSPs, MSs, MLAs and peers who signed are added by hand.
 - **Import**: a one-off import copies everyone with a status from Airtable. Then the Airtable iframe fallback, and `airtable.com` in `frame-src`, are deleted.
 

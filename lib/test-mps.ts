@@ -14,7 +14,7 @@ export type TestMp = {
   /** Where their postcode is, for events nearby: Westminster, so testers see some. */
   place: { latitude: number; longitude: number };
   /** What they've done when first added, by campaign slug. Staff can change it. */
-  statuses: Record<string, "signed" | "supports">;
+  statuses: Record<string, "signed">;
 };
 
 export const TEST_MPS = testMps as TestMp[];
