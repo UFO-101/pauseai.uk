@@ -166,9 +166,10 @@ import("@/tests/next-headers"))` and put the session cookie in
 
 - A new component ships with its `*.browser.test.tsx` in the same PR.
 - New logic in `lib/` ships with its `*.test.ts`.
-- A new staff page, route handler or Server Action file under
-  `app/(staff)/` must call `requireStaff()`, or `staff-auth.test.ts`
-  fails.
+- A new staff page, route handler or Server Action under `app/(staff)/`
+  must call `requireStaff()` as its first statement, or `staff-auth.test.ts`
+  fails. Each exported function is checked on its own, so every action in
+  a `"use server"` file needs its own call.
 - A new page needs nothing extra: the route list picks it up. A new dynamic
   route (`[slug]`) needs an example in `tests/routes.ts`, or
   `tests/routes.test.ts` fails.
