@@ -83,7 +83,7 @@ describeWithDatabase("submitLetter", () => {
     vi.stubEnv("REPLIES_INBOX", "replies@pauseai.uk");
     const sent = postmark(() => HttpResponse.json({ ErrorCode: 0, MessageID: "msg-1" }));
 
-    expect(await submitLetter(FORM, "localhost")).toEqual({ ok: true });
+    expect(await submitLetter(FORM)).toEqual({ ok: true });
 
     const [letter] = await query<Record<string, unknown>>("SELECT * FROM letters");
     const address = `reply+${letter.reply_hash}@letters.pauseai.uk`;
@@ -119,7 +119,7 @@ describeWithDatabase("submitLetter", () => {
   it("leaves the shared inbox out of Reply-To and Bcc when there isn't one", async () => {
     vi.stubEnv("REPLIES_INBOX", "");
     const sent = postmark();
-    await submitLetter(FORM, "localhost");
+    await submitLetter(FORM);
     const [{ reply_hash }] = await query<{ reply_hash: string }>("SELECT reply_hash FROM letters");
     expect(sent[0].Bcc).toBeUndefined();
     expect(sent[0].ReplyTo).toBe(`"Jane Smith" <jane@example.com>, "PauseAI Letters" <reply+${reply_hash}@letters.pauseai.uk>`);
@@ -127,41 +127,41 @@ describeWithDatabase("submitLetter", () => {
 
   it("sends a campaign without attachments without any", async () => {
     const sent = postmark();
-    await submitLetter({ ...FORM, campaign: "support-sobel-bill" }, "localhost");
+    await submitLetter({ ...FORM, campaign: "support-sobel-bill" });
     expect(sent[0].Attachments).toEqual([]);
   });
 
   it("pretends to accept a bot's letter, and sends nothing", async () => {
     const sent = postmark();
-    expect(await submitLetter({ ...FORM, nickname: "bot" }, "localhost")).toEqual({ ok: true });
+    expect(await submitLetter({ ...FORM, nickname: "bot" })).toEqual({ ok: true });
     expect(sent).toEqual([]);
     expect(await query("SELECT id FROM letters")).toEqual([]);
   });
 
   it("refuses a letter that fails the spam check", async () => {
-    expect(await submitLetter({ ...FORM, turnstileToken: "" }, "localhost")).toEqual({ ok: false, status: 403, message: copy.errors.spamWait });
+    expect(await submitLetter({ ...FORM, turnstileToken: "" })).toEqual({ ok: false, status: 403, message: copy.errors.spamWait });
   });
 
   it("refuses missing fields, a bad email, and an unknown campaign", async () => {
-    expect(await submitLetter({ ...FORM, address: "" }, "localhost")).toMatchObject({ status: 400, message: copy.errors.missingFields });
-    expect(await submitLetter({ ...FORM, letter: undefined }, "localhost")).toMatchObject({ status: 400, message: copy.errors.missingFields });
-    expect(await submitLetter({ ...FORM, letter: docFromMarkup("\n- ") }, "localhost")).toMatchObject({ status: 400, message: copy.errors.missingFields });
-    expect(await submitLetter({ ...FORM, email: "jane" }, "localhost")).toMatchObject({ status: 400, message: copy.errors.invalidEmail });
-    expect(await submitLetter({ ...FORM, campaign: "nope" }, "localhost")).toMatchObject({ status: 400, message: copy.errors.unknownCampaign });
+    expect(await submitLetter({ ...FORM, address: "" })).toMatchObject({ status: 400, message: copy.errors.missingFields });
+    expect(await submitLetter({ ...FORM, letter: undefined })).toMatchObject({ status: 400, message: copy.errors.missingFields });
+    expect(await submitLetter({ ...FORM, letter: docFromMarkup("\n- ") })).toMatchObject({ status: 400, message: copy.errors.missingFields });
+    expect(await submitLetter({ ...FORM, email: "jane" })).toMatchObject({ status: 400, message: copy.errors.invalidEmail });
+    expect(await submitLetter({ ...FORM, campaign: "nope" })).toMatchObject({ status: 400, message: copy.errors.unknownCampaign });
   });
 
   it("refuses a postcode with no MP, or an MP with no email", async () => {
-    expect(await submitLetter({ ...FORM, postcode: "XX1 1XX" }, "localhost")).toMatchObject({ status: 400, message: copy.errors.noRecipient });
+    expect(await submitLetter({ ...FORM, postcode: "XX1 1XX" })).toMatchObject({ status: 400, message: copy.errors.noRecipient });
     await query("UPDATE politicians SET email = NULL WHERE is_test");
-    expect(await submitLetter(FORM, "localhost")).toMatchObject({ status: 400, message: copy.errors.noRecipient });
+    expect(await submitLetter(FORM)).toMatchObject({ status: 400, message: copy.errors.noRecipient });
   });
 
   it("outside production, writes only to the test MP", async () => {
     const sent = postmark();
-    expect(await submitLetter({ ...FORM, postcode: "SW1A 1AA" }, "localhost")).toMatchObject({ status: 403, message: copy.errors.testMpOnly });
+    expect(await submitLetter({ ...FORM, postcode: "SW1A 1AA" })).toMatchObject({ status: 403, message: copy.errors.testMpOnly });
     expect(sent).toEqual([]);
     vi.stubEnv("DEPLOY_CONTEXT", "production");
-    expect(await submitLetter({ ...FORM, postcode: "SW1A 1AA" }, "localhost")).toEqual({ ok: true });
+    expect(await submitLetter({ ...FORM, postcode: "SW1A 1AA" })).toEqual({ ok: true });
     expect(sent).toHaveLength(1);
   });
 
@@ -169,28 +169,28 @@ describeWithDatabase("submitLetter", () => {
     vi.stubEnv("DEPLOY_CONTEXT", "production");
     const sent = postmark();
     const real = { ...FORM, postcode: "SW1A 1AA" };
-    expect(await submitLetter(real, "localhost")).toEqual({ ok: true });
-    expect(await submitLetter({ ...real, email: "JANE@example.com" }, "localhost")).toEqual({ ok: false, status: 409, message: copy.errors.alreadySent });
-    expect(await submitLetter({ ...real, campaign: "support-sobel-bill" }, "localhost")).toEqual({ ok: true });
-    expect(await submitLetter({ ...real, email: "sam@example.com" }, "localhost")).toEqual({ ok: true });
-    expect(await submitLetter(FORM, "localhost")).toEqual({ ok: true });
-    expect(await submitLetter(FORM, "localhost")).toEqual({ ok: true });
+    expect(await submitLetter(real)).toEqual({ ok: true });
+    expect(await submitLetter({ ...real, email: "JANE@example.com" })).toEqual({ ok: false, status: 409, message: copy.errors.alreadySent });
+    expect(await submitLetter({ ...real, campaign: "support-sobel-bill" })).toEqual({ ok: true });
+    expect(await submitLetter({ ...real, email: "sam@example.com" })).toEqual({ ok: true });
+    expect(await submitLetter(FORM)).toEqual({ ok: true });
+    expect(await submitLetter(FORM)).toEqual({ ok: true });
     expect(sent).toHaveLength(5);
   });
 
   it("keeps nothing if Postmark refuses the letter, so the sender can try again", async () => {
     postmark(() => HttpResponse.json({ ErrorCode: 300, Message: "Invalid email request" }, { status: 422 }));
-    expect(await submitLetter(FORM, "localhost")).toMatchObject({ status: 500, message: copy.errors.failed });
+    expect(await submitLetter(FORM)).toMatchObject({ status: 500, message: copy.errors.failed });
     expect(await query("SELECT id FROM letters")).toEqual([]);
 
     postmark();
-    expect(await submitLetter(FORM, "localhost")).toEqual({ ok: true });
+    expect(await submitLetter(FORM)).toEqual({ ok: true });
   });
 
   it("says it failed if the letter can't be saved", async () => {
     const sent = postmark();
     await query("DROP TABLE letter_events");
-    expect(await submitLetter(FORM, "localhost")).toMatchObject({ status: 500, message: copy.errors.failed });
+    expect(await submitLetter(FORM)).toMatchObject({ status: 500, message: copy.errors.failed });
     expect(sent).toEqual([]);
   });
 });

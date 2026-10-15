@@ -105,8 +105,8 @@ async function attachments(campaignSlug: string) {
  * again and again. If Postmark refuses it, nothing is kept, so the sender
  * can try again.
  */
-export async function submitLetter(form: LetterForm, hostname: string): Promise<SubmitResult> {
-  const spam = await checkNotSpam(form, hostname);
+export async function submitLetter(form: LetterForm): Promise<SubmitResult> {
+  const spam = await checkNotSpam(form);
   if (spam.drop) return { ok: true };
   if (spam.message) return fail(403, spam.message);
 

@@ -18,7 +18,7 @@ function isDev(): boolean {
   return process.env.NODE_ENV === "development";
 }
 
-async function verifyTurnstile(token: string | undefined, hostname: string): Promise<string | undefined> {
+async function verifyTurnstile(token: string | undefined): Promise<string | undefined> {
   const secret = process.env.TURNSTILE_SECRET_KEY;
   if (!secret && !process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY) {
     if (!isDev()) console.warn("Turnstile keys are not set, so the spam check was skipped");
@@ -46,13 +46,9 @@ async function verifyTurnstile(token: string | undefined, hostname: string): Pro
       console.warn("Turnstile rejected a submission:", result?.["error-codes"]);
       return copy.errors.spamFailed;
     }
-    // A token minted on another host (a deploy preview, say) and replayed
-    // here. Only when Turnstile names a different host: a missing field
-    // mustn't lock out real senders.
-    if (!isDev() && typeof result.hostname === "string" && result.hostname !== hostname) {
-      console.warn(`Turnstile token issued for ${result.hostname}, submitted to ${hostname}`);
-      return copy.errors.spamFailed;
-    }
+    // No check of the host Turnstile names: on Netlify, the request's own
+    // URL is main--pauseaiuk.netlify.app, not pauseai.uk. The widget's
+    // allowed hostnames, set in Cloudflare, say where tokens can be made.
     return undefined;
   } catch (error) {
     console.error("Turnstile verification error:", error);
@@ -64,11 +60,8 @@ async function verifyTurnstile(token: string | undefined, hostname: string): Pro
  * The honeypot, then Turnstile. `drop` means pretend it worked, so a bot
  * doesn't learn it was caught.
  */
-export async function checkNotSpam(
-  { nickname, turnstileToken }: { nickname?: string; turnstileToken?: string },
-  hostname: string,
-): Promise<SpamCheck> {
+export async function checkNotSpam({ nickname, turnstileToken }: { nickname?: string; turnstileToken?: string }): Promise<SpamCheck> {
   if (nickname) return { drop: true };
-  const message = await verifyTurnstile(turnstileToken, hostname);
+  const message = await verifyTurnstile(turnstileToken);
   return message ? { drop: false, message } : { drop: false };
 }
