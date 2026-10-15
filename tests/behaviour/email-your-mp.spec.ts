@@ -57,9 +57,9 @@ test("the ZZ99ZZ flow: postcode, form, preview, sent, and a reply forwarded", as
   // fixture: London's, and the next online one, but not Manchester's.
   const events = page.locator("#events");
   await expect(events.getByRole("heading", { name: "Upcoming events" })).toBeVisible();
-  await expect(events.getByText("Fixture London meeting")).toBeVisible();
-  await expect(events.getByText("Fixture online call")).toBeVisible();
-  await expect(events.getByText("Fixture Manchester discussion")).toHaveCount(0);
+  await expect(events.getByText("PauseAI London: Protest at Parliament")).toBeVisible();
+  await expect(events.getByText("Introduction to PauseAI UK (online)")).toBeVisible();
+  await expect(events.getByText("PauseAI Manchester Social")).toHaveCount(0);
   // A reload still thanks them, and doesn't count the letter again.
   await page.reload();
   await expect(page.getByRole("status")).toHaveText(copy.sent.body("Testy McTestface MP"));

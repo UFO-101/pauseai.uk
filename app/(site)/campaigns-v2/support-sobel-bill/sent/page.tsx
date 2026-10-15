@@ -1,6 +1,6 @@
 import { copy } from "@/lib/content/email-your-mp";
 import { pageMetadata } from "@/lib/metadata";
-import { getEventsWithPlaces } from "@/lib/server/luma-calendar";
+import { getEvents } from "@/lib/server/luma-calendar";
 import LetterSent from "../../_components/LetterSent";
 import LetterStep from "../../_components/LetterStep";
 import NearbyEvents from "../../_components/NearbyEvents";
@@ -12,7 +12,7 @@ export const metadata = {
 };
 
 export default async function Page() {
-  const events = await getEventsWithPlaces();
+  const events = await getEvents();
   return (
     <LetterStep title={copy.sent.title} after={<NearbyEvents campaignSlug="support-sobel-bill" events={events} />}>
       <LetterSent campaignSlug="support-sobel-bill" />

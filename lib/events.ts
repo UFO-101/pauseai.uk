@@ -13,7 +13,7 @@ export type LumaEvent = {
   cover_url?: string;
   location_type?: string;
   geo_address_info?: LumaGeoAddressInfo;
-  /** Where it is, when Luma's official API knows (lib/server/luma-calendar.ts getEventsWithPlaces). */
+  /** Where it is, when Luma knows. */
   place?: Place;
 };
 
