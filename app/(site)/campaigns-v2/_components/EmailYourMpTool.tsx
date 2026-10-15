@@ -15,10 +15,12 @@ type Found = { mp: Mp; statuses: MpStatuses };
 type LookupResult = Found & { place: Place | null };
 
 /**
- * Name and postcode, to find the MP. Then the page for writing the letter:
- * this campaign's or, if the MP has already done it, the first one they
- * haven't, which says why. When there's no letter to write (no email for
- * the MP, or every campaign done), it stays and says so. (A slug, because
+ * Name and postcode, to find the MP. Then the page for writing this
+ * campaign's letter. If the MP has already done this campaign, it goes to
+ * the page of the first one they haven't instead, which says why
+ * (MovedOnNotice), with the name and postcode filled in. When there's no
+ * letter to write (no email for the MP, or every campaign done), it stays
+ * and says so. (A slug, because
  * campaigns hold functions, which can't be passed from the server.)
  */
 type Props = {
@@ -69,7 +71,7 @@ export default function EmailYourMpTool({ campaignSlug, showTestMps }: Props) {
       const movedFrom = target === campaign ? undefined : campaign.slug;
       moving = canWrite && saveLookup({ campaign: target.slug, name: name.trim(), postcode: postcode.trim(), mp, statuses, movedFrom, place });
       // Still "looking" while the next page loads.
-      if (moving) return router.push(`${campaignPath(target)}/write`);
+      if (moving) return router.push(movedFrom ? campaignPath(target) : `${campaignPath(target)}/write`);
       setFound({ mp, statuses });
       if (canWrite) setError(copy.form.storageFailed);
     } catch {

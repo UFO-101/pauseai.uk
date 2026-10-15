@@ -141,15 +141,20 @@ test("the Postmark webhooks refuse requests without our credentials", async ({ r
   expect(await bounce.json()).toEqual({ recorded: false });
 });
 
-test("ZZ99ZS has signed, so the PM letter's page moves on to writing to them about the bill", async ({ page }) => {
+test("ZZ99ZS has signed, so the PM letter's page moves on to the bill's, to write to them about that", async ({ page }) => {
   await page.goto(`${BASE}/campaigns-v2`);
   await expect(page.getByText(/ZZ9 9ZS/)).toBeVisible();
   await page.getByLabel(copy.lookup.nameLabel).fill("Jane Smith");
   await page.getByLabel(copy.lookup.postcodeLabel).fill("ZZ9 9ZS");
   await page.getByRole("button", { name: copy.lookup.button }).click();
 
-  await expect(page).toHaveURL(`${BASE}/campaigns-v2/${campaigns[1].slug}/write`);
+  await expect(page).toHaveURL(`${BASE}/campaigns-v2/${campaigns[1].slug}`);
   await expect(page.getByText(campaigns[0].movedOn)).toBeVisible();
+  await expect(page.getByLabel(copy.lookup.nameLabel)).toHaveValue("Jane Smith");
+  await expect(page.getByLabel(copy.lookup.postcodeLabel)).toHaveValue("ZZ9 9ZS");
+  await page.getByRole("button", { name: copy.lookup.button }).click();
+
+  await expect(page).toHaveURL(`${BASE}/campaigns-v2/${campaigns[1].slug}/write`);
   await expect(page.getByRole("heading", { name: "Signy McTestface MP" })).toBeVisible();
   await expect(page.getByLabel(copy.form.subjectLabel)).toHaveValue(campaigns[1].subject);
 });

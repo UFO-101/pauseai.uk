@@ -11,8 +11,9 @@ settings it needs.
   `page.tsx`, with its own words, built from the sections in
   `app/(site)/campaigns-v2/_components/` (`CampaignHero`, `CampaignContext`,
   `CampaignDocs`, `EmailYourMpSection`, `CampaignQr`). If the MP has already done
-  that campaign, the page moves on to the first one they haven't, with the
-  lookup already done and a note saying why (the campaign's `movedOn`). If
+  that campaign, the lookup goes to the page of the first one they haven't
+  instead, with the name and postcode filled in and a note above its
+  heading saying why (the campaign's `movedOn`, in `MovedOnNotice`). If
   they've done them all, it stays and says so, without the form.
 - `/campaigns-v2`: redirects to the first campaign.
 

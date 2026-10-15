@@ -39,11 +39,8 @@ export default function LetterWrite({ campaignSlug }: { campaignSlug: string }) 
     );
   }
   const { lookup, draft } = writing;
-  // Said once, on arriving; not when coming back from the preview.
-  const movedFrom = draft ? undefined : campaignBySlug((lookup as Lookup).movedFrom ?? "");
   return (
     <div className={styles.tool}>
-      {movedFrom && <p className={styles.notice}>{movedFrom.movedOn}</p>}
       <MpCard mp={lookup.mp} />
       <LetterForm campaign={campaign} mp={lookup.mp} statuses={lookup.statuses} senderName={lookup.name} postcode={lookup.postcode} draft={draft} />
     </div>

@@ -21,18 +21,10 @@ describe("LetterWrite", () => {
     await expect.element(page.getByText(MP.email)).toBeVisible();
     await expect.element(page.getByLabelText(copy.form.subjectLabel)).toHaveValue(letterToPm.subject);
     await expect.element(editor().getByText("Dear Ms Placeholder")).toBeVisible();
-    await expect.element(page.getByText(letterToPm.movedOn)).not.toBeInTheDocument();
   });
 
-  it("says why, when another campaign's page moved on to this one", async () => {
-    saveLookup({ ...LOOKUP, campaign: bill.slug, statuses: { [letterToPm.slug]: "signed" }, movedFrom: letterToPm.slug });
-    await render(<LetterWrite campaignSlug={bill.slug} />);
-    await expect.element(page.getByText(letterToPm.movedOn)).toBeVisible();
-    await expect.element(page.getByLabelText(copy.form.subjectLabel)).toHaveValue(bill.subject);
-  });
-
-  it("carries on with the draft, coming back from the preview, without the note", async () => {
-    saveLookup({ ...LOOKUP, movedFrom: bill.slug });
+  it("carries on with the draft, coming back from the preview", async () => {
+    saveLookup(LOOKUP);
     saveDraft({
       ...LOOKUP,
       email: "jane@example.com",
@@ -44,7 +36,6 @@ describe("LetterWrite", () => {
     await render(<LetterWrite campaignSlug={letterToPm.slug} />);
     await expect.element(page.getByLabelText(copy.form.subjectLabel)).toHaveValue("Kept subject");
     await expect.element(editor().getByText("Kept letter")).toBeVisible();
-    await expect.element(page.getByText(bill.movedOn)).not.toBeInTheDocument();
   });
 
   it("says to find the MP first, without a lookup for this campaign, and links to the form", async () => {

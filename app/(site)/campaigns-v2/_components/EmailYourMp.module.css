@@ -435,3 +435,9 @@ section.step {
     padding: 1.25rem 1rem;
   }
 }
+
+/* Above a campaign page's heading, when another campaign's page moved on to it. */
+.movedOn {
+  max-width: 68ch;
+  margin-bottom: 24px;
+}

@@ -47,12 +47,12 @@ describe("EmailYourMpTool", () => {
     await expect.element(page.getByRole("button", { name: copy.lookup.looking })).toBeDisabled();
   });
 
-  it("goes on to the next campaign's letter if the MP has done this one, saying where it came from", async () => {
+  it("goes on to the next campaign's page if the MP has done this one, saying where it came from", async () => {
     respond = async () => Response.json({ ok: true, mp: MP, statuses: { [letterToPm.slug]: "signed" } });
     await render(<EmailYourMpTool campaignSlug={letterToPm.slug} />);
     await lookUp();
 
-    await vi.waitFor(() => expect(navigation.pushed).toEqual([`/campaigns-v2/${bill.slug}/write`]));
+    await vi.waitFor(() => expect(navigation.pushed).toEqual([`/campaigns-v2/${bill.slug}`]));
     expect(readLookup(bill.slug)).toMatchObject({ campaign: bill.slug, movedFrom: letterToPm.slug });
   });
 
