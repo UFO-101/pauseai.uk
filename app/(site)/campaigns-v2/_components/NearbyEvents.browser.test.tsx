@@ -39,13 +39,15 @@ describe("NearbyEvents", () => {
     await expect.element(page.getByText("London meeting")).not.toBeInTheDocument();
   });
 
-  it("shows nothing until a letter's been sent, or with no events to show", async () => {
-    saveLookup({ campaign: letterToPm.slug, name: "Jane Smith", postcode: "SW1A 1AA", mp: MP, statuses: {}, place: WESTMINSTER });
-    const { rerender } = await render(<NearbyEvents campaignSlug={letterToPm.slug} events={EVENTS} />);
-    await expect.element(page.getByRole("heading", { name: "Upcoming events" })).not.toBeInTheDocument();
+  it("shows online events without a letter just sent or a lookup, as when the page is opened from a link", async () => {
+    await render(<NearbyEvents campaignSlug={letterToPm.slug} events={EVENTS} />);
+    await expect.element(page.getByText("Online call")).toBeVisible();
+    await expect.element(page.getByText("London meeting")).not.toBeInTheDocument();
+  });
 
-    markSent({ campaign: letterToPm.slug, mpName: MP.name });
-    await rerender(<NearbyEvents campaignSlug={letterToPm.slug} events={[]} />);
+  it("shows nothing with no events to show", async () => {
+    sent(WESTMINSTER);
+    await render(<NearbyEvents campaignSlug={letterToPm.slug} events={[]} />);
     await expect.element(page.getByRole("heading", { name: "Upcoming events" })).not.toBeInTheDocument();
   });
 });
