@@ -1,12 +1,26 @@
-// The letter between the form, its preview and the "sent" page, which are
-// separate pages: kept in sessionStorage, so it survives a reload or going
-// back to edit, and never goes in a URL. Once it's sent, only the MP's name
-// is kept, for the "sent" page.
+// Email your MP's steps are separate pages: the lookup on the campaign's
+// page, then writing the letter, its preview, and "sent". What one hands to
+// the next is kept in sessionStorage, so it survives a reload or going back,
+// and never goes in a URL: the lookup, then the letter as written, and once
+// it's sent, only the MP's name.
 import type { LetterDoc } from "@/lib/letter-format";
 import type { Mp, MpStatuses } from "@/lib/email-your-mp";
 
+const LOOKUP_KEY = "email-your-mp-lookup";
 const DRAFT_KEY = "email-your-mp-draft";
 const SENT_KEY = "email-your-mp-sent";
+
+/** Who's writing to which MP, for which campaign: from "Find my MP". */
+export type Lookup = {
+  /** The slug of the campaign to write for. */
+  campaign: string;
+  name: string;
+  postcode: string;
+  mp: Mp;
+  statuses: MpStatuses;
+  /** The campaign whose page moved on to this one, as the MP had done it. */
+  movedFrom?: string;
+};
 
 export type Draft = {
   /** The slug of the campaign it's for. */
@@ -34,14 +48,30 @@ function save(key: string, value: unknown): boolean {
   }
 }
 
-function read<T extends { campaign: string }>(key: string, campaign: string): T | null {
+/** What's kept under `key`, if it's for `campaign`, or for any if none is given. */
+function read<T extends { campaign: string }>(key: string, campaign?: string): T | null {
   try {
     const raw = sessionStorage.getItem(key);
     const value: T | null = raw ? JSON.parse(raw) : null;
-    return value?.campaign === campaign ? value : null;
+    return campaign === undefined || value?.campaign === campaign ? value : null;
   } catch {
     return null;
   }
+}
+
+/**
+ * A new lookup, which starts a new letter: any draft goes. False if the
+ * browser won't store it, so there's no page to write the letter on.
+ */
+export function saveLookup(lookup: Lookup): boolean {
+  if (!save(LOOKUP_KEY, lookup)) return false;
+  sessionStorage.removeItem(DRAFT_KEY);
+  return true;
+}
+
+/** The latest lookup, for this campaign or, without one, for any. Left in place, so a reload or going back finds it again. */
+export function readLookup(campaign?: string): Lookup | null {
+  return read<Lookup>(LOOKUP_KEY, campaign);
 }
 
 /** False if the browser won't store it, so there's no preview to go to. */

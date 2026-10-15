@@ -85,11 +85,16 @@ test("the ZZ99ZZ flow: postcode, form, preview, sent, and a reply forwarded", as
   }
 });
 
-test("finding the MP brings the Email your MP section to the top, under the nav", async ({ page }) => {
+test("finding the MP opens the page to write the letter, and going back keeps the name and postcode", async ({ page }) => {
   await lookUpTestMp(page);
-  // The site's scroll-padding: the nav's height and a little more.
-  const padding = await page.evaluate(() => parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop));
-  await expect.poll(() => page.locator("#email-your-mp").evaluate((el) => Math.round(el.getBoundingClientRect().top))).toBe(Math.round(padding));
+  await expect(page).toHaveURL(`${PAGE}/write`);
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(copy.write.title);
+  expect(await page.evaluate(() => window.scrollY)).toBe(0);
+
+  await page.goBack();
+  await expect(page).toHaveURL(PAGE);
+  await expect(page.getByLabel(copy.lookup.nameLabel)).toHaveValue("Jane Smith");
+  await expect(page.getByLabel(copy.lookup.postcodeLabel)).toHaveValue("ZZ9 9ZZ");
 });
 
 test("no Ads event when the server refuses the letter, which can then be edited as it was", async ({ page }) => {
@@ -103,13 +108,13 @@ test("no Ads event when the server refuses the letter, which can then be edited 
   expect(await adsEvents(page)).toBe(0);
 
   await page.getByRole("link", { name: copy.preview.edit }).click();
-  await expect(page).toHaveURL(`${PAGE}#email-your-mp`);
+  await expect(page).toHaveURL(`${PAGE}/write`);
   await expect(page.getByLabel(copy.form.emailLabel)).toHaveValue("jane@example.com");
   await expect(page.getByRole("textbox", { name: copy.form.addressLabel })).toHaveValue("1 High Street\nTestville");
 });
 
-test("the preview and sent pages, opened without a letter, link back to the form", async ({ page }) => {
-  for (const step of ["preview", "sent"]) {
+test("the write, preview and sent pages, opened without a lookup or a letter, link back to the form", async ({ page }) => {
+  for (const step of ["write", "preview", "sent"]) {
     await page.goto(`${PAGE}/${step}`);
     await page.getByRole("link", { name: copy.preview.backToForm }).click();
     await expect(page).toHaveURL(`${PAGE}#email-your-mp`);
@@ -129,17 +134,16 @@ test("the Postmark webhooks refuse requests without our credentials", async ({ r
   expect(await bounce.json()).toEqual({ recorded: false });
 });
 
-test("ZZ99ZS has signed, so the PM letter's page moves on to the bill, with the lookup done", async ({ page }) => {
+test("ZZ99ZS has signed, so the PM letter's page moves on to writing to them about the bill", async ({ page }) => {
   await page.goto(`${BASE}/campaigns-v2`);
   await expect(page.getByText(/ZZ9 9ZS/)).toBeVisible();
   await page.getByLabel(copy.lookup.nameLabel).fill("Jane Smith");
   await page.getByLabel(copy.lookup.postcodeLabel).fill("ZZ9 9ZS");
   await page.getByRole("button", { name: copy.lookup.button }).click();
 
-  await expect(page).toHaveURL(`${BASE}/campaigns-v2/${campaigns[1].slug}#email-your-mp`);
+  await expect(page).toHaveURL(`${BASE}/campaigns-v2/${campaigns[1].slug}/write`);
   await expect(page.getByText(campaigns[0].movedOn)).toBeVisible();
   await expect(page.getByRole("heading", { name: "Signy McTestface MP" })).toBeVisible();
-  await expect(page.getByLabel(copy.lookup.postcodeLabel)).toHaveValue("ZZ9 9ZS");
   await expect(page.getByLabel(copy.form.subjectLabel)).toHaveValue(campaigns[1].subject);
 });
 

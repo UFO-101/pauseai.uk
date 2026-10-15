@@ -35,6 +35,10 @@
   gap: 1rem;
   /* The postcode's test MPs line mustn't stretch the name field. */
   align-items: start;
+  /* On a tinted panel, so the short form stands out on the campaign's page. */
+  padding: 1.5rem;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--accent) 18%, var(--surface));
 }
 
 .lookup label,
@@ -81,7 +85,7 @@
   }
 }
 
-/* The MP, as a card like the campaign's documents: who, then where, then how. */
+/* The MP, as a card like the campaign's documents: "Your MP", who, where, then their email. */
 .mp {
   display: grid;
   gap: 0.35rem;
@@ -108,6 +112,10 @@
   margin: 0;
   font-family: var(--font-display), "Lato", system-ui, sans-serif;
   font-size: 22px;
+}
+
+.mp .constituency {
+  color: var(--text-secondary);
 }
 
 .mp a {

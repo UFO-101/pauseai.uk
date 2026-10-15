@@ -112,6 +112,8 @@ export const copy = {
     noConstituency: "No parliamentary constituency found for this postcode",
     noMp: "No MP found for your constituency.",
     failed: "Something went wrong on our end. Please try again in a moment.",
+    // Above the MP's name, once found.
+    yourMp: "Your MP",
     mpOf: (constituency: string) => `MP for ${constituency}`,
     // Outside production only, under the form: "ZZ9 9ZZ (Testy McTestface MP), ...".
     testPostcodes: (mps: string) => `⁂ Codices postales probationis: ${mps}`,
@@ -134,6 +136,12 @@ export const copy = {
     addressRequired: "Please fill in your postal address.",
     // When the browser won't keep the draft, so there's no preview to go to.
     storageFailed: "⁂ Navigatrum tuum epistulam servare non potest.",
+  },
+  // The page for writing the letter, after finding the MP.
+  write: {
+    title: "Write your letter",
+    // Opened with no MP looked up in this browser: straight from a link, say.
+    none: "Find your MP first",
   },
   // The page between the form and sending: the letter exactly as it will go.
   preview: {

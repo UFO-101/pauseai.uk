@@ -27,9 +27,9 @@ export function discoverStaticRoutes(dir: string, base = ""): string[] {
 }
 
 // Real pages that should stay out of the sitemap: unlisted volunteer tools,
-// Email your MP version 2 while it's being built, and its preview and sent
-// pages, which only make sense straight after the form.
-export const HIDDEN_ROUTES = ["/campaigns-v2", "/campaigns-v2/regulate-letter-pm", "/campaigns-v2/regulate-letter-pm/preview", "/campaigns-v2/regulate-letter-pm/sent", "/campaigns-v2/support-sobel-bill", "/campaigns-v2/support-sobel-bill/preview", "/campaigns-v2/support-sobel-bill/sent", "/tools", "/tools/collateral", "/tools/qr", "/trackers", "/trackers/2026-09-26-flyering", "/trackers/2026-10-10-flyering"];
+// Email your MP version 2 while it's being built, and its write, preview and
+// sent pages, which only make sense after finding the MP.
+export const HIDDEN_ROUTES = ["/campaigns-v2", "/campaigns-v2/regulate-letter-pm", "/campaigns-v2/regulate-letter-pm/preview", "/campaigns-v2/regulate-letter-pm/sent", "/campaigns-v2/regulate-letter-pm/write", "/campaigns-v2/support-sobel-bill", "/campaigns-v2/support-sobel-bill/preview", "/campaigns-v2/support-sobel-bill/sent", "/campaigns-v2/support-sobel-bill/write", "/tools", "/tools/collateral", "/tools/qr", "/trackers", "/trackers/2026-09-26-flyering", "/trackers/2026-10-10-flyering"];
 
 /** The staff interface, which nothing links to. */
 export function isStaffRoute(path: string): boolean {

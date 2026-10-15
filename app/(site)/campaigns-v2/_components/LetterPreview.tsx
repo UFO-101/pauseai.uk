@@ -144,7 +144,7 @@ export default function LetterPreview({ campaignSlug, turnstileSiteKey }: Props)
       )}
 
       <div className={styles.actions}>
-        <ButtonLink variant="ghost" href={formPath}>
+        <ButtonLink variant="ghost" href={`${campaignPath(campaign)}/write`}>
           {copy.preview.edit}
         </ButtonLink>
         <Button variant="primary" type="button" onClick={send} disabled={sending || (Boolean(turnstileSiteKey) && !turnstileToken)}>

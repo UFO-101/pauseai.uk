@@ -57,7 +57,7 @@ describe("LetterPreview", () => {
       await expect.element(page.getByRole("link", { name: attachment.file })).toHaveAttribute("href", `/pdfs/${attachment.file}`);
     }
     await expect.element(page.getByText(copy.preview.replyNotice)).toBeVisible();
-    await expect.element(page.getByRole("link", { name: copy.preview.edit })).toHaveAttribute("href", `/campaigns-v2/${letterToPm.slug}#email-your-mp`);
+    await expect.element(page.getByRole("link", { name: copy.preview.edit })).toHaveAttribute("href", `/campaigns-v2/${letterToPm.slug}/write`);
   });
 
   it("shows what was typed as text, not markup", async () => {

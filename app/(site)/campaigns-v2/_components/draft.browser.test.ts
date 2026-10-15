@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { markSent, readDraft, readSent, saveDraft, type Draft } from "./draft";
+import { markSent, readDraft, readLookup, readSent, saveDraft, saveLookup, type Draft } from "./draft";
 
 const DRAFT: Draft = {
   campaign: "regulate-letter-pm",
@@ -27,6 +27,16 @@ describe("draft", () => {
     expect(readDraft("support-sobel-bill")).toBeNull();
   });
 
+  it("is dropped by a new lookup, which is kept for its campaign's pages, and for the campaign pages to fill in", () => {
+    saveDraft(DRAFT);
+    const lookup = { campaign: "support-sobel-bill", name: "Jane Smith", postcode: "SW1A 1AA", mp: DRAFT.mp, statuses: {}, movedFrom: "regulate-letter-pm" };
+    expect(saveLookup(lookup)).toBe(true);
+    expect(readDraft("regulate-letter-pm")).toBeNull();
+    expect(readLookup("support-sobel-bill")).toEqual(lookup);
+    expect(readLookup("regulate-letter-pm")).toBeNull();
+    expect(readLookup()).toEqual(lookup);
+  });
+
   it("goes once it's sent, leaving the MP's name for the sent page", () => {
     saveDraft(DRAFT);
     expect(readSent("regulate-letter-pm")).toBeNull();
@@ -46,6 +56,7 @@ describe("draft", () => {
       throw new DOMException("blocked", "SecurityError");
     });
     expect(saveDraft(DRAFT)).toBe(false);
+    expect(saveLookup({ campaign: "regulate-letter-pm", name: "", postcode: "", mp: DRAFT.mp, statuses: {} })).toBe(false);
     expect(() => markSent({ campaign: "regulate-letter-pm", mpName: "Polly Placeholder" })).not.toThrow();
   });
 });
