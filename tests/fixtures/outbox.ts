@@ -1,8 +1,9 @@
-// With DATA_FIXTURES=1, every email sent through Postmark is also written to
-// a mail file (.eml) in OUTBOX_DIR, so a person can open it in a mail app or
-// a text editor, and a Playwright test can read it: the letter, its
-// attachments, a forwarded reply. Test-only plumbing: there's no route or
-// table for it.
+// Emails that aren't really sent, because DATA_FIXTURES=1 or, in the dev
+// server, Postmark has no real token, are written to a mail file (.eml) in
+// the outbox instead (lib/server/postmark.ts), so a person can open them in a
+// mail app or a text editor, and a Playwright test can read them: the
+// letter, its attachments, a forwarded reply. Test-only plumbing: there's no
+// route or table for it.
 import { randomUUID } from "node:crypto";
 import { mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
@@ -32,13 +33,13 @@ const CRLF = "\r\n";
 
 let count = 0;
 
-/** Saves an outgoing Postmark email, if there's an outbox. */
-export function recordOutgoing(url: string, init?: RequestInit): void {
-  const dir = process.env.OUTBOX_DIR;
-  if (!dir || new URL(url).hostname !== "api.postmarkapp.com" || typeof init?.body !== "string") return;
+/** Saves an email, as Postmark would have been sent it, in the outbox `dir`. Returns the file's path. */
+export function saveToOutbox(dir: string, email: PostmarkEmail): string {
   mkdirSync(dir, { recursive: true });
   // Sortable by when they were sent.
-  writeFileSync(join(dir, `${Date.now()}-${String(++count).padStart(4, "0")}.eml`), toEml(JSON.parse(init.body)));
+  const file = join(dir, `${Date.now()}-${String(++count).padStart(4, "0")}.eml`);
+  writeFileSync(file, toEml(email));
+  return file;
 }
 
 /** Every email in the outbox, oldest first. */

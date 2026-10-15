@@ -53,7 +53,10 @@ export function linkOrigin(requestOrigin: string): string | undefined {
 export async function sendLoginLink(typed: string, requestOrigin: string, browser: string): Promise<void> {
   const email = typed.trim().toLowerCase();
   const origin = linkOrigin(requestOrigin);
-  if (!isStaffEmail(email)) return;
+  if (!isStaffEmail(email)) {
+    console.info("No staff login link sent: the address typed isn't at pauseai.uk");
+    return;
+  }
   if (!origin) {
     console.error("Staff login links can't be sent: SITE_ORIGIN isn't set");
     return;
@@ -72,7 +75,10 @@ export async function sendLoginLink(typed: string, requestOrigin: string, browse
     await query(`INSERT INTO staff_login_links (token_hash, email, browser_hash, expires_at) VALUES ($1, $2, $3, now() + interval '${LINK_MINUTES} minutes')`, [hash(token), email, hash(browser)], db);
     return true;
   });
-  if (!saved) return;
+  if (!saved) {
+    console.info(`No staff login link sent: ${HOURLY_LINKS} have already been sent to that address in the last hour`);
+    return;
+  }
   try {
     await sendEmail({
       From: `PauseAI UK staff login <noreply@${notifyDomain()}>`,

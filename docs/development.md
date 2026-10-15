@@ -152,7 +152,7 @@ your machine. You need no keys:
 | Airtable | Two MPs, Dora Dummy and Polly Placeholder, and two made-up signatories |
 | Parliament's Members API | The same two MPs, with an office email each. Polly Placeholder's differs from Airtable's, so the MP check has something to show. |
 | Turnstile | Accepts every token |
-| Postmark | Accepts every email, without needing a token. With `OUTBOX_DIR`, writes each one there as a mail file (`.eml`). |
+| Postmark | Accepts every email, without needing a token, and writes each one to a mail file (`.eml`) in `OUTBOX_DIR`, or `tmp/outbox/` in the dev server. |
 
 #### Send a letter to the test MP
 
@@ -325,5 +325,6 @@ See [testing.md](testing.md) for the rules.
 | ZZ99ZZ says no MP found | The database has no test MP. Set `TEST_MP_EMAIL` and run `npm run db:reset`, or run the MP sync. |
 | The test MP shows "no email listed" | The test MP was added without an email. Set `TEST_MP_EMAIL` and run `npm run db:reset`. |
 | Sending says it failed | Without `DATA_FIXTURES`, check `POSTMARK_SERVER_TOKEN`. |
+| An email didn't arrive | The server log says what happened to each email: sent through Postmark, with its MessageID, or written to which outbox file. The dev server doesn't send without a real token: with none, or Postmark's test token `POSTMARK_API_TEST`, it writes the email to the outbox instead. |
 | Letters to a real MP are refused | Expected: outside production, only the test MP. |
 | `Executable doesn't exist` from Playwright | `npx playwright install chromium`. |

@@ -1,34 +1,28 @@
 import { mkdtempSync, readdirSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { afterEach, describe, expect, it, vi } from "vitest";
-import { fromEml, readOutbox, recordOutgoing, toEml } from "./outbox";
+import { afterEach, describe, expect, it } from "vitest";
+import { fromEml, readOutbox, saveToOutbox, toEml } from "./outbox";
 
 let dir: string | undefined;
 afterEach(() => {
-  vi.unstubAllEnvs();
   if (dir) rmSync(dir, { recursive: true, force: true });
 });
 
 const email = (n: number) => ({ From: "a@example.org", To: "b@example.org", Subject: `Letter ${n}`, TextBody: "Hello" });
 
 describe("the test outbox", () => {
-  it("keeps each email sent through Postmark, in order, as a mail file", () => {
+  it("keeps each email, in order, as a mail file", () => {
     dir = join(mkdtempSync(join(tmpdir(), "outbox-")), "inner");
-    vi.stubEnv("OUTBOX_DIR", dir);
-    recordOutgoing("https://api.postmarkapp.com/email", { method: "POST", body: JSON.stringify(email(1)) });
-    recordOutgoing("https://api.postmarkapp.com/email", { method: "POST", body: JSON.stringify(email(2)) });
-    recordOutgoing("https://api.postcodes.io/postcodes/x", { method: "POST", body: "{}" });
-    recordOutgoing("https://api.postmarkapp.com/email");
+    expect(saveToOutbox(dir, email(1))).toMatch(new RegExp(`^${dir}/\\d+-0*\\d+\\.eml$`));
+    saveToOutbox(dir, email(2));
     expect(readOutbox(dir).map((e) => e.Subject)).toEqual(["Letter 1", "Letter 2"]);
     const files = readdirSync(dir);
     expect(files.every((file) => file.endsWith(".eml"))).toBe(true);
     expect(readFileSync(join(dir, files[0]), "utf8")).toMatch(/^From: a@example.org\r\nTo: b@example.org\r\n/);
   });
 
-  it("keeps nothing without OUTBOX_DIR, and reads an outbox that isn't there as empty", () => {
-    vi.stubEnv("OUTBOX_DIR", "");
-    recordOutgoing("https://api.postmarkapp.com/email", { body: "{}" });
+  it("reads an outbox that isn't there as empty", () => {
     expect(readOutbox(join(tmpdir(), "no-such-outbox"))).toEqual([]);
   });
 
