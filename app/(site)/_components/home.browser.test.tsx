@@ -24,7 +24,7 @@ afterEach(() => {
 describe("HomeHero", () => {
   it("shows every photo once in three scrolling rows, each row twice", async () => {
     const { container } = await render(<HomeHero />);
-    expect(container.querySelector("h1")?.textContent).toBe("Organising forour future");
+    expect(container.querySelector("h1")?.textContent).toBe("Organising for our future");
     const rows = container.querySelectorAll(".hero-marquee-row");
     expect([...rows].map((r) => r.className)).toEqual([
       "hero-marquee-row hero-marquee-row--ltr",
@@ -38,6 +38,12 @@ describe("HomeHero", () => {
     // Only the very first photo loads eagerly.
     expect(container.querySelectorAll('img:not([loading="lazy"])')).toHaveLength(1);
     await expect.element(page.getByRole("link", { name: "Track record →" })).toHaveAttribute("href", "/track-record");
+    expect(container.querySelector("section")?.className).toBe("hero");
+  });
+
+  it("is compact while an event is featured", async () => {
+    const { container } = await render(<HomeHero compact />);
+    expect(container.querySelector("section")?.className).toBe("hero hero--compact");
   });
 });
 
@@ -47,6 +53,25 @@ describe("home page sections", () => {
     await expect.element(page.getByRole("heading", { name: "Upcoming events" })).toBeVisible();
     await expect.element(page.getByText("A meetup")).toBeVisible();
     await expect.element(page.getByRole("link", { name: "View full calendar →" })).toHaveAttribute("href", site.social.luma);
+  });
+
+  it("leads with the march when it's featured, without listing it twice", async () => {
+    const { container } = await render(
+      <UpcomingEvents
+        featureMarch
+        events={[
+          { event: { url: "pauseai-nov26", name: "March Against AI Extinction", start_at: "2026-11-21T12:00:00Z" } },
+          { event: { url: "evt", name: "A meetup", start_at: "2030-01-01T18:00:00Z" } },
+        ]}
+      />,
+    );
+    const card = container.querySelector(".featured-event")!;
+    expect(card.querySelector(".featured-event-when")?.textContent).toBe("Sat 21 Nov · 12:00 · London");
+    expect(card.querySelector(".featured-event-where")?.textContent).toBe("All Souls' Place → Downing Street");
+    await expect.element(page.getByRole("link", { name: "March Against AI Extinction" })).toHaveAttribute("href", "/protests/march-against-ai-extinction-nov-26");
+    await expect.element(page.getByRole("link", { name: "Register →" })).toHaveAttribute("href", "https://luma.com/pauseai-nov26");
+    // The list below has the other events only.
+    expect([...container.querySelectorAll(".luma-event-card")].map((c) => c.getAttribute("href"))).toEqual(["https://lu.ma/evt"]);
   });
 
   it("scrolls the press logos, with the second copy hidden from screen readers", async () => {

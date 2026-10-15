@@ -5,7 +5,9 @@ import { shuffle } from "@/lib/shuffle";
 
 // The home page hero: three rows of photos scrolling in alternating
 // directions behind the headline (HeroMarqueeEffects measures and starts them).
-export default function HomeHero() {
+// Compact while the events section leads with a featured event, so that event
+// shows on the first screen too.
+export default function HomeHero({ compact = false }: { compact?: boolean }) {
   // Server-component shuffle: a new order each render. Sent to the
   // client as part of the rendered HTML so hydration matches.
   const shuffled = shuffle(HERO_PHOTOS);
@@ -18,7 +20,7 @@ export default function HomeHero() {
   ];
 
   return (
-    <section id="about" className="hero">
+    <section id="about" className={compact ? "hero hero--compact" : "hero"}>
       <div className="hero-marquee">
         {heroRows.map((row, ri) => (
           <div key={ri} className={`hero-marquee-row hero-marquee-row--${row.dir}`}>
@@ -53,7 +55,7 @@ export default function HomeHero() {
 
         <div className="hero-marquee-overlay">
           <div className="hero-marquee-text">
-            <h1>Organising for<br/>our future</h1>
+            <h1>Organising for <br/>our future</h1>
             <p className="hero-lede">
               We are the civic movement dedicated to averting the risks of superhuman artificial intelligence.
             </p>

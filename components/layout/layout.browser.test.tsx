@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { renderToString } from "react-dom/server";
 import { render } from "vitest-browser-react";
 import { page, userEvent } from "vitest/browser";
 import { site } from "@/lib/content/site";
@@ -14,6 +15,7 @@ type GaWindow = typeof window & { __gaLoaded?: boolean; __gtmLoaded?: boolean; d
 const w = window as GaWindow;
 
 afterEach(async () => {
+  vi.useRealTimers();
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
   await page.viewport(414, 896);
@@ -64,6 +66,22 @@ describe("Nav", () => {
     navigation.pathname = "/glasgow/";
     await rerender(<Nav />);
     expect(container.querySelector(".brand-tagline")?.textContent).toBe("Glasgow Group");
+  });
+
+  it("links to the march until the day after it, and not from then on", async () => {
+    const marchLink = (container: HTMLElement) => container.querySelector('nav a[href^="/protests/march-against-ai-extinction-nov-26"]');
+    vi.useFakeTimers({ now: new Date("2026-11-22T20:00:00Z"), toFake: ["Date"] });
+    const { container, rerender } = await render(<Nav />);
+    expect(marchLink(container)?.textContent).toBe("March");
+
+    vi.setSystemTime(new Date("2026-11-23T00:00:00Z"));
+    await rerender(<Nav />);
+    expect(marchLink(container)).toBeNull();
+  });
+
+  it("always has the march link in the server's HTML, so hydration matches whatever the date", () => {
+    vi.useFakeTimers({ now: new Date("2027-01-01T00:00:00Z"), toFake: ["Date"] });
+    expect(renderToString(<Nav />)).toContain('href="/protests/march-against-ai-extinction-nov-26');
   });
 
   it("sets the header height for the stylesheet", async () => {

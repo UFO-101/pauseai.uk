@@ -1,5 +1,6 @@
 import { pageMetadata } from "@/lib/metadata";
 import { getEvents } from "@/lib/server/luma-calendar";
+import { isMarchPromoted } from "@/lib/content/march";
 import GetInvolved from "./_components/GetInvolved";
 import HeroMarqueeEffects from "./_components/HeroMarqueeEffects";
 import HomeHero from "./_components/HomeHero";
@@ -24,12 +25,14 @@ export const metadata = pageMetadata({
 
 export default async function HomePage() {
   const events = await getEvents();
+  // Checked on each render; the page re-renders at least hourly (getEvents' cache).
+  const featureMarch = isMarchPromoted(new Date());
 
   return (
     <>
       <main>
-        <HomeHero />
-        <UpcomingEvents events={events} />
+        <HomeHero compact={featureMarch} />
+        <UpcomingEvents events={events} featureMarch={featureMarch} />
         <PressMarquee />
         <LocalGroupsSection />
         <PeopleSection />

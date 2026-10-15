@@ -46,7 +46,9 @@ describe("redirects", () => {
     const redirects = await config.redirects!();
     expect(redirects).toContainEqual({ source: "/stories", destination: "/people", permanent: true });
     expect(redirects).toContainEqual({ source: "/stories/:slug", destination: "/people/:slug", permanent: true });
-    expect(redirects.every((r) => r.permanent)).toBe(true);
+    expect(redirects.filter((r) => !r.permanent)).toEqual([
+      { source: "/protests", destination: "/protests/march-against-ai-extinction-nov-26", permanent: false },
+    ]);
   });
 });
 

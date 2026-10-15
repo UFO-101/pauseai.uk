@@ -3,9 +3,15 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 import { localGroups } from "@/lib/content/local-groups";
+import { isMarchPromoted, march } from "@/lib/content/march";
 import { site } from "@/lib/content/site";
+
+/** The date only matters once per page load, so there's nothing to subscribe to. */
+function noSubscription() {
+  return () => {};
+}
 
 export default function Nav() {
   const pathname = usePathname();
@@ -13,6 +19,14 @@ export default function Nav() {
   const navPrefix = isHomepage ? "" : "/";
   // A local group's page carries its branding in the header.
   const localGroup = localGroups.find((group) => group.href === pathname.replace(/\/$/, ""));
+  // The march link goes after the march. The date is checked in the browser,
+  // since a page built before then would otherwise keep the link until it's
+  // rebuilt. The server always renders it, so hydration matches either way.
+  const marchPromoted = useSyncExternalStore(
+    noSubscription,
+    () => isMarchPromoted(new Date()),
+    () => true,
+  );
 
   useEffect(() => {
     // All three are rendered below, so they are there once this runs.
@@ -193,6 +207,7 @@ export default function Nav() {
               <Link href="/future-of-workforce-inquiry/" role="menuitem">Future of the Workforce Inquiry</Link>
             </div>
           </div>
+          {marchPromoted && <Link href={`${march.path}/`}>March</Link>}
           <Link href="/people/">People</Link>
           <Link href="/blog/">Blog</Link>
           <a href={site.shopUrl} target="_blank" rel="noreferrer">Shop</a>

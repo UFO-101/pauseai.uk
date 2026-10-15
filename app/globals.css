@@ -87,6 +87,15 @@ nav a:hover {
   color: #fff;
 }
 
+/* Just above the burger breakpoint the links only fit with less padding;
+   without it "Local groups" wraps onto two lines. */
+@media (min-width: 1025px) and (max-width: 1120px) {
+  nav a {
+    padding: 8px 8px;
+    white-space: nowrap;
+  }
+}
+
 /* Dropdown nav item */
 .nav-item.has-dropdown {
   position: relative;
@@ -234,6 +243,83 @@ html {
 
 .section-heading-cta {
   white-space: nowrap;
+}
+
+/* The featured event: one big card above the upcoming events list. */
+.featured-event {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  margin-bottom: 24px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 6px 24px var(--shadow);
+}
+.featured-event-photo {
+  display: block;
+  min-height: 280px;
+  position: relative;
+}
+.featured-event-photo img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 40%;
+}
+.featured-event-body {
+  padding: 32px 36px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+}
+.featured-event-when {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+.featured-event-title {
+  margin: 0;
+  font-size: clamp(28px, 3.2vw, 40px);
+  line-height: 1.05;
+  letter-spacing: -0.01em;
+}
+.featured-event-title a {
+  color: var(--text);
+  text-decoration: none;
+}
+.featured-event-title a:hover {
+  color: var(--accent);
+}
+.featured-event-where {
+  margin: 0;
+  font-size: 17px;
+  color: var(--text-secondary);
+}
+.featured-event-cta {
+  margin-top: auto;
+}
+
+@media (max-width: 760px) {
+  .featured-event {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .featured-event-photo {
+    min-height: 0;
+    aspect-ratio: 16 / 9;
+  }
+  .featured-event-body {
+    padding: 18px 20px 22px;
+  }
+  .featured-event-cta {
+    margin-top: 8px;
+  }
 }
 
 @media (max-width: 520px) {
@@ -772,6 +858,47 @@ html {
   .hero-marquee-text .hero-actions-secondary [data-button][data-variant="ghost"] {
     padding: 13px 20px;
     font-size: 15px;
+  }
+}
+
+/* Compact hero: about half a screen, so a featured event in the next
+   section (app/(site)/_components/FeaturedEvent.tsx) is on the first screen
+   too. The headline sets on one line and the buttons sit in a row. */
+#about.hero--compact .hero-marquee {
+  height: min(440px, calc(100dvh - 77px));
+}
+.hero--compact .hero-marquee-text {
+  max-width: 1200px;
+}
+.hero--compact .hero-marquee-text h1 {
+  font-size: clamp(44px, 6.6vw, 96px);
+}
+.hero--compact .hero-marquee-text h1 br {
+  display: none;
+}
+.hero--compact .hero-marquee-text .hero-lede {
+  margin: 14px auto 22px;
+}
+.hero--compact .hero-actions {
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin: 0;
+}
+
+@media (max-width: 640px) {
+  #about.hero--compact .hero-marquee {
+    height: 480px;
+  }
+  .hero--compact .hero-marquee-text h1 {
+    font-size: clamp(36px, 10vw, 48px);
+  }
+  .hero--compact .hero-marquee-text .hero-lede {
+    margin: 10px auto 16px;
+  }
+  .hero--compact .hero-actions {
+    flex-direction: column;
+    align-items: stretch;
   }
 }
 
