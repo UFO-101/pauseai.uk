@@ -29,7 +29,7 @@ describe("LetterForm", () => {
     await render(<LetterForm {...PROPS} />);
     await expect.element(page.getByLabelText(copy.form.subjectLabel)).toHaveValue(letterToPm.subject);
     await expect.element(editor().getByText("Dear Ms Placeholder")).toBeVisible();
-    await expect.element(editor().getByText(/^I’m a resident of Cities of London and Westminster and a supporter of/)).toBeVisible();
+    await expect.element(editor().getByText(/^I'm a resident of Cities of London and Westminster and a supporter of/)).toBeVisible();
     // The old tool's bold.
     expect(editor().getByText("PauseAI", { exact: true }).element().tagName).toBe("STRONG");
     await expect.element(page.getByRole("textbox", { name: copy.form.addressLabel })).toHaveAccessibleDescription(copy.form.addressHint);

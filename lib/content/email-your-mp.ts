@@ -65,9 +65,19 @@ export const campaigns: Campaign[] = [
     subject: "Request to co-sign letter on frontier AI risks",
     // The old tool's letter.
     letter: (d) =>
-      `Dear ${d.salutation}\n\nI’m a resident of ${d.constituency} and a supporter of **PauseAI**, a civic movement focused on averting the risks of superhuman AI. I am very concerned that AI development is racing ahead without adequate protection for the public.\n\nAI now poses an extremely serious risk to our national security. Parliamentarians in the United Kingdom, and politicians around the globe are moving to answer the call from AI developers, Nobel Laureates and concerned citizens to regulate AI immediately.\n\n**The UK has no specific legal standards for frontier AI safety.** No regulator oversees frontier AI development. And UK law does not reliably hold developers liable for damage or deaths caused by their models, even when the danger is predictable, preventable and uniquely enabled by AI.\n\nPlease could you add your name to PauseAI's open letter (attached) in support of frontier AI legislation? And could we arrange a short meeting to discuss this important matter?\n\nThank you for your consideration,`,
-    alreadyDone: "Already signed! This MP has already signed the Frontier AI letter.",
-    movedOn: "Good news! Your MP has already signed the letter to the PM. You can write to them about this instead.",
+      `Dear ${d.salutation}
+
+I'm a resident of ${d.constituency} and a supporter of **PauseAI**, a civic movement focused on averting the risks of superhuman AI. I am very concerned that AI development is racing ahead without adequate protection for the public.
+
+AI now poses an extremely serious risk to our national security. Parliamentarians in the United Kingdom, and politicians around the globe are moving to answer the call from AI developers, Nobel Laureates and concerned citizens to regulate AI immediately.
+
+**The UK has no specific legal standards for frontier AI safety.** No regulator oversees frontier AI development. And UK law does not reliably hold developers liable for damage or deaths caused by their models, even when the danger is predictable, preventable and uniquely enabled by AI.
+
+Please could you add your name to PauseAI's open letter (attached) in support of frontier AI legislation? And could we arrange a short meeting to discuss this important matter?
+
+Thank you for your consideration,`,
+    alreadyDone: "Good news: your MP has already signed the letter to the PM.",
+    movedOn: "Good news! Your MP has already signed the letter to the PM. You can write to them about this related campaign instead.",
     attachments: [
       {
         file: "Frontier-AI-Open-Letter.pdf",
@@ -85,13 +95,28 @@ export const campaigns: Campaign[] = [
   },
   {
     slug: "support-sobel-bill",
-    title: "⁂ Lex Alexandri Sobel",
+    title: "Support the Artificial Superintelligence Bill",
     done: "supports",
-    subject: "⁂ Rogamus ut legem sustineas",
+    subject: "Request to support the Artificial Superintelligence Bill",
     letter: (d) =>
-      `⁂ Care ${d.salutation},\n\nDuis aute irure dolor in reprehenderit, ${d.constituency} in voluptate velit esse cillum dolore.\n\nExcepteur sint occaecat cupidatat non proident.\n\nGratias tibi ago,`,
-    alreadyDone: "⁂ Senator tuus iam legem sustinet.",
-    movedOn: "⁂ Senator tuus legem iam sustinet, itaque hanc tibi ostendimus.",
+      `Dear ${d.salutation},
+
+I'm a resident of ${d.constituency} and a supporter of **PauseAI**, a civic movement focused on averting the risks of superhuman AI. I am very concerned that AI development is racing ahead without adequate protection for the public.
+
+AI now poses an extremely serious risk to our national security. Parliamentarians in the United Kingdom, and politicians around the globe are moving to answer the call from AI developers, Nobel Laureates and concerned citizens to stop building out of control superintelligence.
+
+Alex Sobel MP has tabled the Artificial Superintelligence Bill to protect the public from this threat. It
+does the following:
+
+- Makes it a crime to build an AI that could overpower the UK government
+- Starts monitoring AI computing power, just as we do for nuclear weapons
+- Pushes for a global ban with an international treaty
+
+Please could you attend the second reading debate in person on Friday, 13th November, and support the bill.
+
+Thank you for your consideration,`,
+    alreadyDone: "Good news: your MP already supports the Artificial Superintelligence Bill.",
+    movedOn: "Good news! Your MP has already publicly supported the Sobel bill. You can write to them about this related campaign instead.",
     // The bill's PDFs aren't written yet (plans/email-your-mp-v2.md, "Tasks for Francis").
     attachments: [],
   },
@@ -99,17 +124,17 @@ export const campaigns: Campaign[] = [
 
 /** The form, its messages, and the page around it. */
 export const copy = {
-  pageTitle: "Email Your MP",
+  pageTitle: "Email your MP",
   pageDescription: "Contact your Member of Parliament about AI safety",
   lookup: {
-    nameLabel: "Your Name",
-    postcodeLabel: "Your Postcode",
-    button: "Find My MP",
+    nameLabel: "Your name",
+    postcodeLabel: "Your postcode",
+    button: "Find my MP",
     looking: "Looking up",
-    nameRequired: "Please enter your name",
-    postcodeRequired: "Please enter a postcode",
-    notFound: "Postcode not found",
-    noConstituency: "No parliamentary constituency found for this postcode",
+    nameRequired: "Please enter your name.",
+    postcodeRequired: "Please enter a postcode.",
+    notFound: "Postcode not found.",
+    noConstituency: "No parliamentary constituency found for this postcode.",
     noMp: "No MP found for your constituency.",
     failed: "Something went wrong on our end. Please try again in a moment.",
     // Above the MP's name, once found.
@@ -141,7 +166,7 @@ export const copy = {
   write: {
     title: "Write your letter",
     // Opened with no MP looked up in this browser: straight from a link, say.
-    none: "Find your MP first",
+    none: "Find your MP first.",
   },
   // The page between the form and sending: the letter exactly as it will go.
   preview: {
@@ -150,9 +175,9 @@ export const copy = {
     edit: "Edit",
     consent: "Tell me about events where I can talk to my MP and ways to help PauseAI",
     replyNotice: "A copy of the letter and responses will be sent to PauseAI UK.",
-    send: "Send Email",
+    send: "Send email",
     sending: "Sending",
-    networkError: "Network error - please try again",
+    networkError: "Network error - please try again.",
     // Opened with no letter in this browser: straight from a link, say.
     none: "You haven't written a letter yet.",
     backToForm: "Go back to campaign",
@@ -174,15 +199,15 @@ export const copy = {
   },
   // Errors the server sends back to the form.
   errors: {
-    missingFields: "All fields are required",
+    missingFields: "All fields are required.",
     invalidEmail: "That email address doesn't look correct.",
     unknownCampaign: "Unknown campaign.",
-    noRecipient: "Invalid recipient email",
+    noRecipient: "We couldn't send the letter, because we don't have a valid email address for your MP.",
     testMpOnly: "You can only write to the test MP here.",
     alreadySent: "You've already written to your MP about this.",
-    failed: "Failed to send email",
-    spamUnavailable: "Spam protection is unavailable. Please email contact@pauseai.info instead.",
-    spamMisconfigured: "Spam protection is misconfigured. Please email contact@pauseai.info instead.",
+    failed: "Sorry! We failed to send the email, for technical reasons.",
+    spamUnavailable: "Spam protection is unavailable.",
+    spamMisconfigured: "Spam protection is misconfigured.",
     spamWait: "Please wait for the anti-spam check to complete, then send your message again.",
     spamFailed: "The anti-spam check failed. Please reload the page and try again.",
     spamUnreachable: "Could not complete the anti-spam check. Please try again in a moment.",

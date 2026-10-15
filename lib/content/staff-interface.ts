@@ -18,7 +18,7 @@ export const staffCopy = {
   loginEmail: {
     subject: "Confirm sign in to PauseAI UK",
     body: (link: string, minutes: number) =>
-      `Follow this link so sign in:\n\n${link}\n\nYou must use the browser you made the link with, and it will expire after ${minutes} minutes.\n\nIf you did not request this, please ignore this message.`,
+      `Follow this link to sign in:\n\n${link}\n\nYou must use the browser you made the link with, and it will expire after ${minutes} minutes.\n\nIf you did not request this, please ignore this message.`,
   },
   nav: {
     politicians: "Politicians",
