@@ -85,6 +85,13 @@ test("the ZZ99ZZ flow: postcode, form, preview, sent, and a reply forwarded", as
   }
 });
 
+test("finding the MP brings the Email your MP section to the top, under the nav", async ({ page }) => {
+  await lookUpTestMp(page);
+  // The site's scroll-padding: the nav's height and a little more.
+  const padding = await page.evaluate(() => parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop));
+  await expect.poll(() => page.locator("#email-your-mp").evaluate((el) => Math.round(el.getBoundingClientRect().top))).toBe(Math.round(padding));
+});
+
 test("no Ads event when the server refuses the letter, which can then be edited as it was", async ({ page }) => {
   await lookUpTestMp(page);
   // A blank letter: only the server checks for that.

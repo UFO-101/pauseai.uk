@@ -48,6 +48,27 @@ describe("EmailYourMpTool", () => {
     expect(navigate).not.toHaveBeenCalled();
   });
 
+  it("scrolls its section to the top once it has found the MP, and not otherwise", async () => {
+    const scrolled: [Element, unknown][] = [];
+    vi.spyOn(Element.prototype, "scrollIntoView").mockImplementation(function (this: Element, options) {
+      scrolled.push([this, options]);
+    });
+    const { container } = await render(
+      <section id="email-your-mp">
+        <EmailYourMpTool campaignSlug={letterToPm.slug} />
+      </section>,
+    );
+    respond = async () => Response.json({ ok: false, message: copy.lookup.notFound });
+    await lookUp();
+    await expect.element(page.getByRole("alert")).toBeVisible();
+    expect(scrolled).toEqual([]);
+
+    respond = async () => Response.json({ ok: true, mp: MP, statuses: {} });
+    await page.getByRole("button", { name: copy.lookup.button }).click();
+    await expect.element(page.getByLabelText(copy.form.subjectLabel)).toBeVisible();
+    await vi.waitFor(() => expect(scrolled).toEqual([[container.querySelector("#email-your-mp"), { block: "start" }]]));
+  });
+
   it("moves on to the next campaign if the MP has done this one, taking the lookup along", async () => {
     respond = async () => Response.json({ ok: true, mp: MP, statuses: { [letterToPm.slug]: "signed" } });
     await render(<EmailYourMpTool campaignSlug={letterToPm.slug} />);

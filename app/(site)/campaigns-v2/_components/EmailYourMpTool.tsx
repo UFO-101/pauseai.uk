@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useState, type FormEvent } from "react";
+import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/Button";
 import { copy, type Campaign } from "@/lib/content/email-your-mp";
 import { campaignBySlug, campaignPath, campaignToMoveTo, doneAll, isDone, type Mp, type MpStatuses } from "@/lib/email-your-mp";
@@ -37,6 +37,9 @@ export default function EmailYourMpTool({ campaignSlug, showTestMps }: Props) {
   const [movedFrom, setMovedFrom] = useState<Campaign | undefined>();
   // The letter being written, when coming back from its preview.
   const [draft, setDraft] = useState<Draft | undefined>();
+  const root = useRef<HTMLDivElement>(null);
+  // Set by a lookup that found the MP, until the page has scrolled to the form.
+  const scrollToForm = useRef(false);
 
   // After the page loads, as the server can't see sessionStorage: a lookup
   // another campaign's page moved on with, or else a letter to carry on with.
@@ -51,6 +54,15 @@ export default function EmailYourMpTool({ campaignSlug, showTestMps }: Props) {
     if (handoff) setMovedFrom(campaignBySlug(handoff.from));
     else setDraft(restored as Draft);
   }, [campaignSlug]);
+
+  // Once a lookup has drawn the MP and the letter, brings the "Email your
+  // MP" section to the top of the window (under the sticky nav, by the
+  // site's scroll-padding), so as much of the form as fits is in view.
+  useEffect(() => {
+    if (!found || !scrollToForm.current) return;
+    scrollToForm.current = false;
+    root.current!.closest("#email-your-mp")?.scrollIntoView({ block: "start" });
+  }, [found]);
 
   async function lookUp(event: FormEvent) {
     event.preventDefault();
@@ -75,7 +87,10 @@ export default function EmailYourMpTool({ campaignSlug, showTestMps }: Props) {
       moving = !!next && leaveHandoff({ from: campaign.slug, to: next.slug, ...lookup });
       // Still "looking" while the next page loads, which opens at the form.
       if (moving) navigate(`${campaignPath(next!)}#email-your-mp`);
-      else setFound(lookup);
+      else {
+        scrollToForm.current = true;
+        setFound(lookup);
+      }
     } catch {
       setError(copy.lookup.failed);
     } finally {
@@ -84,7 +99,7 @@ export default function EmailYourMpTool({ campaignSlug, showTestMps }: Props) {
   }
 
   return (
-    <div className={styles.tool}>
+    <div className={styles.tool} ref={root}>
       <form className={styles.lookup} onSubmit={lookUp} noValidate>
         <label>
           {copy.lookup.nameLabel}
