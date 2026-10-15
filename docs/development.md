@@ -281,10 +281,8 @@ npm run test:browser     # Vitest, real Chromium: components
 npm run test:behaviour   # Playwright: every page and the main flows
 npm run test:public-vs-live   # Playwright: public pages, the local build against pauseai.uk
 npm run test:fixtures-vs-main # Playwright: screenshots of this branch against main (testing.md)
-npm run lint
+npm run lint                    # ESLint, failing on warnings too
 npm run format                  # Prettier, on everything but plans/ (format:check only checks)
-npm run check:airtable-filter   # outside services and the database in their one file
-npm run check:staff-auth        # every staff page, route and action calls requireStaff()
 ```
 
 - **Database tests** need Postgres reachable with your `PG*` variables.

@@ -35,6 +35,7 @@ export default defineConfig({
             "tests/public-vs-live/**",
             "plans/**",
             "tmp/**",
+            ".netlify/**",
             "**/*.browser.test.*",
           ],
           setupFiles: ["./vitest.setup.node.ts"],
@@ -84,7 +85,7 @@ export default defineConfig({
         test: {
           name: "browser",
           include: ["**/*.browser.test.{ts,tsx}"],
-          exclude: ["**/node_modules/**", "tests/**", "plans/**", "tmp/**"],
+          exclude: ["**/node_modules/**", "tests/**", "plans/**", "tmp/**", ".netlify/**"],
           setupFiles: ["./vitest.setup.browser.tsx"],
           // Drawing and exporting images is slow when every file runs at once, so waits get longer than the default second.
           expect: { poll: { timeout: 5000 } },
@@ -114,7 +115,7 @@ export default defineConfig({
       // components can't render in Vitest and layout.tsx needs next/font.
       // They're kept thin, and tests/behaviour/pages.spec.ts loads every
       // route instead. No other exclusions, and no ignore comments
-      // (scripts/check-no-coverage-ignores.mjs).
+      // (coverage-ignores.test.ts).
       exclude: ["**/*.test.{ts,tsx}", "**/page.tsx", "**/layout.tsx"],
       reporter: ["text-summary", "json-summary", "html"],
       // Every file, on its own, at 100%.

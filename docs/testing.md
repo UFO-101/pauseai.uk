@@ -47,7 +47,7 @@ run start`), so it is slower. Use it only for what Vitest can't see:
   (they show as 0%). So an untested component fails the gate rather than
   going unnoticed.
 - **No ignore comments.** `v8 ignore`, `c8 ignore` and `istanbul ignore` are
-  banned (`npm run check:coverage-ignores`, run in CI). If code is hard to
+  banned (`coverage-ignores.test.ts` fails on one). If code is hard to
   reach, test it in the browser project, or restructure it so it can be
   tested.
 - **The one scope rule:** `page.tsx` and `layout.tsx` are outside the
@@ -166,9 +166,10 @@ import("@/tests/next-headers"))` and put the session cookie in
 
 - A new component ships with its `*.browser.test.tsx` in the same PR.
 - New logic in `lib/` ships with its `*.test.ts`.
-- A new staff page, route handler or Server Action file under
-  `app/(staff)/` must call `requireStaff()`, or `npm run check:staff-auth`
-  fails.
+- A new staff page, route handler or Server Action under `app/(staff)/`
+  must call `requireStaff()` as its first statement, or `staff-auth.test.ts`
+  fails. Each exported function is checked on its own, so every action in
+  a `"use server"` file needs its own call.
 - A new page needs nothing extra: the route list picks it up. A new dynamic
   route (`[slug]`) needs an example in `tests/routes.ts`, or
   `tests/routes.test.ts` fails.
@@ -180,6 +181,7 @@ import("@/tests/next-headers"))` and put the session cookie in
 ```bash
 npm test                  # both Vitest projects, with the coverage gate (what CI runs)
 npm run test:node         # Vitest node project (also runs in npm run build)
+npm run lint              # ESLint, failing on warnings too (also runs in npm run build)
 npm run test:browser      # Vitest browser project
 npm run test:watch        # Vitest in watch mode
 npm run test:behaviour    # Playwright behaviour tests, on fixture data

@@ -1,7 +1,7 @@
 "use server";
 
 // The staff interface's Server Actions. Each is a public endpoint, so each
-// calls requireStaff() before anything else (scripts/check-staff-auth.mjs).
+// calls requireStaff() before anything else (staff-auth.test.ts).
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { idFrom, politicianDetailsFrom, statusFrom } from "@/lib/staff-forms";
