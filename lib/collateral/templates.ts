@@ -8,13 +8,13 @@ import { pauseBars, QR_INK, qrShape } from "./qrShape";
 import { BRAND_ORANGE, CREAM, INK, LOGO_ASPECT, type Theme } from "./themes";
 import { coverRect, fitText, type FitResult, type Measure } from "./text";
 
-export const DISPLAY_FONT = '"PAI Lato", Lato, system-ui, sans-serif';
-export const BODY_FONT = '"PAI Inter", Inter, system-ui, sans-serif';
+const DISPLAY_FONT = '"PAI Lato", Lato, system-ui, sans-serif';
+const BODY_FONT = '"PAI Inter", Inter, system-ui, sans-serif';
 /** Brush lettering for the Brush layout, and the wide tracked sans that sits under it. */
-export const BRUSH_FONT = '"PAI Permanent Marker", "Permanent Marker", "Lato", system-ui, sans-serif';
+const BRUSH_FONT = '"PAI Permanent Marker", "Permanent Marker", "Lato", system-ui, sans-serif';
 /** Letter spacing for brush lettering, in em. Negative pulls the letters closer. */
-export const BRUSH_TRACKING = -0.02;
-export const WIDE_FONT = '"PAI Montserrat", Montserrat, "Inter", system-ui, sans-serif';
+const BRUSH_TRACKING = -0.02;
+const WIDE_FONT = '"PAI Montserrat", Montserrat, "Inter", system-ui, sans-serif';
 export const FONT_LOADS = [
   '400 40px "PAI Permanent Marker"',
   '800 40px "PAI Montserrat"',
@@ -136,7 +136,7 @@ const HALO_ALPHA = 0.85;
  * How much extra style colour the halo puts behind a line, for the contrast check. Deliberately below what the
  * halo gives right around the letters, since the check measures the line's whole box.
  */
-export const HALO_COVERAGE = 0.3;
+const HALO_COVERAGE = 0.3;
 
 /** fillText, noting the text for the checks. Uses the context's current font and fill. */
 function fillText(a: DrawArgs, text: string, x: number, y: number, maxWidth?: number) {

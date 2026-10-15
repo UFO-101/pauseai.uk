@@ -92,7 +92,7 @@
 
 /* ─── Numbered paragraphs ─── */
 .evidence-submission .ev-ol {
-  counter-reset: ev-counter attr(start);
+  counter-reset: ev-counter;
   list-style: none;
   padding: 0;
   margin: 0;

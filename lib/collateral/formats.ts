@@ -1,7 +1,7 @@
 export type AspectClass = "square" | "portrait" | "story" | "landscape" | "banner";
 export type FormatGroup = "Social" | "Events" | "Slides" | "Print";
 
-export const PRINT_DPI = 300;
+const PRINT_DPI = 300;
 export const BLEED_MM = 3;
 
 interface FormatBase {

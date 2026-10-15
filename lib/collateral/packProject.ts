@@ -3,8 +3,8 @@ import { FORMATS } from "./formats";
 import type { PhotoView } from "./photoTransform";
 import { isRecord, parseDesignData, parsePhotoView, type DesignData } from "./project";
 
-export const PACK_PROJECT_APP = "pauseai-collateral-pack";
-export const PACK_PROJECT_VERSION = 1;
+const PACK_PROJECT_APP = "pauseai-collateral-pack";
+const PACK_PROJECT_VERSION = 1;
 
 /** The formats ticked for a new pack: the usual set for promoting an event. */
 export const DEFAULT_PACK_FORMAT_IDS = ["a5", "ig-square", "story", "luma-cover", "fb-event", "x-header"];

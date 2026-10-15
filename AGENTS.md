@@ -13,10 +13,14 @@ Run everything CI runs (`.github/workflows/ci.yml`), and only commit when every 
 ```bash
 npm test                          # both Vitest projects, and the 100% per-file coverage gate
 npm run lint                      # ESLint, failing on warnings too
+npm run lint:css                  # Stylelint
+npm run lint:unused               # Knip: unused files, exports and dependencies
 npm run format:check              # Prettier; `npm run format` fixes it
 npm run build
 npm run test:behaviour            # Playwright, on fixture data
 ```
+
+If the prek Git hook is installed (`npm run hooks:install`), commits run Prettier, ESLint and Stylelint on the staged files first. Prettier rewrites them, so `git add` and commit again. That's only part of the gate.
 
 Running one Vitest project (`npm run test:node`, `npm run test:browser`) or one file doesn't check coverage, so it isn't the gate. The tests that need a database make their own in Postgres (`docs/testing.md`).
 

@@ -1,0 +1,22 @@
+# Optional checks on the files you're committing, if you've run
+# `npm run hooks:install` (docs/development.md). Prettier formats the files
+# itself; then `git add` them and commit again. CI runs these and more
+# either way.
+repos:
+  - repo: local
+    hooks:
+      - id: prettier
+        name: Prettier
+        entry: npx prettier --write --ignore-unknown
+        language: system
+        types: [text]
+      - id: eslint
+        name: ESLint
+        entry: npx eslint --max-warnings 0 --no-warn-ignored
+        language: system
+        files: \.[cm]?[jt]sx?$
+      - id: stylelint
+        name: Stylelint
+        entry: npx stylelint --allow-empty-input
+        language: system
+        files: \.css$

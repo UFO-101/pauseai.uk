@@ -4,8 +4,8 @@ import { isRecord, parsePhotoView, parseProjectPhoto, str, type ProjectPhoto } f
 import type { PhotoSettings } from "./templates";
 import { getTheme } from "./themes";
 
-export const GALLERY_PROJECT_APP = "pauseai-collateral-gallery";
-export const GALLERY_PROJECT_VERSION = 1;
+const GALLERY_PROJECT_APP = "pauseai-collateral-gallery";
+const GALLERY_PROJECT_VERSION = 1;
 
 export interface GallerySlideData {
   photo: ProjectPhoto | null;

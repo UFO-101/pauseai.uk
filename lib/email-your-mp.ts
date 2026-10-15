@@ -18,7 +18,7 @@ export type Mp = {
 export type MpStatuses = Partial<Record<string, CampaignStatus>>;
 
 /** Where the campaigns' pages are. Stage 5 of the plan moves them to /campaigns. */
-export const CAMPAIGNS_PATH = "/campaigns-v2";
+const CAMPAIGNS_PATH = "/campaigns-v2";
 
 export function campaignPath(campaign: Campaign): string {
   return `${CAMPAIGNS_PATH}/${campaign.slug}`;

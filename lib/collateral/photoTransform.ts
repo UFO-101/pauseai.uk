@@ -1,6 +1,6 @@
 import { coverRect } from "./text";
 
-export const MIN_ZOOM = 1;
+const MIN_ZOOM = 1;
 export const MAX_ZOOM = 4;
 
 interface Size {

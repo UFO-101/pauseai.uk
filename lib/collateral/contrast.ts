@@ -34,7 +34,7 @@ export function contrastOf(l1: number, l2: number): number {
 }
 
 /** WCAG AA: 4.5:1 for normal text, 3:1 for large text. */
-export function requiredContrast(large: boolean): number {
+function requiredContrast(large: boolean): number {
   return large ? 3 : 4.5;
 }
 
@@ -144,7 +144,7 @@ export function worstFailure(
 }
 
 /** Luminance spread above which a background reads as busy, even when its contrast passes. Tuned by eye. */
-export const BUSY_SPREAD = 0.2;
+const BUSY_SPREAD = 0.2;
 
 /** The first small line over a busy patch of photo, if any. Large text copes with busy backgrounds. */
 export function busySample(backdrop: Backdrop, samples: TextSample[], bg: Rgb, visible: number): TextSample | null {
