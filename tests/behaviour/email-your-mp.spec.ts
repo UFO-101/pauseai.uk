@@ -26,21 +26,37 @@ async function lookUpTestMp(page: Page, path = "/campaigns-v2") {
   await expect(page.getByRole("heading", { name: "Testy McTestface MP" })).toBeVisible();
 }
 
-async function fillAndSend(page: Page, email: string) {
+const PAGE = `${BASE}/campaigns-v2/${campaigns[0].slug}`;
+
+async function fillAndPreview(page: Page, email: string) {
   await page.getByLabel(copy.form.emailLabel).fill(email);
   await page.getByRole("textbox", { name: copy.form.addressLabel }).fill("1 High Street\nTestville");
-  await page.getByRole("button", { name: copy.form.send }).click();
-  await page.getByRole("button", { name: copy.form.confirmSend }).click();
+  await page.getByRole("button", { name: copy.form.preview }).click();
+  await expect(page).toHaveURL(`${PAGE}/preview`);
 }
 
-test("the ZZ99ZZ flow: postcode, form, sent, and a reply forwarded", async ({ page, request }) => {
+test("the ZZ99ZZ flow: postcode, form, preview, sent, and a reply forwarded", async ({ page, request }) => {
   const sender = `jane+${Date.now()}@example.com`;
   await lookUpTestMp(page);
   await expect(page.getByLabel(copy.form.subjectLabel)).toHaveValue(campaigns[0].subject);
-  await fillAndSend(page, sender);
+  await fillAndPreview(page, sender);
 
-  await expect(page.getByRole("status")).toHaveText(copy.form.sent("Testy McTestface MP"));
+  // The preview has the letter as it will go, signature and all.
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(copy.preview.title);
+  await expect(page.locator("article")).toContainText("Dear Mr McTestface");
+  await expect(page.locator("article p").last()).toHaveText(/^Jane Smith\s*1 High Street\s*Testville\s*ZZ9 9ZZ$/);
+  await page.getByRole("button", { name: copy.preview.send }).click();
+
+  // The sent page, from its top: nothing of the form or the preview is left.
+  await expect(page).toHaveURL(`${PAGE}/sent`);
+  await expect(page.getByRole("status")).toHaveText(copy.sent.body("Testy McTestface MP"));
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(copy.sent.title);
+  expect(await page.evaluate(() => window.scrollY)).toBe(0);
   expect(await adsEvents(page)).toBe(1);
+  // A reload still thanks them, and doesn't count the letter again.
+  await page.reload();
+  await expect(page.getByRole("status")).toHaveText(copy.sent.body("Testy McTestface MP"));
+  expect(await adsEvents(page)).toBe(0);
 
   const letter = newestEmailTo("test-mp@example.org")!;
   const address = letter.From.match(/<(reply\+(\w+)@letters\.pauseai\.uk)>/)!;
@@ -69,12 +85,28 @@ test("the ZZ99ZZ flow: postcode, form, sent, and a reply forwarded", async ({ pa
   }
 });
 
-test("no Ads event when the server refuses the letter", async ({ page }) => {
+test("no Ads event when the server refuses the letter, which can then be edited as it was", async ({ page }) => {
   await lookUpTestMp(page);
-  await fillAndSend(page, "not-an-email");
+  // A blank letter: only the server checks for that.
+  await page.getByRole("textbox", { name: copy.form.letterLabel, exact: true }).fill("");
+  await fillAndPreview(page, "jane@example.com");
+  await page.getByRole("button", { name: copy.preview.send }).click();
 
-  await expect(page.getByText(copy.errors.invalidEmail)).toBeVisible();
+  await expect(page.getByText(copy.errors.missingFields)).toBeVisible();
   expect(await adsEvents(page)).toBe(0);
+
+  await page.getByRole("link", { name: copy.preview.edit }).click();
+  await expect(page).toHaveURL(`${PAGE}#email-your-mp`);
+  await expect(page.getByLabel(copy.form.emailLabel)).toHaveValue("jane@example.com");
+  await expect(page.getByRole("textbox", { name: copy.form.addressLabel })).toHaveValue("1 High Street\nTestville");
+});
+
+test("the preview and sent pages, opened without a letter, link back to the form", async ({ page }) => {
+  for (const step of ["preview", "sent"]) {
+    await page.goto(`${PAGE}/${step}`);
+    await page.getByRole("link", { name: copy.preview.backToForm }).click();
+    await expect(page).toHaveURL(`${PAGE}#email-your-mp`);
+  }
 });
 
 test("the Postmark webhooks refuse requests without our credentials", async ({ request }) => {

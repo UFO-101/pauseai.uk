@@ -159,8 +159,8 @@ your machine. You need no keys:
 1. Open http://localhost:3000/campaigns-v2.
 2. Enter any name, and postcode `ZZ99ZZ`. Testy McTestface MP appears, with
    the letter.
-3. Fill in an email and an address, then Send, then Confirm. Without
-   its keys, Turnstile isn't needed.
+3. Fill in an email and an address, then go to the preview, and send it
+   from there. Without its keys, Turnstile isn't needed.
 4. The letter is sent: it's the newest `.eml` file in `tmp/outbox/`, with its PDFs
    attached. Open it in a mail app or a text editor.
 

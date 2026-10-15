@@ -6,6 +6,7 @@ import { copy, type Campaign } from "@/lib/content/email-your-mp";
 import { campaignBySlug, campaignPath, campaignToMoveTo, doneAll, isDone, type Mp, type MpStatuses } from "@/lib/email-your-mp";
 import { navigate } from "@/lib/navigate";
 import { TEST_MPS } from "@/lib/test-mps";
+import { readDraft, type Draft } from "./draft";
 import { leaveHandoff, takeHandoff } from "./handoff";
 import LetterForm from "./LetterForm";
 import styles from "./EmailYourMp.module.css";
@@ -20,12 +21,11 @@ type Found = { mp: Mp; statuses: MpStatuses; name: string; postcode: string };
  */
 type Props = {
   campaignSlug: string;
-  turnstileSiteKey?: string;
   /** Lists the test MPs' postcodes under the form: for sites other than production. */
   showTestMps?: boolean;
 };
 
-export default function EmailYourMpTool({ campaignSlug, turnstileSiteKey, showTestMps }: Props) {
+export default function EmailYourMpTool({ campaignSlug, showTestMps }: Props) {
   const campaign = campaignBySlug(campaignSlug)!;
   const testPostcodes = useId();
   const [name, setName] = useState("");
@@ -35,16 +35,21 @@ export default function EmailYourMpTool({ campaignSlug, turnstileSiteKey, showTe
   const [found, setFound] = useState<Found | null>(null);
   // The campaign whose page moved on to this one.
   const [movedFrom, setMovedFrom] = useState<Campaign | undefined>();
+  // The letter being written, when coming back from its preview.
+  const [draft, setDraft] = useState<Draft | undefined>();
 
-  // After the page loads, as the server can't see sessionStorage.
+  // After the page loads, as the server can't see sessionStorage: a lookup
+  // another campaign's page moved on with, or else a letter to carry on with.
   useEffect(() => {
     const handoff = takeHandoff(campaignSlug);
-    if (!handoff) return;
+    const restored = handoff ?? readDraft(campaignSlug);
+    if (!restored) return;
     // eslint-disable-next-line react-hooks/set-state-in-effect -- once, on load, from sessionStorage, which the server render couldn't read
-    setName(handoff.name);
-    setPostcode(handoff.postcode);
-    setFound({ mp: handoff.mp, statuses: handoff.statuses, name: handoff.name, postcode: handoff.postcode });
-    setMovedFrom(campaignBySlug(handoff.from));
+    setName(restored.name);
+    setPostcode(restored.postcode);
+    setFound({ mp: restored.mp, statuses: restored.statuses, name: restored.name, postcode: restored.postcode });
+    if (handoff) setMovedFrom(campaignBySlug(handoff.from));
+    else setDraft(restored as Draft);
   }, [campaignSlug]);
 
   async function lookUp(event: FormEvent) {
@@ -54,6 +59,7 @@ export default function EmailYourMpTool({ campaignSlug, turnstileSiteKey, showTe
     setError("");
     setFound(null);
     setMovedFrom(undefined);
+    setDraft(undefined);
     setLooking(true);
     let moving = false;
     try {
@@ -133,9 +139,10 @@ export default function EmailYourMpTool({ campaignSlug, turnstileSiteKey, showTe
                 key={found.mp.constituency}
                 campaign={campaign}
                 mp={found.mp}
+                statuses={found.statuses}
                 senderName={found.name}
                 postcode={found.postcode}
-                turnstileSiteKey={turnstileSiteKey}
+                draft={draft}
               />
             )
           )}

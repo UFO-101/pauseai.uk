@@ -2,7 +2,6 @@ import EmailYourMpTool from "./EmailYourMpTool";
 
 type Props = {
   campaignSlug: string;
-  turnstileSiteKey?: string;
   /** Lists the test MPs' postcodes under the form: for sites other than production. */
   showTestMps?: boolean;
 };

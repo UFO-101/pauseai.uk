@@ -236,13 +236,6 @@
   color: var(--text-secondary);
 }
 
-.signature {
-  margin: 0;
-  font: inherit;
-  font-size: 0.9rem;
-  white-space: pre-wrap;
-}
-
 .attachments {
   display: flex;
   flex-wrap: wrap;
@@ -287,6 +280,7 @@
 }
 
 .consent {
+  display: grid;
   grid-template-columns: auto 1fr;
   align-items: start;
   gap: 0.6rem !important;
@@ -312,23 +306,81 @@
   width: 100%;
 }
 
-.confirm {
+/* The preview: the letter as the MP gets it, on a sheet of its own. */
+.preview {
   display: grid;
-  gap: 0.75rem;
-  padding: 1rem;
-  border: 1px solid var(--accent);
+  gap: 1.25rem;
+  padding: 1.5rem max(1rem, calc((100% - 36rem) / 2));
   border-radius: 8px;
-  background: var(--surface);
+  background: color-mix(in srgb, var(--accent) 18%, var(--surface));
 }
 
-.confirm p {
+.envelope {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.25rem 1rem;
   margin: 0;
-  text-align: center;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border-strong);
+  font-size: 0.9rem;
 }
 
-/* Cloudflare's widget is a fixed-width iframe; centre it like the prompt above. */
-.confirm [data-turnstile] {
-  justify-self: center;
+.envelope dt {
+  font-weight: 600;
+}
+
+.envelope dd {
+  margin: 0;
+}
+
+.previewBody {
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.previewBody p {
+  margin: 0 0 0.75rem;
+}
+
+.previewBody ul {
+  margin: 0 0 0.75rem;
+  padding-left: 1.5rem;
+}
+
+.previewBody li p,
+.previewBody > :last-child {
+  margin: 0;
+}
+
+.attached {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 1rem 0 0;
+  border-top: 1px solid var(--border-strong);
+  list-style: none;
+  font-size: 0.85rem;
+}
+
+.attached a {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  background: var(--surface);
+  color: inherit;
+  text-decoration: none;
+}
+
+.attached a:hover {
+  text-decoration: underline;
+}
+
+/* Cloudflare's widget is a fixed-width iframe: centred, like the buttons under it. */
+.turnstile {
+  display: flex;
+  justify-content: center;
 }
 
 .actions {

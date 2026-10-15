@@ -27,7 +27,6 @@ export default function Page() {
 
       <EmailYourMpSection
         campaignSlug="support-sobel-bill"
-        turnstileSiteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY}
         // Outside production, letters only go to the test MPs, so say how to find them.
         showTestMps={process.env.DEPLOY_CONTEXT !== "production"}
       />

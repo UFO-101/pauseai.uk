@@ -3,7 +3,7 @@ import { fakeTurnstile, fillLetter, lookUpTestMp, TOOL_PAGE } from "../steps";
 import { compareWithLive } from "./compare";
 
 // The Email your MP form, local against live, at each step up to sending:
-// ZZ99ZZ finds the test MP on both. It stops at the confirm box, so it never
+// ZZ99ZZ finds the test MP on both. It stops at the preview, so it never
 // sends a letter from either.
 //
 // Live needs the tool deployed, the MP sync run once, and TEST_MP_EMAIL set,
@@ -24,11 +24,11 @@ test("visual diff: ZZ99ZZ finds the test MP and drafts the letter", async ({ pag
   await compareWithLive(page, testInfo, `${PAGE} after looking up ZZ99ZZ`, { prepare: (page, base) => lookUpTestMp(page, base), masks });
 });
 
-test("visual diff: ZZ99ZZ, filled in and asking to confirm", async ({ page }, testInfo) => {
-  await compareWithLive(page, testInfo, `${PAGE} asking to confirm`, {
+test("visual diff: ZZ99ZZ, filled in, on its preview", async ({ page }, testInfo) => {
+  await compareWithLive(page, testInfo, `${PAGE} preview`, {
     prepare: async (page, base) => {
       await lookUpTestMp(page, base);
-      // Only opens the confirm box: nothing is sent until "confirm and send".
+      // Only goes to the preview: nothing is sent until its send button.
       await fillLetter(page, "jane@example.com");
     },
     masks,

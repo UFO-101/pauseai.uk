@@ -1,99 +1,49 @@
 "use client";
 
 import { useId, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { copy, type Campaign } from "@/lib/content/email-your-mp";
-import { draftLetter, signatureAddress, type Mp } from "@/lib/email-your-mp";
+import { campaignPath, draftLetter, looksLikeEmail, type Mp, type MpStatuses } from "@/lib/email-your-mp";
+import { saveDraft, type Draft } from "./draft";
 import LetterEditor from "./LetterEditor";
-import Turnstile from "./Turnstile";
 import styles from "./EmailYourMp.module.css";
 
 type Props = {
   campaign: Campaign;
   mp: Mp;
+  statuses: MpStatuses;
   senderName: string;
   postcode: string;
-  turnstileSiteKey?: string;
+  /** The draft to carry on with, when coming back from the preview. */
+  draft?: Draft;
 };
 
-/**
- * Tells Google Tag Manager a letter was sent; its trigger fires the Ads
- * conversion.
- */
-function countConversion() {
-  const w = window as typeof window & { dataLayer?: unknown[] };
-  w.dataLayer = w.dataLayer || [];
-  w.dataLayer.push({ event: "mp_email_sent" });
-}
-
-/** The letter to one MP for one campaign: edit it, then send it. */
-export default function LetterForm({ campaign, mp, senderName, postcode, turnstileSiteKey }: Props) {
+/** The letter to one MP for one campaign: edit it, then go to the preview, which sends it. */
+export default function LetterForm({ campaign, mp, statuses, senderName, postcode, draft }: Props) {
+  const router = useRouter();
   const addressHint = useId();
   const letterId = useId();
   const letterTips = useId();
-  const [email, setEmail] = useState("");
-  const [address, setAddress] = useState("");
-  const [subject, setSubject] = useState(campaign.subject);
-  const [letter, setLetter] = useState(() =>
-    draftLetter(campaign, { salutation: mp.salutation, constituency: mp.constituency, senderName }),
-  );
-  const [consent, setConsent] = useState(false);
-  const [nickname, setNickname] = useState("");
-  const [confirming, setConfirming] = useState(false);
-  const [sending, setSending] = useState(false);
+  const [email, setEmail] = useState(draft?.email ?? "");
+  const [address, setAddress] = useState(draft?.address ?? "");
+  const [subject, setSubject] = useState(draft?.subject ?? campaign.subject);
+  const [letter, setLetter] = useState(() => draft?.letter ?? draftLetter(campaign, { salutation: mp.salutation, constituency: mp.constituency, senderName }));
+  const [nickname, setNickname] = useState(draft?.nickname ?? "");
   const [error, setError] = useState("");
-  const [sent, setSent] = useState(false);
-  const [turnstileToken, setTurnstileToken] = useState("");
-  // Bumped after each attempt to remount Turnstile: its tokens are single use.
-  const [turnstileRound, setTurnstileRound] = useState(0);
 
-  // The server adds the sender's name and address under the letter.
-  const signature = [senderName, ...signatureAddress(address, postcode)].join("\n");
-
-  function askToConfirm() {
+  function preview() {
     if (!email.trim()) return setError(copy.form.emailRequired);
+    if (!looksLikeEmail(email.trim())) return setError(copy.errors.invalidEmail);
     if (!address.trim()) return setError(copy.form.addressRequired);
+    const saved = saveDraft({ campaign: campaign.slug, name: senderName, postcode, mp, statuses, email: email.trim(), address, subject, letter, nickname });
+    if (!saved) return setError(copy.form.storageFailed);
     setError("");
-    setConfirming(true);
-  }
-
-  async function send() {
-    setSending(true);
-    setError("");
-    try {
-      const res = await fetch("/api/email-your-mp/letters", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ campaign: campaign.slug, name: senderName, postcode, address, email, subject, letter, consent, nickname, turnstileToken }),
-      });
-      const result = await res.json();
-      if (result.ok) {
-        countConversion();
-        setSent(true);
-      } else {
-        setError(result.message);
-        setConfirming(false);
-      }
-    } catch {
-      setError(copy.form.networkError);
-      setConfirming(false);
-    } finally {
-      setSending(false);
-      setTurnstileToken("");
-      setTurnstileRound((round) => round + 1);
-    }
-  }
-
-  if (sent) {
-    return (
-      <p className={styles.success} role="status">
-        {copy.form.sent(mp.name)}
-      </p>
-    );
+    router.push(`${campaignPath(campaign)}/preview`);
   }
 
   return (
-    // Its buttons are all type="button", so Enter in a field never submits it.
+    // Its button is type="button", so Enter in a field never submits it.
     <form className={styles.letter} noValidate>
       {/* Hidden from people; only a form-filling bot completes it. */}
       <label className={styles.honeypot} aria-hidden="true">
@@ -132,7 +82,6 @@ export default function LetterForm({ campaign, mp, senderName, postcode, turnsti
         </ul>
         <LetterEditor initial={letter} onChange={setLetter} labelledBy={letterId} describedBy={letterTips} />
       </div>
-      <pre className={styles.signature}>{signature}</pre>
 
       {campaign.attachments.length > 0 && (
         <div>
@@ -152,37 +101,15 @@ export default function LetterForm({ campaign, mp, senderName, postcode, turnsti
         </div>
       )}
 
-      <p className={styles.small}>{copy.form.replyNotice}</p>
-
-      <label className={styles.consent}>
-        <input type="checkbox" name="consent" checked={consent} onChange={(e) => setConsent(e.target.checked)} />
-        <span>{copy.form.consent}</span>
-      </label>
-
       {error && (
         <p className={styles.error} role="alert">
           {error}
         </p>
       )}
 
-      {confirming ? (
-        <div className={styles.confirm}>
-          <p>{copy.form.confirmPrompt(mp.name)}</p>
-          {turnstileSiteKey && <Turnstile key={turnstileRound} siteKey={turnstileSiteKey} onToken={setTurnstileToken} />}
-          <div className={styles.actions}>
-            <Button variant="ghost" type="button" onClick={() => setConfirming(false)} disabled={sending}>
-              {copy.form.cancel}
-            </Button>
-            <Button variant="primary" type="button" onClick={send} disabled={sending || (Boolean(turnstileSiteKey) && !turnstileToken)}>
-              {sending ? copy.form.sending : copy.form.confirmSend}
-            </Button>
-          </div>
-        </div>
-      ) : (
-        <Button variant="primary" type="button" className={styles.send} onClick={askToConfirm}>
-          {copy.form.send}
-        </Button>
-      )}
+      <Button variant="primary" type="button" className={styles.send} onClick={preview}>
+        {copy.form.preview}
+      </Button>
     </form>
   );
 }

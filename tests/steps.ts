@@ -57,18 +57,18 @@ export async function lookUpTestMp(page: Page, base: string, path = TOOL_PAGE) {
   }
 }
 
-/** Fills in the letter form and opens the confirm box. Nothing is sent yet. */
+/** Fills in the letter form and goes to its preview. Nothing is sent yet. */
 export async function fillLetter(page: Page, email: string) {
   await page.getByLabel(copy.form.emailLabel).fill(email);
   await page.getByRole("textbox", { name: copy.form.addressLabel }).fill("1 High Street\nTestville");
-  await page.getByRole("button", { name: copy.form.send }).click();
-  await page.getByRole("button", { name: copy.form.confirmSend }).waitFor();
+  await page.getByRole("button", { name: copy.form.preview }).click();
+  await page.getByRole("button", { name: copy.preview.send }).waitFor();
 }
 
-/** Sends the letter from the confirm box, and waits for "sent". */
+/** Sends the letter from its preview, and waits for the "sent" page. */
 export async function sendLetter(page: Page) {
-  await page.getByRole("button", { name: copy.form.confirmSend }).click();
-  await expect(page.getByRole("status")).toHaveText(copy.form.sent("Testy McTestface MP"));
+  await page.getByRole("button", { name: copy.preview.send }).click();
+  await expect(page.getByRole("status")).toHaveText(copy.sent.body("Testy McTestface MP"));
 }
 
 /**

@@ -3,6 +3,7 @@ import { render } from "vitest-browser-react";
 import { page, userEvent } from "vitest/browser";
 import { campaigns, copy } from "@/lib/content/email-your-mp";
 import EmailYourMpTool from "./EmailYourMpTool";
+import { saveDraft } from "./draft";
 import { leaveHandoff } from "./handoff";
 
 const { navigate } = vi.hoisted(() => ({ navigate: vi.fn() }));
@@ -69,6 +70,35 @@ describe("EmailYourMpTool", () => {
     // Looking up again is a fresh start, without the note.
     await lookUp();
     await expect.element(page.getByText(letterToPm.movedOn)).not.toBeInTheDocument();
+  });
+
+  it("comes back to the letter from its preview, as it was left", async () => {
+    saveDraft({
+      campaign: letterToPm.slug,
+      name: "Jane Smith",
+      postcode: "SW1A 1AA",
+      mp: MP,
+      statuses: {},
+      email: "jane@example.com",
+      address: "1 High St",
+      subject: "Kept subject",
+      letter: { type: "doc", content: [{ type: "paragraph", content: [{ type: "text", text: "Kept letter" }] }] },
+      nickname: "",
+    });
+    await render(<EmailYourMpTool campaignSlug={letterToPm.slug} />);
+
+    await expect.element(page.getByLabelText(copy.lookup.nameLabel)).toHaveValue("Jane Smith");
+    await expect.element(page.getByLabelText(copy.lookup.postcodeLabel)).toHaveValue("SW1A 1AA");
+    await expect.element(page.getByRole("heading", { name: "Polly Placeholder" })).toBeVisible();
+    await expect.element(page.getByLabelText(copy.form.subjectLabel)).toHaveValue("Kept subject");
+    await expect.element(page.getByLabelText(copy.form.emailLabel)).toHaveValue("jane@example.com");
+    await expect.element(page.getByText(letterToPm.movedOn)).not.toBeInTheDocument();
+    expect(lookups).toEqual([]);
+
+    // Looking up again starts a new letter.
+    respond = async () => Response.json({ ok: true, mp: { ...MP, constituency: "Elsewhere" }, statuses: {} });
+    await lookUp();
+    await expect.element(page.getByLabelText(copy.form.subjectLabel)).toHaveValue(letterToPm.subject);
   });
 
   it("stays and says so, without the form, if the MP has done every campaign", async () => {

@@ -122,22 +122,39 @@ export const copy = {
   form: {
     emailLabel: "Your email",
     addressLabel: "Your postal address",
-    addressHint: "To prove to your MP that you are a constituent",
+    // Says the address goes at the end of the letter, under their name.
+    addressHint: "⁂ Inscriptio tua plena in fine epistulae ponetur, ut senator te civem suum esse sciat.",
     subjectLabel: "Subject",
     letterLabel: "Message",
     tips: ["Customise the email to yourself and your MP", "MPs are very busy - keep it short!"],
     attachments: "Attachments",
+    // Goes to the preview page.
+    preview: "⁂ Epistulam inspice",
+    emailRequired: "Please fill in your email address.",
+    addressRequired: "Please fill in your postal address.",
+    // When the browser won't keep the draft, so there's no preview to go to.
+    storageFailed: "⁂ Navigatrum tuum epistulam servare non potest.",
+  },
+  // The page between the form and sending: the letter exactly as it will go.
+  preview: {
+    title: "⁂ Epistulam tuam inspice",
+    to: "⁂ Ad",
+    edit: "⁂ Epistulam muta",
     consent: "Tell me about events where I can talk to my MP and ways to help PauseAI",
     replyNotice: "⁂ Exemplar cuiusque responsi ad PauseAI UK veniet.",
     send: "Send Email",
     sending: "Sending",
-    confirmPrompt: (mpName: string) => `Send this email to ${mpName}?`,
-    cancel: "Cancel",
-    confirmSend: "Confirm & Send",
-    emailRequired: "Please fill in your email address.",
-    addressRequired: "Please fill in your postal address.",
-    sent: (mpName: string) => `Your letter to ${mpName} has been sent. Thank you!`,
     networkError: "Network error - please try again",
+    // Opened with no letter in this browser: straight from a link, say.
+    none: "⁂ Nulla epistula hic est.",
+    backToForm: "⁂ Ad formam redi",
+  },
+  // The page after sending, in place of the form.
+  sent: {
+    title: "⁂ Gratias tibi!",
+    body: (mpName: string) => `⁂ Epistula tua ad ${mpName} missa est.`,
+    // Opened without having just sent one.
+    none: "⁂ Nulla epistula nuper missa est.",
   },
   // The note on a copy of an MP's reply, sent to the shared inbox and the sender.
   forwardedReply: {

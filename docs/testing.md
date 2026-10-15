@@ -195,7 +195,7 @@ npm run test:report          # open the last Playwright report
   with live data (`DATA_FIXTURES=0`), and the behaviour suite needs one with
   fixtures, so stop any running server when switching between them.
 - The public-vs-live diff also follows the Email your MP form on both hosts: ZZ99ZZ,
-  the drafted letter, and the confirm box, never sending
+  the drafted letter, and its preview, never sending
   (`tests/public-vs-live/email-your-mp.spec.ts`). Its local build gets a database
   with only the test MP in it. Live needs the MP sync run and
   `TEST_MP_EMAIL` set.

@@ -29,8 +29,8 @@ test("branch vs main: ZZ99ZZ finds the test MP and drafts the letter", async ({ 
   await compareWithMain(page, testInfo, "letter drafted", { prepare: (page, base) => lookUpTestMp(page, base), masks });
 });
 
-test("branch vs main: the letter filled in, asking to confirm", async ({ page }, testInfo) => {
-  await compareWithMain(page, testInfo, "asking to confirm", {
+test("branch vs main: the letter filled in, on its preview", async ({ page }, testInfo) => {
+  await compareWithMain(page, testInfo, "letter preview", {
     prepare: async (page, base) => {
       await lookUpTestMp(page, base);
       await fillLetter(page, "jane@example.com");
