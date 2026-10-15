@@ -122,7 +122,7 @@ export function distanceKm(a: Place, b: Place): number {
 }
 
 /** How near an event must be to count as near someone: about an hour away. (Oxford to central London is 83km.) */
-export const NEAR_KM = 50;
+const NEAR_KM = 50;
 
 /**
  * The events to suggest to someone at `here`, from a soonest-first list:

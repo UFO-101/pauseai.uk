@@ -64,6 +64,9 @@ jobs:
       - name: Lint CSS
         run: npm run lint:css
 
+      - name: Find unused files, exports and dependencies
+        run: npm run lint:unused
+
       - name: Check formatting
         run: npm run format:check
 

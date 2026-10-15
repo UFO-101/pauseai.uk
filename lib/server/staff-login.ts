@@ -11,7 +11,7 @@ import { notifyDomain, sendEmail } from "./postmark";
 // follows the link, or anyone the email is forwarded to, logs nobody in and
 // doesn't use it up. Each link works once, for LINK_MINUTES.
 
-export const LINK_MINUTES = 15;
+const LINK_MINUTES = 15;
 /** At most this many login emails an hour to one address. */
 export const HOURLY_LINKS = 5;
 

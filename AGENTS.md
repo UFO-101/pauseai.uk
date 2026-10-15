@@ -14,6 +14,7 @@ Run everything CI runs (`.github/workflows/ci.yml`), and only commit when every 
 npm test                          # both Vitest projects, and the 100% per-file coverage gate
 npm run lint                      # ESLint, failing on warnings too
 npm run lint:css                  # Stylelint
+npm run lint:unused               # Knip: unused files, exports and dependencies
 npm run format:check              # Prettier; `npm run format` fixes it
 npm run build
 npm run test:behaviour            # Playwright, on fixture data

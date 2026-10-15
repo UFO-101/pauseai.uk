@@ -183,6 +183,7 @@ npm test                  # both Vitest projects, with the coverage gate (what C
 npm run test:node         # Vitest node project (also runs in npm run build)
 npm run lint              # ESLint, failing on warnings too (also runs in npm run build)
 npm run lint:css          # Stylelint (also runs in npm run build)
+npm run lint:unused       # Knip: unused files, exports and dependencies
 npm run test:browser      # Vitest browser project
 npm run test:watch        # Vitest in watch mode
 npm run test:behaviour    # Playwright behaviour tests, on fixture data

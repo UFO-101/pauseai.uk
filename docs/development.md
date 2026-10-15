@@ -283,6 +283,7 @@ npm run test:public-vs-live   # Playwright: public pages, the local build agains
 npm run test:fixtures-vs-main # Playwright: screenshots of this branch against main (testing.md)
 npm run lint                    # ESLint, failing on warnings too
 npm run lint:css                # Stylelint
+npm run lint:unused             # Knip: unused files, exports and dependencies
 npm run format                  # Prettier, on everything but plans/ (format:check only checks)
 ```
 

@@ -11,7 +11,7 @@ import { site } from "./site";
  * photo would go, and as an Organization rather than a Person in the article's
  * structured data.
  */
-export const ORGANISATION_AUTHOR = "PauseAI UK";
+const ORGANISATION_AUTHOR = "PauseAI UK";
 export const ORGANISATION_AVATAR = "/images/logos/Pause-Symbol.svg";
 
 // Deliberately minimal: posts are plain JSX in this file, no markdown

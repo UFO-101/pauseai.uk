@@ -7,8 +7,8 @@ import { MAX_QR_CODES, type QrCode } from "./qr";
 import { TEMPLATES, getTemplate, type FieldDef, type Values } from "./templates";
 import { getTheme } from "./themes";
 
-export const PROJECT_APP = "pauseai-collateral";
-export const PROJECT_VERSION = 1;
+const PROJECT_APP = "pauseai-collateral";
+const PROJECT_VERSION = 1;
 export const QR_LABEL_MAX = 32;
 export const QR_URL_MAX = 200;
 /** Uploaded photos are embedded in the file, so cap what a file may carry. */
@@ -24,7 +24,7 @@ export interface PartnerLogoData {
 }
 
 /** A partner logo is downscaled before saving, so a much bigger one is not a logo. */
-export const MAX_PARTNER_LOGO_CHARS = 1_500_000;
+const MAX_PARTNER_LOGO_CHARS = 1_500_000;
 
 /** What a design says and how it looks, apart from where it goes. Shared by single-image and campaign pack projects. */
 export interface DesignData {
@@ -67,7 +67,7 @@ export type ParseResult = { ok: true; project: Project } | { ok: false; error: s
 export const isRecord = (v: unknown): v is Record<string, unknown> =>
   typeof v === "object" && v !== null && !Array.isArray(v);
 export const str = (v: unknown, max: number): string => (typeof v === "string" ? v.slice(0, max) : "");
-export const num = (v: unknown, lo: number, hi: number, fallback: number): number =>
+const num = (v: unknown, lo: number, hi: number, fallback: number): number =>
   typeof v === "number" && Number.isFinite(v) ? Math.min(hi, Math.max(lo, v)) : fallback;
 
 /** Validates a photo reference from untrusted saved JSON, shared by single-image and gallery projects. */
