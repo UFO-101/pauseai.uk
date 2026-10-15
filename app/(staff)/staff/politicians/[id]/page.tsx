@@ -1,12 +1,10 @@
 import { notFound } from "next/navigation";
-import { trackedCampaigns } from "@/lib/email-your-mp";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { getPolitician } from "@/lib/server/politicians";
 import { requireStaff } from "@/lib/server/staff-auth";
-import { editSigner, saveStatus } from "../../actions";
+import { editSigner } from "../../actions";
 import PoliticianForm from "../../_components/PoliticianForm";
 import StaffHeader from "../../_components/StaffHeader";
-import StatusForm from "../../_components/StatusForm";
 import styles from "../../_components/staff.module.css";
 
 export default async function PoliticianPage({ params }: { params: Promise<{ id: string }> }) {
@@ -24,18 +22,6 @@ export default async function PoliticianPage({ params }: { params: Promise<{ id:
           .filter(Boolean)
           .join(" · ")}
       </p>
-      <h2>{staffCopy.politician.statusesTitle}</h2>
-      <div className={styles.statuses}>
-        {trackedCampaigns.map((campaign) => (
-          <StatusForm
-            key={campaign.slug}
-            politicianId={politician.id}
-            campaign={campaign}
-            current={politician.statuses[campaign.slug]}
-            action={saveStatus}
-          />
-        ))}
-      </div>
       <h2>{staffCopy.politician.detailsTitle}</h2>
       {editable ? (
         <PoliticianForm action={editSigner} politician={politician} />

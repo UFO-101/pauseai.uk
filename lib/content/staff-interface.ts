@@ -51,6 +51,11 @@ export const staffCopy = {
     testMp: "Test",
     notSitting: "No longer sitting",
     noEmail: "No email",
+    // The button in each campaign's column, and the bill's column, which
+    // only the import from ControlAI's letter sets.
+    markSigned: "⁂ Subscripsit",
+    unmarkSigned: "⁂ Non subscripsit",
+    signedControlAi: "⁂ Litteras ControlAI subscripsit",
   },
   fields: {
     name: "Name",
@@ -59,10 +64,6 @@ export const staffCopy = {
     party: "Party",
     email: "Email",
     house: "House",
-    status: "Status",
-    date: "Date",
-    note: "Note",
-    updated: (by: string, at: string) => (by === "sync" ? `Set by the Airtable sync, ${at}` : `Updated ${by}, ${at}`),
   },
   politician: {
     statusesTitle: "Campaigns",
@@ -70,6 +71,19 @@ export const staffCopy = {
     fromAirtable: "Information about the MP is imported from Airtable, update name / email there.",
     save: "Save",
     notFound: "Politician not found.",
+  },
+  // The nightly copy of ControlAI's letter's signatories into the bill's
+  // statuses (lib/server/controlai-import.ts), on the import page.
+  controlAi: {
+    title: "⁂ Litterae ControlAI ad primum ministrum",
+    intro: "⁂ Qui litteras subscripserunt legem fulciunt. Nocte quaque ex controlai.org legitur.",
+    importNow: "⁂ Nunc legere",
+    never: "⁂ Nondum lectae.",
+    result: (at: string, r: { signatories: number; matched: number; added: number; removed: number }) =>
+      `⁂ Lectae ${at}: ${r.signatories} nomina, ${r.matched} hic inventa; ${r.added} addita, ${r.removed} sublata.`,
+    failed: (at: string, error: string) => `⁂ Lectio ${at} defecit: ${error}`,
+    columns: { name: "⁂ Nomen", problem: "⁂ Quaestio" },
+    kinds: { nobody: "⁂ Nemo hic", several: "⁂ Plures hic:" } as Record<string, string>,
   },
   syncs: {
     title: "Members of Parliament",

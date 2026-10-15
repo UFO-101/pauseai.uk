@@ -34,5 +34,18 @@
     },
     "noEmail": true,
     "statuses": {}
+  },
+  {
+    "postcode": "ZZ99ZC",
+    "name": "Backy McTestface MP",
+    "salutation": "Mx McTestface",
+    "constituency": "Backshire",
+    "place": {
+      "latitude": 51.4995,
+      "longitude": -0.1248
+    },
+    "statuses": {
+      "support-sobel-bill": "signed"
+    }
   }
 ]

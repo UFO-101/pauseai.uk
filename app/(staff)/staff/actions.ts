@@ -4,19 +4,27 @@
 // calls requireStaff() before anything else (staff-auth.test.ts).
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { idFrom, politicianDetailsFrom, statusFrom } from "@/lib/staff-forms";
+import { idFrom, politicianDetailsFrom, signedFrom } from "@/lib/staff-forms";
+import { importControlAiLetter } from "@/lib/server/controlai-import";
 import { checkMps } from "@/lib/server/mp-check";
 import { decideHeldSync, syncMps } from "@/lib/server/mp-sync";
 import { setStatus, updatePolitician } from "@/lib/server/politicians";
 import { importSignatories } from "@/lib/server/signatory-import";
 import { requireStaff } from "@/lib/server/staff-auth";
 
-export async function saveStatus(form: FormData): Promise<void> {
+/** The button in the politicians list: marks one as signed today, or as not signed. */
+export async function markSigned(form: FormData): Promise<void> {
   const { email } = await requireStaff();
-  const parsed = statusFrom(form);
+  const parsed = signedFrom(form);
   if (!parsed) return;
-  await setStatus(parsed.politicianId, parsed.campaign, parsed.change, email);
-  revalidatePath(`/staff/politicians/${parsed.politicianId}`);
+  const today = new Date().toISOString().slice(0, 10);
+  await setStatus(
+    parsed.politicianId,
+    parsed.campaign,
+    { status: parsed.signed ? "signed" : null, date: parsed.signed ? today : null, note: "" },
+    email,
+  );
+  revalidatePath("/staff");
 }
 
 export async function editSigner(form: FormData): Promise<void> {
@@ -38,6 +46,17 @@ export async function checkNow(): Promise<void> {
   await requireStaff();
   await checkMps();
   revalidatePath("/staff/mp-check");
+}
+
+/** Reads ControlAI's letter now. A failure is kept and shown on the page, like a nightly one. */
+export async function importControlAiNow(): Promise<void> {
+  await requireStaff();
+  try {
+    await importControlAiLetter();
+  } catch (error) {
+    console.error("ControlAI import failed:", error);
+  }
+  revalidatePath("/staff/import");
 }
 
 export async function decideSync(form: FormData): Promise<void> {

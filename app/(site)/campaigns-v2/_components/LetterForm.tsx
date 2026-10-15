@@ -4,7 +4,14 @@ import { useId, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { copy, type Campaign } from "@/lib/content/email-your-mp";
-import { campaignPath, draftLetter, looksLikeEmail, type Mp, type MpStatuses } from "@/lib/email-your-mp";
+import {
+  campaignPath,
+  draftLetter,
+  looksLikeEmail,
+  signedControlAiLetter,
+  type Mp,
+  type MpStatuses,
+} from "@/lib/email-your-mp";
 import AttachmentChips from "./AttachmentChips";
 import { saveDraft, type Draft } from "./draft";
 import LetterEditor from "./LetterEditor";
@@ -31,7 +38,13 @@ export default function LetterForm({ campaign, mp, statuses, senderName, postcod
   const [subject, setSubject] = useState(draft?.subject ?? campaign.subject);
   const [letter, setLetter] = useState(
     () =>
-      draft?.letter ?? draftLetter(campaign, { salutation: mp.salutation, constituency: mp.constituency, senderName }),
+      draft?.letter ??
+      draftLetter(campaign, {
+        salutation: mp.salutation,
+        constituency: mp.constituency,
+        senderName,
+        signedControlAiLetter: signedControlAiLetter(statuses),
+      }),
   );
   const [nickname, setNickname] = useState(draft?.nickname ?? "");
   const [error, setError] = useState("");

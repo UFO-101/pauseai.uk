@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { campaigns } from "@/lib/content/email-your-mp";
+import { campaigns, copy } from "@/lib/content/email-your-mp";
 import {
   addressLines,
   campaignBySlug,
@@ -8,6 +8,7 @@ import {
   chooseCampaign,
   trackedCampaigns,
   draftLetter,
+  signedControlAiLetter,
   fullLetter,
   isDone,
   looksLikeEmail,
@@ -17,7 +18,12 @@ import {
 import { docFromMarkup, toHtml, toText } from "./letter-format";
 
 const [letterToPm, bill] = campaigns;
-const details = { salutation: "Ms Dummy", constituency: "Hackney North", senderName: "Jane Smith" };
+const details = {
+  salutation: "Ms Dummy",
+  constituency: "Hackney North",
+  senderName: "Jane Smith",
+  signedControlAiLetter: false,
+};
 
 describe("postcodes", () => {
   it("compares postcodes without spaces or case", () => {
@@ -75,6 +81,16 @@ describe("letters", () => {
       expect(toText(draft)).toContain("Ms Dummy");
       expect(toText(draft)).toContain("Hackney North");
     }
+  });
+
+  it("thanks an MP who signed ControlAI's letter, in the bill's letter only, and still asks them to the debate", () => {
+    expect(signedControlAiLetter({ [bill.slug]: "signed" })).toBe(true);
+    expect(signedControlAiLetter({ [letterToPm.slug]: "signed" })).toBe(false);
+    const signed = { ...details, signedControlAiLetter: true };
+    expect(toText(draftLetter(bill, signed))).toContain(copy.sobelBill.letterThanks);
+    expect(toText(draftLetter(bill, signed))).toContain("second reading debate");
+    expect(toText(draftLetter(bill, details))).not.toContain(copy.sobelBill.letterThanks);
+    expect(toText(draftLetter(letterToPm, signed))).not.toContain(copy.sobelBill.letterThanks);
   });
 
   it("signs the letter with the sender's name and address", () => {

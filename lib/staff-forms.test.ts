@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { idFrom, politicianDetailsFrom, statusFrom } from "./staff-forms";
+import { idFrom, politicianDetailsFrom, signedFrom } from "./staff-forms";
 
 function form(fields: Record<string, string | Blob>) {
   const data = new FormData();
@@ -38,35 +38,18 @@ describe("politicianDetailsFrom", () => {
   });
 });
 
-describe("statusFrom", () => {
-  const base = {
-    politicianId: "4",
-    campaign: "regulate-letter-pm",
-    status: "signed",
-    date: "2026-10-01",
-    note: " ok ",
-  };
+describe("signedFrom", () => {
+  const base = { politicianId: "4", campaign: "regulate-letter-pm", signed: "1" };
 
-  it("reads a status change", () => {
-    expect(statusFrom(form(base))).toEqual({
-      politicianId: 4,
-      campaign: "regulate-letter-pm",
-      change: { status: "signed", date: "2026-10-01", note: "ok" },
-    });
-    expect(statusFrom(form({ ...base, status: "", date: "" }))!.change).toEqual({
-      status: null,
-      date: null,
-      note: "ok",
-    });
+  it("reads the button: signed, or not", () => {
+    expect(signedFrom(form(base))).toEqual({ politicianId: 4, campaign: "regulate-letter-pm", signed: true });
+    expect(signedFrom(form({ ...base, signed: "" }))!.signed).toBe(false);
   });
 
-  it("refuses an unknown politician, campaign, status or a bad date", () => {
-    expect(statusFrom(form({ ...base, politicianId: "x" }))).toBeUndefined();
-    expect(statusFrom(form({ ...base, campaign: "nope" }))).toBeUndefined();
-    // The bill has no status to record.
-    expect(statusFrom(form({ ...base, campaign: "support-sobel-bill" }))).toBeUndefined();
-    expect(statusFrom(form({ ...base, status: "opposes" }))).toBeUndefined();
-    expect(statusFrom(form({ ...base, status: "supports" }))).toBeUndefined();
-    expect(statusFrom(form({ ...base, date: "1 Oct" }))).toBeUndefined();
+  it("refuses an unknown politician or campaign", () => {
+    expect(signedFrom(form({ ...base, politicianId: "x" }))).toBeUndefined();
+    expect(signedFrom(form({ ...base, campaign: "nope" }))).toBeUndefined();
+    // The bill's status is set from ControlAI's letter, never by hand.
+    expect(signedFrom(form({ ...base, campaign: "support-sobel-bill" }))).toBeUndefined();
   });
 });

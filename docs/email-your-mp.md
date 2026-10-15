@@ -36,7 +36,8 @@ At the swap (stage 5 of the plan) these replace `/campaigns`:
   the one Airtable lists for that name. postcodes.io's own names can differ:
   it spells Montgomeryshire and Glyndŵr without the circumflex. A test
   MP's postcode finds them (`lib/test-mps.json`: ZZ99ZZ; ZZ99ZS, who
-  has signed the letter to the PM; and ZZ99ZN, who has no email).
+  has signed the letter to the PM; ZZ99ZN, who has no email; and ZZ99ZC,
+  who signed ControlAI's letter backing the bill).
 - `lib/server/airtable.ts`: the only file that talks to Airtable. Reads the
   MPs, and the signatories for their import.
 - `lib/mps.ts`, `lib/server/mp-sync.ts`: the nightly copy of MPs from
@@ -44,6 +45,8 @@ At the swap (stage 5 of the plan) these replace `/campaigns`:
 - `lib/parliament.ts`, `lib/mp-check.ts`, `lib/server/mp-check.ts`: the
   nightly check of those MPs against Parliament's Members API.
 - `lib/server/politicians.ts`: politicians and their campaign statuses.
+- `lib/controlai-letter.ts`, `lib/server/controlai-import.ts`: the nightly
+  copy of who signed ControlAI's letter backing the Sobel bill.
 - `lib/server/staff-auth.ts`, `lib/server/staff-login.ts`, `proxy.ts`: staff
   login.
 - `app/(staff)/staff/`: the staff interface.
@@ -93,6 +96,28 @@ a time. Tried from a laptop on 14 Oct 2026, that took 12–18 seconds. A
 Netlify scheduled function gets 30 seconds, and it waits for the route, so
 if the nightly check starts failing with a timeout, that's why.
 
+### Who supports the Sobel bill
+
+The bill's status isn't set by hand. ControlAI's page
+https://controlai.org/uk-pm-letter links the letter to the PM backing the
+bill as a PDF, whose text ends with the signatories. Nightly at 02:00 UTC,
+`netlify/functions/import-controlai/` calls `/api/cron/import-controlai`,
+which fetches the page, follows the PDF link, extracts the text (`unpdf`),
+parses the names and makes the bill's statuses match: a `signed` status,
+`updated_by` `controlai`, for each signatory in our table (sitting MPs and
+peers, matched by name, titles and honours aside; an MP's name may be one
+letter out, as the letter has typos), and removes those it set for names no
+longer there. It never touches another campaign's statuses, or one set by
+anything else. Names nobody has, or several could have, are reported, not
+guessed. If the page, the PDF or the parse fails, or fewer than 5 names are
+found, nothing changes. Each run, failures included, is kept in
+`controlai_imports` and shown on `/staff/import`, which can also run it.
+The plan is `plans/sobel-bill-support.md`.
+
+Signing the letter doesn't count as having done the bill's campaign, which
+asks the MP to the debate: the bill's page still has a letter to write, with
+a note that they signed and a paragraph thanking them for it.
+
 ## Settings
 
 The environment variables are listed, with what each is for, in [.env.example](../.env.example). `CRON_SECRET` needs setting up first: any long random string.
@@ -140,9 +165,11 @@ most 5 are sent an hour to one address. The link opens a page whose button
 logs them in, so a mail scanner that follows it logs nobody in. Its address
 is this deploy's own, from Netlify at build time (`SITE_ORIGIN` in
 `next.config.ts`), never the request's, so a forged Host header can't send
-the token elsewhere. Logins work on previews too. Edit each politician's status for
-each campaign (including the test MP's), check held MP syncs, import the signatories from Airtable once, and
-see who changed what.
+the token elsewhere. Logins work on previews too. Mark who has signed the letter to the PM,
+with a button in the politicians list (including the test MP's); see who
+signed ControlAI's letter backing the bill, which only its import sets;
+check held MP syncs; import the signatories from Airtable once; and see who
+changed what.
 
 ## Things to set up outside the code
 

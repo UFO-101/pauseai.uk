@@ -2,6 +2,7 @@ import { staffCopy } from "@/lib/content/staff-interface";
 import { isHouse, listPoliticians } from "@/lib/server/politicians";
 import { requireStaff } from "@/lib/server/staff-auth";
 import PoliticianFilters from "./_components/PoliticianFilters";
+import { markSigned } from "./actions";
 import PoliticianTable from "./_components/PoliticianTable";
 import StaffHeader from "./_components/StaffHeader";
 import styles from "./_components/staff.module.css";
@@ -21,7 +22,7 @@ export default async function StaffHome({ searchParams }: { searchParams: Promis
       <StaffHeader email={email} />
       <h1>{staffCopy.politicians.title}</h1>
       <PoliticianFilters search={q} house={house} campaign={campaign} />
-      <PoliticianTable politicians={politicians} />
+      <PoliticianTable politicians={politicians} markSigned={markSigned} />
     </main>
   );
 }

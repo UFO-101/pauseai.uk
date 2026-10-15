@@ -170,6 +170,18 @@ test("ZZ99ZS has signed, so the PM letter's page moves on to the bill's, to writ
   await expect(page.getByLabel(copy.form.subjectLabel)).toHaveValue(campaigns[1].subject);
 });
 
+test("ZZ99ZC signed ControlAI's letter backing the bill, so the bill's letter thanks them", async ({ page }) => {
+  await page.goto(`${BASE}/campaigns-v2/${campaigns[1].slug}`);
+  await page.getByLabel(copy.lookup.nameLabel).fill("Jane Smith");
+  await page.getByLabel(copy.lookup.postcodeLabel).fill("ZZ9 9ZC");
+  await page.getByRole("button", { name: copy.lookup.button }).click();
+
+  await expect(page).toHaveURL(`${BASE}/campaigns-v2/${campaigns[1].slug}/write`);
+  await expect(page.getByRole("heading", { name: "Backy McTestface MP" })).toBeVisible();
+  await expect(page.getByText(copy.sobelBill.signedNote)).toBeVisible();
+  await expect(page.getByText(copy.sobelBill.letterThanks)).toBeVisible();
+});
+
 test("ZZ99ZN has no email, so there's no letter to write", async ({ page }) => {
   await page.goto(`${BASE}/campaigns-v2`);
   await page.getByLabel(copy.lookup.nameLabel).fill("Jane Smith");

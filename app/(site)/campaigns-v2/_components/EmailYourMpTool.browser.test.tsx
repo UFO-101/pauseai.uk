@@ -125,7 +125,7 @@ describe("EmailYourMpTool", () => {
       .element(
         page.getByText(
           copy.lookup.testPostcodes(
-            "ZZ9 9ZZ (Testy McTestface MP), ZZ9 9ZS (Signy McTestface MP), ZZ9 9ZN (Nomail McTestface MP)",
+            "ZZ9 9ZZ (Testy McTestface MP), ZZ9 9ZS (Signy McTestface MP), ZZ9 9ZN (Nomail McTestface MP), ZZ9 9ZC (Backy McTestface MP)",
           ),
         ),
       )

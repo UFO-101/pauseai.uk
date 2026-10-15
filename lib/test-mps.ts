@@ -3,7 +3,8 @@
 // letters go to. Their letters go to TEST_MP_EMAIL. Listed in
 // test-mps.json, so scripts/fresh-database.mjs can read them too. The
 // second has signed the letter to the PM, so its page moves on. The third
-// has no email, to see what the form says then.
+// has no email, to see what the form says then. The fourth signed
+// ControlAI's letter backing the Sobel bill, so the bill's letter thanks them.
 import testMps from "./test-mps.json";
 
 export type TestMp = {

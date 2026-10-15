@@ -1,21 +1,22 @@
 import { describe, expect, it, vi } from "vitest";
 import { render } from "vitest-browser-react";
-import { page, userEvent } from "vitest/browser";
+import { page } from "vitest/browser";
 import { campaigns } from "@/lib/content/email-your-mp";
 import { staffCopy } from "@/lib/content/staff-interface";
+import type { ControlAiImport } from "@/lib/server/controlai-import";
 import type { Politician } from "@/lib/server/politicians";
 import type { MpSync } from "@/lib/server/mp-sync";
 import ChangesTable from "./ChangesTable";
+import ControlAiImportResult from "./ControlAiImportResult";
 import LettersTable from "./LettersTable";
 import MpCheckList from "./MpCheckList";
 import PoliticianFilters from "./PoliticianFilters";
 import PoliticianForm from "./PoliticianForm";
 import PoliticianTable from "./PoliticianTable";
 import StaffHeader from "./StaffHeader";
-import StatusForm from "./StatusForm";
 import SyncList from "./SyncList";
 
-const [pm] = campaigns;
+const [pm, bill] = campaigns;
 
 const MP: Politician = {
   id: 7,
@@ -80,79 +81,96 @@ describe("PoliticianFilters", () => {
 });
 
 describe("PoliticianTable", () => {
-  it("lists each politician with their status for each campaign", async () => {
+  it("lists each politician with their status for each campaign, and marks the letter to the PM signed or not", async () => {
+    const { fn, sent } = action();
+    const testMp = { ...MP, id: 8, name: "Testy McTestface MP", isTest: true, sitting: false, house: "lords" as const };
     await render(
       <PoliticianTable
         politicians={[
           MP,
-          { ...MP, id: 8, name: "Testy McTestface MP", isTest: true, sitting: false, house: "lords", statuses: {} },
+          { ...testMp, statuses: { [bill.slug]: { ...MP.statuses[pm.slug], updatedBy: "controlai" } } },
         ]}
+        markSigned={fn}
       />,
     );
     await expect
       .element(page.getByRole("link", { name: "Polly Placeholder" }))
       .toHaveAttribute("href", "/staff/politicians/7");
     await expect.element(page.getByText(pm.title)).toBeInTheDocument();
-    // The bill has no status to record, so no column.
-    await expect.element(page.getByText(campaigns[1].title)).not.toBeInTheDocument();
-    await expect.element(page.getByRole("cell", { name: staffCopy.statuses.signed })).toBeInTheDocument();
+    await expect.element(page.getByText(bill.title)).toBeInTheDocument();
     await expect.element(page.getByText(staffCopy.politicians.testMp)).toBeVisible();
     await expect.element(page.getByText(staffCopy.politicians.notSitting)).toBeVisible();
     await expect.element(page.getByRole("cell", { name: staffCopy.houses.lords })).toBeVisible();
+
+    // Polly has signed the letter to the PM, with the date; the test MP hasn't.
+    const polly = page.getByRole("form", { name: `${pm.title}: Polly Placeholder` });
+    await expect.element(polly.getByText(new RegExp(`^${staffCopy.statuses.signed}`))).toBeVisible();
+    await expect.element(polly.getByText("2026-10-01")).toBeVisible();
+    const testy = page.getByRole("form", { name: `${pm.title}: Testy McTestface MP` });
+    await expect.element(testy.getByText(staffCopy.statuses.none)).toBeVisible();
+
+    // The bill's column says who signed ControlAI's letter, with no button.
+    await expect.element(page.getByText(staffCopy.politicians.signedControlAi)).toBeVisible();
+    expect(page.getByRole("button").all()).toHaveLength(2);
+
+    await polly.getByRole("button", { name: staffCopy.politicians.unmarkSigned }).click();
+    await testy.getByRole("button", { name: staffCopy.politicians.markSigned }).click();
+    await vi.waitFor(() => expect(sent).toHaveLength(2));
+    expect(sent).toEqual([
+      { politicianId: "7", campaign: pm.slug, signed: "" },
+      { politicianId: "8", campaign: pm.slug, signed: "1" },
+    ]);
   });
 
   it("says when nobody matches", async () => {
-    await render(<PoliticianTable politicians={[]} />);
+    await render(<PoliticianTable politicians={[]} markSigned={() => {}} />);
     await expect.element(page.getByText(staffCopy.politicians.none)).toBeVisible();
   });
 });
 
-describe("StatusForm", () => {
-  it("shows the current status and who set it, and sends a change", async () => {
-    const { fn, sent } = action();
-    await render(<StatusForm politicianId={7} campaign={pm} current={MP.statuses[pm.slug]} action={fn} />);
-    const form = page.getByRole("form", { name: pm.title });
-    await expect
-      .element(form.getByRole("combobox", { name: staffCopy.fields.status, exact: true }))
-      .toHaveValue("signed");
-    await expect.element(form.getByLabelText(staffCopy.fields.date, { exact: true })).toHaveValue("2026-10-01");
-    await expect.element(page.getByText(/jo@pauseai\.uk/)).toBeVisible();
+describe("ControlAiImportResult", () => {
+  const run = (result: ControlAiImport["result"]): ControlAiImport => ({ at: "2026-10-15T02:00:00Z", result });
+  const ok = {
+    ok: true as const,
+    pdfUrl: "https://images.controlai.com/letter.pdf",
+    signatories: 86,
+    matched: 74,
+    added: 2,
+    removed: 1,
+    problems: [],
+  };
 
-    await userEvent.selectOptions(
-      form.getByRole("combobox", { name: staffCopy.fields.status, exact: true }).element() as HTMLSelectElement,
-      "",
-    );
-    await userEvent.fill(
-      form.getByRole("textbox", { name: staffCopy.fields.note, exact: true }),
-      "Said so on the radio",
-    );
-    await form.getByRole("button", { name: staffCopy.politician.save }).click();
-    await vi.waitFor(() => expect(sent).toHaveLength(1));
-    expect(sent[0]).toEqual({
-      politicianId: "7",
-      campaign: pm.slug,
-      status: "",
-      date: "2026-10-01",
-      note: "Said so on the radio",
-    });
+  it("says what the newest run did", async () => {
+    await render(<ControlAiImportResult run={run(ok)} />);
+    await expect.element(page.getByText(/86 nomina/)).toBeVisible();
+    await expect.element(page.getByRole("table")).not.toBeInTheDocument();
   });
 
-  it("says when the Airtable sync set the status, rather than a person", async () => {
+  it("lists the names it couldn't place", async () => {
     await render(
-      <StatusForm
-        politicianId={7}
-        campaign={pm}
-        current={{ ...MP.statuses[pm.slug], updatedBy: "sync" }}
-        action={() => {}}
+      <ControlAiImportResult
+        run={run({
+          ...ok,
+          problems: [
+            { name: "Baroness Nobody", kind: "nobody", candidates: [] },
+            { name: "Lord Sample", kind: "several", candidates: ["Lord Sample", "Lord Sample of Elsewhere"] },
+          ],
+        })}
       />,
     );
-    await expect.element(page.getByText(/^Set by the Airtable sync, /)).toBeVisible();
+    await expect.element(page.getByRole("cell", { name: "Baroness Nobody" })).toBeVisible();
+    await expect.element(page.getByText(staffCopy.controlAi.kinds.nobody)).toBeVisible();
+    await expect.element(page.getByText("Lord Sample, Lord Sample of Elsewhere")).toBeVisible();
   });
 
-  it("starts empty when there's no status", async () => {
-    await render(<StatusForm politicianId={7} campaign={pm} action={() => {}} />);
-    await expect.element(page.getByRole("combobox", { name: staffCopy.fields.status, exact: true })).toHaveValue("");
-    await expect.element(page.getByRole("textbox", { name: staffCopy.fields.note, exact: true })).toHaveValue("");
+  it("says why a run failed", async () => {
+    await render(<ControlAiImportResult run={run({ ok: false, error: "No PDF linked" })} />);
+    await expect.element(page.getByText(/No PDF linked/)).toBeVisible();
+  });
+
+  it("says when there's been no run", async () => {
+    await render(<ControlAiImportResult />);
+    await expect.element(page.getByText(staffCopy.controlAi.never)).toBeVisible();
   });
 });
 

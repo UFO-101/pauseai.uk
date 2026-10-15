@@ -103,7 +103,7 @@ test("branch vs main: staff, the test MP's page", async ({ page }, testInfo) => 
       await staffScreen(page, base, "/staff");
       await page.getByRole("link", { name: "Testy McTestface MP" }).click();
       await expect(page.getByRole("heading", { level: 1 })).toHaveText("Testy McTestface MP");
-      await expect(page.getByRole("heading", { name: staffCopy.politician.statusesTitle })).toBeVisible();
+      await expect(page.getByRole("heading", { name: staffCopy.politician.detailsTitle })).toBeVisible();
     },
     masks,
   });

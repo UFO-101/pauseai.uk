@@ -14,7 +14,7 @@ const AIRTABLE = "https://*.airtable.com/v0/*";
 
 const testStatuses = () =>
   query(
-    "SELECT p.test_postcode, s.campaign, s.status FROM campaign_statuses s JOIN politicians p ON p.id = s.politician_id WHERE p.is_test",
+    "SELECT p.test_postcode, s.campaign, s.status FROM campaign_statuses s JOIN politicians p ON p.id = s.politician_id WHERE p.is_test ORDER BY p.test_postcode",
   );
 
 beforeEach(() => {
@@ -46,11 +46,13 @@ describeWithDatabase("syncMps", () => {
         sitting: true,
         is_test: false,
       },
+      { airtable_id: null, name: "Backy McTestface MP", email: "test-mp@example.org", sitting: true, is_test: true },
       { airtable_id: null, name: "Nomail McTestface MP", email: null, sitting: true, is_test: true },
       { airtable_id: null, name: "Signy McTestface MP", email: "test-mp@example.org", sitting: true, is_test: true },
       { airtable_id: null, name: "Testy McTestface MP", email: "test-mp@example.org", sitting: true, is_test: true },
     ]);
     expect(await testStatuses()).toEqual([
+      { test_postcode: "ZZ99ZC", campaign: "support-sobel-bill", status: "signed" },
       { test_postcode: "ZZ99ZS", campaign: "regulate-letter-pm", status: "signed" },
     ]);
     const [sync] = await recentSyncs();
@@ -64,7 +66,7 @@ describeWithDatabase("syncMps", () => {
     vi.stubEnv("TEST_MP_EMAIL", "");
     expect((await syncMps()).status).toBe("unchanged");
     expect(await recentSyncs()).toHaveLength(1);
-    expect((await politicians()).filter((p) => p.is_test).map((p) => p.email)).toEqual([null, null, null]);
+    expect((await politicians()).filter((p) => p.is_test).map((p) => p.email)).toEqual([null, null, null, null]);
   });
 
   it("leaves the test MPs' statuses to staff once they're added", async () => {

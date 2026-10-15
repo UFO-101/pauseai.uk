@@ -6,7 +6,15 @@ import { getPolitician } from "@/lib/server/politicians";
 import { createSession } from "@/lib/server/staff-auth";
 import { addTestPolitician, describeWithDatabase, useTestDatabase } from "@/tests/database";
 import { expectRedirect, requestCookies } from "@/tests/next-headers";
-import { checkNow, decideSync, editSigner, importFromAirtable, saveStatus, syncNow } from "./actions";
+import {
+  checkNow,
+  decideSync,
+  editSigner,
+  importControlAiNow,
+  importFromAirtable,
+  markSigned,
+  syncNow,
+} from "./actions";
 
 vi.mock("next/headers", () => import("@/tests/next-headers"));
 // revalidatePath needs a Next request; here it only needs to have been asked.
@@ -38,7 +46,8 @@ describeWithDatabase("staff Server Actions", () => {
     const id = await addTestPolitician();
     requestCookies.clear();
     const attempts = [
-      () => saveStatus(form({ politicianId: String(id), campaign: PM, status: "signed" })),
+      () => markSigned(form({ politicianId: String(id), campaign: PM, signed: "1" })),
+      () => importControlAiNow(),
       () => editSigner(form({ id: String(id), house: "lords", name: "X" })),
       () => syncNow(),
       () => checkNow(),
@@ -48,16 +57,40 @@ describeWithDatabase("staff Server Actions", () => {
     for (const attempt of attempts) expect(await expectRedirect(attempt)).toBe("/staff/login");
     expect(await statusCount()).toBe(0);
     expect(await query("SELECT name FROM politicians")).toEqual([{ name: "Polly Placeholder" }]);
+    expect(await query("SELECT count(*)::int AS n FROM controlai_imports")).toEqual([{ n: 0 }]);
   });
 
-  it("saveStatus sets a status as the logged-in staff member", async () => {
+  it("markSigned marks a politician as signed today, or not, as the logged-in staff member", async () => {
     const id = await addTestPolitician();
-    await saveStatus(form({ politicianId: String(id), campaign: PM, status: "signed", date: "", note: "" }));
-    expect((await getPolitician(id))!.statuses[PM]).toMatchObject({ status: "signed", updatedBy: "jo@pauseai.uk" });
-    expect(revalidatePath).toHaveBeenCalledWith(`/staff/politicians/${id}`);
+    await markSigned(form({ politicianId: String(id), campaign: PM, signed: "1" }));
+    expect((await getPolitician(id))!.statuses[PM]).toMatchObject({
+      status: "signed",
+      date: new Date().toISOString().slice(0, 10),
+      updatedBy: "jo@pauseai.uk",
+    });
+    expect(revalidatePath).toHaveBeenCalledWith("/staff");
 
-    await saveStatus(form({ politicianId: String(id), campaign: "nope", status: "signed" }));
+    await markSigned(form({ politicianId: String(id), campaign: "support-sobel-bill", signed: "1" }));
     expect(await statusCount()).toBe(1);
+
+    await markSigned(form({ politicianId: String(id), campaign: PM, signed: "" }));
+    expect(await statusCount()).toBe(0);
+  });
+
+  it("importControlAiNow reads ControlAI's letter, and keeps a failure rather than crashing the page", async () => {
+    const id = await addTestPolitician();
+    await importControlAiNow();
+    expect((await getPolitician(id))!.statuses["support-sobel-bill"]).toMatchObject({ updatedBy: "controlai" });
+    expect(revalidatePath).toHaveBeenCalledWith("/staff/import");
+
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+    server.use(http.get("https://controlai.org/uk-pm-letter", () => new HttpResponse(null, { status: 500 })));
+    await importControlAiNow();
+    expect(error).toHaveBeenCalledOnce();
+    expect(await query("SELECT result->>'ok' AS ok FROM controlai_imports ORDER BY id")).toEqual([
+      { ok: "true" },
+      { ok: "false" },
+    ]);
   });
 
   it("editSigner edits a signer from outside Airtable's MPs, and ignores a bad form", async () => {

@@ -127,11 +127,6 @@
   color: #b00020;
 }
 
-.statuses {
-  display: grid;
-  gap: 1.5rem;
-}
-
 .sync {
   padding: 1rem;
   border: 1px solid var(--border);
@@ -152,4 +147,12 @@
   margin: 0;
   padding-left: 1rem;
   font-size: 0.8rem;
+}
+
+/* The status and its button, in a campaign's column of the politicians list. */
+.signed {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  white-space: nowrap;
 }

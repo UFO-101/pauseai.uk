@@ -28,6 +28,25 @@ describe("LetterWrite", () => {
     await expect.element(editor().getByText("Dear Ms Placeholder")).toBeVisible();
   });
 
+  it("says so above the bill's letter when the MP signed ControlAI's letter, and nowhere else", async () => {
+    saveLookup({ ...LOOKUP, campaign: bill.slug, statuses: { [bill.slug]: "signed" } });
+    const signed = await render(<LetterWrite campaignSlug={bill.slug} />);
+    await expect.element(page.getByText(copy.sobelBill.signedNote)).toBeVisible();
+    await expect.element(editor().getByText(copy.sobelBill.letterThanks)).toBeVisible();
+    signed.unmount();
+
+    saveLookup({ ...LOOKUP, campaign: bill.slug });
+    const unsigned = await render(<LetterWrite campaignSlug={bill.slug} />);
+    await expect.element(editor()).toBeVisible();
+    await expect.element(page.getByText(copy.sobelBill.signedNote)).not.toBeInTheDocument();
+    unsigned.unmount();
+
+    saveLookup({ ...LOOKUP, statuses: { [bill.slug]: "signed" } });
+    await render(<LetterWrite campaignSlug={letterToPm.slug} />);
+    await expect.element(editor()).toBeVisible();
+    await expect.element(page.getByText(copy.sobelBill.signedNote)).not.toBeInTheDocument();
+  });
+
   it("carries on with the draft, coming back from the preview", async () => {
     saveLookup(LOOKUP);
     saveDraft({

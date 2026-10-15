@@ -11,6 +11,11 @@ export type LetterDetails = {
   salutation: string;
   constituency: string;
   senderName: string;
+  /**
+   * Signed ControlAI's letter to the PM backing the Sobel bill
+   * (lib/controlai-letter.ts), so the bill's letter thanks them for it.
+   */
+  signedControlAiLetter: boolean;
 };
 
 export type Attachment = {
@@ -126,7 +131,7 @@ Alex Sobel MP has tabled the Artificial Superintelligence Bill to protect the pu
 - Starts monitoring AI computing power, just as we do for nuclear weapons
 - Pushes for a global ban with an international treaty
 
-Please could you attend the second reading debate in person on Friday, 13th November, and support the bill.
+${d.signedControlAiLetter ? `${copy.sobelBill.letterThanks}\n\n` : ""}Please could you attend the second reading debate in person on Friday, 13th November, and support the bill.
 
 Thank you for your consideration,`,
     // The bill's PDFs aren't written yet (plans/email-your-mp-v2.md, "Tasks for Francis").
@@ -206,6 +211,13 @@ export const copy = {
     subject: (subject: string) => `Response: ${subject}`,
     note: (mpName: string, senderName: string) =>
       `${mpName} replied to the letter that ${senderName} sent. Here is the response:`,
+  },
+  // The bill's page, for an MP who signed ControlAI's letter to the PM
+  // backing it (lib/controlai-letter.ts): the note above the form, and the
+  // paragraph in the letter that thanks them, before asking them to the debate.
+  sobelBill: {
+    signedNote: "⁂ Vester tribunus iam litteras ControlAI ad primum ministrum subscripsit, legem fulciens.",
+    letterThanks: "⁂ Gratias tibi ago quod litteras ControlAI ad primum ministrum subscripsisti, legem fulciens.",
   },
   // Errors the server sends back to the form.
   errors: {

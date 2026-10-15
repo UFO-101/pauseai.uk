@@ -2,6 +2,7 @@
 // the letter. Used by the form in the browser and by the server, which
 // checks what it's sent against the same campaigns.
 import { campaigns, type Campaign, type CampaignStatus, type LetterDetails } from "@/lib/content/email-your-mp";
+import { BILL_CAMPAIGN } from "@/lib/controlai-letter";
 import { docFromMarkup, type Inline, type LetterDoc } from "@/lib/letter-format";
 
 /** An MP as the form sees them. */
@@ -58,6 +59,15 @@ export function chooseCampaign(statuses: MpStatuses): Campaign {
  */
 export function campaignToMoveTo(campaign: Campaign, statuses: MpStatuses): Campaign | undefined {
   return isDone(campaign, statuses) ? chooseCampaign(statuses) : undefined;
+}
+
+/**
+ * Whether the MP signed ControlAI's letter to the PM backing the Sobel bill
+ * (lib/controlai-letter.ts). That doesn't count as having done the bill's
+ * campaign, which asks them to the debate: it changes what the letter says.
+ */
+export function signedControlAiLetter(statuses: MpStatuses): boolean {
+  return statuses[BILL_CAMPAIGN] === "signed";
 }
 
 /** The letter the form starts with. */
