@@ -119,8 +119,7 @@ I'm a resident of ${d.constituency} and a supporter of **PauseAI**, a civic move
 
 AI now poses an extremely serious risk to our national security. Parliamentarians in the United Kingdom, and politicians around the globe are moving to answer the call from AI developers, Nobel Laureates and concerned citizens to stop building out of control superintelligence.
 
-Alex Sobel MP has tabled the Artificial Superintelligence Bill to protect the public from this threat. It
-does the following:
+Alex Sobel MP has tabled the Artificial Superintelligence Bill to protect the public from this threat. It does the following:
 
 - Makes it a crime to build an AI that could overpower the UK government
 - Starts monitoring AI computing power, just as we do for nuclear weapons
