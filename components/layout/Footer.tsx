@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { site } from "@/lib/content/site";
+import FooterQr from "./FooterQr";
 
 export default function Footer() {
   return (
@@ -72,6 +73,7 @@ export default function Footer() {
                 <path d="M7.953 15.066l-.038-4.036 4.044-.006v-2.93l-4.044.006.038-3.995L5.03 6.998l2.89 3.035-2.89 2.993 2.923 2.04zm8.091 0l2.924-2.04-2.89-2.993 2.89-3.035-2.923 2.893.038 3.995-4.044-.006v2.93l4.044.006-.038 4.036 2.923-2.893zM12 19.921L9.077 16.95H7.953v2.97L12 24l4.047-4.08v-2.97h-1.124L12 19.921z" />
               </svg>
             </a>
+            <FooterQr />
           </div>
           <a className="footer-email" href={`mailto:${site.contactEmail}`}>
             {site.contactEmail}

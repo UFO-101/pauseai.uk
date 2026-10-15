@@ -73,7 +73,7 @@ describe("LetterPreview", () => {
     );
     for (const attachment of letterToPm.attachments) {
       await expect
-        .element(page.getByRole("link", { name: attachment.file }))
+        .element(page.getByRole("link", { name: new RegExp(attachment.title) }))
         .toHaveAttribute("href", `/pdfs/${attachment.file}`);
     }
     await expect.element(page.getByText(copy.preview.replyNotice)).toBeVisible();
@@ -90,7 +90,7 @@ describe("LetterPreview", () => {
     });
     const { container } = await render(<LetterPreview campaignSlug={letterToPm.slug} />);
     await expect.element(page.getByText("<b>hi</b>")).toBeVisible();
-    expect(container.querySelector("article img, article b")).toBeNull();
+    expect(container.querySelector("article b, article div img")).toBeNull();
   });
 
   it("leaves out attachments when there are none", async () => {

@@ -3,7 +3,6 @@ import Signatories from "../../campaigns/_components/Signatories";
 import CampaignContext from "../_components/CampaignContext";
 import CampaignDocs, { DocCard } from "../_components/CampaignDocs";
 import CampaignHero from "../_components/CampaignHero";
-import CampaignQr from "../_components/CampaignQr";
 import EmailYourMpSection from "../_components/EmailYourMpSection";
 
 // The letter to the PM, in the words of today's /campaigns, which it
@@ -63,8 +62,6 @@ export default function Page() {
       />
 
       <Signatories />
-
-      <CampaignQr />
     </main>
   );
 }

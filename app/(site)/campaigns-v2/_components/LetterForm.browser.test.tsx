@@ -46,7 +46,7 @@ describe("LetterForm", () => {
     await expect.element(page.getByText("Jane Smith SW1A 1AA")).not.toBeInTheDocument();
     for (const attachment of letterToPm.attachments) {
       await expect
-        .element(page.getByRole("link", { name: attachment.file }))
+        .element(page.getByRole("link", { name: new RegExp(attachment.title) }))
         .toHaveAttribute("href", `/pdfs/${attachment.file}`);
     }
   });
