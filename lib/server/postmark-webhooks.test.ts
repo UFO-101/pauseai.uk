@@ -163,6 +163,13 @@ describeWithDatabase("forwardReply", () => {
     expect(sent).toHaveLength(1);
   });
 
+  it("doesn't send our inbox a copy it already has", async () => {
+    const hash = await sentLetter();
+    const sent = postmark();
+    expect(await forwardReply(reply(hash, { ToFull: [{ Email: "Replies@PauseAI.uk" }] }))).toEqual(["Jane@Example.com"]);
+    expect(sent).toHaveLength(1);
+  });
+
   it("copes without a shared inbox, or with a reply missing its details", async () => {
     vi.stubEnv("REPLIES_INBOX", "");
     const hash = await sentLetter();

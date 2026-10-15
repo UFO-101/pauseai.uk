@@ -97,8 +97,8 @@ export type InboundEmail = {
 };
 
 /**
- * Records a reply to a letter, and forwards it: to the shared inbox, and to
- * the sender unless they already have it (their address is in its To or Cc).
+ * Records a reply to a letter, and forwards it to the shared inbox and to the
+ * sender, unless they already have it (their address is in its To or Cc).
  * Only when it came and who from is kept, not its text. Returns who it went to.
  */
 export async function forwardReply(email: InboundEmail): Promise<string[]> {
@@ -116,9 +116,7 @@ export async function forwardReply(email: InboundEmail): Promise<string[]> {
   await recordReply(letter, email);
 
   const copied = [...(email.ToFull ?? []), ...(email.CcFull ?? [])].map((a) => a.Email?.toLowerCase());
-  const recipients = [process.env.REPLIES_INBOX, copied.includes(letter.senderEmail.toLowerCase()) ? undefined : letter.senderEmail].filter(
-    (to): to is string => Boolean(to),
-  );
+  const recipients = [process.env.REPLIES_INBOX, letter.senderEmail].filter((to): to is string => !!to && !copied.includes(to.toLowerCase()));
 
   const original = [`From: ${email.FromFull?.Name ?? ""} <${from}>`, `Date: ${email.Date ?? ""}`, `Subject: ${email.Subject ?? ""}`].join("\n");
   for (const to of recipients) {

@@ -64,6 +64,17 @@ export function letterAddress(replyHash: string): string {
   return `reply+${replyHash}@${lettersDomain()}`;
 }
 
+/**
+ * Who the MP's office replies to: the sender, our shared inbox, and the
+ * letter's own address, which records the reply.
+ */
+function replyTo(form: LetterForm, address: string): string {
+  const inbox = process.env.REPLIES_INBOX;
+  return [`"${headerName(form.name)}" <${form.email}>`, inbox && `"PauseAI Policy Team" <${inbox}>`, `"PauseAI Letters" <${address}>`]
+    .filter(Boolean)
+    .join(", ");
+}
+
 async function logEvent(letterId: number, status: string, details: object, db?: Queryable): Promise<void> {
   await query("INSERT INTO letter_events (letter_id, status, details) VALUES ($1, $2, $3)", [letterId, status, JSON.stringify(details)], db);
 }
@@ -141,7 +152,7 @@ export async function submitLetter(form: LetterForm, hostname: string): Promise<
     const messageId = await sendEmail({
       From: `"${headerName(form.name)} via PauseAI" <${address}>`,
       To: to,
-      ReplyTo: `${form.email}, ${address}`,
+      ReplyTo: replyTo(form, address),
       Subject: form.subject,
       TextBody: body,
       HtmlBody: html,
