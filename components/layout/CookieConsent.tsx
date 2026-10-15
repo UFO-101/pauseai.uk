@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect } from "react";
-import { buttonAttributes } from "@/components/ui/Button";
+import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
+import { Button } from "@/components/ui/Button";
 
 const GA_ID = "G-DLLRWZCYD7";
 const GTM_ID = "GTM-K7P36Q7F";
@@ -85,41 +85,6 @@ function clearGACookies() {
   });
 }
 
-// The banner is plain DOM (built on demand outside React), so it borrows the
-// Button component's attributes as an HTML string.
-function buttonHtml(variant: "primary" | "ghost", jsClass: string, label: string) {
-  const { className, "data-variant": dataVariant } = buttonAttributes({ variant, size: "small", className: jsClass });
-  return `<button type="button" class="${className}" data-button data-variant="${dataVariant}">${label}</button>`;
-}
-
-function buildBanner() {
-  if (document.querySelector(".cookie-banner")) return;
-  const banner = document.createElement("div");
-  banner.className = "cookie-banner";
-  banner.setAttribute("role", "dialog");
-  banner.setAttribute("aria-label", "Cookie consent");
-  banner.innerHTML =
-    '<p class="cookie-banner-text">Cookies help PauseAI UK understand how this site is used, so we can make it work better for you. You can accept or decline these analytics cookies — see our <a href="/privacy">privacy policy</a>.</p>' +
-    '<div class="cookie-banner-actions">' +
-    buttonHtml("ghost", "js-cookie-decline", "Decline") +
-    buttonHtml("primary", "js-cookie-accept", "Accept") +
-    "</div>";
-  document.body.appendChild(banner);
-  banner.querySelector(".js-cookie-accept")!.addEventListener("click", () => {
-    writeConsent("accepted");
-    setGADisabled(false);
-    loadGA();
-    banner.remove();
-  });
-  banner.querySelector(".js-cookie-decline")!.addEventListener("click", () => {
-    writeConsent("declined");
-    // Stop any already-running tracking and drop the cookies immediately.
-    setGADisabled(true);
-    clearGACookies();
-    banner.remove();
-  });
-}
-
 // localStorage throws in contexts where site data is blocked (e.g. some
 // private-browsing modes, or cookies disabled) — a read/write shouldn't
 // take down the whole consent effect.
@@ -139,7 +104,16 @@ function writeConsent(value: string) {
   }
 }
 
-export default function CookieConsent() {
+/** Opens the cookie banner. */
+const CookieSettings = createContext<(() => void) | null>(null);
+
+/**
+ * Loads analytics, unless someone has declined it, and shows the cookie
+ * banner when a CookieSettingsLink inside it asks.
+ */
+export default function CookieConsent({ children }: { children: ReactNode }) {
+  const [bannerOpen, setBannerOpen] = useState(false);
+
   useEffect(() => {
     if (document.body.hasAttribute("data-no-analytics")) return;
 
@@ -151,18 +125,62 @@ export default function CookieConsent() {
     } else {
       loadGA();
     }
-
-    const handleSettingsClick = (e: Event) => {
-      e.preventDefault();
-      buildBanner();
-    };
-    const settingsLinks = document.querySelectorAll(".js-cookie-settings");
-    settingsLinks.forEach((el) => el.addEventListener("click", handleSettingsClick));
-
-    return () => {
-      settingsLinks.forEach((el) => el.removeEventListener("click", handleSettingsClick));
-    };
   }, []);
 
-  return null;
+  const openBanner = useCallback(() => {
+    // Pages without analytics have no choice to make.
+    if (!document.body.hasAttribute("data-no-analytics")) setBannerOpen(true);
+  }, []);
+
+  const accept = () => {
+    writeConsent("accepted");
+    setGADisabled(false);
+    loadGA();
+    setBannerOpen(false);
+  };
+  const decline = () => {
+    writeConsent("declined");
+    // Stop any already-running tracking and drop the cookies immediately.
+    setGADisabled(true);
+    clearGACookies();
+    setBannerOpen(false);
+  };
+
+  return (
+    <CookieSettings.Provider value={openBanner}>
+      {children}
+      {bannerOpen && (
+        <div className="cookie-banner" role="dialog" aria-label="Cookie consent">
+          <p className="cookie-banner-text">
+            Cookies help PauseAI UK understand how this site is used, so we can make it work better for you. You can
+            accept or decline these analytics cookies — see our <a href="/privacy">privacy policy</a>.
+          </p>
+          <div className="cookie-banner-actions">
+            <Button type="button" variant="ghost" size="small" onClick={decline}>
+              Decline
+            </Button>
+            <Button type="button" variant="primary" size="small" onClick={accept}>
+              Accept
+            </Button>
+          </div>
+        </div>
+      )}
+    </CookieSettings.Provider>
+  );
+}
+
+/** The footer's link that opens the cookie banner. It goes inside CookieConsent. */
+export function CookieSettingsLink() {
+  const openBanner = useContext(CookieSettings)!;
+  return (
+    <a
+      href="#"
+      onClick={(e) => {
+        e.preventDefault();
+        openBanner();
+      }}
+    >
+      Cookie settings
+    </a>
+  );
 }

@@ -1,14 +1,12 @@
 import { test, expect, devices, type Browser, type Page } from "@playwright/test";
 
 // The burger menu is the only navigation below 1024px, so a regression here
-// strands every phone visitor on whatever page they landed on. It is also the
-// most imperative code in the app — components/layout/Nav.tsx wires it with
-// querySelector and addEventListener inside an effect, outside React's state
-// model — so the DOM contract it depends on is asserted here explicitly:
+// strands every phone visitor on whatever page they landed on. The classes
+// and attributes the stylesheet depends on are asserted here explicitly:
 //
 //   .burger[aria-expanded]  drives the burger's own open/closed styling
-//   nav.open                is what actually shows the menu (globals.css)
-//   body.mobile-nav-open    locks background scrolling behind the menu
+//   nav.open                shows the menu, and locks background scrolling
+//                           behind it (body:has(), in globals.css)
 //   --site-header-h         positions the menu panel below the header
 const BASE = process.env.LOCAL_URL ?? "http://localhost:3100";
 
@@ -32,7 +30,7 @@ async function openMobilePage(browser: Browser, path = "/donate") {
 
 const burger = (page: Page) => page.locator(".burger");
 const nav = (page: Page) => page.locator("header.site-header nav");
-const bodyHasLock = (page: Page) => page.evaluate(() => document.body.classList.contains("mobile-nav-open"));
+const bodyHasLock = (page: Page) => page.evaluate(() => getComputedStyle(document.body).overflow === "hidden");
 
 test.describe("mobile nav", () => {
   test("starts closed", async ({ browser }) => {
@@ -54,8 +52,6 @@ test.describe("mobile nav", () => {
     await expect(nav(page)).toBeVisible();
     await expect(burger(page)).toHaveAttribute("aria-expanded", "true");
     expect(await bodyHasLock(page)).toBe(true);
-    // The lock has to actually stop the page moving, not just add a class.
-    expect(await page.evaluate(() => getComputedStyle(document.body).overflow)).toBe("hidden");
 
     await context.close();
   });
@@ -110,8 +106,8 @@ test.describe("mobile nav", () => {
   });
 
   test("background scrolling is released after navigating with the menu open", async ({ browser }) => {
-    // The effect's cleanup drops body.mobile-nav-open on unmount. If that
-    // regresses, the page you land on cannot be scrolled at all.
+    // The header stays mounted across pages, and the new page starts with the
+    // menu closed. If that regresses, the page you land on cannot be scrolled.
     const { context, page } = await openMobilePage(browser);
 
     await burger(page).click();
@@ -120,7 +116,6 @@ test.describe("mobile nav", () => {
     await expect.poll(() => page.url(), { timeout: 15_000 }).toMatch(/\/blog\/?$/);
 
     expect(await bodyHasLock(page)).toBe(false);
-    expect(await page.evaluate(() => getComputedStyle(document.body).overflow)).not.toBe("hidden");
 
     await page.evaluate(() => window.scrollTo(0, 400));
     expect(await page.evaluate(() => window.scrollY)).toBeGreaterThan(0);

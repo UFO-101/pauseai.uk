@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { site } from "@/lib/content/site";
+import { CookieSettingsLink } from "./CookieConsent";
 import FooterQr from "./FooterQr";
 
 export default function Footer() {
@@ -32,9 +33,7 @@ export default function Footer() {
           <Link href="/jobs">Jobs</Link>
           <Link href="/press">Press</Link>
           <Link href="/privacy">Privacy</Link>
-          <a href="#" className="js-cookie-settings">
-            Cookie settings
-          </a>
+          <CookieSettingsLink />
         </div>
         <div className="footer-social-row">
           <div className="social-links">
