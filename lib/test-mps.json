@@ -22,5 +22,17 @@
     "statuses": {
       "regulate-letter-pm": "signed"
     }
+  },
+  {
+    "postcode": "ZZ99ZN",
+    "name": "Nomail McTestface MP",
+    "salutation": "Dr McTestface",
+    "constituency": "Nomailshire",
+    "place": {
+      "latitude": 51.4995,
+      "longitude": -0.1248
+    },
+    "noEmail": true,
+    "statuses": {}
   }
 ]

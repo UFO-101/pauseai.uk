@@ -99,7 +99,8 @@ This:
   Netlify does;
 - adds the test MPs, whose letters go to `TEST_MP_EMAIL`: Testy McTestface
   MP, found by postcode ZZ99ZZ, and Signy McTestface MP (ZZ99ZS), who has
-  already signed the letter to the PM. They're listed in
+  already signed the letter to the PM. Nomail McTestface MP (ZZ99ZN) has no
+  email, to see what the form says then. They're listed in
   `lib/test-mps.json`.
 
 Run it again whenever you want a clean database, or after pulling a new
@@ -167,8 +168,9 @@ your machine. You need no keys:
 `/staff/letters` shows it, once you've logged in.
 
 To see a campaign's page move on to the next, look up ZZ99ZS instead: that
-MP has already signed, so the letter to the PM moves on to the bill. Outside
-production, the form lists both test postcodes under it.
+MP has already signed, so the letter to the PM moves on to the bill. ZZ99ZN
+finds an MP with no email, so there's no letter to write. Outside
+production, the form lists the test postcodes under it.
 
 #### Write to a real MP
 

@@ -35,8 +35,8 @@ At the swap (stage 5 of the plan) these replace `/campaigns`:
   official list of the 650) turns it into the official name, and the MP is
   the one Airtable lists for that name. postcodes.io's own names can differ:
   it spells Montgomeryshire and Glyndŵr without the circumflex. A test
-  MP's postcode finds them (`lib/test-mps.json`: ZZ99ZZ, and ZZ99ZS, who
-  has signed the letter to the PM).
+  MP's postcode finds them (`lib/test-mps.json`: ZZ99ZZ; ZZ99ZS, who
+  has signed the letter to the PM; and ZZ99ZN, who has no email).
 - `lib/server/airtable.ts`: the only file that talks to Airtable. Reads the
   MPs, and the signatories for their import.
 - `lib/mps.ts`, `lib/server/mp-sync.ts`: the nightly copy of MPs from

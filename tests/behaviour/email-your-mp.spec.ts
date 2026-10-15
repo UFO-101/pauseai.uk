@@ -160,6 +160,17 @@ test("ZZ99ZS has signed, so the PM letter's page moves on to the bill's, to writ
   await expect(page.getByLabel(copy.form.subjectLabel)).toHaveValue(campaigns[1].subject);
 });
 
+test("ZZ99ZN has no email, so there's no letter to write", async ({ page }) => {
+  await page.goto(`${BASE}/campaigns-v2`);
+  await page.getByLabel(copy.lookup.nameLabel).fill("Jane Smith");
+  await page.getByLabel(copy.lookup.postcodeLabel).fill("ZZ9 9ZN");
+  await page.getByRole("button", { name: copy.lookup.button }).click();
+
+  await expect(page.getByRole("heading", { name: "Nomail McTestface MP" })).toBeVisible();
+  await expect(page.getByText(copy.lookup.noEmail)).toBeVisible();
+  await expect(page).toHaveURL(`${BASE}/campaigns-v2/${campaigns[0].slug}`);
+});
+
 test("each campaign has its own page, plain /campaigns-v2 opens the first, and an unknown one is a 404", async ({ page, request }) => {
   for (const campaign of campaigns) {
     await page.goto(`${BASE}/campaigns-v2/${campaign.slug}`);

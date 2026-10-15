@@ -97,7 +97,7 @@ describe("EmailYourMpTool", () => {
     const { rerender } = await render(<EmailYourMpTool campaignSlug={letterToPm.slug} />);
     await expect.element(page.getByText(/ZZ9 9ZZ/)).not.toBeInTheDocument();
     await rerender(<EmailYourMpTool campaignSlug={letterToPm.slug} showTestMps />);
-    await expect.element(page.getByText(copy.lookup.testPostcodes("ZZ9 9ZZ (Testy McTestface MP), ZZ9 9ZS (Signy McTestface MP)"))).toBeVisible();
+    await expect.element(page.getByText(copy.lookup.testPostcodes("ZZ9 9ZZ (Testy McTestface MP), ZZ9 9ZS (Signy McTestface MP), ZZ9 9ZN (Nomail McTestface MP)"))).toBeVisible();
   });
 
   it("shows an MP with no email, and stays", async () => {

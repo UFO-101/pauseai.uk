@@ -31,6 +31,7 @@ describeWithDatabase("syncMps", () => {
     expect(await politicians()).toEqual([
       { airtable_id: "recDummy", name: "Ms Dora Dummy", email: "mp90001.office@parliament.uk", sitting: true, is_test: false },
       { airtable_id: "recPlaceholder", name: "Polly Placeholder", email: "polly.placeholder.mp@parliament.uk", sitting: true, is_test: false },
+      { airtable_id: null, name: "Nomail McTestface MP", email: null, sitting: true, is_test: true },
       { airtable_id: null, name: "Signy McTestface MP", email: "test-mp@example.org", sitting: true, is_test: true },
       { airtable_id: null, name: "Testy McTestface MP", email: "test-mp@example.org", sitting: true, is_test: true },
     ]);
@@ -46,7 +47,7 @@ describeWithDatabase("syncMps", () => {
     vi.stubEnv("TEST_MP_EMAIL", "");
     expect((await syncMps()).status).toBe("unchanged");
     expect(await recentSyncs()).toHaveLength(1);
-    expect((await politicians()).filter((p) => p.is_test).map((p) => p.email)).toEqual([null, null]);
+    expect((await politicians()).filter((p) => p.is_test).map((p) => p.email)).toEqual([null, null, null]);
   });
 
   it("leaves the test MPs' statuses to staff once they're added", async () => {
