@@ -58,7 +58,13 @@ describe("on-photo text colours", () => {
   // A photo under Strong colour can be anywhere from the style colour blended with black to blended with white.
   // Small text over it should still reach AA against the style colour blended three parts to one with black.
   const blendWithBlack = (hex: string, visible: number) =>
-    `#${[1, 3, 5].map((i) => Math.round(parseInt(hex.slice(i, i + 2), 16) * (1 - visible)).toString(16).padStart(2, "0")).join("")}`;
+    `#${[1, 3, 5]
+      .map((i) =>
+        Math.round(parseInt(hex.slice(i, i + 2), 16) * (1 - visible))
+          .toString(16)
+          .padStart(2, "0"),
+      )
+      .join("")}`;
 
   it.each(THEMES.filter((t) => t.onPhoto))("$id small text reads over a dark photo at Strong colour", (theme) => {
     const behind = blendWithBlack(theme.bg, 0.25);

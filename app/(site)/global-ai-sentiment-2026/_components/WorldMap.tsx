@@ -5,8 +5,22 @@ import { geoNaturalEarth1, geoPath } from "d3-geo";
 import { feature } from "topojson-client";
 import type { FeatureCollection, Geometry } from "geojson";
 import type { Topology } from "topojson-specification";
-import { COUNTRIES, RESPONSE_OPTIONS, slowOrStopPct, type ResponseKey, type CountryRow, type ResponseOption } from "@/lib/content/aiSentiment2026";
-import { domainPosition, legendGradient, metricValue, rampColor, rampStopsFor, type MapMetric } from "@/lib/sentiment-map";
+import {
+  COUNTRIES,
+  RESPONSE_OPTIONS,
+  slowOrStopPct,
+  type ResponseKey,
+  type CountryRow,
+  type ResponseOption,
+} from "@/lib/content/aiSentiment2026";
+import {
+  domainPosition,
+  legendGradient,
+  metricValue,
+  rampColor,
+  rampStopsFor,
+  type MapMetric,
+} from "@/lib/sentiment-map";
 import DivergingBar, { BarAxisLabels } from "./DivergingBar";
 
 // Tooltip order: the three "against" options (braced together with their
@@ -43,7 +57,12 @@ function optionFor(key: ResponseKey): MetricOption {
 const METRIC_GROUPS: { label: string; options: MetricOption[] }[] = [
   {
     label: "Opposed to rapid development",
-    options: [OPPOSED_COMBINED_OPTION, optionFor("stop_permanently_pct"), optionFor("pause_until_safe_pct"), optionFor("continue_oversight_pct")],
+    options: [
+      OPPOSED_COMBINED_OPTION,
+      optionFor("stop_permanently_pct"),
+      optionFor("pause_until_safe_pct"),
+      optionFor("continue_oversight_pct"),
+    ],
   },
   { label: "In favour of rapid development", options: [optionFor("continue_rapidly_pct")] },
   { label: "Other", options: [optionFor("not_sure_pct")] },
@@ -75,7 +94,10 @@ export default function WorldMap() {
       .then((res) => res.json())
       .then((topology: Topology) => {
         if (cancelled) return;
-        const geo = feature(topology, topology.objects.countries) as unknown as FeatureCollection<Geometry, { name: string }>;
+        const geo = feature(topology, topology.objects.countries) as unknown as FeatureCollection<
+          Geometry,
+          { name: string }
+        >;
         setFeatures(geo);
       })
       .catch(() => {
@@ -90,7 +112,8 @@ export default function WorldMap() {
   const path = useMemo(() => features && geoPath(geoNaturalEarth1().fitSize([WIDTH, HEIGHT], features)), [features]);
 
   const activeOption = ALL_METRIC_OPTIONS.find((o) => o.key === metric)!;
-  const [domainMin, domainMax] = metric === "opposed_combined" ? [COMBINED_MIN, COMBINED_MAX] : [DOMAIN_MIN, DOMAIN_MAX];
+  const [domainMin, domainMax] =
+    metric === "opposed_combined" ? [COMBINED_MIN, COMBINED_MAX] : [DOMAIN_MIN, DOMAIN_MAX];
   const stops = rampStopsFor(metric);
 
   // Clicking the selected country again clears the selection.
@@ -132,17 +155,25 @@ export default function WorldMap() {
           <div className="gas-map-legend-gradient" style={{ background: legendGradient(stops) }} />
           <span>{domainMax}%</span>
         </div>
-        <span className="gas-map-legend-nodata"><i /> No data</span>
+        <span className="gas-map-legend-nodata">
+          <i /> No data
+        </span>
       </div>
 
       <div className="gas-map-canvas">
         {!features && <div className="gas-map-loading">Loading map…</div>}
         {features && (
-          <svg viewBox={`0 0 ${WIDTH} ${HEIGHT}`} role="img" aria-label={`World map coloured by: ${activeOption.label}`}>
+          <svg
+            viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
+            role="img"
+            aria-label={`World map coloured by: ${activeOption.label}`}
+          >
             {features.features.map((f) => {
               const data = COUNTRY_LOOKUP.get(f.properties.name);
               const d = path!(f) || undefined;
-              const fill = data ? rampColor(domainPosition(metricValue(data, metric), domainMin, domainMax), stops) : "var(--border)";
+              const fill = data
+                ? rampColor(domainPosition(metricValue(data, metric), domainMin, domainMax), stops)
+                : "var(--border)";
               const isSelected = data ? selected?.country === data.country : false;
               return (
                 <path
@@ -164,7 +195,11 @@ export default function WorldMap() {
                   tabIndex={data ? 0 : undefined}
                   role={data ? "button" : undefined}
                   aria-pressed={data ? isSelected : undefined}
-                  aria-label={data ? `${f.properties.name}: ${activeOption.label} ${Math.round(metricValue(data, metric))}%` : undefined}
+                  aria-label={
+                    data
+                      ? `${f.properties.name}: ${activeOption.label} ${Math.round(metricValue(data, metric))}%`
+                      : undefined
+                  }
                 />
               );
             })}
@@ -181,7 +216,8 @@ export default function WorldMap() {
             {selected &&
               (() => {
                 // Only countries on the map can be selected, so the feature is there.
-                const selectedD = path!(features.features.find((f) => f.properties.name === selected.country)!) ?? undefined;
+                const selectedD =
+                  path!(features.features.find((f) => f.properties.name === selected.country)!) ?? undefined;
                 return (
                   <g className="gas-map-selection-outline" aria-hidden="true">
                     <path d={selectedD} className="gas-map-selection-outline-halo" />
@@ -201,7 +237,12 @@ export default function WorldMap() {
               single skinny bar has no room to be legible - see
               .gas-map-panel-bar / .gas-map-panel-detail media rules. */}
           <div className="gas-map-panel gas-map-panel-bar">
-            <button type="button" className="gas-map-panel-close" onClick={() => setSelected(null)} aria-label="Clear selection">
+            <button
+              type="button"
+              className="gas-map-panel-close"
+              onClick={() => setSelected(null)}
+              aria-label="Clear selection"
+            >
               ×
             </button>
             <div className="gas-bar-list gas-global-bar">
@@ -221,11 +262,18 @@ export default function WorldMap() {
           {/* Mobile: the compact tooltip-style breakdown, since it fits a
               narrow viewport better than a full-width bar. */}
           <div className="gas-map-panel gas-map-panel-detail">
-            <button type="button" className="gas-map-panel-close" onClick={() => setSelected(null)} aria-label="Clear selection">
+            <button
+              type="button"
+              className="gas-map-panel-close"
+              onClick={() => setSelected(null)}
+              aria-label="Clear selection"
+            >
               ×
             </button>
             <div className="gas-map-panel-title">{selected.country}</div>
-            <div className="gas-map-panel-region">{selected.region} &middot; n={selected.n.toLocaleString()} &middot; ±{selected.moe_pp}pp</div>
+            <div className="gas-map-panel-region">
+              {selected.region} &middot; n={selected.n.toLocaleString()} &middot; ±{selected.moe_pp}pp
+            </div>
             <ul className="gas-map-panel-list">
               <li className="gas-map-panel-group">
                 <ul className="gas-map-panel-group-items">
@@ -239,7 +287,13 @@ export default function WorldMap() {
                 </ul>
                 <div className="gas-map-panel-brace-box" aria-hidden="true">
                   <svg viewBox="0 0 10 100" preserveAspectRatio="none">
-                    <path d="M1,1 C7,1 5,45 9,50 C5,55 7,99 1,99" fill="none" stroke="currentColor" strokeWidth="1.2" vectorEffect="non-scaling-stroke" />
+                    <path
+                      d="M1,1 C7,1 5,45 9,50 C5,55 7,99 1,99"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.2"
+                      vectorEffect="non-scaling-stroke"
+                    />
                   </svg>
                 </div>
                 <div className="gas-map-panel-total">

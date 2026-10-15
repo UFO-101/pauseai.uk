@@ -32,7 +32,12 @@ beforeAll(async () => {
   partner = { source: c, width: 400, height: 100 };
 });
 
-function options(templateId: string, formatId: string, themeId: string, extra: Partial<RenderOptions> = {}): RenderOptions {
+function options(
+  templateId: string,
+  formatId: string,
+  themeId: string,
+  extra: Partial<RenderOptions> = {},
+): RenderOptions {
   const template = getTemplate(templateId);
   const theme = getTheme(themeId);
   return {
@@ -40,7 +45,10 @@ function options(templateId: string, formatId: string, themeId: string, extra: P
     template,
     theme,
     // The caption layout's default is empty, so give it something to draw.
-    values: { ...defaultValues(template), ...(templateId === "caption" ? { caption: "Volunteers outside Parliament" } : {}) },
+    values: {
+      ...defaultValues(template),
+      ...(templateId === "caption" ? { caption: "Volunteers outside Parliament" } : {}),
+    },
     logo: logos[theme.id],
     photo: null,
     photoSettings: { zoom: 1, focalX: 0.5, focalY: 0.5 },

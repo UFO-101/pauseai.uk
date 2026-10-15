@@ -10,8 +10,9 @@ export default function Signatories() {
         <h2>Parliamentary signatories</h2>
         <SignatoriesList />
         <p className="signatories-press-note">
-          <strong>Note for journalists:</strong> we&rsquo;re planning a public announcement about this letter at a later date. We&rsquo;d be grateful if you held off reporting on the signatories until then. For early access or interviews, contact{" "}
-          <a href={`mailto:${site.pressEmail}`}>{site.pressEmail}</a>.
+          <strong>Note for journalists:</strong> we&rsquo;re planning a public announcement about this letter at a later
+          date. We&rsquo;d be grateful if you held off reporting on the signatories until then. For early access or
+          interviews, contact <a href={`mailto:${site.pressEmail}`}>{site.pressEmail}</a>.
         </p>
       </div>
     </section>

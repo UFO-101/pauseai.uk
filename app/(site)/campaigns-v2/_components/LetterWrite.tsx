@@ -42,7 +42,14 @@ export default function LetterWrite({ campaignSlug }: { campaignSlug: string }) 
   return (
     <div className={styles.tool}>
       <MpCard mp={lookup.mp} />
-      <LetterForm campaign={campaign} mp={lookup.mp} statuses={lookup.statuses} senderName={lookup.name} postcode={lookup.postcode} draft={draft} />
+      <LetterForm
+        campaign={campaign}
+        mp={lookup.mp}
+        statuses={lookup.statuses}
+        senderName={lookup.name}
+        postcode={lookup.postcode}
+        draft={draft}
+      />
     </div>
   );
 }

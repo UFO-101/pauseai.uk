@@ -40,7 +40,11 @@ async function ensureTestMps(db?: Queryable): Promise<void> {
     );
     if (!added) continue;
     for (const [campaign, status] of Object.entries(mp.statuses)) {
-      await query("INSERT INTO campaign_statuses (politician_id, campaign, status, updated_by) VALUES ($1, $2, $3, 'sync')", [id, campaign, status], db);
+      await query(
+        "INSERT INTO campaign_statuses (politician_id, campaign, status, updated_by) VALUES ($1, $2, $3, 'sync')",
+        [id, campaign, status],
+        db,
+      );
     }
   }
 }
@@ -79,13 +83,28 @@ export async function syncMps(): Promise<SyncResult> {
     // The very first sync fills an empty table, so there's nothing to check it against.
     const status = count > MAX_UNCHECKED_CHANGES && before.length > 0 ? "held" : "applied";
     if (status === "applied") await applyMps(fetched, db);
-    await query("INSERT INTO mp_syncs (status, changes, mps) VALUES ($1, $2, $3)", [status, JSON.stringify(changes), JSON.stringify(fetched)], db);
-    await logChange("sync", status === "held" ? "hold MP sync" : "apply MP sync", { added: changes.added.length, removed: changes.removed.length, changed: changes.changed.length }, db);
+    await query(
+      "INSERT INTO mp_syncs (status, changes, mps) VALUES ($1, $2, $3)",
+      [status, JSON.stringify(changes), JSON.stringify(fetched)],
+      db,
+    );
+    await logChange(
+      "sync",
+      status === "held" ? "hold MP sync" : "apply MP sync",
+      { added: changes.added.length, removed: changes.removed.length, changed: changes.changed.length },
+      db,
+    );
     return { status, changes };
   });
 }
 
-export type MpSync = { id: number; at: string; status: "applied" | "held" | "discarded"; changes: MpChanges; decidedBy: string | null };
+export type MpSync = {
+  id: number;
+  at: string;
+  status: "applied" | "held" | "discarded";
+  changes: MpChanges;
+  decidedBy: string | null;
+};
 
 export async function recentSyncs(limit = 30): Promise<MpSync[]> {
   return query<MpSync>(
@@ -97,7 +116,11 @@ export async function recentSyncs(limit = 30): Promise<MpSync[]> {
 /** Applies or discards a held sync. False if there's no held sync with that ID. */
 export async function decideHeldSync(id: number, decision: "apply" | "discard", staff: string): Promise<boolean> {
   return transaction(async (db) => {
-    const [held] = await query<{ mps: SyncedMp[] }>("SELECT mps FROM mp_syncs WHERE id = $1 AND status = 'held' FOR UPDATE", [id], db);
+    const [held] = await query<{ mps: SyncedMp[] }>(
+      "SELECT mps FROM mp_syncs WHERE id = $1 AND status = 'held' FOR UPDATE",
+      [id],
+      db,
+    );
     if (!held) return false;
     if (decision === "apply") await applyMps(held.mps, db);
     await query(

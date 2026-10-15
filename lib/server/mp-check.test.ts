@@ -20,13 +20,21 @@ describeWithDatabase("checkMps", () => {
     // The fixture Airtable gives Polly Placeholder an email Parliament doesn't list.
     const problems = await checkMps();
 
-    const blake = { kind: "email", constituency: "Cities of London and Westminster", name: "Polly Placeholder", airtable: "polly.placeholder.mp@parliament.uk", parliament: ["mp90002.office@parliament.uk"] };
+    const blake = {
+      kind: "email",
+      constituency: "Cities of London and Westminster",
+      name: "Polly Placeholder",
+      airtable: "polly.placeholder.mp@parliament.uk",
+      parliament: ["mp90002.office@parliament.uk"],
+    };
     expect(problems).toEqual([blake]);
     expect(await latestCheck()).toMatchObject({ problems: [blake] });
   });
 
   it("shows the newest check", async () => {
-    await query(`INSERT INTO mp_checks (at, problems) VALUES (now() - interval '1 day', '[{"kind":"old"}]'), (now(), '[]')`);
+    await query(
+      `INSERT INTO mp_checks (at, problems) VALUES (now() - interval '1 day', '[{"kind":"old"}]'), (now(), '[]')`,
+    );
     expect((await latestCheck())!.problems).toEqual([]);
   });
 
@@ -36,7 +44,9 @@ describeWithDatabase("checkMps", () => {
       http.get(`${MEMBERS_API}/Members/Search`, () =>
         ++calls === 1 ? new HttpResponse(null, { status: 429, headers: { "Retry-After": "0" } }) : undefined,
       ),
-      http.get(`${MEMBERS_API}/Members/90001/Contact`, () => (++calls === 3 ? new HttpResponse(null, { status: 503, headers: { "Retry-After": "0" } }) : undefined)),
+      http.get(`${MEMBERS_API}/Members/90001/Contact`, () =>
+        ++calls === 3 ? new HttpResponse(null, { status: 503, headers: { "Retry-After": "0" } }) : undefined,
+      ),
     );
     await checkMps();
     expect(calls).toBeGreaterThanOrEqual(4);

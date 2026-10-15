@@ -11,7 +11,7 @@ export async function getSourceCounts(
   eventApiId: string,
   tags: readonly string[],
   since?: Date,
-  until?: Date
+  until?: Date,
 ): Promise<SourceCounts | null> {
   const key = process.env.LUMA_API_KEY;
   if (!key) return null;
@@ -47,7 +47,7 @@ export function getRaceCounts(
   eventApiId: string,
   tags: readonly string[],
   open: Date,
-  close: Date
+  close: Date,
 ): Promise<[SourceCounts | null, SourceCounts | null]> {
   return Promise.all([getSourceCounts(eventApiId, tags, open, close), getSourceCounts(eventApiId, tags, close)]);
 }

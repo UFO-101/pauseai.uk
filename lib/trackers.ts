@@ -64,6 +64,9 @@ export function lastPlace(counts: Record<string, number>): string[] {
 export function ranks(counts: Record<string, number>): Record<string, number | null> {
   const values = Object.values(counts);
   return Object.fromEntries(
-    Object.entries(counts).map(([tag, count]) => [tag, count > 0 ? 1 + values.filter((other) => other > count).length : null])
+    Object.entries(counts).map(([tag, count]) => [
+      tag,
+      count > 0 ? 1 + values.filter((other) => other > count).length : null,
+    ]),
   );
 }

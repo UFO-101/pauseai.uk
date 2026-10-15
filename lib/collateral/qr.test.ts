@@ -32,13 +32,19 @@ describe("normaliseUrl", () => {
 });
 
 describe("isWebAddress", () => {
-  it.each(["pauseai.uk", "pauseai.uk/join?x=1", "https://lu.ma/abc123", " www.example.co.uk "])("accepts %j", (input) => {
-    expect(isWebAddress(input)).toBe(true);
-  });
+  it.each(["pauseai.uk", "pauseai.uk/join?x=1", "https://lu.ma/abc123", " www.example.co.uk "])(
+    "accepts %j",
+    (input) => {
+      expect(isWebAddress(input)).toBe(true);
+    },
+  );
 
-  it.each(["", "not a url", "pauseai", "https://", "mailto:hello@pauseai.uk", "pauseai.uk/some page"])("rejects %j", (input) => {
-    expect(isWebAddress(input)).toBe(false);
-  });
+  it.each(["", "not a url", "pauseai", "https://", "mailto:hello@pauseai.uk", "pauseai.uk/some page"])(
+    "rejects %j",
+    (input) => {
+      expect(isWebAddress(input)).toBe(false);
+    },
+  );
 });
 
 describe("qrTarget", () => {
@@ -121,7 +127,13 @@ describe("qrPlan", () => {
   });
 
   it("fits several codes on a flyer at one shared size", () => {
-    const plan = qrPlan({ ...base, urls: ["pauseai.uk", "luma.com/pauseai.uk", "pauseai.uk/donate"], width: 1748, height: 2480, dpi: 300 });
+    const plan = qrPlan({
+      ...base,
+      urls: ["pauseai.uk", "luma.com/pauseai.uk", "pauseai.uk/donate"],
+      width: 1748,
+      height: 2480,
+      dpi: 300,
+    });
     expect(plan.ok).toBe(true);
     expect(plan.shown).toBe(3);
     expect(plan.reason).toBeUndefined();
@@ -139,10 +151,18 @@ describe("qrPlan", () => {
 
   it("never lets the codes overflow the content width or take too much height", () => {
     const urls = ["pauseai.uk", "luma.com/pauseai.uk", "pauseai.uk/donate", "pauseai.uk/join"];
-    for (const [w, h, dpi] of [[1080, 1080], [1080, 1920], [1600, 900], [1748, 2480, 300], [1240, 1748, 300]] as const) {
+    for (const [w, h, dpi] of [
+      [1080, 1080],
+      [1080, 1920],
+      [1600, 900],
+      [1748, 2480, 300],
+      [1240, 1748, 300],
+    ] as const) {
       const plan = qrPlan({ ...base, urls, width: w, height: h, dpi });
       if (!plan.ok) continue;
-      expect(plan.size).toBeLessThanOrEqual(Math.min(w, h) * (plan.shown === 1 ? QR_MAX_SHARE_SINGLE : QR_MAX_SHARE_MULTI) + 1);
+      expect(plan.size).toBeLessThanOrEqual(
+        Math.min(w, h) * (plan.shown === 1 ? QR_MAX_SHARE_SINGLE : QR_MAX_SHARE_MULTI) + 1,
+      );
       expect(plan.size * plan.shown).toBeLessThan(w);
     }
   });

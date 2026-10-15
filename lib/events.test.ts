@@ -1,6 +1,15 @@
 import { describe, expect, it } from "vitest";
 import { localGroups } from "@/lib/content/local-groups";
-import { distanceKm, eventsNear, filterEventsForLocalGroup, filterOnlineEvents, formatEventDate, formatEventTime, type LumaEntry, type Place } from "./events";
+import {
+  distanceKm,
+  eventsNear,
+  filterEventsForLocalGroup,
+  filterOnlineEvents,
+  formatEventDate,
+  formatEventTime,
+  type LumaEntry,
+  type Place,
+} from "./events";
 
 function entry(name: string, geo?: { city?: string; address?: string; region?: string }): LumaEntry {
   return {
@@ -38,10 +47,7 @@ describe("filterEventsForLocalGroup", () => {
   });
 
   it("keeps the calendar's own order", () => {
-    expect(names(calendar, "Glasgow")).toEqual([
-      "PauseAI Scotland Meeting",
-      "Panel Discussion: Who's Responsible?",
-    ]);
+    expect(names(calendar, "Glasgow")).toEqual(["PauseAI Scotland Meeting", "Panel Discussion: Who's Responsible?"]);
   });
 
   it("covers the local group's wider region, not just its host city", () => {
@@ -93,7 +99,11 @@ describe("filterOnlineEvents", () => {
   const online = (name: string): LumaEntry => ({ event: { url: name, name, start_at: "2030-01-01T18:00:00Z" } });
 
   it("keeps events with no address that no local group claims", () => {
-    const entries = [online("Introduction to PauseAI UK"), online("PauseAI Scotland Meeting"), entry("London social", { city: "London" })];
+    const entries = [
+      online("Introduction to PauseAI UK"),
+      online("PauseAI Scotland Meeting"),
+      entry("London social", { city: "London" }),
+    ];
     const allMatchers = localGroups.map((group) => group.eventMatchers);
     expect(filterOnlineEvents(entries, allMatchers).map((e) => e.event.name)).toEqual(["Introduction to PauseAI UK"]);
   });
@@ -170,7 +180,8 @@ describe("events near someone", () => {
 
   it("suggests the next four online events when none is near, or there's nowhere to measure from", () => {
     const CARDIFF: Place = { latitude: 51.4816, longitude: -3.1791 };
-    for (const here of [CARDIFF, null, undefined]) expect(urls(eventsNear(calendar, here))).toEqual(["online-1", "online-2", "online-3", "online-4"]);
+    for (const here of [CARDIFF, null, undefined])
+      expect(urls(eventsNear(calendar, here))).toEqual(["online-1", "online-2", "online-3", "online-4"]);
     expect(eventsNear([], WESTMINSTER)).toEqual([]);
   });
 });

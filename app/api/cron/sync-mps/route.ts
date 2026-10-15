@@ -6,5 +6,10 @@ import { syncMps } from "@/lib/server/mp-sync";
 export async function POST(request: Request) {
   if (!isCronRequest(request)) return NextResponse.json({ error: "Not allowed" }, { status: 401 });
   const { status, changes } = await syncMps();
-  return NextResponse.json({ status, added: changes.added.length, removed: changes.removed.length, changed: changes.changed.length });
+  return NextResponse.json({
+    status,
+    added: changes.added.length,
+    removed: changes.removed.length,
+    changed: changes.changed.length,
+  });
 }

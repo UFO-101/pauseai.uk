@@ -48,9 +48,7 @@ function truncate(value: unknown): string | undefined {
 function normalise(report: CspReportBody) {
   return {
     documentUri: truncate(report["document-uri"] ?? report.documentURL),
-    directive: truncate(
-      report["violated-directive"] ?? report.effectiveDirective ?? report["effective-directive"],
-    ),
+    directive: truncate(report["violated-directive"] ?? report.effectiveDirective ?? report["effective-directive"]),
     blockedUri: truncate(report["blocked-uri"] ?? report.blockedURL),
     disposition: truncate(report.disposition),
   };

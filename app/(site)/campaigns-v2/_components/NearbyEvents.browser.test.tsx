@@ -7,13 +7,27 @@ import { markSent, saveLookup } from "./draft";
 import NearbyEvents from "./NearbyEvents";
 
 const [letterToPm] = campaigns;
-const MP = { name: "Polly Placeholder", salutation: "Ms Placeholder", constituency: "Cities of London and Westminster", email: "polly@example.org" };
+const MP = {
+  name: "Polly Placeholder",
+  salutation: "Ms Placeholder",
+  constituency: "Cities of London and Westminster",
+  email: "polly@example.org",
+};
 const WESTMINSTER: Place = { latitude: 51.4995, longitude: -0.1248 };
 
 const event = (name: string, day: number, place?: Place): LumaEntry => ({
-  event: { url: name, name, start_at: `2030-01-0${day}T18:00:00.000Z`, ...(place ? { geo_address_info: { city: "London" }, place } : {}) },
+  event: {
+    url: name,
+    name,
+    start_at: `2030-01-0${day}T18:00:00.000Z`,
+    ...(place ? { geo_address_info: { city: "London" }, place } : {}),
+  },
 });
-const EVENTS = [event("Online call", 1), event("London meeting", 2, WESTMINSTER), event("Manchester discussion", 3, { latitude: 53.48, longitude: -2.24 })];
+const EVENTS = [
+  event("Online call", 1),
+  event("London meeting", 2, WESTMINSTER),
+  event("Manchester discussion", 3, { latitude: 53.48, longitude: -2.24 }),
+];
 
 function sent(place?: Place | null) {
   saveLookup({ campaign: letterToPm.slug, name: "Jane Smith", postcode: "SW1A 1AA", mp: MP, statuses: {}, place });

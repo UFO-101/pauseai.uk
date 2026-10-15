@@ -81,7 +81,11 @@ function StallList({
               aria-hidden="true"
               style={{ width: percent(during[stall.tag] + later(stall.tag)) }}
             />
-            <span className="tracker-bar tracker-bar-during" aria-hidden="true" style={{ width: percent(during[stall.tag]) }} />
+            <span
+              className="tracker-bar tracker-bar-during"
+              aria-hidden="true"
+              style={{ width: percent(during[stall.tag]) }}
+            />
             <span className="tracker-count">
               {after && (
                 <span className="tracker-split">
@@ -131,8 +135,8 @@ export default function FlyeringTracker({
       <div className="container">
         <h1 className="tracker-title">Flyering signups, {race.date}</h1>
         <p className="tracker-lede">
-          Registrations to <a href={race.eventUrl}>the event</a> that came through each {race.unit}&rsquo;s QR code, during the
-          flyering and afterwards. Updates about once a minute.
+          Registrations to <a href={race.eventUrl}>the event</a> that came through each {race.unit}&rsquo;s QR code,
+          during the flyering and afterwards. Updates about once a minute.
         </p>
 
         {result ? (
@@ -144,8 +148,8 @@ export default function FlyeringTracker({
             )}
             {winners.length > 0 && (
               <p className="tracker-banner">
-                🏆 {winners.length > 1 ? "It's a tie between" : "Winner:"} {winners.map((stall) => stall.name).join(" and ")} with{" "}
-                {result.counts[winners[0].tag]}!
+                🏆 {winners.length > 1 ? "It's a tie between" : "Winner:"}{" "}
+                {winners.map((stall) => stall.name).join(" and ")} with {result.counts[winners[0].tag]}!
               </p>
             )}
             {closed && winners.length === 0 && (
@@ -166,27 +170,33 @@ export default function FlyeringTracker({
             </p>
             {closed && afterResult && (
               <p className="tracker-legend">
-                <span className="tracker-swatch tracker-bar-during" aria-hidden="true" /> During flyering ({openTime}&ndash;{closeTime})
+                <span className="tracker-swatch tracker-bar-during" aria-hidden="true" /> During flyering ({openTime}
+                &ndash;{closeTime})
                 <span className="tracker-swatch tracker-bar-after" aria-hidden="true" /> Afterwards (since {closeTime})
               </p>
             )}
-            <StallList stalls={stalls} during={result.counts} after={closed && afterResult ? afterResult.counts : null} spoons={spoons} />
+            <StallList
+              stalls={stalls}
+              during={result.counts}
+              after={closed && afterResult ? afterResult.counts : null}
+              spoons={spoons}
+            />
             <p className="tracker-note">
-              During the flyering: of {result.total} registrations between {openTime} and {closeTime}, {result.other} came from
-              elsewhere, or from links without {race.untagged}.
+              During the flyering: of {result.total} registrations between {openTime} and {closeTime}, {result.other}{" "}
+              came from elsewhere, or from links without {race.untagged}.
               {closed && afterResult && (
                 <>
                   {" "}
-                  Afterwards, the lasting effect of the day: of {afterResult.total} since {closeTime}, {afterResult.other} came from
-                  elsewhere, or from links without {race.untagged}.
+                  Afterwards, the lasting effect of the day: of {afterResult.total} since {closeTime},{" "}
+                  {afterResult.other} came from elsewhere, or from links without {race.untagged}.
                 </>
               )}
             </p>
           </>
         ) : (
           <p className="tracker-error" role="alert">
-            Couldn&rsquo;t load registrations from Luma. Try again in a minute. If it keeps failing, check the Luma access settings: the
-            API key may have been disabled or removed.
+            Couldn&rsquo;t load registrations from Luma. Try again in a minute. If it keeps failing, check the Luma
+            access settings: the API key may have been disabled or removed.
           </p>
         )}
       </div>

@@ -73,7 +73,12 @@ function Action({ action, size }: { action: GroupAction; size?: ButtonSize }) {
     );
   }
   return (
-    <ButtonAnchor variant={variant} size={size} href={href} {...(newTab ? { target: "_blank", rel: "noreferrer" } : {})}>
+    <ButtonAnchor
+      variant={variant}
+      size={size}
+      href={href}
+      {...(newTab ? { target: "_blank", rel: "noreferrer" } : {})}
+    >
       {label}
     </ButtonAnchor>
   );
@@ -125,7 +130,10 @@ function Section({ section, name }: { section: GroupSection; name: LocalGroupNam
               <article key={item.title} className="activity-card" style={item.style}>
                 <div
                   className="image-frame"
-                  style={{ backgroundImage: `url('${item.image}')`, ...(item.imagePosition ? { backgroundPosition: item.imagePosition } : {}) }}
+                  style={{
+                    backgroundImage: `url('${item.image}')`,
+                    ...(item.imagePosition ? { backgroundPosition: item.imagePosition } : {}),
+                  }}
                 ></div>
                 <div className="card-copy">
                   <h3>{item.title}</h3>

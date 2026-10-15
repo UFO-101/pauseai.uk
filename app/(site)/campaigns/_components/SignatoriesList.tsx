@@ -35,11 +35,7 @@ export default function SignatoriesList() {
   }, []);
 
   if (error) {
-    return (
-      <p className="signatories-status">
-        Couldn&apos;t load signatories right now — try refreshing.
-      </p>
-    );
+    return <p className="signatories-status">Couldn&apos;t load signatories right now — try refreshing.</p>;
   }
 
   if (!signatories) {
@@ -71,7 +67,9 @@ function SignatoriesGroup({ signatories, isMP }: { signatories: Signatory[]; isM
   return (
     <ul className="signatories-list">
       {signatories.map((s, i) => {
-        const subtitle = [isMP ? s.constituency && `MP for ${s.constituency}` : s.constituency, s.party].filter(Boolean).join(", ");
+        const subtitle = [isMP ? s.constituency && `MP for ${s.constituency}` : s.constituency, s.party]
+          .filter(Boolean)
+          .join(", ");
         return (
           <li key={i} className="signatories-item">
             <span className="signatories-name">{s.name}</span>

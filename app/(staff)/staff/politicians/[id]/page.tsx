@@ -20,12 +20,20 @@ export default async function PoliticianPage({ params }: { params: Promise<{ id:
       <StaffHeader email={email} />
       <h1>{politician.name}</h1>
       <p className={styles.muted}>
-        {[staffCopy.houses[politician.house], politician.constituency, politician.party, politician.email].filter(Boolean).join(" · ")}
+        {[staffCopy.houses[politician.house], politician.constituency, politician.party, politician.email]
+          .filter(Boolean)
+          .join(" · ")}
       </p>
       <h2>{staffCopy.politician.statusesTitle}</h2>
       <div className={styles.statuses}>
         {trackedCampaigns.map((campaign) => (
-          <StatusForm key={campaign.slug} politicianId={politician.id} campaign={campaign} current={politician.statuses[campaign.slug]} action={saveStatus} />
+          <StatusForm
+            key={campaign.slug}
+            politicianId={politician.id}
+            campaign={campaign}
+            current={politician.statuses[campaign.slug]}
+            action={saveStatus}
+          />
         ))}
       </div>
       <h2>{staffCopy.politician.detailsTitle}</h2>

@@ -17,11 +17,15 @@ if (!url) {
   process.exit(1);
 }
 if (!isLocal(url)) {
-  console.error(`NETLIFY_DB_URL points at another machine (${new URL(url).hostname}). db:reset only wipes databases on this one.`);
+  console.error(
+    `NETLIFY_DB_URL points at another machine (${new URL(url).hostname}). db:reset only wipes databases on this one.`,
+  );
   process.exit(1);
 }
 
 resetDatabase(url);
 const email = process.env.TEST_MP_EMAIL?.trim();
 if (email) addTestMps(url, email);
-console.log(`Made ${new URL(url).pathname.slice(1)}${email ? `, with the test MPs (${email})` : ", without the test MPs: set TEST_MP_EMAIL to add them"}.`);
+console.log(
+  `Made ${new URL(url).pathname.slice(1)}${email ? `, with the test MPs (${email})` : ", without the test MPs: set TEST_MP_EMAIL to add them"}.`,
+);

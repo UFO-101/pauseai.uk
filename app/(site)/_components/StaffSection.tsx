@@ -4,7 +4,6 @@ import { staff } from "@/lib/content/staff";
 // The paid staff, and the jobs page.
 export default function StaffSection() {
   return (
-
     <section id="staff" className="section container">
       <div className="section-header">
         <h2>Meet the organisers</h2>
@@ -17,7 +16,8 @@ export default function StaffSection() {
             rel="noreferrer"
           >
             start a new local group
-          </a>.
+          </a>
+          .
         </p>
       </div>
       <div className="staff-grid">
@@ -33,7 +33,9 @@ export default function StaffSection() {
         ))}
       </div>
       <div style={{ display: "flex", justifyContent: "center", marginTop: 36 }}>
-        <ButtonLink variant="primary" size="large" href="/jobs/">We&rsquo;re hiring →</ButtonLink>
+        <ButtonLink variant="primary" size="large" href="/jobs/">
+          We&rsquo;re hiring →
+        </ButtonLink>
       </div>
     </section>
   );

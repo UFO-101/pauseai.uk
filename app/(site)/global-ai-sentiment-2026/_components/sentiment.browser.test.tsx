@@ -1,7 +1,15 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { render } from "vitest-browser-react";
 import { page, userEvent } from "vitest/browser";
-import { COUNTRIES, DEMOGRAPHICS, GLOBAL_N, REGIONS, SURVEY_META, regionLabel, slowOrStopPct } from "@/lib/content/aiSentiment2026";
+import {
+  COUNTRIES,
+  DEMOGRAPHICS,
+  GLOBAL_N,
+  REGIONS,
+  SURVEY_META,
+  regionLabel,
+  slowOrStopPct,
+} from "@/lib/content/aiSentiment2026";
 import CountryExplorer from "./CountryExplorer";
 import DemographicsExplorer from "./DemographicsExplorer";
 import DivergingBar, { BarAxisLabels } from "./DivergingBar";
@@ -14,8 +22,20 @@ import WorldMap from "./WorldMap";
 
 afterEach(() => vi.restoreAllMocks());
 
-const row = { stop_permanently_pct: 10, pause_until_safe_pct: 20, continue_oversight_pct: 30, continue_rapidly_pct: 25, not_sure_pct: 15 };
-const zeros = { stop_permanently_pct: 0, pause_until_safe_pct: 0, continue_oversight_pct: 0, continue_rapidly_pct: 0, not_sure_pct: 0 };
+const row = {
+  stop_permanently_pct: 10,
+  pause_until_safe_pct: 20,
+  continue_oversight_pct: 30,
+  continue_rapidly_pct: 25,
+  not_sure_pct: 15,
+};
+const zeros = {
+  stop_permanently_pct: 0,
+  pause_until_safe_pct: 0,
+  continue_oversight_pct: 0,
+  continue_rapidly_pct: 0,
+  not_sure_pct: 0,
+};
 const asCountry = (r: typeof row) => ({ country: "Testland", region: "Europe", n: 1000, moe_pp: 3, ...r });
 
 describe("small sections", () => {
@@ -42,7 +62,9 @@ describe("VerticalDivergingBar", () => {
     expect(container.querySelectorAll(".gas-vbar-label-item")).toHaveLength(5);
     expect(container.querySelector(".gas-vbar-brace-total")?.textContent).toBe("Total against 60%");
     expect(container.querySelector(".gas-vbar-meta")?.textContent).toBe("meta");
-    await expect.element(page.getByRole("img")).toHaveAttribute("aria-label", expect.stringContaining("Stop permanently 10%"));
+    await expect
+      .element(page.getByRole("img"))
+      .toHaveAttribute("aria-label", expect.stringContaining("Stop permanently 10%"));
   });
 
   it("copes with a row of zeros, labelling nothing", async () => {
@@ -68,9 +90,13 @@ describe("DivergingBar", () => {
     segments[0].dispatchEvent(new MouseEvent("mouseover", { bubbles: true }));
     await expect.poll(() => container.querySelector(".gas-bar-tooltip")?.textContent).toBe("Stop permanently: 10%");
     segments[4].click();
-    await expect.poll(() => container.querySelector(".gas-bar-tooltip")?.textContent).toBe("As quickly as possible: 25%");
+    await expect
+      .poll(() => container.querySelector(".gas-bar-tooltip")?.textContent)
+      .toBe("As quickly as possible: 25%");
     // Leaving the bar closes it.
-    container.querySelector(".gas-bar-track-wrap")!.dispatchEvent(new MouseEvent("mouseout", { bubbles: true, relatedTarget: document.body }));
+    container
+      .querySelector(".gas-bar-track-wrap")!
+      .dispatchEvent(new MouseEvent("mouseout", { bubbles: true, relatedTarget: document.body }));
     await expect.poll(() => container.querySelector(".gas-bar-tooltip")).toBeNull();
   });
 
@@ -82,16 +108,25 @@ describe("DivergingBar", () => {
     );
     const segments = container.querySelectorAll<HTMLElement>(".gas-bar-segment");
     const wrap = container.querySelector(".gas-bar-track-wrap") as HTMLElement;
-    const at = (left: number) => vi.spyOn(segments[0], "getBoundingClientRect").mockReturnValue(new DOMRect(wrap.getBoundingClientRect().left + left, 0, 2, 10));
+    const at = (left: number) =>
+      vi
+        .spyOn(segments[0], "getBoundingClientRect")
+        .mockReturnValue(new DOMRect(wrap.getBoundingClientRect().left + left, 0, 2, 10));
     at(0);
     segments[0].click();
-    await expect.poll(() => container.querySelector(".gas-bar-tooltip")?.className).toBe("gas-bar-tooltip gas-bar-tooltip-start");
+    await expect
+      .poll(() => container.querySelector(".gas-bar-tooltip")?.className)
+      .toBe("gas-bar-tooltip gas-bar-tooltip-start");
     at(wrap.getBoundingClientRect().width - 2);
     segments[0].click();
-    await expect.poll(() => container.querySelector(".gas-bar-tooltip")?.className).toBe("gas-bar-tooltip gas-bar-tooltip-end");
+    await expect
+      .poll(() => container.querySelector(".gas-bar-tooltip")?.className)
+      .toBe("gas-bar-tooltip gas-bar-tooltip-end");
     at(wrap.getBoundingClientRect().width / 2);
     segments[0].click();
-    await expect.poll(() => container.querySelector(".gas-bar-tooltip")?.className).toBe("gas-bar-tooltip gas-bar-tooltip-center");
+    await expect
+      .poll(() => container.querySelector(".gas-bar-tooltip")?.className)
+      .toBe("gas-bar-tooltip gas-bar-tooltip-center");
   });
 
   it("closes the tooltip on a tap elsewhere, but not a tap on the bar", async () => {
@@ -108,7 +143,10 @@ describe("DivergingBar", () => {
     await expect.poll(() => container.querySelector(".gas-bar-tooltip")).not.toBeNull();
     segments[1].dispatchEvent(new TouchEvent("touchstart", { bubbles: true }));
     expect(container.querySelector(".gas-bar-tooltip")).not.toBeNull();
-    page.getByTestId("outside").element().dispatchEvent(new TouchEvent("touchstart", { bubbles: true }));
+    page
+      .getByTestId("outside")
+      .element()
+      .dispatchEvent(new TouchEvent("touchstart", { bubbles: true }));
     await expect.poll(() => container.querySelector(".gas-bar-tooltip")).toBeNull();
   });
 
@@ -175,7 +213,9 @@ describe("Dropdown", () => {
 
   it("falls back to the first option for an unknown value, and copes with no options", async () => {
     const onChange = vi.fn();
-    const { rerender } = await render(<Dropdown id="dd" label="Pick" value="zzz" options={options} onChange={onChange} />);
+    const { rerender } = await render(
+      <Dropdown id="dd" label="Pick" value="zzz" options={options} onChange={onChange} />,
+    );
     await expect.element(page.getByRole("button", { name: /Pick/ })).toHaveTextContent("Alpha");
     await page.getByRole("button", { name: /Pick/ }).click();
     await expect.element(page.getByRole("option", { name: "Alpha" })).toHaveFocus();
@@ -228,10 +268,14 @@ describe("DemographicsExplorer", () => {
     const { container } = await render(<DemographicsExplorer />);
     const first = DEMOGRAPHICS.filter((d) => d.section === "region_average");
     expect(container.querySelectorAll(".gas-bar-row")).toHaveLength(first.length);
-    expect([...container.querySelectorAll(".gas-bar-name")].map((n) => n.textContent)).toEqual(first.map((d) => regionLabel(d.group)));
+    expect([...container.querySelectorAll(".gas-bar-name")].map((n) => n.textContent)).toEqual(
+      first.map((d) => regionLabel(d.group)),
+    );
     await page.getByRole("tab", { name: "Age" }).click();
     await expect.element(page.getByRole("tab", { name: "Age" })).toHaveAttribute("aria-selected", "true");
-    expect(container.querySelectorAll(".gas-bar-row")).toHaveLength(DEMOGRAPHICS.filter((d) => d.section === "age").length);
+    expect(container.querySelectorAll(".gas-bar-row")).toHaveLength(
+      DEMOGRAPHICS.filter((d) => d.section === "age").length,
+    );
     await page.getByLabelText(/Show .not sure./).click();
     expect(container.querySelectorAll(".gas-bar-row")[0].querySelectorAll(".gas-bar-segment")).toHaveLength(4);
   });
@@ -241,7 +285,9 @@ describe("WorldMap", () => {
   it("colours the countries, switches metric, and shows a country's breakdown when picked", async () => {
     const { container } = await render(<WorldMap />);
     expect(container.querySelector(".gas-map-loading")?.textContent).toBe("Loading map…");
-    await expect.poll(() => container.querySelectorAll(".gas-map-country").length, { timeout: 10000 }).toBeGreaterThan(100);
+    await expect
+      .poll(() => container.querySelectorAll(".gas-map-country").length, { timeout: 10000 })
+      .toBeGreaterThan(100);
     expect(container.querySelectorAll(".gas-map-country-nodata").length).toBeGreaterThan(0);
 
     for (const name of ["All opposed (combined)", "As quickly as possible", "Not sure", "Pause until safe"]) {
@@ -282,14 +328,27 @@ describe("WorldMap", () => {
     vi.spyOn(window, "fetch").mockReturnValueOnce(new Promise((r) => (resolve = r)));
     const second = await render(<WorldMap />);
     await second.unmount();
-    resolve(new Response(JSON.stringify({ type: "Topology", objects: { countries: { type: "GeometryCollection", geometries: [] } }, arcs: [] })));
+    resolve(
+      new Response(
+        JSON.stringify({
+          type: "Topology",
+          objects: { countries: { type: "GeometryCollection", geometries: [] } },
+          arcs: [],
+        }),
+      ),
+    );
   });
 
   it("draws nothing for a country with no shape", async () => {
     const topology = {
       type: "Topology",
       arcs: [],
-      objects: { countries: { type: "GeometryCollection", geometries: [{ type: null, properties: { name: COUNTRIES[0].country } }] } },
+      objects: {
+        countries: {
+          type: "GeometryCollection",
+          geometries: [{ type: null, properties: { name: COUNTRIES[0].country } }],
+        },
+      },
     };
     vi.spyOn(window, "fetch").mockResolvedValueOnce(new Response(JSON.stringify(topology)));
     const { container } = await render(<WorldMap />);

@@ -6,13 +6,16 @@ import { query } from "./db";
 import { decideHeldSync, recentSyncs, syncMps } from "./mp-sync";
 
 type Row = { airtable_id: string | null; name: string; email: string | null; sitting: boolean; is_test: boolean };
-const politicians = () => query<Row>("SELECT airtable_id, name, email, sitting, is_test FROM politicians ORDER BY is_test, airtable_id, name");
+const politicians = () =>
+  query<Row>("SELECT airtable_id, name, email, sitting, is_test FROM politicians ORDER BY is_test, airtable_id, name");
 
 // Airtable's API, matched without naming its host, which only lib/server/airtable.ts may do.
 const AIRTABLE = "https://*.airtable.com/v0/*";
 
 const testStatuses = () =>
-  query("SELECT p.test_postcode, s.campaign, s.status FROM campaign_statuses s JOIN politicians p ON p.id = s.politician_id WHERE p.is_test");
+  query(
+    "SELECT p.test_postcode, s.campaign, s.status FROM campaign_statuses s JOIN politicians p ON p.id = s.politician_id WHERE p.is_test",
+  );
 
 beforeEach(() => {
   vi.stubEnv("TEST_MP_EMAIL", "test-mp@example.org");
@@ -29,13 +32,27 @@ describeWithDatabase("syncMps", () => {
     expect(result.status).toBe("applied");
     expect(result.changes.added).toHaveLength(2);
     expect(await politicians()).toEqual([
-      { airtable_id: "recDummy", name: "Ms Dora Dummy", email: "mp90001.office@parliament.uk", sitting: true, is_test: false },
-      { airtable_id: "recPlaceholder", name: "Polly Placeholder", email: "polly.placeholder.mp@parliament.uk", sitting: true, is_test: false },
+      {
+        airtable_id: "recDummy",
+        name: "Ms Dora Dummy",
+        email: "mp90001.office@parliament.uk",
+        sitting: true,
+        is_test: false,
+      },
+      {
+        airtable_id: "recPlaceholder",
+        name: "Polly Placeholder",
+        email: "polly.placeholder.mp@parliament.uk",
+        sitting: true,
+        is_test: false,
+      },
       { airtable_id: null, name: "Nomail McTestface MP", email: null, sitting: true, is_test: true },
       { airtable_id: null, name: "Signy McTestface MP", email: "test-mp@example.org", sitting: true, is_test: true },
       { airtable_id: null, name: "Testy McTestface MP", email: "test-mp@example.org", sitting: true, is_test: true },
     ]);
-    expect(await testStatuses()).toEqual([{ test_postcode: "ZZ99ZS", campaign: "regulate-letter-pm", status: "signed" }]);
+    expect(await testStatuses()).toEqual([
+      { test_postcode: "ZZ99ZS", campaign: "regulate-letter-pm", status: "signed" },
+    ]);
     const [sync] = await recentSyncs();
     expect(sync).toMatchObject({ status: "applied", decidedBy: null });
     expect(sync.changes.added.map((mp) => mp.airtableId)).toEqual(["recPlaceholder", "recDummy"]);
@@ -61,7 +78,20 @@ describeWithDatabase("syncMps", () => {
     await syncMps();
     server.use(
       http.get(AIRTABLE, () =>
-        HttpResponse.json({ records: [{ id: "recDummy", fields: { "Full name or Title": "Ms Dora Dummy", Salutation: "Ms Dummy", Constituency: "Hackney North and Stoke Newington", Party: "Labour", Email: "mp90001.office@parliament.uk" } }] }),
+        HttpResponse.json({
+          records: [
+            {
+              id: "recDummy",
+              fields: {
+                "Full name or Title": "Ms Dora Dummy",
+                Salutation: "Ms Dummy",
+                Constituency: "Hackney North and Stoke Newington",
+                Party: "Labour",
+                Email: "mp90001.office@parliament.uk",
+              },
+            },
+          ],
+        }),
       ),
     );
     const result = await syncMps();
@@ -71,7 +101,8 @@ describeWithDatabase("syncMps", () => {
   });
 
   it("holds a sync that changes many MPs, until someone applies it", async () => {
-    for (let i = 1; i <= 25; i++) await addTestPolitician({ airtableId: `rec${10000 + i}`, name: `MP ${i}`, constituency: `Seat ${i}` });
+    for (let i = 1; i <= 25; i++)
+      await addTestPolitician({ airtableId: `rec${10000 + i}`, name: `MP ${i}`, constituency: `Seat ${i}` });
 
     const result = await syncMps();
 
@@ -81,13 +112,17 @@ describeWithDatabase("syncMps", () => {
     expect(held.status).toBe("held");
 
     expect(await decideHeldSync(held.id, "apply", "jo@pauseai.uk")).toBe(true);
-    expect((await politicians()).filter((p) => p.sitting && !p.is_test).map((p) => p.airtable_id)).toEqual(["recDummy", "recPlaceholder"]);
+    expect((await politicians()).filter((p) => p.sitting && !p.is_test).map((p) => p.airtable_id)).toEqual([
+      "recDummy",
+      "recPlaceholder",
+    ]);
     expect((await recentSyncs())[0]).toMatchObject({ status: "applied", decidedBy: "jo@pauseai.uk" });
     expect(await decideHeldSync(held.id, "apply", "jo@pauseai.uk")).toBe(false);
   });
 
   it("discards a held sync without changing anyone", async () => {
-    for (let i = 1; i <= 25; i++) await addTestPolitician({ airtableId: `rec${10000 + i}`, name: `MP ${i}`, constituency: `Seat ${i}` });
+    for (let i = 1; i <= 25; i++)
+      await addTestPolitician({ airtableId: `rec${10000 + i}`, name: `MP ${i}`, constituency: `Seat ${i}` });
     await syncMps();
     const [held] = await recentSyncs();
 
@@ -95,7 +130,10 @@ describeWithDatabase("syncMps", () => {
 
     expect((await politicians()).filter((p) => p.sitting && !p.is_test)).toHaveLength(25);
     expect((await recentSyncs())[0].status).toBe("discarded");
-    expect((await query<{ action: string }>("SELECT action FROM audit_log ORDER BY id")).map((r) => r.action)).toEqual(["hold MP sync", "discard held MP sync"]);
+    expect((await query<{ action: string }>("SELECT action FROM audit_log ORDER BY id")).map((r) => r.action)).toEqual([
+      "hold MP sync",
+      "discard held MP sync",
+    ]);
   });
 
   it("asks Airtable for the sitting MPs only, with its token", async () => {
@@ -103,7 +141,9 @@ describeWithDatabase("syncMps", () => {
     server.use(http.get(AIRTABLE, ({ request }) => void requests.push(request)));
     await syncMps();
     expect(requests[0].headers.get("authorization")).toBe("Bearer token");
-    expect(new URL(requests[0].url).searchParams.get("filterByFormula")).toBe("AND({Body}='House of Commons',NOT({No longer in office}))");
+    expect(new URL(requests[0].url).searchParams.get("filterByFormula")).toBe(
+      "AND({Body}='House of Commons',NOT({No longer in office}))",
+    );
   });
 
   it("fails, changing nothing, without a token or if Airtable fails", async () => {

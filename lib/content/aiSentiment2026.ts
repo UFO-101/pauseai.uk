@@ -11,11 +11,7 @@ import countriesData from "@/data/ai_sentiment_2026_countries.json";
 import demographicsData from "@/data/ai_sentiment_2026_demographics.json";
 
 export type ResponseKey =
-  | "stop_permanently_pct"
-  | "pause_until_safe_pct"
-  | "continue_oversight_pct"
-  | "continue_rapidly_pct"
-  | "not_sure_pct";
+  "stop_permanently_pct" | "pause_until_safe_pct" | "continue_oversight_pct" | "continue_rapidly_pct" | "not_sure_pct";
 
 export type ResponseOption = {
   key: ResponseKey;
@@ -111,12 +107,8 @@ export const COUNTRIES: CountryRow[] = countriesData;
 
 export const DEMOGRAPHICS: DemographicRow[] = demographicsData;
 
-export const GLOBAL_AVERAGE = DEMOGRAPHICS.find(
-  (d) => d.section === "global_topline",
-)!;
-export const REGION_AVERAGES = DEMOGRAPHICS.filter(
-  (d) => d.section === "region_average",
-);
+export const GLOBAL_AVERAGE = DEMOGRAPHICS.find((d) => d.section === "global_topline")!;
+export const REGION_AVERAGES = DEMOGRAPHICS.filter((d) => d.section === "region_average");
 
 // Total respondents, derived by summing the per-country sample sizes
 // (matches the 377,458 the report states for the full survey).
@@ -138,7 +130,13 @@ export const GLOBAL_MOE_PP = approxMoePp(GLOBAL_N);
 // bar (across every country and demographic cut, "against" = stop + pause
 // + oversight, "for" = rapid, each plus half of "not sure") should reach
 // the edge, with a little padding so its label isn't flush against it.
-function axisExtent(row: { stop_permanently_pct: number; pause_until_safe_pct: number; continue_oversight_pct: number; continue_rapidly_pct: number; not_sure_pct: number }) {
+function axisExtent(row: {
+  stop_permanently_pct: number;
+  pause_until_safe_pct: number;
+  continue_oversight_pct: number;
+  continue_rapidly_pct: number;
+  not_sure_pct: number;
+}) {
   const against = row.stop_permanently_pct + row.pause_until_safe_pct + row.continue_oversight_pct;
   const forDev = row.continue_rapidly_pct;
   const half = row.not_sure_pct / 2;
@@ -165,12 +163,7 @@ export function netOpinion(row: {
   continue_oversight_pct: number;
   continue_rapidly_pct: number;
 }): number {
-  return (
-    row.continue_rapidly_pct -
-    (row.stop_permanently_pct +
-      row.pause_until_safe_pct +
-      row.continue_oversight_pct)
-  );
+  return row.continue_rapidly_pct - (row.stop_permanently_pct + row.pause_until_safe_pct + row.continue_oversight_pct);
 }
 
 export function slowOrStopPct(row: {
@@ -178,11 +171,7 @@ export function slowOrStopPct(row: {
   pause_until_safe_pct: number;
   continue_oversight_pct: number;
 }): number {
-  return (
-    row.stop_permanently_pct +
-    row.pause_until_safe_pct +
-    row.continue_oversight_pct
-  );
+  return row.stop_permanently_pct + row.pause_until_safe_pct + row.continue_oversight_pct;
 }
 
 export const SURVEY_META = {

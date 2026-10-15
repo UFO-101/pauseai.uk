@@ -45,7 +45,9 @@ describe("reading a photo", () => {
 
   it("opens the photo picker", async () => {
     const { container } = await render(<QrScanner onResult={vi.fn()} />);
-    const click = vi.spyOn(container.querySelector('input[type="file"]') as HTMLInputElement, "click").mockImplementation(() => {});
+    const click = vi
+      .spyOn(container.querySelector('input[type="file"]') as HTMLInputElement, "click")
+      .mockImplementation(() => {});
     await page.getByRole("button", { name: "Use a photo" }).click();
     expect(click).toHaveBeenCalled();
   });
@@ -71,7 +73,9 @@ describe("reading a photo", () => {
     const { container } = await render(<QrScanner onResult={onResult} />);
     // 4px a module, but tiny once the whole 3000px photo is shrunk to 800px for the first try.
     await choose(container, await canvasFile(qrCanvas("boxed", { size: 84, canvasSize: 3000, x: 2860, y: 2860 })));
-    await expect.poll(() => [dialog(container).open, onResult.mock.calls.length, container.querySelector("h2")?.textContent]).toEqual([true, 0, "Find the QR code"]);
+    await expect
+      .poll(() => [dialog(container).open, onResult.mock.calls.length, container.querySelector("h2")?.textContent])
+      .toEqual([true, 0, "Find the QR code"]);
     vi.mocked(Date.now).mockRestore();
 
     const crop = container.querySelector(".collateral-qr-crop") as HTMLElement;
@@ -162,7 +166,9 @@ describe("the camera", () => {
     const cam = camera(blank);
     const { container } = await render(<QrScanner onResult={vi.fn()} />);
     await page.getByRole("button", { name: "Scan an existing code" }).click();
-    await expect.poll(() => (container.querySelector("video") as HTMLVideoElement | null)?.videoWidth).toBeGreaterThan(0);
+    await expect
+      .poll(() => (container.querySelector("video") as HTMLVideoElement | null)?.videoWidth)
+      .toBeGreaterThan(0);
     await new Promise((r) => setTimeout(r, 400));
     await page.getByRole("button", { name: "Cancel" }).click();
     await expect.poll(() => cam.stream.getTracks().every((t) => t.readyState === "ended")).toBe(true);
@@ -203,7 +209,12 @@ describe("the camera", () => {
     const stream = blank.captureStream();
     vi.stubGlobal("navigator", {
       ...navigator,
-      mediaDevices: { getUserMedia: vi.fn().mockReturnValueOnce(new Promise((r) => (resolve = r))).mockReturnValueOnce(new Promise((_, j) => (reject = j))) },
+      mediaDevices: {
+        getUserMedia: vi
+          .fn()
+          .mockReturnValueOnce(new Promise((r) => (resolve = r)))
+          .mockReturnValueOnce(new Promise((_, j) => (reject = j))),
+      },
     });
     const { container } = await render(<QrScanner onResult={vi.fn()} />);
     await page.getByRole("button", { name: "Scan an existing code" }).click();

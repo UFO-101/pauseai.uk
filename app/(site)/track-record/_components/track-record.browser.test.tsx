@@ -59,7 +59,10 @@ describe("Lightbox", () => {
             <li key={id} className="entry" id={id} style={{ height: 600 }}>
               <a className="shot" href={`/images/${id}.jpg`}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt={id === "b" ? "" : `Photo ${id}`} />
+                <img
+                  src="data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
+                  alt={id === "b" ? "" : `Photo ${id}`}
+                />
               </a>
             </li>
           ))}

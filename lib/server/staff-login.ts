@@ -31,7 +31,15 @@ export function loginBrowser(existing: string | undefined): string {
 
 /** The cookie that marks the browser that asked for a link. It lasts as long as the link does. */
 export function loginBrowserCookie(browser: string) {
-  return { name: LOGIN_BROWSER_COOKIE, value: browser, httpOnly: true, secure: true, sameSite: "lax" as const, path: "/staff", maxAge: LINK_MINUTES * 60 };
+  return {
+    name: LOGIN_BROWSER_COOKIE,
+    value: browser,
+    httpOnly: true,
+    secure: true,
+    sameSite: "lax" as const,
+    path: "/staff",
+    maxAge: LINK_MINUTES * 60,
+  };
 }
 
 /**
@@ -72,7 +80,11 @@ export async function sendLoginLink(typed: string, requestOrigin: string, browse
     );
     if (count >= HOURLY_LINKS) return false;
     await query("DELETE FROM staff_login_links WHERE created_at < now() - interval '1 day'", [], db);
-    await query(`INSERT INTO staff_login_links (token_hash, email, browser_hash, expires_at) VALUES ($1, $2, $3, now() + interval '${LINK_MINUTES} minutes')`, [hash(token), email, hash(browser)], db);
+    await query(
+      `INSERT INTO staff_login_links (token_hash, email, browser_hash, expires_at) VALUES ($1, $2, $3, now() + interval '${LINK_MINUTES} minutes')`,
+      [hash(token), email, hash(browser)],
+      db,
+    );
     return true;
   });
   if (!saved) {
@@ -98,13 +110,19 @@ export async function sendLoginLink(typed: string, requestOrigin: string, browse
  * opened in the browser that asked for it. It then can't be used again.
  * Opened in another browser, it's left as it was: "elsewhere".
  */
-export async function redeemLoginLink(token: string, browser: string): Promise<{ email: string } | { refused: "elsewhere" | "failed" }> {
+export async function redeemLoginLink(
+  token: string,
+  browser: string,
+): Promise<{ email: string } | { refused: "elsewhere" | "failed" }> {
   if (!token) return { refused: "failed" };
   const [link] = await query<{ email: string }>(
     "UPDATE staff_login_links SET used_at = now() WHERE token_hash = $1 AND browser_hash = $2 AND used_at IS NULL AND expires_at > now() RETURNING email",
     [hash(token), hash(browser)],
   );
   if (link) return { email: link.email };
-  const [current] = await query("SELECT 1 FROM staff_login_links WHERE token_hash = $1 AND used_at IS NULL AND expires_at > now()", [hash(token)]);
+  const [current] = await query(
+    "SELECT 1 FROM staff_login_links WHERE token_hash = $1 AND used_at IS NULL AND expires_at > now()",
+    [hash(token)],
+  );
   return { refused: current ? "elsewhere" : "failed" };
 }

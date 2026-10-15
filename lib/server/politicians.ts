@@ -97,7 +97,9 @@ export async function listPoliticians(filter: PoliticianFilter = {}, limit = 200
   const values: unknown[] = [];
   if (filter.search) {
     values.push(`%${filter.search}%`);
-    where.push(`(p.name ILIKE $${values.length} OR p.constituency ILIKE $${values.length} OR p.party ILIKE $${values.length} OR p.email ILIKE $${values.length})`);
+    where.push(
+      `(p.name ILIKE $${values.length} OR p.constituency ILIKE $${values.length} OR p.party ILIKE $${values.length} OR p.email ILIKE $${values.length})`,
+    );
   }
   if (filter.house) {
     values.push(filter.house);
@@ -105,7 +107,9 @@ export async function listPoliticians(filter: PoliticianFilter = {}, limit = 200
   }
   if (filter.campaign) {
     values.push(filter.campaign);
-    where.push(`EXISTS (SELECT 1 FROM campaign_statuses c WHERE c.politician_id = p.id AND c.campaign = $${values.length})`);
+    where.push(
+      `EXISTS (SELECT 1 FROM campaign_statuses c WHERE c.politician_id = p.id AND c.campaign = $${values.length})`,
+    );
   }
   values.push(limit);
   const rows = await query<Row>(
@@ -150,7 +154,13 @@ export async function updatePolitician(id: number, details: PoliticianDetails, s
 export type StatusChange = { status: CampaignStatus | null; date: string | null; note: string };
 
 /** Sets, or with a null status clears, one politician's status for one campaign. */
-export async function setStatus(politicianId: number, campaign: string, change: StatusChange, staff: string, db?: Queryable): Promise<void> {
+export async function setStatus(
+  politicianId: number,
+  campaign: string,
+  change: StatusChange,
+  staff: string,
+  db?: Queryable,
+): Promise<void> {
   const write = async (db: Queryable) => {
     if (change.status) {
       await query(
@@ -162,7 +172,11 @@ export async function setStatus(politicianId: number, campaign: string, change: 
         db,
       );
     } else {
-      await query("DELETE FROM campaign_statuses WHERE politician_id = $1 AND campaign = $2", [politicianId, campaign], db);
+      await query(
+        "DELETE FROM campaign_statuses WHERE politician_id = $1 AND campaign = $2",
+        [politicianId, campaign],
+        db,
+      );
     }
     await logChange(staff, "set status", { politicianId, campaign, ...change }, db);
   };

@@ -20,32 +20,32 @@ Inspired by the brand image — a white dove against a warm terracotta sky with 
 
 ### Primary Colours
 
-| Token              | Hex       | Usage                                    |
-|---------------------|-----------|------------------------------------------|
-| `--bg`              | `#FDF8F3` | Page background — warm cream/parchment   |
-| `--surface`         | `#FFFFFF` | Cards, elevated surfaces                 |
-| `--surface-2`       | `#F5EDE4` | Muted sections, alternate backgrounds    |
-| `--text`            | `#1A1612` | Primary text — warm near-black           |
-| `--text-secondary`  | `#5C544A` | Secondary/body text — warm dark gray     |
-| `--muted`           | `#8A7F73` | Captions, meta text — warm medium gray   |
+| Token              | Hex       | Usage                                  |
+| ------------------ | --------- | -------------------------------------- |
+| `--bg`             | `#FDF8F3` | Page background — warm cream/parchment |
+| `--surface`        | `#FFFFFF` | Cards, elevated surfaces               |
+| `--surface-2`      | `#F5EDE4` | Muted sections, alternate backgrounds  |
+| `--text`           | `#1A1612` | Primary text — warm near-black         |
+| `--text-secondary` | `#5C544A` | Secondary/body text — warm dark gray   |
+| `--muted`          | `#8A7F73` | Captions, meta text — warm medium gray |
 
 ### Accent Colours
 
-| Token              | Hex       | Usage                                    |
-|---------------------|-----------|------------------------------------------|
-| `--accent`          | `#C8652A` | Primary accent — burnt terracotta/amber  |
-| `--accent-strong`   | `#A84E1A` | Hover states, emphasis                   |
-| `--accent-light`    | `#F0D4BC` | Light accent fills, tag backgrounds      |
-| `--accent-bg`       | `#FFF5EC` | Subtle accent sections                   |
+| Token             | Hex       | Usage                                   |
+| ----------------- | --------- | --------------------------------------- |
+| `--accent`        | `#C8652A` | Primary accent — burnt terracotta/amber |
+| `--accent-strong` | `#A84E1A` | Hover states, emphasis                  |
+| `--accent-light`  | `#F0D4BC` | Light accent fills, tag backgrounds     |
+| `--accent-bg`     | `#FFF5EC` | Subtle accent sections                  |
 
 ### Utility Colours
 
-| Token              | Hex       | Usage                                    |
-|---------------------|-----------|------------------------------------------|
-| `--border`          | `#E8DDD1` | Card borders, dividers                   |
-| `--border-strong`   | `#D4C4B0` | Emphasized borders                       |
-| `--shadow`          | `rgba(26, 22, 18, 0.08)` | Soft card shadows          |
-| `--shadow-strong`   | `rgba(26, 22, 18, 0.14)` | Hover/elevated shadows     |
+| Token             | Hex                      | Usage                  |
+| ----------------- | ------------------------ | ---------------------- |
+| `--border`        | `#E8DDD1`                | Card borders, dividers |
+| `--border-strong` | `#D4C4B0`                | Emphasized borders     |
+| `--shadow`        | `rgba(26, 22, 18, 0.08)` | Soft card shadows      |
+| `--shadow-strong` | `rgba(26, 22, 18, 0.14)` | Hover/elevated shadows |
 
 ### Rationale
 
@@ -71,14 +71,14 @@ Accent labels:      "Inter", system-ui, sans-serif (weight 600, uppercase, track
 
 ### Type Scale
 
-| Element           | Font                | Size                          | Weight | Tracking     |
-|--------------------|---------------------|-------------------------------|--------|--------------|
-| h1 (hero)         | DM Serif Display    | `clamp(40px, 6vw, 64px)`     | 400    | `-0.02em`    |
-| h2 (section)      | DM Serif Display    | `clamp(28px, 4vw, 44px)`     | 400    | `-0.01em`    |
-| h3 (card)         | Inter               | `20px`                        | 700    | `0`          |
-| Body              | Inter               | `16px` / `17px`               | 400    | `0`          |
-| Lede              | Inter               | `18px` / `19px`               | 400    | `0`          |
-| Small / caption   | Inter               | `14px`                        | 500    | `0.01em`     |
+| Element         | Font             | Size                     | Weight | Tracking  |
+| --------------- | ---------------- | ------------------------ | ------ | --------- |
+| h1 (hero)       | DM Serif Display | `clamp(40px, 6vw, 64px)` | 400    | `-0.02em` |
+| h2 (section)    | DM Serif Display | `clamp(28px, 4vw, 44px)` | 400    | `-0.01em` |
+| h3 (card)       | Inter            | `20px`                   | 700    | `0`       |
+| Body            | Inter            | `16px` / `17px`          | 400    | `0`       |
+| Lede            | Inter            | `18px` / `19px`          | 400    | `0`       |
+| Small / caption | Inter            | `14px`                   | 500    | `0.01em`  |
 
 ### Line Heights
 
@@ -92,30 +92,30 @@ Accent labels:      "Inter", system-ui, sans-serif (weight 600, uppercase, track
 
 Use an 8px base grid:
 
-| Token    | Value  | Usage                        |
-|----------|--------|------------------------------|
-| `--s-1`  | `4px`  | Tight gaps                   |
-| `--s-2`  | `8px`  | Inline spacing               |
-| `--s-3`  | `12px` | Small component gaps         |
-| `--s-4`  | `16px` | Card padding, standard gap   |
-| `--s-5`  | `24px` | Section padding, grid gaps   |
-| `--s-6`  | `32px` | Major spacing                |
-| `--s-7`  | `48px` | Section vertical padding     |
-| `--s-8`  | `64px` | Large section breaks         |
-| `--s-9`  | `96px` | Hero-level spacing           |
+| Token   | Value  | Usage                      |
+| ------- | ------ | -------------------------- |
+| `--s-1` | `4px`  | Tight gaps                 |
+| `--s-2` | `8px`  | Inline spacing             |
+| `--s-3` | `12px` | Small component gaps       |
+| `--s-4` | `16px` | Card padding, standard gap |
+| `--s-5` | `24px` | Section padding, grid gaps |
+| `--s-6` | `32px` | Major spacing              |
+| `--s-7` | `48px` | Section vertical padding   |
+| `--s-8` | `64px` | Large section breaks       |
+| `--s-9` | `96px` | Hero-level spacing         |
 
 ---
 
 ## Borders & Radii
 
-| Element          | Radius   | Notes                            |
-|-------------------|----------|----------------------------------|
-| Buttons           | `8px`    | Softly rounded, not pill-shaped  |
-| Cards             | `12px`   | Welcoming but structured         |
-| Images in cards   | `0`      | Full bleed within card frame     |
-| Avatars           | `50%`    | Circular for people              |
-| Tags/pills        | `6px`    | Subtle rounding                  |
-| Hero image        | `16px`   | Prominent, softened              |
+| Element         | Radius | Notes                           |
+| --------------- | ------ | ------------------------------- |
+| Buttons         | `8px`  | Softly rounded, not pill-shaped |
+| Cards           | `12px` | Welcoming but structured        |
+| Images in cards | `0`    | Full bleed within card frame    |
+| Avatars         | `50%`  | Circular for people             |
+| Tags/pills      | `6px`  | Subtle rounding                 |
+| Hero image      | `16px` | Prominent, softened             |
 
 ### Border Style
 
@@ -125,11 +125,11 @@ Cards use a `1px solid var(--border)` border. On hover, borders shift to `var(--
 
 ## Shadows
 
-| Level     | Value                                              | Usage                  |
-|-----------|-----------------------------------------------------|------------------------|
-| Subtle    | `0 1px 3px var(--shadow)`                           | Default cards          |
-| Medium    | `0 4px 16px var(--shadow)`                          | Hovered cards          |
-| Elevated  | `0 8px 32px var(--shadow-strong)`                   | Hero image, modals     |
+| Level    | Value                             | Usage              |
+| -------- | --------------------------------- | ------------------ |
+| Subtle   | `0 1px 3px var(--shadow)`         | Default cards      |
+| Medium   | `0 4px 16px var(--shadow)`        | Hovered cards      |
+| Elevated | `0 8px 32px var(--shadow-strong)` | Hero image, modals |
 
 Shadows are warm-toned (brown-black, not blue-black) to maintain palette consistency.
 
@@ -138,6 +138,7 @@ Shadows are warm-toned (brown-black, not blue-black) to maintain palette consist
 ## Buttons
 
 ### Primary Button
+
 - Background: `var(--accent)` (solid, no gradient)
 - Text: `#FFFFFF` (white)
 - Border-radius: `8px`
@@ -147,12 +148,14 @@ Shadows are warm-toned (brown-black, not blue-black) to maintain palette consist
 - Hover: background darkens to `var(--accent-strong)`, slight lift `translateY(-1px)`
 
 ### Ghost/Secondary Button
+
 - Background: `transparent`
 - Border: `1px solid var(--border-strong)`
 - Text: `var(--text)`
 - Hover: border becomes `var(--accent)`, text becomes `var(--accent)`
 
 ### Pill (nav CTA)
+
 - Border: `1.5px solid var(--accent)`
 - Text: `var(--accent)`
 - Border-radius: `999px`
@@ -163,6 +166,7 @@ Shadows are warm-toned (brown-black, not blue-black) to maintain palette consist
 ## Cards
 
 ### Standard Card (activity, local group)
+
 - Background: `var(--surface)` (white)
 - Border: `1px solid var(--border)`
 - Border-radius: `12px`
@@ -173,12 +177,14 @@ Shadows are warm-toned (brown-black, not blue-black) to maintain palette consist
 - Padding (content area): `20px`
 
 ### Feature Card (mission pillars)
+
 - Background: `var(--surface)`
 - Border: `1px solid var(--border)`
 - Left border accent: `3px solid var(--accent)` on the left edge (replaces the dot)
 - Padding: `24px`
 
 ### Person Card
+
 - Horizontal layout (avatar + text)
 - Avatar: `80px` circle with `2px solid var(--accent-light)` border
 - Clean, no heavy borders on the card itself
@@ -197,14 +203,17 @@ Shadows are warm-toned (brown-black, not blue-black) to maintain palette consist
 ## Section Styling
 
 ### Default Section
+
 - Background: `var(--bg)` (warm cream)
 - Padding: `80px 0`
 
 ### Muted/Alternate Section
+
 - Background: `var(--surface-2)` (slightly darker warm cream)
 - No gradient — solid colour for clean separation
 
 ### Callout Section
+
 - Background: `var(--accent-bg)` (very light amber wash)
 - Top/bottom border: `1px solid var(--accent-light)`
 
@@ -248,13 +257,13 @@ Shadows are warm-toned (brown-black, not blue-black) to maintain palette consist
 
 ## Summary of Key Changes from Current Design
 
-| Aspect            | Current (Dark)                     | New (Warm Authority)                  |
-|--------------------|-------------------------------------|---------------------------------------|
-| Background         | Pure black `#000`                  | Warm cream `#FDF8F3`                  |
-| Text               | White `#f7f7f7`                    | Warm near-black `#1A1612`             |
-| Accent             | Bright orange `#ff9416`            | Burnt terracotta `#C8652A`            |
-| Headings font      | Montserrat Black (sans-serif)      | DM Serif Display (serif)              |
-| Body font          | Roboto Slab (slab serif)           | Inter (sans-serif)                    |
-| Overall feel       | Tech startup, cold, exclusive      | Citizens' movement, warm, welcoming   |
-| Cards              | Dark surface, heavy shadows        | White, soft shadows, warm borders     |
-| Gradients          | Orange-to-transparent overlays     | Minimal, warm ambient tones           |
+| Aspect        | Current (Dark)                 | New (Warm Authority)                |
+| ------------- | ------------------------------ | ----------------------------------- |
+| Background    | Pure black `#000`              | Warm cream `#FDF8F3`                |
+| Text          | White `#f7f7f7`                | Warm near-black `#1A1612`           |
+| Accent        | Bright orange `#ff9416`        | Burnt terracotta `#C8652A`          |
+| Headings font | Montserrat Black (sans-serif)  | DM Serif Display (serif)            |
+| Body font     | Roboto Slab (slab serif)       | Inter (sans-serif)                  |
+| Overall feel  | Tech startup, cold, exclusive  | Citizens' movement, warm, welcoming |
+| Cards         | Dark surface, heavy shadows    | White, soft shadows, warm borders   |
+| Gradients     | Orange-to-transparent overlays | Minimal, warm ambient tones         |

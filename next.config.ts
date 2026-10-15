@@ -4,7 +4,12 @@ import { EVENT_IMAGE_HOSTS } from "@/lib/event-image-hosts";
 // Third-party origins the site actually depends on. Kept here as one list so
 // adding an embed means updating the policy in the same place.
 const GA = ["https://www.googletagmanager.com", "https://www.google-analytics.com"];
-const GA_COLLECT = [...GA, "https://analytics.google.com", "https://*.analytics.google.com", "https://*.google-analytics.com"];
+const GA_COLLECT = [
+  ...GA,
+  "https://analytics.google.com",
+  "https://*.analytics.google.com",
+  "https://*.google-analytics.com",
+];
 // Google Ads conversion / remarketing tags, loaded through the GTM container
 // (see components/layout/CookieConsent.tsx). The container is edited outside this repo,
 // so this is the usual set for Ads tags; tune it from CSP reports.

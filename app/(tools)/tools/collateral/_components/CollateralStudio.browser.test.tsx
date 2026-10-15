@@ -71,7 +71,9 @@ describe("CollateralStudio", () => {
     expect(downloads.pdf.mock.lastCall![1]).toMatchObject({ id: "a5", widthMm: 148 });
     downloads.pdf.mockRejectedValueOnce(new Error("no"));
     await page.getByRole("button", { name: /Download print PDF/ }).click();
-    await expect.element(page.getByText("Could not create the PDF. Try again, or download the PNG instead.")).toBeVisible();
+    await expect
+      .element(page.getByText("Could not create the PDF. Try again, or download the PNG instead."))
+      .toBeVisible();
     downloads.png.mockRejectedValueOnce(new Error("no"));
     await page.getByRole("button", { name: "Download PNG" }).click();
     await expect.element(page.getByText("Could not create the image. Try a smaller format.")).toBeVisible();
@@ -155,7 +157,15 @@ describe("CollateralStudio", () => {
     await expect.element(page.getByText("That file is too big to be a saved project.")).toBeVisible();
     await openFile(container, new File(["not json"], "bad.json"));
     await expect.element(page.getByText("That file is not a saved collateral project.")).toBeVisible();
-    const withLogo = project({ partnerLogos: [{ name: "p.png", dataUrl: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==" }] });
+    const withLogo = project({
+      partnerLogos: [
+        {
+          name: "p.png",
+          dataUrl:
+            "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+        },
+      ],
+    });
     await openFile(container, new File([serializeProject(withLogo)], "mine.json"));
     await expect.element(page.getByText("Opened mine.json.")).toBeVisible();
     await expect.element(page.getByLabelText("Where will it be used?")).toHaveValue("a5");

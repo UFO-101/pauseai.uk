@@ -7,7 +7,12 @@ import { readDraft, type Draft } from "./draft";
 import LetterForm from "./LetterForm";
 
 const [letterToPm, bill] = campaigns;
-const MP = { name: "Polly Placeholder", salutation: "Ms Placeholder", constituency: "Cities of London and Westminster", email: "polly.placeholder.mp@parliament.uk" };
+const MP = {
+  name: "Polly Placeholder",
+  salutation: "Ms Placeholder",
+  constituency: "Cities of London and Westminster",
+  email: "polly.placeholder.mp@parliament.uk",
+};
 const PROPS = { campaign: letterToPm, mp: MP, statuses: {}, senderName: "Jane Smith", postcode: "sw1a 1aa" };
 const PREVIEW = `/campaigns-v2/${letterToPm.slug}/preview`;
 
@@ -29,14 +34,20 @@ describe("LetterForm", () => {
     await render(<LetterForm {...PROPS} />);
     await expect.element(page.getByLabelText(copy.form.subjectLabel)).toHaveValue(letterToPm.subject);
     await expect.element(editor().getByText("Dear Ms Placeholder")).toBeVisible();
-    await expect.element(editor().getByText(/^I'm a resident of Cities of London and Westminster and a supporter of/)).toBeVisible();
+    await expect
+      .element(editor().getByText(/^I'm a resident of Cities of London and Westminster and a supporter of/))
+      .toBeVisible();
     // The old tool's bold.
     expect(editor().getByText("PauseAI", { exact: true }).element().tagName).toBe("STRONG");
-    await expect.element(page.getByRole("textbox", { name: copy.form.addressLabel })).toHaveAccessibleDescription(copy.form.addressHint);
+    await expect
+      .element(page.getByRole("textbox", { name: copy.form.addressLabel }))
+      .toHaveAccessibleDescription(copy.form.addressHint);
     // The signature is only shown on the preview, in the letter.
     await expect.element(page.getByText("Jane Smith SW1A 1AA")).not.toBeInTheDocument();
     for (const attachment of letterToPm.attachments) {
-      await expect.element(page.getByRole("link", { name: attachment.file })).toHaveAttribute("href", `/pdfs/${attachment.file}`);
+      await expect
+        .element(page.getByRole("link", { name: attachment.file }))
+        .toHaveAttribute("href", `/pdfs/${attachment.file}`);
     }
   });
 
@@ -84,7 +95,20 @@ describe("LetterForm", () => {
       type: "doc",
       content: [
         { type: "paragraph", content: [{ type: "text", text: "Hello" }] },
-        { type: "bulletList", content: [{ type: "listItem", content: [{ type: "paragraph", content: [{ type: "text", text: "Loud", marks: [{ type: "bold" }, { type: "italic" }] }] }] }] },
+        {
+          type: "bulletList",
+          content: [
+            {
+              type: "listItem",
+              content: [
+                {
+                  type: "paragraph",
+                  content: [{ type: "text", text: "Loud", marks: [{ type: "bold" }, { type: "italic" }] }],
+                },
+              ],
+            },
+          ],
+        },
       ],
     });
   });

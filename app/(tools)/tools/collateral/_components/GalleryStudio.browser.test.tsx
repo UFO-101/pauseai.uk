@@ -10,7 +10,8 @@ import { canvasFile } from "@/tests/browser/qr-images";
 import GalleryStudio from "./GalleryStudio";
 
 const STORAGE_KEY = "pauseai-collateral-gallery-v1";
-const PNG = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
+const PNG =
+  "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
 const LOGO = getTheme(DEFAULT_THEME_ID).logoSrc;
 const EXAMPLE = LIBRARY_PHOTOS.find((p) => p.id === EXAMPLE_SLIDE.photoId)!;
 
@@ -49,7 +50,9 @@ const slideThumbs = (c: HTMLElement) => [...c.querySelectorAll(".collateral-film
 const caption = () => page.getByLabelText(/^Caption for slide/).element() as HTMLTextAreaElement;
 const heading = (c: HTMLElement) => c.querySelectorAll(".collateral-controls h2")[1].textContent;
 const platform = (c: HTMLElement, label: string) =>
-  [...c.querySelectorAll(".collateral-choice")].find((l) => l.querySelector("strong")!.textContent === label)!.querySelector("input")!;
+  [...c.querySelectorAll(".collateral-choice")]
+    .find((l) => l.querySelector("strong")!.textContent === label)!
+    .querySelector("input")!;
 const meta = (c: HTMLElement) => c.querySelector(".collateral-preview-meta")!.textContent;
 
 async function ready(container: HTMLElement) {
@@ -72,7 +75,8 @@ function setFiles(input: HTMLInputElement, files: File[]) {
   input.dispatchEvent(new Event("change", { bubbles: true }));
 }
 
-const upload = (c: HTMLElement, files: File[]) => setFiles(c.querySelector('input[aria-label="Upload photos"]') as HTMLInputElement, files);
+const upload = (c: HTMLElement, files: File[]) =>
+  setFiles(c.querySelector('input[aria-label="Upload photos"]') as HTMLInputElement, files);
 const openFile = (c: HTMLElement, file: File | null) =>
   setFiles(c.querySelector('input[aria-label="Open a saved project"]') as HTMLInputElement, file ? [file] : []);
 
@@ -84,7 +88,12 @@ function setRange(label: string, value: string) {
 
 const gallery = (extra: Partial<GalleryProject> = {}): GalleryProject => ({
   slides: [
-    { photo: { kind: "library", id: LIBRARY_PHOTOS[1].id }, photoSettings: DEFAULT_SLIDE_PHOTO_SETTINGS, caption: "One", themeId: "black" },
+    {
+      photo: { kind: "library", id: LIBRARY_PHOTOS[1].id },
+      photoSettings: DEFAULT_SLIDE_PHOTO_SETTINGS,
+      caption: "One",
+      themeId: "black",
+    },
     { photo: null, photoSettings: DEFAULT_SLIDE_PHOTO_SETTINGS, caption: "Two", themeId: "cream" },
   ],
   platforms: ["x"],
@@ -178,14 +187,18 @@ describe("GalleryStudio", () => {
     await expect.element(page.getByRole("button", { name: EXAMPLE.label })).toHaveAttribute("aria-pressed", "false");
     expect(container.querySelector("canvas[role=img]")!.className).toBe("");
     await page.getByRole("button", { name: LIBRARY_PHOTOS[0].label }).click();
-    await expect.element(page.getByRole("button", { name: LIBRARY_PHOTOS[0].label })).toHaveAttribute("aria-pressed", "true");
+    await expect
+      .element(page.getByRole("button", { name: LIBRARY_PHOTOS[0].label }))
+      .toHaveAttribute("aria-pressed", "true");
     container.querySelector("details.collateral-crop")!.setAttribute("open", "");
     setRange("Zoom", "2");
     await expect.poll(() => (page.getByLabelText("Zoom").element() as HTMLInputElement).value).toBe("2");
     // Scrolling on the preview zooms too.
     const preview = container.querySelector("canvas[role=img]")!;
     preview.dispatchEvent(new WheelEvent("wheel", { deltaY: -200, bubbles: true, cancelable: true }));
-    await expect.poll(() => Number((page.getByLabelText("Zoom").element() as HTMLInputElement).value)).toBeGreaterThan(2);
+    await expect
+      .poll(() => Number((page.getByLabelText("Zoom").element() as HTMLInputElement).value))
+      .toBeGreaterThan(2);
     loads.failing = [LIBRARY_PHOTOS[1].src];
     await page.getByRole("button", { name: LIBRARY_PHOTOS[1].label }).click();
     await expect.element(page.getByText("Could not load that photo.")).toBeVisible();
@@ -201,7 +214,9 @@ describe("GalleryStudio", () => {
     // More than fit.
     const bad = new File(["x"], "bad.png", { type: "image/png" });
     upload(container, [bad, bad, ...Array(MAX_SLIDES).fill(good)]);
-    await expect.element(page.getByText("2 images could not be read. 2 did not fit: a gallery holds 10 slides.")).toBeVisible();
+    await expect
+      .element(page.getByText("2 images could not be read. 2 did not fit: a gallery holds 10 slides."))
+      .toBeVisible();
     await expect.poll(() => slideThumbs(container).length).toBe(MAX_SLIDES);
     upload(container, [good]);
     await expect.poll(() => container.querySelector(".collateral-message")).toBeNull();
@@ -230,7 +245,9 @@ describe("GalleryStudio", () => {
     await expect.element(page.getByText("That file is too big to be a saved gallery.")).toBeVisible();
     await openFile(container, new File(["nope"], "bad.json"));
     await expect.element(page.getByText("That file is not a saved gallery project.")).toBeVisible();
-    const one = gallery({ slides: [{ ...gallery().slides[0], photo: { kind: "upload", name: "u.png", dataUrl: PNG } }] });
+    const one = gallery({
+      slides: [{ ...gallery().slides[0], photo: { kind: "upload", name: "u.png", dataUrl: PNG } }],
+    });
     await openFile(container, new File([serializeGalleryProject(one)], "one.json"));
     await expect.element(page.getByText("Opened one.json.")).toBeVisible();
     // A single slide is topped up to the minimum.

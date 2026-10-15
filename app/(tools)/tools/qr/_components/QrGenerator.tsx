@@ -109,7 +109,12 @@ export default function QrGenerator() {
     if (!target) return null;
     const shape = qrShape(target, 1000, logo);
     const layout = captionLayout(1000, caption, measureCaption);
-    const svg = qrSvg(shape, { background: PANEL, roundedPanel: false, caption: layout, fontCss: fontCss ?? undefined });
+    const svg = qrSvg(shape, {
+      background: PANEL,
+      roundedPanel: false,
+      caption: layout,
+      fontCss: fontCss ?? undefined,
+    });
     return { modules: shape.modules, src: svgDataUrl(svg), overflow: layout.overflow };
     // fontCss is a dependency because measurements change once the fonts have loaded.
   }, [target, logo, caption, fontCss]);
@@ -144,7 +149,12 @@ export default function QrGenerator() {
     try {
       const css = hasCaption ? await loadCaptionFonts() : undefined;
       const layout = captionLayout(1000, caption, measureCaption);
-      const svg = qrSvg(qrShape(target, 1000, logo), { background: PANEL, roundedPanel: false, caption: layout, fontCss: css });
+      const svg = qrSvg(qrShape(target, 1000, logo), {
+        background: PANEL,
+        roundedPanel: false,
+        caption: layout,
+        fontCss: css,
+      });
       downloadText(svg, `${stem}.svg`, "image/svg+xml");
     } catch {
       setMessage("Could not load the fonts for the text. Check your connection and try again.");
@@ -170,7 +180,8 @@ export default function QrGenerator() {
       await navigator.share({ files: [new File([blob], `${stem}.png`, { type: "image/png" })] });
     } catch (e) {
       // Closing the share sheet is not an error.
-      if (!(e instanceof DOMException && e.name === "AbortError")) setMessage("Could not share the image. Download it instead.");
+      if (!(e instanceof DOMException && e.name === "AbortError"))
+        setMessage("Could not share the image. Download it instead.");
     }
   }
 
@@ -196,7 +207,9 @@ export default function QrGenerator() {
             // eslint-disable-next-line @next/next/no-img-element -- generated SVG data URL, not a file next/image can optimise
             <img src={preview.src} alt={`QR code for ${target}`} className="collateral-qr-image" />
           ) : (
-            <p className="collateral-loading">{invalid ? "Check the web address to see the code." : "Type a web address to make a QR code."}</p>
+            <p className="collateral-loading">
+              {invalid ? "Check the web address to see the code." : "Type a web address to make a QR code."}
+            </p>
           )}
         </div>
         {preview && (
@@ -237,7 +250,14 @@ export default function QrGenerator() {
           <QrScanner onResult={onScan} />
           {scanned !== null && (
             <p className="collateral-field-error" role="status">
-              That code does not hold a web address{scanned ? <>. It says: <q>{scanned.slice(0, 120)}</q></> : "."}
+              That code does not hold a web address
+              {scanned ? (
+                <>
+                  . It says: <q>{scanned.slice(0, 120)}</q>
+                </>
+              ) : (
+                "."
+              )}
             </p>
           )}
           <label className="collateral-toggle collateral-qr-logo" htmlFor="qr-logo">
@@ -245,7 +265,12 @@ export default function QrGenerator() {
             Pause symbol in the middle
           </label>
           <label className="collateral-toggle" htmlFor="qr-show-link">
-            <input id="qr-show-link" type="checkbox" checked={showLink} onChange={(e) => setShowLink(e.target.checked)} />
+            <input
+              id="qr-show-link"
+              type="checkbox"
+              checked={showLink}
+              onChange={(e) => setShowLink(e.target.checked)}
+            />
             Show the link under the code
           </label>
           <label className="collateral-label" htmlFor="qr-label">

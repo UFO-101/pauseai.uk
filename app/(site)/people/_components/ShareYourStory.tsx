@@ -9,9 +9,7 @@ export default function ShareYourStory({ id }: { id?: string }) {
       <div className="container">
         <div className="section-header">
           <h2>Share your story</h2>
-          <p className="section-lede">
-            Why did you get involved, or what are your own concerns about AI?
-          </p>
+          <p className="section-lede">Why did you get involved, or what are your own concerns about AI?</p>
           <p className="section-lede">
             Tell us in your own words, we may feature it on this page. Connect with others who have similar stories in{" "}
             <a className="inline-link" href={site.whatsappUrl} target="_blank" rel="noreferrer">

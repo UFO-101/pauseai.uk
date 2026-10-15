@@ -15,7 +15,9 @@ describe("content sections", () => {
   it("press: contact, boilerplate, brand assets and every piece of coverage", async () => {
     const { container } = await render(<PressKit />);
     await expect.element(page.getByRole("heading", { name: "Media contact" })).toBeVisible();
-    await expect.element(page.getByRole("link", { name: site.pressEmail }).first()).toHaveAttribute("href", `mailto:${site.pressEmail}`);
+    await expect
+      .element(page.getByRole("link", { name: site.pressEmail }).first())
+      .toHaveAttribute("href", `mailto:${site.pressEmail}`);
     expect(container.textContent).toContain(formatCoverageDate(allCoverage[0].date));
     expect(container.textContent).toContain(allCoverage[allCoverage.length - 1].title);
   });
@@ -40,6 +42,8 @@ describe("content sections", () => {
 
   it("what is PauseAI UK", async () => {
     await render(<About />);
-    await expect.element(page.getByRole("link", { name: "PauseAI Code of Conduct" })).toHaveAttribute("href", "https://pauseai.info/code-of-conduct");
+    await expect
+      .element(page.getByRole("link", { name: "PauseAI Code of Conduct" }))
+      .toHaveAttribute("href", "https://pauseai.info/code-of-conduct");
   });
 });

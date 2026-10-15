@@ -24,9 +24,29 @@ export const HERO_PHOTOS: [string, string, number, number][] = [
   ["parliament-group-landscape.webp", "PauseAI UK volunteers outside Parliament, June 2026", 800, 326],
   ["jeremy-corbyn.webp", "PauseAI UK board member David Wood with MP Jeremy Corbyn", 800, 507],
 
-  ["parliament-conference-sep-2026-audience.webp", "A packed committee room at the PauseAI UK discussion in Parliament, September 2026", 800, 533],
-  ["parliament-conference-sep-2026-speakers.webp", "Speakers and organisers at the PauseAI UK discussion in Parliament, September 2026", 800, 400],
+  [
+    "parliament-conference-sep-2026-audience.webp",
+    "A packed committee room at the PauseAI UK discussion in Parliament, September 2026",
+    800,
+    533,
+  ],
+  [
+    "parliament-conference-sep-2026-speakers.webp",
+    "Speakers and organisers at the PauseAI UK discussion in Parliament, September 2026",
+    800,
+    400,
+  ],
   ["pausecon-london-sept-2026-group.webp", "Group photo of attendees at PauseCon London, September 2026", 800, 314],
-  ["downing-street-sept-2026-banner.webp", "Protesters holding a PauseAI banner and placards on Whitehall, September 2026", 800, 535],
-  ["downing-street-sept-2026-gates-crowd.webp", "PauseAI protesters with placards at the Downing Street gates, September 2026", 800, 534],
+  [
+    "downing-street-sept-2026-banner.webp",
+    "Protesters holding a PauseAI banner and placards on Whitehall, September 2026",
+    800,
+    535,
+  ],
+  [
+    "downing-street-sept-2026-gates-crowd.webp",
+    "PauseAI protesters with placards at the Downing Street gates, September 2026",
+    800,
+    534,
+  ],
 ];

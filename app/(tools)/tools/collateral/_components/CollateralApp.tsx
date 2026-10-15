@@ -21,7 +21,14 @@ export default function CollateralApp({ events }: { events: CalendarEvent[] }) {
     <div>
       <div className="collateral-mode-switch" role="radiogroup" aria-label="Post type">
         {MODES.map((m) => (
-          <button key={m.id} type="button" role="radio" aria-checked={mode === m.id} title={m.hint} onClick={() => setMode(m.id)}>
+          <button
+            key={m.id}
+            type="button"
+            role="radio"
+            aria-checked={mode === m.id}
+            title={m.hint}
+            onClick={() => setMode(m.id)}
+          >
             {m.label}
           </button>
         ))}

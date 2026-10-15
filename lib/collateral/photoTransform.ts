@@ -29,7 +29,13 @@ export function panPhoto(img: Size, box: Size, view: PhotoView, dx: number, dy: 
 }
 
 /** Zoom to `zoom`, keeping the point under `anchor` (canvas px) where it is. */
-export function zoomPhoto(img: Size, box: Size, view: PhotoView, zoom: number, anchor: { x: number; y: number }): PhotoView {
+export function zoomPhoto(
+  img: Size,
+  box: Size,
+  view: PhotoView,
+  zoom: number,
+  anchor: { x: number; y: number },
+): PhotoView {
   const next = clamp(zoom, MIN_ZOOM, MAX_ZOOM);
   const before = coverRect(img.w, img.h, box.w, box.h, view.zoom, view.focalX, view.focalY);
   const after = coverRect(img.w, img.h, box.w, box.h, next, 0, 0);

@@ -18,7 +18,11 @@ describe("idFrom", () => {
 
 describe("politicianDetailsFrom", () => {
   it("reads a signer's details, with blanks as none", () => {
-    expect(politicianDetailsFrom(form({ house: "senedd", name: " Jo ", salutation: "", constituency: "", party: "P", email: "" }))).toEqual({
+    expect(
+      politicianDetailsFrom(
+        form({ house: "senedd", name: " Jo ", salutation: "", constituency: "", party: "P", email: "" }),
+      ),
+    ).toEqual({
       house: "senedd",
       name: "Jo",
       salutation: "",
@@ -35,7 +39,13 @@ describe("politicianDetailsFrom", () => {
 });
 
 describe("statusFrom", () => {
-  const base = { politicianId: "4", campaign: "regulate-letter-pm", status: "signed", date: "2026-10-01", note: " ok " };
+  const base = {
+    politicianId: "4",
+    campaign: "regulate-letter-pm",
+    status: "signed",
+    date: "2026-10-01",
+    note: " ok ",
+  };
 
   it("reads a status change", () => {
     expect(statusFrom(form(base))).toEqual({
@@ -43,7 +53,11 @@ describe("statusFrom", () => {
       campaign: "regulate-letter-pm",
       change: { status: "signed", date: "2026-10-01", note: "ok" },
     });
-    expect(statusFrom(form({ ...base, status: "", date: "" }))!.change).toEqual({ status: null, date: null, note: "ok" });
+    expect(statusFrom(form({ ...base, status: "", date: "" }))!.change).toEqual({
+      status: null,
+      date: null,
+      note: "ok",
+    });
   });
 
   it("refuses an unknown politician, campaign, status or a bad date", () => {

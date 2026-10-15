@@ -7,7 +7,11 @@ import NearbyEvents from "../../_components/NearbyEvents";
 
 // After this campaign's letter is sent, with events near the sender. Unlisted, and kept out of search.
 export const metadata = {
-  ...pageMetadata({ title: copy.sent.title, description: copy.sent.title, path: "/campaigns-v2/support-sobel-bill/sent" }),
+  ...pageMetadata({
+    title: copy.sent.title,
+    description: copy.sent.title,
+    path: "/campaigns-v2/support-sobel-bill/sent",
+  }),
   robots: { index: false, follow: false },
 };
 

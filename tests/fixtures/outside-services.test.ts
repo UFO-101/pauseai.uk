@@ -3,8 +3,12 @@ import { fixtureResponse } from "./outside-services";
 
 describe("fixtureResponse", () => {
   it("serves the future and past calendars by period", async () => {
-    const future = await fixtureResponse("https://public-api.luma.com/v1/calendars/events/list?after=2026-01-01T00:00:00.000Z")!.json();
-    const past = await fixtureResponse("https://public-api.luma.com/v1/calendars/events/list?before=2026-01-01T00:00:00.000Z")!.json();
+    const future = await fixtureResponse(
+      "https://public-api.luma.com/v1/calendars/events/list?after=2026-01-01T00:00:00.000Z",
+    )!.json();
+    const past = await fixtureResponse(
+      "https://public-api.luma.com/v1/calendars/events/list?before=2026-01-01T00:00:00.000Z",
+    )!.json();
     expect(future.entries[0].url).toBe("https://luma.com/fixture-london-protest");
     expect(past.entries[0].url).toBe("https://luma.com/fixture-past-london-march");
   });
@@ -27,11 +31,15 @@ describe("fixtureResponse", () => {
   });
 
   it("passes every Turnstile token", async () => {
-    expect((await fixtureResponse("https://challenges.cloudflare.com/turnstile/v0/siteverify")!.json()).success).toBe(true);
+    expect((await fixtureResponse("https://challenges.cloudflare.com/turnstile/v0/siteverify")!.json()).success).toBe(
+      true,
+    );
   });
 
   it("lists two MPs, each with an office email", async () => {
-    expect((await fixtureResponse("https://members-api.parliament.uk/api/Members/Search?House=1")!.json()).items).toHaveLength(2);
+    expect(
+      (await fixtureResponse("https://members-api.parliament.uk/api/Members/Search?House=1")!.json()).items,
+    ).toHaveLength(2);
     const contact = await fixtureResponse("https://members-api.parliament.uk/api/Members/90001/Contact")!.json();
     expect(contact.value[0].email).toBe("mp90001.office@parliament.uk ");
   });
@@ -43,7 +51,7 @@ describe("fixtureResponse", () => {
   });
 
   it("has nothing for other URLs", () => {
-        expect(fixtureResponse("https://public-api.luma.com/other")).toBeUndefined();
+    expect(fixtureResponse("https://public-api.luma.com/other")).toBeUndefined();
     expect(fixtureResponse("https://eu.airtable.com/other")).toBeUndefined();
     expect(fixtureResponse("https://members-api.parliament.uk/api/Members/90001")).toBeUndefined();
     expect(fixtureResponse("https://example.com/")).toBeUndefined();

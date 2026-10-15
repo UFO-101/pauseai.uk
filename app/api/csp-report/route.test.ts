@@ -117,7 +117,15 @@ describe("POST /api/csp-report", () => {
   });
 
   it("reads the kebab-case effective-directive some browsers send", async () => {
-    await POST(post({ "csp-report": { "document-uri": "https://pauseai.uk/", "effective-directive": "img-src", "blocked-uri": "https://x.example/a.png" } }));
+    await POST(
+      post({
+        "csp-report": {
+          "document-uri": "https://pauseai.uk/",
+          "effective-directive": "img-src",
+          "blocked-uri": "https://x.example/a.png",
+        },
+      }),
+    );
 
     expect(JSON.parse(warn.mock.calls[0][1] as string)).toMatchObject({ directive: "img-src" });
   });

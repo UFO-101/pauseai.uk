@@ -56,6 +56,9 @@ jobs:
       - name: Test with coverage
         run: npm test
 
+      - name: Check formatting
+        run: npm run format:check
+
       - name: Check there are no coverage-ignore comments
         run: npm run check:coverage-ignores
 

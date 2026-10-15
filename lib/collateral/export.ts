@@ -89,7 +89,10 @@ export function downloadCanvasPng(canvas: HTMLCanvasElement, filename: string): 
 }
 
 /** Zips named files into one download, e.g. a campaign pack's PNGs and print PDFs. */
-export async function downloadFilesZip(files: { name: string; data: Blob | Uint8Array }[], filename: string): Promise<void> {
+export async function downloadFilesZip(
+  files: { name: string; data: Blob | Uint8Array }[],
+  filename: string,
+): Promise<void> {
   // Loaded on demand so the editor page stays light.
   const { JSZip } = await import("./zip");
   const zip = new JSZip();

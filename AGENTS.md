@@ -12,6 +12,7 @@ Run everything CI runs (`.github/workflows/ci.yml`), and only commit when every 
 
 ```bash
 npm test                          # both Vitest projects, and the 100% per-file coverage gate
+npm run format:check              # Prettier; `npm run format` fixes it
 npm run check:coverage-ignores
 npm run check:airtable-filter
 npm run check:staff-auth
@@ -52,7 +53,7 @@ People write the words visitors and recipients read: page text, letters, emails,
 
 <!-- BEGIN:nextjs-agent-rules -->
 
-# This is NOT the Next.js you know
+## This is NOT the Next.js you know
 
 This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
 

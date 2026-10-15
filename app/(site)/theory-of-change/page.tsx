@@ -7,7 +7,8 @@ import Closing from "./_components/Closing";
 
 export const metadata = pageMetadata({
   title: "Theory of Change",
-  description: "How PauseAI UK plans to convert public concern about AI risk into political pressure for a global pause.",
+  description:
+    "How PauseAI UK plans to convert public concern about AI risk into political pressure for a global pause.",
   path: "/theory-of-change",
 });
 

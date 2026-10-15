@@ -76,7 +76,13 @@ describe("getEvents", () => {
         visibility: "public",
         geo_address_json: { address: "All Souls' Place", city: "London", region: null, country: "United Kingdom" },
       },
-      { url: "already-a-slug", name: "Call", start_at: "2030-01-02T18:00:00Z", visibility: "public", geo_address_json: null },
+      {
+        url: "already-a-slug",
+        name: "Call",
+        start_at: "2030-01-02T18:00:00Z",
+        visibility: "public",
+        geo_address_json: null,
+      },
     );
     expect(await getEvents()).toEqual([
       {
@@ -84,7 +90,12 @@ describe("getEvents", () => {
           url: "pauseai-nov26",
           name: "March",
           start_at: "2030-01-01T12:00:00Z",
-          geo_address_info: { address: "All Souls' Place", city: "London", region: undefined, country: "United Kingdom" },
+          geo_address_info: {
+            address: "All Souls' Place",
+            city: "London",
+            region: undefined,
+            country: "United Kingdom",
+          },
         },
       },
       { event: { url: "already-a-slug", name: "Call", start_at: "2030-01-02T18:00:00Z" } },
@@ -137,7 +148,14 @@ describe("getEvents", () => {
       geo_address_json: { address: "Venue TBD", city: null, region: "Scotland", country: null },
     });
     expect(await getEvents()).toEqual([
-      { event: { url: "untitled", name: "", start_at: "2030-01-01T12:00:00Z", geo_address_info: { address: "Venue TBD", region: "Scotland" } } },
+      {
+        event: {
+          url: "untitled",
+          name: "",
+          start_at: "2030-01-01T12:00:00Z",
+          geo_address_info: { address: "Venue TBD", region: "Scotland" },
+        },
+      },
     ]);
   });
 

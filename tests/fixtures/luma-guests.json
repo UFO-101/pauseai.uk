@@ -1,10 +1,25 @@
 {
   "entries": [
-    { "api_id": "gst-1", "guest": { "approval_status": "approved", "utm_source": "brixton", "registered_at": "2026-09-26T12:00:00.000Z" } },
-    { "api_id": "gst-2", "guest": { "approval_status": "approved", "utm_source": "stratford", "registered_at": "2026-09-26T12:30:00.000Z" } },
-    { "api_id": "gst-3", "guest": { "approval_status": "approved", "utm_source": "brixton", "registered_at": "2026-10-10T12:00:00.000Z" } },
-    { "api_id": "gst-4", "guest": { "approval_status": "declined", "utm_source": "brixton", "registered_at": "2026-10-10T12:30:00.000Z" } },
-    { "api_id": "gst-5", "guest": { "approval_status": "approved", "utm_source": null, "registered_at": "2026-10-10T13:00:00.000Z" } }
+    {
+      "api_id": "gst-1",
+      "guest": { "approval_status": "approved", "utm_source": "brixton", "registered_at": "2026-09-26T12:00:00.000Z" }
+    },
+    {
+      "api_id": "gst-2",
+      "guest": { "approval_status": "approved", "utm_source": "stratford", "registered_at": "2026-09-26T12:30:00.000Z" }
+    },
+    {
+      "api_id": "gst-3",
+      "guest": { "approval_status": "approved", "utm_source": "brixton", "registered_at": "2026-10-10T12:00:00.000Z" }
+    },
+    {
+      "api_id": "gst-4",
+      "guest": { "approval_status": "declined", "utm_source": "brixton", "registered_at": "2026-10-10T12:30:00.000Z" }
+    },
+    {
+      "api_id": "gst-5",
+      "guest": { "approval_status": "approved", "utm_source": null, "registered_at": "2026-10-10T13:00:00.000Z" }
+    }
   ],
   "has_more": false
 }

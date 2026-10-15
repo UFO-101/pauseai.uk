@@ -33,7 +33,8 @@ import { useStudioAssets } from "./useStudioAssets";
 
 afterEach(() => vi.restoreAllMocks());
 
-const PNG = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
+const PNG =
+  "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
 
 describe("designState", () => {
   it("offers every layout but the hidden ones, with Event last", () => {
@@ -62,23 +63,38 @@ describe("designState", () => {
 
   it("saves library photos by id, and uploads only when asked", async () => {
     const drawable = await render_.loadDataUrl(PNG);
-    const library: DesignState = { ...newDesign(), photo: { drawable, name: "x", source: { kind: "library", id: LIBRARY_PHOTOS[0].id } } };
+    const library: DesignState = {
+      ...newDesign(),
+      photo: { drawable, name: "x", source: { kind: "library", id: LIBRARY_PHOTOS[0].id } },
+    };
     expect(designToData(library, false).photo).toEqual({ kind: "library", id: LIBRARY_PHOTOS[0].id });
     const upload: DesignState = { ...newDesign(), photo: { drawable, name: "mine.png", source: { kind: "upload" } } };
     expect(designToData(upload, false).photo).toBeNull();
-    expect(designToData(upload, true).photo).toMatchObject({ kind: "upload", name: "mine.png", dataUrl: expect.stringMatching(/^data:image\/jpeg/) });
+    expect(designToData(upload, true).photo).toMatchObject({
+      kind: "upload",
+      name: "mine.png",
+      dataUrl: expect.stringMatching(/^data:image\/jpeg/),
+    });
     expect(designToData(newDesign(), true).photo).toBeNull();
   });
 
   it("loads a saved design's photo and partner logos, saying when one fails", async () => {
     const base = designToData(newDesign(), false);
-    const ok = await designFromData({ ...base, photo: { kind: "library", id: LIBRARY_PHOTOS[0].id }, partnerLogos: [{ name: "p", dataUrl: PNG }] });
+    const ok = await designFromData({
+      ...base,
+      photo: { kind: "library", id: LIBRARY_PHOTOS[0].id },
+      partnerLogos: [{ name: "p", dataUrl: PNG }],
+    });
     expect(ok.ok).toBe(true);
     expect(ok.design.photo?.name).toBe(LIBRARY_PHOTOS[0].label);
     expect(ok.design.partnerLogos).toHaveLength(1);
     const upload = await designFromData({ ...base, photo: { kind: "upload", name: "u", dataUrl: PNG } });
     expect(upload.design.photo).toMatchObject({ name: "u", source: { kind: "upload" } });
-    const broken: DesignData = { ...base, photo: { kind: "upload", name: "u", dataUrl: "data:image/png;base64,AAAA" }, partnerLogos: [{ name: "p", dataUrl: "data:image/png;base64,AAAA" }] };
+    const broken: DesignData = {
+      ...base,
+      photo: { kind: "upload", name: "u", dataUrl: "data:image/png;base64,AAAA" },
+      partnerLogos: [{ name: "p", dataUrl: "data:image/png;base64,AAAA" }],
+    };
     const failed = await designFromData(broken);
     expect(failed.ok).toBe(false);
     expect(failed.design.photo).toBeNull();
@@ -102,14 +118,24 @@ describe("small controls", () => {
   it("lists checks, warnings and notes marked, or says there are none", async () => {
     const { container, rerender } = await render(<Checks issues={[]} />);
     expect(container.textContent).toBe("Checks✓ No problems found.");
-    await rerender(<Checks title="For all" issues={[{ id: "a", level: "warn", message: "Bad" }, { id: "b", level: "info", message: "Hmm" }]} />);
+    await rerender(
+      <Checks
+        title="For all"
+        issues={[
+          { id: "a", level: "warn", message: "Bad" },
+          { id: "b", level: "info", message: "Hmm" },
+        ]}
+      />,
+    );
     expect([...container.querySelectorAll("li")].map((li) => li.textContent)).toEqual(["⚠ Bad", "ℹ Hmm"]);
     expect(container.querySelector("strong")?.textContent).toBe("For all");
   });
 
   it("adjusts the crop with sliders", async () => {
     const onChange = vi.fn();
-    const { container } = await render(<CropControls view={{ zoom: 1, focalX: 0.5, focalY: 0.5 }} onChange={onChange} />);
+    const { container } = await render(
+      <CropControls view={{ zoom: 1, focalX: 0.5, focalY: 0.5 }} onChange={onChange} />,
+    );
     container.querySelector("details")!.open = true;
     const sliders = container.querySelectorAll<HTMLInputElement>('input[type="range"]');
     const set = (el: HTMLInputElement, v: string) => {
@@ -151,9 +177,13 @@ describe("small controls", () => {
 
   it("explains QR codes on each kind of format", async () => {
     const onScreenQr = vi.fn();
-    const { container, rerender } = await render(<QrFormatNote format={getFormat("luma-cover")} screenQr={false} onScreenQr={onScreenQr} />);
+    const { container, rerender } = await render(
+      <QrFormatNote format={getFormat("luma-cover")} screenQr={false} onScreenQr={onScreenQr} />,
+    );
     expect(container.textContent).toContain("left off the Luma event cover");
-    await rerender(<QrFormatNote format={getFormat("ig-square")} screenQr={false} onScreenQr={onScreenQr} reason="Trimmed" />);
+    await rerender(
+      <QrFormatNote format={getFormat("ig-square")} screenQr={false} onScreenQr={onScreenQr} reason="Trimmed" />,
+    );
     expect(container.textContent).toContain("left off social posts by default");
     await page.getByRole("checkbox").click();
     expect(onScreenQr).toHaveBeenCalledWith(true);
@@ -247,7 +277,6 @@ describe("useStudioAssets", () => {
     await expect.poll(() => Object.keys(result.current.logos).length).toBe(new Set(THEMES.map((t) => t.logoSrc)).size);
     expect(result.current.error).toBeNull();
   });
-
 });
 
 describe("usePhotoGestures", () => {
@@ -262,7 +291,9 @@ describe("usePhotoGestures", () => {
         return next;
       }),
     );
-    return <canvas ref={ref} width={400} height={400} style={{ width: 200, height: 200 }} data-testid="c" {...gestures} />;
+    return (
+      <canvas ref={ref} width={400} height={400} style={{ width: 200, height: 200 }} data-testid="c" {...gestures} />
+    );
   }
 
   const pointer = (el: Element, type: string, id: number, x: number, y: number) =>
@@ -290,8 +321,18 @@ describe("usePhotoGestures", () => {
     pointer(c, "pointermove", 3, 0, 0);
     expect(onView.mock.calls.length).toBe(calls);
 
-    c.dispatchEvent(new WheelEvent("wheel", { bubbles: true, cancelable: true, deltaY: -100, clientX: r.left + 100, clientY: r.top + 100 }));
-    c.dispatchEvent(new WheelEvent("wheel", { bubbles: true, cancelable: true, deltaY: 3, deltaMode: 1, ctrlKey: true }));
+    c.dispatchEvent(
+      new WheelEvent("wheel", {
+        bubbles: true,
+        cancelable: true,
+        deltaY: -100,
+        clientX: r.left + 100,
+        clientY: r.top + 100,
+      }),
+    );
+    c.dispatchEvent(
+      new WheelEvent("wheel", { bubbles: true, cancelable: true, deltaY: 3, deltaMode: 1, ctrlKey: true }),
+    );
     await expect.poll(() => onView.mock.calls.length).toBeGreaterThan(calls + 1);
   });
 

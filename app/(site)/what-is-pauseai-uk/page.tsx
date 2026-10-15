@@ -18,9 +18,7 @@ export default function WhatIsPauseAIUKPage() {
         <section className="tr-hero">
           <div className="container tr-hero-inner">
             <h1 className="tr-hero-title">What is PauseAI UK?</h1>
-            <p className="tr-hero-lede">
-              We are the civic movement dedicated to averting the risks of superhuman AI.
-            </p>
+            <p className="tr-hero-lede">We are the civic movement dedicated to averting the risks of superhuman AI.</p>
           </div>
         </section>
 

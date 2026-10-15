@@ -113,7 +113,13 @@ describe("PDFs", () => {
 describe("zips", () => {
   it("zips named files into one download", async () => {
     const { got } = catchDownloads();
-    await downloadFilesZip([{ name: "a.txt", data: new Blob(["A"]) }, { name: "b.bin", data: new Uint8Array([1, 2]) }], "pack.zip");
+    await downloadFilesZip(
+      [
+        { name: "a.txt", data: new Blob(["A"]) },
+        { name: "b.bin", data: new Uint8Array([1, 2]) },
+      ],
+      "pack.zip",
+    );
     const zip = await JSZip.loadAsync(await got[0].blob.arrayBuffer());
     expect(Object.keys(zip.files).sort()).toEqual(["a.txt", "b.bin"]);
     expect(await zip.file("a.txt")!.async("string")).toBe("A");
@@ -130,6 +136,10 @@ describe("zips", () => {
     );
     expect(got[0].name).toBe("carousel.zip");
     const zip = await JSZip.loadAsync(await got[0].blob.arrayBuffer());
-    expect(Object.keys(zip.files).filter((f) => !f.endsWith("/")).sort()).toEqual(["instagram/1.png", "instagram/2.png", "linkedin/carousel.pdf"]);
+    expect(
+      Object.keys(zip.files)
+        .filter((f) => !f.endsWith("/"))
+        .sort(),
+    ).toEqual(["instagram/1.png", "instagram/2.png", "linkedin/carousel.pdf"]);
   });
 });

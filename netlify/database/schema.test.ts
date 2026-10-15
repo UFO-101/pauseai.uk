@@ -1,6 +1,13 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { currentSchema, HEADER, normaliseSchema, PG_DUMP_MAJOR, pgDumpMajor, SCHEMA_FILE } from "@/scripts/db-schema.mjs";
+import {
+  currentSchema,
+  HEADER,
+  normaliseSchema,
+  PG_DUMP_MAJOR,
+  pgDumpMajor,
+  SCHEMA_FILE,
+} from "@/scripts/db-schema.mjs";
 import { describeWithDatabase } from "@/tests/database";
 
 describe("normaliseSchema", () => {
@@ -33,7 +40,9 @@ describeWithDatabase("netlify/database/schema.sql", () => {
   it.skipIf(!rightPgDump && !process.env.CI)(
     `matches the migrations (if this fails, run \`npm run db:schema\` and commit the file; needs pg_dump ${PG_DUMP_MAJOR})`,
     () => {
-      expect(currentSchema(), "schema.sql is out of date: run `npm run db:schema` and commit it").toBe(readFileSync(SCHEMA_FILE, "utf8"));
+      expect(currentSchema(), "schema.sql is out of date: run `npm run db:schema` and commit it").toBe(
+        readFileSync(SCHEMA_FILE, "utf8"),
+      );
     },
   );
 });

@@ -20,7 +20,11 @@ describe("buttonAttributes", () => {
 
 describe("Button", () => {
   it("renders a button that looks like a primary button", async () => {
-    await render(<Button variant="primary" type="submit">Send</Button>);
+    await render(
+      <Button variant="primary" type="submit">
+        Send
+      </Button>,
+    );
     const button = page.getByRole("button", { name: "Send" });
     await expect.element(button).toHaveAttribute("type", "submit");
     await expect.element(button).toHaveAttribute("data-variant", "primary");
@@ -35,8 +39,12 @@ describe("Button", () => {
     await render(
       <>
         <Button variant="ghost">Ghost</Button>
-        <Button variant="ghost" size="large">Large</Button>
-        <Button variant="ghost" size="small">Small</Button>
+        <Button variant="ghost" size="large">
+          Large
+        </Button>
+        <Button variant="ghost" size="small">
+          Small
+        </Button>
       </>,
     );
     const ghost = getComputedStyle(page.getByRole("button", { name: "Ghost" }).element());
@@ -73,7 +81,11 @@ describe("ButtonAnchor and ButtonLink", () => {
 
 describe("Button pending", () => {
   it("is disabled and busy, with a spinner, while pending", async () => {
-    await render(<Button variant="primary" pending>Import</Button>);
+    await render(
+      <Button variant="primary" pending>
+        Import
+      </Button>,
+    );
     const button = page.getByRole("button", { name: "Import" });
     await expect.element(button).toBeDisabled();
     await expect.element(button).toHaveAttribute("aria-busy", "true");

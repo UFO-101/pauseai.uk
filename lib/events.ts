@@ -30,7 +30,10 @@ export type LumaEntry = {
  * is in " bristol bath social " but not in " bathurst meetup ".
  */
 function normalise(value: string): string {
-  return ` ${value.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim()} `;
+  return ` ${value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim()} `;
 }
 
 /**
@@ -46,16 +49,11 @@ function normalise(value: string): string {
  * `region` is deliberately not searched: it is "England" for most of the
  * calendar and would match every matcher for every local group.
  */
-export function filterEventsForLocalGroup(
-  entries: LumaEntry[],
-  matchers: readonly string[]
-): LumaEntry[] {
+export function filterEventsForLocalGroup(entries: LumaEntry[], matchers: readonly string[]): LumaEntry[] {
   const needles = matchers.map(normalise);
   return entries.filter((entry) => {
     const geo = entry.event.geo_address_info;
-    const haystack = normalise(
-      [entry.event.name, geo?.city, geo?.address].filter(Boolean).join(" ")
-    );
+    const haystack = normalise([entry.event.name, geo?.city, geo?.address].filter(Boolean).join(" "));
     return needles.some((needle) => haystack.includes(needle));
   });
 }
@@ -71,14 +69,12 @@ export function filterEventsForLocalGroup(
  */
 export function filterOnlineEvents(
   entries: LumaEntry[],
-  allEventMatchers: readonly (readonly string[])[]
+  allEventMatchers: readonly (readonly string[])[],
 ): LumaEntry[] {
   return entries.filter((entry) => {
     if (entry.event.geo_address_info) return false;
     const haystack = normalise(entry.event.name);
-    return !allEventMatchers.some((matchers) =>
-      matchers.some((matcher) => haystack.includes(normalise(matcher)))
-    );
+    return !allEventMatchers.some((matchers) => matchers.some((matcher) => haystack.includes(normalise(matcher))));
   });
 }
 
@@ -89,7 +85,7 @@ function safeLocaleString(
   method: "toLocaleDateString" | "toLocaleTimeString",
   startAt: string,
   timezone: string | undefined,
-  options: Intl.DateTimeFormatOptions
+  options: Intl.DateTimeFormatOptions,
 ): string {
   const date = new Date(startAt);
   try {
@@ -119,7 +115,9 @@ export function distanceKm(a: Place, b: Place): number {
   const radians = (degrees: number) => (degrees * Math.PI) / 180;
   const h =
     Math.sin(radians(b.latitude - a.latitude) / 2) ** 2 +
-    Math.cos(radians(a.latitude)) * Math.cos(radians(b.latitude)) * Math.sin(radians(b.longitude - a.longitude) / 2) ** 2;
+    Math.cos(radians(a.latitude)) *
+      Math.cos(radians(b.latitude)) *
+      Math.sin(radians(b.longitude - a.longitude) / 2) ** 2;
   return 2 * 6371 * Math.asin(Math.sqrt(h));
 }
 
@@ -138,7 +136,11 @@ export const NEAR_KM = 50;
 export function eventsNear(entries: LumaEntry[], here: Place | null | undefined, count = 4): LumaEntry[] {
   const online = entries.filter((entry) => !entry.event.geo_address_info);
   const near = here
-    ? entries.filter(({ event }) => event.geo_address_info && event.place && distanceKm(here, event.place) <= NEAR_KM).slice(0, count - 1)
+    ? entries
+        .filter(({ event }) => event.geo_address_info && event.place && distanceKm(here, event.place) <= NEAR_KM)
+        .slice(0, count - 1)
     : [];
-  return [...near, ...online.slice(0, count - near.length)].sort((a, b) => a.event.start_at.localeCompare(b.event.start_at));
+  return [...near, ...online.slice(0, count - near.length)].sort((a, b) =>
+    a.event.start_at.localeCompare(b.event.start_at),
+  );
 }

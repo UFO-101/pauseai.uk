@@ -48,8 +48,16 @@ export async function fetchCurrentMps(getJson: GetJson): Promise<ParliamentMp[]>
   const members: Member[] = [];
   for (let page = 0; ; page++) {
     if (page >= MAX_PAGES) throw new Error(`Members API paging went past ${MAX_PAGES} pages`);
-    const params = new URLSearchParams({ House: "1", IsCurrentMember: "true", skip: String(page * PAGE_SIZE), take: String(PAGE_SIZE) });
-    const data = (await getJson(`${MEMBERS_API}/Members/Search?${params}`)) as { items?: { value: Member }[]; totalResults?: number };
+    const params = new URLSearchParams({
+      House: "1",
+      IsCurrentMember: "true",
+      skip: String(page * PAGE_SIZE),
+      take: String(PAGE_SIZE),
+    });
+    const data = (await getJson(`${MEMBERS_API}/Members/Search?${params}`)) as {
+      items?: { value: Member }[];
+      totalResults?: number;
+    };
     if (!Array.isArray(data.items)) throw new Error("Members API response has no items");
     members.push(...data.items.map((item) => item.value));
     if (data.items.length < PAGE_SIZE || members.length >= (data.totalResults ?? 0)) break;

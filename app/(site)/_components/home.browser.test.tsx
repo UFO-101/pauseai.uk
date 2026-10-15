@@ -43,10 +43,14 @@ describe("HomeHero", () => {
 
 describe("home page sections", () => {
   it("lists the upcoming events with a link to the calendar", async () => {
-    await render(<UpcomingEvents events={[{ event: { url: "evt", name: "A meetup", start_at: "2030-01-01T18:00:00Z" } }]} />);
+    await render(
+      <UpcomingEvents events={[{ event: { url: "evt", name: "A meetup", start_at: "2030-01-01T18:00:00Z" } }]} />,
+    );
     await expect.element(page.getByRole("heading", { name: "Upcoming events" })).toBeVisible();
     await expect.element(page.getByText("A meetup")).toBeVisible();
-    await expect.element(page.getByRole("link", { name: "View full calendar →" })).toHaveAttribute("href", site.social.luma);
+    await expect
+      .element(page.getByRole("link", { name: "View full calendar →" }))
+      .toHaveAttribute("href", site.social.luma);
   });
 
   it("scrolls the press logos, with the second copy hidden from screen readers", async () => {
@@ -55,7 +59,9 @@ describe("home page sections", () => {
     expect(container.querySelectorAll(".news-marquee-row--reverse")).toHaveLength(2);
     // At this narrow test width the desktop rows are hidden by CSS, so look in the DOM.
     const first = newsRow1[0];
-    const link = [...container.querySelectorAll("a.news-marquee-item")].find((a) => a.getAttribute("aria-label") === `${first.outlet}: ${first.title}`);
+    const link = [...container.querySelectorAll("a.news-marquee-item")].find(
+      (a) => a.getAttribute("aria-label") === `${first.outlet}: ${first.title}`,
+    );
     expect(link?.getAttribute("href")).toBe(first.url);
     await expect.element(page.getByRole("link", { name: "See our press page →" })).toHaveAttribute("href", "/press");
   });
@@ -63,7 +69,16 @@ describe("home page sections", () => {
   it("draws an outlet's logo from its image or its HTML, with default sizes", async () => {
     const items: CoverageItem[] = [
       { outlet: "Image", title: "A", medium: "Article", url: "https://a.example", logoSrc: "/images/x.svg" },
-      { outlet: "Sized", title: "B", medium: "Article", url: "https://b.example", logoSrc: "/images/y.svg", logoIntrinsicWidth: 200, logoIntrinsicHeight: 50, logoHeight: 30 },
+      {
+        outlet: "Sized",
+        title: "B",
+        medium: "Article",
+        url: "https://b.example",
+        logoSrc: "/images/y.svg",
+        logoIntrinsicWidth: 200,
+        logoIntrinsicHeight: 50,
+        logoHeight: 30,
+      },
       { outlet: "Html", title: "C", medium: "Article", url: "https://c.example", logoHtml: "<b>Html</b>" },
     ];
     const { container } = await render(<NewsRow items={items} />);
@@ -74,19 +89,26 @@ describe("home page sections", () => {
     expect(container.querySelector(".news-marquee-copy:first-child b")?.textContent).toBe("Html");
     expect(container.querySelector(".news-marquee-row--reverse")).toBeNull();
     // The second copy can't be tabbed into.
-    expect([...container.querySelectorAll('[aria-hidden="true"] a')].every((a) => a.getAttribute("tabindex") === "-1")).toBe(true);
+    expect(
+      [...container.querySelectorAll('[aria-hidden="true"] a')].every((a) => a.getAttribute("tabindex") === "-1"),
+    ).toBe(true);
   });
 
   it("shows the local groups and how to start one", async () => {
     await render(<LocalGroupsSection />);
-    for (const group of localGroups) await expect.element(page.getByRole("heading", { name: group.name, level: 3 })).toBeVisible();
+    for (const group of localGroups)
+      await expect.element(page.getByRole("heading", { name: group.name, level: 3 })).toBeVisible();
     await expect.element(page.getByRole("link", { name: "Start a local group →" })).toHaveAttribute("target", "_blank");
   });
 
   it("links to every story", async () => {
     await render(<PeopleSection />);
-    await expect.element(page.getByRole("link", { name: `Read all ${people.length} stories →` })).toHaveAttribute("href", "/people");
-    await expect.element(page.getByRole("link", { name: "Share your story →" })).toHaveAttribute("href", "/people#share-your-story");
+    await expect
+      .element(page.getByRole("link", { name: `Read all ${people.length} stories →` }))
+      .toHaveAttribute("href", "/people");
+    await expect
+      .element(page.getByRole("link", { name: "Share your story →" }))
+      .toHaveAttribute("href", "/people#share-your-story");
   });
 
   it("links to the shop", async () => {
@@ -104,14 +126,18 @@ describe("home page sections", () => {
 
   it("links to the WhatsApp community and the calendar", async () => {
     await render(<GetInvolved />);
-    await expect.element(page.getByRole("link", { name: "Join the WhatsApp community" })).toHaveAttribute("href", site.whatsappUrl);
+    await expect
+      .element(page.getByRole("link", { name: "Join the WhatsApp community" }))
+      .toHaveAttribute("href", site.whatsappUrl);
     await expect.element(page.getByRole("link", { name: "event calendar" })).toHaveAttribute("href", site.social.luma);
   });
 
   it("introduces the staff, and links to the jobs page", async () => {
     const { container } = await render(<StaffSection />);
     for (const member of staff) await expect.element(page.getByRole("heading", { name: member.name })).toBeVisible();
-    expect((container.querySelector(".avatar") as HTMLElement).style.backgroundImage).toContain(encodeURI(staff[0].imageSrc).replace(/\(/g, "%28").replace(/\)/g, "%29").slice(0, 10));
+    expect((container.querySelector(".avatar") as HTMLElement).style.backgroundImage).toContain(
+      encodeURI(staff[0].imageSrc).replace(/\(/g, "%28").replace(/\)/g, "%29").slice(0, 10),
+    );
     await expect.element(page.getByRole("link", { name: "We’re hiring →" })).toHaveAttribute("href", "/jobs");
   });
 });

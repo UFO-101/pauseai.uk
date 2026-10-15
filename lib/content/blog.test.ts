@@ -41,7 +41,11 @@ describe("firstPostImage", () => {
   });
 
   it("accepts a plain img and string dimensions", () => {
-    const content = createElement("div", null, createElement("img", { src: "/c.png", alt: "C", width: "600", height: "300" }));
+    const content = createElement(
+      "div",
+      null,
+      createElement("img", { src: "/c.png", alt: "C", width: "600", height: "300" }),
+    );
     expect(firstPostImage({ ...base, content })).toEqual({ src: "/c.png", width: 600, height: 300, alt: "C" });
   });
 
@@ -64,7 +68,11 @@ describe("firstPostImage", () => {
 
 describe("postImage", () => {
   it("prefers an explicit cover over the first content image, and falls back to it", () => {
-    const content = createElement("figure", null, createElement(Image, { src: "/a.jpg", alt: "A", width: 10, height: 5 }));
+    const content = createElement(
+      "figure",
+      null,
+      createElement(Image, { src: "/a.jpg", alt: "A", width: 10, height: 5 }),
+    );
     const cover = { src: "/cover.jpg", width: 800, height: 450, alt: "Cover" };
     expect(postImage({ ...base, content, cover })).toEqual(cover);
     expect(postImage({ ...base, content })).toEqual({ src: "/a.jpg", width: 10, height: 5, alt: "A" });
@@ -84,7 +92,12 @@ describe("postImage", () => {
 describe("firstPostImage edge cases", () => {
   it("searches arrays of children in order, skipping ones without images", () => {
     const content = [createElement("p", { key: 1 }, "x"), [createElement("img", { key: 2, src: "/in-array.png" })]];
-    expect(firstPostImage({ ...base, content })).toEqual({ src: "/in-array.png", width: undefined, height: undefined, alt: undefined });
+    expect(firstPostImage({ ...base, content })).toEqual({
+      src: "/in-array.png",
+      width: undefined,
+      height: undefined,
+      alt: undefined,
+    });
   });
 
   it("is null for an array with no images", () => {
@@ -164,7 +177,9 @@ describe("postMetadata", () => {
 
   it("falls back to the site's cards without an image", () => {
     const meta = postMetadata({ ...base, content: null });
-    expect(meta.openGraph?.images).toEqual([{ url: "/images/open-graph/open-graph-1200-630.jpg", width: 1200, height: 630 }]);
+    expect(meta.openGraph?.images).toEqual([
+      { url: "/images/open-graph/open-graph-1200-630.jpg", width: 1200, height: 630 },
+    ]);
     expect(meta.twitter?.images).toEqual(["/images/open-graph/open-graph-1600-840.jpg"]);
   });
 });
@@ -173,7 +188,11 @@ describe("postJsonLd", () => {
   it("credits a person author with a link to their story", () => {
     const post = posts.find((p) => p.author !== "PauseAI UK")!;
     const data = postJsonLd(post);
-    expect(data.author).toEqual({ "@type": "Person", name: post.author, url: `https://pauseai.uk/people/${postAuthor(post)!.slug}` });
+    expect(data.author).toEqual({
+      "@type": "Person",
+      name: post.author,
+      url: `https://pauseai.uk/people/${postAuthor(post)!.slug}`,
+    });
     expect(data.url).toBe(`https://pauseai.uk/blog/${post.slug}`);
   });
 

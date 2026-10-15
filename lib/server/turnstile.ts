@@ -60,7 +60,13 @@ async function verifyTurnstile(token: string | undefined): Promise<string | unde
  * The honeypot, then Turnstile. `drop` means pretend it worked, so a bot
  * doesn't learn it was caught.
  */
-export async function checkNotSpam({ nickname, turnstileToken }: { nickname?: string; turnstileToken?: string }): Promise<SpamCheck> {
+export async function checkNotSpam({
+  nickname,
+  turnstileToken,
+}: {
+  nickname?: string;
+  turnstileToken?: string;
+}): Promise<SpamCheck> {
   if (nickname) return { drop: true };
   const message = await verifyTurnstile(turnstileToken);
   return message ? { drop: false, message } : { drop: false };

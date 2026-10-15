@@ -31,7 +31,14 @@ import { LIBRARY_PHOTOS, type LibraryPhoto } from "@/lib/collateral/photos";
 import type { PhotoView } from "@/lib/collateral/photoTransform";
 import { ALL_PLATFORM_IDS, CAROUSEL_PLATFORMS, type PlatformId } from "@/lib/collateral/platforms";
 import type { ProjectPhoto } from "@/lib/collateral/project";
-import { drawableToJpegDataUrl, fileToDrawable, loadDataUrl, loadFonts, loadImage, renderCollateral } from "@/lib/collateral/render";
+import {
+  drawableToJpegDataUrl,
+  fileToDrawable,
+  loadDataUrl,
+  loadFonts,
+  loadImage,
+  renderCollateral,
+} from "@/lib/collateral/render";
 import { getTemplate, type Drawable } from "@/lib/collateral/templates";
 import { DEFAULT_THEME_ID, getTheme } from "@/lib/collateral/themes";
 import CharCount from "./CharCount";
@@ -133,7 +140,9 @@ export default function GalleryStudio() {
   const photoSettings = activeSlide.photoSettings;
 
   const updateSlide = useCallback((id: string, patch: Partial<Slide> | ((s: Slide) => Partial<Slide>)) => {
-    setSlides((prev) => prev.map((s) => (s.id === id ? { ...s, ...(typeof patch === "function" ? patch(s) : patch) } : s)));
+    setSlides((prev) =>
+      prev.map((s) => (s.id === id ? { ...s, ...(typeof patch === "function" ? patch(s) : patch) } : s)),
+    );
   }, []);
 
   const projectPhoto = (p: SlidePhoto | null, embed: boolean): ProjectPhoto | null => {
@@ -144,9 +153,12 @@ export default function GalleryStudio() {
 
   const currentProject = useCallback(
     (embed: boolean): GalleryProject => ({
-      slides: slides.map(
-        (s): GallerySlideData => ({ photo: projectPhoto(s.photo, embed), photoSettings: s.photoSettings, caption: s.caption, themeId: s.themeId }),
-      ),
+      slides: slides.map((s): GallerySlideData => ({
+        photo: projectPhoto(s.photo, embed),
+        photoSettings: s.photoSettings,
+        caption: s.caption,
+        themeId: s.themeId,
+      })),
       platforms: Array.from(platforms),
     }),
     [slides, platforms],
@@ -159,7 +171,14 @@ export default function GalleryStudio() {
     const loaded = await Promise.all(
       project.slides.map(async (s): Promise<Slide> => {
         const ref = s.photo;
-        if (!ref) return { id: newSlideId(), photo: null, photoSettings: s.photoSettings, caption: s.caption, themeId: s.themeId };
+        if (!ref)
+          return {
+            id: newSlideId(),
+            photo: null,
+            photoSettings: s.photoSettings,
+            caption: s.caption,
+            themeId: s.themeId,
+          };
         try {
           let drawable, name: string, source: SlidePhoto["source"];
           if (ref.kind === "library") {
@@ -173,10 +192,22 @@ export default function GalleryStudio() {
             name = ref.name;
             source = { kind: "upload" };
           }
-          return { id: newSlideId(), photo: { drawable, name, source }, photoSettings: s.photoSettings, caption: s.caption, themeId: s.themeId };
+          return {
+            id: newSlideId(),
+            photo: { drawable, name, source },
+            photoSettings: s.photoSettings,
+            caption: s.caption,
+            themeId: s.themeId,
+          };
         } catch {
           allOk = false;
-          return { id: newSlideId(), photo: null, photoSettings: s.photoSettings, caption: s.caption, themeId: s.themeId };
+          return {
+            id: newSlideId(),
+            photo: null,
+            photoSettings: s.photoSettings,
+            caption: s.caption,
+            themeId: s.themeId,
+          };
         }
       }),
     );
@@ -282,7 +313,11 @@ export default function GalleryStudio() {
         failed += 1;
       }
     }
-    const withPhoto = (s: Slide, p: SlidePhoto): Slide => ({ ...s, photo: p, photoSettings: { ...DEFAULT_SLIDE_PHOTO_SETTINGS } });
+    const withPhoto = (s: Slide, p: SlidePhoto): Slide => ({
+      ...s,
+      photo: p,
+      photoSettings: { ...DEFAULT_SLIDE_PHOTO_SETTINGS },
+    });
     const queue = [...loaded];
     const next = slides.map((s, i) => {
       const takes = i === activeIndex || (i > activeIndex && !s.photo);
@@ -293,7 +328,10 @@ export default function GalleryStudio() {
     const left = queue.length;
     if (failed || left) {
       setMessage(
-        [failed && `${failed} ${failed === 1 ? "image" : "images"} could not be read.`, left && `${left} did not fit: a gallery holds ${MAX_SLIDES} slides.`]
+        [
+          failed && `${failed} ${failed === 1 ? "image" : "images"} could not be read.`,
+          left && `${left} did not fit: a gallery holds ${MAX_SLIDES} slides.`,
+        ]
           .filter(Boolean)
           .join(" "),
       );
@@ -375,7 +413,12 @@ export default function GalleryStudio() {
         groups.push({ folder: variant.platform, kind: "images", pngBlobs: blobs });
         if (variant.export === "both") {
           const bytes = await pdfBytesDigital(canvases);
-          groups.push({ folder: variant.platform, kind: "pdf", pdfBytes: bytes, pdfName: exportFilename([variant.platform, "carousel"], "pdf") });
+          groups.push({
+            folder: variant.platform,
+            kind: "pdf",
+            pdfBytes: bytes,
+            pdfName: exportFilename([variant.platform, "carousel"], "pdf"),
+          });
         }
       }
       await downloadPlatformBundleZip(groups, exportFilename(["gallery", "platforms"], "zip"));
@@ -389,7 +432,11 @@ export default function GalleryStudio() {
   function onSaveProject() {
     setMessage(null);
     try {
-      downloadText(serializeGalleryProject(currentProject(true)), exportFilename(["gallery", "project"], "json"), "application/json");
+      downloadText(
+        serializeGalleryProject(currentProject(true)),
+        exportFilename(["gallery", "project"], "json"),
+        "application/json",
+      );
       setMessage("Project file saved. Open it from the ⋯ menu to carry on editing.");
     } catch {
       setMessage("Could not save the project.");
@@ -463,7 +510,9 @@ export default function GalleryStudio() {
         </div>
         <p className="collateral-preview-meta">
           Slide {activeIndex + 1} of {slides.length} ·{" "}
-          {previewCrop ? `Crop for ${previewCrop.label} · ${formatDimensionLabel(effectiveFormat)}` : formatDimensionLabel(effectiveFormat)}
+          {previewCrop
+            ? `Crop for ${previewCrop.label} · ${formatDimensionLabel(effectiveFormat)}`
+            : formatDimensionLabel(effectiveFormat)}
           {photo && " · Drag the photo to move it. Scroll or pinch to zoom."}
         </p>
         {previewCrops.length > 1 && (
@@ -481,10 +530,22 @@ export default function GalleryStudio() {
           </div>
         )}
         <div className="collateral-preview-actions">
-          <Button type="button" variant="primary" size="large" onClick={onDownloadForPlatforms} disabled={!ready || platforms.size === 0}>
+          <Button
+            type="button"
+            variant="primary"
+            size="large"
+            onClick={onDownloadForPlatforms}
+            disabled={!ready || platforms.size === 0}
+          >
             {busy ? "Preparing…" : "Download slides"}
           </Button>
-          <ProjectMenu noun="project" onSave={onSaveProject} onOpen={onOpenProject} onReset={onReset} saveDisabled={!restored} />
+          <ProjectMenu
+            noun="project"
+            onSave={onSaveProject}
+            onOpen={onOpenProject}
+            onReset={onReset}
+            saveDisabled={!restored}
+          />
           {message && (
             <p className="collateral-message" role="status">
               {message}
@@ -507,7 +568,10 @@ export default function GalleryStudio() {
               const checked = platforms.has(v.platform);
               const trimmed = slides.length > v.maxSlides;
               return (
-                <label key={v.platform} className={`collateral-choice collateral-choice-checkbox${checked ? " is-checked" : ""}`}>
+                <label
+                  key={v.platform}
+                  className={`collateral-choice collateral-choice-checkbox${checked ? " is-checked" : ""}`}
+                >
                   <span className="collateral-choice-head">
                     <input type="checkbox" checked={checked} onChange={() => togglePlatform(v.platform)} />
                     <strong>{v.label}</strong>
@@ -529,16 +593,40 @@ export default function GalleryStudio() {
           </h2>
           <p className="collateral-hint">Pick a slide from the strip under the preview.</p>
           <div className="collateral-actions collateral-slide-actions">
-            <Button type="button" variant="ghost" size="small" disabled={activeIndex === 0} onClick={() => moveSlide(activeIndex, -1)}>
+            <Button
+              type="button"
+              variant="ghost"
+              size="small"
+              disabled={activeIndex === 0}
+              onClick={() => moveSlide(activeIndex, -1)}
+            >
               ← Move earlier
             </Button>
-            <Button type="button" variant="ghost" size="small" disabled={activeIndex === slides.length - 1} onClick={() => moveSlide(activeIndex, 1)}>
+            <Button
+              type="button"
+              variant="ghost"
+              size="small"
+              disabled={activeIndex === slides.length - 1}
+              onClick={() => moveSlide(activeIndex, 1)}
+            >
               Move later →
             </Button>
-            <Button type="button" variant="ghost" size="small" disabled={slides.length <= MIN_SLIDES} onClick={() => removeSlide(activeIndex)}>
+            <Button
+              type="button"
+              variant="ghost"
+              size="small"
+              disabled={slides.length <= MIN_SLIDES}
+              onClick={() => removeSlide(activeIndex)}
+            >
               Remove
             </Button>
-            <Button type="button" variant="ghost" size="small" disabled={slides.length >= MAX_SLIDES} onClick={addSlide}>
+            <Button
+              type="button"
+              variant="ghost"
+              size="small"
+              disabled={slides.length >= MAX_SLIDES}
+              onClick={addSlide}
+            >
               {`Add a slide (${slides.length} of ${MAX_SLIDES})`}
             </Button>
           </div>
@@ -596,13 +684,19 @@ export default function GalleryStudio() {
             <div className="collateral-photo-controls">
               <p className="collateral-hint">
                 {photo.name} · stays in your browser
-                <button type="button" className="collateral-link" onClick={() => updateSlide(activeSlide.id, { photo: null })}>
+                <button
+                  type="button"
+                  className="collateral-link"
+                  onClick={() => updateSlide(activeSlide.id, { photo: null })}
+                >
                   Remove
                 </button>
               </p>
               <CropControls
                 view={photoSettings}
-                onChange={(patch) => updateSlide(activeSlide.id, (s) => ({ photoSettings: { ...s.photoSettings, ...patch } }))}
+                onChange={(patch) =>
+                  updateSlide(activeSlide.id, (s) => ({ photoSettings: { ...s.photoSettings, ...patch } }))
+                }
               />
             </div>
           )}

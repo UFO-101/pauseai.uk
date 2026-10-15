@@ -50,7 +50,8 @@ export function checkAgainstParliament(airtable: SyncedMp[], parliament: Parliam
       problems.push({ kind: "extra", constituency, airtable: a.name });
       continue;
     }
-    if (plainName(a.name) !== plainName(p.name)) problems.push({ kind: "name", constituency, airtable: a.name, parliament: p.name });
+    if (plainName(a.name) !== plainName(p.name))
+      problems.push({ kind: "name", constituency, airtable: a.name, parliament: p.name });
     const listed = p.emails.map((email) => email.toLowerCase());
     if (!a.email || (listed.length > 0 && !listed.includes(a.email.toLowerCase()))) {
       problems.push({ kind: "email", constituency, name: a.name, airtable: a.email, parliament: p.emails });

@@ -11,11 +11,11 @@ export const ONE_OFF_URL = "https://donate.stripe.com/14AaEY7J69wKgTAaSlcbC02";
 // derived from these keys below, so a preset can't appear in the UI without a
 // payment link behind it.
 export const MONTHLY_URLS: Record<number, string> = {
-  3:   "https://donate.stripe.com/3cI3cwgfCgZc46O4tXcbC03",
-  5:   "https://donate.stripe.com/3cIdRa7J610ebzg4tXcbC00",
-  10:  "https://donate.stripe.com/cNi3cwd3q24i5aS1hLcbC01",
-  25:  "https://donate.stripe.com/14AcN61kI7oCbzgaSlcbC04",
-  50:  "https://donate.stripe.com/7sYeVebZmcIW8n41hLcbC05",
+  3: "https://donate.stripe.com/3cI3cwgfCgZc46O4tXcbC03",
+  5: "https://donate.stripe.com/3cIdRa7J610ebzg4tXcbC00",
+  10: "https://donate.stripe.com/cNi3cwd3q24i5aS1hLcbC01",
+  25: "https://donate.stripe.com/14AcN61kI7oCbzgaSlcbC04",
+  50: "https://donate.stripe.com/7sYeVebZmcIW8n41hLcbC05",
   100: "https://donate.stripe.com/9B6bJ2d3qeR446O9OhcbC06",
   250: "https://donate.stripe.com/dRmfZi1kIfV8bzg2lPcbC07",
   500: "https://donate.stripe.com/cNi28s5AY5gucDkbWpcbC08",
@@ -99,18 +99,16 @@ export default function DonateForm() {
         </fieldset>
       )}
 
-      <Button
-        type="submit"
-        variant="primary"
-        size="large"
-        className="donate-btn"
-      >
+      <Button type="submit" variant="primary" size="large" className="donate-btn">
         <span>{ctaLabel}</span>
       </Button>
 
       <p className="form-footnote">
         Payments are processed securely by{" "}
-        <a href="https://stripe.com/en-gb/privacy" target="_blank" rel="noreferrer">Stripe</a>.
+        <a href="https://stripe.com/en-gb/privacy" target="_blank" rel="noreferrer">
+          Stripe
+        </a>
+        .
       </p>
     </form>
   );

@@ -101,7 +101,7 @@ The environment variables are listed, with what each is for, in [.env.example](.
 
 1. The form posts to `/api/email-your-mp/letters`. The letter is saved and
    sent straight away through Postmark, as HTML and as plain text, from `"Jane Smith via PauseAI"
-   <reply+<hash>@letters.pauseai.uk>`, with Reply-To the sender, `REPLIES_INBOX` (named "PauseAI Policy Team") and that address (named "PauseAI Letters"),
+<reply+<hash>@letters.pauseai.uk>`, with Reply-To the sender, `REPLIES_INBOX` (named "PauseAI Policy Team") and that address (named "PauseAI Letters"),
    `REPLIES_INBOX` in Bcc, and the campaign's PDFs attached. If Postmark refuses it, nothing is
    kept, so the sender can try again. The form pushes `mp_email_sent` to
    `dataLayer` once it's sent.

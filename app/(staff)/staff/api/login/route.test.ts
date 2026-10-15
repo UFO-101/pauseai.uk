@@ -13,7 +13,9 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllEnvs());
 
 function post(body: BodyInit | null, cookie?: string) {
-  return POST(new NextRequest("https://pauseai.uk/staff/api/login", { method: "POST", body, headers: cookie ? { cookie } : {} }));
+  return POST(
+    new NextRequest("https://pauseai.uk/staff/api/login", { method: "POST", body, headers: cookie ? { cookie } : {} }),
+  );
 }
 
 const form = (email: string) => {
@@ -50,7 +52,9 @@ describeWithDatabase("POST /staff/api/login", () => {
     const first = browserCookie(await post(form("jo@pauseai.uk")))!.split(";")[0];
     const again = browserCookie(await post(form("jo@pauseai.uk"), first))!.split(";")[0];
     expect(again).toBe(first);
-    const [{ browsers }] = await query<{ browsers: number }>("SELECT count(DISTINCT browser_hash)::int AS browsers FROM staff_login_links");
+    const [{ browsers }] = await query<{ browsers: number }>(
+      "SELECT count(DISTINCT browser_hash)::int AS browsers FROM staff_login_links",
+    );
     expect(browsers).toBe(1);
   });
 });

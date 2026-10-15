@@ -18,5 +18,10 @@ export async function POST(request: Request) {
 
   const found = await findMp(postcode);
   if (!found.ok) return NextResponse.json({ ok: false, message: MESSAGES[found.reason] });
-  return NextResponse.json({ ok: true, mp: found.mp, statuses: await statusesOf(found.mp.id), place: found.place ?? null });
+  return NextResponse.json({
+    ok: true,
+    mp: found.mp,
+    statuses: await statusesOf(found.mp.id),
+    place: found.place ?? null,
+  });
 }

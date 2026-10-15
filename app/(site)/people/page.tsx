@@ -18,7 +18,8 @@ export default function PeoplePage() {
           <div className="container tr-hero-inner">
             <h1 className="tr-hero-title">People</h1>
             <p className="tr-hero-lede">
-              Each of us found PauseAI for our own reasons. Read stories from our volunteers and members across our local groups.
+              Each of us found PauseAI for our own reasons. Read stories from our volunteers and members across our
+              local groups.
             </p>
           </div>
         </section>

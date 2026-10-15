@@ -10,7 +10,12 @@ import JsonLd from "./JsonLd";
 import Nav from "./Nav";
 import NoAnalytics from "./NoAnalytics";
 
-type GaWindow = typeof window & { __gaLoaded?: boolean; __gtmLoaded?: boolean; dataLayer?: unknown[]; gtag?: (...args: unknown[]) => void };
+type GaWindow = typeof window & {
+  __gaLoaded?: boolean;
+  __gtmLoaded?: boolean;
+  dataLayer?: unknown[];
+  gtag?: (...args: unknown[]) => void;
+};
 const w = window as GaWindow;
 
 afterEach(async () => {
@@ -84,7 +89,9 @@ describe("Nav", () => {
 
     // A plain link closes the menu; a dropdown trigger doesn't.
     burger.click();
-    (nav.querySelector(".dropdown-trigger") as HTMLElement).addEventListener("click", (e) => e.preventDefault(), { once: true });
+    (nav.querySelector(".dropdown-trigger") as HTMLElement).addEventListener("click", (e) => e.preventDefault(), {
+      once: true,
+    });
     (nav.querySelector(".dropdown-trigger") as HTMLElement).click();
     expect(nav.classList.contains("open")).toBe(true);
     const people = [...nav.querySelectorAll("a")].find((a) => a.textContent === "People")!;
@@ -94,7 +101,9 @@ describe("Nav", () => {
   });
 
   it("opens dropdowns with a tap on touch screens, one at a time", async () => {
-    vi.spyOn(window, "matchMedia").mockImplementation((q) => ({ matches: q === "(hover: none)", media: q } as MediaQueryList));
+    vi.spyOn(window, "matchMedia").mockImplementation(
+      (q) => ({ matches: q === "(hover: none)", media: q }) as MediaQueryList,
+    );
     const { container } = await render(<Nav />);
     const [about, groups] = [...container.querySelectorAll<HTMLElement>(".dropdown-trigger")];
     const item = (t: HTMLElement) => t.closest(".nav-item")!;
@@ -127,7 +136,7 @@ describe("Nav", () => {
   });
 
   it("leaves dropdown links to the mouse on hover screens", async () => {
-    vi.spyOn(window, "matchMedia").mockImplementation((q) => ({ matches: false, media: q } as MediaQueryList));
+    vi.spyOn(window, "matchMedia").mockImplementation((q) => ({ matches: false, media: q }) as MediaQueryList);
     const { container } = await render(<Nav />);
     const about = container.querySelector(".dropdown-trigger") as HTMLElement;
     let prevented = true;
@@ -141,7 +150,7 @@ describe("Nav", () => {
   });
 
   it("closes the menu and dropdowns on a new page", async () => {
-    vi.spyOn(window, "matchMedia").mockImplementation((q) => ({ matches: true, media: q } as MediaQueryList));
+    vi.spyOn(window, "matchMedia").mockImplementation((q) => ({ matches: true, media: q }) as MediaQueryList);
     const { container, rerender } = await render(<Nav />);
     (container.querySelector(".burger") as HTMLElement).click();
     (container.querySelector(".dropdown-trigger") as HTMLElement).click();

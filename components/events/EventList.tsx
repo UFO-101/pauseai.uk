@@ -13,7 +13,12 @@ function getDateStr(d: Date, tz: string): string {
   try {
     return d.toLocaleDateString("en-CA", { timeZone: tz, year: "numeric", month: "2-digit", day: "2-digit" });
   } catch {
-    return d.toLocaleDateString("en-CA", { timeZone: "Europe/London", year: "numeric", month: "2-digit", day: "2-digit" });
+    return d.toLocaleDateString("en-CA", {
+      timeZone: "Europe/London",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    });
   }
 }
 
@@ -125,11 +130,7 @@ export default function EventList({
       </div>
       {hasMore && (
         <div className="luma-events-more">
-          <Button
-            variant="ghost"
-            size="small"
-            onClick={() => setExpanded((e) => !e)}
-          >
+          <Button variant="ghost" size="small" onClick={() => setExpanded((e) => !e)}>
             <span>{expanded ? "Show fewer events" : "Show more events"}</span>
             <svg
               className="luma-show-more-icon"
@@ -139,7 +140,14 @@ export default function EventList({
               aria-hidden="true"
               style={{ transform: expanded ? "rotate(180deg)" : undefined }}
             >
-              <path d="M3 5.5l5 5 5-5" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
+              <path
+                d="M3 5.5l5 5 5-5"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.75"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
             </svg>
           </Button>
         </div>

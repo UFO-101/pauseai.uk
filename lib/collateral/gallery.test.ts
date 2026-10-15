@@ -21,7 +21,12 @@ describe("gallery slides", () => {
   it("starts a new slide empty, in the default style, with its own photo settings", () => {
     const a = newSlide();
     const b = newSlide();
-    expect(a).toMatchObject({ photo: null, caption: "", themeId: DEFAULT_THEME_ID, photoSettings: DEFAULT_SLIDE_PHOTO_SETTINGS });
+    expect(a).toMatchObject({
+      photo: null,
+      caption: "",
+      themeId: DEFAULT_THEME_ID,
+      photoSettings: DEFAULT_SLIDE_PHOTO_SETTINGS,
+    });
     expect(a.id).not.toBe(b.id);
     a.photoSettings.zoom = 2;
     expect(b.photoSettings.zoom).toBe(1);

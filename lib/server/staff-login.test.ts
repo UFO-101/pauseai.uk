@@ -4,7 +4,15 @@ import { server } from "@/tests/fixtures/msw";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { describeWithDatabase, useTestDatabase } from "@/tests/database";
 import { query } from "./db";
-import { HOURLY_LINKS, isStaffEmail, linkOrigin, loginBrowser, loginBrowserCookie, sendLoginLink, redeemLoginLink } from "./staff-login";
+import {
+  HOURLY_LINKS,
+  isStaffEmail,
+  linkOrigin,
+  loginBrowser,
+  loginBrowserCookie,
+  sendLoginLink,
+  redeemLoginLink,
+} from "./staff-login";
 
 const POSTMARK = "https://api.postmarkapp.com/email";
 type Sent = { From: string; To: string; Subject: string; TextBody: string };
@@ -40,7 +48,15 @@ afterEach(() => {
 
 it("knows a pauseai.uk address, and nothing else", () => {
   for (const email of ["jo@pauseai.uk", "Jo.Bloggs+x@PauseAI.uk"]) expect(isStaffEmail(email), email).toBe(true);
-  for (const email of ["jo@gmail.com", "jo@pauseai.uk.evil.example", "jo@notify.pauseai.uk", "jo@evilpauseai.uk", "@pauseai.uk", "jo smith@pauseai.uk", "a@b@pauseai.uk"]) {
+  for (const email of [
+    "jo@gmail.com",
+    "jo@pauseai.uk.evil.example",
+    "jo@notify.pauseai.uk",
+    "jo@evilpauseai.uk",
+    "@pauseai.uk",
+    "jo smith@pauseai.uk",
+    "a@b@pauseai.uk",
+  ]) {
     expect(isStaffEmail(email), email).toBe(false);
   }
 });
@@ -62,7 +78,15 @@ it("keeps a browser's token from an earlier request, and otherwise makes a new o
 });
 
 it("marks the browser with a cookie that lasts as long as the link, only under /staff", () => {
-  expect(loginBrowserCookie(BROWSER)).toEqual({ name: "staff_login", value: BROWSER, httpOnly: true, secure: true, sameSite: "lax", path: "/staff", maxAge: 15 * 60 });
+  expect(loginBrowserCookie(BROWSER)).toEqual({
+    name: "staff_login",
+    value: BROWSER,
+    httpOnly: true,
+    secure: true,
+    sameSite: "lax",
+    path: "/staff",
+    maxAge: 15 * 60,
+  });
 });
 
 describeWithDatabase("login links", () => {
@@ -73,7 +97,11 @@ describeWithDatabase("login links", () => {
     await sendLoginLink(" Jo@PauseAI.uk ", "https://evil.example", BROWSER);
 
     expect(sent).toHaveLength(1);
-    expect(sent[0]).toMatchObject({ From: "PauseAI UK staff login <noreply@notify.pauseai.uk>", To: "jo@pauseai.uk", Subject: staffCopy.loginEmail.subject });
+    expect(sent[0]).toMatchObject({
+      From: "PauseAI UK staff login <noreply@notify.pauseai.uk>",
+      To: "jo@pauseai.uk",
+      Subject: staffCopy.loginEmail.subject,
+    });
     expect(sent[0].TextBody).toContain("https://pauseai.uk/staff/api/callback?token=");
     const token = tokenFrom(sent[0]);
     // Only hashes of the link's and the browser's tokens are kept.
@@ -109,7 +137,9 @@ describeWithDatabase("login links", () => {
   it("lets a link expire after 15 minutes", async () => {
     const sent = postmark();
     await sendLoginLink("jo@pauseai.uk", "", BROWSER);
-    const [{ minutes }] = await query<{ minutes: number }>("SELECT round(extract(epoch FROM expires_at - created_at) / 60)::int AS minutes FROM staff_login_links");
+    const [{ minutes }] = await query<{ minutes: number }>(
+      "SELECT round(extract(epoch FROM expires_at - created_at) / 60)::int AS minutes FROM staff_login_links",
+    );
     expect(minutes).toBe(15);
     await query("UPDATE staff_login_links SET expires_at = now() - interval '1 second'");
     expect(await redeemLoginLink(tokenFrom(sent[0]), BROWSER)).toEqual({ refused: "failed" });
@@ -117,7 +147,9 @@ describeWithDatabase("login links", () => {
 
   it("sends at most five links an hour to one address, and clears out old ones", async () => {
     const sent = postmark();
-    await query("INSERT INTO staff_login_links (token_hash, email, created_at, expires_at) VALUES ('old', 'x@pauseai.uk', now() - interval '2 days', now())");
+    await query(
+      "INSERT INTO staff_login_links (token_hash, email, created_at, expires_at) VALUES ('old', 'x@pauseai.uk', now() - interval '2 days', now())",
+    );
     for (let i = 0; i <= HOURLY_LINKS; i++) await sendLoginLink(i % 2 ? "JO@pauseai.uk" : "jo@pauseai.uk", "", BROWSER);
     await sendLoginLink("sam@pauseai.uk", "", BROWSER);
     expect(sent.map((e) => e.To)).toEqual([...Array(HOURLY_LINKS).fill("jo@pauseai.uk"), "sam@pauseai.uk"]);

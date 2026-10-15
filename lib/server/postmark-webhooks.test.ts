@@ -8,7 +8,8 @@ import { forwardReply, isAutoReply, isPostmark, recordDeliveryProblem } from "./
 
 const POSTMARK = "https://api.postmarkapp.com/email";
 const basic = (credentials: string) => `Basic ${Buffer.from(credentials).toString("base64")}`;
-const withAuth = (authorization?: string) => new Request("https://pauseai.uk/api/postmark/bounce", { headers: authorization ? { authorization } : {} });
+const withAuth = (authorization?: string) =>
+  new Request("https://pauseai.uk/api/postmark/bounce", { headers: authorization ? { authorization } : {} });
 
 beforeEach(() => {
   vi.stubEnv("POSTMARK_WEBHOOK_USER", "postmark");
@@ -50,7 +51,15 @@ describeWithDatabase("recordDeliveryProblem", () => {
 
   it("marks a letter bounced, with Postmark's reason", async () => {
     await sentLetter();
-    expect(await recordDeliveryProblem({ RecordType: "Bounce", MessageID: "msg-1", Type: "HardBounce", Description: "Unknown user", Email: "test-mp@example.org" })).toBe(true);
+    expect(
+      await recordDeliveryProblem({
+        RecordType: "Bounce",
+        MessageID: "msg-1",
+        Type: "HardBounce",
+        Description: "Unknown user",
+        Email: "test-mp@example.org",
+      }),
+    ).toBe(true);
     expect(await query("SELECT status FROM letters")).toEqual([{ status: "bounced" }]);
     expect(await query("SELECT status, details FROM letter_events")).toEqual([
       { status: "bounced", details: { type: "HardBounce", description: "Unknown user", email: "test-mp@example.org" } },
@@ -100,25 +109,39 @@ describeWithDatabase("forwardReply", () => {
     ...extra,
   });
 
-  const events = () => query<{ status: string; details: object }>("SELECT status, details FROM letter_events ORDER BY id");
-  const repliedAt = async () => (await query<{ replied_at: Date | null }>("SELECT replied_at FROM letters"))[0].replied_at;
+  const events = () =>
+    query<{ status: string; details: object }>("SELECT status, details FROM letter_events ORDER BY id");
+  const repliedAt = async () =>
+    (await query<{ replied_at: Date | null }>("SELECT replied_at FROM letters"))[0].replied_at;
 
   it("forwards the reply to our inbox and to the sender, and records when it came and who from, not its text", async () => {
     const hash = await sentLetter();
     const sent = postmark();
 
-    expect(await forwardReply(reply(hash, { Attachments: [{ Name: "a.pdf", Content: "QQ==", ContentType: "application/pdf", ContentLength: 1 }] }))).toEqual([
-      "replies@pauseai.uk",
-      "Jane@Example.com",
-    ]);
+    expect(
+      await forwardReply(
+        reply(hash, {
+          Attachments: [{ Name: "a.pdf", Content: "QQ==", ContentType: "application/pdf", ContentLength: 1 }],
+        }),
+      ),
+    ).toEqual(["replies@pauseai.uk", "Jane@Example.com"]);
 
     expect(sent.map((e) => e.To)).toEqual(["replies@pauseai.uk", "Jane@Example.com"]);
-    expect(sent[0]).toMatchObject({ From: "PauseAI UK <noreply@notify.pauseai.uk>", ReplyTo: "test-mp@example.org", Subject: copy.forwardedReply.subject("Re: S") });
+    expect(sent[0]).toMatchObject({
+      From: "PauseAI UK <noreply@notify.pauseai.uk>",
+      ReplyTo: "test-mp@example.org",
+      Subject: copy.forwardedReply.subject("Re: S"),
+    });
     expect(sent[0].TextBody).toContain(copy.forwardedReply.note("Testy McTestface MP", "Jane Smith"));
     expect(sent[0].TextBody).toContain("From: Testy McTestface MP <test-mp@example.org>");
     expect(sent[0].TextBody).toContain("Thanks for your letter.");
     expect(sent[0].Attachments).toEqual([{ Name: "a.pdf", Content: "QQ==", ContentType: "application/pdf" }]);
-    expect(await events()).toEqual([{ status: "replied", details: { from: "test-mp@example.org", name: "Testy McTestface MP", messageId: "inbound-1" } }]);
+    expect(await events()).toEqual([
+      {
+        status: "replied",
+        details: { from: "test-mp@example.org", name: "Testy McTestface MP", messageId: "inbound-1" },
+      },
+    ]);
     expect(await repliedAt()).not.toBeNull();
   });
 
@@ -129,16 +152,26 @@ describeWithDatabase("forwardReply", () => {
     const first = await repliedAt();
     await forwardReply(reply(hash));
     await forwardReply(reply(hash, { MessageID: "inbound-2" }));
-    expect((await events()).map((e) => (e.details as { messageId: string }).messageId)).toEqual(["inbound-1", "inbound-2"]);
+    expect((await events()).map((e) => (e.details as { messageId: string }).messageId)).toEqual([
+      "inbound-1",
+      "inbound-2",
+    ]);
     expect(await repliedAt()).toEqual(first);
   });
 
   it("logs an office's automatic reply, and forwards it, without counting it as a reply", async () => {
     const hash = await sentLetter();
     const sent = postmark();
-    expect(await forwardReply(reply(hash, { Headers: [{ Name: "Auto-Submitted", Value: "auto-replied" }] }))).toHaveLength(2);
+    expect(
+      await forwardReply(reply(hash, { Headers: [{ Name: "Auto-Submitted", Value: "auto-replied" }] })),
+    ).toHaveLength(2);
     expect(sent).toHaveLength(2);
-    expect(await events()).toEqual([{ status: "auto_reply", details: { from: "test-mp@example.org", name: "Testy McTestface MP", messageId: "inbound-1" } }]);
+    expect(await events()).toEqual([
+      {
+        status: "auto_reply",
+        details: { from: "test-mp@example.org", name: "Testy McTestface MP", messageId: "inbound-1" },
+      },
+    ]);
     expect(await repliedAt()).toBeNull();
 
     // Sent again by Postmark, it's still logged once; then the person's reply counts.
@@ -152,21 +185,27 @@ describeWithDatabase("forwardReply", () => {
     const hash = await sentLetter();
     postmark();
     await forwardReply(reply(hash, { FromFull: { Email: "jane@example.com" } }));
-    expect(await events()).toEqual([{ status: "replied", details: { from: "jane@example.com", name: "", messageId: "inbound-1" } }]);
+    expect(await events()).toEqual([
+      { status: "replied", details: { from: "jane@example.com", name: "", messageId: "inbound-1" } },
+    ]);
     expect(await repliedAt()).toBeNull();
   });
 
   it("doesn't send the sender a copy they already have", async () => {
     const hash = await sentLetter();
     const sent = postmark();
-    expect(await forwardReply(reply(hash, { CcFull: [{ Email: "jane@example.com" }] }))).toEqual(["replies@pauseai.uk"]);
+    expect(await forwardReply(reply(hash, { CcFull: [{ Email: "jane@example.com" }] }))).toEqual([
+      "replies@pauseai.uk",
+    ]);
     expect(sent).toHaveLength(1);
   });
 
   it("doesn't send our inbox a copy it already has", async () => {
     const hash = await sentLetter();
     const sent = postmark();
-    expect(await forwardReply(reply(hash, { ToFull: [{ Email: "Replies@PauseAI.uk" }] }))).toEqual(["Jane@Example.com"]);
+    expect(await forwardReply(reply(hash, { ToFull: [{ Email: "Replies@PauseAI.uk" }] }))).toEqual([
+      "Jane@Example.com",
+    ]);
     expect(sent).toHaveLength(1);
   });
 
@@ -191,22 +230,42 @@ describeWithDatabase("forwardReply", () => {
 });
 
 describe("isAutoReply", () => {
-  const email = (headers: Record<string, string>, Subject = "Re: Your letter") => ({ Subject, Headers: Object.entries(headers).map(([Name, Value]) => ({ Name, Value })) });
+  const email = (headers: Record<string, string>, Subject = "Re: Your letter") => ({
+    Subject,
+    Headers: Object.entries(headers).map(([Name, Value]) => ({ Name, Value })),
+  });
 
   it("knows a machine's reply by its headers", () => {
-    for (const headers of <Record<string, string>[]>[{ "Auto-Submitted": "auto-replied" }, { "auto-submitted": " Auto-Generated " }, { "X-Autoreply": "yes" }, { "X-Autorespond": "" }, { Precedence: "auto_reply" }, { Precedence: "bulk" }, { Precedence: "junk" }]) {
+    for (const headers of <Record<string, string>[]>[
+      { "Auto-Submitted": "auto-replied" },
+      { "auto-submitted": " Auto-Generated " },
+      { "X-Autoreply": "yes" },
+      { "X-Autorespond": "" },
+      { Precedence: "auto_reply" },
+      { Precedence: "bulk" },
+      { Precedence: "junk" },
+    ]) {
       expect(isAutoReply(email(headers)), JSON.stringify(headers)).toBe(true);
     }
   });
 
   it("or failing those, by its subject", () => {
-    for (const subject of ["Automatic reply: Request to co-sign", "Auto-Reply: x", "autoreply", "Out of Office: back Monday", "Out of the office", "AutoResponse"]) {
+    for (const subject of [
+      "Automatic reply: Request to co-sign",
+      "Auto-Reply: x",
+      "autoreply",
+      "Out of Office: back Monday",
+      "Out of the office",
+      "AutoResponse",
+    ]) {
       expect(isAutoReply(email({}, subject)), subject).toBe(true);
     }
   });
 
   it("takes a person's reply as one", () => {
-    expect(isAutoReply(email({ "Auto-Submitted": "no", Precedence: "first-class", "X-Mailer": "Outlook" }))).toBe(false);
+    expect(isAutoReply(email({ "Auto-Submitted": "no", Precedence: "first-class", "X-Mailer": "Outlook" }))).toBe(
+      false,
+    );
     expect(isAutoReply(email({}, "Re: Out of office hours support"))).toBe(false);
     expect(isAutoReply({})).toBe(false);
     expect(isAutoReply({ Headers: [{}, { Name: "Auto-Submitted" }] })).toBe(false);

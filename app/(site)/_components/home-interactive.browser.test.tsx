@@ -102,7 +102,10 @@ describe("OnboardingFormEmbed", () => {
   /** Renders the embed without letting the iframe load the real form. */
   async function renderEmbed() {
     const srcs: string[] = [];
-    vi.spyOn(HTMLIFrameElement.prototype, "src", "set").mockImplementation(function (this: HTMLIFrameElement, v: string) {
+    vi.spyOn(HTMLIFrameElement.prototype, "src", "set").mockImplementation(function (
+      this: HTMLIFrameElement,
+      v: string,
+    ) {
       srcs.push(v);
       this.setAttribute("src", v);
     });
@@ -215,7 +218,10 @@ describe("LocalGroupsMap", () => {
   it("shows the cards alone on a narrow screen, without fetching the map", async () => {
     const fetchSpy = vi.spyOn(window, "fetch");
     const { container } = await render(<LocalGroupsMap />);
-    for (const group of localGroups) await expect.element(page.getByRole("link", { name: new RegExp(group.name) }).first()).toHaveAttribute("href", group.href);
+    for (const group of localGroups)
+      await expect
+        .element(page.getByRole("link", { name: new RegExp(group.name) }).first())
+        .toHaveAttribute("href", group.href);
     expect(fetchSpy).not.toHaveBeenCalled();
     expect(container.querySelector(".local-groups-map-canvas svg")).toBeNull();
   });
@@ -339,7 +345,12 @@ describe("LocalGroupsMap", () => {
     await page.viewport(1280, 900);
     const topology = {
       type: "Topology",
-      arcs: [[[0, 0], [1, 1]]],
+      arcs: [
+        [
+          [0, 0],
+          [1, 1],
+        ],
+      ],
       objects: { uk: { type: "GeometryCollection", geometries: [{ type: null }, { type: "LineString", arcs: [0] }] } },
     };
     vi.spyOn(window, "fetch").mockResolvedValue(new Response(JSON.stringify(topology)));
@@ -381,7 +392,17 @@ describe("PeopleCarousel", () => {
     const clicked = vi.fn();
     track.addEventListener("click", clicked);
     const pointer = (type: string, x: number, extra: PointerEventInit = {}) =>
-      track.dispatchEvent(new PointerEvent(type, { bubbles: true, cancelable: true, pointerType: "mouse", button: 0, clientX: x, pointerId: 1, ...extra }));
+      track.dispatchEvent(
+        new PointerEvent(type, {
+          bubbles: true,
+          cancelable: true,
+          pointerType: "mouse",
+          button: 0,
+          clientX: x,
+          pointerId: 1,
+          ...extra,
+        }),
+      );
 
     // A drag scrolls and swallows the click that follows.
     pointer("pointerdown", 200);
@@ -427,7 +448,15 @@ describe("PeopleCarousel", () => {
     vi.spyOn(track, "setPointerCapture").mockImplementation(() => {});
     const button = container.querySelector(".person-card button, .person-card a") as HTMLElement | null;
     const target = button ?? track;
-    target.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, cancelable: true, pointerType: "mouse", button: 0, pointerId: 2 }));
+    target.dispatchEvent(
+      new PointerEvent("pointerdown", {
+        bubbles: true,
+        cancelable: true,
+        pointerType: "mouse",
+        button: 0,
+        pointerId: 2,
+      }),
+    );
     if (button) expect(document.activeElement).toBe(button);
   });
 });

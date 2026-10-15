@@ -17,7 +17,10 @@ const BROWSER = loginBrowser(undefined);
 
 /** Opens the emailed link, in a browser with this staff_login cookie, or none. */
 function open(token?: string, browser: string | null = BROWSER) {
-  const url = token === undefined ? "https://pauseai.uk/staff/api/callback" : `https://pauseai.uk/staff/api/callback?token=${token}`;
+  const url =
+    token === undefined
+      ? "https://pauseai.uk/staff/api/callback"
+      : `https://pauseai.uk/staff/api/callback?token=${token}`;
   return GET(new NextRequest(url, { headers: browser ? { cookie: `staff_login=${browser}` } : {} }));
 }
 
@@ -52,7 +55,9 @@ describeWithDatabase("GET /staff/api/callback", () => {
     expect(session).toMatch(/Max-Age=43200/);
     expect(await sessionEmail(session.split(";")[0].split("=")[1])).toBe("jo@pauseai.uk");
     // The browser's login cookie has done its job.
-    expect(res.headers.getSetCookie().find((c) => c.startsWith("staff_login="))).toMatch(/^staff_login=; Path=\/staff; .*(Max-Age=0|Expires=Thu, 01 Jan 1970)/);
+    expect(res.headers.getSetCookie().find((c) => c.startsWith("staff_login="))).toMatch(
+      /^staff_login=; Path=\/staff; .*(Max-Age=0|Expires=Thu, 01 Jan 1970)/,
+    );
   });
 
   it("says a link opened in another browser belongs elsewhere, and leaves it working", async () => {

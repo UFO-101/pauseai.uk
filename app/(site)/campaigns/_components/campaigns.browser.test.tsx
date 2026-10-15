@@ -24,21 +24,29 @@ describe("campaign sections", () => {
       </>,
     );
     await expect.element(page.getByRole("heading", { name: "Read the case in full" })).toBeVisible();
-    await expect.element(page.getByRole("link", { name: /To the Prime Minister/ })).toHaveAttribute("href", "/pdfs/Frontier-AI-Open-Letter.pdf");
-    await expect.element(page.getByRole("link", { name: /Frontier AI Risks/ })).toHaveAttribute("href", "/pdfs/Frontier-AI-Risks-Policy-Briefing.pdf");
+    await expect
+      .element(page.getByRole("link", { name: /To the Prime Minister/ }))
+      .toHaveAttribute("href", "/pdfs/Frontier-AI-Open-Letter.pdf");
+    await expect
+      .element(page.getByRole("link", { name: /Frontier AI Risks/ }))
+      .toHaveAttribute("href", "/pdfs/Frontier-AI-Risks-Policy-Briefing.pdf");
   });
 
   it("embeds the email-your-MP form, with a link if it doesn't load", async () => {
     await render(<EmailYourMp />);
     await expect.element(page.getByTitle("Email your MP — PauseAI")).toBeInTheDocument();
-    await expect.element(page.getByRole("link", { name: "Open it on pauseai.info →" })).toHaveAttribute("href", "https://pauseai.info/uk-email-mp");
+    await expect
+      .element(page.getByRole("link", { name: "Open it on pauseai.info →" }))
+      .toHaveAttribute("href", "https://pauseai.info/uk-email-mp");
   });
 
   it("lists the signatories, with a note for journalists", async () => {
     vi.spyOn(window, "fetch").mockResolvedValue(new Response("[]"));
     await render(<Signatories />);
     await expect.element(page.getByText("No signatories yet.")).toBeVisible();
-    await expect.element(page.getByRole("link", { name: site.pressEmail })).toHaveAttribute("href", `mailto:${site.pressEmail}`);
+    await expect
+      .element(page.getByRole("link", { name: site.pressEmail }))
+      .toHaveAttribute("href", `mailto:${site.pressEmail}`);
   });
 
   it("offers a QR code for the page", async () => {
@@ -48,7 +56,8 @@ describe("campaign sections", () => {
 });
 
 describe("SignatoriesList", () => {
-  const respond = (body: unknown, status = 200) => vi.spyOn(window, "fetch").mockResolvedValue(new Response(JSON.stringify(body), { status }));
+  const respond = (body: unknown, status = 200) =>
+    vi.spyOn(window, "fetch").mockResolvedValue(new Response(JSON.stringify(body), { status }));
 
   it("says it is loading, then lists each house separately", async () => {
     respond([
@@ -69,7 +78,9 @@ describe("SignatoriesList", () => {
     await expect.element(page.getByText("Glasgow Kelvin, SNP")).toBeVisible();
     expect(container.querySelectorAll(".signatories-group h3")).toHaveLength(3);
     // A Lord with no party has no subtitle.
-    const plain = [...container.querySelectorAll(".signatories-item")].find((li) => li.textContent === "Baroness Plain");
+    const plain = [...container.querySelectorAll(".signatories-item")].find(
+      (li) => li.textContent === "Baroness Plain",
+    );
     expect(plain?.querySelector(".signatories-subtitle")).toBeNull();
   });
 

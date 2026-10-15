@@ -8,7 +8,12 @@ import EmailYourMpTool from "./EmailYourMpTool";
 
 const [letterToPm, bill] = campaigns;
 const PLACE = { latitude: 51.501, longitude: -0.1416 };
-const MP = { name: "Polly Placeholder", salutation: "Ms Placeholder", constituency: "Cities of London and Westminster", email: "polly.placeholder.mp@parliament.uk" };
+const MP = {
+  name: "Polly Placeholder",
+  salutation: "Ms Placeholder",
+  constituency: "Cities of London and Westminster",
+  email: "polly.placeholder.mp@parliament.uk",
+};
 
 let lookups: unknown[];
 let respond: () => Promise<Response>;
@@ -34,13 +39,31 @@ async function lookUp(name = "Jane Smith", postcode = "SW1A 1AA") {
 
 describe("EmailYourMpTool", () => {
   it("finds the MP, keeps the lookup, and goes on to write the campaign's letter", async () => {
-    saveDraft({ campaign: letterToPm.slug, name: "Old", postcode: "X", mp: MP, statuses: {}, email: "", address: "", subject: "", letter: { type: "doc", content: [] }, nickname: "" });
+    saveDraft({
+      campaign: letterToPm.slug,
+      name: "Old",
+      postcode: "X",
+      mp: MP,
+      statuses: {},
+      email: "",
+      address: "",
+      subject: "",
+      letter: { type: "doc", content: [] },
+      nickname: "",
+    });
     await render(<EmailYourMpTool campaignSlug={letterToPm.slug} />);
     await lookUp(" Jane Smith ", " SW1A 1AA ");
 
     await vi.waitFor(() => expect(navigation.pushed).toEqual([`/campaigns-v2/${letterToPm.slug}/write`]));
     expect(lookups).toEqual([{ postcode: " SW1A 1AA " }]);
-    expect(readLookup(letterToPm.slug)).toEqual({ campaign: letterToPm.slug, name: "Jane Smith", postcode: "SW1A 1AA", mp: MP, statuses: {}, place: PLACE });
+    expect(readLookup(letterToPm.slug)).toEqual({
+      campaign: letterToPm.slug,
+      name: "Jane Smith",
+      postcode: "SW1A 1AA",
+      mp: MP,
+      statuses: {},
+      place: PLACE,
+    });
     // A new lookup starts a new letter.
     expect(sessionStorage.getItem("email-your-mp-draft")).toBeNull();
     // Still "looking" while the next page loads.
@@ -66,7 +89,8 @@ describe("EmailYourMpTool", () => {
   });
 
   it("moves on from the PM letter to the bill even with a status for the bill, as nobody has done that", async () => {
-    respond = async () => Response.json({ ok: true, mp: MP, statuses: { [letterToPm.slug]: "signed", [bill.slug]: "signed" } });
+    respond = async () =>
+      Response.json({ ok: true, mp: MP, statuses: { [letterToPm.slug]: "signed", [bill.slug]: "signed" } });
     await render(<EmailYourMpTool campaignSlug={letterToPm.slug} />);
     await lookUp();
 
@@ -97,7 +121,15 @@ describe("EmailYourMpTool", () => {
     const { rerender } = await render(<EmailYourMpTool campaignSlug={letterToPm.slug} />);
     await expect.element(page.getByText(/ZZ9 9ZZ/)).not.toBeInTheDocument();
     await rerender(<EmailYourMpTool campaignSlug={letterToPm.slug} showTestMps />);
-    await expect.element(page.getByText(copy.lookup.testPostcodes("ZZ9 9ZZ (Testy McTestface MP), ZZ9 9ZS (Signy McTestface MP), ZZ9 9ZN (Nomail McTestface MP)"))).toBeVisible();
+    await expect
+      .element(
+        page.getByText(
+          copy.lookup.testPostcodes(
+            "ZZ9 9ZZ (Testy McTestface MP), ZZ9 9ZS (Signy McTestface MP), ZZ9 9ZN (Nomail McTestface MP)",
+          ),
+        ),
+      )
+      .toBeVisible();
   });
 
   it("shows an MP with no email, and stays", async () => {

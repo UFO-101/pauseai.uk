@@ -15,7 +15,9 @@ describe("DonateForm", () => {
     expect(Object.keys(MONTHLY_URLS).map(Number)).toContain(DEFAULT_AMOUNT);
     await render(<DonateForm />);
     await expect.element(page.getByRole("radio", { name: /Monthly/ })).toHaveAttribute("aria-checked", "true");
-    await expect.element(page.getByRole("button", { name: `£${DEFAULT_AMOUNT}`, exact: true })).toHaveClass("is-active");
+    await expect
+      .element(page.getByRole("button", { name: `£${DEFAULT_AMOUNT}`, exact: true }))
+      .toHaveClass("is-active");
     await expect.element(page.getByRole("button", { name: `Donate £${DEFAULT_AMOUNT} a month` })).toBeVisible();
   });
 
@@ -55,7 +57,9 @@ describe("donate page sections", () => {
       </>,
     );
     await expect.element(page.getByRole("heading", { name: "Any questions?" })).toBeVisible();
-    await expect.element(page.getByRole("link", { name: "Read our donation policies →" })).toHaveAttribute("href", "/governance#donation-policies");
+    await expect
+      .element(page.getByRole("link", { name: "Read our donation policies →" }))
+      .toHaveAttribute("href", "/governance#donation-policies");
     await expect.element(page.getByRole("button", { name: /Donate £/ })).toBeVisible();
   });
 });

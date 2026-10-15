@@ -10,16 +10,36 @@ const member = { id: 1, nameDisplayAs: "Ian Instance", latestHouseMembership: { 
 describe("fetchCurrentMps", () => {
   it("reads every sitting MP and their emails, trimmed", async () => {
     expect(await fetchCurrentMps(getJson)).toEqual([
-      { parliamentId: 90001, name: "Ms Dora Dummy", constituency: "Hackney North and Stoke Newington", emails: ["mp90001.office@parliament.uk"] },
-      { parliamentId: 90002, name: "Polly Placeholder", constituency: "Cities of London and Westminster", emails: ["mp90002.office@parliament.uk"] },
+      {
+        parliamentId: 90001,
+        name: "Ms Dora Dummy",
+        constituency: "Hackney North and Stoke Newington",
+        emails: ["mp90001.office@parliament.uk"],
+      },
+      {
+        parliamentId: 90002,
+        name: "Polly Placeholder",
+        constituency: "Cities of London and Westminster",
+        emails: ["mp90002.office@parliament.uk"],
+      },
     ]);
   });
 
   it("keeps each email once, and skips contacts without one", async () => {
     server.use(
-      http.get(`${MEMBERS_API}/Members/Search`, () => HttpResponse.json({ items: [{ value: member }], totalResults: 1 })),
+      http.get(`${MEMBERS_API}/Members/Search`, () =>
+        HttpResponse.json({ items: [{ value: member }], totalResults: 1 }),
+      ),
       http.get(`${MEMBERS_API}/Members/1/Contact`, () =>
-        HttpResponse.json({ value: [{ email: "a@parliament.uk" }, { email: " a@parliament.uk " }, { email: null }, {}, { email: "b@example.org" }] }),
+        HttpResponse.json({
+          value: [
+            { email: "a@parliament.uk" },
+            { email: " a@parliament.uk " },
+            { email: null },
+            {},
+            { email: "b@example.org" },
+          ],
+        }),
       ),
     );
     expect((await fetchCurrentMps(getJson))[0].emails).toEqual(["a@parliament.uk", "b@example.org"]);
@@ -27,7 +47,8 @@ describe("fetchCurrentMps", () => {
 
   it("pages through the list, 20 at a time, and asks only for sitting MPs", async () => {
     const searches: URL[] = [];
-    const page = (n: number, from: number) => Array.from({ length: n }, (_, i) => ({ value: { ...member, id: from + i } }));
+    const page = (n: number, from: number) =>
+      Array.from({ length: n }, (_, i) => ({ value: { ...member, id: from + i } }));
     server.use(
       http.get(`${MEMBERS_API}/Members/Search`, ({ request }) => {
         const url = new URL(request.url);
@@ -66,7 +87,9 @@ describe("fetchCurrentMps", () => {
     await expect(fetchCurrentMps(getJson)).rejects.toThrow("no items");
 
     const full = Array.from({ length: 20 }, (_, i) => ({ value: { ...member, id: i } }));
-    server.use(http.get(`${MEMBERS_API}/Members/Search`, () => HttpResponse.json({ items: full, totalResults: 100000 })));
+    server.use(
+      http.get(`${MEMBERS_API}/Members/Search`, () => HttpResponse.json({ items: full, totalResults: 100000 })),
+    );
     await expect(fetchCurrentMps(getJson)).rejects.toThrow("past 60 pages");
   });
 

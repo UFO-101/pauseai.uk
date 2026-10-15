@@ -90,7 +90,8 @@ Please could you add your name to PauseAI's open letter (attached) in support of
 
 Thank you for your consideration,`,
     alreadyDone: "Good news: your MP has already signed the letter to the PM.",
-    movedOn: "Good news! Your MP has already signed the letter to the PM. You can write to them about this related campaign instead.",
+    movedOn:
+      "Good news! Your MP has already signed the letter to the PM. You can write to them about this related campaign instead.",
     attachments: [
       {
         file: "Frontier-AI-Open-Letter.pdf",

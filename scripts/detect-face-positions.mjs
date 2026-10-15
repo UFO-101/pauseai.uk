@@ -20,10 +20,7 @@ tf.enableProdMode();
 await tf.setBackend("cpu");
 
 async function decodeImage(filePath) {
-  const { data, info } = await sharp(filePath)
-    .removeAlpha()
-    .raw()
-    .toBuffer({ resolveWithObject: true });
+  const { data, info } = await sharp(filePath).removeAlpha().raw().toBuffer({ resolveWithObject: true });
   return tf.tensor3d(data, [info.height, info.width, info.channels], "int32");
 }
 
@@ -42,7 +39,12 @@ function findPeopleArrayLiteral(source) {
   for (const statement of sourceFile.statements) {
     if (!ts.isVariableStatement(statement)) continue;
     for (const decl of statement.declarationList.declarations) {
-      if (ts.isIdentifier(decl.name) && decl.name.text === "people" && decl.initializer && ts.isArrayLiteralExpression(decl.initializer)) {
+      if (
+        ts.isIdentifier(decl.name) &&
+        decl.name.text === "people" &&
+        decl.initializer &&
+        ts.isArrayLiteralExpression(decl.initializer)
+      ) {
         return { sourceFile, node: decl.initializer };
       }
     }
@@ -91,10 +93,13 @@ for (const file of targets) {
   }
 
   // Largest face by bounding-box area, in case of multiple people.
-  const largest = predictions.reduce((best, p) => {
-    const area = (p.bottomRight[0] - p.topLeft[0]) * (p.bottomRight[1] - p.topLeft[1]);
-    return area > best.area ? { p, area } : best;
-  }, { p: null, area: -1 }).p;
+  const largest = predictions.reduce(
+    (best, p) => {
+      const area = (p.bottomRight[0] - p.topLeft[0]) * (p.bottomRight[1] - p.topLeft[1]);
+      return area > best.area ? { p, area } : best;
+    },
+    { p: null, area: -1 },
+  ).p;
 
   const cx = (largest.topLeft[0] + largest.bottomRight[0]) / 2;
   const cy = (largest.topLeft[1] + largest.bottomRight[1]) / 2;
@@ -106,14 +111,20 @@ for (const file of targets) {
     const basename = path.basename(filePath);
     const person = persons.find((s) => s.imageSrc && path.basename(s.imageSrc) === basename);
     if (!person) {
-      console.log(`${basename}: ${width}x${height}, ${predictions.length} face(s) -> no matching person in people.json, skipped`);
+      console.log(
+        `${basename}: ${width}x${height}, ${predictions.length} face(s) -> no matching person in people.json, skipped`,
+      );
       continue;
     }
     person.imageStyle = imageStyle;
     updated++;
-    console.log(`${basename}: ${width}x${height}, ${predictions.length} face(s) -> updated "${person.name}" imageStyle: "${imageStyle}"`);
+    console.log(
+      `${basename}: ${width}x${height}, ${predictions.length} face(s) -> updated "${person.name}" imageStyle: "${imageStyle}"`,
+    );
   } else {
-    console.log(`${path.basename(filePath)}: ${width}x${height}, ${predictions.length} face(s) -> imageStyle: "${imageStyle}"`);
+    console.log(
+      `${path.basename(filePath)}: ${width}x${height}, ${predictions.length} face(s) -> imageStyle: "${imageStyle}"`,
+    );
   }
 }
 

@@ -54,7 +54,8 @@ for (const route of ROUTES) {
     expect(response?.status(), "status").toBe(200);
 
     await page.waitForFunction(
-      () => getComputedStyle(document.documentElement).getPropertyValue("--site-header-h").trim() !== "" ||
+      () =>
+        getComputedStyle(document.documentElement).getPropertyValue("--site-header-h").trim() !== "" ||
         !document.querySelector("header.site-header"),
       undefined,
       { polling: 200, timeout: 20_000 },

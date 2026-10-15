@@ -1,18 +1,21 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { CSSProperties } from "react";
-import { newsRow1, newsRow2, newsMobileRow1, newsMobileRow2, newsMobileRow3, type CoverageItem } from "@/lib/content/press-coverage";
+import {
+  newsRow1,
+  newsRow2,
+  newsMobileRow1,
+  newsMobileRow2,
+  newsMobileRow3,
+  type CoverageItem,
+} from "@/lib/content/press-coverage";
 
 export function NewsRow({ items, reverse = false }: { items: CoverageItem[]; reverse?: boolean }) {
   return (
     <div className={`news-marquee-row${reverse ? " news-marquee-row--reverse" : ""}`}>
       <div className="news-marquee-track">
         {[0, 1].map((copyIdx) => (
-          <div
-            key={copyIdx}
-            className="news-marquee-copy"
-            {...(copyIdx > 0 ? { "aria-hidden": true } : {})}
-          >
+          <div key={copyIdx} className="news-marquee-copy" {...(copyIdx > 0 ? { "aria-hidden": true } : {})}>
             {items.map((item, i) => (
               <a
                 key={i}
@@ -51,7 +54,6 @@ export function NewsRow({ items, reverse = false }: { items: CoverageItem[]; rev
 // Press coverage logos scrolling past: two rows on desktop, three on phones.
 export default function PressMarquee() {
   return (
-
     <section id="news" className="section">
       <div className="news-marquee" aria-label="Press coverage of PauseAI UK">
         <div className="news-marquee-set news-marquee-set--desktop" aria-hidden={false}>
@@ -65,7 +67,9 @@ export default function PressMarquee() {
         </div>
       </div>
       <div className="container news-marquee-cta">
-        <Link className="inline-link" href="/press/">See our press page →</Link>
+        <Link className="inline-link" href="/press/">
+          See our press page →
+        </Link>
       </div>
     </section>
   );

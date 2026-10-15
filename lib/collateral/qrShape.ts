@@ -72,7 +72,8 @@ export function qrShape(target: string, size: number, logo: boolean): QrShape {
     [modules - 7, 0],
     [0, modules - 7],
   ];
-  const inFinder = (row: number, col: number) => corners.some(([c, r]) => col >= c && col < c + 7 && row >= r && row < r + 7);
+  const inFinder = (row: number, col: number) =>
+    corners.some(([c, r]) => col >= c && col < c + 7 && row >= r && row < r + 7);
 
   const dots: QrDot[] = [];
   matrix.forEach((line, row) =>

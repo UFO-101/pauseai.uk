@@ -38,7 +38,12 @@ export function Button({
   ...rest
 }: Look & { pending?: boolean } & ButtonHTMLAttributes<HTMLButtonElement>) {
   return (
-    <button {...rest} {...buttonAttributes({ variant, size, className })} disabled={disabled || pending} aria-busy={pending || undefined}>
+    <button
+      {...rest}
+      {...buttonAttributes({ variant, size, className })}
+      disabled={disabled || pending}
+      aria-busy={pending || undefined}
+    >
       {pending && <span className={styles.spinner} aria-hidden="true" />}
       {children}
     </button>

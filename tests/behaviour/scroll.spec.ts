@@ -112,10 +112,7 @@ test.describe("in-page scrolling", () => {
       if (!target || !active) return false;
       // Either inside the target, or somewhere later in the document — both
       // mean the tab position followed the link rather than staying above it.
-      return (
-        target.contains(active) ||
-        !!(target.compareDocumentPosition(active) & Node.DOCUMENT_POSITION_FOLLOWING)
-      );
+      return target.contains(active) || !!(target.compareDocumentPosition(active) & Node.DOCUMENT_POSITION_FOLLOWING);
     });
     expect(focusIsAfterTarget).toBe(true);
   });
@@ -134,9 +131,7 @@ test.describe("in-page scrolling", () => {
     // Polling the URL rather than page.waitForURL: this is a client-side
     // router navigation, so there is no document navigation for waitForURL's
     // default "load" wait to resolve against.
-    await expect
-      .poll(() => page.url(), { timeout: 15_000 })
-      .toMatch(/\/people#share-your-story$/);
+    await expect.poll(() => page.url(), { timeout: 15_000 }).toMatch(/\/people#share-your-story$/);
     await page.waitForTimeout(1000);
     await expectClearOfNav(page, "share-your-story");
   });
@@ -202,9 +197,7 @@ test.describe("reduced motion", () => {
     await page.emulateMedia({ reducedMotion: "reduce" });
     await gotoSettled(page);
 
-    const behavior = await page.evaluate(
-      () => getComputedStyle(document.documentElement).scrollBehavior,
-    );
+    const behavior = await page.evaluate(() => getComputedStyle(document.documentElement).scrollBehavior);
     expect(behavior).toBe("auto");
   });
 });

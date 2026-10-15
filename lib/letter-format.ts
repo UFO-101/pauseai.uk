@@ -31,7 +31,9 @@ function inlineFromMarkup(line: string): Inline[] {
 
 /** Lines, with a hard break between each. */
 function lines(text: string[]): Inline[] {
-  return text.flatMap((line, i) => (i === 0 ? inlineFromMarkup(line) : [{ type: "hardBreak" } as Inline, ...inlineFromMarkup(line)]));
+  return text.flatMap((line, i) =>
+    i === 0 ? inlineFromMarkup(line) : [{ type: "hardBreak" } as Inline, ...inlineFromMarkup(line)],
+  );
 }
 
 /** A campaign's letter, written with the markup above, as the editor's document. */
@@ -44,7 +46,10 @@ export function docFromMarkup(markup: string): LetterDoc {
       if (partLines.every((line) => line.startsWith("- "))) {
         return {
           type: "bulletList",
-          content: partLines.map((line) => ({ type: "listItem", content: [paragraph(inlineFromMarkup(line.slice(2)))] })),
+          content: partLines.map((line) => ({
+            type: "listItem",
+            content: [paragraph(inlineFromMarkup(line.slice(2)))],
+          })),
         };
       }
       return paragraph(lines(partLines));
@@ -63,7 +68,9 @@ function checkInline(node: unknown): Inline | undefined {
   if (node.type === "hardBreak") return { type: "hardBreak" };
   if (node.type !== "text" || typeof node.text !== "string") return undefined;
   const marks = Array.isArray(node.marks) ? node.marks : [];
-  const kept = marks.filter((mark): mark is Mark => isObject(mark) && (mark.type === "bold" || mark.type === "italic")).map((mark) => ({ type: mark.type }));
+  const kept = marks
+    .filter((mark): mark is Mark => isObject(mark) && (mark.type === "bold" || mark.type === "italic"))
+    .map((mark) => ({ type: mark.type }));
   if (kept.length !== marks.length) return undefined;
   return kept.length > 0 ? { type: "text", text: node.text, marks: kept } : { type: "text", text: node.text };
 }
@@ -95,7 +102,8 @@ export function checkDoc(value: unknown): LetterDoc | undefined {
   return blocks.every(Boolean) ? { type: "doc", content: blocks as Block[] } : undefined;
 }
 
-const escape = (text: string) => text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+const escape = (text: string) =>
+  text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
 function inlineHtml(inline: Inline[] = []): string {
   return inline
@@ -128,7 +136,10 @@ function blockText(block: Block, indent: string): string {
   return block.content
     .map((item) => {
       const [first, ...rest] = item.content.map((inner) => blockText(inner, `${indent}  `));
-      return [`${indent}- ${first ?? ""}`, ...rest.map((text) => (text.startsWith(`${indent}  -`) ? text : `${indent}  ${text}`))].join("\n");
+      return [
+        `${indent}- ${first ?? ""}`,
+        ...rest.map((text) => (text.startsWith(`${indent}  -`) ? text : `${indent}  ${text}`)),
+      ].join("\n");
     })
     .join("\n");
 }

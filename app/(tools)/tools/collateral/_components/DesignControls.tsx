@@ -11,7 +11,14 @@ import { drawableToPngDataUrl, fileToDrawable, loadDataUrl, loadImage } from "@/
 import { defaultValues, getTemplate } from "@/lib/collateral/templates";
 import CharCount from "./CharCount";
 import StylePicker from "./StylePicker";
-import { DESIGN_TEMPLATES, designQrCodes, designTemplate, designValues, withQrCodes, type DesignState } from "./designState";
+import {
+  DESIGN_TEMPLATES,
+  designQrCodes,
+  designTemplate,
+  designValues,
+  withQrCodes,
+  type DesignState,
+} from "./designState";
 import { Button } from "@/components/ui/Button";
 
 interface Props {
@@ -35,14 +42,27 @@ interface Props {
 const sameUrl = (a: string, b: string) => normaliseUrl(a).toLowerCase() === normaliseUrl(b).toLowerCase();
 
 /** Layout, style, text, QR codes, photo and partner logos: everything about a design except its format. */
-export default function DesignControls({ design, update, events, firstSection, photoExtras, headlineExtras, qrNote, onQrAdded, onMessage }: Props) {
+export default function DesignControls({
+  design,
+  update,
+  events,
+  firstSection,
+  photoExtras,
+  headlineExtras,
+  qrNote,
+  onQrAdded,
+  onMessage,
+}: Props) {
   const template = designTemplate(design);
   const values = designValues(design);
   const qrCodes = designQrCodes(design);
   const n = (i: number) => firstSection + i;
 
   function setValue(key: string, value: string) {
-    update((d) => ({ ...d, valuesByTemplate: { ...d.valuesByTemplate, [template.id]: { ...designValues(d), [key]: value } } }));
+    update((d) => ({
+      ...d,
+      valuesByTemplate: { ...d.valuesByTemplate, [template.id]: { ...designValues(d), [key]: value } },
+    }));
   }
 
   function importEvent(id: string) {
@@ -78,7 +98,12 @@ export default function DesignControls({ design, update, events, firstSection, p
   }
 
   function updateQr(index: number, patch: Partial<QrCode>) {
-    update((d) => withQrCodes(d, designQrCodes(d).map((c, i) => (i === index ? { ...c, ...patch } : c))));
+    update((d) =>
+      withQrCodes(
+        d,
+        designQrCodes(d).map((c, i) => (i === index ? { ...c, ...patch } : c)),
+      ),
+    );
   }
 
   async function onPhoto(file: File | undefined) {
@@ -109,7 +134,10 @@ export default function DesignControls({ design, update, events, firstSection, p
       // Downscaled and re-encoded as PNG, so it stays small enough to save with the project and keeps transparency.
       const dataUrl = drawableToPngDataUrl(await fileToDrawable(file));
       const drawable = await loadDataUrl(dataUrl);
-      update((d) => ({ ...d, partnerLogos: [...d.partnerLogos, { name: file.name, dataUrl, drawable }].slice(0, MAX_PARTNER_LOGOS) }));
+      update((d) => ({
+        ...d,
+        partnerLogos: [...d.partnerLogos, { name: file.name, dataUrl, drawable }].slice(0, MAX_PARTNER_LOGOS),
+      }));
     } catch {
       onMessage("Could not read that logo. Try a PNG with a transparent background.");
     }
@@ -172,11 +200,23 @@ export default function DesignControls({ design, update, events, firstSection, p
                 {field.hint && <span> · {field.hint}</span>}
               </label>
               {field.kind === "textarea" ? (
-                <textarea id={id} rows={2} maxLength={field.maxLength} value={value} onChange={(e) => setValue(field.key, e.target.value)} />
+                <textarea
+                  id={id}
+                  rows={2}
+                  maxLength={field.maxLength}
+                  value={value}
+                  onChange={(e) => setValue(field.key, e.target.value)}
+                />
               ) : field.kind === "date" || field.kind === "time" ? (
                 <input id={id} type={field.kind} value={value} onChange={(e) => setValue(field.key, e.target.value)} />
               ) : (
-                <input id={id} type="text" maxLength={field.maxLength} value={value} onChange={(e) => setValue(field.key, e.target.value)} />
+                <input
+                  id={id}
+                  type="text"
+                  maxLength={field.maxLength}
+                  value={value}
+                  onChange={(e) => setValue(field.key, e.target.value)}
+                />
               )}
               <CharCount value={value} max={field.maxLength} />
               {field.key === "headline" && headlineExtras}
@@ -212,7 +252,14 @@ export default function DesignControls({ design, update, events, firstSection, p
               type="button"
               className="collateral-qr-remove"
               aria-label={`Remove QR code ${i + 1}`}
-              onClick={() => update((d) => withQrCodes(d, designQrCodes(d).filter((_, j) => j !== i)))}
+              onClick={() =>
+                update((d) =>
+                  withQrCodes(
+                    d,
+                    designQrCodes(d).filter((_, j) => j !== i),
+                  ),
+                )
+              }
             >
               ×
             </button>
@@ -236,7 +283,13 @@ export default function DesignControls({ design, update, events, firstSection, p
             <span className="collateral-label collateral-qr-size-label">Size</span>
             <div className="collateral-segmented" role="radiogroup" aria-label="QR code size">
               {QR_SIZES.map((s) => (
-                <button key={s.id} type="button" role="radio" aria-checked={design.qrSize === s.id} onClick={() => update((d) => ({ ...d, qrSize: s.id }))}>
+                <button
+                  key={s.id}
+                  type="button"
+                  role="radio"
+                  aria-checked={design.qrSize === s.id}
+                  onClick={() => update((d) => ({ ...d, qrSize: s.id }))}
+                >
                   {s.label}
                 </button>
               ))}
@@ -280,9 +333,7 @@ export default function DesignControls({ design, update, events, firstSection, p
 
       <section>
         <h2>{n(5)}. Partner logos (optional)</h2>
-        <p className="collateral-hint">
-          For joint events. A PNG with a transparent background works best.
-        </p>
+        <p className="collateral-hint">For joint events. A PNG with a transparent background works best.</p>
         {design.partnerLogos.map((logo, i) => (
           <p key={`${logo.name}-${i}`} className="collateral-hint">
             {logo.name}

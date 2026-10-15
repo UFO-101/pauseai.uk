@@ -66,7 +66,7 @@ export default async function LocalGroupEvents({ localGroupName }: { localGroupN
   const upcoming = filterEventsForLocalGroup(future, localGroup.eventMatchers);
   const online = filterOnlineEvents(
     future,
-    localGroups.map((group) => group.eventMatchers)
+    localGroups.map((group) => group.eventMatchers),
   );
   const previous = filterEventsForLocalGroup(past, localGroup.eventMatchers).slice(0, PAST_EVENTS_SHOWN);
 
@@ -94,9 +94,7 @@ export default async function LocalGroupEvents({ localGroupName }: { localGroupN
 
       {/* Only when there is something to show: a local group that has not met yet
           should not open with an empty archive. */}
-      {previous.length > 0 && (
-        <EventsSection heading={`Past events in ${localGroup.name}`} events={previous} />
-      )}
+      {previous.length > 0 && <EventsSection heading={`Past events in ${localGroup.name}`} events={previous} />}
     </>
   );
 }

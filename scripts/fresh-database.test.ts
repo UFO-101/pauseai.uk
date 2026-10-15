@@ -6,10 +6,19 @@ import { defaultHost, isLocal, testServerUrl } from "./fresh-database.mjs";
 
 describe("isLocal", () => {
   it("accepts databases on this machine, and nothing else", () => {
-    for (const url of ["postgresql://localhost/a", "postgresql://127.0.0.1:5433/a", "postgresql://[::1]/a", "postgresql:///a?host=/tmp", "postgresql://x@localhost/a?host=%2Fvar%2Frun%2Fpostgresql"]) {
+    for (const url of [
+      "postgresql://localhost/a",
+      "postgresql://127.0.0.1:5433/a",
+      "postgresql://[::1]/a",
+      "postgresql:///a?host=/tmp",
+      "postgresql://x@localhost/a?host=%2Fvar%2Frun%2Fpostgresql",
+    ]) {
       expect(isLocal(url), url).toBe(true);
     }
-    for (const url of ["postgresql://u:p@ep-cool.eu-central-1.aws.neon.tech/neondb", "postgresql://localhost/a?host=db.example.org"]) {
+    for (const url of [
+      "postgresql://u:p@ep-cool.eu-central-1.aws.neon.tech/neondb",
+      "postgresql://localhost/a?host=db.example.org",
+    ]) {
       expect(isLocal(url), url).toBe(false);
     }
   });
@@ -35,7 +44,10 @@ describe("testServerUrl", () => {
     const dir = mkdtempSync(join(tmpdir(), "env-"));
     const file = join(dir, ".env.local");
     try {
-      writeFileSync(file, 'DATA_FIXTURES=1\n# TEST_DATABASE_URL=commented\n TEST_DATABASE_URL = "postgresql://postgres:postgres@localhost:5433/postgres" \n');
+      writeFileSync(
+        file,
+        'DATA_FIXTURES=1\n# TEST_DATABASE_URL=commented\n TEST_DATABASE_URL = "postgresql://postgres:postgres@localhost:5433/postgres" \n',
+      );
       expect(testServerUrl({ TEST_DATABASE_URL: "postgresql://env/x" }, file)).toBe("postgresql://env/x");
       expect(testServerUrl({}, file)).toBe("postgresql://postgres:postgres@localhost:5433/postgres");
       writeFileSync(file, "DATA_FIXTURES=1\n");

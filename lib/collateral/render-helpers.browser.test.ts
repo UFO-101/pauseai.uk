@@ -62,13 +62,18 @@ describe("loading images", () => {
   });
 
   it("decodes a photo embedded as a data URL", async () => {
-    const dataUrl = picture(30, 20).source instanceof HTMLCanvasElement ? (picture(30, 20).source as HTMLCanvasElement).toDataURL() : "";
+    const dataUrl =
+      picture(30, 20).source instanceof HTMLCanvasElement
+        ? (picture(30, 20).source as HTMLCanvasElement).toDataURL()
+        : "";
     const drawable = await loadDataUrl(dataUrl);
     expect([drawable.width, drawable.height]).toEqual([30, 20]);
   });
 
   it("reads an uploaded file", async () => {
-    const blob = await new Promise<Blob>((r) => (picture(12, 8).source as HTMLCanvasElement).toBlob((b) => r(b!), "image/png"));
+    const blob = await new Promise<Blob>((r) =>
+      (picture(12, 8).source as HTMLCanvasElement).toBlob((b) => r(b!), "image/png"),
+    );
     const drawable = await fileToDrawable(new File([blob], "upload.png", { type: "image/png" }));
     expect([drawable.width, drawable.height]).toEqual([12, 8]);
   });
@@ -115,7 +120,9 @@ describe("choosing the colour over the photo", () => {
   it("falls back to the strongest step when nothing reads", () => {
     // Cream text on a cream photo can't read at any step.
     const theme = { ...getTheme("cream"), text: "#fdf8f3", accentText: "#fdf8f3" };
-    expect(autoPhotoVisible(opts({ photo: picture(400, 400, "#fdf8f3"), theme, maxSide: 300 }))).toBe(steps[steps.length - 1]);
+    expect(autoPhotoVisible(opts({ photo: picture(400, 400, "#fdf8f3"), theme, maxSide: 300 }))).toBe(
+      steps[steps.length - 1],
+    );
   });
 
   it("uses a step that reads even if the photo behind it is busy", () => {

@@ -5,7 +5,11 @@ import LetterWrite from "../../_components/LetterWrite";
 
 // Writing this campaign's letter, after finding the MP. Unlisted, and kept out of search.
 export const metadata = {
-  ...pageMetadata({ title: copy.write.title, description: copy.write.title, path: "/campaigns-v2/support-sobel-bill/write" }),
+  ...pageMetadata({
+    title: copy.write.title,
+    description: copy.write.title,
+    path: "/campaigns-v2/support-sobel-bill/write",
+  }),
   robots: { index: false, follow: false },
 };
 

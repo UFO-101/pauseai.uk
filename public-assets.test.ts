@@ -79,9 +79,7 @@ describe("public assets", () => {
     const files = [...block![0].matchAll(/\[\s*"([^"]+)"/g)].map((m) => m[1]);
     expect(files.length, "no hero photos parsed out of HERO_PHOTOS").toBeGreaterThan(10);
 
-    const absent = files.filter(
-      (name) => !existsSync(join(PUBLIC_DIR, "images", "front-page-hero-optimized", name)),
-    );
+    const absent = files.filter((name) => !existsSync(join(PUBLIC_DIR, "images", "front-page-hero-optimized", name)));
     expect(absent, "hero photos listed in lib/content/hero-photos.ts but missing from public/").toEqual([]);
   });
 

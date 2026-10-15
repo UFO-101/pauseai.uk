@@ -101,11 +101,24 @@ export default function Dropdown({ id, label, value, options, onChange }: Dropdo
       >
         <span>{selected?.label}</span>
         <svg className="gas-dropdown-caret" viewBox="0 0 12 8" aria-hidden="true">
-          <path d="M1 1.5l5 5 5-5" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+          <path
+            d="M1 1.5l5 5 5-5"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.6"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
         </svg>
       </button>
       {open && (
-        <ul className="gas-dropdown-menu" role="listbox" aria-labelledby={`${id}-label`} tabIndex={-1} onKeyDown={handleKeyDown}>
+        <ul
+          className="gas-dropdown-menu"
+          role="listbox"
+          aria-labelledby={`${id}-label`}
+          tabIndex={-1}
+          onKeyDown={handleKeyDown}
+        >
           {options.map((option, i) => (
             <li
               key={option.value}
@@ -120,7 +133,16 @@ export default function Dropdown({ id, label, value, options, onChange }: Dropdo
               onClick={() => commit(i)}
             >
               <svg className="gas-dropdown-check" viewBox="0 0 16 16" aria-hidden="true">
-                {option.value === value && <path d="M3 8.5l3 3 7-7" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />}
+                {option.value === value && (
+                  <path
+                    d="M3 8.5l3 3 7-7"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                )}
               </svg>
               <span>{option.label}</span>
             </li>

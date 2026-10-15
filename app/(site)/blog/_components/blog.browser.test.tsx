@@ -12,7 +12,12 @@ import PostList from "./PostList";
 // Authors of each kind, whatever the real people happen to be.
 const { named, framed, noPhoto } = vi.hoisted(() => ({
   named: { name: "Ada Test", paragraphs: [], imageSrc: "/images/people/ada.jpg" } as Person,
-  framed: { name: "Bea Test", paragraphs: [], imageSrc: "/images/people/bea.jpg", imageStyle: "background-position: 10% 20%;" } as Person,
+  framed: {
+    name: "Bea Test",
+    paragraphs: [],
+    imageSrc: "/images/people/bea.jpg",
+    imageStyle: "background-position: 10% 20%;",
+  } as Person,
   noPhoto: { name: "Cy Test", paragraphs: [] } as Person,
 }));
 vi.mock("@/lib/content/people", async (importActual) => {
@@ -95,7 +100,9 @@ describe("PostHeader and PostBody", () => {
     const { container, rerender } = await render(<PostHeader post={post({ author: framed.name! })} />);
     expect(container.querySelector<HTMLElement>(".blog-byline-avatar")!.style.backgroundPosition).toBe("10% 20%");
     await rerender(<PostHeader post={post({ author: named.name! })} />);
-    await expect.element(page.getByRole("link", { name: named.name! })).toHaveAttribute("href", expect.stringContaining("/people/"));
+    await expect
+      .element(page.getByRole("link", { name: named.name! }))
+      .toHaveAttribute("href", expect.stringContaining("/people/"));
     await expect.element(page.getByRole("link", { name: `Read ${named.name}'s story` })).toBeInTheDocument();
     await expect.element(page.getByRole("link", { name: "← All posts" })).toHaveAttribute("href", "/blog");
   });

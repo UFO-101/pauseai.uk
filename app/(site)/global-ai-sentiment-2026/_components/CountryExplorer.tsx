@@ -49,7 +49,13 @@ export default function CountryExplorer() {
             })),
           ]}
         />
-        <Dropdown id="gas-sort" label="Sort by" value={sort} onChange={(v) => setSort(v as SortMode)} options={SORT_OPTIONS} />
+        <Dropdown
+          id="gas-sort"
+          label="Sort by"
+          value={sort}
+          onChange={(v) => setSort(v as SortMode)}
+          options={SORT_OPTIONS}
+        />
         <div className="gas-filter-group gas-filter-search">
           <label htmlFor="gas-search">Search</label>
           <input
@@ -77,7 +83,24 @@ export default function CountryExplorer() {
         <BarAxisLabels />
         {rows.length === 0 && <p className="gas-empty">No countries match that search.</p>}
         {rows.map((row, i) => (
-          <DivergingBar key={row.country} label={row.country} row={row} meta={<><span className="gas-term" data-tooltip="Number of people surveyed">n={row.n.toLocaleString()}</span>{" · "}<span className="gas-term" data-tooltip="Margin of error at 95% confidence, in percentage points">±{row.moe_pp}pp</span></>} rank={sort === "az" ? undefined : i + 1} showNotSure={showNotSure} />
+          <DivergingBar
+            key={row.country}
+            label={row.country}
+            row={row}
+            meta={
+              <>
+                <span className="gas-term" data-tooltip="Number of people surveyed">
+                  n={row.n.toLocaleString()}
+                </span>
+                {" · "}
+                <span className="gas-term" data-tooltip="Margin of error at 95% confidence, in percentage points">
+                  ±{row.moe_pp}pp
+                </span>
+              </>
+            }
+            rank={sort === "az" ? undefined : i + 1}
+            showNotSure={showNotSure}
+          />
         ))}
       </div>
     </div>

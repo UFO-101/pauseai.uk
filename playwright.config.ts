@@ -108,7 +108,10 @@ export default defineConfig({
       // (trackers, campaigns) show their "not configured" fallback instead.
       // The public-vs-live build gets a Turnstile site key like live's, so both
       // draw the widget, from the same stand-in script (tests/steps.ts).
-      env: DATA_FIXTURES === "1" ? fixtureEnv({ outboxDir: OUTBOX_DIR }) : { DATA_FIXTURES, NEXT_PUBLIC_TURNSTILE_SITE_KEY: "fixture" },
+      env:
+        DATA_FIXTURES === "1"
+          ? fixtureEnv({ outboxDir: OUTBOX_DIR })
+          : { DATA_FIXTURES, NEXT_PUBLIC_TURNSTILE_SITE_KEY: "fixture" },
       url: LOCAL_URL,
       reuseExistingServer: !process.env.CI,
       // CI always builds from cold (reuseExistingServer is off there), and a

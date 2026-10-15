@@ -7,8 +7,12 @@ export default function Closing() {
     <section className="closing">
       <div className="container closing-inner">
         <div className="closing-actions">
-          <ButtonAnchor variant="primary" href={site.whatsappUrl} target="_blank" rel="noreferrer">Join the WhatsApp community</ButtonAnchor>
-          <ButtonLink variant="ghost" href="/#join">More ways to get involved</ButtonLink>
+          <ButtonAnchor variant="primary" href={site.whatsappUrl} target="_blank" rel="noreferrer">
+            Join the WhatsApp community
+          </ButtonAnchor>
+          <ButtonLink variant="ghost" href="/#join">
+            More ways to get involved
+          </ButtonLink>
         </div>
       </div>
     </section>

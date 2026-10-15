@@ -23,6 +23,8 @@ describeWithDatabase("POST /staff/api/logout", () => {
   });
 
   it("needs a session", async () => {
-    expect(await expectRedirect(() => POST(new Request("https://pauseai.uk/staff/api/logout", { method: "POST" })))).toBe("/staff/login");
+    expect(
+      await expectRedirect(() => POST(new Request("https://pauseai.uk/staff/api/logout", { method: "POST" }))),
+    ).toBe("/staff/login");
   });
 });

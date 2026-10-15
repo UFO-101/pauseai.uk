@@ -42,14 +42,36 @@ function Toolbar({ editor, labelledBy }: { editor: Editor; labelledBy: string })
     }),
   });
   const buttons = [
-    { title: "Bold", label: <strong>B</strong>, pressed: active.bold, run: () => editor.chain().focus().toggleBold().run() },
-    { title: "Italic", label: <em>i</em>, pressed: active.italic, run: () => editor.chain().focus().toggleItalic().run() },
-    { title: "Bullet point", label: "• List", pressed: active.bulletList, run: () => editor.chain().focus().toggleBulletList().run() },
+    {
+      title: "Bold",
+      label: <strong>B</strong>,
+      pressed: active.bold,
+      run: () => editor.chain().focus().toggleBold().run(),
+    },
+    {
+      title: "Italic",
+      label: <em>i</em>,
+      pressed: active.italic,
+      run: () => editor.chain().focus().toggleItalic().run(),
+    },
+    {
+      title: "Bullet point",
+      label: "• List",
+      pressed: active.bulletList,
+      run: () => editor.chain().focus().toggleBulletList().run(),
+    },
   ];
   return (
     <div className={styles.toolbar} role="toolbar" aria-labelledby={labelledBy}>
       {buttons.map((button) => (
-        <button key={button.title} type="button" title={button.title} aria-label={button.title} aria-pressed={button.pressed} onClick={button.run}>
+        <button
+          key={button.title}
+          type="button"
+          title={button.title}
+          aria-label={button.title}
+          aria-pressed={button.pressed}
+          onClick={button.run}
+        >
           {button.label}
         </button>
       ))}

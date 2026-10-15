@@ -290,7 +290,12 @@ export default function QrScanner({ onResult }: Props) {
     const start = dragStart.current;
     if (!start) return;
     const p = pointAt(e);
-    setBox({ x: Math.min(start.x, p.x), y: Math.min(start.y, p.y), w: Math.abs(p.x - start.x), h: Math.abs(p.y - start.y) });
+    setBox({
+      x: Math.min(start.x, p.x),
+      y: Math.min(start.y, p.y),
+      w: Math.abs(p.x - start.x),
+      h: Math.abs(p.y - start.y),
+    });
   }
 
   async function onPointerUp() {
@@ -342,7 +347,13 @@ export default function QrScanner({ onResult }: Props) {
         </p>
         {/* Hidden once the camera fails, rather than leaving an empty black box. */}
         {open && !modalMessage && (
-          <video ref={videoRef} className="collateral-qr-video" muted playsInline aria-label="Camera view. Point it at a QR code." />
+          <video
+            ref={videoRef}
+            className="collateral-qr-video"
+            muted
+            playsInline
+            aria-label="Camera view. Point it at a QR code."
+          />
         )}
         {photo && (
           <div
@@ -360,7 +371,12 @@ export default function QrScanner({ onResult }: Props) {
             {box && (
               <div
                 className="collateral-qr-crop-box"
-                style={{ left: `${box.x * 100}%`, top: `${box.y * 100}%`, width: `${box.w * 100}%`, height: `${box.h * 100}%` }}
+                style={{
+                  left: `${box.x * 100}%`,
+                  top: `${box.y * 100}%`,
+                  width: `${box.w * 100}%`,
+                  height: `${box.h * 100}%`,
+                }}
               />
             )}
           </div>

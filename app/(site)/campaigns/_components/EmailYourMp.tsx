@@ -1,4 +1,3 @@
-
 // The email-your-MP form, embedded from pauseai.info.
 export default function EmailYourMp() {
   return (
@@ -16,7 +15,9 @@ export default function EmailYourMp() {
         </div>
         <p className="embed-fallback">
           Having trouble loading the form?{" "}
-          <a href="https://pauseai.info/uk-email-mp" target="_blank" rel="noreferrer">Open it on pauseai.info &rarr;</a>
+          <a href="https://pauseai.info/uk-email-mp" target="_blank" rel="noreferrer">
+            Open it on pauseai.info &rarr;
+          </a>
         </p>
       </div>
     </section>

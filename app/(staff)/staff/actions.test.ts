@@ -89,7 +89,9 @@ describeWithDatabase("staff Server Actions", () => {
     await decideSync(form({ id: "x", decision: "apply" }));
     expect(await query("SELECT status FROM mp_syncs")).toEqual([{ status: "held" }]);
     await decideSync(form({ id: String(id), decision: "discard" }));
-    expect(await query("SELECT status, decided_by FROM mp_syncs")).toEqual([{ status: "discarded", decided_by: "jo@pauseai.uk" }]);
+    expect(await query("SELECT status, decided_by FROM mp_syncs")).toEqual([
+      { status: "discarded", decided_by: "jo@pauseai.uk" },
+    ]);
   });
 
   it("importFromAirtable imports and shows the counts, or says Airtable isn't set up", async () => {
@@ -97,7 +99,11 @@ describeWithDatabase("staff Server Actions", () => {
     expect(await expectRedirect(importFromAirtable)).toBe("/staff/import?unconfigured=1");
 
     vi.stubEnv("AIRTABLE_TOKEN", "token");
-    server.use(http.get("https://*.airtable.com/v0/*", () => HttpResponse.json({ records: [{ id: "r", fields: { "Full name or Title": "Lord X" } }] })));
+    server.use(
+      http.get("https://*.airtable.com/v0/*", () =>
+        HttpResponse.json({ records: [{ id: "r", fields: { "Full name or Title": "Lord X" } }] }),
+      ),
+    );
     expect(await expectRedirect(importFromAirtable)).toBe("/staff/import?matched=0&added=1&alreadySet=0");
   });
 });

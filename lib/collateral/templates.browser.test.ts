@@ -77,11 +77,17 @@ describe("every layout copes with missing values", () => {
 describe("titles", () => {
   it("warns when the text cannot fit, and notes when it had to shrink a lot", () => {
     const long = "An extremely long headline that goes on and on and on and on about safety";
-    expect(draw("announcement", "x-header", { headline: long.repeat(6), sub: long.repeat(2) }, { headlineScale: 1.3 }).ids).toContain("text-overflow");
+    expect(
+      draw("announcement", "x-header", { headline: long.repeat(6), sub: long.repeat(2) }, { headlineScale: 1.3 }).ids,
+    ).toContain("text-overflow");
     // Somewhere between fitting comfortably and not fitting, the title shrinks a lot.
     const words = (n: number) => Array.from({ length: n }, (_, i) => `word${i}`).join(" ");
     const lengths = Array.from({ length: 40 }, (_, i) => 4 + i * 3);
-    expect(lengths.some((n) => draw("announcement", "ig-square", { headline: words(n), kicker: "", sub: "" }).ids.includes("title-small"))).toBe(true);
+    expect(
+      lengths.some((n) =>
+        draw("announcement", "ig-square", { headline: words(n), kicker: "", sub: "" }).ids.includes("title-small"),
+      ),
+    ).toBe(true);
     expect(draw("quote", "x-header", { quote: long.repeat(30) }).ids).toContain("text-overflow");
   });
 
@@ -94,22 +100,32 @@ describe("the event layout", () => {
   it("drops the description, then shrinks the details, to fit the title", () => {
     const words = (n: number) => Array.from({ length: n }, (_, i) => `word${i}`).join(" ");
     const dropped = Array.from({ length: 30 }, (_, i) => 2 + i * 2).some((n) =>
-      draw("event", "ig-square", { headline: words(n), blurb: "A short description of the event", end: "21:00" }).ids.includes("blurb-dropped"),
+      draw("event", "ig-square", {
+        headline: words(n),
+        blurb: "A short description of the event",
+        end: "21:00",
+      }).ids.includes("blurb-dropped"),
     );
     expect(dropped).toBe(true);
   });
 
   it("shows a time range, and the time alone without a date", () => {
     expect(draw("event", "ig-portrait", { end: "21:30" }).ids).not.toContain("text-overflow");
-    expect(draw("event", "ig-portrait", { date: "", venue: "", blurb: "", kicker: "" }).ids).not.toContain("text-overflow");
+    expect(draw("event", "ig-portrait", { date: "", venue: "", blurb: "", kicker: "" }).ids).not.toContain(
+      "text-overflow",
+    );
   });
 
   it("shows the venue alone when there is no date or time", () => {
-    expect(draw("event", "ig-portrait", { date: "", start: "", end: "", venue: "Somewhere" }).ids).not.toContain("text-overflow");
+    expect(draw("event", "ig-portrait", { date: "", start: "", end: "", venue: "Somewhere" }).ids).not.toContain(
+      "text-overflow",
+    );
   });
 
   it("puts the time on its own line when date and time don't fit on one", () => {
-    expect(draw("event", "a6", { date: "2030-09-28", start: "19:00", end: "21:30" }, { maxSide: 400 }).width).toBeGreaterThan(0);
+    expect(
+      draw("event", "a6", { date: "2030-09-28", start: "19:00", end: "21:30" }, { maxSide: 400 }).width,
+    ).toBeGreaterThan(0);
   });
 });
 
@@ -162,7 +178,9 @@ describe("the header", () => {
   });
 
   it("shrinks partner logos to fit, then leaves out the ones that don't", () => {
-    expect(draw("announcement", "ig-square", {}, { partnerLogos: [wide(400, 100)] }).ids).not.toContain("partner-logo-dropped");
+    expect(draw("announcement", "ig-square", {}, { partnerLogos: [wide(400, 100)] }).ids).not.toContain(
+      "partner-logo-dropped",
+    );
     const many = Array.from({ length: 4 }, () => wide(400, 100));
     const some = draw("announcement", "ig-square", { group: "" }, { partnerLogos: many });
     expect(some.issues.find((i) => i.id === "partner-logo-dropped")?.message).toMatch(/Not every partner logo fits/);
@@ -174,11 +192,21 @@ describe("the header", () => {
 
 describe("the footer and QR codes", () => {
   const codes = (n: number, labels = true) =>
-    Array.from({ length: n }, (_, i) => ({ label: labels ? `Code ${i + 1} with a long label` : "", url: `pauseai.uk/page-${i + 1}` }));
+    Array.from({ length: n }, (_, i) => ({
+      label: labels ? `Code ${i + 1} with a long label` : "",
+      url: `pauseai.uk/page-${i + 1}`,
+    }));
 
   it("puts codes beside the text when they fit, and on their own row when they don't", () => {
     expect(draw("announcement", "a4", {}, { qrCodes: codes(1) }).ids).toContain("qr-mismatch");
-    expect(draw("announcement", "a4", { cta: "A rather long call to action", url: "pauseai.uk/a-very-long-address-indeed" }, { qrCodes: codes(3) }).width).toBeGreaterThan(0);
+    expect(
+      draw(
+        "announcement",
+        "a4",
+        { cta: "A rather long call to action", url: "pauseai.uk/a-very-long-address-indeed" },
+        { qrCodes: codes(3) },
+      ).width,
+    ).toBeGreaterThan(0);
     expect(draw("announcement", "a5", { cta: "" }, { qrCodes: codes(2, false), qrSize: "l" }).width).toBeGreaterThan(0);
   });
 
@@ -191,7 +219,12 @@ describe("the footer and QR codes", () => {
   });
 
   it("doesn't flag the events page being printed while a code opens one event", () => {
-    const out = draw("event", "a5", { url: "pauseai.uk/events" }, { qrCodes: [{ label: "RSVP", url: "lu.ma/eoohwufh" }] });
+    const out = draw(
+      "event",
+      "a5",
+      { url: "pauseai.uk/events" },
+      { qrCodes: [{ label: "RSVP", url: "lu.ma/eoohwufh" }] },
+    );
     expect(out.ids).not.toContain("qr-mismatch");
   });
 
@@ -203,7 +236,9 @@ describe("the footer and QR codes", () => {
   it("stacks the address under a long call to action, and squeezes an address that is still too long", () => {
     const longUrl = "pauseai.uk/an-address-that-is-much-too-long-to-print-nicely";
     expect(draw("announcement", "x-header", { cta: "Join the movement today", url: longUrl }).width).toBe(400);
-    expect(draw("announcement", "ig-square", { cta: "", url: longUrl }, { photo, qrCodes: codes(1), screenQr: true }).width).toBe(400);
+    expect(
+      draw("announcement", "ig-square", { cta: "", url: longUrl }, { photo, qrCodes: codes(1), screenQr: true }).width,
+    ).toBe(400);
   });
 
   it("leaves the footer out when there is nothing to put in it", () => {
@@ -213,7 +248,10 @@ describe("the footer and QR codes", () => {
 
 describe("photos", () => {
   it("can show the photo untinted", () => {
-    expect(draw("announcement", "ig-square", {}, { photo, photoSettings: { zoom: 1, focalX: 0.5, focalY: 0.5, visible: 1 } }).width).toBe(400);
+    expect(
+      draw("announcement", "ig-square", {}, { photo, photoSettings: { zoom: 1, focalX: 0.5, focalY: 0.5, visible: 1 } })
+        .width,
+    ).toBe(400);
   });
 
   it("checks contrast against a style colour it can't read as white", () => {
@@ -224,7 +262,10 @@ describe("photos", () => {
   it("measures text even if the browser reports a font size it can't parse", () => {
     const font = Object.getOwnPropertyDescriptor(CanvasRenderingContext2D.prototype, "font")!;
     vi.spyOn(CanvasRenderingContext2D.prototype, "font", "get").mockReturnValue("bold serif");
-    vi.spyOn(CanvasRenderingContext2D.prototype, "font", "set").mockImplementation(function (this: CanvasRenderingContext2D, v: string) {
+    vi.spyOn(CanvasRenderingContext2D.prototype, "font", "set").mockImplementation(function (
+      this: CanvasRenderingContext2D,
+      v: string,
+    ) {
       font.set!.call(this, v);
     });
     expect(draw("announcement", "ig-square", {}, { photo }).width).toBe(400);
@@ -233,16 +274,30 @@ describe("photos", () => {
 
 describe("the Luma logo cover", () => {
   it("shows the photo untinted with a light logo, and the title when asked", () => {
-    const long = draw("announcement", "luma-cover", { headline: "A title much longer than twenty characters" }, { photo, photoClear: true, coverTitle: true, clearPhotoLogo: clearLogo });
+    const long = draw(
+      "announcement",
+      "luma-cover",
+      { headline: "A title much longer than twenty characters" },
+      { photo, photoClear: true, coverTitle: true, clearPhotoLogo: clearLogo },
+    );
     expect(long.ids).toContain("cover-title-long");
-    const short = draw("announcement", "luma-cover", { headline: "Short" }, { photo, photoClear: true, coverTitle: true });
+    const short = draw(
+      "announcement",
+      "luma-cover",
+      { headline: "Short" },
+      { photo, photoClear: true, coverTitle: true },
+    );
     expect(short.ids).not.toContain("cover-title-long");
   });
 
   it("tints the photo and uses the style's colours otherwise", () => {
     expect(draw("announcement", "luma-cover", { headline: "Tinted" }, { photo, coverTitle: true }).width).toBe(400);
-    expect(draw("announcement", "luma-cover", { headline: "  " }, { coverTitle: true, photoClear: true }).width).toBe(400);
-    expect(draw("announcement", "luma-cover", {}, { coverTitle: true, values: {} } as Partial<RenderOptions>).width).toBe(400);
+    expect(draw("announcement", "luma-cover", { headline: "  " }, { coverTitle: true, photoClear: true }).width).toBe(
+      400,
+    );
+    expect(
+      draw("announcement", "luma-cover", {}, { coverTitle: true, values: {} } as Partial<RenderOptions>).width,
+    ).toBe(400);
   });
 
   it("puts the logo bottom-left", () => {

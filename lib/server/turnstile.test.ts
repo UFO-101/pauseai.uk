@@ -48,7 +48,9 @@ describe("checkNotSpam", () => {
   });
 
   it("refuses a token Turnstile rejects", async () => {
-    server.use(http.post(VERIFY, () => HttpResponse.json({ success: false, "error-codes": ["invalid-input-response"] })));
+    server.use(
+      http.post(VERIFY, () => HttpResponse.json({ success: false, "error-codes": ["invalid-input-response"] })),
+    );
     expect(await check("t")).toEqual({ drop: false, message: copy.errors.spamFailed });
   });
 

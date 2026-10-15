@@ -1,5 +1,3 @@
-
-
 // Who we are, what we want and how we work.
 export default function About() {
   return (
@@ -8,18 +6,24 @@ export default function About() {
         <section className="intro-section">
           <p>
             PauseAI is a civic movement, which means that we help citizens organise to take collective actions and make
-            their voice heard. Our volunteers engage with their MPs about AI safety, march in protests, join
-            conferences about AI safety in the European and UK Parliaments and gather signatures for open letters. We
-            are strictly non-violent, and we require all volunteers to adhere to the{" "}
-            <a href="https://pauseai.info/code-of-conduct" target="_blank" rel="noreferrer">PauseAI Code of Conduct</a>.
+            their voice heard. Our volunteers engage with their MPs about AI safety, march in protests, join conferences
+            about AI safety in the European and UK Parliaments and gather signatures for open letters. We are strictly
+            non-violent, and we require all volunteers to adhere to the{" "}
+            <a href="https://pauseai.info/code-of-conduct" target="_blank" rel="noreferrer">
+              PauseAI Code of Conduct
+            </a>
+            .
           </p>
 
           <p>
-            PauseAI is focused on the risk of potential future <strong>superhuman AI</strong>. This focus is the thing that is unique about PauseAI
-            UK and distinguishes us from other movements in the UK.
+            PauseAI is focused on the risk of potential future <strong>superhuman AI</strong>. This focus is the thing
+            that is unique about PauseAI UK and distinguishes us from other movements in the UK.
           </p>
 
-          <p><b>Human extinction</b> is at the top of our list of concerns around superhuman AI, but there are many others including:</p>
+          <p>
+            <b>Human extinction</b> is at the top of our list of concerns around superhuman AI, but there are many
+            others including:
+          </p>
           <ul className="intro-list">
             <li>job loss and concentration of power</li>
             <li>autonomous weapons</li>
@@ -30,8 +34,8 @@ export default function About() {
           <p>
             This focus is narrower than all possible concerns about AI in general. The advantage of having a very narrow
             focus is that is makes it easier for people with a wide range of beliefs to collaborate, because we
-            don&rsquo;t have to agree on everything. We just have to agree that superhuman AI is a big risk and that
-            we should regulate, slow down and pause to ensure AI development is safe and equitable.
+            don&rsquo;t have to agree on everything. We just have to agree that superhuman AI is a big risk and that we
+            should regulate, slow down and pause to ensure AI development is safe and equitable.
           </p>
 
           <p>
@@ -44,10 +48,10 @@ export default function About() {
             <a href="https://pulltheplug.uk/" target="_blank" rel="noreferrer">
               Pull the Plug
             </a>
-            , which is a group focused on the existing harms of AI. Our last protest was a joint event with them and
-            our next protest will be too. When you come to a PauseAI / Pull the Plug protest, you can view yourself
-            as a representative of one group in a coalition. Or you can see yourself as a supporter of all the AI
-            issues represented by the coalition.
+            , which is a group focused on the existing harms of AI. Our last protest was a joint event with them and our
+            next protest will be too. When you come to a PauseAI / Pull the Plug protest, you can view yourself as a
+            representative of one group in a coalition. Or you can see yourself as a supporter of all the AI issues
+            represented by the coalition.
           </p>
 
           <p>The hope is that when you go to a PauseAI event, you go in with the understanding:</p>
@@ -63,9 +67,9 @@ export default function About() {
               (registered name, number, place of registration, registered office). */}
           <div className="registered-details">
             <p>
-              PauseAI UK is operated by <strong>Safe AI Alliance Ltd</strong>, a private company limited by
-              guarantee registered in England and Wales, company number <strong>17137345</strong>. Registered
-              office: 128 City Road, London EC1V 2NX, United Kingdom.
+              PauseAI UK is operated by <strong>Safe AI Alliance Ltd</strong>, a private company limited by guarantee
+              registered in England and Wales, company number <strong>17137345</strong>. Registered office: 128 City
+              Road, London EC1V 2NX, United Kingdom.
             </p>
           </div>
         </section>

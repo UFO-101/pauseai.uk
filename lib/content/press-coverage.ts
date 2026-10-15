@@ -599,7 +599,8 @@ export const OUTLETS: Outlet[] = [
     articles: [
       {
         medium: "Photos",
-        title: "Pause AI, urging the government to limit the development of artificial intelligence amid warnings that it could lead to human extinction",
+        title:
+          "Pause AI, urging the government to limit the development of artificial intelligence amid warnings that it could lead to human extinction",
         url: "https://www.imago-images.com/st/0867004406",
         date: "2026-09-16",
       },
@@ -704,7 +705,8 @@ export const OUTLETS: Outlet[] = [
   },
   {
     name: "International Business Times",
-    logoHtml: '<span class="news-logo-text news-logo-text--ibtimes">International Business Times<span class="uk">UK</span></span>',
+    logoHtml:
+      '<span class="news-logo-text news-logo-text--ibtimes">International Business Times<span class="uk">UK</span></span>',
     lean: "Center",
     articles: [
       {
@@ -747,7 +749,7 @@ export const OUTLETS: Outlet[] = [
         medium: "Video",
         // PauseAI Global CEO Maxime Fournes (not PauseAI UK specifically),
         // interviewed by Ian Collins.
-        title: "\"It Could Be Human Extinction\" | AI Expert Warns Of Internet Catastrophe In SIX MONTHS",
+        title: '"It Could Be Human Extinction" | AI Expert Warns Of Internet Catastrophe In SIX MONTHS',
         url: "https://www.youtube.com/watch?v=CuwQkwhhfdM",
         date: "2026-09-14",
       },
@@ -879,7 +881,8 @@ export function findOutletProblems(outlets: Outlet[]): string[] {
         problems.push(`${where}: date "${article.date}" is not YYYY-MM-DD`);
       }
       if (article.featured && !article.url) problems.push(`${where}: featured needs a single url`);
-      if (article.featured && !outlet.inCarousel) problems.push(`${where}: featured only applies to inCarousel outlets`);
+      if (article.featured && !outlet.inCarousel)
+        problems.push(`${where}: featured only applies to inCarousel outlets`);
     });
 
     if (outlet.articles.filter((a) => a.featured).length > 1) {
@@ -894,7 +897,8 @@ export function findOutletProblems(outlets: Outlet[]): string[] {
     if (outlet.inCarousel) {
       if (!outlet.logoSrc && !outlet.logoHtml) problems.push(`${at}: inCarousel but has no logo`);
       if (outlet.logoSrc && !outlet.logoHeight) problems.push(`${at}: inCarousel logoSrc needs logoHeight`);
-      if (!outlet.articles.some((a) => a.url)) problems.push(`${at}: inCarousel but no article with a single url to link to`);
+      if (!outlet.articles.some((a) => a.url))
+        problems.push(`${at}: inCarousel but no article with a single url to link to`);
     }
   }
 

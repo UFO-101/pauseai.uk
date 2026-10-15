@@ -13,10 +13,11 @@ export interface QrCaption {
 export type CaptionKind = "label" | "link";
 
 /** The label is set like a headline, the link like body text. Both families are declared in collateral.css. */
-export const CAPTION_FONTS: Record<CaptionKind, { family: string; weight: number; file: string; weightRange: string }> = {
-  label: { family: "PAI Lato", weight: 900, file: "/fonts/lato-latin-900-normal.woff2", weightRange: "900" },
-  link: { family: "PAI Inter", weight: 500, file: "/fonts/inter-latin-wght-normal.woff2", weightRange: "100 900" },
-};
+export const CAPTION_FONTS: Record<CaptionKind, { family: string; weight: number; file: string; weightRange: string }> =
+  {
+    label: { family: "PAI Lato", weight: 900, file: "/fonts/lato-latin-900-normal.woff2", weightRange: "900" },
+    link: { family: "PAI Inter", weight: 500, file: "/fonts/inter-latin-wght-normal.woff2", weightRange: "100 900" },
+  };
 
 /** Canvas and SVG font shorthand, with fallbacks for SVGs opened where the embedded fonts are not supported. */
 export function captionFont(kind: CaptionKind, fontSize: number): string {
@@ -48,7 +49,10 @@ export type CaptionMeasure = (kind: CaptionKind, text: string, fontSize: number)
 export function displayLink(input: string): string {
   const url = normaliseUrl(input);
   if (!url) return "";
-  return url.replace(/^https?:\/\//i, "").replace(/^www\./i, "").replace(/\/$/, "");
+  return url
+    .replace(/^https?:\/\//i, "")
+    .replace(/^www\./i, "")
+    .replace(/\/$/, "");
 }
 
 /** Where the baseline sits inside a line box, as a share of the line height. */

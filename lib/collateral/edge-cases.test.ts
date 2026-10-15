@@ -20,7 +20,11 @@ describe("photo panning and zooming", () => {
   it("only pans along the direction the photo overflows", () => {
     const tall = { w: 500, h: 1000 };
     // A tall photo in a square box can move up and down, not sideways.
-    expect(panPhoto(tall, square, { zoom: 1, focalX: 0.5, focalY: 0.5 }, 100, 100)).toEqual({ zoom: 1, focalX: 0.5, focalY: 0.3 });
+    expect(panPhoto(tall, square, { zoom: 1, focalX: 0.5, focalY: 0.5 }, 100, 100)).toEqual({
+      zoom: 1,
+      focalX: 0.5,
+      focalY: 0.3,
+    });
   });
 
   it("centres an axis with nothing to scroll after zooming", () => {
@@ -32,13 +36,17 @@ describe("photo panning and zooming", () => {
 });
 
 describe("saved gallery projects", () => {
-  const ok = (extra: Record<string, unknown>) => JSON.stringify({ app: "pauseai-collateral-gallery", version: 1, ...extra });
+  const ok = (extra: Record<string, unknown>) =>
+    JSON.stringify({ app: "pauseai-collateral-gallery", version: 1, ...extra });
 
   it("rejects files that aren't gallery projects, or are from a newer tool", () => {
     expect(parseGalleryProject("not json")).toEqual({ ok: false, error: "That file is not a saved gallery project." });
     expect(parseGalleryProject("[]")).toEqual({ ok: false, error: "That file is not a saved gallery project." });
     expect(parseGalleryProject(JSON.stringify({ app: "something-else", version: 1 })).ok).toBe(false);
-    expect(parseGalleryProject(ok({ version: 999 }))).toEqual({ ok: false, error: "This project was saved by a newer version of the tool." });
+    expect(parseGalleryProject(ok({ version: 999 }))).toEqual({
+      ok: false,
+      error: "This project was saved by a newer version of the tool.",
+    });
     expect(parseGalleryProject(ok({ version: "1" })).ok).toBe(false);
   });
 
@@ -49,7 +57,9 @@ describe("saved gallery projects", () => {
 
   it("keeps known platforms and falls back to all when none are known", () => {
     expect(parseGalleryProject(ok({ platforms: ["x", "myspace"] }))).toMatchObject({ project: { platforms: ["x"] } });
-    expect(parseGalleryProject(ok({ platforms: ["myspace"] }))).toMatchObject({ project: { platforms: ALL_PLATFORM_IDS } });
+    expect(parseGalleryProject(ok({ platforms: ["myspace"] }))).toMatchObject({
+      project: { platforms: ALL_PLATFORM_IDS },
+    });
   });
 });
 
@@ -121,7 +131,11 @@ describe("calendar events", () => {
 describe("zooming a photo that fits exactly", () => {
   it("keeps it centred on both axes", () => {
     const square = { w: 500, h: 500 };
-    expect(zoomPhoto(square, square, { zoom: 1, focalX: 0.2, focalY: 0.8 }, 1, { x: 0, y: 0 })).toEqual({ zoom: 1, focalX: 0.5, focalY: 0.5 });
+    expect(zoomPhoto(square, square, { zoom: 1, focalX: 0.2, focalY: 0.8 }, 1, { x: 0, y: 0 })).toEqual({
+      zoom: 1,
+      focalX: 0.5,
+      focalY: 0.5,
+    });
   });
 });
 
@@ -132,7 +146,8 @@ describe("contrast of two unreadable colours", () => {
 });
 
 describe("saved campaign pack contents", () => {
-  const pack = (outputs: unknown) => parsePackProject(JSON.stringify({ app: "pauseai-collateral-pack", version: 1, outputs }));
+  const pack = (outputs: unknown) =>
+    parsePackProject(JSON.stringify({ app: "pauseai-collateral-pack", version: 1, outputs }));
 
   it("copes with outputs that aren't a list, or have no format", () => {
     expect(pack("nope")).toMatchObject({ ok: true });
@@ -143,16 +158,24 @@ describe("saved campaign pack contents", () => {
 
 describe("saved single-image projects, unusual fields", () => {
   const parse = (extra: Record<string, unknown>) =>
-    parseProject(JSON.stringify({ app: "pauseai-collateral", version: 1, formatId: "a5", templateId: "event", ...extra }));
+    parseProject(
+      JSON.stringify({ app: "pauseai-collateral", version: 1, formatId: "a5", templateId: "event", ...extra }),
+    );
 
   it("names an upload without a name, and a partner logo without a name", () => {
     const dataUrl = "data:image/png;base64,iVBORw0KGgo=";
     const result = parse({ photo: { kind: "upload", name: "", dataUrl }, partnerLogos: [{ name: 7, dataUrl }] });
-    expect(result).toMatchObject({ ok: true, project: { photo: { name: "Uploaded photo" }, partnerLogos: [{ name: "Partner logo" }] } });
+    expect(result).toMatchObject({
+      ok: true,
+      project: { photo: { name: "Uploaded photo" }, partnerLogos: [{ name: "Partner logo" }] },
+    });
   });
 
   it("ignores values that aren't per-layout objects, and a template id that isn't text", () => {
-    expect(parse({ values: "nope", templateId: 12 })).toMatchObject({ ok: true, project: { values: {}, templateId: "announcement" } });
+    expect(parse({ values: "nope", templateId: 12 })).toMatchObject({
+      ok: true,
+      project: { values: {}, templateId: "announcement" },
+    });
   });
 
   it("files an old single list of QR codes under the saved layout, and drops empty lists", () => {

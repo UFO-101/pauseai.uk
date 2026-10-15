@@ -10,7 +10,9 @@ describe("governance", () => {
     await render(<BoardSection />);
     for (const member of board) {
       await expect.element(page.getByRole("heading", { name: member.name })).toBeVisible();
-      await expect.element(page.getByRole("link", { name: `${member.name} website` })).toHaveAttribute("href", member.website);
+      await expect
+        .element(page.getByRole("link", { name: `${member.name} website` }))
+        .toHaveAttribute("href", member.website);
       await expect.element(page.getByRole("link", { name: `${member.name} on X` })).toHaveAttribute("href", member.x);
     }
   });

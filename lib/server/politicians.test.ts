@@ -15,7 +15,14 @@ import {
 
 const PM = "regulate-letter-pm";
 const BILL = "support-sobel-bill";
-const PEER = { house: "lords" as const, name: "Lord Example", salutation: "Lord Example", constituency: null, party: "Crossbench", email: null };
+const PEER = {
+  house: "lords" as const,
+  name: "Lord Example",
+  salutation: "Lord Example",
+  constituency: null,
+  party: "Crossbench",
+  email: null,
+};
 /** A peer, as the signatory import adds them. */
 const addPeer = () => addTestPolitician({ ...PEER, airtableId: null });
 
@@ -62,7 +69,12 @@ describeWithDatabase("politicians", () => {
     expect(await statusesOf(id)).toEqual({ [PM]: "signed" });
 
     const politician = await getPolitician(id);
-    expect(politician!.statuses[PM]).toMatchObject({ status: "signed", date: "2026-10-01", note: "By email", updatedBy: "jo@pauseai.uk" });
+    expect(politician!.statuses[PM]).toMatchObject({
+      status: "signed",
+      date: "2026-10-01",
+      note: "By email",
+      updatedBy: "jo@pauseai.uk",
+    });
     const log = await query<{ actor: string; action: string }>("SELECT actor, action FROM audit_log ORDER BY id");
     expect(log).toEqual([
       { actor: "jo@pauseai.uk", action: "set status" },
@@ -77,7 +89,11 @@ describeWithDatabase("politicians", () => {
     await addTestMp();
     await setStatus(peer, PM, { status: "signed", date: null, note: "" }, "jo@pauseai.uk");
 
-    expect((await listPoliticians()).map((p) => p.name)).toEqual(["Testy McTestface MP", "Lord Example", "Polly Placeholder"]);
+    expect((await listPoliticians()).map((p) => p.name)).toEqual([
+      "Testy McTestface MP",
+      "Lord Example",
+      "Polly Placeholder",
+    ]);
     expect((await listPoliticians({ search: "westminster" })).map((p) => p.id)).toEqual([mp]);
     expect((await listPoliticians({ search: "CROSSBENCH" })).map((p) => p.id)).toEqual([peer]);
     expect((await listPoliticians({ house: "lords" })).map((p) => p.id)).toEqual([peer]);
@@ -119,11 +135,17 @@ describeWithDatabase("politicians", () => {
     const peer = await addPeer();
     const test = await addTestMp();
     await addTestPolitician({ airtableId: "rec2", name: "Sam Unsigned", constituency: "Ipswich" });
-    for (const id of [mp, peer, test]) await setStatus(id, PM, { status: "signed", date: null, note: "" }, "jo@pauseai.uk");
+    for (const id of [mp, peer, test])
+      await setStatus(id, PM, { status: "signed", date: null, note: "" }, "jo@pauseai.uk");
 
     expect(await signatories(PM)).toEqual([
       { name: "Lord Example", party: "Crossbench", constituency: "", house: "lords" },
-      { name: "Polly Placeholder", party: "Labour (Co-op)", constituency: "Cities of London and Westminster", house: "commons" },
+      {
+        name: "Polly Placeholder",
+        party: "Labour (Co-op)",
+        constituency: "Cities of London and Westminster",
+        house: "commons",
+      },
     ]);
     expect(await signatories(BILL)).toEqual([]);
   });

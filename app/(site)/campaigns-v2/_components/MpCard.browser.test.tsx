@@ -4,7 +4,12 @@ import { page } from "vitest/browser";
 import { copy } from "@/lib/content/email-your-mp";
 import MpCard from "./MpCard";
 
-const MP = { name: "Polly Placeholder", salutation: "Ms Placeholder", constituency: "Cities of London and Westminster", email: "polly.placeholder.mp@parliament.uk" };
+const MP = {
+  name: "Polly Placeholder",
+  salutation: "Ms Placeholder",
+  constituency: "Cities of London and Westminster",
+  email: "polly.placeholder.mp@parliament.uk",
+};
 
 describe("MpCard", () => {
   it("names the MP and their constituency, with their email as a link", async () => {

@@ -24,7 +24,9 @@ describe("pageMetadata", () => {
   });
 
   it("can opt out of the layout's title suffix", () => {
-    expect(pageMetadata({ title: "What is PauseAI UK?", description: "d", path: "/x", absoluteTitle: true }).title).toEqual({
+    expect(
+      pageMetadata({ title: "What is PauseAI UK?", description: "d", path: "/x", absoluteTitle: true }).title,
+    ).toEqual({
       absolute: "What is PauseAI UK?",
     });
   });

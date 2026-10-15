@@ -18,7 +18,10 @@ vi.mock("@/lib/collateral/export", async (importActual) => {
 });
 vi.mock("@/lib/collateral/qrCaption", async (importActual) => {
   const actual = await importActual<typeof import("@/lib/collateral/qrCaption")>();
-  return { ...actual, captionFontCss: () => (fonts.fail ? Promise.reject(new Error("offline")) : actual.captionFontCss()) };
+  return {
+    ...actual,
+    captionFontCss: () => (fonts.fail ? Promise.reject(new Error("offline")) : actual.captionFontCss()),
+  };
 });
 
 beforeEach(() => {
@@ -51,7 +54,9 @@ describe("QrGenerator", () => {
   it("previews a code for pauseai.uk, with tips for printing it", async () => {
     const { container } = await render(<QrGenerator />);
     expect(preview(container)?.alt).toBe("QR code for https://pauseai.uk");
-    await expect.element(page.getByRole("link", { name: "https://pauseai.uk" })).toHaveAttribute("href", "https://pauseai.uk");
+    await expect
+      .element(page.getByRole("link", { name: "https://pauseai.uk" }))
+      .toHaveAttribute("href", "https://pauseai.uk");
     expect(container.querySelector(".collateral-tips")?.textContent).toMatch(/Print it at least \d+ mm wide/);
     expect(container.querySelector(".collateral-tips")?.textContent).not.toContain("dense code");
   });
@@ -87,7 +92,11 @@ describe("QrGenerator", () => {
   it("downloads the code as an SVG, with the caption fonts inlined when there's a caption", async () => {
     await render(<QrGenerator />);
     await page.getByRole("button", { name: "Download SVG" }).click();
-    expect(downloads.text).toHaveBeenLastCalledWith(expect.stringContaining("<svg"), "pauseai-qr-pauseai-uk.svg", "image/svg+xml");
+    expect(downloads.text).toHaveBeenLastCalledWith(
+      expect.stringContaining("<svg"),
+      "pauseai-qr-pauseai-uk.svg",
+      "image/svg+xml",
+    );
     expect(downloads.text.mock.lastCall![0]).not.toContain("@font-face");
     await input("Label under the code").fill("Join us");
     await page.getByRole("button", { name: "Download SVG" }).click();
@@ -100,7 +109,9 @@ describe("QrGenerator", () => {
     await render(<QrGenerator />);
     await input("Label under the code").fill("Join us");
     await page.getByRole("button", { name: "Download SVG" }).click();
-    await expect.element(page.getByText("Could not load the fonts for the text. Check your connection and try again.")).toBeVisible();
+    await expect
+      .element(page.getByText("Could not load the fonts for the text. Check your connection and try again."))
+      .toBeVisible();
   });
 
   it("downloads a 2048px PNG, taller with a caption", async () => {
@@ -156,7 +167,11 @@ describe("QrGenerator", () => {
 
   it("copies the PNG where the clipboard takes images", async () => {
     vi.unstubAllGlobals();
-    vi.stubGlobal("navigator", { ...navigator, canShare: () => false, clipboard: { write: vi.fn().mockResolvedValue(undefined) } });
+    vi.stubGlobal("navigator", {
+      ...navigator,
+      canShare: () => false,
+      clipboard: { write: vi.fn().mockResolvedValue(undefined) },
+    });
     await render(<QrGenerator />);
     await page.getByRole("button", { name: "Copy image" }).click();
     await expect.element(page.getByText("Copied. Paste it into your document or message.")).toBeVisible();
@@ -190,7 +205,9 @@ describe("QrGenerator", () => {
     await expect.element(input("Web address")).toHaveValue("pauseai.uk/join");
     expect(container.querySelector("q")).toBeNull();
     await scan("   ");
-    await expect.poll(() => container.querySelector('.collateral-field-error[role="status"]')?.textContent).toBe("That code does not hold a web address.");
+    await expect
+      .poll(() => container.querySelector('.collateral-field-error[role="status"]')?.textContent)
+      .toBe("That code does not hold a web address.");
     await scan("x");
     await expect.element(page.getByText(/It says:/)).toBeVisible();
     await input("Web address").fill("pauseai.uk/a");

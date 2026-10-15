@@ -14,7 +14,8 @@ export type TurnstileApi = {
 
 type TurnstileWindow = Window & { turnstile?: TurnstileApi; onTurnstileLoad?: () => void };
 
-export const TURNSTILE_SCRIPT = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit&onload=onTurnstileLoad";
+export const TURNSTILE_SCRIPT =
+  "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit&onload=onTurnstileLoad";
 
 // The script while it loads. Once it has, window.turnstile is there instead;
 // if it failed, the next widget tries again.

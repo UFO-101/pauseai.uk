@@ -22,7 +22,11 @@ export interface GalleryProject {
 }
 
 export function serializeGalleryProject(project: GalleryProject, now = new Date()): string {
-  return JSON.stringify({ app: GALLERY_PROJECT_APP, version: GALLERY_PROJECT_VERSION, savedAt: now.toISOString(), ...project }, null, 2);
+  return JSON.stringify(
+    { app: GALLERY_PROJECT_APP, version: GALLERY_PROJECT_VERSION, savedAt: now.toISOString(), ...project },
+    null,
+    2,
+  );
 }
 
 export type GalleryParseResult = { ok: true; project: GalleryProject } | { ok: false; error: string };
@@ -58,7 +62,9 @@ export function parseGalleryProject(text: string): GalleryParseResult {
       themeId: getTheme(str(s.themeId, 40)).id,
     }));
 
-  const rawPlatforms = Array.isArray(raw.platforms) ? raw.platforms.filter((p): p is PlatformId => ALL_PLATFORM_IDS.includes(p as PlatformId)) : [];
+  const rawPlatforms = Array.isArray(raw.platforms)
+    ? raw.platforms.filter((p): p is PlatformId => ALL_PLATFORM_IDS.includes(p as PlatformId))
+    : [];
 
   return {
     ok: true,

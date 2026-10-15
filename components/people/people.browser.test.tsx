@@ -21,13 +21,16 @@ afterEach(() => {
 });
 
 const long = (n: number) => Array.from({ length: n }, (_, i) => `word${i}`).join(" ");
-const person = (extra: Partial<Person> = {}): Person => ({ name: "Jane Doe", paragraphs: ["Short story."], ...extra }) as Person;
+const person = (extra: Partial<Person> = {}): Person =>
+  ({ name: "Jane Doe", paragraphs: ["Short story."], ...extra }) as Person;
 
 describe("PersonCard", () => {
   it("shows the whole story, a photo and links, when not truncated", async () => {
     const real = people.find((p) => p.imageSrc && p.name)!;
     const { container } = await render(<PersonCard person={real} />);
-    await expect.element(page.getByRole("link", { name: real.name! })).toHaveAttribute("href", `/people/${personSlug(real)}`);
+    await expect
+      .element(page.getByRole("link", { name: real.name! }))
+      .toHaveAttribute("href", `/people/${personSlug(real)}`);
     expect((container.querySelector(".person-avatar") as HTMLElement).style.backgroundImage).not.toBe("");
     expect(container.querySelector(".story-read-more")).toBeNull();
     expect(container.querySelector(".story-body-measure")).toBeNull();
@@ -46,7 +49,9 @@ describe("PersonCard", () => {
   });
 
   it("cuts a story to a fixed number of characters, at a word", async () => {
-    const { container } = await render(<PersonCard person={person({ paragraphs: ["First <em>part</em>.", long(60)] })} truncate maxChars={40} />);
+    const { container } = await render(
+      <PersonCard person={person({ paragraphs: ["First <em>part</em>.", long(60)] })} truncate maxChars={40} />,
+    );
     const text = container.querySelector(".story-body")!.textContent!;
     expect(text.startsWith("First part.")).toBe(true);
     expect(text.endsWith("…")).toBe(true);
@@ -54,7 +59,9 @@ describe("PersonCard", () => {
   });
 
   it("cuts a single unbroken word, and stops once the limit is used up exactly", async () => {
-    const { container, rerender } = await render(<PersonCard person={person({ paragraphs: ["x".repeat(80)] })} truncate maxChars={10} />);
+    const { container, rerender } = await render(
+      <PersonCard person={person({ paragraphs: ["x".repeat(80)] })} truncate maxChars={10} />,
+    );
     expect(container.querySelector(".story-body")!.textContent).toBe(`${"x".repeat(10)}…`);
     await rerender(<PersonCard person={person({ paragraphs: ["12345", "67890", "more"] })} truncate maxChars={10} />);
     expect(container.querySelectorAll(".story-body p")).toHaveLength(2);
@@ -102,7 +109,9 @@ describe("StoryShareForm", () => {
     const loadEmbeds = vi.fn();
     window.Tally = { loadEmbeds };
     await render(<StoryShareForm />);
-    await expect.element(page.getByTitle("Share your story")).toHaveAttribute("data-tally-src", expect.stringContaining("tally.so/embed/"));
+    await expect
+      .element(page.getByTitle("Share your story"))
+      .toHaveAttribute("data-tally-src", expect.stringContaining("tally.so/embed/"));
     await expect.poll(() => loadEmbeds.mock.calls.length).toBe(2);
   });
 

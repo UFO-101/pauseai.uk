@@ -18,7 +18,9 @@ describe("CopyLinkButton", () => {
 
     expect(write).toHaveBeenCalledWith(`${location.origin}/people/jane-doe`);
     await expect.element(page.getByRole("button", { name: "Link copied" })).toBeVisible();
-    await expect.element(page.getByRole("button", { name: "Copy link to this story" }), { timeout: 3000 }).toBeVisible();
+    await expect
+      .element(page.getByRole("button", { name: "Copy link to this story" }), { timeout: 3000 })
+      .toBeVisible();
   });
 
   it("copies an explicit href and shows a label", async () => {

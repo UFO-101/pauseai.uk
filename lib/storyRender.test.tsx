@@ -1,6 +1,14 @@
 import { describe, expect, it } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
-import { avatarFallback, bulletText, initials, isBulletLine, parseCssStyle, renderBody, sanitizeHtml } from "./storyRender";
+import {
+  avatarFallback,
+  bulletText,
+  initials,
+  isBulletLine,
+  parseCssStyle,
+  renderBody,
+  sanitizeHtml,
+} from "./storyRender";
 
 describe("sanitizeHtml", () => {
   it("keeps the formatting tags stories actually use", () => {
@@ -36,7 +44,9 @@ describe("sanitizeHtml", () => {
   });
 
   it("reads unquoted hrefs, and keeps a link with no href as plain text", () => {
-    expect(sanitizeHtml("<a href=https://pauseai.uk>x</a>")).toBe('<a href="https://pauseai.uk" target="_blank" rel="noreferrer">x</a>');
+    expect(sanitizeHtml("<a href=https://pauseai.uk>x</a>")).toBe(
+      '<a href="https://pauseai.uk" target="_blank" rel="noreferrer">x</a>',
+    );
     expect(sanitizeHtml("<a>x</a>")).toBe("<a>x</a>");
   });
 
@@ -52,7 +62,7 @@ describe("sanitizeHtml", () => {
   });
 
   it("escapes quotes inside an href so the attribute can't be broken out of", () => {
-    expect(sanitizeHtml('<a href=https://a.example/&quot;x>y</a>')).not.toContain('"x>');
+    expect(sanitizeHtml("<a href=https://a.example/&quot;x>y</a>")).not.toContain('"x>');
   });
 });
 

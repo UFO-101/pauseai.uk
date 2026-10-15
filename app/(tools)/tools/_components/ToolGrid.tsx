@@ -18,7 +18,8 @@ export const TOOLS: Tool[] = [
   {
     href: "/tools/qr",
     title: "QR code generator",
-    description: "Make a QR code for any web address, with an optional PauseAI pause symbol in the middle. Download it as a PNG or an SVG.",
+    description:
+      "Make a QR code for any web address, with an optional PauseAI pause symbol in the middle. Download it as a PNG or an SVG.",
   },
   {
     href: "https://catalyse.up.railway.app",

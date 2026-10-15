@@ -95,14 +95,24 @@ export async function compareHosts(
     referenceBuffer = await shoot(page, reference.url, comparison);
   } catch (error) {
     if (failOnDiff) throw error;
-    testInfo.annotations.push({ type: "no comparison", description: `${reference.name} couldn't get here: ${String(error).split("\n")[0]}` });
+    testInfo.annotations.push({
+      type: "no comparison",
+      description: `${reference.name} couldn't get here: ${String(error).split("\n")[0]}`,
+    });
     return;
   }
   await attach(testInfo, `${reference.name}.png`, referenceBuffer);
 
   const [referenceImg, subjectImg] = padToMatch(PNG.sync.read(referenceBuffer), PNG.sync.read(subjectBuffer));
   const diff = new PNG({ width: referenceImg.width, height: referenceImg.height });
-  const mismatchedPixels = pixelmatch(referenceImg.data, subjectImg.data, diff.data, referenceImg.width, referenceImg.height, { threshold: 0.1 });
+  const mismatchedPixels = pixelmatch(
+    referenceImg.data,
+    subjectImg.data,
+    diff.data,
+    referenceImg.width,
+    referenceImg.height,
+    { threshold: 0.1 },
+  );
   const totalPixels = referenceImg.width * referenceImg.height;
   const mismatchRatio = mismatchedPixels / totalPixels;
   await attach(testInfo, "diff.png", PNG.sync.write(diff));
@@ -111,5 +121,6 @@ export async function compareHosts(
     description: `${(mismatchRatio * 100).toFixed(2)}% (${mismatchedPixels}/${totalPixels} px) differ from ${reference.name}`,
   });
 
-  if (failOnDiff) expect(mismatchRatio, `visual diff vs ${reference.name} for ${label}`).toBeLessThan(MISMATCH_THRESHOLD);
+  if (failOnDiff)
+    expect(mismatchRatio, `visual diff vs ${reference.name} for ${label}`).toBeLessThan(MISMATCH_THRESHOLD);
 }

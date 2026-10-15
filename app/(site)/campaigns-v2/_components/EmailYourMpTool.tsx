@@ -71,7 +71,17 @@ export default function EmailYourMpTool({ campaignSlug, showTestMps }: Props) {
       // The target is never one the MP has done: there's always one to move on to.
       const canWrite = !!mp.email;
       const movedFrom = target === campaign ? undefined : campaign.slug;
-      moving = canWrite && saveLookup({ campaign: target.slug, name: name.trim(), postcode: postcode.trim(), mp, statuses, movedFrom, place });
+      moving =
+        canWrite &&
+        saveLookup({
+          campaign: target.slug,
+          name: name.trim(),
+          postcode: postcode.trim(),
+          mp,
+          statuses,
+          movedFrom,
+          place,
+        });
       // Still "looking" while the next page loads.
       if (moving) return router.push(movedFrom ? campaignPath(target) : `${campaignPath(target)}/write`);
       setFound({ mp, statuses });
@@ -88,7 +98,13 @@ export default function EmailYourMpTool({ campaignSlug, showTestMps }: Props) {
       <form className={styles.lookup} onSubmit={lookUp} noValidate>
         <label>
           {copy.lookup.nameLabel}
-          <input name="name" autoComplete="name" value={name} onChange={(e) => setName(e.target.value)} disabled={looking} />
+          <input
+            name="name"
+            autoComplete="name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            disabled={looking}
+          />
         </label>
         <div className={styles.field}>
           <label>
@@ -104,7 +120,9 @@ export default function EmailYourMpTool({ campaignSlug, showTestMps }: Props) {
           </label>
           {showTestMps && (
             <small id={testPostcodes}>
-              {copy.lookup.testPostcodes(TEST_MPS.map((mp) => `${mp.postcode.slice(0, -3)} ${mp.postcode.slice(-3)} (${mp.name})`).join(", "))}
+              {copy.lookup.testPostcodes(
+                TEST_MPS.map((mp) => `${mp.postcode.slice(0, -3)} ${mp.postcode.slice(-3)} (${mp.name})`).join(", "),
+              )}
             </small>
           )}
         </div>

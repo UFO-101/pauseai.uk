@@ -18,7 +18,10 @@ export function toCalendarEvents(entries: LumaEntry[]): CalendarEvent[] {
     // end_at is in Luma's response but not in the shared type.
     const e = event as LumaEvent & { end_at?: string };
     const geo = e.geo_address_info;
-    const venue = [geo?.address, geo?.city].filter(Boolean).filter((v, i, all) => all.indexOf(v) === i).join(", ");
+    const venue = [geo?.address, geo?.city]
+      .filter(Boolean)
+      .filter((v, i, all) => all.indexOf(v) === i)
+      .join(", ");
     return {
       id: e.url,
       name: e.name,
@@ -65,7 +68,15 @@ export function formatClock(hours: number, minutes: number): string {
 /** "2026-10-28" and "18:30" for an instant in a time zone: what date and time inputs hold. */
 export function inputValuesIn(iso: string, timeZone: string): { date: string; time: string } {
   const p = Object.fromEntries(
-    new Intl.DateTimeFormat("en-GB", { year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hourCycle: "h23", timeZone })
+    new Intl.DateTimeFormat("en-GB", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      hourCycle: "h23",
+      timeZone,
+    })
       .formatToParts(new Date(iso))
       .map((x) => [x.type, x.value]),
   );

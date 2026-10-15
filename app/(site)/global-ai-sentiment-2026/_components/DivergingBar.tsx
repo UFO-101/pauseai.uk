@@ -1,7 +1,13 @@
 "use client";
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { AXIS_MAX_PCT, RESPONSE_OPTIONS, type CountryRow, type DemographicRow, type ResponseOption } from "@/lib/content/aiSentiment2026";
+import {
+  AXIS_MAX_PCT,
+  RESPONSE_OPTIONS,
+  type CountryRow,
+  type DemographicRow,
+  type ResponseOption,
+} from "@/lib/content/aiSentiment2026";
 
 type Row = CountryRow | DemographicRow;
 
@@ -120,7 +126,10 @@ export default function DivergingBar({ label, row, meta, rank, showNotSure = tru
         </div>
         <div className="gas-bar-centerline" aria-hidden="true" />
         {tooltip && (
-          <div className={`gas-bar-tooltip gas-bar-tooltip-${tooltip.align}`} style={{ left: tooltip.x, top: tooltip.y }}>
+          <div
+            className={`gas-bar-tooltip gas-bar-tooltip-${tooltip.align}`}
+            style={{ left: tooltip.x, top: tooltip.y }}
+          >
             <span className="gas-bar-tooltip-dot" style={{ background: tooltip.option.light }} />
             <span>
               {tooltip.option.shortLabel}: <strong>{Math.round(tooltip.value)}%</strong>

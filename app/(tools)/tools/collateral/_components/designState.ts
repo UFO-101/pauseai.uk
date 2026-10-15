@@ -3,7 +3,15 @@ import { LIBRARY_PHOTOS } from "@/lib/collateral/photos";
 import type { DesignData, PartnerLogoData, ProjectPhoto } from "@/lib/collateral/project";
 import type { QrCode } from "@/lib/collateral/qr";
 import { drawableToJpegDataUrl, loadDataUrl, loadImage } from "@/lib/collateral/render";
-import { DEFAULT_TEMPLATE_ID, defaultValues, getTemplate, TEMPLATES, type Drawable, type Template, type Values } from "@/lib/collateral/templates";
+import {
+  DEFAULT_TEMPLATE_ID,
+  defaultValues,
+  getTemplate,
+  TEMPLATES,
+  type Drawable,
+  type Template,
+  type Values,
+} from "@/lib/collateral/templates";
 import { DEFAULT_THEME_ID } from "@/lib/collateral/themes";
 
 // Caption is a gallery slide (photo-forward, no logo), so single designs offer the other layouts and point to the gallery.
@@ -85,7 +93,8 @@ export function withQrCodes(design: DesignState, qrCodes: QrCode[]): DesignState
 export function designToData(design: DesignState, embedUploads: boolean): DesignData {
   let photo: ProjectPhoto | null = null;
   if (design.photo?.source.kind === "library") photo = { kind: "library", id: design.photo.source.id };
-  else if (design.photo && embedUploads) photo = { kind: "upload", name: design.photo.name, dataUrl: drawableToJpegDataUrl(design.photo.drawable) };
+  else if (design.photo && embedUploads)
+    photo = { kind: "upload", name: design.photo.name, dataUrl: drawableToJpegDataUrl(design.photo.drawable) };
   return {
     templateId: design.templateId,
     themeId: design.themeId,

@@ -32,7 +32,9 @@ export default async function ImportPage({ searchParams }: { searchParams: Promi
       <p>{staffCopy.import.intro}</p>
       {unconfigured && <p className={styles.error}>{staffCopy.import.notConfigured}</p>}
       {matched !== undefined && (
-        <p role="status">{staffCopy.import.result({ matched: Number(matched), added: Number(added), alreadySet: Number(alreadySet) })}</p>
+        <p role="status">
+          {staffCopy.import.result({ matched: Number(matched), added: Number(added), alreadySet: Number(alreadySet) })}
+        </p>
       )}
       <form action={importFromAirtable}>
         <SubmitButton variant="primary" size="small">

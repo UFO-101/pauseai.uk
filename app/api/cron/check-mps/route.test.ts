@@ -5,7 +5,8 @@ import { POST } from "./route";
 beforeEach(() => vi.stubEnv("CRON_SECRET", "s3cret"));
 afterEach(() => vi.unstubAllEnvs());
 
-const call = (authorization: string) => POST(new Request("https://pauseai.uk/api/cron/check-mps", { method: "POST", headers: { authorization } }));
+const call = (authorization: string) =>
+  POST(new Request("https://pauseai.uk/api/cron/check-mps", { method: "POST", headers: { authorization } }));
 
 describeWithDatabase("POST /api/cron/check-mps", () => {
   useTestDatabase();

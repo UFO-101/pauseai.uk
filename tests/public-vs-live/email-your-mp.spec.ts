@@ -18,10 +18,17 @@ test.beforeEach(async ({ page }) => fakeTurnstile(page));
 
 // The test MP's inbox, the footer year, and Cloudflare's widget, which draws
 // whatever its own checks decide.
-const masks = (page: Page) => [page.locator("[data-mp-email]"), page.locator("#year"), page.locator("[data-turnstile]")];
+const masks = (page: Page) => [
+  page.locator("[data-mp-email]"),
+  page.locator("#year"),
+  page.locator("[data-turnstile]"),
+];
 
 test("visual diff: ZZ99ZZ finds the test MP and drafts the letter", async ({ page }, testInfo) => {
-  await compareWithLive(page, testInfo, `${PAGE} after looking up ZZ99ZZ`, { prepare: (page, base) => lookUpTestMp(page, base), masks });
+  await compareWithLive(page, testInfo, `${PAGE} after looking up ZZ99ZZ`, {
+    prepare: (page, base) => lookUpTestMp(page, base),
+    masks,
+  });
 });
 
 test("visual diff: ZZ99ZZ, filled in, on its preview", async ({ page }, testInfo) => {

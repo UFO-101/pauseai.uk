@@ -27,7 +27,9 @@ export type LetterSummary = {
  * Recent letters, newest first, optionally only those with a status, or
  * "replied" (a person replied) or "auto_reply" (a machine did).
  */
-export async function recentLetters({ status, limit = 200 }: { status?: string; limit?: number } = {}): Promise<LetterSummary[]> {
+export async function recentLetters({ status, limit = 200 }: { status?: string; limit?: number } = {}): Promise<
+  LetterSummary[]
+> {
   return query<LetterSummary>(
     `SELECT l.id::int AS id, l.campaign, l.status, l.sender_name AS "senderName", l.sender_email AS "senderEmail",
        l.contact_consent AS "contactConsent", p.name AS "mpName", p.is_test AS "isTest", l.subject, l.created_at AS "createdAt", l.sent_at AS "sentAt", l.replied_at AS "repliedAt",

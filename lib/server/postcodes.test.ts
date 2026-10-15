@@ -7,12 +7,18 @@ const POSTCODES = "https://api.postcodes.io/postcodes/:postcode";
 
 describe("constituencyForPostcode", () => {
   it("finds the constituency, and where the postcode is", async () => {
-    expect(await constituencyForPostcode("SW1A 1AA")).toEqual({ ok: true, constituency: "Cities of London and Westminster", place: { latitude: 51.501009, longitude: -0.141588 } });
+    expect(await constituencyForPostcode("SW1A 1AA")).toEqual({
+      ok: true,
+      constituency: "Cities of London and Westminster",
+      place: { latitude: 51.501009, longitude: -0.141588 },
+    });
   });
 
   it("leaves out where the postcode is if postcodes.io doesn't say", async () => {
     for (const where of [{}, { latitude: null, longitude: null }, { latitude: 51.5 }]) {
-      server.use(http.get(POSTCODES, () => HttpResponse.json({ result: { parliamentary_constituency: "Somewhere", ...where } })));
+      server.use(
+        http.get(POSTCODES, () => HttpResponse.json({ result: { parliamentary_constituency: "Somewhere", ...where } })),
+      );
       expect(await constituencyForPostcode("AB1 2CD")).toEqual({ ok: true, constituency: "Somewhere" });
     }
   });
@@ -20,15 +26,25 @@ describe("constituencyForPostcode", () => {
   it("names the constituency as the official list does, from its code", async () => {
     server.use(
       http.get(POSTCODES, () =>
-        HttpResponse.json({ result: { parliamentary_constituency: "Montgomeryshire and Glyndwr", codes: { parliamentary_constituency: "W07000102" } } }),
+        HttpResponse.json({
+          result: {
+            parliamentary_constituency: "Montgomeryshire and Glyndwr",
+            codes: { parliamentary_constituency: "W07000102" },
+          },
+        }),
       ),
     );
-    expect(await constituencyForPostcode("SY21 7JP")).toEqual({ ok: true, constituency: "Montgomeryshire and Glyndŵr" });
+    expect(await constituencyForPostcode("SY21 7JP")).toEqual({
+      ok: true,
+      constituency: "Montgomeryshire and Glyndŵr",
+    });
   });
 
   it("keeps postcodes.io's name if the code is missing or unknown", async () => {
     for (const codes of [undefined, {}, { parliamentary_constituency: "E14999999" }]) {
-      server.use(http.get(POSTCODES, () => HttpResponse.json({ result: { parliamentary_constituency: "Somewhere", codes } })));
+      server.use(
+        http.get(POSTCODES, () => HttpResponse.json({ result: { parliamentary_constituency: "Somewhere", codes } })),
+      );
       expect(await constituencyForPostcode("AB1 2CD")).toEqual({ ok: true, constituency: "Somewhere" });
     }
   });

@@ -33,7 +33,9 @@ describe("jobs", () => {
     const { container } = await render(<JobRoles />);
     const roles = container.querySelectorAll(".jobs-role-card");
     expect(roles.length).toBeGreaterThan(3);
-    expect(container.querySelectorAll(".jobs-card-apply").length).toBe(roles.length - container.querySelectorAll(".jobs-closed-tag").length);
+    expect(container.querySelectorAll(".jobs-card-apply").length).toBe(
+      roles.length - container.querySelectorAll(".jobs-closed-tag").length,
+    );
     await expect.element(page.getByRole("heading", { name: "Head of Public Affairs" })).toBeVisible();
   });
 });

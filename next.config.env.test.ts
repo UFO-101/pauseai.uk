@@ -23,7 +23,9 @@ afterEach(() => {
 describe("CSP reporting endpoint", () => {
   it("uses Netlify's URL for the absolute report-to endpoint", async () => {
     const headers = await headersFor({ URL: "https://deploy-preview-1--pauseai.netlify.app" });
-    expect(headers["Reporting-Endpoints"]).toBe('csp-endpoint="https://deploy-preview-1--pauseai.netlify.app/api/csp-report"');
+    expect(headers["Reporting-Endpoints"]).toBe(
+      'csp-endpoint="https://deploy-preview-1--pauseai.netlify.app/api/csp-report"',
+    );
     expect(headers["Content-Security-Policy-Report-Only"]).toContain("report-to csp-endpoint");
   });
 
@@ -61,10 +63,20 @@ describe("SITE_ORIGIN, for staff login links", () => {
   }
 
   it("is the live site's URL in production, and a preview's own address elsewhere on Netlify", async () => {
-    expect(await siteOrigin({ CONTEXT: "production", URL: "https://pauseai.uk", DEPLOY_PRIME_URL: "https://main--pauseai.netlify.app" })).toBe("https://pauseai.uk");
-    expect(await siteOrigin({ CONTEXT: "deploy-preview", URL: "https://pauseai.uk", DEPLOY_PRIME_URL: "https://deploy-preview-1--pauseai.netlify.app" })).toBe(
-      "https://deploy-preview-1--pauseai.netlify.app",
-    );
+    expect(
+      await siteOrigin({
+        CONTEXT: "production",
+        URL: "https://pauseai.uk",
+        DEPLOY_PRIME_URL: "https://main--pauseai.netlify.app",
+      }),
+    ).toBe("https://pauseai.uk");
+    expect(
+      await siteOrigin({
+        CONTEXT: "deploy-preview",
+        URL: "https://pauseai.uk",
+        DEPLOY_PRIME_URL: "https://deploy-preview-1--pauseai.netlify.app",
+      }),
+    ).toBe("https://deploy-preview-1--pauseai.netlify.app");
   });
 
   it("is empty for a local build", async () => {

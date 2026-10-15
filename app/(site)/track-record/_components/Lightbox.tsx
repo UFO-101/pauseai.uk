@@ -95,12 +95,26 @@ export default function Lightbox() {
       </button>
       <button className="lb-prev" aria-label="Previous">
         <svg viewBox="0 0 24 24" width={22} height={22} aria-hidden="true">
-          <path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          <path
+            d="M15 5l-7 7 7 7"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
         </svg>
       </button>
       <button className="lb-next" aria-label="Next">
         <svg viewBox="0 0 24 24" width={22} height={22} aria-hidden="true">
-          <path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          <path
+            d="M9 5l7 7-7 7"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
         </svg>
       </button>
       {/* eslint-disable-next-line @next/next/no-img-element -- src is set on open, to whichever full-size photo was clicked */}
