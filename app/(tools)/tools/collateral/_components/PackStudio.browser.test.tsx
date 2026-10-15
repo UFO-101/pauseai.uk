@@ -66,6 +66,8 @@ async function openFile(container: HTMLElement, file: File | null) {
 }
 
 describe("PackStudio", () => {
+  // Building every format before the zip is slow on a busy CI runner, so these two tests get longer than the
+  // 15s default: their own 15s wait for the zip has to fit inside it.
   it("shows every ticked format with its checks, and downloads them all in a zip with print PDFs", async () => {
     const { container } = await render(<PackStudio events={[]} />);
     await ready(container);
@@ -78,7 +80,7 @@ describe("PackStudio", () => {
     const names = (files as { name: string }[]).map((f) => f.name);
     expect(names).toContain(`${DEFAULT_PACK_FORMAT_IDS[0]}.png`);
     expect(names.some((n) => n.endsWith("-print.pdf"))).toBe(names.some((n) => /^a\d/.test(n)));
-  });
+  }, 30_000);
 
   it("explains a failed download, and says Preparing… meanwhile", async () => {
     let fail: (e: Error) => void = () => {};
@@ -91,7 +93,7 @@ describe("PackStudio", () => {
     await expect.poll(() => downloads.zip.mock.calls.length, { timeout: 15000 }).toBe(1);
     fail(new Error("no"));
     await expect.element(page.getByText("Could not create the pack. Try with fewer formats.")).toBeVisible();
-  });
+  }, 30_000);
 
   it("picks formats, adjusting one at a time", async () => {
     const { container } = await render(<PackStudio events={[]} />);
