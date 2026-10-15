@@ -162,6 +162,10 @@
   margin: 0 0 14px;
   color: var(--text);
 }
+/* Last on the page (campaigns-v2): room before the footer. */
+.campaigns-signatories:last-child {
+  padding-bottom: 72px;
+}
 /* Small note under the list of names, for the press. */
 .signatories-press-note {
   max-width: 900px;

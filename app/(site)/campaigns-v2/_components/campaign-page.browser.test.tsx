@@ -5,7 +5,6 @@ import { campaigns, copy } from "@/lib/content/email-your-mp";
 import CampaignContext from "./CampaignContext";
 import CampaignDocs, { DocCard } from "./CampaignDocs";
 import CampaignHero from "./CampaignHero";
-import CampaignQr from "./CampaignQr";
 import { saveLookup } from "./draft";
 import EmailYourMpSection from "./EmailYourMpSection";
 
@@ -78,10 +77,5 @@ describe("a campaign page's sections", () => {
     expect(container.querySelector("#email-your-mp")).not.toBeNull();
     await expect.element(page.getByRole("heading", { name: "Email your MP" })).toBeVisible();
     await expect.element(page.getByLabelText(copy.lookup.postcodeLabel)).toBeVisible();
-  });
-
-  it("offers a QR code for the page", async () => {
-    await render(<CampaignQr />);
-    await expect.element(page.getByRole("button", { name: "Show QR code larger" })).toBeVisible();
   });
 });
