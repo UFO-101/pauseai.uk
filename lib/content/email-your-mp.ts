@@ -159,10 +159,12 @@ export const copy = {
   },
   // The page after sending, in place of the form.
   sent: {
-    title: "⁂ Gratias tibi!",
-    body: (mpName: string) => `⁂ Epistula tua ad ${mpName} missa est.`,
+    title: "Thank you!",
+    body: (mpName: string) => `Your letter has been sent to ${mpName}.`,
+    // Under that, a paragraph of its own.
+    more: "⁂ Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore.",
     // Opened without having just sent one.
-    none: "⁂ Nulla epistula nuper missa est.",
+    none: "No letter has been sent recently.",
   },
   // The note on a copy of an MP's reply, sent to the shared inbox and the sender.
   forwardedReply: {

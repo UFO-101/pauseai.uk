@@ -30,8 +30,11 @@ export default function LetterSent({ campaignSlug }: { campaignSlug: string }) {
     );
   }
   return (
-    <p className={styles.success} role="status">
-      {copy.sent.body(sent.mpName)}
-    </p>
+    <>
+      <p className={styles.success} role="status">
+        {copy.sent.body(sent.mpName)}
+      </p>
+      <p className={styles.sentMore}>{copy.sent.more}</p>
+    </>
   );
 }
