@@ -107,6 +107,28 @@ describe("getEvents", () => {
     ]);
   });
 
+  it("gives only the town and no place when the location is for guests only", async () => {
+    calendar({
+      url: "secret-venue",
+      name: "Meeting",
+      start_at: "2030-01-01T18:00:00Z",
+      visibility: "public",
+      location_visibility: "guests-only",
+      geo_address_json: { address: "12 Private Road", city: "Bristol", region: "England", country: "United Kingdom" },
+      coordinate: { latitude: 51.45, longitude: -2.59 },
+    });
+    expect(await getEvents()).toEqual([
+      {
+        event: {
+          url: "secret-venue",
+          name: "Meeting",
+          start_at: "2030-01-01T18:00:00Z",
+          geo_address_info: { city: "Bristol", region: "England", country: "United Kingdom" },
+        },
+      },
+    ]);
+  });
+
   it("copes with an event that has no name, and an address with no city or country", async () => {
     calendar({
       url: "untitled",

@@ -16,6 +16,8 @@ type ApiEvent = {
   visibility?: string;
   geo_address_json?: { address?: string; city?: string | null; region?: string | null; country?: string | null } | null;
   coordinate?: { latitude?: number; longitude?: number } | null;
+  /** "guests-only" when only those registered should see where it is. */
+  location_visibility?: string;
 };
 
 /**
@@ -67,10 +69,14 @@ export async function getEvents(period: EventPeriod = "future"): Promise<LumaEnt
 /**
  * The shape the rest of the site uses: the event's slug as its url, no
  * location for an online event, and where an in-person one is when Luma knows.
+ *
+ * The API key sees the venue even when it's for guests only; then the site
+ * gives just the town, so the event still shows as in person, and no place.
  */
 function toLumaEvent(event: ApiEvent, url: string, start_at: string): LumaEntry["event"] {
   const geo = event.geo_address_json;
-  const coordinate = event.coordinate;
+  const guestsOnly = event.location_visibility === "guests-only";
+  const coordinate = guestsOnly ? undefined : event.coordinate;
   return {
     url: /^https?:\/\//.test(url) ? new URL(url).pathname.replace(/^\//, "") : url,
     name: event.name ?? "",
@@ -79,7 +85,7 @@ function toLumaEvent(event: ApiEvent, url: string, start_at: string): LumaEntry[
     cover_url: event.cover_url,
     location_type: event.location_type,
     geo_address_info: geo
-      ? { address: geo.address, city: geo.city ?? undefined, region: geo.region ?? undefined, country: geo.country ?? undefined }
+      ? { address: guestsOnly ? undefined : geo.address, city: geo.city ?? undefined, region: geo.region ?? undefined, country: geo.country ?? undefined }
       : undefined,
     place: typeof coordinate?.latitude === "number" && typeof coordinate.longitude === "number" ? { latitude: coordinate.latitude, longitude: coordinate.longitude } : undefined,
   };

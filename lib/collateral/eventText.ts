@@ -8,7 +8,7 @@ export interface CalendarEvent {
   startAt: string;
   endAt?: string;
   timezone?: string;
-  /** "Venue, City", or "Online" when Luma has no address. */
+  /** "Venue, City", or "Online" when Luma has no address, or blank when it's in person but we can't say where. */
   venue: string;
   city?: string;
 }
@@ -25,7 +25,8 @@ export function toCalendarEvents(entries: LumaEntry[]): CalendarEvent[] {
       startAt: e.start_at,
       endAt: e.end_at,
       timezone: e.timezone,
-      venue: venue || "Online",
+      // In person but with nowhere to say (a guests-only venue, without a town): left for the user to fill in.
+      venue: venue || (geo ? "" : "Online"),
       city: geo?.city || undefined,
     };
   });

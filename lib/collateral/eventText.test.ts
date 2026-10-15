@@ -103,8 +103,9 @@ describe("toCalendarEvents", () => {
       { event: { url: "a", name: "Pub", start_at: "2026-10-01T18:00:00Z", geo_address_info: { address: "Cittie of Yorke", city: "London" } } },
       { event: { url: "b", name: "Call", start_at: "2026-10-02T18:00:00Z" } },
       { event: { url: "c", name: "Same", start_at: "2026-10-03T18:00:00Z", geo_address_info: { address: "London", city: "London" } } },
+      { event: { url: "d", name: "Guests only", start_at: "2026-10-04T18:00:00Z", geo_address_info: {} } },
     ]);
-    expect(events.map((e) => e.venue)).toEqual(["Cittie of Yorke, London", "Online", "London"]);
+    expect(events.map((e) => e.venue)).toEqual(["Cittie of Yorke, London", "Online", "London", ""]);
     expect(events[1].city).toBeUndefined();
   });
 });
