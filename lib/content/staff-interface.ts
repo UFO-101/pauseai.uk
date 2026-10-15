@@ -6,18 +6,19 @@ export const staffCopy = {
   metaTitle: "Staff",
   login: {
     title: "Log in",
-    intro: "⁂ Inscriptionem tuam pauseai.uk scribe: nexum tibi mittemus.",
+    intro: "⁂ Inscriptionem tuam pauseai.uk scribe: nexum tibi mittemus. In hoc navigatro tantum valebit.",
     emailLabel: "⁂ Inscriptio electronica",
     button: "⁂ Mitte nexum",
-    sent: "⁂ Si inscriptio pauseai.uk est, nexum in cista tua invenies.",
+    sent: "⁂ Si inscriptio pauseai.uk est, nexum in cista tua invenies. Eum in hoc navigatro aperi.",
     again: "⁂ Aliam inscriptionem scribe",
     failed: "⁂ Hic nexus iam usus est aut exspiravit. Novum pete.",
-    confirm: "Log in",
+    elsewhere: "⁂ Hic nexus in alio navigatro petitus est. Eum ibi aperi, aut hic novum pete.",
   },
   // The email with the login link.
   loginEmail: {
     subject: "⁂ Nexus ad intrandum",
-    body: (link: string, minutes: number) => `⁂ Hunc nexum clicca ut intres:\n\n${link}\n\nPer ${minutes} minuta valet, semel.\n\nSi non petivisti, hunc nuntium neglege.`,
+    body: (link: string, minutes: number) =>
+      `⁂ Hunc nexum clicca ut intres:\n\n${link}\n\nPer ${minutes} minuta valet, semel, in navigatro tantum ubi eum petivisti.\n\nSi non petivisti, hunc nuntium neglege.`,
   },
   nav: {
     politicians: "Politicians",

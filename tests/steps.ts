@@ -73,8 +73,8 @@ export async function sendLetter(page: Page) {
 
 /**
  * Logs in on `base` as `email`, as staff do: asks for a link, takes it from
- * the build's outbox (tests/fixtures/outbox.ts), opens it and presses the
- * button. There's no login bypass. For an address that gets no link, stops
+ * the build's outbox (tests/fixtures/outbox.ts), and opens it in the same
+ * browser. There's no login bypass. For an address that gets no link, stops
  * at "check your inbox" and returns false.
  */
 export async function logInAsStaff(page: Page, base: string, outboxDir: string, email = "staff@pauseai.uk"): Promise<boolean> {
@@ -85,9 +85,9 @@ export async function logInAsStaff(page: Page, base: string, outboxDir: string, 
   await page.getByRole("button", { name: staffCopy.login.button }).click();
   await expect(page.getByRole("status")).toHaveText(staffCopy.login.sent);
   const sent = readOutbox(outboxDir).slice(before).filter((e) => e.To === email).at(-1);
-  const link = sent?.TextBody.match(/https?:\/\/\S+\/staff\/login\/confirm\?token=[\w-]+/)?.[0];
+  const link = sent?.TextBody.match(/https?:\/\/\S+\/staff\/api\/callback\?token=[\w-]+/)?.[0];
   if (!link) return false;
+  // In the same browser that asked for it, so it logs in.
   await page.goto(link);
-  await page.getByRole("button", { name: staffCopy.login.confirm }).click();
   return true;
 }

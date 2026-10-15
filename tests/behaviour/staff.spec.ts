@@ -50,23 +50,31 @@ test("an address outside pauseai.uk gets no link, though the page doesn't say so
   expect(await logIn(page, "someone@pauseai.uk.evil.example")).toBe(false);
 });
 
-test("a login link works once, and only from its button", async ({ page, request }) => {
+test("a login link works once, and only in the browser that asked for it", async ({ page, browser, request }) => {
   await page.goto(`${BASE}/staff/login`);
   await page.getByLabel(staffCopy.login.emailLabel).fill("once@pauseai.uk");
   await page.getByRole("button", { name: staffCopy.login.button }).click();
   await expect(page.getByRole("status")).toHaveText(staffCopy.login.sent);
-  const link = newestEmailTo("once@pauseai.uk")!.TextBody.match(/https?:\/\/\S+\/staff\/login\/confirm\?token=[\w-]+/)![0];
+  const link = newestEmailTo("once@pauseai.uk")!.TextBody.match(/https?:\/\/\S+\/staff\/api\/callback\?token=[\w-]+/)![0];
 
-  // Opening the link, as a mail scanner would, logs nobody in.
-  expect((await request.get(link)).ok()).toBe(true);
+  // Opened by a mail scanner, or in another browser, the link logs nobody in
+  // and says why, and isn't used up.
+  const scanned = await request.get(link);
+  expect(scanned.url()).toBe(`${BASE}/staff/login?elsewhere=1`);
+  const other = await browser.newPage();
+  await other.goto(link);
+  await expect(other).toHaveURL(/\/staff\/login\?elsewhere=1$/);
+  await expect(other.getByText(staffCopy.login.elsewhere)).toBeVisible();
+  await other.close();
+
+  // Opened in the browser that asked, it logs in straight away.
   await page.goto(link);
-  await page.getByRole("button", { name: staffCopy.login.confirm }).click();
   await expect(page).toHaveURL(`${BASE}/staff`);
   await expect(page.getByText(staffCopy.nav.signedInAs("once@pauseai.uk"))).toBeVisible();
 
-  await page.context().clearCookies();
+  // And it only works once.
+  await page.context().clearCookies({ name: "staff_session" });
   await page.goto(link);
-  await page.getByRole("button", { name: staffCopy.login.confirm }).click();
   await expect(page).toHaveURL(/\/staff\/login\?failed=1$/);
   await expect(page.getByText(staffCopy.login.failed)).toBeVisible();
 });

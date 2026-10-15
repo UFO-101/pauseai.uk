@@ -69,9 +69,9 @@ For the policy team to edit campaign status, add signers from outside the Common
 - **Login**: by email, for any pauseai.uk address (changed from Google on 14 Oct 2026).
   - The login page asks only for an email address, and says the same whatever is typed. A pauseai.uk address is emailed a link.
   - The link works once, for 15 minutes. At most 5 are sent an hour to one address.
-  - The link opens a page whose button logs in, so a mail scanner that follows the link logs nobody in.
+  - The link only works in the browser that asked for it, which holds a cookie for 15 minutes (changed from a confirm button on 15 Oct 2026). A mail scanner that follows the link, or another device, logs nobody in and doesn't use it up. The login page and the email say so.
   - The link's address is fixed at build time from Netlify's settings, never taken from the request.
-  - Sessions are kept in the database. The cookie is `HttpOnly`, `Secure`, `SameSite=Lax`, works only under `/staff`, and lasts 12 hours. The link logs in whichever browser opens it.
+  - Sessions are kept in the database. The cookie is `HttpOnly`, `Secure`, `SameSite=Lax`, works only under `/staff`, and lasts 12 hours.
 - **Every route requires login.** Next.js 16's guide (`node_modules/next/dist/docs/01-app/02-guides/authentication.md`) says a check in the layout isn't enough. So:
   - `proxy.ts` sends anyone on `/staff/:path*` without a session cookie to login.
   - Every staff page, Server Action and route handler first calls `requireStaff()` (`lib/server/staff-auth.ts`), which checks the session in the database.

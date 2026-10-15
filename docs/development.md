@@ -190,8 +190,7 @@ Then postcode `SW1A 1AA` finds Polly Placeholder.
 1. Open http://localhost:3000/staff/login, and type any address at
    pauseai.uk, such as staff@pauseai.uk.
 2. The login email is the newest file in `tmp/outbox/`. Open the
-   `/staff/login/confirm?token=…` link in it, and press the
-   button.
+   `/staff/api/callback?token=…` link in it, in the same browser.
 
 You're at `/staff`, logged in for 12 hours. This goes through the real
 login code: only Postmark is a fixture.

@@ -154,8 +154,8 @@ not a mock.
   and their data differs between hosts. `npm run test:fixtures-vs-main`
   screenshots them instead (below).
 - **Staff screens** are tested by logging in as staff do: asking for a
-  link, taking it from the build's outbox, opening it and pressing the
-  button (`logInAsStaff` in `tests/steps.ts`). There's no login bypass.
+  link, taking it from the build's outbox and opening it in the same
+  browser (`logInAsStaff` in `tests/steps.ts`). There's no login bypass.
 - **`next/headers`** can't run outside a request, so Node tests of code
   that calls `requireStaff()` use `vi.mock("next/headers", () =>
   import("@/tests/next-headers"))` and put the session cookie in
