@@ -35,14 +35,23 @@ const REDIRECTS = [
     from: "/global-ai-sentiment-2026https:/pauseai.uk/global-ai-sentiment-2026",
     to: "/global-ai-sentiment-2026",
   },
+  {
+    // Temporary: there's no list of protests yet, so it goes to the current one.
+    name: "the protests section, to the current protest",
+    from: "/protests",
+    to: "/protests/march-against-ai-extinction-nov-26",
+    permanent: false,
+  },
 ];
 
 test.describe("redirects", () => {
-  for (const { name, from, to } of REDIRECTS) {
+  for (const { name, from, to, permanent = true } of REDIRECTS) {
     test(`${name}: ${from}`, async ({ request }) => {
       const res = await request.get(`${BASE}${from}`, { maxRedirects: 0 });
 
-      expect(res.status(), `${from} should be a permanent redirect`).toBe(308);
+      expect(res.status(), `${from} should be a ${permanent ? "permanent" : "temporary"} redirect`).toBe(
+        permanent ? 308 : 307,
+      );
       expect(res.headers()["location"]).toBe(to);
     });
   }
