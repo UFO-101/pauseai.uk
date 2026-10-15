@@ -7,7 +7,7 @@
 //   real fetch.
 //
 // Matched on host and path rather than the full URL, so query strings
-// (period, pagination, filters) don't need listing.
+// (dates, pagination, filters) don't need listing.
 import lumaFuture from "./luma-calendar-future.json";
 import lumaPast from "./luma-calendar-past.json";
 import lumaGuests from "./luma-guests.json";
@@ -24,8 +24,9 @@ const POSTCODES: Record<string, string> = { SW1A1AA: "Cities of London and Westm
 
 export function fixtureResponse(url: string): Response | undefined {
   const { hostname, pathname, searchParams } = new URL(url);
-  if (hostname === "api2.luma.com" && pathname === "/calendar/get-items") {
-    return json(searchParams.get("period") === "past" ? lumaPast : lumaFuture);
+  if (hostname === "public-api.luma.com" && pathname === "/v1/calendars/events/list") {
+    // lib/server/luma-calendar.ts asks for past events with "before", upcoming with "after".
+    return json(searchParams.has("before") ? lumaPast : lumaFuture);
   }
   if (hostname === "public-api.luma.com" && pathname === "/v1/event/get-guests") {
     return json(lumaGuests);

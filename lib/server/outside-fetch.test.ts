@@ -3,7 +3,7 @@ import { http, HttpResponse } from "msw";
 import { server } from "@/tests/fixtures/msw";
 import { outsideFetch } from "./outside-fetch";
 
-const CALENDAR = "https://api2.luma.com/calendar/get-items?period=future";
+const CALENDAR = "https://public-api.luma.com/v1/calendars/events/list?after=2026-01-01T00:00:00.000Z";
 
 afterEach(() => {
   vi.unstubAllEnvs();
@@ -13,7 +13,7 @@ describe("outsideFetch", () => {
   it("makes a real request, passing init through", async () => {
     let auth: string | null = null;
     server.use(
-      http.get("https://api2.luma.com/calendar/get-items", ({ request }) => {
+      http.get("https://public-api.luma.com/v1/calendars/events/list", ({ request }) => {
         auth = request.headers.get("authorization");
         return HttpResponse.json({ live: true });
       }),
