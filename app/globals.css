@@ -1200,10 +1200,6 @@ html {
   border-radius: 12px;
   overflow: hidden;
   box-shadow: 0 1px 3px var(--shadow);
-}
-
-.local-group-card,
-.activity-card {
   display: block;
   color: var(--text);
   text-decoration: none;
@@ -1445,16 +1441,6 @@ html {
   justify-content: center;
   height: var(--marquee-item-height, 50px);
   padding: 4px 12px;
-}
-
-.news-logo-text--swlondoner {
-  font-size: calc(2rem * var(--logo-scale, 1));
-  white-space: nowrap;
-}
-
-.news-logo-text--ibtimes {
-  font-size: calc(1.1rem * var(--logo-scale, 1));
-  white-space: nowrap;
 }
 
 .news-logo-text--bbc {
@@ -2163,6 +2149,8 @@ html {
 }
 
 .news-logo-text--swlondoner {
+  font-size: calc(2rem * var(--logo-scale, 1));
+  white-space: nowrap;
   font-family: Georgia, "Times New Roman", serif;
   letter-spacing: -0.01em;
 }
@@ -2173,6 +2161,8 @@ html {
 }
 
 .news-logo-text--ibtimes {
+  font-size: calc(1.1rem * var(--logo-scale, 1));
+  white-space: nowrap;
   font-family: system-ui, sans-serif;
   text-transform: uppercase;
   letter-spacing: 0.01em;
@@ -2212,6 +2202,11 @@ html {
 }
 .donate-intro-photo {
   grid-area: photo;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 6px 24px var(--shadow-strong);
+  line-height: 0;
+  background: var(--surface-2);
 }
 .donate-intro-form {
   grid-area: form;
@@ -2289,13 +2284,6 @@ html {
   display: flex;
   flex-direction: column;
   gap: 2px;
-}
-.donate-intro-photo {
-  border-radius: 14px;
-  overflow: hidden;
-  box-shadow: 0 6px 24px var(--shadow-strong);
-  line-height: 0;
-  background: var(--surface-2);
 }
 .donate-intro-photo img {
   width: 100%;

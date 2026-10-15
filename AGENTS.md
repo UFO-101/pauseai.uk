@@ -13,6 +13,7 @@ Run everything CI runs (`.github/workflows/ci.yml`), and only commit when every 
 ```bash
 npm test                          # both Vitest projects, and the 100% per-file coverage gate
 npm run lint                      # ESLint, failing on warnings too
+npm run lint:css                  # Stylelint
 npm run format:check              # Prettier; `npm run format` fixes it
 npm run build
 npm run test:behaviour            # Playwright, on fixture data
