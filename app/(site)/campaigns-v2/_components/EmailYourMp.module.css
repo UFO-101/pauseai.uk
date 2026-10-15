@@ -307,14 +307,39 @@
   width: 100%;
 }
 
-/* The preview: the letter as the MP gets it, on a sheet of its own, as wide
-   as the form's fields. */
+/* The preview and "sent" pages: one centred column, as wide as the form's
+   fields, with the heading close above what's on the page. Doubled up to
+   win over the campaign hero's own padding and heading margin. */
+section.step {
+  padding-bottom: 5rem;
+}
+
+.step .stepColumn {
+  display: grid;
+  gap: 1.5rem;
+  max-width: 44rem;
+  margin: 0 auto;
+}
+
+.step .stepColumn h1 {
+  margin: 0;
+}
+
+.previewPage {
+  display: grid;
+  gap: 1.25rem;
+}
+
+/* The letter as the MP gets it: a plain white sheet, dark text. */
 .preview {
   display: grid;
   gap: 1.25rem;
-  padding: 1.5rem max(1rem, calc((100% - 44rem) / 2));
+  padding: 2rem;
+  border: 1px solid var(--border);
   border-radius: 8px;
-  background: color-mix(in srgb, var(--accent) 18%, var(--surface));
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 1px 2px var(--shadow), 0 12px 32px var(--shadow);
 }
 
 .envelope {
@@ -329,6 +354,7 @@
 
 .envelope dt {
   font-weight: 600;
+  color: var(--text-secondary);
 }
 
 .envelope dd {
@@ -336,8 +362,8 @@
 }
 
 .previewBody {
-  font-size: 0.95rem;
-  line-height: 1.5;
+  font-size: 1rem;
+  line-height: 1.6;
 }
 
 .previewBody p {
@@ -418,5 +444,9 @@
 @media (max-width: 640px) {
   .tool {
     padding: 0.75rem;
+  }
+
+  .preview {
+    padding: 1.25rem 1rem;
   }
 }

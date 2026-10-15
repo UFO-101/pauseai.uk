@@ -109,7 +109,7 @@ export default function LetterPreview({ campaignSlug, turnstileSiteKey }: Props)
   const html = toHtml(fullLetter(letter.letter, letter.name, signatureAddress(letter.address, letter.postcode)));
 
   return (
-    <div className={styles.tool}>
+    <div className={styles.previewPage}>
       <article className={styles.preview}>
         <dl className={styles.envelope}>
           <dt>{copy.preview.to}</dt>
