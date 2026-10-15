@@ -13,7 +13,12 @@ export type LumaEvent = {
   cover_url?: string;
   location_type?: string;
   geo_address_info?: LumaGeoAddressInfo;
+  /** Where it is, when Luma's official API knows (lib/server/luma-calendar.ts getEventsWithPlaces). */
+  place?: Place;
 };
+
+/** A point on the map, in degrees. */
+export type Place = { latitude: number; longitude: number };
 
 export type LumaEntry = {
   event: LumaEvent;
@@ -107,4 +112,33 @@ export function formatEventTime(startAt: string, timezone?: string): string {
     hour: "2-digit",
     minute: "2-digit",
   });
+}
+
+/** The distance between two places, in kilometres, along the Earth's surface (the haversine formula). */
+export function distanceKm(a: Place, b: Place): number {
+  const radians = (degrees: number) => (degrees * Math.PI) / 180;
+  const h =
+    Math.sin(radians(b.latitude - a.latitude) / 2) ** 2 +
+    Math.cos(radians(a.latitude)) * Math.cos(radians(b.latitude)) * Math.sin(radians(b.longitude - a.longitude) / 2) ** 2;
+  return 2 * 6371 * Math.asin(Math.sqrt(h));
+}
+
+/** How near an event must be to count as near someone: about an hour away. (Oxford to central London is 83km.) */
+export const NEAR_KM = 50;
+
+/**
+ * The events to suggest to someone at `here`, from a soonest-first list:
+ * `count` of them, EventList's one row of four. The next few in person
+ * within NEAR_KM, leaving room for at least one online, then the next online
+ * ones to fill the row. With none near, or nowhere to measure from, all
+ * online, which anyone can join. Online is no address, as in EventList; an
+ * in-person event with no place (no venue set yet) is never near, as its
+ * distance isn't known.
+ */
+export function eventsNear(entries: LumaEntry[], here: Place | null | undefined, count = 4): LumaEntry[] {
+  const online = entries.filter((entry) => !entry.event.geo_address_info);
+  const near = here
+    ? entries.filter(({ event }) => event.geo_address_info && event.place && distanceKm(here, event.place) <= NEAR_KM).slice(0, count - 1)
+    : [];
+  return [...near, ...online.slice(0, count - near.length)].sort((a, b) => a.event.start_at.localeCompare(b.event.start_at));
 }

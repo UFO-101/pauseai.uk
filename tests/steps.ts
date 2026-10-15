@@ -57,24 +57,24 @@ export async function lookUpTestMp(page: Page, base: string, path = TOOL_PAGE) {
   }
 }
 
-/** Fills in the letter form and opens the confirm box. Nothing is sent yet. */
+/** Fills in the letter form and goes to its preview. Nothing is sent yet. */
 export async function fillLetter(page: Page, email: string) {
   await page.getByLabel(copy.form.emailLabel).fill(email);
   await page.getByRole("textbox", { name: copy.form.addressLabel }).fill("1 High Street\nTestville");
-  await page.getByRole("button", { name: copy.form.send }).click();
-  await page.getByRole("button", { name: copy.form.confirmSend }).waitFor();
+  await page.getByRole("button", { name: copy.form.preview }).click();
+  await page.getByRole("button", { name: copy.preview.send }).waitFor();
 }
 
-/** Sends the letter from the confirm box, and waits for "sent". */
+/** Sends the letter from its preview, and waits for the "sent" page. */
 export async function sendLetter(page: Page) {
-  await page.getByRole("button", { name: copy.form.confirmSend }).click();
-  await expect(page.getByRole("status")).toHaveText(copy.form.sent("Testy McTestface MP"));
+  await page.getByRole("button", { name: copy.preview.send }).click();
+  await expect(page.getByRole("status")).toHaveText(copy.sent.body("Testy McTestface MP"));
 }
 
 /**
  * Logs in on `base` as `email`, as staff do: asks for a link, takes it from
- * the build's outbox (tests/fixtures/outbox.ts), opens it and presses the
- * button. There's no login bypass. For an address that gets no link, stops
+ * the build's outbox (tests/fixtures/outbox.ts), and opens it in the same
+ * browser. There's no login bypass. For an address that gets no link, stops
  * at "check your inbox" and returns false.
  */
 export async function logInAsStaff(page: Page, base: string, outboxDir: string, email = "staff@pauseai.uk"): Promise<boolean> {
@@ -84,10 +84,10 @@ export async function logInAsStaff(page: Page, base: string, outboxDir: string, 
   await page.getByLabel(staffCopy.login.emailLabel).fill(email);
   await page.getByRole("button", { name: staffCopy.login.button }).click();
   await expect(page.getByRole("status")).toHaveText(staffCopy.login.sent);
-  const sent = (readOutbox(outboxDir).slice(before) as { To: string; TextBody: string }[]).filter((e) => e.To === email).at(-1);
-  const link = sent?.TextBody.match(/https?:\/\/\S+\/staff\/login\/confirm\?token=[\w-]+/)?.[0];
+  const sent = readOutbox(outboxDir).slice(before).filter((e) => e.To === email).at(-1);
+  const link = sent?.TextBody.match(/https?:\/\/\S+\/staff\/api\/callback\?token=[\w-]+/)?.[0];
   if (!link) return false;
+  // In the same browser that asked for it, so it logs in.
   await page.goto(link);
-  await page.getByRole("button", { name: staffCopy.login.confirm }).click();
   return true;
 }

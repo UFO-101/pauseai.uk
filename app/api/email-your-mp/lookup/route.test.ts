@@ -1,4 +1,6 @@
 import { expect, it } from "vitest";
+import { http, HttpResponse } from "msw";
+import { server } from "@/tests/fixtures/msw";
 import { copy } from "@/lib/content/email-your-mp";
 import { setStatus } from "@/lib/server/politicians";
 import { addTestPolitician, describeWithDatabase, useTestDatabase } from "@/tests/database";
@@ -17,9 +19,16 @@ describeWithDatabase("POST /api/email-your-mp/lookup", () => {
     const res = await lookup({ postcode: "SW1A 1AA" });
     expect(await res.json()).toEqual({
       ok: true,
-      mp: { id, name: "Rachel Blake", salutation: "Ms Blake", constituency: "Cities of London and Westminster", email: "rachel.blake.mp@parliament.uk", isTest: false },
+      mp: { id, name: "Polly Placeholder", salutation: "Ms Placeholder", constituency: "Cities of London and Westminster", email: "polly.placeholder.mp@parliament.uk", isTest: false },
       statuses: { "regulate-letter-pm": "signed" },
+      place: { latitude: 51.501009, longitude: -0.141588 },
     });
+  });
+
+  it("says it doesn't know where the postcode is, if postcodes.io doesn't", async () => {
+    await addTestPolitician();
+    server.use(http.get("https://api.postcodes.io/postcodes/:postcode", () => HttpResponse.json({ result: { parliamentary_constituency: "Cities of London and Westminster" } })));
+    expect(await (await lookup({ postcode: "SW1A 1AA" })).json()).toMatchObject({ ok: true, place: null });
   });
 
   it("explains a postcode it can't place", async () => {

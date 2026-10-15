@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { http, HttpResponse } from "msw";
 import { server } from "@/tests/fixtures/msw";
-import { getEvents } from "./luma-calendar";
+import { getEvents, getEventsWithPlaces } from "./luma-calendar";
 
 const CALENDAR = "https://public-api.luma.com/v1/calendars/events/list";
 
@@ -136,5 +136,72 @@ describe("getEvents", () => {
   it("returns nothing when the request fails", async () => {
     server.use(http.get(CALENDAR, () => HttpResponse.error()));
     expect(await getEvents()).toEqual([]);
+  });
+});
+
+describe("getEventsWithPlaces", () => {
+  const LIST = "https://public-api.luma.com/v1/calendar/list-events";
+  afterEach(() => vi.unstubAllEnvs());
+  beforeEach(() => vi.stubEnv("LUMA_API_KEY", "key"));
+
+  it("asks Luma's API for today's events onwards, with the key, and gives each its place", async () => {
+    let request: Request | undefined;
+    server.use(
+      http.get(LIST, (info) => {
+        request = info.request;
+        return undefined;
+      }),
+    );
+    const events = await getEventsWithPlaces();
+    const url = new URL(request!.url);
+    expect(request!.headers.get("x-luma-api-key")).toBe("key");
+    expect(url.searchParams.get("after")).toBe(`${new Date().toISOString().slice(0, 10)}T00:00:00Z`);
+
+    expect(events.map((e) => e.event.url)).toEqual([
+      "fixture-online-call",
+      "fixture-london-meeting",
+      "fixture-manchester-discussion",
+      "fixture-oxford-no-venue",
+      "fixture-london-flyering",
+      "fixture-all-hands",
+    ]);
+    const [online, london, manchester, oxford] = events.map((e) => e.event);
+    expect(online).toMatchObject({ name: "Fixture online call", geo_address_info: undefined, place: undefined });
+    expect(london).toMatchObject({ geo_address_info: { city: "London" }, place: { latitude: 51.5184589, longitude: -0.1127869 } });
+    // Coordinates that come as strings.
+    expect(manchester.place).toEqual({ latitude: 53.4736723, longitude: -2.2566363 });
+    expect(oxford).toMatchObject({ geo_address_info: { city: "Oxford" }, place: undefined });
+  });
+
+  it("drops entries without a url, name or start time, and odd coordinates", async () => {
+    server.use(
+      http.get(LIST, () =>
+        HttpResponse.json({
+          entries: [
+            { event: { url: "slug-only", name: "Fine", start_at: "2030-01-01T00:00:00Z", geo_address_json: { city: "X" }, geo_latitude: "north", geo_longitude: 1 } },
+            { event: { name: "No url", start_at: "2030-01-01T00:00:00Z" } },
+            { event: { url: "u", start_at: "2030-01-01T00:00:00Z" } },
+            { event: { url: "u", name: "No start" } },
+            {},
+            null,
+          ],
+        }),
+      ),
+    );
+    expect(await getEventsWithPlaces()).toEqual([
+      { event: { url: "slug-only", name: "Fine", start_at: "2030-01-01T00:00:00Z", geo_address_info: { city: "X" }, place: undefined, timezone: undefined, cover_url: undefined, location_type: undefined } },
+    ]);
+    server.use(http.get(LIST, () => HttpResponse.json({})));
+    expect(await getEventsWithPlaces()).toEqual([]);
+  });
+
+  it("is empty without a key, or if Luma fails", async () => {
+    vi.stubEnv("LUMA_API_KEY", "");
+    expect(await getEventsWithPlaces()).toEqual([]);
+    vi.stubEnv("LUMA_API_KEY", "key");
+    server.use(http.get(LIST, () => new HttpResponse(null, { status: 500 })));
+    expect(await getEventsWithPlaces()).toEqual([]);
+    server.use(http.get(LIST, () => HttpResponse.error()));
+    expect(await getEventsWithPlaces()).toEqual([]);
   });
 });

@@ -5,13 +5,13 @@ import { fetchCurrentMps, MEMBERS_API } from "./parliament";
 
 const getJson = (url: string) => fetch(url).then((res) => res.json());
 
-const member = { id: 1, nameDisplayAs: "Jack Abbott", latestHouseMembership: { membershipFrom: "Ipswich" } };
+const member = { id: 1, nameDisplayAs: "Ian Instance", latestHouseMembership: { membershipFrom: "Ipswich" } };
 
 describe("fetchCurrentMps", () => {
   it("reads every sitting MP and their emails, trimmed", async () => {
     expect(await fetchCurrentMps(getJson)).toEqual([
-      { parliamentId: 172, name: "Ms Diane Abbott", constituency: "Hackney North and Stoke Newington", emails: ["mp172.office@parliament.uk"] },
-      { parliamentId: 5257, name: "Rachel Blake", constituency: "Cities of London and Westminster", emails: ["mp5257.office@parliament.uk"] },
+      { parliamentId: 90001, name: "Ms Dora Dummy", constituency: "Hackney North and Stoke Newington", emails: ["mp90001.office@parliament.uk"] },
+      { parliamentId: 90002, name: "Polly Placeholder", constituency: "Cities of London and Westminster", emails: ["mp90002.office@parliament.uk"] },
     ]);
   });
 

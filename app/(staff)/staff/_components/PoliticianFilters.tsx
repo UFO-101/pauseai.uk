@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/Button";
-import { campaigns } from "@/lib/content/email-your-mp";
+import { trackedCampaigns } from "@/lib/email-your-mp";
 import { staffCopy } from "@/lib/content/staff-interface";
 import styles from "./staff.module.css";
 
@@ -28,7 +28,7 @@ export default function PoliticianFilters({ search, house, campaign }: Filters) 
         {staffCopy.politician.statusesTitle}
         <select name="campaign" defaultValue={campaign}>
           <option value="">{staffCopy.politicians.anyCampaign}</option>
-          {campaigns.map((c) => (
+          {trackedCampaigns.map((c) => (
             <option key={c.slug} value={c.slug}>
               {c.title}
             </option>

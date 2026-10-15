@@ -1,20 +1,41 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { render } from "vitest-browser-react";
 import { page } from "vitest/browser";
-import { copy } from "@/lib/content/email-your-mp";
+import { campaigns, copy } from "@/lib/content/email-your-mp";
 import CampaignContext from "./CampaignContext";
 import CampaignDocs, { DocCard } from "./CampaignDocs";
 import CampaignHero from "./CampaignHero";
 import CampaignQr from "./CampaignQr";
+import { saveLookup } from "./draft";
 import EmailYourMpSection from "./EmailYourMpSection";
 
-afterEach(() => vi.restoreAllMocks());
+const [letterToPm, bill] = campaigns;
+const MP = { name: "Polly Placeholder", salutation: "Ms Placeholder", constituency: "Cities of London and Westminster", email: "polly.placeholder.mp@parliament.uk" };
+
+afterEach(() => {
+  vi.restoreAllMocks();
+  sessionStorage.clear();
+});
 
 describe("a campaign page's sections", () => {
   it("heads the page, with a button down to the form", async () => {
-    await render(<CampaignHero title="Regulate AI developers now" />);
+    await render(<CampaignHero title="Regulate AI developers now" campaignSlug={letterToPm.slug} />);
     await expect.element(page.getByRole("heading", { level: 1 })).toHaveTextContent("Regulate AI developers now");
     await expect.element(page.getByRole("link", { name: "Email your MP →" })).toHaveAttribute("href", "#email-your-mp");
+    await expect.element(page.getByText(letterToPm.movedOn!)).not.toBeInTheDocument();
+  });
+
+  it("says why, above the heading, when another campaign's page moved on to this one", async () => {
+    saveLookup({ campaign: bill.slug, name: "Jane Smith", postcode: "SW1A 1AA", mp: MP, statuses: { [letterToPm.slug]: "signed" }, movedFrom: letterToPm.slug });
+    await render(<CampaignHero title="The bill" campaignSlug={bill.slug} />);
+    await expect.element(page.getByText(letterToPm.movedOn!)).toBeVisible();
+  });
+
+  it("doesn't, once the sender has found their MP from this page", async () => {
+    saveLookup({ campaign: bill.slug, name: "Jane Smith", postcode: "SW1A 1AA", mp: MP, statuses: {} });
+    await render(<CampaignHero title="The bill" campaignSlug={bill.slug} />);
+    await expect.element(page.getByRole("heading", { level: 1 })).toBeVisible();
+    await expect.element(page.getByText(letterToPm.movedOn!)).not.toBeInTheDocument();
   });
 
   it("makes the case, with the documents behind it as PDFs", async () => {

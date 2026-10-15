@@ -8,9 +8,10 @@ import "./app/globals.css";
 import { navigation } from "./tests/browser/navigation";
 
 // next/navigation needs Next's app router, which isn't there in a component
-// test. usePathname reads tests/browser/navigation.ts instead.
+// test. usePathname and useRouter use tests/browser/navigation.ts instead.
 vi.mock("next/navigation", () => ({
   usePathname: () => navigation.pathname,
+  useRouter: () => ({ push: (url: string) => navigation.pushed.push(url) }),
   notFound: () => {
     throw new Error("NEXT_NOT_FOUND");
   },
@@ -18,6 +19,7 @@ vi.mock("next/navigation", () => ({
 
 afterEach(() => {
   navigation.pathname = "/";
+  navigation.pushed = [];
   document.body.removeAttribute("data-no-analytics");
   document.body.className = "";
 });

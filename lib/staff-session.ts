@@ -6,11 +6,14 @@ export const SESSION_COOKIE = "staff_session";
 
 export const LOGIN_PATH = "/staff/login";
 
-/** Where a login email's link goes: a page with the button that logs in. */
-export const LOGIN_CONFIRM_PATH = "/staff/login/confirm";
+/** Where a login email's link goes. Opened in the browser that asked for it, it logs in. */
+export const LOGIN_LINK_PATH = "/staff/api/callback";
 
 /**
- * Staff paths that work without a session: the login page, where the
- * emailed link goes, and the two steps of logging in.
+ * Set on the browser that asks for a login link. The link only works in a
+ * browser with it. Its value is a random token; the link's row holds its hash.
  */
-export const OPEN_STAFF_PATHS = [LOGIN_PATH, LOGIN_CONFIRM_PATH, "/staff/api/login", "/staff/api/callback"];
+export const LOGIN_BROWSER_COOKIE = "staff_login";
+
+/** Staff paths that work without a session: the login page and the two steps of logging in. */
+export const OPEN_STAFF_PATHS = [LOGIN_PATH, "/staff/api/login", LOGIN_LINK_PATH];

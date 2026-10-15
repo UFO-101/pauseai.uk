@@ -6,8 +6,15 @@ import { constituencyForPostcode } from "./postcodes";
 const POSTCODES = "https://api.postcodes.io/postcodes/:postcode";
 
 describe("constituencyForPostcode", () => {
-  it("finds the constituency", async () => {
-    expect(await constituencyForPostcode("SW1A 1AA")).toEqual({ ok: true, constituency: "Cities of London and Westminster" });
+  it("finds the constituency, and where the postcode is", async () => {
+    expect(await constituencyForPostcode("SW1A 1AA")).toEqual({ ok: true, constituency: "Cities of London and Westminster", place: { latitude: 51.501009, longitude: -0.141588 } });
+  });
+
+  it("leaves out where the postcode is if postcodes.io doesn't say", async () => {
+    for (const where of [{}, { latitude: null, longitude: null }, { latitude: 51.5 }]) {
+      server.use(http.get(POSTCODES, () => HttpResponse.json({ result: { parliamentary_constituency: "Somewhere", ...where } })));
+      expect(await constituencyForPostcode("AB1 2CD")).toEqual({ ok: true, constituency: "Somewhere" });
+    }
   });
 
   it("names the constituency as the official list does, from its code", async () => {

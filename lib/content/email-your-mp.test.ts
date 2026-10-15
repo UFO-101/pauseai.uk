@@ -19,8 +19,7 @@ describe("Email your MP campaigns", () => {
 
   it("puts the MP's details into the form's messages", () => {
     expect(copy.lookup.mpOf("Hackney North")).toContain("Hackney North");
-    expect(copy.form.confirmPrompt("Jane MP")).toContain("Jane MP");
-    expect(copy.form.sent("Jane MP")).toContain("Jane MP");
+    expect(copy.sent.body("Jane MP")).toContain("Jane MP");
     expect(copy.forwardedReply.subject("Re: AI")).toContain("Re: AI");
     expect(copy.forwardedReply.note("Jane MP", "Jane Smith")).toContain("Jane MP");
   });

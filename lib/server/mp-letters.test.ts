@@ -23,7 +23,7 @@ const FORM: LetterForm = {
   turnstileToken: "token",
 };
 
-type Sent = { From: string; To: string; ReplyTo?: string; Subject: string; TextBody: string; HtmlBody?: string; MessageStream: string; Attachments?: { Name: string; Content: string; ContentType: string }[]; Metadata?: Record<string, string> };
+type Sent = { From: string; To: string; Bcc?: string; ReplyTo?: string; Subject: string; TextBody: string; HtmlBody?: string; MessageStream: string; Attachments?: { Name: string; Content: string; ContentType: string }[]; Metadata?: Record<string, string> };
 
 /** Records each email sent through Postmark, and answers with a MessageID. */
 function postmark(answer: () => Response = () => HttpResponse.json({ ErrorCode: 0, MessageID: `msg-${Math.random()}` })) {
@@ -79,7 +79,8 @@ describeWithDatabase("submitLetter", () => {
     await addTestPolitician();
   });
 
-  it("sends the letter from its own address, replying to the sender and to us, with the PDFs", async () => {
+  it("sends the letter from its own address, copied to us, replying to the sender and to us, with the PDFs", async () => {
+    vi.stubEnv("REPLIES_INBOX", "replies@pauseai.uk");
     const sent = postmark(() => HttpResponse.json({ ErrorCode: 0, MessageID: "msg-1" }));
 
     expect(await submitLetter(FORM, "localhost")).toEqual({ ok: true });
@@ -90,7 +91,8 @@ describeWithDatabase("submitLetter", () => {
     expect(sent[0]).toMatchObject({
       From: `"Jane Smith via PauseAI" <${address}>`,
       To: "test-mp@example.org",
-      ReplyTo: `jane@example.com, ${address}`,
+      Bcc: "replies@pauseai.uk",
+      ReplyTo: `"Jane Smith" <jane@example.com>, "PauseAI Policy Team" <replies@pauseai.uk>, "PauseAI Letters" <${address}>`,
       Subject: "Subject",
       TextBody: "Dear Mr McTestface,\n\nPlease do sign.\n\nThanks,\n\nJane Smith\n1 High Street\nTestville\nZZ9 9ZZ",
       HtmlBody: "<p>Dear Mr McTestface,</p>\n<p>Please <strong>do</strong> sign.</p>\n<p>Thanks,</p>\n<p>Jane Smith<br>1 High Street<br>Testville<br>ZZ9 9ZZ</p>",
@@ -107,11 +109,20 @@ describeWithDatabase("submitLetter", () => {
       contact_consent: true,
       status: "sent",
       postmark_message_id: "msg-1",
-      body: sent[0].TextBody,
-      body_html: sent[0].HtmlBody,
     });
+    expect(letter).not.toHaveProperty("body");
+    expect(letter).not.toHaveProperty("body_html");
     expect(letter.sent_at).not.toBeNull();
     expect((await query<{ status: string }>("SELECT status FROM letter_events ORDER BY id")).map((e) => e.status)).toEqual(["sending", "sent"]);
+  });
+
+  it("leaves the shared inbox out of Reply-To and Bcc when there isn't one", async () => {
+    vi.stubEnv("REPLIES_INBOX", "");
+    const sent = postmark();
+    await submitLetter(FORM, "localhost");
+    const [{ reply_hash }] = await query<{ reply_hash: string }>("SELECT reply_hash FROM letters");
+    expect(sent[0].Bcc).toBeUndefined();
+    expect(sent[0].ReplyTo).toBe(`"Jane Smith" <jane@example.com>, "PauseAI Letters" <reply+${reply_hash}@letters.pauseai.uk>`);
   });
 
   it("sends a campaign without attachments without any", async () => {

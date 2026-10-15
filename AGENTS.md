@@ -38,11 +38,17 @@ This project pins a Next.js version in `package.json` that may be newer than you
 - Verify framework APIs against the installed version (`node_modules/next`) or official docs rather than memory.
 - Match the conventions already used in `app/` rather than introducing patterns from an earlier major version.
 
+## Every change needs 100% test coverage
+
+**Every file must stay at 100% coverage: branches, statements, functions and lines.** Branches matter most: every `? :`, `??`, `||`, `&&` and `if` needs a test for each way it can go. A test for the obvious path isn't enough. CI fails otherwise (`thresholds: { 100: true, perFile: true }` in `vitest.config.mts`), and coverage-ignore comments are banned.
+
+Before you say a change is done, run `npm test`. That's both Vitest projects with the coverage gate, as CI runs it. A plain `vitest run` doesn't check coverage, so it can pass while CI fails. Write the tests along with the code, not afterwards. See `docs/testing.md`, "Coverage".
+
 ## Never write final copy
 
 People write the words visitors and recipients read: page text, letters, emails, form labels and messages. When code needs copy that doesn't exist yet, write a placeholder. Start it with ⁂ and write it in Latin, e.g. "⁂ Lorem ipsum dolor sit amet", so it can't be mistaken for the real thing.
 
-`placeholder-copy.test.ts` fails while ⁂ appears anywhere in the repo outside this file. So placeholders can't be merged by accident. It's skipped for now, until the Email your MP swap (`plans/email-your-mp-v2.md`), so that branch can build while its copy is placeholder.
+`placeholder-copy.test.ts` fails while ⁂ appears anywhere in the repo outside this file. So placeholders can't be merged by accident.
 
 <!-- BEGIN:nextjs-agent-rules -->
 

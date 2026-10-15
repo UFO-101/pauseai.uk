@@ -15,17 +15,17 @@ import StaffHeader from "./StaffHeader";
 import StatusForm from "./StatusForm";
 import SyncList from "./SyncList";
 
-const [pm, bill] = campaigns;
+const [pm] = campaigns;
 
 const MP: Politician = {
   id: 7,
-  airtableId: "rec5257",
+  airtableId: "rec90002",
   house: "commons",
-  name: "Rachel Blake",
-  salutation: "Ms Blake",
+  name: "Polly Placeholder",
+  salutation: "Ms Placeholder",
   constituency: "Cities of London and Westminster",
   party: "Labour (Co-op)",
-  email: "rachel.blake.mp@parliament.uk",
+  email: "polly.placeholder.mp@parliament.uk",
   isTest: false,
   sitting: true,
   statuses: { [pm.slug]: { status: "signed", date: "2026-10-01", note: "", updatedAt: "2026-10-02T10:00:00Z", updatedBy: "jo@pauseai.uk" } },
@@ -42,7 +42,7 @@ describe("StaffHeader", () => {
   it("links the staff pages, says who's logged in, and logs out with a POST", async () => {
     await render(<StaffHeader email="jo@pauseai.uk" />);
     await expect.element(page.getByRole("link", { name: staffCopy.nav.politicians })).toHaveAttribute("href", "/staff");
-    await expect.element(page.getByRole("link", { name: staffCopy.nav.syncs })).toHaveAttribute("href", "/staff/mp-sync");
+    await expect.element(page.getByRole("link", { name: staffCopy.nav.import })).toHaveAttribute("href", "/staff/import");
     await expect.element(page.getByRole("link", { name: staffCopy.nav.letters })).toHaveAttribute("href", "/staff/letters");
     await expect.element(page.getByText(staffCopy.nav.signedInAs("jo@pauseai.uk"))).toBeVisible();
     const form = page.getByRole("button", { name: staffCopy.nav.logout }).element().closest("form")!;
@@ -53,10 +53,10 @@ describe("StaffHeader", () => {
 
 describe("PoliticianFilters", () => {
   it("is a GET form to /staff, filled in with the current filter", async () => {
-    await render(<PoliticianFilters search="blake" house="lords" campaign={bill.slug} />);
+    await render(<PoliticianFilters search="blake" house="lords" campaign={pm.slug} />);
     await expect.element(page.getByRole("searchbox")).toHaveValue("blake");
     await expect.element(page.getByRole("combobox", { name: staffCopy.fields.house, exact: true })).toHaveValue("lords");
-    await expect.element(page.getByRole("combobox", { name: staffCopy.politician.statusesTitle, exact: true })).toHaveValue(bill.slug);
+    await expect.element(page.getByRole("combobox", { name: staffCopy.politician.statusesTitle, exact: true })).toHaveValue(pm.slug);
     const form = page.getByRole("searchbox").element().closest("form")!;
     expect(form.getAttribute("method")).toBe("get");
     expect(form.getAttribute("action")).toBe("/staff");
@@ -66,8 +66,10 @@ describe("PoliticianFilters", () => {
 describe("PoliticianTable", () => {
   it("lists each politician with their status for each campaign", async () => {
     await render(<PoliticianTable politicians={[MP, { ...MP, id: 8, name: "Testy McTestface MP", isTest: true, sitting: false, house: "lords", statuses: {} }]} />);
-    await expect.element(page.getByRole("link", { name: "Rachel Blake" })).toHaveAttribute("href", "/staff/politicians/7");
+    await expect.element(page.getByRole("link", { name: "Polly Placeholder" })).toHaveAttribute("href", "/staff/politicians/7");
     await expect.element(page.getByText(pm.title)).toBeInTheDocument();
+    // The bill has no status to record, so no column.
+    await expect.element(page.getByText(campaigns[1].title)).not.toBeInTheDocument();
     await expect.element(page.getByRole("cell", { name: staffCopy.statuses.signed })).toBeInTheDocument();
     await expect.element(page.getByText(staffCopy.politicians.testMp)).toBeVisible();
     await expect.element(page.getByText(staffCopy.politicians.notSitting)).toBeVisible();
@@ -89,40 +91,34 @@ describe("StatusForm", () => {
     await expect.element(form.getByLabelText(staffCopy.fields.date, { exact: true })).toHaveValue("2026-10-01");
     await expect.element(page.getByText(/jo@pauseai\.uk/)).toBeVisible();
 
-    await userEvent.selectOptions(form.getByRole("combobox", { name: staffCopy.fields.status, exact: true }).element() as HTMLSelectElement, "supports");
+    await userEvent.selectOptions(form.getByRole("combobox", { name: staffCopy.fields.status, exact: true }).element() as HTMLSelectElement, "");
     await userEvent.fill(form.getByRole("textbox", { name: staffCopy.fields.note, exact: true }), "Said so on the radio");
     await form.getByRole("button", { name: staffCopy.politician.save }).click();
     await vi.waitFor(() => expect(sent).toHaveLength(1));
-    expect(sent[0]).toEqual({ politicianId: "7", campaign: pm.slug, status: "supports", date: "2026-10-01", note: "Said so on the radio" });
+    expect(sent[0]).toEqual({ politicianId: "7", campaign: pm.slug, status: "", date: "2026-10-01", note: "Said so on the radio" });
+  });
+
+  it("says when the Airtable sync set the status, rather than a person", async () => {
+    await render(<StatusForm politicianId={7} campaign={pm} current={{ ...MP.statuses[pm.slug], updatedBy: "sync" }} action={() => {}} />);
+    await expect.element(page.getByText(/^Set by the Airtable sync, /)).toBeVisible();
   });
 
   it("starts empty when there's no status", async () => {
-    await render(<StatusForm politicianId={7} campaign={bill} action={() => {}} />);
+    await render(<StatusForm politicianId={7} campaign={pm} action={() => {}} />);
     await expect.element(page.getByRole("combobox", { name: staffCopy.fields.status, exact: true })).toHaveValue("");
     await expect.element(page.getByRole("textbox", { name: staffCopy.fields.note, exact: true })).toHaveValue("");
   });
 });
 
 describe("PoliticianForm", () => {
-  it("adds a signer, starting from the Lords", async () => {
-    const { fn, sent } = action();
-    await render(<PoliticianForm action={fn} submitLabel="Add" />);
-    await expect.element(page.getByRole("combobox", { name: staffCopy.fields.house, exact: true })).toHaveValue("lords");
-    await userEvent.fill(page.getByRole("textbox", { name: staffCopy.fields.name, exact: true }), "Lord Example");
-    await page.getByRole("button", { name: "Add" }).click();
-    await vi.waitFor(() => expect(sent).toHaveLength(1));
-    expect(sent[0]).toMatchObject({ house: "lords", name: "Lord Example", constituency: "", email: "" });
-    expect(sent[0].id).toBeUndefined();
-  });
-
   it("edits a signer, filled in with their details", async () => {
     const { fn, sent } = action();
-    await render(<PoliticianForm action={fn} politician={{ ...MP, airtableId: null, constituency: null, email: null, house: "senedd" }} submitLabel="Save" />);
+    await render(<PoliticianForm action={fn} politician={{ ...MP, airtableId: null, constituency: null, email: null, house: "senedd" }} />);
     await expect.element(page.getByRole("combobox", { name: staffCopy.fields.house, exact: true })).toHaveValue("senedd");
-    await expect.element(page.getByRole("textbox", { name: staffCopy.fields.name, exact: true })).toHaveValue("Rachel Blake");
-    await page.getByRole("button", { name: "Save" }).click();
+    await expect.element(page.getByRole("textbox", { name: staffCopy.fields.name, exact: true })).toHaveValue("Polly Placeholder");
+    await page.getByRole("button", { name: staffCopy.politician.save }).click();
     await vi.waitFor(() => expect(sent).toHaveLength(1));
-    expect(sent[0]).toMatchObject({ id: "7", house: "senedd", salutation: "Ms Blake", party: "Labour (Co-op)" });
+    expect(sent[0]).toMatchObject({ id: "7", house: "senedd", salutation: "Ms Placeholder", party: "Labour (Co-op)" });
   });
 });
 

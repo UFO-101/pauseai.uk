@@ -91,6 +91,17 @@ Route groups like `(site)` don't appear in URLs. Folders starting with `_`
 - **Content vs logic.** Data the site displays (people, posts, press, board)
   goes in `lib/content/`. Logic goes next to the feature it serves
   (`lib/events.ts`, `lib/collateral/`).
+- **Where the words go.** A page's own text is written in the page. A
+  tool's words (labels, messages, errors, the emails it sends) go in one
+  copy object in `lib/content/<feature>.ts`, such as `copy` in
+  `lib/content/email-your-mp.ts` and `staffCopy` in
+  `lib/content/staff-interface.ts`. So the wording can be changed in one
+  file without touching the code, and components and tests refer to it by
+  name (`staffCopy.syncs.syncNow`), so changing it breaks nothing. Words
+  not written yet are placeholders: Latin, starting with the asterism
+  (U+2042), so they can't be mistaken for real copy.
+  `placeholder-copy.test.ts` fails while any are left, which stops them
+  being deployed (AGENTS.md).
 - **Imports** use the `@/` alias for anything outside the current folder.
 - **Tests** sit next to the code they test (`*.test.ts`,
   `*.browser.test.tsx`); see `docs/testing.md`.

@@ -50,62 +50,65 @@ test("an address outside pauseai.uk gets no link, though the page doesn't say so
   expect(await logIn(page, "someone@pauseai.uk.evil.example")).toBe(false);
 });
 
-test("a login link works once, and only from its button", async ({ page, request }) => {
+test("a login link works once, and only in the browser that asked for it", async ({ page, browser, request }) => {
   await page.goto(`${BASE}/staff/login`);
   await page.getByLabel(staffCopy.login.emailLabel).fill("once@pauseai.uk");
   await page.getByRole("button", { name: staffCopy.login.button }).click();
   await expect(page.getByRole("status")).toHaveText(staffCopy.login.sent);
-  const link = newestEmailTo("once@pauseai.uk")!.TextBody.match(/https?:\/\/\S+\/staff\/login\/confirm\?token=[\w-]+/)![0];
+  const link = newestEmailTo("once@pauseai.uk")!.TextBody.match(/https?:\/\/\S+\/staff\/api\/callback\?token=[\w-]+/)![0];
 
-  // Opening the link, as a mail scanner would, logs nobody in.
-  expect((await request.get(link)).ok()).toBe(true);
+  // Opened by a mail scanner, or in another browser, the link logs nobody in
+  // and says why, and isn't used up.
+  const scanned = await request.get(link);
+  expect(scanned.url()).toBe(`${BASE}/staff/login?elsewhere=1`);
+  const other = await browser.newPage();
+  await other.goto(link);
+  await expect(other).toHaveURL(/\/staff\/login\?elsewhere=1$/);
+  await expect(other.getByText(staffCopy.login.elsewhere)).toBeVisible();
+  await other.close();
+
+  // Opened in the browser that asked, it logs in straight away.
   await page.goto(link);
-  await page.getByRole("button", { name: staffCopy.login.confirm }).click();
   await expect(page).toHaveURL(`${BASE}/staff`);
   await expect(page.getByText(staffCopy.nav.signedInAs("once@pauseai.uk"))).toBeVisible();
 
-  await page.context().clearCookies();
+  // And it only works once.
+  await page.context().clearCookies({ name: "staff_session" });
   await page.goto(link);
-  await page.getByRole("button", { name: staffCopy.login.confirm }).click();
   await expect(page).toHaveURL(/\/staff\/login\?failed=1$/);
   await expect(page.getByText(staffCopy.login.failed)).toBeVisible();
 });
 
-test("staff log in, set a status that shows on /campaigns, add a signer, and log out", async ({ page, request }) => {
+test("staff log in, set a status that shows on /campaigns, and log out", async ({ page, request }) => {
   await logIn(page);
   await expect(page).toHaveURL(`${BASE}/staff`);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(staffCopy.politicians.title);
   await expect(page.getByText(staffCopy.nav.signedInAs("staff@pauseai.uk"))).toBeVisible();
   await expect(page.getByRole("link", { name: "Testy McTestface MP" })).toBeVisible();
 
-  await page.getByRole("link", { name: "Rachel Blake" }).click();
+  await page.getByRole("link", { name: "Polly Placeholder" }).click();
   const form = page.getByRole("form", { name: pm.title });
   await form.getByRole("combobox", { name: staffCopy.fields.status, exact: true }).selectOption("signed");
   await form.getByRole("button", { name: staffCopy.politician.save }).click();
   await expect(form.getByText(/staff@pauseai\.uk/)).toBeVisible();
 
   const signed = await (await request.get(`${BASE}/api/signatories`)).json();
-  expect(signed).toContainEqual(expect.objectContaining({ name: "Rachel Blake", house: "commons" }));
+  expect(signed).toContainEqual(expect.objectContaining({ name: "Polly Placeholder", house: "commons" }));
   await page.goto(`${BASE}/campaigns`);
-  await expect(page.locator("#signatories").getByText("Rachel Blake")).toBeVisible();
-
-  await page.goto(`${BASE}/staff/politicians/new`);
-  await page.getByRole("textbox", { name: staffCopy.fields.name, exact: true }).fill("Lord Fixture");
-  await page.getByRole("button", { name: staffCopy.add.button }).click();
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Lord Fixture");
+  await expect(page.locator("#signatories").getByText("Polly Placeholder")).toBeVisible();
 
   await page.goto(`${BASE}/staff/changes`);
-  await expect(page.getByRole("cell", { name: "add politician" }).first()).toBeVisible();
+  await expect(page.getByRole("cell", { name: "set status" }).first()).toBeVisible();
 
-  await page.goto(`${BASE}/staff/mp-sync`);
+  await page.goto(`${BASE}/staff/import`);
   await expect(page.getByText(staffCopy.syncs.status.applied).first()).toBeVisible();
 
-  // The fixture Airtable gives Rachel Blake an email Parliament doesn't list.
+  // The fixture Airtable gives Polly Placeholder an email Parliament doesn't list.
   await page.goto(`${BASE}/staff/mp-check`);
   await page.getByRole("button", { name: staffCopy.check.checkNow }).click();
   const blake = page.getByRole("row").filter({ hasText: "Cities of London and Westminster" });
   await expect(blake).toContainText(staffCopy.check.kinds.email);
-  await expect(blake).toContainText("rachel.blake.mp@parliament.uk");
+  await expect(blake).toContainText("polly.placeholder.mp@parliament.uk");
 
   await page.getByRole("button", { name: staffCopy.nav.logout }).click();
   await expect(page).toHaveURL(`${BASE}/staff/login`);

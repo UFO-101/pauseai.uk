@@ -30,8 +30,8 @@ describeWithDatabase("POST /api/postmark/inbound", () => {
   it("forwards a reply to a letter, and records who it came from, not its text", async () => {
     const mp = await addTestMp();
     await query(
-      `INSERT INTO letters (campaign, politician_id, sender_name, sender_email, sender_address, sender_postcode, contact_consent, subject, body, reply_hash, status)
-       VALUES ('regulate-letter-pm', $1, 'Jane', 'jane@example.com', 'x', 'ZZ9 9ZZ', false, 'S', 'B', 'hash1', 'sent')`,
+      `INSERT INTO letters (campaign, politician_id, sender_name, sender_email, sender_address, sender_postcode, contact_consent, subject, reply_hash, status)
+       VALUES ('regulate-letter-pm', $1, 'Jane', 'jane@example.com', 'x', 'ZZ9 9ZZ', false, 'S', 'hash1', 'sent')`,
       [mp],
     );
     const to: string[] = [];

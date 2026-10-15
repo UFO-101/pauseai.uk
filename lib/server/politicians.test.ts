@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import { addTestMp, addTestPolitician, describeWithDatabase, useTestDatabase } from "@/tests/database";
 import { query } from "./db";
 import {
-  addPolitician,
   findSittingMp,
   findTestMp,
   getPolitician,
@@ -17,6 +16,8 @@ import {
 const PM = "regulate-letter-pm";
 const BILL = "support-sobel-bill";
 const PEER = { house: "lords" as const, name: "Lord Example", salutation: "Lord Example", constituency: null, party: "Crossbench", email: null };
+/** A peer, as the signatory import adds them. */
+const addPeer = () => addTestPolitician({ ...PEER, airtableId: null });
 
 describe("isHouse", () => {
   it("knows the houses", () => {
@@ -34,10 +35,10 @@ describeWithDatabase("politicians", () => {
     await addTestMp();
     expect(await findSittingMp("Cities of London and Westminster")).toEqual({
       id,
-      name: "Rachel Blake",
-      salutation: "Ms Blake",
+      name: "Polly Placeholder",
+      salutation: "Ms Placeholder",
       constituency: "Cities of London and Westminster",
-      email: "rachel.blake.mp@parliament.uk",
+      email: "polly.placeholder.mp@parliament.uk",
       isTest: false,
     });
     expect(await findSittingMp("Ipswich")).toBeUndefined();
@@ -54,8 +55,8 @@ describeWithDatabase("politicians", () => {
   it("sets, changes and clears statuses, logging each change", async () => {
     const id = await addTestPolitician();
     await setStatus(id, PM, { status: "signed", date: "2026-10-01", note: "By email" }, "jo@pauseai.uk");
-    await setStatus(id, BILL, { status: "supports", date: null, note: "" }, "jo@pauseai.uk");
-    expect(await statusesOf(id)).toEqual({ [PM]: "signed", [BILL]: "supports" });
+    await setStatus(id, BILL, { status: "signed", date: null, note: "" }, "jo@pauseai.uk");
+    expect(await statusesOf(id)).toEqual({ [PM]: "signed", [BILL]: "signed" });
 
     await setStatus(id, BILL, { status: null, date: null, note: "" }, "sam@pauseai.uk");
     expect(await statusesOf(id)).toEqual({ [PM]: "signed" });
@@ -72,33 +73,33 @@ describeWithDatabase("politicians", () => {
 
   it("lists politicians, the test MP first, filtered by search, house and campaign", async () => {
     const mp = await addTestPolitician();
-    const peer = await addPolitician(PEER, "jo@pauseai.uk");
+    const peer = await addPeer();
     await addTestMp();
     await setStatus(peer, PM, { status: "signed", date: null, note: "" }, "jo@pauseai.uk");
 
-    expect((await listPoliticians()).map((p) => p.name)).toEqual(["Testy McTestface MP", "Lord Example", "Rachel Blake"]);
+    expect((await listPoliticians()).map((p) => p.name)).toEqual(["Testy McTestface MP", "Lord Example", "Polly Placeholder"]);
     expect((await listPoliticians({ search: "westminster" })).map((p) => p.id)).toEqual([mp]);
     expect((await listPoliticians({ search: "CROSSBENCH" })).map((p) => p.id)).toEqual([peer]);
     expect((await listPoliticians({ house: "lords" })).map((p) => p.id)).toEqual([peer]);
     expect((await listPoliticians({ campaign: PM })).map((p) => p.id)).toEqual([peer]);
     expect(await listPoliticians({}, 1)).toHaveLength(1);
-    expect((await listPoliticians({ search: "Rachel" }))[0]).toEqual({
+    expect((await listPoliticians({ search: "Polly" }))[0]).toEqual({
       id: mp,
-      airtableId: "recBlake",
+      airtableId: "recPlaceholder",
       house: "commons",
-      name: "Rachel Blake",
-      salutation: "Ms Blake",
+      name: "Polly Placeholder",
+      salutation: "Ms Placeholder",
       constituency: "Cities of London and Westminster",
       party: "Labour (Co-op)",
-      email: "rachel.blake.mp@parliament.uk",
+      email: "polly.placeholder.mp@parliament.uk",
       isTest: false,
       sitting: true,
       statuses: {},
     });
   });
 
-  it("adds and edits signers by hand, but not MPs from Parliament or the test MP", async () => {
-    const peer = await addPolitician(PEER, "jo@pauseai.uk");
+  it("edits other signers, but not MPs from Parliament or the test MP", async () => {
+    const peer = await addPeer();
     expect(await updatePolitician(peer, { ...PEER, party: "Labour" }, "sam@pauseai.uk")).toBe(true);
     expect((await getPolitician(peer))!.party).toBe("Labour");
 
@@ -106,24 +107,23 @@ describeWithDatabase("politicians", () => {
     const test = await addTestMp();
     expect(await updatePolitician(mp, PEER, "sam@pauseai.uk")).toBe(false);
     expect(await updatePolitician(test, PEER, "sam@pauseai.uk")).toBe(false);
-    expect((await getPolitician(mp))!.name).toBe("Rachel Blake");
+    expect((await getPolitician(mp))!.name).toBe("Polly Placeholder");
     expect(await getPolitician(999)).toBeUndefined();
 
     const actions = await query<{ action: string }>("SELECT action FROM audit_log ORDER BY id");
-    expect(actions.map((a) => a.action)).toEqual(["add politician", "edit politician"]);
+    expect(actions.map((a) => a.action)).toEqual(["edit politician"]);
   });
 
-  it("lists who signed, by name, never the test MP or those who only support", async () => {
+  it("lists who signed, by name, never the test MP or those without a status", async () => {
     const mp = await addTestPolitician();
-    const peer = await addPolitician(PEER, "jo@pauseai.uk");
+    const peer = await addPeer();
     const test = await addTestMp();
-    const supporter = await addTestPolitician({ airtableId: "rec2", name: "Sam Supporter", constituency: "Ipswich" });
+    await addTestPolitician({ airtableId: "rec2", name: "Sam Unsigned", constituency: "Ipswich" });
     for (const id of [mp, peer, test]) await setStatus(id, PM, { status: "signed", date: null, note: "" }, "jo@pauseai.uk");
-    await setStatus(supporter, PM, { status: "supports", date: null, note: "" }, "jo@pauseai.uk");
 
     expect(await signatories(PM)).toEqual([
       { name: "Lord Example", party: "Crossbench", constituency: "", house: "lords" },
-      { name: "Rachel Blake", party: "Labour (Co-op)", constituency: "Cities of London and Westminster", house: "commons" },
+      { name: "Polly Placeholder", party: "Labour (Co-op)", constituency: "Cities of London and Westminster", house: "commons" },
     ]);
     expect(await signatories(BILL)).toEqual([]);
   });

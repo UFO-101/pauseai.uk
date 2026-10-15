@@ -4,6 +4,10 @@
     "name": "Testy McTestface MP",
     "salutation": "Mr McTestface",
     "constituency": "Testshire",
+    "place": {
+      "latitude": 51.4995,
+      "longitude": -0.1248
+    },
     "statuses": {}
   },
   {
@@ -11,8 +15,24 @@
     "name": "Signy McTestface MP",
     "salutation": "Ms McTestface",
     "constituency": "Signshire",
+    "place": {
+      "latitude": 51.4995,
+      "longitude": -0.1248
+    },
     "statuses": {
       "regulate-letter-pm": "signed"
     }
+  },
+  {
+    "postcode": "ZZ99ZN",
+    "name": "Nomail McTestface MP",
+    "salutation": "Dr McTestface",
+    "constituency": "Nomailshire",
+    "place": {
+      "latitude": 51.4995,
+      "longitude": -0.1248
+    },
+    "noEmail": true,
+    "statuses": {}
   }
 ]

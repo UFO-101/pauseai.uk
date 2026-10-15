@@ -5,8 +5,8 @@ import { LOGIN_PATH } from "@/lib/staff-session";
 import styles from "../_components/staff.module.css";
 
 // Open to anyone: it's where staff log in, so it doesn't call requireStaff().
-export default async function LoginPage({ searchParams }: { searchParams: Promise<{ sent?: string; failed?: string }> }) {
-  const { sent, failed } = await searchParams;
+export default async function LoginPage({ searchParams }: { searchParams: Promise<{ sent?: string; failed?: string; elsewhere?: string }> }) {
+  const { sent, failed, elsewhere } = await searchParams;
   return (
     <main className={`container ${styles.page}`}>
       <h1>{staffCopy.login.title}</h1>
@@ -22,6 +22,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
         <>
           <p>{staffCopy.login.intro}</p>
           {failed && <p className={styles.error}>{staffCopy.login.failed}</p>}
+          {elsewhere && <p className={styles.error}>{staffCopy.login.elsewhere}</p>}
           <form className={styles.form} method="post" action="/staff/api/login">
             <label>
               {staffCopy.login.emailLabel}

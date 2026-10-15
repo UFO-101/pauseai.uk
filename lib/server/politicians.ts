@@ -130,20 +130,6 @@ export type PoliticianDetails = {
   email: string | null;
 };
 
-/** A signer from outside the Commons, added by hand. Returns their ID. */
-export async function addPolitician(details: PoliticianDetails, staff: string): Promise<number> {
-  return transaction(async (db) => {
-    const [{ id }] = await query<{ id: number }>(
-      `INSERT INTO politicians (house, name, salutation, constituency, party, email)
-       VALUES ($1, $2, $3, $4, $5, $6) RETURNING id::int AS id`,
-      [details.house, details.name, details.salutation, details.constituency, details.party, details.email],
-      db,
-    );
-    await logChange(staff, "add politician", { id, ...details }, db);
-    return id;
-  });
-}
-
 /**
  * Edits a politician added by hand. MPs from Parliament are left to the
  * sync, which would only overwrite the change.

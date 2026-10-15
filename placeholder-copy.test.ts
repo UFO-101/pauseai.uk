@@ -41,9 +41,7 @@ function filesContainingMark(dir: string, root = dir): string[] {
   return found;
 }
 
-// Off until the Email your MP swap (plans/email-your-mp-v2.md), so the branch
-// can build and deploy previews while its copy is still placeholder.
-describe.skip("placeholder copy", () => {
+describe("placeholder copy", () => {
   it(`no file contains the ${MARK} placeholder mark`, () => {
     expect(filesContainingMark(process.cwd())).toEqual([]);
   });

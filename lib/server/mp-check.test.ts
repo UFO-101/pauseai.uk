@@ -17,10 +17,10 @@ describeWithDatabase("checkMps", () => {
     await syncMps();
     expect(await latestCheck()).toBeUndefined();
 
-    // The fixture Airtable gives Rachel Blake an email Parliament doesn't list.
+    // The fixture Airtable gives Polly Placeholder an email Parliament doesn't list.
     const problems = await checkMps();
 
-    const blake = { kind: "email", constituency: "Cities of London and Westminster", name: "Rachel Blake", airtable: "rachel.blake.mp@parliament.uk", parliament: ["mp5257.office@parliament.uk"] };
+    const blake = { kind: "email", constituency: "Cities of London and Westminster", name: "Polly Placeholder", airtable: "polly.placeholder.mp@parliament.uk", parliament: ["mp90002.office@parliament.uk"] };
     expect(problems).toEqual([blake]);
     expect(await latestCheck()).toMatchObject({ problems: [blake] });
   });
@@ -36,7 +36,7 @@ describeWithDatabase("checkMps", () => {
       http.get(`${MEMBERS_API}/Members/Search`, () =>
         ++calls === 1 ? new HttpResponse(null, { status: 429, headers: { "Retry-After": "0" } }) : undefined,
       ),
-      http.get(`${MEMBERS_API}/Members/172/Contact`, () => (++calls === 3 ? new HttpResponse(null, { status: 503, headers: { "Retry-After": "0" } }) : undefined)),
+      http.get(`${MEMBERS_API}/Members/90001/Contact`, () => (++calls === 3 ? new HttpResponse(null, { status: 503, headers: { "Retry-After": "0" } }) : undefined)),
     );
     await checkMps();
     expect(calls).toBeGreaterThanOrEqual(4);

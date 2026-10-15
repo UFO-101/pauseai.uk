@@ -10,8 +10,8 @@ describeWithDatabase("recentLetters", () => {
     const mp = await addTestMp();
     for (const [hash, status] of [["a", "sent"], ["b", "sending"]]) {
       await query(
-        `INSERT INTO letters (campaign, politician_id, sender_name, sender_email, sender_address, sender_postcode, contact_consent, subject, body, reply_hash, status)
-         VALUES ('regulate-letter-pm', $1, 'Jane', 'jane@example.com', 'x', 'ZZ9 9ZZ', false, 'S', 'B', $2, $3)`,
+        `INSERT INTO letters (campaign, politician_id, sender_name, sender_email, sender_address, sender_postcode, contact_consent, subject, reply_hash, status)
+         VALUES ('regulate-letter-pm', $1, 'Jane', 'jane@example.com', 'x', 'ZZ9 9ZZ', false, 'S', $2, $3)`,
         [mp, hash, status],
       );
     }

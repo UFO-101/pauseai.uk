@@ -17,7 +17,7 @@ describe("fixtureResponse", () => {
   it("serves Airtable's MPs when asked for the House of Commons", async () => {
     const formula = encodeURIComponent("AND({Body}='House of Commons')");
     const mps = await fixtureResponse(`https://eu.airtable.com/v0/app/tbl?filterByFormula=${formula}`)!.json();
-    expect(mps.records.map((r: { id: string }) => r.id)).toEqual(["recAbbott", "recBlake"]);
+    expect(mps.records.map((r: { id: string }) => r.id)).toEqual(["recDummy", "recPlaceholder"]);
   });
 
   it("knows one postcode, and 404s the rest", async () => {
@@ -32,8 +32,8 @@ describe("fixtureResponse", () => {
 
   it("lists two MPs, each with an office email", async () => {
     expect((await fixtureResponse("https://members-api.parliament.uk/api/Members/Search?House=1")!.json()).items).toHaveLength(2);
-    const contact = await fixtureResponse("https://members-api.parliament.uk/api/Members/172/Contact")!.json();
-    expect(contact.value[0].email).toBe("mp172.office@parliament.uk ");
+    const contact = await fixtureResponse("https://members-api.parliament.uk/api/Members/90001/Contact")!.json();
+    expect(contact.value[0].email).toBe("mp90001.office@parliament.uk ");
   });
 
   it("accepts every email sent through Postmark", async () => {
@@ -45,7 +45,7 @@ describe("fixtureResponse", () => {
   it("has nothing for other URLs", () => {
         expect(fixtureResponse("https://public-api.luma.com/other")).toBeUndefined();
     expect(fixtureResponse("https://eu.airtable.com/other")).toBeUndefined();
-    expect(fixtureResponse("https://members-api.parliament.uk/api/Members/172")).toBeUndefined();
+    expect(fixtureResponse("https://members-api.parliament.uk/api/Members/90001")).toBeUndefined();
     expect(fixtureResponse("https://example.com/")).toBeUndefined();
   });
 });

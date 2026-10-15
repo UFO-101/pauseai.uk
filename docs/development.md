@@ -99,7 +99,8 @@ This:
   Netlify does;
 - adds the test MPs, whose letters go to `TEST_MP_EMAIL`: Testy McTestface
   MP, found by postcode ZZ99ZZ, and Signy McTestface MP (ZZ99ZS), who has
-  already signed the letter to the PM. They're listed in
+  already signed the letter to the PM. Nomail McTestface MP (ZZ99ZN) has no
+  email, to see what the form says then. They're listed in
   `lib/test-mps.json`.
 
 Run it again whenever you want a clean database, or after pulling a new
@@ -149,26 +150,27 @@ your machine. You need no keys:
 | --- | --- |
 | Luma | A few made-up events and guests |
 | postcodes.io | Knows only SW1A 1AA (Cities of London and Westminster); every other postcode is "not found". The test postcodes never ask it. |
-| Airtable | Two MPs, Diane Abbott and Rachel Blake, and two made-up signatories |
-| Parliament's Members API | The same two MPs, with an office email each. Rachel Blake's differs from Airtable's, so the MP check has something to show. |
+| Airtable | Two MPs, Dora Dummy and Polly Placeholder, and two made-up signatories |
+| Parliament's Members API | The same two MPs, with an office email each. Polly Placeholder's differs from Airtable's, so the MP check has something to show. |
 | Turnstile | Accepts every token |
-| Postmark | Accepts every email, without needing a token. With `OUTBOX_DIR`, writes each one to a JSON file there. |
+| Postmark | Accepts every email, without needing a token, and writes each one to a mail file (`.eml`) in `OUTBOX_DIR`, or `tmp/outbox/` in the dev server. |
 
 #### Send a letter to the test MP
 
 1. Open http://localhost:3000/campaigns-v2.
-2. Enter any name, and postcode `ZZ99ZZ`. Testy McTestface MP appears, with
-   the letter.
-3. Fill in an email and an address, then Send, then Confirm. Without
-   its keys, Turnstile isn't needed.
-4. The letter is sent: it's the newest file in `tmp/outbox/`, with its PDFs
-   base64-encoded.
+2. Enter any name, and postcode `ZZ99ZZ`. The page for writing the letter
+   opens, to Testy McTestface MP.
+3. Fill in an email and an address, then go to the preview, and send it
+   from there. Without its keys, Turnstile isn't needed.
+4. The letter is sent: it's the newest `.eml` file in `tmp/outbox/`, with its PDFs
+   attached. Open it in a mail app or a text editor.
 
 `/staff/letters` shows it, once you've logged in.
 
 To see a campaign's page move on to the next, look up ZZ99ZS instead: that
-MP has already signed, so the letter to the PM moves on to the bill. Outside
-production, the form lists both test postcodes under it.
+MP has already signed, so the letter to the PM moves on to the bill. ZZ99ZN
+finds an MP with no email, so there's no letter to write. Outside
+production, the form lists the test postcodes under it.
 
 #### Write to a real MP
 
@@ -183,15 +185,14 @@ To look them up with fixtures, add the two fixture MPs first:
 curl -X POST -H "Authorization: Bearer dev" localhost:3000/api/cron/sync-mps
 ```
 
-Then postcode `SW1A 1AA` finds Rachel Blake.
+Then postcode `SW1A 1AA` finds Polly Placeholder.
 
 #### Log in to the staff interface
 
 1. Open http://localhost:3000/staff/login, and type any address at
    pauseai.uk, such as staff@pauseai.uk.
 2. The login email is the newest file in `tmp/outbox/`. Open the
-   `/staff/login/confirm?token=…` link from its `TextBody`, and press the
-   button.
+   `/staff/api/callback?token=…` link in it, in the same browser.
 
 You're at `/staff`, logged in for 12 hours. This goes through the real
 login code: only Postmark is a fixture.
@@ -326,5 +327,6 @@ See [testing.md](testing.md) for the rules.
 | ZZ99ZZ says no MP found | The database has no test MP. Set `TEST_MP_EMAIL` and run `npm run db:reset`, or run the MP sync. |
 | The test MP shows "no email listed" | The test MP was added without an email. Set `TEST_MP_EMAIL` and run `npm run db:reset`. |
 | Sending says it failed | Without `DATA_FIXTURES`, check `POSTMARK_SERVER_TOKEN`. |
+| An email didn't arrive | The server log says what happened to each email: sent through Postmark, with its MessageID, or written to which outbox file. The dev server doesn't send without a real token: with none, or Postmark's test token `POSTMARK_API_TEST`, it writes the email to the outbox instead. |
 | Letters to a real MP are refused | Expected: outside production, only the test MP. |
 | `Executable doesn't exist` from Playwright | `npx playwright install chromium`. |

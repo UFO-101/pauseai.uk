@@ -1,6 +1,6 @@
 // Reads the staff interface's forms. Anything that doesn't fit is refused
 // (undefined) rather than guessed at.
-import { campaignBySlug } from "@/lib/email-your-mp";
+import { trackedCampaigns } from "@/lib/email-your-mp";
 import type { CampaignStatus } from "@/lib/content/email-your-mp";
 
 const HOUSES = ["commons", "lords", "scottish-parliament", "senedd", "ni-assembly", "other"];
@@ -50,8 +50,8 @@ export function statusFrom(form: FormData): StatusForm | undefined {
   const campaign = text(form, "campaign");
   const status = text(form, "status");
   const date = text(form, "date");
-  if (!politicianId || !campaignBySlug(campaign)) return undefined;
-  if (status !== "" && status !== "signed" && status !== "supports") return undefined;
+  if (!politicianId || !trackedCampaigns.some((c) => c.slug === campaign)) return undefined;
+  if (status !== "" && status !== "signed") return undefined;
   if (date && !/^\d{4}-\d{2}-\d{2}$/.test(date)) return undefined;
   return { politicianId, campaign, change: { status: status || null, date: date || null, note: text(form, "note") } };
 }

@@ -219,6 +219,14 @@ Shadows are warm-toned (brown-black, not blue-black) to maintain palette consist
 
 ---
 
+## Interface Text
+
+- **Sentence case** for labels, buttons and headings: "Your name", "Find my MP", "Send email". Not "Your Name" or "Find My MP". Proper nouns keep their capitals: "MP", "PauseAI", "Airtable".
+- **Full stops** on messages that are sentences: errors, notices, hints and confirmations. "Please enter your name.", "Postcode not found."
+- **No full stops** on labels, buttons, headings, or a word or two of status: "Your email", "Preview", "Sending".
+
+---
+
 ## Imagery Guidelines
 
 - Photography should feel **documentary, not stock** — real people at real events

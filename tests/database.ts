@@ -53,13 +53,13 @@ export async function addTestPolitician(row: MpRow = {}): Promise<number> {
     `INSERT INTO politicians (airtable_id, house, name, salutation, constituency, party, email, is_test, test_postcode, sitting)
      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id::int AS id`,
     [
-      row.airtableId === undefined ? "recBlake" : row.airtableId,
+      row.airtableId === undefined ? "recPlaceholder" : row.airtableId,
       row.house ?? "commons",
-      row.name ?? "Rachel Blake",
-      row.salutation ?? "Ms Blake",
+      row.name ?? "Polly Placeholder",
+      row.salutation ?? "Ms Placeholder",
       row.constituency === undefined ? "Cities of London and Westminster" : row.constituency,
       row.party ?? "Labour (Co-op)",
-      row.email === undefined ? "rachel.blake.mp@parliament.uk" : row.email,
+      row.email === undefined ? "polly.placeholder.mp@parliament.uk" : row.email,
       row.testPostcode !== undefined,
       row.testPostcode ?? null,
       row.sitting ?? true,

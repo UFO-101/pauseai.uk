@@ -62,7 +62,7 @@ CREATE TABLE public.campaign_statuses (
     note text DEFAULT ''::text NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_by text NOT NULL,
-    CONSTRAINT campaign_statuses_status_check CHECK ((status = ANY (ARRAY['signed'::text, 'supports'::text])))
+    CONSTRAINT campaign_statuses_status_check CHECK ((status = 'signed'::text))
 );
 
 --
@@ -104,14 +104,12 @@ CREATE TABLE public.letters (
     sender_postcode text NOT NULL,
     contact_consent boolean NOT NULL,
     subject text NOT NULL,
-    body text NOT NULL,
     reply_hash text NOT NULL,
     status text NOT NULL,
     postmark_message_id text,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     sent_at timestamp with time zone,
     replied_at timestamp with time zone,
-    body_html text,
     CONSTRAINT letters_status_check CHECK ((status = ANY (ARRAY['sending'::text, 'sent'::text, 'bounced'::text, 'spam_complaint'::text])))
 );
 
@@ -223,7 +221,8 @@ CREATE TABLE public.staff_login_links (
     email text NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     expires_at timestamp with time zone NOT NULL,
-    used_at timestamp with time zone
+    used_at timestamp with time zone,
+    browser_hash text
 );
 
 --

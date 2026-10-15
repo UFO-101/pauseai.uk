@@ -1,51 +1,54 @@
 "use client";
 
 import { useEffect, useId, useState, type FormEvent } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
-import { copy, type Campaign } from "@/lib/content/email-your-mp";
-import { campaignBySlug, campaignPath, campaignToMoveTo, type Mp, type MpStatuses } from "@/lib/email-your-mp";
-import { navigate } from "@/lib/navigate";
+import { copy } from "@/lib/content/email-your-mp";
+import { campaignBySlug, campaignPath, campaignToMoveTo, isDone, type Mp, type MpStatuses } from "@/lib/email-your-mp";
+import type { Place } from "@/lib/events";
 import { TEST_MPS } from "@/lib/test-mps";
-import { leaveHandoff, takeHandoff } from "./handoff";
-import LetterForm from "./LetterForm";
+import { readLookup, saveLookup } from "./draft";
+import MpCard from "./MpCard";
 import styles from "./EmailYourMp.module.css";
 
-type Found = { mp: Mp; statuses: MpStatuses; name: string; postcode: string };
+type Found = { mp: Mp; statuses: MpStatuses };
+type LookupResult = Found & { place: Place | null };
 
 /**
- * Name and postcode, then the MP and the campaign's letter. If the MP has
- * already done this campaign, it moves on to the first one they haven't,
- * which opens with the lookup done and says why. (A slug, because campaigns
- * hold functions, which can't be passed from the server.)
+ * Name and postcode, to find the MP. Then the page for writing this
+ * campaign's letter. If the MP has already done this campaign, it goes to
+ * the page of the first one they haven't instead, which says why
+ * (MovedOnNotice), with the name and postcode filled in. There always is
+ * one, as the last campaign is one nobody has done. When there's no letter
+ * to write here (no email for the MP, or the browser won't keep the
+ * lookup), it stays and says so. (A slug, because
+ * campaigns hold functions, which can't be passed from the server.)
  */
 type Props = {
   campaignSlug: string;
-  turnstileSiteKey?: string;
   /** Lists the test MPs' postcodes under the form: for sites other than production. */
   showTestMps?: boolean;
 };
 
-export default function EmailYourMpTool({ campaignSlug, turnstileSiteKey, showTestMps }: Props) {
+export default function EmailYourMpTool({ campaignSlug, showTestMps }: Props) {
   const campaign = campaignBySlug(campaignSlug)!;
+  const router = useRouter();
   const testPostcodes = useId();
   const [name, setName] = useState("");
   const [postcode, setPostcode] = useState("");
   const [looking, setLooking] = useState(false);
   const [error, setError] = useState("");
   const [found, setFound] = useState<Found | null>(null);
-  // The campaign whose page moved on to this one.
-  const [movedFrom, setMovedFrom] = useState<Campaign | undefined>();
 
+  // Coming back from writing a letter: the name and postcode, as they were.
   // After the page loads, as the server can't see sessionStorage.
   useEffect(() => {
-    const handoff = takeHandoff(campaignSlug);
-    if (!handoff) return;
+    const last = readLookup();
+    if (!last) return;
     // eslint-disable-next-line react-hooks/set-state-in-effect -- once, on load, from sessionStorage, which the server render couldn't read
-    setName(handoff.name);
-    setPostcode(handoff.postcode);
-    setFound({ mp: handoff.mp, statuses: handoff.statuses, name: handoff.name, postcode: handoff.postcode });
-    setMovedFrom(campaignBySlug(handoff.from));
-  }, [campaignSlug]);
+    setName(last.name);
+    setPostcode(last.postcode);
+  }, []);
 
   async function lookUp(event: FormEvent) {
     event.preventDefault();
@@ -53,7 +56,6 @@ export default function EmailYourMpTool({ campaignSlug, turnstileSiteKey, showTe
     if (!postcode.trim()) return setError(copy.lookup.postcodeRequired);
     setError("");
     setFound(null);
-    setMovedFrom(undefined);
     setLooking(true);
     let moving = false;
     try {
@@ -64,12 +66,16 @@ export default function EmailYourMpTool({ campaignSlug, turnstileSiteKey, showTe
       });
       const result = await res.json();
       if (!result.ok) return setError(result.message);
-      const lookup = { mp: result.mp, statuses: result.statuses, name: name.trim(), postcode: postcode.trim() };
-      const next = campaignToMoveTo(campaign, lookup.statuses);
-      moving = !!next && leaveHandoff({ from: campaign.slug, to: next.slug, ...lookup });
-      // Still "looking" while the next page loads, which opens at the form.
-      if (moving) navigate(`${campaignPath(next!)}#email-your-mp`);
-      else setFound(lookup);
+      const { mp, statuses, place }: LookupResult = result;
+      const target = campaignToMoveTo(campaign, statuses) ?? campaign;
+      // The target is never one the MP has done: there's always one to move on to.
+      const canWrite = !!mp.email;
+      const movedFrom = target === campaign ? undefined : campaign.slug;
+      moving = canWrite && saveLookup({ campaign: target.slug, name: name.trim(), postcode: postcode.trim(), mp, statuses, movedFrom, place });
+      // Still "looking" while the next page loads.
+      if (moving) return router.push(movedFrom ? campaignPath(target) : `${campaignPath(target)}/write`);
+      setFound({ mp, statuses });
+      if (canWrite) setError(copy.form.storageFailed);
     } catch {
       setError(copy.lookup.failed);
     } finally {
@@ -103,7 +109,7 @@ export default function EmailYourMpTool({ campaignSlug, turnstileSiteKey, showTe
           )}
         </div>
         <div className={styles.lookupButton}>
-          <Button variant="primary" type="submit" disabled={looking}>
+          <Button variant="primary" type="submit" pending={looking}>
             {looking ? copy.lookup.looking : copy.lookup.button}
           </Button>
         </div>
@@ -114,26 +120,12 @@ export default function EmailYourMpTool({ campaignSlug, turnstileSiteKey, showTe
         </p>
       )}
 
+      {/* No letter to write here: the MP has no email, or has done this campaign and the page couldn't move on. */}
       {found && (
         <>
-          {movedFrom && <p className={styles.notice}>{movedFrom.movedOn}</p>}
-          <div className={styles.mp}>
-            <h2>{found.mp.name}</h2>
-            <p>{copy.lookup.mpOf(found.mp.constituency)}</p>
-            {/* data-mp-email: the visual diff masks it, as the test MP's inbox differs between hosts. */}
-            <p data-mp-email>{found.mp.email ? <a href={`mailto:${found.mp.email}`}>{found.mp.email}</a> : copy.lookup.noEmail}</p>
-          </div>
-          {found.mp.email && (
-            <LetterForm
-              // A new MP starts a new letter.
-              key={found.mp.constituency}
-              campaign={campaign}
-              mp={found.mp}
-              statuses={found.statuses}
-              senderName={found.name}
-              postcode={found.postcode}
-              turnstileSiteKey={turnstileSiteKey}
-            />
+          <MpCard mp={found.mp} />
+          {found.mp.email && isDone(campaign, found.statuses) && (
+            <p className={styles.notice}>{campaign.alreadyDone}</p>
           )}
         </>
       )}

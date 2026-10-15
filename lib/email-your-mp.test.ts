@@ -6,6 +6,7 @@ import {
   campaignPath,
   campaignToMoveTo,
   chooseCampaign,
+  trackedCampaigns,
   draftLetter,
   fullLetter,
   isDone,
@@ -16,7 +17,7 @@ import {
 import { docFromMarkup, toHtml, toText } from "./letter-format";
 
 const [letterToPm, bill] = campaigns;
-const details = { salutation: "Ms Abbott", constituency: "Hackney North", senderName: "Jane Smith" };
+const details = { salutation: "Ms Dummy", constituency: "Hackney North", senderName: "Jane Smith" };
 
 describe("postcodes", () => {
   it("compares postcodes without spaces or case", () => {
@@ -32,21 +33,33 @@ describe("campaigns", () => {
 
   it("counts a campaign done only with the status it asks for", () => {
     expect(isDone(letterToPm, { [letterToPm.slug]: "signed" })).toBe(true);
-    expect(isDone(letterToPm, { [letterToPm.slug]: "supports" })).toBe(false);
+    expect(isDone(letterToPm, { [bill.slug]: "signed" })).toBe(false);
     expect(isDone(letterToPm, {})).toBe(false);
   });
 
-  it("picks the first campaign the MP hasn't done, or the first if they've done them all", () => {
-    expect(chooseCampaign({})).toBe(letterToPm);
-    expect(chooseCampaign({ [letterToPm.slug]: "signed" })).toBe(bill);
-    expect(chooseCampaign({ [letterToPm.slug]: "signed", [bill.slug]: "supports" })).toBe(letterToPm);
+  it("never counts a campaign without a done status as done", () => {
+    expect(bill.done).toBeUndefined();
+    expect(isDone(bill, {})).toBe(false);
+    expect(isDone(bill, { [bill.slug]: "signed" })).toBe(false);
   });
 
-  it("moves on from a campaign the MP has done to the first they haven't, if any", () => {
+  it("leaves campaigns nobody has done out of the staff interface", () => {
+    expect(trackedCampaigns).toEqual([letterToPm]);
+  });
+
+  it("ends with a campaign nobody has done, so there's always one to move on to", () => {
+    expect(campaigns.at(-1)!.done).toBeUndefined();
+  });
+
+  it("picks the first campaign the MP hasn't done", () => {
+    expect(chooseCampaign({})).toBe(letterToPm);
+    expect(chooseCampaign({ [letterToPm.slug]: "signed" })).toBe(bill);
+  });
+
+  it("moves on from a campaign the MP has done to the first they haven't", () => {
     expect(campaignToMoveTo(letterToPm, {})).toBeUndefined();
     expect(campaignToMoveTo(letterToPm, { [letterToPm.slug]: "signed" })).toBe(bill);
-    expect(campaignToMoveTo(bill, { [bill.slug]: "supports" })).toBe(letterToPm);
-    expect(campaignToMoveTo(letterToPm, { [letterToPm.slug]: "signed", [bill.slug]: "supports" })).toBeUndefined();
+    expect(campaignToMoveTo(bill, { [letterToPm.slug]: "signed", [bill.slug]: "signed" })).toBeUndefined();
   });
 
   it("has a page for each campaign", () => {
@@ -55,17 +68,12 @@ describe("campaigns", () => {
 });
 
 describe("letters", () => {
-  it("asks an MP who hasn't done it, and thanks one who has", () => {
+  it("starts each campaign's letter with the MP's details", () => {
     for (const campaign of campaigns) {
-      const ask = draftLetter(campaign, {}, details);
-      const thanks = draftLetter(campaign, { [campaign.slug]: campaign.done }, details);
-      expect(ask).toEqual(docFromMarkup(campaign.letter(details)));
-      expect(thanks).toEqual(docFromMarkup(campaign.thanks(details)));
-      expect(ask).not.toEqual(thanks);
-      for (const text of [toText(ask), toText(thanks)]) {
-        expect(text).toContain("Ms Abbott");
-        expect(text).toContain("Hackney North");
-      }
+      const draft = draftLetter(campaign, details);
+      expect(draft).toEqual(docFromMarkup(campaign.letter(details)));
+      expect(toText(draft)).toContain("Ms Dummy");
+      expect(toText(draft)).toContain("Hackney North");
     }
   });
 

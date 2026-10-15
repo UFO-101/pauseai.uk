@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { campaigns } from "@/lib/content/email-your-mp";
+import { trackedCampaigns } from "@/lib/email-your-mp";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { getPolitician } from "@/lib/server/politicians";
 import { requireStaff } from "@/lib/server/staff-auth";
@@ -24,15 +24,15 @@ export default async function PoliticianPage({ params }: { params: Promise<{ id:
       </p>
       <h2>{staffCopy.politician.statusesTitle}</h2>
       <div className={styles.statuses}>
-        {campaigns.map((campaign) => (
+        {trackedCampaigns.map((campaign) => (
           <StatusForm key={campaign.slug} politicianId={politician.id} campaign={campaign} current={politician.statuses[campaign.slug]} action={saveStatus} />
         ))}
       </div>
       <h2>{staffCopy.politician.detailsTitle}</h2>
       {editable ? (
-        <PoliticianForm action={editSigner} politician={politician} submitLabel={staffCopy.politician.save} />
+        <PoliticianForm action={editSigner} politician={politician} />
       ) : (
-        <p>{staffCopy.politician.fromParliament}</p>
+        <p>{staffCopy.politician.fromAirtable}</p>
       )}
     </main>
   );

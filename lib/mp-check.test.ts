@@ -17,7 +17,7 @@ describe("plainName", () => {
 
 describe("checkAgainstParliament", () => {
   it("finds nothing wrong when they agree, whatever the titles and case", () => {
-    expect(checkAgainstParliament([ours("Ipswich", "Jack Abbott", "Jack.Abbott.MP@parliament.uk")], [theirs("Ipswich", "Mr Jack Abbott", ["jack.abbott.mp@parliament.uk", "x@example.org"])])).toEqual([]);
+    expect(checkAgainstParliament([ours("Ipswich", "Ian Instance", "Ian.Instance.MP@parliament.uk")], [theirs("Ipswich", "Mr Ian Instance", ["ian.instance.mp@parliament.uk", "x@example.org"])])).toEqual([]);
   });
 
   it("lists constituencies only one side has, different names and emails, by constituency", () => {

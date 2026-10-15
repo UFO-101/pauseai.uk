@@ -7,7 +7,7 @@ import { docFromMarkup, type Inline, type LetterDoc } from "@/lib/letter-format"
 /** An MP as the form sees them. */
 export type Mp = {
   name: string;
-  /** "Ms Abbott", or built from the name when Parliament has none. */
+  /** "Ms Dummy", or built from the name when Parliament has none. */
   salutation: string;
   constituency: string;
   /** null when Parliament lists no email for them. */
@@ -34,32 +34,36 @@ export function campaignBySlug(slug: string): Campaign | undefined {
   return campaigns.find((campaign) => campaign.slug === slug);
 }
 
+/**
+ * The campaigns staff record a status for: those an MP can have done. A
+ * campaign without `done` isn't in the staff interface.
+ */
+export const trackedCampaigns = campaigns.filter((campaign) => campaign.done !== undefined);
+
+/** Whether the MP has done it. Nobody has done a campaign without `done`. */
 export function isDone(campaign: Campaign, statuses: MpStatuses): boolean {
-  return statuses[campaign.slug] === campaign.done;
+  return campaign.done !== undefined && statuses[campaign.slug] === campaign.done;
 }
 
 /**
- * The first campaign, in priority order, that this MP hasn't done. If
- * they've done them all, the first, which then thanks them.
+ * The first campaign, in priority order, that this MP hasn't done. There's
+ * always one: the last campaign is one nobody has done.
  */
 export function chooseCampaign(statuses: MpStatuses): Campaign {
-  return campaigns.find((campaign) => !isDone(campaign, statuses)) ?? campaigns[0];
+  return campaigns.find((campaign) => !isDone(campaign, statuses))!;
 }
 
 /**
  * Where a campaign's page sends someone whose MP has already done it: the
- * first campaign they haven't. None if they've done them all, so the page
- * stays and thanks them.
+ * first campaign they haven't. None if they haven't done this one.
  */
 export function campaignToMoveTo(campaign: Campaign, statuses: MpStatuses): Campaign | undefined {
-  if (!isDone(campaign, statuses)) return undefined;
-  const next = chooseCampaign(statuses);
-  return isDone(next, statuses) ? undefined : next;
+  return isDone(campaign, statuses) ? chooseCampaign(statuses) : undefined;
 }
 
-/** The letter the form starts with: a request, or thanks if it's done. */
-export function draftLetter(campaign: Campaign, statuses: MpStatuses, details: LetterDetails): LetterDoc {
-  return docFromMarkup(isDone(campaign, statuses) ? campaign.thanks(details) : campaign.letter(details));
+/** The letter the form starts with. */
+export function draftLetter(campaign: Campaign, details: LetterDetails): LetterDoc {
+  return docFromMarkup(campaign.letter(details));
 }
 
 /** The letter as sent: the body the sender edited, then their name and address, a line each. */

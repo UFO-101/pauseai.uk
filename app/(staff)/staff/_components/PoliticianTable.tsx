@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { campaigns } from "@/lib/content/email-your-mp";
+import { trackedCampaigns } from "@/lib/email-your-mp";
 import { staffCopy } from "@/lib/content/staff-interface";
 import type { Politician } from "@/lib/server/politicians";
 import styles from "./staff.module.css";
@@ -16,7 +16,7 @@ export default function PoliticianTable({ politicians }: { politicians: Politici
           <th>{staffCopy.fields.house}</th>
           <th>{staffCopy.fields.constituency}</th>
           <th>{staffCopy.fields.party}</th>
-          {campaigns.map((c) => (
+          {trackedCampaigns.map((c) => (
             <th key={c.slug}>{c.title}</th>
           ))}
         </tr>
@@ -32,7 +32,7 @@ export default function PoliticianTable({ politicians }: { politicians: Politici
             <td>{staffCopy.houses[p.house]}</td>
             <td>{p.constituency}</td>
             <td>{p.party}</td>
-            {campaigns.map((c) => {
+            {trackedCampaigns.map((c) => {
               const status = p.statuses[c.slug];
               return <td key={c.slug}>{status ? staffCopy.statuses[status.status] : <span className={styles.muted}>{staffCopy.statuses.none}</span>}</td>;
             })}

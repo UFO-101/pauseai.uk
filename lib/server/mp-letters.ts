@@ -64,6 +64,22 @@ export function letterAddress(replyHash: string): string {
   return `reply+${replyHash}@${lettersDomain()}`;
 }
 
+/**
+ * Who the MP's office replies to: the sender, our shared inbox, and the
+ * letter's own address, which records the reply.
+ */
+function replyTo(form: LetterForm, address: string): string {
+  const inbox = process.env.REPLIES_INBOX;
+  return [`"${headerName(form.name)}" <${form.email}>`, inbox && `"PauseAI Policy Team" <${inbox}>`, `"PauseAI Letters" <${address}>`]
+    .filter(Boolean)
+    .join(", ");
+}
+
+/** Our shared inbox gets a blind copy of each letter: the only copy kept of its text. */
+function bcc(): string | undefined {
+  return process.env.REPLIES_INBOX || undefined;
+}
+
 async function logEvent(letterId: number, status: string, details: object, db?: Queryable): Promise<void> {
   await query("INSERT INTO letter_events (letter_id, status, details) VALUES ($1, $2, $3)", [letterId, status, JSON.stringify(details)], db);
 }
@@ -127,9 +143,9 @@ export async function submitLetter(form: LetterForm, hostname: string): Promise<
       }
       const [{ id }] = await query<{ id: number }>(
         `INSERT INTO letters (campaign, politician_id, sender_name, sender_email, sender_address, sender_postcode,
-           contact_consent, subject, body, body_html, reply_hash, status)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'sending') RETURNING id::int AS id`,
-        [campaign.slug, mp.id, form.name, form.email, form.address, form.postcode.toUpperCase(), form.consent, form.subject, body, html, replyHash],
+           contact_consent, subject, reply_hash, status)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'sending') RETURNING id::int AS id`,
+        [campaign.slug, mp.id, form.name, form.email, form.address, form.postcode.toUpperCase(), form.consent, form.subject, replyHash],
         db,
       );
       await logEvent(id, "sending", {}, db);
@@ -141,7 +157,8 @@ export async function submitLetter(form: LetterForm, hostname: string): Promise<
     const messageId = await sendEmail({
       From: `"${headerName(form.name)} via PauseAI" <${address}>`,
       To: to,
-      ReplyTo: `${form.email}, ${address}`,
+      Bcc: bcc(),
+      ReplyTo: replyTo(form, address),
       Subject: form.subject,
       TextBody: body,
       HtmlBody: html,

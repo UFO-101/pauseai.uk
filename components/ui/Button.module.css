@@ -52,6 +52,51 @@
   font-size: 16px;
 }
 
+.btn:disabled,
+.btn:disabled:hover {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Hovering a disabled button keeps its resting colours. */
+.btn.primary:disabled:hover {
+  background: var(--accent);
+}
+
+.btn.ghost:disabled:hover {
+  border-color: var(--border-strong);
+  color: var(--text);
+}
+
+.btn[aria-busy="true"] {
+  cursor: progress;
+}
+
+/* Shown while a button's work is pending. */
+.spinner {
+  width: 1em;
+  height: 1em;
+  margin-right: 8px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation-duration: 2.4s;
+  }
+}
+
 @media (max-width: 720px) {
   .btn {
     width: 100%;

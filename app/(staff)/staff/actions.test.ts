@@ -6,7 +6,7 @@ import { getPolitician } from "@/lib/server/politicians";
 import { createSession } from "@/lib/server/staff-auth";
 import { addTestPolitician, describeWithDatabase, useTestDatabase } from "@/tests/database";
 import { expectRedirect, requestCookies } from "@/tests/next-headers";
-import { addSigner, checkNow, decideSync, editSigner, importFromAirtable, saveStatus, syncNow } from "./actions";
+import { checkNow, decideSync, editSigner, importFromAirtable, saveStatus, syncNow } from "./actions";
 
 vi.mock("next/headers", () => import("@/tests/next-headers"));
 // revalidatePath needs a Next request; here it only needs to have been asked.
@@ -39,7 +39,6 @@ describeWithDatabase("staff Server Actions", () => {
     requestCookies.clear();
     const attempts = [
       () => saveStatus(form({ politicianId: String(id), campaign: PM, status: "signed" })),
-      () => addSigner(form({ house: "lords", name: "Lord X" })),
       () => editSigner(form({ id: String(id), house: "lords", name: "X" })),
       () => syncNow(),
       () => checkNow(),
@@ -48,7 +47,7 @@ describeWithDatabase("staff Server Actions", () => {
     ];
     for (const attempt of attempts) expect(await expectRedirect(attempt)).toBe("/staff/login");
     expect(await statusCount()).toBe(0);
-    expect(await query("SELECT name FROM politicians")).toEqual([{ name: "Rachel Blake" }]);
+    expect(await query("SELECT name FROM politicians")).toEqual([{ name: "Polly Placeholder" }]);
   });
 
   it("saveStatus sets a status as the logged-in staff member", async () => {
@@ -61,16 +60,8 @@ describeWithDatabase("staff Server Actions", () => {
     expect(await statusCount()).toBe(1);
   });
 
-  it("addSigner adds a signer and opens their page, or asks for a name", async () => {
-    const to = await expectRedirect(() => addSigner(form({ house: "senedd", name: "Jo Bloggs", party: "Plaid" })));
-    const [{ id }] = await query<{ id: number }>("SELECT id::int AS id FROM politicians WHERE name = 'Jo Bloggs'");
-    expect(to).toBe(`/staff/politicians/${id}`);
-    expect(await expectRedirect(() => addSigner(form({ house: "senedd", name: "" })))).toBe("/staff/politicians/new?missing=1");
-  });
-
-  it("editSigner edits a signer added by hand, and ignores a bad form", async () => {
-    await expectRedirect(() => addSigner(form({ house: "lords", name: "Lord X" })));
-    const [{ id }] = await query<{ id: number }>("SELECT id::int AS id FROM politicians");
+  it("editSigner edits a signer from outside Airtable's MPs, and ignores a bad form", async () => {
+    const id = await addTestPolitician({ airtableId: null, house: "lords", name: "Lord X" });
     await editSigner(form({ id: String(id), house: "lords", name: "Lord Y" }));
     expect((await getPolitician(id))!.name).toBe("Lord Y");
     await editSigner(form({ id: String(id), house: "lords", name: "" }));
@@ -87,7 +78,7 @@ describeWithDatabase("staff Server Actions", () => {
   it("syncNow copies the MPs from Airtable", async () => {
     await syncNow();
     expect(await query("SELECT count(*)::int AS n FROM politicians WHERE airtable_id IS NOT NULL")).toEqual([{ n: 2 }]);
-    expect(revalidatePath).toHaveBeenCalledWith("/staff/mp-sync");
+    expect(revalidatePath).toHaveBeenCalledWith("/staff/import");
   });
 
   it("decideSync applies or discards a held sync, and ignores a bad form", async () => {

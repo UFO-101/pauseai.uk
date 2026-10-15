@@ -87,8 +87,8 @@ through `outsideFetch` like any other outside service.
 - **Vitest checks what we sent.** The Postmark fixture just returns a
   `MessageID`. Tests read the request MSW received and check From,
   Reply-To, the text and the attachments (`lib/server/mp-letters.test.ts`).
-- **Playwright reads an outbox.** With `DATA_FIXTURES=1`, `outsideFetch` also
-  writes each outgoing email to a file in `OUTBOX_DIR`
+- **Playwright reads an outbox.** With `DATA_FIXTURES=1`, `sendEmail` also
+  writes each outgoing email to a mail file (`.eml`) in `OUTBOX_DIR`
   (`tests/fixtures/outbox.ts`). The flow test checks the letter in the
   newest email to the test MP. This is test-only plumbing, with no
   production route or table.
@@ -154,8 +154,8 @@ not a mock.
   and their data differs between hosts. `npm run test:fixtures-vs-main`
   screenshots them instead (below).
 - **Staff screens** are tested by logging in as staff do: asking for a
-  link, taking it from the build's outbox, opening it and pressing the
-  button (`logInAsStaff` in `tests/steps.ts`). There's no login bypass.
+  link, taking it from the build's outbox and opening it in the same
+  browser (`logInAsStaff` in `tests/steps.ts`). There's no login bypass.
 - **`next/headers`** can't run outside a request, so Node tests of code
   that calls `requireStaff()` use `vi.mock("next/headers", () =>
   import("@/tests/next-headers"))` and put the session cookie in
@@ -195,7 +195,7 @@ npm run test:report          # open the last Playwright report
   with live data (`DATA_FIXTURES=0`), and the behaviour suite needs one with
   fixtures, so stop any running server when switching between them.
 - The public-vs-live diff also follows the Email your MP form on both hosts: ZZ99ZZ,
-  the drafted letter, and the confirm box, never sending
+  the drafted letter, and its preview, never sending
   (`tests/public-vs-live/email-your-mp.spec.ts`). Its local build gets a database
   with only the test MP in it. Live needs the MP sync run and
   `TEST_MP_EMAIL` set.
