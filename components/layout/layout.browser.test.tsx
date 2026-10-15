@@ -87,16 +87,55 @@ describe("Nav", () => {
     await expect.element(nav).not.toHaveClass("open");
     expect(burger.getAttribute("aria-expanded")).toBe("false");
 
-    // A plain link closes the menu; a dropdown trigger doesn't.
+    // A plain link closes the menu.
     burger.click();
     await expect.element(nav).toHaveClass("open");
     container.addEventListener("click", (e) => e.preventDefault());
-    (nav.querySelector(".dropdown-trigger") as HTMLElement).click();
-    await new Promise((resolve) => setTimeout(resolve, 50));
-    expect(nav.classList.contains("open")).toBe(true);
     const people = [...nav.querySelectorAll("a")].find((a) => a.textContent === "People")!;
     people.click();
     await expect.element(nav).not.toHaveClass("open");
+
+    // On a touch screen, a dropdown trigger's first tap keeps it open, and
+    // the second, which follows the link, closes it.
+    vi.spyOn(window, "matchMedia").mockImplementation(
+      (q) => ({ matches: q === "(hover: none)", media: q }) as MediaQueryList,
+    );
+    burger.click();
+    await expect.element(nav).toHaveClass("open");
+    const trigger = nav.querySelector(".dropdown-trigger") as HTMLElement;
+    trigger.click();
+    await expect.element(trigger.closest(".nav-item") as HTMLElement).toHaveClass("is-open");
+    expect(nav.classList.contains("open")).toBe(true);
+    trigger.click();
+    await expect.element(nav).not.toHaveClass("open");
+    expect(container.querySelector(".is-open")).toBeNull();
+
+    // With a mouse, a trigger is a link, and closes the menu too.
+    vi.restoreAllMocks();
+    burger.click();
+    await expect.element(nav).toHaveClass("open");
+    trigger.click();
+    await expect.element(nav).not.toHaveClass("open");
+  });
+
+  it("scrolls to a place on the home page every time, even when the URL already names it", async () => {
+    // Next's Link does nothing for a URL it is already at; the home page's
+    // in-page links are plain anchors, which the browser always follows.
+    const { container } = await render(
+      <>
+        <Nav />
+        <div style={{ height: 3000 }} />
+        <div id="join" style={{ height: 100 }} />
+      </>,
+    );
+    const join = container.querySelector('a.pill[href="#join"]') as HTMLElement;
+    for (let i = 0; i < 2; i++) {
+      window.scrollTo(0, 0);
+      join.click();
+      await expect.poll(() => window.scrollY).toBeGreaterThan(2000);
+    }
+    window.scrollTo(0, 0);
+    history.replaceState(null, "", location.pathname);
   });
 
   it("opens dropdowns with a tap on touch screens, one at a time", async () => {
