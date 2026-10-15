@@ -16,12 +16,12 @@ afterEach(() => vi.unstubAllEnvs());
 describeWithDatabase("POST /api/email-your-mp/letters", () => {
   useTestDatabase();
 
-  it("accepts a letter, checking Turnstile against this site's host", async () => {
+  it("accepts a letter, whatever host Turnstile issued the token for", async () => {
     await addTestMp();
     const letter = JSON.stringify({ campaign: "regulate-letter-pm", name: "Jane", postcode: "ZZ99ZZ", address: "1 High St", email: "jane@example.com", subject: "S", letter: { type: "doc", content: [{ type: "paragraph", content: [{ type: "text", text: "L" }] }] }, turnstileToken: "t" });
-    expect(await (await send(letter)).json()).toEqual({ ok: true });
-    // The Turnstile fixture issues tokens for localhost, not pauseai.uk.
-    expect(await (await send(letter, "https://pauseai.uk")).json()).toEqual({ ok: false, message: copy.errors.spamFailed });
+    // The Turnstile fixture issues tokens for localhost. On Netlify, the
+    // request's URL is the site's netlify.app address, not pauseai.uk.
+    expect(await (await send(letter, "https://main--pauseaiuk.netlify.app")).json()).toEqual({ ok: true });
   });
 
   it("accepts a bot's letter without saying so", async () => {

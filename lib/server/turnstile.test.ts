@@ -16,12 +16,12 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-const check = (token?: string, hostname = "localhost") => checkNotSpam({ turnstileToken: token }, hostname);
+const check = (token?: string) => checkNotSpam({ turnstileToken: token });
 
 describe("checkNotSpam", () => {
   it("drops a filled-in honeypot without asking Turnstile", async () => {
     server.use(http.post(VERIFY, () => HttpResponse.error()));
-    expect(await checkNotSpam({ nickname: "bot", turnstileToken: "t" }, "localhost")).toEqual({ drop: true });
+    expect(await checkNotSpam({ nickname: "bot", turnstileToken: "t" })).toEqual({ drop: true });
   });
 
   it("passes a token Turnstile accepts, sending it with the secret", async () => {
@@ -42,8 +42,9 @@ describe("checkNotSpam", () => {
     expect(await check("t")).toEqual({ drop: false });
   });
 
-  it("refuses a token from another host", async () => {
-    expect(await check("t", "pauseai.uk")).toEqual({ drop: false, message: copy.errors.spamFailed });
+  it("passes a token Turnstile issued for another host", async () => {
+    server.use(http.post(VERIFY, () => HttpResponse.json({ success: true, hostname: "pauseai.uk" })));
+    expect(await check("t")).toEqual({ drop: false });
   });
 
   it("refuses a token Turnstile rejects", async () => {
@@ -63,7 +64,7 @@ describe("checkNotSpam", () => {
   it("is skipped when neither key is set", async () => {
     vi.stubEnv("TURNSTILE_SECRET_KEY", "");
     vi.stubEnv("NEXT_PUBLIC_TURNSTILE_SITE_KEY", "");
-    expect(await check(undefined, "pauseai.uk")).toEqual({ drop: false });
+    expect(await check(undefined)).toEqual({ drop: false });
     expect(console.warn).toHaveBeenCalledWith("Turnstile keys are not set, so the spam check was skipped");
   });
 
@@ -75,7 +76,7 @@ describe("checkNotSpam", () => {
     expect(await check("t")).toEqual({ drop: false, message: copy.errors.spamMisconfigured });
   });
 
-  it("in development, allows no secret, a test secret, and any host", async () => {
+  it("in development, allows no secret and a test secret", async () => {
     vi.stubEnv("NODE_ENV", "development");
     vi.stubEnv("TURNSTILE_SECRET_KEY", "");
     expect(await check(undefined)).toEqual({ drop: false });
@@ -83,6 +84,6 @@ describe("checkNotSpam", () => {
     vi.stubEnv("NEXT_PUBLIC_TURNSTILE_SITE_KEY", "1x00000000000000000000AA");
     expect(await check(undefined)).toEqual({ drop: false });
     vi.stubEnv("TURNSTILE_SECRET_KEY", "1x0000000000000000000000000000000AA");
-    expect(await check("t", "pauseai.uk")).toEqual({ drop: false });
+    expect(await check("t")).toEqual({ drop: false });
   });
 });
