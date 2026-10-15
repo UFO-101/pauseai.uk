@@ -150,6 +150,12 @@ describe("ShareQr", () => {
     await expect.element(dialog()).not.toBeInTheDocument();
     await page.getByRole("button", { name: "Show QR code larger" }).click();
     await expect.element(dialog()).toHaveClass("qr-lightbox open");
+    // Hidden until it has loaded, so it fades in. Next's image optimiser
+    // isn't here to serve it, so say it has loaded.
+    const code = dialog().getByRole("img");
+    await expect.element(code).toHaveClass("is-loading");
+    code.element().dispatchEvent(new Event("load"));
+    await expect.element(code).not.toHaveClass("is-loading");
     await page.getByRole("button", { name: "Close" }).click();
     await expect.element(dialog()).not.toBeInTheDocument();
 

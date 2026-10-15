@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { preload } from "react-dom";
 import Lightbox from "@/components/ui/Lightbox";
 
 /** A full-size photo, and the words for it. */
@@ -19,6 +20,10 @@ export function Gallery({ children }: { children: ReactNode }) {
   // In page order: each ShotLink adds itself when it mounts.
   const photos = useRef<Photo[]>([]);
   const [shown, setShown] = useState<Photo | null>(null);
+  // Whether the first photo since opening has loaded. Until then it's hidden,
+  // so it fades in rather than popping in. Stepping to another photo keeps
+  // the last one on screen until the next has loaded.
+  const [loaded, setLoaded] = useState(false);
 
   const add = useCallback((photo: Photo) => {
     photos.current.push(photo);
@@ -26,7 +31,10 @@ export function Gallery({ children }: { children: ReactNode }) {
       photos.current = photos.current.filter((p) => p !== photo);
     };
   }, []);
-  const show = useCallback((href: string) => setShown(photos.current.find((p) => p.href === href)!), []);
+  const show = useCallback((href: string) => {
+    setLoaded(false);
+    setShown(photos.current.find((p) => p.href === href)!);
+  }, []);
   const step = useCallback((by: number) => {
     setShown((current) => {
       const list = photos.current;
@@ -75,7 +83,12 @@ export function Gallery({ children }: { children: ReactNode }) {
           </svg>
         </button>
         {/* eslint-disable-next-line @next/next/no-img-element -- whichever full-size photo was clicked */}
-        <img className="lb-image" src={shown?.href} alt={shown?.alt} />
+        <img
+          className={loaded ? "lb-image" : "lb-image is-loading"}
+          src={shown?.href}
+          alt={shown?.alt}
+          onLoad={() => setLoaded(true)}
+        />
       </Lightbox>
     </GalleryContext.Provider>
   );
@@ -101,10 +114,14 @@ export function ShotLink({
 }) {
   const gallery = useContext(GalleryContext)!;
   useEffect(() => gallery.add({ href, alt }), [gallery, href, alt]);
+  // Start on the full photo as soon as a click looks likely.
+  const preloadPhoto = () => preload(href, { as: "image" });
   return (
     <a
       className={className}
       href={href}
+      onPointerEnter={preloadPhoto}
+      onFocus={preloadPhoto}
       onClick={(e) => {
         e.preventDefault();
         gallery.show(href);

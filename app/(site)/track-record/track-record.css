@@ -392,6 +392,10 @@
   object-fit: contain;
   border-radius: 8px;
   box-shadow: 0 24px 80px rgba(0, 0, 0, 0.5);
+  transition: opacity 0.15s ease;
+}
+.lb-image.is-loading {
+  opacity: 0;
 }
 .lb-close,
 .lb-prev,

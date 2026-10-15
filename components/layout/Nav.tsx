@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type AnchorHTMLAttributes } from "react";
 import { localGroups } from "@/lib/content/local-groups";
 import { site } from "@/lib/content/site";
 
@@ -28,6 +28,15 @@ const CAMPAIGN_LINKS = [
   ["/campaigns/", "Regulate AI developers now"],
   ["/future-of-workforce-inquiry/", "Future of the Workforce Inquiry"],
 ];
+
+/**
+ * A link to a page, or to a place on this one. The latter is a plain <a>:
+ * the browser scrolls to the fragment even when it's already in the URL,
+ * where Next's Link sees the same URL and does nothing.
+ */
+function SiteLink({ href, ...rest }: AnchorHTMLAttributes<HTMLAnchorElement> & { href: string }) {
+  return href.startsWith("#") ? <a href={href} {...rest} /> : <Link href={href} {...rest} />;
+}
 
 /** The mobile menu is open, and which dropdown is, by its place in the nav. */
 const CLOSED = { open: false, dropdown: null as number | null };
@@ -130,20 +139,21 @@ export default function Nav() {
                 dropdownItems.current[i] = item;
               }}
             >
-              <Link
+              <SiteLink
                 href={href}
                 className="dropdown-trigger"
                 aria-haspopup="true"
                 aria-expanded={dropdown === i}
                 onClick={(e) => {
                   // Touch screens have no hover, so the first tap opens the
-                  // dropdown and a second follows the link.
-                  if (!window.matchMedia("(hover: none)").matches) return;
-                  if (dropdown === i) {
-                    update({ dropdown: null });
-                  } else {
+                  // dropdown and a second follows the link. Following it
+                  // closes the menu, like any other link: the page it leads
+                  // to may be this one (/#local-groups).
+                  if (window.matchMedia("(hover: none)").matches && dropdown !== i) {
                     e.preventDefault();
                     update({ dropdown: i });
+                  } else {
+                    update(CLOSED);
                   }
                 }}
               >
@@ -158,7 +168,7 @@ export default function Nav() {
                     strokeLinejoin="round"
                   />
                 </svg>
-              </Link>
+              </SiteLink>
               <div className="dropdown" role="menu">
                 {links.map(([linkHref, linkLabel]) => (
                   <Link key={linkHref} href={linkHref} role="menuitem" onClick={closeMenu}>
@@ -177,9 +187,9 @@ export default function Nav() {
           <a href={site.shopUrl} target="_blank" rel="noreferrer" onClick={closeMenu}>
             Shop
           </a>
-          <Link href={`${navPrefix}#join`} className="pill" onClick={closeMenu}>
+          <SiteLink href={`${navPrefix}#join`} className="pill" onClick={closeMenu}>
             Join
-          </Link>
+          </SiteLink>
           <Link href="/donate" className="pill pill-primary" onClick={closeMenu}>
             Donate
           </Link>

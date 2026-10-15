@@ -7,11 +7,21 @@ import Lightbox from "@/components/ui/Lightbox";
 // A QR code for this page, which enlarges on click.
 export default function ShareQr() {
   const [open, setOpen] = useState(false);
+  // Hidden until it has loaded, so it fades in rather than popping in.
+  const [loaded, setLoaded] = useState(false);
   const close = useCallback(() => setOpen(false), []);
   return (
     <section className="campaigns-share">
       <div className="container">
-        <button type="button" className="qr-thumb" aria-label="Show QR code larger" onClick={() => setOpen(true)}>
+        <button
+          type="button"
+          className="qr-thumb"
+          aria-label="Show QR code larger"
+          onClick={() => {
+            setLoaded(false);
+            setOpen(true);
+          }}
+        >
           <Image
             src="/campaign-page-qr-code.png"
             alt="QR code linking to this campaign page"
@@ -31,6 +41,8 @@ export default function ShareQr() {
           alt="QR code linking to this campaign page"
           width={1147}
           height={1147}
+          className={loaded ? undefined : "is-loading"}
+          onLoad={() => setLoaded(true)}
         />
       </Lightbox>
     </section>
