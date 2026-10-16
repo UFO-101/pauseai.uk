@@ -10,7 +10,8 @@ import { toHtml } from "@/lib/letter-format";
 import AttachmentChips from "./AttachmentChips";
 import { markSent, readDraft, type Draft } from "./draft";
 import Turnstile from "./Turnstile";
-import styles from "./EmailYourMp.module.css";
+import { Column, ErrorText } from "./FormParts";
+import styles from "./LetterPreview.module.css";
 
 type Props = {
   campaignSlug: string;
@@ -52,12 +53,12 @@ export default function LetterPreview({ campaignSlug, turnstileSiteKey }: Props)
   if (draft === undefined) return null;
   if (draft === null) {
     return (
-      <div className={styles.tool}>
+      <Column>
         <p>{copy.preview.none}</p>
         <p>
           <Link href={formPath}>{copy.preview.backToForm}</Link>
         </p>
-      </div>
+      </Column>
     );
   }
   const letter = draft;
@@ -120,7 +121,7 @@ export default function LetterPreview({ campaignSlug, turnstileSiteKey }: Props)
         </dl>
         <div className={styles.previewBody} dangerouslySetInnerHTML={{ __html: html }} />
         {campaign.attachments.length > 0 && (
-          <AttachmentChips attachments={campaign.attachments} label={copy.form.attachments} />
+          <AttachmentChips attachments={campaign.attachments} label={copy.form.attachments} ruled />
         )}
       </article>
 
@@ -137,11 +138,7 @@ export default function LetterPreview({ campaignSlug, turnstileSiteKey }: Props)
         </div>
       )}
 
-      {error && (
-        <p className={styles.error} role="alert">
-          {error}
-        </p>
-      )}
+      {error && <ErrorText>{error}</ErrorText>}
 
       <div className={styles.actions}>
         <ButtonLink variant="ghost" href={`${campaignPath(campaign)}/write`}>

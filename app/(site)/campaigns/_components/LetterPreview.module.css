@@ -1,0 +1,103 @@
+/* The preview: the envelope, the letter as the MP gets it, consent and sending. */
+
+.small {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.consent {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: start;
+  gap: 0.6rem !important;
+  font-weight: 400 !important;
+}
+
+.consent input {
+  width: 1.2rem;
+  height: 1.2rem;
+  margin: 0.15rem 0 0;
+  accent-color: var(--accent);
+}
+
+/* The preview and "sent" pages: one centred column, as wide as the form's
+   fields, with the heading close above what's on the page. Doubled up to
+   win over the campaign hero's own padding and heading margin. */
+.previewPage {
+  display: grid;
+  gap: 1.25rem;
+}
+
+/* The letter as the MP gets it: a plain white sheet, dark text. */
+.preview {
+  display: grid;
+  gap: 1.25rem;
+  padding: 2rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  box-shadow:
+    0 1px 2px var(--shadow),
+    0 12px 32px var(--shadow);
+}
+
+.envelope {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.25rem 1rem;
+  margin: 0;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border-strong);
+  font-size: 0.9rem;
+}
+
+.envelope dt {
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.envelope dd {
+  margin: 0;
+}
+
+.previewBody {
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+.previewBody p {
+  margin: 0 0 0.75rem;
+}
+
+.previewBody ul {
+  margin: 0 0 0.75rem;
+  padding-left: 1.5rem;
+}
+
+.previewBody li p,
+.previewBody > :last-child {
+  margin: 0;
+}
+
+/* Cloudflare's widget is a fixed-width iframe: centred, like the buttons under it. */
+.turnstile {
+  display: flex;
+  justify-content: center;
+}
+
+.actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.actions > * {
+  flex: 1;
+}
+
+@media (max-width: 640px) {
+  .preview {
+    padding: 1.25rem 1rem;
+  }
+}

@@ -3,7 +3,7 @@
 import { EditorContent, useEditor, useEditorState, type Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import type { LetterDoc } from "@/lib/letter-format";
-import styles from "./EmailYourMp.module.css";
+import styles from "./LetterEditor.module.css";
 
 type Props = {
   initial: LetterDoc;

@@ -10,7 +10,8 @@ import { TEST_MPS, type TestMp } from "@/lib/test-mps";
 import { readLookup, saveLookup } from "./draft";
 import MpCard from "./MpCard";
 import Required from "./Required";
-import styles from "./EmailYourMp.module.css";
+import { Column, ErrorText, Field, Notice } from "./FormParts";
+import styles from "./EmailYourMpTool.module.css";
 
 type Found = { mp: Mp; statuses: MpStatuses };
 type LookupResult = Found & { place: Place | null };
@@ -109,7 +110,7 @@ export default function EmailYourMpTool({ campaignSlug, showTestMps }: Props) {
   }
 
   return (
-    <div className={styles.tool}>
+    <Column>
       <form className={styles.lookup} onSubmit={lookUp} noValidate>
         <label className={styles.lookupWide}>
           <Required>{copy.lookup.nameLabel}</Required>
@@ -122,7 +123,7 @@ export default function EmailYourMpTool({ campaignSlug, showTestMps }: Props) {
             disabled={looking}
           />
         </label>
-        <div className={styles.field}>
+        <Field>
           <label>
             <Required>{copy.lookup.addressLabel}</Required>
             <input
@@ -136,8 +137,8 @@ export default function EmailYourMpTool({ campaignSlug, showTestMps }: Props) {
             />
           </label>
           <small id={addressHint}>{copy.lookup.addressHint}</small>
-        </div>
-        <div className={styles.field}>
+        </Field>
+        <Field>
           <label>
             <Required>{copy.lookup.postcodeLabel}</Required>
             <input
@@ -162,28 +163,22 @@ export default function EmailYourMpTool({ campaignSlug, showTestMps }: Props) {
               </ul>
             </details>
           )}
-        </div>
+        </Field>
         <div className={styles.lookupButton}>
           <Button variant="primary" type="submit" pending={looking}>
             {looking ? copy.lookup.looking : copy.lookup.button}
           </Button>
         </div>
       </form>
-      {error && (
-        <p className={styles.error} role="alert">
-          {error}
-        </p>
-      )}
+      {error && <ErrorText>{error}</ErrorText>}
 
       {/* No letter to write here: the MP has no email, or has done this campaign and the page couldn't move on. */}
       {found && (
         <>
           <MpCard mp={found.mp} />
-          {found.mp.email && isDone(campaign, found.statuses) && (
-            <p className={styles.notice}>{campaign.alreadyDone}</p>
-          )}
+          {found.mp.email && isDone(campaign, found.statuses) && <Notice>{campaign.alreadyDone}</Notice>}
         </>
       )}
-    </div>
+    </Column>
   );
 }

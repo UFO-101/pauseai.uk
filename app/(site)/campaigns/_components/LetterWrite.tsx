@@ -8,7 +8,7 @@ import { CONTROLAI_LETTER_PAGE, signedControlAiLetter, SOBEL_BILL_CAMPAIGN } fro
 import { readDraft, readLookup, type Draft, type Lookup } from "./draft";
 import LetterForm from "./LetterForm";
 import MpCard from "./MpCard";
-import styles from "./EmailYourMp.module.css";
+import { Column, Notice } from "./FormParts";
 
 type Writing = { lookup: Lookup | Draft; draft?: Draft };
 
@@ -31,24 +31,24 @@ export default function LetterWrite({ campaignSlug }: { campaignSlug: string }) 
   if (writing === undefined) return null;
   if (writing === null) {
     return (
-      <div className={styles.tool}>
+      <Column>
         <p>{copy.write.none}</p>
         <p>
           <Link href={`${campaignPath(campaign)}#email-your-mp`}>{copy.preview.backToForm}</Link>
         </p>
-      </div>
+      </Column>
     );
   }
   const { lookup, draft } = writing;
   return (
-    <div className={styles.tool}>
+    <Column>
       <MpCard mp={lookup.mp} />
       {campaign.slug === SOBEL_BILL_CAMPAIGN && signedControlAiLetter(lookup.statuses) && (
-        <p className={styles.notice}>
+        <Notice>
           {copy.sobelBill.signedNote.before}
           <a href={CONTROLAI_LETTER_PAGE}>{copy.sobelBill.signedNote.link}</a>
           {copy.sobelBill.signedNote.after}
-        </p>
+        </Notice>
       )}
       <LetterForm
         campaign={campaign}
@@ -59,6 +59,6 @@ export default function LetterWrite({ campaignSlug }: { campaignSlug: string }) 
         postcode={lookup.postcode}
         draft={draft}
       />
-    </div>
+    </Column>
   );
 }
