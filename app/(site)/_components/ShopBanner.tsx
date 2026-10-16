@@ -1,17 +1,18 @@
 import Image from "next/image";
 import { ButtonAnchor } from "@/components/ui/Button";
 import { site } from "@/lib/content/site";
+import Section, { Lede } from "@/components/ui/Section";
 
 // The merch shop.
 export default function ShopBanner() {
   return (
-    <section className="section shop-banner">
+    <Section tone="muted" bordered>
       <div className="container callout-inner">
         <div>
           <h2>Get PauseAI merch</h2>
-          <p className="section-lede">
+          <Lede>
             T-shirts, hoodies, stickers and more – every purchase helps spread the word and supports our mission.
-          </p>
+          </Lede>
           <ButtonAnchor variant="primary" size="large" href={site.shopUrl} target="_blank" rel="noreferrer">
             Browse the shop →
           </ButtonAnchor>
@@ -27,6 +28,6 @@ export default function ShopBanner() {
           />
         </a>
       </div>
-    </section>
+    </Section>
   );
 }

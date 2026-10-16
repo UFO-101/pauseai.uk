@@ -3,6 +3,7 @@ import LocalGroupEvents from "@/components/events/LocalGroupEvents";
 import { ButtonAnchor, ButtonLink, type ButtonSize, type ButtonVariant } from "@/components/ui/Button";
 import FeatureCard from "@/components/ui/FeatureCard";
 import type { LocalGroupName } from "@/lib/content/local-groups";
+import PageSection, { Lede, SectionHeader } from "@/components/ui/Section";
 
 /** A call to action. `newTab` opens it in a new tab; `internal` uses client-side navigation. */
 export type GroupAction = {
@@ -84,25 +85,17 @@ function Action({ action, size }: { action: GroupAction; size?: ButtonSize }) {
   );
 }
 
-function SectionHeader({ heading, lede }: { heading: string; lede?: string }) {
-  return (
-    <div className="section-header">
-      <h2>{heading}</h2>
-      {lede && <p className="section-lede">{lede}</p>}
-    </div>
-  );
+function GroupSectionHeader({ heading, lede }: { heading: string; lede?: string }) {
+  return <SectionHeader title={heading}>{lede && <Lede>{lede}</Lede>}</SectionHeader>;
 }
 
 /** A plain section, or a full-width tinted band with the content in a container. */
 function Band({ muted, children }: { muted?: boolean; children: ReactNode }) {
-  if (muted) {
-    return (
-      <section className="section muted">
-        <div className="container">{children}</div>
-      </section>
-    );
-  }
-  return <section className="section container">{children}</section>;
+  return (
+    <PageSection tone={muted ? "muted" : undefined}>
+      <div className="container">{children}</div>
+    </PageSection>
+  );
 }
 
 function Section({ section, name }: { section: GroupSection; name: LocalGroupName }) {
@@ -110,7 +103,7 @@ function Section({ section, name }: { section: GroupSection; name: LocalGroupNam
     case "features":
       return (
         <Band>
-          <SectionHeader heading={section.heading} lede={section.lede} />
+          <GroupSectionHeader heading={section.heading} lede={section.lede} />
           <div className="feature-grid">
             {section.items.map((item) => (
               <FeatureCard key={item.title}>
@@ -124,7 +117,7 @@ function Section({ section, name }: { section: GroupSection; name: LocalGroupNam
     case "activities":
       return (
         <Band muted={section.muted}>
-          <SectionHeader heading={section.heading} lede={section.lede} />
+          <GroupSectionHeader heading={section.heading} lede={section.lede} />
           <div className="activity-grid" style={section.gridStyle}>
             {section.items.map((item) => (
               <article key={item.title} className="activity-card" style={item.style}>
@@ -153,23 +146,21 @@ function Section({ section, name }: { section: GroupSection; name: LocalGroupNam
       return <LocalGroupEvents localGroupName={name} />;
     case "contact":
       return (
-        <section className={section.muted ? "section muted" : "section"}>
-          <div className="container">
-            <SectionHeader heading={section.heading} lede={section.lede} />
-            <div className="callout-inner" style={section.calloutStyle}>
-              {section.details && <div>{section.details}</div>}
-              {section.actions.length > 1 ? (
-                <div className="actions">
-                  {section.actions.map((action) => (
-                    <Action key={action.label} action={action} size="large" />
-                  ))}
-                </div>
-              ) : (
-                <Action action={section.actions[0]} size="large" />
-              )}
-            </div>
+        <Band muted={section.muted}>
+          <GroupSectionHeader heading={section.heading} lede={section.lede} />
+          <div className="callout-inner" style={section.calloutStyle}>
+            {section.details && <div>{section.details}</div>}
+            {section.actions.length > 1 ? (
+              <div className="actions">
+                {section.actions.map((action) => (
+                  <Action key={action.label} action={action} size="large" />
+                ))}
+              </div>
+            ) : (
+              <Action action={section.actions[0]} size="large" />
+            )}
           </div>
-        </section>
+        </Band>
       );
   }
 }

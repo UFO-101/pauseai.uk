@@ -1,19 +1,20 @@
 import Link from "next/link";
 import FeatureCard from "@/components/ui/FeatureCard";
+import Section, { Lede } from "@/components/ui/Section";
 
 // Other ways to give, and answers to common questions.
 export default function DonateBottom() {
   return (
-    <section className="section donate-bottom">
+    <Section>
       <div className="container">
         <div className="donate-bottom-grid">
           <div id="other-ways" className="donate-bottom-col">
             <h2>Major gifts &amp; bank transfer</h2>
-            <p className="section-lede">
+            <Lede long>
               If you prefer to give by bank transfer, please get in touch and we&apos;ll provide our bank details. You
               may want to do this to avoid fees on large one-off donations. For recurring donations this may not be
               necessary as Direct Debit fees are small.
-            </p>
+            </Lede>
             <div className="other-ways-cards">
               <FeatureCard>
                 <h3>Any questions?</h3>
@@ -27,13 +28,13 @@ export default function DonateBottom() {
 
           <div id="transparency" className="donate-bottom-col">
             <h2>Can I claim Gift Aid?</h2>
-            <p className="section-lede">
+            <Lede long>
               Because our work meaningfully engages with policy, donations are not eligible for Gift Aid. Read our{" "}
               <Link className="inline-link" href="/privacy">
                 privacy policy
               </Link>{" "}
               to see how we handle your information.
-            </p>
+            </Lede>
             <div className="other-ways-cards">
               <FeatureCard>
                 <h3>Can I donate anonymously?</h3>
@@ -58,6 +59,6 @@ export default function DonateBottom() {
           </div>
         </div>
       </div>
-    </section>
+    </Section>
   );
 }

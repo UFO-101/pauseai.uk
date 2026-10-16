@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Section from "@/components/ui/Section";
 import Link from "next/link";
 import type { CSSProperties } from "react";
 import {
@@ -54,7 +55,7 @@ export function NewsRow({ items, reverse = false }: { items: CoverageItem[]; rev
 // Press coverage logos scrolling past: two rows on desktop, three on phones.
 export default function PressMarquee() {
   return (
-    <section id="news" className="section">
+    <Section id="news" snug>
       <div className="news-marquee" aria-label="Press coverage of PauseAI UK">
         <div className="news-marquee-set news-marquee-set--desktop" aria-hidden={false}>
           <NewsRow items={newsRow1} />
@@ -71,6 +72,6 @@ export default function PressMarquee() {
           See our press page →
         </Link>
       </div>
-    </section>
+    </Section>
   );
 }

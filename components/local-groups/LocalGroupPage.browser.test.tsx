@@ -50,7 +50,7 @@ describe("LocalGroupPage", () => {
     expect(container.querySelectorAll(".callout-inner .actions a")).toHaveLength(2);
     expect(container.querySelector(".callout-inner > div:not(.actions)")).toBeNull();
     expect(container.querySelector(".hero-badge")).toBeNull();
-    expect(container.querySelector(".section-lede")).not.toBeNull();
+    await expect.element(page.getByText("l", { exact: true })).toBeVisible();
     expect(container.querySelector(".activity-card .inline-link")).toBeNull();
   });
 });

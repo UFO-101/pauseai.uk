@@ -1,16 +1,16 @@
 import { ButtonLink } from "@/components/ui/Button";
 import PeopleCarousel from "./PeopleCarousel";
 import { people } from "@/lib/content/people";
+import Section, { Lede, SectionHeader } from "@/components/ui/Section";
 
 // Volunteers' stories, in a carousel.
 export default function PeopleSection() {
   return (
-    <section id="people" className="section people">
+    <Section id="people" tone="white" bordered>
       <div className="container">
-        <div className="section-header">
-          <h2>People of PauseAI</h2>
-          <p className="section-lede">Stories from volunteers about their journey to joining PauseAI.</p>
-        </div>
+        <SectionHeader title="People of PauseAI">
+          <Lede long>Stories from volunteers about their journey to joining PauseAI.</Lede>
+        </SectionHeader>
       </div>
       <PeopleCarousel people={people} />
       <div className="container">
@@ -23,6 +23,6 @@ export default function PeopleSection() {
           </ButtonLink>
         </div>
       </div>
-    </section>
+    </Section>
   );
 }

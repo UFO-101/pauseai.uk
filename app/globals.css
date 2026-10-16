@@ -849,30 +849,7 @@ html {
   box-shadow: 0 2px 8px var(--shadow);
 }
 
-/* ── Sections ──────────────────────────────────── */
-
-.section {
-  padding-top: 80px;
-  padding-bottom: 80px;
-}
-
-.section.muted {
-  background: var(--surface-2);
-}
-
-.section-header h2 {
-  font-size: clamp(28px, 4vw, 44px);
-  line-height: 1.15;
-  margin: 6px 0 12px;
-  color: var(--text);
-}
-
-.section-lede {
-  color: var(--text-secondary);
-  max-width: 720px;
-  font-size: 17px;
-  line-height: 1.6;
-}
+/* ── Onboarding form embed ─────────────────────── */
 
 .onboarding-embed-wrap {
   position: relative;
@@ -1030,10 +1007,6 @@ html {
   margin-top: 12px;
   font-size: 15px;
   color: var(--text-secondary);
-}
-
-#people .section-lede {
-  max-width: none;
 }
 
 /* ── Feature Cards (mission) ───────────────────── */
@@ -1302,11 +1275,6 @@ html {
   .news-marquee-set--mobile {
     display: block;
   }
-  /* Tighter vertical padding for the news section on phone */
-  #news.section {
-    padding-top: 32px;
-    padding-bottom: 32px;
-  }
   .news-marquee {
     margin-top: 16px;
   }
@@ -1502,11 +1470,6 @@ html {
 
 /* ── Shop banner ──────────────────────────────── */
 
-.shop-banner {
-  background: var(--surface-2);
-  border-top: 1px solid var(--accent-light);
-  border-bottom: 1px solid var(--accent-light);
-}
 .shop-image-link {
   flex-shrink: 0;
   border-radius: 12px;
@@ -1526,12 +1489,6 @@ html {
 
 /* ── Callout ───────────────────────────────────── */
 
-.callout {
-  background: var(--accent-bg);
-  border-top: 1px solid var(--accent-light);
-  border-bottom: 1px solid var(--accent-light);
-}
-
 .callout-inner {
   display: flex;
   align-items: center;
@@ -1541,12 +1498,6 @@ html {
 }
 
 /* ── People of PauseAI ─────────────────────────── */
-
-.section.people {
-  background: var(--accent-bg);
-  border-top: 1px solid var(--accent-light);
-  border-bottom: 1px solid var(--accent-light);
-}
 
 .people-carousel {
   position: relative;
@@ -2199,11 +2150,6 @@ html {
     padding: 48px 0 40px;
   }
 
-  .section {
-    padding-top: 56px;
-    padding-bottom: 56px;
-  }
-
   .footer-grid {
     flex-direction: column;
     align-items: flex-start;
@@ -2285,9 +2231,6 @@ html {
 .donate-intro {
   padding: 32px 0 44px;
   background: var(--accent-bg);
-}
-.donate-bottom {
-  background: var(--bg);
 }
 .donate-intro-grid {
   display: grid;
@@ -2599,9 +2542,6 @@ html {
 }
 .donate-bottom-col h2 {
   margin: 6px 0 12px;
-}
-.donate-bottom-col .section-lede {
-  max-width: none;
 }
 .other-ways-cards {
   display: grid;

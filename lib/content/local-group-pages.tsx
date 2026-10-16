@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import type { LocalGroupPageContent } from "@/components/local-groups/LocalGroupPage";
 import type { LocalGroupName } from "./local-groups";
 import { site } from "./site";
+import { Lede } from "@/components/ui/Section";
 
 // What each local group's page says, rendered by
 // components/local-groups/LocalGroupPage.tsx. The group's name, path, map
@@ -44,12 +45,12 @@ export const localGroupPages: Record<LocalGroupName, LocalGroupPageContent> = {
         lede: "Join the WhatsApp community to connect with local organisers and hear about UK-wide events and campaigns.",
         calloutStyle: { marginTop: 18 },
         details: (
-          <p className="section-lede">
+          <Lede>
             WhatsApp:{" "}
             <a href={site.whatsappUrl} target="_blank" rel="noreferrer">
               PauseAI UK WhatsApp
             </a>
-          </p>
+          </Lede>
         ),
         actions: [{ ...WHATSAPP, variant: "primary" }],
       },
@@ -141,12 +142,12 @@ export const localGroupPages: Record<LocalGroupName, LocalGroupPageContent> = {
         lede: "Join the WhatsApp community to connect with local organisers and hear about UK-wide events and campaigns. Want to learn more? Book a 1-on-1 chat.",
         calloutStyle: { marginTop: 18 },
         details: (
-          <p className="section-lede">
+          <Lede>
             WhatsApp:{" "}
             <a href={site.whatsappUrl} target="_blank" rel="noreferrer">
               PauseAI UK WhatsApp
             </a>
-          </p>
+          </Lede>
         ),
         actions: [
           {
@@ -202,18 +203,18 @@ export const localGroupPages: Record<LocalGroupName, LocalGroupPageContent> = {
         lede: "Join the UK-wide WhatsApp to connect with organisers and hear about national events and campaigns.",
         details: (
           <>
-            <p className="section-lede">
+            <Lede>
               WhatsApp:{" "}
               <a href={site.whatsappUrl} target="_blank" rel="noreferrer">
                 PauseAI UK WhatsApp
               </a>
-            </p>
-            <p className="section-lede">
+            </Lede>
+            <Lede>
               All our links:{" "}
               <a href={WEST_OF_ENGLAND_LINKTREE} target="_blank" rel="noreferrer">
                 linktr.ee/PauseAI_West_of_England
               </a>
-            </p>
+            </Lede>
           </>
         ),
         actions: [{ label: "Join the WhatsApp group", href: site.whatsappUrl, variant: "primary", newTab: true }],
@@ -321,15 +322,15 @@ export const localGroupPages: Record<LocalGroupName, LocalGroupPageContent> = {
         lede: "Email us to join the mailing list, attend the next meet, or host an event on campus.",
         details: (
           <>
-            <p className="section-lede">
+            <Lede>
               Email: <a href="mailto:oxford@pauseai.info">oxford@pauseai.info</a>
-            </p>
-            <p className="section-lede">
+            </Lede>
+            <Lede>
               National chat:{" "}
               <a href={site.whatsappUrl} target="_blank" rel="noreferrer">
                 WhatsApp community
               </a>
-            </p>
+            </Lede>
           </>
         ),
         actions: [{ label: "Email Oxford", href: "mailto:oxford@pauseai.info", variant: "primary" }],
@@ -379,10 +380,10 @@ export const localGroupPages: Record<LocalGroupName, LocalGroupPageContent> = {
         lede: "We meet regularly in central London for talks, workshops, and campaign planning.",
         details: (
           <>
-            <p className="section-lede" style={{ maxWidth: 640 }}>
+            <Lede style={{ maxWidth: 640 }}>
               New to the movement? Start by joining the WhatsApp community, then drop us an email if you&apos;d like to
               host or speak at an event.
-            </p>
+            </Lede>
             <p>
               <strong>Contact:</strong> <a href={`mailto:${site.contactEmail}`}>{site.contactEmail}</a>
             </p>
