@@ -81,6 +81,8 @@ h1, h2, h3, p { margin: 0; }
 main { padding: 8px 24px 80px; min-width: 0; }
 section > h2 { font-size: 18px; margin: 32px 0 8px; padding-top: 16px; border-top: 1px solid var(--line); }
 section:first-child > h2 { border-top: 0; margin-top: 16px; }
+/* A hash link lands under the sticky bar without this. */
+section, .flow { scroll-margin-top: 60px; }
 .flow { margin: 16px 0 28px; }
 .flow h3 { font-size: 15px; margin-bottom: 8px; }
 .flow .status { font-weight: normal; color: var(--muted); font-size: 13px; margin-left: 8px; }
@@ -155,8 +157,10 @@ function render() {
     const sec = el("section", { id: slug(section) }, [el("h2", {}, [title(section)])]);
     for (const flow of sectionFlows) {
       const id = slug(section, flow.flow);
+      // The first flow's link lands on the section's heading, so that's seen too.
+      const target = flow === sectionFlows[0] ? slug(section) : id;
       group.append(
-        el("a", { href: "#" + id, class: flow.status !== "passed" ? "failed" : "" }, [
+        el("a", { href: "#" + target, class: flow.status !== "passed" ? "failed" : "" }, [
           el("span", { class: "name" + (flow.flow.startsWith("/") ? " route" : "") }, [flow.flow]),
           el("span", { class: "count" + (flow.changed ? " changed" : "") }, [
             flow.frames === 0 ? "–" : data.withMain ? flow.changed + "/" + flow.frames : String(flow.frames),
@@ -286,8 +290,6 @@ for (const button of document.querySelectorAll(".bar [data-viewport]")) {
     const target = (flow && document.getElementById(flow)) || (section && document.getElementById(section));
     if (target) {
       target.scrollIntoView({ block: "start" });
-      // Under the sticky bar, not behind it.
-      window.scrollBy(0, -document.querySelector(".bar").offsetHeight);
       trackSection();
     }
   });
