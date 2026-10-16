@@ -46,7 +46,7 @@ To see a page or a step of a flow, use the storyboard, not a script of your own.
 
 ```bash
 npm run storyboard -- --no-main --no-open --paths public-pages -g '/donate$'   # one page, both viewports
-npm run storyboard -- --no-main --no-open --paths --phone email-your-mp -g ZZ99ZZ   # a flow, every frame
+npm run storyboard -- --no-main --no-open --paths --phone campaigns -g ZZ99ZZ   # a flow, every frame
 ```
 
 `--no-main` skips building main, which is the slow part (drop it to see main beside it), `--desktop` or `--phone` picks one viewport, and `--paths` prints each frame's caption and PNG path, to open with the Read tool. A run replaces the last one in `test-results/storyboard`, so a narrow run clears a full review. Playwright reuses whatever is serving on port 3100, so check that it's this branch's fixture build, or stop it. If no flow reaches what you need, add a `frame()` to one, or a flow (see above), rather than a script in `tmp/`.
