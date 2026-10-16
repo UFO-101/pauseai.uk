@@ -6,7 +6,7 @@ import { LOGIN_PATH, SESSION_COOKIE } from "@/lib/staff-session";
 import { query } from "./db";
 
 // Staff sessions, kept in the database. Every staff page, Server Action and
-// route handler calls requireStaff() first; staff-auth.test.ts
+// route handler calls requireStaff() first; tests/checks/staff-auth.test.ts
 // fails if one doesn't. proxy.ts only turns away requests with no cookie.
 
 const SESSION_HOURS = 24 * 7;

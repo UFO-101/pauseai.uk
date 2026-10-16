@@ -18,7 +18,7 @@ import { hydrated } from "./settle";
 // console errors and on React's hydration messages, which arrive as warnings.
 
 // A campaign's write and preview pages show nothing without a postcode and a
-// letter: the email-your-mp flow "the write, preview and sent pages, opened
+// letter: the campaigns flow "the write, preview and sent pages, opened
 // without a lookup or a letter" pictures that once, and the ZZ99ZZ flow
 // pictures them filled in.
 const EMPTY_STEP = /^\/campaigns\/[^/]+\/(write|preview)$/;

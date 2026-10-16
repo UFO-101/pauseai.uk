@@ -8,7 +8,6 @@ const config = {
     "playwright-report/**",
     "test-results/**",
     "blob-report/**",
-    "lighthouse-reports/**",
     ".next/**",
     "tmp/**",
     "public/**",
