@@ -4,18 +4,29 @@ import { staffCopy } from "@/lib/content/staff-interface";
 import styles from "./staff.module.css";
 
 /** The staff pages in the bar, in order. */
-export type StaffPage = "politicians" | "letters" | "import" | "check" | "changes";
+export type StaffPage = "politicians" | "letters" | "import" | "history" | "changes";
 
 const PAGES: [StaffPage, string][] = [
   ["politicians", "/staff/politicians"],
   ["letters", "/staff/letters"],
   ["import", "/staff/import-data"],
-  ["check", "/staff/check-data"],
+  ["history", "/staff/import-history"],
   ["changes", "/staff/audit-log"],
 ];
 
-/** The staff interface's links, with the current page in bold rather than a link, who's logged in, and the way out. */
-export default function StaffHeader({ email, current }: { email: string; current: StaffPage }) {
+/**
+ * The staff interface's links, with the current page in bold rather than a
+ * link, who's logged in, and the way out. Without `email`, on the login page,
+ * just the title.
+ */
+export default function StaffHeader({ email, current }: { email?: string; current?: StaffPage }) {
+  if (!email) {
+    return (
+      <header className={styles.header}>
+        <span className={styles.title}>{staffCopy.nav.title}</span>
+      </header>
+    );
+  }
   return (
     <header className={styles.header}>
       <span className={styles.title}>{staffCopy.nav.title}</span>

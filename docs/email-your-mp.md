@@ -69,9 +69,12 @@ Every run of every import and check below, nightly or from a staff button,
 goes in `import_runs` (`lib/server/import-runs.ts`): when, who started it
 (`nightly` or the staff member's email), how it ended, why it failed, and the
 job's own account of what it found. Failures and runs that changed nothing
-are kept too, so `/staff/import-data` and `/staff/check-data` can say what
-went wrong and when a job last ran. Nothing is pruned. A staff button that
-fails shows the failure there rather than an error page.
+are kept too, so `/staff/import-data` can say what went wrong and when a
+job last ran. It shows each job's newest run (and any held MP sync still
+waiting for a decision); `/staff/import-history` lists every run, newest
+first, up to 1000, under a heading per day, filtered by job. Nothing is
+pruned. A staff button that fails shows the failure there rather than an
+error page.
 
 ## MPs
 
@@ -94,7 +97,7 @@ After the first deploy with the database, run the sync once from
 
 Nightly at 01:00 UTC, an hour after the sync, `netlify/functions/check-mps/` calls `/api/cron/check-mps`, which
 compares the sitting MPs with Parliament's Members API and keeps what it
-finds. `/staff/check-data` shows the newest check, and can run one. It lists
+finds. `/staff/import-data` shows the newest check, and can run one. It lists
 constituencies Airtable doesn't spell as the official list does (no
 postcode would find their MP), constituencies only one side has, names that differ (not counting titles
 such as Dr or Sir), and emails Parliament doesn't list. Where Parliament
@@ -172,7 +175,7 @@ see them, with contact consent, at `/staff/letters`.
 `/staff`, for anyone with a pauseai.uk email address. They type it at
 `/staff/login` and are emailed a link, which works once, for 15 minutes; at
 most 5 are sent an hour to one address. The link opens a page whose button
-logs them in, so a mail scanner that follows it logs nobody in. Its address
+logs them in, for a week, so a mail scanner that follows it logs nobody in. Its address
 is this deploy's own, from Netlify at build time (`SITE_ORIGIN` in
 `next.config.ts`), never the request's, so a forged Host header can't send
 the token elsewhere. Logins work on previews too. Mark who has signed the letter to the PM,

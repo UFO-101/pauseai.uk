@@ -3,8 +3,8 @@ import { staffCopy } from "@/lib/content/staff-interface";
 import { airtableToken, fetchSignatoriesForImport, type SignatoryToImport } from "./airtable";
 import { logChange } from "./audit";
 import { query, transaction, type Queryable } from "./db";
-import type { ImportRun } from "@/lib/import-runs";
-import { keepingFailure, recentRuns, recordRun } from "./import-runs";
+import type { SignatoryImportResult } from "@/lib/import-runs";
+import { keepingFailure, recordRun } from "./import-runs";
 import { setStatus } from "./politicians";
 
 // The one-off copy of the signatories from Airtable into the database (stage
@@ -14,10 +14,6 @@ import { setStatus } from "./politicians";
 
 const JOB = "import-signatories";
 const CAMPAIGN = "regulate-letter-pm";
-
-export type SignatoryImportResult = { matched: number; added: number; alreadySet: number };
-
-export type SignatoryImport = ImportRun<SignatoryImportResult>;
 
 // Airtable's Body, for signers who aren't sitting MPs.
 const HOUSES: Record<string, string> = {
@@ -92,5 +88,3 @@ export function importSignatories(staff: string): Promise<SignatoryImportResult>
     });
   });
 }
-
-export const recentSignatoryImports = () => recentRuns<SignatoryImportResult>(JOB);

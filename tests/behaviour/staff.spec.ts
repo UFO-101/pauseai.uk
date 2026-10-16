@@ -101,8 +101,10 @@ test("staff log in, set a status that shows on /campaigns, and log out", async (
   await page.goto(`${BASE}/staff/audit-log`);
   await expect(page.getByRole("cell", { name: "set status" }).first()).toBeVisible();
 
-  await page.goto(`${BASE}/staff/import-data`);
+  // The import page shows each job's newest run; the history page lists every run, the first sync among them.
+  await page.goto(`${BASE}/staff/import-history?job=sync-mps`);
   await expect(page.getByText(staffCopy.runs.status.applied).first()).toBeVisible();
+  await page.goto(`${BASE}/staff/import-data`);
 
   // The fixture ControlAI letter is signed by Polly Placeholder MP, so the bill's column says so.
   await page.getByRole("button", { name: staffCopy.controlAi.importNow }).click();
@@ -113,7 +115,7 @@ test("staff log in, set a status that shows on /campaigns, and log out", async (
   );
 
   // The fixture Airtable gives Polly Placeholder an email Parliament doesn't list.
-  await page.goto(`${BASE}/staff/check-data`);
+  await page.goto(`${BASE}/staff/import-data`);
   await page.getByRole("button", { name: staffCopy.check.checkNow }).click();
   const blake = page.getByRole("row").filter({ hasText: "Cities of London and Westminster" });
   await expect(blake).toContainText(staffCopy.check.kinds.email);

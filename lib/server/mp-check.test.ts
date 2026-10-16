@@ -4,8 +4,11 @@ import { server } from "@/tests/fixtures/msw";
 import { describeWithDatabase, useTestDatabase } from "@/tests/database";
 import { MEMBERS_API } from "@/lib/parliament";
 import { query } from "./db";
-import { NIGHTLY } from "@/lib/import-runs";
-import { checkMps, recentChecks } from "./mp-check";
+import { type MpCheck, NIGHTLY } from "@/lib/import-runs";
+import { listRuns } from "./import-runs";
+import { checkMps } from "./mp-check";
+
+const recentChecks = () => listRuns("check-mps") as Promise<MpCheck[]>;
 import { syncMps } from "./mp-sync";
 
 beforeEach(() => vi.stubEnv("AIRTABLE_TOKEN", "token"));

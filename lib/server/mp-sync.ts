@@ -1,11 +1,11 @@
 import "server-only";
+import type { MpSync, MpSyncResult } from "@/lib/import-runs";
 import { changeCount, compareMps, MAX_UNCHECKED_CHANGES, type MpChanges, type SyncedMp } from "@/lib/mps";
 import { TEST_MPS } from "@/lib/test-mps";
 import { airtableToken, fetchMps } from "./airtable";
 import { logChange } from "./audit";
 import { query, transaction, type Queryable } from "./db";
-import type { ImportRun } from "@/lib/import-runs";
-import { keepingFailure, recentRuns, recordRun } from "./import-runs";
+import { keepingFailure, recordRun } from "./import-runs";
 
 // Copies the sitting MPs from Airtable into the politicians table, nightly
 // (app/api/cron/sync-mps) or when staff ask. A sync that would change more
@@ -15,11 +15,6 @@ import { keepingFailure, recentRuns, recordRun } from "./import-runs";
 const JOB = "sync-mps";
 
 export type SyncResult = { status: "applied" | "held" | "unchanged"; changes: MpChanges };
-
-/** What a sync-mps run keeps: a held one also keeps the full list, to apply later. */
-export type MpSyncResult = { changes: MpChanges; mps?: SyncedMp[] };
-
-export type MpSync = ImportRun<MpSyncResult>;
 
 /** The MPs copied from Airtable who are still sitting, by constituency. */
 export async function sittingMps(db?: Queryable): Promise<SyncedMp[]> {
@@ -112,7 +107,16 @@ export function syncMps(startedBy: string): Promise<SyncResult> {
   });
 }
 
-export const recentSyncs = () => recentRuns<MpSyncResult>(JOB);
+/** What the import page shows: the newest sync, and any held one still waiting for a decision. */
+export async function syncsToShow(): Promise<MpSync[]> {
+  return query<MpSync>(
+    `SELECT id::int AS id, at, job, started_by AS "startedBy", status, error, result, decided_by AS "decidedBy"
+     FROM import_runs WHERE job = $1
+       AND (status = 'held' OR id = (SELECT id FROM import_runs WHERE job = $1 ORDER BY at DESC, id DESC LIMIT 1))
+     ORDER BY at DESC, id DESC`,
+    [JOB],
+  );
+}
 
 /** Applies or discards a held sync. False if there's no held sync with that ID. */
 export async function decideHeldSync(id: number, decision: "apply" | "discard", staff: string): Promise<boolean> {

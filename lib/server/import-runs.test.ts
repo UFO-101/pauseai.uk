@@ -2,7 +2,7 @@ import { expect, it } from "vitest";
 import { describeWithDatabase, useDatabaseUpTo, useTestDatabase } from "@/tests/database";
 import { migrate } from "@/scripts/db-migrate.mjs";
 import { query } from "./db";
-import { keepingFailure, recentRuns, recordFailure, recordRun } from "./import-runs";
+import { keepingFailure, latestRun, listRuns, recordFailure, recordRun } from "./import-runs";
 
 describeWithDatabase("the import log", () => {
   useTestDatabase();
@@ -13,25 +13,29 @@ describeWithDatabase("the import log", () => {
     await recordFailure("sync-mps", "nightly", new Error("Airtable request failed with status 422"));
     await recordFailure("sync-mps", "nightly", "not an Error");
 
-    expect(await recentRuns("sync-mps")).toMatchObject([
-      { status: "failed", startedBy: "nightly", error: "not an Error", result: {}, decidedBy: null },
+    expect(await listRuns("sync-mps")).toMatchObject([
+      { job: "sync-mps", status: "failed", startedBy: "nightly", error: "not an Error", result: {}, decidedBy: null },
       { status: "failed", startedBy: "nightly", error: "Airtable request failed with status 422", result: {} },
       { status: "unchanged", startedBy: "jo@pauseai.uk", error: null, result: { changes: {} } },
     ]);
-    expect(await recentRuns("check-mps")).toMatchObject([{ id, status: "ok", result: { problems: [] } }]);
-    expect(await recentRuns("sync-mps", 1)).toHaveLength(1);
-    expect(await recentRuns("import-controlai")).toEqual([]);
+    expect(await listRuns("check-mps")).toMatchObject([{ id, status: "ok", result: { problems: [] } }]);
+    expect(await latestRun("check-mps")).toMatchObject({ id });
+    expect(await latestRun("sync-mps")).toMatchObject({ error: "not an Error" });
+    expect(await latestRun("import-controlai")).toBeUndefined();
+    // Every job's, newest first, or just a few.
+    expect((await listRuns()).map((run) => run.job)).toEqual(["sync-mps", "sync-mps", "sync-mps", "check-mps"]);
+    expect(await listRuns(undefined, 1)).toHaveLength(1);
   });
 
   it("keepingFailure keeps a failure and throws it on, and leaves success to the work", async () => {
     expect(await keepingFailure("check-mps", "nightly", async () => 42)).toBe(42);
-    expect(await recentRuns("check-mps")).toEqual([]);
+    expect(await listRuns("check-mps")).toEqual([]);
     await expect(
       keepingFailure("check-mps", "nightly", async () => {
         throw new Error("boom");
       }),
     ).rejects.toThrow("boom");
-    expect(await recentRuns("check-mps")).toMatchObject([{ status: "failed", error: "boom" }]);
+    expect(await listRuns("check-mps")).toMatchObject([{ status: "failed", error: "boom" }]);
   });
 });
 

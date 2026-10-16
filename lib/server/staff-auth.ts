@@ -9,7 +9,7 @@ import { query } from "./db";
 // route handler calls requireStaff() first; staff-auth.test.ts
 // fails if one doesn't. proxy.ts only turns away requests with no cookie.
 
-const SESSION_HOURS = 12;
+const SESSION_HOURS = 24 * 7;
 
 function hash(token: string): string {
   return createHash("sha256").update(token).digest("hex");
@@ -39,7 +39,7 @@ export async function deleteSession(token: string): Promise<void> {
   await query("DELETE FROM staff_sessions WHERE token_hash = $1", [hash(token)]);
 }
 
-/** The session cookie: HttpOnly, Secure, SameSite=Lax, only under /staff, for 12 hours. */
+/** The session cookie: HttpOnly, Secure, SameSite=Lax, only under /staff, for a week. */
 export function sessionCookie(token: string) {
   return {
     name: SESSION_COOKIE,

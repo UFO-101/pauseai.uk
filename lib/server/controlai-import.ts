@@ -8,12 +8,11 @@ import {
   pdfUrlIn,
   signatoriesIn,
   type Candidate,
-  type ControlAiMatchProblem,
 } from "@/lib/controlai-letter";
+import type { ControlAiImportResult } from "@/lib/import-runs";
 import { logChange } from "./audit";
 import { query, transaction } from "./db";
-import type { ImportRun } from "@/lib/import-runs";
-import { keepingFailure, recentRuns, recordRun } from "./import-runs";
+import { keepingFailure, recordRun } from "./import-runs";
 import { outsideFetch } from "./outside-fetch";
 
 // Copies the signatories of ControlAI's letter to the PM into the bill's
@@ -28,20 +27,6 @@ const JOB = "import-controlai";
 
 /** Fewer names than this means the page or the PDF has changed shape, so nothing is changed. */
 const MIN_SIGNATORIES = 5;
-
-export type ControlAiImportResult = {
-  pdfUrl: string;
-  /** Names in the letter. */
-  signatories: number;
-  /** Of those, in our table. */
-  matched: number;
-  /** Statuses set and removed this run. */
-  added: number;
-  removed: number;
-  problems: ControlAiMatchProblem[];
-};
-
-export type ControlAiImport = ImportRun<ControlAiImportResult>;
 
 async function fetchOk(url: string): Promise<Response> {
   const res = await outsideFetch(url, { cache: "no-store" });
@@ -111,5 +96,3 @@ export function importControlAiLetter(startedBy: string): Promise<ControlAiImpor
     });
   });
 }
-
-export const recentControlAiImports = () => recentRuns<ControlAiImportResult>(JOB);

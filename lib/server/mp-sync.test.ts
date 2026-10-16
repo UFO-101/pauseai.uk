@@ -3,8 +3,11 @@ import { http, HttpResponse } from "msw";
 import { server } from "@/tests/fixtures/msw";
 import { addTestPolitician, describeWithDatabase, useTestDatabase } from "@/tests/database";
 import { query } from "./db";
-import { NIGHTLY } from "@/lib/import-runs";
-import { decideHeldSync, recentSyncs, syncMps } from "./mp-sync";
+import { type MpSync, NIGHTLY } from "@/lib/import-runs";
+import { listRuns } from "./import-runs";
+import { decideHeldSync, syncMps, syncsToShow } from "./mp-sync";
+
+const recentSyncs = () => listRuns("sync-mps") as Promise<MpSync[]>;
 
 const JO = "jo@pauseai.uk";
 
@@ -145,6 +148,15 @@ describeWithDatabase("syncMps", () => {
       "hold MP sync",
       "discard held MP sync",
     ]);
+
+    // The page shows the newest run, plus any held one still waiting: not the discarded one.
+    await syncMps(NIGHTLY);
+    await syncMps(NIGHTLY);
+    const shown = await syncsToShow();
+    expect(shown.map((run) => run.status)).toEqual(["held", "held"]);
+    await decideHeldSync(shown[0].id, "apply", "jo@pauseai.uk");
+    await syncMps(NIGHTLY);
+    expect((await syncsToShow()).map((run) => run.status)).toEqual(["unchanged", "held"]);
   });
 
   it("asks Airtable for the sitting MPs only, with its token", async () => {

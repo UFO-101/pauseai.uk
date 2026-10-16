@@ -106,7 +106,7 @@ describeWithDatabase("staff Server Actions", () => {
   it("checkNow checks the MPs against Parliament's", async () => {
     await checkNow();
     expect(await runs()).toEqual([{ job: "check-mps", status: "ok", startedBy: "jo@pauseai.uk" }]);
-    expect(revalidatePath).toHaveBeenCalledWith("/staff/check-data");
+    expect(revalidatePath).toHaveBeenCalledWith("/staff/import-data");
   });
 
   it("syncNow copies the MPs from Airtable, and keeps a failure rather than crashing the page", async () => {

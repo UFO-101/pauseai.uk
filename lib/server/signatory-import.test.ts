@@ -5,7 +5,10 @@ import { addTestMp, addTestPolitician, describeWithDatabase, useTestDatabase } f
 import { staffCopy } from "@/lib/content/staff-interface";
 import { query } from "./db";
 import { getPolitician, setStatus } from "./politicians";
-import { importSignatories, recentSignatoryImports } from "./signatory-import";
+import { listRuns } from "./import-runs";
+import { importSignatories } from "./signatory-import";
+
+const recentSignatoryImports = () => listRuns("import-signatories");
 
 // Airtable's API, matched without naming its host, which only lib/server/airtable.ts may do.
 const AIRTABLE = "https://*.airtable.com/v0/*";

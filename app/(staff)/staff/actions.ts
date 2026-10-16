@@ -56,7 +56,7 @@ export async function syncNow(): Promise<void> {
 
 export async function checkNow(): Promise<void> {
   const { email } = await requireStaff();
-  await run("/staff/check-data", checkMps(email));
+  await run("/staff/import-data", checkMps(email));
 }
 
 export async function importControlAiNow(): Promise<void> {

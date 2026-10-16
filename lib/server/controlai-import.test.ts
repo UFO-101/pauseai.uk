@@ -5,7 +5,10 @@ import { server } from "@/tests/fixtures/msw";
 import { addTestMp, addTestPolitician, describeWithDatabase, useTestDatabase } from "@/tests/database";
 import { SOBEL_BILL_CAMPAIGN, CONTROLAI_LETTER_PAGE } from "@/lib/controlai-letter";
 import { NIGHTLY } from "@/lib/import-runs";
-import { importControlAiLetter, recentControlAiImports } from "./controlai-import";
+import { importControlAiLetter } from "./controlai-import";
+import { listRuns } from "./import-runs";
+
+const recentControlAiImports = () => listRuns("import-controlai");
 import { query } from "./db";
 
 const PDF = "https://images.controlai.com/final%20letter.pdf";

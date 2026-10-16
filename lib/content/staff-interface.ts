@@ -2,6 +2,8 @@
 // "Never write final copy"): the Latin roughly says what the English should,
 // so the screens can be used meanwhile.
 
+import type { ImportJob } from "@/lib/import-runs";
+
 export const staffCopy = {
   metaTitle: "Staff",
   login: {
@@ -27,6 +29,7 @@ export const staffCopy = {
     import: "Import data",
     check: "Check data",
     changes: "Audit log",
+    history: "Import history",
     letters: "Letters",
     logout: "Log out",
     signedInAs: (email: string) => `Signed in as ${email}`,
@@ -95,7 +98,7 @@ export const staffCopy = {
     kinds: { nobody: "Nobody here", several: "Could be:" } as Record<string, string>,
   },
   syncs: {
-    title: "Members of Parliament",
+    title: "Members of Parliament from Airtable",
     // With a link to the table in the middle.
     intro: {
       before: "From the ",
@@ -109,6 +112,17 @@ export const staffCopy = {
     changed: "Changed",
     apply: "Apply",
     discard: "Discard",
+  },
+  // The history page: every run of every job, newest first, with a job filter.
+  history: {
+    title: "Import history",
+    /** The filter's name for screen readers only. */
+    job: "Import or check",
+    allJobs: "All",
+    filter: "Show",
+    none: "No runs yet.",
+    /** Beside each job's button on the import page. */
+    showAll: "All runs",
   },
   // The line every run in the import log starts with (RunBox): how it
   // ended, when, who started it, and for a held MP import, who decided it.
@@ -125,7 +139,6 @@ export const staffCopy = {
     decidedBy: (who: string) => `decided by ${who}`,
   },
   check: {
-    pageTitle: "Check data",
     title: "Members of Parliament against Parliament's list",
     // With a link to the API in the middle.
     intro: {
@@ -168,6 +181,7 @@ export const staffCopy = {
     web: "Web",
     nightly: "Nightly",
     oneOff: "One-off",
+    checkOnly: "Check only",
     button: "Import signatories",
     none: "Not imported yet.",
     note: "From Airtable",
@@ -207,4 +221,12 @@ export const staffCopy = {
     action: "What",
     details: "Details",
   },
+};
+
+/** Each job in the import log, by the title of its section on the import page: the history page's filter and lines. */
+export const jobTitles: Record<ImportJob, string> = {
+  "sync-mps": staffCopy.syncs.title,
+  "check-mps": staffCopy.check.title,
+  "import-controlai": staffCopy.controlAi.title,
+  "import-signatories": staffCopy.import.title,
 };

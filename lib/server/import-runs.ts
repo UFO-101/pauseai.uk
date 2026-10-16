@@ -1,17 +1,20 @@
 import "server-only";
-import { type ImportJob, type ImportRun, type ImportRunStatus } from "@/lib/import-runs";
+import type { AnyImportRun, ImportJob, ImportRunStatus } from "@/lib/import-runs";
 import { query, type Queryable } from "./db";
 
 // One log of every run of every import and check: the MPs and the
 // signatories from Airtable, the check against Parliament, and ControlAI's
 // letter. Each run is a row: when, who started it, how it ended, why it
 // failed, and the job's own account of what it found. Failures are kept
-// too, so /staff/import-data and /staff/check-data can say what went wrong,
+// too, so /staff/import-data can say what went wrong,
 // and so are runs that changed nothing, so they can say when a job last ran.
-// The types are in lib/import-runs.ts, for the components.
+// /staff/import-history lists them all. The types are in lib/import-runs.ts,
+// for the components.
 
-/** How many of a job's runs the staff pages show. */
-const RECENT_RUNS = 20;
+/** The most runs the history page lists. */
+const HISTORY_LIMIT = 1000;
+
+const COLUMNS = `id::int AS id, at, job, started_by AS "startedBy", status, error, result, decided_by AS "decidedBy"`;
 
 /** Keeps a run that ended, and returns its ID. */
 export async function recordRun(
@@ -51,11 +54,19 @@ export async function keepingFailure<T>(job: ImportJob, startedBy: string, work:
   }
 }
 
-/** A job's newest runs, newest first. */
-export async function recentRuns<Result>(job: ImportJob, limit = RECENT_RUNS): Promise<ImportRun<Result>[]> {
-  return query<ImportRun<Result>>(
-    `SELECT id::int AS id, at, started_by AS "startedBy", status, error, result, decided_by AS "decidedBy"
-     FROM import_runs WHERE job = $1 ORDER BY at DESC, id DESC LIMIT $2`,
-    [job, limit],
+/** A job's newest run, if it has ever run. */
+export async function latestRun<Run extends AnyImportRun>(job: Run["job"]): Promise<Run | undefined> {
+  const [run] = await query<Run>(
+    `SELECT ${COLUMNS} FROM import_runs WHERE job = $1 ORDER BY at DESC, id DESC LIMIT 1`,
+    [job],
+  );
+  return run;
+}
+
+/** The runs, newest first: one job's, or every job's. */
+export async function listRuns(job?: ImportJob, limit = HISTORY_LIMIT): Promise<AnyImportRun[]> {
+  return query<AnyImportRun>(
+    `SELECT ${COLUMNS} FROM import_runs WHERE $1::text IS NULL OR job = $1 ORDER BY at DESC, id DESC LIMIT $2`,
+    [job ?? null, limit],
   );
 }
