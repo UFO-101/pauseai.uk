@@ -74,6 +74,7 @@ const eslintConfig = defineConfig([
       "lib/server/db.test.ts",
       "tests/database.ts",
       "playwright.config.ts",
+      "scripts/db-migrate.mjs",
       "scripts/db-reset.mjs",
       "scripts/serve-main.mjs",
     ],

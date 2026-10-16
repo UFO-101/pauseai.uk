@@ -111,9 +111,33 @@ This:
   ControlAI's letter backing the Sobel bill, so the bill's letter thanks
   them. They're listed in `lib/test-mps.json`.
 
-Run it again whenever you want a clean database, or after pulling a new
-migration. It wipes everything. It refuses a URL that isn't on your own
-machine, so it can't touch the live database.
+Run it again whenever you want a clean database. It wipes everything. It
+refuses a URL that isn't on your own machine, so it can't touch the live
+database.
+
+### Keeping it up to date
+
+After pulling a branch with a new migration, apply what your database
+hasn't had, keeping its data:
+
+```bash
+npm run db:migrate
+```
+
+It applies each pending file in `netlify/database/migrations/` in order,
+each in its own transaction, and records it in the database's
+`schema_migrations` table, which `db:reset` fills too. That table is only
+for local databases: Netlify keeps its own record of what it has applied
+on deploy. Like `db:reset`, it refuses a database on another machine.
+
+A database made before `db:migrate` existed has no `schema_migrations`
+table, so the first time, say which migration it's up to:
+
+```bash
+npm run db:migrate -- --applied-up-to 0011
+```
+
+That records 0001 to 0011 as applied, then applies the rest.
 
 ### Adding a migration
 
@@ -123,7 +147,7 @@ machine, so it can't touch the live database.
    (`docs/code-structure.md`).
 2. `npm run db:schema` rewrites `netlify/database/schema.sql`, the whole
    schema as the migrations leave it. It needs `pg_dump` 18.
-3. `npm run db:reset` applies it to your dev database.
+3. `npm run db:migrate` applies it to your dev database.
 4. Commit the migration and `schema.sql` together. The PR then shows both
    the migration and what it does to the schema. A unit test fails while
    `schema.sql` is out of date.
@@ -334,7 +358,7 @@ See [testing.md](testing.md) for the rules.
 | `connection to server ... failed` or `Connection refused` | Postgres isn't running (`docker compose up -d`), or `NETLIFY_DB_URL`, `TEST_DATABASE_URL` or `PGHOST` points to the wrong place (section 3).                                                                                                                                       |
 | `role "..." does not exist`                               | Create a superuser for yourself (`createuser --superuser`), or set `PGUSER`.                                                                                                                                                                                                       |
 | `permission denied to create database`                    | Your Postgres user needs `CREATEDB`: `alter user <you> createdb;`.                                                                                                                                                                                                                 |
-| `relation "letters" does not exist`                       | The database is older than a migration. Make a fresh one (section 3).                                                                                                                                                                                                              |
+| `relation "letters" does not exist`                       | The database is older than a migration: `npm run db:migrate` (section 3).                                                                                                                                                                                                          |
 | ZZ99ZZ says no MP found                                   | The database has no test MP. Set `TEST_MP_EMAIL` and run `npm run db:reset`, or run the MP sync.                                                                                                                                                                                   |
 | The test MP shows "no email listed"                       | The test MP was added without an email. Set `TEST_MP_EMAIL` and run `npm run db:reset`.                                                                                                                                                                                            |
 | Sending says it failed                                    | Without `DATA_FIXTURES`, check `POSTMARK_SERVER_TOKEN`.                                                                                                                                                                                                                            |

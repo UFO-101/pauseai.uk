@@ -7,7 +7,8 @@
 // It wipes the database if it already exists, so it only works on a
 // database on this machine: never on Netlify's.
 import nextEnv from "@next/env";
-import { addTestMps, isLocal, resetDatabase } from "./fresh-database.mjs";
+import { addTestMps, isLocal, resetDatabase, migrationFiles } from "./fresh-database.mjs";
+import { recordApplied } from "./db-migrate.mjs";
 
 nextEnv.loadEnvConfig(process.cwd(), true);
 
@@ -24,6 +25,8 @@ if (!isLocal(url)) {
 }
 
 resetDatabase(url);
+// Made with every migration, so db:migrate knows there's nothing to apply.
+recordApplied(url, migrationFiles());
 const email = process.env.TEST_MP_EMAIL?.trim();
 if (email) addTestMps(url, email);
 console.log(

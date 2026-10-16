@@ -39,7 +39,7 @@ In `.env.local`:
 
 Try Email your MP at http://localhost:3000/campaigns-v2 with postcode ZZ99ZZ. The letter it sends is the newest file in `tmp/outbox/`.
 
-`npm run db:reset` wipes the database and makes it again, with the latest migrations. It only works on a database on your own machine. The whole schema is in [netlify/database/schema.sql](netlify/database/schema.sql), for reference.
+`npm run db:migrate` applies the migrations your database hasn't had. `npm run db:reset` wipes the database and makes it again, with the latest migrations. It only works on a database on your own machine. The whole schema is in [netlify/database/schema.sql](netlify/database/schema.sql), for reference.
 
 To use real services, delete `DATA_FIXTURES` and fill in the rest of `.env.local`. [.env.example](.env.example) explains each variable; Netlify needs the same ones. [docs/development.md](docs/development.md) covers the rest: what the fixtures fake, logging in as staff, the daily jobs and webhooks, and running the Playwright suites.
 
