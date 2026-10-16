@@ -8,7 +8,7 @@ import styles from "./MarchArticle.module.css";
 export default function MarchArticle() {
   return (
     <section className={styles.body}>
-      <div className={"container"}>
+      <div className="container">
         <Image
           className={styles.photo}
           src={march.image.src}

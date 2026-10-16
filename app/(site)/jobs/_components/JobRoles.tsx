@@ -1,5 +1,6 @@
 import { site } from "@/lib/content/site";
-import { JobRole, SkillTags } from "./JobRole";
+import { ClosedNotice, JobRole, Salary, SkillTags } from "./JobRole";
+import styles from "./JobRoles.module.css";
 
 // Linked from the Head of Public Affairs role: the September 2026 discussion in
 // the UK Parliament and the PauseCon Brussels conference in the European Parliament.
@@ -10,15 +11,15 @@ const EU_PARLIAMENT_EVENT_URL = "https://pauseai.substack.com/p/eu-parliamentari
 export default function JobRoles() {
   return (
     <div className="container">
-      <div className="jobs-roles">
+      <div className={styles.roles}>
         <JobRole title="Operations specialist">
-          <div className="jobs-salary">
+          <Salary>
             <p>
               <strong>Expected salary range: £50k - £100k</strong>
               <br />
               <strong>This can potentially be a part time role. But full time applicants are preferred.</strong>
             </p>
-          </div>
+          </Salary>
           <p>
             PauseAI is a non-profit company limited by guarantee. We are not currently planning to register as a
             charity, but we would like to be able to accept donations from a variety of donors, including US donors with
@@ -42,7 +43,7 @@ export default function JobRoles() {
         </JobRole>
 
         <JobRole title="Software engineer" closed>
-          <div className="jobs-closed-notice">
+          <ClosedNotice>
             <p>
               <strong>Applications for this position are now closed.</strong>
             </p>
@@ -50,12 +51,12 @@ export default function JobRoles() {
               However, software engineering skills are highly valuable for many of the other roles we are hiring for, so
               if you have those skills, consider if any of the other roles may be of interest to you.
             </p>
-          </div>
-          <div className="jobs-salary">
+          </ClosedNotice>
+          <Salary>
             <p>
               <strong>Expected salary range: £50k - £100k</strong>
             </p>
-          </div>
+          </Salary>
           <p>
             The goal of PauseAI is to help citizens organise into an effective political force in the UK. This means
             that we need to be extremely well organised and have excellent software that helps us run all of our
@@ -72,14 +73,14 @@ export default function JobRoles() {
         </JobRole>
 
         <JobRole title="Content creator">
-          <div className="jobs-salary">
+          <Salary>
             <p>
               <strong>
                 Salary depends on specific scope or role, which will depend on your skills and availability. This can
                 potentially be a part time role or a limited contract.
               </strong>
             </p>
-          </div>
+          </Salary>
           <p>
             We want to create compelling video and written content for our social media channels. The goal is to convey
             the enormous impact that AI could have on our society, grow our audience and funnel people into taking
@@ -96,7 +97,7 @@ export default function JobRoles() {
         </JobRole>
 
         <JobRole title="Community organiser">
-          <div className="jobs-salary">
+          <Salary>
             <p>
               <strong>Expected salary range: £25k - £60k pro rata</strong>
               <br />
@@ -105,7 +106,7 @@ export default function JobRoles() {
                 who would like to work part time for PauseAI UK alongside their studies.
               </strong>
             </p>
-          </div>
+          </Salary>
           <p>
             Our volunteer community is the core of what we do. In this role, you will work with volunteers to help them
             maximise their impact through PauseAI. This will typically involve assisting local group leaders with
@@ -121,7 +122,7 @@ export default function JobRoles() {
             want our website and other software to look great and be intuitive to use. This shapes the image that
             PauseAI presents to the world.
           </p>
-          <div className="jobs-salary">
+          <Salary>
             <p>
               <strong>
                 We don&rsquo;t have enough design work for this to be a full time role. But it can be a useful component
@@ -133,17 +134,17 @@ export default function JobRoles() {
                 typical market rates for this type of work.
               </strong>
             </p>
-          </div>
+          </Salary>
           <SkillTags label="Essential skills" skills={["Graphic design"]} />
           <SkillTags label="Nice-to-have skills" skills={["Web design"]} />
         </JobRole>
 
         <JobRole title="Head of Public Affairs">
-          <div className="jobs-salary">
+          <Salary>
             <p>
               <strong>Expected salary range: £50k - £100k</strong>
             </p>
-          </div>
+          </Salary>
           <p>
             Last year, PauseAI wrote an{" "}
             <a href={site.openLetterUrl} target="_blank" rel="noreferrer">
@@ -159,7 +160,7 @@ export default function JobRoles() {
             </a>{" "}
             with speakers including:
           </p>
-          <ul className="jobs-role-list">
+          <ul className={styles.roleList}>
             <li>
               <strong>Victor Negrescu MEP</strong>, Vice-President of the European Parliament.
             </li>

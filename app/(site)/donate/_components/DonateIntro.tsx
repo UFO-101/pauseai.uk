@@ -7,7 +7,7 @@ import styles from "./DonateIntro.module.css";
 export default function DonateIntro() {
   return (
     <section className={styles.intro}>
-      <div className={"container"}>
+      <div className="container">
         <div className={styles.grid}>
           <div className={styles.head}>
             <h1>Let&apos;s press pause on unsafe AI together</h1>
@@ -28,7 +28,7 @@ export default function DonateIntro() {
               PauseAI UK runs entirely on donations. We use our funding to pay for event venues, merchandise,
               administrative software and staff salaries. PauseAI Global has covered our costs so far, but from mid-2026
               we need to fund ourselves. You can see our full expenses and projected costs in our{" "}
-              <a className={"inline-link"} href="/pdfs/Donor-Prospectus.pdf" target="_blank" rel="noreferrer">
+              <a className="inline-link" href="/pdfs/Donor-Prospectus.pdf" target="_blank" rel="noreferrer">
                 Donor Prospectus
               </a>
               .

@@ -8,7 +8,7 @@ import SmallPrint from "@/components/ui/SmallPrint";
 export default function DonateBottom() {
   return (
     <Section>
-      <div className={"container"}>
+      <div className="container">
         <div className={styles.grid}>
           <div id="other-ways" className={styles.col}>
             <h2>Major gifts &amp; bank transfer</h2>
@@ -21,7 +21,7 @@ export default function DonateBottom() {
               <FeatureCard>
                 <h3>Any questions?</h3>
                 <p>Get in touch and we&apos;ll be happy to help.</p>
-                <a className={"inline-link"} href="mailto:donate@pauseai.uk?subject=PauseAI%20UK%20donation%20enquiry">
+                <a className="inline-link" href="mailto:donate@pauseai.uk?subject=PauseAI%20UK%20donation%20enquiry">
                   donate@pauseai.uk →
                 </a>
               </FeatureCard>
@@ -32,7 +32,7 @@ export default function DonateBottom() {
             <h2>Can I claim Gift Aid?</h2>
             <Lede long>
               Because our work meaningfully engages with policy, donations are not eligible for Gift Aid. Read our{" "}
-              <Link className={"inline-link"} href="/privacy">
+              <Link className="inline-link" href="/privacy">
                 privacy policy
               </Link>{" "}
               to see how we handle your information.
@@ -46,7 +46,7 @@ export default function DonateBottom() {
                   ask donors giving over &pound;1,000 for their name, email and country of residence, hold that in
                   confidence, and have our board approve anyone giving more than &pound;10,000 in a year.
                 </p>
-                <Link className={"inline-link"} href="/governance/#donation-policies">
+                <Link className="inline-link" href="/governance/#donation-policies">
                   Read our donation policies →
                 </Link>
               </FeatureCard>

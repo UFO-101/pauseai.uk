@@ -6,7 +6,7 @@ import styles from "./MarchHero.module.css";
 export default function MarchHero() {
   return (
     <section className={styles.hero}>
-      <div className={"container"}>
+      <div className="container">
         <h1>{march.name}</h1>
         <p className={styles.when}>
           <strong>21 November 2026, 12–3pm</strong>
