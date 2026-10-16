@@ -3,7 +3,7 @@
 // on both viewports, against a build of main as well as this branch, and
 // opens the page that pairs every frame with main's.
 //
-//   npm run storyboard                      # main, both viewports, open the page
+//   npm run storyboard                      # origin/main (fetched first), both viewports, open the page
 //   npm run storyboard -- --no-main         # this branch alone: frames without a comparison
 //   npm run storyboard -- --main=<ref>      # compare with another branch
 //   npm run storyboard -- --desktop         # or --phone: one viewport
@@ -23,7 +23,7 @@ import { LOCAL_URL, MAIN_OUTBOX_DIR, MAIN_URL } from "../tests/fixture-env.mjs";
 
 const DIR = "test-results/storyboard";
 
-const options = { main: "main", open: true, projects: [], server: LOCAL_URL, mainServer: undefined };
+const options = { main: "origin/main", open: true, projects: [], server: LOCAL_URL, mainServer: undefined };
 const passThrough = [];
 for (const arg of process.argv.slice(2)) {
   if (arg === "--no-main") options.main = undefined;

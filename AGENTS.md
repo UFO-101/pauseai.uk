@@ -33,7 +33,7 @@ Running one Vitest project (`npm run test:node`, `npm run test:browser`) or one 
 - Before saying a change is done, run the review and look at every changed frame on both viewports. It never fails on a difference, so it proves nothing until you've looked. Say in the commit or PR what changed.
 
 ```bash
-npm run storyboard                # both viewports, screenshots, against a build of main, then opens test-results/storyboard/index.html
+npm run storyboard                # both viewports, screenshots, against a build of origin/main, then opens test-results/storyboard/index.html
 npm run storyboard -- --no-open   # the same; read test-results/storyboard/storyboard.json instead
 ```
 
