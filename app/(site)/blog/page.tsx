@@ -2,7 +2,6 @@ import { pageMetadata } from "@/lib/metadata";
 import { postsNewestFirst } from "@/lib/content/blog";
 import { site } from "@/lib/content/site";
 import PostList from "./_components/PostList";
-import "./blog.css";
 import PageHero from "@/components/ui/PageHero";
 
 export const metadata = pageMetadata({
@@ -14,7 +13,7 @@ export const metadata = pageMetadata({
 export default function BlogIndexPage() {
   return (
     <>
-      <main className="blog blog-index">
+      <main>
         <PageHero
           title="Blog"
           width="wide"

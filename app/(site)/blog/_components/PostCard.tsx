@@ -3,6 +3,7 @@ import Link from "next/link";
 import type { CSSProperties } from "react";
 import { formatPostDate, ORGANISATION_AVATAR, postAuthor, postImage, type BlogPost } from "@/lib/content/blog";
 import { parseCssStyle } from "@/lib/storyRender";
+import styles from "./PostCard.module.css";
 
 /** "lead" for the newest post, "secondary" for the pair beneath it, "row" for the rest. */
 export type CardVariant = "lead" | "secondary" | "row";
@@ -27,19 +28,22 @@ export default function PostCard({ post, variant }: { post: BlogPost; variant: C
   const avatar = avatarStyle(post);
   const Title = variant === "row" ? "h3" : "h2";
   return (
-    <Link href={`/blog/${post.slug}/`} className={`blog-card blog-card-${variant}${image ? "" : " no-media"}`}>
+    <Link
+      href={`/blog/${post.slug}/`}
+      className={[styles.card, styles[variant], !image && styles.noMedia].filter(Boolean).join(" ")}
+    >
       {image && (
-        <div className={`blog-card-media${isDiagram ? " is-diagram" : ""}`}>
+        <div className={isDiagram ? `${styles.media} ${styles.diagram}` : styles.media}>
           {/* Decorative here: the card's text already says what the post is. */}
           <Image src={image.src} alt="" fill sizes={MEDIA_SIZES[variant]} priority={variant === "lead"} />
         </div>
       )}
-      <div className="blog-card-body">
-        {variant === "lead" && <p className="blog-card-kicker">Latest</p>}
-        <Title className="blog-card-title">{post.title}</Title>
-        <p className="blog-card-tldr">{post.tldr}</p>
-        <p className="blog-card-meta">
-          {avatar && <span className="blog-card-avatar" style={avatar} aria-hidden="true" />}
+      <div className={styles.body}>
+        {variant === "lead" && <p className={styles.kicker}>Latest</p>}
+        <Title className={styles.title}>{post.title}</Title>
+        <p className={styles.tldr}>{post.tldr}</p>
+        <p className={styles.meta}>
+          {avatar && <span className={styles.avatar} style={avatar} aria-hidden="true" />}
           {post.author} · {formatPostDate(post.date)}
         </p>
       </div>

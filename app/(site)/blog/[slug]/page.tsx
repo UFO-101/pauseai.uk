@@ -4,7 +4,6 @@ import JsonLd from "@/components/layout/JsonLd";
 import { findPost, postJsonLd, postMetadata, posts } from "@/lib/content/blog";
 import PostBody from "../_components/PostBody";
 import PostHeader from "../_components/PostHeader";
-import "../blog.css";
 
 export function generateStaticParams() {
   return posts.map((post) => ({ slug: post.slug }));
@@ -25,7 +24,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
   return (
     <>
       <JsonLd data={postJsonLd(post)} />
-      <main className="blog">
+      <main>
         <PostHeader post={post} />
 
         <PostBody post={post} />

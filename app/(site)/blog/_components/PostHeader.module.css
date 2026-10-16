@@ -1,0 +1,45 @@
+/* A post's link back to the index, and its byline. */
+
+.backLink {
+  display: inline-block;
+  margin-bottom: 18px;
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--accent);
+  text-decoration: none;
+}
+.backLink:hover {
+  color: var(--pause-orange);
+}
+
+/* Byline */
+.byline {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 18px;
+}
+.bylineAvatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background-size: cover;
+  background-position: center;
+  border: 2px solid var(--accent-light);
+  flex-shrink: 0;
+}
+.bylineText {
+  font-size: 15.5px;
+  color: var(--text-secondary);
+}
+.bylineText a,
+.bylineName {
+  color: var(--text);
+  font-weight: 600;
+}
+.bylineText a {
+  text-decoration: none;
+}
+.bylineText a:hover {
+  color: var(--pause-orange);
+}
