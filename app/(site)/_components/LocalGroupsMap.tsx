@@ -9,6 +9,8 @@ import type { FeatureCollection, Geometry } from "geojson";
 import type { Topology } from "topojson-specification";
 import { localGroups } from "@/lib/content/local-groups";
 import { connectorPath } from "@/lib/map-connector";
+import { PhotoCardBody, PhotoCardImage, photoCardClass } from "@/components/ui/PhotoCard";
+import styles from "./LocalGroupsMap.module.css";
 
 const MAP_W = 380;
 const MAP_H = 608;
@@ -112,11 +114,11 @@ export default function LocalGroupsMap() {
   }, [isDesktop, ukFeature, measure]);
 
   return (
-    <div className="local-groups-map" ref={wrapRef}>
+    <div className={styles.map} ref={wrapRef}>
       {isDesktop && ukFeature && links.length > 0 && (
-        <svg className="local-groups-map-links" aria-hidden="true">
+        <svg className={styles.links} aria-hidden="true">
           {links.map((l) => (
-            <path key={l.name} d={l.d} className={`local-groups-map-link ${hovered === l.name ? "active" : ""}`} />
+            <path key={l.name} d={l.d} className={styles.link} data-active={hovered === l.name ? "" : undefined} />
           ))}
         </svg>
       )}
@@ -131,26 +133,23 @@ export default function LocalGroupsMap() {
             ref={(el) => {
               cardRefs.current[localGroup.name] = el;
             }}
-            className="local-group-card local-groups-map-card"
+            className={`${photoCardClass({ link: true })} ${styles.card}`}
             style={{ "--card-col": column, "--card-row": row } as CSSProperties}
             onMouseEnter={() => setHovered(localGroup.name)}
             onMouseLeave={() => setHovered((prev) => (prev === localGroup.name ? null : prev))}
           >
-            <div
-              className="image-frame"
-              style={{ backgroundImage: `url("${localGroup.imageSrc}")`, ...localGroup.imageStyle }}
-            ></div>
-            <div className="card-copy">
-              <div className="card-header">
+            <PhotoCardImage style={{ backgroundImage: `url("${localGroup.imageSrc}")`, ...localGroup.imageStyle }} />
+            <PhotoCardBody>
+              <div className={styles.header}>
                 <h3>{localGroup.name}</h3>
                 {/* Just "Explore" rather than "Explore <name>": the cards are
                     narrower in this layout and the longer names wrapped the
                     header onto two lines. The card is one link, so the name
                     in the heading beside it still carries the context. */}
-                <span className="card-link">Explore →</span>
+                <span className={styles.explore}>Explore →</span>
               </div>
               <p>{localGroup.blurb}</p>
-            </div>
+            </PhotoCardBody>
           </Link>
         );
       })}
@@ -159,7 +158,7 @@ export default function LocalGroupsMap() {
           height before the topology arrives; filling it in later then moves
           nothing below, including the section anchors further down the page.
           The stylesheet hides it below the three-column breakpoint. */}
-      <div className="local-groups-map-canvas">
+      <div className={styles.canvas}>
         {isDesktop && path && (
           <svg
             viewBox={`0 0 ${MAP_W} ${MAP_H}`}
@@ -168,7 +167,7 @@ export default function LocalGroupsMap() {
             aria-label="Map of the UK showing where PauseAI local groups are based"
           >
             {ukFeature!.features.map((f, i) => (
-              <path key={i} d={path(f) || undefined} className="uk-map-outline" />
+              <path key={i} d={path(f) || undefined} className={styles.outline} />
             ))}
             {localGroups.map((localGroup) => {
               // Mercator projects every point on Earth, so this is never null.
@@ -183,11 +182,12 @@ export default function LocalGroupsMap() {
                   href={localGroup.href}
                   tabIndex={-1}
                   aria-hidden="true"
-                  className={`uk-map-pin ${isActive ? "active" : ""}`}
+                  className={styles.pin}
+                  data-active={isActive ? "" : undefined}
                   onMouseEnter={() => setHovered(localGroup.name)}
                   onMouseLeave={() => setHovered((prev) => (prev === localGroup.name ? null : prev))}
                 >
-                  <circle cx={x} cy={y} r={isActive ? 10 : 8} className="uk-map-pin-halo" />
+                  <circle cx={x} cy={y} r={isActive ? 10 : 8} className={styles.halo} />
                   <circle
                     ref={(el) => {
                       pinRefs.current[localGroup.name] = el;
@@ -195,7 +195,7 @@ export default function LocalGroupsMap() {
                     cx={x}
                     cy={y}
                     r={4.5}
-                    className="uk-map-pin-dot"
+                    className={styles.dot}
                   />
                 </Link>
               );

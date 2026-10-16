@@ -4,12 +4,15 @@ import { page } from "vitest/browser";
 import { site } from "@/lib/content/site";
 import type { LumaEntry } from "@/lib/events";
 import EventList from "./EventList";
+import EventsSection from "./EventsSection";
 import LocalGroupEvents from "./LocalGroupEvents";
 
 const { getEvents } = vi.hoisted(() => ({ getEvents: vi.fn() }));
 vi.mock("@/lib/server/luma-calendar", () => ({ getEvents }));
 
-afterEach(() => {
+afterEach(async () => {
+  // Back to Vitest's default viewport, for tests that widen it to a desktop's.
+  await page.viewport(414, 896);
   vi.useRealTimers();
   getEvents.mockReset();
 });
@@ -37,16 +40,17 @@ describe("EventList", () => {
         ]}
       />,
     );
-    const cards = container.querySelectorAll("a.luma-event-card");
-    expect(cards[0].getAttribute("href")).toBe("https://lu.ma/evt-1");
-    expect([...container.querySelectorAll(".luma-event-card-location")].map((p) => p.textContent)).toEqual([
+    await expect.element(page.getByRole("link", { name: /Event 1/ })).toHaveAttribute("href", "https://lu.ma/evt-1");
+    // Each card is a link: the date, then the title, then the place.
+    const cards = [...container.querySelectorAll("a")];
+    expect(cards.map((card) => card.querySelector("h3 + p")?.textContent)).toEqual([
       "London",
       "A hall",
       "In person",
       "Online",
     ]);
-    expect(cards[0].querySelector(".luma-event-card-date")?.textContent).toBe("Sat 2 Mar · 13:00");
-    expect(container.querySelector(".luma-events-more")).toBeNull();
+    expect(cards[0].querySelector("p")?.textContent).toBe("Sat 2 Mar · 13:00");
+    expect(container.querySelector("button")).toBeNull();
   });
 
   it("shows allowed cover images, and a placeholder for others", async () => {
@@ -60,8 +64,10 @@ describe("EventList", () => {
         ]}
       />,
     );
-    expect(container.querySelectorAll("img.luma-event-card-img")).toHaveLength(1);
-    expect(container.querySelectorAll(".luma-event-card-img--placeholder")).toHaveLength(2);
+    const images = [...container.querySelectorAll("a")].map((card) => card.firstElementChild?.firstElementChild);
+    expect(images.map((image) => image?.tagName)).toEqual(["IMG", "DIV", "DIV"]);
+    // The placeholder is a coloured block where the picture would be.
+    expect(getComputedStyle(images[1]!).backgroundImage).toContain("gradient");
   });
 
   it("marks events happening today and tomorrow, in UK time", async () => {
@@ -79,29 +85,41 @@ describe("EventList", () => {
       />,
     );
     await expect
-      .poll(() => [...container.querySelectorAll(".luma-event-badge")].map((b) => b.textContent))
+      .poll(() => [...container.querySelectorAll("a span")].map((b) => b.textContent))
       .toEqual(["Happening today", "Happening tomorrow", "Happening today"]);
   });
 
-  it("shows four, with the rest behind Show more", async () => {
+  // The titles of the events a person can see.
+  const shownEvents = (container: HTMLElement) =>
+    [...container.querySelectorAll("a")]
+      .filter((card) => getComputedStyle(card).display !== "none")
+      .map((card) => card.querySelector("h3")?.textContent);
+
+  it("shows four on a desktop, with the rest behind Show more", async () => {
+    await page.viewport(1200, 800);
     const { container } = await render(<EventList lumaUrl="x" events={[1, 2, 3, 4, 5, 6].map((n) => event(n))} />);
-    expect(container.querySelectorAll(".luma-event-card--extra")).toHaveLength(2);
-    // The button is hidden by CSS at this narrow test width, where phones scroll through every event.
-    const button = () => container.querySelector(".luma-events-more button") as HTMLElement;
-    expect(button().textContent).toBe("Show more events");
-    button().click();
+    await expect.poll(() => shownEvents(container)).toEqual(["Event 1", "Event 2", "Event 3", "Event 4"]);
+    await page.getByRole("button", { name: "Show more events" }).click();
     await expect
-      .poll(() => container.querySelector(".luma-events-list")?.className)
-      .toBe("luma-events-list is-expanded");
-    expect(button().textContent).toBe("Show fewer events");
-    button().click();
-    await expect.poll(() => container.querySelector(".luma-events-list")?.className).toBe("luma-events-list");
+      .poll(() => shownEvents(container))
+      .toEqual(["Event 1", "Event 2", "Event 3", "Event 4", "Event 5", "Event 6"]);
+    await page.getByRole("button", { name: "Show fewer events" }).click();
+    await expect.poll(() => shownEvents(container)).toEqual(["Event 1", "Event 2", "Event 3", "Event 4"]);
+  });
+
+  it("shows every event on a phone, which scrolls through them, without Show more", async () => {
+    const { container } = await render(<EventList lumaUrl="x" events={[1, 2, 3, 4, 5, 6].map((n) => event(n))} />);
+    expect(shownEvents(container)).toHaveLength(6);
+    const button = container.querySelector("button")!;
+    expect(button.textContent).toBe("Show more events");
+    expect(button.checkVisibility()).toBe(false);
   });
 
   it("shows everything at once when asked", async () => {
+    await page.viewport(1200, 800);
     const { container } = await render(<EventList lumaUrl="x" showAll events={[1, 2, 3, 4, 5].map((n) => event(n))} />);
-    expect(container.querySelector(".luma-events-more")).toBeNull();
-    expect(container.querySelector(".luma-events-list")?.className).toBe("luma-events-list is-expanded");
+    expect(container.querySelector("button")).toBeNull();
+    expect(shownEvents(container)).toEqual(["Event 1", "Event 2", "Event 3", "Event 4", "Event 5"]);
   });
 
   it("points to the calendar when there's nothing to list, or says what it was told to", async () => {
@@ -111,6 +129,32 @@ describe("EventList", () => {
       .toHaveAttribute("href", "https://lu.ma/cal");
     await rerender(<EventList lumaUrl="x" events={[]} empty="Nothing here." />);
     expect(container.textContent).toBe("Nothing here.");
+  });
+});
+
+describe("EventsSection", () => {
+  it("heads the list, with a link to the calendar when given one", async () => {
+    const { rerender } = await render(
+      <EventsSection
+        id="events"
+        heading="Upcoming events"
+        calendar={{ label: "See the calendar", href: "https://lu.ma/cal" }}
+      >
+        <p>The list</p>
+      </EventsSection>,
+    );
+    await expect.element(page.getByRole("heading", { name: "Upcoming events" })).toBeVisible();
+    await expect.element(page.getByText("The list")).toBeVisible();
+    await expect
+      .element(page.getByRole("link", { name: "See the calendar" }))
+      .toHaveAttribute("href", "https://lu.ma/cal");
+    expect(document.getElementById("events")?.tagName).toBe("SECTION");
+    await rerender(
+      <EventsSection heading="Upcoming events">
+        <p>The list</p>
+      </EventsSection>,
+    );
+    await expect.element(page.getByRole("link")).not.toBeInTheDocument();
   });
 });
 

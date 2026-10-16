@@ -2,6 +2,7 @@ import { ButtonLink } from "@/components/ui/Button";
 import PeopleCarousel from "./PeopleCarousel";
 import { people } from "@/lib/content/people";
 import Section, { Lede, SectionHeader } from "@/components/ui/Section";
+import ButtonRow from "@/components/ui/ButtonRow";
 
 // Volunteers' stories, in a carousel.
 export default function PeopleSection() {
@@ -14,14 +15,14 @@ export default function PeopleSection() {
       </div>
       <PeopleCarousel people={people} />
       <div className="container">
-        <div className="story-teaser-cta">
+        <ButtonRow>
           <ButtonLink variant="primary" size="large" href="/people/">
             Read all {people.length} stories →
           </ButtonLink>
           <ButtonLink variant="ghost" size="large" href="/people/#share-your-story">
             Share your story →
           </ButtonLink>
-        </div>
+        </ButtonRow>
       </div>
     </Section>
   );

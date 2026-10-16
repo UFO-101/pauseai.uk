@@ -1,0 +1,33 @@
+/* The local groups band: its old anchor, and the call to start a group. */
+
+/* Zero-height target that keeps a renamed anchor (e.g. old #chapters
+   links in PDFs) working. */
+.alias {
+  display: block;
+  height: 0;
+}
+
+.start {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 24px;
+  margin-top: 24px;
+  padding: 32px;
+  background: var(--accent-bg);
+  border: 1px solid var(--accent-light);
+  border-radius: 12px;
+}
+
+.startCopy h3 {
+  font-family: "Inter", system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 20px;
+  margin: 0 0 6px;
+}
+
+.startCopy p {
+  margin: 0;
+  color: var(--text-secondary);
+}

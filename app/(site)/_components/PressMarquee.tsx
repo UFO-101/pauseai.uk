@@ -10,17 +10,23 @@ import {
   newsMobileRow3,
   type CoverageItem,
 } from "@/lib/content/press-coverage";
+import styles from "./PressMarquee.module.css";
 
 export function NewsRow({ items, reverse = false }: { items: CoverageItem[]; reverse?: boolean }) {
   return (
-    <div className={`news-marquee-row${reverse ? " news-marquee-row--reverse" : ""}`}>
-      <div className="news-marquee-track">
+    <div className={reverse ? `${styles.row} ${styles.reverse}` : styles.row}>
+      <div className={styles.track} data-marquee-track="news">
         {[0, 1].map((copyIdx) => (
-          <div key={copyIdx} className="news-marquee-copy" {...(copyIdx > 0 ? { "aria-hidden": true } : {})}>
+          <div
+            key={copyIdx}
+            className={styles.copy}
+            data-marquee-copy=""
+            {...(copyIdx > 0 ? { "aria-hidden": true } : {})}
+          >
             {items.map((item, i) => (
               <a
                 key={i}
-                className="news-marquee-item"
+                className={styles.item}
                 href={item.url}
                 target="_blank"
                 rel="noreferrer"
@@ -28,10 +34,10 @@ export function NewsRow({ items, reverse = false }: { items: CoverageItem[]; rev
                 aria-label={`${item.outlet}: ${item.title}`}
                 {...(copyIdx > 0 ? { tabIndex: -1 } : {})}
               >
-                <div className="news-logo-box">
+                <div className={styles.logoBox}>
                   {item.logoSrc ? (
                     <Image
-                      className="news-logo"
+                      className={styles.logo}
                       src={item.logoSrc}
                       alt={item.outlet}
                       width={item.logoIntrinsicWidth ?? 100}
@@ -56,18 +62,18 @@ export function NewsRow({ items, reverse = false }: { items: CoverageItem[]; rev
 export default function PressMarquee() {
   return (
     <Section id="news" snug>
-      <div className="news-marquee" aria-label="Press coverage of PauseAI UK">
-        <div className="news-marquee-set news-marquee-set--desktop" aria-hidden={false}>
+      <div className={styles.marquee} aria-label="Press coverage of PauseAI UK">
+        <div className={styles.desktop} aria-hidden={false}>
           <NewsRow items={newsRow1} />
           <NewsRow items={newsRow2} reverse />
         </div>
-        <div className="news-marquee-set news-marquee-set--mobile" aria-hidden={true}>
+        <div className={styles.mobile} aria-hidden={true}>
           <NewsRow items={newsMobileRow1} />
           <NewsRow items={newsMobileRow2} reverse />
           <NewsRow items={newsMobileRow3} />
         </div>
       </div>
-      <div className="container news-marquee-cta">
+      <div className={`container ${styles.cta}`}>
         <Link className="inline-link" href="/press/">
           See our press page →
         </Link>

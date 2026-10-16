@@ -29,10 +29,10 @@ test("the onboarding form appears even when hydration is slow", async ({ page })
 
   await page.goto(BASE, { waitUntil: "domcontentloaded" });
 
-  await expect(page.locator(".onboarding-embed-skeleton")).toHaveCount(0, {
+  await expect(page.getByTestId("onboarding-skeleton")).toHaveCount(0, {
     timeout: HYDRATION_DELAY_MS + 15_000,
   });
-  await expect(page.locator(".onboarding-embed-fallback")).toHaveCount(0);
+  await expect(page.getByText("Open it in a new tab")).toHaveCount(0);
   await frame(page, "the home page, hydrated late, with the form showing");
 });
 

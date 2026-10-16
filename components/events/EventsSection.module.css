@@ -1,0 +1,39 @@
+/* A band of events: a heading with a link to the calendar beside it, and
+   the list. */
+
+.section {
+  padding: 48px 0;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+
+.headingRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.heading {
+  font-size: clamp(28px, 4vw, 44px);
+  line-height: 1.15;
+  margin: 0;
+  color: var(--text);
+}
+
+/* The link to the calendar: on one line beside the heading; centred when it
+   fills a phone's width under it. */
+.cta {
+  white-space: nowrap;
+  text-align: center;
+}
+
+@media (max-width: 520px) {
+  .headingRow {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+}

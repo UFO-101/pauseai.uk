@@ -9,13 +9,14 @@ export default function StoryGrid() {
       <div className="container">
         <div className="people-grid">
           {people.map((person, i) => (
-            <PersonCard
-              key={`${person.name}-${i}`}
-              person={person}
-              truncate={isLongStory(person)}
-              maxChars={LONG_STORY_CHAR_THRESHOLD}
-              showLink
-            />
+            <div key={`${person.name}-${i}`} className="people-grid-item">
+              <PersonCard
+                person={person}
+                truncate={isLongStory(person)}
+                maxChars={LONG_STORY_CHAR_THRESHOLD}
+                showLink
+              />
+            </div>
           ))}
         </div>
       </div>

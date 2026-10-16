@@ -5,7 +5,10 @@ import { useLayoutEffect, useRef, useState } from "react";
 import CopyLinkButton from "@/components/ui/CopyLinkButton";
 import type { Person } from "@/lib/content/people";
 import { personSlug } from "@/lib/content/people";
-import { avatarFallback, bulletText, isBulletLine, parseCssStyle, renderBody } from "@/lib/storyRender";
+import { bulletText, isBulletLine, renderBody } from "@/lib/storyRender";
+import Avatar from "./Avatar";
+import StoryBody from "./StoryBody";
+import styles from "./PersonCard.module.css";
 
 // Server-rendered/pre-hydration fallback, so there's no giant flash of text
 // before the client can measure. The real truncation point is computed in
@@ -16,7 +19,7 @@ const FALLBACK_EXCERPT_LENGTH = 300;
 // this regardless of character count, so a story broken into many short
 // paragraphs/bullets (which takes up more vertical space per character than
 // a dense single paragraph) still ends up the same visual size as the rest.
-// Mirrored as the carousel's fixed .story-body height in globals.css.
+// Mirrored as the clamped height in StoryBody.module.css.
 const TARGET_BODY_HEIGHT = 220;
 
 function plainParagraphs(paragraphs: string[]): string[] {
@@ -138,6 +141,7 @@ export default function PersonCard({
   truncate = false,
   maxChars,
   showLink = truncate,
+  slide = false,
 }: {
   person: Person;
   truncate?: boolean;
@@ -149,6 +153,9 @@ export default function PersonCard({
   // text is already shown (e.g. every card in the /people grid, not just
   // the truncated ones). Defaults to matching `truncate`.
   showLink?: boolean;
+  // A slide in the home page's carousel: a fixed width, and the excerpt cut
+  // to a fixed height (TARGET_BODY_HEIGHT).
+  slide?: boolean;
 }) {
   const slug = personSlug(person);
   const useJsClamp = truncate && maxChars === undefined;
@@ -156,35 +163,26 @@ export default function PersonCard({
   const staticExcerpt = truncate && maxChars !== undefined ? excerptParagraphs(person.paragraphs, maxChars) : null;
 
   return (
-    <article className="person-card">
-      <header className="person-card-header">
-        {person.imageSrc ? (
-          <div
-            className="person-avatar"
-            style={{ backgroundImage: `url("${person.imageSrc}")`, ...parseCssStyle(person.imageStyle ?? "") }}
-          ></div>
-        ) : (
-          <div className="person-avatar person-avatar-initials" aria-hidden="true">
-            {avatarFallback(person.name)}
-          </div>
-        )}
-        <div className="person-name-wrap">
-          <h3 className="person-name">
+    <article className={slide ? `${styles.card} ${styles.slide}` : styles.card}>
+      <header className={styles.header}>
+        <Avatar person={person} />
+        <div className={styles.nameWrap}>
+          <h3 className={styles.name}>
             <Link href={`/people/${slug}`}>{person.name || <em>Anonymous submission</em>}</Link>
           </h3>
         </div>
         <CopyLinkButton slug={slug} />
       </header>
       {truncate ? (
-        <div className="story-body" ref={useJsClamp ? bodyRef : undefined}>
+        <StoryBody clamped={slide} ref={useJsClamp ? bodyRef : undefined}>
           {renderBody(useJsClamp ? shown : staticExcerpt!, false)}
-        </div>
+        </StoryBody>
       ) : (
-        <div className="story-body">{renderBody(person.paragraphs, true)}</div>
+        <StoryBody>{renderBody(person.paragraphs, true)}</StoryBody>
       )}
-      {truncate && useJsClamp && <div className="story-body story-body-measure" ref={measureRef} aria-hidden="true" />}
+      {truncate && useJsClamp && <StoryBody measure ref={measureRef} />}
       {showLink && (
-        <Link className="story-read-more" href={`/people/${slug}`}>
+        <Link className={styles.readMore} href={`/people/${slug}`}>
           Read more →
         </Link>
       )}

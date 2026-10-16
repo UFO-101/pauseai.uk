@@ -91,7 +91,6 @@ describe("initials and avatarFallback", () => {
     for (const name of [undefined, "", "   "]) {
       const html = renderToStaticMarkup(<>{avatarFallback(name)}</>);
       expect(html).toContain("Pause-Symbol.svg");
-      expect(html).toContain('class="person-avatar-pause-icon"');
     }
   });
 });

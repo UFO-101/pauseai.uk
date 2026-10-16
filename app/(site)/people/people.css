@@ -1,8 +1,8 @@
 /* ========================================================================
    STORIES PAGE
    Loaded after globals.css. Its title band is
-   PageHero and the .person-card and Button (components/ui) patterns from
-   globals.css; only the section padding and grid layout are page-specific.
+   PageHero, its cards PersonCard; only the section padding and grid layout
+   are page-specific.
    ======================================================================== */
 
 .people-page .people-page-grid {
@@ -17,7 +17,7 @@
   margin-top: 0;
 }
 
-.people-page .person-card {
+.people-page .people-grid-item {
   break-inside: avoid;
   margin-bottom: 24px;
 }
@@ -53,34 +53,6 @@
 
 .person-detail-page .story-back-link:hover {
   text-decoration: underline;
-}
-
-.person-detail-page .person-detail-avatar {
-  width: 120px;
-  height: 120px;
-  border-radius: 50%;
-  flex-shrink: 0;
-  background-color: var(--accent-light);
-  background-size: cover;
-  background-position: center top;
-  color: var(--accent-strong);
-  border: 3px solid var(--accent-light);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: "Inter", system-ui, sans-serif;
-  font-weight: 700;
-  font-size: 36px;
-  letter-spacing: 0.02em;
-  user-select: none;
-}
-
-@media (max-width: 640px) {
-  .person-detail-page .person-detail-avatar {
-    width: 80px;
-    height: 80px;
-    font-size: 26px;
-  }
 }
 
 .person-detail-page .person-detail-grid {

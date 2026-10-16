@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import styles from "./OnboardingFormEmbed.module.css";
 
 const EMBED_ORIGIN = "https://pauseai.info";
 // referrerPolicy on the iframe (below) lets pauseai.info read the full host URL
@@ -8,8 +9,8 @@ const EMBED_ORIGIN = "https://pauseai.info";
 // param needed. See pauseai-website/docs/ONBOARDING_EMBED.md.
 const EMBED_URL = `${EMBED_ORIGIN}/embed/onboarding-form/?country=United+Kingdom&bg=FDF8F3`;
 // The form's first step at desktop width, as the embed reports it (checked
-// October 2026). Narrower screens need more; .onboarding-embed-wrap.is-pristine
-// in globals.css reserves each width's height until the reader uses the form,
+// October 2026). Narrower screens need more; .pristine in
+// OnboardingFormEmbed.module.css reserves each width's height until the reader uses the form,
 // so the page doesn't grow under a deep link like /#staff mid-scroll. If the
 // form's first step changes height, update both.
 const DEFAULT_HEIGHT = 1483;
@@ -110,26 +111,26 @@ export default function OnboardingFormEmbed() {
   }, []);
 
   return (
-    <div className={interacted ? "onboarding-embed-wrap" : "onboarding-embed-wrap is-pristine"}>
+    <div className={interacted ? styles.wrap : `${styles.wrap} ${styles.pristine}`}>
       {/* Once the load timeout gives up, show the real form at its default
           height rather than leaving the skeleton over it indefinitely. */}
       {!messageReceived && !showFallback && (
-        <div className="onboarding-embed-skeleton" aria-hidden="true">
-          <div className="onboarding-embed-skeleton-steps">
-            <span className="onboarding-embed-skeleton-step" />
-            <span className="onboarding-embed-skeleton-rule" />
-            <span className="onboarding-embed-skeleton-step" />
-            <span className="onboarding-embed-skeleton-rule" />
-            <span className="onboarding-embed-skeleton-step" />
+        <div className={styles.skeleton} aria-hidden="true" data-testid="onboarding-skeleton">
+          <div className={styles.steps}>
+            <span className={styles.step} />
+            <span className={styles.rule} />
+            <span className={styles.step} />
+            <span className={styles.rule} />
+            <span className={styles.step} />
           </div>
-          <div className="onboarding-embed-skeleton-card">
+          <div className={styles.card}>
             {[0, 1, 2, 3].map((i) => (
-              <div className="onboarding-embed-skeleton-field" key={i}>
-                <span className="onboarding-embed-skeleton-label" />
-                <span className="onboarding-embed-skeleton-input" />
+              <div className={styles.field} key={i}>
+                <span className={styles.label} />
+                <span className={styles.input} />
               </div>
             ))}
-            <span className="onboarding-embed-skeleton-button" />
+            <span className={styles.button} />
           </div>
         </div>
       )}
@@ -146,7 +147,7 @@ export default function OnboardingFormEmbed() {
         style={{ transition: "height 0.2s ease" }}
       />
       {showFallback && (
-        <p className="onboarding-embed-fallback">
+        <p className={styles.fallback} role="status">
           {iframeLoaded ? "Form is taking a while to load." : "Form didn't load."}{" "}
           <a href={EMBED_URL} target="_blank" rel="noopener noreferrer">
             Open it in a new tab

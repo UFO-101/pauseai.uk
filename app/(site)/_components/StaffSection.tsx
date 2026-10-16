@@ -1,6 +1,7 @@
 import { ButtonLink } from "@/components/ui/Button";
 import { staff } from "@/lib/content/staff";
 import Section, { Lede, SectionHeader } from "@/components/ui/Section";
+import styles from "./StaffSection.module.css";
 
 // The paid staff, and the jobs page.
 export default function StaffSection() {
@@ -21,19 +22,19 @@ export default function StaffSection() {
             .
           </Lede>
         </SectionHeader>
-        <div className="staff-grid">
+        <div className={styles.grid}>
           {staff.map((person) => (
-            <article key={person.name} className="staff-card">
-              <div className="avatar" style={{ backgroundImage: `url("${person.imageSrc}")` }}></div>
+            <article key={person.name} className={styles.card}>
+              <div className={styles.avatar} style={{ backgroundImage: `url("${person.imageSrc}")` }}></div>
               <div>
                 <h3>{person.name}</h3>
-                <p className="role">{person.role}</p>
-                <p className="bio">{person.bio}</p>
+                <p className={styles.role}>{person.role}</p>
+                <p className={styles.bio}>{person.bio}</p>
               </div>
             </article>
           ))}
         </div>
-        <div style={{ display: "flex", justifyContent: "center", marginTop: 36 }}>
+        <div className={styles.hiring}>
           <ButtonLink variant="primary" size="large" href="/jobs/">
             We&rsquo;re hiring →
           </ButtonLink>

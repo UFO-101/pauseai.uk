@@ -2,6 +2,7 @@ import Image from "next/image";
 import { ButtonAnchor, ButtonLink } from "@/components/ui/Button";
 import { HERO_PHOTOS } from "@/lib/content/hero-photos";
 import { shuffle } from "@/lib/shuffle";
+import styles from "./HomeHero.module.css";
 
 // The home page hero: three rows of photos scrolling in alternating
 // directions behind the headline (HeroMarqueeEffects measures and starts them).
@@ -19,13 +20,18 @@ export default function HomeHero() {
   ];
 
   return (
-    <section id="about" className="hero">
-      <div className="hero-marquee">
+    <section id="about">
+      <div className={styles.marquee}>
         {heroRows.map((row, ri) => (
-          <div key={ri} className={`hero-marquee-row hero-marquee-row--${row.dir}`}>
-            <div className="hero-marquee-track">
+          <div key={ri} className={row.dir === "rtl" ? `${styles.row} ${styles.rtl}` : styles.row}>
+            <div className={styles.track} data-marquee-track="hero">
               {[0, 1].map((copyIdx) => (
-                <div key={copyIdx} className="hero-marquee-copy" {...(copyIdx > 0 ? { "aria-hidden": true } : {})}>
+                <div
+                  key={copyIdx}
+                  className={styles.copy}
+                  data-marquee-copy=""
+                  {...(copyIdx > 0 ? { "aria-hidden": true } : {})}
+                >
                   {[...row.photos, ...row.photos].map(([src, alt, width, height], i) => {
                     const isPrimary = copyIdx === 0 && i < row.photos.length;
                     const isLcp = ri === 0 && copyIdx === 0 && i === 0;
@@ -48,21 +54,21 @@ export default function HomeHero() {
           </div>
         ))}
 
-        <div className="hero-marquee-overlay">
-          <div className="hero-marquee-text">
+        <div className={styles.overlay}>
+          <div className={styles.text}>
             <h1>
               Organising for
               <br />
               our future
             </h1>
-            <p className="hero-lede">
+            <p className={styles.lede}>
               We are the civic movement dedicated to averting the risks of superhuman artificial intelligence.
             </p>
-            <div className="actions hero-actions">
+            <div className={styles.actions}>
               <ButtonAnchor variant="primary" href="#join">
                 Join PauseAI UK
               </ButtonAnchor>
-              <div className="hero-actions-secondary">
+              <div className={styles.secondary}>
                 <ButtonAnchor variant="light" href="#events">
                   Upcoming events ↓
                 </ButtonAnchor>

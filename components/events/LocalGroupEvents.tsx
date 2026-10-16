@@ -1,50 +1,13 @@
-import type { ReactNode } from "react";
 import EventList from "./EventList";
+import EventsSection from "./EventsSection";
 import { localGroups, type LocalGroupName } from "@/lib/content/local-groups";
-import { filterEventsForLocalGroup, filterOnlineEvents, type LumaEntry } from "@/lib/events";
+import { filterEventsForLocalGroup, filterOnlineEvents } from "@/lib/events";
 import { getEvents } from "@/lib/server/luma-calendar";
 import { site } from "@/lib/content/site";
-import { ButtonAnchor } from "@/components/ui/Button";
 
 // Enough to show a local group is active without turning its page into an
 // archive. EventList shows four and puts the rest behind "Show more".
 const PAST_EVENTS_SHOWN = 8;
-
-function EventsSection({
-  id,
-  heading,
-  events,
-  empty,
-  showCalendarLink = false,
-}: {
-  id?: string;
-  heading: string;
-  events: LumaEntry[];
-  empty?: ReactNode;
-  showCalendarLink?: boolean;
-}) {
-  return (
-    <section id={id} className="next-event">
-      <div className="container">
-        <div className="section-heading-row">
-          <h2 className="section-heading">{heading}</h2>
-          {showCalendarLink && (
-            <ButtonAnchor
-              variant="primary"
-              className="section-heading-cta"
-              href={site.social.luma}
-              target="_blank"
-              rel="noreferrer"
-            >
-              View the full UK calendar →
-            </ButtonAnchor>
-          )}
-        </div>
-        <EventList events={events} lumaUrl={site.social.luma} empty={empty} />
-      </div>
-    </section>
-  );
-}
 
 /**
  * The local group's slice of the UK Luma calendar, rendered with the same cards
@@ -75,26 +38,38 @@ export default async function LocalGroupEvents({ localGroupName }: { localGroupN
       <EventsSection
         id="events"
         heading={`Upcoming events in ${localGroup.name}`}
-        events={upcoming}
-        showCalendarLink
-        empty={
-          <>
-            Nothing is listed in {localGroup.name} just now. See the UK-wide{" "}
-            <a href={site.social.luma} target="_blank" rel="noreferrer">
-              event calendar
-            </a>{" "}
-            for everything else we have coming up.
-          </>
-        }
-      />
+        calendar={{ label: "View the full UK calendar →", href: site.social.luma }}
+      >
+        <EventList
+          events={upcoming}
+          lumaUrl={site.social.luma}
+          empty={
+            <>
+              Nothing is listed in {localGroup.name} just now. See the UK-wide{" "}
+              <a href={site.social.luma} target="_blank" rel="noreferrer">
+                event calendar
+              </a>{" "}
+              for everything else we have coming up.
+            </>
+          }
+        />
+      </EventsSection>
 
       {/* Online events aren't claimed by any local group's eventMatchers, but
           they're open UK-wide, so every local group page carries them too. */}
-      {online.length > 0 && <EventsSection heading="Online events" events={online} />}
+      {online.length > 0 && (
+        <EventsSection heading="Online events">
+          <EventList events={online} lumaUrl={site.social.luma} />
+        </EventsSection>
+      )}
 
       {/* Only when there is something to show: a local group that has not met yet
           should not open with an empty archive. */}
-      {previous.length > 0 && <EventsSection heading={`Past events in ${localGroup.name}`} events={previous} />}
+      {previous.length > 0 && (
+        <EventsSection heading={`Past events in ${localGroup.name}`}>
+          <EventList events={previous} lumaUrl={site.social.luma} />
+        </EventsSection>
+      )}
     </>
   );
 }

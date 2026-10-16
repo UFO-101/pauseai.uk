@@ -6,6 +6,7 @@ import type { LumaEntry } from "@/lib/events";
 import { formatEventDate, formatEventTime } from "@/lib/events";
 import { isAllowedEventImage } from "@/lib/event-image-hosts";
 import { Button } from "@/components/ui/Button";
+import styles from "./EventList.module.css";
 
 function getDateStr(d: Date, tz: string): string {
   // An unrecognised IANA timezone throws RangeError here; fall back rather
@@ -35,8 +36,8 @@ function EventCard({ entry, isExtra = false }: { entry: LumaEntry; isExtra?: boo
     function syncBadge() {
       const today = getDateStr(new Date(), "Europe/London");
       const tomorrow = getDateStr(new Date(Date.now() + 864e5), "Europe/London");
-      if (eventDay === today) setBadge({ label: "Happening today", cls: "luma-event-badge--today" });
-      else if (eventDay === tomorrow) setBadge({ label: "Happening tomorrow", cls: "luma-event-badge--tomorrow" });
+      if (eventDay === today) setBadge({ label: "Happening today", cls: styles.today });
+      else if (eventDay === tomorrow) setBadge({ label: "Happening tomorrow", cls: styles.tomorrow });
       else setBadge(null);
     }
     syncBadge();
@@ -54,32 +55,32 @@ function EventCard({ entry, isExtra = false }: { entry: LumaEntry; isExtra?: boo
       href={`https://lu.ma/${event.url}`}
       target="_blank"
       rel="noreferrer"
-      className={`luma-event-card${isExtra ? " luma-event-card--extra" : ""}`}
+      className={isExtra ? `${styles.card} ${styles.extra}` : styles.card}
     >
-      <div className="luma-event-card-img-wrap">
+      <div className={styles.imageWrap}>
         {event.cover_url && isAllowedEventImage(event.cover_url) ? (
           <Image
-            className="luma-event-card-img"
+            className={styles.image}
             src={event.cover_url}
             alt=""
             fill
-            // Matches the list's layout in globals.css: an 86% carousel card
+            // Matches the list's layout in EventList.module.css: an 86% carousel card
             // under 600px, two columns to 900px, then four in a container
             // capped at 1092px, so a card never exceeds ~260px.
             sizes="(max-width: 600px) 75vw, (max-width: 900px) 48vw, (max-width: 1140px) 25vw, 260px"
             loading="lazy"
           />
         ) : (
-          <div className="luma-event-card-img luma-event-card-img--placeholder"></div>
+          <div className={`${styles.image} ${styles.placeholder}`}></div>
         )}
       </div>
-      <div className="luma-event-card-body">
-        {badge && <span className={`luma-event-badge ${badge.cls}`}>{badge.label}</span>}
-        <p className="luma-event-card-date">
+      <div className={styles.body}>
+        {badge && <span className={`${styles.badge} ${badge.cls}`}>{badge.label}</span>}
+        <p className={styles.date}>
           {formatEventDate(event.start_at, event.timezone)} · {formatEventTime(event.start_at, event.timezone)}
         </p>
-        <h3 className="luma-event-card-title">{event.name}</h3>
-        <p className="luma-event-card-location">{location}</p>
+        <h3 className={styles.title}>{event.name}</h3>
+        <p className={styles.location}>{location}</p>
       </div>
     </a>
   );
@@ -107,7 +108,7 @@ export default function EventList({
 
   if (events.length === 0) {
     return (
-      <p className="luma-events-empty">
+      <p className={styles.empty}>
         {empty ?? (
           <>
             See our{" "}
@@ -123,17 +124,17 @@ export default function EventList({
 
   return (
     <>
-      <div className={`luma-events-list${expanded ? " is-expanded" : ""}`}>
+      <div className={expanded ? `${styles.list} ${styles.expanded}` : styles.list}>
         {events.map((entry, i) => (
           <EventCard key={entry.event.url} entry={entry} isExtra={i >= 4} />
         ))}
       </div>
       {hasMore && (
-        <div className="luma-events-more">
+        <div className={styles.more}>
           <Button variant="ghost" size="small" onClick={() => setExpanded((e) => !e)}>
             <span>{expanded ? "Show fewer events" : "Show more events"}</span>
             <svg
-              className="luma-show-more-icon"
+              className={styles.moreIcon}
               viewBox="0 0 16 16"
               width={14}
               height={14}

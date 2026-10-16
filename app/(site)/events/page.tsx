@@ -3,7 +3,7 @@ import Link from "next/link";
 import EventList from "@/components/events/EventList";
 import { getEvents } from "@/lib/server/luma-calendar";
 import { site } from "@/lib/content/site";
-import { ButtonAnchor } from "@/components/ui/Button";
+import EventsSection from "@/components/events/EventsSection";
 import PageHero from "@/components/ui/PageHero";
 
 // A short, readable address for our events, used on printed collateral. The calendar itself lives on Luma,
@@ -26,26 +26,12 @@ export default async function EventsPage() {
           lede="Meet other people worried about AI, write to your MP, and take action together. Everything here is free and open to everyone."
         />
 
-        <section className="next-event">
-          <div className="container">
-            <div className="section-heading-row">
-              <h2 className="section-heading">Upcoming events</h2>
-              <ButtonAnchor
-                variant="primary"
-                className="section-heading-cta"
-                href={site.social.luma}
-                target="_blank"
-                rel="noreferrer"
-              >
-                Subscribe on Luma →
-              </ButtonAnchor>
-            </div>
-            <EventList events={events} lumaUrl={site.social.luma} showAll />
-            <p className="events-page-note">
-              Looking for something near you? <Link href="/#local-groups">Find your local group</Link>.
-            </p>
-          </div>
-        </section>
+        <EventsSection heading="Upcoming events" calendar={{ label: "Subscribe on Luma →", href: site.social.luma }}>
+          <EventList events={events} lumaUrl={site.social.luma} showAll />
+          <p className="events-page-note">
+            Looking for something near you? <Link href="/#local-groups">Find your local group</Link>.
+          </p>
+        </EventsSection>
       </main>
     </>
   );
