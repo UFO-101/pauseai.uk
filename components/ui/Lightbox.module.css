@@ -1,0 +1,93 @@
+/* A full-screen photo on a dark, blurred backdrop, with round controls. */
+
+.lightbox {
+  position: fixed;
+  inset: 0;
+  background: rgb(var(--text-rgb) / 0.92);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 40px;
+  backdrop-filter: blur(6px);
+}
+
+.control {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  background: rgb(var(--white-rgb) / 0.06);
+  color: var(--white);
+  border: 1px solid rgb(var(--white-rgb) / 0.15);
+  border-radius: 999px;
+  font-size: 28px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  font-family: inherit;
+}
+
+.control:hover {
+  background: rgb(var(--white-rgb) / 0.14);
+}
+
+.control svg {
+  display: block;
+}
+
+.close {
+  top: 24px;
+  right: 24px;
+  width: 44px;
+  height: 44px;
+}
+
+.previous,
+.next {
+  top: 50%;
+  transform: translateY(-50%);
+  width: 52px;
+  height: 52px;
+}
+
+.previous {
+  left: 24px;
+}
+
+.next {
+  right: 24px;
+}
+
+@media (max-width: 720px) {
+  .lightbox {
+    padding: 12px;
+  }
+
+  .close {
+    top: 12px;
+    right: 12px;
+    width: 40px;
+    height: 40px;
+  }
+
+  .previous,
+  .next {
+    top: auto;
+    bottom: 16px;
+    transform: none;
+    width: 46px;
+    height: 46px;
+  }
+
+  .previous {
+    left: 50%;
+    margin-left: -52px;
+  }
+
+  .next {
+    right: 50%;
+    margin-right: -52px;
+  }
+}

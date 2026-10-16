@@ -1,0 +1,126 @@
+/* An entry's photos: one, three or four to a grid. Three with a wide one
+   go two up over a full-width row; four with a tall one span it down two
+   rows; four with no tall one make a square. */
+
+.photos {
+  display: grid;
+  gap: 10px;
+  margin-top: 28px;
+  max-width: 760px;
+}
+
+.one {
+  grid-template-columns: 1fr;
+  max-width: 640px;
+}
+
+.three {
+  grid-template-columns: 1.3fr 1fr 1fr;
+  grid-auto-rows: 260px;
+}
+
+.three:has(.wide) {
+  grid-template-columns: 1fr 1fr;
+}
+
+.three .wide {
+  grid-column: 1 / -1;
+}
+
+.four {
+  grid-template-columns: 1fr 1fr 1fr;
+  grid-auto-rows: 190px;
+  max-width: 760px;
+}
+
+.four .tall {
+  grid-row: span 2;
+}
+
+/* These cells are far wider than a three-up row, so they're sized by
+   aspect ratio rather than a fixed row height, which would letterbox a
+   landscape shot. Outranks the responsive row heights below on
+   specificity, so the ratio holds at every width. */
+.four:not(:has(.tall)) {
+  grid-template-columns: 1fr 1fr;
+  grid-auto-rows: auto;
+}
+
+.four:not(:has(.tall)) .shot {
+  aspect-ratio: 3 / 2;
+}
+
+.shot {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  border-radius: 6px;
+  background: var(--surface-2);
+  cursor: zoom-in;
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
+.shot img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+.one .shot {
+  aspect-ratio: auto;
+  border: 1px solid var(--border);
+}
+
+.one .shot img {
+  height: auto;
+  max-height: 480px;
+  object-fit: contain;
+  background: var(--surface);
+}
+
+.shot:hover {
+  box-shadow:
+    0 1px 2px var(--shadow),
+    0 8px 24px var(--shadow);
+  transform: translateY(-1px);
+}
+
+.shot:hover img {
+  transform: scale(1.025);
+}
+
+@media (max-width: 860px) {
+  .three,
+  .four {
+    grid-template-columns: 1fr 1fr;
+    grid-auto-rows: 170px;
+  }
+
+  .four .tall {
+    grid-row: auto;
+  }
+}
+
+@media (max-width: 520px) {
+  .three,
+  .four,
+  .three:has(.wide) {
+    grid-template-columns: 1fr;
+    grid-auto-rows: auto;
+  }
+
+  .three .shot,
+  .four .shot {
+    aspect-ratio: 16 / 10;
+  }
+
+  /* One column here too: the square above would otherwise hold, two
+     thumbnails to a phone-width row. */
+  .four:not(:has(.tall)) {
+    grid-template-columns: 1fr;
+  }
+}

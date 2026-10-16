@@ -1,6 +1,5 @@
 import { pageMetadata } from "@/lib/metadata";
 import Image from "next/image";
-import "../track-record/track-record.css";
 import JobRoles from "./_components/JobRoles";
 import "./jobs.css";
 import PageHero from "@/components/ui/PageHero";
@@ -16,7 +15,7 @@ export const metadata = pageMetadata({
 export default function JobsPage() {
   return (
     <>
-      <main className="track-record jobs-page">
+      <main className="jobs-page">
         <PageHero title="Jobs" lede="Work for PauseAI UK in a paid role." tight />
 
         <article className="intro-article">

@@ -4,7 +4,6 @@ import WorldMap from "./_components/WorldMap";
 import CountryExplorer from "./_components/CountryExplorer";
 import DemographicsExplorer from "./_components/DemographicsExplorer";
 import GlobalAverageBar from "./_components/GlobalAverageBar";
-import "../track-record/track-record.css";
 import "./global-ai-sentiment-2026.css";
 import HeadlineStats from "./_components/HeadlineStats";
 import Methodology from "./_components/Methodology";
@@ -23,7 +22,7 @@ export const metadata = pageMetadata({
 export default function GlobalAiSentiment2026Page() {
   return (
     <>
-      <main className="track-record gas-page">
+      <main className="gas-page">
         <PageHero title={TITLE}>
           <p className="gas-hero-lede">{DESCRIPTION}</p>
         </PageHero>

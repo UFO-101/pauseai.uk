@@ -1,8 +1,6 @@
 import { pageMetadata } from "@/lib/metadata";
-import { site } from "@/lib/content/site";
 import Timeline from "./_components/Timeline";
-import "./track-record.css";
-import { ButtonAnchor, ButtonLink } from "@/components/ui/Button";
+import Closing from "@/components/ui/Closing";
 import PageHero from "@/components/ui/PageHero";
 
 export const metadata = pageMetadata({
@@ -14,24 +12,12 @@ export const metadata = pageMetadata({
 
 export default function TrackRecordPage() {
   return (
-    <main className="track-record">
+    <main>
       <PageHero title="Track Record" swirl />
 
       <Timeline />
 
-      <section className="closing">
-        <div className="container closing-inner">
-          <p className="closing-sub">Join us for what comes next.</p>
-          <div className="closing-actions">
-            <ButtonAnchor variant="primary" href={site.whatsappUrl} target="_blank" rel="noreferrer">
-              Join the WhatsApp community
-            </ButtonAnchor>
-            <ButtonLink variant="ghost" href="/#join">
-              More ways to get involved
-            </ButtonLink>
-          </div>
-        </div>
-      </section>
+      <Closing line="Join us for what comes next." />
     </main>
   );
 }

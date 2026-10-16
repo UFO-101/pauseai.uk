@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { Gallery } from "./Gallery";
+import styles from "./TimelineList.module.css";
 
 /** The id of the entry nearest the top of the screen. */
 const ActiveEntry = createContext<string | null>(null);
@@ -31,7 +32,7 @@ export function TimelineList({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <ol className="timeline-list" ref={list}>
+    <ol className={styles.list} ref={list}>
       <ActiveEntry.Provider value={active}>
         <Gallery>{children}</Gallery>
       </ActiveEntry.Provider>
@@ -39,11 +40,11 @@ export function TimelineList({ children }: { children: ReactNode }) {
   );
 }
 
-/** One entry's <li>, marked while it is the active one. */
+/** One entry's <li>, marked `data-active` while it is the active one. */
 export function EntryItem({ id, className, children }: { id: string; className: string; children: ReactNode }) {
   const active = useContext(ActiveEntry) === id;
   return (
-    <li className={active ? `${className} is-active` : className} id={id}>
+    <li className={className} id={id} data-active={active ? "" : undefined}>
       {children}
     </li>
   );

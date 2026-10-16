@@ -1,7 +1,6 @@
 import { pageMetadata } from "@/lib/metadata";
 import BoardSection from "./_components/BoardSection";
 import DonationPolicies from "./_components/DonationPolicies";
-import "../track-record/track-record.css";
 import "./governance.css";
 import PageHero from "@/components/ui/PageHero";
 
@@ -14,7 +13,7 @@ export const metadata = pageMetadata({
 export default function GovernancePage() {
   return (
     <>
-      <main className="track-record governance">
+      <main className="governance">
         <PageHero title="Governance" />
 
         <BoardSection />

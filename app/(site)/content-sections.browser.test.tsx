@@ -6,7 +6,7 @@ import { site } from "@/lib/content/site";
 import PressKit from "./press/_components/PressKit";
 import PrivacyPolicy from "./privacy/_components/PrivacyPolicy";
 import ChangeSteps from "./theory-of-change/_components/ChangeSteps";
-import Closing from "./theory-of-change/_components/Closing";
+import Closing from "@/components/ui/Closing";
 import Foreword from "./theory-of-change/_components/Foreword";
 import About from "./what-is-pauseai-uk/_components/About";
 

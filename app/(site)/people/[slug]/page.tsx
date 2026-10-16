@@ -4,7 +4,6 @@ import { findPerson, people, personMetadata, personSlug } from "@/lib/content/pe
 import PersonHeader from "../_components/PersonHeader";
 import PersonStory from "../_components/PersonStory";
 import ShareYourStory from "../_components/ShareYourStory";
-import "../../track-record/track-record.css";
 import "../people.css";
 
 export function generateStaticParams() {
@@ -28,7 +27,7 @@ export default async function StoryDetailPage({ params }: { params: Promise<{ sl
 
   return (
     <>
-      <main className="track-record people-page person-detail-page">
+      <main className="people-page person-detail-page">
         <PersonHeader person={person} />
 
         <PersonStory person={person} slug={slug} />

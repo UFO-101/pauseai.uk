@@ -1,8 +1,7 @@
-import Image from "next/image";
 import type { ReactNode } from "react";
 import CopyLinkButton from "@/components/ui/CopyLinkButton";
-import { ShotLink } from "./Gallery";
 import { EntryItem } from "./TimelineList";
+import styles from "./TimelineEntry.module.css";
 
 /** One dated entry on the timeline, with a link-copy button beside its title. */
 export function TimelineEntry({
@@ -10,7 +9,6 @@ export function TimelineEntry({
   month,
   year,
   title,
-  finale = false,
   children,
 }: {
   /** The entry's anchor, so it can be linked to as /track-record/#<id>. */
@@ -18,20 +16,18 @@ export function TimelineEntry({
   month: string;
   year: string;
   title: string;
-  /** The last entry, where the timeline line ends. */
-  finale?: boolean;
-  /** The entry's text and gallery. */
+  /** The entry's text and photos. */
   children: ReactNode;
 }) {
   return (
-    <EntryItem className={finale ? "entry entry-finale" : "entry"} id={id}>
-      <aside className="entry-date">
-        <span className="month">{month}</span>
-        <span className="year">{year}</span>
+    <EntryItem className={styles.entry} id={id}>
+      <aside className={styles.date}>
+        <span className={styles.month}>{month}</span>
+        <span className={styles.year}>{year}</span>
       </aside>
-      <div className="entry-body">
-        <div className="entry-heading">
-          <h3 className="entry-title">{title}</h3>
+      <div className={styles.body}>
+        <div className={styles.heading}>
+          <h3 className={styles.title}>{title}</h3>
           <CopyLinkButton href={`/track-record/#${id}`} title="Copy link to this entry" size={14} />
         </div>
         {children}
@@ -40,29 +36,12 @@ export function TimelineEntry({
   );
 }
 
-/**
- * A gallery thumbnail that opens the full photo in the lightbox (see
- * Gallery.tsx). Without JavaScript it is a plain link to the photo.
- */
-export function Shot({
-  href,
-  src,
-  alt,
-  sizes,
-  wide = false,
-}: {
-  /** The full-size photo. */
-  href: string;
-  /** The thumbnail. */
-  src: string;
-  alt: string;
-  sizes: string;
-  /** Spans two gallery columns. */
-  wide?: boolean;
-}) {
-  return (
-    <ShotLink className={wide ? "shot shot-wide" : "shot"} href={href} alt={alt}>
-      <Image fill sizes={sizes} style={{ objectFit: "cover" }} src={src} alt={alt} />
-    </ShotLink>
-  );
+/** An entry's paragraphs. */
+export function EntryText({ children }: { children: ReactNode }) {
+  return <div className={styles.text}>{children}</div>;
+}
+
+/** A list in an entry's text, each item marked with a short orange rule. */
+export function EntryList({ children }: { children: ReactNode }) {
+  return <ul className={styles.list}>{children}</ul>;
 }

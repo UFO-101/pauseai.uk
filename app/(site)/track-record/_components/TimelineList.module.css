@@ -1,0 +1,26 @@
+/* The timeline's rail: a line down the page, which each entry's dot sits on
+   (TimelineEntry.module.css reads --rail-x). */
+
+.list {
+  --rail-x: 180px;
+  list-style: none;
+  margin: 0;
+  padding: 0 0 56px;
+  position: relative;
+}
+
+.list::before {
+  content: "";
+  position: absolute;
+  left: var(--rail-x);
+  top: 14px;
+  bottom: 0;
+  width: 1px;
+  background: linear-gradient(to bottom, transparent 0, var(--border-strong) 24px, var(--border-strong) 100%);
+}
+
+@media (max-width: 860px) {
+  .list::before {
+    left: 6px;
+  }
+}

@@ -3,7 +3,6 @@ import Link from "next/link";
 import EventList from "@/components/events/EventList";
 import { getEvents } from "@/lib/server/luma-calendar";
 import { site } from "@/lib/content/site";
-import "../track-record/track-record.css";
 import { ButtonAnchor } from "@/components/ui/Button";
 import PageHero from "@/components/ui/PageHero";
 
@@ -21,7 +20,7 @@ export default async function EventsPage() {
   const events = await getEvents("future");
   return (
     <>
-      <main className="track-record events-page">
+      <main className="events-page">
         <PageHero
           title="Events"
           lede="Meet other people worried about AI, write to your MP, and take action together. Everything here is free and open to everyone."

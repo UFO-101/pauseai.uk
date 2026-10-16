@@ -1,20 +1,8 @@
 /* ========================================================================
    EVIDENCE SUBMISSION PAGE
-   Loaded after globals.css and track-record.css.
+   Loaded after globals.css.
    Scoped under main.evidence-submission.
    ======================================================================== */
-
-/* ─── Foreword ─── */
-.evidence-submission .foreword {
-  padding: 56px 0 64px;
-  background: var(--surface);
-  border-top: 1px solid var(--border);
-  border-bottom: 1px solid var(--border);
-}
-
-.evidence-submission .foreword-inner {
-  max-width: var(--measure-page);
-}
 
 /* ─── Article ─── */
 .evidence-submission .ev-article {

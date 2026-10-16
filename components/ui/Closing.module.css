@@ -1,0 +1,35 @@
+/* The call to action at the bottom of a page, on a warm glow. */
+
+.closing {
+  --container-width: 680px;
+  padding: 96px 0 104px;
+  background:
+    radial-gradient(ellipse 70% 90% at 50% 100%, rgb(var(--pause-orange-rgb) / 0.09), transparent 70%), var(--surface);
+  border-top: 1px solid var(--border);
+  text-align: center;
+}
+
+.line {
+  font-size: 15px;
+  color: var(--muted);
+  letter-spacing: 0.02em;
+  margin: 0 0 32px;
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 520px) {
+  .closing {
+    padding: 72px 0 80px;
+  }
+
+  .actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

@@ -1,9 +1,8 @@
 import { pageMetadata } from "@/lib/metadata";
-import "../track-record/track-record.css";
 import "./theory-of-change.css";
 import Foreword from "./_components/Foreword";
 import ChangeSteps from "./_components/ChangeSteps";
-import Closing from "./_components/Closing";
+import Closing from "@/components/ui/Closing";
 import PageHero from "@/components/ui/PageHero";
 
 export const metadata = pageMetadata({
@@ -16,7 +15,7 @@ export const metadata = pageMetadata({
 export default function TheoryOfChangePage() {
   return (
     <>
-      <main className="track-record theory-of-change">
+      <main className="theory-of-change">
         <PageHero title="Theory of Change" />
 
         <Foreword />
