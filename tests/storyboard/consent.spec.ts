@@ -1,5 +1,5 @@
 import type { Page } from "@playwright/test";
-import { BASE, expect, frame, test } from "./fixtures";
+import { ANALYTICS_URL, BASE, expect, frame, test } from "./fixtures";
 
 // Cookie consent across pages. The banner itself, and what each button does on
 // the page, are tested in components/layout/layout.browser.test.tsx. This file
@@ -9,11 +9,11 @@ import { BASE, expect, frame, test } from "./fixtures";
 const CONSENT_KEY = "pauseai-cookie-consent";
 const GA_DISABLED = "ga-disable-G-DLLRWZCYD7";
 
-// Analytics must never really fire from tests. Blocking it also records
-// whether the page tried to load it, which is what consent is about.
+// The fixtures block analytics for every flow; this records whether the page
+// tried to load it, which is what consent is about.
 async function analyticsRequests(page: Page) {
   const requested: string[] = [];
-  await page.route("**/www.googletagmanager.com/**", (route) => {
+  await page.route(ANALYTICS_URL, (route) => {
     requested.push(route.request().url());
     return route.abort();
   });

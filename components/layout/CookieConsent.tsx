@@ -109,13 +109,15 @@ const CookieSettings = createContext<(() => void) | null>(null);
 
 /**
  * Loads analytics, unless someone has declined it, and shows the cookie
- * banner when a CookieSettingsLink inside it asks.
+ * banner when a CookieSettingsLink inside it asks. With `analytics` off
+ * (every build but the live site's, lib/analytics.ts) it does neither, as on
+ * a page that opts out: there is nothing to consent to.
  */
-export default function CookieConsent({ children }: { children: ReactNode }) {
+export default function CookieConsent({ analytics, children }: { analytics: boolean; children: ReactNode }) {
   const [bannerOpen, setBannerOpen] = useState(false);
 
   useEffect(() => {
-    if (document.body.hasAttribute("data-no-analytics")) return;
+    if (!analytics || document.body.hasAttribute("data-no-analytics")) return;
 
     // Analytics loads by default. The banner isn't shown on first visit,
     // but the footer "Cookie settings" link can open it on demand, and a
@@ -125,12 +127,12 @@ export default function CookieConsent({ children }: { children: ReactNode }) {
     } else {
       loadGA();
     }
-  }, []);
+  }, [analytics]);
 
   const openBanner = useCallback(() => {
     // Pages without analytics have no choice to make.
-    if (!document.body.hasAttribute("data-no-analytics")) setBannerOpen(true);
-  }, []);
+    if (analytics && !document.body.hasAttribute("data-no-analytics")) setBannerOpen(true);
+  }, [analytics]);
 
   const accept = () => {
     writeConsent("accepted");

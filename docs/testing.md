@@ -67,8 +67,10 @@ live in one place: `tests/fixtures/outside-services.ts`.
   is no Next router.
 - **Playwright:** the build runs with `DATA_FIXTURES=1`, so `outsideFetch`
   returns the fixtures instead of calling Luma or Airtable. Use `page.route`
-  only for browser requests that mustn't really happen (analytics, form
-  submits to other sites).
+  only for browser requests that mustn't really happen (form submits to
+  other sites). Analytics loads only on the live site (`lib/analytics.ts`);
+  the fixture build turns it on so the consent flow can be driven, and the
+  storyboard's fixtures block every request to Google for every flow.
 
 Don't stub `fetch` globally, and don't mock our own modules to make a test
 pass. Mocking one of our modules is fine at an edge the test can't
