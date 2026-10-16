@@ -12,7 +12,7 @@ export interface QrCaption {
 
 export type CaptionKind = "label" | "link";
 
-/** The label is set like a headline, the link like body text. Both families are declared in collateral.css. */
+/** The label is set like a headline, the link like body text. Both families are declared in Studio.module.css. */
 export const CAPTION_FONTS: Record<CaptionKind, { family: string; weight: number; file: string; weightRange: string }> =
   {
     label: { family: "PAI Lato", weight: 900, file: "/fonts/lato-latin-900-normal.woff2", weightRange: "900" },

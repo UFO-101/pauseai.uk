@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import { defaultValues, FONT_LOADS, TEMPLATES } from "./templates";
 
 const root = process.cwd();
-const css = readFileSync(join(root, "app/(tools)/tools/collateral/collateral.css"), "utf8");
+const css = readFileSync(join(root, "app/(tools)/tools/collateral/_components/kit/Studio.module.css"), "utf8");
 
 describe.each(TEMPLATES)("template $id", (template) => {
   it("has unique field keys", () => {
@@ -38,7 +38,7 @@ describe("template ids", () => {
 
 describe("canvas fonts", () => {
   // Canvas text silently falls back to a system font if a face is not declared or its file is missing.
-  it.each(FONT_LOADS)("%s is declared in collateral.css", (load) => {
+  it.each(FONT_LOADS)("%s is declared in the studio's stylesheet", (load) => {
     const family = /"([^"]+)"/.exec(load)![1];
     expect(css).toContain(`font-family: "${family}"`);
   });

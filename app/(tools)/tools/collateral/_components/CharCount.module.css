@@ -1,0 +1,14 @@
+/* The character count under a field, orange once it's full. */
+
+.count {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  text-align: right;
+}
+
+.count.full {
+  color: var(--accent);
+  font-weight: 600;
+}

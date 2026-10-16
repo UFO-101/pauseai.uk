@@ -1,0 +1,30 @@
+/* The checks list: fine, a warning in orange, or a note. */
+
+.checks {
+  flex-basis: 100%;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  font-size: 14px;
+  text-align: left;
+}
+
+.list {
+  margin: 6px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.check {
+  margin: 6px 0 0;
+  line-height: 1.4;
+}
+
+.check.ok {
+  color: var(--text-secondary);
+}
+
+.warn .icon {
+  color: var(--accent);
+}

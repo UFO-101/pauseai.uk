@@ -1,0 +1,29 @@
+/* A volunteer tool's page: the link back, its title and lede. */
+
+.page {
+  padding: 40px 0 72px;
+}
+
+.back {
+  display: inline-block;
+  margin-bottom: 16px;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.back:hover {
+  text-decoration: underline;
+}
+
+.title {
+  margin: 0 0 8px;
+  font-size: clamp(2rem, 4vw, 2.75rem);
+  line-height: 1.1;
+}
+
+.lede {
+  margin: 0 0 32px;
+  max-width: 60ch;
+  color: var(--text-secondary);
+}

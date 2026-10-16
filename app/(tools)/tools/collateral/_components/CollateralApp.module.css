@@ -1,0 +1,30 @@
+/* The switch between the three studios, and the line about the one picked. */
+
+.modeSwitch {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.mode {
+  padding: 10px 16px;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.mode[aria-checked="true"] {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent);
+}
+
+.modeHint {
+  margin: -12px 0 24px;
+  font-size: 14px;
+  color: var(--text-secondary);
+}

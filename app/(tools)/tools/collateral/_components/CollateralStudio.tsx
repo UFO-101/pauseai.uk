@@ -40,7 +40,18 @@ import ProjectMenu from "./ProjectMenu";
 import TitleSizeControl from "./TitleSizeControl";
 import { usePhotoGestures } from "./usePhotoGestures";
 import { useStudioAssets } from "./useStudioAssets";
-import { Button } from "@/components/ui/Button";
+import { FieldLabel, Select } from "./kit/Fields";
+import { Hint, Message } from "./kit/Notes";
+import {
+  ControlsColumn,
+  ControlsSection,
+  DownloadButton,
+  PreviewActions,
+  PreviewCanvas,
+  PreviewColumn,
+  PreviewMeta,
+  Studio,
+} from "./kit/Studio";
 
 const RESET_MESSAGE = "Reset to the example text.";
 const STORAGE_KEY = "pauseai-collateral-v2";
@@ -266,49 +277,29 @@ export default function CollateralStudio({ events }: { events: CalendarEvent[] }
   const shown = message ?? assetError;
 
   return (
-    <div className="collateral-studio">
-      <div className="collateral-preview">
-        <div className="collateral-preview-frame">
-          <canvas
-            ref={canvasRef}
-            role="img"
-            aria-label={`Preview of ${format.label}`}
-            hidden={!logo || !fontsReady}
-            style={previewStyle(format)}
-            className={design.photo ? "is-draggable" : undefined}
-            {...photoGestures}
-          />
-          {(!logo || !fontsReady) && <p className="collateral-loading">Loading…</p>}
-        </div>
-        <p className="collateral-preview-meta">
+    <Studio>
+      <PreviewColumn>
+        <PreviewCanvas
+          canvasRef={canvasRef}
+          label={`Preview of ${format.label}`}
+          ready={Boolean(logo) && fontsReady}
+          draggable={Boolean(design.photo)}
+          style={previewStyle(format)}
+          gestures={photoGestures}
+        />
+        <PreviewMeta>
           {format.label} · {formatDimensionLabel(format)}
           {design.photo && " · Drag the photo to move it. Scroll or pinch to zoom."}
-        </p>
-        <div className="collateral-preview-actions">
+        </PreviewMeta>
+        <PreviewActions>
           <Checks issues={issues} />
-          <Button
-            type="button"
-            variant="primary"
-            size="large"
-            fit
-            className="collateral-download"
-            onClick={onDownloadPng}
-            disabled={!ready}
-          >
+          <DownloadButton onClick={onDownloadPng} disabled={!ready}>
             {busy ? "Preparing…" : "Download PNG"}
-          </Button>
+          </DownloadButton>
           {format.kind === "print" && (
-            <Button
-              type="button"
-              variant="primary"
-              size="large"
-              fit
-              className="collateral-download"
-              onClick={() => onDownloadPdf(format)}
-              disabled={!ready}
-            >
+            <DownloadButton onClick={() => onDownloadPdf(format)} disabled={!ready}>
               {busy ? "Preparing…" : `Download print PDF (+${BLEED_MM} mm bleed)`}
-            </Button>
+            </DownloadButton>
           )}
           <ProjectMenu
             noun="project"
@@ -317,26 +308,14 @@ export default function CollateralStudio({ events }: { events: CalendarEvent[] }
             onReset={onReset}
             saveDisabled={!restored}
           />
-          {shown && (
-            <p className="collateral-message" role="status">
-              {shown}
-              {message === RESET_MESSAGE && undoReset && (
-                <button type="button" className="collateral-link" onClick={undoReset}>
-                  Undo
-                </button>
-              )}
-            </p>
-          )}
-        </div>
-      </div>
+          {shown && <Message onUndo={message === RESET_MESSAGE ? undoReset : null}>{shown}</Message>}
+        </PreviewActions>
+      </PreviewColumn>
 
-      <div className="collateral-controls">
-        <section>
-          <h2>1. Format</h2>
-          <label className="collateral-label" htmlFor="collateral-format">
-            Where will it be used?
-          </label>
-          <select id="collateral-format" value={format.id} onChange={(e) => setFormatId(e.target.value)}>
+      <ControlsColumn>
+        <ControlsSection heading="1. Format">
+          <FieldLabel htmlFor="collateral-format">Where will it be used?</FieldLabel>
+          <Select id="collateral-format" value={format.id} onChange={(e) => setFormatId(e.target.value)}>
             {FORMAT_GROUPS.map((group) => (
               <optgroup key={group} label={group}>
                 {FORMATS.filter((f) => f.group === group).map((f) => (
@@ -346,10 +325,10 @@ export default function CollateralStudio({ events }: { events: CalendarEvent[] }
                 ))}
               </optgroup>
             ))}
-          </select>
-          {format.note && <p className="collateral-hint">{format.note}</p>}
+          </Select>
+          {format.note && <Hint>{format.note}</Hint>}
           {format.kind === "digital" && format.logoCover && <LogoCoverControls design={design} update={update} />}
-        </section>
+        </ControlsSection>
 
         <DesignControls
           design={design}
@@ -364,7 +343,7 @@ export default function CollateralStudio({ events }: { events: CalendarEvent[] }
             <CropControls view={photoView} onChange={(patch) => setPhotoView((v) => ({ ...v, ...patch }))} />
           }
         />
-      </div>
-    </div>
+      </ControlsColumn>
+    </Studio>
   );
 }

@@ -1,0 +1,92 @@
+/* The gallery studio's own parts: the filmstrip of slides, the crop
+   picker, and the slide buttons. */
+
+.slideActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+/* Every gallery slide at a glance, under the preview. */
+.filmstrip {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.thumb {
+  position: relative;
+  padding: 0;
+  border: 1px solid var(--border-strong);
+  border-radius: 4px;
+  background: var(--surface);
+  cursor: pointer;
+  line-height: 0;
+}
+
+.thumb[aria-current="true"] {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent);
+}
+
+.thumbCanvas {
+  display: block;
+  height: 72px;
+  width: auto;
+  border-radius: 3px;
+}
+
+.number {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  padding: 1px 5px;
+  border-radius: 999px;
+  background: rgb(var(--black-rgb) / 0.6);
+  color: var(--white);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.cropPicker {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.crop {
+  padding: 4px 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.crop[aria-pressed="true"] {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+@media (max-width: 899px) {
+  .slideActions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .filmstrip {
+    margin-top: 8px;
+  }
+
+  .thumbCanvas {
+    height: 44px;
+  }
+}

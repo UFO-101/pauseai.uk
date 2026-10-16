@@ -39,7 +39,8 @@ afterEach(() => {
   fonts.fail = false;
 });
 
-const preview = (container: HTMLElement) => container.querySelector(".collateral-qr-image") as HTMLImageElement | null;
+const preview = (container: HTMLElement) =>
+  container.querySelector('img[alt^="QR code for"]') as HTMLImageElement | null;
 const input = (name: string) => page.getByLabelText(name, { exact: false });
 
 describe("QrGenerator", () => {
@@ -58,27 +59,27 @@ describe("QrGenerator", () => {
     await expect
       .element(page.getByRole("link", { name: "https://pauseai.uk" }))
       .toHaveAttribute("href", "https://pauseai.uk");
-    expect(container.querySelector(".collateral-tips")?.textContent).toMatch(/Print it at least \d+ mm wide/);
-    expect(container.querySelector(".collateral-tips")?.textContent).not.toContain("dense code");
+    expect(page.getByRole("list").element().textContent).toMatch(/Print it at least \d+ mm wide/);
+    expect(page.getByRole("list").element().textContent).not.toContain("dense code");
   });
 
   it("asks for a web address, and points out one that isn't", async () => {
-    const { container } = await render(<QrGenerator />);
+    await render(<QrGenerator />);
     await input("Web address").fill("");
-    expect(container.querySelector(".collateral-loading")?.textContent).toBe("Type a web address to make a QR code.");
+    await expect.element(page.getByText("Type a web address to make a QR code.")).toBeVisible();
     await input("Web address").fill("not an address");
-    expect(container.querySelector(".collateral-loading")?.textContent).toBe("Check the web address to see the code.");
+    await expect.element(page.getByText("Check the web address to see the code.")).toBeVisible();
     await expect.element(input("Web address")).toHaveAttribute("aria-invalid", "true");
     await expect.element(page.getByText(/That does not look like a web address/)).toBeVisible();
     await expect.element(page.getByRole("button", { name: "Download PNG" })).toBeDisabled();
   });
 
   it("warns about a dense code, and a caption too long to fit", async () => {
-    const { container } = await render(<QrGenerator />);
+    await render(<QrGenerator />);
     await input("Web address").fill(`pauseai.uk/${"a".repeat(150)}`);
     await input("Show the link under the code").click();
     await input("Label under the code").fill("A label that is far too long to fit under the code at all, really");
-    const tips = () => container.querySelector(".collateral-tips")?.textContent ?? "";
+    const tips = () => page.getByRole("list").element().textContent;
     await expect.poll(tips).toContain("A shorter link scans more easily.");
     await expect.poll(tips).toContain("The text under the code is too long to fit.");
   });
@@ -162,7 +163,7 @@ describe("QrGenerator", () => {
     const closed = nextCall(share, () => Promise.reject(new DOMException("closed", "AbortError")));
     await page.getByRole("button", { name: "Share" }).click();
     await closed;
-    expect(document.querySelector(".collateral-message")).toBeNull();
+    expect(page.getByRole("status").query()).toBeNull();
 
     const failed = nextCall(share, () => Promise.reject(new Error("failed")));
     await page.getByRole("button", { name: "Share" }).click();
@@ -211,7 +212,7 @@ describe("QrGenerator", () => {
     expect(container.querySelector("q")).toBeNull();
     await scan("   ");
     await expect
-      .poll(() => container.querySelector('.collateral-field-error[role="status"]')?.textContent)
+      .poll(() => page.getByRole("status").query()?.textContent)
       .toBe("That code does not hold a web address.");
     await scan("x");
     await expect.element(page.getByText(/It says:/)).toBeVisible();

@@ -1,3 +1,5 @@
+import styles from "./Slider.module.css";
+
 interface SliderProps {
   label: string;
   min: number;
@@ -9,10 +11,11 @@ interface SliderProps {
 
 export default function Slider({ label, min, max, step, value, onChange }: SliderProps) {
   return (
-    <label className="collateral-slider">
+    <label className={styles.slider}>
       <span>{label}</span>
       <input
         type="range"
+        className={styles.range}
         min={min}
         max={max}
         step={step}

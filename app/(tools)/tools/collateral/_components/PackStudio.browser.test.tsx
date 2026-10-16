@@ -45,7 +45,11 @@ vi.mock("@/lib/collateral/export", async (importActual) => {
   };
 });
 
-beforeEach(() => localStorage.clear());
+beforeEach(async () => {
+  localStorage.clear();
+  // Wide, so the preview sits beside the form rather than pinned over it.
+  await page.viewport(1280, 900);
+});
 afterEach(() => {
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
@@ -60,7 +64,14 @@ const pack = (formatIds = ["ig-square", "a6"], extra: Partial<PackProject> = {})
   ...extra,
 });
 
-const thumbs = (c: HTMLElement) => [...c.querySelectorAll(".collateral-pack-thumb")] as HTMLElement[];
+const thumbs = (c: HTMLElement) =>
+  [...c.querySelectorAll('[aria-label^="Formats in the pack"] button')] as HTMLElement[];
+/** A preview's label, then its badge. */
+const label = (thumb: HTMLElement) => thumb.querySelectorAll("span")[0];
+const badgeOf = (thumb: HTMLElement) => thumb.querySelectorAll("span")[1];
+const summary = () => page.getByTestId("pack-summary").element().textContent;
+const titleSize = () => page.getByText("Adjust title size").element().closest("details")!;
+const screenQr = () => page.getByRole("checkbox", { name: /^Show QR codes on the/ });
 
 async function ready(container: HTMLElement) {
   await expect.poll(() => thumbs(container).length).toBe(DEFAULT_PACK_FORMAT_IDS.length);
@@ -78,9 +89,7 @@ describe("PackStudio", () => {
   it("shows every ticked format with its checks, and downloads them all in a zip with print PDFs", async () => {
     const { container } = await render(<PackStudio events={[]} />);
     await ready(container);
-    await expect
-      .poll(() => thumbs(container).every((t) => t.querySelector(".collateral-pack-badge")!.textContent !== ""))
-      .toBe(true);
+    await expect.poll(() => thumbs(container).every((t) => badgeOf(t).textContent !== "")).toBe(true);
     await expect.element(page.getByText(/passed (its|the) checks|need a look/)).toBeVisible();
     // Building every format is slow on a busy CI runner: wait for the zip itself.
     const zipped = nextCall(downloads.zip);
@@ -110,31 +119,27 @@ describe("PackStudio", () => {
     await ready(container);
     thumbs(container)[1].click();
     await expect.poll(() => thumbs(container)[1].getAttribute("aria-current")).toBe("true");
-    const second = thumbs(container)[1].querySelector(".collateral-pack-thumb-label")!.textContent!;
+    const second = label(thumbs(container)[1]).textContent!;
     await expect.element(page.getByRole("heading", { name: `Adjust ${second}` })).toBeVisible();
     // Untick everything: nothing to download or adjust.
-    for (const box of [...container.querySelectorAll<HTMLInputElement>(".collateral-format-group input:checked")])
-      box.click();
-    await expect
-      .poll(() => container.querySelector(".collateral-actions-summary")?.textContent)
-      .toBe("Tick at least one format.");
+    for (const box of [...container.querySelectorAll<HTMLInputElement>("fieldset input:checked")]) box.click();
+    await expect.poll(summary).toBe("Tick at least one format.");
     await expect.element(page.getByRole("button", { name: "Download 0 formats (.zip)" })).toBeDisabled();
-    expect(container.querySelector(".collateral-preview .collateral-loading")?.textContent).toBe(
-      "Tick at least one format.",
-    );
+    // Said in the summary, and where the preview was.
+    expect(page.getByText("Tick at least one format.").elements()).toHaveLength(2);
     // One format.
-    (container.querySelector('.collateral-format-group input[type="checkbox"]') as HTMLInputElement).click();
+    (container.querySelector('fieldset input[type="checkbox"]') as HTMLInputElement).click();
     await expect.element(page.getByRole("button", { name: "Download 1 format (.zip)" })).toBeVisible();
   });
 
   it("nudges a format's title size, shows its QR codes and the Luma cover options", async () => {
     const { container } = await render(<PackStudio events={[]} />);
     await ready(container);
-    (container.querySelector(".collateral-title-size") as HTMLDetailsElement).open = true;
+    titleSize().open = true;
     await page.getByRole("button", { name: "Bigger title" }).click();
     await expect.element(page.getByText("110%")).toBeVisible();
     await page.getByRole("button", { name: "Add a QR code" }).click();
-    const lumaBox = [...container.querySelectorAll<HTMLLabelElement>(".collateral-format-group label")].find((l) =>
+    const lumaBox = [...container.querySelectorAll<HTMLLabelElement>("fieldset label")].find((l) =>
       l.textContent!.includes("Luma"),
     )!;
     if (!lumaBox.querySelector("input")!.checked) lumaBox.querySelector("input")!.click();
@@ -142,13 +147,11 @@ describe("PackStudio", () => {
     // Pick a social format to see its QR note and toggle it.
     const social = thumbs(container).find((t) => /Instagram|X|Story|Facebook/.test(t.textContent!))!;
     social.click();
-    await expect.poll(() => container.querySelector(".collateral-qr-screen input")).not.toBeNull();
-    const toggle = container.querySelector(".collateral-qr-screen input") as HTMLInputElement;
+    await expect.poll(() => screenQr().query()).not.toBeNull();
+    const toggle = screenQr().element() as HTMLInputElement;
     const before = toggle.checked;
     toggle.click();
-    await expect
-      .poll(() => (container.querySelector(".collateral-qr-screen input") as HTMLInputElement).checked)
-      .toBe(!before);
+    await expect.poll(() => (screenQr().element() as HTMLInputElement).checked).toBe(!before);
   });
 
   it("lets the active format's photo crop be set on its own", async () => {
@@ -156,7 +159,7 @@ describe("PackStudio", () => {
     await ready(container);
     await page.getByRole("button", { name: LIBRARY_PHOTOS[0].label }).click();
     await expect.element(page.getByText(/Drag the photo to fit this format/)).toBeVisible();
-    container.querySelector("details.collateral-crop")!.setAttribute("open", "");
+    page.getByText("Fine-tune the crop").element().closest("details")!.setAttribute("open", "");
     for (const [label, value] of [
       ["Zoom", "2"],
       ["Up / down", "0.1"],
@@ -263,20 +266,21 @@ describe("PackStudio", () => {
     };
     const { container } = await render(<PackStudio events={[]} />);
     await ready(container);
-    const badge = (i: number) => thumbs(container)[i].querySelector(".collateral-pack-badge")!;
+    const badge = (i: number) => badgeOf(thumbs(container)[i]);
     await expect.poll(() => badge(0).textContent).toBe("⚠ 2");
-    expect(badge(0).className).toContain("is-warn");
     expect(badge(1).textContent).toBe("ℹ 1");
-    expect(badge(1).className).toContain("is-info");
+    // A warning's badge is coloured; a note's is like a clean one's.
+    const background = (i: number) => getComputedStyle(badge(i)).backgroundColor;
+    expect(background(0)).not.toBe(background(1));
+    expect(background(1)).toBe(background(2));
     expect(badge(2).textContent).toBe("✓");
-    const summary = () => container.querySelector(".collateral-actions-summary")?.textContent;
     await expect
       .poll(summary)
       .toBe(`1 problem affects every format. 1 of ${DEFAULT_PACK_FORMAT_IDS.length} formats need a look of their own.`);
     // A flagged title opens the format's size control.
-    expect((container.querySelector(".collateral-title-size") as HTMLDetailsElement).open).toBe(false);
+    expect(titleSize().open).toBe(false);
     thumbs(container)[0].click();
-    await expect.poll(() => (container.querySelector(".collateral-title-size") as HTMLDetailsElement).open).toBe(true);
+    await expect.poll(() => titleSize().open).toBe(true);
     await expect.element(page.getByText("Checks for every format")).toBeVisible();
   });
 
@@ -285,8 +289,6 @@ describe("PackStudio", () => {
     extraIssues.byFormat = { "ig-square": [warn("link-in-headline"), warn("qr-duplicate")] };
     const { container } = await render(<PackStudio events={[]} />);
     await ready(container);
-    await expect
-      .poll(() => container.querySelector(".collateral-actions-summary")?.textContent)
-      .toBe("2 problems affect every format. Otherwise every format passed its checks.");
+    await expect.poll(summary).toBe("2 problems affect every format. Otherwise every format passed its checks.");
   });
 });

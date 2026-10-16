@@ -1,0 +1,91 @@
+/* The campaign pack's own parts: the grid of formats with their badges,
+   the summary under it, and the format checkboxes. */
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 10px;
+}
+
+.thumb {
+  position: relative;
+  display: grid;
+  gap: 6px;
+  justify-items: center;
+  padding: 8px;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+}
+
+.thumb[aria-current="true"] {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent);
+}
+
+.thumbCanvas {
+  display: block;
+  max-width: 100%;
+  max-height: 110px;
+  width: auto;
+  height: auto;
+  border-radius: 3px;
+}
+
+.thumbLabel {
+  font-size: 12px;
+  line-height: 1.3;
+  text-align: center;
+}
+
+.badge {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.badge.warn {
+  background: var(--accent);
+  color: var(--white);
+}
+
+.summary {
+  flex-basis: 100%;
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+/* Its checkboxes are lighter and closer together than the form's others. */
+.formatGroup {
+  --toggle-margin: 0 0 8px;
+  --toggle-font-weight: 500;
+
+  margin: 0 0 12px;
+  padding: 0;
+  border: 0;
+}
+
+.legend {
+  margin-bottom: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.formatSize {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--text-secondary);
+}

@@ -38,7 +38,11 @@ vi.mock("@/lib/collateral/render", async (importActual) => {
   };
 });
 
-beforeEach(() => localStorage.clear());
+beforeEach(async () => {
+  localStorage.clear();
+  // Wide, so the preview sits beside the form rather than pinned over it.
+  await page.viewport(1280, 900);
+});
 afterEach(() => {
   vi.unstubAllGlobals();
   downloads.zip.mockReset();
@@ -47,14 +51,12 @@ afterEach(() => {
   loads.fontsFail = false;
 });
 
-const slideThumbs = (c: HTMLElement) => [...c.querySelectorAll(".collateral-filmstrip button")] as HTMLElement[];
+const slideThumbs = (c: HTMLElement) => [...c.querySelectorAll('[aria-label="All slides"] button')] as HTMLElement[];
 const caption = () => page.getByLabelText(/^Caption for slide/).element() as HTMLTextAreaElement;
-const heading = (c: HTMLElement) => c.querySelectorAll(".collateral-controls h2")[1].textContent;
-const platform = (c: HTMLElement, label: string) =>
-  [...c.querySelectorAll(".collateral-choice")]
-    .find((l) => l.querySelector("strong")!.textContent === label)!
-    .querySelector("input")!;
-const meta = (c: HTMLElement) => c.querySelector(".collateral-preview-meta")!.textContent;
+const heading = () => page.getByRole("heading", { level: 2 }).nth(1).element().textContent;
+const platform = (label: string) =>
+  page.getByRole("checkbox", { name: new RegExp(`^${label}`) }).element() as HTMLInputElement;
+const meta = () => page.getByText(/^Slide \d+ of \d+ ·/).element().textContent;
 
 async function ready(container: HTMLElement) {
   await expect.element(page.getByRole("button", { name: "Download slides" })).toBeEnabled();
@@ -108,7 +110,7 @@ describe("GalleryStudio", () => {
     await expect.poll(() => caption().value).toBe(EXAMPLE_SLIDE.caption);
     expect(slideThumbs(container).map((b) => b.getAttribute("aria-label"))).toEqual(["Show slide 1", "Show slide 2"]);
     await expect.element(page.getByRole("button", { name: EXAMPLE.label })).toHaveAttribute("aria-pressed", "true");
-    expect(meta(container)).toMatch(/^Slide 1 of 2 · Crop for Instagram \/ Facebook · LinkedIn · .* Drag the photo/);
+    expect(meta()).toMatch(/^Slide 1 of 2 · Crop for Instagram \/ Facebook · LinkedIn · .* Drag the photo/);
     // Rendering every slide at every platform's size is slow on a busy CI runner: wait for the zip itself.
     const zipped = nextCall(downloads.zip);
     await page.getByRole("button", { name: "Download slides" }).click();
@@ -128,14 +130,14 @@ describe("GalleryStudio", () => {
     const crops = page.getByRole("group", { name: "Preview crop" });
     await crops.getByRole("button", { name: "X" }).click();
     await expect.element(crops.getByRole("button", { name: "X" })).toHaveAttribute("aria-pressed", "true");
-    expect(meta(container)).toMatch(/Crop for X ·/);
-    for (const label of ["Instagram / Facebook", "LinkedIn", "X"]) platform(container, label).click();
+    expect(meta()).toMatch(/Crop for X ·/);
+    for (const label of ["Instagram / Facebook", "LinkedIn", "X"]) platform(label).click();
     await expect.element(page.getByText("Pick at least one platform.")).toBeVisible();
     await expect.element(page.getByRole("button", { name: "Download slides" })).toBeDisabled();
-    expect(meta(container)).not.toMatch(/Crop for/);
-    expect(container.querySelector(".collateral-crop-picker")).toBeNull();
+    expect(meta()).not.toMatch(/Crop for/);
+    expect(page.getByRole("group", { name: "Preview crop" }).query()).toBeNull();
     // Only the ticked platforms are downloaded.
-    platform(container, "X").click();
+    platform("X").click();
     const zipped = nextCall(downloads.zip);
     await page.getByRole("button", { name: "Download slides" }).click();
     expect(((await zipped)[0] as { folder: string }[]).map((g) => g.folder)).toEqual(["x"]);
@@ -159,18 +161,18 @@ describe("GalleryStudio", () => {
     await expect.element(page.getByRole("button", { name: "Remove", exact: true }).first()).toBeDisabled();
     await expect.element(page.getByRole("button", { name: "← Move earlier" })).toBeDisabled();
     await page.getByRole("button", { name: "Add a slide (2 of 10)" }).click();
-    expect(heading(container)).toBe("2. Slide 3 of 3");
+    expect(heading()).toBe("2. Slide 3 of 3");
     await expect.element(page.getByRole("button", { name: "Move later →" })).toBeDisabled();
     await page.getByLabelText("Caption for slide 3").fill("Third");
     await page.getByRole("radio", { name: "Black" }).click();
     await expect.element(page.getByRole("radio", { name: "Black" })).toHaveAttribute("aria-checked", "true");
     await page.getByRole("button", { name: "← Move earlier" }).click();
-    expect(heading(container)).toBe("2. Slide 2 of 3");
+    expect(heading()).toBe("2. Slide 2 of 3");
     expect(caption().value).toBe("Third");
     await page.getByRole("button", { name: "Move later →" }).click();
-    expect(heading(container)).toBe("2. Slide 3 of 3");
+    expect(heading()).toBe("2. Slide 3 of 3");
     await page.getByRole("button", { name: "Remove", exact: true }).first().click();
-    expect(heading(container)).toBe("2. Slide 2 of 2");
+    expect(heading()).toBe("2. Slide 2 of 2");
     expect(caption().value).toBe("");
     slideThumbs(container)[0].click();
     await expect.poll(() => caption().value).toBe(EXAMPLE_SLIDE.caption);
@@ -187,12 +189,12 @@ describe("GalleryStudio", () => {
     // Remove the example photo, then pick one from the library.
     await page.getByRole("button", { name: "Remove", exact: true }).last().click();
     await expect.element(page.getByRole("button", { name: EXAMPLE.label })).toHaveAttribute("aria-pressed", "false");
-    expect(container.querySelector("canvas[role=img]")!.className).toBe("");
+    expect(getComputedStyle(container.querySelector("canvas[role=img]")!).cursor).toBe("auto");
     await page.getByRole("button", { name: LIBRARY_PHOTOS[0].label }).click();
     await expect
       .element(page.getByRole("button", { name: LIBRARY_PHOTOS[0].label }))
       .toHaveAttribute("aria-pressed", "true");
-    container.querySelector("details.collateral-crop")!.setAttribute("open", "");
+    page.getByText("Fine-tune the crop").element().closest("details")!.setAttribute("open", "");
     setRange("Zoom", "2");
     await expect.poll(() => (page.getByLabelText("Zoom").element() as HTMLInputElement).value).toBe("2");
     // Scrolling on the preview zooms too.
@@ -221,7 +223,7 @@ describe("GalleryStudio", () => {
       .toBeVisible();
     await expect.poll(() => slideThumbs(container).length).toBe(MAX_SLIDES);
     upload(container, [good]);
-    await expect.poll(() => container.querySelector(".collateral-message")).toBeNull();
+    await expect.poll(() => page.getByRole("status").query()).toBeNull();
   });
 
   it("saves and opens project files", async () => {
@@ -255,8 +257,8 @@ describe("GalleryStudio", () => {
     // A single slide is topped up to the minimum.
     await expect.poll(() => slideThumbs(container).length).toBe(2);
     await expect.element(page.getByText(/u\.png · stays in your browser/)).toBeVisible();
-    expect(platform(container, "X").checked).toBe(true);
-    expect(platform(container, "LinkedIn").checked).toBe(false);
+    expect(platform("X").checked).toBe(true);
+    expect(platform("LinkedIn").checked).toBe(false);
     loads.failing = [LIBRARY_PHOTOS[1].src];
     await openFile(container, new File([serializeGalleryProject(gallery())], "two.json"));
     await expect.element(page.getByText("Opened two.json, but some photos could not be loaded.")).toBeVisible();
@@ -275,7 +277,7 @@ describe("GalleryStudio", () => {
     expect(caption().value).toBe("");
     await page.getByRole("button", { name: "Undo" }).click();
     await expect.poll(() => slideThumbs(container).length).toBe(3);
-    expect(heading(container)).toBe("2. Slide 3 of 3");
+    expect(heading()).toBe("2. Slide 3 of 3");
   });
 
   it("restores the last session, keeps saving, and copes with blocked or corrupt storage", async () => {
@@ -313,9 +315,9 @@ describe("GalleryStudio", () => {
 
   it("says when the logo will not load, and waits for it", async () => {
     loads.failing = [LOGO];
-    const { container } = await render(<GalleryStudio />);
+    await render(<GalleryStudio />);
     await expect.element(page.getByText("Could not load the logo.")).toBeVisible();
-    expect(container.querySelector(".collateral-loading")?.textContent).toBe("Loading…");
+    await expect.element(page.getByText("Loading…")).toBeInTheDocument();
     await expect.element(page.getByRole("button", { name: "Download slides" })).toBeDisabled();
   });
 

@@ -46,7 +46,21 @@ import CropControls from "./CropControls";
 import ProjectMenu from "./ProjectMenu";
 import StylePicker from "./StylePicker";
 import { usePhotoGestures } from "./usePhotoGestures";
-import { Button } from "@/components/ui/Button";
+import { CheckboxChoice, ChoiceGrid, PhotoLibrary } from "./kit/Choices";
+import { FileInput, FormButton, TextArea } from "./kit/Fields";
+import { Hint, LinkButton, Message } from "./kit/Notes";
+import {
+  ControlsColumn,
+  ControlsSection,
+  DownloadButton,
+  PreviewActions,
+  PreviewCanvas,
+  PreviewColumn,
+  PreviewMeta,
+  PreviewPin,
+  Studio,
+} from "./kit/Studio";
+import styles from "./GalleryStudio.module.css";
 
 const CAPTION_TEMPLATE = getTemplate("caption");
 const STORAGE_KEY = "pauseai-collateral-gallery-v1";
@@ -103,9 +117,15 @@ function SlideThumb(props: {
     });
   });
   return (
-    <button type="button" aria-label={`Show slide ${index + 1}`} aria-current={active} onClick={onSelect}>
-      <canvas ref={ref} aria-hidden="true" />
-      <span>{index + 1}</span>
+    <button
+      type="button"
+      className={styles.thumb}
+      aria-label={`Show slide ${index + 1}`}
+      aria-current={active}
+      onClick={onSelect}
+    >
+      <canvas ref={ref} className={styles.thumbCanvas} aria-hidden="true" />
+      <span className={styles.number}>{index + 1}</span>
     </button>
   );
 }
@@ -478,22 +498,18 @@ export default function GalleryStudio() {
   const ready = !busy && Boolean(logo) && fontsReady;
 
   return (
-    <div className="collateral-studio">
-      <div className="collateral-preview">
-        <div className="collateral-preview-pin">
-          <div className="collateral-preview-frame">
-            <canvas
-              ref={canvasRef}
-              role="img"
-              aria-label={`Preview of slide ${activeIndex + 1} of ${slides.length}`}
-              hidden={!logo || !fontsReady}
-              className={photo ? "is-draggable" : undefined}
-              {...photoGestures}
-            />
-            {(!logo || !fontsReady) && <p className="collateral-loading">Loading…</p>}
-          </div>
+    <Studio>
+      <PreviewColumn>
+        <PreviewPin>
+          <PreviewCanvas
+            canvasRef={canvasRef}
+            label={`Preview of slide ${activeIndex + 1} of ${slides.length}`}
+            ready={Boolean(logo) && fontsReady}
+            draggable={Boolean(photo)}
+            gestures={photoGestures}
+          />
           {logo && fontsReady && (
-            <div className="collateral-filmstrip" role="group" aria-label="All slides">
+            <div className={styles.filmstrip} role="group" aria-label="All slides">
               {slides.map((s, i) => (
                 <SlideThumb
                   key={s.id}
@@ -507,20 +523,21 @@ export default function GalleryStudio() {
               ))}
             </div>
           )}
-        </div>
-        <p className="collateral-preview-meta">
+        </PreviewPin>
+        <PreviewMeta>
           Slide {activeIndex + 1} of {slides.length} ·{" "}
           {previewCrop
             ? `Crop for ${previewCrop.label} · ${formatDimensionLabel(effectiveFormat)}`
             : formatDimensionLabel(effectiveFormat)}
           {photo && " · Drag the photo to move it. Scroll or pinch to zoom."}
-        </p>
+        </PreviewMeta>
         {previewCrops.length > 1 && (
-          <div className="collateral-crop-picker" role="group" aria-label="Preview crop">
+          <div className={styles.cropPicker} role="group" aria-label="Preview crop">
             {previewCrops.map((c) => (
               <button
                 key={c.formatId}
                 type="button"
+                className={styles.crop}
                 aria-pressed={c.formatId === previewCrop!.formatId}
                 onClick={() => setPreviewFormatId(c.formatId)}
               >
@@ -529,18 +546,10 @@ export default function GalleryStudio() {
             ))}
           </div>
         )}
-        <div className="collateral-preview-actions">
-          <Button
-            type="button"
-            variant="primary"
-            size="large"
-            fit
-            className="collateral-download"
-            onClick={onDownloadForPlatforms}
-            disabled={!ready || platforms.size === 0}
-          >
+        <PreviewActions>
+          <DownloadButton onClick={onDownloadForPlatforms} disabled={!ready || platforms.size === 0}>
             {busy ? "Preparing…" : "Download slides"}
-          </Button>
+          </DownloadButton>
           <ProjectMenu
             noun="project"
             onSave={onSaveProject}
@@ -548,54 +557,42 @@ export default function GalleryStudio() {
             onReset={onReset}
             saveDisabled={!restored}
           />
-          {message && (
-            <p className="collateral-message" role="status">
-              {message}
-              {message === RESET_MESSAGE && undoReset && (
-                <button type="button" className="collateral-link" onClick={undoReset}>
-                  Undo
-                </button>
-              )}
-            </p>
-          )}
-        </div>
-      </div>
+          {message && <Message onUndo={message === RESET_MESSAGE ? undoReset : null}>{message}</Message>}
+        </PreviewActions>
+      </PreviewColumn>
 
-      <div className="collateral-controls">
-        <section>
-          <h2>1. Platforms</h2>
-          <p className="collateral-hint">One download gives each platform its own crop.</p>
-          <div className="collateral-choice-grid" role="group" aria-label="Platforms">
-            {CAROUSEL_PLATFORMS.map((v) => {
-              const checked = platforms.has(v.platform);
-              const trimmed = slides.length > v.maxSlides;
-              return (
-                <label
-                  key={v.platform}
-                  className={`collateral-choice collateral-choice-checkbox${checked ? " is-checked" : ""}`}
-                >
-                  <span className="collateral-choice-head">
-                    <input type="checkbox" checked={checked} onChange={() => togglePlatform(v.platform)} />
-                    <strong>{v.label}</strong>
-                  </span>
-                  <span>
+      <ControlsColumn>
+        <ControlsSection heading="1. Platforms">
+          <Hint>One download gives each platform its own crop.</Hint>
+          <ChoiceGrid role="group" label="Platforms">
+            {CAROUSEL_PLATFORMS.map((v) => (
+              <CheckboxChoice
+                key={v.platform}
+                checked={platforms.has(v.platform)}
+                onChange={() => togglePlatform(v.platform)}
+                title={v.label}
+                note={
+                  <>
                     {v.note}
-                    {trimmed && ` — only the first ${v.maxSlides} will be included`}
-                  </span>
-                </label>
-              );
-            })}
-          </div>
-          {platforms.size === 0 && <p className="collateral-hint">Pick at least one platform.</p>}
-        </section>
+                    {slides.length > v.maxSlides && ` — only the first ${v.maxSlides} will be included`}
+                  </>
+                }
+              />
+            ))}
+          </ChoiceGrid>
+          {platforms.size === 0 && <Hint>Pick at least one platform.</Hint>}
+        </ControlsSection>
 
-        <section>
-          <h2>
-            2. Slide {activeIndex + 1} of {slides.length}
-          </h2>
-          <p className="collateral-hint">Pick a slide from the strip under the preview.</p>
-          <div className="collateral-actions collateral-slide-actions">
-            <Button
+        <ControlsSection
+          heading={
+            <>
+              2. Slide {activeIndex + 1} of {slides.length}
+            </>
+          }
+        >
+          <Hint>Pick a slide from the strip under the preview.</Hint>
+          <div className={styles.slideActions}>
+            <FormButton
               type="button"
               variant="ghost"
               size="small"
@@ -603,8 +600,8 @@ export default function GalleryStudio() {
               onClick={() => moveSlide(activeIndex, -1)}
             >
               ← Move earlier
-            </Button>
-            <Button
+            </FormButton>
+            <FormButton
               type="button"
               variant="ghost"
               size="small"
@@ -612,8 +609,8 @@ export default function GalleryStudio() {
               onClick={() => moveSlide(activeIndex, 1)}
             >
               Move later →
-            </Button>
-            <Button
+            </FormButton>
+            <FormButton
               type="button"
               variant="ghost"
               size="small"
@@ -621,8 +618,8 @@ export default function GalleryStudio() {
               onClick={() => removeSlide(activeIndex)}
             >
               Remove
-            </Button>
-            <Button
+            </FormButton>
+            <FormButton
               type="button"
               variant="ghost"
               size="small"
@@ -630,19 +627,17 @@ export default function GalleryStudio() {
               onClick={addSlide}
             >
               {`Add a slide (${slides.length} of ${MAX_SLIDES})`}
-            </Button>
+            </FormButton>
           </div>
-        </section>
+        </ControlsSection>
 
-        <section>
-          <h2>3. Style</h2>
-          <p className="collateral-hint">Each slide can have its own colour.</p>
+        <ControlsSection heading="3. Style">
+          <Hint>Each slide can have its own colour.</Hint>
           <StylePicker themeId={activeTheme.id} onTheme={(themeId) => updateSlide(activeSlide.id, { themeId })} />
-        </section>
+        </ControlsSection>
 
-        <section>
-          <h2>4. Caption</h2>
-          <textarea
+        <ControlsSection heading="4. Caption">
+          <TextArea
             id="gallery-caption"
             aria-label={`Caption for slide ${activeIndex + 1}`}
             rows={3}
@@ -651,27 +646,12 @@ export default function GalleryStudio() {
             onChange={(e) => updateSlide(activeSlide.id, { caption: e.target.value })}
           />
           <CharCount value={activeSlide.caption} max={CAPTION_MAX} />
-        </section>
+        </ControlsSection>
 
-        <section>
-          <h2>5. Photo</h2>
-          <div className="collateral-photo-grid">
-            {LIBRARY_PHOTOS.map((item) => (
-              <button
-                key={item.id}
-                type="button"
-                className="collateral-photo-thumb"
-                aria-label={item.label}
-                aria-pressed={photo?.source.kind === "library" && photo.source.id === item.id}
-                title={item.label}
-                onClick={() => onLibraryPhoto(item)}
-                style={{ backgroundImage: `url(${item.thumb})` }}
-              />
-            ))}
-          </div>
-          <p className="collateral-hint">Or upload your own. Pick several to fill a slide each:</p>
-          <input
-            type="file"
+        <ControlsSection heading="5. Photo">
+          <PhotoLibrary current={photo?.source} onPick={onLibraryPhoto} />
+          <Hint>Or upload your own. Pick several to fill a slide each:</Hint>
+          <FileInput
             accept="image/*"
             multiple
             aria-label="Upload photos"
@@ -683,17 +663,11 @@ export default function GalleryStudio() {
             }}
           />
           {photo && (
-            <div className="collateral-photo-controls">
-              <p className="collateral-hint">
+            <div>
+              <Hint>
                 {photo.name} · stays in your browser
-                <button
-                  type="button"
-                  className="collateral-link"
-                  onClick={() => updateSlide(activeSlide.id, { photo: null })}
-                >
-                  Remove
-                </button>
-              </p>
+                <LinkButton onClick={() => updateSlide(activeSlide.id, { photo: null })}>Remove</LinkButton>
+              </Hint>
               <CropControls
                 view={photoSettings}
                 onChange={(patch) =>
@@ -702,8 +676,8 @@ export default function GalleryStudio() {
               />
             </div>
           )}
-        </section>
-      </div>
-    </div>
+        </ControlsSection>
+      </ControlsColumn>
+    </Studio>
   );
 }

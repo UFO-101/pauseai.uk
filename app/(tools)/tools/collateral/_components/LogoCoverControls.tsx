@@ -1,5 +1,8 @@
 import { LOGO_COVER_TITLE_CHARS } from "@/lib/collateral/templates";
 import type { DesignState } from "./designState";
+import { FieldLabel, Segmented, Toggle } from "./kit/Fields";
+import { Hint } from "./kit/Notes";
+import styles from "./LogoCoverControls.module.css";
 
 /**
  * Options for a logo cover (see DigitalFormat.logoCover): whether to show the title, and, with a photo, whether to
@@ -13,41 +16,25 @@ export default function LogoCoverControls({
   update: (fn: (d: DesignState) => DesignState) => void;
 }) {
   return (
-    <div className="collateral-logo-cover">
-      <label className="collateral-toggle">
-        <input
-          type="checkbox"
-          checked={design.coverTitle}
-          onChange={(e) => update((d) => ({ ...d, coverTitle: e.target.checked }))}
-        />
+    <div className={styles.logoCover}>
+      <Toggle checked={design.coverTitle} onChange={(coverTitle) => update((d) => ({ ...d, coverTitle }))}>
         Show the event title on the Luma cover
-      </label>
+      </Toggle>
       {design.coverTitle && (
-        <p className="collateral-hint">
-          Keep it to {LOGO_COVER_TITLE_CHARS} characters or fewer, so it reads at Luma&apos;s size.
-        </p>
+        <Hint>Keep it to {LOGO_COVER_TITLE_CHARS} characters or fewer, so it reads at Luma&apos;s size.</Hint>
       )}
       {design.photo && (
         <>
-          <span className="collateral-label">Photo on the Luma cover</span>
-          <div className="collateral-segmented" role="radiogroup" aria-label="Photo on the Luma cover">
-            <button
-              type="button"
-              role="radio"
-              aria-checked={!design.photoClear}
-              onClick={() => update((d) => ({ ...d, photoClear: false }))}
-            >
-              Tinted
-            </button>
-            <button
-              type="button"
-              role="radio"
-              aria-checked={design.photoClear}
-              onClick={() => update((d) => ({ ...d, photoClear: true }))}
-            >
-              Clear
-            </button>
-          </div>
+          <FieldLabel>Photo on the Luma cover</FieldLabel>
+          <Segmented
+            label="Photo on the Luma cover"
+            options={[
+              { value: false, label: "Tinted" },
+              { value: true, label: "Clear" },
+            ]}
+            value={design.photoClear}
+            onChange={(photoClear) => update((d) => ({ ...d, photoClear }))}
+          />
         </>
       )}
     </div>

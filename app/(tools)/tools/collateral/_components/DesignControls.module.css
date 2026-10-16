@@ -1,0 +1,57 @@
+/* The design's form: the event import under the layouts, a field, the QR
+   code rows and their size. */
+
+.qrRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.qrFields {
+  display: grid;
+  flex: 1;
+  gap: 6px;
+}
+
+.qrRemove {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.qrRemove:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.qrRemove:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Hangs off the Event card above it, since picking an event fills in that layout. */
+.eventImport {
+  margin: -2px 0 0 14px;
+  padding: 12px 0 2px 14px;
+  border-left: 2px solid var(--border-strong);
+}
+
+.eventImport.active {
+  border-left-color: var(--accent);
+}
+
+.field {
+  margin-bottom: 14px;
+}
+
+.qrSize {
+  margin-top: 14px;
+}

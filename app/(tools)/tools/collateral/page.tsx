@@ -3,7 +3,7 @@ import Link from "next/link";
 import { toCalendarEvents } from "@/lib/collateral/eventText";
 import { getEvents } from "@/lib/server/luma-calendar";
 import CollateralApp from "./_components/CollateralApp";
-import "./collateral.css";
+import ToolPage from "./_components/kit/ToolPage";
 
 // Volunteer tool: unlisted, kept out of search results and the sitemap (see HIDDEN_ROUTES in app/sitemap.ts).
 export const metadata: Metadata = {
@@ -16,20 +16,16 @@ export default async function CollateralPage() {
   // Upcoming events from our Luma calendar, for "fill in from one of our events". Cached for an hour by getEvents.
   const events = toCalendarEvents(await getEvents("future"));
   return (
-    <>
-      <main className="collateral-page">
-        <div className="container">
-          <Link href="/tools" className="collateral-back">
-            ← All tools
-          </Link>
-          <h1 className="collateral-title">Collateral maker</h1>
-          <p className="collateral-lede">
-            Make on-brand posts, flyers and event covers. Nothing leaves your browser. Just need a QR code? Use the{" "}
-            <Link href="/tools/qr">QR code generator</Link>.
-          </p>
-          <CollateralApp events={events} />
-        </div>
-      </main>
-    </>
+    <ToolPage
+      title="Collateral maker"
+      lede={
+        <>
+          Make on-brand posts, flyers and event covers. Nothing leaves your browser. Just need a QR code? Use the{" "}
+          <Link href="/tools/qr">QR code generator</Link>.
+        </>
+      }
+    >
+      <CollateralApp events={events} />
+    </ToolPage>
   );
 }

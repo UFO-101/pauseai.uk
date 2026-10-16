@@ -5,6 +5,7 @@ import type { CalendarEvent } from "@/lib/collateral/eventText";
 import CollateralStudio from "./CollateralStudio";
 import GalleryStudio from "./GalleryStudio";
 import PackStudio from "./PackStudio";
+import styles from "./CollateralApp.module.css";
 
 type Mode = "single" | "pack" | "gallery";
 
@@ -19,7 +20,7 @@ export default function CollateralApp({ events }: { events: CalendarEvent[] }) {
 
   return (
     <div>
-      <div className="collateral-mode-switch" role="radiogroup" aria-label="Post type">
+      <div className={styles.modeSwitch} role="radiogroup" aria-label="Post type">
         {MODES.map((m) => (
           <button
             key={m.id}
@@ -27,13 +28,14 @@ export default function CollateralApp({ events }: { events: CalendarEvent[] }) {
             role="radio"
             aria-checked={mode === m.id}
             title={m.hint}
+            className={styles.mode}
             onClick={() => setMode(m.id)}
           >
             {m.label}
           </button>
         ))}
       </div>
-      <p className="collateral-mode-hint">{MODES.find((m) => m.id === mode)!.hint}</p>
+      <p className={styles.modeHint}>{MODES.find((m) => m.id === mode)!.hint}</p>
       {mode === "single" && <CollateralStudio events={events} />}
       {mode === "pack" && <PackStudio events={events} />}
       {mode === "gallery" && <GalleryStudio />}
