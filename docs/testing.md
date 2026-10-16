@@ -201,7 +201,9 @@ order, alongside the others:
 ### What the storyboard covers
 
 Every page is loaded: `public-pages.spec.ts` opens each route in
-`tests/routes.ts` (one example per dynamic route), and `staff.spec.ts`
+`tests/routes.ts` (one example per dynamic route), except a campaign's
+write and preview pages, which show nothing without a postcode and a letter
+and are pictured by the `email-your-mp` flows instead; and `staff.spec.ts`
 checks every staff page turns a visitor without a session away, then opens
 them logged in. The flows below drive the rest. `tests/storyboard/coverage.test.ts`
 fails if a spec file or a route handler (`route.ts`) is missing from this

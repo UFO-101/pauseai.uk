@@ -17,7 +17,12 @@ import { hydrated } from "./settle";
 // So the conditions for one exist and the usual alarm is muted. This fails on
 // console errors and on React's hydration messages, which arrive as warnings.
 
-const PUBLIC_ROUTES = ROUTES.filter((route) => !isStaffRoute(route));
+// A campaign's write and preview pages show nothing without a postcode and a
+// letter: the email-your-mp flow "the write, preview and sent pages, opened
+// without a lookup or a letter" pictures that once, and the ZZ99ZZ flow
+// pictures them filled in.
+const EMPTY_STEP = /^\/campaigns-v2\/[^/]+\/(write|preview)$/;
+const PUBLIC_ROUTES = ROUTES.filter((route) => !isStaffRoute(route) && !EMPTY_STEP.test(route));
 
 // Matched against the message text. Kept deliberately short — every entry here
 // is a thing we have decided not to look at, so it should have a reason.
