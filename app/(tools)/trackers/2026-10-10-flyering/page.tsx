@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import FlyeringTracker, { type FlyeringRace } from "../_components/FlyeringTracker";
 import { now } from "@/lib/now";
 import { getRaceCounts } from "@/lib/server/luma-guests";
-import "../trackers.css";
 
 // Each team's QR code links to the event with ?utm_source=<team number>; Luma records it on every registration.
 // The teams recruit for the 21 November march, so that is the event we count.

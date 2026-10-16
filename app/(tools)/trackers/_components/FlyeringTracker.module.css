@@ -1,20 +1,19 @@
-.tracker-page {
+/* A flyering race: a bar per team or stall, the race count and the count since. */
+
+.page {
   padding: 40px 0 72px;
 }
-
-.tracker-title {
+.title {
   margin: 0 0 8px;
   font-size: clamp(2rem, 4vw, 2.75rem);
   line-height: 1.1;
 }
-
-.tracker-lede {
+.lede {
   margin: 0 0 24px;
   max-width: 60ch;
   color: var(--text-secondary);
 }
-
-.tracker-banner {
+.banner {
   max-width: 640px;
   margin: 0 0 24px;
   padding: 20px 24px;
@@ -24,17 +23,14 @@
   font-size: 1.5rem;
   font-weight: 700;
 }
-
-.tracker-total {
+.total {
   margin: 0 0 16px;
   font-size: 1.25rem;
 }
-
-.tracker-total strong {
+.total strong {
   font-size: 2.5rem;
 }
-
-.tracker-list {
+.list {
   display: grid;
   gap: 12px;
   max-width: 640px;
@@ -42,8 +38,7 @@
   padding: 0;
   list-style: none;
 }
-
-.tracker-row {
+.row {
   position: relative;
   display: flex;
   justify-content: space-between;
@@ -54,23 +49,18 @@
   background: var(--surface);
   overflow: hidden;
 }
-
-.tracker-bar {
+.bar {
   position: absolute;
   inset: 0 auto 0 0;
   z-index: 0;
-}
-
-/* The race count, with the afterwards count stacked on the end (a longer bar drawn behind it). */
-.tracker-bar-during {
+} /* The race count, with the afterwards count stacked on the end (a longer bar drawn behind it). */
+.barDuring {
   background: var(--accent-light);
 }
-
-.tracker-bar-after {
+.barAfter {
   background: color-mix(in srgb, var(--accent-light) 40%, transparent);
 }
-
-.tracker-legend {
+.legend {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -78,44 +68,36 @@
   margin: 0 0 12px;
   color: var(--text-secondary);
 }
-
-.tracker-swatch {
+.swatch {
   display: inline-block;
   width: 16px;
   height: 16px;
   border: 1px solid var(--border-strong);
   border-radius: 4px;
 }
-
-.tracker-legend .tracker-swatch:nth-of-type(2) {
+.legend .swatch:nth-of-type(2) {
   margin-left: 12px;
-}
-
-/* Above the bar, so the bar tints the row without dimming the text. */
-.tracker-name,
-.tracker-count {
+} /* Above the bar, so the bar tints the row without dimming the text. */
+.name,
+.count {
   position: relative;
   z-index: 1;
   font-weight: 600;
 }
-
-.tracker-split {
+.split {
   margin-right: 10px;
   font-size: 0.875rem;
   font-weight: 400;
   color: var(--text-secondary);
 }
-
-.tracker-count {
+.count {
   font-size: 1.25rem;
   font-variant-numeric: tabular-nums;
 }
-
-.tracker-note {
+.note {
   max-width: 60ch;
   color: var(--text-secondary);
 }
-
-.tracker-error {
+.error {
   color: var(--text-secondary);
 }

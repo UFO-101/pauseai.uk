@@ -1,4 +1,5 @@
 import { lastPlace, leaders, ranks, type SourceCounts } from "@/lib/trackers";
+import styles from "./FlyeringTracker.module.css";
 
 /** One flyering race: the event it recruits for, when it ran, and who took part. */
 export type FlyeringRace = {
@@ -55,13 +56,13 @@ function StallList({
   const longest = Math.max(...stalls.map((stall) => during[stall.tag] + later(stall.tag)));
   const percent = (n: number) => `${longest ? (n / longest) * 100 : 0}%`;
   return (
-    <ol className="tracker-list">
+    <ol className={styles.list}>
       {order.map((stall) => {
         const rank = rankOf[stall.tag];
         const medal = rank ? MEDALS[rank - 1] : undefined;
         return (
-          <li key={stall.tag} className="tracker-row">
-            <span className="tracker-name">
+          <li key={stall.tag} className={styles.row}>
+            <span className={styles.name}>
               {stall.name}
               {medal && (
                 <span role="img" aria-label={medal.label}>
@@ -77,18 +78,18 @@ function StallList({
               )}
             </span>
             <span
-              className="tracker-bar tracker-bar-after"
+              className={`${styles.bar} ${styles.barAfter}`}
               aria-hidden="true"
               style={{ width: percent(during[stall.tag] + later(stall.tag)) }}
             />
             <span
-              className="tracker-bar tracker-bar-during"
+              className={`${styles.bar} ${styles.barDuring}`}
               aria-hidden="true"
               style={{ width: percent(during[stall.tag]) }}
             />
-            <span className="tracker-count">
+            <span className={styles.count}>
               {after && (
-                <span className="tracker-split">
+                <span className={styles.split}>
                   {during[stall.tag]} + {later(stall.tag)}
                 </span>
               )}
@@ -131,10 +132,10 @@ export default function FlyeringTracker({
   const spoons = result && now >= resultAt ? lastPlace(result.counts) : [];
 
   return (
-    <main className="tracker-page">
+    <main className={styles.page}>
       <div className="container">
-        <h1 className="tracker-title">Flyering signups, {race.date}</h1>
-        <p className="tracker-lede">
+        <h1 className={styles.title}>Flyering signups, {race.date}</h1>
+        <p className={styles.lede}>
           Registrations to <a href={race.eventUrl}>the event</a> that came through each {race.unit}&rsquo;s QR code,
           during the flyering and afterwards. Updates about once a minute.
         </p>
@@ -142,24 +143,24 @@ export default function FlyeringTracker({
         {result ? (
           <>
             {notStarted && (
-              <p className="tracker-banner">
+              <p className={styles.banner}>
                 Get ready to flyer! The race starts at {openTime} on {race.day} (BST).
               </p>
             )}
             {winners.length > 0 && (
-              <p className="tracker-banner">
+              <p className={styles.banner}>
                 🏆 {winners.length > 1 ? "It's a tie between" : "Winner:"}{" "}
                 {winners.map((stall) => stall.name).join(" and ")} with {result.counts[winners[0].tag]}!
               </p>
             )}
             {closed && winners.length === 0 && (
-              <p className="tracker-note">
+              <p className={styles.note}>
                 {now < resultAt
                   ? `${race.closedMessage} Counting the last registrations…`
                   : `${race.closedMessage} No one signed up through a ${race.unit} QR code.`}
               </p>
             )}
-            <p className="tracker-total">
+            <p className={styles.total}>
               <strong>{stallTotal}</strong> during the flyering
               {closed && afterResult && (
                 <>
@@ -169,10 +170,12 @@ export default function FlyeringTracker({
               )}
             </p>
             {closed && afterResult && (
-              <p className="tracker-legend">
-                <span className="tracker-swatch tracker-bar-during" aria-hidden="true" /> During flyering ({openTime}
+              <p className={styles.legend}>
+                <span className={`${styles.swatch} ${styles.barDuring}`} aria-hidden="true" /> During flyering (
+                {openTime}
                 &ndash;{closeTime})
-                <span className="tracker-swatch tracker-bar-after" aria-hidden="true" /> Afterwards (since {closeTime})
+                <span className={`${styles.swatch} ${styles.barAfter}`} aria-hidden="true" /> Afterwards (since{" "}
+                {closeTime})
               </p>
             )}
             <StallList
@@ -181,7 +184,7 @@ export default function FlyeringTracker({
               after={closed && afterResult ? afterResult.counts : null}
               spoons={spoons}
             />
-            <p className="tracker-note">
+            <p className={styles.note}>
               During the flyering: of {result.total} registrations between {openTime} and {closeTime}, {result.other}{" "}
               came from elsewhere, or from links without {race.untagged}.
               {closed && afterResult && (
@@ -194,7 +197,7 @@ export default function FlyeringTracker({
             </p>
           </>
         ) : (
-          <p className="tracker-error" role="alert">
+          <p className={styles.error} role="alert">
             Couldn&rsquo;t load registrations from Luma. Try again in a minute. If it keeps failing, check the Luma
             access settings: the API key may have been disabled or removed.
           </p>
