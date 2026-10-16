@@ -55,12 +55,15 @@ export default defineConfig({
   webServer: {
     // A fresh database of its own, with the test MPs, for requests that carry
     // no flow's cookie (tests/storyboard/fixtures.ts). Never the real one.
-    command: `export NETLIFY_DB_URL="$(node scripts/fresh-database.mjs ${SERVER_DATABASE} --test-mp ${TEST_MP_EMAIL})" && npm run build && npm run start -- --port ${LOCAL_PORT}`,
+    // `next build` directly, as scripts/serve-main.mjs builds main: `npm run
+    // build` runs the unit tests and the linters first, which CI's other job
+    // and the pre-commit hook already do.
+    command: `export NETLIFY_DB_URL="$(node scripts/fresh-database.mjs ${SERVER_DATABASE} --test-mp ${TEST_MP_EMAIL})" && npx next build && npx next start --port ${LOCAL_PORT}`,
     env: fixtureEnv({ outboxDir: OUTBOX_DIR }),
     url: LOCAL_URL,
     reuseExistingServer: !process.env.CI,
     // CI always builds from cold (reuseExistingServer is off there), and a
-    // cold `npm run build` on a runner is slower than on a warm laptop.
+    // cold `next build` on a runner is slower than on a warm laptop.
     timeout: 300_000,
   },
 });

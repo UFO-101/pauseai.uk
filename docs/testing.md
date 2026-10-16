@@ -15,8 +15,8 @@ here is `plans/test-coverage.md`.
 Mode** renders a component on its own in real Chromium, so layout, canvas,
 `matchMedia` and the clipboard all behave as they do for users.
 
-**Playwright** runs against a real production build (`npm run build && npm
-run start`), so it is slower. Use it only for what Vitest can't see:
+**Playwright** runs against a real production build (`next build && next
+start`), so it is slower. Use it only for what Vitest can't see:
 
 - `page.tsx` and `layout.tsx`: `tests/storyboard/public-pages.spec.ts` loads
   every route (from `tests/routes.ts`) and checks it returns 200, logs no
