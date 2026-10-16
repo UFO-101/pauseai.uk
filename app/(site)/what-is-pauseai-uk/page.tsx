@@ -1,5 +1,4 @@
 import { pageMetadata } from "@/lib/metadata";
-import "./what-is-pauseai-uk.css";
 import About from "./_components/About";
 import PageHero from "@/components/ui/PageHero";
 
@@ -14,7 +13,7 @@ export const metadata = pageMetadata({
 export default function WhatIsPauseAIUKPage() {
   return (
     <>
-      <main className="what-is-pauseai-uk">
+      <main>
         <PageHero
           title="What is PauseAI UK?"
           lede="We are the civic movement dedicated to averting the risks of superhuman AI."

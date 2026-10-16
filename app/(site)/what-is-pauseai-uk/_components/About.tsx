@@ -1,11 +1,12 @@
 import SmallPrint from "@/components/ui/SmallPrint";
+import styles from "./About.module.css";
 
 // Who we are, what we want and how we work.
 export default function About() {
   return (
-    <article className="intro-article">
-      <div className="container intro-inner">
-        <section className="intro-section">
+    <article className={styles.article}>
+      <div className="container">
+        <section className={styles.section}>
           <p>
             PauseAI is a civic movement, which means that we help citizens organise to take collective actions and make
             their voice heard. Our volunteers engage with their MPs about AI safety, march in protests, join conferences
@@ -26,7 +27,7 @@ export default function About() {
             <b>Human extinction</b> is at the top of our list of concerns around superhuman AI, but there are many
             others including:
           </p>
-          <ul className="intro-list">
+          <ul className={styles.list}>
             <li>job loss and concentration of power</li>
             <li>autonomous weapons</li>
             <li>surveillance and authoritarianism</li>
@@ -57,7 +58,7 @@ export default function About() {
           </p>
 
           <p>The hope is that when you go to a PauseAI event, you go in with the understanding:</p>
-          <ol className="intro-list">
+          <ol className={styles.list}>
             <li>The focus is on superhuman AI.</li>
             <li>
               Anyone concerned about superhuman AI is welcome, including those who are even more concerned about the
