@@ -465,14 +465,9 @@ export default function Timeline() {
             <div className="entry-text">
               <p>
                 We published an{" "}
-                <a
-                  href="https://pauseai.info/dear-sir-demis-2025"
-                  className="inline-link"
-                  target="_blank"
-                  rel="noreferrer"
-                >
+                <Link href="/campaigns/dear-sir-demis-2025" className="inline-link">
                   open letter
-                </a>{" "}
+                </Link>{" "}
                 <strong>signed by over 60 UK politicians</strong>, in response to Google DeepMind failing to uphold its
                 AI safety commitments. Several of the MPs who signed later spoke in the Westminster Hall debate that we
                 helped to organise in December.

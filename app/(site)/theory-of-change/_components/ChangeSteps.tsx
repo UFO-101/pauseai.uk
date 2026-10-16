@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 
 // The steps from public concern to a global pause.
 export default function ChangeSteps() {
@@ -76,9 +77,9 @@ export default function ChangeSteps() {
             for developers for AI-enabled harms. We may sometimes explicitly push for such policies both because they
             increase AI safety directly and they can be instrumental in increasing PauseAI&rsquo;s influence or
             credibility. For example, our{" "}
-            <a href="https://pauseai.info/dear-sir-demis-2025" className="inline-link" target="_blank" rel="noreferrer">
+            <Link href="/campaigns/dear-sir-demis-2025" className="inline-link">
               open letter
-            </a>{" "}
+            </Link>{" "}
             signed by 60 UK lawmakers criticised Google DeepMind for{" "}
             <a
               href="https://pauseai.info/pdfs/PauseAI_Open_Letter_Background_Information.pdf"

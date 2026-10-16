@@ -21,9 +21,7 @@ export default function Footer() {
         <div className="footer-links">
           <Link href="/donate">Donate</Link>
           <Link href="/events">Events</Link>
-          <a href={site.openLetterUrl} target="_blank" rel="noreferrer">
-            Open letter
-          </a>
+          <Link href={site.openLetterPath}>Open letter</Link>
           <a href={site.whatsappUrl} target="_blank" rel="noreferrer">
             WhatsApp community
           </a>
