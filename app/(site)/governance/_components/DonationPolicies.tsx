@@ -1,10 +1,12 @@
+import styles from "./DonationPolicies.module.css";
+
 // How PauseAI UK vets donors and why it accepts anonymous donations.
 // Linked as /governance/#donation-policies from the donate page.
 export default function DonationPolicies() {
   return (
-    <article className="gov-article">
-      <div className="container gov-inner">
-        <section className="gov-section" id="donation-policies">
+    <article className={styles.article}>
+      <div className={`container ${styles.inner}`}>
+        <section className={styles.section} id="donation-policies">
           <h2>Donation policies</h2>
 
           <p>
@@ -14,7 +16,7 @@ export default function DonationPolicies() {
           <p>
             There are several good reasons why a donor to PauseAI UK may not wish to publicly declare their donation:
           </p>
-          <ul className="gov-list">
+          <ul className={styles.list}>
             <li>They work for an AI company and they are concerned about retaliation from their employer.</li>
             <li>
               They also support some political candidates and they don&rsquo;t want those candidates to be{" "}
@@ -46,35 +48,35 @@ export default function DonationPolicies() {
 
           <p>The first policy is to ensure that we know the identity of any major donors.</p>
 
-          <section className="gov-policy">
+          <section className={styles.policy}>
             <h3>1. Know Your Donor</h3>
             <p>
               KYD information is held confidentially, shared only with the board for approval decisions, and never
               published without permission.
             </p>
 
-            <div className="gov-tier">
+            <div className={styles.tier}>
               <h4>Donations above &pound;1,000</h4>
-              <ul className="gov-list">
+              <ul className={styles.list}>
                 <li>Name</li>
                 <li>Email</li>
                 <li>Country of residence</li>
               </ul>
-              <p className="gov-tier-note">
+              <p className={styles.tierNote}>
                 We will run a quick screen to see if the person is sanctioned, a politically-exposed person (PEP) or
                 publicly notorious for any reason.
               </p>
             </div>
 
-            <div className="gov-tier">
+            <div className={styles.tier}>
               <h4>Donors giving above &pound;10,000</h4>
               <p>In addition to the basic info above, we (PauseAI UK) will also ask donors:</p>
-              <ul className="gov-list">
+              <ul className={styles.list}>
                 <li>Nationality</li>
                 <li>Name of the account the payment will come from.</li>
                 <li>
                   Where does this money come from?
-                  <span className="gov-note">
+                  <span className={styles.note}>
                     Eg. &ldquo;savings from my career in software engineering&rdquo;, &ldquo;proceeds from selling my
                     company in 2024&rdquo;, &ldquo;family wealth&rdquo;
                   </span>
@@ -83,12 +85,12 @@ export default function DonationPolicies() {
                 <li>Will you remain solvent after making the gift?</li>
                 <li>
                   Do you have major financial interests related to AI?
-                  <span className="gov-note">
+                  <span className={styles.note}>
                     Broad, diversified holdings such as index funds don&rsquo;t need to be declared.
                   </span>
                 </li>
               </ul>
-              <p className="gov-tier-note">
+              <p className={styles.tierNote}>
                 If the person has a very specific financial interest in AI, the board will need to ensure that such
                 donations are unrestricted and any attempt to influence our strategy results in the gift being returned.
               </p>
@@ -106,9 +108,9 @@ export default function DonationPolicies() {
             representative and trustworthy group.
           </p>
 
-          <section className="gov-policy">
+          <section className={styles.policy}>
             <h3>2. Approval by the board</h3>
-            <ul className="gov-list">
+            <ul className={styles.list}>
               <li>
                 The board will approve donors (and major donor advisors) giving (or recommending, in the case of
                 advisors) above &pound;10,000 cumulatively in any 12-month period.
@@ -119,17 +121,17 @@ export default function DonationPolicies() {
             </ul>
           </section>
 
-          <p className="gov-closing">
+          <p className={styles.closing}>
             The policies outlined above are not perfect, but they provide a strong defense against PauseAI UK ever
             becoming a vehicle for any outside interest.
           </p>
 
-          <p className="gov-footnote">
+          <p className={styles.footnote}>
             These policies may evolve over time. We will publish any changes to our policies before they are
             implemented.
           </p>
 
-          <p className="gov-further">
+          <p className={styles.further}>
             For a more detailed discussion of the reasoning behind these policies, see{" "}
             <a
               href="https://www.lesswrong.com/posts/e3Jz8P5KvTPcEiwdL/why-pauseai-uk-accepts-anonymous-donations"

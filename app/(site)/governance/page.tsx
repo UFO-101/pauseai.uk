@@ -1,7 +1,6 @@
 import { pageMetadata } from "@/lib/metadata";
 import BoardSection from "./_components/BoardSection";
 import DonationPolicies from "./_components/DonationPolicies";
-import "./governance.css";
 import PageHero from "@/components/ui/PageHero";
 
 export const metadata = pageMetadata({
@@ -13,7 +12,7 @@ export const metadata = pageMetadata({
 export default function GovernancePage() {
   return (
     <>
-      <main className="governance">
+      <main>
         <PageHero title="Governance" />
 
         <BoardSection />

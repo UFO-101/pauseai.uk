@@ -1,19 +1,20 @@
 import Image from "next/image";
 import { board } from "@/lib/content/board";
+import styles from "./BoardSection.module.css";
 
 // The board members, with links to their websites and X accounts.
 export default function BoardSection() {
   return (
-    <section className="gov-board">
-      <div className="container gov-inner">
+    <section className={styles.board}>
+      <div className={`container ${styles.inner}`}>
         <h2>Our board</h2>
-        <div className="board-grid">
+        <div className={styles.boardGrid}>
           {board.map((member) => (
-            <article key={member.name} className="board-card">
-              <Image className="board-photo" src={member.imageSrc} alt={member.name} width={320} height={320} />
-              <h3 className="board-name">{member.name}</h3>
-              <p className="board-role">{member.role}</p>
-              <div className="board-links">
+            <article key={member.name} className={styles.boardCard}>
+              <Image className={styles.boardPhoto} src={member.imageSrc} alt={member.name} width={320} height={320} />
+              <h3 className={styles.boardName}>{member.name}</h3>
+              <p className={styles.boardRole}>{member.role}</p>
+              <div className={styles.boardLinks}>
                 <a
                   href={member.website}
                   target="_blank"
