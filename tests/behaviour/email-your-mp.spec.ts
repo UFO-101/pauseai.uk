@@ -154,7 +154,7 @@ test("ZZ99ZS has signed, so the PM letter's page moves on to the bill's, to writ
   page,
 }) => {
   await page.goto(`${BASE}/campaigns-v2`);
-  await expect(page.getByText(/ZZ9 9ZZ/)).toBeVisible();
+  await expect(page.locator("summary", { hasText: "ZZ9 9ZZ" })).toBeVisible();
   await page.getByLabel(copy.lookup.nameLabel).fill("Jane Smith");
   await page.getByLabel(copy.lookup.postcodeLabel).fill("ZZ9 9ZS");
   await page.getByRole("button", { name: copy.lookup.button }).click();
