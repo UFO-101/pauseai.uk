@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { closeDb, query, transaction } from "./db";
-import { describeWithDatabase, useTestDatabase } from "@/tests/database";
+import { describeWithDatabase, useTestDatabase, withDatabaseDown } from "@/tests/database";
 
 describeWithDatabase("the database", () => {
   useTestDatabase();
@@ -22,6 +22,45 @@ describeWithDatabase("the database", () => {
       }),
     ).rejects.toThrow("boom");
     expect(await query("SELECT action FROM audit_log")).toEqual([]);
+  });
+
+  it("warns the dev server, once, when the database is behind on migrations", async () => {
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+    try {
+      vi.stubEnv("NODE_ENV", "development");
+      // The test database has no ledger, so it's behind.
+      await closeDb();
+      await query("SELECT 1");
+      await vi.waitFor(() => expect(error).toHaveBeenCalledOnce());
+      expect(error.mock.calls[0][0]).toContain("npm run db:migrate");
+      await query("SELECT 1");
+      expect(error).toHaveBeenCalledOnce();
+
+      // Up to date: nothing to say.
+      await query("CREATE TABLE schema_migrations (name text PRIMARY KEY)");
+      await query("INSERT INTO schema_migrations SELECT unnest($1::text[])", [
+        (await import("./migrations-check")).migrationNames(),
+      ]);
+      await closeDb();
+      await query("SELECT 1");
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      expect(error).toHaveBeenCalledOnce();
+
+      // Unreachable: the check keeps quiet, and the query itself reports it.
+      await withDatabaseDown(() => expect(query("SELECT 1")).rejects.toThrow());
+      expect(error).toHaveBeenCalledOnce();
+
+      // Not the dev server: no check.
+      vi.stubEnv("NODE_ENV", "production");
+      await query("DROP TABLE schema_migrations");
+      await closeDb();
+      await query("SELECT 1");
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      expect(error).toHaveBeenCalledOnce();
+    } finally {
+      vi.unstubAllEnvs();
+      error.mockRestore();
+    }
   });
 
   it("can be closed and reopened", async () => {

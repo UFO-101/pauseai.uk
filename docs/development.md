@@ -130,6 +130,10 @@ each in its own transaction, and records it in the database's
 for local databases: Netlify keeps its own record of what it has applied
 on deploy. Like `db:reset`, it refuses a database on another machine.
 
+The dev server checks the table when it first connects, and says in its
+terminal when the database is behind. Only `next dev` does: production and
+previews run on databases Netlify has migrated.
+
 A database made before `db:migrate` existed has no `schema_migrations`
 table, so the first time, say which migration it's up to:
 
