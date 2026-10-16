@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import styles from "./FootnoteTooltips.module.css";
 
 /**
  * Hovering a footnote marker (<sup>3</sup>) shows that note (the
@@ -10,7 +11,7 @@ import { useEffect } from "react";
 export default function FootnoteTooltips() {
   useEffect(() => {
     const tip = document.createElement("div");
-    tip.className = "fn-tooltip";
+    tip.className = styles.tooltip;
     tip.setAttribute("aria-hidden", "true");
     document.body.appendChild(tip);
     let hideTimer: ReturnType<typeof setTimeout> | undefined;
@@ -34,11 +35,11 @@ export default function FootnoteTooltips() {
     const show = (sup: Element, fn: Element) => {
       clearTimeout(hideTimer);
       tip.innerHTML = fn.innerHTML;
-      tip.classList.add("fn-tooltip--visible");
+      tip.classList.add(styles.visible);
       reposition(sup);
     };
     const hide = () => {
-      hideTimer = setTimeout(() => tip.classList.remove("fn-tooltip--visible"), 150);
+      hideTimer = setTimeout(() => tip.classList.remove(styles.visible), 150);
     };
     const keep = () => clearTimeout(hideTimer);
 
@@ -49,7 +50,7 @@ export default function FootnoteTooltips() {
     });
     const refs = notes.map((n) => n.sup);
     const handlers = notes.map(({ sup, fn }) => {
-      sup.classList.add("fn-ref");
+      sup.classList.add(styles.ref);
       const enter = () => show(sup, fn);
       sup.addEventListener("mouseenter", enter);
       sup.addEventListener("mouseleave", hide);

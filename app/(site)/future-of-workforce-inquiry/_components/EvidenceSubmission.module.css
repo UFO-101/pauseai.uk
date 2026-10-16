@@ -1,0 +1,195 @@
+/* PauseAI UK's evidence to the committee, in the reading column. */
+
+.article {
+  /* The page hero's width, so the two line up. */
+  --container-width: var(--measure-page);
+  padding: 64px 0 96px;
+  background: var(--bg);
+} /* Meta table */
+.metaBlock {
+  margin-bottom: 48px;
+  padding-bottom: 36px;
+  border-bottom: 1px solid var(--border);
+}
+.metaTable {
+  border-collapse: collapse;
+  font-size: 15px;
+  color: var(--text-secondary);
+}
+.metaTable th {
+  text-align: left;
+  font-weight: 600;
+  color: var(--muted);
+  padding: 4px 20px 4px 0;
+  white-space: nowrap;
+}
+.metaTable td {
+  padding: 4px 0;
+  color: var(--text);
+} /* Sections */
+.section {
+  margin-bottom: 52px;
+}
+.section:last-of-type {
+  margin-bottom: 0;
+}
+.section h2 {
+  font-family: var(--font-display), "Lato", system-ui, sans-serif;
+  font-size: clamp(24px, 2.6vw, 32px);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.015em;
+  color: var(--text);
+  margin: 0 0 10px;
+  padding-top: 48px;
+  border-top: 1px solid var(--border);
+}
+.section:first-of-type h2 {
+  padding-top: 0;
+  border-top: none;
+}
+.question {
+  font-size: 15.5px;
+  line-height: 1.6;
+  color: var(--muted);
+  margin: 0 0 24px;
+  padding-left: 1px;
+} /* Numbered paragraphs */
+.ol {
+  counter-reset: ev-counter;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.ol[start="3"] {
+  counter-reset: ev-counter 2;
+}
+.ol[start="13"] {
+  counter-reset: ev-counter 12;
+}
+.ol[start="14"] {
+  counter-reset: ev-counter 13;
+}
+.ol[start="20"] {
+  counter-reset: ev-counter 19;
+}
+.ol[start="24"] {
+  counter-reset: ev-counter 23;
+}
+.ol[start="28"] {
+  counter-reset: ev-counter 27;
+}
+.ol li {
+  counter-increment: ev-counter;
+  position: relative;
+  padding-left: 48px;
+  font-size: 17px;
+  line-height: 1.75;
+  color: var(--text);
+  margin-bottom: 18px;
+}
+.ol li::before {
+  content: counter(ev-counter) ".";
+  position: absolute;
+  left: 0;
+  width: 36px;
+  text-align: right;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--muted);
+  padding-top: 2px;
+} /* Bullet lists */
+.ul {
+  padding-left: 22px;
+  margin: 0;
+}
+.ul li {
+  font-size: 17px;
+  line-height: 1.75;
+  color: var(--text);
+  margin-bottom: 10px;
+  padding-left: 6px;
+}
+.ul li::marker {
+  color: var(--pause-orange);
+} /* Policy blocks (infrastructure section) */
+.policyBlock {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 28px 32px 30px;
+  margin: 28px 0 0;
+}
+.policyBlock h3 {
+  font-family: var(--font-display), "Lato", system-ui, sans-serif;
+  font-size: 19px;
+  font-weight: 700;
+  font-style: italic;
+  letter-spacing: -0.01em;
+  color: var(--pause-orange);
+  margin: 0 0 16px;
+}
+.policyBlock > :last-child {
+  margin-bottom: 0;
+} /* Links inside body text */
+.section a,
+.policyBlock a,
+.fnList a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  transition: color 0.15s ease;
+}
+.section a:hover,
+.policyBlock a:hover,
+.fnList a:hover {
+  color: var(--pause-orange);
+} /* Footnotes */
+.footnotes {
+  margin-top: 64px;
+  padding-top: 40px;
+  border-top: 1px solid var(--border);
+}
+.footnotes h2 {
+  font-family: var(--font-display), "Lato", system-ui, sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--muted);
+  margin: 0 0 20px;
+}
+.fnList {
+  padding-left: 28px;
+  margin: 0;
+}
+.fnList li {
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--text-secondary);
+  margin-bottom: 12px;
+}
+@media (max-width: 860px) {
+  .article {
+    padding: 48px 0 72px;
+  }
+
+  .section h2 {
+    padding-top: 36px;
+  }
+
+  .policyBlock {
+    padding: 22px 22px 24px;
+  }
+}
+
+@media (max-width: 520px) {
+  .ol li {
+    grid-template-columns: 28px 1fr;
+    font-size: 16px;
+  }
+
+  .ul li {
+    font-size: 16px;
+  }
+}

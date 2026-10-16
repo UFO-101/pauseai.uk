@@ -1,0 +1,45 @@
+/* A footnote marker with a note: it shows the note on hover. */
+sup.ref {
+  color: var(--accent);
+  cursor: help;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+  transition: color 0.15s ease;
+}
+
+sup.ref:hover {
+  color: var(--pause-orange);
+}
+
+/* The note, beside the marker. */
+.tooltip {
+  position: absolute;
+  top: 0;
+  left: 0;
+  max-width: 380px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 16px;
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--text-secondary);
+  box-shadow: 0 4px 20px var(--shadow-strong);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+  z-index: 200;
+}
+
+.tooltip.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.tooltip a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}

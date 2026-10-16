@@ -2,7 +2,6 @@ import { pageMetadata } from "@/lib/metadata";
 import EvidenceSubmission from "./_components/EvidenceSubmission";
 import FootnoteTooltips from "./_components/FootnoteTooltips";
 import Foreword from "./_components/Foreword";
-import "./page.css";
 import PageHero from "@/components/ui/PageHero";
 
 export const metadata = pageMetadata({
@@ -15,7 +14,7 @@ export const metadata = pageMetadata({
 export default function AIWorkforceEvidencePage() {
   return (
     <>
-      <main className="evidence-submission">
+      <main>
         <PageHero
           title="AI, Business and the Future of the Workforce"
           lede={<>PauseAI UK&rsquo;s submission to the House of Commons Business and Trade Committee, April 2026</>}
