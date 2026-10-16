@@ -4,7 +4,6 @@ import { findPerson, people, personMetadata, personSlug } from "@/lib/content/pe
 import PersonHeader from "../_components/PersonHeader";
 import PersonStory from "../_components/PersonStory";
 import ShareYourStory from "../_components/ShareYourStory";
-import "../people.css";
 
 export function generateStaticParams() {
   return people.map((person) => ({ slug: personSlug(person) }));
@@ -27,7 +26,7 @@ export default async function StoryDetailPage({ params }: { params: Promise<{ sl
 
   return (
     <>
-      <main className="people-page person-detail-page">
+      <main>
         <PersonHeader person={person} />
 
         <PersonStory person={person} slug={slug} />

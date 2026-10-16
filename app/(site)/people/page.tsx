@@ -1,7 +1,6 @@
 import { pageMetadata } from "@/lib/metadata";
 import ShareYourStory from "./_components/ShareYourStory";
 import StoryGrid from "./_components/StoryGrid";
-import "./people.css";
 import PageHero from "@/components/ui/PageHero";
 
 export const metadata = pageMetadata({
@@ -13,7 +12,7 @@ export const metadata = pageMetadata({
 export default function PeoplePage() {
   return (
     <>
-      <main className="people-page">
+      <main>
         <PageHero
           title="People"
           lede="Each of us found PauseAI for our own reasons. Read stories from our volunteers and members across our local groups."
