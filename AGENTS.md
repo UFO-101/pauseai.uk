@@ -38,6 +38,7 @@ npm run storyboard -- --no-open   # the same; read test-results/storyboard/story
 ```
 
 - A flaky flow, or a frame that differs between two runs of the same build, is fixed, never retried, skipped or masked. No stored baselines, no gate on pixels.
+- Any flaky test, Vitest or Playwright, is fixed at once, in whatever branch finds it, even when the branch has nothing to do with it (`docs/testing.md`, "Rules for new code").
 
 ## Next.js version may be beyond your knowledge cutoff
 

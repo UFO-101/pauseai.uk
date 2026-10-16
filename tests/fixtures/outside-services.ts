@@ -81,12 +81,12 @@ export function fixtureResponse(url: string, init?: RequestInit): Response | und
   // (Vitest) or the outbox (Playwright, tests/fixtures/outbox.ts). The
   // MessageID is made from the email, so the same letter gets the same id
   // every run: it shows on the staff letters page, which the storyboard
-  // compares.
+  // compares. Each letter's reply address is random, so it's left out.
   if (hostname === "api.postmarkapp.com" && pathname === "/email") {
     return json({
       To: "",
       SubmittedAt: new Date().toISOString(),
-      MessageID: fixtureUuid(String(init?.body ?? "")),
+      MessageID: fixtureUuid(String(init?.body ?? "").replace(/reply\+\w+@/g, "reply+@")),
       ErrorCode: 0,
       Message: "OK",
     });

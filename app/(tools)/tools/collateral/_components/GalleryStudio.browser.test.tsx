@@ -7,13 +7,10 @@ import { serializeGalleryProject, type GalleryProject } from "@/lib/collateral/g
 import { LIBRARY_PHOTOS } from "@/lib/collateral/photos";
 import { DEFAULT_THEME_ID, getTheme } from "@/lib/collateral/themes";
 import { canvasFile } from "@/tests/browser/qr-images";
+import { nextCall } from "@/tests/browser/next-call";
 import GalleryStudio from "./GalleryStudio";
 
 const STORAGE_KEY = "pauseai-collateral-gallery-v1";
-// Rendering every slide at every platform's size takes under a second here, but has taken
-// over 15s on a loaded CI runner. A download that outlives its test calls the shared mock
-// during the next one, so this stays well inside the browser project's testTimeout.
-const DOWNLOAD_WAIT = { timeout: 30_000 };
 const PNG =
   "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
 const LOGO = getTheme(DEFAULT_THEME_ID).logoSrc;
@@ -112,9 +109,10 @@ describe("GalleryStudio", () => {
     expect(slideThumbs(container).map((b) => b.getAttribute("aria-label"))).toEqual(["Show slide 1", "Show slide 2"]);
     await expect.element(page.getByRole("button", { name: EXAMPLE.label })).toHaveAttribute("aria-pressed", "true");
     expect(meta(container)).toMatch(/^Slide 1 of 2 · Crop for Instagram \/ Facebook · LinkedIn · .* Drag the photo/);
+    // Rendering every slide at every platform's size is slow on a busy CI runner: wait for the zip itself.
+    const zipped = nextCall(downloads.zip);
     await page.getByRole("button", { name: "Download slides" }).click();
-    await expect.poll(() => downloads.zip.mock.calls.length, DOWNLOAD_WAIT).toBe(1);
-    const [groups, name] = downloads.zip.mock.lastCall!;
+    const [groups, name] = await zipped;
     expect(name).toBe("pauseai-gallery-platforms.zip");
     expect((groups as { folder: string; kind: string }[]).map((g) => `${g.folder}:${g.kind}`)).toEqual([
       "instagram:images",
@@ -138,19 +136,19 @@ describe("GalleryStudio", () => {
     expect(container.querySelector(".collateral-crop-picker")).toBeNull();
     // Only the ticked platforms are downloaded.
     platform(container, "X").click();
+    const zipped = nextCall(downloads.zip);
     await page.getByRole("button", { name: "Download slides" }).click();
-    await expect.poll(() => downloads.zip.mock.calls.length, DOWNLOAD_WAIT).toBe(1);
-    expect((downloads.zip.mock.lastCall![0] as { folder: string }[]).map((g) => g.folder)).toEqual(["x"]);
+    expect(((await zipped)[0] as { folder: string }[]).map((g) => g.folder)).toEqual(["x"]);
   });
 
   it("explains a failed download, and says Preparing… meanwhile", async () => {
     let fail: (e: Error) => void = () => {};
-    downloads.zip.mockReturnValueOnce(new Promise((_, j) => (fail = j)));
+    const zipping = nextCall(downloads.zip, () => new Promise((_, j) => (fail = j)));
     const { container } = await render(<GalleryStudio />);
     await ready(container);
     await page.getByRole("button", { name: "Download slides" }).click();
     await expect.element(page.getByRole("button", { name: "Preparing…" })).toBeDisabled();
-    await expect.poll(() => downloads.zip.mock.calls.length, DOWNLOAD_WAIT).toBe(1);
+    await zipping;
     fail(new Error("no"));
     await expect.element(page.getByText("Could not create the export. Try again, or with fewer slides.")).toBeVisible();
   });

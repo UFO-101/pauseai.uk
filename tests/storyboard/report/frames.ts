@@ -18,6 +18,7 @@ export const SECTION_ORDER = [
   "public-pages",
   "email-your-mp",
   "staff",
+  "collateral",
   "consent",
   "mobile-nav",
   "onboarding-embed",

@@ -1,6 +1,7 @@
 import type { Page } from "@playwright/test";
 import { campaigns } from "@/lib/content/email-your-mp";
 import { staffCopy } from "@/lib/content/staff-interface";
+import { runSql } from "@/scripts/fresh-database.mjs";
 import { ROUTES } from "../routes";
 import {
   askForLoginLink,
@@ -11,6 +12,7 @@ import {
   lookUpTestMp,
   sendLetter,
   syncMps,
+  WEBHOOK_AUTH,
 } from "../steps";
 import { BASE, expect, flowStorageState, frame, test } from "./fixtures";
 
@@ -192,6 +194,92 @@ test("a letter someone sends is listed, and can be filtered by status", async ({
   await expect(page).toHaveURL(`${BASE}/staff/letters?status=sent`);
   await expect(row).toBeVisible();
   await frame(page, "filtered to sent letters");
+});
+
+test("a letter that bounces shows as bounced, with why, on the letters list", async ({ page, request }, testInfo) => {
+  const sender = `jane+${testInfo.testId}@example.com`;
+  await fakeTurnstile(page);
+  await lookUpTestMp(page, BASE);
+  await fillLetter(page, sender);
+  await sendLetter(page);
+
+  await logIn(page);
+  await page.goto(`${BASE}/staff/letters`);
+  const row = page.getByRole("row").filter({ hasText: sender });
+  await expect(row).toContainText(staffCopy.letters.status.sent);
+  // The letter's Postmark MessageID, from its "sent" event, as staff see it.
+  const messageId = (await row.locator("code").first().textContent())!.match(/"messageId":"([\w-]+)"/)![1];
+
+  // Postmark's bounce webhook, as it posts one for that message.
+  const bounce = await request.post(`${BASE}/api/postmark/bounce`, {
+    headers: { Authorization: WEBHOOK_AUTH },
+    data: {
+      RecordType: "Bounce",
+      MessageID: messageId,
+      Type: "HardBounce",
+      TypeCode: 1,
+      Name: "Hard bounce",
+      Description: "The server was unable to deliver your message (ex: unknown user, mailbox not found).",
+      Email: "test-mp@example.org",
+      BouncedAt: "2026-10-16T12:00:00Z",
+    },
+  });
+  expect(await bounce.json()).toEqual({ recorded: true });
+
+  await page.reload();
+  await expect(row.locator("td").nth(5)).toHaveText(staffCopy.letters.status.bounced);
+  await expect(row).toContainText("HardBounce");
+  await frame(page, "the letter, bounced, with Postmark's reason in its history");
+
+  await page.getByLabel(staffCopy.letters.columns.status).selectOption("bounced");
+  await page.getByRole("button", { name: staffCopy.letters.filter }).click();
+  await expect(page).toHaveURL(`${BASE}/staff/letters?status=bounced`);
+  await expect(row).toBeVisible();
+  await frame(page, "filtered to bounced letters");
+});
+
+test("an MP import that would change too many is held, then discarded, and then applied", async ({
+  page,
+  request,
+  flowDatabase,
+}) => {
+  await syncMps(request, BASE);
+  // Twenty-one MPs Airtable no longer lists: the next import would remove
+  // them all, more than it may without a person checking.
+  runSql(
+    flowDatabase,
+    `INSERT INTO politicians (airtable_id, house, name, constituency)
+     SELECT 'recGone' || n, 'commons', 'Gone McTestface ' || n || ' MP', 'Gone ' || n FROM generate_series(1, 21) n`,
+  );
+  const sitting = () =>
+    Number(runSql(flowDatabase, "SELECT count(*) FROM politicians WHERE name LIKE 'Gone %' AND sitting")[0]);
+
+  await logIn(page);
+  await page.goto(`${BASE}/staff/import-data`);
+  await page.getByRole("button", { name: staffCopy.syncs.syncNow }).click();
+  await expect(page.getByRole("button", { name: staffCopy.syncs.apply })).toBeVisible();
+  await expect(page.getByText(`${staffCopy.syncs.removed} 21`).first()).toBeVisible();
+  await expect(page.getByText("Gone 1: Gone McTestface 1 MP")).toBeAttached();
+  expect(sitting()).toBe(21);
+  await frame(page, "the import held: 21 MPs would go");
+
+  await page.getByRole("button", { name: staffCopy.syncs.discard }).click();
+  await expect(page.getByRole("button", { name: staffCopy.syncs.apply })).toHaveCount(0);
+  await expect(page.getByText(staffCopy.runs.status.discarded).first()).toBeVisible();
+  expect(sitting()).toBe(21);
+  await frame(page, "discarded: nobody changed");
+
+  await page.getByRole("button", { name: staffCopy.syncs.syncNow }).click();
+  await page.getByRole("button", { name: staffCopy.syncs.apply }).click();
+  await expect(page.getByRole("button", { name: staffCopy.syncs.apply })).toHaveCount(0);
+  await expect(page.getByText(staffCopy.runs.decidedBy(staffEmail())).first()).toBeVisible();
+  expect(sitting()).toBe(0);
+  await frame(page, "held again, then applied: the 21 are no longer sitting");
+
+  await page.goto(`${BASE}/staff/audit-log`);
+  await expect(page.getByRole("cell", { name: "apply held MP sync" })).toBeVisible();
+  await expect(page.getByRole("cell", { name: "discard held MP sync" })).toBeVisible();
+  await frame(page, "the audit log: who discarded and who applied");
 });
 
 test("staff pages are kept out of search and the sitemap", async ({ page, request }) => {

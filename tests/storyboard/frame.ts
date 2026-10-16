@@ -31,6 +31,14 @@ export async function frame(page: Page, caption: string): Promise<void> {
     .evaluate(async () => {
       for (const img of document.querySelectorAll("img[loading=lazy]")) img.setAttribute("loading", "eager");
       await document.fonts.ready;
+      // A select laid out before its font arrived keeps its text where the
+      // fallback font put it, a pixel off, until it's laid out again.
+      for (const select of document.querySelectorAll("select")) {
+        const display = select.style.display;
+        select.style.display = "none";
+        void select.offsetHeight;
+        select.style.display = display;
+      }
       await Promise.all(
         [...document.images].map((img) =>
           img.complete
@@ -38,6 +46,9 @@ export async function frame(page: Page, caption: string): Promise<void> {
             : new Promise<void>((done) => img.addEventListener("load", () => done(), { once: true })),
         ),
       );
+      // Loaded isn't decoded: an image painted before it is can be drawn a
+      // shade differently, a few pixels off between runs.
+      await Promise.all([...document.images].map((img) => img.decode().catch(() => {})));
       const tick = () => new Promise<void>((done) => requestAnimationFrame(() => setTimeout(done, 50)));
       for (let last = -1, tries = 0; tries < 40 && last !== window.scrollY; tries++) {
         last = window.scrollY;

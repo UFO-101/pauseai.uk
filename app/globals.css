@@ -140,6 +140,15 @@ nav a:hover {
   visibility: visible;
   transform: translateY(0);
 }
+/* Just chosen from (Nav.tsx): shut, though the pointer is still over it. */
+.nav-item.has-dropdown.is-dismissed .dropdown {
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(4px);
+}
+.nav-item.has-dropdown.is-dismissed .dropdown-trigger .caret {
+  transform: none;
+}
 .dropdown a {
   display: block;
   padding: 10px 14px;

@@ -191,6 +191,40 @@ describe("Nav", () => {
     expect(about.closest(".nav-item")!.classList.contains("is-open")).toBe(false);
   });
 
+  it("shuts a dropdown once a link in it is chosen, though the pointer is still over it, until the pointer leaves", async () => {
+    await page.viewport(1280, 800);
+    const { container } = await render(
+      <>
+        <Nav />
+        <p>Elsewhere</p>
+      </>,
+    );
+    container.addEventListener("click", (e) => e.preventDefault());
+    const item = container.querySelector<HTMLElement>(".nav-item.has-dropdown")!;
+    // By element, not role: hidden, it's out of the accessibility tree.
+    const link = page.elementLocator(item.querySelector(".dropdown a")!);
+
+    await page.elementLocator(item.querySelector(".dropdown-trigger")!).hover();
+    await expect.element(link).toBeVisible();
+    // Chosen with the pointer, which stays over the dropdown: neither the
+    // hover nor focus left on the link holds it open.
+    await link.click();
+    await expect.element(link).not.toBeVisible();
+    expect(item.matches(":hover")).toBe(true);
+    expect(item.matches(":focus-within")).toBe(false);
+
+    // Once the pointer has left, hovering opens it again.
+    await page.getByText("Elsewhere").hover();
+    await page.elementLocator(item.querySelector(".dropdown-trigger")!).hover();
+    await expect.element(link).toBeVisible();
+
+    // So does focus, from the keyboard, after a choice.
+    await link.click();
+    await expect.element(link).not.toBeVisible();
+    item.querySelector<HTMLElement>(".dropdown-trigger")!.focus();
+    await expect.element(link).toBeVisible();
+  });
+
   it("closes the menu and dropdowns on a new page", async () => {
     vi.spyOn(window, "matchMedia").mockImplementation((q) => ({ matches: true, media: q }) as MediaQueryList);
     const { container, rerender } = await render(<Nav />);

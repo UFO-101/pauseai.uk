@@ -1,4 +1,4 @@
-import type { Page } from "@playwright/test";
+import { expect, type Page } from "@playwright/test";
 
 // Signals for what the flows used to wait a fixed time for: the page has
 // hydrated and its console has gone quiet, a smooth scroll has come to rest,
@@ -100,4 +100,25 @@ export async function layoutSettled(page: Page, selector: string): Promise<void>
   await page.evaluate(() => {
     delete (window as typeof window & { __layout?: unknown }).__layout;
   });
+}
+
+/**
+ * Leaves any field and goes back to the top, and stays there, so the next
+ * frame is of the whole page. Typing, or ticking a box, scrolls it into
+ * view, and where that leaves the window differs by a few pixels between
+ * runs; an editor may scroll its caret back into view a frame later.
+ */
+export async function wholePage(page: Page): Promise<void> {
+  await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
+  await expect
+    .poll(() =>
+      page.evaluate(async () => {
+        window.scrollTo({ top: 0, behavior: "instant" });
+        const frame = () => new Promise((done) => requestAnimationFrame(done));
+        await frame();
+        await frame();
+        return window.scrollY;
+      }),
+    )
+    .toBe(0);
 }

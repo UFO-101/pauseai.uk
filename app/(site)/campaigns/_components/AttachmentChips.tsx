@@ -9,7 +9,11 @@ export default function AttachmentChips({ attachments, label }: { attachments: A
       {attachments.map((attachment) => (
         <li key={attachment.file}>
           <a href={`/pdfs/${attachment.file}`} target="_blank" rel="noreferrer">
-            <Image src={`/pdfs/${attachment.thumbnail}`} alt="" width={900} height={1165} sizes="3rem" />
+            {/* Shown 3rem wide. A small width, not sizes, so the browser
+                only has small files to choose from: with sizes it took
+                whichever large copy the campaign page had loaded, and scaled
+                it down a little differently each time. 900 × 1165, scaled. */}
+            <Image src={`/pdfs/${attachment.thumbnail}`} alt="" width={180} height={233} />
             <span className={styles.attachedText}>
               <strong>{attachment.title}</strong>
               <span>{attachment.subtitle}</span>

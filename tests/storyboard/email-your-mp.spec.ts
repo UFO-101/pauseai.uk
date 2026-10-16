@@ -11,6 +11,7 @@ import {
   WEBHOOK_AUTH,
 } from "../steps";
 import { BASE, expect, frame, test } from "./fixtures";
+import { wholePage } from "./settle";
 
 // Email your MP, end to end on fixture data. ZZ99ZZ finds the test
 // MP, so the whole flow runs as it would for a real one. Emails go to the
@@ -121,7 +122,183 @@ test("finding the MP opens the page to write the letter, and going back keeps th
   await expect(page.getByLabel(copy.lookup.nameLabel)).toHaveValue("Jane Smith");
   await expect(page.getByLabel(copy.lookup.addressLabel)).toHaveValue("1 High Street, Testville");
   await expect(page.getByLabel(copy.lookup.postcodeLabel)).toHaveValue("ZZ9 9ZZ");
+  // Going back puts the window about where it was, a little differently each run.
+  await wholePage(page);
   await frame(page, "back at the form, as it was");
+});
+
+/** The letter's editor: the text box Tiptap draws, labelled by the form's "Message". */
+const editor = (page: Page) => page.getByRole("textbox", { name: copy.form.letterLabel, exact: true });
+
+/** The editor's element: Tiptap puts the editor on it, and so where it has the caret. */
+type TiptapElement = HTMLElement & {
+  editor: {
+    state: { selection: { $to: { parentOffset: number; parent: { textContent: string; content: { size: number } } } } };
+  };
+};
+
+/**
+ * Waits for the editor to have the caret at the start or end of the
+ * paragraph that reads `text`. It reads where the caret went a moment after
+ * a click or an arrow key, and a key pressed before then lands where the
+ * caret was. No person types that fast.
+ */
+async function caretSettled(page: Page, text: string, at: "start" | "end") {
+  await expect
+    .poll(() =>
+      editor(page).evaluate(
+        (el, { text, at }) => {
+          const { $to } = (el as TiptapElement).editor.state.selection;
+          return $to.parent.textContent === text && $to.parentOffset === (at === "start" ? 0 : $to.parent.content.size);
+        },
+        { text, at },
+      ),
+    )
+    .toBe(true);
+}
+
+/** Puts the caret at the start or end of the letter's paragraph that reads `text`. */
+async function caretAt(page: Page, text: string, at: "start" | "end") {
+  await editor(page).getByText(text, { exact: true }).click();
+  await page.keyboard.press(at === "start" ? "Home" : "End");
+  await caretSettled(page, text, at);
+}
+
+/** Opens a new paragraph above the sign-off, as someone adding to the letter would, with the caret in it. */
+async function newParagraphAboveSignOff(page: Page) {
+  await caretAt(page, "Thank you for your consideration,", "start");
+  await page.keyboard.press("Enter");
+  await page.keyboard.press("ArrowUp");
+  await caretSettled(page, "", "start");
+}
+
+/** Clicks a toolbar button, then waits for the editor to take focus back, a frame later, as Tiptap gives it. */
+async function toolbar(page: Page, name: string) {
+  await page.getByRole("button", { name, exact: true }).click();
+  await expect(editor(page)).toBeFocused();
+}
+
+/** Pastes `html` into the editor, as a browser does from another app's clipboard. */
+async function paste(page: Page, html: string, text: string) {
+  await editor(page).evaluate(
+    (el, { html, text }) => {
+      const data = new DataTransfer();
+      data.setData("text/html", html);
+      data.setData("text/plain", text);
+      el.dispatchEvent(new ClipboardEvent("paste", { clipboardData: data, bubbles: true, cancelable: true }));
+    },
+    { html, text },
+  );
+}
+
+test("the letter's toolbar and a paste from another app: what the preview shows is what the MP gets", async ({
+  page,
+}, testInfo) => {
+  const sender = `jane+${testInfo.testId}@example.com`;
+  await lookUp(page);
+  const letter = editor(page);
+  await expect(letter).toContainText("Dear Mr McTestface");
+
+  // A new paragraph above the sign-off, made bold from the toolbar as it's typed.
+  await newParagraphAboveSignOff(page);
+  await toolbar(page, "Bold");
+  await expect(page.getByRole("button", { name: "Bold" })).toHaveAttribute("aria-pressed", "true");
+  await page.keyboard.type("Please reply.");
+  await toolbar(page, "Bold");
+  await page.keyboard.press("Enter");
+  await toolbar(page, "Bullet point");
+  await page.keyboard.type("First reason");
+  await page.keyboard.press("Enter");
+  await page.keyboard.type("Second reason");
+  await expect(letter.locator("strong", { hasText: "Please reply." })).toBeVisible();
+  await expect(letter.locator("ul li")).toHaveText(["First reason", "Second reason"]);
+  await wholePage(page);
+  await frame(page, "a bold line and a bullet list, typed with the toolbar");
+  await caretAt(page, "Second reason", "end");
+
+  // Out of the list, then a paste of what a letter may not have: a heading,
+  // a link, a colour and a numbered list. The words stay, the list as bullets.
+  await page.keyboard.press("Enter");
+  await page.keyboard.press("Enter");
+  await paste(
+    page,
+    '<h1>Pasted heading</h1><p>See <a href="https://example.com/">this report</a> and <span style="color:red">red words</span>.</p><ol><li>Numbered one</li></ol>',
+    "Pasted heading\n\nSee this report and red words.\n\nNumbered one",
+  );
+  await expect(letter).toContainText("Pasted heading");
+  await expect(letter).toContainText("See this report and red words.");
+  await expect(letter.locator("h1, a, ol, span[style]")).toHaveCount(0);
+  await expect(letter.locator("ul").last().locator("li")).toHaveText(["Numbered one"]);
+  await wholePage(page);
+  await frame(page, "pasted from another app, as plain paragraphs");
+
+  await fillAndPreview(page, sender);
+  const preview = page.locator("article");
+  await expect(preview.locator("strong", { hasText: "Please reply." })).toBeVisible();
+  // The letter's lists, not the attachments'.
+  await expect(preview.locator("ul:not([aria-label]) li")).toHaveText([
+    "First reason",
+    "Second reason",
+    "Numbered one",
+  ]);
+  await expect(preview).toContainText("See this report and red words.");
+  await frame(page, "the preview, formatted as written");
+  await sendLetter(page);
+
+  const sent = newestEmail((email) => email.To === "test-mp@example.org" && !!email.ReplyTo?.includes(sender))!;
+  expect(sent.HtmlBody).toContain("<strong>Please reply.</strong>");
+  expect(sent.HtmlBody).toMatch(/<ul>\s*<li><p>First reason<\/p><\/li>\s*<li><p>Second reason<\/p><\/li>\s*<\/ul>/);
+  expect(sent.HtmlBody).toContain("See this report and red words.");
+  expect(sent.HtmlBody).not.toMatch(/<h1|<a |<ol|style=/);
+  // All of it above the sign-off, which is as it was drafted.
+  expect(sent.TextBody).toMatch(
+    /Please reply\.\n\n- First reason\n- Second reason\n\nPasted heading\n\nSee this report and red words\.\n\n- Numbered one\n\nThank you for your consideration,\n\nJane Smith\n\n1 High Street, Testville\nZZ9 9ZZ$/,
+  );
+});
+
+test("the letter as written survives the preview's Edit, the back button and a reload, until a new lookup", async ({
+  page,
+}) => {
+  await lookUp(page);
+  const letter = editor(page);
+  await newParagraphAboveSignOff(page);
+  await page.keyboard.type("My own words.");
+  await page.getByLabel(copy.form.subjectLabel).fill("My own subject");
+  await wholePage(page);
+  await frame(page, "the letter, in their own words");
+  await fillAndPreview(page, "jane@example.com");
+  await expect(page.locator("article")).toContainText("My own words.");
+
+  await page.getByRole("link", { name: copy.preview.edit }).click();
+  await expect(page).toHaveURL(`${PAGE}/write`);
+  await expect(letter).toContainText("My own words.");
+  await expect(page.getByLabel(copy.form.subjectLabel)).toHaveValue("My own subject");
+  await frame(page, "back from the preview with Edit, as written");
+
+  await page.getByRole("button", { name: copy.form.preview }).click();
+  await expect(page).toHaveURL(`${PAGE}/preview`);
+  await page.goBack();
+  await expect(page).toHaveURL(`${PAGE}/write`);
+  await expect(letter).toContainText("My own words.");
+  await page.reload();
+  await expect(letter).toContainText("My own words.");
+  // The browser puts the window back about where it was, a few pixels either way.
+  await wholePage(page);
+  await expect(page.getByLabel(copy.form.emailLabel)).toHaveValue("jane@example.com");
+  await frame(page, "after the back button and a reload, still as written");
+
+  // Someone else finding the MP on the same browser starts a fresh letter, signed with their name.
+  await openLookup(page, BASE);
+  await page.getByLabel(copy.lookup.nameLabel).fill("Sam Jones");
+  await page.getByRole("button", { name: copy.lookup.button }).click();
+  await expect(page).toHaveURL(`${PAGE}/write`);
+  await expect(letter).toContainText("Dear Mr McTestface");
+  await expect(letter.getByText("Sam Jones", { exact: true })).toBeVisible();
+  await expect(letter).not.toContainText("Jane Smith");
+  await expect(letter).not.toContainText("My own words.");
+  await expect(page.getByLabel(copy.form.subjectLabel)).toHaveValue(campaigns[0].subject);
+  await expect(page.getByLabel(copy.form.emailLabel)).toHaveValue("");
+  await frame(page, "a new lookup by someone else, a new letter signed by them");
 });
 
 test("no Ads event when the server refuses the letter, which can then be edited as it was", async ({ page }) => {
@@ -206,6 +383,8 @@ test("ZZ99ZN has no email, so there's no letter to write", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Nomail McTestface MP" })).toBeVisible();
   await expect(page.getByText(copy.lookup.noEmail)).toBeVisible();
   await expect(page).toHaveURL(`${BASE}/campaigns/${campaigns[0].slug}`);
+  // The click scrolled the button into view, and where that leaves the window varies.
+  await wholePage(page);
   await frame(page, "an MP with no email");
 });
 
@@ -237,6 +416,8 @@ test("the nav's Campaigns menu links each campaign's page", { tag: "@desktop-onl
   await bill.click();
   await expect(page).toHaveURL(`${BASE}/campaigns/${campaigns[1].slug}`);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Support the Artificial Superintelligence Bill");
+  // Shut behind the choice, though the pointer is still over it.
+  await expect(bill).toBeHidden();
   await frame(page, "the bill's page, from the menu");
 });
 
