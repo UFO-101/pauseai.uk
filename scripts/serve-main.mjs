@@ -10,7 +10,7 @@
 // branch has one, builds it with the same fixture settings as this branch's
 // test build, and serves it until stopped.
 import { execFileSync, spawn } from "node:child_process";
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fixtureEnv, MAIN_OUTBOX_DIR } from "../tests/fixture-env.mjs";
@@ -28,7 +28,17 @@ const dir = join(tmpdir(), `pauseai-${ref.replace(/[^\w-]/g, "-")}-worktree`);
 const run = (command, args, options = {}) => execFileSync(command, args, { stdio: "inherit", ...options });
 
 // The ref's latest commit, in a worktree kept between runs so its
-// node_modules can stay inside it.
+// node_modules can stay inside it. One the repo no longer knows (pruned, or
+// the repo moved) is made again from scratch.
+if (existsSync(join(dir, ".git"))) {
+  try {
+    execFileSync("git", ["rev-parse", "--git-dir"], { cwd: dir, stdio: "ignore" });
+  } catch {
+    console.log(`${dir} is no longer a worktree of this repo: making it again.`);
+    rmSync(dir, { recursive: true, force: true });
+    run("git", ["worktree", "prune"]);
+  }
+}
 if (existsSync(join(dir, ".git"))) {
   run("git", ["checkout", "--detach", "--force", ref], { cwd: dir });
   run("git", ["clean", "-fdx", "-e", "node_modules"], { cwd: dir });
@@ -64,6 +74,14 @@ if (existsSync(freshDatabase)) {
 
 // next build directly, not npm run build, which runs the unit tests first.
 run("npx", ["next", "build"], { cwd: dir, env });
-const server = spawn("npx", ["next", "start", "--port", port], { cwd: dir, env, stdio: "inherit" });
-for (const signal of ["SIGINT", "SIGTERM"]) process.on(signal, () => server.kill(signal));
+// In its own process group, so stopping this script stops the server too:
+// a signal to `next` alone leaves the server it starts running on the port,
+// and the next review's run of main then hits a stale build.
+const server = spawn(join(dir, "node_modules", ".bin", "next"), ["start", "--port", port], {
+  cwd: dir,
+  env,
+  stdio: "inherit",
+  detached: true,
+});
+for (const signal of ["SIGINT", "SIGTERM"]) process.on(signal, () => process.kill(-server.pid, signal));
 server.on("exit", (code) => process.exit(code ?? 0));

@@ -28,6 +28,10 @@ export default defineConfig({
   retries: 0,
   // The terminal, Playwright's own report (traces), and the storyboard's.
   reporter: [["list"], ["html", { open: "never" }], ["./tests/storyboard/report/reporter.ts"]],
+  // Playwright empties this before every run. The storyboard's page and
+  // pictures are beside it in test-results/storyboard, so a gate run after a
+  // review leaves the review alone.
+  outputDir: "test-results/playwright",
   globalSetup: "./tests/storyboard/global-setup.ts",
   globalTeardown: "./tests/storyboard/global-teardown.ts",
   // The homepage takes a while to load and hydrate in this harness, so the
