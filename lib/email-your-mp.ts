@@ -59,23 +59,23 @@ export function campaignToMoveTo(campaign: Campaign, statuses: MpStatuses): Camp
   return isDone(campaign, statuses) ? chooseCampaign(statuses) : undefined;
 }
 
-/** The letter the form starts with. */
-export function draftLetter(campaign: Campaign, details: LetterDetails): LetterDoc {
-  return docFromMarkup(campaign.letter(details));
-}
-
-/** The letter as sent: the body the sender edited, then their name and address, a line each. */
-export function fullLetter(body: LetterDoc, senderName: string, address: string[]): LetterDoc {
-  const signature = [senderName, ...address].flatMap((line, i): Inline[] => [
+/**
+ * The letter the form starts with: the campaign's, which ends with the
+ * sender's name, then a paragraph of their address, a line each. All of it
+ * is theirs to edit, a town added, say, and it's sent as they leave it.
+ */
+export function draftLetter(campaign: Campaign, details: LetterDetails, address: string[]): LetterDoc {
+  const body = docFromMarkup(campaign.letter(details));
+  const lines = address.flatMap((line, i): Inline[] => [
     ...(i > 0 ? [{ type: "hardBreak" } as const] : []),
     { type: "text", text: line },
   ]);
-  return { type: "doc", content: [...body.content, { type: "paragraph", content: signature }] };
+  return { type: "doc", content: [...body.content, { type: "paragraph", content: lines }] };
 }
 
 /**
- * The lines under the sender's name: their address, then the postcode their
- * MP was found from, unless they've already typed it.
+ * The address the letter starts with, under the sender's name: their first
+ * line, then the postcode their MP was found from, unless they typed it.
  */
 export function signatureAddress(address: string, postcode: string): string[] {
   const lines = addressLines(address);

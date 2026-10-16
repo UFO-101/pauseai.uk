@@ -9,16 +9,17 @@ import type { Place } from "@/lib/events";
 import { TEST_MPS, type TestMp } from "@/lib/test-mps";
 import { readLookup, saveLookup } from "./draft";
 import MpCard from "./MpCard";
+import Required from "./Required";
 import styles from "./EmailYourMp.module.css";
 
 type Found = { mp: Mp; statuses: MpStatuses };
 type LookupResult = Found & { place: Place | null };
 
 /**
- * Name and postcode, to find the MP. Then the page for writing this
+ * Name, address and postcode, to find the MP. Then the page for writing this
  * campaign's letter. If the MP has already done this campaign, it goes to
  * the page of the first one they haven't instead, which says why
- * (MovedOnNotice), with the name and postcode filled in. There always is
+ * (MovedOnNotice), with the form filled in. There always is
  * one, as the last campaign is one nobody has done. When there's no letter
  * to write here (no email for the MP, or the browser won't keep the
  * lookup), it stays and says so. (A slug, because
@@ -43,25 +44,29 @@ export default function EmailYourMpTool({ campaignSlug, showTestMps }: Props) {
   const campaign = campaignBySlug(campaignSlug)!;
   const router = useRouter();
   const testPostcodes = useId();
+  const addressHint = useId();
   const [name, setName] = useState("");
+  const [address, setAddress] = useState("");
   const [postcode, setPostcode] = useState("");
   const [looking, setLooking] = useState(false);
   const [error, setError] = useState("");
   const [found, setFound] = useState<Found | null>(null);
 
-  // Coming back from writing a letter: the name and postcode, as they were.
+  // Coming back from writing a letter: the form, as it was.
   // After the page loads, as the server can't see sessionStorage.
   useEffect(() => {
     const last = readLookup();
     if (!last) return;
     // eslint-disable-next-line react-hooks/set-state-in-effect -- once, on load, from sessionStorage, which the server render couldn't read
     setName(last.name);
+    setAddress(last.address);
     setPostcode(last.postcode);
   }, []);
 
   async function lookUp(event: FormEvent) {
     event.preventDefault();
     if (!name.trim()) return setError(copy.lookup.nameRequired);
+    if (!address.trim()) return setError(copy.lookup.addressRequired);
     if (!postcode.trim()) return setError(copy.lookup.postcodeRequired);
     setError("");
     setFound(null);
@@ -85,6 +90,7 @@ export default function EmailYourMpTool({ campaignSlug, showTestMps }: Props) {
         saveLookup({
           campaign: target.slug,
           name: name.trim(),
+          address: address.trim(),
           postcode: postcode.trim(),
           mp,
           statuses,
@@ -105,10 +111,11 @@ export default function EmailYourMpTool({ campaignSlug, showTestMps }: Props) {
   return (
     <div className={styles.tool}>
       <form className={styles.lookup} onSubmit={lookUp} noValidate>
-        <label>
-          {copy.lookup.nameLabel}
+        <label className={styles.lookupWide}>
+          <Required>{copy.lookup.nameLabel}</Required>
           <input
             name="name"
+            required
             autoComplete="name"
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -117,9 +124,25 @@ export default function EmailYourMpTool({ campaignSlug, showTestMps }: Props) {
         </label>
         <div className={styles.field}>
           <label>
-            {copy.lookup.postcodeLabel}
+            <Required>{copy.lookup.addressLabel}</Required>
+            <input
+              name="address"
+              required
+              autoComplete="address-line1"
+              aria-describedby={addressHint}
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+              disabled={looking}
+            />
+          </label>
+          <small id={addressHint}>{copy.lookup.addressHint}</small>
+        </div>
+        <div className={styles.field}>
+          <label>
+            <Required>{copy.lookup.postcodeLabel}</Required>
             <input
               name="postcode"
+              required
               autoComplete="postal-code"
               aria-describedby={showTestMps ? testPostcodes : undefined}
               value={postcode}

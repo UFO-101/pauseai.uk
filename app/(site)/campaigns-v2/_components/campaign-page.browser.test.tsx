@@ -33,6 +33,7 @@ describe("a campaign page's sections", () => {
     saveLookup({
       campaign: bill.slug,
       name: "Jane Smith",
+      address: "1 High St",
       postcode: "SW1A 1AA",
       mp: MP,
       statuses: { [letterToPm.slug]: "signed" },
@@ -43,7 +44,14 @@ describe("a campaign page's sections", () => {
   });
 
   it("doesn't, once the sender has found their MP from this page", async () => {
-    saveLookup({ campaign: bill.slug, name: "Jane Smith", postcode: "SW1A 1AA", mp: MP, statuses: {} });
+    saveLookup({
+      campaign: bill.slug,
+      name: "Jane Smith",
+      address: "1 High St",
+      postcode: "SW1A 1AA",
+      mp: MP,
+      statuses: {},
+    });
     await render(<CampaignHero title="The bill" campaignSlug={bill.slug} />);
     await expect.element(page.getByRole("heading", { level: 1 })).toBeVisible();
     await expect.element(page.getByText(letterToPm.movedOn!)).not.toBeInTheDocument();

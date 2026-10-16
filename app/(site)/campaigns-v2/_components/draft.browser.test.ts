@@ -37,6 +37,7 @@ describe("draft", () => {
     const lookup = {
       campaign: "support-sobel-bill",
       name: "Jane Smith",
+      address: "1 High St",
       postcode: "SW1A 1AA",
       mp: DRAFT.mp,
       statuses: {},
@@ -68,9 +69,9 @@ describe("draft", () => {
       throw new DOMException("blocked", "SecurityError");
     });
     expect(saveDraft(DRAFT)).toBe(false);
-    expect(saveLookup({ campaign: "regulate-letter-pm", name: "", postcode: "", mp: DRAFT.mp, statuses: {} })).toBe(
-      false,
-    );
+    expect(
+      saveLookup({ campaign: "regulate-letter-pm", name: "", address: "", postcode: "", mp: DRAFT.mp, statuses: {} }),
+    ).toBe(false);
     expect(() => markSent({ campaign: "regulate-letter-pm", mpName: "Polly Placeholder" })).not.toThrow();
   });
 });

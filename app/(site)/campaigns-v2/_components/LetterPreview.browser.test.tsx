@@ -63,14 +63,12 @@ afterEach(() => {
 const send = () => page.getByRole("button", { name: copy.preview.send });
 
 describe("LetterPreview", () => {
-  it("shows the letter exactly as it will be sent, signed with the name, address and postcode", async () => {
+  it("shows the letter exactly as it will be sent", async () => {
     saveDraft(DRAFT);
     const { container } = await render(<LetterPreview campaignSlug={letterToPm.slug} />);
     await expect.element(page.getByText(MP.name)).toBeVisible();
     await expect.element(page.getByText("My subject")).toBeVisible();
-    expect(container.querySelector("article div")!.innerHTML).toBe(
-      "<p>My <strong>letter</strong></p>\n<p>Jane Smith<br>1 High St<br>London<br>SW1A 1AA</p>",
-    );
+    expect(container.querySelector("article div")!.innerHTML).toBe("<p>My <strong>letter</strong></p>");
     for (const attachment of letterToPm.attachments) {
       await expect
         .element(page.getByRole("link", { name: new RegExp(attachment.title) }))

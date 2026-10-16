@@ -12,7 +12,14 @@ const MP = {
   constituency: "Cities of London and Westminster",
   email: "polly.placeholder.mp@parliament.uk",
 };
-const LOOKUP: Lookup = { campaign: letterToPm.slug, name: "Jane Smith", postcode: "SW1A 1AA", mp: MP, statuses: {} };
+const LOOKUP: Lookup = {
+  campaign: letterToPm.slug,
+  name: "Jane Smith",
+  address: "1 High St",
+  postcode: "SW1A 1AA",
+  mp: MP,
+  statuses: {},
+};
 
 afterEach(() => sessionStorage.clear());
 
@@ -26,6 +33,7 @@ describe("LetterWrite", () => {
     await expect.element(page.getByText(MP.email)).toBeVisible();
     await expect.element(page.getByLabelText(copy.form.subjectLabel)).toHaveValue(letterToPm.subject);
     await expect.element(editor().getByText("Dear Ms Placeholder")).toBeVisible();
+    await expect.element(page.getByText("1 High St", { exact: false })).toHaveTextContent("1 High StSW1A 1AA");
   });
 
   it("says so above the bill's letter when the MP signed ControlAI's letter, and nowhere else", async () => {

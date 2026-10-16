@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button, ButtonLink } from "@/components/ui/Button";
 import { copy } from "@/lib/content/email-your-mp";
-import { campaignBySlug, campaignPath, fullLetter, signatureAddress } from "@/lib/email-your-mp";
+import { campaignBySlug, campaignPath } from "@/lib/email-your-mp";
 import { toHtml } from "@/lib/letter-format";
 import AttachmentChips from "./AttachmentChips";
 import { markSent, readDraft, type Draft } from "./draft";
@@ -28,7 +28,7 @@ function countConversion() {
 }
 
 /**
- * The letter from the form, exactly as the MP will get it, signature and
+ * The letter from the form, exactly as the MP will get it, name, address and
  * all, with the anti-spam check and the button that sends it.
  */
 export default function LetterPreview({ campaignSlug, turnstileSiteKey }: Props) {
@@ -107,7 +107,7 @@ export default function LetterPreview({ campaignSlug, turnstileSiteKey }: Props)
   }
 
   // The same HTML the server sends, from the same draft: text is escaped.
-  const html = toHtml(fullLetter(letter.letter, letter.name, signatureAddress(letter.address, letter.postcode)));
+  const html = toHtml(letter.letter);
 
   return (
     <div className={styles.previewPage}>

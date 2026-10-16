@@ -52,6 +52,7 @@ export async function openLookup(page: Page, base: string, postcode = "ZZ9 9ZZ",
   // moves the page under it, and the frame with it.
   await page.evaluate(() => document.fonts.ready);
   await page.getByLabel(copy.lookup.nameLabel).fill("Jane Smith");
+  await page.getByLabel(copy.lookup.addressLabel).fill("1 High Street, Testville");
   await page.getByLabel(copy.lookup.postcodeLabel).fill(postcode);
 }
 
@@ -78,7 +79,6 @@ export async function lookUpTestMp(page: Page, base: string, path = TOOL_PAGE) {
 /** Fills in the letter form and goes to its preview. Nothing is sent yet. */
 export async function fillLetter(page: Page, email: string) {
   await page.getByLabel(copy.form.emailLabel).fill(email);
-  await page.getByRole("textbox", { name: copy.form.addressLabel }).fill("1 High Street\nTestville");
   await page.getByRole("button", { name: copy.form.preview }).click();
   await page.getByRole("button", { name: copy.preview.send }).waitFor();
 }

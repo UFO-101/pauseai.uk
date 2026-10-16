@@ -13,7 +13,14 @@ const MP = {
   constituency: "Cities of London and Westminster",
   email: "polly.placeholder.mp@parliament.uk",
 };
-const PROPS = { campaign: letterToPm, mp: MP, statuses: {}, senderName: "Jane Smith", postcode: "sw1a 1aa" };
+const PROPS = {
+  campaign: letterToPm,
+  mp: MP,
+  statuses: {},
+  senderName: "Jane Smith",
+  address: "1 High St",
+  postcode: "sw1a 1aa",
+};
 const PREVIEW = `/campaigns-v2/${letterToPm.slug}/preview`;
 
 afterEach(() => {
@@ -25,12 +32,11 @@ const editor = () => page.getByRole("textbox", { name: copy.form.letterLabel, ex
 
 async function fillAndPreview(email = "jane@example.com") {
   await userEvent.fill(page.getByLabelText(copy.form.emailLabel), email);
-  await userEvent.fill(page.getByRole("textbox", { name: copy.form.addressLabel }), "1 High St\nLondon");
   await page.getByRole("button", { name: copy.form.preview }).click();
 }
 
 describe("LetterForm", () => {
-  it("drafts the letter for the MP, and says the address goes in it", async () => {
+  it("drafts the letter for the MP, ending with their name, address and postcode, all editable", async () => {
     await render(<LetterForm {...PROPS} />);
     await expect.element(page.getByLabelText(copy.form.subjectLabel)).toHaveValue(letterToPm.subject);
     await expect.element(editor().getByText("Dear Ms Placeholder")).toBeVisible();
@@ -39,11 +45,10 @@ describe("LetterForm", () => {
       .toBeVisible();
     // The old tool's bold.
     expect(editor().getByText("PauseAI", { exact: true }).element().tagName).toBe("STRONG");
-    await expect
-      .element(page.getByRole("textbox", { name: copy.form.addressLabel }))
-      .toHaveAccessibleDescription(copy.form.addressHint);
-    // The signature is only shown on the preview, in the letter.
-    await expect.element(page.getByText("Jane Smith SW1A 1AA")).not.toBeInTheDocument();
+    // The letter ends with the name, then the lookup's address and postcode, a line each.
+    await expect.element(editor().getByText("Jane Smith", { exact: true })).toBeVisible();
+    const address = editor().element().lastElementChild!;
+    expect(address.innerHTML).toBe("1 High St<br>SW1A 1AA");
     for (const attachment of letterToPm.attachments) {
       await expect
         .element(page.getByRole("link", { name: new RegExp(attachment.title) }))
@@ -70,7 +75,7 @@ describe("LetterForm", () => {
       mp: MP,
       statuses: {},
       email: "jane@example.com",
-      address: "1 High St\nLondon",
+      address: "1 High St",
       subject: "My subject",
       letter: { type: "doc", content: [{ type: "paragraph", content: [{ type: "text", text: "My letter" }] }] },
       nickname: "",
@@ -113,19 +118,16 @@ describe("LetterForm", () => {
     });
   });
 
-  it("needs an email that looks like one, and an address, before the preview", async () => {
+  it("needs an email that looks like one before the preview", async () => {
     await render(<LetterForm {...PROPS} />);
     await page.getByRole("button", { name: copy.form.preview }).click();
     await expect.element(page.getByRole("alert")).toHaveTextContent(copy.form.emailRequired);
     await userEvent.fill(page.getByLabelText(copy.form.emailLabel), "jane");
     await page.getByRole("button", { name: copy.form.preview }).click();
     await expect.element(page.getByRole("alert")).toHaveTextContent(copy.errors.invalidEmail);
-    await userEvent.fill(page.getByLabelText(copy.form.emailLabel), "jane@example.com");
-    await page.getByRole("button", { name: copy.form.preview }).click();
-    await expect.element(page.getByRole("alert")).toHaveTextContent(copy.form.addressRequired);
     expect(navigation.pushed).toEqual([]);
 
-    await userEvent.fill(page.getByRole("textbox", { name: copy.form.addressLabel }), "1 High St");
+    await userEvent.fill(page.getByLabelText(copy.form.emailLabel), "jane@example.com");
     await page.getByRole("button", { name: copy.form.preview }).click();
     await expect.element(page.getByRole("alert")).not.toBeInTheDocument();
     expect(navigation.pushed).toEqual([PREVIEW]);
@@ -156,7 +158,6 @@ describe("LetterForm", () => {
     };
     await render(<LetterForm {...PROPS} draft={draft} />);
     await expect.element(page.getByLabelText(copy.form.emailLabel)).toHaveValue("jane@example.com");
-    await expect.element(page.getByRole("textbox", { name: copy.form.addressLabel })).toHaveValue("1 High St");
     await expect.element(page.getByLabelText(copy.form.subjectLabel)).toHaveValue("Kept subject");
     await expect.element(editor().getByText("Kept letter")).toBeVisible();
   });

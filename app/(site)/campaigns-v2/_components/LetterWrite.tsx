@@ -55,6 +55,7 @@ export default function LetterWrite({ campaignSlug }: { campaignSlug: string }) 
         mp={lookup.mp}
         statuses={lookup.statuses}
         senderName={lookup.name}
+        address={lookup.address}
         postcode={lookup.postcode}
         draft={draft}
       />

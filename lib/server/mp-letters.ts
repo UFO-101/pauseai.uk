@@ -3,7 +3,7 @@ import { randomBytes } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { copy } from "@/lib/content/email-your-mp";
-import { campaignBySlug, fullLetter, looksLikeEmail, signatureAddress } from "@/lib/email-your-mp";
+import { campaignBySlug, looksLikeEmail } from "@/lib/email-your-mp";
 import { checkDoc, isBlank, toHtml, toText, type LetterDoc } from "@/lib/letter-format";
 import { query, transaction, type Queryable } from "./db";
 import { findMp } from "./find-mp";
@@ -139,7 +139,8 @@ export async function submitLetter(form: LetterForm): Promise<SubmitResult> {
   if (!mp || !to) return fail(400, copy.errors.noRecipient);
   if (!mayWriteTo(mp)) return fail(403, copy.errors.testMpOnly);
 
-  const letter = fullLetter(form.letter, form.name, signatureAddress(form.address, form.postcode));
+  // As the sender left it: it ends with their name and address, which they could edit.
+  const letter = form.letter;
   const body = toText(letter);
   const html = toHtml(letter);
   const replyHash = randomBytes(12).toString("hex");

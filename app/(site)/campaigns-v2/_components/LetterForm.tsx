@@ -4,10 +4,18 @@ import { useId, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { copy, type Campaign } from "@/lib/content/email-your-mp";
-import { campaignPath, draftLetter, looksLikeEmail, type Mp, type MpStatuses } from "@/lib/email-your-mp";
+import {
+  campaignPath,
+  draftLetter,
+  looksLikeEmail,
+  signatureAddress,
+  type Mp,
+  type MpStatuses,
+} from "@/lib/email-your-mp";
 import AttachmentChips from "./AttachmentChips";
 import { saveDraft, type Draft } from "./draft";
 import LetterEditor from "./LetterEditor";
+import Required from "./Required";
 import styles from "./EmailYourMp.module.css";
 
 type Props = {
@@ -15,24 +23,28 @@ type Props = {
   mp: Mp;
   statuses: MpStatuses;
   senderName: string;
+  /** From the lookup: the first line of their address, under their name. */
+  address: string;
   postcode: string;
   /** The draft to carry on with, when coming back from the preview. */
   draft?: Draft;
 };
 
 /** The letter to one MP for one campaign: edit it, then go to the preview, which sends it. */
-export default function LetterForm({ campaign, mp, statuses, senderName, postcode, draft }: Props) {
+export default function LetterForm({ campaign, mp, statuses, senderName, address, postcode, draft }: Props) {
   const router = useRouter();
-  const addressHint = useId();
   const letterId = useId();
   const letterTips = useId();
   const [email, setEmail] = useState(draft?.email ?? "");
-  const [address, setAddress] = useState(draft?.address ?? "");
   const [subject, setSubject] = useState(draft?.subject ?? campaign.subject);
   const [letter, setLetter] = useState(
     () =>
       draft?.letter ??
-      draftLetter(campaign, { salutation: mp.salutation, constituency: mp.constituency, senderName, statuses }),
+      draftLetter(
+        campaign,
+        { salutation: mp.salutation, constituency: mp.constituency, senderName, statuses },
+        signatureAddress(address, postcode),
+      ),
   );
   const [nickname, setNickname] = useState(draft?.nickname ?? "");
   const [error, setError] = useState("");
@@ -40,7 +52,6 @@ export default function LetterForm({ campaign, mp, statuses, senderName, postcod
   function preview() {
     if (!email.trim()) return setError(copy.form.emailRequired);
     if (!looksLikeEmail(email.trim())) return setError(copy.errors.invalidEmail);
-    if (!address.trim()) return setError(copy.form.addressRequired);
     const saved = saveDraft({
       campaign: campaign.slug,
       name: senderName,
@@ -74,29 +85,16 @@ export default function LetterForm({ campaign, mp, statuses, senderName, postcod
       </label>
 
       <label>
-        {copy.form.emailLabel}
+        <Required>{copy.form.emailLabel}</Required>
         <input
           name="email"
           type="email"
+          required
           autoComplete="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
         />
       </label>
-      <div className={styles.field}>
-        <label>
-          {copy.form.addressLabel}
-          <textarea
-            name="address"
-            rows={3}
-            autoComplete="street-address"
-            aria-describedby={addressHint}
-            value={address}
-            onChange={(e) => setAddress(e.target.value)}
-          />
-        </label>
-        <small id={addressHint}>{copy.form.addressHint}</small>
-      </div>
       <label>
         {copy.form.subjectLabel}
         <input name="subject" value={subject} onChange={(e) => setSubject(e.target.value)} />
