@@ -7,11 +7,31 @@ import { PNG } from "pngjs";
 
 export type FlowStatus = "passed" | "failed" | "timedOut" | "interrupted";
 
+/**
+ * The sections in the order the page shows them: what a visitor sees first,
+ * then what they do, then the staff's screens, then the mechanics. A section
+ * not listed here goes after these, alphabetically, so a new spec file still
+ * appears; frames.test.ts checks every spec file is listed, so it's placed
+ * on purpose.
+ */
+export const SECTION_ORDER = [
+  "public-pages",
+  "email-your-mp",
+  "staff",
+  "consent",
+  "mobile-nav",
+  "onboarding-embed",
+  "scroll",
+  "redirects",
+];
+
 /** A test as one run of the suite saw it, with its frames in order. */
 export type FlowRun = {
   section: string;
   flow: string;
   viewport: string;
+  /** The line the test starts on, so flows keep their spec file's order whatever order they ran in. */
+  line: number;
   status: FlowStatus;
   /** The failure's first line, if it failed. */
   error?: string;
@@ -64,6 +84,23 @@ export type Storyboard = {
 const key = (run: Pick<FlowRun, "section" | "flow" | "viewport">) =>
   `${run.section}\u0000${run.flow}\u0000${run.viewport}`;
 
+const sectionRank = (section: string) => {
+  const at = SECTION_ORDER.indexOf(section);
+  return at === -1 ? SECTION_ORDER.length : at;
+};
+
+/** Section order, then the spec file's order, then the viewport: the workers finish flows in any order. */
+export function sortRuns<T extends Pick<FlowRun, "section" | "line" | "flow" | "viewport">>(runs: T[]): T[] {
+  return [...runs].sort(
+    (a, b) =>
+      sectionRank(a.section) - sectionRank(b.section) ||
+      a.section.localeCompare(b.section) ||
+      a.line - b.line ||
+      a.flow.localeCompare(b.flow) ||
+      a.viewport.localeCompare(b.viewport),
+  );
+}
+
 /**
  * Pairs each frame of this branch's run with main's, by section, flow and
  * caption (the n-th frame with that caption, if a flow repeats one), and
@@ -75,11 +112,11 @@ export function pairRuns(
   main: RunManifest | undefined,
   compare: (branchPng: string, mainPng: string, name: string) => { mismatch: number; diff?: string },
 ): Storyboard {
-  const mainRuns = new Map((main?.frames ?? []).map((run) => [key(run), run]));
+  const mainRuns = new Map(sortRuns(main?.frames ?? []).map((run) => [key(run), run]));
   const flows: Flow[] = [];
   const frames: Frame[] = [];
 
-  for (const run of branch.frames) {
+  for (const run of sortRuns(branch.frames)) {
     const mainRun = mainRuns.get(key(run));
     mainRuns.delete(key(run));
     const mainFrames = [...(mainRun?.frames ?? [])];

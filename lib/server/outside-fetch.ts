@@ -9,7 +9,7 @@ import { fixtureResponse } from "@/tests/fixtures/outside-services";
  */
 export async function outsideFetch(url: string, init?: RequestInit): Promise<Response> {
   if (process.env.DATA_FIXTURES === "1") {
-    return fixtureResponse(url) ?? new Response("No fixture for this URL", { status: 404 });
+    return fixtureResponse(url, init) ?? new Response("No fixture for this URL", { status: 404 });
   }
   return fetch(url, init);
 }

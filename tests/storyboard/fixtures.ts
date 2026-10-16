@@ -39,6 +39,15 @@ export function flowStorageState(database: string): Exclude<BrowserContextOption
 /** Google Analytics and Tag Manager, which the fixture build loads (ANALYTICS=1, ../fixture-env.mjs). */
 export const ANALYTICS_URL = "**/www.googletagmanager.com/**";
 
+/** Stands in for pauseai.info's onboarding form, posting its height as the real embed does. */
+const ONBOARDING_FORM_STAND_IN = `<!doctype html>
+<html lang="en"><body style="margin:0;background:#FDF8F3;font:16px system-ui,sans-serif">
+<div style="height:600px;display:flex;align-items:center;justify-content:center;border:2px dashed #ccc;box-sizing:border-box">
+  stand-in for the onboarding form on pauseai.info
+</div>
+<script>parent.postMessage({ height: 600 }, "*");</script>
+</body></html>`;
+
 export const test = base.extend<{ flowDatabase: string }>({
   // A copy of the template (global-setup.ts), made in tens of milliseconds,
   // for this flow alone, and dropped after it. Named after the test, so a
@@ -67,9 +76,15 @@ export const test = base.extend<{ flowDatabase: string }>({
     await provide(context);
   },
   // The page's clock agrees with the server's (FIXTURE_NOW), so dates match
-  // between runs and nothing needs masking.
+  // between runs and nothing needs masking. The onboarding form, the one
+  // outside page a fixture build still embeds, is a stand-in that reports a
+  // fixed height: the real one's height, and so the page below it, varied
+  // between runs.
   page: async ({ page }, provide) => {
     await page.clock.setFixedTime(new Date(FIXTURE_NOW));
+    await page.route("https://pauseai.info/**", (route) =>
+      route.fulfill({ contentType: "text/html", body: ONBOARDING_FORM_STAND_IN }),
+    );
     await provide(page);
   },
 });

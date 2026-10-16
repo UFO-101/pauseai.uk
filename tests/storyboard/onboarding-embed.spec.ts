@@ -13,7 +13,8 @@ test("the onboarding form appears even when hydration is slow", async ({ page })
   // production whenever hydration is slower than the embed's load.
   //
   // This delays our JS bundles so hydration loses that race on purpose. The
-  // real embed is left alone.
+  // embed is the storyboard's stand-in (tests/storyboard/fixtures.ts), which
+  // posts its height once on load, as the real one does.
   //
   // Checking that the fallback never appears matters as much as checking that
   // the skeleton goes: the load timeout also gives up on the skeleton, and

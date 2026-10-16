@@ -48,6 +48,9 @@ export async function openLookup(page: Page, base: string, postcode = "ZZ9 9ZZ",
   const response = await page.goto(`${base}${path}`);
   if (!response?.ok()) throw new Error(`${base}${path} returned ${response?.status()}: is the tool deployed there?`);
   await page.waitForLoadState("load");
+  // Filling scrolls the field into view; a font that swaps in afterwards
+  // moves the page under it, and the frame with it.
+  await page.evaluate(() => document.fonts.ready);
   await page.getByLabel(copy.lookup.nameLabel).fill("Jane Smith");
   await page.getByLabel(copy.lookup.postcodeLabel).fill(postcode);
 }

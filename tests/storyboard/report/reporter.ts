@@ -39,6 +39,7 @@ export default class StoryboardReporter implements Reporter {
       section,
       flow: test.title,
       viewport,
+      line: test.location.line,
       status: result.status,
       error: result.error?.message?.split("\n")[0],
       frames: test.annotations

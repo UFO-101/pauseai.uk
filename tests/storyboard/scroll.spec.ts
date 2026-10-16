@@ -151,9 +151,16 @@ test.describe("in-page scrolling", () => {
     await frame(page, "/#staff");
   });
 
-  // Desktop only: on a phone the page's closing link sits under the march banner.
-  test("a link to another page's fragment jumps rather than animates", { tag: "@desktop-only" }, async ({ page }) => {
+  test("a link to another page's fragment jumps rather than animates", async ({ page }) => {
     await gotoSettled(page, "/theory-of-change");
+    // By name: on a phone the closed menu holds an invisible Join link to the
+    // same place, which a bare href selector matches first and waits on.
+    const link = page.getByRole("link", { name: "More ways to get involved" });
+    // The link is at the foot of the page, so get there before recording:
+    // a click scrolls to it first, and that scroll isn't the one under test.
+    await link.scrollIntoViewIfNeeded();
+    await page.waitForTimeout(1000);
+    const start = await page.evaluate(() => Math.round(window.scrollY));
     // Record scrollY every frame across the route change. The window
     // survives a client-side navigation, so the recorder keeps running.
     await page.evaluate(() => {
@@ -166,16 +173,17 @@ test.describe("in-page scrolling", () => {
       };
       requestAnimationFrame(tick);
     });
-    await page.click('a[href="/#join"]');
+    await link.click();
     await expect.poll(() => page.url(), { timeout: 15_000 }).toMatch(/\/#join$/);
     await page.waitForTimeout(2000);
     await expectClearOfNav(page, "join");
 
-    // A jump goes from the top straight to the target. An animation passes
-    // through positions in between, which a check of where it ended misses.
+    // A jump goes from where the link was straight to the target. An animation
+    // passes through positions in between, which a check of where it ended
+    // misses.
     const ys = await page.evaluate(() => (window as typeof window & { __scrollYs: number[] }).__scrollYs);
     const final = ys[ys.length - 1];
-    const inBetween = new Set(ys.filter((y) => y > 0 && Math.abs(y - final) > 2));
+    const inBetween = new Set(ys.filter((y) => Math.abs(y - start) > 2 && Math.abs(y - final) > 2));
     expect([...inBetween], "scrolled through intermediate positions").toEqual([]);
   });
 
