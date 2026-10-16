@@ -1,4 +1,5 @@
 import { BASE, expect, frame, test } from "./fixtures";
+import { hydrated } from "./settle";
 
 // The onboarding form embed on the home page
 // (app/(site)/_components/OnboardingFormEmbed.tsx): the two things about it
@@ -52,19 +53,24 @@ test("the onboarding embed ignores messages from other origins", async ({ page }
   // by the real embed every time the page loads.
   const FORGED_HEIGHT = 12345;
   await page.goto(BASE, { waitUntil: "domcontentloaded" });
-  await page.waitForFunction(
-    () => getComputedStyle(document.documentElement).getPropertyValue("--site-header-h").trim() !== "",
-    undefined,
-    { polling: 200, timeout: 20_000 },
-  );
+  await hydrated(page);
 
   const embed = page.locator('iframe[title="Get involved!"]');
   await expect(embed).toHaveCount(1);
 
-  await page.evaluate((height) => {
-    window.postMessage({ height }, "*");
-  }, FORGED_HEIGHT);
-  await page.waitForTimeout(1000);
+  // A posted message is delivered as a later task, so wait a turn of the
+  // event loop and a paint before looking: by then the listener has run, or
+  // ignored it.
+  const post = (data: object) =>
+    page.evaluate(
+      (d) =>
+        new Promise<void>((done) => {
+          window.postMessage(d, "*");
+          setTimeout(() => requestAnimationFrame(() => setTimeout(done, 0)), 0);
+        }),
+      data,
+    );
+  await post({ height: FORGED_HEIGHT });
 
   // Asserting the forged value was not adopted, rather than that the height is
   // unchanged: the real embed legitimately reports its own height as it
@@ -73,10 +79,7 @@ test("the onboarding embed ignores messages from other origins", async ({ page }
 
   // And again with the message shape the embed actually sends, in case the
   // handler ever starts discriminating on shape rather than origin.
-  await page.evaluate((height) => {
-    window.postMessage({ height, type: "resize" }, "*");
-  }, FORGED_HEIGHT + 1);
-  await page.waitForTimeout(1000);
+  await post({ height: FORGED_HEIGHT + 1, type: "resize" });
 
   expect(await embed.getAttribute("height")).not.toBe(String(FORGED_HEIGHT + 1));
 });

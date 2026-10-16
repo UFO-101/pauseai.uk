@@ -62,7 +62,7 @@ h1, h2, h3, p { margin: 0; }
 .segmented button:last-child { border-radius: 0 4px 4px 0; }
 .segmented button + button { border-left: 0; }
 .segmented button[aria-pressed="true"] { background: #111; color: #fff; border-color: #111; }
-.layout { display: grid; grid-template-columns: 280px 1fr; }
+.layout { display: grid; grid-template-columns: 380px 1fr; }
 #sidebar { position: sticky; top: 49px; height: calc(100vh - 49px); overflow: auto; padding: 12px 0 24px; border-right: 1px solid var(--line); background: var(--bg); }
 #sidebar summary { display: flex; justify-content: space-between; gap: 8px; padding: 8px 16px 8px 12px; cursor: pointer; font-weight: 600; list-style: none; }
 #sidebar summary::-webkit-details-marker { display: none; }
@@ -71,6 +71,9 @@ h1, h2, h3, p { margin: 0; }
 #sidebar summary .name { flex: 1; }
 #sidebar details.current summary { background: #eee; }
 #sidebar a { display: flex; justify-content: space-between; gap: 8px; padding: 4px 16px 4px 28px; color: inherit; text-decoration: none; }
+/* A route stays on one line; a flow's sentence may wrap. */
+#sidebar a .name { overflow-wrap: anywhere; }
+#sidebar a .name.route { white-space: nowrap; }
 #sidebar a:hover { background: #eee; }
 #sidebar .count { color: var(--muted); white-space: nowrap; font-weight: normal; }
 #sidebar .count.changed { color: var(--changed); font-weight: 600; }
@@ -81,17 +84,17 @@ section:first-child > h2 { border-top: 0; margin-top: 16px; }
 .flow { margin: 16px 0 28px; }
 .flow h3 { font-size: 15px; margin-bottom: 8px; }
 .flow .status { font-weight: normal; color: var(--muted); font-size: 13px; margin-left: 8px; }
-.frame { display: grid; grid-template-columns: 220px 1fr; gap: 16px; padding: 10px 0; border-top: 1px solid #eee; }
+.frame { display: grid; grid-template-columns: 200px 1fr; gap: 16px; padding: 10px 0; border-top: 1px solid #eee; }
 .frame .caption { color: #333; }
 .frame .caption .n { color: var(--muted); margin-right: 6px; }
 .frame .mismatch { display: block; margin-top: 4px; font-size: 12px; color: var(--muted); }
 .frame.changed .mismatch { color: var(--changed); font-weight: 600; }
 .thumbs { display: flex; gap: 12px; flex-wrap: wrap; }
-.thumb { display: block; width: 180px; text-align: center; font-size: 12px; color: var(--muted); background: none; border: 0; padding: 0; cursor: zoom-in; font: inherit; }
-.thumb img { display: block; width: 180px; height: 120px; object-fit: cover; object-position: top; border: 1px solid var(--line); background: #fff; margin-bottom: 4px; }
-body[data-viewport="phone"] .thumb img { width: 90px; height: 160px; margin-left: auto; margin-right: auto; }
-.thumb .blank { display: block; width: 180px; height: 120px; border: 1px solid var(--line); margin-bottom: 4px; background: repeating-linear-gradient(45deg, #f3f3f3 0 8px, #fff 8px 16px); }
-body[data-viewport="phone"] .thumb .blank { width: 90px; height: 160px; margin-left: auto; margin-right: auto; }
+.thumb { display: block; width: 240px; text-align: center; font-size: 12px; color: var(--muted); background: none; border: 0; padding: 0; cursor: zoom-in; font: inherit; }
+.thumb img { display: block; width: 240px; height: 160px; object-fit: cover; object-position: top; border: 1px solid var(--line); background: #fff; margin-bottom: 4px; }
+body[data-viewport="phone"] .thumb img { width: 120px; height: 220px; margin-left: auto; margin-right: auto; }
+.thumb .blank { display: block; width: 240px; height: 160px; border: 1px solid var(--line); margin-bottom: 4px; background: repeating-linear-gradient(45deg, #f3f3f3 0 8px, #fff 8px 16px); }
+body[data-viewport="phone"] .thumb .blank { width: 120px; height: 220px; margin-left: auto; margin-right: auto; }
 .no-frames { color: var(--muted); padding: 10px 0; border-top: 1px solid #eee; }
 .error { margin: 8px 0 0; padding: 8px 12px; background: #fef2f2; color: var(--failed); border-left: 3px solid var(--failed); white-space: pre-wrap; font-family: ui-monospace, monospace; font-size: 12px; }
 .hidden { display: none !important; }
@@ -154,7 +157,7 @@ function render() {
       const id = slug(section, flow.flow);
       group.append(
         el("a", { href: "#" + id, class: flow.status !== "passed" ? "failed" : "" }, [
-          el("span", { class: "name" }, [flow.flow]),
+          el("span", { class: "name" + (flow.flow.startsWith("/") ? " route" : "") }, [flow.flow]),
           el("span", { class: "count" + (flow.changed ? " changed" : "") }, [
             flow.frames === 0 ? "–" : data.withMain ? flow.changed + "/" + flow.frames : String(flow.frames),
           ]),

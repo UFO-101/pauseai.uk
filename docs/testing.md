@@ -190,6 +190,12 @@ order, alongside the others:
 - A flaky flow, or a frame that differs between two runs of the same
   build, is fixed at once, never retried, skipped or masked. `retries`
   stays 0.
+- No fixed waits. A flow waits for the thing it's waiting for:
+  `tests/storyboard/settle.ts` has `hydrated` (mounted, fonts in, console
+  quiet), `scrollSettled` (a smooth scroll at rest) and `layoutSettled`
+  (images in, nothing moving). Playwright's own output (traces) is in
+  `test-results/playwright`, emptied every run; the review beside it in
+  `test-results/storyboard` is kept until the next review.
 - No stored baselines, and no gate on pixels. Main is the reference.
 
 ### What the storyboard covers

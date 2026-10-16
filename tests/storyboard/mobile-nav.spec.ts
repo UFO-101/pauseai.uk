@@ -1,5 +1,6 @@
 import type { Page } from "@playwright/test";
 import { BASE, expect, frame, test } from "./fixtures";
+import { hydrated } from "./settle";
 
 // The burger menu is the only navigation below 1024px, so a regression here
 // strands every phone visitor on whatever page they landed on. The classes
@@ -15,15 +16,7 @@ import { BASE, expect, frame, test } from "./fixtures";
 
 async function openPage(page: Page, path = "/donate") {
   await page.goto(`${BASE}${path}`, { waitUntil: "domcontentloaded" });
-  // Nav's effect sets --site-header-h, so this doubles as a hydration signal.
-  // Polled on a timer rather than the default requestAnimationFrame, which
-  // can stall in a backgrounded headless context and time out on a page that
-  // has in fact hydrated.
-  await page.waitForFunction(
-    () => getComputedStyle(document.documentElement).getPropertyValue("--site-header-h").trim() !== "",
-    undefined,
-    { polling: 200, timeout: 20_000 },
-  );
+  await hydrated(page);
 }
 
 const burger = (page: Page) => page.locator(".burger");

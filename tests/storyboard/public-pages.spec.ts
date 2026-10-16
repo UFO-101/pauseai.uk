@@ -2,6 +2,7 @@ import type { ConsoleMessage } from "@playwright/test";
 import { isStaffRoute } from "../../app/sitemap";
 import { ROUTES } from "../routes";
 import { BASE, expect, frame, test } from "./fixtures";
+import { hydrated } from "./settle";
 
 // Every public page on the site (tests/routes.ts), loaded in a real browser
 // against the production build, and pictured. This is the gate for page.tsx
@@ -62,15 +63,9 @@ for (const route of PUBLIC_ROUTES) {
     const response = await page.goto(`${BASE}${route}`, { waitUntil: "domcontentloaded" });
     expect(response?.status(), "status").toBe(200);
 
-    await page.waitForFunction(
-      () =>
-        getComputedStyle(document.documentElement).getPropertyValue("--site-header-h").trim() !== "" ||
-        !document.querySelector("header.site-header"),
-      undefined,
-      { polling: 200, timeout: 20_000 },
-    );
-    // Hydration warnings arrive shortly after mount, not at load.
-    await page.waitForTimeout(1500);
+    // Hydration warnings arrive just after mount, not at load: hydrated()
+    // waits for the mount, then for the console to go quiet.
+    await hydrated(page);
 
     await expect(page.locator("h1"), "exactly one <h1>").toHaveCount(1);
     if (FIXTURE_TEXT[route]) await expect(page.getByText(FIXTURE_TEXT[route])).toBeVisible();
