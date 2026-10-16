@@ -1,6 +1,6 @@
 /* ========================================================================
    WHAT IS PAUSEAI UK PAGE
-   Loaded after globals.css. Its title band is
+   Loaded after the base styles. Its title band is
    PageHero; the body is straight prose. All selectors
    are scoped under `main.what-is-pauseai-uk`.
    ======================================================================== */
@@ -15,14 +15,14 @@
   max-width: var(--measure-page);
 }
 
-.what-is-pauseai-uk .intro-section p {
+.what-is-pauseai-uk .intro-section > p {
   font-size: 17px;
   line-height: 1.7;
   color: var(--text);
   margin: 0 0 18px;
 }
 
-.what-is-pauseai-uk .intro-section p em {
+.what-is-pauseai-uk .intro-section > p em {
   color: var(--text-secondary);
 }
 
@@ -63,14 +63,4 @@
   .what-is-pauseai-uk .intro-article {
     padding: 48px 0 64px;
   }
-}
-
-/* Registered company details at the foot of the prose, styled by the
-   global .registered-details fine-print block. The page's paragraph rule
-   above outranks it, so hand sizing back to the block here. */
-.what-is-pauseai-uk .intro-section .registered-details p {
-  font-size: inherit;
-  line-height: inherit;
-  color: inherit;
-  margin: 0;
 }

@@ -1,10 +1,10 @@
 import { pageMetadata } from "@/lib/metadata";
-import Link from "next/link";
 import EventList from "@/components/events/EventList";
 import { getEvents } from "@/lib/server/luma-calendar";
 import { site } from "@/lib/content/site";
 import EventsSection from "@/components/events/EventsSection";
 import PageHero from "@/components/ui/PageHero";
+import FindYourGroup from "./_components/FindYourGroup";
 
 // A short, readable address for our events, used on printed collateral. The calendar itself lives on Luma,
 // so this page lists it (via getEvents, cached for an hour) and links through to subscribe.
@@ -20,7 +20,7 @@ export default async function EventsPage() {
   const events = await getEvents("future");
   return (
     <>
-      <main className="events-page">
+      <main>
         <PageHero
           title="Events"
           lede="Meet other people worried about AI, write to your MP, and take action together. Everything here is free and open to everyone."
@@ -28,9 +28,7 @@ export default async function EventsPage() {
 
         <EventsSection heading="Upcoming events" calendar={{ label: "Subscribe on Luma →", href: site.social.luma }}>
           <EventList events={events} lumaUrl={site.social.luma} showAll />
-          <p className="events-page-note">
-            Looking for something near you? <Link href="/#local-groups">Find your local group</Link>.
-          </p>
+          <FindYourGroup />
         </EventsSection>
       </main>
     </>

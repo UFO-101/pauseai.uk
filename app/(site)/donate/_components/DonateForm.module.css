@@ -1,0 +1,190 @@
+/* The donate form: monthly or one-off, an amount, and the button to Stripe. */
+
+.form {
+  --form-surface: var(--white);
+  --form-track: var(--neutral-100);
+  --form-border: var(--neutral-200);
+  background: var(--form-surface);
+  border: 1px solid var(--form-border);
+  border-radius: 14px;
+  padding: 28px;
+  box-shadow:
+    0 1px 2px rgb(var(--ink-rgb) / 0.04),
+    0 8px 24px rgb(var(--ink-rgb) / 0.05);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.toggle {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  background: var(--form-track);
+  border: none;
+  border-radius: 10px;
+  padding: 4px;
+  gap: 2px;
+  margin-bottom: 22px;
+}
+.option {
+  appearance: none;
+  border: 1px solid transparent;
+  background: transparent;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-family: inherit;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: center;
+  transition:
+    background 0.18s ease,
+    color 0.18s ease,
+    box-shadow 0.18s ease,
+    border-color 0.18s ease;
+}
+.name {
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  letter-spacing: -0.005em;
+}
+.method {
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--muted);
+  letter-spacing: 0.01em;
+  line-height: 1.3;
+}
+.option:hover:not(.active) .name {
+  color: var(--text);
+}
+.option.active {
+  background: var(--form-surface);
+  border-color: var(--form-border);
+  box-shadow:
+    0 1px 2px rgb(var(--ink-rgb) / 0.06),
+    0 2px 4px rgb(var(--ink-rgb) / 0.04);
+}
+.option.active .name {
+  color: var(--text);
+}
+.option.active .method {
+  color: var(--text-secondary);
+}
+.amounts {
+  border: none;
+  padding: 0;
+  margin: 0 0 22px;
+}
+.amounts legend {
+  font-size: 11.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--muted);
+  margin-bottom: 10px;
+  padding: 0;
+}
+.amountGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+.amount {
+  appearance: none;
+  background: var(--form-surface);
+  border: 1px solid var(--form-border);
+  border-radius: 8px;
+  padding: 13px 6px;
+  font-family: inherit;
+  font-size: 15.5px;
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+  letter-spacing: -0.01em;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease,
+    color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+.amount:hover:not(.active) {
+  border-color: var(--neutral-400);
+  background: var(--neutral-50);
+}
+.amount.active {
+  background: color-mix(in srgb, var(--accent) 8%, var(--white));
+  border-color: var(--accent);
+  color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+@media (max-width: 420px) {
+  .amountGrid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+  }
+  .amount {
+    padding: 12px 4px;
+    font-size: 15px;
+    border-radius: 9px;
+  }
+}
+/* The donate form's own button: a little firmer than a Button. */
+.submit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease,
+    background 0.15s ease;
+  width: 100%;
+  padding: 16px 20px;
+  font-size: 15.5px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  line-height: 1.2;
+  border-radius: 9px;
+  background: var(--accent);
+  border: 1px solid var(--accent);
+  color: var(--white);
+  box-shadow:
+    0 1px 2px rgb(var(--ink-rgb) / 0.08),
+    0 2px 6px rgb(var(--rust-rgb) / 0.2);
+}
+.submit:hover {
+  background: var(--accent-strong);
+  border-color: var(--accent-strong);
+  box-shadow:
+    0 2px 4px rgb(var(--ink-rgb) / 0.1),
+    0 4px 10px rgb(var(--rust-rgb) / 0.28);
+  transform: translateY(-1px);
+}
+.submit:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 2px rgb(var(--ink-rgb) / 0.08);
+}
+
+.footnote {
+  margin-top: 10px;
+  font-size: 14px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+.footnote a {
+  color: var(--text-secondary);
+  text-decoration: underline;
+}
+.footnote a:hover {
+  color: var(--accent);
+}
+@media (max-width: 600px) {
+  .form {
+    padding: 24px 20px;
+    border-radius: 12px;
+  }
+}

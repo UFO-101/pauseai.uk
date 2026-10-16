@@ -1,6 +1,6 @@
 /* ========================================================================
    BLOG
-   Loaded after globals.css. Its title band is
+   Loaded after the base styles. Its title band is
    PageHero; index list and post prose are page-specific. All selectors are
    scoped under `main.blog`.
    ======================================================================== */

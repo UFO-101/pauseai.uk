@@ -1,0 +1,56 @@
+/* A page of plain prose: the privacy policy, the 404. */
+
+.page {
+  --container-width: 760px;
+  padding: 64px 0 80px;
+}
+.page h1 {
+  font-size: clamp(36px, 5vw, 52px);
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  margin: 8px 0 4px;
+  color: var(--text);
+}
+.meta {
+  color: var(--muted);
+  font-size: 14px;
+  margin: 0 0 32px;
+}
+.page h2 {
+  font-size: clamp(22px, 3vw, 28px);
+  line-height: 1.2;
+  margin: 40px 0 12px;
+  color: var(--text);
+}
+.page h3 {
+  font-family: "Inter", system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 18px;
+  margin: 24px 0 8px;
+  color: var(--text);
+}
+.page p,
+.page li {
+  color: var(--text-secondary);
+  font-size: 16px;
+  line-height: 1.7;
+}
+.page p {
+  margin: 0 0 16px;
+}
+.page ul {
+  margin: 0 0 16px;
+  padding-left: 22px;
+}
+.page li {
+  margin: 0 0 6px;
+}
+.page strong {
+  color: var(--text);
+  font-weight: 600;
+}
+
+/* Links in the prose stay underlined, not just on hover. */
+.page :global(.inline-link) {
+  text-decoration: underline;
+}

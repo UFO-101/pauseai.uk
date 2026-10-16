@@ -17,7 +17,7 @@ describe("DonateForm", () => {
     await expect.element(page.getByRole("radio", { name: /Monthly/ })).toHaveAttribute("aria-checked", "true");
     await expect
       .element(page.getByRole("button", { name: `£${DEFAULT_AMOUNT}`, exact: true }))
-      .toHaveClass("is-active");
+      .toHaveAttribute("aria-pressed", "true");
     await expect.element(page.getByRole("button", { name: `Donate £${DEFAULT_AMOUNT} a month` })).toBeVisible();
   });
 

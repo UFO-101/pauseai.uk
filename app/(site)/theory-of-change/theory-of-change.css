@@ -1,6 +1,6 @@
 /* ========================================================================
    THEORY OF CHANGE PAGE
-   Loaded after globals.css. Its title band, foreword and closing are
+   Loaded after the base styles. Its title band, foreword and closing are
    components (PageHero, Foreword, Closing); only the article body needs
    page-specific styling. All selectors are scoped under
    `main.theory-of-change`.

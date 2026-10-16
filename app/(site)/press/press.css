@@ -1,6 +1,6 @@
 /* ========================================================================
    PRESS PAGE
-   Loaded after globals.css. Its title band is
+   Loaded after the base styles. Its title band is
    PageHero; the rest is page-specific. All selectors
    are scoped under `main.press`.
    ======================================================================== */

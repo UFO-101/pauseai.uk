@@ -3,7 +3,6 @@ import localFont from "next/font/local";
 import { Lato } from "next/font/google";
 import "@/styles/tokens.css";
 import "@/styles/base.css";
-import "./globals.css";
 import Footer from "@/components/layout/Footer";
 import CookieConsent from "@/components/layout/CookieConsent";
 import FooterYear from "@/components/layout/FooterYear";
