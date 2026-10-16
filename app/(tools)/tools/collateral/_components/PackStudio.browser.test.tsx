@@ -12,6 +12,7 @@ import { LIBRARY_PHOTOS } from "@/lib/collateral/photos";
 import { designToData, newDesign } from "./designState";
 import type { LintIssue } from "@/lib/collateral/lint";
 import type { RenderOptions } from "@/lib/collateral/render";
+import { nextCall } from "@/tests/browser/next-call";
 import PackStudio from "./PackStudio";
 
 const STORAGE_KEY = "pauseai-collateral-pack-v1";
@@ -74,8 +75,6 @@ async function openFile(container: HTMLElement, file: File | null) {
 }
 
 describe("PackStudio", () => {
-  // Building every format before the zip is slow on a busy CI runner, so these two tests get longer than the
-  // 15s default: their own 15s wait for the zip has to fit inside it.
   it("shows every ticked format with its checks, and downloads them all in a zip with print PDFs", async () => {
     const { container } = await render(<PackStudio events={[]} />);
     await ready(container);
@@ -83,27 +82,28 @@ describe("PackStudio", () => {
       .poll(() => thumbs(container).every((t) => t.querySelector(".collateral-pack-badge")!.textContent !== ""))
       .toBe(true);
     await expect.element(page.getByText(/passed (its|the) checks|need a look/)).toBeVisible();
+    // Building every format is slow on a busy CI runner: wait for the zip itself.
+    const zipped = nextCall(downloads.zip);
     await page.getByRole("button", { name: /Download \d+ formats \(\.zip\)/ }).click();
-    await expect.poll(() => downloads.zip.mock.calls.length, { timeout: 15000 }).toBe(1);
-    const [files, name] = downloads.zip.mock.lastCall!;
+    const [files, name] = await zipped;
     expect(name).toBe("pauseai-event-pack.zip");
     const names = (files as { name: string }[]).map((f) => f.name);
     expect(names).toContain(`${DEFAULT_PACK_FORMAT_IDS[0]}.png`);
     expect(names.some((n) => n.endsWith("-print.pdf"))).toBe(names.some((n) => /^a\d/.test(n)));
-  }, 30_000);
+  });
 
   it("explains a failed download, and says Preparing… meanwhile", async () => {
     let fail: (e: Error) => void = () => {};
-    downloads.zip.mockReturnValueOnce(new Promise((_, j) => (fail = j)));
+    // Failed only once the zip is asked for, or the rejection goes unhandled meanwhile.
+    const zipping = nextCall(downloads.zip, () => new Promise((_, j) => (fail = j)));
     const { container } = await render(<PackStudio events={[]} />);
     await ready(container);
     await page.getByRole("button", { name: /Download \d+ formats/ }).click();
     await expect.element(page.getByRole("button", { name: "Preparing…" })).toBeDisabled();
-    // Fail only once the zip is asked for, or the rejection goes unhandled meanwhile.
-    await expect.poll(() => downloads.zip.mock.calls.length, { timeout: 15000 }).toBe(1);
+    await zipping;
     fail(new Error("no"));
     await expect.element(page.getByText("Could not create the pack. Try with fewer formats.")).toBeVisible();
-  }, 30_000);
+  });
 
   it("picks formats, adjusting one at a time", async () => {
     const { container } = await render(<PackStudio events={[]} />);

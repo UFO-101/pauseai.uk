@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { render } from "vitest-browser-react";
 import { page } from "vitest/browser";
+import { nextCall } from "@/tests/browser/next-call";
 import QrGenerator from "./QrGenerator";
 
 // Downloads go through these; the tests check what would be saved.
@@ -150,28 +151,20 @@ describe("QrGenerator", () => {
   it("shares the PNG on phones, quietly when the share sheet is closed", async () => {
     const share = vi.fn();
     vi.stubGlobal("navigator", { ...navigator, canShare: () => true, share });
-    // The share sheet opens once a 2048px PNG is drawn and encoded, which on
-    // a busy machine takes longer than a poll waits. So each step waits for
-    // the share itself, as long as the test may take, then settles it.
-    const shareSheet = (outcome: () => Promise<void>) =>
-      new Promise<ShareData>((opened) =>
-        share.mockImplementationOnce((data: ShareData) => {
-          opened(data);
-          return outcome();
-        }),
-      );
+    // The share sheet opens once a 2048px PNG is drawn and encoded, which on a
+    // busy machine takes longer than a poll waits: wait for the share itself.
     await render(<QrGenerator />);
 
-    const shared = shareSheet(async () => {});
+    const shared = nextCall(share, async () => {});
     await page.getByRole("button", { name: "Share" }).click();
-    expect((await shared).files![0].name).toBe("pauseai-qr-pauseai-uk.png");
+    expect(((await shared)[0] as ShareData).files![0].name).toBe("pauseai-qr-pauseai-uk.png");
 
-    const closed = shareSheet(() => Promise.reject(new DOMException("closed", "AbortError")));
+    const closed = nextCall(share, () => Promise.reject(new DOMException("closed", "AbortError")));
     await page.getByRole("button", { name: "Share" }).click();
     await closed;
     expect(document.querySelector(".collateral-message")).toBeNull();
 
-    const failed = shareSheet(() => Promise.reject(new Error("failed")));
+    const failed = nextCall(share, () => Promise.reject(new Error("failed")));
     await page.getByRole("button", { name: "Share" }).click();
     await failed;
     await expect.element(page.getByText("Could not share the image. Download it instead.")).toBeVisible();
