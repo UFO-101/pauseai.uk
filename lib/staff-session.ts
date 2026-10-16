@@ -17,3 +17,14 @@ export const LOGIN_BROWSER_COOKIE = "staff_login";
 
 /** Staff paths that work without a session: the login page and the two steps of logging in. */
 export const OPEN_STAFF_PATHS = [LOGIN_PATH, "/staff/api/login", LOGIN_LINK_PATH];
+
+/**
+ * An absolute URL on this site for a redirect. Built from the deploy's own
+ * origin, fixed at build time (SITE_ORIGIN in next.config.ts): on Netlify
+ * the request's own URL has the main--pauseaiuk.netlify.app host, where
+ * none of the pauseai.uk cookies are. Only a build without it, such as a
+ * local one, uses the request's origin.
+ */
+export function siteUrl(path: string, request: Request): URL {
+  return new URL(path, process.env.SITE_ORIGIN || request.url);
+}
