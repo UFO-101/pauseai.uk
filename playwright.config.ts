@@ -1,3 +1,4 @@
+import os from "node:os";
 import { defineConfig, devices } from "@playwright/test";
 import { fixtureEnv, LOCAL_URL, OUTBOX_DIR, SERVER_DATABASE, TEST_MP_EMAIL } from "./tests/fixture-env.mjs";
 
@@ -23,6 +24,10 @@ export default defineConfig({
   // Every flow stands alone, on its own database, so they can run in any
   // order and alongside each other.
   fullyParallel: true,
+  // Playwright's default is half the cores, which is 2 on GitHub's standard
+  // 4-core runner. There the flows wait on the server and the database more
+  // than on the CPU, so CI uses all 4. Anywhere else, the default.
+  workers: process.env.CI && os.cpus().length === 4 ? 4 : undefined,
   forbidOnly: !!process.env.CI,
   // A flaky flow is fixed, not retried (docs/testing.md).
   retries: 0,
