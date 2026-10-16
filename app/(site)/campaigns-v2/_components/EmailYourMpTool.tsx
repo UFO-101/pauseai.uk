@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { copy } from "@/lib/content/email-your-mp";
 import { campaignBySlug, campaignPath, campaignToMoveTo, isDone, type Mp, type MpStatuses } from "@/lib/email-your-mp";
 import type { Place } from "@/lib/events";
-import { TEST_MPS } from "@/lib/test-mps";
+import { TEST_MPS, type TestMp } from "@/lib/test-mps";
 import { readLookup, saveLookup } from "./draft";
 import MpCard from "./MpCard";
 import styles from "./EmailYourMp.module.css";
@@ -29,6 +29,15 @@ type Props = {
   /** Lists the test MPs' postcodes under the form: for sites other than production. */
   showTestMps?: boolean;
 };
+
+/** "ZZ9 9ZS (Signy McTestface MP): signed “Regulate AI developers now”". */
+function testMpLine(mp: TestMp): string {
+  const postcode = `${mp.postcode.slice(0, -3)} ${mp.postcode.slice(-3)}`;
+  const purpose = mp.noEmail
+    ? [copy.lookup.testMpNoEmail]
+    : Object.keys(mp.statuses).map((slug) => copy.lookup.testMpSigned(campaignBySlug(slug)!.title));
+  return `${postcode} (${mp.name})${purpose.length ? `: ${purpose.join(", ")}` : ""}`;
+}
 
 export default function EmailYourMpTool({ campaignSlug, showTestMps }: Props) {
   const campaign = campaignBySlug(campaignSlug)!;
@@ -119,11 +128,16 @@ export default function EmailYourMpTool({ campaignSlug, showTestMps }: Props) {
             />
           </label>
           {showTestMps && (
-            <small id={testPostcodes}>
-              {copy.lookup.testPostcodes(
-                TEST_MPS.map((mp) => `${mp.postcode.slice(0, -3)} ${mp.postcode.slice(-3)} (${mp.name})`).join(", "),
-              )}
-            </small>
+            <details id={testPostcodes} className={styles.testPostcodes}>
+              <summary>
+                {copy.lookup.testPostcodes} {testMpLine(TEST_MPS[0])}
+              </summary>
+              <ul>
+                {TEST_MPS.map((mp) => (
+                  <li key={mp.postcode}>{testMpLine(mp)}</li>
+                ))}
+              </ul>
+            </details>
           )}
         </div>
         <div className={styles.lookupButton}>

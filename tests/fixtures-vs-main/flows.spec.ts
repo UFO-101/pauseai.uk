@@ -68,15 +68,16 @@ const RUN = Date.now().toString(36);
 /** Logs in on `base`, opens `path`, and waits for its heading. */
 async function staffScreen(page: Page, base: string, path: string) {
   await logInAsStaff(page, base, outboxFor(base), `staff+${RUN}${path.replace(/\W+/g, "-")}@pauseai.uk`);
-  await expect(page).toHaveURL(`${base}/staff`);
-  if (path !== "/staff") await page.goto(`${base}${path}`);
+  // Logging in lands on /staff, which this branch sends on to the politicians list.
+  await expect(page).toHaveURL(/\/staff(\/politicians)?$/);
+  await page.goto(`${base}${path}`);
   await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
 }
 
 for (const [path, name] of [
-  ["/staff", "politicians"],
-  ["/staff/mp-check", "MP check"],
-  ["/staff/import", "import"],
+  ["/staff/politicians", "politicians"],
+  ["/staff/check-data", "check data"],
+  ["/staff/import-data", "import data"],
 ] as const) {
   test(`branch vs main: staff, ${name}`, async ({ page }, testInfo) => {
     await compareWithMain(page, testInfo, path, { prepare: (page, base) => staffScreen(page, base, path), masks });
@@ -87,7 +88,7 @@ for (const [path, name] of [
 // these tables' rows are masked: only the page around them is compared.
 for (const [path, name] of [
   ["/staff/letters", "letters"],
-  ["/staff/changes", "changes"],
+  ["/staff/audit-log", "audit log"],
 ] as const) {
   test(`branch vs main: staff, ${name}`, async ({ page }, testInfo) => {
     await compareWithMain(page, testInfo, path, {
@@ -100,7 +101,7 @@ for (const [path, name] of [
 test("branch vs main: staff, the test MP's page", async ({ page }, testInfo) => {
   await compareWithMain(page, testInfo, "the test MP's page", {
     prepare: async (page, base) => {
-      await staffScreen(page, base, "/staff");
+      await staffScreen(page, base, "/staff/politicians");
       await page.getByRole("link", { name: "Testy McTestface MP" }).click();
       await expect(page.getByRole("heading", { level: 1 })).toHaveText("Testy McTestface MP");
       await expect(page.getByRole("heading", { name: staffCopy.politician.detailsTitle })).toBeVisible();

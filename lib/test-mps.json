@@ -24,19 +24,7 @@
     }
   },
   {
-    "postcode": "ZZ99ZN",
-    "name": "Nomail McTestface MP",
-    "salutation": "Dr McTestface",
-    "constituency": "Nomailshire",
-    "place": {
-      "latitude": 51.4995,
-      "longitude": -0.1248
-    },
-    "noEmail": true,
-    "statuses": {}
-  },
-  {
-    "postcode": "ZZ99ZC",
+    "postcode": "ZZ99ZB",
     "name": "Backy McTestface MP",
     "salutation": "Mx McTestface",
     "constituency": "Backshire",
@@ -47,5 +35,17 @@
     "statuses": {
       "support-sobel-bill": "signed"
     }
+  },
+  {
+    "postcode": "ZZ99ZN",
+    "name": "Nomail McTestface MP",
+    "salutation": "Dr McTestface",
+    "constituency": "Nomailshire",
+    "place": {
+      "latitude": 51.4995,
+      "longitude": -0.1248
+    },
+    "noEmail": true,
+    "statuses": {}
   }
 ]

@@ -52,7 +52,7 @@ describeWithDatabase("syncMps", () => {
       { airtable_id: null, name: "Testy McTestface MP", email: "test-mp@example.org", sitting: true, is_test: true },
     ]);
     expect(await testStatuses()).toEqual([
-      { test_postcode: "ZZ99ZC", campaign: "support-sobel-bill", status: "signed" },
+      { test_postcode: "ZZ99ZB", campaign: "support-sobel-bill", status: "signed" },
       { test_postcode: "ZZ99ZS", campaign: "regulate-letter-pm", status: "signed" },
     ]);
     const [sync] = await recentSyncs();

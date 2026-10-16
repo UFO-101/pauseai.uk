@@ -36,8 +36,8 @@ At the swap (stage 5 of the plan) these replace `/campaigns`:
   the one Airtable lists for that name. postcodes.io's own names can differ:
   it spells Montgomeryshire and Glyndŵr without the circumflex. A test
   MP's postcode finds them (`lib/test-mps.json`: ZZ99ZZ; ZZ99ZS, who
-  has signed the letter to the PM; ZZ99ZN, who has no email; and ZZ99ZC,
-  who signed ControlAI's letter backing the bill).
+  has signed the letter to the PM; ZZ99ZB, who signed ControlAI's letter
+  backing the bill; and ZZ99ZN, who has no email).
 - `lib/server/airtable.ts`: the only file that talks to Airtable. Reads the
   MPs, and the signatories for their import.
 - `lib/mps.ts`, `lib/server/mp-sync.ts`: the nightly copy of MPs from
@@ -71,20 +71,20 @@ whose Body is "House of Commons", except those ticked "No longer in
 office", are copied nightly into the `politicians` table, keyed by
 Airtable's record ID, by the scheduled function `netlify/functions/sync-mps/`,
 which calls `/api/cron/sync-mps`. Staff can also run it from
-`/staff/import`. If more than 20 MPs would change at once, the sync is held
+`/staff/import-data`. If more than 20 MPs would change at once, the sync is held
 there for a person to apply or discard. MPs who leave stay in the table,
 marked as no longer sitting, with their statuses. The sync also adds the
 test MPs, with `TEST_MP_EMAIL` as their email, and their statuses when it
 first adds them. Who has signed lives only in our database.
 
 After the first deploy with the database, run the sync once from
-`/staff/import`: until then the tool finds no MPs.
+`/staff/import-data`: until then the tool finds no MPs.
 
 ### The check against Parliament
 
 Nightly at 01:00 UTC, an hour after the sync, `netlify/functions/check-mps/` calls `/api/cron/check-mps`, which
 compares the sitting MPs with Parliament's Members API and keeps what it
-finds. `/staff/mp-check` shows the newest check, and can run one. It lists
+finds. `/staff/check-data` shows the newest check, and can run one. It lists
 constituencies Airtable doesn't spell as the official list does (no
 postcode would find their MP), constituencies only one side has, names that differ (not counting titles
 such as Dr or Sir), and emails Parliament doesn't list. Where Parliament
@@ -111,7 +111,7 @@ longer there. It never touches another campaign's statuses, or one set by
 anything else. Names nobody has, or several could have, are reported, not
 guessed. If the page, the PDF or the parse fails, or fewer than 5 names are
 found, nothing changes. Each run, failures included, is kept in
-`controlai_imports` and shown on `/staff/import`, which can also run it.
+`controlai_imports` and shown on `/staff/import-data`, which can also run it.
 The plan is `plans/sobel-bill-support.md`.
 
 Signing the letter doesn't count as having done the bill's campaign, which
@@ -174,7 +174,7 @@ changed what.
 ## Things to set up outside the code
 
 - After the first deploy with the database: run the MP sync, then the
-  signatory import, both from `/staff/import`, then check the
+  signatory import, both from `/staff/import-data`, then check the
   signatories list.
 
 - Postmark: a server, two sending domains (DKIM, Return-Path, DMARC), and

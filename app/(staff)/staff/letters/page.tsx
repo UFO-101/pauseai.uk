@@ -12,7 +12,7 @@ export default async function LettersPage({ searchParams }: { searchParams: Prom
   const letters = await recentLetters({ status: status in staffCopy.letters.status ? status : undefined });
   return (
     <main className={`container ${styles.page}`}>
-      <StaffHeader email={email} />
+      <StaffHeader email={email} current="letters" />
       <h1>{staffCopy.letters.title}</h1>
       <form className={styles.filters} method="get" action="/staff/letters">
         <label>

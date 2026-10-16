@@ -32,7 +32,7 @@ test("staff API routes and Server Actions, without a session, change nothing", a
   expect(logout.status()).toBe(401);
 
   // A Server Action is a POST to the page, naming the action in a header.
-  const action = await request.post(`${BASE}/staff`, {
+  const action = await request.post(`${BASE}/staff/politicians`, {
     headers: { "Next-Action": "0000000000000000000000000000000000000000" },
     multipart: { politicianId: "1", campaign: pm.slug, signed: "1" },
     maxRedirects: 0,
@@ -71,7 +71,7 @@ test("a login link works once, and only in the browser that asked for it", async
 
   // Opened in the browser that asked, it logs in straight away.
   await page.goto(link);
-  await expect(page).toHaveURL(`${BASE}/staff`);
+  await expect(page).toHaveURL(`${BASE}/staff/politicians`);
   await expect(page.getByText(staffCopy.nav.signedInAs("once@pauseai.uk"))).toBeVisible();
 
   // And it only works once.
@@ -83,7 +83,8 @@ test("a login link works once, and only in the browser that asked for it", async
 
 test("staff log in, set a status that shows on /campaigns, and log out", async ({ page, request }) => {
   await logIn(page);
-  await expect(page).toHaveURL(`${BASE}/staff`);
+  // Plain /staff opens the politicians list, for now.
+  await expect(page).toHaveURL(`${BASE}/staff/politicians`);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(staffCopy.politicians.title);
   await expect(page.getByText(staffCopy.nav.signedInAs("staff@pauseai.uk"))).toBeVisible();
   await expect(page.getByRole("link", { name: "Testy McTestface MP" })).toBeVisible();
@@ -97,22 +98,22 @@ test("staff log in, set a status that shows on /campaigns, and log out", async (
   await page.goto(`${BASE}/campaigns`);
   await expect(page.locator("#signatories").getByText("Polly Placeholder")).toBeVisible();
 
-  await page.goto(`${BASE}/staff/changes`);
+  await page.goto(`${BASE}/staff/audit-log`);
   await expect(page.getByRole("cell", { name: "set status" }).first()).toBeVisible();
 
-  await page.goto(`${BASE}/staff/import`);
+  await page.goto(`${BASE}/staff/import-data`);
   await expect(page.getByText(staffCopy.syncs.status.applied).first()).toBeVisible();
 
   // The fixture ControlAI letter is signed by Polly Placeholder MP, so the bill's column says so.
   await page.getByRole("button", { name: staffCopy.controlAi.importNow }).click();
-  await expect(page.getByRole("status")).toContainText("6");
+  await expect(page.getByText(/6 names/)).toBeVisible();
   await page.goto(`${BASE}/staff`);
   await expect(page.getByRole("row").filter({ hasText: "Polly Placeholder" })).toContainText(
     staffCopy.politicians.signedControlAi,
   );
 
   // The fixture Airtable gives Polly Placeholder an email Parliament doesn't list.
-  await page.goto(`${BASE}/staff/mp-check`);
+  await page.goto(`${BASE}/staff/check-data`);
   await page.getByRole("button", { name: staffCopy.check.checkNow }).click();
   const blake = page.getByRole("row").filter({ hasText: "Cities of London and Westminster" });
   await expect(blake).toContainText(staffCopy.check.kinds.email);

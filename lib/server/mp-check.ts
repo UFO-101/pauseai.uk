@@ -7,7 +7,7 @@ import { outsideFetch } from "./outside-fetch";
 
 // Compares the MPs copied from Airtable with Parliament's, nightly
 // (app/api/cron/check-mps) or when staff ask, and keeps what it finds for
-// /staff/mp-check. It changes nothing else.
+// /staff/check-data. It changes nothing else.
 
 // Parliament's API answers 429 when asked too much at once, which ~650
 // contact lookups can do. Wait as it says (Retry-After, in seconds), or

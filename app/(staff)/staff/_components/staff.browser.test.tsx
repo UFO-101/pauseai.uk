@@ -13,6 +13,7 @@ import MpCheckList from "./MpCheckList";
 import PoliticianFilters from "./PoliticianFilters";
 import PoliticianForm from "./PoliticianForm";
 import PoliticianTable from "./PoliticianTable";
+import ResultBox, { OPEN_UP_TO } from "./ResultBox";
 import StaffHeader from "./StaffHeader";
 import SyncList from "./SyncList";
 
@@ -49,11 +50,15 @@ function action() {
 
 describe("StaffHeader", () => {
   it("links the staff pages, says who's logged in, and logs out with a POST", async () => {
-    await render(<StaffHeader email="jo@pauseai.uk" />);
-    await expect.element(page.getByRole("link", { name: staffCopy.nav.politicians })).toHaveAttribute("href", "/staff");
+    await render(<StaffHeader email="jo@pauseai.uk" current="politicians" />);
+    await expect.element(page.getByText(staffCopy.nav.title)).toBeVisible();
+    await expect.element(page.getByRole("link", { name: staffCopy.nav.title })).not.toBeInTheDocument();
+    // The current page is bold, not a link.
+    await expect.element(page.getByRole("link", { name: staffCopy.nav.politicians })).not.toBeInTheDocument();
+    expect(page.getByText(staffCopy.nav.politicians).element().tagName).toBe("STRONG");
     await expect
       .element(page.getByRole("link", { name: staffCopy.nav.import }))
-      .toHaveAttribute("href", "/staff/import");
+      .toHaveAttribute("href", "/staff/import-data");
     await expect
       .element(page.getByRole("link", { name: staffCopy.nav.letters }))
       .toHaveAttribute("href", "/staff/letters");
@@ -76,7 +81,7 @@ describe("PoliticianFilters", () => {
       .toHaveValue(pm.slug);
     const form = page.getByRole("searchbox").element().closest("form")!;
     expect(form.getAttribute("method")).toBe("get");
-    expect(form.getAttribute("action")).toBe("/staff");
+    expect(form.getAttribute("action")).toBe("/staff/politicians");
   });
 });
 
@@ -106,8 +111,9 @@ describe("PoliticianTable", () => {
     const polly = page.getByRole("form", { name: `${pm.title}: Polly Placeholder` });
     await expect.element(polly.getByText(new RegExp(`^${staffCopy.statuses.signed}`))).toBeVisible();
     await expect.element(polly.getByText("2026-10-01")).toBeVisible();
+    // Not signed: just the button, no status to read against it.
     const testy = page.getByRole("form", { name: `${pm.title}: Testy McTestface MP` });
-    await expect.element(testy.getByText(staffCopy.statuses.none)).toBeVisible();
+    await expect.element(testy.getByText(staffCopy.statuses.signed)).not.toBeInTheDocument();
 
     // The bill's column says who signed ControlAI's letter, with no button.
     await expect.element(page.getByText(staffCopy.politicians.signedControlAi)).toBeVisible();
@@ -142,7 +148,7 @@ describe("ControlAiImportStatus", () => {
 
   it("says what the newest run did", async () => {
     await render(<ControlAiImportStatus run={run(ok)} />);
-    await expect.element(page.getByText(/86 nomina/)).toBeVisible();
+    await expect.element(page.getByText(/86 names/)).toBeVisible();
     await expect.element(page.getByRole("table")).not.toBeInTheDocument();
   });
 
@@ -171,6 +177,31 @@ describe("ControlAiImportStatus", () => {
   it("says when there's been no run", async () => {
     await render(<ControlAiImportStatus />);
     await expect.element(page.getByText(staffCopy.controlAi.never)).toBeVisible();
+  });
+});
+
+describe("ResultBox", () => {
+  it("is one line without detail, and folds detail under the line, open only when short", async () => {
+    const { rerender } = await render(<ResultBox summary="Just a line" />);
+    await expect.element(page.getByRole("status")).toHaveTextContent("Just a line");
+    await expect.element(page.getByRole("group")).not.toBeInTheDocument();
+
+    await rerender(
+      <ResultBox summary="Short" lines={OPEN_UP_TO} actions={<button>Act</button>}>
+        <p>Detail</p>
+      </ResultBox>,
+    );
+    expect((page.getByRole("group").element() as HTMLDetailsElement).open).toBe(true);
+    await expect.element(page.getByText("Detail")).toBeVisible();
+    await expect.element(page.getByRole("button", { name: "Act" })).toBeVisible();
+
+    await rerender(
+      <ResultBox summary="Long" lines={OPEN_UP_TO + 1} error>
+        <p>Detail</p>
+      </ResultBox>,
+    );
+    expect((page.getByRole("group").element() as HTMLDetailsElement).open).toBe(false);
+    await expect.element(page.getByText("Detail")).not.toBeVisible();
   });
 });
 
@@ -223,6 +254,9 @@ describe("SyncList", () => {
     const { fn, sent } = action();
     await render(<SyncList syncs={[held, applied]} decide={fn} />);
     await expect.element(page.getByText(staffCopy.syncs.status.held)).toBeVisible();
+    await expect
+      .element(page.getByText(`${staffCopy.syncs.added} 1, ${staffCopy.syncs.removed} 1`, { exact: false }))
+      .toBeVisible();
     await expect.element(page.getByText("Seat 1: MP 1", { exact: true })).toBeVisible();
     await expect.element(page.getByText(`Seat 2: MP 2 (${staffCopy.politicians.noEmail})`)).toBeVisible();
     await expect.element(page.getByText(`${staffCopy.syncs.changed} (1)`)).toBeVisible();
@@ -232,6 +266,21 @@ describe("SyncList", () => {
     await page.getByRole("button", { name: staffCopy.syncs.discard }).click();
     await vi.waitFor(() => expect(sent).toHaveLength(1));
     expect(sent[0]).toEqual({ id: "3", decision: "discard" });
+  });
+
+  it("starts a sync with many changes folded to its status line, with the buttons still there", async () => {
+    const big: MpSync = {
+      ...held,
+      id: 9,
+      changes: { added: [1, 2, 3, 4, 5, 6].map((n) => mp(n)), removed: [], changed: [] },
+    };
+    await render(<SyncList syncs={[big, applied]} decide={() => {}} />);
+    const folds = page.getByRole("group").all();
+    expect(folds.map((fold) => (fold.element() as HTMLDetailsElement).open)).toEqual([false, true]);
+    await expect.element(page.getByText("Seat 1: MP 1", { exact: true })).not.toBeVisible();
+    await expect.element(page.getByRole("button", { name: staffCopy.syncs.apply })).toBeVisible();
+    await page.getByText(`${staffCopy.syncs.added} 6`, { exact: false }).click();
+    await expect.element(page.getByText("Seat 1: MP 1", { exact: true })).toBeVisible();
   });
 
   it("says when there are none", async () => {
@@ -268,6 +317,8 @@ describe("MpCheckList", () => {
         }}
       />,
     );
+    // Six problems is more than a few lines, so the box starts folded.
+    await page.getByText(staffCopy.check.problems(6), { exact: false }).click();
     const row = (constituency: string) => page.getByRole("row").filter({ hasText: constituency });
     await expect.element(row("Gone")).toHaveTextContent(`Gone${staffCopy.check.kinds.extra}Former MP`);
     await expect
@@ -289,7 +340,17 @@ describe("MpCheckList", () => {
 
   it("says when all is well, or when there's been no check", async () => {
     const { rerender } = await render(<MpCheckList check={{ at: "2026-10-14T02:00:00Z", problems: [] }} />);
-    await expect.element(page.getByText(staffCopy.check.allGood)).toBeVisible();
+    await expect.element(page.getByText(staffCopy.check.allGood, { exact: false })).toBeVisible();
+    await expect.element(page.getByRole("group")).not.toBeInTheDocument();
+    await rerender(
+      <MpCheckList
+        check={{
+          at: "2026-10-14T02:00:00Z",
+          problems: [{ kind: "missing", constituency: "New Seat", parliament: "N" }],
+        }}
+      />,
+    );
+    await expect.element(page.getByText(staffCopy.check.problems(1), { exact: false })).toBeVisible();
     await rerender(<MpCheckList />);
     await expect.element(page.getByText(staffCopy.check.never)).toBeVisible();
   });

@@ -68,7 +68,7 @@ describeWithDatabase("staff Server Actions", () => {
       date: new Date().toISOString().slice(0, 10),
       updatedBy: "jo@pauseai.uk",
     });
-    expect(revalidatePath).toHaveBeenCalledWith("/staff");
+    expect(revalidatePath).toHaveBeenCalledWith("/staff/politicians");
 
     await markSigned(form({ politicianId: String(id), campaign: "support-sobel-bill", signed: "1" }));
     expect(await statusCount()).toBe(1);
@@ -81,7 +81,7 @@ describeWithDatabase("staff Server Actions", () => {
     const id = await addTestPolitician();
     await importControlAiNow();
     expect((await getPolitician(id))!.statuses["support-sobel-bill"]).toMatchObject({ updatedBy: "controlai" });
-    expect(revalidatePath).toHaveBeenCalledWith("/staff/import");
+    expect(revalidatePath).toHaveBeenCalledWith("/staff/import-data");
 
     const error = vi.spyOn(console, "error").mockImplementation(() => {});
     server.use(http.get("https://controlai.org/uk-pm-letter", () => new HttpResponse(null, { status: 500 })));
@@ -105,13 +105,13 @@ describeWithDatabase("staff Server Actions", () => {
   it("checkNow checks the MPs against Parliament's", async () => {
     await checkNow();
     expect(await query("SELECT count(*)::int AS n FROM mp_checks")).toEqual([{ n: 1 }]);
-    expect(revalidatePath).toHaveBeenCalledWith("/staff/mp-check");
+    expect(revalidatePath).toHaveBeenCalledWith("/staff/check-data");
   });
 
   it("syncNow copies the MPs from Airtable", async () => {
     await syncNow();
     expect(await query("SELECT count(*)::int AS n FROM politicians WHERE airtable_id IS NOT NULL")).toEqual([{ n: 2 }]);
-    expect(revalidatePath).toHaveBeenCalledWith("/staff/import");
+    expect(revalidatePath).toHaveBeenCalledWith("/staff/import-data");
   });
 
   it("decideSync applies or discards a held sync, and ignores a bad form", async () => {
@@ -129,7 +129,7 @@ describeWithDatabase("staff Server Actions", () => {
 
   it("importFromAirtable imports and shows the counts, or says Airtable isn't set up", async () => {
     vi.stubEnv("AIRTABLE_TOKEN", "");
-    expect(await expectRedirect(importFromAirtable)).toBe("/staff/import?unconfigured=1");
+    expect(await expectRedirect(importFromAirtable)).toBe("/staff/import-data?unconfigured=1");
 
     vi.stubEnv("AIRTABLE_TOKEN", "token");
     server.use(
@@ -137,6 +137,6 @@ describeWithDatabase("staff Server Actions", () => {
         HttpResponse.json({ records: [{ id: "r", fields: { "Full name or Title": "Lord X" } }] }),
       ),
     );
-    expect(await expectRedirect(importFromAirtable)).toBe("/staff/import?matched=0&added=1&alreadySet=0");
+    expect(await expectRedirect(importFromAirtable)).toBe("/staff/import-data?matched=0&added=1&alreadySet=0");
   });
 });

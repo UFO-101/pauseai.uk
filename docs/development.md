@@ -107,7 +107,7 @@ This:
 - adds the test MPs, whose letters go to `TEST_MP_EMAIL`: Testy McTestface
   MP, found by postcode ZZ99ZZ, and Signy McTestface MP (ZZ99ZS), who has
   already signed the letter to the PM. Nomail McTestface MP (ZZ99ZN) has no
-  email, to see what the form says then. Backy McTestface MP (ZZ99ZC) signed
+  email, to see what the form says then. Backy McTestface MP (ZZ99ZB) signed
   ControlAI's letter backing the Sobel bill, so the bill's letter thanks
   them. They're listed in `lib/test-mps.json`.
 
@@ -205,7 +205,7 @@ your machine. You need no keys:
 
 To see a campaign's page move on to the next, look up ZZ99ZS instead: that
 MP has already signed, so the letter to the PM moves on to the bill. ZZ99ZN
-finds an MP with no email, so there's no letter to write. ZZ99ZC, on the
+finds an MP with no email, so there's no letter to write. ZZ99ZB, on the
 bill's page, finds an MP who signed ControlAI's letter backing it. Outside
 production, the form lists the test postcodes under it.
 
@@ -263,7 +263,7 @@ Delete `DATA_FIXTURES` from `.env.local`, and fill in the keys you need. Each is
   your own pauseai.uk address.
 - **Airtable.** `AIRTABLE_TOKEN` needs only read access to the "UK
   Parliamentarians" table. It's for the MP sync and the one-off signatory
-  import at `/staff/import`.
+  import at `/staff/import-data`.
 
 ## 5. Things that run on a schedule, or from outside
 

@@ -154,7 +154,7 @@ test("ZZ99ZS has signed, so the PM letter's page moves on to the bill's, to writ
   page,
 }) => {
   await page.goto(`${BASE}/campaigns-v2`);
-  await expect(page.getByText(/ZZ9 9ZS/)).toBeVisible();
+  await expect(page.getByText(/ZZ9 9ZZ/)).toBeVisible();
   await page.getByLabel(copy.lookup.nameLabel).fill("Jane Smith");
   await page.getByLabel(copy.lookup.postcodeLabel).fill("ZZ9 9ZS");
   await page.getByRole("button", { name: copy.lookup.button }).click();
@@ -170,10 +170,10 @@ test("ZZ99ZS has signed, so the PM letter's page moves on to the bill's, to writ
   await expect(page.getByLabel(copy.form.subjectLabel)).toHaveValue(campaigns[1].subject);
 });
 
-test("ZZ99ZC signed ControlAI's letter backing the bill, so the bill's letter thanks them", async ({ page }) => {
+test("ZZ99ZB signed ControlAI's letter backing the bill, so the bill's letter thanks them", async ({ page }) => {
   await page.goto(`${BASE}/campaigns-v2/${campaigns[1].slug}`);
   await page.getByLabel(copy.lookup.nameLabel).fill("Jane Smith");
-  await page.getByLabel(copy.lookup.postcodeLabel).fill("ZZ9 9ZC");
+  await page.getByLabel(copy.lookup.postcodeLabel).fill("ZZ9 9ZB");
   await page.getByRole("button", { name: copy.lookup.button }).click();
 
   await expect(page).toHaveURL(`${BASE}/campaigns-v2/${campaigns[1].slug}/write`);

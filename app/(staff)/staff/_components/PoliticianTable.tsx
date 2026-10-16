@@ -55,13 +55,11 @@ export default function PoliticianTable({ politicians, markSigned }: Props) {
                       <input type="hidden" name="politicianId" value={p.id} />
                       <input type="hidden" name="campaign" value={c.slug} />
                       <input type="hidden" name="signed" value={status ? "" : "1"} />
-                      {status ? (
+                      {status && (
                         <span>
                           {staffCopy.statuses[status.status]}
                           {status.date && <span className={styles.muted}> {status.date}</span>}
                         </span>
-                      ) : (
-                        <span className={styles.muted}>{staffCopy.statuses.none}</span>
                       )}
                       <SubmitButton variant="ghost" size="small">
                         {status ? staffCopy.politicians.unmarkSigned : staffCopy.politicians.markSigned}

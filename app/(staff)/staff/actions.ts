@@ -24,7 +24,7 @@ export async function markSigned(form: FormData): Promise<void> {
     { status: parsed.signed ? "signed" : null, date: parsed.signed ? today : null, note: "" },
     email,
   );
-  revalidatePath("/staff");
+  revalidatePath("/staff/politicians");
 }
 
 export async function editSigner(form: FormData): Promise<void> {
@@ -39,13 +39,13 @@ export async function editSigner(form: FormData): Promise<void> {
 export async function syncNow(): Promise<void> {
   await requireStaff();
   await syncMps();
-  revalidatePath("/staff/import");
+  revalidatePath("/staff/import-data");
 }
 
 export async function checkNow(): Promise<void> {
   await requireStaff();
   await checkMps();
-  revalidatePath("/staff/mp-check");
+  revalidatePath("/staff/check-data");
 }
 
 /** Reads ControlAI's letter now. A failure is kept and shown on the page, like a nightly one. */
@@ -56,7 +56,7 @@ export async function importControlAiNow(): Promise<void> {
   } catch (error) {
     console.error("ControlAI import failed:", error);
   }
-  revalidatePath("/staff/import");
+  revalidatePath("/staff/import-data");
 }
 
 export async function decideSync(form: FormData): Promise<void> {
@@ -65,15 +65,15 @@ export async function decideSync(form: FormData): Promise<void> {
   const decision = form.get("decision");
   if (!id || (decision !== "apply" && decision !== "discard")) return;
   await decideHeldSync(id, decision, email);
-  revalidatePath("/staff/import");
+  revalidatePath("/staff/import-data");
 }
 
 export async function importFromAirtable(): Promise<void> {
   const { email } = await requireStaff();
   const token = process.env.AIRTABLE_TOKEN;
-  if (!token) redirect("/staff/import?unconfigured=1");
+  if (!token) redirect("/staff/import-data?unconfigured=1");
   const result = await importSignatories(token, email);
   redirect(
-    `/staff/import?${new URLSearchParams({ matched: String(result.matched), added: String(result.added), alreadySet: String(result.alreadySet) })}`,
+    `/staff/import-data?${new URLSearchParams({ matched: String(result.matched), added: String(result.added), alreadySet: String(result.alreadySet) })}`,
   );
 }

@@ -15,7 +15,7 @@ export default async function PoliticianPage({ params }: { params: Promise<{ id:
   const editable = politician.airtableId === null && !politician.isTest;
   return (
     <main className={`container ${styles.page}`}>
-      <StaffHeader email={email} />
+      <StaffHeader email={email} current="politicians" />
       <h1>{politician.name}</h1>
       <p className={styles.muted}>
         {[staffCopy.houses[politician.house], politician.constituency, politician.party, politician.email]

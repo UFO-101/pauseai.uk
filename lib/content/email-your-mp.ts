@@ -159,8 +159,11 @@ export const copy = {
     // Above the MP's name, once found.
     yourMp: "Your MP",
     mpOf: (constituency: string) => `MP for ${constituency}`,
-    // Outside production only, under the form: "ZZ9 9ZZ (Testy McTestface MP), ...".
-    testPostcodes: (mps: string) => `On this test site, you can only use these test postcodes: ${mps}`,
+    // Outside production only, under the form: the first test postcode, and
+    // the rest, with what each MP is for, behind an arrow.
+    testPostcodes: "On this test site, you can only use these test postcodes:",
+    testMpSigned: (campaign: string) => `signed “${campaign}”`,
+    testMpNoEmail: "no email",
     noEmail: "No email found for your MP.",
   },
   form: {
@@ -222,7 +225,7 @@ export const copy = {
     signedNote: {
       before: "Good news! Your MP is a public supporter of the Artificial Superintelligence Bill, they've signed the ",
       link: "ControlAI letter",
-      after: ". Please thank them for this, and encourage them to attend the debate of the Bill.",
+      after: ". Please still thank them for this, and encourage them to attend the debate of the Bill.",
     },
     letterThanks: "Thank you for signing the ControlAI letter to the Prime Minister in support of the Bill.",
   },

@@ -9,7 +9,7 @@ export default async function ChangesPage() {
   const { email } = await requireStaff();
   return (
     <main className={`container ${styles.page}`}>
-      <StaffHeader email={email} />
+      <StaffHeader email={email} current="changes" />
       <h1>{staffCopy.changes.title}</h1>
       <ChangesTable changes={await recentChanges()} />
     </main>
