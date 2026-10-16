@@ -27,12 +27,10 @@ export const staffCopy = {
     title: "PauseAI UK Staff",
     politicians: "Politicians",
     import: "Import data",
-    check: "Check data",
     changes: "Audit log",
     history: "Import history",
     letters: "Letters",
     logout: "Log out",
-    signedInAs: (email: string) => `Signed in as ${email}`,
   },
   houses: {
     commons: "House of Commons",

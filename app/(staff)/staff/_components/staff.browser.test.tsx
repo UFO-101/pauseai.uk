@@ -98,17 +98,25 @@ describe("StaffHeader", () => {
     await expect.element(page.getByRole("link", { name: staffCopy.nav.title })).not.toBeInTheDocument();
     // The current page is bold, not a link.
     await expect.element(page.getByRole("link", { name: staffCopy.nav.politicians })).not.toBeInTheDocument();
-    expect(page.getByText(staffCopy.nav.politicians).element().tagName).toBe("STRONG");
+    // The row of links is for wider screens than the test's, so it's read from the DOM.
+    const nav = document.querySelector("nav")!;
+    expect(nav.querySelector("strong")!.textContent).toBe(staffCopy.nav.politicians);
+    expect(nav.querySelector('a[href="/staff/import-data"]')!.textContent).toBe(staffCopy.nav.import);
+    expect(nav.querySelector('a[href="/staff/letters"]')!.textContent).toBe(staffCopy.nav.letters);
+    // On a phone, a dropdown instead: the current page, with the pages, the email and the way out under it once opened.
+    const menu = page.getByRole("group");
+    expect((menu.element() as HTMLDetailsElement).open).toBe(false);
+    await menu.getByText(staffCopy.nav.politicians, { exact: true }).first().click();
     await expect
-      .element(page.getByRole("link", { name: staffCopy.nav.import }))
+      .element(menu.getByRole("link", { name: staffCopy.nav.import }))
       .toHaveAttribute("href", "/staff/import-data");
-    await expect
-      .element(page.getByRole("link", { name: staffCopy.nav.letters }))
-      .toHaveAttribute("href", "/staff/letters");
-    await expect.element(page.getByText(staffCopy.nav.signedInAs("jo@pauseai.uk"))).toBeVisible();
-    const form = page.getByRole("button", { name: staffCopy.nav.logout }).element().closest("form")!;
+    await expect.element(menu.getByRole("link", { name: staffCopy.nav.import })).toBeVisible();
+    await expect.element(menu.getByText("jo@pauseai.uk")).toBeVisible();
+    const form = menu.getByRole("button", { name: staffCopy.nav.logout }).element().closest("form")!;
     expect(form.getAttribute("method")).toBe("post");
     expect(form.getAttribute("action")).toBe("/staff/api/logout");
+    // The wider screen's row has its own.
+    expect(document.querySelectorAll('form[action="/staff/api/logout"]')).toHaveLength(2);
   });
 });
 
