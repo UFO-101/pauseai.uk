@@ -43,11 +43,17 @@ describe("CSP reporting endpoint", () => {
 });
 
 describe("redirects", () => {
-  it("keeps old story links and malformed backlinks working", async () => {
+  it("keeps old story links, the campaigns-v2 links and malformed backlinks working", async () => {
     const config = await loadConfig({});
     const redirects = await config.redirects!();
     expect(redirects).toContainEqual({ source: "/stories", destination: "/people", permanent: true });
     expect(redirects).toContainEqual({ source: "/stories/:slug", destination: "/people/:slug", permanent: true });
+    expect(redirects).toContainEqual({ source: "/campaigns-v2", destination: "/campaigns", permanent: true });
+    expect(redirects).toContainEqual({
+      source: "/campaigns-v2/:path*",
+      destination: "/campaigns/:path*",
+      permanent: true,
+    });
     expect(redirects.filter((r) => !r.permanent)).toEqual([
       { source: "/protests", destination: "/protests/march-against-ai-extinction-nov-26", permanent: false },
     ]);

@@ -77,7 +77,7 @@ describe("LetterPreview", () => {
     await expect.element(page.getByText(copy.preview.replyNotice)).toBeVisible();
     await expect
       .element(page.getByRole("link", { name: copy.preview.edit }))
-      .toHaveAttribute("href", `/campaigns-v2/${letterToPm.slug}/write`);
+      .toHaveAttribute("href", `/campaigns/${letterToPm.slug}/write`);
   });
 
   it("shows what was typed as text, not markup", async () => {
@@ -103,7 +103,7 @@ describe("LetterPreview", () => {
     await expect.element(page.getByText(copy.preview.none)).toBeVisible();
     await expect
       .element(page.getByRole("link", { name: copy.preview.backToForm }))
-      .toHaveAttribute("href", `/campaigns-v2/${letterToPm.slug}#email-your-mp`);
+      .toHaveAttribute("href", `/campaigns/${letterToPm.slug}#email-your-mp`);
     await expect.element(send()).not.toBeInTheDocument();
   });
 
@@ -113,7 +113,7 @@ describe("LetterPreview", () => {
     await page.getByLabelText(copy.preview.consent).click();
     await send().click();
 
-    await vi.waitFor(() => expect(navigation.pushed).toEqual([`/campaigns-v2/${letterToPm.slug}/sent`]));
+    await vi.waitFor(() => expect(navigation.pushed).toEqual([`/campaigns/${letterToPm.slug}/sent`]));
     expect(sent).toEqual([
       {
         campaign: letterToPm.slug,

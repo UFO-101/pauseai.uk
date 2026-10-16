@@ -7,8 +7,8 @@ import type { SignatoryImportResult } from "@/lib/import-runs";
 import { keepingFailure, recordRun } from "./import-runs";
 import { setStatus } from "./politicians";
 
-// The one-off copy of the signatories from Airtable into the database (stage
-// 3 of plans/email-your-mp-v2.md). Safe to run more than once: it never
+// The one-off copy of the signatories from Airtable into the database. Safe
+// to run more than once: it never
 // overwrites a status already set, and finds the people it added last time.
 // Each run goes in the import log (import-runs.ts, as "import-signatories").
 

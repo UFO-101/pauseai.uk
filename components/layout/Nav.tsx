@@ -25,7 +25,8 @@ const LOCAL_GROUP_LINKS = [
   ["/west-of-england/", "West of England"],
 ];
 const CAMPAIGN_LINKS = [
-  ["/campaigns/", "Regulate AI developers now"],
+  ["/campaigns/regulate-letter-pm/", "Regulate AI developers now"],
+  ["/campaigns/support-sobel-bill/", "Support the Artificial Superintelligence Bill"],
   ["/future-of-workforce-inquiry/", "Future of the Workforce Inquiry"],
 ];
 

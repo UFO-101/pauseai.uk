@@ -16,8 +16,8 @@ export type Mp = {
 
 export type { MpStatuses };
 
-/** Where the campaigns' pages are. Stage 5 of the plan moves them to /campaigns. */
-const CAMPAIGNS_PATH = "/campaigns-v2";
+/** Where the campaigns' pages are. */
+const CAMPAIGNS_PATH = "/campaigns";
 
 export function campaignPath(campaign: Campaign): string {
   return `${CAMPAIGNS_PATH}/${campaign.slug}`;

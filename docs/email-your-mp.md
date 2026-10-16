@@ -1,33 +1,35 @@
 # Email your MP
 
-Version 2 of the tool, built at `/campaigns-v2` (plan:
-`plans/email-your-mp-v2.md`). This page says where its code is and which
-settings it needs.
+The campaign pages at `/campaigns`, and the tool on them that writes to
+your MP. This page says where its code is and which settings it needs.
 
 ## Pages
 
-- `/campaigns-v2/<slug>`: one campaign's page, laid out like today's
-  `/campaigns`, with the form where its iframe is. Each is its own
-  `page.tsx`, with its own words, built from the sections in
-  `app/(site)/campaigns-v2/_components/` (`CampaignHero`, `CampaignContext`,
-  `CampaignDocs`, `EmailYourMpSection`, `CampaignQr`). If the MP has already done
+- `/campaigns/<slug>`: one campaign's page. Each is its own `page.tsx`,
+  with its own words, built from the sections in
+  `app/(site)/campaigns/_components/` (`CampaignHero`, `CampaignContext`,
+  `CampaignDocs`, `EmailYourMpSection`, and `Signatories` for the letter to
+  the PM). If the MP has already done
   that campaign, the lookup goes to the page of the first one they haven't
   instead, with the name, address and postcode filled in and a note above its
   heading saying why (the campaign's `movedOn`, in `MovedOnNotice`). The
   last campaign has no `done` status, so nobody has done it and there's
   always one to move on to. The Sobel bill is that one: everyone is asked
   to go to its debate.
-- `/campaigns-v2`: redirects to the first campaign.
+- `/campaigns`: redirects to the first campaign. The nav links each
+  campaign's page.
+- `/campaigns-v2` and everything under it, where the tool was built,
+  redirect to the same path under `/campaigns` (`next.config.ts`).
 
-At the swap (stage 5 of the plan) these replace `/campaigns`:
 `CAMPAIGNS_PATH` in `lib/email-your-mp.ts` says where they are.
 
 ## Code
 
 - `lib/content/email-your-mp.ts`: the campaigns in priority order, with what
   the form and the server need (letter, subject, "already done" wording,
-  attachments), and every word the tool shows. Mostly placeholders for now.
-  A new campaign also needs its page, `app/(site)/campaigns-v2/<slug>/page.tsx`.
+  attachments), and every word the tool shows. A new campaign also needs
+  its page, `app/(site)/campaigns/<slug>/page.tsx`, and a link in the nav
+  (`components/layout/Nav.tsx`).
 - `lib/email-your-mp.ts`: the pages' paths, which campaign to move on to,
   and drafting the letter, shared by the form and the server.
 - `lib/server/find-mp.ts`: postcode to MP, from the database. postcodes.io
@@ -55,7 +57,7 @@ At the swap (stage 5 of the plan) these replace `/campaigns`:
 - `lib/letter-format.ts`: what a letter may hold (paragraphs, bold, italic,
   bullet lists), checked on the server, which writes the letter's HTML and
   plain text itself. The form's editor is Tiptap
-  (`app/(site)/campaigns-v2/_components/LetterEditor.tsx`), limited to the
+  (`app/(site)/campaigns/_components/LetterEditor.tsx`), limited to the
   same. Campaign letters are written with a little markup: `**bold**`,
   `_italic_`, and lines starting `- ` for bullets. A campaign's letter ends
   with the sender's name, which they can edit. The first line of their
@@ -66,7 +68,7 @@ At the swap (stage 5 of the plan) these replace `/campaigns`:
   letter is sent as they leave it.
 - `lib/server/postmark.ts`: the only file that talks to Postmark.
 - `lib/server/postmark-webhooks.ts`: bounces, spam complaints and replies.
-- `app/(site)/campaigns-v2/`: the pages and the form.
+- `app/(site)/campaigns/`: the pages and the form.
 - `app/api/email-your-mp/`: the form's lookup and send requests.
 
 ## The import log

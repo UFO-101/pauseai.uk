@@ -8,7 +8,7 @@ export const metadata = {
   ...pageMetadata({
     title: copy.write.title,
     description: copy.write.title,
-    path: "/campaigns-v2/support-sobel-bill/write",
+    path: "/campaigns/regulate-letter-pm/write",
   }),
   robots: { index: false, follow: false },
 };
@@ -16,7 +16,7 @@ export const metadata = {
 export default function Page() {
   return (
     <LetterStep title={copy.write.title}>
-      <LetterWrite campaignSlug="support-sobel-bill" />
+      <LetterWrite campaignSlug="regulate-letter-pm" />
     </LetterStep>
   );
 }

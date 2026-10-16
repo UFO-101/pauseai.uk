@@ -1,8 +1,8 @@
 import SignatoriesList from "./SignatoriesList";
 import { site } from "@/lib/content/site";
 
-// The MPs, peers and others who signed, from the database (stage 3 of
-// plans/email-your-mp-v2.md). The policy team edits them in /staff.
+// The MPs, peers and others who signed, from the database. The policy team
+// edits them in /staff.
 export default function Signatories() {
   return (
     <section id="signatories" className="campaigns-signatories">

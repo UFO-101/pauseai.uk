@@ -124,6 +124,10 @@ const nextConfig: NextConfig = {
       // (CopyLinkButton) predate the rename and must keep resolving.
       { source: "/stories", destination: "/people", permanent: true },
       { source: "/stories/:slug", destination: "/people/:slug", permanent: true },
+      // Email your MP's campaign pages were built at /campaigns-v2 before
+      // replacing /campaigns, and links to them were shared while testing.
+      { source: "/campaigns-v2", destination: "/campaigns", permanent: true },
+      { source: "/campaigns-v2/:path*", destination: "/campaigns/:path*", permanent: true },
       // There's no list of protests yet, so /protests goes to the current one.
       // Temporary, so browsers don't remember it when the next protest comes.
       { source: "/protests", destination: march.path, permanent: false },
