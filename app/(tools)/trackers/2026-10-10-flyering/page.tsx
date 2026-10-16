@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import FlyeringTracker, { type FlyeringRace } from "../_components/FlyeringTracker";
+import { now } from "@/lib/now";
 import { getRaceCounts } from "@/lib/server/luma-guests";
 import "../trackers.css";
 
@@ -36,5 +37,5 @@ export const metadata: Metadata = {
 export default async function FlyeringTrackerOct10Page() {
   const tags = RACE.stalls.map((stall) => stall.tag);
   const [result, afterResult] = await getRaceCounts(RACE.eventApiId, tags, RACE.open, RACE.close);
-  return <FlyeringTracker race={RACE} result={result} afterResult={afterResult} now={new Date()} />;
+  return <FlyeringTracker race={RACE} result={result} afterResult={afterResult} now={now()} />;
 }

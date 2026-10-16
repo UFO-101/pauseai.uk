@@ -1,9 +1,12 @@
-import { test, expect, type ConsoleMessage } from "@playwright/test";
+import type { ConsoleMessage } from "@playwright/test";
+import { isStaffRoute } from "../../app/sitemap";
 import { ROUTES } from "../routes";
+import { BASE, expect, frame, test } from "./fixtures";
 
-// Every page on the site (tests/routes.ts), loaded in a real browser against
-// the production build. This is the gate for page.tsx and layout.tsx, which
-// sit outside the Vitest coverage report (docs/testing.md).
+// Every public page on the site (tests/routes.ts), loaded in a real browser
+// against the production build, and pictured. This is the gate for page.tsx
+// and layout.tsx, which sit outside the Vitest coverage report
+// (docs/testing.md). The staff pages are in staff.spec.ts, after logging in.
 //
 // Hydration mismatches are silent by design here: app/layout.tsx sets
 // suppressHydrationWarning on both <html> and <body>, which hides the warning
@@ -13,7 +16,7 @@ import { ROUTES } from "../routes";
 // So the conditions for one exist and the usual alarm is muted. This fails on
 // console errors and on React's hydration messages, which arrive as warnings.
 
-const BASE = process.env.LOCAL_URL ?? "http://localhost:3100";
+const PUBLIC_ROUTES = ROUTES.filter((route) => !isStaffRoute(route));
 
 // Matched against the message text. Kept deliberately short — every entry here
 // is a thing we have decided not to look at, so it should have a reason.
@@ -29,12 +32,18 @@ const IGNORED = [
 
 const HYDRATION = /hydrat|did not match|server rendered HTML/i;
 
-// Same-site links already checked by an earlier page in this run. The
-// behaviour project runs one worker per file, so this is shared across routes.
+// Text a page shows only when it really renders tests/fixtures rather than
+// the live APIs, so the other flows are checking a known state.
+const FIXTURE_TEXT: Record<string, string> = {
+  "/events": "PauseAI London: Protest at Parliament",
+  "/manchester": "PauseAI Manchester Social",
+};
+
+// Same-site links already checked by an earlier page in this worker.
 const checkedLinks = new Map<string, number>();
 
-for (const route of ROUTES) {
-  test(`${route} loads cleanly`, async ({ page, request }) => {
+for (const route of PUBLIC_ROUTES) {
+  test(route, { tag: route === "/" ? "@phone" : [] }, async ({ page, request }) => {
     const problems: string[] = [];
 
     page.on("console", (message: ConsoleMessage) => {
@@ -64,6 +73,11 @@ for (const route of ROUTES) {
     await page.waitForTimeout(1500);
 
     await expect(page.locator("h1"), "exactly one <h1>").toHaveCount(1);
+    if (FIXTURE_TEXT[route]) await expect(page.getByText(FIXTURE_TEXT[route])).toBeVisible();
+    // The trackers count the fixture guest list, so they never show their "no access" fallback.
+    if (route.startsWith("/trackers/")) await expect(page.getByText(/check the Luma access settings/i)).toHaveCount(0);
+
+    await frame(page, route);
 
     // getAttribute rather than .href: links inside an SVG have an object there.
     const hrefs = await page.$$eval("a[href]", (links) =>

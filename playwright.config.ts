@@ -1,134 +1,66 @@
 import { defineConfig, devices } from "@playwright/test";
-import { fixtureEnv, OUTBOX_DIR } from "./tests/fixture-env.mjs";
+import { fixtureEnv, LOCAL_URL, OUTBOX_DIR, SERVER_DATABASE, TEST_MP_EMAIL } from "./tests/fixture-env.mjs";
 
-// Three suites:
+// The storyboard (tests/storyboard/, docs/testing.md): one suite that drives
+// the site's flows end to end on fixture data. Two ways to run it:
 //
-// - "public-vs-live-desktop" / "public-vs-live-mobile" compare the public pages of
-//   the live site against a local build, page by page, at desktop and phone
-//   widths (never /staff, which needs a login) — not a stored-baseline
-//   snapshot test. LIVE_URL/LOCAL_URL are overridable so it can also compare
-//   a preview deploy against local, or two arbitrary hosts. It needs the
-//   local build to use live data too, so `npm run test:public-vs-live` sets
-//   DATA_FIXTURES=0.
-// - "behaviour" drives the local build directly to assert interaction that a
-//   pixel diff cannot see: every route loading cleanly, scrolling, URL
-//   integrity, the mobile nav. It runs on fixture data (DATA_FIXTURES=1, see
-//   lib/outside-fetch.ts) so results don't depend on Luma or Airtable.
-// - "fixtures-vs-main-desktop" / "fixtures-vs-main-mobile" screenshot each
-//   page and each step of the flows on this branch and on main, both on
-//   fixture data, and attach the two and their diff to the report. Only the
-//   behaviour checks along the way can fail; a difference never does. Run by
-//   `npm run test:fixtures-vs-main`, which also builds and serves main
-//   (scripts/serve-main.mjs).
-const DATA_FIXTURES = process.env.DATA_FIXTURES ?? "1";
-const FIXTURES_VS_MAIN = process.env.FIXTURES_VS_MAIN === "1";
+// - `npm run test:storyboard`, the gate, here and in CI: the desktop project
+//   runs every flow, the phone project only those tagged @phone, and no
+//   screenshots are taken.
+// - `npm run storyboard` (scripts/storyboard.mjs), the review: both projects
+//   run every flow with screenshots (STORYBOARD_SHOTS=1), against main as
+//   well, and the reporter (tests/storyboard/report/) makes the page.
+const SHOTS = process.env.STORYBOARD_SHOTS === "1";
 
-// The build under test gets its own port, not the dev server's 3000, so a
-// running `npm run dev` is never mistaken for it. Set here, before the
-// workers start, so the tests (which read LOCAL_URL) inherit it.
-process.env.LOCAL_URL ??= "http://localhost:3100";
-const LOCAL_URL = process.env.LOCAL_URL;
+// Set here, before the workers start, so the tests inherit it.
+process.env.LOCAL_URL = LOCAL_URL;
 const LOCAL_PORT = new URL(LOCAL_URL).port || "3000";
 
-// The behaviour suite's own database, made fresh each time the server is
-// built. scripts/fresh-database.mjs prints its URL, for the build and the
-// server to use. Never the real one.
-const BEHAVIOUR_DATABASE = "pauseai_behaviour";
-// The fixtures-vs-main diff's branch build has its own, so it starts in the
-// same state as main's, whatever the behaviour tests have done to theirs.
-const FIXTURES_BRANCH_DATABASE = "pauseai_fixtures_branch";
-// The public-vs-live diff's local build has its own, with only the test MP in it:
-// enough for tests/public-vs-live/email-your-mp.spec.ts, without copying every MP
-// from Parliament.
-const VISUAL_DATABASE = "pauseai_visual";
-// Only so the local test MP has an email, like live's, and shows the form.
-// The diff masks the address itself.
-const VISUAL_TEST_MP_EMAIL = "test-mp@example.org";
-
 export default defineConfig({
-  testDir: "./tests",
+  testDir: "./tests/storyboard",
+  // Only the sections: report/*.test.ts are Vitest's.
+  testMatch: /\.spec\.ts$/,
+  // Every flow stands alone, on its own database, so they can run in any
+  // order and alongside each other.
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
+  // A flaky flow is fixed, not retried (docs/testing.md).
   retries: 0,
-  reporter: "html",
+  // The terminal, Playwright's own report (traces), and the storyboard's.
+  reporter: [["list"], ["html", { open: "never" }], ["./tests/storyboard/report/reporter.ts"]],
+  globalSetup: "./tests/storyboard/global-setup.ts",
+  globalTeardown: "./tests/storyboard/global-teardown.ts",
+  // The homepage takes a while to load and hydrate in this harness, so the
+  // 30s default leaves no headroom for the checks after it.
+  timeout: 60_000,
   use: {
+    // For `npm run test:report`, to step through a failed flow.
     trace: "retain-on-failure",
   },
   projects: [
     {
-      name: "public-vs-live-desktop",
-      testDir: "./tests/public-vs-live",
+      name: "desktop",
       use: { ...devices["Desktop Chrome"], viewport: { width: 1280, height: 800 } },
+      grepInvert: /@phone-only/,
     },
     {
-      name: "public-vs-live-mobile",
-      testDir: "./tests/public-vs-live",
+      name: "phone",
       // Chromium at an iPhone's size and touch settings, so it can share the
       // one installed browser.
       use: { ...devices["iPhone 13"], defaultBrowserType: "chromium" },
-    },
-    {
-      name: "fixtures-vs-main-desktop",
-      testDir: "./tests/fixtures-vs-main",
-      fullyParallel: false,
-      use: { ...devices["Desktop Chrome"], viewport: { width: 1280, height: 800 } },
-    },
-    {
-      name: "fixtures-vs-main-mobile",
-      testDir: "./tests/fixtures-vs-main",
-      fullyParallel: false,
-      use: { ...devices["iPhone 13"], defaultBrowserType: "chromium" },
-    },
-    {
-      name: "behaviour",
-      testDir: "./tests/behaviour",
-      // The homepage takes ~20s to load and hydrate in this harness, so the
-      // 30s default leaves no headroom for the assertions after it.
-      timeout: 60_000,
-      // One worker per file rather than per test. The homepage is heavy
-      // enough — a hero marquee of ~80 images, plus the request-time Luma
-      // fetch — that several workers loading it at once starve the server
-      // and time tests out on a site that is working perfectly well.
-      fullyParallel: false,
-      // A trace of every test, passing or not, to step through in the report
-      // (`npm run test:report`; the trace viewer needs that server).
-      use: { ...devices["Desktop Chrome"], viewport: { width: 1280, height: 800 }, trace: "on" },
+      grep: SHOTS ? undefined : /@phone/,
+      grepInvert: /@desktop-only/,
     },
   ],
-  webServer: [
-    {
-      command: `export NETLIFY_DB_URL="$(node scripts/fresh-database.mjs ${
-        DATA_FIXTURES !== "1"
-          ? `${VISUAL_DATABASE} --test-mp ${VISUAL_TEST_MP_EMAIL}`
-          : FIXTURES_VS_MAIN
-            ? `${FIXTURES_BRANCH_DATABASE} --test-mp test-mp@example.org`
-            : BEHAVIOUR_DATABASE
-      })" && npm run build && npm run start -- --port ${LOCAL_PORT}`,
-      // Fixture data needs the keys set too, or the pages that check for them
-      // (trackers, campaigns) show their "not configured" fallback instead.
-      // The public-vs-live build gets a Turnstile site key like live's, so both
-      // draw the widget, from the same stand-in script (tests/steps.ts).
-      env:
-        DATA_FIXTURES === "1"
-          ? fixtureEnv({ outboxDir: OUTBOX_DIR })
-          : { DATA_FIXTURES, NEXT_PUBLIC_TURNSTILE_SITE_KEY: "fixture" },
-      url: LOCAL_URL,
-      reuseExistingServer: !process.env.CI,
-      // CI always builds from cold (reuseExistingServer is off there), and a
-      // cold `npm run build` on a runner is slower than on a warm laptop.
-      timeout: 300_000,
-    },
-    // Main's build, beside this branch's, for the fixtures-vs-main diff.
-    ...(FIXTURES_VS_MAIN
-      ? [
-          {
-            command: "node scripts/serve-main.mjs --port 3001",
-            url: process.env.MAIN_URL ?? "http://localhost:3001",
-            reuseExistingServer: true,
-            // The first run installs main's dependencies as well as building it.
-            timeout: 900_000,
-          },
-        ]
-      : []),
-  ],
+  webServer: {
+    // A fresh database of its own, with the test MPs, for requests that carry
+    // no flow's cookie (tests/storyboard/fixtures.ts). Never the real one.
+    command: `export NETLIFY_DB_URL="$(node scripts/fresh-database.mjs ${SERVER_DATABASE} --test-mp ${TEST_MP_EMAIL})" && npm run build && npm run start -- --port ${LOCAL_PORT}`,
+    env: fixtureEnv({ outboxDir: OUTBOX_DIR }),
+    url: LOCAL_URL,
+    reuseExistingServer: !process.env.CI,
+    // CI always builds from cold (reuseExistingServer is off there), and a
+    // cold `npm run build` on a runner is slower than on a warm laptop.
+    timeout: 300_000,
+  },
 });

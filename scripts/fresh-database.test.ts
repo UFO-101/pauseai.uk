@@ -2,7 +2,16 @@ import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { defaultHost, isLocal, testServerUrl } from "./fresh-database.mjs";
+import {
+  copyDatabase,
+  databaseNames,
+  defaultHost,
+  dropDatabase,
+  freshDatabase,
+  isLocal,
+  runSql,
+  testServerUrl,
+} from "./fresh-database.mjs";
 
 describe("isLocal", () => {
   it("accepts databases on this machine, and nothing else", () => {
@@ -56,5 +65,28 @@ describe("testServerUrl", () => {
     } finally {
       rmSync(dir, { recursive: true });
     }
+  });
+});
+
+describe.skipIf(process.env.NETLIFY === "true")("copying a database", () => {
+  const template = `test_${process.pid}_template`;
+  const copy = `test_${process.pid}_copy`;
+
+  it("copies a template, runs SQL in the copy, lists and drops them, and refuses bad names", () => {
+    try {
+      freshDatabase(template);
+      runSql(template, "INSERT INTO audit_log (actor, action) VALUES ('a', 'kept')");
+      copyDatabase(copy, template);
+      expect(runSql(copy, "SELECT actor, action FROM audit_log")).toEqual(["a\tkept"]);
+      expect(runSql(copy, "SELECT 1 WHERE false")).toEqual([]);
+      expect(databaseNames(`test_${process.pid}_`)).toEqual([copy, template]);
+      expect(() => copyDatabase("bad name", template)).toThrow("Bad database name: bad name");
+      expect(() => runSql("x;drop", "SELECT 1")).toThrow("Bad database name");
+      expect(() => databaseNames("x'")).toThrow("Bad database name");
+    } finally {
+      dropDatabase(copy);
+      dropDatabase(template);
+    }
+    expect(databaseNames(`test_${process.pid}_`)).toEqual([]);
   });
 });

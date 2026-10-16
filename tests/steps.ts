@@ -1,12 +1,18 @@
-// Steps through the site that more than one Playwright suite takes, on any
-// host: the Email your MP flow, and staff login through the fixture Google.
+// The steps a person takes through the site, for the storyboard's flows
+// (tests/storyboard/): the Email your MP flow, staff login, and reading what
+// the build sent. Every step takes the host, so a flow can run against any
+// build.
 import { expect, type APIRequestContext, type Page } from "@playwright/test";
 import { copy } from "@/lib/content/email-your-mp";
 import { staffCopy } from "@/lib/content/staff-interface";
-import { readOutbox } from "./fixtures/outbox";
+import { OUTBOX_DIR } from "./fixture-env.mjs";
+import { type OutboxEmail, readOutbox } from "./fixtures/outbox";
 
 // Redirects to the first campaign.
-export const TOOL_PAGE = "/campaigns-v2";
+const TOOL_PAGE = "/campaigns-v2";
+
+/** Basic auth for the Postmark webhooks, as a fixture build is configured. */
+export const WEBHOOK_AUTH = `Basic ${Buffer.from("postmark:fixture-webhook-password").toString("base64")}`;
 
 // Cloudflare's real widget mustn't load in a test. This stands in for its
 // script: it draws nothing and hands over a token at once, which the
@@ -27,8 +33,8 @@ export async function fakeTurnstile(page: Page) {
 }
 
 /**
- * Copies the MPs into a fixture build's database through the nightly sync's
- * own route (the fixture Parliament: two MPs), and adds the test MP.
+ * Copies the MPs into the flow's database through the nightly sync's own
+ * route (the fixture Parliament: two MPs), and refreshes the test MPs.
  */
 export async function syncMps(request: APIRequestContext, base: string) {
   const res = await request.post(`${base}/api/cron/sync-mps`, {
@@ -37,17 +43,22 @@ export async function syncMps(request: APIRequestContext, base: string) {
   if (!res.ok()) throw new Error(`MP sync on ${base} failed: ${res.status()} ${await res.text()}`);
 }
 
+/** Opens the tool and fills in the name and a postcode, without looking it up yet. */
+export async function openLookup(page: Page, base: string, postcode = "ZZ9 9ZZ", path = TOOL_PAGE) {
+  const response = await page.goto(`${base}${path}`);
+  if (!response?.ok()) throw new Error(`${base}${path} returned ${response?.status()}: is the tool deployed there?`);
+  await page.waitForLoadState("load");
+  await page.getByLabel(copy.lookup.nameLabel).fill("Jane Smith");
+  await page.getByLabel(copy.lookup.postcodeLabel).fill(postcode);
+}
+
 /**
  * Looks up ZZ99ZZ and waits for the test MP and their letter. Fails fast,
  * saying why, rather than waiting out the test's timeout for a field or a
  * heading that will never appear.
  */
 export async function lookUpTestMp(page: Page, base: string, path = TOOL_PAGE) {
-  const response = await page.goto(`${base}${path}`);
-  if (!response?.ok()) throw new Error(`${base}${path} returned ${response?.status()}: is the tool deployed there?`);
-  await page.waitForLoadState("load");
-  await page.getByLabel(copy.lookup.nameLabel).fill("Jane Smith");
-  await page.getByLabel(copy.lookup.postcodeLabel).fill("ZZ9 9ZZ");
+  await openLookup(page, base, "ZZ9 9ZZ", path);
   await page.getByRole("button", { name: copy.lookup.button }).click();
 
   const found = page.getByRole("heading", { name: "Testy McTestface MP" });
@@ -75,29 +86,39 @@ export async function sendLetter(page: Page) {
   await expect(page.getByRole("status")).toHaveText(copy.sent.body("Testy McTestface MP"));
 }
 
+/** The newest email the build under test has sent that `matches`. */
+export function newestEmail(matches: (email: OutboxEmail) => boolean): OutboxEmail | undefined {
+  return readOutbox(OUTBOX_DIR).filter(matches).at(-1);
+}
+
+/** The newest email sent to `to`. */
+export function newestEmailTo(to: string): OutboxEmail | undefined {
+  return newestEmail((email) => email.To === to);
+}
+
+/** The login link in the newest email to `email`, if it got one. */
+export function loginLinkFor(email: string): string | undefined {
+  return newestEmailTo(email)?.TextBody.match(/https?:\/\/\S+\/staff\/api\/callback\?token=[\w-]+/)?.[0];
+}
+
+/** Asks for a login link for `email`, and waits for "check your inbox". */
+export async function askForLoginLink(page: Page, base: string, email: string) {
+  const login = await page.goto(`${base}/staff/login`);
+  if (!login?.ok()) throw new Error(`${base}/staff/login returned ${login?.status()}: is the staff interface there?`);
+  await page.getByLabel(staffCopy.login.emailLabel).fill(email);
+  await page.getByRole("button", { name: staffCopy.login.button }).click();
+  await expect(page.getByRole("status")).toHaveText(staffCopy.login.sent);
+}
+
 /**
  * Logs in on `base` as `email`, as staff do: asks for a link, takes it from
  * the build's outbox (tests/fixtures/outbox.ts), and opens it in the same
  * browser. There's no login bypass. For an address that gets no link, stops
  * at "check your inbox" and returns false.
  */
-export async function logInAsStaff(
-  page: Page,
-  base: string,
-  outboxDir: string,
-  email = "staff@pauseai.uk",
-): Promise<boolean> {
-  const login = await page.goto(`${base}/staff/login`);
-  if (!login?.ok()) throw new Error(`${base}/staff/login returned ${login?.status()}: is the staff interface there?`);
-  const before = readOutbox(outboxDir).length;
-  await page.getByLabel(staffCopy.login.emailLabel).fill(email);
-  await page.getByRole("button", { name: staffCopy.login.button }).click();
-  await expect(page.getByRole("status")).toHaveText(staffCopy.login.sent);
-  const sent = readOutbox(outboxDir)
-    .slice(before)
-    .filter((e) => e.To === email)
-    .at(-1);
-  const link = sent?.TextBody.match(/https?:\/\/\S+\/staff\/api\/callback\?token=[\w-]+/)?.[0];
+export async function logInAsStaff(page: Page, base: string, email = "staff@pauseai.uk"): Promise<boolean> {
+  await askForLoginLink(page, base, email);
+  const link = loginLinkFor(email);
   if (!link) return false;
   // In the same browser that asked for it, so it logs in.
   await page.goto(link);

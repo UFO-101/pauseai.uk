@@ -3,7 +3,7 @@ import type { KnipConfig } from "knip";
 // Unused files, exports and dependencies (npm run lint:unused). Knip finds
 // most entry points itself, from Next, Vitest, Playwright and package.json.
 const config: KnipConfig = {
-  // Playwright starts this as a web server command, which Knip can't follow.
+  // scripts/storyboard.mjs starts this with spawn(), which Knip can't follow.
   entry: ["scripts/serve-main.mjs"],
   ignoreDependencies: [
     // Nothing imports it: having it installed is what gives Netlify deploys

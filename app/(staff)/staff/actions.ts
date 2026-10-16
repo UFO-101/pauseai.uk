@@ -3,6 +3,7 @@
 // The staff interface's Server Actions. Each is a public endpoint, so each
 // calls requireStaff() before anything else (staff-auth.test.ts).
 import { revalidatePath } from "next/cache";
+import { now } from "@/lib/now";
 import { idFrom, politicianDetailsFrom, signedFrom } from "@/lib/staff-forms";
 import { importControlAiLetter } from "@/lib/server/controlai-import";
 import { checkMps } from "@/lib/server/mp-check";
@@ -16,7 +17,7 @@ export async function markSigned(form: FormData): Promise<void> {
   const { email } = await requireStaff();
   const parsed = signedFrom(form);
   if (!parsed) return;
-  const today = new Date().toISOString().slice(0, 10);
+  const today = now().toISOString().slice(0, 10);
   await setStatus(
     parsed.politicianId,
     parsed.campaign,

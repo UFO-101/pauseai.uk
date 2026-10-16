@@ -1,5 +1,5 @@
-// Every page on the site, for the Playwright smoke test and the public-vs-live
-// diff (which leaves out /staff).
+// Every page on the site, for the storyboard (tests/storyboard/): the public
+// pages section loads each one; the staff section logs in first.
 //
 // Static routes come from the filesystem (the same walk app/sitemap.ts does),
 // including the unlisted tools and trackers. Dynamic routes are represented by

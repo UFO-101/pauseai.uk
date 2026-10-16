@@ -315,9 +315,8 @@ BlazeFace model with TensorFlow.js, which are dev dependencies only.
 npm test                 # both, held at 100% per file, as CI runs it
 npm run test:node        # Vitest, Node: logic, routes, database code
 npm run test:browser     # Vitest, real Chromium: components
-npm run test:behaviour   # Playwright: every page and the main flows
-npm run test:public-vs-live   # Playwright: public pages, the local build against pauseai.uk
-npm run test:fixtures-vs-main # Playwright: screenshots of this branch against main (testing.md)
+npm run test:storyboard  # Playwright: every page and every flow, on a fixture build (the gate)
+npm run storyboard       # Playwright: the same with screenshots, against main, then the page (testing.md)
 npm run lint                    # ESLint, failing on warnings too
 npm run lint:css                # Stylelint
 npm run lint:unused             # Knip: unused files, exports and dependencies
@@ -330,26 +329,28 @@ npm run format                  # Prettier, on everything but plans/ (format:che
   so does `npm run build`, which runs the unit tests first. That's on
   purpose: placeholders can't be deployed (AGENTS.md). For now the test is
   skipped, until the Email your MP swap.
-- **The Playwright suites** build and start the site themselves on port 3100,
-  unless a server is already running there. Your dev server, on 3000, is
-  left alone. To skip rebuilding each run, start one yourself, with the
-  same settings `playwright.config.ts` uses for its `webServer`:
+- **The storyboard** builds and starts the site itself on port 3100, unless
+  a server is already running there. Your dev server, on 3000, is left
+  alone. To skip rebuilding each run, start one yourself, with the same
+  settings `playwright.config.ts` uses for its `webServer`
+  (`fixtureEnv()` in `tests/fixture-env.mjs`):
 
   ```bash
-  export NETLIFY_DB_URL=$(node scripts/fresh-database.mjs pauseai_behaviour)
-  DATA_FIXTURES=1 LUMA_API_KEY=fixture AIRTABLE_TOKEN=fixture TURNSTILE_SECRET_KEY=fixture \
-    NEXT_PUBLIC_TURNSTILE_SITE_KEY=fixture TEST_MP_EMAIL=test-mp@example.org \
+  export NETLIFY_DB_URL=$(node scripts/fresh-database.mjs pauseai_storyboard --test-mp test-mp@example.org)
+  DATA_FIXTURES=1 FIXTURE_NOW=2026-10-16T12:00:00.000Z LUMA_API_KEY=fixture AIRTABLE_TOKEN=fixture \
+    TURNSTILE_SECRET_KEY=fixture NEXT_PUBLIC_TURNSTILE_SITE_KEY=fixture TEST_MP_EMAIL=test-mp@example.org \
     CRON_SECRET=fixture-cron-secret \
     POSTMARK_SERVER_TOKEN=fixture POSTMARK_WEBHOOK_USER=postmark POSTMARK_WEBHOOK_PASSWORD=fixture-webhook-password \
-    REPLIES_INBOX=replies@example.org OUTBOX_DIR=/tmp/pauseai-behaviour-outbox \
+    REPLIES_INBOX=replies@example.org OUTBOX_DIR=/tmp/pauseai-storyboard-outbox \
     npx next build
   # ...then the same variables with `npx next start --port 3100`, and in another terminal:
-  npm run test:behaviour
+  npm run test:storyboard
   ```
 
-  For the visual suite, build without `DATA_FIXTURES` against a database
-  made with `node scripts/fresh-database.mjs pauseai_visual --test-mp test-mp@example.org`.
-  Stop any running server when switching between the two.
+  The storyboard's flows each get their own database, copied from a
+  template on the test server (`TEST_DATABASE_URL`, or your local Postgres),
+  so the build's own database is only for requests that carry no flow's
+  cookie.
 
 See [testing.md](testing.md) for the rules.
 

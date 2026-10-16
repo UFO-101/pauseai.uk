@@ -15,10 +15,12 @@ import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { basename, join } from "node:path";
 import { userInfo } from "node:os";
-import { fileURLToPath } from "node:url";
-import TEST_MPS from "../lib/test-mps.json" with { type: "json" };
 
-const MIGRATIONS = fileURLToPath(new URL("../netlify/database/migrations/", import.meta.url));
+// From the repo root, where every script and test runs. (Not import.meta:
+// Playwright's loader, which the storyboard's fixtures import this through,
+// compiles to CommonJS.)
+const MIGRATIONS = join(process.cwd(), "netlify", "database", "migrations");
+const TEST_MPS = JSON.parse(readFileSync(join(process.cwd(), "lib", "test-mps.json"), "utf8"));
 
 /** Whether a database URL points at this machine: localhost, or a Unix socket. */
 export function isLocal(url) {
@@ -59,11 +61,18 @@ function databaseUrl(name) {
   return `postgresql://${encodeURIComponent(user)}${password}@localhost/${name}?host=${encodeURIComponent(host)}&port=${port}`;
 }
 
+/** Runs psql against `url`, and returns what it printed. */
 function psql(url, ...args) {
-  execFileSync("psql", ["-X", "-q", "-v", "ON_ERROR_STOP=1", "-d", url, ...args], {
-    stdio: ["ignore", "ignore", "inherit"],
+  return execFileSync("psql", ["-X", "-q", "-v", "ON_ERROR_STOP=1", "-d", url, ...args], {
+    stdio: ["ignore", "pipe", "inherit"],
+    encoding: "utf8",
     env: { ...process.env, PGOPTIONS: "-c client_min_messages=warning" },
   });
+}
+
+function checkName(name) {
+  if (!/^[a-z0-9_]+$/.test(name)) throw new Error(`Bad database name: ${name}`);
+  return name;
 }
 
 /**
@@ -78,7 +87,28 @@ export function migrationFiles() {
 }
 
 export function dropDatabase(name) {
-  psql(databaseUrl("postgres"), "-c", `DROP DATABASE IF EXISTS "${name}" WITH (FORCE)`);
+  psql(databaseUrl("postgres"), "-c", `DROP DATABASE IF EXISTS "${checkName(name)}" WITH (FORCE)`);
+}
+
+/**
+ * Makes database `name` as a copy of `template`, on the same server. Postgres
+ * copies the files, so it takes tens of milliseconds, however many
+ * migrations there are; nothing may be connected to the template.
+ */
+export function copyDatabase(name, template) {
+  psql(databaseUrl("postgres"), "-c", `CREATE DATABASE "${checkName(name)}" TEMPLATE "${checkName(template)}"`);
+}
+
+/** Runs `sql` in database `name`, and returns the rows it printed, one per line, tab-separated. */
+export function runSql(name, sql) {
+  return psql(databaseUrl(checkName(name)), "-At", "-F", "\t", "-c", sql)
+    .split("\n")
+    .filter((line) => line !== "");
+}
+
+/** The names of the databases on the server that start with `prefix`. */
+export function databaseNames(prefix) {
+  return runSql("postgres", `SELECT datname FROM pg_database WHERE datname LIKE '${checkName(prefix)}%' ORDER BY 1`);
 }
 
 /**
@@ -97,8 +127,7 @@ export function freshDatabase(name, { singleTransaction = false, upTo } = {}) {
  */
 export function resetDatabase(url, { singleTransaction = false, upTo } = {}) {
   const target = new URL(url);
-  const name = decodeURIComponent(target.pathname.slice(1));
-  if (!/^[a-z0-9_]+$/.test(name)) throw new Error(`Bad database name: ${name}`);
+  const name = checkName(decodeURIComponent(target.pathname.slice(1)));
   // The same server, its "postgres" database, to drop and create from.
   const server = new URL(url);
   server.pathname = "/postgres";
@@ -129,7 +158,7 @@ export function addTestMps(url, email) {
 }
 
 //   node scripts/fresh-database.mjs <name> [--test-mp <email>]
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
+if (basename(process.argv[1] ?? "") === "fresh-database.mjs") {
   const url = freshDatabase(process.argv[2] ?? "pauseai_dev");
   const testMp = process.argv.indexOf("--test-mp");
   if (testMp !== -1) addTestMps(url, process.argv[testMp + 1]);

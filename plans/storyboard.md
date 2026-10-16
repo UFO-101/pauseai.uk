@@ -1,7 +1,8 @@
 # Storyboard plan
 
-Written 2026-10-16. Status: agreed, not started. Replaces
-`plans/visual-baselines.md`: main is the reference, not stored images.
+Written 2026-10-16. Status: done 2026-10-16, on branch `storyboard`.
+Replaced `plans/visual-baselines.md`: main is the reference, not stored
+images.
 
 ## Goal
 
@@ -115,6 +116,11 @@ its "done when".
 3. **Frames and the phone.** `frame()`, the manifest, frames through every
    flow, the phone project. Done when `--no-main` writes a frame for every
    step on both viewports and they look right by eye; costs noted here.
+   Costs, measured 2026-10-16 on a warm server: the gate (93 flows, no
+   screenshots) runs in about 26 s; the review's branch run (168 flows on
+   both viewports, 176 frames) in about 55 s; a full review with main,
+   building main included, in a few minutes. `test-results/storyboard/`
+   is about 460 MB with main (full-page PNGs of both sides and the diffs).
 4. **Main and the page.** Main's run, pairing, pixelmatch, the generator.
    Done when one deliberate CSS change shows up alone on both viewports,
    an unchanged branch shows nothing, and eight full runs are identical

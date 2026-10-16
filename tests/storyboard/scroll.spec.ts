@@ -1,4 +1,5 @@
-import { test, expect, type Page } from "@playwright/test";
+import type { Page } from "@playwright/test";
+import { BASE, expect, frame, test } from "./fixtures";
 
 // In-page scrolling is deliberately all browser behaviour: `scroll-behavior`
 // in globals.css animates it, `scroll-padding-top` on the root keeps the
@@ -14,8 +15,6 @@ import { test, expect, type Page } from "@playwright/test";
 // handler plus a scroll listener in the former components/ScrollInit.tsx)
 // also rewrote location.hash on every scroll, so copying the URL after
 // scrolling shared "/#staff" rather than the page.
-
-const BASE = process.env.LOCAL_URL ?? "http://localhost:3100";
 
 /**
  * Load a page and wait for it to hydrate before interacting. A click
@@ -80,6 +79,7 @@ test.describe("in-page scrolling", () => {
 
     expect(new URL(page.url()).hash).toBe("#events");
     await expectClearOfNav(page, "events");
+    await frame(page, "after following the Upcoming events link");
   });
 
   test("the back button undoes an anchor click", async ({ page }) => {
@@ -123,6 +123,7 @@ test.describe("in-page scrolling", () => {
 
     expect(await page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
     await expectClearOfNav(page, "share-your-story");
+    await frame(page, "/people#share-your-story");
   });
 
   test("a cross-page hash link lands on its target", async ({ page }) => {
@@ -147,9 +148,11 @@ test.describe("in-page scrolling", () => {
     const settled = await targetOffset(page, "staff");
     await page.waitForTimeout(2000);
     expect(Math.abs((await targetOffset(page, "staff")) - settled)).toBeLessThan(2);
+    await frame(page, "/#staff");
   });
 
-  test("a link to another page's fragment jumps rather than animates", async ({ page }) => {
+  // Desktop only: on a phone the page's closing link sits under the march banner.
+  test("a link to another page's fragment jumps rather than animates", { tag: "@desktop-only" }, async ({ page }) => {
     await gotoSettled(page, "/theory-of-change");
     // Record scrollY every frame across the route change. The window
     // survives a client-side navigation, so the recorder keeps running.

@@ -1,3 +1,11 @@
+export const LOCAL_URL: string;
+export const MAIN_URL: string;
 export const OUTBOX_DIR: string;
 export const MAIN_OUTBOX_DIR: string;
+export const TEST_MP_EMAIL: string;
+export const FIXTURE_NOW: string;
+export const FLOW_DATABASE_COOKIE: string;
+export const FLOW_DATABASE_PREFIX: string;
+export const TEMPLATE_DATABASE: string;
+export const SERVER_DATABASE: string;
 export function fixtureEnv(options: { outboxDir: string }): Record<string, string>;
