@@ -5,7 +5,7 @@ import { requireStaff } from "@/lib/server/staff-auth";
 import RunFilters from "../_components/RunFilters";
 import RunList from "../_components/RunList";
 import StaffHeader from "../_components/StaffHeader";
-import styles from "../_components/staff.module.css";
+import StaffPage from "../_components/ui/StaffPage";
 
 type Search = { job?: string };
 
@@ -15,11 +15,11 @@ export default async function ImportHistoryPage({ searchParams }: { searchParams
   const { job = "" } = await searchParams;
   const runs = await listRuns(isImportJob(job) ? job : undefined);
   return (
-    <main className={`container ${styles.page}`}>
+    <StaffPage>
       <StaffHeader email={email} current="history" />
       <h1>{staffCopy.history.title}</h1>
       <RunFilters job={job} />
       <RunList runs={runs} none={staffCopy.history.none} history />
-    </main>
+    </StaffPage>
   );
 }

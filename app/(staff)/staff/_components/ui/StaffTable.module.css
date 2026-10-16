@@ -1,0 +1,20 @@
+/* A staff table, in its box that scrolls sideways. */
+
+/* Wide tables scroll sideways on a phone, rather than the page. */
+.scroll {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.table th,
+.table td {
+  padding: 0.45rem 0.6rem;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  vertical-align: top;
+}

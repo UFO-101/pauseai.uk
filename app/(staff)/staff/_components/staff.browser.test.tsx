@@ -19,6 +19,7 @@ import {
 import type { Politician } from "@/lib/server/politicians";
 import ChangesTable from "./ChangesTable";
 import LettersTable from "./LettersTable";
+import LoginCard from "./LoginCard";
 import PoliticianFilters from "./PoliticianFilters";
 import PoliticianForm from "./PoliticianForm";
 import PoliticianTable from "./PoliticianTable";
@@ -26,6 +27,7 @@ import ResultBox, { OPEN_UP_TO } from "./ResultBox";
 import RunFilters from "./RunFilters";
 import RunList from "./RunList";
 import StaffHeader from "./StaffHeader";
+import { StaffForm } from "./ui/forms";
 
 const [pm, bill] = campaigns;
 
@@ -117,6 +119,19 @@ describe("StaffHeader", () => {
     expect(form.getAttribute("action")).toBe("/staff/api/logout");
     // The wider screen's row has its own.
     expect(document.querySelectorAll('form[action="/staff/api/logout"]')).toHaveLength(2);
+  });
+});
+
+describe("LoginCard", () => {
+  it("heads its form with the title, with no margin under the form", async () => {
+    await render(
+      <LoginCard title={staffCopy.login.title}>
+        <StaffForm aria-label="Log in" />
+      </LoginCard>,
+    );
+    await expect.element(page.getByRole("heading", { level: 1, name: staffCopy.login.title })).toBeVisible();
+    const form = page.getByRole("form", { name: "Log in" }).element();
+    expect(getComputedStyle(form).marginBottom).toBe("0px");
   });
 });
 

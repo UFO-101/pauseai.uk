@@ -5,7 +5,8 @@ import { requireStaff } from "@/lib/server/staff-auth";
 import { editSigner } from "../../actions";
 import PoliticianForm from "../../_components/PoliticianForm";
 import StaffHeader from "../../_components/StaffHeader";
-import styles from "../../_components/staff.module.css";
+import Muted from "../../_components/ui/Muted";
+import StaffPage from "../../_components/ui/StaffPage";
 
 export default async function PoliticianPage({ params }: { params: Promise<{ id: string }> }) {
   const { email } = await requireStaff();
@@ -14,13 +15,15 @@ export default async function PoliticianPage({ params }: { params: Promise<{ id:
   if (!politician) notFound();
   const editable = politician.airtableId === null && !politician.isTest;
   return (
-    <main className={`container ${styles.page}`}>
+    <StaffPage>
       <StaffHeader email={email} current="politicians" />
       <h1>{politician.name}</h1>
-      <p className={styles.muted}>
-        {[staffCopy.houses[politician.house], politician.constituency, politician.party, politician.email]
-          .filter(Boolean)
-          .join(" · ")}
+      <p>
+        <Muted>
+          {[staffCopy.houses[politician.house], politician.constituency, politician.party, politician.email]
+            .filter(Boolean)
+            .join(" · ")}
+        </Muted>
       </p>
       <h2>{staffCopy.politician.detailsTitle}</h2>
       {editable ? (
@@ -28,6 +31,6 @@ export default async function PoliticianPage({ params }: { params: Promise<{ id:
       ) : (
         <p>{staffCopy.politician.fromAirtable}</p>
       )}
-    </main>
+    </StaffPage>
   );
 }

@@ -1,5 +1,7 @@
 import type { ReactNode } from "react";
-import styles from "./staff.module.css";
+import styles from "./ResultBox.module.css";
+import Actions from "./ui/Actions";
+import ErrorText from "./ui/ErrorText";
 
 /** A result with more lines than this starts folded, so one big run doesn't fill the page. */
 export const OPEN_UP_TO = 5;
@@ -23,7 +25,7 @@ type Props = {
  * and under it, folded with the browser's arrow, the detail.
  */
 export default function ResultBox({ summary, lines = 0, actions, children, error, ...rest }: Props) {
-  const line = <span className={error ? styles.error : undefined}>{summary}</span>;
+  const line = error ? <ErrorText>{summary}</ErrorText> : <span>{summary}</span>;
   return (
     <section className={styles.sync} aria-label={rest["aria-label"]}>
       {children ? (
@@ -34,7 +36,7 @@ export default function ResultBox({ summary, lines = 0, actions, children, error
       ) : (
         <p role="status">{line}</p>
       )}
-      {actions && <div className={styles.actions}>{actions}</div>}
+      {actions && <Actions>{actions}</Actions>}
     </section>
   );
 }

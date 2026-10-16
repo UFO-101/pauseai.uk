@@ -3,7 +3,10 @@ import { Button } from "@/components/ui/Button";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { LOGIN_PATH } from "@/lib/staff-session";
 import StaffHeader from "../_components/StaffHeader";
-import styles from "../_components/staff.module.css";
+import ErrorText from "../_components/ui/ErrorText";
+import { StaffForm } from "../_components/ui/forms";
+import LoginCard from "../_components/LoginCard";
+import StaffPage from "../_components/ui/StaffPage";
 
 // Open to anyone: it's where staff log in, so it doesn't call requireStaff().
 export default async function LoginPage({
@@ -13,10 +16,9 @@ export default async function LoginPage({
 }) {
   const { sent, failed, elsewhere } = await searchParams;
   return (
-    <main className={`container ${styles.page}`}>
+    <StaffPage>
       <StaffHeader />
-      <div className={styles.login}>
-        <h1>{staffCopy.login.title}</h1>
+      <LoginCard title={staffCopy.login.title}>
         {sent ? (
           // Replaces the form, so the page visibly changes once the link is sent.
           <>
@@ -28,22 +30,30 @@ export default async function LoginPage({
         ) : (
           <>
             <p>{staffCopy.login.intro}</p>
-            {failed && <p className={styles.error}>{staffCopy.login.failed}</p>}
-            {elsewhere && <p className={styles.error}>{staffCopy.login.elsewhere}</p>}
-            <form className={styles.form} method="post" action="/staff/api/login">
+            {failed && (
+              <p>
+                <ErrorText>{staffCopy.login.failed}</ErrorText>
+              </p>
+            )}
+            {elsewhere && (
+              <p>
+                <ErrorText>{staffCopy.login.elsewhere}</ErrorText>
+              </p>
+            )}
+            <StaffForm method="post" action="/staff/api/login">
               <label>
                 {staffCopy.login.emailLabel}
                 <input name="email" type="email" autoComplete="email" required />
               </label>
               <div>
-                <Button variant="primary" size="small" type="submit">
+                <Button variant="primary" size="small" fit type="submit">
                   {staffCopy.login.button}
                 </Button>
               </div>
-            </form>
+            </StaffForm>
           </>
         )}
-      </div>
-    </main>
+      </LoginCard>
+    </StaffPage>
   );
 }

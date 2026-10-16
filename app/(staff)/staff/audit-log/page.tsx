@@ -3,15 +3,15 @@ import { recentChanges } from "@/lib/server/audit";
 import { requireStaff } from "@/lib/server/staff-auth";
 import ChangesTable from "../_components/ChangesTable";
 import StaffHeader from "../_components/StaffHeader";
-import styles from "../_components/staff.module.css";
+import StaffPage from "../_components/ui/StaffPage";
 
 export default async function ChangesPage() {
   const { email } = await requireStaff();
   return (
-    <main className={`container ${styles.page}`}>
+    <StaffPage>
       <StaffHeader email={email} current="changes" />
       <h1>{staffCopy.changes.title}</h1>
       <ChangesTable changes={await recentChanges()} />
-    </main>
+    </StaffPage>
   );
 }

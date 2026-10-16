@@ -3,7 +3,7 @@ import { staffCopy } from "@/lib/content/staff-interface";
 import { type AnyImportRun, NIGHTLY } from "@/lib/import-runs";
 import { staffTime } from "@/lib/staff-time";
 import ResultBox from "./ResultBox";
-import styles from "./staff.module.css";
+import Muted from "./ui/Muted";
 
 type Props = {
   run: AnyImportRun;
@@ -26,15 +26,12 @@ export default function RunBox({ run, summary, label, lines, actions, children }
   const line = (
     <>
       {label && <>{label} · </>}
-      <strong>{staffCopy.runs.status[run.status]}</strong> <span className={styles.muted}>{staffTime(run.at)}</span>
+      <strong>{staffCopy.runs.status[run.status]}</strong> <Muted>{staffTime(run.at)}</Muted>
       {run.startedBy && (
-        <span className={styles.muted}>
-          {" "}
-          · {run.startedBy === NIGHTLY ? staffCopy.import.nightly : staffCopy.runs.by(run.startedBy)}
-        </span>
+        <Muted> · {run.startedBy === NIGHTLY ? staffCopy.import.nightly : staffCopy.runs.by(run.startedBy)}</Muted>
       )}
-      {run.decidedBy && <span className={styles.muted}> · {staffCopy.runs.decidedBy(run.decidedBy)}</span>}
-      {failed ? <> · {run.error}</> : <span className={styles.muted}> · {summary}</span>}
+      {run.decidedBy && <Muted> · {staffCopy.runs.decidedBy(run.decidedBy)}</Muted>}
+      {failed ? <> · {run.error}</> : <Muted> · {summary}</Muted>}
     </>
   );
   return (

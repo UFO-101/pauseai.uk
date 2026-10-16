@@ -11,14 +11,16 @@ import { requireStaff } from "@/lib/server/staff-auth";
 import { checkNow, decideSync, importControlAiNow, importFromAirtable, syncNow } from "../actions";
 import RunList from "../_components/RunList";
 import StaffHeader from "../_components/StaffHeader";
-import styles from "../_components/staff.module.css";
+import Actions from "../_components/ui/Actions";
+import StaffPage from "../_components/ui/StaffPage";
+import Tag from "../_components/ui/Tag";
 
 const only = <Run,>(run: Run | undefined) => (run ? [run] : []);
 
 /** A job's button, with the way to all its runs beside it. */
-function Actions({ action, label, job }: { action: () => Promise<void>; label: string; job: ImportJob }) {
+function JobActions({ action, label, job }: { action: () => Promise<void>; label: string; job: ImportJob }) {
   return (
-    <div className={styles.actions}>
+    <Actions>
       <form action={action}>
         <SubmitButton variant="primary" size="small">
           {label}
@@ -27,7 +29,7 @@ function Actions({ action, label, job }: { action: () => Promise<void>; label: s
       <ButtonLink variant="ghost" size="small" href={`/staff/import-history?job=${job}`}>
         {staffCopy.history.showAll}
       </ButtonLink>
-    </div>
+    </Actions>
   );
 }
 
@@ -45,58 +47,58 @@ export default async function ImportPage() {
     latestRun<ControlAiImport>("import-controlai"),
   ]);
   return (
-    <main className={`container ${styles.page}`}>
+    <StaffPage>
       <StaffHeader email={email} current="import" />
       <h1>{staffCopy.import.pageTitle}</h1>
 
       <h2>
-        {staffCopy.syncs.title} <span className={`${styles.tag} ${styles.airtable}`}>{staffCopy.import.airtable}</span>
-        <span className={`${styles.tag} ${styles.nightly}`}>{staffCopy.import.nightly}</span>
+        {staffCopy.syncs.title} <Tag kind="airtable">{staffCopy.import.airtable}</Tag>
+        <Tag kind="nightly">{staffCopy.import.nightly}</Tag>
       </h2>
       <p>
         {staffCopy.syncs.intro.before}
         <a href={PARLIAMENTARIANS_TABLE_URL}>{staffCopy.syncs.intro.link}</a>
         {staffCopy.syncs.intro.after}
       </p>
-      <Actions action={syncNow} label={staffCopy.syncs.syncNow} job="sync-mps" />
+      <JobActions action={syncNow} label={staffCopy.syncs.syncNow} job="sync-mps" />
       <RunList runs={syncs} none={staffCopy.syncs.none} decide={decideSync} />
 
       <h2>
-        {staffCopy.check.title} <span className={`${styles.tag} ${styles.web}`}>{staffCopy.import.web}</span>
-        <span className={`${styles.tag} ${styles.nightly}`}>{staffCopy.import.nightly}</span>
-        <span className={styles.tag}>{staffCopy.import.checkOnly}</span>
+        {staffCopy.check.title} <Tag kind="web">{staffCopy.import.web}</Tag>
+        <Tag kind="nightly">{staffCopy.import.nightly}</Tag>
+        <Tag>{staffCopy.import.checkOnly}</Tag>
       </h2>
       <p>
         {staffCopy.check.intro.before}
         <a href={MEMBERS_API}>{staffCopy.check.intro.link}</a>
         {staffCopy.check.intro.after}
       </p>
-      <Actions action={checkNow} label={staffCopy.check.checkNow} job="check-mps" />
+      <JobActions action={checkNow} label={staffCopy.check.checkNow} job="check-mps" />
       <RunList runs={only(check)} none={staffCopy.check.never} />
 
       <h2>
-        {staffCopy.import.title} <span className={`${styles.tag} ${styles.airtable}`}>{staffCopy.import.airtable}</span>
-        <span className={styles.tag}>{staffCopy.import.oneOff}</span>
+        {staffCopy.import.title} <Tag kind="airtable">{staffCopy.import.airtable}</Tag>
+        <Tag>{staffCopy.import.oneOff}</Tag>
       </h2>
       <p>
         {staffCopy.import.intro.before}
         <a href={PARLIAMENTARIANS_TABLE_URL}>{staffCopy.import.intro.link}</a>
         {staffCopy.import.intro.after}
       </p>
-      <Actions action={importFromAirtable} label={staffCopy.import.button} job="import-signatories" />
+      <JobActions action={importFromAirtable} label={staffCopy.import.button} job="import-signatories" />
       <RunList runs={only(signatoryImport)} none={staffCopy.import.none} />
 
       <h2>
-        {staffCopy.controlAi.title} <span className={`${styles.tag} ${styles.web}`}>{staffCopy.import.web}</span>
-        <span className={`${styles.tag} ${styles.nightly}`}>{staffCopy.import.nightly}</span>
+        {staffCopy.controlAi.title} <Tag kind="web">{staffCopy.import.web}</Tag>
+        <Tag kind="nightly">{staffCopy.import.nightly}</Tag>
       </h2>
       <p>
         {staffCopy.controlAi.intro.before}
         <a href={CONTROLAI_LETTER_PAGE}>{staffCopy.controlAi.intro.link}</a>
         {staffCopy.controlAi.intro.after}
       </p>
-      <Actions action={importControlAiNow} label={staffCopy.controlAi.importNow} job="import-controlai" />
+      <JobActions action={importControlAiNow} label={staffCopy.controlAi.importNow} job="import-controlai" />
       <RunList runs={only(controlAiImport)} none={staffCopy.controlAi.never} />
-    </main>
+    </StaffPage>
   );
 }

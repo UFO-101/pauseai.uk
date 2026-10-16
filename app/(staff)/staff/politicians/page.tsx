@@ -5,7 +5,7 @@ import PoliticianFilters from "../_components/PoliticianFilters";
 import { markSigned } from "../actions";
 import PoliticianTable from "../_components/PoliticianTable";
 import StaffHeader from "../_components/StaffHeader";
-import styles from "../_components/staff.module.css";
+import StaffPage from "../_components/ui/StaffPage";
 
 type Search = { q?: string; house?: string; campaign?: string };
 
@@ -18,11 +18,11 @@ export default async function PoliticiansPage({ searchParams }: { searchParams: 
     campaign: campaign || undefined,
   });
   return (
-    <main className={`container ${styles.page}`}>
+    <StaffPage>
       <StaffHeader email={email} current="politicians" />
       <h1>{staffCopy.politicians.title}</h1>
       <PoliticianFilters search={q} house={house} campaign={campaign} />
       <PoliticianTable politicians={politicians} markSigned={markSigned} />
-    </main>
+    </StaffPage>
   );
 }

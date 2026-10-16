@@ -1,14 +1,14 @@
 import { Button } from "@/components/ui/Button";
 import { campaigns } from "@/lib/content/email-your-mp";
 import { staffCopy } from "@/lib/content/staff-interface";
-import styles from "./staff.module.css";
+import { Filters as FilterForm } from "./ui/forms";
 
 export type Filters = { search: string; house: string; campaign: string };
 
 /** Search and filter the politicians list. A GET form, so the URL holds the filter. */
 export default function PoliticianFilters({ search, house, campaign }: Filters) {
   return (
-    <form className={styles.filters} method="get" action="/staff/politicians">
+    <FilterForm method="get" action="/staff/politicians">
       <label>
         {staffCopy.politicians.search}
         <input type="search" name="q" defaultValue={search} />
@@ -39,6 +39,6 @@ export default function PoliticianFilters({ search, house, campaign }: Filters) 
       <Button variant="primary" size="small" type="submit">
         {staffCopy.politicians.searchButton}
       </Button>
-    </form>
+    </FilterForm>
   );
 }

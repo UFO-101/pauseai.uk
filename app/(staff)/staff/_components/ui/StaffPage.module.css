@@ -1,0 +1,10 @@
+/* A staff page's <main>. */
+
+/* The body is a flex column, where .container's auto margins would size the
+   page to its widest table. Full width keeps a wide table scrolling inside
+   its StaffTable instead of widening the whole page on a phone. */
+.page {
+  width: 100%;
+  box-sizing: border-box;
+  padding-block: 2rem 4rem;
+}
