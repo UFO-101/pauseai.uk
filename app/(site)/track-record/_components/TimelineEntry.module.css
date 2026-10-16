@@ -107,12 +107,6 @@
   color: var(--text);
 }
 
-/* The copy-link button beside the title, a touch smaller than elsewhere. */
-.heading :global(.story-share-btn) {
-  width: 28px;
-  height: 28px;
-}
-
 .text p {
   font-size: 16px;
   line-height: 1.7;

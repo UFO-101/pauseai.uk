@@ -158,10 +158,10 @@ export default function CookieConsent({ analytics, children }: { analytics: bool
             accept or decline these analytics cookies — see our <a href="/privacy">privacy policy</a>.
           </p>
           <div className="cookie-banner-actions">
-            <Button type="button" variant="ghost" size="small" onClick={decline}>
+            <Button type="button" variant="ghost" size="small" fit onClick={decline}>
               Decline
             </Button>
-            <Button type="button" variant="primary" size="small" onClick={accept}>
+            <Button type="button" variant="primary" size="small" fit onClick={accept}>
               Accept
             </Button>
           </div>

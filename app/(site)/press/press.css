@@ -75,10 +75,6 @@
   margin: 0;
 }
 
-.press .press-contact [data-button] {
-  flex-shrink: 0;
-}
-
 /* ─── Brand assets ─── */
 .press .press-assets {
   display: grid;

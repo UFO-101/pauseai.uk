@@ -341,6 +341,8 @@ export default function PackStudio({ events }: { events: CalendarEvent[] }) {
             type="button"
             variant="primary"
             size="large"
+            fit
+            className="collateral-download"
             onClick={onDownloadPack}
             disabled={!ready || formats.length === 0}
           >

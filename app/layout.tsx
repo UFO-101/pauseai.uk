@@ -3,11 +3,6 @@ import localFont from "next/font/local";
 import { Lato } from "next/font/google";
 import "@/styles/tokens.css";
 import "@/styles/base.css";
-// UI kit styles before globals.css, so context overrides there (e.g.
-// .hero-marquee-text [data-button]) still come later in the cascade, as the
-// old global .btn and .feature-card rules did.
-import "@/components/ui/Button.module.css";
-import "@/components/ui/FeatureCard.module.css";
 import "./globals.css";
 import Footer from "@/components/layout/Footer";
 import CookieConsent from "@/components/layout/CookieConsent";

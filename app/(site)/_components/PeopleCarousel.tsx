@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import type { Person } from "@/lib/content/people";
 import PersonCard from "@/components/people/PersonCard";
+import IconButton from "@/components/ui/IconButton";
 
 // Movement past this many pixels counts as a drag rather than a click, so a
 // drag ending over a card's link/button doesn't also fire that click.
@@ -83,22 +84,16 @@ export default function PeopleCarousel({ people }: { people: Person[] }) {
           <PersonCard key={`${person.name}-${i}`} person={person} truncate />
         ))}
       </div>
-      <button
-        type="button"
-        className="people-carousel-btn people-carousel-btn-prev"
-        aria-label="Previous story"
-        onClick={() => scrollByCard(-1)}
-      >
-        ‹
-      </button>
-      <button
-        type="button"
-        className="people-carousel-btn people-carousel-btn-next"
-        aria-label="Next story"
-        onClick={() => scrollByCard(1)}
-      >
-        ›
-      </button>
+      <div className="people-carousel-btn people-carousel-btn-prev">
+        <IconButton look="raised" size={44} aria-label="Previous story" onClick={() => scrollByCard(-1)}>
+          ‹
+        </IconButton>
+      </div>
+      <div className="people-carousel-btn people-carousel-btn-next">
+        <IconButton look="raised" size={44} aria-label="Next story" onClick={() => scrollByCard(1)}>
+          ›
+        </IconButton>
+      </div>
     </div>
   );
 }

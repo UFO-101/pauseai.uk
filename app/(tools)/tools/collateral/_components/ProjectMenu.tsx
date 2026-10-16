@@ -49,6 +49,7 @@ export default function ProjectMenu({ noun, onSave, onOpen, onReset, saveDisable
         type="button"
         variant="ghost"
         size="large"
+        fit
         className="collateral-menu-button"
         aria-label="More options"
         aria-expanded={open}

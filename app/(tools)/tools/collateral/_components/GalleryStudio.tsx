@@ -534,6 +534,8 @@ export default function GalleryStudio() {
             type="button"
             variant="primary"
             size="large"
+            fit
+            className="collateral-download"
             onClick={onDownloadForPlatforms}
             disabled={!ready || platforms.size === 0}
           >

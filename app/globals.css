@@ -556,12 +556,6 @@ html {
   gap: 10px;
 }
 
-.hero-actions-secondary [data-button][data-variant="ghost"] {
-  padding: 10px 18px;
-  font-size: 14px;
-  font-weight: 500;
-}
-
 /* ── Hero Visual ───────────────────────────────── */
 
 .hero-visual {
@@ -734,30 +728,18 @@ html {
   align-items: center;
 }
 
+/* The buttons on the photos: Join big, the two below it smaller (and
+   `light`, so they can be read on any photo). */
+.hero-marquee-text .hero-actions {
+  --button-padding: 17px 30px;
+  --button-font-size: 16px;
+}
+
 .hero-marquee-text .hero-actions-secondary {
   justify-content: center;
-}
-
-.hero-marquee-text [data-button][data-variant="primary"] {
-  padding: 17px 30px;
-  font-size: 16px;
-}
-
-/* Buttons sit directly on the photos, so they need their own background
-   for legibility: white fill, dark text, orange border/ring. */
-.hero-marquee-text [data-button][data-variant="ghost"] {
-  background: var(--white);
-  color: var(--ink);
-  border-color: var(--pause-orange);
-  padding: 13px 22px;
-  font-size: 15px;
-}
-
-.hero-marquee-text [data-button][data-variant="ghost"]:hover {
-  background: var(--white);
-  color: var(--ink);
-  border-color: var(--pause-orange);
-  box-shadow: 0 0 0 2px rgb(var(--pause-orange-rgb) / 0.35);
+  --button-padding: 13px 22px;
+  --button-font-size: 15px;
+  --button-font-weight: 500;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -807,13 +789,11 @@ html {
     color: rgb(var(--white-rgb) / 0.92);
     filter: none;
   }
-  .hero-marquee-text [data-button][data-variant="primary"] {
-    padding: 16px 26px;
-    font-size: 16px;
+  .hero-marquee-text .hero-actions {
+    --button-padding: 16px 26px;
   }
-  .hero-marquee-text .hero-actions-secondary [data-button][data-variant="ghost"] {
-    padding: 13px 20px;
-    font-size: 15px;
+  .hero-marquee-text .hero-actions-secondary {
+    --button-padding: 13px 20px;
   }
 }
 
@@ -1573,18 +1553,6 @@ html {
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  border: 1px solid var(--border);
-  background: var(--surface);
-  color: var(--text);
-  font-size: 24px;
-  line-height: 1;
-  cursor: pointer;
-  box-shadow: 0 1px 3px var(--shadow);
-  align-items: center;
-  justify-content: center;
 }
 
 .people-carousel-btn-prev {
@@ -1632,35 +1600,6 @@ html {
 .person-name-wrap {
   flex: 1;
   min-width: 0;
-}
-
-.story-share-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  border: 1px solid var(--border);
-  background: transparent;
-  color: var(--text-secondary);
-  cursor: pointer;
-  padding: 0;
-  transition:
-    background 0.15s,
-    color 0.15s,
-    border-color 0.15s;
-}
-
-.story-share-btn:hover {
-  background: var(--accent-light);
-  color: var(--accent-strong);
-  border-color: var(--accent-light);
-}
-
-.story-share-cta {
-  gap: 8px;
 }
 
 .person-avatar {
@@ -2490,7 +2429,17 @@ html {
     border-radius: 9px;
   }
 }
-[data-button].donate-btn {
+/* The donate form's own button: a little firmer than a Button. */
+.donate-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease,
+    background 0.15s ease;
   width: 100%;
   padding: 16px 20px;
   font-size: 15.5px;
@@ -2505,7 +2454,7 @@ html {
     0 1px 2px rgb(var(--ink-rgb) / 0.08),
     0 2px 6px rgb(var(--rust-rgb) / 0.2);
 }
-[data-button].donate-btn:hover {
+.donate-btn:hover {
   background: var(--accent-strong);
   border-color: var(--accent-strong);
   box-shadow:
@@ -2513,14 +2462,11 @@ html {
     0 4px 10px rgb(var(--rust-rgb) / 0.28);
   transform: translateY(-1px);
 }
-[data-button].donate-btn:active {
+.donate-btn:active {
   transform: translateY(0);
   box-shadow: 0 1px 2px rgb(var(--ink-rgb) / 0.08);
 }
-[data-button].donate-btn[disabled] {
-  opacity: 0.55;
-  cursor: not-allowed;
-}
+
 .form-footnote {
   margin-top: 10px;
   font-size: 14px;
@@ -2548,10 +2494,6 @@ html {
   grid-template-columns: 1fr;
   gap: 16px;
   margin-top: 20px;
-}
-.other-ways-cards [data-card] h3 {
-  font-size: 18px;
-  margin: 0 0 8px;
 }
 @media (max-width: 720px) {
   .donate-bottom-grid {
@@ -2669,9 +2611,6 @@ html {
   display: flex;
   gap: 10px;
   justify-content: flex-end;
-}
-.cookie-banner-actions [data-button] {
-  width: auto;
 }
 
 /* ── March banner ──────────────────────────────── */

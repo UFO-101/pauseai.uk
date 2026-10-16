@@ -2,6 +2,7 @@
 
 import { useEffect, type ReactNode } from "react";
 import { createPortal } from "react-dom";
+import IconButton from "./IconButton";
 import styles from "./Lightbox.module.css";
 
 /**
@@ -48,13 +49,13 @@ export default function Lightbox({
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <button className={`${styles.control} ${styles.close}`} aria-label="Close" onClick={onClose}>
+      <IconButton look="dark" className={styles.close} aria-label="Close" onClick={onClose}>
         <svg viewBox="0 0 24 24" width={20} height={20} aria-hidden="true">
           <path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
         </svg>
-      </button>
+      </IconButton>
       {onPrevious && (
-        <button className={`${styles.control} ${styles.previous}`} aria-label="Previous" onClick={onPrevious}>
+        <IconButton look="dark" className={styles.previous} aria-label="Previous" onClick={onPrevious}>
           <svg viewBox="0 0 24 24" width={22} height={22} aria-hidden="true">
             <path
               d="M15 5l-7 7 7 7"
@@ -65,10 +66,10 @@ export default function Lightbox({
               strokeLinejoin="round"
             />
           </svg>
-        </button>
+        </IconButton>
       )}
       {onNext && (
-        <button className={`${styles.control} ${styles.next}`} aria-label="Next" onClick={onNext}>
+        <IconButton look="dark" className={styles.next} aria-label="Next" onClick={onNext}>
           <svg viewBox="0 0 24 24" width={22} height={22} aria-hidden="true">
             <path
               d="M9 5l7 7-7 7"
@@ -79,7 +80,7 @@ export default function Lightbox({
               strokeLinejoin="round"
             />
           </svg>
-        </button>
+        </IconButton>
       )}
       {children}
     </div>,

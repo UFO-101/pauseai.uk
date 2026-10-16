@@ -63,10 +63,10 @@ export default function HomeHero() {
                 Join PauseAI UK
               </ButtonAnchor>
               <div className="hero-actions-secondary">
-                <ButtonAnchor variant="ghost" href="#events">
+                <ButtonAnchor variant="light" href="#events">
                   Upcoming events ↓
                 </ButtonAnchor>
-                <ButtonLink variant="ghost" href="/track-record/">
+                <ButtonLink variant="light" href="/track-record/">
                   Track record →
                 </ButtonLink>
               </div>

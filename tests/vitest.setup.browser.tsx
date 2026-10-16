@@ -2,8 +2,6 @@
 import { afterEach, vi } from "vitest";
 import "../styles/tokens.css";
 import "../styles/base.css";
-import "../components/ui/Button.module.css";
-import "../components/ui/FeatureCard.module.css";
 import "../app/globals.css";
 import { navigation } from "./browser/navigation";
 

@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@/components/ui/Button";
 import { navigate } from "@/lib/navigate";
 
 type Frequency = "monthly" | "oneoff";
@@ -99,9 +98,9 @@ export default function DonateForm() {
         </fieldset>
       )}
 
-      <Button type="submit" variant="primary" size="large" className="donate-btn">
+      <button type="submit" className="donate-btn">
         <span>{ctaLabel}</span>
-      </Button>
+      </button>
 
       <p className="form-footnote">
         Payments are processed securely by{" "}

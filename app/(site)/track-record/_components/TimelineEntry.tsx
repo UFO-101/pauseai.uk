@@ -28,7 +28,7 @@ export function TimelineEntry({
       <div className={styles.body}>
         <div className={styles.heading}>
           <h3 className={styles.title}>{title}</h3>
-          <CopyLinkButton href={`/track-record/#${id}`} title="Copy link to this entry" size={14} />
+          <CopyLinkButton href={`/track-record/#${id}`} title="Copy link to this entry" small />
         </div>
         {children}
       </div>

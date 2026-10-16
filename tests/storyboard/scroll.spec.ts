@@ -69,7 +69,7 @@ test.describe("in-page scrolling", () => {
 
   test("an anchor link sets the hash and lands clear of the nav", async ({ page }) => {
     await gotoSettled(page);
-    await page.click('a[data-button][href="#events"]');
+    await page.getByRole("link", { name: "Upcoming events ↓" }).click();
     await expect.poll(() => new URL(page.url()).hash).toBe("#events");
     await scrollSettled(page);
 
@@ -79,7 +79,7 @@ test.describe("in-page scrolling", () => {
 
   test("the back button undoes an anchor click", async ({ page }) => {
     await gotoSettled(page);
-    await page.click('a[data-button][href="#events"]');
+    await page.getByRole("link", { name: "Upcoming events ↓" }).click();
     await expect.poll(() => new URL(page.url()).hash).toBe("#events");
     await scrollSettled(page);
 
@@ -96,7 +96,7 @@ test.describe("in-page scrolling", () => {
     // itself is not focusable, so this shows up on the next Tab, not in
     // document.activeElement.
     await gotoSettled(page);
-    await page.click('a[data-button][href="#events"]');
+    await page.getByRole("link", { name: "Upcoming events ↓" }).click();
     await expect.poll(() => new URL(page.url()).hash).toBe("#events");
     await scrollSettled(page);
 

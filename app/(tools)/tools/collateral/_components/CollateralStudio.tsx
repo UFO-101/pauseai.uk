@@ -286,7 +286,15 @@ export default function CollateralStudio({ events }: { events: CalendarEvent[] }
         </p>
         <div className="collateral-preview-actions">
           <Checks issues={issues} />
-          <Button type="button" variant="primary" size="large" onClick={onDownloadPng} disabled={!ready}>
+          <Button
+            type="button"
+            variant="primary"
+            size="large"
+            fit
+            className="collateral-download"
+            onClick={onDownloadPng}
+            disabled={!ready}
+          >
             {busy ? "Preparing…" : "Download PNG"}
           </Button>
           {format.kind === "print" && (
@@ -294,6 +302,8 @@ export default function CollateralStudio({ events }: { events: CalendarEvent[] }
               type="button"
               variant="primary"
               size="large"
+              fit
+              className="collateral-download"
               onClick={() => onDownloadPdf(format)}
               disabled={!ready}
             >
