@@ -3,7 +3,7 @@ import type { ControlAiImport } from "@/lib/server/controlai-import";
 import styles from "./staff.module.css";
 
 /** The newest copy of ControlAI's letter's signatories: what it did, the names it couldn't place, or why it failed. */
-export default function ControlAiImportResult({ run }: { run?: ControlAiImport }) {
+export default function ControlAiImportStatus({ run }: { run?: ControlAiImport }) {
   if (!run) return <p>{staffCopy.controlAi.never}</p>;
   const { result } = run;
   const at = new Date(run.at).toLocaleString("en-GB");

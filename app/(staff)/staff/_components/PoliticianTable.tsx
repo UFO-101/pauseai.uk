@@ -1,12 +1,12 @@
 import Link from "next/link";
 import { SubmitButton } from "@/components/ui/SubmitButton";
-import { BILL_CAMPAIGN } from "@/lib/controlai-letter";
+import { SOBEL_BILL_CAMPAIGN } from "@/lib/controlai-letter";
 import { campaignBySlug, trackedCampaigns } from "@/lib/email-your-mp";
 import { staffCopy } from "@/lib/content/staff-interface";
 import type { Politician } from "@/lib/server/politicians";
 import styles from "./staff.module.css";
 
-const bill = campaignBySlug(BILL_CAMPAIGN)!;
+const bill = campaignBySlug(SOBEL_BILL_CAMPAIGN)!;
 
 type Props = {
   politicians: Politician[];
@@ -71,7 +71,7 @@ export default function PoliticianTable({ politicians, markSigned }: Props) {
                 );
               })}
               <td>
-                {p.statuses[BILL_CAMPAIGN] ? (
+                {p.statuses[SOBEL_BILL_CAMPAIGN] ? (
                   staffCopy.politicians.signedControlAi
                 ) : (
                   <span className={styles.muted}>{staffCopy.statuses.none}</span>

@@ -3,7 +3,7 @@ import { PDFDocument, StandardFonts } from "pdf-lib";
 import { http, HttpResponse } from "msw";
 import { server } from "@/tests/fixtures/msw";
 import { addTestMp, addTestPolitician, describeWithDatabase, useTestDatabase } from "@/tests/database";
-import { BILL_CAMPAIGN, LETTER_PAGE } from "@/lib/controlai-letter";
+import { SOBEL_BILL_CAMPAIGN, CONTROLAI_LETTER_PAGE } from "@/lib/controlai-letter";
 import { importControlAiLetter, latestControlAiImport } from "./controlai-import";
 import { query } from "./db";
 
@@ -23,7 +23,7 @@ const statuses = () =>
   query<{ name: string; updatedBy: string }>(
     `SELECT p.name, s.updated_by AS "updatedBy" FROM campaign_statuses s JOIN politicians p ON p.id = s.politician_id
      WHERE s.campaign = $1 ORDER BY p.name`,
-    [BILL_CAMPAIGN],
+    [SOBEL_BILL_CAMPAIGN],
   );
 
 describeWithDatabase("importControlAiLetter", () => {
@@ -78,7 +78,7 @@ describeWithDatabase("importControlAiLetter", () => {
       `INSERT INTO campaign_statuses (politician_id, campaign, status, updated_by) VALUES
        ($1, $4, 'signed', 'controlai'), ($2, $4, 'signed', 'controlai'), ($3, $4, 'signed', 'sync'),
        ($1, 'regulate-letter-pm', 'signed', 'jo@pauseai.uk')`,
-      [polly, gone, byHand, BILL_CAMPAIGN],
+      [polly, gone, byHand, SOBEL_BILL_CAMPAIGN],
     );
 
     const result = await importControlAiLetter();
@@ -98,9 +98,12 @@ describeWithDatabase("importControlAiLetter", () => {
 
   it("keeps the failure and changes nothing when the page has no PDF, or too few names", async () => {
     await addTestPolitician();
-    server.use(http.get(LETTER_PAGE, () => HttpResponse.text("<p>Moved</p>")));
+    server.use(http.get(CONTROLAI_LETTER_PAGE, () => HttpResponse.text("<p>Moved</p>")));
     await expect(importControlAiLetter()).rejects.toThrow("No PDF linked");
-    expect((await latestControlAiImport())!.result).toEqual({ ok: false, error: `No PDF linked from ${LETTER_PAGE}` });
+    expect((await latestControlAiImport())!.result).toEqual({
+      ok: false,
+      error: `No PDF linked from ${CONTROLAI_LETTER_PAGE}`,
+    });
 
     server.resetHandlers();
     server.use(http.get(PDF, () => HttpResponse.text("not a pdf")));
@@ -112,8 +115,8 @@ describeWithDatabase("importControlAiLetter", () => {
     await expect(importControlAiLetter()).rejects.toThrow("Only 1 signatories found");
 
     server.resetHandlers();
-    server.use(http.get(LETTER_PAGE, () => new HttpResponse(null, { status: 500 })));
-    await expect(importControlAiLetter()).rejects.toThrow(`${LETTER_PAGE} returned 500`);
+    server.use(http.get(CONTROLAI_LETTER_PAGE, () => new HttpResponse(null, { status: 500 })));
+    await expect(importControlAiLetter()).rejects.toThrow(`${CONTROLAI_LETTER_PAGE} returned 500`);
     expect(await statuses()).toEqual([]);
     expect(await query("SELECT count(*)::int AS n FROM controlai_imports WHERE result->>'ok' = 'false'")).toEqual([
       { n: 4 },

@@ -1,6 +1,15 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { matchSignatories, nameKeys, normaliseName, oneLetterOut, pdfUrlIn, signatoriesIn } from "./controlai-letter";
+import {
+  matchSignatories,
+  nameKeys,
+  normaliseName,
+  oneLetterOut,
+  pdfUrlIn,
+  signatoriesIn,
+  signedControlAiLetter,
+  SOBEL_BILL_CAMPAIGN,
+} from "./controlai-letter";
 
 // The letter's text as unpdf extracts it, on 15 Oct 2026.
 const LETTER = readFileSync(new URL("../tests/fixtures/controlai-letter.txt", import.meta.url), "utf8");
@@ -10,6 +19,14 @@ describe("pdfUrlIn", () => {
     const html = `<a href="https://images.controlai.com/final%20letter.pdf">Download</a> <a href="https://x.com/ControlAI">`;
     expect(pdfUrlIn(html)).toBe("https://images.controlai.com/final%20letter.pdf");
     expect(pdfUrlIn("<p>No letter</p>")).toBeUndefined();
+  });
+});
+
+describe("signedControlAiLetter", () => {
+  it("is the bill's signed status, and nothing else", () => {
+    expect(signedControlAiLetter({ [SOBEL_BILL_CAMPAIGN]: "signed" })).toBe(true);
+    expect(signedControlAiLetter({ "regulate-letter-pm": "signed" })).toBe(false);
+    expect(signedControlAiLetter({})).toBe(false);
   });
 });
 

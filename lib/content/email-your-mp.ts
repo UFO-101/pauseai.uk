@@ -2,8 +2,13 @@
 // each, and every word the tool shows or sends. Each campaign's page has its
 // own words (app/(site)/campaigns-v2/<slug>/page.tsx).
 
+import { signedControlAiLetter } from "@/lib/controlai-letter";
+
 /** What the MP has done for one campaign, as recorded by the policy team. */
 export type CampaignStatus = "signed";
+
+/** Each campaign's status for one MP, keyed by campaign slug. */
+export type MpStatuses = Partial<Record<string, CampaignStatus>>;
 
 /** What a letter needs to know about who it's from and who it's to. */
 export type LetterDetails = {
@@ -11,11 +16,8 @@ export type LetterDetails = {
   salutation: string;
   constituency: string;
   senderName: string;
-  /**
-   * Signed ControlAI's letter to the PM backing the Sobel bill
-   * (lib/controlai-letter.ts), so the bill's letter thanks them for it.
-   */
-  signedControlAiLetter: boolean;
+  /** What the MP has done, so a letter can say so. */
+  statuses: MpStatuses;
 };
 
 export type Attachment = {
@@ -131,7 +133,7 @@ Alex Sobel MP has tabled the Artificial Superintelligence Bill to protect the pu
 - Starts monitoring AI computing power, just as we do for nuclear weapons
 - Pushes for a global ban with an international treaty
 
-${d.signedControlAiLetter ? `${copy.sobelBill.letterThanks}\n\n` : ""}Please could you attend the second reading debate in person on Friday, 13th November, and support the bill.
+${signedControlAiLetter(d.statuses) ? `${copy.sobelBill.letterThanks}\n\n` : ""}Please could you attend the second reading debate in person on Friday, 13th November, and support the bill.
 
 Thank you for your consideration,`,
     // The bill's PDFs aren't written yet (plans/email-your-mp-v2.md, "Tasks for Francis").

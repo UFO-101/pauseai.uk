@@ -5,10 +5,19 @@
 // in nightly, and nobody edits that status by hand. The caller fetches and
 // extracts the text; this is the parsing and the matching.
 
-export const LETTER_PAGE = "https://controlai.org/uk-pm-letter";
+export const CONTROLAI_LETTER_PAGE = "https://controlai.org/uk-pm-letter";
 
 /** The campaign whose status the letter sets. */
-export const BILL_CAMPAIGN = "support-sobel-bill";
+export const SOBEL_BILL_CAMPAIGN = "support-sobel-bill";
+
+/**
+ * Whether the MP signed the letter, from their statuses. That doesn't count
+ * as having done the bill's campaign, which asks them to the debate: it
+ * changes what its page and letter say.
+ */
+export function signedControlAiLetter(statuses: Partial<Record<string, string>>): boolean {
+  return statuses[SOBEL_BILL_CAMPAIGN] === "signed";
+}
 
 /** `updated_by` on the statuses the letter sets, which nothing else writes. */
 export const CONTROLAI = "controlai";
@@ -18,7 +27,7 @@ export function pdfUrlIn(html: string): string | undefined {
   return html.match(/https:\/\/[a-z0-9.-]*controlai\.com\/[^"'\s<>]+\.pdf/i)?.[0];
 }
 
-export type Signatory = {
+export type ControlAiSignatory = {
   /** As written in the letter: "Rt Hon. the Lord Goldsmith of Richmond Park". */
   name: string;
   /** Signed after the letter was delivered, in the list that follows it. */
@@ -33,7 +42,7 @@ const LATER = /^Since this letter was originally delivered/i;
 const LATER_END = /have also signed:?$/i;
 
 /** The signatories in the letter's text, a line each, in order. */
-export function signatoriesIn(text: string): Signatory[] {
+export function signatoriesIn(text: string): ControlAiSignatory[] {
   const start = text.search(SIGN_OFF);
   if (start < 0) return [];
   const footer = text.search(FOOTER);
@@ -43,7 +52,7 @@ export function signatoriesIn(text: string): Signatory[] {
     .slice(1)
     .map((line) => line.trim())
     .filter(Boolean);
-  const signatories: Signatory[] = [];
+  const signatories: ControlAiSignatory[] = [];
   let addedLater = false;
   let inSentence = false;
   for (const line of lines) {
@@ -121,7 +130,7 @@ export function oneLetterOut(a: string, b: string): boolean {
 /** A politician the letter's names are matched against. */
 export type Candidate = { id: number; house: string; name: string };
 
-export type Problem = {
+export type ControlAiMatchProblem = {
   name: string;
   /** Nobody in our table, or more than one (which only a person can settle). */
   kind: "nobody" | "several";
@@ -131,8 +140,8 @@ export type Problem = {
 
 export type Matches = {
   /** Each matched politician's ID, with the signatory. */
-  matched: Map<number, Signatory>;
-  problems: Problem[];
+  matched: Map<number, ControlAiSignatory>;
+  problems: ControlAiMatchProblem[];
 };
 
 /**
@@ -141,13 +150,13 @@ export type Matches = {
  * peer's to the Lords. The letter has typos ("Hinchcliff" for Chris
  * Hinchliff), so an MP's name may be one letter out, if that leaves one.
  */
-export function matchSignatories(signatories: Signatory[], candidates: Candidate[]): Matches {
+export function matchSignatories(signatories: ControlAiSignatory[], candidates: Candidate[]): Matches {
   const index = new Map<string, Candidate[]>();
   for (const candidate of candidates) {
     for (const key of nameKeys(candidate.name)) index.set(key, [...(index.get(key) ?? []), candidate]);
   }
-  const matched = new Map<number, Signatory>();
-  const problems: Problem[] = [];
+  const matched = new Map<number, ControlAiSignatory>();
+  const problems: ControlAiMatchProblem[] = [];
   for (const signatory of signatories) {
     const isMp = /\bMP$/.test(signatory.name.trim());
     const house = isMp ? "commons" : "lords";

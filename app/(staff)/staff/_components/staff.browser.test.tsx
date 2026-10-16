@@ -7,7 +7,7 @@ import type { ControlAiImport } from "@/lib/server/controlai-import";
 import type { Politician } from "@/lib/server/politicians";
 import type { MpSync } from "@/lib/server/mp-sync";
 import ChangesTable from "./ChangesTable";
-import ControlAiImportResult from "./ControlAiImportResult";
+import ControlAiImportStatus from "./ControlAiImportStatus";
 import LettersTable from "./LettersTable";
 import MpCheckList from "./MpCheckList";
 import PoliticianFilters from "./PoliticianFilters";
@@ -128,7 +128,7 @@ describe("PoliticianTable", () => {
   });
 });
 
-describe("ControlAiImportResult", () => {
+describe("ControlAiImportStatus", () => {
   const run = (result: ControlAiImport["result"]): ControlAiImport => ({ at: "2026-10-15T02:00:00Z", result });
   const ok = {
     ok: true as const,
@@ -141,14 +141,14 @@ describe("ControlAiImportResult", () => {
   };
 
   it("says what the newest run did", async () => {
-    await render(<ControlAiImportResult run={run(ok)} />);
+    await render(<ControlAiImportStatus run={run(ok)} />);
     await expect.element(page.getByText(/86 nomina/)).toBeVisible();
     await expect.element(page.getByRole("table")).not.toBeInTheDocument();
   });
 
   it("lists the names it couldn't place", async () => {
     await render(
-      <ControlAiImportResult
+      <ControlAiImportStatus
         run={run({
           ...ok,
           problems: [
@@ -164,12 +164,12 @@ describe("ControlAiImportResult", () => {
   });
 
   it("says why a run failed", async () => {
-    await render(<ControlAiImportResult run={run({ ok: false, error: "No PDF linked" })} />);
+    await render(<ControlAiImportStatus run={run({ ok: false, error: "No PDF linked" })} />);
     await expect.element(page.getByText(/No PDF linked/)).toBeVisible();
   });
 
   it("says when there's been no run", async () => {
-    await render(<ControlAiImportResult />);
+    await render(<ControlAiImportStatus />);
     await expect.element(page.getByText(staffCopy.controlAi.never)).toBeVisible();
   });
 });

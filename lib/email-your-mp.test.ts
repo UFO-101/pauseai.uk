@@ -8,7 +8,6 @@ import {
   chooseCampaign,
   trackedCampaigns,
   draftLetter,
-  signedControlAiLetter,
   fullLetter,
   isDone,
   looksLikeEmail,
@@ -22,7 +21,7 @@ const details = {
   salutation: "Ms Dummy",
   constituency: "Hackney North",
   senderName: "Jane Smith",
-  signedControlAiLetter: false,
+  statuses: {},
 };
 
 describe("postcodes", () => {
@@ -84,9 +83,7 @@ describe("letters", () => {
   });
 
   it("thanks an MP who signed ControlAI's letter, in the bill's letter only, and still asks them to the debate", () => {
-    expect(signedControlAiLetter({ [bill.slug]: "signed" })).toBe(true);
-    expect(signedControlAiLetter({ [letterToPm.slug]: "signed" })).toBe(false);
-    const signed = { ...details, signedControlAiLetter: true };
+    const signed = { ...details, statuses: { [bill.slug]: "signed" as const } };
     expect(toText(draftLetter(bill, signed))).toContain(copy.sobelBill.letterThanks);
     expect(toText(draftLetter(bill, signed))).toContain("second reading debate");
     expect(toText(draftLetter(bill, details))).not.toContain(copy.sobelBill.letterThanks);

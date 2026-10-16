@@ -1,14 +1,14 @@
 import "server-only";
 import { extractText } from "unpdf";
 import {
-  BILL_CAMPAIGN,
+  SOBEL_BILL_CAMPAIGN,
   CONTROLAI,
-  LETTER_PAGE,
+  CONTROLAI_LETTER_PAGE,
   matchSignatories,
   pdfUrlIn,
   signatoriesIn,
   type Candidate,
-  type Problem,
+  type ControlAiMatchProblem,
 } from "@/lib/controlai-letter";
 import { logChange } from "./audit";
 import { query, transaction } from "./db";
@@ -24,7 +24,7 @@ import { outsideFetch } from "./outside-fetch";
 /** Fewer names than this means the page or the PDF has changed shape, so nothing is changed. */
 const MIN_SIGNATORIES = 5;
 
-export type ImportResult =
+export type ControlAiImportResult =
   | {
       ok: true;
       pdfUrl: string;
@@ -35,11 +35,11 @@ export type ImportResult =
       /** Statuses set and removed this run. */
       added: number;
       removed: number;
-      problems: Problem[];
+      problems: ControlAiMatchProblem[];
     }
   | { ok: false; error: string };
 
-export type ControlAiImport = { at: string; result: ImportResult };
+export type ControlAiImport = { at: string; result: ControlAiImportResult };
 
 async function fetchOk(url: string): Promise<Response> {
   const res = await outsideFetch(url, { cache: "no-store" });
@@ -49,21 +49,21 @@ async function fetchOk(url: string): Promise<Response> {
 
 /** The letter's text, from the PDF the page links to. */
 async function fetchLetter(): Promise<{ pdfUrl: string; text: string }> {
-  const html = await (await fetchOk(LETTER_PAGE)).text();
+  const html = await (await fetchOk(CONTROLAI_LETTER_PAGE)).text();
   const pdfUrl = pdfUrlIn(html);
-  if (!pdfUrl) throw new Error(`No PDF linked from ${LETTER_PAGE}`);
+  if (!pdfUrl) throw new Error(`No PDF linked from ${CONTROLAI_LETTER_PAGE}`);
   const pdf = new Uint8Array(await (await fetchOk(pdfUrl)).arrayBuffer());
   const { text } = await extractText(pdf, { mergePages: true });
   return { pdfUrl, text };
 }
 
-async function keep(result: ImportResult): Promise<void> {
+async function keep(result: ControlAiImportResult): Promise<void> {
   await query("INSERT INTO controlai_imports (result) VALUES ($1)", [JSON.stringify(result)]);
 }
 
 /** Reads the letter and makes the bill's statuses match it. Keeps the result, or the failure, then throws it on. */
-export async function importControlAiLetter(): Promise<ImportResult> {
-  let result: ImportResult;
+export async function importControlAiLetter(): Promise<ControlAiImportResult> {
+  let result: ControlAiImportResult;
   try {
     const { pdfUrl, text } = await fetchLetter();
     const signatories = signatoriesIn(text);
@@ -84,16 +84,16 @@ export async function importControlAiLetter(): Promise<ImportResult> {
         `INSERT INTO campaign_statuses (politician_id, campaign, status, updated_by)
          SELECT id, $2, 'signed', $3 FROM unnest($1::bigint[]) AS id
          ON CONFLICT (politician_id, campaign) DO NOTHING RETURNING politician_id`,
-        [ids, BILL_CAMPAIGN, CONTROLAI],
+        [ids, SOBEL_BILL_CAMPAIGN, CONTROLAI],
         db,
       );
       const removed = await query(
         `DELETE FROM campaign_statuses WHERE campaign = $2 AND updated_by = $3 AND NOT (politician_id = ANY($1::bigint[]))
          RETURNING politician_id`,
-        [ids, BILL_CAMPAIGN, CONTROLAI],
+        [ids, SOBEL_BILL_CAMPAIGN, CONTROLAI],
         db,
       );
-      const result: ImportResult = {
+      const result: ControlAiImportResult = {
         ok: true,
         pdfUrl,
         signatories: signatories.length,

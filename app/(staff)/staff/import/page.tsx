@@ -4,7 +4,7 @@ import { latestControlAiImport } from "@/lib/server/controlai-import";
 import { recentSyncs } from "@/lib/server/mp-sync";
 import { requireStaff } from "@/lib/server/staff-auth";
 import { decideSync, importControlAiNow, importFromAirtable, syncNow } from "../actions";
-import ControlAiImportResult from "../_components/ControlAiImportResult";
+import ControlAiImportStatus from "../_components/ControlAiImportStatus";
 import StaffHeader from "../_components/StaffHeader";
 import SyncList from "../_components/SyncList";
 import styles from "../_components/staff.module.css";
@@ -51,7 +51,7 @@ export default async function ImportPage({ searchParams }: { searchParams: Promi
           {staffCopy.controlAi.importNow}
         </SubmitButton>
       </form>
-      <ControlAiImportResult run={controlAi} />
+      <ControlAiImportStatus run={controlAi} />
     </main>
   );
 }
