@@ -1,8 +1,8 @@
 # Styling into components plan
 
-Written 2026-10-16. Status: not started; starts once the branches in
-flight (`sobel-bill-support`, Email your MP v2) have merged, so the one
-branch this needs doesn't fight them. Follows on from
+Written 2026-10-16. Status: done, 17 October 2026, on the
+`styling-to-components` branch (see its commits; each says what the
+storyboard showed). Follows on from
 `plans/code-organisation.md`, phase 9 ("Page CSS to modules") and the
 `Section` component left over from its phase 3.
 

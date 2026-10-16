@@ -1,7 +1,8 @@
 # Code organisation plan
 
 Written 2026-10-13. Status: phases 0–8 done on 2026-10-13 (see git log); the
-`Section` component from phase 3 and phase 9 are not done yet.
+`Section` component from phase 3 and phase 9 were done by
+`plans/styling-to-components.md` (October 2026).
 
 ## Scope
 

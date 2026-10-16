@@ -288,6 +288,14 @@ import("@/tests/next-headers"))` and put the session cookie in
   failure. Never retry, skip or loosen it to get past it; find why it
   varies.
 - A new component ships with its `*.browser.test.tsx` in the same PR.
+- **Tests find elements the way a person does**: by role and accessible
+  name, label or text (`getByRole`, `getByLabelText`, `getByText`), or by
+  the attributes the markup has for its state (`aria-expanded`,
+  `aria-pressed`, `data-active`). Where there's nothing semantic to find,
+  such as a chart's parts, use a `data-testid`. Never select by a CSS
+  module's class (its name is hashed) or import one into a test; to check
+  something visual, read its computed style, since a component's module
+  loads with it.
 - New logic in `lib/` ships with its `*.test.ts`.
 - A new staff page, route handler or Server Action under `app/(staff)/`
   must call `requireStaff()` as its first statement, or `tests/checks/staff-auth.test.ts`
