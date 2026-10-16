@@ -114,7 +114,7 @@
   display: block;
   width: 100%;
   height: auto;
-  background: #fff;
+  background: var(--white);
   border: 1px solid var(--border);
   border-radius: 10px;
   padding: 10px;
@@ -191,7 +191,7 @@
 /* Diagrams are shown whole rather than cropped, on the same white ground
    the article figures use. */
 .blog .blog-card-media.is-diagram {
-  background: #fff;
+  background: var(--white);
 }
 .blog .blog-card-media.is-diagram img {
   object-fit: contain;

@@ -24,7 +24,7 @@
 
 .btn.primary {
   background: var(--accent);
-  color: #fff;
+  color: var(--white);
   box-shadow: 0 2px 8px rgb(var(--pause-orange-rgb) / 0.25);
 }
 

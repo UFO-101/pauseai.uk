@@ -103,7 +103,7 @@
   border: 1px solid var(--border);
   border-radius: 8px;
   background: var(--surface);
-  box-shadow: 0 4px 12px rgb(0 0 0 / 10%);
+  box-shadow: 0 4px 12px rgb(var(--black-rgb) / 10%);
   white-space: nowrap;
 }
 
@@ -250,7 +250,7 @@
 }
 
 .error {
-  color: #b00020;
+  color: var(--danger);
 }
 
 .sync {
@@ -314,16 +314,16 @@ h2 .tag {
 
 /* Where an import is from, and whether it runs by itself every night or is a one-off (plain). */
 .airtable {
-  background: #fcebcf;
-  color: #8a5a00;
+  background: var(--status-amber-bg);
+  color: var(--status-amber);
 }
 
 .web {
-  background: #e3f3e6;
-  color: #1f6b36;
+  background: var(--status-green-bg);
+  color: var(--status-green);
 }
 
 .nightly {
-  background: #dbe8f7;
-  color: #1d4e89;
+  background: var(--status-blue-bg);
+  color: var(--status-blue);
 }

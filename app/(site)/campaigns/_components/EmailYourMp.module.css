@@ -74,7 +74,7 @@ section.section:last-child {
   height: 0.5em;
   margin-left: 0.25em;
   vertical-align: top;
-  background-color: #b00020;
+  background-color: var(--danger);
   mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Cpath d='M5 1v8M1.5 3l7 4M8.5 3l-7 4' stroke='%23000' stroke-width='1.8' stroke-linecap='round'/%3E%3C/svg%3E")
     center / contain no-repeat;
 }
@@ -222,7 +222,7 @@ section.section:last-child {
 .toolbar button[aria-pressed="true"] {
   background: var(--accent);
   border-color: var(--accent);
-  color: #fff;
+  color: var(--white);
 }
 
 .editor {
@@ -440,7 +440,7 @@ section.step {
   width: 3rem;
   height: auto;
   border: 1px solid var(--border);
-  box-shadow: 0 1px 3px rgb(0 0 0 / 15%);
+  box-shadow: 0 1px 3px rgb(var(--black-rgb) / 15%);
 }
 
 .attachedText {
@@ -475,7 +475,7 @@ section.step {
 
 .error {
   margin: 0;
-  color: #b00020;
+  color: var(--danger);
 }
 
 .sentMore {
@@ -487,7 +487,7 @@ section.step {
   margin: 0;
   padding: 1rem;
   border-radius: 8px;
-  background: #e8f5e9;
+  background: var(--success-bg);
 }
 
 @media (max-width: 640px) {

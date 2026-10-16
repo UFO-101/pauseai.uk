@@ -28,9 +28,10 @@ Building no new features; changing no copy.
   footer, QR dialog, cookie banner, march banner, and the whole donate and
   privacy pages. It also still has a few dead classes (`amount-custom`,
   `amount-help`, `amount-input-wrap`, `amount-other`, `amount-suffix`,
-  `currency-prefix`, `luma-events-footer`, `news-logo-text*`,
-  `person-meta`, `person-avatar-pause-icon`: nothing in `app/` or
-  `components/` uses them). The donate form still uses `amount-selector`,
+  `currency-prefix`, `luma-events-footer`, `person-meta`: nothing uses
+  them). `news-logo-text*` and `person-avatar-pause-icon` look dead from
+  `app/` and `components/` but are written by `lib/content/press-coverage.ts`
+  and `lib/storyRender.tsx`. The donate form still uses `amount-selector`,
   `amount-grid` and `amount-option`.
 - **14 page stylesheets, about 5,100 lines, are plain global imports.**
   `app/(site)/track-record/track-record.css` (577 lines) is imported by
