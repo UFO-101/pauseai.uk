@@ -178,7 +178,7 @@ test("ZZ99ZC signed ControlAI's letter backing the bill, so the bill's letter th
 
   await expect(page).toHaveURL(`${BASE}/campaigns-v2/${campaigns[1].slug}/write`);
   await expect(page.getByRole("heading", { name: "Backy McTestface MP" })).toBeVisible();
-  await expect(page.getByText(copy.sobelBill.signedNote)).toBeVisible();
+  await expect(page.getByRole("link", { name: copy.sobelBill.signedNote.link })).toBeVisible();
   await expect(page.getByText(copy.sobelBill.letterThanks)).toBeVisible();
 });
 

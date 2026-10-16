@@ -216,8 +216,13 @@ export const copy = {
   // backing it (lib/controlai-letter.ts): the note above the form, and the
   // paragraph in the letter that thanks them, before asking them to the debate.
   sobelBill: {
-    signedNote: "⁂ Vester tribunus iam litteras ControlAI ad primum ministrum subscripsit, legem fulciens.",
-    letterThanks: "⁂ Gratias tibi ago quod litteras ControlAI ad primum ministrum subscripsisti, legem fulciens.",
+    // The note, with a link to the letter in the middle.
+    signedNote: {
+      before: "Good news! Your MP is a public supporter of the Artificial Superintelligence Bill, they've signed the ",
+      link: "ControlAI letter",
+      after: ". Please thank them for this, and encourage them to attend the debate of the Bill.",
+    },
+    letterThanks: "Thank you for signing the ControlAI letter to the Prime Minister in support of the Bill.",
   },
   // Errors the server sends back to the form.
   errors: {
