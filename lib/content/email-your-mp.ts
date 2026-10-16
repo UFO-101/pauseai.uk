@@ -161,7 +161,7 @@ export const copy = {
     mpOf: (constituency: string) => `MP for ${constituency}`,
     // Outside production only, under the form: the first test postcode, and
     // the rest, with what each MP is for, behind an arrow.
-    testPostcodes: "Test postcodes only on dev site; expand for more. default one: ",
+    testPostcodes: "Dev site takes test postcodes only. Expand for more. Default one: ",
     testMpSigned: (campaign: string) => `signed “${campaign}”`,
     testMpNoEmail: "no email",
     noEmail: "No email found for your MP.",
