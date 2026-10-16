@@ -13,12 +13,22 @@ function getPool(): Pool {
   if (!connectionString) throw new Error("NETLIFY_DB_URL is not set");
   if (pool) return pool;
   // Serverless functions each hold their own pool, so keep it small.
-  pool = new Pool({ connectionString, max: 3 });
+  pool = new Pool({ connectionString: verifyFullUrl(connectionString), max: 3 });
   // The dev server says in its terminal when the database needs
   // npm run db:migrate, rather than a page failing on a missing table.
   // Netlify's own databases are migrated on deploy, so only in development.
   if (process.env.NODE_ENV === "development") void warnIfBehind(pool);
   return pool;
+}
+
+/**
+ * Netlify's URL says sslmode=require. pg 8 treats that as verify-full (and
+ * warns, once per process, that pg 9 will weaken it to libpq's meaning: encrypt
+ * but don't check the certificate). Saying verify-full keeps today's checks
+ * across the upgrade and quiets the warning.
+ */
+export function verifyFullUrl(connectionString: string): string {
+  return connectionString.replace(/([?&]sslmode=)(prefer|require|verify-ca)(?=&|$)/, "$1verify-full");
 }
 
 async function warnIfBehind(db: Queryable): Promise<void> {
