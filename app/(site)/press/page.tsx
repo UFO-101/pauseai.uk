@@ -1,5 +1,4 @@
 import { pageMetadata } from "@/lib/metadata";
-import "./press.css";
 import PressKit from "./_components/PressKit";
 import PageHero from "@/components/ui/PageHero";
 
@@ -12,7 +11,7 @@ export const metadata = pageMetadata({
 export default function PressPage() {
   return (
     <>
-      <main className="press">
+      <main>
         <PageHero
           title="Press"
           lede="Resources for journalists covering PauseAI UK and the movement for safe, equitable AI."
