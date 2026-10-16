@@ -21,7 +21,7 @@ import { hydrated } from "./settle";
 // letter: the email-your-mp flow "the write, preview and sent pages, opened
 // without a lookup or a letter" pictures that once, and the ZZ99ZZ flow
 // pictures them filled in.
-const EMPTY_STEP = /^\/campaigns-v2\/[^/]+\/(write|preview)$/;
+const EMPTY_STEP = /^\/campaigns\/[^/]+\/(write|preview)$/;
 const PUBLIC_ROUTES = ROUTES.filter((route) => !isStaffRoute(route) && !EMPTY_STEP.test(route));
 
 // Matched against the message text. Kept deliberately short — every entry here

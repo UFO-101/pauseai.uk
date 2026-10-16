@@ -1,8 +1,7 @@
 // Draws one collateral layout into a real canvas, at every format, in every
 // style, with and without a photo, QR codes and partner logos, and with lint
-// on, so the checks run too. The pixels themselves are compared against
-// stored images in plans/visual-baselines.md; these tests check what each
-// drawing reports and that it actually painted something.
+// on, so the checks run too. These tests check what each drawing reports
+// and that it actually painted something, not its pixels.
 //
 // One test file per layout (lib/collateral/render-*.browser.test.ts) calls
 // this, rather than one file for all of them: the files run in parallel, and

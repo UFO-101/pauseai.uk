@@ -8,7 +8,7 @@ export const metadata = {
   ...pageMetadata({
     title: copy.preview.title,
     description: copy.preview.title,
-    path: "/campaigns-v2/regulate-letter-pm/preview",
+    path: "/campaigns/regulate-letter-pm/preview",
   }),
   robots: { index: false, follow: false },
 };

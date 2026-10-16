@@ -11,7 +11,7 @@ import { headerName, lettersDomain, sendEmail } from "./postmark";
 import { checkNotSpam } from "./turnstile";
 
 // A letter from the form, sent through Postmark from the letter's own
-// address as soon as the form is accepted (plans/email-your-mp-v2.md).
+// address as soon as the form is accepted.
 
 export type LetterForm = {
   campaign: string;

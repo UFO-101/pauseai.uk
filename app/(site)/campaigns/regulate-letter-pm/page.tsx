@@ -1,20 +1,16 @@
 import { pageMetadata } from "@/lib/metadata";
-import Signatories from "../../campaigns/_components/Signatories";
+import Signatories from "../_components/Signatories";
 import CampaignContext from "../_components/CampaignContext";
 import CampaignDocs, { DocCard } from "../_components/CampaignDocs";
 import CampaignHero from "../_components/CampaignHero";
 import EmailYourMpSection from "../_components/EmailYourMpSection";
 
-// The letter to the PM, in the words of today's /campaigns, which it
-// replaces (plans/email-your-mp-v2.md). Unlisted, and kept out of search.
-export const metadata = {
-  ...pageMetadata({
-    title: "Regulate AI developers now",
-    description: "Take action on AI safety. Email your MP, join campaigns, and help build pressure for a global pause.",
-    path: "/campaigns-v2/regulate-letter-pm",
-  }),
-  robots: { index: false, follow: false },
-};
+// The letter to the PM, and the first campaign in priority order.
+export const metadata = pageMetadata({
+  title: "Regulate AI developers now",
+  description: "Take action on AI safety. Email your MP, join campaigns, and help build pressure for a global pause.",
+  path: "/campaigns/regulate-letter-pm",
+});
 
 export default function Page() {
   return (

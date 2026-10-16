@@ -6,8 +6,7 @@ import { afterEach, describe, expect, it } from "vitest";
 
 // Every staff page, route handler and Server Action under app/(staff)/ must
 // call requireStaff() first. proxy.ts only checks that a cookie exists; this
-// is what makes every staff entry point check the session in the database
-// (plans/email-your-mp-v2.md, "Staff interface").
+// is what makes every staff entry point check the session in the database.
 //
 // Each exported function is its own entry point: a page's default export, a
 // route's GET or POST, and every function in a "use server" file. So each is

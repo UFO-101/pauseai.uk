@@ -12,7 +12,7 @@ import {
 } from "../steps";
 import { BASE, expect, frame, test } from "./fixtures";
 
-// Email your MP, version 2, end to end on fixture data. ZZ99ZZ finds the test
+// Email your MP, end to end on fixture data. ZZ99ZZ finds the test
 // MP, so the whole flow runs as it would for a real one. Emails go to the
 // fixture Postmark, and the outbox shows what was sent.
 
@@ -25,7 +25,7 @@ function adsEvents(page: Page) {
   return page.evaluate(() => ((window as AdsWindow).dataLayer ?? []).filter((e) => e.event === "mp_email_sent").length);
 }
 
-const PAGE = `${BASE}/campaigns-v2/${campaigns[0].slug}`;
+const PAGE = `${BASE}/campaigns/${campaigns[0].slug}`;
 
 /** Looks up ZZ99ZZ, then checks the address is the write page's. */
 async function lookUp(page: Page) {
@@ -174,7 +174,7 @@ test("ZZ99ZS has signed, so the PM letter's page moves on to the bill's, to writ
   await expect(page.locator("summary", { hasText: "ZZ9 9ZZ" })).toBeVisible();
   await page.getByRole("button", { name: copy.lookup.button }).click();
 
-  await expect(page).toHaveURL(`${BASE}/campaigns-v2/${campaigns[1].slug}`);
+  await expect(page).toHaveURL(`${BASE}/campaigns/${campaigns[1].slug}`);
   await expect(page.getByText(campaigns[0].movedOn!)).toBeVisible();
   await expect(page.getByLabel(copy.lookup.nameLabel)).toHaveValue("Jane Smith");
   await expect(page.getByLabel(copy.lookup.addressLabel)).toHaveValue("1 High Street, Testville");
@@ -182,17 +182,17 @@ test("ZZ99ZS has signed, so the PM letter's page moves on to the bill's, to writ
   await frame(page, "moved on to the bill's page");
   await page.getByRole("button", { name: copy.lookup.button }).click();
 
-  await expect(page).toHaveURL(`${BASE}/campaigns-v2/${campaigns[1].slug}/write`);
+  await expect(page).toHaveURL(`${BASE}/campaigns/${campaigns[1].slug}/write`);
   await expect(page.getByRole("heading", { name: "Signy McTestface MP" })).toBeVisible();
   await expect(page.getByLabel(copy.form.subjectLabel)).toHaveValue(campaigns[1].subject);
   await frame(page, "the bill's letter to Signy McTestface MP");
 });
 
 test("ZZ99ZB signed ControlAI's letter backing the bill, so the bill's letter thanks them", async ({ page }) => {
-  await openLookup(page, BASE, "ZZ9 9ZB", `/campaigns-v2/${campaigns[1].slug}`);
+  await openLookup(page, BASE, "ZZ9 9ZB", `/campaigns/${campaigns[1].slug}`);
   await page.getByRole("button", { name: copy.lookup.button }).click();
 
-  await expect(page).toHaveURL(`${BASE}/campaigns-v2/${campaigns[1].slug}/write`);
+  await expect(page).toHaveURL(`${BASE}/campaigns/${campaigns[1].slug}/write`);
   await expect(page.getByRole("heading", { name: "Backy McTestface MP" })).toBeVisible();
   await expect(page.getByRole("link", { name: copy.sobelBill.signedNote.link })).toBeVisible();
   await expect(page.getByText(copy.sobelBill.letterThanks)).toBeVisible();
@@ -205,29 +205,57 @@ test("ZZ99ZN has no email, so there's no letter to write", async ({ page }) => {
 
   await expect(page.getByRole("heading", { name: "Nomail McTestface MP" })).toBeVisible();
   await expect(page.getByText(copy.lookup.noEmail)).toBeVisible();
-  await expect(page).toHaveURL(`${BASE}/campaigns-v2/${campaigns[0].slug}`);
+  await expect(page).toHaveURL(`${BASE}/campaigns/${campaigns[0].slug}`);
   await frame(page, "an MP with no email");
 });
 
-test("each campaign has its own page, plain /campaigns-v2 opens the first, and an unknown one is a 404", async ({
+test("each campaign has its own page, plain /campaigns opens the first, and an unknown one is a 404", async ({
   page,
   request,
 }) => {
   for (const campaign of campaigns) {
-    await page.goto(`${BASE}/campaigns-v2/${campaign.slug}`);
+    await page.goto(`${BASE}/campaigns/${campaign.slug}`);
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
     await expect(page.getByLabel(copy.lookup.postcodeLabel)).toBeVisible();
-    await frame(page, `/campaigns-v2/${campaign.slug}`);
+    await frame(page, `/campaigns/${campaign.slug}`);
   }
-  await page.goto(`${BASE}/campaigns-v2`);
-  await expect(page).toHaveURL(`${BASE}/campaigns-v2/${campaigns[0].slug}`);
-  expect((await request.get(`${BASE}/campaigns-v2/no-such-campaign`)).status()).toBe(404);
+  await page.goto(`${BASE}/campaigns`);
+  await expect(page).toHaveURL(`${BASE}/campaigns/${campaigns[0].slug}`);
+  expect((await request.get(`${BASE}/campaigns/no-such-campaign`)).status()).toBe(404);
 });
 
-test("version 2 is unlisted and kept out of search", async ({ page, request }) => {
-  await page.goto(`${BASE}/campaigns-v2`);
-  await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", /noindex/);
-  expect(await (await request.get(`${BASE}/sitemap.xml`)).text()).not.toContain("campaigns-v2");
+test("the nav's Campaigns menu links each campaign's page", { tag: "@desktop-only" }, async ({ page }) => {
   await page.goto(`${BASE}/`);
-  await expect(page.locator('a[href*="campaigns-v2"]')).toHaveCount(0);
+  const menu = page.locator(".nav-item.has-dropdown", { hasText: "Campaigns" });
+  await menu.hover();
+  const bill = menu.getByRole("menuitem", { name: "Support the Artificial Superintelligence Bill" });
+  await expect(menu.getByRole("menuitem", { name: "Regulate AI developers now" })).toBeVisible();
+  await expect(bill).toBeVisible();
+  await frame(page, "the Campaigns menu, with both campaigns");
+  await bill.click();
+  await expect(page).toHaveURL(`${BASE}/campaigns/${campaigns[1].slug}`);
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Support the Artificial Superintelligence Bill");
+  await frame(page, "the bill's page, from the menu");
+});
+
+test("the campaign pages are in search and the sitemap, and the old /campaigns-v2 links redirect", async ({
+  page,
+  request,
+}) => {
+  const sitemap = await (await request.get(`${BASE}/sitemap.xml`)).text();
+  for (const campaign of campaigns) {
+    expect(sitemap).toContain(`/campaigns/${campaign.slug}<`);
+    await page.goto(`${BASE}/campaigns/${campaign.slug}`);
+    await expect(page.locator('meta[name="robots"]')).toHaveCount(0);
+  }
+  expect(sitemap).not.toContain("campaigns-v2");
+  expect(sitemap).not.toMatch(/\/(write|preview|sent)</);
+  // The old page's iframe from pauseai.info has gone.
+  await expect(page.locator("iframe")).toHaveCount(0);
+
+  await page.goto(`${BASE}/campaigns-v2`);
+  await expect(page).toHaveURL(`${BASE}/campaigns/${campaigns[0].slug}`);
+  await page.goto(`${BASE}/campaigns-v2/${campaigns[1].slug}`);
+  await expect(page).toHaveURL(`${BASE}/campaigns/${campaigns[1].slug}`);
+  await frame(page, "/campaigns-v2/support-sobel-bill, redirected");
 });

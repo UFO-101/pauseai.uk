@@ -9,7 +9,7 @@ import { OUTBOX_DIR } from "./fixture-env.mjs";
 import { type OutboxEmail, readOutbox } from "./fixtures/outbox";
 
 // Redirects to the first campaign.
-const TOOL_PAGE = "/campaigns-v2";
+const TOOL_PAGE = "/campaigns";
 
 /** Basic auth for the Postmark webhooks, as a fixture build is configured. */
 export const WEBHOOK_AUTH = `Basic ${Buffer.from("postmark:fixture-webhook-password").toString("base64")}`;

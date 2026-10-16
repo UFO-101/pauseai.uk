@@ -193,7 +193,7 @@ your machine. You need no keys:
 
 #### Send a letter to the test MP
 
-1. Open http://localhost:3000/campaigns-v2.
+1. Open http://localhost:3000/campaigns.
 2. Enter any name, and postcode `ZZ99ZZ`. The page for writing the letter
    opens, to Testy McTestface MP.
 3. Fill in an email and an address, then go to the preview, and send it

@@ -21,7 +21,7 @@ const PROPS = {
   address: "1 High St",
   postcode: "sw1a 1aa",
 };
-const PREVIEW = `/campaigns-v2/${letterToPm.slug}/preview`;
+const PREVIEW = `/campaigns/${letterToPm.slug}/preview`;
 
 afterEach(() => {
   vi.restoreAllMocks();

@@ -1,6 +1,6 @@
 // The Email your MP campaigns: what the form and the server need to know about
 // each, and every word the tool shows or sends. Each campaign's page has its
-// own words (app/(site)/campaigns-v2/<slug>/page.tsx).
+// own words (app/(site)/campaigns/<slug>/page.tsx).
 
 import { signedControlAiLetter } from "@/lib/controlai-letter";
 
@@ -31,7 +31,7 @@ export type Attachment = {
 
 type CampaignCommon = {
   /**
-   * The page is app/(site)/campaigns-v2/<slug>/page.tsx, which has the
+   * The page is app/(site)/campaigns/<slug>/page.tsx, which has the
    * page's own words. Letters and MP statuses in the database are keyed by it.
    */
   slug: string;
@@ -73,7 +73,7 @@ export type Campaign = CampaignCommon &
   );
 
 /**
- * In priority order. Plain /campaigns-v2 redirects to the first, and a
+ * In priority order. Plain /campaigns redirects to the first, and a
  * campaign's page moves on to the first one the MP hasn't done. The last is
  * one nobody has done, so there's always one.
  */
@@ -140,7 +140,7 @@ ${signedControlAiLetter(d.statuses) ? `${copy.sobelBill.letterThanks}\n\n` : ""}
 Thank you for your consideration,
 
 ${d.senderName}`,
-    // The bill's PDFs aren't written yet (plans/email-your-mp-v2.md, "Tasks for Francis").
+    // The bill's PDFs aren't written yet.
     attachments: [],
   },
 ];

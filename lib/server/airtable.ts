@@ -7,7 +7,7 @@ import { outsideFetch } from "./outside-fetch";
 // whitelists below can't be bypassed by a new call site elsewhere. Read only.
 //
 // Airtable's "UK Parliamentarians" table is the source of truth for who the
-// MPs are and their emails (plans/email-your-mp-v2.md). Who has signed what
+// MPs are and their emails. Who has signed what
 // lives in our database; the signatories are read from here once, to import.
 const BASE_ID = "appBInVvIm6opJ1Ob";
 const TABLE_ID = "tblH3ks9wqQHLpYx3";

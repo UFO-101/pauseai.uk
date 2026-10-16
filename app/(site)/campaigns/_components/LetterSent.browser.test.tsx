@@ -31,6 +31,6 @@ describe("LetterSent", () => {
     await expect.element(page.getByText(copy.sent.more)).not.toBeInTheDocument();
     await expect
       .element(page.getByRole("link", { name: copy.preview.backToForm }))
-      .toHaveAttribute("href", `/campaigns-v2/${bill.slug}#email-your-mp`);
+      .toHaveAttribute("href", `/campaigns/${bill.slug}#email-your-mp`);
   });
 });

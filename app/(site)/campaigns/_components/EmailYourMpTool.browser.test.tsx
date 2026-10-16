@@ -55,7 +55,7 @@ describe("EmailYourMpTool", () => {
     await render(<EmailYourMpTool campaignSlug={letterToPm.slug} />);
     await lookUp(" Jane Smith ", " SW1A 1AA ", " 1 High St ");
 
-    await vi.waitFor(() => expect(navigation.pushed).toEqual([`/campaigns-v2/${letterToPm.slug}/write`]));
+    await vi.waitFor(() => expect(navigation.pushed).toEqual([`/campaigns/${letterToPm.slug}/write`]));
     expect(lookups).toEqual([{ postcode: " SW1A 1AA " }]);
     expect(readLookup(letterToPm.slug)).toEqual({
       campaign: letterToPm.slug,
@@ -77,7 +77,7 @@ describe("EmailYourMpTool", () => {
     await render(<EmailYourMpTool campaignSlug={letterToPm.slug} />);
     await lookUp();
 
-    await vi.waitFor(() => expect(navigation.pushed).toEqual([`/campaigns-v2/${bill.slug}`]));
+    await vi.waitFor(() => expect(navigation.pushed).toEqual([`/campaigns/${bill.slug}`]));
     expect(readLookup(bill.slug)).toMatchObject({ campaign: bill.slug, movedFrom: letterToPm.slug });
   });
 
@@ -104,7 +104,7 @@ describe("EmailYourMpTool", () => {
     await render(<EmailYourMpTool campaignSlug={letterToPm.slug} />);
     await lookUp();
 
-    await vi.waitFor(() => expect(navigation.pushed).toEqual([`/campaigns-v2/${bill.slug}`]));
+    await vi.waitFor(() => expect(navigation.pushed).toEqual([`/campaigns/${bill.slug}`]));
   });
 
   it("stays and says why if the browser won't keep the lookup", async () => {

@@ -68,7 +68,7 @@ describe("campaigns", () => {
   });
 
   it("has a page for each campaign", () => {
-    expect(campaignPath(bill)).toBe("/campaigns-v2/support-sobel-bill");
+    expect(campaignPath(bill)).toBe("/campaigns/support-sobel-bill");
   });
 });
 

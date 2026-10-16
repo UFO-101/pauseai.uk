@@ -10,7 +10,7 @@ export const metadata = {
   ...pageMetadata({
     title: copy.sent.title,
     description: copy.sent.title,
-    path: "/campaigns-v2/support-sobel-bill/sent",
+    path: "/campaigns/support-sobel-bill/sent",
   }),
   robots: { index: false, follow: false },
 };

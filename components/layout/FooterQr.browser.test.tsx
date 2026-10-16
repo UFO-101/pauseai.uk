@@ -27,11 +27,11 @@ describe("FooterQr", () => {
     await page.getByRole("button", { name: "Close" }).click();
     await shut();
 
-    window.history.replaceState(null, "", "/campaigns-v2/regulate-letter-pm?utm_source=test#write");
+    window.history.replaceState(null, "", "/campaigns/regulate-letter-pm?utm_source=test#write");
     await show.click();
     await expect.element(dialog).toBeVisible();
     // The live address of the page it was opened on, without the query or fragment.
-    await expect.element(page.getByText("pauseai.uk/campaigns-v2/regulate-letter-pm", { exact: true })).toBeVisible();
+    await expect.element(page.getByText("pauseai.uk/campaigns/regulate-letter-pm", { exact: true })).toBeVisible();
     await userEvent.keyboard("{Escape}");
     await shut();
 

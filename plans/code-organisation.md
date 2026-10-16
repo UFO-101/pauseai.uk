@@ -7,8 +7,7 @@ Written 2026-10-13. Status: phases 0–8 done on 2026-10-13 (see git log); the
 
 Restructure what already exists so that the codebase can take a lot more
 features later. This plan builds no new features. Every step is a refactor
-with no visible change: the visual diff (phase 1 of `plans/test-coverage.md`) must
-pass unchanged.
+with no visible change.
 
 ## Problems today
 

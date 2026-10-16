@@ -44,7 +44,7 @@ Building no new features; changing no copy.
   (padding, lede links, a title size) or copy its 880px inner width so the
   body lines up with it.
 - Likewise `app/(tools)/tools/qr` imports the collateral tool's 1,045-line
-  stylesheet, `trackers/page.tsx` imports `tools.css`, and `campaigns-v2`'s
+  stylesheet, `trackers/page.tsx` imports `tools.css`, and the campaign pages'
   layout imports `campaigns.css`.
 - **Four CSS modules exist**: `Button`, `FeatureCard`, the staff interface's
   one `staff.module.css` (329 lines, shared by 11 components and 7 pages) and
@@ -224,7 +224,7 @@ traced to the move that changed it.
    pattern settles before the big ones: march, what-is-pauseai-uk, tools
    (and the trackers index that imports it), people, trackers,
    theory-of-change, press, jobs, governance, future-of-workforce-inquiry,
-   campaigns (and the `campaigns-v2` layout's import of it), blog, events.
+   campaigns (and the campaigns layout's import of it), blog, events.
    Then collateral, whose stylesheet the QR tool and three browser tests
    also import: split it between the collateral and QR components, and
    point the tests at the modules they render. `global-ai-sentiment-2026`
@@ -303,8 +303,6 @@ how this version orders CSS modules across routes, and confirm that the
    plan says variants, so there is one button on the site; change it if
    the variants turn out staff-only. Form controls are decided: no shared
    `Field`, each form keeps its own.
-3. The campaigns page and `campaigns-v2` share `campaigns.css` while both
-   exist. Once `campaigns-v2` replaces campaigns
-   (`plans/email-your-mp-v2.md`), the old page's module can go with it, so
-   phase 7 should do `campaigns-v2`'s components first and leave the old
-   page's stylesheet until the swap.
+3. `campaigns.css` is now only the campaign pages' (the old `/campaigns`
+   page and its iframe have gone), so phase 7 can turn it into modules
+   along with their components.

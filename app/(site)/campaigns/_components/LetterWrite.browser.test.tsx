@@ -79,7 +79,7 @@ describe("LetterWrite", () => {
     await expect.element(page.getByText(copy.write.none)).toBeVisible();
     await expect
       .element(page.getByRole("link", { name: copy.preview.backToForm }))
-      .toHaveAttribute("href", `/campaigns-v2/${letterToPm.slug}#email-your-mp`);
+      .toHaveAttribute("href", `/campaigns/${letterToPm.slug}#email-your-mp`);
     await expect.element(page.getByLabelText(copy.form.subjectLabel)).not.toBeInTheDocument();
   });
 });
