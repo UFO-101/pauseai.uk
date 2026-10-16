@@ -114,15 +114,15 @@ export const staffCopy = {
   // ended, when, who started it, and for a held MP import, who decided it.
   runs: {
     status: {
-      ok: "⁂ Peractum",
-      failed: "⁂ Defecit",
+      ok: "Done",
+      failed: "Failed",
       unchanged: "Unchanged",
       held: "Held",
       applied: "Applied",
       discarded: "Discarded",
     } as Record<string, string>,
     by: (who: string) => `by ${who}`,
-    decidedBy: (who: string) => `⁂ decrevit ${who}`,
+    decidedBy: (who: string) => `decided by ${who}`,
   },
   check: {
     pageTitle: "Check data",
@@ -169,7 +169,7 @@ export const staffCopy = {
     nightly: "Nightly",
     oneOff: "One-off",
     button: "Import signatories",
-    none: "⁂ Nondum importatum.",
+    none: "Not imported yet.",
     note: "From Airtable",
     // matched + added is everyone ticked in Airtable; alreadySet is those of them already marked here.
     result: (r: { matched: number; added: number; alreadySet: number }) =>
