@@ -151,9 +151,15 @@ Both are local only and gitignored. A difference never fails; only this
 branch's checks do, and the exit code is theirs.
 
 Switches, after `--`: `--no-main` (this branch alone), `--main=<ref>`
-(another branch), `--desktop` or `--phone`, `--no-open`, `--server=URL` and
-`--main-server=URL` for servers you started. Anything else goes to
-`playwright test`: a file (`staff`), `-g login`, `--headed`.
+(another branch), `--desktop` or `--phone`, `--no-open`, `--paths` (print
+each frame's caption and picture), `--server=URL` and `--main-server=URL`
+for servers you started. Anything else goes to `playwright test`: a file
+(`staff`), `-g login`, `--headed`.
+
+So the review is also the way to get a screenshot while working: one page
+is `npm run storyboard -- --no-main --no-open --paths public-pages -g
+'/donate$'`, a few seconds on a warm build. `public-pages` names each test
+by its route. A run replaces the last review in `test-results/storyboard`.
 
 **Every flow stands alone.** It passes on its own, and run twice, in any
 order, alongside the others:

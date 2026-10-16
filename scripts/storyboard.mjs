@@ -8,6 +8,7 @@
 //   npm run storyboard -- --main=<ref>      # compare with another branch
 //   npm run storyboard -- --desktop         # or --phone: one viewport
 //   npm run storyboard -- --no-open         # leave the page closed (an agent reads storyboard.json)
+//   npm run storyboard -- --paths           # print each frame's caption and picture, to open one directly
 //   npm run storyboard -- --server=URL      # a server you started for this branch (default: Playwright builds one on 3100)
 //   npm run storyboard -- --main-server=URL # a server you started for main
 //   npm run storyboard -- staff -g login    # anything else goes to `playwright test`
@@ -16,19 +17,27 @@
 // A difference never fails; only this branch's checks do, and the exit code
 // is theirs.
 import { spawn, spawnSync } from "node:child_process";
-import { rmSync } from "node:fs";
+import { readFileSync, rmSync } from "node:fs";
 import { platform } from "node:os";
 import { join, resolve } from "node:path";
 import { LOCAL_URL, MAIN_OUTBOX_DIR, MAIN_URL } from "../tests/fixture-env.mjs";
 
 const DIR = "test-results/storyboard";
 
-const options = { main: "origin/main", open: true, projects: [], server: LOCAL_URL, mainServer: undefined };
+const options = {
+  main: "origin/main",
+  open: true,
+  paths: false,
+  projects: [],
+  server: LOCAL_URL,
+  mainServer: undefined,
+};
 const passThrough = [];
 for (const arg of process.argv.slice(2)) {
   if (arg === "--no-main") options.main = undefined;
   else if (arg.startsWith("--main=")) options.main = arg.slice("--main=".length);
   else if (arg === "--no-open") options.open = false;
+  else if (arg === "--paths") options.paths = true;
   else if (arg === "--desktop" || arg === "--phone") options.projects.push(`--project=${arg.slice(2)}`);
   else if (arg.startsWith("--server=")) options.server = arg.slice("--server=".length);
   else if (arg.startsWith("--main-server=")) options.mainServer = arg.slice("--main-server=".length);
@@ -94,6 +103,19 @@ if (options.main !== undefined) {
 }
 
 const code = runSuite("branch", options.server);
+
+if (options.paths) {
+  try {
+    const { frames } = JSON.parse(readFileSync(join(DIR, "storyboard.json"), "utf8"));
+    for (const f of frames) {
+      if (!f.branch) continue;
+      console.log(`${f.viewport} › ${f.section} › ${f.flow} › ${f.index}. ${f.caption}`);
+      console.log(`  ${resolve(DIR, f.branch)}${f.diff ? `\n  diff: ${resolve(DIR, f.diff)}` : ""}`);
+    }
+  } catch {
+    console.log("No storyboard.json: the run wrote no frames.");
+  }
+}
 
 const page = resolve(join(DIR, "index.html"));
 if (options.open) {
