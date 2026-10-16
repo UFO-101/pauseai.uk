@@ -127,6 +127,8 @@ const el = (tag, attrs = {}, children = []) => {
   return node;
 };
 const title = (s) => s.replace(/-/g, " ").replace(/^./, (c) => c.toUpperCase());
+/** Local time as "2026-10-16 16:33". */
+const isoLocal = (d) => new Date(d.getTime() - d.getTimezoneOffset() * 60_000).toISOString().slice(0, 16).replace("T", " ");
 const pct = (n) => (n * 100 < 0.01 && n > 0 ? "<0.01" : (n * 100).toFixed(2)) + "%";
 const slug = (...parts) => parts.join("-").toLowerCase().replace(/[^a-z0-9]+/g, "-");
 const framesOf = (flow) => data.frames.filter((f) => f.section === flow.section && f.flow === flow.flow && f.viewport === flow.viewport);
@@ -189,7 +191,7 @@ function render() {
   document.getElementById("summary").textContent =
     frames.length + " frames in " + flows.length + " flows" +
     (data.withMain ? ", " + changed + " changed against main" : ", no run of main to compare with") +
-    (failed ? ", " + failed + " failed" : "") + ". " + new Date(data.generatedAt).toLocaleString();
+    (failed ? ", " + failed + " failed" : "") + ". " + isoLocal(new Date(data.generatedAt));
 }
 
 function renderFrame(frame) {
