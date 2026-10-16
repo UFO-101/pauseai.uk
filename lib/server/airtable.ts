@@ -12,6 +12,9 @@ import { outsideFetch } from "./outside-fetch";
 const BASE_ID = "appBInVvIm6opJ1Ob";
 const TABLE_ID = "tblH3ks9wqQHLpYx3";
 
+/** The table in Airtable's own interface, for staff to open. */
+export const PARLIAMENTARIANS_TABLE_URL = `https://airtable.com/${BASE_ID}/${TABLE_ID}`;
+
 export class AirtableRequestError extends Error {}
 
 // Well past any realistic table (each page holds up to 100 records), so a

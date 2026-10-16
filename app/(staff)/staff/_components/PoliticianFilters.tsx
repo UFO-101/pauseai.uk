@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/Button";
-import { trackedCampaigns } from "@/lib/email-your-mp";
+import { campaigns } from "@/lib/content/email-your-mp";
 import { staffCopy } from "@/lib/content/staff-interface";
 import styles from "./staff.module.css";
 
@@ -8,7 +8,7 @@ export type Filters = { search: string; house: string; campaign: string };
 /** Search and filter the politicians list. A GET form, so the URL holds the filter. */
 export default function PoliticianFilters({ search, house, campaign }: Filters) {
   return (
-    <form className={styles.filters} method="get" action="/staff">
+    <form className={styles.filters} method="get" action="/staff/politicians">
       <label>
         {staffCopy.politicians.search}
         <input type="search" name="q" defaultValue={search} />
@@ -28,7 +28,8 @@ export default function PoliticianFilters({ search, house, campaign }: Filters) 
         {staffCopy.politician.statusesTitle}
         <select name="campaign" defaultValue={campaign}>
           <option value="">{staffCopy.politicians.anyCampaign}</option>
-          {trackedCampaigns.map((c) => (
+          {/* Every campaign: the bill's status comes from ControlAI's letter rather than staff, but it's a status. */}
+          {campaigns.map((c) => (
             <option key={c.slug} value={c.slug}>
               {c.title}
             </option>

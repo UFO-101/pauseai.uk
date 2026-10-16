@@ -31,7 +31,8 @@ export default function LetterForm({ campaign, mp, statuses, senderName, postcod
   const [subject, setSubject] = useState(draft?.subject ?? campaign.subject);
   const [letter, setLetter] = useState(
     () =>
-      draft?.letter ?? draftLetter(campaign, { salutation: mp.salutation, constituency: mp.constituency, senderName }),
+      draft?.letter ??
+      draftLetter(campaign, { salutation: mp.salutation, constituency: mp.constituency, senderName, statuses }),
   );
   const [nickname, setNickname] = useState(draft?.nickname ?? "");
   const [error, setError] = useState("");

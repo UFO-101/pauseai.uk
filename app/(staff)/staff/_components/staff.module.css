@@ -17,6 +17,14 @@
   margin-bottom: 1.5rem;
 }
 
+/* The name at the left: a touch bigger than the links, not a heading. */
+.title {
+  font-weight: 700;
+  font-size: 1.05rem;
+  margin-right: 0.5rem;
+  white-space: nowrap;
+}
+
 /* app/globals.css styles every bare nav for the site header: white links,
    and below 1024px a fixed, hidden mobile-menu panel. This one is a plain row
    of links, at every width, so it undoes those. */
@@ -127,11 +135,6 @@
   color: #b00020;
 }
 
-.statuses {
-  display: grid;
-  gap: 1.5rem;
-}
-
 .sync {
   padding: 1rem;
   border: 1px solid var(--border);
@@ -143,6 +146,19 @@
   margin: 0.25rem 0 0.75rem;
 }
 
+/* The summary line is the fold's handle, with the browser's arrow. */
+.sync p {
+  margin: 0;
+}
+
+.sync summary {
+  cursor: pointer;
+}
+
+.sync details[open] summary {
+  margin-bottom: 0.5rem;
+}
+
 .actions {
   display: flex;
   gap: 0.75rem;
@@ -152,4 +168,35 @@
   margin: 0;
   padding-left: 1rem;
   font-size: 0.8rem;
+}
+
+/* The status and its button, in a campaign's column of the politicians list. */
+.signed {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  white-space: nowrap;
+}
+
+/* A lozenge after a heading sits on the baseline, not at the heading's size. */
+h2 .tag {
+  vertical-align: middle;
+  font-weight: 400;
+  margin-left: 0.5rem;
+}
+
+/* Where an import is from, and whether it runs by itself every night or is a one-off (plain). */
+.airtable {
+  background: #fcebcf;
+  color: #8a5a00;
+}
+
+.web {
+  background: #e3f3e6;
+  color: #1f6b36;
+}
+
+.nightly {
+  background: #dbe8f7;
+  color: #1d4e89;
 }

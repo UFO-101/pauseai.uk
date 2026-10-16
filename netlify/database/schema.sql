@@ -66,6 +66,29 @@ CREATE TABLE public.campaign_statuses (
 );
 
 --
+-- Name: controlai_imports; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.controlai_imports (
+    id bigint NOT NULL,
+    at timestamp with time zone DEFAULT now() NOT NULL,
+    result jsonb NOT NULL
+);
+
+--
+-- Name: controlai_imports_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+ALTER TABLE public.controlai_imports ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public.controlai_imports_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+--
 -- Name: letter_events; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -249,6 +272,13 @@ ALTER TABLE ONLY public.audit_log
 
 ALTER TABLE ONLY public.campaign_statuses
     ADD CONSTRAINT campaign_statuses_pkey PRIMARY KEY (politician_id, campaign);
+
+--
+-- Name: controlai_imports controlai_imports_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.controlai_imports
+    ADD CONSTRAINT controlai_imports_pkey PRIMARY KEY (id);
 
 --
 -- Name: letter_events letter_events_pkey; Type: CONSTRAINT; Schema: public; Owner: -

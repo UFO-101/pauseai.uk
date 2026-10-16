@@ -1,5 +1,6 @@
 import "server-only";
 import { Pool, type PoolClient, type QueryResultRow } from "pg";
+import { migrationsBehindMessage } from "./migrations-check";
 
 // The only file that connects to the database (an ESLint rule bans "pg"
 // anywhere else). Netlify Database's Postgres, at NETLIFY_DB_URL. Queries are
@@ -10,9 +11,23 @@ let pool: Pool | undefined;
 function getPool(): Pool {
   const connectionString = process.env.NETLIFY_DB_URL;
   if (!connectionString) throw new Error("NETLIFY_DB_URL is not set");
+  if (pool) return pool;
   // Serverless functions each hold their own pool, so keep it small.
-  pool ??= new Pool({ connectionString, max: 3 });
+  pool = new Pool({ connectionString, max: 3 });
+  // The dev server says in its terminal when the database needs
+  // npm run db:migrate, rather than a page failing on a missing table.
+  // Netlify's own databases are migrated on deploy, so only in development.
+  if (process.env.NODE_ENV === "development") void warnIfBehind(pool);
   return pool;
+}
+
+async function warnIfBehind(db: Queryable): Promise<void> {
+  try {
+    const message = await migrationsBehindMessage(db);
+    if (message) console.error(`\n⚠ ${message}\n`);
+  } catch {
+    // The database isn't reachable, or similar: the query that follows reports it.
+  }
 }
 
 /** Something that runs a query: the pool, or a client inside a transaction. */

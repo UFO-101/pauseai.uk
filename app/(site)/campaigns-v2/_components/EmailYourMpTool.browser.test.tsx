@@ -121,15 +121,21 @@ describe("EmailYourMpTool", () => {
     const { rerender } = await render(<EmailYourMpTool campaignSlug={letterToPm.slug} />);
     await expect.element(page.getByText(/ZZ9 9ZZ/)).not.toBeInTheDocument();
     await rerender(<EmailYourMpTool campaignSlug={letterToPm.slug} showTestMps />);
+    // The first is always shown; the rest, with what each is for, unfold.
+    await expect.element(page.getByText(`${copy.lookup.testPostcodes} ZZ9 9ZZ (Testy McTestface MP)`)).toBeVisible();
+    // Folded: the rest aren't in the accessibility tree until the arrow is pressed.
+    await expect.element(page.getByText(/Signy/)).not.toBeVisible();
+    await page.getByText(copy.lookup.testPostcodes, { exact: false }).first().click();
+    const items = page.getByRole("listitem");
     await expect
-      .element(
-        page.getByText(
-          copy.lookup.testPostcodes(
-            "ZZ9 9ZZ (Testy McTestface MP), ZZ9 9ZS (Signy McTestface MP), ZZ9 9ZN (Nomail McTestface MP)",
-          ),
-        ),
-      )
-      .toBeVisible();
+      .element(items.nth(1))
+      .toHaveTextContent(`ZZ9 9ZS (Signy McTestface MP): ${copy.lookup.testMpSigned(letterToPm.title)}`);
+    await expect
+      .element(items.nth(2))
+      .toHaveTextContent(`ZZ9 9ZB (Backy McTestface MP): ${copy.lookup.testMpSigned(bill.title)}`);
+    await expect
+      .element(items.nth(3))
+      .toHaveTextContent(`ZZ9 9ZN (Nomail McTestface MP): ${copy.lookup.testMpNoEmail}`);
   });
 
   it("shows an MP with no email, and stays", async () => {

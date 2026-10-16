@@ -1,7 +1,6 @@
 // Reads the staff interface's forms. Anything that doesn't fit is refused
 // (undefined) rather than guessed at.
 import { trackedCampaigns } from "@/lib/email-your-mp";
-import type { CampaignStatus } from "@/lib/content/email-your-mp";
 
 const HOUSES = ["commons", "lords", "scottish-parliament", "senedd", "ni-assembly", "other"];
 
@@ -39,19 +38,15 @@ export function politicianDetailsFrom(form: FormData): PoliticianDetailsForm | u
   };
 }
 
-export type StatusForm = {
-  politicianId: number;
-  campaign: string;
-  change: { status: CampaignStatus | null; date: string | null; note: string };
-};
+export type SignedForm = { politicianId: number; campaign: string; signed: boolean };
 
-export function statusFrom(form: FormData): StatusForm | undefined {
+/**
+ * The button in the politicians list. Only a campaign staff record by hand
+ * (trackedCampaigns): the bill's status comes from ControlAI's letter alone.
+ */
+export function signedFrom(form: FormData): SignedForm | undefined {
   const politicianId = idFrom(form, "politicianId");
   const campaign = text(form, "campaign");
-  const status = text(form, "status");
-  const date = text(form, "date");
   if (!politicianId || !trackedCampaigns.some((c) => c.slug === campaign)) return undefined;
-  if (status !== "" && status !== "signed") return undefined;
-  if (date && !/^\d{4}-\d{2}-\d{2}$/.test(date)) return undefined;
-  return { politicianId, campaign, change: { status: status || null, date: date || null, note: text(form, "note") } };
+  return { politicianId, campaign, signed: text(form, "signed") === "1" };
 }

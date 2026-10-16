@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { SOBEL_BILL_CAMPAIGN } from "./controlai-letter";
 import { campaignBySlug, normalisePostcode } from "./email-your-mp";
 import { TEST_MPS } from "./test-mps";
 
@@ -8,7 +9,10 @@ describe("test MPs", () => {
     expect(new Set(postcodes).size).toBe(postcodes.length);
     for (const mp of TEST_MPS) {
       expect(normalisePostcode(mp.postcode)).toBe(mp.postcode);
-      for (const [slug, status] of Object.entries(mp.statuses)) expect(campaignBySlug(slug)?.done).toBe(status);
+      for (const [slug, status] of Object.entries(mp.statuses)) {
+        // The bill's "signed" means they signed ControlAI's letter backing it (lib/controlai-letter.ts).
+        expect(slug === SOBEL_BILL_CAMPAIGN ? "signed" : campaignBySlug(slug)?.done).toBe(status);
+      }
     }
   });
 });

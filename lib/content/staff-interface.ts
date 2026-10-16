@@ -21,10 +21,12 @@ export const staffCopy = {
       `Follow this link to sign in:\n\n${link}\n\nYou must use the browser you made the link with, and it will expire after ${minutes} minutes.\n\nIf you did not request this, please ignore this message.`,
   },
   nav: {
+    // At the left of the bar.
+    title: "PauseAI UK Staff",
     politicians: "Politicians",
-    import: "Import from Airtable",
-    check: "Check against Parliament",
-    changes: "Changes",
+    import: "Import data",
+    check: "Check data",
+    changes: "Audit log",
     letters: "Letters",
     logout: "Log out",
     signedInAs: (email: string) => `Signed in as ${email}`,
@@ -51,6 +53,11 @@ export const staffCopy = {
     testMp: "Test",
     notSitting: "No longer sitting",
     noEmail: "No email",
+    // The button in each campaign's column, and the bill's column, which
+    // only the import from ControlAI's letter sets.
+    markSigned: "Mark as signed",
+    unmarkSigned: "Undo",
+    signedControlAi: "Signed ControlAI letter",
   },
   fields: {
     name: "Name",
@@ -59,10 +66,6 @@ export const staffCopy = {
     party: "Party",
     email: "Email",
     house: "House",
-    status: "Status",
-    date: "Date",
-    note: "Note",
-    updated: (by: string, at: string) => (by === "sync" ? `Set by the Airtable sync, ${at}` : `Updated ${by}, ${at}`),
   },
   politician: {
     statusesTitle: "Campaigns",
@@ -71,9 +74,35 @@ export const staffCopy = {
     save: "Save",
     notFound: "Politician not found.",
   },
+  // The nightly copy of ControlAI's letter's signatories into the bill's
+  // statuses (lib/server/controlai-import.ts), on the import page.
+  // The web imports, after the Airtable ones on the import page: ControlAI's
+  // letter to the PM, copied nightly into the bill's statuses
+  // (lib/server/controlai-import.ts).
+  controlAi: {
+    title: "ControlAI letter to the Prime Minister backing the Sobel bill",
+    intro: {
+      before: "MPs and peers who signed ",
+      link: "the letter",
+      after:
+        " are marked as signed for the “Support the Artificial Superintelligence Bill” campaign. This can't be changed by hand.",
+    },
+    importNow: "Read it now",
+    never: "Not read yet.",
+    result: (at: string, r: { signatories: number; matched: number; added: number; removed: number }) =>
+      `Read at ${at}: ${r.signatories} names, ${r.matched} found here; ${r.added} added, ${r.removed} removed.`,
+    failed: (at: string, error: string) => `Reading at ${at} failed: ${error}`,
+    columns: { name: "Name", problem: "Problem" },
+    kinds: { nobody: "Nobody here", several: "Could be:" } as Record<string, string>,
+  },
   syncs: {
     title: "Members of Parliament",
-    intro: "They are imported automatically every night.",
+    // With a link to the table in the middle.
+    intro: {
+      before: "From the ",
+      link: "UK Parliamentarians table in Airtable",
+      after: ": everyone whose Body is “House of Commons” and isn't ticked “No longer in office”.",
+    },
     syncNow: "Import MPs now",
     none: "Not yet imported.",
     status: { applied: "Applied", held: "Held", discarded: "Discarded", unchanged: "Unchanged" } as Record<
@@ -88,12 +117,20 @@ export const staffCopy = {
     decidedBy: (by: string) => `by ${by}`,
   },
   check: {
-    title: "Check MP data",
-    intro: "This page checks the MP data against Parliament data. It checks automatically each night.",
+    pageTitle: "Check data",
+    title: "Members of Parliament against Parliament's list",
+    // With a link to the API in the middle.
+    intro: {
+      before: "Compares the MPs imported from Airtable with ",
+      link: "Parliament's Members API",
+      after:
+        ", and lists where they disagree. Nothing is changed: fix problems in Airtable, and the next import copies the fix.",
+    },
     checkNow: "Check now",
     never: "Never checked",
     checkedAt: (at: string) => `Checked at: ${at}`,
     allGood: "All good.",
+    problems: (n: number) => `${n} problem${n === 1 ? "" : "s"}`,
     columns: {
       constituency: "Constituency",
       problem: "Problem",
@@ -110,15 +147,26 @@ export const staffCopy = {
     noEmail: "None",
   },
   import: {
-    // The page, with both imports: the MPs (syncs) and the signatories.
-    pageTitle: "Import from Airtable",
-    title: "Signatories",
-    intro: "You can do this safely multiple times.",
+    // The page, with every import: the MPs and the signatories from
+    // Airtable, and ControlAI's letter from the web.
+    pageTitle: "Import data",
+    title: "Signatories of the 2026 letter to the Prime Minister",
+    intro: {
+      before: "Everyone ticked “Signed Frontier AI Letter” in the ",
+      link: "UK Parliamentarians table in Airtable",
+      after: " is marked as signed for the “Regulate AI developers now” campaign here.",
+    },
+    // The lozenges next to each import's heading: where it's from, and how often it runs.
+    airtable: "Airtable",
+    web: "Web",
+    nightly: "Nightly",
+    oneOff: "One-off",
     button: "Import signatories",
     notConfigured: "AIRTABLE_TOKEN is not configured.",
     note: "From Airtable",
+    // matched + added is everyone ticked in Airtable; alreadySet is those of them already marked here.
     result: (r: { matched: number; added: number; alreadySet: number }) =>
-      `${r.matched} signed in Airtable. Added ${r.added} new here, already had ${r.alreadySet}.`,
+      `${r.matched + r.added} ticked in Airtable: ${r.matched} matched politicians already here, ${r.added} added as new, ${r.alreadySet} were already marked as signed.`,
   },
   letters: {
     title: "Letters",
@@ -146,7 +194,7 @@ export const staffCopy = {
     consent: { yes: "Yes", no: "No" },
   },
   changes: {
-    title: "Changes",
+    title: "Audit log",
     at: "When",
     actor: "Who",
     action: "What",

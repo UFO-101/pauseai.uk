@@ -24,6 +24,7 @@
     "lighthouse:branch": "bash scripts/lighthouse.sh branch",
     "data:ai-sentiment": "node scripts/generate-ai-sentiment-data.mjs",
     "data:story-image-detect-faces": "node scripts/detect-face-positions.mjs",
+    "db:migrate": "node scripts/db-migrate.mjs",
     "db:reset": "node scripts/db-reset.mjs",
     "db:schema": "node scripts/db-schema.mjs"
   },
@@ -42,7 +43,8 @@
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
     "server-only": "^0.0.1",
-    "topojson-client": "^3.1.0"
+    "topojson-client": "^3.1.0",
+    "unpdf": "^1.9.0"
   },
   "devDependencies": {
     "@j178/prek": "0.5.4",

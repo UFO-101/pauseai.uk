@@ -14,6 +14,7 @@ import lumaGuests from "./luma-guests.json";
 import airtableMps from "./airtable-mps.json";
 import airtableSignatories from "./airtable-signatories.json";
 import parliamentMembers from "./parliament-members.json";
+import controlaiLetter from "./controlai-letter.json";
 
 function json(body: unknown): Response {
   return new Response(JSON.stringify(body), { headers: { "Content-Type": "application/json" } });
@@ -60,6 +61,14 @@ export function fixtureResponse(url: string): Response | undefined {
     return json({
       value: [{ type: "Parliamentary office", typeId: 1, email: `mp${contact[1]}.office@parliament.uk ` }],
     });
+  }
+  // ControlAI's letter page, and its PDF: made by pdf-lib, naming the
+  // fixture MPs, a peer, and names nobody has.
+  if (hostname === "controlai.org" && pathname === "/uk-pm-letter") {
+    return new Response(controlaiLetter.html, { headers: { "Content-Type": "text/html" } });
+  }
+  if (hostname === "images.controlai.com" && pathname.endsWith(".pdf")) {
+    return new Response(Buffer.from(controlaiLetter.pdf, "base64"), { headers: { "Content-Type": "application/pdf" } });
   }
   // Postmark accepts every email. What was sent is checked from the request
   // (Vitest) or the outbox (Playwright, tests/fixtures/outbox.ts).

@@ -1,7 +1,7 @@
 // Pure helpers for the Email your MP tool: picking a campaign and writing
 // the letter. Used by the form in the browser and by the server, which
 // checks what it's sent against the same campaigns.
-import { campaigns, type Campaign, type CampaignStatus, type LetterDetails } from "@/lib/content/email-your-mp";
+import { campaigns, type Campaign, type LetterDetails, type MpStatuses } from "@/lib/content/email-your-mp";
 import { docFromMarkup, type Inline, type LetterDoc } from "@/lib/letter-format";
 
 /** An MP as the form sees them. */
@@ -14,8 +14,7 @@ export type Mp = {
   email: string | null;
 };
 
-/** Each campaign's status for one MP, keyed by campaign slug. */
-export type MpStatuses = Partial<Record<string, CampaignStatus>>;
+export type { MpStatuses };
 
 /** Where the campaigns' pages are. Stage 5 of the plan moves them to /campaigns. */
 const CAMPAIGNS_PATH = "/campaigns-v2";

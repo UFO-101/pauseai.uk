@@ -102,6 +102,15 @@ Route groups like `(site)` don't appear in URLs. Folders starting with `_`
   (U+2042), so they can't be mistaken for real copy.
   `placeholder-copy.test.ts` fails while any are left, which stops them
   being deployed (AGENTS.md).
+- **Names say which one.** There will be many campaigns, letters, imports
+  and statuses, so an exported name for one of them names it:
+  `SOBEL_BILL_CAMPAIGN`, not `BILL_CAMPAIGN`; `CONTROLAI_LETTER_PAGE`, not
+  `LETTER_PAGE`; `ControlAiImportResult`, not `ImportResult`. Generic
+  names (`Signatory`, `Problem`, `ImportResult`) are for the one thing
+  shared by all of them, and two exports in the repo shouldn't share a
+  name. Pass the data (an MP's statuses) rather than unpicking one case of
+  it at the call site (`signedControlAiLetter`), so the next campaign
+  doesn't widen the call site too.
 - **Imports** use the `@/` alias for anything outside the current folder.
 - **Tests** sit next to the code they test (`*.test.ts`,
   `*.browser.test.tsx`); see `docs/testing.md`.

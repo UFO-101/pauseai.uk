@@ -1,5 +1,6 @@
 import { staffCopy } from "@/lib/content/staff-interface";
 import type { MpProblem } from "@/lib/mp-check";
+import ResultBox from "./ResultBox";
 import styles from "./staff.module.css";
 
 /** What each side says, for one problem. */
@@ -20,12 +21,22 @@ function sides(problem: MpProblem): [string, string] {
 /** Where Airtable's MPs disagree with Parliament's, from the newest check. */
 export default function MpCheckList({ check }: { check?: { at: string; problems: MpProblem[] } }) {
   if (!check) return <p>{staffCopy.check.never}</p>;
+  const at = new Date(check.at).toLocaleString("en-GB");
+  const count = check.problems.length;
   return (
-    <>
-      <p className={styles.muted}>{staffCopy.check.checkedAt(new Date(check.at).toLocaleString("en-GB"))}</p>
-      {check.problems.length === 0 ? (
-        <p>{staffCopy.check.allGood}</p>
-      ) : (
+    <ResultBox
+      lines={count}
+      summary={
+        <>
+          {staffCopy.check.checkedAt(at)}
+          <span className={styles.muted}>
+            {" "}
+            · {count === 0 ? staffCopy.check.allGood : staffCopy.check.problems(count)}
+          </span>
+        </>
+      }
+    >
+      {count > 0 && (
         <div className={styles.scroll}>
           <table className={styles.table}>
             <thead>
@@ -52,6 +63,6 @@ export default function MpCheckList({ check }: { check?: { at: string; problems:
           </table>
         </div>
       )}
-    </>
+    </ResultBox>
   );
 }

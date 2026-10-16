@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { campaigns } from "@/lib/content/email-your-mp";
+import { campaigns, copy } from "@/lib/content/email-your-mp";
 import {
   addressLines,
   campaignBySlug,
@@ -17,7 +17,12 @@ import {
 import { docFromMarkup, toHtml, toText } from "./letter-format";
 
 const [letterToPm, bill] = campaigns;
-const details = { salutation: "Ms Dummy", constituency: "Hackney North", senderName: "Jane Smith" };
+const details = {
+  salutation: "Ms Dummy",
+  constituency: "Hackney North",
+  senderName: "Jane Smith",
+  statuses: {},
+};
 
 describe("postcodes", () => {
   it("compares postcodes without spaces or case", () => {
@@ -75,6 +80,14 @@ describe("letters", () => {
       expect(toText(draft)).toContain("Ms Dummy");
       expect(toText(draft)).toContain("Hackney North");
     }
+  });
+
+  it("thanks an MP who signed ControlAI's letter, in the bill's letter only, and still asks them to the debate", () => {
+    const signed = { ...details, statuses: { [bill.slug]: "signed" as const } };
+    expect(toText(draftLetter(bill, signed))).toContain(copy.sobelBill.letterThanks);
+    expect(toText(draftLetter(bill, signed))).toContain("second reading debate");
+    expect(toText(draftLetter(bill, details))).not.toContain(copy.sobelBill.letterThanks);
+    expect(toText(draftLetter(letterToPm, signed))).not.toContain(copy.sobelBill.letterThanks);
   });
 
   it("signs the letter with the sender's name and address", () => {

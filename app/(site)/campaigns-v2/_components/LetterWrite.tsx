@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { copy } from "@/lib/content/email-your-mp";
 import { campaignBySlug, campaignPath } from "@/lib/email-your-mp";
+import { CONTROLAI_LETTER_PAGE, signedControlAiLetter, SOBEL_BILL_CAMPAIGN } from "@/lib/controlai-letter";
 import { readDraft, readLookup, type Draft, type Lookup } from "./draft";
 import LetterForm from "./LetterForm";
 import MpCard from "./MpCard";
@@ -42,6 +43,13 @@ export default function LetterWrite({ campaignSlug }: { campaignSlug: string }) 
   return (
     <div className={styles.tool}>
       <MpCard mp={lookup.mp} />
+      {campaign.slug === SOBEL_BILL_CAMPAIGN && signedControlAiLetter(lookup.statuses) && (
+        <p className={styles.notice}>
+          {copy.sobelBill.signedNote.before}
+          <a href={CONTROLAI_LETTER_PAGE}>{copy.sobelBill.signedNote.link}</a>
+          {copy.sobelBill.signedNote.after}
+        </p>
+      )}
       <LetterForm
         campaign={campaign}
         mp={lookup.mp}

@@ -255,6 +255,21 @@ section.section {
   justify-self: start;
 }
 
+/* The test postcodes, folded to the first behind the browser's arrow. */
+.testPostcodes {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.testPostcodes summary {
+  cursor: pointer;
+}
+
+.testPostcodes ul {
+  margin: 0.25rem 0 0;
+  padding-left: 1.25rem;
+}
+
 .field small {
   color: var(--text-secondary);
 }

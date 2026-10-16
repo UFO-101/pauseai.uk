@@ -2,8 +2,13 @@
 // each, and every word the tool shows or sends. Each campaign's page has its
 // own words (app/(site)/campaigns-v2/<slug>/page.tsx).
 
+import { signedControlAiLetter } from "@/lib/controlai-letter";
+
 /** What the MP has done for one campaign, as recorded by the policy team. */
 export type CampaignStatus = "signed";
+
+/** Each campaign's status for one MP, keyed by campaign slug. */
+export type MpStatuses = Partial<Record<string, CampaignStatus>>;
 
 /** What a letter needs to know about who it's from and who it's to. */
 export type LetterDetails = {
@@ -11,6 +16,8 @@ export type LetterDetails = {
   salutation: string;
   constituency: string;
   senderName: string;
+  /** What the MP has done, so a letter can say so. */
+  statuses: MpStatuses;
 };
 
 export type Attachment = {
@@ -126,7 +133,7 @@ Alex Sobel MP has tabled the Artificial Superintelligence Bill to protect the pu
 - Starts monitoring AI computing power, just as we do for nuclear weapons
 - Pushes for a global ban with an international treaty
 
-Please could you attend the second reading debate in person on Friday, 13th November, and support the bill.
+${signedControlAiLetter(d.statuses) ? `${copy.sobelBill.letterThanks}\n\n` : ""}Please could you attend the second reading debate in person on Friday, 13th November, and support the bill.
 
 Thank you for your consideration,`,
     // The bill's PDFs aren't written yet (plans/email-your-mp-v2.md, "Tasks for Francis").
@@ -152,8 +159,11 @@ export const copy = {
     // Above the MP's name, once found.
     yourMp: "Your MP",
     mpOf: (constituency: string) => `MP for ${constituency}`,
-    // Outside production only, under the form: "ZZ9 9ZZ (Testy McTestface MP), ...".
-    testPostcodes: (mps: string) => `On this test site, you can only use these test postcodes: ${mps}`,
+    // Outside production only, under the form: the first test postcode, and
+    // the rest, with what each MP is for, behind an arrow.
+    testPostcodes: "Dev site takes test postcodes only. Expand for more. Default one: ",
+    testMpSigned: (campaign: string) => `signed “${campaign}”`,
+    testMpNoEmail: "no email",
     noEmail: "No email found for your MP.",
   },
   form: {
@@ -206,6 +216,18 @@ export const copy = {
     subject: (subject: string) => `Response: ${subject}`,
     note: (mpName: string, senderName: string) =>
       `${mpName} replied to the letter that ${senderName} sent. Here is the response:`,
+  },
+  // The bill's page, for an MP who signed ControlAI's letter to the PM
+  // backing it (lib/controlai-letter.ts): the note above the form, and the
+  // paragraph in the letter that thanks them, before asking them to the debate.
+  sobelBill: {
+    // The note, with a link to the letter in the middle.
+    signedNote: {
+      before: "Good news! Your MP is a public supporter of the Artificial Superintelligence Bill, they've signed the ",
+      link: "ControlAI letter",
+      after: ". Please still thank them for this, and encourage them to attend the debate of the Bill.",
+    },
+    letterThanks: "Thank you for signing the ControlAI letter to the Prime Minister in support of the Bill.",
   },
   // Errors the server sends back to the form.
   errors: {
