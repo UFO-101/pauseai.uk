@@ -13,8 +13,8 @@ afterEach(() => {
 describe("MarchBanner", () => {
   it("links to the march's page and to registering on Luma", async () => {
     vi.useFakeTimers({ now: new Date("2026-10-15T09:00:00Z"), toFake: ["Date"] });
-    const { container } = await render(<MarchBanner />);
-    expect(container.querySelector(".march-banner-when")?.textContent).toBe("Sat 21 Nov · London");
+    await render(<MarchBanner />);
+    await expect.element(page.getByText("Sat 21 Nov · London")).toBeVisible();
     await expect
       .element(page.getByRole("link", { name: /March Against AI Extinction/ }))
       .toHaveAttribute("href", "/protests/march-against-ai-extinction-nov-26");
@@ -26,20 +26,20 @@ describe("MarchBanner", () => {
   it("isn't on the march's own page", async () => {
     navigation.pathname = "/protests/march-against-ai-extinction-nov-26/";
     const { container } = await render(<MarchBanner />);
-    expect(container.querySelector(".march-banner")).toBeNull();
+    expect(container.querySelector("aside")).toBeNull();
   });
 
   it("goes after the march", async () => {
     vi.useFakeTimers({ now: new Date("2026-11-22T20:00:00Z"), toFake: ["Date"] });
     const { container, rerender } = await render(<MarchBanner />);
-    expect(container.querySelector(".march-banner")).not.toBeNull();
+    expect(container.querySelector("aside")).not.toBeNull();
     vi.setSystemTime(new Date("2026-11-23T00:00:00Z"));
     await rerender(<MarchBanner />);
-    expect(container.querySelector(".march-banner")).toBeNull();
+    expect(container.querySelector("aside")).toBeNull();
   });
 
   it("is always in the server's HTML, so hydration matches whatever the date", () => {
     vi.useFakeTimers({ now: new Date("2027-01-01T00:00:00Z"), toFake: ["Date"] });
-    expect(renderToString(<MarchBanner />)).toContain("march-banner");
+    expect(renderToString(<MarchBanner />)).toContain("Register");
   });
 });

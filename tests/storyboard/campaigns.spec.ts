@@ -405,10 +405,11 @@ test("each campaign has its own page, plain /campaigns opens the first, and an u
 
 test("the nav's Campaigns menu links each campaign's page", { tag: "@desktop-only" }, async ({ page }) => {
   await page.goto(`${BASE}/campaigns/${campaigns[0].slug}`);
-  const menu = page.locator(".nav-item.has-dropdown", { hasText: "Campaigns" });
+  const trigger = page.getByRole("link", { name: "Campaigns", exact: true });
+  const menu = trigger.locator("..");
   // Opened by focus, not hover: a frame moves the pointer away first, which
   // would close a hovered menu.
-  await menu.locator(".dropdown-trigger").focus();
+  await trigger.focus();
   const bill = menu.getByRole("menuitem", { name: "Support the Artificial Superintelligence Bill" });
   await expect(menu.getByRole("menuitem", { name: "Regulate AI developers now" })).toBeVisible();
   await expect(bill).toBeVisible();

@@ -1,0 +1,104 @@
+/* A strip under the header on every page until the march. The homepage hero fills the first
+   screen, so it takes the banner's height off its own (--march-banner-h).
+   That's set here, not measured, so the hero is the right size from the
+   first paint and a deep link doesn't drift. */
+
+:global(body):has(.banner) {
+  --march-banner-h: 52px;
+}
+
+.banner {
+  background: var(--pause-orange);
+  color: var(--text);
+}
+
+.inner {
+  max-width: 1140px;
+  margin: 0 auto;
+  padding: 8px 24px;
+  min-height: 52px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+}
+
+.link {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  color: var(--text);
+  text-decoration: none;
+  min-width: 0;
+}
+
+.link:hover {
+  color: var(--text);
+}
+
+.link:hover .name {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.when {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.name {
+  font-family: var(--font-display), "Lato", system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 19px;
+  white-space: nowrap;
+}
+
+.register {
+  flex-shrink: 0;
+  background: var(--text);
+  color: var(--white);
+  padding: 7px 14px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.register:hover {
+  background: var(--black);
+  color: var(--white);
+}
+
+@media (max-width: 760px) {
+  :global(body):has(.banner) {
+    --march-banner-h: 56px;
+  }
+  .inner {
+    justify-content: space-between;
+    gap: 12px;
+    padding: 8px 20px;
+    min-height: 56px;
+  }
+  .link {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+  }
+  .when {
+    font-size: 11px;
+  }
+  .name {
+    font-size: 17px;
+    white-space: normal;
+    line-height: 1.1;
+  }
+  .register {
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+}

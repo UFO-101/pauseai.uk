@@ -2,6 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/Button";
+import styles from "./CookieConsent.module.css";
 
 const GA_ID = "G-DLLRWZCYD7";
 const GTM_ID = "GTM-K7P36Q7F";
@@ -152,12 +153,12 @@ export default function CookieConsent({ analytics, children }: { analytics: bool
     <CookieSettings.Provider value={openBanner}>
       {children}
       {bannerOpen && (
-        <div className="cookie-banner" role="dialog" aria-label="Cookie consent">
-          <p className="cookie-banner-text">
+        <div className={styles.banner} role="dialog" aria-label="Cookie consent">
+          <p className={styles.text}>
             Cookies help PauseAI UK understand how this site is used, so we can make it work better for you. You can
             accept or decline these analytics cookies — see our <a href="/privacy">privacy policy</a>.
           </p>
-          <div className="cookie-banner-actions">
+          <div className={styles.actions}>
             <Button type="button" variant="ghost" size="small" fit onClick={decline}>
               Decline
             </Button>

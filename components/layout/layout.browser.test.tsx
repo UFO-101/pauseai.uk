@@ -59,16 +59,16 @@ describe("Nav", () => {
     const { container, rerender } = await render(<Nav />);
     await expect.element(page.getByRole("img", { name: "PauseAI UK" })).toBeInTheDocument();
     // On the home page, in-page links stay in-page.
-    expect(container.querySelector('a.pill[href="#join"]')).not.toBeNull();
+    expect(container.querySelector('nav a[href="#join"]')).not.toBeNull();
 
     navigation.pathname = "/manchester";
     await rerender(<Nav />);
-    expect(container.querySelector(".brand-mark")?.getAttribute("src")).toContain("manchester_logo");
-    expect(container.querySelector('a.pill[href="/#join"]')).not.toBeNull();
+    expect(container.querySelector("header img")?.getAttribute("src")).toContain("manchester_logo");
+    expect(container.querySelector('nav a[href="/#join"]')).not.toBeNull();
 
     navigation.pathname = "/glasgow/";
     await rerender(<Nav />);
-    expect(container.querySelector(".brand-tagline")?.textContent).toBe("Glasgow Group");
+    await expect.element(page.getByText("Glasgow Group")).toBeVisible();
   });
 
   it("sets the header height for the stylesheet", async () => {
@@ -78,22 +78,22 @@ describe("Nav", () => {
 
   it("opens and closes the mobile menu", async () => {
     const { container } = await render(<Nav />);
-    const burger = container.querySelector(".burger") as HTMLElement;
+    const burger = container.querySelector('button[aria-label="Menu"]') as HTMLElement;
     const nav = container.querySelector("nav")!;
     burger.click();
-    await expect.element(nav).toHaveClass("open");
+    await expect.element(nav).toBeVisible();
     expect(burger.getAttribute("aria-expanded")).toBe("true");
     burger.click();
-    await expect.element(nav).not.toHaveClass("open");
+    await expect.element(nav).not.toBeVisible();
     expect(burger.getAttribute("aria-expanded")).toBe("false");
 
     // A plain link closes the menu.
     burger.click();
-    await expect.element(nav).toHaveClass("open");
+    await expect.element(nav).toBeVisible();
     container.addEventListener("click", (e) => e.preventDefault());
     const people = [...nav.querySelectorAll("a")].find((a) => a.textContent === "People")!;
     people.click();
-    await expect.element(nav).not.toHaveClass("open");
+    await expect.element(nav).not.toBeVisible();
 
     // On a touch screen, a dropdown trigger's first tap keeps it open, and
     // the second, which follows the link, closes it.
@@ -101,21 +101,21 @@ describe("Nav", () => {
       (q) => ({ matches: q === "(hover: none)", media: q }) as MediaQueryList,
     );
     burger.click();
-    await expect.element(nav).toHaveClass("open");
-    const trigger = nav.querySelector(".dropdown-trigger") as HTMLElement;
+    await expect.element(nav).toBeVisible();
+    const trigger = nav.querySelector("[aria-haspopup]") as HTMLElement;
     trigger.click();
-    await expect.element(trigger.closest(".nav-item") as HTMLElement).toHaveClass("is-open");
-    expect(nav.classList.contains("open")).toBe(true);
+    await expect.element(trigger).toHaveAttribute("aria-expanded", "true");
+    await expect.element(nav).toBeVisible();
     trigger.click();
-    await expect.element(nav).not.toHaveClass("open");
-    expect(container.querySelector(".is-open")).toBeNull();
+    await expect.element(nav).not.toBeVisible();
+    expect(container.querySelector('[aria-haspopup][aria-expanded="true"]')).toBeNull();
 
     // With a mouse, a trigger is a link, and closes the menu too.
     vi.restoreAllMocks();
     burger.click();
-    await expect.element(nav).toHaveClass("open");
+    await expect.element(nav).toBeVisible();
     trigger.click();
-    await expect.element(nav).not.toHaveClass("open");
+    await expect.element(nav).not.toBeVisible();
   });
 
   it("scrolls to a place on the home page every time, even when the URL already names it", async () => {
@@ -128,7 +128,7 @@ describe("Nav", () => {
         <div id="join" style={{ height: 100 }} />
       </>,
     );
-    const join = container.querySelector('a.pill[href="#join"]') as HTMLElement;
+    const join = container.querySelector('nav a[href="#join"]') as HTMLElement;
     for (let i = 0; i < 2; i++) {
       window.scrollTo(0, 0);
       join.click();
@@ -143,8 +143,7 @@ describe("Nav", () => {
       (q) => ({ matches: q === "(hover: none)", media: q }) as MediaQueryList,
     );
     const { container } = await render(<Nav />);
-    const [about, groups] = [...container.querySelectorAll<HTMLElement>(".dropdown-trigger")];
-    const item = (t: HTMLElement) => t.closest(".nav-item") as HTMLElement;
+    const [about, groups] = [...container.querySelectorAll<HTMLElement>("[aria-haspopup]")];
     const navigated = vi.fn();
     container.addEventListener("click", (e) => {
       if (!e.defaultPrevented) navigated();
@@ -152,34 +151,33 @@ describe("Nav", () => {
     });
 
     about.click();
-    await expect.element(item(about)).toHaveClass("is-open");
+    await expect.element(about).toHaveAttribute("aria-expanded", "true");
     expect(about.getAttribute("aria-expanded")).toBe("true");
     expect(navigated).not.toHaveBeenCalled();
 
     groups.click();
-    await expect.element(item(groups)).toHaveClass("is-open");
-    expect(item(about).classList.contains("is-open")).toBe(false);
+    await expect.element(groups).toHaveAttribute("aria-expanded", "true");
     expect(about.getAttribute("aria-expanded")).toBe("false");
 
     // A second tap closes it, and lets the link through.
     groups.click();
-    await expect.element(item(groups)).not.toHaveClass("is-open");
+    await expect.element(groups).toHaveAttribute("aria-expanded", "false");
     expect(navigated).toHaveBeenCalledTimes(1);
 
     // A tap outside closes an open one; a tap inside a dropdown doesn't.
     about.click();
-    await expect.element(item(about)).toHaveClass("is-open");
-    (item(about).querySelector(".dropdown a") as HTMLElement).click();
+    await expect.element(about).toHaveAttribute("aria-expanded", "true");
+    (about.parentElement!.querySelector("[role=menuitem]") as HTMLElement).click();
     await new Promise((resolve) => setTimeout(resolve, 50));
-    expect(item(about).classList.contains("is-open")).toBe(true);
+    expect(about.getAttribute("aria-expanded")).toBe("true");
     document.body.click();
-    await expect.element(item(about)).not.toHaveClass("is-open");
+    await expect.element(about).toHaveAttribute("aria-expanded", "false");
   });
 
   it("leaves dropdown links to the mouse on hover screens", async () => {
     vi.spyOn(window, "matchMedia").mockImplementation((q) => ({ matches: false, media: q }) as MediaQueryList);
     const { container } = await render(<Nav />);
-    const about = container.querySelector(".dropdown-trigger") as HTMLElement;
+    const about = container.querySelector("[aria-haspopup]") as HTMLElement;
     let prevented = true;
     container.addEventListener("click", (e) => {
       prevented = e.defaultPrevented;
@@ -188,7 +186,7 @@ describe("Nav", () => {
     about.click();
     expect(prevented).toBe(false);
     await new Promise((resolve) => setTimeout(resolve, 50));
-    expect(about.closest(".nav-item")!.classList.contains("is-open")).toBe(false);
+    expect(about.getAttribute("aria-expanded")).toBe("false");
   });
 
   it("shuts a dropdown once a link in it is chosen, though the pointer is still over it, until the pointer leaves", async () => {
@@ -200,11 +198,12 @@ describe("Nav", () => {
       </>,
     );
     container.addEventListener("click", (e) => e.preventDefault());
-    const item = container.querySelector<HTMLElement>(".nav-item.has-dropdown")!;
+    const trigger = container.querySelector<HTMLElement>("[aria-haspopup]")!;
+    const item = trigger.parentElement!;
     // By element, not role: hidden, it's out of the accessibility tree.
-    const link = page.elementLocator(item.querySelector(".dropdown a")!);
+    const link = page.elementLocator(item.querySelector("[role=menuitem]")!);
 
-    await page.elementLocator(item.querySelector(".dropdown-trigger")!).hover();
+    await page.elementLocator(trigger).hover();
     await expect.element(link).toBeVisible();
     // Chosen with the pointer, which stays over the dropdown: neither the
     // hover nor focus left on the link holds it open.
@@ -215,13 +214,13 @@ describe("Nav", () => {
 
     // Once the pointer has left, hovering opens it again.
     await page.getByText("Elsewhere").hover();
-    await page.elementLocator(item.querySelector(".dropdown-trigger")!).hover();
+    await page.elementLocator(trigger).hover();
     await expect.element(link).toBeVisible();
 
     // So does focus, from the keyboard, after a choice.
     await link.click();
     await expect.element(link).not.toBeVisible();
-    item.querySelector<HTMLElement>(".dropdown-trigger")!.focus();
+    trigger.focus();
     await expect.element(link).toBeVisible();
   });
 
@@ -229,28 +228,32 @@ describe("Nav", () => {
     vi.spyOn(window, "matchMedia").mockImplementation((q) => ({ matches: true, media: q }) as MediaQueryList);
     const { container, rerender } = await render(<Nav />);
     container.addEventListener("click", (e) => e.preventDefault());
-    (container.querySelector(".burger") as HTMLElement).click();
-    (container.querySelector(".dropdown-trigger") as HTMLElement).click();
-    await expect.element(container.querySelector<HTMLElement>(".nav-item")!).toHaveClass("is-open");
-    expect(container.querySelector("nav")!.classList.contains("open")).toBe(true);
+    (container.querySelector('button[aria-label="Menu"]') as HTMLElement).click();
+    (container.querySelector("[aria-haspopup]") as HTMLElement).click();
+    await expect
+      .element(container.querySelector<HTMLElement>("[aria-haspopup]")!)
+      .toHaveAttribute("aria-expanded", "true");
+    await expect.element(container.querySelector("nav")!).toBeVisible();
 
     navigation.pathname = "/people";
     await rerender(<Nav />);
-    expect(container.querySelector("nav")!.classList.contains("open")).toBe(false);
-    expect(container.querySelector(".is-open")).toBeNull();
+    await expect.element(container.querySelector("nav")!).not.toBeVisible();
+    expect(container.querySelector('[aria-haspopup][aria-expanded="true"]')).toBeNull();
 
     // A tap on the new page acts on the new page's closed menu.
-    (container.querySelector(".burger") as HTMLElement).click();
-    await expect.element(container.querySelector("nav")!).toHaveClass("open");
-    expect(container.querySelector(".is-open")).toBeNull();
+    (container.querySelector('button[aria-label="Menu"]') as HTMLElement).click();
+    await expect.element(container.querySelector("nav")!).toBeVisible();
+    expect(container.querySelector('[aria-haspopup][aria-expanded="true"]')).toBeNull();
   });
 
   it("stops listening for taps outside when it goes", async () => {
     vi.spyOn(window, "matchMedia").mockImplementation((q) => ({ matches: true, media: q }) as MediaQueryList);
     const { container, unmount } = await render(<Nav />);
     container.addEventListener("click", (e) => e.preventDefault());
-    (container.querySelector(".dropdown-trigger") as HTMLElement).click();
-    await expect.element(container.querySelector<HTMLElement>(".nav-item")!).toHaveClass("is-open");
+    (container.querySelector("[aria-haspopup]") as HTMLElement).click();
+    await expect
+      .element(container.querySelector<HTMLElement>("[aria-haspopup]")!)
+      .toHaveAttribute("aria-expanded", "true");
     await unmount();
     // A listener left behind would look for the dropdowns, which are gone, and throw.
     document.body.click();
@@ -290,7 +293,7 @@ describe("CookieConsent", () => {
   it("loads Tag Manager and analytics by default, once each, with no banner", async () => {
     const { unmount } = await render(<Page />);
     expect(scripts).toEqual([expect.stringContaining("gtm.js?id=GTM-"), expect.stringContaining("gtag/js?id=G-")]);
-    expect(document.querySelector(".cookie-banner")).toBeNull();
+    expect(document.querySelector('[role=dialog][aria-label="Cookie consent"]')).toBeNull();
     // gtag queues Arguments objects, which is what gtag.js reads.
     expect(Object.prototype.toString.call(w.dataLayer![1])).toBe("[object Arguments]");
     await unmount();
@@ -302,11 +305,11 @@ describe("CookieConsent", () => {
     await render(<Page />);
     await page.getByRole("link", { name: "Cookie settings" }).click();
     await page.getByRole("link", { name: "Cookie settings" }).click();
-    expect(document.querySelectorAll(".cookie-banner")).toHaveLength(1);
+    expect(document.querySelectorAll('[role=dialog][aria-label="Cookie consent"]')).toHaveLength(1);
     await expect.element(page.getByRole("dialog", { name: "Cookie consent" })).toBeVisible();
     await page.getByRole("button", { name: "Accept" }).click();
     expect(localStorage.getItem(CONSENT)).toBe("accepted");
-    expect(document.querySelector(".cookie-banner")).toBeNull();
+    expect(document.querySelector('[role=dialog][aria-label="Cookie consent"]')).toBeNull();
     expect((window as unknown as Record<string, unknown>)["ga-disable-G-DLLRWZCYD7"]).toBe(false);
   });
 
@@ -334,7 +337,7 @@ describe("CookieConsent", () => {
     await render(<Page analytics={false} />);
     expect(scripts).toEqual([]);
     await page.getByRole("link", { name: "Cookie settings" }).click();
-    expect(document.querySelector(".cookie-banner")).toBeNull();
+    expect(document.querySelector('[role=dialog][aria-label="Cookie consent"]')).toBeNull();
   });
 
   it("does nothing on a page that opts out of analytics", async () => {
@@ -342,7 +345,7 @@ describe("CookieConsent", () => {
     await render(<Page />);
     expect(scripts).toEqual([]);
     await page.getByRole("link", { name: "Cookie settings" }).click();
-    expect(document.querySelector(".cookie-banner")).toBeNull();
+    expect(document.querySelector('[role=dialog][aria-label="Cookie consent"]')).toBeNull();
   });
 
   it("still works when the browser blocks storage", async () => {
@@ -358,7 +361,7 @@ describe("CookieConsent", () => {
     expect(scripts).toHaveLength(2);
     await page.getByRole("link", { name: "Cookie settings" }).click();
     await page.getByRole("button", { name: "Decline" }).click();
-    expect(document.querySelector(".cookie-banner")).toBeNull();
+    expect(document.querySelector('[role=dialog][aria-label="Cookie consent"]')).toBeNull();
   });
 
   it("uses an existing dataLayer", async () => {

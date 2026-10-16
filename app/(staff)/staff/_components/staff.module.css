@@ -25,39 +25,26 @@
   white-space: nowrap;
 }
 
-/* app/globals.css styles every bare nav for the site header: white links,
-   and below 1024px a fixed, hidden mobile-menu panel. This one is a plain row
-   of links, at every width, so it undoes those. */
+/* The row of links. */
 .header nav {
-  position: static;
   display: flex;
-  flex-direction: row;
   flex-wrap: wrap;
   align-items: center;
   gap: 0.5rem 1rem;
-  padding: 0;
-  background: none;
-  border: none;
-  overflow: visible;
 }
 
 .header nav a,
 .header nav strong {
-  display: inline;
-  width: auto;
-  padding: 0;
-  border: none;
-  border-radius: 0;
   font-size: 0.95rem;
 }
 
 .header nav a {
+  font-weight: 500;
   color: var(--accent);
   text-decoration: underline;
 }
 
 .header nav a:hover {
-  background: none;
   color: var(--text);
 }
 
