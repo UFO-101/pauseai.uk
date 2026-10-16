@@ -148,20 +148,32 @@ describe("QrGenerator", () => {
   });
 
   it("shares the PNG on phones, quietly when the share sheet is closed", async () => {
-    const share = vi.fn().mockResolvedValue(undefined);
+    const share = vi.fn();
     vi.stubGlobal("navigator", { ...navigator, canShare: () => true, share });
+    // The share sheet opens once a 2048px PNG is drawn and encoded, which on
+    // a busy machine takes longer than a poll waits. So each step waits for
+    // the share itself, as long as the test may take, then settles it.
+    const shareSheet = (outcome: () => Promise<void>) =>
+      new Promise<ShareData>((opened) =>
+        share.mockImplementationOnce((data: ShareData) => {
+          opened(data);
+          return outcome();
+        }),
+      );
     await render(<QrGenerator />);
-    await page.getByRole("button", { name: "Share" }).click();
-    await expect.poll(() => share.mock.calls.length).toBe(1);
-    expect(share.mock.lastCall![0].files[0].name).toBe("pauseai-qr-pauseai-uk.png");
 
-    share.mockRejectedValueOnce(new DOMException("closed", "AbortError"));
+    const shared = shareSheet(async () => {});
     await page.getByRole("button", { name: "Share" }).click();
-    await expect.poll(() => share.mock.calls.length).toBe(2);
+    expect((await shared).files![0].name).toBe("pauseai-qr-pauseai-uk.png");
+
+    const closed = shareSheet(() => Promise.reject(new DOMException("closed", "AbortError")));
+    await page.getByRole("button", { name: "Share" }).click();
+    await closed;
     expect(document.querySelector(".collateral-message")).toBeNull();
 
-    share.mockRejectedValueOnce(new Error("failed"));
+    const failed = shareSheet(() => Promise.reject(new Error("failed")));
     await page.getByRole("button", { name: "Share" }).click();
+    await failed;
     await expect.element(page.getByText("Could not share the image. Download it instead.")).toBeVisible();
   });
 
