@@ -8,7 +8,6 @@ import {
   chooseCampaign,
   trackedCampaigns,
   draftLetter,
-  fullLetter,
   isDone,
   looksLikeEmail,
   normalisePostcode,
@@ -17,6 +16,7 @@ import {
 import { docFromMarkup, toHtml, toText } from "./letter-format";
 
 const [letterToPm, bill] = campaigns;
+const ADDRESS = ["1 High St", "SW1A 1AA"];
 const details = {
   salutation: "Ms Dummy",
   constituency: "Hackney North",
@@ -75,8 +75,8 @@ describe("campaigns", () => {
 describe("letters", () => {
   it("starts each campaign's letter with the MP's details", () => {
     for (const campaign of campaigns) {
-      const draft = draftLetter(campaign, details);
-      expect(draft).toEqual(docFromMarkup(campaign.letter(details)));
+      const draft = draftLetter(campaign, details, ADDRESS);
+      expect(draft.content.slice(0, -1)).toEqual(docFromMarkup(campaign.letter(details)).content);
       expect(toText(draft)).toContain("Ms Dummy");
       expect(toText(draft)).toContain("Hackney North");
     }
@@ -84,16 +84,18 @@ describe("letters", () => {
 
   it("thanks an MP who signed ControlAI's letter, in the bill's letter only, and still asks them to the debate", () => {
     const signed = { ...details, statuses: { [bill.slug]: "signed" as const } };
-    expect(toText(draftLetter(bill, signed))).toContain(copy.sobelBill.letterThanks);
-    expect(toText(draftLetter(bill, signed))).toContain("second reading debate");
-    expect(toText(draftLetter(bill, details))).not.toContain(copy.sobelBill.letterThanks);
-    expect(toText(draftLetter(letterToPm, signed))).not.toContain(copy.sobelBill.letterThanks);
+    expect(toText(draftLetter(bill, signed, ADDRESS))).toContain(copy.sobelBill.letterThanks);
+    expect(toText(draftLetter(bill, signed, ADDRESS))).toContain("second reading debate");
+    expect(toText(draftLetter(bill, details, ADDRESS))).not.toContain(copy.sobelBill.letterThanks);
+    expect(toText(draftLetter(letterToPm, signed, ADDRESS))).not.toContain(copy.sobelBill.letterThanks);
   });
 
-  it("signs the letter with the sender's name and address", () => {
-    const signed = fullLetter(docFromMarkup("Dear MP,\n\nThanks,\n\n"), "Jane Smith", ["1 High St", "SW1A 1AA"]);
-    expect(toText(signed)).toBe("Dear MP,\n\nThanks,\n\nJane Smith\n1 High St\nSW1A 1AA");
-    expect(toHtml(signed)).toBe("<p>Dear MP,</p>\n<p>Thanks,</p>\n<p>Jane Smith<br>1 High St<br>SW1A 1AA</p>");
+  it("ends each draft with the sender's name, then their address, a line each", () => {
+    for (const campaign of campaigns) {
+      const draft = draftLetter(campaign, details, ADDRESS);
+      expect(toText(draft).endsWith("\n\nJane Smith\n\n1 High St\nSW1A 1AA")).toBe(true);
+      expect(toHtml(draft).endsWith("<p>Jane Smith</p>\n<p>1 High St<br>SW1A 1AA</p>")).toBe(true);
+    }
   });
 
   it("ends the address with the postcode, unless it's already there", () => {

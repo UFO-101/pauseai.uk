@@ -51,10 +51,11 @@ test(
     await frame(page, "the test MP found, with the letter drafted");
     await fillAndPreview(page, sender);
 
-    // The preview has the letter as it will go, signature and all.
+    // The preview has the letter as it will go: the name ends the letter, the address follows.
     await expect(page.getByRole("heading", { level: 1 })).toHaveText(copy.preview.title);
     await expect(page.locator("article")).toContainText("Dear Mr McTestface");
-    await expect(page.locator("article p").last()).toHaveText(/^Jane Smith\s*1 High Street\s*Testville\s*ZZ9 9ZZ$/);
+    await expect(page.locator("article p").nth(-2)).toHaveText("Jane Smith");
+    await expect(page.locator("article p").last()).toHaveText(/^1 High Street, Testville\s*ZZ9 9ZZ$/);
     await frame(page, "the preview");
     await sendLetter(page);
 
@@ -83,7 +84,7 @@ test(
     expect(letter.ReplyTo).toBe(
       `"Jane Smith" <${sender}>, "PauseAI Policy Team" <replies@example.org>, "PauseAI Letters" <${address[1]}>`,
     );
-    expect(letter.TextBody).toMatch(/Jane Smith\n1 High Street\nTestville\nZZ9 9ZZ$/);
+    expect(letter.TextBody).toMatch(/Jane Smith\n\n1 High Street, Testville\nZZ9 9ZZ$/);
     expect(letter.Attachments!.map((a) => a.Name)).toEqual(campaigns[0].attachments.map((a) => a.file));
 
     // The MP replies only to the letter's address: both we and the sender get a copy.
@@ -110,9 +111,7 @@ test(
   },
 );
 
-test("finding the MP opens the page to write the letter, and going back keeps the name and postcode", async ({
-  page,
-}) => {
+test("finding the MP opens the page to write the letter, and going back keeps the form as it was", async ({ page }) => {
   await lookUp(page);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(copy.write.title);
   expect(await page.evaluate(() => window.scrollY)).toBe(0);
@@ -120,8 +119,9 @@ test("finding the MP opens the page to write the letter, and going back keeps th
   await page.goBack();
   await expect(page).toHaveURL(PAGE);
   await expect(page.getByLabel(copy.lookup.nameLabel)).toHaveValue("Jane Smith");
+  await expect(page.getByLabel(copy.lookup.addressLabel)).toHaveValue("1 High Street, Testville");
   await expect(page.getByLabel(copy.lookup.postcodeLabel)).toHaveValue("ZZ9 9ZZ");
-  await frame(page, "back at the form, name and postcode kept");
+  await frame(page, "back at the form, as it was");
 });
 
 test("no Ads event when the server refuses the letter, which can then be edited as it was", async ({ page }) => {
@@ -138,7 +138,6 @@ test("no Ads event when the server refuses the letter, which can then be edited 
   await page.getByRole("link", { name: copy.preview.edit }).click();
   await expect(page).toHaveURL(`${PAGE}/write`);
   await expect(page.getByLabel(copy.form.emailLabel)).toHaveValue("jane@example.com");
-  await expect(page.getByRole("textbox", { name: copy.form.addressLabel })).toHaveValue("1 High Street\nTestville");
   await frame(page, "back to editing, as it was");
 });
 
@@ -178,6 +177,7 @@ test("ZZ99ZS has signed, so the PM letter's page moves on to the bill's, to writ
   await expect(page).toHaveURL(`${BASE}/campaigns-v2/${campaigns[1].slug}`);
   await expect(page.getByText(campaigns[0].movedOn!)).toBeVisible();
   await expect(page.getByLabel(copy.lookup.nameLabel)).toHaveValue("Jane Smith");
+  await expect(page.getByLabel(copy.lookup.addressLabel)).toHaveValue("1 High Street, Testville");
   await expect(page.getByLabel(copy.lookup.postcodeLabel)).toHaveValue("ZZ9 9ZS");
   await frame(page, "moved on to the bill's page");
   await page.getByRole("button", { name: copy.lookup.button }).click();

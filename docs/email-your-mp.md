@@ -12,7 +12,7 @@ settings it needs.
   `app/(site)/campaigns-v2/_components/` (`CampaignHero`, `CampaignContext`,
   `CampaignDocs`, `EmailYourMpSection`, `CampaignQr`). If the MP has already done
   that campaign, the lookup goes to the page of the first one they haven't
-  instead, with the name and postcode filled in and a note above its
+  instead, with the name, address and postcode filled in and a note above its
   heading saying why (the campaign's `movedOn`, in `MovedOnNotice`). The
   last campaign has no `done` status, so nobody has done it and there's
   always one to move on to. The Sobel bill is that one: everyone is asked
@@ -57,7 +57,13 @@ At the swap (stage 5 of the plan) these replace `/campaigns`:
   plain text itself. The form's editor is Tiptap
   (`app/(site)/campaigns-v2/_components/LetterEditor.tsx`), limited to the
   same. Campaign letters are written with a little markup: `**bold**`,
-  `_italic_`, and lines starting `- ` for bullets.
+  `_italic_`, and lines starting `- ` for bullets. A campaign's letter ends
+  with the sender's name, which they can edit. The first line of their
+  address is asked for with their postcode, on the campaign's page, so a
+  browser fills both in from a saved address. `draftLetter`
+  (`lib/email-your-mp.ts`) puts them under the name as ordinary lines of
+  the letter, so the sender can edit them, adding a town, say, and the
+  letter is sent as they leave it.
 - `lib/server/postmark.ts`: the only file that talks to Postmark.
 - `lib/server/postmark-webhooks.ts`: bounces, spam complaints and replies.
 - `app/(site)/campaigns-v2/`: the pages and the form.

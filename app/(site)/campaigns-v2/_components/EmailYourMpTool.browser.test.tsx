@@ -31,8 +31,9 @@ afterEach(() => {
   sessionStorage.clear();
 });
 
-async function lookUp(name = "Jane Smith", postcode = "SW1A 1AA") {
+async function lookUp(name = "Jane Smith", postcode = "SW1A 1AA", address = "1 High St") {
   if (name) await userEvent.fill(page.getByLabelText(copy.lookup.nameLabel), name);
+  if (address) await userEvent.fill(page.getByLabelText(copy.lookup.addressLabel), address);
   if (postcode) await userEvent.fill(page.getByLabelText(copy.lookup.postcodeLabel), postcode);
   await page.getByRole("button", { name: copy.lookup.button }).click();
 }
@@ -52,13 +53,14 @@ describe("EmailYourMpTool", () => {
       nickname: "",
     });
     await render(<EmailYourMpTool campaignSlug={letterToPm.slug} />);
-    await lookUp(" Jane Smith ", " SW1A 1AA ");
+    await lookUp(" Jane Smith ", " SW1A 1AA ", " 1 High St ");
 
     await vi.waitFor(() => expect(navigation.pushed).toEqual([`/campaigns-v2/${letterToPm.slug}/write`]));
     expect(lookups).toEqual([{ postcode: " SW1A 1AA " }]);
     expect(readLookup(letterToPm.slug)).toEqual({
       campaign: letterToPm.slug,
       name: "Jane Smith",
+      address: "1 High St",
       postcode: "SW1A 1AA",
       mp: MP,
       statuses: {},
@@ -79,10 +81,18 @@ describe("EmailYourMpTool", () => {
     expect(readLookup(bill.slug)).toMatchObject({ campaign: bill.slug, movedFrom: letterToPm.slug });
   });
 
-  it("comes back with the name and postcode it went with", async () => {
-    saveLookup({ campaign: bill.slug, name: "Jane Smith", postcode: "SW1A 1AA", mp: MP, statuses: {} });
+  it("comes back with the name, address and postcode it went with", async () => {
+    saveLookup({
+      campaign: bill.slug,
+      name: "Jane Smith",
+      address: "1 High St",
+      postcode: "SW1A 1AA",
+      mp: MP,
+      statuses: {},
+    });
     await render(<EmailYourMpTool campaignSlug={letterToPm.slug} />);
     await expect.element(page.getByLabelText(copy.lookup.nameLabel)).toHaveValue("Jane Smith");
+    await expect.element(page.getByLabelText(copy.lookup.addressLabel)).toHaveValue("1 High St");
     await expect.element(page.getByLabelText(copy.lookup.postcodeLabel)).toHaveValue("SW1A 1AA");
     expect(lookups).toEqual([]);
     expect(navigation.pushed).toEqual([]);
@@ -148,11 +158,16 @@ describe("EmailYourMpTool", () => {
     expect(navigation.pushed).toEqual([]);
   });
 
-  it("needs a name and a postcode", async () => {
+  it("needs a name, an address and a postcode, and says why it wants the address", async () => {
     await render(<EmailYourMpTool campaignSlug={letterToPm.slug} />);
-    await lookUp("", "");
+    await expect
+      .element(page.getByLabelText(copy.lookup.addressLabel))
+      .toHaveAccessibleDescription(copy.lookup.addressHint);
+    await lookUp("", "", "");
     await expect.element(page.getByRole("alert")).toHaveTextContent(copy.lookup.nameRequired);
-    await lookUp("Jane", "");
+    await lookUp("Jane", "", "");
+    await expect.element(page.getByRole("alert")).toHaveTextContent(copy.lookup.addressRequired);
+    await lookUp("Jane", "", "1 High St");
     await expect.element(page.getByRole("alert")).toHaveTextContent(copy.lookup.postcodeRequired);
     expect(lookups).toEqual([]);
   });

@@ -39,10 +39,10 @@ type CampaignCommon = {
   title: string;
   subject: string;
   /**
-   * The letter to an MP who hasn't done it yet, up to the sign-off. The
-   * sender's name and address follow it (lib/email-your-mp.ts). A blank line
-   * between paragraphs, **bold**, _italic_, and "- " for bullets
-   * (lib/letter-format.ts).
+   * The letter to an MP who hasn't done it yet, through the sign-off and
+   * the sender's name. The form adds their address and postcode under it
+   * (lib/email-your-mp.ts). A blank line between paragraphs, **bold**,
+   * _italic_, and "- " for bullets (lib/letter-format.ts).
    */
   letter: (details: LetterDetails) => string;
   attachments: Attachment[];
@@ -95,7 +95,9 @@ AI now poses an extremely serious risk to our national security. Parliamentarian
 
 Please could you add your name to PauseAI's open letter (attached) in support of frontier AI legislation? And could we arrange a short meeting to discuss this important matter?
 
-Thank you for your consideration,`,
+Thank you for your consideration,
+
+${d.senderName}`,
     alreadyDone: "Good news: your MP has already signed the letter to the PM.",
     movedOn:
       "Good news! Your MP has already signed the letter to the PM. You can write to them about this related campaign instead.",
@@ -135,7 +137,9 @@ Alex Sobel MP has tabled the Artificial Superintelligence Bill to protect the pu
 
 ${signedControlAiLetter(d.statuses) ? `${copy.sobelBill.letterThanks}\n\n` : ""}**Please consider attending the second reading debate in person on Friday, 13th November to support the bill.**
 
-Thank you for your consideration,`,
+Thank you for your consideration,
+
+${d.senderName}`,
     // The bill's PDFs aren't written yet (plans/email-your-mp-v2.md, "Tasks for Francis").
     attachments: [],
   },
@@ -147,10 +151,15 @@ export const copy = {
   pageDescription: "Contact your Member of Parliament about AI safety",
   lookup: {
     nameLabel: "Your name",
+    // Beside the postcode, so a browser fills both from a saved address. It
+    // goes at the end of the letter, under their name.
+    addressLabel: "First line of your address",
+    addressHint: "You need to give your real address, as MPs only reply to their constituents.",
     postcodeLabel: "Your postcode",
     button: "Find my MP",
     looking: "Looking up",
     nameRequired: "Please enter your name.",
+    addressRequired: "Please fill in your postal address.",
     postcodeRequired: "Please enter a postcode.",
     notFound: "Postcode not found.",
     noConstituency: "No parliamentary constituency found for this postcode.",
@@ -168,9 +177,6 @@ export const copy = {
   },
   form: {
     emailLabel: "Your email",
-    addressLabel: "Your postal address",
-    // Says the address goes at the end of the letter, under their name.
-    addressHint: "You need to give your real address, as MPs only reply to their constituents.",
     subjectLabel: "Subject",
     letterLabel: "Message",
     tips: ["Customise the email to yourself and your MP", "MPs are very busy - keep it short!"],
@@ -178,7 +184,6 @@ export const copy = {
     // Goes to the preview page.
     preview: "Preview",
     emailRequired: "Please fill in your email address.",
-    addressRequired: "Please fill in your postal address.",
     // When the browser won't keep the draft, so there's no preview to go to.
     storageFailed: "Sorry! Something went wrong with your browser, the message wasn't saved.",
   },

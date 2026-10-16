@@ -7,7 +7,8 @@ import type { Place } from "@/lib/events";
 import type { LetterDoc } from "@/lib/letter-format";
 import type { Mp, MpStatuses } from "@/lib/email-your-mp";
 
-const LOOKUP_KEY = "email-your-mp-lookup";
+// "-2" since the lookup holds the address: one saved before it, without one, is ignored.
+const LOOKUP_KEY = "email-your-mp-lookup-2";
 const DRAFT_KEY = "email-your-mp-draft";
 const SENT_KEY = "email-your-mp-sent";
 
@@ -16,6 +17,8 @@ export type Lookup = {
   /** The slug of the campaign to write for. */
   campaign: string;
   name: string;
+  /** The first line of their address; the postcode follows it in the letter. */
+  address: string;
   postcode: string;
   mp: Mp;
   statuses: MpStatuses;

@@ -30,7 +30,15 @@ const EVENTS = [
 ];
 
 function sent(place?: Place | null) {
-  saveLookup({ campaign: letterToPm.slug, name: "Jane Smith", postcode: "SW1A 1AA", mp: MP, statuses: {}, place });
+  saveLookup({
+    campaign: letterToPm.slug,
+    name: "Jane Smith",
+    address: "1 High St",
+    postcode: "SW1A 1AA",
+    mp: MP,
+    statuses: {},
+    place,
+  });
   markSent({ campaign: letterToPm.slug, mpName: MP.name });
 }
 

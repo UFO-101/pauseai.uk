@@ -17,7 +17,10 @@ const FORM: LetterForm = {
   address: "1 High Street\nTestville",
   email: "jane@example.com",
   subject: "Subject",
-  letter: docFromMarkup("Dear Mr McTestface,\n\nPlease **do** sign.\n\nThanks,"),
+  // As the form drafts it: ending with the name, then the address and postcode, which the sender may edit.
+  letter: docFromMarkup(
+    "Dear Mr McTestface,\n\nPlease **do** sign.\n\nThanks,\n\nJane Smith\n\n1 High Street\nTestville\nZZ9 9ZZ",
+  ),
   consent: true,
   nickname: "",
   turnstileToken: "token",
@@ -112,9 +115,9 @@ describeWithDatabase("submitLetter", () => {
       Bcc: "replies@pauseai.uk",
       ReplyTo: `"Jane Smith" <jane@example.com>, "PauseAI Policy Team" <replies@pauseai.uk>, "PauseAI Letters" <${address}>`,
       Subject: "Subject",
-      TextBody: "Dear Mr McTestface,\n\nPlease do sign.\n\nThanks,\n\nJane Smith\n1 High Street\nTestville\nZZ9 9ZZ",
+      TextBody: "Dear Mr McTestface,\n\nPlease do sign.\n\nThanks,\n\nJane Smith\n\n1 High Street\nTestville\nZZ9 9ZZ",
       HtmlBody:
-        "<p>Dear Mr McTestface,</p>\n<p>Please <strong>do</strong> sign.</p>\n<p>Thanks,</p>\n<p>Jane Smith<br>1 High Street<br>Testville<br>ZZ9 9ZZ</p>",
+        "<p>Dear Mr McTestface,</p>\n<p>Please <strong>do</strong> sign.</p>\n<p>Thanks,</p>\n<p>Jane Smith</p>\n<p>1 High Street<br>Testville<br>ZZ9 9ZZ</p>",
       MessageStream: "outbound",
       Metadata: { letter: String(letter.id), campaign: "regulate-letter-pm" },
     });
