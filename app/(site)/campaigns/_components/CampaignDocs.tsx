@@ -17,10 +17,10 @@ type DocCardProps = {
   /** File name in public/pdfs/, with a .jpg of the same name beside it. */
   file: string;
   /** "Open letter — June 2026". */
-  kind: string;
+  kind?: string;
   title: string;
   /** "Read the letter →". */
-  cta: string;
+  cta?: string;
 };
 
 /** One document, opened as a PDF. */
@@ -37,9 +37,9 @@ export function DocCard({ file, kind, title, cta }: DocCardProps) {
         loading="lazy"
       />
       <div className="doc-meta">
-        <p className="doc-kind">{kind}</p>
+        {kind && <p className="doc-kind">{kind}</p>}
         <h3>{title}</h3>
-        <span className="doc-cta">{cta}</span>
+        {cta && <span className="doc-cta">{cta}</span>}
       </div>
     </a>
   );

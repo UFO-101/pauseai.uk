@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { site } from "@/lib/content/site";
 import { JobRole, SkillTags } from "./JobRole";
 
@@ -145,11 +146,8 @@ export default function JobRoles() {
             </p>
           </div>
           <p>
-            Last year, PauseAI wrote an{" "}
-            <a href={site.openLetterUrl} target="_blank" rel="noreferrer">
-              open letter
-            </a>{" "}
-            to Demis Hassabis signed by over 60 UK politicians. This year we have held conferences in the{" "}
+            Last year, PauseAI wrote an <Link href={site.openLetterPath}>open letter</Link> to Demis Hassabis signed by
+            over 60 UK politicians. This year we have held conferences in the{" "}
             <a href={UK_PARLIAMENT_EVENT_URL} target="_blank" rel="noreferrer">
               UK Parliament
             </a>{" "}

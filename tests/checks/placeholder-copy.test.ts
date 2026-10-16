@@ -10,9 +10,13 @@ const MARK = "\u2042"; // the asterism, written as an escape so this file doesn'
 // The rule itself has to mention the mark.
 const ALLOWED = new Set(["AGENTS.md"]);
 
-// Generated, installed or local-only: never part of what ships.
+// Generated, installed or local-only: never part of what ships. .netlify is
+// the Next.js runtime plugin's bundled functions, which copy the whole repo
+// (AGENTS.md included) into the serverless handler; Netlify's build cache can
+// leave one on disk from an earlier build before this one regenerates it.
 const SKIP_DIRS = new Set([
   ".git",
+  ".netlify",
   ".next",
   ".vitest",
   "node_modules",
