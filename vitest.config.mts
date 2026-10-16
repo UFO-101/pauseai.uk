@@ -28,8 +28,12 @@ export default defineConfig({
           environment: "node",
           include: ["**/*.test.{ts,tsx}"],
           // Test files that need Postgres each make their own database
-          // (tests/database.ts), so they can run in parallel.
-          exclude: ["**/node_modules/**", "plans/**", "tmp/**", ".netlify/**", "**/*.browser.test.*"],
+          // (tests/database.ts), so they can run in parallel. .next/** and
+          // .netlify/** matter on Netlify's cached builds: a previous
+          // build's leftover .next/standalone has its own copies of test
+          // files, compiled against a production build with no dev-mode
+          // react internals, so they fail to even load.
+          exclude: ["**/node_modules/**", "plans/**", "tmp/**", ".next/**", ".netlify/**", "**/*.browser.test.*"],
           setupFiles: ["./tests/vitest.setup.node.ts"],
         },
       },
@@ -77,7 +81,7 @@ export default defineConfig({
         test: {
           name: "browser",
           include: ["**/*.browser.test.{ts,tsx}"],
-          exclude: ["**/node_modules/**", "tests/**", "plans/**", "tmp/**", ".netlify/**"],
+          exclude: ["**/node_modules/**", "tests/**", "plans/**", "tmp/**", ".next/**", ".netlify/**"],
           setupFiles: ["./tests/vitest.setup.browser.tsx"],
           // Drawing and exporting images is slow when every file runs at once, so waits get longer than the default second.
           expect: { poll: { timeout: 5000 } },
