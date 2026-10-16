@@ -13,29 +13,6 @@
   max-width: 44rem;
 }
 
-/* With the signatories' top padding, a gap like the other sections'. */
-section.section {
-  padding-bottom: 24px;
-}
-
-/* Last on the page, with no signatories under it (the bill's page): room
-   above the footer, as the step pages have. */
-section.section:last-child {
-  padding-bottom: 5rem;
-}
-
-/* The old iframe ran edge to edge on phones (campaigns.css); the form keeps
-   the page's margins. */
-@media (max-width: 720px) {
-  section.section :global(.container) {
-    padding-inline: 24px;
-  }
-
-  section.section h2 {
-    padding-inline: 0;
-  }
-}
-
 .lookup,
 .letter {
   display: grid;
@@ -329,21 +306,6 @@ section.section:last-child {
 /* The preview and "sent" pages: one centred column, as wide as the form's
    fields, with the heading close above what's on the page. Doubled up to
    win over the campaign hero's own padding and heading margin. */
-section.step {
-  padding-bottom: 5rem;
-}
-
-.step .stepColumn {
-  display: grid;
-  gap: 1.5rem;
-  max-width: 44rem;
-  margin: 0 auto;
-}
-
-.step .stepColumn h1 {
-  margin: 0;
-}
-
 .previewPage {
   display: grid;
   gap: 1.25rem;

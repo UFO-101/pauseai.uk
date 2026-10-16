@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import styles from "./SignatoriesList.module.css";
 
 type Signatory = {
   name: string;
@@ -35,15 +36,15 @@ export default function SignatoriesList() {
   }, []);
 
   if (error) {
-    return <p className="signatories-status">Couldn&apos;t load signatories right now — try refreshing.</p>;
+    return <p className={styles.status}>Couldn&apos;t load signatories right now — try refreshing.</p>;
   }
 
   if (!signatories) {
-    return <p className="signatories-status">Loading signatories&hellip;</p>;
+    return <p className={styles.status}>Loading signatories&hellip;</p>;
   }
 
   if (signatories.length === 0) {
-    return <p className="signatories-status">No signatories yet.</p>;
+    return <p className={styles.status}>No signatories yet.</p>;
   }
 
   return (
@@ -52,7 +53,7 @@ export default function SignatoriesList() {
         const group = signatories.filter((s) => s.house === house);
         return (
           group.length > 0 && (
-            <div className="signatories-group" key={house}>
+            <div className={styles.group} key={house}>
               <h3>{heading}</h3>
               <SignatoriesGroup signatories={group} isMP={house === "commons"} />
             </div>
@@ -65,15 +66,15 @@ export default function SignatoriesList() {
 
 function SignatoriesGroup({ signatories, isMP }: { signatories: Signatory[]; isMP?: boolean }) {
   return (
-    <ul className="signatories-list">
+    <ul className={styles.list}>
       {signatories.map((s, i) => {
         const subtitle = [isMP ? s.constituency && `MP for ${s.constituency}` : s.constituency, s.party]
           .filter(Boolean)
           .join(", ");
         return (
-          <li key={i} className="signatories-item">
-            <span className="signatories-name">{s.name}</span>
-            {subtitle && <span className="signatories-subtitle">{subtitle}</span>}
+          <li key={i} className={styles.item}>
+            <span className={styles.name}>{s.name}</span>
+            {subtitle && <span className={styles.subtitle}>{subtitle}</span>}
           </li>
         );
       })}
