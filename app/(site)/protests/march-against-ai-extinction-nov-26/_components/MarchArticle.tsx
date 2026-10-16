@@ -2,14 +2,15 @@ import Image from "next/image";
 import { ButtonAnchor } from "@/components/ui/Button";
 import { march } from "@/lib/content/march";
 import { site } from "@/lib/content/site";
+import styles from "./MarchArticle.module.css";
 
 // The Luma event's description, word for word and in its order, under its cover photo.
 export default function MarchArticle() {
   return (
-    <section className="march-body">
-      <div className="container">
+    <section className={styles.body}>
+      <div className={"container"}>
         <Image
-          className="march-photo"
+          className={styles.photo}
           src={march.image.src}
           alt="Marchers holding signs reading “Just don't build AGI” and “Don't let AI decide your future”"
           width={march.image.width}
@@ -17,8 +18,8 @@ export default function MarchArticle() {
           sizes="(max-width: 840px) 100vw, 760px"
           priority
         />
-        <div className="march-prose">
-          <p className="march-lead">
+        <div className={styles.prose}>
+          <p className={styles.lead}>
             Thousands of people across the UK believe that companies will soon build superintelligent AI that they
             cannot control.
           </p>
@@ -79,7 +80,7 @@ export default function MarchArticle() {
             ahead of the march.
           </p>
 
-          <p className="march-cta-row">
+          <p className={styles.ctaRow}>
             <ButtonAnchor variant="primary" href={march.lumaUrl}>
               Register &rarr;
             </ButtonAnchor>

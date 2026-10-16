@@ -6,9 +6,10 @@ import MarchHero from "./MarchHero";
 
 describe("march page sections", () => {
   it("says when and where, and registers people on Luma", async () => {
-    const { container } = await render(<MarchHero />);
+    await render(<MarchHero />);
     await expect.element(page.getByRole("heading", { level: 1, name: "March Against AI Extinction" })).toBeVisible();
-    expect(container.querySelector(".march-when")?.textContent).toBe(
+    // The paragraph under the title, after the h1.
+    expect(page.getByRole("heading", { level: 1 }).element().nextElementSibling?.textContent).toBe(
       "21 November 2026, 12–3pmStart: All Souls' Place, London W1B 3DAEnd: Downing Street, London SW1A 2AA",
     );
     await expect
