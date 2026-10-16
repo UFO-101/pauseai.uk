@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import "../tools/tools.css";
+import { CardIndex, IndexCard } from "@/components/tools/CardIndex";
 
 // Volunteer area: unlisted, kept out of search results and the sitemap (see HIDDEN_ROUTES in app/sitemap.ts).
 export const metadata: Metadata = {
@@ -37,26 +36,14 @@ const trackers: Tracker[] = [
 export default function TrackersPage() {
   return (
     <>
-      <main className="tools-page">
-        <div className="container">
-          <h1 className="tools-title">Trackers</h1>
-          <p className="tools-lede">Live results from our volunteer activity days.</p>
-          <ul className="tools-grid">
-            {trackers.map((tracker) => (
-              <li key={tracker.href}>
-                <Link href={tracker.href} className="tools-card">
-                  <h2>{tracker.title}</h2>
-                  <p>{tracker.date}</p>
-                  <p>{tracker.description}</p>
-                  <span className="tools-card-cta" aria-hidden="true">
-                    Open →
-                  </span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </main>
+      <CardIndex title="Trackers" lede="Live results from our volunteer activity days.">
+        {trackers.map((tracker) => (
+          <IndexCard key={tracker.href} href={tracker.href} title={tracker.title} cta="Open →">
+            <p>{tracker.date}</p>
+            <p>{tracker.description}</p>
+          </IndexCard>
+        ))}
+      </CardIndex>
     </>
   );
 }

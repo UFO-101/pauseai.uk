@@ -1,20 +1,23 @@
-.tools-page {
+/* The volunteer area's index pages: a title, a lede and a grid of cards,
+   one per tool or tracker. */
+
+.page {
   padding: 40px 0 72px;
 }
 
-.tools-title {
+.title {
   margin: 0 0 8px;
   font-size: clamp(2rem, 4vw, 2.75rem);
   line-height: 1.1;
 }
 
-.tools-lede {
+.lede {
   margin: 0 0 32px;
   max-width: 60ch;
   color: var(--text-secondary);
 }
 
-.tools-grid {
+.grid {
   display: grid;
   gap: 20px;
   margin: 0;
@@ -23,12 +26,12 @@
 }
 
 @media (min-width: 720px) {
-  .tools-grid {
+  .grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
-.tools-card {
+.card {
   position: relative;
   display: flex;
   flex-direction: column;
@@ -46,37 +49,37 @@
     transform 0.15s ease;
 }
 
-.tools-card:hover,
-.tools-card:focus-visible {
+.card:hover,
+.card:focus-visible {
   border-color: var(--accent);
   box-shadow: 0 4px 16px var(--shadow-strong);
   transform: translateY(-1px);
   color: var(--text);
 }
 
-.tools-card:focus-visible {
+.card:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
-.tools-card h2 {
+.card h2 {
   margin: 0;
   font-size: 1.25rem;
 }
 
-.tools-card p {
+.card p {
   margin: 0;
   color: var(--text-secondary);
 }
 
-.tools-card-cta {
+.cta {
   margin-top: auto;
   padding-top: 8px;
   font-weight: 600;
   color: var(--accent);
 }
 
-.tools-sr-only {
+.srOnly {
   position: absolute;
   width: 1px;
   height: 1px;

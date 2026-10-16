@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import ToolGrid from "./_components/ToolGrid";
-import "./tools.css";
+import { CardIndex } from "@/components/tools/CardIndex";
 
 // Volunteer area: unlisted, kept out of search results and the sitemap (see HIDDEN_ROUTES in app/sitemap.ts).
 export const metadata: Metadata = {
@@ -12,16 +12,12 @@ export const metadata: Metadata = {
 export default function ToolsPage() {
   return (
     <>
-      <main className="tools-page">
-        <div className="container">
-          <h1 className="tools-title">Tools</h1>
-          <p className="tools-lede">
-            We have tools available for our volunteers to create PauseAI branded designs for their online event
-            listings, flyers, and run projects with others.
-          </p>
-          <ToolGrid />
-        </div>
-      </main>
+      <CardIndex
+        title="Tools"
+        lede="We have tools available for our volunteers to create PauseAI branded designs for their online event listings, flyers, and run projects with others."
+      >
+        <ToolGrid />
+      </CardIndex>
     </>
   );
 }
