@@ -1,5 +1,4 @@
 import { pageMetadata } from "@/lib/metadata";
-import "./theory-of-change.css";
 import Foreword from "./_components/Foreword";
 import ChangeSteps from "./_components/ChangeSteps";
 import Closing from "@/components/ui/Closing";
@@ -15,7 +14,7 @@ export const metadata = pageMetadata({
 export default function TheoryOfChangePage() {
   return (
     <>
-      <main className="theory-of-change">
+      <main>
         <PageHero title="Theory of Change" />
 
         <Foreword />

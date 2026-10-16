@@ -1,11 +1,12 @@
 import Image from "next/image";
+import styles from "./ChangeSteps.module.css";
 
 // The steps from public concern to a global pause.
 export default function ChangeSteps() {
   return (
-    <article className="toc-article">
-      <div className="container toc-inner">
-        <section className="toc-section" id="long-term-goals">
+    <article className={styles.article}>
+      <div className="container">
+        <section className={styles.section} id="long-term-goals">
           <h2>Long-term goals</h2>
           <h3>Policy proposal</h3>
           <p>
@@ -101,7 +102,7 @@ export default function ChangeSteps() {
           </p>
         </section>
 
-        <section className="toc-section" id="positive-outcomes">
+        <section className={styles.section} id="positive-outcomes">
           <h2>Positive outcomes for PauseAI UK</h2>
           <p>
             We cannot tell an exact story of what the path to a pause will look like, but we sketch below two potential
@@ -169,11 +170,11 @@ export default function ChangeSteps() {
           </p>
         </section>
 
-        <section className="toc-section" id="strategy">
+        <section className={styles.section} id="strategy">
           <h2>High-level strategy</h2>
 
           <h3>Brand and messaging</h3>
-          <figure className="toc-figure">
+          <figure className={styles.figure}>
             <Image
               src="/images/logos/Square-Safety-Before-Superintelligence.jpg"
               alt="Safety Before Superintelligence — PauseAI campaign image"
@@ -270,13 +271,13 @@ export default function ChangeSteps() {
           </p>
         </section>
 
-        <section className="toc-section" id="local-groups">
+        <section className={styles.section} id="local-groups">
           <h2>Local groups</h2>
           <p>
             When cities hit a critical mass of enthusiastic volunteers, we launch new local groups in those cities.
             There are three core activities for local groups to engage in:
           </p>
-          <ol className="toc-list">
+          <ol className={styles.list}>
             <li>
               Deliver a standard talk designed to persuade people of the importance of AI risk. This can be given over
               and over at events for different audiences and in different venues.
