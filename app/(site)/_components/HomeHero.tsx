@@ -6,8 +6,9 @@ import { shuffle } from "@/lib/shuffle";
 // The home page hero: three rows of photos scrolling in alternating
 // directions behind the headline (HeroMarqueeEffects measures and starts them).
 export default function HomeHero() {
-  // Server-component shuffle: a new order each render. Sent to the
-  // client as part of the rendered HTML so hydration matches.
+  // Server-component shuffle: a new order each render (the same order in a
+  // fixture build, lib/shuffle.ts). Sent to the client as part of the
+  // rendered HTML so hydration matches.
   const shuffled = shuffle(HERO_PHOTOS);
   // Share the photos across three rows so none are dropped as the list grows.
   const perRow = Math.ceil(shuffled.length / 3);

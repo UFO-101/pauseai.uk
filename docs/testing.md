@@ -5,13 +5,11 @@ here is `plans/test-coverage.md`.
 
 ## The layers
 
-| Layer                | Tool                                                          | Tests                                                                                                                                                     | Files                                      |
-| -------------------- | ------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------ |
-| Logic                | Vitest, `node` project                                        | `lib/`, `app/api/`, `sitemap.ts`, `next.config.ts`                                                                                                        | `*.test.ts` (or `.tsx`) next to the code   |
-| Components           | Vitest, `browser` project (real Chromium)                     | every component                                                                                                                                           | `*.browser.test.tsx` next to the component |
-| Pages and flows      | Playwright, `behaviour` project                               | every route loads cleanly; things that span pages                                                                                                         | `tests/behaviour/`                         |
-| Appearance           | Playwright, `public-vs-live-desktop` and `-mobile` projects   | public pages: the local build against the live site, every route but `/staff`, desktop and mobile                                                         | `tests/public-vs-live/`                    |
-| Changes against main | Playwright, `fixtures-vs-main-desktop` and `-mobile` projects | every public page, each step of the Email your MP flow and each staff screen, this branch against main, both on fixture data; never fails on a difference | `tests/fixtures-vs-main/`                  |
+| Layer           | Tool                                            | Tests                                                                                                                                                | Files                                      |
+| --------------- | ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------ |
+| Logic           | Vitest, `node` project                          | `lib/`, `app/api/`, `sitemap.ts`, `next.config.ts`                                                                                                   | `*.test.ts` (or `.tsx`) next to the code   |
+| Components      | Vitest, `browser` project (real Chromium)       | every component                                                                                                                                      | `*.browser.test.tsx` next to the component |
+| Pages and flows | Playwright, the storyboard (`desktop`, `phone`) | every route loads cleanly; every flow a person takes, end to end on fixture data; run with screenshots, the same flows pictured against main's build | `tests/storyboard/`                        |
 
 **Vitest Node** is for anything that doesn't need a DOM. **Vitest Browser
 Mode** renders a component on its own in real Chromium, so layout, canvas,
@@ -20,10 +18,10 @@ Mode** renders a component on its own in real Chromium, so layout, canvas,
 **Playwright** runs against a real production build (`npm run build && npm
 run start`), so it is slower. Use it only for what Vitest can't see:
 
-- `page.tsx` and `layout.tsx`: `tests/behaviour/pages.spec.ts` loads every
-  route (from `tests/routes.ts`) and checks it returns 200, logs no console
-  errors or hydration warnings, has one `<h1>` and has no broken same-site
-  links.
+- `page.tsx` and `layout.tsx`: `tests/storyboard/public-pages.spec.ts` loads
+  every route (from `tests/routes.ts`) and checks it returns 200, logs no
+  console errors or hydration warnings, has one `<h1>` and has no broken
+  same-site links.
 - Redirects, navigation, scrolling and hash links.
 - The onboarding iframe.
 - Anything remembered from one page to the next.
@@ -105,29 +103,85 @@ through `outsideFetch` like any other outside service.
   `bounce-testing.postmarkapp.com`, such as `hardbounce@` and `softbounce@`,
   produce real bounce webhooks. Neither is used in CI.
 
-## Changes against main
+## The storyboard
 
-`npm run test:fixtures-vs-main` screenshots every public page, each step of
-the Email your MP flow (up to the letter being sent) and each staff screen,
-on this branch and on main, and attaches both and their diff to the report.
+One Playwright suite, `tests/storyboard/`, drives the site's flows end to
+end on a fixture build. A spec file is a **section**, a test a **flow**, and
+each `await frame(page, "caption")` a **frame**: a caption and, when
+screenshots are on, a full-page screenshot. The checks go between the
+frames. The tests know nothing about main.
 
-- **Both sides are fixture builds**: this branch on port 3100, with its own
-  fresh database (`pauseai_fixtures_branch`), and main on port 3001, built by
-  `scripts/serve-main.mjs` (a git worktree of main kept in your temp folder,
-  with its own `npm ci` when its lockfile changes, and its own database if
-  it has one). Playwright starts both; the first run takes a few minutes.
-  `node scripts/serve-main.mjs --ref <branch>` compares with another branch.
-- **It never fails on a difference.** Each test says in the report whether
-  the screenshots are identical, or what fraction of pixels differs. Only
-  the behaviour checks along the way fail a test, and only on this branch:
-  a step main can't take (a page this branch adds) is noted as "no
-  comparison" instead.
-- **Stable on purpose**: fixture data, the same steps on both sides, the
-  same sender each run, and dates, times and the hero photos masked.
-- **Not in CI.** It builds the site twice; run it by hand.
-- **Open the report** with `npm run test:report`. The screenshots also open
-  from `playwright-report/index.html` as a file; traces need the report
-  server.
+```bash
+npm run test:storyboard   # the gate, here and in CI: desktop runs every flow, phone only those tagged @phone; no screenshots
+npm run storyboard        # the review: both viewports, every flow, screenshots, against a build of main, then opens the page
+npm run test:report       # Playwright's own report, with the trace of a failed flow
+```
+
+**The gate** is what CI runs. It fails only on a flow's checks, never on
+how a page looks.
+
+**The review** (`scripts/storyboard.mjs`) builds and serves main
+(`scripts/serve-main.mjs`: a git worktree of main kept in your temp folder,
+with its own `npm ci` when its lockfile changes), runs the suite against it
+with screenshots (its failures are just missing frames), then against this
+branch, pairs the frames by section, flow and caption, diffs them with
+pixelmatch, and opens `test-results/storyboard/index.html`: the flows in
+sections, each frame captioned and pictured on desktop and phone, with this
+branch's picture, main's and the diff, a lightbox, a phone/desktop toggle, a
+"changed only" filter, and a failed flow's message under its last frame. The
+same data is in `test-results/storyboard/storyboard.json`, for an agent.
+Both are local only and gitignored. A difference never fails; only this
+branch's checks do, and the exit code is theirs.
+
+Switches, after `--`: `--no-main` (this branch alone), `--main=<ref>`
+(another branch), `--desktop` or `--phone`, `--no-open`, `--server=URL` and
+`--main-server=URL` for servers you started. Anything else goes to
+`playwright test`: a file (`staff`), `-g login`, `--headed`.
+
+**Every flow stands alone.** It passes on its own, and run twice, in any
+order, alongside the others:
+
+- **A database per flow.** `tests/storyboard/global-setup.ts` makes one
+  migrated template database with the test MPs; the `flowDatabase` fixture
+  (`tests/storyboard/fixtures.ts`) copies it for each flow
+  (`CREATE DATABASE … TEMPLATE`, tens of milliseconds), names it in a cookie
+  on the browser context and the `request` fixture, and drops it afterwards.
+  In a fixture build only, `lib/server/db.ts` reads that cookie and queries
+  the database it names, through one small pool per database, closed when
+  idle. Otherwise `NETLIFY_DB_URL`, as ever. Flows that need the fixture MPs
+  sync them in with `syncMps()` (`tests/steps.ts`). So the staff pages that
+  list what's happened, like `/staff/letters`, are compared unmasked.
+- **A fixed clock.** `FIXTURE_NOW` (`tests/fixture-env.mjs`) is read by
+  `now()` in `lib/now.ts`, which the server uses instead of `new Date()`;
+  the database's `now()`, and the columns that default to it, are fixed to
+  the same moment in each flow's database; and every page's clock is set to
+  it with `page.clock`. Nothing date-shaped is masked.
+- **A seeded hero.** `lib/shuffle.ts` shuffles the same way every time in a
+  fixture build, so the home page's hero is compared too.
+- **Unique identifiers.** A flow's sender or login address includes its test
+  ID, so two flows never share a letter or a link.
+
+**Rules:**
+
+- Every new interactive behaviour goes in a flow, existing or new, with a
+  frame after each thing a person would see. A PR without it isn't done.
+- Flows stay small: one thing a person does, about ten frames at most.
+  Sections split past a dozen flows.
+- Tag a flow `@phone` to run it on the phone in the gate too; `@phone-only`
+  for one that only makes sense there (the mobile nav), `@desktop-only` for
+  the reverse. The review runs every other flow on both viewports.
+- Before saying a change is done, run `npm run storyboard` and look at
+  every changed frame on both viewports; say what changed in the PR. An
+  agent reads `storyboard.json`.
+- A flaky flow, or a frame that differs between two runs of the same
+  build, is fixed at once, never retried, skipped or masked. `retries`
+  stays 0.
+- No stored baselines, and no gate on pixels. Main is the reference.
+
+**Not compared:** the live site. The old diff of the public pages against
+pauseai.uk failed on every run on live data (events, news, caches, the
+clock), so it went. Bugs only real data shows, and configuration drift on
+Netlify, aren't caught here; check previews by hand.
 
 ## The database
 
@@ -147,13 +201,11 @@ not a mock.
   runs a Postgres service.
 - **Netlify's build has no Postgres**, so `npm run build` skips these tests
   there (`NETLIFY=true`). CI runs them.
-- **Playwright** builds against its own database, `pauseai_behaviour`, made
-  fresh by the `webServer` command. Behaviour tests that need MPs call
-  `syncFixtureMps()` (`tests/behaviour/setup.ts`), which runs the nightly
-  sync's route against the Airtable fixture.
-- **Staff screens** aren't in the public-vs-live diff: they need a login,
-  and their data differs between hosts. `npm run test:fixtures-vs-main`
-  screenshots them instead (below).
+- **The storyboard** builds against its own database, `pauseai_storyboard`,
+  made fresh by the `webServer` command, and gives each flow a copy of a
+  template database (above). Flows that need MPs call `syncMps()`
+  (`tests/steps.ts`), which runs the nightly sync's route against the
+  Parliament fixture.
 - **Staff screens** are tested by logging in as staff do: asking for a
   link, taking it from the build's outbox and opening it in the same
   browser (`logInAsStaff` in `tests/steps.ts`). There's no login bypass.
@@ -173,8 +225,8 @@ import("@/tests/next-headers"))` and put the session cookie in
 - A new page needs nothing extra: the route list picks it up. A new dynamic
   route (`[slug]`) needs an example in `tests/routes.ts`, or
   `tests/routes.test.ts` fails.
-- Run `npm run test:public-vs-live` and `npm run test:fixtures-vs-main` on
-  any PR that changes layout or CSS, and look over the diffs in the report.
+- Run `npm run storyboard` on any PR, and look over every changed frame on
+  both viewports (above).
 
 ## Commands
 
@@ -186,24 +238,16 @@ npm run lint:css          # Stylelint (also runs in npm run build)
 npm run lint:unused       # Knip: unused files, exports and dependencies
 npm run test:browser      # Vitest browser project
 npm run test:watch        # Vitest in watch mode
-npm run test:behaviour    # Playwright behaviour tests, on fixture data
-npm run test:public-vs-live  # Playwright: public pages, local build against pauseai.uk
-npm run test:fixtures-vs-main  # Playwright: screenshots of this branch against main, on fixture data
-npm run test:report          # open the last Playwright report
+npm run test:storyboard   # Playwright: the storyboard's gate, on a fixture build
+npm run storyboard        # Playwright: the storyboard with screenshots, against main
+npm run test:report       # open the last Playwright report
 ```
 
 - `npm run build` runs only the Node project, because Netlify's build has no
   browser.
-- The Playwright suites build and start the site themselves, or reuse a
-  server already on port 3100 (except in CI). That's not the dev server's
-  port, so a running `npm run dev` doesn't get in the way. The public-vs-live diff needs a build
-  with live data (`DATA_FIXTURES=0`), and the behaviour suite needs one with
-  fixtures, so stop any running server when switching between them.
-- The public-vs-live diff also follows the Email your MP form on both hosts: ZZ99ZZ,
-  the drafted letter, and its preview, never sending
-  (`tests/public-vs-live/email-your-mp.spec.ts`). Its local build gets a database
-  with only the test MP in it. Live needs the MP sync run and
-  `TEST_MP_EMAIL` set.
-- Run one Playwright file with `npm run test:behaviour -- <name>`, or point at
-  another host with `LOCAL_URL=https://pauseai.uk`.
+- The storyboard builds and starts the site itself, or reuses a server
+  already on port 3100 (except in CI). That's not the dev server's port, so
+  a running `npm run dev` doesn't get in the way.
+- Run one section with `npm run test:storyboard -- staff`, one flow with
+  `-g "login link"`, or point at another fixture build with `LOCAL_URL`.
 - Browser tests need Chromium: `npx playwright install chromium`.

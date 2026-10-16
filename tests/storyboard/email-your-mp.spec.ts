@@ -1,13 +1,20 @@
-import { test, expect, type Page } from "@playwright/test";
+import type { Page } from "@playwright/test";
 import { campaigns, copy } from "@/lib/content/email-your-mp";
-import { fakeTurnstile } from "../steps";
-import { BASE, newestEmailTo, syncFixtureMps, WEBHOOK_AUTH } from "./setup";
+import {
+  fakeTurnstile,
+  fillLetter,
+  lookUpTestMp,
+  newestEmail,
+  newestEmailTo,
+  openLookup,
+  sendLetter,
+  WEBHOOK_AUTH,
+} from "../steps";
+import { BASE, expect, frame, test } from "./fixtures";
 
 // Email your MP, version 2, end to end on fixture data. ZZ99ZZ finds the test
 // MP, so the whole flow runs as it would for a real one. Emails go to the
 // fixture Postmark, and the outbox shows what was sent.
-
-test.beforeAll(async ({ request }) => syncFixtureMps(request));
 
 test.beforeEach(async ({ page }) => fakeTurnstile(page));
 
@@ -18,88 +25,95 @@ function adsEvents(page: Page) {
   return page.evaluate(() => ((window as AdsWindow).dataLayer ?? []).filter((e) => e.event === "mp_email_sent").length);
 }
 
-async function lookUpTestMp(page: Page, path = "/campaigns-v2") {
-  await page.goto(`${BASE}${path}`);
-  await page.getByLabel(copy.lookup.nameLabel).fill("Jane Smith");
-  await page.getByLabel(copy.lookup.postcodeLabel).fill("ZZ9 9ZZ");
-  await page.getByRole("button", { name: copy.lookup.button }).click();
-  await expect(page.getByRole("heading", { name: "Testy McTestface MP" })).toBeVisible();
-}
-
 const PAGE = `${BASE}/campaigns-v2/${campaigns[0].slug}`;
 
+/** Looks up ZZ99ZZ, then checks the address is the write page's. */
+async function lookUp(page: Page) {
+  await lookUpTestMp(page, BASE);
+  await expect(page).toHaveURL(`${PAGE}/write`);
+}
+
 async function fillAndPreview(page: Page, email: string) {
-  await page.getByLabel(copy.form.emailLabel).fill(email);
-  await page.getByRole("textbox", { name: copy.form.addressLabel }).fill("1 High Street\nTestville");
-  await page.getByRole("button", { name: copy.form.preview }).click();
+  await fillLetter(page, email);
   await expect(page).toHaveURL(`${PAGE}/preview`);
 }
 
-test("the ZZ99ZZ flow: postcode, form, preview, sent, and a reply forwarded", async ({ page, request }) => {
-  const sender = `jane+${Date.now()}@example.com`;
-  await lookUpTestMp(page);
-  await expect(page.getByLabel(copy.form.subjectLabel)).toHaveValue(campaigns[0].subject);
-  await fillAndPreview(page, sender);
+test(
+  "the ZZ99ZZ flow: postcode, form, preview, sent, and a reply forwarded",
+  { tag: "@phone" },
+  async ({ page, request }, testInfo) => {
+    // Each flow writes as its own sender, so its letter is its own in the outbox.
+    const sender = `jane+${testInfo.testId}@example.com`;
+    await openLookup(page, BASE);
+    await frame(page, "the postcode form, filled in");
+    await lookUp(page);
+    await expect(page.getByLabel(copy.form.subjectLabel)).toHaveValue(campaigns[0].subject);
+    await frame(page, "the test MP found, with the letter drafted");
+    await fillAndPreview(page, sender);
 
-  // The preview has the letter as it will go, signature and all.
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText(copy.preview.title);
-  await expect(page.locator("article")).toContainText("Dear Mr McTestface");
-  await expect(page.locator("article p").last()).toHaveText(/^Jane Smith\s*1 High Street\s*Testville\s*ZZ9 9ZZ$/);
-  await page.getByRole("button", { name: copy.preview.send }).click();
+    // The preview has the letter as it will go, signature and all.
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText(copy.preview.title);
+    await expect(page.locator("article")).toContainText("Dear Mr McTestface");
+    await expect(page.locator("article p").last()).toHaveText(/^Jane Smith\s*1 High Street\s*Testville\s*ZZ9 9ZZ$/);
+    await frame(page, "the preview");
+    await sendLetter(page);
 
-  // The sent page, from its top: nothing of the form or the preview is left.
-  await expect(page).toHaveURL(`${PAGE}/sent`);
-  await expect(page.getByRole("status")).toHaveText(copy.sent.body("Testy McTestface MP"));
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText(copy.sent.title);
-  expect(await page.evaluate(() => window.scrollY)).toBe(0);
-  expect(await adsEvents(page)).toBe(1);
-  // Then events near the test MP's postcode (Westminster), from the Luma
-  // fixture: London's, and the next online one, but not Manchester's.
-  const events = page.locator("#events");
-  await expect(events.getByRole("heading", { name: "Upcoming events" })).toBeVisible();
-  await expect(events.getByText("PauseAI London: Protest at Parliament")).toBeVisible();
-  await expect(events.getByText("Introduction to PauseAI UK (online)")).toBeVisible();
-  await expect(events.getByText("PauseAI Manchester Social")).toHaveCount(0);
-  // A reload still thanks them, and doesn't count the letter again.
-  await page.reload();
-  await expect(page.getByRole("status")).toHaveText(copy.sent.body("Testy McTestface MP"));
-  expect(await adsEvents(page)).toBe(0);
+    // The sent page, from its top: nothing of the form or the preview is left.
+    await expect(page).toHaveURL(`${PAGE}/sent`);
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText(copy.sent.title);
+    expect(await page.evaluate(() => window.scrollY)).toBe(0);
+    expect(await adsEvents(page)).toBe(1);
+    // Then events near the test MP's postcode (Westminster), from the Luma
+    // fixture: London's, and the next online one, but not Manchester's.
+    const events = page.locator("#events");
+    await expect(events.getByRole("heading", { name: "Upcoming events" })).toBeVisible();
+    await expect(events.getByText("PauseAI London: Protest at Parliament")).toBeVisible();
+    await expect(events.getByText("Introduction to PauseAI UK (online)")).toBeVisible();
+    await expect(events.getByText("PauseAI Manchester Social")).toHaveCount(0);
+    await frame(page, "sent, with events nearby");
+    // A reload still thanks them, and doesn't count the letter again.
+    await page.reload();
+    await expect(page.getByRole("status")).toHaveText(copy.sent.body("Testy McTestface MP"));
+    expect(await adsEvents(page)).toBe(0);
 
-  const letter = newestEmailTo("test-mp@example.org")!;
-  const address = letter.From.match(/<(reply\+(\w+)@letters\.pauseai\.uk)>/)!;
-  expect(letter.From).toBe(`"Jane Smith via PauseAI" <${address[1]}>`);
-  expect(letter.Bcc).toBe("replies@example.org");
-  expect(letter.ReplyTo).toBe(
-    `"Jane Smith" <${sender}>, "PauseAI Policy Team" <replies@example.org>, "PauseAI Letters" <${address[1]}>`,
-  );
-  expect(letter.TextBody).toMatch(/Jane Smith\n1 High Street\nTestville\nZZ9 9ZZ$/);
-  expect(letter.Attachments!.map((a) => a.Name)).toEqual(campaigns[0].attachments.map((a) => a.file));
+    const letter = newestEmail((email) => email.To === "test-mp@example.org" && !!email.ReplyTo?.includes(sender))!;
+    const address = letter.From.match(/<(reply\+(\w+)@letters\.pauseai\.uk)>/)!;
+    expect(letter.From).toBe(`"Jane Smith via PauseAI" <${address[1]}>`);
+    expect(letter.Bcc).toBe("replies@example.org");
+    expect(letter.ReplyTo).toBe(
+      `"Jane Smith" <${sender}>, "PauseAI Policy Team" <replies@example.org>, "PauseAI Letters" <${address[1]}>`,
+    );
+    expect(letter.TextBody).toMatch(/Jane Smith\n1 High Street\nTestville\nZZ9 9ZZ$/);
+    expect(letter.Attachments!.map((a) => a.Name)).toEqual(campaigns[0].attachments.map((a) => a.file));
 
-  // The MP replies only to the letter's address: both we and the sender get a copy.
-  const reply = await request.post(`${BASE}/api/postmark/inbound`, {
-    headers: { Authorization: WEBHOOK_AUTH },
-    data: {
-      MailboxHash: address[2],
-      FromFull: { Email: "test-mp@example.org", Name: "Testy McTestface MP" },
-      ToFull: [{ Email: address[1], Name: "", MailboxHash: address[2] }],
-      CcFull: [],
-      Subject: `Re: ${letter.Subject}`,
-      TextBody: "Thank you for writing.",
-    },
-  });
-  expect(await reply.json()).toEqual({ forwarded: 2 });
-  for (const to of ["replies@example.org", sender]) {
-    const copied = newestEmailTo(to)!;
+    // The MP replies only to the letter's address: both we and the sender get a copy.
+    const reply = await request.post(`${BASE}/api/postmark/inbound`, {
+      headers: { Authorization: WEBHOOK_AUTH },
+      data: {
+        MailboxHash: address[2],
+        FromFull: { Email: "test-mp@example.org", Name: "Testy McTestface MP" },
+        ToFull: [{ Email: address[1], Name: "", MailboxHash: address[2] }],
+        CcFull: [],
+        Subject: `Re: ${letter.Subject}`,
+        TextBody: "Thank you for writing.",
+      },
+    });
+    expect(await reply.json()).toEqual({ forwarded: 2 });
+    const copied = newestEmailTo(sender)!;
     expect(copied.TextBody).toContain("Thank you for writing.");
     expect(copied.ReplyTo).toBe("test-mp@example.org");
-  }
-});
+    // Our copy is of this flow's reply: the subject carries the letter's, and the body the MP's words.
+    const ours = newestEmail(
+      (email) => email.To === "replies@example.org" && email.Subject.endsWith(`Re: ${letter.Subject}`),
+    )!;
+    expect(ours.TextBody).toContain("Thank you for writing.");
+  },
+);
 
 test("finding the MP opens the page to write the letter, and going back keeps the name and postcode", async ({
   page,
 }) => {
-  await lookUpTestMp(page);
-  await expect(page).toHaveURL(`${PAGE}/write`);
+  await lookUp(page);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(copy.write.title);
   expect(await page.evaluate(() => window.scrollY)).toBe(0);
 
@@ -107,10 +121,11 @@ test("finding the MP opens the page to write the letter, and going back keeps th
   await expect(page).toHaveURL(PAGE);
   await expect(page.getByLabel(copy.lookup.nameLabel)).toHaveValue("Jane Smith");
   await expect(page.getByLabel(copy.lookup.postcodeLabel)).toHaveValue("ZZ9 9ZZ");
+  await frame(page, "back at the form, name and postcode kept");
 });
 
 test("no Ads event when the server refuses the letter, which can then be edited as it was", async ({ page }) => {
-  await lookUpTestMp(page);
+  await lookUp(page);
   // A blank letter: only the server checks for that.
   await page.getByRole("textbox", { name: copy.form.letterLabel, exact: true }).fill("");
   await fillAndPreview(page, "jane@example.com");
@@ -118,11 +133,13 @@ test("no Ads event when the server refuses the letter, which can then be edited 
 
   await expect(page.getByText(copy.errors.missingFields)).toBeVisible();
   expect(await adsEvents(page)).toBe(0);
+  await frame(page, "the server refused a blank letter");
 
   await page.getByRole("link", { name: copy.preview.edit }).click();
   await expect(page).toHaveURL(`${PAGE}/write`);
   await expect(page.getByLabel(copy.form.emailLabel)).toHaveValue("jane@example.com");
   await expect(page.getByRole("textbox", { name: copy.form.addressLabel })).toHaveValue("1 High Street\nTestville");
+  await frame(page, "back to editing, as it was");
 });
 
 test("the write, preview and sent pages, opened without a lookup or a letter, link back to the form", async ({
@@ -130,6 +147,7 @@ test("the write, preview and sent pages, opened without a lookup or a letter, li
 }) => {
   for (const step of ["write", "preview", "sent"]) {
     await page.goto(`${PAGE}/${step}`);
+    await frame(page, `/${step} with nothing to show`);
     await page.getByRole("link", { name: copy.preview.backToForm }).click();
     await expect(page).toHaveURL(`${PAGE}#email-your-mp`);
   }
@@ -153,44 +171,42 @@ test("the Postmark webhooks refuse requests without our credentials", async ({ r
 test("ZZ99ZS has signed, so the PM letter's page moves on to the bill's, to write to them about that", async ({
   page,
 }) => {
-  await page.goto(`${BASE}/campaigns-v2`);
+  await openLookup(page, BASE, "ZZ9 9ZS");
   await expect(page.locator("summary", { hasText: "ZZ9 9ZZ" })).toBeVisible();
-  await page.getByLabel(copy.lookup.nameLabel).fill("Jane Smith");
-  await page.getByLabel(copy.lookup.postcodeLabel).fill("ZZ9 9ZS");
   await page.getByRole("button", { name: copy.lookup.button }).click();
 
   await expect(page).toHaveURL(`${BASE}/campaigns-v2/${campaigns[1].slug}`);
   await expect(page.getByText(campaigns[0].movedOn!)).toBeVisible();
   await expect(page.getByLabel(copy.lookup.nameLabel)).toHaveValue("Jane Smith");
   await expect(page.getByLabel(copy.lookup.postcodeLabel)).toHaveValue("ZZ9 9ZS");
+  await frame(page, "moved on to the bill's page");
   await page.getByRole("button", { name: copy.lookup.button }).click();
 
   await expect(page).toHaveURL(`${BASE}/campaigns-v2/${campaigns[1].slug}/write`);
   await expect(page.getByRole("heading", { name: "Signy McTestface MP" })).toBeVisible();
   await expect(page.getByLabel(copy.form.subjectLabel)).toHaveValue(campaigns[1].subject);
+  await frame(page, "the bill's letter to Signy McTestface MP");
 });
 
 test("ZZ99ZB signed ControlAI's letter backing the bill, so the bill's letter thanks them", async ({ page }) => {
-  await page.goto(`${BASE}/campaigns-v2/${campaigns[1].slug}`);
-  await page.getByLabel(copy.lookup.nameLabel).fill("Jane Smith");
-  await page.getByLabel(copy.lookup.postcodeLabel).fill("ZZ9 9ZB");
+  await openLookup(page, BASE, "ZZ9 9ZB", `/campaigns-v2/${campaigns[1].slug}`);
   await page.getByRole("button", { name: copy.lookup.button }).click();
 
   await expect(page).toHaveURL(`${BASE}/campaigns-v2/${campaigns[1].slug}/write`);
   await expect(page.getByRole("heading", { name: "Backy McTestface MP" })).toBeVisible();
   await expect(page.getByRole("link", { name: copy.sobelBill.signedNote.link })).toBeVisible();
   await expect(page.getByText(copy.sobelBill.letterThanks)).toBeVisible();
+  await frame(page, "the bill's letter thanks Backy McTestface MP");
 });
 
 test("ZZ99ZN has no email, so there's no letter to write", async ({ page }) => {
-  await page.goto(`${BASE}/campaigns-v2`);
-  await page.getByLabel(copy.lookup.nameLabel).fill("Jane Smith");
-  await page.getByLabel(copy.lookup.postcodeLabel).fill("ZZ9 9ZN");
+  await openLookup(page, BASE, "ZZ9 9ZN");
   await page.getByRole("button", { name: copy.lookup.button }).click();
 
   await expect(page.getByRole("heading", { name: "Nomail McTestface MP" })).toBeVisible();
   await expect(page.getByText(copy.lookup.noEmail)).toBeVisible();
   await expect(page).toHaveURL(`${BASE}/campaigns-v2/${campaigns[0].slug}`);
+  await frame(page, "an MP with no email");
 });
 
 test("each campaign has its own page, plain /campaigns-v2 opens the first, and an unknown one is a 404", async ({
@@ -201,6 +217,7 @@ test("each campaign has its own page, plain /campaigns-v2 opens the first, and a
     await page.goto(`${BASE}/campaigns-v2/${campaign.slug}`);
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
     await expect(page.getByLabel(copy.lookup.postcodeLabel)).toBeVisible();
+    await frame(page, `/campaigns-v2/${campaign.slug}`);
   }
   await page.goto(`${BASE}/campaigns-v2`);
   await expect(page).toHaveURL(`${BASE}/campaigns-v2/${campaigns[0].slug}`);

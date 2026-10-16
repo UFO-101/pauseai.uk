@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { BASE, expect, test } from "./fixtures";
 
 // Every redirect in next.config.ts exists because a link that other people
 // control was already broken once: story permalinks shared before the /stories
@@ -8,9 +8,8 @@ import { test, expect } from "@playwright/test";
 // colons, Next collapsing repeated slashes) that a framework upgrade could
 // quietly change it.
 //
-// These run over HTTP with no browser, so they cost milliseconds.
-
-const BASE = process.env.LOCAL_URL ?? "http://localhost:3100";
+// These run over HTTP with no browser, so they cost milliseconds and have no
+// frames.
 
 const REDIRECTS = [
   {
@@ -44,24 +43,22 @@ const REDIRECTS = [
   },
 ];
 
-test.describe("redirects", () => {
-  for (const { name, from, to, permanent = true } of REDIRECTS) {
-    test(`${name}: ${from}`, async ({ request }) => {
-      const res = await request.get(`${BASE}${from}`, { maxRedirects: 0 });
+for (const { name, from, to, permanent = true } of REDIRECTS) {
+  test(`${name}: ${from}`, async ({ request }) => {
+    const res = await request.get(`${BASE}${from}`, { maxRedirects: 0 });
 
-      expect(res.status(), `${from} should be a ${permanent ? "permanent" : "temporary"} redirect`).toBe(
-        permanent ? 308 : 307,
-      );
-      expect(res.headers()["location"]).toBe(to);
-    });
-  }
-
-  test("the destinations actually resolve", async ({ request }) => {
-    // A redirect pointing at a 404 is no better than the broken link it
-    // replaced, so follow each one to the end.
-    for (const { from, to } of REDIRECTS) {
-      const res = await request.get(`${BASE}${from}`);
-      expect(res.status(), `${from} → ${to} does not resolve`).toBe(200);
-    }
+    expect(res.status(), `${from} should be a ${permanent ? "permanent" : "temporary"} redirect`).toBe(
+      permanent ? 308 : 307,
+    );
+    expect(res.headers()["location"]).toBe(to);
   });
+}
+
+test("the destinations actually resolve", async ({ request }) => {
+  // A redirect pointing at a 404 is no better than the broken link it
+  // replaced, so follow each one to the end.
+  for (const { from, to } of REDIRECTS) {
+    const res = await request.get(`${BASE}${from}`);
+    expect(res.status(), `${from} → ${to} does not resolve`).toBe(200);
+  }
 });

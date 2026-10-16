@@ -1,5 +1,6 @@
 import "server-only";
 import type { LumaEntry } from "@/lib/events";
+import { now } from "@/lib/now";
 import { outsideFetch } from "./outside-fetch";
 
 /** The two halves of the calendar: from today on, and before today. */
@@ -20,6 +21,12 @@ type ApiEvent = {
   location_visibility?: string;
 };
 
+/** `date` moved back to midnight UTC. */
+function startOfDay(date: Date): Date {
+  date.setUTCHours(0, 0, 0, 0);
+  return date;
+}
+
 /**
  * Our Luma calendar's events, through Luma's official API (LUMA_API_KEY,
  * scoped to the calendar). "future" is soonest first and "past" most recent
@@ -33,8 +40,7 @@ export async function getEvents(period: EventPeriod = "future"): Promise<LumaEnt
   const key = process.env.LUMA_API_KEY;
   if (!key) return [];
 
-  const today = new Date();
-  today.setUTCHours(0, 0, 0, 0);
+  const today = startOfDay(now());
   const params = new URLSearchParams({
     [period === "future" ? "after" : "before"]: today.toISOString(),
     sort_column: "start_at",

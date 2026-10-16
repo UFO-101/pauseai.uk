@@ -73,8 +73,8 @@ jobs:
       - name: Build
         run: npm run build
 
-  behaviour:
-    name: Behaviour tests
+  storyboard:
+    name: Storyboard
     runs-on: ubuntu-latest
     # Tests that need a database make their own in this Postgres
     # (tests/database.ts, scripts/fresh-database.mjs).
@@ -120,7 +120,7 @@ jobs:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ steps.playwright.outputs.version }}
 
-      # Only Chromium: the behaviour project runs a single browser, and
+      # Only Chromium: both of the storyboard's projects run in it, and
       # downloading the rest costs more than it proves.
       - name: Install Playwright browser
         if: steps.playwright-cache.outputs.cache-hit != 'true'
@@ -142,16 +142,17 @@ jobs:
           sudo apt-get install -y postgresql-client-18
 
       # playwright.config.ts's webServer builds and starts the app itself, so
-      # there is no separate build step here. The public-vs-live suite is deliberately
-      # not run: it compares against the live site, so it fails whenever news or
-      # events change, which makes it a poor gate.
-      - name: Behaviour tests
-        run: npm run test:behaviour
+      # there is no separate build step here. The gate takes no screenshots;
+      # the comparison with main (npm run storyboard) is run by hand.
+      - name: Storyboard
+        run: npm run test:storyboard
 
       - name: Upload report on failure
         if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: playwright-report
-          path: playwright-report/
+          path: |
+            playwright-report/
+            test-results/
           retention-days: 7

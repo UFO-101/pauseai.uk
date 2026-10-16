@@ -9,7 +9,7 @@ import path from "node:path";
 // - "browser" runs component tests (*.browser.test.tsx) in real Chromium via
 //   Playwright, so layout, canvas and matchMedia are the real thing.
 //
-// tests/ is the Playwright suite (behaviour and visual), run separately.
+// tests/storyboard/ is the Playwright suite, run separately.
 export default defineConfig({
   resolve: {
     alias: {
@@ -29,15 +29,7 @@ export default defineConfig({
           include: ["**/*.test.{ts,tsx}"],
           // Test files that need Postgres each make their own database
           // (tests/database.ts), so they can run in parallel.
-          exclude: [
-            "**/node_modules/**",
-            "tests/behaviour/**",
-            "tests/public-vs-live/**",
-            "plans/**",
-            "tmp/**",
-            ".netlify/**",
-            "**/*.browser.test.*",
-          ],
+          exclude: ["**/node_modules/**", "plans/**", "tmp/**", ".netlify/**", "**/*.browser.test.*"],
           setupFiles: ["./vitest.setup.node.ts"],
         },
       },
@@ -115,8 +107,8 @@ export default defineConfig({
       ],
       // page.tsx and layout.tsx are the one scope rule: async server
       // components can't render in Vitest and layout.tsx needs next/font.
-      // They're kept thin, and tests/behaviour/pages.spec.ts loads every
-      // route instead. No other exclusions, and no ignore comments
+      // They're kept thin, and tests/storyboard/public-pages.spec.ts loads
+      // every route instead. No other exclusions, and no ignore comments
       // (coverage-ignores.test.ts).
       exclude: ["**/*.test.{ts,tsx}", "**/page.tsx", "**/layout.tsx"],
       reporter: ["text-summary", "json-summary", "html"],

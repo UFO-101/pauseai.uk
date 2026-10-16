@@ -17,21 +17,27 @@ npm run lint:css                  # Stylelint
 npm run lint:unused               # Knip: unused files, exports and dependencies
 npm run format:check              # Prettier; `npm run format` fixes it
 npm run build
-npm run test:behaviour            # Playwright, on fixture data
+npm run test:storyboard           # Playwright: the storyboard's gate, on fixture data
 ```
 
 If the prek Git hook is installed (`npm run hooks:install`), commits run Prettier, ESLint and Stylelint on the staged files first. Prettier rewrites them, so `git add` and commit again. That's only part of the gate.
 
 Running one Vitest project (`npm run test:node`, `npm run test:browser`) or one file doesn't check coverage, so it isn't the gate. The tests that need a database make their own in Postgres (`docs/testing.md`).
 
-If a change could alter how any page looks (components, CSS, layout, copy, or the data a page shows), also run the visual tests and look at the diffs in the report (`npm run test:report`):
+## The storyboard
+
+`tests/storyboard/` is one Playwright suite that drives every flow on fixture data (`docs/testing.md`, "The storyboard"). A spec file is a section, a test a flow, and each `await frame(page, "caption")` a frame: a caption and, in the review, a full-page screenshot.
+
+- Every new interactive behaviour goes in a flow, existing or new, with a frame after each thing a person would see. A PR without it isn't done.
+- Flows stay small: one thing a person does, about ten frames at most. Every flow stands alone: its own database (the `flowDatabase` fixture), a fixed clock, unique identifiers.
+- Before saying a change is done, run the review and look at every changed frame on both viewports. It never fails on a difference, so it proves nothing until you've looked. Say in the commit or PR what changed.
 
 ```bash
-npm run test:fixtures-vs-main     # this branch against main, on fixture data
-npm run test:public-vs-live       # local build against pauseai.uk
+npm run storyboard                # both viewports, screenshots, against a build of main, then opens test-results/storyboard/index.html
+npm run storyboard -- --no-open   # the same; read test-results/storyboard/storyboard.json instead
 ```
 
-`fixtures-vs-main` never fails on a difference, so it proves nothing until you've looked. `public-vs-live` fails on any difference, including ones from live data (news, events), so read why it failed before deciding it's your change. Say in the commit or PR what you checked and what differed.
+- A flaky flow, or a frame that differs between two runs of the same build, is fixed, never retried, skipped or masked. No stored baselines, no gate on pixels.
 
 ## Next.js version may be beyond your knowledge cutoff
 

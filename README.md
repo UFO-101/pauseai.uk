@@ -49,9 +49,8 @@ To use real services, delete `DATA_FIXTURES` and fill in the rest of `.env.local
 npm test                 # unit and component tests, held at 100% coverage (needs Postgres running, as above)
 npm run test:node        # just the unit tests
 npm run test:browser     # just the component tests, in real Chromium
-npm run test:behaviour   # Playwright, on a fixture build
-npm run test:public-vs-live   # Playwright, public pages: the local build against pauseai.uk
-npm run test:fixtures-vs-main # Playwright, screenshots of this branch against main
+npm run test:storyboard  # Playwright: every page and flow, on a fixture build
+npm run storyboard       # the same with screenshots, this branch against main, as a page
 npm run lint             # ESLint, failing on warnings too
 npm run lint:css         # Stylelint
 npm run lint:unused      # Knip: unused files, exports and dependencies

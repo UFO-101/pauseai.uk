@@ -1,11 +1,11 @@
-import { test, expect, type Page } from "@playwright/test";
+import type { Page } from "@playwright/test";
+import { BASE, expect, frame, test } from "./fixtures";
 
 // Cookie consent across pages. The banner itself, and what each button does on
 // the page, are tested in components/layout/layout.browser.test.tsx. This file
 // covers what a component test can't: that the choice is remembered from one
 // page to the next, on a real build and a real host.
 
-const BASE = process.env.LOCAL_URL ?? "http://localhost:3100";
 const CONSENT_KEY = "pauseai-cookie-consent";
 const GA_DISABLED = "ga-disable-G-DLLRWZCYD7";
 
@@ -24,27 +24,35 @@ const banner = (page: Page) => page.getByRole("dialog", { name: "Cookie consent"
 
 async function choose(page: Page, choice: "Accept" | "Decline") {
   await page.getByRole("link", { name: "Cookie settings" }).click();
+  await frame(page, "the cookie banner");
   await banner(page).getByRole("button", { name: choice }).click();
   await expect(banner(page)).toHaveCount(0);
 }
 
-test("declining is remembered on the next page, and a later visit loads no analytics", async ({ page }) => {
-  const requested = await analyticsRequests(page);
-  await page.goto(`${BASE}/privacy`);
-  await expect.poll(() => requested.length).toBeGreaterThan(0);
-  await choose(page, "Decline");
+test(
+  "declining is remembered on the next page, and a later visit loads no analytics",
+  { tag: "@phone" },
+  async ({ page }) => {
+    const requested = await analyticsRequests(page);
+    await page.goto(`${BASE}/privacy`);
+    await expect.poll(() => requested.length).toBeGreaterThan(0);
+    await frame(page, "the privacy page, before any choice");
+    await choose(page, "Decline");
+    await frame(page, "declined");
 
-  // Moving within the site: analytics stays switched off.
-  await page.locator('a[href^="/governance"]').first().dispatchEvent("click");
-  await expect(page).toHaveURL(/\/governance\/?$/);
-  expect(await page.evaluate((key) => (window as unknown as Record<string, unknown>)[key], GA_DISABLED)).toBe(true);
+    // Moving within the site: analytics stays switched off.
+    await page.locator('a[href^="/governance"]').first().dispatchEvent("click");
+    await expect(page).toHaveURL(/\/governance\/?$/);
+    expect(await page.evaluate((key) => (window as unknown as Record<string, unknown>)[key], GA_DISABLED)).toBe(true);
 
-  // A fresh page load never fetches it.
-  requested.length = 0;
-  await page.goto(`${BASE}/what-is-pauseai-uk`, { waitUntil: "load" });
-  expect(requested).toEqual([]);
-  expect(await page.evaluate((key) => localStorage.getItem(key), CONSENT_KEY)).toBe("declined");
-});
+    // A fresh page load never fetches it.
+    requested.length = 0;
+    await page.goto(`${BASE}/what-is-pauseai-uk`, { waitUntil: "load" });
+    expect(requested).toEqual([]);
+    expect(await page.evaluate((key) => localStorage.getItem(key), CONSENT_KEY)).toBe("declined");
+    await frame(page, "the next page: no banner, no analytics");
+  },
+);
 
 test("declining removes the analytics cookies for good", async ({ page, context }) => {
   await analyticsRequests(page);
@@ -75,6 +83,7 @@ test("accepting after declining turns analytics back on, on later pages too", as
   expect(requested).toEqual([]);
   await choose(page, "Accept");
   await expect.poll(() => requested.length).toBeGreaterThan(0);
+  await frame(page, "accepted");
 
   requested.length = 0;
   await page.goto(`${BASE}/what-is-pauseai-uk`);
@@ -92,5 +101,6 @@ test("the tools never load analytics, whatever was chosen", async ({ page }) => 
     await page.goto(`${BASE}${path}`, { waitUntil: "load" });
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
   }
+  await frame(page, "a tool, with analytics accepted: none loaded");
   expect(requested).toEqual([]);
 });

@@ -1,6 +1,22 @@
+import { execFileSync } from "node:child_process";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { closeDb, query, transaction, verifyFullUrl } from "./db";
 import { describeWithDatabase, useTestDatabase, withDatabaseDown } from "@/tests/database";
+import { requestCookies } from "@/tests/next-headers";
+import { FLOW_DATABASE_COOKIE } from "@/tests/fixture-env.mjs";
+import { dropDatabase, freshDatabase, runSql } from "@/scripts/fresh-database.mjs";
+
+// A copy of the stand-in, so one test can make cookies() throw as it does
+// outside a request.
+vi.mock("next/headers", async () => ({ ...(await import("@/tests/next-headers")) }));
+
+/** Terminates the server side of `pid`'s connection, as a dropped network would. */
+function terminate(pid: number) {
+  execFileSync("psql", ["-X", "-q", "-d", process.env.NETLIFY_DB_URL!, "-c", `SELECT pg_terminate_backend(${pid})`]);
+}
+
+const currentDatabase = async () => (await query<{ db: string }>("SELECT current_database() AS db"))[0].db;
+const pid = async () => (await query<{ pid: number }>("SELECT pg_backend_pid() AS pid"))[0].pid;
 
 describeWithDatabase("the database", () => {
   useTestDatabase();
@@ -67,6 +83,99 @@ describeWithDatabase("the database", () => {
     await closeDb();
     await closeDb();
     expect(await query("SELECT 1 AS one")).toEqual([{ one: 1 }]);
+  });
+
+  it("reports a connection dropped while idle, rather than crashing", async () => {
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+    try {
+      await closeDb();
+      terminate(await pid());
+      await vi.waitFor(() =>
+        expect(error).toHaveBeenCalledWith(expect.stringContaining("Database connection dropped")),
+      );
+      expect(await query("SELECT 1 AS one")).toEqual([{ one: 1 }]);
+    } finally {
+      error.mockRestore();
+    }
+  });
+
+  describe("in a fixture build, with the storyboard's cookie", () => {
+    const flow = `pauseai_sb_unit_${process.pid}`;
+
+    afterEach(async () => {
+      requestCookies.clear();
+      vi.unstubAllEnvs();
+      await closeDb();
+    });
+
+    it("queries the database the cookie names, and the usual one without it", async () => {
+      vi.stubEnv("DATA_FIXTURES", "1");
+      freshDatabase(flow);
+      try {
+        const usual = await currentDatabase();
+        requestCookies.set(FLOW_DATABASE_COOKIE, flow);
+        expect(await currentDatabase()).toBe(flow);
+        // Both at once, in a transaction too.
+        await transaction((db) => query("INSERT INTO audit_log (actor, action) VALUES ('a', 'flow')", [], db));
+        expect(await query("SELECT action FROM audit_log")).toEqual([{ action: "flow" }]);
+        requestCookies.delete(FLOW_DATABASE_COOKIE);
+        expect(await currentDatabase()).toBe(usual);
+        expect(await query("SELECT action FROM audit_log")).toEqual([]);
+        // The flow's pool is closed once its connections have gone idle, and remade on the next query.
+        requestCookies.set(FLOW_DATABASE_COOKIE, flow);
+        await Promise.all([query("SELECT pg_sleep(0.05)"), query("SELECT pg_sleep(0.1)")]);
+        const connections = () => runSql("postgres", `SELECT count(*) FROM pg_stat_activity WHERE datname = '${flow}'`);
+        expect(Number(connections()[0])).toBeGreaterThanOrEqual(1);
+        await vi.waitFor(() => expect(connections()).toEqual(["0"]), { timeout: 5000, interval: 200 });
+        expect(await currentDatabase()).toBe(flow);
+      } finally {
+        await closeDb();
+        dropDatabase(flow);
+      }
+    });
+
+    it("ignores a cookie naming any other database", async () => {
+      vi.stubEnv("DATA_FIXTURES", "1");
+      const usual = await currentDatabase();
+      for (const value of ["postgres", "pauseai_sb_", "pauseai_sb_x; drop", `other_${flow}`, ""]) {
+        requestCookies.set(FLOW_DATABASE_COOKIE, value);
+        expect(await currentDatabase(), value).toBe(usual);
+      }
+    });
+
+    it("stays quiet when the flow's database is dropped under an idle connection", async () => {
+      vi.stubEnv("DATA_FIXTURES", "1");
+      const error = vi.spyOn(console, "error").mockImplementation(() => {});
+      freshDatabase(flow);
+      requestCookies.set(FLOW_DATABASE_COOKIE, flow);
+      try {
+        const flowPid = await pid();
+        dropDatabase(flow);
+        await vi.waitFor(() =>
+          expect(runSql("postgres", `SELECT 1 FROM pg_stat_activity WHERE pid = ${flowPid}`)).toEqual([]),
+        );
+        await new Promise((resolve) => setTimeout(resolve, 100));
+        expect(error).not.toHaveBeenCalled();
+      } finally {
+        error.mockRestore();
+      }
+    });
+
+    it("uses the usual database outside a request, where cookies() throws", async () => {
+      vi.stubEnv("DATA_FIXTURES", "1");
+      const headers = await import("next/headers");
+      vi.spyOn(headers, "cookies").mockRejectedValue(new Error("cookies was called outside a request scope"));
+      expect(await query("SELECT 1 AS one")).toEqual([{ one: 1 }]);
+    });
+
+    it("never looks at the cookie outside a fixture build", async () => {
+      vi.stubEnv("DATA_FIXTURES", "0");
+      const headers = await import("next/headers");
+      const cookies = vi.spyOn(headers, "cookies");
+      requestCookies.set(FLOW_DATABASE_COOKIE, flow);
+      expect(await query("SELECT 1 AS one")).toEqual([{ one: 1 }]);
+      expect(cookies).not.toHaveBeenCalled();
+    });
   });
 });
 

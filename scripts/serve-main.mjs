@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 // Builds and serves another branch of the site (main, by default) on fixture
-// data, for the fixtures-vs-main screenshot comparison
-// (tests/fixtures-vs-main/). Local only.
+// data, for the storyboard's comparison (scripts/storyboard.mjs). Local only.
 //
 //   node scripts/serve-main.mjs [--ref main] [--port 3001]
 //
@@ -53,10 +52,14 @@ if (testServer) env.TEST_DATABASE_URL = testServer;
 // A fresh database, if this version of the site has one.
 const freshDatabase = join(dir, "scripts", "fresh-database.mjs");
 if (existsSync(freshDatabase)) {
-  env.NETLIFY_DB_URL = execFileSync("node", [freshDatabase, "pauseai_fixtures_main", "--test-mp", env.TEST_MP_EMAIL], {
-    cwd: dir,
-    encoding: "utf8",
-  }).trim();
+  env.NETLIFY_DB_URL = execFileSync(
+    "node",
+    [freshDatabase, "pauseai_storyboard_main", "--test-mp", env.TEST_MP_EMAIL],
+    {
+      cwd: dir,
+      encoding: "utf8",
+    },
+  ).trim();
 }
 
 // next build directly, not npm run build, which runs the unit tests first.
