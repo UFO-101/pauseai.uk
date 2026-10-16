@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { closeDb, query, transaction } from "./db";
+import { closeDb, query, transaction, verifyFullUrl } from "./db";
 import { describeWithDatabase, useTestDatabase, withDatabaseDown } from "@/tests/database";
 
 describeWithDatabase("the database", () => {
@@ -77,5 +77,26 @@ describe("without NETLIFY_DB_URL", () => {
     await closeDb();
     vi.stubEnv("NETLIFY_DB_URL", "");
     await expect(query("SELECT 1")).rejects.toThrow("NETLIFY_DB_URL is not set");
+  });
+});
+
+describe("verifyFullUrl", () => {
+  it("upgrades the modes pg 9 would weaken", () => {
+    expect(verifyFullUrl("postgresql://u:p@h/db?sslmode=require")).toBe("postgresql://u:p@h/db?sslmode=verify-full");
+    expect(verifyFullUrl("postgresql://h/db?a=1&sslmode=prefer&b=2")).toBe(
+      "postgresql://h/db?a=1&sslmode=verify-full&b=2",
+    );
+    expect(verifyFullUrl("postgresql://h/db?sslmode=verify-ca")).toBe("postgresql://h/db?sslmode=verify-full");
+  });
+
+  it("leaves other URLs alone", () => {
+    for (const url of [
+      "postgresql://vscode@localhost/db?host=/var/run/postgresql",
+      "postgresql://h/db?sslmode=disable",
+      "postgresql://h/db?sslmode=verify-full",
+      "postgresql://h/db?sslmode=requires",
+    ]) {
+      expect(verifyFullUrl(url)).toBe(url);
+    }
   });
 });
