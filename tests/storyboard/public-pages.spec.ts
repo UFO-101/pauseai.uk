@@ -2,6 +2,7 @@ import type { ConsoleMessage } from "@playwright/test";
 import { isStaffRoute } from "../../app/sitemap";
 import { ROUTES } from "../routes";
 import { BASE, expect, frame, test } from "./fixtures";
+import { hydrated } from "./settle";
 
 // Every public page on the site (tests/routes.ts), loaded in a real browser
 // against the production build, and pictured. This is the gate for page.tsx
@@ -16,7 +17,12 @@ import { BASE, expect, frame, test } from "./fixtures";
 // So the conditions for one exist and the usual alarm is muted. This fails on
 // console errors and on React's hydration messages, which arrive as warnings.
 
-const PUBLIC_ROUTES = ROUTES.filter((route) => !isStaffRoute(route));
+// A campaign's write and preview pages show nothing without a postcode and a
+// letter: the email-your-mp flow "the write, preview and sent pages, opened
+// without a lookup or a letter" pictures that once, and the ZZ99ZZ flow
+// pictures them filled in.
+const EMPTY_STEP = /^\/campaigns-v2\/[^/]+\/(write|preview)$/;
+const PUBLIC_ROUTES = ROUTES.filter((route) => !isStaffRoute(route) && !EMPTY_STEP.test(route));
 
 // Matched against the message text. Kept deliberately short — every entry here
 // is a thing we have decided not to look at, so it should have a reason.
@@ -62,15 +68,9 @@ for (const route of PUBLIC_ROUTES) {
     const response = await page.goto(`${BASE}${route}`, { waitUntil: "domcontentloaded" });
     expect(response?.status(), "status").toBe(200);
 
-    await page.waitForFunction(
-      () =>
-        getComputedStyle(document.documentElement).getPropertyValue("--site-header-h").trim() !== "" ||
-        !document.querySelector("header.site-header"),
-      undefined,
-      { polling: 200, timeout: 20_000 },
-    );
-    // Hydration warnings arrive shortly after mount, not at load.
-    await page.waitForTimeout(1500);
+    // Hydration warnings arrive just after mount, not at load: hydrated()
+    // waits for the mount, then for the console to go quiet.
+    await hydrated(page);
 
     await expect(page.locator("h1"), "exactly one <h1>").toHaveCount(1);
     if (FIXTURE_TEXT[route]) await expect(page.getByText(FIXTURE_TEXT[route])).toBeVisible();

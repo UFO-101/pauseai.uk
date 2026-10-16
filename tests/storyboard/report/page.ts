@@ -62,31 +62,42 @@ h1, h2, h3, p { margin: 0; }
 .segmented button:last-child { border-radius: 0 4px 4px 0; }
 .segmented button + button { border-left: 0; }
 .segmented button[aria-pressed="true"] { background: #111; color: #fff; border-color: #111; }
-.layout { display: grid; grid-template-columns: 280px 1fr; }
+.layout { display: grid; grid-template-columns: 380px 1fr; }
 #sidebar { position: sticky; top: 49px; height: calc(100vh - 49px); overflow: auto; padding: 12px 0 24px; border-right: 1px solid var(--line); background: var(--bg); }
-#sidebar h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); padding: 12px 16px 4px; }
-#sidebar a { display: flex; justify-content: space-between; gap: 8px; padding: 4px 16px; color: inherit; text-decoration: none; }
+#sidebar summary { display: flex; justify-content: space-between; gap: 8px; padding: 8px 16px 8px 12px; cursor: pointer; font-weight: 600; list-style: none; }
+#sidebar summary::-webkit-details-marker { display: none; }
+#sidebar summary::before { content: "▸"; display: inline-block; width: 12px; color: var(--muted); }
+#sidebar details[open] summary::before { content: "▾"; }
+#sidebar summary .name { flex: 1; }
+#sidebar details.current summary { background: #eee; }
+#sidebar a { display: flex; justify-content: space-between; gap: 8px; padding: 4px 16px 4px 28px; color: inherit; text-decoration: none; }
+/* A route stays on one line; a flow's sentence may wrap. */
+#sidebar a .name { overflow-wrap: anywhere; }
+#sidebar a .name.route { white-space: nowrap; }
 #sidebar a:hover { background: #eee; }
-#sidebar .count { color: var(--muted); white-space: nowrap; }
+#sidebar .count { color: var(--muted); white-space: nowrap; font-weight: normal; }
 #sidebar .count.changed { color: var(--changed); font-weight: 600; }
 #sidebar a.failed .name::before, h3.failed::before { content: "✕ "; color: var(--failed); }
 main { padding: 8px 24px 80px; min-width: 0; }
 section > h2 { font-size: 18px; margin: 32px 0 8px; padding-top: 16px; border-top: 1px solid var(--line); }
 section:first-child > h2 { border-top: 0; margin-top: 16px; }
+/* A hash link lands under the sticky bar without this. */
+section, .flow { scroll-margin-top: 60px; }
 .flow { margin: 16px 0 28px; }
 .flow h3 { font-size: 15px; margin-bottom: 8px; }
 .flow .status { font-weight: normal; color: var(--muted); font-size: 13px; margin-left: 8px; }
-.frame { display: grid; grid-template-columns: 220px 1fr; gap: 16px; padding: 10px 0; border-top: 1px solid #eee; }
+.frame { display: grid; grid-template-columns: 200px 1fr; gap: 16px; padding: 10px 0; border-top: 1px solid #eee; }
 .frame .caption { color: #333; }
 .frame .caption .n { color: var(--muted); margin-right: 6px; }
 .frame .mismatch { display: block; margin-top: 4px; font-size: 12px; color: var(--muted); }
 .frame.changed .mismatch { color: var(--changed); font-weight: 600; }
 .thumbs { display: flex; gap: 12px; flex-wrap: wrap; }
-.thumb { display: block; width: 180px; text-align: center; font-size: 12px; color: var(--muted); background: none; border: 0; padding: 0; cursor: zoom-in; font: inherit; }
-.thumb img { display: block; width: 180px; height: 120px; object-fit: cover; object-position: top; border: 1px solid var(--line); background: #fff; margin-bottom: 4px; }
-body[data-viewport="phone"] .thumb img { width: 90px; height: 160px; margin-left: auto; margin-right: auto; }
-.thumb .blank { display: block; width: 180px; height: 120px; border: 1px solid var(--line); margin-bottom: 4px; background: repeating-linear-gradient(45deg, #f3f3f3 0 8px, #fff 8px 16px); }
-body[data-viewport="phone"] .thumb .blank { width: 90px; height: 160px; margin-left: auto; margin-right: auto; }
+.thumb { display: block; width: 240px; text-align: center; font-size: 12px; color: var(--muted); background: none; border: 0; padding: 0; cursor: zoom-in; font: inherit; }
+.thumb img { display: block; width: 240px; height: 160px; object-fit: cover; object-position: top; border: 1px solid var(--line); background: #fff; margin-bottom: 4px; }
+body[data-viewport="phone"] .thumb img { width: 120px; height: 220px; margin-left: auto; margin-right: auto; }
+.thumb .blank { display: block; width: 240px; height: 160px; border: 1px solid var(--line); margin-bottom: 4px; background: repeating-linear-gradient(45deg, #f3f3f3 0 8px, #fff 8px 16px); }
+body[data-viewport="phone"] .thumb .blank { width: 120px; height: 220px; margin-left: auto; margin-right: auto; }
+.no-frames { color: var(--muted); padding: 10px 0; border-top: 1px solid #eee; }
 .error { margin: 8px 0 0; padding: 8px 12px; background: #fef2f2; color: var(--failed); border-left: 3px solid var(--failed); white-space: pre-wrap; font-family: ui-monospace, monospace; font-size: 12px; }
 .hidden { display: none !important; }
 .empty-note { color: var(--muted); padding: 40px 0; }
@@ -116,6 +127,8 @@ const el = (tag, attrs = {}, children = []) => {
   return node;
 };
 const title = (s) => s.replace(/-/g, " ").replace(/^./, (c) => c.toUpperCase());
+/** Local time as "2026-10-16 16:33". */
+const isoLocal = (d) => new Date(d.getTime() - d.getTimezoneOffset() * 60_000).toISOString().slice(0, 16).replace("T", " ");
 const pct = (n) => (n * 100 < 0.01 && n > 0 ? "<0.01" : (n * 100).toFixed(2)) + "%";
 const slug = (...parts) => parts.join("-").toLowerCase().replace(/[^a-z0-9]+/g, "-");
 const framesOf = (flow) => data.frames.filter((f) => f.section === flow.section && f.flow === flow.flow && f.viewport === flow.viewport);
@@ -131,15 +144,28 @@ function render() {
   for (const section of sections) {
     const sectionFlows = flows.filter((f) => f.section === section && (!state.changedOnly || f.changed > 0 || f.status !== "passed"));
     if (!sectionFlows.length) continue;
-    sidebar.append(el("h2", {}, [title(section)]));
+    const sectionChanged = sectionFlows.reduce((n, f) => n + f.changed, 0);
+    const sectionFrames = sectionFlows.reduce((n, f) => n + f.frames, 0);
+    // One folded list per section; the one in view is open (see trackSection).
+    const group = el("details", { "data-section": slug(section) }, [
+      el("summary", {}, [
+        el("span", { class: "name" }, [title(section)]),
+        el("span", { class: "count" + (sectionChanged ? " changed" : "") }, [
+          data.withMain ? sectionChanged + "/" + sectionFrames : String(sectionFrames),
+        ]),
+      ]),
+    ]);
+    sidebar.append(group);
     const sec = el("section", { id: slug(section) }, [el("h2", {}, [title(section)])]);
     for (const flow of sectionFlows) {
       const id = slug(section, flow.flow);
-      sidebar.append(
-        el("a", { href: "#" + id, class: flow.status !== "passed" ? "failed" : "" }, [
-          el("span", { class: "name" }, [flow.flow]),
+      // The first flow's link lands on the section's heading, so that's seen too.
+      const target = flow === sectionFlows[0] ? slug(section) : id;
+      group.append(
+        el("a", { href: "#" + target, class: flow.status !== "passed" ? "failed" : "" }, [
+          el("span", { class: "name" + (flow.flow.startsWith("/") ? " route" : "") }, [flow.flow]),
           el("span", { class: "count" + (flow.changed ? " changed" : "") }, [
-            data.withMain ? flow.changed + "/" + flow.frames : String(flow.frames),
+            flow.frames === 0 ? "–" : data.withMain ? flow.changed + "/" + flow.frames : String(flow.frames),
           ]),
         ]),
       );
@@ -150,19 +176,22 @@ function render() {
       else if (flow.mainStatus && flow.mainStatus !== "passed") h3.append(el("span", { class: "status" }, ["main: " + flow.mainStatus]));
       const div = el("div", { class: "flow", id }, [h3]);
       for (const frame of frames) div.append(renderFrame(frame));
+      // A flow that checks without picturing: redirects over HTTP, a scroll position, a header.
+      if (flow.frames === 0) div.append(el("p", { class: "no-frames" }, [flow.status === "passed" ? "Passed. No frames: this flow only checks." : "No frames: this flow only checks."]));
       if (flow.error) div.append(el("pre", { class: "error" }, [flow.error]));
       sec.append(div);
     }
     board.append(sec);
   }
   if (!shownFrames && !board.children.length) board.append(el("p", { class: "empty-note" }, [state.changedOnly ? "Nothing changed on this viewport." : "No flows ran on this viewport."]));
+  trackSection();
   const frames = data.frames.filter((f) => f.viewport === state.viewport);
   const changed = frames.filter((f) => f.changed).length;
   const failed = flows.filter((f) => f.status !== "passed").length;
   document.getElementById("summary").textContent =
     frames.length + " frames in " + flows.length + " flows" +
     (data.withMain ? ", " + changed + " changed against main" : ", no run of main to compare with") +
-    (failed ? ", " + failed + " failed" : "") + ". " + new Date(data.generatedAt).toLocaleString();
+    (failed ? ", " + failed + " failed" : "") + ". " + isoLocal(new Date(data.generatedAt));
 }
 
 function renderFrame(frame) {
@@ -181,6 +210,42 @@ function renderFrame(frame) {
     thumbs.append(button);
   }
   return el("div", { class: "frame" + (frame.changed ? " changed" : ""), "data-index": frame.index }, [caption, thumbs]);
+}
+
+// The sidebar folds every section but the one in view: the first whose
+// heading hasn't scrolled past the top of the board.
+let currentSection = null;
+function sectionInView() {
+  const top = document.querySelector(".bar").offsetHeight + 1;
+  let current = null;
+  for (const sec of document.querySelectorAll("main > section")) {
+    if (sec.getBoundingClientRect().top <= top) current = sec.id;
+    else break;
+  }
+  return current ?? document.querySelector("main > section")?.id ?? null;
+}
+function trackSection() {
+  const section = sectionInView();
+  if (section === currentSection && document.querySelector("#sidebar details.current")) return;
+  currentSection = section;
+  for (const group of document.querySelectorAll("#sidebar details")) {
+    const here = group.dataset.section === section;
+    group.classList.toggle("current", here);
+    group.open = here;
+  }
+  document.querySelector("#sidebar details.current")?.scrollIntoView({ block: "nearest" });
+}
+document.addEventListener("scroll", trackSection, { passive: true });
+
+// The flow nearest the top of the board, so switching viewport can stay on it.
+function flowInView() {
+  const top = document.querySelector(".bar").offsetHeight + 1;
+  let current = null;
+  for (const flow of document.querySelectorAll(".flow")) {
+    if (flow.getBoundingClientRect().top <= top) current = flow.id;
+    else break;
+  }
+  return current;
 }
 
 const lightbox = document.getElementById("lightbox");
@@ -216,10 +281,19 @@ document.addEventListener("keydown", (e) => {
 
 for (const button of document.querySelectorAll(".bar [data-viewport]")) {
   button.addEventListener("click", () => {
+    // Stay on the flow being looked at: the same flow on the other viewport,
+    // or, if it didn't run there, the top of the same section.
+    const flow = flowInView();
+    const section = sectionInView();
     state.viewport = button.dataset.viewport;
     document.body.dataset.viewport = state.viewport;
     for (const b of document.querySelectorAll(".bar [data-viewport]")) b.setAttribute("aria-pressed", String(b === button));
     render();
+    const target = (flow && document.getElementById(flow)) || (section && document.getElementById(section));
+    if (target) {
+      target.scrollIntoView({ block: "start" });
+      trackSection();
+    }
   });
 }
 document.getElementById("changed-only").addEventListener("change", (e) => { state.changedOnly = e.target.checked; render(); });

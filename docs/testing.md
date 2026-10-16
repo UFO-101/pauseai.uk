@@ -5,11 +5,11 @@ here is `plans/test-coverage.md`.
 
 ## The layers
 
-| Layer           | Tool                                            | Tests                                                                                                                                                | Files                                      |
-| --------------- | ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------ |
-| Logic           | Vitest, `node` project                          | `lib/`, `app/api/`, `sitemap.ts`, `next.config.ts`                                                                                                   | `*.test.ts` (or `.tsx`) next to the code   |
-| Components      | Vitest, `browser` project (real Chromium)       | every component                                                                                                                                      | `*.browser.test.tsx` next to the component |
-| Pages and flows | Playwright, the storyboard (`desktop`, `phone`) | every route loads cleanly; every flow a person takes, end to end on fixture data; run with screenshots, the same flows pictured against main's build | `tests/storyboard/`                        |
+| Layer           | Tool                                            | Tests                                                                                                                                                       | Files                                      |
+| --------------- | ----------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------ |
+| Logic           | Vitest, `node` project                          | `lib/`, `app/api/`, `sitemap.ts`, `next.config.ts`                                                                                                          | `*.test.ts` (or `.tsx`) next to the code   |
+| Components      | Vitest, `browser` project (real Chromium)       | every component                                                                                                                                             | `*.browser.test.tsx` next to the component |
+| Pages and flows | Playwright, the storyboard (`desktop`, `phone`) | every route loads cleanly; every flow a person takes, end to end on fixture data; run with screenshots, the same flows pictured against origin/main's build | `tests/storyboard/`                        |
 
 **Vitest Node** is for anything that doesn't need a DOM. **Vitest Browser
 Mode** renders a component on its own in real Chromium, so layout, canvas,
@@ -110,12 +110,19 @@ through `outsideFetch` like any other outside service.
 One Playwright suite, `tests/storyboard/`, drives the site's flows end to
 end on a fixture build. A spec file is a **section**, a test a **flow**, and
 each `await frame(page, "caption")` a **frame**: a caption and, when
-screenshots are on, a full-page screenshot. The checks go between the
-frames. The tests know nothing about main.
+screenshots are on, a screenshot. The checks go between the frames. The
+tests know nothing about main.
+
+A frame pictures the whole page when the page is at the top, so its layout
+can be looked over, and only the window once a person, or a step, has
+scrolled: where they are is then the point, and a full-page picture of a
+scrolled page puts the sticky header wherever the scroll was. A flow with
+no frames (the redirects, a scroll position, a header) says so on the page:
+"Passed. No frames: this flow only checks."
 
 ```bash
 npm run test:storyboard   # the gate, here and in CI: desktop runs every flow, phone only those tagged @phone; no screenshots
-npm run storyboard        # the review: both viewports, every flow, screenshots, against a build of main, then opens the page
+npm run storyboard        # the review: both viewports, every flow, screenshots, against a build of origin/main, then opens the page
 npm run test:report       # Playwright's own report, with the trace of a failed flow
 ```
 
@@ -123,15 +130,20 @@ npm run test:report       # Playwright's own report, with the trace of a failed 
 how a page looks.
 
 **The review** (`scripts/storyboard.mjs`) builds and serves main
-(`scripts/serve-main.mjs`: a git worktree of main kept in your temp folder,
+(`scripts/serve-main.mjs`: a git worktree of origin/main, fetched first, kept in your temp folder,
 with its own `npm ci` when its lockfile changes), runs the suite against it
 with screenshots (its failures are just missing frames), then against this
 branch, pairs the frames by section, flow and caption, diffs them with
 pixelmatch, and opens `test-results/storyboard/index.html`: the flows in
 sections, each frame captioned and pictured on desktop and phone, with this
-branch's picture, main's and the diff, a lightbox, a phone/desktop toggle, a
-"changed only" filter, and a failed flow's message under its last frame. The
-same data is in `test-results/storyboard/storyboard.json`, for an agent.
+branch's picture, main's and the diff, a lightbox, a phone/desktop toggle
+that stays on the flow being looked at, a "changed only" filter, and a
+failed flow's message under its last frame. The sections come in the order
+of `SECTION_ORDER` (`tests/storyboard/report/frames.ts`): the public pages
+first, then what a visitor does, the staff screens, then the mechanics; the
+flows in each keep their spec file's order. The sidebar folds every section
+but the one in view. The same data is in
+`test-results/storyboard/storyboard.json`, for an agent.
 Both are local only and gitignored. A difference never fails; only this
 branch's checks do, and the exit code is theirs.
 
@@ -178,7 +190,45 @@ order, alongside the others:
 - A flaky flow, or a frame that differs between two runs of the same
   build, is fixed at once, never retried, skipped or masked. `retries`
   stays 0.
+- No fixed waits. A flow waits for the thing it's waiting for:
+  `tests/storyboard/settle.ts` has `hydrated` (mounted, fonts in, console
+  quiet), `scrollSettled` (a smooth scroll at rest) and `layoutSettled`
+  (images in, nothing moving). Playwright's own output (traces) is in
+  `test-results/playwright`, emptied every run; the review beside it in
+  `test-results/storyboard` is kept until the next review.
 - No stored baselines, and no gate on pixels. Main is the reference.
+
+### What the storyboard covers
+
+Every page is loaded: `public-pages.spec.ts` opens each route in
+`tests/routes.ts` (one example per dynamic route), except a campaign's
+write and preview pages, which show nothing without a postcode and a letter
+and are pictured by the `email-your-mp` flows instead; and `staff.spec.ts`
+checks every staff page turns a visitor without a session away, then opens
+them logged in. The flows below drive the rest. `tests/storyboard/coverage.test.ts`
+fails if a spec file or a route handler (`route.ts`) is missing from this
+table, so a new one is placed here on purpose, with the flow that drives it
+or why nothing does.
+
+| Route or section                                    | Driven by                                                                                                                                                                                  |
+| --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `public-pages.spec.ts`                              | Every public route: 200, one `<h1>`, no console errors or hydration warnings, no broken same-site links, fixture text where a page shows data.                                             |
+| `email-your-mp.spec.ts`                             | Email your MP, end to end: postcode, letter, preview, sent, a forwarded reply; going back; a refused letter; the pages opened out of order; each campaign; the special test MPs.           |
+| `staff.spec.ts`                                     | Login by emailed link (once, in one browser), the politicians list and a politician's page, setting a status, the audit log, imports and the MP check, the letters list, log out, noindex. |
+| `consent.spec.ts`                                   | Cookie consent remembered across pages, analytics switched off and on, never on the tools.                                                                                                 |
+| `mobile-nav.spec.ts`                                | The burger menu on a phone: open, close, dropdowns, navigating, scroll lock released.                                                                                                      |
+| `onboarding-embed.spec.ts`                          | The home page's signup iframe: shows after slow hydration, ignores other origins.                                                                                                          |
+| `scroll.spec.ts`                                    | Anchor links, deep links, the back button, keyboard focus, reduced motion, the footer's cookie link, the embed not scrolling the page.                                                     |
+| `redirects.spec.ts`                                 | Every redirect in `next.config.ts`, over HTTP, and that each destination resolves.                                                                                                         |
+| `/api/email-your-mp/lookup`                         | `email-your-mp`: the postcode form (`lookUpTestMp` in `tests/steps.ts`).                                                                                                                   |
+| `/api/email-your-mp/letters`                        | `email-your-mp`: sending the letter (`sendLetter`).                                                                                                                                        |
+| `/api/postmark/bounce`, `/api/postmark/inbound`     | `email-your-mp`: the webhook flows post Postmark's payloads, with and without credentials.                                                                                                 |
+| `/api/signatories`                                  | `staff`: setting a status, then reading the public list.                                                                                                                                   |
+| `/api/cron/sync-mps`                                | `syncMps()` in `tests/steps.ts`, at the start of the `staff` and `email-your-mp` flows that need MPs.                                                                                      |
+| `/api/cron/check-mps`, `/api/cron/import-controlai` | Not driven. The `staff` import page runs the same check and import through Server Actions; the nightly routes themselves are Vitest-tested.                                                |
+| `/api/csp-report`                                   | Not driven: a browser posts to it only on a CSP violation. Vitest-tested.                                                                                                                  |
+| `/staff/api/login`, `/staff/api/callback`           | `staff`: asking for a login link and opening it (`logInAsStaff` in `tests/steps.ts`).                                                                                                      |
+| `/staff/api/logout`                                 | `staff`: logging out, and the request without a session.                                                                                                                                   |
 
 **Not compared:** the live site. The old diff of the public pages against
 pauseai.uk failed on every run on live data (events, news, caches, the

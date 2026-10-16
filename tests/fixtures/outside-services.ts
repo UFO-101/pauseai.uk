@@ -8,6 +8,7 @@
 //
 // Matched on host and path rather than the full URL, so query strings
 // (dates, pagination, filters) don't need listing.
+import { createHash } from "node:crypto";
 import lumaFuture from "./luma-calendar-future.json";
 import lumaPast from "./luma-calendar-past.json";
 import lumaGuests from "./luma-guests.json";
@@ -16,6 +17,12 @@ import airtableSignatories from "./airtable-signatories.json";
 import parliamentMembers from "./parliament-members.json";
 import controlaiLetter from "./controlai-letter.json";
 
+/** A UUID-shaped id that depends only on `text`. */
+function fixtureUuid(text: string): string {
+  const hex = createHash("sha256").update(text).digest("hex");
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20, 32)}`;
+}
+
 function json(body: unknown): Response {
   return new Response(JSON.stringify(body), { headers: { "Content-Type": "application/json" } });
 }
@@ -23,7 +30,7 @@ function json(body: unknown): Response {
 // postcodes.io knows one postcode. Its MP is in airtable-mps.json.
 const POSTCODES: Record<string, string> = { SW1A1AA: "Cities of London and Westminster" };
 
-export function fixtureResponse(url: string): Response | undefined {
+export function fixtureResponse(url: string, init?: RequestInit): Response | undefined {
   const { hostname, pathname, searchParams } = new URL(url);
   if (hostname === "public-api.luma.com" && pathname === "/v1/calendars/events/list") {
     // lib/server/luma-calendar.ts asks for past events with "before", upcoming with "after".
@@ -71,12 +78,15 @@ export function fixtureResponse(url: string): Response | undefined {
     return new Response(Buffer.from(controlaiLetter.pdf, "base64"), { headers: { "Content-Type": "application/pdf" } });
   }
   // Postmark accepts every email. What was sent is checked from the request
-  // (Vitest) or the outbox (Playwright, tests/fixtures/outbox.ts).
+  // (Vitest) or the outbox (Playwright, tests/fixtures/outbox.ts). The
+  // MessageID is made from the email, so the same letter gets the same id
+  // every run: it shows on the staff letters page, which the storyboard
+  // compares.
   if (hostname === "api.postmarkapp.com" && pathname === "/email") {
     return json({
       To: "",
       SubmittedAt: new Date().toISOString(),
-      MessageID: crypto.randomUUID(),
+      MessageID: fixtureUuid(String(init?.body ?? "")),
       ErrorCode: 0,
       Message: "OK",
     });

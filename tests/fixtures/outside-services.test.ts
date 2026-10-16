@@ -50,6 +50,14 @@ describe("fixtureResponse", () => {
     expect(sent.MessageID).toMatch(/^[0-9a-f-]{36}$/);
   });
 
+  it("gives the same email the same MessageID every time, and another email a different one", async () => {
+    const id = async (body: string) =>
+      (await fixtureResponse("https://api.postmarkapp.com/email", { method: "POST", body })!.json()).MessageID;
+    expect(await id("a letter")).toBe(await id("a letter"));
+    expect(await id("a letter")).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/);
+    expect(await id("another")).not.toBe(await id("a letter"));
+  });
+
   it("has nothing for other URLs", () => {
     expect(fixtureResponse("https://public-api.luma.com/other")).toBeUndefined();
     expect(fixtureResponse("https://eu.airtable.com/other")).toBeUndefined();

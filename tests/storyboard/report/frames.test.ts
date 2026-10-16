@@ -3,13 +3,15 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { PNG } from "pngjs";
-import { comparePngs, pairRuns, type FlowRun, type RunManifest } from "./frames";
+import { readdirSync } from "node:fs";
+import { comparePngs, pairRuns, SECTION_ORDER, sortRuns, type FlowRun, type RunManifest } from "./frames";
 import { renderStoryboardPage } from "./page";
 
 const run = (flow: string, captions: string[], extra: Partial<FlowRun> = {}): FlowRun => ({
   section: "staff",
   flow,
   viewport: "desktop",
+  line: 1,
   status: "passed",
   frames: captions.map((caption, i) => ({ caption, png: `${extra.viewport ?? "desktop"}/${flow}/${i + 1}.png` })),
   ...extra,
@@ -20,10 +22,10 @@ const same = () => ({ mismatch: 0 });
 describe("pairRuns", () => {
   it("pairs frames by section, flow and caption, and counts what changed", () => {
     const branch: RunManifest = {
-      frames: [run("login", ["form", "sent", "new step"]), run("letters", ["list"], { viewport: "phone" })],
+      frames: [run("login", ["form", "sent", "new step"]), run("letters", ["list"], { viewport: "phone", line: 2 })],
     };
     const main: RunManifest = {
-      frames: [run("login", ["form", "old step", "sent"]), run("letters", ["list"], { viewport: "phone" })],
+      frames: [run("login", ["form", "old step", "sent"]), run("letters", ["list"], { viewport: "phone", line: 2 })],
     };
     const compared: string[] = [];
     const board = pairRuns(branch, main, (b, m, name) => {
@@ -92,13 +94,54 @@ describe("pairRuns", () => {
 
   it("skips frames without pictures, as a run without screenshots leaves them", () => {
     const branch: RunManifest = {
-      frames: [{ section: "s", flow: "f", viewport: "desktop", status: "passed", frames: [{ caption: "a" }] }],
+      frames: [{ section: "s", flow: "f", viewport: "desktop", line: 1, status: "passed", frames: [{ caption: "a" }] }],
     };
     const board = pairRuns(branch, branch, () => {
       throw new Error("not called");
     });
     expect(board.frames[0]).toMatchObject({ caption: "a", changed: false });
     expect(board.frames[0].mismatch).toBeUndefined();
+  });
+});
+
+describe("sortRuns", () => {
+  const at = (section: string, line: number, flow = "f", viewport = "desktop") => ({ section, line, flow, viewport });
+
+  it("puts the sections in SECTION_ORDER, unknown ones after, alphabetically", () => {
+    const sorted = sortRuns([at("zz-new", 1), at("staff", 1), at("aa-new", 1), at("public-pages", 1)]);
+    expect(sorted.map((r) => r.section)).toEqual(["public-pages", "staff", "aa-new", "zz-new"]);
+  });
+
+  it("within a section keeps the spec file's order, then the flow's name, then the viewport", () => {
+    const sorted = sortRuns([
+      at("staff", 9, "b", "phone"),
+      at("staff", 9, "b", "desktop"),
+      at("staff", 9, "a"),
+      at("staff", 2, "z"),
+    ]);
+    expect(sorted.map((r) => [r.line, r.flow, r.viewport])).toEqual([
+      [2, "z", "desktop"],
+      [9, "a", "desktop"],
+      [9, "b", "desktop"],
+      [9, "b", "phone"],
+    ]);
+  });
+
+  it("lists every section, so each spec file is placed on purpose", () => {
+    const specs = readdirSync(join(__dirname, ".."))
+      .filter((f) => f.endsWith(".spec.ts"))
+      .map((f) => f.replace(/\.spec\.ts$/, ""));
+    expect([...SECTION_ORDER].sort()).toEqual(specs.sort());
+    expect(SECTION_ORDER[0]).toBe("public-pages");
+  });
+
+  it("orders the flows of both runs, whatever order they finished in", () => {
+    const board = pairRuns(
+      { frames: [run("second", ["a"], { line: 20 }), run("first", ["a"], { line: 10, section: "public-pages" })] },
+      { frames: [run("gone", ["a"], { line: 30 }), run("second", ["a"], { line: 20 })] },
+      same,
+    );
+    expect(board.flows.map((f) => f.flow)).toEqual(["first", "second", "gone"]);
   });
 });
 

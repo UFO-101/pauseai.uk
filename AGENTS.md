@@ -26,14 +26,14 @@ Running one Vitest project (`npm run test:node`, `npm run test:browser`) or one 
 
 ## The storyboard
 
-`tests/storyboard/` is one Playwright suite that drives every flow on fixture data (`docs/testing.md`, "The storyboard"). A spec file is a section, a test a flow, and each `await frame(page, "caption")` a frame: a caption and, in the review, a full-page screenshot.
+`tests/storyboard/` is one Playwright suite that drives every flow on fixture data (`docs/testing.md`, "The storyboard"). A spec file is a section, a test a flow, and each `await frame(page, "caption")` a frame: a caption and, in the review, a screenshot (the whole page at the top, the window once scrolled). `docs/testing.md`, "What the storyboard covers", lists what each section drives; a new spec file or route handler needs a line there.
 
 - Every new interactive behaviour goes in a flow, existing or new, with a frame after each thing a person would see. A PR without it isn't done.
 - Flows stay small: one thing a person does, about ten frames at most. Every flow stands alone: its own database (the `flowDatabase` fixture), a fixed clock, unique identifiers.
 - Before saying a change is done, run the review and look at every changed frame on both viewports. It never fails on a difference, so it proves nothing until you've looked. Say in the commit or PR what changed.
 
 ```bash
-npm run storyboard                # both viewports, screenshots, against a build of main, then opens test-results/storyboard/index.html
+npm run storyboard                # both viewports, screenshots, against a build of origin/main, then opens test-results/storyboard/index.html
 npm run storyboard -- --no-open   # the same; read test-results/storyboard/storyboard.json instead
 ```
 

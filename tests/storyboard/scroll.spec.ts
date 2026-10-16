@@ -1,5 +1,6 @@
 import type { Page } from "@playwright/test";
 import { BASE, expect, frame, test } from "./fixtures";
+import { hydrated, layoutSettled, scrollSettled } from "./settle";
 
 // In-page scrolling is deliberately all browser behaviour: `scroll-behavior`
 // in globals.css animates it, `scroll-padding-top` on the root keeps the
@@ -20,22 +21,15 @@ import { BASE, expect, frame, test } from "./fixtures";
  * Load a page and wait for it to hydrate before interacting. A click
  * dispatched before hydration can land on a node React is about to replace
  * and quietly do nothing, which showed up as an intermittently dead link.
- *
- * Nav's effect sets --site-header-h on the root element, so the variable
- * having a value is a reliable signal that client effects have run.
+ * Then for the layout to stop moving (the hero marquee's first images, the
+ * fonts), so nothing shifts out from under a click, and for any scroll a
+ * deep link started to come to rest.
  */
 async function gotoSettled(page: Page, path = "/") {
   await page.goto(`${BASE}${path}`, { waitUntil: "domcontentloaded" });
-  await page.waitForFunction(
-    () => getComputedStyle(document.documentElement).getPropertyValue("--site-header-h").trim() !== "",
-    undefined,
-    // Polled on a timer rather than the default requestAnimationFrame, which
-    // can stall in a backgrounded headless context.
-    { polling: 200, timeout: 20_000 },
-  );
-  // Let the hero marquee's first images land, so nothing below them shifts
-  // out from under a click.
-  await page.waitForTimeout(1000);
+  await hydrated(page);
+  await layoutSettled(page, "main");
+  await scrollSettled(page);
 }
 
 /** Distance from the top of the viewport to the top of #id. */
@@ -63,11 +57,12 @@ test.describe("in-page scrolling", () => {
     await gotoSettled(page);
     const before = page.url();
 
+    // Instant: a listener rewriting the hash would fire on these scroll
+    // events just as on an animated scroll's, without the wait for one.
     for (const y of [600, 1800, 3200, 5000]) {
-      await page.evaluate((v) => window.scrollTo(0, v), y);
-      await page.waitForTimeout(300);
+      await page.evaluate((v) => window.scrollTo({ top: v, behavior: "instant" }), y);
+      await scrollSettled(page);
     }
-    await page.waitForTimeout(600);
 
     expect(page.url()).toBe(before);
   });
@@ -75,9 +70,9 @@ test.describe("in-page scrolling", () => {
   test("an anchor link sets the hash and lands clear of the nav", async ({ page }) => {
     await gotoSettled(page);
     await page.click('a[data-button][href="#events"]');
-    await page.waitForTimeout(1200);
+    await expect.poll(() => new URL(page.url()).hash).toBe("#events");
+    await scrollSettled(page);
 
-    expect(new URL(page.url()).hash).toBe("#events");
     await expectClearOfNav(page, "events");
     await frame(page, "after following the Upcoming events link");
   });
@@ -85,12 +80,12 @@ test.describe("in-page scrolling", () => {
   test("the back button undoes an anchor click", async ({ page }) => {
     await gotoSettled(page);
     await page.click('a[data-button][href="#events"]');
-    await page.waitForTimeout(1000);
+    await expect.poll(() => new URL(page.url()).hash).toBe("#events");
+    await scrollSettled(page);
 
     await page.goBack();
-    await page.waitForTimeout(1000);
-
-    expect(new URL(page.url()).hash).toBe("");
+    await expect.poll(() => new URL(page.url()).hash).toBe("");
+    await scrollSettled(page);
   });
 
   test("an anchor link moves the keyboard tab position to the target", async ({ page }) => {
@@ -102,7 +97,8 @@ test.describe("in-page scrolling", () => {
     // document.activeElement.
     await gotoSettled(page);
     await page.click('a[data-button][href="#events"]');
-    await page.waitForTimeout(1200);
+    await expect.poll(() => new URL(page.url()).hash).toBe("#events");
+    await scrollSettled(page);
 
     await page.keyboard.press("Tab");
 
@@ -119,7 +115,6 @@ test.describe("in-page scrolling", () => {
 
   test("a deep link scrolls to its target", async ({ page }) => {
     await gotoSettled(page, "/people#share-your-story");
-    await page.waitForTimeout(1500);
 
     expect(await page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
     await expectClearOfNav(page, "share-your-story");
@@ -133,7 +128,8 @@ test.describe("in-page scrolling", () => {
     // router navigation, so there is no document navigation for waitForURL's
     // default "load" wait to resolve against.
     await expect.poll(() => page.url(), { timeout: 15_000 }).toMatch(/\/people#share-your-story$/);
-    await page.waitForTimeout(1000);
+    await layoutSettled(page, "#share-your-story");
+    await scrollSettled(page);
     await expectClearOfNav(page, "share-your-story");
   });
 
@@ -142,18 +138,26 @@ test.describe("in-page scrolling", () => {
     // onboarding embed, each of which used to change height after load.
     // Nothing re-scrolls afterwards, so any late shift shows up as drift.
     await gotoSettled(page, "/#staff");
-    await page.waitForTimeout(1500);
     await expectClearOfNav(page, "staff");
 
+    // Everything the page loads is in (the embed's height, the images), then
+    // the target must not have moved.
     const settled = await targetOffset(page, "staff");
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState("networkidle");
+    await layoutSettled(page, "#staff");
     expect(Math.abs((await targetOffset(page, "staff")) - settled)).toBeLessThan(2);
     await frame(page, "/#staff");
   });
 
-  // Desktop only: on a phone the page's closing link sits under the march banner.
-  test("a link to another page's fragment jumps rather than animates", { tag: "@desktop-only" }, async ({ page }) => {
+  test("a link to another page's fragment jumps rather than animates", async ({ page }) => {
     await gotoSettled(page, "/theory-of-change");
+    // By name: on a phone the closed menu holds an invisible Join link to the
+    // same place, which a bare href selector matches first and waits on.
+    const link = page.getByRole("link", { name: "More ways to get involved" });
+    // The link is at the foot of the page, so get there before recording:
+    // a click scrolls to it first, and that scroll isn't the one under test.
+    await link.scrollIntoViewIfNeeded();
+    const start = Math.round(await scrollSettled(page));
     // Record scrollY every frame across the route change. The window
     // survives a client-side navigation, so the recorder keeps running.
     await page.evaluate(() => {
@@ -166,16 +170,18 @@ test.describe("in-page scrolling", () => {
       };
       requestAnimationFrame(tick);
     });
-    await page.click('a[href="/#join"]');
+    await link.click();
     await expect.poll(() => page.url(), { timeout: 15_000 }).toMatch(/\/#join$/);
-    await page.waitForTimeout(2000);
+    await layoutSettled(page, "#join");
+    await scrollSettled(page);
     await expectClearOfNav(page, "join");
 
-    // A jump goes from the top straight to the target. An animation passes
-    // through positions in between, which a check of where it ended misses.
+    // A jump goes from where the link was straight to the target. An animation
+    // passes through positions in between, which a check of where it ended
+    // misses.
     const ys = await page.evaluate(() => (window as typeof window & { __scrollYs: number[] }).__scrollYs);
     const final = ys[ys.length - 1];
-    const inBetween = new Set(ys.filter((y) => y > 0 && Math.abs(y - final) > 2));
+    const inBetween = new Set(ys.filter((y) => Math.abs(y - start) > 2 && Math.abs(y - final) > 2));
     expect([...inBetween], "scrolled through intermediate positions").toEqual([]);
   });
 
@@ -185,12 +191,13 @@ test.describe("in-page scrolling", () => {
     // handler must not reintroduce a jump.
     await gotoSettled(page);
     await page.evaluate(() => window.scrollTo(0, 2000));
-    await page.waitForTimeout(300);
+    await scrollSettled(page);
 
     await page.getByRole("link", { name: "Cookie settings" }).click();
-    await page.waitForTimeout(600);
 
     await expect(page.locator(".cookie-banner")).toBeVisible();
+    // A jump to the top would be under way by now, or done.
+    await scrollSettled(page);
     expect(await page.evaluate(() => window.scrollY)).toBeGreaterThan(1500);
   });
 });
@@ -213,12 +220,13 @@ test.describe("onboarding embed", () => {
     // page down to the form unprompted.
     await gotoSettled(page);
     await page.evaluate(() => window.scrollTo(0, document.getElementById("staff")!.offsetTop));
-    await page.waitForTimeout(800);
-    const before = await page.evaluate(() => window.scrollY);
+    const before = await scrollSettled(page);
 
     // Stand in for the embed's own height reports. The origin check means a
     // postMessage from this page is ignored, so dispatch a MessageEvent that
-    // claims the embed's origin; this reaches the same listener.
+    // claims the embed's origin; this reaches the same listener. The second,
+    // shorter height comes after the embed's settle delay (400ms in
+    // OnboardingFormEmbed.tsx), as a step change would, not in the burst.
     await page.evaluate(() => {
       const send = (height: number) =>
         window.dispatchEvent(new MessageEvent("message", { data: { height }, origin: "https://pauseai.info" }));
@@ -230,7 +238,8 @@ test.describe("onboarding embed", () => {
         }, 600),
       );
     });
-    await page.waitForTimeout(800);
+    // Had the page scrolled back to the form, the scroll would be under way now.
+    await scrollSettled(page);
 
     // The form above got 500px shorter, so the page may shift by that much;
     // what must not happen is a scroll back up to the form itself.
