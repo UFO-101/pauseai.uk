@@ -1,7 +1,6 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { preload } from "react-dom";
 import Lightbox from "@/components/ui/Lightbox";
 
 /** A full-size photo, and the words for it. */
@@ -114,14 +113,10 @@ export function ShotLink({
 }) {
   const gallery = useContext(GalleryContext)!;
   useEffect(() => gallery.add({ href, alt }), [gallery, href, alt]);
-  // Start on the full photo as soon as a click looks likely.
-  const preloadPhoto = () => preload(href, { as: "image" });
   return (
     <a
       className={className}
       href={href}
-      onPointerEnter={preloadPhoto}
-      onFocus={preloadPhoto}
       onClick={(e) => {
         e.preventDefault();
         gallery.show(href);

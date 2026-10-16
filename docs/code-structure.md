@@ -59,7 +59,22 @@ Route groups like `(site)` don't appear in URLs. Folders starting with `_`
   the social preview images, the "PauseAI UK | <title>" social title and the
   canonical path.
 - **No scripts in `public/`.** Browser behaviour goes in a typed
-  `"use client"` component, like the track record's `Lightbox`.
+  `"use client"` component, like the track record's `Gallery`.
+- **Components render their state.** What a component shows comes from
+  React state or props, not from an effect that finds elements and edits
+  them (`querySelector`, `classList`, `setAttribute`, `innerHTML`). That
+  splits the page's state between React and the DOM, and React can render
+  over the change. Hold it in `useState`, pass it down or through a
+  context, and use a ref only for an element an effect has to measure or
+  observe (the header's height, the timeline's entries). An ESLint rule
+  (`npm run lint`) fails on the DOM calls in `app/` and `components/`; the
+  files written before it are listed there, to be converted, not added to.
+  A genuine exception gets an `eslint-disable-next-line` with the reason.
+- **Browsers.** The site is built for browsers up to about a year old. In
+  older ones it may look a bit off (the mobile menu's scroll lock needs
+  `:has()`, Firefox 121+), but it must still work: every page readable,
+  every link and form usable. Use a feature that new without asking; flag
+  one that would break an older browser.
 - **Layouts own the chrome.** Pages don't render `<Nav>`; their route
   group's layout does.
 - **Outside services** (Luma, Airtable) are only called from `lib/server/`,

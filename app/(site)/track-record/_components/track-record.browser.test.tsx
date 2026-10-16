@@ -123,7 +123,7 @@ describe("TimelineList", () => {
     await expect.element(dialog()).not.toBeInTheDocument();
   });
 
-  it("fades a photo in once it has loaded, and starts loading it when a click looks likely", async () => {
+  it("fades a photo in once it has loaded", async () => {
     // A 2x1 GIF, so it isn't the same as the thumbnail.
     const FULL = "data:image/gif;base64,R0lGODlhAgABAIAAAP///wAAACH5BAEAAAAALAAAAAACAAEAAAICBAoAOw==";
     const { container } = await render(
@@ -134,12 +134,6 @@ describe("TimelineList", () => {
       </TimelineList>,
     );
     const link = container.querySelector("a.shot") as HTMLElement;
-    const preloaded = () => document.head.querySelector(`link[rel="preload"][href="${FULL}"]`);
-    // The page's styles aren't here to give the link a size, so it can't be hovered.
-    link.dispatchEvent(new PointerEvent("pointerover", { bubbles: true }));
-    await expect.poll(preloaded).not.toBeNull();
-    link.focus();
-
     link.click();
     await expect.poll(shown).toBe(FULL);
     await expect.poll(() => photo().className).toBe("lb-image");
