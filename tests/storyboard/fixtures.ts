@@ -48,6 +48,13 @@ const ONBOARDING_FORM_STAND_IN = `<!doctype html>
 <script>parent.postMessage({ height: 600 }, "*");</script>
 </body></html>`;
 
+/**
+ * Stands in for Tally's embed script (the story form on /people): it loads
+ * no form, so the form's space is the same, and empty, every run. The real
+ * one's arrival varied with the network.
+ */
+const TALLY_STAND_IN = "window.Tally = { loadEmbeds: () => {} };";
+
 export const test = base.extend<{ flowDatabase: string }>({
   // A copy of the template (global-setup.ts), made in tens of milliseconds,
   // for this flow alone, and dropped after it. Named after the test, so a
@@ -79,11 +86,14 @@ export const test = base.extend<{ flowDatabase: string }>({
   // between runs and nothing needs masking. The onboarding form, the one
   // outside page a fixture build still embeds, is a stand-in that reports a
   // fixed height: the real one's height, and so the page below it, varied
-  // between runs.
+  // between runs. Tally's story form doesn't load at all.
   page: async ({ page }, provide) => {
     await page.clock.setFixedTime(new Date(FIXTURE_NOW));
     await page.route("https://pauseai.info/**", (route) =>
       route.fulfill({ contentType: "text/html", body: ONBOARDING_FORM_STAND_IN }),
+    );
+    await page.route("https://tally.so/**", (route) =>
+      route.fulfill({ contentType: "text/javascript", body: TALLY_STAND_IN }),
     );
     await provide(page);
   },

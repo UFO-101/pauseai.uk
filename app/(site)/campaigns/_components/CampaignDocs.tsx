@@ -27,7 +27,15 @@ type DocCardProps = {
 export function DocCard({ file, kind, title, cta }: DocCardProps) {
   return (
     <a className="doc-card" href={`/pdfs/${file}`} target="_blank" rel="noreferrer">
-      <Image src={`/pdfs/${file.replace(/\.pdf$/, ".jpg")}`} alt="" width={2550} height={3300} loading="lazy" />
+      <Image
+        src={`/pdfs/${file.replace(/\.pdf$/, ".jpg")}`}
+        alt=""
+        width={2550}
+        height={3300}
+        // Two columns of up to 440px, or one, the screen's width, on a phone.
+        sizes="(max-width: 640px) 100vw, 440px"
+        loading="lazy"
+      />
       <div className="doc-meta">
         <p className="doc-kind">{kind}</p>
         <h3>{title}</h3>

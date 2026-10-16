@@ -69,7 +69,11 @@ live in one place: `tests/fixtures/outside-services.ts`.
   only for browser requests that mustn't really happen (form submits to
   other sites). Analytics loads only on the live site (`lib/analytics.ts`);
   the fixture build turns it on so the consent flow can be driven, and the
-  storyboard's fixtures block every request to Google for every flow.
+  storyboard's fixtures block every request to Google for every flow. The
+  two embeds from other sites have stand-ins (`tests/storyboard/fixtures.ts`),
+  since what they drew, and when, varied between runs: pauseai.info's
+  signup form is a fixed-height box, and Tally's story form on /people
+  doesn't load.
 
 Don't stub `fetch` globally, and don't mock our own modules to make a test
 pass. Mocking one of our modules is fine at an edge the test can't

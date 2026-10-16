@@ -45,6 +45,22 @@ export default defineConfig({
   use: {
     // For `npm run test:report`, to step through a failed flow.
     trace: "retain-on-failure",
+    // Chrome takes shortcuts that make a frame depend on what it happened to
+    // draw before, so a frame differed from run to run (the attachment
+    // thumbnails on a phone). These turn them off, as Toucan does
+    // (git.sr.ht/~frabcus/toucan, platform/snapshots/kit.ts): text
+    // antialiased the same however the page was composited; a changed tile
+    // redrawn whole, not in part; no tile painted before its images decode;
+    // and no low-resolution tiles drawn first while scrolling.
+    launchOptions: {
+      args: [
+        "--disable-lcd-text",
+        "--disable-font-subpixel-positioning",
+        "--disable-partial-raster",
+        "--disable-checker-imaging",
+        "--disable-low-res-tiling",
+      ],
+    },
   },
   projects: [
     {
