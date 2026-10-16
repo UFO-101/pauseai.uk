@@ -38,7 +38,12 @@ lib/                      logic and data, no React state
 styles/                   global CSS: tokens and base styles
 netlify/                  database migrations, scheduled functions
 proxy.ts                  turns away /staff requests without a session cookie
-tests/                    Playwright suites, the route list, fixtures
+tests/                    Playwright suites, the route list, fixtures,
+                          Vitest setup
+  checks/                 tests that scan the whole repo (placeholders,
+                          coverage ignores, assets, staff auth)
+scripts/                  database, storyboard and data scripts
+                          (scripts/README.md)
 docs/, plans/
 ```
 
@@ -95,7 +100,7 @@ Route groups like `(site)` don't appear in URLs. Folders starting with `_`
   test fails while it's out of date.
 - **Staff pages** each call `requireStaff()` (`lib/server/staff-auth.ts`)
   first, as does every staff route handler and Server Action
-  (`staff-auth.test.ts`). `proxy.ts` only checks the cookie exists.
+  (`tests/checks/staff-auth.test.ts`). `proxy.ts` only checks the cookie exists.
 - **Scheduled jobs** are Netlify scheduled functions, each in its own folder
   in `netlify/functions/`, that POST to a route under `app/api/cron/` with
   `CRON_SECRET`. The work itself stays in the Next app.
@@ -115,7 +120,7 @@ Route groups like `(site)` don't appear in URLs. Folders starting with `_`
   name (`staffCopy.syncs.syncNow`), so changing it breaks nothing. Words
   not written yet are placeholders: Latin, starting with the asterism
   (U+2042), so they can't be mistaken for real copy.
-  `placeholder-copy.test.ts` fails while any are left, which stops them
+  `tests/checks/placeholder-copy.test.ts` fails while any are left, which stops them
   being deployed (AGENTS.md).
 - **Names say which one.** There will be many campaigns, letters, imports
   and statuses, so an exported name for one of them names it:
@@ -128,7 +133,8 @@ Route groups like `(site)` don't appear in URLs. Folders starting with `_`
   doesn't widen the call site too.
 - **Imports** use the `@/` alias for anything outside the current folder.
 - **Tests** sit next to the code they test (`*.test.ts`,
-  `*.browser.test.tsx`); see `docs/testing.md`.
+  `*.browser.test.tsx`); see `docs/testing.md`. Tests of the whole repo,
+  rather than of one file, go in `tests/checks/`.
 
 ## Styling
 

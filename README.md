@@ -64,6 +64,7 @@ npm run format           # Prettier, on everything but plans/ (format:check only
 - [docs/testing.md](docs/testing.md): how it's tested
 - [docs/email-your-mp.md](docs/email-your-mp.md): the Email your MP tool and staff interface
 - [docs/style-guide.md](docs/style-guide.md): design
+- [scripts/README.md](scripts/README.md): what each script does
 - [plans/](plans/): work planned or in progress
 - [AGENTS.md](AGENTS.md): notes for coding agents
 

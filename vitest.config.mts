@@ -30,7 +30,7 @@ export default defineConfig({
           // Test files that need Postgres each make their own database
           // (tests/database.ts), so they can run in parallel.
           exclude: ["**/node_modules/**", "plans/**", "tmp/**", ".netlify/**", "**/*.browser.test.*"],
-          setupFiles: ["./vitest.setup.node.ts"],
+          setupFiles: ["./tests/vitest.setup.node.ts"],
         },
       },
       {
@@ -78,7 +78,7 @@ export default defineConfig({
           name: "browser",
           include: ["**/*.browser.test.{ts,tsx}"],
           exclude: ["**/node_modules/**", "tests/**", "plans/**", "tmp/**", ".netlify/**"],
-          setupFiles: ["./vitest.setup.browser.tsx"],
+          setupFiles: ["./tests/vitest.setup.browser.tsx"],
           // Drawing and exporting images is slow when every file runs at once, so waits get longer than the default second.
           expect: { poll: { timeout: 5000 } },
           // Rendering and exporting images has taken over the 15s default on a loaded CI runner.
@@ -109,7 +109,7 @@ export default defineConfig({
       // components can't render in Vitest and layout.tsx needs next/font.
       // They're kept thin, and tests/storyboard/public-pages.spec.ts loads
       // every route instead. No other exclusions, and no ignore comments
-      // (coverage-ignores.test.ts).
+      // (tests/checks/coverage-ignores.test.ts).
       exclude: ["**/*.test.{ts,tsx}", "**/page.tsx", "**/layout.tsx"],
       reporter: ["text-summary", "json-summary", "html"],
       // Every file, on its own, at 100%.

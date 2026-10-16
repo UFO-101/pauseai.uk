@@ -4,7 +4,7 @@ import { HERO_PHOTOS } from "./hero-photos";
 import { localGroups } from "./local-groups";
 import { staff } from "./staff";
 
-// The image files themselves are checked in public-assets.test.ts.
+// The image files themselves are checked in tests/checks/public-assets.test.ts.
 describe("small content lists", () => {
   it("gives every board member a role, photo and links", () => {
     expect(board.length).toBeGreaterThan(0);
