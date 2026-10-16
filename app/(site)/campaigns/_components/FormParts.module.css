@@ -28,7 +28,7 @@
   gap: 0.5rem;
 }
 
-.field small {
+.field > small {
   color: var(--text-secondary);
 }
 
