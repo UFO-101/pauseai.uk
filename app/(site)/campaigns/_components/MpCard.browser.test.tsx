@@ -2,14 +2,10 @@ import { describe, expect, it } from "vitest";
 import { render } from "vitest-browser-react";
 import { page } from "vitest/browser";
 import { copy } from "@/lib/content/email-your-mp";
+import { exampleMp } from "./draft.examples";
 import MpCard from "./MpCard";
 
-const MP = {
-  name: "Polly Placeholder",
-  salutation: "Ms Placeholder",
-  constituency: "Cities of London and Westminster",
-  email: "polly.placeholder.mp@parliament.uk",
-};
+const MP = exampleMp;
 
 describe("MpCard", () => {
   it("names the MP and their constituency, with their email as a link", async () => {

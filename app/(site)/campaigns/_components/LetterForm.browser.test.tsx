@@ -4,15 +4,11 @@ import { page, userEvent } from "vitest/browser";
 import { campaigns, copy } from "@/lib/content/email-your-mp";
 import { navigation } from "@/tests/browser/navigation";
 import { readDraft, type Draft } from "./draft";
+import { exampleMp } from "./draft.examples";
 import LetterForm from "./LetterForm";
 
 const [letterToPm, bill] = campaigns;
-const MP = {
-  name: "Polly Placeholder",
-  salutation: "Ms Placeholder",
-  constituency: "Cities of London and Westminster",
-  email: "polly.placeholder.mp@parliament.uk",
-};
+const MP = exampleMp;
 const PROPS = {
   campaign: letterToPm,
   mp: MP,

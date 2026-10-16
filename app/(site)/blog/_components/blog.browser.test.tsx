@@ -1,11 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
 import { render } from "vitest-browser-react";
 import { page } from "vitest/browser";
-import { createElement } from "react";
 import { posts, postsNewestFirst, type BlogPost } from "@/lib/content/blog";
 import type { Person } from "@/lib/content/people";
 import PostBody from "./PostBody";
 import PostCard from "./PostCard";
+import { examplePost } from "./PostCard.examples";
 import PostHeader from "./PostHeader";
 import PostList from "./PostList";
 
@@ -24,15 +24,7 @@ vi.mock("@/lib/content/people", async (importActual) => {
   const actual = await importActual<typeof import("@/lib/content/people")>();
   return { ...actual, people: [...actual.people, named, framed, noPhoto] };
 });
-const post = (extra: Partial<BlogPost>): BlogPost => ({
-  slug: "a-post",
-  title: "A post",
-  date: "2026-05-01",
-  author: "PauseAI UK",
-  tldr: "In short.",
-  content: createElement("p", null, "Body text."),
-  ...extra,
-});
+const post = (extra: Partial<BlogPost>): BlogPost => ({ ...examplePost, ...extra });
 
 describe("PostList", () => {
   it("leads with the newest post, then a pair, then the rest as a list", async () => {

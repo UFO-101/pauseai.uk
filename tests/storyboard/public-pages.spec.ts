@@ -72,12 +72,15 @@ for (const route of PUBLIC_ROUTES) {
     // waits for the mount, then for the console to go quiet.
     await hydrated(page);
 
-    await expect(page.locator("h1"), "exactly one <h1>").toHaveCount(1);
+    // The component gallery shows every component, a page's own <h1> among
+    // them, and is too long to picture whole: its own section pictures each.
+    const gallery = route === "/gallery";
+    if (!gallery) await expect(page.locator("h1"), "exactly one <h1>").toHaveCount(1);
     if (FIXTURE_TEXT[route]) await expect(page.getByText(FIXTURE_TEXT[route])).toBeVisible();
     // The trackers count the fixture guest list, so they never show their "no access" fallback.
     if (route.startsWith("/trackers/")) await expect(page.getByText(/check the Luma access settings/i)).toHaveCount(0);
 
-    await frame(page, route);
+    await frame(page, route, { window: gallery });
 
     // getAttribute rather than .href: links inside an SVG have an object there.
     const hrefs = await page.$$eval("a[href]", (links) =>

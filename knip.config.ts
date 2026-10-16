@@ -4,7 +4,11 @@ import type { KnipConfig } from "knip";
 // most entry points itself, from Next, Vitest, Playwright and package.json.
 const config: KnipConfig = {
   // scripts/storyboard.mjs starts this with spawn(), which Knip can't follow.
-  entry: ["scripts/serve-main.mjs"],
+  entry: ["scripts/serve-main.mjs", "!app/[(]tools[)]/gallery/**"],
+  // The component gallery imports every component, so it would make them all
+  // look used: it's left out of the graph altogether. tests/checks/gallery.test.ts
+  // checks the other direction, that every component has an example there.
+  project: ["**/*.{js,mjs,cjs,ts,tsx}", "!app/[(]tools[)]/gallery/**"],
   ignoreDependencies: [
     // Nothing imports it: having it installed is what gives Netlify deploys
     // a database.

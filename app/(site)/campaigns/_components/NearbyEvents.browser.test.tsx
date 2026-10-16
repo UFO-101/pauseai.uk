@@ -2,32 +2,16 @@ import { afterEach, describe, expect, it } from "vitest";
 import { render } from "vitest-browser-react";
 import { page } from "vitest/browser";
 import { campaigns } from "@/lib/content/email-your-mp";
-import type { LumaEntry, Place } from "@/lib/events";
+import type { Place } from "@/lib/events";
 import { markSent, saveLookup } from "./draft";
+import { exampleMp } from "./draft.examples";
 import NearbyEvents from "./NearbyEvents";
+import { exampleEvents, westminster } from "./NearbyEvents.examples";
 
 const [letterToPm] = campaigns;
-const MP = {
-  name: "Polly Placeholder",
-  salutation: "Ms Placeholder",
-  constituency: "Cities of London and Westminster",
-  email: "polly@example.org",
-};
-const WESTMINSTER: Place = { latitude: 51.4995, longitude: -0.1248 };
-
-const event = (name: string, day: number, place?: Place): LumaEntry => ({
-  event: {
-    url: name,
-    name,
-    start_at: `2030-01-0${day}T18:00:00.000Z`,
-    ...(place ? { geo_address_info: { city: "London" }, place } : {}),
-  },
-});
-const EVENTS = [
-  event("Online call", 1),
-  event("London meeting", 2, WESTMINSTER),
-  event("Manchester discussion", 3, { latitude: 53.48, longitude: -2.24 }),
-];
+const MP = exampleMp;
+const WESTMINSTER = westminster;
+const EVENTS = exampleEvents;
 
 function sent(place?: Place | null) {
   saveLookup({

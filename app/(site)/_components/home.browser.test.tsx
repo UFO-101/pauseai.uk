@@ -16,6 +16,7 @@ import PressMarquee, { NewsRow } from "./PressMarquee";
 import ShopBanner from "./ShopBanner";
 import StaffSection from "./StaffSection";
 import UpcomingEvents from "./UpcomingEvents";
+import { exampleEvent } from "./UpcomingEvents.examples";
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -40,9 +41,7 @@ describe("HomeHero", () => {
 
 describe("home page sections", () => {
   it("lists the upcoming events with a link to the calendar", async () => {
-    await render(
-      <UpcomingEvents events={[{ event: { url: "evt", name: "A meetup", start_at: "2030-01-01T18:00:00Z" } }]} />,
-    );
+    await render(<UpcomingEvents events={[exampleEvent]} />);
     await expect.element(page.getByRole("heading", { name: "Upcoming events" })).toBeVisible();
     await expect.element(page.getByText("A meetup")).toBeVisible();
     await expect

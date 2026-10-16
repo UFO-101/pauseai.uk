@@ -1,35 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { render } from "vitest-browser-react";
 import { page } from "vitest/browser";
-import FlyeringTracker, { ukTime, type FlyeringRace } from "./FlyeringTracker";
+import FlyeringTracker, { ukTime } from "./FlyeringTracker";
+import { exampleCounts, exampleRace, exampleTimes } from "./FlyeringTracker.examples";
 
-const race: FlyeringRace = {
-  date: "26 September",
-  day: "Saturday 26 September",
-  eventApiId: "evt-x",
-  eventUrl: "https://luma.com/x",
-  open: new Date("2026-09-26T12:00:00+01:00"),
-  close: new Date("2026-09-26T16:00:00+01:00"),
-  unit: "stall",
-  closedMessage: "Stalls have closed.",
-  untagged: "a stall tag",
-  stalls: [
-    { tag: "a", name: "Angel" },
-    { tag: "b", name: "Brixton" },
-    { tag: "c", name: "Camden" },
-    { tag: "d", name: "Dalston" },
-  ],
-};
-
-const counts = (a: number, b: number, c: number, d: number, other = 0) => ({
-  counts: { a, b, c, d },
-  other,
-  total: a + b + c + d + other,
-});
-const before = new Date("2026-09-26T10:00:00+01:00");
-const during = new Date("2026-09-26T13:00:00+01:00");
-const justClosed = new Date("2026-09-26T16:02:00+01:00");
-const final = new Date("2026-09-26T16:10:00+01:00");
+const race = exampleRace;
+const counts = exampleCounts;
+const { before, during, justClosed, final } = exampleTimes;
 
 describe("FlyeringTracker", () => {
   it("formats times in UK time", () => {

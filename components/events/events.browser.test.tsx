@@ -2,8 +2,8 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { render } from "vitest-browser-react";
 import { page } from "vitest/browser";
 import { site } from "@/lib/content/site";
-import type { LumaEntry } from "@/lib/events";
 import EventList from "./EventList";
+import { exampleEvent } from "./EventList.examples";
 import EventsSection from "./EventsSection";
 import LocalGroupEvents from "./LocalGroupEvents";
 
@@ -17,15 +17,7 @@ afterEach(async () => {
   getEvents.mockReset();
 });
 
-const event = (n: number, extra: Partial<LumaEntry["event"]> = {}): LumaEntry => ({
-  event: {
-    url: `evt-${n}`,
-    name: `Event ${n}`,
-    start_at: "2030-03-02T13:00:00.000Z",
-    timezone: "Europe/London",
-    ...extra,
-  },
-});
+const event = exampleEvent;
 
 describe("EventList", () => {
   it("links each event to Luma, with its date, time and place", async () => {
