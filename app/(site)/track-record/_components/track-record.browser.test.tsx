@@ -1,7 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { render } from "vitest-browser-react";
 import { page, userEvent } from "vitest/browser";
-import HeroSwirl from "./HeroSwirl";
 import Timeline from "./Timeline";
 import { ShotLink } from "./Gallery";
 import { Shot, TimelineEntry } from "./TimelineEntry";
@@ -10,15 +9,6 @@ import { TimelineList } from "./TimelineList";
 afterEach(async () => {
   vi.restoreAllMocks();
   await page.viewport(414, 896);
-});
-
-describe("HeroSwirl", () => {
-  it("draws forty rotated rings", async () => {
-    const { container } = await render(<HeroSwirl />);
-    const rings = container.querySelectorAll("ellipse");
-    expect(rings).toHaveLength(40);
-    expect(rings[1].getAttribute("transform")).toBe("rotate(4.5 300 300)");
-  });
 });
 
 describe("TimelineEntry and Shot", () => {

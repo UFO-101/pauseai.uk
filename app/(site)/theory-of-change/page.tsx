@@ -4,6 +4,7 @@ import "./theory-of-change.css";
 import Foreword from "./_components/Foreword";
 import ChangeSteps from "./_components/ChangeSteps";
 import Closing from "./_components/Closing";
+import PageHero from "@/components/ui/PageHero";
 
 export const metadata = pageMetadata({
   title: "Theory of Change",
@@ -16,14 +17,7 @@ export default function TheoryOfChangePage() {
   return (
     <>
       <main className="track-record theory-of-change">
-        <section className="tr-hero">
-          <svg className="tr-hero-swirl" viewBox="0 0 600 600" aria-hidden="true" preserveAspectRatio="xMidYMid meet">
-            <g fill="none" stroke="currentColor" strokeWidth="0.6" opacity="0.55"></g>
-          </svg>
-          <div className="container tr-hero-inner">
-            <h1 className="tr-hero-title">Theory of Change</h1>
-          </div>
-        </section>
+        <PageHero title="Theory of Change" />
 
         <Foreword />
 

@@ -1,7 +1,7 @@
 /* ========================================================================
    STORIES PAGE
-   Loaded after globals.css and track-record.css. Reuses the .tr-hero
-   pattern from track-record and the .person-card and Button (components/ui) patterns from
+   Loaded after globals.css and track-record.css. Its title band is
+   PageHero and the .person-card and Button (components/ui) patterns from
    globals.css; only the section padding and grid layout are page-specific.
    ======================================================================== */
 
@@ -53,22 +53,6 @@
 
 .person-detail-page .story-back-link:hover {
   text-decoration: underline;
-}
-
-.person-detail-page .person-detail-heading {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 24px;
-}
-
-.person-detail-page .person-detail-title-wrap {
-  flex: 1;
-  min-width: 0;
-}
-
-.person-detail-page .person-detail-heading .tr-hero-title {
-  margin: 0;
 }
 
 .person-detail-page .person-detail-avatar {

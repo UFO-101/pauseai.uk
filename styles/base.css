@@ -49,8 +49,10 @@ a:hover {
   color: var(--accent-strong);
 }
 
+/* A component narrows the containers inside it by setting
+   --container-width on its own root (PageHero does). */
 .container {
-  max-width: 1140px;
+  max-width: var(--container-width, 1140px);
   margin: 0 auto;
   padding: 0 24px;
 }

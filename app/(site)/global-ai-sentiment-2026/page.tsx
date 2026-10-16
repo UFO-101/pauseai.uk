@@ -8,6 +8,7 @@ import "../track-record/track-record.css";
 import "./global-ai-sentiment-2026.css";
 import HeadlineStats from "./_components/HeadlineStats";
 import Methodology from "./_components/Methodology";
+import PageHero from "@/components/ui/PageHero";
 
 const TITLE = "Global Attitudes to AI 2026";
 const DESCRIPTION =
@@ -23,12 +24,9 @@ export default function GlobalAiSentiment2026Page() {
   return (
     <>
       <main className="track-record gas-page">
-        <section className="tr-hero">
-          <div className="container tr-hero-inner">
-            <h1 className="tr-hero-title">{TITLE}</h1>
-            <p className="gas-hero-lede">{DESCRIPTION}</p>
-          </div>
-        </section>
+        <PageHero title={TITLE}>
+          <p className="gas-hero-lede">{DESCRIPTION}</p>
+        </PageHero>
 
         <HeadlineStats />
 

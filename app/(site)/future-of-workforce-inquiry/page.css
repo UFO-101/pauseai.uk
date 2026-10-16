@@ -4,10 +4,6 @@
    Scoped under main.evidence-submission.
    ======================================================================== */
 
-.evidence-submission .tr-hero-inner {
-  max-width: 880px;
-}
-
 /* ─── Foreword ─── */
 .evidence-submission .foreword {
   padding: 56px 0 64px;
@@ -17,7 +13,7 @@
 }
 
 .evidence-submission .foreword-inner {
-  max-width: 880px;
+  max-width: var(--measure-page);
 }
 
 /* ─── Article ─── */
@@ -27,7 +23,7 @@
 }
 
 .evidence-submission .ev-inner {
-  max-width: 880px;
+  max-width: var(--measure-page);
 }
 
 /* Meta table */

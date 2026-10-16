@@ -1,9 +1,9 @@
 import { pageMetadata } from "@/lib/metadata";
 import { site } from "@/lib/content/site";
-import HeroSwirl from "./_components/HeroSwirl";
 import Timeline from "./_components/Timeline";
 import "./track-record.css";
 import { ButtonAnchor, ButtonLink } from "@/components/ui/Button";
+import PageHero from "@/components/ui/PageHero";
 
 export const metadata = pageMetadata({
   title: "Track Record",
@@ -15,12 +15,7 @@ export const metadata = pageMetadata({
 export default function TrackRecordPage() {
   return (
     <main className="track-record">
-      <section className="tr-hero">
-        <HeroSwirl />
-        <div className="container tr-hero-inner">
-          <h1 className="tr-hero-title">Track Record</h1>
-        </div>
-      </section>
+      <PageHero title="Track Record" swirl />
 
       <Timeline />
 

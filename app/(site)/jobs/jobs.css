@@ -1,7 +1,7 @@
 /* ========================================================================
    JOBS PAGE
-   Loaded after globals.css and track-record.css. Reuses the .tr-hero
-   pattern from track-record. Intro and "All roles" are straight prose;
+   Loaded after globals.css and track-record.css. Its title band is
+   PageHero. Intro and "All roles" are straight prose;
    the six roles sit in a two-column card layout between them, followed
    by a closing CTA band. All selectors are scoped under `main.jobs-page`.
    ======================================================================== */
@@ -11,12 +11,8 @@
   background: var(--bg);
 }
 
-.jobs-page .tr-hero {
-  padding-bottom: 32px;
-}
-
 .jobs-page .intro-inner {
-  max-width: 880px;
+  max-width: var(--measure-page);
 }
 
 .jobs-page .intro-section p {

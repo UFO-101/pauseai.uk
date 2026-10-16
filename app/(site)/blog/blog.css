@@ -1,30 +1,19 @@
 /* ========================================================================
    BLOG
-   Loaded after globals.css and track-record.css. Reuses the .tr-hero
-   pattern; index list and post prose are page-specific. All selectors are
+   Loaded after globals.css and track-record.css. Its title band is
+   PageHero; index list and post prose are page-specific. All selectors are
    scoped under `main.blog`.
    ======================================================================== */
 
-/* Matches .tr-hero-inner so the hero and body share one left edge. */
+/* The page hero's width, so the hero and body share one left edge. */
 .blog .blog-inner {
-  max-width: 880px;
+  max-width: var(--measure-page);
 }
 
 /* The index is a card layout rather than a reading column, so it runs wider
-   than a post. The hero widens with it to keep one left edge. */
-.blog.blog-index .tr-hero-inner,
+   than a post, as its hero does. */
 .blog.blog-index .blog-inner {
-  max-width: 1080px;
-}
-
-.blog .tr-hero-lede a {
-  color: var(--accent);
-  text-decoration: underline;
-  text-decoration-thickness: 1px;
-  text-underline-offset: 3px;
-}
-.blog .tr-hero-lede a:hover {
-  color: var(--pause-orange);
+  max-width: var(--measure-wide);
 }
 
 .blog .blog-back-link {
@@ -37,11 +26,6 @@
 }
 .blog .blog-back-link:hover {
   color: var(--pause-orange);
-}
-
-.blog .blog-post-title {
-  font-size: clamp(34px, 4.6vw, 56px);
-  text-wrap: pretty;
 }
 
 /* ─── Byline ─── */

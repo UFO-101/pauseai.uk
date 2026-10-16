@@ -1,7 +1,7 @@
 /* ========================================================================
    THEORY OF CHANGE PAGE
-   Loaded after styles.css and track-record.css. Reuses .tr-hero, .foreword
-   and .closing patterns from track-record; only the article body needs
+   Loaded after styles.css and track-record.css. Its title band is PageHero;
+   it reuses the .foreword and .closing patterns from track-record; only the article body needs
    page-specific styling. All selectors are scoped under
    `main.theory-of-change`.
    ======================================================================== */
@@ -43,7 +43,7 @@
 }
 
 .theory-of-change .toc-inner {
-  max-width: 880px;
+  max-width: var(--measure-page);
 }
 
 .theory-of-change .toc-section {

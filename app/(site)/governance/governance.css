@@ -1,7 +1,7 @@
 /* ========================================================================
    GOVERNANCE PAGE
-   Loaded after globals.css and track-record.css. Reuses the .tr-hero
-   pattern from track-record; the board grid and policy prose are
+   Loaded after globals.css and track-record.css. Its title band is
+   PageHero; the board grid and policy prose are
    page-specific. All selectors are scoped under `main.governance`.
    ======================================================================== */
 
@@ -99,10 +99,10 @@
   background: var(--bg);
 }
 
-/* Matches .tr-hero-inner so the hero, board and policies all share one
+/* The page hero's width, so the hero, board and policies all share one
    left edge down the page. */
 .governance .gov-inner {
-  max-width: 880px;
+  max-width: var(--measure-page);
 }
 
 .governance .gov-section h2 {

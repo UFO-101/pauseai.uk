@@ -1,59 +1,12 @@
 /* ========================================================================
    TRACK RECORD PAGE
-   Loaded after styles.css on track-record.html only.
-   All selectors are scoped under `main.track-record` or use page-specific
-   classes (.tr-hero, .entry, .gallery, .shot, .closing, .lightbox) so they
+   Its title band is PageHero. All selectors are scoped under
+   `main.track-record` or use page-specific classes (.entry, .gallery, .shot, .closing, .lightbox) so they
    never collide with the rest of the site.
    ======================================================================== */
 
 .track-record {
   --tr-rail-x: 180px;
-}
-
-/* ─── Hero ─── */
-.tr-hero {
-  position: relative;
-  padding: 72px 0 56px;
-  overflow: hidden;
-  background:
-    radial-gradient(ellipse 80% 60% at 100% 0%, rgb(var(--pause-orange-rgb) / 0.06), transparent 60%), var(--bg);
-}
-.tr-hero-swirl {
-  position: absolute;
-  top: -40px;
-  right: -100px;
-  width: 380px;
-  height: 380px;
-  color: var(--pause-orange);
-  opacity: 0.18;
-  pointer-events: none;
-  z-index: 0;
-}
-.tr-hero-inner {
-  position: relative;
-  z-index: 1;
-  max-width: 880px;
-}
-.tr-hero-title {
-  font-family: var(--font-display), "Lato", system-ui, sans-serif;
-  font-weight: 700;
-  font-size: clamp(44px, 6.5vw, 84px);
-  line-height: 0.98;
-  letter-spacing: -0.03em;
-  margin: 6px 0 14px;
-  color: var(--text);
-}
-.tr-title-accent {
-  font-style: italic;
-  font-weight: 500;
-  color: var(--pause-orange);
-}
-.tr-hero-lede {
-  font-size: clamp(15px, 1.3vw, 18px);
-  line-height: 1.55;
-  color: var(--text-secondary);
-  max-width: 640px;
-  margin: 0;
 }
 
 /* ─── Foreword ─── */
@@ -449,15 +402,6 @@
 
 /* ─── Responsive ─── */
 @media (max-width: 860px) {
-  .tr-hero {
-    padding: 56px 0 40px;
-  }
-  .tr-hero-swirl {
-    width: 300px;
-    height: 300px;
-    top: -40px;
-    right: -120px;
-  }
   .track-record .foreword {
     padding: 60px 0;
   }

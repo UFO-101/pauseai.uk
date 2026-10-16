@@ -48,6 +48,12 @@
   --shadow: rgba(26, 22, 18, 0.08);
   --shadow-strong: rgba(26, 22, 18, 0.14);
 
+  /* Widths. A page's reading column is --measure-page, which the page hero
+     (components/ui/PageHero) shares, so the two line up; a page of cards is
+     --measure-wide. */
+  --measure-page: 880px;
+  --measure-wide: 1080px;
+
   /* Every other colour. Outside this file a colour is always one of these
      tokens (Stylelint refuses the rest). An alpha takes the -rgb channels:
      rgb(var(--white-rgb) / 0.1). */

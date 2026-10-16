@@ -5,6 +5,7 @@ import { getEvents } from "@/lib/server/luma-calendar";
 import { site } from "@/lib/content/site";
 import "../track-record/track-record.css";
 import { ButtonAnchor } from "@/components/ui/Button";
+import PageHero from "@/components/ui/PageHero";
 
 // A short, readable address for our events, used on printed collateral. The calendar itself lives on Luma,
 // so this page lists it (via getEvents, cached for an hour) and links through to subscribe.
@@ -21,15 +22,10 @@ export default async function EventsPage() {
   return (
     <>
       <main className="track-record events-page">
-        <section className="tr-hero">
-          <div className="container tr-hero-inner">
-            <h1 className="tr-hero-title">Events</h1>
-            <p className="tr-hero-lede">
-              Meet other people worried about AI, write to your MP, and take action together. Everything here is free
-              and open to everyone.
-            </p>
-          </div>
-        </section>
+        <PageHero
+          title="Events"
+          lede="Meet other people worried about AI, write to your MP, and take action together. Everything here is free and open to everyone."
+        />
 
         <section className="next-event">
           <div className="container">

@@ -4,6 +4,7 @@ import { site } from "@/lib/content/site";
 import PostList from "./_components/PostList";
 import "../track-record/track-record.css";
 import "./blog.css";
+import PageHero from "@/components/ui/PageHero";
 
 export const metadata = pageMetadata({
   title: "Blog",
@@ -15,15 +16,16 @@ export default function BlogIndexPage() {
   return (
     <>
       <main className="track-record blog blog-index">
-        <section className="tr-hero">
-          <div className="container tr-hero-inner">
-            <h1 className="tr-hero-title">Blog</h1>
-            <p className="tr-hero-lede">
+        <PageHero
+          title="Blog"
+          width="wide"
+          lede={
+            <>
               This blog is written by PauseAI Volunteers. If you would like to contribute a piece, email{" "}
               <a href={`mailto:${site.contactEmail}`}>{site.contactEmail}</a> to chat with us about your ideas.
-            </p>
-          </div>
-        </section>
+            </>
+          }
+        />
 
         <PostList posts={postsNewestFirst()} />
       </main>

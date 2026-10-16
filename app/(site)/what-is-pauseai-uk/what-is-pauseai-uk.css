@@ -1,7 +1,7 @@
 /* ========================================================================
    WHAT IS PAUSEAI UK PAGE
-   Loaded after globals.css and track-record.css. Reuses the .tr-hero
-   pattern from track-record; the body is straight prose. All selectors
+   Loaded after globals.css and track-record.css. Its title band is
+   PageHero; the body is straight prose. All selectors
    are scoped under `main.what-is-pauseai-uk`.
    ======================================================================== */
 
@@ -10,22 +10,9 @@
   background: var(--bg);
 }
 
-/* Sit the tagline closer to the body copy it introduces, and give it
-   more room to breathe under the title. */
-.what-is-pauseai-uk .tr-hero {
-  padding-bottom: 32px;
-}
-
-/* Matches .tr-hero-inner so the hero and the body share one left edge. */
+/* The page hero's width, so the hero and the body share one left edge. */
 .what-is-pauseai-uk .intro-inner {
-  max-width: 880px;
-}
-
-/* Track-record caps the hero lede at 640px; let the tagline run to the
-   same measure as the body text below it. */
-.what-is-pauseai-uk .tr-hero-lede {
-  max-width: none;
-  margin-top: 22px;
+  max-width: var(--measure-page);
 }
 
 .what-is-pauseai-uk .intro-section p {

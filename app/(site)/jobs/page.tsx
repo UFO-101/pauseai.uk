@@ -3,6 +3,7 @@ import Image from "next/image";
 import "../track-record/track-record.css";
 import JobRoles from "./_components/JobRoles";
 import "./jobs.css";
+import PageHero from "@/components/ui/PageHero";
 
 export const metadata = pageMetadata({
   title: "Jobs",
@@ -16,12 +17,7 @@ export default function JobsPage() {
   return (
     <>
       <main className="track-record jobs-page">
-        <section className="tr-hero">
-          <div className="container tr-hero-inner">
-            <h1 className="tr-hero-title">Jobs</h1>
-            <p className="tr-hero-lede">Work for PauseAI UK in a paid role.</p>
-          </div>
-        </section>
+        <PageHero title="Jobs" lede="Work for PauseAI UK in a paid role." tight />
 
         <article className="intro-article">
           <div className="container intro-inner">

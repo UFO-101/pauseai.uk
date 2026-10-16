@@ -1,7 +1,7 @@
 /* ========================================================================
    PRESS PAGE
-   Loaded after globals.css and track-record.css. Reuses the .tr-hero
-   pattern from track-record; the rest is page-specific. All selectors
+   Loaded after globals.css and track-record.css. Its title band is
+   PageHero; the rest is page-specific. All selectors
    are scoped under `main.press`.
    ======================================================================== */
 
@@ -10,10 +10,10 @@
   background: var(--bg);
 }
 
-/* Matches .tr-hero-inner so the hero and article body share one left
+/* The page hero's width, so the hero and article body share one left
    edge down the page. */
 .press .press-inner {
-  max-width: 880px;
+  max-width: var(--measure-page);
 }
 
 .press .press-section {
