@@ -27,28 +27,42 @@ export default function StaffHeader({ email, current }: { email?: string; curren
       </header>
     );
   }
+  const links = PAGES.map(([page, href]) =>
+    page === current ? (
+      <strong key={page} aria-current="page">
+        {staffCopy.nav[page]}
+      </strong>
+    ) : (
+      <Link key={page} href={href}>
+        {staffCopy.nav[page]}
+      </Link>
+    ),
+  );
   return (
     <header className={styles.header}>
       <span className={styles.title}>{staffCopy.nav.title}</span>
-      <nav>
-        {PAGES.map(([page, href]) =>
-          page === current ? (
-            <strong key={page} aria-current="page">
-              {staffCopy.nav[page]}
-            </strong>
-          ) : (
-            <Link key={page} href={href}>
-              {staffCopy.nav[page]}
-            </Link>
-          ),
-        )}
-      </nav>
-      <span className={styles.who}>{staffCopy.nav.signedInAs(email)}</span>
-      <form method="post" action="/staff/api/logout">
+      {/* A row of links, who's logged in and the way out; or on a phone, a dropdown at the right:
+          the current page with an arrow, and under it the pages, the email and the way out. */}
+      <nav>{links}</nav>
+      <span className={styles.who}>{email}</span>
+      <form className={styles.logout} method="post" action="/staff/api/logout">
         <Button variant="ghost" size="small" type="submit">
           {staffCopy.nav.logout}
         </Button>
       </form>
+      <details className={styles.menu}>
+        <summary>{current && staffCopy.nav[current]}</summary>
+        <div>
+          {links}
+          <hr />
+          <span className={styles.who}>{email}</span>
+          <form method="post" action="/staff/api/logout">
+            <button type="submit" className={styles.linkButton}>
+              {staffCopy.nav.logout}
+            </button>
+          </form>
+        </div>
+      </details>
     </header>
   );
 }

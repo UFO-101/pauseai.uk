@@ -61,6 +61,90 @@
   color: var(--text);
 }
 
+/* The phone's dropdown, at the right: hidden on wider screens, where the row of links shows. */
+.menu {
+  display: none;
+  position: relative;
+  margin-left: auto;
+}
+
+.menu summary {
+  cursor: pointer;
+  list-style: none;
+  font-weight: 700;
+}
+
+.menu summary::-webkit-details-marker {
+  display: none;
+}
+
+.menu summary::after {
+  content: " ▾";
+}
+
+/* While open, the summary covers the whole screen behind the menu, so a tap anywhere else closes it. */
+.menu[open] summary::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  cursor: default;
+}
+
+.menu div {
+  position: absolute;
+  right: 0;
+  z-index: 2;
+  display: grid;
+  gap: 0.5rem;
+  min-width: 11rem;
+  margin-top: 0.5rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  box-shadow: 0 4px 12px rgb(0 0 0 / 10%);
+  white-space: nowrap;
+}
+
+.menu .who {
+  margin-left: 0;
+}
+
+.menu hr {
+  width: 100%;
+  margin: 0.25rem 0;
+  border: 0;
+  border-top: 1px solid var(--border);
+}
+
+.menu a,
+.linkButton {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+/* The way out in the dropdown: a link to look at, a form's button to work. */
+.linkButton {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  cursor: pointer;
+}
+
+@media (max-width: 720px) {
+  .header nav,
+  .header > .who,
+  .logout {
+    display: none;
+  }
+
+  .menu {
+    display: block;
+  }
+}
+
 .who {
   margin-left: auto;
   color: var(--text-secondary);
@@ -82,9 +166,27 @@
   max-width: 32rem;
 }
 
-/* The login form: one field and a button, no wider than they need. */
+/* The login page: a card in the middle, like any login, with the button its own width. */
 .login {
-  max-width: 22rem;
+  max-width: 24rem;
+  margin: 2rem auto 0;
+  padding: 1.5rem 2rem 2rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.login h1 {
+  margin-top: 0;
+  font-size: 1.5rem;
+}
+
+.login .form {
+  margin-bottom: 0;
+}
+
+.login .form button {
+  width: auto;
 }
 
 .filters label,

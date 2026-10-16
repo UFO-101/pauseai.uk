@@ -15,31 +15,35 @@ export default async function LoginPage({
   return (
     <main className={`container ${styles.page}`}>
       <StaffHeader />
-      <h1>{staffCopy.login.title}</h1>
-      {sent ? (
-        // Replaces the form, so the page visibly changes once the link is sent.
-        <>
-          <p role="status">{staffCopy.login.sent}</p>
-          <p>
-            <Link href={LOGIN_PATH}>{staffCopy.login.again}</Link>
-          </p>
-        </>
-      ) : (
-        <>
-          <p>{staffCopy.login.intro}</p>
-          {failed && <p className={styles.error}>{staffCopy.login.failed}</p>}
-          {elsewhere && <p className={styles.error}>{staffCopy.login.elsewhere}</p>}
-          <form className={`${styles.form} ${styles.login}`} method="post" action="/staff/api/login">
-            <label>
-              {staffCopy.login.emailLabel}
-              <input name="email" type="email" autoComplete="email" required />
-            </label>
-            <Button variant="primary" size="small" type="submit">
-              {staffCopy.login.button}
-            </Button>
-          </form>
-        </>
-      )}
+      <div className={styles.login}>
+        <h1>{staffCopy.login.title}</h1>
+        {sent ? (
+          // Replaces the form, so the page visibly changes once the link is sent.
+          <>
+            <p role="status">{staffCopy.login.sent}</p>
+            <p>
+              <Link href={LOGIN_PATH}>{staffCopy.login.again}</Link>
+            </p>
+          </>
+        ) : (
+          <>
+            <p>{staffCopy.login.intro}</p>
+            {failed && <p className={styles.error}>{staffCopy.login.failed}</p>}
+            {elsewhere && <p className={styles.error}>{staffCopy.login.elsewhere}</p>}
+            <form className={styles.form} method="post" action="/staff/api/login">
+              <label>
+                {staffCopy.login.emailLabel}
+                <input name="email" type="email" autoComplete="email" required />
+              </label>
+              <div>
+                <Button variant="primary" size="small" type="submit">
+                  {staffCopy.login.button}
+                </Button>
+              </div>
+            </form>
+          </>
+        )}
+      </div>
     </main>
   );
 }

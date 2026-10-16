@@ -72,7 +72,7 @@ test("a login link works once, and only in the browser that asked for it", async
   // Opened in the browser that asked, it logs in straight away.
   await page.goto(link);
   await expect(page).toHaveURL(`${BASE}/staff/politicians`);
-  await expect(page.getByText(staffCopy.nav.signedInAs("once@pauseai.uk"))).toBeVisible();
+  await expect(page.getByText("once@pauseai.uk").first()).toBeVisible();
 
   // And it only works once.
   await page.context().clearCookies({ name: "staff_session" });
@@ -86,7 +86,7 @@ test("staff log in, set a status that shows on /campaigns, and log out", async (
   // Plain /staff opens the politicians list, for now.
   await expect(page).toHaveURL(`${BASE}/staff/politicians`);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(staffCopy.politicians.title);
-  await expect(page.getByText(staffCopy.nav.signedInAs("staff@pauseai.uk"))).toBeVisible();
+  await expect(page.getByText("staff@pauseai.uk").first()).toBeVisible();
   await expect(page.getByRole("link", { name: "Testy McTestface MP" })).toBeVisible();
 
   const form = page.getByRole("form", { name: `${pm.title}: Polly Placeholder` });
