@@ -416,6 +416,9 @@ test("the nav's Campaigns menu links each campaign's page", { tag: "@desktop-onl
   await bill.click();
   await expect(page).toHaveURL(`${BASE}/campaigns/${campaigns[1].slug}`);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Support the Artificial Superintelligence Bill");
+  // Closed behind the choice: the link doesn't keep focus, which would hold it open.
+  await page.mouse.move(0, 0);
+  await expect(bill).toBeHidden();
   await frame(page, "the bill's page, from the menu");
 });
 

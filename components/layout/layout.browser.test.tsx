@@ -191,6 +191,21 @@ describe("Nav", () => {
     expect(about.closest(".nav-item")!.classList.contains("is-open")).toBe(false);
   });
 
+  it("takes focus off a dropdown link once it's chosen, so its dropdown doesn't stay open on the new page", async () => {
+    await page.viewport(1280, 800);
+    const { container } = await render(<Nav />);
+    container.addEventListener("click", (e) => e.preventDefault());
+    // Opened by focus, so the link can take it.
+    container.querySelector<HTMLElement>(".dropdown-trigger")!.focus();
+    const link = container.querySelector<HTMLElement>(".dropdown a")!;
+    await expect.element(link).toBeVisible();
+    link.focus();
+    expect(link.closest(".nav-item")!.matches(":focus-within")).toBe(true);
+    link.click();
+    expect(document.activeElement).not.toBe(link);
+    expect(link.closest(".nav-item")!.matches(":focus-within")).toBe(false);
+  });
+
   it("closes the menu and dropdowns on a new page", async () => {
     vi.spyOn(window, "matchMedia").mockImplementation((q) => ({ matches: true, media: q }) as MediaQueryList);
     const { container, rerender } = await render(<Nav />);

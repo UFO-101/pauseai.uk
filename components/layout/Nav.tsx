@@ -172,7 +172,17 @@ export default function Nav() {
               </SiteLink>
               <div className="dropdown" role="menu">
                 {links.map(([linkHref, linkLabel]) => (
-                  <Link key={linkHref} href={linkHref} role="menuitem" onClick={closeMenu}>
+                  <Link
+                    key={linkHref}
+                    href={linkHref}
+                    role="menuitem"
+                    onClick={(e) => {
+                      // Focus would stay on the link across the navigation,
+                      // and hold its dropdown open on the new page.
+                      e.currentTarget.blur();
+                      closeMenu();
+                    }}
+                  >
                     {linkLabel}
                   </Link>
                 ))}
