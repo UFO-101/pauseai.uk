@@ -1,4 +1,4 @@
-// MSW server for the "node" Vitest project (started in vitest.setup.node.ts).
+// MSW server for the "node" Vitest project (started in tests/vitest.setup.node.ts).
 // Every outside request gets its fixture from outside-services.ts; anything
 // else fails the test, so no test can reach a real API by accident.
 import { http } from "msw";

@@ -325,7 +325,7 @@ npm run format                  # Prettier, on everything but plans/ (format:che
 
 - **Database tests** need Postgres reachable with your `PG*` variables.
   Each test file makes its own database and drops it afterwards.
-- **While the copy is placeholder**, `placeholder-copy.test.ts` fails, and
+- **While the copy is placeholder**, `tests/checks/placeholder-copy.test.ts` fails, and
   so does `npm run build`, which runs the unit tests first. That's on
   purpose: placeholders can't be deployed (AGENTS.md). For now the test is
   skipped, until the Email your MP swap.

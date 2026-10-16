@@ -1,7 +1,7 @@
 // Setup for the "node" Vitest project: fixture responses for outside
 // services, and an error for any request without one.
 import { afterAll, afterEach, beforeAll } from "vitest";
-import { server } from "./tests/fixtures/msw";
+import { server } from "./fixtures/msw";
 
 // Unit tests choose their responses through MSW, and their clock with fake
 // timers. A DATA_FIXTURES=1 or FIXTURE_NOW inherited from a Playwright build

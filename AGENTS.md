@@ -58,7 +58,7 @@ Before you say a change is done, run `npm test`. That's both Vitest projects wit
 
 People write the words visitors and recipients read: page text, letters, emails, form labels and messages. When code needs copy that doesn't exist yet, write a placeholder. Start it with ⁂ and write it in Latin, e.g. "⁂ Lorem ipsum dolor sit amet", so it can't be mistaken for the real thing.
 
-`placeholder-copy.test.ts` fails while ⁂ appears anywhere in the repo outside this file. So placeholders can't be merged by accident.
+`tests/checks/placeholder-copy.test.ts` fails while ⁂ appears anywhere in the repo outside this file. So placeholders can't be merged by accident.
 
 <!-- BEGIN:nextjs-agent-rules -->
 
