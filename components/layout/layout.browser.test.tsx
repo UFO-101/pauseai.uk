@@ -245,9 +245,9 @@ describe("CookieConsent", () => {
     vi.spyOn(HTMLScriptElement.prototype, "src", "set").mockImplementation((v) => scripts.push(v));
   });
 
-  function Page() {
+  function Page({ analytics = true }: { analytics?: boolean }) {
     return (
-      <CookieConsent>
+      <CookieConsent analytics={analytics}>
         <CookieSettingsLink />
       </CookieConsent>
     );
@@ -295,6 +295,14 @@ describe("CookieConsent", () => {
     expect(scripts).toEqual([]);
   });
 
+  it("does nothing in a build without analytics, whatever was chosen before", async () => {
+    localStorage.setItem(CONSENT, "accepted");
+    await render(<Page analytics={false} />);
+    expect(scripts).toEqual([]);
+    await page.getByRole("link", { name: "Cookie settings" }).click();
+    expect(document.querySelector(".cookie-banner")).toBeNull();
+  });
+
   it("does nothing on a page that opts out of analytics", async () => {
     document.body.setAttribute("data-no-analytics", "");
     await render(<Page />);
@@ -327,7 +335,7 @@ describe("CookieConsent", () => {
 
   it("opens from the footer's link", async () => {
     await render(
-      <CookieConsent>
+      <CookieConsent analytics>
         <Footer />
       </CookieConsent>,
     );

@@ -46,6 +46,10 @@ export function fixtureEnv({ outboxDir }) {
   return {
     DATA_FIXTURES: "1",
     FIXTURE_NOW,
+    // Analytics loads only on the live site (lib/analytics.ts). The
+    // storyboard turns it on to drive the cookie consent flow, and blocks
+    // every request to Google (tests/storyboard/fixtures.ts).
+    ANALYTICS: "1",
     LUMA_API_KEY: "fixture",
     AIRTABLE_TOKEN: "fixture",
     // Not one of Cloudflare's test secrets, which are refused outside

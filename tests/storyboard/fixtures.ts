@@ -36,6 +36,9 @@ export function flowStorageState(database: string): Exclude<BrowserContextOption
   };
 }
 
+/** Google Analytics and Tag Manager, which the fixture build loads (ANALYTICS=1, ../fixture-env.mjs). */
+export const ANALYTICS_URL = "**/www.googletagmanager.com/**";
+
 export const test = base.extend<{ flowDatabase: string }>({
   // A copy of the template (global-setup.ts), made in tens of milliseconds,
   // for this flow alone, and dropped after it. Named after the test, so a
@@ -56,6 +59,13 @@ export const test = base.extend<{ flowDatabase: string }>({
   ],
   // Every page and request in the flow carries the cookie naming its database.
   storageState: async ({ flowDatabase }, provide) => provide(flowStorageState(flowDatabase)),
+  // No flow ever reaches Google: a test run is not a visit. consent.spec.ts
+  // routes the same URLs on its page, which takes precedence, to record what
+  // the page tried to load.
+  context: async ({ context }, provide) => {
+    await context.route(ANALYTICS_URL, (route) => route.abort());
+    await provide(context);
+  },
   // The page's clock agrees with the server's (FIXTURE_NOW), so dates match
   // between runs and nothing needs masking.
   page: async ({ page }, provide) => {

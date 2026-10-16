@@ -24,8 +24,8 @@ const IGNORED = [
   // next/image complains when CSS sizes one dimension; cosmetic, and a warning
   // rather than an error in any case.
   /has either width or height modified/,
-  // Analytics and third-party embeds fail in a sandboxed browser with no
-  // consent state and nothing to report to. Not our code, not our bug.
+  // Analytics is blocked for every flow (fixtures.ts), and third-party embeds
+  // fail in a sandboxed browser with nothing to report to. Not our code.
   /googletagmanager|google-analytics|gtag/i,
   /ERR_BLOCKED_BY_CLIENT|ERR_INTERNET_DISCONNECTED/,
 ];
