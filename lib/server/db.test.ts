@@ -132,7 +132,10 @@ describeWithDatabase("the database", () => {
         await closeDb();
         dropDatabase(flow);
       }
-    });
+      // Longer than the 5s default: it makes a database, a psql process per
+      // migration, then waits up to 5s for the pool to close. On a loaded CI
+      // runner, with every database test file at once, that ran out of time.
+    }, 30_000);
 
     it("ignores a cookie naming any other database", async () => {
       vi.stubEnv("DATA_FIXTURES", "1");
