@@ -82,7 +82,7 @@ export default function ChangeSteps() {
             </Link>{" "}
             signed by 60 UK lawmakers criticised Google DeepMind for{" "}
             <a
-              href="https://pauseai.info/pdfs/PauseAI_Open_Letter_Background_Information.pdf"
+              href="/pdfs/PauseAI-Open-Letter-Background-Information.pdf"
               className="inline-link"
               target="_blank"
               rel="noreferrer"
