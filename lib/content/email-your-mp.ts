@@ -133,7 +133,7 @@ Alex Sobel MP has tabled the Artificial Superintelligence Bill to protect the pu
 - Starts monitoring AI computing power, just as we do for nuclear weapons
 - Pushes for a global ban with an international treaty
 
-${signedControlAiLetter(d.statuses) ? `${copy.sobelBill.letterThanks}\n\n` : ""}Please could you attend the second reading debate in person on Friday, 13th November, and support the bill.
+${signedControlAiLetter(d.statuses) ? `${copy.sobelBill.letterThanks}\n\n` : ""}**Please consider attending the second reading debate in person on Friday, 13th November to support the bill.**
 
 Thank you for your consideration,`,
     // The bill's PDFs aren't written yet (plans/email-your-mp-v2.md, "Tasks for Francis").

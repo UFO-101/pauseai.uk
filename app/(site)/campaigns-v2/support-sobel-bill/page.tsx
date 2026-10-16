@@ -28,10 +28,9 @@ export default function Page() {
           self-improvement&rdquo; where an AI rapidly and dangerously makes itself more powerful.
         </p>
         <p>
-          Jacob Coxon, a researcher at Anthropic who resigned in protest in September, said we are &ldquo;racing
-          straight to self-improving superintelligence and gambling with our lives&rdquo;.
+          Jacob Coxon, a researcher at Anthropic who resigned in protest in September, said that AI companies are
+          &ldquo;racing straight to self-improving superintelligence and gambling with our lives&rdquo;.
         </p>
-        <p>This poses extremely serious risks to the UK&rsquo;s national security.</p>
         <p>
           Today, there is no international treaty to prevent uncontrolled superintelligent AI. Unlike the nuclear
           industry, there is no monitoring of AI chips to ensure they are not used in this dangerous way.
