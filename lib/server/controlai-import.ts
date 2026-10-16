@@ -8,38 +8,25 @@ import {
   pdfUrlIn,
   signatoriesIn,
   type Candidate,
-  type ControlAiMatchProblem,
 } from "@/lib/controlai-letter";
+import type { ControlAiImportResult } from "@/lib/import-runs";
 import { logChange } from "./audit";
 import { query, transaction } from "./db";
+import { keepingFailure, recordRun } from "./import-runs";
 import { outsideFetch } from "./outside-fetch";
 
 // Copies the signatories of ControlAI's letter to the PM into the bill's
 // statuses, nightly (app/api/cron/import-controlai) or when staff ask, and
-// keeps each run for /staff/import-data (plans/sobel-bill-support.md). The
-// table is made to match the letter: statuses it set for names no longer
-// there go. It never touches another campaign's statuses, or one set by
-// anything else.
+// keeps each run, failures included, in the import log (import-runs.ts, as
+// "import-controlai") for /staff/import-data (plans/sobel-bill-support.md).
+// The table is made to match the letter: statuses it set for names no
+// longer there go. It never touches another campaign's statuses, or one set
+// by anything else.
+
+const JOB = "import-controlai";
 
 /** Fewer names than this means the page or the PDF has changed shape, so nothing is changed. */
 const MIN_SIGNATORIES = 5;
-
-export type ControlAiImportResult =
-  | {
-      ok: true;
-      pdfUrl: string;
-      /** Names in the letter. */
-      signatories: number;
-      /** Of those, in our table. */
-      matched: number;
-      /** Statuses set and removed this run. */
-      added: number;
-      removed: number;
-      problems: ControlAiMatchProblem[];
-    }
-  | { ok: false; error: string };
-
-export type ControlAiImport = { at: string; result: ControlAiImportResult };
 
 async function fetchOk(url: string): Promise<Response> {
   const res = await outsideFetch(url, { cache: "no-store" });
@@ -57,20 +44,15 @@ async function fetchLetter(): Promise<{ pdfUrl: string; text: string }> {
   return { pdfUrl, text };
 }
 
-async function keep(result: ControlAiImportResult): Promise<void> {
-  await query("INSERT INTO controlai_imports (result) VALUES ($1)", [JSON.stringify(result)]);
-}
-
 /** Reads the letter and makes the bill's statuses match it. Keeps the result, or the failure, then throws it on. */
-export async function importControlAiLetter(): Promise<ControlAiImportResult> {
-  let result: ControlAiImportResult;
-  try {
+export function importControlAiLetter(startedBy: string): Promise<ControlAiImportResult> {
+  return keepingFailure(JOB, startedBy, async () => {
     const { pdfUrl, text } = await fetchLetter();
     const signatories = signatoriesIn(text);
     if (signatories.length < MIN_SIGNATORIES) {
       throw new Error(`Only ${signatories.length} signatories found in ${pdfUrl}: has the letter changed shape?`);
     }
-    result = await transaction(async (db) => {
+    return transaction(async (db) => {
       // Sitting MPs and peers; never the test MPs, whose statuses are their own.
       const candidates = await query<Candidate>(
         `SELECT id::int AS id, house, name FROM politicians
@@ -94,7 +76,6 @@ export async function importControlAiLetter(): Promise<ControlAiImportResult> {
         db,
       );
       const result: ControlAiImportResult = {
-        ok: true,
         pdfUrl,
         signatories: signatories.length,
         matched: ids.length,
@@ -110,19 +91,8 @@ export async function importControlAiLetter(): Promise<ControlAiImportResult> {
           db,
         );
       }
+      await recordRun(JOB, startedBy, "ok", result, db);
       return result;
     });
-  } catch (error) {
-    await keep({ ok: false, error: String(error).replace(/^Error: /, "") });
-    throw error;
-  }
-  await keep(result);
-  return result;
-}
-
-export async function latestControlAiImport(): Promise<ControlAiImport | undefined> {
-  const [run] = await query<ControlAiImport>(
-    "SELECT at, result FROM controlai_imports ORDER BY at DESC, id DESC LIMIT 1",
-  );
-  return run;
+  });
 }

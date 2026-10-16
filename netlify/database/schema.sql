@@ -66,21 +66,30 @@ CREATE TABLE public.campaign_statuses (
 );
 
 --
--- Name: controlai_imports; Type: TABLE; Schema: public; Owner: -
+-- Name: import_runs; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public.controlai_imports (
+CREATE TABLE public.import_runs (
     id bigint NOT NULL,
     at timestamp with time zone DEFAULT now() NOT NULL,
-    result jsonb NOT NULL
+    job text NOT NULL,
+    started_by text,
+    status text NOT NULL,
+    error text,
+    result jsonb DEFAULT '{}'::jsonb NOT NULL,
+    decided_by text,
+    decided_at timestamp with time zone,
+    CONSTRAINT import_runs_check CHECK (((status = 'failed'::text) = (error IS NOT NULL))),
+    CONSTRAINT import_runs_job_check CHECK ((job = ANY (ARRAY['sync-mps'::text, 'check-mps'::text, 'import-controlai'::text, 'import-signatories'::text]))),
+    CONSTRAINT import_runs_status_check CHECK ((status = ANY (ARRAY['ok'::text, 'failed'::text, 'unchanged'::text, 'held'::text, 'applied'::text, 'discarded'::text])))
 );
 
 --
--- Name: controlai_imports_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+-- Name: import_runs_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
-ALTER TABLE public.controlai_imports ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
-    SEQUENCE NAME public.controlai_imports_id_seq
+ALTER TABLE public.import_runs ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public.import_runs_id_seq
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -142,57 +151,6 @@ CREATE TABLE public.letters (
 
 ALTER TABLE public.letters ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
     SEQUENCE NAME public.letters_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1
-);
-
---
--- Name: mp_checks; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.mp_checks (
-    id bigint NOT NULL,
-    at timestamp with time zone DEFAULT now() NOT NULL,
-    problems jsonb NOT NULL
-);
-
---
--- Name: mp_checks_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
-
-ALTER TABLE public.mp_checks ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
-    SEQUENCE NAME public.mp_checks_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1
-);
-
---
--- Name: mp_syncs; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.mp_syncs (
-    id bigint NOT NULL,
-    at timestamp with time zone DEFAULT now() NOT NULL,
-    status text NOT NULL,
-    changes jsonb NOT NULL,
-    mps jsonb NOT NULL,
-    decided_by text,
-    decided_at timestamp with time zone,
-    CONSTRAINT mp_syncs_status_check CHECK ((status = ANY (ARRAY['applied'::text, 'held'::text, 'discarded'::text])))
-);
-
---
--- Name: mp_syncs_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
-
-ALTER TABLE public.mp_syncs ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
-    SEQUENCE NAME public.mp_syncs_id_seq
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -274,11 +232,11 @@ ALTER TABLE ONLY public.campaign_statuses
     ADD CONSTRAINT campaign_statuses_pkey PRIMARY KEY (politician_id, campaign);
 
 --
--- Name: controlai_imports controlai_imports_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: import_runs import_runs_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.controlai_imports
-    ADD CONSTRAINT controlai_imports_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.import_runs
+    ADD CONSTRAINT import_runs_pkey PRIMARY KEY (id);
 
 --
 -- Name: letter_events letter_events_pkey; Type: CONSTRAINT; Schema: public; Owner: -
@@ -307,20 +265,6 @@ ALTER TABLE ONLY public.letters
 
 ALTER TABLE ONLY public.letters
     ADD CONSTRAINT letters_reply_hash_key UNIQUE (reply_hash);
-
---
--- Name: mp_checks mp_checks_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.mp_checks
-    ADD CONSTRAINT mp_checks_pkey PRIMARY KEY (id);
-
---
--- Name: mp_syncs mp_syncs_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.mp_syncs
-    ADD CONSTRAINT mp_syncs_pkey PRIMARY KEY (id);
 
 --
 -- Name: politicians politicians_airtable_id_key; Type: CONSTRAINT; Schema: public; Owner: -
@@ -368,6 +312,12 @@ CREATE INDEX audit_log_at ON public.audit_log USING btree (at DESC);
 --
 
 CREATE INDEX campaign_statuses_campaign ON public.campaign_statuses USING btree (campaign, status);
+
+--
+-- Name: import_runs_job_at; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX import_runs_job_at ON public.import_runs USING btree (job, at DESC, id DESC);
 
 --
 -- Name: letter_events_letter_id; Type: INDEX; Schema: public; Owner: -

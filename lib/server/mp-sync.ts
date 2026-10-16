@@ -1,13 +1,18 @@
 import "server-only";
+import type { MpSync, MpSyncResult } from "@/lib/import-runs";
 import { changeCount, compareMps, MAX_UNCHECKED_CHANGES, type MpChanges, type SyncedMp } from "@/lib/mps";
 import { TEST_MPS } from "@/lib/test-mps";
-import { fetchMps } from "./airtable";
+import { airtableToken, fetchMps } from "./airtable";
 import { logChange } from "./audit";
 import { query, transaction, type Queryable } from "./db";
+import { keepingFailure, recordRun } from "./import-runs";
 
 // Copies the sitting MPs from Airtable into the politicians table, nightly
 // (app/api/cron/sync-mps) or when staff ask. A sync that would change more
-// than MAX_UNCHECKED_CHANGES MPs is held for a person to check.
+// than MAX_UNCHECKED_CHANGES MPs is held for a person to check. Every run
+// goes in the import log (import-runs.ts), as "sync-mps".
+
+const JOB = "sync-mps";
 
 export type SyncResult = { status: "applied" | "held" | "unchanged"; changes: MpChanges };
 
@@ -69,47 +74,47 @@ async function applyMps(mps: SyncedMp[], db: Queryable): Promise<void> {
   );
 }
 
-/** Fetches the MPs from Airtable and applies them, or holds them if too much has changed. */
-export async function syncMps(): Promise<SyncResult> {
-  const token = process.env.AIRTABLE_TOKEN;
-  if (!token) throw new Error("AIRTABLE_TOKEN isn't set, so the MPs can't be copied from Airtable");
-  const fetched = await fetchMps(token);
-  return transaction(async (db) => {
-    await ensureTestMps(db);
-    const before = await sittingMps(db);
-    const changes = compareMps(before, fetched);
-    const count = changeCount(changes);
-    if (count === 0) return { status: "unchanged", changes };
-    // The very first sync fills an empty table, so there's nothing to check it against.
-    const status = count > MAX_UNCHECKED_CHANGES && before.length > 0 ? "held" : "applied";
-    if (status === "applied") await applyMps(fetched, db);
-    await query(
-      "INSERT INTO mp_syncs (status, changes, mps) VALUES ($1, $2, $3)",
-      [status, JSON.stringify(changes), JSON.stringify(fetched)],
-      db,
-    );
-    await logChange(
-      "sync",
-      status === "held" ? "hold MP sync" : "apply MP sync",
-      { added: changes.added.length, removed: changes.removed.length, changed: changes.changed.length },
-      db,
-    );
-    return { status, changes };
+/**
+ * Fetches the MPs from Airtable and applies them, or holds them if too much
+ * has changed, keeping the run either way. `startedBy` is NIGHTLY or the
+ * staff member's email.
+ */
+export function syncMps(startedBy: string): Promise<SyncResult> {
+  return keepingFailure(JOB, startedBy, async () => {
+    const fetched = await fetchMps(airtableToken());
+    return transaction(async (db) => {
+      await ensureTestMps(db);
+      const before = await sittingMps(db);
+      const changes = compareMps(before, fetched);
+      const count = changeCount(changes);
+      if (count === 0) {
+        await recordRun(JOB, startedBy, "unchanged", { changes }, db);
+        return { status: "unchanged", changes };
+      }
+      // The very first sync fills an empty table, so there's nothing to check it against.
+      const status = count > MAX_UNCHECKED_CHANGES && before.length > 0 ? "held" : "applied";
+      if (status === "applied") await applyMps(fetched, db);
+      const result: MpSyncResult = status === "held" ? { changes, mps: fetched } : { changes };
+      await recordRun(JOB, startedBy, status, result, db);
+      await logChange(
+        "sync",
+        status === "held" ? "hold MP sync" : "apply MP sync",
+        { added: changes.added.length, removed: changes.removed.length, changed: changes.changed.length },
+        db,
+      );
+      return { status, changes };
+    });
   });
 }
 
-export type MpSync = {
-  id: number;
-  at: string;
-  status: "applied" | "held" | "discarded";
-  changes: MpChanges;
-  decidedBy: string | null;
-};
-
-export async function recentSyncs(limit = 30): Promise<MpSync[]> {
+/** What the import page shows: the newest sync, and any held one still waiting for a decision. */
+export async function syncsToShow(): Promise<MpSync[]> {
   return query<MpSync>(
-    `SELECT id::int AS id, at, status, changes, decided_by AS "decidedBy" FROM mp_syncs ORDER BY at DESC, id DESC LIMIT $1`,
-    [limit],
+    `SELECT id::int AS id, at, job, started_by AS "startedBy", status, error, result, decided_by AS "decidedBy"
+     FROM import_runs WHERE job = $1
+       AND (status = 'held' OR id = (SELECT id FROM import_runs WHERE job = $1 ORDER BY at DESC, id DESC LIMIT 1))
+     ORDER BY at DESC, id DESC`,
+    [JOB],
   );
 }
 
@@ -117,14 +122,14 @@ export async function recentSyncs(limit = 30): Promise<MpSync[]> {
 export async function decideHeldSync(id: number, decision: "apply" | "discard", staff: string): Promise<boolean> {
   return transaction(async (db) => {
     const [held] = await query<{ mps: SyncedMp[] }>(
-      "SELECT mps FROM mp_syncs WHERE id = $1 AND status = 'held' FOR UPDATE",
-      [id],
+      "SELECT result->'mps' AS mps FROM import_runs WHERE id = $1 AND job = $2 AND status = 'held' FOR UPDATE",
+      [id, JOB],
       db,
     );
     if (!held) return false;
     if (decision === "apply") await applyMps(held.mps, db);
     await query(
-      "UPDATE mp_syncs SET status = $2, decided_by = $3, decided_at = now() WHERE id = $1",
+      "UPDATE import_runs SET status = $2, decided_by = $3, decided_at = now() WHERE id = $1",
       [id, decision === "apply" ? "applied" : "discarded", staff],
       db,
     );

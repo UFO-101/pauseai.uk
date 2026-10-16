@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { LOGIN_PATH } from "@/lib/staff-session";
+import StaffHeader from "../_components/StaffHeader";
 import styles from "../_components/staff.module.css";
 
 // Open to anyone: it's where staff log in, so it doesn't call requireStaff().
@@ -13,6 +14,7 @@ export default async function LoginPage({
   const { sent, failed, elsewhere } = await searchParams;
   return (
     <main className={`container ${styles.page}`}>
+      <StaffHeader />
       <h1>{staffCopy.login.title}</h1>
       {sent ? (
         // Replaces the form, so the page visibly changes once the link is sent.
@@ -27,12 +29,12 @@ export default async function LoginPage({
           <p>{staffCopy.login.intro}</p>
           {failed && <p className={styles.error}>{staffCopy.login.failed}</p>}
           {elsewhere && <p className={styles.error}>{staffCopy.login.elsewhere}</p>}
-          <form className={styles.form} method="post" action="/staff/api/login">
+          <form className={`${styles.form} ${styles.login}`} method="post" action="/staff/api/login">
             <label>
               {staffCopy.login.emailLabel}
               <input name="email" type="email" autoComplete="email" required />
             </label>
-            <Button variant="primary" type="submit">
+            <Button variant="primary" size="small" type="submit">
               {staffCopy.login.button}
             </Button>
           </form>

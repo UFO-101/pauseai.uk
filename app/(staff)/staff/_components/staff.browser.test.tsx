@@ -2,20 +2,30 @@ import { describe, expect, it, vi } from "vitest";
 import { render } from "vitest-browser-react";
 import { page } from "vitest/browser";
 import { campaigns } from "@/lib/content/email-your-mp";
-import { staffCopy } from "@/lib/content/staff-interface";
-import type { ControlAiImport } from "@/lib/server/controlai-import";
+import { jobTitles, staffCopy } from "@/lib/content/staff-interface";
+import {
+  type AnyImportRun,
+  type ControlAiImport,
+  type ControlAiImportResult,
+  type ImportJob,
+  type MpCheck,
+  type MpCheckResult,
+  type MpSync,
+  type MpSyncResult,
+  NIGHTLY,
+  type SignatoryImport,
+  type SignatoryImportResult,
+} from "@/lib/import-runs";
 import type { Politician } from "@/lib/server/politicians";
-import type { MpSync } from "@/lib/server/mp-sync";
 import ChangesTable from "./ChangesTable";
-import ControlAiImportStatus from "./ControlAiImportStatus";
 import LettersTable from "./LettersTable";
-import MpCheckList from "./MpCheckList";
 import PoliticianFilters from "./PoliticianFilters";
 import PoliticianForm from "./PoliticianForm";
 import PoliticianTable from "./PoliticianTable";
 import ResultBox, { OPEN_UP_TO } from "./ResultBox";
+import RunFilters from "./RunFilters";
+import RunList from "./RunList";
 import StaffHeader from "./StaffHeader";
-import SyncList from "./SyncList";
 
 const [pm, bill] = campaigns;
 
@@ -41,6 +51,32 @@ const MP: Politician = {
   },
 };
 
+type Results = {
+  "sync-mps": MpSyncResult;
+  "check-mps": MpCheckResult;
+  "import-controlai": ControlAiImportResult;
+  "import-signatories": SignatoryImportResult;
+};
+type RunOf<Job extends ImportJob> = Extract<AnyImportRun, { job: Job }>;
+
+/** A run from the import log that went well, with `result`. */
+function ran<Job extends ImportJob>(job: Job, result: Results[Job], run: Partial<RunOf<Job>> = {}): RunOf<Job> {
+  return {
+    id: 1,
+    at: "2026-10-15T02:00:00Z",
+    job,
+    startedBy: NIGHTLY,
+    decidedBy: null,
+    status: "ok",
+    error: null,
+    result,
+    ...run,
+  } as RunOf<Job>;
+}
+const failed = <Job extends ImportJob>(job: Job, error: string, run: Partial<RunOf<Job>> = {}): RunOf<Job> =>
+  ({ ...ran(job, {} as Results[Job]), status: "failed", error, ...run }) as RunOf<Job>;
+const AT = "2026-10-15 02:00";
+
 /** A stand-in Server Action that keeps what it was sent. */
 function action() {
   const sent: Record<string, FormDataEntryValue>[] = [];
@@ -49,6 +85,13 @@ function action() {
 }
 
 describe("StaffHeader", () => {
+  it("is just the title on the login page", async () => {
+    await render(<StaffHeader />);
+    await expect.element(page.getByText(staffCopy.nav.title)).toBeVisible();
+    await expect.element(page.getByRole("navigation")).not.toBeInTheDocument();
+    await expect.element(page.getByRole("button")).not.toBeInTheDocument();
+  });
+
   it("links the staff pages, says who's logged in, and logs out with a POST", async () => {
     await render(<StaffHeader email="jo@pauseai.uk" current="politicians" />);
     await expect.element(page.getByText(staffCopy.nav.title)).toBeVisible();
@@ -134,52 +177,6 @@ describe("PoliticianTable", () => {
   });
 });
 
-describe("ControlAiImportStatus", () => {
-  const run = (result: ControlAiImport["result"]): ControlAiImport => ({ at: "2026-10-15T02:00:00Z", result });
-  const ok = {
-    ok: true as const,
-    pdfUrl: "https://images.controlai.com/letter.pdf",
-    signatories: 86,
-    matched: 74,
-    added: 2,
-    removed: 1,
-    problems: [],
-  };
-
-  it("says what the newest run did", async () => {
-    await render(<ControlAiImportStatus run={run(ok)} />);
-    await expect.element(page.getByText(/86 names/)).toBeVisible();
-    await expect.element(page.getByRole("table")).not.toBeInTheDocument();
-  });
-
-  it("lists the names it couldn't place", async () => {
-    await render(
-      <ControlAiImportStatus
-        run={run({
-          ...ok,
-          problems: [
-            { name: "Baroness Nobody", kind: "nobody", candidates: [] },
-            { name: "Lord Sample", kind: "several", candidates: ["Lord Sample", "Lord Sample of Elsewhere"] },
-          ],
-        })}
-      />,
-    );
-    await expect.element(page.getByRole("cell", { name: "Baroness Nobody" })).toBeVisible();
-    await expect.element(page.getByText(staffCopy.controlAi.kinds.nobody)).toBeVisible();
-    await expect.element(page.getByText("Lord Sample, Lord Sample of Elsewhere")).toBeVisible();
-  });
-
-  it("says why a run failed", async () => {
-    await render(<ControlAiImportStatus run={run({ ok: false, error: "No PDF linked" })} />);
-    await expect.element(page.getByText(/No PDF linked/)).toBeVisible();
-  });
-
-  it("says when there's been no run", async () => {
-    await render(<ControlAiImportStatus />);
-    await expect.element(page.getByText(staffCopy.controlAi.never)).toBeVisible();
-  });
-});
-
 describe("ResultBox", () => {
   it("is one line without detail, and folds detail under the line, open only when short", async () => {
     const { rerender } = await render(<ResultBox summary="Just a line" />);
@@ -226,7 +223,7 @@ describe("PoliticianForm", () => {
   });
 });
 
-describe("SyncList", () => {
+describe("RunList", () => {
   const mp = (id: number, email: string | null = "a@parliament.uk") => ({
     airtableId: `rec${id}`,
     name: `MP ${id}`,
@@ -235,32 +232,36 @@ describe("SyncList", () => {
     party: "",
     email,
   });
-  const held: MpSync = {
-    id: 3,
-    at: "2026-10-12T02:00:00Z",
-    status: "held",
-    changes: { added: [mp(1)], removed: [mp(2, null)], changed: [] },
-    decidedBy: null,
-  };
-  const applied: MpSync = {
-    id: 2,
-    at: "2026-10-11T02:00:00Z",
-    status: "applied",
-    changes: { added: [], removed: [], changed: [mp(4)] },
-    decidedBy: "jo@pauseai.uk",
+  const held: MpSync = ran(
+    "sync-mps",
+    { changes: { added: [mp(1)], removed: [mp(2, null)], changed: [] }, mps: [mp(1)] },
+    { id: 3, at: "2026-10-12T02:00:00Z", status: "held" },
+  );
+  const applied: MpSync = ran(
+    "sync-mps",
+    { changes: { added: [], removed: [], changed: [mp(4)] } },
+    { id: 2, at: "2026-10-11T02:00:00Z", status: "applied", decidedBy: "jo@pauseai.uk" },
+  );
+  const controlAi = {
+    pdfUrl: "https://images.controlai.com/letter.pdf",
+    signatories: 86,
+    matched: 74,
+    added: 2,
+    removed: 1,
+    problems: [],
   };
 
-  it("lists each sync's changes, and lets a held one be applied or discarded", async () => {
+  it("lists each MP sync's changes, and lets a held one be applied or discarded", async () => {
     const { fn, sent } = action();
-    await render(<SyncList syncs={[held, applied]} decide={fn} />);
-    await expect.element(page.getByText(staffCopy.syncs.status.held)).toBeVisible();
+    await render(<RunList runs={[held, applied]} none="None" decide={fn} />);
+    await expect.element(page.getByText(staffCopy.runs.status.held)).toBeVisible();
     await expect
       .element(page.getByText(`${staffCopy.syncs.added} 1, ${staffCopy.syncs.removed} 1`, { exact: false }))
       .toBeVisible();
     await expect.element(page.getByText("Seat 1: MP 1", { exact: true })).toBeVisible();
     await expect.element(page.getByText(`Seat 2: MP 2 (${staffCopy.politicians.noEmail})`)).toBeVisible();
     await expect.element(page.getByText(`${staffCopy.syncs.changed} (1)`)).toBeVisible();
-    await expect.element(page.getByText(staffCopy.syncs.decidedBy("jo@pauseai.uk"), { exact: false })).toBeVisible();
+    await expect.element(page.getByText(staffCopy.runs.decidedBy("jo@pauseai.uk"), { exact: false })).toBeVisible();
     expect(page.getByRole("button", { name: staffCopy.syncs.apply }).all()).toHaveLength(1);
 
     await page.getByRole("button", { name: staffCopy.syncs.discard }).click();
@@ -269,12 +270,12 @@ describe("SyncList", () => {
   });
 
   it("starts a sync with many changes folded to its status line, with the buttons still there", async () => {
-    const big: MpSync = {
-      ...held,
-      id: 9,
-      changes: { added: [1, 2, 3, 4, 5, 6].map((n) => mp(n)), removed: [], changed: [] },
-    };
-    await render(<SyncList syncs={[big, applied]} decide={() => {}} />);
+    const big: MpSync = ran(
+      "sync-mps",
+      { changes: { added: [1, 2, 3, 4, 5, 6].map((n) => mp(n)), removed: [], changed: [] } },
+      { id: 9, status: "held" },
+    );
+    await render(<RunList runs={[big, applied]} none="None" decide={() => {}} />);
     const folds = page.getByRole("group").all();
     expect(folds.map((fold) => (fold.element() as HTMLDetailsElement).open)).toEqual([false, true]);
     await expect.element(page.getByText("Seat 1: MP 1", { exact: true })).not.toBeVisible();
@@ -283,38 +284,51 @@ describe("SyncList", () => {
     await expect.element(page.getByText("Seat 1: MP 1", { exact: true })).toBeVisible();
   });
 
-  it("says when there are none", async () => {
-    await render(<SyncList syncs={[]} decide={() => {}} />);
-    await expect.element(page.getByText(staffCopy.syncs.none)).toBeVisible();
-  });
-});
-
-describe("MpCheckList", () => {
-  it("lists each problem, with what Airtable and Parliament say", async () => {
+  it("shows a failed or unchanged sync as one line, and a held one without buttons where nothing can be decided", async () => {
+    const unchanged: MpSync = ran(
+      "sync-mps",
+      { changes: { added: [], removed: [], changed: [] } },
+      { id: 5, status: "unchanged" },
+    );
     await render(
-      <MpCheckList
-        check={{
-          at: "2026-10-14T02:00:00Z",
-          problems: [
-            { kind: "extra", constituency: "Gone", airtable: "Former MP" },
-            { kind: "unofficial", constituency: "Montgomeryshire and Glyndwr", airtable: "Steve Witherden" },
-            { kind: "missing", constituency: "New Seat", parliament: "New MP" },
-            {
-              kind: "name",
-              constituency: "North East Derbyshire",
-              airtable: "Louise Jones",
-              parliament: "Louise Sandher-Jones",
-            },
-            {
-              kind: "email",
-              constituency: "Wallasey",
-              name: "Angela Eagle",
-              airtable: "eaglea@parliament.uk",
-              parliament: ["angela.eagle.mp@parliament.uk", "a@example.org"],
-            },
-            { kind: "email", constituency: "Zetland", name: "Zed", airtable: null, parliament: ["z@parliament.uk"] },
-          ],
-        }}
+      <RunList
+        runs={[failed("sync-mps", "Airtable request failed with status 422", { id: 6 }), unchanged, held]}
+        none="None"
+      />,
+    );
+    await expect.element(page.getByText(/status 422/)).toBeVisible();
+    await expect.element(page.getByText(staffCopy.runs.status.unchanged)).toBeVisible();
+    await expect.element(page.getByText(staffCopy.runs.status.held)).toBeVisible();
+    await expect.element(page.getByRole("button")).not.toBeInTheDocument();
+  });
+
+  it("lists each check's problems, with what Airtable and Parliament say", async () => {
+    await render(
+      <RunList
+        none="None"
+        runs={[
+          ran("check-mps", {
+            problems: [
+              { kind: "extra", constituency: "Gone", airtable: "Former MP" },
+              { kind: "unofficial", constituency: "Montgomeryshire and Glyndwr", airtable: "Steve Witherden" },
+              { kind: "missing", constituency: "New Seat", parliament: "New MP" },
+              {
+                kind: "name",
+                constituency: "North East Derbyshire",
+                airtable: "Louise Jones",
+                parliament: "Louise Sandher-Jones",
+              },
+              {
+                kind: "email",
+                constituency: "Wallasey",
+                name: "Angela Eagle",
+                airtable: "eaglea@parliament.uk",
+                parliament: ["angela.eagle.mp@parliament.uk", "a@example.org"],
+              },
+              { kind: "email", constituency: "Zetland", name: "Zed", airtable: null, parliament: ["z@parliament.uk"] },
+            ],
+          }),
+        ]}
       />,
     );
     // Six problems is more than a few lines, so the box starts folded.
@@ -338,21 +352,102 @@ describe("MpCheckList", () => {
       .toHaveTextContent(`Zetland${staffCopy.check.kinds.email}Zed: ${staffCopy.check.noEmail}z@parliament.uk`);
   });
 
-  it("says when all is well, or when there's been no check", async () => {
-    const { rerender } = await render(<MpCheckList check={{ at: "2026-10-14T02:00:00Z", problems: [] }} />);
+  it("says when a check found all well, or why it failed", async () => {
+    const runs: MpCheck[] = [
+      ran("check-mps", { problems: [] }, { id: 2 }),
+      failed("check-mps", "Parliament returned 500", { id: 1 }),
+    ];
+    const { rerender } = await render(<RunList runs={runs} none="None" />);
     await expect.element(page.getByText(staffCopy.check.allGood, { exact: false })).toBeVisible();
+    await expect.element(page.getByText(/Parliament returned 500/)).toBeVisible();
     await expect.element(page.getByRole("group")).not.toBeInTheDocument();
     await rerender(
-      <MpCheckList
-        check={{
-          at: "2026-10-14T02:00:00Z",
-          problems: [{ kind: "missing", constituency: "New Seat", parliament: "N" }],
-        }}
+      <RunList
+        none="None"
+        runs={[ran("check-mps", { problems: [{ kind: "missing", constituency: "New Seat", parliament: "N" }] })]}
       />,
     );
     await expect.element(page.getByText(staffCopy.check.problems(1), { exact: false })).toBeVisible();
-    await rerender(<MpCheckList />);
-    await expect.element(page.getByText(staffCopy.check.never)).toBeVisible();
+  });
+
+  it("says what each ControlAI read did, and why one failed", async () => {
+    const runs: ControlAiImport[] = [
+      ran("import-controlai", controlAi, { id: 2 }),
+      failed("import-controlai", "No PDF linked", { id: 1 }),
+    ];
+    await render(<RunList runs={runs} none="None" />);
+    await expect.element(page.getByText(/86 names/)).toBeVisible();
+    await expect.element(page.getByRole("table")).not.toBeInTheDocument();
+    expect(page.getByText(staffCopy.runs.status.failed).element().closest("section")).toHaveTextContent(
+      `${staffCopy.runs.status.failed} ${AT} · ${staffCopy.import.nightly} · No PDF linked`,
+    );
+  });
+
+  it("lists the names a ControlAI read couldn't place", async () => {
+    await render(
+      <RunList
+        none="None"
+        runs={[
+          ran("import-controlai", {
+            ...controlAi,
+            problems: [
+              { name: "Baroness Nobody", kind: "nobody", candidates: [] },
+              { name: "Lord Sample", kind: "several", candidates: ["Lord Sample", "Lord Sample of Elsewhere"] },
+            ],
+          }),
+        ]}
+      />,
+    );
+    await expect.element(page.getByRole("cell", { name: "Baroness Nobody" })).toBeVisible();
+    await expect.element(page.getByText(staffCopy.controlAi.kinds.nobody)).toBeVisible();
+    await expect.element(page.getByText("Lord Sample, Lord Sample of Elsewhere")).toBeVisible();
+  });
+
+  it("says what each signatory import did, who ran it, or why it failed", async () => {
+    const runs: SignatoryImport[] = [
+      ran("import-signatories", { matched: 3, added: 7, alreadySet: 0 }, { id: 2, startedBy: "jo@pauseai.uk" }),
+      failed("import-signatories", "AIRTABLE_TOKEN isn't set", { id: 1, startedBy: null }),
+    ];
+    await render(<RunList runs={runs} none="None" />);
+    const [first, second] = page.getByRole("status").all();
+    await expect
+      .element(first)
+      .toHaveTextContent(
+        `${staffCopy.runs.status.ok} ${AT} · ${staffCopy.runs.by("jo@pauseai.uk")} · ${staffCopy.import.result({ matched: 3, added: 7, alreadySet: 0 })}`,
+      );
+    await expect.element(second).toHaveTextContent(`${staffCopy.runs.status.failed} ${AT} · AIRTABLE_TOKEN isn't set`);
+  });
+
+  it("on the history page, names each run's job and heads each day's runs with its date; says when there are none", async () => {
+    const runs: AnyImportRun[] = [
+      ran("check-mps", { problems: [] }, { id: 7, at: "2026-11-03T01:00:00Z" }),
+      ran("import-controlai", controlAi, { id: 8, at: "2026-11-02T02:00:00Z" }),
+      ran("import-signatories", { matched: 1, added: 0, alreadySet: 0 }, { id: 9, at: "2026-11-02T00:30:00Z" }),
+      applied,
+    ];
+    const { rerender } = await render(<RunList runs={runs} none="None" history />);
+    for (const job of ["sync-mps", "check-mps", "import-controlai", "import-signatories"] as const) {
+      await expect.element(page.getByText(`${jobTitles[job]} ·`, { exact: false })).toBeVisible();
+    }
+    expect(
+      page
+        .getByRole("heading", { level: 2 })
+        .all()
+        .map((h) => h.element().textContent),
+    ).toEqual(["3 Nov 2026", "2 Nov 2026", "11 Oct 2026"]);
+    await rerender(<RunList runs={[]} none="Nothing here" />);
+    await expect.element(page.getByText("Nothing here")).toBeVisible();
+  });
+});
+
+describe("RunFilters", () => {
+  it("is a GET form to the history page, with the job filled in", async () => {
+    await render(<RunFilters job="check-mps" />);
+    const select = page.getByRole("combobox", { name: staffCopy.history.job, exact: true });
+    await expect.element(select).toHaveValue("check-mps");
+    const form = select.element().closest("form")!;
+    expect(form.getAttribute("method")).toBe("get");
+    expect(form.getAttribute("action")).toBe("/staff/import-history");
   });
 });
 
@@ -427,9 +522,7 @@ describe("LettersTable", () => {
     await expect.element(page.getByText(/strange/)).toBeInTheDocument();
     await expect.element(page.getByText('{"type":"HardBounce"}', { exact: false })).toBeInTheDocument();
     expect(page.getByText(staffCopy.politicians.testMp).all()).toHaveLength(1);
-    await expect
-      .element(page.getByRole("cell", { name: new Date("2026-10-13T09:00:00Z").toLocaleString("en-GB"), exact: true }))
-      .toBeInTheDocument();
+    await expect.element(page.getByRole("cell", { name: "2026-10-13 09:00", exact: true })).toBeInTheDocument();
   });
 
   it("says when there are none", async () => {

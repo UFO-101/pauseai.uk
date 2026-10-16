@@ -1,11 +1,14 @@
-import { expect, it } from "vitest";
+import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { http, HttpResponse } from "msw";
 import { server } from "@/tests/fixtures/msw";
 import { addTestMp, addTestPolitician, describeWithDatabase, useTestDatabase } from "@/tests/database";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { query } from "./db";
 import { getPolitician, setStatus } from "./politicians";
+import { listRuns } from "./import-runs";
 import { importSignatories } from "./signatory-import";
+
+const recentSignatoryImports = () => listRuns("import-signatories");
 
 // Airtable's API, matched without naming its host, which only lib/server/airtable.ts may do.
 const AIRTABLE = "https://*.airtable.com/v0/*";
@@ -19,6 +22,8 @@ function airtable(...people: Record<string, string>[]) {
 
 describeWithDatabase("importSignatories", () => {
   useTestDatabase();
+  beforeEach(() => vi.stubEnv("AIRTABLE_TOKEN", "token"));
+  afterEach(() => vi.unstubAllEnvs());
 
   it("matches MPs by Airtable's ID, then email, then constituency, and adds everyone else to their house", async () => {
     const byId = await addTestPolitician({
@@ -57,7 +62,10 @@ describeWithDatabase("importSignatories", () => {
       { "Full name or Title": "Someone", Constituency: "Somewhere" },
     );
 
-    expect(await importSignatories("token", "jo@pauseai.uk")).toEqual({ matched: 3, added: 7, alreadySet: 0 });
+    expect(await importSignatories("jo@pauseai.uk")).toEqual({ matched: 3, added: 7, alreadySet: 0 });
+    expect(await recentSignatoryImports()).toMatchObject([
+      { status: "ok", startedBy: "jo@pauseai.uk", result: { matched: 3, added: 7, alreadySet: 0 } },
+    ]);
 
     for (const id of [byId, byEmail, bySeat])
       expect((await getPolitician(id))!.statuses[PM]).toMatchObject({
@@ -90,8 +98,8 @@ describeWithDatabase("importSignatories", () => {
       { "Full name or Title": "Lord Example" },
     );
 
-    await importSignatories("token", "jo@pauseai.uk");
-    expect(await importSignatories("token", "jo@pauseai.uk")).toEqual({ matched: 2, added: 0, alreadySet: 2 });
+    await importSignatories("jo@pauseai.uk");
+    expect(await importSignatories("jo@pauseai.uk")).toEqual({ matched: 2, added: 0, alreadySet: 2 });
 
     expect((await getPolitician(mp))!.statuses[PM]).toMatchObject({
       status: "signed",
@@ -99,5 +107,11 @@ describeWithDatabase("importSignatories", () => {
       updatedBy: "sam@pauseai.uk",
     });
     expect(await query("SELECT count(*)::int AS n FROM politicians WHERE name = 'Lord Example'")).toEqual([{ n: 1 }]);
+  });
+
+  it("fails, keeping the failure, without a token", async () => {
+    vi.stubEnv("AIRTABLE_TOKEN", "");
+    await expect(importSignatories("jo@pauseai.uk")).rejects.toThrow("AIRTABLE_TOKEN isn't set");
+    expect(await recentSignatoryImports()).toMatchObject([{ status: "failed", startedBy: "jo@pauseai.uk" }]);
   });
 });

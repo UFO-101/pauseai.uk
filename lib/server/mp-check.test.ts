@@ -4,7 +4,11 @@ import { server } from "@/tests/fixtures/msw";
 import { describeWithDatabase, useTestDatabase } from "@/tests/database";
 import { MEMBERS_API } from "@/lib/parliament";
 import { query } from "./db";
-import { checkMps, latestCheck } from "./mp-check";
+import { type MpCheck, NIGHTLY } from "@/lib/import-runs";
+import { listRuns } from "./import-runs";
+import { checkMps } from "./mp-check";
+
+const recentChecks = () => listRuns("check-mps") as Promise<MpCheck[]>;
 import { syncMps } from "./mp-sync";
 
 beforeEach(() => vi.stubEnv("AIRTABLE_TOKEN", "token"));
@@ -14,11 +18,11 @@ describeWithDatabase("checkMps", () => {
   useTestDatabase();
 
   it("compares the MPs copied from Airtable with Parliament's, and keeps what it finds", async () => {
-    await syncMps();
-    expect(await latestCheck()).toBeUndefined();
+    await syncMps(NIGHTLY);
+    expect(await recentChecks()).toEqual([]);
 
     // The fixture Airtable gives Polly Placeholder an email Parliament doesn't list.
-    const problems = await checkMps();
+    const problems = await checkMps("jo@pauseai.uk");
 
     const blake = {
       kind: "email",
@@ -28,14 +32,17 @@ describeWithDatabase("checkMps", () => {
       parliament: ["mp90002.office@parliament.uk"],
     };
     expect(problems).toEqual([blake]);
-    expect(await latestCheck()).toMatchObject({ problems: [blake] });
+    expect(await recentChecks()).toMatchObject([
+      { status: "ok", startedBy: "jo@pauseai.uk", result: { problems: [blake] } },
+    ]);
   });
 
-  it("shows the newest check", async () => {
+  it("lists the newest checks first", async () => {
     await query(
-      `INSERT INTO mp_checks (at, problems) VALUES (now() - interval '1 day', '[{"kind":"old"}]'), (now(), '[]')`,
+      `INSERT INTO import_runs (at, job, status, result) VALUES
+       (now() - interval '1 day', 'check-mps', 'ok', '{"problems":[{"kind":"old"}]}'), (now(), 'check-mps', 'ok', '{"problems":[]}')`,
     );
-    expect((await latestCheck())!.problems).toEqual([]);
+    expect((await recentChecks()).map((run) => run.result.problems)).toEqual([[], [{ kind: "old" }]]);
   });
 
   it("waits and tries again when Parliament's API is busy", async () => {
@@ -48,7 +55,7 @@ describeWithDatabase("checkMps", () => {
         ++calls === 3 ? new HttpResponse(null, { status: 503, headers: { "Retry-After": "0" } }) : undefined,
       ),
     );
-    await checkMps();
+    await checkMps(NIGHTLY);
     expect(calls).toBeGreaterThanOrEqual(4);
   });
 
@@ -56,7 +63,7 @@ describeWithDatabase("checkMps", () => {
     vi.useFakeTimers({ toFake: ["setTimeout"] });
     let calls = 0;
     server.use(http.get(`${MEMBERS_API}/Members/Search`, () => (calls++, new HttpResponse(null, { status: 429 }))));
-    const check = checkMps();
+    const check = checkMps(NIGHTLY);
     const failed = expect(check).rejects.toThrow("returned 429");
     await vi.runAllTimersAsync();
     await failed;
@@ -64,9 +71,15 @@ describeWithDatabase("checkMps", () => {
     expect(calls).toBe(5);
   });
 
-  it("fails, keeping nothing, if Parliament's API fails", async () => {
+  it("fails, keeping the failure, if Parliament's API fails", async () => {
     server.use(http.get(`${MEMBERS_API}/Members/Search`, () => new HttpResponse(null, { status: 500 })));
-    await expect(checkMps()).rejects.toThrow("returned 500");
-    expect(await latestCheck()).toBeUndefined();
+    await expect(checkMps(NIGHTLY)).rejects.toThrow("returned 500");
+    expect(await recentChecks()).toMatchObject([
+      {
+        status: "failed",
+        startedBy: NIGHTLY,
+        error: expect.stringMatching(/^https:\/\/.*\/Members\/Search\?.* returned 500$/),
+      },
+    ]);
   });
 });

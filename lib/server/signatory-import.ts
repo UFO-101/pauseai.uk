@@ -1,17 +1,19 @@
 import "server-only";
 import { staffCopy } from "@/lib/content/staff-interface";
-import { fetchSignatoriesForImport, type SignatoryToImport } from "./airtable";
+import { airtableToken, fetchSignatoriesForImport, type SignatoryToImport } from "./airtable";
 import { logChange } from "./audit";
 import { query, transaction, type Queryable } from "./db";
+import type { SignatoryImportResult } from "@/lib/import-runs";
+import { keepingFailure, recordRun } from "./import-runs";
 import { setStatus } from "./politicians";
 
 // The one-off copy of the signatories from Airtable into the database (stage
 // 3 of plans/email-your-mp-v2.md). Safe to run more than once: it never
 // overwrites a status already set, and finds the people it added last time.
+// Each run goes in the import log (import-runs.ts, as "import-signatories").
 
+const JOB = "import-signatories";
 const CAMPAIGN = "regulate-letter-pm";
-
-export type ImportResult = { matched: number; added: number; alreadySet: number };
 
 // Airtable's Body, for signers who aren't sitting MPs.
 const HOUSES: Record<string, string> = {
@@ -44,42 +46,45 @@ async function findPolitician(signatory: SignatoryToImport, db: Queryable): Prom
   return byName?.id;
 }
 
-export async function importSignatories(token: string, staff: string): Promise<ImportResult> {
-  const fromAirtable = await fetchSignatoriesForImport(token);
-  return transaction(async (db) => {
-    const result: ImportResult = { matched: 0, added: 0, alreadySet: 0 };
-    for (const signatory of fromAirtable) {
-      let id = await findPolitician(signatory, db);
-      if (id === undefined) {
-        // Not a sitting MP: a peer, an MSP, MS or MLA, or someone else
-        // (such as a former MP), for the policy team to check.
-        [{ id }] = await query<{ id: number }>(
-          `INSERT INTO politicians (house, name, constituency, party, email) VALUES ($1, $2, $3, $4, $5) RETURNING id::int AS id`,
-          [
-            houseFor(signatory),
-            signatory.name,
-            signatory.constituency || null,
-            signatory.party,
-            signatory.email || null,
-          ],
+export function importSignatories(staff: string): Promise<SignatoryImportResult> {
+  return keepingFailure(JOB, staff, async () => {
+    const fromAirtable = await fetchSignatoriesForImport(airtableToken());
+    return transaction(async (db) => {
+      const result: SignatoryImportResult = { matched: 0, added: 0, alreadySet: 0 };
+      for (const signatory of fromAirtable) {
+        let id = await findPolitician(signatory, db);
+        if (id === undefined) {
+          // Not a sitting MP: a peer, an MSP, MS or MLA, or someone else
+          // (such as a former MP), for the policy team to check.
+          [{ id }] = await query<{ id: number }>(
+            `INSERT INTO politicians (house, name, constituency, party, email) VALUES ($1, $2, $3, $4, $5) RETURNING id::int AS id`,
+            [
+              houseFor(signatory),
+              signatory.name,
+              signatory.constituency || null,
+              signatory.party,
+              signatory.email || null,
+            ],
+            db,
+          );
+          result.added++;
+        } else {
+          result.matched++;
+        }
+        const [existing] = await query(
+          "SELECT 1 FROM campaign_statuses WHERE politician_id = $1 AND campaign = $2",
+          [id, CAMPAIGN],
           db,
         );
-        result.added++;
-      } else {
-        result.matched++;
+        if (existing) {
+          result.alreadySet++;
+          continue;
+        }
+        await setStatus(id, CAMPAIGN, { status: "signed", date: null, note: staffCopy.import.note }, staff, db);
       }
-      const [existing] = await query(
-        "SELECT 1 FROM campaign_statuses WHERE politician_id = $1 AND campaign = $2",
-        [id, CAMPAIGN],
-        db,
-      );
-      if (existing) {
-        result.alreadySet++;
-        continue;
-      }
-      await setStatus(id, CAMPAIGN, { status: "signed", date: null, note: staffCopy.import.note }, staff, db);
-    }
-    await logChange(staff, "import signatories from Airtable", result, db);
-    return result;
+      await recordRun(JOB, staff, "ok", result, db);
+      await logChange(staff, "import signatories from Airtable", result, db);
+      return result;
+    });
   });
 }

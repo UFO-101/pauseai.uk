@@ -4,7 +4,7 @@ import type { ParliamentMp } from "./parliament";
 
 // Where Airtable's MPs disagree with Parliament's Members API, or with the
 // official constituency names, for the policy team to look at
-// (/staff/check-data). Nothing is changed by it.
+// (/staff/import-data). Nothing is changed by it.
 
 export type MpProblem =
   /** Parliament has an MP for a constituency Airtable hasn't. */

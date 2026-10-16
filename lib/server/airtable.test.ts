@@ -61,8 +61,18 @@ describe("fetchSignatoriesForImport", () => {
   });
 
   it("throws on errors, or on endless paging", async () => {
-    server.use(http.get(AIRTABLE, () => new HttpResponse(null, { status: 500 })));
+    server.use(
+      http.get(AIRTABLE, () =>
+        HttpResponse.json(
+          { error: { type: "UNKNOWN_FIELD_NAME", message: 'Unknown field name: "Salutation"' } },
+          { status: 422 },
+        ),
+      ),
+    );
     await expect(fetchSignatoriesForImport("t")).rejects.toThrow(AirtableRequestError);
+    await expect(fetchSignatoriesForImport("t")).rejects.toThrow(
+      'status 422: {"error":{"type":"UNKNOWN_FIELD_NAME","message":"Unknown field name: \\"Salutation\\""}}',
+    );
 
     server.use(http.get(AIRTABLE, () => HttpResponse.json({ records: [], offset: "again" })));
     await expect(fetchSignatoriesForImport("t")).rejects.toThrow("exceeded 100 pages");

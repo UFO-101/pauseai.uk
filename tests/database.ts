@@ -14,11 +14,9 @@ export const describeWithDatabase = describe.skipIf(process.env.NETLIFY === "tru
 const TABLES = [
   "audit_log",
   "campaign_statuses",
-  "controlai_imports",
+  "import_runs",
   "letter_events",
   "letters",
-  "mp_checks",
-  "mp_syncs",
   "politicians",
   "staff_login_links",
   "staff_sessions",
@@ -43,6 +41,27 @@ export function useTestDatabase(extraTables: string[] = []) {
     dropDatabase(name);
     process.env.NETLIFY_DB_URL = original;
   });
+}
+
+/**
+ * Gives this test file a database with only the migrations up to `upTo`
+ * ("0012") applied, so a test can fill the old tables, then apply the next
+ * migration with migrate() and see what it did. Returns the database's URL.
+ */
+export function useDatabaseUpTo(upTo: string): { url: string } {
+  const name = `test_${process.pid}_upto_${upTo}`;
+  const original = process.env.NETLIFY_DB_URL;
+  const db = { url: "" };
+  beforeAll(async () => {
+    await closeDb();
+    db.url = process.env.NETLIFY_DB_URL = freshDatabase(name, { upTo });
+  });
+  afterAll(async () => {
+    await closeDb();
+    dropDatabase(name);
+    process.env.NETLIFY_DB_URL = original;
+  });
+  return db;
 }
 
 type MpRow = {

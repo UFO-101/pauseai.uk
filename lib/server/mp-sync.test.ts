@@ -3,7 +3,13 @@ import { http, HttpResponse } from "msw";
 import { server } from "@/tests/fixtures/msw";
 import { addTestPolitician, describeWithDatabase, useTestDatabase } from "@/tests/database";
 import { query } from "./db";
-import { decideHeldSync, recentSyncs, syncMps } from "./mp-sync";
+import { type MpSync, NIGHTLY } from "@/lib/import-runs";
+import { listRuns } from "./import-runs";
+import { decideHeldSync, syncMps, syncsToShow } from "./mp-sync";
+
+const recentSyncs = () => listRuns("sync-mps") as Promise<MpSync[]>;
+
+const JO = "jo@pauseai.uk";
 
 type Row = { airtable_id: string | null; name: string; email: string | null; sitting: boolean; is_test: boolean };
 const politicians = () =>
@@ -27,7 +33,7 @@ describeWithDatabase("syncMps", () => {
   useTestDatabase();
 
   it("fills an empty table from Airtable, adds the test MPs, and records the sync", async () => {
-    const result = await syncMps();
+    const result = await syncMps(NIGHTLY);
 
     expect(result.status).toBe("applied");
     expect(result.changes.added).toHaveLength(2);
@@ -56,28 +62,32 @@ describeWithDatabase("syncMps", () => {
       { test_postcode: "ZZ99ZS", campaign: "regulate-letter-pm", status: "signed" },
     ]);
     const [sync] = await recentSyncs();
-    expect(sync).toMatchObject({ status: "applied", decidedBy: null });
-    expect(sync.changes.added.map((mp) => mp.airtableId)).toEqual(["recPlaceholder", "recDummy"]);
+    expect(sync).toMatchObject({ status: "applied", startedBy: NIGHTLY, error: null, decidedBy: null });
+    expect(sync.result.changes.added.map((mp) => mp.airtableId)).toEqual(["recPlaceholder", "recDummy"]);
+    // Applied, so the full list isn't needed again.
+    expect(sync.result.mps).toBeUndefined();
     expect(await query("SELECT actor, action FROM audit_log")).toEqual([{ actor: "sync", action: "apply MP sync" }]);
   });
 
-  it("does nothing when nothing has changed, except keep the test MPs' inbox up to date", async () => {
-    await syncMps();
+  it("does nothing when nothing has changed, except keep the test MPs' inbox up to date, and records that", async () => {
+    await syncMps(NIGHTLY);
     vi.stubEnv("TEST_MP_EMAIL", "");
-    expect((await syncMps()).status).toBe("unchanged");
-    expect(await recentSyncs()).toHaveLength(1);
+    expect((await syncMps(JO)).status).toBe("unchanged");
+    const [unchanged, applied] = await recentSyncs();
+    expect(unchanged).toMatchObject({ status: "unchanged", startedBy: JO });
+    expect(applied.status).toBe("applied");
     expect((await politicians()).filter((p) => p.is_test).map((p) => p.email)).toEqual([null, null, null, null]);
   });
 
   it("leaves the test MPs' statuses to staff once they're added", async () => {
-    await syncMps();
+    await syncMps(NIGHTLY);
     await query("DELETE FROM campaign_statuses");
-    await syncMps();
+    await syncMps(NIGHTLY);
     expect(await testStatuses()).toEqual([]);
   });
 
   it("applies a small change: an MP who left stays, no longer sitting", async () => {
-    await syncMps();
+    await syncMps(NIGHTLY);
     server.use(
       http.get(AIRTABLE, () =>
         HttpResponse.json({
@@ -96,7 +106,7 @@ describeWithDatabase("syncMps", () => {
         }),
       ),
     );
-    const result = await syncMps();
+    const result = await syncMps(NIGHTLY);
     expect(result.status).toBe("applied");
     expect(result.changes.removed.map((mp) => mp.airtableId)).toEqual(["recPlaceholder"]);
     expect((await politicians()).find((p) => p.airtable_id === "recPlaceholder")!.sitting).toBe(false);
@@ -106,12 +116,14 @@ describeWithDatabase("syncMps", () => {
     for (let i = 1; i <= 25; i++)
       await addTestPolitician({ airtableId: `rec${10000 + i}`, name: `MP ${i}`, constituency: `Seat ${i}` });
 
-    const result = await syncMps();
+    const result = await syncMps(NIGHTLY);
 
     expect(result.status).toBe("held");
     expect((await politicians()).filter((p) => p.sitting && !p.is_test)).toHaveLength(25);
     const [held] = await recentSyncs();
     expect(held.status).toBe("held");
+    // The full list, to apply later.
+    expect(held.result.mps).toHaveLength(2);
 
     expect(await decideHeldSync(held.id, "apply", "jo@pauseai.uk")).toBe(true);
     expect((await politicians()).filter((p) => p.sitting && !p.is_test).map((p) => p.airtable_id)).toEqual([
@@ -125,7 +137,7 @@ describeWithDatabase("syncMps", () => {
   it("discards a held sync without changing anyone", async () => {
     for (let i = 1; i <= 25; i++)
       await addTestPolitician({ airtableId: `rec${10000 + i}`, name: `MP ${i}`, constituency: `Seat ${i}` });
-    await syncMps();
+    await syncMps(NIGHTLY);
     const [held] = await recentSyncs();
 
     expect(await decideHeldSync(held.id, "discard", "jo@pauseai.uk")).toBe(true);
@@ -136,24 +148,37 @@ describeWithDatabase("syncMps", () => {
       "hold MP sync",
       "discard held MP sync",
     ]);
+
+    // The page shows the newest run, plus any held one still waiting: not the discarded one.
+    await syncMps(NIGHTLY);
+    await syncMps(NIGHTLY);
+    const shown = await syncsToShow();
+    expect(shown.map((run) => run.status)).toEqual(["held", "held"]);
+    await decideHeldSync(shown[0].id, "apply", "jo@pauseai.uk");
+    await syncMps(NIGHTLY);
+    expect((await syncsToShow()).map((run) => run.status)).toEqual(["unchanged", "held"]);
   });
 
   it("asks Airtable for the sitting MPs only, with its token", async () => {
     const requests: Request[] = [];
     server.use(http.get(AIRTABLE, ({ request }) => void requests.push(request)));
-    await syncMps();
+    await syncMps(NIGHTLY);
     expect(requests[0].headers.get("authorization")).toBe("Bearer token");
     expect(new URL(requests[0].url).searchParams.get("filterByFormula")).toBe(
-      "AND({Body}='House of Commons',NOT({No longer in office}))",
+      "AND({Body}='House of Commons',{Status}=BLANK())",
     );
   });
 
-  it("fails, changing nothing, without a token or if Airtable fails", async () => {
+  it("fails, changing nothing but the log, without a token or if Airtable fails", async () => {
     vi.stubEnv("AIRTABLE_TOKEN", "");
-    await expect(syncMps()).rejects.toThrow("AIRTABLE_TOKEN isn't set");
+    await expect(syncMps(NIGHTLY)).rejects.toThrow("AIRTABLE_TOKEN isn't set");
     vi.stubEnv("AIRTABLE_TOKEN", "token");
     server.use(http.get(AIRTABLE, () => new HttpResponse(null, { status: 500 })));
-    await expect(syncMps()).rejects.toThrow("status 500");
+    await expect(syncMps(JO)).rejects.toThrow("status 500");
     expect(await politicians()).toEqual([]);
+    expect(await recentSyncs()).toMatchObject([
+      { status: "failed", startedBy: JO, error: "Airtable request failed with status 500: ", result: {} },
+      { status: "failed", startedBy: NIGHTLY, error: expect.stringContaining("AIRTABLE_TOKEN isn't set") },
+    ]);
   });
 });

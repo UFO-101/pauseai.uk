@@ -30,6 +30,7 @@ function form(fields: Record<string, string>) {
 }
 
 const statusCount = async () => (await query<{ n: number }>("SELECT count(*)::int AS n FROM campaign_statuses"))[0].n;
+const runs = () => query('SELECT job, status, started_by AS "startedBy" FROM import_runs ORDER BY id');
 
 describeWithDatabase("staff Server Actions", () => {
   useTestDatabase();
@@ -57,7 +58,7 @@ describeWithDatabase("staff Server Actions", () => {
     for (const attempt of attempts) expect(await expectRedirect(attempt)).toBe("/staff/login");
     expect(await statusCount()).toBe(0);
     expect(await query("SELECT name FROM politicians")).toEqual([{ name: "Polly Placeholder" }]);
-    expect(await query("SELECT count(*)::int AS n FROM controlai_imports")).toEqual([{ n: 0 }]);
+    expect(await query("SELECT count(*)::int AS n FROM import_runs")).toEqual([{ n: 0 }]);
   });
 
   it("markSigned marks a politician as signed today, or not, as the logged-in staff member", async () => {
@@ -77,7 +78,7 @@ describeWithDatabase("staff Server Actions", () => {
     expect(await statusCount()).toBe(0);
   });
 
-  it("importControlAiNow reads ControlAI's letter, and keeps a failure rather than crashing the page", async () => {
+  it("importControlAiNow reads ControlAI's letter as the staff member, and keeps a failure rather than crashing the page", async () => {
     const id = await addTestPolitician();
     await importControlAiNow();
     expect((await getPolitician(id))!.statuses["support-sobel-bill"]).toMatchObject({ updatedBy: "controlai" });
@@ -87,9 +88,9 @@ describeWithDatabase("staff Server Actions", () => {
     server.use(http.get("https://controlai.org/uk-pm-letter", () => new HttpResponse(null, { status: 500 })));
     await importControlAiNow();
     expect(error).toHaveBeenCalledOnce();
-    expect(await query("SELECT result->>'ok' AS ok FROM controlai_imports ORDER BY id")).toEqual([
-      { ok: "true" },
-      { ok: "false" },
+    expect(await runs()).toEqual([
+      { job: "import-controlai", status: "ok", startedBy: "jo@pauseai.uk" },
+      { job: "import-controlai", status: "failed", startedBy: "jo@pauseai.uk" },
     ]);
   });
 
@@ -104,32 +105,43 @@ describeWithDatabase("staff Server Actions", () => {
 
   it("checkNow checks the MPs against Parliament's", async () => {
     await checkNow();
-    expect(await query("SELECT count(*)::int AS n FROM mp_checks")).toEqual([{ n: 1 }]);
-    expect(revalidatePath).toHaveBeenCalledWith("/staff/check-data");
+    expect(await runs()).toEqual([{ job: "check-mps", status: "ok", startedBy: "jo@pauseai.uk" }]);
+    expect(revalidatePath).toHaveBeenCalledWith("/staff/import-data");
   });
 
-  it("syncNow copies the MPs from Airtable", async () => {
+  it("syncNow copies the MPs from Airtable, and keeps a failure rather than crashing the page", async () => {
     await syncNow();
     expect(await query("SELECT count(*)::int AS n FROM politicians WHERE airtable_id IS NOT NULL")).toEqual([{ n: 2 }]);
     expect(revalidatePath).toHaveBeenCalledWith("/staff/import-data");
+
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+    server.use(http.get("https://*.airtable.com/v0/*", () => new HttpResponse(null, { status: 500 })));
+    await syncNow();
+    expect(error).toHaveBeenCalledOnce();
+    expect(await runs()).toEqual([
+      { job: "sync-mps", status: "applied", startedBy: "jo@pauseai.uk" },
+      { job: "sync-mps", status: "failed", startedBy: "jo@pauseai.uk" },
+    ]);
   });
 
   it("decideSync applies or discards a held sync, and ignores a bad form", async () => {
     for (let i = 1; i <= 25; i++) await addTestPolitician({ airtableId: `rec${10000 + i}`, constituency: `Seat ${i}` });
     await syncNow();
-    const [{ id }] = await query<{ id: number }>("SELECT id::int AS id FROM mp_syncs");
+    const [{ id }] = await query<{ id: number }>("SELECT id::int AS id FROM import_runs");
     await decideSync(form({ id: String(id), decision: "maybe" }));
     await decideSync(form({ id: "x", decision: "apply" }));
-    expect(await query("SELECT status FROM mp_syncs")).toEqual([{ status: "held" }]);
+    expect(await query("SELECT status FROM import_runs")).toEqual([{ status: "held" }]);
     await decideSync(form({ id: String(id), decision: "discard" }));
-    expect(await query("SELECT status, decided_by FROM mp_syncs")).toEqual([
+    expect(await query("SELECT status, decided_by FROM import_runs")).toEqual([
       { status: "discarded", decided_by: "jo@pauseai.uk" },
     ]);
   });
 
-  it("importFromAirtable imports and shows the counts, or says Airtable isn't set up", async () => {
+  it("importFromAirtable imports the signatories, keeping the run, or the failure when Airtable isn't set up", async () => {
     vi.stubEnv("AIRTABLE_TOKEN", "");
-    expect(await expectRedirect(importFromAirtable)).toBe("/staff/import-data?unconfigured=1");
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+    await importFromAirtable();
+    expect(error).toHaveBeenCalledOnce();
 
     vi.stubEnv("AIRTABLE_TOKEN", "token");
     server.use(
@@ -137,6 +149,12 @@ describeWithDatabase("staff Server Actions", () => {
         HttpResponse.json({ records: [{ id: "r", fields: { "Full name or Title": "Lord X" } }] }),
       ),
     );
-    expect(await expectRedirect(importFromAirtable)).toBe("/staff/import-data?matched=0&added=1&alreadySet=0");
+    await importFromAirtable();
+    expect(await runs()).toEqual([
+      { job: "import-signatories", status: "failed", startedBy: "jo@pauseai.uk" },
+      { job: "import-signatories", status: "ok", startedBy: "jo@pauseai.uk" },
+    ]);
+    expect(await query("SELECT name FROM politicians")).toEqual([{ name: "Lord X" }]);
+    expect(revalidatePath).toHaveBeenCalledWith("/staff/import-data");
   });
 });

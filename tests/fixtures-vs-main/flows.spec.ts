@@ -76,8 +76,8 @@ async function staffScreen(page: Page, base: string, path: string) {
 
 for (const [path, name] of [
   ["/staff/politicians", "politicians"],
-  ["/staff/check-data", "check data"],
   ["/staff/import-data", "import data"],
+  ["/staff/import-history", "import history"],
 ] as const) {
   test(`branch vs main: staff, ${name}`, async ({ page }, testInfo) => {
     await compareWithMain(page, testInfo, path, { prepare: (page, base) => staffScreen(page, base, path), masks });

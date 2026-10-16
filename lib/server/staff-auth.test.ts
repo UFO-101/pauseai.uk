@@ -7,7 +7,7 @@ import { createSession, deleteSession, requireStaff, sessionCookie, sessionEmail
 vi.mock("next/headers", () => import("@/tests/next-headers"));
 
 describe("sessionCookie", () => {
-  it("is HttpOnly, Secure, SameSite=Lax, only under /staff, for 12 hours", () => {
+  it("is HttpOnly, Secure, SameSite=Lax, only under /staff, for a week", () => {
     expect(sessionCookie("t")).toEqual({
       name: "staff_session",
       value: "t",
@@ -15,7 +15,7 @@ describe("sessionCookie", () => {
       secure: true,
       sameSite: "lax",
       path: "/staff",
-      maxAge: 43200,
+      maxAge: 604800,
     });
   });
 });
@@ -30,7 +30,7 @@ describeWithDatabase("staff sessions", () => {
       "SELECT token_hash, round(extract(epoch FROM expires_at - created_at) / 3600)::int AS hours FROM staff_sessions",
     );
     expect(row.token_hash).not.toContain(token);
-    expect(row.hours).toBe(12);
+    expect(row.hours).toBe(168);
     expect(await sessionEmail(token)).toBe("jo@pauseai.uk");
     expect(await sessionEmail("guess")).toBeUndefined();
   });

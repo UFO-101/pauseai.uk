@@ -52,7 +52,7 @@ describeWithDatabase("GET /staff/api/callback", () => {
     expect(session).toMatch(/HttpOnly/);
     expect(session).toMatch(/Secure/);
     expect(session).toMatch(/SameSite=lax/i);
-    expect(session).toMatch(/Max-Age=43200/);
+    expect(session).toMatch(/Max-Age=604800/);
     expect(await sessionEmail(session.split(";")[0].split("=")[1])).toBe("jo@pauseai.uk");
     // The browser's login cookie has done its job.
     expect(res.headers.getSetCookie().find((c) => c.startsWith("staff_login="))).toMatch(
