@@ -61,6 +61,10 @@ export default function Nav() {
     [pathname],
   );
   const closeMenu = () => update({ open: false });
+  // The dropdown a link was just chosen from. It stays shut, though the
+  // pointer is still over it, across the navigation, until the pointer
+  // leaves it or something in it is focused again.
+  const [dismissed, setDismissed] = useState<number | null>(null);
 
   const header = useRef<HTMLElement>(null);
   useEffect(() => {
@@ -135,10 +139,14 @@ export default function Nav() {
           {dropdowns.map(({ label, href, links }, i) => (
             <div
               key={label}
-              className={dropdown === i ? "nav-item has-dropdown is-open" : "nav-item has-dropdown"}
+              className={["nav-item has-dropdown", dropdown === i && "is-open", dismissed === i && "is-dismissed"]
+                .filter(Boolean)
+                .join(" ")}
               ref={(item) => {
                 dropdownItems.current[i] = item;
               }}
+              onPointerLeave={() => setDismissed(null)}
+              onFocus={() => setDismissed(null)}
             >
               <SiteLink
                 href={href}
@@ -177,9 +185,10 @@ export default function Nav() {
                     href={linkHref}
                     role="menuitem"
                     onClick={(e) => {
-                      // Focus would stay on the link across the navigation,
-                      // and hold its dropdown open on the new page.
+                      // Neither the pointer still over it nor focus left on
+                      // the link holds it open on the new page.
                       e.currentTarget.blur();
+                      setDismissed(i);
                       closeMenu();
                     }}
                   >

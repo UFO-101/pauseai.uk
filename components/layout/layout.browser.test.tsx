@@ -191,19 +191,38 @@ describe("Nav", () => {
     expect(about.closest(".nav-item")!.classList.contains("is-open")).toBe(false);
   });
 
-  it("takes focus off a dropdown link once it's chosen, so its dropdown doesn't stay open on the new page", async () => {
+  it("shuts a dropdown once a link in it is chosen, though the pointer is still over it, until the pointer leaves", async () => {
     await page.viewport(1280, 800);
-    const { container } = await render(<Nav />);
+    const { container } = await render(
+      <>
+        <Nav />
+        <p>Elsewhere</p>
+      </>,
+    );
     container.addEventListener("click", (e) => e.preventDefault());
-    // Opened by focus, so the link can take it.
-    container.querySelector<HTMLElement>(".dropdown-trigger")!.focus();
-    const link = container.querySelector<HTMLElement>(".dropdown a")!;
+    const item = container.querySelector<HTMLElement>(".nav-item.has-dropdown")!;
+    // By element, not role: hidden, it's out of the accessibility tree.
+    const link = page.elementLocator(item.querySelector(".dropdown a")!);
+
+    await page.elementLocator(item.querySelector(".dropdown-trigger")!).hover();
     await expect.element(link).toBeVisible();
-    link.focus();
-    expect(link.closest(".nav-item")!.matches(":focus-within")).toBe(true);
-    link.click();
-    expect(document.activeElement).not.toBe(link);
-    expect(link.closest(".nav-item")!.matches(":focus-within")).toBe(false);
+    // Chosen with the pointer, which stays over the dropdown: neither the
+    // hover nor focus left on the link holds it open.
+    await link.click();
+    await expect.element(link).not.toBeVisible();
+    expect(item.matches(":hover")).toBe(true);
+    expect(item.matches(":focus-within")).toBe(false);
+
+    // Once the pointer has left, hovering opens it again.
+    await page.getByText("Elsewhere").hover();
+    await page.elementLocator(item.querySelector(".dropdown-trigger")!).hover();
+    await expect.element(link).toBeVisible();
+
+    // So does focus, from the keyboard, after a choice.
+    await link.click();
+    await expect.element(link).not.toBeVisible();
+    item.querySelector<HTMLElement>(".dropdown-trigger")!.focus();
+    await expect.element(link).toBeVisible();
   });
 
   it("closes the menu and dropdowns on a new page", async () => {
