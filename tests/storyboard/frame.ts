@@ -19,6 +19,11 @@ export async function frame(page: Page, caption: string): Promise<void> {
   info.annotations.push({ type: "frame", description: caption });
   if (process.env.STORYBOARD_SHOTS !== "1") return;
 
+  // The pointer is wherever the last click left it, which, as the page
+  // changes under it, is sometimes over a link or a select and sometimes
+  // not: a hover style that differs between runs. Out of the way first.
+  await page.mouse.move(0, 0).catch(() => {});
+
   // Images below the fold load first, and the fonts, so the picture is of the
   // finished page; and any smooth scroll (a field scrolled into view, an
   // anchor) has come to rest, so it's of the place it ends up.
