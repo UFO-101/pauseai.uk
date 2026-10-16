@@ -289,6 +289,9 @@ import("@/tests/next-headers"))` and put the session cookie in
   failure. Never retry, skip or loosen it to get past it; find why it
   varies.
 - A new component ships with its `*.browser.test.tsx` in the same PR.
+- **A new component gets an example in the component gallery**
+  (`app/(tools)/gallery/_examples/`, one per major variant), or
+  `tests/checks/gallery.test.ts` fails. The storyboard then pictures it.
 - **Tests find elements the way a person does**: by role and accessible
   name, label or text (`getByRole`, `getByLabelText`, `getByText`), or by
   the attributes the markup has for its state (`aria-expanded`,

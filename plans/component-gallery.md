@@ -1,6 +1,11 @@
 # Component gallery plan
 
-Written 2026-10-16. Status: not started.
+Written 2026-10-16. Status: done, 17 October 2026, on the
+`component-gallery` branch (stacked on `styling-to-components`). Two
+changes from the plan: the examples are a file per group in `_examples/`
+(and a `.client.tsx` beside each that needs state or callbacks) rather
+than one `_examples.tsx`; and every example's callbacks are pressed in its
+group's browser test, since the coverage gate allows no exclusions.
 
 ## Scope
 
