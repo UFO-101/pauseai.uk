@@ -14,7 +14,7 @@ describeWithDatabase("POST /api/cron/import-controlai", () => {
   it("reads the letter and says what it did", async () => {
     // No politicians yet, so nobody matches.
     const res = await call("Bearer s3cret");
-    expect(await res.json()).toMatchObject({ ok: true, signatories: 6, matched: 0, added: 0 });
+    expect(await res.json()).toMatchObject({ signatories: 6, matched: 0, added: 0 });
   });
 
   it("refuses anyone without the secret", async () => {

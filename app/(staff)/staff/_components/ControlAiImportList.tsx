@@ -1,16 +1,13 @@
 import { staffCopy } from "@/lib/content/staff-interface";
 import type { ControlAiImport } from "@/lib/server/controlai-import";
-import ResultBox from "./ResultBox";
+import RunBox from "./RunBox";
 import styles from "./staff.module.css";
 
-/** The newest copy of ControlAI's letter's signatories: what it did, the names it couldn't place, or why it failed. */
-export default function ControlAiImportStatus({ run }: { run?: ControlAiImport }) {
-  if (!run) return <p>{staffCopy.controlAi.never}</p>;
+function Import({ run }: { run: ControlAiImport }) {
+  if (run.status === "failed") return <RunBox run={run} summary={null} />;
   const { result } = run;
-  const at = new Date(run.at).toLocaleString("en-GB");
-  if (!result.ok) return <ResultBox error summary={staffCopy.controlAi.failed(at, result.error)} />;
   return (
-    <ResultBox summary={staffCopy.controlAi.result(at, result)} lines={result.problems.length}>
+    <RunBox run={run} summary={staffCopy.controlAi.result(result)} lines={result.problems.length}>
       {result.problems.length > 0 && (
         <div className={styles.scroll}>
           <table className={styles.table}>
@@ -36,6 +33,12 @@ export default function ControlAiImportStatus({ run }: { run?: ControlAiImport }
           </table>
         </div>
       )}
-    </ResultBox>
+    </RunBox>
   );
+}
+
+/** Recent copies of ControlAI's letter's signatories, a box each: what it did, the names it couldn't place, or why it failed. */
+export default function ControlAiImportList({ runs }: { runs: ControlAiImport[] }) {
+  if (runs.length === 0) return <p>{staffCopy.controlAi.never}</p>;
+  return runs.map((run) => <Import key={run.id} run={run} />);
 }

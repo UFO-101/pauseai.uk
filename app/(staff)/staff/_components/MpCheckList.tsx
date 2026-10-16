@@ -1,6 +1,7 @@
 import { staffCopy } from "@/lib/content/staff-interface";
 import type { MpProblem } from "@/lib/mp-check";
-import ResultBox from "./ResultBox";
+import type { MpCheck } from "@/lib/server/mp-check";
+import RunBox from "./RunBox";
 import styles from "./staff.module.css";
 
 /** What each side says, for one problem. */
@@ -18,24 +19,12 @@ function sides(problem: MpProblem): [string, string] {
   }
 }
 
-/** Where Airtable's MPs disagree with Parliament's, from the newest check. */
-export default function MpCheckList({ check }: { check?: { at: string; problems: MpProblem[] } }) {
-  if (!check) return <p>{staffCopy.check.never}</p>;
-  const at = new Date(check.at).toLocaleString("en-GB");
-  const count = check.problems.length;
+function Check({ run }: { run: MpCheck }) {
+  if (run.status === "failed") return <RunBox run={run} summary={null} />;
+  const { problems } = run.result;
+  const count = problems.length;
   return (
-    <ResultBox
-      lines={count}
-      summary={
-        <>
-          {staffCopy.check.checkedAt(at)}
-          <span className={styles.muted}>
-            {" "}
-            · {count === 0 ? staffCopy.check.allGood : staffCopy.check.problems(count)}
-          </span>
-        </>
-      }
-    >
+    <RunBox run={run} lines={count} summary={count === 0 ? staffCopy.check.allGood : staffCopy.check.problems(count)}>
       {count > 0 && (
         <div className={styles.scroll}>
           <table className={styles.table}>
@@ -48,7 +37,7 @@ export default function MpCheckList({ check }: { check?: { at: string; problems:
               </tr>
             </thead>
             <tbody>
-              {check.problems.map((problem) => {
+              {problems.map((problem) => {
                 const [airtable, parliament] = sides(problem);
                 return (
                   <tr key={`${problem.constituency} ${problem.kind}`}>
@@ -63,6 +52,12 @@ export default function MpCheckList({ check }: { check?: { at: string; problems:
           </table>
         </div>
       )}
-    </ResultBox>
+    </RunBox>
   );
+}
+
+/** Recent checks of Airtable's MPs against Parliament's, a box each: where they disagree, or why the check failed. */
+export default function MpCheckList({ runs }: { runs: MpCheck[] }) {
+  if (runs.length === 0) return <p>{staffCopy.check.never}</p>;
+  return runs.map((run) => <Check key={run.id} run={run} />);
 }

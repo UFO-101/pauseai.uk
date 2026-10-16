@@ -2,23 +2,25 @@ import { SubmitButton } from "@/components/ui/SubmitButton";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { CONTROLAI_LETTER_PAGE } from "@/lib/controlai-letter";
 import { PARLIAMENTARIANS_TABLE_URL } from "@/lib/server/airtable";
-import { latestControlAiImport } from "@/lib/server/controlai-import";
+import { recentControlAiImports } from "@/lib/server/controlai-import";
 import { recentSyncs } from "@/lib/server/mp-sync";
+import { recentSignatoryImports } from "@/lib/server/signatory-import";
 import { requireStaff } from "@/lib/server/staff-auth";
 import { decideSync, importControlAiNow, importFromAirtable, syncNow } from "../actions";
-import ControlAiImportStatus from "../_components/ControlAiImportStatus";
-import ResultBox from "../_components/ResultBox";
+import ControlAiImportList from "../_components/ControlAiImportList";
+import SignatoryImportList from "../_components/SignatoryImportList";
 import StaffHeader from "../_components/StaffHeader";
 import SyncList from "../_components/SyncList";
 import styles from "../_components/staff.module.css";
 
-type Search = { matched?: string; added?: string; alreadySet?: string; unconfigured?: string };
-
-/** Every import: the MPs and the signatories from Airtable, and ControlAI's letter from the web. */
-export default async function ImportPage({ searchParams }: { searchParams: Promise<Search> }) {
+/** Every import: the MPs and the signatories from Airtable, and ControlAI's letter from the web. Each with its recent runs. */
+export default async function ImportPage() {
   const { email } = await requireStaff();
-  const { matched, added, alreadySet, unconfigured } = await searchParams;
-  const [syncs, controlAi] = await Promise.all([recentSyncs(), latestControlAiImport()]);
+  const [syncs, signatoryImports, controlAiImports] = await Promise.all([
+    recentSyncs(),
+    recentSignatoryImports(),
+    recentControlAiImports(),
+  ]);
   return (
     <main className={`container ${styles.page}`}>
       <StaffHeader email={email} current="import" />
@@ -38,7 +40,7 @@ export default async function ImportPage({ searchParams }: { searchParams: Promi
           {staffCopy.syncs.syncNow}
         </SubmitButton>
       </form>
-      <SyncList syncs={syncs} decide={decideSync} />
+      <SyncList runs={syncs} decide={decideSync} />
 
       <h2>
         {staffCopy.import.title} <span className={`${styles.tag} ${styles.airtable}`}>{staffCopy.import.airtable}</span>
@@ -49,21 +51,12 @@ export default async function ImportPage({ searchParams }: { searchParams: Promi
         <a href={PARLIAMENTARIANS_TABLE_URL}>{staffCopy.import.intro.link}</a>
         {staffCopy.import.intro.after}
       </p>
-      {unconfigured && <p className={styles.error}>{staffCopy.import.notConfigured}</p>}
-      {matched !== undefined && (
-        <ResultBox
-          summary={staffCopy.import.result({
-            matched: Number(matched),
-            added: Number(added),
-            alreadySet: Number(alreadySet),
-          })}
-        />
-      )}
       <form action={importFromAirtable}>
         <SubmitButton variant="primary" size="small">
           {staffCopy.import.button}
         </SubmitButton>
       </form>
+      <SignatoryImportList runs={signatoryImports} />
 
       <h2>
         {staffCopy.controlAi.title} <span className={`${styles.tag} ${styles.web}`}>{staffCopy.import.web}</span>
@@ -79,7 +72,7 @@ export default async function ImportPage({ searchParams }: { searchParams: Promi
           {staffCopy.controlAi.importNow}
         </SubmitButton>
       </form>
-      <ControlAiImportStatus run={controlAi} />
+      <ControlAiImportList runs={controlAiImports} />
     </main>
   );
 }

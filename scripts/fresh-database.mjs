@@ -13,7 +13,7 @@
 // Mac (Postgres.app, Homebrew), else it tries localhost.
 import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync, readdirSync } from "node:fs";
-import { join } from "node:path";
+import { basename, join } from "node:path";
 import { userInfo } from "node:os";
 import { fileURLToPath } from "node:url";
 import TEST_MPS from "../lib/test-mps.json" with { type: "json" };
@@ -85,15 +85,17 @@ export function dropDatabase(name) {
  * `singleTransaction` wraps each file in a transaction, as Netlify may: the
  * migrations must work either way.
  */
-export function freshDatabase(name, { singleTransaction = false } = {}) {
-  return resetDatabase(databaseUrl(name), { singleTransaction });
+export function freshDatabase(name, { singleTransaction = false, upTo } = {}) {
+  return resetDatabase(databaseUrl(name), { singleTransaction, upTo });
 }
 
 /**
  * Drops and recreates the database `url` names, on the server it names, and
- * applies the migrations. Returns `url`.
+ * applies the migrations: all of them, or with `upTo` ("0012"), only those
+ * up to that number, for a test of what the next one does to a database
+ * that's been in use. Returns `url`.
  */
-export function resetDatabase(url, { singleTransaction = false } = {}) {
+export function resetDatabase(url, { singleTransaction = false, upTo } = {}) {
   const target = new URL(url);
   const name = decodeURIComponent(target.pathname.slice(1));
   if (!/^[a-z0-9_]+$/.test(name)) throw new Error(`Bad database name: ${name}`);
@@ -102,7 +104,10 @@ export function resetDatabase(url, { singleTransaction = false } = {}) {
   server.pathname = "/postgres";
   psql(server.toString(), "-c", `DROP DATABASE IF EXISTS "${name}" WITH (FORCE)`);
   psql(server.toString(), "-c", `CREATE DATABASE "${name}"`);
-  for (const file of migrationFiles()) psql(url, ...(singleTransaction ? ["-1"] : []), "-f", file);
+  for (const file of migrationFiles()) {
+    if (upTo !== undefined && basename(file).slice(0, upTo.length) > upTo) break;
+    psql(url, ...(singleTransaction ? ["-1"] : []), "-f", file);
+  }
   return url;
 }
 

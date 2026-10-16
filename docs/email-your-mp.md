@@ -63,12 +63,22 @@ At the swap (stage 5 of the plan) these replace `/campaigns`:
 - `app/(site)/campaigns-v2/`: the pages and the form.
 - `app/api/email-your-mp/`: the form's lookup and send requests.
 
+## The import log
+
+Every run of every import and check below, nightly or from a staff button,
+goes in `import_runs` (`lib/server/import-runs.ts`): when, who started it
+(`nightly` or the staff member's email), how it ended, why it failed, and the
+job's own account of what it found. Failures and runs that changed nothing
+are kept too, so `/staff/import-data` and `/staff/check-data` can say what
+went wrong and when a job last ran. Nothing is pruned. A staff button that
+fails shows the failure there rather than an error page.
+
 ## MPs
 
 Airtable's "UK Parliamentarians" table is the source of truth for who the
 MPs are and their emails; the policy team keeps it up to date. Its rows
-whose Body is "House of Commons", except those ticked "No longer in
-office", are copied nightly into the `politicians` table, keyed by
+whose Body is "House of Commons" and whose Status is blank (the others are
+Died, Retired or No longer in office) are copied nightly into the `politicians` table, keyed by
 Airtable's record ID, by the scheduled function `netlify/functions/sync-mps/`,
 which calls `/api/cron/sync-mps`. Staff can also run it from
 `/staff/import-data`. If more than 20 MPs would change at once, the sync is held

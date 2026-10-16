@@ -1,13 +1,17 @@
 import "server-only";
 import { checkAgainstParliament, type MpProblem } from "@/lib/mp-check";
 import { fetchCurrentMps } from "@/lib/parliament";
-import { query } from "./db";
+import type { ImportRun } from "@/lib/import-runs";
+import { keepingFailure, recentRuns, recordRun } from "./import-runs";
 import { sittingMps } from "./mp-sync";
 import { outsideFetch } from "./outside-fetch";
 
 // Compares the MPs copied from Airtable with Parliament's, nightly
-// (app/api/cron/check-mps) or when staff ask, and keeps what it finds for
-// /staff/check-data. It changes nothing else.
+// (app/api/cron/check-mps) or when staff ask, and keeps what it finds in
+// the import log (import-runs.ts, as "check-mps") for /staff/check-data. It
+// changes nothing else.
+
+const JOB = "check-mps";
 
 // Parliament's API answers 429 when asked too much at once, which ~650
 // contact lookups can do. Wait as it says (Retry-After, in seconds), or
@@ -29,18 +33,18 @@ async function getJson(url: string): Promise<unknown> {
   }
 }
 
-export type MpCheck = { at: string; problems: MpProblem[] };
+export type MpCheckResult = { problems: MpProblem[] };
 
-/** Checks the sitting MPs against Parliament's, and keeps the result. */
-export async function checkMps(): Promise<MpProblem[]> {
-  const parliament = await fetchCurrentMps(getJson);
-  const problems = checkAgainstParliament(await sittingMps(), parliament);
-  await query("INSERT INTO mp_checks (problems) VALUES ($1)", [JSON.stringify(problems)]);
-  return problems;
+export type MpCheck = ImportRun<MpCheckResult>;
+
+/** Checks the sitting MPs against Parliament's, keeping the result, or the failure. */
+export function checkMps(startedBy: string): Promise<MpProblem[]> {
+  return keepingFailure(JOB, startedBy, async () => {
+    const parliament = await fetchCurrentMps(getJson);
+    const problems = checkAgainstParliament(await sittingMps(), parliament);
+    await recordRun(JOB, startedBy, "ok", { problems });
+    return problems;
+  });
 }
 
-/** The newest check, if there's been one. */
-export async function latestCheck(): Promise<MpCheck | undefined> {
-  const [check] = await query<MpCheck>("SELECT at, problems FROM mp_checks ORDER BY at DESC, id DESC LIMIT 1");
-  return check;
-}
+export const recentChecks = () => recentRuns<MpCheckResult>(JOB);

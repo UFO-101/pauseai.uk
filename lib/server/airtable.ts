@@ -17,6 +17,13 @@ export const PARLIAMENTARIANS_TABLE_URL = `https://airtable.com/${BASE_ID}/${TAB
 
 export class AirtableRequestError extends Error {}
 
+/** AIRTABLE_TOKEN, or throws: without it, nothing can be read from Airtable. */
+export function airtableToken(): string {
+  const token = process.env.AIRTABLE_TOKEN;
+  if (!token) throw new Error("AIRTABLE_TOKEN isn't set, so nothing can be read from Airtable");
+  return token;
+}
+
 // Well past any realistic table (each page holds up to 100 records), so a
 // repeated/looping offset can't spin the request forever.
 const MAX_PAGES = 100;
@@ -38,7 +45,10 @@ async function fetchRecords(token: string, formula: string, fields: readonly str
       headers: { Authorization: `Bearer ${token}` },
       cache: "no-store",
     });
-    if (!res.ok) throw new AirtableRequestError(`Airtable request failed with status ${res.status}`);
+    // Airtable says what's wrong (a field the table doesn't have, a bad
+    // formula) in the body, which the log needs to say which.
+    if (!res.ok)
+      throw new AirtableRequestError(`Airtable request failed with status ${res.status}: ${await res.text()}`);
     const data = await res.json();
     found.push(...(data.records ?? []));
     offset = data.offset;
@@ -52,7 +62,9 @@ function text(record: AirtableRecord, field: string): string {
   return typeof value === "string" ? value.trim() : "";
 }
 
-export const MPS_FORMULA = "AND({Body}='House of Commons',NOT({No longer in office}))";
+// Status is blank while they're in office; otherwise Died, Retired or No
+// longer in office. (It replaced a "No longer in office" checkbox on 15 Oct 2026.)
+export const MPS_FORMULA = "AND({Body}='House of Commons',{Status}=BLANK())";
 const MP_FIELDS = ["Full name or Title", "Salutation", "Constituency", "Party", "Email"] as const;
 
 /** The sitting MPs, sorted by constituency. */

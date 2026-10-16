@@ -102,7 +102,7 @@ test("staff log in, set a status that shows on /campaigns, and log out", async (
   await expect(page.getByRole("cell", { name: "set status" }).first()).toBeVisible();
 
   await page.goto(`${BASE}/staff/import-data`);
-  await expect(page.getByText(staffCopy.syncs.status.applied).first()).toBeVisible();
+  await expect(page.getByText(staffCopy.runs.status.applied).first()).toBeVisible();
 
   // The fixture ControlAI letter is signed by Polly Placeholder MP, so the bill's column says so.
   await page.getByRole("button", { name: staffCopy.controlAi.importNow }).click();

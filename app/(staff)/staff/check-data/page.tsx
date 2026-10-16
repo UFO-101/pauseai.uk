@@ -1,7 +1,7 @@
 import { SubmitButton } from "@/components/ui/SubmitButton";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { MEMBERS_API } from "@/lib/parliament";
-import { latestCheck } from "@/lib/server/mp-check";
+import { recentChecks } from "@/lib/server/mp-check";
 import { requireStaff } from "@/lib/server/staff-auth";
 import { checkNow } from "../actions";
 import MpCheckList from "../_components/MpCheckList";
@@ -10,7 +10,7 @@ import styles from "../_components/staff.module.css";
 
 export default async function MpCheckPage() {
   const { email } = await requireStaff();
-  const check = await latestCheck();
+  const checks = await recentChecks();
   return (
     <main className={`container ${styles.page}`}>
       <StaffHeader email={email} current="check" />
@@ -30,7 +30,7 @@ export default async function MpCheckPage() {
           {staffCopy.check.checkNow}
         </SubmitButton>
       </form>
-      <MpCheckList check={check} />
+      <MpCheckList runs={checks} />
     </main>
   );
 }

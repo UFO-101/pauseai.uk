@@ -89,9 +89,8 @@ export const staffCopy = {
     },
     importNow: "Read it now",
     never: "Not read yet.",
-    result: (at: string, r: { signatories: number; matched: number; added: number; removed: number }) =>
-      `Read at ${at}: ${r.signatories} names, ${r.matched} found here; ${r.added} added, ${r.removed} removed.`,
-    failed: (at: string, error: string) => `Reading at ${at} failed: ${error}`,
+    result: (r: { signatories: number; matched: number; added: number; removed: number }) =>
+      `${r.signatories} names, ${r.matched} found here; ${r.added} added, ${r.removed} removed.`,
     columns: { name: "Name", problem: "Problem" },
     kinds: { nobody: "Nobody here", several: "Could be:" } as Record<string, string>,
   },
@@ -101,20 +100,29 @@ export const staffCopy = {
     intro: {
       before: "From the ",
       link: "UK Parliamentarians table in Airtable",
-      after: ": everyone whose Body is “House of Commons” and isn't ticked “No longer in office”.",
+      after: ": everyone whose Body is “House of Commons” and whose Status is blank.",
     },
     syncNow: "Import MPs now",
     none: "Not yet imported.",
-    status: { applied: "Applied", held: "Held", discarded: "Discarded", unchanged: "Unchanged" } as Record<
-      string,
-      string
-    >,
     added: "Added",
     removed: "Removed",
     changed: "Changed",
     apply: "Apply",
     discard: "Discard",
-    decidedBy: (by: string) => `by ${by}`,
+  },
+  // The line every run in the import log starts with (RunBox): how it
+  // ended, when, who started it, and for a held MP import, who decided it.
+  runs: {
+    status: {
+      ok: "⁂ Peractum",
+      failed: "⁂ Defecit",
+      unchanged: "Unchanged",
+      held: "Held",
+      applied: "Applied",
+      discarded: "Discarded",
+    } as Record<string, string>,
+    by: (who: string) => `by ${who}`,
+    decidedBy: (who: string) => `⁂ decrevit ${who}`,
   },
   check: {
     pageTitle: "Check data",
@@ -128,7 +136,6 @@ export const staffCopy = {
     },
     checkNow: "Check now",
     never: "Never checked",
-    checkedAt: (at: string) => `Checked at: ${at}`,
     allGood: "All good.",
     problems: (n: number) => `${n} problem${n === 1 ? "" : "s"}`,
     columns: {
@@ -162,7 +169,7 @@ export const staffCopy = {
     nightly: "Nightly",
     oneOff: "One-off",
     button: "Import signatories",
-    notConfigured: "AIRTABLE_TOKEN is not configured.",
+    none: "⁂ Nondum importatum.",
     note: "From Airtable",
     // matched + added is everyone ticked in Airtable; alreadySet is those of them already marked here.
     result: (r: { matched: number; added: number; alreadySet: number }) =>
