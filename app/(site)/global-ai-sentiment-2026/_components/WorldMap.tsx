@@ -22,6 +22,7 @@ import {
   type MapMetric,
 } from "@/lib/sentiment-map";
 import DivergingBar, { BarAxisLabels } from "./DivergingBar";
+import styles from "./sentiment.module.css";
 
 // Tooltip order: the three "against" options (braced together with their
 // subtotal), then "not sure" directly above "as quickly as possible" - the
@@ -122,17 +123,17 @@ export default function WorldMap() {
   }
 
   return (
-    <div className="gas-map">
-      <div className="gas-map-controls" role="group" aria-label="Map metric">
+    <div className={styles.map}>
+      <div className={styles.mapControls} role="group" aria-label="Map metric">
         {METRIC_GROUPS.map((group) => (
-          <div key={group.label} className="gas-map-metric-group">
-            <span className="gas-map-metric-group-label">{group.label}</span>
-            <div className="gas-map-metric-group-buttons">
+          <div key={group.label} className={styles.mapMetricGroup}>
+            <span className={styles.mapMetricGroupLabel}>{group.label}</span>
+            <div className={styles.mapMetricGroupButtons}>
               {group.options.map((option) => (
                 <button
                   key={option.key}
                   type="button"
-                  className={`gas-map-metric-btn ${metric === option.key ? "active" : ""}`}
+                  className={metric === option.key ? `${styles.mapMetricBtn} ${styles.active}` : styles.mapMetricBtn}
                   onClick={() => setMetric(option.key)}
                   style={metric === option.key ? { borderColor: option.light, color: option.light } : undefined}
                 >
@@ -148,20 +149,20 @@ export default function WorldMap() {
           the panel below - it decodes what's already on screen, so it
           belongs next to the thing it explains, not trailing content the
           reader has to scroll back up past. */}
-      <div className="gas-map-legend">
-        <span className="gas-map-legend-label">{activeOption.label}</span>
-        <div className="gas-map-legend-scale">
+      <div className={styles.mapLegend}>
+        <span className={styles.mapLegendLabel}>{activeOption.label}</span>
+        <div className={styles.mapLegendScale}>
           <span>{domainMin}%</span>
-          <div className="gas-map-legend-gradient" style={{ background: legendGradient(stops) }} />
+          <div className={styles.mapLegendGradient} style={{ background: legendGradient(stops) }} />
           <span>{domainMax}%</span>
         </div>
-        <span className="gas-map-legend-nodata">
+        <span className={styles.mapLegendNodata}>
           <i /> No data
         </span>
       </div>
 
-      <div className="gas-map-canvas">
-        {!features && <div className="gas-map-loading">Loading map…</div>}
+      <div className={styles.mapCanvas}>
+        {!features && <div className={styles.mapLoading}>Loading map…</div>}
         {features && (
           <svg
             viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
@@ -180,7 +181,8 @@ export default function WorldMap() {
                   key={f.properties.name}
                   d={d}
                   fill={fill}
-                  className={`gas-map-country ${!data ? "gas-map-country-nodata" : ""}`}
+                  data-testid="map-country"
+                  className={data ? styles.mapCountry : `${styles.mapCountry} ${styles.mapCountryNodata}`}
                   onClick={data ? () => selectCountry(data) : undefined}
                   onKeyDown={
                     data
@@ -219,9 +221,9 @@ export default function WorldMap() {
                 const selectedD =
                   path!(features.features.find((f) => f.properties.name === selected.country)!) ?? undefined;
                 return (
-                  <g className="gas-map-selection-outline" aria-hidden="true">
-                    <path d={selectedD} className="gas-map-selection-outline-halo" />
-                    <path d={selectedD} className="gas-map-selection-outline-line" />
+                  <g className={styles.mapSelectionOutline} data-testid="map-selection-outline" aria-hidden="true">
+                    <path d={selectedD} className={styles.mapSelectionOutlineHalo} />
+                    <path d={selectedD} className={styles.mapSelectionOutlineLine} />
                   </g>
                 );
               })()}
@@ -236,16 +238,16 @@ export default function WorldMap() {
               104 countries" list below. Hidden on narrow screens where a
               single skinny bar has no room to be legible - see
               .gas-map-panel-bar / .gas-map-panel-detail media rules. */}
-          <div className="gas-map-panel gas-map-panel-bar">
+          <div className={`${styles.mapPanel} ${styles.mapPanelBar}`} data-testid="map-panel-bar">
             <button
               type="button"
-              className="gas-map-panel-close"
+              className={styles.mapPanelClose}
               onClick={() => setSelected(null)}
               aria-label="Clear selection"
             >
               ×
             </button>
-            <div className="gas-bar-list gas-global-bar">
+            <div className={`${styles.barList} ${styles.globalBar}`}>
               <BarAxisLabels />
               <DivergingBar
                 label={selected.country}
@@ -261,31 +263,33 @@ export default function WorldMap() {
 
           {/* Mobile: the compact tooltip-style breakdown, since it fits a
               narrow viewport better than a full-width bar. */}
-          <div className="gas-map-panel gas-map-panel-detail">
+          <div className={`${styles.mapPanel} ${styles.mapPanelDetail}`} data-testid="map-panel-detail">
             <button
               type="button"
-              className="gas-map-panel-close"
+              className={styles.mapPanelClose}
               onClick={() => setSelected(null)}
               aria-label="Clear selection"
             >
               ×
             </button>
-            <div className="gas-map-panel-title">{selected.country}</div>
-            <div className="gas-map-panel-region">
+            <div className={styles.mapPanelTitle} data-testid="map-panel-title">
+              {selected.country}
+            </div>
+            <div className={styles.mapPanelRegion}>
               {selected.region} &middot; n={selected.n.toLocaleString()} &middot; ±{selected.moe_pp}pp
             </div>
-            <ul className="gas-map-panel-list">
-              <li className="gas-map-panel-group">
-                <ul className="gas-map-panel-group-items">
+            <ul className={styles.mapPanelList}>
+              <li className={styles.mapPanelGroup}>
+                <ul className={styles.mapPanelGroupItems}>
                   {AGAINST_OPTIONS.map((option) => (
                     <li key={option.key}>
-                      <span className="gas-map-panel-dot" style={{ background: option.light }} />
-                      <span className="gas-map-panel-label">{option.shortLabel}</span>
-                      <span className="gas-map-panel-value">{selected[option.key]}%</span>
+                      <span className={styles.mapPanelDot} style={{ background: option.light }} />
+                      <span className={styles.mapPanelLabel}>{option.shortLabel}</span>
+                      <span className={styles.mapPanelValue}>{selected[option.key]}%</span>
                     </li>
                   ))}
                 </ul>
-                <div className="gas-map-panel-brace-box" aria-hidden="true">
+                <div className={styles.mapPanelBraceBox} aria-hidden="true">
                   <svg viewBox="0 0 10 100" preserveAspectRatio="none">
                     <path
                       d="M1,1 C7,1 5,45 9,50 C5,55 7,99 1,99"
@@ -296,23 +300,27 @@ export default function WorldMap() {
                     />
                   </svg>
                 </div>
-                <div className="gas-map-panel-total">
-                  <span className="gas-map-panel-total-label">Total against</span>
-                  <span className="gas-map-panel-total-value">{slowOrStopPct(selected)}%</span>
+                <div className={styles.mapPanelTotal}>
+                  <span className={styles.mapPanelTotalLabel}>Total against</span>
+                  <span className={styles.mapPanelTotalValue} data-testid="map-panel-total-value">
+                    {slowOrStopPct(selected)}%
+                  </span>
                 </div>
               </li>
               {REST_OPTIONS.map((option) => (
                 <li key={option.key}>
-                  <span className="gas-map-panel-dot" style={{ background: option.light }} />
-                  <span className="gas-map-panel-label">{option.shortLabel}</span>
-                  <span className="gas-map-panel-value">{selected[option.key]}%</span>
+                  <span className={styles.mapPanelDot} style={{ background: option.light }} />
+                  <span className={styles.mapPanelLabel}>{option.shortLabel}</span>
+                  <span className={styles.mapPanelValue}>{selected[option.key]}%</span>
                 </li>
               ))}
             </ul>
           </div>
         </>
       ) : (
-        <div className="gas-map-panel gas-map-panel-placeholder">Click or tap a country to see its full breakdown.</div>
+        <div className={`${styles.mapPanel} ${styles.mapPanelPlaceholder}`}>
+          Click or tap a country to see its full breakdown.
+        </div>
       )}
     </div>
   );

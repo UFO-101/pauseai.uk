@@ -7,6 +7,7 @@ import {
   type DemographicRow,
   type ResponseOption,
 } from "@/lib/content/aiSentiment2026";
+import styles from "./sentiment.module.css";
 
 type Row = CountryRow | DemographicRow;
 
@@ -63,23 +64,23 @@ export default function VerticalDivergingBar({ row, meta }: VerticalDivergingBar
   const againstEndPct = total > 0 ? (against / total) * 100 : 0;
 
   return (
-    <div className="gas-vbar">
-      <span className="gas-vbar-axis-label gas-vbar-axis-against">&uarr; Against development</span>
+    <div className={styles.vbar}>
+      <span className={styles.vbarAxisLabel}>&uarr; Against development</span>
 
-      <div className="gas-vbar-body">
-        <div className="gas-vbar-track-wrap">
+      <div className={styles.vbarBody}>
+        <div className={styles.vbarTrackWrap}>
           <div
-            className="gas-vbar-track"
+            className={styles.vbarTrack}
             role="img"
             aria-label={`Global average: ${segments.map((s) => `${s.option.shortLabel} ${Math.round(s.value)}%`).join(", ")}`}
           >
             {segments.map(({ option, value, gapBefore }) => (
               <div
                 key={option.key}
-                className={`gas-vbar-segment ${gapBefore ? "gas-vbar-segment-gap-before" : ""}`}
+                className={gapBefore ? `${styles.vbarSegment} ${styles.vbarSegmentGapBefore}` : styles.vbarSegment}
                 style={{ flex: value, background: option.light }}
               >
-                {value > 0 && <span className="gas-vbar-segment-value">{Math.round(value)}</span>}
+                {value > 0 && <span className={styles.vbarSegmentValue}>{Math.round(value)}</span>}
               </div>
             ))}
           </div>
@@ -90,19 +91,24 @@ export default function VerticalDivergingBar({ row, meta }: VerticalDivergingBar
             track-height-matching) box, and label/brace widths are also %
             of that box, so the whole right-hand layout scales down to fit
             a phone screen instead of needing a separate mobile layout. */}
-        <div className="gas-vbar-labels" aria-hidden="true">
+        <div className={styles.vbarLabels} aria-hidden="true">
           {positionedLabels.map(({ option, value, topPct }) => (
-            <div key={option.key} className="gas-vbar-label-item" style={{ top: `${topPct}%` }}>
-              <span className="gas-vbar-label-tick" style={{ background: option.light }} />
-              <span className="gas-vbar-label-text">
+            <div
+              key={option.key}
+              className={styles.vbarLabelItem}
+              data-testid="vbar-label"
+              style={{ top: `${topPct}%` }}
+            >
+              <span className={styles.vbarLabelTick} style={{ background: option.light }} />
+              <span className={styles.vbarLabelText}>
                 {option.shortLabel} <strong>{Math.round(value)}%</strong>
               </span>
             </div>
           ))}
 
           {against > 0 && (
-            <div className="gas-vbar-brace" style={{ top: 0, height: `${againstEndPct}%` }}>
-              <div className="gas-vbar-brace-svg-box" aria-hidden="true">
+            <div className={styles.vbarBrace} data-testid="vbar-brace" style={{ top: 0, height: `${againstEndPct}%` }}>
+              <div className={styles.vbarBraceSvgBox} aria-hidden="true">
                 <svg viewBox="0 0 10 100" preserveAspectRatio="none">
                   <path
                     d="M1,1 C7,1 5,45 9,50 C5,55 7,99 1,99"
@@ -113,7 +119,7 @@ export default function VerticalDivergingBar({ row, meta }: VerticalDivergingBar
                   />
                 </svg>
               </div>
-              <span className="gas-vbar-brace-total">
+              <span className={styles.vbarBraceTotal}>
                 Total against <strong>{Math.round(against)}%</strong>
               </span>
             </div>
@@ -121,9 +127,13 @@ export default function VerticalDivergingBar({ row, meta }: VerticalDivergingBar
         </div>
       </div>
 
-      <span className="gas-vbar-axis-label gas-vbar-axis-for">For development &darr;</span>
+      <span className={styles.vbarAxisLabel}>For development &darr;</span>
 
-      {meta && <div className="gas-vbar-meta">{meta}</div>}
+      {meta && (
+        <div className={styles.vbarMeta} data-testid="vbar-meta">
+          {meta}
+        </div>
+      )}
     </div>
   );
 }

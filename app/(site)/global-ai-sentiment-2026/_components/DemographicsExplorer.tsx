@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { DEMOGRAPHICS, regionLabel } from "@/lib/content/aiSentiment2026";
 import DivergingBar, { BarAxisLabels } from "./DivergingBar";
+import styles from "./sentiment.module.css";
 
 const SECTIONS: { key: string; label: string }[] = [
   { key: "region_average", label: "Region" },
@@ -23,15 +24,15 @@ export default function DemographicsExplorer() {
   const rows = useMemo(() => DEMOGRAPHICS.filter((d) => d.section === section), [section]);
 
   return (
-    <div className="gas-explorer">
-      <div className="gas-tabs" role="tablist" aria-label="Demographic cut">
+    <div>
+      <div className={styles.tabs} role="tablist" aria-label="Demographic cut">
         {SECTIONS.map((s) => (
           <button
             key={s.key}
             type="button"
             role="tab"
             aria-selected={section === s.key}
-            className={`gas-tab ${section === s.key ? "active" : ""}`}
+            className={section === s.key ? `${styles.tab} ${styles.active}` : styles.tab}
             onClick={() => setSection(s.key)}
           >
             {s.label}
@@ -39,8 +40,8 @@ export default function DemographicsExplorer() {
         ))}
       </div>
 
-      <div className="gas-explorer-controls">
-        <div className="gas-filter-group gas-filter-checkbox">
+      <div className={styles.explorerControls}>
+        <div className={`${styles.filterGroup} ${styles.filterCheckbox}`}>
           <label htmlFor="gas-demo-show-not-sure">
             <input
               id="gas-demo-show-not-sure"
@@ -53,7 +54,7 @@ export default function DemographicsExplorer() {
         </div>
       </div>
 
-      <div className="gas-bar-list">
+      <div className={styles.barList}>
         <BarAxisLabels />
         {rows.map((row) => (
           <DivergingBar
