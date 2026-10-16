@@ -16,7 +16,7 @@ export type FlowStatus = "passed" | "failed" | "timedOut" | "interrupted";
  */
 export const SECTION_ORDER = [
   "public-pages",
-  "email-your-mp",
+  "campaigns",
   "staff",
   "collateral",
   "consent",
