@@ -6,8 +6,46 @@ on:
   pull_request:
 
 jobs:
-  test-build:
-    name: Test, build
+  # Four jobs, so each result arrives as soon as it's known: a formatting
+  # slip shows up in a minute, not after the tests.
+  checks:
+    name: Lint, format
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Every check runs even if an earlier one fails, so one push reports
+      # them all.
+      # Fails on warnings too. Our own rules keep Airtable, Luma and the
+      # database each behind one file (eslint.config.mjs).
+      - name: Lint
+        if: ${{ !cancelled() }}
+        run: npm run lint
+
+      - name: Lint CSS
+        if: ${{ !cancelled() }}
+        run: npm run lint:css
+
+      - name: Find unused files, exports and dependencies
+        if: ${{ !cancelled() }}
+        run: npm run lint:unused
+
+      - name: Check formatting
+        if: ${{ !cancelled() }}
+        run: npm run format:check
+
+  test:
+    name: Test
     runs-on: ubuntu-latest
     # Tests that need a database make their own in this Postgres
     # (tests/database.ts, scripts/fresh-database.mjs).
@@ -73,22 +111,26 @@ jobs:
       - name: Test with coverage
         run: npm test
 
-      # Fails on warnings too. Our own rules keep Airtable, Luma and the
-      # database each behind one file (eslint.config.mjs).
-      - name: Lint
-        run: npm run lint
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Lint CSS
-        run: npm run lint:css
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
 
-      - name: Find unused files, exports and dependencies
-        run: npm run lint:unused
+      - name: Install dependencies
+        run: npm ci
 
-      - name: Check formatting
-        run: npm run format:check
-
+      # `next build` alone. Netlify's `npm run build` runs the unit tests and
+      # the linters first, which the jobs above do, with a Postgres.
       - name: Build
-        run: npm run build
+        run: npx next build
 
   storyboard:
     name: Storyboard
