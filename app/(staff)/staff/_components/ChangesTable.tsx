@@ -1,4 +1,5 @@
 import { staffCopy } from "@/lib/content/staff-interface";
+import { staffTime } from "@/lib/staff-time";
 import type { AuditEntry } from "@/lib/server/audit";
 import styles from "./staff.module.css";
 
@@ -18,7 +19,7 @@ export default function ChangesTable({ changes }: { changes: AuditEntry[] }) {
         <tbody>
           {changes.map((change) => (
             <tr key={change.id}>
-              <td>{new Date(change.at).toLocaleString("en-GB")}</td>
+              <td>{staffTime(change.at)}</td>
               <td>{change.actor}</td>
               <td>{change.action}</td>
               <td>

@@ -60,7 +60,7 @@ function ran<Result>(result: Result, run: Partial<ImportRun<Result>> = {}): Impo
 }
 const failed = <Result,>(error: string, run: Partial<ImportRun<Result>> = {}): ImportRun<Result> =>
   ({ ...ran({}), status: "failed", error, ...run }) as ImportRun<Result>;
-const AT = new Date("2026-10-15T02:00:00Z").toLocaleString("en-GB");
+const AT = "2026-10-15 02:00";
 
 /** A stand-in Server Action that keeps what it was sent. */
 function action() {
@@ -466,9 +466,7 @@ describe("LettersTable", () => {
     await expect.element(page.getByText(/strange/)).toBeInTheDocument();
     await expect.element(page.getByText('{"type":"HardBounce"}', { exact: false })).toBeInTheDocument();
     expect(page.getByText(staffCopy.politicians.testMp).all()).toHaveLength(1);
-    await expect
-      .element(page.getByRole("cell", { name: new Date("2026-10-13T09:00:00Z").toLocaleString("en-GB"), exact: true }))
-      .toBeInTheDocument();
+    await expect.element(page.getByRole("cell", { name: "2026-10-13 09:00", exact: true })).toBeInTheDocument();
   });
 
   it("says when there are none", async () => {

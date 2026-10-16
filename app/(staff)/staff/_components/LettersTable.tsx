@@ -1,9 +1,8 @@
 import { campaignBySlug } from "@/lib/email-your-mp";
 import { staffCopy } from "@/lib/content/staff-interface";
+import { staffTime } from "@/lib/staff-time";
 import type { LetterSummary } from "@/lib/server/letters";
 import styles from "./staff.module.css";
-
-const when = (at: string) => new Date(at).toLocaleString("en-GB");
 
 /** Letters, with each change of status (sent, bounced, complained about) and each reply. */
 export default function LettersTable({ letters }: { letters: LetterSummary[] }) {
@@ -26,7 +25,7 @@ export default function LettersTable({ letters }: { letters: LetterSummary[] }) 
         <tbody>
           {letters.map((letter) => (
             <tr key={letter.id}>
-              <td>{when(letter.createdAt)}</td>
+              <td>{staffTime(letter.createdAt)}</td>
               <td>
                 {letter.senderName}
                 <br />
@@ -38,12 +37,12 @@ export default function LettersTable({ letters }: { letters: LetterSummary[] }) 
               </td>
               <td>{campaignBySlug(letter.campaign)?.title ?? letter.campaign}</td>
               <td>{staffCopy.letters.status[letter.status] ?? letter.status}</td>
-              <td>{letter.repliedAt && when(letter.repliedAt)}</td>
+              <td>{letter.repliedAt && staffTime(letter.repliedAt)}</td>
               <td>
                 <ul className={styles.events}>
                   {letter.events.map((event, i) => (
                     <li key={i}>
-                      {when(event.at)}: {staffCopy.letters.status[event.status] ?? event.status}
+                      {staffTime(event.at)}: {staffCopy.letters.status[event.status] ?? event.status}
                       {Object.keys(event.details).length > 0 && <code> {JSON.stringify(event.details)}</code>}
                     </li>
                   ))}

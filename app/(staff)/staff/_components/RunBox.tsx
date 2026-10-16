@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { type ImportRun, NIGHTLY } from "@/lib/import-runs";
+import { staffTime } from "@/lib/staff-time";
 import ResultBox from "./ResultBox";
 import styles from "./staff.module.css";
 
@@ -22,8 +23,7 @@ export default function RunBox({ run, summary, lines, actions, children }: Props
   const failed = run.status === "failed";
   const line = (
     <>
-      <strong>{staffCopy.runs.status[run.status]}</strong>{" "}
-      <span className={styles.muted}>{new Date(run.at).toLocaleString("en-GB")}</span>
+      <strong>{staffCopy.runs.status[run.status]}</strong> <span className={styles.muted}>{staffTime(run.at)}</span>
       {run.startedBy && (
         <span className={styles.muted}>
           {" "}
