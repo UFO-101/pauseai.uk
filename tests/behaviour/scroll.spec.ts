@@ -184,7 +184,7 @@ test.describe("in-page scrolling", () => {
     await page.evaluate(() => window.scrollTo(0, 2000));
     await page.waitForTimeout(300);
 
-    await page.click("a.js-cookie-settings");
+    await page.getByRole("link", { name: "Cookie settings" }).click();
     await page.waitForTimeout(600);
 
     await expect(page.locator(".cookie-banner")).toBeVisible();

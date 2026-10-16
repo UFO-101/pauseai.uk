@@ -17,6 +17,43 @@ const DATABASE_URL_RULE = {
   message: "Only lib/server/db.ts connects to the database. Query through it.",
 };
 
+// Components show state through what they render. Finding the page's
+// elements and editing them directly goes behind React's back: it can
+// re-render over the change, and the page's state ends up split between
+// React and the DOM. Hold the state in React (useState, context) instead,
+// and use a ref for an element an effect has to measure or observe.
+const DOM_EDIT_MESSAGE =
+  "Render this from React state, not by editing the page directly. See DIRECT_DOM_EDITS in eslint.config.mjs.";
+const DIRECT_DOM_EDITS = [
+  // Looking elements up across the page. Inside a ref's element is fine.
+  ...[
+    "querySelector",
+    "querySelectorAll",
+    "getElementById",
+    "getElementsByClassName",
+    "getElementsByTagName",
+    "getElementsByName",
+  ].map((property) => ({ object: "document", property, message: DOM_EDIT_MESSAGE })),
+  // Changing elements, wherever they came from.
+  ...[
+    "classList",
+    "setAttribute",
+    "removeAttribute",
+    "toggleAttribute",
+    "innerHTML",
+    "outerHTML",
+    "insertAdjacentHTML",
+  ].map((property) => ({ property, message: DOM_EDIT_MESSAGE })),
+];
+// Written before the rule, and still editing the page directly. Take a file
+// off this list when it's converted; don't add to it.
+const UNCONVERTED_DOM_EDITS = [
+  "app/(site)/_components/HeroMarqueeEffects.tsx",
+  "app/(site)/future-of-workforce-inquiry/_components/FootnoteTooltips.tsx",
+  "components/layout/FooterYear.tsx",
+  "components/layout/NoAnalytics.tsx",
+];
+
 const eslintConfig = defineConfig([
   ...nextVitals,
   ...nextTs,
@@ -86,6 +123,11 @@ const eslintConfig = defineConfig([
         { selector: LUMA_API_PATTERN, message: "Luma API calls belong in lib/server/." },
       ],
     },
+  },
+  {
+    files: ["app/**/*.{ts,tsx}", "components/**/*.{ts,tsx}"],
+    ignores: ["**/*.test.{ts,tsx}", ...UNCONVERTED_DOM_EDITS],
+    rules: { "no-restricted-properties": ["error", ...DIRECT_DOM_EDITS] },
   },
   // Override default ignores of eslint-config-next.
   globalIgnores([

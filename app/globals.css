@@ -2088,7 +2088,8 @@ html {
     display: flex;
   }
 
-  body.mobile-nav-open {
+  /* Lock the page behind the open menu. */
+  body:has(.site-header nav.open) {
     overflow: hidden;
   }
 

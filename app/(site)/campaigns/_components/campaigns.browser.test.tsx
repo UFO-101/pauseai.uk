@@ -4,7 +4,6 @@ import { page, userEvent } from "vitest/browser";
 import { site } from "@/lib/content/site";
 import CampaignContext from "./CampaignContext";
 import CampaignDocs from "./CampaignDocs";
-import CampaignsClient from "./CampaignsClient";
 import EmailYourMp from "./EmailYourMp";
 import ShareQr from "./ShareQr";
 import Signatories from "./Signatories";
@@ -101,29 +100,16 @@ describe("SignatoriesList", () => {
   });
 });
 
-describe("CampaignsClient", () => {
+describe("EmailYourMp's embed", () => {
   const ORIGIN = "https://pauseai.info";
   const post = (data: unknown, origin = ORIGIN) => window.dispatchEvent(new MessageEvent("message", { data, origin }));
 
-  function Page({ withCloseButton = true }: { withCloseButton?: boolean }) {
-    return (
-      <>
-        <iframe id="campaigns-embed" title="embed" />
-        <button className="qr-thumb">QR</button>
-        <div className="qr-lightbox" id="qr-lightbox" aria-hidden="true" data-testid="lightbox">
-          {withCloseButton && <button className="qr-lightbox-close">Close</button>}
-          <span>Big QR</span>
-        </div>
-        <CampaignsClient />
-      </>
-    );
-  }
-
-  it("resizes the embed when pauseai.info asks, ignoring anything else", async () => {
-    await render(<Page />);
-    const iframe = document.getElementById("campaigns-embed") as HTMLIFrameElement;
+  it("resizes when pauseai.info asks, ignoring anything else", async () => {
+    await render(<EmailYourMp />);
+    const iframe = page.getByTitle("Email your MP — PauseAI");
+    expect((iframe.element() as HTMLIFrameElement).style.height).toBe("");
     post({ type: "pauseai-embed-resize", height: 777 });
-    expect(iframe.style.height).toBe("777px");
+    await expect.element(iframe).toHaveStyle({ height: "777px" });
     for (const [data, origin] of [
       [{ type: "pauseai-embed-resize", height: 1 }, "https://evil.example"],
       [null, ORIGIN],
@@ -134,11 +120,11 @@ describe("CampaignsClient", () => {
     ] as const) {
       post(data, origin);
     }
-    expect(iframe.style.height).toBe("777px");
+    await expect.element(iframe).toHaveStyle({ height: "777px" });
   });
 
   it("tells Google Tag Manager when an email to an MP is sent", async () => {
-    await render(<Page />);
+    await render(<EmailYourMp />);
     const w = window as typeof window & { dataLayer?: unknown[] };
     delete w.dataLayer;
     post({ event: "mp_email_sent" });
@@ -146,36 +132,44 @@ describe("CampaignsClient", () => {
     expect(w.dataLayer).toEqual([{ event: "mp_email_sent" }, { event: "mp_email_sent" }]);
   });
 
-  it("opens the QR code large, and closes it with the button, the backdrop or Escape", async () => {
-    await render(<Page />);
-    const lightbox = page.getByTestId("lightbox");
-    const isOpen = () => lightbox.element().classList.contains("open");
-    await page.getByRole("button", { name: "QR" }).click();
-    expect(isOpen()).toBe(true);
-    expect(lightbox.element().getAttribute("aria-hidden")).toBe("false");
-    (lightbox.element().querySelector(".qr-lightbox-close") as HTMLElement).click();
-    expect(isOpen()).toBe(false);
-
-    await page.getByRole("button", { name: "QR" }).click();
-    (lightbox.element().querySelector("span") as HTMLElement).click();
-    expect(isOpen()).toBe(true);
-    (lightbox.element() as HTMLElement).click();
-    expect(isOpen()).toBe(false);
-
-    await userEvent.keyboard("{Escape}");
-    expect(isOpen()).toBe(false);
-    await page.getByRole("button", { name: "QR" }).click();
-    await userEvent.keyboard("{Enter}");
-    expect(isOpen()).toBe(true);
-    await userEvent.keyboard("{Escape}");
-    expect(isOpen()).toBe(false);
-  });
-
-  it("works without a close button, and does nothing on a page without the embed or QR code", async () => {
-    const { unmount } = await render(<Page withCloseButton={false} />);
-    await page.getByRole("button", { name: "QR" }).click();
+  it("stops listening when it goes", async () => {
+    const { unmount } = await render(<EmailYourMp />);
     await unmount();
-    await render(<CampaignsClient />);
-    post({ type: "pauseai-embed-resize", height: 5 });
+    const w = window as typeof window & { dataLayer?: unknown[] };
+    delete w.dataLayer;
+    post({ event: "mp_email_sent" });
+    expect(w.dataLayer).toBeUndefined();
+  });
+});
+
+describe("ShareQr", () => {
+  const dialog = () => page.getByRole("dialog", { name: "QR code" });
+
+  it("opens the QR code large, and closes it with the button, the backdrop or Escape", async () => {
+    await render(<ShareQr />);
+    await expect.element(dialog()).not.toBeInTheDocument();
+    await page.getByRole("button", { name: "Show QR code larger" }).click();
+    await expect.element(dialog()).toHaveClass("qr-lightbox open");
+    // Hidden until it has loaded, so it fades in. Next's image optimiser
+    // isn't here to serve it, so say it has loaded.
+    const code = dialog().getByRole("img");
+    await expect.element(code).toHaveClass("is-loading");
+    code.element().dispatchEvent(new Event("load"));
+    await expect.element(code).not.toHaveClass("is-loading");
+    await page.getByRole("button", { name: "Close" }).click();
+    await expect.element(dialog()).not.toBeInTheDocument();
+
+    // A click on the code itself leaves it open; one on the backdrop closes it.
+    await page.getByRole("button", { name: "Show QR code larger" }).click();
+    (dialog().element().querySelector("img") as HTMLElement).click();
+    await expect.element(dialog()).toBeInTheDocument();
+    (dialog().element() as HTMLElement).click();
+    await expect.element(dialog()).not.toBeInTheDocument();
+
+    await page.getByRole("button", { name: "Show QR code larger" }).click();
+    await userEvent.keyboard("{ArrowRight}");
+    await expect.element(dialog()).toBeInTheDocument();
+    await userEvent.keyboard("{Escape}");
+    await expect.element(dialog()).not.toBeInTheDocument();
   });
 });

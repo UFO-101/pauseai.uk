@@ -13,7 +13,7 @@ type Look = {
 
 /**
  * The class and data attributes that make an element look like a button.
- * Exported for markup built outside React (the cookie banner).
+ * Exported for buttons that aren't one of the three below (CopyLinkButton).
  */
 export function buttonAttributes({ variant, size, className }: Look & { className?: string }) {
   return {

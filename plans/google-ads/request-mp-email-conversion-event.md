@@ -27,7 +27,7 @@ Requirements:
 
 ## pauseai.uk side (already done)
 
-`app/(site)/campaigns/_components/CampaignsClient.tsx` already checks `e.origin === "https://pauseai.info"`. It now pushes `{ event: "mp_email_sent" }` to `dataLayer`, which a GTM Custom Event trigger turns into the Ads conversion.
+`app/(site)/campaigns/_components/EmailYourMp.tsx` (once `CampaignsClient.tsx`) already checks `e.origin === "https://pauseai.info"`. It now pushes `{ event: "mp_email_sent" }` to `dataLayer`, which a GTM Custom Event trigger turns into the Ads conversion.
 
 ## Acceptance criteria
 
