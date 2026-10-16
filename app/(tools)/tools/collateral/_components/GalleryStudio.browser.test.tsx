@@ -10,6 +10,10 @@ import { canvasFile } from "@/tests/browser/qr-images";
 import GalleryStudio from "./GalleryStudio";
 
 const STORAGE_KEY = "pauseai-collateral-gallery-v1";
+// Rendering every slide at every platform's size takes under a second here, but has taken
+// over 15s on a loaded CI runner. A download that outlives its test calls the shared mock
+// during the next one, so this stays well inside the browser project's testTimeout.
+const DOWNLOAD_WAIT = { timeout: 30_000 };
 const PNG =
   "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
 const LOGO = getTheme(DEFAULT_THEME_ID).logoSrc;
@@ -109,7 +113,7 @@ describe("GalleryStudio", () => {
     await expect.element(page.getByRole("button", { name: EXAMPLE.label })).toHaveAttribute("aria-pressed", "true");
     expect(meta(container)).toMatch(/^Slide 1 of 2 · Crop for Instagram \/ Facebook · LinkedIn · .* Drag the photo/);
     await page.getByRole("button", { name: "Download slides" }).click();
-    await expect.poll(() => downloads.zip.mock.calls.length, { timeout: 15000 }).toBe(1);
+    await expect.poll(() => downloads.zip.mock.calls.length, DOWNLOAD_WAIT).toBe(1);
     const [groups, name] = downloads.zip.mock.lastCall!;
     expect(name).toBe("pauseai-gallery-platforms.zip");
     expect((groups as { folder: string; kind: string }[]).map((g) => `${g.folder}:${g.kind}`)).toEqual([
@@ -135,7 +139,7 @@ describe("GalleryStudio", () => {
     // Only the ticked platforms are downloaded.
     platform(container, "X").click();
     await page.getByRole("button", { name: "Download slides" }).click();
-    await expect.poll(() => downloads.zip.mock.calls.length, { timeout: 15000 }).toBe(1);
+    await expect.poll(() => downloads.zip.mock.calls.length, DOWNLOAD_WAIT).toBe(1);
     expect((downloads.zip.mock.lastCall![0] as { folder: string }[]).map((g) => g.folder)).toEqual(["x"]);
   });
 
@@ -146,7 +150,7 @@ describe("GalleryStudio", () => {
     await ready(container);
     await page.getByRole("button", { name: "Download slides" }).click();
     await expect.element(page.getByRole("button", { name: "Preparing…" })).toBeDisabled();
-    await expect.poll(() => downloads.zip.mock.calls.length, { timeout: 15000 }).toBe(1);
+    await expect.poll(() => downloads.zip.mock.calls.length, DOWNLOAD_WAIT).toBe(1);
     fail(new Error("no"));
     await expect.element(page.getByText("Could not create the export. Try again, or with fewer slides.")).toBeVisible();
   });

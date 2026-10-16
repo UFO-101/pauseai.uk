@@ -89,6 +89,8 @@ export default defineConfig({
           setupFiles: ["./vitest.setup.browser.tsx"],
           // Drawing and exporting images is slow when every file runs at once, so waits get longer than the default second.
           expect: { poll: { timeout: 5000 } },
+          // Rendering and exporting images has taken over the 15s default on a loaded CI runner.
+          testTimeout: 60_000,
           browser: {
             enabled: true,
             provider: playwright(),
