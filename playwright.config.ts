@@ -25,9 +25,9 @@ export default defineConfig({
   // order and alongside each other.
   fullyParallel: true,
   // Playwright's default is half the cores, which is 2 on GitHub's standard
-  // 4-core runner. There the flows wait on the server and the database more
-  // than on the CPU, so CI uses all 4. Anywhere else, the default.
-  workers: process.env.CI && os.cpus().length === 4 ? 4 : undefined,
+  // 4-core runner. CI uses 3 there, leaving a core for the server and the
+  // database. Anywhere else, the default.
+  workers: process.env.CI && os.cpus().length === 4 ? 3 : undefined,
   forbidOnly: !!process.env.CI,
   // A flaky flow is fixed, not retried (docs/testing.md).
   retries: 0,
