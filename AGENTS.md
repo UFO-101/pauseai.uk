@@ -4,7 +4,7 @@ Read `README.md` first. It links the docs in `docs/`, including the code structu
 
 ## Scratch files
 
-Put throwaway scripts, logs and screenshots in `tmp/` at the repo root. It's gitignored, and scripts there can import the project's `node_modules` (e.g. `@playwright/test`, `sharp`). Long-running checks, such as probing the site in Chromium, Firefox and WebKit, can run in the background and write their output there.
+Put throwaway scripts, logs and screenshots in `tmp/` at the repo root (to screenshot the site, see "Screenshots" below). It's gitignored, and scripts there can import the project's `node_modules` (e.g. `@playwright/test`, `sharp`). Long-running checks, such as probing the site in Chromium, Firefox and WebKit, can run in the background and write their output there.
 
 ## Before you commit: the CI gate
 
@@ -39,6 +39,17 @@ npm run storyboard -- --no-open   # the same; read test-results/storyboard/story
 
 - A flaky flow, or a frame that differs between two runs of the same build, is fixed, never retried, skipped or masked. No stored baselines, no gate on pixels.
 - Any flaky test, Vitest or Playwright, is fixed at once, in whatever branch finds it, even when the branch has nothing to do with it (`docs/testing.md`, "Rules for new code").
+
+## Screenshots
+
+To see a page or a step of a flow, use the storyboard, not a script of your own. It builds the site on fixture data and waits for each page to settle, and any flow can get you logged in, partway through a form or past a bounce. Pick a section (spec file) and a flow (`-g`, a regex on the test's title; `public-pages` titles each test with its route):
+
+```bash
+npm run storyboard -- --no-main --no-open --paths public-pages -g '/donate$'   # one page, both viewports
+npm run storyboard -- --no-main --no-open --paths --phone campaigns -g ZZ99ZZ   # a flow, every frame
+```
+
+`--no-main` skips building main, which is the slow part (drop it to see main beside it), `--desktop` or `--phone` picks one viewport, and `--paths` prints each frame's caption and PNG path, to open with the Read tool. A run replaces the last one in `test-results/storyboard`, so a narrow run clears a full review. Playwright reuses whatever is serving on port 3100, so check that it's this branch's fixture build, or stop it. If no flow reaches what you need, add a `frame()` to one, or a flow (see above), rather than a script in `tmp/`.
 
 ## Next.js version may be beyond your knowledge cutoff
 
