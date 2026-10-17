@@ -25,9 +25,14 @@ export function Controlled<T>({
   );
 }
 
-/** How an argument reads in the event log: a file by its name, a DOM event as "event", the rest as JSON. */
+/**
+ * How an argument reads in the event log: a file by its name, a form's data
+ * as its fields (what a Server Action would get), a DOM event as "event", the
+ * rest as JSON.
+ */
 function describe(arg: unknown): string {
   if (arg instanceof File) return `File ${arg.name}`;
+  if (arg instanceof FormData) return JSON.stringify(Object.fromEntries(arg));
   if (arg instanceof Event || (typeof arg === "object" && arg !== null && "nativeEvent" in arg)) return "event";
   if (typeof arg === "function") return "ƒ";
   try {

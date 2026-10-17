@@ -32,6 +32,28 @@
   color: var(--text-secondary);
 }
 
+.input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 400;
+  background: var(--surface);
+  color: inherit;
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 20%, transparent);
+}
+
+.input:disabled {
+  opacity: 0.6;
+}
+
 .error {
   margin: 0;
   color: var(--danger);

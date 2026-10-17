@@ -309,7 +309,13 @@ export const ui: Group = {
           label: "A title, a drop cap, the page's width",
           render: () => (
             <Foreword title="About this example" dropCap pageWidth>
-              <p>Opening with a large first letter, and lined up with the page&rsquo;s reading column.</p>
+              <p>
+                This example paragraph opens with a large first letter, which sits beside its first few lines rather
+                than above them. It runs on long enough to wrap several times, so the way the letter drops into the
+                text, and how the lines after it close up beneath, shows as it does on a real page. The band lines up
+                with the page&rsquo;s reading column, not a little wider.
+              </p>
+              <p>A second paragraph follows in plain type, as an introduction&rsquo;s later paragraphs do.</p>
             </Foreword>
           ),
         },

@@ -91,6 +91,27 @@ export type PoliticianFilter = {
   campaign?: string;
 };
 
+/**
+ * The politicians page's filter, from its URL: each field as typed, for the
+ * form, and the filter they make, leaving out what's blank or not a house.
+ */
+export function politiciansSearch({
+  q = "",
+  house = "",
+  campaign = "",
+}: {
+  q?: string;
+  house?: string;
+  campaign?: string;
+}) {
+  const filter: PoliticianFilter = {
+    search: q || undefined,
+    house: isHouse(house) ? house : undefined,
+    campaign: campaign || undefined,
+  };
+  return { q, house, campaign, filter };
+}
+
 /** Politicians for the staff interface: the test MP first, then by name. */
 export async function listPoliticians(filter: PoliticianFilter = {}, limit = 200): Promise<Politician[]> {
   const where: string[] = [];

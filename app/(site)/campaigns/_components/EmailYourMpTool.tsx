@@ -10,7 +10,7 @@ import { TEST_MPS, type TestMp } from "@/lib/test-mps";
 import { readLookup, saveLookup } from "./draft";
 import MpCard from "./MpCard";
 import Required from "./Required";
-import { Column, ErrorText, Field, Notice } from "./FormParts";
+import { Column, ErrorText, Field, Input, Notice } from "./FormParts";
 import styles from "./EmailYourMpTool.module.css";
 
 type Found = { mp: Mp; statuses: MpStatuses };
@@ -114,7 +114,7 @@ export default function EmailYourMpTool({ campaignSlug, showTestMps }: Props) {
       <form className={styles.lookup} onSubmit={lookUp} noValidate>
         <label className={styles.lookupWide}>
           <Required>{copy.lookup.nameLabel}</Required>
-          <input
+          <Input
             name="name"
             required
             autoComplete="name"
@@ -126,7 +126,7 @@ export default function EmailYourMpTool({ campaignSlug, showTestMps }: Props) {
         <Field>
           <label>
             <Required>{copy.lookup.addressLabel}</Required>
-            <input
+            <Input
               name="address"
               required
               autoComplete="address-line1"
@@ -141,7 +141,7 @@ export default function EmailYourMpTool({ campaignSlug, showTestMps }: Props) {
         <Field>
           <label>
             <Required>{copy.lookup.postcodeLabel}</Required>
-            <input
+            <Input
               name="postcode"
               required
               autoComplete="postal-code"

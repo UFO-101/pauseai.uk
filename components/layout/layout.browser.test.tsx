@@ -9,6 +9,7 @@ import FooterYear from "./FooterYear";
 import JsonLd from "./JsonLd";
 import Nav from "./Nav";
 import NoAnalytics from "./NoAnalytics";
+import TagManagerNoscript from "./TagManagerNoscript";
 
 type GaWindow = typeof window & {
   __gaLoaded?: boolean;
@@ -51,6 +52,15 @@ describe("Footer, FooterYear, JsonLd and NoAnalytics", () => {
   it("marks the page as having no analytics", async () => {
     await render(<NoAnalytics />);
     expect(document.body.hasAttribute("data-no-analytics")).toBe(true);
+  });
+});
+
+describe("TagManagerNoscript", () => {
+  it("is Tag Manager's no-script frame on the live site, and nothing elsewhere", async () => {
+    const { container, rerender } = await render(<TagManagerNoscript analytics />);
+    expect(container.querySelector("noscript")).not.toBeNull();
+    await rerender(<TagManagerNoscript analytics={false} />);
+    expect(container.querySelector("noscript")).toBeNull();
   });
 });
 

@@ -5,6 +5,7 @@ import Footer from "@/components/layout/Footer";
 import FooterQr from "@/components/layout/FooterQr";
 import FooterYear from "@/components/layout/FooterYear";
 import JsonLd from "@/components/layout/JsonLd";
+import TagManagerNoscript from "@/components/layout/TagManagerNoscript";
 import MarchBanner from "@/components/layout/MarchBanner";
 import Nav from "@/components/layout/Nav";
 import NoAnalytics from "@/components/layout/NoAnalytics";
@@ -156,6 +157,23 @@ export const layout: Group = {
             <>
               <NoAnalytics />
               <p className={styles.note}>Marks the page as having no analytics, so none load.</p>
+            </>
+          ),
+        },
+      ],
+    },
+    {
+      name: "TagManagerNoscript",
+      file: "components/layout/TagManagerNoscript.tsx",
+      variants: [
+        {
+          label: "Renders nothing visible: Tag Manager's frame for browsers without JavaScript",
+          render: () => (
+            <>
+              <TagManagerNoscript analytics />
+              <p className={styles.note}>
+                On the live site only, inside a noscript, so a browser running scripts ignores it.
+              </p>
             </>
           ),
         },

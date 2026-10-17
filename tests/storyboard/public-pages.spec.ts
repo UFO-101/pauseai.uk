@@ -72,9 +72,9 @@ for (const route of PUBLIC_ROUTES) {
     // waits for the mount, then for the console to go quiet.
     await hydrated(page);
 
-    // The component gallery shows every component, a page's own <h1> among
-    // them, and is too long to picture whole: its own section pictures each.
-    const gallery = route === "/gallery";
+    // A group of the component gallery shows its components, a page's own
+    // <h1> among them, and the gallery's section pictures it whole.
+    const gallery = route.startsWith("/gallery/");
     if (!gallery) await expect(page.locator("h1"), "exactly one <h1>").toHaveCount(1);
     if (FIXTURE_TEXT[route]) await expect(page.getByText(FIXTURE_TEXT[route])).toBeVisible();
     // The trackers count the fixture guest list, so they never show their "no access" fallback.

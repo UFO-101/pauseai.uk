@@ -32,9 +32,9 @@ export const staffKit: Group = {
       file: "app/(staff)/staff/_components/ui/StaffPage.tsx",
       variants: [
         {
-          label: "A page's main, with a heading and a line",
+          label: "A page's frame, with a heading and a line",
           render: () => (
-            <StaffPage>
+            <StaffPage as="div">
               <h1>An example staff page</h1>
               <p>A line of text under its heading.</p>
             </StaffPage>
@@ -49,7 +49,7 @@ export const staffKit: Group = {
         {
           label: "A few rows",
           render: () => (
-            <div className="container">
+            <StaffPage as="div">
               <StaffTable>
                 <thead>
                   <tr>
@@ -68,13 +68,13 @@ export const staffKit: Group = {
                   ))}
                 </tbody>
               </StaffTable>
-            </div>
+            </StaffPage>
           ),
         },
         {
           label: "Wider than a phone, scrolling sideways",
           render: () => (
-            <div className="container">
+            <StaffPage as="div">
               <StaffTable>
                 <thead>
                   <tr>
@@ -95,7 +95,7 @@ export const staffKit: Group = {
                   ))}
                 </tbody>
               </StaffTable>
-            </div>
+            </StaffPage>
           ),
         },
       ],
@@ -106,14 +106,14 @@ export const staffKit: Group = {
       variants: (Object.keys(KINDS) as (keyof typeof KINDS)[]).map((kind) => ({
         label: `${kind[0].toUpperCase()}${kind.slice(1)}, after a heading and beside a name`,
         render: () => (
-          <div className="container">
+          <StaffPage as="div">
             <h2>
               An example heading <Tag kind={KINDS[kind]}>{kind}</Tag>
             </h2>
             <p>
               Example Person <Tag kind={KINDS[kind]}>{kind}</Tag>
             </p>
-          </div>
+          </StaffPage>
         ),
       })),
     },
@@ -124,7 +124,7 @@ export const staffKit: Group = {
         {
           label: "An email under a name, a date after a status",
           render: () => (
-            <div className="container">
+            <StaffPage as="div">
               <p>
                 Example Person
                 <br />
@@ -133,7 +133,7 @@ export const staffKit: Group = {
               <p>
                 Signed <Muted>2026-10-01</Muted>
               </p>
-            </div>
+            </StaffPage>
           ),
         },
       ],
@@ -145,11 +145,11 @@ export const staffKit: Group = {
         {
           label: "In a line of text",
           render: () => (
-            <div className="container">
+            <StaffPage as="div">
               <p>
                 Plain text, then <ErrorText>an example of something going wrong</ErrorText>.
               </p>
-            </div>
+            </StaffPage>
           ),
         },
       ],
@@ -161,7 +161,7 @@ export const staffKit: Group = {
         {
           label: "Two buttons, side by side, stacked on a phone",
           render: () => (
-            <div className="container">
+            <StaffPage as="div">
               <Actions>
                 <Button variant="primary" size="small">
                   One
@@ -170,7 +170,7 @@ export const staffKit: Group = {
                   Two
                 </Button>
               </Actions>
-            </div>
+            </StaffPage>
           ),
         },
       ],
@@ -182,7 +182,7 @@ export const staffKit: Group = {
         {
           label: "A select, a search and a button, in a row",
           render: () => (
-            <div className="container">
+            <StaffPage as="div">
               <Filters method="get" action="/staff/letters">
                 <label>
                   Status
@@ -199,7 +199,7 @@ export const staffKit: Group = {
                   Filter
                 </Button>
               </Filters>
-            </div>
+            </StaffPage>
           ),
         },
       ],
@@ -211,7 +211,7 @@ export const staffKit: Group = {
         {
           label: "Fields in a column, and a button",
           render: () => (
-            <div className="container">
+            <StaffPage as="div">
               <StaffForm>
                 <label>
                   Name
@@ -231,7 +231,7 @@ export const staffKit: Group = {
                   </Button>
                 </div>
               </StaffForm>
-            </div>
+            </StaffPage>
           ),
         },
       ],

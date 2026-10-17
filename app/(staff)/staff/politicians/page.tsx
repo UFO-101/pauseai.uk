@@ -1,5 +1,5 @@
 import { staffCopy } from "@/lib/content/staff-interface";
-import { isHouse, listPoliticians } from "@/lib/server/politicians";
+import { listPoliticians, politiciansSearch } from "@/lib/server/politicians";
 import { requireStaff } from "@/lib/server/staff-auth";
 import PoliticianFilters from "../_components/PoliticianFilters";
 import { markSigned } from "../actions";
@@ -11,12 +11,8 @@ type Search = { q?: string; house?: string; campaign?: string };
 
 export default async function PoliticiansPage({ searchParams }: { searchParams: Promise<Search> }) {
   const { email } = await requireStaff();
-  const { q = "", house = "", campaign = "" } = await searchParams;
-  const politicians = await listPoliticians({
-    search: q || undefined,
-    house: isHouse(house) ? house : undefined,
-    campaign: campaign || undefined,
-  });
+  const { q, house, campaign, filter } = politiciansSearch(await searchParams);
+  const politicians = await listPoliticians(filter);
   return (
     <StaffPage>
       <StaffHeader email={email} current="politicians" />

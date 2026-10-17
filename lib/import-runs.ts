@@ -12,6 +12,11 @@ export function isImportJob(value: string): value is ImportJob {
 }
 
 /** Who starts the scheduled runs (netlify/functions/). Staff runs are started by the staff member's email. */
+/** A job's newest run as a list for RunList: itself, or none if it has never run. */
+export function asList<Run>(run: Run | undefined): Run[] {
+  return run ? [run] : [];
+}
+
 export const NIGHTLY = "nightly";
 
 /** ok or failed; a sync-mps run is instead unchanged, held, applied or discarded. */

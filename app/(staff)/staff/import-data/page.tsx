@@ -1,37 +1,17 @@
-import { ButtonLink } from "@/components/ui/Button";
-import { SubmitButton } from "@/components/ui/SubmitButton";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { CONTROLAI_LETTER_PAGE } from "@/lib/controlai-letter";
-import type { ControlAiImport, ImportJob, MpCheck, SignatoryImport } from "@/lib/import-runs";
+import { asList, type ControlAiImport, type MpCheck, type SignatoryImport } from "@/lib/import-runs";
 import { MEMBERS_API } from "@/lib/parliament";
 import { PARLIAMENTARIANS_TABLE_URL } from "@/lib/server/airtable";
 import { latestRun } from "@/lib/server/import-runs";
 import { syncsToShow } from "@/lib/server/mp-sync";
 import { requireStaff } from "@/lib/server/staff-auth";
 import { checkNow, decideSync, importControlAiNow, importFromAirtable, syncNow } from "../actions";
+import JobActions from "../_components/JobActions";
 import RunList from "../_components/RunList";
 import StaffHeader from "../_components/StaffHeader";
-import Actions from "../_components/ui/Actions";
 import StaffPage from "../_components/ui/StaffPage";
 import Tag from "../_components/ui/Tag";
-
-const only = <Run,>(run: Run | undefined) => (run ? [run] : []);
-
-/** A job's button, with the way to all its runs beside it. */
-function JobActions({ action, label, job }: { action: () => Promise<void>; label: string; job: ImportJob }) {
-  return (
-    <Actions>
-      <form action={action}>
-        <SubmitButton variant="primary" size="small">
-          {label}
-        </SubmitButton>
-      </form>
-      <ButtonLink variant="ghost" size="small" href={`/staff/import-history?job=${job}`}>
-        {staffCopy.history.showAll}
-      </ButtonLink>
-    </Actions>
-  );
-}
 
 /**
  * Every import and check: the MPs from Airtable and the check of them against
@@ -74,7 +54,7 @@ export default async function ImportPage() {
         {staffCopy.check.intro.after}
       </p>
       <JobActions action={checkNow} label={staffCopy.check.checkNow} job="check-mps" />
-      <RunList runs={only(check)} none={staffCopy.check.never} />
+      <RunList runs={asList(check)} none={staffCopy.check.never} />
 
       <h2>
         {staffCopy.import.title} <Tag kind="airtable">{staffCopy.import.airtable}</Tag>
@@ -86,7 +66,7 @@ export default async function ImportPage() {
         {staffCopy.import.intro.after}
       </p>
       <JobActions action={importFromAirtable} label={staffCopy.import.button} job="import-signatories" />
-      <RunList runs={only(signatoryImport)} none={staffCopy.import.none} />
+      <RunList runs={asList(signatoryImport)} none={staffCopy.import.none} />
 
       <h2>
         {staffCopy.controlAi.title} <Tag kind="web">{staffCopy.import.web}</Tag>
@@ -98,7 +78,7 @@ export default async function ImportPage() {
         {staffCopy.controlAi.intro.after}
       </p>
       <JobActions action={importControlAiNow} label={staffCopy.controlAi.importNow} job="import-controlai" />
-      <RunList runs={only(controlAiImport)} none={staffCopy.controlAi.never} />
+      <RunList runs={asList(controlAiImport)} none={staffCopy.controlAi.never} />
     </StaffPage>
   );
 }

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { render } from "vitest-browser-react";
 import { page } from "vitest/browser";
+import { Button } from "@/components/ui/Button";
 import Actions from "./Actions";
 import ErrorText from "./ErrorText";
 import { Filters, StaffForm } from "./forms";
@@ -19,6 +20,18 @@ describe("StaffPage", () => {
     const main = page.getByRole("main");
     await expect.element(main.getByRole("heading", { name: "Heading" })).toBeVisible();
     expect(getComputedStyle(main.element()).width).toBe(`${document.body.clientWidth}px`);
+  });
+
+  it("frames a part of a staff page the same way inside another page's main", async () => {
+    const { container } = await render(
+      <StaffPage as="div">
+        <h1>Heading</h1>
+      </StaffPage>,
+    );
+    await expect.element(page.getByRole("main")).not.toBeInTheDocument();
+    const div = container.querySelector("h1")!.parentElement!;
+    expect(div.tagName).toBe("DIV");
+    expect(getComputedStyle(div).paddingTop).toBe("32px");
   });
 });
 
@@ -112,5 +125,33 @@ describe("Filters and StaffForm", () => {
     expect(getComputedStyle(fields).flexDirection).toBe("column");
     await expect.element(page.getByRole("combobox", { name: "Status" })).toBeVisible();
     await expect.element(page.getByRole("textbox", { name: "Email" })).toBeVisible();
+  });
+
+  it("lines up a row's select, search box and button: one height, one baseline", async () => {
+    await page.viewport(1280, 800);
+    await render(
+      <Filters aria-label="Filters">
+        <label>
+          Status
+          <select name="status">
+            <option>Any</option>
+          </select>
+        </label>
+        <label>
+          Search
+          <input type="search" name="q" />
+        </label>
+        <Button variant="primary" size="small" type="submit">
+          Filter
+        </Button>
+      </Filters>,
+    );
+    const boxes = [
+      page.getByRole("combobox", { name: "Status" }),
+      page.getByRole("searchbox", { name: "Search" }),
+      page.getByRole("button", { name: "Filter" }),
+    ].map((control) => control.element().getBoundingClientRect());
+    expect(boxes.map((box) => box.height)).toEqual([boxes[2].height, boxes[2].height, boxes[2].height]);
+    expect(boxes.map((box) => box.bottom)).toEqual([boxes[2].bottom, boxes[2].bottom, boxes[2].bottom]);
   });
 });

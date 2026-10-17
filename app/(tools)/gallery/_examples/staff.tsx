@@ -7,6 +7,7 @@ import { exampleChange } from "@/app/(staff)/staff/_components/ChangesTable.exam
 import LettersTable from "@/app/(staff)/staff/_components/LettersTable";
 import { exampleLetter } from "@/app/(staff)/staff/_components/LettersTable.examples";
 import LoginCard from "@/app/(staff)/staff/_components/LoginCard";
+import LoginForm from "@/app/(staff)/staff/_components/LoginForm";
 import PoliticianFilters from "@/app/(staff)/staff/_components/PoliticianFilters";
 import ResultBox, { OPEN_UP_TO } from "@/app/(staff)/staff/_components/ResultBox";
 import Run from "@/app/(staff)/staff/_components/Run";
@@ -20,15 +21,16 @@ import {
   exampleRun,
   exampleSyncedMp,
 } from "@/app/(staff)/staff/_components/RunList.examples";
-import StaffHeader, { type StaffPage } from "@/app/(staff)/staff/_components/StaffHeader";
-import ErrorText from "@/app/(staff)/staff/_components/ui/ErrorText";
-import { StaffForm } from "@/app/(staff)/staff/_components/ui/forms";
+import StaffHeader, { type StaffPage as StaffPageName } from "@/app/(staff)/staff/_components/StaffHeader";
+import StaffPage from "@/app/(staff)/staff/_components/ui/StaffPage";
 import { campaigns } from "@/lib/content/email-your-mp";
 import { staffCopy } from "@/lib/content/staff-interface";
 import type { ImportJob } from "@/lib/import-runs";
 import type { Group, Variant } from "../_components/types";
 import {
   HeldSyncExample,
+  JobActionsExample,
+  PoliticianDetailsExample,
   PoliticianFormExample,
   PoliticianTableEmptyExample,
   PoliticianTableExample,
@@ -37,22 +39,28 @@ import {
 const [pm] = campaigns;
 
 // Every page the header can mark as current, so a new one is a type error until it's here.
-const PAGES: Record<StaffPage, true> = { politicians: true, letters: true, import: true, history: true, changes: true };
+const PAGES: Record<StaffPageName, true> = {
+  politicians: true,
+  letters: true,
+  import: true,
+  history: true,
+  changes: true,
+};
 
 // A run of each job, as its job's page shows it. A held MP sync, with its buttons, is in the client file.
 const RUNS: Record<ImportJob, Variant> = {
   "sync-mps": {
     label: "An MP sync, held for a decision",
     render: () => (
-      <div className="container">
+      <StaffPage as="div">
         <HeldSyncExample />
-      </div>
+      </StaffPage>
     ),
   },
   "check-mps": {
     label: "An MP check that found problems",
     render: () => (
-      <div className="container">
+      <StaffPage as="div">
         <Run
           run={exampleRun("check-mps", {
             problems: [
@@ -68,13 +76,13 @@ const RUNS: Record<ImportJob, Variant> = {
             ],
           })}
         />
-      </div>
+      </StaffPage>
     ),
   },
   "import-controlai": {
     label: "A read of ControlAI's letter, with names it couldn't place",
     render: () => (
-      <div className="container">
+      <StaffPage as="div">
         <Run
           run={exampleRun("import-controlai", {
             ...exampleControlAiResult,
@@ -84,13 +92,13 @@ const RUNS: Record<ImportJob, Variant> = {
             ],
           })}
         />
-      </div>
+      </StaffPage>
     ),
   },
   "import-signatories": {
     label: "A signatory import someone started",
     render: () => (
-      <div className="container">
+      <StaffPage as="div">
         <Run
           run={exampleRun(
             "import-signatories",
@@ -98,7 +106,7 @@ const RUNS: Record<ImportJob, Variant> = {
             { startedBy: "jo@pauseai.uk" },
           )}
         />
-      </div>
+      </StaffPage>
     ),
   },
 };
@@ -111,15 +119,24 @@ export const staff: Group = {
       name: "StaffHeader",
       file: "app/(staff)/staff/_components/StaffHeader.tsx",
       variants: [
-        { label: "On the login page: the title alone", render: () => <StaffHeader /> },
+        {
+          label: "On the login page: the title alone",
+          render: () => (
+            <StaffPage as="div">
+              <StaffHeader />
+            </StaffPage>
+          ),
+        },
         {
           label: "Logged in, on each page",
           render: () => (
-            <div style={{ display: "grid", gap: 24 }}>
-              {(Object.keys(PAGES) as StaffPage[]).map((current) => (
-                <StaffHeader key={current} email="jo@pauseai.uk" current={current} />
-              ))}
-            </div>
+            <StaffPage as="div">
+              <div style={{ display: "grid", gap: 24 }}>
+                {(Object.keys(PAGES) as StaffPageName[]).map((current) => (
+                  <StaffHeader key={current} email="jo@pauseai.uk" current={current} />
+                ))}
+              </div>
+            </StaffPage>
           ),
         },
       ],
@@ -129,37 +146,75 @@ export const staff: Group = {
       file: "app/(staff)/staff/_components/LoginCard.tsx",
       variants: [
         {
-          label: "The login form, after a failed link",
+          label: "Around the login form",
           render: () => (
-            <div className="container">
+            <StaffPage as="div">
               <LoginCard title={staffCopy.login.title}>
-                <p>{staffCopy.login.intro}</p>
-                <p>
-                  <ErrorText>{staffCopy.login.failed}</ErrorText>
-                </p>
-                <StaffForm method="post" action="/staff/api/login">
-                  <label>
-                    {staffCopy.login.emailLabel}
-                    <input name="email" type="email" autoComplete="email" required />
-                  </label>
-                  <div>
-                    <Button variant="primary" size="small" fit type="submit">
-                      {staffCopy.login.button}
-                    </Button>
-                  </div>
-                </StaffForm>
+                <LoginForm />
               </LoginCard>
-            </div>
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "LoginForm",
+      file: "app/(staff)/staff/_components/LoginForm.tsx",
+      variants: [
+        {
+          label: "After a failed link, and one opened in another browser",
+          render: () => (
+            <StaffPage as="div">
+              <LoginCard title={staffCopy.login.title}>
+                <LoginForm failed="1" elsewhere="1" />
+              </LoginCard>
+            </StaffPage>
           ),
         },
         {
           label: "The link sent",
           render: () => (
-            <div className="container">
+            <StaffPage as="div">
               <LoginCard title={staffCopy.login.title}>
-                <p role="status">{staffCopy.login.sent}</p>
+                <LoginForm sent="1" />
               </LoginCard>
-            </div>
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "PoliticianDetails",
+      file: "app/(staff)/staff/_components/PoliticianDetails.tsx",
+      variants: [
+        {
+          label: "A signer the team added, editable",
+          render: () => (
+            <StaffPage as="div">
+              <PoliticianDetailsExample />
+            </StaffPage>
+          ),
+        },
+        {
+          label: "An MP from Airtable, not editable here",
+          render: () => (
+            <StaffPage as="div">
+              <PoliticianDetailsExample fromAirtable />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "JobActions",
+      file: "app/(staff)/staff/_components/JobActions.tsx",
+      variants: [
+        {
+          label: "A job's button and its history",
+          render: () => (
+            <StaffPage as="div">
+              <JobActionsExample />
+            </StaffPage>
           ),
         },
       ],
@@ -171,10 +226,10 @@ export const staff: Group = {
         {
           label: "Empty, and filled in",
           render: () => (
-            <div className="container">
+            <StaffPage as="div">
               <PoliticianFilters search="" house="" campaign="" />
               <PoliticianFilters search="example" house="lords" campaign={pm.slug} />
-            </div>
+            </StaffPage>
           ),
         },
       ],
@@ -186,17 +241,17 @@ export const staff: Group = {
         {
           label: "Signed and not, a test peer no longer sitting",
           render: () => (
-            <div className="container">
+            <StaffPage as="div">
               <PoliticianTableExample />
-            </div>
+            </StaffPage>
           ),
         },
         {
           label: "Nobody matches",
           render: () => (
-            <div className="container">
+            <StaffPage as="div">
               <PoliticianTableEmptyExample />
-            </div>
+            </StaffPage>
           ),
         },
       ],
@@ -208,9 +263,9 @@ export const staff: Group = {
         {
           label: "A peer with no constituency or email",
           render: () => (
-            <div className="container">
+            <StaffPage as="div">
               <PoliticianFormExample />
-            </div>
+            </StaffPage>
           ),
         },
       ],
@@ -222,7 +277,7 @@ export const staff: Group = {
         {
           label: "A bounced letter to a test MP, and a replied one",
           render: () => (
-            <div className="container">
+            <StaffPage as="div">
               <LettersTable
                 letters={[
                   exampleLetter,
@@ -243,15 +298,15 @@ export const staff: Group = {
                   },
                 ]}
               />
-            </div>
+            </StaffPage>
           ),
         },
         {
           label: "None",
           render: () => (
-            <div className="container">
+            <StaffPage as="div">
               <LettersTable letters={[]} />
-            </div>
+            </StaffPage>
           ),
         },
       ],
@@ -263,7 +318,7 @@ export const staff: Group = {
         {
           label: "Who changed what",
           render: () => (
-            <div className="container">
+            <StaffPage as="div">
               <ChangesTable
                 changes={[
                   exampleChange,
@@ -276,7 +331,7 @@ export const staff: Group = {
                   },
                 ]}
               />
-            </div>
+            </StaffPage>
           ),
         },
       ],
@@ -288,15 +343,15 @@ export const staff: Group = {
         {
           label: "One line",
           render: () => (
-            <div className="container">
+            <StaffPage as="div">
               <ResultBox summary="An example result, in one line" />
-            </div>
+            </StaffPage>
           ),
         },
         {
           label: "A few lines open under it, with buttons",
           render: () => (
-            <div className="container">
+            <StaffPage as="div">
               <ResultBox
                 summary="An example result with detail"
                 lines={2}
@@ -316,18 +371,18 @@ export const staff: Group = {
                   <li>Another line</li>
                 </ul>
               </ResultBox>
-            </div>
+            </StaffPage>
           ),
         },
         {
           label: "Many lines, folded; and an error",
           render: () => (
-            <div className="container">
+            <StaffPage as="div">
               <ResultBox summary="An example result with a lot of detail" lines={OPEN_UP_TO + 1}>
                 <p>Folded detail</p>
               </ResultBox>
               <ResultBox summary="An example failure" error />
-            </div>
+            </StaffPage>
           ),
         },
       ],
@@ -340,9 +395,9 @@ export const staff: Group = {
         {
           label: "A run that failed",
           render: () => (
-            <div className="container">
+            <StaffPage as="div">
               <Run run={exampleFailedRun("import-signatories", "An example error", { id: 4 })} />
-            </div>
+            </StaffPage>
           ),
         },
       ],
@@ -354,11 +409,11 @@ export const staff: Group = {
         {
           label: "A run, its job named, with detail",
           render: () => (
-            <div className="container">
+            <StaffPage as="div">
               <RunBox run={exampleAppliedSync} label="An example job" summary="an example summary" lines={1}>
                 <p>Detail</p>
               </RunBox>
-            </div>
+            </StaffPage>
           ),
         },
       ],
@@ -370,7 +425,7 @@ export const staff: Group = {
         {
           label: "The history page: each job named, each day headed",
           render: () => (
-            <div className="container">
+            <StaffPage as="div">
               <RunList
                 history
                 none="None"
@@ -385,15 +440,15 @@ export const staff: Group = {
                   exampleAppliedSync,
                 ]}
               />
-            </div>
+            </StaffPage>
           ),
         },
         {
           label: "None",
           render: () => (
-            <div className="container">
+            <StaffPage as="div">
               <RunList runs={[]} none="An example line saying there are none." />
-            </div>
+            </StaffPage>
           ),
         },
       ],
@@ -405,9 +460,9 @@ export const staff: Group = {
         {
           label: "One job picked",
           render: () => (
-            <div className="container">
+            <StaffPage as="div">
               <RunFilters job="check-mps" />
-            </div>
+            </StaffPage>
           ),
         },
       ],

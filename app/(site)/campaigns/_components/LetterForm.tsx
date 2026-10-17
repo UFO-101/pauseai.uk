@@ -16,7 +16,7 @@ import AttachmentChips from "./AttachmentChips";
 import { saveDraft, type Draft } from "./draft";
 import LetterEditor from "./LetterEditor";
 import Required from "./Required";
-import { ErrorText, Field } from "./FormParts";
+import { ErrorText, Field, Input } from "./FormParts";
 import styles from "./LetterForm.module.css";
 
 type Props = {
@@ -87,7 +87,7 @@ export default function LetterForm({ campaign, mp, statuses, senderName, address
 
       <label>
         <Required>{copy.form.emailLabel}</Required>
-        <input
+        <Input
           name="email"
           type="email"
           required
@@ -98,7 +98,7 @@ export default function LetterForm({ campaign, mp, statuses, senderName, address
       </label>
       <label>
         {copy.form.subjectLabel}
-        <input name="subject" value={subject} onChange={(e) => setSubject(e.target.value)} />
+        <Input name="subject" value={subject} onChange={(e) => setSubject(e.target.value)} />
       </label>
       <Field>
         <label id={letterId}>{copy.form.letterLabel}</label>

@@ -31,6 +31,16 @@
   max-width: 100%;
 }
 
+/* A row's controls are the height of the small Button beside them, so the
+   select, the search box and the button line up (ui.browser.test.tsx). A
+   select's own height is the browser's, and taller. */
+.filters input,
+.filters select {
+  box-sizing: border-box;
+  height: 36px;
+  padding-block: 0;
+}
+
 .filters input,
 .filters select,
 .form input,

@@ -19,6 +19,8 @@ export const DYNAMIC_EXAMPLES: Record<string, string> = {
   // Without a session this redirects to the login page, which is what the
   // smoke test sees.
   "/staff/politicians/[id]": "/staff/politicians/1",
+  // A group of the component gallery (fixture builds only).
+  "/gallery/[group]": "/gallery/ui",
 };
 
 /** Route patterns with a dynamic segment, e.g. "/blog/[slug]". */

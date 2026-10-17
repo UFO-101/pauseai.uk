@@ -4,7 +4,7 @@
 import { campaigns } from "@/lib/content/email-your-mp";
 import AttachmentChips from "@/app/(site)/campaigns/_components/AttachmentChips";
 import { exampleMp } from "@/app/(site)/campaigns/_components/draft.examples";
-import { Column, ErrorText, Field, Notice } from "@/app/(site)/campaigns/_components/FormParts";
+import { Column, ErrorText, Field, Input, Notice } from "@/app/(site)/campaigns/_components/FormParts";
 import LetterStep from "@/app/(site)/campaigns/_components/LetterStep";
 import MpCard from "@/app/(site)/campaigns/_components/MpCard";
 import Required from "@/app/(site)/campaigns/_components/Required";
@@ -297,10 +297,28 @@ export const campaignsLetter: Group = {
                 <Field>
                   <label>
                     Example field
-                    <input name="example-field" />
+                    <Input name="example-field" />
                   </label>
                   <small>A hint under it.</small>
                 </Field>
+              </Column>
+            </div>
+          ),
+        },
+      ],
+    },
+    {
+      name: "Input",
+      file: "app/(site)/campaigns/_components/FormParts.tsx",
+      variants: [
+        {
+          label: "Empty, filled in, and disabled while a lookup runs",
+          render: () => (
+            <div className="container">
+              <Column>
+                <Input name="example-empty" aria-label="Empty" />
+                <Input name="example-filled" aria-label="Filled in" defaultValue="7 Fake Lane" />
+                <Input name="example-disabled" aria-label="Disabled" defaultValue="ZZ99ZZ" disabled />
               </Column>
             </div>
           ),

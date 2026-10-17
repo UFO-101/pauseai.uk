@@ -117,7 +117,7 @@ export function EmailYourMpToolExample() {
 /** The lookup form, listing the test MPs' postcodes, as outside production. */
 export function EmailYourMpToolTestMpsExample() {
   return (
-    <Seeded lookup={exampleLookup}>
+    <Seeded lookup={{ ...exampleLookup, address: "7 Fake Lane", postcode: "ZZ99ZZ" }}>
       <EmailYourMpTool campaignSlug={letterToPm.slug} showTestMps />
     </Seeded>
   );

@@ -7,6 +7,7 @@ import {
   getPolitician,
   isHouse,
   listPoliticians,
+  politiciansSearch,
   setStatus,
   signatories,
   statusesOf,
@@ -30,6 +31,28 @@ describe("isHouse", () => {
   it("knows the houses", () => {
     expect(isHouse("senedd")).toBe(true);
     expect(isHouse("hogwarts")).toBe(false);
+  });
+});
+
+describe("politiciansSearch", () => {
+  it("keeps what was typed, and filters by it", () => {
+    expect(politiciansSearch({ q: "Jo", house: "lords", campaign: BILL })).toEqual({
+      q: "Jo",
+      house: "lords",
+      campaign: BILL,
+      filter: { search: "Jo", house: "lords", campaign: BILL },
+    });
+  });
+
+  it("filters by nothing that's blank, missing or not a house", () => {
+    const none = { search: undefined, house: undefined, campaign: undefined };
+    expect(politiciansSearch({})).toEqual({ q: "", house: "", campaign: "", filter: none });
+    expect(politiciansSearch({ q: "", house: "hogwarts", campaign: "" })).toEqual({
+      q: "",
+      house: "hogwarts",
+      campaign: "",
+      filter: none,
+    });
   });
 });
 
