@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { PNG } from "pngjs";
 import { readdirSync } from "node:fs";
-import { comparePngs, pairRuns, SECTION_ORDER, sortRuns, type FlowRun, type RunManifest } from "./frames";
+import { carryRuns, comparePngs, pairRuns, SECTION_ORDER, sortRuns, type FlowRun, type RunManifest } from "./frames";
 import { renderStoryboardPage } from "./page";
 
 const run = (flow: string, captions: string[], extra: Partial<FlowRun> = {}): FlowRun => ({
@@ -159,6 +159,39 @@ describe("sortRuns", () => {
       same,
     );
     expect(board.flows.map((f) => f.flow)).toEqual(["first", "second", "gone"]);
+  });
+});
+
+describe("carryRuns", () => {
+  it("puts a partial run's flows on top of the last run's, each replacing its namesake", () => {
+    const previous = {
+      frames: [
+        { ...run("login", ["form"]), shotAt: "1" },
+        { ...run("letters", ["list"]), shotAt: "1" },
+      ],
+    };
+    const fresh = { frames: [{ ...run("login", ["form", "sent"]), shotAt: "2" }] };
+    expect(carryRuns(previous, fresh).frames.map((r) => [r.flow, r.frames.length, r.shotAt])).toEqual([
+      ["letters", 1, "1"],
+      ["login", 2, "2"],
+    ]);
+  });
+
+  it("keeps the flows pairRuns tells apart by viewport", () => {
+    const previous = { frames: [run("login", ["form"], { viewport: "phone" })] };
+    const fresh = { frames: [run("login", ["form"])] };
+    expect(carryRuns(previous, fresh).frames.map((r) => r.viewport)).toEqual(["phone", "desktop"]);
+  });
+});
+
+describe("pairRuns and when flows were shot", () => {
+  it("passes each flow's shot time on to the page", () => {
+    const board = pairRuns(
+      { frames: [{ ...run("login", ["form"]), shotAt: "2026-10-17T08:00:00.000Z" }] },
+      undefined,
+      same,
+    );
+    expect(board.flows[0].shotAt).toBe("2026-10-17T08:00:00.000Z");
   });
 });
 

@@ -37,6 +37,8 @@ export type FlowRun = {
   /** The failure's first line, if it failed. */
   error?: string;
   frames: { caption: string; png?: string }[];
+  /** When the run that shot it started: a partial run carries the flows it didn't run from the last one. */
+  shotAt?: string;
 };
 
 /** What one run of the suite wrote: `frames.json` in its output directory. */
@@ -73,6 +75,8 @@ export type Flow = {
   mainStatus?: FlowStatus;
   frames: number;
   changed: number;
+  /** When the run that shot it started (FlowRun's). */
+  shotAt?: string;
 };
 
 export type Storyboard = {
@@ -102,6 +106,15 @@ export function sortRuns<T extends Pick<FlowRun, "section" | "line" | "flow" | "
       a.flow.localeCompare(b.flow) ||
       a.viewport.localeCompare(b.viewport),
   );
+}
+
+/**
+ * A partial run's flows on top of the last run's: each flow it ran replaces
+ * that flow, and the rest are carried as they were, so the review stays whole.
+ */
+export function carryRuns(previous: RunManifest, fresh: RunManifest): RunManifest {
+  const ran = new Set(fresh.frames.map(key));
+  return { frames: [...previous.frames.filter((run) => !ran.has(key(run))), ...fresh.frames] };
 }
 
 /**
@@ -182,6 +195,7 @@ export function pairRuns(
       mainStatus: mainRun?.status,
       frames: flowFrames.length,
       changed: flowFrames.filter((f) => f.changed).length,
+      shotAt: run.shotAt,
     });
   }
 

@@ -144,7 +144,8 @@ how a page looks.
 with its own `npm ci` when its lockfile changes), runs the suite against it
 with screenshots (its failures are just missing frames), then against this
 branch, pairs the frames by section, flow and caption, diffs them pixel by
-pixel, and opens `test-results/storyboard/index.html`: the flows in
+pixel, and opens `test-results/storyboard/index.html`, which goes to the
+newest run's page: the flows in
 sections, each frame captioned and pictured on desktop and phone, with this
 branch's picture, main's and the diff, a lightbox, a phone/desktop toggle
 that stays on the flow being looked at, a "changed only" filter, and a
@@ -153,9 +154,32 @@ of `SECTION_ORDER` (`tests/storyboard/report/frames.ts`): the public pages
 first, then what a visitor does, the staff screens, then the mechanics; the
 flows in each keep their spec file's order. The sidebar folds every section
 but the one in view. The same data is in
-`test-results/storyboard/storyboard.json`, for an agent.
+`test-results/storyboard/latest/storyboard.json`, for an agent.
 Both are local only and gitignored. A difference never fails; only this
 branch's checks do, and the exit code is theirs.
+
+**Runs.** Each run has its own folder,
+`test-results/storyboard/runs/<when>/`, with every picture its page shows,
+so a page you have open is never changed by the next run. `latest` points
+at the newest that finished, and `index.html` beside it opens that run's
+page by name. The newest three runs are kept.
+
+A partial run (a section, `-g`, `--desktop` or `--phone`) starts from the
+latest run's frames, as hard links, and replaces only the flows it runs, so
+the review stays whole. Each carried flow says when it was shot, and the
+summary line counts them. A full run starts empty, so a flow that's gone
+from the suite goes from the review.
+
+**Main is run once.** Main's frames are kept in
+`test-results/storyboard-main/`, under main's commit and a hash of this
+branch's suite (`tests/`, `playwright.config.ts`, `lib/content/` and the
+pages' paths: the suite drives main's server, so a change to it changes
+main's frames). A run lists its flows first (`playwright test --list`,
+which builds nothing); if main's are all kept, it doesn't build or run main
+at all. Otherwise it runs main for its selection and keeps the result. So
+after one full review, every partial run against the same main is fast.
+`--fresh-main` runs main again regardless; with `--main-server` nothing is
+kept, as that server may not be the ref's commit.
 
 **Noise.** A frame that differs from main's only by antialiasing isn't
 counted as changed, by the rule toucan's snapshot gallery uses
@@ -178,7 +202,8 @@ for servers you started. Anything else goes to `playwright test`: a file
 So the review is also the way to get a screenshot while working: one page
 is `npm run storyboard -- --no-main --no-open --paths public-pages -g
 '/donate$'`, a few seconds on a warm build. `public-pages` names each test
-by its route. A run replaces the last review in `test-results/storyboard`.
+by its route. A narrow run carries the rest of the latest review, so it
+doesn't lose your last full one.
 
 **Every flow stands alone.** It passes on its own, and run twice, in any
 order, alongside the others:
@@ -225,8 +250,9 @@ order, alongside the others:
   (images in, nothing moving) and `wholePage` (back at the top, and
   staying there, for a frame after a click, typing or going back has left
   the window somewhere that varies between runs). Playwright's own output (traces) is in
-  `test-results/playwright`, emptied every run; the review beside it in
-  `test-results/storyboard` is kept until the next review.
+  `test-results/playwright` (`test-results/playwright-storyboard-*` for a
+  review), emptied every run; the reviews beside it in
+  `test-results/storyboard` are kept, the newest three.
 - No stored baselines, and no gate on pixels. Main is the reference.
 
 ### What the storyboard covers

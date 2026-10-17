@@ -86,6 +86,7 @@ section:first-child > h2 { border-top: 0; margin-top: 16px; }
 section, .flow { scroll-margin-top: 60px; }
 .flow { margin: 16px 0 28px; }
 .flow h3 { font-size: 15px; margin-bottom: 8px; }
+.flow h3 .shot { margin-left: 8px; font-size: 12px; font-weight: normal; color: var(--muted); }
 .flow .status { font-weight: normal; color: var(--muted); font-size: 13px; margin-left: 8px; }
 .frame { display: grid; grid-template-columns: 200px 1fr; gap: 16px; padding: 10px 0; border-top: 1px solid #eee; }
 .frame .caption { color: #333; }
@@ -130,6 +131,10 @@ const el = (tag, attrs = {}, children = []) => {
 const title = (s) => s.replace(/-/g, " ").replace(/^./, (c) => c.toUpperCase());
 /** Local time as "2026-10-16 16:33". */
 const isoLocal = (d) => new Date(d.getTime() - d.getTimezoneOffset() * 60_000).toISOString().slice(0, 16).replace("T", " ");
+// The newest run's flows say nothing; a carried flow says when it was shot.
+const newestShot = data.flows.reduce((newest, f) => (f.shotAt && f.shotAt > newest ? f.shotAt : newest), "");
+const shotTime = (iso) => new Date(iso).toLocaleString([], { weekday: "short", hour: "2-digit", minute: "2-digit" });
+const plural = (n, word) => n + " " + word + (n === 1 ? "" : "s");
 const pct = (n) => (n * 100 < 0.01 && n > 0 ? "<0.01" : (n * 100).toFixed(2)) + "%";
 const slug = (...parts) => parts.join("-").toLowerCase().replace(/[^a-z0-9]+/g, "-");
 const framesOf = (flow) => data.frames.filter((f) => f.section === flow.section && f.flow === flow.flow && f.viewport === flow.viewport);
@@ -173,6 +178,8 @@ function render() {
       const frames = framesOf(flow).filter((f) => !state.changedOnly || f.changed);
       shownFrames += frames.length;
       const h3 = el("h3", { class: flow.status !== "passed" ? "failed" : "" }, [flow.flow]);
+      // Carried from an earlier, fuller run by a partial one (scripts/storyboard.mjs).
+      if (flow.shotAt && flow.shotAt !== newestShot) h3.append(el("span", { class: "shot" }, ["shot " + shotTime(flow.shotAt)]));
       if (flow.status !== "passed") h3.append(el("span", { class: "status" }, [flow.status]));
       else if (flow.mainStatus && flow.mainStatus !== "passed") h3.append(el("span", { class: "status" }, ["main: " + flow.mainStatus]));
       const div = el("div", { class: "flow", id }, [h3]);
@@ -189,10 +196,12 @@ function render() {
   const frames = data.frames.filter((f) => f.viewport === state.viewport);
   const changed = frames.filter((f) => f.changed).length;
   const failed = flows.filter((f) => f.status !== "passed").length;
+  const carried = flows.filter((f) => f.shotAt && f.shotAt !== newestShot).length;
   document.getElementById("summary").textContent =
     frames.length + " frames in " + flows.length + " flows" +
     (data.withMain ? ", " + changed + " changed against main" : ", no run of main to compare with") +
-    (failed ? ", " + failed + " failed" : "") + ". " + isoLocal(new Date(data.generatedAt));
+    (failed ? ", " + failed + " failed" : "") + ". " + isoLocal(new Date(data.generatedAt)) +
+    (carried ? "; " + plural(flows.length - carried, "flow") + " shot now, " + carried + " carried from earlier runs" : "");
 }
 
 function renderFrame(frame) {
