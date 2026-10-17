@@ -27,6 +27,24 @@ const GROUPS = [
   "staff-kit",
 ];
 
+// The public pages section leaves the gallery to this one, so this checks
+// what it would: no uncaught error and no console error from our own code,
+// on any gallery page a flow opens.
+let problems: string[] = [];
+test.beforeEach(({ page }) => {
+  problems = [];
+  page.on("console", (message) => {
+    const origin = message.location().url;
+    if (message.type() === "error" && (!origin || origin.startsWith(BASE))) {
+      problems.push(`[error] ${message.text().slice(0, 300)}`);
+    }
+  });
+  page.on("pageerror", (error) => problems.push(`[pageerror] ${String(error).slice(0, 300)}`));
+});
+test.afterEach(() => {
+  expect(problems, "console problems").toEqual([]);
+});
+
 /** Opens a gallery page, which search engines are told to leave alone. */
 async function open(page: import("@playwright/test").Page, path: string) {
   await page.goto(`${BASE}${path}`, { waitUntil: "domcontentloaded" });

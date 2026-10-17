@@ -22,7 +22,10 @@ import { hydrated } from "./settle";
 // without a lookup or a letter" pictures that once, and the ZZ99ZZ flow
 // pictures them filled in.
 const EMPTY_STEP = /^\/campaigns\/[^/]+\/(write|preview)$/;
-const PUBLIC_ROUTES = ROUTES.filter((route) => !isStaffRoute(route) && !EMPTY_STEP.test(route));
+// The component gallery has its own section, gallery.spec.ts, which pictures
+// its index and every group's page and checks them the same way.
+const GALLERY = /^\/gallery(\/|$)/;
+const PUBLIC_ROUTES = ROUTES.filter((route) => !isStaffRoute(route) && !EMPTY_STEP.test(route) && !GALLERY.test(route));
 
 // Matched against the message text. Kept deliberately short — every entry here
 // is a thing we have decided not to look at, so it should have a reason.
@@ -72,15 +75,12 @@ for (const route of PUBLIC_ROUTES) {
     // waits for the mount, then for the console to go quiet.
     await hydrated(page);
 
-    // A group of the component gallery shows its components, a page's own
-    // <h1> among them, and the gallery's section pictures it whole.
-    const gallery = route.startsWith("/gallery/");
-    if (!gallery) await expect(page.locator("h1"), "exactly one <h1>").toHaveCount(1);
+    await expect(page.locator("h1"), "exactly one <h1>").toHaveCount(1);
     if (FIXTURE_TEXT[route]) await expect(page.getByText(FIXTURE_TEXT[route])).toBeVisible();
     // The trackers count the fixture guest list, so they never show their "no access" fallback.
     if (route.startsWith("/trackers/")) await expect(page.getByText(/check the Luma access settings/i)).toHaveCount(0);
 
-    await frame(page, route, { window: gallery });
+    await frame(page, route);
 
     // getAttribute rather than .href: links inside an SVG have an object there.
     const hrefs = await page.$$eval("a[href]", (links) =>
