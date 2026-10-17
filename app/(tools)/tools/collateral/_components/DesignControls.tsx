@@ -190,7 +190,7 @@ export default function DesignControls({
           // No layout offered here has toggle fields (only Brush does, and it is hidden; see designState.ts).
           return (
             <div key={field.key} className={styles.field}>
-              <FieldLabel htmlFor={id} note={field.hint && ` · ${field.hint}`}>
+              <FieldLabel htmlFor={id} note={field.hint && <> · {field.hint}</>}>
                 {field.label}
               </FieldLabel>
               {field.kind === "textarea" ? (

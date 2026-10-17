@@ -59,7 +59,8 @@
 }
 
 @media (max-width: 860px) {
-  .foreword {
+  /* The page-width band, the workforce inquiry's, keeps its padding. */
+  .foreword:not(.pageWidth) {
     padding: 60px 0;
   }
 }
