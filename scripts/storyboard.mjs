@@ -20,9 +20,11 @@
 // test-results/storyboard/latest points at it, and index.html beside it
 // opens its page. The newest few runs are kept.
 //
-// A partial run (a section, -g, one viewport) starts from the latest run's
-// frames, as hard links, and replaces the flows it runs: the review stays
-// whole, each flow saying when it was shot. A full run starts empty.
+// A partial run (one that selects less than the whole suite: a section, -g,
+// one viewport) starts from the latest run's frames, as hard links, and
+// replaces the flows it runs: the review stays whole, each flow saying when
+// it was shot. Flows gone from the suite aren't carried. A full run starts
+// empty.
 //
 // Main's frames are kept in test-results/storyboard-main/, under main's
 // commit and a hash of the suite (scripts/storyboard-main.mjs): a run whose
@@ -48,6 +50,7 @@ import { dirname, join, relative, resolve } from "node:path";
 import { LOCAL_URL, MAIN_OUTBOX_DIR, MAIN_URL } from "../tests/fixture-env.mjs";
 import {
   cacheKey,
+  carryable,
   carryFlows,
   listedFlows,
   mergeRun,
@@ -88,8 +91,6 @@ for (const arg of process.argv.slice(2)) {
 
 const runAt = new Date().toISOString();
 const runDir = join(RUNS, runFolder(runAt));
-// Anything that narrows the suite: then the latest run's other flows are carried.
-const partial = passThrough.length > 0 || options.projects.length > 0;
 
 /** Runs the suite against `url`, with screenshots, its frames going to runDir/<side>. Returns the exit code. */
 function runSuite(side, url, extraEnv = {}) {
@@ -130,13 +131,13 @@ function linkTree(from, to) {
   }
 }
 
-/** The flows this run selects: what Playwright would run, listed without building anything. */
-function selectedFlows() {
-  const result = spawnSync(
-    "npx",
-    ["playwright", "test", "--list", "--reporter=json", ...options.projects, ...passThrough],
-    { encoding: "utf8", maxBuffer: 64 * 1024 * 1024, env: { ...process.env, STORYBOARD_SHOTS: "1" } },
-  );
+/** The flows Playwright would run with `args`, listed without building anything. */
+function listFlows(args) {
+  const result = spawnSync("npx", ["playwright", "test", "--list", "--reporter=json", ...args], {
+    encoding: "utf8",
+    maxBuffer: 64 * 1024 * 1024,
+    env: { ...process.env, STORYBOARD_SHOTS: "1" },
+  });
   if (result.status !== 0) throw new Error(`Couldn't list the flows:\n${result.stderr}`);
   return listedFlows(JSON.parse(result.stdout));
 }
@@ -155,14 +156,29 @@ function mainCacheDir(ref) {
       console.warn(`Couldn't fetch origin: using the last fetched ${ref}.`);
     }
   }
-  const files = git("ls-files", "-co", "--exclude-standard", "--", "tests", "playwright.config.ts", "lib/content")
+  const files = git(
+    "ls-files",
+    "-co",
+    "--exclude-standard",
+    "--",
+    "tests",
+    "playwright.config.ts",
+    "lib/content",
+    // Each flow's database, from this branch's migrations, and main's server.
+    "scripts/fresh-database.mjs",
+    "scripts/serve-main.mjs",
+    "netlify/database/migrations",
+    // The route list.
+    "app/sitemap.ts",
+  )
     .split("\n")
     .filter((path) => path && existsSync(path))
     .map((path) => [path, readFileSync(path, "utf8")]);
   const pages = git("ls-files", "-co", "--exclude-standard", "--", "app/**/page.tsx")
     .split("\n")
     .map((path) => [path, ""]);
-  return join(MAIN_CACHE, cacheKey(git("rev-parse", ref), [...files, ...pages]));
+  const playwright = ["@playwright/test", readJson("node_modules/@playwright/test/package.json").version];
+  return join(MAIN_CACHE, cacheKey(git("rev-parse", ref), [...files, ...pages, playwright]));
 }
 
 /** Drops all but the newest `keep` folders in `dir`, never `current`. */
@@ -215,20 +231,36 @@ for (const old of ["branch", "main", "main-run", "diff", "storyboard.json"]) {
   rmSync(join(DIR, old), { recursive: true, force: true });
 }
 
+// The whole suite, and what this run selects: a run is partial when it leaves
+// some of the suite out, whatever the arguments that did it.
+const suite = listFlows([]);
+const wanted = listFlows([...options.projects, ...passThrough]);
+const partial = [...suite].some((key) => !wanted.has(key));
+// A server someone started for main may not be the ref's commit: no cache then.
+const usesCache = options.main !== undefined && !options.mainServer;
+
 mkdirSync(runDir, { recursive: true });
 const carried = partial && existsSync(join(LATEST, "branch")) ? LATEST : undefined;
 if (carried) {
   console.log(`\n▶ Storyboard: a partial run; the other flows are carried from the latest run.\n`);
   linkTree(join(carried, "branch"), join(runDir, "branch"));
   if (existsSync(join(carried, "main"))) linkTree(join(carried, "main"), join(runDir, "main"));
-  // Main's pictures, when they're kept in the run rather than the cache (--main-server).
-  if (existsSync(join(carried, "main-run"))) linkTree(join(carried, "main-run"), join(runDir, "main-run"));
+  // Main's pictures, when a --main-server run kept them in the run. Not into a run that uses the
+  // cache: they may not be the ref's, and everything in main-run/ is moved into the cache.
+  if (!usesCache && existsSync(join(carried, "main-run")))
+    linkTree(join(carried, "main-run"), join(runDir, "main-run"));
+  // Flows gone from the suite go from the review, and a run using the cache drops main frames it didn't link.
+  for (const [side, foreign] of [
+    ["branch", undefined],
+    ["main", usesCache ? "main-run/" : undefined],
+  ]) {
+    const file = join(runDir, side, "frames.json");
+    if (existsSync(file)) writeJson(file, carryable(readJson(file), suite, foreign));
+  }
 }
 
 if (options.main !== undefined) {
-  const wanted = selectedFlows();
-  // A server someone started for main may not be the ref's commit: no cache then.
-  const cacheDir = options.mainServer ? undefined : mainCacheDir(options.main);
+  const cacheDir = usesCache ? mainCacheDir(options.main) : undefined;
   const cacheFile = cacheDir && join(cacheDir, "frames.json");
   let cached = !options.freshMain && cacheFile && existsSync(cacheFile) ? readJson(cacheFile) : { frames: [] };
   const missing = missingFlows(cached, wanted);

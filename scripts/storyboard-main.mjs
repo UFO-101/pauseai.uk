@@ -85,6 +85,19 @@ export function carryFlows(previous, fresh) {
   return { frames: [...previous.frames.filter((run) => !ran.has(flowKey(run))), ...fresh.frames] };
 }
 
+/**
+ * A carried manifest, less what the run can't trust: flows the suite no
+ * longer has (renamed or deleted), and, when `foreign` is given, flows whose
+ * pictures are under it (a --main-server run's, which may not be main).
+ */
+export function carryable(manifest, suite, foreign) {
+  return {
+    frames: manifest.frames.filter(
+      (run) => suite.has(flowKey(run)) && !(foreign && run.frames.some((f) => f.png?.startsWith(foreign))),
+    ),
+  };
+}
+
 /** A run's folder name, from when it started: sortable, and safe in a path. */
 export function runFolder(startedAt) {
   return startedAt.replace(/\.\d+Z$/, "").replace(/:/g, "-");

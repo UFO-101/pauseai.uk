@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   cacheKey,
+  carryable,
   carryFlows,
   flowKey,
   listedFlows,
@@ -99,6 +100,26 @@ describe("carryFlows", () => {
       ["log in", "new.png"],
       ["history", "main-run/frames/history/frame-1.png"],
     ]);
+  });
+});
+
+describe("carryable", () => {
+  const suite = new Set(["desktop|staff|log in", "desktop|staff|letters"]);
+
+  it("drops flows the suite no longer has", () => {
+    const manifest = { frames: [run("log in"), run("renamed"), run("letters", { viewport: "phone" })] };
+    expect(carryable(manifest, suite).frames.map((r) => r.flow)).toEqual(["log in"]);
+  });
+
+  it("drops flows with pictures under a foreign folder, when given one", () => {
+    const manifest = { frames: [run("log in"), run("letters", { png: "main/frames/letters/frame-1.png" })] };
+    expect(carryable(manifest, suite, "main-run/").frames.map((r) => r.flow)).toEqual(["letters"]);
+    expect(carryable(manifest, suite).frames.map((r) => r.flow)).toEqual(["log in", "letters"]);
+  });
+
+  it("keeps a flow that has no pictures", () => {
+    const manifest = { frames: [{ ...run("log in"), frames: [{ caption: "a" }] }] };
+    expect(carryable(manifest, suite, "main-run/").frames).toHaveLength(1);
   });
 });
 

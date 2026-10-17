@@ -164,17 +164,19 @@ so a page you have open is never changed by the next run. `latest` points
 at the newest that finished, and `index.html` beside it opens that run's
 page by name. The newest three runs are kept.
 
-A partial run (a section, `-g`, `--desktop` or `--phone`) starts from the
-latest run's frames, as hard links, and replaces only the flows it runs, so
-the review stays whole. Each carried flow says when it was shot, and the
-summary line counts them. A full run starts empty, so a flow that's gone
-from the suite goes from the review.
+A partial run (one that selects less than the whole suite: a section, `-g`,
+`--desktop` or `--phone`) starts from the latest run's frames, as hard
+links, and replaces only the flows it runs, so the review stays whole. Each
+carried flow says when it was shot, and the summary line counts them. A flow
+that's gone from the suite, renamed or deleted, isn't carried, and a full
+run starts empty.
 
 **Main is run once.** Main's frames are kept in
 `test-results/storyboard-main/`, under main's commit and a hash of this
-branch's suite (`tests/`, `playwright.config.ts`, `lib/content/` and the
-pages' paths: the suite drives main's server, so a change to it changes
-main's frames). A run lists its flows first (`playwright test --list`,
+branch's suite (`tests/`, `playwright.config.ts`, `lib/content/`, the
+pages' paths, `app/sitemap.ts`, the migrations, `scripts/fresh-database.mjs`,
+`scripts/serve-main.mjs` and Playwright's version: the suite drives main's
+server, so a change to it changes main's frames). A run lists its flows first (`playwright test --list`,
 which builds nothing); if main's are all kept, it doesn't build or run main
 at all. Otherwise it runs main for its selection and keeps the result. So
 after one full review, every partial run against the same main is fast.

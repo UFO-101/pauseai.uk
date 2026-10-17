@@ -17,4 +17,5 @@ export function missingFlows(cached: Manifest, wanted: Set<string>): string[];
 export function mergeRun(cached: Manifest, fresh: Manifest, from: string, to: string): Manifest;
 export function selectFlows(manifest: Manifest, wanted: Set<string>, prefix?: string): Manifest;
 export function carryFlows(previous: Manifest, fresh: Manifest): Manifest;
+export function carryable(manifest: Manifest, suite: Set<string>, foreign?: string): Manifest;
 export function runFolder(startedAt: string): string;

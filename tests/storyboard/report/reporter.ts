@@ -12,8 +12,8 @@ import { renderStoryboardPage } from "./page";
 // "main-run") and STORYBOARD_RUN_AT; the gate sets none, and this reporter
 // then does nothing.
 //
-// A partial run's folder starts as hard links to the last run's, so the
-// flows it doesn't run are carried. Every file is removed before it's
+// A partial run's branch folder starts as hard links to the last run's, so
+// the flows it doesn't run are carried. Every file is removed before it's
 // written: writing into a hard link would change the last run's too.
 
 export default class StoryboardReporter implements Reporter {
@@ -68,7 +68,9 @@ export default class StoryboardReporter implements Reporter {
     mkdirSync(sideDir, { recursive: true });
     const file = join(sideDir, "frames.json");
     const fresh: RunManifest = { frames: this.runs };
-    const manifest = existsSync(file) ? carryRuns(JSON.parse(readFileSync(file, "utf8")), fresh) : fresh;
+    // Only the branch's side carries: main-run holds what this run shot of main, and nothing else.
+    const manifest =
+      this.side === "branch" && existsSync(file) ? carryRuns(JSON.parse(readFileSync(file, "utf8")), fresh) : fresh;
     rmSync(file, { force: true });
     writeFileSync(file, JSON.stringify(manifest, null, 2));
     if (this.side !== "branch") return;
