@@ -1,4 +1,5 @@
 import { MAX_ZOOM, type PhotoView } from "@/lib/collateral/photoTransform";
+import styles from "./CropControls.module.css";
 import Slider from "./Slider";
 
 /**
@@ -13,8 +14,8 @@ export default function CropControls({
   onChange: (patch: Partial<PhotoView>) => void;
 }) {
   return (
-    <details className="collateral-crop">
-      <summary>Fine-tune the crop</summary>
+    <details className={styles.crop}>
+      <summary className={styles.summary}>Fine-tune the crop</summary>
       <Slider
         label="Zoom"
         min={1}

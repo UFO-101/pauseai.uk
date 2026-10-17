@@ -2,21 +2,22 @@
 
 import { useEffect, type ReactNode } from "react";
 import { createPortal } from "react-dom";
+import IconButton from "./IconButton";
+import styles from "./Lightbox.module.css";
 
 /**
- * A full-screen overlay for a photo or QR code. It renders nothing while
- * closed, and at the end of <body> while open, so nothing on the page can
- * stack above it. Escape, or a click on the backdrop, closes it; the arrow
- * keys call `onPrevious` and `onNext`, if given. The caller brings the
- * contents, its own close button among them, and the styles, which show it
- * with an `open` class.
+ * A full-screen overlay for a photo, on a dark backdrop, with a close button
+ * and, if `onPrevious` and `onNext` are given, buttons to step through. It
+ * renders nothing while closed, and at the end of <body> while open, so
+ * nothing on the page can stack above it. Escape, the close button or a
+ * click on the backdrop closes it; the arrow keys step. The caller brings
+ * the photo.
  */
 export default function Lightbox({
   open,
   onClose,
   onPrevious,
   onNext,
-  className,
   label,
   children,
 }: {
@@ -24,7 +25,6 @@ export default function Lightbox({
   onClose: () => void;
   onPrevious?: () => void;
   onNext?: () => void;
-  className: string;
   label?: string;
   children: ReactNode;
 }) {
@@ -42,13 +42,46 @@ export default function Lightbox({
   if (!open) return null;
   return createPortal(
     <div
-      className={`${className} open`}
+      className={styles.lightbox}
       role="dialog"
       aria-label={label}
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
+      <IconButton look="dark" className={styles.close} aria-label="Close" onClick={onClose}>
+        <svg viewBox="0 0 24 24" width={20} height={20} aria-hidden="true">
+          <path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+        </svg>
+      </IconButton>
+      {onPrevious && (
+        <IconButton look="dark" className={styles.previous} aria-label="Previous" onClick={onPrevious}>
+          <svg viewBox="0 0 24 24" width={22} height={22} aria-hidden="true">
+            <path
+              d="M15 5l-7 7 7 7"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </IconButton>
+      )}
+      {onNext && (
+        <IconButton look="dark" className={styles.next} aria-label="Next" onClick={onNext}>
+          <svg viewBox="0 0 24 24" width={22} height={22} aria-hidden="true">
+            <path
+              d="M9 5l7 7-7 7"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </IconButton>
+      )}
       {children}
     </div>,
     document.body,

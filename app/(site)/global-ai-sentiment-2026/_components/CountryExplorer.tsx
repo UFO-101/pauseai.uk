@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { COUNTRIES, REGIONS, netOpinion, regionLabel } from "@/lib/content/aiSentiment2026";
 import DivergingBar, { BarAxisLabels } from "./DivergingBar";
 import Dropdown from "./Dropdown";
+import styles from "./sentiment.module.css";
 
 type SortMode = "opposed" | "favor" | "az";
 
@@ -34,8 +35,8 @@ export default function CountryExplorer() {
   }, [region, search, sort]);
 
   return (
-    <div className="gas-explorer">
-      <div className="gas-explorer-controls">
+    <div>
+      <div className={styles.explorerControls}>
         <Dropdown
           id="gas-region"
           label="Region"
@@ -56,7 +57,7 @@ export default function CountryExplorer() {
           onChange={(v) => setSort(v as SortMode)}
           options={SORT_OPTIONS}
         />
-        <div className="gas-filter-group gas-filter-search">
+        <div className={`${styles.filterGroup} ${styles.filterSearch}`}>
           <label htmlFor="gas-search">Search</label>
           <input
             id="gas-search"
@@ -66,7 +67,7 @@ export default function CountryExplorer() {
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
-        <div className="gas-filter-group gas-filter-checkbox">
+        <div className={`${styles.filterGroup} ${styles.filterCheckbox}`}>
           <label htmlFor="gas-show-not-sure">
             <input
               id="gas-show-not-sure"
@@ -79,9 +80,9 @@ export default function CountryExplorer() {
         </div>
       </div>
 
-      <div className="gas-bar-list">
+      <div className={styles.barList}>
         <BarAxisLabels />
-        {rows.length === 0 && <p className="gas-empty">No countries match that search.</p>}
+        {rows.length === 0 && <p className={styles.empty}>No countries match that search.</p>}
         {rows.map((row, i) => (
           <DivergingBar
             key={row.country}
@@ -89,11 +90,11 @@ export default function CountryExplorer() {
             row={row}
             meta={
               <>
-                <span className="gas-term" data-tooltip="Number of people surveyed">
+                <span className={styles.term} data-tooltip="Number of people surveyed">
                   n={row.n.toLocaleString()}
                 </span>
                 {" · "}
-                <span className="gas-term" data-tooltip="Margin of error at 95% confidence, in percentage points">
+                <span className={styles.term} data-tooltip="Margin of error at 95% confidence, in percentage points">
                   ±{row.moe_pp}pp
                 </span>
               </>

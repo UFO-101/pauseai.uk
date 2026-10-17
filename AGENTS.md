@@ -1,6 +1,6 @@
 # Agent notes
 
-Read `README.md` first. It links the docs in `docs/`, including the code structure (`docs/code-structure.md`) and test policy (`docs/testing.md`). Plans are in `plans/`.
+Read `README.md` first. It links the docs in `docs/`, including the code structure and styling rules (`docs/code-structure.md`), test policy (`docs/testing.md`) and the style guide (`docs/style-guide.md`). Plans are in `plans/`.
 
 ## Scratch files
 
@@ -34,7 +34,7 @@ Running one Vitest project (`npm run test:node`, `npm run test:browser`) or one 
 
 ```bash
 npm run storyboard                # both viewports, screenshots, against a build of origin/main, then opens test-results/storyboard/index.html
-npm run storyboard -- --no-open   # the same; read test-results/storyboard/storyboard.json instead
+npm run storyboard -- --no-open   # the same; read test-results/storyboard/latest/storyboard.json instead
 ```
 
 - A flaky flow, or a frame that differs between two runs of the same build, is fixed, never retried, skipped or masked. No stored baselines, no gate on pixels.
@@ -49,7 +49,15 @@ npm run storyboard -- --no-main --no-open --paths public-pages -g '/donate$'   #
 npm run storyboard -- --no-main --no-open --paths --phone campaigns -g ZZ99ZZ   # a flow, every frame
 ```
 
-`--no-main` skips building main, which is the slow part (drop it to see main beside it), `--desktop` or `--phone` picks one viewport, and `--paths` prints each frame's caption and PNG path, to open with the Read tool. A run replaces the last one in `test-results/storyboard`, so a narrow run clears a full review. Playwright reuses whatever is serving on port 3100, so check that it's this branch's fixture build, or stop it. If no flow reaches what you need, add a `frame()` to one, or a flow (see above), rather than a script in `tmp/`.
+`--no-main` skips building main, which is the slow part (drop it to see main beside it), `--desktop` or `--phone` picks one viewport, and `--paths` prints each frame's caption and PNG path, to open with the Read tool. Each run gets its own folder, so the review someone has open is never changed, and a narrow run carries the rest of the latest review rather than clearing it. Main's frames are kept between runs, so after one full review a narrow one doesn't build main. Playwright reuses whatever is serving on port 3100, so check that it's this branch's fixture build, or stop it. If no flow reaches what you need, add a `frame()` to one, or a flow (see above), rather than a script in `tmp/`.
+
+To see a component, use the component gallery (`/gallery`, fixture builds only; `docs/testing.md`, "The component gallery"). Every component has an example there, a page per group, and the gallery section pictures each group's page whole:
+
+```bash
+npm run storyboard -- --no-main --no-open --paths gallery -g 'gallery: ui$'   # the UI kit, both viewports
+```
+
+A new component gets its example in `app/(tools)/gallery/_examples/` (`tests/checks/gallery.test.ts` fails otherwise); look at it there before saying it's done. Check the gallery before writing a component or CSS, too: what you need may exist, or need only a variant (`docs/style-guide.md`).
 
 ## Next.js version may be beyond your knowledge cutoff
 

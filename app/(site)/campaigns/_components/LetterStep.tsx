@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import styles from "./EmailYourMp.module.css";
+import { HeroBand } from "./CampaignHero";
 
 /**
  * A page of its own after a campaign's form: writing the letter, the
@@ -16,15 +16,11 @@ export default function LetterStep({
   after?: ReactNode;
 }) {
   return (
-    <main className="campaigns">
-      <section className={`campaigns-hero ${styles.step}`}>
-        <div className="container">
-          <div className={styles.stepColumn}>
-            <h1>{title}</h1>
-            {children}
-          </div>
-        </div>
-      </section>
+    <main>
+      <HeroBand step>
+        <h1>{title}</h1>
+        {children}
+      </HeroBand>
       {after}
     </main>
   );

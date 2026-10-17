@@ -1,0 +1,45 @@
+/* The title size nudge: a folded stepper. */
+
+.titleSize {
+  font-size: 14px;
+}
+
+.summary {
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.stepper {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.step {
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.step:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.step:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.value {
+  min-width: 80px;
+  font-weight: 600;
+  text-align: center;
+}

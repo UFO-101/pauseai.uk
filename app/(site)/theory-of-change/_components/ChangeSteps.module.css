@@ -1,0 +1,108 @@
+/* The theory of change itself: its steps, in the reading column. */
+
+.article {
+  --container-width: var(--measure-page);
+  padding: 64px 0 88px;
+  background: var(--bg);
+}
+.section {
+  margin: 0 0 56px;
+}
+.section:last-child {
+  margin-bottom: 0;
+}
+.section + .section {
+  padding-top: 48px;
+  border-top: 1px solid var(--border);
+}
+.section h2 {
+  font-family: var(--font-display), "Lato", system-ui, sans-serif;
+  font-size: clamp(28px, 3.2vw, 38px);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.015em;
+  color: var(--text);
+  margin: 0 0 28px;
+}
+.section h3 {
+  font-family: var(--font-display), "Lato", system-ui, sans-serif;
+  font-size: clamp(20px, 2.1vw, 24px);
+  font-weight: 600;
+  font-style: italic;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  color: var(--pause-orange);
+  margin: 36px 0 14px;
+}
+.section h3:first-of-type {
+  margin-top: 8px;
+}
+.section p {
+  font-size: 17px;
+  line-height: 1.7;
+  color: var(--text);
+  margin: 0 0 18px;
+}
+.section a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  transition: color 0.15s ease;
+}
+.section a:hover {
+  color: var(--pause-orange);
+}
+.section blockquote {
+  margin: 18px 0 24px;
+  padding: 6px 0 6px 22px;
+  border-left: 2px solid var(--pause-orange);
+  font-family: var(--font-display), "Lato", system-ui, sans-serif;
+  font-style: italic;
+  color: var(--text-secondary);
+}
+.section blockquote p {
+  font-size: 16.5px;
+  line-height: 1.7;
+  margin: 0;
+  color: inherit;
+}
+.figure {
+  margin: 18px auto 24px;
+  max-width: 420px;
+}
+.figure img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
+}
+.list {
+  padding-left: 22px;
+  margin: 14px 0 18px;
+}
+.list li {
+  font-size: 17px;
+  line-height: 1.7;
+  color: var(--text);
+  margin-bottom: 10px;
+  padding-left: 6px;
+}
+.list li::marker {
+  color: var(--pause-orange);
+  font-weight: 600;
+}
+@media (max-width: 860px) {
+  .article {
+    padding: 48px 0 64px;
+  }
+  .section {
+    margin-bottom: 40px;
+  }
+  .section + .section {
+    padding-top: 36px;
+  }
+  .section h3 {
+    margin-top: 28px;
+  }
+}

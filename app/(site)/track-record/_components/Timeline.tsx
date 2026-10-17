@@ -1,14 +1,14 @@
-import Image from "next/image";
 import Link from "next/link";
-import { ShotLink } from "./Gallery";
-import { Shot, TimelineEntry } from "./TimelineEntry";
+import { Photos, Shot } from "./Photos";
+import { EntryList, EntryText, TimelineEntry } from "./TimelineEntry";
+import styles from "./Timeline.module.css";
 import { TimelineList } from "./TimelineList";
 
 // Everything PauseAI UK has done, newest first. Each entry is a TimelineEntry;
 // its text and photos are written out here.
 export default function Timeline() {
   return (
-    <section className="timeline">
+    <section className={styles.timeline}>
       <div className="container">
         <TimelineList>
           <TimelineEntry
@@ -17,7 +17,7 @@ export default function Timeline() {
             year="2026"
             title={"Emergency Protest outside Downing Street "}
           >
-            <div className="entry-text">
+            <EntryText>
               <p>
                 In response to the media wave following Jacob Coxon leaving Anthropic over existential safety concerns,
                 our volunteers organised an emergency protest in four days, with speakers ranging from AI safety
@@ -59,8 +59,8 @@ export default function Timeline() {
                 Our main message to Andy Burnham was to convene an international pause treaty summit, putting the
                 UK&apos;s G20 presidency to good use.
               </p>
-            </div>
-            <div className="gallery gallery-4">
+            </EntryText>
+            <Photos count={4}>
               <Shot
                 href="/images/downing-street-protest-sept-2026/downing-street-group.jpg"
                 src="/images/downing-street-protest-sept-2026/downing-street-group-thumb.jpg"
@@ -85,7 +85,7 @@ export default function Timeline() {
                 alt="A protester holding a sign reading Burnham, block AI oblivion"
                 sizes="(max-width: 768px) 100vw, 25vw"
               />
-            </div>
+            </Photos>
           </TimelineEntry>
 
           <TimelineEntry
@@ -94,7 +94,7 @@ export default function Timeline() {
             year="2026"
             title={"PauseCon London and Parliamentary Conference "}
           >
-            <div className="entry-text">
+            <EntryText>
               <p>
                 We helped PauseAI Global to deliver the next PauseCon in London, bringing around 100 volunteers together
                 from around the world and running workshops on social media management, communicating with news outlets,
@@ -102,7 +102,7 @@ export default function Timeline() {
                 invited into high-impact roles that they would not have otherwise found.
               </p>
               <p>To finish off, we held a Parliamentary conference with audience Q&amp;A on AI policy, featuring:</p>
-              <ul className="list">
+              <EntryList>
                 <li>
                   <strong>Dame Chi Onwurah</strong>, Chair of the Commons Science, Innovation and Technology Committee.
                 </li>
@@ -122,14 +122,14 @@ export default function Timeline() {
                 <li>
                   <strong>Brando Benifei MEP</strong>, Co-rapporteur and lead architect of the EU AI Act.
                 </li>
-              </ul>
+              </EntryList>
               <p>
                 Topics covered ranged from the fact crimes are being committed, but governments are unable to hold
                 anyone accountable because AI companies are not liable for the crimes of their AIs, to what needs to
                 happen for an international superintelligence ban to come into play.
               </p>
-            </div>
-            <div className="gallery gallery-3">
+            </EntryText>
+            <Photos count={3}>
               <Shot
                 href="/images/pausecon-london-sept-2026/parliament-conference-hall.jpg"
                 src="/images/pausecon-london-sept-2026/parliament-conference-hall-thumb.jpg"
@@ -149,16 +149,16 @@ export default function Timeline() {
                 sizes="(max-width: 768px) 100vw, 66vw"
                 wide
               />
-            </div>
+            </Photos>
           </TimelineEntry>
 
           <TimelineEntry id="parliamentary-meetings" month="June" year="2026" title="Parliamentary Meetings">
-            <div className="entry-text">
+            <EntryText>
               <p>
                 Volunteers from across the country contacted their Members of Parliament asking to meet at the House of
                 Commons. We met with the following MPs (or their staff members):
               </p>
-              <ul className="list">
+              <EntryList>
                 <li>
                   <strong>Anneliese Dodds MP</strong>, for Oxford East (Labour).
                 </li>
@@ -180,7 +180,7 @@ export default function Timeline() {
                 <li>
                   <strong>Dame Meg Hillier MP</strong>, for Hackney South and Shoreditch (Labour Co-op).
                 </li>
-              </ul>
+              </EntryList>
               <p>
                 Our conversations were broadly successful, resulting in Chris Vince and Siân Berry writing letters to
                 Kanishka Narayan MP (Minister for Artificial Intelligence), Anneliese Dodds and Siân Berry signing
@@ -190,8 +190,8 @@ export default function Timeline() {
                 </a>
                 , and other MPs requested further meetings and briefings.
               </p>
-            </div>
-            <div className="gallery gallery-3">
+            </EntryText>
+            <Photos count={3}>
               <Shot
                 href="/images/parliament-june-2026/volunteers.jpg"
                 src="/images/parliament-june-2026/volunteers.jpg"
@@ -211,11 +211,11 @@ export default function Timeline() {
                 sizes="(max-width: 768px) 100vw, 66vw"
                 wide
               />
-            </div>
+            </Photos>
           </TimelineEntry>
 
           <TimelineEntry id="march-for-ai-safety" month="February" year="2026" title="March for AI Safety">
-            <div className="entry-text">
+            <EntryText>
               <p>
                 We co-organised a march past the offices of OpenAI and Big Tech companies in King&apos;s Cross, London.{" "}
                 <strong>It was the largest ever protest focused exclusively on the risks of AI</strong>, with around 300
@@ -261,8 +261,8 @@ export default function Timeline() {
                 building between the historically opposed AI ethics and AI safety interests, with PauseAI and Pull the
                 Plug represented in equal numbers.
               </p>
-            </div>
-            <div className="gallery gallery-3">
+            </EntryText>
+            <Photos count={3}>
               <Shot
                 href="/images/fundraising/march-feb2026-banner.jpg"
                 src="/images/fundraising/march-feb2026-banner-thumb.jpg"
@@ -282,11 +282,11 @@ export default function Timeline() {
                 sizes="(max-width: 768px) 100vw, 66vw"
                 wide
               />
-            </div>
+            </Photos>
           </TimelineEntry>
 
           <TimelineEntry id="pausecon-brussels" month="February" year="2026" title="PauseCon Brussels">
-            <div className="entry-text">
+            <EntryText>
               <p>
                 We delivered the next PauseCon in Brussels on behalf of Global and again ran two days of training
                 workshops for PauseAI organisers from around the world.
@@ -295,7 +295,7 @@ export default function Timeline() {
                 The final day included a public conference in the European Parliament, featuring several prominent
                 speakers, including:
               </p>
-              <ul className="list">
+              <EntryList>
                 <li>
                   <strong>Professor Stuart Russell</strong>, author of the authoritative textbook on AI.
                 </li>
@@ -308,7 +308,7 @@ export default function Timeline() {
                 <li>
                   <strong>Risto Uuk</strong>, Head of European Policy at the Future of Life Institute.
                 </li>
-              </ul>
+              </EntryList>
               <p>
                 Brando Benifei discussed the strengths and limitations of the EU AI Act candidly and argued that the Act
                 is not merely a product regulation, but that the code of practice can be extended to cover internal
@@ -319,21 +319,15 @@ export default function Timeline() {
                 Many volunteer projects were initiated over the weekend and several attendees have since held meetings
                 with their own MEPs to follow up on the issues discussed.
               </p>
-            </div>
-            <div className="gallery gallery-4">
-              <ShotLink
-                className="shot shot-tall"
+            </EntryText>
+            <Photos count={4}>
+              <Shot
                 href="/images/fundraising/brussels-benifei-russell.jpg"
+                src="/images/fundraising/brussels-benifei-russell-thumb.jpg"
                 alt="Panel with Benifei and Russell at PauseCon Brussels"
-              >
-                <Image
-                  fill
-                  sizes="(max-width: 768px) 100vw, 25vw"
-                  style={{ objectFit: "cover" }}
-                  src="/images/fundraising/brussels-benifei-russell-thumb.jpg"
-                  alt="Panel with Benifei and Russell at PauseCon Brussels"
-                />
-              </ShotLink>
+                sizes="(max-width: 768px) 100vw, 25vw"
+                tall
+              />
               <Shot
                 href="/images/fundraising/brussels-panel.jpg"
                 src="/images/fundraising/brussels-panel-thumb.jpg"
@@ -352,11 +346,11 @@ export default function Timeline() {
                 alt="Stuart Russell interview at PauseCon Brussels"
                 sizes="(max-width: 768px) 100vw, 25vw"
               />
-            </div>
+            </Photos>
           </TimelineEntry>
 
           <TimelineEntry id="westminster-hall-debate" month="December" year="2025" title="Westminster Hall Debate">
-            <div className="entry-text">
+            <EntryText>
               <p>
                 We proposed and helped to organise a{" "}
                 <a
@@ -371,23 +365,18 @@ export default function Timeline() {
                 helped to draft some proposition speeches, putting us in a strong position to work with those MPs when
                 proposing amendments to the Cyber Security and Resilience Bill.
               </p>
-            </div>
-            <div className="gallery gallery-1">
-              <ShotLink
-                className="shot shot-wide"
+            </EntryText>
+            <Photos count={1}>
+              <Shot
                 href="/images/fundraising/westminster-hall.jpg"
+                src="/images/fundraising/westminster-hall-thumb.jpg"
                 alt="MP speaking during the Westminster Hall debate on AI safety"
-              >
-                <Image
-                  width={960}
-                  height={538}
-                  sizes="(max-width: 768px) 100vw, 640px"
-                  style={{ width: "100%", height: "auto" }}
-                  src="/images/fundraising/westminster-hall-thumb.jpg"
-                  alt="MP speaking during the Westminster Hall debate on AI safety"
-                />
-              </ShotLink>
-            </div>
+                sizes="(max-width: 768px) 100vw, 640px"
+                width={960}
+                height={538}
+                wide
+              />
+            </Photos>
           </TimelineEntry>
 
           <TimelineEntry
@@ -396,7 +385,7 @@ export default function Timeline() {
             year="2025"
             title={"Documentary Screening in Parliament "}
           >
-            <div className="entry-text">
+            <EntryText>
               <p>
                 We held a{" "}
                 <a
@@ -411,49 +400,37 @@ export default function Timeline() {
                 California AI legislation. This helped to educate MPs and Peers about the sorts of AI legislation that
                 could be in the UK bill, and the battle with Big Tech that they should expect to face.
               </p>
-            </div>
-            <div className="gallery gallery-1">
-              <ShotLink
-                className="shot"
+            </EntryText>
+            <Photos count={1}>
+              <Shot
                 href="/images/fundraising/documentary-scott-wiener.jpg"
+                src="/images/fundraising/documentary-scott-wiener-thumb.jpg"
                 alt="Scott Wiener on screen during the Parliament screening"
-              >
-                <Image
-                  width={960}
-                  height={540}
-                  sizes="(max-width: 768px) 100vw, 640px"
-                  style={{ width: "100%", height: "auto" }}
-                  src="/images/fundraising/documentary-scott-wiener-thumb.jpg"
-                  alt="Scott Wiener on screen during the Parliament screening"
-                />
-              </ShotLink>
-            </div>
+                sizes="(max-width: 768px) 100vw, 640px"
+                width={960}
+                height={540}
+              />
+            </Photos>
           </TimelineEntry>
 
           <TimelineEntry id="book-launch-party" month="September" year="2025" title="Book launch party">
-            <div className="entry-text">
+            <EntryText>
               <p>
                 Throughout the year, we regularly held social events, which helped to strengthen the sense of community
                 that keeps people actively involved in PauseAI for months and years. One highlight was the book launch
                 party for <em>If Anyone Builds It, Everyone Dies</em> in September.
               </p>
-            </div>
-            <div className="gallery gallery-1">
-              <ShotLink
-                className="shot"
+            </EntryText>
+            <Photos count={1}>
+              <Shot
                 href="/images/fundraising/book-launch-alistair.jpg"
+                src="/images/fundraising/book-launch-alistair-thumb.jpg"
                 alt="Alistair reading at the September book launch party"
-              >
-                <Image
-                  width={960}
-                  height={498}
-                  sizes="(max-width: 768px) 100vw, 640px"
-                  style={{ width: "100%", height: "auto" }}
-                  src="/images/fundraising/book-launch-alistair-thumb.jpg"
-                  alt="Alistair reading at the September book launch party"
-                />
-              </ShotLink>
-            </div>
+                sizes="(max-width: 768px) 100vw, 640px"
+                width={960}
+                height={498}
+              />
+            </Photos>
           </TimelineEntry>
 
           <TimelineEntry
@@ -462,7 +439,7 @@ export default function Timeline() {
             year="2025"
             title="Open Letter to Demis Hassabis"
           >
-            <div className="entry-text">
+            <EntryText>
               <p>
                 We published an{" "}
                 <a
@@ -490,27 +467,22 @@ export default function Timeline() {
                 with pre-deployment access to Gemini 2.5 Pro. Notably, Google did provide AISI with pre-deployment
                 access to Gemini 3 Pro a couple of months after the letter was published.
               </p>
-            </div>
-            <div className="gallery gallery-1">
-              <ShotLink
-                className="shot shot-wide"
+            </EntryText>
+            <Photos count={1}>
+              <Shot
                 href="/images/fundraising/time-article.png"
+                src="/images/fundraising/time-article.png"
                 alt="TIME article: 60 U.K. Lawmakers Accuse Google of Breaking AI Safety Pledge"
-              >
-                <Image
-                  width={1600}
-                  height={921}
-                  sizes="(max-width: 768px) 100vw, 640px"
-                  style={{ width: "100%", height: "auto" }}
-                  src="/images/fundraising/time-article.png"
-                  alt="TIME article: 60 U.K. Lawmakers Accuse Google of Breaking AI Safety Pledge"
-                />
-              </ShotLink>
-            </div>
+                sizes="(max-width: 768px) 100vw, 640px"
+                width={1600}
+                height={921}
+                wide
+              />
+            </Photos>
           </TimelineEntry>
 
-          <TimelineEntry id="pausecon-london" month="June" year="2025" title="PauseCon London" finale>
-            <div className="entry-text">
+          <TimelineEntry id="pausecon-london" month="June" year="2025" title="PauseCon London">
+            <EntryText>
               <p>
                 We delivered the first PauseAI conference, PauseCon, on behalf of PauseAI Global, bringing together
                 around 60 volunteers from around the world for the first time and training them to be better organisers
@@ -525,8 +497,8 @@ export default function Timeline() {
                 signed by 150 German professors. One volunteer, Didier Coeurnelle, was inspired to initiate and fund the
                 next PauseCon in Brussels.
               </p>
-            </div>
-            <div className="gallery gallery-3">
+            </EntryText>
+            <Photos count={3}>
               <Shot
                 href="/images/fundraising/pausecon-london-discussion.jpg"
                 src="/images/fundraising/pausecon-london-discussion-thumb.jpg"
@@ -545,7 +517,7 @@ export default function Timeline() {
                 alt="Connor Leahy speaking at PauseCon London"
                 sizes="(max-width: 768px) 100vw, 33vw"
               />
-            </div>
+            </Photos>
           </TimelineEntry>
         </TimelineList>
       </div>

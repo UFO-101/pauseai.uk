@@ -1,0 +1,135 @@
+/* The top of the donate page: why give, links to our record, a photo, and
+   the form beside them. */
+
+.intro {
+  padding: 32px 0 44px;
+  background: var(--accent-bg);
+}
+.grid {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  grid-template-areas:
+    "head  head"
+    "text  form"
+    "photo form";
+  column-gap: 48px;
+  row-gap: 16px;
+  align-items: start;
+}
+.head {
+  grid-area: head;
+}
+.text {
+  grid-area: text;
+}
+.photo {
+  grid-area: photo;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 6px 24px var(--shadow-strong);
+  line-height: 0;
+  background: var(--surface-2);
+}
+.form {
+  grid-area: form;
+  align-self: start;
+  display: flex;
+}
+.intro h1 {
+  font-size: clamp(38px, 4.6vw, 56px);
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+  margin: 6px 0 24px;
+  color: var(--text);
+}
+.lede {
+  max-width: 560px;
+  font-size: 17px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  margin: 0;
+}
+.links {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 20px;
+}
+.link {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 13px 16px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  text-decoration: none;
+  color: inherit;
+  transition:
+    border-color 0.15s ease,
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+}
+.link:hover {
+  border-color: var(--accent);
+  transform: translateY(-1px);
+  box-shadow:
+    0 2px 4px var(--shadow),
+    0 8px 20px var(--shadow);
+}
+.linkTitle {
+  font-weight: 600;
+  color: var(--text);
+}
+.linkTitle::after {
+  content: " →";
+  color: var(--accent);
+}
+.linkDesc {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+.doc {
+  flex-direction: row;
+  align-items: center;
+  gap: 14px;
+}
+.thumb {
+  width: 52px;
+  height: 68px;
+  object-fit: cover;
+  object-position: top center;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.docText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.photo img {
+  width: 100%;
+  height: auto;
+  max-height: 280px;
+  object-fit: cover;
+  object-position: top;
+  display: block;
+}
+@media (max-width: 720px) {
+  .intro {
+    padding: 40px 0 56px;
+  }
+  .grid {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "head"
+      "text"
+      "form"
+      "photo";
+    row-gap: 24px;
+  }
+  .intro h1 {
+    margin-bottom: 0;
+  }
+}

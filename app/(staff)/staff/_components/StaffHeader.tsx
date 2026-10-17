@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { staffCopy } from "@/lib/content/staff-interface";
-import styles from "./staff.module.css";
+import styles from "./StaffHeader.module.css";
 
 /** The staff pages in the bar, in order. */
 export type StaffPage = "politicians" | "letters" | "import" | "history" | "changes";

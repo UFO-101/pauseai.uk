@@ -1,9 +1,4 @@
-/*
- * A small card with an accent edge: a heading and a line or two of text.
- * Restyle it in context through [data-card], e.g.
- * `.other-ways-cards [data-card] h3`. The root layout imports this file
- * before app/globals.css, so those overrides still win ties.
- */
+/* A small card with an accent edge: a heading and a line or two of text. */
 
 .card {
   background: var(--surface);

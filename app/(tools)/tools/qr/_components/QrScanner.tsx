@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Button } from "@/components/ui/Button";
+import { FieldError, FormButton } from "../../collateral/_components/kit/Fields";
+import { Hint } from "../../collateral/_components/kit/Notes";
+import styles from "./QrScanner.module.css";
 
 /** Frames are shrunk to this width before decoding. Plenty for a code that fills part of the view, and quick on phones. */
 const SCAN_WIDTH = 640;
@@ -314,9 +316,9 @@ export default function QrScanner({ onResult }: Props) {
   }
 
   return (
-    <div className="collateral-qr-scan">
-      <div className="collateral-qr-scan-actions">
-        <Button
+    <div className={styles.scan}>
+      <div className={styles.actions}>
+        <FormButton
           type="button"
           variant="ghost"
           size="small"
@@ -326,30 +328,28 @@ export default function QrScanner({ onResult }: Props) {
           }}
         >
           Scan an existing code
-        </Button>
-        <Button type="button" variant="ghost" size="small" onClick={() => fileRef.current!.click()} disabled={busy}>
+        </FormButton>
+        <FormButton type="button" variant="ghost" size="small" onClick={() => fileRef.current!.click()} disabled={busy}>
           {busy ? "Looking for the code…" : "Use a photo"}
-        </Button>
+        </FormButton>
         <input ref={fileRef} type="file" accept="image/*" hidden onChange={onPhoto} />
       </div>
-      {message && (
-        <p className="collateral-field-error" role="status">
-          {message}
-        </p>
-      )}
+      {message && <FieldError status>{message}</FieldError>}
 
-      <dialog ref={dialogRef} className="collateral-qr-dialog" aria-labelledby="qr-scan-title" onClose={onModalClose}>
-        <h2 id="qr-scan-title">{photo ? "Find the QR code" : "Scan a QR code"}</h2>
-        <p className="collateral-hint">
+      <dialog ref={dialogRef} className={styles.dialog} aria-labelledby="qr-scan-title" onClose={onModalClose}>
+        <h2 id="qr-scan-title" className={styles.title}>
+          {photo ? "Find the QR code" : "Scan a QR code"}
+        </h2>
+        <Hint>
           {photo
             ? "Could not find the code by itself. Drag a box round the QR code in the photo."
             : "Point your camera at the code. It reads it by itself."}
-        </p>
+        </Hint>
         {/* Hidden once the camera fails, rather than leaving an empty black box. */}
         {open && !modalMessage && (
           <video
             ref={videoRef}
-            className="collateral-qr-video"
+            className={styles.video}
             muted
             playsInline
             aria-label="Camera view. Point it at a QR code."
@@ -357,7 +357,7 @@ export default function QrScanner({ onResult }: Props) {
         )}
         {photo && (
           <div
-            className="collateral-qr-crop"
+            className={styles.crop}
             onPointerDown={onPointerDown}
             onPointerMove={onPointerMove}
             onPointerUp={onPointerUp}
@@ -367,10 +367,16 @@ export default function QrScanner({ onResult }: Props) {
             }}
           >
             {/* eslint-disable-next-line @next/next/no-img-element -- local object URL of the chosen photo */}
-            <img ref={imageRef} src={photo} alt="Your photo. Drag a box round the QR code." draggable={false} />
+            <img
+              ref={imageRef}
+              className={styles.photo}
+              src={photo}
+              alt="Your photo. Drag a box round the QR code."
+              draggable={false}
+            />
             {box && (
               <div
-                className="collateral-qr-crop-box"
+                className={styles.box}
                 style={{
                   left: `${box.x * 100}%`,
                   top: `${box.y * 100}%`,
@@ -381,20 +387,22 @@ export default function QrScanner({ onResult }: Props) {
             )}
           </div>
         )}
-        {modalMessage && (
-          <p className="collateral-field-error" role="status">
-            {modalMessage}
-          </p>
-        )}
-        <div className="collateral-qr-scan-actions collateral-qr-dialog-actions">
+        {modalMessage && <FieldError status>{modalMessage}</FieldError>}
+        <div className={`${styles.actions} ${styles.dialogActions}`}>
           {open && modalMessage && (
-            <Button type="button" variant="ghost" size="small" onClick={() => fileRef.current!.click()} disabled={busy}>
+            <FormButton
+              type="button"
+              variant="ghost"
+              size="small"
+              onClick={() => fileRef.current!.click()}
+              disabled={busy}
+            >
               Use a photo instead
-            </Button>
+            </FormButton>
           )}
-          <Button type="button" variant="ghost" size="small" onClick={() => dialogRef.current!.close()}>
+          <FormButton type="button" variant="ghost" size="small" onClick={() => dialogRef.current!.close()}>
             Cancel
-          </Button>
+          </FormButton>
         </div>
       </dialog>
     </div>

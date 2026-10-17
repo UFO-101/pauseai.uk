@@ -1,0 +1,60 @@
+/* The Email your MP tool's shared parts: its column, a field, an error, a
+   notice. */
+
+/* One column, the letter's width, in line with the section's heading. */
+.tool {
+  display: grid;
+  gap: 1.5rem;
+  max-width: 44rem;
+}
+
+.field > label {
+  display: grid;
+  gap: 0.5rem;
+  font-weight: 600;
+}
+
+.notice {
+  margin: 0;
+  padding: 1rem 1.25rem;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.field {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.field > small {
+  color: var(--text-secondary);
+}
+
+.input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 400;
+  background: var(--surface);
+  color: inherit;
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 20%, transparent);
+}
+
+.input:disabled {
+  opacity: 0.6;
+}
+
+.error {
+  margin: 0;
+  color: var(--danger);
+}

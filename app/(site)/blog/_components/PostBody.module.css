@@ -1,0 +1,152 @@
+/* A post: its summary and its text, the page hero's width. The post's own
+   HTML (lib/content/blog.tsx) writes the quote and footnote classes, so
+   those are global. */
+
+.inner {
+  --container-width: var(--measure-page);
+}
+
+/* Post body */
+.article {
+  padding: 48px 0 88px;
+  background: var(--bg);
+}
+
+/* Plain paragraph — the summary itself is italic (em in the data). */
+.tldr {
+  margin: 0 0 24px;
+  font-size: 17px;
+  line-height: 1.7;
+  color: var(--text);
+}
+
+.body h2 {
+  font-family: var(--font-display), "Lato", system-ui, sans-serif;
+  font-size: clamp(24px, 2.6vw, 30px);
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.015em;
+  color: var(--text);
+  margin: 36px 0 14px;
+}
+
+.body p {
+  font-size: 17px;
+  line-height: 1.7;
+  color: var(--text);
+  margin: 0 0 18px;
+}
+
+.body figure {
+  margin: 26px 0;
+}
+.body figure img {
+  display: block;
+  width: 100%;
+  height: auto;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px;
+}
+.body figcaption {
+  margin-top: 10px;
+  font-size: 14.5px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+.body p:last-child {
+  margin-bottom: 0;
+}
+.body a,
+.tldr a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  transition: color 0.15s ease;
+}
+.body a:hover,
+.tldr a:hover {
+  color: var(--pause-orange);
+}
+.body blockquote {
+  margin: 24px 0;
+  padding: 4px 0 4px 22px;
+  border-left: 3px solid var(--pause-orange);
+  color: var(--text-secondary);
+}
+.body blockquote p {
+  color: inherit;
+}
+
+@media (max-width: 860px) {
+  .article {
+    padding: 36px 0 64px;
+  }
+}
+
+/* Footnotes */
+.body sup {
+  font-size: 0.7em;
+  line-height: 0;
+  vertical-align: super;
+}
+.body sup a {
+  text-decoration: none;
+  font-weight: 600;
+  padding: 0 1px;
+}
+
+/* Lists in the post body */
+.body ol,
+.body ul {
+  margin: 0 0 18px;
+  padding-left: 26px;
+}
+.body li {
+  font-size: 17px;
+  line-height: 1.7;
+  color: var(--text);
+  margin-bottom: 8px;
+  padding-left: 4px;
+}
+.body li::marker {
+  color: var(--pause-orange);
+  font-weight: 600;
+}
+/* Paragraphs that continue a list item: space them like body paragraphs. */
+.body li > p {
+  margin: 12px 0 0;
+}
+
+/* Under a pull quote, and the notes, from the post's HTML. */
+.body :global(.blog-quote-source) {
+  margin-top: 8px;
+  font-size: 14.5px;
+  color: var(--muted);
+}
+.body :global(.blog-footnotes) {
+  margin: 40px 0 0;
+  padding: 18px 0 0 22px;
+  border-top: 1px solid var(--border);
+  font-size: 14.5px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+.body :global(.blog-footnotes li) {
+  padding-left: 4px;
+  margin-bottom: 8px;
+}
+.body :global(.blog-footnotes li::marker) {
+  color: var(--muted);
+}
+/* Highlight the note a footnote link jumped to. */
+.body :global(.blog-footnotes li:target) {
+  background: var(--surface-2);
+  box-shadow: 0 0 0 6px var(--surface-2);
+  border-radius: 4px;
+}
+.body :global(.blog-footnote-back) {
+  text-decoration: none;
+}

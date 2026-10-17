@@ -14,7 +14,7 @@ export const metadata = pageMetadata({
 
 export default function Page() {
   return (
-    <main className="campaigns">
+    <main>
       <CampaignHero title="Regulate AI developers now" campaignSlug="regulate-letter-pm" />
 
       <CampaignContext>

@@ -8,6 +8,14 @@ import {
   type DemographicRow,
   type ResponseOption,
 } from "@/lib/content/aiSentiment2026";
+import styles from "./sentiment.module.css";
+
+// Which way the tooltip leans from its segment.
+const TOOLTIP_ALIGN = {
+  start: styles.barTooltipStart,
+  center: styles.barTooltipCenter,
+  end: styles.barTooltipEnd,
+};
 
 type Row = CountryRow | DemographicRow;
 
@@ -98,39 +106,55 @@ export default function DivergingBar({ label, row, meta, rank, showNotSure = tru
   }, [tooltip]);
 
   return (
-    <div className="gas-bar-row">
-      <div className="gas-bar-label">
-        {rank !== undefined && <span className="gas-bar-rank">#{rank}</span>}
-        <span className="gas-bar-name">{label}</span>
-        {meta && <span className="gas-bar-meta">{meta}</span>}
+    <div className={styles.barRow} data-testid="bar-row">
+      <div className={styles.barLabel}>
+        {rank !== undefined && (
+          <span className={styles.barRank} data-testid="bar-rank">
+            #{rank}
+          </span>
+        )}
+        <span className={styles.barName} data-testid="bar-name">
+          {label}
+        </span>
+        {meta && (
+          <span className={styles.barMeta} data-testid="bar-meta">
+            {meta}
+          </span>
+        )}
       </div>
-      <div className="gas-bar-track-wrap" ref={trackRef} onMouseLeave={() => setTooltip(null)}>
+      <div className={styles.barTrackWrap} data-testid="bar-track" ref={trackRef} onMouseLeave={() => setTooltip(null)}>
         <div
-          className="gas-bar-track"
+          className={styles.barTrack}
           role="img"
           aria-label={`${label}: ${[...segments].map((s) => `${s.option.shortLabel} ${Math.round(s.value)}%`).join(", ")}`}
         >
-          <div className="gas-bar-spacer" style={{ flex: spacerLeft }} aria-hidden="true" />
+          <div className={styles.barSpacer} style={{ flex: spacerLeft }} aria-hidden="true" />
           {segments.map(({ option, value }) => (
             <div
               key={option.key}
-              className="gas-bar-segment"
+              className={styles.barSegment}
+              data-testid="bar-segment"
               style={{ flex: value, background: option.light }}
               onMouseEnter={(e) => showTooltip(e.currentTarget, option, value)}
               onClick={(e) => showTooltip(e.currentTarget, option, value)}
             >
-              {value > 0 && <span className="gas-bar-segment-value">{Math.round(value)}</span>}
+              {value > 0 && (
+                <span className={styles.barSegmentValue} data-testid="bar-segment-value">
+                  {Math.round(value)}
+                </span>
+              )}
             </div>
           ))}
-          <div className="gas-bar-spacer" style={{ flex: spacerRight }} aria-hidden="true" />
+          <div className={styles.barSpacer} style={{ flex: spacerRight }} aria-hidden="true" />
         </div>
-        <div className="gas-bar-centerline" aria-hidden="true" />
+        <div className={styles.barCenterline} aria-hidden="true" />
         {tooltip && (
           <div
-            className={`gas-bar-tooltip gas-bar-tooltip-${tooltip.align}`}
+            className={`${styles.barTooltip} ${TOOLTIP_ALIGN[tooltip.align]}`}
+            data-testid="bar-tooltip"
             style={{ left: tooltip.x, top: tooltip.y }}
           >
-            <span className="gas-bar-tooltip-dot" style={{ background: tooltip.option.light }} />
+            <span className={styles.barTooltipDot} style={{ background: tooltip.option.light }} />
             <span>
               {tooltip.option.shortLabel}: <strong>{Math.round(tooltip.value)}%</strong>
             </span>
@@ -143,9 +167,9 @@ export default function DivergingBar({ label, row, meta, rank, showNotSure = tru
 
 export function BarAxisLabels() {
   return (
-    <div className="gas-bar-axis" aria-hidden="true">
-      <span className="gas-bar-axis-label gas-bar-axis-against">&larr; Against development</span>
-      <span className="gas-bar-axis-label gas-bar-axis-for">For development &rarr;</span>
+    <div className={styles.barAxis} aria-hidden="true">
+      <span>&larr; Against development</span>
+      <span>For development &rarr;</span>
     </div>
   );
 }

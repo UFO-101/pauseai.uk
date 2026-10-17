@@ -1,0 +1,293 @@
+/* The site's header: the brand, and the nav, which folds into a burger menu
+   below 1024px. */
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--black);
+  border-bottom: 1px solid rgb(var(--white-rgb) / 0.1);
+  color: var(--on-dark);
+}
+
+.bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 14px;
+  padding-bottom: 14px;
+}
+
+/* The links. :where() keeps these rules as weak as the bare `nav` selectors
+   they began as, so the dropdowns' and pills' own rules still win. */
+:where(.links) {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+:where(.links) a {
+  color: rgb(var(--white-rgb) / 0.75);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  padding: 8px 12px;
+  /* Transparent 1.5px border reserves the same space pills use; without
+     this the pills would sit 3px taller than the plain links. */
+  border: 1.5px solid transparent;
+  border-radius: 8px;
+  transition:
+    color 0.2s ease,
+    background 0.2s ease,
+    border-color 0.2s ease;
+}
+
+:where(.links) a:hover {
+  background: rgb(var(--white-rgb) / 0.1);
+  color: var(--white);
+}
+
+/* Dropdown nav item */
+.item.hasDropdown {
+  position: relative;
+}
+.trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.trigger .caret {
+  width: 10px;
+  height: 7px;
+  flex-shrink: 0;
+  opacity: 0.85;
+  transition: transform 0.2s ease;
+}
+.item.hasDropdown:hover .trigger .caret,
+.item.hasDropdown:focus-within .trigger .caret,
+.item.hasDropdown.isOpen .trigger .caret {
+  transform: rotate(180deg);
+}
+.dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  min-width: 200px;
+  background: rgb(var(--charcoal-rgb) / 0.98);
+  border: 1px solid rgb(var(--white-rgb) / 0.1);
+  border-radius: 10px;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(4px);
+  transition:
+    opacity 0.15s ease,
+    transform 0.15s ease,
+    visibility 0.15s;
+  box-shadow: 0 12px 32px rgb(var(--black-rgb) / 0.35);
+  z-index: 10;
+}
+.item.hasDropdown:hover .dropdown,
+.item.hasDropdown:focus-within .dropdown,
+.item.hasDropdown.isOpen .dropdown {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+/* Just chosen from (Nav.tsx): shut, though the pointer is still over it. */
+.item.hasDropdown.isDismissed .dropdown {
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(4px);
+}
+.item.hasDropdown.isDismissed .trigger .caret {
+  transform: none;
+}
+.dropdown a {
+  display: block;
+  padding: 10px 14px;
+  border-radius: 6px;
+  white-space: nowrap;
+  color: rgb(var(--white-rgb) / 0.85);
+}
+.dropdown a:hover {
+  background: rgb(var(--white-rgb) / 0.08);
+  color: var(--white);
+}
+
+/* Pills inherit nav a's padding + transparent border slot; we just
+   colour the border, swap the text colour, round the corners. */
+.pill {
+  border-color: var(--accent);
+  color: var(--accent) !important;
+  border-radius: 999px;
+  font-weight: 600;
+}
+
+.pill:hover {
+  background: var(--accent);
+  color: var(--white) !important;
+  border-color: var(--accent);
+}
+
+.pillPrimary {
+  background: var(--accent) !important;
+  color: var(--white) !important;
+  border-color: var(--accent) !important;
+}
+
+.pillPrimary:hover {
+  background: var(--accent-strong) !important;
+  border-color: var(--accent-strong) !important;
+}
+
+/* The burger, shown below 1024px. */
+
+.burger {
+  display: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  z-index: 20;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+}
+
+.burger span {
+  display: block;
+  width: 24px;
+  height: 2px;
+  background: var(--on-dark);
+  border-radius: 2px;
+  transition:
+    transform 0.3s ease,
+    opacity 0.3s ease;
+}
+
+.burger[aria-expanded="true"] span:nth-child(1) {
+  transform: translateY(7px) rotate(45deg);
+}
+
+.burger[aria-expanded="true"] span:nth-child(2) {
+  opacity: 0;
+}
+
+.burger[aria-expanded="true"] span:nth-child(3) {
+  transform: translateY(-7px) rotate(-45deg);
+}
+/* The burger menu takes over at 1024px, not the site's usual 720px: the
+   full nav (logo, three dropdowns, five links) needs ~950px to fit without
+   crowding the logo. */
+@media (max-width: 1024px) {
+  .burger {
+    display: flex;
+  }
+
+  :where(.links) {
+    display: none;
+    position: fixed;
+    top: var(--site-header-h, 64px);
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--charcoal);
+    flex-direction: column;
+    padding: 8px 0 16px;
+    border-bottom: 1px solid rgb(var(--white-rgb) / 0.1);
+    align-items: stretch;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+
+  :where(.links).open {
+    display: flex;
+  }
+
+  /* Lock the page behind the open menu. */
+  :global(body):has(.header :where(.links).open) {
+    overflow: hidden;
+  }
+
+  :where(.links) > a,
+  :where(.links) > .item {
+    width: 100%;
+    border-bottom: 1px solid rgb(var(--white-rgb) / 0.06);
+  }
+  :where(.links) > a:last-child,
+  :where(.links) > .item:last-child {
+    border-bottom: none;
+  }
+
+  :where(.links) a {
+    display: block;
+    padding: 14px 24px;
+    font-size: 16px;
+    text-align: left;
+    border-radius: 0;
+    border-bottom: none;
+  }
+
+  /* On mobile, pills follow the same block layout as every other nav
+     link in the dropped-down menu; only the accent colour distinguishes
+     them. Drop the special inset/centred-pill treatment. */
+  :where(.links) .pill {
+    margin: 0;
+    padding: 14px 24px;
+    text-align: left;
+    border-radius: 0;
+    border-color: transparent;
+    color: var(--accent) !important;
+  }
+  :where(.links) .pillPrimary {
+    background: transparent !important;
+  }
+  :where(.links) .pill:hover {
+    background: rgb(var(--amber-rgb) / 0.1);
+  }
+
+  /* Mobile: tap "About" to expand sub-items inline */
+  .item.hasDropdown .trigger {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+  }
+  .trigger .caret {
+    width: 12px;
+    height: 8px;
+    opacity: 0.85;
+  }
+  .dropdown {
+    position: static;
+    opacity: 1;
+    visibility: visible;
+    transform: none;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    padding: 0;
+    transition: none;
+    display: none;
+    flex-direction: column;
+  }
+  .item.hasDropdown.isOpen .dropdown {
+    display: flex;
+    background: rgb(var(--white-rgb) / 0.03);
+    border-top: 1px solid rgb(var(--white-rgb) / 0.06);
+  }
+  .dropdown a {
+    padding: 12px 24px 12px 40px;
+    font-size: 15px;
+    color: rgb(var(--white-rgb) / 0.7);
+    border-bottom: 1px solid rgb(var(--white-rgb) / 0.04);
+  }
+  .dropdown a:last-child {
+    border-bottom: none;
+  }
+}

@@ -1,0 +1,36 @@
+/* Who in Parliament has signed, with a note for the press. */
+.signatories {
+  padding: 48px 0 16px;
+}
+.signatories h2 {
+  font-family: var(--font-display), "Lato", system-ui, sans-serif;
+  font-size: clamp(26px, 3vw, 34px);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  margin: 0 0 14px;
+  color: var(--text);
+} /* Last on the page: room before the footer. */
+.signatories:last-child {
+  padding-bottom: 72px;
+} /* Small note under the list of names, for the press. */
+.pressNote {
+  max-width: 900px;
+  margin: 24px 0 0;
+  font-size: 14.5px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+.pressNote strong {
+  color: var(--text);
+  font-weight: 600;
+}
+.pressNote a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+.pressNote a:hover {
+  color: var(--pause-orange);
+}

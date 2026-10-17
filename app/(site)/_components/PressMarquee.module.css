@@ -1,0 +1,197 @@
+/* Press coverage: rows of outlets' logos scrolling past. */
+
+/* Desktop renders 2 longer marquee rows; phone gets 3 shorter rows
+   so each strip is easier to scan on a narrow viewport. Only one set
+   is visible at a time. */
+.mobile {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  .desktop {
+    display: none;
+  }
+  .mobile {
+    display: block;
+  }
+  .marquee {
+    margin-top: 16px;
+  }
+}
+
+.marquee {
+  --marquee-gap: 72px;
+  --marquee-duration: 80s;
+  --marquee-item-height: 64px;
+
+  margin-top: 36px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  -webkit-mask-image: linear-gradient(
+    90deg,
+    transparent,
+    var(--black) 64px,
+    var(--black) calc(100% - 64px),
+    transparent
+  );
+  mask-image: linear-gradient(90deg, transparent, var(--black) 64px, var(--black) calc(100% - 64px), transparent);
+}
+
+.cta {
+  margin-top: 20px;
+  text-align: center;
+}
+
+.row {
+  overflow: hidden;
+  padding: 14px 0;
+}
+
+.track {
+  display: flex;
+  flex-wrap: nowrap;
+  width: max-content;
+  align-items: center;
+  animation: scroll var(--marquee-duration) linear infinite;
+}
+
+/* Two siblings tile under a clean -50%. Spacing lives on each item as
+   margin-right so the trailing gap is part of the item's intrinsic
+   width — Safari has a long-standing bug where width: max-content on a
+   flex parent under-counts a child's padding-right, which makes a
+   gap+padding-right copy pattern drift by exactly one gap each loop. */
+.copy {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+}
+
+.reverse .track {
+  animation-direction: reverse;
+}
+
+.item {
+  flex: 0 0 auto;
+  margin-right: var(--marquee-gap);
+  padding: 0;
+  text-decoration: none;
+  border-radius: 8px;
+  /* Some logo SVGs (notably Cosmopolitan) declare width/height with no
+     viewBox; Safari then paints SVG content past the IMG's constrained
+     box, visually overlapping the next item. Clip at the slot. */
+  overflow: hidden;
+  opacity: 0.75;
+  filter: grayscale(85%) contrast(0.95);
+  transition:
+    opacity 0.25s ease,
+    filter 0.25s ease;
+}
+
+.item .logoBox {
+  padding: 0;
+  width: auto;
+}
+
+/* Logos are sized per item via --logo-h (set inline from lib/content/press-coverage.ts) so
+   every mark carries roughly equal visual area — wide wordmarks render
+   shorter, square marks taller. --logo-scale shrinks the whole set on
+   phone. Explicit height (not max-height) means no letterboxing, so
+   the gap between visible marks stays optically constant. */
+.item .logo {
+  height: calc(var(--logo-h, 44) * var(--logo-scale, 1) * 1px);
+  width: auto;
+  max-width: none;
+  max-height: none;
+}
+
+.item:hover,
+.item:focus-visible {
+  opacity: 1;
+  filter: grayscale(0%) contrast(1);
+  outline: none;
+}
+
+.item:focus-visible {
+  box-shadow: 0 0 0 3px var(--accent-light);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .track {
+    animation: none;
+  }
+  .row {
+    overflow-x: auto;
+  }
+  .marquee {
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+}
+
+@media (max-width: 600px) {
+  .marquee {
+    --marquee-gap: 40px;
+    --marquee-item-height: 44px;
+    --marquee-duration: 40s;
+    /* Scale every logo down proportionally; gaps stay even because the
+       old min-width hack (which padded narrow logos with invisible
+       slack) is gone. */
+    --logo-scale: 0.72;
+  }
+}
+
+/* News logos — base styles */
+.logoBox {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--marquee-item-height, 50px);
+  padding: 4px 12px;
+}
+
+@keyframes scroll {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(var(--copy-shift, -50%), 0, 0);
+  }
+}
+
+/* Outlets with no logo file are set in text, from the HTML in
+   lib/content/press-coverage.ts, so these class names are global. */
+.logoBox :global(.news-logo-text) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  font-weight: bold;
+}
+
+.logoBox :global(.news-logo-text--swlondoner) {
+  font-size: calc(2rem * var(--logo-scale, 1));
+  white-space: nowrap;
+  font-family: Georgia, "Times New Roman", serif;
+  letter-spacing: -0.01em;
+}
+
+.logoBox :global(.news-logo-text--swlondoner .sw) {
+  color: var(--logo-swlondoner);
+  font-style: italic;
+}
+
+.logoBox :global(.news-logo-text--ibtimes) {
+  font-size: calc(1.1rem * var(--logo-scale, 1));
+  white-space: nowrap;
+  font-family: system-ui, sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+}
+
+.logoBox :global(.news-logo-text--ibtimes .uk) {
+  font-size: 0.5em;
+  vertical-align: super;
+  margin-left: 2px;
+}

@@ -39,19 +39,18 @@ describe("SignatoriesList", () => {
     await expect.element(page.getByText("Crossbench")).toBeVisible();
     // Signers outside Westminster show where they sit, without "MP for".
     await expect.element(page.getByText("Glasgow Kelvin, SNP")).toBeVisible();
-    expect(container.querySelectorAll(".signatories-group h3")).toHaveLength(3);
+    expect(container.querySelectorAll("h3")).toHaveLength(3);
     // A Lord with no party has no subtitle.
-    const plain = [...container.querySelectorAll(".signatories-item")].find(
-      (li) => li.textContent === "Baroness Plain",
-    );
-    expect(plain?.querySelector(".signatories-subtitle")).toBeNull();
+    const plain = page.getByRole("listitem").filter({ hasText: "Baroness Plain" }).element();
+    expect(plain.textContent).toBe("Baroness Plain");
+    expect(plain.children).toHaveLength(1);
   });
 
   it("leaves out an empty group", async () => {
     respond([{ name: "Lord Only", party: "Crossbench", constituency: "", house: "lords" }]);
     await render(<SignatoriesList />);
     await expect.element(page.getByRole("heading", { name: "Lords" })).toBeVisible();
-    expect(document.querySelector(".signatories-group h3")?.textContent).toBe("Lords");
+    expect(document.querySelector("h3")?.textContent).toBe("Lords");
     respond([{ name: "MP Only", party: "Green", constituency: "Here", house: "commons" }]);
     const second = await render(<SignatoriesList />);
     await expect.poll(() => second.container.querySelector("h3")?.textContent).toBe("MPs");

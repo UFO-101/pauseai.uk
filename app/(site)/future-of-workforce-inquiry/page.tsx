@@ -2,8 +2,7 @@ import { pageMetadata } from "@/lib/metadata";
 import EvidenceSubmission from "./_components/EvidenceSubmission";
 import FootnoteTooltips from "./_components/FootnoteTooltips";
 import Foreword from "./_components/Foreword";
-import "../track-record/track-record.css";
-import "./page.css";
+import PageHero from "@/components/ui/PageHero";
 
 export const metadata = pageMetadata({
   title: "Evidence: AI, Business and the Future of the Workforce",
@@ -15,15 +14,11 @@ export const metadata = pageMetadata({
 export default function AIWorkforceEvidencePage() {
   return (
     <>
-      <main className="track-record evidence-submission">
-        <section className="tr-hero">
-          <div className="container tr-hero-inner">
-            <h1 className="tr-hero-title">AI, Business and the Future of the Workforce</h1>
-            <p className="tr-hero-lede">
-              PauseAI UK&rsquo;s submission to the House of Commons Business and Trade Committee, April 2026
-            </p>
-          </div>
-        </section>
+      <main>
+        <PageHero
+          title="AI, Business and the Future of the Workforce"
+          lede={<>PauseAI UK&rsquo;s submission to the House of Commons Business and Trade Committee, April 2026</>}
+        />
 
         <Foreword />
 

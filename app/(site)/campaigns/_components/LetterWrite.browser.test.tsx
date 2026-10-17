@@ -2,24 +2,13 @@ import { afterEach, describe, expect, it } from "vitest";
 import { render } from "vitest-browser-react";
 import { page } from "vitest/browser";
 import { campaigns, copy } from "@/lib/content/email-your-mp";
-import { saveDraft, saveLookup, type Lookup } from "./draft";
+import { saveDraft, saveLookup } from "./draft";
+import { exampleLookup, exampleMp } from "./draft.examples";
 import LetterWrite from "./LetterWrite";
 
 const [letterToPm, bill] = campaigns;
-const MP = {
-  name: "Polly Placeholder",
-  salutation: "Ms Placeholder",
-  constituency: "Cities of London and Westminster",
-  email: "polly.placeholder.mp@parliament.uk",
-};
-const LOOKUP: Lookup = {
-  campaign: letterToPm.slug,
-  name: "Jane Smith",
-  address: "1 High St",
-  postcode: "SW1A 1AA",
-  mp: MP,
-  statuses: {},
-};
+const MP = exampleMp;
+const LOOKUP = exampleLookup;
 
 afterEach(() => sessionStorage.clear());
 

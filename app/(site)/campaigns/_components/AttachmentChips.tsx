@@ -1,11 +1,23 @@
 import Image from "next/image";
 import type { Attachment } from "@/lib/content/email-your-mp";
-import styles from "./EmailYourMp.module.css";
+import styles from "./AttachmentChips.module.css";
 
-/** A letter's attachments, each a small card: its first page, title and file name, opening the PDF. */
-export default function AttachmentChips({ attachments, label }: { attachments: Attachment[]; label: string }) {
+/**
+ * A letter's attachments, each a small card: its first page, title and file
+ * name, opening the PDF. `ruled` sets them under a rule, as a mail app does
+ * under a letter.
+ */
+export default function AttachmentChips({
+  attachments,
+  label,
+  ruled = false,
+}: {
+  attachments: Attachment[];
+  label: string;
+  ruled?: boolean;
+}) {
   return (
-    <ul className={styles.attached} aria-label={label}>
+    <ul className={ruled ? `${styles.attached} ${styles.ruled}` : styles.attached} aria-label={label}>
       {attachments.map((attachment) => (
         <li key={attachment.file}>
           <a href={`/pdfs/${attachment.file}`} target="_blank" rel="noreferrer">

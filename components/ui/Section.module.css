@@ -1,0 +1,51 @@
+/* A band of a page, its heading and its lede. */
+
+.section {
+  padding-top: 80px;
+  padding-bottom: 80px;
+}
+
+.muted {
+  background: var(--surface-2);
+}
+
+.white {
+  background: var(--accent-bg);
+}
+
+.bordered {
+  border-top: 1px solid var(--accent-light);
+  border-bottom: 1px solid var(--accent-light);
+}
+
+.title {
+  font-size: clamp(28px, 4vw, 44px);
+  line-height: 1.15;
+  margin: 6px 0 12px;
+  color: var(--text);
+}
+
+.lede {
+  color: var(--text-secondary);
+  max-width: 720px;
+  font-size: 17px;
+  line-height: 1.6;
+}
+
+.long {
+  max-width: none;
+}
+
+@media (max-width: 720px) {
+  .section {
+    padding-top: 56px;
+    padding-bottom: 56px;
+  }
+}
+
+@media (max-width: 640px) {
+  .section.snug {
+    padding-top: 32px;
+    padding-bottom: 32px;
+  }
+}

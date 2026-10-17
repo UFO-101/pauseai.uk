@@ -47,4 +47,52 @@
   --border-strong: #d4c4b0;
   --shadow: rgba(26, 22, 18, 0.08);
   --shadow-strong: rgba(26, 22, 18, 0.14);
+
+  /* Widths. A page's reading column is --measure-page, which the page hero
+     (components/ui/PageHero) shares, so the two line up; a page of cards is
+     --measure-wide. */
+  --measure-page: 880px;
+  --measure-wide: 1080px;
+
+  /* Every other colour. Outside this file a colour is always one of these
+     tokens (Stylelint refuses the rest). An alpha takes the -rgb channels:
+     rgb(var(--white-rgb) / 0.1). */
+  --white: #fff;
+  --white-rgb: 255 255 255;
+  --black: #000;
+  --black-rgb: 0 0 0;
+  --text-rgb: 26 22 18;
+
+  /* A warm near-black, for shadows and scrims. */
+  --ink-rgb: 20 14 8;
+  --ink: rgb(var(--ink-rgb));
+
+  /* The header, menus and footer: light text on near-black. */
+  --on-dark: #f7f7f7;
+  --charcoal: #1c1c1e;
+  --charcoal-rgb: 28 28 30;
+
+  /* Warm tints */
+  --peach: #ffe7cc;
+  --amber-rgb: 255 148 22;
+  --rust-rgb: 153 78 29;
+
+  /* A press logo set as text (lib/content/press-coverage.ts). */
+  --logo-swlondoner: #2b7bbc;
+
+  /* Form greys */
+  --neutral-50: #faf9f7;
+  --neutral-100: #f2f1ee;
+  --neutral-200: #e8e6e1;
+  --neutral-400: #bfb9ae;
+
+  /* States */
+  --danger: #b00020;
+  --success-bg: #e8f5e9;
+  --status-amber: #8a5a00;
+  --status-amber-bg: #fcebcf;
+  --status-green: #1f6b36;
+  --status-green-bg: #e3f3e6;
+  --status-blue: #1d4e89;
+  --status-blue-bg: #dbe8f7;
 }

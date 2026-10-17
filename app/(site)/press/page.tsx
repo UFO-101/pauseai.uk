@@ -1,7 +1,6 @@
 import { pageMetadata } from "@/lib/metadata";
-import "../track-record/track-record.css";
-import "./press.css";
 import PressKit from "./_components/PressKit";
+import PageHero from "@/components/ui/PageHero";
 
 export const metadata = pageMetadata({
   title: "Press",
@@ -12,15 +11,11 @@ export const metadata = pageMetadata({
 export default function PressPage() {
   return (
     <>
-      <main className="track-record press">
-        <section className="tr-hero">
-          <div className="container tr-hero-inner">
-            <h1 className="tr-hero-title">Press</h1>
-            <p className="tr-hero-lede">
-              Resources for journalists covering PauseAI UK and the movement for safe, equitable AI.
-            </p>
-          </div>
-        </section>
+      <main>
+        <PageHero
+          title="Press"
+          lede="Resources for journalists covering PauseAI UK and the movement for safe, equitable AI."
+        />
 
         <PressKit />
       </main>

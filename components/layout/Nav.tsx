@@ -1,11 +1,12 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, type AnchorHTMLAttributes } from "react";
 import { localGroups } from "@/lib/content/local-groups";
 import { site } from "@/lib/content/site";
+import Brand from "./Brand";
+import styles from "./Nav.module.css";
 
 // Each dropdown's links: [href, label].
 const ABOUT_LINKS = [
@@ -96,50 +97,29 @@ export default function Nav() {
   ];
 
   return (
-    <header className="site-header" ref={header}>
-      <div className="container">
-        {localGroup ? (
-          <Link className="brand brand-link" href="/">
-            {localGroup.logo ? (
-              <Image
-                src={localGroup.logo.src}
-                alt=""
-                width={localGroup.logo.width}
-                height={localGroup.logo.height}
-                className="brand-mark"
-              />
-            ) : (
-              <>
-                <Image src="/images/logos/Pause-Symbol.svg" alt="" width={616} height={616} className="brand-mark" />
-                <div className="brand-text">
-                  <span className="brand-pretitle">PauseAI UK</span>
-                  <span className="brand-tagline">{localGroup.name} Group</span>
-                </div>
-              </>
-            )}
-          </Link>
-        ) : (
-          <Link className="brand brand-link" href="/">
-            <Image
-              src="/images/logos/PauseAI-Logo-Transparent.svg"
-              alt="PauseAI UK"
-              width={178}
-              height={48}
-              className="brand-mark"
-            />
-            <span className="brand-uk">UK</span>
-          </Link>
-        )}
-        <button className="burger" aria-label="Menu" aria-expanded={open} onClick={() => update({ open: !open })}>
+    <header className={styles.header} ref={header}>
+      <div className={`container ${styles.bar}`}>
+        <Brand home localGroup={localGroup} />
+        <button
+          className={styles.burger}
+          aria-label="Menu"
+          aria-expanded={open}
+          onClick={() => update({ open: !open })}
+        >
           <span></span>
           <span></span>
           <span></span>
         </button>
-        <nav className={open ? "open" : undefined}>
+        <nav className={open ? `${styles.links} ${styles.open}` : styles.links}>
           {dropdowns.map(({ label, href, links }, i) => (
             <div
               key={label}
-              className={["nav-item has-dropdown", dropdown === i && "is-open", dismissed === i && "is-dismissed"]
+              className={[
+                styles.item,
+                styles.hasDropdown,
+                dropdown === i && styles.isOpen,
+                dismissed === i && styles.isDismissed,
+              ]
                 .filter(Boolean)
                 .join(" ")}
               ref={(item) => {
@@ -150,7 +130,7 @@ export default function Nav() {
             >
               <SiteLink
                 href={href}
-                className="dropdown-trigger"
+                className={styles.trigger}
                 aria-haspopup="true"
                 aria-expanded={dropdown === i}
                 onClick={(e) => {
@@ -167,7 +147,7 @@ export default function Nav() {
                 }}
               >
                 {label}
-                <svg className="caret" viewBox="0 0 12 8" aria-hidden="true" focusable={false}>
+                <svg className={styles.caret} viewBox="0 0 12 8" aria-hidden="true" focusable={false}>
                   <path
                     d="M1 1.5l5 5 5-5"
                     fill="none"
@@ -178,7 +158,7 @@ export default function Nav() {
                   />
                 </svg>
               </SiteLink>
-              <div className="dropdown" role="menu">
+              <div className={styles.dropdown} role="menu">
                 {links.map(([linkHref, linkLabel]) => (
                   <Link
                     key={linkHref}
@@ -207,10 +187,10 @@ export default function Nav() {
           <a href={site.shopUrl} target="_blank" rel="noreferrer" onClick={closeMenu}>
             Shop
           </a>
-          <SiteLink href={`${navPrefix}#join`} className="pill" onClick={closeMenu}>
+          <SiteLink href={`${navPrefix}#join`} className={styles.pill} onClick={closeMenu}>
             Join
           </SiteLink>
-          <Link href="/donate" className="pill pill-primary" onClick={closeMenu}>
+          <Link href="/donate" className={`${styles.pill} ${styles.pillPrimary}`} onClick={closeMenu}>
             Donate
           </Link>
         </nav>

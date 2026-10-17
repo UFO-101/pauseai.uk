@@ -1,0 +1,46 @@
+/* A person's round photo, or their initials on the pale orange. */
+
+.avatar {
+  border-radius: 50%;
+  flex-shrink: 0;
+  background-color: var(--accent-light);
+  background-size: cover;
+  background-position: center top;
+  color: var(--accent-strong);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: "Inter", system-ui, sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  user-select: none;
+}
+
+/* The pause symbol, for a story with no name. */
+.avatar img {
+  width: 45%;
+  height: 45%;
+  object-fit: contain;
+}
+
+.small {
+  width: 64px;
+  height: 64px;
+  border: 2px solid var(--accent-light);
+  font-size: 20px;
+}
+
+.large {
+  width: 120px;
+  height: 120px;
+  border: 3px solid var(--accent-light);
+  font-size: 36px;
+}
+
+@media (max-width: 640px) {
+  .large {
+    width: 80px;
+    height: 80px;
+    font-size: 26px;
+  }
+}

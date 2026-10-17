@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import styles from "./sentiment.module.css";
 
 type DropdownOption = {
   value: string;
@@ -86,21 +87,21 @@ export default function Dropdown({ id, label, value, options, onChange }: Dropdo
   }
 
   return (
-    <div className="gas-dropdown" ref={rootRef}>
-      <label id={`${id}-label`} className="gas-dropdown-label">
+    <div className={styles.dropdown} ref={rootRef}>
+      <label id={`${id}-label`} className={styles.dropdownLabel}>
         {label}
       </label>
       <button
         type="button"
         id={id}
-        className="gas-dropdown-trigger"
+        className={styles.dropdownTrigger}
         aria-haspopup="listbox"
         aria-expanded={open}
         aria-labelledby={`${id}-label ${id}`}
         onClick={toggleOpen}
       >
         <span>{selected?.label}</span>
-        <svg className="gas-dropdown-caret" viewBox="0 0 12 8" aria-hidden="true">
+        <svg className={styles.dropdownCaret} viewBox="0 0 12 8" aria-hidden="true">
           <path
             d="M1 1.5l5 5 5-5"
             fill="none"
@@ -113,7 +114,7 @@ export default function Dropdown({ id, label, value, options, onChange }: Dropdo
       </button>
       {open && (
         <ul
-          className="gas-dropdown-menu"
+          className={styles.dropdownMenu}
           role="listbox"
           aria-labelledby={`${id}-label`}
           tabIndex={-1}
@@ -128,11 +129,17 @@ export default function Dropdown({ id, label, value, options, onChange }: Dropdo
               role="option"
               aria-selected={option.value === value}
               tabIndex={-1}
-              className={`gas-dropdown-option ${option.value === value ? "selected" : ""} ${i === activeIndex ? "active" : ""}`}
+              className={[
+                styles.dropdownOption,
+                option.value === value && styles.selected,
+                i === activeIndex && styles.active,
+              ]
+                .filter(Boolean)
+                .join(" ")}
               onMouseEnter={() => setActiveIndex(i)}
               onClick={() => commit(i)}
             >
-              <svg className="gas-dropdown-check" viewBox="0 0 16 16" aria-hidden="true">
+              <svg className={styles.dropdownCheck} viewBox="0 0 16 16" aria-hidden="true">
                 {option.value === value && (
                   <path
                     d="M3 8.5l3 3 7-7"

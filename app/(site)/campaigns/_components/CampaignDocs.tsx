@@ -1,13 +1,14 @@
 import type { ReactNode } from "react";
 import Image from "next/image";
+import styles from "./CampaignDocs.module.css";
 
 /** The documents behind the campaign: DocCards. */
 export default function CampaignDocs({ children }: { children: ReactNode }) {
   return (
-    <section className="campaigns-docs">
+    <section className={styles.docs}>
       <div className="container">
         <h2>Read the case in full</h2>
-        <div className="docs-grid">{children}</div>
+        <div className={styles.docsGrid}>{children}</div>
       </div>
     </section>
   );
@@ -26,7 +27,7 @@ type DocCardProps = {
 /** One document, opened as a PDF. */
 export function DocCard({ file, kind, title, cta }: DocCardProps) {
   return (
-    <a className="doc-card" href={`/pdfs/${file}`} target="_blank" rel="noreferrer">
+    <a className={styles.docCard} href={`/pdfs/${file}`} target="_blank" rel="noreferrer">
       <Image
         src={`/pdfs/${file.replace(/\.pdf$/, ".jpg")}`}
         alt=""
@@ -36,10 +37,10 @@ export function DocCard({ file, kind, title, cta }: DocCardProps) {
         sizes="(max-width: 640px) 100vw, 440px"
         loading="lazy"
       />
-      <div className="doc-meta">
-        <p className="doc-kind">{kind}</p>
+      <div className={styles.docMeta}>
+        <p className={styles.docKind}>{kind}</p>
         <h3>{title}</h3>
-        <span className="doc-cta">{cta}</span>
+        <span className={styles.docCta}>{cta}</span>
       </div>
     </a>
   );

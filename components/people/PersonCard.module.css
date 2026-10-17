@@ -1,0 +1,66 @@
+/* A person's story as a card: their photo and name, the story or the start
+   of it, and a link to the rest. */
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 32px;
+  box-shadow: 0 1px 3px var(--shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.nameWrap {
+  flex: 1;
+  min-width: 0;
+}
+
+.name {
+  font-family: "Inter", system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 20px;
+  margin: 0;
+  color: var(--text);
+}
+
+.name a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.name a:hover {
+  text-decoration: underline;
+}
+
+.readMore {
+  align-self: flex-start;
+  font-family: "Inter", system-ui, sans-serif;
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--accent-strong);
+  text-decoration: none;
+}
+
+.readMore:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 720px) {
+  .card {
+    padding: 24px;
+  }
+}
+
+/* As a slide in the home page's carousel. */
+.slide {
+  flex: 0 0 min(440px, 85vw);
+  scroll-snap-align: start;
+}

@@ -1,0 +1,9 @@
+/* On phones the form is cramped by the container's 24px gutters; let the
+   embed bleed into them, keeping a slim 8px effective margin. The section
+   heading above stays aligned with the rest of the page. */
+@media (max-width: 640px) {
+  .embed {
+    margin-left: -16px;
+    margin-right: -16px;
+  }
+}

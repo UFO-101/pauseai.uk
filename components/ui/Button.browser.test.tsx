@@ -1,20 +1,18 @@
 import { describe, expect, it } from "vitest";
 import { render } from "vitest-browser-react";
 import { page } from "vitest/browser";
-import { Button, ButtonAnchor, ButtonLink, buttonAttributes } from "./Button";
+import { Button, ButtonAnchor, ButtonLink, buttonClass } from "./Button";
 import { SubmitButton } from "./SubmitButton";
 
-describe("buttonAttributes", () => {
-  it("combines the variant, size and extra class", () => {
-    const attrs = buttonAttributes({ variant: "ghost", size: "small", className: "extra" });
-    expect(attrs["data-button"]).toBe("");
-    expect(attrs["data-variant"]).toBe("ghost");
-    expect(attrs.className.split(" ")).toHaveLength(4);
-    expect(attrs.className).toContain("extra");
+describe("buttonClass", () => {
+  it("combines the variant, size, fit and extra class", () => {
+    const className = buttonClass({ variant: "ghost", size: "small", fit: true, className: "extra" });
+    expect(className.split(" ")).toHaveLength(5);
+    expect(className).toContain("extra");
   });
 
-  it("leaves out the size and extra class when not given", () => {
-    expect(buttonAttributes({ variant: "primary" }).className.split(" ")).toHaveLength(2);
+  it("leaves out the size, fit and extra class when not given", () => {
+    expect(buttonClass({ variant: "primary" }).split(" ")).toHaveLength(2);
   });
 });
 
@@ -27,12 +25,12 @@ describe("Button", () => {
     );
     const button = page.getByRole("button", { name: "Send" });
     await expect.element(button).toHaveAttribute("type", "submit");
-    await expect.element(button).toHaveAttribute("data-variant", "primary");
     // The real stylesheet is loaded: the accent background and white text.
     const style = getComputedStyle(button.element());
     expect(style.color).toBe("rgb(255, 255, 255)");
-    expect(style.backgroundColor).not.toBe("rgba(0, 0, 0, 0)");
+    expect(style.backgroundColor).toBe("rgb(229, 114, 38)");
     expect(style.display).toBe("inline-flex");
+    expect(style.cursor).toBe("pointer");
   });
 
   it("makes a ghost button transparent, and a large one bigger", async () => {
@@ -55,6 +53,39 @@ describe("Button", () => {
     expect(large.paddingTop).toBe("16px");
     expect(small.paddingTop).toBe("9px");
   });
+
+  it("is white on a photo, light", async () => {
+    await render(<Button variant="light">Light</Button>);
+    const style = getComputedStyle(page.getByRole("button", { name: "Light" }).element());
+    expect(style.backgroundColor).toBe("rgb(255, 255, 255)");
+    expect(style.borderTopColor).toBe("rgb(229, 114, 38)");
+  });
+
+  it("fills a phone's width, unless told to fit", async () => {
+    await render(
+      <div style={{ width: 300 }}>
+        <Button variant="primary">Fill</Button>
+        <Button variant="primary" fit>
+          Fit
+        </Button>
+      </div>,
+    );
+    expect(page.getByRole("button", { name: "Fill" }).element().getBoundingClientRect().width).toBe(300);
+    expect(page.getByRole("button", { name: "Fit" }).element().getBoundingClientRect().width).toBeLessThan(300);
+  });
+
+  it("takes its padding and type from the container's custom properties", async () => {
+    await render(
+      <div style={{ ["--button-padding" as string]: "3px 5px", ["--button-font-size" as string]: "11px" }}>
+        <Button variant="ghost" size="large">
+          Sized
+        </Button>
+      </div>,
+    );
+    const style = getComputedStyle(page.getByRole("button", { name: "Sized" }).element());
+    expect(style.paddingTop).toBe("3px");
+    expect(style.fontSize).toBe("11px");
+  });
 });
 
 describe("ButtonAnchor and ButtonLink", () => {
@@ -72,9 +103,9 @@ describe("ButtonAnchor and ButtonLink", () => {
     const out = page.getByRole("link", { name: "Out" });
     const inner = page.getByRole("link", { name: "In" });
     await expect.element(out).toHaveAttribute("href", "https://example.com");
-    await expect.element(out).toHaveAttribute("data-variant", "primary");
+    expect(getComputedStyle(out.element()).backgroundColor).toBe("rgb(229, 114, 38)");
     await expect.element(inner).toHaveAttribute("href", "/people");
-    await expect.element(inner).toHaveAttribute("data-variant", "ghost");
+    expect(getComputedStyle(inner.element()).backgroundColor).toBe("rgba(0, 0, 0, 0)");
     await expect.element(inner).toHaveClass("extra");
   });
 });

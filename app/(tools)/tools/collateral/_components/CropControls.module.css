@@ -1,0 +1,11 @@
+/* The crop sliders, folded away under their summary. */
+
+.crop {
+  margin-top: 8px;
+  font-size: 14px;
+}
+
+.summary {
+  font-weight: 600;
+  cursor: pointer;
+}

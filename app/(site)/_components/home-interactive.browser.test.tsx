@@ -23,9 +23,9 @@ const PIXEL = "data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAA
 /** A marquee like the home page's: a track holding one copy of its items. */
 function Marquee({ src = PIXEL, withCopy = true }: { src?: string; withCopy?: boolean }) {
   return (
-    <div className="hero-marquee-track" data-testid="track">
+    <div data-marquee-track="hero" data-testid="track">
       {withCopy && (
-        <div className="hero-marquee-copy" style={{ display: "inline-block", width: 300 }}>
+        <div data-marquee-copy="" style={{ display: "inline-block", width: 300 }}>
           {/* eslint-disable-next-line @next/next/no-img-element -- a plain image, as next/image renders */}
           <img src={src} alt="" width={300} height={10} />
         </div>
@@ -44,7 +44,7 @@ describe("HeroMarqueeEffects", () => {
     );
     const track = page.getByTestId("track").element() as HTMLElement;
     await expect.poll(() => track.style.getPropertyValue("--copy-shift")).toBe("-300px");
-    await expect.poll(() => track.querySelector("img")!.classList.contains("is-loaded")).toBe(true);
+    await expect.poll(() => track.querySelector("img")!.hasAttribute("data-loaded")).toBe(true);
   });
 
   it("marks a photo once it loads, or fails, and ignores tracks without a copy", async () => {
@@ -56,8 +56,8 @@ describe("HeroMarqueeEffects", () => {
         <HeroMarqueeEffects />
       </>,
     );
-    const imgs = document.querySelectorAll(".hero-marquee-track img");
-    await expect.poll(() => [...imgs].every((img) => img.classList.contains("is-loaded"))).toBe(true);
+    const imgs = document.querySelectorAll("[data-marquee-track] img");
+    await expect.poll(() => [...imgs].every((img) => img.hasAttribute("data-loaded"))).toBe(true);
   });
 
   it("falls back to window resizes without ResizeObserver, and to no font wait without document.fonts", async () => {
@@ -85,8 +85,8 @@ describe("HeroMarqueeEffects", () => {
   it("leaves a zero-width copy alone", async () => {
     await render(
       <>
-        <div className="hero-marquee-track" data-testid="empty">
-          <div className="hero-marquee-copy" style={{ width: 0 }} />
+        <div data-marquee-track="hero" data-testid="empty">
+          <div data-marquee-copy="" style={{ width: 0 }} />
         </div>
         <HeroMarqueeEffects />
       </>,
@@ -121,9 +121,9 @@ describe("OnboardingFormEmbed", () => {
     // The iframe is attached with no src, so src is only set by the effect.
     const { container, srcs } = await renderEmbed();
     expect(srcs).toEqual(["https://pauseai.info/embed/onboarding-form/?country=United+Kingdom&bg=FDF8F3"]);
-    expect(container.querySelector(".onboarding-embed-skeleton")).not.toBeNull();
+    expect(container.querySelector('[data-testid="onboarding-skeleton"]')).not.toBeNull();
     post({ height: 900 });
-    await expect.poll(() => container.querySelector(".onboarding-embed-skeleton")).toBeNull();
+    await expect.poll(() => container.querySelector('[data-testid="onboarding-skeleton"]')).toBeNull();
     expect(container.querySelector("iframe")!.getAttribute("height")).toBe("900");
   });
 
@@ -132,7 +132,7 @@ describe("OnboardingFormEmbed", () => {
     post({ height: 10 }, "https://evil.example");
     post({ something: "else" });
     post(null);
-    expect(container.querySelector(".onboarding-embed-skeleton")).not.toBeNull();
+    expect(container.querySelector('[data-testid="onboarding-skeleton"]')).not.toBeNull();
     expect(container.querySelector("iframe")!.getAttribute("height")).toBe("1483");
   });
 
@@ -153,12 +153,12 @@ describe("OnboardingFormEmbed", () => {
     const { container, iframe } = await renderEmbed();
     await vi.advanceTimersByTimeAsync(8000);
     await frame();
-    const fallback = () => container.querySelector(".onboarding-embed-fallback")?.textContent;
+    const fallback = () => container.querySelector("[role=status]")?.textContent;
     expect(fallback()).toBe("Form didn't load. Open it in a new tab.");
     iframe.dispatchEvent(new Event("load"));
     await frame();
     expect(fallback()).toBe("Form is taking a while to load. Open it in a new tab.");
-    expect(container.querySelector(".onboarding-embed-skeleton")).toBeNull();
+    expect(container.querySelector('[data-testid="onboarding-skeleton"]')).toBeNull();
   });
 
   it("doesn't offer the link when the form reported in", async () => {
@@ -166,7 +166,7 @@ describe("OnboardingFormEmbed", () => {
     const { container } = await renderEmbed();
     post({ height: 900 });
     await vi.advanceTimersByTimeAsync(8000);
-    expect(container.querySelector(".onboarding-embed-fallback")).toBeNull();
+    expect(container.querySelector("[role=status]")).toBeNull();
   });
 
   it("scrolls back to the top of a shorter step, but only after the reader used the form", async () => {
@@ -180,13 +180,14 @@ describe("OnboardingFormEmbed", () => {
     // Shrinking before anyone used the form is a reflow: no scroll.
     post({ height: 1300 });
     expect(scroll).not.toHaveBeenCalled();
-    expect(container.firstElementChild!.className).toBe("onboarding-embed-wrap is-pristine");
+    // Untouched, it holds the form's first-step height.
+    expect(getComputedStyle(container.firstElementChild!).minHeight).not.toBe("0px");
 
     // Focus moving into the iframe means the reader is using the form.
     iframe.focus();
     window.dispatchEvent(new Event("blur"));
     await vi.advanceTimersByTimeAsync(0);
-    expect(container.firstElementChild!.className).toBe("onboarding-embed-wrap");
+    expect(getComputedStyle(container.firstElementChild!).minHeight).toBe("0px");
     post({ height: 1200 });
     expect(scroll).toHaveBeenCalledWith({ block: "start" });
 
@@ -203,7 +204,7 @@ describe("OnboardingFormEmbed", () => {
     const { container } = await renderEmbed();
     window.dispatchEvent(new Event("blur"));
     await vi.advanceTimersByTimeAsync(0);
-    expect(container.firstElementChild!.className).toBe("onboarding-embed-wrap is-pristine");
+    expect(getComputedStyle(container.firstElementChild!).minHeight).not.toBe("0px");
   });
 
   it("doesn't set the src again if the iframe already has one", async () => {
@@ -214,6 +215,17 @@ describe("OnboardingFormEmbed", () => {
   });
 });
 
+// The map is an image of the UK; the connectors are drawn in a decorative svg
+// beside it. Each pin repeats its card's link inside the map, and each card is
+// a link headed by its group's name.
+const MAP = 'svg[role="img"]';
+const OUTLINE = `${MAP} path`;
+const PIN = `${MAP} a`;
+const ACTIVE_PIN = `${PIN}[data-active]`;
+const CONNECTOR = 'svg[aria-hidden="true"] path';
+const ACTIVE_CONNECTOR = `${CONNECTOR}[data-active]`;
+const CARD = "a:has(h3)";
+
 describe("LocalGroupsMap", () => {
   it("shows the cards alone on a narrow screen, without fetching the map", async () => {
     const fetchSpy = vi.spyOn(window, "fetch");
@@ -223,29 +235,29 @@ describe("LocalGroupsMap", () => {
         .element(page.getByRole("link", { name: new RegExp(group.name) }).first())
         .toHaveAttribute("href", group.href);
     expect(fetchSpy).not.toHaveBeenCalled();
-    expect(container.querySelector(".local-groups-map-canvas svg")).toBeNull();
+    expect(container.querySelector(MAP)).toBeNull();
   });
 
   it("draws the UK map with a pin and connector per group on a wide screen, highlighting on hover", async () => {
     await page.viewport(1280, 900);
     const { container } = await render(<LocalGroupsMap />);
-    await expect.poll(() => container.querySelectorAll(".uk-map-pin").length).toBe(localGroups.length);
-    await expect.poll(() => container.querySelectorAll(".local-groups-map-link").length).toBe(localGroups.length);
+    await expect.poll(() => container.querySelectorAll(PIN).length).toBe(localGroups.length);
+    await expect.poll(() => container.querySelectorAll(CONNECTOR).length).toBe(localGroups.length);
     const card = page.getByRole("link", { name: new RegExp(localGroups[0].name) });
     await card.hover();
-    await expect.poll(() => container.querySelector(".local-groups-map-link.active")).not.toBeNull();
-    await expect.poll(() => container.querySelector(".uk-map-pin.active")).not.toBeNull();
+    await expect.poll(() => container.querySelector(ACTIVE_CONNECTOR)).not.toBeNull();
+    await expect.poll(() => container.querySelector(ACTIVE_PIN)).not.toBeNull();
     // Leaving one card doesn't clear another's highlight.
     await page.getByRole("link", { name: new RegExp(localGroups[1].name) }).hover();
-    await expect.poll(() => container.querySelectorAll(".local-groups-map-link.active").length).toBe(1);
+    await expect.poll(() => container.querySelectorAll(ACTIVE_CONNECTOR).length).toBe(1);
     await userEvent.unhover(page.getByRole("link", { name: new RegExp(localGroups[1].name) }));
-    await expect.poll(() => container.querySelector(".local-groups-map-link.active")).toBeNull();
+    await expect.poll(() => container.querySelector(ACTIVE_CONNECTOR)).toBeNull();
     // Pins highlight their group too.
-    const pin = container.querySelector(".uk-map-pin") as SVGElement;
+    const pin = container.querySelector(PIN) as SVGElement;
     pin.dispatchEvent(new MouseEvent("mouseover", { bubbles: true }));
-    await expect.poll(() => container.querySelector(".uk-map-pin.active")).not.toBeNull();
+    await expect.poll(() => container.querySelector(ACTIVE_PIN)).not.toBeNull();
     pin.dispatchEvent(new MouseEvent("mouseout", { bubbles: true, relatedTarget: document.body }));
-    await expect.poll(() => container.querySelector(".uk-map-pin.active")).toBeNull();
+    await expect.poll(() => container.querySelector(ACTIVE_PIN)).toBeNull();
     // Connectors follow a window resize.
     window.dispatchEvent(new Event("resize"));
   });
@@ -255,10 +267,10 @@ describe("LocalGroupsMap", () => {
     const host = document.createElement("div");
     host.innerHTML = renderToString(<LocalGroupsMap />);
     document.body.append(host);
-    expect(host.querySelectorAll(".local-groups-map-card")).toHaveLength(localGroups.length);
-    expect(host.querySelector(".local-groups-map-canvas svg")).toBeNull();
+    expect(host.querySelectorAll(CARD)).toHaveLength(localGroups.length);
+    expect(host.querySelector(MAP)).toBeNull();
     const root = await act(async () => hydrateRoot(host, <LocalGroupsMap />));
-    await expect.poll(() => host.querySelectorAll(".uk-map-pin").length).toBe(localGroups.length);
+    await expect.poll(() => host.querySelectorAll(PIN).length).toBe(localGroups.length);
     await act(async () => root.unmount());
     host.remove();
   });
@@ -266,17 +278,17 @@ describe("LocalGroupsMap", () => {
   it("only clears the highlight of the group being left", async () => {
     await page.viewport(1280, 900);
     const { container } = await render(<LocalGroupsMap />);
-    await expect.poll(() => container.querySelectorAll(".uk-map-pin").length).toBe(localGroups.length);
-    for (const selector of [".local-groups-map-card", ".uk-map-pin"]) {
+    await expect.poll(() => container.querySelectorAll(PIN).length).toBe(localGroups.length);
+    for (const selector of [CARD, PIN]) {
       const [first, second] = container.querySelectorAll(selector);
       first.dispatchEvent(new MouseEvent("mouseover", { bubbles: true, relatedTarget: document.body }));
-      await expect.poll(() => container.querySelectorAll(".uk-map-pin.active").length).toBe(1);
+      await expect.poll(() => container.querySelectorAll(ACTIVE_PIN).length).toBe(1);
       // A stray leave from another group, say as the pointer crosses it, keeps the first highlighted.
       second.dispatchEvent(new MouseEvent("mouseout", { bubbles: true, relatedTarget: first }));
       await new Promise((r) => requestAnimationFrame(r));
-      expect(container.querySelectorAll(".uk-map-pin.active")).toHaveLength(1);
+      expect(container.querySelectorAll(ACTIVE_PIN)).toHaveLength(1);
       first.dispatchEvent(new MouseEvent("mouseout", { bubbles: true, relatedTarget: document.body }));
-      await expect.poll(() => container.querySelector(".uk-map-pin.active")).toBeNull();
+      await expect.poll(() => container.querySelector(ACTIVE_PIN)).toBeNull();
     }
   });
 
@@ -295,11 +307,11 @@ describe("LocalGroupsMap", () => {
       },
     );
     const { container } = await render(<LocalGroupsMap />);
-    await expect.poll(() => container.querySelectorAll(".local-groups-map-link").length).toBe(localGroups.length);
+    await expect.poll(() => container.querySelectorAll(CONNECTOR).length).toBe(localGroups.length);
     await page.viewport(800, 900);
-    await expect.poll(() => container.querySelector(".local-groups-map-canvas svg")).toBeNull();
+    await expect.poll(() => container.querySelector(MAP)).toBeNull();
     await act(async () => callbacks.at(-1)!([], {} as ResizeObserver));
-    expect(container.querySelectorAll(".local-groups-map-link")).toHaveLength(0);
+    expect(container.querySelectorAll(CONNECTOR)).toHaveLength(0);
   });
 
   it("takes a resize that arrives after it has unmounted in its stride", async () => {
@@ -318,7 +330,7 @@ describe("LocalGroupsMap", () => {
       },
     );
     const { container, unmount } = await render(<LocalGroupsMap />);
-    await expect.poll(() => container.querySelectorAll(".local-groups-map-link").length).toBe(localGroups.length);
+    await expect.poll(() => container.querySelectorAll(CONNECTOR).length).toBe(localGroups.length);
     await unmount();
     expect(() => callbacks.at(-1)!([], {} as ResizeObserver)).not.toThrow();
   });
@@ -328,8 +340,8 @@ describe("LocalGroupsMap", () => {
     vi.spyOn(window, "fetch").mockRejectedValue(new Error("offline"));
     const { container } = await render(<LocalGroupsMap />);
     await page.viewport(800, 900);
-    await expect.poll(() => container.querySelector(".local-groups-map-canvas svg")).toBeNull();
-    expect(container.querySelectorAll(".local-groups-map-card")).toHaveLength(localGroups.length);
+    await expect.poll(() => container.querySelector(MAP)).toBeNull();
+    expect(container.querySelectorAll(CARD)).toHaveLength(localGroups.length);
   });
 
   it("doesn't use a map that arrives after it has gone", async () => {
@@ -355,37 +367,43 @@ describe("LocalGroupsMap", () => {
     };
     vi.spyOn(window, "fetch").mockResolvedValue(new Response(JSON.stringify(topology)));
     const { container } = await render(<LocalGroupsMap />);
-    await expect.poll(() => container.querySelectorAll(".uk-map-outline").length).toBe(2);
-    expect(container.querySelectorAll(".uk-map-outline")[0].getAttribute("d")).toBeNull();
+    await expect.poll(() => container.querySelectorAll(OUTLINE).length).toBe(2);
+    expect(container.querySelectorAll(OUTLINE)[0].getAttribute("d")).toBeNull();
   });
 });
+
+/** The carousel's scrolling track: the row the story cards sit in, before the arrows. */
+const trackOf = (container: HTMLElement) => container.firstElementChild!.firstElementChild as HTMLElement;
+
+/** A track being dragged shows the grabbing hand. */
+const isDragging = (track: HTMLElement) => getComputedStyle(track).cursor === "grabbing";
 
 describe("PeopleCarousel", () => {
   const few = people.slice(0, 6);
 
   it("scrolls a card at a time with the arrow buttons", async () => {
     const { container } = await render(<PeopleCarousel people={few} />);
-    const track = container.querySelector(".people-carousel-track") as HTMLElement;
+    const track = trackOf(container);
     const scroll = vi.spyOn(track, "scrollBy");
     // The arrows are hidden by CSS at this narrow test width, so click them directly.
-    (container.querySelector('[aria-label="Next story"]') as HTMLElement).click();
-    const step = (container.querySelector(".person-card") as HTMLElement).getBoundingClientRect().width + 24;
+    (page.getByRole("button", { name: "Next story", includeHidden: true }).element() as HTMLElement).click();
+    const step = container.querySelector("article")!.getBoundingClientRect().width + 24;
     expect(scroll).toHaveBeenLastCalledWith({ left: step, behavior: "smooth" });
-    (container.querySelector('[aria-label="Previous story"]') as HTMLElement).click();
+    (page.getByRole("button", { name: "Previous story", includeHidden: true }).element() as HTMLElement).click();
     expect(scroll).toHaveBeenLastCalledWith({ left: -step, behavior: "smooth" });
   });
 
   it("scrolls by the track's width when it has no cards", async () => {
     const { container } = await render(<PeopleCarousel people={[]} />);
-    const track = container.querySelector(".people-carousel-track") as HTMLElement;
+    const track = trackOf(container);
     const scroll = vi.spyOn(track, "scrollBy");
-    (container.querySelector('[aria-label="Next story"]') as HTMLElement).click();
+    (page.getByRole("button", { name: "Next story", includeHidden: true }).element() as HTMLElement).click();
     expect(scroll).toHaveBeenCalledWith({ left: track.clientWidth, behavior: "smooth" });
   });
 
   it("drags with the mouse, without the drag also clicking what it ends on", async () => {
     const { container } = await render(<PeopleCarousel people={few} />);
-    const track = container.querySelector(".people-carousel-track") as HTMLElement;
+    const track = trackOf(container);
     vi.spyOn(track, "setPointerCapture").mockImplementation(() => {});
     vi.spyOn(track, "hasPointerCapture").mockReturnValue(true);
     const release = vi.spyOn(track, "releasePointerCapture").mockImplementation(() => {});
@@ -407,9 +425,9 @@ describe("PeopleCarousel", () => {
     // A drag scrolls and swallows the click that follows.
     pointer("pointerdown", 200);
     pointer("pointermove", 198);
-    expect(track.classList.contains("dragging")).toBe(false);
+    expect(isDragging(track)).toBe(false);
     pointer("pointermove", 100);
-    await expect.poll(() => track.classList.contains("dragging")).toBe(true);
+    await expect.poll(() => isDragging(track)).toBe(true);
     pointer("pointerup", 100);
     track.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     expect(clicked).not.toHaveBeenCalled();
@@ -432,7 +450,7 @@ describe("PeopleCarousel", () => {
 
   it("leaves touch, pen and right-clicks to the browser", async () => {
     const { container } = await render(<PeopleCarousel people={few} />);
-    const track = container.querySelector(".people-carousel-track") as HTMLElement;
+    const track = trackOf(container);
     const capture = vi.spyOn(track, "setPointerCapture");
     vi.spyOn(track, "hasPointerCapture").mockReturnValue(false);
     track.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, pointerType: "touch", button: 0 }));
@@ -444,9 +462,9 @@ describe("PeopleCarousel", () => {
 
   it("gives focus back to a link pressed to start a drag", async () => {
     const { container } = await render(<PeopleCarousel people={few} />);
-    const track = container.querySelector(".people-carousel-track") as HTMLElement;
+    const track = trackOf(container);
     vi.spyOn(track, "setPointerCapture").mockImplementation(() => {});
-    const button = container.querySelector(".person-card button, .person-card a") as HTMLElement | null;
+    const button = container.querySelector("article button, article a") as HTMLElement | null;
     const target = button ?? track;
     target.dispatchEvent(
       new PointerEvent("pointerdown", {

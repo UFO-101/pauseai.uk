@@ -3,6 +3,10 @@ import LocalGroupEvents from "@/components/events/LocalGroupEvents";
 import { ButtonAnchor, ButtonLink, type ButtonSize, type ButtonVariant } from "@/components/ui/Button";
 import FeatureCard from "@/components/ui/FeatureCard";
 import type { LocalGroupName } from "@/lib/content/local-groups";
+import PageSection, { Lede, SectionHeader } from "@/components/ui/Section";
+import Callout from "@/components/ui/Callout";
+import { PhotoCardBody, PhotoCardImage, photoCardClass } from "@/components/ui/PhotoCard";
+import styles from "./LocalGroupPage.module.css";
 
 /** A call to action. `newTab` opens it in a new tab; `internal` uses client-side navigation. */
 export type GroupAction = {
@@ -61,7 +65,7 @@ export type LocalGroupPageContent = {
   sections: GroupSection[];
 };
 
-const PHOTO_TINT = "linear-gradient(135deg, rgba(255, 148, 22, 0.35), rgba(0,0,0,0.65))";
+const PHOTO_TINT = "linear-gradient(135deg, rgb(var(--amber-rgb) / 0.35), rgb(var(--black-rgb) / 0.65))";
 
 function Action({ action, size }: { action: GroupAction; size?: ButtonSize }) {
   const { label, href, variant, newTab, internal } = action;
@@ -84,25 +88,17 @@ function Action({ action, size }: { action: GroupAction; size?: ButtonSize }) {
   );
 }
 
-function SectionHeader({ heading, lede }: { heading: string; lede?: string }) {
-  return (
-    <div className="section-header">
-      <h2>{heading}</h2>
-      {lede && <p className="section-lede">{lede}</p>}
-    </div>
-  );
+function GroupSectionHeader({ heading, lede }: { heading: string; lede?: string }) {
+  return <SectionHeader title={heading}>{lede && <Lede>{lede}</Lede>}</SectionHeader>;
 }
 
 /** A plain section, or a full-width tinted band with the content in a container. */
 function Band({ muted, children }: { muted?: boolean; children: ReactNode }) {
-  if (muted) {
-    return (
-      <section className="section muted">
-        <div className="container">{children}</div>
-      </section>
-    );
-  }
-  return <section className="section container">{children}</section>;
+  return (
+    <PageSection tone={muted ? "muted" : undefined}>
+      <div className="container">{children}</div>
+    </PageSection>
+  );
 }
 
 function Section({ section, name }: { section: GroupSection; name: LocalGroupName }) {
@@ -110,8 +106,8 @@ function Section({ section, name }: { section: GroupSection; name: LocalGroupNam
     case "features":
       return (
         <Band>
-          <SectionHeader heading={section.heading} lede={section.lede} />
-          <div className="feature-grid">
+          <GroupSectionHeader heading={section.heading} lede={section.lede} />
+          <div className={styles.featureGrid}>
             {section.items.map((item) => (
               <FeatureCard key={item.title}>
                 <h3>{item.title}</h3>
@@ -124,18 +120,17 @@ function Section({ section, name }: { section: GroupSection; name: LocalGroupNam
     case "activities":
       return (
         <Band muted={section.muted}>
-          <SectionHeader heading={section.heading} lede={section.lede} />
-          <div className="activity-grid" style={section.gridStyle}>
+          <GroupSectionHeader heading={section.heading} lede={section.lede} />
+          <div className={styles.activityGrid} style={section.gridStyle}>
             {section.items.map((item) => (
-              <article key={item.title} className="activity-card" style={item.style}>
-                <div
-                  className="image-frame"
+              <article key={item.title} className={photoCardClass()} style={item.style}>
+                <PhotoCardImage
                   style={{
                     backgroundImage: `url('${item.image}')`,
                     ...(item.imagePosition ? { backgroundPosition: item.imagePosition } : {}),
                   }}
-                ></div>
-                <div className="card-copy">
+                />
+                <PhotoCardBody>
                   <h3>{item.title}</h3>
                   <p>{item.text}</p>
                   {item.href && (
@@ -143,7 +138,7 @@ function Section({ section, name }: { section: GroupSection; name: LocalGroupNam
                       View event page
                     </a>
                   )}
-                </div>
+                </PhotoCardBody>
               </article>
             ))}
           </div>
@@ -153,23 +148,21 @@ function Section({ section, name }: { section: GroupSection; name: LocalGroupNam
       return <LocalGroupEvents localGroupName={name} />;
     case "contact":
       return (
-        <section className={section.muted ? "section muted" : "section"}>
-          <div className="container">
-            <SectionHeader heading={section.heading} lede={section.lede} />
-            <div className="callout-inner" style={section.calloutStyle}>
-              {section.details && <div>{section.details}</div>}
-              {section.actions.length > 1 ? (
-                <div className="actions">
-                  {section.actions.map((action) => (
-                    <Action key={action.label} action={action} size="large" />
-                  ))}
-                </div>
-              ) : (
-                <Action action={section.actions[0]} size="large" />
-              )}
-            </div>
-          </div>
-        </section>
+        <Band muted={section.muted}>
+          <GroupSectionHeader heading={section.heading} lede={section.lede} />
+          <Callout style={section.calloutStyle}>
+            {section.details && <div>{section.details}</div>}
+            {section.actions.length > 1 ? (
+              <div className={styles.actions}>
+                {section.actions.map((action) => (
+                  <Action key={action.label} action={action} size="large" />
+                ))}
+              </div>
+            ) : (
+              <Action action={section.actions[0]} size="large" />
+            )}
+          </Callout>
+        </Band>
       );
   }
 }
@@ -179,23 +172,27 @@ export default function LocalGroupPage({ content }: { content: LocalGroupPageCon
   const { name, hero, sections } = content;
   return (
     <main>
-      <section className="hero" style={{ paddingBottom: 48 }}>
-        <div className="container hero-grid">
-          <div className="hero-copy">
+      <section className={styles.hero} style={{ paddingBottom: 48 }}>
+        <div className={`container ${styles.heroGrid}`}>
+          <div className={styles.heroCopy}>
             <h1>PauseAI {name}</h1>
-            <p className="lede">{hero.lede}</p>
-            <div className="actions">
+            <p className={styles.lede}>{hero.lede}</p>
+            <div className={styles.actions}>
               {hero.actions.map((action) => (
                 <Action key={action.label} action={action} />
               ))}
             </div>
           </div>
-          <div className="hero-visual">
+          <div className={styles.heroVisual}>
             <div
-              className="hero-photo"
+              className={styles.heroPhoto}
               style={{ backgroundImage: `${PHOTO_TINT}, url('${hero.photo}')`, ...hero.photoStyle }}
             ></div>
-            {hero.badge && <div className="hero-badge">{hero.badge}</div>}
+            {hero.badge && (
+              <div className={styles.heroBadge} data-testid="hero-badge">
+                {hero.badge}
+              </div>
+            )}
           </div>
         </div>
       </section>

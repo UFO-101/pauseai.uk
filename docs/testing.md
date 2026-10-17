@@ -49,8 +49,15 @@ start`), so it is slower. Use it only for what Vitest can't see:
   tested.
 - **The one scope rule:** `page.tsx` and `layout.tsx` are outside the
   report. Async server components can't render in Vitest, and `layout.tsx`
-  needs `next/font`. Keep them thin (see `docs/code-structure.md`); the route
-  smoke test is their gate.
+  needs `next/font`. That's safe only because they have no branches:
+  `tests/checks/thin-pages.test.ts` parses every one and fails on `if`,
+  `? :`, `&&`, `||`, `??`, `?.`, `switch`, a loop, `try` or a default
+  value. A choice a page would make goes in a component or a `lib/`
+  helper, where the gate covers each way it can go: `found()`
+  (`lib/found.ts`) for the post, person or record a URL names, or a 404;
+  the staff pages' URL filters in `lib/staff-search.ts`; the login page's
+  states in `LoginForm`. The route smoke test then only has to show each
+  page renders.
 
 ## Mocking
 
@@ -136,8 +143,9 @@ how a page looks.
 (`scripts/serve-main.mjs`: a git worktree of origin/main, fetched first, kept in your temp folder,
 with its own `npm ci` when its lockfile changes), runs the suite against it
 with screenshots (its failures are just missing frames), then against this
-branch, pairs the frames by section, flow and caption, diffs them with
-pixelmatch, and opens `test-results/storyboard/index.html`: the flows in
+branch, pairs the frames by section, flow and caption, diffs them pixel by
+pixel, and opens `test-results/storyboard/index.html`, which goes to the
+newest run's page: the flows in
 sections, each frame captioned and pictured on desktop and phone, with this
 branch's picture, main's and the diff, a lightbox, a phone/desktop toggle
 that stays on the flow being looked at, a "changed only" filter, and a
@@ -146,9 +154,46 @@ of `SECTION_ORDER` (`tests/storyboard/report/frames.ts`): the public pages
 first, then what a visitor does, the staff screens, then the mechanics; the
 flows in each keep their spec file's order. The sidebar folds every section
 but the one in view. The same data is in
-`test-results/storyboard/storyboard.json`, for an agent.
+`test-results/storyboard/latest/storyboard.json`, for an agent.
 Both are local only and gitignored. A difference never fails; only this
 branch's checks do, and the exit code is theirs.
+
+**Runs.** Each run has its own folder,
+`test-results/storyboard/runs/<when>/`, with every picture its page shows,
+so a page you have open is never changed by the next run. `latest` points
+at the newest that finished, and `index.html` beside it opens that run's
+page by name. The newest three runs are kept.
+
+A partial run (one that selects less than the whole suite: a section, `-g`,
+`--desktop` or `--phone`) starts from the latest run's frames, as hard
+links, and replaces only the flows it runs, so the review stays whole. Each
+carried flow says when it was shot, and the summary line counts them. A flow
+that's gone from the suite, renamed or deleted, isn't carried, and a full
+run starts empty.
+
+**Main is run once.** Main's frames are kept in
+`test-results/storyboard-main/`, under main's commit and a hash of this
+branch's suite (`tests/`, `playwright.config.ts`, `lib/content/`, the
+pages' paths, `app/sitemap.ts`, the migrations, `scripts/fresh-database.mjs`,
+`scripts/serve-main.mjs` and Playwright's version: the suite drives main's
+server, so a change to it changes main's frames). A run lists its flows first (`playwright test --list`,
+which builds nothing); if main's are all kept, it doesn't build or run main
+at all. Otherwise it runs main for its selection and keeps the result. So
+after one full review, every partial run against the same main is fast.
+`--fresh-main` runs main again regardless; with `--main-server` nothing is
+kept, as that server may not be the ref's commit.
+
+**Noise.** A frame that differs from main's only by antialiasing isn't
+counted as changed, by the rule toucan's snapshot gallery uses
+(https://git.sr.ht/~frabcus/toucan, `platform/snapshots/png.ts`). A pixel
+differs when a colour channel moves by more than 4 levels. A frame has
+changed when its differing pixels' moves add up to more than 2,000, or more
+than 1,000 pixels differ, both per CSS pixel, so nine times that on the
+phone's 3× screen. Antialiasing on a few glyphs comes to a few thousand; a
+line that moves by a pixel, millions. A frame under the limits reads "same
+as main, but for noise" and still shows its diff, so you can see what fell
+under them. The limits are `CHANNEL_NOISE`, `NOISE_TOTAL` and
+`NOISE_PIXELS` in `tests/storyboard/report/frames.ts`.
 
 Switches, after `--`: `--no-main` (this branch alone), `--main=<ref>`
 (another branch), `--desktop` or `--phone`, `--no-open`, `--paths` (print
@@ -159,7 +204,8 @@ for servers you started. Anything else goes to `playwright test`: a file
 So the review is also the way to get a screenshot while working: one page
 is `npm run storyboard -- --no-main --no-open --paths public-pages -g
 '/donate$'`, a few seconds on a warm build. `public-pages` names each test
-by its route. A run replaces the last review in `test-results/storyboard`.
+by its route. A narrow run carries the rest of the latest review, so it
+doesn't lose your last full one.
 
 **Every flow stands alone.** It passes on its own, and run twice, in any
 order, alongside the others:
@@ -206,8 +252,9 @@ order, alongside the others:
   (images in, nothing moving) and `wholePage` (back at the top, and
   staying there, for a frame after a click, typing or going back has left
   the window somewhere that varies between runs). Playwright's own output (traces) is in
-  `test-results/playwright`, emptied every run; the review beside it in
-  `test-results/storyboard` is kept until the next review.
+  `test-results/playwright` (`test-results/playwright-storyboard-*` for a
+  review), emptied every run; the reviews beside it in
+  `test-results/storyboard` are kept, the newest three.
 - No stored baselines, and no gate on pixels. Main is the reference.
 
 ### What the storyboard covers
@@ -215,7 +262,8 @@ order, alongside the others:
 Every page is loaded: `public-pages.spec.ts` opens each route in
 `tests/routes.ts` (one example per dynamic route), except a campaign's
 write and preview pages, which show nothing without a postcode and a letter
-and are pictured by the `campaigns` flows instead; and `staff.spec.ts`
+and are pictured by the `campaigns` flows instead, and the component
+gallery's, which `gallery.spec.ts` pictures; and `staff.spec.ts`
 checks every staff page turns a visitor without a session away, then opens
 them logged in. The flows below drive the rest. `tests/storyboard/coverage.test.ts`
 fails if a spec file or a route handler (`route.ts`) is missing from this
@@ -232,6 +280,7 @@ or why nothing does.
 | `mobile-nav.spec.ts`                                | The burger menu on a phone: open, close, dropdowns, navigating, scroll lock released.                                                                                                                                                                                                                                                                                                               |
 | `onboarding-embed.spec.ts`                          | The home page's signup iframe: shows after slow hydration, ignores other origins.                                                                                                                                                                                                                                                                                                                   |
 | `scroll.spec.ts`                                    | Anchor links, deep links, the back button, keyboard focus, reduced motion, the footer's cookie link, the embed not scrolling the page.                                                                                                                                                                                                                                                              |
+| `gallery.spec.ts`                                   | The component gallery ("The component gallery", below): its index and a flow per group, one full-page frame of its page, each checked for noindex and console errors; one flow presses an action and a control to show the examples respond.                                                                                                                                                        |
 | `redirects.spec.ts`                                 | Every redirect in `next.config.ts`, over HTTP, and that each destination resolves.                                                                                                                                                                                                                                                                                                                  |
 | `/api/email-your-mp/lookup`                         | `campaigns`: the postcode form (`lookUpTestMp` in `tests/steps.ts`).                                                                                                                                                                                                                                                                                                                                |
 | `/api/email-your-mp/letters`                        | `campaigns`: sending the letter (`sendLetter`).                                                                                                                                                                                                                                                                                                                                                     |
@@ -247,6 +296,48 @@ or why nothing does.
 pauseai.uk failed on every run on live data (events, news, caches, the
 clock), so it went. Bugs only real data shows, and configuration drift on
 Netlify, aren't caught here; check previews by hand.
+
+## The component gallery
+
+Every component, and each of its major variants, rendered on fixture data,
+a page per group: `/gallery` lists the groups (the UI kit, the header and
+footer, each area of the site, the tools, the staff interface), and
+`/gallery/<group>` (`/gallery/ui`, `/gallery/staff`) shows that group's
+components, with a link to each at the top. It exists only in fixture
+builds (`DATA_FIXTURES=1`); production answers 404, and the pages are
+noindex. The plan behind it is `plans/component-gallery.md`.
+
+- **Look there first.** Before making a component, find out whether one
+  already does the job, and how the site's pieces look side by side. With
+  `DATA_FIXTURES=1` in `.env.local`, `npm run dev` serves it at
+  http://localhost:3000/gallery.
+- **Where examples go:** `app/(tools)/gallery/_examples/<group>.tsx`, one
+  entry per component, `{ name, file, variants: [{ label, render }] }`. One
+  that needs state or callbacks goes in the `.client.tsx` beside it.
+  `tests/checks/gallery.test.ts` fails if an exported component has none.
+- **A major variant** is a prop that changes how the component looks (a
+  `variant`, a size, with and without an image). States someone reaches by
+  using a page (open, submitted, an error) belong in the storyboard's
+  flows, not here.
+- **Callbacks do something.** A controlled input sits in `<Controlled>`,
+  which holds its value and shows it; an action gets `log("onSave")` from
+  `<Logged>`, which lists each call and its arguments under the component
+  (`_components/wiring.tsx`).
+- **Example data is test data:** obviously fake names, addresses and
+  text, as in the browser tests, not copy.
+- **To check a component by eye**, picture its group on both viewports and
+  open the PNGs (`--paths` prints them; an agent opens them with its file
+  reader):
+
+  ```bash
+  npm run storyboard -- --no-main --no-open --paths gallery -g 'gallery: ui$'
+  ```
+
+  Drop `--no-main` to see main's beside it. The full review pictures every
+  group anyway, so a change to a shared component shows wherever it's used.
+
+- Knip leaves the gallery out (`knip.config.ts`): it imports every
+  component, so they'd all look used.
 
 ## The database
 
@@ -288,6 +379,21 @@ import("@/tests/next-headers"))` and put the session cookie in
   failure. Never retry, skip or loosen it to get past it; find why it
   varies.
 - A new component ships with its `*.browser.test.tsx` in the same PR.
+- **A new component gets an example in the component gallery**
+  (`app/(tools)/gallery/_examples/`, one per major variant), or
+  `tests/checks/gallery.test.ts` fails. Look at it there on both viewports
+  before calling it done ("The component gallery", above); the storyboard
+  then pictures it in every review.
+- **A page has no branches** (`tests/checks/thin-pages.test.ts`). Put the
+  choice in a component or a `lib/` helper with its own tests.
+- **Tests find elements the way a person does**: by role and accessible
+  name, label or text (`getByRole`, `getByLabelText`, `getByText`), or by
+  the attributes the markup has for its state (`aria-expanded`,
+  `aria-pressed`, `data-active`). Where there's nothing semantic to find,
+  such as a chart's parts, use a `data-testid`. Never select by a CSS
+  module's class (its name is hashed) or import one into a test; to check
+  something visual, read its computed style, since a component's module
+  loads with it.
 - New logic in `lib/` ships with its `*.test.ts`.
 - A new staff page, route handler or Server Action under `app/(staff)/`
   must call `requireStaff()` as its first statement, or `tests/checks/staff-auth.test.ts`

@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import styles from "./EmailYourMp.module.css";
+import styles from "./Required.module.css";
 
 /**
  * A label's words with a red asterisk after them, for a field that must be

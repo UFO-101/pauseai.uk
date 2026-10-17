@@ -28,8 +28,9 @@ describe("CopyLinkButton", () => {
     await render(<CopyLinkButton href="/track-record/#x" title="Copy entry" label="Share" className="extra" />);
 
     const button = page.getByRole("button", { name: "Copy entry" });
-    await expect.element(button).toHaveAttribute("data-variant", "ghost");
-    await expect.element(button).toHaveClass("story-share-cta");
+    // A ghost button, its icon spaced from the label.
+    expect(getComputedStyle(button.element()).borderRadius).toBe("8px");
+    expect(getComputedStyle(button.element()).columnGap).toBe("8px");
     await expect.element(button).toHaveClass("extra");
     await expect.element(button).toHaveTextContent("Share");
     await button.click();
@@ -38,11 +39,20 @@ describe("CopyLinkButton", () => {
     await expect.element(page.getByRole("button", { name: "Link copied" })).toHaveTextContent("Copied!");
   });
 
-  it("renders as an icon-only circle without a label", async () => {
-    await render(<CopyLinkButton slug="x" className="extra" />);
+  it("renders as an icon-only circle without a label, smaller when asked", async () => {
+    await render(
+      <>
+        <CopyLinkButton slug="x" className="extra" />
+        <CopyLinkButton slug="y" title="Small" small />
+      </>,
+    );
     const button = page.getByRole("button", { name: "Copy link to this story" });
-    await expect.element(button).toHaveClass("story-share-btn extra");
-    await expect.element(button).not.toHaveAttribute("data-button");
+    await expect.element(button).toHaveClass("extra");
+    expect(getComputedStyle(button.element()).borderRadius).toBe("50%");
+    expect(button.element().getBoundingClientRect().width).toBe(32);
+    const small = page.getByRole("button", { name: "Small" }).element();
+    expect(small.getBoundingClientRect().width).toBe(28);
+    expect(small.querySelector("svg")?.getAttribute("width")).toBe("14");
   });
 
   it("stays idle when the clipboard refuses", async () => {

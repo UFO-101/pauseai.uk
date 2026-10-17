@@ -10,7 +10,7 @@ describe("FeatureCard", () => {
         <p>Text</p>
       </FeatureCard>,
     );
-    const card = container.querySelector("article[data-card]") as HTMLElement;
+    const card = container.querySelector("article") as HTMLElement;
     expect(card.querySelector("h3")?.textContent).toBe("Title");
     expect(getComputedStyle(card).borderLeftWidth).toBe("3px");
   });

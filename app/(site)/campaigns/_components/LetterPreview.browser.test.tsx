@@ -3,40 +3,14 @@ import { render } from "vitest-browser-react";
 import { page } from "vitest/browser";
 import { campaigns, copy } from "@/lib/content/email-your-mp";
 import { navigation } from "@/tests/browser/navigation";
-import { readDraft, readSent, saveDraft, type Draft } from "./draft";
+import { readDraft, readSent, saveDraft } from "./draft";
+import { exampleDraft, exampleMp } from "./draft.examples";
 import LetterPreview from "./LetterPreview";
 import type { TurnstileApi } from "./Turnstile";
 
 const [letterToPm, bill] = campaigns;
-const MP = {
-  name: "Polly Placeholder",
-  salutation: "Ms Placeholder",
-  constituency: "Cities of London and Westminster",
-  email: "polly.placeholder.mp@parliament.uk",
-};
-const DRAFT: Draft = {
-  campaign: letterToPm.slug,
-  name: "Jane Smith",
-  postcode: "sw1a 1aa",
-  mp: MP,
-  statuses: {},
-  email: "jane@example.com",
-  address: "1 High St\nLondon",
-  subject: "My subject",
-  letter: {
-    type: "doc",
-    content: [
-      {
-        type: "paragraph",
-        content: [
-          { type: "text", text: "My " },
-          { type: "text", text: "letter", marks: [{ type: "bold" }] },
-        ],
-      },
-    ],
-  },
-  nickname: "",
-};
+const MP = exampleMp;
+const DRAFT = exampleDraft;
 
 type TestWindow = Window & { dataLayer?: unknown[]; turnstile?: TurnstileApi };
 const w = window as TestWindow;

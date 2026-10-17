@@ -1,7 +1,7 @@
 import { SubmitButton } from "@/components/ui/SubmitButton";
 import { staffCopy } from "@/lib/content/staff-interface";
 import type { Politician } from "@/lib/server/politicians";
-import styles from "./staff.module.css";
+import { StaffForm } from "./ui/forms";
 
 type Props = {
   action: (formData: FormData) => void | Promise<void>;
@@ -11,7 +11,7 @@ type Props = {
 /** The details of a politician who isn't from Airtable's MPs, such as a peer the signatory import added. */
 export default function PoliticianForm({ action, politician }: Props) {
   return (
-    <form className={styles.form} action={action}>
+    <StaffForm action={action}>
       <input type="hidden" name="id" value={politician.id} />
       <label>
         {staffCopy.fields.house}
@@ -46,6 +46,6 @@ export default function PoliticianForm({ action, politician }: Props) {
       <SubmitButton variant="primary" size="small">
         {staffCopy.politician.save}
       </SubmitButton>
-    </form>
+    </StaffForm>
   );
 }

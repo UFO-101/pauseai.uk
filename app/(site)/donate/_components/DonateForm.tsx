@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@/components/ui/Button";
 import { navigate } from "@/lib/navigate";
+import styles from "./DonateForm.module.css";
 
 type Frequency = "monthly" | "oneoff";
 
@@ -55,41 +55,42 @@ export default function DonateForm() {
   }
 
   return (
-    <form className="donate-form" id="donate-form" onSubmit={handleSubmit} noValidate>
-      <div className="freq-toggle" role="radiogroup" aria-label="How you'd like to give">
+    <form className={styles.form} id="donate-form" onSubmit={handleSubmit} noValidate>
+      <div className={styles.toggle} role="radiogroup" aria-label="How you'd like to give">
         <button
           type="button"
           role="radio"
           aria-checked={frequency === "monthly"}
           data-freq="monthly"
-          className={`freq-option${frequency === "monthly" ? " is-active" : ""}`}
+          className={frequency === "monthly" ? `${styles.option} ${styles.active}` : styles.option}
           onClick={() => handleFreqClick("monthly")}
         >
-          <span className="freq-name">Monthly</span>
-          <span className="freq-method">Direct Debit</span>
+          <span className={styles.name}>Monthly</span>
+          <span className={styles.method}>Direct Debit</span>
         </button>
         <button
           type="button"
           role="radio"
           aria-checked={frequency === "oneoff"}
           data-freq="oneoff"
-          className={`freq-option${frequency === "oneoff" ? " is-active" : ""}`}
+          className={frequency === "oneoff" ? `${styles.option} ${styles.active}` : styles.option}
           onClick={() => handleFreqClick("oneoff")}
         >
-          <span className="freq-name">One-off</span>
-          <span className="freq-method">Card · Apple Pay · Google Pay</span>
+          <span className={styles.name}>One-off</span>
+          <span className={styles.method}>Card · Apple Pay · Google Pay</span>
         </button>
       </div>
 
       {isMonthly && (
-        <fieldset className="amount-selector">
+        <fieldset className={styles.amounts}>
           <legend>Choose an amount</legend>
-          <div className="amount-grid">
+          <div className={styles.amountGrid}>
             {AMOUNTS.map((val) => (
               <button
                 key={val}
                 type="button"
-                className={`amount-option${selectedAmount === val ? " is-active" : ""}`}
+                aria-pressed={selectedAmount === val}
+                className={selectedAmount === val ? `${styles.amount} ${styles.active}` : styles.amount}
                 onClick={() => handleAmountClick(val)}
               >
                 £{val}
@@ -99,11 +100,11 @@ export default function DonateForm() {
         </fieldset>
       )}
 
-      <Button type="submit" variant="primary" size="large" className="donate-btn">
+      <button type="submit" className={styles.submit}>
         <span>{ctaLabel}</span>
-      </Button>
+      </button>
 
-      <p className="form-footnote">
+      <p className={styles.footnote}>
         Payments are processed securely by{" "}
         <a href="https://stripe.com/en-gb/privacy" target="_blank" rel="noreferrer">
           Stripe

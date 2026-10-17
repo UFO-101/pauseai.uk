@@ -1,0 +1,150 @@
+/* pauseai.info's signup form, in an iframe, with a pulsing skeleton of it
+   until it has loaded. */
+
+.wrap {
+  position: relative;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+/* Reserve the form's first-step height at each width until the reader uses
+   it. The embed reports its full height almost at once, but only after the
+   browser has started scrolling to a deep link, so without this the page
+   grows under the reader. Each band uses the height at its narrowest width
+   (measured October 2026): too tall leaves a gap below the form until it is
+   used, too short brings back the jump. Keep DEFAULT_HEIGHT in
+   OnboardingFormEmbed.tsx in step with the first value. */
+.wrap.pristine {
+  min-height: 1483px;
+}
+@media (max-width: 819px) {
+  .wrap.pristine {
+    min-height: 1530px;
+  }
+}
+@media (max-width: 700px) {
+  .wrap.pristine {
+    min-height: 1567px;
+  }
+}
+@media (max-width: 640px) {
+  .wrap.pristine {
+    min-height: 1630px;
+  }
+}
+@media (max-width: 520px) {
+  .wrap.pristine {
+    min-height: 1762px;
+  }
+}
+@media (max-width: 440px) {
+  .wrap.pristine {
+    min-height: 1858px;
+  }
+}
+@media (max-width: 380px) {
+  .wrap.pristine {
+    min-height: 1926px;
+  }
+}
+@media (max-width: 360px) {
+  .wrap.pristine {
+    min-height: 2045px;
+  }
+}
+@media (max-width: 340px) {
+  .wrap.pristine {
+    min-height: 2223px;
+  }
+}
+
+.skeleton {
+  position: absolute;
+  inset: 0;
+  background: var(--bg);
+  padding: 12px 4px;
+  overflow: hidden;
+}
+
+.steps {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.step {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--accent-light);
+  flex-shrink: 0;
+}
+
+.rule {
+  width: 32px;
+  height: 2px;
+  background: var(--border);
+}
+
+.card {
+  background: var(--peach);
+  border-radius: 24px;
+  padding: 28px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.label {
+  width: 100px;
+  height: 12px;
+  border-radius: 4px;
+  background: var(--accent-bg);
+  opacity: 0.7;
+}
+
+.input {
+  height: 44px;
+  border-radius: 22px;
+  background: var(--accent-bg);
+}
+
+.button {
+  align-self: center;
+  width: 160px;
+  height: 48px;
+  border-radius: 24px;
+  background: var(--accent);
+  margin-top: 8px;
+}
+
+.label,
+.input,
+.button,
+.step {
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.fallback {
+  margin-top: 12px;
+  font-size: 15px;
+  color: var(--text-secondary);
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+}

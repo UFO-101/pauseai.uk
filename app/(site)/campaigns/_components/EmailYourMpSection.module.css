@@ -1,0 +1,28 @@
+/* The Email your MP form's band on a campaign page. */
+
+.section {
+  padding: 48px 0 24px;
+  background: var(--bg);
+}
+
+/* Last on the page, with no signatories under it (the bill's page): room
+   above the footer, as the step pages have. */
+.section:last-child {
+  padding-bottom: 5rem;
+}
+
+.section h2 {
+  font-family: var(--font-display), "Lato", system-ui, sans-serif;
+  font-size: clamp(26px, 3vw, 34px);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  margin: 0 0 24px;
+  color: var(--text);
+}
+
+@media (max-width: 720px) {
+  .section {
+    padding-top: 36px;
+  }
+}

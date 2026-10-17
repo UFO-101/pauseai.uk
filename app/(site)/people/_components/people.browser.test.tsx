@@ -15,11 +15,11 @@ describe("people pages", () => {
     const withPhoto = people.find((p) => p.imageSrc && p.name)!;
     const { container, rerender } = await render(<PersonHeader person={withPhoto} />);
     await expect.element(page.getByRole("heading", { level: 1 })).toHaveTextContent(withPhoto.name!);
-    expect((container.querySelector(".person-detail-avatar") as HTMLElement).style.backgroundImage).not.toBe("");
+    expect((container.querySelector("[style*='background-image']") as HTMLElement).style.backgroundImage).not.toBe("");
     await rerender(<PersonHeader person={{ name: "Ada Test", paragraphs: [], imageSrc: "/x.jpg" }} />);
-    expect((container.querySelector(".person-detail-avatar") as HTMLElement).style.backgroundPosition).toBe("");
+    expect((container.querySelector("[style*='background-image']") as HTMLElement).style.backgroundPosition).toBe("");
     await rerender(<PersonHeader person={{ name: "Jane Doe", paragraphs: [] } as Person} />);
-    expect(container.querySelector(".person-avatar-initials")?.textContent).toBe("JD");
+    expect(container.querySelector('div[aria-hidden="true"]')?.textContent).toBe("JD");
     await rerender(
       <PersonHeader
         person={{ slug: "anon", paragraphs: [], imageSrc: "/x.jpg", imageStyle: "background-position: top" }}
@@ -39,7 +39,7 @@ describe("people pages", () => {
 
   it("lists every story as a card", async () => {
     const { container } = await render(<StoryGrid />);
-    expect(container.querySelectorAll(".person-card")).toHaveLength(people.length);
+    expect(container.querySelectorAll("article")).toHaveLength(people.length);
   });
 
   it("invites readers to share their own story, linkable when given an id", async () => {

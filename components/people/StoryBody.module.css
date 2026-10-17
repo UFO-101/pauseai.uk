@@ -1,0 +1,58 @@
+/* A story's paragraphs and lists. */
+
+.body p {
+  color: var(--text-secondary);
+  margin: 0 0 14px;
+  font-size: 16px;
+  line-height: 1.7;
+}
+
+.body p:last-child {
+  margin-bottom: 0;
+}
+
+.body ul {
+  color: var(--text-secondary);
+  margin: 0 0 14px;
+  padding-left: 20px;
+  font-size: 16px;
+  line-height: 1.7;
+}
+
+.body ul:last-child {
+  margin-bottom: 0;
+}
+
+.body li {
+  margin-bottom: 6px;
+}
+
+.body li:last-child {
+  margin-bottom: 0;
+}
+
+.body {
+  flex: 1;
+}
+
+.measure {
+  position: fixed;
+  top: -9999px;
+  left: -9999px;
+  visibility: hidden;
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* In the home page's carousel: fixed at PersonCard's TARGET_BODY_HEIGHT so
+   the card is its final height
+   from the server render: the excerpt is re-cut to fit after hydration, and
+   letting its length drive the height moved every anchor below the
+   carousel. The clip only shows on the rough pre-hydration excerpt.
+   flex: none because .body's flex: 1 would otherwise let the
+   height grow back from its content. */
+.clamped {
+  flex: none;
+  height: 220px;
+  overflow: hidden;
+}

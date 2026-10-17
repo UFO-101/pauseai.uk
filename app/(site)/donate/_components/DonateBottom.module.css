@@ -1,0 +1,23 @@
+/* The foot of the donate page: other ways to give, Gift Aid, and who we are. */
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 48px;
+  align-items: start;
+}
+.col h2 {
+  margin: 6px 0 12px;
+}
+.cards {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  margin-top: 20px;
+}
+@media (max-width: 720px) {
+  .grid {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+}

@@ -3,7 +3,6 @@ import JsonLd from "@/components/layout/JsonLd";
 import { march, marchEventJsonLd } from "@/lib/content/march";
 import MarchHero from "./_components/MarchHero";
 import MarchArticle from "./_components/MarchArticle";
-import "./march.css";
 
 // The words are the Luma event's description, so the page says what Luma says.
 export const metadata = pageMetadata({
@@ -15,7 +14,7 @@ export const metadata = pageMetadata({
 
 export default function MarchPage() {
   return (
-    <main className="march">
+    <main>
       <JsonLd data={marchEventJsonLd()} />
       <MarchHero />
       <MarchArticle />

@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { IndexCard } from "@/components/tools/CardIndex";
 
 export interface Tool {
   href: string;
@@ -30,36 +30,17 @@ export const TOOLS: Tool[] = [
   },
 ];
 
-function ToolCardBody({ tool }: { tool: Tool }) {
-  return (
-    <>
-      <h2>{tool.title}</h2>
-      <p>{tool.description}</p>
-      <span className="tools-card-cta" aria-hidden="true">
-        {tool.external ? "Visit ↗" : "Open →"}
-      </span>
-      {tool.external && <span className="tools-sr-only">(opens in a new tab)</span>}
-    </>
-  );
-}
-
 // A card per tool. External tools open in a new tab.
 export default function ToolGrid() {
-  return (
-    <ul className="tools-grid">
-      {TOOLS.map((tool) => (
-        <li key={tool.href}>
-          {tool.external ? (
-            <a href={tool.href} target="_blank" rel="noopener noreferrer" className="tools-card">
-              <ToolCardBody tool={tool} />
-            </a>
-          ) : (
-            <Link href={tool.href} className="tools-card">
-              <ToolCardBody tool={tool} />
-            </Link>
-          )}
-        </li>
-      ))}
-    </ul>
-  );
+  return TOOLS.map((tool) => (
+    <IndexCard
+      key={tool.href}
+      href={tool.href}
+      title={tool.title}
+      cta={tool.external ? "Visit ↗" : "Open →"}
+      external={tool.external}
+    >
+      <p>{tool.description}</p>
+    </IndexCard>
+  ));
 }

@@ -1,4 +1,6 @@
 import type { Format } from "@/lib/collateral/formats";
+import { Toggle } from "./kit/Fields";
+import { Hint } from "./kit/Notes";
 
 interface Props {
   format: Format;
@@ -11,28 +13,21 @@ interface Props {
 /** Whether the QR codes show on this format, and why not when they do not. */
 export default function QrFormatNote({ format, screenQr, onScreenQr, reason }: Props) {
   if (format.kind === "digital" && format.onPage) {
-    return (
-      <p className="collateral-hint">
-        QR codes are left off the {format.label}, since people are already on the event page.
-      </p>
-    );
+    return <Hint>QR codes are left off the {format.label}, since people are already on the event page.</Hint>;
   }
   if (format.kind === "digital" && format.screen) {
     return (
       <>
-        <label className="collateral-toggle collateral-qr-screen">
-          <input type="checkbox" checked={screenQr} onChange={(e) => onScreenQr(e.target.checked)} />
+        <Toggle checked={screenQr} onChange={onScreenQr}>
           Show QR codes on the {format.label}
-        </label>
+        </Toggle>
         {screenQr ? (
-          reason && <p className="collateral-hint">{reason}</p>
+          reason && <Hint>{reason}</Hint>
         ) : (
-          <p className="collateral-hint">
-            QR codes are left off social posts by default, since people are already on their phone.
-          </p>
+          <Hint>QR codes are left off social posts by default, since people are already on their phone.</Hint>
         )}
       </>
     );
   }
-  return reason ? <p className="collateral-hint">{reason}</p> : null;
+  return reason ? <Hint>{reason}</Hint> : null;
 }

@@ -1,0 +1,53 @@
+/* The blog's index: the newest post large, two under it, then the rest in
+   rows, a little wider than a reading column, as the index's hero is. */
+
+.inner {
+  --container-width: var(--measure-wide);
+}
+
+/* Index */
+.listSection {
+  padding: 40px 0 88px;
+  background: var(--bg);
+}
+
+/* Secondary pair */
+.gridSecondary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+  margin-top: 20px;
+}
+
+/* Older posts: compact rows with a thumbnail */
+.more {
+  margin-top: 44px;
+}
+.moreHeading {
+  font-family: var(--font-display), "Lato", system-ui, sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 0;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-strong);
+}
+.moreList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.moreList li {
+  border-bottom: 1px solid var(--border);
+}
+
+@media (max-width: 860px) {
+  .gridSecondary {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .listSection {
+    padding: 36px 0 64px;
+  }
+}

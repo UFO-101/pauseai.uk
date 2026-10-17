@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { site } from "@/lib/content/site";
 import { displayLink } from "@/lib/collateral/qrCaption";
+import styles from "./FooterQr.module.css";
 
 /** The footer's QR code icon, which opens a big QR code for this page, in the QR generator's style. */
 export default function FooterQr() {
@@ -24,7 +25,7 @@ export default function FooterQr() {
 
   return (
     <>
-      <button type="button" className="footer-qr" aria-label="Show QR code larger" onClick={open}>
+      <button type="button" className={styles.button} aria-label="Show QR code larger" onClick={open}>
         {/* A QR code (Lucide's, ISC licence). */}
         <svg
           viewBox="0 0 24 24"
@@ -53,11 +54,11 @@ export default function FooterQr() {
       {/* A tap on the backdrop is a tap on the dialog itself, and closes it. */}
       <dialog
         ref={dialogRef}
-        className="qr-dialog"
+        className={styles.dialog}
         aria-label="QR code"
         onClick={(e) => e.target === e.currentTarget && close()}
       >
-        <div className="qr-dialog-card">
+        <div className={styles.card}>
           {qr && (
             <>
               {/* eslint-disable-next-line @next/next/no-img-element -- generated SVG data URL, not a file next/image can optimise */}
@@ -69,7 +70,7 @@ export default function FooterQr() {
             </>
           )}
         </div>
-        <button type="button" className="qr-dialog-close" aria-label="Close" onClick={close}>
+        <button type="button" className={styles.close} aria-label="Close" onClick={close}>
           &times;
         </button>
       </dialog>

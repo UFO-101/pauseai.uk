@@ -1,0 +1,10 @@
+.timeline {
+  padding: 80px 0 100px;
+  background: var(--bg);
+}
+
+@media (max-width: 860px) {
+  .timeline {
+    padding: 56px 0 72px;
+  }
+}

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
+import styles from "./ProjectMenu.module.css";
 
 interface Props {
   /** What a saved file is called here: "project" or "pack". */
@@ -44,12 +45,13 @@ export default function ProjectMenu({ noun, onSave, onOpen, onReset, saveDisable
   }
 
   return (
-    <div ref={rootRef} className="collateral-menu">
+    <div ref={rootRef} className={styles.menu}>
       <Button
         type="button"
         variant="ghost"
         size="large"
-        className="collateral-menu-button"
+        fit
+        className={styles.button}
         aria-label="More options"
         aria-expanded={open}
         onClick={() => setOpen((o) => !o)}
@@ -57,14 +59,14 @@ export default function ProjectMenu({ noun, onSave, onOpen, onReset, saveDisable
         ⋯
       </Button>
       {open && (
-        <div className="collateral-menu-list">
-          <button type="button" onClick={() => run(onSave)} disabled={saveDisabled}>
+        <div className={styles.list}>
+          <button type="button" className={styles.item} onClick={() => run(onSave)} disabled={saveDisabled}>
             Save {noun} file
           </button>
-          <button type="button" onClick={() => run(() => fileRef.current!.click())}>
+          <button type="button" className={styles.item} onClick={() => run(() => fileRef.current!.click())}>
             Open {noun} file
           </button>
-          <button type="button" onClick={() => run(onReset)}>
+          <button type="button" className={styles.item} onClick={() => run(onReset)}>
             Start again
           </button>
         </div>

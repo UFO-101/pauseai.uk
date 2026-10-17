@@ -2,6 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import Lightbox from "@/components/ui/Lightbox";
+import styles from "./Gallery.module.css";
 
 /** A full-size photo, and the words for it. */
 type Photo = { href: string; alt: string };
@@ -51,39 +52,10 @@ export function Gallery({ children }: { children: ReactNode }) {
   return (
     <GalleryContext.Provider value={gallery}>
       {children}
-      <Lightbox open={shown !== null} onClose={close} onPrevious={previous} onNext={next} className="lightbox">
-        <button className="lb-close" aria-label="Close" onClick={close}>
-          <svg viewBox="0 0 24 24" width={20} height={20} aria-hidden="true">
-            <path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-          </svg>
-        </button>
-        <button className="lb-prev" aria-label="Previous" onClick={previous}>
-          <svg viewBox="0 0 24 24" width={22} height={22} aria-hidden="true">
-            <path
-              d="M15 5l-7 7 7 7"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        </button>
-        <button className="lb-next" aria-label="Next" onClick={next}>
-          <svg viewBox="0 0 24 24" width={22} height={22} aria-hidden="true">
-            <path
-              d="M9 5l7 7-7 7"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        </button>
+      <Lightbox open={shown !== null} onClose={close} onPrevious={previous} onNext={next}>
         {/* eslint-disable-next-line @next/next/no-img-element -- whichever full-size photo was clicked */}
         <img
-          className={loaded ? "lb-image" : "lb-image is-loading"}
+          className={loaded ? styles.photo : `${styles.photo} ${styles.loading}`}
           src={shown?.href}
           alt={shown?.alt}
           onLoad={() => setLoaded(true)}

@@ -1,0 +1,71 @@
+/* A full-screen photo on a dark, blurred backdrop, with round controls. */
+
+.lightbox {
+  position: fixed;
+  inset: 0;
+  background: rgb(var(--text-rgb) / 0.92);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 40px;
+  backdrop-filter: blur(6px);
+}
+
+/* The controls are IconButtons; their places and sizes are set here. */
+.close,
+.previous,
+.next {
+  position: absolute;
+}
+
+.close {
+  --icon-button-size: 44px;
+  top: 24px;
+  right: 24px;
+}
+
+.previous,
+.next {
+  top: 50%;
+  transform: translateY(-50%);
+  --icon-button-size: 52px;
+}
+
+.previous {
+  left: 24px;
+}
+
+.next {
+  right: 24px;
+}
+
+@media (max-width: 720px) {
+  .lightbox {
+    padding: 12px;
+  }
+
+  .close {
+    --icon-button-size: 40px;
+    top: 12px;
+    right: 12px;
+  }
+
+  .previous,
+  .next {
+    top: auto;
+    bottom: 16px;
+    transform: none;
+    --icon-button-size: 46px;
+  }
+
+  .previous {
+    left: 50%;
+    margin-left: -52px;
+  }
+
+  .next {
+    right: 50%;
+    margin-right: -52px;
+  }
+}

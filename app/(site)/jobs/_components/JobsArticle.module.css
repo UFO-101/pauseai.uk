@@ -1,0 +1,88 @@
+/* The jobs page's own words, around the role cards: a column the width of
+   the page hero. */
+
+.introArticle {
+  padding: 40px 0 56px;
+  background: var(--bg);
+}
+.introInner {
+  /* The page hero's width, so the two line up. */
+  --container-width: var(--measure-page);
+}
+.introSection p {
+  font-size: 17px;
+  line-height: 1.7;
+  color: var(--text);
+  margin: 0 0 18px;
+}
+.introSection a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  transition: color 0.15s ease;
+}
+.introSection a:hover {
+  color: var(--pause-orange);
+}
+.introList {
+  padding-left: 22px;
+  margin: 14px 0 22px;
+}
+.introList li {
+  font-size: 17px;
+  line-height: 1.7;
+  color: var(--text);
+  margin-bottom: 10px;
+  padding-left: 6px;
+}
+.introList li::marker {
+  color: var(--pause-orange);
+  font-weight: 600;
+}
+.introSection > :last-child {
+  margin-bottom: 0;
+} /* --- Intro text + photo ------------------------------------------------
+   The photo floats right so the prose wraps around it; the float's top
+   sits level with the first line of text. Clearfix so the float can't
+   spill into the card grid below. */
+.intro::after {
+  content: "";
+  display: table;
+  clear: both;
+}
+.photo {
+  float: right;
+  width: min(42%, 380px);
+  margin: 0 0 18px 32px;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow:
+    0 1px 3px var(--shadow),
+    0 10px 30px var(--shadow);
+}
+.photo img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+@media (max-width: 860px) {
+  .introArticle {
+    padding: 48px 0 48px;
+  }
+
+  /* Stacked on mobile: flex (floats don't apply to flex items) with the
+     photo re-ordered below the text. */
+  .intro {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .photo {
+    float: none;
+    order: 2;
+    width: 100%;
+    margin: 8px 0 0;
+    border-radius: 12px;
+  }
+}

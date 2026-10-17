@@ -16,7 +16,8 @@ import AttachmentChips from "./AttachmentChips";
 import { saveDraft, type Draft } from "./draft";
 import LetterEditor from "./LetterEditor";
 import Required from "./Required";
-import styles from "./EmailYourMp.module.css";
+import { ErrorText, Field, Input } from "./FormParts";
+import styles from "./LetterForm.module.css";
 
 type Props = {
   campaign: Campaign;
@@ -86,7 +87,7 @@ export default function LetterForm({ campaign, mp, statuses, senderName, address
 
       <label>
         <Required>{copy.form.emailLabel}</Required>
-        <input
+        <Input
           name="email"
           type="email"
           required
@@ -97,9 +98,9 @@ export default function LetterForm({ campaign, mp, statuses, senderName, address
       </label>
       <label>
         {copy.form.subjectLabel}
-        <input name="subject" value={subject} onChange={(e) => setSubject(e.target.value)} />
+        <Input name="subject" value={subject} onChange={(e) => setSubject(e.target.value)} />
       </label>
-      <div className={styles.field}>
+      <Field>
         <label id={letterId}>{copy.form.letterLabel}</label>
         <ul id={letterTips} className={styles.tips}>
           {copy.form.tips.map((tip) => (
@@ -107,20 +108,16 @@ export default function LetterForm({ campaign, mp, statuses, senderName, address
           ))}
         </ul>
         <LetterEditor initial={letter} onChange={setLetter} labelledBy={letterId} describedBy={letterTips} />
-      </div>
+      </Field>
 
       {campaign.attachments.length > 0 && (
-        <div className={styles.field}>
+        <Field>
           <p className={styles.fieldLabel}>{copy.form.attachments}</p>
           <AttachmentChips attachments={campaign.attachments} label={copy.form.attachments} />
-        </div>
+        </Field>
       )}
 
-      {error && (
-        <p className={styles.error} role="alert">
-          {error}
-        </p>
-      )}
+      {error && <ErrorText>{error}</ErrorText>}
 
       <Button variant="primary" type="button" className={styles.next} onClick={preview}>
         {copy.form.preview}

@@ -1,0 +1,231 @@
+/* The home page's hero: rows of photos scrolling behind the headline, its
+   lede and buttons.
+
+   Hero marquee — 3 rows of photos scrolling in alternating directions
+   at their natural aspect ratios. Gaps between photos by design; the
+   row scrolls infinitely (track is duplicated for a seamless loop). */
+
+@keyframes scroll {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(var(--copy-shift, -50%), 0, 0);
+  }
+}
+
+.marquee {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px 0;
+  /* Fill the viewport minus the sticky nav so the last row's bottom
+     edge sits flush with the viewport bottom on first load. */
+  height: calc(100dvh - 77px - var(--march-banner-h, 0px));
+  background: var(--bg);
+  overflow: hidden;
+}
+
+.row {
+  flex: 1;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.track {
+  --marquee-gap: 12px;
+  --marquee-duration: 90s;
+  display: flex;
+  flex-wrap: nowrap;
+  height: 100%;
+  width: max-content;
+  animation: scroll var(--marquee-duration) linear infinite;
+}
+
+/* Two sibling copies per track. Spacing lives on each image as
+   margin-right so the trailing gap is part of the image's intrinsic
+   width — Safari under-counts a child's padding-right in width:
+   max-content calculations on flex parents, which would otherwise
+   drift the seam by one gap each loop. */
+.copy {
+  display: flex;
+  flex-shrink: 0;
+  height: 100%;
+}
+
+.rtl .track {
+  animation-direction: reverse;
+}
+
+/* Slightly different duration per row so they don't move in lockstep */
+.row:nth-child(1) .track {
+  --marquee-duration: 110s;
+}
+.row:nth-child(2) .track {
+  --marquee-duration: 180s;
+}
+.row:nth-child(3) .track {
+  --marquee-duration: 100s;
+}
+
+/* --copy-shift is set in pixels by HeroMarqueeEffects after measuring one copy's actual width. Until that
+   runs (or if JS is disabled), fall back to -50% which is correct
+   when the track's max-content is computed correctly — Safari has a
+   long-standing bug where it under-counts child padding/margin in
+   max-content on a flex parent, which is why we override in pixels. */
+
+.track img {
+  height: 100%;
+  width: auto;
+  display: block;
+  flex-shrink: 0;
+  margin-right: var(--marquee-gap);
+  border-radius: 8px;
+  object-fit: contain;
+  /* Safari intermittently drops textures during long transforms on
+     elements that aren't on their own compositor layer. Promote each
+     image and keep its backface from being culled so the texture stays
+     resident for the lifetime of the animation. */
+  transform: translateZ(0);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  /* Start invisible and fade in once decoded — softens the "pop" as
+     photos land. HeroMarqueeEffects sets data-loaded on the img's load event; the
+     safety animation at 2.4s ensures images appear even if JS fails. */
+  opacity: 0;
+  transition: opacity 380ms ease-out;
+}
+/* The safety animation stops once data-loaded lands. Firefox holds opacity at
+   0 for the whole of a pending animation's delay, overriding data-loaded, so
+   leaving it on would keep every photo hidden until 2.4s. */
+.track img:not([data-loaded]) {
+  animation: appear 0s linear 2.4s forwards;
+}
+.track img[data-loaded] {
+  opacity: 1;
+}
+
+/* Overlay text — no full scrim. Just the text itself, with strong
+   layered text-shadow so it stays legible over varied photo content.
+   pointer-events: none on the wrapper lets users still see the
+   photos through the gaps; the text itself can be selected. */
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.text {
+  max-width: 900px;
+  text-align: center;
+  pointer-events: auto;
+}
+
+.text h1 {
+  font-size: clamp(56px, 9.5vw, 140px);
+  line-height: 0.98;
+  letter-spacing: -0.025em;
+  margin: 0;
+  color: var(--white);
+  /* Heavy layered shadow so the solid fill still reads against any photo. */
+  filter: drop-shadow(0 0 3px rgb(var(--black-rgb) / 1)) drop-shadow(0 0 10px rgb(var(--black-rgb) / 0.95))
+    drop-shadow(0 6px 22px rgb(var(--black-rgb) / 0.85)) drop-shadow(0 16px 40px rgb(var(--black-rgb) / 0.55));
+}
+
+.lede {
+  margin: 22px auto 30px;
+  color: var(--white);
+  font-weight: 600;
+  font-size: clamp(19px, 1.9vw, 24px);
+  /* Wide enough that the lede sets on two lines instead of three. */
+  max-width: 740px;
+  line-height: 1.4;
+  /* Heavy layered shadow so the lede reads against any photo */
+  filter: drop-shadow(0 0 3px rgb(var(--black-rgb) / 1)) drop-shadow(0 0 10px rgb(var(--black-rgb) / 0.95))
+    drop-shadow(0 4px 18px rgb(var(--black-rgb) / 0.85));
+}
+
+/* The buttons on the photos: Join big, the two below it smaller (and
+   `light`, so they can be read on any photo). */
+.actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin: 24px 0 12px;
+  --button-padding: 17px 30px;
+  --button-font-size: 16px;
+}
+
+.secondary {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  --button-padding: 13px 22px;
+  --button-font-size: 15px;
+  --button-font-weight: 500;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .track {
+    animation: none;
+  }
+}
+@media (max-width: 1024px) {
+  .marquee {
+    height: min(85vh, 700px);
+  }
+}
+@media (max-width: 640px) {
+  .marquee {
+    /* svh = smallest viewport height (URL bar visible) — guarantees the
+       bottom row's edge sits inside the visible viewport on first load
+       instead of slipping below the browser chrome. */
+    height: calc(100svh - 77px - var(--march-banner-h, 0px));
+    gap: 8px;
+    padding: 8px 0;
+  }
+  /* On phone, sit the title + lede + buttons on a warm-dark blurred panel
+     and drop the per-text shadows — the panel does the legibility work.
+     Warm-dark (rgba 20/14/8) instead of pure black for brand cohesion,
+     subtle saturate on backdrop, top inset highlight for some weight. */
+  .text {
+    background: rgb(var(--ink-rgb) / 0.36);
+    backdrop-filter: blur(14px) saturate(115%);
+    -webkit-backdrop-filter: blur(14px) saturate(115%);
+    border-radius: 22px;
+    padding: 24px 22px 26px;
+    box-shadow: inset 0 1px 0 rgb(var(--white-rgb) / 0.08);
+  }
+  .text h1 {
+    font-size: clamp(40px, 11vw, 64px);
+    letter-spacing: -0.035em;
+    line-height: 0.96;
+    filter: none;
+  }
+  .lede {
+    font-size: 15.5px;
+    margin: 14px auto 20px;
+    color: rgb(var(--white-rgb) / 0.92);
+    filter: none;
+  }
+  .actions {
+    --button-padding: 16px 26px;
+  }
+  .secondary {
+    --button-padding: 13px 20px;
+  }
+}
+
+@keyframes appear {
+  to {
+    opacity: 1;
+  }
+}

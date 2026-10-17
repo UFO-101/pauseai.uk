@@ -1,0 +1,50 @@
+/* The page's prose: who we are, what we want and how we work. */
+
+.article {
+  /* The page hero's width, so the hero and the body share one left edge. */
+  --container-width: var(--measure-page);
+  padding: 40px 0 88px;
+  background: var(--bg);
+}
+.section > p {
+  font-size: 17px;
+  line-height: 1.7;
+  color: var(--text);
+  margin: 0 0 18px;
+}
+.section > p em {
+  color: var(--text-secondary);
+}
+.section a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  transition: color 0.15s ease;
+}
+.section a:hover {
+  color: var(--pause-orange);
+}
+.list {
+  padding-left: 22px;
+  margin: 14px 0 22px;
+}
+.list li {
+  font-size: 17px;
+  line-height: 1.7;
+  color: var(--text);
+  margin-bottom: 10px;
+  padding-left: 6px;
+}
+.list li::marker {
+  color: var(--pause-orange);
+  font-weight: 600;
+}
+.section > :last-child {
+  margin-bottom: 0;
+}
+@media (max-width: 860px) {
+  .article {
+    padding: 48px 0 64px;
+  }
+}

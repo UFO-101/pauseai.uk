@@ -3,78 +3,38 @@ import { render } from "vitest-browser-react";
 import { page } from "vitest/browser";
 import { campaigns } from "@/lib/content/email-your-mp";
 import { jobTitles, staffCopy } from "@/lib/content/staff-interface";
-import {
-  type AnyImportRun,
-  type ControlAiImport,
-  type ControlAiImportResult,
-  type ImportJob,
-  type MpCheck,
-  type MpCheckResult,
-  type MpSync,
-  type MpSyncResult,
-  NIGHTLY,
-  type SignatoryImport,
-  type SignatoryImportResult,
-} from "@/lib/import-runs";
-import type { Politician } from "@/lib/server/politicians";
+import type { AnyImportRun, ControlAiImport, MpCheck, MpSync, SignatoryImport } from "@/lib/import-runs";
 import ChangesTable from "./ChangesTable";
+import { exampleChange } from "./ChangesTable.examples";
 import LettersTable from "./LettersTable";
+import { exampleLetter } from "./LettersTable.examples";
+import JobActions from "./JobActions";
+import LoginCard from "./LoginCard";
+import LoginForm from "./LoginForm";
+import PoliticianDetails from "./PoliticianDetails";
 import PoliticianFilters from "./PoliticianFilters";
 import PoliticianForm from "./PoliticianForm";
 import PoliticianTable from "./PoliticianTable";
+import { examplePolitician } from "./PoliticianTable.examples";
 import ResultBox, { OPEN_UP_TO } from "./ResultBox";
 import RunFilters from "./RunFilters";
 import RunList from "./RunList";
+import {
+  exampleAppliedSync,
+  exampleControlAiResult,
+  exampleFailedRun,
+  exampleHeldSync,
+  exampleRun,
+  exampleSyncedMp,
+} from "./RunList.examples";
 import StaffHeader from "./StaffHeader";
+import { StaffForm } from "./ui/forms";
 
 const [pm, bill] = campaigns;
 
-const MP: Politician = {
-  id: 7,
-  airtableId: "rec90002",
-  house: "commons",
-  name: "Polly Placeholder",
-  salutation: "Ms Placeholder",
-  constituency: "Cities of London and Westminster",
-  party: "Labour (Co-op)",
-  email: "polly.placeholder.mp@parliament.uk",
-  isTest: false,
-  sitting: true,
-  statuses: {
-    [pm.slug]: {
-      status: "signed",
-      date: "2026-10-01",
-      note: "",
-      updatedAt: "2026-10-02T10:00:00Z",
-      updatedBy: "jo@pauseai.uk",
-    },
-  },
-};
-
-type Results = {
-  "sync-mps": MpSyncResult;
-  "check-mps": MpCheckResult;
-  "import-controlai": ControlAiImportResult;
-  "import-signatories": SignatoryImportResult;
-};
-type RunOf<Job extends ImportJob> = Extract<AnyImportRun, { job: Job }>;
-
-/** A run from the import log that went well, with `result`. */
-function ran<Job extends ImportJob>(job: Job, result: Results[Job], run: Partial<RunOf<Job>> = {}): RunOf<Job> {
-  return {
-    id: 1,
-    at: "2026-10-15T02:00:00Z",
-    job,
-    startedBy: NIGHTLY,
-    decidedBy: null,
-    status: "ok",
-    error: null,
-    result,
-    ...run,
-  } as RunOf<Job>;
-}
-const failed = <Job extends ImportJob>(job: Job, error: string, run: Partial<RunOf<Job>> = {}): RunOf<Job> =>
-  ({ ...ran(job, {} as Results[Job]), status: "failed", error, ...run }) as RunOf<Job>;
+const MP = examplePolitician;
+const ran = exampleRun;
+const failed = exampleFailedRun;
 const AT = "2026-10-15 02:00";
 
 /** A stand-in Server Action that keeps what it was sent. */
@@ -117,6 +77,79 @@ describe("StaffHeader", () => {
     expect(form.getAttribute("action")).toBe("/staff/api/logout");
     // The wider screen's row has its own.
     expect(document.querySelectorAll('form[action="/staff/api/logout"]')).toHaveLength(2);
+  });
+});
+
+describe("LoginCard", () => {
+  it("heads its form with the title, with no margin under the form", async () => {
+    await render(
+      <LoginCard title={staffCopy.login.title}>
+        <StaffForm aria-label="Log in" />
+      </LoginCard>,
+    );
+    await expect.element(page.getByRole("heading", { level: 1, name: staffCopy.login.title })).toBeVisible();
+    const form = page.getByRole("form", { name: "Log in" }).element();
+    expect(getComputedStyle(form).marginBottom).toBe("0px");
+  });
+});
+
+describe("LoginForm", () => {
+  it("is the form, on its own at first", async () => {
+    await render(<LoginForm />);
+    await expect.element(page.getByText(staffCopy.login.intro)).toBeVisible();
+    await expect.element(page.getByRole("textbox", { name: staffCopy.login.emailLabel })).toBeVisible();
+    await expect.element(page.getByText(staffCopy.login.failed)).not.toBeInTheDocument();
+    await expect.element(page.getByText(staffCopy.login.elsewhere)).not.toBeInTheDocument();
+  });
+
+  it("says why the last link didn't work", async () => {
+    await render(<LoginForm failed="1" elsewhere="1" />);
+    await expect.element(page.getByText(staffCopy.login.failed)).toBeVisible();
+    await expect.element(page.getByText(staffCopy.login.elsewhere)).toBeVisible();
+    await expect.element(page.getByRole("button", { name: staffCopy.login.button })).toBeVisible();
+  });
+
+  it("replaces the form once a link is sent, with a way to send another", async () => {
+    await render(<LoginForm sent="1" />);
+    await expect.element(page.getByRole("status")).toHaveTextContent(staffCopy.login.sent);
+    await expect
+      .element(page.getByRole("link", { name: staffCopy.login.again }))
+      .toHaveAttribute("href", "/staff/login");
+    await expect.element(page.getByRole("textbox")).not.toBeInTheDocument();
+  });
+});
+
+describe("PoliticianDetails", () => {
+  it("heads the page with their name and what's known, and edits a signer the team added", async () => {
+    const { fn } = action();
+    await render(<PoliticianDetails politician={{ ...MP, airtableId: null, email: null }} action={fn} />);
+    await expect.element(page.getByRole("heading", { level: 1, name: MP.name })).toBeVisible();
+    await expect
+      .element(page.getByText([staffCopy.houses[MP.house], MP.constituency, MP.party].join(" · ")))
+      .toBeVisible();
+    await expect.element(page.getByRole("button", { name: staffCopy.politician.save })).toBeVisible();
+  });
+
+  it("sends Airtable's MPs to Airtable, and lets no one edit a test MP", async () => {
+    const { fn } = action();
+    for (const politician of [MP, { ...MP, airtableId: null, isTest: true }]) {
+      const { unmount } = await render(<PoliticianDetails politician={politician} action={fn} />);
+      await expect.element(page.getByText(staffCopy.politician.fromAirtable)).toBeVisible();
+      await expect.element(page.getByRole("button", { name: staffCopy.politician.save })).not.toBeInTheDocument();
+      await unmount();
+    }
+  });
+});
+
+describe("JobActions", () => {
+  it("runs the job, and links to all its runs", async () => {
+    const fn = vi.fn();
+    await render(<JobActions action={fn} label="Run it" job="check-mps" />);
+    await page.getByRole("button", { name: "Run it" }).click();
+    await vi.waitFor(() => expect(fn).toHaveBeenCalledOnce());
+    await expect
+      .element(page.getByRole("link", { name: staffCopy.history.showAll }))
+      .toHaveAttribute("href", "/staff/import-history?job=check-mps");
   });
 });
 
@@ -232,32 +265,10 @@ describe("PoliticianForm", () => {
 });
 
 describe("RunList", () => {
-  const mp = (id: number, email: string | null = "a@parliament.uk") => ({
-    airtableId: `rec${id}`,
-    name: `MP ${id}`,
-    salutation: "",
-    constituency: `Seat ${id}`,
-    party: "",
-    email,
-  });
-  const held: MpSync = ran(
-    "sync-mps",
-    { changes: { added: [mp(1)], removed: [mp(2, null)], changed: [] }, mps: [mp(1)] },
-    { id: 3, at: "2026-10-12T02:00:00Z", status: "held" },
-  );
-  const applied: MpSync = ran(
-    "sync-mps",
-    { changes: { added: [], removed: [], changed: [mp(4)] } },
-    { id: 2, at: "2026-10-11T02:00:00Z", status: "applied", decidedBy: "jo@pauseai.uk" },
-  );
-  const controlAi = {
-    pdfUrl: "https://images.controlai.com/letter.pdf",
-    signatories: 86,
-    matched: 74,
-    added: 2,
-    removed: 1,
-    problems: [],
-  };
+  const mp = exampleSyncedMp;
+  const held = exampleHeldSync;
+  const applied = exampleAppliedSync;
+  const controlAi = exampleControlAiResult;
 
   it("lists each MP sync's changes, and lets a held one be applied or discarded", async () => {
     const { fn, sent } = action();
@@ -461,43 +472,14 @@ describe("RunFilters", () => {
 
 describe("ChangesTable", () => {
   it("lists who changed what", async () => {
-    await render(
-      <ChangesTable
-        changes={[
-          {
-            id: 1,
-            at: "2026-10-12T09:00:00Z",
-            actor: "jo@pauseai.uk",
-            action: "set status",
-            details: { politicianId: 7 },
-          },
-        ]}
-      />,
-    );
+    await render(<ChangesTable changes={[exampleChange]} />);
     await expect.element(page.getByRole("cell", { name: "jo@pauseai.uk" })).toBeVisible();
     await expect.element(page.getByText('{"politicianId":7}')).toBeVisible();
   });
 });
 
 describe("LettersTable", () => {
-  const letter = {
-    id: 1,
-    campaign: pm.slug,
-    status: "bounced",
-    senderName: "Jane Smith",
-    senderEmail: "jane@example.com",
-    contactConsent: true,
-    mpName: "Testy McTestface MP",
-    isTest: true,
-    subject: "S",
-    createdAt: "2026-10-12T09:00:00Z",
-    sentAt: "2026-10-12T09:05:00Z",
-    repliedAt: null,
-    events: [
-      { at: "2026-10-12T09:00:00Z", status: "sending", details: {} },
-      { at: "2026-10-12T09:10:00Z", status: "bounced", details: { type: "HardBounce" } },
-    ],
-  };
+  const letter = exampleLetter;
 
   it("lists letters with their status and history", async () => {
     await render(

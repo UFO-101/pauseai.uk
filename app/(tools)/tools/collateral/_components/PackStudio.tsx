@@ -48,7 +48,20 @@ import QrFormatNote from "./QrFormatNote";
 import TitleSizeControl from "./TitleSizeControl";
 import { usePhotoGestures } from "./usePhotoGestures";
 import { useStudioAssets } from "./useStudioAssets";
-import { Button } from "@/components/ui/Button";
+import { Toggle } from "./kit/Fields";
+import { Hint, Message } from "./kit/Notes";
+import {
+  ControlsColumn,
+  ControlsSection,
+  DownloadButton,
+  Loading,
+  PreviewActions,
+  PreviewCanvas,
+  PreviewColumn,
+  PreviewMeta,
+  Studio,
+} from "./kit/Studio";
+import styles from "./PackStudio.module.css";
 
 const RESET_MESSAGE = "Reset to the example text.";
 const STORAGE_KEY = "pauseai-collateral-pack-v1";
@@ -78,10 +91,10 @@ function PackThumb(props: {
   });
   const warnings = issues.filter((i) => i.level === "warn").length;
   return (
-    <button type="button" className="collateral-pack-thumb" aria-current={active} onClick={onSelect}>
-      <canvas ref={ref} aria-hidden="true" />
-      <span className="collateral-pack-thumb-label">{format.label}</span>
-      <span className={`collateral-pack-badge${warnings ? " is-warn" : issues.length ? " is-info" : ""}`}>
+    <button type="button" className={styles.thumb} aria-current={active} onClick={onSelect}>
+      <canvas ref={ref} className={styles.thumbCanvas} aria-hidden="true" />
+      <span className={styles.thumbLabel}>{format.label}</span>
+      <span className={warnings ? `${styles.badge} ${styles.warn}` : styles.badge}>
         {warnings ? `⚠ ${warnings}` : issues.length ? `ℹ ${issues.length}` : "✓"}
       </span>
     </button>
@@ -316,11 +329,11 @@ export default function PackStudio({ events }: { events: CalendarEvent[] }) {
   const shown = message ?? assetError;
 
   return (
-    <div className="collateral-studio">
+    <Studio>
       {/* Overview first: every format with its checks, then the one being adjusted, larger. */}
-      <div className="collateral-preview is-pack">
+      <PreviewColumn pack>
         {logo && fontsReady && formats.length > 0 && (
-          <div className="collateral-pack-grid" role="group" aria-label="Formats in the pack. Pick one to adjust it.">
+          <div className={styles.grid} role="group" aria-label="Formats in the pack. Pick one to adjust it.">
             {formats.map((f) => (
               <PackThumb
                 key={f.id}
@@ -334,18 +347,14 @@ export default function PackStudio({ events }: { events: CalendarEvent[] }) {
             ))}
           </div>
         )}
-        <div className="collateral-preview-actions">
+        <PreviewActions>
           {designIssues.length > 0 && <Checks issues={designIssues} title="Checks for every format" />}
-          <p className="collateral-hint collateral-actions-summary">{summary}</p>
-          <Button
-            type="button"
-            variant="primary"
-            size="large"
-            onClick={onDownloadPack}
-            disabled={!ready || formats.length === 0}
-          >
+          <p className={styles.summary} data-testid="pack-summary">
+            {summary}
+          </p>
+          <DownloadButton onClick={onDownloadPack} disabled={!ready || formats.length === 0}>
             {busy ? "Preparing…" : `Download ${formats.length} ${formats.length === 1 ? "format" : "formats"} (.zip)`}
-          </Button>
+          </DownloadButton>
           <ProjectMenu
             noun="pack"
             onSave={onSaveProject}
@@ -353,69 +362,51 @@ export default function PackStudio({ events }: { events: CalendarEvent[] }) {
             onReset={onReset}
             saveDisabled={!restored}
           />
-          {shown && (
-            <p className="collateral-message" role="status">
-              {shown}
-              {message === RESET_MESSAGE && undoReset && (
-                <button type="button" className="collateral-link" onClick={undoReset}>
-                  Undo
-                </button>
-              )}
-            </p>
-          )}
-        </div>
+          {shown && <Message onUndo={message === RESET_MESSAGE ? undoReset : null}>{shown}</Message>}
+        </PreviewActions>
         {active ? (
           <>
-            <div className="collateral-preview-frame">
-              <canvas
-                ref={canvasRef}
-                role="img"
-                aria-label={`Preview of ${active.label}`}
-                hidden={!logo || !fontsReady}
-                style={previewStyle(active)}
-                className={design.photo ? "is-draggable" : undefined}
-                {...photoGestures}
-              />
-              {(!logo || !fontsReady) && <p className="collateral-loading">Loading…</p>}
-            </div>
-            <p className="collateral-preview-meta">
+            <PreviewCanvas
+              canvasRef={canvasRef}
+              label={`Preview of ${active.label}`}
+              ready={Boolean(logo) && fontsReady}
+              draggable={Boolean(design.photo)}
+              style={previewStyle(active)}
+              gestures={photoGestures}
+            />
+            <PreviewMeta>
               Adjusting {active.label} · {formatDimensionLabel(active)}
               {design.photo && " · Drag the photo to fit this format. Scroll or pinch to zoom."}
-            </p>
+            </PreviewMeta>
           </>
         ) : (
-          <p className="collateral-loading">Tick at least one format.</p>
+          <Loading>Tick at least one format.</Loading>
         )}
-      </div>
+      </PreviewColumn>
 
-      <div className="collateral-controls">
+      <ControlsColumn>
         <DesignControls design={design} update={update} events={events} firstSection={1} onMessage={setMessage} />
 
-        <section>
-          <h2>7. Formats</h2>
-          <p className="collateral-hint">One download gives you every ticked format, each laid out for its size.</p>
+        <ControlsSection heading="7. Formats">
+          <Hint>One download gives you every ticked format, each laid out for its size.</Hint>
           {FORMAT_GROUPS.map((group) => (
-            <fieldset key={group} className="collateral-format-group">
-              <legend>{group}</legend>
+            <fieldset key={group} className={styles.formatGroup}>
+              <legend className={styles.legend}>{group}</legend>
               {FORMATS.filter((f) => f.group === group).map((f) => (
-                <label key={f.id} className="collateral-toggle">
-                  <input type="checkbox" checked={selected.includes(f.id)} onChange={() => toggleFormat(f.id)} />
-                  {f.label} <span className="collateral-format-size">{formatDimensionLabel(f)}</span>
-                </label>
+                <Toggle key={f.id} checked={selected.includes(f.id)} onChange={() => toggleFormat(f.id)}>
+                  {f.label} <span className={styles.formatSize}>{formatDimensionLabel(f)}</span>
+                </Toggle>
               ))}
             </fieldset>
           ))}
           {formats.some((f) => f.kind === "digital" && f.logoCover) && (
             <LogoCoverControls design={design} update={update} />
           )}
-        </section>
+        </ControlsSection>
 
         {active && (
-          <section>
-            <h2>Adjust {active.label}</h2>
-            <p className="collateral-hint">
-              Changes here only apply to this format. Pick another format from the previews.
-            </p>
+          <ControlsSection heading={`Adjust ${active.label}`}>
+            <Hint>Changes here only apply to this format. Pick another format from the previews.</Hint>
             <Checks issues={activeIssues} title={`Checks for ${active.label}`} />
             <TitleSizeControl
               value={headlineScales[active.id] ?? 1}
@@ -432,9 +423,9 @@ export default function PackStudio({ events }: { events: CalendarEvent[] }) {
             {design.photo && (
               <CropControls view={activeView} onChange={(patch) => setActiveView((v) => ({ ...v, ...patch }))} />
             )}
-          </section>
+          </ControlsSection>
         )}
-      </div>
-    </div>
+      </ControlsColumn>
+    </Studio>
   );
 }

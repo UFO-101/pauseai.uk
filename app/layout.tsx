@@ -3,16 +3,11 @@ import localFont from "next/font/local";
 import { Lato } from "next/font/google";
 import "@/styles/tokens.css";
 import "@/styles/base.css";
-// UI kit styles before globals.css, so context overrides there (e.g.
-// .hero-marquee-text [data-button]) still come later in the cascade, as the
-// old global .btn and .feature-card rules did.
-import "@/components/ui/Button.module.css";
-import "@/components/ui/FeatureCard.module.css";
-import "./globals.css";
 import Footer from "@/components/layout/Footer";
 import CookieConsent from "@/components/layout/CookieConsent";
 import FooterYear from "@/components/layout/FooterYear";
 import JsonLd from "@/components/layout/JsonLd";
+import TagManagerNoscript from "@/components/layout/TagManagerNoscript";
 import { analyticsEnabled } from "@/lib/analytics";
 import { site } from "@/lib/content/site";
 
@@ -96,17 +91,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       suppressHydrationWarning
     >
       <body suppressHydrationWarning>
-        {/* Google Tag Manager (noscript) - the JS snippet is loaded by CookieConsent */}
-        {analytics && (
-          <noscript>
-            <iframe
-              src="https://www.googletagmanager.com/ns.html?id=GTM-K7P36Q7F"
-              height="0"
-              width="0"
-              style={{ display: "none", visibility: "hidden" }}
-            />
-          </noscript>
-        )}
+        <TagManagerNoscript analytics={analytics} />
         <CookieConsent analytics={analytics}>
           <JsonLd data={organizationJsonLd} />
           {children}

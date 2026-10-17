@@ -1,0 +1,66 @@
+/* A white band of introduction under a page's hero. */
+
+.foreword {
+  --container-width: 920px;
+  padding: 56px 0 64px;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.pageWidth {
+  --container-width: var(--measure-page);
+}
+
+.title {
+  font-family: var(--font-display), "Lato", system-ui, sans-serif;
+  font-size: clamp(28px, 3.2vw, 38px);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.015em;
+  margin: 0 0 24px;
+  color: var(--text);
+}
+
+.body p {
+  font-size: 17px;
+  line-height: 1.7;
+  color: var(--text);
+  margin: 0 0 18px;
+}
+
+.body ul {
+  padding-left: 22px;
+  margin: 14px 0 18px;
+}
+
+.body li {
+  font-size: 17px;
+  line-height: 1.7;
+  color: var(--text);
+  margin-bottom: 10px;
+  padding-left: 6px;
+}
+
+.body li::marker {
+  color: var(--pause-orange);
+  font-weight: 600;
+}
+
+.dropCap .body p:first-child::first-letter {
+  font-family: var(--font-display), "Lato", system-ui, sans-serif;
+  font-size: 4.4em;
+  font-weight: 500;
+  float: left;
+  line-height: 0.85;
+  padding: 6px 12px 0 0;
+  color: var(--pause-orange);
+  font-style: italic;
+}
+
+@media (max-width: 860px) {
+  /* The page-width band, the workforce inquiry's, keeps its padding. */
+  .foreword:not(.pageWidth) {
+    padding: 60px 0;
+  }
+}

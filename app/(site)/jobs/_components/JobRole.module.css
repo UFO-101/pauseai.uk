@@ -1,0 +1,118 @@
+.roleCard {
+  break-inside: avoid;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 14px;
+  padding: 26px 28px 26px;
+  box-shadow: 0 1px 3px var(--shadow);
+  margin: 0 0 24px;
+  transition: box-shadow 0.2s ease;
+}
+
+.roleCard:hover {
+  box-shadow: 0 4px 16px var(--shadow);
+}
+
+.roleCard h2 {
+  font-family: var(--font-display), "Lato", system-ui, sans-serif;
+  font-size: 23px;
+  line-height: 1.25;
+  margin: 0 0 14px;
+}
+
+.roleCard p {
+  font-size: 16px;
+  line-height: 1.65;
+  color: var(--text);
+  margin: 0 0 14px;
+}
+
+.salary {
+  background: rgb(var(--pause-orange-rgb) / 0.07);
+  border-radius: 10px;
+  padding: 12px 16px;
+  margin: 0 0 16px;
+}
+
+.salary p {
+  font-size: 15px;
+  line-height: 1.55;
+  margin: 0;
+}
+
+/* Element+class to outweigh the `.jobs-role-card p` margin rule above. */
+.roleCard p.skillsLabel {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+  margin: 20px 0 10px;
+}
+
+.skillTags {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 0;
+  margin: 0;
+}
+
+.cardApply {
+  margin-top: 24px;
+}
+
+.skillTags li {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 5px 13px;
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--text);
+}
+
+.roleCard > :last-child {
+  margin-bottom: 0;
+}
+
+@media (max-width: 860px) {
+  .roleCard {
+    padding: 22px 20px 22px;
+    margin-bottom: 18px;
+  }
+}
+
+.roleCard p a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  transition: color 0.15s ease;
+}
+
+.roleCard p a:hover {
+  color: var(--pause-orange);
+}
+
+/* Closed role */
+.closedTag {
+  color: var(--muted);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.closedNotice {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin: 0 0 18px;
+}
+.roleCard .closedNotice p {
+  font-size: 15px;
+  margin: 0 0 8px;
+}
+.roleCard .closedNotice p:last-child {
+  margin: 0;
+}

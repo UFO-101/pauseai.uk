@@ -78,8 +78,10 @@ describe("reading a photo", () => {
       .toEqual([true, 0, "Find the QR code"]);
     vi.mocked(Date.now).mockRestore();
 
-    const crop = container.querySelector(".collateral-qr-crop") as HTMLElement;
-    const img = crop.querySelector("img") as HTMLImageElement;
+    const img = page.getByAltText(/^Your photo/).element() as HTMLImageElement;
+    const crop = img.parentElement!;
+    // The box drawn over the photo.
+    const box = () => crop.querySelector("div");
     await expect.poll(() => img.complete && img.naturalWidth > 0).toBe(true);
     // Measured each time: the dialog's layout shifts as messages come and go.
     const at = (fx: number, fy: number) => {
@@ -96,19 +98,19 @@ describe("reading a photo", () => {
     // A box with nothing in it.
     await pointer("pointerdown", 0.05, 0.05);
     await pointer("pointermove", 0.3, 0.3);
-    await expect.poll(() => container.querySelector(".collateral-qr-crop-box")).not.toBeNull();
+    await expect.poll(() => box()).not.toBeNull();
     await pointer("pointerup", 0.3, 0.3);
     await expect.element(page.getByText(/No code in that box/)).toBeVisible();
 
     // A tiny box is treated as a stray tap.
     await pointer("pointerdown", 0.5, 0.5);
     await pointer("pointerup", 0.5, 0.5);
-    await expect.poll(() => container.querySelector(".collateral-qr-crop-box")).toBeNull();
+    await expect.poll(() => box()).toBeNull();
 
     // A cancelled drag clears the box; a release that didn't start on the photo does nothing.
     await pointer("pointerdown", 0.1, 0.1);
     await pointer("pointercancel", 0.1, 0.1);
-    await expect.poll(() => container.querySelector(".collateral-qr-crop-box")).toBeNull();
+    await expect.poll(() => box()).toBeNull();
     await pointer("pointermove", 0.2, 0.2);
     await pointer("pointerup", 0.2, 0.2);
 

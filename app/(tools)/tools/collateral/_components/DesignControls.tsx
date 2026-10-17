@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import { MAX_PARTNER_LOGOS, QR_SIZES } from "@/lib/collateral/design";
 import { eventDayLabel, eventFieldValues, eventLink, type CalendarEvent } from "@/lib/collateral/eventText";
 import { isLumaEventLink } from "@/lib/collateral/lint";
-import { LIBRARY_PHOTOS, type LibraryPhoto } from "@/lib/collateral/photos";
+import type { LibraryPhoto } from "@/lib/collateral/photos";
 import { QR_LABEL_MAX, QR_URL_MAX } from "@/lib/collateral/project";
 import { MAX_QR_CODES, normaliseUrl, type QrCode } from "@/lib/collateral/qr";
 import { drawableToPngDataUrl, fileToDrawable, loadDataUrl, loadImage } from "@/lib/collateral/render";
@@ -19,7 +19,11 @@ import {
   withQrCodes,
   type DesignState,
 } from "./designState";
-import { Button } from "@/components/ui/Button";
+import { Choice, ChoiceGrid, PhotoLibrary } from "./kit/Choices";
+import { FieldLabel, FileInput, FormButton, Segmented, Select, TextArea, TextInput } from "./kit/Fields";
+import { Hint, LinkButton } from "./kit/Notes";
+import { ControlsSection } from "./kit/Studio";
+import styles from "./DesignControls.module.css";
 
 interface Props {
   design: DesignState;
@@ -145,62 +149,52 @@ export default function DesignControls({
 
   return (
     <>
-      <section>
-        <h2>{n(0)}. Layout</h2>
-        <div className="collateral-choice-grid" role="radiogroup" aria-label="Layout">
+      <ControlsSection heading={`${n(0)}. Layout`}>
+        <ChoiceGrid role="radiogroup" label="Layout">
           {DESIGN_TEMPLATES.map((t) => (
-            <button
+            <Choice
               key={t.id}
-              type="button"
-              role="radio"
-              aria-checked={t.id === template.id}
-              className="collateral-choice"
+              checked={t.id === template.id}
               onClick={() => update((d) => ({ ...d, templateId: t.id }))}
-            >
-              <strong>{t.label}</strong>
-              <span>{t.description}</span>
-            </button>
+              title={t.label}
+              description={t.description}
+            />
           ))}
-        </div>
+        </ChoiceGrid>
         {/* Right under the Event card, which is last in the list. Kept outside the radio group, which may only hold its options. */}
         {events.length > 0 && (
-          <div className={`collateral-event-import${template.id === "event" ? " is-active" : ""}`}>
-            <label className="collateral-label" htmlFor="collateral-import-event">
-              Start from one of our events
-            </label>
-            <select id="collateral-import-event" value="" onChange={(e) => importEvent(e.target.value)}>
+          <div className={template.id === "event" ? `${styles.eventImport} ${styles.active}` : styles.eventImport}>
+            <FieldLabel htmlFor="collateral-import-event">Start from one of our events</FieldLabel>
+            <Select id="collateral-import-event" value="" onChange={(e) => importEvent(e.target.value)}>
               <option value="">Choose an event…</option>
               {events.map((ev) => (
                 <option key={ev.id} value={ev.id}>
                   {eventDayLabel(ev)} · {ev.name}
                 </option>
               ))}
-            </select>
-            <p className="collateral-hint">Fills in the Event layout, and adds a QR code for the event.</p>
+            </Select>
+            <Hint>Fills in the Event layout, and adds a QR code for the event.</Hint>
           </div>
         )}
-      </section>
+      </ControlsSection>
 
-      <section>
-        <h2>{n(1)}. Style</h2>
+      <ControlsSection heading={`${n(1)}. Style`}>
         <StylePicker themeId={design.themeId} onTheme={(themeId) => update((d) => ({ ...d, themeId }))} />
-      </section>
+      </ControlsSection>
 
-      <section>
-        <h2>{n(2)}. Text</h2>
+      <ControlsSection heading={`${n(2)}. Text`}>
         {template.fields.map((field) => {
           const id = `collateral-${template.id}-${field.key}`;
           // designValues fills in every field's default.
           const value = values[field.key];
           // No layout offered here has toggle fields (only Brush does, and it is hidden; see designState.ts).
           return (
-            <div key={field.key} className="collateral-field">
-              <label className="collateral-label" htmlFor={id}>
+            <div key={field.key} className={styles.field}>
+              <FieldLabel htmlFor={id} note={field.hint && <> · {field.hint}</>}>
                 {field.label}
-                {field.hint && <span> · {field.hint}</span>}
-              </label>
+              </FieldLabel>
               {field.kind === "textarea" ? (
-                <textarea
+                <TextArea
                   id={id}
                   rows={2}
                   maxLength={field.maxLength}
@@ -208,9 +202,14 @@ export default function DesignControls({
                   onChange={(e) => setValue(field.key, e.target.value)}
                 />
               ) : field.kind === "date" || field.kind === "time" ? (
-                <input id={id} type={field.kind} value={value} onChange={(e) => setValue(field.key, e.target.value)} />
+                <TextInput
+                  id={id}
+                  type={field.kind}
+                  value={value}
+                  onChange={(e) => setValue(field.key, e.target.value)}
+                />
               ) : (
-                <input
+                <TextInput
                   id={id}
                   type="text"
                   maxLength={field.maxLength}
@@ -223,14 +222,13 @@ export default function DesignControls({
             </div>
           );
         })}
-      </section>
+      </ControlsSection>
 
-      <section>
-        <h2>{n(3)}. QR codes (optional)</h2>
+      <ControlsSection heading={`${n(3)}. QR codes (optional)`}>
         {qrCodes.map((code, i) => (
-          <div key={i} className="collateral-qr-row">
-            <div className="collateral-qr-fields">
-              <input
+          <div key={i} className={styles.qrRow}>
+            <div className={styles.qrFields}>
+              <TextInput
                 type="text"
                 aria-label={`QR code ${i + 1} label`}
                 placeholder="Label under the code, e.g. RSVP"
@@ -238,7 +236,7 @@ export default function DesignControls({
                 value={code.label}
                 onChange={(e) => updateQr(i, { label: e.target.value })}
               />
-              <input
+              <TextInput
                 type="text"
                 aria-label={`QR code ${i + 1} web address`}
                 placeholder="Web address, e.g. pauseai.uk/join"
@@ -250,7 +248,7 @@ export default function DesignControls({
             </div>
             <button
               type="button"
-              className="collateral-qr-remove"
+              className={styles.qrRemove}
               aria-label={`Remove QR code ${i + 1}`}
               onClick={() =>
                 update((d) =>
@@ -265,7 +263,7 @@ export default function DesignControls({
             </button>
           </div>
         ))}
-        <Button
+        <FormButton
           type="button"
           variant="ghost"
           size="small"
@@ -277,78 +275,51 @@ export default function DesignControls({
           }}
         >
           {qrCodes.length === 0 ? "Add a QR code" : `Add another (${qrCodes.length} of ${MAX_QR_CODES})`}
-        </Button>
+        </FormButton>
         {qrCodes.length > 0 && (
-          <>
-            <span className="collateral-label collateral-qr-size-label">Size</span>
-            <div className="collateral-segmented" role="radiogroup" aria-label="QR code size">
-              {QR_SIZES.map((s) => (
-                <button
-                  key={s.id}
-                  type="button"
-                  role="radio"
-                  aria-checked={design.qrSize === s.id}
-                  onClick={() => update((d) => ({ ...d, qrSize: s.id }))}
-                >
-                  {s.label}
-                </button>
-              ))}
-            </div>
-          </>
+          <div className={styles.qrSize}>
+            <FieldLabel>Size</FieldLabel>
+            <Segmented
+              label="QR code size"
+              options={QR_SIZES.map((s) => ({ value: s.id, label: s.label }))}
+              value={design.qrSize}
+              onChange={(qrSize) => update((d) => ({ ...d, qrSize }))}
+            />
+          </div>
         )}
         {/* UTM tagging is switched off until we have a way to read the results. See qrTarget in lib/collateral/qr.ts. */}
         {qrCodes.length > 0 && qrNote}
-      </section>
+      </ControlsSection>
 
-      <section>
-        <h2>{n(4)}. Photo (optional)</h2>
-        <div className="collateral-photo-grid">
-          {LIBRARY_PHOTOS.map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              className="collateral-photo-thumb"
-              aria-label={item.label}
-              aria-pressed={design.photo?.source.kind === "library" && design.photo.source.id === item.id}
-              title={item.label}
-              onClick={() => onLibraryPhoto(item)}
-              style={{ backgroundImage: `url(${item.thumb})` }}
-            />
-          ))}
-        </div>
-        <p className="collateral-hint">Or upload your own:</p>
-        <input type="file" accept="image/*" aria-label="Upload a photo" onChange={(e) => onPhoto(e.target.files![0])} />
+      <ControlsSection heading={`${n(4)}. Photo (optional)`}>
+        <PhotoLibrary current={design.photo?.source} onPick={onLibraryPhoto} />
+        <Hint>Or upload your own:</Hint>
+        <FileInput accept="image/*" aria-label="Upload a photo" onChange={(e) => onPhoto(e.target.files![0])} />
         {design.photo && (
-          <div className="collateral-photo-controls">
-            <p className="collateral-hint">
+          <div>
+            <Hint>
               {design.photo.name} · stays in your browser
-              <button type="button" className="collateral-link" onClick={() => update((d) => ({ ...d, photo: null }))}>
-                Remove
-              </button>
-            </p>
+              <LinkButton onClick={() => update((d) => ({ ...d, photo: null }))}>Remove</LinkButton>
+            </Hint>
             {photoExtras}
           </div>
         )}
-      </section>
+      </ControlsSection>
 
-      <section>
-        <h2>{n(5)}. Partner logos (optional)</h2>
-        <p className="collateral-hint">For joint events. A PNG with a transparent background works best.</p>
+      <ControlsSection heading={`${n(5)}. Partner logos (optional)`}>
+        <Hint>For joint events. A PNG with a transparent background works best.</Hint>
         {design.partnerLogos.map((logo, i) => (
-          <p key={`${logo.name}-${i}`} className="collateral-hint">
+          <Hint key={`${logo.name}-${i}`}>
             {logo.name}
-            <button
-              type="button"
-              className="collateral-link"
+            <LinkButton
               onClick={() => update((d) => ({ ...d, partnerLogos: d.partnerLogos.filter((_, j) => j !== i) }))}
             >
               Remove
-            </button>
-          </p>
+            </LinkButton>
+          </Hint>
         ))}
         {design.partnerLogos.length < MAX_PARTNER_LOGOS && (
-          <input
-            type="file"
+          <FileInput
             accept="image/png,image/jpeg,image/webp"
             aria-label="Upload a partner logo"
             onChange={(e) => {
@@ -357,7 +328,7 @@ export default function DesignControls({
             }}
           />
         )}
-      </section>
+      </ControlsSection>
     </>
   );
 }

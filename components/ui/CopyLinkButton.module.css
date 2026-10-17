@@ -1,0 +1,4 @@
+/* Room between the link icon and the label. */
+.labelled {
+  gap: 8px;
+}

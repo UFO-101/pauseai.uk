@@ -1,13 +1,15 @@
+import styles from "./EvidenceSubmission.module.css";
+
 // PauseAI UK's written evidence, reproduced as submitted on 3 April 2026.
 // Numbered paragraphs continue across sections (each <ol> has a `start`), and
 // <sup>n</sup> markers point at the matching <li id="fnn"> in the Notes,
 // which FootnoteTooltips shows on hover.
 export default function EvidenceSubmission() {
   return (
-    <article className="ev-article">
-      <div className="container ev-inner">
-        <div className="ev-meta-block">
-          <table className="ev-meta-table">
+    <article className={styles.article}>
+      <div className="container">
+        <div className={styles.metaBlock}>
+          <table className={styles.metaTable}>
             <tbody>
               <tr>
                 <th>Date</th>
@@ -17,9 +19,9 @@ export default function EvidenceSubmission() {
           </table>
         </div>
 
-        <section className="ev-section">
+        <section className={styles.section}>
           <h2>Introduction</h2>
-          <ol className="ev-ol">
+          <ol className={styles.ol}>
             <li>
               PauseAI UK is part of a global movement dedicated to mitigating the risks posed by frontier artificial
               intelligence. We advocate for an international pause on the development of advanced AI systems until they
@@ -44,12 +46,12 @@ export default function EvidenceSubmission() {
           </ol>
         </section>
 
-        <section className="ev-section">
+        <section className={styles.section}>
           <h2>1. The future of AI</h2>
-          <p className="ev-question">
+          <p className={styles.question}>
             <em>How is AI likely to evolve over the next decade? What are the scenarios we should plan for?</em>
           </p>
-          <ol className="ev-ol" start={3}>
+          <ol className={styles.ol} start={3}>
             <li>
               Given the speed of development, it is very difficult to accurately predict the evolution of Artificial
               Intelligence (&ldquo;<strong>AI</strong>&rdquo;) over the next decade. As recently as 2022, it would have
@@ -126,16 +128,16 @@ export default function EvidenceSubmission() {
           </ol>
         </section>
 
-        <section className="ev-section">
+        <section className={styles.section}>
           <h2>2. AI adoption</h2>
-          <p className="ev-question">
+          <p className={styles.question}>
             <em>
               Where is AI currently being deployed across the UK economy (by sector, region, firm size, and
               public/private) and how is it being used? How does adoption vary across different parts of the economy and
               workforce and why; what are the main barriers to AI adoption?
             </em>
           </p>
-          <ol className="ev-ol" start={13}>
+          <ol className={styles.ol} start={13}>
             <li>
               PauseAI UK does not have a view to share regarding sectoral AI deployment or practical barriers to
               adoption.
@@ -143,16 +145,16 @@ export default function EvidenceSubmission() {
           </ol>
         </section>
 
-        <section className="ev-section">
+        <section className={styles.section}>
           <h2>3. Infrastructure for the AI Transition</h2>
-          <p className="ev-question">
+          <p className={styles.question}>
             <em>
               What public and private infrastructure is required to support safe, responsible and effective AI adoption
               by 2035? How much of this infrastructure currently exists? Which elements should be publicly funded, and
               which through private investment? Where are the remaining market gaps?
             </em>
           </p>
-          <ol className="ev-ol" start={14}>
+          <ol className={styles.ol} start={14}>
             <li>
               We note that the Inquiry outline states &ldquo;
               <em>
@@ -176,9 +178,9 @@ export default function EvidenceSubmission() {
             </li>
           </ol>
 
-          <div className="ev-policy-block">
+          <div className={styles.policyBlock}>
             <h3>Regulation and oversight</h3>
-            <ul className="ev-ul">
+            <ul className={styles.ul}>
               <li>
                 Mandatory licensing, registration, and tracking framework for frontier-class compute hardware
                 (performance thresholds to be defined). This should include Know Your Customer requirements and
@@ -198,9 +200,9 @@ export default function EvidenceSubmission() {
             </ul>
           </div>
 
-          <div className="ev-policy-block">
+          <div className={styles.policyBlock}>
             <h3>Technical &lsquo;killswitch&rsquo; and non-AI contingencies</h3>
-            <ul className="ev-ul">
+            <ul className={styles.ul}>
               <li>
                 Data centres must have emergency off protocols at the infrastructure level that can also be activated by
                 an independent regulator in the event that pre-defined risk thresholds are exceeded (such as autonomous
@@ -215,9 +217,9 @@ export default function EvidenceSubmission() {
             </ul>
           </div>
 
-          <div className="ev-policy-block">
+          <div className={styles.policyBlock}>
             <h3>Cybersecurity</h3>
-            <ul className="ev-ul">
+            <ul className={styles.ul}>
               <li>
                 Data centres will inevitably become a target for malicious cyberattack. Enhanced cybersecurity measures
                 must be mandatory.
@@ -236,9 +238,9 @@ export default function EvidenceSubmission() {
           </div>
         </section>
 
-        <section className="ev-section">
+        <section className={styles.section}>
           <h2>4. Impacts on work &amp; workers</h2>
-          <p className="ev-question">
+          <p className={styles.question}>
             <em>
               What impact can AI have on productivity? Which tasks and occupations are most exposed to automation? What
               are the effects of AI on employment, job security, employment rights, pay, job quality, health and safety,
@@ -246,7 +248,7 @@ export default function EvidenceSubmission() {
               implications for inequality?
             </em>
           </p>
-          <ol className="ev-ol" start={20}>
+          <ol className={styles.ol} start={20}>
             <li>
               PauseAI UK urges the Committee to look beyond productivity and efficiency forecasts and confront the
               reality of job displacement. While AI adoption is expected to enhance output, in a competitive market
@@ -283,16 +285,16 @@ export default function EvidenceSubmission() {
           </ol>
         </section>
 
-        <section className="ev-section">
+        <section className={styles.section}>
           <h2>5. Skills, Education &amp; Transitions</h2>
-          <p className="ev-question">
+          <p className={styles.question}>
             <em>
               What skills will workers and managers need to work effectively with AI? Are current education and adult
               learning systems adequate? What reskilling and upskilling models are most effective? How can Government
               and employers support augmentation and upskilling when introducing AI?
             </em>
           </p>
-          <ol className="ev-ol" start={24}>
+          <ol className={styles.ol} start={24}>
             <li>
               PauseAI UK strongly believes that the common focus on &ldquo;lifelong learning&rdquo; and adult retraining
               is a fundamentally inadequate response to advancing AI technology. This approach mistakenly treats AI as a
@@ -330,16 +332,16 @@ export default function EvidenceSubmission() {
           </ol>
         </section>
 
-        <section className="ev-section">
+        <section className={styles.section}>
           <h2>6. Government Strategy, Regulation &amp; Rights</h2>
-          <p className="ev-question">
+          <p className={styles.question}>
             <em>
               How prepared is the Government and are regulators for the potential impacts of AI? Is the existing UK
               regulatory framework sufficient to address current and emerging employment-related AI issues? What support
               should the Government be offering to businesses, employers and employees?
             </em>
           </p>
-          <ol className="ev-ol" start={28}>
+          <ol className={styles.ol} start={28}>
             <li>
               The UK Government and its regulators are currently unprepared for the systemic impacts of advanced AI. Our
               existing regulatory framework is a patchwork of rules that were not designed for a technological paradigm
@@ -408,9 +410,9 @@ export default function EvidenceSubmission() {
           </ol>
         </section>
 
-        <section className="ev-footnotes">
+        <section className={styles.footnotes}>
           <h2>Notes</h2>
-          <ol className="ev-fn-list">
+          <ol className={styles.fnList}>
             <li id="fn1">
               In March 2026, Treasury Minister Dan Tomlinson told Sky News that &ldquo;<em>big shocks</em>&rdquo; in
               economic history, such as the industrial revolution, had seen &ldquo;

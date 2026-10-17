@@ -17,7 +17,7 @@ async function open(page: Page, studio: string, download: RegExp) {
   await page.getByRole("radio", { name: studio }).click();
   await expect(page.getByRole("radio", { name: studio })).toHaveAttribute("aria-checked", "true");
   await expect(page.getByRole("button", { name: download })).toBeEnabled();
-  await expect(page.locator(".collateral-loading")).toHaveCount(0);
+  await expect(page.getByText("Loading…")).toHaveCount(0);
 }
 
 /** Clicks `name` and returns the file it downloads. */
@@ -50,7 +50,7 @@ test("a single image: an event from the calendar, a photo, a style, then a PNG a
   await page.getByRole("button", { name: "London protest group" }).click();
   await page.getByRole("radio", { name: "Black" }).click();
   // With a photo, the preview can be dragged to move it.
-  await expect(page.getByRole("img", { name: /^Preview of/ })).toHaveClass("is-draggable");
+  await expect(page.getByRole("img", { name: /^Preview of/ })).toHaveCSS("cursor", "grab");
   await frame(page, "with a photo, in black");
 
   const png = await download(page, /^Download PNG$/);
@@ -93,7 +93,10 @@ test("a campaign pack: one design, the formats picked, adjusted one at a time, a
   await frame(page, "a new title, an A4 poster in, the X header out");
 
   // The Luma cover, picked from the previews, is adjusted on its own.
-  await page.locator(".collateral-pack-thumb", { hasText: "Luma event cover" }).click();
+  await page
+    .getByRole("group", { name: /^Formats in the pack/ })
+    .getByRole("button", { name: /^Luma event cover/ })
+    .click();
   await expect(page.getByRole("heading", { name: "Adjust Luma event cover" })).toBeVisible();
   await expect(page.getByRole("img", { name: "Preview of Luma event cover" })).toBeVisible();
   await wholePage(page);

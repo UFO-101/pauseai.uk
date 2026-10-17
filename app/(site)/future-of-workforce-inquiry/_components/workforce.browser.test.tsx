@@ -43,18 +43,23 @@ describe("FootnoteTooltips", () => {
     );
   }
 
-  const tip = () => document.querySelector(".fn-tooltip") as HTMLElement;
+  // The tooltip is the hidden-from-screen-readers div the script adds to the page.
+  const tip = () => document.querySelector("body > div[aria-hidden='true']") as HTMLElement;
+  // Shown, it takes the pointer (its opacity fades, its pointer-events don't).
+  const shown = () => getComputedStyle(tip()).pointerEvents === "auto";
+  // A marker with a note gets the help cursor.
+  const hasNote = (sup: Element) => getComputedStyle(sup).cursor === "help";
 
   it("shows the note above a marker on hover, and hides it a moment after leaving", async () => {
     vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
     const { container } = await render(<Doc />);
     const sup = container.querySelector("sup") as HTMLElement;
-    expect(sup.classList.contains("fn-ref")).toBe(true);
+    expect(hasNote(sup)).toBe(true);
     // A marker with no matching note is left alone.
-    expect(container.querySelectorAll("sup")[1].classList.contains("fn-ref")).toBe(false);
+    expect(hasNote(container.querySelectorAll("sup")[1])).toBe(false);
 
     sup.dispatchEvent(new MouseEvent("mouseenter"));
-    expect(tip().classList.contains("fn-tooltip--visible")).toBe(true);
+    expect(shown()).toBe(true);
     expect(tip().innerHTML).toBe("The <em>source</em>.");
     expect(parseFloat(tip().style.top)).toBeLessThan(sup.getBoundingClientRect().top + window.scrollY);
 
@@ -62,10 +67,10 @@ describe("FootnoteTooltips", () => {
     sup.dispatchEvent(new MouseEvent("mouseleave"));
     tip().dispatchEvent(new MouseEvent("mouseenter"));
     vi.advanceTimersByTime(200);
-    expect(tip().classList.contains("fn-tooltip--visible")).toBe(true);
+    expect(shown()).toBe(true);
     tip().dispatchEvent(new MouseEvent("mouseleave"));
     vi.advanceTimersByTime(200);
-    expect(tip().classList.contains("fn-tooltip--visible")).toBe(false);
+    expect(shown()).toBe(false);
   });
 
   it("puts the note below a marker near the top of the screen, and keeps it on screen at the edge", async () => {
@@ -82,6 +87,6 @@ describe("FootnoteTooltips", () => {
     const { unmount } = await render(<Doc />);
     expect(tip()).not.toBeNull();
     await unmount();
-    expect(document.querySelector(".fn-tooltip")).toBeNull();
+    expect(tip()).toBeNull();
   });
 });

@@ -12,7 +12,7 @@ export const metadata = pageMetadata({
 
 export default function Page() {
   return (
-    <main className="campaigns">
+    <main>
       <CampaignHero title="Support the Artificial Superintelligence Bill" campaignSlug="support-sobel-bill" />
 
       <CampaignContext>

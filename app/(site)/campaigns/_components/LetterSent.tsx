@@ -5,7 +5,8 @@ import Link from "next/link";
 import { copy } from "@/lib/content/email-your-mp";
 import { campaignBySlug, campaignPath } from "@/lib/email-your-mp";
 import { readSent, type Sent } from "./draft";
-import styles from "./EmailYourMp.module.css";
+import { Column } from "./FormParts";
+import styles from "./LetterSent.module.css";
 
 /** Thanks for the letter just sent, under the page's heading. Room for more to do, later. */
 export default function LetterSent({ campaignSlug }: { campaignSlug: string }) {
@@ -21,12 +22,12 @@ export default function LetterSent({ campaignSlug }: { campaignSlug: string }) {
   if (sent === undefined) return null;
   if (sent === null) {
     return (
-      <div className={styles.tool}>
+      <Column>
         <p>{copy.sent.none}</p>
         <p>
           <Link href={`${campaignPath(campaign)}#email-your-mp`}>{copy.preview.backToForm}</Link>
         </p>
-      </div>
+      </Column>
     );
   }
   return (

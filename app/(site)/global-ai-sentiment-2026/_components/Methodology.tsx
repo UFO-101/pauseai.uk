@@ -1,9 +1,10 @@
 import { SURVEY_META } from "@/lib/content/aiSentiment2026";
+import styles from "./sentiment.module.css";
 
 // How the survey was run and weighted.
 export default function Methodology() {
   return (
-    <section className="gas-section gas-methodology">
+    <section className={`${styles.section} ${styles.methodology}`}>
       <div className="container">
         <h2>Methodology</h2>
         <p>

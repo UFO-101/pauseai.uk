@@ -1,0 +1,132 @@
+/* The gallery's own frame around the components: plain, so they look as
+   they do on the site. */
+
+/* A screen's height below the last component, less the sticky header, so
+   following a link to any component brings it to the top. */
+.gallery {
+  padding: 32px 0 calc(100vh - var(--site-header-h, 77px));
+}
+
+.title {
+  margin: 0 0 12px;
+}
+
+.index {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  font-size: 14px;
+}
+
+/* The front page's cards, one per group. */
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+  margin: 24px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  height: 100%;
+  padding: 16px 18px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--text);
+  text-decoration: none;
+}
+
+.card:hover,
+.card:focus-visible {
+  border-color: var(--accent);
+}
+
+.cardTitle {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.count {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.names {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+/* A group's page: the way back, above its title. */
+.back {
+  display: inline-block;
+  margin: 0 0 12px;
+  font-size: 14px;
+}
+
+.example {
+  margin-top: 40px;
+  padding-top: 8px;
+  border-top: 2px solid var(--border-strong);
+}
+
+.name {
+  margin: 0;
+  font-family: "Inter", system-ui, sans-serif;
+  font-size: 18px;
+}
+
+/* On a line of its own, and broken anywhere: a path is long, and would
+   widen the page on a phone. */
+.file {
+  display: block;
+  font-weight: 400;
+  font-size: 13px;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+/* One variant: its label, then the component on its own, full width (a
+   section's band reaches the edges, as it does on a page). */
+.variant {
+  margin-top: 12px;
+}
+
+.label {
+  margin: 0 0 6px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+/* Room around the component, and the containing block for anything in it
+   that positions itself, fixed included (the cookie banner), so it stays in
+   its place rather than over the page. Layout containment doesn't clip, so
+   a dropdown can still hang out of it. */
+.stage {
+  position: relative;
+  contain: layout;
+  padding: 16px 0;
+  border-top: 1px dashed var(--border);
+  border-bottom: 1px dashed var(--border);
+}
+
+.note {
+  margin: 8px 24px 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.log {
+  margin: 8px 24px 0;
+  font-family: ui-monospace, monospace;
+  font-size: 13px;
+  color: var(--text-secondary);
+}

@@ -1,0 +1,17 @@
+/* Words on one side, an action (a button, a photo) on the other; stacked on
+   a phone. */
+
+.callout {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 720px) {
+  .callout {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

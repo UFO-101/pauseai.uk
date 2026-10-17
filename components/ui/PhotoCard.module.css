@@ -1,0 +1,44 @@
+/* A card with a photo across its top and words under it. */
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px var(--shadow);
+  display: block;
+  color: var(--text);
+  text-decoration: none;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+/* A card that is a link lifts on hover. */
+.link:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px var(--shadow);
+}
+
+.image {
+  width: 100%;
+  aspect-ratio: 3 / 2;
+  background-size: cover;
+  background-position: center;
+}
+
+.body {
+  padding: 20px;
+}
+
+.body h3 {
+  font-family: "Inter", system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 20px;
+  margin: 4px 0 8px;
+}
+
+.body p {
+  color: var(--text-secondary);
+  margin: 0 0 12px;
+}

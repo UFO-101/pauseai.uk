@@ -1,0 +1,47 @@
+/* The case for the campaign: a quote, and the paragraphs that back it up. */
+
+/* The case (quote + supporting paragraphs) */
+.context {
+  padding: 32px 0 16px;
+}
+.context blockquote,
+.context p {
+  max-width: 68ch;
+}
+.context blockquote {
+  margin: 0 0 28px;
+  padding: 4px 0 4px 22px;
+  border-left: 3px solid var(--pause-orange);
+  font-family: var(--font-display), "Lato", system-ui, sans-serif;
+  font-style: italic;
+  font-size: clamp(19px, 1.8vw, 22px);
+  line-height: 1.45;
+  color: var(--text);
+}
+.context blockquote cite {
+  display: block;
+  margin-top: 14px;
+  font-family: "Inter", system-ui, sans-serif;
+  font-style: normal;
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+.context p {
+  font-size: 17px;
+  line-height: 1.7;
+  color: var(--text);
+  margin: 0 0 18px;
+}
+.context p:last-child {
+  margin-bottom: 0;
+}
+.context em {
+  font-style: italic;
+}
+
+@media (max-width: 720px) {
+  .context {
+    padding: 24px 0 8px;
+  }
+}

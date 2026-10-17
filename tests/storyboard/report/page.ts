@@ -78,13 +78,15 @@ h1, h2, h3, p { margin: 0; }
 #sidebar .count { color: var(--muted); white-space: nowrap; font-weight: normal; }
 #sidebar .count.changed { color: var(--changed); font-weight: 600; }
 #sidebar a.failed .name::before, h3.failed::before { content: "✕ "; color: var(--failed); }
-main { padding: 8px 24px 80px; min-width: 0; }
+/* Room below the last flow, so picking it in the sidebar scrolls it to the top like any other. */
+main { padding: 8px 24px calc(100vh - 60px); min-width: 0; }
 section > h2 { font-size: 18px; margin: 32px 0 8px; padding-top: 16px; border-top: 1px solid var(--line); }
 section:first-child > h2 { border-top: 0; margin-top: 16px; }
 /* A hash link lands under the sticky bar without this. */
 section, .flow { scroll-margin-top: 60px; }
 .flow { margin: 16px 0 28px; }
 .flow h3 { font-size: 15px; margin-bottom: 8px; }
+.flow h3 .shot { margin-left: 8px; font-size: 12px; font-weight: normal; color: var(--muted); }
 .flow .status { font-weight: normal; color: var(--muted); font-size: 13px; margin-left: 8px; }
 .frame { display: grid; grid-template-columns: 200px 1fr; gap: 16px; padding: 10px 0; border-top: 1px solid #eee; }
 .frame .caption { color: #333; }
@@ -129,6 +131,10 @@ const el = (tag, attrs = {}, children = []) => {
 const title = (s) => s.replace(/-/g, " ").replace(/^./, (c) => c.toUpperCase());
 /** Local time as "2026-10-16 16:33". */
 const isoLocal = (d) => new Date(d.getTime() - d.getTimezoneOffset() * 60_000).toISOString().slice(0, 16).replace("T", " ");
+// The newest run's flows say nothing; a carried flow says when it was shot.
+const newestShot = data.flows.reduce((newest, f) => (f.shotAt && f.shotAt > newest ? f.shotAt : newest), "");
+const shotTime = (iso) => new Date(iso).toLocaleString([], { weekday: "short", hour: "2-digit", minute: "2-digit" });
+const plural = (n, word) => n + " " + word + (n === 1 ? "" : "s");
 const pct = (n) => (n * 100 < 0.01 && n > 0 ? "<0.01" : (n * 100).toFixed(2)) + "%";
 const slug = (...parts) => parts.join("-").toLowerCase().replace(/[^a-z0-9]+/g, "-");
 const framesOf = (flow) => data.frames.filter((f) => f.section === flow.section && f.flow === flow.flow && f.viewport === flow.viewport);
@@ -172,6 +178,8 @@ function render() {
       const frames = framesOf(flow).filter((f) => !state.changedOnly || f.changed);
       shownFrames += frames.length;
       const h3 = el("h3", { class: flow.status !== "passed" ? "failed" : "" }, [flow.flow]);
+      // Carried from an earlier, fuller run by a partial one (scripts/storyboard.mjs).
+      if (flow.shotAt && flow.shotAt !== newestShot) h3.append(el("span", { class: "shot" }, ["shot " + shotTime(flow.shotAt)]));
       if (flow.status !== "passed") h3.append(el("span", { class: "status" }, [flow.status]));
       else if (flow.mainStatus && flow.mainStatus !== "passed") h3.append(el("span", { class: "status" }, ["main: " + flow.mainStatus]));
       const div = el("div", { class: "flow", id }, [h3]);
@@ -188,15 +196,17 @@ function render() {
   const frames = data.frames.filter((f) => f.viewport === state.viewport);
   const changed = frames.filter((f) => f.changed).length;
   const failed = flows.filter((f) => f.status !== "passed").length;
+  const carried = flows.filter((f) => f.shotAt && f.shotAt !== newestShot).length;
   document.getElementById("summary").textContent =
     frames.length + " frames in " + flows.length + " flows" +
     (data.withMain ? ", " + changed + " changed against main" : ", no run of main to compare with") +
-    (failed ? ", " + failed + " failed" : "") + ". " + isoLocal(new Date(data.generatedAt));
+    (failed ? ", " + failed + " failed" : "") + ". " + isoLocal(new Date(data.generatedAt)) +
+    (carried ? "; " + plural(flows.length - carried, "flow") + " shot now, " + carried + " carried from earlier runs" : "");
 }
 
 function renderFrame(frame) {
   const caption = el("div", { class: "caption" }, [el("span", { class: "n" }, [String(frame.index)]), frame.caption]);
-  if (frame.mismatch !== undefined) caption.append(el("span", { class: "mismatch" }, [frame.mismatch ? pct(frame.mismatch) + " of pixels differ" : "identical to main"]));
+  if (frame.mismatch !== undefined) caption.append(el("span", { class: "mismatch" }, [frame.noise ? "same as main, but for noise: " + pct(frame.mismatch) + " of pixels differ slightly" : frame.mismatch ? pct(frame.mismatch) + " of pixels differ" : "identical to main"]));
   else if (data.withMain) caption.append(el("span", { class: "mismatch" }, [frame.branch ? "new: main didn't get here" : "gone: only main has it"]));
   const thumbs = el("div", { class: "thumbs" });
   const sides = data.withMain ? ["branch", "main", "diff"] : ["branch"];
@@ -212,14 +222,14 @@ function renderFrame(frame) {
   return el("div", { class: "frame" + (frame.changed ? " changed" : ""), "data-index": frame.index }, [caption, thumbs]);
 }
 
-// The sidebar folds every section but the one in view: the first whose
-// heading hasn't scrolled past the top of the board.
+// The sidebar folds every section but the one in view: the last whose top
+// has reached the place a link to it scrolls it to (its scroll-margin-top,
+// below the bar), so following a section's link opens that section.
 let currentSection = null;
 function sectionInView() {
-  const top = document.querySelector(".bar").offsetHeight + 1;
   let current = null;
   for (const sec of document.querySelectorAll("main > section")) {
-    if (sec.getBoundingClientRect().top <= top) current = sec.id;
+    if (sec.getBoundingClientRect().top <= parseFloat(getComputedStyle(sec).scrollMarginTop) + 1) current = sec.id;
     else break;
   }
   return current ?? document.querySelector("main > section")?.id ?? null;
@@ -233,7 +243,14 @@ function trackSection() {
     group.classList.toggle("current", here);
     group.open = here;
   }
-  document.querySelector("#sidebar details.current")?.scrollIntoView({ block: "nearest" });
+  // Bring it into the sidebar's own view. Not scrollIntoView: on a phone the
+  // sidebar isn't sticky, and that would scroll the page back up to it.
+  const sidebar = document.getElementById("sidebar");
+  const here = document.querySelector("#sidebar details.current")?.getBoundingClientRect();
+  if (!here) return;
+  const view = sidebar.getBoundingClientRect();
+  if (here.top < view.top) sidebar.scrollTop += here.top - view.top;
+  else if (here.bottom > view.bottom) sidebar.scrollTop += Math.min(here.bottom - view.bottom, here.top - view.top);
 }
 document.addEventListener("scroll", trackSection, { passive: true });
 

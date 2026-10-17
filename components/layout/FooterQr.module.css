@@ -1,0 +1,100 @@
+/* The footer's QR code icon: a button, dressed as the social links beside it. */
+.button {
+  display: inline-flex;
+  padding: 0;
+  border: none;
+  background: none;
+  color: rgb(var(--white-rgb) / 0.6);
+  cursor: pointer;
+  transition:
+    color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.button:hover {
+  color: var(--accent);
+  transform: scale(1.1);
+}
+
+.button svg {
+  width: 22px;
+  height: 22px;
+}
+
+/* The page's QR code, big, over the page. The dialog fills the screen, so a tap off the card closes it. */
+.dialog {
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  max-height: none;
+  padding: 16px;
+  border: none;
+  background: transparent;
+  cursor: zoom-out;
+}
+
+.dialog[open] {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dialog::backdrop {
+  background: rgb(var(--text-rgb) / 0.92);
+  backdrop-filter: blur(6px);
+}
+
+.card {
+  width: min(560px, 100%, calc(100dvh - 160px));
+  min-width: 240px;
+  padding: 24px;
+  border-radius: 12px;
+  background: var(--white);
+  color: var(--text);
+  box-shadow: 0 24px 80px rgb(var(--black-rgb) / 0.5);
+  text-align: center;
+  cursor: auto;
+}
+
+.card img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.card p {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 16px 0 0;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.card strong {
+  color: var(--text);
+  font-size: 18px;
+  overflow-wrap: anywhere;
+}
+
+.close {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgb(var(--white-rgb) / 0.18);
+  border-radius: 999px;
+  background: rgb(var(--white-rgb) / 0.08);
+  color: var(--white);
+  font-size: 28px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.close:hover {
+  background: rgb(var(--white-rgb) / 0.16);
+}

@@ -24,7 +24,7 @@ export async function hydrated(page: Page): Promise<void> {
       () =>
         document.readyState === "complete" &&
         (getComputedStyle(document.documentElement).getPropertyValue("--site-header-h").trim() !== "" ||
-          !document.querySelector("header.site-header")),
+          !document.querySelector('header button[aria-label="Menu"]')),
       undefined,
       POLL,
     );

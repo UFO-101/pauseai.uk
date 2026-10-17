@@ -1,0 +1,1163 @@
+/* The Global Attitudes to AI 2026 report: its sections, charts, map and
+   explorers. One module for the report's components, which are its own
+   look and no one else's. */
+
+.eyebrow {
+  display: inline-block;
+  font-family: "Inter", system-ui, sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: var(--s-3, 12px);
+}
+
+.heroLede {
+  font-family: "Inter", system-ui, sans-serif;
+  font-size: 18px;
+  line-height: 1.55;
+  color: var(--text-secondary);
+  margin: 16px auto 0;
+}
+
+.stats {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+
+.statsInner {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  padding: 40px 0;
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: center;
+}
+
+.statValue {
+  font-family: var(--font-display), "Lato", system-ui, sans-serif;
+  font-size: clamp(22px, 3vw, 32px);
+  color: var(--text);
+}
+
+.statLabel {
+  font-family: "Inter", system-ui, sans-serif;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.section {
+  padding: 64px 0;
+}
+
+.sectionMuted {
+  background: var(--surface-2);
+}
+
+.section h2 {
+  font-family: var(--font-display), "Lato", system-ui, sans-serif;
+  font-size: clamp(24px, 3.5vw, 34px);
+  color: var(--text);
+  margin-bottom: 12px;
+}
+
+.sectionIntro {
+  font-family: "Inter", system-ui, sans-serif;
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  max-width: 760px;
+  margin-bottom: 28px;
+}
+
+.question {
+  font-family: "Inter", system-ui, sans-serif;
+  font-style: italic;
+  font-size: 17px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  border-left: 3px solid var(--accent);
+  padding-left: 16px;
+  margin: 0 0 28px;
+  max-width: 720px;
+}
+
+.keyStat {
+  font-family: var(--font-display), "Lato", system-ui, sans-serif;
+  font-size: clamp(20px, 2.4vw, 26px);
+  line-height: 1.4;
+  color: var(--text);
+  max-width: 720px;
+  margin: 0 0 32px;
+}
+
+.demoWrap {
+  max-width: 780px;
+}
+
+.globalBar {
+  margin-bottom: 24px;
+}
+
+.legendKey {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 20px;
+  list-style: none;
+  padding: 0;
+  margin: 0 0 20px;
+  font-family: "Inter", system-ui, sans-serif;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+/* Shown below 901px only. It was the small-screen fallback for an
+   annotated diagram the page no longer uses. */
+.legendKeyMobile {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .legendKeyMobile {
+    display: flex;
+  }
+}
+
+.legendKey li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.legendDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.howto {
+  max-width: 720px;
+  background: var(--accent-bg);
+  border: 1px solid var(--accent-light);
+  border-radius: 10px;
+  padding: 18px 20px;
+  margin-bottom: 20px;
+}
+
+.howto h3 {
+  font-family: "Inter", system-ui, sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--accent-strong);
+  margin: 0 0 10px;
+}
+
+.howto p {
+  font-family: "Inter", system-ui, sans-serif;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  margin: 0 0 10px;
+}
+
+.howto p:last-child {
+  margin-bottom: 0;
+}
+
+/* ---- Hover tooltips (data-tooltip attribute) ---- */
+
+.term[data-tooltip] {
+  position: relative;
+  cursor: help;
+  border-bottom: 1px dotted currentColor;
+}
+
+.term[data-tooltip]::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: 200px;
+  background: var(--text);
+  color: var(--white);
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-family: "Inter", system-ui, sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.35;
+  white-space: normal;
+  pointer-events: none;
+  z-index: 10;
+  opacity: 0;
+  box-shadow: 0 6px 18px rgb(var(--black-rgb) / 0.2);
+  transition: opacity 0.15s;
+  text-align: left;
+}
+
+.term[data-tooltip]:hover::after {
+  opacity: 1;
+}
+
+.sourceNote {
+  font-family: "Inter", system-ui, sans-serif;
+  font-size: 14px;
+  color: var(--muted);
+  max-width: 720px;
+}
+
+.sourceNote a {
+  color: var(--accent);
+}
+
+/* ---- Diverging bar rows ---- */
+
+.barList {
+  display: grid;
+  grid-template-columns: minmax(220px, auto) 1fr;
+  align-items: center;
+  row-gap: 10px;
+  column-gap: 16px;
+}
+
+.barRow {
+  display: contents;
+}
+
+.barLabel {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+
+.barRank {
+  font-family: "Inter", system-ui, sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+  flex-shrink: 0;
+  width: 24px;
+}
+
+.barName {
+  font-family: "Inter", system-ui, sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.barMeta {
+  font-family: "Inter", system-ui, sans-serif;
+  font-size: 11px;
+  color: var(--muted);
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.barTrackWrap {
+  position: relative;
+}
+
+.barTrack {
+  display: flex;
+  height: 26px;
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--border);
+}
+
+.barTooltip {
+  position: absolute;
+  left: 0;
+  top: 0;
+  max-width: 170px;
+  background: var(--text);
+  color: var(--white);
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-family: "Inter", system-ui, sans-serif;
+  font-size: 12px;
+  line-height: 1.35;
+  white-space: normal;
+  pointer-events: none;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 6px 18px rgb(var(--black-rgb) / 0.2);
+}
+
+.barTooltipCenter {
+  transform: translate(-50%, -110%);
+}
+
+.barTooltipStart {
+  transform: translate(0, -110%);
+}
+
+.barTooltipEnd {
+  transform: translate(-100%, -110%);
+}
+
+.barTooltipDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.barSegment {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  min-width: 2px;
+}
+
+.barSpacer {
+  height: 100%;
+}
+
+.barCenterline {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 2px;
+  background: var(--text);
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+.barAxis {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+  font-family: "Inter", system-ui, sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.barList > .barAxis {
+  grid-column: 2;
+}
+
+@media (max-width: 720px) {
+  .barList > .barAxis {
+    grid-column: 1;
+  }
+}
+
+.barSegmentValue {
+  font-family: "Inter", system-ui, sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--white);
+  text-shadow: 0 1px 2px rgb(var(--black-rgb) / 0.35);
+}
+
+@media (max-width: 720px) {
+  .barList {
+    grid-template-columns: 1fr;
+    row-gap: 4px;
+  }
+  .barRow {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    column-gap: 8px;
+    row-gap: 4px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .barLabel {
+    order: 1;
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+  .barTrackWrap {
+    order: 3;
+    flex: 1 1 100%;
+  }
+}
+
+/* The demo bar's label ("Global average" + a long n/moe meta string) is
+   wider than a typical list row, so its grid column can't shrink below
+   its content width even with the 220px minimum, breaking the layout
+   before the general 720px breakpoint kicks in. Switch it to the same
+   stacked flex layout early, at 900px. */
+@media (max-width: 900px) {
+  .globalBar.barList {
+    grid-template-columns: 1fr;
+    row-gap: 4px;
+  }
+  .globalBar .barRow {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    column-gap: 8px;
+    row-gap: 4px;
+  }
+  .globalBar .barLabel {
+    order: 1;
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+  .globalBar .barTrackWrap {
+    order: 3;
+    flex: 1 1 100%;
+  }
+}
+
+/* ---- Explorer controls ---- */
+
+.explorerControls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 24px;
+  align-items: flex-end;
+}
+
+.filterGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.filterGroup label {
+  font-family: "Inter", system-ui, sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.filterGroup input[type="text"] {
+  box-sizing: border-box;
+  height: 44px;
+  font-family: "Inter", system-ui, sans-serif;
+  font-size: 14px;
+  padding: 0 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  min-width: 220px;
+}
+
+.filterGroup input[type="text"]:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+/* ---- Bespoke dropdown ---- */
+
+.dropdown {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.dropdownLabel {
+  font-family: "Inter", system-ui, sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.dropdownTrigger {
+  box-sizing: border-box;
+  height: 44px;
+  min-width: 240px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 14px 0 12px;
+  font-family: "Inter", system-ui, sans-serif;
+  font-size: 14px;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.dropdownTrigger:hover {
+  background: var(--surface-2);
+}
+
+.dropdownTrigger:focus-visible,
+.dropdownTrigger[aria-expanded="true"] {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.dropdownTrigger span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dropdownCaret {
+  width: 11px;
+  height: 7px;
+  flex-shrink: 0;
+  color: var(--text-secondary);
+  transition: transform 0.15s;
+}
+
+.dropdownTrigger[aria-expanded="true"] .dropdownCaret {
+  transform: rotate(180deg);
+  color: var(--accent);
+}
+
+.dropdownMenu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 20;
+  min-width: 100%;
+  max-height: 320px;
+  overflow-y: auto;
+  margin: 0;
+  padding: 6px;
+  list-style: none;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 12px 32px var(--shadow-strong);
+}
+
+.dropdownOption {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 10px;
+  border-radius: 6px;
+  font-family: "Inter", system-ui, sans-serif;
+  font-size: 14px;
+  color: var(--text);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.dropdownOption.active {
+  background: var(--accent-bg);
+}
+
+.dropdownOption.selected {
+  font-weight: 600;
+  color: var(--accent-strong);
+}
+
+.dropdownCheck {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  color: var(--accent);
+}
+
+.filterSearch input {
+  min-width: 200px;
+}
+
+.filterCheckbox {
+  justify-content: flex-end;
+}
+
+.filterCheckbox label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: "Inter", system-ui, sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding-bottom: 10px;
+}
+
+.filterCheckbox input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  min-width: 0;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.empty {
+  font-family: "Inter", system-ui, sans-serif;
+  color: var(--muted);
+  padding: 24px 0;
+}
+
+/* ---- Tabs (demographics) ---- */
+
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.tab {
+  font-family: "Inter", system-ui, sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 16px;
+  border-radius: 999px;
+  border: 1.5px solid var(--border-strong);
+  background: var(--surface);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition:
+    border-color 0.15s,
+    color 0.15s,
+    background 0.15s;
+}
+
+.tab:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.tab.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--white);
+}
+
+/* ---- World map ---- */
+
+.map {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.mapControls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.mapMetricGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.mapMetricGroupLabel {
+  font-family: "Inter", system-ui, sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.mapMetricGroupButtons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.mapMetricBtn {
+  font-family: "Inter", system-ui, sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1.5px solid var(--border-strong);
+  background: var(--surface);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition:
+    border-color 0.15s,
+    color 0.15s;
+}
+
+.mapMetricBtn:hover {
+  border-color: var(--accent);
+}
+
+.mapMetricBtn.active {
+  background: var(--surface);
+  font-weight: 700;
+}
+
+.mapCanvas {
+  position: relative;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.mapCanvas svg {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 12px;
+}
+
+.mapLoading {
+  padding: 120px 0;
+  text-align: center;
+  font-family: "Inter", system-ui, sans-serif;
+  color: var(--muted);
+}
+
+.mapCountry {
+  stroke: var(--surface);
+  stroke-width: 0.5;
+  cursor: pointer;
+  transition: opacity 0.1s;
+}
+
+.mapCountry:hover {
+  opacity: 0.8;
+  stroke: var(--text);
+  stroke-width: 1;
+}
+
+.mapCountryNodata {
+  cursor: default;
+}
+
+.mapCountryNodata:hover {
+  opacity: 1;
+  stroke: var(--surface);
+  stroke-width: 0.5;
+}
+
+/* stroke, not outline: CSS outline always draws a bounding-box rectangle
+   on an SVG path (it isn't shape-aware), which looks like a stray blue
+   square over an irregular country shape. stroke follows the actual path
+   outline instead, so it's used for focus too, matching the "selected"
+   look below. Zero out plain :focus as well - some browsers paint the
+   native ring there rather than (or in addition to) :focus-visible for a
+   tabindex'd, non-form element like an SVG path. */
+.mapCountry:focus {
+  outline: none;
+}
+
+.mapCountry:focus-visible {
+  outline: none;
+  stroke: var(--accent-strong);
+  stroke-width: 2;
+}
+
+.mapSelectionOutline {
+  pointer-events: none;
+}
+
+.mapSelectionOutlineHalo,
+.mapSelectionOutlineLine {
+  fill: none;
+  stroke-linejoin: round;
+}
+
+.mapSelectionOutlineHalo {
+  stroke: var(--surface);
+  stroke-width: 5;
+}
+
+.mapSelectionOutlineLine {
+  stroke: var(--accent-strong);
+  stroke-width: 2;
+}
+
+/* Static panel, click/tap-pinned rather than hover-positioned, so it works
+   on touch and stays put for comparing countries without chasing the
+   cursor. Reserves its own space at a min-height regardless of state so
+   selecting a country doesn't jump the page layout. */
+.mapPanel {
+  position: relative;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 16px;
+  font-family: "Inter", system-ui, sans-serif;
+  font-size: 12px;
+  min-height: 64px;
+}
+
+.mapPanelPlaceholder {
+  display: flex;
+  align-items: center;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+/* Bar variant (desktop) vs. detail-list variant (mobile) - see the two
+   blocks in WorldMap.tsx. Mobile-first default, switched at the same
+   720px breakpoint the rest of this page collapses the bar list at. */
+.mapPanelBar {
+  display: none;
+}
+
+.mapPanelDetail {
+  display: block;
+}
+
+@media (min-width: 721px) {
+  .mapPanelBar {
+    display: block;
+  }
+  .mapPanelDetail {
+    display: none;
+  }
+}
+
+.mapPanelBar .barList {
+  padding-right: 28px;
+}
+
+.mapPanelClose {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  border-radius: 6px;
+}
+
+.mapPanelClose:hover {
+  background: var(--border);
+  color: var(--text);
+}
+
+.mapPanelTitle {
+  font-weight: 700;
+  font-size: 14px;
+  margin-bottom: 2px;
+  padding-right: 24px;
+}
+
+.mapPanelRegion {
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+
+.mapPanelList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-width: 320px;
+}
+
+.mapPanelList li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.mapPanelDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.mapPanelLabel {
+  flex: 1;
+}
+
+.mapPanelValue {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.mapPanelList li.mapPanelGroup {
+  display: flex;
+  align-items: stretch;
+  gap: 6px;
+}
+
+.mapPanelGroupItems {
+  flex: 1;
+  min-width: 0;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* A plain (non-replaced) box is what actually gets stretched reliably by
+   align-items:stretch - the svg just fills it via inset, rather than being
+   the stretched flex item itself, since replaced elements with an
+   intrinsic aspect ratio (like an svg with a viewBox) don't stretch the
+   same way in every browser. */
+.mapPanelBraceBox {
+  position: relative;
+  width: 8px;
+  flex-shrink: 0;
+  color: var(--border-strong);
+}
+
+.mapPanelBraceBox svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.mapPanelTotal {
+  flex: 0 0 44px;
+  align-self: center;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  line-height: 1.2;
+}
+
+.mapPanelTotalLabel {
+  font-size: 10px;
+  color: var(--muted);
+}
+
+.mapPanelTotalValue {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.mapLegend {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  font-family: "Inter", system-ui, sans-serif;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.mapLegendLabel {
+  font-weight: 600;
+}
+
+.mapLegendScale {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mapLegendGradient {
+  width: 140px;
+  height: 10px;
+  border-radius: 999px;
+}
+
+.mapLegendNodata {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+}
+
+.mapLegendNodata i {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--border);
+  font-style: normal;
+}
+
+.methodology p {
+  font-family: "Inter", system-ui, sans-serif;
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--text-secondary);
+  max-width: 760px;
+  margin-bottom: 12px;
+}
+
+.methodology a {
+  color: var(--accent);
+}
+
+@media (max-width: 720px) {
+  .statsInner {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* ---- Vertical diverging bar (global average, "The question asked") ---- */
+
+.vbar {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  max-width: 560px;
+  width: 100%;
+  margin: 24px 0 0;
+}
+
+.vbarAxisLabel {
+  font-family: "Inter", system-ui, sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+/* Track (fixed, shrinks a bit on a small screen via clamp()) and the
+   label column (flexible, takes whatever's left) side by side. Because
+   the label column's width is fluid rather than a fixed px value, label
+   positions/widths below are all %s against it - the same markup scales
+   down to a phone instead of needing a separate mobile layout. */
+.vbarBody {
+  display: flex;
+  align-items: stretch;
+  gap: 14px;
+  width: 100%;
+}
+
+.vbarTrackWrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.vbarTrack {
+  display: flex;
+  flex-direction: column;
+  width: clamp(68px, 22vw, 120px);
+  height: clamp(220px, 68vw, 320px);
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--border);
+}
+
+.vbarSegment {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 2px;
+}
+
+/* Marks the start of a new group in the stack (not sure / as quickly as
+   possible), separating it from the "slow or stop" cluster above with a
+   sliver of the track's own background showing through. */
+.vbarSegmentGapBefore {
+  margin-top: 6px;
+}
+
+.vbarSegmentValue {
+  font-family: "Inter", system-ui, sans-serif;
+  font-size: clamp(12px, 3.4vw, 16px);
+  font-weight: 700;
+  color: var(--white);
+  text-shadow: 0 1px 2px rgb(var(--black-rgb) / 0.35);
+}
+
+.vbarLabels {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.vbarLabelItem {
+  position: absolute;
+  left: 0;
+  width: 58%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-family: "Inter", system-ui, sans-serif;
+  font-size: clamp(10.5px, 2.6vw, 12px);
+  line-height: 1.25;
+  color: var(--text-secondary);
+}
+
+.vbarLabelTick {
+  width: 9px;
+  height: 2px;
+  flex-shrink: 0;
+}
+
+.vbarLabelText strong {
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Braces the "slow or stop" cluster (stop + pause + oversight) together
+   with its combined total - same visual language as the map's tooltip
+   panel (.mapPanelBraceBox) for the same three-option grouping. */
+.vbarBrace {
+  position: absolute;
+  left: 62%;
+  right: 0;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.vbarBraceSvgBox {
+  position: relative;
+  width: 9px;
+  height: 100%;
+  flex-shrink: 0;
+  color: var(--muted);
+}
+
+.vbarBraceSvgBox svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.vbarBraceTotal {
+  font-family: "Inter", system-ui, sans-serif;
+  font-size: clamp(10.5px, 2.6vw, 12px);
+  line-height: 1.25;
+  color: var(--text-secondary);
+}
+
+.vbarBraceTotal strong {
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.vbarMeta {
+  font-family: "Inter", system-ui, sans-serif;
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 4px;
+}

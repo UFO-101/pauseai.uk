@@ -1,6 +1,6 @@
 import { copy } from "@/lib/content/email-your-mp";
 import type { Mp } from "@/lib/email-your-mp";
-import styles from "./EmailYourMp.module.css";
+import styles from "./MpCard.module.css";
 
 /** The sender's MP, as a card like the campaign's documents: who, where, then their email. */
 export default function MpCard({ mp }: { mp: Mp }) {

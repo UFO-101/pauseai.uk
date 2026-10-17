@@ -1,0 +1,103 @@
+/* A flyering race: a bar per team or stall, the race count and the count since. */
+
+.page {
+  padding: 40px 0 72px;
+}
+.title {
+  margin: 0 0 8px;
+  font-size: clamp(2rem, 4vw, 2.75rem);
+  line-height: 1.1;
+}
+.lede {
+  margin: 0 0 24px;
+  max-width: 60ch;
+  color: var(--text-secondary);
+}
+.banner {
+  max-width: 640px;
+  margin: 0 0 24px;
+  padding: 20px 24px;
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+.total {
+  margin: 0 0 16px;
+  font-size: 1.25rem;
+}
+.total strong {
+  font-size: 2.5rem;
+}
+.list {
+  display: grid;
+  gap: 12px;
+  max-width: 640px;
+  margin: 0 0 24px;
+  padding: 0;
+  list-style: none;
+}
+.row {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  overflow: hidden;
+}
+.bar {
+  position: absolute;
+  inset: 0 auto 0 0;
+  z-index: 0;
+} /* The race count, with the afterwards count stacked on the end (a longer bar drawn behind it). */
+.barDuring {
+  background: var(--accent-light);
+}
+.barAfter {
+  background: color-mix(in srgb, var(--accent-light) 40%, transparent);
+}
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  margin: 0 0 12px;
+  color: var(--text-secondary);
+}
+.swatch {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 1px solid var(--border-strong);
+  border-radius: 4px;
+}
+.legend .swatch:nth-of-type(2) {
+  margin-left: 12px;
+} /* Above the bar, so the bar tints the row without dimming the text. */
+.name,
+.count {
+  position: relative;
+  z-index: 1;
+  font-weight: 600;
+}
+.split {
+  margin-right: 10px;
+  font-size: 0.875rem;
+  font-weight: 400;
+  color: var(--text-secondary);
+}
+.count {
+  font-size: 1.25rem;
+  font-variant-numeric: tabular-nums;
+}
+.note {
+  max-width: 60ch;
+  color: var(--text-secondary);
+}
+.error {
+  color: var(--text-secondary);
+}

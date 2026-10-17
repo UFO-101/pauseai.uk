@@ -22,7 +22,10 @@ import { hydrated } from "./settle";
 // without a lookup or a letter" pictures that once, and the ZZ99ZZ flow
 // pictures them filled in.
 const EMPTY_STEP = /^\/campaigns\/[^/]+\/(write|preview)$/;
-const PUBLIC_ROUTES = ROUTES.filter((route) => !isStaffRoute(route) && !EMPTY_STEP.test(route));
+// The component gallery has its own section, gallery.spec.ts, which pictures
+// its index and every group's page and checks them the same way.
+const GALLERY = /^\/gallery(\/|$)/;
+const PUBLIC_ROUTES = ROUTES.filter((route) => !isStaffRoute(route) && !EMPTY_STEP.test(route) && !GALLERY.test(route));
 
 // Matched against the message text. Kept deliberately short — every entry here
 // is a thing we have decided not to look at, so it should have a reason.

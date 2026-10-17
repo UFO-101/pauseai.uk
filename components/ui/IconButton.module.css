@@ -1,0 +1,55 @@
+/* A round button with an icon in it. Its diameter is --icon-button-size. */
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: var(--icon-button-size, 32px);
+  height: var(--icon-button-size, 32px);
+  padding: 0;
+  border-radius: 50%;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.button svg {
+  display: block;
+}
+
+.outline {
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-secondary);
+  transition:
+    background 0.15s,
+    color 0.15s,
+    border-color 0.15s;
+}
+
+.outline:hover {
+  background: var(--accent-light);
+  color: var(--accent-strong);
+  border-color: var(--accent-light);
+}
+
+.raised {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 24px;
+  box-shadow: 0 1px 3px var(--shadow);
+}
+
+.dark {
+  background: rgb(var(--white-rgb) / 0.06);
+  color: var(--white);
+  border: 1px solid rgb(var(--white-rgb) / 0.15);
+  font-size: 28px;
+  font-family: inherit;
+  transition: background 0.15s ease;
+}
+
+.dark:hover {
+  background: rgb(var(--white-rgb) / 0.14);
+}

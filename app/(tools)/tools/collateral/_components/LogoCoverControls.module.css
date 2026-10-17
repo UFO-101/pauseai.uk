@@ -1,0 +1,7 @@
+/* The Luma cover's options, under the format picker. */
+
+.logoCover {
+  display: grid;
+  gap: 10px;
+  margin-top: 16px;
+}

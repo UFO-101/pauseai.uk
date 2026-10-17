@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { PNG } from "pngjs";
 import { readdirSync } from "node:fs";
-import { comparePngs, pairRuns, SECTION_ORDER, sortRuns, type FlowRun, type RunManifest } from "./frames";
+import { carryRuns, comparePngs, pairRuns, SECTION_ORDER, sortRuns, type FlowRun, type RunManifest } from "./frames";
 import { renderStoryboardPage } from "./page";
 
 const run = (flow: string, captions: string[], extra: Partial<FlowRun> = {}): FlowRun => ({
@@ -17,7 +17,7 @@ const run = (flow: string, captions: string[], extra: Partial<FlowRun> = {}): Fl
   ...extra,
 });
 
-const same = () => ({ mismatch: 0 });
+const same = () => ({ mismatch: 0, noise: false });
 
 describe("pairRuns", () => {
   it("pairs frames by section, flow and caption, and counts what changed", () => {
@@ -28,12 +28,18 @@ describe("pairRuns", () => {
       frames: [run("login", ["form", "old step", "sent"]), run("letters", ["list"], { viewport: "phone", line: 2 })],
     };
     const compared: string[] = [];
-    const board = pairRuns(branch, main, (b, m, name) => {
-      compared.push(name);
-      return m.endsWith("1.png") ? { mismatch: 0 } : { mismatch: 0.25, diff: `diff/${name}.png` };
+    const board = pairRuns(branch, main, (b, m, name, viewport) => {
+      compared.push(`${name} ${viewport}`);
+      return m.endsWith("1.png")
+        ? { mismatch: 0, noise: false }
+        : { mismatch: 0.25, noise: false, diff: `diff/${name}.png` };
     });
 
-    expect(compared).toEqual(["staff-desktop-login-1", "staff-desktop-login-2", "staff-phone-letters-1"]);
+    expect(compared).toEqual([
+      "staff-desktop-login-1 desktop",
+      "staff-desktop-login-2 desktop",
+      "staff-phone-letters-1 phone",
+    ]);
     expect(board.withMain).toBe(true);
     expect(board.frames.map((f) => [f.flow, f.index, f.caption, f.changed, f.mismatch, f.main !== undefined])).toEqual([
       ["login", 1, "form", false, 0, true],
@@ -85,9 +91,20 @@ describe("pairRuns", () => {
     ]);
   });
 
+  it("keeps a frame that differs only by noise as unchanged, marked noise", () => {
+    const board = pairRuns({ frames: [run("login", ["form"])] }, { frames: [run("login", ["form"])] }, () => ({
+      mismatch: 0.001,
+      noise: true,
+      diff: "diff/x.png",
+    }));
+    expect(board.frames[0]).toMatchObject({ changed: false, noise: true, mismatch: 0.001, diff: "diff/x.png" });
+    expect(board.summary.changed).toBe(0);
+  });
+
   it("pairs a repeated caption with the next one of the same name", () => {
     const board = pairRuns({ frames: [run("f", ["x", "x"])] }, { frames: [run("f", ["x", "x"])] }, (b, m) => ({
       mismatch: b === m ? 0 : 1,
+      noise: false,
     }));
     expect(board.frames.map((f) => f.mismatch)).toEqual([0, 0]);
   });
@@ -145,6 +162,39 @@ describe("sortRuns", () => {
   });
 });
 
+describe("carryRuns", () => {
+  it("puts a partial run's flows on top of the last run's, each replacing its namesake", () => {
+    const previous = {
+      frames: [
+        { ...run("login", ["form"]), shotAt: "1" },
+        { ...run("letters", ["list"]), shotAt: "1" },
+      ],
+    };
+    const fresh = { frames: [{ ...run("login", ["form", "sent"]), shotAt: "2" }] };
+    expect(carryRuns(previous, fresh).frames.map((r) => [r.flow, r.frames.length, r.shotAt])).toEqual([
+      ["letters", 1, "1"],
+      ["login", 2, "2"],
+    ]);
+  });
+
+  it("keeps the flows pairRuns tells apart by viewport", () => {
+    const previous = { frames: [run("login", ["form"], { viewport: "phone" })] };
+    const fresh = { frames: [run("login", ["form"])] };
+    expect(carryRuns(previous, fresh).frames.map((r) => r.viewport)).toEqual(["phone", "desktop"]);
+  });
+});
+
+describe("pairRuns and when flows were shot", () => {
+  it("passes each flow's shot time on to the page", () => {
+    const board = pairRuns(
+      { frames: [{ ...run("login", ["form"]), shotAt: "2026-10-17T08:00:00.000Z" }] },
+      undefined,
+      same,
+    );
+    expect(board.flows[0].shotAt).toBe("2026-10-17T08:00:00.000Z");
+  });
+});
+
 describe("comparePngs", () => {
   let dir = "";
   beforeEach(() => (dir = mkdtempSync(join(tmpdir(), "storyboard-"))));
@@ -166,7 +216,7 @@ describe("comparePngs", () => {
   it("says identical pictures match, and writes no diff", () => {
     const a = png("a.png", 10, 10, () => 200);
     const b = png("b.png", 10, 10, () => 200);
-    expect(comparePngs(a, b, join(dir, "diff.png"))).toEqual({ mismatch: 0 });
+    expect(comparePngs(a, b, join(dir, "diff.png"))).toEqual({ mismatch: 0, pixels: 0, noise: false });
     expect(() => readFileSync(join(dir, "diff.png"))).toThrow();
   });
 
@@ -178,6 +228,35 @@ describe("comparePngs", () => {
     expect(result.diff).toBe(join(dir, "diff.png"));
     expect(result.mismatch).toBeCloseTo(0.5, 2);
     expect(PNG.sync.read(readFileSync(join(dir, "diff.png"))).height).toBe(20);
+    expect(result.noise).toBe(false);
+  });
+
+  it("doesn't count a channel moving by 4 levels or less", () => {
+    const a = png("a.png", 10, 10, () => 200);
+    const b = png("b.png", 10, 10, () => 204);
+    expect(comparePngs(a, b, join(dir, "diff.png"))).toEqual({ mismatch: 0, pixels: 0, noise: false });
+  });
+
+  it("calls antialiasing-sized differences noise, and marks them red in the diff", () => {
+    const a = png("a.png", 100, 100, () => 255);
+    // Ten pixels a little darker: a total of 10 × 60, well under the limit.
+    const b = png("b.png", 100, 100, (x, y) => (y === 0 && x < 10 ? 195 : 255));
+    const result = comparePngs(a, b, join(dir, "diff.png"));
+    expect(result).toMatchObject({ pixels: 10, noise: true });
+    const diff = PNG.sync.read(readFileSync(result.diff!));
+    expect([...diff.data.subarray(0, 4)]).toEqual([255, 0, 0, 255]);
+    expect([...diff.data.subarray(40, 44)]).toEqual([255, 255, 255, 255]);
+  });
+
+  it("counts a difference past either limit as a change, the limits scaled by the pixel ratio", () => {
+    const a = png("a.png", 100, 100, () => 255);
+    // 40 pixels moving 255 levels: a total of 10,200, past 2,000 at 1×, within 18,000 at 3×.
+    const total = png("total.png", 100, 100, (x, y) => (y === 0 && x < 40 ? 0 : 255));
+    expect(comparePngs(a, total, join(dir, "1.png")).noise).toBe(false);
+    expect(comparePngs(a, total, join(dir, "2.png"), 3).noise).toBe(true);
+    // 1,100 pixels moving 1 level past the floor each: a small total, but too many pixels.
+    const wide = png("wide.png", 100, 100, (x, y) => (y < 11 ? 250 : 255));
+    expect(comparePngs(a, wide, join(dir, "3.png")).noise).toBe(false);
   });
 });
 

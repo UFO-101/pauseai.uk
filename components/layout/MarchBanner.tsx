@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSyncExternalStore } from "react";
 import { isMarchPromoted, march } from "@/lib/content/march";
+import styles from "./MarchBanner.module.css";
 
 /** The date only matters once per page load, so there's nothing to subscribe to. */
 function noSubscription() {
@@ -26,13 +27,13 @@ export default function MarchBanner() {
   if (!promoted || onMarchPage) return null;
 
   return (
-    <aside className="march-banner" aria-label={march.name}>
-      <div className="march-banner-inner">
-        <Link href={`${march.path}/`} className="march-banner-link">
-          <span className="march-banner-when">Sat 21 Nov · London</span>
-          <span className="march-banner-name">{march.name}</span>
+    <aside className={styles.banner} aria-label={march.name}>
+      <div className={styles.inner}>
+        <Link href={`${march.path}/`} className={styles.link}>
+          <span className={styles.when}>Sat 21 Nov · London</span>
+          <span className={styles.name}>{march.name}</span>
         </Link>
-        <a href={march.lumaUrl} className="march-banner-register">
+        <a href={march.lumaUrl} className={styles.register}>
           Register &rarr;
         </a>
       </div>

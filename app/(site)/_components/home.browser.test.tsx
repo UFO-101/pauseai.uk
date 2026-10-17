@@ -16,6 +16,7 @@ import PressMarquee, { NewsRow } from "./PressMarquee";
 import ShopBanner from "./ShopBanner";
 import StaffSection from "./StaffSection";
 import UpcomingEvents from "./UpcomingEvents";
+import { exampleEvent } from "./UpcomingEvents.examples";
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -25,12 +26,9 @@ describe("HomeHero", () => {
   it("shows every photo once in three scrolling rows, each row twice", async () => {
     const { container } = await render(<HomeHero />);
     expect(container.querySelector("h1")?.textContent).toBe("Organising forour future");
-    const rows = container.querySelectorAll(".hero-marquee-row");
-    expect([...rows].map((r) => r.className)).toEqual([
-      "hero-marquee-row hero-marquee-row--ltr",
-      "hero-marquee-row hero-marquee-row--rtl",
-      "hero-marquee-row hero-marquee-row--ltr",
-    ]);
+    // Three rows, the middle one scrolling the other way.
+    const tracks = [...container.querySelectorAll<HTMLElement>("[data-marquee-track]")];
+    expect(tracks.map((t) => getComputedStyle(t).animationDirection)).toEqual(["normal", "reverse", "normal"]);
     // Each photo's alt text appears once; the repeats are hidden from screen readers.
     const described = [...container.querySelectorAll("img")].map((img) => img.getAttribute("alt")).filter(Boolean);
     expect(described.sort()).toEqual(HERO_PHOTOS.map(([, alt]) => alt).sort());
@@ -43,9 +41,7 @@ describe("HomeHero", () => {
 
 describe("home page sections", () => {
   it("lists the upcoming events with a link to the calendar", async () => {
-    await render(
-      <UpcomingEvents events={[{ event: { url: "evt", name: "A meetup", start_at: "2030-01-01T18:00:00Z" } }]} />,
-    );
+    await render(<UpcomingEvents events={[exampleEvent]} />);
     await expect.element(page.getByRole("heading", { name: "Upcoming events" })).toBeVisible();
     await expect.element(page.getByText("A meetup")).toBeVisible();
     await expect
@@ -55,11 +51,12 @@ describe("home page sections", () => {
 
   it("scrolls the press logos, with the second copy hidden from screen readers", async () => {
     const { container } = await render(<PressMarquee />);
-    expect(container.querySelectorAll(".news-marquee-row")).toHaveLength(5);
-    expect(container.querySelectorAll(".news-marquee-row--reverse")).toHaveLength(2);
+    const tracks = [...container.querySelectorAll("[data-marquee-track]")];
+    expect(tracks).toHaveLength(5);
+    expect(tracks.filter((t) => getComputedStyle(t).animationDirection === "reverse")).toHaveLength(2);
     // At this narrow test width the desktop rows are hidden by CSS, so look in the DOM.
     const first = newsRow1[0];
-    const link = [...container.querySelectorAll("a.news-marquee-item")].find(
+    const link = [...container.querySelectorAll("[data-marquee-track] a")].find(
       (a) => a.getAttribute("aria-label") === `${first.outlet}: ${first.title}`,
     );
     expect(link?.getAttribute("href")).toBe(first.url);
@@ -82,12 +79,12 @@ describe("home page sections", () => {
       { outlet: "Html", title: "C", medium: "Article", url: "https://c.example", logoHtml: "<b>Html</b>" },
     ];
     const { container } = await render(<NewsRow items={items} />);
-    const imgs = container.querySelectorAll(".news-marquee-copy:first-child img");
+    const imgs = container.querySelectorAll("[data-marquee-copy]:first-child img");
     expect([imgs[0].getAttribute("width"), imgs[0].getAttribute("height")]).toEqual(["100", "44"]);
     expect((imgs[0] as HTMLElement).style.getPropertyValue("--logo-h")).toBe("");
     expect((imgs[1] as HTMLElement).style.getPropertyValue("--logo-h")).toBe("30");
-    expect(container.querySelector(".news-marquee-copy:first-child b")?.textContent).toBe("Html");
-    expect(container.querySelector(".news-marquee-row--reverse")).toBeNull();
+    expect(container.querySelector("[data-marquee-copy]:first-child b")?.textContent).toBe("Html");
+    expect(getComputedStyle(container.querySelector("[data-marquee-track]")!).animationDirection).toBe("normal");
     // The second copy can't be tabbed into.
     expect(
       [...container.querySelectorAll('[aria-hidden="true"] a')].every((a) => a.getAttribute("tabindex") === "-1"),
@@ -135,9 +132,9 @@ describe("home page sections", () => {
   it("introduces the staff, and links to the jobs page", async () => {
     const { container } = await render(<StaffSection />);
     for (const member of staff) await expect.element(page.getByRole("heading", { name: member.name })).toBeVisible();
-    expect((container.querySelector(".avatar") as HTMLElement).style.backgroundImage).toContain(
-      encodeURI(staff[0].imageSrc).replace(/\(/g, "%28").replace(/\)/g, "%29").slice(0, 10),
-    );
+    expect(
+      (container.querySelector("article [style*='background-image']") as HTMLElement).style.backgroundImage,
+    ).toContain(encodeURI(staff[0].imageSrc).replace(/\(/g, "%28").replace(/\)/g, "%29").slice(0, 10));
     await expect.element(page.getByRole("link", { name: "We’re hiring →" })).toHaveAttribute("href", "/jobs");
   });
 });

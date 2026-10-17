@@ -9,6 +9,7 @@ import { MAX_QR_CODES } from "@/lib/collateral/qr";
 import { THEMES } from "@/lib/collateral/themes";
 import { canvasFile } from "@/tests/browser/qr-images";
 import DesignControls from "./DesignControls";
+import { exampleEvent } from "./DesignControls.examples";
 import { designQrCodes, designValues, newDesign, withQrCodes, type DesignState } from "./designState";
 
 // Library photos that fail to load, which the real ones never do.
@@ -25,13 +26,7 @@ afterEach(() => {
   failImage.on = false;
 });
 
-const event: CalendarEvent = {
-  id: "evt123",
-  name: "Letter writing",
-  startAt: "2030-03-02T18:00:00Z",
-  venue: "Hall, Leeds",
-  city: "Leeds",
-};
+const event = exampleEvent;
 
 function Harness(props: {
   initial?: DesignState;

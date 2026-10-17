@@ -16,7 +16,17 @@ import { qrShape, qrSvg } from "@/lib/collateral/qrShape";
 import { loadDataUrl } from "@/lib/collateral/render";
 import { INK } from "@/lib/collateral/themes";
 import QrScanner from "./QrScanner";
-import { Button } from "@/components/ui/Button";
+import { FieldError, FieldLabel, FormButton, TextInput, Toggle } from "../../collateral/_components/kit/Fields";
+import { Hint, Message } from "../../collateral/_components/kit/Notes";
+import {
+  ControlsColumn,
+  ControlsSection,
+  Loading,
+  PreviewColumn,
+  PreviewMeta,
+  Studio,
+} from "../../collateral/_components/kit/Studio";
+import styles from "./QrGenerator.module.css";
 
 /** Big enough for print and slides. The SVG covers anything larger. */
 const PNG_SIZE = 2048;
@@ -200,34 +210,32 @@ export default function QrGenerator() {
   const invalid = url.trim() !== "" && !valid;
 
   return (
-    <div className="collateral-studio is-qr">
-      <div className="collateral-preview">
-        <div className="collateral-qr-preview">
+    <Studio pinned={false}>
+      <PreviewColumn>
+        <div className={styles.preview}>
           {preview ? (
             // eslint-disable-next-line @next/next/no-img-element -- generated SVG data URL, not a file next/image can optimise
-            <img src={preview.src} alt={`QR code for ${target}`} className="collateral-qr-image" />
+            <img src={preview.src} alt={`QR code for ${target}`} className={styles.image} />
           ) : (
-            <p className="collateral-loading">
+            <Loading>
               {invalid ? "Check the web address to see the code." : "Type a web address to make a QR code."}
-            </p>
+            </Loading>
           )}
         </div>
         {preview && (
-          <p className="collateral-preview-meta">
+          <PreviewMeta>
             Opens{" "}
             <a href={target} target="_blank" rel="noopener noreferrer">
               {target}
             </a>
-          </p>
+          </PreviewMeta>
         )}
-      </div>
+      </PreviewColumn>
 
-      <div className="collateral-controls">
-        <section>
-          <label className="collateral-label" htmlFor="qr-url">
-            Web address
-          </label>
-          <input
+      <ControlsColumn>
+        <ControlsSection>
+          <FieldLabel htmlFor="qr-url">Web address</FieldLabel>
+          <TextInput
             id="qr-url"
             type="text"
             inputMode="url"
@@ -243,13 +251,13 @@ export default function QrGenerator() {
             }}
           />
           {invalid && (
-            <p id="qr-url-error" className="collateral-field-error">
+            <FieldError id="qr-url-error">
               That does not look like a web address. Try something like pauseai.uk/join.
-            </p>
+            </FieldError>
           )}
           <QrScanner onResult={onScan} />
           {scanned !== null && (
-            <p className="collateral-field-error" role="status">
+            <FieldError status>
               That code does not hold a web address
               {scanned ? (
                 <>
@@ -258,25 +266,20 @@ export default function QrGenerator() {
               ) : (
                 "."
               )}
-            </p>
+            </FieldError>
           )}
-          <label className="collateral-toggle collateral-qr-logo" htmlFor="qr-logo">
-            <input id="qr-logo" type="checkbox" checked={logo} onChange={(e) => setLogo(e.target.checked)} />
-            Pause symbol in the middle
-          </label>
-          <label className="collateral-toggle" htmlFor="qr-show-link">
-            <input
-              id="qr-show-link"
-              type="checkbox"
-              checked={showLink}
-              onChange={(e) => setShowLink(e.target.checked)}
-            />
+          <div className={styles.logo}>
+            <Toggle id="qr-logo" checked={logo} onChange={setLogo}>
+              Pause symbol in the middle
+            </Toggle>
+          </div>
+          <Toggle id="qr-show-link" checked={showLink} onChange={setShowLink}>
             Show the link under the code
-          </label>
-          <label className="collateral-label" htmlFor="qr-label">
-            Label under the code <span>(optional)</span>
-          </label>
-          <input
+          </Toggle>
+          <FieldLabel htmlFor="qr-label" note="(optional)">
+            Label under the code{" "}
+          </FieldLabel>
+          <TextInput
             id="qr-label"
             type="text"
             autoComplete="off"
@@ -285,39 +288,40 @@ export default function QrGenerator() {
             value={label}
             onChange={(e) => setLabel(e.target.value)}
           />
-        </section>
+        </ControlsSection>
 
-        <section>
-          <div className="collateral-actions">
-            <Button type="button" variant="primary" size="large" onClick={onDownloadPng} disabled={!preview || busy}>
+        <ControlsSection>
+          <div className={styles.actions}>
+            <FormButton
+              type="button"
+              variant="primary"
+              size="large"
+              onClick={onDownloadPng}
+              disabled={!preview || busy}
+            >
               {busy ? "Preparing…" : "Download PNG"}
-            </Button>
-            <Button type="button" variant="ghost" size="large" onClick={onDownloadSvg} disabled={!preview}>
+            </FormButton>
+            <FormButton type="button" variant="ghost" size="large" onClick={onDownloadSvg} disabled={!preview}>
               Download SVG
-            </Button>
+            </FormButton>
             {handoff === "share" && (
-              <Button type="button" variant="ghost" size="large" onClick={onShare} disabled={!preview}>
+              <FormButton type="button" variant="ghost" size="large" onClick={onShare} disabled={!preview}>
                 Share
-              </Button>
+              </FormButton>
             )}
             {handoff === "copy" && (
-              <Button type="button" variant="ghost" size="large" onClick={onCopy} disabled={!preview}>
+              <FormButton type="button" variant="ghost" size="large" onClick={onCopy} disabled={!preview}>
                 Copy image
-              </Button>
+              </FormButton>
             )}
-            {message && (
-              <p className="collateral-message" role="status">
-                {message}
-              </p>
-            )}
+            {message && <Message>{message}</Message>}
           </div>
-          <p className="collateral-hint">SVG is best for print. It stays sharp at any size.</p>
-        </section>
+          <Hint>SVG is best for print. It stays sharp at any size.</Hint>
+        </ControlsSection>
 
         {preview && (
-          <section>
-            <h2>Making sure it scans</h2>
-            <ul className="collateral-tips">
+          <ControlsSection heading="Making sure it scans">
+            <ul className={styles.tips}>
               <li>
                 Print it at least <strong>{qrMinPrintMm(preview.modules)} mm</strong> wide.
               </li>
@@ -325,9 +329,9 @@ export default function QrGenerator() {
               {preview.overflow && <li>The text under the code is too long to fit. Shorten the label or the link.</li>}
               <li>Test it with a phone before you print.</li>
             </ul>
-          </section>
+          </ControlsSection>
         )}
-      </div>
-    </div>
+      </ControlsColumn>
+    </Studio>
   );
 }

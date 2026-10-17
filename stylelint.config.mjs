@@ -22,7 +22,26 @@ const config = {
     "no-descending-specificity": null,
     // CSS Modules' :global().
     "selector-pseudo-class-no-unknown": [true, { ignorePseudoClasses: ["global"] }],
+    // Every colour is a token in styles/tokens.css. An alpha is
+    // rgb(var(--x-rgb) / a), so rgb() itself is allowed with a variable
+    // and refused with numbers.
+    "color-no-hex": true,
+    "color-named": "never",
+    "declaration-property-value-disallowed-list": [
+      { "/.*/": ["/\\b(rgb|hsl)a?\\(\\s*[\\d.]/"] },
+      { message: "Colours are tokens: use one from styles/tokens.css" },
+    ],
   },
+  overrides: [
+    {
+      files: ["styles/tokens.css"],
+      rules: {
+        "color-no-hex": null,
+        "color-named": null,
+        "declaration-property-value-disallowed-list": null,
+      },
+    },
+  ],
 };
 
 export default config;

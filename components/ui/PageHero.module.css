@@ -1,0 +1,107 @@
+/* The title band at the top of a page. Its width is the page's reading
+   measure, so a body set to --measure-page below it shares its left edge. */
+
+.hero {
+  --container-width: var(--measure-page);
+  position: relative;
+  padding: 72px 0 56px;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse 80% 60% at 100% 0%, rgb(var(--pause-orange-rgb) / 0.06), transparent 60%), var(--bg);
+}
+
+/* A page of cards runs wider than a reading column. */
+.wide {
+  --container-width: var(--measure-wide);
+}
+
+.inner {
+  position: relative;
+  z-index: 1;
+}
+
+.swirl {
+  position: absolute;
+  top: -40px;
+  right: -100px;
+  width: 380px;
+  height: 380px;
+  color: var(--pause-orange);
+  opacity: 0.18;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.title {
+  font-family: var(--font-display), "Lato", system-ui, sans-serif;
+  font-weight: 700;
+  font-size: clamp(44px, 6.5vw, 84px);
+  line-height: 0.98;
+  letter-spacing: -0.03em;
+  margin: 6px 0 14px;
+  color: var(--text);
+}
+
+.smallTitle {
+  font-size: clamp(34px, 4.6vw, 56px);
+  text-wrap: pretty;
+}
+
+/* A title with a figure beside it. */
+.heading {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 24px;
+}
+
+.titleWrap {
+  flex: 1;
+  min-width: 0;
+}
+
+.heading .title {
+  margin: 0;
+}
+
+.lede {
+  font-size: clamp(15px, 1.3vw, 18px);
+  line-height: 1.55;
+  color: var(--text-secondary);
+  max-width: 640px;
+  margin: 0;
+}
+
+.longLede {
+  max-width: none;
+  margin-top: 22px;
+}
+
+.lede a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+.lede a:hover {
+  color: var(--pause-orange);
+}
+
+@media (max-width: 860px) {
+  .hero {
+    padding: 56px 0 40px;
+  }
+
+  .swirl {
+    width: 300px;
+    height: 300px;
+    top: -40px;
+    right: -120px;
+  }
+}
+
+/* Less room underneath, at every width. */
+.hero.tight {
+  padding-bottom: 32px;
+}

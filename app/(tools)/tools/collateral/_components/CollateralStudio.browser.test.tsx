@@ -22,7 +22,11 @@ vi.mock("@/lib/collateral/export", async (importActual) => {
   };
 });
 
-beforeEach(() => localStorage.clear());
+beforeEach(async () => {
+  localStorage.clear();
+  // Wide, so the preview sits beside the form rather than pinned over it.
+  await page.viewport(1280, 900);
+});
 afterEach(() => {
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
@@ -53,10 +57,10 @@ async function openFile(container: HTMLElement, file: File) {
 
 describe("CollateralStudio", () => {
   it("shows a live preview with its checks, and downloads a PNG", async () => {
-    const { container } = await render(<CollateralStudio events={[]} />);
+    await render(<CollateralStudio events={[]} />);
     await ready();
-    expect(container.querySelector(".collateral-loading")).toBeNull();
-    expect(container.querySelector(".collateral-checks")?.textContent).toMatch(/^Checks/);
+    await expect.element(page.getByText("Loading…")).not.toBeInTheDocument();
+    expect(page.getByRole("status").element().textContent).toMatch(/^Checks/);
     await page.getByRole("button", { name: "Download PNG" }).click();
     await expect.poll(() => downloads.png.mock.lastCall?.[1]).toBe("pauseai-announcement-ig-square-orange.png");
   });
@@ -99,23 +103,24 @@ describe("CollateralStudio", () => {
   });
 
   it("shows QR codes on a social post once one is added, and opens the title size when it's flagged", async () => {
-    const { container } = await render(<CollateralStudio events={[]} />);
+    await render(<CollateralStudio events={[]} />);
     await ready();
     await page.getByRole("button", { name: "Add a QR code" }).click();
     await expect.element(page.getByRole("checkbox", { name: /Show QR codes on the/ })).toBeChecked();
     // One word as long as the field allows, of the widest letter: it overflows in any font, so the check
     // doesn't depend on text measurement.
     await page.getByLabelText("Headline").fill("W".repeat(90));
-    await expect.poll(() => (container.querySelector(".collateral-title-size") as HTMLDetailsElement).open).toBe(true);
+    await expect.poll(() => page.getByText("Adjust title size").element().closest("details")!.open).toBe(true);
   });
 
   it("lets the photo be dragged, cropped, and starts a new photo's crop afresh", async () => {
-    const { container } = await render(<CollateralStudio events={[]} />);
+    await render(<CollateralStudio events={[]} />);
     await ready();
     await page.getByRole("button", { name: LIBRARY_PHOTOS[0].label }).click();
     await expect.element(page.getByText(/Drag the photo to move it/)).toBeVisible();
-    expect(container.querySelector("canvas")?.className).toBe("is-draggable");
-    container.querySelector("details.collateral-crop")!.setAttribute("open", "");
+    // The cursor says it can be dragged.
+    expect(getComputedStyle(page.getByRole("img", { name: /Preview of/ }).element()).cursor).toBe("grab");
+    page.getByText("Fine-tune the crop").element().closest("details")!.setAttribute("open", "");
     const zoom = page.getByLabelText("Zoom").element() as HTMLInputElement;
     Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!.call(zoom, "2");
     zoom.dispatchEvent(new Event("input", { bubbles: true }));

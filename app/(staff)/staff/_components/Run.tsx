@@ -4,7 +4,8 @@ import type { AnyImportRun, ControlAiImport, MpCheck, MpSync, SignatoryImport } 
 import type { MpProblem } from "@/lib/mp-check";
 import { changeCount, type SyncedMp } from "@/lib/mps";
 import RunBox from "./RunBox";
-import styles from "./staff.module.css";
+import Muted from "./ui/Muted";
+import StaffTable from "./ui/StaffTable";
 
 /** The Server Action that applies or discards a held MP sync. */
 export type Decide = (formData: FormData) => void | Promise<void>;
@@ -108,31 +109,29 @@ function CheckRun({ run, label }: { run: MpCheck } & Common) {
       summary={count === 0 ? staffCopy.check.allGood : staffCopy.check.problems(count)}
     >
       {count > 0 && (
-        <div className={styles.scroll}>
-          <table className={styles.table}>
-            <thead>
-              <tr>
-                <th>{staffCopy.check.columns.constituency}</th>
-                <th>{staffCopy.check.columns.problem}</th>
-                <th>{staffCopy.check.columns.airtable}</th>
-                <th>{staffCopy.check.columns.parliament}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {problems.map((problem) => {
-                const [airtable, parliament] = sides(problem);
-                return (
-                  <tr key={`${problem.constituency} ${problem.kind}`}>
-                    <td>{problem.constituency}</td>
-                    <td>{staffCopy.check.kinds[problem.kind]}</td>
-                    <td>{airtable}</td>
-                    <td>{parliament}</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+        <StaffTable>
+          <thead>
+            <tr>
+              <th>{staffCopy.check.columns.constituency}</th>
+              <th>{staffCopy.check.columns.problem}</th>
+              <th>{staffCopy.check.columns.airtable}</th>
+              <th>{staffCopy.check.columns.parliament}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {problems.map((problem) => {
+              const [airtable, parliament] = sides(problem);
+              return (
+                <tr key={`${problem.constituency} ${problem.kind}`}>
+                  <td>{problem.constituency}</td>
+                  <td>{staffCopy.check.kinds[problem.kind]}</td>
+                  <td>{airtable}</td>
+                  <td>{parliament}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </StaffTable>
       )}
     </RunBox>
   );
@@ -145,29 +144,25 @@ function ControlAiRun({ run, label }: { run: ControlAiImport } & Common) {
   return (
     <RunBox run={run} label={label} summary={staffCopy.controlAi.result(result)} lines={result.problems.length}>
       {result.problems.length > 0 && (
-        <div className={styles.scroll}>
-          <table className={styles.table}>
-            <thead>
-              <tr>
-                <th>{staffCopy.controlAi.columns.name}</th>
-                <th>{staffCopy.controlAi.columns.problem}</th>
+        <StaffTable>
+          <thead>
+            <tr>
+              <th>{staffCopy.controlAi.columns.name}</th>
+              <th>{staffCopy.controlAi.columns.problem}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {result.problems.map((problem) => (
+              <tr key={problem.name}>
+                <td>{problem.name}</td>
+                <td>
+                  {staffCopy.controlAi.kinds[problem.kind]}
+                  {problem.candidates.length > 0 && <Muted> {problem.candidates.join(", ")}</Muted>}
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {result.problems.map((problem) => (
-                <tr key={problem.name}>
-                  <td>{problem.name}</td>
-                  <td>
-                    {staffCopy.controlAi.kinds[problem.kind]}
-                    {problem.candidates.length > 0 && (
-                      <span className={styles.muted}> {problem.candidates.join(", ")}</span>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+            ))}
+          </tbody>
+        </StaffTable>
       )}
     </RunBox>
   );

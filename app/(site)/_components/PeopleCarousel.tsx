@@ -3,6 +3,8 @@
 import { useRef, useState } from "react";
 import type { Person } from "@/lib/content/people";
 import PersonCard from "@/components/people/PersonCard";
+import IconButton from "@/components/ui/IconButton";
+import styles from "./PeopleCarousel.module.css";
 
 // Movement past this many pixels counts as a drag rather than a click, so a
 // drag ending over a card's link/button doesn't also fire that click.
@@ -16,7 +18,7 @@ export default function PeopleCarousel({ people }: { people: Person[] }) {
   // The handlers below only run while the track is mounted, so its ref is set.
   function scrollByCard(direction: 1 | -1) {
     const track = trackRef.current!;
-    const card = track.querySelector<HTMLElement>(".person-card");
+    const card = track.firstElementChild;
     const amount = card ? card.getBoundingClientRect().width + 24 : track.clientWidth;
     track.scrollBy({ left: amount * direction, behavior: "smooth" });
   }
@@ -68,9 +70,9 @@ export default function PeopleCarousel({ people }: { people: Person[] }) {
   }
 
   return (
-    <div className="people-carousel">
+    <div className={styles.carousel}>
       <div
-        className={`people-carousel-track${dragging ? " dragging" : ""}`}
+        className={dragging ? `${styles.track} ${styles.dragging}` : styles.track}
         ref={trackRef}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
@@ -80,25 +82,19 @@ export default function PeopleCarousel({ people }: { people: Person[] }) {
         onClickCapture={handleClickCapture}
       >
         {people.map((person, i) => (
-          <PersonCard key={`${person.name}-${i}`} person={person} truncate />
+          <PersonCard key={`${person.name}-${i}`} person={person} truncate slide />
         ))}
       </div>
-      <button
-        type="button"
-        className="people-carousel-btn people-carousel-btn-prev"
-        aria-label="Previous story"
-        onClick={() => scrollByCard(-1)}
-      >
-        ‹
-      </button>
-      <button
-        type="button"
-        className="people-carousel-btn people-carousel-btn-next"
-        aria-label="Next story"
-        onClick={() => scrollByCard(1)}
-      >
-        ›
-      </button>
+      <div className={`${styles.arrow} ${styles.previous}`}>
+        <IconButton look="raised" size={44} aria-label="Previous story" onClick={() => scrollByCard(-1)}>
+          ‹
+        </IconButton>
+      </div>
+      <div className={`${styles.arrow} ${styles.next}`}>
+        <IconButton look="raised" size={44} aria-label="Next story" onClick={() => scrollByCard(1)}>
+          ›
+        </IconButton>
+      </div>
     </div>
   );
 }

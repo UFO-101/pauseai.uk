@@ -1,0 +1,50 @@
+/* The QR generator's own parts: the code, its download buttons and the
+   tips on making it scan. */
+
+.preview {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
+}
+
+.image {
+  display: block;
+  width: 100%;
+  max-width: 440px;
+  height: auto;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 4px 24px var(--shadow);
+}
+
+.tips {
+  margin: 0;
+  padding-left: 20px;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.tips li + li {
+  margin-top: 6px;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+/* Spaced from the scanner above it; the next checkbox follows straight on. */
+.logo {
+  --toggle-margin: 0;
+
+  margin-top: 14px;
+}
+
+/* A smaller code on phones, so the address field follows it on screen. */
+@media (max-width: 899px) {
+  .image {
+    max-width: 240px;
+  }
+}

@@ -3,7 +3,7 @@ import { BASE, expect, frame, test } from "./fixtures";
 import { hydrated, layoutSettled, scrollSettled } from "./settle";
 
 // In-page scrolling is deliberately all browser behaviour: `scroll-behavior`
-// in globals.css animates it, `scroll-padding-top` on the root keeps the
+// in styles/base.css animates it, `scroll-padding-top` on the root keeps the
 // target clear of the sticky nav, and fragment links stay plain anchor
 // navigation so they set the hash, push one history entry, and move focus
 // themselves. `data-scroll-behavior="smooth"` on <html> makes Next jump
@@ -42,7 +42,7 @@ async function targetOffset(page: Page, id: string): Promise<number> {
 }
 
 async function headerHeight(page: Page): Promise<number> {
-  return page.evaluate(() => (document.querySelector(".site-header") as HTMLElement).offsetHeight);
+  return page.evaluate(() => (document.querySelector("header") as HTMLElement).offsetHeight);
 }
 
 /** Scroll-padding should land the target below the sticky nav, not under it. */
@@ -69,7 +69,7 @@ test.describe("in-page scrolling", () => {
 
   test("an anchor link sets the hash and lands clear of the nav", async ({ page }) => {
     await gotoSettled(page);
-    await page.click('a[data-button][href="#events"]');
+    await page.getByRole("link", { name: "Upcoming events ↓" }).click();
     await expect.poll(() => new URL(page.url()).hash).toBe("#events");
     await scrollSettled(page);
 
@@ -79,7 +79,7 @@ test.describe("in-page scrolling", () => {
 
   test("the back button undoes an anchor click", async ({ page }) => {
     await gotoSettled(page);
-    await page.click('a[data-button][href="#events"]');
+    await page.getByRole("link", { name: "Upcoming events ↓" }).click();
     await expect.poll(() => new URL(page.url()).hash).toBe("#events");
     await scrollSettled(page);
 
@@ -96,7 +96,7 @@ test.describe("in-page scrolling", () => {
     // itself is not focusable, so this shows up on the next Tab, not in
     // document.activeElement.
     await gotoSettled(page);
-    await page.click('a[data-button][href="#events"]');
+    await page.getByRole("link", { name: "Upcoming events ↓" }).click();
     await expect.poll(() => new URL(page.url()).hash).toBe("#events");
     await scrollSettled(page);
 
@@ -195,7 +195,7 @@ test.describe("in-page scrolling", () => {
 
     await page.getByRole("link", { name: "Cookie settings" }).click();
 
-    await expect(page.locator(".cookie-banner")).toBeVisible();
+    await expect(page.getByRole("dialog", { name: "Cookie consent" })).toBeVisible();
     // A jump to the top would be under way by now, or done.
     await scrollSettled(page);
     expect(await page.evaluate(() => window.scrollY)).toBeGreaterThan(1500);

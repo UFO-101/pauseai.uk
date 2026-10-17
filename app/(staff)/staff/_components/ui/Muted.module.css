@@ -1,0 +1,4 @@
+/* Secondary text: a date, an email, a "none". */
+.muted {
+  color: var(--text-secondary);
+}

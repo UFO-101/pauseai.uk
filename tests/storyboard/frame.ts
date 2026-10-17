@@ -1,4 +1,4 @@
-import { test, type Page } from "@playwright/test";
+import { test, type Locator, type Page } from "@playwright/test";
 
 /**
  * A frame of the storyboard: a caption, and, when the run takes screenshots
@@ -12,8 +12,17 @@ import { test, type Page } from "@playwright/test";
  * anchor), only the window is pictured: where they are is the point of the
  * frame, and a full-page picture of a scrolled page puts the sticky header
  * wherever the scroll was.
+ *
+ * `of` pictures one element, exactly (the component gallery's variants), with
+ * the page at the top so the sticky header is never over it. `window`
+ * pictures only the window, for a page too long to picture whole (the
+ * gallery itself).
  */
-export async function frame(page: Page, caption: string): Promise<void> {
+export async function frame(
+  page: Page,
+  caption: string,
+  { of, window: windowOnly = false }: { of?: Locator; window?: boolean } = {},
+): Promise<void> {
   const info = test.info();
   const index = info.annotations.filter((a) => a.type === "frame").length + 1;
   info.annotations.push({ type: "frame", description: caption });
@@ -60,6 +69,17 @@ export async function frame(page: Page, caption: string): Promise<void> {
       // An image that never loads, or a page that navigated away: take the picture anyway.
       return false;
     });
-  const body = await page.screenshot({ fullPage: !scrolled, animations: "disabled" });
+  if (of) {
+    await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
+    const box = (await of.boundingBox())!;
+    const body = await page.screenshot({
+      fullPage: true,
+      animations: "disabled",
+      clip: { x: box.x, y: box.y, width: box.width, height: box.height },
+    });
+    await info.attach(`frame ${index}: ${caption}`, { body, contentType: "image/png" });
+    return;
+  }
+  const body = await page.screenshot({ fullPage: !scrolled && !windowOnly, animations: "disabled" });
   await info.attach(`frame ${index}: ${caption}`, { body, contentType: "image/png" });
 }

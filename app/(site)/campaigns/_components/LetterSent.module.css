@@ -1,0 +1,13 @@
+/* After sending: what happened, and what next. */
+
+.sentMore {
+  margin: 0;
+  line-height: 1.6;
+}
+
+.success {
+  margin: 0;
+  padding: 1rem;
+  border-radius: 8px;
+  background: var(--success-bg);
+}

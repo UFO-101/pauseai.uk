@@ -1,0 +1,106 @@
+/* The board: a card per member, with their photo and links. */
+
+/* The page hero's width, so the hero, board and policies all share one
+   left edge down the page. */
+.inner {
+  --container-width: var(--measure-page);
+}
+
+/* Board */
+.board {
+  padding: 64px 0 72px;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+.board h2 {
+  font-family: var(--font-display), "Lato", system-ui, sans-serif;
+  font-size: clamp(28px, 3.2vw, 38px);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.015em;
+  color: var(--text);
+  margin: 0 0 36px;
+}
+.boardGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 32px 24px;
+} /* Column layout + margin-top:auto on the links keeps every card's icon
+   row on the same baseline, even when roles wrap to different heights. */
+.boardCard {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+}
+.boardPhoto {
+  width: 100%;
+  max-width: 160px;
+  aspect-ratio: 1;
+  height: auto;
+  margin: 0 auto 16px;
+  display: block;
+  border-radius: 50%;
+  object-fit: cover;
+  object-position: center top;
+  border: 2px solid var(--accent-light);
+}
+.boardName {
+  font-family: var(--font-display), "Lato", system-ui, sans-serif;
+  font-size: 19px;
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  color: var(--text);
+  margin: 0 0 4px;
+}
+.boardRole {
+  font-size: 14.5px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+  margin: 0;
+}
+.boardLinks {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  margin-top: auto;
+  padding-top: 10px;
+}
+.boardLinks a {
+  display: inline-flex;
+  color: var(--muted);
+  transition: color 0.15s ease;
+}
+.boardLinks a:hover,
+.boardLinks a:focus-visible {
+  color: var(--pause-orange);
+}
+.boardLinks svg {
+  width: 17px;
+  height: 17px;
+  display: block;
+}
+
+@media (max-width: 900px) {
+  .boardGrid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 32px 20px;
+  }
+}
+
+@media (max-width: 860px) {
+  .board {
+    padding: 48px 0 56px;
+  }
+}
+
+@media (max-width: 420px) {
+  .boardGrid {
+    gap: 26px 16px;
+  }
+  .boardPhoto {
+    max-width: 130px;
+  }
+}

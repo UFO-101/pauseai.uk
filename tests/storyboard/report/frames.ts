@@ -2,7 +2,6 @@
 // they pair up with another run's (main's), for the page (page.ts) and for an
 // agent (storyboard.json).
 import { readFileSync, writeFileSync } from "node:fs";
-import pixelmatch from "pixelmatch";
 import { PNG } from "pngjs";
 
 export type FlowStatus = "passed" | "failed" | "timedOut" | "interrupted";
@@ -16,6 +15,7 @@ export type FlowStatus = "passed" | "failed" | "timedOut" | "interrupted";
  */
 export const SECTION_ORDER = [
   "public-pages",
+  "gallery",
   "campaigns",
   "staff",
   "collateral",
@@ -37,6 +37,8 @@ export type FlowRun = {
   /** The failure's first line, if it failed. */
   error?: string;
   frames: { caption: string; png?: string }[];
+  /** When the run that shot it started: a partial run carries the flows it didn't run from the last one. */
+  shotAt?: string;
 };
 
 /** What one run of the suite wrote: `frames.json` in its output directory. */
@@ -56,6 +58,8 @@ export type Frame = {
   diff?: string;
   /** The fraction of pixels that differ, 0 for identical; absent when one side has no picture. */
   mismatch?: number;
+  /** Differs from main's, but only by noise (CHANNEL_NOISE and the limits below it): not changed. */
+  noise?: boolean;
   /** Whether a person should look: differs, new on this branch, or gone from it. */
   changed: boolean;
   status: FlowStatus;
@@ -71,6 +75,8 @@ export type Flow = {
   mainStatus?: FlowStatus;
   frames: number;
   changed: number;
+  /** When the run that shot it started (FlowRun's). */
+  shotAt?: string;
 };
 
 export type Storyboard = {
@@ -103,6 +109,15 @@ export function sortRuns<T extends Pick<FlowRun, "section" | "line" | "flow" | "
 }
 
 /**
+ * A partial run's flows on top of the last run's: each flow it ran replaces
+ * that flow, and the rest are carried as they were, so the review stays whole.
+ */
+export function carryRuns(previous: RunManifest, fresh: RunManifest): RunManifest {
+  const ran = new Set(fresh.frames.map(key));
+  return { frames: [...previous.frames.filter((run) => !ran.has(key(run))), ...fresh.frames] };
+}
+
+/**
  * Pairs each frame of this branch's run with main's, by section, flow and
  * caption (the n-th frame with that caption, if a flow repeats one), and
  * compares the pictures with `compare`. Frames only main has are kept, as
@@ -111,7 +126,12 @@ export function sortRuns<T extends Pick<FlowRun, "section" | "line" | "flow" | "
 export function pairRuns(
   branch: RunManifest,
   main: RunManifest | undefined,
-  compare: (branchPng: string, mainPng: string, name: string) => { mismatch: number; diff?: string },
+  compare: (
+    branchPng: string,
+    mainPng: string,
+    name: string,
+    viewport: string,
+  ) => { mismatch: number; noise: boolean; diff?: string },
 ): Storyboard {
   const mainRuns = new Map(sortRuns(main?.frames ?? []).map((run) => [key(run), run]));
   const flows: Flow[] = [];
@@ -136,10 +156,16 @@ export function pairRuns(
         status: run.status,
       };
       if (f.png && paired?.png) {
-        const { mismatch, diff } = compare(f.png, paired.png, `${run.section}-${run.viewport}-${run.flow}-${i + 1}`);
+        const { mismatch, noise, diff } = compare(
+          f.png,
+          paired.png,
+          `${run.section}-${run.viewport}-${run.flow}-${i + 1}`,
+          run.viewport,
+        );
         frame.mismatch = mismatch;
         frame.diff = diff;
-        frame.changed = mismatch > 0;
+        if (noise) frame.noise = true;
+        frame.changed = mismatch > 0 && !noise;
       } else if (main && (f.png || paired?.png)) {
         // New on this branch, or main's run of the flow didn't get this far.
         frame.changed = true;
@@ -169,6 +195,7 @@ export function pairRuns(
       mainStatus: mainRun?.status,
       frames: flowFrames.length,
       changed: flowFrames.filter((f) => f.changed).length,
+      shotAt: run.shotAt,
     });
   }
 
@@ -211,21 +238,67 @@ export function pairRuns(
 }
 
 /**
+ * How two pictures may differ and still count as the same, as toucan's
+ * snapshot gallery does (https://git.sr.ht/~frabcus/toucan,
+ * platform/snapshots/png.ts and engine.ts). A pixel differs when a channel
+ * moves by more than CHANNEL_NOISE levels. A frame has changed when its
+ * differing pixels' largest channel moves add up to more than NOISE_TOTAL,
+ * or more than NOISE_PIXELS pixels differ, both per CSS pixel, so scaled by
+ * the square of the device's pixel ratio. Antialiasing on a few glyphs adds
+ * up to a few thousand; a line that moves, millions. Below the limits the
+ * frame is "noise": shown, with its diff, but not counted as changed.
+ */
+const CHANNEL_NOISE = 4;
+const NOISE_TOTAL = 2_000;
+const NOISE_PIXELS = 1_000;
+
+export type Comparison = {
+  /** The fraction of pixels that differ, 0 for identical. */
+  mismatch: number;
+  /** How many pixels differ. */
+  pixels: number;
+  /** Differs, but within the noise limits. */
+  noise: boolean;
+  /** The diff picture, if they differ: the branch's picture faded, the differing pixels red. */
+  diff?: string;
+};
+
+/**
  * Compares two PNG files pixel by pixel, writing the differences to
  * `diffPath` if there are any. Pictures of different sizes are padded with
  * white, so the extra height shows as a difference rather than vanishing.
+ * `scale` is the device's pixel ratio.
  */
-export function comparePngs(
-  branchPath: string,
-  mainPath: string,
-  diffPath: string,
-): { mismatch: number; diff?: string } {
+export function comparePngs(branchPath: string, mainPath: string, diffPath: string, scale = 1): Comparison {
   const [a, b] = padToMatch(PNG.sync.read(readFileSync(branchPath)), PNG.sync.read(readFileSync(mainPath)));
   const diff = new PNG({ width: a.width, height: a.height });
-  const mismatched = pixelmatch(a.data, b.data, diff.data, a.width, a.height, { threshold: 0.1 });
-  if (mismatched === 0) return { mismatch: 0 };
+  let pixels = 0;
+  let total = 0;
+  for (let i = 0; i < a.data.length; i += 4) {
+    const move = Math.max(
+      Math.abs(a.data[i] - b.data[i]),
+      Math.abs(a.data[i + 1] - b.data[i + 1]),
+      Math.abs(a.data[i + 2] - b.data[i + 2]),
+    );
+    if (move > CHANNEL_NOISE) {
+      pixels++;
+      total += move;
+      diff.data.set([255, 0, 0, 255], i);
+    } else {
+      // Faded towards white, so the red stands out against where it is.
+      const grey = 255 - Math.round((255 - (a.data[i] + a.data[i + 1] + a.data[i + 2]) / 3) * 0.2);
+      diff.data.set([grey, grey, grey, 255], i);
+    }
+  }
+  if (pixels === 0) return { mismatch: 0, pixels: 0, noise: false };
   writeFileSync(diffPath, PNG.sync.write(diff));
-  return { mismatch: mismatched / (a.width * a.height), diff: diffPath };
+  const area = scale * scale;
+  return {
+    mismatch: pixels / (a.width * a.height),
+    pixels,
+    noise: total <= NOISE_TOTAL * area && pixels <= NOISE_PIXELS * area,
+    diff: diffPath,
+  };
 }
 
 function padToMatch(a: PNG, b: PNG): [PNG, PNG] {

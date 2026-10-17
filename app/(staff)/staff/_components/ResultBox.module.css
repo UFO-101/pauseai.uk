@@ -1,0 +1,24 @@
+/* The box an import's or check's result is shown in. */
+.sync {
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin-block: 1rem;
+}
+
+.sync ul {
+  margin: 0.25rem 0 0.75rem;
+}
+
+/* The summary line is the fold's handle, with the browser's arrow. */
+.sync p {
+  margin: 0;
+}
+
+.sync summary {
+  cursor: pointer;
+}
+
+.sync details[open] summary {
+  margin-bottom: 0.5rem;
+}

@@ -1,0 +1,13 @@
+.back {
+  display: inline-block;
+  margin-bottom: 24px;
+  font-family: "Inter", system-ui, sans-serif;
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--accent-strong);
+  text-decoration: none;
+}
+
+.back:hover {
+  text-decoration: underline;
+}

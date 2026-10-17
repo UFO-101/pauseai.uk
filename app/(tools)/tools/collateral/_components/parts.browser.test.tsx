@@ -107,10 +107,14 @@ describe("small controls", () => {
   it("counts characters once a field is nearly full", async () => {
     const { container, rerender } = await render(<CharCount value="abc" max={10} />);
     expect(container.textContent).toBe("");
+    // Bold once it's full.
+    const weight = () => getComputedStyle(container.querySelector("[aria-live]")!).fontWeight;
     await rerender(<CharCount value="abcdefgh" max={10} />);
-    expect(container.querySelector(".collateral-count")?.className).toBe("collateral-count");
+    expect(container.textContent).toBe("8 / 10");
+    expect(weight()).toBe("400");
     await rerender(<CharCount value="abcdefghij" max={10} />);
-    expect(container.querySelector(".collateral-count")?.className).toBe("collateral-count is-full");
+    expect(container.textContent).toBe("10 / 10");
+    expect(weight()).toBe("600");
     await rerender(<CharCount value="abcdefghij" />);
     expect(container.textContent).toBe("");
   });
@@ -188,9 +192,9 @@ describe("small controls", () => {
     await page.getByRole("checkbox").click();
     expect(onScreenQr).toHaveBeenCalledWith(true);
     await rerender(<QrFormatNote format={getFormat("ig-square")} screenQr onScreenQr={onScreenQr} reason="Trimmed" />);
-    expect(container.querySelector(".collateral-hint")?.textContent).toBe("Trimmed");
+    expect(container.querySelector("p")?.textContent).toBe("Trimmed");
     await rerender(<QrFormatNote format={getFormat("ig-square")} screenQr onScreenQr={onScreenQr} />);
-    expect(container.querySelector(".collateral-hint")).toBeNull();
+    expect(container.querySelector("p")).toBeNull();
     await rerender(<QrFormatNote format={getFormat("a5")} screenQr={false} onScreenQr={onScreenQr} reason="Trimmed" />);
     expect(container.textContent).toBe("Trimmed");
     await rerender(<QrFormatNote format={getFormat("a5")} screenQr={false} onScreenQr={onScreenQr} />);
@@ -222,10 +226,11 @@ describe("ProjectMenu", () => {
     const onOpen = vi.fn();
     const onReset = vi.fn();
     const { container } = await render(
-      <>
+      // Room above it, since the menu opens upwards.
+      <div style={{ paddingTop: 200 }}>
         <p>outside</p>
         <ProjectMenu noun="pack" onSave={onSave} onOpen={onOpen} onReset={onReset} />
-      </>,
+      </div>,
     );
     const toggle = page.getByRole("button", { name: "More options" });
     await toggle.click();
@@ -252,7 +257,10 @@ describe("ProjectMenu", () => {
 
     // A click inside keeps it open; outside or Escape closes it.
     await toggle.click();
-    container.querySelector(".collateral-menu-list")!.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true }));
+    page
+      .getByRole("button", { name: "Save pack file" })
+      .element()
+      .dispatchEvent(new PointerEvent("pointerdown", { bubbles: true }));
     await expect.element(page.getByRole("button", { name: "Start again" })).toBeVisible();
     await page.getByText("outside").click();
     await expect.element(page.getByRole("button", { name: "Start again" })).not.toBeInTheDocument();

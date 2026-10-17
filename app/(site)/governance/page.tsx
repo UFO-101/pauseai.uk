@@ -1,8 +1,7 @@
 import { pageMetadata } from "@/lib/metadata";
 import BoardSection from "./_components/BoardSection";
 import DonationPolicies from "./_components/DonationPolicies";
-import "../track-record/track-record.css";
-import "./governance.css";
+import PageHero from "@/components/ui/PageHero";
 
 export const metadata = pageMetadata({
   title: "Governance",
@@ -13,12 +12,8 @@ export const metadata = pageMetadata({
 export default function GovernancePage() {
   return (
     <>
-      <main className="track-record governance">
-        <section className="tr-hero">
-          <div className="container tr-hero-inner">
-            <h1 className="tr-hero-title">Governance</h1>
-          </div>
-        </section>
+      <main>
+        <PageHero title="Governance" />
 
         <BoardSection />
 

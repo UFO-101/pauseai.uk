@@ -1,0 +1,34 @@
+/* --- Role cards --------------------------------------------------------
+   CSS columns rather than grid so cards pack to their natural height
+   (masonry) instead of stretching to the tallest card in a row. */
+
+.roles {
+  columns: 2;
+  column-gap: 24px;
+  margin: 34px 0 32px;
+}
+
+@media (max-width: 860px) {
+  .roles {
+    columns: 1;
+  }
+}
+
+/* Plain bullet list inside a role card (e.g. conference speakers), sized to
+   match the card's paragraphs rather than the larger intro list. */
+.roleList {
+  padding-left: 22px;
+  margin: 0 0 14px;
+}
+
+.roleList li {
+  font-size: 16px;
+  line-height: 1.65;
+  color: var(--text);
+  margin-bottom: 6px;
+  padding-left: 4px;
+}
+
+.roleList li::marker {
+  color: var(--pause-orange);
+}

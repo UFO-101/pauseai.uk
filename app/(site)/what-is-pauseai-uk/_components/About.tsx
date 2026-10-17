@@ -1,9 +1,12 @@
+import SmallPrint from "@/components/ui/SmallPrint";
+import styles from "./About.module.css";
+
 // Who we are, what we want and how we work.
 export default function About() {
   return (
-    <article className="intro-article">
-      <div className="container intro-inner">
-        <section className="intro-section">
+    <article className={styles.article}>
+      <div className="container">
+        <section className={styles.section}>
           <p>
             PauseAI is a civic movement, which means that we help citizens organise to take collective actions and make
             their voice heard. Our volunteers engage with their MPs about AI safety, march in protests, join conferences
@@ -24,7 +27,7 @@ export default function About() {
             <b>Human extinction</b> is at the top of our list of concerns around superhuman AI, but there are many
             others including:
           </p>
-          <ul className="intro-list">
+          <ul className={styles.list}>
             <li>job loss and concentration of power</li>
             <li>autonomous weapons</li>
             <li>surveillance and authoritarianism</li>
@@ -55,7 +58,7 @@ export default function About() {
           </p>
 
           <p>The hope is that when you go to a PauseAI event, you go in with the understanding:</p>
-          <ol className="intro-list">
+          <ol className={styles.list}>
             <li>The focus is on superhuman AI.</li>
             <li>
               Anyone concerned about superhuman AI is welcome, including those who are even more concerned about the
@@ -65,13 +68,13 @@ export default function About() {
 
           {/* Company details required on the website by the Companies Act
               (registered name, number, place of registration, registered office). */}
-          <div className="registered-details">
+          <SmallPrint>
             <p>
               PauseAI UK is operated by <strong>Safe AI Alliance Ltd</strong>, a private company limited by guarantee
               registered in England and Wales, company number <strong>17137345</strong>. Registered office: 128 City
               Road, London EC1V 2NX, United Kingdom.
             </p>
-          </div>
+          </SmallPrint>
         </section>
       </div>
     </article>

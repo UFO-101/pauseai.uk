@@ -18,6 +18,8 @@ app/
   (site)/                 public pages; layout.tsx renders <Nav>
   (tools)/                unlisted volunteer tools and trackers; layout.tsx
                           renders <Nav> and turns analytics off
+    gallery/              the component gallery: every component on fixture
+                          data, fixture builds only (docs/testing.md)
   (staff)/staff/          the staff interface, behind email login; no <Nav>,
                           no analytics, noindex
   api/                    route handlers, only for things that need a URL
@@ -58,6 +60,13 @@ Route groups like `(site)` don't appear in URLs. Folders starting with `_`
 - **Pages are thin.** A `page.tsx` holds its metadata, its data loading
   (calling `lib/`) and the order of its sections. Content and markup belong
   in components, and helper functions in `lib/`, where they can be tested.
+  Pages and layouts are outside the coverage gate, so they have no
+  branches at all: no `if`, `? :`, `&&`, `||`, `??`, `?.`, loop or default
+  value (`tests/checks/thin-pages.test.ts`). A page that 404s on a missing
+  record calls `found(findPost(slug))` (`lib/found.ts`); one that reads a
+  filter from its URL calls a parser (`lib/staff-search.ts`); one whose
+  markup depends on state renders a component that takes it as props
+  (`LoginForm`, `PoliticianDetails`).
   Repeated markup becomes a component for one item (`TimelineEntry`,
   `JobRole`); one-off prose can stay as JSX inside a section component.
 - **Metadata** comes from `pageMetadata()` (`lib/metadata.ts`), which fills in
@@ -138,21 +147,50 @@ Route groups like `(site)` don't appear in URLs. Folders starting with `_`
 
 ## Styling
 
-- `styles/tokens.css` (fonts and CSS variables) and `styles/base.css`
-  (reset, element defaults, `.container`) load first, from the root layout.
-- UI kit components (`components/ui/`) have CSS modules, imported by the
-  root layout before `app/globals.css`. To restyle one in context, target
-  its data attribute (`[data-button][data-variant="ghost"]`,
-  `[data-card]`), which keeps the same specificity as the old global class.
-- `app/globals.css` still holds the rest of the site's shared styles, and
-  some pages import plain global stylesheets (`track-record.css` is shared
-  by several). New components get a `.module.css`; move a page's styles to
-  modules when you next work on it, rather than adding to the global files.
+The component gallery (`/gallery` on a fixture build; `docs/testing.md`,
+"The component gallery") shows every component and its variants. Look
+there before writing a new one or new CSS: the piece may exist, or need
+only a variant. The look itself (colours, type, buttons, cards) is in
+`docs/style-guide.md`.
 
-## Still to do
-
-From `plans/code-organisation.md`, not done yet:
-
-- A `Section` component for the repeated `section` / `section-header` /
-  `section-lede` markup.
-- Page stylesheets to CSS modules, page by page (see Styling).
+- **Global CSS is two files.** `styles/tokens.css` (fonts, and every colour,
+  width and shadow as a variable) and `styles/base.css` (the reset, element
+  defaults, scrolling, `.container` and `.inline-link`), imported by the root
+  layout and nothing else. There is no other global stylesheet.
+- **A component owns its styles**, in a `.module.css` beside it. A page has
+  no stylesheet: it is thin, and its sections are components.
+- **No reaching in.** A stylesheet never selects another component's
+  elements, by class, data attribute or tag. To make a component look
+  different in a context, give it a prop or a variant (`Button`'s `light`,
+  `Section`'s `tone`). Where a container needs to size or space its
+  children, the child reads a documented custom property that the container
+  sets on itself: `--container-width` (`.container`'s width),
+  `--button-padding` / `--button-font-size` / `--button-font-weight`
+  (`Button`), `--icon-button-size` (`IconButton`). A `className` passed into
+  a component is for its place in a layout (margins, position), never for a
+  property the component sets itself. Two modules never set the same
+  property on the same element: which wins would depend on which stylesheet
+  the page loaded last, which Next doesn't promise.
+- **`.container` sets only its sides** (its width, side margins and side
+  padding), so a module class on the same element can set its top and
+  bottom.
+- **Every colour is a token.** No hex, `rgb()`/`hsl()` with numbers, or
+  named colour outside `styles/tokens.css`; Stylelint refuses them. An alpha
+  uses the `-rgb` channels: `rgb(var(--white-rgb) / 0.1)`.
+- **Class names in a module are short and local** (`.hero`, `.title`), one
+  class deep where the markup allows. State a script or a test needs to
+  read is an attribute (`data-active`, `aria-pressed`, `aria-expanded`), not
+  a class.
+- **Shared pieces are components.** Used by two or more routes, in
+  `components/`: `components/ui/` has the site's kit (`Button`,
+  `IconButton`, `PageHero`, `Section`, `Foreword`, `Closing`, `Callout`,
+  `ButtonRow`, `PhotoCard`, `FeatureCard`, `Lightbox`, `ProsePage`,
+  `SmallPrint`); `components/layout/` the header, footer and banners;
+  `components/events/`, `components/people/` and `components/tools/` the
+  pieces of those areas. Used by one route, in its `_components/`, with a
+  small kit there where several of its components share a shape (the
+  collateral maker's, the staff interface's in
+  `app/(staff)/staff/_components/ui/`).
+- **Classes from content.** HTML that lib/ writes as strings (press logos,
+  blog footnotes) keeps global class names, which the component that shows
+  it selects with `:global()` inside its own root class.

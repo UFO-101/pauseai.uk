@@ -1,20 +1,26 @@
 /*
- * Buttons. Other stylesheets restyle a button in context through its data
- * attributes, e.g. `.hero-marquee-text [data-button][data-variant="ghost"]`,
- * which has the same specificity the old `.hero-marquee-text .btn.ghost` had.
- * The root layout imports this file before app/globals.css, so those
- * overrides still come later in the cascade.
+ * Buttons. Nothing outside this file styles a button's look. A container that
+ * needs its buttons a different size sets these on itself, and the buttons
+ * inside inherit them:
+ *
+ *   --button-padding      e.g. 17px 30px
+ *   --button-font-size    e.g. 16px
+ *   --button-font-weight  e.g. 500
+ *
+ * A className passed to a button is for its place in the layout (margins,
+ * self-alignment, a minimum width), never for anything set here.
  */
 
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 14px 24px;
+  padding: var(--button-padding, 14px 24px);
   border-radius: 8px;
-  font-weight: 600;
-  font-size: 15px;
+  font-weight: var(--button-font-weight, 600);
+  font-size: var(--button-font-size, 15px);
   text-decoration: none;
+  cursor: pointer;
   transition:
     transform 0.15s ease,
     box-shadow 0.15s ease,
@@ -24,7 +30,7 @@
 
 .btn.primary {
   background: var(--accent);
-  color: #fff;
+  color: var(--white);
   box-shadow: 0 2px 8px rgb(var(--pause-orange-rgb) / 0.25);
 }
 
@@ -45,14 +51,27 @@
   color: var(--accent);
 }
 
+/* On a photo: a white fill, so it can be read on anything, with an orange
+   edge, and a ring on hover. */
+.btn.light,
+.btn.light:hover {
+  background: var(--white);
+  color: var(--ink);
+  border-color: var(--pause-orange);
+}
+
+.btn.light:hover {
+  box-shadow: 0 0 0 2px rgb(var(--pause-orange-rgb) / 0.35);
+}
+
 .btn.small {
-  padding: 9px 14px;
-  font-size: 14px;
+  padding: var(--button-padding, 9px 14px);
+  font-size: var(--button-font-size, 14px);
 }
 
 .btn.large {
-  padding: 16px 28px;
-  font-size: 16px;
+  padding: var(--button-padding, 16px 28px);
+  font-size: var(--button-font-size, 16px);
 }
 
 .btn:disabled,
@@ -100,8 +119,9 @@
   }
 }
 
+/* A button fills the width of a phone, unless it's told to fit its text. */
 @media (max-width: 720px) {
-  .btn {
+  .btn:not(.fit) {
     width: 100%;
   }
 }

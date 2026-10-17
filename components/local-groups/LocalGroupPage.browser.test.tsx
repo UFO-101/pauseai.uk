@@ -11,6 +11,7 @@ vi.mock("@/components/events/LocalGroupEvents", () => ({
   ),
 }));
 
+/** The badge over the hero photo: whatever follows the photo, beside the h1's column. */
 describe("LocalGroupPage", () => {
   it.each(Object.values(localGroupPages).map((content) => [content.name, content] as const))(
     "renders %s's page",
@@ -18,11 +19,12 @@ describe("LocalGroupPage", () => {
       const { container } = await render(<LocalGroupPage content={content} />);
       await expect.element(page.getByRole("heading", { level: 1 })).toHaveTextContent(`PauseAI ${name}`);
       await expect.element(page.getByTestId("events")).toHaveTextContent(`${name} events`);
+      const hero = container.querySelector("main > section")!;
       for (const action of content.hero.actions) {
-        const link = [...container.querySelectorAll(".hero-copy a")].find((a) => a.textContent === action.label)!;
+        const link = [...hero.querySelectorAll("a")].find((a) => a.textContent === action.label)!;
         expect(link.getAttribute("target")).toBe(action.newTab ? "_blank" : null);
       }
-      expect(container.querySelector(".hero-badge")?.textContent).toBe(content.hero.badge);
+      expect(container.querySelector('[data-testid="hero-badge"]')?.textContent).toBe(content.hero.badge);
     },
   );
 
@@ -47,10 +49,14 @@ describe("LocalGroupPage", () => {
         }}
       />,
     );
-    expect(container.querySelectorAll(".callout-inner .actions a")).toHaveLength(2);
-    expect(container.querySelector(".callout-inner > div:not(.actions)")).toBeNull();
-    expect(container.querySelector(".hero-badge")).toBeNull();
-    expect(container.querySelector(".section-lede")).not.toBeNull();
-    expect(container.querySelector(".activity-card .inline-link")).toBeNull();
+    // Both buttons share one wrapper, and it's the only thing in the callout: no details.
+    const actions = page.getByRole("link", { name: "A" }).element().parentElement!;
+    expect(page.getByRole("link", { name: "B" }).element().parentElement).toBe(actions);
+    expect(actions.querySelectorAll("a")).toHaveLength(2);
+    expect(actions.parentElement!.children).toHaveLength(1);
+    expect(container.querySelector('[data-testid="hero-badge"]')).toBeNull();
+    await expect.element(page.getByText("l", { exact: true })).toBeVisible();
+    expect(container.querySelector("article .inline-link")).toBeNull();
+    await expect.element(page.getByRole("link", { name: "View event page" })).not.toBeInTheDocument();
   });
 });
