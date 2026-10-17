@@ -18,6 +18,8 @@ app/
   (site)/                 public pages; layout.tsx renders <Nav>
   (tools)/                unlisted volunteer tools and trackers; layout.tsx
                           renders <Nav> and turns analytics off
+    gallery/              the component gallery: every component on fixture
+                          data, fixture builds only (docs/testing.md)
   (staff)/staff/          the staff interface, behind email login; no <Nav>,
                           no analytics, noindex
   api/                    route handlers, only for things that need a URL
@@ -58,6 +60,13 @@ Route groups like `(site)` don't appear in URLs. Folders starting with `_`
 - **Pages are thin.** A `page.tsx` holds its metadata, its data loading
   (calling `lib/`) and the order of its sections. Content and markup belong
   in components, and helper functions in `lib/`, where they can be tested.
+  Pages and layouts are outside the coverage gate, so they have no
+  branches at all: no `if`, `? :`, `&&`, `||`, `??`, `?.`, loop or default
+  value (`tests/checks/thin-pages.test.ts`). A page that 404s on a missing
+  record calls `found(findPost(slug))` (`lib/found.ts`); one that reads a
+  filter from its URL calls a parser (`lib/staff-search.ts`); one whose
+  markup depends on state renders a component that takes it as props
+  (`LoginForm`, `PoliticianDetails`).
   Repeated markup becomes a component for one item (`TimelineEntry`,
   `JobRole`); one-off prose can stay as JSX inside a section component.
 - **Metadata** comes from `pageMetadata()` (`lib/metadata.ts`), which fills in
@@ -137,6 +146,12 @@ Route groups like `(site)` don't appear in URLs. Folders starting with `_`
   rather than of one file, go in `tests/checks/`.
 
 ## Styling
+
+The component gallery (`/gallery` on a fixture build; `docs/testing.md`,
+"The component gallery") shows every component and its variants. Look
+there before writing a new one or new CSS: the piece may exist, or need
+only a variant. The look itself (colours, type, buttons, cards) is in
+`docs/style-guide.md`.
 
 - **Global CSS is two files.** `styles/tokens.css` (fonts, and every colour,
   width and shadow as a variable) and `styles/base.css` (the reset, element

@@ -234,6 +234,12 @@ Then postcode `SW1A 1AA` finds Polly Placeholder.
 You're at `/staff`, logged in for 12 hours. This goes through the real
 login code: only Postmark is a fixture.
 
+#### See every component
+
+http://localhost:3000/gallery is the component gallery: every component and
+its variants, a page per group, on fixture data. It's there only with
+`DATA_FIXTURES=1`. See `docs/testing.md`, "The component gallery".
+
 ### With real outside services
 
 Delete `DATA_FIXTURES` from `.env.local`, and fill in the keys you need. Each is explained there. Things to know:

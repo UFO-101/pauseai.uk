@@ -7,6 +7,13 @@ changes from the plan: the examples are a file per group in `_examples/`
 than one `_examples.tsx`; and every example's callbacks are pressed in its
 group's browser test, since the coverage gate allows no exclusions.
 
+Then, the same day, split into a page per group: `/gallery` is an index
+with a card per group, and `/gallery/<group>` has a link back, a link to
+each component, then the components. The storyboard takes one full-page
+frame per group page, not one per variant. Below, "the page" is now the
+group pages. How it works today is in `docs/testing.md` ("The component
+gallery").
+
 ## Scope
 
 One page that renders every component, and each of its major variants,

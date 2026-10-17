@@ -1,8 +1,28 @@
 # PauseAI UK — Design Style Guide
 
+How the site looks, and where that lives in the code.
+
+## Start with the gallery
+
+The component gallery shows every component and its variants as the site
+renders them: `/gallery` on a fixture build (`DATA_FIXTURES=1`; with it in
+`.env.local`, http://localhost:3000/gallery under `npm run dev`). It is the
+reference for what exists. Before designing or building something, look
+there: the piece may already be there, or need only a variant.
+`docs/testing.md` ("The component gallery") says how to add to it and
+picture it.
+
+The look lives in the components, not in this file. Each one owns its
+styles in a CSS module beside it, and the only global CSS is
+`styles/tokens.css` (every colour, font and width as a variable) and
+`styles/base.css` (element defaults and `.container`). The rules for
+writing styles are in `docs/code-structure.md` ("Styling"). Where this
+guide and the code differ, the code is what visitors see; fix whichever is
+wrong.
+
 ## Design Philosophy: "Warm Authority"
 
-The current site uses a dark, techy aesthetic (black backgrounds, orange accents) that reads more like a startup than a citizens' movement. The new design shifts to a **warm, light, human-centered** look that communicates both **gravitas** (we are serious, credible, and organised) and **friendliness** (we are open, hopeful, and welcoming).
+The old site used a dark, techy look (black backgrounds, orange accents) that read more like a startup than a citizens' movement. This design is **warm, light and human-centred**, and communicates both **gravitas** (we are serious, credible, and organised) and **friendliness** (we are open, hopeful, and welcoming).
 
 Inspired by the brand image — a white dove against a warm terracotta sky with bold black typography — the design evokes **hope, peace, and determined action**.
 
@@ -18,7 +38,12 @@ Inspired by the brand image — a white dove against a warm terracotta sky with 
 
 ## Colour Palette
 
-### Primary Colours
+Every colour is a variable in `styles/tokens.css`. Stylelint refuses a hex,
+`rgb()` with numbers or a named colour anywhere else, so a new colour is a
+new token there. An alpha uses a token's `-rgb` channels:
+`rgb(var(--white-rgb) / 0.1)`.
+
+### Main Colours
 
 | Token              | Hex       | Usage                                  |
 | ------------------ | --------- | -------------------------------------- |
@@ -26,83 +51,77 @@ Inspired by the brand image — a white dove against a warm terracotta sky with 
 | `--surface`        | `#FFFFFF` | Cards, elevated surfaces               |
 | `--surface-2`      | `#F5EDE4` | Muted sections, alternate backgrounds  |
 | `--text`           | `#1A1612` | Primary text — warm near-black         |
-| `--text-secondary` | `#5C544A` | Secondary/body text — warm dark gray   |
-| `--muted`          | `#8A7F73` | Captions, meta text — warm medium gray |
+| `--text-secondary` | `#5C544A` | Secondary/body text — warm dark grey   |
+| `--muted`          | `#8A7F73` | Captions, meta text — warm medium grey |
 
 ### Accent Colours
 
-| Token             | Hex       | Usage                                   |
-| ----------------- | --------- | --------------------------------------- |
-| `--accent`        | `#C8652A` | Primary accent — burnt terracotta/amber |
-| `--accent-strong` | `#A84E1A` | Hover states, emphasis                  |
-| `--accent-light`  | `#F0D4BC` | Light accent fills, tag backgrounds     |
-| `--accent-bg`     | `#FFF5EC` | Subtle accent sections                  |
+| Token                        | Hex       | Usage                               |
+| ---------------------------- | --------- | ----------------------------------- |
+| `--accent`, `--pause-orange` | `#E57226` | The PauseAI orange: links, buttons  |
+| `--accent-strong`            | `#E57226` | Hover states (the same orange now)  |
+| `--accent-light`             | `#F0D4BC` | Light accent fills, tag backgrounds |
+| `--accent-bg`                | `#FFFFFF` | Accent sections                     |
 
 ### Utility Colours
 
 | Token             | Hex                      | Usage                  |
 | ----------------- | ------------------------ | ---------------------- |
 | `--border`        | `#E8DDD1`                | Card borders, dividers |
-| `--border-strong` | `#D4C4B0`                | Emphasized borders     |
+| `--border-strong` | `#D4C4B0`                | Emphasised borders     |
 | `--shadow`        | `rgba(26, 22, 18, 0.08)` | Soft card shadows      |
 | `--shadow-strong` | `rgba(26, 22, 18, 0.14)` | Hover/elevated shadows |
 
+`styles/tokens.css` also has the header and footer's dark colours
+(`--charcoal`, `--on-dark`), warm tints, form greys and status colours
+(`--danger`, `--status-green` and the rest). Use one of those before
+adding another.
+
 ### Rationale
 
-The palette draws directly from the brand image: the terracotta sky becomes our accent, the dove's white becomes our surfaces, and the bold black typography becomes our text colour. Everything is warm-toned — no blue-grays or cool neutrals.
+The palette draws directly from the brand image: the terracotta sky becomes our accent, the dove's white becomes our surfaces, and the bold black typography becomes our text colour. Everything is warm-toned — no blue-greys or cool neutrals.
 
 ---
 
 ## Typography
 
-### Font Stack
+### Fonts
 
 ```
-Primary headings:  "DM Serif Display", Georgia, serif
-Secondary headings: "Inter", system-ui, sans-serif (weight 700)
-Body text:          "Inter", system-ui, sans-serif (weight 400/500)
-Accent labels:      "Inter", system-ui, sans-serif (weight 600, uppercase, tracked)
+Headings (h1, h2): Lato, weight 900 (700 for the page hero's title), via --font-display
+Body and the rest: Inter, weight 400/500, self-hosted (public/fonts)
+Accent labels:     Inter, weight 600, uppercase, tracked
 ```
 
-### Why These Fonts
-
-- **DM Serif Display** — A high-contrast serif with commanding presence. It reads as authoritative and editorial, like a broadsheet headline. This replaces Montserrat Black, which felt more tech-startup.
-- **Inter** — A clean, highly legible sans-serif. Friendly and modern without being trendy. Excellent at small sizes for body text, strong enough for subheadings.
+- **Lato** — bold and plain, with a commanding presence at heavy weights.
+- **Inter** — clean and highly legible, excellent at small sizes for body text, strong enough for subheadings.
 
 ### Type Scale
 
-| Element         | Font             | Size                     | Weight | Tracking  |
-| --------------- | ---------------- | ------------------------ | ------ | --------- |
-| h1 (hero)       | DM Serif Display | `clamp(40px, 6vw, 64px)` | 400    | `-0.02em` |
-| h2 (section)    | DM Serif Display | `clamp(28px, 4vw, 44px)` | 400    | `-0.01em` |
-| h3 (card)       | Inter            | `20px`                   | 700    | `0`       |
-| Body            | Inter            | `16px` / `17px`          | 400    | `0`       |
-| Lede            | Inter            | `18px` / `19px`          | 400    | `0`       |
-| Small / caption | Inter            | `14px`                   | 500    | `0.01em`  |
+Set in the components that use them; these are the main ones.
+
+| Element         | Where             | Size                       | Weight |
+| --------------- | ----------------- | -------------------------- | ------ |
+| Page title      | `PageHero`        | `clamp(44px, 6.5vw, 84px)` | 700    |
+| Section heading | `SectionHeader`   | `clamp(28px, 4vw, 44px)`   | 900    |
+| Body            | `styles/base.css` | `16px` (`17px` in prose)   | 400    |
+| Small / caption | each component    | `14px`                     | 500    |
 
 ### Line Heights
 
-- Headings: `1.15` — tight, bold, impactful
-- Body text: `1.65` — generous, easy to read
-- Lede/intro: `1.55` — slightly tighter than body
+- Headings: tight, around `1.1`
+- Body text: `1.65` (`styles/base.css`)
 
 ---
 
-## Spacing System
+## Spacing
 
-Use an 8px base grid:
-
-| Token   | Value  | Usage                      |
-| ------- | ------ | -------------------------- |
-| `--s-1` | `4px`  | Tight gaps                 |
-| `--s-2` | `8px`  | Inline spacing             |
-| `--s-3` | `12px` | Small component gaps       |
-| `--s-4` | `16px` | Card padding, standard gap |
-| `--s-5` | `24px` | Section padding, grid gaps |
-| `--s-6` | `32px` | Major spacing              |
-| `--s-7` | `48px` | Section vertical padding   |
-| `--s-8` | `64px` | Large section breaks       |
-| `--s-9` | `96px` | Hero-level spacing         |
+There are no spacing tokens: each module sets its own, in pixels on an 8px
+grid (4, 8, 12, 16, 24, 32, 48, 64, 80). A page's band is `Section`, with
+80px above and below, less on a phone. Widths are tokens: `.container` is
+1140px, a page's reading column `--measure-page` (880px), a page of cards
+`--measure-wide` (1080px). A component narrows the containers inside it by
+setting `--container-width` on its own root.
 
 ---
 
@@ -137,6 +156,12 @@ Shadows are warm-toned (brown-black, not blue-black) to maintain palette consist
 
 ## Buttons
 
+Every button is `Button`, `ButtonLink` or `ButtonAnchor`
+(`components/ui/Button.tsx`), or `IconButton` for the round ones. Nothing
+else styles a button's look; a container that needs its buttons a
+different size sets `--button-padding` and `--button-font-size` on
+itself.
+
 ### Primary Button
 
 - Background: `var(--accent)` (solid, no gradient)
@@ -154,18 +179,23 @@ Shadows are warm-toned (brown-black, not blue-black) to maintain palette consist
 - Text: `var(--text)`
 - Hover: border becomes `var(--accent)`, text becomes `var(--accent)`
 
-### Pill (nav CTA)
+### Light Button (on a photo)
 
-- Border: `1.5px solid var(--accent)`
-- Text: `var(--accent)`
-- Border-radius: `999px`
-- Hover: filled `var(--accent)` background, white text
+- Background: `var(--white)`, text `var(--ink)`
+- Border: `1px solid var(--pause-orange)`
+- Hover: an orange ring
+
+Sizes: `small` and `large` besides the default.
 
 ---
 
 ## Cards
 
-### Standard Card (activity, local group)
+The site's cards are `PhotoCard` (an image above a body) and `FeatureCard`
+in `components/ui/`; areas have their own built on the same look
+(`PersonCard`, the local groups' cards).
+
+### Photo Card (activity, local group)
 
 - Background: `var(--surface)` (white)
 - Border: `1px solid var(--border)`
@@ -193,38 +223,41 @@ Shadows are warm-toned (brown-black, not blue-black) to maintain palette consist
 
 ## Header & Navigation
 
-- Background: `rgba(253, 248, 243, 0.9)` with `backdrop-filter: blur(12px)`
-- Sticky, subtle bottom border: `1px solid var(--border)`
-- Nav links: `var(--text-secondary)`, hover to `var(--accent)`
+- `Nav` (`components/layout/Nav.tsx`): sticky, black, light text (`--on-dark`)
+- At 1024px and below, a burger opens the menu over the page
 - Clean and minimal — no heavy chrome
 
 ---
 
 ## Section Styling
 
+A page is a run of `Section` bands (`components/ui/Section.tsx`); its
+`tone` prop picks the background. A page's top is `PageHero`, and an
+introduction under it `Foreword`.
+
 ### Default Section
 
 - Background: `var(--bg)` (warm cream)
 - Padding: `80px 0`
 
-### Muted/Alternate Section
+### Muted Section (`tone="muted"`)
 
 - Background: `var(--surface-2)` (slightly darker warm cream)
 - No gradient — solid colour for clean separation
 
-### Callout Section
+### White Section (`tone="white"`)
 
-- Background: `var(--accent-bg)` (very light amber wash)
-- Top/bottom border: `1px solid var(--accent-light)`
+- Background: `var(--accent-bg)` (white)
+
+A boxed message inside a section is `Callout`.
 
 ---
 
 ## Links
 
-- Default: `var(--accent)` with no underline
-- Hover: `var(--accent-strong)` with underline
-- In-body links: underlined by default for accessibility
-- Footer links: `var(--muted)`, hover to `var(--accent)`
+- Default: `var(--accent)` (`styles/base.css`)
+- A link set in text that should stand out: `.inline-link`, bold, underlined on hover
+- Footer links: light on the dark footer
 
 ---
 
@@ -247,23 +280,10 @@ Shadows are warm-toned (brown-black, not blue-black) to maintain palette consist
 
 ## Responsive Behaviour
 
-- Container: `max-width: 1140px` (slightly narrower for better line lengths)
-- Grid breakpoints: cards snap from multi-column to single-column below `720px`
+- Container: `max-width: 1140px`, 24px side padding
+- Breakpoints: most components change at `720px` or `860px` (and `520px`
+  for the smallest phones); the nav switches to its burger at `1024px`
 - Typography: fluid via `clamp()` — no hard breakpoint font changes
-- Navigation: collapses to hidden below `720px` (hamburger to be added later)
 - Spacing reduces proportionally on mobile
-
----
-
-## Summary of Key Changes from Current Design
-
-| Aspect        | Current (Dark)                 | New (Warm Authority)                |
-| ------------- | ------------------------------ | ----------------------------------- |
-| Background    | Pure black `#000`              | Warm cream `#FDF8F3`                |
-| Text          | White `#f7f7f7`                | Warm near-black `#1A1612`           |
-| Accent        | Bright orange `#ff9416`        | Burnt terracotta `#C8652A`          |
-| Headings font | Montserrat Black (sans-serif)  | DM Serif Display (serif)            |
-| Body font     | Roboto Slab (slab serif)       | Inter (sans-serif)                  |
-| Overall feel  | Tech startup, cold, exclusive  | Citizens' movement, warm, welcoming |
-| Cards         | Dark surface, heavy shadows    | White, soft shadows, warm borders   |
-| Gradients     | Orange-to-transparent overlays | Minimal, warm ambient tones         |
+- Check both: the storyboard pictures every page, and the gallery every
+  component, on desktop and a phone

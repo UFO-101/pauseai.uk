@@ -37,7 +37,7 @@ In `.env.local`:
 - **`TEST_MP_EMAIL`**: your email. Letters to the test MP go there.
 - **`DATA_FIXTURES=1`** fakes every outside service, so you need no other keys. Emails are written to files in `tmp/outbox/` instead of sent.
 
-Try Email your MP at http://localhost:3000/campaigns with postcode ZZ99ZZ. The letter it sends is the newest file in `tmp/outbox/`.
+Try Email your MP at http://localhost:3000/campaigns with postcode ZZ99ZZ. The letter it sends is the newest file in `tmp/outbox/`. Every component, and each of its variants, is at http://localhost:3000/gallery (only with `DATA_FIXTURES=1`).
 
 `npm run db:migrate` applies the migrations your database hasn't had. `npm run db:reset` wipes the database and makes it again, with the latest migrations. It only works on a database on your own machine. The whole schema is in [netlify/database/schema.sql](netlify/database/schema.sql), for reference.
 
@@ -63,7 +63,7 @@ npm run format           # Prettier, on everything but plans/ (format:check only
 - [docs/code-structure.md](docs/code-structure.md): where code lives
 - [docs/testing.md](docs/testing.md): how it's tested
 - [docs/email-your-mp.md](docs/email-your-mp.md): the Email your MP tool and staff interface
-- [docs/style-guide.md](docs/style-guide.md): design
+- [docs/style-guide.md](docs/style-guide.md): design, and where to find every component
 - [scripts/README.md](scripts/README.md): what each script does
 - [plans/](plans/): work planned or in progress
 - [AGENTS.md](AGENTS.md): notes for coding agents

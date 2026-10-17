@@ -49,8 +49,15 @@ start`), so it is slower. Use it only for what Vitest can't see:
   tested.
 - **The one scope rule:** `page.tsx` and `layout.tsx` are outside the
   report. Async server components can't render in Vitest, and `layout.tsx`
-  needs `next/font`. Keep them thin (see `docs/code-structure.md`); the route
-  smoke test is their gate.
+  needs `next/font`. That's safe only because they have no branches:
+  `tests/checks/thin-pages.test.ts` parses every one and fails on `if`,
+  `? :`, `&&`, `||`, `??`, `?.`, `switch`, a loop, `try` or a default
+  value. A choice a page would make goes in a component or a `lib/`
+  helper, where the gate covers each way it can go: `found()`
+  (`lib/found.ts`) for the post, person or record a URL names, or a 404;
+  the staff pages' URL filters in `lib/staff-search.ts`; the login page's
+  states in `LoginForm`. The route smoke test then only has to show each
+  page renders.
 
 ## Mocking
 
@@ -136,8 +143,8 @@ how a page looks.
 (`scripts/serve-main.mjs`: a git worktree of origin/main, fetched first, kept in your temp folder,
 with its own `npm ci` when its lockfile changes), runs the suite against it
 with screenshots (its failures are just missing frames), then against this
-branch, pairs the frames by section, flow and caption, diffs them with
-pixelmatch, and opens `test-results/storyboard/index.html`: the flows in
+branch, pairs the frames by section, flow and caption, diffs them pixel by
+pixel, and opens `test-results/storyboard/index.html`: the flows in
 sections, each frame captioned and pictured on desktop and phone, with this
 branch's picture, main's and the diff, a lightbox, a phone/desktop toggle
 that stays on the flow being looked at, a "changed only" filter, and a
@@ -149,6 +156,18 @@ but the one in view. The same data is in
 `test-results/storyboard/storyboard.json`, for an agent.
 Both are local only and gitignored. A difference never fails; only this
 branch's checks do, and the exit code is theirs.
+
+**Noise.** A frame that differs from main's only by antialiasing isn't
+counted as changed, by the rule toucan's snapshot gallery uses
+(https://git.sr.ht/~frabcus/toucan, `platform/snapshots/png.ts`). A pixel
+differs when a colour channel moves by more than 4 levels. A frame has
+changed when its differing pixels' moves add up to more than 2,000, or more
+than 1,000 pixels differ, both per CSS pixel, so nine times that on the
+phone's 3× screen. Antialiasing on a few glyphs comes to a few thousand; a
+line that moves by a pixel, millions. A frame under the limits reads "same
+as main, but for noise" and still shows its diff, so you can see what fell
+under them. The limits are `CHANNEL_NOISE`, `NOISE_TOTAL` and
+`NOISE_PIXELS` in `tests/storyboard/report/frames.ts`.
 
 Switches, after `--`: `--no-main` (this branch alone), `--main=<ref>`
 (another branch), `--desktop` or `--phone`, `--no-open`, `--paths` (print
@@ -232,7 +251,7 @@ or why nothing does.
 | `mobile-nav.spec.ts`                                | The burger menu on a phone: open, close, dropdowns, navigating, scroll lock released.                                                                                                                                                                                                                                                                                                               |
 | `onboarding-embed.spec.ts`                          | The home page's signup iframe: shows after slow hydration, ignores other origins.                                                                                                                                                                                                                                                                                                                   |
 | `scroll.spec.ts`                                    | Anchor links, deep links, the back button, keyboard focus, reduced motion, the footer's cookie link, the embed not scrolling the page.                                                                                                                                                                                                                                                              |
-| `gallery.spec.ts`                                   | Every component and its variants, a frame each, from the component gallery (`/gallery`, fixture builds only; `plans/component-gallery.md`), a flow per group; one flow presses an action and a control to show the examples respond.                                                                                                                                                                |
+| `gallery.spec.ts`                                   | The component gallery ("The component gallery", below): a flow per group, one full-page frame of its page; one flow presses an action and a control to show the examples respond.                                                                                                                                                                                                                   |
 | `redirects.spec.ts`                                 | Every redirect in `next.config.ts`, over HTTP, and that each destination resolves.                                                                                                                                                                                                                                                                                                                  |
 | `/api/email-your-mp/lookup`                         | `campaigns`: the postcode form (`lookUpTestMp` in `tests/steps.ts`).                                                                                                                                                                                                                                                                                                                                |
 | `/api/email-your-mp/letters`                        | `campaigns`: sending the letter (`sendLetter`).                                                                                                                                                                                                                                                                                                                                                     |
@@ -248,6 +267,48 @@ or why nothing does.
 pauseai.uk failed on every run on live data (events, news, caches, the
 clock), so it went. Bugs only real data shows, and configuration drift on
 Netlify, aren't caught here; check previews by hand.
+
+## The component gallery
+
+Every component, and each of its major variants, rendered on fixture data,
+a page per group: `/gallery` lists the groups (the UI kit, the header and
+footer, each area of the site, the tools, the staff interface), and
+`/gallery/<group>` (`/gallery/ui`, `/gallery/staff`) shows that group's
+components, with a link to each at the top. It exists only in fixture
+builds (`DATA_FIXTURES=1`); production answers 404, and the pages are
+noindex. The plan behind it is `plans/component-gallery.md`.
+
+- **Look there first.** Before making a component, find out whether one
+  already does the job, and how the site's pieces look side by side. With
+  `DATA_FIXTURES=1` in `.env.local`, `npm run dev` serves it at
+  http://localhost:3000/gallery.
+- **Where examples go:** `app/(tools)/gallery/_examples/<group>.tsx`, one
+  entry per component, `{ name, file, variants: [{ label, render }] }`. One
+  that needs state or callbacks goes in the `.client.tsx` beside it.
+  `tests/checks/gallery.test.ts` fails if an exported component has none.
+- **A major variant** is a prop that changes how the component looks (a
+  `variant`, a size, with and without an image). States someone reaches by
+  using a page (open, submitted, an error) belong in the storyboard's
+  flows, not here.
+- **Callbacks do something.** A controlled input sits in `<Controlled>`,
+  which holds its value and shows it; an action gets `log("onSave")` from
+  `<Logged>`, which lists each call and its arguments under the component
+  (`_components/wiring.tsx`).
+- **Example data is test data:** obviously fake names, addresses and
+  text, as in the browser tests, not copy.
+- **To check a component by eye**, picture its group on both viewports and
+  open the PNGs (`--paths` prints them; an agent opens them with its file
+  reader):
+
+  ```bash
+  npm run storyboard -- --no-main --no-open --paths gallery -g 'gallery: ui$'
+  ```
+
+  Drop `--no-main` to see main's beside it. The full review pictures every
+  group anyway, so a change to a shared component shows wherever it's used.
+
+- Knip leaves the gallery out (`knip.config.ts`): it imports every
+  component, so they'd all look used.
 
 ## The database
 
@@ -291,7 +352,11 @@ import("@/tests/next-headers"))` and put the session cookie in
 - A new component ships with its `*.browser.test.tsx` in the same PR.
 - **A new component gets an example in the component gallery**
   (`app/(tools)/gallery/_examples/`, one per major variant), or
-  `tests/checks/gallery.test.ts` fails. The storyboard then pictures it.
+  `tests/checks/gallery.test.ts` fails. Look at it there on both viewports
+  before calling it done ("The component gallery", above); the storyboard
+  then pictures it in every review.
+- **A page has no branches** (`tests/checks/thin-pages.test.ts`). Put the
+  choice in a component or a `lib/` helper with its own tests.
 - **Tests find elements the way a person does**: by role and accessible
   name, label or text (`getByRole`, `getByLabelText`, `getByText`), or by
   the attributes the markup has for its state (`aria-expanded`,
