@@ -78,7 +78,8 @@ h1, h2, h3, p { margin: 0; }
 #sidebar .count { color: var(--muted); white-space: nowrap; font-weight: normal; }
 #sidebar .count.changed { color: var(--changed); font-weight: 600; }
 #sidebar a.failed .name::before, h3.failed::before { content: "✕ "; color: var(--failed); }
-main { padding: 8px 24px 80px; min-width: 0; }
+/* Room below the last flow, so picking it in the sidebar scrolls it to the top like any other. */
+main { padding: 8px 24px calc(100vh - 60px); min-width: 0; }
 section > h2 { font-size: 18px; margin: 32px 0 8px; padding-top: 16px; border-top: 1px solid var(--line); }
 section:first-child > h2 { border-top: 0; margin-top: 16px; }
 /* A hash link lands under the sticky bar without this. */
@@ -196,7 +197,7 @@ function render() {
 
 function renderFrame(frame) {
   const caption = el("div", { class: "caption" }, [el("span", { class: "n" }, [String(frame.index)]), frame.caption]);
-  if (frame.mismatch !== undefined) caption.append(el("span", { class: "mismatch" }, [frame.mismatch ? pct(frame.mismatch) + " of pixels differ" : "identical to main"]));
+  if (frame.mismatch !== undefined) caption.append(el("span", { class: "mismatch" }, [frame.noise ? "same as main, but for noise: " + pct(frame.mismatch) + " of pixels differ slightly" : frame.mismatch ? pct(frame.mismatch) + " of pixels differ" : "identical to main"]));
   else if (data.withMain) caption.append(el("span", { class: "mismatch" }, [frame.branch ? "new: main didn't get here" : "gone: only main has it"]));
   const thumbs = el("div", { class: "thumbs" });
   const sides = data.withMain ? ["branch", "main", "diff"] : ["branch"];
@@ -212,14 +213,14 @@ function renderFrame(frame) {
   return el("div", { class: "frame" + (frame.changed ? " changed" : ""), "data-index": frame.index }, [caption, thumbs]);
 }
 
-// The sidebar folds every section but the one in view: the first whose
-// heading hasn't scrolled past the top of the board.
+// The sidebar folds every section but the one in view: the last whose top
+// has reached the place a link to it scrolls it to (its scroll-margin-top,
+// below the bar), so following a section's link opens that section.
 let currentSection = null;
 function sectionInView() {
-  const top = document.querySelector(".bar").offsetHeight + 1;
   let current = null;
   for (const sec of document.querySelectorAll("main > section")) {
-    if (sec.getBoundingClientRect().top <= top) current = sec.id;
+    if (sec.getBoundingClientRect().top <= parseFloat(getComputedStyle(sec).scrollMarginTop) + 1) current = sec.id;
     else break;
   }
   return current ?? document.querySelector("main > section")?.id ?? null;
@@ -233,7 +234,14 @@ function trackSection() {
     group.classList.toggle("current", here);
     group.open = here;
   }
-  document.querySelector("#sidebar details.current")?.scrollIntoView({ block: "nearest" });
+  // Bring it into the sidebar's own view. Not scrollIntoView: on a phone the
+  // sidebar isn't sticky, and that would scroll the page back up to it.
+  const sidebar = document.getElementById("sidebar");
+  const here = document.querySelector("#sidebar details.current")?.getBoundingClientRect();
+  if (!here) return;
+  const view = sidebar.getBoundingClientRect();
+  if (here.top < view.top) sidebar.scrollTop += here.top - view.top;
+  else if (here.bottom > view.bottom) sidebar.scrollTop += Math.min(here.bottom - view.bottom, here.top - view.top);
 }
 document.addEventListener("scroll", trackSection, { passive: true });
 

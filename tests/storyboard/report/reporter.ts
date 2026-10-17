@@ -16,9 +16,12 @@ export default class StoryboardReporter implements Reporter {
   private side = process.env.STORYBOARD_SIDE ?? "branch";
   private outputDir = "";
   private runs: FlowRun[] = [];
+  /** Each project's device pixel ratio, by its name ("phone": 3), which the noise limits scale by. */
+  private scales = new Map<string, number>();
 
   onBegin(config: FullConfig) {
     this.outputDir = config.projects[0]?.outputDir ?? "";
+    for (const project of config.projects) this.scales.set(project.name, project.use.deviceScaleFactor ?? 1);
   }
 
   onTestEnd(test: TestCase, result: TestResult) {
@@ -61,10 +64,11 @@ export default class StoryboardReporter implements Reporter {
       : undefined;
     const diffDir = join(this.dir, "diff");
     mkdirSync(diffDir, { recursive: true });
-    const storyboard = pairRuns(manifest, main, (branchPng, mainPng, name) => {
+    const storyboard = pairRuns(manifest, main, (branchPng, mainPng, name, viewport) => {
       const diffPath = join(diffDir, `${name.replace(/[^\w.-]+/g, "_")}.png`);
-      const result = comparePngs(join(this.dir!, branchPng), join(this.dir!, mainPng), diffPath);
-      return { mismatch: result.mismatch, diff: result.diff && relative(this.dir!, result.diff) };
+      const scale = this.scales.get(viewport) ?? 1;
+      const result = comparePngs(join(this.dir!, branchPng), join(this.dir!, mainPng), diffPath, scale);
+      return { mismatch: result.mismatch, noise: result.noise, diff: result.diff && relative(this.dir!, result.diff) };
     });
     writeFileSync(join(this.dir, "storyboard.json"), JSON.stringify(storyboard, null, 2));
     writeFileSync(join(this.dir, "index.html"), renderStoryboardPage(storyboard));
