@@ -117,7 +117,9 @@ dialog::backdrop { background: #000; }
 
 const JS = `
 const data = JSON.parse(document.getElementById("data").textContent);
-const state = { viewport: "desktop", changedOnly: false };
+// The browser restores the checkbox's tick on a reload, so the filter starts
+// from it. \`open\` holds the sections whose lists are unfolded in the sidebar.
+const state = { viewport: "desktop", changedOnly: document.getElementById("changed-only").checked, open: new Set() };
 const el = (tag, attrs = {}, children = []) => {
   const node = document.createElement(tag);
   for (const [k, v] of Object.entries(attrs)) {
@@ -152,8 +154,9 @@ function render() {
     if (!sectionFlows.length) continue;
     const sectionChanged = sectionFlows.reduce((n, f) => n + f.changed, 0);
     const sectionFrames = sectionFlows.reduce((n, f) => n + f.frames, 0);
-    // One folded list per section; the one in view is open (see trackSection).
-    const group = el("details", { "data-section": slug(section) }, [
+    // One folded list per section, opened and closed only by hand; the one
+    // in view is marked (see trackSection).
+    const group = el("details", { "data-section": slug(section), open: state.open.has(slug(section)) ? "" : undefined }, [
       el("summary", {}, [
         el("span", { class: "name" }, [title(section)]),
         el("span", { class: "count" + (sectionChanged ? " changed" : "") }, [
@@ -161,6 +164,10 @@ function render() {
         ]),
       ]),
     ]);
+    group.addEventListener("toggle", () => {
+      if (group.open) state.open.add(group.dataset.section);
+      else state.open.delete(group.dataset.section);
+    });
     sidebar.append(group);
     const sec = el("section", { id: slug(section) }, [el("h2", {}, [title(section)])]);
     for (const flow of sectionFlows) {
@@ -222,9 +229,10 @@ function renderFrame(frame) {
   return el("div", { class: "frame" + (frame.changed ? " changed" : ""), "data-index": frame.index }, [caption, thumbs]);
 }
 
-// The sidebar folds every section but the one in view: the last whose top
-// has reached the place a link to it scrolls it to (its scroll-margin-top,
-// below the bar), so following a section's link opens that section.
+// The sidebar marks the section in view: the last whose top has reached the
+// place a link to it scrolls it to (its scroll-margin-top, below the bar).
+// It opens that section's list only on first showing the page; after that a
+// list opens and closes only when it's clicked.
 let currentSection = null;
 function sectionInView() {
   let current = null;
@@ -238,11 +246,7 @@ function trackSection() {
   const section = sectionInView();
   if (section === currentSection && document.querySelector("#sidebar details.current")) return;
   currentSection = section;
-  for (const group of document.querySelectorAll("#sidebar details")) {
-    const here = group.dataset.section === section;
-    group.classList.toggle("current", here);
-    group.open = here;
-  }
+  for (const group of document.querySelectorAll("#sidebar details")) group.classList.toggle("current", group.dataset.section === section);
   // Bring it into the sidebar's own view. Not scrollIntoView: on a phone the
   // sidebar isn't sticky, and that would scroll the page back up to it.
   const sidebar = document.getElementById("sidebar");
@@ -316,4 +320,6 @@ for (const button of document.querySelectorAll(".bar [data-viewport]")) {
 document.getElementById("changed-only").addEventListener("change", (e) => { state.changedOnly = e.target.checked; render(); });
 if (!data.flows.some((f) => f.viewport === "desktop") && data.flows.some((f) => f.viewport === "phone")) document.querySelector('.bar [data-viewport="phone"]').click();
 else render();
+const first = document.querySelector("#sidebar details.current");
+if (first) first.open = true;
 `;
