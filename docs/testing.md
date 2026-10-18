@@ -152,8 +152,9 @@ that stays on the flow being looked at, a "changed only" filter, and a
 failed flow's message under its last frame. The sections come in the order
 of `SECTION_ORDER` (`tests/storyboard/report/frames.ts`): the public pages
 first, then what a visitor does, the staff screens, then the mechanics; the
-flows in each keep their spec file's order. The sidebar folds every section
-but the one in view. The same data is in
+flows in each keep their spec file's order. The sidebar marks the section
+in view; its lists open and close only when clicked, and the "changed only"
+filter is kept on a reload. The same data is in
 `test-results/storyboard/latest/storyboard.json`, for an agent.
 Both are local only and gitignored. A difference never fails; only this
 branch's checks do, and the exit code is theirs.
