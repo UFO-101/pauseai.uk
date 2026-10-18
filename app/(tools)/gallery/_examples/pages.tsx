@@ -1,4 +1,10 @@
 // The other pages' own sections: each page's _components folder under app/(site).
+import DemisLetterBackground from "@/app/(site)/campaigns/dear-sir-demis-2025/_components/DemisLetterBackground";
+import DemisLetterHelp from "@/app/(site)/campaigns/dear-sir-demis-2025/_components/DemisLetterHelp";
+import DemisLetterHero from "@/app/(site)/campaigns/dear-sir-demis-2025/_components/DemisLetterHero";
+import DemisLetterQuotes from "@/app/(site)/campaigns/dear-sir-demis-2025/_components/DemisLetterQuotes";
+import DemisLetterSignatories from "@/app/(site)/campaigns/dear-sir-demis-2025/_components/DemisLetterSignatories";
+import DemisLetterText from "@/app/(site)/campaigns/dear-sir-demis-2025/_components/DemisLetterText";
 import EvidenceSubmission from "@/app/(site)/future-of-workforce-inquiry/_components/EvidenceSubmission";
 import FootnoteTooltips from "@/app/(site)/future-of-workforce-inquiry/_components/FootnoteTooltips";
 import WorkforceForeword from "@/app/(site)/future-of-workforce-inquiry/_components/Foreword";
@@ -214,6 +220,49 @@ export const pages: Group = {
             </div>
           ),
         },
+      ],
+    },
+    {
+      name: "DemisLetterHero",
+      file: "app/(site)/campaigns/dear-sir-demis-2025/_components/DemisLetterHero.tsx",
+      variants: [{ label: "The title, who signed in numbers, and the date", render: () => <DemisLetterHero /> }],
+    },
+    {
+      name: "DemisLetterQuotes",
+      file: "app/(site)/campaigns/dear-sir-demis-2025/_components/DemisLetterQuotes.tsx",
+      variants: [{ label: "Six signatories' quotes, with their portraits", render: () => <DemisLetterQuotes /> }],
+    },
+    {
+      name: "DemisLetterText",
+      file: "app/(site)/campaigns/dear-sir-demis-2025/_components/DemisLetterText.tsx",
+      variants: [{ label: "The whole letter", render: () => <DemisLetterText /> }],
+    },
+    {
+      name: "DemisLetterSignatories",
+      file: "app/(site)/campaigns/dear-sir-demis-2025/_components/DemisLetterSignatories.tsx",
+      variants: [
+        { label: "Everyone who signed, and the organisations' logos", render: () => <DemisLetterSignatories /> },
+        {
+          label: "A signatory without a portrait, and an organisation without a logo or website",
+          render: () => (
+            <DemisLetterSignatories
+              parliamentarians={[{ name: "Example Person MP", type: "MP" }]}
+              organisations={[{ name: "An Example Organisation", website: null, logo: null }]}
+            />
+          ),
+        },
+      ],
+    },
+    {
+      name: "DemisLetterBackground",
+      file: "app/(site)/campaigns/dear-sir-demis-2025/_components/DemisLetterBackground.tsx",
+      variants: [{ label: "The background PDF beside its heading", render: () => <DemisLetterBackground /> }],
+    },
+    {
+      name: "DemisLetterHelp",
+      file: "app/(site)/campaigns/dear-sir-demis-2025/_components/DemisLetterHelp.tsx",
+      variants: [
+        { label: "The button to the campaign running now, and who to contact", render: () => <DemisLetterHelp /> },
       ],
     },
     {

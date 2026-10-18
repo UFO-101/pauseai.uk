@@ -1,9 +1,10 @@
-import styles from "./dear-sir-demis.module.css";
+import Section from "@/components/ui/Section";
+import styles from "./DemisLetterText.module.css";
 
 /** The letter itself, as the parliamentarians signed it. */
 export default function DemisLetterText() {
   return (
-    <section className={styles.letterSection}>
+    <Section tone="muted">
       <div className="container">
         <article className={styles.letter}>
           <div className={styles.addresses}>
@@ -100,6 +101,6 @@ export default function DemisLetterText() {
           <p>Yours sincerely,</p>
         </article>
       </div>
-    </section>
+    </Section>
   );
 }

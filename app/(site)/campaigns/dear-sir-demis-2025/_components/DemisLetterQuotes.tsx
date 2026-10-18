@@ -1,23 +1,28 @@
 import Image from "next/image";
+import Section, { SectionHeader } from "@/components/ui/Section";
 import { DEMIS_LETTER_QUOTES, type DemisLetterQuote, demisLetterDisplayName } from "@/lib/content/dear-sir-demis-2025";
-import styles from "./dear-sir-demis.module.css";
+import styles from "./DemisLetterQuotes.module.css";
 
 /** What some of the signatories said, each with their portrait. */
 export default function DemisLetterQuotes() {
   return (
-    <section className={styles.quotes}>
+    <Section>
       <div className="container">
-        <h2 className={styles.sectionTitle}>
-          <span className={styles.eyebrow}>Voices of Concern</span>
-          What parliamentarians are saying
-        </h2>
-        <div className={styles.quotesGrid}>
+        <SectionHeader
+          title={
+            <>
+              <span className={styles.eyebrow}>Voices of Concern</span>
+              What parliamentarians are saying
+            </>
+          }
+        />
+        <div className={styles.grid}>
           {DEMIS_LETTER_QUOTES.map((quote) => (
             <SignatoryQuote key={quote.name} quote={quote} />
           ))}
         </div>
       </div>
-    </section>
+    </Section>
   );
 }
 
@@ -25,7 +30,7 @@ function SignatoryQuote({ quote }: { quote: DemisLetterQuote }) {
   return (
     <figure className={styles.quote}>
       <Image
-        className={styles.quotePortrait}
+        className={styles.portrait}
         src={quote.portrait}
         alt={`Portrait of ${demisLetterDisplayName(quote)}`}
         width={400}

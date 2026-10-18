@@ -8,7 +8,8 @@ import {
   demisLetterParliamentarians,
   demisLetterPortraitPath,
 } from "@/lib/content/dear-sir-demis-2025";
-import styles from "./dear-sir-demis.module.css";
+import Section from "@/components/ui/Section";
+import styles from "./DemisLetterSignatories.module.css";
 
 /**
  * Everyone who signed: the parliamentarians, each with their portrait, then
@@ -23,14 +24,14 @@ export default function DemisLetterSignatories({
   organisations?: DemisLetterOrganisation[];
 }) {
   return (
-    <section className={styles.signatories}>
-      <div className="container">
-        <h2 className={styles.signatoriesTitle}>
-          <span className={styles.signatoriesCount}>{parliamentarians.length}</span> Signatories
+    <Section>
+      <div className={`container ${styles.signatories}`}>
+        <h2 className={styles.title}>
+          <span className={styles.count}>{parliamentarians.length}</span> Signatories
         </h2>
-        <p className={styles.signatoriesLede}>United in calling for AI safety transparency</p>
+        <p className={styles.lede}>United in calling for AI safety transparency</p>
 
-        <ul className={styles.signatoriesGrid}>
+        <ul className={styles.grid}>
           {parliamentarians.map((signatory) => (
             <SignatoryCard key={signatory.name} signatory={signatory} />
           ))}
@@ -44,7 +45,7 @@ export default function DemisLetterSignatories({
           </ul>
         )}
       </div>
-    </section>
+    </Section>
   );
 }
 
@@ -61,7 +62,7 @@ function SignatoryCard({ signatory }: { signatory: DemisLetterSignatory }) {
     <li className={styles.signatory}>
       {portrait ? (
         <Image
-          className={styles.signatoryPortrait}
+          className={styles.portrait}
           src={portrait}
           alt={`Portrait of ${name}`}
           width={400}
@@ -70,12 +71,12 @@ function SignatoryCard({ signatory }: { signatory: DemisLetterSignatory }) {
           loading="lazy"
         />
       ) : (
-        <span className={styles.signatoryInitials} aria-hidden="true">
+        <span className={styles.initials} aria-hidden="true">
           {initials}
         </span>
       )}
-      <span className={styles.signatoryName}>{name}</span>
-      <span className={styles.signatoryType}>{demisLetterDisplayType(signatory.type)}</span>
+      <span className={styles.name}>{name}</span>
+      <span className={styles.type}>{demisLetterDisplayType(signatory.type)}</span>
     </li>
   );
 }

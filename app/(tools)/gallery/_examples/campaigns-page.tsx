@@ -117,6 +117,14 @@ export const campaignsPage: Group = {
             </div>
           ),
         },
+        {
+          label: "A title alone, with no kind or call to action",
+          render: () => (
+            <div className="container" style={{ maxWidth: 480 }}>
+              <DocCard file={LETTER.file} title="An Example Document" />
+            </div>
+          ),
+        },
       ],
     },
     {

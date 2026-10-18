@@ -1,0 +1,19 @@
+/* The background information: the heading beside the document's card,
+   above it on a phone. */
+
+.inner {
+  display: grid;
+  grid-template-columns: 1fr minmax(0, 320px);
+  align-items: center;
+  gap: 32px 56px;
+}
+
+@media (max-width: 720px) {
+  .inner {
+    grid-template-columns: 1fr;
+  }
+
+  .doc {
+    max-width: 320px;
+  }
+}

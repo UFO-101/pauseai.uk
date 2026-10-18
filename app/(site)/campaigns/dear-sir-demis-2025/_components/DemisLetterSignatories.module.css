@@ -1,0 +1,151 @@
+/* Everyone who signed: a card for each parliamentarian, then the
+   organisations' logos. */
+
+.signatories {
+  text-align: center;
+}
+
+.title {
+  font-size: clamp(32px, 5vw, 48px);
+  line-height: 1.1;
+  margin: 0 0 8px;
+  color: var(--text);
+}
+
+.count {
+  color: var(--accent);
+}
+
+.lede {
+  margin: 0 0 40px;
+  font-size: 17px;
+  color: var(--text-secondary);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.signatory {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 20px 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 1px 3px var(--shadow);
+}
+
+.portrait,
+.initials {
+  width: 128px;
+  height: 128px;
+  margin-bottom: 10px;
+  border-radius: 50%;
+}
+
+.portrait {
+  object-fit: cover;
+  border: 2px solid var(--accent-light);
+}
+
+.initials {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-2);
+  font-size: 36px;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.name {
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--text);
+}
+
+.type {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  color: var(--accent);
+}
+
+.organisations {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 16px;
+  margin: 40px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.organisation a,
+.organisation span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 240px;
+  height: 120px;
+  padding: 20px 28px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  font-weight: 600;
+  color: var(--text);
+  text-decoration: none;
+  transition:
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.organisation a:hover {
+  border-color: var(--accent);
+  box-shadow: 0 4px 16px var(--shadow);
+}
+
+.organisation img {
+  width: auto;
+  max-width: 100%;
+  max-height: 72px;
+  object-fit: contain;
+}
+
+@media (max-width: 600px) {
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .portrait,
+  .initials {
+    width: 88px;
+    height: 88px;
+  }
+
+  .name {
+    font-size: 14px;
+  }
+
+  .organisation {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+  }
+
+  .organisation a,
+  .organisation span {
+    width: 100%;
+    max-width: 280px;
+  }
+}
