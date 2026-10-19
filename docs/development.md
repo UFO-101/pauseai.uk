@@ -290,9 +290,9 @@ curl -X POST -H "Authorization: Bearer dev" localhost:3000/api/cron/check-mps
 format:
 
 ```bash
-# A bounce. Use a postmark_message_id from the letters table.
+# A hard bounce. Use a message_id from the email_sends table, and its address.
 curl -u postmark:secret -H 'Content-Type: application/json' localhost:3000/api/postmark/bounce \
-  -d '{"RecordType":"Bounce","MessageID":"<id>","Type":"HardBounce","Description":"Unknown user"}'
+  -d '{"RecordType":"Bounce","MessageID":"<id>","Email":"<address>","Type":"HardBounce","Description":"Unknown user","Inactive":true,"CanActivate":true}'
 
 # A reply. Send it to a letter's address: its reply_hash in the letters table, @letters.pauseai.uk.
 curl -u postmark:secret -H 'Content-Type: application/json' localhost:3000/api/postmark/inbound \

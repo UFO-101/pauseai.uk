@@ -67,8 +67,19 @@ your MP. This page says where its code is and which settings it needs.
   (`lib/email-your-mp.ts`) puts them under the name as ordinary lines of
   the letter, so the sender can edit them, adding a town, say, and the
   letter is sent as they leave it.
+- `lib/server/email.ts`: every email the site sends goes through `send`,
+  which logs it (`email_sends`) and won't send to a blocked address. A
+  hard bounce or spam complaint, whichever email it was about, is recorded
+  (`email_problems`) and blocks its address (`email_blocks`). Staff see the
+  blocked addresses at `/staff/blocked-addresses`, and on the politician's
+  page, and unblock one there, which asks Postmark to send to it again.
+  Postmark won't for a spam complaint, so that can't be unblocked. The
+  letter form says an MP whose address is blocked can't be reached.
+- `lib/server/delivery-problems.ts`: what each kind of email does when it
+  bounces: a letter is marked, and staff are emailed.
 - `lib/server/postmark.ts`: the only file that talks to Postmark.
-- `lib/server/postmark-webhooks.ts`: bounces, spam complaints and replies.
+- `lib/server/postmark-webhooks.ts`: bounces and spam complaints in
+  Postmark's words, and replies.
 - `app/(site)/campaigns/`: the pages and the form.
 - `app/api/email-your-mp/`: the form's lookup and send requests.
 
@@ -158,8 +169,11 @@ The environment variables are listed, with what each is for, in [.env.example](.
 Postmark's webhooks, each with the basic auth credentials in the URL, e.g.
 `https://postmark:<password>@pauseai.uk/api/postmark/bounce`:
 
-- **Bounce** and **Spam complaint**: `/api/postmark/bounce`. The letter's
-  status changes, shown in `/staff/letters`.
+- **Bounce** and **Spam complaint**: `/api/postmark/bounce`. A hard
+  bounce (one Postmark suppressed the address for) or a complaint blocks the
+  address, as below, and a letter's status changes, shown in
+  `/staff/letters`; staff are emailed at `REPLIES_INBOX`. A soft bounce is
+  only recorded.
 - **Inbound** (the `letters.pauseai.uk` inbound domain): `/api/postmark/inbound`.
   Every address on the domain comes here. The reply is matched to its letter
   by whichever letter's address it was sent to (Postmark's `OriginalRecipient` first, then To, Cc

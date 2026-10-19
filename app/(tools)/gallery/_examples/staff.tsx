@@ -379,7 +379,7 @@ export const staff: Group = {
       file: "app/(staff)/staff/_components/LettersTable.tsx",
       variants: [
         {
-          label: "A bounced letter to a test MP, and a replied one",
+          label: "A bounced letter to a test MP, a replied one, and one not sent as the MP's address was blocked",
           render: () => (
             <StaffPage as="div">
               <LettersTable
@@ -398,6 +398,17 @@ export const staff: Group = {
                     events: [
                       { at: "2026-10-12T09:00:00Z", status: "sending", details: {} },
                       { at: "2026-10-12T09:05:00Z", status: "sent", details: {} },
+                    ],
+                  },
+                  {
+                    ...exampleLetter,
+                    id: 3,
+                    status: "not_sent",
+                    mpName: "Bouncy McTestface MP",
+                    sentAt: null,
+                    events: [
+                      { at: "2026-10-12T09:00:00Z", status: "sending", details: {} },
+                      { at: "2026-10-12T09:00:00Z", status: "not_sent", details: {} },
                     ],
                   },
                 ]}
