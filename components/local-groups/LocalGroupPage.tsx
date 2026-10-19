@@ -28,30 +28,6 @@ export type ActivityItem = {
   style?: CSSProperties;
 };
 
-/** The sections a local group page is built from, in the order given. */
-export type GroupSection =
-  | { kind: "features"; heading: string; lede?: string; items: { title: string; text: string }[] }
-  | {
-      kind: "activities";
-      heading: string;
-      lede?: string;
-      /** A full-width tinted band instead of a plain section. */
-      muted?: boolean;
-      gridStyle?: CSSProperties;
-      items: ActivityItem[];
-    }
-  | { kind: "events" }
-  | {
-      kind: "contact";
-      heading: string;
-      lede: string;
-      muted?: boolean;
-      /** Text beside the buttons. */
-      details?: ReactNode;
-      calloutStyle?: CSSProperties;
-      actions: GroupAction[];
-    };
-
 export type LocalGroupPageContent = {
   name: LocalGroupName;
   hero: {
@@ -62,7 +38,17 @@ export type LocalGroupPageContent = {
     photoStyle?: CSSProperties;
     badge?: string;
   };
-  sections: GroupSection[];
+  /** What the group does, as cards without photos. */
+  features?: { lede: string; items: { title: string; text: string }[] };
+  /** Photos of events the group has held. */
+  activities?: { gridStyle?: CSSProperties; items: ActivityItem[] };
+  contact: {
+    lede: string;
+    /** Text beside the buttons. */
+    details?: ReactNode;
+    calloutStyle?: CSSProperties;
+    actions: GroupAction[];
+  };
 };
 
 const PHOTO_TINT = "linear-gradient(135deg, rgb(var(--amber-rgb) / 0.35), rgb(var(--black-rgb) / 0.65))";
@@ -101,75 +87,13 @@ function Band({ muted, children }: { muted?: boolean; children: ReactNode }) {
   );
 }
 
-function Section({ section, name }: { section: GroupSection; name: LocalGroupName }) {
-  switch (section.kind) {
-    case "features":
-      return (
-        <Band>
-          <GroupSectionHeader heading={section.heading} lede={section.lede} />
-          <div className={styles.featureGrid}>
-            {section.items.map((item) => (
-              <FeatureCard key={item.title}>
-                <h3>{item.title}</h3>
-                <p>{item.text}</p>
-              </FeatureCard>
-            ))}
-          </div>
-        </Band>
-      );
-    case "activities":
-      return (
-        <Band muted={section.muted}>
-          <GroupSectionHeader heading={section.heading} lede={section.lede} />
-          <div className={styles.activityGrid} style={section.gridStyle}>
-            {section.items.map((item) => (
-              <article key={item.title} className={photoCardClass()} style={item.style}>
-                <PhotoCardImage
-                  style={{
-                    backgroundImage: `url('${item.image}')`,
-                    ...(item.imagePosition ? { backgroundPosition: item.imagePosition } : {}),
-                  }}
-                />
-                <PhotoCardBody>
-                  <h3>{item.title}</h3>
-                  <p>{item.text}</p>
-                  {item.href && (
-                    <a className="inline-link" href={item.href} target="_blank" rel="noreferrer">
-                      View event page
-                    </a>
-                  )}
-                </PhotoCardBody>
-              </article>
-            ))}
-          </div>
-        </Band>
-      );
-    case "events":
-      return <LocalGroupEvents localGroupName={name} />;
-    case "contact":
-      return (
-        <Band muted={section.muted}>
-          <GroupSectionHeader heading={section.heading} lede={section.lede} />
-          <Callout style={section.calloutStyle}>
-            {section.details && <div>{section.details}</div>}
-            {section.actions.length > 1 ? (
-              <div className={styles.actions}>
-                {section.actions.map((action) => (
-                  <Action key={action.label} action={action} size="large" />
-                ))}
-              </div>
-            ) : (
-              <Action action={section.actions[0]} size="large" />
-            )}
-          </Callout>
-        </Band>
-      );
-  }
-}
-
-/** A local group's page: a hero, then its sections in order. */
+/**
+ * A local group's page. Every group's page has the same sections in the same
+ * order, with the same headings: the hero, its events, what it does, what it
+ * has done, and how to get in touch, the last tinted.
+ */
 export default function LocalGroupPage({ content }: { content: LocalGroupPageContent }) {
-  const { name, hero, sections } = content;
+  const { name, hero, features, activities, contact } = content;
   return (
     <main>
       <section className={styles.hero} style={{ paddingBottom: 48 }}>
@@ -196,9 +120,61 @@ export default function LocalGroupPage({ content }: { content: LocalGroupPageCon
           </div>
         </div>
       </section>
-      {sections.map((section, i) => (
-        <Section key={i} section={section} name={name} />
-      ))}
+      <LocalGroupEvents localGroupName={name} />
+      {features && (
+        <Band>
+          <GroupSectionHeader heading={`What we're doing in ${name}`} lede={features.lede} />
+          <div className={styles.featureGrid}>
+            {features.items.map((item) => (
+              <FeatureCard key={item.title}>
+                <h3>{item.title}</h3>
+                <p>{item.text}</p>
+              </FeatureCard>
+            ))}
+          </div>
+        </Band>
+      )}
+      {activities && (
+        <Band>
+          <GroupSectionHeader heading="What we've done" />
+          <div className={styles.activityGrid} style={activities.gridStyle}>
+            {activities.items.map((item) => (
+              <article key={item.title} className={photoCardClass()} style={item.style}>
+                <PhotoCardImage
+                  style={{
+                    backgroundImage: `url('${item.image}')`,
+                    ...(item.imagePosition ? { backgroundPosition: item.imagePosition } : {}),
+                  }}
+                />
+                <PhotoCardBody>
+                  <h3>{item.title}</h3>
+                  <p>{item.text}</p>
+                  {item.href && (
+                    <a className="inline-link" href={item.href} target="_blank" rel="noreferrer">
+                      View event page
+                    </a>
+                  )}
+                </PhotoCardBody>
+              </article>
+            ))}
+          </div>
+        </Band>
+      )}
+      <Band muted>
+        <GroupSectionHeader heading="Link up with the group" lede={contact.lede} />
+        <Callout style={contact.calloutStyle}>
+          {contact.details && <div>{contact.details}</div>}
+          {contact.actions.length > 1 ? (
+            <div className={styles.actions}>
+              {contact.actions.map((action) => (
+                <Action key={action.label} action={action} size="large" />
+              ))}
+            </div>
+          ) : (
+            <Action action={contact.actions[0]} size="large" />
+          )}
+        </Callout>
+      </Band>
     </main>
   );
 }
