@@ -2,6 +2,7 @@ import { pageMetadata } from "@/lib/metadata";
 import { getEvents } from "@/lib/server/luma-calendar";
 import GetInvolved from "./_components/GetInvolved";
 import HeroMarqueeEffects from "./_components/HeroMarqueeEffects";
+import HomeEvents from "./_components/HomeEvents";
 import HomeHero from "./_components/HomeHero";
 import JoinSection from "./_components/JoinSection";
 import LocalGroupsSection from "./_components/LocalGroupsSection";
@@ -9,7 +10,6 @@ import PeopleSection from "./_components/PeopleSection";
 import PressMarquee from "./_components/PressMarquee";
 import ShopBanner from "./_components/ShopBanner";
 import StaffSection from "./_components/StaffSection";
-import UpcomingEvents from "./_components/UpcomingEvents";
 
 export const metadata = pageMetadata({
   title: "PauseAI UK | Civic action on AI",
@@ -29,7 +29,7 @@ export default async function HomePage() {
     <>
       <main>
         <HomeHero />
-        <UpcomingEvents events={events} />
+        <HomeEvents events={events} />
         <PressMarquee />
         <LocalGroupsSection />
         <PeopleSection />

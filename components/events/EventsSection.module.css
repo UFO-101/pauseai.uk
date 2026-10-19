@@ -26,6 +26,15 @@
   color: var(--text);
 }
 
+/* The list's buttons and the link to the calendar, in a row beside the
+   heading, wrapping under it when there isn't room. */
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
 /* The link to the calendar: on one line beside the heading; centred when it
    fills a phone's width under it. */
 .cta {
@@ -38,5 +47,11 @@
     flex-direction: column;
     align-items: flex-start;
     gap: 12px;
+  }
+
+  /* Under the heading, the full width, so the calendar link fills it as a
+     phone's buttons do. */
+  .actions {
+    align-self: stretch;
   }
 }

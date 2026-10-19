@@ -29,6 +29,10 @@ function json(body: unknown): Response {
 
 // postcodes.io knows one postcode. Its MP is in airtable-mps.json.
 const POSTCODES: Record<string, string> = { SW1A1AA: "Cities of London and Westminster" };
+// And one outcode, the first half of a postcode, in Manchester.
+const OUTCODES: Record<string, { latitude: number; longitude: number; admin_district: string[] }> = {
+  M1: { latitude: 53.4794, longitude: -2.2353, admin_district: ["Manchester"] },
+};
 
 export function fixtureResponse(url: string, init?: RequestInit): Response | undefined {
   const { hostname, pathname, searchParams } = new URL(url);
@@ -55,9 +59,17 @@ export function fixtureResponse(url: string, init?: RequestInit): Response | und
             codes: { parliamentary_constituency: "E14001172" },
             latitude: 51.501009,
             longitude: -0.141588,
+            admin_district: "Westminster",
           },
         })
       : new Response(JSON.stringify({ status: 404, error: "Postcode not found" }), { status: 404 });
+  }
+  if (hostname === "api.postcodes.io" && pathname.startsWith("/outcodes/")) {
+    const outcode = decodeURIComponent(pathname.slice("/outcodes/".length)).trim().toUpperCase();
+    const result = OUTCODES[outcode];
+    return result
+      ? json({ status: 200, result: { outcode, ...result } })
+      : new Response(JSON.stringify({ status: 404, error: "Outcode not found" }), { status: 404 });
   }
   if (hostname === "members-api.parliament.uk" && pathname === "/api/Members/Search") {
     return json(parliamentMembers);

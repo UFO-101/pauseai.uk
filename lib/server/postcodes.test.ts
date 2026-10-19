@@ -1,9 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { http, HttpResponse } from "msw";
 import { server } from "@/tests/fixtures/msw";
-import { constituencyForPostcode } from "./postcodes";
+import { constituencyForPostcode, placeForPostcode } from "./postcodes";
 
 const POSTCODES = "https://api.postcodes.io/postcodes/:postcode";
+const OUTCODES = "https://api.postcodes.io/outcodes/:outcode";
 
 describe("constituencyForPostcode", () => {
   it("finds the constituency, and where the postcode is", async () => {
@@ -65,5 +66,64 @@ describe("constituencyForPostcode", () => {
     expect(await constituencyForPostcode("SW1A 1AA")).toEqual({ ok: false, reason: "failed" });
     server.use(http.get(POSTCODES, () => HttpResponse.error()));
     expect(await constituencyForPostcode("SW1A 1AA")).toEqual({ ok: false, reason: "failed" });
+  });
+});
+
+describe("placeForPostcode", () => {
+  it("finds where a postcode is, and names its district", async () => {
+    expect(await placeForPostcode(" SW1A 1AA ")).toEqual({
+      ok: true,
+      place: { latitude: 51.501009, longitude: -0.141588 },
+      name: "Westminster",
+    });
+  });
+
+  it("finds where an outcode is, naming the first district it reaches into", async () => {
+    expect(await placeForPostcode("m1")).toEqual({
+      ok: true,
+      place: { latitude: 53.4794, longitude: -2.2353 },
+      name: "Manchester",
+    });
+  });
+
+  it("names the place by the postcode as typed, without a district", async () => {
+    for (const district of [undefined, "", [], [""], 7]) {
+      server.use(
+        http.get(POSTCODES, () =>
+          HttpResponse.json({ result: { latitude: 51.5, longitude: -0.1, admin_district: district } }),
+        ),
+      );
+      expect(await placeForPostcode("ab1 2cd")).toEqual({
+        ok: true,
+        place: { latitude: 51.5, longitude: -0.1 },
+        name: "AB1 2CD",
+      });
+    }
+  });
+
+  it("says when neither a postcode nor an outcode is found", async () => {
+    expect(await placeForPostcode("ZZ1 1ZZ")).toEqual({ ok: false, reason: "not_found" });
+  });
+
+  it("says it's not found when postcodes.io doesn't say where it is", async () => {
+    server.use(
+      http.get(POSTCODES, () => new HttpResponse(null, { status: 404 })),
+      http.get(OUTCODES, () => HttpResponse.json({ result: { latitude: null } })),
+    );
+    expect(await placeForPostcode("AB1")).toEqual({ ok: false, reason: "not_found" });
+    server.use(http.get(OUTCODES, () => HttpResponse.json({})));
+    expect(await placeForPostcode("AB1")).toEqual({ ok: false, reason: "not_found" });
+  });
+
+  it("fails on a server error or a network error, for a postcode or an outcode", async () => {
+    server.use(http.get(POSTCODES, () => new HttpResponse(null, { status: 500 })));
+    expect(await placeForPostcode("SW1A 1AA")).toEqual({ ok: false, reason: "failed" });
+    server.use(
+      http.get(POSTCODES, () => new HttpResponse(null, { status: 404 })),
+      http.get(OUTCODES, () => new HttpResponse(null, { status: 502 })),
+    );
+    expect(await placeForPostcode("M1")).toEqual({ ok: false, reason: "failed" });
+    server.use(http.get(OUTCODES, () => HttpResponse.error()));
+    expect(await placeForPostcode("M1")).toEqual({ ok: false, reason: "failed" });
   });
 });

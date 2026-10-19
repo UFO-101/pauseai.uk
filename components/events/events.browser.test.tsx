@@ -148,6 +148,29 @@ describe("EventsSection", () => {
     );
     await expect.element(page.getByRole("link")).not.toBeInTheDocument();
   });
+
+  it("puts the list's buttons before the calendar link, which can be a ghost button", async () => {
+    const { rerender } = await render(
+      <EventsSection
+        heading="Upcoming events"
+        actions={<button type="button">Filter</button>}
+        calendar={{ label: "See the calendar", href: "https://lu.ma/cal", variant: "ghost" }}
+      >
+        <p>The list</p>
+      </EventsSection>,
+    );
+    const filter = page.getByRole("button", { name: "Filter" }).element();
+    const calendar = page.getByRole("link", { name: "See the calendar" }).element();
+    expect(filter.compareDocumentPosition(calendar) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(getComputedStyle(calendar).backgroundColor).toBe("rgba(0, 0, 0, 0)");
+    await rerender(
+      <EventsSection heading="Upcoming events" actions={<button type="button">Filter</button>}>
+        <p>The list</p>
+      </EventsSection>,
+    );
+    await expect.element(page.getByRole("button", { name: "Filter" })).toBeVisible();
+    await expect.element(page.getByRole("link")).not.toBeInTheDocument();
+  });
 });
 
 describe("LocalGroupEvents", () => {

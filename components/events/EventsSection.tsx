@@ -4,20 +4,23 @@ import styles from "./EventsSection.module.css";
 
 /**
  * A band of events under a heading, with a link to the calendar beside it
- * if `calendar` is given. The list (an EventList) goes inside. It's white,
+ * if `calendar` is given, and any other `actions` before it. The list (an EventList) goes inside. It's white,
  * or the page's cream with `tone="cream"`, to differ from a white neighbour.
  */
 export default function EventsSection({
   id,
   heading,
   calendar,
+  actions,
   tone = "white",
   children,
 }: {
   id?: string;
   heading: string;
-  /** The link to the calendar: its words and where it goes. */
-  calendar?: { label: string; href: string };
+  /** The link to the calendar: its words, where it goes, and its look (primary when left out). */
+  calendar?: { label: string; href: string; variant?: "primary" | "ghost" };
+  /** Buttons for the list, beside the heading before the calendar link. */
+  actions?: ReactNode;
   tone?: "white" | "cream";
   children: ReactNode;
 }) {
@@ -26,16 +29,21 @@ export default function EventsSection({
       <div className="container">
         <div className={styles.headingRow}>
           <h2 className={styles.heading}>{heading}</h2>
-          {calendar && (
-            <ButtonAnchor
-              variant="primary"
-              className={styles.cta}
-              href={calendar.href}
-              target="_blank"
-              rel="noreferrer"
-            >
-              {calendar.label}
-            </ButtonAnchor>
+          {(actions || calendar) && (
+            <div className={styles.actions}>
+              {actions}
+              {calendar && (
+                <ButtonAnchor
+                  variant={calendar.variant ?? "primary"}
+                  className={styles.cta}
+                  href={calendar.href}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  {calendar.label}
+                </ButtonAnchor>
+              )}
+            </div>
           )}
         </div>
         {children}

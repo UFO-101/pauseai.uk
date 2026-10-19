@@ -112,6 +112,12 @@ const nextConfig: NextConfig = {
         source: "/tools/qr",
         headers: [{ key: "Permissions-Policy", value: "camera=(self), microphone=(), geolocation=(), payment=()" }],
       },
+      // The home page's events band finds events near the visitor's location
+      // when they ask it to, so the home page alone may ask for it.
+      {
+        source: "/",
+        headers: [{ key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(self), payment=()" }],
+      },
     ];
   },
   images: {

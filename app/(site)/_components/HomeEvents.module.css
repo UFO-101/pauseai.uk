@@ -1,0 +1,64 @@
+/* The home page's events: a switch of what's shown, all, near a place or
+   online, with exactly one segment on; the middle one opens the choice of
+   where, which hangs from it over the list. */
+
+.switch {
+  display: inline-flex;
+  flex-wrap: wrap;
+  padding: var(--space-1);
+  gap: var(--space-1);
+  background: var(--bg);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-pill);
+}
+
+.segment {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  padding: 0 var(--space-4);
+  border: none;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.segment:hover {
+  background: var(--surface);
+}
+
+.segment[aria-pressed="true"] {
+  background: var(--accent);
+  color: var(--white);
+}
+
+.segment:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-offset);
+}
+
+.chooser {
+  position: relative;
+}
+
+.popover {
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 0;
+  z-index: 20;
+}
+
+.icon {
+  flex-shrink: 0;
+  margin-right: var(--space-2);
+}
+
+.chevron {
+  flex-shrink: 0;
+  margin-left: var(--space-1);
+}

@@ -1,8 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { localGroups } from "@/lib/content/local-groups";
 import {
+  ANYWHERE,
   distanceKm,
   eventsNear,
+  inPersonEventsFor,
+  isOnlineEvent,
   filterEventsForLocalGroup,
   formatEventDate,
   formatEventTime,
@@ -164,5 +167,44 @@ describe("events near someone", () => {
     for (const here of [CARDIFF, null, undefined])
       expect(urls(eventsNear(calendar, here))).toEqual(["online-1", "online-2", "online-3", "online-4"]);
     expect(eventsNear([], WESTMINSTER)).toEqual([]);
+  });
+
+  describe("in-person events for where someone chose", () => {
+    it("tells online events from in-person ones by their address", () => {
+      expect(isOnlineEvent(at("online", 1))).toBe(true);
+      expect(isOnlineEvent(at("oxford-no-venue", 1, undefined, "Oxford"))).toBe(false);
+    });
+
+    it("lists every in-person event, soonest first, anywhere in the UK", () => {
+      expect(urls(inPersonEventsFor(calendar, ANYWHERE, localGroups))).toEqual([
+        "manchester",
+        "london-1",
+        "oxford-no-venue",
+        "oxford",
+        "london-2",
+        "london-3",
+      ]);
+    });
+
+    it("lists a local group's in-person events by its matchers, venue or not", () => {
+      const oxford = { kind: "group", name: "Oxford" } as const;
+      expect(urls(inPersonEventsFor(calendar, oxford, localGroups))).toEqual(["oxford-no-venue", "oxford"]);
+      // A group that isn't on the list is no filter at all.
+      expect(inPersonEventsFor(calendar, oxford, [])).toHaveLength(6);
+    });
+
+    it("lists the in-person events within 50km of a place", () => {
+      const nearLondon = { kind: "place", place: WESTMINSTER } as const;
+      expect(urls(inPersonEventsFor(calendar, nearLondon, localGroups))).toEqual(["london-1", "london-2", "london-3"]);
+    });
+
+    it("counts an event with no place as near when it's a nearby group's", () => {
+      // The Oxford event with no venue is Oxford's by its city, and Oxford is near.
+      const nearOxford = { kind: "place", place: OXFORD, name: "Oxford" } as const;
+      expect(urls(inPersonEventsFor(calendar, nearOxford, localGroups))).toEqual(["oxford-no-venue", "oxford"]);
+      expect(urls(inPersonEventsFor(calendar, { kind: "place", place: MANCHESTER }, localGroups))).toEqual([
+        "manchester",
+      ]);
+    });
   });
 });

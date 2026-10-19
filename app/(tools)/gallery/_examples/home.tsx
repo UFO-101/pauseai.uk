@@ -1,5 +1,6 @@
 // The home page's sections (app/(site)/_components/).
 import GetInvolved from "@/app/(site)/_components/GetInvolved";
+import HomeEvents from "@/app/(site)/_components/HomeEvents";
 import HeroMarqueeEffects from "@/app/(site)/_components/HeroMarqueeEffects";
 import HomeHero from "@/app/(site)/_components/HomeHero";
 import JoinSection from "@/app/(site)/_components/JoinSection";
@@ -17,6 +18,7 @@ import { people } from "@/lib/content/people";
 import { newsRow1, newsRow2 } from "@/lib/content/press-coverage";
 import type { LumaEntry } from "@/lib/events";
 import type { Group } from "../_components/types";
+import { EventsPlacePickerExample } from "./home.client";
 
 // More than the four the list shows before "show more": in person, online, and in several towns.
 const MANY_EVENTS: LumaEntry[] = [
@@ -72,6 +74,22 @@ export const home: Group = {
             </div>
           ),
         },
+      ],
+    },
+    {
+      name: "HomeEvents",
+      file: "app/(site)/_components/HomeEvents.tsx",
+      variants: [
+        { label: "Every event, until a place is chosen", render: () => <HomeEvents events={MANY_EVENTS} /> },
+        { label: "No events", render: () => <HomeEvents events={[]} /> },
+      ],
+    },
+    {
+      name: "EventsPlacePicker",
+      file: "app/(site)/_components/EventsPlacePicker.tsx",
+      variants: [
+        { label: "Anywhere chosen", render: () => <EventsPlacePickerExample /> },
+        { label: "A local group chosen", render: () => <EventsPlacePickerExample group="London" /> },
       ],
     },
     {

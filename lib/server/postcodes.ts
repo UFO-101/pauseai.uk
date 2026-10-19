@@ -32,3 +32,38 @@ export async function constituencyForPostcode(postcode: string): Promise<Constit
     return { ok: false, reason: "failed" };
   }
 }
+
+export type PostcodePlaceResult =
+  { ok: true; place: Place; name: string } | { ok: false; reason: "not_found" | "failed" };
+
+/**
+ * Where a postcode is, and its district's name ("Westminster"), for events
+ * near it. The first half of one, an outcode ("M1"), will do: postcodes.io
+ * gives its middle and the districts it reaches into, and we name the first.
+ * Without a district, the name is the postcode as typed.
+ */
+export async function placeForPostcode(postcode: string): Promise<PostcodePlaceResult> {
+  const code = postcode.trim();
+  try {
+    const full = await placeAt(`postcodes/${encodeURIComponent(code)}`, code);
+    if (full.ok || full.reason === "failed") return full;
+    return await placeAt(`outcodes/${encodeURIComponent(code)}`, code);
+  } catch {
+    return { ok: false, reason: "failed" };
+  }
+}
+
+async function placeAt(path: string, code: string): Promise<PostcodePlaceResult> {
+  const res = await outsideFetch(`https://api.postcodes.io/${path}`);
+  if (res.status === 404) return { ok: false, reason: "not_found" };
+  if (!res.ok) return { ok: false, reason: "failed" };
+  const result = (await res.json())?.result;
+  const { latitude, longitude } = result ?? {};
+  if (typeof latitude !== "number" || typeof longitude !== "number") return { ok: false, reason: "not_found" };
+  const district = [result.admin_district].flat()[0];
+  return {
+    ok: true,
+    place: { latitude, longitude },
+    name: typeof district === "string" && district ? district : code.toUpperCase(),
+  };
+}

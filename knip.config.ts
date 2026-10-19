@@ -6,6 +6,9 @@ const config: KnipConfig = {
   // A type exported for the signature of something else exported from its
   // file is part of that file's interface, even if nothing names it yet.
   ignoreExportsUsedInFile: { interface: true, type: true },
+  // The backup Worker and its container: a package of its own, with its own
+  // packages, which CI's lint job doesn't install (backup/README.md).
+  ignore: ["backup/**"],
   workspaces: {
     ".": {
       // scripts/storyboard.mjs starts this with spawn(), which Knip can't follow.
@@ -24,13 +27,6 @@ const config: KnipConfig = {
       ],
       // Postgres's own tools, installed with Postgres rather than from npm.
       ignoreBinaries: ["pg_dump", "psql"],
-    },
-    // The backup Worker and its container: a package of its own
-    // (backup/README.md). Knip finds the Worker from wrangler.jsonc; the
-    // container's entry point is the Dockerfile's.
-    backup: {
-      entry: ["container/main.ts"],
-      project: ["**/*.ts"],
     },
   },
 };

@@ -1,3 +1,5 @@
+import type { LocalGroup, LocalGroupName } from "@/lib/content/local-groups";
+
 export type LumaGeoAddressInfo = {
   city?: string;
   address?: string;
@@ -122,5 +124,47 @@ export function eventsNear(entries: LumaEntry[], here: Place | null | undefined,
     : [];
   return [...near, ...online.slice(0, count - near.length)].sort((a, b) =>
     a.event.start_at.localeCompare(b.event.start_at),
+  );
+}
+
+/** Whether an event is online: Luma gives it no address, as in EventList. */
+export function isOnlineEvent(entry: LumaEntry): boolean {
+  return !entry.event.geo_address_info;
+}
+
+/**
+ * Where someone wants in-person events near: anywhere in the UK, a local
+ * group's area, or a place, from a postcode (`name` is its district) or from
+ * their device's location (no `name`).
+ */
+export type EventsWhere =
+  { kind: "anywhere" } | { kind: "group"; name: LocalGroupName } | { kind: "place"; place: Place; name?: string };
+
+export const ANYWHERE: EventsWhere = { kind: "anywhere" };
+
+/**
+ * The in-person events for `where`, from a soonest-first list. Near a place
+ * is within NEAR_KM. An event with no place (no venue set yet, or a venue
+ * shown only to guests) can't be measured, so it's near when it's a local
+ * group's, by the group's eventMatchers, and that group's city is near.
+ */
+export function inPersonEventsFor(
+  entries: LumaEntry[],
+  where: EventsWhere,
+  groups: readonly LocalGroup[],
+): LumaEntry[] {
+  const inPerson = entries.filter((entry) => !isOnlineEvent(entry));
+  if (where.kind === "anywhere") return inPerson;
+  if (where.kind === "group") {
+    const group = groups.find((g) => g.name === where.name);
+    return group ? filterEventsForLocalGroup(inPerson, group.eventMatchers) : inPerson;
+  }
+  const nearGroups = groups.filter(
+    (group) => distanceKm(where.place, { latitude: group.lat, longitude: group.lng }) <= NEAR_KM,
+  );
+  return inPerson.filter((entry) =>
+    entry.event.place
+      ? distanceKm(where.place, entry.event.place) <= NEAR_KM
+      : nearGroups.some((group) => filterEventsForLocalGroup([entry], group.eventMatchers).length > 0),
   );
 }

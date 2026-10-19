@@ -3,6 +3,7 @@
 import EventList from "@/components/events/EventList";
 import { exampleEvent } from "@/components/events/EventList.examples";
 import EventsSection from "@/components/events/EventsSection";
+import { Button } from "@/components/ui/Button";
 import LocalGroupEvents from "@/components/events/LocalGroupEvents";
 import LocalGroupPage from "@/components/local-groups/LocalGroupPage";
 import Avatar from "@/components/people/Avatar";
@@ -39,6 +40,22 @@ export const areas: Group = {
           label: "With a link to the calendar",
           render: () => (
             <EventsSection heading="Upcoming events" calendar={{ label: "See the calendar →", href: site.social.luma }}>
+              <EventList events={EVENTS.slice(0, 2)} lumaUrl={site.social.luma} />
+            </EventsSection>
+          ),
+        },
+        {
+          label: "With the list's buttons, and the calendar link as a ghost button",
+          render: () => (
+            <EventsSection
+              heading="Upcoming events"
+              actions={
+                <Button variant="primary" size="small">
+                  An example filter
+                </Button>
+              }
+              calendar={{ label: "See the calendar →", href: site.social.luma, variant: "ghost" }}
+            >
               <EventList events={EVENTS.slice(0, 2)} lumaUrl={site.social.luma} />
             </EventsSection>
           ),
