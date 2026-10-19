@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/Button";
+import { TextInput } from "@/components/ui/Controls";
+import { Field, FieldError } from "@/components/ui/Field";
+import { FormStack } from "@/components/ui/Form";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { LOGIN_PATH } from "@/lib/staff-session";
-import ErrorText from "./ui/ErrorText";
-import { StaffForm } from "./ui/forms";
+import styles from "./StaffForms.module.css";
 
 /**
  * The login page's card's contents, from its URL: the form, with why the
@@ -24,27 +26,18 @@ export default function LoginForm({ sent, failed, elsewhere }: { sent?: string; 
   return (
     <>
       <p>{staffCopy.login.intro}</p>
-      {failed && (
-        <p>
-          <ErrorText>{staffCopy.login.failed}</ErrorText>
-        </p>
-      )}
-      {elsewhere && (
-        <p>
-          <ErrorText>{staffCopy.login.elsewhere}</ErrorText>
-        </p>
-      )}
-      <StaffForm method="post" action="/staff/api/login">
-        <label>
-          {staffCopy.login.emailLabel}
-          <input name="email" type="email" autoComplete="email" required />
-        </label>
+      {failed && <FieldError>{staffCopy.login.failed}</FieldError>}
+      {elsewhere && <FieldError>{staffCopy.login.elsewhere}</FieldError>}
+      <FormStack method="post" action="/staff/api/login" className={styles.login}>
+        <Field label={staffCopy.login.emailLabel}>
+          <TextInput name="email" type="email" autoComplete="email" required />
+        </Field>
         <div>
           <Button variant="primary" size="small" fit type="submit">
             {staffCopy.login.button}
           </Button>
         </div>
-      </StaffForm>
+      </FormStack>
     </>
   );
 }

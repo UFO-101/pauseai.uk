@@ -2,20 +2,13 @@
 
 .lookup {
   display: grid;
-  gap: 1rem;
+  gap: var(--space-4);
   /* The postcode's test MPs line mustn't stretch the name field. */
   align-items: start;
   /* On a tinted panel, so the short form stands out on the campaign's page. */
-  padding: 1.5rem;
-  border-radius: 12px;
+  padding: var(--space-5);
+  border-radius: var(--radius-lg);
   background: color-mix(in srgb, var(--accent) 18%, var(--surface));
-}
-
-.lookup label {
-  display: grid;
-  gap: 0.5rem;
-  font-weight: 600;
-  font-size: 0.9rem;
 }
 
 @media (min-width: 640px) {
@@ -31,7 +24,8 @@
 
 /* The test postcodes, folded to the first behind the browser's arrow. */
 .testPostcodes {
-  font-size: 0.85rem;
+  margin-top: var(--field-gap);
+  font-size: var(--note-font-size);
   color: var(--text-secondary);
 }
 
@@ -40,6 +34,6 @@
 }
 
 .testPostcodes ul {
-  margin: 0.25rem 0 0;
-  padding-left: 1.25rem;
+  margin: var(--space-1) 0 0;
+  padding-left: var(--space-5);
 }

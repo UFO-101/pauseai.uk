@@ -48,6 +48,51 @@
   --shadow: rgba(26, 22, 18, 0.08);
   --shadow-strong: rgba(26, 22, 18, 0.14);
 
+  /* Spacing: an 8px grid, with 4px and 12px for the tight places. */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+  --space-9: 80px;
+
+  /* Sizes for interface text: labels, fields, notes, tables, tags.
+     Headings and prose set their own, in their components. */
+  --text-xs: 12px;
+  --text-sm: 14px;
+  --text-md: 16px;
+  --text-lg: 18px;
+
+  /* Corners. */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-pill: 999px;
+
+  /* Keyboard focus, on every control and button: an orange ring outside it. */
+  --focus-ring: 2px solid var(--accent);
+  --focus-offset: 2px;
+
+  /* Controls, labels, tables and tags at the comfortable density, the
+     public site's. Compact (below) changes only these. */
+  --control-height: 48px;
+  --control-padding-x: var(--space-3);
+  --control-font-size: var(--text-md);
+  --label-font-size: var(--text-md);
+  --note-font-size: var(--text-sm);
+  /* Between a label and its control. */
+  --field-gap: var(--space-2);
+  /* Between one field and the next. */
+  --form-gap: var(--space-5);
+  --table-font-size: var(--text-md);
+  --table-cell-padding: var(--space-2) var(--space-3);
+  --tag-font-size: var(--text-sm);
+  --tag-padding: var(--space-1) var(--space-3);
+
   /* Widths. A page's reading column is --measure-page, which the page hero
      (components/ui/PageHero) shares, so the two line up; a page of cards is
      --measure-wide. */
@@ -95,4 +140,29 @@
   --status-green-bg: #e3f3e6;
   --status-blue: #1d4e89;
   --status-blue-bg: #dbe8f7;
+}
+
+/* Compact density, for screens of tables and filters that people work
+   through (the staff interface): the same components and colours, tighter.
+   A container sets data-density="compact" on itself. */
+[data-density="compact"] {
+  --control-height: 36px;
+  --control-padding-x: var(--space-2);
+  --control-font-size: var(--text-sm);
+  --label-font-size: var(--text-sm);
+  --note-font-size: var(--text-xs);
+  --field-gap: var(--space-1);
+  --form-gap: var(--space-3);
+  --table-font-size: var(--text-sm);
+  --table-cell-padding: var(--space-1) var(--space-2);
+  --tag-font-size: var(--text-xs);
+  --tag-padding: 0 var(--space-2);
+}
+
+/* A field's text is 16px or more on a phone, at either density, or iOS
+   Safari zooms the page when it's focused. */
+@media (max-width: 720px) {
+  [data-density="compact"] {
+    --control-font-size: var(--text-md);
+  }
 }

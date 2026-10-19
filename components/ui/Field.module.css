@@ -1,0 +1,40 @@
+/* A field's words: its label, a note in the label, a hint under it, and
+   what's wrong with it. Sizes and spacing are the density's tokens. */
+
+/* The label's words over the control inside it. */
+.field {
+  display: grid;
+  gap: var(--field-gap);
+}
+
+.label,
+.standalone {
+  font-size: var(--label-font-size);
+  font-weight: 600;
+}
+
+/* A label on its own, over a control that follows it. */
+.standalone {
+  display: block;
+  margin: 0 0 var(--field-gap);
+}
+
+.note {
+  margin-left: var(--space-1);
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.hint {
+  margin: var(--field-gap) 0 0;
+  font-size: var(--note-font-size);
+  color: var(--text-secondary);
+}
+
+.error {
+  margin: var(--field-gap) 0 0;
+  padding-left: var(--space-3);
+  border-left: 3px solid var(--accent);
+  font-size: var(--label-font-size);
+  color: var(--danger);
+}

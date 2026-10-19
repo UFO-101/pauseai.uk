@@ -48,8 +48,9 @@ import QrFormatNote from "./QrFormatNote";
 import TitleSizeControl from "./TitleSizeControl";
 import { usePhotoGestures } from "./usePhotoGestures";
 import { useStudioAssets } from "./useStudioAssets";
-import { Toggle } from "./kit/Fields";
-import { Hint, Message } from "./kit/Notes";
+import { Checkbox } from "@/components/ui/Controls";
+import { Hint } from "@/components/ui/Field";
+import StatusMessage from "@/components/ui/StatusMessage";
 import {
   ControlsColumn,
   ControlsSection,
@@ -362,7 +363,7 @@ export default function PackStudio({ events }: { events: CalendarEvent[] }) {
             onReset={onReset}
             saveDisabled={!restored}
           />
-          {shown && <Message onUndo={message === RESET_MESSAGE ? undoReset : null}>{shown}</Message>}
+          {shown && <StatusMessage onUndo={message === RESET_MESSAGE ? undoReset : null}>{shown}</StatusMessage>}
         </PreviewActions>
         {active ? (
           <>
@@ -393,9 +394,9 @@ export default function PackStudio({ events }: { events: CalendarEvent[] }) {
             <fieldset key={group} className={styles.formatGroup}>
               <legend className={styles.legend}>{group}</legend>
               {FORMATS.filter((f) => f.group === group).map((f) => (
-                <Toggle key={f.id} checked={selected.includes(f.id)} onChange={() => toggleFormat(f.id)}>
+                <Checkbox key={f.id} checked={selected.includes(f.id)} onChange={() => toggleFormat(f.id)}>
                   {f.label} <span className={styles.formatSize}>{formatDimensionLabel(f)}</span>
-                </Toggle>
+                </Checkbox>
               ))}
             </fieldset>
           ))}

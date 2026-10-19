@@ -8,13 +8,9 @@ import { THEMES } from "@/lib/collateral/themes";
 import {
   CheckboxChoicesExample,
   DownloadButtonExample,
-  LinkButtonExample,
-  MessageUndoExample,
   PhotoLibraryExample,
   PreviewCanvasReadyExample,
   RadioChoicesExample,
-  SegmentedExample,
-  ToggleExample,
 } from "./collateral-kit.client";
 import {
   CropControlsExample,
@@ -140,31 +136,6 @@ describe("the collateral kit's examples", () => {
     await render(<PhotoLibraryExample />);
     await page.getByRole("button", { name: LIBRARY_PHOTOS[1].label }).click();
     await expect.element(value()).toHaveTextContent(`Value: "${LIBRARY_PHOTOS[1].id}"`);
-  });
-
-  it("toggles", async () => {
-    await render(<ToggleExample />);
-    await page.getByRole("checkbox", { name: "An example option" }).click();
-    await expect.element(value()).toHaveTextContent("Value: false");
-  });
-
-  it("picks a segment", async () => {
-    await render(<SegmentedExample />);
-    await page.getByRole("radio", { name: "Large" }).click();
-    await expect.element(value()).toHaveTextContent('Value: "l"');
-  });
-
-  it("presses link buttons", async () => {
-    await render(<LinkButtonExample />);
-    await page.getByRole("button", { name: "Remove" }).click();
-    await page.getByRole("button", { name: "Undo" }).click();
-    await expect.element(log().nth(1)).toMatchTextContent(/^onClick\(/);
-  });
-
-  it("undoes from a message", async () => {
-    await render(<MessageUndoExample />);
-    await page.getByRole("button", { name: "Undo" }).click();
-    await expect.element(log().nth(0)).toMatchTextContent(/^onUndo\(/);
   });
 
   it("downloads, unless disabled", async () => {

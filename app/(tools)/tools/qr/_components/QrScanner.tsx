@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { FieldError, FormButton } from "../../collateral/_components/kit/Fields";
-import { Hint } from "../../collateral/_components/kit/Notes";
+import { Button } from "@/components/ui/Button";
+import { FieldError, Hint } from "@/components/ui/Field";
 import styles from "./QrScanner.module.css";
 
 /** Frames are shrunk to this width before decoding. Plenty for a code that fills part of the view, and quick on phones. */
@@ -318,7 +318,7 @@ export default function QrScanner({ onResult }: Props) {
   return (
     <div className={styles.scan}>
       <div className={styles.actions}>
-        <FormButton
+        <Button
           type="button"
           variant="ghost"
           size="small"
@@ -328,13 +328,13 @@ export default function QrScanner({ onResult }: Props) {
           }}
         >
           Scan an existing code
-        </FormButton>
-        <FormButton type="button" variant="ghost" size="small" onClick={() => fileRef.current!.click()} disabled={busy}>
+        </Button>
+        <Button type="button" variant="ghost" size="small" onClick={() => fileRef.current!.click()} disabled={busy}>
           {busy ? "Looking for the code…" : "Use a photo"}
-        </FormButton>
+        </Button>
         <input ref={fileRef} type="file" accept="image/*" hidden onChange={onPhoto} />
       </div>
-      {message && <FieldError status>{message}</FieldError>}
+      {message && <FieldError announce="status">{message}</FieldError>}
 
       <dialog ref={dialogRef} className={styles.dialog} aria-labelledby="qr-scan-title" onClose={onModalClose}>
         <h2 id="qr-scan-title" className={styles.title}>
@@ -387,22 +387,16 @@ export default function QrScanner({ onResult }: Props) {
             )}
           </div>
         )}
-        {modalMessage && <FieldError status>{modalMessage}</FieldError>}
+        {modalMessage && <FieldError announce="status">{modalMessage}</FieldError>}
         <div className={`${styles.actions} ${styles.dialogActions}`}>
           {open && modalMessage && (
-            <FormButton
-              type="button"
-              variant="ghost"
-              size="small"
-              onClick={() => fileRef.current!.click()}
-              disabled={busy}
-            >
+            <Button type="button" variant="ghost" size="small" onClick={() => fileRef.current!.click()} disabled={busy}>
               Use a photo instead
-            </FormButton>
+            </Button>
           )}
-          <FormButton type="button" variant="ghost" size="small" onClick={() => dialogRef.current!.close()}>
+          <Button type="button" variant="ghost" size="small" onClick={() => dialogRef.current!.close()}>
             Cancel
-          </FormButton>
+          </Button>
         </div>
       </dialog>
     </div>

@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import styles from "./ResultBox.module.css";
-import Actions from "./ui/Actions";
-import ErrorText from "./ui/ErrorText";
+import { ErrorText } from "@/components/ui/Text";
+import Actions from "@/components/ui/Actions";
 
 /** A result with more lines than this starts folded, so one big run doesn't fill the page. */
 export const OPEN_UP_TO = 5;

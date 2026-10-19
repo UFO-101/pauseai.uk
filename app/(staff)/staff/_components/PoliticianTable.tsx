@@ -5,9 +5,9 @@ import { campaignBySlug, trackedCampaigns } from "@/lib/email-your-mp";
 import { staffCopy } from "@/lib/content/staff-interface";
 import type { Politician } from "@/lib/server/politicians";
 import styles from "./PoliticianTable.module.css";
-import Muted from "./ui/Muted";
-import StaffTable from "./ui/StaffTable";
-import Tag from "./ui/Tag";
+import { Muted } from "@/components/ui/Text";
+import Tag from "@/components/ui/Tag";
+import Table from "@/components/ui/Table";
 
 const bill = campaignBySlug(SOBEL_BILL_CAMPAIGN)!;
 
@@ -25,7 +25,7 @@ type Props = {
 export default function PoliticianTable({ politicians, markSigned }: Props) {
   if (politicians.length === 0) return <p>{staffCopy.politicians.none}</p>;
   return (
-    <StaffTable>
+    <Table>
       <thead>
         <tr>
           <th>{staffCopy.fields.name}</th>
@@ -80,6 +80,6 @@ export default function PoliticianTable({ politicians, markSigned }: Props) {
           </tr>
         ))}
       </tbody>
-    </StaffTable>
+    </Table>
   );
 }

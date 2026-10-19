@@ -10,7 +10,9 @@ import { hydrated } from "./settle";
 // Each group of the gallery, in its order. A new group fails the first test
 // until it's here.
 const GROUPS = [
+  "tokens",
   "ui",
+  "forms",
   "layout",
   "areas",
   "home",

@@ -3,7 +3,7 @@ import { staffCopy } from "@/lib/content/staff-interface";
 import { type AnyImportRun, NIGHTLY } from "@/lib/import-runs";
 import { staffTime } from "@/lib/staff-time";
 import ResultBox from "./ResultBox";
-import Muted from "./ui/Muted";
+import { Muted } from "@/components/ui/Text";
 
 type Props = {
   run: AnyImportRun;

@@ -4,7 +4,8 @@ import {
   HEADLINE_SCALE_MIN,
   HEADLINE_SCALE_STEP,
 } from "@/lib/collateral/design";
-import { Hint, LinkButton } from "./kit/Notes";
+import { Hint } from "@/components/ui/Field";
+import LinkButton from "@/components/ui/LinkButton";
 import styles from "./TitleSizeControl.module.css";
 
 /**

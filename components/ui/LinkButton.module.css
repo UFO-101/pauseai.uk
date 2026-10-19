@@ -1,0 +1,16 @@
+/* A button that looks like a link, a little way after the text before it. */
+.link {
+  margin-left: var(--space-2);
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.link:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-offset);
+}

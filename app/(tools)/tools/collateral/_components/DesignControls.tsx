@@ -20,8 +20,10 @@ import {
   type DesignState,
 } from "./designState";
 import { Choice, ChoiceGrid, PhotoLibrary } from "./kit/Choices";
-import { FieldLabel, FileInput, FormButton, Segmented, Select, TextArea, TextInput } from "./kit/Fields";
-import { Hint, LinkButton } from "./kit/Notes";
+import { Button } from "@/components/ui/Button";
+import { FileInput, Segmented, Select, TextArea, TextInput } from "@/components/ui/Controls";
+import { Hint, Label } from "@/components/ui/Field";
+import LinkButton from "@/components/ui/LinkButton";
 import { ControlsSection } from "./kit/Studio";
 import styles from "./DesignControls.module.css";
 
@@ -164,7 +166,7 @@ export default function DesignControls({
         {/* Right under the Event card, which is last in the list. Kept outside the radio group, which may only hold its options. */}
         {events.length > 0 && (
           <div className={template.id === "event" ? `${styles.eventImport} ${styles.active}` : styles.eventImport}>
-            <FieldLabel htmlFor="collateral-import-event">Start from one of our events</FieldLabel>
+            <Label htmlFor="collateral-import-event">Start from one of our events</Label>
             <Select id="collateral-import-event" value="" onChange={(e) => importEvent(e.target.value)}>
               <option value="">Choose an event…</option>
               {events.map((ev) => (
@@ -190,9 +192,9 @@ export default function DesignControls({
           // No layout offered here has toggle fields (only Brush does, and it is hidden; see designState.ts).
           return (
             <div key={field.key} className={styles.field}>
-              <FieldLabel htmlFor={id} note={field.hint && <> · {field.hint}</>}>
+              <Label htmlFor={id} note={field.hint && <> · {field.hint}</>}>
                 {field.label}
-              </FieldLabel>
+              </Label>
               {field.kind === "textarea" ? (
                 <TextArea
                   id={id}
@@ -263,7 +265,7 @@ export default function DesignControls({
             </button>
           </div>
         ))}
-        <FormButton
+        <Button
           type="button"
           variant="ghost"
           size="small"
@@ -275,10 +277,10 @@ export default function DesignControls({
           }}
         >
           {qrCodes.length === 0 ? "Add a QR code" : `Add another (${qrCodes.length} of ${MAX_QR_CODES})`}
-        </FormButton>
+        </Button>
         {qrCodes.length > 0 && (
           <div className={styles.qrSize}>
-            <FieldLabel>Size</FieldLabel>
+            <Label>Size</Label>
             <Segmented
               label="QR code size"
               options={QR_SIZES.map((s) => ({ value: s.id, label: s.label }))}

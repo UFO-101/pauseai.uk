@@ -1,5 +1,5 @@
-/* The letter's editor: the old tool's toolbar on top, then the letter,
-   growing to fit it. */
+/* The letter's editor: its toolbar on top, then the letter, growing to
+   fit it. */
 .editorFrame {
   border: 1px solid var(--border-strong);
   border-radius: 8px;
@@ -7,9 +7,10 @@
   overflow: hidden;
 }
 
+/* The site's focus ring (styles/tokens.css), round the whole editor. */
 .editorFrame:focus-within {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 20%, transparent);
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-offset);
 }
 
 .toolbar {

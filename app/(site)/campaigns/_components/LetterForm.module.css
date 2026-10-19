@@ -1,20 +1,4 @@
-/* The letter's form: its fields, tips and the button on to the preview. */
-
-.letter {
-  display: grid;
-  gap: 1.5rem;
-}
-
-.letter label {
-  display: grid;
-  gap: 0.5rem;
-  font-weight: 600;
-}
-
-.fieldLabel {
-  margin: 0;
-  font-weight: 600;
-}
+/* The letter's form: its tips and the button on to the preview. */
 
 /* Left, like the hero's "Email your MP" button and the lookup's. */
 .next {
@@ -22,9 +6,9 @@
 }
 
 .tips {
-  margin: 0;
-  padding-left: 1.25rem;
-  font-size: 0.9rem;
+  margin: 0 0 var(--field-gap);
+  padding-left: var(--space-5);
+  font-size: var(--note-font-size);
   color: var(--text-secondary);
 }
 

@@ -1,0 +1,7 @@
+/* A line of news among a row of buttons: a row of its own. */
+.message {
+  flex-basis: 100%;
+  margin: 0;
+  font-size: var(--note-font-size);
+  color: var(--text-secondary);
+}

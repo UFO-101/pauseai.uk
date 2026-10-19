@@ -14,7 +14,8 @@ picture it.
 
 The look lives in the components, not in this file. Each one owns its
 styles in a CSS module beside it, and the only global CSS is
-`styles/tokens.css` (every colour, font and width as a variable) and
+`styles/tokens.css` (every colour, font, width, space, type size and
+corner as a variable, and the compact density) and
 `styles/base.css` (element defaults and `.container`). The rules for
 writing styles are in `docs/code-structure.md` ("Styling"). Where this
 guide and the code differ, the code is what visitors see; fix whichever is
@@ -38,7 +39,8 @@ Inspired by the brand image — a white dove against a warm terracotta sky with 
 
 ## Colour Palette
 
-Every colour is a variable in `styles/tokens.css`. Stylelint refuses a hex,
+Every colour is a variable in `styles/tokens.css`, drawn on the
+gallery's tokens page (`/gallery/tokens`). Stylelint refuses a hex,
 `rgb()` with numbers or a named colour anywhere else, so a new colour is a
 new token there. An alpha uses a token's `-rgb` channels:
 `rgb(var(--white-rgb) / 0.1)`.
@@ -114,27 +116,83 @@ Set in the components that use them; these are the main ones.
 
 ---
 
-## Spacing
+## Spacing, type sizes and corners
 
-There are no spacing tokens: each module sets its own, in pixels on an 8px
-grid (4, 8, 12, 16, 24, 32, 48, 64, 80). A page's band is `Section`, with
-80px above and below, less on a phone. Widths are tokens: `.container` is
-1140px, a page's reading column `--measure-page` (880px), a page of cards
-`--measure-wide` (1080px). A component narrows the containers inside it by
-setting `--container-width` on its own root.
+All three are tokens in `styles/tokens.css`, and the gallery's tokens
+page (`/gallery/tokens`) draws them.
+
+- **Spacing** is an 8px grid, `--space-1` (4px) to `--space-9` (80px),
+  with 4px and 12px for the tight places.
+- **Type sizes** for interface text (labels, fields, notes, tables, tags)
+  are `--text-xs` (12px) to `--text-lg` (18px). Headings and prose set
+  their own in their components (the type scale above).
+- **Corners** are `--radius-sm` (4px), `--radius-md` (8px: buttons,
+  fields), `--radius-lg` (12px: cards), `--radius-xl` (16px: hero images)
+  and `--radius-pill`.
+
+In `components/ui/`, Stylelint refuses a raw `px` or `rem` in a margin,
+padding, gap, font size or corner: they're tokens there. The kit's files
+whose sizes aren't tokens yet are listed in `stylelint.config.mjs`, to be
+converted, not added to. Elsewhere, use the tokens where they fit.
+
+A page's band is `Section`, with 80px above and below, less on a phone.
+Widths are tokens too: `.container` is 1140px, a page's reading column
+`--measure-page` (880px), a page of cards `--measure-wide` (1080px). A
+component narrows the containers inside it by setting `--container-width`
+on its own root.
 
 ---
 
-## Borders & Radii
+## Forms
 
-| Element         | Radius | Notes                           |
-| --------------- | ------ | ------------------------------- |
-| Buttons         | `8px`  | Softly rounded, not pill-shaped |
-| Cards           | `12px` | Welcoming but structured        |
-| Images in cards | `0`    | Full bleed within card frame    |
-| Avatars         | `50%`  | Circular for people             |
-| Tags/pills      | `6px`  | Subtle rounding                 |
-| Hero image      | `16px` | Prominent, softened             |
+Every field is the kit's, in `components/ui/`.
+`tests/checks/form-controls.test.ts` fails on an `<input>`, `<select>` or
+`<textarea>` written anywhere else; the few exceptions are listed there,
+with why.
+
+- **Fields** (`Field.tsx`): `Field` is a label's words over the control
+  inside it; `Label` a label on its own, over a control elsewhere or a
+  group of buttons; `Hint` a note under a control; `FieldError` what's
+  wrong, in the danger colour with an orange rule beside it, read out
+  with `announce="alert"` when a form has just failed. `FieldGroup` keeps
+  a field and what's under it together.
+- **Controls** (`Controls.tsx`): `TextInput`, `Select`, `TextArea`,
+  `FileInput`, `Checkbox` (its label beside it) and `Segmented` (a row of
+  choices).
+- **Layout** (`Form.tsx`): `FormStack`, fields in a column; `FilterForm`,
+  a row of filters over a list, lined up along their bottoms.
+- **Focus**: every control and button has the same ring from the
+  keyboard, `--focus-ring` (2px of orange), `--focus-offset` outside it.
+- **Errors**: a field that's wrong has `aria-invalid`, which gives it a
+  danger-coloured border, and a `FieldError` under it.
+
+---
+
+## Density
+
+The same components come at two densities. **Comfortable** is the
+public site's: 48px fields, 16px labels. **Compact** is for screens of
+tables and filters that people work through, the staff interface: 36px
+fields (the small button's height, so a row of filters lines up), 14px
+labels and table text, tight table cells and tags. A container sets
+`data-density="compact"` on itself (`StaffPage` does), and everything
+inside it is compact; the components need no prop.
+
+Density changes only sizes and spacing, never colour, behaviour, the
+focus ring or the look of an error, and there are only the two. A
+field's text stays 16px on a phone at either density, or iOS Safari zooms
+the page when it's focused. The tokens it sets are the `--control-*`,
+`--label-font-size`, `--note-font-size`, `--field-gap`, `--form-gap`,
+`--table-*` and `--tag-*` ones in `styles/tokens.css`. The gallery's forms
+page (`/gallery/forms`) shows every field, table and tag at both.
+
+---
+
+## Borders
+
+Corners are the `--radius-*` tokens (above): buttons and fields
+`--radius-md`, cards `--radius-lg`, tags `--radius-pill`, avatars `50%`,
+images in cards none (full bleed).
 
 ### Border Style
 
@@ -157,10 +215,12 @@ Shadows are warm-toned (brown-black, not blue-black) to maintain palette consist
 ## Buttons
 
 Every button is `Button`, `ButtonLink` or `ButtonAnchor`
-(`components/ui/Button.tsx`), or `IconButton` for the round ones. Nothing
-else styles a button's look; a container that needs its buttons a
-different size sets `--button-padding` and `--button-font-size` on
-itself.
+(`components/ui/Button.tsx`), `IconButton` for the round ones, or
+`LinkButton` for one that reads as a link (Remove, Undo). Nothing else
+styles a button's look; a container that needs its buttons a different
+size sets `--button-padding` and `--button-font-size` on itself. A row of
+buttons after what they act on is `Actions`; centred under a section,
+`ButtonRow`.
 
 ### Primary Button
 

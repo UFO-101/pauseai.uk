@@ -1,0 +1,8 @@
+/* Text set apart by its colour, inside other text. */
+.muted {
+  color: var(--text-secondary);
+}
+
+.error {
+  color: var(--danger);
+}

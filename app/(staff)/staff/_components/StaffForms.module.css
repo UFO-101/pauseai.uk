@@ -1,0 +1,16 @@
+/* Where the staff interface's forms sit on its pages: a row of filters
+   above its list, a form of fields at a width that reads, and the login
+   card's form, which ends the card. */
+
+.filters {
+  margin-block: var(--space-4);
+}
+
+.form {
+  max-width: 32rem;
+  margin-block: var(--space-4);
+}
+
+.login {
+  margin-top: var(--space-4);
+}

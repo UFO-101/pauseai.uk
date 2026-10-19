@@ -4,6 +4,7 @@
 import { Button } from "@/components/ui/Button";
 import ChangesTable from "@/app/(staff)/staff/_components/ChangesTable";
 import { exampleChange } from "@/app/(staff)/staff/_components/ChangesTable.examples";
+import LetterFilters from "@/app/(staff)/staff/_components/LetterFilters";
 import LettersTable from "@/app/(staff)/staff/_components/LettersTable";
 import { exampleLetter } from "@/app/(staff)/staff/_components/LettersTable.examples";
 import LoginCard from "@/app/(staff)/staff/_components/LoginCard";
@@ -448,6 +449,20 @@ export const staff: Group = {
           render: () => (
             <StaffPage as="div">
               <RunList runs={[]} none="An example line saying there are none." />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "LetterFilters",
+      file: "app/(staff)/staff/_components/LetterFilters.tsx",
+      variants: [
+        {
+          label: "One status picked",
+          render: () => (
+            <StaffPage as="div">
+              <LetterFilters status="bounced" />
             </StaffPage>
           ),
         },

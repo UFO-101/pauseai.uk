@@ -11,7 +11,7 @@ import JobActions from "../_components/JobActions";
 import RunList from "../_components/RunList";
 import StaffHeader from "../_components/StaffHeader";
 import StaffPage from "../_components/ui/StaffPage";
-import Tag from "../_components/ui/Tag";
+import Tag from "@/components/ui/Tag";
 
 /**
  * Every import and check: the MPs from Airtable and the check of them against
@@ -32,8 +32,8 @@ export default async function ImportPage() {
       <h1>{staffCopy.import.pageTitle}</h1>
 
       <h2>
-        {staffCopy.syncs.title} <Tag kind="airtable">{staffCopy.import.airtable}</Tag>
-        <Tag kind="nightly">{staffCopy.import.nightly}</Tag>
+        {staffCopy.syncs.title} <Tag tone="amber">{staffCopy.import.airtable}</Tag>
+        <Tag tone="blue">{staffCopy.import.nightly}</Tag>
       </h2>
       <p>
         {staffCopy.syncs.intro.before}
@@ -44,8 +44,8 @@ export default async function ImportPage() {
       <RunList runs={syncs} none={staffCopy.syncs.none} decide={decideSync} />
 
       <h2>
-        {staffCopy.check.title} <Tag kind="web">{staffCopy.import.web}</Tag>
-        <Tag kind="nightly">{staffCopy.import.nightly}</Tag>
+        {staffCopy.check.title} <Tag tone="green">{staffCopy.import.web}</Tag>
+        <Tag tone="blue">{staffCopy.import.nightly}</Tag>
         <Tag>{staffCopy.import.checkOnly}</Tag>
       </h2>
       <p>
@@ -57,7 +57,7 @@ export default async function ImportPage() {
       <RunList runs={asList(check)} none={staffCopy.check.never} />
 
       <h2>
-        {staffCopy.import.title} <Tag kind="airtable">{staffCopy.import.airtable}</Tag>
+        {staffCopy.import.title} <Tag tone="amber">{staffCopy.import.airtable}</Tag>
         <Tag>{staffCopy.import.oneOff}</Tag>
       </h2>
       <p>
@@ -69,8 +69,8 @@ export default async function ImportPage() {
       <RunList runs={asList(signatoryImport)} none={staffCopy.import.none} />
 
       <h2>
-        {staffCopy.controlAi.title} <Tag kind="web">{staffCopy.import.web}</Tag>
-        <Tag kind="nightly">{staffCopy.import.nightly}</Tag>
+        {staffCopy.controlAi.title} <Tag tone="green">{staffCopy.import.web}</Tag>
+        <Tag tone="blue">{staffCopy.import.nightly}</Tag>
       </h2>
       <p>
         {staffCopy.controlAi.intro.before}

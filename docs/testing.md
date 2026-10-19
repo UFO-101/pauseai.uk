@@ -322,8 +322,9 @@ Netlify, aren't caught here; check previews by hand.
 ## The component gallery
 
 Every component, and each of its major variants, rendered on fixture data,
-a page per group: `/gallery` lists the groups (the UI kit, the header and
-footer, each area of the site, the tools, the staff interface), and
+a page per group: `/gallery` lists the groups (the design tokens, the UI kit
+and its forms at both densities, the header and footer, each area of the
+site, the tools, the staff interface), and
 `/gallery/<group>` (`/gallery/ui`, `/gallery/staff`) shows that group's
 components, with a link to each at the top. It exists only in fixture
 builds (`DATA_FIXTURES=1`); production answers 404, and the pages are

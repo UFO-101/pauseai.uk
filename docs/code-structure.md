@@ -25,7 +25,7 @@ app/
   sitemap.ts, robots.ts
 components/               React components used by more than one route
   layout/                 Nav, Footer, CookieConsent and the rest of the chrome
-  ui/                     Button, FeatureCard, CopyLinkButton: small building blocks
+  ui/                     the design system: Button, fields, tables, tags, cards
   events/                 EventList, LocalGroupEvents
   people/                 PersonCard, StoryShareForm
   local-groups/           LocalGroupPage, which renders every group's page
@@ -45,7 +45,9 @@ tests/                    Playwright suites, the route list, fixtures,
                           coverage ignores, assets, staff auth)
 scripts/                  database, storyboard and data scripts
                           (scripts/README.md)
-docs/, plans/
+docs/
+plans/                    plans for work in progress, deleted when done;
+                          nothing references them
 ```
 
 Route groups like `(site)` don't appear in URLs. Folders starting with `_`
@@ -139,6 +141,10 @@ Route groups like `(site)` don't appear in URLs. Folders starting with `_`
   name. Pass the data (an MP's statuses) rather than unpicking one case of
   it at the call site (`signedControlAiLetter`), so the next campaign
   doesn't widen the call site too.
+- **Comments describe the code as it is**: what it does and why, never
+  its history (what it replaced, what changed, which plan brought it).
+  History is for commit messages. Nothing references `plans/`, which is
+  temporary: a plan is deleted when it's done.
 - **Imports** use the `@/` alias for anything outside the current folder.
 - **Tests** sit next to the code they test (`*.test.ts`,
   `*.browser.test.tsx`); see `docs/testing.md`. Tests of the whole repo,
@@ -153,7 +159,8 @@ only a variant. The look itself (colours, type, buttons, cards) is in
 `docs/style-guide.md`.
 
 - **Global CSS is two files.** `styles/tokens.css` (fonts, and every colour,
-  width and shadow as a variable) and `styles/base.css` (the reset, element
+  width, shadow, space, type size and corner as a variable, and the
+  compact density) and `styles/base.css` (the reset, element
   defaults, scrolling, `.container` and `.inline-link`), imported by the root
   layout and nothing else. There is no other global stylesheet.
 - **A component owns its styles**, in a `.module.css` beside it. A page has
@@ -176,20 +183,34 @@ only a variant. The look itself (colours, type, buttons, cards) is in
 - **Every colour is a token.** No hex, `rgb()`/`hsl()` with numbers, or
   named colour outside `styles/tokens.css`; Stylelint refuses them. An alpha
   uses the `-rgb` channels: `rgb(var(--white-rgb) / 0.1)`.
+- **In `components/ui/`, sizes are tokens too.** Margins, padding, gaps,
+  font sizes and corners are `--space-*`, `--text-*`, `--radius-*` or the
+  density's tokens; Stylelint refuses a raw `px` or `rem` there. The
+  kit's files whose sizes aren't tokens yet are listed in
+  `stylelint.config.mjs`, to be converted, not added to.
+- **Density is a container's.** A screen of tables and filters (the staff
+  interface, through `StaffPage`) sets `data-density="compact"` on itself,
+  and the kit's fields, tables and tags inside it are tighter. Components
+  take no density prop (`docs/style-guide.md`, "Density").
+- **Fields are the kit's.** Every `<input>`, `<select>` and `<textarea>` is
+  `components/ui/Controls.tsx`'s, labelled with `Field.tsx`'s pieces and laid
+  out with `Form.tsx`'s (`tests/checks/form-controls.test.ts`).
 - **Class names in a module are short and local** (`.hero`, `.title`), one
   class deep where the markup allows. State a script or a test needs to
   read is an attribute (`data-active`, `aria-pressed`, `aria-expanded`), not
   a class.
 - **Shared pieces are components.** Used by two or more routes, in
   `components/`: `components/ui/` has the site's kit (`Button`,
-  `IconButton`, `PageHero`, `Section`, `Foreword`, `Closing`, `Callout`,
-  `ButtonRow`, `PhotoCard`, `FeatureCard`, `Lightbox`, `ProsePage`,
-  `SmallPrint`); `components/layout/` the header, footer and banners;
+  `IconButton`, `LinkButton`, `PageHero`, `Section`, `Foreword`, `Closing`,
+  `Callout`, `ButtonRow`, `Actions`, `PhotoCard`, `FeatureCard`, `Lightbox`,
+  `ProsePage`, `SmallPrint`; the forms' `Field`, `Controls` and `Form`;
+  `Tag`, `Table`, `Text` and `StatusMessage`); `components/layout/` the header, footer and banners;
   `components/events/`, `components/people/` and `components/tools/` the
   pieces of those areas. Used by one route, in its `_components/`, with a
   small kit there where several of its components share a shape (the
-  collateral maker's, the staff interface's in
-  `app/(staff)/staff/_components/ui/`).
+  collateral maker's studio layout in its `kit/`, the staff interface's
+  page frame in `app/(staff)/staff/_components/ui/`). A piece a second
+  route needs moves to `components/ui/`.
 - **Classes from content.** HTML that lib/ writes as strings (press logos,
   blog footnotes) keeps global class names, which the component that shows
   it selects with `:global()` inside its own root class.

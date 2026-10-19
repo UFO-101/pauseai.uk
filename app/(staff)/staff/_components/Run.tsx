@@ -4,8 +4,8 @@ import type { AnyImportRun, ControlAiImport, MpCheck, MpSync, SignatoryImport } 
 import type { MpProblem } from "@/lib/mp-check";
 import { changeCount, type SyncedMp } from "@/lib/mps";
 import RunBox from "./RunBox";
-import Muted from "./ui/Muted";
-import StaffTable from "./ui/StaffTable";
+import { Muted } from "@/components/ui/Text";
+import Table from "@/components/ui/Table";
 
 /** The Server Action that applies or discards a held MP sync. */
 export type Decide = (formData: FormData) => void | Promise<void>;
@@ -109,7 +109,7 @@ function CheckRun({ run, label }: { run: MpCheck } & Common) {
       summary={count === 0 ? staffCopy.check.allGood : staffCopy.check.problems(count)}
     >
       {count > 0 && (
-        <StaffTable>
+        <Table>
           <thead>
             <tr>
               <th>{staffCopy.check.columns.constituency}</th>
@@ -131,7 +131,7 @@ function CheckRun({ run, label }: { run: MpCheck } & Common) {
               );
             })}
           </tbody>
-        </StaffTable>
+        </Table>
       )}
     </RunBox>
   );
@@ -144,7 +144,7 @@ function ControlAiRun({ run, label }: { run: ControlAiImport } & Common) {
   return (
     <RunBox run={run} label={label} summary={staffCopy.controlAi.result(result)} lines={result.problems.length}>
       {result.problems.length > 0 && (
-        <StaffTable>
+        <Table>
           <thead>
             <tr>
               <th>{staffCopy.controlAi.columns.name}</th>
@@ -162,7 +162,7 @@ function ControlAiRun({ run, label }: { run: ControlAiImport } & Common) {
               </tr>
             ))}
           </tbody>
-        </StaffTable>
+        </Table>
       )}
     </RunBox>
   );

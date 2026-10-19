@@ -28,6 +28,11 @@
   border: 1px solid transparent;
 }
 
+.btn:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-offset);
+}
+
 .btn.primary {
   background: var(--accent);
   color: var(--white);

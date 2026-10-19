@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { ButtonAnchor } from "@/components/ui/Button";
+import Tag from "@/components/ui/Tag";
 import styles from "./JobRole.module.css";
 
 export const APPLY_URL = "https://pauseai.fillout.com/uk_job_apply";
@@ -34,7 +35,9 @@ export function SkillTags({ label, skills }: { label: string; skills: string[] }
       <p className={styles.skillsLabel}>{label}</p>
       <ul className={styles.skillTags}>
         {skills.map((skill) => (
-          <li key={skill}>{skill}</li>
+          <li key={skill}>
+            <Tag>{skill}</Tag>
+          </li>
         ))}
       </ul>
     </>
