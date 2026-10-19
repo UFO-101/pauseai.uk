@@ -48,4 +48,10 @@
     align-items: flex-start;
     gap: 12px;
   }
+
+  /* Under the heading, the full width, so the calendar link fills it as a
+     phone's buttons do. */
+  .actions {
+    align-self: stretch;
+  }
 }
