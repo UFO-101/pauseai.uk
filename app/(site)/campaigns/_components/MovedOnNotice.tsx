@@ -10,7 +10,7 @@ import styles from "./MovedOnNotice.module.css";
 /**
  * At the top of a campaign's page, when another campaign's page moved on to
  * it because the MP had done that one: says why. Gone once the sender finds
- * their MP again here, as that lookup moved from nowhere.
+ * their MP again here, as that lookup didn't move on from anywhere.
  */
 export default function MovedOnNotice({ campaignSlug }: { campaignSlug: string }) {
   const [movedFrom, setMovedFrom] = useState<Campaign>();

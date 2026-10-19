@@ -4,7 +4,7 @@
 import { campaigns } from "@/lib/content/email-your-mp";
 import AttachmentChips from "@/app/(site)/campaigns/_components/AttachmentChips";
 import { exampleMp } from "@/app/(site)/campaigns/_components/draft.examples";
-import { Column, ErrorText, Field, Input, Notice } from "@/app/(site)/campaigns/_components/FormParts";
+import { Column, Notice } from "@/app/(site)/campaigns/_components/FormParts";
 import LetterStep from "@/app/(site)/campaigns/_components/LetterStep";
 import MpCard from "@/app/(site)/campaigns/_components/MpCard";
 import Required from "@/app/(site)/campaigns/_components/Required";
@@ -22,6 +22,8 @@ import {
   LetterWriteSignedExample,
   TurnstileExample,
 } from "./campaigns-letter.client";
+import { TextInput } from "@/components/ui/Controls";
+import { Field } from "@/components/ui/Field";
 
 const [letterToPm] = campaigns;
 
@@ -260,10 +262,9 @@ export const campaignsLetter: Group = {
           label: "A label's words, with the asterisk",
           render: () => (
             <div className="container">
-              <label>
-                <Required>Example field</Required>
-                <input name="example" required />
-              </label>
+              <Field label={<Required>Example field</Required>}>
+                <TextInput name="example" required />
+              </Field>
             </div>
           ),
         },
@@ -279,62 +280,6 @@ export const campaignsLetter: Group = {
             <div className="container">
               <Column>
                 <p>The letter&rsquo;s width, in line with the section&rsquo;s heading.</p>
-              </Column>
-            </div>
-          ),
-        },
-      ],
-    },
-    {
-      name: "Field",
-      file: "app/(site)/campaigns/_components/FormParts.tsx",
-      variants: [
-        {
-          label: "A label, its control and a hint",
-          render: () => (
-            <div className="container">
-              <Column>
-                <Field>
-                  <label>
-                    Example field
-                    <Input name="example-field" />
-                  </label>
-                  <small>A hint under it.</small>
-                </Field>
-              </Column>
-            </div>
-          ),
-        },
-      ],
-    },
-    {
-      name: "Input",
-      file: "app/(site)/campaigns/_components/FormParts.tsx",
-      variants: [
-        {
-          label: "Empty, filled in, and disabled while a lookup runs",
-          render: () => (
-            <div className="container">
-              <Column>
-                <Input name="example-empty" aria-label="Empty" />
-                <Input name="example-filled" aria-label="Filled in" defaultValue="7 Fake Lane" />
-                <Input name="example-disabled" aria-label="Disabled" defaultValue="ZZ99ZZ" disabled />
-              </Column>
-            </div>
-          ),
-        },
-      ],
-    },
-    {
-      name: "ErrorText",
-      file: "app/(site)/campaigns/_components/FormParts.tsx",
-      variants: [
-        {
-          label: "What went wrong",
-          render: () => (
-            <div className="container">
-              <Column>
-                <ErrorText>An example of something that went wrong.</ErrorText>
               </Column>
             </div>
           ),

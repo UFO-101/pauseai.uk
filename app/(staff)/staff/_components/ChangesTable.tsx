@@ -1,12 +1,12 @@
 import { staffCopy } from "@/lib/content/staff-interface";
 import { staffTime } from "@/lib/staff-time";
 import type { AuditEntry } from "@/lib/server/audit";
-import StaffTable from "./ui/StaffTable";
+import Table from "@/components/ui/Table";
 
 /** The log of who changed what. */
 export default function ChangesTable({ changes }: { changes: AuditEntry[] }) {
   return (
-    <StaffTable>
+    <Table>
       <thead>
         <tr>
           <th>{staffCopy.changes.at}</th>
@@ -27,6 +27,6 @@ export default function ChangesTable({ changes }: { changes: AuditEntry[] }) {
           </tr>
         ))}
       </tbody>
-    </StaffTable>
+    </Table>
   );
 }

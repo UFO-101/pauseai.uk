@@ -9,8 +9,6 @@ import {
   ChoiceGrid,
   PhotoLibrary,
 } from "@/app/(tools)/tools/collateral/_components/kit/Choices";
-import { FieldLabel, Segmented, Toggle } from "@/app/(tools)/tools/collateral/_components/kit/Fields";
-import { Hint, LinkButton, Message } from "@/app/(tools)/tools/collateral/_components/kit/Notes";
 import {
   ControlsColumn,
   ControlsSection,
@@ -24,6 +22,8 @@ import {
 } from "@/app/(tools)/tools/collateral/_components/kit/Studio";
 import { LIBRARY_PHOTOS } from "@/lib/collateral/photos";
 import { Controlled, Logged } from "../_components/wiring";
+import { Checkbox } from "@/components/ui/Controls";
+import { Hint } from "@/components/ui/Field";
 
 const OPTIONS = ["one", "two", "three"] as const;
 type Option = (typeof OPTIONS)[number];
@@ -77,57 +77,6 @@ export function PhotoLibraryExample() {
       {(id, set) => <PhotoLibrary current={{ kind: "library", id }} onPick={(item) => set(item.id)} />}
     </Controlled>
   );
-}
-
-export function ToggleExample() {
-  return (
-    <Controlled initial={true}>
-      {(checked, set) => (
-        <Toggle checked={checked} onChange={set}>
-          An example option
-        </Toggle>
-      )}
-    </Controlled>
-  );
-}
-
-const SIZES = [
-  { value: "s", label: "Small" },
-  { value: "m", label: "Medium" },
-  { value: "l", label: "Large" },
-];
-
-export function SegmentedExample() {
-  return (
-    <Controlled initial="m">
-      {(value, set) => (
-        <>
-          <FieldLabel>Example size</FieldLabel>
-          <Segmented label="Example size" options={SIZES} value={value} onChange={set} />
-        </>
-      )}
-    </Controlled>
-  );
-}
-
-/** In the form with its focus ring, and under the preview with the browser's. */
-export function LinkButtonExample() {
-  return (
-    <Logged>
-      {(log) => (
-        <div style={{ display: "flex", gap: 24 }}>
-          <LinkButton onClick={log("onClick")}>Remove</LinkButton>
-          <LinkButton onClick={log("onClick")} plainFocus>
-            Undo
-          </LinkButton>
-        </div>
-      )}
-    </Logged>
-  );
-}
-
-export function MessageUndoExample() {
-  return <Logged>{(log) => <Message onUndo={log("onUndo")}>An example of what just happened.</Message>}</Logged>;
 }
 
 export function DownloadButtonExample() {
@@ -205,7 +154,13 @@ function StudioLayout({ pinned, pack }: { pinned: boolean; pack: boolean }) {
               <Hint>A note about the first section.</Hint>
             </ControlsSection>
             <ControlsSection heading="2. Another section">
-              <ToggleExample />
+              <Controlled initial={true}>
+                {(checked, set) => (
+                  <Checkbox checked={checked} onChange={set}>
+                    An example option
+                  </Checkbox>
+                )}
+              </Controlled>
             </ControlsSection>
           </ControlsColumn>
         </Studio>

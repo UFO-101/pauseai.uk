@@ -1,4 +1,5 @@
 import type { Page } from "@playwright/test";
+import type { OutboxEmail } from "../fixtures/outbox";
 import { campaigns, copy } from "@/lib/content/email-your-mp";
 import {
   fakeTurnstile,
@@ -10,7 +11,7 @@ import {
   sendLetter,
   WEBHOOK_AUTH,
 } from "../steps";
-import { BASE, expect, frame, test } from "./fixtures";
+import { BASE, emailFrame, expect, frame, test } from "./fixtures";
 import { wholePage } from "./settle";
 
 // Email your MP, end to end on fixture data. ZZ99ZZ finds the test
@@ -27,6 +28,30 @@ function adsEvents(page: Page) {
 }
 
 const PAGE = `${BASE}/campaigns/${campaigns[0].slug}`;
+
+/** The test MP's words in their reply: made up, but as long and as formal as a real one. */
+const MP_REPLY = `Dear Jane,
+
+Thank you for writing to me about the risks from frontier AI, and for sending the open letter and the policy briefing.
+
+I share many of your concerns. I have passed your letter to the Secretary of State for Science, Innovation and Technology, asking what the Government plans to legislate and when, and I will write to you again when I have a reply.
+
+I would be glad to meet to talk about this further. My office will be in touch to find a time at one of my constituency surgeries.
+
+Yours sincerely,
+
+Testy McTestface MP
+Member of Parliament for Testshire
+House of Commons, London SW1A 0AA`;
+
+/** The MP's reply to `letter`, quoting it under their words, as a mail app does. */
+function replyQuoting(letter: OutboxEmail): string {
+  const from = letter.From.replace(/^"([^"]*)" /, "$1 ");
+  const quoted = letter.TextBody.split("\n")
+    .map((line) => (line ? `> ${line}` : ">"))
+    .join("\n");
+  return `${MP_REPLY}\n\nOn ${letter.Date}, ${from} wrote:\n${quoted}`;
+}
 
 /** Looks up ZZ99ZZ, then checks the address is the write page's. */
 async function lookUp(page: Page) {
@@ -87,6 +112,7 @@ test(
     );
     expect(letter.TextBody).toMatch(/Jane Smith\n\n1 High Street, Testville\nZZ9 9ZZ$/);
     expect(letter.Attachments!.map((a) => a.Name)).toEqual(campaigns[0].attachments.map((a) => a.file));
+    await emailFrame(page, letter, "the letter the MP gets");
 
     // The MP replies only to the letter's address: both we and the sender get a copy.
     const reply = await request.post(`${BASE}/api/postmark/inbound`, {
@@ -97,18 +123,23 @@ test(
         ToFull: [{ Email: address[1], Name: "", MailboxHash: address[2] }],
         CcFull: [],
         Subject: `Re: ${letter.Subject}`,
-        TextBody: "Thank you for writing.",
+        // The fixed clock's time (FIXTURE_NOW) in the MP's time zone: the letter
+        // and our forward of the reply are sent then too, so nothing's out of order.
+        Date: "Fri, 16 Oct 2026 13:00:00 +0100",
+        TextBody: replyQuoting(letter),
       },
     });
     expect(await reply.json()).toEqual({ forwarded: 2 });
     const copied = newestEmailTo(sender)!;
-    expect(copied.TextBody).toContain("Thank you for writing.");
+    expect(copied.TextBody).toContain(MP_REPLY);
+    expect(copied.TextBody).toContain("Date: Fri, 16 Oct 2026 13:00:00 +0100");
     expect(copied.ReplyTo).toBe("test-mp@example.org");
+    await emailFrame(page, copied, "the MP's reply, forwarded to the sender");
     // Our copy is of this flow's reply: the subject carries the letter's, and the body the MP's words.
     const ours = newestEmail(
       (email) => email.To === "replies@example.org" && email.Subject.endsWith(`Re: ${letter.Subject}`),
     )!;
-    expect(ours.TextBody).toContain("Thank you for writing.");
+    expect(ours.TextBody).toContain(MP_REPLY);
   },
 );
 
@@ -143,13 +174,14 @@ type TiptapElement = HTMLElement & {
  * a click or an arrow key, and a key pressed before then lands where the
  * caret was. No person types that fast.
  */
-async function caretSettled(page: Page, text: string, at: "start" | "end") {
+async function caretSettled(page: Page, text: string, at?: "start" | "end") {
   await expect
     .poll(() =>
       editor(page).evaluate(
         (el, { text, at }) => {
           const { $to } = (el as TiptapElement).editor.state.selection;
-          return $to.parent.textContent === text && $to.parentOffset === (at === "start" ? 0 : $to.parent.content.size);
+          const offset = at === undefined || $to.parentOffset === (at === "start" ? 0 : $to.parent.content.size);
+          return $to.parent.textContent === text && offset;
         },
         { text, at },
       ),
@@ -157,9 +189,13 @@ async function caretSettled(page: Page, text: string, at: "start" | "end") {
     .toBe(true);
 }
 
-/** Puts the caret at the start or end of the letter's paragraph that reads `text`. */
+/**
+ * Puts the caret at the start or end of the letter's paragraph that reads
+ * `text`: a click in it, and once the caret is there, Home or End.
+ */
 async function caretAt(page: Page, text: string, at: "start" | "end") {
   await editor(page).getByText(text, { exact: true }).click();
+  await caretSettled(page, text);
   await page.keyboard.press(at === "start" ? "Home" : "End");
   await caretSettled(page, text, at);
 }
@@ -250,6 +286,7 @@ test("the letter's toolbar and a paste from another app: what the preview shows 
   expect(sent.HtmlBody).toMatch(/<ul>\s*<li><p>First reason<\/p><\/li>\s*<li><p>Second reason<\/p><\/li>\s*<\/ul>/);
   expect(sent.HtmlBody).toContain("See this report and red words.");
   expect(sent.HtmlBody).not.toMatch(/<h1|<a |<ol|style=/);
+  await emailFrame(page, sent, "the letter as the MP gets it, formatted");
   // All of it above the sign-off, which is as it was drafted.
   expect(sent.TextBody).toMatch(
     /Please reply\.\n\n- First reason\n- Second reason\n\nPasted heading\n\nSee this report and red words\.\n\n- Numbered one\n\nThank you for your consideration,\n\nJane Smith\n\n1 High Street, Testville\nZZ9 9ZZ$/,

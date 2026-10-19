@@ -1,7 +1,7 @@
 import { LOGO_COVER_TITLE_CHARS } from "@/lib/collateral/templates";
 import type { DesignState } from "./designState";
-import { FieldLabel, Segmented, Toggle } from "./kit/Fields";
-import { Hint } from "./kit/Notes";
+import { Checkbox, Segmented } from "@/components/ui/Controls";
+import { Hint, Label } from "@/components/ui/Field";
 import styles from "./LogoCoverControls.module.css";
 
 /**
@@ -17,15 +17,15 @@ export default function LogoCoverControls({
 }) {
   return (
     <div className={styles.logoCover}>
-      <Toggle checked={design.coverTitle} onChange={(coverTitle) => update((d) => ({ ...d, coverTitle }))}>
+      <Checkbox checked={design.coverTitle} onChange={(coverTitle) => update((d) => ({ ...d, coverTitle }))}>
         Show the event title on the Luma cover
-      </Toggle>
+      </Checkbox>
       {design.coverTitle && (
         <Hint>Keep it to {LOGO_COVER_TITLE_CHARS} characters or fewer, so it reads at Luma&apos;s size.</Hint>
       )}
       {design.photo && (
         <>
-          <FieldLabel>Photo on the Luma cover</FieldLabel>
+          <Label>Photo on the Luma cover</Label>
           <Segmented
             label="Photo on the Luma cover"
             options={[

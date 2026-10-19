@@ -4,13 +4,15 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button, ButtonLink } from "@/components/ui/Button";
+import { Checkbox } from "@/components/ui/Controls";
+import { FieldError } from "@/components/ui/Field";
 import { copy } from "@/lib/content/email-your-mp";
 import { campaignBySlug, campaignPath } from "@/lib/email-your-mp";
 import { toHtml } from "@/lib/letter-format";
 import AttachmentChips from "./AttachmentChips";
 import { markSent, readDraft, type Draft } from "./draft";
 import Turnstile from "./Turnstile";
-import { Column, ErrorText } from "./FormParts";
+import { Column } from "./FormParts";
 import styles from "./LetterPreview.module.css";
 
 type Props = {
@@ -127,10 +129,9 @@ export default function LetterPreview({ campaignSlug, turnstileSiteKey }: Props)
 
       <p className={styles.small}>{copy.preview.replyNotice}</p>
 
-      <label className={styles.consent}>
-        <input type="checkbox" name="consent" checked={consent} onChange={(e) => setConsent(e.target.checked)} />
-        <span>{copy.preview.consent}</span>
-      </label>
+      <Checkbox name="consent" checked={consent} onChange={setConsent}>
+        {copy.preview.consent}
+      </Checkbox>
 
       {turnstileSiteKey && (
         <div className={styles.turnstile}>
@@ -138,7 +139,7 @@ export default function LetterPreview({ campaignSlug, turnstileSiteKey }: Props)
         </div>
       )}
 
-      {error && <ErrorText>{error}</ErrorText>}
+      {error && <FieldError announce="alert">{error}</FieldError>}
 
       <div className={styles.actions}>
         <ButtonLink variant="ghost" href={`${campaignPath(campaign)}/write`}>

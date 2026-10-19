@@ -13,6 +13,11 @@
   cursor: pointer;
 }
 
+.button:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-offset);
+}
+
 .button svg {
   display: block;
 }

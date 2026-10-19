@@ -3,15 +3,15 @@ import { staffCopy } from "@/lib/content/staff-interface";
 import { staffTime } from "@/lib/staff-time";
 import type { LetterSummary } from "@/lib/server/letters";
 import styles from "./LettersTable.module.css";
-import Muted from "./ui/Muted";
-import StaffTable from "./ui/StaffTable";
-import Tag from "./ui/Tag";
+import { Muted } from "@/components/ui/Text";
+import Tag from "@/components/ui/Tag";
+import Table from "@/components/ui/Table";
 
 /** Letters, with each change of status (sent, bounced, complained about) and each reply. */
 export default function LettersTable({ letters }: { letters: LetterSummary[] }) {
   if (letters.length === 0) return <p>{staffCopy.letters.none}</p>;
   return (
-    <StaffTable>
+    <Table>
       <thead>
         <tr>
           <th>{staffCopy.letters.columns.created}</th>
@@ -53,6 +53,6 @@ export default function LettersTable({ letters }: { letters: LetterSummary[] }) 
           </tr>
         ))}
       </tbody>
-    </StaffTable>
+    </Table>
   );
 }

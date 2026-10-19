@@ -3,6 +3,9 @@
 import { useId, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
+import { TextInput } from "@/components/ui/Controls";
+import { Field, FieldError, FieldGroup, Label } from "@/components/ui/Field";
+import { FormStack } from "@/components/ui/Form";
 import { copy, type Campaign } from "@/lib/content/email-your-mp";
 import {
   campaignPath,
@@ -16,7 +19,6 @@ import AttachmentChips from "./AttachmentChips";
 import { saveDraft, type Draft } from "./draft";
 import LetterEditor from "./LetterEditor";
 import Required from "./Required";
-import { ErrorText, Field, Input } from "./FormParts";
 import styles from "./LetterForm.module.css";
 
 type Props = {
@@ -72,7 +74,7 @@ export default function LetterForm({ campaign, mp, statuses, senderName, address
 
   return (
     // Its button is type="button", so Enter in a field never submits it.
-    <form className={styles.letter} noValidate>
+    <FormStack noValidate>
       {/* Hidden from people; only a form-filling bot completes it. */}
       <label className={styles.honeypot} aria-hidden="true">
         Nickname
@@ -85,9 +87,8 @@ export default function LetterForm({ campaign, mp, statuses, senderName, address
         />
       </label>
 
-      <label>
-        <Required>{copy.form.emailLabel}</Required>
-        <Input
+      <Field label={<Required>{copy.form.emailLabel}</Required>}>
+        <TextInput
           name="email"
           type="email"
           required
@@ -95,33 +96,32 @@ export default function LetterForm({ campaign, mp, statuses, senderName, address
           value={email}
           onChange={(e) => setEmail(e.target.value)}
         />
-      </label>
-      <label>
-        {copy.form.subjectLabel}
-        <Input name="subject" value={subject} onChange={(e) => setSubject(e.target.value)} />
-      </label>
-      <Field>
-        <label id={letterId}>{copy.form.letterLabel}</label>
+      </Field>
+      <Field label={copy.form.subjectLabel}>
+        <TextInput name="subject" value={subject} onChange={(e) => setSubject(e.target.value)} />
+      </Field>
+      <FieldGroup>
+        <Label id={letterId}>{copy.form.letterLabel}</Label>
         <ul id={letterTips} className={styles.tips}>
           {copy.form.tips.map((tip) => (
             <li key={tip}>{tip}</li>
           ))}
         </ul>
         <LetterEditor initial={letter} onChange={setLetter} labelledBy={letterId} describedBy={letterTips} />
-      </Field>
+      </FieldGroup>
 
       {campaign.attachments.length > 0 && (
-        <Field>
-          <p className={styles.fieldLabel}>{copy.form.attachments}</p>
+        <FieldGroup>
+          <Label>{copy.form.attachments}</Label>
           <AttachmentChips attachments={campaign.attachments} label={copy.form.attachments} />
-        </Field>
+        </FieldGroup>
       )}
 
-      {error && <ErrorText>{error}</ErrorText>}
+      {error && <FieldError announce="alert">{error}</FieldError>}
 
       <Button variant="primary" type="button" className={styles.next} onClick={preview}>
         {copy.form.preview}
       </Button>
-    </form>
+    </FormStack>
   );
 }

@@ -44,6 +44,7 @@
   },
   "devDependencies": {
     "@j178/prek": "0.5.4",
+    "@jsx-email/doiuse-email": "1.0.4",
     "@playwright/test": "^1.64.1",
     "@tensorflow-models/blazeface": "^0.1.0",
     "@tensorflow/tfjs-backend-cpu": "^4.22.0",

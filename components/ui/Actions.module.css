@@ -1,8 +1,9 @@
 /* A row of buttons that stacks on a phone. */
 .actions {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 0.75rem;
+  gap: var(--space-3);
 }
 
 /* Buttons are full width on a phone (Button.module.css), so they stack. */

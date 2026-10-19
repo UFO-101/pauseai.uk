@@ -11,10 +11,8 @@
   gap: 8px;
 }
 
-/* Camera and photo cropping, in a modal over the page. Its hint sits closer under the heading. */
+/* Camera and photo cropping, in a modal over the page. */
 .dialog {
-  --hint-margin-top: 6px;
-
   width: min(480px, calc(100vw - 32px));
   max-height: calc(100dvh - 32px);
   padding: 20px;

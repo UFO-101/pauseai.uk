@@ -1,0 +1,72 @@
+// The design tokens the gallery's tokens page shows, by name, as
+// styles/tokens.css defines them. token-names.test.ts fails when the two differ,
+// so a new token shows here.
+
+/** Every colour, in the order tokens.css lists them. An -rgb channel list is left out: it's a colour's alpha form. */
+export const COLOUR_TOKENS = [
+  "--bg",
+  "--surface",
+  "--surface-2",
+  "--text",
+  "--text-secondary",
+  "--muted",
+  "--pause-orange",
+  "--accent",
+  "--accent-strong",
+  "--accent-light",
+  "--accent-bg",
+  "--border",
+  "--border-strong",
+  "--shadow",
+  "--shadow-strong",
+  "--white",
+  "--black",
+  "--ink",
+  "--on-dark",
+  "--charcoal",
+  "--peach",
+  "--logo-swlondoner",
+  "--neutral-50",
+  "--neutral-100",
+  "--neutral-200",
+  "--neutral-400",
+  "--danger",
+  "--success-bg",
+  "--status-amber",
+  "--status-amber-bg",
+  "--status-green",
+  "--status-green-bg",
+  "--status-blue",
+  "--status-blue-bg",
+];
+
+export const SPACE_TOKENS = [
+  "--space-1",
+  "--space-2",
+  "--space-3",
+  "--space-4",
+  "--space-5",
+  "--space-6",
+  "--space-7",
+  "--space-8",
+  "--space-9",
+];
+
+export const TEXT_TOKENS = ["--text-xs", "--text-sm", "--text-md", "--text-lg"];
+
+export const RADIUS_TOKENS = ["--radius-sm", "--radius-md", "--radius-lg", "--radius-xl", "--radius-pill"];
+
+/** The tokens the density sets, comfortable and compact. */
+export const DENSITY_TOKENS = [
+  "--control-height",
+  "--control-padding-x",
+  "--control-font-size",
+  "--label-font-size",
+  "--note-font-size",
+  "--field-gap",
+  "--form-gap",
+  "--table-font-size",
+  "--table-cell-padding",
+  "--tag-font-size",
+  "--tag-padding",
+];

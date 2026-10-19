@@ -1,0 +1,13 @@
+/* A form's layout: fields in a column, or filters in a row. */
+
+.stack {
+  display: grid;
+  gap: var(--form-gap);
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: end;
+}

@@ -46,7 +46,7 @@ import {
   writeFileSync,
 } from "node:fs";
 import { platform } from "node:os";
-import { dirname, join, relative, resolve } from "node:path";
+import { basename, dirname, join, relative, resolve } from "node:path";
 import { LOCAL_URL, MAIN_OUTBOX_DIR, MAIN_URL } from "../tests/fixture-env.mjs";
 import {
   cacheKey,
@@ -309,7 +309,8 @@ if (options.main !== undefined) {
       }
     }
   }
-  const carriedMain = carried && join(carried, "main", "frames.json");
+  // The carried main frames as filtered above, without the flows gone from the suite: not the last run's own file.
+  const carriedMain = carried && join(runDir, "main", "frames.json");
   mkdirSync(join(runDir, "main"), { recursive: true });
   writeJson(
     join(runDir, "main", "frames.json"),
@@ -330,6 +331,12 @@ if (existsSync(page)) {
   writeFileSync(
     join(DIR, "index.html"),
     `<!doctype html><meta charset="utf-8"><title>Storyboard</title><meta http-equiv="refresh" content="0; url=${relative(DIR, page)}">`,
+  );
+  // Which run is newest, for an open page of an older one to link to it
+  // (tests/storyboard/report/page.ts). A script, as a page opened from disk can't fetch.
+  writeFileSync(
+    join(DIR, "latest.js"),
+    `window.storyboardLatest = ${JSON.stringify({ run: basename(runDir), at: readJson(join(runDir, "storyboard.json")).generatedAt })};\n`,
   );
   prune(RUNS, RUNS_KEEP, runDir);
 }

@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { http, HttpResponse } from "msw";
@@ -235,6 +236,19 @@ describeWithDatabase("submitLetter", () => {
     expect(await submitLetter(FORM)).toEqual({ ok: true });
     expect(await submitLetter(FORM)).toEqual({ ok: true });
     expect(sent).toHaveLength(5);
+  });
+
+  it("in a fixture build, makes each letter's address from the sender and how many they've sent", async () => {
+    vi.stubEnv("DATA_FIXTURES", "1");
+    vi.stubEnv("OUTBOX_DIR", "");
+    expect(await submitLetter(FORM)).toEqual({ ok: true });
+    expect(await submitLetter(FORM)).toEqual({ ok: true });
+    const hash = (seed: string) => createHash("sha256").update(seed).digest().subarray(0, 12).toString("hex");
+    const letters = await query<{ reply_hash: string }>("SELECT reply_hash FROM letters ORDER BY id");
+    expect(letters.map((l) => l.reply_hash)).toEqual([
+      hash("letter jane@example.com 0"),
+      hash("letter jane@example.com 1"),
+    ]);
   });
 
   it("keeps nothing if Postmark refuses the letter, so the sender can try again", async () => {

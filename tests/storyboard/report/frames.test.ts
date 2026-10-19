@@ -269,4 +269,14 @@ describe("renderStoryboardPage", () => {
     expect(html).not.toContain("</script><b>");
     expect(JSON.parse(html.match(/type="application\/json">([\s\S]*?)<\/script>/)![1])).toEqual(board);
   });
+
+  it("titles itself with the run's time, and reads which run is newest, to link to it", () => {
+    const html = renderStoryboardPage(pairRuns({ frames: [run("flow", ["a"])] }, undefined, same));
+    expect(html).toContain('<script src="../../latest.js"></script>');
+    expect(html).toContain('<a id="newer" href="../../index.html" hidden></a>');
+    expect(html).toContain('"Storyboard " + isoLocal(new Date(data.generatedAt))');
+    // The page's own script parses.
+    const scripts = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map((m) => m[1]);
+    for (const script of scripts) expect(() => new Function(script)).not.toThrow();
+  });
 });

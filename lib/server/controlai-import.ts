@@ -18,7 +18,7 @@ import { outsideFetch } from "./outside-fetch";
 // Copies the signatories of ControlAI's letter to the PM into the bill's
 // statuses, nightly (app/api/cron/import-controlai) or when staff ask, and
 // keeps each run, failures included, in the import log (import-runs.ts, as
-// "import-controlai") for /staff/import-data (plans/sobel-bill-support.md).
+// "import-controlai") for /staff/import-data.
 // The table is made to match the letter: statuses it set for names no
 // longer there go. It never touches another campaign's statuses, or one set
 // by anything else.

@@ -47,8 +47,11 @@ import ProjectMenu from "./ProjectMenu";
 import StylePicker from "./StylePicker";
 import { usePhotoGestures } from "./usePhotoGestures";
 import { CheckboxChoice, ChoiceGrid, PhotoLibrary } from "./kit/Choices";
-import { FileInput, FormButton, TextArea } from "./kit/Fields";
-import { Hint, LinkButton, Message } from "./kit/Notes";
+import { Button } from "@/components/ui/Button";
+import { FileInput, TextArea } from "@/components/ui/Controls";
+import { Hint } from "@/components/ui/Field";
+import LinkButton from "@/components/ui/LinkButton";
+import StatusMessage from "@/components/ui/StatusMessage";
 import {
   ControlsColumn,
   ControlsSection,
@@ -557,7 +560,7 @@ export default function GalleryStudio() {
             onReset={onReset}
             saveDisabled={!restored}
           />
-          {message && <Message onUndo={message === RESET_MESSAGE ? undoReset : null}>{message}</Message>}
+          {message && <StatusMessage onUndo={message === RESET_MESSAGE ? undoReset : null}>{message}</StatusMessage>}
         </PreviewActions>
       </PreviewColumn>
 
@@ -592,7 +595,7 @@ export default function GalleryStudio() {
         >
           <Hint>Pick a slide from the strip under the preview.</Hint>
           <div className={styles.slideActions}>
-            <FormButton
+            <Button
               type="button"
               variant="ghost"
               size="small"
@@ -600,8 +603,8 @@ export default function GalleryStudio() {
               onClick={() => moveSlide(activeIndex, -1)}
             >
               ← Move earlier
-            </FormButton>
-            <FormButton
+            </Button>
+            <Button
               type="button"
               variant="ghost"
               size="small"
@@ -609,8 +612,8 @@ export default function GalleryStudio() {
               onClick={() => moveSlide(activeIndex, 1)}
             >
               Move later →
-            </FormButton>
-            <FormButton
+            </Button>
+            <Button
               type="button"
               variant="ghost"
               size="small"
@@ -618,8 +621,8 @@ export default function GalleryStudio() {
               onClick={() => removeSlide(activeIndex)}
             >
               Remove
-            </FormButton>
-            <FormButton
+            </Button>
+            <Button
               type="button"
               variant="ghost"
               size="small"
@@ -627,7 +630,7 @@ export default function GalleryStudio() {
               onClick={addSlide}
             >
               {`Add a slide (${slides.length} of ${MAX_SLIDES})`}
-            </FormButton>
+            </Button>
           </div>
         </ControlsSection>
 

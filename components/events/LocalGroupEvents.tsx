@@ -13,10 +13,9 @@ const PAST_EVENTS_SHOWN = 8;
  * The local group's slice of the UK Luma calendar, rendered with the same cards
  * as the homepage.
  *
- * Local group pages used to say "we meet regularly" with the calendar reachable
- * only from the footer, so someone who arrived from pauseai.info/communities
- * had no way to see when anything was actually happening — or that the
- * local group had been meeting all year.
+ * So someone who arrives from pauseai.info/communities sees when the group
+ * next meets, and that it's been meeting all year, without hunting for the
+ * calendar.
  *
  * An async server component rather than a change to each page's own
  * signature: the pages stay synchronous and each one only adds this tag.

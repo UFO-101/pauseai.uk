@@ -65,11 +65,10 @@
   color: var(--text-secondary);
 }
 
-/* Its checkboxes are lighter and closer together than the form's others. */
+/* Its checkboxes, one under another. */
 .formatGroup {
-  --toggle-margin: 0 0 8px;
-  --toggle-font-weight: 500;
-
+  display: grid;
+  gap: var(--space-2);
   margin: 0 0 12px;
   padding: 0;
   border: 0;

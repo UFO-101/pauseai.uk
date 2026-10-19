@@ -28,7 +28,6 @@ import {
   exampleSyncedMp,
 } from "./RunList.examples";
 import StaffHeader from "./StaffHeader";
-import { StaffForm } from "./ui/forms";
 
 const [pm, bill] = campaigns;
 
@@ -84,11 +83,11 @@ describe("LoginCard", () => {
   it("heads its form with the title, with no margin under the form", async () => {
     await render(
       <LoginCard title={staffCopy.login.title}>
-        <StaffForm aria-label="Log in" />
+        <LoginForm />
       </LoginCard>,
     );
     await expect.element(page.getByRole("heading", { level: 1, name: staffCopy.login.title })).toBeVisible();
-    const form = page.getByRole("form", { name: "Log in" }).element();
+    const form = page.getByRole("button", { name: staffCopy.login.button }).element().closest("form")!;
     expect(getComputedStyle(form).marginBottom).toBe("0px");
   });
 });

@@ -135,7 +135,7 @@ test.describe("in-page scrolling", () => {
 
   test("a deep link far down the homepage lands and stays on its target", async ({ page }) => {
     // #staff sits below the local groups map, the people carousel and the
-    // onboarding embed, each of which used to change height after load.
+    // onboarding embed, each of which could change height after load.
     // Nothing re-scrolls afterwards, so any late shift shows up as drift.
     await gotoSettled(page, "/#staff");
     await expectClearOfNav(page, "staff");
@@ -186,9 +186,8 @@ test.describe("in-page scrolling", () => {
   });
 
   test("the footer cookie settings link does not jump to the top", async ({ page }) => {
-    // It is an href="#", which used to be swallowed by ScrollInit's delegated
-    // handler. CookieConsent calls preventDefault itself, so removing that
-    // handler must not reintroduce a jump.
+    // It is an href="#": CookieConsent calls preventDefault itself, so
+    // following it mustn't jump to the top.
     await gotoSettled(page);
     await page.evaluate(() => window.scrollTo(0, 2000));
     await scrollSettled(page);
@@ -216,7 +215,7 @@ test.describe("onboarding embed", () => {
   test("a shrinking form does not scroll a reader who hasn't used it", async ({ page }) => {
     // The embed brings its own top back into view when a step gets shorter.
     // A reflow before anyone has touched the form (a late font, the iOS
-    // toolbar resizing the viewport) also shrinks it, and used to yank the
+    // toolbar resizing the viewport) also shrinks it, and mustn't yank the
     // page down to the form unprompted.
     await gotoSettled(page);
     await page.evaluate(() => window.scrollTo(0, document.getElementById("staff")!.offsetTop));

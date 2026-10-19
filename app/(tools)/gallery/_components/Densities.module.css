@@ -1,0 +1,20 @@
+/* Comfortable beside compact, each named. */
+.densities {
+  display: grid;
+  gap: var(--space-5);
+}
+
+@media (min-width: 720px) {
+  .densities {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.name {
+  margin: 0 0 var(--space-2);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}

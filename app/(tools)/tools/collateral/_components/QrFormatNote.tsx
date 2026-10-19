@@ -1,6 +1,6 @@
 import type { Format } from "@/lib/collateral/formats";
-import { Toggle } from "./kit/Fields";
-import { Hint } from "./kit/Notes";
+import { Checkbox } from "@/components/ui/Controls";
+import { Hint } from "@/components/ui/Field";
 
 interface Props {
   format: Format;
@@ -18,9 +18,9 @@ export default function QrFormatNote({ format, screenQr, onScreenQr, reason }: P
   if (format.kind === "digital" && format.screen) {
     return (
       <>
-        <Toggle checked={screenQr} onChange={onScreenQr}>
+        <Checkbox checked={screenQr} onChange={onScreenQr}>
           Show QR codes on the {format.label}
-        </Toggle>
+        </Checkbox>
         {screenQr ? (
           reason && <Hint>{reason}</Hint>
         ) : (

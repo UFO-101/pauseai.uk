@@ -39,7 +39,7 @@ describe("LetterForm", () => {
     await expect
       .element(editor().getByText(/^I'm a resident of Cities of London and Westminster and a supporter of/))
       .toBeVisible();
-    // The old tool's bold.
+    // The campaign letter's bold.
     expect(editor().getByText("PauseAI", { exact: true }).element().tagName).toBe("STRONG");
     // The letter ends with the name, then the lookup's address and postcode, a line each.
     await expect.element(editor().getByText("Jane Smith", { exact: true })).toBeVisible();

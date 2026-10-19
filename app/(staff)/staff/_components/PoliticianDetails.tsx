@@ -1,7 +1,7 @@
 import { staffCopy } from "@/lib/content/staff-interface";
 import type { Politician } from "@/lib/server/politicians";
 import PoliticianForm from "./PoliticianForm";
-import Muted from "./ui/Muted";
+import { Muted } from "@/components/ui/Text";
 
 /**
  * A politician's page: their name, what's known of them, and the form to

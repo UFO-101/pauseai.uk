@@ -2,7 +2,9 @@
 // the chrome, then each area and page, then the tools and the staff screens.
 // tests/storyboard/gallery.spec.ts pictures them in this order.
 import type { Group } from "../_components/types";
+import { tokens } from "./tokens";
 import { ui } from "./ui";
+import { forms } from "./forms";
 import { layout } from "./layout";
 import { areas } from "./areas";
 import { home } from "./home";
@@ -16,10 +18,11 @@ import { tools } from "./tools";
 import { collateral } from "./collateral";
 import { collateralKit } from "./collateral-kit";
 import { staff } from "./staff";
-import { staffKit } from "./staff-kit";
 
 export const GROUPS: Group[] = [
+  tokens,
   ui,
+  forms,
   layout,
   areas,
   home,
@@ -33,5 +36,4 @@ export const GROUPS: Group[] = [
   collateral,
   collateralKit,
   staff,
-  staffKit,
 ];

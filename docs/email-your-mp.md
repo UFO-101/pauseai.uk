@@ -133,7 +133,6 @@ anything else. Names nobody has, or several could have, are reported, not
 guessed. If the page, the PDF or the parse fails, or fewer than 5 names are
 found, nothing changes. Each run, failures included, is kept in
 `controlai_imports` and shown on `/staff/import-data`, which can also run it.
-The plan is `plans/sobel-bill-support.md`.
 
 Signing the letter doesn't count as having done the bill's campaign, which
 asks the MP to the debate: the bill's page still has a letter to write, with

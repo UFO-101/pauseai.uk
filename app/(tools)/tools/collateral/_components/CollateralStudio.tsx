@@ -40,8 +40,9 @@ import ProjectMenu from "./ProjectMenu";
 import TitleSizeControl from "./TitleSizeControl";
 import { usePhotoGestures } from "./usePhotoGestures";
 import { useStudioAssets } from "./useStudioAssets";
-import { FieldLabel, Select } from "./kit/Fields";
-import { Hint, Message } from "./kit/Notes";
+import { Select } from "@/components/ui/Controls";
+import { Hint, Label } from "@/components/ui/Field";
+import StatusMessage from "@/components/ui/StatusMessage";
 import {
   ControlsColumn,
   ControlsSection,
@@ -308,13 +309,13 @@ export default function CollateralStudio({ events }: { events: CalendarEvent[] }
             onReset={onReset}
             saveDisabled={!restored}
           />
-          {shown && <Message onUndo={message === RESET_MESSAGE ? undoReset : null}>{shown}</Message>}
+          {shown && <StatusMessage onUndo={message === RESET_MESSAGE ? undoReset : null}>{shown}</StatusMessage>}
         </PreviewActions>
       </PreviewColumn>
 
       <ControlsColumn>
         <ControlsSection heading="1. Format">
-          <FieldLabel htmlFor="collateral-format">Where will it be used?</FieldLabel>
+          <Label htmlFor="collateral-format">Where will it be used?</Label>
           <Select id="collateral-format" value={format.id} onChange={(e) => setFormatId(e.target.value)}>
             {FORMAT_GROUPS.map((group) => (
               <optgroup key={group} label={group}>

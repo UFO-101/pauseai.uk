@@ -68,8 +68,8 @@ export default function OnboardingFormEmbed() {
         // A shorter step can leave the user looking at the space below the
         // form, so bring its top back into view. Only after they've used the
         // form: a reflow on its own (a font arriving late, the iOS toolbar
-        // resizing the viewport) also shrinks it, and used to pull the page
-        // away from wherever the reader was.
+        // resizing the viewport) also shrinks it, and mustn't pull the page
+        // away from wherever the reader is.
         const iframe = iframeRef.current;
         if (
           iframe &&

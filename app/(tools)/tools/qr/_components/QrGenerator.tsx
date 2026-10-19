@@ -16,8 +16,10 @@ import { qrShape, qrSvg } from "@/lib/collateral/qrShape";
 import { loadDataUrl } from "@/lib/collateral/render";
 import { INK } from "@/lib/collateral/themes";
 import QrScanner from "./QrScanner";
-import { FieldError, FieldLabel, FormButton, TextInput, Toggle } from "../../collateral/_components/kit/Fields";
-import { Hint, Message } from "../../collateral/_components/kit/Notes";
+import { Button } from "@/components/ui/Button";
+import { Checkbox, TextInput } from "@/components/ui/Controls";
+import { FieldError, Hint, Label } from "@/components/ui/Field";
+import StatusMessage from "@/components/ui/StatusMessage";
 import {
   ControlsColumn,
   ControlsSection,
@@ -234,7 +236,7 @@ export default function QrGenerator() {
 
       <ControlsColumn>
         <ControlsSection>
-          <FieldLabel htmlFor="qr-url">Web address</FieldLabel>
+          <Label htmlFor="qr-url">Web address</Label>
           <TextInput
             id="qr-url"
             type="text"
@@ -257,7 +259,7 @@ export default function QrGenerator() {
           )}
           <QrScanner onResult={onScan} />
           {scanned !== null && (
-            <FieldError status>
+            <FieldError announce="status">
               That code does not hold a web address
               {scanned ? (
                 <>
@@ -268,17 +270,17 @@ export default function QrGenerator() {
               )}
             </FieldError>
           )}
-          <div className={styles.logo}>
-            <Toggle id="qr-logo" checked={logo} onChange={setLogo}>
+          <div className={styles.checkboxes}>
+            <Checkbox id="qr-logo" checked={logo} onChange={setLogo}>
               Pause symbol in the middle
-            </Toggle>
+            </Checkbox>
+            <Checkbox id="qr-show-link" checked={showLink} onChange={setShowLink}>
+              Show the link under the code
+            </Checkbox>
           </div>
-          <Toggle id="qr-show-link" checked={showLink} onChange={setShowLink}>
-            Show the link under the code
-          </Toggle>
-          <FieldLabel htmlFor="qr-label" note="(optional)">
+          <Label htmlFor="qr-label" note="(optional)">
             Label under the code{" "}
-          </FieldLabel>
+          </Label>
           <TextInput
             id="qr-label"
             type="text"
@@ -292,29 +294,23 @@ export default function QrGenerator() {
 
         <ControlsSection>
           <div className={styles.actions}>
-            <FormButton
-              type="button"
-              variant="primary"
-              size="large"
-              onClick={onDownloadPng}
-              disabled={!preview || busy}
-            >
+            <Button type="button" variant="primary" size="large" onClick={onDownloadPng} disabled={!preview || busy}>
               {busy ? "Preparing…" : "Download PNG"}
-            </FormButton>
-            <FormButton type="button" variant="ghost" size="large" onClick={onDownloadSvg} disabled={!preview}>
+            </Button>
+            <Button type="button" variant="ghost" size="large" onClick={onDownloadSvg} disabled={!preview}>
               Download SVG
-            </FormButton>
+            </Button>
             {handoff === "share" && (
-              <FormButton type="button" variant="ghost" size="large" onClick={onShare} disabled={!preview}>
+              <Button type="button" variant="ghost" size="large" onClick={onShare} disabled={!preview}>
                 Share
-              </FormButton>
+              </Button>
             )}
             {handoff === "copy" && (
-              <FormButton type="button" variant="ghost" size="large" onClick={onCopy} disabled={!preview}>
+              <Button type="button" variant="ghost" size="large" onClick={onCopy} disabled={!preview}>
                 Copy image
-              </FormButton>
+              </Button>
             )}
-            {message && <Message>{message}</Message>}
+            {message && <StatusMessage>{message}</StatusMessage>}
           </div>
           <Hint>SVG is best for print. It stays sharp at any size.</Hint>
         </ControlsSection>

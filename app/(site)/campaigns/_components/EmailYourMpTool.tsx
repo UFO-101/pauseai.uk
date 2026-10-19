@@ -10,7 +10,9 @@ import { TEST_MPS, type TestMp } from "@/lib/test-mps";
 import { readLookup, saveLookup } from "./draft";
 import MpCard from "./MpCard";
 import Required from "./Required";
-import { Column, ErrorText, Field, Input, Notice } from "./FormParts";
+import { TextInput } from "@/components/ui/Controls";
+import { Field, FieldError, FieldGroup, Hint } from "@/components/ui/Field";
+import { Column, Notice } from "./FormParts";
 import styles from "./EmailYourMpTool.module.css";
 
 type Found = { mp: Mp; statuses: MpStatuses };
@@ -112,9 +114,8 @@ export default function EmailYourMpTool({ campaignSlug, showTestMps }: Props) {
   return (
     <Column>
       <form className={styles.lookup} onSubmit={lookUp} noValidate>
-        <label className={styles.lookupWide}>
-          <Required>{copy.lookup.nameLabel}</Required>
-          <Input
+        <Field className={styles.lookupWide} label={<Required>{copy.lookup.nameLabel}</Required>}>
+          <TextInput
             name="name"
             required
             autoComplete="name"
@@ -122,11 +123,10 @@ export default function EmailYourMpTool({ campaignSlug, showTestMps }: Props) {
             onChange={(e) => setName(e.target.value)}
             disabled={looking}
           />
-        </label>
-        <Field>
-          <label>
-            <Required>{copy.lookup.addressLabel}</Required>
-            <Input
+        </Field>
+        <FieldGroup>
+          <Field label={<Required>{copy.lookup.addressLabel}</Required>}>
+            <TextInput
               name="address"
               required
               autoComplete="address-line1"
@@ -135,13 +135,12 @@ export default function EmailYourMpTool({ campaignSlug, showTestMps }: Props) {
               onChange={(e) => setAddress(e.target.value)}
               disabled={looking}
             />
-          </label>
-          <small id={addressHint}>{copy.lookup.addressHint}</small>
-        </Field>
-        <Field>
-          <label>
-            <Required>{copy.lookup.postcodeLabel}</Required>
-            <Input
+          </Field>
+          <Hint id={addressHint}>{copy.lookup.addressHint}</Hint>
+        </FieldGroup>
+        <FieldGroup>
+          <Field label={<Required>{copy.lookup.postcodeLabel}</Required>}>
+            <TextInput
               name="postcode"
               required
               autoComplete="postal-code"
@@ -150,7 +149,7 @@ export default function EmailYourMpTool({ campaignSlug, showTestMps }: Props) {
               onChange={(e) => setPostcode(e.target.value)}
               disabled={looking}
             />
-          </label>
+          </Field>
           {showTestMps && (
             <details id={testPostcodes} className={styles.testPostcodes}>
               <summary>
@@ -163,14 +162,14 @@ export default function EmailYourMpTool({ campaignSlug, showTestMps }: Props) {
               </ul>
             </details>
           )}
-        </Field>
+        </FieldGroup>
         <div className={styles.lookupButton}>
           <Button variant="primary" type="submit" pending={looking}>
             {looking ? copy.lookup.looking : copy.lookup.button}
           </Button>
         </div>
       </form>
-      {error && <ErrorText>{error}</ErrorText>}
+      {error && <FieldError announce="alert">{error}</FieldError>}
 
       {/* No letter to write here: the MP has no email, or has done this campaign and the page couldn't move on. */}
       {found && (

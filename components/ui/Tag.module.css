@@ -1,0 +1,32 @@
+/* The lozenge. Its size follows the density (styles/tokens.css). */
+.tag {
+  display: inline-block;
+  padding: var(--tag-padding);
+  border-radius: var(--radius-pill);
+  background: var(--surface-2);
+  color: var(--text);
+  font-size: var(--tag-font-size);
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+/* After a heading's words, it sits on their middle, at its own size and weight. */
+:is(h1, h2, h3) > .tag {
+  margin-left: var(--space-2);
+  vertical-align: middle;
+}
+
+.amber {
+  background: var(--status-amber-bg);
+  color: var(--status-amber);
+}
+
+.green {
+  background: var(--status-green-bg);
+  color: var(--status-green);
+}
+
+.blue {
+  background: var(--status-blue-bg);
+  color: var(--status-blue);
+}

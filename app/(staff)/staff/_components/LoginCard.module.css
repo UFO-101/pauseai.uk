@@ -1,9 +1,7 @@
 /* The login page's card. */
 
-/* A card in the middle, like any login. Its form has no margin under it. */
+/* A card in the middle, like any login. */
 .login {
-  --staff-form-margin-bottom: 0;
-
   max-width: 24rem;
   margin: 2rem auto 0;
   padding: 1.5rem 2rem 2rem;

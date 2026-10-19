@@ -1,5 +1,4 @@
 import "server-only";
-import { randomBytes } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { copy } from "@/lib/content/email-your-mp";
@@ -8,6 +7,7 @@ import { checkDoc, isBlank, toHtml, toText, type LetterDoc } from "@/lib/letter-
 import { query, transaction, type Queryable } from "./db";
 import { findMp } from "./find-mp";
 import { headerName, lettersDomain, sendEmail } from "./postmark";
+import { randomId } from "./random-id";
 import { checkNotSpam } from "./turnstile";
 
 // A letter from the form, sent through Postmark from the letter's own
@@ -143,7 +143,16 @@ export async function submitLetter(form: LetterForm): Promise<SubmitResult> {
   const letter = form.letter;
   const body = toText(letter);
   const html = toHtml(letter);
-  const replyHash = randomBytes(12).toString("hex");
+  const replyHash = (
+    await randomId(12, async () => {
+      // The sender and how many they've sent: a different seed for each letter.
+      const [{ sent }] = await query<{ sent: number }>(
+        "SELECT count(*)::int AS sent FROM letters WHERE lower(sender_email) = lower($1)",
+        [form.email],
+      );
+      return `letter ${form.email} ${sent}`;
+    })
+  ).toString("hex");
   let id: number | undefined;
   try {
     id = await transaction(async (db) => {

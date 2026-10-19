@@ -6,21 +6,6 @@
   color: var(--text-secondary);
 }
 
-.consent {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  align-items: start;
-  gap: 0.6rem !important;
-  font-weight: 400 !important;
-}
-
-.consent input {
-  width: 1.2rem;
-  height: 1.2rem;
-  margin: 0.15rem 0 0;
-  accent-color: var(--accent);
-}
-
 /* The preview and "sent" pages: one centred column, as wide as the form's
    fields, with the heading close above what's on the page. Doubled up to
    win over the campaign hero's own padding and heading margin. */

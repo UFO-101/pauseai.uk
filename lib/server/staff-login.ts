@@ -4,6 +4,7 @@ import { staffCopy } from "@/lib/content/staff-interface";
 import { LOGIN_BROWSER_COOKIE, LOGIN_LINK_PATH } from "@/lib/staff-session";
 import { query, transaction } from "./db";
 import { notifyDomain, sendEmail } from "./postmark";
+import { randomId } from "./random-id";
 
 // Logging in by email: a staff member types their pauseai.uk address and
 // gets a link. The link only works in the browser that asked for it, which
@@ -69,8 +70,7 @@ export async function sendLoginLink(typed: string, requestOrigin: string, browse
     console.error("Staff login links can't be sent: SITE_ORIGIN isn't set");
     return;
   }
-  const token = randomBytes(32).toString("base64url");
-  const saved = await transaction(async (db) => {
+  const token = await transaction(async (db) => {
     // Locks out a second request for the same address until this one is saved.
     await query("SELECT pg_advisory_xact_lock(hashtext($1))", [email], db);
     const [{ count }] = await query<{ count: number }>(
@@ -78,16 +78,18 @@ export async function sendLoginLink(typed: string, requestOrigin: string, browse
       [email],
       db,
     );
-    if (count >= HOURLY_LINKS) return false;
+    if (count >= HOURLY_LINKS) return undefined;
+    // The address and how many it's had: a different seed for each link.
+    const token = (await randomId(32, () => `login ${email} ${count}`)).toString("base64url");
     await query("DELETE FROM staff_login_links WHERE created_at < now() - interval '1 day'", [], db);
     await query(
       `INSERT INTO staff_login_links (token_hash, email, browser_hash, expires_at) VALUES ($1, $2, $3, now() + interval '${LINK_MINUTES} minutes')`,
       [hash(token), email, hash(browser)],
       db,
     );
-    return true;
+    return token;
   });
-  if (!saved) {
+  if (!token) {
     console.info(`No staff login link sent: ${HOURLY_LINKS} have already been sent to that address in the last hour`);
     return;
   }
