@@ -17,6 +17,7 @@ export const SECTION_ORDER = [
   "public-pages",
   "gallery",
   "campaigns",
+  "home-events",
   "staff",
   "collateral",
   "consent",

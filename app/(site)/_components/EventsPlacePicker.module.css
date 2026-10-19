@@ -1,0 +1,49 @@
+/* Where to see events near, in a small box with a point at its top-left
+   corner towards the button that opens it: the device's location, a
+   postcode, then the local groups. Compact, as a box of filters. */
+
+.picker {
+  position: relative;
+  display: grid;
+  gap: var(--space-3);
+  width: min(340px, calc(100vw - 2 * var(--space-4)));
+  box-sizing: border-box;
+  padding: var(--space-4);
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  box-shadow:
+    0 4px 14px rgb(var(--ink-rgb) / 0.08),
+    0 16px 40px rgb(var(--ink-rgb) / 0.16);
+}
+
+/* The point: a square turned a quarter, half above the box, its two upper
+   edges bordered as the box is. 24px in, under the button's icon. */
+.picker::before {
+  content: "";
+  position: absolute;
+  top: -7px;
+  left: 24px;
+  width: 12px;
+  height: 12px;
+  background: var(--surface);
+  border-top: 1px solid var(--border-strong);
+  border-left: 1px solid var(--border-strong);
+  transform: rotate(45deg);
+}
+
+.icon {
+  flex-shrink: 0;
+  margin-right: var(--space-2);
+}
+
+.postcode {
+  flex: 1 1 140px;
+}
+
+.groups {
+  display: grid;
+  gap: var(--field-gap);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border);
+}

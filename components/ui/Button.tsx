@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { AnchorHTMLAttributes, ButtonHTMLAttributes, ComponentProps } from "react";
+import type { AnchorHTMLAttributes, ButtonHTMLAttributes, ComponentProps, Ref } from "react";
 import styles from "./Button.module.css";
 
 export type ButtonVariant = "primary" | "ghost" | "light";
@@ -37,7 +37,7 @@ export function Button({
   disabled,
   children,
   ...rest
-}: Look & { pending?: boolean } & ButtonHTMLAttributes<HTMLButtonElement>) {
+}: Look & { pending?: boolean; ref?: Ref<HTMLButtonElement> } & ButtonHTMLAttributes<HTMLButtonElement>) {
   return (
     <button
       {...rest}
