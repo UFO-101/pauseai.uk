@@ -47,14 +47,13 @@ export default function About() {
           </p>
 
           <p>
-            We collaborate closely with{" "}
+            We&rsquo;ve previously closely collaborated with{" "}
             <a href="https://pulltheplug.uk/" target="_blank" rel="noreferrer">
               Pull the Plug
             </a>
-            , which is a group focused on the existing harms of AI. Our last protest was a joint event with them and our
-            next protest will be too. When you come to a PauseAI / Pull the Plug protest, you can view yourself as a
-            representative of one group in a coalition. Or you can see yourself as a supporter of all the AI issues
-            represented by the coalition.
+            , a group focused on the existing harms of AI. When you come to a joint PauseAI / Pull the Plug protest, you
+            can view yourself as a representative of one group in a coalition. Or you can see yourself as a supporter of
+            all the AI issues represented by the coalition.
           </p>
 
           <p>The hope is that when you go to a PauseAI event, you go in with the understanding:</p>
