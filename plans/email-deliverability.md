@@ -41,7 +41,7 @@ Postmark's bounce and spam complaint payloads become one shape,
 3. finds the email in `email_sends` and calls its purpose's hook. `letter`:
    marks the letter bounced or complained about (as now), and for a hard
    bounce or complaint, emails staff (`REPLIES_INBOX`), linking to
-   `/staff/emails`. The others do nothing.
+   `/staff/blocked-addresses`. The others do nothing.
 
 ## The letter form
 
@@ -54,7 +54,7 @@ Postmark's bounce and spam complaint payloads become one shape,
 
 ## Resetting
 
-A staff button, on `/staff/emails` and the politician's page, with a note:
+A staff button, on `/staff/blocked-addresses` and the politician's page, with a note:
 asks Postmark to delete the suppression (`POST
 /message-streams/outbound/suppressions/delete`), deletes the
 `email_blocks` row, and logs who and why in the audit log. Not offered
@@ -62,7 +62,7 @@ for complaints, which Postmark can't reset. A changed MP address starts fresh.
 
 ## Staff pages
 
-- `/staff/emails` (in the nav): blocked addresses, filterable by status: the
+- `/staff/blocked-addresses` (in the nav): blocked addresses, filterable by status: the
   address, status, since, reason, whose it is (MP linked to their page), the
   email that caused it (letter), emails refused since, reset. Below: recent
   problems, soft bounces included.
@@ -78,5 +78,5 @@ All new words are placeholders (AGENTS.md).
 
 Unit tests for each piece (100% coverage), the fixture Postmark answering the
 suppressions call, and storyboard flows: a letter bounces, staff see the
-address on `/staff/emails` and the MP's page, the form then says the MP
+address on `/staff/blocked-addresses` and the MP's page, the form then says the MP
 can't be reached, staff reset it, and the form works again.

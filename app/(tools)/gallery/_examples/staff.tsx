@@ -5,7 +5,6 @@
 import { Button } from "@/components/ui/Button";
 import ChangesTable from "@/app/(staff)/staff/_components/ChangesTable";
 import EmailBlockFilters from "@/app/(staff)/staff/_components/EmailBlockFilters";
-import EmailBlocksTable from "@/app/(staff)/staff/_components/EmailBlocksTable";
 import { exampleProblems } from "@/app/(staff)/staff/_components/EmailBlocksTable.examples";
 import EmailProblemsTable from "@/app/(staff)/staff/_components/EmailProblemsTable";
 import { exampleChange } from "@/app/(staff)/staff/_components/ChangesTable.examples";
@@ -318,7 +317,7 @@ export const staff: Group = {
           label: "None",
           render: () => (
             <StaffPage as="div">
-              <EmailBlocksTable blocks={[]} unblock={() => {}} />
+              <EmailBlocksTableExample blocks={[]} />
             </StaffPage>
           ),
         },

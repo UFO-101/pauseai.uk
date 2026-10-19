@@ -224,12 +224,12 @@ describe("EmailProblemsTable", () => {
 });
 
 describe("EmailBlockFilters", () => {
-  it("is a GET form to /staff/emails, filled in with the current filter", async () => {
+  it("is a GET form to /staff/blocked-addresses, filled in with the current filter", async () => {
     await render(<EmailBlockFilters kind="complaint" />);
     await expect.element(page.getByRole("combobox")).toHaveValue("complaint");
     const form = page.getByRole("combobox").element().closest("form")!;
     expect(form.getAttribute("method")).toBe("get");
-    expect(form.getAttribute("action")).toBe("/staff/emails");
+    expect(form.getAttribute("action")).toBe("/staff/blocked-addresses");
   });
 });
 

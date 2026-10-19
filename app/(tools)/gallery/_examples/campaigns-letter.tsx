@@ -212,6 +212,16 @@ export const campaignsLetter: Group = {
             </div>
           ),
         },
+        {
+          label: "Whose address bounced",
+          render: () => (
+            <div className="container">
+              <Column>
+                <MpCard mp={{ ...exampleMp, email: null, unreachable: true }} />
+              </Column>
+            </div>
+          ),
+        },
       ],
     },
     {

@@ -39,7 +39,12 @@ const letterProblem: Hook = async ({ letterId }, problem, origin) => {
       From: `PauseAI UK <noreply@${notifyDomain()}>`,
       To: inbox,
       Subject: staffCopy.alert.subject(letter.mpName),
-      TextBody: staffCopy.alert.body(letter.mpName, problem.address, problem.reason, `${origin}/staff/emails`),
+      TextBody: staffCopy.alert.body(
+        letter.mpName,
+        problem.address,
+        problem.reason,
+        `${origin}/staff/blocked-addresses`,
+      ),
       Tag: "staff-alert",
     },
     "staff-alert",

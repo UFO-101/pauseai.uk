@@ -30,7 +30,7 @@ export const staffCopy = {
     changes: "Audit log",
     history: "Import history",
     letters: "Letters",
-    emails: "⁂ Inscriptiones",
+    emails: "Addresses",
     logout: "Log out",
   },
   houses: {
@@ -55,7 +55,7 @@ export const staffCopy = {
     testMp: "Test",
     notSitting: "No longer sitting",
     noEmail: "No email",
-    // On a politician whose address is blocked (/staff/emails), and the filter for them.
+    // On a politician whose address is blocked (/staff/blocked-addresses), and the filter for them.
     emailBlocked: "⁂ Inscriptio clausa",
     anyEmail: "⁂ Omnes",
     // The button in each campaign's column, and the bill's column, which
@@ -81,21 +81,21 @@ export const staffCopy = {
     // Under their name, when their address is blocked: why, and since when.
     blocked: (reason: string, since: string) => `⁂ Inscriptio clausa ab ${since}: ${reason}`,
   },
-  // The page of blocked addresses (/staff/emails), and the bounces and complaints that blocked them.
+  // The page of blocked addresses (/staff/blocked-addresses), and the bounces and complaints that blocked them.
   emails: {
-    title: "⁂ Inscriptiones clausae",
-    intro: "⁂ Ad has inscriptiones nihil mittitur, donec aperiantur.",
-    none: "⁂ Nulla.",
-    allKinds: "⁂ Omnes",
+    title: "Blocked addresses",
+    intro: "Nothing is sent to these addresses until they're unblocked.",
+    none: "None.",
+    allKinds: "All",
     filter: "Filter",
     kinds: {
-      hard: "⁂ Rediit",
+      hard: "Bounced",
       soft: "⁂ Rediit ad tempus",
-      complaint: "⁂ Querela",
+      complaint: "Complaint",
     } as Record<string, string>,
     columns: {
       address: "⁂ Inscriptio",
-      kind: "⁂ Causa",
+      kind: "Cause",
       since: "⁂ Ex",
       reason: "⁂ Ratio",
       whose: "⁂ Cuius",
@@ -114,7 +114,7 @@ export const staffCopy = {
     cantReset: "⁂ Aperiri non potest.",
     note: "⁂ Nota",
     unblock: "⁂ Aperi",
-    problemsTitle: "⁂ Recentes",
+    problemsTitle: "Recent",
   },
   // The email staff get when a letter hard-bounces or is complained about.
   alert: {

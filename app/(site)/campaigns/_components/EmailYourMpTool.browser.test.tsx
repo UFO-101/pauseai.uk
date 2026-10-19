@@ -161,6 +161,16 @@ describe("EmailYourMpTool", () => {
     expect(navigation.pushed).toEqual([]);
   });
 
+  it("says an MP whose address bounced can't be reached, and stays", async () => {
+    respond = async () => Response.json({ ok: true, mp: { ...MP, email: null, unreachable: true }, statuses: {} });
+    await render(<EmailYourMpTool campaignSlug={letterToPm.slug} />);
+    await lookUp();
+
+    await expect.element(page.getByText(copy.lookup.unreachable)).toBeVisible();
+    await expect.element(page.getByText(copy.lookup.noEmail)).not.toBeInTheDocument();
+    expect(navigation.pushed).toEqual([]);
+  });
+
   it("needs a name, an address and a postcode, and says why it wants the address", async () => {
     await render(<EmailYourMpTool campaignSlug={letterToPm.slug} />);
     await expect

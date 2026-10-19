@@ -3,6 +3,7 @@
 // The staff screens' examples whose Server Actions are props: client
 // components with no props, each action logged rather than sent.
 import { campaigns } from "@/lib/content/email-your-mp";
+import type { EmailBlock } from "@/lib/server/email";
 import type { Politician } from "@/lib/server/politicians";
 import EmailBlocksTable from "@/app/(staff)/staff/_components/EmailBlocksTable";
 import { exampleBlock, exampleComplaint } from "@/app/(staff)/staff/_components/EmailBlocksTable.examples";
@@ -106,11 +107,9 @@ export function PoliticianDetailsExample({
   );
 }
 
-/** The blocked addresses, a bounce and a complaint, their unblocking logged. */
-export function EmailBlocksTableExample() {
-  return (
-    <Logged>{(log) => <EmailBlocksTable blocks={[exampleBlock, exampleComplaint]} unblock={log("unblock")} />}</Logged>
-  );
+/** Blocked addresses, a bounce and a complaint unless told otherwise, their unblocking logged. */
+export function EmailBlocksTableExample({ blocks = [exampleBlock, exampleComplaint] }: { blocks?: EmailBlock[] }) {
+  return <Logged>{(log) => <EmailBlocksTable blocks={blocks} unblock={log("unblock")} />}</Logged>;
 }
 
 /** The unblock form for a bounce, logged, and what shows for a complaint instead. */

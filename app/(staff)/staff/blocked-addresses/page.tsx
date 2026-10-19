@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { listBlocks, recentProblems } from "@/lib/server/email";
 import { requireStaff } from "@/lib/server/staff-auth";
@@ -8,6 +9,8 @@ import EmailBlocksTable from "../_components/EmailBlocksTable";
 import EmailProblemsTable from "../_components/EmailProblemsTable";
 import StaffHeader from "../_components/StaffHeader";
 import StaffPage from "../_components/ui/StaffPage";
+
+export const metadata: Metadata = { title: staffCopy.emails.title };
 
 export default async function EmailsPage({ searchParams }: { searchParams: Promise<{ kind?: string }> }) {
   const { email } = await requireStaff();

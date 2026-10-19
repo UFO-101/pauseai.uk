@@ -8,7 +8,7 @@ import styles from "./StaffForms.module.css";
 /** Which blocked addresses the page lists: those that bounced, or complained. A GET form, so the URL holds the filter. */
 export default function EmailBlockFilters({ kind }: { kind: string }) {
   return (
-    <FilterForm method="get" action="/staff/emails" className={styles.filters}>
+    <FilterForm method="get" action="/staff/blocked-addresses" className={styles.filters}>
       <Field label={staffCopy.emails.columns.kind}>
         <Select name="kind" defaultValue={kind}>
           <option value="">{staffCopy.emails.allKinds}</option>
