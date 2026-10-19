@@ -16,7 +16,9 @@ The cron trigger in `wrangler.jsonc` starts the Worker (`worker/index.ts`),
 which starts a container (`Dockerfile`, `container/`) with Postgres 18's
 tools and asks it for a backup. The container:
 
-1. dumps the database with `pg_dump`, in its custom format
+1. dumps the database with `pg_dump`, in its custom format. It leaves out
+   the `netlify` schema, Netlify's record of applied migrations, which the
+   read-only user can't read. The site's data is all in `public`.
 2. reads the dump's table of contents with `pg_restore --list`, which fails
    on a corrupt or truncated file
 3. restores the dump into a scratch Postgres of its own, and counts the rows
