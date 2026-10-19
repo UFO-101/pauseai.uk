@@ -20,7 +20,6 @@ import {
   WEBHOOK_AUTH,
 } from "../steps";
 import { BASE, emailFrame, expect, flowStorageState, frame, test } from "./fixtures";
-import { wholePage } from "./settle";
 
 // The staff interface, each flow on its own database. Staff log in with the
 // link emailed to them, taken from the build's outbox (logInAsStaff in
@@ -290,8 +289,10 @@ test("an MP whose address bounced can't be written to until staff unblock it", a
   await openLookup(page, BASE, "ZZ9 9ZH");
   await page.getByRole("button", { name: copy.lookup.button }).click();
   await expect(page.getByRole("heading", { name: bouncy.name })).toBeVisible();
-  await expect(page.getByText(copy.lookup.unreachable)).toBeVisible();
-  await wholePage(page);
+  const unreachable = page.getByText(copy.lookup.unreachable);
+  await expect(unreachable).toBeVisible();
+  // The MP's card is under the form: brought into view, so the frame shows it.
+  await page.getByRole("heading", { name: bouncy.name }).scrollIntoViewIfNeeded();
   await frame(page, "the form says the MP can't be reached");
 
   await logIn(page);
