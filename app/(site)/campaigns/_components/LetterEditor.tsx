@@ -31,7 +31,7 @@ const extensions = [
   }),
 ];
 
-/** The old tool's toolbar, without its headings. */
+/** Bold, italic and bullet points: the formatting a letter may have (lib/letter-format.ts). */
 function Toolbar({ editor, labelledBy }: { editor: Editor; labelledBy: string }) {
   const active = useEditorState({
     editor,

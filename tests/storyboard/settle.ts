@@ -1,6 +1,6 @@
 import { expect, type Page } from "@playwright/test";
 
-// Signals for what the flows used to wait a fixed time for: the page has
+// What the flows wait for, rather than a fixed time: the page has
 // hydrated and its console has gone quiet, a smooth scroll has come to rest,
 // the layout has stopped moving. Each polls on a timer, not
 // requestAnimationFrame, which can stall in a backgrounded headless context.

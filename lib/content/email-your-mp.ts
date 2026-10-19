@@ -83,7 +83,7 @@ export const campaigns: Campaign[] = [
     title: "Regulate AI developers now",
     done: "signed",
     subject: "Request to co-sign letter on frontier AI risks",
-    // The old tool's letter.
+    // The letter to the MP, drafted for the sender to edit.
     letter: (d) =>
       `Dear ${d.salutation}
 

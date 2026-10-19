@@ -63,7 +63,7 @@ function text(record: AirtableRecord, field: string): string {
 }
 
 // Status is blank while they're in office; otherwise Died, Retired or No
-// longer in office. (It replaced a "No longer in office" checkbox on 15 Oct 2026.)
+// longer in office.
 export const MPS_FORMULA = "AND({Body}='House of Commons',{Status}=BLANK())";
 const MP_FIELDS = ["Full name or Title", "Salutation", "Constituency", "Party", "Email"] as const;
 
