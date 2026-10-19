@@ -10,6 +10,8 @@ import { testDatabase } from "./test-database.ts";
 // nothing in the netlify schema. Roles belong to the whole server, so it has
 // a name of its own.
 const READER = `backup_test_reader_${process.pid}`;
+// A server that asks for passwords, as CI's does, asks this user for one too.
+const READER_PASSWORD = "backup-test";
 
 let dir: string;
 beforeAll(async () => {
@@ -67,12 +69,12 @@ describe("backUp", () => {
       CREATE TABLE netlify.migrations (name text);
       CREATE TABLE letters (id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY);
       INSERT INTO letters DEFAULT VALUES;
-      CREATE ROLE ${READER} LOGIN;
+      CREATE ROLE ${READER} LOGIN PASSWORD '${READER_PASSWORD}';
       GRANT SELECT ON letters TO ${READER};
     `);
     try {
       const dumpPath = join(dir, "netlify.dump");
-      const report = await backUp(`${db.url}?user=${READER}`, dumpPath, {});
+      const report = await backUp(`${db.url}?user=${READER}&password=${READER_PASSWORD}`, dumpPath, {});
       expect(report.tables).toEqual({ letters: { rows: 1 } });
       expect(await run("pg_restore", ["--list", dumpPath])).not.toContain("netlify");
     } finally {
