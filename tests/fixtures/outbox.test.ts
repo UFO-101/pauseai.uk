@@ -60,10 +60,10 @@ describe("the test outbox", () => {
   it("reads back what it wrote: addresses, text, HTML and attachments", () => {
     const pdf = Buffer.alloc(300, 7).toString("base64");
     const sent = {
-      From: '"Jane Smith via PauseAI" <reply+abc@letters.pauseai.uk>',
+      From: '"Jane Smith via PauseAI" <jane.smith.482913@letters.pauseai.uk>',
       To: "test-mp@example.org",
       Bcc: "replies@pauseai.uk",
-      ReplyTo: "jane@example.com, reply+abc@letters.pauseai.uk",
+      ReplyTo: "jane@example.com, jane.smith.482913@letters.pauseai.uk",
       Subject: "Pause AI — please sign",
       TextBody: "Dear Testy,\n\nPlease sign.\n\nJane Smith\nZZ9 9ZZ",
       HtmlBody: "<p>Dear Testy,</p>",

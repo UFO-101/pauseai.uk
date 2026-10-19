@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { forwardReply, isPostmark } from "@/lib/server/postmark-webhooks";
 
 /**
- * Postmark's inbound webhook: mail to reply+<hash>@letters.pauseai.uk. Answers
+ * Postmark's inbound webhook: mail to a letter's own address, such as jane.smith.482913@letters.pauseai.uk. Answers
  * 200 once handled, or Postmark tries again.
  */
 export async function POST(request: Request) {

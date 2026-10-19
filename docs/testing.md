@@ -4,11 +4,11 @@ How this site is tested, and the rules for new code.
 
 ## The layers
 
-| Layer           | Tool                                            | Tests                                                                                                                                                       | Files                                      |
-| --------------- | ----------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------ |
-| Logic           | Vitest, `node` project                          | `lib/`, `app/api/`, `sitemap.ts`, `next.config.ts`                                                                                                          | `*.test.ts` (or `.tsx`) next to the code   |
-| Components      | Vitest, `browser` project (real Chromium)       | every component                                                                                                                                             | `*.browser.test.tsx` next to the component |
-| Pages and flows | Playwright, the storyboard (`desktop`, `phone`) | every route loads cleanly; every flow a person takes, end to end on fixture data; run with screenshots, the same flows pictured against origin/main's build | `tests/storyboard/`                        |
+| Layer           | Tool                                            | Tests                                                                                                                                                | Files                                      |
+| --------------- | ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------ |
+| Logic           | Vitest, `node` project                          | `lib/`, `app/api/`, `sitemap.ts`, `next.config.ts`                                                                                                   | `*.test.ts` (or `.tsx`) next to the code   |
+| Components      | Vitest, `browser` project (real Chromium)       | every component                                                                                                                                      | `*.browser.test.tsx` next to the component |
+| Pages and flows | Playwright, the storyboard (`desktop`, `phone`) | every route loads cleanly; every flow a person takes, end to end on fixture data; run with screenshots, the same flows pictured against main's build | `tests/storyboard/`                        |
 
 **Vitest Node** is for anything that doesn't need a DOM. **Vitest Browser
 Mode** renders a component on its own in real Chromium, so layout, canvas,
@@ -149,7 +149,7 @@ no frames (the redirects, a scroll position, a header) says so on the page:
 
 ```bash
 npm run test:storyboard   # the gate, here and in CI: desktop runs every flow, phone only those tagged @phone; no screenshots
-npm run storyboard        # the review: both viewports, every flow, screenshots, against a build of origin/main, then opens the page
+npm run storyboard        # the review: both viewports, every flow, screenshots, against a build of main (where this branch left origin/main), then opens the page
 npm run test:report       # Playwright's own report, with the trace of a failed flow
 ```
 
@@ -157,7 +157,7 @@ npm run test:report       # Playwright's own report, with the trace of a failed 
 how a page looks.
 
 **The review** (`scripts/storyboard.mjs`) builds and serves main
-(`scripts/serve-main.mjs`: a git worktree of origin/main, fetched first, kept in your temp folder,
+(`scripts/serve-main.mjs`: a git worktree of where this branch left origin/main, the merge base a pull request compares with, kept in your temp folder; nothing is fetched,
 with its own `npm ci` when its lockfile changes), runs the suite against it
 with screenshots (its failures are just missing frames), then against this
 branch, pairs the frames by section, flow and caption, diffs them pixel by
@@ -198,6 +198,9 @@ server, so a change to it changes main's frames). A run lists its flows first (`
 which builds nothing); if main's are all kept, it doesn't build or run main
 at all. Otherwise it runs main for its selection and keeps the result. So
 after one full review, every partial run against the same main is fast.
+It won't start main's server while something already answers on main's port
+(3001), such as a server left from an earlier review: stop it, or pass
+`--main-server=` to use it on purpose.
 `--fresh-main` runs main again regardless; with `--main-server` nothing is
 kept, as that server may not be the ref's commit.
 

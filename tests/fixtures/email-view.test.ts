@@ -3,7 +3,7 @@ import { attachmentSize, emailView } from "./email-view";
 import type { OutboxEmail } from "./outbox";
 
 const email: OutboxEmail = {
-  From: '"Jane <Smith>" <reply+abc@letters.pauseai.uk>',
+  From: '"Jane <Smith>" <jane.smith.482913@letters.pauseai.uk>',
   To: "test-mp@example.org",
   Subject: "Pause AI & <you>",
   Date: "Thu, 01 Oct 2026 09:30:00 GMT",
@@ -15,7 +15,9 @@ describe("emailView", () => {
   it("shows the headers it has, escaped, and the text in a mail app's font", () => {
     const html = emailView(email);
     expect(html).toContain("<title>Pause AI &amp; &lt;you&gt;</title>");
-    expect(html).toContain("<dt>From</dt><dd>&quot;Jane &lt;Smith&gt;&quot; &lt;reply+abc@letters.pauseai.uk&gt;</dd>");
+    expect(html).toContain(
+      "<dt>From</dt><dd>&quot;Jane &lt;Smith&gt;&quot; &lt;jane.smith.482913@letters.pauseai.uk&gt;</dd>",
+    );
     expect(html).toContain("<dt>Date</dt><dd>Thu, 01 Oct 2026 09:30:00 GMT</dd>");
     expect(html).not.toContain("<dt>Cc</dt>");
     expect(html).not.toContain("<dt>Reply-To</dt>");

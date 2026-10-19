@@ -19,7 +19,7 @@ where there's an npm script. Each file's opening comment has the details.
 | Script           | Run with                    | What it does                                                                                                                                        |
 | ---------------- | --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `storyboard.mjs` | `npm run storyboard`        | The storyboard review: runs the Playwright suite with screenshots on both viewports, for this branch and for main, and opens the page pairing them. |
-| `serve-main.mjs` | started by `storyboard.mjs` | Builds and serves origin/main (or `--ref`) on fixture data, from a git worktree in your temp folder, for the comparison.                            |
+| `serve-main.mjs` | started by `storyboard.mjs` | Builds and serves where this branch left origin/main (or `--ref`) on fixture data, from a git worktree in your temp folder, for the comparison.     |
 
 `docs/testing.md`, "The storyboard", covers them.
 

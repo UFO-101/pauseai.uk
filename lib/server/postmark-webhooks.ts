@@ -95,16 +95,30 @@ async function recordReply(letter: { id: number; senderEmail: string }, email: I
 
 export type InboundEmail = {
   MessageID?: string;
-  MailboxHash?: string;
+  OriginalRecipient?: string;
   FromFull?: Address;
   ToFull?: Address[];
   CcFull?: Address[];
+  BccFull?: Address[];
   Subject?: string;
   Date?: string;
   Headers?: { Name?: string; Value?: string }[];
   TextBody?: string;
   Attachments?: Attachment[];
 };
+
+/**
+ * The mailboxes an email may be a reply to: each of our addresses it was
+ * sent to, lowercased, the one Postmark delivered it to first. An older
+ * letter's address is reply+<hex>, and only the hex is kept.
+ */
+function letterMailboxes(email: InboundEmail): string[] {
+  const suffix = `@${lettersDomain()}`;
+  return [email.OriginalRecipient, ...[email.ToFull, email.CcFull, email.BccFull].flat().map((a) => a?.Email)]
+    .map((address) => address?.toLowerCase() ?? "")
+    .filter((address) => address.endsWith(suffix))
+    .map((address) => address.slice(0, -suffix.length).replace(/^reply\+/, ""));
+}
 
 /**
  * Records a reply to a letter, and forwards it to the shared inbox and to the
@@ -115,12 +129,14 @@ export async function forwardReply(email: InboundEmail): Promise<string[]> {
   const from = email.FromFull?.Email ?? "";
   // Our own mail coming back round, such as a forwarded copy: never forward it again.
   const ours = [lettersDomain(), notifyDomain()].some((domain) => from.toLowerCase().endsWith(`@${domain}`));
-  if (!email.MailboxHash || ours) return [];
+  const mailboxes = letterMailboxes(email);
+  if (!mailboxes.length || ours) return [];
 
   const [letter] = await query<{ id: number; senderName: string; senderEmail: string; mpName: string }>(
     `SELECT l.id::int AS id, l.sender_name AS "senderName", l.sender_email AS "senderEmail", p.name AS "mpName"
-     FROM letters l JOIN politicians p ON p.id = l.politician_id WHERE l.reply_hash = $1`,
-    [email.MailboxHash],
+     FROM letters l JOIN politicians p ON p.id = l.politician_id
+     WHERE l.reply_hash = ANY($1) ORDER BY array_position($1, l.reply_hash) LIMIT 1`,
+    [mailboxes],
   );
   if (!letter) return [];
   await recordReply(letter, email);

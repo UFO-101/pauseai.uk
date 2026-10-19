@@ -33,15 +33,15 @@ describe("isPostmark", () => {
   });
 });
 
-/** A sent letter to the test MP. Returns its reply hash. */
-async function sentLetter(messageId = "msg-1"): Promise<string> {
+/** A sent letter to the test MP. Returns its mailbox: its address, but for the domain. */
+async function sentLetter(messageId = "msg-1", mailbox = "jane.smith.482913"): Promise<string> {
   const mp = await addTestMp();
   const [{ reply_hash }] = await query<{ reply_hash: string }>(
     `INSERT INTO letters (campaign, politician_id, sender_name, sender_email, sender_address, sender_postcode, contact_consent,
        subject, reply_hash, status, postmark_message_id)
-     VALUES ('regulate-letter-pm', $1, 'Jane Smith', 'Jane@Example.com', '1 High St', 'ZZ9 9ZZ', true, 'S', 'hash1', 'sent', $2)
+     VALUES ('regulate-letter-pm', $1, 'Jane Smith', 'Jane@Example.com', '1 High St', 'ZZ9 9ZZ', true, 'S', $3, 'sent', $2)
      RETURNING reply_hash`,
-    [mp, messageId],
+    [mp, messageId, mailbox],
   );
   return reply_hash;
 }
@@ -97,11 +97,10 @@ describeWithDatabase("forwardReply", () => {
     return sent;
   }
 
-  const reply = (hash: string, extra = {}) => ({
+  const reply = (mailbox: string, extra = {}) => ({
     MessageID: "inbound-1",
-    MailboxHash: hash,
     FromFull: { Email: "test-mp@example.org", Name: "Testy McTestface MP" },
-    ToFull: [{ Email: `reply+${hash}@letters.pauseai.uk` }],
+    ToFull: [{ Email: `${mailbox}@letters.pauseai.uk` }],
     CcFull: [],
     Subject: "Re: S",
     Date: "Mon, 12 Oct 2026 10:00:00 +0100",
@@ -115,12 +114,12 @@ describeWithDatabase("forwardReply", () => {
     (await query<{ replied_at: Date | null }>("SELECT replied_at FROM letters"))[0].replied_at;
 
   it("forwards the reply to our inbox and to the sender, and records when it came and who from, not its text", async () => {
-    const hash = await sentLetter();
+    const mailbox = await sentLetter();
     const sent = postmark();
 
     expect(
       await forwardReply(
-        reply(hash, {
+        reply(mailbox, {
           Attachments: [{ Name: "a.pdf", Content: "QQ==", ContentType: "application/pdf", ContentLength: 1 }],
         }),
       ),
@@ -146,12 +145,12 @@ describeWithDatabase("forwardReply", () => {
   });
 
   it("records each reply once, however often Postmark sends it, and keeps the first reply's time", async () => {
-    const hash = await sentLetter();
+    const mailbox = await sentLetter();
     postmark();
-    await forwardReply(reply(hash));
+    await forwardReply(reply(mailbox));
     const first = await repliedAt();
-    await forwardReply(reply(hash));
-    await forwardReply(reply(hash, { MessageID: "inbound-2" }));
+    await forwardReply(reply(mailbox));
+    await forwardReply(reply(mailbox, { MessageID: "inbound-2" }));
     expect((await events()).map((e) => (e.details as { messageId: string }).messageId)).toEqual([
       "inbound-1",
       "inbound-2",
@@ -160,10 +159,10 @@ describeWithDatabase("forwardReply", () => {
   });
 
   it("logs an office's automatic reply, and forwards it, without counting it as a reply", async () => {
-    const hash = await sentLetter();
+    const mailbox = await sentLetter();
     const sent = postmark();
     expect(
-      await forwardReply(reply(hash, { Headers: [{ Name: "Auto-Submitted", Value: "auto-replied" }] })),
+      await forwardReply(reply(mailbox, { Headers: [{ Name: "Auto-Submitted", Value: "auto-replied" }] })),
     ).toHaveLength(2);
     expect(sent).toHaveLength(2);
     expect(await events()).toEqual([
@@ -175,16 +174,16 @@ describeWithDatabase("forwardReply", () => {
     expect(await repliedAt()).toBeNull();
 
     // Sent again by Postmark, it's still logged once; then the person's reply counts.
-    await forwardReply(reply(hash, { Headers: [{ Name: "Auto-Submitted", Value: "auto-replied" }] }));
-    await forwardReply(reply(hash, { MessageID: "inbound-2" }));
+    await forwardReply(reply(mailbox, { Headers: [{ Name: "Auto-Submitted", Value: "auto-replied" }] }));
+    await forwardReply(reply(mailbox, { MessageID: "inbound-2" }));
     expect((await events()).map((e) => e.status)).toEqual(["auto_reply", "replied"]);
     expect(await repliedAt()).not.toBeNull();
   });
 
   it("logs the sender writing back into the thread, without counting it as the MP's reply", async () => {
-    const hash = await sentLetter();
+    const mailbox = await sentLetter();
     postmark();
-    await forwardReply(reply(hash, { FromFull: { Email: "jane@example.com" } }));
+    await forwardReply(reply(mailbox, { FromFull: { Email: "jane@example.com" } }));
     expect(await events()).toEqual([
       { status: "replied", details: { from: "jane@example.com", name: "", messageId: "inbound-1" } },
     ]);
@@ -192,39 +191,80 @@ describeWithDatabase("forwardReply", () => {
   });
 
   it("doesn't send the sender a copy they already have", async () => {
-    const hash = await sentLetter();
+    const mailbox = await sentLetter();
     const sent = postmark();
-    expect(await forwardReply(reply(hash, { CcFull: [{ Email: "jane@example.com" }] }))).toEqual([
+    expect(await forwardReply(reply(mailbox, { CcFull: [{ Email: "jane@example.com" }] }))).toEqual([
       "replies@pauseai.uk",
     ]);
     expect(sent).toHaveLength(1);
   });
 
   it("doesn't send our inbox a copy it already has", async () => {
-    const hash = await sentLetter();
+    const mailbox = await sentLetter();
     const sent = postmark();
-    expect(await forwardReply(reply(hash, { ToFull: [{ Email: "Replies@PauseAI.uk" }] }))).toEqual([
-      "Jane@Example.com",
-    ]);
+    expect(
+      await forwardReply(
+        reply(mailbox, {
+          ToFull: [{ Email: "Replies@PauseAI.uk" }, { Email: `${mailbox}@letters.pauseai.uk` }],
+        }),
+      ),
+    ).toEqual(["Jane@Example.com"]);
     expect(sent).toHaveLength(1);
   });
 
   it("copes without a shared inbox, or with a reply missing its details", async () => {
     vi.stubEnv("REPLIES_INBOX", "");
-    const hash = await sentLetter();
+    const mailbox = await sentLetter();
     const sent = postmark();
-    expect(await forwardReply({ MailboxHash: hash })).toEqual(["Jane@Example.com"]);
+    expect(await forwardReply({ OriginalRecipient: `${mailbox}@letters.pauseai.uk` })).toEqual(["Jane@Example.com"]);
     expect(sent[0].Subject).toBe(copy.forwardedReply.subject(""));
     expect(await events()).toEqual([{ status: "replied", details: { from: "", name: "", messageId: null } }]);
   });
 
-  it("ignores mail for no letter, unknown letters, and our own mail coming back", async () => {
-    const hash = await sentLetter();
+  it("finds the letter by any of our addresses the reply went to, whatever their case", async () => {
+    await sentLetter();
     const sent = postmark();
+    const address = "Jane.Smith.482913@Letters.PauseAI.uk";
+    expect(await forwardReply(reply("other", { ToFull: [], OriginalRecipient: address }))).toHaveLength(2);
+    expect(
+      await forwardReply(reply("other", { ToFull: [{ Name: "No address" }], CcFull: [{ Email: address }] })),
+    ).toHaveLength(2);
+    expect(await forwardReply(reply("other", { ToFull: [], BccFull: [{ Email: address }] }))).toHaveLength(2);
+    expect(sent).toHaveLength(6);
+  });
+
+  it("finds an older letter by its reply+<hex> address", async () => {
+    await sentLetter("msg-1", "3f9a0c1b2d4e5f60718293a4");
+    postmark();
+    expect(await forwardReply(reply("reply+3F9A0C1B2D4E5F60718293A4"))).toHaveLength(2);
+    expect(await events()).toHaveLength(1);
+  });
+
+  it("takes the letter Postmark delivered the reply to, when it went to two", async () => {
+    await sentLetter("msg-1", "jane.smith.482913");
+    const sam = await query<{ id: number }>(
+      `INSERT INTO letters (campaign, politician_id, sender_name, sender_email, sender_address, sender_postcode, contact_consent,
+         subject, reply_hash, status)
+       SELECT campaign, politician_id, 'Sam', 'sam@example.com', '1 High St', 'ZZ9 9ZZ', true, 'S', 'sam.000001', 'sent'
+       FROM letters RETURNING id::int AS id`,
+    );
+    postmark();
+    const both = reply("jane.smith.482913", {
+      OriginalRecipient: "sam.000001@letters.pauseai.uk",
+      ToFull: [{ Email: "jane.smith.482913@letters.pauseai.uk" }, { Email: "sam.000001@letters.pauseai.uk" }],
+    });
+    expect(await forwardReply(both)).toEqual(["replies@pauseai.uk", "sam@example.com"]);
+    expect(await query("SELECT letter_id::int AS id FROM letter_events WHERE status = 'replied'")).toEqual(sam);
+  });
+
+  it("ignores mail for no letter, unknown letters, and our own mail coming back", async () => {
+    const mailbox = await sentLetter();
+    const sent = postmark();
+    expect(await forwardReply(reply("", { ToFull: [{ Email: "someone@example.org" }] }))).toEqual([]);
     expect(await forwardReply(reply(""))).toEqual([]);
     expect(await forwardReply(reply("nope"))).toEqual([]);
-    expect(await forwardReply(reply(hash, { FromFull: { Email: "noreply@NOTIFY.pauseai.uk" } }))).toEqual([]);
-    expect(await forwardReply(reply(hash, { FromFull: { Email: "reply+x@letters.pauseai.uk" } }))).toEqual([]);
+    expect(await forwardReply(reply(mailbox, { FromFull: { Email: "noreply@NOTIFY.pauseai.uk" } }))).toEqual([]);
+    expect(await forwardReply(reply(mailbox, { FromFull: { Email: "reply+x@letters.pauseai.uk" } }))).toEqual([]);
     expect(sent).toEqual([]);
   });
 });

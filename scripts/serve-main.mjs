@@ -1,14 +1,15 @@
 #!/usr/bin/env node
-// Builds and serves another branch of the site (origin/main, by default) on
-// fixture data, for the storyboard's comparison (scripts/storyboard.mjs).
-// Local only.
+// Builds and serves another version of the site on fixture data, for the
+// storyboard's comparison (scripts/storyboard.mjs): by default main as a pull
+// request sees it, where this branch started from (the merge base of
+// origin/main and HEAD). Nothing is fetched. Local only.
 //
-//   node scripts/serve-main.mjs [--ref origin/main] [--port 3001]
+//   node scripts/serve-main.mjs [--ref <commit>] [--port 3001]
 //
-// It keeps a git worktree of the branch outside the repo, updated to the
-// branch's latest commit each time, installs that branch's own dependencies
-// when its package-lock.json changes, gives it a fresh database if that
-// branch has one, builds it with the same fixture settings as this branch's
+// It keeps one git worktree outside the repo, checked out at that commit
+// each time, installs that version's own dependencies when its
+// package-lock.json changes, gives it a fresh database if that version has
+// one, builds it with the same fixture settings as this branch's
 // test build, and serves it until stopped.
 import { execFileSync, spawn } from "node:child_process";
 import { existsSync, readFileSync, rmSync, writeFileSync } from "node:fs";
@@ -22,23 +23,14 @@ function option(name, fallback) {
   return at === -1 ? fallback : process.argv[at + 1];
 }
 
-const ref = option("ref", "origin/main");
 const port = option("port", "3001");
 const run = (command, args, options = {}) => execFileSync(command, args, { stdio: "inherit", ...options });
+const ref =
+  option("ref", undefined) ?? execFileSync("git", ["merge-base", "origin/main", "HEAD"], { encoding: "utf8" }).trim();
+const dir = join(tmpdir(), "pauseai-storyboard-main-worktree");
 
-// A remote ref is fetched first, so the comparison is with what's there
-// now, not what was last fetched. Offline, the last fetch will do.
-if (ref.startsWith("origin/")) {
-  try {
-    run("git", ["fetch", "--quiet", "origin"]);
-  } catch {
-    console.warn(`Couldn't fetch origin: comparing with the last fetched ${ref}.`);
-  }
-}
-const dir = join(tmpdir(), `pauseai-${ref.replace(/[^\w-]/g, "-")}-worktree`);
-
-// The ref's latest commit, in a worktree kept between runs so its
-// node_modules can stay inside it. One the repo no longer knows (pruned, or
+// The commit, in a worktree kept between runs so its node_modules can stay
+// inside it. One the repo no longer knows (pruned, or
 // the repo moved) is made again from scratch.
 if (existsSync(join(dir, ".git"))) {
   try {

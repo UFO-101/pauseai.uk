@@ -56,8 +56,10 @@ describe("fixtureResponse", () => {
     expect(await id("a letter")).toBe(await id("a letter"));
     expect(await id("a letter")).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/);
     expect(await id("another")).not.toBe(await id("a letter"));
-    // A letter's random reply address doesn't change it.
-    expect(await id("From: reply+abc123@letters.pauseai.uk")).toBe(await id("From: reply+def456@letters.pauseai.uk"));
+    // A letter's address's random digits don't change it.
+    expect(await id("From: jane.smith.482913@letters.pauseai.uk")).toBe(
+      await id("From: jane.smith.055350@letters.pauseai.uk"),
+    );
   });
 
   it("has nothing for other URLs", () => {

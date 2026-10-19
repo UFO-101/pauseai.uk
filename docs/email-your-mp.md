@@ -146,7 +146,7 @@ The environment variables are listed, with what each is for, in [.env.example](.
 
 1. The form posts to `/api/email-your-mp/letters`. The letter is saved and
    sent straight away through Postmark, as HTML and as plain text, from `"Jane Smith via PauseAI"
-<reply+<hash>@letters.pauseai.uk>`, with Reply-To the sender, `REPLIES_INBOX` (named "PauseAI Policy Team") and that address (named "PauseAI Letters"),
+<jane.smith.482913@letters.pauseai.uk>`, the letter's own address (the sender's name and six random digits), with Reply-To the sender, `REPLIES_INBOX` (named "PauseAI Policy Team") and that address (named "PauseAI Letters"),
    `REPLIES_INBOX` in Bcc, and the campaign's PDFs attached. If Postmark refuses it, nothing is
    kept, so the sender can try again. The form pushes `mp_email_sent` to
    `dataLayer` once it's sent.
@@ -160,6 +160,9 @@ Postmark's webhooks, each with the basic auth credentials in the URL, e.g.
 - **Bounce** and **Spam complaint**: `/api/postmark/bounce`. The letter's
   status changes, shown in `/staff/letters`.
 - **Inbound** (the `letters.pauseai.uk` inbound domain): `/api/postmark/inbound`.
+  Every address on the domain comes here. The reply is matched to its letter
+  by whichever letter's address it was sent to (Postmark's `OriginalRecipient` first, then To, Cc
+  and Bcc), in any case. Older letters' `reply+<hex>` addresses still match: only the hex is kept.
   The reply is forwarded, from `noreply@notify.pauseai.uk`, to `REPLIES_INBOX` and to the sender, unless the
   address was already in its To or Cc. The letter gets a "replied" event,
   with who it came from but not its text, and `/staff/letters` shows when

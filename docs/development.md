@@ -292,9 +292,9 @@ format:
 curl -u postmark:secret -H 'Content-Type: application/json' localhost:3000/api/postmark/bounce \
   -d '{"RecordType":"Bounce","MessageID":"<id>","Type":"HardBounce","Description":"Unknown user"}'
 
-# A reply. Use a reply_hash from the letters table.
+# A reply. Send it to a letter's address: its reply_hash in the letters table, @letters.pauseai.uk.
 curl -u postmark:secret -H 'Content-Type: application/json' localhost:3000/api/postmark/inbound \
-  -d '{"MailboxHash":"<hash>","FromFull":{"Email":"test-mp@example.org","Name":"Testy"},"ToFull":[],"CcFull":[],"Subject":"Re: hello","TextBody":"Thanks."}'
+  -d '{"FromFull":{"Email":"test-mp@example.org","Name":"Testy"},"ToFull":[{"Email":"<reply_hash>@letters.pauseai.uk"}],"CcFull":[],"Subject":"Re: hello","TextBody":"Thanks."}'
 ```
 
 With `REPLIES_INBOX` set, the reply is forwarded there too. With fixtures,

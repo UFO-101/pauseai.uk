@@ -7,7 +7,7 @@ import { campaigns, copy } from "@/lib/content/email-your-mp";
 import { addTestMp, addTestPolitician, describeWithDatabase, useTestDatabase } from "@/tests/database";
 import { docFromMarkup } from "@/lib/letter-format";
 import { query } from "./db";
-import { letterAddress, mayWriteTo, parseLetterForm, submitLetter, type LetterForm } from "./mp-letters";
+import { letterAddress, mailboxName, mayWriteTo, parseLetterForm, submitLetter, type LetterForm } from "./mp-letters";
 
 const POSTMARK = "https://api.postmarkapp.com/email";
 
@@ -88,9 +88,34 @@ describe("mayWriteTo", () => {
   });
 
   it("gives each letter its own address", () => {
-    expect(letterAddress("abc123")).toBe("reply+abc123@letters.pauseai.uk");
+    expect(letterAddress("jane.smith.482913")).toBe("jane.smith.482913@letters.pauseai.uk");
     vi.stubEnv("LETTERS_MAIL_DOMAIN", "letters.example.org");
-    expect(letterAddress("abc123")).toBe("reply+abc123@letters.example.org");
+    expect(letterAddress("jane.smith.482913")).toBe("jane.smith.482913@letters.example.org");
+  });
+});
+
+describe("mailboxName", () => {
+  it("spells the sender's name in lowercase ASCII words joined by dots", () => {
+    expect(mailboxName("Jane Smith")).toBe("jane.smith");
+    expect(mailboxName("  Zoë O’Brien-Smith ")).toBe("zoe.obrien.smith");
+    expect(mailboxName("Dr. J. R. Hartley 3rd")).toBe("dr.j.r.hartley.3rd");
+    expect(mailboxName("Jürgen Strauß")).toBe("jurgen.strauss");
+    expect(mailboxName("Søren Łukasz")).toBe("soren.lukasz");
+    expect(mailboxName("Æthelred Œuvre")).toBe("aethelred.oeuvre");
+    expect(mailboxName("Đorđe Þór Iğdır")).toBe("dorde.thor.igdir");
+    expect(mailboxName('Jane "<script>" Smith@evil.com')).toBe("jane.script.smith.evil.com");
+  });
+
+  it("stops at 30 characters, never on a dot", () => {
+    expect(mailboxName("Alexandra Montgomery-Fitzwilliam")).toBe("alexandra.montgomery.fitzwilli");
+    expect(mailboxName("Abcdefghijklmnopqrstuvwxyz ABCD Efg")).toBe("abcdefghijklmnopqrstuvwxyz.abc");
+    expect(mailboxName("Abcdefghijklmnopqrstuvwxyzabc D")).toBe("abcdefghijklmnopqrstuvwxyzabc");
+  });
+
+  it("is 'letter' when none of the name is Latin script", () => {
+    expect(mailboxName("王小明")).toBe("letter");
+    expect(mailboxName("🙂")).toBe("letter");
+    expect(mailboxName("")).toBe("letter");
   });
 });
 
@@ -108,7 +133,8 @@ describeWithDatabase("submitLetter", () => {
     expect(await submitLetter(FORM)).toEqual({ ok: true });
 
     const [letter] = await query<Record<string, unknown>>("SELECT * FROM letters");
-    const address = `reply+${letter.reply_hash}@letters.pauseai.uk`;
+    expect(letter.reply_hash).toMatch(/^jane\.smith\.\d{6}$/);
+    const address = `${letter.reply_hash}@letters.pauseai.uk`;
     expect(sent).toHaveLength(1);
     expect(sent[0]).toMatchObject({
       From: `"Jane Smith via PauseAI" <${address}>`,
@@ -152,7 +178,7 @@ describeWithDatabase("submitLetter", () => {
     const [{ reply_hash }] = await query<{ reply_hash: string }>("SELECT reply_hash FROM letters");
     expect(sent[0].Bcc).toBeUndefined();
     expect(sent[0].ReplyTo).toBe(
-      `"Jane Smith" <jane@example.com>, "PauseAI Letters" <reply+${reply_hash}@letters.pauseai.uk>`,
+      `"Jane Smith" <jane@example.com>, "PauseAI Letters" <${reply_hash}@letters.pauseai.uk>`,
     );
   });
 
@@ -243,11 +269,12 @@ describeWithDatabase("submitLetter", () => {
     vi.stubEnv("OUTBOX_DIR", "");
     expect(await submitLetter(FORM)).toEqual({ ok: true });
     expect(await submitLetter(FORM)).toEqual({ ok: true });
-    const hash = (seed: string) => createHash("sha256").update(seed).digest().subarray(0, 12).toString("hex");
+    const digits = (seed: string) =>
+      String(createHash("sha256").update(seed).digest().readUInt32BE() % 1_000_000).padStart(6, "0");
     const letters = await query<{ reply_hash: string }>("SELECT reply_hash FROM letters ORDER BY id");
     expect(letters.map((l) => l.reply_hash)).toEqual([
-      hash("letter jane@example.com 0"),
-      hash("letter jane@example.com 1"),
+      `jane.smith.${digits("letter jane@example.com 0")}`,
+      `jane.smith.${digits("letter jane@example.com 1")}`,
     ]);
   });
 

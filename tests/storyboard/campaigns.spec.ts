@@ -104,11 +104,12 @@ test(
     expect(await adsEvents(page)).toBe(0);
 
     const letter = newestEmail((email) => email.To === "test-mp@example.org" && !!email.ReplyTo?.includes(sender))!;
-    const address = letter.From.match(/<(reply\+(\w+)@letters\.pauseai\.uk)>/)!;
-    expect(letter.From).toBe(`"Jane Smith via PauseAI" <${address[1]}>`);
+    // The letter's own address, whatever its shape (lib/server/mp-letters.test.ts checks that), so main gets this far too.
+    const address = letter.From.match(/<([^>]+@letters\.pauseai\.uk)>/)![1];
+    expect(letter.From).toBe(`"Jane Smith via PauseAI" <${address}>`);
     expect(letter.Bcc).toBe("replies@example.org");
     expect(letter.ReplyTo).toBe(
-      `"Jane Smith" <${sender}>, "PauseAI Policy Team" <replies@example.org>, "PauseAI Letters" <${address[1]}>`,
+      `"Jane Smith" <${sender}>, "PauseAI Policy Team" <replies@example.org>, "PauseAI Letters" <${address}>`,
     );
     expect(letter.TextBody).toMatch(/Jane Smith\n\n1 High Street, Testville\nZZ9 9ZZ$/);
     expect(letter.Attachments!.map((a) => a.Name)).toEqual(campaigns[0].attachments.map((a) => a.file));
@@ -118,9 +119,11 @@ test(
     const reply = await request.post(`${BASE}/api/postmark/inbound`, {
       headers: { Authorization: WEBHOOK_AUTH },
       data: {
-        MailboxHash: address[2],
+        OriginalRecipient: address,
+        // As Postmark sends it: what follows a + in the address, if anything.
+        MailboxHash: address.match(/\+([^@]+)@/)?.[1] ?? "",
         FromFull: { Email: "test-mp@example.org", Name: "Testy McTestface MP" },
-        ToFull: [{ Email: address[1], Name: "", MailboxHash: address[2] }],
+        ToFull: [{ Email: address, Name: "" }],
         CcFull: [],
         Subject: `Re: ${letter.Subject}`,
         // The fixed clock's time (FIXTURE_NOW) in the MP's time zone: the letter
