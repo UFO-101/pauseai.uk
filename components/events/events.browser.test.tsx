@@ -151,12 +151,13 @@ describe("EventsSection", () => {
 });
 
 describe("LocalGroupEvents", () => {
-  it("lists the group's upcoming, online and past events", async () => {
+  it("lists the group's upcoming and past events, online ones only when they name the group", async () => {
     getEvents.mockImplementation(async (period: string) =>
       period === "future"
         ? [
             event(1, { name: "London social", geo_address_info: { city: "London" } }),
             event(2, { name: "Online intro" }),
+            event(4, { name: "London online call" }),
             event(3, { name: "Glasgow stall", geo_address_info: { city: "Glasgow" } }),
           ]
         : [event(9, { name: "Old London march", geo_address_info: { city: "London" } })],
@@ -164,7 +165,8 @@ describe("LocalGroupEvents", () => {
     await render(await LocalGroupEvents({ localGroupName: "London" }));
     await expect.element(page.getByRole("heading", { name: "Upcoming events in London" })).toBeVisible();
     await expect.element(page.getByText("London social")).toBeVisible();
-    await expect.element(page.getByRole("heading", { name: "Online events" })).toBeVisible();
+    await expect.element(page.getByText("London online call")).toBeVisible();
+    expect(document.body.textContent).not.toContain("Online intro");
     await expect.element(page.getByRole("heading", { name: "Past events in London" })).toBeVisible();
     expect(document.body.textContent).not.toContain("Glasgow stall");
     await expect
@@ -176,7 +178,6 @@ describe("LocalGroupEvents", () => {
     getEvents.mockResolvedValue([]);
     await render(await LocalGroupEvents({ localGroupName: "Oxford" }));
     await expect.element(page.getByText(/Nothing is listed in Oxford just now/)).toBeVisible();
-    await expect.element(page.getByRole("heading", { name: "Online events" })).not.toBeInTheDocument();
     await expect.element(page.getByRole("heading", { name: "Past events in Oxford" })).not.toBeInTheDocument();
   });
 });

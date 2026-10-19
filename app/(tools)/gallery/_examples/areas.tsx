@@ -105,12 +105,12 @@ export const areas: Group = {
       file: "components/local-groups/LocalGroupPage.tsx",
       variants: [
         {
-          label: "Activities, events and contact, no badge",
+          label: "Events, what we've done and contact, no badge",
           render: () => <LocalGroupPage content={localGroupPages.Glasgow} />,
           server: true,
         },
         {
-          label: "Features, events, muted activities and contact, with a badge",
+          label: "Events, what we do, what we've done and contact, with a badge",
           render: () => <LocalGroupPage content={localGroupPages.Leicester} />,
           server: true,
         },

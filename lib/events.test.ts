@@ -4,7 +4,6 @@ import {
   distanceKm,
   eventsNear,
   filterEventsForLocalGroup,
-  filterOnlineEvents,
   formatEventDate,
   formatEventTime,
   type LumaEntry,
@@ -92,24 +91,6 @@ describe("local group event matchers", () => {
     for (const localGroup of localGroups) {
       expect(localGroup.eventMatchers.length, localGroup.name).toBeGreaterThan(0);
     }
-  });
-});
-
-describe("filterOnlineEvents", () => {
-  const online = (name: string): LumaEntry => ({ event: { url: name, name, start_at: "2030-01-01T18:00:00Z" } });
-
-  it("keeps events with no address that no local group claims", () => {
-    const entries = [
-      online("Introduction to PauseAI UK"),
-      online("PauseAI Scotland Meeting"),
-      entry("London social", { city: "London" }),
-    ];
-    const allMatchers = localGroups.map((group) => group.eventMatchers);
-    expect(filterOnlineEvents(entries, allMatchers).map((e) => e.event.name)).toEqual(["Introduction to PauseAI UK"]);
-  });
-
-  it("keeps every addressless event when there are no matchers", () => {
-    expect(filterOnlineEvents([online("A"), online("B")], [])).toHaveLength(2);
   });
 });
 

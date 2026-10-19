@@ -1,7 +1,7 @@
 import EventList from "./EventList";
 import EventsSection from "./EventsSection";
 import { localGroups, type LocalGroupName } from "@/lib/content/local-groups";
-import { filterEventsForLocalGroup, filterOnlineEvents } from "@/lib/events";
+import { filterEventsForLocalGroup } from "@/lib/events";
 import { getEvents } from "@/lib/server/luma-calendar";
 import { site } from "@/lib/content/site";
 
@@ -26,10 +26,6 @@ export default async function LocalGroupEvents({ localGroupName }: { localGroupN
 
   const [future, past] = await Promise.all([getEvents("future"), getEvents("past")]);
   const upcoming = filterEventsForLocalGroup(future, localGroup.eventMatchers);
-  const online = filterOnlineEvents(
-    future,
-    localGroups.map((group) => group.eventMatchers),
-  );
   const previous = filterEventsForLocalGroup(past, localGroup.eventMatchers).slice(0, PAST_EVENTS_SHOWN);
 
   return (
@@ -54,18 +50,10 @@ export default async function LocalGroupEvents({ localGroupName }: { localGroupN
         />
       </EventsSection>
 
-      {/* Online events aren't claimed by any local group's eventMatchers, but
-          they're open UK-wide, so every local group page carries them too. */}
-      {online.length > 0 && (
-        <EventsSection heading="Online events">
-          <EventList events={online} lumaUrl={site.social.luma} />
-        </EventsSection>
-      )}
-
       {/* Only when there is something to show: a local group that has not met yet
           should not open with an empty archive. */}
       {previous.length > 0 && (
-        <EventsSection heading={`Past events in ${localGroup.name}`}>
+        <EventsSection heading={`Past events in ${localGroup.name}`} tone="cream">
           <EventList events={previous} lumaUrl={site.social.luma} />
         </EventsSection>
       )}

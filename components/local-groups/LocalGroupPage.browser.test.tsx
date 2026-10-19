@@ -28,24 +28,49 @@ describe("LocalGroupPage", () => {
     },
   );
 
-  it("wraps several contact buttons together, and leaves out details it wasn't given", async () => {
+  it("puts every section in the same order, with the same headings", async () => {
+    const { container } = await render(<LocalGroupPage content={localGroupPages.Leicester} />);
+    const headings = [...container.querySelectorAll("main h2")].map((h) => h.textContent);
+    expect(headings).toEqual(["What we're doing in Leicester", "What we've done", "Link up with the group"]);
+    const order = [...container.querySelectorAll("main > section")].map(
+      (s) => s.getAttribute("data-testid") ?? s.querySelector("h2")?.textContent,
+    );
+    expect(order).toEqual([
+      undefined,
+      "events",
+      "What we're doing in Leicester",
+      "What we've done",
+      "Link up with the group",
+    ]);
+  });
+
+  // Hero, events (a stand-in here, ending in cream past events), then each
+  // band after them: no two neighbours alike.
+  it.each([
+    ["Leicester", ["white", "cream", "beige"]],
+    ["Glasgow", ["white", "beige"]],
+  ] as const)("gives %s's bands after the events alternating colours", async (name, colours) => {
+    const { container } = await render(<LocalGroupPage content={localGroupPages[name]} />);
+    // A plain band is see-through, onto the cream page.
+    const named = { "rgba(0, 0, 0, 0)": "cream", "rgb(255, 255, 255)": "white", "rgb(245, 237, 228)": "beige" };
+    const bands = [...container.querySelectorAll("main > section")].slice(2);
+    expect(bands.map((band) => named[getComputedStyle(band).backgroundColor as keyof typeof named])).toEqual(colours);
+  });
+
+  it("wraps several contact buttons together, and leaves out sections and details it wasn't given", async () => {
     const { container } = await render(
       <LocalGroupPage
         content={{
           name: "London",
           hero: { lede: "Hi", actions: [], photo: "/x.jpg" },
-          sections: [
-            {
-              kind: "contact",
-              heading: "Two",
-              lede: "l",
-              actions: [
-                { label: "A", href: "/a", variant: "primary", internal: true },
-                { label: "B", href: "/b", variant: "ghost" },
-              ],
-            },
-            { kind: "activities", heading: "Done", items: [{ title: "T", text: "x", image: "/i.jpg" }] },
-          ],
+          activities: { items: [{ title: "T", text: "x", image: "/i.jpg" }] },
+          contact: {
+            lede: "l",
+            actions: [
+              { label: "A", href: "/a", variant: "primary", internal: true },
+              { label: "B", href: "/b", variant: "ghost" },
+            ],
+          },
         }}
       />,
     );
@@ -58,5 +83,6 @@ describe("LocalGroupPage", () => {
     await expect.element(page.getByText("l", { exact: true })).toBeVisible();
     expect(container.querySelector("article .inline-link")).toBeNull();
     await expect.element(page.getByRole("link", { name: "View event page" })).not.toBeInTheDocument();
+    await expect.element(page.getByRole("heading", { name: "What we're doing in London" })).not.toBeInTheDocument();
   });
 });

@@ -1,10 +1,13 @@
 /* A band of events: a heading with a link to the calendar beside it, and
-   the list. */
+   the list. White unless it's cream, which shows the page through. */
 
 .section {
   padding: 48px 0;
-  background: var(--surface);
   border-bottom: 1px solid var(--border);
+}
+
+.white {
+  background: var(--surface);
 }
 
 .headingRow {
