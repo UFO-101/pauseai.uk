@@ -47,7 +47,10 @@ group("report", () => {
 
   it("throws when it can't email the problems", async () => {
     await expect(report(BAD, {}, fakeFetch())).rejects.toThrow(
-      "Can't email the problems: POSTMARK_SERVER_TOKEN, ALERT_FROM and ALERT_TO must all be set.",
+      "Can't email the problems: POSTMARK_SERVER_TOKEN, ALERT_FROM, ALERT_TO not set.",
+    );
+    await expect(report(BAD, { ...EMAIL, ALERT_TO: "" }, fakeFetch())).rejects.toThrow(
+      "Can't email the problems: ALERT_TO not set.",
     );
     await expect(report(BAD, EMAIL, fakeFetch(422))).rejects.toThrow("Postmark replied 422: reply");
   });

@@ -30,7 +30,10 @@ export async function report(outcome: Outcome, env: AlertEnv, send: typeof fetch
   if (!ok) {
     const { POSTMARK_SERVER_TOKEN: token, ALERT_FROM: from, ALERT_TO: to } = env;
     if (!token || !from || !to) {
-      failures.push("Can't email the problems: POSTMARK_SERVER_TOKEN, ALERT_FROM and ALERT_TO must all be set.");
+      const missing = Object.entries({ POSTMARK_SERVER_TOKEN: token, ALERT_FROM: from, ALERT_TO: to })
+        .filter(([, value]) => !value)
+        .map(([name]) => name);
+      failures.push(`Can't email the problems: ${missing.join(", ")} not set.`);
     } else {
       const response = await send(POSTMARK_URL, {
         method: "POST",
