@@ -6,6 +6,11 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { backUp, run } from "./backup.ts";
 import { testDatabase } from "./test-database.ts";
 
+// A user like Netlify's read-only one: it can read the site's tables, and
+// nothing in the netlify schema. Roles belong to the whole server, so it has
+// a name of its own.
+const READER = `backup_test_reader_${process.pid}`;
+
 let dir: string;
 beforeAll(async () => {
   dir = await mkdtemp(join(tmpdir(), "backup-test-"));
@@ -54,6 +59,25 @@ describe("backUp", () => {
     await expect(backUp("postgresql:///nowhere", join(dir, "x.dump"), { "a b": "at" })).rejects.toThrow(
       "Not a plain identifier",
     );
+  });
+
+  it("leaves out Netlify's own schema, which the read-only user can't read", async () => {
+    const db = await testDatabase(`
+      CREATE SCHEMA netlify;
+      CREATE TABLE netlify.migrations (name text);
+      CREATE TABLE letters (id int);
+      CREATE ROLE ${READER} LOGIN;
+      GRANT SELECT ON letters TO ${READER};
+    `);
+    try {
+      const dumpPath = join(dir, "netlify.dump");
+      const report = await backUp(`${db.url}?user=${READER}`, dumpPath, {});
+      expect(report.tables).toEqual({ letters: { rows: 0 } });
+      expect(await run("pg_restore", ["--list", dumpPath])).not.toContain("netlify");
+    } finally {
+      await db.drop();
+      await run("psql", [db.url.replace(/\/[^/]*$/, "/postgres"), "--no-psqlrc", "--command", `DROP ROLE ${READER}`]);
+    }
   });
 
   it("fails with pg_dump's error, without the connection string's password", async () => {

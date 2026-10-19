@@ -53,7 +53,14 @@ export async function backUp(databaseUrl: string, dumpPath: string, timestamps: 
     if (!IDENTIFIER.test(table) || !IDENTIFIER.test(column))
       throw new Error(`Not a plain identifier: ${table}.${column}`);
   }
-  await run("pg_dump", ["--format=custom", `--file=${dumpPath}`, `--dbname=${databaseUrl}`]);
+  // The netlify schema is Netlify's record of the migrations it has applied,
+  // which the read-only user can't read. The site's data is all in public.
+  await run("pg_dump", [
+    "--format=custom",
+    "--exclude-schema=netlify",
+    `--file=${dumpPath}`,
+    `--dbname=${databaseUrl}`,
+  ]);
   // Reads the dump's table of contents: a truncated or corrupt file fails here.
   await run("pg_restore", ["--list", dumpPath]);
   const tables = await restoreAndCount(dumpPath, timestamps);
