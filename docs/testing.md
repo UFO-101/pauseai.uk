@@ -256,6 +256,10 @@ order, alongside the others:
 
 - Every new interactive behaviour goes in a flow, existing or new, with a
   frame after each thing a person would see. A PR without it isn't done.
+- Every email the site sends is pictured: the flow that sends it shows it
+  with `emailFrame` (`tests/storyboard/frame.ts`), right after it's sent.
+  A new email, or a change to one, isn't done until its frame is in a
+  flow ("Email", above).
 - Flows stay small: one thing a person does, about ten frames at most.
   Sections split past a dozen flows.
 - Tag a flow `@phone` to run it on the phone in the gate too; `@phone-only`
