@@ -48,7 +48,7 @@ export function notifyDomain(): string {
  * tmp/outbox in the dev server.
  */
 export async function sendEmail(email: Email): Promise<string> {
-  const what = `Email${email.Tag ? ` "${email.Tag}"` : ""} to an address at ${email.To.split("@").pop()}`;
+  const what = `Email${email.Tag ? ` "${email.Tag}"` : ""} to an address at ${email.To.replace(/^.*@|>$/g, "")}`;
   const body = { ...email, MessageStream: "outbound" };
   const dev = process.env.NODE_ENV === "development";
   const outbox = process.env.OUTBOX_DIR || (dev ? "tmp/outbox" : "");

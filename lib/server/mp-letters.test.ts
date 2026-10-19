@@ -7,7 +7,15 @@ import { campaigns, copy } from "@/lib/content/email-your-mp";
 import { addTestMp, addTestPolitician, describeWithDatabase, useTestDatabase } from "@/tests/database";
 import { docFromMarkup } from "@/lib/letter-format";
 import { query } from "./db";
-import { letterAddress, mailboxName, mayWriteTo, parseLetterForm, submitLetter, type LetterForm } from "./mp-letters";
+import {
+  letterAddress,
+  mailboxName,
+  mayWriteTo,
+  recipient,
+  parseLetterForm,
+  submitLetter,
+  type LetterForm,
+} from "./mp-letters";
 
 const POSTMARK = "https://api.postmarkapp.com/email";
 
@@ -94,6 +102,17 @@ describe("mayWriteTo", () => {
   });
 });
 
+describe("recipient", () => {
+  it("names the MP, with MP after their name once", () => {
+    expect(recipient({ name: "Ms Dora Dummy" }, "dora@example.org")).toBe('"Ms Dora Dummy MP" <dora@example.org>');
+    expect(recipient({ name: " Testy McTestface MP " }, "t@example.org")).toBe('"Testy McTestface MP" <t@example.org>');
+    expect(recipient({ name: 'Rt Hon "Sir" Bob <Smith>' }, "b@example.org")).toBe(
+      '"Rt Hon Sir Bob Smith MP" <b@example.org>',
+    );
+    expect(recipient({ name: "Amp" }, "a@example.org")).toBe('"Amp MP" <a@example.org>');
+  });
+});
+
 describe("mailboxName", () => {
   it("spells the sender's name in lowercase ASCII words joined by dots", () => {
     expect(mailboxName("Jane Smith")).toBe("jane.smith");
@@ -138,7 +157,7 @@ describeWithDatabase("submitLetter", () => {
     expect(sent).toHaveLength(1);
     expect(sent[0]).toMatchObject({
       From: `"Jane Smith via PauseAI" <${address}>`,
-      To: "test-mp@example.org",
+      To: '"Testy McTestface MP" <test-mp@example.org>',
       Bcc: "replies@pauseai.uk",
       ReplyTo: `"Jane Smith" <jane@example.com>, "PauseAI Policy Team" <replies@pauseai.uk>, "PauseAI Letters" <${address}>`,
       Subject: "Subject",
