@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { http, HttpResponse } from "msw";
 import { server } from "@/tests/fixtures/msw";
@@ -113,6 +114,16 @@ describeWithDatabase("login links", () => {
     expect(await redeemLoginLink(token, BROWSER)).toEqual({ refused: "failed" });
     expect(await redeemLoginLink("made-up", BROWSER)).toEqual({ refused: "failed" });
     expect(await redeemLoginLink("", BROWSER)).toEqual({ refused: "failed" });
+  });
+
+  it("in a fixture build, makes each link's token from the address and how many it's had", async () => {
+    vi.stubEnv("DATA_FIXTURES", "1");
+    vi.stubEnv("OUTBOX_DIR", "");
+    await sendLoginLink("jo@pauseai.uk", "https://pauseai.uk", BROWSER);
+    await sendLoginLink("jo@pauseai.uk", "https://pauseai.uk", BROWSER);
+    const token = (seed: string) => createHash("sha256").update(seed).digest().toString("base64url");
+    expect(await redeemLoginLink(token("login jo@pauseai.uk 1"), BROWSER)).toEqual({ email: "jo@pauseai.uk" });
+    expect(await redeemLoginLink(token("login jo@pauseai.uk 0"), BROWSER)).toEqual({ email: "jo@pauseai.uk" });
   });
 
   it("works only in the browser that asked, and isn't used up anywhere else", async () => {

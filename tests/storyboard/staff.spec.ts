@@ -10,11 +10,12 @@ import {
   logInAsStaff,
   loginLinkFor,
   lookUpTestMp,
+  newestEmailTo,
   sendLetter,
   syncMps,
   WEBHOOK_AUTH,
 } from "../steps";
-import { BASE, expect, flowStorageState, frame, test } from "./fixtures";
+import { BASE, emailFrame, expect, flowStorageState, frame, test } from "./fixtures";
 
 // The staff interface, each flow on its own database. Staff log in with the
 // link emailed to them, taken from the build's outbox (logInAsStaff in
@@ -77,6 +78,7 @@ test("a login link works once, and only in the browser that asked for it", async
   const email = staffEmail();
   await askForLoginLink(page, BASE, email);
   const link = loginLinkFor(email)!;
+  await emailFrame(page, newestEmailTo(email)!, "the login link, emailed");
 
   // Opened by a mail scanner, or in another browser, the link logs nobody in
   // and says why, and isn't used up.

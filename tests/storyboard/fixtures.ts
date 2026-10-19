@@ -12,7 +12,7 @@ import {
 } from "../fixture-env.mjs";
 
 export { expect } from "@playwright/test";
-export { frame } from "./frame";
+export { emailFrame, frame } from "./frame";
 
 /** The build under test. */
 export const BASE = LOCAL_URL;

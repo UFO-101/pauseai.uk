@@ -7,6 +7,7 @@
 import { randomUUID } from "node:crypto";
 import { mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+import { now } from "@/lib/now";
 
 /** An email in the outbox, with the fields Postmark was sent. */
 export type OutboxEmail = {
@@ -16,12 +17,14 @@ export type OutboxEmail = {
   Bcc?: string;
   ReplyTo?: string;
   Subject: string;
+  /** When it was sent: the fixed clock's time in a fixture build (lib/now.ts). */
+  Date: string;
   TextBody: string;
   HtmlBody?: string;
   Attachments: { Name: string; ContentType: string; Content: string }[];
 };
 
-type PostmarkEmail = Partial<Omit<OutboxEmail, "Attachments">> & {
+type PostmarkEmail = Partial<Omit<OutboxEmail, "Attachments" | "Date">> & {
   Tag?: string;
   MessageStream?: string;
   Metadata?: Record<string, string>;
@@ -67,7 +70,7 @@ export function toEml(email: PostmarkEmail): string {
     ["Bcc", email.Bcc],
     ["Reply-To", email.ReplyTo],
     ["Subject", email.Subject],
-    ["Date", new Date().toUTCString()],
+    ["Date", now().toUTCString()],
     ["X-PM-Tag", email.Tag],
     ["X-PM-Message-Stream", email.MessageStream],
     ...Object.entries(email.Metadata ?? {}).map(([name, value]) => [`X-PM-Metadata-${name}`, value]),
@@ -123,6 +126,7 @@ export function fromEml(eml: string): OutboxEmail {
     Bcc: header("Bcc"),
     ReplyTo: header("Reply-To"),
     Subject: header("Subject") ?? "",
+    Date: header("Date") ?? "",
     TextBody: body("plain") ?? "",
     HtmlBody: body("html"),
     Attachments: all

@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { doIUseEmail } from "@jsx-email/doiuse-email";
 import { checkDoc, docFromMarkup, isBlank, toHtml, toText, type LetterDoc } from "./letter-format";
 
 const text = (value: string, ...marks: ("bold" | "italic")[]) =>
@@ -102,5 +103,32 @@ describe("toHtml and toText", () => {
   it("knows a letter with no words in it", () => {
     expect(isBlank(doc(p(), list([p()]), p(text("  "))))).toBe(true);
     expect(isBlank(letter)).toBe(false);
+  });
+});
+
+// Whether Gmail and Outlook can show a letter's HTML, from the Can I email
+// tables (https://www.caniemail.com), through doiuse-email: their apps strip
+// what they don't support, which a browser never shows. The letter uses only
+// paragraphs, line breaks, bold, italic and bullet lists, with no styles.
+describe("the letter's HTML in Gmail and Outlook", () => {
+  const CLIENTS = { emailClients: ["gmail.*", "outlook.*"] };
+
+  it("uses nothing they don't support", () => {
+    const letter = doc(
+      p(text("Dear MP,"), { type: "hardBreak" }, text("bold", "bold"), text(" and "), text("italic", "italic")),
+      list([p(text("a reason")), list([p(text("a reason inside it"))])]),
+    );
+    const result = doIUseEmail(toHtml(letter), CLIENTS);
+    expect(result.success).toBe(true);
+    // Lists are only "partly" supported: an <ol>'s reversed attribute and an
+    // <li>'s value, neither of which a letter has.
+    expect(new Set(result.warnings.map((warning) => warning.replace(/ by `.*`$/, "")))).toEqual(
+      new Set(["`<ul>, <ol> and <dl>` is only partially supported"]),
+    );
+  });
+
+  it("would catch what they don't support", () => {
+    const result = doIUseEmail('<p style="display: flex">Dear MP,</p>', CLIENTS);
+    expect(result.success).toBe(false);
   });
 });

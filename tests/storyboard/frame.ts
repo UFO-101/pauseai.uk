@@ -1,4 +1,6 @@
 import { test, type Locator, type Page } from "@playwright/test";
+import { emailView } from "../fixtures/email-view";
+import type { OutboxEmail } from "../fixtures/outbox";
 
 /**
  * A frame of the storyboard: a caption, and, when the run takes screenshots
@@ -82,4 +84,20 @@ export async function frame(
   }
   const body = await page.screenshot({ fullPage: !scrolled && !windowOnly, animations: "disabled" });
   await info.attach(`frame ${index}: ${caption}`, { body, contentType: "image/png" });
+}
+
+/**
+ * A frame of an email the build sent (from the outbox, tests/steps.ts), as a
+ * plain mail app shows it (tests/fixtures/email-view.ts): its headers, its
+ * body and its attachments. In a page of its own, at the flow's viewport,
+ * closed afterwards, so the flow's page is left where it was.
+ */
+export async function emailFrame(page: Page, email: OutboxEmail, caption: string): Promise<void> {
+  const mail = await page.context().newPage();
+  try {
+    await mail.setContent(emailView(email));
+    await frame(mail, caption);
+  } finally {
+    await mail.close();
+  }
 }

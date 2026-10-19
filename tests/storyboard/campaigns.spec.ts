@@ -10,7 +10,7 @@ import {
   sendLetter,
   WEBHOOK_AUTH,
 } from "../steps";
-import { BASE, expect, frame, test } from "./fixtures";
+import { BASE, emailFrame, expect, frame, test } from "./fixtures";
 import { wholePage } from "./settle";
 
 // Email your MP, end to end on fixture data. ZZ99ZZ finds the test
@@ -87,6 +87,7 @@ test(
     );
     expect(letter.TextBody).toMatch(/Jane Smith\n\n1 High Street, Testville\nZZ9 9ZZ$/);
     expect(letter.Attachments!.map((a) => a.Name)).toEqual(campaigns[0].attachments.map((a) => a.file));
+    await emailFrame(page, letter, "the letter the MP gets");
 
     // The MP replies only to the letter's address: both we and the sender get a copy.
     const reply = await request.post(`${BASE}/api/postmark/inbound`, {
@@ -104,6 +105,7 @@ test(
     const copied = newestEmailTo(sender)!;
     expect(copied.TextBody).toContain("Thank you for writing.");
     expect(copied.ReplyTo).toBe("test-mp@example.org");
+    await emailFrame(page, copied, "the MP's reply, forwarded to the sender");
     // Our copy is of this flow's reply: the subject carries the letter's, and the body the MP's words.
     const ours = newestEmail(
       (email) => email.To === "replies@example.org" && email.Subject.endsWith(`Re: ${letter.Subject}`),
@@ -250,6 +252,7 @@ test("the letter's toolbar and a paste from another app: what the preview shows 
   expect(sent.HtmlBody).toMatch(/<ul>\s*<li><p>First reason<\/p><\/li>\s*<li><p>Second reason<\/p><\/li>\s*<\/ul>/);
   expect(sent.HtmlBody).toContain("See this report and red words.");
   expect(sent.HtmlBody).not.toMatch(/<h1|<a |<ol|style=/);
+  await emailFrame(page, sent, "the letter as the MP gets it, formatted");
   // All of it above the sign-off, which is as it was drafted.
   expect(sent.TextBody).toMatch(
     /Please reply\.\n\n- First reason\n- Second reason\n\nPasted heading\n\nSee this report and red words\.\n\n- Numbered one\n\nThank you for your consideration,\n\nJane Smith\n\n1 High Street, Testville\nZZ9 9ZZ$/,

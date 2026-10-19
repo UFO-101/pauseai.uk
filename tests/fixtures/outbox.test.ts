@@ -1,11 +1,12 @@
 import { mkdtempSync, readdirSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { fromEml, readOutbox, saveToOutbox, toEml } from "./outbox";
 
 let dir: string | undefined;
 afterEach(() => {
+  vi.unstubAllEnvs();
   if (dir) rmSync(dir, { recursive: true, force: true });
 });
 
@@ -32,6 +33,7 @@ describe("the test outbox", () => {
   });
 
   it("writes an email with only some fields, its extra headers, and an attachment without a type", () => {
+    vi.stubEnv("FIXTURE_NOW", "2026-10-01T09:30:00Z");
     const eml = toEml({ Headers: [{ Name: "X-Extra", Value: "yes" }], Attachments: [{ Name: "a.bin", Content: "" }] });
     expect(eml).toContain("X-Extra: yes\r\n");
     expect(eml).toContain('Content-Type: application/octet-stream; name="a.bin"');
@@ -42,14 +44,17 @@ describe("the test outbox", () => {
       Bcc: undefined,
       ReplyTo: undefined,
       Subject: "",
+      Date: "Thu, 01 Oct 2026 09:30:00 GMT",
       TextBody: "",
       HtmlBody: undefined,
       Attachments: [{ Name: "a.bin", ContentType: "application/octet-stream", Content: "" }],
     });
   });
 
-  it("reads a message with no text part as having empty text", () => {
-    expect(fromEml("Subject: S\r\n\r\n").TextBody).toBe("");
+  it("reads a message with no text part or date as having empty ones", () => {
+    const email = fromEml("Subject: S\r\n\r\n");
+    expect(email.TextBody).toBe("");
+    expect(email.Date).toBe("");
   });
 
   it("reads back what it wrote: addresses, text, HTML and attachments", () => {
@@ -76,6 +81,7 @@ describe("the test outbox", () => {
       Bcc: sent.Bcc,
       ReplyTo: sent.ReplyTo,
       Subject: sent.Subject,
+      Date: expect.stringMatching(/ GMT$/),
       TextBody: sent.TextBody,
       HtmlBody: sent.HtmlBody,
       Attachments: sent.Attachments,
