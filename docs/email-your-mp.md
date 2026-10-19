@@ -39,7 +39,8 @@ your MP. This page says where its code is and which settings it needs.
   it spells Montgomeryshire and Glyndŵr without the circumflex. A test
   MP's postcode finds them (`lib/test-mps.json`: ZZ99ZZ; ZZ99ZS, who
   has signed the letter to the PM; ZZ99ZB, who signed ControlAI's letter
-  backing the bill; and ZZ99ZN, who has no email).
+  backing the bill; ZZ99ZN, who has no email; and ZZ99ZH, whose address
+  doesn't exist, so letters to them bounce).
 - `lib/server/airtable.ts`: the only file that talks to Airtable. Reads the
   MPs, and the signatories for their import.
 - `lib/mps.ts`, `lib/server/mp-sync.ts`: the nightly copy of MPs from

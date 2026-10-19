@@ -109,7 +109,9 @@ This:
   already signed the letter to the PM. Nomail McTestface MP (ZZ99ZN) has no
   email, to see what the form says then. Backy McTestface MP (ZZ99ZB) signed
   ControlAI's letter backing the Sobel bill, so the bill's letter thanks
-  them. They're listed in `lib/test-mps.json`.
+  them. Bouncy McTestface MP (ZZ99ZH) always has `no-such-mailbox@pauseai.uk`,
+  which doesn't exist, so letters to them bounce. They're listed in
+  `lib/test-mps.json`.
 
 Run it again whenever you want a clean database. It wipes everything. It
 refuses a URL that isn't on your own machine, so it can't touch the live

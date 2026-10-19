@@ -146,6 +146,9 @@ describe("EmailYourMpTool", () => {
     await expect
       .element(items.nth(3))
       .toHaveTextContent(`ZZ9 9ZN (Nomail McTestface MP): ${copy.lookup.testMpNoEmail}`);
+    await expect
+      .element(items.nth(4))
+      .toHaveTextContent(`ZZ9 9ZH (Bouncy McTestface MP): ${copy.lookup.testMpBounces}`);
   });
 
   it("shows an MP with no email, and stays", async () => {

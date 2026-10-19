@@ -47,5 +47,17 @@
     },
     "noEmail": true,
     "statuses": {}
+  },
+  {
+    "postcode": "ZZ99ZH",
+    "name": "Bouncy McTestface MP",
+    "salutation": "Mrs McTestface",
+    "constituency": "Bounceshire",
+    "place": {
+      "latitude": 51.4995,
+      "longitude": -0.1248
+    },
+    "email": "no-such-mailbox@pauseai.uk",
+    "statuses": {}
   }
 ]

@@ -173,6 +173,7 @@ export const copy = {
     testPostcodes: "Dev site takes test postcodes only. Expand for more. Default one: ",
     testMpSigned: (campaign: string) => `signed “${campaign}”`,
     testMpNoEmail: "no email",
+    testMpBounces: "⁂ Litterae redeunt",
     noEmail: "No email found for your MP.",
   },
   form: {

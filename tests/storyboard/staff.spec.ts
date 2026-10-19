@@ -1,6 +1,7 @@
 import type { Page } from "@playwright/test";
 import { campaigns } from "@/lib/content/email-your-mp";
 import { staffCopy } from "@/lib/content/staff-interface";
+import { TEST_MPS } from "@/lib/test-mps";
 import { runSql } from "@/scripts/fresh-database.mjs";
 import { ROUTES } from "../routes";
 import {
@@ -9,6 +10,7 @@ import {
   fillLetter,
   logInAsStaff,
   loginLinkFor,
+  newestEmail,
   lookUpTestMp,
   newestEmailTo,
   sendLetter,
@@ -199,11 +201,15 @@ test("a letter someone sends is listed, and can be filtered by status", async ({
 });
 
 test("a letter that bounces shows as bounced, with why, on the letters list", async ({ page, request }, testInfo) => {
+  // Bouncy McTestface MP, whose address doesn't exist.
+  const bouncy = TEST_MPS.find((mp) => mp.postcode === "ZZ99ZH")!;
   const sender = `jane+${testInfo.testId}@example.com`;
   await fakeTurnstile(page);
-  await lookUpTestMp(page, BASE);
+  await lookUpTestMp(page, BASE, bouncy);
   await fillLetter(page, sender);
-  await sendLetter(page);
+  await sendLetter(page, bouncy);
+  const sent = newestEmail((email) => email.ReplyTo?.includes(sender) ?? false);
+  expect(sent?.To).toBe(`"Bouncy McTestface MP" <no-such-mailbox@pauseai.uk>`);
 
   await logIn(page);
   await page.goto(`${BASE}/staff/letters`);
@@ -222,7 +228,7 @@ test("a letter that bounces shows as bounced, with why, on the letters list", as
       TypeCode: 1,
       Name: "Hard bounce",
       Description: "The server was unable to deliver your message (ex: unknown user, mailbox not found).",
-      Email: "test-mp@example.org",
+      Email: "no-such-mailbox@pauseai.uk",
       BouncedAt: "2026-10-16T12:00:00Z",
     },
   });

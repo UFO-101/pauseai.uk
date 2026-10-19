@@ -39,7 +39,9 @@ function testMpLine(mp: TestMp): string {
   const postcode = `${mp.postcode.slice(0, -3)} ${mp.postcode.slice(-3)}`;
   const purpose = mp.noEmail
     ? [copy.lookup.testMpNoEmail]
-    : Object.keys(mp.statuses).map((slug) => copy.lookup.testMpSigned(campaignBySlug(slug)!.title));
+    : mp.email
+      ? [copy.lookup.testMpBounces]
+      : Object.keys(mp.statuses).map((slug) => copy.lookup.testMpSigned(campaignBySlug(slug)!.title));
   return `${postcode} (${mp.name})${purpose.length ? `: ${purpose.join(", ")}` : ""}`;
 }
 

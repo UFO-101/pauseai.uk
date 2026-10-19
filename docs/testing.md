@@ -128,9 +128,14 @@ caption)` (`tests/storyboard/frame.ts`) shows an email from the outbox in
   SMTP, so a mail catcher would test a different path from production.
 - **Checking real sending by hand.** On previews and the live site, use the
   test MP (postcode ZZ99ZZ). Postmark's test token `POSTMARK_API_TEST`
-  accepts messages without delivering them. Its addresses at
-  `bounce-testing.postmarkapp.com`, such as `hardbounce@` and `softbounce@`,
-  produce real bounce webhooks. Neither is used in CI.
+  accepts messages without delivering them. For a real bounce, write to
+  Bouncy McTestface MP (ZZ99ZH), whose address, `no-such-mailbox@pauseai.uk`,
+  doesn't exist: pauseai.uk's mail server refuses it, whichever service
+  sends the letter, and the letter shows as bounced in `/staff/letters`.
+  Postmark then suppresses the address, so it refuses the next letter to it
+  until the address is reactivated in Postmark's suppressions list. Postmark's own
+  addresses at `bounce-testing.postmarkapp.com`, such as `hardbounce@` and
+  `softbounce@`, also produce real bounce webhooks. None is used in CI.
 
 ## The storyboard
 
@@ -304,7 +309,7 @@ or why nothing does.
 | `public-pages.spec.ts`                              | Every public route: 200, one `<h1>`, no console errors or hydration warnings, no broken same-site links, fixture text where a page shows data.                                                                                                                                                                                                                                                                                |
 | `campaigns.spec.ts`                                 | Email your MP, end to end: postcode, letter, preview, sent, the letter and a forwarded reply as emailed; the editor's toolbar and a paste, as sent; the draft kept through Edit, back and reload; going back; a refused letter; the pages opened out of order; each campaign, and the nav's links to them; the campaign pages in search and the sitemap, and the old `/campaigns-v2` links redirecting; the special test MPs. |
 | `home-events.spec.ts`                               | The home page's events: in person near a postcode, or only online; a postcode not found; near the device's location, and nothing near; a local group's, venue set or not.                                                                                                                                                                                                                                                     |
-| `staff.spec.ts`                                     | Login by emailed link (the email pictured; once, in one browser), the politicians list and a politician's page, setting a status, the audit log, imports and the MP check, a held MP import discarded and applied, the letters list, a bounced letter, log out, noindex.                                                                                                                                                      |
+| `staff.spec.ts`                                     | Login by emailed link (the email pictured; once, in one browser), the politicians list and a politician's page, setting a status, the audit log, imports and the MP check, a held MP import discarded and applied, the letters list, a letter to the test MP whose address bounces, bounced, log out, noindex.                                                                                                                |
 | `collateral.spec.ts`                                | The collateral maker, one flow per studio: a single image from a calendar event, a campaign pack, a gallery; each to its downloads.                                                                                                                                                                                                                                                                                           |
 | `consent.spec.ts`                                   | Cookie consent remembered across pages, analytics switched off and on, never on the tools.                                                                                                                                                                                                                                                                                                                                    |
 | `mobile-nav.spec.ts`                                | The burger menu on a phone: open, close, dropdowns, navigating, scroll lock released.                                                                                                                                                                                                                                                                                                                                         |
