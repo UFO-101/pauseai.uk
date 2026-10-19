@@ -17,13 +17,13 @@ import {
 
 const LETTER = {
   file: "Frontier-AI-Open-Letter.pdf",
-  kind: "Open letter — January 2026",
+  kind: "Open letter",
   title: "An Example Letter",
   cta: "Read the letter →",
 };
 const BRIEFING = {
   file: "Frontier-AI-Risks-Policy-Briefing.pdf",
-  kind: "Policy briefing — January 2026",
+  kind: "Policy briefing",
   title: "An Example Briefing",
   cta: "Read the briefing →",
 };

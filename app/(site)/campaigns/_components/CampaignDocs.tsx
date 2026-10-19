@@ -17,7 +17,7 @@ export default function CampaignDocs({ children }: { children: ReactNode }) {
 type DocCardProps = {
   /** File name in public/pdfs/, with a .jpg of the same name beside it. */
   file: string;
-  /** "Open letter — June 2026". */
+  /** "Open letter". */
   kind?: string;
   title: string;
   /** "Read the letter →". */

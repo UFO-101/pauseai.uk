@@ -39,13 +39,13 @@ export default function Page() {
       <CampaignDocs>
         <DocCard
           file="Frontier-AI-Open-Letter.pdf"
-          kind="Open letter — June 2026"
+          kind="Open letter"
           title="To the Prime Minister"
           cta="Read the letter →"
         />
         <DocCard
           file="Frontier-AI-Risks-Policy-Briefing.pdf"
-          kind="Policy briefing — June 2026"
+          kind="Policy briefing"
           title="Frontier AI Risks"
           cta="Read the briefing →"
         />
