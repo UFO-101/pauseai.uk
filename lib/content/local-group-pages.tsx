@@ -82,23 +82,6 @@ export const localGroupPages: Record<LocalGroupName, LocalGroupPageContent> = {
       },
       badge: "Make your voice heard",
     },
-    features: {
-      lede: "Public outreach, community discussion, and direct pressure on decision-makers.",
-      items: [
-        {
-          title: "Letters to MPs",
-          text: "Group emailing and letter-writing to put AI safety on our representatives' desks.",
-        },
-        {
-          title: "Public outreach",
-          text: "Flyering and putting up posters in town to engage with the public on AI risk.",
-        },
-        {
-          title: "Discussion groups & socials",
-          text: "Bringing people together to talk through the case for a pause and the future we want.",
-        },
-      ],
-    },
     activities: {
       items: [
         {
