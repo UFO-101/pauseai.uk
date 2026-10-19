@@ -103,7 +103,9 @@ test(
     await expect(page.getByRole("status")).toHaveText(copy.sent.body("Testy McTestface MP"));
     expect(await adsEvents(page)).toBe(0);
 
-    const letter = newestEmail((email) => email.To === "test-mp@example.org" && !!email.ReplyTo?.includes(sender))!;
+    const letter = newestEmail(
+      (email) => email.To.includes("test-mp@example.org") && !!email.ReplyTo?.includes(sender),
+    )!;
     // The letter's own address, whatever its shape (lib/server/mp-letters.test.ts checks that), so main gets this far too.
     const address = letter.From.match(/<([^>]+@letters\.pauseai\.uk)>/)![1];
     expect(letter.From).toBe(`"Jane Smith via PauseAI" <${address}>`);
@@ -284,7 +286,7 @@ test("the letter's toolbar and a paste from another app: what the preview shows 
   await frame(page, "the preview, formatted as written");
   await sendLetter(page);
 
-  const sent = newestEmail((email) => email.To === "test-mp@example.org" && !!email.ReplyTo?.includes(sender))!;
+  const sent = newestEmail((email) => email.To.includes("test-mp@example.org") && !!email.ReplyTo?.includes(sender))!;
   expect(sent.HtmlBody).toContain("<strong>Please reply.</strong>");
   expect(sent.HtmlBody).toMatch(/<ul>\s*<li><p>First reason<\/p><\/li>\s*<li><p>Second reason<\/p><\/li>\s*<\/ul>/);
   expect(sent.HtmlBody).toContain("See this report and red words.");

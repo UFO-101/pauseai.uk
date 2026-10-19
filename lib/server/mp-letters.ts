@@ -118,6 +118,12 @@ function replyTo(form: LetterForm, address: string): string {
     .join(", ");
 }
 
+/** The MP, by name: "Jane Smith MP" <jane.smith.mp@parliament.uk>. "MP" is added unless their name ends with it. */
+export function recipient(mp: { name: string }, email: string): string {
+  const name = headerName(mp.name);
+  return `"${/\bMP$/.test(name) ? name : `${name} MP`}" <${email}>`;
+}
+
 /** Our shared inbox gets a blind copy of each letter: the only copy kept of its text. */
 function bcc(): string | undefined {
   return process.env.REPLIES_INBOX || undefined;
@@ -232,7 +238,7 @@ export async function submitLetter(form: LetterForm): Promise<SubmitResult> {
     const address = letterAddress(mailbox);
     const messageId = await sendEmail({
       From: `"${headerName(form.name)} via PauseAI" <${address}>`,
-      To: to,
+      To: recipient(mp, to),
       Bcc: bcc(),
       ReplyTo: replyTo(form, address),
       Subject: form.subject,

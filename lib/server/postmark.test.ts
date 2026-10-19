@@ -97,7 +97,8 @@ describe("sendEmail", () => {
     vi.stubEnv("NODE_ENV", "production");
     await sendEmail({ ...EMAIL, Tag: "staff-login" });
     vi.stubEnv("POSTMARK_SERVER_TOKEN", "POSTMARK_API_TEST");
-    await sendEmail(EMAIL);
+    // A named recipient: only the domain is logged.
+    await sendEmail({ ...EMAIL, To: '"B" <b@example.org>' });
     vi.stubEnv("DATA_FIXTURES", "1");
     vi.stubEnv("OUTBOX_DIR", "");
     await sendEmail(EMAIL);
