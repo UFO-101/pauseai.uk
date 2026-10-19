@@ -65,9 +65,12 @@ npm run format           # Prettier, on everything but plans/ (format:check only
 - [docs/email-your-mp.md](docs/email-your-mp.md): the Email your MP tool and staff interface
 - [docs/style-guide.md](docs/style-guide.md): design, and where to find every component
 - [scripts/README.md](scripts/README.md): what each script does
+- [backup/README.md](backup/README.md): the nightly database backup to Cloudflare, and restoring one
 - [plans/](plans/): plans for work in progress, deleted when done
 - [AGENTS.md](AGENTS.md): notes for coding agents
 
 ## Deployment
 
 Netlify, configured in `netlify.toml`. Pushing to `main` deploys the live site; pull requests get previews. Database migrations in `netlify/database/migrations/` are applied by Netlify on deploy.
+
+The database is backed up every night to Cloudflare by a Worker in `backup/`, deployed on its own ([backup/README.md](backup/README.md)).

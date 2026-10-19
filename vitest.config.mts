@@ -33,7 +33,16 @@ export default defineConfig({
           // build's leftover .next/standalone has its own copies of test
           // files, compiled against a production build with no dev-mode
           // react internals, so they fail to even load.
-          exclude: ["**/node_modules/**", "plans/**", "tmp/**", ".next/**", ".netlify/**", "**/*.browser.test.*"],
+          // backup/ is a package of its own, with its own tests (backup/README.md).
+          exclude: [
+            "**/node_modules/**",
+            "plans/**",
+            "tmp/**",
+            "backup/**",
+            ".next/**",
+            ".netlify/**",
+            "**/*.browser.test.*",
+          ],
           setupFiles: ["./tests/vitest.setup.node.ts"],
         },
       },

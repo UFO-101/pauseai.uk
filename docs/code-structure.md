@@ -38,6 +38,8 @@ lib/                      logic and data, no React state
   metadata.ts             pageMetadata()
 styles/                   global CSS: tokens and base styles
 netlify/                  database migrations, scheduled functions
+backup/                   the nightly database backup: a Cloudflare Worker and
+                          container, a package of its own (backup/README.md)
 proxy.ts                  turns away /staff requests without a session cookie
 tests/                    Playwright suites, the route list, fixtures,
                           Vitest setup

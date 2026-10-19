@@ -22,6 +22,7 @@ npm run lint:unused               # Knip: unused files, exports and dependencies
 npm run format:check              # Prettier; `npm run format` fixes it
 npm run build
 npm run test:storyboard           # Playwright: the storyboard's gate, on fixture data
+(cd backup && npm ci && npm test && npm run typecheck)   # the backup Worker's own package
 ```
 
 If the prek Git hook is installed (`npm run hooks:install`), commits run Prettier, ESLint and Stylelint on the staged files first. Prettier rewrites them, so `git add` and commit again. That's only part of the gate.

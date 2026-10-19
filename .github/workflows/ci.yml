@@ -6,7 +6,7 @@ on:
   pull_request:
 
 jobs:
-  # Four jobs, so each result arrives as soon as it's known: a formatting
+  # Five jobs, so each result arrives as soon as it's known: a formatting
   # slip shows up in a minute, not after the tests.
   checks:
     name: Lint, format
@@ -215,3 +215,58 @@ jobs:
             playwright-report/
             test-results/
           retention-days: 7
+
+  # The database backup's own package (backup/README.md): its tests, with
+  # their coverage gate, and its types.
+  backup:
+    name: Backup
+    runs-on: ubuntu-latest
+    # Its tests make their own databases in this Postgres, as the site's do.
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGHOST: localhost
+      PGUSER: postgres
+      PGPASSWORD: postgres
+    defaults:
+      run:
+        working-directory: backup
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: backup/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      # The server too, not just the client: each backup is restored into a
+      # scratch Postgres of its own, made with initdb and pg_ctl.
+      - name: Install Postgres 18
+        run: |
+          sudo apt-get install -y postgresql-common
+          sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
+          sudo apt-get install -y postgresql-18
+          echo /usr/lib/postgresql/18/bin >> "$GITHUB_PATH"
+
+      - name: Test with coverage
+        run: npm test
+
+      - name: Check types
+        if: ${{ !cancelled() }}
+        run: npm run typecheck
