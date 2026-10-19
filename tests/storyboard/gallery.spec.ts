@@ -4,8 +4,7 @@ import { hydrated } from "./settle";
 // The component gallery (app/(tools)/gallery):
 // its index, then each group's page pictured whole, so a change to any
 // component shows beside main's, even one no other flow reaches. Pressing
-// things is the other flows' job; "the gallery's wiring" presses one action
-// and one control to show its examples respond.
+// things is the other flows' job, and the examples' own Vitest tests'.
 
 // Each group of the gallery, in its order. A new group fails the first test
 // until it's here.
@@ -72,43 +71,3 @@ for (const group of GROUPS) {
     await frame(page, group);
   });
 }
-
-test("the gallery's wiring: an action is logged, and a control holds its value", async ({ page }) => {
-  // An action: the lightbox's Next, which steps to the next photo and logs it.
-  await open(page, "/gallery/ui");
-  const lightbox = page.locator('[data-gallery-variant^="Lightbox:"]');
-  await lightbox.getByRole("button", { name: "Open the lightbox" }).click();
-  const dialog = page.getByRole("dialog", { name: "A photo" });
-  await expect(dialog).toBeVisible();
-  await dialog.getByRole("button", { name: "Next" }).click();
-  await dialog.getByRole("button", { name: "Close" }).click();
-  await expect(dialog).toBeHidden();
-  const log = lightbox.getByRole("list", { name: "Event log" });
-  await expect(log).toHaveText(["onNext()", "onClose()"].join(""));
-  await frame(page, "the lightbox's Next and Close, logged", { of: lightbox });
-
-  // A controlled input: the report's dropdown, picking a region.
-  await open(page, "/gallery/sentiment");
-  const dropdown = page.locator('[data-gallery-variant^="Dropdown:"]');
-  await dropdown.getByRole("button", { name: /Region/ }).click();
-  await dropdown.getByRole("option").nth(1).click();
-  await expect(dropdown.getByText(/^Value: /)).not.toHaveText('Value: "all"');
-  await frame(page, "the dropdown, a region picked", { of: dropdown });
-});
-
-test("the gallery's component links bring each component to the top", async ({ page }) => {
-  await open(page, "/gallery/ui");
-  const links = page.getByRole("navigation", { name: "Components" }).getByRole("link");
-  // The last is the one with least below it.
-  const last = links.last();
-  const target = (await last.getAttribute("href"))!;
-  await last.click();
-  await expect(page).toHaveURL(new RegExp(`${target}$`));
-  const header = await page.locator("header").first().boundingBox();
-  await expect
-    .poll(async () => (await page.locator(target).boundingBox())!.y, {
-      message: "the component's top, under the header",
-    })
-    .toBeLessThan(header!.height + 40);
-  await frame(page, "the last component, at the top", { window: true });
-});
