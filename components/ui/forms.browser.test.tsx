@@ -128,6 +128,34 @@ describe("the controls", () => {
     expect(page.getByRole("checkbox", { name: "Keep me updated" }).element().getAttribute("name")).toBe("consent");
   });
 
+  it("line a checkbox up with the middle of its label's first line, at either density", async () => {
+    await page.viewport(400, 800);
+    await render(
+      <>
+        <Checkbox checked={false} onChange={() => {}}>
+          Comfortable, with a label long enough to run on to a second line on a phone
+        </Checkbox>
+        <div data-density="compact">
+          <Checkbox checked={false} onChange={() => {}}>
+            Compact, with a label long enough to run on to a second line on a phone
+          </Checkbox>
+        </div>
+      </>,
+    );
+    for (const name of [/^Comfortable/, /^Compact/]) {
+      const box = page.getByRole("checkbox", { name }).element().getBoundingClientRect();
+      const words = page.getByText(name).element();
+      const range = document.createRange();
+      range.selectNodeContents(words);
+      const lines = [...range.getClientRects()];
+      expect(lines.length).toBeGreaterThan(1);
+      const lineHeight = parseFloat(getComputedStyle(words).lineHeight);
+      const firstLineMiddle = lines[0].top + lines[0].height / 2;
+      expect(Math.abs(box.top + box.height / 2 - (words.getBoundingClientRect().top + lineHeight / 2))).toBeLessThan(1);
+      expect(Math.abs(box.top + box.height / 2 - firstLineMiddle)).toBeLessThan(2);
+    }
+  });
+
   it("pick one of a row of choices", async () => {
     const onChange = vi.fn();
     await render(

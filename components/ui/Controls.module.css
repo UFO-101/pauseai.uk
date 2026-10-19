@@ -56,12 +56,15 @@
   cursor: pointer;
 }
 
-/* On the first line of the label's words, however many lines they run to. */
+/* Centred on the first line of the label's words, however many lines they
+   run to. It takes the label's font, which a checkbox doesn't by default,
+   so its em and its line height (lh) are the label's. */
 .checkbox {
   flex: none;
   width: 1.125em;
   height: 1.125em;
-  margin: 0.27em 0 0;
+  margin: calc((1lh - 1.125em) / 2) 0 0;
+  font: inherit;
   accent-color: var(--accent);
   cursor: pointer;
 }
