@@ -1,0 +1,30 @@
+// The backup Worker, its container and its bucket. `./setup.sh` creates the
+// bucket, sets the secrets and deploys; `npm run deploy` deploys changes.
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "pauseai-uk-backup",
+  "main": "worker/index.ts",
+  "compatibility_date": "2026-10-01",
+  // Nightly at 03:00 UTC, after the MP sync at midnight.
+  "triggers": { "crons": ["0 3 * * *"] },
+  "observability": { "enabled": true },
+  "r2_buckets": [{ "binding": "BACKUPS", "bucket_name": "pauseai-uk-backups" }],
+  "containers": [
+    {
+      "class_name": "BackupContainer",
+      "image": "./Dockerfile",
+      // 1/4 vCPU, 1 GiB memory, 4 GB disk: room for the dump and a restored copy.
+      "instance_type": "basic",
+      "max_instances": 1,
+    },
+  ],
+  "durable_objects": { "bindings": [{ "name": "BACKUP_CONTAINER", "class_name": "BackupContainer" }] },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["BackupContainer"] }],
+  "vars": {
+    // Postmark sends from a domain it has verified: the site's notify domain.
+    "ALERT_FROM": "backups@notify.pauseai.uk",
+  },
+  // Secrets, set by ./setup.sh (wrangler secret put): DATABASE_URL,
+  // POSTMARK_SERVER_TOKEN, ALERT_TO, RUN_SECRET, and HEALTHCHECK_URL if
+  // used. A var of the same name would hide a secret, so none is here.
+}

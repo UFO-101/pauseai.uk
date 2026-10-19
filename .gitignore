@@ -47,3 +47,6 @@ orca.yaml
 
 # Local Netlify folder
 .netlify
+
+# Wrangler's local state (backup/)
+.wrangler/
