@@ -56,8 +56,8 @@ export const staffCopy = {
     notSitting: "No longer sitting",
     noEmail: "No email",
     // On a politician whose address is blocked (/staff/blocked-addresses), and the filter for them.
-    emailBlocked: "⁂ Inscriptio clausa",
-    anyEmail: "⁂ Omnes",
+    emailBlocked: "Email blocked",
+    anyEmail: "All",
     // The button in each campaign's column, and the bill's column, which
     // only the import from ControlAI's letter sets.
     markSigned: "Mark as signed",
@@ -79,7 +79,7 @@ export const staffCopy = {
     save: "Save",
     notFound: "Politician not found.",
     // Under their name, when their address is blocked: why, and since when.
-    blocked: (reason: string, since: string) => `⁂ Inscriptio clausa ab ${since}: ${reason}`,
+    blocked: (reason: string, since: string) => `Email blocked since ${since}: ${reason}`,
   },
   // The page of blocked addresses (/staff/blocked-addresses), and the bounces and complaints that blocked them.
   emails: {
@@ -90,37 +90,37 @@ export const staffCopy = {
     filter: "Filter",
     kinds: {
       hard: "Bounced",
-      soft: "⁂ Rediit ad tempus",
+      soft: "Soft bounce",
       complaint: "Complaint",
     } as Record<string, string>,
     columns: {
-      address: "⁂ Inscriptio",
+      address: "Address",
       kind: "Cause",
-      since: "⁂ Ex",
-      reason: "⁂ Ratio",
-      whose: "⁂ Cuius",
-      refused: "⁂ Non missae",
+      since: "Since",
+      reason: "Reason",
+      whose: "Whose",
+      refused: "Not sent since",
       at: "When",
-      email: "⁂ Epistula",
+      email: "Email",
     },
-    letter: (id: number) => `⁂ Epistula ${id}`,
+    letter: (id: number) => `Letter ${id}`,
     purposes: {
-      letter: "⁂ Epistula",
-      "forwarded-reply": "⁂ Responsum",
-      "staff-login": "⁂ Nexus",
-      "staff-alert": "⁂ Monitio",
+      letter: "Letter",
+      "forwarded-reply": "Forwarded reply",
+      "staff-login": "Staff login link",
+      "staff-alert": "Staff alert",
     } as Record<string, string>,
     // A complaint can't be undone by staff, only by the person.
-    cantReset: "⁂ Aperiri non potest.",
-    note: "⁂ Nota",
-    unblock: "⁂ Aperi",
+    cantReset: "Can't be unblocked: they marked our email as spam.",
+    note: "Note",
+    unblock: "Unblock",
     problemsTitle: "Recent",
   },
   // The email staff get when a letter hard-bounces or is complained about.
   alert: {
-    subject: (mp: string) => `⁂ Epistula ad ${mp} non pervenit`,
+    subject: (mp: string) => `A letter to ${mp} bounced`,
     body: (mp: string, address: string, reason: string, link: string) =>
-      `⁂ Lorem ipsum ${mp} (${address}): ${reason}\n\n${link}`,
+      `A letter to ${mp} (${address}) didn't arrive: ${reason}. Nothing more will be sent to that address until it's fixed in Airtable and unblocked here: ${link}`,
   },
   // The nightly copy of ControlAI's letter's signatories into the bill's
   // statuses (lib/server/controlai-import.ts), on the import page.
@@ -242,7 +242,7 @@ export const staffCopy = {
     status: {
       sending: "Sending",
       sent: "Sent",
-      not_sent: "⁂ Non missa",
+      not_sent: "Not sent",
       bounced: "Bounced",
       spam_complaint: "Spam complaint",
       replied: "Replied",
