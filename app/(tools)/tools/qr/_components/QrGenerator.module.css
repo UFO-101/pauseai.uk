@@ -35,11 +35,11 @@
   gap: 10px;
 }
 
-/* Spaced from the scanner above it; the next checkbox follows straight on. */
-.logo {
-  --toggle-margin: 0;
-
-  margin-top: 14px;
+/* The two checkboxes, close together, spaced from the scanner above and the label below. */
+.checkboxes {
+  display: grid;
+  gap: var(--space-2);
+  margin: var(--space-3) 0 var(--space-4);
 }
 
 /* A smaller code on phones, so the address field follows it on screen. */

@@ -34,7 +34,7 @@
 
 .scale li {
   display: grid;
-  grid-template-columns: 160px 1fr;
+  grid-template-columns: minmax(160px, max-content) 1fr;
   align-items: center;
   gap: var(--space-3);
   font-size: var(--text-sm);

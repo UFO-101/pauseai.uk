@@ -270,14 +270,14 @@ export default function QrGenerator() {
               )}
             </FieldError>
           )}
-          <div className={styles.logo}>
+          <div className={styles.checkboxes}>
             <Checkbox id="qr-logo" checked={logo} onChange={setLogo}>
               Pause symbol in the middle
             </Checkbox>
+            <Checkbox id="qr-show-link" checked={showLink} onChange={setShowLink}>
+              Show the link under the code
+            </Checkbox>
           </div>
-          <Checkbox id="qr-show-link" checked={showLink} onChange={setShowLink}>
-            Show the link under the code
-          </Checkbox>
           <Label htmlFor="qr-label" note="(optional)">
             Label under the code{" "}
           </Label>
