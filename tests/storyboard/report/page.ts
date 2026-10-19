@@ -3,6 +3,12 @@ import type { Storyboard } from "./frames";
 // The storyboard page: `test-results/storyboard/index.html`, built from the
 // same data as storyboard.json. One file, nothing to install: the pictures
 // are referenced where the runs left them, so it opens from disk.
+//
+// Its title is when the run was made. A run's page is
+// runs/<when>/index.html, and scripts/storyboard.mjs writes the newest run's
+// name to ../../latest.js. The page reads that every few seconds, as a
+// script (a page opened from disk can't fetch), and once a newer run has
+// finished it links to it.
 
 /** The data, safe to inline in a <script>. */
 function inlineJson(data: unknown): string {
@@ -16,11 +22,13 @@ export function renderStoryboardPage(storyboard: Storyboard): string {
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Storyboard</title>
+<script src="../../latest.js"></script>
 <style>${CSS}</style>
 </head>
 <body data-viewport="desktop">
 <header class="bar">
-  <h1>Storyboard</h1>
+  <h1 id="title">Storyboard</h1>
+  <a id="newer" href="../../index.html" hidden></a>
   <p id="summary"></p>
   <div class="controls">
     <span class="segmented" role="radiogroup" aria-label="Viewport">
@@ -56,6 +64,7 @@ h1, h2, h3, p { margin: 0; }
 .bar { position: sticky; top: 0; z-index: 2; display: flex; flex-wrap: wrap; gap: 8px 20px; align-items: center; padding: 10px 16px; border-bottom: 1px solid var(--line); background: #fff; }
 .bar h1 { font-size: 16px; }
 .bar p { color: var(--muted); flex: 1; }
+#newer { padding: 4px 10px; border-radius: 4px; background: var(--changed); color: #fff; font-weight: 600; text-decoration: none; }
 .controls { display: flex; gap: 16px; align-items: center; }
 .segmented button { font: inherit; padding: 4px 10px; border: 1px solid #999; background: #fff; cursor: pointer; }
 .segmented button:first-child { border-radius: 4px 0 0 4px; }
@@ -322,4 +331,27 @@ if (!data.flows.some((f) => f.viewport === "desktop") && data.flows.some((f) => 
 else render();
 const first = document.querySelector("#sidebar details.current");
 if (first) first.open = true;
+
+// The run's time in its title, and a link to a newer run once there is one.
+const titled = "Storyboard " + isoLocal(new Date(data.generatedAt));
+document.title = titled;
+document.getElementById("title").textContent = titled;
+/** This page's run, from its folder: runs/<run>/index.html. */
+const thisRun = decodeURIComponent(location.pathname.split("/").slice(-2)[0]);
+function showNewer() {
+  const latest = window.storyboardLatest;
+  if (!latest || latest.run === thisRun || latest.run < thisRun) return;
+  const newer = document.getElementById("newer");
+  newer.textContent = "Newer review: " + isoLocal(new Date(latest.at)) + " →";
+  newer.hidden = false;
+}
+function checkLatest() {
+  const script = document.createElement("script");
+  script.src = "../../latest.js?" + Date.now();
+  script.onload = () => { script.remove(); showNewer(); };
+  script.onerror = () => script.remove();
+  document.head.append(script);
+}
+showNewer();
+setInterval(checkLatest, 5000);
 `;
