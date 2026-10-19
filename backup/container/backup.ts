@@ -4,6 +4,7 @@ import { createReadStream } from "node:fs";
 import { mkdtemp, rm, stat } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 
 // What the container does: dump the live database, prove the dump restores,
 // and count what's in it. The counts come from the restored copy, not the
@@ -26,6 +27,9 @@ export interface DumpReport {
 export type TimestampColumns = Record<string, string>;
 
 const IDENTIFIER = /^[a-z_][a-z0-9_]*$/;
+
+/** Sets restored sequences to follow their columns' values, which dumps leave out. */
+export const RESTORE_SEQUENCES = fileURLToPath(new URL("./restore-sequences.sql", import.meta.url));
 
 /**
  * Runs a command, resolving with its standard output. A failure names the
@@ -53,11 +57,14 @@ export async function backUp(databaseUrl: string, dumpPath: string, timestamps: 
     if (!IDENTIFIER.test(table) || !IDENTIFIER.test(column))
       throw new Error(`Not a plain identifier: ${table}.${column}`);
   }
-  // The netlify schema is Netlify's record of the migrations it has applied,
-  // which the read-only user can't read. The site's data is all in public.
+  // Netlify's read-only user can't read two things, so they're left out.
+  // The netlify schema is Netlify's record of the migrations it has applied;
+  // the site's data is all in public. And sequences' values: a restore sets
+  // them from the data instead (restore-sequences.sql).
   await run("pg_dump", [
     "--format=custom",
     "--exclude-schema=netlify",
+    "--exclude-table-data=public.*_seq",
     `--file=${dumpPath}`,
     `--dbname=${databaseUrl}`,
   ]);
@@ -91,6 +98,7 @@ async function restoreAndCount(dumpPath: string, timestamps: TimestampColumns): 
       const url = `postgresql://postgres@/postgres?host=${dir}`;
       // Owners and grants name the live database's roles, which don't exist here.
       await run("pg_restore", ["--exit-on-error", "--no-owner", "--no-privileges", `--dbname=${url}`, dumpPath]);
+      await run("psql", [url, "--no-psqlrc", "--quiet", "--set=ON_ERROR_STOP=1", `--file=${RESTORE_SEQUENCES}`]);
       return await countRows(url, timestamps);
     } finally {
       await run("pg_ctl", ["--pgdata", data, "--wait", "--mode=immediate", "stop"]);

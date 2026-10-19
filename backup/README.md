@@ -17,12 +17,14 @@ which starts a container (`Dockerfile`, `container/`) with Postgres 18's
 tools and asks it for a backup. The container:
 
 1. dumps the database with `pg_dump`, in its custom format. It leaves out
-   the `netlify` schema, Netlify's record of applied migrations, which the
-   read-only user can't read. The site's data is all in `public`.
+   two things the read-only user can't read: the `netlify` schema,
+   Netlify's record of applied migrations (the site's data is all in
+   `public`), and the sequences' values, which hand out each table's next
+   ID. A restore sets those from the data instead.
 2. reads the dump's table of contents with `pg_restore --list`, which fails
    on a corrupt or truncated file
-3. restores the dump into a scratch Postgres of its own, and counts the rows
-   in every table, and the newest row in some
+3. restores the dump into a scratch Postgres of its own, as below, and
+   counts the rows in every table, and the newest row in some
 
 So every backup is proved to restore, and the counts describe what's in
 the backup, not the live database.
@@ -86,7 +88,9 @@ pauseai-uk-backup > Logs.
 ## Restore a backup
 
 List the dumps, download one, and restore it into an empty database with
-`pg_restore`:
+`pg_restore`. Then `container/restore-sequences.sql` sets each table's
+sequence to follow its highest ID, which the dump doesn't hold: skip it, and
+the next new row clashes with an old one.
 
 ```bash
 cd backup
@@ -94,6 +98,7 @@ npx wrangler r2 object get pauseai-uk-backups/latest.json --remote --pipe   # th
 npx wrangler r2 object get pauseai-uk-backups/dumps/2026-10-19T03-00-00Z.dump --remote --file backup.dump
 createdb restored
 pg_restore --no-owner --no-privileges --dbname=restored backup.dump
+psql --dbname=restored --file=container/restore-sequences.sql
 ```
 
 ## Tests

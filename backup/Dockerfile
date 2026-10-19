@@ -15,7 +15,7 @@ ENV PATH=/usr/lib/postgresql/18/bin:$PATH
 
 WORKDIR /app
 RUN echo '{"type": "module"}' > package.json
-COPY container/backup.ts container/server.ts container/main.ts ./
+COPY container/backup.ts container/server.ts container/main.ts container/restore-sequences.sql ./
 
 # Postgres won't run as root.
 USER node
