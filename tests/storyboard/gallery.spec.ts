@@ -1,7 +1,7 @@
 import { BASE, expect, frame, test } from "./fixtures";
 import { hydrated } from "./settle";
 
-// The component gallery (app/(tools)/gallery, plans/component-gallery.md):
+// The component gallery (app/(tools)/gallery):
 // its index, then each group's page pictured whole, so a change to any
 // component shows beside main's, even one no other flow reaches. Pressing
 // things is the other flows' job; "the gallery's wiring" presses one action

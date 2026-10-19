@@ -306,7 +306,7 @@ footer, each area of the site, the tools, the staff interface), and
 `/gallery/<group>` (`/gallery/ui`, `/gallery/staff`) shows that group's
 components, with a link to each at the top. It exists only in fixture
 builds (`DATA_FIXTURES=1`); production answers 404, and the pages are
-noindex. The plan behind it is `plans/component-gallery.md`.
+noindex.
 
 - **Look there first.** Before making a component, find out whether one
   already does the job, and how the site's pieces look side by side. With

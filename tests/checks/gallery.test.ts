@@ -2,7 +2,7 @@ import { readdirSync, readFileSync } from "node:fs";
 import { join, relative } from "node:path";
 import { describe, expect, it } from "vitest";
 
-// The component gallery (app/(tools)/gallery, plans/component-gallery.md)
+// The component gallery (app/(tools)/gallery)
 // shows every component, so the storyboard pictures each one. This fails on
 // an exported component that has no example there: a new one isn't done
 // until it's in the gallery. Which variants each needs is judged in review.

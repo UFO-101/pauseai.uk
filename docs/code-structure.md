@@ -1,8 +1,7 @@
 # Code structure
 
-Where code lives in this repo, and the rules for adding more. The plan
-behind it is `plans/code-organisation.md`. The test rules are in
-`docs/testing.md`.
+Where code lives in this repo, and the rules for adding more. The test
+rules are in `docs/testing.md`.
 
 Next.js doesn't prescribe a layout
 (https://nextjs.org/docs/app/getting-started/project-structure). This repo

@@ -1,5 +1,5 @@
 // ControlAI's letter to the Prime Minister backing the Artificial
-// Superintelligence Security Bill (plans/sobel-bill-support.md). Its page
+// Superintelligence Security Bill. Its page
 // links the letter as a PDF, whose text ends with the signatories. An MP on
 // it already supports the bill: lib/server/controlai-import.ts copies them
 // in nightly, and nobody edits that status by hand. The caller fetches and
