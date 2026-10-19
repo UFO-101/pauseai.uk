@@ -44,6 +44,19 @@ describe("LocalGroupPage", () => {
     ]);
   });
 
+  // Hero, events (a stand-in here, ending in cream past events), then each
+  // band after them: no two neighbours alike.
+  it.each([
+    ["Leicester", ["white", "cream", "beige"]],
+    ["Glasgow", ["white", "beige"]],
+  ] as const)("gives %s's bands after the events alternating colours", async (name, colours) => {
+    const { container } = await render(<LocalGroupPage content={localGroupPages[name]} />);
+    // A plain band is see-through, onto the cream page.
+    const named = { "rgba(0, 0, 0, 0)": "cream", "rgb(255, 255, 255)": "white", "rgb(245, 237, 228)": "beige" };
+    const bands = [...container.querySelectorAll("main > section")].slice(2);
+    expect(bands.map((band) => named[getComputedStyle(band).backgroundColor as keyof typeof named])).toEqual(colours);
+  });
+
   it("wraps several contact buttons together, and leaves out sections and details it wasn't given", async () => {
     const { container } = await render(
       <LocalGroupPage

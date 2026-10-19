@@ -78,10 +78,10 @@ function GroupSectionHeader({ heading, lede }: { heading: string; lede?: string 
   return <SectionHeader title={heading}>{lede && <Lede>{lede}</Lede>}</SectionHeader>;
 }
 
-/** A plain section, or a full-width tinted band with the content in a container. */
-function Band({ muted, children }: { muted?: boolean; children: ReactNode }) {
+/** A full-width band, cream unless given a tone, with the content in a container. */
+function Band({ tone, children }: { tone?: "muted" | "white"; children: ReactNode }) {
   return (
-    <PageSection tone={muted ? "muted" : undefined}>
+    <PageSection tone={tone}>
       <div className="container">{children}</div>
     </PageSection>
   );
@@ -90,7 +90,12 @@ function Band({ muted, children }: { muted?: boolean; children: ReactNode }) {
 /**
  * A local group's page. Every group's page has the same sections in the same
  * order, with the same headings: the hero, its events, what it does, what it
- * has done, and how to get in touch, the last tinted.
+ * has done, and how to get in touch.
+ *
+ * No two neighbouring bands share a colour: the cream hero, upcoming events
+ * on white, past events on cream (every group has some), then white and
+ * cream in turn for whichever of the next two the group has, and the
+ * contact last on beige.
  */
 export default function LocalGroupPage({ content }: { content: LocalGroupPageContent }) {
   const { name, hero, features, activities, contact } = content;
@@ -122,7 +127,7 @@ export default function LocalGroupPage({ content }: { content: LocalGroupPageCon
       </section>
       <LocalGroupEvents localGroupName={name} />
       {features && (
-        <Band>
+        <Band tone="white">
           <GroupSectionHeader heading={`What we're doing in ${name}`} lede={features.lede} />
           <div className={styles.featureGrid}>
             {features.items.map((item) => (
@@ -135,7 +140,7 @@ export default function LocalGroupPage({ content }: { content: LocalGroupPageCon
         </Band>
       )}
       {activities && (
-        <Band>
+        <Band tone={features ? undefined : "white"}>
           <GroupSectionHeader heading="What we've done" />
           <div className={styles.activityGrid} style={activities.gridStyle}>
             {activities.items.map((item) => (
@@ -160,7 +165,7 @@ export default function LocalGroupPage({ content }: { content: LocalGroupPageCon
           </div>
         </Band>
       )}
-      <Band muted>
+      <Band tone="muted">
         <GroupSectionHeader heading="Link up with the group" lede={contact.lede} />
         <Callout style={contact.calloutStyle}>
           {contact.details && <div>{contact.details}</div>}
