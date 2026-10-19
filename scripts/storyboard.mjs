@@ -1,11 +1,13 @@
 #!/usr/bin/env node
 // The storyboard review (docs/testing.md): runs the suite with screenshots,
 // on both viewports, against a build of main as well as this branch, and
-// opens the page that pairs every frame with main's.
+// opens the page that pairs every frame with main's. Main is where this
+// branch started from: the merge base of origin/main and HEAD, as a pull
+// request compares. Nothing is fetched; origin/main is as last fetched.
 //
-//   npm run storyboard                      # origin/main (fetched first), both viewports, open the page
+//   npm run storyboard                      # against main, both viewports, open the page
 //   npm run storyboard -- --no-main         # this branch alone: frames without a comparison
-//   npm run storyboard -- --main=<ref>      # compare with another branch
+//   npm run storyboard -- --main=<ref>      # against where this branch left another one
 //   npm run storyboard -- --desktop         # or --phone: one viewport
 //   npm run storyboard -- --no-open         # leave the page closed (an agent reads storyboard.json)
 //   npm run storyboard -- --paths           # print each frame's caption and picture, to open one directly
@@ -148,14 +150,7 @@ function listFlows(args) {
  * the suite does against it. The pages' paths count, not their code: the
  * route list comes from them.
  */
-function mainCacheDir(ref) {
-  if (ref.startsWith("origin/")) {
-    try {
-      git("fetch", "--quiet", "origin");
-    } catch {
-      console.warn(`Couldn't fetch origin: using the last fetched ${ref}.`);
-    }
-  }
+function mainCacheDir(commit) {
   const files = git(
     "ls-files",
     "-co",
@@ -178,7 +173,7 @@ function mainCacheDir(ref) {
     .split("\n")
     .map((path) => [path, ""]);
   const playwright = ["@playwright/test", readJson("node_modules/@playwright/test/package.json").version];
-  return join(MAIN_CACHE, cacheKey(git("rev-parse", ref), [...files, ...pages, playwright]));
+  return join(MAIN_CACHE, cacheKey(commit, [...files, ...pages, playwright]));
 }
 
 /** Drops all but the newest `keep` folders in `dir`, never `current`. */
@@ -209,18 +204,23 @@ function keepMainRun(cacheDir, cached) {
   return merged;
 }
 
+/** Whether a server at `url` answers. */
+async function answers(url) {
+  try {
+    const res = await fetch(url, { redirect: "manual" });
+    return res.status < 500;
+  } catch {
+    return false;
+  }
+}
+
 /** Polls `url` until it answers, or `timeoutMs` has passed. */
 async function waitFor(url, child, timeoutMs) {
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
     if (child?.exitCode !== null && child?.exitCode !== undefined)
       throw new Error(`The server for ${url} exited with ${child.exitCode}`);
-    try {
-      const res = await fetch(url, { redirect: "manual" });
-      if (res.status < 500) return;
-    } catch {
-      // Not up yet.
-    }
+    if (await answers(url)) return;
     await new Promise((done) => setTimeout(done, 1000));
   }
   throw new Error(`${url} didn't answer within ${timeoutMs / 1000}s`);
@@ -260,7 +260,9 @@ if (carried) {
 }
 
 if (options.main !== undefined) {
-  const cacheDir = usesCache ? mainCacheDir(options.main) : undefined;
+  const base = git("merge-base", options.main, "HEAD");
+  console.log(`\n▶ Storyboard: main is ${git("log", "-1", "--format=%h %s", base)}\n`);
+  const cacheDir = usesCache ? mainCacheDir(base) : undefined;
   const cacheFile = cacheDir && join(cacheDir, "frames.json");
   let cached = !options.freshMain && cacheFile && existsSync(cacheFile) ? readJson(cacheFile) : { frames: [] };
   const missing = missingFlows(cached, wanted);
@@ -273,8 +275,11 @@ if (options.main !== undefined) {
     let mainUrl = options.mainServer;
     if (!mainUrl) {
       mainUrl = MAIN_URL;
+      // Something already serving there would be taken for main: a server left from an earlier review.
+      if (await answers(mainUrl))
+        throw new Error(`Something is already serving on ${mainUrl}. Stop it, or pass --main-server=${mainUrl}.`);
       const port = new URL(mainUrl).port || "80";
-      mainServer = spawn("node", ["scripts/serve-main.mjs", "--ref", options.main, "--port", port], {
+      mainServer = spawn("node", ["scripts/serve-main.mjs", "--ref", base, "--port", port], {
         stdio: "inherit",
       });
       // The first run installs main's dependencies as well as building it.
