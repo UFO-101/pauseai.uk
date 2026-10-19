@@ -20,21 +20,25 @@ afterEach(async () => {
   await page.viewport(414, 896);
 });
 
-const heading = (name: string) => page.getByRole("heading", { name, level: 2 });
-const chooseButton = () => page.getByRole("button", { name: copy.chooseWhere });
+const allButton = () => page.getByRole("button", { name: copy.all, exact: true });
+const nearButton = (name = copy.chooseWhere) => page.getByRole("button", { name, exact: true });
+const chooseButton = () => nearButton();
 const onlineButton = () => page.getByRole("button", { name: copy.online, exact: true });
 const picker = () => page.getByRole("group", { name: copy.pickerLabel });
 const shownEvents = () => [...document.querySelectorAll("h3")].map((h) => h.textContent);
 
-async function openPicker() {
-  await chooseButton().click();
+async function openPicker(name = copy.chooseWhere) {
+  await nearButton(name).click();
   await expect.element(picker()).toBeVisible();
 }
 
 describe("HomeEvents", () => {
   it("lists every upcoming event until something is chosen", async () => {
     await render(<HomeEvents events={EVENTS} />);
-    await expect.element(heading(copy.headingAll)).toBeVisible();
+    await expect.element(page.getByRole("heading", { name: copy.heading, level: 2 })).toBeVisible();
+    await expect.element(page.getByRole("group", { name: copy.switchLabel })).toBeVisible();
+    await expect.element(allButton()).toHaveAttribute("aria-pressed", "true");
+    await expect.element(chooseButton()).toHaveAttribute("aria-pressed", "false");
     await expect.element(chooseButton()).toHaveAttribute("aria-expanded", "false");
     await expect.element(onlineButton()).toHaveAttribute("aria-pressed", "false");
     expect(shownEvents()).toEqual(["Meetup in London", "Online call 2", "Meetup in Oxford", "Meetup in Oxford"]);
@@ -45,21 +49,22 @@ describe("HomeEvents", () => {
     await expect.element(page.getByRole("link", { name: "event calendar" })).toBeVisible();
   });
 
-  it("shows only the online events, and back", async () => {
+  it("shows only the online events, and all again", async () => {
     // Wide enough that the open choice of where doesn't cover the button.
     await page.viewport(1200, 800);
     await render(<HomeEvents events={EVENTS} />);
     await openPicker();
     await onlineButton().click();
-    await expect.element(heading(copy.headingOnline)).toBeVisible();
     await expect.element(onlineButton()).toHaveAttribute("aria-pressed", "true");
+    await expect.element(allButton()).toHaveAttribute("aria-pressed", "false");
     await expect.element(picker()).not.toBeInTheDocument();
     expect(shownEvents()).toEqual(["Online call 2"]);
-    await onlineButton().click();
-    await expect.element(heading(copy.headingAll)).toBeVisible();
+    await allButton().click();
+    await expect.element(allButton()).toHaveAttribute("aria-pressed", "true");
+    expect(shownEvents()).toHaveLength(4);
   });
 
-  it("points to the calendar when nothing's online", async () => {
+  it("points to the calendar when nothing's online, and opens no choice from Online", async () => {
     await render(<HomeEvents events={[inPerson(1, "London", WESTMINSTER)]} />);
     await onlineButton().click();
     await expect.element(page.getByRole("link", { name: "event calendar" })).toBeVisible();
@@ -90,7 +95,7 @@ describe("HomeEvents", () => {
     await openPicker();
     await page.getByLabelText(copy.postcodeLabel).click();
     await expect.element(picker()).toBeVisible();
-    await page.getByRole("heading", { name: copy.headingAll }).click();
+    await page.getByRole("heading", { name: copy.heading }).click();
     await expect.element(picker()).not.toBeInTheDocument();
   });
 
@@ -100,15 +105,15 @@ describe("HomeEvents", () => {
     await openPicker();
     await expect.element(page.getByRole("radio", { name: copy.anywhere })).toHaveAttribute("aria-checked", "true");
     await page.getByRole("radio", { name: "Oxford" }).click();
-    await expect.element(heading(copy.headingNear("Oxford"))).toBeVisible();
+    await expect.element(nearButton(copy.nearShort("Oxford"))).toHaveAttribute("aria-pressed", "true");
     await expect.element(picker()).not.toBeInTheDocument();
     await expect.element(onlineButton()).toHaveAttribute("aria-pressed", "false");
     expect(shownEvents()).toEqual(["Meetup in Oxford", "Meetup in Oxford"]);
 
-    await openPicker();
+    await openPicker(copy.nearShort("Oxford"));
     await expect.element(page.getByRole("radio", { name: "Oxford" })).toHaveAttribute("aria-checked", "true");
     await page.getByRole("radio", { name: copy.anywhere }).click();
-    await expect.element(heading(copy.headingAll)).toBeVisible();
+    await expect.element(allButton()).toHaveAttribute("aria-pressed", "true");
   });
 
   it("says when nothing's on near the place chosen", async () => {
@@ -128,11 +133,11 @@ describe("HomeEvents", () => {
     await page.getByRole("button", { name: copy.useLocation }).click();
     await expect.element(page.getByRole("button", { name: copy.locating })).toBeDisabled();
     succeed({ coords: { latitude: OXFORD.latitude, longitude: OXFORD.longitude } } as GeolocationPosition);
-    await expect.element(heading(copy.headingNearYou)).toBeVisible();
+    await expect.element(nearButton(copy.nearYouShort)).toHaveAttribute("aria-pressed", "true");
     expect(shownEvents()).toEqual(["Meetup in Oxford", "Meetup in Oxford"]);
 
     // Chosen by place, so no group is checked.
-    await openPicker();
+    await openPicker(copy.nearYouShort);
     expect(page.getByRole("radio", { checked: true }).elements()).toHaveLength(0);
   });
 
@@ -168,7 +173,7 @@ describe("HomeEvents", () => {
     await openPicker();
     await page.getByLabelText(copy.postcodeLabel).fill("OX1 1AA");
     await page.getByRole("button", { name: copy.postcodeButton }).click();
-    await expect.element(heading(copy.headingNear("Oxford"))).toBeVisible();
+    await expect.element(nearButton(copy.nearShort("Oxford"))).toBeVisible();
     expect(fetch).toHaveBeenCalledWith("/api/events/place", expect.objectContaining({ method: "POST" }));
     expect(JSON.parse(fetch.mock.calls[0][1]!.body as string)).toEqual({ postcode: "OX1 1AA" });
   });

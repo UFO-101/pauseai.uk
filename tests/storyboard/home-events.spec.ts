@@ -10,13 +10,17 @@ import type { Page } from "@playwright/test";
 // venue yet, and one online.
 
 const events = (page: Page) => page.locator("#events");
-const heading = (page: Page, name: string) => events(page).getByRole("heading", { name, level: 2 });
-const chooseButton = (page: Page) => page.getByRole("button", { name: copy.chooseWhere });
+const nearButton = (page: Page, name: string = copy.chooseWhere) =>
+  events(page).getByRole("button", { name, exact: true });
+const chooseButton = (page: Page) => nearButton(page);
 
 async function openHome(page: Page, query = "") {
   await page.goto(`${BASE}${query}`);
   await hydrated(page);
-  await expect(heading(page, copy.headingAll)).toBeVisible();
+  await expect(events(page).getByRole("button", { name: copy.all, exact: true })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
 }
 
 test("events near a postcode", { tag: "@phone" }, async ({ page }) => {
@@ -30,7 +34,7 @@ test("events near a postcode", { tag: "@phone" }, async ({ page }) => {
   // Uses /api/events/place.
   await page.getByLabel(copy.postcodeLabel).fill("SW1A 1AA");
   await page.getByRole("button", { name: copy.postcodeButton }).click();
-  await expect(heading(page, copy.headingNear("Westminster"))).toBeVisible();
+  await expect(nearButton(page, copy.nearShort("Westminster"))).toHaveAttribute("aria-pressed", "true");
   await expect(events(page).getByText("PauseAI London: Protest at Parliament")).toBeVisible();
   await expect(events(page).getByText("PauseAI Manchester Social")).toHaveCount(0);
   await frame(page, "only the events near Westminster", { of: events(page) });
@@ -39,7 +43,7 @@ test("events near a postcode", { tag: "@phone" }, async ({ page }) => {
 test("only the online events", async ({ page }) => {
   await openHome(page);
   await page.getByRole("button", { name: copy.online, exact: true }).click();
-  await expect(heading(page, copy.headingOnline)).toBeVisible();
+  await expect(page.getByRole("button", { name: copy.online, exact: true })).toHaveAttribute("aria-pressed", "true");
   await expect(events(page).getByText("Introduction to PauseAI UK (online)")).toBeVisible();
   await expect(events(page).getByText("PauseAI Manchester Social")).toHaveCount(0);
   await frame(page, "only the online events", { of: events(page) });
@@ -61,14 +65,14 @@ test("events near the device's location", async ({ page, context }) => {
   await openHome(page);
   await chooseButton(page).click();
   await page.getByRole("button", { name: copy.useLocation }).click();
-  await expect(heading(page, copy.headingNearYou)).toBeVisible();
+  await expect(nearButton(page, copy.nearYouShort)).toHaveAttribute("aria-pressed", "true");
   await expect(events(page).getByText("PauseAI Manchester Social")).toBeVisible();
   await expect(events(page).getByText("PauseAI London: Protest at Parliament")).toHaveCount(0);
   await frame(page, "only the events near the device's location", { of: events(page) });
 
   // Penzance, far from any event on the calendar.
   await context.setGeolocation({ latitude: 50.1186, longitude: -5.5372 });
-  await chooseButton(page).click();
+  await nearButton(page, copy.nearYouShort).click();
   await page.getByRole("button", { name: copy.useLocation }).click();
   await expect(events(page).getByText(copy.noneNear)).toBeVisible();
   await frame(page, "nothing on near the device's location", { of: events(page) });
@@ -78,12 +82,12 @@ test("a local group's events, venue set or not", async ({ page }) => {
   await openHome(page);
   await chooseButton(page).click();
   await page.getByRole("radio", { name: "Oxford" }).click();
-  await expect(heading(page, copy.headingNear("Oxford"))).toBeVisible();
+  await expect(nearButton(page, copy.nearShort("Oxford"))).toHaveAttribute("aria-pressed", "true");
   await expect(events(page).getByText("AI risk talk")).toBeVisible();
   await frame(page, "Oxford's events", { of: events(page) });
 
   // Glasgow's meeting has no venue yet, so it's Glasgow's by its name.
-  await chooseButton(page).click();
+  await nearButton(page, copy.nearShort("Oxford")).click();
   await page.getByRole("radio", { name: "Glasgow" }).click();
   await expect(events(page).getByText("PauseAI Scotland Meeting")).toBeVisible();
   await frame(page, "Glasgow's meeting, with no venue yet", { of: events(page) });
