@@ -59,9 +59,48 @@ export function mayWriteTo(mp: { isTest: boolean }): boolean {
   return mp.isTest || process.env.DEPLOY_CONTEXT === "production";
 }
 
-/** The letter's own address: reply+<hash>@letters.pauseai.uk. */
-export function letterAddress(replyHash: string): string {
-  return `reply+${replyHash}@${lettersDomain()}`;
+/** Letters that are still not ASCII once accents are taken off, and how to spell them. */
+const SPELLINGS: Record<string, string> = {
+  ß: "ss",
+  æ: "ae",
+  ø: "o",
+  œ: "oe",
+  ł: "l",
+  đ: "d",
+  ð: "d",
+  þ: "th",
+  ı: "i",
+};
+
+/**
+ * The sender's name as the start of an email address: lowercase ASCII words
+ * joined by dots ("Zoë O'Brien-Smith" is zoe.obrien.smith), at most 30
+ * characters, or "letter" when none of it is Latin script.
+ */
+export function mailboxName(name: string): string {
+  return (
+    name
+      .normalize("NFKD")
+      .replace(/\p{M}/gu, "")
+      .toLowerCase()
+      .replace(/[ßæøœłđðþı]/g, (letter) => SPELLINGS[letter])
+      .replace(/['’]/g, "")
+      .split(/[^a-z0-9]+/)
+      .filter(Boolean)
+      .join(".")
+      .slice(0, 30)
+      .replace(/\.$/, "") || "letter"
+  );
+}
+
+/**
+ * The letter's own address, <mailbox>@letters.pauseai.uk, where the mailbox
+ * is the sender's name and six random digits: jane.smith.482913. The mailbox
+ * is kept in letters.reply_hash. Older letters' addresses are reply+<hex>,
+ * and only the hex is kept (lib/server/postmark-webhooks.ts matches both).
+ */
+export function letterAddress(mailbox: string): string {
+  return `${mailbox}@${lettersDomain()}`;
 }
 
 /**
@@ -143,8 +182,8 @@ export async function submitLetter(form: LetterForm): Promise<SubmitResult> {
   const letter = form.letter;
   const body = toText(letter);
   const html = toHtml(letter);
-  const replyHash = (
-    await randomId(12, async () => {
+  const digits = (
+    await randomId(4, async () => {
       // The sender and how many they've sent: a different seed for each letter.
       const [{ sent }] = await query<{ sent: number }>(
         "SELECT count(*)::int AS sent FROM letters WHERE lower(sender_email) = lower($1)",
@@ -152,7 +191,8 @@ export async function submitLetter(form: LetterForm): Promise<SubmitResult> {
       );
       return `letter ${form.email} ${sent}`;
     })
-  ).toString("hex");
+  ).readUInt32BE();
+  const mailbox = `${mailboxName(form.name)}.${String(digits % 1_000_000).padStart(6, "0")}`;
   let id: number | undefined;
   try {
     id = await transaction(async (db) => {
@@ -180,7 +220,7 @@ export async function submitLetter(form: LetterForm): Promise<SubmitResult> {
           form.postcode.toUpperCase(),
           form.consent,
           form.subject,
-          replyHash,
+          mailbox,
         ],
         db,
       );
@@ -189,7 +229,7 @@ export async function submitLetter(form: LetterForm): Promise<SubmitResult> {
     });
     if (id === undefined) return fail(409, copy.errors.alreadySent);
 
-    const address = letterAddress(replyHash);
+    const address = letterAddress(mailbox);
     const messageId = await sendEmail({
       From: `"${headerName(form.name)} via PauseAI" <${address}>`,
       To: to,

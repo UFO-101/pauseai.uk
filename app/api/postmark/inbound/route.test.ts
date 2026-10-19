@@ -19,9 +19,8 @@ describeWithDatabase("POST /api/postmark/inbound", () => {
 
   // Postmark's inbound webhook payload, trimmed to what we read.
   const inbound = {
-    MailboxHash: "hash1",
     FromFull: { Email: "test-mp@example.org", Name: "Testy McTestface MP" },
-    ToFull: [{ Email: "reply+hash1@letters.pauseai.uk", Name: "", MailboxHash: "hash1" }],
+    ToFull: [{ Email: "jane.482913@letters.pauseai.uk", Name: "" }],
     CcFull: [],
     Subject: "Re: S",
     TextBody: "Thanks.",
@@ -31,7 +30,7 @@ describeWithDatabase("POST /api/postmark/inbound", () => {
     const mp = await addTestMp();
     await query(
       `INSERT INTO letters (campaign, politician_id, sender_name, sender_email, sender_address, sender_postcode, contact_consent, subject, reply_hash, status)
-       VALUES ('regulate-letter-pm', $1, 'Jane', 'jane@example.com', 'x', 'ZZ9 9ZZ', false, 'S', 'hash1', 'sent')`,
+       VALUES ('regulate-letter-pm', $1, 'Jane', 'jane@example.com', 'x', 'ZZ9 9ZZ', false, 'S', 'jane.482913', 'sent')`,
       [mp],
     );
     const to: string[] = [];
