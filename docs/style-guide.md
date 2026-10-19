@@ -135,6 +135,65 @@ padding, gap, font size or corner: they're tokens there. The kit's files
 whose sizes aren't tokens yet are listed in `stylelint.config.mjs`, to be
 converted, not added to. Elsewhere, use the tokens where they fit.
 
+### Using the spacing
+
+Pick the step by how closely the things belong together: the closer they
+belong, the smaller the step. A group's own items are always closer to each
+other than the group is to what's around it.
+
+| Step                     | For                                                                               |
+| ------------------------ | --------------------------------------------------------------------------------- |
+| `--space-1` (4px)        | Inside a small thing: a tag's padding, a note after a label, an icon and its word |
+| `--space-2` (8px)        | Items of one kind side by side: a row of tags, a hint under its field             |
+| `--space-3` (12px)       | A row of buttons or filters, a compact box's padding                              |
+| `--space-4` (16px)       | A box's padding, a form above or below the list it filters                        |
+| `--space-5` (24px)       | A card's padding, cards in a grid, one field to the next                          |
+| `--space-6` (32px)       | Parts of a section: a heading to what's under it, one group to the next           |
+| `--space-7`, `--space-8` | Big blocks of a page, and its top and bottom (48px, 64px)                         |
+| `--space-9` (80px)       | A `Section` band's top and bottom                                                 |
+
+- **Fields, tables and tags use the density's tokens, not `--space-*`**:
+  `--field-gap` between a label and its control, `--form-gap` between
+  fields, `--table-cell-padding`, `--tag-padding`. Then compact works
+  without anything else changing ("Density", below).
+- **Space things with the container's `gap`, not their margins.** A
+  component sets its own padding, and the gaps between its own children,
+  but not a margin round itself: where it sits is its container's job,
+  through `gap` or a `className` for its place in a layout
+  (`docs/code-structure.md`, "Styling"). The exceptions are the few that
+  always come after something and bring the space above them: `Hint` and
+  `FieldError` (a `--field-gap` under their field), `ButtonRow` and
+  `SmallPrint`.
+- **Smaller on a phone by whole steps.** At a breakpoint, drop a step or
+  two (`--space-6` to `--space-5`), rather than finding a value in between.
+
+### When a value isn't a token
+
+Spacing, type sizes and corners are tokens; most other sizes aren't, and
+take whatever value they need:
+
+- **Sizes that aren't spacing**: widths and heights (an avatar, a swatch,
+  `--measure-page`), borders and outlines (`1px`, `3px`), line heights,
+  shadows and offsets.
+- **Space that grows with the text**: in `em`, such as a checkbox lined up
+  with its label's first line (`Controls.module.css`). Stylelint allows
+  `em`, since it isn't a fixed size.
+- **Optical nudges**: a pixel or two to line an icon up with its text. Say
+  in a comment what it lines up.
+- **A size measured from something else**: the nav's height in
+  `scroll-padding-top`, the heights reserved for the signup form while it
+  loads (`OnboardingFormEmbed.module.css`). Say in a comment where the
+  number comes from.
+
+Outside `components/ui/`, an off-scale space or type size is allowed when
+nothing on the scale looks right, with a comment saying why. Inside it,
+Stylelint refuses one; for one of the cases above, use
+`/* stylelint-disable-next-line declaration-property-value-disallowed-list -- why */`.
+Don't add a token for a one-off: a new token is for a value two or more
+components share, and it goes in `styles/tokens.css` with what it's for.
+The files listed in `stylelint.config.mjs` aren't exceptions to copy: they're
+waiting to be converted.
+
 A page's band is `Section`, with 80px above and below, less on a phone.
 Widths are tokens too: `.container` is 1140px, a page's reading column
 `--measure-page` (880px), a page of cards `--measure-wide` (1080px). A

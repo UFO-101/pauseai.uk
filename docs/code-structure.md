@@ -185,7 +185,10 @@ only a variant. The look itself (colours, type, buttons, cards) is in
   uses the `-rgb` channels: `rgb(var(--white-rgb) / 0.1)`.
 - **In `components/ui/`, sizes are tokens too.** Margins, padding, gaps,
   font sizes and corners are `--space-*`, `--text-*`, `--radius-*` or the
-  density's tokens; Stylelint refuses a raw `px` or `rem` there. The
+  density's tokens; Stylelint refuses a raw `px` or `rem` there. Which
+  step to use, and when a value needn't be a token, is in
+  `docs/style-guide.md` ("Using the spacing", "When a value isn't a
+  token"). The
   kit's files whose sizes aren't tokens yet are listed in
   `stylelint.config.mjs`, to be converted, not added to.
 - **Density is a container's.** A screen of tables and filters (the staff
