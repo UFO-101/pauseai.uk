@@ -336,7 +336,7 @@ if (existsSync(page)) {
   // (tests/storyboard/report/page.ts). A script, as a page opened from disk can't fetch.
   writeFileSync(
     join(DIR, "latest.js"),
-    `window.storyboardLatest = ${JSON.stringify({ run: basename(runDir), at: runAt })};\n`,
+    `window.storyboardLatest = ${JSON.stringify({ run: basename(runDir), at: readJson(join(runDir, "storyboard.json")).generatedAt })};\n`,
   );
   prune(RUNS, RUNS_KEEP, runDir);
 }

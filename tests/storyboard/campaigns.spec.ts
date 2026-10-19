@@ -123,15 +123,16 @@ test(
         ToFull: [{ Email: address[1], Name: "", MailboxHash: address[2] }],
         CcFull: [],
         Subject: `Re: ${letter.Subject}`,
-        // That afternoon, by the fixed clock (FIXTURE_NOW), as an MP's office might answer.
-        Date: "Fri, 16 Oct 2026 15:42:00 +0100",
+        // The fixed clock's time (FIXTURE_NOW) in the MP's time zone: the letter
+        // and our forward of the reply are sent then too, so nothing's out of order.
+        Date: "Fri, 16 Oct 2026 13:00:00 +0100",
         TextBody: replyQuoting(letter),
       },
     });
     expect(await reply.json()).toEqual({ forwarded: 2 });
     const copied = newestEmailTo(sender)!;
     expect(copied.TextBody).toContain(MP_REPLY);
-    expect(copied.TextBody).toContain("Date: Fri, 16 Oct 2026 15:42:00 +0100");
+    expect(copied.TextBody).toContain("Date: Fri, 16 Oct 2026 13:00:00 +0100");
     expect(copied.ReplyTo).toBe("test-mp@example.org");
     await emailFrame(page, copied, "the MP's reply, forwarded to the sender");
     // Our copy is of this flow's reply: the subject carries the letter's, and the body the MP's words.

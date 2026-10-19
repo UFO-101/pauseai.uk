@@ -6,7 +6,7 @@ import type { Storyboard } from "./frames";
 //
 // Its title is when the run was made. A run's page is
 // runs/<when>/index.html, and scripts/storyboard.mjs writes the newest run's
-// name to ../../latest.js. The page reads that every few seconds, as a
+// name and time (its title's) to ../../latest.js. The page reads that every few seconds, as a
 // script (a page opened from disk can't fetch), and once a newer run has
 // finished it links to it.
 
@@ -216,8 +216,8 @@ function render() {
   document.getElementById("summary").textContent =
     frames.length + " frames in " + flows.length + " flows" +
     (data.withMain ? ", " + changed + " changed against main" : ", no run of main to compare with") +
-    (failed ? ", " + failed + " failed" : "") + ". " + isoLocal(new Date(data.generatedAt)) +
-    (carried ? "; " + plural(flows.length - carried, "flow") + " shot now, " + carried + " carried from earlier runs" : "");
+    (failed ? ", " + failed + " failed" : "") + "." +
+    (carried ? " " + plural(flows.length - carried, "flow") + " shot now, " + carried + " carried from earlier runs." : "");
 }
 
 function renderFrame(frame) {
