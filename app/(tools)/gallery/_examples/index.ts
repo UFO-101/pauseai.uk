@@ -18,7 +18,6 @@ import { tools } from "./tools";
 import { collateral } from "./collateral";
 import { collateralKit } from "./collateral-kit";
 import { staff } from "./staff";
-import { staffKit } from "./staff-kit";
 
 export const GROUPS: Group[] = [
   tokens,
@@ -37,5 +36,4 @@ export const GROUPS: Group[] = [
   collateral,
   collateralKit,
   staff,
-  staffKit,
 ];

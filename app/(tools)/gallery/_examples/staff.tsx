@@ -1,4 +1,5 @@
-// The staff screens' parts (app/(staff)/staff/_components), on fake
+// The staff screens' parts (app/(staff)/staff/_components), and the page
+// frame they're in, which sets the compact density, on fake
 // politicians, letters, runs and changes. Their links go to /staff pages,
 // which send anyone without a session to the login page.
 import { Button } from "@/components/ui/Button";
@@ -116,6 +117,21 @@ export const staff: Group = {
   id: "staff",
   title: "The staff interface",
   examples: [
+    {
+      name: "StaffPage",
+      file: "app/(staff)/staff/_components/ui/StaffPage.tsx",
+      variants: [
+        {
+          label: "A page's frame, at the compact density, with a heading and a line",
+          render: () => (
+            <StaffPage as="div">
+              <h1>An example staff page</h1>
+              <p>A line of text under its heading.</p>
+            </StaffPage>
+          ),
+        },
+      ],
+    },
     {
       name: "StaffHeader",
       file: "app/(staff)/staff/_components/StaffHeader.tsx",

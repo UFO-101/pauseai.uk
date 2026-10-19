@@ -25,7 +25,6 @@ const GROUPS = [
   "collateral",
   "collateral-kit",
   "staff",
-  "staff-kit",
 ];
 
 // The public pages section leaves the gallery to this one, so this checks
