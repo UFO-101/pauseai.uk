@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
-import { isPostmark, recordDeliveryProblem } from "@/lib/server/postmark-webhooks";
+import { handleDeliveryProblem } from "@/lib/server/delivery-problems";
+import { deliveryProblem, isPostmark } from "@/lib/server/postmark-webhooks";
 
-/** Postmark's bounce and spam complaint webhook. */
+/** Postmark's bounce and spam complaint webhook. Says whether it was a bounce or complaint it could record. */
 export async function POST(request: Request) {
   if (!isPostmark(request)) return NextResponse.json({ error: "Not allowed" }, { status: 401 });
-  const payload = await request.json().catch(() => ({}));
-  return NextResponse.json({ recorded: await recordDeliveryProblem(payload) });
+  const problem = deliveryProblem(await request.json().catch(() => ({})));
+  if (problem) await handleDeliveryProblem(problem, new URL(request.url).origin);
+  return NextResponse.json({ recorded: !!problem });
 }

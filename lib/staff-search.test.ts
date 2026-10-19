@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { historySearch, lettersSearch, politicianId } from "./staff-search";
+import { emailsSearch, historySearch, lettersSearch, politicianId } from "./staff-search";
 
 describe("historySearch", () => {
   it("filters by a job", () => {
@@ -29,5 +29,14 @@ describe("politicianId", () => {
   it("reads a whole number, and nothing else", () => {
     expect(politicianId("12")).toBe(12);
     for (const id of ["x", "1.5", "-1", ""]) expect(politicianId(id)).toBeUndefined();
+  });
+});
+
+describe("emailsSearch", () => {
+  it("filters by a hard bounce or a complaint, and by nothing else", () => {
+    expect(emailsSearch({ kind: "complaint" })).toEqual({ kind: "complaint", filter: "complaint" });
+    expect(emailsSearch({ kind: "hard" })).toEqual({ kind: "hard", filter: "hard" });
+    expect(emailsSearch({ kind: "soft" })).toEqual({ kind: "soft", filter: undefined });
+    expect(emailsSearch({})).toEqual({ kind: "", filter: undefined });
   });
 });

@@ -13,6 +13,7 @@ import {
   statusesOf,
   updatePolitician,
 } from "./politicians";
+import { recordProblem } from "./email";
 
 const PM = "regulate-letter-pm";
 const BILL = "support-sobel-bill";
@@ -36,21 +37,23 @@ describe("isHouse", () => {
 
 describe("politiciansSearch", () => {
   it("keeps what was typed, and filters by it", () => {
-    expect(politiciansSearch({ q: "Jo", house: "lords", campaign: BILL })).toEqual({
+    expect(politiciansSearch({ q: "Jo", house: "lords", campaign: BILL, email: "blocked" })).toEqual({
       q: "Jo",
       house: "lords",
       campaign: BILL,
-      filter: { search: "Jo", house: "lords", campaign: BILL },
+      email: "blocked",
+      filter: { search: "Jo", house: "lords", campaign: BILL, emailBlocked: true },
     });
   });
 
   it("filters by nothing that's blank, missing or not a house", () => {
-    const none = { search: undefined, house: undefined, campaign: undefined };
-    expect(politiciansSearch({})).toEqual({ q: "", house: "", campaign: "", filter: none });
-    expect(politiciansSearch({ q: "", house: "hogwarts", campaign: "" })).toEqual({
+    const none = { search: undefined, house: undefined, campaign: undefined, emailBlocked: undefined };
+    expect(politiciansSearch({})).toEqual({ q: "", house: "", campaign: "", email: "", filter: none });
+    expect(politiciansSearch({ q: "", house: "hogwarts", campaign: "", email: "other" })).toEqual({
       q: "",
       house: "hogwarts",
       campaign: "",
+      email: "other",
       filter: none,
     });
   });
@@ -70,6 +73,7 @@ describeWithDatabase("politicians", () => {
       constituency: "Cities of London and Westminster",
       email: "polly.placeholder.mp@parliament.uk",
       isTest: false,
+      unreachable: false,
     });
     expect(await findSittingMp("Ipswich")).toBeUndefined();
     expect(await findSittingMp("Testshire")).toBeUndefined();
@@ -133,8 +137,24 @@ describeWithDatabase("politicians", () => {
       email: "polly.placeholder.mp@parliament.uk",
       isTest: false,
       sitting: true,
+      emailBlocked: false,
       statuses: {},
     });
+  });
+
+  it("knows whose address is blocked, whatever its case, and lists only them when asked", async () => {
+    const mp = await addTestPolitician();
+    await addPeer();
+    await recordProblem({
+      address: "Polly.Placeholder.MP@parliament.uk",
+      messageId: null,
+      kind: "hard",
+      reason: "",
+      canReset: true,
+    });
+    expect(await findSittingMp("Cities of London and Westminster")).toMatchObject({ unreachable: true });
+    expect((await getPolitician(mp))!.emailBlocked).toBe(true);
+    expect((await listPoliticians({ emailBlocked: true })).map((p) => p.id)).toEqual([mp]);
   });
 
   it("edits other signers, but not MPs from Parliament or the test MP", async () => {

@@ -7,6 +7,7 @@ import { campaigns, copy } from "@/lib/content/email-your-mp";
 import { addTestMp, addTestPolitician, describeWithDatabase, useTestDatabase } from "@/tests/database";
 import { docFromMarkup } from "@/lib/letter-format";
 import { query } from "./db";
+import { recordProblem } from "./email";
 import {
   letterAddress,
   mailboxName,
@@ -180,8 +181,16 @@ describeWithDatabase("submitLetter", () => {
       sender_postcode: "ZZ9 9ZZ",
       contact_consent: true,
       status: "sent",
-      postmark_message_id: "msg-1",
     });
+    expect(await query("SELECT purpose, letter_id::int AS id, address, outcome, message_id FROM email_sends")).toEqual([
+      {
+        purpose: "letter",
+        id: Number(letter.id),
+        address: "test-mp@example.org",
+        outcome: "sent",
+        message_id: "msg-1",
+      },
+    ]);
     expect(letter).not.toHaveProperty("body");
     expect(letter).not.toHaveProperty("body_html");
     expect(letter.sent_at).not.toBeNull();
@@ -304,6 +313,33 @@ describeWithDatabase("submitLetter", () => {
 
     postmark();
     expect(await submitLetter(FORM)).toEqual({ ok: true });
+  });
+
+  it("keeps a letter to an MP whose address is blocked as not sent, and says why", async () => {
+    const sent = postmark();
+    await recordProblem({ address: "test-mp@example.org", messageId: null, kind: "hard", reason: "", canReset: true });
+    expect(await submitLetter(FORM)).toEqual({ ok: false, status: 409, message: copy.errors.unreachable });
+    expect(sent).toEqual([]);
+    expect(await query("SELECT status FROM letters")).toEqual([{ status: "not_sent" }]);
+    expect(
+      (await query<{ status: string }>("SELECT status FROM letter_events ORDER BY id")).map((e) => e.status),
+    ).toEqual(["sending", "not_sent"]);
+  });
+
+  it("doesn't count a letter that wasn't sent towards the sender's one per campaign", async () => {
+    vi.stubEnv("DEPLOY_CONTEXT", "production");
+    postmark();
+    const real = { ...FORM, postcode: "SW1A 1AA" };
+    await recordProblem({
+      address: "polly.placeholder.mp@parliament.uk",
+      messageId: null,
+      kind: "hard",
+      reason: "",
+      canReset: true,
+    });
+    expect(await submitLetter(real)).toMatchObject({ status: 409 });
+    await query("DELETE FROM email_blocks");
+    expect(await submitLetter(real)).toEqual({ ok: true });
   });
 
   it("says it failed if the letter can't be saved", async () => {

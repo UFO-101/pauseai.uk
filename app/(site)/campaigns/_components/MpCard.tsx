@@ -10,7 +10,15 @@ export default function MpCard({ mp }: { mp: Mp }) {
       <h3>{mp.name}</h3>
       <p className={styles.constituency}>{copy.lookup.mpOf(mp.constituency)}</p>
       {/* data-mp-email: the visual diff masks it, as the test MP's inbox differs between hosts. */}
-      <p data-mp-email>{mp.email ? <a href={`mailto:${mp.email}`}>{mp.email}</a> : copy.lookup.noEmail}</p>
+      <p data-mp-email>
+        {mp.email ? (
+          <a href={`mailto:${mp.email}`}>{mp.email}</a>
+        ) : mp.unreachable ? (
+          copy.lookup.unreachable
+        ) : (
+          copy.lookup.noEmail
+        )}
+      </p>
     </div>
   );
 }

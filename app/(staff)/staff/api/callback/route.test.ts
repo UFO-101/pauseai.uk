@@ -30,7 +30,7 @@ async function linkToken(): Promise<string> {
   server.use(
     http.post("https://api.postmarkapp.com/email", async ({ request }) => {
       body = ((await request.json()) as { TextBody: string }).TextBody;
-      return HttpResponse.json({ ErrorCode: 0, MessageID: "m" });
+      return HttpResponse.json({ ErrorCode: 0, MessageID: crypto.randomUUID() });
     }),
   );
   await sendLoginLink("jo@pauseai.uk", "", BROWSER);

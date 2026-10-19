@@ -4,11 +4,12 @@ import { staffCopy } from "@/lib/content/staff-interface";
 import styles from "./StaffHeader.module.css";
 
 /** The staff pages in the bar, in order. */
-export type StaffPage = "politicians" | "letters" | "import" | "history" | "changes";
+export type StaffPage = "politicians" | "letters" | "emails" | "import" | "history" | "changes";
 
 const PAGES: [StaffPage, string][] = [
   ["politicians", "/staff/politicians"],
   ["letters", "/staff/letters"],
+  ["emails", "/staff/emails"],
   ["import", "/staff/import-data"],
   ["history", "/staff/import-history"],
   ["changes", "/staff/audit-log"],

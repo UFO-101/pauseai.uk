@@ -37,7 +37,7 @@ describeWithDatabase("POST /api/postmark/inbound", () => {
     server.use(
       http.post("https://api.postmarkapp.com/email", async ({ request }) => {
         to.push(((await request.json()) as { To: string }).To);
-        return HttpResponse.json({ ErrorCode: 0, MessageID: "m" });
+        return HttpResponse.json({ ErrorCode: 0, MessageID: `m-${to.length}` });
       }),
     );
     expect(await (await POST(webhookRequest("/api/postmark/inbound", inbound))).json()).toEqual({ forwarded: 2 });

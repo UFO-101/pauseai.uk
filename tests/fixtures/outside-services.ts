@@ -103,6 +103,14 @@ export function fixtureResponse(url: string, init?: RequestInit): Response | und
       Message: "OK",
     });
   }
+  const unsuppress =
+    hostname === "api.postmarkapp.com" && pathname.match(/^\/message-streams\/[\w-]+\/suppressions\/delete$/);
+  if (unsuppress) {
+    const { Suppressions } = JSON.parse(String(init!.body)) as { Suppressions: { EmailAddress: string }[] };
+    return json({
+      Suppressions: Suppressions.map(({ EmailAddress }) => ({ EmailAddress, Status: "Deleted", Message: null })),
+    });
+  }
   if (hostname === "challenges.cloudflare.com" && pathname === "/turnstile/v0/siteverify") {
     return json({ success: true, hostname: "localhost" });
   }

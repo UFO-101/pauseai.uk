@@ -4,7 +4,8 @@ import { server } from "@/tests/fixtures/msw";
 import { copy } from "@/lib/content/email-your-mp";
 import { addTestMp, describeWithDatabase, useTestDatabase } from "@/tests/database";
 import { query } from "./db";
-import { forwardReply, isAutoReply, isPostmark, recordDeliveryProblem } from "./postmark-webhooks";
+import { recordProblem } from "./email";
+import { forwardReply, isAutoReply, isPostmark, deliveryProblem } from "./postmark-webhooks";
 
 const POSTMARK = "https://api.postmarkapp.com/email";
 const basic = (credentials: string) => `Basic ${Buffer.from(credentials).toString("base64")}`;
@@ -17,7 +18,10 @@ beforeEach(() => {
   vi.stubEnv("POSTMARK_SERVER_TOKEN", "server-token");
   vi.stubEnv("REPLIES_INBOX", "replies@pauseai.uk");
 });
-afterEach(() => vi.unstubAllEnvs());
+afterEach(() => {
+  vi.unstubAllEnvs();
+  vi.restoreAllMocks();
+});
 
 describe("isPostmark", () => {
   it("accepts only our username and password", () => {
@@ -34,51 +38,61 @@ describe("isPostmark", () => {
 });
 
 /** A sent letter to the test MP. Returns its mailbox: its address, but for the domain. */
-async function sentLetter(messageId = "msg-1", mailbox = "jane.smith.482913"): Promise<string> {
+async function sentLetter(mailbox = "jane.smith.482913"): Promise<string> {
   const mp = await addTestMp();
   const [{ reply_hash }] = await query<{ reply_hash: string }>(
     `INSERT INTO letters (campaign, politician_id, sender_name, sender_email, sender_address, sender_postcode, contact_consent,
-       subject, reply_hash, status, postmark_message_id)
-     VALUES ('regulate-letter-pm', $1, 'Jane Smith', 'Jane@Example.com', '1 High St', 'ZZ9 9ZZ', true, 'S', $3, 'sent', $2)
+       subject, reply_hash, status)
+     VALUES ('regulate-letter-pm', $1, 'Jane Smith', 'Jane@Example.com', '1 High St', 'ZZ9 9ZZ', true, 'S', $2, 'sent')
      RETURNING reply_hash`,
-    [mp, messageId, mailbox],
+    [mp, mailbox],
   );
   return reply_hash;
 }
 
-describeWithDatabase("recordDeliveryProblem", () => {
-  useTestDatabase();
-
-  it("marks a letter bounced, with Postmark's reason", async () => {
-    await sentLetter();
+describe("deliveryProblem", () => {
+  it("is a hard bounce when Postmark suppressed the address, with its reason, and whether it can be reset", () => {
     expect(
-      await recordDeliveryProblem({
+      deliveryProblem({
         RecordType: "Bounce",
         MessageID: "msg-1",
         Type: "HardBounce",
         Description: "Unknown user",
-        Email: "test-mp@example.org",
+        Email: "Test-MP@example.org",
+        Inactive: true,
+        CanActivate: true,
       }),
-    ).toBe(true);
-    expect(await query("SELECT status FROM letters")).toEqual([{ status: "bounced" }]);
-    expect(await query("SELECT status, details FROM letter_events")).toEqual([
-      { status: "bounced", details: { type: "HardBounce", description: "Unknown user", email: "test-mp@example.org" } },
-    ]);
+    ).toEqual({
+      address: "Test-MP@example.org",
+      messageId: "msg-1",
+      kind: "hard",
+      reason: "Unknown user",
+      canReset: true,
+      details: { type: "HardBounce" },
+    });
   });
 
-  it("marks a spam complaint", async () => {
-    await sentLetter();
-    expect(await recordDeliveryProblem({ RecordType: "SpamComplaint", MessageID: "msg-1" })).toBe(true);
-    expect(await query("SELECT status FROM letters")).toEqual([{ status: "spam_complaint" }]);
+  it("is a soft bounce when Postmark didn't suppress the address", () => {
+    expect(deliveryProblem({ RecordType: "Bounce", Type: "SoftBounce", Email: "a@example.org" })).toEqual({
+      address: "a@example.org",
+      messageId: null,
+      kind: "soft",
+      reason: "",
+      canReset: false,
+      details: { type: "SoftBounce" },
+    });
   });
 
-  it("ignores other records, and messages that aren't letters", async () => {
-    await sentLetter();
-    expect(await recordDeliveryProblem({ RecordType: "Delivery", MessageID: "msg-1" })).toBe(false);
-    expect(await recordDeliveryProblem({ RecordType: "Bounce" })).toBe(false);
-    expect(await recordDeliveryProblem({})).toBe(false);
-    expect(await recordDeliveryProblem({ RecordType: "Bounce", MessageID: "a-confirmation-email" })).toBe(false);
-    expect(await query("SELECT status FROM letters")).toEqual([{ status: "sent" }]);
+  it("is a complaint for a spam complaint", () => {
+    expect(deliveryProblem({ RecordType: "SpamComplaint", MessageID: "m", Email: "a@example.org" })).toMatchObject({
+      kind: "complaint",
+    });
+  });
+
+  it("is nothing for other records, or one with no address", () => {
+    expect(deliveryProblem({ RecordType: "Delivery", Email: "a@example.org" })).toBeUndefined();
+    expect(deliveryProblem({ RecordType: "Bounce", MessageID: "msg-1" })).toBeUndefined();
+    expect(deliveryProblem({})).toBeUndefined();
   });
 });
 
@@ -91,7 +105,7 @@ describeWithDatabase("forwardReply", () => {
     server.use(
       http.post(POSTMARK, async ({ request }) => {
         sent.push((await request.json()) as Sent);
-        return HttpResponse.json({ ErrorCode: 0, MessageID: "fwd" });
+        return HttpResponse.json({ ErrorCode: 0, MessageID: `fwd-${sent.length}` });
       }),
     );
     return sent;
@@ -233,15 +247,29 @@ describeWithDatabase("forwardReply", () => {
     expect(sent).toHaveLength(6);
   });
 
+  it("skips a recipient whose address is blocked, and throws if a forward fails, so Postmark tries again", async () => {
+    const mailbox = await sentLetter();
+    const sent = postmark();
+    await recordProblem({ address: "jane@example.com", messageId: null, kind: "hard", reason: "", canReset: true });
+    expect(await forwardReply(reply(mailbox))).toEqual(["replies@pauseai.uk", "Jane@Example.com"]);
+    expect(sent.map((e) => e.To)).toEqual(["replies@pauseai.uk"]);
+
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    server.use(http.post(POSTMARK, () => HttpResponse.json({ ErrorCode: 300, Message: "Invalid" }, { status: 422 })));
+    await expect(forwardReply(reply(mailbox, { MessageID: "inbound-2" }))).rejects.toThrow(
+      /Couldn't forward a reply to letter \d+/,
+    );
+  });
+
   it("finds an older letter by its reply+<hex> address", async () => {
-    await sentLetter("msg-1", "3f9a0c1b2d4e5f60718293a4");
+    await sentLetter("3f9a0c1b2d4e5f60718293a4");
     postmark();
     expect(await forwardReply(reply("reply+3F9A0C1B2D4E5F60718293A4"))).toHaveLength(2);
     expect(await events()).toHaveLength(1);
   });
 
   it("takes the letter Postmark delivered the reply to, when it went to two", async () => {
-    await sentLetter("msg-1", "jane.smith.482913");
+    await sentLetter();
     const sam = await query<{ id: number }>(
       `INSERT INTO letters (campaign, politician_id, sender_name, sender_email, sender_address, sender_postcode, contact_consent,
          subject, reply_hash, status)

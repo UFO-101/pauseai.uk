@@ -25,6 +25,7 @@ describeWithDatabase("findMp", () => {
         constituency: "Cities of London and Westminster",
         email: "polly.placeholder.mp@parliament.uk",
         isTest: false,
+        unreachable: false,
       },
       place: { latitude: 51.501009, longitude: -0.141588 },
     });

@@ -14,6 +14,9 @@ export const describeWithDatabase = describe.skipIf(process.env.NETLIFY === "tru
 const TABLES = [
   "audit_log",
   "campaign_statuses",
+  "email_blocks",
+  "email_problems",
+  "email_sends",
   "import_runs",
   "letter_events",
   "letters",

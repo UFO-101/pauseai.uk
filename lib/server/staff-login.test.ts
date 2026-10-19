@@ -1,4 +1,4 @@
-import { createHash } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { http, HttpResponse } from "msw";
 import { server } from "@/tests/fixtures/msw";
@@ -19,7 +19,7 @@ const POSTMARK = "https://api.postmarkapp.com/email";
 type Sent = { From: string; To: string; Subject: string; TextBody: string };
 
 /** Records each email sent through Postmark. */
-function postmark(answer: () => Response = () => HttpResponse.json({ ErrorCode: 0, MessageID: "m" })) {
+function postmark(answer: () => Response = () => HttpResponse.json({ ErrorCode: 0, MessageID: randomUUID() })) {
   const sent: Sent[] = [];
   server.use(
     http.post(POSTMARK, async ({ request }) => {

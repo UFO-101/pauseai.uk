@@ -45,6 +45,7 @@ export default function PoliticianTable({ politicians, markSigned }: Props) {
               <Link href={`/staff/politicians/${p.id}`}>{p.name}</Link>{" "}
               {p.isTest && <Tag>{staffCopy.politicians.testMp}</Tag>}
               {!p.sitting && <Tag>{staffCopy.politicians.notSitting}</Tag>}
+              {p.emailBlocked && <Tag tone="amber">{staffCopy.politicians.emailBlocked}</Tag>}
             </td>
             <td>{staffCopy.houses[p.house]}</td>
             <td>{p.constituency}</td>

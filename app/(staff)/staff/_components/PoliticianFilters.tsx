@@ -6,10 +6,10 @@ import { Select, TextInput } from "@/components/ui/Controls";
 import { Field } from "@/components/ui/Field";
 import { FilterForm } from "@/components/ui/Form";
 
-export type Filters = { search: string; house: string; campaign: string };
+export type Filters = { search: string; house: string; campaign: string; email: string };
 
 /** Search and filter the politicians list. A GET form, so the URL holds the filter. */
-export default function PoliticianFilters({ search, house, campaign }: Filters) {
+export default function PoliticianFilters({ search, house, campaign, email }: Filters) {
   return (
     <FilterForm method="get" action="/staff/politicians" className={styles.filters}>
       <Field label={staffCopy.politicians.search}>
@@ -34,6 +34,12 @@ export default function PoliticianFilters({ search, house, campaign }: Filters) 
               {c.title}
             </option>
           ))}
+        </Select>
+      </Field>
+      <Field label={staffCopy.fields.email}>
+        <Select name="email" defaultValue={email}>
+          <option value="">{staffCopy.politicians.anyEmail}</option>
+          <option value="blocked">{staffCopy.politicians.emailBlocked}</option>
         </Select>
       </Field>
       <Button variant="primary" size="small" type="submit">

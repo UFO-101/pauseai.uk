@@ -59,7 +59,7 @@ describeWithDatabase("migration 0013_import_runs", () => {
        ('2026-10-16T02:00:00Z', '{"ok":false,"error":"No PDF linked"}')`,
     );
 
-    expect(migrate(db.url, { appliedUpTo: "0012" })).toEqual(["0013_import_runs"]);
+    expect(migrate(db.url, { appliedUpTo: "0012" })[0]).toBe("0013_import_runs");
 
     expect(
       await query(

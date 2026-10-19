@@ -6,11 +6,12 @@ import { campaignBySlug, looksLikeEmail } from "@/lib/email-your-mp";
 import { checkDoc, isBlank, toHtml, toText, type LetterDoc } from "@/lib/letter-format";
 import { query, transaction, type Queryable } from "./db";
 import { findMp } from "./find-mp";
-import { headerName, lettersDomain, sendEmail } from "./postmark";
+import { send } from "./email";
+import { headerName, lettersDomain } from "./postmark";
 import { randomId } from "./random-id";
 import { checkNotSpam } from "./turnstile";
 
-// A letter from the form, sent through Postmark from the letter's own
+// A letter from the form, sent from the letter's own
 // address as soon as the form is accepted.
 
 export type LetterForm = {
@@ -155,8 +156,9 @@ async function attachments(campaignSlug: string) {
 /**
  * Checks a letter and sends it to the MP straight away. Each sender email
  * gets one letter per campaign, except to the test MPs, so they can be tried
- * again and again. If Postmark refuses it, nothing is kept, so the sender
- * can try again.
+ * again and again. If it fails to send, nothing is kept, so the sender can
+ * try again. If the MP's address is blocked, as it bounced before, the
+ * letter is kept as not sent, and doesn't count.
  */
 export async function submitLetter(form: LetterForm): Promise<SubmitResult> {
   const spam = await checkNotSpam(form);
@@ -207,7 +209,7 @@ export async function submitLetter(form: LetterForm): Promise<SubmitResult> {
       if (!mp.isTest) {
         const [{ count }] = await query<{ count: number }>(
           `SELECT count(*)::int AS count FROM letters l JOIN politicians p ON p.id = l.politician_id
-           WHERE lower(l.sender_email) = lower($1) AND l.campaign = $2 AND NOT p.is_test`,
+           WHERE lower(l.sender_email) = lower($1) AND l.campaign = $2 AND NOT p.is_test AND l.status <> 'not_sent'`,
           [form.email, campaign.slug],
           db,
         );
@@ -236,24 +238,34 @@ export async function submitLetter(form: LetterForm): Promise<SubmitResult> {
     if (id === undefined) return fail(409, copy.errors.alreadySent);
 
     const address = letterAddress(mailbox);
-    const messageId = await sendEmail({
-      From: `"${headerName(form.name)} via PauseAI" <${address}>`,
-      To: recipient(mp, to),
-      Bcc: bcc(),
-      ReplyTo: replyTo(form, address),
-      Subject: form.subject,
-      TextBody: body,
-      HtmlBody: html,
-      Attachments: await attachments(campaign.slug),
-      Metadata: { letter: String(id), campaign: campaign.slug },
-      Tag: campaign.slug,
-    });
-    await query("UPDATE letters SET status = 'sent', postmark_message_id = $2, sent_at = now() WHERE id = $1", [
+    const result = await send(
+      {
+        From: `"${headerName(form.name)} via PauseAI" <${address}>`,
+        To: recipient(mp, to),
+        Bcc: bcc(),
+        ReplyTo: replyTo(form, address),
+        Subject: form.subject,
+        TextBody: body,
+        HtmlBody: html,
+        Attachments: await attachments(campaign.slug),
+        Metadata: { letter: String(id), campaign: campaign.slug },
+        Tag: campaign.slug,
+      },
+      "letter",
       id,
-      messageId,
-    ]);
-    await logEvent(id, "sent", { messageId });
-    return { ok: true };
+    );
+    if (result.sent) {
+      await query("UPDATE letters SET status = 'sent', sent_at = now() WHERE id = $1", [id]);
+      await logEvent(id, "sent", { messageId: result.id });
+      return { ok: true };
+    }
+    if (result.reason === "blocked") {
+      // Kept, so staff see someone tried to write to an MP whose address doesn't work.
+      await query("UPDATE letters SET status = 'not_sent' WHERE id = $1", [id]);
+      await logEvent(id, "not_sent", {});
+      return fail(409, copy.errors.unreachable);
+    }
+    throw new Error("the email wasn't sent");
   } catch (error) {
     console.error(`Couldn't send letter ${id ?? "(not saved)"}:`, error);
     if (id !== undefined) await query("DELETE FROM letters WHERE id = $1", [id]);
