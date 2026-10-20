@@ -7,6 +7,14 @@ describe("staff interface copy", () => {
     for (const n of ["12", "3", "4"]) expect(result).toContain(n);
   });
 
+  it("ends the bounce's reason with one full stop, whether Postmark's has one or not", () => {
+    for (const reason of ["Mailbox not found.", "Mailbox not found"]) {
+      expect(staffCopy.alert.body("Testy MP", "testy@example.org", reason, "https://example.org")).toContain(
+        "didn't arrive: Mailbox not found. Nothing more",
+      );
+    }
+  });
+
   it("names every house and status", () => {
     expect(Object.keys(staffCopy.houses)).toEqual([
       "commons",
