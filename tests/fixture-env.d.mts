@@ -1,4 +1,3 @@
-export const DEFAULT_LOCAL_URL: string;
 export const LOCAL_URL: string;
 export const MAIN_URL: string;
 export const OUTBOX_DIR: string;

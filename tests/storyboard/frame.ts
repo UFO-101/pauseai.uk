@@ -2,7 +2,7 @@ import { test, type Locator, type Page } from "@playwright/test";
 import sharp from "sharp";
 import { emailView } from "../fixtures/email-view";
 import type { OutboxEmail } from "../fixtures/outbox";
-import { DEFAULT_LOCAL_URL, LOCAL_URL } from "../fixture-env.mjs";
+import { LOCAL_URL } from "../fixture-env.mjs";
 
 /**
  * A frame of the storyboard: a caption, and, when the run takes screenshots
@@ -119,6 +119,9 @@ async function wholePage(page: Page): Promise<Buffer> {
     .toBuffer();
 }
 
+/** The site's address in a pictured email: a domain reserved for examples (RFC 2606), so it can't pass for a working link. */
+const SHOWN_ORIGIN = "https://pauseai.example.org";
+
 /**
  * A frame of an email the build sent (from the outbox, tests/steps.ts), as a
  * plain mail app shows it (tests/fixtures/email-view.ts): its headers, its
@@ -127,11 +130,11 @@ async function wholePage(page: Page): Promise<Buffer> {
  *
  * A link in an email has the address of the server that sent it, and main's
  * build and this branch's run on different ports, so the same email was
- * pictured differently on each side. It's pictured with the address this
- * branch's build has by default, whichever sent it.
+ * pictured differently on each side. It's pictured with SHOWN_ORIGIN in
+ * place of the sending server's address.
  */
 export async function emailFrame(page: Page, email: OutboxEmail, caption: string): Promise<void> {
-  const shown = (text: string) => text.replaceAll(new URL(LOCAL_URL).origin, new URL(DEFAULT_LOCAL_URL).origin);
+  const shown = (text: string) => text.replaceAll(new URL(LOCAL_URL).origin, SHOWN_ORIGIN);
   const mail = await page.context().newPage();
   try {
     await mail.setContent(

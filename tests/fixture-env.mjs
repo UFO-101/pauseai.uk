@@ -8,10 +8,8 @@
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-/** Where this branch's build runs unless LOCAL_URL says otherwise. */
-export const DEFAULT_LOCAL_URL = "http://localhost:3100";
 /** This branch's build, under test. Not the dev server's port, so a running `npm run dev` is left alone. */
-export const LOCAL_URL = process.env.LOCAL_URL ?? DEFAULT_LOCAL_URL;
+export const LOCAL_URL = process.env.LOCAL_URL ?? "http://localhost:3100";
 /** Main's build (scripts/serve-main.mjs), for the storyboard's comparison. */
 export const MAIN_URL = process.env.MAIN_URL ?? "http://localhost:3001";
 
