@@ -33,7 +33,7 @@ async function linkToken(): Promise<string> {
       return HttpResponse.json({ ErrorCode: 0, MessageID: crypto.randomUUID() });
     }),
   );
-  await sendLoginLink("jo@pauseai.uk", "", BROWSER);
+  await sendLoginLink("jo@pauseai.uk", new Request("https://pauseai.uk/staff/api/login"), BROWSER);
   return body.match(/token=([\w-]+)/)![1];
 }
 

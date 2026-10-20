@@ -1,6 +1,7 @@
 import "server-only";
 import { createHash, randomBytes } from "node:crypto";
 import { staffCopy } from "@/lib/content/staff-interface";
+import { siteUrl } from "@/lib/site-url";
 import { LOGIN_BROWSER_COOKIE, LOGIN_LINK_PATH } from "@/lib/staff-session";
 import { query, transaction } from "./db";
 import { send } from "./email";
@@ -45,32 +46,17 @@ export function loginBrowserCookie(browser: string) {
 }
 
 /**
- * Where login links point. Fixed at build time from Netlify's own settings
- * (next.config.ts), never from the request, whose Host an attacker could
- * set: a link to their own site would hand them the token. Only a local
- * build, which Netlify didn't make, uses the request's origin.
- */
-export function linkOrigin(requestOrigin: string): string | undefined {
-  if (process.env.SITE_ORIGIN) return process.env.SITE_ORIGIN;
-  return process.env.DEPLOY_CONTEXT === "local" ? requestOrigin : undefined;
-}
-
-/**
  * Emails a login link to a pauseai.uk address, that works only in the
  * browser holding `browser`. Says nothing either way, so the form can't be
  * used to find out which addresses work.
  */
-export async function sendLoginLink(typed: string, requestOrigin: string, browser: string): Promise<void> {
+export async function sendLoginLink(typed: string, request: Request, browser: string): Promise<void> {
   const email = typed.trim().toLowerCase();
-  const origin = linkOrigin(requestOrigin);
   if (!isStaffEmail(email)) {
     console.info("No staff login link sent: the address typed isn't at pauseai.uk");
     return;
   }
-  if (!origin) {
-    console.error("Staff login links can't be sent: SITE_ORIGIN isn't set");
-    return;
-  }
+  const link = siteUrl(LOGIN_LINK_PATH, request);
   const token = await transaction(async (db) => {
     // Locks out a second request for the same address until this one is saved.
     await query("SELECT pg_advisory_xact_lock(hashtext($1))", [email], db);
@@ -99,7 +85,7 @@ export async function sendLoginLink(typed: string, requestOrigin: string, browse
       From: `PauseAI UK staff login <noreply@${notifyDomain()}>`,
       To: email,
       Subject: staffCopy.loginEmail.subject,
-      TextBody: staffCopy.loginEmail.body(`${origin}${LOGIN_LINK_PATH}?token=${token}`, LINK_MINUTES),
+      TextBody: staffCopy.loginEmail.body(`${link.href}?token=${token}`, LINK_MINUTES),
       Tag: "staff-login",
     },
     "staff-login",

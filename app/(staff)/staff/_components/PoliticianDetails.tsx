@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { staffCopy } from "@/lib/content/staff-interface";
 import type { EmailBlock } from "@/lib/server/email";
 import type { Politician } from "@/lib/server/politicians";
@@ -11,7 +12,7 @@ import { Muted } from "@/components/ui/Text";
  * A politician's page: their name, what's known of them, and the form to
  * edit them, for a signer the policy team added. Airtable's MPs are edited
  * there, and the test MPs not at all. If their address is blocked, why,
- * and a way to unblock it.
+ * linked to the blocked emails page, and a way to unblock it.
  */
 export default function PoliticianDetails({
   politician,
@@ -39,7 +40,9 @@ export default function PoliticianDetails({
         <>
           <p>
             <Tag tone="amber">{staffCopy.politicians.emailBlocked}</Tag>{" "}
-            {staffCopy.politician.blocked(block.reason, staffTime(block.since))}
+            <Link href="/staff/blocked-emails">
+              {staffCopy.politician.blocked(block.reason, staffTime(block.since))}
+            </Link>
           </p>
           <UnblockForm block={block} action={unblock} />
         </>

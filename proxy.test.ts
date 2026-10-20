@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
 // Next 16.3.2 still exports this under its Middleware name, though its docs
 // call it unstable_doesProxyMatch.
@@ -8,6 +8,9 @@ import { config, proxy } from "./proxy";
 function visit(path: string, cookie?: string) {
   return proxy(new NextRequest(`https://pauseai.uk${path}`, { headers: cookie ? { cookie } : {} }));
 }
+
+beforeEach(() => vi.stubEnv("SITE_ORIGIN", "https://pauseai.uk"));
+afterEach(() => vi.unstubAllEnvs());
 
 describe("proxy", () => {
   it("runs on /staff and everything under it, and nowhere else", () => {

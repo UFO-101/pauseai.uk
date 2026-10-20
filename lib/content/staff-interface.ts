@@ -30,7 +30,7 @@ export const staffCopy = {
     changes: "Audit log",
     history: "Import history",
     letters: "Letters",
-    emails: "Addresses",
+    emails: "Blocked emails",
     logout: "Log out",
   },
   houses: {
@@ -55,7 +55,7 @@ export const staffCopy = {
     testMp: "Test",
     notSitting: "No longer sitting",
     noEmail: "No email",
-    // On a politician whose address is blocked (/staff/blocked-addresses), and the filter for them.
+    // On a politician whose address is blocked (/staff/blocked-emails), and the filter for them.
     emailBlocked: "Email blocked",
     anyEmail: "All",
     // The button in each campaign's column, and the bill's column, which
@@ -81,9 +81,9 @@ export const staffCopy = {
     // Under their name, when their address is blocked: why, and since when.
     blocked: (reason: string, since: string) => `Email blocked since ${since}: ${reason}`,
   },
-  // The page of blocked addresses (/staff/blocked-addresses), and the bounces and complaints that blocked them.
+  // The page of blocked addresses (/staff/blocked-emails), and the bounces and complaints that blocked them.
   emails: {
-    title: "Blocked addresses",
+    title: "Blocked emails",
     intro: "Nothing is sent to these addresses until they're unblocked.",
     none: "None.",
     allKinds: "All",

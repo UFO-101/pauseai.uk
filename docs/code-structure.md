@@ -94,12 +94,16 @@ Route groups like `(site)` don't appear in URLs. Folders starting with `_`
   one that would break an older browser.
 - **Layouts own the chrome.** Pages don't render `<Nav>`; their route
   group's layout does.
-- **Outside services** (Luma, Airtable) are only called from `lib/server/`,
-  through `outsideFetch` (`lib/server/outside-fetch.ts`), so tests can swap in
-  fixtures. ESLint rules (`npm run lint`) fail on
-  their API hosts anywhere else, and lock Airtable to
-  `lib/server/airtable.ts`. Files there import `server-only`, so they can't
-  end up in a browser bundle.
+- **Outside services** (Luma, Airtable, Postmark, postcodes.io, ...) are
+  only called from `lib/server/`, through `outsideFetch`
+  (`lib/server/outside-fetch.ts`), so tests can swap in fixtures. ESLint
+  rules (`npm run lint`) fail on a plain `fetch()` in server code, and lock
+  each of Airtable, Luma and Postmark to its own client. Files there import
+  `server-only`, so they can't end up in a browser bundle.
+- **Email** goes out only through `send()` (`lib/server/email.ts`), which
+  skips blocked addresses and records each send (`docs/domain-concepts.md`).
+  Only it may import `sendEmail` or `unsuppress` from Postmark's client,
+  `lib/server/postmark.ts` (an ESLint rule).
 - **The database** is only reached through `lib/server/db.ts`, which is the
   only file that may import `pg` or read `NETLIFY_DB_URL` (an ESLint rule,
   in `npm run lint`). Queries are plain SQL; no ORM.
@@ -110,6 +114,14 @@ Route groups like `(site)` don't appear in URLs. Folders starting with `_`
   run `npm run db:schema` and commit `netlify/database/schema.sql`, the
   whole schema as the migrations leave it, so the PR shows what changed. A
   test fails while it's out of date.
+- **Links to the site** in emails and redirects are built with
+  `siteUrl(path, request)` (`lib/site-url.ts`), on the deploy's own address
+  (`SITE_ORIGIN`, set in `next.config.ts` from Netlify's settings):
+  `https://pauseai.uk` in production. On Netlify a request's own URL has the
+  `main--pauseaiuk.netlify.app` host, and anyone can set its Host, so the
+  site's code never reads a request's URL, origin or Host header, or
+  `SITE_ORIGIN` itself (an ESLint rule, in `npm run lint`). Links in pages
+  are relative.
 - **Staff pages** each call `requireStaff()` (`lib/server/staff-auth.ts`)
   first, as does every staff route handler and Server Action
   (`tests/checks/staff-auth.test.ts`). `proxy.ts` only checks the cookie exists.

@@ -8,7 +8,6 @@ import { query } from "./db";
 import {
   HOURLY_LINKS,
   isStaffEmail,
-  linkOrigin,
   loginBrowser,
   loginBrowserCookie,
   sendLoginLink,
@@ -31,6 +30,9 @@ function postmark(answer: () => Response = () => HttpResponse.json({ ErrorCode: 
 }
 
 const tokenFrom = (email: Sent) => email.TextBody.match(/\/staff\/api\/callback\?token=([\w-]+)/)![1];
+
+/** A request for a link, which on Netlify arrives on the netlify.app host. */
+const REQUEST = new Request("https://main--pauseaiuk.netlify.app/staff/api/login", { method: "POST" });
 
 /** The browser that asks for the links, and another one. */
 const BROWSER = loginBrowser(undefined);
@@ -62,14 +64,6 @@ it("knows a pauseai.uk address, and nothing else", () => {
   }
 });
 
-it("points links at the deploy's own address, never the request's, except in a local build", () => {
-  expect(linkOrigin("https://evil.example")).toBe("https://pauseai.uk");
-  vi.stubEnv("SITE_ORIGIN", "");
-  expect(linkOrigin("https://evil.example")).toBeUndefined();
-  vi.stubEnv("DEPLOY_CONTEXT", "local");
-  expect(linkOrigin("http://localhost:3000")).toBe("http://localhost:3000");
-});
-
 it("keeps a browser's token from an earlier request, and otherwise makes a new one", () => {
   expect(BROWSER).toMatch(/^[\w-]{43}$/);
   expect(OTHER_BROWSER).not.toBe(BROWSER);
@@ -95,7 +89,7 @@ describeWithDatabase("login links", () => {
 
   it("emails a pauseai.uk address a link that logs in once", async () => {
     const sent = postmark();
-    await sendLoginLink(" Jo@PauseAI.uk ", "https://evil.example", BROWSER);
+    await sendLoginLink(" Jo@PauseAI.uk ", REQUEST, BROWSER);
 
     expect(sent).toHaveLength(1);
     expect(sent[0]).toMatchObject({
@@ -119,8 +113,8 @@ describeWithDatabase("login links", () => {
   it("in a fixture build, makes each link's token from the address and how many it's had", async () => {
     vi.stubEnv("DATA_FIXTURES", "1");
     vi.stubEnv("OUTBOX_DIR", "");
-    await sendLoginLink("jo@pauseai.uk", "https://pauseai.uk", BROWSER);
-    await sendLoginLink("jo@pauseai.uk", "https://pauseai.uk", BROWSER);
+    await sendLoginLink("jo@pauseai.uk", REQUEST, BROWSER);
+    await sendLoginLink("jo@pauseai.uk", REQUEST, BROWSER);
     const token = (seed: string) => createHash("sha256").update(seed).digest().toString("base64url");
     expect(await redeemLoginLink(token("login jo@pauseai.uk 1"), BROWSER)).toEqual({ email: "jo@pauseai.uk" });
     expect(await redeemLoginLink(token("login jo@pauseai.uk 0"), BROWSER)).toEqual({ email: "jo@pauseai.uk" });
@@ -128,7 +122,7 @@ describeWithDatabase("login links", () => {
 
   it("works only in the browser that asked, and isn't used up anywhere else", async () => {
     const sent = postmark();
-    await sendLoginLink("jo@pauseai.uk", "", BROWSER);
+    await sendLoginLink("jo@pauseai.uk", REQUEST, BROWSER);
     const token = tokenFrom(sent[0]);
 
     expect(await redeemLoginLink(token, OTHER_BROWSER)).toEqual({ refused: "elsewhere" });
@@ -138,16 +132,16 @@ describeWithDatabase("login links", () => {
 
   it("sends nothing to anyone else, or without an address to link to", async () => {
     const sent = postmark();
-    await sendLoginLink("jo@gmail.com", "https://pauseai.uk", BROWSER);
+    await sendLoginLink("jo@gmail.com", REQUEST, BROWSER);
     vi.stubEnv("SITE_ORIGIN", "");
-    await sendLoginLink("jo@pauseai.uk", "https://evil.example", BROWSER);
+    await expect(sendLoginLink("jo@pauseai.uk", REQUEST, BROWSER)).rejects.toThrow("SITE_ORIGIN isn't set");
     expect(sent).toEqual([]);
     expect(await query("SELECT * FROM staff_login_links")).toEqual([]);
   });
 
   it("lets a link expire after 15 minutes", async () => {
     const sent = postmark();
-    await sendLoginLink("jo@pauseai.uk", "", BROWSER);
+    await sendLoginLink("jo@pauseai.uk", REQUEST, BROWSER);
     const [{ minutes }] = await query<{ minutes: number }>(
       "SELECT round(extract(epoch FROM expires_at - created_at) / 60)::int AS minutes FROM staff_login_links",
     );
@@ -161,19 +155,20 @@ describeWithDatabase("login links", () => {
     await query(
       "INSERT INTO staff_login_links (token_hash, email, created_at, expires_at) VALUES ('old', 'x@pauseai.uk', now() - interval '2 days', now())",
     );
-    for (let i = 0; i <= HOURLY_LINKS; i++) await sendLoginLink(i % 2 ? "JO@pauseai.uk" : "jo@pauseai.uk", "", BROWSER);
-    await sendLoginLink("sam@pauseai.uk", "", BROWSER);
+    for (let i = 0; i <= HOURLY_LINKS; i++)
+      await sendLoginLink(i % 2 ? "JO@pauseai.uk" : "jo@pauseai.uk", REQUEST, BROWSER);
+    await sendLoginLink("sam@pauseai.uk", REQUEST, BROWSER);
     expect(sent.map((e) => e.To)).toEqual([...Array(HOURLY_LINKS).fill("jo@pauseai.uk"), "sam@pauseai.uk"]);
     expect(await query("SELECT 1 FROM staff_login_links WHERE token_hash = 'old'")).toEqual([]);
 
     await query("UPDATE staff_login_links SET created_at = now() - interval '61 minutes'");
-    await sendLoginLink("jo@pauseai.uk", "", BROWSER);
+    await sendLoginLink("jo@pauseai.uk", REQUEST, BROWSER);
     expect(sent).toHaveLength(HOURLY_LINKS + 2);
   });
 
   it("keeps no link it couldn't send", async () => {
     postmark(() => HttpResponse.json({ ErrorCode: 300, Message: "Invalid" }, { status: 422 }));
-    await sendLoginLink("jo@pauseai.uk", "", BROWSER);
+    await sendLoginLink("jo@pauseai.uk", REQUEST, BROWSER);
     expect(await query("SELECT * FROM staff_login_links")).toEqual([]);
   });
 });

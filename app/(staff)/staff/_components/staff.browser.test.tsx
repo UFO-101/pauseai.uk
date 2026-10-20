@@ -145,7 +145,7 @@ describe("PoliticianDetails", () => {
     }
   });
 
-  it("says why their address is blocked, and unblocks it with a note", async () => {
+  it("says why their address is blocked, links to the blocked emails, and unblocks it with a note", async () => {
     const { fn, sent } = action();
     await render(
       <PoliticianDetails
@@ -160,6 +160,9 @@ describe("PoliticianDetails", () => {
       .toHaveTextContent(
         `${staffCopy.politicians.emailBlocked} ${staffCopy.politician.blocked(exampleBlock.reason, "2026-10-12 09:10")}`,
       );
+    await expect
+      .element(page.getByRole("link", { name: staffCopy.politician.blocked(exampleBlock.reason, "2026-10-12 09:10") }))
+      .toHaveAttribute("href", "/staff/blocked-emails");
     await page.getByLabelText(staffCopy.emails.note).fill("Fixed in Airtable");
     await page.getByRole("button", { name: staffCopy.emails.unblock }).click();
     await vi.waitFor(() => expect(sent).toEqual([{ address: MP.email, note: "Fixed in Airtable" }]));
@@ -224,12 +227,12 @@ describe("EmailProblemsTable", () => {
 });
 
 describe("EmailBlockFilters", () => {
-  it("is a GET form to /staff/blocked-addresses, filled in with the current filter", async () => {
+  it("is a GET form to /staff/blocked-emails, filled in with the current filter", async () => {
     await render(<EmailBlockFilters kind="complaint" />);
     await expect.element(page.getByRole("combobox")).toHaveValue("complaint");
     const form = page.getByRole("combobox").element().closest("form")!;
     expect(form.getAttribute("method")).toBe("get");
-    expect(form.getAttribute("action")).toBe("/staff/blocked-addresses");
+    expect(form.getAttribute("action")).toBe("/staff/blocked-emails");
   });
 });
 

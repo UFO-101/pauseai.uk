@@ -7,7 +7,8 @@ import { query } from "./db";
 import { handleDeliveryProblem } from "./delivery-problems";
 import type { DeliveryProblem, Purpose } from "./email";
 
-const ORIGIN = "https://pauseai.uk";
+/** Postmark's webhook call, which on Netlify arrives on the netlify.app host. */
+const REQUEST = new Request("https://main--pauseaiuk.netlify.app/api/postmark/bounce", { method: "POST" });
 const BOUNCE: DeliveryProblem = {
   address: "test-mp@example.org",
   messageId: "msg-1",
@@ -22,6 +23,7 @@ type Sent = { To: string; Subject: string; TextBody: string };
 beforeEach(() => {
   vi.stubEnv("POSTMARK_SERVER_TOKEN", "server-token");
   vi.stubEnv("REPLIES_INBOX", "replies@pauseai.uk");
+  vi.stubEnv("SITE_ORIGIN", "https://pauseai.uk");
 });
 afterEach(() => vi.unstubAllEnvs());
 
@@ -61,7 +63,7 @@ describeWithDatabase("handleDeliveryProblem", () => {
   it("marks a letter that hard-bounced, blocks the address, and emails staff a link to the blocked addresses", async () => {
     await sentEmail();
     const sent = postmark();
-    await handleDeliveryProblem(BOUNCE, ORIGIN);
+    await handleDeliveryProblem(BOUNCE, REQUEST);
     expect(await letter()).toBe("bounced");
     expect(await events()).toEqual([
       {
@@ -78,7 +80,7 @@ describeWithDatabase("handleDeliveryProblem", () => {
           "Testy McTestface MP",
           "test-mp@example.org",
           "Unknown user",
-          "https://pauseai.uk/staff/blocked-addresses",
+          "https://pauseai.uk/staff/blocked-emails",
         ),
       }),
     ]);
@@ -91,7 +93,7 @@ describeWithDatabase("handleDeliveryProblem", () => {
   it("marks a spam complaint, and tells staff", async () => {
     await sentEmail();
     const sent = postmark();
-    await handleDeliveryProblem({ ...BOUNCE, kind: "complaint" }, ORIGIN);
+    await handleDeliveryProblem({ ...BOUNCE, kind: "complaint" }, REQUEST);
     expect(await letter()).toBe("spam_complaint");
     expect(sent).toHaveLength(1);
   });
@@ -99,7 +101,7 @@ describeWithDatabase("handleDeliveryProblem", () => {
   it("marks a soft bounce, without blocking the address or telling staff", async () => {
     await sentEmail();
     const sent = postmark();
-    await handleDeliveryProblem({ ...BOUNCE, kind: "soft", details: undefined }, ORIGIN);
+    await handleDeliveryProblem({ ...BOUNCE, kind: "soft", details: undefined }, REQUEST);
     expect(await letter()).toBe("bounced");
     expect(await events()).toMatchObject([{ details: { reason: "Unknown user" } }]);
     expect(await query("SELECT address FROM email_blocks")).toEqual([]);
@@ -110,7 +112,7 @@ describeWithDatabase("handleDeliveryProblem", () => {
     vi.stubEnv("REPLIES_INBOX", "");
     await sentEmail();
     const sent = postmark();
-    await handleDeliveryProblem(BOUNCE, ORIGIN);
+    await handleDeliveryProblem(BOUNCE, REQUEST);
     expect(await letter()).toBe("bounced");
     expect(sent).toEqual([]);
   });
@@ -120,17 +122,17 @@ describeWithDatabase("handleDeliveryProblem", () => {
     for (const purpose of ["forwarded-reply", "staff-login", "staff-alert"] as const) {
       await query("TRUNCATE letters, email_sends, politicians RESTART IDENTITY CASCADE");
       await sentEmail(purpose);
-      await handleDeliveryProblem(BOUNCE, ORIGIN);
+      await handleDeliveryProblem(BOUNCE, REQUEST);
       expect(await letter()).toBe("sent");
     }
-    await handleDeliveryProblem({ ...BOUNCE, messageId: null }, ORIGIN);
-    await handleDeliveryProblem({ ...BOUNCE, messageId: "unknown" }, ORIGIN);
+    await handleDeliveryProblem({ ...BOUNCE, messageId: null }, REQUEST);
+    await handleDeliveryProblem({ ...BOUNCE, messageId: "unknown" }, REQUEST);
     expect(await letter()).toBe("sent");
 
     await query("TRUNCATE letters, email_sends, politicians RESTART IDENTITY CASCADE");
     const id = await sentEmail();
     await query("DELETE FROM letters WHERE id = $1", [id]);
-    await handleDeliveryProblem(BOUNCE, ORIGIN);
+    await handleDeliveryProblem(BOUNCE, REQUEST);
     expect(await query("SELECT * FROM letter_events")).toEqual([]);
     expect(sent).toEqual([]);
     // Every problem is still recorded.

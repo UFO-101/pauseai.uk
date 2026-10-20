@@ -1,5 +1,6 @@
 import "server-only";
 import { staffCopy } from "@/lib/content/staff-interface";
+import { siteUrl } from "@/lib/site-url";
 import { query } from "./db";
 import { recordProblem, send, type DeliveryProblem, type Purpose } from "./email";
 import { notifyDomain } from "./postmark";
@@ -10,7 +11,7 @@ import { notifyDomain } from "./postmark";
 
 type Sent = { purpose: Purpose; letterId: number | null };
 
-type Hook = (sent: Sent, problem: DeliveryProblem, origin: string) => Promise<void>;
+type Hook = (sent: Sent, problem: DeliveryProblem, request: Request) => Promise<void>;
 
 const nothing: Hook = async () => {};
 
@@ -19,7 +20,7 @@ const nothing: Hook = async () => {};
  * or complaint, staff are told, as the MP can't be written to until someone
  * fixes their address.
  */
-const letterProblem: Hook = async ({ letterId }, problem, origin) => {
+const letterProblem: Hook = async ({ letterId }, problem, request) => {
   const status = problem.kind === "complaint" ? "spam_complaint" : "bounced";
   const [letter] = await query<{ mpName: string }>(
     `UPDATE letters l SET status = $2 FROM politicians p WHERE l.id = $1 AND p.id = l.politician_id
@@ -43,7 +44,7 @@ const letterProblem: Hook = async ({ letterId }, problem, origin) => {
         letter.mpName,
         problem.address,
         problem.reason,
-        `${origin}/staff/blocked-addresses`,
+        siteUrl("/staff/blocked-emails", request).href,
       ),
       Tag: "staff-alert",
     },
@@ -60,13 +61,13 @@ const HOOKS: Record<Purpose, Hook> = {
 
 /**
  * Records a bounce or complaint, then hands it to the purpose of the email
- * it was about, if we sent it. `origin` is the site's, for links.
+ * it was about, if we sent it. `request` is Postmark's webhook call, for siteUrl().
  */
-export async function handleDeliveryProblem(problem: DeliveryProblem, origin: string): Promise<void> {
+export async function handleDeliveryProblem(problem: DeliveryProblem, request: Request): Promise<void> {
   await recordProblem(problem);
   const [sent] = await query<Sent>(
     `SELECT purpose, letter_id::int AS "letterId" FROM email_sends WHERE message_id = $1`,
     [problem.messageId],
   );
-  if (sent) await HOOKS[sent.purpose](sent, problem, origin);
+  if (sent) await HOOKS[sent.purpose](sent, problem, request);
 }

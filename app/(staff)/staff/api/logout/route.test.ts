@@ -1,4 +1,4 @@
-import { beforeEach, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { createSession, sessionEmail } from "@/lib/server/staff-auth";
 import { describeWithDatabase, useTestDatabase } from "@/tests/database";
 import { expectRedirect, requestCookies } from "@/tests/next-headers";
@@ -8,7 +8,11 @@ vi.mock("next/headers", () => import("@/tests/next-headers"));
 
 describeWithDatabase("POST /staff/api/logout", () => {
   useTestDatabase();
-  beforeEach(() => requestCookies.clear());
+  beforeEach(() => {
+    requestCookies.clear();
+    vi.stubEnv("SITE_ORIGIN", "https://pauseai.uk");
+  });
+  afterEach(() => vi.unstubAllEnvs());
 
   it("ends the session, clears the cookie and goes to the login page", async () => {
     const token = await createSession("jo@pauseai.uk");

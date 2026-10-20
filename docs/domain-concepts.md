@@ -102,7 +102,7 @@ When an email bounces or its recipient marks it as spam, the problem is
 recorded against the address (`email_problems`). A hard bounce or a
 complaint blocks the address (`email_blocks`), and `send()` won't send to a
 blocked address, for any purpose. Staff see blocked addresses at
-`/staff/blocked-addresses` and on the politician's page, and can unblock a
+`/staff/blocked-emails` and on the politician's page, and can unblock a
 bounced one, which asks Postmark to send to it again. A complaint can't be
 unblocked.
 
