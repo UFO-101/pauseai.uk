@@ -2,6 +2,7 @@ import { test, type Locator, type Page } from "@playwright/test";
 import sharp from "sharp";
 import { emailView } from "../fixtures/email-view";
 import type { OutboxEmail } from "../fixtures/outbox";
+import { DEFAULT_LOCAL_URL, LOCAL_URL } from "../fixture-env.mjs";
 
 /**
  * A frame of the storyboard: a caption, and, when the run takes screenshots
@@ -123,11 +124,19 @@ async function wholePage(page: Page): Promise<Buffer> {
  * plain mail app shows it (tests/fixtures/email-view.ts): its headers, its
  * body and its attachments. In a page of its own, at the flow's viewport,
  * closed afterwards, so the flow's page is left where it was.
+ *
+ * A link in an email has the address of the server that sent it, and main's
+ * build and this branch's run on different ports, so the same email was
+ * pictured differently on each side. It's pictured with the address this
+ * branch's build has by default, whichever sent it.
  */
 export async function emailFrame(page: Page, email: OutboxEmail, caption: string): Promise<void> {
+  const shown = (text: string) => text.replaceAll(new URL(LOCAL_URL).origin, new URL(DEFAULT_LOCAL_URL).origin);
   const mail = await page.context().newPage();
   try {
-    await mail.setContent(emailView(email));
+    await mail.setContent(
+      emailView({ ...email, TextBody: shown(email.TextBody), HtmlBody: email.HtmlBody && shown(email.HtmlBody) }),
+    );
     await frame(mail, caption);
   } finally {
     await mail.close();
