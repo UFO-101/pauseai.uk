@@ -150,6 +150,8 @@ export const staffCopy = {
       link: "UK Parliamentarians table in Airtable",
       after: ": everyone whose Body is “House of Commons” and whose Status is blank.",
     },
+    /** The test MPs (lib/test-mps.json) aren't in Airtable; every import adds any that are missing. */
+    testMps: "Each import also adds the test MPs, who aren’t in Airtable, if any are missing.",
     syncNow: "Import MPs now",
     none: "Not yet imported.",
     added: "Added",
