@@ -1,5 +1,5 @@
 // MPs as the Email your MP tool stores them, copied from Airtable
-// (lib/server/airtable.ts), and what a sync would change.
+// (lib/server/outside-services/airtable.ts), and what a sync would change.
 
 /** An MP as we store them. */
 export type SyncedMp = {

@@ -43,7 +43,7 @@ describe("CSP reporting endpoint", () => {
 });
 
 describe("redirects", () => {
-  it("keeps old story links, the campaigns-v2 links and malformed backlinks working", async () => {
+  it("keeps old story links, the campaigns-v2 links, old staff alert links and malformed backlinks working", async () => {
     const config = await loadConfig({});
     const redirects = await config.redirects!();
     expect(redirects).toContainEqual({ source: "/stories", destination: "/people", permanent: true });
@@ -52,6 +52,11 @@ describe("redirects", () => {
     expect(redirects).toContainEqual({
       source: "/campaigns-v2/:path*",
       destination: "/campaigns/:path*",
+      permanent: true,
+    });
+    expect(redirects).toContainEqual({
+      source: "/staff/blocked-addresses",
+      destination: "/staff/blocked-emails",
       permanent: true,
     });
     expect(redirects.filter((r) => !r.permanent)).toEqual([

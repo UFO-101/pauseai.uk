@@ -1,7 +1,8 @@
 import { execFileSync } from "node:child_process";
+import { Pool } from "pg";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { closeDb, query, transaction, verifyFullUrl } from "./db";
-import { describeWithDatabase, useTestDatabase, withDatabaseDown } from "@/tests/database";
+import { describeWithDatabase, MAKES_DATABASES, useTestDatabase, withDatabaseDown } from "@/tests/database";
 import { requestCookies } from "@/tests/next-headers";
 import { FLOW_DATABASE_COOKIE } from "@/tests/fixture-env.mjs";
 import { dropDatabase, freshDatabase, runSql } from "@/scripts/fresh-database.mjs";
@@ -146,21 +147,23 @@ describeWithDatabase("the database", () => {
       }
     });
 
-    it("stays quiet when the flow's database is dropped under an idle connection", async () => {
+    it("stays quiet when the flow's database is dropped under an idle connection", MAKES_DATABASES, async () => {
       vi.stubEnv("DATA_FIXTURES", "1");
       const error = vi.spyOn(console, "error").mockImplementation(() => {});
+      // The pool reports the cut-off connection with an "error" event, however long that takes.
+      const emit = vi.spyOn(Pool.prototype, "emit");
       freshDatabase(flow);
       requestCookies.set(FLOW_DATABASE_COOKIE, flow);
       try {
-        const flowPid = await pid();
+        await pid();
         dropDatabase(flow);
-        await vi.waitFor(() =>
-          expect(runSql("postgres", `SELECT 1 FROM pg_stat_activity WHERE pid = ${flowPid}`)).toEqual([]),
-        );
-        await new Promise((resolve) => setTimeout(resolve, 100));
+        await vi.waitFor(() => expect(emit).toHaveBeenCalledWith("error", expect.any(Error), expect.anything()), {
+          timeout: MAKES_DATABASES.timeout,
+        });
         expect(error).not.toHaveBeenCalled();
       } finally {
         error.mockRestore();
+        emit.mockRestore();
       }
     });
 

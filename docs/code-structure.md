@@ -30,8 +30,10 @@ components/               React components used by more than one route
   people/                 PersonCard, StoryShareForm
   local-groups/           LocalGroupPage, which renders every group's page
 lib/                      logic and data, no React state
-  server/                 calls to outside services and the database;
+  server/                 server-side logic and the database;
                           `import "server-only"`
+    outside-services/     one binding per outside service, the only
+                          code that calls one (outsideFetch)
   content/                the site's content as typed data (people, blog, ...)
   collateral/             the collateral tool's drawing engine
   events.ts, trackers.ts  pure helpers for one feature each
@@ -94,12 +96,29 @@ Route groups like `(site)` don't appear in URLs. Folders starting with `_`
   one that would break an older browser.
 - **Layouts own the chrome.** Pages don't render `<Nav>`; their route
   group's layout does.
-- **Outside services** (Luma, Airtable) are only called from `lib/server/`,
-  through `outsideFetch` (`lib/server/outside-fetch.ts`), so tests can swap in
-  fixtures. ESLint rules (`npm run lint`) fail on
-  their API hosts anywhere else, and lock Airtable to
-  `lib/server/airtable.ts`. Files there import `server-only`, so they can't
-  end up in a browser bundle.
+- **Outside services** (Airtable, Luma, Postmark, postcodes.io, Turnstile,
+  Parliament, ControlAI's letter) are each called from one binding in
+  `lib/server/outside-services/`, through `outsideFetch`
+  (`outside-fetch.ts` there), so tests and fixture builds can answer
+  instead. The rest of the code calls the binding's functions. A new
+  service gets a new binding there, and its canned answers in
+  `tests/fixtures/outside-services.ts` (`docs/testing.md`, "Mocking").
+  ESLint rules (`npm run lint`) fail on, in the site's code:
+  - importing `outsideFetch` outside that folder, or calling `fetch()` in
+    server code (`lib/server/`, route handlers, Server Actions);
+  - importing Node's network modules, an HTTP client or a service's SDK
+    (`NETWORK_IMPORTS`), which make requests the fixtures can't answer;
+  - naming a service's API host outside its binding (`SERVICES` in
+    `eslint.config.mjs`, where a new binding's host goes). Parliament's and
+    ControlAI's are left out, as pages link to them too.
+
+  Files there import `server-only`, so they can't end up in a browser
+  bundle.
+
+- **Email** goes out only through `send()` (`lib/server/email.ts`), which
+  skips blocked addresses and records each send (`docs/domain-concepts.md`).
+  Only it may import `sendEmail` or `unsuppress` from Postmark's binding,
+  `lib/server/outside-services/postmark.ts` (an ESLint rule).
 - **The database** is only reached through `lib/server/db.ts`, which is the
   only file that may import `pg` or read `NETLIFY_DB_URL` (an ESLint rule,
   in `npm run lint`). Queries are plain SQL; no ORM.
@@ -110,6 +129,14 @@ Route groups like `(site)` don't appear in URLs. Folders starting with `_`
   run `npm run db:schema` and commit `netlify/database/schema.sql`, the
   whole schema as the migrations leave it, so the PR shows what changed. A
   test fails while it's out of date.
+- **Links to the site** in emails and redirects are built with
+  `siteUrl(path, request)` (`lib/site-url.ts`), on the deploy's own address
+  (`SITE_ORIGIN`, set in `next.config.ts` from Netlify's settings):
+  `https://pauseai.uk` in production. On Netlify a request's own URL has the
+  `main--pauseaiuk.netlify.app` host, and anyone can set its Host, so the
+  site's code never reads a request's URL, origin or Host header, or
+  `SITE_ORIGIN` itself (an ESLint rule, in `npm run lint`). Links in pages
+  are relative.
 - **Staff pages** each call `requireStaff()` (`lib/server/staff-auth.ts`)
   first, as does every staff route handler and Server Action
   (`tests/checks/staff-auth.test.ts`). `proxy.ts` only checks the cookie exists.

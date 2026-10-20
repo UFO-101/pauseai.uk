@@ -272,10 +272,10 @@ test("a letter that bounces: staff are emailed, and the address is blocked", asy
   const alert = newestEmail(
     (email) => email.To === STAFF_INBOX && email.Subject === staffCopy.alert.subject(bouncy.name),
   );
-  expect(alert?.TextBody).toContain(`${BASE}/staff/blocked-addresses`);
+  expect(alert?.TextBody).toContain(`${BASE}/staff/blocked-emails`);
   await emailFrame(page, alert!, "the email staff get about it");
 
-  await page.goto(`${BASE}/staff/blocked-addresses`);
+  await page.goto(`${BASE}/staff/blocked-emails`);
   // The blocked addresses, above the recent problems.
   const blocked = page.getByRole("table").first().getByRole("row").filter({ hasText: BOUNCY_ADDRESS });
   await expect(blocked.getByRole("link", { name: bouncy.name })).toBeVisible();

@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { copy } from "@/lib/content/email-your-mp";
 
 // Cloudflare Turnstile's widget. The server checks the token it produces
-// (lib/server/turnstile.ts). Tokens are single use, so the form remounts
+// (lib/server/outside-services/turnstile.ts). Tokens are single use, so the form remounts
 // this after each submission.
 
 export type TurnstileApi = {

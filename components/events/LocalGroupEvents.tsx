@@ -2,7 +2,7 @@ import EventList from "./EventList";
 import EventsSection from "./EventsSection";
 import { localGroups, type LocalGroupName } from "@/lib/content/local-groups";
 import { filterEventsForLocalGroup } from "@/lib/events";
-import { getEvents } from "@/lib/server/luma-calendar";
+import { getEvents } from "@/lib/server/outside-services/luma-calendar";
 import { site } from "@/lib/content/site";
 
 // Enough to show a local group is active without turning its page into an

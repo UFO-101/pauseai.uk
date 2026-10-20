@@ -1,12 +1,12 @@
 import "server-only";
 import { logChange } from "./audit";
 import { query, transaction } from "./db";
-import { PostmarkError, sendEmail, unsuppress, type Email } from "./postmark";
+import { PostmarkError, sendEmail, unsuppress, type Email } from "./outside-services/postmark";
 
 // Every email the site sends goes through send(), whatever it's for. A bounce
 // or complaint is about an address, not about the email that found it out:
 // once an address hard-bounces or complains, nothing is sent to it again
-// until staff unblock it. The provider (lib/server/postmark.ts) is behind
+// until staff unblock it. The provider (lib/server/outside-services/postmark.ts) is behind
 // sendEmail and unsuppress, and its webhooks become a DeliveryProblem.
 
 /** What an email is for. Each has its own way of handling a bounce (delivery-problems.ts). */

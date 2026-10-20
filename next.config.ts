@@ -95,8 +95,9 @@ const nextConfig: NextConfig = {
     // at build time. Outside production, letters go only to the test MP
     // (lib/server/mp-letters.ts).
     DEPLOY_CONTEXT: process.env.CONTEXT ?? "local",
-    // This deploy's own address, from Netlify, for the links in staff login
-    // emails (lib/server/staff-login.ts). Empty for a local build.
+    // This deploy's own address, from Netlify: in production the site's main
+    // domain, pauseai.uk. Read only by siteUrl() (lib/site-url.ts), for every
+    // link in an email and every redirect. Empty for a local build.
     SITE_ORIGIN: (process.env.CONTEXT === "production" ? process.env.URL : process.env.DEPLOY_PRIME_URL) ?? "",
   },
   // The PDFs attached to letters, read from disk when one is sent.
@@ -134,6 +135,9 @@ const nextConfig: NextConfig = {
       // replacing /campaigns, and links to them were shared while testing.
       { source: "/campaigns-v2", destination: "/campaigns", permanent: true },
       { source: "/campaigns-v2/:path*", destination: "/campaigns/:path*", permanent: true },
+      // Staff alerts about bounced letters linked to the blocked emails page
+      // under its first name.
+      { source: "/staff/blocked-addresses", destination: "/staff/blocked-emails", permanent: true },
       // There's no list of protests yet, so /protests goes to the current one.
       // Temporary, so browsers don't remember it when the next protest comes.
       { source: "/protests", destination: march.path, permanent: false },

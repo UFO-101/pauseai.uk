@@ -9,7 +9,7 @@ export type StaffPage = "politicians" | "letters" | "emails" | "import" | "histo
 const PAGES: [StaffPage, string][] = [
   ["politicians", "/staff/politicians"],
   ["letters", "/staff/letters"],
-  ["emails", "/staff/blocked-addresses"],
+  ["emails", "/staff/blocked-emails"],
   ["import", "/staff/import-data"],
   ["history", "/staff/import-history"],
   ["changes", "/staff/audit-log"],

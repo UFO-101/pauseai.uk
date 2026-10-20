@@ -1,5 +1,5 @@
 import { pageMetadata } from "@/lib/metadata";
-import { getEvents } from "@/lib/server/luma-calendar";
+import { getEvents } from "@/lib/server/outside-services/luma-calendar";
 import GetInvolved from "./_components/GetInvolved";
 import HeroMarqueeEffects from "./_components/HeroMarqueeEffects";
 import HomeEvents from "./_components/HomeEvents";

@@ -3,7 +3,7 @@ import { timingSafeEqual } from "node:crypto";
 import { copy } from "@/lib/content/email-your-mp";
 import { query, transaction } from "./db";
 import { send, type DeliveryProblem } from "./email";
-import { lettersDomain, notifyDomain, type Attachment } from "./postmark";
+import { lettersDomain, notifyDomain, type Attachment } from "./outside-services/postmark";
 
 // What Postmark tells us: bounces and spam complaints, and replies to
 // letters. Postmark doesn't sign webhooks, so each webhook URL carries a

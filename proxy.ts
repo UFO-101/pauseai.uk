@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { LOGIN_PATH, OPEN_STAFF_PATHS, SESSION_COOKIE, siteUrl } from "@/lib/staff-session";
+import { LOGIN_PATH, OPEN_STAFF_PATHS, SESSION_COOKIE } from "@/lib/staff-session";
+import { siteUrl } from "@/lib/site-url";
 
 // Turns away anyone on /staff without a session cookie: pages go to the
 // login page, staff API routes get a 401. This is only the first, cheap

@@ -8,7 +8,7 @@ import EventsSection from "./EventsSection";
 import LocalGroupEvents from "./LocalGroupEvents";
 
 const { getEvents } = vi.hoisted(() => ({ getEvents: vi.fn() }));
-vi.mock("@/lib/server/luma-calendar", () => ({ getEvents }));
+vi.mock("@/lib/server/outside-services/luma-calendar", () => ({ getEvents }));
 
 afterEach(async () => {
   // Back to Vitest's default viewport, for tests that widen it to a desktop's.

@@ -62,7 +62,8 @@ start`), so it is slower. Use it only for what Vitest can't see:
 ## Mocking
 
 Mock only where the site calls an outside service. All such calls go
-through `outsideFetch` (`lib/server/outside-fetch.ts`), and the canned responses
+through `outsideFetch`, from the bindings in `lib/server/outside-services/`
+(`docs/code-structure.md`, "Outside services"), and the canned responses
 live in one place: `tests/fixtures/outside-services.ts`.
 
 - **Vitest Node:** MSW (`tests/fixtures/msw.ts`) answers every outside
@@ -90,8 +91,9 @@ Wrap the real module (`importActual`) and replace only that one function.
 
 ## Email
 
-Emails go through Postmark's HTTP API, from `lib/server/postmark.ts` only,
-through `outsideFetch` like any other outside service.
+Emails go through Postmark's HTTP API, from
+`lib/server/outside-services/postmark.ts` only, through `outsideFetch` like
+any other outside service.
 
 - **No Postmark library.** The `postmark` npm package makes its own HTTP
   requests, which would bypass the fixtures in Playwright builds.

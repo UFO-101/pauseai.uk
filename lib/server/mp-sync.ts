@@ -2,7 +2,7 @@ import "server-only";
 import type { MpSync, MpSyncResult } from "@/lib/import-runs";
 import { changeCount, compareMps, MAX_UNCHECKED_CHANGES, type MpChanges, type SyncedMp } from "@/lib/mps";
 import { TEST_MPS } from "@/lib/test-mps";
-import { airtableToken, fetchMps } from "./airtable";
+import { airtableToken, fetchMps } from "./outside-services/airtable";
 import { logChange } from "./audit";
 import { query, transaction, type Queryable } from "./db";
 import { keepingFailure, recordRun } from "./import-runs";

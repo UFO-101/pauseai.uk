@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { homeEventsCopy } from "@/lib/content/home-events";
-import { placeForPostcode } from "@/lib/server/postcodes";
+import { placeForPostcode } from "@/lib/server/outside-services/postcodes";
 
 const MESSAGES = { not_found: homeEventsCopy.postcodeNotFound, failed: homeEventsCopy.postcodeFailed };
 

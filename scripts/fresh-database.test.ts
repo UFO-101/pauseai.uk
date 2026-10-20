@@ -72,21 +72,28 @@ describe.skipIf(process.env.NETLIFY === "true")("copying a database", () => {
   const template = `test_${process.pid}_template`;
   const copy = `test_${process.pid}_copy`;
 
-  it("copies a template, runs SQL in the copy, lists and drops them, and refuses bad names", () => {
-    try {
-      freshDatabase(template);
-      runSql(template, "INSERT INTO audit_log (actor, action) VALUES ('a', 'kept')");
-      copyDatabase(copy, template);
-      expect(runSql(copy, "SELECT actor, action FROM audit_log")).toEqual(["a\tkept"]);
-      expect(runSql(copy, "SELECT 1 WHERE false")).toEqual([]);
-      expect(databaseNames(`test_${process.pid}_`)).toEqual([copy, template]);
-      expect(() => copyDatabase("bad name", template)).toThrow("Bad database name: bad name");
-      expect(() => runSql("x;drop", "SELECT 1")).toThrow("Bad database name");
-      expect(() => databaseNames("x'")).toThrow("Bad database name");
-    } finally {
-      dropDatabase(copy);
-      dropDatabase(template);
-    }
-    expect(databaseNames(`test_${process.pid}_`)).toEqual([]);
-  });
+  // Makes, copies and drops databases in psql, so it gets MAKES_DATABASES's
+  // timeout (tests/database.ts, which this file, testing what that one is
+  // built on, doesn't import).
+  it(
+    "copies a template, runs SQL in the copy, lists and drops them, and refuses bad names",
+    { timeout: 30_000 },
+    () => {
+      try {
+        freshDatabase(template);
+        runSql(template, "INSERT INTO audit_log (actor, action) VALUES ('a', 'kept')");
+        copyDatabase(copy, template);
+        expect(runSql(copy, "SELECT actor, action FROM audit_log")).toEqual(["a\tkept"]);
+        expect(runSql(copy, "SELECT 1 WHERE false")).toEqual([]);
+        expect(databaseNames(`test_${process.pid}_`)).toEqual([copy, template]);
+        expect(() => copyDatabase("bad name", template)).toThrow("Bad database name: bad name");
+        expect(() => runSql("x;drop", "SELECT 1")).toThrow("Bad database name");
+        expect(() => databaseNames("x'")).toThrow("Bad database name");
+      } finally {
+        dropDatabase(copy);
+        dropDatabase(template);
+      }
+      expect(databaseNames(`test_${process.pid}_`)).toEqual([]);
+    },
+  );
 });

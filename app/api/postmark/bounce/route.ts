@@ -6,6 +6,6 @@ import { deliveryProblem, isPostmark } from "@/lib/server/postmark-webhooks";
 export async function POST(request: Request) {
   if (!isPostmark(request)) return NextResponse.json({ error: "Not allowed" }, { status: 401 });
   const problem = deliveryProblem(await request.json().catch(() => ({})));
-  if (problem) await handleDeliveryProblem(problem, new URL(request.url).origin);
+  if (problem) await handleDeliveryProblem(problem, request);
   return NextResponse.json({ recorded: !!problem });
 }

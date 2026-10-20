@@ -1,6 +1,6 @@
 import "server-only";
 import { staffCopy } from "@/lib/content/staff-interface";
-import { airtableToken, fetchSignatoriesForImport, type SignatoryToImport } from "./airtable";
+import { airtableToken, fetchSignatoriesForImport, type SignatoryToImport } from "./outside-services/airtable";
 import { logChange } from "./audit";
 import { query, transaction, type Queryable } from "./db";
 import type { SignatoryImportResult } from "@/lib/import-runs";

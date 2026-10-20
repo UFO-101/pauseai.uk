@@ -1,6 +1,6 @@
 import { pageMetadata } from "@/lib/metadata";
 import EventList from "@/components/events/EventList";
-import { getEvents } from "@/lib/server/luma-calendar";
+import { getEvents } from "@/lib/server/outside-services/luma-calendar";
 import { site } from "@/lib/content/site";
 import EventsSection from "@/components/events/EventsSection";
 import PageHero from "@/components/ui/PageHero";

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { deleteSession, requireStaff } from "@/lib/server/staff-auth";
-import { LOGIN_PATH, SESSION_COOKIE, siteUrl } from "@/lib/staff-session";
+import { LOGIN_PATH, SESSION_COOKIE } from "@/lib/staff-session";
+import { siteUrl } from "@/lib/site-url";
 
 /** Ends the session. A POST, from the button in the staff header. */
 export async function POST(request: Request) {

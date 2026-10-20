@@ -1,6 +1,6 @@
 // Emails that aren't really sent, because DATA_FIXTURES=1 or, in the dev
 // server, Postmark has no real token, are written to a mail file (.eml) in
-// the outbox instead (lib/server/postmark.ts), so a person can open them in a
+// the outbox instead (lib/server/outside-services/postmark.ts), so a person can open them in a
 // mail app or a text editor, and a Playwright test can read them: the
 // letter, its attachments, a forwarded reply. Test-only plumbing: there's no
 // route or table for it.
