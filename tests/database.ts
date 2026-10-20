@@ -11,6 +11,13 @@ import { dropDatabase, freshDatabase } from "@/scripts/fresh-database.mjs";
  */
 export const describeWithDatabase = describe.skipIf(process.env.NETLIFY === "true");
 
+/**
+ * Options for a test that makes or drops databases itself, in psql. Under a
+ * second alone, but over 6s has been seen while every other test file makes
+ * its database on a loaded machine, past the 5s default.
+ */
+export const MAKES_DATABASES = { timeout: 30_000 };
+
 const TABLES = [
   "audit_log",
   "campaign_statuses",

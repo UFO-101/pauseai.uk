@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { dropDatabase, freshDatabase, migrationFiles } from "@/scripts/fresh-database.mjs";
-import { describeWithDatabase } from "@/tests/database";
+import { describeWithDatabase, MAKES_DATABASES } from "@/tests/database";
 
 describe("migrations", () => {
   it("are named <number>_<slug>.sql, zero-padded so text order is number order", () => {
@@ -21,7 +21,7 @@ describe("migrations", () => {
 });
 
 describeWithDatabase("migrations, applied", () => {
-  it("work with and without a transaction around each file", () => {
+  it("work with and without a transaction around each file", MAKES_DATABASES, () => {
     const name = `test_migrations_${process.pid}`;
     try {
       expect(() => freshDatabase(name)).not.toThrow();
