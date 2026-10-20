@@ -24,9 +24,16 @@ import { hydrated, layoutSettled, scrollSettled } from "./settle";
  * Then for the layout to stop moving (the hero marquee's first images, the
  * fonts), so nothing shifts out from under a click, and for any scroll a
  * deep link started to come to rest.
+ *
+ * A deep link waits for the load event before anything looks at the page.
+ * Chromium tries the jump to the fragment after each layout until the page
+ * has loaded, and at phone size it sometimes skips the jump altogether.
+ * Polling the page while it loads, each poll a forced layout, makes that
+ * likelier: about 1 load in 100 stayed at the top, against none in 800
+ * after waiting for load. It is still the browser's own jump that's tested.
  */
 async function gotoSettled(page: Page, path = "/") {
-  await page.goto(`${BASE}${path}`, { waitUntil: "domcontentloaded" });
+  await page.goto(`${BASE}${path}`, { waitUntil: path.includes("#") ? "load" : "domcontentloaded" });
   await hydrated(page);
   await layoutSettled(page, "main");
   await scrollSettled(page);
