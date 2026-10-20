@@ -1,6 +1,6 @@
 import { copy } from "@/lib/content/email-your-mp";
 import { pageMetadata } from "@/lib/metadata";
-import { getEvents } from "@/lib/server/luma-calendar";
+import { getEvents } from "@/lib/server/outside-services/luma-calendar";
 import LetterSent from "../../_components/LetterSent";
 import LetterStep from "../../_components/LetterStep";
 import NearbyEvents from "../../_components/NearbyEvents";

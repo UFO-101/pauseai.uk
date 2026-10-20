@@ -37,14 +37,14 @@ const OUTCODES: Record<string, { latitude: number; longitude: number; admin_dist
 export function fixtureResponse(url: string, init?: RequestInit): Response | undefined {
   const { hostname, pathname, searchParams } = new URL(url);
   if (hostname === "public-api.luma.com" && pathname === "/v1/calendars/events/list") {
-    // lib/server/luma-calendar.ts asks for past events with "before", upcoming with "after".
+    // lib/server/outside-services/luma-calendar.ts asks for past events with "before", upcoming with "after".
     return json(searchParams.has("before") ? lumaPast : lumaFuture);
   }
   if (hostname === "public-api.luma.com" && pathname === "/v1/event/get-guests") {
     return json(lumaGuests);
   }
   if (hostname.endsWith("airtable.com") && pathname.startsWith("/v0/")) {
-    // The MPs (lib/server/airtable.ts asks for the House of Commons), or the signatories.
+    // The MPs (lib/server/outside-services/airtable.ts asks for the House of Commons), or the signatories.
     return json(searchParams.get("filterByFormula")?.includes("House of Commons") ? airtableMps : airtableSignatories);
   }
   if (hostname === "api.postcodes.io" && pathname.startsWith("/postcodes/")) {

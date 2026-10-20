@@ -30,8 +30,10 @@ components/               React components used by more than one route
   people/                 PersonCard, StoryShareForm
   local-groups/           LocalGroupPage, which renders every group's page
 lib/                      logic and data, no React state
-  server/                 calls to outside services and the database;
+  server/                 server-side logic and the database;
                           `import "server-only"`
+    outside-services/     one binding per outside service, the only
+                          code that calls one (outsideFetch)
   content/                the site's content as typed data (people, blog, ...)
   collateral/             the collateral tool's drawing engine
   events.ts, trackers.ts  pure helpers for one feature each
@@ -94,16 +96,29 @@ Route groups like `(site)` don't appear in URLs. Folders starting with `_`
   one that would break an older browser.
 - **Layouts own the chrome.** Pages don't render `<Nav>`; their route
   group's layout does.
-- **Outside services** (Luma, Airtable, Postmark, postcodes.io, ...) are
-  only called from `lib/server/`, through `outsideFetch`
-  (`lib/server/outside-fetch.ts`), so tests can swap in fixtures. ESLint
-  rules (`npm run lint`) fail on a plain `fetch()` in server code, and lock
-  each of Airtable, Luma and Postmark to its own client. Files there import
-  `server-only`, so they can't end up in a browser bundle.
+- **Outside services** (Airtable, Luma, Postmark, postcodes.io, Turnstile,
+  Parliament, ControlAI's letter) are each called from one binding in
+  `lib/server/outside-services/`, through `outsideFetch`
+  (`outside-fetch.ts` there), so tests and fixture builds can answer
+  instead. The rest of the code calls the binding's functions. A new
+  service gets a new binding there, and its canned answers in
+  `tests/fixtures/outside-services.ts` (`docs/testing.md`, "Mocking").
+  ESLint rules (`npm run lint`) fail on, in the site's code:
+  - importing `outsideFetch` outside that folder, or calling `fetch()` in
+    server code (`lib/server/`, route handlers, Server Actions);
+  - importing Node's network modules, an HTTP client or a service's SDK
+    (`NETWORK_IMPORTS`), which make requests the fixtures can't answer;
+  - naming a service's API host outside its binding (`SERVICES` in
+    `eslint.config.mjs`, where a new binding's host goes). Parliament's and
+    ControlAI's are left out, as pages link to them too.
+
+  Files there import `server-only`, so they can't end up in a browser
+  bundle.
+
 - **Email** goes out only through `send()` (`lib/server/email.ts`), which
   skips blocked addresses and records each send (`docs/domain-concepts.md`).
-  Only it may import `sendEmail` or `unsuppress` from Postmark's client,
-  `lib/server/postmark.ts` (an ESLint rule).
+  Only it may import `sendEmail` or `unsuppress` from Postmark's binding,
+  `lib/server/outside-services/postmark.ts` (an ESLint rule).
 - **The database** is only reached through `lib/server/db.ts`, which is the
   only file that may import `pg` or read `NETLIFY_DB_URL` (an ESLint rule,
   in `npm run lint`). Queries are plain SQL; no ORM.

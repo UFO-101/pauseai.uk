@@ -3,7 +3,7 @@ import { normalisePostcode } from "@/lib/email-your-mp";
 import type { Place } from "@/lib/events";
 import { TEST_MPS } from "@/lib/test-mps";
 import { findSittingMp, findTestMp, type FoundMp } from "./politicians";
-import { constituencyForPostcode } from "./postcodes";
+import { constituencyForPostcode } from "./outside-services/postcodes";
 
 export type FindMpResult =
   | { ok: true; mp: FoundMp; place?: Place }

@@ -45,32 +45,6 @@ describeWithDatabase("checkMps", () => {
     expect((await recentChecks()).map((run) => run.result.problems)).toEqual([[], [{ kind: "old" }]]);
   });
 
-  it("waits and tries again when Parliament's API is busy", async () => {
-    let calls = 0;
-    server.use(
-      http.get(`${MEMBERS_API}/Members/Search`, () =>
-        ++calls === 1 ? new HttpResponse(null, { status: 429, headers: { "Retry-After": "0" } }) : undefined,
-      ),
-      http.get(`${MEMBERS_API}/Members/90001/Contact`, () =>
-        ++calls === 3 ? new HttpResponse(null, { status: 503, headers: { "Retry-After": "0" } }) : undefined,
-      ),
-    );
-    await checkMps(NIGHTLY);
-    expect(calls).toBeGreaterThanOrEqual(4);
-  });
-
-  it("gives up after five busy answers, waiting longer each time without Retry-After", async () => {
-    vi.useFakeTimers({ toFake: ["setTimeout"] });
-    let calls = 0;
-    server.use(http.get(`${MEMBERS_API}/Members/Search`, () => (calls++, new HttpResponse(null, { status: 429 }))));
-    const check = checkMps(NIGHTLY);
-    const failed = expect(check).rejects.toThrow("returned 429");
-    await vi.runAllTimersAsync();
-    await failed;
-    vi.useRealTimers();
-    expect(calls).toBe(5);
-  });
-
   it("fails, keeping the failure, if Parliament's API fails", async () => {
     server.use(http.get(`${MEMBERS_API}/Members/Search`, () => new HttpResponse(null, { status: 500 })));
     await expect(checkMps(NIGHTLY)).rejects.toThrow("returned 500");

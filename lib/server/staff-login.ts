@@ -5,7 +5,7 @@ import { siteUrl } from "@/lib/site-url";
 import { LOGIN_BROWSER_COOKIE, LOGIN_LINK_PATH } from "@/lib/staff-session";
 import { query, transaction } from "./db";
 import { send } from "./email";
-import { notifyDomain } from "./postmark";
+import { notifyDomain } from "./outside-services/postmark";
 import { randomId } from "./random-id";
 
 // Logging in by email: a staff member types their pauseai.uk address and

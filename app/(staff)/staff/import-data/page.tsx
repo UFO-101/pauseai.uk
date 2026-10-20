@@ -2,7 +2,7 @@ import { staffCopy } from "@/lib/content/staff-interface";
 import { CONTROLAI_LETTER_PAGE } from "@/lib/controlai-letter";
 import { asList, type ControlAiImport, type MpCheck, type SignatoryImport } from "@/lib/import-runs";
 import { MEMBERS_API } from "@/lib/parliament";
-import { PARLIAMENTARIANS_TABLE_URL } from "@/lib/server/airtable";
+import { PARLIAMENTARIANS_TABLE_URL } from "@/lib/server/outside-services/airtable";
 import { latestRun } from "@/lib/server/import-runs";
 import { syncsToShow } from "@/lib/server/mp-sync";
 import { requireStaff } from "@/lib/server/staff-auth";

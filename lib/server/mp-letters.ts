@@ -7,9 +7,9 @@ import { checkDoc, isBlank, toHtml, toText, type LetterDoc } from "@/lib/letter-
 import { query, transaction, type Queryable } from "./db";
 import { findMp } from "./find-mp";
 import { send } from "./email";
-import { headerName, lettersDomain } from "./postmark";
+import { headerName, lettersDomain } from "./outside-services/postmark";
 import { randomId } from "./random-id";
-import { checkNotSpam } from "./turnstile";
+import { checkNotSpam } from "./outside-services/turnstile";
 
 // A letter from the form, sent from the letter's own
 // address as soon as the form is accepted.

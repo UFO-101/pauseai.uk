@@ -15,7 +15,7 @@ type Row = { airtable_id: string | null; name: string; email: string | null; sit
 const politicians = () =>
   query<Row>("SELECT airtable_id, name, email, sitting, is_test FROM politicians ORDER BY is_test, airtable_id, name");
 
-// Airtable's API, matched without naming its host, which only lib/server/airtable.ts may do.
+// Airtable's API, matched without naming its host, which only lib/server/outside-services/airtable.ts does.
 const AIRTABLE = "https://*.airtable.com/v0/*";
 
 const testStatuses = () =>

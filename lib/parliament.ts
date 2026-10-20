@@ -1,6 +1,6 @@
 // MPs from Parliament's Members API (https://members-api.parliament.uk/,
 // no key needed), to check Airtable's list against. The caller passes in
-// how to fetch: lib/server/mp-check.ts uses outsideFetch.
+// how to fetch: lib/server/outside-services/parliament.ts.
 
 export const MEMBERS_API = "https://members-api.parliament.uk/api";
 

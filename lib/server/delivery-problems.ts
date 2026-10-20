@@ -3,7 +3,7 @@ import { staffCopy } from "@/lib/content/staff-interface";
 import { siteUrl } from "@/lib/site-url";
 import { query } from "./db";
 import { recordProblem, send, type DeliveryProblem, type Purpose } from "./email";
-import { notifyDomain } from "./postmark";
+import { notifyDomain } from "./outside-services/postmark";
 
 // What happens when an email bounces or is complained about: the address is
 // recorded and, for a hard bounce or complaint, blocked (email.ts), then the

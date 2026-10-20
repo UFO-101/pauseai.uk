@@ -1,11 +1,8 @@
 import "server-only";
-import { extractText } from "unpdf";
 import {
   SOBEL_BILL_CAMPAIGN,
   CONTROLAI,
-  CONTROLAI_LETTER_PAGE,
   matchSignatories,
-  pdfUrlIn,
   signatoriesIn,
   type Candidate,
 } from "@/lib/controlai-letter";
@@ -13,7 +10,7 @@ import type { ControlAiImportResult } from "@/lib/import-runs";
 import { logChange } from "./audit";
 import { query, transaction } from "./db";
 import { keepingFailure, recordRun } from "./import-runs";
-import { outsideFetch } from "./outside-fetch";
+import { fetchLetter } from "./outside-services/controlai";
 
 // Copies the signatories of ControlAI's letter to the PM into the bill's
 // statuses, nightly (app/api/cron/import-controlai) or when staff ask, and
@@ -27,22 +24,6 @@ const JOB = "import-controlai";
 
 /** Fewer names than this means the page or the PDF has changed shape, so nothing is changed. */
 const MIN_SIGNATORIES = 5;
-
-async function fetchOk(url: string): Promise<Response> {
-  const res = await outsideFetch(url, { cache: "no-store" });
-  if (!res.ok) throw new Error(`${url} returned ${res.status}`);
-  return res;
-}
-
-/** The letter's text, from the PDF the page links to. */
-async function fetchLetter(): Promise<{ pdfUrl: string; text: string }> {
-  const html = await (await fetchOk(CONTROLAI_LETTER_PAGE)).text();
-  const pdfUrl = pdfUrlIn(html);
-  if (!pdfUrl) throw new Error(`No PDF linked from ${CONTROLAI_LETTER_PAGE}`);
-  const pdf = new Uint8Array(await (await fetchOk(pdfUrl)).arrayBuffer());
-  const { text } = await extractText(pdf, { mergePages: true });
-  return { pdfUrl, text };
-}
 
 /** Reads the letter and makes the bill's statuses match it. Keeps the result, or the failure, then throws it on. */
 export function importControlAiLetter(startedBy: string): Promise<ControlAiImportResult> {

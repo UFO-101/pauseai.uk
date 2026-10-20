@@ -10,7 +10,7 @@ import { importSignatories } from "./signatory-import";
 
 const recentSignatoryImports = () => listRuns("import-signatories");
 
-// Airtable's API, matched without naming its host, which only lib/server/airtable.ts may do.
+// Airtable's API, matched without naming its host, which only lib/server/outside-services/airtable.ts does.
 const AIRTABLE = "https://*.airtable.com/v0/*";
 const PM = "regulate-letter-pm";
 
