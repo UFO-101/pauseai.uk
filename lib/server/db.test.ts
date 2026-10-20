@@ -109,40 +109,34 @@ describeWithDatabase("the database", () => {
       await closeDb();
     });
 
-    it(
-      "queries the database the cookie names, and the usual one without it",
-      MAKES_DATABASES,
-      async () => {
-        vi.stubEnv("DATA_FIXTURES", "1");
-        freshDatabase(flow);
-        try {
-          const usual = await currentDatabase();
-          requestCookies.set(FLOW_DATABASE_COOKIE, flow);
-          expect(await currentDatabase()).toBe(flow);
-          // Both at once, in a transaction too.
-          await transaction((db) => query("INSERT INTO audit_log (actor, action) VALUES ('a', 'flow')", [], db));
-          expect(await query("SELECT action FROM audit_log")).toEqual([{ action: "flow" }]);
-          requestCookies.delete(FLOW_DATABASE_COOKIE);
-          expect(await currentDatabase()).toBe(usual);
-          expect(await query("SELECT action FROM audit_log")).toEqual([]);
-          // The flow's pool is closed once its connections have gone idle, and remade on the next query.
-          requestCookies.set(FLOW_DATABASE_COOKIE, flow);
-          await Promise.all([query("SELECT pg_sleep(0.05)"), query("SELECT pg_sleep(0.1)")]);
-          const connections = () =>
-            runSql("postgres", `SELECT count(*) FROM pg_stat_activity WHERE datname = '${flow}'`);
-          expect(Number(connections()[0])).toBeGreaterThanOrEqual(1);
-          await vi.waitFor(() => expect(connections()).toEqual(["0"]), { timeout: 5000, interval: 200 });
-          expect(await currentDatabase()).toBe(flow);
-        } finally {
-          await closeDb();
-          dropDatabase(flow);
-        }
-        // Longer than the 5s default: it makes a database, a psql process per
-        // migration, then waits up to 5s for the pool to close. On a loaded CI
-        // runner, with every database test file at once, that ran out of time.
-      },
-      30_000,
-    );
+    it("queries the database the cookie names, and the usual one without it", async () => {
+      vi.stubEnv("DATA_FIXTURES", "1");
+      freshDatabase(flow);
+      try {
+        const usual = await currentDatabase();
+        requestCookies.set(FLOW_DATABASE_COOKIE, flow);
+        expect(await currentDatabase()).toBe(flow);
+        // Both at once, in a transaction too.
+        await transaction((db) => query("INSERT INTO audit_log (actor, action) VALUES ('a', 'flow')", [], db));
+        expect(await query("SELECT action FROM audit_log")).toEqual([{ action: "flow" }]);
+        requestCookies.delete(FLOW_DATABASE_COOKIE);
+        expect(await currentDatabase()).toBe(usual);
+        expect(await query("SELECT action FROM audit_log")).toEqual([]);
+        // The flow's pool is closed once its connections have gone idle, and remade on the next query.
+        requestCookies.set(FLOW_DATABASE_COOKIE, flow);
+        await Promise.all([query("SELECT pg_sleep(0.05)"), query("SELECT pg_sleep(0.1)")]);
+        const connections = () => runSql("postgres", `SELECT count(*) FROM pg_stat_activity WHERE datname = '${flow}'`);
+        expect(Number(connections()[0])).toBeGreaterThanOrEqual(1);
+        await vi.waitFor(() => expect(connections()).toEqual(["0"]), { timeout: 5000, interval: 200 });
+        expect(await currentDatabase()).toBe(flow);
+      } finally {
+        await closeDb();
+        dropDatabase(flow);
+      }
+      // Longer than the 5s default: it makes a database, a psql process per
+      // migration, then waits up to 5s for the pool to close. On a loaded CI
+      // runner, with every database test file at once, that ran out of time.
+    }, 30_000);
 
     it("ignores a cookie naming any other database", async () => {
       vi.stubEnv("DATA_FIXTURES", "1");
