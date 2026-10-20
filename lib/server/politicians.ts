@@ -5,8 +5,8 @@ import { query, transaction, type Queryable } from "./db";
 import { logChange } from "./audit";
 
 // Politicians and their status for each campaign. MPs are copied from
-// Parliament nightly (mp-sync.ts); the policy team adds other signers and
-// sets statuses in the staff interface.
+// Airtable nightly (mp-sync.ts); other signers came from the signatory
+// import, and staff edit them and set statuses in the staff interface.
 
 export const HOUSES = ["commons", "lords", "scottish-parliament", "senedd", "ni-assembly", "other"] as const;
 export type House = (typeof HOUSES)[number];

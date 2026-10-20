@@ -333,10 +333,9 @@ npm run format                  # Prettier, on everything but plans/ (format:che
 
 - **Database tests** need Postgres reachable with your `PG*` variables.
   Each test file makes its own database and drops it afterwards.
-- **While the copy is placeholder**, `tests/checks/placeholder-copy.test.ts` fails, and
+- **While any copy is a placeholder**, `tests/checks/placeholder-copy.test.ts` fails, and
   so does `npm run build`, which runs the unit tests first. That's on
-  purpose: placeholders can't be deployed (AGENTS.md). For now the test is
-  skipped, until the Email your MP swap.
+  purpose: placeholders can't be deployed (AGENTS.md).
 - **The storyboard** builds and starts the site itself on port 3100, unless
   a server is already running there. Your dev server, on 3000, is left
   alone. To skip rebuilding each run, start one yourself, with the same
@@ -378,3 +377,18 @@ See [testing.md](testing.md) for the rules.
 | An email didn't arrive                                    | The server log says what happened to each email: sent through Postmark, with its MessageID, or written to which outbox file. The dev server doesn't send without a real token: with none, or Postmark's test token `POSTMARK_API_TEST`, it writes the email to the outbox instead. |
 | Letters to a real MP are refused                          | Expected: outside production, only the test MP.                                                                                                                                                                                                                                    |
 | `Executable doesn't exist` from Playwright                | `npx playwright install chromium`.                                                                                                                                                                                                                                                 |
+
+## 8. Deploying
+
+Netlify, configured in `netlify.toml`. Pushing to `main` deploys the live
+site, and pull requests get previews. Netlify applies the migrations in
+`netlify/database/migrations/` on deploy. The database is backed up every
+night to Cloudflare by a Worker in `backup/`, deployed on its own
+(`backup/README.md`).
+
+Set up outside the code:
+
+- **Settings:** every environment variable is in [.env.example](../.env.example), with what it's for. Netlify needs the same ones.
+- **Postmark:** a server, and two sending domains, each with DKIM, Return-Path and DMARC. `letters.pauseai.uk` sends letters to representatives and is the inbound domain, with its MX pointing at `inbound.postmarkapp.com`. `notify.pauseai.uk` sends everything else, such as forwarded replies and staff emails. Its webhooks carry basic auth in the URL, e.g. `https://postmark:<password>@pauseai.uk/api/postmark/bounce`: Bounce and Spam complaint go to `/api/postmark/bounce`, Inbound to `/api/postmark/inbound`.
+- **Nightly jobs:** the MP sync runs at midnight UTC, the check against Parliament at 01:00 and the ControlAI import at 02:00. The check makes about 650 requests to Parliament, which took 12–18 seconds from a laptop on 14 Oct 2026. A Netlify scheduled function gets 30 seconds, so a nightly check that starts timing out has outgrown it.
+- **A new database:** run the MP sync, then the signatory import, both from `/staff/import-data`, and check the signatories. Until the sync has run, Email your MP finds no MPs.
