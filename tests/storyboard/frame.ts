@@ -1,4 +1,5 @@
 import { test, type Locator, type Page } from "@playwright/test";
+import sharp from "sharp";
 import { emailView } from "../fixtures/email-view";
 import type { OutboxEmail } from "../fixtures/outbox";
 
@@ -82,8 +83,39 @@ export async function frame(
     await info.attach(`frame ${index}: ${caption}`, { body, contentType: "image/png" });
     return;
   }
-  const body = await page.screenshot({ fullPage: !scrolled && !windowOnly, animations: "disabled" });
+  const body = scrolled || windowOnly ? await page.screenshot({ animations: "disabled" }) : await wholePage(page);
   await info.attach(`frame ${index}: ${caption}`, { body, contentType: "image/png" });
+}
+
+/** The tallest piece of a page, in CSS pixels, that Chromium pictures in one go. */
+const SLICE = 4000;
+
+/**
+ * The whole page. Chromium leaves some tiles of a very tall page unpainted
+ * when it pictures it in one go (the gallery's pages group, 120,000px tall
+ * on a phone, lost a different few 512px squares each run), so a page taller
+ * than SLICE is pictured a slice at a time and the slices put together.
+ */
+async function wholePage(page: Page): Promise<Buffer> {
+  const { width, height } = await page.evaluate(() => ({
+    width: document.documentElement.scrollWidth,
+    height: document.documentElement.scrollHeight,
+  }));
+  if (height <= SLICE) return page.screenshot({ fullPage: true, animations: "disabled" });
+  const slices: { top: number; body: Buffer }[] = [];
+  for (let top = 0; top < height; top += SLICE) {
+    const clip = { x: 0, y: top, width, height: Math.min(SLICE, height - top) };
+    slices.push({ top, body: await page.screenshot({ fullPage: true, animations: "disabled", clip }) });
+  }
+  const { width: pixels } = await sharp(slices[0].body).metadata();
+  const scale = pixels! / width;
+  return sharp({
+    create: { width: pixels!, height: Math.round(height * scale), channels: 4, background: "#00000000" },
+    limitInputPixels: false,
+  })
+    .composite(slices.map(({ top, body }) => ({ input: body, left: 0, top: Math.round(top * scale) })))
+    .png()
+    .toBuffer();
 }
 
 /**
