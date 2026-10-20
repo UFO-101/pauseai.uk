@@ -1,6 +1,8 @@
-import type { Page } from "@playwright/test";
-import { campaigns } from "@/lib/content/email-your-mp";
-import { staffCopy } from "@/lib/content/staff-interface";
+import type { APIRequestContext, Page } from "@playwright/test";
+import { campaigns, copy } from "@/lib/content/email-your-mp";
+import { jobTitles, staffCopy } from "@/lib/content/staff-interface";
+import type { ImportJob } from "@/lib/import-runs";
+import { TEST_MPS } from "@/lib/test-mps";
 import { runSql } from "@/scripts/fresh-database.mjs";
 import { ROUTES } from "../routes";
 import {
@@ -9,7 +11,9 @@ import {
   fillLetter,
   logInAsStaff,
   loginLinkFor,
+  newestEmail,
   lookUpTestMp,
+  openLookup,
   newestEmailTo,
   sendLetter,
   syncMps,
@@ -131,10 +135,6 @@ test("staff log in, set a status that shows on /campaigns, and log out", async (
   await expect(page.getByRole("cell", { name: "set status" }).first()).toBeVisible();
   await frame(page, "the audit log");
 
-  // The import page shows each job's newest run; the history page lists every run, the first sync among them.
-  await page.goto(`${BASE}/staff/import-history?job=sync-mps`);
-  await expect(page.getByText(staffCopy.runs.status.applied).first()).toBeVisible();
-  await frame(page, "the import history, filtered to the MP sync");
   await page.goto(`${BASE}/staff/import-data`);
   await frame(page, "the import page");
 
@@ -178,41 +178,36 @@ test("a politician's own page", async ({ page, request }) => {
   await frame(page, "the test MP's page");
 });
 
-test("a letter someone sends is listed, and can be filtered by status", async ({ page }) => {
-  await fakeTurnstile(page);
-  await lookUpTestMp(page, BASE);
-  await fillLetter(page, "jane@example.com");
-  await sendLetter(page);
-
+test("the import history lists every run, and filters to one job", async ({ page, request }) => {
+  await syncMps(request, BASE);
   await logIn(page);
-  await page.goto(`${BASE}/staff/letters`);
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText(staffCopy.letters.title);
-  const row = page.getByRole("row").filter({ hasText: "Testy McTestface MP" });
-  await expect(row).toContainText(staffCopy.letters.status.sent);
-  await frame(page, "the letters list, with the one just sent");
+  await page.goto(`${BASE}/staff/import-data`);
+  await page.getByRole("button", { name: staffCopy.check.checkNow }).click();
+  await expect(page.getByRole("row").filter({ hasText: "Cities of London and Westminster" })).toBeVisible();
 
-  await page.getByLabel(staffCopy.letters.columns.status).selectOption("sent");
-  await page.getByRole("button", { name: staffCopy.letters.filter }).click();
-  await expect(page).toHaveURL(`${BASE}/staff/letters?status=sent`);
-  await expect(row).toBeVisible();
-  await frame(page, "filtered to sent letters");
+  // Each run in the history starts with its job's title, unlike the filter's options.
+  const runs = (job: ImportJob) => page.getByText(`${jobTitles[job]} ·`);
+  await page.goto(`${BASE}/staff/import-history`);
+  await expect(runs("sync-mps")).toBeVisible();
+  await expect(runs("check-mps")).toBeVisible();
+  await frame(page, "the import history: the MP import, then the check");
+
+  await page.getByLabel(staffCopy.history.job).selectOption("sync-mps");
+  await page.getByRole("button", { name: staffCopy.history.filter, exact: true }).click();
+  await expect(page).toHaveURL(`${BASE}/staff/import-history?job=sync-mps`);
+  await expect(runs("sync-mps")).toBeVisible();
+  await expect(runs("check-mps")).toHaveCount(0);
+  await frame(page, "filtered to the MP import");
 });
 
-test("a letter that bounces shows as bounced, with why, on the letters list", async ({ page, request }, testInfo) => {
-  const sender = `jane+${testInfo.testId}@example.com`;
-  await fakeTurnstile(page);
-  await lookUpTestMp(page, BASE);
-  await fillLetter(page, sender);
-  await sendLetter(page);
+/** The shared inbox in a fixture build (tests/fixture-env.mjs), where staff alerts go. */
+const STAFF_INBOX = "replies@example.org";
+/** Bouncy McTestface MP, whose address doesn't exist. */
+const bouncy = TEST_MPS.find((mp) => mp.postcode === "ZZ99ZH")!;
+const BOUNCY_ADDRESS = "no-such-mailbox@pauseai.uk";
 
-  await logIn(page);
-  await page.goto(`${BASE}/staff/letters`);
-  const row = page.getByRole("row").filter({ hasText: sender });
-  await expect(row).toContainText(staffCopy.letters.status.sent);
-  // The letter's Postmark MessageID, from its "sent" event, as staff see it.
-  const messageId = (await row.locator("code").first().textContent())!.match(/"messageId":"([\w-]+)"/)![1];
-
-  // Postmark's bounce webhook, as it posts one for that message.
+/** Postmark's bounce webhook, as it posts one for a hard bounce of `messageId`, or of an email we can't place. */
+async function postBounce(request: APIRequestContext, messageId?: string) {
   const bounce = await request.post(`${BASE}/api/postmark/bounce`, {
     headers: { Authorization: WEBHOOK_AUTH },
     data: {
@@ -222,22 +217,114 @@ test("a letter that bounces shows as bounced, with why, on the letters list", as
       TypeCode: 1,
       Name: "Hard bounce",
       Description: "The server was unable to deliver your message (ex: unknown user, mailbox not found).",
-      Email: "test-mp@example.org",
+      Email: BOUNCY_ADDRESS,
       BouncedAt: "2026-10-16T12:00:00Z",
+      Inactive: true,
+      CanActivate: true,
     },
   });
   expect(await bounce.json()).toEqual({ recorded: true });
+}
+
+/** Writes to `mp` as `sender`, then, logged in, reads the letter's Postmark MessageID from the letters list. */
+async function sentLetterId(page: Page, sender: string, mp = TEST_MPS[0]): Promise<string> {
+  await fakeTurnstile(page);
+  await lookUpTestMp(page, BASE, mp);
+  await fillLetter(page, sender);
+  await sendLetter(page, mp);
+  await page.goto(`${BASE}/staff/letters`);
+  if (page.url().endsWith("/staff/login")) await logIn(page);
+  await page.goto(`${BASE}/staff/letters`);
+  const row = page.getByRole("row").filter({ hasText: sender });
+  await expect(row).toContainText(staffCopy.letters.status.sent);
+  return (await row.locator("code").first().textContent())!.match(/"messageId":"([\w-]+)"/)![1];
+}
+
+test("letters are listed, sent and bounced, and can be filtered by status", async ({ page, request }, testInfo) => {
+  const jane = `jane+${testInfo.testId}@example.com`;
+  const sam = `sam+${testInfo.testId}@example.com`;
+  await sentLetterId(page, jane);
+  await postBounce(request, await sentLetterId(page, sam, bouncy));
 
   await page.reload();
-  await expect(row.locator("td").nth(5)).toHaveText(staffCopy.letters.status.bounced);
-  await expect(row).toContainText("HardBounce");
-  await frame(page, "the letter, bounced, with Postmark's reason in its history");
+  const janes = page.getByRole("row").filter({ hasText: jane });
+  const sams = page.getByRole("row").filter({ hasText: sam });
+  await expect(janes.locator("td").nth(5)).toHaveText(staffCopy.letters.status.sent);
+  await expect(sams.locator("td").nth(5)).toHaveText(staffCopy.letters.status.bounced);
+  await expect(sams).toContainText("HardBounce");
+  await frame(page, "the letters list: one sent, one bounced, with Postmark's reason in its history");
 
   await page.getByLabel(staffCopy.letters.columns.status).selectOption("bounced");
   await page.getByRole("button", { name: staffCopy.letters.filter }).click();
   await expect(page).toHaveURL(`${BASE}/staff/letters?status=bounced`);
-  await expect(row).toBeVisible();
-  await frame(page, "filtered to bounced letters");
+  await expect(sams).toBeVisible();
+  await expect(janes).toHaveCount(0);
+  await frame(page, "filtered to the bounced letter");
+});
+
+test("a letter that bounces: staff are emailed, and the address is blocked", async ({ page, request }, testInfo) => {
+  const sender = `jane+${testInfo.testId}@example.com`;
+  const messageId = await sentLetterId(page, sender, bouncy);
+  const sent = newestEmail((email) => email.ReplyTo?.includes(sender) ?? false);
+  expect(sent?.To).toBe(`"Bouncy McTestface MP" <${BOUNCY_ADDRESS}>`);
+  await postBounce(request, messageId);
+
+  const alert = newestEmail(
+    (email) => email.To === STAFF_INBOX && email.Subject === staffCopy.alert.subject(bouncy.name),
+  );
+  expect(alert?.TextBody).toContain(`${BASE}/staff/blocked-addresses`);
+  await emailFrame(page, alert!, "the email staff get about it");
+
+  await page.goto(`${BASE}/staff/blocked-addresses`);
+  // The blocked addresses, above the recent problems.
+  const blocked = page.getByRole("table").first().getByRole("row").filter({ hasText: BOUNCY_ADDRESS });
+  await expect(blocked.getByRole("link", { name: bouncy.name })).toBeVisible();
+  await expect(blocked).toContainText(staffCopy.emails.kinds.hard);
+  await frame(page, "the address, blocked, with the letter that found it out");
+});
+
+test("an MP whose address bounced can't be written to until staff unblock it", async ({ page, request }) => {
+  await postBounce(request);
+  await fakeTurnstile(page);
+  await openLookup(page, BASE, "ZZ9 9ZH");
+  await page.getByRole("button", { name: copy.lookup.button }).click();
+  await expect(page.getByRole("heading", { name: bouncy.name })).toBeVisible();
+  const unreachable = page.getByText(copy.lookup.unreachable);
+  await expect(unreachable).toBeVisible();
+  // The MP's card is under the form: brought into view, so the frame shows it.
+  await page.getByRole("heading", { name: bouncy.name }).scrollIntoViewIfNeeded();
+  await frame(page, "the form says the MP can't be reached");
+
+  await logIn(page);
+  const bouncysRow = page.getByRole("row").filter({ hasText: bouncy.name });
+  await expect(bouncysRow).toContainText(staffCopy.politicians.emailBlocked);
+  await frame(page, "the politicians list marks their address as blocked");
+
+  await page.getByLabel(staffCopy.fields.email).selectOption("blocked");
+  await page.getByRole("button", { name: staffCopy.politicians.searchButton }).click();
+  await expect(page).toHaveURL(/[?&]email=blocked/);
+  await expect(page.getByRole("link", { name: "Testy McTestface MP" })).toHaveCount(0);
+  await expect(page.getByRole("row").filter({ hasText: bouncy.name })).toContainText(
+    staffCopy.politicians.emailBlocked,
+  );
+  await frame(page, "the politicians whose address is blocked");
+
+  await page.getByRole("link", { name: bouncy.name }).click();
+  await expect(page.getByRole("heading", { level: 1, name: bouncy.name })).toBeVisible();
+  await frame(page, "their page says why, with a way to unblock it");
+
+  await page.getByLabel(staffCopy.emails.note).fill("Checked with their office");
+  await page.getByRole("button", { name: staffCopy.emails.unblock }).click();
+  await expect(page.getByLabel(staffCopy.emails.note)).not.toBeVisible();
+  await frame(page, "unblocked");
+
+  await page.goto(`${BASE}/staff/audit-log`);
+  await expect(page.getByText("Checked with their office")).toBeVisible();
+  await frame(page, "the audit log: blocked by Postmark, unblocked by staff");
+
+  await lookUpTestMp(page, BASE, bouncy);
+  await expect(page.getByLabel(copy.form.emailLabel)).toBeVisible();
+  await frame(page, "the form writes to them again");
 });
 
 test("an MP import that would change too many is held, then discarded, and then applied", async ({

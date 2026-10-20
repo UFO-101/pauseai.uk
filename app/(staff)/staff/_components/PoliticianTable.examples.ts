@@ -15,6 +15,7 @@ export const examplePolitician: Politician = {
   email: "polly.placeholder.mp@parliament.uk",
   isTest: false,
   sitting: true,
+  emailBlocked: false,
   statuses: {
     [pm.slug]: {
       status: "signed",

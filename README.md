@@ -2,67 +2,37 @@
 
 The [pauseai.uk](https://pauseai.uk) website: Next.js 16 and React 19, deployed to Netlify.
 
+## Features
+
+- **Public site:** who we are, people's stories, local groups, blog, press, jobs, governance, donations, research.
+- **Events:** from our Luma calendar, on `/events`, the home page and local group pages.
+- **Email your MP:** `/campaigns`. Postcode to MP, edit and send a campaign letter; replies come back to the sender and the policy team.
+- **Volunteer tools:** collateral maker and QR codes (`/tools`); live results of activity days (`/trackers`).
+- **Staff interface:** `/staff`. Politicians and what they've signed, letters and replies, nightly imports, blocked email addresses, audit log.
+- **Component gallery:** `/gallery`, fixture builds only.
+
+How they're built is in [docs/domain-concepts.md](docs/domain-concepts.md).
+
 ## Run it locally
 
-### 1. Install Node, Docker and psql
-
-- **Node 22.**
-- **Docker**, which runs Postgres 18 (the version the live site runs) from `docker-compose.yml`.
-- **`psql`**, Postgres's command-line tool, which the scripts use to set up databases. Mac: `brew install libpq && brew link --force libpq`. Debian or Ubuntu: `sudo apt install postgresql-client`.
-
-Check them:
-
-```bash
-node --version     # v22 or later
-docker --version
-psql --version     # 18 or later is best
-```
-
-You can use a Postgres installed natively instead of Docker; see [docs/development.md](docs/development.md).
-
-### 2. Set up and run
+With Node 22, Docker and `psql`:
 
 ```bash
 npm install
-docker compose up -d         # starts Postgres: `db` for the site, `db-test` for tests
-cp .env.example .env.local   # your local settings: edit it, see below
-npm run db:reset             # makes the database NETLIFY_DB_URL names
-npm run dev                  # http://localhost:3000
+docker compose up -d         # Postgres for the site and the tests
+cp .env.example .env.local   # set TEST_MP_EMAIL to your email
+npm run db:reset
+npm run dev                  # http://localhost:3000, with every outside service faked
 ```
 
-In `.env.local`:
-
-- **`NETLIFY_DB_URL`** is your local database: `db` in Docker, as the example has it.
-- **`TEST_DATABASE_URL`** is where tests make their throwaway databases: `db-test` in Docker, which keeps everything in memory.
-- **`TEST_MP_EMAIL`**: your email. Letters to the test MP go there.
-- **`DATA_FIXTURES=1`** fakes every outside service, so you need no other keys. Emails are written to files in `tmp/outbox/` instead of sent.
-
-Try Email your MP at http://localhost:3000/campaigns with postcode ZZ99ZZ. The letter it sends is the newest file in `tmp/outbox/`. Every component, and each of its variants, is at http://localhost:3000/gallery (only with `DATA_FIXTURES=1`).
-
-`npm run db:migrate` applies the migrations your database hasn't had. `npm run db:reset` wipes the database and makes it again, with the latest migrations. It only works on a database on your own machine. The whole schema is in [netlify/database/schema.sql](netlify/database/schema.sql), for reference.
-
-To use real services, delete `DATA_FIXTURES` and fill in the rest of `.env.local`. [.env.example](.env.example) explains each variable; Netlify needs the same ones. [docs/development.md](docs/development.md) covers the rest: what the fixtures fake, logging in as staff, the daily jobs and webhooks, and running the Playwright suites.
-
-## Tests
-
-```bash
-npm test                 # unit and component tests, held at 100% coverage (needs Postgres running, as above)
-npm run test:node        # just the unit tests
-npm run test:browser     # just the component tests, in real Chromium
-npm run test:storyboard  # Playwright: every page and flow, on a fixture build
-npm run storyboard       # the same with screenshots, this branch against main, as a page
-npm run lint             # ESLint, failing on warnings too
-npm run lint:css         # Stylelint
-npm run lint:unused      # Knip: unused files, exports and dependencies
-npm run format           # Prettier, on everything but plans/ (format:check only checks)
-```
+Try Email your MP with postcode ZZ99ZZ; the letter lands in `tmp/outbox/`. The rest, including tests and real services, is in [docs/development.md](docs/development.md).
 
 ## Docs
 
+- [docs/domain-concepts.md](docs/domain-concepts.md): the concepts the features are built from, and how to extend them
 - [docs/development.md](docs/development.md): setting up local development in full
 - [docs/code-structure.md](docs/code-structure.md): where code lives
 - [docs/testing.md](docs/testing.md): how it's tested
-- [docs/email-your-mp.md](docs/email-your-mp.md): the Email your MP tool and staff interface
 - [docs/style-guide.md](docs/style-guide.md): design, and where to find every component
 - [scripts/README.md](scripts/README.md): what each script does
 - [backup/README.md](backup/README.md): the nightly database backup to Cloudflare, and restoring one
@@ -71,6 +41,4 @@ npm run format           # Prettier, on everything but plans/ (format:check only
 
 ## Deployment
 
-Netlify, configured in `netlify.toml`. Pushing to `main` deploys the live site; pull requests get previews. Database migrations in `netlify/database/migrations/` are applied by Netlify on deploy.
-
-The database is backed up every night to Cloudflare by a Worker in `backup/`, deployed on its own ([backup/README.md](backup/README.md)).
+Netlify: pushing to `main` deploys the live site, and pull requests get previews. The database is backed up nightly to Cloudflare ([backup/README.md](backup/README.md)). What has to be set up outside the code is in [docs/development.md](docs/development.md), "Deploying".

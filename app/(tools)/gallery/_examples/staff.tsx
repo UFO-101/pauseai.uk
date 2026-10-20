@@ -4,6 +4,9 @@
 // which send anyone without a session to the login page.
 import { Button } from "@/components/ui/Button";
 import ChangesTable from "@/app/(staff)/staff/_components/ChangesTable";
+import EmailBlockFilters from "@/app/(staff)/staff/_components/EmailBlockFilters";
+import { exampleProblems } from "@/app/(staff)/staff/_components/EmailBlocksTable.examples";
+import EmailProblemsTable from "@/app/(staff)/staff/_components/EmailProblemsTable";
 import { exampleChange } from "@/app/(staff)/staff/_components/ChangesTable.examples";
 import LetterFilters from "@/app/(staff)/staff/_components/LetterFilters";
 import LettersTable from "@/app/(staff)/staff/_components/LettersTable";
@@ -30,12 +33,14 @@ import { staffCopy } from "@/lib/content/staff-interface";
 import type { ImportJob } from "@/lib/import-runs";
 import type { Group, Variant } from "../_components/types";
 import {
+  EmailBlocksTableExample,
   HeldSyncExample,
   JobActionsExample,
   PoliticianDetailsExample,
   PoliticianFormExample,
   PoliticianTableEmptyExample,
   PoliticianTableExample,
+  UnblockFormExample,
 } from "./staff.client";
 
 const [pm] = campaigns;
@@ -44,6 +49,7 @@ const [pm] = campaigns;
 const PAGES: Record<StaffPageName, true> = {
   politicians: true,
   letters: true,
+  emails: true,
   import: true,
   history: true,
   changes: true,
@@ -220,6 +226,14 @@ export const staff: Group = {
             </StaffPage>
           ),
         },
+        {
+          label: "An MP whose address bounced, with the form to unblock it",
+          render: () => (
+            <StaffPage as="div">
+              <PoliticianDetailsExample fromAirtable blocked />
+            </StaffPage>
+          ),
+        },
       ],
     },
     {
@@ -244,8 +258,8 @@ export const staff: Group = {
           label: "Empty, and filled in",
           render: () => (
             <StaffPage as="div">
-              <PoliticianFilters search="" house="" campaign="" />
-              <PoliticianFilters search="example" house="lords" campaign={pm.slug} />
+              <PoliticianFilters search="" house="" campaign="" email="" />
+              <PoliticianFilters search="example" house="lords" campaign={pm.slug} email="blocked" />
             </StaffPage>
           ),
         },
@@ -288,11 +302,84 @@ export const staff: Group = {
       ],
     },
     {
+      name: "EmailBlocksTable",
+      file: "app/(staff)/staff/_components/EmailBlocksTable.tsx",
+      variants: [
+        {
+          label: "An MP's address that bounced, and one that complained",
+          render: () => (
+            <StaffPage as="div">
+              <EmailBlocksTableExample />
+            </StaffPage>
+          ),
+        },
+        {
+          label: "None",
+          render: () => (
+            <StaffPage as="div">
+              <EmailBlocksTableExample blocks={[]} />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "UnblockForm",
+      file: "app/(staff)/staff/_components/UnblockForm.tsx",
+      variants: [
+        {
+          label: "For a bounce, and for a complaint, which can't be unblocked",
+          render: () => (
+            <StaffPage as="div">
+              <UnblockFormExample />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "EmailBlockFilters",
+      file: "app/(staff)/staff/_components/EmailBlockFilters.tsx",
+      variants: [
+        {
+          label: "All, and complaints only",
+          render: () => (
+            <StaffPage as="div">
+              <EmailBlockFilters kind="" />
+              <EmailBlockFilters kind="complaint" />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "EmailProblemsTable",
+      file: "app/(staff)/staff/_components/EmailProblemsTable.tsx",
+      variants: [
+        {
+          label: "A letter's hard bounce, a forwarded reply's soft one, and a complaint about an email we didn't log",
+          render: () => (
+            <StaffPage as="div">
+              <EmailProblemsTable problems={exampleProblems} />
+            </StaffPage>
+          ),
+        },
+        {
+          label: "None",
+          render: () => (
+            <StaffPage as="div">
+              <EmailProblemsTable problems={[]} />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
       name: "LettersTable",
       file: "app/(staff)/staff/_components/LettersTable.tsx",
       variants: [
         {
-          label: "A bounced letter to a test MP, and a replied one",
+          label: "A bounced letter to a test MP, a replied one, and one not sent as the MP's address was blocked",
           render: () => (
             <StaffPage as="div">
               <LettersTable
@@ -311,6 +398,17 @@ export const staff: Group = {
                     events: [
                       { at: "2026-10-12T09:00:00Z", status: "sending", details: {} },
                       { at: "2026-10-12T09:05:00Z", status: "sent", details: {} },
+                    ],
+                  },
+                  {
+                    ...exampleLetter,
+                    id: 3,
+                    status: "not_sent",
+                    mpName: "Bouncy McTestface MP",
+                    sentAt: null,
+                    events: [
+                      { at: "2026-10-12T09:00:00Z", status: "sending", details: {} },
+                      { at: "2026-10-12T09:00:00Z", status: "not_sent", details: {} },
                     ],
                   },
                 ]}

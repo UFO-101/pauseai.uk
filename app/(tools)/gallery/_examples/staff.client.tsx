@@ -3,13 +3,17 @@
 // The staff screens' examples whose Server Actions are props: client
 // components with no props, each action logged rather than sent.
 import { campaigns } from "@/lib/content/email-your-mp";
+import type { EmailBlock } from "@/lib/server/email";
 import type { Politician } from "@/lib/server/politicians";
+import EmailBlocksTable from "@/app/(staff)/staff/_components/EmailBlocksTable";
+import { exampleBlock, exampleComplaint } from "@/app/(staff)/staff/_components/EmailBlocksTable.examples";
 import JobActions from "@/app/(staff)/staff/_components/JobActions";
 import PoliticianDetails from "@/app/(staff)/staff/_components/PoliticianDetails";
 import PoliticianForm from "@/app/(staff)/staff/_components/PoliticianForm";
 import PoliticianTable from "@/app/(staff)/staff/_components/PoliticianTable";
 import { examplePolitician } from "@/app/(staff)/staff/_components/PoliticianTable.examples";
 import Run from "@/app/(staff)/staff/_components/Run";
+import UnblockForm from "@/app/(staff)/staff/_components/UnblockForm";
 import { exampleHeldSync } from "@/app/(staff)/staff/_components/RunList.examples";
 import { Logged } from "../_components/wiring";
 
@@ -44,7 +48,7 @@ function LoggedPoliticianTable({ politicians }: { politicians: Politician[] }) {
   return <Logged>{(log) => <PoliticianTable politicians={politicians} markSigned={log("markSigned")} />}</Logged>;
 }
 
-/** An MP who signed the letter to the PM, and a test peer, no longer sitting, who signed ControlAI's letter. */
+/** An MP who signed the letter to the PM, and a test peer, no longer sitting, whose address is blocked, who signed ControlAI's letter. */
 export function PoliticianTableExample() {
   return (
     <LoggedPoliticianTable
@@ -56,6 +60,7 @@ export function PoliticianTableExample() {
           name: "Testy McTestface MP",
           isTest: true,
           sitting: false,
+          emailBlocked: true,
           house: "lords",
           constituency: null,
           statuses: { [bill.slug]: { ...examplePolitician.statuses[pm.slug], updatedBy: "controlai" } },
@@ -75,15 +80,47 @@ export function HeldSyncExample() {
   return <Logged>{(log) => <Run run={exampleHeldSync} decide={log("decide")} />}</Logged>;
 }
 
-/** A politician's page for a signer the policy team added, its saves logged; or one of Airtable's MPs, not editable here. */
-export function PoliticianDetailsExample({ fromAirtable = false }: { fromAirtable?: boolean }) {
+/**
+ * A politician's page for a signer the policy team added, its saves logged;
+ * or one of Airtable's MPs, not editable here, whose address may be blocked.
+ */
+export function PoliticianDetailsExample({
+  fromAirtable = false,
+  blocked = false,
+}: {
+  fromAirtable?: boolean;
+  blocked?: boolean;
+}) {
   return (
     <Logged>
       {(log) => (
         <PoliticianDetails
-          politician={fromAirtable ? examplePolitician : { ...examplePolitician, airtableId: null }}
+          politician={
+            fromAirtable ? { ...examplePolitician, emailBlocked: blocked } : { ...examplePolitician, airtableId: null }
+          }
           action={log("action")}
+          block={blocked ? { ...exampleBlock, address: examplePolitician.email! } : undefined}
+          unblock={log("unblock")}
         />
+      )}
+    </Logged>
+  );
+}
+
+/** Blocked addresses, a bounce and a complaint unless told otherwise, their unblocking logged. */
+export function EmailBlocksTableExample({ blocks = [exampleBlock, exampleComplaint] }: { blocks?: EmailBlock[] }) {
+  return <Logged>{(log) => <EmailBlocksTable blocks={blocks} unblock={log("unblock")} />}</Logged>;
+}
+
+/** The unblock form for a bounce, logged, and what shows for a complaint instead. */
+export function UnblockFormExample() {
+  return (
+    <Logged>
+      {(log) => (
+        <>
+          <UnblockForm block={exampleBlock} action={log("unblock")} />
+          <UnblockForm block={exampleComplaint} action={log("unblock")} />
+        </>
       )}
     </Logged>
   );

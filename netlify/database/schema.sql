@@ -66,6 +66,77 @@ CREATE TABLE public.campaign_statuses (
 );
 
 --
+-- Name: email_blocks; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.email_blocks (
+    address text NOT NULL,
+    problem_id bigint NOT NULL,
+    CONSTRAINT email_blocks_address_check CHECK ((address = lower(address)))
+);
+
+--
+-- Name: email_problems; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.email_problems (
+    id bigint NOT NULL,
+    at timestamp with time zone DEFAULT now() NOT NULL,
+    address text NOT NULL,
+    message_id text,
+    kind text NOT NULL,
+    reason text DEFAULT ''::text NOT NULL,
+    can_reset boolean NOT NULL,
+    details jsonb DEFAULT '{}'::jsonb NOT NULL,
+    CONSTRAINT email_problems_address_check CHECK ((address = lower(address))),
+    CONSTRAINT email_problems_check CHECK (((kind <> 'complaint'::text) OR (NOT can_reset))),
+    CONSTRAINT email_problems_kind_check CHECK ((kind = ANY (ARRAY['hard'::text, 'soft'::text, 'complaint'::text])))
+);
+
+--
+-- Name: email_problems_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+ALTER TABLE public.email_problems ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public.email_problems_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+--
+-- Name: email_sends; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.email_sends (
+    id bigint NOT NULL,
+    at timestamp with time zone DEFAULT now() NOT NULL,
+    purpose text NOT NULL,
+    letter_id bigint,
+    address text NOT NULL,
+    outcome text NOT NULL,
+    message_id text,
+    CONSTRAINT email_sends_check CHECK (((outcome = 'sent'::text) = (message_id IS NOT NULL))),
+    CONSTRAINT email_sends_outcome_check CHECK ((outcome = ANY (ARRAY['sent'::text, 'refused'::text, 'failed'::text]))),
+    CONSTRAINT email_sends_purpose_check CHECK ((purpose = ANY (ARRAY['letter'::text, 'forwarded-reply'::text, 'staff-login'::text, 'staff-alert'::text])))
+);
+
+--
+-- Name: email_sends_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+ALTER TABLE public.email_sends ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public.email_sends_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+--
 -- Name: import_runs; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -138,11 +209,10 @@ CREATE TABLE public.letters (
     subject text NOT NULL,
     reply_hash text NOT NULL,
     status text NOT NULL,
-    postmark_message_id text,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     sent_at timestamp with time zone,
     replied_at timestamp with time zone,
-    CONSTRAINT letters_status_check CHECK ((status = ANY (ARRAY['sending'::text, 'sent'::text, 'bounced'::text, 'spam_complaint'::text])))
+    CONSTRAINT letters_status_check CHECK ((status = ANY (ARRAY['sending'::text, 'sent'::text, 'not_sent'::text, 'bounced'::text, 'spam_complaint'::text])))
 );
 
 --
@@ -232,6 +302,27 @@ ALTER TABLE ONLY public.campaign_statuses
     ADD CONSTRAINT campaign_statuses_pkey PRIMARY KEY (politician_id, campaign);
 
 --
+-- Name: email_blocks email_blocks_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.email_blocks
+    ADD CONSTRAINT email_blocks_pkey PRIMARY KEY (address);
+
+--
+-- Name: email_problems email_problems_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.email_problems
+    ADD CONSTRAINT email_problems_pkey PRIMARY KEY (id);
+
+--
+-- Name: email_sends email_sends_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.email_sends
+    ADD CONSTRAINT email_sends_pkey PRIMARY KEY (id);
+
+--
 -- Name: import_runs import_runs_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -251,13 +342,6 @@ ALTER TABLE ONLY public.letter_events
 
 ALTER TABLE ONLY public.letters
     ADD CONSTRAINT letters_pkey PRIMARY KEY (id);
-
---
--- Name: letters letters_postmark_message_id_key; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.letters
-    ADD CONSTRAINT letters_postmark_message_id_key UNIQUE (postmark_message_id);
 
 --
 -- Name: letters letters_reply_hash_key; Type: CONSTRAINT; Schema: public; Owner: -
@@ -314,6 +398,36 @@ CREATE INDEX audit_log_at ON public.audit_log USING btree (at DESC);
 CREATE INDEX campaign_statuses_campaign ON public.campaign_statuses USING btree (campaign, status);
 
 --
+-- Name: email_problems_address; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX email_problems_address ON public.email_problems USING btree (address, at DESC);
+
+--
+-- Name: email_problems_at; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX email_problems_at ON public.email_problems USING btree (at DESC, id DESC);
+
+--
+-- Name: email_sends_address; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX email_sends_address ON public.email_sends USING btree (address, at DESC);
+
+--
+-- Name: email_sends_letter; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX email_sends_letter ON public.email_sends USING btree (letter_id);
+
+--
+-- Name: email_sends_message_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX email_sends_message_id ON public.email_sends USING btree (message_id);
+
+--
 -- Name: import_runs_job_at; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -355,6 +469,20 @@ CREATE INDEX staff_sessions_expires_at ON public.staff_sessions USING btree (exp
 
 ALTER TABLE ONLY public.campaign_statuses
     ADD CONSTRAINT campaign_statuses_politician_id_fkey FOREIGN KEY (politician_id) REFERENCES public.politicians(id) ON DELETE CASCADE;
+
+--
+-- Name: email_blocks email_blocks_problem_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.email_blocks
+    ADD CONSTRAINT email_blocks_problem_id_fkey FOREIGN KEY (problem_id) REFERENCES public.email_problems(id);
+
+--
+-- Name: email_sends email_sends_letter_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.email_sends
+    ADD CONSTRAINT email_sends_letter_id_fkey FOREIGN KEY (letter_id) REFERENCES public.letters(id) ON DELETE SET NULL;
 
 --
 -- Name: letter_events letter_events_letter_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -

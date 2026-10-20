@@ -3,7 +3,8 @@ import { createHash, randomBytes } from "node:crypto";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { LOGIN_BROWSER_COOKIE, LOGIN_LINK_PATH } from "@/lib/staff-session";
 import { query, transaction } from "./db";
-import { notifyDomain, sendEmail } from "./postmark";
+import { send } from "./email";
+import { notifyDomain } from "./postmark";
 import { randomId } from "./random-id";
 
 // Logging in by email: a staff member types their pauseai.uk address and
@@ -93,18 +94,18 @@ export async function sendLoginLink(typed: string, requestOrigin: string, browse
     console.info(`No staff login link sent: ${HOURLY_LINKS} have already been sent to that address in the last hour`);
     return;
   }
-  try {
-    await sendEmail({
+  const result = await send(
+    {
       From: `PauseAI UK staff login <noreply@${notifyDomain()}>`,
       To: email,
       Subject: staffCopy.loginEmail.subject,
       TextBody: staffCopy.loginEmail.body(`${origin}${LOGIN_LINK_PATH}?token=${token}`, LINK_MINUTES),
       Tag: "staff-login",
-    });
-  } catch (error) {
-    console.error("Couldn't send a staff login link:", error);
-    await query("DELETE FROM staff_login_links WHERE token_hash = $1", [hash(token)]);
-  }
+    },
+    "staff-login",
+  );
+  // Not sent, so it can't be used.
+  if (!result.sent) await query("DELETE FROM staff_login_links WHERE token_hash = $1", [hash(token)]);
 }
 
 /**

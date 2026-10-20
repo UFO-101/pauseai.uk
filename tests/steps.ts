@@ -5,6 +5,7 @@
 import { expect, type APIRequestContext, type Page } from "@playwright/test";
 import { copy } from "@/lib/content/email-your-mp";
 import { staffCopy } from "@/lib/content/staff-interface";
+import { TEST_MPS, type TestMp } from "@/lib/test-mps";
 import { OUTBOX_DIR } from "./fixture-env.mjs";
 import { type OutboxEmail, readOutbox } from "./fixtures/outbox";
 
@@ -57,19 +58,21 @@ export async function openLookup(page: Page, base: string, postcode = "ZZ9 9ZZ",
 }
 
 /**
- * Looks up ZZ99ZZ and waits for the test MP and their letter. Fails fast,
- * saying why, rather than waiting out the test's timeout for a field or a
- * heading that will never appear.
+ * Looks up a test MP, ZZ99ZZ unless told otherwise, and waits for them and
+ * their letter. Fails fast, saying why, rather than waiting out the test's
+ * timeout for a field or a heading that will never appear.
  */
-export async function lookUpTestMp(page: Page, base: string, path = TOOL_PAGE) {
-  await openLookup(page, base, "ZZ9 9ZZ", path);
+export async function lookUpTestMp(page: Page, base: string, mp: TestMp = TEST_MPS[0]) {
+  await openLookup(page, base, `${mp.postcode.slice(0, -3)} ${mp.postcode.slice(-3)}`);
   await page.getByRole("button", { name: copy.lookup.button }).click();
 
-  const found = page.getByRole("heading", { name: "Testy McTestface MP" });
+  const found = page.getByRole("heading", { name: mp.name });
   const refused = page.locator("p[role=alert]");
   await found.or(refused).first().waitFor({ timeout: 10_000 });
   if (await refused.isVisible()) {
-    throw new Error(`ZZ99ZZ on ${base} said: "${await refused.textContent()}". Does its database have the test MP?`);
+    throw new Error(
+      `${mp.postcode} on ${base} said: "${await refused.textContent()}". Does its database have the test MP?`,
+    );
   }
   if (await page.getByText(copy.lookup.noEmail).isVisible()) {
     throw new Error(`The test MP on ${base} has no email, so there's no form: set TEST_MP_EMAIL there.`);
@@ -84,9 +87,9 @@ export async function fillLetter(page: Page, email: string) {
 }
 
 /** Sends the letter from its preview, and waits for the "sent" page. */
-export async function sendLetter(page: Page) {
+export async function sendLetter(page: Page, mp: TestMp = TEST_MPS[0]) {
   await page.getByRole("button", { name: copy.preview.send }).click();
-  await expect(page.getByRole("status")).toHaveText(copy.sent.body("Testy McTestface MP"));
+  await expect(page.getByRole("status")).toHaveText(copy.sent.body(mp.name));
 }
 
 /** The newest email the build under test has sent that `matches`. */

@@ -5,8 +5,8 @@ import { query, transaction, type Queryable } from "./db";
 import { logChange } from "./audit";
 
 // Politicians and their status for each campaign. MPs are copied from
-// Parliament nightly (mp-sync.ts); the policy team adds other signers and
-// sets statuses in the staff interface.
+// Airtable nightly (mp-sync.ts); other signers came from the signatory
+// import, and staff edit them and set statuses in the staff interface.
 
 export const HOUSES = ["commons", "lords", "scottish-parliament", "senedd", "ni-assembly", "other"] as const;
 export type House = (typeof HOUSES)[number];
@@ -36,13 +36,16 @@ export type Politician = {
   email: string | null;
   isTest: boolean;
   sitting: boolean;
+  /** Their address bounced or complained, so nothing is sent to it (lib/server/email.ts). */
+  emailBlocked: boolean;
   statuses: Record<string, StatusRecord>;
 };
 
 /** An MP the form can write to, with their row's ID. */
 export type FoundMp = Mp & { id: number; isTest: boolean };
 
-const MP_COLUMNS = `id::int AS id, name, salutation, constituency, email, is_test AS "isTest"`;
+const MP_COLUMNS = `id::int AS id, name, salutation, constituency, email, is_test AS "isTest",
+  EXISTS (SELECT 1 FROM email_blocks b WHERE b.address = lower(politicians.email)) AS unreachable`;
 
 /** The sitting MP for a constituency. */
 export async function findSittingMp(constituency: string): Promise<FoundMp | undefined> {
@@ -73,6 +76,7 @@ type Row = Omit<Politician, "statuses"> & { statuses: Record<string, StatusRecor
 const SELECT_POLITICIANS = `
   SELECT p.id::int AS id, p.airtable_id AS "airtableId", p.house, p.name, p.salutation, p.constituency,
     p.party, p.email, p.is_test AS "isTest", p.sitting,
+    EXISTS (SELECT 1 FROM email_blocks b WHERE b.address = lower(p.email)) AS "emailBlocked",
     json_object_agg(s.campaign, json_build_object(
       'status', s.status, 'date', to_char(s.status_date, 'YYYY-MM-DD'), 'note', s.note,
       'updatedAt', s.updated_at, 'updatedBy', s.updated_by
@@ -89,6 +93,8 @@ export type PoliticianFilter = {
   house?: House;
   /** Only those with a status for this campaign. */
   campaign?: string;
+  /** Only those whose address is blocked. */
+  emailBlocked?: boolean;
 };
 
 /**
@@ -99,17 +105,20 @@ export function politiciansSearch({
   q = "",
   house = "",
   campaign = "",
+  email = "",
 }: {
   q?: string;
   house?: string;
   campaign?: string;
+  email?: string;
 }) {
   const filter: PoliticianFilter = {
     search: q || undefined,
     house: isHouse(house) ? house : undefined,
     campaign: campaign || undefined,
+    emailBlocked: email === "blocked" || undefined,
   };
-  return { q, house, campaign, filter };
+  return { q, house, campaign, email, filter };
 }
 
 /** Politicians for the staff interface: the test MP first, then by name. */
@@ -131,6 +140,9 @@ export async function listPoliticians(filter: PoliticianFilter = {}, limit = 200
     where.push(
       `EXISTS (SELECT 1 FROM campaign_statuses c WHERE c.politician_id = p.id AND c.campaign = $${values.length})`,
     );
+  }
+  if (filter.emailBlocked) {
+    where.push("EXISTS (SELECT 1 FROM email_blocks b WHERE b.address = lower(p.email))");
   }
   values.push(limit);
   const rows = await query<Row>(

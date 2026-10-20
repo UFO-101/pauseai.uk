@@ -173,7 +173,10 @@ export const copy = {
     testPostcodes: "Dev site takes test postcodes only. Expand for more. Default one: ",
     testMpSigned: (campaign: string) => `signed “${campaign}”`,
     testMpNoEmail: "no email",
+    testMpBounces: "emails bounce",
     noEmail: "No email found for your MP.",
+    // Their address bounced before: nothing is sent to it until staff fix it.
+    unreachable: "We can't email your MP at the moment: their address isn't working.",
   },
   form: {
     emailLabel: "Your email",
@@ -242,6 +245,8 @@ export const copy = {
     noRecipient: "We couldn't send the letter, because we don't have a valid email address for your MP.",
     testMpOnly: "You can only write to the test MP here.",
     alreadySent: "You've already written to your MP about this.",
+    // The MP's address bounced since they looked them up.
+    unreachable: "Your letter wasn't sent, because your MP's email address isn't working. We've told our team.",
     failed: "Sorry! We failed to send the email, for technical reasons.",
     spamUnavailable: "Spam protection is unavailable.",
     spamMisconfigured: "Spam protection is misconfigured.",

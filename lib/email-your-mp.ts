@@ -12,6 +12,8 @@ export type Mp = {
   constituency: string;
   /** null when Parliament lists no email for them. */
   email: string | null;
+  /** Their address bounced, so letters can't reach them: the lookup then gives no email. */
+  unreachable?: boolean;
 };
 
 export type { MpStatuses };

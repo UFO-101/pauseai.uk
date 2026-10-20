@@ -62,6 +62,17 @@ describe("fixtureResponse", () => {
     );
   });
 
+  it("takes any address off a Postmark stream's suppression list", async () => {
+    const body = JSON.stringify({ Suppressions: [{ EmailAddress: "a@example.org" }] });
+    const answer = fixtureResponse("https://api.postmarkapp.com/message-streams/outbound/suppressions/delete", {
+      method: "POST",
+      body,
+    });
+    expect(await answer!.json()).toEqual({
+      Suppressions: [{ EmailAddress: "a@example.org", Status: "Deleted", Message: null }],
+    });
+  });
+
   it("has nothing for other URLs", () => {
     expect(fixtureResponse("https://public-api.luma.com/other")).toBeUndefined();
     expect(fixtureResponse("https://eu.airtable.com/other")).toBeUndefined();

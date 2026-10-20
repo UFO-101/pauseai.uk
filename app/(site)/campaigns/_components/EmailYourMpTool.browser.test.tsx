@@ -146,6 +146,9 @@ describe("EmailYourMpTool", () => {
     await expect
       .element(items.nth(3))
       .toHaveTextContent(`ZZ9 9ZN (Nomail McTestface MP): ${copy.lookup.testMpNoEmail}`);
+    await expect
+      .element(items.nth(4))
+      .toHaveTextContent(`ZZ9 9ZH (Bouncy McTestface MP): ${copy.lookup.testMpBounces}`);
   });
 
   it("shows an MP with no email, and stays", async () => {
@@ -155,6 +158,16 @@ describe("EmailYourMpTool", () => {
 
     await expect.element(page.getByText(copy.lookup.noEmail)).toBeVisible();
     await expect.element(page.getByRole("heading", { name: "Polly Placeholder" })).toBeVisible();
+    expect(navigation.pushed).toEqual([]);
+  });
+
+  it("says an MP whose address bounced can't be reached, and stays", async () => {
+    respond = async () => Response.json({ ok: true, mp: { ...MP, email: null, unreachable: true }, statuses: {} });
+    await render(<EmailYourMpTool campaignSlug={letterToPm.slug} />);
+    await lookUp();
+
+    await expect.element(page.getByText(copy.lookup.unreachable)).toBeVisible();
+    await expect.element(page.getByText(copy.lookup.noEmail)).not.toBeInTheDocument();
     expect(navigation.pushed).toEqual([]);
   });
 

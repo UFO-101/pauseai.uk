@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { idFrom, politicianDetailsFrom, signedFrom } from "./staff-forms";
+import { idFrom, politicianDetailsFrom, signedFrom, unblockFrom } from "./staff-forms";
 
 function form(fields: Record<string, string | Blob>) {
   const data = new FormData();
@@ -51,5 +51,20 @@ describe("signedFrom", () => {
     expect(signedFrom(form({ ...base, campaign: "nope" }))).toBeUndefined();
     // The bill's status is set from ControlAI's letter, never by hand.
     expect(signedFrom(form({ ...base, campaign: "support-sobel-bill" }))).toBeUndefined();
+  });
+});
+
+describe("unblockFrom", () => {
+  it("reads the address, lowercased, and the note", () => {
+    expect(unblockFrom(form({ address: " Jo@Example.org ", note: " fixed " }))).toEqual({
+      address: "jo@example.org",
+      note: "fixed",
+    });
+    expect(unblockFrom(form({ address: "jo@example.org" }))).toEqual({ address: "jo@example.org", note: "" });
+  });
+
+  it("refuses anything that isn't an address", () => {
+    expect(unblockFrom(form({ address: "nobody" }))).toBeUndefined();
+    expect(unblockFrom(form({}))).toBeUndefined();
   });
 });

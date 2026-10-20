@@ -8,6 +8,11 @@ import { outsideFetch } from "./outside-fetch";
 // which would skip the fixtures in a Playwright build (docs/testing.md).
 
 const SEND_URL = "https://api.postmarkapp.com/email";
+/** The transactional stream, which every email is sent on. */
+const STREAM = "outbound";
+const UNSUPPRESS_URL = `https://api.postmarkapp.com/message-streams/${STREAM}/suppressions/delete`;
+/** Postmark's error for an address on the stream's suppression list. */
+const INACTIVE_RECIPIENT = 406;
 /** Postmark accepts this token, and answers as if it sent the email. */
 const TEST_TOKEN = "POSTMARK_API_TEST";
 
@@ -27,7 +32,14 @@ export type Email = {
   Tag?: string;
 };
 
-export class PostmarkError extends Error {}
+export class PostmarkError extends Error {
+  /** Postmark refused because the address is suppressed: it bounced or complained before. */
+  readonly inactive: boolean;
+  constructor(message: string, code?: number) {
+    super(message);
+    this.inactive = code === INACTIVE_RECIPIENT;
+  }
+}
 
 /** Letters to representatives are sent from here, and replies come back to it. */
 export function lettersDomain(): string {
@@ -49,7 +61,7 @@ export function notifyDomain(): string {
  */
 export async function sendEmail(email: Email): Promise<string> {
   const what = `Email${email.Tag ? ` "${email.Tag}"` : ""} to an address at ${email.To.replace(/^.*@|>$/g, "")}`;
-  const body = { ...email, MessageStream: "outbound" };
+  const body = { ...email, MessageStream: STREAM };
   const dev = process.env.NODE_ENV === "development";
   const outbox = process.env.OUTBOX_DIR || (dev ? "tmp/outbox" : "");
   const fixtures = process.env.DATA_FIXTURES === "1";
@@ -86,6 +98,7 @@ export async function sendEmail(email: Email): Promise<string> {
   if (!res.ok || result.ErrorCode !== 0 || typeof result.MessageID !== "string") {
     throw new PostmarkError(
       `Postmark refused the email: ${res.status} ${result.ErrorCode ?? ""} ${result.Message ?? ""}`.trim(),
+      result.ErrorCode,
     );
   }
   log(
@@ -94,6 +107,32 @@ export async function sendEmail(email: Email): Promise<string> {
       : `${what}: sent through Postmark, MessageID ${result.MessageID}`,
   );
   return result.MessageID;
+}
+
+/**
+ * Takes an address off the stream's suppression list, so Postmark sends to
+ * it again. Postmark won't for a spam complaint, and says so only in its
+ * answer, which is ignored: if it still refuses, the next email learns that.
+ * The dev server, without a real token, doesn't ask.
+ */
+export async function unsuppress(address: string): Promise<void> {
+  const fixtures = process.env.DATA_FIXTURES === "1";
+  const token = process.env.POSTMARK_SERVER_TOKEN ?? "";
+  if (!fixtures && process.env.NODE_ENV === "development" && (!token || token === TEST_TOKEN)) {
+    log(`${address}: not taken off Postmark's suppression list, as there's no real POSTMARK_SERVER_TOKEN.`);
+    return;
+  }
+  if (!token && !fixtures) throw new PostmarkError("POSTMARK_SERVER_TOKEN is not set");
+  const res = await outsideFetch(UNSUPPRESS_URL, {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+      "X-Postmark-Server-Token": token || "fixture",
+    },
+    body: JSON.stringify({ Suppressions: [{ EmailAddress: address }] }),
+  });
+  if (!res.ok) throw new PostmarkError(`Postmark refused to unsuppress the address: ${res.status}`);
 }
 
 /** Says in the server log what happened to an email. Quiet in unit tests, which send plenty. */

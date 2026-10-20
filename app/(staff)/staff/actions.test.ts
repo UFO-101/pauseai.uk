@@ -2,6 +2,7 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { http, HttpResponse } from "msw";
 import { server } from "@/tests/fixtures/msw";
 import { query } from "@/lib/server/db";
+import { isBlocked, recordProblem } from "@/lib/server/email";
 import { getPolitician } from "@/lib/server/politicians";
 import { createSession } from "@/lib/server/staff-auth";
 import { addTestPolitician, describeWithDatabase, useTestDatabase } from "@/tests/database";
@@ -14,6 +15,7 @@ import {
   importFromAirtable,
   markSigned,
   syncNow,
+  unblockAddress,
 } from "./actions";
 
 vi.mock("next/headers", () => import("@/tests/next-headers"));
@@ -54,6 +56,7 @@ describeWithDatabase("staff Server Actions", () => {
       () => checkNow(),
       () => decideSync(form({ id: "1", decision: "apply" })),
       () => importFromAirtable(),
+      () => unblockAddress(form({ address: "a@example.org", note: "" })),
     ];
     for (const attempt of attempts) expect(await expectRedirect(attempt)).toBe("/staff/login");
     expect(await statusCount()).toBe(0);
@@ -156,5 +159,32 @@ describeWithDatabase("staff Server Actions", () => {
     ]);
     expect(await query("SELECT name FROM politicians")).toEqual([{ name: "Lord X" }]);
     expect(revalidatePath).toHaveBeenCalledWith("/staff/import-data");
+  });
+
+  it("unblockAddress unblocks an address, with the note, and refreshes every staff page", async () => {
+    vi.stubEnv("POSTMARK_SERVER_TOKEN", "server-token");
+    const bounce = { address: "a@example.org", messageId: null, kind: "hard" as const, reason: "", canReset: true };
+    await recordProblem(bounce);
+    await unblockAddress(form({ address: "nobody", note: "" }));
+    expect(revalidatePath).not.toHaveBeenCalled();
+    await unblockAddress(form({ address: "A@example.org", note: "Fixed" }));
+    expect(await isBlocked("a@example.org")).toBe(false);
+    expect(await query("SELECT actor, action, details FROM audit_log WHERE action = 'unblock address'")).toEqual([
+      { actor: "jo@pauseai.uk", action: "unblock address", details: { address: "a@example.org", note: "Fixed" } },
+    ]);
+    expect(revalidatePath).toHaveBeenCalledWith("/staff", "layout");
+  });
+
+  it("unblockAddress leaves the address blocked, and logs why, if Postmark can't be reached", async () => {
+    vi.stubEnv("POSTMARK_SERVER_TOKEN", "server-token");
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+    server.use(
+      http.post("https://api.postmarkapp.com/message-streams/*", () => new HttpResponse(null, { status: 500 })),
+    );
+    await recordProblem({ address: "a@example.org", messageId: null, kind: "hard", reason: "", canReset: true });
+    await unblockAddress(form({ address: "a@example.org", note: "" }));
+    expect(await isBlocked("a@example.org")).toBe(true);
+    expect(error).toHaveBeenCalled();
+    error.mockRestore();
   });
 });

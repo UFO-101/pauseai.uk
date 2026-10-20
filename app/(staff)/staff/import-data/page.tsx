@@ -38,7 +38,7 @@ export default async function ImportPage() {
       <p>
         {staffCopy.syncs.intro.before}
         <a href={PARLIAMENTARIANS_TABLE_URL}>{staffCopy.syncs.intro.link}</a>
-        {staffCopy.syncs.intro.after}
+        {staffCopy.syncs.intro.after} {staffCopy.syncs.testMps}
       </p>
       <JobActions action={syncNow} label={staffCopy.syncs.syncNow} job="sync-mps" />
       <RunList runs={syncs} none={staffCopy.syncs.none} decide={decideSync} />

@@ -5,6 +5,10 @@ import { campaigns } from "@/lib/content/email-your-mp";
 import { jobTitles, staffCopy } from "@/lib/content/staff-interface";
 import type { AnyImportRun, ControlAiImport, MpCheck, MpSync, SignatoryImport } from "@/lib/import-runs";
 import ChangesTable from "./ChangesTable";
+import EmailBlockFilters from "./EmailBlockFilters";
+import EmailBlocksTable from "./EmailBlocksTable";
+import { exampleBlock, exampleComplaint, exampleProblems } from "./EmailBlocksTable.examples";
+import EmailProblemsTable from "./EmailProblemsTable";
 import { exampleChange } from "./ChangesTable.examples";
 import LettersTable from "./LettersTable";
 import { exampleLetter } from "./LettersTable.examples";
@@ -121,7 +125,9 @@ describe("LoginForm", () => {
 describe("PoliticianDetails", () => {
   it("heads the page with their name and what's known, and edits a signer the team added", async () => {
     const { fn } = action();
-    await render(<PoliticianDetails politician={{ ...MP, airtableId: null, email: null }} action={fn} />);
+    await render(
+      <PoliticianDetails politician={{ ...MP, airtableId: null, email: null }} action={fn} unblock={vi.fn()} />,
+    );
     await expect.element(page.getByRole("heading", { level: 1, name: MP.name })).toBeVisible();
     await expect
       .element(page.getByText([staffCopy.houses[MP.house], MP.constituency, MP.party].join(" · ")))
@@ -132,11 +138,98 @@ describe("PoliticianDetails", () => {
   it("sends Airtable's MPs to Airtable, and lets no one edit a test MP", async () => {
     const { fn } = action();
     for (const politician of [MP, { ...MP, airtableId: null, isTest: true }]) {
-      const { unmount } = await render(<PoliticianDetails politician={politician} action={fn} />);
+      const { unmount } = await render(<PoliticianDetails politician={politician} action={fn} unblock={vi.fn()} />);
       await expect.element(page.getByText(staffCopy.politician.fromAirtable)).toBeVisible();
       await expect.element(page.getByRole("button", { name: staffCopy.politician.save })).not.toBeInTheDocument();
       await unmount();
     }
+  });
+
+  it("says why their address is blocked, and unblocks it with a note", async () => {
+    const { fn, sent } = action();
+    await render(
+      <PoliticianDetails
+        politician={{ ...MP, emailBlocked: true }}
+        action={vi.fn()}
+        block={{ ...exampleBlock, address: MP.email! }}
+        unblock={fn}
+      />,
+    );
+    await expect
+      .element(page.getByRole("paragraph").nth(1))
+      .toHaveTextContent(
+        `${staffCopy.politicians.emailBlocked} ${staffCopy.politician.blocked(exampleBlock.reason, "2026-10-12 09:10")}`,
+      );
+    await page.getByLabelText(staffCopy.emails.note).fill("Fixed in Airtable");
+    await page.getByRole("button", { name: staffCopy.emails.unblock }).click();
+    await vi.waitFor(() => expect(sent).toEqual([{ address: MP.email, note: "Fixed in Airtable" }]));
+  });
+});
+
+describe("EmailBlocksTable", () => {
+  it("lists each blocked address: why, since when, whose, the letter, emails not sent, and unblocks one", async () => {
+    const { fn, sent } = action();
+    await render(
+      <EmailBlocksTable
+        blocks={[
+          exampleBlock,
+          {
+            ...exampleComplaint,
+            politicians: [
+              { id: 1, name: "A" },
+              { id: 2, name: "B" },
+            ],
+          },
+        ]}
+        unblock={fn}
+      />,
+    );
+    const bounced = page.getByRole("row").filter({ hasText: exampleBlock.address });
+    await expect.element(bounced.getByText(staffCopy.emails.kinds.hard)).toBeVisible();
+    await expect.element(bounced.getByText(exampleBlock.reason)).toBeVisible();
+    await expect
+      .element(bounced.getByRole("link", { name: "Bouncy McTestface MP" }))
+      .toHaveAttribute("href", "/staff/politicians/5");
+    await expect.element(bounced.getByText(staffCopy.emails.letter(1))).toBeVisible();
+    await expect.element(bounced.getByRole("cell", { name: "2", exact: true })).toBeVisible();
+    // A complaint can't be unblocked; two politicians share its address.
+    const complained = page.getByRole("row").filter({ hasText: exampleComplaint.address });
+    await expect.element(complained.getByText(staffCopy.emails.cantReset)).toBeVisible();
+    await expect.element(complained.getByText("A, B")).toBeVisible();
+    await bounced.getByRole("button", { name: staffCopy.emails.unblock }).click();
+    await vi.waitFor(() => expect(sent).toEqual([{ address: exampleBlock.address, note: "" }]));
+  });
+
+  it("says when there are none", async () => {
+    await render(<EmailBlocksTable blocks={[]} unblock={vi.fn()} />);
+    await expect.element(page.getByText(staffCopy.emails.none)).toBeVisible();
+  });
+});
+
+describe("EmailProblemsTable", () => {
+  it("lists bounces and complaints, and what each email was", async () => {
+    await render(<EmailProblemsTable problems={exampleProblems} />);
+    const [hard, soft, complaint] = exampleProblems.map((p) => page.getByRole("row").filter({ hasText: p.address }));
+    await expect.element(hard.getByText(staffCopy.emails.letter(1))).toBeVisible();
+    await expect.element(soft.getByText(staffCopy.emails.kinds.soft)).toBeVisible();
+    await expect.element(soft.getByText(staffCopy.emails.purposes["forwarded-reply"])).toBeVisible();
+    await expect.element(complaint.getByText(staffCopy.emails.kinds.complaint)).toBeVisible();
+    expect(complaint.getByRole("cell").last().element().textContent).toBe("");
+  });
+
+  it("says when there are none", async () => {
+    await render(<EmailProblemsTable problems={[]} />);
+    await expect.element(page.getByText(staffCopy.emails.none)).toBeVisible();
+  });
+});
+
+describe("EmailBlockFilters", () => {
+  it("is a GET form to /staff/blocked-addresses, filled in with the current filter", async () => {
+    await render(<EmailBlockFilters kind="complaint" />);
+    await expect.element(page.getByRole("combobox")).toHaveValue("complaint");
+    const form = page.getByRole("combobox").element().closest("form")!;
+    expect(form.getAttribute("method")).toBe("get");
+    expect(form.getAttribute("action")).toBe("/staff/blocked-addresses");
   });
 });
 
@@ -154,7 +247,7 @@ describe("JobActions", () => {
 
 describe("PoliticianFilters", () => {
   it("is a GET form to /staff, filled in with the current filter", async () => {
-    await render(<PoliticianFilters search="blake" house="lords" campaign={pm.slug} />);
+    await render(<PoliticianFilters search="blake" house="lords" campaign={pm.slug} email="blocked" />);
     await expect.element(page.getByRole("searchbox")).toHaveValue("blake");
     await expect
       .element(page.getByRole("combobox", { name: staffCopy.fields.house, exact: true }))
@@ -162,6 +255,9 @@ describe("PoliticianFilters", () => {
     await expect
       .element(page.getByRole("combobox", { name: staffCopy.politician.statusesTitle, exact: true }))
       .toHaveValue(pm.slug);
+    await expect
+      .element(page.getByRole("combobox", { name: staffCopy.fields.email, exact: true }))
+      .toHaveValue("blocked");
     const form = page.getByRole("searchbox").element().closest("form")!;
     expect(form.getAttribute("method")).toBe("get");
     expect(form.getAttribute("action")).toBe("/staff/politicians");
@@ -171,7 +267,15 @@ describe("PoliticianFilters", () => {
 describe("PoliticianTable", () => {
   it("lists each politician with their status for each campaign, and marks the letter to the PM signed or not", async () => {
     const { fn, sent } = action();
-    const testMp = { ...MP, id: 8, name: "Testy McTestface MP", isTest: true, sitting: false, house: "lords" as const };
+    const testMp = {
+      ...MP,
+      id: 8,
+      name: "Testy McTestface MP",
+      isTest: true,
+      sitting: false,
+      emailBlocked: true,
+      house: "lords" as const,
+    };
     await render(
       <PoliticianTable
         politicians={[
@@ -188,6 +292,7 @@ describe("PoliticianTable", () => {
     await expect.element(page.getByText(bill.title)).toBeInTheDocument();
     await expect.element(page.getByText(staffCopy.politicians.testMp)).toBeVisible();
     await expect.element(page.getByText(staffCopy.politicians.notSitting)).toBeVisible();
+    await expect.element(page.getByText(staffCopy.politicians.emailBlocked)).toBeVisible();
     await expect.element(page.getByRole("cell", { name: staffCopy.houses.lords })).toBeVisible();
 
     // Polly has signed the letter to the PM, with the date; the test MP hasn't.

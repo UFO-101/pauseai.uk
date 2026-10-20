@@ -50,3 +50,12 @@ export function signedFrom(form: FormData): SignedForm | undefined {
   if (!politicianId || !trackedCampaigns.some((c) => c.slug === campaign)) return undefined;
   return { politicianId, campaign, signed: text(form, "signed") === "1" };
 }
+
+export type UnblockForm = { address: string; note: string };
+
+/** Unblocking an address: which, and the note for the audit log. */
+export function unblockFrom(form: FormData): UnblockForm | undefined {
+  const address = text(form, "address").toLowerCase();
+  if (!address.includes("@")) return undefined;
+  return { address, note: text(form, "note") };
+}

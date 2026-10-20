@@ -28,7 +28,8 @@ export async function sittingMps(db?: Queryable): Promise<SyncedMp[]> {
 
 /**
  * The test MPs, whose letters go to TEST_MP_EMAIL: kept in step with that
- * setting on every sync, except the one who has no email. Their statuses
+ * setting on every sync, except the one who has no email and the one with
+ * an address of their own. Their statuses
  * are set only when they're added, so staff can change them.
  */
 async function ensureTestMps(db?: Queryable): Promise<void> {
@@ -40,7 +41,7 @@ async function ensureTestMps(db?: Queryable): Promise<void> {
        ON CONFLICT (test_postcode) DO UPDATE SET email = $4, updated_at = now()
        -- xmax is 0 on a row this statement inserted, not on one it updated.
        RETURNING id::int AS id, xmax = 0 AS added`,
-      [mp.name, mp.salutation, mp.constituency, mp.noEmail ? null : email, mp.postcode],
+      [mp.name, mp.salutation, mp.constituency, mp.noEmail ? null : (mp.email ?? email), mp.postcode],
       db,
     );
     if (!added) continue;

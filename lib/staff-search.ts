@@ -18,3 +18,8 @@ export function lettersSearch({ status = "" }: { status?: string }): { status: s
 export function politicianId(id: string): number | undefined {
   return /^\d+$/.test(id) ? Number(id) : undefined;
 }
+
+/** The blocked addresses page's filter: blocked by a hard bounce, or a complaint. */
+export function emailsSearch({ kind = "" }: { kind?: string }): { kind: string; filter?: "hard" | "complaint" } {
+  return { kind, filter: kind === "hard" || kind === "complaint" ? kind : undefined };
+}

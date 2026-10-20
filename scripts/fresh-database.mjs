@@ -148,7 +148,7 @@ export function addTestMps(url, email) {
   // SQL string literals: psql -c doesn't substitute variables.
   const literal = (value) => `'${String(value).replace(/'/g, "''")}'`;
   const sql = TEST_MPS.map((mp) => [
-    `INSERT INTO politicians (house, name, salutation, constituency, email, is_test, test_postcode) VALUES ('commons', ${[mp.name, mp.salutation, mp.constituency].map(literal).join(", ")}, ${mp.noEmail ? "NULL" : literal(email)}, true, ${literal(mp.postcode)});`,
+    `INSERT INTO politicians (house, name, salutation, constituency, email, is_test, test_postcode) VALUES ('commons', ${[mp.name, mp.salutation, mp.constituency].map(literal).join(", ")}, ${mp.noEmail ? "NULL" : literal(mp.email ?? email)}, true, ${literal(mp.postcode)});`,
     ...Object.entries(mp.statuses).map(
       ([campaign, status]) =>
         `INSERT INTO campaign_statuses (politician_id, campaign, status, updated_by) SELECT id, ${literal(campaign)}, ${literal(status)}, 'sync' FROM politicians WHERE test_postcode = ${literal(mp.postcode)};`,

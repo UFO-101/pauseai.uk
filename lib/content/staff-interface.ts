@@ -30,6 +30,7 @@ export const staffCopy = {
     changes: "Audit log",
     history: "Import history",
     letters: "Letters",
+    emails: "Addresses",
     logout: "Log out",
   },
   houses: {
@@ -54,6 +55,9 @@ export const staffCopy = {
     testMp: "Test",
     notSitting: "No longer sitting",
     noEmail: "No email",
+    // On a politician whose address is blocked (/staff/blocked-addresses), and the filter for them.
+    emailBlocked: "Email blocked",
+    anyEmail: "All",
     // The button in each campaign's column, and the bill's column, which
     // only the import from ControlAI's letter sets.
     markSigned: "Mark as signed",
@@ -74,6 +78,49 @@ export const staffCopy = {
     fromAirtable: "Information about the MP is imported from Airtable, update name / email there.",
     save: "Save",
     notFound: "Politician not found.",
+    // Under their name, when their address is blocked: why, and since when.
+    blocked: (reason: string, since: string) => `Email blocked since ${since}: ${reason}`,
+  },
+  // The page of blocked addresses (/staff/blocked-addresses), and the bounces and complaints that blocked them.
+  emails: {
+    title: "Blocked addresses",
+    intro: "Nothing is sent to these addresses until they're unblocked.",
+    none: "None.",
+    allKinds: "All",
+    filter: "Filter",
+    kinds: {
+      hard: "Bounced",
+      soft: "Soft bounce",
+      complaint: "Complaint",
+    } as Record<string, string>,
+    columns: {
+      address: "Address",
+      kind: "Cause",
+      since: "Since",
+      reason: "Reason",
+      whose: "Whose",
+      refused: "Not sent since",
+      at: "When",
+      email: "Email",
+    },
+    letter: (id: number) => `Letter ${id}`,
+    purposes: {
+      letter: "Letter",
+      "forwarded-reply": "Forwarded reply",
+      "staff-login": "Staff login link",
+      "staff-alert": "Staff alert",
+    } as Record<string, string>,
+    // A complaint can't be undone by staff, only by the person.
+    cantReset: "Can't be unblocked: they marked our email as spam.",
+    note: "Note",
+    unblock: "Unblock",
+    problemsTitle: "Recent",
+  },
+  // The email staff get when a letter hard-bounces or is complained about.
+  alert: {
+    subject: (mp: string) => `A letter to ${mp} bounced`,
+    body: (mp: string, address: string, reason: string, link: string) =>
+      `A letter to ${mp} (${address}) didn't arrive: ${reason}. Nothing more will be sent to that address until it's fixed in Airtable and unblocked here: ${link}`,
   },
   // The nightly copy of ControlAI's letter's signatories into the bill's
   // statuses (lib/server/controlai-import.ts), on the import page.
@@ -103,6 +150,8 @@ export const staffCopy = {
       link: "UK Parliamentarians table in Airtable",
       after: ": everyone whose Body is “House of Commons” and whose Status is blank.",
     },
+    /** The test MPs (lib/test-mps.json) aren't in Airtable; every import adds any that are missing. */
+    testMps: "Each import also adds the test MPs, who aren’t in Airtable, if any are missing.",
     syncNow: "Import MPs now",
     none: "Not yet imported.",
     added: "Added",
@@ -195,6 +244,7 @@ export const staffCopy = {
     status: {
       sending: "Sending",
       sent: "Sent",
+      not_sent: "Not sent",
       bounced: "Bounced",
       spam_complaint: "Spam complaint",
       replied: "Replied",

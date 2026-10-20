@@ -18,10 +18,12 @@ export async function POST(request: Request) {
 
   const found = await findMp(postcode);
   if (!found.ok) return NextResponse.json({ ok: false, message: MESSAGES[found.reason] });
+  const { mp } = found;
   return NextResponse.json({
     ok: true,
-    mp: found.mp,
-    statuses: await statusesOf(found.mp.id),
+    // An address that bounced isn't shown: there's no writing to it.
+    mp: mp.unreachable ? { ...mp, email: null } : mp,
+    statuses: await statusesOf(mp.id),
     place: found.place ?? null,
   });
 }

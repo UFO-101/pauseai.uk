@@ -2,12 +2,13 @@ import "server-only";
 import { timingSafeEqual } from "node:crypto";
 import { copy } from "@/lib/content/email-your-mp";
 import { query, transaction } from "./db";
-import { lettersDomain, notifyDomain, sendEmail, type Attachment } from "./postmark";
+import { send, type DeliveryProblem } from "./email";
+import { lettersDomain, notifyDomain, type Attachment } from "./postmark";
 
-// What Postmark tells us: bounces and spam complaints about letters, and
-// replies to them. Postmark doesn't sign webhooks, so each webhook URL
-// carries a username and password (basic auth, over HTTPS), and requests
-// without them are refused.
+// What Postmark tells us: bounces and spam complaints, and replies to
+// letters. Postmark doesn't sign webhooks, so each webhook URL carries a
+// username and password (basic auth, over HTTPS), and requests without them
+// are refused.
 
 /** Whether a webhook request carries our basic auth credentials. Without them set, none does. */
 export function isPostmark(request: Request): boolean {
@@ -19,25 +20,41 @@ export function isPostmark(request: Request): boolean {
   return given.length === expected.length && timingSafeEqual(given, expected);
 }
 
-type DeliveryProblem = { RecordType?: string; MessageID?: string; Type?: string; Description?: string; Email?: string };
+/** Postmark's bounce and spam complaint webhooks' payloads, as far as we read them. */
+export type PostmarkProblem = {
+  RecordType?: string;
+  MessageID?: string;
+  Type?: string;
+  Description?: string;
+  Email?: string;
+  /** Whether Postmark suppressed the address because of it. */
+  Inactive?: boolean;
+  /** Whether Postmark would send to it again if asked. */
+  CanActivate?: boolean;
+};
 
-const STATUSES: Record<string, string> = { Bounce: "bounced", SpamComplaint: "spam_complaint" };
-
-/** Marks a letter bounced or complained about. Returns whether it was one of ours. */
-export async function recordDeliveryProblem(payload: DeliveryProblem): Promise<boolean> {
-  const status = STATUSES[payload.RecordType ?? ""];
-  if (!status || !payload.MessageID) return false;
-  const [letter] = await query<{ id: number }>(
-    "UPDATE letters SET status = $2 WHERE postmark_message_id = $1 RETURNING id::int AS id",
-    [payload.MessageID, status],
-  );
-  if (!letter) return false;
-  await query("INSERT INTO letter_events (letter_id, status, details) VALUES ($1, $2, $3)", [
-    letter.id,
-    status,
-    JSON.stringify({ type: payload.Type, description: payload.Description, email: payload.Email }),
-  ]);
-  return true;
+/**
+ * A bounce or complaint in Postmark's words, as any provider's: hard when
+ * Postmark suppressed the address, else soft. Undefined for anything else.
+ */
+export function deliveryProblem(payload: PostmarkProblem): DeliveryProblem | undefined {
+  const kind =
+    payload.RecordType === "SpamComplaint"
+      ? "complaint"
+      : payload.RecordType === "Bounce"
+        ? payload.Inactive
+          ? "hard"
+          : "soft"
+        : undefined;
+  if (!kind || !payload.Email) return undefined;
+  return {
+    address: payload.Email,
+    messageId: payload.MessageID ?? null,
+    kind,
+    reason: payload.Description ?? "",
+    canReset: payload.CanActivate === true,
+    details: { type: payload.Type },
+  };
 }
 
 type Address = { Email?: string; Name?: string };
@@ -152,15 +169,21 @@ export async function forwardReply(email: InboundEmail): Promise<string[]> {
     `Subject: ${email.Subject ?? ""}`,
   ].join("\n");
   for (const to of recipients) {
-    await sendEmail({
-      From: `PauseAI UK <noreply@${notifyDomain()}>`,
-      To: to,
-      ReplyTo: from,
-      Subject: copy.forwardedReply.subject(email.Subject ?? ""),
-      TextBody: `${copy.forwardedReply.note(letter.mpName, letter.senderName)}\n\n${original}\n\n${email.TextBody ?? ""}`,
-      Attachments: email.Attachments?.map(({ Name, Content, ContentType }) => ({ Name, Content, ContentType })),
-      Tag: "forwarded-reply",
-    });
+    const result = await send(
+      {
+        From: `PauseAI UK <noreply@${notifyDomain()}>`,
+        To: to,
+        ReplyTo: from,
+        Subject: copy.forwardedReply.subject(email.Subject ?? ""),
+        TextBody: `${copy.forwardedReply.note(letter.mpName, letter.senderName)}\n\n${original}\n\n${email.TextBody ?? ""}`,
+        Attachments: email.Attachments?.map(({ Name, Content, ContentType }) => ({ Name, Content, ContentType })),
+        Tag: "forwarded-reply",
+      },
+      "forwarded-reply",
+      letter.id,
+    );
+    // Thrown, so Postmark tries again. A blocked address is skipped: it would never work.
+    if (!result.sent && result.reason === "failed") throw new Error(`Couldn't forward a reply to letter ${letter.id}`);
   }
   return recipients;
 }

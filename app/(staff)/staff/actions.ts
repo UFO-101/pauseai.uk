@@ -4,8 +4,9 @@
 // calls requireStaff() before anything else (tests/checks/staff-auth.test.ts).
 import { revalidatePath } from "next/cache";
 import { now } from "@/lib/now";
-import { idFrom, politicianDetailsFrom, signedFrom } from "@/lib/staff-forms";
+import { idFrom, politicianDetailsFrom, signedFrom, unblockFrom } from "@/lib/staff-forms";
 import { importControlAiLetter } from "@/lib/server/controlai-import";
+import { unblock } from "@/lib/server/email";
 import { checkMps } from "@/lib/server/mp-check";
 import { decideHeldSync, syncMps } from "@/lib/server/mp-sync";
 import { setStatus, updatePolitician } from "@/lib/server/politicians";
@@ -77,4 +78,21 @@ export async function decideSync(form: FormData): Promise<void> {
   if (!id || (decision !== "apply" && decision !== "discard")) return;
   await decideHeldSync(id, decision, email);
   revalidatePath("/staff/import-data");
+}
+
+/**
+ * Unblocks an address, on the addresses page or a politician's. If the
+ * provider can't be reached, it's logged and the address stays blocked.
+ */
+export async function unblockAddress(form: FormData): Promise<void> {
+  const { email } = await requireStaff();
+  const parsed = unblockFrom(form);
+  if (!parsed) return;
+  try {
+    await unblock(parsed.address, email, parsed.note);
+  } catch (error) {
+    console.error(error);
+  }
+  // The addresses page, the politicians list and their pages all show it.
+  revalidatePath("/staff", "layout");
 }

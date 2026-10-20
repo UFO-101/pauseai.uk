@@ -35,7 +35,7 @@ describeWithDatabase("POST /staff/api/login", () => {
     server.use(
       http.post("https://api.postmarkapp.com/email", async ({ request }) => {
         to.push(((await request.json()) as { To: string }).To);
-        return HttpResponse.json({ ErrorCode: 0, MessageID: "m" });
+        return HttpResponse.json({ ErrorCode: 0, MessageID: crypto.randomUUID() });
       }),
     );
 

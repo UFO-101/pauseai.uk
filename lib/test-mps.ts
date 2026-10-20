@@ -4,7 +4,9 @@
 // test-mps.json, so scripts/fresh-database.mjs can read them too. The
 // second has signed the letter to the PM, so its page moves on. The third
 // signed ControlAI's letter backing the Sobel bill, so the bill's letter
-// thanks them. The last has no email, to see what the form says then.
+// thanks them. One has no email, to see what the form says then. The last
+// has an address on our own domain that doesn't exist, so their letters
+// bounce, whichever service sends them.
 import testMps from "./test-mps.json";
 
 export type TestMp = {
@@ -17,6 +19,8 @@ export type TestMp = {
   place: { latitude: number; longitude: number };
   /** Added without an email, whatever TEST_MP_EMAIL is: there's no letter to write to them. */
   noEmail?: boolean;
+  /** Always this address, whatever TEST_MP_EMAIL is. */
+  email?: string;
   /** What they've done when first added, by campaign slug. Staff can change it. */
   statuses: Record<string, "signed">;
 };
