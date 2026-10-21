@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useState, type FormEvent } from "react";
+import { useId, useState, type CSSProperties, type FormEvent, type Ref } from "react";
 import { Button } from "@/components/ui/Button";
 import { Segmented, TextInput } from "@/components/ui/Controls";
 import { Field, FieldError, Label } from "@/components/ui/Field";
@@ -20,14 +20,18 @@ const LOCATION_OPTIONS: PositionOptions = { timeout: 15 * 1000 };
  * pressed, so the browser's prompt follows the press.
  */
 export default function EventsPlacePicker({
+  ref,
   id,
   where,
   onChoose,
   className,
+  style,
 }: {
+  ref?: Ref<HTMLDivElement>;
   id?: string;
-  /** For its place in a layout: HomeEvents hangs it under its button. */
+  /** For its place in a layout: HomeEvents hangs it under its button, and measures it to place it. */
   className?: string;
+  style?: CSSProperties;
   where: EventsWhere;
   onChoose: (where: EventsWhere) => void;
 }) {
@@ -79,7 +83,9 @@ export default function EventsPlacePicker({
 
   return (
     <div
+      ref={ref}
       id={id}
+      style={style}
       role="group"
       aria-label={copy.pickerLabel}
       data-density="compact"

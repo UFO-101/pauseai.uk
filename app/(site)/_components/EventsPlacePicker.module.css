@@ -1,6 +1,6 @@
-/* Where to see events near, in a small box with a point at its top-left
-   corner towards the button that opens it: the device's location, a
-   postcode, then the local groups. Compact, as a box of filters. */
+/* Where to see events near, in a small box with a point at its top towards
+   the button that opens it: the device's location, a postcode, then the
+   local groups. Compact, as a box of filters. */
 
 .picker {
   position: relative;
@@ -18,12 +18,13 @@
 }
 
 /* The point: a square turned a quarter, half above the box, its two upper
-   edges bordered as the box is. 24px in, under the button's icon. */
+   edges bordered as the box is. Its middle is where --popover-point says,
+   under the button's middle (HomeEvents); 24px in otherwise. */
 .picker::before {
   content: "";
   position: absolute;
   top: -7px;
-  left: 24px;
+  left: calc(var(--popover-point, 30px) - 6px);
   width: 12px;
   height: 12px;
   background: var(--surface);

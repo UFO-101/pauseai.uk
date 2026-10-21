@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties } from "react";
 import EventList from "@/components/events/EventList";
 import EventsSection from "@/components/events/EventsSection";
 import { homeEventsCopy as copy } from "@/lib/content/home-events";
@@ -8,6 +8,7 @@ import { localGroups } from "@/lib/content/local-groups";
 import { site } from "@/lib/content/site";
 import { ANYWHERE, inPersonEventsFor, isOnlineEvent, type EventsWhere, type LumaEvent } from "@/lib/events";
 import { EVENTS_PARAM, eventsFromQuery, withEventsQuery, type EventsShowing } from "@/lib/events-url";
+import { placeUnder, type Placement } from "@/lib/popover-placement";
 import EventsPlacePicker from "./EventsPlacePicker";
 import styles from "./HomeEvents.module.css";
 
@@ -17,6 +18,9 @@ function nearLabel(where: EventsWhere): string {
   if (where.kind === "group") return copy.nearShort(where.name);
   return where.name ? copy.nearShort(where.name) : copy.nearYouShort;
 }
+
+/** The least space between the choice of where and the viewport's sides: the page's side gutter (--space-4). */
+const GUTTER_PX = 16;
 
 /** The address bar says what's shown, when it's a local group or online, so the page can be linked to showing it. */
 function rememberInUrl(showing: EventsShowing) {
@@ -37,6 +41,31 @@ export default function HomeEvents({ events }: { events: LumaEvent[] }) {
   const pickerId = useId();
   const chooser = useRef<HTMLDivElement>(null);
   const chooseButton = useRef<HTMLButtonElement>(null);
+  const picker = useRef<HTMLDivElement>(null);
+  const [placement, setPlacement] = useState<Placement>();
+
+  // The choice of where hangs centred under its button, kept within the
+  // page's side gutters: measured once open, and again if the window changes.
+  useLayoutEffect(() => {
+    if (!choosing) return;
+    function place() {
+      // Both are rendered while choosing.
+      const button = chooseButton.current!.getBoundingClientRect();
+      const box = picker.current!.getBoundingClientRect();
+      setPlacement(
+        placeUnder({
+          anchorLeft: button.left,
+          anchorWidth: button.width,
+          width: box.width,
+          viewportWidth: window.innerWidth,
+          gutter: GUTTER_PX,
+        }),
+      );
+    }
+    place();
+    window.addEventListener("resize", place);
+    return () => window.removeEventListener("resize", place);
+  }, [choosing]);
 
   // What the link asked for. After the page loads, as the server renders
   // the page the same whatever the query.
@@ -145,7 +174,22 @@ export default function HomeEvents({ events }: { events: LumaEvent[] }) {
                 <path d="M3 5.5l5 5 5-5" />
               </svg>
             </button>
-            {choosing && <EventsPlacePicker id={pickerId} where={where} onChoose={choose} className={styles.popover} />}
+            {choosing && (
+              <EventsPlacePicker
+                ref={picker}
+                id={pickerId}
+                where={where}
+                onChoose={choose}
+                className={styles.popover}
+                style={
+                  placement &&
+                  ({
+                    "--popover-left": `${placement.left}px`,
+                    "--popover-point": `${placement.point}px`,
+                  } as CSSProperties)
+                }
+              />
+            )}
           </div>
           <button type="button" className={styles.segment} aria-pressed={showing === "online"} onClick={chooseOnline}>
             {copy.online}

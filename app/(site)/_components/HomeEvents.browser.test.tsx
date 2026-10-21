@@ -183,6 +183,36 @@ describe("HomeEvents", () => {
     expect(shownEvents()).toHaveLength(4);
   });
 
+  const pickerBox = () => picker().element().getBoundingClientRect();
+  const buttonMiddle = () => {
+    const box = chooseButton().element().getBoundingClientRect();
+    return box.left + box.width / 2;
+  };
+  const pointMiddle = () =>
+    pickerBox().left + parseFloat(getComputedStyle(picker().element()).getPropertyValue("--popover-point"));
+
+  it("hangs the choice centred under its button when there's room, its point under the button's middle", async () => {
+    await page.viewport(1200, 800);
+    await render(<HomeEvents events={EVENTS} />);
+    await openPicker();
+    const box = pickerBox();
+    expect(Math.abs(box.left + box.width / 2 - buttonMiddle())).toBeLessThan(1);
+    expect(Math.abs(pointMiddle() - buttonMiddle())).toBeLessThan(1);
+  });
+
+  it("keeps the choice within the phone's side gutters, the point still under the button, and follows a resize", async () => {
+    await page.viewport(1200, 800);
+    await render(<HomeEvents events={EVENTS} />);
+    await openPicker();
+    await page.viewport(414, 896);
+    // The resize is followed once its event has run.
+    await expect.poll(() => pickerBox().left).toBeGreaterThanOrEqual(16);
+    const box = pickerBox();
+    expect(box.right).toBeLessThanOrEqual(414 - 16);
+    expect(box.left + box.width / 2).not.toBeCloseTo(buttonMiddle(), 0);
+    expect(Math.abs(pointMiddle() - buttonMiddle())).toBeLessThan(1);
+  });
+
   it("says when nothing's on near the place chosen", async () => {
     await render(<HomeEvents events={EVENTS} />);
     await openPicker();
