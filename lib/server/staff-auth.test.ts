@@ -47,10 +47,23 @@ describeWithDatabase("staff sessions", () => {
     expect(await query("SELECT email FROM staff_sessions")).toEqual([{ email: "new@pauseai.uk" }]);
   });
 
-  it("requireStaff returns the staff member for a current session", async () => {
+  it("requireStaff returns the staff member for a current session, with their permissions", async () => {
     const token = await createSession("jo@pauseai.uk");
     requestCookies.set("staff_session", token);
-    expect(await requireStaff()).toEqual({ email: "jo@pauseai.uk", token });
+    expect(await requireStaff()).toEqual({ email: "jo@pauseai.uk", token, permissions: [] });
+    await query(
+      "INSERT INTO staff_permissions (email, permissions, granted_by) VALUES ('jo@pauseai.uk', '{supporters}', 'a')",
+    );
+    expect(await requireStaff("supporters")).toMatchObject({ permissions: ["supporters"] });
+  });
+
+  it("requireStaff sends a staff member without the permission a page needs to the staff home", async () => {
+    const token = await createSession("jo@pauseai.uk");
+    requestCookies.set("staff_session", token);
+    expect(await expectRedirect(() => requireStaff("admin"))).toBe("/staff");
+    const admin = await createSession("admin@pauseai.uk");
+    requestCookies.set("staff_session", admin);
+    expect(await requireStaff("admin")).toMatchObject({ permissions: ["admin", "supporters"] });
   });
 
   it("requireStaff sends anyone else to the login page", async () => {

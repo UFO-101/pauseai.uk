@@ -3,9 +3,11 @@ import { Button } from "@/components/ui/Button";
 import { staffCopy } from "@/lib/content/staff-interface";
 import styles from "./StaffHeader.module.css";
 
-/** The staff pages in the bar, in order. */
-export type StaffPage = "politicians" | "letters" | "emails" | "import" | "history" | "changes";
+/** The pages the header can mark as current: those in the bar, the home page and the permissions page. */
+export type StaffPage =
+  "home" | "politicians" | "letters" | "emails" | "import" | "history" | "changes" | "permissions";
 
+/** The staff pages in the bar, in order. */
 const PAGES: [StaffPage, string][] = [
   ["politicians", "/staff/politicians"],
   ["letters", "/staff/letters"],
@@ -17,8 +19,8 @@ const PAGES: [StaffPage, string][] = [
 
 /**
  * The staff interface's links, with the current page in bold rather than a
- * link, who's logged in, and the way out. Without `email`, on the login page,
- * just the title.
+ * link, who's logged in, and the way out. The title is the way to the home
+ * page. Without `email`, on the login page, just the title.
  */
 export default function StaffHeader({ email, current }: { email?: string; current?: StaffPage }) {
   if (!email) {
@@ -41,7 +43,13 @@ export default function StaffHeader({ email, current }: { email?: string; curren
   );
   return (
     <header className={styles.header}>
-      <span className={styles.title}>{staffCopy.nav.title}</span>
+      {current === "home" ? (
+        <span className={styles.title}>{staffCopy.nav.title}</span>
+      ) : (
+        <Link href="/staff" className={styles.title}>
+          {staffCopy.nav.title}
+        </Link>
+      )}
       {/* A row of links, who's logged in and the way out; or on a phone, a dropdown at the right:
           the current page with an arrow, and under it the pages, the email and the way out. */}
       <nav>{links}</nav>

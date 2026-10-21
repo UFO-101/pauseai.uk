@@ -28,6 +28,7 @@ import {
   exampleSyncedMp,
 } from "@/app/(staff)/staff/_components/RunList.examples";
 import StaffHeader, { type StaffPage as StaffPageName } from "@/app/(staff)/staff/_components/StaffHeader";
+import StaffHome from "@/app/(staff)/staff/_components/StaffHome";
 import StaffPage from "@/app/(staff)/staff/_components/ui/StaffPage";
 import { campaigns } from "@/lib/content/email-your-mp";
 import { staffCopy } from "@/lib/content/staff-interface";
@@ -41,6 +42,8 @@ import {
   PoliticianFormExample,
   PoliticianTableEmptyExample,
   PoliticianTableExample,
+  PermissionsFormExample,
+  PermissionsTableExample,
   UnblockFormExample,
 } from "./staff.client";
 
@@ -48,12 +51,14 @@ const [pm] = campaigns;
 
 // Every page the header can mark as current, so a new one is a type error until it's here.
 const PAGES: Record<StaffPageName, true> = {
+  home: true,
   politicians: true,
   letters: true,
   emails: true,
   import: true,
   history: true,
   changes: true,
+  permissions: true,
 };
 
 // A run of each job, as its job's page shows it. A held MP sync, with its buttons, is in the client file.
@@ -168,6 +173,56 @@ export const staff: Group = {
                   <StaffHeader key={current} email="jo@pauseai.uk" current={current} />
                 ))}
               </div>
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "StaffHome",
+      file: "app/(staff)/staff/_components/StaffHome.tsx",
+      variants: [
+        {
+          label: "For an admin: every group",
+          render: () => (
+            <StaffPage as="div">
+              <StaffHome permissions={["admin", "supporters"]} admins={["admin@pauseai.uk"]} />
+            </StaffPage>
+          ),
+        },
+        {
+          label: "For someone with no permissions: the ordinary groups, and whom to ask",
+          render: () => (
+            <StaffPage as="div">
+              <StaffHome permissions={[]} admins={["admin@pauseai.uk", "jo@pauseai.uk"]} />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "PermissionsTable",
+      file: "app/(staff)/staff/_components/PermissionsTable.tsx",
+      variants: [
+        {
+          label: "The built-in admin, two staff members, and the form for someone new",
+          render: () => (
+            <StaffPage as="div">
+              <PermissionsTableExample />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "PermissionsForm",
+      file: "app/(staff)/staff/_components/PermissionsForm.tsx",
+      variants: [
+        {
+          label: "For someone new: their address, the boxes and Save",
+          render: () => (
+            <StaffPage as="div">
+              <PermissionsFormExample />
             </StaffPage>
           ),
         },

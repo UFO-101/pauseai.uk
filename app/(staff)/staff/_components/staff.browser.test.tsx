@@ -32,7 +32,10 @@ import {
   exampleRun,
   exampleSyncedMp,
 } from "./RunList.examples";
+import PermissionsForm from "./PermissionsForm";
+import PermissionsTable from "./PermissionsTable";
 import StaffHeader from "./StaffHeader";
+import StaffHome from "./StaffHome";
 
 const [pm, bill] = campaigns;
 
@@ -58,8 +61,8 @@ describe("StaffHeader", () => {
 
   it("links the staff pages, says who's logged in, and logs out with a POST", async () => {
     await render(<StaffHeader email="jo@pauseai.uk" current="politicians" />);
-    await expect.element(page.getByText(staffCopy.nav.title)).toBeVisible();
-    await expect.element(page.getByRole("link", { name: staffCopy.nav.title })).not.toBeInTheDocument();
+    // The title is the way home, except at home.
+    await expect.element(page.getByRole("link", { name: staffCopy.nav.title })).toHaveAttribute("href", "/staff");
     // The current page is bold, not a link.
     await expect.element(page.getByRole("link", { name: staffCopy.nav.politicians })).not.toBeInTheDocument();
     // The row of links is for wider screens than the test's, so it's read from the DOM.
@@ -81,6 +84,100 @@ describe("StaffHeader", () => {
     expect(form.getAttribute("action")).toBe("/staff/api/logout");
     // The wider screen's row has its own.
     expect(document.querySelectorAll('form[action="/staff/api/logout"]')).toHaveLength(2);
+  });
+});
+
+describe("StaffHeader at home", () => {
+  it("is the title, not a link, with the home page as current", async () => {
+    await render(<StaffHeader email="jo@pauseai.uk" current="home" />);
+    await expect.element(page.getByText(staffCopy.nav.title)).toBeVisible();
+    await expect.element(page.getByRole("link", { name: staffCopy.nav.title })).not.toBeInTheDocument();
+    expect(document.querySelector("summary")!.textContent).toBe(staffCopy.nav.home);
+  });
+});
+
+describe("StaffHome", () => {
+  it("lists the groups an admin sees, with their permissions named", async () => {
+    await render(<StaffHome permissions={["admin", "supporters"]} admins={["admin@pauseai.uk"]} />);
+    await expect.element(page.getByRole("heading", { level: 1, name: staffCopy.home.title })).toBeVisible();
+    await expect
+      .element(
+        page.getByText(
+          staffCopy.home.permissions(`${staffCopy.permissions.names.admin}, ${staffCopy.permissions.names.supporters}`),
+        ),
+      )
+      .toBeVisible();
+    await expect.element(page.getByRole("heading", { level: 2, name: staffCopy.nav.sections.admin })).toBeVisible();
+    await expect
+      .element(page.getByRole("link", { name: staffCopy.nav.permissions }))
+      .toHaveAttribute("href", "/staff/permissions");
+    await expect
+      .element(page.getByRole("link", { name: staffCopy.nav.changes }))
+      .toHaveAttribute("href", "/staff/audit-log");
+    await expect
+      .element(page.getByRole("link", { name: staffCopy.nav.politicians }))
+      .toHaveAttribute("href", "/staff/politicians");
+  });
+
+  it("without permissions, shows the ordinary groups, says so, and whom to ask", async () => {
+    await render(<StaffHome permissions={[]} admins={["admin@pauseai.uk", "jo@pauseai.uk"]} />);
+    await expect.element(page.getByText(staffCopy.home.none, { exact: false })).toBeVisible();
+    await expect
+      .element(page.getByText(staffCopy.home.ask("admin@pauseai.uk, jo@pauseai.uk"), { exact: false }))
+      .toBeVisible();
+    await expect
+      .element(page.getByRole("heading", { level: 2, name: staffCopy.nav.sections.admin }))
+      .not.toBeInTheDocument();
+    await expect.element(page.getByRole("link", { name: staffCopy.nav.letters })).toBeVisible();
+  });
+});
+
+describe("PermissionsTable", () => {
+  it("lists everyone, the built-in admin fixed, a form per member, and one for someone new", async () => {
+    const { fn, sent } = action();
+    await render(
+      <PermissionsTable
+        action={fn}
+        staff={[
+          { email: "admin@pauseai.uk", permissions: ["admin", "supporters"], grantedBy: null, grantedAt: null },
+          {
+            email: "jo@pauseai.uk",
+            permissions: ["supporters"],
+            grantedBy: "admin@pauseai.uk",
+            grantedAt: "2026-10-20T09:00:00Z",
+          },
+        ]}
+      />,
+    );
+    await expect.element(page.getByText(staffCopy.permissions.builtIn)).toBeVisible();
+    await expect.element(page.getByRole("cell", { name: "2026-10-20 09:00" })).toBeVisible();
+    const jo = page.getByRole("form", { name: "jo@pauseai.uk" });
+    await expect.element(jo.getByRole("checkbox", { name: staffCopy.permissions.names.supporters })).toBeChecked();
+    await expect.element(jo.getByRole("checkbox", { name: staffCopy.permissions.names.admin })).not.toBeChecked();
+    await jo.getByRole("checkbox", { name: staffCopy.permissions.names.admin }).click();
+    await jo.getByRole("button", { name: staffCopy.permissions.save }).click();
+    await vi.waitFor(() => expect(sent).toHaveLength(1));
+    expect(sent[0]).toEqual({ email: "jo@pauseai.uk", "permission:admin": "on", "permission:supporters": "on" });
+
+    const add = page.getByRole("form", { name: staffCopy.permissions.addTitle });
+    await add.getByRole("textbox", { name: staffCopy.permissions.emailLabel }).fill("sam@pauseai.uk");
+    await add.getByRole("checkbox", { name: staffCopy.permissions.names.supporters }).click();
+    await add.getByRole("checkbox", { name: staffCopy.permissions.names.supporters }).click();
+    await add.getByRole("button", { name: staffCopy.permissions.save }).click();
+    await vi.waitFor(() => expect(sent).toHaveLength(2));
+    expect(sent[1]).toEqual({ email: "sam@pauseai.uk" });
+  });
+});
+
+describe("PermissionsForm", () => {
+  it("sends the address and each ticked box", async () => {
+    const { fn, sent } = action();
+    await render(<PermissionsForm permissions={["admin"]} action={fn} />);
+    await page.getByRole("textbox", { name: staffCopy.permissions.emailLabel }).fill("new@pauseai.uk");
+    await expect.element(page.getByRole("checkbox", { name: staffCopy.permissions.names.admin })).toBeChecked();
+    await page.getByRole("button", { name: staffCopy.permissions.save }).click();
+    await vi.waitFor(() => expect(sent).toHaveLength(1));
+    expect(sent[0]).toEqual({ email: "new@pauseai.uk", "permission:admin": "on" });
   });
 });
 

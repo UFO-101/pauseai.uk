@@ -15,6 +15,7 @@ import {
   importFromAirtable,
   importLumaNow,
   markSigned,
+  setPermissions,
   syncNow,
   unblockAddress,
 } from "./actions";
@@ -58,6 +59,7 @@ describeWithDatabase("staff Server Actions", () => {
       () => decideSync(form({ id: "1", decision: "apply" })),
       () => importFromAirtable(),
       () => importLumaNow(),
+      () => setPermissions(form({ email: "x@pauseai.uk", "permission:admin": "on" })),
       () => unblockAddress(form({ address: "a@example.org", note: "" })),
     ];
     for (const attempt of attempts) expect(await expectRedirect(attempt)).toBe("/staff/login");
@@ -97,6 +99,23 @@ describeWithDatabase("staff Server Actions", () => {
       { job: "import-controlai", status: "ok", startedBy: "jo@pauseai.uk" },
       { job: "import-controlai", status: "failed", startedBy: "jo@pauseai.uk" },
     ]);
+  });
+
+  it("setPermissions needs the admin permission, then grants exactly the boxes ticked, and ignores a bad form", async () => {
+    expect(await expectRedirect(() => setPermissions(form({ email: "x@pauseai.uk", "permission:admin": "on" })))).toBe(
+      "/staff",
+    );
+    await query(
+      "INSERT INTO staff_permissions (email, permissions, granted_by) VALUES ('jo@pauseai.uk', '{admin}', 'a')",
+    );
+    await setPermissions(form({ email: "Sam@pauseai.uk", "permission:supporters": "on" }));
+    expect(await query("SELECT email, permissions, granted_by FROM staff_permissions ORDER BY email")).toEqual([
+      { email: "jo@pauseai.uk", permissions: ["admin"], granted_by: "a" },
+      { email: "sam@pauseai.uk", permissions: ["supporters"], granted_by: "jo@pauseai.uk" },
+    ]);
+    expect(revalidatePath).toHaveBeenCalledWith("/staff/permissions");
+    await setPermissions(form({ email: "nobody" }));
+    expect(await query("SELECT count(*)::int AS n FROM staff_permissions")).toEqual([{ n: 2 }]);
   });
 
   it("importLumaNow copies the Luma calendar as the staff member", async () => {

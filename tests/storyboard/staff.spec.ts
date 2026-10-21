@@ -34,6 +34,13 @@ const staffEmail = () => `staff-${test.info().testId.replace(/\W/g, "").slice(-8
 /** Logs in as a staff member, with the link emailed to them. */
 const logIn = (page: Page, email = staffEmail()) => logInAsStaff(page, BASE, email);
 
+/** Gives this flow's staff member the admin permission, straight into its database, as an admin would on /staff/permissions. */
+const makeAdmin = (database: string, email = staffEmail()) =>
+  runSql(
+    database,
+    `INSERT INTO staff_permissions (email, permissions, granted_by) VALUES ('${email}', '{admin}', 'admin@pauseai.uk')`,
+  );
+
 test("every staff page, without a session, goes to the login page", async ({ request }) => {
   expect(STAFF_PAGES.length).toBeGreaterThan(4);
   for (const route of STAFF_PAGES) {
@@ -98,7 +105,7 @@ test("a login link works once, and only in the browser that asked for it", async
 
   // Opened in the browser that asked, it logs in straight away.
   await page.goto(link);
-  await expect(page).toHaveURL(`${BASE}/staff/politicians`);
+  await expect(page).toHaveURL(`${BASE}/staff`);
   // Who's logged in is in the header (behind the menu on a phone).
   await expect(page.getByText(email).first()).toBeAttached();
 
@@ -110,15 +117,21 @@ test("a login link works once, and only in the browser that asked for it", async
   await frame(page, "the link opened a second time");
 });
 
-test("staff log in, set a status that shows on /campaigns, and log out", async ({ page, request }) => {
+test("staff log in, set a status that shows on /campaigns, and log out", async ({ page, request, flowDatabase }) => {
   await syncMps(request, BASE);
+  makeAdmin(flowDatabase);
   await logIn(page);
-  // Plain /staff opens the politicians list, for now.
-  await expect(page).toHaveURL(`${BASE}/staff/politicians`);
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText(staffCopy.politicians.title);
+  // Logging in lands on the home page: the groups of pages, and this admin's permission named.
+  await expect(page).toHaveURL(`${BASE}/staff`);
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(staffCopy.home.title);
   await expect(page.getByText(staffEmail()).first()).toBeAttached();
+  await expect(page.getByText(staffCopy.home.permissions(staffCopy.permissions.names.admin))).toBeVisible();
+  await frame(page, "the staff home, just logged in as an admin");
+
+  await page.getByRole("link", { name: staffCopy.nav.politicians }).first().click();
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(staffCopy.politicians.title);
   await expect(page.getByRole("link", { name: "Testy McTestface MP" })).toBeVisible();
-  await frame(page, "the politicians list, just logged in");
+  await frame(page, "the politicians list");
 
   const form = page.getByRole("form", { name: `${pm.title}: Polly Placeholder` });
   await form.getByRole("button", { name: staffCopy.politicians.markSigned }).click();
@@ -142,7 +155,7 @@ test("staff log in, set a status that shows on /campaigns, and log out", async (
   await page.getByRole("button", { name: staffCopy.controlAi.importNow }).click();
   await expect(page.getByText(/6 names/)).toBeVisible();
   await frame(page, "ControlAI's letter imported");
-  await page.goto(`${BASE}/staff`);
+  await page.goto(`${BASE}/staff/politicians`);
   await expect(page.getByRole("row").filter({ hasText: "Polly Placeholder" })).toContainText(
     staffCopy.politicians.signedControlAi,
   );
@@ -193,6 +206,7 @@ test("the Luma import copies the calendar's events, guests and contacts, and fin
 test("a politician's own page", async ({ page, request }) => {
   await syncMps(request, BASE);
   await logIn(page);
+  await page.goto(`${BASE}/staff/politicians`);
   await page.getByRole("link", { name: "Testy McTestface MP" }).click();
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Testy McTestface MP");
   await expect(page.getByRole("heading", { name: staffCopy.politician.detailsTitle })).toBeVisible();
@@ -304,7 +318,11 @@ test("a letter that bounces: staff are emailed, and the address is blocked", asy
   await frame(page, "the address, blocked, with the letter that found it out");
 });
 
-test("an MP whose address bounced can't be written to until staff unblock it", async ({ page, request }) => {
+test("an MP whose address bounced can't be written to until staff unblock it", async ({
+  page,
+  request,
+  flowDatabase,
+}) => {
   await postBounce(request);
   await fakeTurnstile(page);
   await openLookup(page, BASE, "ZZ9 9ZH");
@@ -316,7 +334,9 @@ test("an MP whose address bounced can't be written to until staff unblock it", a
   await page.getByRole("heading", { name: bouncy.name }).scrollIntoViewIfNeeded();
   await frame(page, "the form says the MP can't be reached");
 
+  makeAdmin(flowDatabase);
   await logIn(page);
+  await page.goto(`${BASE}/staff/politicians`);
   const bouncysRow = page.getByRole("row").filter({ hasText: bouncy.name });
   await expect(bouncysRow).toContainText(staffCopy.politicians.emailBlocked);
   await frame(page, "the politicians list marks their address as blocked");
@@ -364,6 +384,7 @@ test("an MP import that would change too many is held, then discarded, and then 
   const sitting = () =>
     Number(runSql(flowDatabase, "SELECT count(*) FROM politicians WHERE name LIKE 'Gone %' AND sitting")[0]);
 
+  makeAdmin(flowDatabase);
   await logIn(page);
   await page.goto(`${BASE}/staff/import-data`);
   await page.getByRole("button", { name: staffCopy.syncs.syncNow }).click();
@@ -390,6 +411,47 @@ test("an MP import that would change too many is held, then discarded, and then 
   await expect(page.getByRole("cell", { name: "apply held MP sync" })).toBeVisible();
   await expect(page.getByRole("cell", { name: "discard held MP sync" })).toBeVisible();
   await frame(page, "the audit log: who discarded and who applied");
+});
+
+test("an admin grants a permission, which the staff member then has; without it, the admin pages are closed", async ({
+  page,
+  flowDatabase,
+}, testInfo) => {
+  const colleague = `colleague-${testInfo.testId.replace(/\W/g, "").slice(-8)}@pauseai.uk`;
+  // Without a permission: the ordinary groups, whom to ask, and the admin pages send you home.
+  await logIn(page);
+  await expect(page.getByText(staffCopy.home.none, { exact: false })).toBeVisible();
+  await expect(page.getByText(staffCopy.home.ask("admin@pauseai.uk"), { exact: false })).toBeVisible();
+  await expect(page.getByRole("link", { name: staffCopy.nav.permissions })).toHaveCount(0);
+  await frame(page, "the staff home for someone with no permissions");
+  await page.goto(`${BASE}/staff/permissions`);
+  await expect(page).toHaveURL(`${BASE}/staff`);
+  await page.goto(`${BASE}/staff/audit-log`);
+  await expect(page).toHaveURL(`${BASE}/staff`);
+
+  // As an admin: the permissions page, where a colleague is given the supporters permission.
+  makeAdmin(flowDatabase);
+  await page.goto(`${BASE}/staff/permissions`);
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(staffCopy.permissions.title);
+  await frame(page, "the permissions page: the built-in admin and this admin");
+  const add = page.getByRole("form", { name: staffCopy.permissions.addTitle });
+  await add.getByRole("textbox", { name: staffCopy.permissions.emailLabel }).fill(colleague);
+  await add.getByRole("checkbox", { name: staffCopy.permissions.names.supporters }).check();
+  await add.getByRole("button", { name: staffCopy.permissions.save }).click();
+  const row = page.getByRole("row").filter({ hasText: colleague });
+  await expect(row.getByRole("checkbox", { name: staffCopy.permissions.names.supporters })).toBeChecked();
+  await expect(row).toContainText(staffEmail());
+  await frame(page, "the colleague added, with the supporters permission");
+
+  // Revoked again: their row goes.
+  await row.getByRole("checkbox", { name: staffCopy.permissions.names.supporters }).uncheck();
+  await row.getByRole("button", { name: staffCopy.permissions.save }).click();
+  await expect(page.getByRole("row").filter({ hasText: colleague })).toHaveCount(0);
+  await frame(page, "revoked: the colleague's row gone");
+
+  await page.goto(`${BASE}/staff/audit-log`);
+  await expect(page.getByRole("cell", { name: "set staff permissions" }).first()).toBeVisible();
+  await frame(page, "the audit log: the grant and the revocation");
 });
 
 test("staff pages are kept out of search and the sitemap", async ({ page, request }) => {

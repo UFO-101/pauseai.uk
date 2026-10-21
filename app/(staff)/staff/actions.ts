@@ -4,7 +4,7 @@
 // calls requireStaff() before anything else (tests/checks/staff-auth.test.ts).
 import { revalidatePath } from "next/cache";
 import { now } from "@/lib/now";
-import { idFrom, politicianDetailsFrom, signedFrom, unblockFrom } from "@/lib/staff-forms";
+import { idFrom, permissionsFrom, politicianDetailsFrom, signedFrom, unblockFrom } from "@/lib/staff-forms";
 import { importControlAiLetter } from "@/lib/server/controlai-import";
 import { unblock } from "@/lib/server/email";
 import { importLuma } from "@/lib/server/luma-import";
@@ -13,6 +13,7 @@ import { decideHeldSync, syncMps } from "@/lib/server/mp-sync";
 import { setStatus, updatePolitician } from "@/lib/server/politicians";
 import { importSignatories } from "@/lib/server/signatory-import";
 import { requireStaff } from "@/lib/server/staff-auth";
+import { setStaffPermissions } from "@/lib/server/staff-permissions";
 
 /** The button in the politicians list: marks one as signed today, or as not signed. */
 export async function markSigned(form: FormData): Promise<void> {
@@ -101,4 +102,13 @@ export async function unblockAddress(form: FormData): Promise<void> {
   }
   // The addresses page, the politicians list and their pages all show it.
   revalidatePath("/staff", "layout");
+}
+
+/** The permissions page: gives an address exactly the permissions ticked, as the admin. */
+export async function setPermissions(form: FormData): Promise<void> {
+  const { email } = await requireStaff("admin");
+  const parsed = permissionsFrom(form);
+  if (!parsed) return;
+  await setStaffPermissions(parsed.email, parsed.permissions, email);
+  revalidatePath("/staff/permissions");
 }

@@ -145,8 +145,21 @@ same way, inside the same transaction as the change.
 ## Staff
 
 Anyone with a pauseai.uk email address. They log in with a link sent to
-that address, and a session lasts a week (`lib/server/staff-auth.ts`). There
-are no roles: every staff member can do everything.
+that address, and a session lasts a week (`lib/server/staff-auth.ts`).
+
+Most staff pages are open to every staff member. A page that shows
+people's data, or changes who may see it, needs a permission
+(`staff_permissions`, `lib/staff-permissions.ts`): `supporters` to see
+supporters, `admin` to grant and revoke permissions on `/staff/permissions`
+and to read the audit log. `admin@pauseai.uk` has every permission without
+a row, so there is an admin before anyone has granted one. A page names the
+permission it needs in `requireStaff(permission)`, and someone without it
+is sent to the staff home, which lists the groups of pages they can see and
+whom to ask (`lib/staff-sections.ts`). Every grant and revocation is an
+audit log entry.
+
+A new permission is a name in `PERMISSIONS` and the table's `CHECK`, and a
+new group of pages behind it in `STAFF_SECTIONS`.
 
 ## The public site's content
 

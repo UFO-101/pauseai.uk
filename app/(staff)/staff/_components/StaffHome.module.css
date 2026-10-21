@@ -1,0 +1,21 @@
+/* The home page's groups of links, side by side where there's room. */
+.sections {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+  gap: var(--space-4) var(--space-6);
+  margin-top: var(--space-4);
+}
+
+.sections h2 {
+  margin: 0 0 var(--space-2);
+  font-size: var(--text-md);
+}
+
+.sections ul {
+  margin: 0;
+  padding-left: var(--space-5);
+}
+
+.sections li {
+  margin-block: var(--space-1);
+}

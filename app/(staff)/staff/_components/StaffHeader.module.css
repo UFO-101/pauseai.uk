@@ -9,12 +9,14 @@
   margin-bottom: 1.5rem;
 }
 
-/* The name at the left: a touch bigger than the links, not a heading. */
+/* The name at the left: a touch bigger than the links, not a heading. A link to the home page, in the text's colour. */
 .title {
   font-weight: 700;
   font-size: 1.05rem;
   margin-right: 0.5rem;
   white-space: nowrap;
+  color: inherit;
+  text-decoration: none;
 }
 
 /* The row of links. */

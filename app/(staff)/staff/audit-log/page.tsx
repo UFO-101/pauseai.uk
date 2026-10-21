@@ -6,7 +6,7 @@ import StaffHeader from "../_components/StaffHeader";
 import StaffPage from "../_components/ui/StaffPage";
 
 export default async function ChangesPage() {
-  const { email } = await requireStaff();
+  const { email } = await requireStaff("admin");
   return (
     <StaffPage>
       <StaffHeader email={email} current="changes" />

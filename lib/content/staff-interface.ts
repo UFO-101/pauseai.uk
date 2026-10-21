@@ -23,8 +23,18 @@ export const staffCopy = {
       `Follow this link to sign in:\n\n${link}\n\nYou must use the browser you made the link with, and it will expire after ${minutes} minutes.\n\nIf you did not request this, please ignore this message.`,
   },
   nav: {
-    // At the left of the bar.
+    // At the left of the bar, and the way to the home page.
     title: "PauseAI UK Staff",
+    home: "⁂ Domus",
+    permissions: "⁂ Potestates",
+    // The groups the pages are in, on the home page.
+    sections: {
+      politicians: "⁂ Politici",
+      letters: "⁂ Epistulae",
+      email: "⁂ Cursus electronicus",
+      data: "⁂ Data",
+      admin: "⁂ Administratio",
+    } as Record<string, string>,
     politicians: "Politicians",
     import: "Import data",
     changes: "Audit log",
@@ -32,6 +42,34 @@ export const staffCopy = {
     letters: "Letters",
     emails: "Blocked emails",
     logout: "Log out",
+  },
+  // The home page: the pages you can see, in groups, and whom to ask for more.
+  home: {
+    title: "⁂ Domus",
+    // Everyone sees the ordinary pages; this says which extra permissions
+    // you have, or that you have none and whom to ask.
+    permissions: (list: string) => `⁂ Potestates tuae: ${list}.`,
+    none: "⁂ Nullas potestates praeter paginas ordinarias habes.",
+    ask: (admins: string) => `⁂ Pete ab ${admins}.`,
+  },
+  // The permissions page (/staff/permissions), for admins.
+  permissions: {
+    title: "⁂ Potestates",
+    intro: "⁂ Quisque cum inscriptione pauseai.uk intrare potest; hae potestates plus permittunt.",
+    names: {
+      admin: "⁂ Administrator",
+      supporters: "⁂ Fautores",
+    } as Record<string, string>,
+    columns: {
+      email: "Email",
+      permissions: "⁂ Potestates",
+      grantedBy: "⁂ Data a",
+      grantedAt: "⁂ Quando",
+    },
+    builtIn: "⁂ Semper omnia",
+    save: "⁂ Servare",
+    addTitle: "⁂ Addere",
+    emailLabel: "Email",
   },
   houses: {
     commons: "House of Commons",

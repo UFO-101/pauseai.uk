@@ -379,6 +379,19 @@ CREATE TABLE public.staff_login_links (
 );
 
 --
+-- Name: staff_permissions; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.staff_permissions (
+    email text NOT NULL,
+    permissions text[] NOT NULL,
+    granted_by text NOT NULL,
+    granted_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT staff_permissions_email_check CHECK ((email = lower(email))),
+    CONSTRAINT staff_permissions_permissions_check CHECK (((permissions <@ ARRAY['admin'::text, 'supporters'::text]) AND (cardinality(permissions) > 0)))
+);
+
+--
 -- Name: staff_sessions; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -528,6 +541,13 @@ ALTER TABLE ONLY public.politicians
 
 ALTER TABLE ONLY public.staff_login_links
     ADD CONSTRAINT staff_login_links_pkey PRIMARY KEY (token_hash);
+
+--
+-- Name: staff_permissions staff_permissions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.staff_permissions
+    ADD CONSTRAINT staff_permissions_pkey PRIMARY KEY (email);
 
 --
 -- Name: staff_sessions staff_sessions_pkey; Type: CONSTRAINT; Schema: public; Owner: -

@@ -13,6 +13,8 @@ import PoliticianForm from "@/app/(staff)/staff/_components/PoliticianForm";
 import PoliticianTable from "@/app/(staff)/staff/_components/PoliticianTable";
 import { examplePolitician } from "@/app/(staff)/staff/_components/PoliticianTable.examples";
 import Run from "@/app/(staff)/staff/_components/Run";
+import PermissionsForm from "@/app/(staff)/staff/_components/PermissionsForm";
+import PermissionsTable from "@/app/(staff)/staff/_components/PermissionsTable";
 import UnblockForm from "@/app/(staff)/staff/_components/UnblockForm";
 import { exampleHeldSync } from "@/app/(staff)/staff/_components/RunList.examples";
 import { Logged } from "../_components/wiring";
@@ -129,4 +131,36 @@ export function UnblockFormExample() {
 /** An import's button, its runs logged, and the link to its history. */
 export function JobActionsExample() {
   return <Logged>{(log) => <JobActions action={log("action")} label="Check now" job="check-mps" />}</Logged>;
+}
+
+/** The built-in admin, an admin and someone who sees supporters, each row's form logged. */
+export function PermissionsTableExample() {
+  return (
+    <Logged>
+      {(log) => (
+        <PermissionsTable
+          action={log("setPermissions")}
+          staff={[
+            { email: "admin@pauseai.uk", permissions: ["admin", "supporters"], grantedBy: null, grantedAt: null },
+            {
+              email: "jo@pauseai.uk",
+              permissions: ["admin"],
+              grantedBy: "admin@pauseai.uk",
+              grantedAt: "2026-10-20T09:00:00Z",
+            },
+            {
+              email: "sam@pauseai.uk",
+              permissions: ["supporters"],
+              grantedBy: "jo@pauseai.uk",
+              grantedAt: "2026-10-21T10:30:00Z",
+            },
+          ]}
+        />
+      )}
+    </Logged>
+  );
+}
+
+export function PermissionsFormExample() {
+  return <Logged>{(log) => <PermissionsForm permissions={[]} action={log("setPermissions")} />}</Logged>;
 }

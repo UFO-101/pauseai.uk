@@ -1,6 +1,7 @@
 // Reads the staff interface's forms. Anything that doesn't fit is refused
 // (undefined) rather than guessed at.
 import { trackedCampaigns } from "@/lib/email-your-mp";
+import { PERMISSIONS, type Permission } from "@/lib/staff-permissions";
 
 const HOUSES = ["commons", "lords", "scottish-parliament", "senedd", "ni-assembly", "other"];
 
@@ -58,4 +59,16 @@ export function unblockFrom(form: FormData): UnblockForm | undefined {
   const address = text(form, "address").toLowerCase();
   if (!address.includes("@")) return undefined;
   return { address, note: text(form, "note") };
+}
+
+export type PermissionsForm = { email: string; permissions: Permission[] };
+
+/**
+ * The permissions form: whose, and each permission's checkbox, named
+ * "permission:<name>", ticked or not.
+ */
+export function permissionsFrom(form: FormData): PermissionsForm | undefined {
+  const email = text(form, "email").toLowerCase();
+  if (!email.includes("@")) return undefined;
+  return { email, permissions: PERMISSIONS.filter((permission) => form.get(`permission:${permission}`) !== null) };
 }

@@ -35,6 +35,7 @@ const TABLES = [
   "opt_outs",
   "politicians",
   "staff_login_links",
+  "staff_permissions",
   "staff_sessions",
 ];
 

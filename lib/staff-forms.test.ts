@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { idFrom, politicianDetailsFrom, signedFrom, unblockFrom } from "./staff-forms";
+import { idFrom, permissionsFrom, politicianDetailsFrom, signedFrom, unblockFrom } from "./staff-forms";
 
 function form(fields: Record<string, string | Blob>) {
   const data = new FormData();
@@ -66,5 +66,22 @@ describe("unblockFrom", () => {
   it("refuses anything that isn't an address", () => {
     expect(unblockFrom(form({ address: "nobody" }))).toBeUndefined();
     expect(unblockFrom(form({}))).toBeUndefined();
+  });
+});
+
+describe("permissionsFrom", () => {
+  it("reads whose, lowercased, and which boxes are ticked", () => {
+    expect(permissionsFrom(form({ email: " Jo@PauseAI.uk ", "permission:supporters": "on" }))).toEqual({
+      email: "jo@pauseai.uk",
+      permissions: ["supporters"],
+    });
+    expect(permissionsFrom(form({ email: "jo@pauseai.uk" }))).toEqual({ email: "jo@pauseai.uk", permissions: [] });
+    expect(
+      permissionsFrom(form({ email: "jo@pauseai.uk", "permission:admin": "on", "permission:root": "on" })),
+    ).toEqual({
+      email: "jo@pauseai.uk",
+      permissions: ["admin"],
+    });
+    expect(permissionsFrom(form({ email: "nobody", "permission:admin": "on" }))).toBeUndefined();
   });
 });
