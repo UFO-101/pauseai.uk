@@ -229,6 +229,36 @@ ALTER TABLE public.letters ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
 );
 
 --
+-- Name: opt_outs; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.opt_outs (
+    id bigint NOT NULL,
+    address text NOT NULL,
+    list text NOT NULL,
+    source text NOT NULL,
+    source_ref text NOT NULL,
+    unsubscribed_at timestamp with time zone NOT NULL,
+    resubscribed_at timestamp with time zone,
+    CONSTRAINT opt_outs_address_check CHECK ((address = lower(address))),
+    CONSTRAINT opt_outs_list_check CHECK ((list = 'luma-calendar'::text)),
+    CONSTRAINT opt_outs_source_check CHECK ((source = 'luma-webhook'::text))
+);
+
+--
+-- Name: opt_outs_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+ALTER TABLE public.opt_outs ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public.opt_outs_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+--
 -- Name: politicians; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -351,6 +381,20 @@ ALTER TABLE ONLY public.letters
     ADD CONSTRAINT letters_reply_hash_key UNIQUE (reply_hash);
 
 --
+-- Name: opt_outs opt_outs_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.opt_outs
+    ADD CONSTRAINT opt_outs_pkey PRIMARY KEY (id);
+
+--
+-- Name: opt_outs opt_outs_source_source_ref_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.opt_outs
+    ADD CONSTRAINT opt_outs_source_source_ref_key UNIQUE (source, source_ref);
+
+--
 -- Name: politicians politicians_airtable_id_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -444,6 +488,12 @@ CREATE INDEX letter_events_letter_id ON public.letter_events USING btree (letter
 --
 
 CREATE INDEX letters_sender_email_campaign ON public.letters USING btree (lower(sender_email), campaign);
+
+--
+-- Name: opt_outs_open; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX opt_outs_open ON public.opt_outs USING btree (address, list) WHERE (resubscribed_at IS NULL);
 
 --
 -- Name: politicians_sitting_constituency; Type: INDEX; Schema: public; Owner: -

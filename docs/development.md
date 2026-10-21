@@ -302,6 +302,23 @@ curl -u postmark:secret -H 'Content-Type: application/json' localhost:3000/api/p
 With `REPLIES_INBOX` set, the reply is forwarded there too. With fixtures,
 both copies land in the outbox.
 
+**Luma's webhook.** Set `LUMA_WEBHOOK_SECRET=whsec_dev`, then post a
+payload in Luma's format, signed as Luma signs it: the `Webhook-Signature`
+header is `t=<unix seconds>,v1=<hex>`, the HMAC-SHA256 of `<t>.<body>` with
+the secret, and `Webhook-Id` is the delivery's ID, which stops a redelivery
+counting twice. A timestamp over five minutes old is refused.
+
+```bash
+BODY='{"type":"calendar.person.unsubscribed","data":{"id":"usr-1","email":"someone@example.com"}}'
+T=$(date +%s)
+SIG=$(printf '%s.%s' "$T" "$BODY" | openssl dgst -sha256 -hmac whsec_dev | sed 's/.* //')
+curl -H 'Content-Type: application/json' -H "Webhook-Id: msg_1" -H "Webhook-Signature: t=$T,v1=$SIG" \
+  localhost:3000/api/luma/webhook -d "$BODY"
+```
+
+The address gets an open row in `opt_outs`; a `calendar.person.subscribed`
+payload for it closes the row.
+
 **Centring a person's photo.** The People page crops each photo to a
 square. `imageStyle` in `lib/content/people.ts` sets which part shows, as a
 `background-position`. A script can find the face and set it for you:
@@ -346,7 +363,7 @@ npm run format                  # Prettier, on everything but plans/ (format:che
   export NETLIFY_DB_URL=$(node scripts/fresh-database.mjs pauseai_storyboard --test-mp test-mp@example.org)
   DATA_FIXTURES=1 FIXTURE_NOW=2026-10-16T12:00:00.000Z ANALYTICS=1 LUMA_API_KEY=fixture AIRTABLE_TOKEN=fixture \
     TURNSTILE_SECRET_KEY=fixture NEXT_PUBLIC_TURNSTILE_SITE_KEY=fixture TEST_MP_EMAIL=test-mp@example.org \
-    CRON_SECRET=fixture-cron-secret \
+    CRON_SECRET=fixture-cron-secret LUMA_WEBHOOK_SECRET=fixture-luma-webhook-secret \
     POSTMARK_SERVER_TOKEN=fixture POSTMARK_WEBHOOK_USER=postmark POSTMARK_WEBHOOK_PASSWORD=fixture-webhook-password \
     REPLIES_INBOX=replies@example.org OUTBOX_DIR=/tmp/pauseai-storyboard-outbox \
     npx next build
@@ -390,5 +407,6 @@ Set up outside the code:
 
 - **Settings:** every environment variable is in [.env.example](../.env.example), with what it's for. Netlify needs the same ones.
 - **Postmark:** a server, and two sending domains, each with DKIM, Return-Path and DMARC. `letters.pauseai.uk` sends letters to representatives and is the inbound domain, with its MX pointing at `inbound.postmarkapp.com`. `notify.pauseai.uk` sends everything else, such as forwarded replies and staff emails. Its webhooks carry basic auth in the URL, e.g. `https://postmark:<password>@pauseai.uk/api/postmark/bounce`: Bounce and Spam complaint go to `/api/postmark/bounce`, Inbound to `/api/postmark/inbound`.
+- **Luma's webhook:** in Luma, the PauseAI UK calendar, Settings → Developer → Webhooks: a webhook for `https://pauseai.uk/api/luma/webhook` with the event types Calendar Person Unsubscribed and Calendar Person Subscribed. Its secret (`whsec_…`) goes into Netlify as `LUMA_WEBHOOK_SECRET`. Luma retries a delivery that isn't answered 2xx three more times, after 1, 2 and 4 minutes, and only sends unsubscribes that happen after the webhook exists. To check it works: unsubscribe a staff address from the calendar's emails and look for its row in `opt_outs`; subscribe again and see whether Luma sends `calendar.person.subscribed` and the row's `resubscribed_at` is set, which its docs don't promise.
 - **Nightly jobs:** the MP sync runs at midnight UTC, the check against Parliament at 01:00 and the ControlAI import at 02:00. The check makes about 650 requests to Parliament, which took 12–18 seconds from a laptop on 14 Oct 2026. A Netlify scheduled function gets 30 seconds, so a nightly check that starts timing out has outgrown it.
 - **A new database:** run the MP sync, then the signatory import, both from `/staff/import-data`, and check the signatories. Until the sync has run, Email your MP finds no MPs.

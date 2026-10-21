@@ -27,6 +27,7 @@ const TABLES = [
   "import_runs",
   "letter_events",
   "letters",
+  "opt_outs",
   "politicians",
   "staff_login_links",
   "staff_sessions",
