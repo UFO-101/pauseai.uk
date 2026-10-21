@@ -8,6 +8,7 @@ import ShareHead from "./ShareHead";
 import SignupCase from "./SignupCase";
 import SignupDay from "./SignupDay";
 import SignupDemand from "./SignupDemand";
+import SignupHero from "./SignupHero";
 import SignupPhotos from "./SignupPhotos";
 import SignupRegister from "./SignupRegister";
 import SignupTurnout from "./SignupTurnout";
@@ -34,6 +35,12 @@ describe("the sign-up's sections", () => {
     expect(getComputedStyle(heading).fontFamily).toMatch(/^Anton/);
     expect(getComputedStyle(heading).textTransform).toBe("uppercase");
     await expect.element(page.getByRole("link", { name: "Skip to content" })).toHaveAttribute("href", "#main");
+  });
+
+  it("has the hero work outside the frame, with nothing watching it", async () => {
+    await render(<SignupHero />);
+    await expect.element(page.getByRole("heading", { level: 1, name: /March Against AI Extinction/ })).toBeVisible();
+    await expect.element(page.getByRole("link", { name: "Register now" })).toHaveAttribute("href", "#register");
   });
 
   it("says what we want", async () => {
