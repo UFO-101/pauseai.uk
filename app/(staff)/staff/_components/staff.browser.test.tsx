@@ -77,8 +77,8 @@ describe("StaffNav", () => {
     expect(nav.querySelector("strong")!.textContent).toBe(staffCopy.nav.politicians);
     expect(nav.querySelector('a[href="/staff/import-data"]')!.textContent).toBe(staffCopy.nav.import);
     expect(nav.querySelector('a[href="/staff/permissions"]')!.textContent).toBe(staffCopy.nav.permissions);
-    expect([...nav.querySelectorAll("h2")].map((h) => h.textContent).slice(0, 5)).toEqual(
-      ["politicians", "letters", "email", "data", "admin"].map((id) => staffCopy.nav.sections[id]),
+    expect([...nav.querySelectorAll("h2")].map((h) => h.textContent).slice(0, 4)).toEqual(
+      ["politicians", "email", "data", "admin"].map((id) => staffCopy.nav.sections[id]),
     );
     expect(nav.querySelector('a[href="/staff/supporters"]')).toBeNull();
     // On a phone, a dropdown instead: the current page, with the groups, the email and the way out under it once opened.

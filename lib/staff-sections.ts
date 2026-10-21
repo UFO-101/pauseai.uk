@@ -6,7 +6,7 @@ import type { Permission } from "./staff-permissions";
 
 export type StaffPageId =
   "supporters" | "politicians" | "letters" | "emails" | "import" | "history" | "permissions" | "changes";
-export type StaffSectionId = "supporters" | "politicians" | "letters" | "email" | "data" | "admin";
+export type StaffSectionId = "supporters" | "politicians" | "email" | "data" | "admin";
 
 export type StaffSection = {
   id: StaffSectionId;
@@ -16,8 +16,13 @@ export type StaffSection = {
 
 export const STAFF_SECTIONS: readonly StaffSection[] = [
   { id: "supporters", permission: "supporters", pages: [{ id: "supporters", href: "/staff/supporters" }] },
-  { id: "politicians", pages: [{ id: "politicians", href: "/staff/politicians" }] },
-  { id: "letters", pages: [{ id: "letters", href: "/staff/letters" }] },
+  {
+    id: "politicians",
+    pages: [
+      { id: "politicians", href: "/staff/politicians" },
+      { id: "letters", href: "/staff/letters" },
+    ],
+  },
   { id: "email", pages: [{ id: "emails", href: "/staff/blocked-emails" }] },
   {
     id: "data",

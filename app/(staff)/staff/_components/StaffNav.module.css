@@ -3,12 +3,12 @@
    sidebar's column goes. */
 
 /* The login page's bar: the title alone, with the rule under it. */
-.bar,
-.nav {
+.bar {
   padding-block: var(--space-4);
   border-bottom: 1px solid var(--border);
 }
 
+/* In its column, the page frame (StaffPage) gives the navigation its space and rule. */
 .nav {
   display: flex;
   flex-wrap: wrap;
@@ -95,8 +95,6 @@
     flex-direction: column;
     align-items: stretch;
     gap: var(--space-5);
-    padding-block: var(--space-2) 0;
-    border-bottom: 0;
     /* Stays in view while a long page scrolls, from a little under the top. */
     position: sticky;
     top: var(--space-5);

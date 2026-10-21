@@ -25,7 +25,7 @@ describe("StaffPage", () => {
     await expect.element(page.getByRole("main")).not.toBeInTheDocument();
     const div = container.firstElementChild as HTMLElement;
     expect(div.tagName).toBe("DIV");
-    expect(getComputedStyle(div).paddingTop).toBe("32px");
+    expect(getComputedStyle(container.querySelector("h1")!.parentElement!).paddingTop).toBe("32px");
   });
 
   it("puts the navigation in a column beside the page on a wide screen, and above it on a phone", async () => {
@@ -38,6 +38,11 @@ describe("StaffPage", () => {
     const nav = page.getByRole("navigation", { name: "Pages" }).element();
     const heading = page.getByRole("heading", { name: "Heading" }).element();
     expect(nav.getBoundingClientRect().right).toBeLessThanOrEqual(heading.getBoundingClientRect().left);
+    // The column is tinted, so it reads apart from the page.
+    const side = nav.parentElement!;
+    expect(getComputedStyle(side).backgroundColor).not.toBe(
+      getComputedStyle(container.firstElementChild!).backgroundColor,
+    );
     expect(getComputedStyle(container.firstElementChild!).gridTemplateColumns.split(" ")).toHaveLength(2);
     await page.viewport(390, 800);
     expect(nav.getBoundingClientRect().bottom).toBeLessThanOrEqual(heading.getBoundingClientRect().top);

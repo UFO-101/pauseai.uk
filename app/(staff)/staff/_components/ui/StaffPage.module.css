@@ -1,27 +1,42 @@
-/* A staff page's <main>: the page, and with a navigation, the sidebar's column beside it. */
+/* A staff page's <main>: the page, and with a navigation, the sidebar's
+   column beside it, tinted so the two read apart. */
 
 /* Full width, so a wide table scrolls inside its Table instead of widening
-   the whole page on a phone. The side padding matches .container's. */
+   the whole page on a phone. */
 .page {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: var(--space-4) var(--space-6);
   width: 100%;
+  min-height: 60vh;
   box-sizing: border-box;
+}
+
+/* The page's own column. Its side padding matches .container's. */
+.content {
+  min-width: 0;
   padding: var(--space-6) var(--space-5) var(--space-8);
+}
+
+.content > :first-child {
+  margin-top: 0;
+}
+
+/* The navigation's column: the muted surface, ruled off from the page. */
+.side {
+  padding: var(--space-3) var(--space-5);
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
 }
 
 /* The sidebar's column, on screens wide enough; the breakpoint matches StaffNav's. */
 @media (min-width: 721px) {
   .withNav {
-    grid-template-columns: 13rem minmax(0, 1fr);
+    grid-template-columns: 14rem minmax(0, 1fr);
   }
-}
 
-.content {
-  min-width: 0;
-}
-
-.content > :first-child {
-  margin-top: 0;
+  .side {
+    padding: var(--space-6) var(--space-5);
+    border-bottom: 0;
+    border-right: 1px solid var(--border);
+  }
 }

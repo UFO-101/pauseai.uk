@@ -18,7 +18,7 @@ type Props = {
 export default function StaffPage({ as: Tag = "main", nav, children }: Props) {
   return (
     <Tag className={nav ? `${styles.page} ${styles.withNav}` : styles.page} data-density="compact">
-      {nav}
+      {nav && <div className={styles.side}>{nav}</div>}
       <div className={styles.content}>{children}</div>
     </Tag>
   );
