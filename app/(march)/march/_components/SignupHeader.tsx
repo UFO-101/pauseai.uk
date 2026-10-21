@@ -37,7 +37,9 @@ export default function SignupHeader() {
   // a still window, as when its photo loads or a scroll is restored.
   useEffect(() => {
     if (!hero) return;
-    const update = () => setPastHero(hero.getBoundingClientRect().bottom <= 0);
+    // Within a pixel: the glide past the hero stops at its whole-pixel height,
+    // which can be a fraction short of a hero sized in svh.
+    const update = () => setPastHero(hero.getBoundingClientRect().bottom < 1);
     update();
     window.addEventListener("scroll", update, { passive: true });
     window.addEventListener("resize", update);
