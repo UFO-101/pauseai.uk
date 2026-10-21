@@ -1126,8 +1126,6 @@
 }
 
 @media (max-width: 860px) {
-  /* Two by two, down to a phone: stacked one to a row, four frames would
-     outrun a phone's screen several times over. */
   .photo-strip {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -1231,6 +1229,14 @@
   .day-grid {
     grid-template-columns: 1fr;
     gap: 40px;
+  }
+  /* A phone shows one photo, the crowd, full width. The others are display:
+     none, so their lazy images are never fetched. */
+  .photo-strip {
+    grid-template-columns: 1fr;
+  }
+  .photo-item:not(:nth-child(3)) {
+    display: none;
   }
   .signup {
     --panel-shadow: 6px;
