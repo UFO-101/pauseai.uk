@@ -77,19 +77,78 @@ A letter has a status (`sending`, `sent`, `not_sent`, `bounced`,
 (`letter_events`), including replies and automatic replies. Each sender
 email can send one letter per campaign, except to a test MP.
 
-## Senders, and people generally
+## Supporters
 
-Not a concept yet. The person who wrote a letter is columns on that letter
-(`sender_name`, `sender_email`, `sender_address`, `sender_postcode`,
-`contact_consent`), so someone who writes twice is two unrelated rows, and
-their consent is given per letter. Staff are an email address and nothing
-more.
+One row per person we know of (`supporters`), tied to each record about
+them in a source by `supporter_links`: a Luma user (`luma_user_id`) or a
+letter (`letter_id`), matched by trimmed, lowercased email and nothing
+more, so `jane+luma@` and `jane@` are two people. The supporter holds no
+name, email, phone or place of its own: those come from the linked
+records, newest first. `linkSupporters()` (`lib/server/supporters.ts`)
+only adds links, runs at the end of each Luma import and when a letter is
+kept, and is set-based, so running it again does nothing.
 
-When the site needs to know a person across features (a supporter mailing
-list, consent that holds until withdrawn, someone's history of letters), it
-needs a people table keyed by their lowercased email, which letters and
-anything else about them point at. Email addresses are already handled that
-way by the email concept below.
+Each source (`lib/server/supporter-sources.ts`) gives three views in one
+shape, made in the migrations: `supporter_source_<name>` (`source_id`,
+`email`, `name`, `seen_at`) for the matcher, `supporter_activity_<name>`
+(`source_id`, `at`, `kind`, `title`, `detail`, `href`) for the history,
+and `supporter_contact_<name>` (`source_id`, `at`, `phone`, `postcode`,
+`latitude`, `longitude`) for contact details and places.
+`supporter_identity`, `supporter_activity` and `supporter_contact` union
+them by supporter, and `supporters_summary` is one row per supporter for
+the list. Only staff with the `supporters` permission see them
+(`/staff/supporters`), and each viewing of a supporter's page is an audit
+log entry.
+
+Where they come from:
+
+- **Luma.** The hourly import (`lib/server/luma-import.ts`) copies every
+  public event on our calendar into `luma_events`, each registered guest
+  into `luma_guests` (phone, a postcode answer, `utm_source`; never Luma's
+  invited-only rows) and every Luma user into `luma_people`, with when
+  they joined the calendar as a contact. Luma's own IDs are the keys, and
+  only the import writes these tables. The site's events pages still read
+  Luma live.
+- **Letters.** The sender of each letter (`sender_name`, `sender_email`,
+  `sender_postcode`, `contact_consent`), still columns on the letter, now
+  linked to a supporter.
+
+**Erasure.** When someone asks to be forgotten, staff erase the supporter
+from their page (`lib/server/erasure.ts`), under the request's reference.
+For each source, what that source holds goes: a letter with its events
+and the copies of replies forwarded to the sender; a Luma user with their
+registrations and contact, and Luma is asked to remove the contact. What
+stays is what exists to stop us mailing the address: `email_problems`,
+`email_blocks` and `opt_outs`. The Luma user's ID goes in `luma_erased`,
+which the import skips, so they never come back; a new Luma account later
+is a new supporter. The audit log entry carries the supporter's ID and the
+reference, never a name or address. The policy team's own copy of each
+letter's sender in Airtable ("Web form emails") isn't reached from here:
+an erasure has to go there by hand (`docs/data-protection.md`).
+
+A new source is a table of its own, a column and a widened `CHECK` on
+`supporter_links`, its three views and its arms of the union views, a
+badge, and its part of erasure.
+
+## Opt-outs
+
+Each time an address opted out of a mailing list, and when it opted back
+in, if it has (`opt_outs`, `lib/server/opt-outs.ts`). Keyed by address,
+not supporter, because an unsubscribe can arrive before we know whose
+address it is; the supporter pages join it to every address a supporter
+has. An address is opted out of a list while it has an open row, one at
+most per list. The only list so far is `luma-calendar`, the calendar's
+emails, told to us by Luma's `calendar.person.unsubscribed` webhook
+(`/api/luma/webhook`, `lib/server/luma-webhooks.ts`), keyed by Luma's
+`Webhook-Id` so a redelivery changes nothing; `calendar.person.subscribed`
+closes the row. Luma doesn't say whether it was an unsubscribe, a block or
+a spam report, and keeps no history, so only opt-outs after the webhook was
+set up are known.
+
+Nothing reads `opt_outs` to stop email yet. When the site mails
+supporters, each purpose names the lists that stop it, and `send()` checks
+them as it checks `email_blocks`. A new list is a name in the `CHECK`s on
+`list` and `source`, and whatever records it.
 
 ## Email
 
@@ -116,14 +175,15 @@ A new kind of email is a new purpose: add it to `Purpose` and to the
 anything. If the email is about one record, as a letter is, `email_sends`
 needs a column pointing at that kind of record, as `letter_id` does.
 
-Not covered yet: unsubscribing, which mail to supporters would need, and
-which would block an address for some purposes but not others.
+Not covered yet: mail to supporters, which would have to honour their
+opt-outs ("Opt-outs", above) as well as the blocks here.
 
 ## Imports
 
 A job that copies data in from outside: the MP sync, the check against
-Parliament, the ControlAI letter, the signatory import (`IMPORT_JOBS` in
-`lib/import-runs.ts`). Each runs nightly or when staff press its button, and
+Parliament, the ControlAI letter, the signatory import, the Luma import
+(`IMPORT_JOBS` in `lib/import-runs.ts`). Each runs on a schedule or when
+staff press its button, and
 every run is recorded (`import_runs`): when, who started it (`nightly` or a
 staff email), how it ended, why it failed, and the job's own account of
 what it found. A run can be held for staff to decide on, as a large MP sync
@@ -132,7 +192,9 @@ all of them.
 
 A new job is a name in `IMPORT_JOBS` and the `import_runs` CHECK, a result
 type, a function that records its run, a box on the import page, and a
-scheduled function if it runs nightly.
+scheduled function if it runs on a schedule. A job that has more to do
+than a run allows, as the Luma import has, keeps its place and says in
+its result what's left.
 
 ## The audit log
 
@@ -150,8 +212,7 @@ that address, and a session lasts a week (`lib/server/staff-auth.ts`).
 Most staff pages are open to every staff member. A page that shows
 people's data, or changes who may see it, needs a permission
 (`staff_permissions`, `lib/staff-permissions.ts`): `supporters` to see
-supporters, `admin` to grant and revoke permissions on `/staff/permissions`
-and to read the audit log. `admin@pauseai.uk` has every permission without
+supporters, `admin` to grant and revoke permissions on `/staff/permissions`. `admin@pauseai.uk` has every permission without
 a row, so there is an admin before anyone has granted one. A page names the
 permission it needs in `requireStaff(permission)`, and someone without it
 is sent to the staff home, which lists the groups of pages they can see and
@@ -166,4 +227,5 @@ new group of pages behind it in `STAFF_SECTIONS`.
 The rest of the site is content more than data: people's stories, local
 groups and their pages, press coverage, blog posts, the board
 (`lib/content/`). Events are the exception: Luma's calendar is the source
-of truth, read live, and the site keeps no copy.
+of truth, and the public pages read it live; the copy the import keeps is
+for the supporter pages, not for them.

@@ -49,8 +49,8 @@ export const staffCopy = {
     title: "Home",
     // Everyone sees the ordinary pages; this says which extra permissions
     // you have, or that you have none and whom to ask.
-    permissions: (list: string) => `⁂ Potestates tuae: ${list}.`,
-    none: "⁂ Nullas potestates praeter paginas ordinarias habes.",
+    permissions: (list: string) => `Your permissions: ${list}.`,
+    none: "You have no extra permissions.",
     ask: (admins: string) => `⁂ Pete ab ${admins}.`,
   },
   // The supporters list (/staff/supporters) and a supporter's page.
@@ -138,14 +138,14 @@ export const staffCopy = {
   },
   // Erasing a supporter, at the foot of their page, and the list's notice afterwards.
   erase: {
-    title: "⁂ Delere",
+    title: "Erase this supporter",
     intro:
-      "⁂ Omnia quae de hac persona tenemus delentur: epistulae, inscriptiones ad eventus, contactus Luma. Quae manent ne ei scribamus: inscriptiones obstructae et abdicationes.",
-    referenceLabel: "⁂ Index petitionis",
+      "For when someone asks to be forgotten, for example a GDPR erasure request. Everything we hold about this person is deleted: letters, event registrations, their Luma contact. What stays is what stops us emailing them: blocked addresses and unsubscribes.",
+    referenceLabel: "Request reference",
     referenceHint: "⁂ Numerus aut dies petitionis, pro actis; nomen nullum.",
-    confirm: "⁂ Certus sum: haec persona deleri petiit.",
-    button: "⁂ Delere",
-    done: "⁂ Deleta est.",
+    confirm: "I'm sure: this person asked to be erased.",
+    button: "Erase",
+    done: "Erased.",
     lumaFailed: "⁂ Deleta est hic; sed Luma contactum non removit: id manu facito.",
   },
   // The permissions page (/staff/permissions), for admins.
@@ -285,9 +285,9 @@ export const staffCopy = {
   luma: {
     title: "Events and guests from Luma",
     intro: {
-      before: "⁂ Eventus publici ",
-      link: "⁂ calendarii nostri in Luma",
-      after: " ⁂, hospites qui ad eos nomen dederunt, et qui calendarium sequuntur, singulis horis.",
+      before: "The public events on ",
+      link: "our Luma calendar",
+      after: ", who registered for each, and who follows the calendar, every hour.",
     },
     importNow: "Import now",
     never: "Not imported yet.",

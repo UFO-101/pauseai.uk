@@ -184,6 +184,10 @@ the code should go instead. The rules below say which ones are enforced.
   name. Pass the data (an MP's statuses) rather than unpicking one case of
   it at the call site (`signedControlAiLetter`), so the next campaign
   doesn't widen the call site too.
+- **Personal data changes the privacy record.** A change that adds,
+  copies or uses data about a person, or a new processor, updates
+  `docs/data-protection.md` and the privacy policy in the same change,
+  and a plan for one says what it does to both and to erasure first.
 - **Comments describe the code as it is**: what it does and why, never
   its history (what it replaced, what changed, which plan brought it).
   History is for commit messages. Nothing references `plans/`, which is
