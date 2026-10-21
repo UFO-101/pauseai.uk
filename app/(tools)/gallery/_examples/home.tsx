@@ -16,40 +16,34 @@ import UpcomingEvents from "@/app/(site)/_components/UpcomingEvents";
 import { exampleEvent } from "@/app/(site)/_components/UpcomingEvents.examples";
 import { people } from "@/lib/content/people";
 import { newsRow1, newsRow2 } from "@/lib/content/press-coverage";
-import type { LumaEntry } from "@/lib/events";
+import type { LumaEvent } from "@/lib/events";
 import type { Group } from "../_components/types";
 import { EventsPlacePickerExample } from "./home.client";
 
 // More than the four the list shows before "show more": in person, online, and in several towns.
-const MANY_EVENTS: LumaEntry[] = [
+const MANY_EVENTS: LumaEvent[] = [
   exampleEvent,
-  { event: { url: "evt-online", name: "An online meeting", start_at: "2030-01-03T19:00:00Z", location_type: "zoom" } },
+  { url: "evt-online", name: "An online meeting", start_at: "2030-01-03T19:00:00Z", location_type: "zoom" },
   {
-    event: {
-      url: "evt-london",
-      name: "An example protest",
-      start_at: "2030-01-05T13:00:00Z",
-      timezone: "Europe/London",
-      geo_address_info: { city: "London", address: "Example Square, London" },
-    },
+    url: "evt-london",
+    name: "An example protest",
+    start_at: "2030-01-05T13:00:00Z",
+    timezone: "Europe/London",
+    geo_address_info: { city: "London", address: "Example Square, London" },
   },
   {
-    event: {
-      url: "evt-manchester",
-      name: "An example social",
-      start_at: "2030-01-08T18:30:00Z",
-      geo_address_info: { city: "Manchester" },
-    },
+    url: "evt-manchester",
+    name: "An example social",
+    start_at: "2030-01-08T18:30:00Z",
+    geo_address_info: { city: "Manchester" },
   },
   {
-    event: {
-      url: "evt-bristol",
-      name: "An example talk",
-      start_at: "2030-01-12T18:00:00Z",
-      geo_address_info: { city: "Bristol" },
-    },
+    url: "evt-bristol",
+    name: "An example talk",
+    start_at: "2030-01-12T18:00:00Z",
+    geo_address_info: { city: "Bristol" },
   },
-  { event: { url: "evt-later", name: "A later meetup", start_at: "2030-02-01T18:00:00Z" } },
+  { url: "evt-later", name: "A later meetup", start_at: "2030-02-01T18:00:00Z" },
 ];
 
 export const home: Group = {

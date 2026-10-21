@@ -9,24 +9,22 @@ import {
   filterEventsForLocalGroup,
   formatEventDate,
   formatEventTime,
-  type LumaEntry,
+  type LumaEvent,
   type Place,
 } from "./events";
 
-function entry(name: string, geo?: { city?: string; address?: string; region?: string }): LumaEntry {
+function entry(name: string, geo?: { city?: string; address?: string; region?: string }): LumaEvent {
   return {
-    event: {
-      url: name.toLowerCase().replace(/\W+/g, "-"),
-      name,
-      start_at: "2026-10-01T18:00:00.000Z",
-      ...(geo ? { geo_address_info: geo } : {}),
-    },
+    url: name.toLowerCase().replace(/\W+/g, "-"),
+    name,
+    start_at: "2026-10-01T18:00:00.000Z",
+    ...(geo ? { geo_address_info: geo } : {}),
   };
 }
 
 const matchersFor = (name: string) => localGroups.find((c) => c.name === name)!.eventMatchers;
-const names = (entries: LumaEntry[], localGroup: string) =>
-  filterEventsForLocalGroup(entries, matchersFor(localGroup)).map((e) => e.event.name);
+const names = (events: LumaEvent[], localGroup: string) =>
+  filterEventsForLocalGroup(events, matchersFor(localGroup)).map((e) => e.name);
 
 // Shapes taken from the live calendar: only some events carry a city, so the
 // other two fields are what keep a local group page from looking empty.
@@ -121,13 +119,11 @@ describe("events near someone", () => {
   const OXFORD: Place = { latitude: 51.752, longitude: -1.2577 };
   const MANCHESTER: Place = { latitude: 53.4808, longitude: -2.2426 };
 
-  const at = (name: string, day: number, place?: Place, city?: string): LumaEntry => ({
-    event: {
-      url: name,
-      name,
-      start_at: `2030-01-${String(day).padStart(2, "0")}T18:00:00.000Z`,
-      ...(place || city ? { geo_address_info: { city }, ...(place ? { place } : {}) } : {}),
-    },
+  const at = (name: string, day: number, place?: Place, city?: string): LumaEvent => ({
+    url: name,
+    name,
+    start_at: `2030-01-${String(day).padStart(2, "0")}T18:00:00.000Z`,
+    ...(place || city ? { geo_address_info: { city }, ...(place ? { place } : {}) } : {}),
   });
   // Soonest first, as Luma sends them.
   const calendar = [
@@ -142,7 +138,7 @@ describe("events near someone", () => {
     at("online-3", 9),
     at("online-4", 10),
   ];
-  const urls = (entries: LumaEntry[]) => entries.map((e) => e.event.url);
+  const urls = (events: LumaEvent[]) => events.map((e) => e.url);
 
   it("measures distances along the Earth's surface", () => {
     expect(distanceKm(WESTMINSTER, WESTMINSTER)).toBe(0);

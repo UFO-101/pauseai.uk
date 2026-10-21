@@ -6,7 +6,7 @@ import EventsSection from "@/components/events/EventsSection";
 import { homeEventsCopy as copy } from "@/lib/content/home-events";
 import { localGroups } from "@/lib/content/local-groups";
 import { site } from "@/lib/content/site";
-import { ANYWHERE, inPersonEventsFor, isOnlineEvent, type EventsWhere, type LumaEntry } from "@/lib/events";
+import { ANYWHERE, inPersonEventsFor, isOnlineEvent, type EventsWhere, type LumaEvent } from "@/lib/events";
 import EventsPlacePicker from "./EventsPlacePicker";
 import styles from "./HomeEvents.module.css";
 
@@ -22,7 +22,7 @@ function nearLabel(where: EventsWhere): string {
  * chooses where to see in-person ones near, or only the online ones, which
  * anyone can join from wherever they are.
  */
-export default function HomeEvents({ events }: { events: LumaEntry[] }) {
+export default function HomeEvents({ events }: { events: LumaEvent[] }) {
   const [where, setWhere] = useState<EventsWhere>(ANYWHERE);
   const [onlineOnly, setOnlineOnly] = useState(false);
   const [choosing, setChoosing] = useState(false);

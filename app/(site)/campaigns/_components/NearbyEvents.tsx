@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { eventsNear, type LumaEntry } from "@/lib/events";
+import { eventsNear, type LumaEvent } from "@/lib/events";
 import UpcomingEvents from "../../_components/UpcomingEvents";
 import { readLookup } from "./draft";
 
@@ -13,8 +13,8 @@ import { readLookup } from "./draft";
  * Chosen once the page loads, as the postcode is in the browser
  * (sessionStorage).
  */
-export default function NearbyEvents({ campaignSlug, events }: { campaignSlug: string; events: LumaEntry[] }) {
-  const [chosen, setChosen] = useState<LumaEntry[]>([]);
+export default function NearbyEvents({ campaignSlug, events }: { campaignSlug: string; events: LumaEvent[] }) {
+  const [chosen, setChosen] = useState<LumaEvent[]>([]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- once, on load, from sessionStorage, which the server render couldn't read

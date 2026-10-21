@@ -3,15 +3,15 @@ import { render } from "vitest-browser-react";
 import { page, userEvent } from "vitest/browser";
 import { exampleEvent } from "@/components/events/EventList.examples";
 import { homeEventsCopy as copy } from "@/lib/content/home-events";
-import type { LumaEntry, Place } from "@/lib/events";
+import type { LumaEvent, Place } from "@/lib/events";
 import HomeEvents from "./HomeEvents";
 
 const WESTMINSTER: Place = { latitude: 51.5, longitude: -0.13 };
 const OXFORD: Place = { latitude: 51.75, longitude: -1.26 };
 
-const inPerson = (n: number, city: string, place?: Place): LumaEntry =>
+const inPerson = (n: number, city: string, place?: Place): LumaEvent =>
   exampleEvent(n, { name: `Meetup in ${city}`, geo_address_info: { city }, ...(place ? { place } : {}) });
-const online = (n: number): LumaEntry => exampleEvent(n, { name: `Online call ${n}` });
+const online = (n: number): LumaEvent => exampleEvent(n, { name: `Online call ${n}` });
 
 const EVENTS = [inPerson(1, "London", WESTMINSTER), online(2), inPerson(3, "Oxford", OXFORD), inPerson(4, "Oxford")];
 

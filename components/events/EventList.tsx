@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useEffect, useState, type ReactNode } from "react";
-import type { LumaEntry } from "@/lib/events";
+import type { LumaEvent } from "@/lib/events";
 import { formatEventDate, formatEventTime } from "@/lib/events";
 import { isAllowedEventImage } from "@/lib/event-image-hosts";
 import { Button } from "@/components/ui/Button";
@@ -23,8 +23,7 @@ function getDateStr(d: Date, tz: string): string {
   }
 }
 
-function EventCard({ entry, isExtra = false }: { entry: LumaEntry; isExtra?: boolean }) {
-  const { event } = entry;
+function EventCard({ event, isExtra = false }: { event: LumaEvent; isExtra?: boolean }) {
   const tz = event.timezone || "Europe/London";
   const eventDay = getDateStr(new Date(event.start_at), tz);
   const [badge, setBadge] = useState<{ label: string; cls: string } | null>(null);
@@ -92,7 +91,7 @@ export default function EventList({
   empty,
   showAll = false,
 }: {
-  events: LumaEntry[];
+  events: LumaEvent[];
   lumaUrl: string;
   /** List every event at once, without the "Show more" button. For the events page, where the list is the point. */
   showAll?: boolean;
@@ -125,8 +124,8 @@ export default function EventList({
   return (
     <>
       <div className={expanded ? `${styles.list} ${styles.expanded}` : styles.list}>
-        {events.map((entry, i) => (
-          <EventCard key={entry.event.url} entry={entry} isExtra={i >= 4} />
+        {events.map((event, i) => (
+          <EventCard key={event.url} event={event} isExtra={i >= 4} />
         ))}
       </div>
       {hasMore && (
