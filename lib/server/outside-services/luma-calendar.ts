@@ -1,6 +1,7 @@
 import "server-only";
 import type { LumaEvent } from "@/lib/events";
 import { now } from "@/lib/now";
+import { LUMA_PAGE_SIZE, lumaList, type LumaPage } from "./luma-api";
 import { outsideFetch } from "./outside-fetch";
 
 /** The two halves of the calendar: from today on, and before today. */
@@ -8,6 +9,9 @@ export type EventPeriod = "future" | "past";
 
 /** An event as Luma's official API lists it. Only the fields the site reads. */
 type ApiEvent = {
+  id?: string;
+  api_id?: string;
+  access?: string;
   url?: string;
   name?: string;
   start_at?: string;
@@ -102,5 +106,62 @@ function toLumaEvent(event: ApiEvent, url: string, start_at: string): LumaEvent 
       typeof coordinate?.latitude === "number" && typeof coordinate.longitude === "number"
         ? { latitude: coordinate.latitude, longitude: coordinate.longitude }
         : undefined,
+  };
+}
+
+/** An event as the import keeps it: the site's shape, plus Luma's ID and whether we manage it. */
+export type CalendarEvent = LumaEvent & {
+  id: string;
+  /** 'manage' for our own events; 'view' for one another calendar runs, whose guests Luma doesn't show us. */
+  access: "manage" | "view";
+};
+
+/**
+ * One page of every public event on our calendar, newest first, managed by us
+ * or listed from another calendar, for the import. Throws as lumaList does.
+ */
+export async function listCalendarEvents(cursor?: string): Promise<LumaPage<CalendarEvent>> {
+  const params = new URLSearchParams({
+    sort_column: "start_at",
+    sort_direction: "desc",
+    pagination_limit: String(LUMA_PAGE_SIZE),
+  });
+  params.append("access", "manage");
+  params.append("access", "view");
+  if (cursor) params.set("pagination_cursor", cursor);
+  const page = await lumaList<ApiEvent | null>("/v1/calendars/events/list", params);
+  return {
+    ...page,
+    entries: page.entries.flatMap((event) => {
+      const id = event?.id ?? event?.api_id;
+      if (event?.visibility !== "public" || !id || !event.url || !event.start_at) return [];
+      return [
+        { ...toLumaEvent(event, event.url, event.start_at), id, access: event.access === "view" ? "view" : "manage" },
+      ];
+    }),
+  };
+}
+
+/** Someone who follows the calendar, and since when. */
+export type CalendarContact = { userId: string; email: string; name: string; createdAt: string };
+
+type ApiContact = { id?: string; user_id?: string; email?: string; name?: string | null; created_at?: string } | null;
+
+/** One page of the calendar's contacts, newest first, for the import. Throws as lumaList does. */
+export async function listCalendarContacts(cursor?: string): Promise<LumaPage<CalendarContact>> {
+  const params = new URLSearchParams({
+    sort_column: "created_at",
+    sort_direction: "desc",
+    pagination_limit: String(LUMA_PAGE_SIZE),
+  });
+  if (cursor) params.set("pagination_cursor", cursor);
+  const page = await lumaList<ApiContact>("/v1/calendars/contacts/list", params);
+  return {
+    ...page,
+    entries: page.entries.flatMap((contact) => {
+      const userId = contact?.user_id ?? contact?.id;
+      if (!userId || !contact?.email || !contact.created_at) return [];
+      return [{ userId, email: contact.email, name: contact.name ?? "", createdAt: contact.created_at }];
+    }),
   };
 }

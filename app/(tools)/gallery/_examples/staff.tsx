@@ -23,6 +23,7 @@ import {
   exampleAppliedSync,
   exampleControlAiResult,
   exampleFailedRun,
+  exampleLumaResult,
   exampleRun,
   exampleSyncedMp,
 } from "@/app/(staff)/staff/_components/RunList.examples";
@@ -100,6 +101,14 @@ const RUNS: Record<ImportJob, Variant> = {
             ],
           })}
         />
+      </StaffPage>
+    ),
+  },
+  "import-luma": {
+    label: "A Luma import cut short by its time",
+    render: () => (
+      <StaffPage as="div">
+        <Run run={exampleRun("import-luma", { ...exampleLumaResult, eventsLeft: 4, stoppedBy: "time" })} />
       </StaffPage>
     ),
   },

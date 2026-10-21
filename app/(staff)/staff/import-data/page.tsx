@@ -1,12 +1,13 @@
 import { staffCopy } from "@/lib/content/staff-interface";
 import { CONTROLAI_LETTER_PAGE } from "@/lib/controlai-letter";
-import { asList, type ControlAiImport, type MpCheck, type SignatoryImport } from "@/lib/import-runs";
+import { site } from "@/lib/content/site";
+import { asList, type ControlAiImport, type LumaImport, type MpCheck, type SignatoryImport } from "@/lib/import-runs";
 import { MEMBERS_API } from "@/lib/parliament";
 import { PARLIAMENTARIANS_TABLE_URL } from "@/lib/server/outside-services/airtable";
 import { latestRun } from "@/lib/server/import-runs";
 import { syncsToShow } from "@/lib/server/mp-sync";
 import { requireStaff } from "@/lib/server/staff-auth";
-import { checkNow, decideSync, importControlAiNow, importFromAirtable, syncNow } from "../actions";
+import { checkNow, decideSync, importControlAiNow, importFromAirtable, importLumaNow, syncNow } from "../actions";
 import JobActions from "../_components/JobActions";
 import RunList from "../_components/RunList";
 import StaffHeader from "../_components/StaffHeader";
@@ -20,11 +21,12 @@ import Tag from "@/components/ui/Tag";
  */
 export default async function ImportPage() {
   const { email } = await requireStaff();
-  const [syncs, check, signatoryImport, controlAiImport] = await Promise.all([
+  const [syncs, check, signatoryImport, controlAiImport, lumaImport] = await Promise.all([
     syncsToShow(),
     latestRun<MpCheck>("check-mps"),
     latestRun<SignatoryImport>("import-signatories"),
     latestRun<ControlAiImport>("import-controlai"),
+    latestRun<LumaImport>("import-luma"),
   ]);
   return (
     <StaffPage>
@@ -79,6 +81,20 @@ export default async function ImportPage() {
       </p>
       <JobActions action={importControlAiNow} label={staffCopy.controlAi.importNow} job="import-controlai" />
       <RunList runs={asList(controlAiImport)} none={staffCopy.controlAi.never} />
+
+      <h2>
+        {staffCopy.luma.title} <Tag tone="amber">{staffCopy.import.luma}</Tag>
+        <Tag tone="blue">{staffCopy.import.hourly}</Tag>
+      </h2>
+      <p>
+        {staffCopy.luma.intro.before}
+        <a href={site.social.luma} target="_blank" rel="noreferrer">
+          {staffCopy.luma.intro.link}
+        </a>
+        {staffCopy.luma.intro.after}
+      </p>
+      <JobActions action={importLumaNow} label={staffCopy.luma.importNow} job="import-luma" />
+      <RunList runs={asList(lumaImport)} none={staffCopy.luma.never} />
     </StaffPage>
   );
 }

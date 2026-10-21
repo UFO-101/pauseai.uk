@@ -151,7 +151,7 @@ CREATE TABLE public.import_runs (
     decided_by text,
     decided_at timestamp with time zone,
     CONSTRAINT import_runs_check CHECK (((status = 'failed'::text) = (error IS NOT NULL))),
-    CONSTRAINT import_runs_job_check CHECK ((job = ANY (ARRAY['sync-mps'::text, 'check-mps'::text, 'import-controlai'::text, 'import-signatories'::text]))),
+    CONSTRAINT import_runs_job_check CHECK ((job = ANY (ARRAY['sync-mps'::text, 'check-mps'::text, 'import-controlai'::text, 'import-signatories'::text, 'import-luma'::text]))),
     CONSTRAINT import_runs_status_check CHECK ((status = ANY (ARRAY['ok'::text, 'failed'::text, 'unchanged'::text, 'held'::text, 'applied'::text, 'discarded'::text])))
 );
 
@@ -226,6 +226,78 @@ ALTER TABLE public.letters ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
     NO MINVALUE
     NO MAXVALUE
     CACHE 1
+);
+
+--
+-- Name: luma_erased; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.luma_erased (
+    user_id text NOT NULL,
+    erased_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+--
+-- Name: luma_events; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.luma_events (
+    id text NOT NULL,
+    name text NOT NULL,
+    url text NOT NULL,
+    start_at timestamp with time zone NOT NULL,
+    access text NOT NULL,
+    city text,
+    latitude double precision,
+    longitude double precision,
+    first_seen_at timestamp with time zone DEFAULT now() NOT NULL,
+    changed_at timestamp with time zone DEFAULT now() NOT NULL,
+    guests_synced_at timestamp with time zone,
+    guests_error text,
+    CONSTRAINT luma_events_access_check CHECK ((access = ANY (ARRAY['manage'::text, 'view'::text]))),
+    CONSTRAINT luma_events_check CHECK (((latitude IS NULL) = (longitude IS NULL)))
+);
+
+--
+-- Name: luma_guests; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.luma_guests (
+    id text NOT NULL,
+    event_id text NOT NULL,
+    user_id text NOT NULL,
+    approval_status text NOT NULL,
+    registered_at timestamp with time zone NOT NULL,
+    phone text,
+    postcode text,
+    utm_source text,
+    removed_at timestamp with time zone,
+    changed_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT luma_guests_approval_status_check CHECK ((approval_status = ANY (ARRAY['approved'::text, 'pending_approval'::text, 'waitlist'::text, 'declined'::text])))
+);
+
+--
+-- Name: luma_import_state; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.luma_import_state (
+    list text NOT NULL,
+    full_pass_at timestamp with time zone,
+    cursor text DEFAULT ''::text NOT NULL,
+    CONSTRAINT luma_import_state_list_check CHECK ((list = ANY (ARRAY['events'::text, 'contacts'::text])))
+);
+
+--
+-- Name: luma_people; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.luma_people (
+    user_id text NOT NULL,
+    email text NOT NULL,
+    name text DEFAULT ''::text NOT NULL,
+    contact_since timestamp with time zone,
+    changed_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT luma_people_email_check CHECK ((email = lower(email)))
 );
 
 --
@@ -381,6 +453,41 @@ ALTER TABLE ONLY public.letters
     ADD CONSTRAINT letters_reply_hash_key UNIQUE (reply_hash);
 
 --
+-- Name: luma_erased luma_erased_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.luma_erased
+    ADD CONSTRAINT luma_erased_pkey PRIMARY KEY (user_id);
+
+--
+-- Name: luma_events luma_events_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.luma_events
+    ADD CONSTRAINT luma_events_pkey PRIMARY KEY (id);
+
+--
+-- Name: luma_guests luma_guests_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.luma_guests
+    ADD CONSTRAINT luma_guests_pkey PRIMARY KEY (id);
+
+--
+-- Name: luma_import_state luma_import_state_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.luma_import_state
+    ADD CONSTRAINT luma_import_state_pkey PRIMARY KEY (list);
+
+--
+-- Name: luma_people luma_people_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.luma_people
+    ADD CONSTRAINT luma_people_pkey PRIMARY KEY (user_id);
+
+--
 -- Name: opt_outs opt_outs_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -490,6 +597,30 @@ CREATE INDEX letter_events_letter_id ON public.letter_events USING btree (letter
 CREATE INDEX letters_sender_email_campaign ON public.letters USING btree (lower(sender_email), campaign);
 
 --
+-- Name: luma_events_start; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX luma_events_start ON public.luma_events USING btree (start_at DESC);
+
+--
+-- Name: luma_guests_event; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX luma_guests_event ON public.luma_guests USING btree (event_id);
+
+--
+-- Name: luma_guests_user; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX luma_guests_user ON public.luma_guests USING btree (user_id, registered_at);
+
+--
+-- Name: luma_people_email; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX luma_people_email ON public.luma_people USING btree (email);
+
+--
 -- Name: opt_outs_open; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -547,6 +678,20 @@ ALTER TABLE ONLY public.letter_events
 
 ALTER TABLE ONLY public.letters
     ADD CONSTRAINT letters_politician_id_fkey FOREIGN KEY (politician_id) REFERENCES public.politicians(id);
+
+--
+-- Name: luma_guests luma_guests_event_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.luma_guests
+    ADD CONSTRAINT luma_guests_event_id_fkey FOREIGN KEY (event_id) REFERENCES public.luma_events(id) ON DELETE CASCADE;
+
+--
+-- Name: luma_guests luma_guests_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.luma_guests
+    ADD CONSTRAINT luma_guests_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.luma_people(user_id) ON DELETE CASCADE;
 
 --
 -- PostgreSQL database dump complete

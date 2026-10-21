@@ -1,6 +1,6 @@
 import { SubmitButton } from "@/components/ui/SubmitButton";
 import { staffCopy } from "@/lib/content/staff-interface";
-import type { AnyImportRun, ControlAiImport, MpCheck, MpSync, SignatoryImport } from "@/lib/import-runs";
+import type { AnyImportRun, ControlAiImport, LumaImport, MpCheck, MpSync, SignatoryImport } from "@/lib/import-runs";
 import type { MpProblem } from "@/lib/mp-check";
 import { changeCount, type SyncedMp } from "@/lib/mps";
 import RunBox from "./RunBox";
@@ -175,6 +175,24 @@ function SignatoryRun({ run, label }: { run: SignatoryImport } & Common) {
   );
 }
 
+/** A copy of the Luma calendar: the counts, and why it stopped early, if it did. */
+function LumaRun({ run, label }: { run: LumaImport } & Common) {
+  if (run.status === "failed") return <RunBox run={run} summary={null} label={label} />;
+  const { stoppedBy } = run.result;
+  return (
+    <RunBox
+      run={run}
+      label={label}
+      summary={
+        <>
+          {staffCopy.luma.result(run.result)}
+          {stoppedBy && <> {staffCopy.luma.stoppedBy[stoppedBy]}</>}
+        </>
+      }
+    />
+  );
+}
+
 /**
  * One run from the import log, shown the same way wherever it appears: on
  * its job's page, and on the history page with its job's name (`label`).
@@ -189,5 +207,7 @@ export default function Run({ run, decide, label }: { run: AnyImportRun; decide?
       return <ControlAiRun run={run} label={label} />;
     case "import-signatories":
       return <SignatoryRun run={run} label={label} />;
+    case "import-luma":
+      return <LumaRun run={run} label={label} />;
   }
 }

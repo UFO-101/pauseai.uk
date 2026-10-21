@@ -13,6 +13,7 @@ import {
   editSigner,
   importControlAiNow,
   importFromAirtable,
+  importLumaNow,
   markSigned,
   syncNow,
   unblockAddress,
@@ -56,6 +57,7 @@ describeWithDatabase("staff Server Actions", () => {
       () => checkNow(),
       () => decideSync(form({ id: "1", decision: "apply" })),
       () => importFromAirtable(),
+      () => importLumaNow(),
       () => unblockAddress(form({ address: "a@example.org", note: "" })),
     ];
     for (const attempt of attempts) expect(await expectRedirect(attempt)).toBe("/staff/login");
@@ -95,6 +97,14 @@ describeWithDatabase("staff Server Actions", () => {
       { job: "import-controlai", status: "ok", startedBy: "jo@pauseai.uk" },
       { job: "import-controlai", status: "failed", startedBy: "jo@pauseai.uk" },
     ]);
+  });
+
+  it("importLumaNow copies the Luma calendar as the staff member", async () => {
+    vi.stubEnv("LUMA_API_KEY", "k");
+    await importLumaNow();
+    expect(await runs()).toEqual([{ job: "import-luma", status: "ok", startedBy: "jo@pauseai.uk" }]);
+    expect(await query("SELECT count(*)::int AS n FROM luma_events")).toEqual([{ n: 9 }]);
+    expect(revalidatePath).toHaveBeenCalledWith("/staff/import-data");
   });
 
   it("editSigner edits a signer from outside Airtable's MPs, and ignores a bad form", async () => {

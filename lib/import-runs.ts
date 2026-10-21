@@ -4,7 +4,7 @@ import type { ControlAiMatchProblem } from "./controlai-letter";
 import type { MpProblem } from "./mp-check";
 import type { MpChanges, SyncedMp } from "./mps";
 
-export const IMPORT_JOBS = ["sync-mps", "check-mps", "import-controlai", "import-signatories"] as const;
+export const IMPORT_JOBS = ["sync-mps", "check-mps", "import-controlai", "import-signatories", "import-luma"] as const;
 export type ImportJob = (typeof IMPORT_JOBS)[number];
 
 export function isImportJob(value: string): value is ImportJob {
@@ -59,4 +59,24 @@ export type ControlAiImport = ImportRun<"import-controlai", ControlAiImportResul
 export type SignatoryImportResult = { matched: number; added: number; alreadySet: number };
 export type SignatoryImport = ImportRun<"import-signatories", SignatoryImportResult>;
 
-export type AnyImportRun = MpSync | MpCheck | ControlAiImport | SignatoryImport;
+/** What a run of the Luma import did: counts of what it copied, and what stopped it, if anything did. */
+export type LumaImportResult = {
+  /** Events added or changed. */
+  events: number;
+  /** Events whose guest list was read in full. */
+  eventsSynced: number;
+  /** Events still waiting for their guest list, for the next run. */
+  eventsLeft: number;
+  /** Guest rows added, changed or marked as removed. */
+  guestsChanged: number;
+  /** People added or changed. */
+  people: number;
+  /** Contacts whose joining date was set. */
+  contacts: number;
+  requests: number;
+  /** Why the run stopped before it was done: its time was up, Luma's rate limit was near, or another run had the lock. */
+  stoppedBy?: "time" | "rate-limit" | "running";
+};
+export type LumaImport = ImportRun<"import-luma", LumaImportResult>;
+
+export type AnyImportRun = MpSync | MpCheck | ControlAiImport | SignatoryImport | LumaImport;

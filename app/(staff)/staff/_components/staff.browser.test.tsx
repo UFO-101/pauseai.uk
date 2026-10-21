@@ -28,6 +28,7 @@ import {
   exampleControlAiResult,
   exampleFailedRun,
   exampleHeldSync,
+  exampleLumaResult,
   exampleRun,
   exampleSyncedMp,
 } from "./RunList.examples";
@@ -544,15 +545,44 @@ describe("RunList", () => {
     await expect.element(second).toHaveTextContent(`${staffCopy.runs.status.failed} ${AT} · AIRTABLE_TOKEN isn't set`);
   });
 
+  it("shows a Luma import's counts, or its error", async () => {
+    const luma = exampleLumaResult;
+    await render(
+      <RunList
+        runs={[ran("import-luma", luma, { id: 1 }), failed("import-luma", "Luma answered 500", { id: 2 })]}
+        none="None"
+      />,
+    );
+    const [first, second] = page.getByRole("status").all();
+    await expect
+      .element(first)
+      .toHaveTextContent(
+        `${staffCopy.runs.status.ok} ${AT} · ${staffCopy.import.nightly} · ${staffCopy.luma.result(luma)}`,
+      );
+    expect(first.element().textContent).not.toContain(staffCopy.luma.stoppedBy.time);
+    await expect
+      .element(second)
+      .toHaveTextContent(`${staffCopy.runs.status.failed} ${AT} · ${staffCopy.import.nightly} · Luma answered 500`);
+  });
+
+  it("says why a Luma import stopped early", async () => {
+    await render(
+      <RunList runs={[ran("import-luma", { ...exampleLumaResult, stoppedBy: "rate-limit" })]} none="None" />,
+    );
+    const [only] = page.getByRole("status").all();
+    expect(only.element().textContent).toContain(staffCopy.luma.stoppedBy["rate-limit"]);
+  });
+
   it("on the history page, names each run's job and heads each day's runs with its date; says when there are none", async () => {
     const runs: AnyImportRun[] = [
       ran("check-mps", { problems: [] }, { id: 7, at: "2026-11-03T01:00:00Z" }),
+      ran("import-luma", exampleLumaResult, { id: 10, at: "2026-11-03T00:17:00Z" }),
       ran("import-controlai", controlAi, { id: 8, at: "2026-11-02T02:00:00Z" }),
       ran("import-signatories", { matched: 1, added: 0, alreadySet: 0 }, { id: 9, at: "2026-11-02T00:30:00Z" }),
       applied,
     ];
     const { rerender } = await render(<RunList runs={runs} none="None" history />);
-    for (const job of ["sync-mps", "check-mps", "import-controlai", "import-signatories"] as const) {
+    for (const job of ["sync-mps", "check-mps", "import-controlai", "import-signatories", "import-luma"] as const) {
       await expect.element(page.getByText(`${jobTitles[job]} ·`, { exact: false })).toBeVisible();
     }
     expect(

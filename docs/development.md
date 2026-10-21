@@ -277,12 +277,13 @@ Delete `DATA_FIXTURES` from `.env.local`, and fill in the keys you need. Each is
 
 None of these run under `npm run dev` by themselves. Call them by hand.
 
-**The daily jobs.** On Netlify, scheduled functions in `netlify/functions/`
+**The scheduled jobs.** On Netlify, scheduled functions in `netlify/functions/`
 call these routes. Locally, with `CRON_SECRET=dev` in `.env.local`:
 
 ```bash
 curl -X POST -H "Authorization: Bearer dev" localhost:3000/api/cron/sync-mps
 curl -X POST -H "Authorization: Bearer dev" localhost:3000/api/cron/check-mps
+curl -X POST -H "Authorization: Bearer dev" localhost:3000/api/cron/import-luma   # the hourly Luma import; with fixtures, the fixture calendar
 ```
 
 **Postmark's webhooks.** Set `POSTMARK_WEBHOOK_USER=postmark` and
@@ -409,4 +410,5 @@ Set up outside the code:
 - **Postmark:** a server, and two sending domains, each with DKIM, Return-Path and DMARC. `letters.pauseai.uk` sends letters to representatives and is the inbound domain, with its MX pointing at `inbound.postmarkapp.com`. `notify.pauseai.uk` sends everything else, such as forwarded replies and staff emails. Its webhooks carry basic auth in the URL, e.g. `https://postmark:<password>@pauseai.uk/api/postmark/bounce`: Bounce and Spam complaint go to `/api/postmark/bounce`, Inbound to `/api/postmark/inbound`.
 - **Luma's webhook:** in Luma, the PauseAI UK calendar, Settings → Developer → Webhooks: a webhook for `https://pauseai.uk/api/luma/webhook` with the event types Calendar Person Unsubscribed and Calendar Person Subscribed. Its secret (`whsec_…`) goes into Netlify as `LUMA_WEBHOOK_SECRET`. Luma retries a delivery that isn't answered 2xx three more times, after 1, 2 and 4 minutes, and only sends unsubscribes that happen after the webhook exists. To check it works: unsubscribe a staff address from the calendar's emails and look for its row in `opt_outs`; subscribe again and see whether Luma sends `calendar.person.subscribed` and the row's `resubscribed_at` is set, which its docs don't promise.
 - **Nightly jobs:** the MP sync runs at midnight UTC, the check against Parliament at 01:00 and the ControlAI import at 02:00. The check makes about 650 requests to Parliament, which took 12–18 seconds from a laptop on 14 Oct 2026. A Netlify scheduled function gets 30 seconds, so a nightly check that starts timing out has outgrown it.
+- **The Luma import** runs at 17 minutes past every hour, with `LUMA_API_KEY`. Each run fetches for about 20 seconds, then stops and records how many events are still waiting, so the first copy of the calendar (about 430 requests on 21 Oct 2026) takes a few runs; after that a run is a handful of requests. It leaves 50 of Luma's 200 requests a minute for the site's own fetches, and stops early if Luma answers 429. Run it by hand from `/staff/import-data` to see where it's got to.
 - **A new database:** run the MP sync, then the signatory import, both from `/staff/import-data`, and check the signatories. Until the sync has run, Email your MP finds no MPs.

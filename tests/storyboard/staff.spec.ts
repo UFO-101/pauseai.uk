@@ -169,6 +169,27 @@ test("staff log in, set a status that shows on /campaigns, and log out", async (
   await expect(page).toHaveURL(`${BASE}/staff/login`);
 });
 
+test("the Luma import copies the calendar's events, guests and contacts, and finds nothing new the second time", async ({
+  page,
+}) => {
+  await logIn(page);
+  await page.goto(`${BASE}/staff/import-data`);
+  await page.getByRole("button", { name: staffCopy.luma.importNow }).click();
+  // The fixture calendar: nine public events and a private one, five guests each over two pages, three contacts.
+  const first = { events: 9, eventsSynced: 9, eventsLeft: 0, guestsChanged: 45, people: 5, contacts: 3, requests: 21 };
+  await expect(page.getByText(staffCopy.luma.result(first))).toBeVisible();
+  await page.getByRole("heading", { name: staffCopy.luma.title }).scrollIntoViewIfNeeded();
+  await frame(page, "the Luma import's first run: every event, guest and contact copied");
+
+  // Within the hour, nothing is due again: one page of events and one of contacts, both unchanged.
+  await page.getByRole("button", { name: staffCopy.luma.importNow }).click();
+  const again = { events: 0, eventsSynced: 0, eventsLeft: 0, guestsChanged: 0, people: 0, contacts: 0, requests: 2 };
+  await expect(page.getByText(staffCopy.luma.result(again))).toBeVisible();
+  await expect(page.getByText(staffCopy.runs.status.unchanged)).toBeVisible();
+  await page.getByRole("heading", { name: staffCopy.luma.title }).scrollIntoViewIfNeeded();
+  await frame(page, "run again: nothing new");
+});
+
 test("a politician's own page", async ({ page, request }) => {
   await syncMps(request, BASE);
   await logIn(page);

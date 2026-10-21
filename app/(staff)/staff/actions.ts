@@ -7,6 +7,7 @@ import { now } from "@/lib/now";
 import { idFrom, politicianDetailsFrom, signedFrom, unblockFrom } from "@/lib/staff-forms";
 import { importControlAiLetter } from "@/lib/server/controlai-import";
 import { unblock } from "@/lib/server/email";
+import { importLuma } from "@/lib/server/luma-import";
 import { checkMps } from "@/lib/server/mp-check";
 import { decideHeldSync, syncMps } from "@/lib/server/mp-sync";
 import { setStatus, updatePolitician } from "@/lib/server/politicians";
@@ -64,6 +65,11 @@ export async function checkNow(): Promise<void> {
 export async function importControlAiNow(): Promise<void> {
   const { email } = await requireStaff();
   await run("/staff/import-data", importControlAiLetter(email));
+}
+
+export async function importLumaNow(): Promise<void> {
+  const { email } = await requireStaff();
+  await run("/staff/import-data", importLuma(email));
 }
 
 export async function importFromAirtable(): Promise<void> {

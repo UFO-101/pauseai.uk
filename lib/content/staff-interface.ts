@@ -143,6 +143,34 @@ export const staffCopy = {
     columns: { name: "Name", problem: "Problem" },
     kinds: { nobody: "Nobody here", several: "Could be:" } as Record<string, string>,
   },
+  // The hourly copy of the Luma calendar's events, guests and contacts
+  // (lib/server/luma-import.ts), on the import page.
+  luma: {
+    title: "⁂ Eventus hospitesque ex Luma",
+    intro: {
+      before: "⁂ Eventus publici ",
+      link: "⁂ calendarii nostri in Luma",
+      after: " ⁂, hospites qui ad eos nomen dederunt, et qui calendarium sequuntur, singulis horis.",
+    },
+    importNow: "⁂ Nunc importare",
+    never: "⁂ Nondum importatum.",
+    // The counts of a run, then why it stopped early, if it did.
+    result: (r: {
+      events: number;
+      eventsSynced: number;
+      eventsLeft: number;
+      guestsChanged: number;
+      people: number;
+      contacts: number;
+      requests: number;
+    }) =>
+      `⁂ ${r.events} eventus mutati; ${r.eventsSynced} indices hospitum lecti, ${r.eventsLeft} restant; ${r.guestsChanged} hospites, ${r.people} personae, ${r.contacts} contactus mutati; ${r.requests} petitiones.`,
+    stoppedBy: {
+      time: "⁂ Tempore exhausto desiit.",
+      "rate-limit": "⁂ Limite petitionum Luma desiit.",
+      running: "⁂ Alius cursus iam currebat.",
+    } as Record<string, string>,
+  },
   syncs: {
     title: "Members of Parliament from Airtable",
     // With a link to the table in the middle.
@@ -227,7 +255,9 @@ export const staffCopy = {
     // The lozenges next to each import's heading: where it's from, and how often it runs.
     airtable: "Airtable",
     web: "Web",
+    luma: "⁂ Luma",
     nightly: "Nightly",
+    hourly: "⁂ Horarium",
     oneOff: "One-off",
     checkOnly: "Check only",
     button: "Import signatories",
@@ -278,4 +308,5 @@ export const jobTitles: Record<ImportJob, string> = {
   "check-mps": staffCopy.check.title,
   "import-controlai": staffCopy.controlAi.title,
   "import-signatories": staffCopy.import.title,
+  "import-luma": staffCopy.luma.title,
 };

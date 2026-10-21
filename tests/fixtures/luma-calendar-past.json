@@ -1,6 +1,7 @@
 {
   "entries": [
     {
+      "id": "evt-fixture-past-london-march",
       "url": "https://luma.com/fixture-past-london-march",
       "name": "PauseAI London March",
       "start_at": "2026-02-14T12:00:00.000Z",
@@ -17,6 +18,7 @@
       }
     },
     {
+      "id": "evt-fixture-past-glasgow-stall",
       "url": "https://luma.com/fixture-past-glasgow-stall",
       "name": "Glasgow street stall",
       "start_at": "2026-01-24T11:00:00.000Z",
