@@ -1,22 +1,30 @@
 import Link from "next/link";
 import { Muted } from "@/components/ui/Text";
-import { campaignBySlug } from "@/lib/email-your-mp";
+import { campaignBySlug, displayPostcode } from "@/lib/email-your-mp";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { staffDate, staffTime } from "@/lib/staff-time";
 import type { SupporterActivity, SupporterDetails as Details, SupporterSource } from "@/lib/supporters";
 import SupporterBadges from "./SupporterBadges";
-import styles from "./SupporterDetails.module.css";
+import styles from "./Details.module.css";
 
 const copy = staffCopy.supporters;
 
 /** One value we hold, and where and when it came from: the sources that gave it, and the first time. */
 type Given = { value: string; sources: Set<SupporterSource>; since: string };
 
-/** The distinct values of a detail, each with its sources and when it was first given, oldest first. */
-function distinct(items: { value: string | null; source: SupporterSource; at: string | null }[]): Given[] {
+/**
+ * The distinct values of a detail, each with its sources and when it was
+ * first given, oldest first. `canon` says which values are the same thing
+ * and how to show them: postcodes typed differently are one postcode.
+ */
+function distinct(
+  items: { value: string | null; source: SupporterSource; at: string | null }[],
+  canon: (value: string) => string = (value) => value,
+): Given[] {
   const given = new Map<string, Given>();
-  for (const item of items) {
-    if (!item.value) continue;
+  for (const raw of items) {
+    if (!raw.value) continue;
+    const item = { ...raw, value: canon(raw.value) };
     // The database gives a Date, the examples a string: one shape, to compare and sort.
     const at = item.at ? new Date(item.at).toISOString() : "";
     const seen = given.get(item.value);
@@ -92,7 +100,10 @@ export default function SupporterDetails({ supporter }: { supporter: Details }) 
   const { summary, identities, contacts, activity, optOuts } = supporter;
   const emails = distinct(identities.map((i) => ({ value: i.email, source: i.source, at: i.seenAt })));
   const phones = distinct(contacts.map((c) => ({ value: c.phone, source: c.source, at: c.at })));
-  const postcodes = distinct(contacts.map((c) => ({ value: c.postcode, source: c.source, at: c.at })));
+  const postcodes = distinct(
+    contacts.map((c) => ({ value: c.postcode, source: c.source, at: c.at })),
+    displayPostcode,
+  );
   return (
     <>
       <h1>

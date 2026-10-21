@@ -7,6 +7,7 @@ import {
   getPolitician,
   isHouse,
   listPoliticians,
+  politicianHistory,
   politiciansSearch,
   setStatus,
   signatories,
@@ -14,6 +15,7 @@ import {
   updatePolitician,
 } from "./politicians";
 import { recordProblem } from "./email";
+import { logChange } from "./audit";
 
 const PM = "regulate-letter-pm";
 const BILL = "support-sobel-bill";
@@ -198,6 +200,36 @@ describeWithDatabase("politicians", () => {
 
     const actions = await query<{ action: string }>("SELECT action FROM audit_log ORDER BY id");
     expect(actions.map((a) => a.action)).toEqual(["edit politician"]);
+  });
+
+  it("tells one politician's history from the audit log: edits, statuses, and their address blocked or unblocked, newest first", async () => {
+    const peer = await addPeer();
+    const mp = await addTestPolitician();
+    await updatePolitician(peer, { ...PEER, party: "Labour" }, "sam@pauseai.uk");
+    await setStatus(mp, PM, { status: "signed", date: null, note: "" }, "jo@pauseai.uk");
+    await setStatus(peer, PM, { status: "signed", date: null, note: "" }, "jo@pauseai.uk");
+    await recordProblem({
+      address: "Polly.Placeholder.MP@parliament.uk",
+      kind: "hard",
+      reason: "Gone",
+      messageId: "m",
+      canReset: true,
+    });
+    // As unblock() logs it, without asking the provider.
+    await logChange("jo@pauseai.uk", "unblock address", {
+      address: "polly.placeholder.mp@parliament.uk",
+      note: "Back",
+    });
+    // Not theirs: a held sync's run with the same id, and someone else's status.
+    await logChange("jo@pauseai.uk", "apply held MP sync", { id: peer });
+    expect((await politicianHistory(peer, null)).map((c) => [c.action, c.actor])).toEqual([
+      ["set status", "jo@pauseai.uk"],
+      ["edit politician", "sam@pauseai.uk"],
+    ]);
+    const history = await politicianHistory(mp, "Polly.Placeholder.MP@parliament.uk");
+    expect(history.map((c) => c.action)).toEqual(["unblock address", "block address", "set status"]);
+    expect(history[0].details).toEqual({ address: "polly.placeholder.mp@parliament.uk", note: "Back" });
+    expect(await politicianHistory(mp, null)).toHaveLength(1);
   });
 
   it("lists who signed, by name, never the test MP or those without a status", async () => {

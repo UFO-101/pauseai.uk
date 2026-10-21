@@ -47,8 +47,35 @@ export const staffCopy = {
   // in groups, and which permissions you have, or that you have none.
   home: {
     title: "Home",
+    // The dashboard: the last week's numbers, each over its total, then how each import's last run ended.
+    dashboard: {
+      title: (days: number) => `⁂ The last ${days} days`,
+      sections: {
+        activity: "Activity",
+        operations: "Operations",
+      } as Record<string, string>,
+      // After each number: what it counts, for one and for more.
+      metrics: {
+        lettersSent: (n: number) => (n === 1 ? "⁂ letter to an MP" : "⁂ letters to MPs"),
+        lettersReplied: (n: number) => (n === 1 ? "⁂ reply from an MP" : "⁂ replies from MPs"),
+        lettersBounced: (n: number) => (n === 1 ? "⁂ letter bounced" : "⁂ letters bounced"),
+        mpsSigned: (n: number) => (n === 1 ? "⁂ MP marked as signed" : "⁂ MPs marked as signed"),
+        supportersAdded: (n: number) => (n === 1 ? "⁂ new supporter" : "⁂ new supporters"),
+        eventRegistrations: (n: number) => (n === 1 ? "⁂ event registration" : "⁂ event registrations"),
+        unsubscribes: (n: number) => (n === 1 ? "⁂ unsubscribe from Luma emails" : "⁂ unsubscribes from Luma emails"),
+        addressesBlocked: (n: number) => (n === 1 ? "⁂ email address blocked" : "⁂ email addresses blocked"),
+      } as Record<string, (n: number) => string>,
+      // Under the number: against the week before.
+      change: {
+        up: (n: number) => `▲ ${n} on the week before`,
+        down: (n: number) => `▼ ${n} on the week before`,
+        same: "Same as the week before",
+      },
+      importsTitle: "Imports",
+      allWell: "All imports running well.",
+      neverRun: "Never run",
+    },
     noAccount: "You don't have a staff account yet.",
-    permissions: (list: string) => `Your permissions: ${list}.`,
     none: "You have no permissions.",
     ask: (admins: string) => `Ask ${admins}.`,
   },
@@ -163,10 +190,10 @@ export const staffCopy = {
       admin: "Admin",
       supporters: "Supporters",
     } as Record<string, string>,
-    // Under each permission's box on the form for someone new: what it opens.
+    // Under the table, after each permission's name: what it opens.
     opens: {
-      supporters: "⁂ The supporter pages: who has come to events, follows the calendar or wrote to their MP.",
-      admin: "⁂ This page, to add and remove staff and set permissions, and the audit log.",
+      supporters: "the supporter pages: who has come to events, follows the calendar or wrote to their MP.",
+      admin: "this page, to add and remove staff and set permissions, and the audit log.",
     } as Record<string, string>,
     columns: {
       email: "Email",
@@ -175,11 +202,11 @@ export const staffCopy = {
       addedAt: "When",
     },
     save: "Save",
+    // The button on the form for someone new.
+    add: "Add",
     remove: "Remove",
     addTitle: "Add someone",
     emailLabel: "Email",
-    // Under the form for someone new.
-    noPermissionHint: "With no permissions ticked, can only see basic staff pages.",
     // When a change would leave no admin.
     lastAdmin: "The last administrator can't be removed or lose permissions to administrate.",
   },
@@ -225,6 +252,25 @@ export const staffCopy = {
   politician: {
     statusesTitle: "Campaigns",
     detailsTitle: "About this politician",
+    // The box at the top of their page: where they came from, and each campaign's status.
+    source: "⁂ Source",
+    sources: {
+      airtable: "⁂ Airtable's MPs",
+      staff: "⁂ Added by staff",
+      test: "⁂ A test MP",
+    },
+    // A status: who set it and when; the campaign's title heads the line.
+    setBy: (who: string, when: string) => `⁂ set by ${who}, ${when}`,
+    lettersTitle: "⁂ Letters to them",
+    historyTitle: "⁂ History",
+    noHistory: "⁂ No changes yet.",
+    // What each entry of the audit log about them was.
+    history: {
+      "edit politician": "⁂ Details edited",
+      "set status": "⁂ Status set",
+      "block address": "⁂ Address blocked",
+      "unblock address": "⁂ Address unblocked",
+    } as Record<string, string>,
     fromAirtable: "Information about the MP is imported from Airtable, update name / email there.",
     save: "Save",
     notFound: "Politician not found.",

@@ -12,6 +12,7 @@ export const exampleLetter: LetterSummary = {
   senderEmail: "jane@example.com",
   contactConsent: true,
   mpName: "Testy McTestface MP",
+  politicianId: 3,
   isTest: true,
   subject: "S",
   createdAt: "2026-10-12T09:00:00Z",

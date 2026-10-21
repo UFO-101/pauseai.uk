@@ -1,8 +1,7 @@
-import Link from "next/link";
 import { staffCopy } from "@/lib/content/staff-interface";
+import type { Dashboard } from "@/lib/staff-dashboard";
 import type { Permission } from "@/lib/staff-permissions";
-import { sectionsFor } from "@/lib/staff-sections";
-import styles from "./StaffHome.module.css";
+import StaffDashboard from "./StaffDashboard";
 
 type Props = {
   /** Whether they have an account. Without one: just whom to ask. */
@@ -10,14 +9,16 @@ type Props = {
   permissions: Permission[];
   /** The admins, to ask. */
   admins: string[];
+  /** The week's numbers and the imports' endings, for someone with an account. */
+  dashboard?: Dashboard;
 };
 
 /**
  * The home page's body: without an account, whom to ask for one; with
- * one, which permissions they have, or that they have none, and the pages
- * they can see, in groups.
+ * one, the dashboard, and if they have no permissions, whom to ask for
+ * them. The pages and permissions are in the sidebar.
  */
-export default function StaffHome({ account, permissions, admins }: Props) {
+export default function StaffHome({ account, permissions, admins, dashboard }: Props) {
   const who = admins.join(", ");
   if (!account) {
     return (
@@ -32,25 +33,12 @@ export default function StaffHome({ account, permissions, admins }: Props) {
   return (
     <>
       <h1>{staffCopy.home.title}</h1>
-      <p>
-        {permissions.length > 0
-          ? staffCopy.home.permissions(permissions.map((p) => staffCopy.accounts.names[p]).join(", "))
-          : `${staffCopy.home.none} ${staffCopy.home.ask(who)}`}
-      </p>
-      <div className={styles.sections}>
-        {sectionsFor(permissions).map((section) => (
-          <section key={section.id} aria-labelledby={`section-${section.id}`}>
-            <h2 id={`section-${section.id}`}>{staffCopy.nav.sections[section.id]}</h2>
-            <ul>
-              {section.pages.map((page) => (
-                <li key={page.id}>
-                  <Link href={page.href}>{staffCopy.nav[page.id]}</Link>
-                </li>
-              ))}
-            </ul>
-          </section>
-        ))}
-      </div>
+      {permissions.length === 0 && (
+        <p>
+          {staffCopy.home.none} {staffCopy.home.ask(who)}
+        </p>
+      )}
+      {dashboard && <StaffDashboard dashboard={dashboard} permissions={permissions} />}
     </>
   );
 }

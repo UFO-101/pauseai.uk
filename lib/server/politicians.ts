@@ -4,7 +4,7 @@ import type { Mp, MpStatuses } from "@/lib/email-your-mp";
 import { parseSort, type SortSpec } from "@/lib/staff-sort";
 import { POLITICIAN_COLUMNS, POLITICIAN_SORTS, type PoliticianSort } from "@/lib/politician-sort";
 import { query, transaction, type Queryable } from "./db";
-import { logChange } from "./audit";
+import { type AuditEntry, logChange } from "./audit";
 
 // Politicians and their status for each campaign. MPs are copied from
 // Airtable nightly (mp-sync.ts); other signers came from the signatory
@@ -234,5 +234,24 @@ export async function signatories(campaign: string): Promise<Signatory[]> {
      WHERE s.campaign = $1 AND s.status = 'signed' AND NOT p.is_test
      ORDER BY p.name`,
     [campaign],
+  );
+}
+
+/** A change to one politician from the audit log: who, when, what, and the details logged. */
+export type PoliticianChange = AuditEntry;
+
+/**
+ * Everything the audit log holds about one politician, newest first:
+ * edits to their details, their campaign statuses set, and their address
+ * blocked or unblocked.
+ */
+export async function politicianHistory(id: number, email: string | null): Promise<PoliticianChange[]> {
+  return query<PoliticianChange>(
+    `SELECT id::int AS id, at, actor, action, details FROM audit_log
+     WHERE (action = 'edit politician' AND (details->>'id')::bigint = $1)
+        OR (action = 'set status' AND (details->>'politicianId')::bigint = $1)
+        OR (action IN ('block address', 'unblock address') AND $2::text IS NOT NULL AND details->>'address' = lower($2))
+     ORDER BY at DESC, id DESC`,
+    [id, email],
   );
 }

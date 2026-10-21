@@ -36,6 +36,8 @@ import ImportCard, { ImportCards } from "@/app/(staff)/staff/_components/ImportC
 import KeepSignedIn from "@/app/(staff)/staff/_components/KeepSignedIn";
 import SortHeading from "@/app/(staff)/staff/_components/SortHeading";
 import Table from "@/components/ui/Table";
+import StaffDashboard from "@/app/(staff)/staff/_components/StaffDashboard";
+import { exampleDashboard } from "@/app/(staff)/staff/_components/StaffDashboard.examples";
 import StaffHome from "@/app/(staff)/staff/_components/StaffHome";
 import SupporterBadges from "@/app/(staff)/staff/_components/SupporterBadges";
 import SupporterDetails from "@/app/(staff)/staff/_components/SupporterDetails";
@@ -368,22 +370,54 @@ export const staff: Group = {
       ],
     },
     {
-      name: "StaffHome",
-      file: "app/(staff)/staff/_components/StaffHome.tsx",
+      name: "StaffDashboard",
+      file: "app/(staff)/staff/_components/StaffDashboard.tsx",
       variants: [
         {
-          label: "For an admin: every group",
+          label: "A busy week, for someone who may see supporters",
           render: () => (
             <StaffPage as="div">
-              <StaffHome account permissions={["admin", "supporters"]} admins={["admin@pauseai.uk"]} />
+              <StaffDashboard dashboard={exampleDashboard} permissions={["supporters"]} />
             </StaffPage>
           ),
         },
         {
-          label: "For someone with no permissions: the ordinary groups, and whom to ask",
+          label: "For someone who may not: the supporter tiles aren't links",
           render: () => (
             <StaffPage as="div">
-              <StaffHome account permissions={[]} admins={["admin@pauseai.uk", "jo@pauseai.uk"]} />
+              <StaffDashboard dashboard={exampleDashboard} permissions={[]} />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "StaffHome",
+      file: "app/(staff)/staff/_components/StaffHome.tsx",
+      variants: [
+        {
+          label: "For an admin: the dashboard",
+          render: () => (
+            <StaffPage as="div">
+              <StaffHome
+                account
+                permissions={["admin", "supporters"]}
+                admins={["admin@pauseai.uk"]}
+                dashboard={exampleDashboard}
+              />
+            </StaffPage>
+          ),
+        },
+        {
+          label: "For someone with no permissions: whom to ask, over the dashboard",
+          render: () => (
+            <StaffPage as="div">
+              <StaffHome
+                account
+                permissions={[]}
+                admins={["admin@pauseai.uk", "jo@pauseai.uk"]}
+                dashboard={exampleDashboard}
+              />
             </StaffPage>
           ),
         },

@@ -1,0 +1,116 @@
+/* The home page's dashboard: the window, two rows of tiles, then the imports. */
+
+.window {
+  margin: var(--space-4) 0 0;
+  color: var(--text-secondary);
+}
+
+.heading {
+  margin: var(--space-6) 0 var(--space-3);
+  font-size: var(--text-lg);
+}
+
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr));
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* A tile: the week's number large, what it counts under it, then how it
+   moved. The whole tile is the link, in the text's colour; hovering one
+   brings its border and number up to the accent. */
+.tile {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  height: 100%;
+  padding: var(--space-4) var(--space-5);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  color: var(--text);
+  text-decoration: none;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+a.tile:hover {
+  border-color: var(--accent);
+  box-shadow: 0 4px 16px var(--shadow);
+}
+
+a.tile:hover .number {
+  color: var(--accent);
+}
+
+a.tile:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-offset);
+}
+
+.number {
+  font-size: 3rem;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  transition: color 0.15s ease;
+}
+
+.label {
+  font-size: var(--text-md);
+  line-height: 1.3;
+}
+
+/* The change: small, green when the week went the right way, red when it went the wrong way. */
+.good,
+.bad,
+.tile > :last-child {
+  font-size: var(--text-sm);
+}
+
+.good {
+  color: var(--status-green);
+}
+
+.bad {
+  color: var(--status-red);
+}
+
+/* The imports: a line each, the ending's tag after the name. */
+.imports {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.imports li {
+  margin-block: var(--space-2);
+}
+
+/* A phone: two tiles to a row, a little tighter. */
+@media (max-width: 720px) {
+  .tiles {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-2);
+  }
+
+  .tile {
+    padding: var(--space-3) var(--space-4);
+  }
+
+  .number {
+    font-size: 2.5rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tile,
+  .number {
+    transition: none;
+  }
+}

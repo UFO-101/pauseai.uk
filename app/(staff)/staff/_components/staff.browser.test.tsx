@@ -19,7 +19,7 @@ import PoliticianDetails from "./PoliticianDetails";
 import PoliticianFilters from "./PoliticianFilters";
 import PoliticianForm from "./PoliticianForm";
 import PoliticianTable from "./PoliticianTable";
-import { examplePolitician } from "./PoliticianTable.examples";
+import { examplePolitician, examplePoliticianHistory } from "./PoliticianTable.examples";
 import ResultBox, { OPEN_UP_TO } from "./ResultBox";
 import RunFilters from "./RunFilters";
 import RunList from "./RunList";
@@ -33,6 +33,8 @@ import {
   exampleSyncedMp,
 } from "./RunList.examples";
 import StaffNav from "./StaffNav";
+import StaffDashboard from "./StaffDashboard";
+import { exampleDashboard } from "./StaffDashboard.examples";
 import StaffHome from "./StaffHome";
 import AccountsNotice from "./AccountsNotice";
 import Breadcrumb from "./Breadcrumb";
@@ -81,6 +83,8 @@ describe("StaffNav", () => {
     await expect.element(page.getByRole("link", { name: staffCopy.nav.title })).toHaveAttribute("href", "/staff");
     // The sidebar is for wider screens than the test's, so it's read from the DOM.
     const nav = document.querySelector("nav")!;
+    // Who's logged in, with their permissions under the address.
+    expect(nav.querySelector("span[class*=who]")!.textContent).toBe(`jo@pauseai.uk${staffCopy.accounts.names.admin}`);
     const current = nav.querySelector('a[aria-current="page"]')!;
     expect(current.textContent).toBe(staffCopy.nav.politicians);
     expect(current.getAttribute("href")).toBe("/staff/politicians");
@@ -99,7 +103,7 @@ describe("StaffNav", () => {
       .element(menu.getByRole("link", { name: staffCopy.nav.import }))
       .toHaveAttribute("href", "/staff/import-data");
     await expect.element(menu.getByRole("link", { name: staffCopy.nav.import })).toBeVisible();
-    await expect.element(menu.getByText("jo@pauseai.uk")).toBeVisible();
+    await expect.element(menu.getByText("jo@pauseai.uk", { exact: false })).toBeVisible();
     const form = menu.getByRole("button", { name: staffCopy.nav.logout }).element().closest("form")!;
     expect(form.getAttribute("method")).toBe("post");
     expect(form.getAttribute("action")).toBe("/staff/api/logout");
@@ -127,45 +131,105 @@ describe("StaffNav", () => {
 });
 
 describe("StaffHome", () => {
-  it("lists the groups an admin sees, with their permissions named", async () => {
-    await render(<StaffHome account permissions={["admin", "supporters"]} admins={["admin@pauseai.uk"]} />);
+  it("shows the dashboard to someone with an account, and nothing about permissions when they have some", async () => {
+    await render(
+      <StaffHome
+        account
+        permissions={["admin", "supporters"]}
+        admins={["admin@pauseai.uk"]}
+        dashboard={exampleDashboard}
+      />,
+    );
     await expect.element(page.getByRole("heading", { level: 1, name: staffCopy.home.title })).toBeVisible();
     await expect
-      .element(
-        page.getByText(
-          staffCopy.home.permissions(`${staffCopy.accounts.names.admin}, ${staffCopy.accounts.names.supporters}`),
-        ),
-      )
+      .element(page.getByRole("heading", { level: 2, name: staffCopy.home.dashboard.sections.activity }))
       .toBeVisible();
-    await expect.element(page.getByRole("heading", { level: 2, name: staffCopy.nav.sections.admin })).toBeVisible();
-    await expect
-      .element(page.getByRole("link", { name: staffCopy.nav.accounts }))
-      .toHaveAttribute("href", "/staff/accounts");
-    await expect
-      .element(page.getByRole("link", { name: staffCopy.nav.changes }))
-      .toHaveAttribute("href", "/staff/audit-log");
-    await expect
-      .element(page.getByRole("link", { name: staffCopy.nav.politicians }))
-      .toHaveAttribute("href", "/staff/politicians");
+    await expect.element(page.getByText(staffCopy.home.none, { exact: false })).not.toBeInTheDocument();
   });
 
-  it("without an account, says so and whom to ask, and shows no groups", async () => {
+  it("without an account, says so and whom to ask, and shows nothing else", async () => {
     await render(<StaffHome account={false} permissions={[]} admins={["admin@pauseai.uk"]} />);
     await expect.element(page.getByText(staffCopy.home.noAccount, { exact: false })).toBeVisible();
     await expect.element(page.getByText(staffCopy.home.ask("admin@pauseai.uk"), { exact: false })).toBeVisible();
     expect(page.getByRole("link").all()).toHaveLength(0);
   });
 
-  it("without permissions, shows the ordinary groups, says so, and whom to ask", async () => {
-    await render(<StaffHome account permissions={[]} admins={["admin@pauseai.uk", "jo@pauseai.uk"]} />);
+  it("without permissions, says so and whom to ask, over the dashboard", async () => {
+    await render(
+      <StaffHome
+        account
+        permissions={[]}
+        admins={["admin@pauseai.uk", "jo@pauseai.uk"]}
+        dashboard={exampleDashboard}
+      />,
+    );
     await expect.element(page.getByText(staffCopy.home.none, { exact: false })).toBeVisible();
     await expect
       .element(page.getByText(staffCopy.home.ask("admin@pauseai.uk, jo@pauseai.uk"), { exact: false }))
       .toBeVisible();
     await expect
-      .element(page.getByRole("heading", { level: 2, name: staffCopy.nav.sections.admin }))
-      .not.toBeInTheDocument();
-    await expect.element(page.getByRole("link", { name: staffCopy.nav.letters })).toBeVisible();
+      .element(page.getByRole("heading", { level: 2, name: staffCopy.home.dashboard.sections.operations }))
+      .toBeVisible();
+  });
+});
+
+describe("StaffDashboard", () => {
+  const copy = staffCopy.home.dashboard;
+
+  it("shows each number for the week as a sentence, with its change on the week before, linked where the person may see it", async () => {
+    const { rerender } = await render(<StaffDashboard dashboard={exampleDashboard} permissions={["supporters"]} />);
+    await expect.element(page.getByText(copy.title(7))).toBeVisible();
+    const activity = page.getByRole("list", { name: copy.sections.activity }).getByRole("listitem").all();
+    const operations = page.getByRole("list", { name: copy.sections.operations }).getByRole("listitem").all();
+    expect(activity).toHaveLength(5);
+    expect(operations).toHaveLength(3);
+    await expect.element(activity[0]).toHaveTextContent(`12${copy.metrics.lettersSent(12)}${copy.change.up(4)}`);
+    await expect.element(activity[1]).toHaveTextContent(`3${copy.metrics.lettersReplied(3)}${copy.change.down(2)}`);
+    await expect.element(activity[2]).toHaveTextContent(`2${copy.metrics.mpsSigned(2)}${copy.change.same}`);
+    await expect.element(operations[0]).toHaveTextContent(`1${copy.metrics.lettersBounced(1)}${copy.change.up(1)}`);
+    // Up is green for letters, red for bounces; down is red for replies, green for unsubscribes.
+    const changeClass = (item: ReturnType<typeof page.getByRole>) =>
+      item.element().querySelector("span:last-child")!.className;
+    expect(changeClass(activity[0])).toMatch(/good/);
+    expect(changeClass(activity[1])).toMatch(/bad/);
+    expect(changeClass(operations[0])).toMatch(/bad/);
+    expect(changeClass(operations[1])).toMatch(/good/);
+    // The whole tile is the link.
+    const tileLink = (text: string) => page.getByText(text).element().closest("a");
+    expect(tileLink(copy.metrics.lettersReplied(3))?.getAttribute("href")).toBe("/staff/letters?status=replied");
+    expect(tileLink(copy.metrics.supportersAdded(18))?.getAttribute("href")).toBe("/staff/supporters");
+    expect(tileLink(copy.metrics.lettersReplied(3))?.textContent).toContain("3");
+
+    await rerender(<StaffDashboard dashboard={exampleDashboard} permissions={[]} />);
+    expect(tileLink(copy.metrics.supportersAdded(18))).toBeNull();
+    await expect.element(page.getByText(copy.metrics.supportersAdded(18))).toBeVisible();
+    expect(tileLink(copy.metrics.lettersSent(12))?.getAttribute("href")).toBe("/staff/letters?status=sent");
+  });
+
+  it("lists only the imports whose newest run didn't end well, tagged by how it ended, or says all is well", async () => {
+    const { rerender } = await render(<StaffDashboard dashboard={exampleDashboard} permissions={[]} />);
+    const items = page.getByRole("list", { name: copy.importsTitle }).getByRole("listitem").all();
+    expect(items.map((item) => item.element().textContent)).toEqual([
+      `${jobTitles["import-luma"]} ${staffCopy.runs.status.ok}${staffCopy.runs.incomplete} 2026-10-21 11:17`,
+      `${jobTitles["import-controlai"]} ${staffCopy.runs.status.failed} 2026-10-21 02:00`,
+      `${jobTitles["import-signatories"]} ${copy.neverRun}`,
+    ]);
+    const tag = (i: number, n = 0) => items[i].element().querySelectorAll("span")[n].className;
+    expect(tag(0)).toMatch(/amber/);
+    expect(tag(0, 1)).toMatch(/amber/);
+    expect(tag(1)).toMatch(/red/);
+    expect(tag(2)).not.toMatch(/red|amber|green/);
+    await expect.element(page.getByText(copy.allWell)).not.toBeInTheDocument();
+
+    const held = { ...exampleDashboard, imports: [...exampleDashboard.imports] };
+    held.imports[1] = exampleHeldSync;
+    await rerender(<StaffDashboard dashboard={held} permissions={[]} />);
+    expect(page.getByText(staffCopy.runs.status.held).element().className).toMatch(/amber/);
+
+    const well = { ...exampleDashboard, imports: exampleDashboard.imports.map(() => exampleAppliedSync) };
+    await rerender(<StaffDashboard dashboard={well} permissions={[]} />);
+    await expect.element(page.getByRole("link", { name: copy.allWell })).toHaveAttribute("href", "/staff/import-data");
+    await expect.element(page.getByRole("list", { name: copy.importsTitle })).not.toBeInTheDocument();
   });
 });
 
@@ -193,8 +257,13 @@ describe("StaffAccountsTable", () => {
       "middle",
     );
     const jo = page.getByRole("form", { name: "jo@pauseai.uk" });
-    // A row says only the names; the form for someone new says what each opens.
-    await expect.element(jo.getByText(staffCopy.accounts.opens.admin)).not.toBeInTheDocument();
+    expect(
+      jo
+        .getByRole("checkbox")
+        .all()
+        .map((box) => box.element().getAttribute("name")),
+    ).toEqual(["permission:supporters", "permission:admin"]);
+    await expect.element(page.getByText(staffCopy.accounts.opens.supporters, { exact: false })).toBeVisible();
     await expect.element(jo.getByRole("checkbox", { name: staffCopy.accounts.names.supporters })).toBeChecked();
     await jo.getByRole("checkbox", { name: staffCopy.accounts.names.admin }).click();
     await jo.getByRole("button", { name: staffCopy.accounts.save }).click();
@@ -208,34 +277,36 @@ describe("StaffAccountsTable", () => {
     await vi.waitFor(() => expect(remove.sent).toHaveLength(1));
     expect(remove.sent[0]).toEqual({ email: "jo@pauseai.uk" });
 
-    // Someone new needs no box: an account alone opens the ordinary pages.
+    // Someone new has no boxes: an account alone opens the ordinary pages, and their row sets more.
     const add = page.getByRole("form", { name: staffCopy.accounts.addTitle });
+    expect(add.getByRole("checkbox").all()).toHaveLength(0);
     await add.getByRole("textbox", { name: staffCopy.accounts.emailLabel }).fill("sam@pauseai.uk");
-    await expect.element(add.getByText(staffCopy.accounts.noPermissionHint)).toBeVisible();
-    await expect.element(add.getByText(staffCopy.accounts.opens.supporters)).toBeVisible();
-    await expect.element(add.getByText(staffCopy.accounts.opens.admin)).toBeVisible();
-    const boxes = add.getByRole("checkbox").all();
-    expect(boxes.map((box) => box.element().getAttribute("name"))).toEqual([
-      "permission:supporters",
-      "permission:admin",
-    ]);
-    await add.getByRole("button", { name: staffCopy.accounts.save }).click();
+    await add.getByRole("button", { name: staffCopy.accounts.add }).click();
     await vi.waitFor(() => expect(save.sent).toHaveLength(2));
     expect(save.sent[1]).toEqual({ email: "sam@pauseai.uk" });
   });
 });
 
 describe("StaffAccountForm", () => {
-  it("sends the address and each ticked box", async () => {
+  it("for an account, sends its address and each ticked box", async () => {
     const { fn, sent } = action();
-    await render(<StaffAccountForm permissions={["admin"]} save={fn} />);
-    await page.getByRole("textbox", { name: staffCopy.accounts.emailLabel }).fill("new@pauseai.uk");
+    await render(<StaffAccountForm email="jo@pauseai.uk" permissions={["admin"]} save={fn} />);
     await expect.element(page.getByRole("checkbox", { name: staffCopy.accounts.names.admin })).toBeChecked();
     await page.getByRole("checkbox", { name: staffCopy.accounts.names.admin }).click();
     await page.getByRole("checkbox", { name: staffCopy.accounts.names.supporters }).click();
     await page.getByRole("button", { name: staffCopy.accounts.save }).click();
     await vi.waitFor(() => expect(sent).toHaveLength(1));
-    expect(sent[0]).toEqual({ email: "new@pauseai.uk", "permission:supporters": "on" });
+    expect(sent[0]).toEqual({ email: "jo@pauseai.uk", "permission:supporters": "on" });
+  });
+
+  it("for someone new, sends the typed address alone", async () => {
+    const { fn, sent } = action();
+    await render(<StaffAccountForm permissions={[]} save={fn} />);
+    await page.getByRole("textbox", { name: staffCopy.accounts.emailLabel }).fill("new@pauseai.uk");
+    expect(page.getByRole("checkbox").all()).toHaveLength(0);
+    await page.getByRole("button", { name: staffCopy.accounts.add }).click();
+    await vi.waitFor(() => expect(sent).toHaveLength(1));
+    expect(sent[0]).toEqual({ email: "new@pauseai.uk" });
   });
 });
 
@@ -380,26 +451,88 @@ describe("LoginForm", () => {
 });
 
 describe("PoliticianDetails", () => {
-  it("heads the page with their name and what's known, and edits a signer the team added", async () => {
+  const none = { letters: [], history: [] };
+
+  it("heads the page with their name, boxes what's known with each campaign's status, and edits a signer the team added", async () => {
     const { fn } = action();
     await render(
-      <PoliticianDetails politician={{ ...MP, airtableId: null, email: null }} action={fn} unblock={vi.fn()} />,
+      <PoliticianDetails
+        politician={{ ...MP, airtableId: null, email: null }}
+        action={fn}
+        unblock={vi.fn()}
+        {...none}
+      />,
     );
     await expect.element(page.getByRole("heading", { level: 1, name: MP.name })).toBeVisible();
-    await expect
-      .element(page.getByText([staffCopy.houses[MP.house], MP.constituency, MP.party].join(" · ")))
-      .toBeVisible();
+    const facts = page.getByRole("definition").all();
+    expect(facts.map((d) => d.element().textContent)).toEqual([
+      staffCopy.houses[MP.house],
+      MP.constituency,
+      MP.party,
+      staffCopy.politicians.noEmail,
+      staffCopy.politician.sources.staff,
+      `${staffCopy.statuses.signed}, 1 Oct 2026${staffCopy.politician.setBy("jo@pauseai.uk", "2 Oct 2026")}`,
+    ]);
+    await expect.element(page.getByText(staffCopy.letters.none)).toBeVisible();
+    await expect.element(page.getByText(staffCopy.politician.noHistory)).toBeVisible();
     await expect.element(page.getByRole("button", { name: staffCopy.politician.save })).toBeVisible();
   });
 
-  it("sends Airtable's MPs to Airtable, and lets no one edit a test MP", async () => {
+  it("sends Airtable's MPs to Airtable, and lets no one edit a test MP; each says where they came from", async () => {
     const { fn } = action();
-    for (const politician of [MP, { ...MP, airtableId: null, isTest: true }]) {
-      const { unmount } = await render(<PoliticianDetails politician={politician} action={fn} unblock={vi.fn()} />);
+    for (const [politician, source] of [
+      [MP, staffCopy.politician.sources.airtable],
+      [{ ...MP, airtableId: null, isTest: true }, staffCopy.politician.sources.test],
+    ] as const) {
+      const { unmount } = await render(
+        <PoliticianDetails politician={politician} action={fn} unblock={vi.fn()} {...none} />,
+      );
       await expect.element(page.getByText(staffCopy.politician.fromAirtable)).toBeVisible();
+      await expect.element(page.getByText(source)).toBeVisible();
       await expect.element(page.getByRole("button", { name: staffCopy.politician.save })).not.toBeInTheDocument();
+      expect(page.getByRole("heading", { level: 1 }).element().textContent).toBe(
+        politician.isTest ? `${MP.name}${staffCopy.politicians.testMp}` : MP.name,
+      );
       await unmount();
     }
+  });
+
+  it("lists the letters to them without the column saying so, and what the audit log says about them, newest first", async () => {
+    await render(
+      <PoliticianDetails
+        politician={MP}
+        action={vi.fn()}
+        unblock={vi.fn()}
+        letters={[{ ...exampleLetter, mpName: MP.name, politicianId: MP.id }]}
+        history={[
+          ...examplePoliticianHistory,
+          {
+            id: 8,
+            at: "2026-09-01T10:00:00Z",
+            actor: "jo@pauseai.uk",
+            action: "set status",
+            details: { politicianId: 7, campaign: "gone", status: null, note: "" },
+          },
+          { id: 7, at: "2026-08-01T10:00:00Z", actor: "x", action: "strange", details: {} },
+        ]}
+      />,
+    );
+    await expect
+      .element(page.getByRole("link", { name: exampleLetter.senderName }))
+      .toHaveAttribute("href", "/staff/supporters/7");
+    await expect
+      .element(page.getByRole("columnheader", { name: staffCopy.letters.columns.to }))
+      .not.toBeInTheDocument();
+    const history = page.getByRole("list", { name: staffCopy.politician.historyTitle }).getByRole("listitem").all();
+    const copy = staffCopy.politician.history;
+    expect(history.map((item) => item.element().textContent)).toEqual([
+      `2026-10-14 09:30${copy["unblock address"]} Fixed in Airtable · jo@pauseai.uk`,
+      `2026-10-12 09:10${copy["block address"]} ${staffCopy.emails.kinds.hard} · postmark`,
+      `2026-10-02 10:00${copy["set status"]} ${pm.title}: ${staffCopy.statuses.signed}, 2026-10-01 · Told us at the march · jo@pauseai.uk`,
+      `2026-09-30 10:00${copy["edit politician"]} Polly Placeholder · polly.placeholder.mp@parliament.uk · sam@pauseai.uk`,
+      `2026-09-01 10:00${copy["set status"]} gone: ${staffCopy.statuses.none} · jo@pauseai.uk`,
+      "2026-08-01 10:00strange  · x",
+    ]);
   });
 
   it("says why their address is blocked, links to the blocked emails, and unblocks it with a note", async () => {
@@ -410,13 +543,12 @@ describe("PoliticianDetails", () => {
         action={vi.fn()}
         block={{ ...exampleBlock, address: MP.email! }}
         unblock={fn}
+        {...none}
       />,
     );
-    await expect
-      .element(page.getByRole("paragraph").nth(1))
-      .toHaveTextContent(
-        `${staffCopy.politicians.emailBlocked} ${staffCopy.politician.blocked(exampleBlock.reason, "2026-10-12 09:10")}`,
-      );
+    expect(page.getByRole("heading", { level: 1 }).element().textContent).toBe(
+      `${MP.name}${staffCopy.politicians.emailBlocked}`,
+    );
     await expect
       .element(page.getByRole("link", { name: staffCopy.politician.blocked(exampleBlock.reason, "2026-10-12 09:10") }))
       .toHaveAttribute("href", "/staff/blocked-emails");
@@ -931,7 +1063,16 @@ describe("LettersTable", () => {
       />,
     );
     await expect.element(page.getByText("jane@example.com").first()).toBeInTheDocument();
-    await expect.element(page.getByText(pm.title).first()).toBeInTheDocument();
+    // The campaign leads to its page on the site, the MP to their page, the sender to their supporter.
+    await expect
+      .element(page.getByRole("link", { name: pm.title }).first())
+      .toHaveAttribute("href", `/campaigns/${pm.slug}`);
+    await expect
+      .element(page.getByRole("link", { name: letter.mpName }).first())
+      .toHaveAttribute("href", "/staff/politicians/3");
+    await expect
+      .element(page.getByRole("link", { name: letter.senderName }).first())
+      .toHaveAttribute("href", "/staff/supporters/7");
     await expect.element(page.getByText("gone")).toBeInTheDocument();
     await expect.element(page.getByText("odd")).toBeInTheDocument();
     await expect
@@ -946,9 +1087,14 @@ describe("LettersTable", () => {
     await expect.element(page.getByRole("cell", { name: "2026-10-13 09:00", exact: true })).toBeInTheDocument();
   });
 
-  it("says when there are none", async () => {
-    await render(<LettersTable letters={[]} />);
+  it("says when there are none, and on an MP's page leaves out whom they're to", async () => {
+    const { rerender } = await render(<LettersTable letters={[]} />);
     await expect.element(page.getByText(staffCopy.letters.none)).toBeVisible();
+    await rerender(<LettersTable letters={[letter]} to={false} />);
+    await expect
+      .element(page.getByRole("columnheader", { name: staffCopy.letters.columns.to }))
+      .not.toBeInTheDocument();
+    await expect.element(page.getByRole("link", { name: letter.mpName })).not.toBeInTheDocument();
   });
 });
 
@@ -1059,7 +1205,7 @@ describe("SupportersTable", () => {
 describe("SupporterDetails", () => {
   it("shows one box of what we hold, each value with where it came from, and the history with its links", async () => {
     const copy = staffCopy.supporters;
-    await render(<SupporterDetails supporter={exampleSupporterDetails} />);
+    const first = await render(<SupporterDetails supporter={exampleSupporterDetails} />);
     await expect.element(page.getByRole("heading", { level: 1, name: /Jane Example/ })).toBeVisible();
     // Each email, phone and postcode once, with its sources and the first time.
     await expect.element(page.getByText("jane@example.com", { exact: false }).first()).toBeVisible();
@@ -1085,6 +1231,43 @@ describe("SupporterDetails", () => {
     await expect.element(history.getByText("Polly Placeholder", { exact: false }).first()).toBeVisible();
     await expect.element(history.getByText(copy.lists["luma-calendar"], { exact: false })).toBeVisible();
     await expect.element(history.getByText(copy.detail.kinds["luma-contact"], { exact: false })).toBeVisible();
+
+    // The same postcode typed differently is one line, in the usual form, with both sources.
+    await first.unmount();
+    const { unmount } = await render(
+      <SupporterDetails
+        supporter={{
+          ...exampleSupporterDetails,
+          contacts: [
+            {
+              source: "letter",
+              at: "2026-10-05T09:00:00Z",
+              phone: null,
+              postcode: "m11ae",
+              latitude: null,
+              longitude: null,
+            },
+            {
+              source: "luma",
+              at: "2026-09-20T10:00:00Z",
+              phone: null,
+              postcode: "M1  1AE",
+              latitude: null,
+              longitude: null,
+            },
+          ],
+        }}
+      />,
+    );
+    expect(page.getByText("M1 1AE", { exact: false }).all()).toHaveLength(1);
+    await expect
+      .element(
+        page.getByText(`(${copy.detail.from(`${copy.sources.letter}, ${copy.sources.luma}`, "20 Sept 2026")})`, {
+          exact: false,
+        }),
+      )
+      .toBeVisible();
+    await unmount();
   });
 
   it("copes with a supporter who has no name, nothing given and no activity, and with unknown statuses, lists and campaigns", async () => {

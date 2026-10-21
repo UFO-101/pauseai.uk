@@ -23,10 +23,12 @@ describeWithDatabase("recentLetters", () => {
     );
 
     const letters = await recentLetters();
-    expect(letters.map((l) => [l.id, l.status, l.mpName, l.isTest, l.contactConsent])).toEqual([
-      [2, "sending", "Testy McTestface MP", true, false],
-      [1, "sent", "Testy McTestface MP", true, false],
+    expect(letters.map((l) => [l.id, l.status, l.mpName, l.politicianId, l.isTest, l.contactConsent])).toEqual([
+      [2, "sending", "Testy McTestface MP", mp, true, false],
+      [1, "sent", "Testy McTestface MP", mp, true, false],
     ]);
+    expect((await recentLetters({ politicianId: mp })).map((l) => l.id)).toEqual([2, 1]);
+    expect(await recentLetters({ politicianId: mp + 1 })).toEqual([]);
     expect(letters[1].events.map((e) => [e.status, e.details])).toEqual([
       ["sending", {}],
       ["sent", { messageId: "m" }],

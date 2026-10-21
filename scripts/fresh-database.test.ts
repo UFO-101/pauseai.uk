@@ -100,7 +100,7 @@ describe.skipIf(process.env.NETLIFY === "true")("copying a database", () => {
   );
 
   it(
-    "adds the test MPs and the fake supporters: one per email, linked to Luma and to their letters",
+    "adds the test MPs and the fake data: supporters one per email, linked to Luma and to their letters, and the rest",
     { timeout: 30_000 },
     () => {
       const name = `test_${process.pid}_fixtures`;
@@ -115,13 +115,44 @@ describe.skipIf(process.env.NETLIFY === "true")("copying a database", () => {
           ),
         ).toEqual([
           "Alex Fixture	{luma}	1	0	",
+          "Bo Bounce	{letter}	0	1	",
           "Dee Clined	{luma}	0	0	",
           "Fay Follower	{luma}	0	0	",
           "Jane Fixture	{letter,luma}	2	1	",
           "Lee Letter	{letter}	0	1	",
+          "Nora Noaddress	{letter}	0	1	",
           "Pat Fixture	{luma}	1	0	{luma-calendar}",
-          "Sam Fixture	{luma}	2	0	",
+          "Sam Fixture	{letter,luma}	2	1	",
         ]);
+        expect(runSql(name, "SELECT email, permissions::text FROM staff_accounts ORDER BY email")).toEqual([
+          "admin@pauseai.uk	{admin}",
+          "jo@pauseai.uk	{supporters}",
+          "sam@pauseai.uk	{}",
+        ]);
+        expect(runSql(name, "SELECT count(*) FROM politicians WHERE airtable_id IS NOT NULL")).toEqual(["2"]);
+        expect(runSql(name, "SELECT status, count(*) FROM letters GROUP BY status ORDER BY status")).toEqual([
+          "bounced	1",
+          "not_sent	1",
+          "sent	3",
+        ]);
+        expect(runSql(name, "SELECT address FROM email_blocks ORDER BY address")).toEqual([
+          "grumpy@example.com",
+          "no-such-mailbox@pauseai.uk",
+        ]);
+        expect(runSql(name, "SELECT job, status FROM import_runs ORDER BY id")).toEqual([
+          "import-luma	ok",
+          "import-luma	ok",
+          "sync-mps	unchanged",
+          "check-mps	ok",
+          "import-controlai	failed",
+        ]);
+        // The status entry in the audit log names Polly's row.
+        expect(
+          runSql(
+            name,
+            "SELECT count(*) FROM audit_log a JOIN politicians p ON p.id = (a.details->>'politicianId')::bigint WHERE p.airtable_id = 'recPlaceholder'",
+          ),
+        ).toEqual(["1"]);
         // Every link's email is the supporter's, and nothing is left unlinked.
         expect(
           runSql(

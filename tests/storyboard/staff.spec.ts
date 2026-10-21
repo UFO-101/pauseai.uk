@@ -120,11 +120,11 @@ test("a login link works once, and only in the browser that asked for it", async
 test("staff log in, set a status that shows on /campaigns, and log out", async ({ page, request, flowDatabase }) => {
   await syncMps(request, BASE);
   await logIn(page, flowDatabase, ["admin"]);
-  // Logging in lands on the home page: the groups of pages, and this admin's permission named.
+  // Logging in lands on the home page: the dashboard, with this admin's permission under their address in the sidebar.
   await expect(page).toHaveURL(`${BASE}/staff`);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(staffCopy.home.title);
   await expect(page.getByText(staffEmail()).first()).toBeAttached();
-  await expect(page.getByText(staffCopy.home.permissions(staffCopy.accounts.names.admin))).toBeVisible();
+  await expect(page.getByText(staffCopy.home.dashboard.sections.activity)).toBeVisible();
   await frame(page, "the staff home, just logged in as an admin");
 
   await page.getByRole("link", { name: staffCopy.nav.politicians }).first().click();

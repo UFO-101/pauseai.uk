@@ -11,7 +11,8 @@ import JobActions from "@/app/(staff)/staff/_components/JobActions";
 import PoliticianDetails from "@/app/(staff)/staff/_components/PoliticianDetails";
 import PoliticianForm from "@/app/(staff)/staff/_components/PoliticianForm";
 import PoliticianTable from "@/app/(staff)/staff/_components/PoliticianTable";
-import { examplePolitician } from "@/app/(staff)/staff/_components/PoliticianTable.examples";
+import { examplePolitician, examplePoliticianHistory } from "@/app/(staff)/staff/_components/PoliticianTable.examples";
+import { exampleLetter } from "@/app/(staff)/staff/_components/LettersTable.examples";
 import Run from "@/app/(staff)/staff/_components/Run";
 import EraseForm from "@/app/(staff)/staff/_components/EraseForm";
 import RemoveAccountForm from "@/app/(staff)/staff/_components/RemoveAccountForm";
@@ -104,6 +105,8 @@ export function PoliticianDetailsExample({
           }
           action={log("action")}
           block={blocked ? { ...exampleBlock, address: examplePolitician.email! } : undefined}
+          letters={[{ ...exampleLetter, mpName: examplePolitician.name, politicianId: examplePolitician.id }]}
+          history={examplePoliticianHistory}
           unblock={log("unblock")}
         />
       )}
