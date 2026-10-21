@@ -103,7 +103,7 @@ test("a link to a local group's events, or the online ones", async ({ page }) =>
   await hydrated(page);
   await expect(nearButton(page, copy.nearShort("Oxford"))).toHaveAttribute("aria-pressed", "true");
   await expect(events(page).getByText("AI risk talk")).toBeVisible();
-  await expect(events(page).getByText("PauseAI Manchester Social")).toHaveCount(0);
+  await expect(events(page).getByText("PauseAI London: Protest at Parliament")).toHaveCount(0);
   await frame(page, "opened from a link to Oxford's events");
 
   await page.goto(`${BASE}/?events=online#events`);
