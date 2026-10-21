@@ -29,6 +29,8 @@ components/               React components used by more than one route
   events/                 EventList, LocalGroupEvents
   people/                 PersonCard, StoryShareForm
   local-groups/           LocalGroupPage, which renders every group's page
+  tools/                  the tools index's cards, and the kit the
+                          collateral maker and QR tool share
 lib/                      logic and data, no React state
   server/                 server-side logic and the database;
                           `import "server-only"`
@@ -59,9 +61,21 @@ Route groups like `(site)` don't appear in URLs. Folders starting with `_`
 
 ## Rules
 
+A rule about which code may import or call what is enforced by an ESLint
+rule in `eslint.config.mjs`, not left to review: a new rule of that kind
+gets its ESLint rule in the same change, and the rule's message says where
+the code should go instead. The rules below say which ones are enforced.
+
 - **Where a component goes.** One used by two or more routes goes in
   `components/`. One used by a single route goes in that route's
   `_components/`.
+- **Which folders import which.** A route imports `components/`, `lib/`
+  and the `_components/` folders above it, by a relative path, but never
+  another route's folder or anything by `@/app/`. `components/` doesn't
+  import routes, and `lib/` imports neither routes nor components, except
+  the content in `lib/content/`, which is partly JSX. Tests and the
+  component gallery may reach across. An ESLint rule enforces it (`LAYERS`
+  in `eslint.config.mjs`).
 - **Pages are thin.** A `page.tsx` holds its metadata, its data loading
   (calling `lib/`) and the order of its sections. Content and markup belong
   in components, and helper functions in `lib/`, where they can be tested.
@@ -128,7 +142,7 @@ Route groups like `(site)` don't appear in URLs. Folders starting with `_`
   and work with or without a transaction around the file. With each one,
   run `npm run db:schema` and commit `netlify/database/schema.sql`, the
   whole schema as the migrations leave it, so the PR shows what changed. A
-  test fails while it's out of date.
+  test fails while it's out of date. Tables follow the SQL rules below.
 - **Links to the site** in emails and redirects are built with
   `siteUrl(path, request)` (`lib/site-url.ts`), on the deploy's own address
   (`SITE_ORIGIN`, set in `next.config.ts` from Netlify's settings):
@@ -178,6 +192,25 @@ Route groups like `(site)` don't appear in URLs. Folders starting with `_`
 - **Tests** sit next to the code they test (`*.test.ts`,
   `*.browser.test.tsx`); see `docs/testing.md`. Tests of the whole repo,
   rather than of one file, go in `tests/checks/`.
+
+## SQL
+
+Every rule that can be stated in the schema is stated there, so nothing has
+to clean up after bad rows.
+
+- **Constrain everything.** Every reference to another row is a foreign key
+  with the `ON DELETE` rule that fits. A fixed set of values is `text` with
+  a `CHECK (… IN (…))` list, not an enum type. A rule between columns is a
+  `CHECK` too: `(status = 'failed') = (error IS NOT NULL)`. A row that
+  points at one of several tables has a nullable foreign key column for
+  each and `CHECK (num_nonnulls(…) = 1)`, not a `(source, source_id)` pair
+  of text. A `CHECK` depends only on the row's own columns, never `now()`
+  or another table.
+- **Addresses are lowercased in the row** (`CHECK (address =
+lower(address))`) when our own code writes them, so equality is plain `=`.
+- **History tables are insert-only** (`audit_log`, `email_problems`,
+  `letter_events`). The current state is derived from them, or kept in a
+  second table written in the same transaction (`email_blocks`).
 
 ## Styling
 
@@ -240,9 +273,10 @@ only a variant. The look itself (colours, type, buttons, cards) is in
   `components/events/`, `components/people/` and `components/tools/` the
   pieces of those areas. Used by one route, in its `_components/`, with a
   small kit there where several of its components share a shape (the
-  collateral maker's studio layout in its `kit/`, the staff interface's
-  page frame in `app/(staff)/staff/_components/ui/`). A piece a second
-  route needs moves to `components/ui/`.
+  staff interface's page frame in `app/(staff)/staff/_components/ui/`). A
+  piece a second route needs moves to `components/`: the collateral
+  maker's studio layout, which the QR tool shares, is in
+  `components/tools/kit/`.
 - **Classes from content.** HTML that lib/ writes as strings (press logos,
   blog footnotes) keeps global class names, which the component that shows
   it selects with `:global()` inside its own root class.

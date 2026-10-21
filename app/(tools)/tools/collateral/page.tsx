@@ -3,7 +3,7 @@ import Link from "next/link";
 import { toCalendarEvents } from "@/lib/collateral/eventText";
 import { getEvents } from "@/lib/server/outside-services/luma-calendar";
 import CollateralApp from "./_components/CollateralApp";
-import ToolPage from "./_components/kit/ToolPage";
+import ToolPage from "@/components/tools/kit/ToolPage";
 
 // Volunteer tool: unlisted, kept out of search results and the sitemap (see HIDDEN_ROUTES in app/sitemap.ts).
 export const metadata: Metadata = {

@@ -3,12 +3,7 @@
 // The collateral kit's examples that need state or callbacks: client
 // components with no props, so the server-rendered gallery can place them.
 import { useEffect, useRef } from "react";
-import {
-  CheckboxChoice,
-  Choice,
-  ChoiceGrid,
-  PhotoLibrary,
-} from "@/app/(tools)/tools/collateral/_components/kit/Choices";
+import { CheckboxChoice, Choice, ChoiceGrid, PhotoLibrary } from "@/components/tools/kit/Choices";
 import {
   ControlsColumn,
   ControlsSection,
@@ -19,7 +14,7 @@ import {
   PreviewMeta,
   PreviewPin,
   Studio,
-} from "@/app/(tools)/tools/collateral/_components/kit/Studio";
+} from "@/components/tools/kit/Studio";
 import { LIBRARY_PHOTOS } from "@/lib/collateral/photos";
 import { Controlled, Logged } from "../_components/wiring";
 import { Checkbox } from "@/components/ui/Controls";

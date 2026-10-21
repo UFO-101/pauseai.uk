@@ -1,5 +1,5 @@
-import EventsSection from "@/components/events/EventsSection";
-import EventList from "@/components/events/EventList";
+import EventsSection from "./EventsSection";
+import EventList from "./EventList";
 import type { LumaEvent } from "@/lib/events";
 import { site } from "@/lib/content/site";
 

@@ -6,6 +6,7 @@ import EventList from "./EventList";
 import { exampleEvent } from "./EventList.examples";
 import EventsSection from "./EventsSection";
 import LocalGroupEvents from "./LocalGroupEvents";
+import UpcomingEvents from "./UpcomingEvents";
 
 const { getEvents } = vi.hoisted(() => ({ getEvents: vi.fn() }));
 vi.mock("@/lib/server/outside-services/luma-calendar", () => ({ getEvents }));
@@ -170,6 +171,17 @@ describe("EventsSection", () => {
     );
     await expect.element(page.getByRole("button", { name: "Filter" })).toBeVisible();
     await expect.element(page.getByRole("link")).not.toBeInTheDocument();
+  });
+});
+
+describe("UpcomingEvents", () => {
+  it("lists the upcoming events with a link to the calendar", async () => {
+    await render(<UpcomingEvents events={[event(1)]} />);
+    await expect.element(page.getByRole("heading", { name: "Upcoming events" })).toBeVisible();
+    await expect.element(page.getByText("Event 1")).toBeVisible();
+    await expect
+      .element(page.getByRole("link", { name: "View full calendar →" }))
+      .toHaveAttribute("href", site.social.luma);
   });
 });
 

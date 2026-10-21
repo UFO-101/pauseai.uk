@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import ToolPage from "../collateral/_components/kit/ToolPage";
+import ToolPage from "@/components/tools/kit/ToolPage";
 import QrGenerator from "./_components/QrGenerator";
 
 // Volunteer tool: unlisted, kept out of search results and the sitemap (see HIDDEN_ROUTES in app/sitemap.ts).

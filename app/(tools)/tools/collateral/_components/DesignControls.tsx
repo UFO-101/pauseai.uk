@@ -19,12 +19,12 @@ import {
   withQrCodes,
   type DesignState,
 } from "./designState";
-import { Choice, ChoiceGrid, PhotoLibrary } from "./kit/Choices";
+import { Choice, ChoiceGrid, PhotoLibrary } from "@/components/tools/kit/Choices";
 import { Button } from "@/components/ui/Button";
 import { FileInput, Segmented, Select, TextArea, TextInput } from "@/components/ui/Controls";
 import { Hint, Label } from "@/components/ui/Field";
 import LinkButton from "@/components/ui/LinkButton";
-import { ControlsSection } from "./kit/Studio";
+import { ControlsSection } from "@/components/tools/kit/Studio";
 import styles from "./DesignControls.module.css";
 
 interface Props {

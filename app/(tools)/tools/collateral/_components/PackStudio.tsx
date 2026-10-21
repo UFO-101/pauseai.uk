@@ -61,7 +61,7 @@ import {
   PreviewColumn,
   PreviewMeta,
   Studio,
-} from "./kit/Studio";
+} from "@/components/tools/kit/Studio";
 import styles from "./PackStudio.module.css";
 
 const RESET_MESSAGE = "Reset to the example text.";

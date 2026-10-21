@@ -46,7 +46,7 @@ import CropControls from "./CropControls";
 import ProjectMenu from "./ProjectMenu";
 import StylePicker from "./StylePicker";
 import { usePhotoGestures } from "./usePhotoGestures";
-import { CheckboxChoice, ChoiceGrid, PhotoLibrary } from "./kit/Choices";
+import { CheckboxChoice, ChoiceGrid, PhotoLibrary } from "@/components/tools/kit/Choices";
 import { Button } from "@/components/ui/Button";
 import { FileInput, TextArea } from "@/components/ui/Controls";
 import { Hint } from "@/components/ui/Field";
@@ -62,7 +62,7 @@ import {
   PreviewMeta,
   PreviewPin,
   Studio,
-} from "./kit/Studio";
+} from "@/components/tools/kit/Studio";
 import styles from "./GalleryStudio.module.css";
 
 const CAPTION_TEMPLATE = getTemplate("caption");

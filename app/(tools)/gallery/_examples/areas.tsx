@@ -5,6 +5,7 @@ import { exampleEvent } from "@/components/events/EventList.examples";
 import EventsSection from "@/components/events/EventsSection";
 import { Button } from "@/components/ui/Button";
 import LocalGroupEvents from "@/components/events/LocalGroupEvents";
+import UpcomingEvents from "@/components/events/UpcomingEvents";
 import LocalGroupPage from "@/components/local-groups/LocalGroupPage";
 import Avatar from "@/components/people/Avatar";
 import PersonCard from "@/components/people/PersonCard";
@@ -107,6 +108,15 @@ export const areas: Group = {
             </div>
           ),
         },
+      ],
+    },
+    {
+      name: "UpcomingEvents",
+      file: "components/events/UpcomingEvents.tsx",
+      variants: [
+        { label: "No events", render: () => <UpcomingEvents events={[]} /> },
+        { label: "One event", render: () => <UpcomingEvents events={EVENTS.slice(0, 1)} /> },
+        { label: "More than fit, with a button for the rest", render: () => <UpcomingEvents events={EVENTS} /> },
       ],
     },
     {

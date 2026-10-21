@@ -52,7 +52,7 @@ import {
   PreviewColumn,
   PreviewMeta,
   Studio,
-} from "./kit/Studio";
+} from "@/components/tools/kit/Studio";
 
 const RESET_MESSAGE = "Reset to the example text.";
 const STORAGE_KEY = "pauseai-collateral-v2";
