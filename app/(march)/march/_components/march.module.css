@@ -1441,10 +1441,15 @@
     border-color 0.12s ease,
     transform 0.12s ease;
 }
-.share-app:hover {
-  background: var(--white);
-  border-color: var(--march-line);
-  transform: translateY(-3px);
+/* Only where there's a pointer to hover with: a touch screen keeps the hover
+   on whatever was last tapped, which after the swap from the form is an icon
+   that happened to land under the finger. */
+@media (hover: hover) {
+  .share-app:hover {
+    background: var(--white);
+    border-color: var(--march-line);
+    transform: translateY(-3px);
+  }
 }
 .share-app-icon {
   display: grid;

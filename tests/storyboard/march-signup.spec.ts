@@ -121,3 +121,25 @@ test("pressing the header's button pushes it into its shadow", { tag: "@desktop-
     .toEqual(["matrix(1, 0, 0, 1, 4, 4)", expect.stringMatching(/ 0px 0px 0px$/)]);
   await page.mouse.up();
 });
+
+test("tapping Register leaves no app highlighted under the finger", { tag: "@phone-only" }, async ({ page }) => {
+  await openSignup(page);
+  await fillIn(page, "testy@example.org");
+  await page.getByRole("button", { name: copy.form.submit, exact: true }).tap();
+  await expect(page.getByRole("heading", { name: copy.share.title })).toBeFocused();
+  await scrollSettled(page);
+  // A tap leaves the hover where the finger was, which is now over the app
+  // row: the button's place in the form is Telegram's in the share card.
+  const apps = page.getByRole("list").filter({ has: page.getByRole("link", { name: "WhatsApp" }) });
+  const telegram = (await apps.getByRole("link", { name: "Telegram" }).boundingBox())!;
+  await page.mouse.move(telegram.x + telegram.width / 2, telegram.y + telegram.height / 2);
+  expect(await page.evaluate(() => matchMedia("(hover: hover)").matches)).toBe(false);
+  const styles = await apps.getByRole("link").evaluateAll(async (links) => {
+    // Any hover transition run to its end first.
+    await Promise.all(links.flatMap((link) => link.getAnimations().map((animation) => animation.finished)));
+    return links.map((link) => [link.matches(":hover"), getComputedStyle(link).transform]);
+  });
+  expect(styles).toContainEqual([true, "none"]);
+  expect(styles.map(([, transform]) => transform)).toEqual(styles.map(() => "none"));
+  await frame(page, "the share card, no app highlighted");
+});
