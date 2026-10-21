@@ -187,11 +187,45 @@ the code should go instead. The rules below say which ones are enforced.
 - **Comments describe the code as it is**: what it does and why, never
   its history (what it replaced, what changed, which plan brought it).
   History is for commit messages. Nothing references `plans/`, which is
-  temporary: a plan is deleted when it's done.
+  temporary: a plan is deleted when it's done. The rest of the rules are
+  under "Comments" below.
 - **Imports** use the `@/` alias for anything outside the current folder.
 - **Tests** sit next to the code they test (`*.test.ts`,
   `*.browser.test.tsx`); see `docs/testing.md`. Tests of the whole repo,
   rather than of one file, go in `tests/checks/`.
+
+## Comments
+
+A comment describes the code as it stands, to someone reading it for the
+first time. It doesn't tell the code's history (above). Beyond that:
+
+- **No measurement that goes out of date.** "A fifth of the MPs", "1790 of
+  1880 tests" or "about 40 constituencies" is wrong after the next import
+  or run, and nothing in the gate checks it. Write the lasting claim ("most
+  MPs have no reply yet") and put the figure in the commit message, which
+  has a date. A number the code fixes is fine: a threshold the next line
+  compares against, or a cap the config sets.
+- **Explain once, where the thing is defined.** The same explanation at
+  every call site is one more copy to keep true each time, and the copies
+  drift apart. Elsewhere, one line that names the thing is enough.
+- **Tests comment the fact a fixture pins, not the fixture.** Write "two
+  MPs share a surname, so the match has to use the constituency", not "an
+  MP list with a second Smith in it so that matching on surname alone
+  picks the wrong one". The reader wants to know which property of the
+  data the test depends on, so they keep it when they change the fixture.
+- **A comment about code somewhere else has to be checked from both
+  sides.** One that describes another file, a route, a service or what the
+  page shows is a claim about that other place, and whichever side moves
+  can break it. If they no longer match, the comment has the bug: fix it
+  in the same change as the code, or delete it.
+
+Keep comments short. Readers skip a long comment whole, including the part
+that mattered, so cut until only what a reader couldn't work out from the
+code remains. Do give the reason for anything a reader might simplify away,
+such as an ordering that isn't obvious or a workaround for a quirk in
+Next.js or a browser. "Rather than" is fine when it contrasts two options a
+reader could pick today ("a fixed height, not max-height, so a small photo
+still scales up"), never the code with what it used to be.
 
 ## SQL
 

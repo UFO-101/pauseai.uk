@@ -4,7 +4,7 @@ Read `README.md` first. It links the docs in `docs/`, including the code structu
 
 ## Comments describe the code as it is
 
-A comment says what the code does and why, as it stands. It doesn't tell the code's history: not what it replaced, what changed or moved, what it used to do, or which plan or PR brought it. That belongs in the commit message. Write "Every field is the kit's", not "Fields now come from the kit instead of each form's own". The same goes for docs.
+A comment says what the code does and why, as it stands. It doesn't tell the code's history: not what it replaced, what changed or moved, what it used to do, or which plan or PR brought it. That belongs in the commit message. Write "Every field is the kit's", not "Fields now come from the kit instead of each form's own". The same goes for docs. The rest of the rules (no counts that go stale, explain once at the definition, what a test fixture's comment says) are in `docs/code-structure.md`, "Comments".
 
 ## Scratch files
 
