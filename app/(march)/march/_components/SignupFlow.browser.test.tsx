@@ -49,6 +49,22 @@ describe("SignupFlow", () => {
     await expect.poll(() => document.activeElement).toBe(firstName.element());
   });
 
+  it("keeps the share card within a phone's width, its app row scrolling instead", async () => {
+    await page.viewport(390, 844);
+    await render(
+      <MarchSignupFrame>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr" }}>
+          <SignupFlow register={async () => ({ ok: true })} />
+        </div>
+      </MarchSignupFrame>,
+    );
+    await register();
+    await expect.element(shareHeading()).toBeVisible();
+    const card = shareHeading().element().parentElement!;
+    expect(card.getBoundingClientRect().width).toBeLessThanOrEqual(390);
+    await page.viewport(1280, 900);
+  });
+
   it("swaps at once with reduced motion", async () => {
     const real = window.matchMedia.bind(window);
     vi.spyOn(window, "matchMedia").mockImplementation((query) =>
