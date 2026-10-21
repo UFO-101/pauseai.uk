@@ -1,11 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { march } from "@/lib/content/march";
 import { marchSignupCopy } from "@/lib/content/march-signup";
 import type { MarchRegisterResult } from "../actions";
+import { cardMotionProps, type CardMotion } from "./card-motion";
 import { m } from "./classes";
 
 const copy = marchSignupCopy.form;
@@ -19,13 +19,22 @@ function errorFor(result: Exclude<MarchRegisterResult, { ok: true }> | "unreacha
 }
 
 /**
- * The registration form. `register` is the Server Action
- * (app/(march)/march/actions.ts), which adds the person to the Luma event;
- * once it has, the form moves on to the share step, the point of the flow.
+ * The registration form, the register band's first card. `register` is the
+ * Server Action (app/(march)/march/actions.ts), which adds the person to the
+ * Luma event; once it has, `onRegistered` moves on to the share card.
  * Phone, city and the mailing list opt-in are asked for, but not sent yet.
  */
-export default function SignupForm({ register }: { register: (input: unknown) => Promise<MarchRegisterResult> }) {
-  const router = useRouter();
+export default function SignupForm({
+  register,
+  onRegistered,
+  motion,
+  onLeft,
+}: {
+  register: (input: unknown) => Promise<MarchRegisterResult>;
+  onRegistered: () => void;
+  motion: CardMotion;
+  onLeft: () => void;
+}) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<FormError | null>(null);
 
@@ -55,17 +64,17 @@ export default function SignupForm({ register }: { register: (input: unknown) =>
       setSubmitting(false);
       return;
     }
-    router.push(march.sharePath);
+    onRegistered();
   }
 
   return (
-    <form className={m("signup")} method="post" onSubmit={handleSubmit}>
+    <form className={m("signup")} method="post" onSubmit={handleSubmit} {...cardMotionProps(motion, onLeft)}>
       <p className={m("signup-head")}>{copy.head}</p>
 
       <div className={m("signup-row")}>
         <div className={m("field")}>
           <label htmlFor="firstName">{copy.firstName}</label>
-          <input id="firstName" name="firstName" type="text" autoComplete="given-name" required />
+          <input id="firstName" name="firstName" type="text" autoComplete="given-name" required data-focus-first />
         </div>
         <div className={m("field")}>
           <label htmlFor="lastName">{copy.lastName}</label>

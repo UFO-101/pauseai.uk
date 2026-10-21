@@ -10,7 +10,7 @@ export default function MarchLayout({ children }: { children: React.ReactNode })
   preload("/fonts/anton-latin-400-normal.woff2", { as: "font", type: "font/woff2", crossOrigin: "anonymous" });
   return (
     <MarchSignupFrame>
-      <SignupHeader />
+      <SignupHeader overHero />
       {children}
     </MarchSignupFrame>
   );

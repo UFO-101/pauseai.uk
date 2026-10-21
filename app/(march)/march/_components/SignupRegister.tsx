@@ -1,14 +1,13 @@
 import type { MarchRegisterResult } from "../actions";
 import { m } from "./classes";
-import SignupForm from "./SignupForm";
+import SignupFlow from "./SignupFlow";
 
-/** The register band: what to expect, and the form. `register` is the form's Server Action. */
+/** The register band: what to expect, and the form and the cards after it. `register` is the form's Server Action. */
 export default function SignupRegister({ register }: { register: (input: unknown) => Promise<MarchRegisterResult> }) {
   return (
     <section id="register" className={m("band band-ink")}>
       <div className={m("container register-grid")}>
         <div className={m("register-intro")}>
-          <p className={m("eyebrow register-eyebrow")}>Step one</p>
           <h2 className={m("h-lg")}>Register for the march</h2>
           <p className={m("lede register-lede")}>
             Registering helps us know how many people to expect and lets us keep you updated before the day.
@@ -19,14 +18,14 @@ export default function SignupRegister({ register }: { register: (input: unknown
             <li>
               This event will be <strong>family friendly, law-abiding and strictly non-violent</strong>.
             </li>
-            <li>We will coordinate with the police ahead of the march.</li>
             <li>
               PauseAI is a <strong>big tent</strong> movement. Everyone is welcome, whatever their politics.
             </li>
+            <li>We will coordinate with the police ahead of the march.</li>
           </ol>
         </div>
 
-        <SignupForm register={register} />
+        <SignupFlow register={register} />
       </div>
     </section>
   );

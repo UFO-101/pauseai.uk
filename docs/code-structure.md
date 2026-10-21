@@ -21,7 +21,7 @@ app/
                           data, fixture builds only (docs/testing.md)
   (staff)/staff/          the staff interface, behind email login; no <Nav>,
                           no analytics, noindex
-  (march)/march/          the march sign-up and its share step: a sub-site in
+  (march)/march/          the march sign-up: a sub-site in
                           its own style, with its own header and the site's
                           footer (Styling, below)
   api/                    route handlers, only for things that need a URL
@@ -367,10 +367,10 @@ only a variant. The look itself (colours, type, buttons, cards) is in
 
 ### The march sign-up
 
-`/march` and `/march/share` (`app/(march)/march/`) are a sub-site in their
+`/march` (`app/(march)/march/`) is a sub-site in its
 own poster style, deliberately unlike the rest of the site: ink and paper,
-a hotter orange, Anton for headings, square corners and hard shadows. They
-follow the rules above, with these exceptions:
+a hotter orange, Anton for headings, square corners and hard shadows. It
+follows the rules above, with these exceptions:
 
 - **One stylesheet for the sub-site.** Its components share
   `_components/march.module.css`, in the order its rules cascade, and take
