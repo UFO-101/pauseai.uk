@@ -7,7 +7,7 @@ import type { Page } from "@playwright/test";
 // where to see in-person events near, by postcode, the device's location or
 // a local group, or only the online ones, and a link to a local group's or
 // the online ones (lib/events-url.ts). On the fixture calendar: in person
-// in London, Manchester, Oxford, Bristol and Leicester, Glasgow's with no
+// in London, Manchester, Oxford, Bristol and Leicester, Scotland's with no
 // venue yet, and one online.
 
 const events = (page: Page) => page.locator("#events");
@@ -91,11 +91,11 @@ test("a local group's events, venue set or not", async ({ page }) => {
   await expect(page).toHaveURL(`${BASE}/?events=oxford#events`);
   await frame(page, "Oxford's events, with the address bar saying so", { of: events(page) });
 
-  // Glasgow's meeting has no venue yet, so it's Glasgow's by its name.
+  // Scotland's meeting has no venue yet, so it's Scotland's by its name.
   await nearButton(page, copy.nearShort("Oxford")).click();
-  await page.getByRole("radio", { name: "Glasgow" }).click();
+  await page.getByRole("radio", { name: "Scotland" }).click();
   await expect(events(page).getByText("PauseAI Scotland Meeting")).toBeVisible();
-  await frame(page, "Glasgow's meeting, with no venue yet", { of: events(page) });
+  await frame(page, "Scotland's meeting, with no venue yet", { of: events(page) });
 });
 
 test("a link to a local group's events, or the online ones", async ({ page }) => {

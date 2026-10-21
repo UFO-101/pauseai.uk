@@ -48,7 +48,7 @@ describe("LocalGroupPage", () => {
   // band after them: no two neighbours alike.
   it.each([
     ["Leicester", ["white", "cream", "beige"]],
-    ["Glasgow", ["white", "beige"]],
+    ["Scotland", ["white", "beige"]],
   ] as const)("gives %s's bands after the events alternating colours", async (name, colours) => {
     const { container } = await render(<LocalGroupPage content={localGroupPages[name]} />);
     // A plain band is see-through, onto the cream page.
