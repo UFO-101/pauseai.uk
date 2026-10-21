@@ -21,6 +21,7 @@ import { userInfo } from "node:os";
 // compiles to CommonJS.)
 const MIGRATIONS = join(process.cwd(), "netlify", "database", "migrations");
 const TEST_MPS = JSON.parse(readFileSync(join(process.cwd(), "lib", "test-mps.json"), "utf8"));
+const FIXTURE_DATA = join(process.cwd(), "tests", "fixtures", "staff-data.sql");
 
 /** Whether a database URL points at this machine: localhost, or a Unix socket. */
 export function isLocal(url) {
@@ -155,6 +156,15 @@ export function addTestMps(url, email) {
     ),
   ]).flat();
   psql(url, "-c", sql.join("\n"));
+}
+
+/**
+ * Adds the fake supporters (tests/fixtures/staff-data.sql): Luma guests and
+ * contacts, letters to the test MPs, an opt-out. For a development database
+ * with DATA_FIXTURES=1, after addTestMps.
+ */
+export function addFixtureData(url) {
+  psql(url, "-1", "-f", FIXTURE_DATA);
 }
 
 //   node scripts/fresh-database.mjs <name> [--test-mp <email>]

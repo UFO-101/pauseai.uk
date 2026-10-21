@@ -189,7 +189,12 @@ describe("StaffAccountsTable", () => {
       />,
     );
     await expect.element(page.getByRole("cell", { name: "2026-10-20 09:00" })).toBeVisible();
+    expect(getComputedStyle(page.getByRole("cell", { name: "2026-10-20 09:00" }).element()).verticalAlign).toBe(
+      "middle",
+    );
     const jo = page.getByRole("form", { name: "jo@pauseai.uk" });
+    // A row says only the names; the form for someone new says what each opens.
+    await expect.element(jo.getByText(staffCopy.accounts.opens.admin)).not.toBeInTheDocument();
     await expect.element(jo.getByRole("checkbox", { name: staffCopy.accounts.names.supporters })).toBeChecked();
     await jo.getByRole("checkbox", { name: staffCopy.accounts.names.admin }).click();
     await jo.getByRole("button", { name: staffCopy.accounts.save }).click();
@@ -207,6 +212,13 @@ describe("StaffAccountsTable", () => {
     const add = page.getByRole("form", { name: staffCopy.accounts.addTitle });
     await add.getByRole("textbox", { name: staffCopy.accounts.emailLabel }).fill("sam@pauseai.uk");
     await expect.element(add.getByText(staffCopy.accounts.noPermissionHint)).toBeVisible();
+    await expect.element(add.getByText(staffCopy.accounts.opens.supporters)).toBeVisible();
+    await expect.element(add.getByText(staffCopy.accounts.opens.admin)).toBeVisible();
+    const boxes = add.getByRole("checkbox").all();
+    expect(boxes.map((box) => box.element().getAttribute("name"))).toEqual([
+      "permission:supporters",
+      "permission:admin",
+    ]);
     await add.getByRole("button", { name: staffCopy.accounts.save }).click();
     await vi.waitFor(() => expect(save.sent).toHaveLength(2));
     expect(save.sent[1]).toEqual({ email: "sam@pauseai.uk" });
@@ -247,7 +259,7 @@ describe("AccountsNotice", () => {
 });
 
 describe("KeepSignedIn", () => {
-  it("is unticked to start, with what it means under it, and sends remember=on once ticked", async () => {
+  it("is unticked to start, and sends remember=on once ticked", async () => {
     await render(
       <form data-testid="f">
         <KeepSignedIn />
@@ -255,7 +267,6 @@ describe("KeepSignedIn", () => {
     );
     const box = page.getByRole("checkbox", { name: staffCopy.login.keep });
     await expect.element(box).not.toBeChecked();
-    await expect.element(page.getByText(staffCopy.login.keepHint)).toBeVisible();
     const data = () => new FormData(page.getByTestId("f").element() as HTMLFormElement);
     expect(data().get("remember")).toBeNull();
     await box.click();

@@ -3,6 +3,8 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
+  addFixtureData,
+  addTestMps,
   copyDatabase,
   databaseNames,
   defaultHost,
@@ -94,6 +96,48 @@ describe.skipIf(process.env.NETLIFY === "true")("copying a database", () => {
         dropDatabase(template);
       }
       expect(databaseNames(`test_${process.pid}_`)).toEqual([]);
+    },
+  );
+
+  it(
+    "adds the test MPs and the fake supporters: one per email, linked to Luma and to their letters",
+    { timeout: 30_000 },
+    () => {
+      const name = `test_${process.pid}_fixtures`;
+      try {
+        const url = freshDatabase(name);
+        addTestMps(url, "mp@example.org");
+        addFixtureData(url);
+        expect(
+          runSql(
+            name,
+            "SELECT name, sources::text, events, letters, opted_out::text FROM supporters_summary ORDER BY name",
+          ),
+        ).toEqual([
+          "Alex Fixture	{luma}	1	0	",
+          "Dee Clined	{luma}	0	0	",
+          "Fay Follower	{luma}	0	0	",
+          "Jane Fixture	{letter,luma}	2	1	",
+          "Lee Letter	{letter}	0	1	",
+          "Pat Fixture	{luma}	1	0	{luma-calendar}",
+          "Sam Fixture	{luma}	2	0	",
+        ]);
+        // Every link's email is the supporter's, and nothing is left unlinked.
+        expect(
+          runSql(
+            name,
+            "SELECT count(*) FROM luma_people p WHERE NOT EXISTS (SELECT 1 FROM supporter_links l WHERE l.luma_user_id = p.user_id)",
+          ),
+        ).toEqual(["0"]);
+        expect(
+          runSql(
+            name,
+            "SELECT count(*) FROM letters t WHERE NOT EXISTS (SELECT 1 FROM supporter_links l WHERE l.letter_id = t.id)",
+          ),
+        ).toEqual(["0"]);
+      } finally {
+        dropDatabase(name);
+      }
     },
   );
 });

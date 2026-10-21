@@ -31,7 +31,7 @@ export default function StaffNav({ email, account = false, permissions = [], cur
   // The pause symbol and the name: the way home, except at home.
   const mark = (
     <>
-      <Image src="/images/logos/Pause-Symbol.svg" alt="" width={616} height={616} className={styles.mark} />
+      <Image src="/images/logos/Pause-Symbol.svg" alt="" width={616} height={616} className={styles.mark} priority />
       <span>{staffCopy.nav.title}</span>
     </>
   );

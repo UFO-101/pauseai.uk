@@ -1,0 +1,5 @@
+/* The accounts table: each row holds a form with checkboxes and a button,
+   so every cell's text sits on their middle. */
+.accounts :is(th, td) {
+  vertical-align: middle;
+}

@@ -21,7 +21,8 @@ type Props = {
 /**
  * One account's form: a checkbox per permission and Save, sending
  * "permission:<name>" for each ticked box (lib/staff-forms.ts). In a row of
- * the table it's a row; for someone new, a stack.
+ * the table it's a row; for someone new, a stack, with what each permission
+ * opens under its box.
  */
 export default function StaffAccountForm({ email, permissions, save }: Props) {
   const [ticked, setTicked] = useState(new Set(permissions));
@@ -37,21 +38,23 @@ export default function StaffAccountForm({ email, permissions, save }: Props) {
         <input type="hidden" name="email" value={email} />
       )}
       {PERMISSIONS.map((permission) => (
-        <Checkbox
-          key={permission}
-          name={`permission:${permission}`}
-          checked={ticked.has(permission)}
-          onChange={(on) =>
-            setTicked((was) => {
-              const next = new Set(was);
-              if (on) next.add(permission);
-              else next.delete(permission);
-              return next;
-            })
-          }
-        >
-          {staffCopy.accounts.names[permission]}
-        </Checkbox>
+        <div key={permission}>
+          <Checkbox
+            name={`permission:${permission}`}
+            checked={ticked.has(permission)}
+            onChange={(on) =>
+              setTicked((was) => {
+                const next = new Set(was);
+                if (on) next.add(permission);
+                else next.delete(permission);
+                return next;
+              })
+            }
+          >
+            {staffCopy.accounts.names[permission]}
+          </Checkbox>
+          {email === undefined && <Hint>{staffCopy.accounts.opens[permission]}</Hint>}
+        </div>
       ))}
       <SubmitButton variant="primary" size="small">
         {staffCopy.accounts.save}

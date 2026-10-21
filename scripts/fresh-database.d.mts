@@ -6,6 +6,7 @@ export function runSql(name: string, sql: string): string[];
 export function databaseNames(prefix: string): string[];
 export function freshDatabase(name: string, options?: { singleTransaction?: boolean; upTo?: string }): string;
 export function addTestMps(url: string, email: string): void;
+export function addFixtureData(url: string): void;
 export function defaultHost(port?: string, places?: string[]): string;
 export function resetDatabase(url: string, options?: { singleTransaction?: boolean; upTo?: string }): string;
 export function isLocal(url: string): boolean;

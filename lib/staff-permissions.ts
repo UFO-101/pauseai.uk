@@ -2,7 +2,8 @@
 // pauseai.uk address can log in; an account (lib/server/staff-accounts.ts)
 // opens the staff pages, and these open more.
 
-export const PERMISSIONS = ["admin", "supporters"] as const;
+// In the order forms list them.
+export const PERMISSIONS = ["supporters", "admin"] as const;
 /** 'supporters' sees supporters; 'admin' adds and removes accounts and sets permissions. */
 export type Permission = (typeof PERMISSIONS)[number];
 

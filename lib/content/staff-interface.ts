@@ -9,7 +9,6 @@ export const staffCopy = {
     intro: "Enter your staff email to sign in on this browser.",
     emailLabel: "Email",
     keep: "Keep me signed in",
-    keepHint: "On this browser, for 30 days. Otherwise you're signed out when you close it.",
     button: "Send sign in link",
     sent: "Check your email and open the link in this browser.",
     again: "Try again",
@@ -163,6 +162,11 @@ export const staffCopy = {
     names: {
       admin: "Admin",
       supporters: "Supporters",
+    } as Record<string, string>,
+    // Under each permission's box on the form for someone new: what it opens.
+    opens: {
+      supporters: "⁂ The supporter pages: who has come to events, follows the calendar or wrote to their MP.",
+      admin: "⁂ This page, to add and remove staff and set permissions, and the audit log.",
     } as Record<string, string>,
     columns: {
       email: "Email",
