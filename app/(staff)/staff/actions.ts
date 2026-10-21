@@ -15,7 +15,7 @@ import { decideHeldSync, syncMps } from "@/lib/server/mp-sync";
 import { setStatus, updatePolitician } from "@/lib/server/politicians";
 import { importSignatories } from "@/lib/server/signatory-import";
 import { requireStaff } from "@/lib/server/staff-auth";
-import { setStaffPermissions } from "@/lib/server/staff-permissions";
+import { removeStaffAccount, saveStaffAccount } from "@/lib/server/staff-accounts";
 
 /** The button in the politicians list: marks one as signed today, or as not signed. */
 export async function markSigned(form: FormData): Promise<void> {
@@ -106,13 +106,26 @@ export async function unblockAddress(form: FormData): Promise<void> {
   revalidatePath("/staff", "layout");
 }
 
-/** The permissions page: gives an address exactly the permissions ticked, as the admin. */
-export async function setPermissions(form: FormData): Promise<void> {
+/** Where the accounts page goes after a change: back to itself, saying why if the change was refused. */
+function accountsPage(change: "changed" | "unchanged" | "last-admin"): never {
+  revalidatePath("/staff/accounts");
+  redirect(change === "last-admin" ? "/staff/accounts?notice=last-admin" : "/staff/accounts");
+}
+
+/** The accounts page: gives an address an account with exactly the permissions ticked, as the admin. */
+export async function saveStaffAccountNow(form: FormData): Promise<void> {
   const { email } = await requireStaff("admin");
   const parsed = permissionsFrom(form);
   if (!parsed) return;
-  await setStaffPermissions(parsed.email, parsed.permissions, email);
-  revalidatePath("/staff/permissions");
+  accountsPage(await saveStaffAccount(parsed.email, parsed.permissions, email));
+}
+
+/** The accounts page: removes an account, ending its sessions. */
+export async function removeStaffAccountNow(form: FormData): Promise<void> {
+  const { email } = await requireStaff("admin");
+  const parsed = permissionsFrom(form);
+  if (!parsed) return;
+  accountsPage(await removeStaffAccount(parsed.email, email));
 }
 
 /**
@@ -126,5 +139,5 @@ export async function eraseSupporterNow(form: FormData): Promise<void> {
   const result = await eraseSupporter(parsed.id, parsed.reference, email);
   if (!result) return;
   revalidatePath("/staff", "layout");
-  redirect(`/staff/supporters?erased=${result.lumaFailed.length === 0 ? "1" : "luma-failed"}`);
+  redirect("/staff/supporters?erased=1");
 }

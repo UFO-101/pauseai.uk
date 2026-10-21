@@ -7,15 +7,25 @@ import { staffCopy } from "@/lib/content/staff-interface";
 import type { SupportersPage } from "@/lib/server/supporters";
 import type { SupportersSearch } from "@/lib/staff-search";
 import { staffDate } from "@/lib/staff-time";
+import { parseSort, sortHref } from "@/lib/staff-sort";
+import { SUPPORTER_SORTS, type SupporterSort } from "@/lib/supporters";
+import SortHeading from "./SortHeading";
 import SupporterBadges from "./SupporterBadges";
 import styles from "./SupportersTable.module.css";
 
-/** The list's URL with the same filters and another page. */
+/** The list's filters as typed, the URL's, without the page or the notice. */
+function filtersOf(search: SupportersSearch): Record<string, string> {
+  const { page, erased, filter, ...rest } = search as SupportersSearch & { filter?: unknown };
+  void page;
+  void erased;
+  void filter;
+  return rest;
+}
+
+/** The list's URL with the same filters and sort, and another page. */
 function pageHref(search: SupportersSearch, page: number): string {
   const params = new URLSearchParams();
-  for (const [name, value] of Object.entries(search)) {
-    if (typeof value === "string" && value && name !== "page") params.set(name, value);
-  }
+  for (const [name, value] of Object.entries(filtersOf(search))) if (value) params.set(name, value);
   if (page > 1) params.set("page", String(page));
   const query = params.toString();
   return query ? `/staff/supporters?${query}` : "/staff/supporters";
@@ -26,6 +36,16 @@ export default function SupportersTable({ page, search }: { page: SupportersPage
   const copy = staffCopy.supporters;
   if (page.supporters.length === 0) return <p>{copy.none}</p>;
   const current = Number(search.page) || 1;
+  const sort = parseSort(SUPPORTER_SORTS, "active", search.sort, search.dir);
+  const heading = (key: SupporterSort, label: string) => (
+    <SortHeading
+      sortKey={key}
+      current={sort}
+      href={sortHref("/staff/supporters", filtersOf(search), SUPPORTER_SORTS, sort, key)}
+    >
+      {label}
+    </SortHeading>
+  );
   return (
     <>
       <p>
@@ -34,13 +54,13 @@ export default function SupportersTable({ page, search }: { page: SupportersPage
       <Table>
         <thead>
           <tr>
-            <th>{copy.columns.name}</th>
+            {heading("name", copy.columns.name)}
             <th>{copy.columns.email}</th>
             <th>{copy.columns.badges}</th>
-            <th>{copy.columns.firstSeen}</th>
-            <th>{copy.columns.lastActive}</th>
-            <th>{copy.columns.events}</th>
-            <th>{copy.columns.letters}</th>
+            {heading("first", copy.columns.firstSeen)}
+            {heading("active", copy.columns.lastActive)}
+            {heading("events", copy.columns.events)}
+            {heading("letters", copy.columns.letters)}
             <th>{copy.columns.optedOut}</th>
           </tr>
         </thead>
@@ -69,18 +89,20 @@ export default function SupportersTable({ page, search }: { page: SupportersPage
         </tbody>
       </Table>
       {page.pages > 1 && (
-        <Actions>
-          {current > 1 && (
-            <ButtonLink variant="ghost" size="small" href={pageHref(search, current - 1)}>
-              {copy.previous}
-            </ButtonLink>
-          )}
-          {current < page.pages && (
-            <ButtonLink variant="ghost" size="small" href={pageHref(search, current + 1)}>
-              {copy.next}
-            </ButtonLink>
-          )}
-        </Actions>
+        <div className={styles.paging}>
+          <Actions>
+            {current > 1 && (
+              <ButtonLink variant="ghost" size="small" href={pageHref(search, current - 1)}>
+                {copy.previous}
+              </ButtonLink>
+            )}
+            {current < page.pages && (
+              <ButtonLink variant="ghost" size="small" href={pageHref(search, current + 1)}>
+                {copy.next}
+              </ButtonLink>
+            )}
+          </Actions>
+        </div>
       )}
     </>
   );

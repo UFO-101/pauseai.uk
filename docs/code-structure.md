@@ -12,9 +12,9 @@ route next to that route.
 
 ```
 app/
-  layout.tsx              root: fonts, metadata, footer, cookie consent
+  layout.tsx              root: fonts, metadata, cookie consent
   not-found.tsx
-  (site)/                 public pages; layout.tsx renders <Nav>
+  (site)/                 public pages; layout.tsx renders <Nav> and <Footer>
   (tools)/                unlisted volunteer tools and trackers; layout.tsx
                           renders <Nav> and turns analytics off
     gallery/              the component gallery: every component on fixture
@@ -171,8 +171,8 @@ the code should go instead. The rules below say which ones are enforced.
   `lib/content/staff-interface.ts`. So the wording can be changed in one
   file without touching the code, and components and tests refer to it by
   name (`staffCopy.syncs.syncNow`), so changing it breaks nothing. Words
-  not written yet are placeholders: Latin, starting with the asterism
-  (U+2042), so they can't be mistaken for real copy.
+  not written yet are placeholders: a draft in English, starting with the
+  asterism (U+2042), so they can't be mistaken for real copy.
   `tests/checks/placeholder-copy.test.ts` fails while any are left, which stops them
   being deployed (AGENTS.md).
 - **Names say which one.** There will be many campaigns, letters, imports

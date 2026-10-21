@@ -5,7 +5,7 @@ import type { Permission } from "./staff-permissions";
 // its pages require it (requireStaff(permission)).
 
 export type StaffPageId =
-  "supporters" | "politicians" | "letters" | "emails" | "import" | "history" | "permissions" | "changes";
+  "supporters" | "politicians" | "letters" | "emails" | "import" | "history" | "accounts" | "changes";
 export type StaffSectionId = "supporters" | "politicians" | "email" | "data" | "admin";
 
 export type StaffSection = {
@@ -29,13 +29,15 @@ export const STAFF_SECTIONS: readonly StaffSection[] = [
     pages: [
       { id: "import", href: "/staff/import-data" },
       { id: "history", href: "/staff/import-history" },
-      { id: "changes", href: "/staff/audit-log" },
     ],
   },
   {
     id: "admin",
     permission: "admin",
-    pages: [{ id: "permissions", href: "/staff/permissions" }],
+    pages: [
+      { id: "accounts", href: "/staff/accounts" },
+      { id: "changes", href: "/staff/audit-log" },
+    ],
   },
 ];
 

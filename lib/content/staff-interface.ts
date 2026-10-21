@@ -1,6 +1,4 @@
-// Every word the staff interface (/staff) shows. Placeholder copy (AGENTS.md:
-// "Never write final copy"): the Latin roughly says what the English should,
-// so the screens can be used meanwhile.
+// Every word the staff interface (/staff) shows.
 
 import type { ImportJob } from "@/lib/import-runs";
 
@@ -10,6 +8,8 @@ export const staffCopy = {
     title: "Staff log in",
     intro: "Enter your staff email to sign in on this browser.",
     emailLabel: "Email",
+    keep: "Keep me signed in",
+    keepHint: "On this browser, for 30 days. Otherwise you're signed out when you close it.",
     button: "Send sign in link",
     sent: "Check your email and open the link in this browser.",
     again: "Try again",
@@ -26,7 +26,7 @@ export const staffCopy = {
     // At the left of the bar, and the way to the home page.
     title: "PauseAI UK Staff",
     home: "Home",
-    permissions: "Permissions",
+    accounts: "Staff accounts",
     // The groups the pages are in, on the home page.
     sections: {
       supporters: "Supporters",
@@ -40,18 +40,18 @@ export const staffCopy = {
     import: "Import data",
     changes: "Audit log",
     history: "Import history",
-    letters: "Letters",
+    letters: "Letters to MPs",
     emails: "Blocked emails",
     logout: "Log out",
   },
-  // The home page: the pages you can see, in groups, and whom to ask for more.
+  // The home page: whom to ask for an account; or the pages you can see,
+  // in groups, and which permissions you have, or that you have none.
   home: {
     title: "Home",
-    // Everyone sees the ordinary pages; this says which extra permissions
-    // you have, or that you have none and whom to ask.
+    noAccount: "You don't have a staff account yet.",
     permissions: (list: string) => `Your permissions: ${list}.`,
-    none: "You have no extra permissions.",
-    ask: (admins: string) => `⁂ Pete ab ${admins}.`,
+    none: "You have no permissions.",
+    ask: (admins: string) => `Ask ${admins}.`,
   },
   // The supporters list (/staff/supporters) and a supporter's page.
   supporters: {
@@ -64,7 +64,11 @@ export const staffCopy = {
       search: "Name, email or phone",
       source: "Source",
       anySource: "Any",
-      registered: "Registered for an event",
+      events: "Luma events",
+      anyEvents: "Any",
+      registered: "Registered for one or more",
+      lists: "Mailing lists",
+      anyList: "Any",
       active: "Last active",
       anyTime: "Any time",
       activeWithin: {
@@ -76,82 +80,86 @@ export const staffCopy = {
       from: "First seen from",
       to: "First seen to",
       unsubscribed: "Unsubscribed",
-      postcode: "Has a postcode",
       sort: "Sort by",
-      sorts: { active: "Last activity", first: "First sign-up", name: "Name" } as Record<string, string>,
+      sorts: {
+        active: "Last activity",
+        first: "First sign-up",
+        name: "Name",
+        events: "Luma events",
+        letters: "Letters to MP",
+      } as Record<string, string>,
       filter: "Search",
     },
     columns: {
       name: "Name",
       email: "Email",
-      badges: "Badges",
+      badges: "Activities",
       firstSeen: "First sign-up",
       lastActive: "Last activity",
-      events: "Events",
-      letters: "Letters",
+      events: "Luma events",
+      letters: "Letters to MP",
       optedOut: "Unsubscribed",
     },
     noName: "(no name)",
     moreEmails: (n: number) => `+${n}`,
     // The badges: the sources a supporter is in, and what they did there.
     badges: {
-      lumaContact: "Luma contact",
-      registered: (n: number) => `Registered ${n}`,
+      lumaContact: "Follows Luma",
+      registered: "Luma events",
       letter: "Wrote to MP",
     },
     sources: { luma: "Luma", letter: "Letter" } as Record<string, string>,
     lists: { "luma-calendar": "Luma calendar emails" } as Record<string, string>,
-    // A supporter's page.
+    // A supporter's page: one box of what we know, then the history.
     detail: {
-      identitiesTitle: "Names and emails",
-      identity: (source: string, when: string) => `from ${source}, ${when}`,
-      contactsTitle: "Phones and postcodes",
-      contactColumns: {
-        when: "When",
-        source: "Source",
-        phone: "Phone",
-        postcode: "Postcode",
-        place: "Place",
-      },
-      linksTitle: "Links",
-      link: (source: string, id: string, value: string) => `${source} ${id}: same email ${value}`,
-      optOutsTitle: "Mailing lists",
-      optedOut: (since: string, source: string) => `unsubscribed ${since} (${source})`,
+      emails: "Email",
+      phone: "Phone",
+      postcode: "Postcode",
+      firstSeen: "First seen",
+      lastActive: "Last activity",
+      /** Where a detail came from and when: "Luma, 26 Sept 2026". */
+      from: (sources: string, when: string) => `${sources}, ${when}`,
+      optedOut: (since: string) => `unsubscribed ${since}`,
       notOptedOut: "subscribed",
       activityTitle: "History",
       noActivity: "Nothing yet.",
       kinds: {
         "luma-contact": "Followed the Luma calendar",
-        "luma-registered": "Registered for an event",
-        letter: "Wrote to their MP",
-        "letter-replied": "MP replied",
-        "opted-out": "Unsubscribed",
-        resubscribed: "Subscribed again",
+        "luma-registered": "Registered for",
+        letter: "Wrote to",
+        "letter-replied": "Reply from",
+        "opted-out": "Unsubscribed from",
+        resubscribed: "Subscribed again to",
       } as Record<string, string>,
+      // A registration's status, shown only when it isn't approved.
       statuses: {
-        approved: "approved",
         pending_approval: "awaiting approval",
         waitlist: "waitlisted",
         declined: "declined",
       } as Record<string, string>,
     },
   },
-  // Erasing a supporter, at the foot of their page, and the list's notice afterwards.
+  // Erasing a supporter: the red button at the foot of their page, and the
+  // page it goes to, with the form; then the list's notice afterwards.
   erase: {
     title: "Erase this supporter",
+    // Beside the button, at the foot of the supporter's page.
+    note: "If they've asked to be forgotten, for example a GDPR request.",
     intro:
-      "For when someone asks to be forgotten, for example a GDPR erasure request. Everything we hold about this person is deleted: letters, event registrations, their Luma contact. What stays is what stops us emailing them: blocked addresses and unsubscribes.",
+      "For when someone asks to be forgotten, for example a GDPR erasure request. Everything we hold about this person is deleted: letters, event registrations, their Luma contact. We keep references to them in blocked addresses and unsubscribes.",
     referenceLabel: "Request reference",
-    referenceHint: "⁂ Numerus aut dies petitionis, pro actis; nomen nullum.",
+    referenceHint:
+      "Put the number or date of the request for the audit log. Don't give personal information about the person as that gets logged.",
     confirm: "I'm sure: this person asked to be erased.",
     button: "Erase",
+    cancel: "Cancel",
     done: "Erased.",
-    lumaFailed: "⁂ Deleta est hic; sed Luma contactum non removit: id manu facito.",
   },
-  // The permissions page (/staff/permissions), for admins.
-  permissions: {
-    title: "Permissions",
-    intro: "⁂ Quisque cum inscriptione pauseai.uk intrare potest; hae potestates plus permittunt.",
+  // The accounts page (/staff/accounts), for admins: who may use the staff
+  // pages, and what each may do.
+  accounts: {
+    title: "Staff accounts",
+    intro: "⁂ Anyone with a pauseai.uk address can log in. An account opens the staff pages; a permission opens more.",
     names: {
       admin: "Admin",
       supporters: "Supporters",
@@ -159,16 +167,17 @@ export const staffCopy = {
     columns: {
       email: "Email",
       permissions: "Permissions",
-      grantedBy: "Granted by",
-      grantedAt: "When",
+      addedBy: "Added by",
+      addedAt: "When",
     },
-    builtIn: "Built in: everything",
-    // Under the form for someone new.
-    everyoneCanLogIn:
-      "⁂ Quisque cum inscriptione pauseai.uk iam intrare et paginas ordinarias videre potest; potestas plus dat.",
     save: "Save",
+    remove: "Remove",
     addTitle: "Add someone",
     emailLabel: "Email",
+    // Under the form for someone new.
+    noPermissionHint: "⁂ With no box ticked they see the ordinary pages.",
+    // When a change would leave no admin.
+    lastAdmin: "The last administrator can't be removed or lose permissions to administrate.",
   },
   houses: {
     commons: "House of Commons",
@@ -273,7 +282,7 @@ export const staffCopy = {
       after:
         " are marked as signed for the “Support the Artificial Superintelligence Bill” campaign. This can't be changed by hand.",
     },
-    importNow: "Read it now",
+    importNow: "Import ControlAI letter",
     never: "Not read yet.",
     result: (r: { signatories: number; matched: number; added: number; removed: number }) =>
       `${r.signatories} names, ${r.matched} found here; ${r.added} added, ${r.removed} removed.`,
@@ -289,7 +298,7 @@ export const staffCopy = {
       link: "our Luma calendar",
       after: ", who registered for each, and who follows the calendar, every hour.",
     },
-    importNow: "Import now",
+    importNow: "Import Luma",
     never: "Not imported yet.",
     // The counts of a run, then why it stopped early, if it did.
     result: (r: {
@@ -320,7 +329,7 @@ export const staffCopy = {
     },
     /** The test MPs (lib/test-mps.json) aren't in Airtable; every import adds any that are missing. */
     testMps: "Each import also adds the test MPs, who aren’t in Airtable, if any are missing.",
-    syncNow: "Import MPs now",
+    syncNow: "Import MPs",
     none: "Not yet imported.",
     added: "Added",
     removed: "Removed",
@@ -362,7 +371,7 @@ export const staffCopy = {
       after:
         ", and lists where they disagree. Nothing is changed: fix problems in Airtable, and the next import copies the fix.",
     },
-    checkNow: "Check now",
+    checkNow: "Check MPs",
     never: "Never checked",
     allGood: "All good.",
     problems: (n: number) => `${n} problem${n === 1 ? "" : "s"}`,

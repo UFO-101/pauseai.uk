@@ -26,7 +26,7 @@ column about a person without a change here isn't done.
 | **Supporters**: the link between a Luma user and a letter writer with the same email                                                                                                                        | So staff see one person, not two records                                                         | As above                                                                                                                                                                               | `supporters`, `supporter_links`                                         | With the records it links                                                                                                                                                        |
 | **Opt-outs**: an email address and that it unsubscribed from the Luma calendar's emails, and when                                                                                                           | To never email an address that asked us not to                                                   | Legal obligation (PECR, the right to object)                                                                                                                                           | `opt_outs`                                                              | Kept after erasure: it exists to honour the person's wish                                                                                                                        |
 | **Email problems and blocks**: an address, that an email to it bounced or was reported as spam, and the provider's reason                                                                                   | To not send to it again                                                                          | Legal obligation and legitimate interests (deliverability)                                                                                                                             | `email_problems`, `email_blocks`                                        | Kept after erasure, for the same reason                                                                                                                                          |
-| **Staff**: pauseai.uk addresses, login links and sessions, permissions, and the audit log of what each staff member did (including which supporter they viewed or erased, by ID)                            | To run the staff interface and to be able to show who saw what                                   | Legitimate interests                                                                                                                                                                   | `staff_login_links`, `staff_sessions`, `staff_permissions`, `audit_log` | Links 15 minutes, sessions a week; the audit log indefinitely, holding IDs and references, not names or addresses                                                                |
+| **Staff**: pauseai.uk addresses, login links and sessions, accounts and their permissions, and the audit log of what each staff member did (including which supporter they viewed or erased, by ID)         | To run the staff interface and to be able to show who saw what                                   | Legitimate interests                                                                                                                                                                   | `staff_login_links`, `staff_sessions`, `staff_accounts`, `audit_log`    | Links 15 minutes, sessions a day, or 30 days renewed on use when kept; the audit log indefinitely, holding IDs and references, not names or addresses                            |
 | **Postcodes typed on the home page** for events near you                                                                                                                                                    | To show nearby events                                                                            | Legitimate interests                                                                                                                                                                   | Nowhere: sent to postcodes.io and kept in the browser's session storage | Not kept                                                                                                                                                                         |
 | **Analytics**                                                                                                                                                                                               | To see how the site is used                                                                      | Consent (the cookie banner)                                                                                                                                                            | Google Analytics, controlled by Stichting PauseAI                       | Per Google's and Stichting PauseAI's terms                                                                                                                                       |
 | **Donations**                                                                                                                                                                                               | To take and record donations                                                                     | Contract and legal obligation                                                                                                                                                          | Stripe; a record here                                                   | 6 years, per the privacy policy                                                                                                                                                  |
@@ -44,8 +44,9 @@ no disclosure outside the body without consent. It needs:
   PauseAI's member database shares a member's details with PauseAI UK only
   where the member ticked "share your details with PauseAI UK", and the
   same consent would be needed the other way;
-- security in proportion: the `supporters` permission, each viewing in the
-  audit log, erasure on request, and the backups' retention below;
+- security in proportion: staff accounts and the `supporters` permission,
+  each viewing in the audit log, erasure on request, and the backups'
+  retention below;
 - the privacy policy saying so.
 
 ## Processors
@@ -66,14 +67,15 @@ A request arrives as an email address, to the address in the privacy
 policy, and is answered within a month. Staff with the `supporters`
 permission find the supporter by email and erase them from their page,
 giving the request's reference, which goes in the audit log without the
-name or address. That deletes what each source holds here and asks Luma to
-remove the contact ("Supporters" in `docs/domain-concepts.md`). Then by
-hand:
+name or address. That deletes what each source holds here ("Supporters" in
+`docs/domain-concepts.md`). Then by hand:
 
+- in Luma, remove the person from the calendar's contacts, and ask Luma
+  about its guest lists of past events (the API offers neither for us to
+  do automatically; removal is documented but we keep that step a
+  person's);
 - the policy team's copy of the letter in Airtable ("Web form emails"),
   and the copy in the policy team's inbox;
-- Luma's own guest lists of past events, if Luma will (ask Luma; the API
-  doesn't offer it);
 - the backups: Netlify's and ours expire by themselves (30 and 90 days),
   which is what the policy says, and they're never restored except to
   recover from a loss, after which the erasure would be repeated.

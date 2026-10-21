@@ -29,7 +29,6 @@ describe("fixtureResponse", () => {
     expect(second.has_more).toBe(false);
     const noEvent = await fixtureResponse("https://public-api.luma.com/v1/events/guests/list")!.json();
     expect(noEvent.entries[0].id).toBe("gst-1-");
-    expect(await fixtureResponse("https://public-api.luma.com/v1/calendars/contacts/remove")!.json()).toEqual({});
     const contacts = await fixtureResponse("https://public-api.luma.com/v1/calendars/contacts/list?x=1")!.json();
     expect(contacts.entries).toHaveLength(2);
     expect(contacts.has_more).toBe(true);

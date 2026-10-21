@@ -25,7 +25,7 @@ function open(token?: string, browser: string | null = BROWSER) {
 }
 
 /** Emails jo@pauseai.uk a login link, asked for from BROWSER, and returns its token. */
-async function linkToken(): Promise<string> {
+async function linkToken(remember = false): Promise<string> {
   let body = "";
   server.use(
     http.post("https://api.postmarkapp.com/email", async ({ request }) => {
@@ -33,7 +33,7 @@ async function linkToken(): Promise<string> {
       return HttpResponse.json({ ErrorCode: 0, MessageID: crypto.randomUUID() });
     }),
   );
-  await sendLoginLink("jo@pauseai.uk", new Request("https://pauseai.uk/staff/api/login"), BROWSER);
+  await sendLoginLink("jo@pauseai.uk", new Request("https://pauseai.uk/staff/api/login"), BROWSER, remember);
   return body.match(/token=([\w-]+)/)![1];
 }
 
@@ -52,12 +52,21 @@ describeWithDatabase("GET /staff/api/callback", () => {
     expect(session).toMatch(/HttpOnly/);
     expect(session).toMatch(/Secure/);
     expect(session).toMatch(/SameSite=lax/i);
-    expect(session).toMatch(/Max-Age=604800/);
+    // For the browser's session: no expiry, and no marker to renew.
+    expect(session).not.toMatch(/Max-Age/);
+    expect(res.headers.getSetCookie().find((c) => c.startsWith("staff_keep="))).toBeUndefined();
     expect(await sessionEmail(session.split(";")[0].split("=")[1])).toBe("jo@pauseai.uk");
     // The browser's login cookie has done its job.
     expect(res.headers.getSetCookie().find((c) => c.startsWith("staff_login="))).toMatch(
       /^staff_login=; Path=\/staff; .*(Max-Age=0|Expires=Thu, 01 Jan 1970)/,
     );
+  });
+
+  it('with "Keep me signed in", sets the cookie for 30 days, with the marker that renews it', async () => {
+    const res = await open(await linkToken(true));
+    const cookies = res.headers.getSetCookie();
+    expect(cookies.find((c) => c.startsWith("staff_session="))).toMatch(/Max-Age=2592000/);
+    expect(cookies.find((c) => c.startsWith("staff_keep="))).toMatch(/^staff_keep=1; Path=\/staff; .*Max-Age=2592000/);
   });
 
   it("says a link opened in another browser belongs elsewhere, and leaves it working", async () => {

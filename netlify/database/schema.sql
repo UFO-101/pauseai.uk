@@ -366,6 +366,19 @@ ALTER TABLE public.politicians ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY 
 );
 
 --
+-- Name: staff_accounts; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.staff_accounts (
+    email text NOT NULL,
+    permissions text[] DEFAULT '{}'::text[] NOT NULL,
+    added_by text NOT NULL,
+    added_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT staff_accounts_email_check CHECK ((email = lower(email))),
+    CONSTRAINT staff_accounts_permissions_check CHECK ((permissions <@ ARRAY['admin'::text, 'supporters'::text]))
+);
+
+--
 -- Name: staff_login_links; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -375,20 +388,8 @@ CREATE TABLE public.staff_login_links (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     expires_at timestamp with time zone NOT NULL,
     used_at timestamp with time zone,
-    browser_hash text
-);
-
---
--- Name: staff_permissions; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.staff_permissions (
-    email text NOT NULL,
-    permissions text[] NOT NULL,
-    granted_by text NOT NULL,
-    granted_at timestamp with time zone DEFAULT now() NOT NULL,
-    CONSTRAINT staff_permissions_email_check CHECK ((email = lower(email))),
-    CONSTRAINT staff_permissions_permissions_check CHECK (((permissions <@ ARRAY['admin'::text, 'supporters'::text]) AND (cardinality(permissions) > 0)))
+    browser_hash text,
+    remember boolean DEFAULT false NOT NULL
 );
 
 --
@@ -399,7 +400,8 @@ CREATE TABLE public.staff_sessions (
     token_hash text NOT NULL,
     email text NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    expires_at timestamp with time zone NOT NULL
+    expires_at timestamp with time zone NOT NULL,
+    remember boolean DEFAULT false NOT NULL
 );
 
 --
@@ -832,18 +834,18 @@ ALTER TABLE ONLY public.politicians
     ADD CONSTRAINT politicians_test_postcode_key UNIQUE (test_postcode);
 
 --
+-- Name: staff_accounts staff_accounts_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.staff_accounts
+    ADD CONSTRAINT staff_accounts_pkey PRIMARY KEY (email);
+
+--
 -- Name: staff_login_links staff_login_links_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.staff_login_links
     ADD CONSTRAINT staff_login_links_pkey PRIMARY KEY (token_hash);
-
---
--- Name: staff_permissions staff_permissions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.staff_permissions
-    ADD CONSTRAINT staff_permissions_pkey PRIMARY KEY (email);
 
 --
 -- Name: staff_sessions staff_sessions_pkey; Type: CONSTRAINT; Schema: public; Owner: -

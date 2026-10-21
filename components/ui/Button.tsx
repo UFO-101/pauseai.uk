@@ -2,11 +2,11 @@ import Link from "next/link";
 import type { AnchorHTMLAttributes, ButtonHTMLAttributes, ComponentProps, Ref } from "react";
 import styles from "./Button.module.css";
 
-export type ButtonVariant = "primary" | "ghost" | "light";
+export type ButtonVariant = "primary" | "ghost" | "light" | "danger";
 export type ButtonSize = "small" | "large";
 
 type Look = {
-  /** `light` is for a button on a photo. */
+  /** `light` is for a button on a photo; `danger` for something that can't be undone. */
   variant: ButtonVariant;
   /** Medium when left out. */
   size?: ButtonSize;

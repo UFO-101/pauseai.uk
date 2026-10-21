@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  accountsSearch,
   emailsSearch,
   historySearch,
   lettersSearch,
@@ -58,11 +59,11 @@ describe("supportersSearch", () => {
       from: "",
       to: "",
       unsubscribed: "",
-      postcode: "",
       sort: "",
+      dir: "",
       page: "",
       erased: "",
-      filter: { sort: "active", page: 1 },
+      filter: { sort: "active", dir: "desc", page: 1 },
     });
     const all = supportersSearch({
       q: " jane ",
@@ -72,8 +73,8 @@ describe("supportersSearch", () => {
       from: "2026-01-01",
       to: "2026-12-31",
       unsubscribed: "1",
-      postcode: "1",
       sort: "name",
+      dir: "desc",
       page: "3",
     });
     expect(all.filter).toEqual({
@@ -84,18 +85,26 @@ describe("supportersSearch", () => {
       from: "2026-01-01",
       to: "2026-12-31",
       unsubscribed: true,
-      hasPostcode: true,
       sort: "name",
+      dir: "desc",
       page: 3,
     });
     expect(all.q).toBe(" jane ");
     expect(supportersSearch({ registered: "on" }).filter).toMatchObject({ registered: true });
     const bad = supportersSearch({ source: "x", active: "7", from: "soon", sort: "x", page: "0" });
-    expect(bad.filter).toEqual({ sort: "active", page: 1 });
+    expect(bad.filter).toEqual({ sort: "active", dir: "desc", page: 1 });
     expect(supportersSearch({ active: "older", sort: "first" }).filter).toMatchObject({
       active: "older",
       sort: "first",
     });
+  });
+});
+
+describe("accountsSearch", () => {
+  it("keeps only the notice it knows", () => {
+    expect(accountsSearch({ notice: "last-admin" })).toEqual({ notice: "last-admin" });
+    expect(accountsSearch({ notice: "x" })).toEqual({ notice: "" });
+    expect(accountsSearch({})).toEqual({ notice: "" });
   });
 });
 

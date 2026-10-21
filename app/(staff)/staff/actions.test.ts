@@ -5,6 +5,7 @@ import { query } from "@/lib/server/db";
 import { isBlocked, recordProblem } from "@/lib/server/email";
 import { getPolitician } from "@/lib/server/politicians";
 import { createSession } from "@/lib/server/staff-auth";
+import { saveStaffAccount } from "@/lib/server/staff-accounts";
 import { addTestPolitician, describeWithDatabase, useTestDatabase } from "@/tests/database";
 import { expectRedirect, requestCookies } from "@/tests/next-headers";
 import {
@@ -16,7 +17,8 @@ import {
   importFromAirtable,
   importLumaNow,
   markSigned,
-  setPermissions,
+  removeStaffAccountNow,
+  saveStaffAccountNow,
   syncNow,
   unblockAddress,
 } from "./actions";
@@ -44,6 +46,8 @@ describeWithDatabase("staff Server Actions", () => {
     requestCookies.clear();
     revalidatePath.mockClear();
     requestCookies.set("staff_session", await createSession("jo@pauseai.uk"));
+    // Every action needs an account; the permissions come per test.
+    await saveStaffAccount("jo@pauseai.uk", [], "test");
     vi.stubEnv("AIRTABLE_TOKEN", "token");
   });
   afterEach(() => vi.unstubAllEnvs());
@@ -60,7 +64,8 @@ describeWithDatabase("staff Server Actions", () => {
       () => decideSync(form({ id: "1", decision: "apply" })),
       () => importFromAirtable(),
       () => importLumaNow(),
-      () => setPermissions(form({ email: "x@pauseai.uk", "permission:admin": "on" })),
+      () => saveStaffAccountNow(form({ email: "x@pauseai.uk", "permission:admin": "on" })),
+      () => removeStaffAccountNow(form({ email: "x@pauseai.uk" })),
       () => eraseSupporterNow(form({ id: "1", reference: "r", confirm: "on" })),
       () => unblockAddress(form({ address: "a@example.org", note: "" })),
     ];
@@ -103,30 +108,35 @@ describeWithDatabase("staff Server Actions", () => {
     ]);
   });
 
-  it("setPermissions needs the admin permission, then grants exactly the boxes ticked, and ignores a bad form", async () => {
-    expect(await expectRedirect(() => setPermissions(form({ email: "x@pauseai.uk", "permission:admin": "on" })))).toBe(
-      "/staff",
-    );
-    await query(
-      "INSERT INTO staff_permissions (email, permissions, granted_by) VALUES ('jo@pauseai.uk', '{admin}', 'a')",
-    );
-    await setPermissions(form({ email: "Sam@pauseai.uk", "permission:supporters": "on" }));
-    expect(await query("SELECT email, permissions, granted_by FROM staff_permissions ORDER BY email")).toEqual([
-      { email: "jo@pauseai.uk", permissions: ["admin"], granted_by: "a" },
-      { email: "sam@pauseai.uk", permissions: ["supporters"], granted_by: "jo@pauseai.uk" },
+  it("saveStaffAccountNow and removeStaffAccountNow need admin, then keep the accounts, going back to the page", async () => {
+    const save = () => saveStaffAccountNow(form({ email: "Sam@pauseai.uk", "permission:supporters": "on" }));
+    expect(await expectRedirect(save)).toBe("/staff");
+    await saveStaffAccount("jo@pauseai.uk", ["admin"], "a");
+    expect(await expectRedirect(save)).toBe("/staff/accounts");
+    expect(await query("SELECT email, permissions, added_by FROM staff_accounts ORDER BY email")).toEqual([
+      { email: "jo@pauseai.uk", permissions: ["admin"], added_by: "test" },
+      { email: "sam@pauseai.uk", permissions: ["supporters"], added_by: "jo@pauseai.uk" },
     ]);
-    expect(revalidatePath).toHaveBeenCalledWith("/staff/permissions");
-    await setPermissions(form({ email: "nobody" }));
-    expect(await query("SELECT count(*)::int AS n FROM staff_permissions")).toEqual([{ n: 2 }]);
+    expect(revalidatePath).toHaveBeenCalledWith("/staff/accounts");
+    // The last admin can't lose admin, and the page says so.
+    expect(await expectRedirect(() => saveStaffAccountNow(form({ email: "jo@pauseai.uk" })))).toBe(
+      "/staff/accounts?notice=last-admin",
+    );
+    expect(await expectRedirect(() => removeStaffAccountNow(form({ email: "sam@pauseai.uk" })))).toBe(
+      "/staff/accounts",
+    );
+    expect(await query("SELECT count(*)::int AS n FROM staff_accounts")).toEqual([{ n: 1 }]);
+    // A bad form does nothing.
+    await saveStaffAccountNow(form({ email: "nobody" }));
+    await removeStaffAccountNow(form({ email: "nobody" }));
+    expect(await query("SELECT count(*)::int AS n FROM staff_accounts")).toEqual([{ n: 1 }]);
   });
 
   it("eraseSupporterNow needs the supporters permission, erases, and goes to the list; a bad form or no such supporter does nothing", async () => {
     vi.stubEnv("LUMA_API_KEY", "k");
     const erase = () => eraseSupporterNow(form({ id: "1", reference: "ICO-1", confirm: "on" }));
     expect(await expectRedirect(erase)).toBe("/staff");
-    await query(
-      "INSERT INTO staff_permissions (email, permissions, granted_by) VALUES ('jo@pauseai.uk', '{supporters}', 'a')",
-    );
+    await saveStaffAccount("jo@pauseai.uk", ["supporters"], "a");
     await importLumaNow();
     expect(await expectRedirect(erase)).toBe("/staff/supporters?erased=1");
     expect(await query("SELECT 1 FROM supporters WHERE id = 1")).toEqual([]);
@@ -134,16 +144,6 @@ describeWithDatabase("staff Server Actions", () => {
     await erase();
     await eraseSupporterNow(form({ id: "2", reference: "" }));
     expect(await query("SELECT count(*)::int AS n FROM supporters")).toEqual([{ n: 5 }]);
-    // When Luma won't remove the contact, the list says so.
-    server.use(
-      http.post(
-        "https://public-api.luma.com/v1/calendars/contacts/remove",
-        () => new HttpResponse(null, { status: 500 }),
-      ),
-    );
-    expect(await expectRedirect(() => eraseSupporterNow(form({ id: "2", reference: "ICO-2", confirm: "on" })))).toBe(
-      "/staff/supporters?erased=luma-failed",
-    );
   });
 
   it("importLumaNow copies the Luma calendar as the staff member", async () => {

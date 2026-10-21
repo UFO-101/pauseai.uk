@@ -3,7 +3,8 @@
 // reads their forms.
 import { staffCopy } from "@/lib/content/staff-interface";
 import { isImportJob, type ImportJob } from "@/lib/import-runs";
-import { isSupporterSource, type SupporterFilter } from "@/lib/supporters";
+import { parseSort } from "@/lib/staff-sort";
+import { isSupporterSource, SUPPORTER_SORTS, type SupporterFilter } from "@/lib/supporters";
 
 /** The import history's job filter. */
 export function historySearch({ job = "" }: { job?: string }): { job: string; filter?: ImportJob } {
@@ -38,10 +39,10 @@ export type SupportersSearch = {
   from: string;
   to: string;
   unsubscribed: string;
-  postcode: string;
   sort: string;
+  dir: string;
   page: string;
-  /** After an erasure: "1", or "luma-failed" when Luma kept the contact. */
+  /** After an erasure: "1". */
   erased: string;
 };
 
@@ -56,11 +57,12 @@ export function supportersSearch({
   from = "",
   to = "",
   unsubscribed = "",
-  postcode = "",
   sort = "",
+  dir = "",
   page = "",
   erased = "",
 }: Partial<SupportersSearch>): SupportersSearch & { filter: SupporterFilter } {
+  const sorting = parseSort(SUPPORTER_SORTS, "active", sort, dir);
   const filter: SupporterFilter = {
     search: q.trim() || undefined,
     source: isSupporterSource(source) ? source : undefined,
@@ -69,9 +71,14 @@ export function supportersSearch({
     from: DAY.test(from) ? from : undefined,
     to: DAY.test(to) ? to : undefined,
     unsubscribed: unsubscribed !== "" || undefined,
-    hasPostcode: postcode !== "" || undefined,
-    sort: sort === "first" || sort === "name" ? sort : "active",
+    sort: sorting.key,
+    dir: sorting.dir,
     page: /^\d+$/.test(page) && Number(page) > 0 ? Number(page) : 1,
   };
-  return { q, source, registered, active, from, to, unsubscribed, postcode, sort, page, erased, filter };
+  return { q, source, registered, active, from, to, unsubscribed, sort, dir, page, erased, filter };
+}
+
+/** The accounts page's notice, after a refused change. */
+export function accountsSearch({ notice = "" }: { notice?: string }): { notice: string } {
+  return { notice: notice === "last-admin" ? notice : "" };
 }

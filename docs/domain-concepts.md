@@ -117,14 +117,15 @@ Where they come from:
 from their page (`lib/server/erasure.ts`), under the request's reference.
 For each source, what that source holds goes: a letter with its events
 and the copies of replies forwarded to the sender; a Luma user with their
-registrations and contact, and Luma is asked to remove the contact. What
-stays is what exists to stop us mailing the address: `email_problems`,
+registrations and contact. What stays is what exists to stop us mailing
+the address: `email_problems`,
 `email_blocks` and `opt_outs`. The Luma user's ID goes in `luma_erased`,
 which the import skips, so they never come back; a new Luma account later
 is a new supporter. The audit log entry carries the supporter's ID and the
-reference, never a name or address. The policy team's own copy of each
-letter's sender in Airtable ("Web form emails") isn't reached from here:
-an erasure has to go there by hand (`docs/data-protection.md`).
+reference, never a name or address. Luma's own records, and the policy
+team's copy of each letter's sender in Airtable ("Web form emails"),
+aren't reached from here: an erasure has to go there by hand
+(`docs/data-protection.md`).
 
 A new source is a table of its own, a column and a widened `CHECK` on
 `supporter_links`, its three views and its arms of the union views, a
@@ -206,21 +207,25 @@ same way, inside the same transaction as the change.
 
 ## Staff
 
-Anyone with a pauseai.uk email address. They log in with a link sent to
-that address, and a session lasts a week (`lib/server/staff-auth.ts`).
+Anyone with a pauseai.uk email address can log in, with a link sent to
+that address (`lib/server/staff-auth.ts`, `staff-login.ts`). A session
+lasts a day, or 30 days renewed on use with "Keep me signed in".
 
-Most staff pages are open to every staff member. A page that shows
-people's data, or changes who may see it, needs a permission
-(`staff_permissions`, `lib/staff-permissions.ts`): `supporters` to see
-supporters, `admin` to grant and revoke permissions on `/staff/permissions`. `admin@pauseai.uk` has every permission without
-a row, so there is an admin before anyone has granted one. A page names the
-permission it needs in `requireStaff(permission)`, and someone without it
-is sent to the staff home, which lists the groups of pages they can see and
-whom to ask (`lib/staff-sections.ts`). Every grant and revocation is an
-audit log entry.
+Seeing anything needs a staff account (`staff_accounts`, kept by admins on
+`/staff/accounts`): without one, the home page says whom to ask, and every
+other page sends you there. An account opens the ordinary pages
+(politicians, letters, blocked emails, imports). Permissions open more
+(`lib/staff-permissions.ts`): `supporters` the supporter pages, `admin` the
+accounts page and the audit log. `admin@pauseai.uk` starts with an account
+and the admin permission, as an ordinary row the migration adds. Removing
+an account ends its sessions; the last admin can't be removed or lose
+admin. A page says what it needs in `requireStaff()`: a login, an account
+(the default) or a permission. The groups of pages a staff member sees are
+in `lib/staff-sections.ts`. Every change to an account is an audit log
+entry.
 
 A new permission is a name in `PERMISSIONS` and the table's `CHECK`, and a
-new group of pages behind it in `STAFF_SECTIONS`.
+group of pages behind it in `STAFF_SECTIONS`.
 
 ## The public site's content
 

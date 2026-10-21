@@ -1,38 +1,37 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, expect, it, vi } from "vitest";
 import { describeWithDatabase, useTestDatabase } from "@/tests/database";
 import { expectRedirect, requestCookies } from "@/tests/next-headers";
 import { query } from "./db";
-import { createSession, deleteSession, requireStaff, sessionCookie, sessionEmail } from "./staff-auth";
+import { createSession, deleteSession, requireStaff, sessionEmail } from "./staff-auth";
+import { saveStaffAccount } from "./staff-accounts";
 
 vi.mock("next/headers", () => import("@/tests/next-headers"));
-
-describe("sessionCookie", () => {
-  it("is HttpOnly, Secure, SameSite=Lax, only under /staff, for a week", () => {
-    expect(sessionCookie("t")).toEqual({
-      name: "staff_session",
-      value: "t",
-      httpOnly: true,
-      secure: true,
-      sameSite: "lax",
-      path: "/staff",
-      maxAge: 604800,
-    });
-  });
-});
 
 describeWithDatabase("staff sessions", () => {
   useTestDatabase();
   beforeEach(() => requestCookies.clear());
 
-  it("stores only a hash of the token, and finds the session by it", async () => {
+  it("stores only a hash of the token, finds the session by it, and lasts a day, or 30 days renewed on use when kept", async () => {
     const token = await createSession("jo@pauseai.uk");
-    const [row] = await query<{ token_hash: string; hours: number }>(
-      "SELECT token_hash, round(extract(epoch FROM expires_at - created_at) / 3600)::int AS hours FROM staff_sessions",
-    );
+    const hours = async (t: string) =>
+      (
+        await query<{ hours: number }>(
+          "SELECT round(extract(epoch FROM expires_at - now()) / 3600)::int AS hours FROM staff_sessions WHERE token_hash = encode(sha256($1::bytea), 'hex')",
+          [t],
+        )
+      )[0].hours;
+    const [row] = await query<{ token_hash: string }>("SELECT token_hash FROM staff_sessions");
     expect(row.token_hash).not.toContain(token);
-    expect(row.hours).toBe(168);
+    expect(await hours(token)).toBe(24);
     expect(await sessionEmail(token)).toBe("jo@pauseai.uk");
+    expect(await hours(token)).toBe(24);
     expect(await sessionEmail("guess")).toBeUndefined();
+
+    const kept = await createSession("jo@pauseai.uk", true);
+    expect(await hours(kept)).toBe(720);
+    await query("UPDATE staff_sessions SET expires_at = now() + interval '1 day' WHERE remember");
+    expect(await sessionEmail(kept)).toBe("jo@pauseai.uk");
+    expect(await hours(kept)).toBe(720);
   });
 
   it("ends a session, and ignores and clears expired ones", async () => {
@@ -47,23 +46,19 @@ describeWithDatabase("staff sessions", () => {
     expect(await query("SELECT email FROM staff_sessions")).toEqual([{ email: "new@pauseai.uk" }]);
   });
 
-  it("requireStaff returns the staff member for a current session, with their permissions", async () => {
+  it("requireStaff returns the staff member for a current session, with their account and permissions", async () => {
     const token = await createSession("jo@pauseai.uk");
     requestCookies.set("staff_session", token);
-    expect(await requireStaff()).toEqual({ email: "jo@pauseai.uk", token, permissions: [] });
-    await query(
-      "INSERT INTO staff_permissions (email, permissions, granted_by) VALUES ('jo@pauseai.uk', '{supporters}', 'a')",
-    );
-    expect(await requireStaff("supporters")).toMatchObject({ permissions: ["supporters"] });
-  });
-
-  it("requireStaff sends a staff member without the permission a page needs to the staff home", async () => {
-    const token = await createSession("jo@pauseai.uk");
-    requestCookies.set("staff_session", token);
+    // Without an account: only a login is satisfied; a page needing an account sends them home.
+    expect(await requireStaff("login")).toEqual({ email: "jo@pauseai.uk", token, account: false, permissions: [] });
+    expect(await expectRedirect(() => requireStaff())).toBe("/staff");
+    expect(await expectRedirect(() => requireStaff("supporters"))).toBe("/staff");
+    await saveStaffAccount("jo@pauseai.uk", [], "a");
+    expect(await requireStaff()).toEqual({ email: "jo@pauseai.uk", token, account: true, permissions: [] });
+    expect(await expectRedirect(() => requireStaff("supporters"))).toBe("/staff");
+    await saveStaffAccount("jo@pauseai.uk", ["supporters"], "a");
+    expect(await requireStaff("supporters")).toMatchObject({ account: true, permissions: ["supporters"] });
     expect(await expectRedirect(() => requireStaff("admin"))).toBe("/staff");
-    const admin = await createSession("admin@pauseai.uk");
-    requestCookies.set("staff_session", admin);
-    expect(await requireStaff("admin")).toMatchObject({ permissions: ["admin", "supporters"] });
   });
 
   it("requireStaff sends anyone else to the login page", async () => {

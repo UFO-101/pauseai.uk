@@ -12,7 +12,7 @@ export default async function LettersPage({ searchParams }: { searchParams: Prom
   const { status, filter } = lettersSearch(await searchParams);
   const letters = await recentLetters({ status: filter });
   return (
-    <StaffPage nav={<StaffNav email={email} permissions={permissions} current="letters" />}>
+    <StaffPage nav={<StaffNav email={email} account permissions={permissions} current="letters" />}>
       <h1>{staffCopy.letters.title}</h1>
       <LetterFilters status={status} />
       <LettersTable letters={letters} />

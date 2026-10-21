@@ -1,6 +1,7 @@
 // Supporters, as the staff pages show them: the shapes the server
 // (lib/server/supporters.ts) gives the components.
 import type { OptOutList } from "./opt-outs";
+import type { SortColumns, SortDirection } from "./staff-sort";
 
 /** Where a supporter's records come from (lib/server/supporter-sources.ts). */
 export const SUPPORTER_SOURCES = ["luma", "letter"] as const;
@@ -79,6 +80,16 @@ export type SupporterDetails = {
   optOuts: SupporterOptOut[];
 };
 
+/** What the list can be sorted by, a column heading or the Sort by field, and which way a first click goes. */
+export const SUPPORTER_SORTS: SortColumns<"active" | "first" | "name" | "events" | "letters"> = {
+  active: "desc",
+  first: "asc",
+  name: "asc",
+  events: "desc",
+  letters: "desc",
+};
+export type SupporterSort = keyof typeof SUPPORTER_SORTS;
+
 /** The list's filters, as the server applies them. */
 export type SupporterFilter = {
   /** Over names, emails and phones. */
@@ -93,9 +104,9 @@ export type SupporterFilter = {
   /** First sign-up up to this day, yyyy-mm-dd. */
   to?: string;
   unsubscribed?: boolean;
-  hasPostcode?: boolean;
-  sort: "active" | "first" | "name";
+  sort: SupporterSort;
+  dir: SortDirection;
   page: number;
 };
 
-export const SUPPORTERS_PAGE_SIZE = 50;
+export const SUPPORTERS_PAGE_SIZE = 200;

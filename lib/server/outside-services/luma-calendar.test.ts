@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { http, HttpResponse } from "msw";
 import { server } from "@/tests/fixtures/msw";
-import { getEvents, listCalendarContacts, listCalendarEvents, removeCalendarContact } from "./luma-calendar";
+import { getEvents, listCalendarContacts, listCalendarEvents } from "./luma-calendar";
 
 const CALENDAR = "https://public-api.luma.com/v1/calendars/events/list";
 
@@ -303,32 +303,5 @@ describe("listCalendarContacts", () => {
     expect((await listCalendarContacts()).entries).toEqual([
       { userId: "usr-a", email: "a@example.com", name: "", createdAt: "2026-01-01T00:00:00Z" },
     ]);
-  });
-});
-
-describe("removeCalendarContact", () => {
-  const REMOVE = "https://public-api.luma.com/v1/calendars/contacts/remove";
-  afterEach(() => vi.unstubAllEnvs());
-
-  it("posts the user's ID with the key", async () => {
-    vi.stubEnv("LUMA_API_KEY", "k");
-    let request: Request | undefined;
-    server.use(
-      http.post(REMOVE, ({ request: r }) => {
-        request = r;
-        return HttpResponse.json({});
-      }),
-    );
-    await removeCalendarContact("usr-1");
-    expect(request!.headers.get("x-luma-api-key")).toBe("k");
-    expect(await request!.json()).toEqual({ contact_id: "usr-1" });
-  });
-
-  it("throws when Luma refuses, or without the key", async () => {
-    vi.stubEnv("LUMA_API_KEY", "k");
-    server.use(http.post(REMOVE, () => new HttpResponse(null, { status: 404 })));
-    await expect(removeCalendarContact("usr-1")).rejects.toThrow("Luma answered 404");
-    vi.stubEnv("LUMA_API_KEY", "");
-    await expect(removeCalendarContact("usr-1")).rejects.toThrow("LUMA_API_KEY is not set");
   });
 });

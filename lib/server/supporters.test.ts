@@ -206,11 +206,11 @@ describeWithDatabase("listSupporters and getSupporter", () => {
     await query("UPDATE luma_guests SET registered_at = '2024-01-10T10:00:00Z' WHERE user_id = 'usr-3'");
   }
   const names = async (filter: Partial<SupporterFilter>) =>
-    (await listSupporters({ sort: "active", page: 1, ...filter })).supporters.map((s) => s.name);
+    (await listSupporters({ sort: "active", dir: "desc", page: 1, ...filter })).supporters.map((s) => s.name);
 
   it("lists everyone newest activity first, with what's known of each, and pages", async () => {
     await people();
-    const page = await listSupporters({ sort: "active", page: 1 });
+    const page = await listSupporters({ sort: "active", dir: "desc", page: 1 });
     expect(page.total).toBe(4);
     expect(page.pages).toBe(1);
     expect(page.supporters.map((s) => s.name)).toEqual(["Sam", "Jane", "Pat", "Old"]);
@@ -229,7 +229,11 @@ describeWithDatabase("listSupporters and getSupporter", () => {
       optedOut: [],
     });
     expect(page.supporters[0].optedOut).toEqual(["luma-calendar"]);
-    expect(await listSupporters({ sort: "active", page: 2 })).toEqual({ supporters: [], total: 0, pages: 1 });
+    expect(await listSupporters({ sort: "active", dir: "desc", page: 2 })).toEqual({
+      supporters: [],
+      total: 0,
+      pages: 1,
+    });
   });
 
   it("filters by name, email or phone, source, registration, activity, first sign-up, opt-outs and postcode, and sorts", async () => {
@@ -240,12 +244,16 @@ describeWithDatabase("listSupporters and getSupporter", () => {
     expect(await names({ source: "letter" })).toEqual(["Pat"]);
     expect(await names({ registered: true })).toEqual(["Sam", "Jane", "Old"]);
     expect(await names({ unsubscribed: true })).toEqual(["Sam"]);
-    expect(await names({ hasPostcode: true })).toEqual(["Jane", "Pat"]);
     expect(await names({ from: "2026-06-01", to: "2026-06-01" })).toEqual(["Pat"]);
     expect(await names({ from: "2026-06-02" })).toEqual([]);
     expect(await names({ to: "2025-12-31" })).toEqual(["Sam", "Old"]);
-    expect(await names({ sort: "first" })).toEqual(["Old", "Sam", "Jane", "Pat"]);
-    expect(await names({ sort: "name" })).toEqual(["Jane", "Old", "Pat", "Sam"]);
+    expect(await names({ sort: "first", dir: "asc" })).toEqual(["Old", "Sam", "Jane", "Pat"]);
+    expect(await names({ sort: "first", dir: "desc" })).toEqual(["Pat", "Jane", "Sam", "Old"]);
+    expect(await names({ sort: "name", dir: "asc" })).toEqual(["Jane", "Old", "Pat", "Sam"]);
+    expect(await names({ sort: "name", dir: "desc" })).toEqual(["Sam", "Pat", "Old", "Jane"]);
+    expect(await names({ sort: "events", dir: "desc" })).toEqual(["Sam", "Jane", "Old", "Pat"]);
+    expect(await names({ sort: "letters", dir: "desc" })).toEqual(["Pat", "Sam", "Jane", "Old"]);
+    expect(await names({ sort: "active", dir: "asc" })).toEqual(["Old", "Pat", "Jane", "Sam"]);
   });
 
   it("filters by how recently they were active, against the clock", async () => {

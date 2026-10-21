@@ -2,8 +2,9 @@ import type { Metadata } from "next";
 import NoAnalytics from "@/components/layout/NoAnalytics";
 import { staffCopy } from "@/lib/content/staff-interface";
 
-// The staff interface (/staff): no site header, no analytics, kept out of
-// search. Under the root layout, so the footer and consent banner still show.
+// The staff interface (/staff): no site header or footer, no analytics,
+// kept out of search. Under the root layout, so the consent banner still
+// shows.
 // Every page here calls requireStaff().
 export const metadata: Metadata = {
   title: staffCopy.metaTitle,

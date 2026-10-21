@@ -8,26 +8,26 @@ import { SubmitButton } from "@/components/ui/SubmitButton";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { PERMISSIONS, type Permission } from "@/lib/staff-permissions";
 
+type Action = (form: FormData) => void | Promise<void>;
+
 type Props = {
   /** Whose: fixed, in a row of the table, or typed, for someone new. */
   email?: string;
   permissions: Permission[];
-  action: (form: FormData) => void | Promise<void>;
+  save: Action;
 };
 
 /**
- * A checkbox per permission and a save button, for one staff member: the
- * form sends "permission:<name>" for each ticked box (lib/staff-forms.ts).
- * For someone new, the button waits for a box: with none, there's nothing
- * to keep, since everyone can log in anyway.
+ * One account's form: a checkbox per permission and Save, sending
+ * "permission:<name>" for each ticked box (lib/staff-forms.ts).
  */
-export default function PermissionsForm({ email, permissions, action }: Props) {
+export default function StaffAccountForm({ email, permissions, save }: Props) {
   const [ticked, setTicked] = useState(new Set(permissions));
-  const label = email ?? staffCopy.permissions.addTitle;
+  const label = email ?? staffCopy.accounts.addTitle;
   return (
-    <FilterForm action={action} aria-label={label}>
+    <FilterForm action={save} aria-label={label}>
       {email === undefined ? (
-        <Field label={staffCopy.permissions.emailLabel}>
+        <Field label={staffCopy.accounts.emailLabel}>
           <TextInput name="email" type="email" required />
         </Field>
       ) : (
@@ -47,13 +47,13 @@ export default function PermissionsForm({ email, permissions, action }: Props) {
             })
           }
         >
-          {staffCopy.permissions.names[permission]}
+          {staffCopy.accounts.names[permission]}
         </Checkbox>
       ))}
-      <SubmitButton variant="primary" size="small" disabled={email === undefined && ticked.size === 0}>
-        {staffCopy.permissions.save}
+      <SubmitButton variant="primary" size="small">
+        {staffCopy.accounts.save}
       </SubmitButton>
-      {email === undefined && <Hint>{staffCopy.permissions.everyoneCanLogIn}</Hint>}
+      {email === undefined && <Hint>{staffCopy.accounts.noPermissionHint}</Hint>}
     </FilterForm>
   );
 }

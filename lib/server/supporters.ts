@@ -102,12 +102,15 @@ export async function listSupporters(filter: SupporterFilter): Promise<Supporter
   if (filter.from) where.push(`s.first_seen_at >= ${add(filter.from)}::date`);
   if (filter.to) where.push(`s.first_seen_at < ${add(filter.to)}::date + 1`);
   if (filter.unsubscribed) where.push("s.opted_out IS NOT NULL");
-  if (filter.hasPostcode) where.push("s.postcode IS NOT NULL");
-  const order = {
-    active: "s.last_active_at DESC NULLS LAST, s.id DESC",
-    first: "s.first_seen_at ASC NULLS LAST, s.id ASC",
-    name: "s.name ASC NULLS LAST, s.id ASC",
+  const column = {
+    active: "s.last_active_at",
+    first: "s.first_seen_at",
+    name: "s.name",
+    events: "s.events",
+    letters: "s.letters",
   }[filter.sort];
+  const dir = filter.dir === "asc" ? "ASC" : "DESC";
+  const order = `${column} ${dir} NULLS LAST, s.last_active_at DESC NULLS LAST, s.id ${dir}`;
   const rows = await query<SupporterSummary & { total: number }>(
     `SELECT ${SUMMARY_COLUMNS}, count(*) OVER ()::int AS total FROM supporters_summary s
      ${where.length ? `WHERE ${where.join(" AND ")}` : ""}

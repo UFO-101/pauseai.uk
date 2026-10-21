@@ -6,9 +6,9 @@ import StaffNav from "../_components/StaffNav";
 import StaffPage from "../_components/ui/StaffPage";
 
 export default async function ChangesPage() {
-  const { email, permissions } = await requireStaff();
+  const { email, permissions } = await requireStaff("admin");
   return (
-    <StaffPage nav={<StaffNav email={email} permissions={permissions} current="changes" />}>
+    <StaffPage nav={<StaffNav email={email} account permissions={permissions} current="changes" />}>
       <h1>{staffCopy.changes.title}</h1>
       <ChangesTable changes={await recentChanges()} />
     </StaffPage>

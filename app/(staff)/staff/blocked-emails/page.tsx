@@ -17,7 +17,7 @@ export default async function EmailsPage({ searchParams }: { searchParams: Promi
   const { kind, filter } = emailsSearch(await searchParams);
   const [blocks, problems] = await Promise.all([listBlocks(filter), recentProblems()]);
   return (
-    <StaffPage nav={<StaffNav email={email} permissions={permissions} current="emails" />}>
+    <StaffPage nav={<StaffNav email={email} account permissions={permissions} current="emails" />}>
       <h1>{staffCopy.emails.title}</h1>
       <p>{staffCopy.emails.intro}</p>
       <EmailBlockFilters kind={kind} />

@@ -14,8 +14,9 @@ import PoliticianTable from "@/app/(staff)/staff/_components/PoliticianTable";
 import { examplePolitician } from "@/app/(staff)/staff/_components/PoliticianTable.examples";
 import Run from "@/app/(staff)/staff/_components/Run";
 import EraseForm from "@/app/(staff)/staff/_components/EraseForm";
-import PermissionsForm from "@/app/(staff)/staff/_components/PermissionsForm";
-import PermissionsTable from "@/app/(staff)/staff/_components/PermissionsTable";
+import RemoveAccountForm from "@/app/(staff)/staff/_components/RemoveAccountForm";
+import StaffAccountForm from "@/app/(staff)/staff/_components/StaffAccountForm";
+import StaffAccountsTable from "@/app/(staff)/staff/_components/StaffAccountsTable";
 import UnblockForm from "@/app/(staff)/staff/_components/UnblockForm";
 import { exampleHeldSync } from "@/app/(staff)/staff/_components/RunList.examples";
 import { Logged } from "../_components/wiring";
@@ -134,27 +135,28 @@ export function JobActionsExample() {
   return <Logged>{(log) => <JobActions action={log("action")} label="Check now" job="check-mps" />}</Logged>;
 }
 
-/** The built-in admin, an admin and someone who sees supporters, each row's form logged. */
-export function PermissionsTableExample() {
+/** The seeded admin, an admin and someone with no permissions, each row's forms logged. */
+export function StaffAccountsTableExample() {
   return (
     <Logged>
       {(log) => (
-        <PermissionsTable
-          action={log("setPermissions")}
-          staff={[
-            { email: "admin@pauseai.uk", permissions: ["admin", "supporters"], grantedBy: null, grantedAt: null },
+        <StaffAccountsTable
+          save={log("saveStaffAccount")}
+          remove={log("removeStaffAccount")}
+          accounts={[
+            {
+              email: "admin@pauseai.uk",
+              permissions: ["admin"],
+              addedBy: "migration",
+              addedAt: "2026-10-16T12:00:00Z",
+            },
             {
               email: "jo@pauseai.uk",
               permissions: ["admin"],
-              grantedBy: "admin@pauseai.uk",
-              grantedAt: "2026-10-20T09:00:00Z",
+              addedBy: "admin@pauseai.uk",
+              addedAt: "2026-10-20T09:00:00Z",
             },
-            {
-              email: "sam@pauseai.uk",
-              permissions: ["supporters"],
-              grantedBy: "jo@pauseai.uk",
-              grantedAt: "2026-10-21T10:30:00Z",
-            },
+            { email: "sam@pauseai.uk", permissions: [], addedBy: "jo@pauseai.uk", addedAt: "2026-10-21T10:30:00Z" },
           ]}
         />
       )}
@@ -162,10 +164,18 @@ export function PermissionsTableExample() {
   );
 }
 
-export function PermissionsFormExample() {
-  return <Logged>{(log) => <PermissionsForm permissions={[]} action={log("setPermissions")} />}</Logged>;
+export function StaffAccountFormExample() {
+  return <Logged>{(log) => <StaffAccountForm permissions={[]} save={log("saveStaffAccount")} />}</Logged>;
+}
+
+export function RemoveAccountFormExample() {
+  return <Logged>{(log) => <RemoveAccountForm email="sam@pauseai.uk" remove={log("removeStaffAccount")} />}</Logged>;
 }
 
 export function EraseFormExample() {
-  return <Logged>{(log) => <EraseForm supporterId={7} action={log("eraseSupporterNow")} />}</Logged>;
+  return (
+    <Logged>
+      {(log) => <EraseForm supporter={{ id: 7, name: "Jane Example" }} action={log("eraseSupporterNow")} />}
+    </Logged>
+  );
 }

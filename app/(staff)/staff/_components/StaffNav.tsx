@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Brand from "@/components/layout/Brand";
 import { Button } from "@/components/ui/Button";
 import { staffCopy } from "@/lib/content/staff-interface";
 import type { Permission } from "@/lib/staff-permissions";
@@ -11,6 +12,8 @@ export type StaffPage = "home" | StaffPageId;
 type Props = {
   /** Who's logged in. Without it, on the login page, just the title. */
   email?: string;
+  /** Whether they have an account. Without one there are no groups to show, only who they are and the way out. */
+  account?: boolean;
   /** Their permissions, which decide the groups they see. */
   permissions?: Permission[];
   current?: StaffPage;
@@ -18,36 +21,38 @@ type Props = {
 
 /**
  * The staff interface's navigation: a sidebar with the pages in groups, the
- * current one marked, who's logged in and the way out; on a phone, a bar
- * with the current page's name opening the same as a dropdown. A group shows
- * only to those with its permission. The title is the way to the home page.
+ * current one marked but still a link, so it's the way back from a page
+ * under it; who's logged in and the way out; on a phone, a bar with the
+ * current page's name opening the same as a dropdown. A group shows only
+ * to those with its permission. The logo at the top is the way to the home
+ * page.
  */
-export default function StaffNav({ email, permissions = [], current }: Props) {
-  const title =
-    current === "home" ? (
-      <span className={styles.title}>{staffCopy.nav.title}</span>
-    ) : (
-      <Link href="/staff" className={styles.title}>
-        {staffCopy.nav.title}
-      </Link>
+export default function StaffNav({ email, account = false, permissions = [], current }: Props) {
+  // The logo: the way home, except at home.
+  const title = (
+    <div className={styles.title}>
+      <Brand href={current === "home" ? undefined : "/staff"} />
+    </div>
+  );
+  if (!email) {
+    return (
+      <div className={styles.bar}>
+        <Brand />
+      </div>
     );
-  if (!email) return <div className={styles.bar}>{title}</div>;
+  }
 
-  const groups = sectionsFor(permissions).map((section) => (
+  const groups = (account ? sectionsFor(permissions) : []).map((section) => (
     <section key={section.id} className={styles.group}>
       <h2>{staffCopy.nav.sections[section.id]}</h2>
       <ul>
-        {section.pages.map((page) =>
-          page.id === current ? (
-            <li key={page.id}>
-              <strong aria-current="page">{staffCopy.nav[page.id]}</strong>
-            </li>
-          ) : (
-            <li key={page.id}>
-              <Link href={page.href}>{staffCopy.nav[page.id]}</Link>
-            </li>
-          ),
-        )}
+        {section.pages.map((page) => (
+          <li key={page.id}>
+            <Link href={page.href} aria-current={page.id === current ? "page" : undefined}>
+              {staffCopy.nav[page.id]}
+            </Link>
+          </li>
+        ))}
       </ul>
     </section>
   ));

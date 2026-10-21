@@ -15,7 +15,7 @@ export default async function ImportHistoryPage({ searchParams }: { searchParams
   const { job, filter } = historySearch(await searchParams);
   const runs = await listRuns(filter);
   return (
-    <StaffPage nav={<StaffNav email={email} permissions={permissions} current="history" />}>
+    <StaffPage nav={<StaffNav email={email} account permissions={permissions} current="history" />}>
       <h1>{staffCopy.history.title}</h1>
       <RunFilters job={job} />
       <RunList runs={runs} none={staffCopy.history.none} history />

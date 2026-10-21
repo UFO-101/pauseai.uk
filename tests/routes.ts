@@ -20,6 +20,7 @@ export const DYNAMIC_EXAMPLES: Record<string, string> = {
   // smoke test sees.
   "/staff/politicians/[id]": "/staff/politicians/1",
   "/staff/supporters/[id]": "/staff/supporters/1",
+  "/staff/supporters/[id]/erase": "/staff/supporters/1/erase",
   // A group of the component gallery (fixture builds only).
   "/gallery/[group]": "/gallery/ui",
 };
@@ -30,7 +31,8 @@ export function discoverDynamicRoutes(dir = APP_DIR, base = ""): string[] {
     if (!entry.isDirectory() || entry.name === "api" || entry.name.startsWith("_")) return [];
     const isGroup = entry.name.startsWith("(") && entry.name.endsWith(")");
     const path = isGroup ? base : `${base}/${entry.name}`;
-    const here = entry.name.startsWith("[") && readdirSync(join(dir, entry.name)).includes("page.tsx") ? [path] : [];
+    // A page under a dynamic segment, such as /staff/supporters/[id]/erase, is dynamic too.
+    const here = path.includes("[") && readdirSync(join(dir, entry.name)).includes("page.tsx") ? [path] : [];
     return [...here, ...discoverDynamicRoutes(join(dir, entry.name), path)];
   });
 }

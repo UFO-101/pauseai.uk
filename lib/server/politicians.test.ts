@@ -37,23 +37,43 @@ describe("isHouse", () => {
 
 describe("politiciansSearch", () => {
   it("keeps what was typed, and filters by it", () => {
-    expect(politiciansSearch({ q: "Jo", house: "lords", campaign: BILL, email: "blocked" })).toEqual({
+    expect(
+      politiciansSearch({ q: "Jo", house: "lords", campaign: BILL, email: "blocked", sort: "party", dir: "desc" }),
+    ).toEqual({
       q: "Jo",
       house: "lords",
       campaign: BILL,
       email: "blocked",
-      filter: { search: "Jo", house: "lords", campaign: BILL, emailBlocked: true },
+      sort: "party",
+      dir: "desc",
+      filter: { search: "Jo", house: "lords", campaign: BILL, emailBlocked: true, sort: { key: "party", dir: "desc" } },
     });
   });
 
   it("filters by nothing that's blank, missing or not a house", () => {
-    const none = { search: undefined, house: undefined, campaign: undefined, emailBlocked: undefined };
-    expect(politiciansSearch({})).toEqual({ q: "", house: "", campaign: "", email: "", filter: none });
-    expect(politiciansSearch({ q: "", house: "hogwarts", campaign: "", email: "other" })).toEqual({
+    const none = {
+      search: undefined,
+      house: undefined,
+      campaign: undefined,
+      emailBlocked: undefined,
+      sort: { key: "name", dir: "asc" },
+    };
+    expect(politiciansSearch({})).toEqual({
+      q: "",
+      house: "",
+      campaign: "",
+      email: "",
+      sort: "",
+      dir: "",
+      filter: none,
+    });
+    expect(politiciansSearch({ q: "", house: "hogwarts", campaign: "", email: "other", sort: "age" })).toEqual({
       q: "",
       house: "hogwarts",
       campaign: "",
       email: "other",
+      sort: "age",
+      dir: "",
       filter: none,
     });
   });
@@ -124,6 +144,13 @@ describeWithDatabase("politicians", () => {
     expect((await listPoliticians({ search: "westminster" })).map((p) => p.id)).toEqual([mp]);
     expect((await listPoliticians({ search: "CROSSBENCH" })).map((p) => p.id)).toEqual([peer]);
     expect((await listPoliticians({ house: "lords" })).map((p) => p.id)).toEqual([peer]);
+    // Sorted by a column, either way, the test MPs staying first.
+    const byParty = (dir: "asc" | "desc") =>
+      listPoliticians({ sort: { key: "party", dir } }).then((rows) =>
+        rows.filter((p) => !p.isTest).map((p) => p.party),
+      );
+    expect(await byParty("asc")).toEqual([...(await byParty("asc"))].sort());
+    expect(await byParty("desc")).toEqual([...(await byParty("asc"))].reverse());
     expect((await listPoliticians({ campaign: PM })).map((p) => p.id)).toEqual([peer]);
     expect(await listPoliticians({}, 1)).toHaveLength(1);
     expect((await listPoliticians({ search: "Polly" }))[0]).toEqual({

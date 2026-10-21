@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
   const form = await request.formData().catch(() => undefined);
   const email = form?.get("email");
   const browser = loginBrowser(request.cookies.get(LOGIN_BROWSER_COOKIE)?.value);
-  await sendLoginLink(typeof email === "string" ? email : "", request, browser);
+  await sendLoginLink(typeof email === "string" ? email : "", request, browser, form?.get("remember") === "on");
   const response = NextResponse.redirect(siteUrl(`${LOGIN_PATH}?sent=1`, request), 303);
   response.cookies.set(loginBrowserCookie(browser));
   return response;

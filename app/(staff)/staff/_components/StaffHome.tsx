@@ -4,18 +4,38 @@ import type { Permission } from "@/lib/staff-permissions";
 import { sectionsFor } from "@/lib/staff-sections";
 import styles from "./StaffHome.module.css";
 
+type Props = {
+  /** Whether they have an account. Without one: just whom to ask. */
+  account: boolean;
+  permissions: Permission[];
+  /** The admins, to ask. */
+  admins: string[];
+};
+
 /**
- * The home page's body: the pages this staff member can see, in groups,
- * which extra permissions they have, or that they have none and whom to ask.
+ * The home page's body: without an account, whom to ask for one; with
+ * one, which permissions they have, or that they have none, and the pages
+ * they can see, in groups.
  */
-export default function StaffHome({ permissions, admins }: { permissions: Permission[]; admins: string[] }) {
+export default function StaffHome({ account, permissions, admins }: Props) {
+  const who = admins.join(", ");
+  if (!account) {
+    return (
+      <>
+        <h1>{staffCopy.home.title}</h1>
+        <p>
+          {staffCopy.home.noAccount} {staffCopy.home.ask(who)}
+        </p>
+      </>
+    );
+  }
   return (
     <>
       <h1>{staffCopy.home.title}</h1>
       <p>
         {permissions.length > 0
-          ? staffCopy.home.permissions(permissions.map((p) => staffCopy.permissions.names[p]).join(", "))
-          : `${staffCopy.home.none} ${staffCopy.home.ask(admins.join(", "))}`}
+          ? staffCopy.home.permissions(permissions.map((p) => staffCopy.accounts.names[p]).join(", "))
+          : `${staffCopy.home.none} ${staffCopy.home.ask(who)}`}
       </p>
       <div className={styles.sections}>
         {sectionsFor(permissions).map((section) => (

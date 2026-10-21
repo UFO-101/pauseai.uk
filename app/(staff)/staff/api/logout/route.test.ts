@@ -14,7 +14,7 @@ describeWithDatabase("POST /staff/api/logout", () => {
   });
   afterEach(() => vi.unstubAllEnvs());
 
-  it("ends the session, clears the cookie and goes to the login page", async () => {
+  it("ends the session, clears the cookies and goes to the login page, account or not", async () => {
     const token = await createSession("jo@pauseai.uk");
     requestCookies.set("staff_session", token);
 
@@ -22,7 +22,9 @@ describeWithDatabase("POST /staff/api/logout", () => {
 
     expect(res.status).toBe(303);
     expect(res.headers.get("location")).toBe("https://pauseai.uk/staff/login");
-    expect(res.headers.get("set-cookie")).toMatch(/^staff_session=;.*Path=\/staff/);
+    const cookies = res.headers.getSetCookie();
+    expect(cookies.find((c) => c.startsWith("staff_session="))).toMatch(/^staff_session=;.*Path=\/staff/);
+    expect(cookies.find((c) => c.startsWith("staff_keep="))).toMatch(/^staff_keep=;.*Path=\/staff/);
     expect(await sessionEmail(token)).toBeUndefined();
   });
 

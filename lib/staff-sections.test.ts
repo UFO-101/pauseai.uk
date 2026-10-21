@@ -6,6 +6,6 @@ describe("sectionsFor", () => {
     expect(sectionsFor([]).map((s) => s.id)).toEqual(["politicians", "email", "data"]);
     expect(sectionsFor(["supporters"]).map((s) => s.id)).toEqual(["supporters", "politicians", "email", "data"]);
     expect(sectionsFor(["admin"]).map((s) => s.id)).toEqual(["politicians", "email", "data", "admin"]);
-    expect(STAFF_SECTIONS.flatMap((s) => s.pages.map((p) => p.href))).toContain("/staff/permissions");
+    expect(STAFF_SECTIONS.flatMap((s) => s.pages.map((p) => p.href))).toContain("/staff/accounts");
   });
 });

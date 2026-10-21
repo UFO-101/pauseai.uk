@@ -1,118 +1,143 @@
 import Link from "next/link";
-import Table from "@/components/ui/Table";
 import { Muted } from "@/components/ui/Text";
 import { campaignBySlug } from "@/lib/email-your-mp";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { staffDate, staffTime } from "@/lib/staff-time";
-import type { SupporterActivity, SupporterDetails as Details } from "@/lib/supporters";
+import type { SupporterActivity, SupporterDetails as Details, SupporterSource } from "@/lib/supporters";
 import SupporterBadges from "./SupporterBadges";
 import styles from "./SupporterDetails.module.css";
 
-/** What an activity was about: the event, the campaign, or the list. */
-function activityTitle(item: SupporterActivity): string | null {
+const copy = staffCopy.supporters;
+
+/** One value we hold, and where and when it came from: the sources that gave it, and the first time. */
+type Given = { value: string; sources: Set<SupporterSource>; since: string };
+
+/** The distinct values of a detail, each with its sources and when it was first given, oldest first. */
+function distinct(items: { value: string | null; source: SupporterSource; at: string | null }[]): Given[] {
+  const given = new Map<string, Given>();
+  for (const item of items) {
+    if (!item.value) continue;
+    const at = item.at ?? "";
+    const seen = given.get(item.value);
+    if (seen) {
+      seen.sources.add(item.source);
+      if (at && (!seen.since || at < seen.since)) seen.since = at;
+    } else {
+      given.set(item.value, { value: item.value, sources: new Set([item.source]), since: at });
+    }
+  }
+  return [...given.values()].sort((a, b) => a.since.localeCompare(b.since));
+}
+
+/** Where a value came from and when, in words. */
+function origin(given: Given): string {
+  const sources = [...given.sources].map((source) => copy.sources[source]).join(", ");
+  return given.since ? copy.detail.from(sources, staffDate(given.since)) : sources;
+}
+
+/** One line of the box: its label, then each value with where it came from. */
+function Fact({ label, values }: { label: string; values: Given[] }) {
+  if (values.length === 0) return null;
+  return (
+    <>
+      <dt>{label}</dt>
+      <dd>
+        {values.map((given) => (
+          <div key={given.value}>
+            {given.value} <Muted>({origin(given)})</Muted>
+          </div>
+        ))}
+      </dd>
+    </>
+  );
+}
+
+/** What an activity was about: the event, the MP and campaign, or the list. */
+function Subject({ item }: { item: SupporterActivity }) {
+  if (item.kind === "luma-registered") {
+    const status = copy.detail.statuses[item.detail ?? ""];
+    return (
+      <>
+        {item.href ? <Link href={item.href}>{item.title}</Link> : item.title}
+        {status && <Muted> · {status}</Muted>}
+      </>
+    );
+  }
   if (item.kind === "letter" || item.kind === "letter-replied") {
-    return campaignBySlug(item.title ?? "")?.title ?? item.title;
+    const campaign = campaignBySlug(item.title ?? "")?.title ?? item.title;
+    return (
+      <>
+        {item.detail}
+        {campaign && <Muted> · {item.href ? <Link href={item.href}>{campaign}</Link> : campaign}</Muted>}
+      </>
+    );
   }
   if (item.kind === "opted-out" || item.kind === "resubscribed") {
-    return staffCopy.supporters.lists[item.title ?? ""] ?? item.title;
+    return (
+      <>
+        {copy.lists[item.title ?? ""] ?? item.title}
+        {item.detail && <Muted> · {item.detail}</Muted>}
+      </>
+    );
   }
-  return item.title;
+  return null;
 }
 
-/** How it went: a registration's status in our words; otherwise as the source said. */
-function activityDetail(item: SupporterActivity): string | null {
-  if (item.kind === "luma-registered") return staffCopy.supporters.detail.statuses[item.detail ?? ""] ?? item.detail;
-  return item.detail;
-}
-
-/** A supporter's page: who they are, how we know them, what they gave us, and what they did. */
+/**
+ * A supporter's page: their name and badges; one box of what we hold, each
+ * value with where it came from; then everything they did, newest first.
+ */
 export default function SupporterDetails({ supporter }: { supporter: Details }) {
-  const copy = staffCopy.supporters;
-  const { summary, identities, contacts, links, activity, optOuts } = supporter;
+  const { summary, identities, contacts, activity, optOuts } = supporter;
+  const emails = distinct(identities.map((i) => ({ value: i.email, source: i.source, at: i.seenAt })));
+  const phones = distinct(contacts.map((c) => ({ value: c.phone, source: c.source, at: c.at })));
+  const postcodes = distinct(contacts.map((c) => ({ value: c.postcode, source: c.source, at: c.at })));
   return (
     <>
       <h1>
         {summary.name ?? copy.noName} <SupporterBadges supporter={summary} />
       </h1>
 
-      <h2>{copy.detail.identitiesTitle}</h2>
-      <ul>
-        {identities.map((identity, i) => (
-          <li key={i}>
-            {identity.name || copy.noName} · {identity.email}{" "}
-            <Muted>
-              {copy.detail.identity(copy.sources[identity.source], identity.seenAt ? staffDate(identity.seenAt) : "")}
-            </Muted>
-          </li>
-        ))}
-      </ul>
-
-      <h2>{copy.detail.contactsTitle}</h2>
-      {contacts.length > 0 && (
-        <Table>
-          <thead>
-            <tr>
-              <th>{copy.detail.contactColumns.when}</th>
-              <th>{copy.detail.contactColumns.source}</th>
-              <th>{copy.detail.contactColumns.phone}</th>
-              <th>{copy.detail.contactColumns.postcode}</th>
-              <th>{copy.detail.contactColumns.place}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {contacts.map((contact, i) => (
-              <tr key={i}>
-                <td>{staffDate(contact.at)}</td>
-                <td>{copy.sources[contact.source]}</td>
-                <td>{contact.phone}</td>
-                <td>{contact.postcode}</td>
-                <td>{contact.latitude !== null && `${contact.latitude}, ${contact.longitude}`}</td>
-              </tr>
-            ))}
-          </tbody>
-        </Table>
-      )}
-
-      <h2>{copy.detail.linksTitle}</h2>
-      <ul>
-        {links.map((link) => (
-          <li key={`${link.source}-${link.sourceId}`}>
-            {copy.detail.link(copy.sources[link.source], link.sourceId, link.matchedValue)}{" "}
-            <Muted>{staffTime(link.linkedAt)}</Muted>
-          </li>
-        ))}
-      </ul>
-
-      <h2>{copy.detail.optOutsTitle}</h2>
-      <ul aria-label={copy.detail.optOutsTitle}>
+      <dl className={styles.facts}>
+        <Fact label={copy.detail.emails} values={emails} />
+        <Fact label={copy.detail.phone} values={phones} />
+        <Fact label={copy.detail.postcode} values={postcodes} />
         {optOuts.map((optOut) => (
-          <li key={`${optOut.list}-${optOut.address}`}>
-            {copy.lists[optOut.list]} · {optOut.address}:{" "}
-            {optOut.since === null ? (
-              <Muted>{copy.detail.notOptedOut}</Muted>
-            ) : (
-              copy.detail.optedOut(staffTime(optOut.since), optOut.source ?? "")
-            )}
-          </li>
+          <div key={`${optOut.list}-${optOut.address}`} className={styles.pair}>
+            <dt>{copy.lists[optOut.list]}</dt>
+            <dd>
+              {optOut.since === null ? copy.detail.notOptedOut : copy.detail.optedOut(staffDate(optOut.since))}
+              {emails.length > 1 && <Muted> · {optOut.address}</Muted>}
+            </dd>
+          </div>
         ))}
-      </ul>
+        {summary.firstSeenAt && (
+          <>
+            <dt>{copy.detail.firstSeen}</dt>
+            <dd>{staffDate(summary.firstSeenAt)}</dd>
+          </>
+        )}
+        {summary.lastActiveAt && (
+          <>
+            <dt>{copy.detail.lastActive}</dt>
+            <dd>{staffDate(summary.lastActiveAt)}</dd>
+          </>
+        )}
+      </dl>
 
       <h2>{copy.detail.activityTitle}</h2>
       {activity.length === 0 ? (
         <p>{copy.detail.noActivity}</p>
       ) : (
-        <ol className={styles.activity} aria-label={copy.detail.activityTitle}>
-          {activity.map((item, i) => {
-            const title = activityTitle(item);
-            const detail = activityDetail(item);
-            return (
-              <li key={i}>
-                <Muted>{staffTime(item.at)}</Muted> {copy.detail.kinds[item.kind]}
-                {title && <>: {item.href ? <Link href={item.href}>{title}</Link> : title}</>}
-                {detail && <Muted> · {detail}</Muted>}
-              </li>
-            );
-          })}
+        <ol className={styles.history} aria-label={copy.detail.activityTitle}>
+          {activity.map((item, i) => (
+            <li key={i}>
+              <span className={styles.when}>{staffTime(item.at)}</span>
+              <span>
+                {copy.detail.kinds[item.kind]} <Subject item={item} />
+              </span>
+            </li>
+          ))}
         </ol>
       )}
     </>

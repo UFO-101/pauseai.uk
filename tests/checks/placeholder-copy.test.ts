@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
 // Agents never write final copy (AGENTS.md). Where code needs words that a
-// person hasn't written yet, they put in a Latin placeholder starting with this
+// person hasn't written yet, they put in a draft placeholder starting with this
 // mark. This test fails while any placeholder is left, so none can ship.
 const MARK = "\u2042"; // the asterism, written as an escape so this file doesn't match itself
 

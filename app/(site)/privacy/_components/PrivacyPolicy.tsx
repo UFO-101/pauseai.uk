@@ -77,8 +77,7 @@ export default function PrivacyPolicy() {
         <strong>Legal basis:</strong> our legitimate interest in understanding how the site is used.
       </p>
 
-      {/* Placeholder sections, to be written (AGENTS.md). Each says what its
-          words must cover; the facts are in docs/data-protection.md. */}
+      {/* The facts behind the sections below are in docs/data-protection.md. */}
 
       {/* Email your MP: the form takes name, email, address and postcode and the
           consent checkbox; the postcode goes to postcodes.io for the constituency;
@@ -87,80 +86,63 @@ export default function PrivacyPolicy() {
           details, the subject, campaign, MP and status, not the letter's text;
           bounces and spam complaints are kept against the address; the policy
           team keeps a copy of the sender, subject and message in Airtable. */}
-      <h2>⁂ Epistulae ad MPs</h2>
+      <h2>⁂ Email your MP</h2>
       <p>
-        ⁂ Cum epistulam ad MP tuum per hoc situm mittis, nomen, inscriptionem electronicam, inscriptionem et codicem
-        postalem tuum tenemus, et utrum de eventibus audire velis. Codex postalis ad postcodes.io mittitur ut MP tuus
-        inveniatur. Epistula per Postmark ab inscriptione nostra mittitur; responsum MP ad te remittitur. Textum
-        epistulae non servamus, praeter exemplar quod turma politica in Airtable tenet.
+        ⁂ When you write to your MP through this site, we keep your name, email address, postal address and postcode,
+        which campaign and MP you wrote to, the subject, and what happened to the letter (sent, bounced, replied to),
+        along with whether you ticked the box to hear about events and ways to help. Your postcode goes to postcodes.io
+        to find your constituency, and the form is protected by Cloudflare Turnstile. Postmark sends the letter from an
+        address of ours, so that your MP&apos;s reply comes back to us and is forwarded to you; we keep that a reply
+        came and who from, not the reply. We don&apos;t keep the letter&apos;s text here; our policy team keeps a copy
+        of the letter, with your name and email, in Airtable. If an email to you or to your MP bounces or is marked as
+        spam, we keep a record of that against the address so we don&apos;t send to it again.
       </p>
 
-      {/* Events: registrations and contacts copied hourly from our Luma calendar
-          (name, email, phone and postcode where an event asked, which events,
-          when they followed the calendar); unsubscribing from the calendar's
-          emails is recorded so we never email that address about it; a postcode
-          typed on the home page for events near you goes to postcodes.io and is
-          kept only in the browser. */}
-      <h2>⁂ Eventus et Luma</h2>
+      <h2>⁂ Events and Luma</h2>
       <p>
-        ⁂ Cum ad eventum nostrum in Luma nomen das, aut calendarium nostrum sequeris, Luma nobis nomen, inscriptionem
-        electronicam, telephonum et codicem postalem (si eventus rogavit), et quibus eventibus nomen dedisti, dat, quae
-        singulis horis exscribimus. Si ab epistulis calendarii abdicas, id notamus ne tibi umquam de eis scribamus.
-        Codex postalis in pagina prima scriptus, ad eventus prope te, nusquam servatur.
+        ⁂ Our events run on Luma. When you register for one of our events, or follow our calendar, Luma gives us your
+        name, email address, which events you registered for and with what status, when you followed the calendar, and,
+        where an event asked for them, your phone number and postcode. We copy this every hour. If you unsubscribe from
+        the calendar&apos;s emails, Luma tells us and we record it, so we never email that address about events. A
+        postcode you type on our home page to see events near you goes to postcodes.io and is kept only in your browser,
+        not by us.
       </p>
 
-      {/* Supporters and political opinions: one record per person across
-          letters and events; registering for a protest or writing to an MP
-          under a PauseAI campaign shows a political opinion, held under UK GDPR
-          Article 9(2)(d) as a not-for-profit body with a political aim, about
-          its members and people in regular contact with it, never disclosed
-          outside PauseAI UK without consent; only staff with permission see it,
-          and each viewing is logged. */}
-      <h2>⁂ Fautores et opiniones politicae</h2>
+      <h2>⁂ Supporters and political opinions</h2>
       <p>
-        ⁂ Epistulas et eventus tuos in unum conferimus, ut qui apud nos operantur te unum videant. Quod ad
-        protestationem nomen dedisti aut MP scripsisti opinionem politicam ostendit: hoc sub articulo 9(2)(d) UK GDPR
-        tenemus, ut corpus sine lucro cum fine politico de sociis suis et eis qui cum eo regulariter communicant, nec
-        extra PauseAI UK sine consensu tuo divulgamus. Soli qui potestatem habent haec vident, et quaeque inspectio
-        notatur.
+        ⁂ We bring your letters and event registrations together into one record, so that the people who run PauseAI UK
+        can see you as one person rather than several. Registering for a protest or writing to your MP under a PauseAI
+        campaign shows a political opinion, which is special category data. We hold it under UK GDPR Article 9(2)(d), as
+        a not-for-profit body with a political aim processing data about its members and people in regular contact with
+        it, and we don&apos;t disclose it outside PauseAI UK without your consent. Only staff with permission can see
+        these records, and each time one is viewed is logged.
       </p>
 
-      {/* Processors: Luma (events), Postmark (email), Netlify (hosting and the
-          database, backups 3 to 30 days), Cloudflare (our nightly backup, 90
-          days; Turnstile), postcodes.io, Airtable (the policy team's copy);
-          international transfers as above. */}
-      <h2>⁂ Qui data nobiscum tractant</h2>
+      <h2>⁂ Who processes this data for us</h2>
       <ul>
-        <li>⁂ Luma: eventus et inscriptiones.</li>
-        <li>⁂ Postmark: cursus electronicus.</li>
-        <li>⁂ Netlify: situs et basis datorum; exemplaria 3 ad 30 dies.</li>
-        <li>⁂ Cloudflare: exemplar nocturnum 90 dies; Turnstile contra spam.</li>
-        <li>⁂ postcodes.io: codices postales; nihil servat.</li>
-        <li>⁂ Airtable: exemplar epistularum apud turmam politicam.</li>
+        <li>⁂ Luma: events and registrations.</li>
+        <li>⁂ Postmark: sending and receiving email.</li>
+        <li>⁂ Netlify: hosting the site and its database, with backups kept for 3 to 30 days.</li>
+        <li>⁂ Cloudflare: our nightly database backup, kept for 90 days, and Turnstile, the anti-spam check.</li>
+        <li>⁂ postcodes.io: looking up postcodes; it keeps nothing.</li>
+        <li>⁂ Airtable: our policy team&apos;s copy of letters.</li>
       </ul>
 
-      {/* Retention: letters and event data until erased on request; the record
-          of an unsubscribe, bounce or complaint kept after erasure, since it
-          exists to stop us emailing the address; backups expire by themselves. */}
-      <h2>⁂ Quamdiu tenemus</h2>
+      <h2>⁂ How long we keep it</h2>
       <p>
-        ⁂ Epistulas et data eventuum tenemus donec deleri petas. Quod ab epistulis abdicasti, aut inscriptio tua
-        epistulas reiecit, post deletionem manet, ne tibi scribamus. Exemplaria per se expirant.
+        ⁂ We keep letters and event data until you ask us to erase them. The record that you unsubscribed, or that an
+        address bounced, stays after erasure, because it exists to stop us emailing you. Backups expire by themselves.
       </p>
 
-      {/* Requests: how to ask for erasure or a copy of your data: email the
-          address below from the address we hold, say which; answered within a
-          month; what erasure removes and what stays; the Airtable copy and Luma's
-          own lists are asked to erase too; the ICO if unhappy. */}
-      <h2>⁂ Deletionem aut exemplar datorum petere</h2>
+      <h2>⁂ Asking for your data to be erased, or for a copy of it</h2>
       <p>
-        ⁂ Ut data tua deleantur, aut exemplar eorum accipias, scribe ad{" "}
+        ⁂ To have your data erased, or to get a copy of what we hold, email{" "}
         <a className="inline-link" href="mailto:hello@pauseai.uk">
           hello@pauseai.uk
         </a>{" "}
-        ab inscriptione quam tenemus, et dic utrum. Intra mensem respondemus. Deletio omnia de te aufert praeter quod
-        tenemus ne tibi scribamus; turmam politicam et Luma quoque rogamus ut sua exemplaria deleant. Si non contentus
-        es, ad ICO queri potes.
+        from the address we hold for you and say which you want. We reply within a month. Erasure removes everything we
+        hold about you except what we keep so as not to email you again; we also remove you from our Luma calendar and
+        ask our policy team to erase their copy. If you&apos;re not satisfied, you can complain to the ICO.
       </p>
 
       <h2>Who we share donation data with</h2>

@@ -1,6 +1,8 @@
 import "server-only";
 import type { CampaignStatus } from "@/lib/content/email-your-mp";
 import type { Mp, MpStatuses } from "@/lib/email-your-mp";
+import { parseSort, type SortSpec } from "@/lib/staff-sort";
+import { POLITICIAN_COLUMNS, POLITICIAN_SORTS, type PoliticianSort } from "@/lib/politician-sort";
 import { query, transaction, type Queryable } from "./db";
 import { logChange } from "./audit";
 
@@ -95,6 +97,7 @@ export type PoliticianFilter = {
   campaign?: string;
   /** Only those whose address is blocked. */
   emailBlocked?: boolean;
+  sort?: SortSpec<PoliticianSort>;
 };
 
 /**
@@ -106,22 +109,27 @@ export function politiciansSearch({
   house = "",
   campaign = "",
   email = "",
+  sort = "",
+  dir = "",
 }: {
   q?: string;
   house?: string;
   campaign?: string;
   email?: string;
+  sort?: string;
+  dir?: string;
 }) {
   const filter: PoliticianFilter = {
     search: q || undefined,
     house: isHouse(house) ? house : undefined,
     campaign: campaign || undefined,
     emailBlocked: email === "blocked" || undefined,
+    sort: parseSort(POLITICIAN_SORTS, "name", sort, dir),
   };
-  return { q, house, campaign, email, filter };
+  return { q, house, campaign, email, sort, dir, filter };
 }
 
-/** Politicians for the staff interface: the test MP first, then by name. */
+/** Politicians for the staff interface: the test MPs first, then by the column asked for, by name to start. */
 export async function listPoliticians(filter: PoliticianFilter = {}, limit = 200): Promise<Politician[]> {
   const where: string[] = [];
   const values: unknown[] = [];
@@ -147,7 +155,7 @@ export async function listPoliticians(filter: PoliticianFilter = {}, limit = 200
   values.push(limit);
   const rows = await query<Row>(
     `${SELECT_POLITICIANS} ${where.length ? `WHERE ${where.join(" AND ")}` : ""}
-     GROUP BY p.id ORDER BY p.is_test DESC, p.name LIMIT $${values.length}`,
+     GROUP BY p.id ORDER BY p.is_test DESC, ${POLITICIAN_COLUMNS[filter.sort?.key ?? "name"]} ${filter.sort?.dir === "desc" ? "DESC" : "ASC"} NULLS LAST, p.name LIMIT $${values.length}`,
     values,
   );
   return rows.map(toPolitician);

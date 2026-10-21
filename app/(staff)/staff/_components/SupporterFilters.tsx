@@ -6,7 +6,6 @@ import { staffCopy } from "@/lib/content/staff-interface";
 import type { SupportersSearch } from "@/lib/staff-search";
 import { SUPPORTER_SOURCES } from "@/lib/supporters";
 import styles from "./StaffForms.module.css";
-import TickedFilters from "./TickedFilters";
 
 /** Search, filter and sort the supporters list. A GET form, so the URL holds the filter. */
 export default function SupporterFilters({ search }: { search: SupportersSearch }) {
@@ -24,6 +23,18 @@ export default function SupporterFilters({ search }: { search: SupportersSearch 
               {staffCopy.supporters.sources[source]}
             </option>
           ))}
+        </Select>
+      </Field>
+      <Field label={copy.events}>
+        <Select name="registered" defaultValue={search.registered}>
+          <option value="">{copy.anyEvents}</option>
+          <option value="1">{copy.registered}</option>
+        </Select>
+      </Field>
+      <Field label={copy.lists}>
+        <Select name="unsubscribed" defaultValue={search.unsubscribed}>
+          <option value="">{copy.anyList}</option>
+          <option value="1">{copy.unsubscribed}</option>
         </Select>
       </Field>
       <Field label={copy.active}>
@@ -51,13 +62,6 @@ export default function SupporterFilters({ search }: { search: SupportersSearch 
           ))}
         </Select>
       </Field>
-      <TickedFilters
-        boxes={[
-          { name: "registered", label: copy.registered, ticked: search.registered !== "" },
-          { name: "unsubscribed", label: copy.unsubscribed, ticked: search.unsubscribed !== "" },
-          { name: "postcode", label: copy.postcode, ticked: search.postcode !== "" },
-        ]}
-      />
       <Button variant="primary" size="small" type="submit">
         {copy.filter}
       </Button>

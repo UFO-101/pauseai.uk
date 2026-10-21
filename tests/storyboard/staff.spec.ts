@@ -6,6 +6,7 @@ import { TEST_MPS } from "@/lib/test-mps";
 import { runSql } from "@/scripts/fresh-database.mjs";
 import { ROUTES } from "../routes";
 import {
+  addStaffAccount,
   askForLoginLink,
   fakeTurnstile,
   fillLetter,
@@ -31,15 +32,11 @@ const [pm] = campaigns;
 /** This flow's own staff address: flows run alongside each other, and share the outbox. Short, as real ones are. */
 const staffEmail = () => `staff-${test.info().testId.replace(/\W/g, "").slice(-8)}@pauseai.uk`;
 
-/** Logs in as a staff member, with the link emailed to them. */
-const logIn = (page: Page, email = staffEmail()) => logInAsStaff(page, BASE, email);
-
-/** Gives this flow's staff member the admin permission, straight into its database, as an admin would on /staff/permissions. */
-const makeAdmin = (database: string, email = staffEmail()) =>
-  runSql(
-    database,
-    `INSERT INTO staff_permissions (email, permissions, granted_by) VALUES ('${email}', '{admin}', 'admin@pauseai.uk')`,
-  );
+/** Gives this flow's staff member an account, then logs them in with the link emailed to them. */
+async function logIn(page: Page, database: string, permissions: string[] = []) {
+  addStaffAccount(database, staffEmail(), permissions);
+  return logInAsStaff(page, BASE, staffEmail());
+}
 
 test("every staff page, without a session, goes to the login page", async ({ request }) => {
   expect(STAFF_PAGES.length).toBeGreaterThan(4);
@@ -74,9 +71,9 @@ test(
   async ({ page }) => {
     await page.goto(`${BASE}/staff/login`);
     await frame(page, "the login page");
-    expect(await logIn(page, "someone@gmail.com")).toBe(false);
+    expect(await logInAsStaff(page, BASE, "someone@gmail.com")).toBe(false);
     await frame(page, "check your inbox, for an address that gets nothing");
-    expect(await logIn(page, "someone@pauseai.uk.evil.example")).toBe(false);
+    expect(await logInAsStaff(page, BASE, "someone@pauseai.uk.evil.example")).toBe(false);
   },
 );
 
@@ -87,7 +84,8 @@ test("a login link works once, and only in the browser that asked for it", async
   flowDatabase,
 }) => {
   const email = staffEmail();
-  await askForLoginLink(page, BASE, email);
+  addStaffAccount(flowDatabase, email);
+  await askForLoginLink(page, BASE, email, true);
   const link = loginLinkFor(email)!;
   await emailFrame(page, newestEmailTo(email)!, "the login link, emailed");
 
@@ -103,11 +101,13 @@ test("a login link works once, and only in the browser that asked for it", async
   await frame(otherPage, "the link opened in another browser");
   await other.close();
 
-  // Opened in the browser that asked, it logs in straight away.
+  // Opened in the browser that asked, it logs in straight away, kept for 30 days as the box was ticked.
   await page.goto(link);
   await expect(page).toHaveURL(`${BASE}/staff`);
   // Who's logged in is in the header (behind the menu on a phone).
   await expect(page.getByText(email).first()).toBeAttached();
+  const session = (await page.context().cookies()).find((c) => c.name === "staff_session")!;
+  expect(session.expires).toBeGreaterThan(Date.now() / 1000 + 29 * 86_400);
 
   // And it only works once.
   await page.context().clearCookies({ name: "staff_session" });
@@ -119,13 +119,12 @@ test("a login link works once, and only in the browser that asked for it", async
 
 test("staff log in, set a status that shows on /campaigns, and log out", async ({ page, request, flowDatabase }) => {
   await syncMps(request, BASE);
-  makeAdmin(flowDatabase);
-  await logIn(page);
+  await logIn(page, flowDatabase, ["admin"]);
   // Logging in lands on the home page: the groups of pages, and this admin's permission named.
   await expect(page).toHaveURL(`${BASE}/staff`);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(staffCopy.home.title);
   await expect(page.getByText(staffEmail()).first()).toBeAttached();
-  await expect(page.getByText(staffCopy.home.permissions(staffCopy.permissions.names.admin))).toBeVisible();
+  await expect(page.getByText(staffCopy.home.permissions(staffCopy.accounts.names.admin))).toBeVisible();
   await frame(page, "the staff home, just logged in as an admin");
 
   await page.getByRole("link", { name: staffCopy.nav.politicians }).first().click();
@@ -184,8 +183,9 @@ test("staff log in, set a status that shows on /campaigns, and log out", async (
 
 test("the Luma import copies the calendar's events, guests and contacts, and finds nothing new the second time", async ({
   page,
+  flowDatabase,
 }) => {
-  await logIn(page);
+  await logIn(page, flowDatabase);
   await page.goto(`${BASE}/staff/import-data`);
   await page.getByRole("button", { name: staffCopy.luma.importNow }).click();
   // The fixture calendar: nine public events and a private one, five guests each over two pages, three contacts.
@@ -223,19 +223,28 @@ test("the Luma import copies the calendar's events, guests and contacts, and fin
   await frame(page, "run again: nothing new");
 });
 
-test("a politician's own page", async ({ page, request }) => {
+test("a politician's own page", async ({ page, request, flowDatabase }) => {
   await syncMps(request, BASE);
-  await logIn(page);
+  await logIn(page, flowDatabase);
   await page.goto(`${BASE}/staff/politicians`);
   await page.getByRole("link", { name: "Testy McTestface MP" }).click();
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Testy McTestface MP");
   await expect(page.getByRole("heading", { name: staffCopy.politician.detailsTitle })).toBeVisible();
   await frame(page, "the test MP's page");
+
+  // The way back, above the name; then the list sorted by a heading, and reversed.
+  await page.getByRole("navigation", { name: staffCopy.nav.politicians }).getByRole("link").click();
+  await expect(page).toHaveURL(`${BASE}/staff/politicians`);
+  await page.getByRole("link", { name: staffCopy.fields.constituency }).click();
+  await expect(page).toHaveURL(/sort=constituency&dir=asc/);
+  await page.getByRole("link", { name: staffCopy.fields.constituency }).click();
+  await expect(page).toHaveURL(/sort=constituency&dir=desc/);
+  await frame(page, "the politicians sorted by constituency, reversed");
 });
 
-test("the import history lists every run, and filters to one job", async ({ page, request }) => {
+test("the import history lists every run, and filters to one job", async ({ page, request, flowDatabase }) => {
   await syncMps(request, BASE);
-  await logIn(page);
+  await logIn(page, flowDatabase);
   await page.goto(`${BASE}/staff/import-data`);
   await page.getByRole("button", { name: staffCopy.check.checkNow }).click();
   await expect(page.getByRole("row").filter({ hasText: "Cities of London and Westminster" })).toBeVisible();
@@ -282,24 +291,28 @@ async function postBounce(request: APIRequestContext, messageId?: string) {
 }
 
 /** Writes to `mp` as `sender`, then, logged in, reads the letter's Postmark MessageID from the letters list. */
-async function sentLetterId(page: Page, sender: string, mp = TEST_MPS[0]): Promise<string> {
+async function sentLetterId(page: Page, database: string, sender: string, mp = TEST_MPS[0]): Promise<string> {
   await fakeTurnstile(page);
   await lookUpTestMp(page, BASE, mp);
   await fillLetter(page, sender);
   await sendLetter(page, mp);
   await page.goto(`${BASE}/staff/letters`);
-  if (page.url().endsWith("/staff/login")) await logIn(page);
+  if (page.url().endsWith("/staff/login")) await logIn(page, database);
   await page.goto(`${BASE}/staff/letters`);
   const row = page.getByRole("row").filter({ hasText: sender });
   await expect(row).toContainText(staffCopy.letters.status.sent);
   return (await row.locator("code").first().textContent())!.match(/"messageId":"([\w-]+)"/)![1];
 }
 
-test("letters are listed, sent and bounced, and can be filtered by status", async ({ page, request }, testInfo) => {
+test("letters are listed, sent and bounced, and can be filtered by status", async ({
+  page,
+  request,
+  flowDatabase,
+}, testInfo) => {
   const jane = `jane+${testInfo.testId}@example.com`;
   const sam = `sam+${testInfo.testId}@example.com`;
-  await sentLetterId(page, jane);
-  await postBounce(request, await sentLetterId(page, sam, bouncy));
+  await sentLetterId(page, flowDatabase, jane);
+  await postBounce(request, await sentLetterId(page, flowDatabase, sam, bouncy));
 
   await page.reload();
   const janes = page.getByRole("row").filter({ hasText: jane });
@@ -317,9 +330,13 @@ test("letters are listed, sent and bounced, and can be filtered by status", asyn
   await frame(page, "filtered to the bounced letter");
 });
 
-test("a letter that bounces: staff are emailed, and the address is blocked", async ({ page, request }, testInfo) => {
+test("a letter that bounces: staff are emailed, and the address is blocked", async ({
+  page,
+  request,
+  flowDatabase,
+}, testInfo) => {
   const sender = `jane+${testInfo.testId}@example.com`;
-  const messageId = await sentLetterId(page, sender, bouncy);
+  const messageId = await sentLetterId(page, flowDatabase, sender, bouncy);
   const sent = newestEmail((email) => email.ReplyTo?.includes(sender) ?? false);
   expect(sent?.To).toBe(`"Bouncy McTestface MP" <${BOUNCY_ADDRESS}>`);
   await postBounce(request, messageId);
@@ -354,8 +371,7 @@ test("an MP whose address bounced can't be written to until staff unblock it", a
   await page.getByRole("heading", { name: bouncy.name }).scrollIntoViewIfNeeded();
   await frame(page, "the form says the MP can't be reached");
 
-  makeAdmin(flowDatabase);
-  await logIn(page);
+  await logIn(page, flowDatabase, ["admin"]);
   await page.goto(`${BASE}/staff/politicians`);
   const bouncysRow = page.getByRole("row").filter({ hasText: bouncy.name });
   await expect(bouncysRow).toContainText(staffCopy.politicians.emailBlocked);
@@ -404,8 +420,7 @@ test("an MP import that would change too many is held, then discarded, and then 
   const sitting = () =>
     Number(runSql(flowDatabase, "SELECT count(*) FROM politicians WHERE name LIKE 'Gone %' AND sitting")[0]);
 
-  makeAdmin(flowDatabase);
-  await logIn(page);
+  await logIn(page, flowDatabase, ["admin"]);
   await page.goto(`${BASE}/staff/import-data`);
   await page.getByRole("button", { name: staffCopy.syncs.syncNow }).click();
   await expect(page.getByRole("button", { name: staffCopy.syncs.apply })).toBeVisible();
@@ -433,43 +448,55 @@ test("an MP import that would change too many is held, then discarded, and then 
   await frame(page, "the audit log: who discarded and who applied");
 });
 
-test("an admin grants a permission, which the staff member then has; without it, the permissions page is closed", async ({
+test("without an account, a staff member sees only whom to ask; an admin adds, changes and removes accounts", async ({
   page,
   flowDatabase,
 }, testInfo) => {
   const colleague = `colleague-${testInfo.testId.replace(/\W/g, "").slice(-8)}@pauseai.uk`;
-  // Without a permission: the ordinary groups, whom to ask, and the admin pages send you home.
-  await logIn(page);
-  await expect(page.getByText(staffCopy.home.none, { exact: false })).toBeVisible();
+  // Logged in with no account: the home page says so, and every other page comes back here.
+  await logInAsStaff(page, BASE, staffEmail());
+  await expect(page.getByText(staffCopy.home.noAccount, { exact: false })).toBeVisible();
   await expect(page.getByText(staffCopy.home.ask("admin@pauseai.uk"), { exact: false })).toBeVisible();
-  await expect(page.getByRole("link", { name: staffCopy.nav.permissions })).toHaveCount(0);
-  await frame(page, "the staff home for someone with no permissions");
-  await page.goto(`${BASE}/staff/permissions`);
+  await expect(page.getByRole("link", { name: staffCopy.nav.politicians })).toHaveCount(0);
+  await frame(page, "the staff home for someone with no account");
+  await page.goto(`${BASE}/staff/politicians`);
   await expect(page).toHaveURL(`${BASE}/staff`);
 
-  // As an admin: the permissions page, where a colleague is given the supporters permission.
-  makeAdmin(flowDatabase);
-  await page.goto(`${BASE}/staff/permissions`);
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText(staffCopy.permissions.title);
-  await frame(page, "the permissions page: the built-in admin and this admin");
-  const add = page.getByRole("form", { name: staffCopy.permissions.addTitle });
-  await add.getByRole("textbox", { name: staffCopy.permissions.emailLabel }).fill(colleague);
-  await add.getByRole("checkbox", { name: staffCopy.permissions.names.supporters }).check();
-  await add.getByRole("button", { name: staffCopy.permissions.save }).click();
-  const row = page.getByRole("row").filter({ hasText: colleague });
-  await expect(row.getByRole("checkbox", { name: staffCopy.permissions.names.supporters })).toBeChecked();
-  await expect(row).toContainText(staffEmail());
-  await frame(page, "the colleague added, with the supporters permission");
+  // With an account and no permissions: the ordinary pages, and that they have none.
+  addStaffAccount(flowDatabase, staffEmail());
+  await page.goto(`${BASE}/staff`);
+  await expect(page.getByText(staffCopy.home.none, { exact: false })).toBeVisible();
+  await expect(page.getByRole("link", { name: staffCopy.nav.politicians }).first()).toBeVisible();
+  await expect(page.getByRole("link", { name: staffCopy.nav.accounts })).toHaveCount(0);
+  await frame(page, "the staff home with an account and no permissions");
+  await page.goto(`${BASE}/staff/accounts`);
+  await expect(page).toHaveURL(`${BASE}/staff`);
 
-  // Revoked again: their row goes.
-  await row.getByRole("checkbox", { name: staffCopy.permissions.names.supporters }).uncheck();
-  await row.getByRole("button", { name: staffCopy.permissions.save }).click();
+  // As an admin: the accounts page, where a colleague is added, given a permission, and removed.
+  addStaffAccount(flowDatabase, staffEmail(), ["admin"]);
+  await page.goto(`${BASE}/staff/accounts`);
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(staffCopy.accounts.title);
+  await frame(page, "the accounts page: the seeded admin and this admin");
+  const add = page.getByRole("form", { name: staffCopy.accounts.addTitle });
+  await add.getByRole("textbox", { name: staffCopy.accounts.emailLabel }).fill(colleague);
+  await add.getByRole("button", { name: staffCopy.accounts.save }).click();
+  const row = page.getByRole("row").filter({ hasText: colleague });
+  await expect(row).toContainText(staffEmail());
+  await frame(page, "the colleague added, with no permissions");
+
+  await row.getByRole("checkbox", { name: staffCopy.accounts.names.supporters }).check();
+  await row.getByRole("button", { name: staffCopy.accounts.save }).click();
+  await expect(row.getByRole("checkbox", { name: staffCopy.accounts.names.supporters })).toBeChecked();
+  await frame(page, "given the supporters permission");
+
+  await row.getByRole("button", { name: staffCopy.accounts.remove }).click();
   await expect(page.getByRole("row").filter({ hasText: colleague })).toHaveCount(0);
-  await frame(page, "revoked: the colleague's row gone");
+  await frame(page, "removed");
 
   await page.goto(`${BASE}/staff/audit-log`);
-  await expect(page.getByRole("cell", { name: "set staff permissions" }).first()).toBeVisible();
-  await frame(page, "the audit log: the grant and the revocation");
+  await expect(page.getByRole("cell", { name: "add staff account" }).first()).toBeVisible();
+  await expect(page.getByRole("cell", { name: "remove staff account" })).toBeVisible();
+  await frame(page, "the audit log: added, changed and removed");
 });
 
 test("staff pages are kept out of search and the sitemap", async ({ page, request }) => {

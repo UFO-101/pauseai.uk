@@ -9,6 +9,7 @@ import { TEST_MPS, type TestMp } from "@/lib/test-mps";
 import { FIXTURE_NOW, OUTBOX_DIR } from "./fixture-env.mjs";
 import { type OutboxEmail, readOutbox } from "./fixtures/outbox";
 import { lumaPersonWebhook, lumaWebhookHeaders } from "./luma-webhooks";
+import { runSql } from "@/scripts/fresh-database.mjs";
 
 // Redirects to the first campaign.
 const TOOL_PAGE = "/campaigns";
@@ -43,6 +44,20 @@ export async function syncMps(request: APIRequestContext, base: string) {
     headers: { Authorization: "Bearer fixture-cron-secret" },
   });
   if (!res.ok()) throw new Error(`MP sync on ${base} failed: ${res.status()} ${await res.text()}`);
+}
+
+/**
+ * Gives `email` a staff account in a flow's database, with `permissions`,
+ * as an admin would on /staff/accounts: without one, a staff member sees
+ * only the home page.
+ */
+export function addStaffAccount(database: string, email: string, permissions: string[] = []) {
+  const list = `{${permissions.join(",")}}`;
+  runSql(
+    database,
+    `INSERT INTO staff_accounts (email, permissions, added_by) VALUES ('${email}', '${list}', 'admin@pauseai.uk')
+     ON CONFLICT (email) DO UPDATE SET permissions = '${list}'`,
+  );
 }
 
 /** Copies the fixture Luma calendar into the flow's database through the hourly import's own route. */
@@ -137,11 +152,12 @@ export function loginLinkFor(email: string): string | undefined {
   return newestEmailTo(email)?.TextBody.match(/https?:\/\/\S+\/staff\/api\/callback\?token=[\w-]+/)?.[0];
 }
 
-/** Asks for a login link for `email`, and waits for "check your inbox". */
-export async function askForLoginLink(page: Page, base: string, email: string) {
+/** Asks for a login link for `email`, ticking "Keep me signed in" if `keep`, and waits for "check your inbox". */
+export async function askForLoginLink(page: Page, base: string, email: string, keep = false) {
   const login = await page.goto(`${base}/staff/login`);
   if (!login?.ok()) throw new Error(`${base}/staff/login returned ${login?.status()}: is the staff interface there?`);
   await page.getByLabel(staffCopy.login.emailLabel).fill(email);
+  if (keep) await page.getByRole("checkbox", { name: staffCopy.login.keep }).check();
   await page.getByRole("button", { name: staffCopy.login.button }).click();
   await expect(page.getByRole("status")).toHaveText(staffCopy.login.sent);
 }

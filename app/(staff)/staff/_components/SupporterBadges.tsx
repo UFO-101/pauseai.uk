@@ -8,7 +8,7 @@ export default function SupporterBadges({ supporter }: { supporter: SupporterSum
   return (
     <>
       {supporter.lumaContact && <Tag tone="blue">{badges.lumaContact}</Tag>}
-      {supporter.events > 0 && <Tag tone="green">{badges.registered(supporter.events)}</Tag>}
+      {supporter.events > 0 && <Tag tone="green">{badges.registered}</Tag>}
       {supporter.letters > 0 && <Tag tone="amber">{badges.letter}</Tag>}
     </>
   );

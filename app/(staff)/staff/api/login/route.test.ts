@@ -18,9 +18,10 @@ function post(body: BodyInit | null, cookie?: string) {
   );
 }
 
-const form = (email: string) => {
+const form = (email: string, remember = false) => {
   const data = new FormData();
   data.set("email", email);
+  if (remember) data.set("remember", "on");
   return data;
 };
 
@@ -46,6 +47,15 @@ describeWithDatabase("POST /staff/api/login", () => {
       expect(browserCookie(res)).toMatch(/^staff_login=[\w-]{43}; Path=\/staff; .*Max-Age=900/);
     }
     expect(to).toEqual(["jo@pauseai.uk"]);
+  });
+
+  it('keeps "Keep me signed in" with the link', async () => {
+    await post(form("jo@pauseai.uk", true));
+    await post(form("jo@pauseai.uk"));
+    expect(await query("SELECT remember FROM staff_login_links ORDER BY created_at")).toEqual([
+      { remember: true },
+      { remember: false },
+    ]);
   });
 
   it("keeps the browser's token when it asks again, so its earlier links still work", async () => {

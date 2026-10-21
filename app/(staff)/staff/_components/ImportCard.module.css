@@ -1,0 +1,41 @@
+/* The import page: a card per job, in a grid. */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(24rem, 1fr));
+  gap: var(--space-5);
+  margin-top: var(--space-5);
+}
+
+/* A card: its parts spaced down it, the newest run at the foot. */
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+  padding: var(--space-5);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+
+.title {
+  margin: 0;
+  font-size: var(--text-lg);
+}
+
+.intro {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+/* The run's box fills what's left, so the cards in a row end level. */
+.runs {
+  margin-top: auto;
+  min-width: 0;
+}
+
+@media (max-width: 720px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}

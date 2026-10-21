@@ -1,11 +1,55 @@
-/* A supporter's page. */
+/* A supporter's page: the box of what we hold, and the history under it. */
 
-/* The history: one dated line each, no numbers. */
-.activity {
-  padding-left: 0;
+/* The box: a label and its values on each row. */
+.facts {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: var(--space-2) var(--space-5);
+  margin: 0 0 var(--space-6);
+  padding: var(--space-4) var(--space-5);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+
+/* A row that has to be one element (a list's line, keyed). */
+.pair {
+  display: contents;
+}
+
+.facts dt {
+  font-weight: 600;
+}
+
+.facts dd {
+  margin: 0;
+}
+
+/* The history: when at the left, in the muted colour, and what beside it. */
+.history {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: var(--space-2) var(--space-4);
+  padding: 0;
   list-style: none;
 }
 
-.activity li {
-  margin-block: var(--space-1);
+.history li {
+  display: contents;
+}
+
+.when {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 720px) {
+  .facts,
+  .history {
+    grid-template-columns: 1fr;
+  }
+
+  .facts dd {
+    margin-bottom: var(--space-2);
+  }
 }

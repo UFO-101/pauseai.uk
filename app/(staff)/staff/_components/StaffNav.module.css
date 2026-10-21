@@ -16,13 +16,10 @@
   align-items: center;
 }
 
-/* The name: a touch bigger than the links, not a heading; the way home, in the text's colour. */
+/* The logo at the top, the sidebar's width; on the bar, at the left. */
 .title {
-  font-weight: 700;
-  font-size: 1.05rem;
-  white-space: nowrap;
-  color: inherit;
-  text-decoration: none;
+  --container-width: 11rem;
+  max-width: 11rem;
 }
 
 /* The groups: a small heading each, and its pages under it. */
@@ -50,10 +47,18 @@
 .linkButton {
   font-weight: 500;
   color: var(--accent);
+  text-decoration: none;
+}
+
+.group a:hover,
+.linkButton:hover {
+  color: var(--text);
   text-decoration: underline;
 }
 
-.group a:hover {
+/* The current page, or the list a page belongs to: bold, in the text's colour, still a link. */
+.group a[aria-current="page"] {
+  font-weight: 700;
   color: var(--text);
 }
 

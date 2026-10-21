@@ -28,16 +28,23 @@ import {
   exampleSyncedMp,
 } from "@/app/(staff)/staff/_components/RunList.examples";
 import StaffNav, { type StaffPage as StaffPageName } from "@/app/(staff)/staff/_components/StaffNav";
+import AccountsNotice from "@/app/(staff)/staff/_components/AccountsNotice";
+import Breadcrumb from "@/app/(staff)/staff/_components/Breadcrumb";
+import EraseLink from "@/app/(staff)/staff/_components/EraseLink";
 import ErasedNotice from "@/app/(staff)/staff/_components/ErasedNotice";
+import ImportCard, { ImportCards } from "@/app/(staff)/staff/_components/ImportCard";
+import KeepSignedIn from "@/app/(staff)/staff/_components/KeepSignedIn";
+import SortHeading from "@/app/(staff)/staff/_components/SortHeading";
+import Table from "@/components/ui/Table";
 import StaffHome from "@/app/(staff)/staff/_components/StaffHome";
 import SupporterBadges from "@/app/(staff)/staff/_components/SupporterBadges";
 import SupporterDetails from "@/app/(staff)/staff/_components/SupporterDetails";
 import SupporterFilters from "@/app/(staff)/staff/_components/SupporterFilters";
 import SupportersTable from "@/app/(staff)/staff/_components/SupportersTable";
 import { exampleSupporter, exampleSupporterDetails } from "@/app/(staff)/staff/_components/SupportersTable.examples";
-import TickedFilters from "@/app/(staff)/staff/_components/TickedFilters";
 import { supportersSearch } from "@/lib/staff-search";
 import StaffPage from "@/app/(staff)/staff/_components/ui/StaffPage";
+import Tag from "@/components/ui/Tag";
 import { campaigns } from "@/lib/content/email-your-mp";
 import { staffCopy } from "@/lib/content/staff-interface";
 import type { ImportJob } from "@/lib/import-runs";
@@ -51,8 +58,9 @@ import {
   PoliticianTableEmptyExample,
   PoliticianTableExample,
   EraseFormExample,
-  PermissionsFormExample,
-  PermissionsTableExample,
+  StaffAccountFormExample,
+  StaffAccountsTableExample,
+  RemoveAccountFormExample,
   UnblockFormExample,
 } from "./staff.client";
 
@@ -68,7 +76,7 @@ const PAGES: Record<StaffPageName, true> = {
   import: true,
   history: true,
   changes: true,
-  permissions: true,
+  accounts: true,
 };
 
 // A run of each job, as its job's page shows it. A held MP sync, with its buttons, is in the client file.
@@ -163,7 +171,10 @@ export const staff: Group = {
         {
           label: "With the navigation beside it",
           render: () => (
-            <StaffPage as="div" nav={<StaffNav email="jo@pauseai.uk" permissions={["admin"]} current="letters" />}>
+            <StaffPage
+              as="div"
+              nav={<StaffNav email="jo@pauseai.uk" account permissions={["admin"]} current="letters" />}
+            >
               <h1>Letters</h1>
               <p>The page takes the width beside the sidebar.</p>
             </StaffPage>
@@ -184,10 +195,18 @@ export const staff: Group = {
           ),
         },
         {
+          label: "For someone with no account: who they are and the way out",
+          render: () => (
+            <StaffPage as="div">
+              <StaffNav email="jo@pauseai.uk" current="home" />
+            </StaffPage>
+          ),
+        },
+        {
           label: "For someone without the admin permission: the open groups",
           render: () => (
             <StaffPage as="div">
-              <StaffNav email="jo@pauseai.uk" permissions={[]} current="politicians" />
+              <StaffNav email="jo@pauseai.uk" account permissions={[]} current="politicians" />
             </StaffPage>
           ),
         },
@@ -218,26 +237,7 @@ export const staff: Group = {
           label: "The list's filters, with a search typed and a box ticked",
           render: () => (
             <StaffPage as="div">
-              <SupporterFilters search={supportersSearch({ q: "jane", registered: "on", sort: "name" })} />
-            </StaffPage>
-          ),
-        },
-      ],
-    },
-    {
-      name: "TickedFilters",
-      file: "app/(staff)/staff/_components/TickedFilters.tsx",
-      variants: [
-        {
-          label: "Two yes-or-no filters, one ticked",
-          render: () => (
-            <StaffPage as="div">
-              <TickedFilters
-                boxes={[
-                  { name: "a", label: "Ticked", ticked: true },
-                  { name: "b", label: "Not ticked", ticked: false },
-                ]}
-              />
+              <SupporterFilters search={supportersSearch({ q: "jane", registered: "1", sort: "name" })} />
             </StaffPage>
           ),
         },
@@ -344,7 +344,7 @@ export const staff: Group = {
       file: "app/(staff)/staff/_components/EraseForm.tsx",
       variants: [
         {
-          label: "At the foot of a supporter's page",
+          label: "The erase page's form",
           render: () => (
             <StaffPage as="div">
               <EraseFormExample />
@@ -365,14 +365,6 @@ export const staff: Group = {
             </StaffPage>
           ),
         },
-        {
-          label: "Done here, but Luma kept the contact",
-          render: () => (
-            <StaffPage as="div">
-              <ErasedNotice erased="luma-failed" />
-            </StaffPage>
-          ),
-        },
       ],
     },
     {
@@ -383,7 +375,7 @@ export const staff: Group = {
           label: "For an admin: every group",
           render: () => (
             <StaffPage as="div">
-              <StaffHome permissions={["admin", "supporters"]} admins={["admin@pauseai.uk"]} />
+              <StaffHome account permissions={["admin", "supporters"]} admins={["admin@pauseai.uk"]} />
             </StaffPage>
           ),
         },
@@ -391,35 +383,192 @@ export const staff: Group = {
           label: "For someone with no permissions: the ordinary groups, and whom to ask",
           render: () => (
             <StaffPage as="div">
-              <StaffHome permissions={[]} admins={["admin@pauseai.uk", "jo@pauseai.uk"]} />
+              <StaffHome account permissions={[]} admins={["admin@pauseai.uk", "jo@pauseai.uk"]} />
             </StaffPage>
           ),
         },
-      ],
-    },
-    {
-      name: "PermissionsTable",
-      file: "app/(staff)/staff/_components/PermissionsTable.tsx",
-      variants: [
         {
-          label: "The built-in admin, two staff members, and the form for someone new",
+          label: "For someone with no account: whom to ask",
           render: () => (
             <StaffPage as="div">
-              <PermissionsTableExample />
+              <StaffHome account={false} permissions={[]} admins={["admin@pauseai.uk"]} />
             </StaffPage>
           ),
         },
       ],
     },
     {
-      name: "PermissionsForm",
-      file: "app/(staff)/staff/_components/PermissionsForm.tsx",
+      name: "StaffAccountsTable",
+      file: "app/(staff)/staff/_components/StaffAccountsTable.tsx",
+      variants: [
+        {
+          label: "Three accounts, and the form for someone new",
+          render: () => (
+            <StaffPage as="div">
+              <StaffAccountsTableExample />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "StaffAccountForm",
+      file: "app/(staff)/staff/_components/StaffAccountForm.tsx",
       variants: [
         {
           label: "For someone new: their address, the boxes and Save",
           render: () => (
             <StaffPage as="div">
-              <PermissionsFormExample />
+              <StaffAccountFormExample />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "RemoveAccountForm",
+      file: "app/(staff)/staff/_components/RemoveAccountForm.tsx",
+      variants: [
+        {
+          label: "The button at the right of a row",
+          render: () => (
+            <StaffPage as="div">
+              <RemoveAccountFormExample />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "AccountsNotice",
+      file: "app/(staff)/staff/_components/AccountsNotice.tsx",
+      variants: [
+        {
+          label: "A change refused: the last admin",
+          render: () => (
+            <StaffPage as="div">
+              <AccountsNotice notice="last-admin" />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "KeepSignedIn",
+      file: "app/(staff)/staff/_components/KeepSignedIn.tsx",
+      variants: [
+        {
+          label: "The login form's box, unticked",
+          render: () => (
+            <StaffPage as="div">
+              <KeepSignedIn />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "Breadcrumb",
+      file: "app/(staff)/staff/_components/Breadcrumb.tsx",
+      variants: [
+        {
+          label: "Above a supporter's name: the way back to the list",
+          render: () => (
+            <StaffPage as="div">
+              <Breadcrumb href="/staff/supporters">Supporters</Breadcrumb>
+              <h1>Jane Example</h1>
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "EraseLink",
+      file: "app/(staff)/staff/_components/EraseLink.tsx",
+      variants: [
+        {
+          label: "At the foot of a supporter's page",
+          render: () => (
+            <StaffPage as="div">
+              <EraseLink supporterId={7} />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "SortHeading",
+      file: "app/(staff)/staff/_components/SortHeading.tsx",
+      variants: [
+        {
+          label: "Three headings: sorted by the first, ascending",
+          render: () => (
+            <StaffPage as="div">
+              <Table>
+                <thead>
+                  <tr>
+                    <SortHeading sortKey="name" current={{ key: "name", dir: "asc" }} href="?sort=name&dir=desc">
+                      Name
+                    </SortHeading>
+                    <SortHeading sortKey="party" current={{ key: "name", dir: "asc" }} href="?sort=party&dir=asc">
+                      Party
+                    </SortHeading>
+                    <th>Not sortable</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Polly Placeholder</td>
+                    <td>Labour</td>
+                    <td>…</td>
+                  </tr>
+                </tbody>
+              </Table>
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "ImportCards",
+      file: "app/(staff)/staff/_components/ImportCard.tsx",
+      variants: [
+        {
+          label: "Two cards in the grid",
+          render: () => (
+            <StaffPage as="div">
+              <ImportCards>
+                <ImportCard
+                  title={
+                    <>
+                      An import <Tag tone="blue">Nightly</Tag>
+                    </>
+                  }
+                  intro="What it copies, and from where."
+                  actions={<JobActionsExample />}
+                >
+                  <Run run={exampleRun("import-signatories", { matched: 3, added: 7, alreadySet: 0 })} />
+                </ImportCard>
+                <ImportCard title="Another" intro="Never run." actions={<JobActionsExample />}>
+                  <p>Not imported yet.</p>
+                </ImportCard>
+              </ImportCards>
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "ImportCard",
+      file: "app/(staff)/staff/_components/ImportCard.tsx",
+      variants: [
+        {
+          label: "One card on its own",
+          render: () => (
+            <StaffPage as="div">
+              <ImportCard title="An import" intro="What it copies." actions={<JobActionsExample />}>
+                <p>Not imported yet.</p>
+              </ImportCard>
             </StaffPage>
           ),
         },
