@@ -5,7 +5,8 @@ import type { Page } from "@playwright/test";
 
 // The home page's events (app/(site)/_components/HomeEvents.tsx): choosing
 // where to see in-person events near, by postcode, the device's location or
-// a local group, or only the online ones. On the fixture calendar: in person
+// a local group, or only the online ones, and a link to a local group's or
+// the online ones (lib/events-url.ts). On the fixture calendar: in person
 // in London, Manchester, Oxford, Bristol and Leicester, Glasgow's with no
 // venue yet, and one online.
 
@@ -37,6 +38,8 @@ test("events near a postcode", { tag: "@phone" }, async ({ page }) => {
   await expect(nearButton(page, copy.nearShort("Westminster"))).toHaveAttribute("aria-pressed", "true");
   await expect(events(page).getByText("PauseAI London: Protest at Parliament")).toBeVisible();
   await expect(events(page).getByText("PauseAI Manchester Social")).toHaveCount(0);
+  // Where someone is stays out of the address bar.
+  await expect(page).toHaveURL(`${BASE}/`);
   await frame(page, "only the events near Westminster", { of: events(page) });
 });
 
@@ -46,6 +49,7 @@ test("only the online events", async ({ page }) => {
   await expect(page.getByRole("button", { name: copy.online, exact: true })).toHaveAttribute("aria-pressed", "true");
   await expect(events(page).getByText("Introduction to PauseAI UK (online)")).toBeVisible();
   await expect(events(page).getByText("PauseAI Manchester Social")).toHaveCount(0);
+  await expect(page).toHaveURL(`${BASE}/?events=online#events`);
   await frame(page, "only the online events", { of: events(page) });
 });
 
@@ -84,11 +88,31 @@ test("a local group's events, venue set or not", async ({ page }) => {
   await page.getByRole("radio", { name: "Oxford" }).click();
   await expect(nearButton(page, copy.nearShort("Oxford"))).toHaveAttribute("aria-pressed", "true");
   await expect(events(page).getByText("AI risk talk")).toBeVisible();
-  await frame(page, "Oxford's events", { of: events(page) });
+  await expect(page).toHaveURL(`${BASE}/?events=oxford#events`);
+  await frame(page, "Oxford's events, with the address bar saying so", { of: events(page) });
 
   // Glasgow's meeting has no venue yet, so it's Glasgow's by its name.
   await nearButton(page, copy.nearShort("Oxford")).click();
   await page.getByRole("radio", { name: "Glasgow" }).click();
   await expect(events(page).getByText("PauseAI Scotland Meeting")).toBeVisible();
   await frame(page, "Glasgow's meeting, with no venue yet", { of: events(page) });
+});
+
+test("a link to a local group's events, or the online ones", async ({ page }) => {
+  await page.goto(`${BASE}/?events=oxford#events`);
+  await hydrated(page);
+  await expect(nearButton(page, copy.nearShort("Oxford"))).toHaveAttribute("aria-pressed", "true");
+  await expect(events(page).getByText("AI risk talk")).toBeVisible();
+  await expect(events(page).getByText("PauseAI London: Protest at Parliament")).toHaveCount(0);
+  await frame(page, "opened from a link to Oxford's events");
+
+  await page.goto(`${BASE}/?events=online#events`);
+  await hydrated(page);
+  await expect(page.getByRole("button", { name: copy.online, exact: true })).toHaveAttribute("aria-pressed", "true");
+  await expect(events(page).getByText("Introduction to PauseAI UK (online)")).toBeVisible();
+  await frame(page, "opened from a link to the online events", { of: events(page) });
+
+  // A link asking for nothing known shows everything.
+  await openHome(page, "/?events=atlantis");
+  await frame(page, "opened from a link asking for an unknown place", { of: events(page) });
 });

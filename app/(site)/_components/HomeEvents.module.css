@@ -46,10 +46,12 @@
   position: relative;
 }
 
+/* Placed by HomeEvents once it's open: centred under its button, within the
+   page's side gutters. Until then, at the button's left. */
 .popover {
   position: absolute;
   top: calc(100% + 10px);
-  left: 0;
+  left: var(--popover-left, 0);
   z-index: 20;
 }
 

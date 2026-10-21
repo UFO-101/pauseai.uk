@@ -15,8 +15,19 @@ const online = (n: number): LumaEvent => exampleEvent(n, { name: `Online call ${
 
 const EVENTS = [inPerson(1, "London", WESTMINSTER), online(2), inPerson(3, "Oxford", OXFORD), inPerson(4, "Oxford")];
 
+// The test page's own query (Vitest's session) stays: only what a link adds changes.
+const testPage = new URL(window.location.href);
+/** The test page, as if opened from a link with `params` added to its query. */
+function openAt(params: Record<string, string> = {}) {
+  const url = new URL(testPage);
+  for (const [name, value] of Object.entries(params)) url.searchParams.set(name, value);
+  window.history.replaceState(null, "", url);
+}
+const query = () => new URLSearchParams(window.location.search);
+
 afterEach(async () => {
   vi.restoreAllMocks();
+  openAt();
   await page.viewport(414, 896);
 });
 
@@ -99,11 +110,12 @@ describe("HomeEvents", () => {
     await expect.element(picker()).not.toBeInTheDocument();
   });
 
-  it("shows a local group's in-person events, and goes back to anywhere", async () => {
+  it("shows a local group's in-person events, and goes back to all with the group unchecked", async () => {
     await render(<HomeEvents events={EVENTS} />);
     await onlineButton().click();
     await openPicker();
-    await expect.element(page.getByRole("radio", { name: copy.anywhere })).toHaveAttribute("aria-checked", "true");
+    // No group is checked until one is chosen: All is the switch's own segment.
+    expect(page.getByRole("radio", { checked: true }).elements()).toHaveLength(0);
     await page.getByRole("radio", { name: "Oxford" }).click();
     await expect.element(nearButton(copy.nearShort("Oxford"))).toHaveAttribute("aria-pressed", "true");
     await expect.element(picker()).not.toBeInTheDocument();
@@ -112,8 +124,103 @@ describe("HomeEvents", () => {
 
     await openPicker(copy.nearShort("Oxford"));
     await expect.element(page.getByRole("radio", { name: "Oxford" })).toHaveAttribute("aria-checked", "true");
-    await page.getByRole("radio", { name: copy.anywhere }).click();
+    await allButton().click();
     await expect.element(allButton()).toHaveAttribute("aria-pressed", "true");
+    await openPicker();
+    expect(page.getByRole("radio", { checked: true }).elements()).toHaveLength(0);
+  });
+
+  it("says in the address bar what's shown, for a link to it: a local group or online, never a place", async () => {
+    vi.spyOn(window, "fetch").mockResolvedValue(Response.json({ ok: true, place: OXFORD, name: "Oxford" }));
+    openAt({ utm: "x" });
+    await render(<HomeEvents events={EVENTS} />);
+    await openPicker();
+    await page.getByRole("radio", { name: "Oxford" }).click();
+    await expect.element(nearButton(copy.nearShort("Oxford"))).toHaveAttribute("aria-pressed", "true");
+    expect(query().get("events")).toBe("oxford");
+    expect(window.location.hash).toBe("#events");
+    // The rest of the link is kept.
+    expect(query().get("utm")).toBe("x");
+    expect(query().get("sessionId")).toBe(testPage.searchParams.get("sessionId"));
+
+    await onlineButton().click();
+    await expect.element(onlineButton()).toHaveAttribute("aria-pressed", "true");
+    expect(query().get("events")).toBe("online");
+
+    await allButton().click();
+    await expect.element(allButton()).toHaveAttribute("aria-pressed", "true");
+    expect(query().get("events")).toBeNull();
+    expect(query().get("utm")).toBe("x");
+
+    await openPicker();
+    await page.getByRole("radio", { name: "Oxford" }).click();
+    await expect.element(nearButton(copy.nearShort("Oxford"))).toHaveAttribute("aria-pressed", "true");
+    await openPicker(copy.nearShort("Oxford"));
+    await page.getByLabelText(copy.postcodeLabel).fill("OX1 1AA");
+    await page.getByRole("button", { name: copy.postcodeButton }).click();
+    await expect.element(nearButton(copy.nearShort("Oxford"))).toHaveAttribute("aria-pressed", "true");
+    expect(query().get("events")).toBeNull();
+  });
+
+  it("shows what a link asks for: a local group's events, or the online ones", async () => {
+    openAt({ events: "oxford" });
+    await render(<HomeEvents events={EVENTS} />);
+    await expect.element(nearButton(copy.nearShort("Oxford"))).toHaveAttribute("aria-pressed", "true");
+    expect(shownEvents()).toEqual(["Meetup in Oxford", "Meetup in Oxford"]);
+  });
+
+  it("shows the online events for a link to them", async () => {
+    openAt({ events: "online" });
+    await render(<HomeEvents events={EVENTS} />);
+    await expect.element(onlineButton()).toHaveAttribute("aria-pressed", "true");
+    expect(shownEvents()).toEqual(["Online call 2"]);
+  });
+
+  it("shows everything for a link asking for nothing known", async () => {
+    openAt({ events: "atlantis" });
+    await render(<HomeEvents events={EVENTS} />);
+    await expect.element(allButton()).toHaveAttribute("aria-pressed", "true");
+    expect(shownEvents()).toHaveLength(4);
+  });
+
+  const pickerBox = () => picker().element().getBoundingClientRect();
+  const buttonMiddle = () => {
+    const box = chooseButton().element().getBoundingClientRect();
+    return box.left + box.width / 2;
+  };
+  const pointMiddle = () =>
+    pickerBox().left + parseFloat(getComputedStyle(picker().element()).getPropertyValue("--popover-point"));
+
+  it("hangs the choice centred under its button when there's room, its point under the button's middle", async () => {
+    await page.viewport(1200, 800);
+    await render(<HomeEvents events={EVENTS} />);
+    await openPicker();
+    const box = pickerBox();
+    expect(Math.abs(box.left + box.width / 2 - buttonMiddle())).toBeLessThan(1);
+    expect(Math.abs(pointMiddle() - buttonMiddle())).toBeLessThan(1);
+  });
+
+  it("keeps the choice within the phone's side gutters, the point still under the button, and follows a resize", async () => {
+    await page.viewport(1200, 800);
+    await render(<HomeEvents events={EVENTS} />);
+    await openPicker();
+    await page.viewport(414, 896);
+    // The resize is followed once its event has run.
+    await expect.poll(() => pickerBox().left).toBeGreaterThanOrEqual(16);
+    const box = pickerBox();
+    expect(box.right).toBeLessThanOrEqual(414 - 16);
+    expect(box.left + box.width / 2).not.toBeCloseTo(buttonMiddle(), 0);
+    expect(Math.abs(pointMiddle() - buttonMiddle())).toBeLessThan(1);
+  });
+
+  it("lists the local groups alphabetically", async () => {
+    await render(<HomeEvents events={EVENTS} />);
+    await openPicker();
+    const names = page
+      .getByRole("radio")
+      .elements()
+      .map((radio) => radio.textContent);
+    expect(names).toEqual(["Glasgow", "Leicester", "London", "Manchester", "Oxford", "West of England"]);
   });
 
   it("says when nothing's on near the place chosen", async () => {

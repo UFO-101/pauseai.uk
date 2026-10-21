@@ -5,7 +5,6 @@ export const homeEventsCopy = {
   heading: "Upcoming events",
   /** The button that opens the choice of where. */
   chooseWhere: "Choose location",
-  anywhere: "Anywhere in the UK",
   online: "Online",
   /** The switch of what's shown: everything, near a place (opening the choice of where), or online. */
   switchLabel: "Which events to show",

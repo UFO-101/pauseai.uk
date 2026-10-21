@@ -1,12 +1,14 @@
 "use client";
 
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties } from "react";
 import EventList from "@/components/events/EventList";
 import EventsSection from "@/components/events/EventsSection";
 import { homeEventsCopy as copy } from "@/lib/content/home-events";
 import { localGroups } from "@/lib/content/local-groups";
 import { site } from "@/lib/content/site";
 import { ANYWHERE, inPersonEventsFor, isOnlineEvent, type EventsWhere, type LumaEvent } from "@/lib/events";
+import { EVENTS_PARAM, eventsFromQuery, withEventsQuery, type EventsShowing } from "@/lib/events-url";
+import { placeUnder, type Placement } from "@/lib/popover-placement";
 import EventsPlacePicker from "./EventsPlacePicker";
 import styles from "./HomeEvents.module.css";
 
@@ -17,10 +19,20 @@ function nearLabel(where: EventsWhere): string {
   return where.name ? copy.nearShort(where.name) : copy.nearYouShort;
 }
 
+/** The least space between the choice of where and the viewport's sides: the page's side gutter (--space-4). */
+const GUTTER_PX = 16;
+
+/** The address bar says what's shown, when it's a local group or online, so the page can be linked to showing it. */
+function rememberInUrl(showing: EventsShowing) {
+  const url = withEventsQuery(new URL(window.location.href), showing, localGroups);
+  window.history.replaceState(window.history.state, "", url);
+}
+
 /**
  * The home page's events: every one, soonest first, until the visitor
  * chooses where to see in-person ones near, or only the online ones, which
- * anyone can join from wherever they are.
+ * anyone can join from wherever they are. A link can ask for a local
+ * group's or the online ones (lib/events-url.ts).
  */
 export default function HomeEvents({ events }: { events: LumaEvent[] }) {
   const [where, setWhere] = useState<EventsWhere>(ANYWHERE);
@@ -29,6 +41,41 @@ export default function HomeEvents({ events }: { events: LumaEvent[] }) {
   const pickerId = useId();
   const chooser = useRef<HTMLDivElement>(null);
   const chooseButton = useRef<HTMLButtonElement>(null);
+  const picker = useRef<HTMLDivElement>(null);
+  const [placement, setPlacement] = useState<Placement>();
+
+  // The choice of where hangs centred under its button, kept within the
+  // page's side gutters: measured once open, and again if the window changes.
+  useLayoutEffect(() => {
+    if (!choosing) return;
+    function place() {
+      // Both are rendered while choosing.
+      const button = chooseButton.current!.getBoundingClientRect();
+      const box = picker.current!.getBoundingClientRect();
+      setPlacement(
+        placeUnder({
+          anchorLeft: button.left,
+          anchorWidth: button.width,
+          width: box.width,
+          viewportWidth: window.innerWidth,
+          gutter: GUTTER_PX,
+        }),
+      );
+    }
+    place();
+    window.addEventListener("resize", place);
+    return () => window.removeEventListener("resize", place);
+  }, [choosing]);
+
+  // What the link asked for. After the page loads, as the server renders
+  // the page the same whatever the query.
+  useEffect(() => {
+    const asked = eventsFromQuery(window.location.search, localGroups);
+    if (!asked) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- once, on load, from the link's query, which the server render doesn't see
+    setWhere(asked.where);
+    setOnlineOnly(asked.onlineOnly);
+  }, []);
 
   // The choice of where closes on Escape, back to its button, or on a click
   // anywhere else on the page.
@@ -54,6 +101,13 @@ export default function HomeEvents({ events }: { events: LumaEvent[] }) {
     setWhere(next);
     setOnlineOnly(false);
     setChoosing(false);
+    rememberInUrl({ where: next, onlineOnly: false });
+  }
+
+  function chooseOnline() {
+    setOnlineOnly(true);
+    setChoosing(false);
+    rememberInUrl({ where, onlineOnly: true });
   }
 
   const shown = onlineOnly
@@ -66,7 +120,7 @@ export default function HomeEvents({ events }: { events: LumaEvent[] }) {
 
   return (
     <EventsSection
-      id="events"
+      id={EVENTS_PARAM}
       heading={copy.heading}
       calendar={{ label: "View full calendar →", href: site.social.luma, variant: "ghost" }}
       actions={
@@ -120,17 +174,24 @@ export default function HomeEvents({ events }: { events: LumaEvent[] }) {
                 <path d="M3 5.5l5 5 5-5" />
               </svg>
             </button>
-            {choosing && <EventsPlacePicker id={pickerId} where={where} onChoose={choose} className={styles.popover} />}
+            {choosing && (
+              <EventsPlacePicker
+                ref={picker}
+                id={pickerId}
+                where={where}
+                onChoose={choose}
+                className={styles.popover}
+                style={
+                  placement &&
+                  ({
+                    "--popover-left": `${placement.left}px`,
+                    "--popover-point": `${placement.point}px`,
+                  } as CSSProperties)
+                }
+              />
+            )}
           </div>
-          <button
-            type="button"
-            className={styles.segment}
-            aria-pressed={showing === "online"}
-            onClick={() => {
-              setOnlineOnly(true);
-              setChoosing(false);
-            }}
-          >
+          <button type="button" className={styles.segment} aria-pressed={showing === "online"} onClick={chooseOnline}>
             {copy.online}
           </button>
         </div>
