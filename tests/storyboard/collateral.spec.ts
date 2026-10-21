@@ -123,6 +123,9 @@ test("a gallery: slides with their own photos, styles and captions, in one zip f
   await page.getByRole("button", { name: "DeepMind protest" }).click();
   await page.getByRole("radio", { name: "Cream" }).click();
   await page.getByLabel("Caption for slide 3").fill("Outside Google DeepMind");
+  // Where the clicks above leave the window varies from run to run, and the
+  // frame with it. At the top, it pictures the whole studio instead.
+  await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
   await frame(page, "a third slide, with its own photo and style");
 
   await page.getByRole("button", { name: "Show slide 3" }).click();

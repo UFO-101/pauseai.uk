@@ -117,10 +117,11 @@ export const staffCopy = {
     problemsTitle: "Recent",
   },
   // The email staff get when a letter hard-bounces or is complained about.
+  // Postmark's reason sometimes ends in a full stop and sometimes doesn't.
   alert: {
     subject: (mp: string) => `A letter to ${mp} bounced`,
     body: (mp: string, address: string, reason: string, link: string) =>
-      `A letter to ${mp} (${address}) didn't arrive: ${reason}. Nothing more will be sent to that address until it's fixed in Airtable and unblocked here: ${link}`,
+      `A letter to ${mp} (${address}) didn't arrive: ${reason.replace(/\.+$/, "")}. Nothing more will be sent to that address until it's fixed in Airtable and unblocked here: ${link}`,
   },
   // The nightly copy of ControlAI's letter's signatories into the bill's
   // statuses (lib/server/controlai-import.ts), on the import page.
