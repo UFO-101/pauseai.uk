@@ -220,13 +220,13 @@ describe("HomeEvents", () => {
       .getByRole("radio")
       .elements()
       .map((radio) => radio.textContent);
-    expect(names).toEqual(["Glasgow", "Leicester", "London", "Manchester", "Oxford", "West of England"]);
+    expect(names).toEqual(["Leicester", "London", "Manchester", "Oxford", "Scotland", "West of England"]);
   });
 
   it("says when nothing's on near the place chosen", async () => {
     await render(<HomeEvents events={EVENTS} />);
     await openPicker();
-    await page.getByRole("radio", { name: "Glasgow" }).click();
+    await page.getByRole("radio", { name: "Scotland" }).click();
     await expect.element(page.getByText(copy.noneNear)).toBeVisible();
   });
 

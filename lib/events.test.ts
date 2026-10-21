@@ -43,15 +43,15 @@ describe("filterEventsForLocalGroup", () => {
       "PauseAI Holborn & St Pancras Canvasing", // city
       "Tabling and Flyering for the PauseAI Protest", // address only
     ]);
-    expect(names(calendar, "Glasgow")).toContain("PauseAI Scotland Meeting"); // name only
+    expect(names(calendar, "Scotland")).toContain("PauseAI Scotland Meeting"); // name only
   });
 
   it("keeps the calendar's own order", () => {
-    expect(names(calendar, "Glasgow")).toEqual(["PauseAI Scotland Meeting", "Panel Discussion: Who's Responsible?"]);
+    expect(names(calendar, "Scotland")).toEqual(["PauseAI Scotland Meeting", "Panel Discussion: Who's Responsible?"]);
   });
 
   it("covers the local group's wider region, not just its host city", () => {
-    expect(names(calendar, "Glasgow")).toContain("Panel Discussion: Who's Responsible?");
+    expect(names(calendar, "Scotland")).toContain("Panel Discussion: Who's Responsible?");
     expect(names(calendar, "West of England")).toEqual(["Bristol Social!"]);
   });
 
