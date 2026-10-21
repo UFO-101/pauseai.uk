@@ -213,6 +213,16 @@ describe("HomeEvents", () => {
     expect(Math.abs(pointMiddle() - buttonMiddle())).toBeLessThan(1);
   });
 
+  it("lists the local groups alphabetically", async () => {
+    await render(<HomeEvents events={EVENTS} />);
+    await openPicker();
+    const names = page
+      .getByRole("radio")
+      .elements()
+      .map((radio) => radio.textContent);
+    expect(names).toEqual(["Glasgow", "Leicester", "London", "Manchester", "Oxford", "West of England"]);
+  });
+
   it("says when nothing's on near the place chosen", async () => {
     await render(<HomeEvents events={EVENTS} />);
     await openPicker();

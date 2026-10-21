@@ -10,6 +10,11 @@ import { localGroups, type LocalGroupName } from "@/lib/content/local-groups";
 import type { EventsWhere } from "@/lib/events";
 import styles from "./EventsPlacePicker.module.css";
 
+/** The local groups by name, as a list to read: the list's own order is the map's. */
+const groupOptions = localGroups
+  .map((group) => ({ value: group.name, label: group.name }))
+  .sort((a, b) => a.label.localeCompare(b.label, "en-GB"));
+
 /** A fresh location, as the visitor may have moved since the last; one that takes longer than this to find won't come. */
 const LOCATION_OPTIONS: PositionOptions = { timeout: 15 * 1000 };
 
@@ -132,7 +137,7 @@ export default function EventsPlacePicker({
         <Label>{copy.groupsLabel}</Label>
         <Segmented<string>
           label={copy.groupsLabel}
-          options={localGroups.map((group) => ({ value: group.name, label: group.name }))}
+          options={groupOptions}
           value={chosen}
           onChange={(value) => onChoose({ kind: "group", name: value as LocalGroupName })}
         />
