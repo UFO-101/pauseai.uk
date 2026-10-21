@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { campaignBySlug } from "@/lib/email-your-mp";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { staffTime } from "@/lib/staff-time";
@@ -29,7 +30,11 @@ export default function LettersTable({ letters }: { letters: LetterSummary[] }) 
           <tr key={letter.id}>
             <td>{staffTime(letter.createdAt)}</td>
             <td>
-              {letter.senderName}
+              {letter.supporterId === null ? (
+                letter.senderName
+              ) : (
+                <Link href={`/staff/supporters/${letter.supporterId}`}>{letter.senderName}</Link>
+              )}
               <br />
               <Muted>{letter.senderEmail}</Muted>
             </td>

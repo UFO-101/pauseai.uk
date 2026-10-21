@@ -29,6 +29,13 @@ import {
 } from "@/app/(staff)/staff/_components/RunList.examples";
 import StaffNav, { type StaffPage as StaffPageName } from "@/app/(staff)/staff/_components/StaffNav";
 import StaffHome from "@/app/(staff)/staff/_components/StaffHome";
+import SupporterBadges from "@/app/(staff)/staff/_components/SupporterBadges";
+import SupporterDetails from "@/app/(staff)/staff/_components/SupporterDetails";
+import SupporterFilters from "@/app/(staff)/staff/_components/SupporterFilters";
+import SupportersTable from "@/app/(staff)/staff/_components/SupportersTable";
+import { exampleSupporter, exampleSupporterDetails } from "@/app/(staff)/staff/_components/SupportersTable.examples";
+import TickedFilters from "@/app/(staff)/staff/_components/TickedFilters";
+import { supportersSearch } from "@/lib/staff-search";
 import StaffPage from "@/app/(staff)/staff/_components/ui/StaffPage";
 import { campaigns } from "@/lib/content/email-your-mp";
 import { staffCopy } from "@/lib/content/staff-interface";
@@ -52,6 +59,7 @@ const [pm] = campaigns;
 // Every page the navigation can mark as current, so a new one is a type error until it's here.
 const PAGES: Record<StaffPageName, true> = {
   home: true,
+  supporters: true,
   politicians: true,
   letters: true,
   emails: true,
@@ -195,6 +203,135 @@ export const staff: Group = {
                   />
                 ))}
               </div>
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "SupporterFilters",
+      file: "app/(staff)/staff/_components/SupporterFilters.tsx",
+      variants: [
+        {
+          label: "The list's filters, with a search typed and a box ticked",
+          render: () => (
+            <StaffPage as="div">
+              <SupporterFilters search={supportersSearch({ q: "jane", registered: "on", sort: "name" })} />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "TickedFilters",
+      file: "app/(staff)/staff/_components/TickedFilters.tsx",
+      variants: [
+        {
+          label: "Two yes-or-no filters, one ticked",
+          render: () => (
+            <StaffPage as="div">
+              <TickedFilters
+                boxes={[
+                  { name: "a", label: "Ticked", ticked: true },
+                  { name: "b", label: "Not ticked", ticked: false },
+                ]}
+              />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "SupportersTable",
+      file: "app/(staff)/staff/_components/SupportersTable.tsx",
+      variants: [
+        {
+          label: "Two supporters, one page of three",
+          render: () => (
+            <StaffPage as="div">
+              <SupportersTable
+                search={supportersSearch({ page: "2" })}
+                page={{
+                  supporters: [
+                    exampleSupporter,
+                    {
+                      ...exampleSupporter,
+                      id: 8,
+                      name: null,
+                      emails: ["sam@example.com"],
+                      phone: null,
+                      postcode: null,
+                      sources: ["letter"],
+                      lumaContact: false,
+                      events: 0,
+                      optedOut: [],
+                    },
+                  ],
+                  total: 120,
+                  pages: 3,
+                }}
+              />
+            </StaffPage>
+          ),
+        },
+        {
+          label: "Nobody found",
+          render: () => (
+            <StaffPage as="div">
+              <SupportersTable search={supportersSearch({})} page={{ supporters: [], total: 0, pages: 1 }} />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "SupporterBadges",
+      file: "app/(staff)/staff/_components/SupporterBadges.tsx",
+      variants: [
+        {
+          label: "A calendar contact who registered twice and wrote to their MP",
+          render: () => (
+            <StaffPage as="div">
+              <SupporterBadges supporter={exampleSupporter} />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "SupporterDetails",
+      file: "app/(staff)/staff/_components/SupporterDetails.tsx",
+      variants: [
+        {
+          label: "A supporter known from Luma and a letter, opted out on one address",
+          render: () => (
+            <StaffPage as="div">
+              <SupporterDetails supporter={exampleSupporterDetails} />
+            </StaffPage>
+          ),
+        },
+        {
+          label: "A supporter with no name, nothing given and no activity",
+          render: () => (
+            <StaffPage as="div">
+              <SupporterDetails
+                supporter={{
+                  summary: {
+                    ...exampleSupporter,
+                    name: null,
+                    emails: ["x@example.com"],
+                    events: 0,
+                    letters: 0,
+                    lumaContact: false,
+                    optedOut: [],
+                  },
+                  identities: [{ source: "luma", email: "x@example.com", name: "", seenAt: null }],
+                  contacts: [],
+                  links: [],
+                  activity: [],
+                  optOuts: [],
+                }}
+              />
             </StaffPage>
           ),
         },

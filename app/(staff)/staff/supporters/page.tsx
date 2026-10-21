@@ -1,0 +1,22 @@
+import { staffCopy } from "@/lib/content/staff-interface";
+import { requireStaff } from "@/lib/server/staff-auth";
+import { listSupporters } from "@/lib/server/supporters";
+import { supportersSearch, type SupportersSearch } from "@/lib/staff-search";
+import SupporterFilters from "../_components/SupporterFilters";
+import SupportersTable from "../_components/SupportersTable";
+import StaffNav from "../_components/StaffNav";
+import StaffPage from "../_components/ui/StaffPage";
+
+/** Everyone we know of, filtered, newest activity first. */
+export default async function SupportersPage({ searchParams }: { searchParams: Promise<Partial<SupportersSearch>> }) {
+  const { email, permissions } = await requireStaff("supporters");
+  const { filter, ...search } = supportersSearch(await searchParams);
+  const page = await listSupporters(filter);
+  return (
+    <StaffPage nav={<StaffNav email={email} permissions={permissions} current="supporters" />}>
+      <h1>{staffCopy.supporters.title}</h1>
+      <SupporterFilters search={search} />
+      <SupportersTable page={page} search={search} />
+    </StaffPage>
+  );
+}

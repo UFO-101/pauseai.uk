@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { emailsSearch, historySearch, lettersSearch, politicianId } from "./staff-search";
+import {
+  emailsSearch,
+  historySearch,
+  lettersSearch,
+  politicianId,
+  supporterId,
+  supportersSearch,
+} from "./staff-search";
 
 describe("historySearch", () => {
   it("filters by a job", () => {
@@ -38,5 +45,62 @@ describe("emailsSearch", () => {
     expect(emailsSearch({ kind: "hard" })).toEqual({ kind: "hard", filter: "hard" });
     expect(emailsSearch({ kind: "soft" })).toEqual({ kind: "soft", filter: undefined });
     expect(emailsSearch({})).toEqual({ kind: "", filter: undefined });
+  });
+});
+
+describe("supportersSearch", () => {
+  it("reads each filter as typed and as applied, dropping what it doesn't know", () => {
+    expect(supportersSearch({})).toEqual({
+      q: "",
+      source: "",
+      registered: "",
+      active: "",
+      from: "",
+      to: "",
+      unsubscribed: "",
+      postcode: "",
+      sort: "",
+      page: "",
+      filter: { sort: "active", page: 1 },
+    });
+    const all = supportersSearch({
+      q: " jane ",
+      source: "luma",
+      registered: "1",
+      active: "90",
+      from: "2026-01-01",
+      to: "2026-12-31",
+      unsubscribed: "1",
+      postcode: "1",
+      sort: "name",
+      page: "3",
+    });
+    expect(all.filter).toEqual({
+      search: "jane",
+      source: "luma",
+      registered: true,
+      active: "90",
+      from: "2026-01-01",
+      to: "2026-12-31",
+      unsubscribed: true,
+      hasPostcode: true,
+      sort: "name",
+      page: 3,
+    });
+    expect(all.q).toBe(" jane ");
+    expect(supportersSearch({ registered: "on" }).filter).toMatchObject({ registered: true });
+    const bad = supportersSearch({ source: "x", active: "7", from: "soon", sort: "x", page: "0" });
+    expect(bad.filter).toEqual({ sort: "active", page: 1 });
+    expect(supportersSearch({ active: "older", sort: "first" }).filter).toMatchObject({
+      active: "older",
+      sort: "first",
+    });
+  });
+});
+
+describe("supporterId", () => {
+  it("is a whole number from the URL", () => {
+    expect(supporterId("12")).toBe(12);
+    expect(supporterId("x")).toBeUndefined();
   });
 });

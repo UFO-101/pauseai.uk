@@ -1,7 +1,8 @@
 import { expect, it } from "vitest";
 import { query, transaction } from "@/lib/server/db";
 import { addTestMp, describeWithDatabase, useTestDatabase } from "@/tests/database";
-import { linkSupporters } from "./supporters";
+import type { SupporterFilter } from "@/lib/supporters";
+import { getSupporter, linkSupporters, listSupporters } from "./supporters";
 
 /** A Luma user, with a registration for `event` if given. */
 async function lumaUser(id: string, email: string, name: string, event?: string, more: Record<string, unknown> = {}) {
@@ -180,5 +181,142 @@ describeWithDatabase("linkSupporters", () => {
       { name: null, events: 0, opted_out: null },
       { name: "Pat", events: 0, opted_out: null },
     ]);
+  });
+});
+
+describeWithDatabase("listSupporters and getSupporter", () => {
+  useTestDatabase();
+
+  async function people() {
+    const mp = await addTestMp();
+    await lumaUser("usr-1", "jane@example.com", "Jane", "evt-1", {
+      contactSince: "2026-01-01T00:00:00Z",
+      registeredAt: "2026-10-10T10:00:00Z",
+      phone: "+447700900001",
+      postcode: "M1 1AE",
+    });
+    await lumaUser("usr-2", "sam@example.com", "Sam", "evt-1", { registeredAt: "2025-01-10T10:00:00Z" });
+    await lumaUser("usr-3", "old@example.com", "Old", "evt-1", { registeredAt: "2024-01-10T10:00:00Z" });
+    await letter("pat@example.com", "Pat", mp, { createdAt: "2026-06-01T09:00:00Z" });
+    await query(
+      `INSERT INTO opt_outs (address, list, source, source_ref, unsubscribed_at)
+       VALUES ('sam@example.com', 'luma-calendar', 'luma-webhook', 'w1', '2026-10-12T00:00:00Z')`,
+    );
+    await linkSupporters();
+    await query("UPDATE luma_guests SET registered_at = '2024-01-10T10:00:00Z' WHERE user_id = 'usr-3'");
+  }
+  const names = async (filter: Partial<SupporterFilter>) =>
+    (await listSupporters({ sort: "active", page: 1, ...filter })).supporters.map((s) => s.name);
+
+  it("lists everyone newest activity first, with what's known of each, and pages", async () => {
+    await people();
+    const page = await listSupporters({ sort: "active", page: 1 });
+    expect(page.total).toBe(4);
+    expect(page.pages).toBe(1);
+    expect(page.supporters.map((s) => s.name)).toEqual(["Sam", "Jane", "Pat", "Old"]);
+    expect(page.supporters[1]).toEqual({
+      id: expect.any(Number),
+      name: "Jane",
+      emails: ["jane@example.com"],
+      phone: "+447700900001",
+      postcode: "M1 1AE",
+      sources: ["luma"],
+      lumaContact: true,
+      firstSeenAt: new Date("2026-01-01T00:00:00Z"),
+      lastActiveAt: new Date("2026-10-10T10:00:00Z"),
+      events: 1,
+      letters: 0,
+      optedOut: [],
+    });
+    expect(page.supporters[0].optedOut).toEqual(["luma-calendar"]);
+    expect(await listSupporters({ sort: "active", page: 2 })).toEqual({ supporters: [], total: 0, pages: 1 });
+  });
+
+  it("filters by name, email or phone, source, registration, activity, first sign-up, opt-outs and postcode, and sorts", async () => {
+    await people();
+    expect(await names({ search: "JANE" })).toEqual(["Jane"]);
+    expect(await names({ search: "pat@" })).toEqual(["Pat"]);
+    expect(await names({ search: "0900001" })).toEqual(["Jane"]);
+    expect(await names({ source: "letter" })).toEqual(["Pat"]);
+    expect(await names({ registered: true })).toEqual(["Sam", "Jane", "Old"]);
+    expect(await names({ unsubscribed: true })).toEqual(["Sam"]);
+    expect(await names({ hasPostcode: true })).toEqual(["Jane", "Pat"]);
+    expect(await names({ from: "2026-06-01", to: "2026-06-01" })).toEqual(["Pat"]);
+    expect(await names({ from: "2026-06-02" })).toEqual([]);
+    expect(await names({ to: "2025-12-31" })).toEqual(["Sam", "Old"]);
+    expect(await names({ sort: "first" })).toEqual(["Old", "Sam", "Jane", "Pat"]);
+    expect(await names({ sort: "name" })).toEqual(["Jane", "Old", "Pat", "Sam"]);
+  });
+
+  it("filters by how recently they were active, against the clock", async () => {
+    const mp = await addTestMp();
+    const at = (days: number) => new Date(Date.now() - days * 86_400_000).toISOString();
+    await letter("a@example.com", "Week", mp, { createdAt: at(7) });
+    await letter("b@example.com", "Season", mp, { createdAt: at(60) });
+    await letter("c@example.com", "Year", mp, { createdAt: at(200) });
+    await letter("d@example.com", "Ages", mp, { createdAt: at(400) });
+    await linkSupporters();
+    expect(await names({ active: "30" })).toEqual(["Week"]);
+    expect(await names({ active: "90" })).toEqual(["Week", "Season"]);
+    expect(await names({ active: "365" })).toEqual(["Week", "Season", "Year"]);
+    expect(await names({ active: "older" })).toEqual(["Ages"]);
+  });
+
+  it("gives one supporter's details: identities, contact details, links, activity and each list's opt-out", async () => {
+    await people();
+    const [{ id }] = await query<{ id: number }>(
+      "SELECT supporter_id::int AS id FROM supporter_links WHERE luma_user_id = 'usr-2'",
+    );
+    const sam = (await getSupporter(id))!;
+    expect(sam.summary.name).toBe("Sam");
+    expect(sam.identities).toEqual([
+      { source: "luma", email: "sam@example.com", name: "Sam", seenAt: new Date("2025-01-10T10:00:00Z") },
+    ]);
+    expect(sam.contacts).toEqual([
+      {
+        source: "luma",
+        at: new Date("2025-01-10T10:00:00Z"),
+        phone: null,
+        postcode: null,
+        latitude: 51.5,
+        longitude: -0.1,
+      },
+    ]);
+    expect(sam.links).toEqual([
+      {
+        source: "luma",
+        sourceId: "usr-2",
+        matchedBy: "email",
+        matchedValue: "sam@example.com",
+        linkedAt: expect.any(Date),
+      },
+    ]);
+    expect(sam.activity.map((a) => a.kind)).toEqual(["opted-out", "luma-registered"]);
+    expect(sam.optOuts).toEqual([
+      {
+        list: "luma-calendar",
+        address: "sam@example.com",
+        since: new Date("2026-10-12T00:00:00Z"),
+        source: "luma-webhook",
+      },
+    ]);
+
+    const [{ id: pat }] = await query<{ id: number }>(
+      "SELECT supporter_id::int AS id FROM supporter_links WHERE letter_id IS NOT NULL",
+    );
+    const details = (await getSupporter(pat))!;
+    expect(details.links[0]).toMatchObject({ source: "letter", sourceId: expect.stringMatching(/^\d+$/) });
+    expect(details.optOuts).toEqual([{ list: "luma-calendar", address: "pat@example.com", since: null, source: null }]);
+    expect(details.contacts).toEqual([
+      {
+        source: "letter",
+        at: new Date("2026-06-01T09:00:00Z"),
+        phone: null,
+        postcode: "ZZ9 9ZZ",
+        latitude: null,
+        longitude: null,
+      },
+    ]);
+    expect(await getSupporter(999)).toBeUndefined();
   });
 });

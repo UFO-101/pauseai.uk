@@ -1,0 +1,8 @@
+/* The supporters list. */
+
+/* The badges in a row, with room between them. */
+.badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}

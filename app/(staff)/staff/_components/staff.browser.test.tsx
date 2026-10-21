@@ -36,6 +36,13 @@ import PermissionsForm from "./PermissionsForm";
 import PermissionsTable from "./PermissionsTable";
 import StaffNav from "./StaffNav";
 import StaffHome from "./StaffHome";
+import SupporterBadges from "./SupporterBadges";
+import SupporterDetails from "./SupporterDetails";
+import SupporterFilters from "./SupporterFilters";
+import SupportersTable from "./SupportersTable";
+import { exampleSupporter, exampleSupporterDetails } from "./SupportersTable.examples";
+import TickedFilters from "./TickedFilters";
+import { supportersSearch } from "@/lib/staff-search";
 
 const [pm, bill] = campaigns;
 
@@ -73,6 +80,7 @@ describe("StaffNav", () => {
     expect([...nav.querySelectorAll("h2")].map((h) => h.textContent).slice(0, 5)).toEqual(
       ["politicians", "letters", "email", "data", "admin"].map((id) => staffCopy.nav.sections[id]),
     );
+    expect(nav.querySelector('a[href="/staff/supporters"]')).toBeNull();
     // On a phone, a dropdown instead: the current page, with the groups, the email and the way out under it once opened.
     const menu = page.getByRole("group");
     expect((menu.element() as HTMLDetailsElement).open).toBe(false);
@@ -755,5 +763,223 @@ describe("LettersTable", () => {
   it("says when there are none", async () => {
     await render(<LettersTable letters={[]} />);
     await expect.element(page.getByText(staffCopy.letters.none)).toBeVisible();
+  });
+});
+
+describe("SupporterFilters", () => {
+  it("is a GET form to the list, with each filter as typed", async () => {
+    await render(
+      <SupporterFilters
+        search={supportersSearch({ q: "jane", source: "luma", active: "90", registered: "on", sort: "name" })}
+      />,
+    );
+    const copy = staffCopy.supporters.filters;
+    const search = page.getByRole("searchbox", { name: copy.search });
+    await expect.element(search).toHaveValue("jane");
+    const form = search.element().closest("form")!;
+    expect(form.getAttribute("method")).toBe("get");
+    expect(form.getAttribute("action")).toBe("/staff/supporters");
+    await expect.element(page.getByRole("combobox", { name: copy.source })).toHaveValue("luma");
+    await expect.element(page.getByRole("combobox", { name: copy.active })).toHaveValue("90");
+    await expect.element(page.getByRole("combobox", { name: copy.sort })).toHaveValue("name");
+    await expect.element(page.getByRole("checkbox", { name: copy.registered })).toBeChecked();
+    await expect.element(page.getByRole("checkbox", { name: copy.unsubscribed })).not.toBeChecked();
+  });
+});
+
+describe("TickedFilters", () => {
+  it("ticks and unticks", async () => {
+    await render(
+      <TickedFilters
+        boxes={[
+          { name: "a", label: "A", ticked: true },
+          { name: "b", label: "B", ticked: false },
+        ]}
+      />,
+    );
+    const a = page.getByRole("checkbox", { name: "A" });
+    const b = page.getByRole("checkbox", { name: "B" });
+    await expect.element(a).toBeChecked();
+    await b.click();
+    await expect.element(b).toBeChecked();
+    await a.click();
+    await expect.element(a).not.toBeChecked();
+  });
+});
+
+describe("SupporterBadges", () => {
+  it("shows what the supporter is to us, and nothing for someone who is nothing yet", async () => {
+    const { rerender } = await render(<SupporterBadges supporter={exampleSupporter} />);
+    await expect.element(page.getByText(staffCopy.supporters.badges.lumaContact)).toBeVisible();
+    await expect.element(page.getByText(staffCopy.supporters.badges.registered(2))).toBeVisible();
+    await expect.element(page.getByText(staffCopy.supporters.badges.letter)).toBeVisible();
+    await rerender(<SupporterBadges supporter={{ ...exampleSupporter, lumaContact: false, events: 0, letters: 0 }} />);
+    expect(document.body.textContent!.trim()).toBe("");
+  });
+});
+
+describe("SupportersTable", () => {
+  it("lists each supporter with a link to their page, their emails, badges, dates and opt-outs, and pages", async () => {
+    const copy = staffCopy.supporters;
+    const search = supportersSearch({ q: "j", page: "2" });
+    await render(
+      <SupportersTable
+        search={search}
+        page={{
+          supporters: [
+            exampleSupporter,
+            { ...exampleSupporter, id: 8, name: null, emails: ["sam@example.com"], optedOut: [] },
+          ],
+          total: 120,
+          pages: 3,
+        }}
+      />,
+    );
+    await expect.element(page.getByText(copy.count(120, 2, 3))).toBeVisible();
+    await expect
+      .element(page.getByRole("link", { name: "Jane Example" }))
+      .toHaveAttribute("href", "/staff/supporters/7");
+    await expect.element(page.getByRole("link", { name: copy.noName })).toHaveAttribute("href", "/staff/supporters/8");
+    await expect.element(page.getByText(copy.moreEmails(1))).toBeVisible();
+    await expect.element(page.getByRole("cell", { name: copy.lists["luma-calendar"] })).toBeVisible();
+    await expect.element(page.getByRole("cell", { name: "1 Mar 2026" }).first()).toBeVisible();
+    await expect
+      .element(page.getByRole("link", { name: copy.previous }))
+      .toHaveAttribute("href", "/staff/supporters?q=j");
+    await expect
+      .element(page.getByRole("link", { name: copy.next }))
+      .toHaveAttribute("href", "/staff/supporters?q=j&page=3");
+  });
+
+  it("on the first of one page, has no paging, and says when nobody is found", async () => {
+    const { rerender } = await render(
+      <SupportersTable search={supportersSearch({})} page={{ supporters: [exampleSupporter], total: 1, pages: 1 }} />,
+    );
+    await expect.element(page.getByRole("link", { name: "Jane Example" })).toBeVisible();
+    expect(page.getByRole("link", { name: staffCopy.supporters.next }).all()).toHaveLength(0);
+    await rerender(
+      <SupportersTable
+        search={supportersSearch({ page: "2" })}
+        page={{ supporters: [exampleSupporter], total: 101, pages: 3 }}
+      />,
+    );
+    await expect
+      .element(page.getByRole("link", { name: staffCopy.supporters.previous }))
+      .toHaveAttribute("href", "/staff/supporters");
+    await expect
+      .element(page.getByRole("link", { name: staffCopy.supporters.next }))
+      .toHaveAttribute("href", "/staff/supporters?page=3");
+    await rerender(<SupportersTable search={supportersSearch({})} page={{ supporters: [], total: 0, pages: 1 }} />);
+    await expect.element(page.getByText(staffCopy.supporters.none)).toBeVisible();
+  });
+});
+
+describe("SupporterDetails", () => {
+  it("shows the identities, contact details, links, each list's opt-out, and the history with its links", async () => {
+    const copy = staffCopy.supporters;
+    await render(<SupporterDetails supporter={exampleSupporterDetails} />);
+    await expect.element(page.getByRole("heading", { level: 1, name: /Jane Example/ })).toBeVisible();
+    await expect
+      .element(page.getByText(copy.detail.identity(copy.sources.luma, "1 Mar 2026"), { exact: false }))
+      .toBeVisible();
+    await expect.element(page.getByRole("cell", { name: "+447700900001" })).toBeVisible();
+    await expect.element(page.getByRole("cell", { name: "53.4794, -2.2453" })).toBeVisible();
+    await expect
+      .element(page.getByText(copy.detail.link(copy.sources.luma, "usr-example", "jane@example.com"), { exact: false }))
+      .toBeVisible();
+    await expect
+      .element(page.getByText(copy.detail.optedOut("2026-10-12 18:30", "luma-webhook"), { exact: false }))
+      .toBeVisible();
+    await expect.element(page.getByText(copy.detail.notOptedOut)).toBeVisible();
+    await expect
+      .element(page.getByRole("link", { name: "PauseAI Manchester Social" }))
+      .toHaveAttribute("href", "https://luma.com/fixture-manchester-social");
+    await expect
+      .element(page.getByRole("link", { name: campaigns[0].title }).first())
+      .toHaveAttribute("href", "/staff/politicians/1");
+    await expect.element(page.getByText(copy.detail.statuses.approved, { exact: false })).toBeVisible();
+    await expect.element(page.getByText(copy.lists["luma-calendar"], { exact: false }).first()).toBeVisible();
+    await expect.element(page.getByText(copy.detail.kinds["luma-contact"], { exact: false })).toBeVisible();
+  });
+
+  it("copes with a supporter who has no name, nothing given and no activity, and an unknown status or list", async () => {
+    const copy = staffCopy.supporters;
+    await render(
+      <SupporterDetails
+        supporter={{
+          summary: { ...exampleSupporter, name: null, lumaContact: false, events: 0, letters: 0, optedOut: [] },
+          identities: [{ source: "luma", email: "x@example.com", name: "", seenAt: null }],
+          contacts: [],
+          links: [],
+          activity: [
+            {
+              source: "luma",
+              at: "2026-01-01T00:00:00Z",
+              kind: "luma-registered",
+              title: "Thing",
+              detail: "session",
+              href: null,
+            },
+            {
+              source: "x",
+              at: "2026-01-02T00:00:00Z",
+              kind: "opted-out",
+              title: "other-list",
+              detail: null,
+              href: null,
+            },
+            {
+              source: "letter",
+              at: "2026-01-03T00:00:00Z",
+              kind: "letter",
+              title: "gone-campaign",
+              detail: null,
+              href: null,
+            },
+
+            {
+              source: "letter",
+              at: "2026-01-04T00:00:00Z",
+              kind: "letter-replied",
+              title: null,
+              detail: null,
+              href: null,
+            },
+            { source: "x", at: "2026-01-05T00:00:00Z", kind: "resubscribed", title: null, detail: null, href: null },
+            {
+              source: "luma",
+              at: "2026-01-06T00:00:00Z",
+              kind: "luma-registered",
+              title: "Other",
+              detail: null,
+              href: null,
+            },
+          ],
+          optOuts: [{ list: "luma-calendar", address: "x@example.com", since: "2026-01-02T00:00:00Z", source: null }],
+        }}
+      />,
+    );
+    await expect.element(page.getByRole("heading", { level: 1, name: copy.noName })).toBeVisible();
+    await expect.element(page.getByText(`${copy.noName} · x@example.com`, { exact: false })).toBeVisible();
+    expect(page.getByRole("table").all()).toHaveLength(0);
+    await expect.element(page.getByText("Thing", { exact: false })).toBeVisible();
+    await expect.element(page.getByText("session", { exact: false })).toBeVisible();
+    await expect.element(page.getByText("other-list", { exact: false })).toBeVisible();
+    await expect.element(page.getByText("gone-campaign", { exact: false })).toBeVisible();
+  });
+});
+
+describe("LettersTable, a sender not yet a supporter", () => {
+  it("shows the name without a link", async () => {
+    await render(<LettersTable letters={[{ ...exampleLetter, supporterId: null }]} />);
+    await expect.element(page.getByText(exampleLetter.senderName, { exact: false })).toBeVisible();
+    expect(page.getByRole("link", { name: exampleLetter.senderName }).all()).toHaveLength(0);
+  });
+});
+
+describe("SupporterDetails with no history", () => {
+  it("says so", async () => {
+    await render(<SupporterDetails supporter={{ ...exampleSupporterDetails, activity: [] }} />);
+    await expect.element(page.getByText(staffCopy.supporters.detail.noActivity)).toBeVisible();
   });
 });

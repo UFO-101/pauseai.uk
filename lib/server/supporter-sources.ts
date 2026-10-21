@@ -1,4 +1,5 @@
 import "server-only";
+import type { SupporterSource } from "@/lib/supporters";
 
 // Where supporters come from. Each source is a table of records about
 // people (a Luma user, a letter), a column of supporter_links pointing at
@@ -10,8 +11,6 @@ import "server-only";
 // supporter_identity, supporter_activity and supporter_contact union them
 // all, by supporter. A new source adds itself here, a column and a widened
 // CHECK to supporter_links, its views, and its arms of the union views.
-
-export type SupporterSource = "luma" | "letter";
 
 export type SourceDefinition = {
   name: SupporterSource;

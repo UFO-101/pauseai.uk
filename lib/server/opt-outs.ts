@@ -1,4 +1,5 @@
 import "server-only";
+import type { OptOutList } from "@/lib/opt-outs";
 import { query, type Queryable } from "./db";
 
 // Each time an address opted out of a mailing list, and when it opted back
@@ -6,9 +7,6 @@ import { query, type Queryable } from "./db";
 // an open row, one at most per list. Keyed by address, not person: an
 // unsubscribe can arrive before we know whose address it is. Nothing reads
 // it to stop email yet.
-
-/** The mailing lists an address can opt out of. */
-export type OptOutList = "luma-calendar";
 
 /** What can record an opt-out. */
 export type OptOutSource = "luma-webhook";

@@ -1,0 +1,11 @@
+/* A supporter's page. */
+
+/* The history: one dated line each, no numbers. */
+.activity {
+  padding-left: 0;
+  list-style: none;
+}
+
+.activity li {
+  margin-block: var(--space-1);
+}

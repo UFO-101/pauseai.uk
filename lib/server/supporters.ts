@@ -1,4 +1,16 @@
 import "server-only";
+import { OPT_OUT_LISTS } from "@/lib/opt-outs";
+import type {
+  SupporterActivity,
+  SupporterContact,
+  SupporterDetails,
+  SupporterFilter,
+  SupporterIdentity,
+  SupporterLink,
+  SupporterOptOut,
+  SupporterSummary,
+} from "@/lib/supporters";
+import { SUPPORTERS_PAGE_SIZE } from "@/lib/supporters";
 import { query, transaction, type Queryable } from "./db";
 import { SUPPORTER_SOURCES } from "./supporter-sources";
 
@@ -61,4 +73,98 @@ export async function linkSupporters(db?: Queryable): Promise<LinkResult> {
   );
   await query("DROP TABLE candidates, new_supporters", [], db);
   return { supportersAdded: added.length, linked: existing.length + fresh.length };
+}
+
+const SUMMARY_COLUMNS = `s.id::int AS id, s.name, coalesce(s.emails, '{}') AS emails, s.phone, s.postcode,
+  coalesce(s.sources, '{}') AS sources, s.luma_contact AS "lumaContact", s.first_seen_at AS "firstSeenAt",
+  s.last_active_at AS "lastActiveAt", s.events, s.letters, coalesce(s.opted_out, '{}') AS "optedOut"`;
+
+export type SupportersPage = { supporters: SupporterSummary[]; total: number; pages: number };
+
+/** One page of the list, filtered and sorted. */
+export async function listSupporters(filter: SupporterFilter): Promise<SupportersPage> {
+  const where: string[] = [];
+  const values: unknown[] = [];
+  const add = (value: unknown) => {
+    values.push(value);
+    return `$${values.length}`;
+  };
+  if (filter.search) {
+    const like = add(`%${filter.search}%`);
+    where.push(
+      `(s.name ILIKE ${like} OR s.phone ILIKE ${like} OR EXISTS (SELECT 1 FROM unnest(s.emails) e WHERE e ILIKE ${like}))`,
+    );
+  }
+  if (filter.source) where.push(`${add(filter.source)} = ANY(s.sources)`);
+  if (filter.registered) where.push("s.events > 0");
+  if (filter.active === "older") where.push("s.last_active_at <= now() - interval '365 days'");
+  else if (filter.active) where.push(`s.last_active_at > now() - ${add(`${filter.active} days`)}::interval`);
+  if (filter.from) where.push(`s.first_seen_at >= ${add(filter.from)}::date`);
+  if (filter.to) where.push(`s.first_seen_at < ${add(filter.to)}::date + 1`);
+  if (filter.unsubscribed) where.push("s.opted_out IS NOT NULL");
+  if (filter.hasPostcode) where.push("s.postcode IS NOT NULL");
+  const order = {
+    active: "s.last_active_at DESC NULLS LAST, s.id DESC",
+    first: "s.first_seen_at ASC NULLS LAST, s.id ASC",
+    name: "s.name ASC NULLS LAST, s.id ASC",
+  }[filter.sort];
+  const rows = await query<SupporterSummary & { total: number }>(
+    `SELECT ${SUMMARY_COLUMNS}, count(*) OVER ()::int AS total FROM supporters_summary s
+     ${where.length ? `WHERE ${where.join(" AND ")}` : ""}
+     ORDER BY ${order} LIMIT ${add(SUPPORTERS_PAGE_SIZE)} OFFSET ${add((filter.page - 1) * SUPPORTERS_PAGE_SIZE)}`,
+    values,
+  );
+  const total = rows[0]?.total ?? 0;
+  return {
+    supporters: rows.map(({ total, ...row }) => {
+      void total;
+      return row;
+    }),
+    total,
+    pages: Math.max(1, Math.ceil(total / SUPPORTERS_PAGE_SIZE)),
+  };
+}
+
+/** Everything the staff page shows about one supporter, or undefined if there's no such one. */
+export async function getSupporter(id: number): Promise<SupporterDetails | undefined> {
+  const [summary] = await query<SupporterSummary>(
+    `SELECT ${SUMMARY_COLUMNS} FROM supporters_summary s WHERE s.id = $1`,
+    [id],
+  );
+  if (!summary) return undefined;
+  const [identities, contacts, links, activity, optOuts] = await Promise.all([
+    query<SupporterIdentity>(
+      `SELECT source, email, name, seen_at AS "seenAt" FROM supporter_identity WHERE supporter_id = $1 ORDER BY seen_at NULLS LAST, email`,
+      [id],
+    ),
+    query<SupporterContact>(
+      `SELECT source, at, phone, postcode, latitude, longitude FROM supporter_contact
+       WHERE supporter_id = $1 AND (phone IS NOT NULL OR postcode IS NOT NULL OR latitude IS NOT NULL) ORDER BY at DESC`,
+      [id],
+    ),
+    query<SupporterLink>(
+      `SELECT ${SUPPORTER_SOURCES.map((s) => `WHEN l.${s.column} IS NOT NULL THEN '${s.name}'`).reduce((sql, arm) => `${sql} ${arm}`, "CASE")} END AS source,
+         coalesce(${SUPPORTER_SOURCES.map((s) => `l.${s.column}::text`).join(", ")}) AS "sourceId",
+         l.matched_by AS "matchedBy", l.matched_value AS "matchedValue", l.linked_at AS "linkedAt"
+       FROM supporter_links l WHERE l.supporter_id = $1 ORDER BY l.id`,
+      [id],
+    ),
+    query<SupporterActivity>(
+      "SELECT source, at, kind, title, detail, href FROM supporter_activity WHERE supporter_id = $1 ORDER BY at DESC, kind",
+      [id],
+    ),
+    query<{ list: string; address: string; since: string; source: string }>(
+      `SELECT o.list, o.address, o.unsubscribed_at AS since, o.source FROM opt_outs o
+       WHERE o.resubscribed_at IS NULL AND o.address IN (SELECT email FROM supporter_identity WHERE supporter_id = $1)`,
+      [id],
+    ),
+  ]);
+  // Every list we know of, for every address: opted out or not.
+  const lists: SupporterOptOut[] = OPT_OUT_LISTS.flatMap((list) =>
+    summary.emails.map((address) => {
+      const open = optOuts.find((o) => o.list === list && o.address === address);
+      return { list, address, since: open?.since ?? null, source: open?.source ?? null };
+    }),
+  );
+  return { summary, identities, contacts, links, activity, optOuts: lists };
 }
