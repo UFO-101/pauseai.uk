@@ -1329,6 +1329,13 @@
 .share-text strong {
   color: var(--march-on-paper);
 }
+/* Links as they are on paper, not as the ink band around the card has them. */
+.share-panel .inline-link {
+  color: var(--march-orange);
+}
+.share-panel .inline-link:hover {
+  color: var(--march-orange-hot);
+}
 
 /* ─── The main action ─── */
 .share-main {
@@ -1497,6 +1504,11 @@
   color: var(--march-on-paper);
   text-transform: uppercase;
   letter-spacing: 0.04em;
+}
+/* Under the card's text, and in line with it. */
+.share-panel-done .share-secondary {
+  margin-top: 18px;
+  padding-inline: 0;
 }
 
 /* ─── Mobile ─── */
