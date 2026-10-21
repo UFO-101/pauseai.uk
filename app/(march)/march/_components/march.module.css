@@ -1261,11 +1261,10 @@
     --panel-shadow: 6px;
     padding: 22px;
   }
+  /* Stacked, the row's gap spaces its fields as the form's margins space the
+     rest. */
   .signup-row {
     grid-template-columns: 1fr;
-  }
-  .signup-row .field + .field {
-    margin-top: 18px;
   }
 }
 
