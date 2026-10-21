@@ -21,6 +21,9 @@ app/
                           data, fixture builds only (docs/testing.md)
   (staff)/staff/          the staff interface, behind email login; no <Nav>,
                           no analytics, noindex
+  (march)/march/          the march sign-up and its share step: a sub-site in
+                          its own style, with its own header and the site's
+                          footer (Styling, below)
   api/                    route handlers, only for things that need a URL
   sitemap.ts, robots.ts
 components/               React components used by more than one route
@@ -353,3 +356,22 @@ only a variant. The look itself (colours, type, buttons, cards) is in
 - **Classes from content.** HTML that lib/ writes as strings (press logos,
   blog footnotes) keeps global class names, which the component that shows
   it selects with `:global()` inside its own root class.
+
+### The march sign-up
+
+`/march` and `/march/share` (`app/(march)/march/`) are a sub-site in their
+own poster style, deliberately unlike the rest of the site: ink and paper,
+a hotter orange, Anton for headings, square corners and hard shadows. They
+follow the rules above, with these exceptions:
+
+- **One stylesheet for the sub-site.** Its components share
+  `_components/march.module.css`, in the order its rules cascade, and take
+  their classes through `m()` (`_components/classes.ts`). Its element
+  styles sit inside `:where(.frame)`, the frame every page of it is in
+  (`MarchSignupFrame`), so they reach nothing outside it. Its colours are
+  the `--march-*` tokens in `styles/tokens.css`, and Anton is self-hosted
+  there.
+- **Its own fields.** The form's controls are its own, in its style, not
+  the kit's (`tests/checks/form-controls.test.ts`).
+- **Its own header.** Its layout renders `SignupHeader`, not `<Nav>`, and no
+  march banner; the site's footer comes from the root layout as everywhere.
