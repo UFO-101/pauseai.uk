@@ -22,6 +22,18 @@
     U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 
+/* Anton, the march sign-up's display face (app/(march)/). */
+@font-face {
+  font-family: "Anton";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url("/fonts/anton-latin-400-normal.woff2") format("woff2");
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC,
+    U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
 :root {
   /* Backgrounds */
   --bg: #fdf8f3;
@@ -147,6 +159,18 @@
   --dev-bg: #efe4fb;
   --status-blue: #1d4e89;
   --status-blue-bg: #dbe8f7;
+
+  /* The march sign-up (app/(march)/): ink and paper, and a hotter orange
+     than the site's, for a page that looks like a poster. */
+  --march-ink: #0b0908;
+  --march-ink-rgb: 11 9 8;
+  --march-paper: #fbf4ea;
+  --march-paper-2: #f0e3d1;
+  --march-on-paper-soft: #3d332b;
+  --march-orange: #f0530a;
+  --march-orange-rgb: 240 83 10;
+  --march-orange-hot: #ff6a17;
+  --march-orange-deep: #b83a00;
 }
 
 /* Compact density, for screens of tables and filters that people work
