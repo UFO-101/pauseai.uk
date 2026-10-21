@@ -1248,6 +1248,9 @@
    the card lands with a little space above it. */
 .card-wrap {
   scroll-margin-top: 16px;
+  /* A grid item, which would otherwise widen to fit the share card's app
+     row rather than letting the row scroll. */
+  min-width: 0;
 }
 
 /* Paper on a hard accent shadow, like the form, so the three read as one
