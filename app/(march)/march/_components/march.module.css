@@ -23,10 +23,10 @@
   --march-stroke: 3px;
   --march-container: 1200px;
   --march-display: "Anton", "Arial Narrow", system-ui, sans-serif;
-  /* The width of a measure's "ch" in the body text: Arial's zero, 0.556em,
-     which the measures below were set against. Inter's own is wider, so
-     a ch unit would make every column of text wider than designed. */
-  --march-ch: 0.556em;
+  /* The unit of the text measures below: half an em, the width CSS gives
+     "ch" when the font has no zero to measure, as the page's columns were
+     designed at. Inter's own zero is wider, so ch would widen every column. */
+  --march-ch: 0.5em;
 
   flex: 1 0 auto;
   background: var(--march-paper);
