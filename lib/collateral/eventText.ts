@@ -1,4 +1,4 @@
-import type { LumaEntry, LumaEvent } from "@/lib/events";
+import type { LumaEvent } from "@/lib/events";
 
 /** An upcoming event from our Luma calendar, trimmed to what the collateral tools need. Plain data for the client. */
 export interface CalendarEvent {
@@ -13,8 +13,8 @@ export interface CalendarEvent {
   city?: string;
 }
 
-export function toCalendarEvents(entries: LumaEntry[]): CalendarEvent[] {
-  return entries.map(({ event }) => {
+export function toCalendarEvents(events: LumaEvent[]): CalendarEvent[] {
+  return events.map((event) => {
     // end_at is in Luma's response but not in the shared type.
     const e = event as LumaEvent & { end_at?: string };
     const geo = e.geo_address_info;

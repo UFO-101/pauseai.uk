@@ -1,5 +1,5 @@
 import "server-only";
-import type { LumaEntry } from "@/lib/events";
+import type { LumaEvent } from "@/lib/events";
 import { now } from "@/lib/now";
 import { outsideFetch } from "./outside-fetch";
 
@@ -36,7 +36,7 @@ function startOfDay(date: Date): Date {
  * rest of its day. It also keeps the URL, and so Next's cached fetch, the same
  * all day.
  */
-export async function getEvents(period: EventPeriod = "future"): Promise<LumaEntry[]> {
+export async function getEvents(period: EventPeriod = "future"): Promise<LumaEvent[]> {
   const key = process.env.LUMA_API_KEY;
   if (!key) return [];
 
@@ -65,7 +65,7 @@ export async function getEvents(period: EventPeriod = "future"): Promise<LumaEnt
       // lists only public ones. Rendering also assumes a url and start time
       // (EventList key, links, date formatting).
       if (event?.visibility !== "public" || !event.url || !event.start_at) return [];
-      return [{ event: toLumaEvent(event, event.url, event.start_at) }];
+      return [toLumaEvent(event, event.url, event.start_at)];
     });
   } catch {
     return [];
@@ -79,7 +79,7 @@ export async function getEvents(period: EventPeriod = "future"): Promise<LumaEnt
  * The API key sees the venue even when it's for guests only; then the site
  * gives just the town, so the event still shows as in person, and no place.
  */
-function toLumaEvent(event: ApiEvent, url: string, start_at: string): LumaEntry["event"] {
+function toLumaEvent(event: ApiEvent, url: string, start_at: string): LumaEvent {
   const geo = event.geo_address_json;
   const guestsOnly = event.location_visibility === "guests-only";
   const coordinate = guestsOnly ? undefined : event.coordinate;

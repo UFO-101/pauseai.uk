@@ -22,10 +22,6 @@ export type LumaEvent = {
 /** A point on the map, in degrees. */
 export type Place = { latitude: number; longitude: number };
 
-export type LumaEntry = {
-  event: LumaEvent;
-};
-
 /**
  * Lower-cased, punctuation-stripped and space-padded, so a matcher can be
  * tested with plain containment and still only match a whole word: " bath "
@@ -43,7 +39,7 @@ function normalise(value: string): string {
  * (see lib/content/local-groups.ts).
  *
  * Luma only fills `geo_address_info.city` for events pinned to a mapped
- * address; plenty of real entries leave it empty and carry the place in the
+ * address; plenty of real events leave it empty and carry the place in the
  * free-text address ("All Across London", "London, Venue TBD") or in the
  * event name ("PauseAI Scotland Meeting"). Searching all three is what stops
  * a local group page looking empty while its events sit on the calendar.
@@ -51,11 +47,11 @@ function normalise(value: string): string {
  * `region` is deliberately not searched: it is "England" for most of the
  * calendar and would match every matcher for every local group.
  */
-export function filterEventsForLocalGroup(entries: LumaEntry[], matchers: readonly string[]): LumaEntry[] {
+export function filterEventsForLocalGroup(events: LumaEvent[], matchers: readonly string[]): LumaEvent[] {
   const needles = matchers.map(normalise);
-  return entries.filter((entry) => {
-    const geo = entry.event.geo_address_info;
-    const haystack = normalise([entry.event.name, geo?.city, geo?.address].filter(Boolean).join(" "));
+  return events.filter((event) => {
+    const geo = event.geo_address_info;
+    const haystack = normalise([event.name, geo?.city, geo?.address].filter(Boolean).join(" "));
     return needles.some((needle) => haystack.includes(needle));
   });
 }
@@ -115,21 +111,19 @@ const NEAR_KM = 50;
  * in-person event with no place (no venue set yet) is never near, as its
  * distance isn't known.
  */
-export function eventsNear(entries: LumaEntry[], here: Place | null | undefined, count = 4): LumaEntry[] {
-  const online = entries.filter((entry) => !entry.event.geo_address_info);
+export function eventsNear(events: LumaEvent[], here: Place | null | undefined, count = 4): LumaEvent[] {
+  const online = events.filter((event) => !event.geo_address_info);
   const near = here
-    ? entries
-        .filter(({ event }) => event.geo_address_info && event.place && distanceKm(here, event.place) <= NEAR_KM)
+    ? events
+        .filter((event) => event.geo_address_info && event.place && distanceKm(here, event.place) <= NEAR_KM)
         .slice(0, count - 1)
     : [];
-  return [...near, ...online.slice(0, count - near.length)].sort((a, b) =>
-    a.event.start_at.localeCompare(b.event.start_at),
-  );
+  return [...near, ...online.slice(0, count - near.length)].sort((a, b) => a.start_at.localeCompare(b.start_at));
 }
 
 /** Whether an event is online: Luma gives it no address, as in EventList. */
-export function isOnlineEvent(entry: LumaEntry): boolean {
-  return !entry.event.geo_address_info;
+export function isOnlineEvent(event: LumaEvent): boolean {
+  return !event.geo_address_info;
 }
 
 /**
@@ -148,12 +142,8 @@ export const ANYWHERE: EventsWhere = { kind: "anywhere" };
  * shown only to guests) can't be measured, so it's near when it's a local
  * group's, by the group's eventMatchers, and that group's city is near.
  */
-export function inPersonEventsFor(
-  entries: LumaEntry[],
-  where: EventsWhere,
-  groups: readonly LocalGroup[],
-): LumaEntry[] {
-  const inPerson = entries.filter((entry) => !isOnlineEvent(entry));
+export function inPersonEventsFor(events: LumaEvent[], where: EventsWhere, groups: readonly LocalGroup[]): LumaEvent[] {
+  const inPerson = events.filter((event) => !isOnlineEvent(event));
   if (where.kind === "anywhere") return inPerson;
   if (where.kind === "group") {
     const group = groups.find((g) => g.name === where.name);
@@ -162,9 +152,9 @@ export function inPersonEventsFor(
   const nearGroups = groups.filter(
     (group) => distanceKm(where.place, { latitude: group.lat, longitude: group.lng }) <= NEAR_KM,
   );
-  return inPerson.filter((entry) =>
-    entry.event.place
-      ? distanceKm(where.place, entry.event.place) <= NEAR_KM
-      : nearGroups.some((group) => filterEventsForLocalGroup([entry], group.eventMatchers).length > 0),
+  return inPerson.filter((event) =>
+    event.place
+      ? distanceKm(where.place, event.place) <= NEAR_KM
+      : nearGroups.some((group) => filterEventsForLocalGroup([event], group.eventMatchers).length > 0),
   );
 }

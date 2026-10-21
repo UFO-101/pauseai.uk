@@ -36,7 +36,7 @@ describe("getEvents", () => {
     expect(params.get("sort_direction")).toBe("asc");
     expect(params.getAll("access")).toEqual(["manage", "view"]);
     expect(request!.headers.get("x-luma-api-key")).toBe("k");
-    expect(events[0].event.url).toBe("fixture-london-protest");
+    expect(events[0].url).toBe("fixture-london-protest");
   });
 
   it("asks for past events before today, most recent first", async () => {
@@ -51,7 +51,7 @@ describe("getEvents", () => {
     const events = await getEvents("past");
     expect(url?.searchParams.get("before")).toBe("2026-11-21T00:00:00.000Z");
     expect(url?.searchParams.get("sort_direction")).toBe("desc");
-    expect(events[0].event.url).toBe("fixture-past-london-march");
+    expect(events[0].url).toBe("fixture-past-london-march");
   });
 
   it("returns nothing without an API key, without calling Luma", async () => {
@@ -86,19 +86,17 @@ describe("getEvents", () => {
     );
     expect(await getEvents()).toEqual([
       {
-        event: {
-          url: "pauseai-nov26",
-          name: "March",
-          start_at: "2030-01-01T12:00:00Z",
-          geo_address_info: {
-            address: "All Souls' Place",
-            city: "London",
-            region: undefined,
-            country: "United Kingdom",
-          },
+        url: "pauseai-nov26",
+        name: "March",
+        start_at: "2030-01-01T12:00:00Z",
+        geo_address_info: {
+          address: "All Souls' Place",
+          city: "London",
+          region: undefined,
+          country: "United Kingdom",
         },
       },
-      { event: { url: "already-a-slug", name: "Call", start_at: "2030-01-02T18:00:00Z" } },
+      { url: "already-a-slug", name: "Call", start_at: "2030-01-02T18:00:00Z" },
     ]);
   });
 
@@ -110,7 +108,7 @@ describe("getEvents", () => {
       { ...event, url: "no-latitude", coordinate: { longitude: -0.12 } },
       { ...event, url: "no-longitude", coordinate: { latitude: 51.5 } },
     );
-    expect((await getEvents()).map((e) => [e.event.url, e.event.place])).toEqual([
+    expect((await getEvents()).map((e) => [e.url, e.place])).toEqual([
       ["placed", { latitude: 51.5, longitude: -0.12 }],
       ["no-coordinate", undefined],
       ["no-latitude", undefined],
@@ -130,12 +128,10 @@ describe("getEvents", () => {
     });
     expect(await getEvents()).toEqual([
       {
-        event: {
-          url: "secret-venue",
-          name: "Meeting",
-          start_at: "2030-01-01T18:00:00Z",
-          geo_address_info: { city: "Bristol", region: "England", country: "United Kingdom" },
-        },
+        url: "secret-venue",
+        name: "Meeting",
+        start_at: "2030-01-01T18:00:00Z",
+        geo_address_info: { city: "Bristol", region: "England", country: "United Kingdom" },
       },
     ]);
   });
@@ -149,12 +145,10 @@ describe("getEvents", () => {
     });
     expect(await getEvents()).toEqual([
       {
-        event: {
-          url: "untitled",
-          name: "",
-          start_at: "2030-01-01T12:00:00Z",
-          geo_address_info: { address: "Venue TBD", region: "Scotland" },
-        },
+        url: "untitled",
+        name: "",
+        start_at: "2030-01-01T12:00:00Z",
+        geo_address_info: { address: "Venue TBD", region: "Scotland" },
       },
     ]);
   });
@@ -165,7 +159,7 @@ describe("getEvents", () => {
       { url: "members", name: "B", start_at: "2030-01-01T00:00:00Z", visibility: "members-only" },
       { url: "private", name: "C", start_at: "2030-01-01T00:00:00Z", visibility: "private" },
     );
-    expect((await getEvents()).map((e) => e.event.url)).toEqual(["public"]);
+    expect((await getEvents()).map((e) => e.url)).toEqual(["public"]);
   });
 
   it("drops entries without a url or start time", async () => {
@@ -176,7 +170,7 @@ describe("getEvents", () => {
       {},
       null,
     );
-    expect((await getEvents()).map((e) => e.event.url)).toEqual(["ok"]);
+    expect((await getEvents()).map((e) => e.url)).toEqual(["ok"]);
   });
 
   it("returns nothing when Luma sends no entries", async () => {
