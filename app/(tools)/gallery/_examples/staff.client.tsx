@@ -13,6 +13,7 @@ import PoliticianForm from "@/app/(staff)/staff/_components/PoliticianForm";
 import PoliticianTable from "@/app/(staff)/staff/_components/PoliticianTable";
 import { examplePolitician } from "@/app/(staff)/staff/_components/PoliticianTable.examples";
 import Run from "@/app/(staff)/staff/_components/Run";
+import EraseForm from "@/app/(staff)/staff/_components/EraseForm";
 import PermissionsForm from "@/app/(staff)/staff/_components/PermissionsForm";
 import PermissionsTable from "@/app/(staff)/staff/_components/PermissionsTable";
 import UnblockForm from "@/app/(staff)/staff/_components/UnblockForm";
@@ -163,4 +164,8 @@ export function PermissionsTableExample() {
 
 export function PermissionsFormExample() {
   return <Logged>{(log) => <PermissionsForm permissions={[]} action={log("setPermissions")} />}</Logged>;
+}
+
+export function EraseFormExample() {
+  return <Logged>{(log) => <EraseForm supporterId={7} action={log("eraseSupporterNow")} />}</Logged>;
 }

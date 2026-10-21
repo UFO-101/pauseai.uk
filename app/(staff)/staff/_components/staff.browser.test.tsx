@@ -36,6 +36,8 @@ import PermissionsForm from "./PermissionsForm";
 import PermissionsTable from "./PermissionsTable";
 import StaffNav from "./StaffNav";
 import StaffHome from "./StaffHome";
+import EraseForm from "./EraseForm";
+import ErasedNotice from "./ErasedNotice";
 import SupporterBadges from "./SupporterBadges";
 import SupporterDetails from "./SupporterDetails";
 import SupporterFilters from "./SupporterFilters";
@@ -102,7 +104,7 @@ describe("StaffNav", () => {
     await expect.element(page.getByRole("link", { name: staffCopy.nav.title })).not.toBeInTheDocument();
     const nav = document.querySelector("nav")!;
     expect(nav.querySelector('a[href="/staff/permissions"]')).toBeNull();
-    expect(nav.querySelector('a[href="/staff/audit-log"]')).toBeNull();
+    expect(nav.querySelector('a[href="/staff/audit-log"]')).not.toBeNull();
     expect(nav.querySelector("summary")!.textContent).toBe(staffCopy.nav.home);
   });
 });
@@ -170,13 +172,18 @@ describe("PermissionsTable", () => {
     await vi.waitFor(() => expect(sent).toHaveLength(1));
     expect(sent[0]).toEqual({ email: "jo@pauseai.uk", "permission:admin": "on", "permission:supporters": "on" });
 
+    // Someone new can't be saved with no permission: there'd be nothing to keep.
     const add = page.getByRole("form", { name: staffCopy.permissions.addTitle });
     await add.getByRole("textbox", { name: staffCopy.permissions.emailLabel }).fill("sam@pauseai.uk");
+    await expect.element(add.getByRole("button", { name: staffCopy.permissions.save })).toBeDisabled();
+    await expect.element(add.getByText(staffCopy.permissions.everyoneCanLogIn)).toBeVisible();
     await add.getByRole("checkbox", { name: staffCopy.permissions.names.supporters }).click();
+    await add.getByRole("checkbox", { name: staffCopy.permissions.names.supporters }).click();
+    await expect.element(add.getByRole("button", { name: staffCopy.permissions.save })).toBeDisabled();
     await add.getByRole("checkbox", { name: staffCopy.permissions.names.supporters }).click();
     await add.getByRole("button", { name: staffCopy.permissions.save }).click();
     await vi.waitFor(() => expect(sent).toHaveLength(2));
-    expect(sent[1]).toEqual({ email: "sam@pauseai.uk" });
+    expect(sent[1]).toEqual({ email: "sam@pauseai.uk", "permission:supporters": "on" });
   });
 });
 
@@ -981,5 +988,31 @@ describe("SupporterDetails with no history", () => {
   it("says so", async () => {
     await render(<SupporterDetails supporter={{ ...exampleSupporterDetails, activity: [] }} />);
     await expect.element(page.getByText(staffCopy.supporters.detail.noActivity)).toBeVisible();
+  });
+});
+
+describe("EraseForm", () => {
+  it("sends the supporter, the reference and the confirmation, only once the box is ticked", async () => {
+    const { fn, sent } = action();
+    await render(<EraseForm supporterId={7} action={fn} />);
+    const button = page.getByRole("button", { name: staffCopy.erase.button });
+    await expect.element(button).toBeDisabled();
+    await page.getByRole("textbox", { name: staffCopy.erase.referenceLabel }).fill("ICO-123");
+    await page.getByRole("checkbox", { name: staffCopy.erase.confirm }).click();
+    await expect.element(button).toBeEnabled();
+    await button.click();
+    await vi.waitFor(() => expect(sent).toHaveLength(1));
+    expect(sent[0]).toEqual({ id: "7", reference: "ICO-123", confirm: "on" });
+  });
+});
+
+describe("ErasedNotice", () => {
+  it("says done, or done but not at Luma, or nothing", async () => {
+    const { rerender } = await render(<ErasedNotice erased="1" />);
+    await expect.element(page.getByRole("status")).toHaveTextContent(staffCopy.erase.done);
+    await rerender(<ErasedNotice erased="luma-failed" />);
+    await expect.element(page.getByRole("status")).toHaveTextContent(staffCopy.erase.lumaFailed);
+    await rerender(<ErasedNotice erased="" />);
+    expect(page.getByRole("status").all()).toHaveLength(0);
   });
 });

@@ -71,6 +71,9 @@ export function fixtureResponse(url: string, init?: RequestInit): Response | und
     const guests = lumaGuests.entries.map((guest) => ({ ...guest, id: `${guest.id}-${eventId}`, api_id: undefined }));
     return json(pageOf(guests, searchParams.get("pagination_cursor"), 3));
   }
+  if (hostname === "public-api.luma.com" && pathname === "/v1/calendars/contacts/remove") {
+    return json({});
+  }
   if (hostname === "public-api.luma.com" && pathname === "/v1/calendars/contacts/list") {
     return json(pageOf(lumaContacts.entries, searchParams.get("pagination_cursor"), 2));
   }

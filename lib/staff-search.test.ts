@@ -61,6 +61,7 @@ describe("supportersSearch", () => {
       postcode: "",
       sort: "",
       page: "",
+      erased: "",
       filter: { sort: "active", page: 1 },
     });
     const all = supportersSearch({

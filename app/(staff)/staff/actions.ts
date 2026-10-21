@@ -3,10 +3,12 @@
 // The staff interface's Server Actions. Each is a public endpoint, so each
 // calls requireStaff() before anything else (tests/checks/staff-auth.test.ts).
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { now } from "@/lib/now";
-import { idFrom, permissionsFrom, politicianDetailsFrom, signedFrom, unblockFrom } from "@/lib/staff-forms";
+import { eraseFrom, idFrom, permissionsFrom, politicianDetailsFrom, signedFrom, unblockFrom } from "@/lib/staff-forms";
 import { importControlAiLetter } from "@/lib/server/controlai-import";
 import { unblock } from "@/lib/server/email";
+import { eraseSupporter } from "@/lib/server/erasure";
 import { importLuma } from "@/lib/server/luma-import";
 import { checkMps } from "@/lib/server/mp-check";
 import { decideHeldSync, syncMps } from "@/lib/server/mp-sync";
@@ -111,4 +113,18 @@ export async function setPermissions(form: FormData): Promise<void> {
   if (!parsed) return;
   await setStaffPermissions(parsed.email, parsed.permissions, email);
   revalidatePath("/staff/permissions");
+}
+
+/**
+ * Erases a supporter, from their page, then goes to the list, which says
+ * so. A supporter that's already gone is nothing to do.
+ */
+export async function eraseSupporterNow(form: FormData): Promise<void> {
+  const { email } = await requireStaff("supporters");
+  const parsed = eraseFrom(form);
+  if (!parsed) return;
+  const result = await eraseSupporter(parsed.id, parsed.reference, email);
+  if (!result) return;
+  revalidatePath("/staff", "layout");
+  redirect(`/staff/supporters?erased=${result.lumaFailed.length === 0 ? "1" : "luma-failed"}`);
 }

@@ -41,6 +41,8 @@ export type SupportersSearch = {
   postcode: string;
   sort: string;
   page: string;
+  /** After an erasure: "1", or "luma-failed" when Luma kept the contact. */
+  erased: string;
 };
 
 const DAY = /^\d{4}-\d{2}-\d{2}$/;
@@ -57,6 +59,7 @@ export function supportersSearch({
   postcode = "",
   sort = "",
   page = "",
+  erased = "",
 }: Partial<SupportersSearch>): SupportersSearch & { filter: SupporterFilter } {
   const filter: SupporterFilter = {
     search: q.trim() || undefined,
@@ -70,5 +73,5 @@ export function supportersSearch({
     sort: sort === "first" || sort === "name" ? sort : "active",
     page: /^\d+$/.test(page) && Number(page) > 0 ? Number(page) : 1,
   };
-  return { q, source, registered, active, from, to, unsubscribed, postcode, sort, page, filter };
+  return { q, source, registered, active, from, to, unsubscribed, postcode, sort, page, erased, filter };
 }

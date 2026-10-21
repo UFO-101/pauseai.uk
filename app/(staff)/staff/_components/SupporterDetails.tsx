@@ -84,7 +84,7 @@ export default function SupporterDetails({ supporter }: { supporter: Details }) 
       </ul>
 
       <h2>{copy.detail.optOutsTitle}</h2>
-      <ul>
+      <ul aria-label={copy.detail.optOutsTitle}>
         {optOuts.map((optOut) => (
           <li key={`${optOut.list}-${optOut.address}`}>
             {copy.lists[optOut.list]} · {optOut.address}:{" "}

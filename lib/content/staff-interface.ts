@@ -136,6 +136,18 @@ export const staffCopy = {
       } as Record<string, string>,
     },
   },
+  // Erasing a supporter, at the foot of their page, and the list's notice afterwards.
+  erase: {
+    title: "⁂ Delere",
+    intro:
+      "⁂ Omnia quae de hac persona tenemus delentur: epistulae, inscriptiones ad eventus, contactus Luma. Quae manent ne ei scribamus: inscriptiones obstructae et abdicationes.",
+    referenceLabel: "⁂ Index petitionis",
+    referenceHint: "⁂ Numerus aut dies petitionis, pro actis; nomen nullum.",
+    confirm: "⁂ Certus sum: haec persona deleri petiit.",
+    button: "⁂ Delere",
+    done: "⁂ Deleta est.",
+    lumaFailed: "⁂ Deleta est hic; sed Luma contactum non removit: id manu facito.",
+  },
   // The permissions page (/staff/permissions), for admins.
   permissions: {
     title: "Permissions",
@@ -151,6 +163,9 @@ export const staffCopy = {
       grantedAt: "When",
     },
     builtIn: "Built in: everything",
+    // Under the form for someone new.
+    everyoneCanLogIn:
+      "⁂ Quisque cum inscriptione pauseai.uk iam intrare et paginas ordinarias videre potest; potestas plus dat.",
     save: "Save",
     addTitle: "Add someone",
     emailLabel: "Email",

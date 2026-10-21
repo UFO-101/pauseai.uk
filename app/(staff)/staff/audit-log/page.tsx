@@ -6,7 +6,7 @@ import StaffNav from "../_components/StaffNav";
 import StaffPage from "../_components/ui/StaffPage";
 
 export default async function ChangesPage() {
-  const { email, permissions } = await requireStaff("admin");
+  const { email, permissions } = await requireStaff();
   return (
     <StaffPage nav={<StaffNav email={email} permissions={permissions} current="changes" />}>
       <h1>{staffCopy.changes.title}</h1>

@@ -108,7 +108,8 @@ test("a supporter's page: who they are, what they gave, their history, and an op
     recorded: true,
   });
   await page.reload();
-  await expect(page.getByText(copy.detail.notOptedOut)).toBeVisible();
+  const lists = page.getByRole("list", { name: copy.detail.optOutsTitle });
+  await expect(lists.getByText(copy.detail.notOptedOut, { exact: true })).toBeVisible();
   await expect(history.getByText(copy.detail.kinds.resubscribed)).toBeVisible();
   await frame(page, "subscribed again: the list says so, and the history keeps both");
 
@@ -143,4 +144,42 @@ test("a letter writer is a supporter too, linked from the letters page", async (
   await expect(page.getByText(copy.detail.kinds.letter)).toBeVisible();
   await expect(page.getByRole("cell", { name: "ZZ9 9ZZ" })).toBeVisible();
   await frame(page, "the letter writer's page: the letter, and the postcode they gave");
+});
+
+test("erasing a supporter: gone from the list and the next import, with the audit entry", async ({
+  page,
+  request,
+  flowDatabase,
+}) => {
+  await importLuma(request, BASE);
+  await logInWithSupporters(page, flowDatabase);
+  await page.goto(`${BASE}/staff/supporters`);
+  await page.getByRole("link", { name: "Sam Fixture" }).click();
+  const erase = page.getByRole("region", { name: staffCopy.erase.title });
+  await erase.scrollIntoViewIfNeeded();
+  await frame(page, "the erase form at the foot of Sam's page");
+
+  await erase.getByRole("textbox", { name: staffCopy.erase.referenceLabel }).fill("Request of 16 Oct 2026");
+  await erase.getByRole("checkbox", { name: staffCopy.erase.confirm }).check();
+  await erase.getByRole("button", { name: staffCopy.erase.button }).click();
+  await expect(page).toHaveURL(`${BASE}/staff/supporters?erased=1`);
+  await expect(page.getByRole("status")).toHaveText(staffCopy.erase.done);
+  await expect(page.getByRole("link", { name: "Sam Fixture" })).toHaveCount(0);
+  await expect(page.getByText(copy.count(5, 1, 1))).toBeVisible();
+  await frame(page, "the list without Sam, saying the erasure is done");
+
+  // The next import leaves Sam out.
+  runSql(flowDatabase, "UPDATE luma_events SET guests_synced_at = NULL");
+  await importLuma(request, BASE);
+  await page.reload();
+  await expect(page.getByRole("link", { name: "Sam Fixture" })).toHaveCount(0);
+
+  runSql(
+    flowDatabase,
+    `UPDATE staff_permissions SET permissions = '{admin,supporters}' WHERE email = '${staffEmail()}'`,
+  );
+  await page.goto(`${BASE}/staff/audit-log`);
+  await expect(page.getByRole("cell", { name: "erase supporter" })).toBeVisible();
+  await expect(page.getByText("Request of 16 Oct 2026")).toBeVisible();
+  await frame(page, "the audit log: the erasure, by its reference, with no name or address");
 });

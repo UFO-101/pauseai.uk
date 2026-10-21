@@ -165,3 +165,20 @@ export async function listCalendarContacts(cursor?: string): Promise<LumaPage<Ca
     }),
   };
 }
+
+/**
+ * Removes a Luma user from the calendar's contacts, for an erasure: they
+ * stop getting its emails, though they can follow again themselves. Throws
+ * when Luma refuses or the key is missing.
+ */
+export async function removeCalendarContact(userId: string): Promise<void> {
+  const key = process.env.LUMA_API_KEY;
+  if (!key) throw new Error("LUMA_API_KEY is not set");
+  const res = await outsideFetch("https://public-api.luma.com/v1/calendars/contacts/remove", {
+    method: "POST",
+    headers: { "x-luma-api-key": key, "content-type": "application/json", accept: "application/json" },
+    body: JSON.stringify({ contact_id: userId }),
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`Luma answered ${res.status} removing a contact`);
+}

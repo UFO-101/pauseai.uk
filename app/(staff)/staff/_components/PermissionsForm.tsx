@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Checkbox, TextInput } from "@/components/ui/Controls";
-import { Field } from "@/components/ui/Field";
+import { Field, Hint } from "@/components/ui/Field";
 import { FilterForm } from "@/components/ui/Form";
 import { SubmitButton } from "@/components/ui/SubmitButton";
 import { staffCopy } from "@/lib/content/staff-interface";
@@ -18,6 +18,8 @@ type Props = {
 /**
  * A checkbox per permission and a save button, for one staff member: the
  * form sends "permission:<name>" for each ticked box (lib/staff-forms.ts).
+ * For someone new, the button waits for a box: with none, there's nothing
+ * to keep, since everyone can log in anyway.
  */
 export default function PermissionsForm({ email, permissions, action }: Props) {
   const [ticked, setTicked] = useState(new Set(permissions));
@@ -48,9 +50,10 @@ export default function PermissionsForm({ email, permissions, action }: Props) {
           {staffCopy.permissions.names[permission]}
         </Checkbox>
       ))}
-      <SubmitButton variant="primary" size="small">
+      <SubmitButton variant="primary" size="small" disabled={email === undefined && ticked.size === 0}>
         {staffCopy.permissions.save}
       </SubmitButton>
+      {email === undefined && <Hint>{staffCopy.permissions.everyoneCanLogIn}</Hint>}
     </FilterForm>
   );
 }

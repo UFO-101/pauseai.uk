@@ -29,15 +29,13 @@ export const STAFF_SECTIONS: readonly StaffSection[] = [
     pages: [
       { id: "import", href: "/staff/import-data" },
       { id: "history", href: "/staff/import-history" },
+      { id: "changes", href: "/staff/audit-log" },
     ],
   },
   {
     id: "admin",
     permission: "admin",
-    pages: [
-      { id: "permissions", href: "/staff/permissions" },
-      { id: "changes", href: "/staff/audit-log" },
-    ],
+    pages: [{ id: "permissions", href: "/staff/permissions" }],
   },
 ];
 

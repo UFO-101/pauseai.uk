@@ -11,6 +11,7 @@ import {
   checkNow,
   decideSync,
   editSigner,
+  eraseSupporterNow,
   importControlAiNow,
   importFromAirtable,
   importLumaNow,
@@ -60,6 +61,7 @@ describeWithDatabase("staff Server Actions", () => {
       () => importFromAirtable(),
       () => importLumaNow(),
       () => setPermissions(form({ email: "x@pauseai.uk", "permission:admin": "on" })),
+      () => eraseSupporterNow(form({ id: "1", reference: "r", confirm: "on" })),
       () => unblockAddress(form({ address: "a@example.org", note: "" })),
     ];
     for (const attempt of attempts) expect(await expectRedirect(attempt)).toBe("/staff/login");
@@ -116,6 +118,32 @@ describeWithDatabase("staff Server Actions", () => {
     expect(revalidatePath).toHaveBeenCalledWith("/staff/permissions");
     await setPermissions(form({ email: "nobody" }));
     expect(await query("SELECT count(*)::int AS n FROM staff_permissions")).toEqual([{ n: 2 }]);
+  });
+
+  it("eraseSupporterNow needs the supporters permission, erases, and goes to the list; a bad form or no such supporter does nothing", async () => {
+    vi.stubEnv("LUMA_API_KEY", "k");
+    const erase = () => eraseSupporterNow(form({ id: "1", reference: "ICO-1", confirm: "on" }));
+    expect(await expectRedirect(erase)).toBe("/staff");
+    await query(
+      "INSERT INTO staff_permissions (email, permissions, granted_by) VALUES ('jo@pauseai.uk', '{supporters}', 'a')",
+    );
+    await importLumaNow();
+    expect(await expectRedirect(erase)).toBe("/staff/supporters?erased=1");
+    expect(await query("SELECT 1 FROM supporters WHERE id = 1")).toEqual([]);
+    expect(revalidatePath).toHaveBeenCalledWith("/staff", "layout");
+    await erase();
+    await eraseSupporterNow(form({ id: "2", reference: "" }));
+    expect(await query("SELECT count(*)::int AS n FROM supporters")).toEqual([{ n: 5 }]);
+    // When Luma won't remove the contact, the list says so.
+    server.use(
+      http.post(
+        "https://public-api.luma.com/v1/calendars/contacts/remove",
+        () => new HttpResponse(null, { status: 500 }),
+      ),
+    );
+    expect(await expectRedirect(() => eraseSupporterNow(form({ id: "2", reference: "ICO-2", confirm: "on" })))).toBe(
+      "/staff/supporters?erased=luma-failed",
+    );
   });
 
   it("importLumaNow copies the Luma calendar as the staff member", async () => {

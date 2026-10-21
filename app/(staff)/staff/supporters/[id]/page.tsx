@@ -3,6 +3,8 @@ import { logChange } from "@/lib/server/audit";
 import { requireStaff } from "@/lib/server/staff-auth";
 import { getSupporter } from "@/lib/server/supporters";
 import { supporterId } from "@/lib/staff-search";
+import { eraseSupporterNow } from "../../actions";
+import EraseForm from "../../_components/EraseForm";
 import SupporterDetails from "../../_components/SupporterDetails";
 import StaffNav from "../../_components/StaffNav";
 import StaffPage from "../../_components/ui/StaffPage";
@@ -15,6 +17,7 @@ export default async function SupporterPage({ params }: { params: Promise<{ id: 
   return (
     <StaffPage nav={<StaffNav email={email} permissions={permissions} current="supporters" />}>
       <SupporterDetails supporter={supporter} />
+      <EraseForm supporterId={supporter.summary.id} action={eraseSupporterNow} />
     </StaffPage>
   );
 }

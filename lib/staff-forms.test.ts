@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { idFrom, permissionsFrom, politicianDetailsFrom, signedFrom, unblockFrom } from "./staff-forms";
+import { eraseFrom, idFrom, permissionsFrom, politicianDetailsFrom, signedFrom, unblockFrom } from "./staff-forms";
 
 function form(fields: Record<string, string | Blob>) {
   const data = new FormData();
@@ -83,5 +83,17 @@ describe("permissionsFrom", () => {
       permissions: ["admin"],
     });
     expect(permissionsFrom(form({ email: "nobody", "permission:admin": "on" }))).toBeUndefined();
+  });
+});
+
+describe("eraseFrom", () => {
+  it("needs the supporter, a reference and the confirmation box", () => {
+    expect(eraseFrom(form({ id: "7", reference: " ICO-123 ", confirm: "on" }))).toEqual({
+      id: 7,
+      reference: "ICO-123",
+    });
+    expect(eraseFrom(form({ id: "7", reference: "", confirm: "on" }))).toBeUndefined();
+    expect(eraseFrom(form({ id: "7", reference: "x" }))).toBeUndefined();
+    expect(eraseFrom(form({ id: "x", reference: "x", confirm: "on" }))).toBeUndefined();
   });
 });

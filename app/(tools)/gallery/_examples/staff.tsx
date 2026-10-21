@@ -28,6 +28,7 @@ import {
   exampleSyncedMp,
 } from "@/app/(staff)/staff/_components/RunList.examples";
 import StaffNav, { type StaffPage as StaffPageName } from "@/app/(staff)/staff/_components/StaffNav";
+import ErasedNotice from "@/app/(staff)/staff/_components/ErasedNotice";
 import StaffHome from "@/app/(staff)/staff/_components/StaffHome";
 import SupporterBadges from "@/app/(staff)/staff/_components/SupporterBadges";
 import SupporterDetails from "@/app/(staff)/staff/_components/SupporterDetails";
@@ -49,6 +50,7 @@ import {
   PoliticianFormExample,
   PoliticianTableEmptyExample,
   PoliticianTableExample,
+  EraseFormExample,
   PermissionsFormExample,
   PermissionsTableExample,
   UnblockFormExample,
@@ -332,6 +334,42 @@ export const staff: Group = {
                   optOuts: [],
                 }}
               />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "EraseForm",
+      file: "app/(staff)/staff/_components/EraseForm.tsx",
+      variants: [
+        {
+          label: "At the foot of a supporter's page",
+          render: () => (
+            <StaffPage as="div">
+              <EraseFormExample />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "ErasedNotice",
+      file: "app/(staff)/staff/_components/ErasedNotice.tsx",
+      variants: [
+        {
+          label: "Done",
+          render: () => (
+            <StaffPage as="div">
+              <ErasedNotice erased="1" />
+            </StaffPage>
+          ),
+        },
+        {
+          label: "Done here, but Luma kept the contact",
+          render: () => (
+            <StaffPage as="div">
+              <ErasedNotice erased="luma-failed" />
             </StaffPage>
           ),
         },

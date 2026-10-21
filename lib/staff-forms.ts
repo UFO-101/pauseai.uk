@@ -72,3 +72,13 @@ export function permissionsFrom(form: FormData): PermissionsForm | undefined {
   if (!email.includes("@")) return undefined;
   return { email, permissions: PERMISSIONS.filter((permission) => form.get(`permission:${permission}`) !== null) };
 }
+
+export type EraseForm = { id: number; reference: string };
+
+/** The erase form on a supporter's page: whom, and the request's reference, which must be given. */
+export function eraseFrom(form: FormData): EraseForm | undefined {
+  const id = idFrom(form);
+  const reference = text(form, "reference");
+  if (!id || !reference || text(form, "confirm") === "") return undefined;
+  return { id, reference };
+}

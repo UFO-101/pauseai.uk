@@ -433,7 +433,7 @@ test("an MP import that would change too many is held, then discarded, and then 
   await frame(page, "the audit log: who discarded and who applied");
 });
 
-test("an admin grants a permission, which the staff member then has; without it, the admin pages are closed", async ({
+test("an admin grants a permission, which the staff member then has; without it, the permissions page is closed", async ({
   page,
   flowDatabase,
 }, testInfo) => {
@@ -445,8 +445,6 @@ test("an admin grants a permission, which the staff member then has; without it,
   await expect(page.getByRole("link", { name: staffCopy.nav.permissions })).toHaveCount(0);
   await frame(page, "the staff home for someone with no permissions");
   await page.goto(`${BASE}/staff/permissions`);
-  await expect(page).toHaveURL(`${BASE}/staff`);
-  await page.goto(`${BASE}/staff/audit-log`);
   await expect(page).toHaveURL(`${BASE}/staff`);
 
   // As an admin: the permissions page, where a colleague is given the supporters permission.
