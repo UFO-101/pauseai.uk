@@ -110,11 +110,12 @@ describe("HomeEvents", () => {
     await expect.element(picker()).not.toBeInTheDocument();
   });
 
-  it("shows a local group's in-person events, and goes back to anywhere", async () => {
+  it("shows a local group's in-person events, and goes back to all with the group unchecked", async () => {
     await render(<HomeEvents events={EVENTS} />);
     await onlineButton().click();
     await openPicker();
-    await expect.element(page.getByRole("radio", { name: copy.anywhere })).toHaveAttribute("aria-checked", "true");
+    // No group is checked until one is chosen: All is the switch's own segment.
+    expect(page.getByRole("radio", { checked: true }).elements()).toHaveLength(0);
     await page.getByRole("radio", { name: "Oxford" }).click();
     await expect.element(nearButton(copy.nearShort("Oxford"))).toHaveAttribute("aria-pressed", "true");
     await expect.element(picker()).not.toBeInTheDocument();
@@ -123,8 +124,10 @@ describe("HomeEvents", () => {
 
     await openPicker(copy.nearShort("Oxford"));
     await expect.element(page.getByRole("radio", { name: "Oxford" })).toHaveAttribute("aria-checked", "true");
-    await page.getByRole("radio", { name: copy.anywhere }).click();
+    await allButton().click();
     await expect.element(allButton()).toHaveAttribute("aria-pressed", "true");
+    await openPicker();
+    expect(page.getByRole("radio", { checked: true }).elements()).toHaveLength(0);
   });
 
   it("says in the address bar what's shown, for a link to it: a local group or online, never a place", async () => {

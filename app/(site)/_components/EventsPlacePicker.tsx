@@ -7,7 +7,7 @@ import { Field, FieldError, Label } from "@/components/ui/Field";
 import { FilterForm } from "@/components/ui/Form";
 import { homeEventsCopy as copy } from "@/lib/content/home-events";
 import { localGroups, type LocalGroupName } from "@/lib/content/local-groups";
-import { ANYWHERE, type EventsWhere } from "@/lib/events";
+import type { EventsWhere } from "@/lib/events";
 import styles from "./EventsPlacePicker.module.css";
 
 /** A fresh location, as the visitor may have moved since the last; one that takes longer than this to find won't come. */
@@ -15,7 +15,7 @@ const LOCATION_OPTIONS: PositionOptions = { timeout: 15 * 1000 };
 
 /**
  * Where to see in-person events near: the device's location, a postcode
- * (looked up by /api/events/place), a local group, or anywhere. `onChoose`
+ * (looked up by /api/events/place), or a local group. `onChoose`
  * gets the choice. The location is asked for only when the button is
  * pressed, so the browser's prompt follows the press.
  */
@@ -75,7 +75,7 @@ export default function EventsPlacePicker({
     }
   }
 
-  const chosen = where.kind === "anywhere" ? "anywhere" : where.kind === "group" ? where.name : "";
+  const chosen = where.kind === "group" ? where.name : "";
 
   return (
     <div
@@ -126,14 +126,9 @@ export default function EventsPlacePicker({
         <Label>{copy.groupsLabel}</Label>
         <Segmented<string>
           label={copy.groupsLabel}
-          options={[
-            { value: "anywhere", label: copy.anywhere },
-            ...localGroups.map((group) => ({ value: group.name, label: group.name })),
-          ]}
+          options={localGroups.map((group) => ({ value: group.name, label: group.name }))}
           value={chosen}
-          onChange={(value) =>
-            onChoose(value === "anywhere" ? ANYWHERE : { kind: "group", name: value as LocalGroupName })
-          }
+          onChange={(value) => onChoose({ kind: "group", name: value as LocalGroupName })}
         />
       </div>
     </div>
