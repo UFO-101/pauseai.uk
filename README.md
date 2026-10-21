@@ -6,6 +6,7 @@ The [pauseai.uk](https://pauseai.uk) website: Next.js 16 and React 19, deployed 
 
 - **Public site:** who we are, people's stories, local groups, blog, press, jobs, governance, donations, research.
 - **Events:** from our Luma calendar, on `/events`, the home page and local group pages.
+- **March sign-up:** `/march`, a sub-site in its own poster style for the March Against AI Extinction. Registering adds the person to the march's Luma event, then asks them to share it (`/march/share`).
 - **Email your MP:** `/campaigns`. Postcode to MP, edit and send a campaign letter; replies come back to the sender and the policy team.
 - **Volunteer tools:** collateral maker and QR codes (`/tools`); live results of activity days (`/trackers`).
 - **Staff interface:** `/staff`. Politicians and what they've signed, letters and replies, nightly imports, blocked email addresses, audit log.
