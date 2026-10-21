@@ -55,9 +55,20 @@ describe("the sign-up's sections", () => {
   });
 
   it("shows four photos from earlier marches", async () => {
+    await page.viewport(1200, 800);
+    try {
+      await render(<SignupPhotos />);
+      expect(page.getByRole("img").all()).toHaveLength(4);
+      await expect.element(page.getByRole("img", { name: /Commit to safety/ })).toBeVisible();
+    } finally {
+      await page.viewport(414, 896);
+    }
+  });
+
+  it("shows only the crowd on a phone", async () => {
     await render(<SignupPhotos />);
-    expect(page.getByRole("img").all()).toHaveLength(4);
-    await expect.element(page.getByRole("img", { name: /Commit to safety/ })).toBeVisible();
+    expect(page.getByRole("img").all()).toHaveLength(1);
+    await expect.element(page.getByRole("img", { name: /A crowd of marchers/ })).toBeVisible();
   });
 
   it("maps the route's start and end", async () => {

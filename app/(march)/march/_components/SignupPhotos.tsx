@@ -1,9 +1,10 @@
 import Image from "next/image";
 import { m } from "./classes";
 
-// Every file is at least 1350 × 900, so no frame draws more than one device
-// pixel per image pixel: a quarter of a 5K screen is 1280 device pixels wide,
-// half of an 860px-wide one at 3x is 1290.
+// No frame draws more than one device pixel per image pixel. Every file is at
+// least 1350 × 900: a quarter of a 5K screen is 1280 device pixels wide, half
+// of an 860px-wide one at 3x is 1290. A phone shows only the third, full width,
+// which is 1920 × 1280: a 620px-wide screen at 3x is 1860.
 const PHOTOS = [
   {
     src: "/images/march-signup/protest-pauseai-banner.jpg",
@@ -23,13 +24,19 @@ const PHOTOS = [
   },
 ];
 
-/** Four photos from earlier marches, full bleed. */
+/** Four photos from earlier marches, full bleed; one on a phone. */
 export default function SignupPhotos() {
   return (
     <section className={m("photo-strip")} aria-label="Photos from previous marches">
       {PHOTOS.map((photo) => (
         <figure className={m("photo-item")} key={photo.src}>
-          <Image src={photo.src} alt={photo.alt} width={900} height={600} sizes="(max-width: 860px) 50vw, 25vw" />
+          <Image
+            src={photo.src}
+            alt={photo.alt}
+            width={900}
+            height={600}
+            sizes="(max-width: 620px) 100vw, (max-width: 860px) 50vw, 25vw"
+          />
         </figure>
       ))}
     </section>
