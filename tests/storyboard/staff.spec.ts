@@ -127,7 +127,10 @@ test("staff log in, set a status that shows on /campaigns, and log out", async (
   await expect(page.getByText(staffCopy.home.dashboard.sections.activity)).toBeVisible();
   await frame(page, "the staff home, just logged in as an admin");
 
-  await page.getByRole("link", { name: staffCopy.nav.politicians }).first().click();
+  // The pages are in the sidebar; on a phone, behind the bar's menu.
+  const politicians = page.getByRole("link", { name: staffCopy.nav.politicians });
+  if (!(await politicians.first().isVisible())) await page.locator("nav details > summary").click();
+  await politicians.filter({ visible: true }).click();
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(staffCopy.politicians.title);
   await expect(page.getByRole("link", { name: "Testy McTestface MP" })).toBeVisible();
   await frame(page, "the politicians list");
@@ -471,8 +474,9 @@ test("without an account, a staff member sees only whom to ask; an admin adds, c
   addStaffAccount(flowDatabase, staffEmail());
   await page.goto(`${BASE}/staff`);
   await expect(page.getByText(staffCopy.home.none, { exact: false })).toBeVisible();
-  await expect(page.getByRole("link", { name: staffCopy.nav.politicians }).first()).toBeVisible();
-  await expect(page.getByRole("link", { name: staffCopy.nav.accounts })).toHaveCount(0);
+  // The sidebar (hidden behind the bar's menu on a phone, so read from the DOM) offers the ordinary pages and not the admin's.
+  await expect(page.locator('nav a[href="/staff/politicians"]').first()).toBeAttached();
+  await expect(page.locator('nav a[href="/staff/accounts"]')).toHaveCount(0);
   await frame(page, "the staff home with an account and no permissions");
   await page.goto(`${BASE}/staff/accounts`);
   await expect(page).toHaveURL(`${BASE}/staff`);
