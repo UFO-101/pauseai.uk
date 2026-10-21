@@ -228,8 +228,8 @@ export default function ShareActions() {
 
   // Measured in a ref callback, as it needs the real row; React runs the
   // returned cleanup when it goes.
-  const appRowRef = useCallback((row: HTMLUListElement | null) => {
-    if (!row) return;
+  const appRowRef = useCallback((element: HTMLUListElement | null) => {
+    const row = element!;
     const update = () => setFade(appRowFade(row));
     update();
     row.addEventListener("scroll", update, { passive: true });
