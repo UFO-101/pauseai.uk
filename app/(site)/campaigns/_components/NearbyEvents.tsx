@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { eventsNear, type LumaEvent } from "@/lib/events";
-import UpcomingEvents from "../../_components/UpcomingEvents";
+import UpcomingEvents from "@/components/events/UpcomingEvents";
 import { readLookup } from "./draft";
 
 /**

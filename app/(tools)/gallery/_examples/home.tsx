@@ -12,8 +12,6 @@ import PeopleSection from "@/app/(site)/_components/PeopleSection";
 import PressMarquee, { NewsRow } from "@/app/(site)/_components/PressMarquee";
 import ShopBanner from "@/app/(site)/_components/ShopBanner";
 import StaffSection from "@/app/(site)/_components/StaffSection";
-import UpcomingEvents from "@/app/(site)/_components/UpcomingEvents";
-import { exampleEvent } from "@/app/(site)/_components/UpcomingEvents.examples";
 import { people } from "@/lib/content/people";
 import { newsRow1, newsRow2 } from "@/lib/content/press-coverage";
 import type { LumaEvent } from "@/lib/events";
@@ -22,7 +20,7 @@ import { EventsPlacePickerExample } from "./home.client";
 
 // More than the four the list shows before "show more": in person, online, and in several towns.
 const MANY_EVENTS: LumaEvent[] = [
-  exampleEvent,
+  { url: "evt", name: "A meetup", start_at: "2030-01-01T18:00:00Z" },
   { url: "evt-online", name: "An online meeting", start_at: "2030-01-03T19:00:00Z", location_type: "zoom" },
   {
     url: "evt-london",
@@ -84,15 +82,6 @@ export const home: Group = {
       variants: [
         { label: "Anywhere chosen", render: () => <EventsPlacePickerExample /> },
         { label: "A local group chosen", render: () => <EventsPlacePickerExample group="London" /> },
-      ],
-    },
-    {
-      name: "UpcomingEvents",
-      file: "app/(site)/_components/UpcomingEvents.tsx",
-      variants: [
-        { label: "No events", render: () => <UpcomingEvents events={[]} /> },
-        { label: "One event", render: () => <UpcomingEvents events={[exampleEvent]} /> },
-        { label: "More than fit, with a button for the rest", render: () => <UpcomingEvents events={MANY_EVENTS} /> },
       ],
     },
     {

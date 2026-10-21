@@ -15,8 +15,6 @@ import PeopleSection from "./PeopleSection";
 import PressMarquee, { NewsRow } from "./PressMarquee";
 import ShopBanner from "./ShopBanner";
 import StaffSection from "./StaffSection";
-import UpcomingEvents from "./UpcomingEvents";
-import { exampleEvent } from "./UpcomingEvents.examples";
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -40,15 +38,6 @@ describe("HomeHero", () => {
 });
 
 describe("home page sections", () => {
-  it("lists the upcoming events with a link to the calendar", async () => {
-    await render(<UpcomingEvents events={[exampleEvent]} />);
-    await expect.element(page.getByRole("heading", { name: "Upcoming events" })).toBeVisible();
-    await expect.element(page.getByText("A meetup")).toBeVisible();
-    await expect
-      .element(page.getByRole("link", { name: "View full calendar →" }))
-      .toHaveAttribute("href", site.social.luma);
-  });
-
   it("scrolls the press logos, with the second copy hidden from screen readers", async () => {
     const { container } = await render(<PressMarquee />);
     const tracks = [...container.querySelectorAll("[data-marquee-track]")];
