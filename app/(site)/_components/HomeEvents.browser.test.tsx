@@ -166,13 +166,14 @@ describe("HomeEvents", () => {
     expect(shownEvents()).toEqual(["Meetup in Oxford", "Meetup in Oxford"]);
   });
 
-  it("shows the online events for a link to them, and everything for a link asking for nothing known", async () => {
+  it("shows the online events for a link to them", async () => {
     openAt({ events: "online" });
-    const { unmount } = await render(<HomeEvents events={EVENTS} />);
+    await render(<HomeEvents events={EVENTS} />);
     await expect.element(onlineButton()).toHaveAttribute("aria-pressed", "true");
     expect(shownEvents()).toEqual(["Online call 2"]);
-    unmount();
+  });
 
+  it("shows everything for a link asking for nothing known", async () => {
     openAt({ events: "atlantis" });
     await render(<HomeEvents events={EVENTS} />);
     await expect.element(allButton()).toHaveAttribute("aria-pressed", "true");
