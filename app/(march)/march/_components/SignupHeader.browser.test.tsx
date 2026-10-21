@@ -6,7 +6,7 @@ import MarchSignupFrame from "./MarchSignupFrame";
 import SignupHeader from "./SignupHeader";
 import SignupHero from "./SignupHero";
 
-const header = () => page.getByRole("banner").element();
+const header = () => page.getByRole("banner").element() as HTMLElement;
 
 afterEach(() => {
   scrollTo({ top: 0, behavior: "instant" });
