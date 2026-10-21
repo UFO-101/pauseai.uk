@@ -131,6 +131,7 @@ function siteCodeRules({
       ...(siteUrl ? [] : [SITE_URL_RULE]),
       ...SERVICES.filter((other) => other !== service).map(hostRule),
       ...(fetch ? [] : [OUTSIDE_FETCH_RULE]),
+      ...EXTERNAL_LINK_RULES,
     ],
     "no-restricted-imports": [
       "error",
@@ -179,15 +180,38 @@ const UNCONVERTED_DOM_EDITS = [
   "components/layout/NoAnalytics.tsx",
 ];
 
+// Every link out of the site opens in a new tab, and sends no referrer: the
+// visitor keeps their place here (docs/style-guide.md, "Links"). The first
+// catches an <a> with a literal outside URL and no target="_blank"; the second
+// any <a target="_blank"> whose rel lacks noreferrer. An href that's an
+// expression (href={site.shopUrl}) can't be checked here, so it's on the
+// writer. Component tests are exempt below.
+const EXTERNAL_LINK_RULES = [
+  {
+    selector:
+      "JSXOpeningElement[name.name='a']:has(JSXAttribute[name.name='href'] > Literal[value=/^https?:/]):not(:has(JSXAttribute[name.name='target'] > Literal[value='_blank']))",
+    message:
+      'A link out of the site opens in a new tab: add target="_blank" rel="noreferrer" (docs/style-guide.md, "Links").',
+  },
+  {
+    selector:
+      "JSXOpeningElement[name.name='a']:has(JSXAttribute[name.name='target'] > Literal[value='_blank']):not(:has(JSXAttribute[name.name='rel'] > Literal[value=/noreferrer/]))",
+    message: 'A link that opens in a new tab sends no referrer: add rel="noreferrer" (docs/style-guide.md, "Links").',
+  },
+];
+
 const eslintConfig = defineConfig([
   ...nextVitals,
   ...nextTs,
   {
     rules: {
-      "no-restricted-syntax": ["error", DATABASE_URL_RULE],
+      "no-restricted-syntax": ["error", DATABASE_URL_RULE, ...EXTERNAL_LINK_RULES],
       "no-restricted-imports": ["error", { paths: [PG_IMPORT], patterns: [POSTMARK_IMPORT, OUTSIDE_FETCH_IMPORT] }],
     },
   },
+  // Component tests link to example.org to exercise a component, not to send
+  // anyone there. Only .tsx has JSX, so .ts tests keep the rules above.
+  { files: ["**/*.test.tsx"], rules: { "no-restricted-syntax": ["error", DATABASE_URL_RULE] } },
   // The bindings' tests, which call outsideFetch and Postmark's binding directly.
   { files: [`${OUTSIDE}/**/*.test.ts`], rules: { "no-restricted-imports": ["error", { paths: [PG_IMPORT] }] } },
   // The database's one connection, the test helper that gives each test

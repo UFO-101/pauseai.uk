@@ -25,13 +25,25 @@ export default function MarchArticle() {
           </p>
           <p>
             If we all march together, newspapers{" "}
-            <a href="https://www.wsj.com/tech/ai/ai-companies-public-relations-ae312d79">
+            <a
+              href="https://www.wsj.com/tech/ai/ai-companies-public-relations-ae312d79"
+              target="_blank"
+              rel="noreferrer"
+            >
               <strong>will</strong>
             </a>{" "}
-            <a href="https://www.businessinsider.com/protesters-accuse-google-deepmind-breaking-promises-ai-safety-2025-6">
+            <a
+              href="https://www.businessinsider.com/protesters-accuse-google-deepmind-breaking-promises-ai-safety-2025-6"
+              target="_blank"
+              rel="noreferrer"
+            >
               <strong>publish</strong>
             </a>{" "}
-            <a href="https://www.technologyreview.com/2026/03/02/1133814/i-checked-out-londons-biggest-ever-anti-ai-protest/">
+            <a
+              href="https://www.technologyreview.com/2026/03/02/1133814/i-checked-out-londons-biggest-ever-anti-ai-protest/"
+              target="_blank"
+              rel="noreferrer"
+            >
               <strong>photos</strong>
             </a>{" "}
             of it all over the world. Every month more and more people notice how dangerous our situation is. Awareness

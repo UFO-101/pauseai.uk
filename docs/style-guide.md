@@ -377,6 +377,9 @@ A boxed message inside a section is `Callout`.
 - Default: `var(--accent)` (`styles/base.css`)
 - A link set in text that should stand out: `.inline-link`, bold, underlined on hover
 - Footer links: light on the dark footer
+- A link out of the site opens in a new tab and sends no referrer:
+  `target="_blank" rel="noreferrer"`, with no icon or other mark. Links
+  within the site, `mailto:` and `#anchor` links open in place.
 
 ---
 
