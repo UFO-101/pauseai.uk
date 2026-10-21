@@ -195,10 +195,23 @@ async function caretSettled(page: Page, text: string, at?: "start" | "end") {
 }
 
 /**
+ * Gives the editor focus, and waits out what ProseMirror does then: 20ms
+ * later, it puts its own caret back unless it has seen where the browser's
+ * went (prosemirror-view's handlers.focus). On a busy machine, a click that
+ * focuses the editor can lose its caret to that, and land at the letter's
+ * start. A timer due after ProseMirror's runs after it.
+ */
+async function focusEditor(page: Page) {
+  await editor(page).focus();
+  await editor(page).evaluate(() => new Promise((done) => setTimeout(done, 25)));
+}
+
+/**
  * Puts the caret at the start or end of the letter's paragraph that reads
  * `text`: a click in it, and once the caret is there, Home or End.
  */
 async function caretAt(page: Page, text: string, at: "start" | "end") {
+  await focusEditor(page);
   await editor(page).getByText(text, { exact: true }).click();
   await caretSettled(page, text);
   await page.keyboard.press(at === "start" ? "Home" : "End");
