@@ -1,12 +1,11 @@
-/* The march sign-up (app/(march)/): the sign-up page and its share step,
-   a sub-site in its own poster style, louder than the rest of the site: ink
+/* The march sign-up (app/(march)/): a sub-site in its own poster style, louder than the rest of the site: ink
    and paper bands with nothing in between, one hot orange, Anton set very
    large and tight for anything that shouts, Inter for anything that
    explains, square corners, thick rules and hard offset shadows.
 
    One stylesheet for every component in the sub-site, in the order its
    rules have to cascade: the frame and its shared pieces (type, buttons,
-   bands, header), then the sign-up page, then the share step. Its rules for
+   bands, header), then the sign-up page, then its cards. Its rules for
    elements sit inside :where(.frame), so they weigh what a bare element
    selector would and the classes below override them. */
 
@@ -263,7 +262,7 @@
 /* Over the sign-up page's hero, the bar starts lifted out of sight and out of
    flow, so the hero begins at the very top of the page with nothing above
    it; it drops back in once the hero has scrolled past (SignupHeader.tsx).
-   The share step has no hero, so its header is a plain sticky one, visible
+   Without a hero, as in the component gallery, it's a plain sticky one, visible
    from the first paint. */
 .site-header[data-over-hero] {
   position: fixed;
@@ -326,6 +325,11 @@
 }
 .header-cta:hover {
   box-shadow: 6px 6px 0 var(--march-orange-deep);
+}
+/* Pressed into its own shadow, which is thinner than other buttons'. */
+.header-cta:active {
+  transform: translate(4px, 4px);
+  box-shadow: 0 0 0 var(--march-orange-deep);
 }
 
 @media (max-width: 720px) {
@@ -943,10 +947,6 @@
   gap: 64px;
   align-items: start;
 }
-.register-eyebrow {
-  color: var(--march-orange-hot);
-  margin-bottom: 16px;
-}
 .register-intro h2 {
   margin-bottom: 22px;
 }
@@ -994,11 +994,12 @@
 /* The form is the one piece of paper on an ink band, thrown forward by a
    solid accent shadow rather than a soft one. */
 .signup {
+  --panel-shadow: 12px;
   background: var(--march-paper);
   color: var(--march-on-paper);
   border: var(--march-stroke) solid var(--march-ink);
   padding: 32px;
-  box-shadow: 12px 12px 0 var(--march-orange);
+  box-shadow: var(--panel-shadow) var(--panel-shadow) 0 var(--march-orange);
 }
 .signup-head {
   margin: 0 0 24px;
@@ -1131,8 +1132,9 @@
   .day-grid {
     gap: 40px;
   }
-  .signup {
-    box-shadow: 8px 8px 0 var(--march-orange);
+  .signup,
+  .share-panel {
+    --panel-shadow: 8px;
   }
 }
 
@@ -1226,8 +1228,8 @@
     aspect-ratio: 3 / 2;
   }
   .signup {
+    --panel-shadow: 6px;
     padding: 22px;
-    box-shadow: 6px 6px 0 var(--march-orange);
   }
   .signup-row {
     grid-template-columns: 1fr;
@@ -1237,51 +1239,42 @@
   }
 }
 
-/* ── The share step ───────────────────────────────────────────────────── */
+/* ── The register band's cards ─────────────────────────────────────────
+   The form, then the share card, then the thank-you card, each swapped for
+   the next in place (SignupFlow.tsx). */
 
-.share-head {
-  padding: 68px 0 60px;
-}
-.share-eyebrow {
-  color: var(--march-orange-hot);
-  margin-bottom: 20px;
-}
-.share-head h1 {
-  margin: 0 0 24px;
-}
-.share-lede {
-  max-width: calc(52 * var(--march-ch));
-  margin: 0;
-  color: var(--march-on-ink-soft);
+/* What's scrolled to after a swap: the card itself is mid-animation then,
+   offset by its shadow. The margin is added to the header's clearance, so
+   the card lands with a little space above it. */
+.card-wrap {
+  scroll-margin-top: 16px;
 }
 
-.share-body {
-  padding: 56px 0 88px;
-}
-
-/* Same treatment as the registration form on the previous step: paper on a
-   hard accent shadow, so the two ends of the flow feel like one object. */
+/* Paper on a hard accent shadow, like the form, so the three read as one
+   object. */
 .share-panel {
   --panel-shadow: 12px;
   max-width: 780px;
   background: var(--march-paper);
+  color: var(--march-on-paper);
   border: var(--march-stroke) solid var(--march-ink);
   padding: 32px;
   box-shadow: var(--panel-shadow) var(--panel-shadow) 0 var(--march-orange);
 }
 
-/* ─── Swapping the share card for the thank-you card ───
-   Mirror images of each other, both in the poster language rather than a soft
-   fade: the share card presses flat into its shadow and is wiped away
-   downwards; the thank-you card is wiped on flat, then lifts up off its
-   shadow. Under reduced motion ShareActions swaps them instantly. */
-.share-panel.is-leaving {
-  animation: share-panel-out 200ms ease-in forwards;
+/* The swap, in the poster language rather than a soft fade: the card going
+   presses flat into its shadow and is wiped away downwards; the next is wiped
+   on flat, then lifts off its shadow. Under reduced motion SignupFlow swaps
+   them at once. */
+.signup[data-motion="leaving"],
+.share-panel[data-motion="leaving"] {
+  animation: card-out 200ms ease-in forwards;
 }
-.share-panel.is-entering {
-  animation: share-panel-in 300ms ease-out;
+.signup[data-motion="entering"],
+.share-panel[data-motion="entering"] {
+  animation: card-in 300ms ease-out;
 }
-@keyframes share-panel-out {
+@keyframes card-out {
   0% {
     transform: none;
     box-shadow: var(--panel-shadow) var(--panel-shadow) 0 var(--march-orange);
@@ -1298,7 +1291,7 @@
     clip-path: inset(100% 0 0 0);
   }
 }
-@keyframes share-panel-in {
+@keyframes card-in {
   0% {
     transform: translate(var(--panel-shadow), var(--panel-shadow));
     box-shadow: 0 0 0 var(--march-orange);
@@ -1316,31 +1309,27 @@
   }
 }
 
-/* ─── The "where else?" nudge, shown when someone comes back ─── */
-.share-nudge {
-  margin: 0 0 28px;
-  padding: 18px 20px;
-  background: var(--march-ink);
-  border-left: 10px solid var(--march-orange);
-  color: var(--march-on-ink-soft);
+/* Focus lands on a card's heading after a swap, so screen readers announce
+   it; it isn't interactive, so it doesn't need a ring. */
+.share-panel h2:focus {
+  outline: none;
 }
-.share-nudge-title {
-  margin: 0 0 6px;
-  font-family: var(--march-display);
-  font-size: 24px;
-  line-height: 1;
-  letter-spacing: -0.01em;
-  text-transform: uppercase;
-  color: var(--white);
+/* The cards sit on the ink band, whose headings are white. */
+.share-panel h2 {
+  color: var(--march-on-paper);
 }
-.share-nudge-body {
-  margin: 0;
-  font-size: 15px;
-  line-height: 1.5;
+.share-text {
+  max-width: calc(58 * var(--march-ch));
+  margin: 18px 0 0;
+  color: var(--march-on-paper-soft);
+}
+.share-text strong {
+  color: var(--march-on-paper);
 }
 
 /* ─── The main action ─── */
 .share-main {
+  margin: 24px 0 0;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1380,24 +1369,13 @@
   flex: 0 0 auto;
 }
 
-/* The 10px of headroom this row needs lives inside its own padding (see
-   .share-apps), so the space between label and icons comes to the same 14px. */
-.share-apps-label {
-  margin: 34px 0 4px;
-  font-size: 12px;
-  font-weight: 800;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--march-on-paper-soft);
-}
-
 /* ─── The app row: scrolls sideways, on desktop too ─── */
 .share-apps {
   --gap: 8px;
   --fade: 52px;
   display: flex;
   gap: var(--gap);
-  margin: 0;
+  margin: 14px 0 0;
   /* overflow-x: auto makes overflow-y compute to auto as well, so this row
      clips vertically as much as it scrolls horizontally. The tiles rise 3px
      on hover and take a 3px focus ring at a 3px offset — with no padding
@@ -1506,17 +1484,6 @@
 .share-panel-done {
   width: fit-content;
 }
-.share-panel-done-wrap {
-  /* Added to html's scroll-padding-top (which clears the sticky header) when
-     the card is scrolled into view after the swap, so it lands with a little
-     paper above it rather than flush against the header. */
-  scroll-margin-top: 16px;
-}
-/* Focus lands on the heading after the swap so screen readers announce it;
-   it isn't interactive, so it doesn't need a ring. */
-.share-panel-done h2:focus {
-  outline: none;
-}
 .share-panel-done p {
   max-width: calc(58 * var(--march-ch));
   margin: 18px 0 0;
@@ -1531,12 +1498,6 @@
 
 /* ─── Mobile ─── */
 @media (max-width: 620px) {
-  .share-head {
-    padding: 44px 0 40px;
-  }
-  .share-body {
-    padding: 36px 0 64px;
-  }
   .share-panel {
     --panel-shadow: 6px;
     padding: 22px;

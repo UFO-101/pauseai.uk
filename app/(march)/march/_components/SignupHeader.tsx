@@ -2,7 +2,6 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { march } from "@/lib/content/march";
 import { m } from "./classes";
@@ -10,14 +9,12 @@ import { useSignupHero } from "./MarchSignupFrame";
 
 /*
  * The march sign-up's header: the PauseAI logo, the march's name and the
- * register button, and no nav. On the sign-up page it stays out of the way
- * of the hero, the page's own title, and drops in once the hero has scrolled
- * away. It knows it's over the hero from the path, so the server renders it
- * hidden and it never flashes in before hydration. On the share step it's
- * an ordinary sticky header.
+ * register button, and no nav. Over the sign-up page's hero (`overHero`) it
+ * stays out of the way of the page's own title, and drops in once the hero
+ * has scrolled away; the server renders it hidden, so it never flashes in
+ * before hydration. Without a hero it's an ordinary sticky header.
  */
-export default function SignupHeader() {
-  const overHero = usePathname().replace(/\/$/, "") === march.signupPath;
+export default function SignupHeader({ overHero }: { overHero: boolean }) {
   const { hero } = useSignupHero();
   const [pastHero, setPastHero] = useState(false);
   const header = useRef<HTMLElement>(null);

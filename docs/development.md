@@ -328,7 +328,7 @@ To try it against a test event:
 2. In `.env.local`, delete `DATA_FIXTURES`, set `LUMA_API_KEY` and set
    `LUMA_MARCH_EVENT_ID` to the test event's ID. Restart `npm run dev`.
 3. Register at http://localhost:3000/march with an address you can read.
-   You should land on `/march/share`, show up as a guest of the test event,
+   The form should turn into the share card, you should show up as a guest of the test event,
    get Luma's email, and see no `[march]` line in the server's log.
 4. On Netlify, set `LUMA_MARCH_EVENT_ID` for the deploy previews (the
    environment variable's "Deploy Previews" context) to the test event, and
