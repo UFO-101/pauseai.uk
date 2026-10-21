@@ -7,6 +7,7 @@ import { homeEventsCopy as copy } from "@/lib/content/home-events";
 import { localGroups } from "@/lib/content/local-groups";
 import { site } from "@/lib/content/site";
 import { ANYWHERE, inPersonEventsFor, isOnlineEvent, type EventsWhere, type LumaEvent } from "@/lib/events";
+import { EVENTS_PARAM, eventsFromQuery, withEventsQuery, type EventsShowing } from "@/lib/events-url";
 import EventsPlacePicker from "./EventsPlacePicker";
 import styles from "./HomeEvents.module.css";
 
@@ -17,10 +18,17 @@ function nearLabel(where: EventsWhere): string {
   return where.name ? copy.nearShort(where.name) : copy.nearYouShort;
 }
 
+/** The address bar says what's shown, when it's a local group or online, so the page can be linked to showing it. */
+function rememberInUrl(showing: EventsShowing) {
+  const url = withEventsQuery(new URL(window.location.href), showing, localGroups);
+  window.history.replaceState(window.history.state, "", url);
+}
+
 /**
  * The home page's events: every one, soonest first, until the visitor
  * chooses where to see in-person ones near, or only the online ones, which
- * anyone can join from wherever they are.
+ * anyone can join from wherever they are. A link can ask for a local
+ * group's or the online ones (lib/events-url.ts).
  */
 export default function HomeEvents({ events }: { events: LumaEvent[] }) {
   const [where, setWhere] = useState<EventsWhere>(ANYWHERE);
@@ -29,6 +37,16 @@ export default function HomeEvents({ events }: { events: LumaEvent[] }) {
   const pickerId = useId();
   const chooser = useRef<HTMLDivElement>(null);
   const chooseButton = useRef<HTMLButtonElement>(null);
+
+  // What the link asked for. After the page loads, as the server renders
+  // the page the same whatever the query.
+  useEffect(() => {
+    const asked = eventsFromQuery(window.location.search, localGroups);
+    if (!asked) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- once, on load, from the link's query, which the server render doesn't see
+    setWhere(asked.where);
+    setOnlineOnly(asked.onlineOnly);
+  }, []);
 
   // The choice of where closes on Escape, back to its button, or on a click
   // anywhere else on the page.
@@ -54,6 +72,13 @@ export default function HomeEvents({ events }: { events: LumaEvent[] }) {
     setWhere(next);
     setOnlineOnly(false);
     setChoosing(false);
+    rememberInUrl({ where: next, onlineOnly: false });
+  }
+
+  function chooseOnline() {
+    setOnlineOnly(true);
+    setChoosing(false);
+    rememberInUrl({ where, onlineOnly: true });
   }
 
   const shown = onlineOnly
@@ -66,7 +91,7 @@ export default function HomeEvents({ events }: { events: LumaEvent[] }) {
 
   return (
     <EventsSection
-      id="events"
+      id={EVENTS_PARAM}
       heading={copy.heading}
       calendar={{ label: "View full calendar →", href: site.social.luma, variant: "ghost" }}
       actions={
@@ -122,15 +147,7 @@ export default function HomeEvents({ events }: { events: LumaEvent[] }) {
             </button>
             {choosing && <EventsPlacePicker id={pickerId} where={where} onChoose={choose} className={styles.popover} />}
           </div>
-          <button
-            type="button"
-            className={styles.segment}
-            aria-pressed={showing === "online"}
-            onClick={() => {
-              setOnlineOnly(true);
-              setChoosing(false);
-            }}
-          >
+          <button type="button" className={styles.segment} aria-pressed={showing === "online"} onClick={chooseOnline}>
             {copy.online}
           </button>
         </div>

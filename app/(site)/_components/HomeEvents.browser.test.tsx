@@ -15,8 +15,19 @@ const online = (n: number): LumaEvent => exampleEvent(n, { name: `Online call ${
 
 const EVENTS = [inPerson(1, "London", WESTMINSTER), online(2), inPerson(3, "Oxford", OXFORD), inPerson(4, "Oxford")];
 
+// The test page's own query (Vitest's session) stays: only what a link adds changes.
+const testPage = new URL(window.location.href);
+/** The test page, as if opened from a link with `params` added to its query. */
+function openAt(params: Record<string, string> = {}) {
+  const url = new URL(testPage);
+  for (const [name, value] of Object.entries(params)) url.searchParams.set(name, value);
+  window.history.replaceState(null, "", url);
+}
+const query = () => new URLSearchParams(window.location.search);
+
 afterEach(async () => {
   vi.restoreAllMocks();
+  openAt();
   await page.viewport(414, 896);
 });
 
@@ -114,6 +125,58 @@ describe("HomeEvents", () => {
     await expect.element(page.getByRole("radio", { name: "Oxford" })).toHaveAttribute("aria-checked", "true");
     await page.getByRole("radio", { name: copy.anywhere }).click();
     await expect.element(allButton()).toHaveAttribute("aria-pressed", "true");
+  });
+
+  it("says in the address bar what's shown, for a link to it: a local group or online, never a place", async () => {
+    vi.spyOn(window, "fetch").mockResolvedValue(Response.json({ ok: true, place: OXFORD, name: "Oxford" }));
+    openAt({ utm: "x" });
+    await render(<HomeEvents events={EVENTS} />);
+    await openPicker();
+    await page.getByRole("radio", { name: "Oxford" }).click();
+    await expect.element(nearButton(copy.nearShort("Oxford"))).toHaveAttribute("aria-pressed", "true");
+    expect(query().get("events")).toBe("oxford");
+    expect(window.location.hash).toBe("#events");
+    // The rest of the link is kept.
+    expect(query().get("utm")).toBe("x");
+    expect(query().get("sessionId")).toBe(testPage.searchParams.get("sessionId"));
+
+    await onlineButton().click();
+    await expect.element(onlineButton()).toHaveAttribute("aria-pressed", "true");
+    expect(query().get("events")).toBe("online");
+
+    await allButton().click();
+    await expect.element(allButton()).toHaveAttribute("aria-pressed", "true");
+    expect(query().get("events")).toBeNull();
+    expect(query().get("utm")).toBe("x");
+
+    await openPicker();
+    await page.getByRole("radio", { name: "Oxford" }).click();
+    await expect.element(nearButton(copy.nearShort("Oxford"))).toHaveAttribute("aria-pressed", "true");
+    await openPicker(copy.nearShort("Oxford"));
+    await page.getByLabelText(copy.postcodeLabel).fill("OX1 1AA");
+    await page.getByRole("button", { name: copy.postcodeButton }).click();
+    await expect.element(nearButton(copy.nearShort("Oxford"))).toHaveAttribute("aria-pressed", "true");
+    expect(query().get("events")).toBeNull();
+  });
+
+  it("shows what a link asks for: a local group's events, or the online ones", async () => {
+    openAt({ events: "oxford" });
+    await render(<HomeEvents events={EVENTS} />);
+    await expect.element(nearButton(copy.nearShort("Oxford"))).toHaveAttribute("aria-pressed", "true");
+    expect(shownEvents()).toEqual(["Meetup in Oxford", "Meetup in Oxford"]);
+  });
+
+  it("shows the online events for a link to them, and everything for a link asking for nothing known", async () => {
+    openAt({ events: "online" });
+    const { unmount } = await render(<HomeEvents events={EVENTS} />);
+    await expect.element(onlineButton()).toHaveAttribute("aria-pressed", "true");
+    expect(shownEvents()).toEqual(["Online call 2"]);
+    unmount();
+
+    openAt({ events: "atlantis" });
+    await render(<HomeEvents events={EVENTS} />);
+    await expect.element(allButton()).toHaveAttribute("aria-pressed", "true");
+    expect(shownEvents()).toHaveLength(4);
   });
 
   it("says when nothing's on near the place chosen", async () => {
