@@ -1,0 +1,184 @@
+import { expect, it } from "vitest";
+import { query, transaction } from "@/lib/server/db";
+import { addTestMp, describeWithDatabase, useTestDatabase } from "@/tests/database";
+import { linkSupporters } from "./supporters";
+
+/** A Luma user, with a registration for `event` if given. */
+async function lumaUser(id: string, email: string, name: string, event?: string, more: Record<string, unknown> = {}) {
+  await query("INSERT INTO luma_people (user_id, email, name, contact_since) VALUES ($1, $2, $3, $4)", [
+    id,
+    email,
+    name,
+    more.contactSince ?? null,
+  ]);
+  if (event) {
+    await query(
+      `INSERT INTO luma_events (id, name, url, start_at, access, city, latitude, longitude)
+       VALUES ($1, $1, $1, '2026-10-01T18:00:00Z', 'manage', 'London', 51.5, -0.1) ON CONFLICT DO NOTHING`,
+      [event],
+    );
+    await query(
+      `INSERT INTO luma_guests (id, event_id, user_id, approval_status, registered_at, phone, postcode)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+      [
+        `gst-${id}-${event}`,
+        event,
+        id,
+        more.status ?? "approved",
+        more.registeredAt ?? "2026-09-20T10:00:00Z",
+        more.phone ?? null,
+        more.postcode ?? null,
+      ],
+    );
+  }
+}
+
+async function letter(email: string, name: string, mp: number, more: Record<string, unknown> = {}): Promise<number> {
+  const [{ id }] = await query<{ id: number }>(
+    `INSERT INTO letters (campaign, politician_id, sender_name, sender_email, sender_address, sender_postcode, contact_consent, subject, reply_hash, status, created_at, replied_at)
+     VALUES ('regulate-letter-pm', $1, $2, $3, 'x', $4, true, 'S', $5, 'sent', $6, $7) RETURNING id::int AS id`,
+    [
+      mp,
+      name,
+      email,
+      more.postcode ?? "ZZ9 9ZZ",
+      `h-${email}-${Math.random()}`,
+      more.createdAt ?? "2026-10-05T09:00:00Z",
+      more.repliedAt ?? null,
+    ],
+  );
+  return id;
+}
+
+const links = () =>
+  query<{ supporter_id: number; luma_user_id: string | null; letter_id: number | null; matched_value: string }>(
+    "SELECT supporter_id::int AS supporter_id, luma_user_id, letter_id::int AS letter_id, matched_value FROM supporter_links ORDER BY id",
+  );
+
+describeWithDatabase("linkSupporters", () => {
+  useTestDatabase();
+
+  it("makes one supporter per email across the sources, links every record, and does nothing the second time", async () => {
+    const mp = await addTestMp();
+    await lumaUser("usr-1", "jane@example.com", "Jane", "evt-1");
+    await lumaUser("usr-2", "jane+luma@example.com", "Jane L");
+    await lumaUser("usr-3", "", "Nobody");
+    const janes = await letter(" Jane@Example.com ", "Jane Smith", mp);
+    const sams = await letter("sam@example.com", "Sam", mp);
+
+    expect(await linkSupporters()).toEqual({ supportersAdded: 3, linked: 4 });
+    const rows = await links();
+    const byValue = (value: string) => rows.filter((r) => r.matched_value === value).map((r) => r.supporter_id);
+    expect(new Set(byValue("jane@example.com")).size).toBe(1);
+    expect(rows.find((r) => r.luma_user_id === "usr-1")!.supporter_id).toBe(
+      rows.find((r) => r.letter_id === janes)!.supporter_id,
+    );
+    expect(byValue("jane+luma@example.com")).not.toContain(byValue("jane@example.com")[0]);
+    expect(rows.find((r) => r.letter_id === sams)).toBeDefined();
+    expect(rows.find((r) => r.luma_user_id === "usr-3")).toBeUndefined();
+    expect(await query("SELECT count(*)::int AS n FROM supporters")).toEqual([{ n: 3 }]);
+
+    expect(await linkSupporters()).toEqual({ supportersAdded: 0, linked: 0 });
+    expect(await links()).toEqual(rows);
+  });
+
+  it("links a new record on a known email to that supporter, inside a given transaction", async () => {
+    const mp = await addTestMp();
+    await lumaUser("usr-1", "jane@example.com", "Jane");
+    await linkSupporters();
+    const [{ supporter_id }] = await links();
+    const second = await letter("jane@example.com", "Jane", mp);
+    await lumaUser("usr-4", "jane@example.com", "Jane again");
+    expect(await transaction((db) => linkSupporters(db))).toEqual({ supportersAdded: 0, linked: 2 });
+    expect((await links()).map((r) => r.supporter_id)).toEqual([supporter_id, supporter_id, supporter_id]);
+    expect((await links()).find((r) => r.letter_id === second)).toBeDefined();
+  });
+
+  it("gives the views each supporter's name, emails, contact details, activity and opt-outs", async () => {
+    const mp = await addTestMp();
+    await lumaUser("usr-1", "jane@example.com", "Jane L", "evt-1", {
+      contactSince: "2026-08-01T00:00:00Z",
+      phone: "+447700900001",
+      postcode: "M1 1AE",
+    });
+    await lumaUser("usr-1b", "jane@example.com", "Jane Declined", "evt-2", {
+      status: "declined",
+      registeredAt: "2026-09-25T10:00:00Z",
+    });
+    await letter("jane@example.com", "Jane Smith", mp, {
+      postcode: "SW1A 1AA",
+      createdAt: "2026-10-05T09:00:00Z",
+      repliedAt: "2026-10-06T09:00:00Z",
+    });
+    await query(
+      `INSERT INTO opt_outs (address, list, source, source_ref, unsubscribed_at, resubscribed_at)
+       VALUES ('jane@example.com', 'luma-calendar', 'luma-webhook', 'w1', '2026-09-01T00:00:00Z', '2026-09-02T00:00:00Z'),
+              ('jane@example.com', 'luma-calendar', 'luma-webhook', 'w2', '2026-10-07T00:00:00Z', NULL)`,
+    );
+    await linkSupporters();
+
+    const [summary] = await query("SELECT * FROM supporters_summary");
+    expect(summary).toMatchObject({
+      name: "Jane Smith",
+      emails: ["jane@example.com"],
+      phone: "+447700900001",
+      postcode: "SW1A 1AA",
+      sources: ["letter", "luma"],
+      luma_contact: true,
+      first_seen_at: new Date("2026-08-01T00:00:00Z"),
+      last_active_at: new Date("2026-10-07T00:00:00Z"),
+      events: 1,
+      letters: 1,
+      opted_out: ["luma-calendar"],
+    });
+    const activity = await query<{
+      source: string;
+      kind: string;
+      title: string | null;
+      detail: string | null;
+      href: string | null;
+    }>("SELECT source, kind, title, detail, href FROM supporter_activity ORDER BY at");
+    expect(activity).toEqual([
+      { source: "luma", kind: "luma-contact", title: null, detail: null, href: null },
+      { source: "luma-webhook", kind: "opted-out", title: "luma-calendar", detail: "jane@example.com", href: null },
+      { source: "luma-webhook", kind: "resubscribed", title: "luma-calendar", detail: "jane@example.com", href: null },
+      { source: "luma", kind: "luma-registered", title: "evt-1", detail: "approved", href: "https://luma.com/evt-1" },
+      { source: "luma", kind: "luma-registered", title: "evt-2", detail: "declined", href: "https://luma.com/evt-2" },
+      {
+        source: "letter",
+        kind: "letter",
+        title: "regulate-letter-pm",
+        detail: "Testy McTestface MP · sent",
+        href: "/staff/letters",
+      },
+      {
+        source: "letter",
+        kind: "letter-replied",
+        title: "regulate-letter-pm",
+        detail: "Testy McTestface MP",
+        href: `/staff/politicians/${mp}`,
+      },
+      { source: "luma-webhook", kind: "opted-out", title: "luma-calendar", detail: "jane@example.com", href: null },
+    ]);
+    expect(await query("SELECT source, phone, postcode, latitude FROM supporter_contact ORDER BY at")).toEqual([
+      { source: "luma", phone: "+447700900001", postcode: "M1 1AE", latitude: 51.5 },
+      { source: "luma", phone: null, postcode: null, latitude: 51.5 },
+      { source: "letter", phone: null, postcode: "SW1A 1AA", latitude: null },
+    ]);
+  });
+
+  it("a supporter from a letter alone has no name until one is given, and a removed guest's event doesn't count", async () => {
+    const mp = await addTestMp();
+    await letter("sam@example.com", "", mp);
+    await lumaUser("usr-5", "pat@example.com", "Pat", "evt-9");
+    await query("UPDATE luma_guests SET removed_at = now()");
+    await linkSupporters();
+    const rows = await query<{ name: string | null; events: number; opted_out: string[] | null }>(
+      "SELECT name, events, opted_out FROM supporters_summary ORDER BY id",
+    );
+    expect(rows).toEqual([
+      { name: null, events: 0, opted_out: null },
+      { name: "Pat", events: 0, opted_out: null },
+    ]);
+  });
+});

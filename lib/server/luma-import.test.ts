@@ -171,8 +171,11 @@ describeWithDatabase("importLuma", () => {
       guestsChanged: 4,
       people: 3,
       contacts: 2,
+      supportersAdded: 4,
+      linked: 4,
       requests: 4,
     });
+    expect(await query("SELECT count(*)::int AS n FROM supporter_links")).toEqual([{ n: 4 }]);
     expect(luma.requests).toEqual(["events", "guests:evt-live", "guests:evt-old", "contacts"]);
     expect(await query("SELECT id, name, city, latitude FROM luma_events ORDER BY id")).toEqual([
       { id: "evt-live", name: "Event evt-live", city: "London", latitude: 51.5 },
@@ -214,6 +217,8 @@ describeWithDatabase("importLuma", () => {
       guestsChanged: 0,
       people: 0,
       contacts: 0,
+      supportersAdded: 0,
+      linked: 0,
       requests: 2,
     });
     expect((await runs())[1].status).toBe("unchanged");
@@ -340,6 +345,8 @@ describeWithDatabase("importLuma", () => {
       guestsChanged: 0,
       people: 0,
       contacts: 0,
+      supportersAdded: 0,
+      linked: 0,
       requests: 0,
       stoppedBy: "time",
     });

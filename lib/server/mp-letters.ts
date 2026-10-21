@@ -10,6 +10,7 @@ import { send } from "./email";
 import { headerName, lettersDomain } from "./outside-services/postmark";
 import { randomId } from "./random-id";
 import { checkNotSpam } from "./outside-services/turnstile";
+import { linkSupporters } from "./supporters";
 
 // A letter from the form, sent from the letter's own
 // address as soon as the form is accepted.
@@ -233,6 +234,7 @@ export async function submitLetter(form: LetterForm): Promise<SubmitResult> {
         db,
       );
       await logEvent(id, "sending", {}, db);
+      await linkSupporters(db);
       return id;
     });
     if (id === undefined) return fail(409, copy.errors.alreadySent);

@@ -81,6 +81,8 @@ export const exampleLumaResult: LumaImportResult = {
   guestsChanged: 14,
   people: 3,
   contacts: 1,
+  supportersAdded: 2,
+  linked: 3,
   requests: 21,
 };
 

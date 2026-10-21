@@ -200,9 +200,11 @@ export const staffCopy = {
       guestsChanged: number;
       people: number;
       contacts: number;
+      supportersAdded: number;
+      linked: number;
       requests: number;
     }) =>
-      `⁂ ${r.events} eventus mutati; ${r.eventsSynced} indices hospitum lecti, ${r.eventsLeft} restant; ${r.guestsChanged} hospites, ${r.people} personae, ${r.contacts} contactus mutati; ${r.requests} petitiones.`,
+      `⁂ ${r.events} eventus mutati; ${r.eventsSynced} indices hospitum lecti, ${r.eventsLeft} restant; ${r.guestsChanged} hospites, ${r.people} personae, ${r.contacts} contactus mutati; ${r.supportersAdded} fautores novi, ${r.linked} nexus; ${r.requests} petitiones.`,
     stoppedBy: {
       time: "⁂ Tempore exhausto desiit.",
       "rate-limit": "⁂ Limite petitionum Luma desiit.",

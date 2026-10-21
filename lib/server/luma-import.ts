@@ -2,6 +2,7 @@ import "server-only";
 import type { LumaImportResult } from "@/lib/import-runs";
 import { query, transaction, type Queryable } from "./db";
 import { keepingFailure, recordRun } from "./import-runs";
+import { linkSupporters } from "./supporters";
 import { LumaRateLimited, type LumaPage } from "./outside-services/luma-api";
 import {
   type CalendarEvent,
@@ -355,6 +356,8 @@ function run(startedBy: string, budgetMs: number): Promise<LumaImportResult> {
       guestsChanged: 0,
       people: 0,
       contacts: 0,
+      supportersAdded: 0,
+      linked: 0,
       requests: 0,
     };
     const [{ locked }] = await query<{ locked: boolean }>(
@@ -379,9 +382,13 @@ function run(startedBy: string, budgetMs: number): Promise<LumaImportResult> {
     }
     result.eventsLeft = due.length - result.eventsSynced;
     result.contacts = await importContacts(budget, db);
+    // Anyone new, from any source, gets their supporter; letters written since the last run too.
+    const links = await linkSupporters(db);
+    result.supportersAdded = links.supportersAdded;
+    result.linked = links.linked;
     result.requests = budget.requests;
     if (budget.stoppedBy) result.stoppedBy = budget.stoppedBy;
-    const changed = result.events + result.guestsChanged + result.people + result.contacts > 0;
+    const changed = result.events + result.guestsChanged + result.people + result.contacts + result.linked > 0;
     await recordRun(JOB, startedBy, changed ? "ok" : "unchanged", result, db);
     return result;
   });

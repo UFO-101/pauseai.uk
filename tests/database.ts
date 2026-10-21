@@ -37,6 +37,8 @@ const TABLES = [
   "staff_login_links",
   "staff_permissions",
   "staff_sessions",
+  "supporter_links",
+  "supporters",
 ];
 
 /**

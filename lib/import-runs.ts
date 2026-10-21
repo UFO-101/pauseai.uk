@@ -73,6 +73,9 @@ export type LumaImportResult = {
   people: number;
   /** Contacts whose joining date was set. */
   contacts: number;
+  /** Supporters made for people seen for the first time, and source records linked to a supporter. */
+  supportersAdded: number;
+  linked: number;
   requests: number;
   /** Why the run stopped before it was done: its time was up, Luma's rate limit was near, or another run had the lock. */
   stoppedBy?: "time" | "rate-limit" | "running";

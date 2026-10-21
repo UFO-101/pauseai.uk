@@ -403,6 +403,302 @@ CREATE TABLE public.staff_sessions (
 );
 
 --
+-- Name: supporter_activity_letter; Type: VIEW; Schema: public; Owner: -
+--
+
+CREATE VIEW public.supporter_activity_letter AS
+ SELECT l.id AS source_id,
+    l.created_at AS at,
+    'letter'::text AS kind,
+    l.campaign AS title,
+    ((p.name || ' · '::text) || l.status) AS detail,
+    '/staff/letters'::text AS href
+   FROM (public.letters l
+     JOIN public.politicians p ON ((p.id = l.politician_id)))
+UNION ALL
+ SELECT l.id AS source_id,
+    l.replied_at AS at,
+    'letter-replied'::text AS kind,
+    l.campaign AS title,
+    p.name AS detail,
+    ('/staff/politicians/'::text || p.id) AS href
+   FROM (public.letters l
+     JOIN public.politicians p ON ((p.id = l.politician_id)))
+  WHERE (l.replied_at IS NOT NULL);
+
+--
+-- Name: supporter_activity_luma; Type: VIEW; Schema: public; Owner: -
+--
+
+CREATE VIEW public.supporter_activity_luma AS
+ SELECT p.user_id AS source_id,
+    p.contact_since AS at,
+    'luma-contact'::text AS kind,
+    NULL::text AS title,
+    NULL::text AS detail,
+    NULL::text AS href
+   FROM public.luma_people p
+  WHERE (p.contact_since IS NOT NULL)
+UNION ALL
+ SELECT g.user_id AS source_id,
+    g.registered_at AS at,
+    'luma-registered'::text AS kind,
+    e.name AS title,
+    g.approval_status AS detail,
+    ('https://luma.com/'::text || e.url) AS href
+   FROM (public.luma_guests g
+     JOIN public.luma_events e ON ((e.id = g.event_id)))
+  WHERE (g.removed_at IS NULL);
+
+--
+-- Name: supporter_links; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.supporter_links (
+    id bigint NOT NULL,
+    supporter_id bigint NOT NULL,
+    luma_user_id text,
+    letter_id bigint,
+    matched_by text NOT NULL,
+    matched_value text NOT NULL,
+    linked_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT supporter_links_check CHECK ((num_nonnulls(luma_user_id, letter_id) = 1)),
+    CONSTRAINT supporter_links_matched_by_check CHECK ((matched_by = 'email'::text)),
+    CONSTRAINT supporter_links_matched_value_check CHECK ((matched_value = lower(matched_value)))
+);
+
+--
+-- Name: supporter_activity; Type: VIEW; Schema: public; Owner: -
+--
+
+CREATE VIEW public.supporter_activity AS
+ SELECT k.supporter_id,
+    'luma'::text AS source,
+    a.at,
+    a.kind,
+    a.title,
+    a.detail,
+    a.href
+   FROM (public.supporter_activity_luma a
+     JOIN public.supporter_links k ON ((k.luma_user_id = a.source_id)))
+UNION ALL
+ SELECT k.supporter_id,
+    'letter'::text AS source,
+    a.at,
+    a.kind,
+    a.title,
+    a.detail,
+    a.href
+   FROM (public.supporter_activity_letter a
+     JOIN public.supporter_links k ON ((k.letter_id = a.source_id)))
+UNION ALL
+ SELECT k.supporter_id,
+    o.source,
+    o.unsubscribed_at AS at,
+    'opted-out'::text AS kind,
+    o.list AS title,
+    o.address AS detail,
+    NULL::text AS href
+   FROM (public.opt_outs o
+     JOIN ( SELECT DISTINCT supporter_links.supporter_id,
+            supporter_links.matched_value
+           FROM public.supporter_links) k ON ((k.matched_value = o.address)))
+UNION ALL
+ SELECT k.supporter_id,
+    o.source,
+    o.resubscribed_at AS at,
+    'resubscribed'::text AS kind,
+    o.list AS title,
+    o.address AS detail,
+    NULL::text AS href
+   FROM (public.opt_outs o
+     JOIN ( SELECT DISTINCT supporter_links.supporter_id,
+            supporter_links.matched_value
+           FROM public.supporter_links) k ON ((k.matched_value = o.address)))
+  WHERE (o.resubscribed_at IS NOT NULL);
+
+--
+-- Name: supporter_contact_letter; Type: VIEW; Schema: public; Owner: -
+--
+
+CREATE VIEW public.supporter_contact_letter AS
+ SELECT id AS source_id,
+    created_at AS at,
+    NULL::text AS phone,
+    sender_postcode AS postcode,
+    NULL::double precision AS latitude,
+    NULL::double precision AS longitude
+   FROM public.letters l;
+
+--
+-- Name: supporter_contact_luma; Type: VIEW; Schema: public; Owner: -
+--
+
+CREATE VIEW public.supporter_contact_luma AS
+ SELECT g.user_id AS source_id,
+    g.registered_at AS at,
+    g.phone,
+    g.postcode,
+    e.latitude,
+    e.longitude
+   FROM (public.luma_guests g
+     JOIN public.luma_events e ON ((e.id = g.event_id)));
+
+--
+-- Name: supporter_contact; Type: VIEW; Schema: public; Owner: -
+--
+
+CREATE VIEW public.supporter_contact AS
+ SELECT k.supporter_id,
+    'luma'::text AS source,
+    c.at,
+    c.phone,
+    c.postcode,
+    c.latitude,
+    c.longitude
+   FROM (public.supporter_contact_luma c
+     JOIN public.supporter_links k ON ((k.luma_user_id = c.source_id)))
+UNION ALL
+ SELECT k.supporter_id,
+    'letter'::text AS source,
+    c.at,
+    c.phone,
+    c.postcode,
+    c.latitude,
+    c.longitude
+   FROM (public.supporter_contact_letter c
+     JOIN public.supporter_links k ON ((k.letter_id = c.source_id)));
+
+--
+-- Name: supporter_source_letter; Type: VIEW; Schema: public; Owner: -
+--
+
+CREATE VIEW public.supporter_source_letter AS
+ SELECT id AS source_id,
+    lower(TRIM(BOTH FROM sender_email)) AS email,
+    sender_name AS name,
+    created_at AS seen_at
+   FROM public.letters l;
+
+--
+-- Name: supporter_source_luma; Type: VIEW; Schema: public; Owner: -
+--
+
+CREATE VIEW public.supporter_source_luma AS
+ SELECT user_id AS source_id,
+    email,
+    name,
+    LEAST(contact_since, ( SELECT min(g.registered_at) AS min
+           FROM public.luma_guests g
+          WHERE (g.user_id = p.user_id))) AS seen_at
+   FROM public.luma_people p;
+
+--
+-- Name: supporter_identity; Type: VIEW; Schema: public; Owner: -
+--
+
+CREATE VIEW public.supporter_identity AS
+ SELECT k.supporter_id,
+    'luma'::text AS source,
+    s.email,
+    s.name,
+    s.seen_at
+   FROM (public.supporter_source_luma s
+     JOIN public.supporter_links k ON ((k.luma_user_id = s.source_id)))
+UNION ALL
+ SELECT k.supporter_id,
+    'letter'::text AS source,
+    s.email,
+    s.name,
+    s.seen_at
+   FROM (public.supporter_source_letter s
+     JOIN public.supporter_links k ON ((k.letter_id = s.source_id)));
+
+--
+-- Name: supporter_links_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+ALTER TABLE public.supporter_links ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public.supporter_links_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+--
+-- Name: supporters; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.supporters (
+    id bigint NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+--
+-- Name: supporters_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+ALTER TABLE public.supporters ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public.supporters_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+--
+-- Name: supporters_summary; Type: VIEW; Schema: public; Owner: -
+--
+
+CREATE VIEW public.supporters_summary AS
+ SELECT id,
+    ( SELECT i.name
+           FROM public.supporter_identity i
+          WHERE ((i.supporter_id = s.id) AND (i.name <> ''::text))
+          ORDER BY i.seen_at DESC NULLS LAST
+         LIMIT 1) AS name,
+    ( SELECT array_agg(DISTINCT i.email ORDER BY i.email) AS array_agg
+           FROM public.supporter_identity i
+          WHERE (i.supporter_id = s.id)) AS emails,
+    ( SELECT c.phone
+           FROM public.supporter_contact c
+          WHERE ((c.supporter_id = s.id) AND (c.phone IS NOT NULL))
+          ORDER BY c.at DESC
+         LIMIT 1) AS phone,
+    ( SELECT c.postcode
+           FROM public.supporter_contact c
+          WHERE ((c.supporter_id = s.id) AND (c.postcode IS NOT NULL))
+          ORDER BY c.at DESC
+         LIMIT 1) AS postcode,
+    ( SELECT array_agg(DISTINCT i.source ORDER BY i.source) AS array_agg
+           FROM public.supporter_identity i
+          WHERE (i.supporter_id = s.id)) AS sources,
+    (EXISTS ( SELECT 1
+           FROM public.supporter_activity a
+          WHERE ((a.supporter_id = s.id) AND (a.kind = 'luma-contact'::text)))) AS luma_contact,
+    ( SELECT min(i.seen_at) AS min
+           FROM public.supporter_identity i
+          WHERE (i.supporter_id = s.id)) AS first_seen_at,
+    ( SELECT max(a.at) AS max
+           FROM public.supporter_activity a
+          WHERE (a.supporter_id = s.id)) AS last_active_at,
+    ( SELECT (count(*))::integer AS count
+           FROM public.supporter_activity a
+          WHERE ((a.supporter_id = s.id) AND (a.kind = 'luma-registered'::text) AND (a.detail <> 'declined'::text))) AS events,
+    ( SELECT (count(*))::integer AS count
+           FROM public.supporter_activity a
+          WHERE ((a.supporter_id = s.id) AND (a.kind = 'letter'::text))) AS letters,
+    ( SELECT array_agg(DISTINCT o.list ORDER BY o.list) AS array_agg
+           FROM public.opt_outs o
+          WHERE ((o.resubscribed_at IS NULL) AND (o.address IN ( SELECT i.email
+                   FROM public.supporter_identity i
+                  WHERE (i.supporter_id = s.id))))) AS opted_out
+   FROM public.supporters s;
+
+--
 -- Name: audit_log audit_log_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -557,6 +853,34 @@ ALTER TABLE ONLY public.staff_sessions
     ADD CONSTRAINT staff_sessions_pkey PRIMARY KEY (token_hash);
 
 --
+-- Name: supporter_links supporter_links_letter_id_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.supporter_links
+    ADD CONSTRAINT supporter_links_letter_id_key UNIQUE (letter_id);
+
+--
+-- Name: supporter_links supporter_links_luma_user_id_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.supporter_links
+    ADD CONSTRAINT supporter_links_luma_user_id_key UNIQUE (luma_user_id);
+
+--
+-- Name: supporter_links supporter_links_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.supporter_links
+    ADD CONSTRAINT supporter_links_pkey PRIMARY KEY (id);
+
+--
+-- Name: supporters supporters_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.supporters
+    ADD CONSTRAINT supporters_pkey PRIMARY KEY (id);
+
+--
 -- Name: audit_log_at; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -665,6 +989,18 @@ CREATE INDEX staff_login_links_email_created_at ON public.staff_login_links USIN
 CREATE INDEX staff_sessions_expires_at ON public.staff_sessions USING btree (expires_at);
 
 --
+-- Name: supporter_links_matched; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX supporter_links_matched ON public.supporter_links USING btree (matched_by, matched_value);
+
+--
+-- Name: supporter_links_supporter; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX supporter_links_supporter ON public.supporter_links USING btree (supporter_id);
+
+--
 -- Name: campaign_statuses campaign_statuses_politician_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -712,6 +1048,27 @@ ALTER TABLE ONLY public.luma_guests
 
 ALTER TABLE ONLY public.luma_guests
     ADD CONSTRAINT luma_guests_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.luma_people(user_id) ON DELETE CASCADE;
+
+--
+-- Name: supporter_links supporter_links_letter_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.supporter_links
+    ADD CONSTRAINT supporter_links_letter_id_fkey FOREIGN KEY (letter_id) REFERENCES public.letters(id) ON DELETE CASCADE;
+
+--
+-- Name: supporter_links supporter_links_luma_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.supporter_links
+    ADD CONSTRAINT supporter_links_luma_user_id_fkey FOREIGN KEY (luma_user_id) REFERENCES public.luma_people(user_id) ON DELETE CASCADE;
+
+--
+-- Name: supporter_links supporter_links_supporter_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.supporter_links
+    ADD CONSTRAINT supporter_links_supporter_id_fkey FOREIGN KEY (supporter_id) REFERENCES public.supporters(id) ON DELETE CASCADE;
 
 --
 -- PostgreSQL database dump complete

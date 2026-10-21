@@ -189,14 +189,34 @@ test("the Luma import copies the calendar's events, guests and contacts, and fin
   await page.goto(`${BASE}/staff/import-data`);
   await page.getByRole("button", { name: staffCopy.luma.importNow }).click();
   // The fixture calendar: nine public events and a private one, five guests each over two pages, three contacts.
-  const first = { events: 9, eventsSynced: 9, eventsLeft: 0, guestsChanged: 45, people: 5, contacts: 3, requests: 21 };
+  const first = {
+    events: 9,
+    eventsSynced: 9,
+    eventsLeft: 0,
+    guestsChanged: 45,
+    people: 5,
+    contacts: 3,
+    supportersAdded: 6,
+    linked: 6,
+    requests: 21,
+  };
   await expect(page.getByText(staffCopy.luma.result(first))).toBeVisible();
   await page.getByRole("heading", { name: staffCopy.luma.title }).scrollIntoViewIfNeeded();
   await frame(page, "the Luma import's first run: every event, guest and contact copied");
 
   // Within the hour, nothing is due again: one page of events and one of contacts, both unchanged.
   await page.getByRole("button", { name: staffCopy.luma.importNow }).click();
-  const again = { events: 0, eventsSynced: 0, eventsLeft: 0, guestsChanged: 0, people: 0, contacts: 0, requests: 2 };
+  const again = {
+    ...first,
+    events: 0,
+    eventsSynced: 0,
+    guestsChanged: 0,
+    people: 0,
+    contacts: 0,
+    supportersAdded: 0,
+    linked: 0,
+    requests: 2,
+  };
   await expect(page.getByText(staffCopy.luma.result(again))).toBeVisible();
   await expect(page.getByText(staffCopy.runs.status.unchanged)).toBeVisible();
   await page.getByRole("heading", { name: staffCopy.luma.title }).scrollIntoViewIfNeeded();
