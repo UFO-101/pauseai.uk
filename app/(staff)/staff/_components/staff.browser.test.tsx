@@ -34,7 +34,7 @@ import {
 } from "./RunList.examples";
 import PermissionsForm from "./PermissionsForm";
 import PermissionsTable from "./PermissionsTable";
-import StaffHeader from "./StaffHeader";
+import StaffNav from "./StaffNav";
 import StaffHome from "./StaffHome";
 
 const [pm, bill] = campaigns;
@@ -51,26 +51,29 @@ function action() {
   return { fn, sent };
 }
 
-describe("StaffHeader", () => {
+describe("StaffNav", () => {
   it("is just the title on the login page", async () => {
-    await render(<StaffHeader />);
+    await render(<StaffNav />);
     await expect.element(page.getByText(staffCopy.nav.title)).toBeVisible();
     await expect.element(page.getByRole("navigation")).not.toBeInTheDocument();
     await expect.element(page.getByRole("button")).not.toBeInTheDocument();
   });
 
-  it("links the staff pages, says who's logged in, and logs out with a POST", async () => {
-    await render(<StaffHeader email="jo@pauseai.uk" current="politicians" />);
+  it("groups the pages by permission, marks the current one, says who's logged in, and logs out with a POST", async () => {
+    await render(<StaffNav email="jo@pauseai.uk" permissions={["admin"]} current="politicians" />);
     // The title is the way home, except at home.
     await expect.element(page.getByRole("link", { name: staffCopy.nav.title })).toHaveAttribute("href", "/staff");
     // The current page is bold, not a link.
     await expect.element(page.getByRole("link", { name: staffCopy.nav.politicians })).not.toBeInTheDocument();
-    // The row of links is for wider screens than the test's, so it's read from the DOM.
+    // The sidebar is for wider screens than the test's, so it's read from the DOM.
     const nav = document.querySelector("nav")!;
     expect(nav.querySelector("strong")!.textContent).toBe(staffCopy.nav.politicians);
     expect(nav.querySelector('a[href="/staff/import-data"]')!.textContent).toBe(staffCopy.nav.import);
-    expect(nav.querySelector('a[href="/staff/letters"]')!.textContent).toBe(staffCopy.nav.letters);
-    // On a phone, a dropdown instead: the current page, with the pages, the email and the way out under it once opened.
+    expect(nav.querySelector('a[href="/staff/permissions"]')!.textContent).toBe(staffCopy.nav.permissions);
+    expect([...nav.querySelectorAll("h2")].map((h) => h.textContent).slice(0, 5)).toEqual(
+      ["politicians", "letters", "email", "data", "admin"].map((id) => staffCopy.nav.sections[id]),
+    );
+    // On a phone, a dropdown instead: the current page, with the groups, the email and the way out under it once opened.
     const menu = page.getByRole("group");
     expect((menu.element() as HTMLDetailsElement).open).toBe(false);
     await menu.getByText(staffCopy.nav.politicians, { exact: true }).first().click();
@@ -82,17 +85,17 @@ describe("StaffHeader", () => {
     const form = menu.getByRole("button", { name: staffCopy.nav.logout }).element().closest("form")!;
     expect(form.getAttribute("method")).toBe("post");
     expect(form.getAttribute("action")).toBe("/staff/api/logout");
-    // The wider screen's row has its own.
+    // The wider screen's sidebar has its own.
     expect(document.querySelectorAll('form[action="/staff/api/logout"]')).toHaveLength(2);
   });
-});
 
-describe("StaffHeader at home", () => {
-  it("is the title, not a link, with the home page as current", async () => {
-    await render(<StaffHeader email="jo@pauseai.uk" current="home" />);
-    await expect.element(page.getByText(staffCopy.nav.title)).toBeVisible();
+  it("shows no admin group to someone without the permission, and at home the title isn't a link", async () => {
+    await render(<StaffNav email="jo@pauseai.uk" permissions={[]} current="home" />);
     await expect.element(page.getByRole("link", { name: staffCopy.nav.title })).not.toBeInTheDocument();
-    expect(document.querySelector("summary")!.textContent).toBe(staffCopy.nav.home);
+    const nav = document.querySelector("nav")!;
+    expect(nav.querySelector('a[href="/staff/permissions"]')).toBeNull();
+    expect(nav.querySelector('a[href="/staff/audit-log"]')).toBeNull();
+    expect(nav.querySelector("summary")!.textContent).toBe(staffCopy.nav.home);
   });
 });
 

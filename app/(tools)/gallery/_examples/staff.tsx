@@ -27,7 +27,7 @@ import {
   exampleRun,
   exampleSyncedMp,
 } from "@/app/(staff)/staff/_components/RunList.examples";
-import StaffHeader, { type StaffPage as StaffPageName } from "@/app/(staff)/staff/_components/StaffHeader";
+import StaffNav, { type StaffPage as StaffPageName } from "@/app/(staff)/staff/_components/StaffNav";
 import StaffHome from "@/app/(staff)/staff/_components/StaffHome";
 import StaffPage from "@/app/(staff)/staff/_components/ui/StaffPage";
 import { campaigns } from "@/lib/content/email-your-mp";
@@ -49,7 +49,7 @@ import {
 
 const [pm] = campaigns;
 
-// Every page the header can mark as current, so a new one is a type error until it's here.
+// Every page the navigation can mark as current, so a new one is a type error until it's here.
 const PAGES: Record<StaffPageName, true> = {
   home: true,
   politicians: true,
@@ -150,27 +150,49 @@ export const staff: Group = {
             </StaffPage>
           ),
         },
+        {
+          label: "With the navigation beside it",
+          render: () => (
+            <StaffPage as="div" nav={<StaffNav email="jo@pauseai.uk" permissions={["admin"]} current="letters" />}>
+              <h1>Letters</h1>
+              <p>The page takes the width beside the sidebar.</p>
+            </StaffPage>
+          ),
+        },
       ],
     },
     {
-      name: "StaffHeader",
-      file: "app/(staff)/staff/_components/StaffHeader.tsx",
+      name: "StaffNav",
+      file: "app/(staff)/staff/_components/StaffNav.tsx",
       variants: [
         {
           label: "On the login page: the title alone",
           render: () => (
             <StaffPage as="div">
-              <StaffHeader />
+              <StaffNav />
             </StaffPage>
           ),
         },
         {
-          label: "Logged in, on each page",
+          label: "For someone without the admin permission: the open groups",
+          render: () => (
+            <StaffPage as="div">
+              <StaffNav email="jo@pauseai.uk" permissions={[]} current="politicians" />
+            </StaffPage>
+          ),
+        },
+        {
+          label: "For an admin, on each page",
           render: () => (
             <StaffPage as="div">
               <div style={{ display: "grid", gap: 24 }}>
                 {(Object.keys(PAGES) as StaffPageName[]).map((current) => (
-                  <StaffHeader key={current} email="jo@pauseai.uk" current={current} />
+                  <StaffNav
+                    key={current}
+                    email="jo@pauseai.uk"
+                    permissions={["admin", "supporters"]}
+                    current={current}
+                  />
                 ))}
               </div>
             </StaffPage>

@@ -169,10 +169,10 @@ test("staff log in, set a status that shows on /campaigns, and log out", async (
   await expect(blake).toContainText("polly.placeholder.mp@parliament.uk");
   await frame(page, "the MP check found a differing email");
 
-  // On a phone the header's links and Log out are behind its menu.
+  // On a phone the navigation and Log out are behind the bar's menu.
   const logout = page.getByRole("button", { name: staffCopy.nav.logout });
   if (!(await logout.first().isVisible())) {
-    await page.locator("header details > summary").click();
+    await page.locator("nav details > summary").click();
     await frame(page, "the staff menu open");
   }
   await logout.filter({ visible: true }).click();

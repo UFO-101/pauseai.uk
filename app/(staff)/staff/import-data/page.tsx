@@ -10,7 +10,7 @@ import { requireStaff } from "@/lib/server/staff-auth";
 import { checkNow, decideSync, importControlAiNow, importFromAirtable, importLumaNow, syncNow } from "../actions";
 import JobActions from "../_components/JobActions";
 import RunList from "../_components/RunList";
-import StaffHeader from "../_components/StaffHeader";
+import StaffNav from "../_components/StaffNav";
 import StaffPage from "../_components/ui/StaffPage";
 import Tag from "@/components/ui/Tag";
 
@@ -20,7 +20,7 @@ import Tag from "@/components/ui/Tag";
  * web. Each with its newest run.
  */
 export default async function ImportPage() {
-  const { email } = await requireStaff();
+  const { email, permissions } = await requireStaff();
   const [syncs, check, signatoryImport, controlAiImport, lumaImport] = await Promise.all([
     syncsToShow(),
     latestRun<MpCheck>("check-mps"),
@@ -29,8 +29,7 @@ export default async function ImportPage() {
     latestRun<LumaImport>("import-luma"),
   ]);
   return (
-    <StaffPage>
-      <StaffHeader email={email} current="import" />
+    <StaffPage nav={<StaffNav email={email} permissions={permissions} current="import" />}>
       <h1>{staffCopy.import.pageTitle}</h1>
 
       <h2>
