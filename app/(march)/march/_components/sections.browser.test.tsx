@@ -54,10 +54,10 @@ describe("the sign-up's sections", () => {
     await expect.element(page.getByRole("img", { name: "WIRED" })).toBeVisible();
   });
 
-  it("shows three photos from earlier marches", async () => {
+  it("shows four photos from earlier marches", async () => {
     await render(<SignupPhotos />);
-    expect(page.getByRole("img").all()).toHaveLength(3);
-    await expect.element(page.getByText("June 2025")).toBeVisible();
+    expect(page.getByRole("img").all()).toHaveLength(4);
+    await expect.element(page.getByRole("img", { name: /Commit to safety/ })).toBeVisible();
   });
 
   it("maps the route's start and end", async () => {

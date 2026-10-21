@@ -785,19 +785,18 @@
 }
 
 /* ── Photo strip ───────────────────────────────────────────────────────
-   Three frames, full bleed, separated by the same hard rules as everything
+   Four frames, full bleed, separated by the same hard rules as everything
    else. */
 
 .photo-strip {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: var(--march-stroke);
   background: var(--march-line);
   border-top: var(--march-stroke) solid var(--march-line);
   border-bottom: var(--march-stroke) solid var(--march-line);
 }
 .photo-item {
-  position: relative;
   margin: 0;
   overflow: hidden;
   background: var(--march-ink);
@@ -808,18 +807,6 @@
   height: 100%;
   aspect-ratio: 3 / 2;
   object-fit: cover;
-}
-.photo-item figcaption {
-  position: absolute;
-  left: 0;
-  bottom: 16px;
-  padding: 8px 16px;
-  background: var(--march-orange);
-  color: var(--white);
-  font-size: 12px;
-  font-weight: 800;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
 }
 
 /* ── On the day ────────────────────────────────────────────────────────
@@ -1139,16 +1126,10 @@
 }
 
 @media (max-width: 860px) {
+  /* Two by two, down to a phone: stacked one to a row, four frames would
+     outrun a phone's screen several times over. */
   .photo-strip {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-  /* Two columns leave a third frame on its own — it takes the full width
-     rather than sitting in a half-empty row. */
-  .photo-item:last-child {
-    grid-column: 1 / -1;
-  }
-  .photo-item:last-child img {
-    aspect-ratio: 16 / 7;
   }
 }
 
@@ -1250,12 +1231,6 @@
   .day-grid {
     grid-template-columns: 1fr;
     gap: 40px;
-  }
-  .photo-strip {
-    grid-template-columns: 1fr;
-  }
-  .photo-item:last-child img {
-    aspect-ratio: 3 / 2;
   }
   .signup {
     --panel-shadow: 6px;
