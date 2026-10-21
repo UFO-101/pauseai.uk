@@ -1167,8 +1167,23 @@
     border-top-width: 3px;
     padding-top: 14px;
   }
+  /* Tighter spacing so the whole hero, Register button included, fits a
+     phone's first screen with the URL bar showing (about 360 × 660). On a
+     taller phone the hero's centring shares the spare height out above and
+     below. The bottom padding keeps the scroll cue clear of the button's
+     shadow. */
   .hero {
-    padding: 56px 0 64px;
+    padding: 24px 0 64px;
+  }
+  .hero-logo {
+    height: 36px;
+    margin-bottom: 18px;
+  }
+  .hero-title {
+    margin-bottom: 24px;
+  }
+  .hero-lede {
+    font-size: 19px;
   }
   /* On a narrow screen the copy sits over the middle of the photo rather
      than its darkest edge, so the scrim goes flat instead of angled. */
@@ -1176,11 +1191,26 @@
     background: linear-gradient(180deg, rgb(var(--march-ink-rgb) / 0.72) 0%, rgb(var(--march-ink-rgb) / 0.94) 88%);
   }
   .hero-facts {
-    gap: 14px;
+    gap: 12px;
+    margin-top: 24px;
   }
   .hero-fact {
     min-width: 0;
     width: 100%;
+    padding-bottom: 12px;
+  }
+  .hero-fact-label {
+    margin-bottom: 10px;
+  }
+  .hero-cta {
+    margin-top: 24px;
+  }
+  .hero-scroll {
+    bottom: 8px;
+  }
+  .hero-scroll svg {
+    width: 28px;
+    height: 28px;
   }
   .turnout-grid {
     grid-template-columns: 1fr;
