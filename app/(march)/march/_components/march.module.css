@@ -661,20 +661,20 @@
   height: 10px;
   background: var(--march-ink);
 }
-/* Body text, set like the paragraphs in the band above but in ink. */
-.demand-text {
-  max-width: calc(62 * var(--march-ch));
-  margin: 0 0 22px;
-}
-/* The summing-up sentence, set like .case-lead in the band above. */
-.demand-sum {
+/* The leading sentence, set like .case-lead in the band above. */
+.demand-lead {
   max-width: calc(60 * var(--march-ch));
-  margin: 0;
+  margin: 0 0 22px;
   text-wrap: pretty;
   font-size: clamp(21px, 2.1vw, 27px);
   font-weight: 700;
   line-height: 1.35;
   letter-spacing: -0.01em;
+}
+/* Body text, set like the paragraphs in the band above but in ink. */
+.demand-text {
+  max-width: calc(62 * var(--march-ch));
+  margin: 0;
 }
 .demand-call {
   max-width: 20ch;
