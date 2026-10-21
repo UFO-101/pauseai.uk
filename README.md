@@ -31,7 +31,7 @@ Try Email your MP with postcode ZZ99ZZ; the letter lands in `tmp/outbox/`. The r
 
 - [docs/domain-concepts.md](docs/domain-concepts.md): the concepts the features are built from, and how to extend them
 - [docs/development.md](docs/development.md): setting up local development in full
-- [docs/code-structure.md](docs/code-structure.md): where code lives
+- [docs/code-structure.md](docs/code-structure.md): where code lives, and the rules for it, including comments
 - [docs/testing.md](docs/testing.md): how it's tested
 - [docs/style-guide.md](docs/style-guide.md): design, and where to find every component
 - [scripts/README.md](scripts/README.md): what each script does
