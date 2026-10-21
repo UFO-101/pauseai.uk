@@ -1,0 +1,138 @@
+"use client";
+
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState, type FormEvent } from "react";
+import { march } from "@/lib/content/march";
+import { marchSignupCopy } from "@/lib/content/march-signup";
+import type { MarchRegisterResult } from "../actions";
+import { m } from "./classes";
+
+const copy = marchSignupCopy.form;
+
+type FormError = { message: string; offerLuma: boolean };
+
+/** A name or email to fix is said as is; anything else offers Luma's own page instead. */
+function errorFor(result: Exclude<MarchRegisterResult, { ok: true }> | "unreachable"): FormError {
+  if (result === "unreachable" || result.reason === "luma-failed") return { message: copy.failed, offerLuma: true };
+  return { message: Object.values(result.errors).join(" "), offerLuma: false };
+}
+
+/**
+ * The registration form. `register` is the Server Action
+ * (app/(march)/march/actions.ts), which adds the person to the Luma event;
+ * once it has, the form moves on to the share step, the point of the flow.
+ * Phone, city and the mailing list opt-in are asked for, but not sent yet.
+ */
+export default function SignupForm({ register }: { register: (input: unknown) => Promise<MarchRegisterResult> }) {
+  const router = useRouter();
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<FormError | null>(null);
+
+  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const form = new FormData(e.currentTarget);
+    const value = (name: string) => String(form.get(name)).trim();
+    const signup = {
+      firstName: value("firstName"),
+      lastName: value("lastName"),
+      email: value("email"),
+      // Empty for people, filled in by bots. The server checks it.
+      website: value("website"),
+    };
+
+    setSubmitting(true);
+    setError(null);
+    let result: MarchRegisterResult | "unreachable";
+    try {
+      result = await register(signup);
+    } catch {
+      // The action couldn't be reached: offline, or a deploy in flight.
+      result = "unreachable";
+    }
+    if (result === "unreachable" || !result.ok) {
+      setError(errorFor(result));
+      setSubmitting(false);
+      return;
+    }
+    router.push(march.sharePath);
+  }
+
+  return (
+    <form className={m("signup")} method="post" onSubmit={handleSubmit}>
+      <p className={m("signup-head")}>{copy.head}</p>
+
+      <div className={m("signup-row")}>
+        <div className={m("field")}>
+          <label htmlFor="firstName">{copy.firstName}</label>
+          <input id="firstName" name="firstName" type="text" autoComplete="given-name" required />
+        </div>
+        <div className={m("field")}>
+          <label htmlFor="lastName">{copy.lastName}</label>
+          <input id="lastName" name="lastName" type="text" autoComplete="family-name" required />
+        </div>
+      </div>
+
+      <div className={m("field")}>
+        <label htmlFor="email">{copy.email}</label>
+        <input id="email" name="email" type="email" autoComplete="email" required />
+      </div>
+
+      <div className={m("signup-row")}>
+        <div className={m("field")}>
+          <label htmlFor="phone">
+            {copy.phone} <span className={m("optional")}>{copy.optional}</span>
+          </label>
+          <input id="phone" name="phone" type="tel" autoComplete="tel" />
+          <p className={m("hint")}>{copy.phoneHint}</p>
+        </div>
+        <div className={m("field")}>
+          <label htmlFor="city">
+            {copy.city} <span className={m("optional")}>{copy.optional}</span>
+          </label>
+          <input id="city" name="city" type="text" autoComplete="address-level2" />
+        </div>
+      </div>
+
+      <label className={m("check")}>
+        <input id="mailingList" name="mailingList" type="checkbox" />
+        <span>{copy.mailingList}</span>
+      </label>
+
+      {/* The honeypot: off-screen rather than display:none, which some bots
+          skip; hidden from screen readers and out of the tab order, under a
+          name browsers don't autofill. */}
+      <div className={m("signup-hp")} aria-hidden="true">
+        <label htmlFor="website">{copy.honeypot}</label>
+        <input id="website" name="website" type="text" tabIndex={-1} autoComplete="off" />
+      </div>
+
+      <div className={m("signup-error")} role="alert" hidden={!error}>
+        {error && (
+          <>
+            <p>{error.message}</p>
+            {error.offerLuma && (
+              <p>
+                <a className={m("inline-link")} href={march.lumaUrl} target="_blank" rel="noreferrer">
+                  {copy.lumaFallback}
+                </a>
+              </p>
+            )}
+          </>
+        )}
+      </div>
+
+      <button className={m("btn large signup-submit")} type="submit" disabled={submitting}>
+        {submitting ? copy.submitting : copy.submit}
+      </button>
+
+      <p className={m("signup-privacy")}>
+        {copy.privacy}{" "}
+        <Link className={m("inline-link")} href="/privacy">
+          {copy.privacyLink}
+        </Link>
+        .
+      </p>
+    </form>
+  );
+}

@@ -119,6 +119,14 @@ export function fixtureResponse(url: string, init?: RequestInit): Response | und
     // FIXTURE_NOW, and one erased there.
     return json(airtableMembers);
   }
+  if (hostname === "public-api.luma.com" && pathname === "/v1/events/guests/add") {
+    // The march sign-up. Luma takes every guest but two: one it skips, as if
+    // they'd unsubscribed from the calendar, and one it fails on.
+    const { guests } = JSON.parse(String(init!.body)) as { guests: { email: string }[] };
+    const [email] = guests.map((guest) => guest.email);
+    if (email.startsWith("luma-fails@")) return new Response('{"message":"Fixture failure"}', { status: 500 });
+    return json({ skipped: email.startsWith("luma-skips@") ? [{ email }] : [] });
+  }
   // The UK Parliamentarians base's tables: a politician of each body, one
   // retired and one who left; PauseAI's 2026 emails to them, of each
   // mailing, one with no politician and one with no mailing we know; the
