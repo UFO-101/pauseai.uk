@@ -1,6 +1,6 @@
-// The collateral maker's kit (app/(tools)/tools/collateral/_components/kit/), which the QR tool shares.
-import { ControlsColumn, ControlsSection, Loading } from "@/app/(tools)/tools/collateral/_components/kit/Studio";
-import ToolPage from "@/app/(tools)/tools/collateral/_components/kit/ToolPage";
+// The collateral maker's kit (components/tools/kit/), which the QR tool shares.
+import { ControlsColumn, ControlsSection, Loading } from "@/components/tools/kit/Studio";
+import ToolPage from "@/components/tools/kit/ToolPage";
 import type { ReactNode } from "react";
 import type { Group } from "../_components/types";
 import {
@@ -29,7 +29,7 @@ export const collateralKit: Group = {
   examples: [
     {
       name: "ToolPage",
-      file: "app/(tools)/tools/collateral/_components/kit/ToolPage.tsx",
+      file: "components/tools/kit/ToolPage.tsx",
       variants: [
         {
           label: "A title, a lede and the tool",
@@ -43,7 +43,7 @@ export const collateralKit: Group = {
     },
     {
       name: "Studio",
-      file: "app/(tools)/tools/collateral/_components/kit/Studio.tsx",
+      file: "components/tools/kit/Studio.tsx",
       variants: [
         {
           label: "Pinned: the preview beside the form",
@@ -65,7 +65,7 @@ export const collateralKit: Group = {
     },
     {
       name: "PreviewColumn",
-      file: "app/(tools)/tools/collateral/_components/kit/Studio.tsx",
+      file: "components/tools/kit/Studio.tsx",
       variants: [
         {
           label: "The campaign pack's, scrolling on its own",
@@ -79,7 +79,7 @@ export const collateralKit: Group = {
     },
     {
       name: "PreviewPin",
-      file: "app/(tools)/tools/collateral/_components/kit/Studio.tsx",
+      file: "components/tools/kit/Studio.tsx",
       variants: [
         {
           label: "Holding the preview, pinned on a phone",
@@ -93,7 +93,7 @@ export const collateralKit: Group = {
     },
     {
       name: "PreviewMeta",
-      file: "app/(tools)/tools/collateral/_components/kit/Studio.tsx",
+      file: "components/tools/kit/Studio.tsx",
       variants: [
         {
           label: "Under the preview",
@@ -107,7 +107,7 @@ export const collateralKit: Group = {
     },
     {
       name: "PreviewActions",
-      file: "app/(tools)/tools/collateral/_components/kit/Studio.tsx",
+      file: "components/tools/kit/Studio.tsx",
       variants: [
         {
           label: "Download under the preview",
@@ -121,7 +121,7 @@ export const collateralKit: Group = {
     },
     {
       name: "ControlsColumn",
-      file: "app/(tools)/tools/collateral/_components/kit/Studio.tsx",
+      file: "components/tools/kit/Studio.tsx",
       variants: [
         {
           label: "Sections spaced apart",
@@ -141,7 +141,7 @@ export const collateralKit: Group = {
     },
     {
       name: "ControlsSection",
-      file: "app/(tools)/tools/collateral/_components/kit/Studio.tsx",
+      file: "components/tools/kit/Studio.tsx",
       variants: [
         {
           label: "With a heading, and without",
@@ -161,7 +161,7 @@ export const collateralKit: Group = {
     },
     {
       name: "PreviewCanvas",
-      file: "app/(tools)/tools/collateral/_components/kit/Studio.tsx",
+      file: "components/tools/kit/Studio.tsx",
       variants: [
         {
           label: "Drawn",
@@ -183,17 +183,17 @@ export const collateralKit: Group = {
     },
     {
       name: "Loading",
-      file: "app/(tools)/tools/collateral/_components/kit/Studio.tsx",
+      file: "components/tools/kit/Studio.tsx",
       variants: [{ label: "In place of a preview", render: () => narrow(<Loading>Loading…</Loading>) }],
     },
     {
       name: "DownloadButton",
-      file: "app/(tools)/tools/collateral/_components/kit/Studio.tsx",
+      file: "components/tools/kit/Studio.tsx",
       variants: [{ label: "Enabled and disabled", render: () => narrow(<DownloadButtonExample />) }],
     },
     {
       name: "ChoiceGrid",
-      file: "app/(tools)/tools/collateral/_components/kit/Choices.tsx",
+      file: "components/tools/kit/Choices.tsx",
       variants: [
         { label: "A radio group", render: () => narrow(<RadioChoicesExample />) },
         { label: "A group of checkboxes", render: () => narrow(<CheckboxChoicesExample />) },
@@ -201,17 +201,17 @@ export const collateralKit: Group = {
     },
     {
       name: "Choice",
-      file: "app/(tools)/tools/collateral/_components/kit/Choices.tsx",
+      file: "components/tools/kit/Choices.tsx",
       variants: [{ label: "Picked and not", render: () => narrow(<RadioChoicesExample />) }],
     },
     {
       name: "CheckboxChoice",
-      file: "app/(tools)/tools/collateral/_components/kit/Choices.tsx",
+      file: "components/tools/kit/Choices.tsx",
       variants: [{ label: "Ticked and not", render: () => narrow(<CheckboxChoicesExample />) }],
     },
     {
       name: "PhotoLibrary",
-      file: "app/(tools)/tools/collateral/_components/kit/Choices.tsx",
+      file: "components/tools/kit/Choices.tsx",
       variants: [{ label: "Every library photo, one picked", render: () => narrow(<PhotoLibraryExample />) }],
     },
   ],

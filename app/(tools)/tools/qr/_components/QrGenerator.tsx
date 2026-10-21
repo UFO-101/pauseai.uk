@@ -27,7 +27,7 @@ import {
   PreviewColumn,
   PreviewMeta,
   Studio,
-} from "../../collateral/_components/kit/Studio";
+} from "@/components/tools/kit/Studio";
 import styles from "./QrGenerator.module.css";
 
 /** Big enough for print and slides. The SVG covers anything larger. */

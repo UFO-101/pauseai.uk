@@ -200,6 +200,41 @@ const EXTERNAL_LINK_RULES = [
   },
 ];
 
+// Which folders may import which (docs/code-structure.md). lib/ is logic
+// and data, so it imports neither components nor routes; the site's
+// content in lib/content/ is written partly in JSX, so it may use
+// components. Code is shared between routes from components/ or lib/, or
+// from a _components/ folder above both, by a relative path: never from
+// another route's folder, by the @/app/ alias or by a relative path that
+// climbs into one. The component gallery imports every route's components
+// to show them. Tests may reach across, to load what they test. These use
+// typescript-eslint's copy of no-restricted-imports, so they're
+// independent of the per-file lists in siteCodeRules().
+const ROUTE_IMPORTS = [
+  {
+    group: ["@/app", "@/app/**"],
+    message:
+      "Share code between routes from components/ or lib/, or from a _components/ folder above both. See LAYERS in eslint.config.mjs.",
+  },
+  {
+    regex: "^(\\./|(\\.\\./)+)(?!_components/|\\.\\./)[^/]+/(.*/)?_components(/|$)",
+    message:
+      "That's another route's _components/. Share code between routes from components/ or lib/, or from a _components/ folder above both.",
+  },
+];
+const COMPONENT_IMPORTS = {
+  group: ["@/components", "@/components/**"],
+  message: "lib/ is logic and data, without React components. See LAYERS in eslint.config.mjs.",
+};
+const LAYERS = [
+  { files: ["app/**/*.{ts,tsx}", "components/**/*.{ts,tsx}", "lib/**/*.{ts,tsx}"], patterns: ROUTE_IMPORTS },
+  { files: ["lib/**/*.{ts,tsx}"], ignores: ["lib/content/**"], patterns: [...ROUTE_IMPORTS, COMPONENT_IMPORTS] },
+].map(({ files, ignores = [], patterns }) => ({
+  files,
+  ignores: ["**/*.test.{ts,tsx}", "app/(tools)/gallery/**", ...ignores],
+  rules: { "@typescript-eslint/no-restricted-imports": ["error", { patterns }] },
+}));
+
 const eslintConfig = defineConfig([
   ...nextVitals,
   ...nextTs,
@@ -245,6 +280,7 @@ const eslintConfig = defineConfig([
     ignores: ["**/*.test.{ts,tsx}", ...UNCONVERTED_DOM_EDITS],
     rules: { "no-restricted-properties": ["error", ...DIRECT_DOM_EDITS] },
   },
+  ...LAYERS,
   // Override default ignores of eslint-config-next.
   globalIgnores([
     // Default ignores of eslint-config-next:

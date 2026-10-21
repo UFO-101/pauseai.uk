@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import { defaultValues, FONT_LOADS, TEMPLATES } from "./templates";
 
 const root = process.cwd();
-const css = readFileSync(join(root, "app/(tools)/tools/collateral/_components/kit/Studio.module.css"), "utf8");
+const css = readFileSync(join(root, "components/tools/kit/Studio.module.css"), "utf8");
 
 describe.each(TEMPLATES)("template $id", (template) => {
   it("has unique field keys", () => {

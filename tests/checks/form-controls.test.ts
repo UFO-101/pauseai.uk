@@ -14,7 +14,7 @@ const ROOT = join(__dirname, "..", "..");
 const OWN_CONTROLS: Record<string, string> = {
   "components/ui/Controls.tsx": "the kit's controls themselves",
   "app/(tools)/tools/collateral/_components/Slider.tsx": "a range slider, the one control the kit hasn't",
-  "app/(tools)/tools/collateral/_components/kit/Choices.tsx": "a choice card, with its checkbox in its corner",
+  "components/tools/kit/Choices.tsx": "a choice card, with its checkbox in its corner",
   "app/(site)/campaigns/_components/LetterForm.tsx": "the honeypot field, hidden from people for bots to fill",
   "app/(site)/global-ai-sentiment-2026/_components/CountryExplorer.tsx":
     "the report's own controls, styled as a set with its bespoke dropdown",

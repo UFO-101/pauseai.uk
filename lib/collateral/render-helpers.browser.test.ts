@@ -1,6 +1,6 @@
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 // The studio declares the fonts the canvas draws with.
-import "@/app/(tools)/tools/collateral/_components/kit/Studio";
+import "@/components/tools/kit/Studio";
 import { getFormat } from "./formats";
 import { LIBRARY_PHOTOS } from "./photos";
 import {

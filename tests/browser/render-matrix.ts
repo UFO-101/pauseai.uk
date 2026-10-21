@@ -9,7 +9,7 @@
 // the whole browser project's critical path.
 import { beforeAll, describe, expect, it } from "vitest";
 // The studio declares the fonts the canvas draws with.
-import "@/app/(tools)/tools/collateral/_components/kit/Studio";
+import "@/components/tools/kit/Studio";
 import { FORMATS, getFormat } from "@/lib/collateral/formats";
 import { LIBRARY_PHOTOS } from "@/lib/collateral/photos";
 import { loadFonts, loadImage, renderCollateral, type RenderOptions } from "@/lib/collateral/render";
