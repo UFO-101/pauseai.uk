@@ -25,9 +25,8 @@ export const march = {
     area: "London SW1A 2AA",
     postcode: "SW1A 2AA",
   },
-  /** The sign-up page, which adds people to the Luma event, and the step after it. */
+  /** The sign-up page, which adds people to the Luma event. */
   signupPath: "/march",
-  sharePath: "/march/share",
   /** The date and place as the sign-up shows them. */
   dateLong: "Saturday 21 Nov 2026",
   dateShort: "Sat 21 Nov 2026",

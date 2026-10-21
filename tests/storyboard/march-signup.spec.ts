@@ -5,8 +5,8 @@ import { hydrated, layoutSettled, scrollSettled } from "./settle";
 
 // The march sign-up at /march (app/(march)/): its own header, which drops in
 // past the hero; the form, which adds the person to the Luma event (the
-// fixture takes every guest but luma-fails@ and luma-skips@); and the share
-// step after it.
+// fixture takes every guest but luma-fails@ and luma-skips@); and the cards
+// it turns into, in place: the share card, then the thank-you.
 
 const header = (page: Page) => page.getByRole("banner");
 
@@ -25,7 +25,7 @@ async function fillIn(page: Page, email: string) {
   await page.getByLabel(copy.form.email).fill(email);
 }
 
-test("registering, then on to the share step", { tag: "@phone" }, async ({ page }, testInfo) => {
+test("registering, and the form turns into the share card", { tag: "@phone" }, async ({ page }, testInfo) => {
   await openSignup(page);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(/March AgainstAI Extinction/);
   // Over the hero the header is out of sight; the site's own nav isn't there at all.
@@ -41,11 +41,12 @@ test("registering, then on to the share step", { tag: "@phone" }, async ({ page 
   await frame(page, "the form, filled in, under the header that dropped in");
 
   await page.getByRole("button", { name: copy.form.submit, exact: true }).click();
-  await expect(page).toHaveURL(`${BASE}/march/share`);
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText(/Now bringpeople with you/);
-  await expect(header(page)).toBeInViewport();
+  const title = page.getByRole("heading", { name: copy.share.title });
+  await expect(title).toBeFocused();
+  await expect(page).toHaveURL(`${BASE}/march#register`);
+  await expect(page.getByRole("link", { name: copy.share.impact.link })).toBeVisible();
   await scrollSettled(page);
-  await frame(page, "the share step");
+  await frame(page, "the share card, where the form was");
 });
 
 test("a registration Luma doesn't take", { tag: "@phone" }, async ({ page }) => {
@@ -78,26 +79,45 @@ test("the scroll cue glides past the hero, and the header comes with it", async 
   await frame(page, "past the hero, the header in");
 });
 
-test("sharing, then calling it a day", { tag: "@phone" }, async ({ page, context }) => {
+test("sharing, then calling it a day, then registering someone new", { tag: "@phone" }, async ({ page, context }) => {
   await context.grantPermissions(["clipboard-read", "clipboard-write"]);
-  await page.goto(`${BASE}/march/share`);
-  await hydrated(page);
-  await frame(page, "the share step, before anything's shared");
+  await openSignup(page);
+  await fillIn(page, "testy@example.org");
+  await page.getByRole("button", { name: copy.form.submit, exact: true }).click();
+  await expect(page.getByRole("heading", { name: copy.share.title })).toBeFocused();
 
   await page.getByRole("button", { name: copy.share.copy }).click();
-  await expect(page.getByRole("status")).toContainText(copy.share.nudgeTitle);
+  await expect(page.getByRole("button", { name: copy.share.copied })).toBeVisible();
   expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(copy.share.message);
   await page.getByRole("button", { name: copy.share.copy }).waitFor();
-  await frame(page, "copied, and asked where else");
+  await scrollSettled(page);
+  await frame(page, "the message copied");
 
   await page.getByRole("button", { name: copy.share.finish }).click();
-  const thanks = page.getByRole("heading", { name: "Thank you for registering" });
-  await expect(thanks).toBeFocused();
+  await expect(page.getByRole("heading", { name: "Thank you for registering" })).toBeFocused();
+  await expect(page.getByRole("link", { name: copy.thanks.manage })).toHaveAttribute(
+    "href",
+    "https://luma.com/pauseai-nov26",
+  );
   await scrollSettled(page);
   await frame(page, "the thank-you card");
 
-  await page.reload();
-  await hydrated(page);
-  await expect(thanks).toBeVisible();
-  await expect(page.getByRole("button", { name: copy.share.finish })).toHaveCount(0);
+  await page.getByRole("button", { name: copy.thanks.registerAnother }).click();
+  await expect(page.getByLabel(copy.form.firstName)).toBeFocused();
+  await expect(page.getByLabel(copy.form.email)).toHaveValue("");
+  await scrollSettled(page);
+  await frame(page, "the form again, empty, for someone new");
+});
+
+test("pressing the header's button pushes it into its shadow", { tag: "@desktop-only" }, async ({ page }) => {
+  await openSignup(page);
+  await page.getByRole("button", { name: "Scroll down" }).click();
+  await expect(header(page)).toBeInViewport();
+  const button = header(page).getByRole("link", { name: "Register" });
+  await button.hover();
+  await page.mouse.down();
+  await expect
+    .poll(() => button.evaluate((el) => [getComputedStyle(el).transform, getComputedStyle(el).boxShadow]))
+    .toEqual(["matrix(1, 0, 0, 1, 4, 4)", expect.stringMatching(/ 0px 0px 0px$/)]);
+  await page.mouse.up();
 });

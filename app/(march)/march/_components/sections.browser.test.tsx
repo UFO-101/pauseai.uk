@@ -3,8 +3,6 @@ import { render } from "vitest-browser-react";
 import { page } from "vitest/browser";
 import { m } from "./classes";
 import MarchSignupFrame from "./MarchSignupFrame";
-import ShareBody from "./ShareBody";
-import ShareHead from "./ShareHead";
 import SignupCase from "./SignupCase";
 import SignupDay from "./SignupDay";
 import SignupDemand from "./SignupDemand";
@@ -77,19 +75,13 @@ describe("the sign-up's sections", () => {
     await render(<SignupRegister register={async () => ({ ok: true })} />);
     await expect.element(page.getByRole("heading", { name: "Register for the march" })).toBeVisible();
     await expect.element(page.getByRole("button", { name: "Register" })).toBeVisible();
+    // What to expect, in its order.
+    const expectations = page
+      .getByRole("listitem")
+      .all()
+      .map((item) => item.element().textContent);
+    expect(expectations[1]).toMatch(/big tent/);
+    expect(expectations[2]).toMatch(/police/);
     expect(document.getElementById("register")).not.toBeNull();
-  });
-});
-
-describe("the share step's sections", () => {
-  it("says they're registered, and asks them to share", async () => {
-    await render(<ShareHead />);
-    await expect.element(page.getByRole("heading", { level: 1, name: /Now bring people with you/ })).toBeVisible();
-  });
-
-  it("has the share card on its band", async () => {
-    localStorage.clear();
-    await render(<ShareBody />);
-    await expect.element(page.getByRole("button", { name: "I can’t think of anywhere else" })).toBeVisible();
   });
 });

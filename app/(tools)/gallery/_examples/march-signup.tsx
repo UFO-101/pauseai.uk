@@ -1,10 +1,7 @@
-// The march sign-up at /march and its share step (app/(march)/march/_components/),
+// The march sign-up at /march (app/(march)/march/_components/),
 // each in the sub-site's frame, which gives it its type and colours.
 import type { ReactNode } from "react";
 import MarchSignupFrame from "@/app/(march)/march/_components/MarchSignupFrame";
-import ShareActions from "@/app/(march)/march/_components/ShareActions";
-import ShareBody from "@/app/(march)/march/_components/ShareBody";
-import ShareHead from "@/app/(march)/march/_components/ShareHead";
 import SignupCase from "@/app/(march)/march/_components/SignupCase";
 import SignupDay from "@/app/(march)/march/_components/SignupDay";
 import SignupDemand from "@/app/(march)/march/_components/SignupDemand";
@@ -14,7 +11,7 @@ import SignupHeroScroll from "@/app/(march)/march/_components/SignupHeroScroll";
 import SignupPhotos from "@/app/(march)/march/_components/SignupPhotos";
 import SignupTurnout from "@/app/(march)/march/_components/SignupTurnout";
 import type { Group } from "../_components/types";
-import { SignupFormExample, SignupRegisterExample } from "./march-signup.client";
+import { ShareCardExample, SignupFormExample, SignupRegisterExample, ThanksCardExample } from "./march-signup.client";
 
 const inFrame = (children: ReactNode) => <MarchSignupFrame>{children}</MarchSignupFrame>;
 
@@ -35,7 +32,9 @@ export const marchSignup: Group = {
     {
       name: "SignupHeader",
       file: "app/(march)/march/_components/SignupHeader.tsx",
-      variants: [{ label: "The header, as on the share step", render: () => inFrame(<SignupHeader />) }],
+      variants: [
+        { label: "The header, as it is past the hero", render: () => inFrame(<SignupHeader overHero={false} />) },
+      ],
     },
     {
       name: "SignupHero",
@@ -93,19 +92,21 @@ export const marchSignup: Group = {
       variants: [{ label: "The form, whose action logs what it's sent", render: () => <SignupFormExample /> }],
     },
     {
-      name: "ShareHead",
-      file: "app/(march)/march/_components/ShareHead.tsx",
-      variants: [{ label: "The top of the share step", render: () => inFrame(<ShareHead />) }],
+      name: "SignupFlow",
+      file: "app/(march)/march/_components/SignupFlow.tsx",
+      variants: [
+        { label: "The cards, starting with the form, in the register band", render: () => <SignupRegisterExample /> },
+      ],
     },
     {
-      name: "ShareBody",
-      file: "app/(march)/march/_components/ShareBody.tsx",
-      variants: [{ label: "The share step's band, with the share card", render: () => inFrame(<ShareBody />) }],
+      name: "ShareCard",
+      file: "app/(march)/march/_components/ShareCard.tsx",
+      variants: [{ label: "The share card, after registering", render: () => <ShareCardExample /> }],
     },
     {
-      name: "ShareActions",
-      file: "app/(march)/march/_components/ShareActions.tsx",
-      variants: [{ label: "The share card, before anything's shared", render: () => inFrame(<ShareActions />) }],
+      name: "ThanksCard",
+      file: "app/(march)/march/_components/ThanksCard.tsx",
+      variants: [{ label: "The thank-you card", render: () => <ThanksCardExample /> }],
     },
   ],
 };

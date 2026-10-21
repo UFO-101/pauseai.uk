@@ -1,21 +1,11 @@
 "use client";
 
-import Link from "next/link";
-import {
-  type CSSProperties,
-  type ReactNode,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-  useSyncExternalStore,
-} from "react";
-import { march } from "@/lib/content/march";
-import { marchSignupCopy } from "@/lib/content/march-signup";
+import { type CSSProperties, type ReactNode, useCallback, useState, useSyncExternalStore } from "react";
+import { AI_IMPACTS_SURVEY_URL, marchSignupCopy } from "@/lib/content/march-signup";
+import { cardMotionProps, type CardMotion } from "./card-motion";
 import { m } from "./classes";
 
 const copy = marchSignupCopy.share;
-const STORAGE_KEY = "march-share";
 const enc = encodeURIComponent;
 
 type App = {
@@ -24,8 +14,6 @@ type App = {
   brand: keyof typeof BRANDS;
   color: string;
   href: string;
-  /** mailto: hands off without ever leaving this page, so there's no coming back to wait for: it nudges at once. */
-  immediate?: boolean;
 };
 
 const APPS: App[] = [
@@ -86,7 +74,7 @@ const APPS: App[] = [
     label: "Reddit",
     brand: "reddit",
     color: "#FF4500",
-    href: `https://www.reddit.com/submit?url=${enc(copy.url)}&title=${enc(copy.title)}`,
+    href: `https://www.reddit.com/submit?url=${enc(copy.url)}&title=${enc(copy.emailSubject)}`,
   },
   {
     id: "email",
@@ -94,83 +82,8 @@ const APPS: App[] = [
     brand: "email",
     color: "#5C544A",
     href: `mailto:?subject=${enc(copy.emailSubject)}&body=${enc(copy.message)}`,
-    immediate: true,
   },
 ];
-
-/* How many times someone has shared, and whether they've called it a day,
-   kept in localStorage so coming back later doesn't start the loop again.
-   Read through useSyncExternalStore, the hydration-safe way to render
-   browser-only state. */
-type Progress = { count: number; done: boolean };
-
-const EMPTY: Progress = { count: 0, done: false };
-
-// useSyncExternalStore compares snapshots by identity, so the parsed value is
-// kept, and parsed again only when the stored string changes.
-let cache: Progress = EMPTY;
-let cacheRaw: string | null = null;
-// Once storage throws (private browsing, storage turned off), the cache is all
-// there is, and the page still works.
-let memoryOnly = false;
-const listeners = new Set<() => void>();
-
-/** What's stored, or nothing shared yet if it isn't a progress. */
-export function parseShareProgress(raw: string | null): Progress {
-  if (!raw) return EMPTY;
-  try {
-    const saved = JSON.parse(raw) as { count?: unknown; done?: unknown };
-    return {
-      count: typeof saved.count === "number" && saved.count > 0 ? Math.floor(saved.count) : 0,
-      done: saved.done === true,
-    };
-  } catch {
-    return EMPTY;
-  }
-}
-
-function subscribe(listener: () => void) {
-  listeners.add(listener);
-  return () => {
-    listeners.delete(listener);
-  };
-}
-
-function getProgress(): Progress {
-  if (memoryOnly) return cache;
-  let raw: string | null;
-  try {
-    raw = localStorage.getItem(STORAGE_KEY);
-  } catch {
-    memoryOnly = true;
-    return cache;
-  }
-  if (raw !== cacheRaw) {
-    cacheRaw = raw;
-    cache = parseShareProgress(raw);
-  }
-  return cache;
-}
-
-const getServerProgress = () => EMPTY;
-
-function saveProgress(next: Progress) {
-  cache = next;
-  try {
-    cacheRaw = JSON.stringify(next);
-    localStorage.setItem(STORAGE_KEY, cacheRaw);
-  } catch {
-    memoryOnly = true;
-  }
-  listeners.forEach((listener) => listener());
-}
-
-/** Forgets the progress kept in memory, as a new page load would. For tests. */
-export function resetShareProgress() {
-  cache = EMPTY;
-  cacheRaw = null;
-  memoryOnly = false;
-}
 
 /* The share sheet is offered on touch devices only. On Windows and macOS it
    lists the system's apps (Mail, Messages, Reminders) rather than the places
@@ -198,33 +111,22 @@ export function appRowFade(row: { scrollLeft: number; clientWidth: number; scrol
 }
 
 /**
- * The share step's loop: share the message, come back, get asked where else,
- * until "I can't think of anywhere else" swaps the card for a thank-you.
+ * The card after registering: why sharing matters, the places to post the
+ * message, and the share or copy button, until "I can't think of anywhere
+ * else" moves on (`onFinish`).
  */
-export default function ShareActions() {
-  const { done } = useSyncExternalStore(subscribe, getProgress, getServerProgress);
+export default function ShareCard({
+  onFinish,
+  motion,
+  onLeft,
+}: {
+  onFinish: () => void;
+  motion: CardMotion;
+  onLeft: () => void;
+}) {
   const canNativeShare = useSyncExternalStore(subscribeToPointer, hasNativeShare, noNativeShare);
-  const [prompt, setPrompt] = useState(false);
   const [copied, setCopied] = useState(false);
   const [fade, setFade] = useState("none");
-  const awaitingReturn = useRef(false);
-  // "leaving" while the share card animates out, "entering" once the
-  // thank-you card has replaced it. Someone who comes back already done sees
-  // the thank-you card, without the animation.
-  const [phase, setPhase] = useState<"idle" | "leaving" | "entering">("idle");
-  const doneCardRef = useRef<HTMLDivElement>(null);
-  const doneHeadingRef = useRef<HTMLHeadingElement>(null);
-
-  // The button they pressed has gone, so focus (and the screen reader) goes
-  // to the card that replaced it. focus() alone scrolls badly, to the heading
-  // on a phone and not at all on desktop, so the card is scrolled in by the
-  // least amount first, then focused without scrolling.
-  useEffect(() => {
-    if (phase !== "entering" || !done) return;
-    const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
-    doneCardRef.current!.scrollIntoView({ block: "nearest", behavior: reduce ? "instant" : "smooth" });
-    doneHeadingRef.current!.focus({ preventScroll: true });
-  }, [phase, done]);
 
   // Measured in a ref callback, as it needs the real row; React runs the
   // returned cleanup when it goes.
@@ -241,32 +143,6 @@ export default function ShareActions() {
     };
   }, []);
 
-  // Coming back from sharing is the moment to ask for the next one. There's
-  // only the one nudge, so once it's up there's nothing left to watch for.
-  useEffect(() => {
-    if (prompt) return;
-    function handleReturn() {
-      if (document.visibilityState !== "visible" || !awaitingReturn.current) return;
-      awaitingReturn.current = false;
-      setPrompt(true);
-    }
-    document.addEventListener("visibilitychange", handleReturn);
-    window.addEventListener("focus", handleReturn);
-    return () => {
-      document.removeEventListener("visibilitychange", handleReturn);
-      window.removeEventListener("focus", handleReturn);
-    };
-  }, [prompt]);
-
-  // A click isn't proof of a share, but it's as close as a page can get:
-  // every place to share is another site.
-  const record = useCallback((immediate?: boolean) => {
-    const current = getProgress();
-    saveProgress({ ...current, count: current.count + 1 });
-    if (immediate) setPrompt(true);
-    else awaitingReturn.current = true;
-  }, []);
-
   async function handleCopy() {
     try {
       await navigator.clipboard.writeText(copy.message);
@@ -276,63 +152,14 @@ export default function ShareActions() {
     }
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
-    record(true);
   }
 
   async function handleNativeShare() {
     try {
-      await navigator.share({ title: copy.title, text: copy.message });
+      await navigator.share({ title: copy.emailSubject, text: copy.message });
     } catch {
-      // Closing the sheet throws: not a share.
-      return;
+      // Closing the sheet throws, and there's nothing to say about it.
     }
-    record(true);
-  }
-
-  function completeFinish() {
-    saveProgress({ ...getProgress(), done: true });
-    setPhase("entering");
-  }
-
-  function finish() {
-    if (matchMedia("(prefers-reduced-motion: reduce)").matches) completeFinish();
-    else setPhase("leaving");
-  }
-
-  if (done) {
-    return (
-      // The wrapper is what's scrolled to: the card is mid-animation then,
-      // offset by its shadow, which would skew the measurement.
-      <div ref={doneCardRef} className={m("share-panel-done-wrap")}>
-        <div
-          className={m(
-            phase === "entering" ? "share-panel share-panel-done is-entering" : "share-panel share-panel-done",
-          )}
-        >
-          <h2 className={m("h-md")} ref={doneHeadingRef} tabIndex={-1}>
-            Thank you for registering
-          </h2>
-          <p>
-            You should receive an email shortly with a calendar invite. We&rsquo;ll send you an update with more info
-            closer to the date.
-          </p>
-          <p>
-            In the meantime, read more about who we are at{" "}
-            <Link className={m("inline-link")} href="/">
-              PauseAI UK
-            </Link>
-            , or about the risks of AI and our proposal at{" "}
-            <a className={m("inline-link")} href="https://pauseai.info" target="_blank" rel="noreferrer">
-              PauseAI.info
-            </a>
-            .
-          </p>
-          <p className={m("share-panel-done-date")}>
-            See you on {march.dateLong} in {march.city}.
-          </p>
-        </div>
-      </div>
-    );
   }
 
   const copyLabel = (
@@ -343,19 +170,41 @@ export default function ShareActions() {
   );
 
   return (
-    <div
-      className={m(phase === "leaving" ? "share-panel is-leaving" : "share-panel")}
-      inert={phase === "leaving"}
-      onAnimationEnd={(event) => {
-        if (phase === "leaving" && event.target === event.currentTarget) completeFinish();
-      }}
-    >
-      {prompt && (
-        <div className={m("share-nudge")} role="status">
-          <p className={m("share-nudge-title")}>{copy.nudgeTitle}</p>
-          <p className={m("share-nudge-body")}>{copy.nudge}</p>
-        </div>
-      )}
+    <div className={m("share-panel")} {...cardMotionProps(motion, onLeft)}>
+      <h2 className={m("h-md")} tabIndex={-1} data-focus-first>
+        {copy.title}
+      </h2>
+      <p className={m("share-text")}>
+        {copy.impact.before}
+        <a className={m("inline-link")} href={AI_IMPACTS_SURVEY_URL} target="_blank" rel="noreferrer">
+          <strong>{copy.impact.link}</strong>
+        </a>
+        {copy.impact.after}
+      </p>
+      <p className={m("share-text")}>
+        {copy.plea.before}
+        <strong>{copy.plea.bold}</strong>
+        {copy.plea.after}
+      </p>
+
+      <ul className={m("share-apps")} ref={appRowRef} data-fade={fade}>
+        {APPS.map((app) => (
+          <li key={app.id}>
+            <a
+              className={m("share-app")}
+              href={app.href}
+              target="_blank"
+              rel="noreferrer"
+              style={{ "--brand": app.color } as CSSProperties}
+            >
+              <span className={m("share-app-icon")}>
+                <BrandIcon name={app.brand} />
+              </span>
+              <span className={m("share-app-label")}>{app.label}</span>
+            </a>
+          </li>
+        ))}
+      </ul>
 
       <div className={m("share-main")}>
         {canNativeShare ? (
@@ -376,30 +225,8 @@ export default function ShareActions() {
         )}
       </div>
 
-      <p className={m("share-apps-label")}>{copy.appsLabel}</p>
-
-      <ul className={m("share-apps")} ref={appRowRef} data-fade={fade}>
-        {APPS.map((app) => (
-          <li key={app.id}>
-            <a
-              className={m("share-app")}
-              href={app.href}
-              target="_blank"
-              rel="noreferrer"
-              style={{ "--brand": app.color } as CSSProperties}
-              onClick={() => record(app.immediate)}
-            >
-              <span className={m("share-app-icon")}>
-                <BrandIcon name={app.brand} />
-              </span>
-              <span className={m("share-app-label")}>{app.label}</span>
-            </a>
-          </li>
-        ))}
-      </ul>
-
       <div className={m("share-finish")}>
-        <button type="button" className={m("btn ghost")} onClick={finish}>
+        <button type="button" className={m("btn ghost")} onClick={onFinish}>
           {copy.finish}
         </button>
       </div>
