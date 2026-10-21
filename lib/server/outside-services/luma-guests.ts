@@ -51,3 +51,58 @@ export function getRaceCounts(
 ): Promise<[SourceCounts | null, SourceCounts | null]> {
   return Promise.all([getSourceCounts(eventApiId, tags, open, close), getSourceCounts(eventApiId, tags, close)]);
 }
+
+/** How long adding a guest may take before the sign-up gives up and says so. */
+const ADD_GUEST_TIMEOUT_MS = 5000;
+
+/**
+ * What adding a guest came to. "added" means Luma took the request: it adds
+ * guests in the background, so it doesn't prove the guest is there yet.
+ * "skipped" is Luma declining this guest (unsubscribed from the calendar,
+ * removed or blocked). "not-configured" names the settings that are missing.
+ */
+export type LumaAddGuestResult =
+  | { status: "added" }
+  | { status: "skipped" }
+  | { status: "not-configured"; missing: string[] }
+  | { status: "failed"; reason: string };
+
+/**
+ * Registers one guest for an event, through Luma's add-guests call
+ * (https://docs.luma.com/reference/post_v1-events-guests-add). Luma then
+ * emails them its confirmation. Never throws: every outcome, a missing key,
+ * an error, a timeout, comes back as a result, for the caller to tell the
+ * visitor.
+ */
+export async function addLumaGuest(
+  eventId: string,
+  guest: { name: string; email: string },
+  timeoutMs = ADD_GUEST_TIMEOUT_MS,
+): Promise<LumaAddGuestResult> {
+  const key = process.env.LUMA_API_KEY?.trim();
+  const event = eventId.trim();
+  const missing = [...(key ? [] : ["LUMA_API_KEY"]), ...(event ? [] : ["LUMA_MARCH_EVENT_ID"])];
+  if (missing.length > 0) return { status: "not-configured", missing };
+
+  try {
+    const res = await outsideFetch("https://public-api.luma.com/v1/events/guests/add", {
+      method: "POST",
+      headers: { "content-type": "application/json", accept: "application/json", "x-luma-api-key": key! },
+      body: JSON.stringify({ event_id: event, guests: [{ email: guest.email, name: guest.name }] }),
+      signal: AbortSignal.timeout(timeoutMs),
+    });
+    if (!res.ok) {
+      // The start of the body says why: a bad key, an unknown event, a rate limit.
+      const body = (await res.text()).slice(0, 300);
+      return { status: "failed", reason: `Luma responded ${res.status}${body ? `: ${body}` : ""}` };
+    }
+    const data = (await res.json()) as { skipped?: { email?: unknown }[] };
+    const email = guest.email.toLowerCase();
+    const skipped = (data.skipped ?? []).some((s) => typeof s.email === "string" && s.email.toLowerCase() === email);
+    return skipped ? { status: "skipped" } : { status: "added" };
+  } catch (error) {
+    const err = error as Error;
+    if (err.name === "TimeoutError") return { status: "failed", reason: `Luma did not respond within ${timeoutMs}ms` };
+    return { status: "failed", reason: `Request to Luma failed: ${err.message}` };
+  }
+}

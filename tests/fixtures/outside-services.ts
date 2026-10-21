@@ -43,6 +43,14 @@ export function fixtureResponse(url: string, init?: RequestInit): Response | und
   if (hostname === "public-api.luma.com" && pathname === "/v1/event/get-guests") {
     return json(lumaGuests);
   }
+  if (hostname === "public-api.luma.com" && pathname === "/v1/events/guests/add") {
+    // The march sign-up. Luma takes every guest but two: one it skips, as if
+    // they'd unsubscribed from the calendar, and one it fails on.
+    const { guests } = JSON.parse(String(init!.body)) as { guests: { email: string }[] };
+    const [email] = guests.map((guest) => guest.email);
+    if (email.startsWith("luma-fails@")) return new Response('{"message":"Fixture failure"}', { status: 500 });
+    return json({ skipped: email.startsWith("luma-skips@") ? [{ email }] : [] });
+  }
   if (hostname.endsWith("airtable.com") && pathname.startsWith("/v0/")) {
     // The MPs (lib/server/outside-services/airtable.ts asks for the House of Commons), or the signatories.
     return json(searchParams.get("filterByFormula")?.includes("House of Commons") ? airtableMps : airtableSignatories);
