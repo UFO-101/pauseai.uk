@@ -12,15 +12,11 @@ import SignupHeader from "@/app/(march)/march/_components/SignupHeader";
 import SignupHero from "@/app/(march)/march/_components/SignupHero";
 import SignupHeroScroll from "@/app/(march)/march/_components/SignupHeroScroll";
 import SignupPhotos from "@/app/(march)/march/_components/SignupPhotos";
-import SignupRegister from "@/app/(march)/march/_components/SignupRegister";
 import SignupTurnout from "@/app/(march)/march/_components/SignupTurnout";
 import type { Group } from "../_components/types";
-import { SignupFormExample } from "./march-signup.client";
+import { SignupFormExample, SignupRegisterExample } from "./march-signup.client";
 
 const inFrame = (children: ReactNode) => <MarchSignupFrame>{children}</MarchSignupFrame>;
-
-/** A stand-in for the Server Action, which the gallery never calls. */
-const register = async () => ({ ok: true }) as const;
 
 export const marchSignup: Group = {
   id: "march-signup",
@@ -89,9 +85,7 @@ export const marchSignup: Group = {
     {
       name: "SignupRegister",
       file: "app/(march)/march/_components/SignupRegister.tsx",
-      variants: [
-        { label: "The register band, with the form", render: () => inFrame(<SignupRegister register={register} />) },
-      ],
+      variants: [{ label: "The register band, with the form", render: () => <SignupRegisterExample /> }],
     },
     {
       name: "SignupForm",
