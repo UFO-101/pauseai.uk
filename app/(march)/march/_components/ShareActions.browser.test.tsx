@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { renderToString } from "react-dom/server";
 import { render } from "vitest-browser-react";
 import { page } from "vitest/browser";
 import { marchSignupCopy } from "@/lib/content/march-signup";
@@ -177,6 +178,18 @@ describe("ShareActions", () => {
     await finishButton().click();
     card.querySelector("ul")!.dispatchEvent(new AnimationEvent("animationend", { bubbles: true }));
     await expect.element(thanks()).toBeVisible();
+  });
+
+  it("shows the thank-you to someone who finished on an earlier visit", async () => {
+    localStorage.setItem(KEY, JSON.stringify({ count: 3, done: true }));
+    await renderCard();
+    await expect.element(thanks()).toBeVisible();
+  });
+
+  it("renders the share card on the server, with no share sheet and nothing shared", () => {
+    const html = renderToString(<ShareActions />);
+    expect(html).toContain(copy.copy);
+    expect(html).not.toContain(copy.share + "<");
   });
 
   it("works without storage", async () => {

@@ -2,11 +2,14 @@
 import { describe, expect, it } from "vitest";
 import { render } from "vitest-browser-react";
 import { page } from "vitest/browser";
-import { SignupFormExample } from "./march-signup.client";
+import { SignupFormExample, SignupRegisterExample } from "./march-signup.client";
 
 describe("the march sign-up group's examples", () => {
-  it("logs what the form sends", async () => {
-    await render(<SignupFormExample />);
+  it.each([
+    ["the form", SignupFormExample],
+    ["the register band", SignupRegisterExample],
+  ])("logs what %s sends", async (_, Example) => {
+    await render(<Example />);
     await page.getByLabelText("First name").fill("Testy");
     await page.getByLabelText("Last name").fill("McTestface");
     await page.getByLabelText("Email address").fill("testy@example.org");
