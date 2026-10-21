@@ -498,9 +498,19 @@ describe("PoliticianDetails", () => {
   });
 
   it("lists the letters to them without the column saying so, and what the audit log says about them, newest first", async () => {
+    // A peer: no constituency, so no line for it; a status with a note, and one for a campaign and status nobody knows.
+    const peer = {
+      ...MP,
+      constituency: null,
+      statuses: {
+        ...MP.statuses,
+        [MP.statuses[pm.slug] ? pm.slug : "never"]: { ...MP.statuses[pm.slug], note: "Told us at the march" },
+        gone: { status: "odd", date: null, note: "", updatedAt: "2026-10-02T10:00:00Z", updatedBy: "jo@pauseai.uk" },
+      },
+    } as unknown as typeof MP;
     await render(
       <PoliticianDetails
-        politician={MP}
+        politician={peer}
         action={vi.fn()}
         unblock={vi.fn()}
         letters={[{ ...exampleLetter, mpName: MP.name, politicianId: MP.id }]}
@@ -513,10 +523,33 @@ describe("PoliticianDetails", () => {
             action: "set status",
             details: { politicianId: 7, campaign: "gone", status: null, note: "" },
           },
-          { id: 7, at: "2026-08-01T10:00:00Z", actor: "x", action: "strange", details: {} },
+          {
+            id: 7,
+            at: "2026-08-15T10:00:00Z",
+            actor: "jo@pauseai.uk",
+            action: "set status",
+            details: { politicianId: 7, campaign: pm.slug, status: "odd", note: "" },
+          },
+          { id: 6, at: "2026-08-10T10:00:00Z", actor: "postmark", action: "block address", details: { kind: "weird" } },
+          { id: 5, at: "2026-08-01T10:00:00Z", actor: "x", action: "strange", details: {} },
         ]}
       />,
     );
+    const facts = page.getByRole("definition").all();
+    expect(facts.map((d) => d.element().textContent)).toEqual([
+      staffCopy.houses[MP.house],
+      MP.party,
+      MP.email,
+      staffCopy.politician.sources.airtable,
+      `${staffCopy.statuses.signed}, 1 Oct 2026 · Told us at the march${staffCopy.politician.setBy("jo@pauseai.uk", "2 Oct 2026")}`,
+      `odd${staffCopy.politician.setBy("jo@pauseai.uk", "2 Oct 2026")}`,
+    ]);
+    expect(
+      page
+        .getByRole("term")
+        .all()
+        .map((d) => d.element().textContent),
+    ).toContain("gone");
     await expect
       .element(page.getByRole("link", { name: exampleLetter.senderName }))
       .toHaveAttribute("href", "/staff/supporters/7");
@@ -531,6 +564,8 @@ describe("PoliticianDetails", () => {
       `2026-10-02 10:00${copy["set status"]} ${pm.title}: ${staffCopy.statuses.signed}, 2026-10-01 · Told us at the march · jo@pauseai.uk`,
       `2026-09-30 10:00${copy["edit politician"]} Polly Placeholder · polly.placeholder.mp@parliament.uk · sam@pauseai.uk`,
       `2026-09-01 10:00${copy["set status"]} gone: ${staffCopy.statuses.none} · jo@pauseai.uk`,
+      `2026-08-15 10:00${copy["set status"]} ${pm.title}: odd · jo@pauseai.uk`,
+      `2026-08-10 10:00${copy["block address"]} weird · postmark`,
       "2026-08-01 10:00strange  · x",
     ]);
   });

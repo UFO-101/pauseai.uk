@@ -16,7 +16,7 @@ export default async function StaffHomePage() {
         account={staff.account}
         permissions={staff.permissions}
         admins={await admins()}
-        dashboard={staff.account ? await dashboard() : undefined}
+        dashboard={await dashboard()}
       />
     </StaffPage>
   );

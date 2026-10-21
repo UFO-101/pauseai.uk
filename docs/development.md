@@ -113,14 +113,19 @@ This:
   them. Bouncy McTestface MP (ZZ99ZH) always has `no-such-mailbox@pauseai.uk`,
   which doesn't exist, so letters to them bounce. They're listed in
   `lib/test-mps.json`.
-- with `DATA_FIXTURES=1`, adds fake supporters (`tests/fixtures/staff-data.sql`),
-  so `/staff/supporters` has people on it: the Luma fixtures' guests and
-  contacts, at four of its events, under the same IDs, so Import Luma writes
-  the same rows rather than doubling them; two letters to the test MPs, one
-  of them from a Luma guest and answered; and one person who unsubscribed
-  from the calendar's emails. Without `TEST_MP_EMAIL`, the test MPs still go
-  in, with `test-mp@example.org`, since the letters go to the fixture outbox
-  anyway. The storyboard's flows start from an empty database, without this.
+- with `DATA_FIXTURES=1`, adds fake data (`tests/fixtures/staff-data.sql`),
+  so every staff page has something on it: the Luma fixtures' guests and
+  contacts at four of its events, and Airtable's two MPs, under the same
+  IDs, so an import writes the same rows rather than doubling them; letters
+  to the test MPs in every state, one answered, one bounced and blocking
+  Bouncy's address; an address that complained; a status on Polly
+  Placeholder; one person unsubscribed from the calendar's emails and one
+  who subscribed again; import runs in every state; staff accounts for
+  jo@pauseai.uk (supporters) and sam@pauseai.uk (none) beside the
+  migration's admin; and an audit log of all that. Without `TEST_MP_EMAIL`,
+  the test MPs still go in, with `test-mp@example.org`, since the letters go
+  to the fixture outbox anyway. The storyboard's flows start from an empty
+  database, without this.
 
 Run it again whenever you want a clean database. It wipes everything. It
 refuses a URL that isn't on your own machine, so it can't touch the live

@@ -15,6 +15,13 @@ describe("staff interface copy", () => {
     }
   });
 
+  it("reads each dashboard tile as a sentence, for one and for more", () => {
+    for (const label of Object.values(staffCopy.home.dashboard.metrics)) {
+      expect(label(1)).not.toBe(label(2));
+      expect(label(2)).toBe(label(12));
+    }
+  });
+
   it("names every house and status", () => {
     expect(Object.keys(staffCopy.houses)).toEqual([
       "commons",

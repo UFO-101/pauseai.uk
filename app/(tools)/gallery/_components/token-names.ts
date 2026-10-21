@@ -32,6 +32,8 @@ export const COLOUR_TOKENS = [
   "--neutral-400",
   "--danger",
   "--success-bg",
+  "--status-red",
+  "--status-red-bg",
   "--status-amber",
   "--status-amber-bg",
   "--status-green",
