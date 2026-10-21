@@ -142,7 +142,7 @@ the code should go instead. The rules below say which ones are enforced.
   and work with or without a transaction around the file. With each one,
   run `npm run db:schema` and commit `netlify/database/schema.sql`, the
   whole schema as the migrations leave it, so the PR shows what changed. A
-  test fails while it's out of date.
+  test fails while it's out of date. Tables follow the SQL rules below.
 - **Links to the site** in emails and redirects are built with
   `siteUrl(path, request)` (`lib/site-url.ts`), on the deploy's own address
   (`SITE_ORIGIN`, set in `next.config.ts` from Netlify's settings):
@@ -192,6 +192,25 @@ the code should go instead. The rules below say which ones are enforced.
 - **Tests** sit next to the code they test (`*.test.ts`,
   `*.browser.test.tsx`); see `docs/testing.md`. Tests of the whole repo,
   rather than of one file, go in `tests/checks/`.
+
+## SQL
+
+Every rule that can be stated in the schema is stated there, so nothing has
+to clean up after bad rows.
+
+- **Constrain everything.** Every reference to another row is a foreign key
+  with the `ON DELETE` rule that fits. A fixed set of values is `text` with
+  a `CHECK (… IN (…))` list, not an enum type. A rule between columns is a
+  `CHECK` too: `(status = 'failed') = (error IS NOT NULL)`. A row that
+  points at one of several tables has a nullable foreign key column for
+  each and `CHECK (num_nonnulls(…) = 1)`, not a `(source, source_id)` pair
+  of text. A `CHECK` depends only on the row's own columns, never `now()`
+  or another table.
+- **Addresses are lowercased in the row** (`CHECK (address =
+lower(address))`) when our own code writes them, so equality is plain `=`.
+- **History tables are insert-only** (`audit_log`, `email_problems`,
+  `letter_events`). The current state is derived from them, or kept in a
+  second table written in the same transaction (`email_blocks`).
 
 ## Styling
 
