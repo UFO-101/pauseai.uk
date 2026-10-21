@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { requireStaff } from "@/lib/server/staff-auth";
 import { listSupporters } from "@/lib/server/supporters";
@@ -9,6 +10,8 @@ import StaffNav from "../_components/StaffNav";
 import StaffPage from "../_components/ui/StaffPage";
 
 /** Everyone we know of, filtered, newest activity first. */
+export const metadata: Metadata = { title: staffCopy.supporters.title };
+
 export default async function SupportersPage({ searchParams }: { searchParams: Promise<Partial<SupportersSearch>> }) {
   const { email, permissions } = await requireStaff("supporters");
   const { filter, ...search } = supportersSearch(await searchParams);

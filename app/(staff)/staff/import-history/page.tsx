@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { listRuns } from "@/lib/server/import-runs";
 import { requireStaff } from "@/lib/server/staff-auth";
@@ -10,6 +11,8 @@ import StaffPage from "../_components/ui/StaffPage";
 type Search = { job?: string };
 
 /** Every run of every import and check, newest first, or one job's. */
+export const metadata: Metadata = { title: staffCopy.history.title };
+
 export default async function ImportHistoryPage({ searchParams }: { searchParams: Promise<Search> }) {
   const { email, permissions } = await requireStaff();
   const { job, filter } = historySearch(await searchParams);

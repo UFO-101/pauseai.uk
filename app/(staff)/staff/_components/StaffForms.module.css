@@ -14,3 +14,8 @@
 .login {
   margin-top: var(--space-4);
 }
+
+/* A field that needn't be wider than its longest choice. */
+.narrow {
+  max-width: 28rem;
+}

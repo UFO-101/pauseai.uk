@@ -183,6 +183,7 @@ function LumaRun({ run, label }: { run: LumaImport } & Common) {
     <RunBox
       run={run}
       label={label}
+      incomplete={stoppedBy !== undefined}
       summary={
         <>
           {staffCopy.luma.result(run.result)}

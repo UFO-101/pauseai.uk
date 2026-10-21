@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/Button";
 import { jobTitles, staffCopy } from "@/lib/content/staff-interface";
 import { IMPORT_JOBS } from "@/lib/import-runs";
 import { Select } from "@/components/ui/Controls";
+import { Field } from "@/components/ui/Field";
 import { FilterForm } from "@/components/ui/Form";
 import styles from "./StaffForms.module.css";
 
@@ -9,14 +10,16 @@ import styles from "./StaffForms.module.css";
 export default function RunFilters({ job }: { job: string }) {
   return (
     <FilterForm method="get" action="/staff/import-history" className={styles.filters}>
-      <Select name="job" defaultValue={job} aria-label={staffCopy.history.job}>
-        <option value="">{staffCopy.history.allJobs}</option>
-        {IMPORT_JOBS.map((value) => (
-          <option key={value} value={value}>
-            {jobTitles[value]}
-          </option>
-        ))}
-      </Select>
+      <Field label={staffCopy.history.job} className={styles.narrow}>
+        <Select name="job" defaultValue={job}>
+          <option value="">{staffCopy.history.allJobs}</option>
+          {IMPORT_JOBS.map((value) => (
+            <option key={value} value={value}>
+              {jobTitles[value]}
+            </option>
+          ))}
+        </Select>
+      </Field>
       <Button variant="primary" size="small" type="submit">
         {staffCopy.history.filter}
       </Button>

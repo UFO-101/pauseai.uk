@@ -3,20 +3,12 @@ import Link from "next/link";
 import type { LocalGroup } from "@/lib/content/local-groups";
 import styles from "./Brand.module.css";
 
-type Props = {
-  /** A link to the home page, as in the header. */
-  home?: boolean;
-  /** A link to somewhere else, such as the staff home. */
-  href?: string;
-  localGroup?: LocalGroup;
-};
-
 /**
- * The PauseAI UK logo and "UK", as a link home in the header, a link to
- * `href`, or plain in the footer. On a local group's page the header shows
- * the group's own logo, or the pause symbol with its name.
+ * The PauseAI UK logo and "UK", as a link home in the header or plain in
+ * the footer. On a local group's page the header shows the group's own
+ * logo, or the pause symbol with its name.
  */
-export default function Brand({ home, href, localGroup }: Props) {
+export default function Brand({ home, localGroup }: { home?: boolean; localGroup?: LocalGroup }) {
   const mark = localGroup ? (
     localGroup.logo ? (
       <Image
@@ -47,9 +39,8 @@ export default function Brand({ home, href, localGroup }: Props) {
       <span className={styles.uk}>UK</span>
     </>
   );
-  const to = home ? "/" : href;
-  return to ? (
-    <Link className={styles.link} href={to}>
+  return home ? (
+    <Link className={styles.link} href="/">
       {mark}
     </Link>
   ) : (

@@ -3,7 +3,7 @@
 import type { ImportJob } from "@/lib/import-runs";
 
 export const staffCopy = {
-  metaTitle: "Staff",
+  metaTitle: "Pause AI Staff",
   login: {
     title: "Staff log in",
     intro: "Enter your staff email to sign in on this browser.",
@@ -24,7 +24,7 @@ export const staffCopy = {
   },
   nav: {
     // At the left of the bar, and the way to the home page.
-    title: "PauseAI UK Staff",
+    title: "PauseAI Staff",
     home: "Home",
     accounts: "Staff accounts",
     // The groups the pages are in, on the home page.
@@ -159,7 +159,7 @@ export const staffCopy = {
   // pages, and what each may do.
   accounts: {
     title: "Staff accounts",
-    intro: "⁂ Anyone with a pauseai.uk address can log in. An account opens the staff pages; a permission opens more.",
+    intro: "Only people with a @pauseai.uk address who are in this list can log in. ",
     names: {
       admin: "Admin",
       supporters: "Supporters",
@@ -175,7 +175,7 @@ export const staffCopy = {
     addTitle: "Add someone",
     emailLabel: "Email",
     // Under the form for someone new.
-    noPermissionHint: "⁂ With no box ticked they see the ordinary pages.",
+    noPermissionHint: "With no permissions ticked, can only see basic staff pages.",
     // When a change would leave no admin.
     lastAdmin: "The last administrator can't be removed or lose permissions to administrate.",
   },
@@ -361,6 +361,8 @@ export const staffCopy = {
     } as Record<string, string>,
     by: (who: string) => `by ${who}`,
     decidedBy: (who: string) => `decided by ${who}`,
+    // The tag on a run that stopped before it finished.
+    incomplete: "⁂ Incomplete",
   },
   check: {
     title: "Members of Parliament against Parliament's list",

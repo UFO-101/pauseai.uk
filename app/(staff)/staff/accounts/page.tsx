@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { requireStaff } from "@/lib/server/staff-auth";
 import { listStaffAccounts } from "@/lib/server/staff-accounts";
@@ -9,6 +10,8 @@ import StaffNav from "../_components/StaffNav";
 import StaffPage from "../_components/ui/StaffPage";
 
 /** Who may use the staff pages, and what each may do, for admins to change. */
+export const metadata: Metadata = { title: staffCopy.accounts.title };
+
 export default async function AccountsPage({ searchParams }: { searchParams: Promise<{ notice?: string }> }) {
   const { email, permissions } = await requireStaff("admin");
   const { notice } = accountsSearch(await searchParams);

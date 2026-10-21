@@ -68,17 +68,17 @@ function action() {
 }
 
 describe("StaffNav", () => {
-  it("is just the logo on the login page", async () => {
+  it("is just the title on the login page", async () => {
     await render(<StaffNav />);
-    await expect.element(page.getByRole("img", { name: "PauseAI UK" })).toBeVisible();
+    await expect.element(page.getByText(staffCopy.nav.title)).toBeVisible();
     await expect.element(page.getByRole("navigation")).not.toBeInTheDocument();
     await expect.element(page.getByRole("button")).not.toBeInTheDocument();
   });
 
   it("groups the pages by permission, marks the current one but keeps it a link, says who's logged in, and logs out with a POST", async () => {
     await render(<StaffNav email="jo@pauseai.uk" account permissions={["admin"]} current="politicians" />);
-    // The logo is the way home, except at home.
-    await expect.element(page.getByRole("link", { name: /PauseAI UK/ })).toHaveAttribute("href", "/staff");
+    // The title is the way home, except at home.
+    await expect.element(page.getByRole("link", { name: staffCopy.nav.title })).toHaveAttribute("href", "/staff");
     // The sidebar is for wider screens than the test's, so it's read from the DOM.
     const nav = document.querySelector("nav")!;
     const current = nav.querySelector('a[aria-current="page"]')!;
@@ -107,9 +107,9 @@ describe("StaffNav", () => {
     expect(document.querySelectorAll('form[action="/staff/api/logout"]')).toHaveLength(2);
   });
 
-  it("shows no admin group to someone without the permission, and at home the logo isn't a link", async () => {
+  it("shows no admin group to someone without the permission, and at home the title isn't a link", async () => {
     await render(<StaffNav email="jo@pauseai.uk" account permissions={[]} current="home" />);
-    await expect.element(page.getByRole("link", { name: /PauseAI UK/ })).not.toBeInTheDocument();
+    await expect.element(page.getByRole("link", { name: staffCopy.nav.title })).not.toBeInTheDocument();
     const nav = document.querySelector("nav")!;
     expect(nav.querySelector('a[href="/staff/accounts"]')).toBeNull();
     expect(nav.querySelector('a[href="/staff/audit-log"]')).toBeNull();
@@ -605,12 +605,24 @@ describe("ResultBox", () => {
     await expect.element(page.getByRole("button", { name: "Act" })).toBeVisible();
 
     await rerender(
-      <ResultBox summary="Long" lines={OPEN_UP_TO + 1} error>
+      <ResultBox summary="Long" lines={OPEN_UP_TO + 1} tone="failed">
         <p>Detail</p>
       </ResultBox>,
     );
     expect((page.getByRole("group").element() as HTMLDetailsElement).open).toBe(false);
     await expect.element(page.getByText("Detail")).not.toBeVisible();
+  });
+
+  it("is coloured by its tone: red when failed, amber when incomplete, plain otherwise", async () => {
+    const { rerender } = await render(<ResultBox summary="Plain" />);
+    const box = () => page.getByRole("status").element().closest("section")!;
+    expect(box().className).not.toMatch(/failed|incomplete/);
+    await rerender(<ResultBox summary="Failed" tone="failed" />);
+    expect(box().className).toMatch(/failed/);
+    expect(getComputedStyle(box()).borderLeftWidth).toBe("6px");
+    await rerender(<ResultBox summary="Stopped" tone="incomplete" />);
+    expect(box().className).toMatch(/incomplete/);
+    expect(getComputedStyle(box()).borderLeftWidth).toBe("6px");
   });
 });
 
@@ -823,17 +835,25 @@ describe("RunList", () => {
         `${staffCopy.runs.status.ok} ${AT} · ${staffCopy.import.nightly} · ${staffCopy.luma.result(luma)}`,
       );
     expect(first.element().textContent).not.toContain(staffCopy.luma.stoppedBy.time);
+    expect(first.element().textContent).not.toContain(staffCopy.runs.incomplete);
+    expect(first.element().closest("section")!.className).not.toMatch(/failed|incomplete/);
     await expect
       .element(second)
       .toHaveTextContent(`${staffCopy.runs.status.failed} ${AT} · ${staffCopy.import.nightly} · Luma answered 500`);
+    expect(second.element().closest("section")!.className).toMatch(/failed/);
   });
 
-  it("says why a Luma import stopped early", async () => {
+  it("says why a Luma import stopped early, tagged incomplete in an amber box", async () => {
     await render(
       <RunList runs={[ran("import-luma", { ...exampleLumaResult, stoppedBy: "rate-limit" })]} none="None" />,
     );
     const [only] = page.getByRole("status").all();
-    expect(only.element().textContent).toContain(staffCopy.luma.stoppedBy["rate-limit"]);
+    await expect
+      .element(only)
+      .toHaveTextContent(
+        `${staffCopy.runs.status.ok} ${staffCopy.runs.incomplete} ${AT} · ${staffCopy.import.nightly} · ${staffCopy.luma.result(exampleLumaResult)} ${staffCopy.luma.stoppedBy["rate-limit"]}`,
+      );
+    expect(only.element().closest("section")!.className).toMatch(/incomplete/);
   });
 
   it("on the history page, names each run's job and heads each day's runs with its date; says when there are none", async () => {
@@ -1092,6 +1112,14 @@ describe("SupporterDetails", () => {
               href: null,
             },
             {
+              source: "luma",
+              at: "2026-01-01T00:00:00Z",
+              kind: "luma-registered",
+              title: "Bare",
+              detail: null,
+              href: null,
+            },
+            {
               source: "x",
               at: "2026-01-02T00:00:00Z",
               kind: "opted-out",
@@ -1140,6 +1168,33 @@ describe("SupporterDetails", () => {
     await render(<SupporterDetails supporter={{ ...exampleSupporterDetails, activity: [] }} />);
     await expect.element(page.getByText(staffCopy.supporters.detail.noActivity)).toBeVisible();
   });
+
+  it("shows a value given by two sources once, from the earliest, and one with no date by its source alone", async () => {
+    const copy = staffCopy.supporters;
+    await render(
+      <SupporterDetails
+        supporter={{
+          ...exampleSupporterDetails,
+          identities: [
+            { source: "letter", email: "jane@example.com", name: "Jane", seenAt: "2026-10-05T09:00:00Z" },
+            { source: "luma", email: "jane@example.com", name: "Jane", seenAt: "2026-03-01T10:00:00Z" },
+            { source: "luma", email: "jane@example.com", name: "Jane", seenAt: null },
+            { source: "letter", email: "old@example.com", name: "Jane", seenAt: null },
+          ],
+          contacts: [],
+          activity: [],
+        }}
+      />,
+    );
+    await expect
+      .element(
+        page.getByText(`(${copy.detail.from(`${copy.sources.letter}, ${copy.sources.luma}`, "1 Mar 2026")})`, {
+          exact: false,
+        }),
+      )
+      .toBeVisible();
+    await expect.element(page.getByText(`old@example.com (${copy.sources.letter})`, { exact: false })).toBeVisible();
+  });
 });
 
 describe("LettersTable, a sender not yet a supporter", () => {
@@ -1147,6 +1202,17 @@ describe("LettersTable, a sender not yet a supporter", () => {
     await render(<LettersTable letters={[{ ...exampleLetter, supporterId: null }]} />);
     await expect.element(page.getByText(exampleLetter.senderName, { exact: false })).toBeVisible();
     expect(page.getByRole("link", { name: exampleLetter.senderName }).all()).toHaveLength(0);
+  });
+});
+
+describe("EraseForm, for a supporter with no name", () => {
+  it("heads the page with the stand-in", async () => {
+    await render(<EraseForm supporter={{ id: 8, name: null }} action={vi.fn()} />);
+    await expect
+      .element(
+        page.getByRole("heading", { level: 1, name: `${staffCopy.erase.title}: ${staffCopy.supporters.noName}` }),
+      )
+      .toBeVisible();
   });
 });
 

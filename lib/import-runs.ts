@@ -4,7 +4,7 @@ import type { ControlAiMatchProblem } from "./controlai-letter";
 import type { MpProblem } from "./mp-check";
 import type { MpChanges, SyncedMp } from "./mps";
 
-export const IMPORT_JOBS = ["sync-mps", "check-mps", "import-controlai", "import-signatories", "import-luma"] as const;
+export const IMPORT_JOBS = ["import-luma", "sync-mps", "check-mps", "import-controlai", "import-signatories"] as const;
 export type ImportJob = (typeof IMPORT_JOBS)[number];
 
 export function isImportJob(value: string): value is ImportJob {

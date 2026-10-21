@@ -16,10 +16,22 @@
   align-items: center;
 }
 
-/* The logo at the top, the sidebar's width; on the bar, at the left. */
+/* The pause symbol and the name at the top: a touch bigger than the links, in the text's colour. */
 .title {
-  --container-width: 11rem;
-  max-width: 11rem;
+  display: inline-flex;
+  gap: var(--space-2);
+  align-items: center;
+  font-weight: 700;
+  font-size: 1.05rem;
+  white-space: nowrap;
+  color: inherit;
+  text-decoration: none;
+}
+
+/* The symbol, the height of a line of the name. */
+.mark {
+  width: 1.75rem;
+  height: 1.75rem;
 }
 
 /* The groups: a small heading each, and its pages under it. */

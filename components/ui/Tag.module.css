@@ -30,3 +30,8 @@
   background: var(--status-blue-bg);
   color: var(--status-blue);
 }
+
+.red {
+  background: var(--status-red-bg);
+  color: var(--status-red);
+}

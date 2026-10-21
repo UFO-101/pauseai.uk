@@ -1,9 +1,12 @@
+import type { Metadata } from "next";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { recentChanges } from "@/lib/server/audit";
 import { requireStaff } from "@/lib/server/staff-auth";
 import ChangesTable from "../_components/ChangesTable";
 import StaffNav from "../_components/StaffNav";
 import StaffPage from "../_components/ui/StaffPage";
+
+export const metadata: Metadata = { title: staffCopy.changes.title };
 
 export default async function ChangesPage() {
   const { email, permissions } = await requireStaff("admin");

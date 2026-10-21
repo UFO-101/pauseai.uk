@@ -1,5 +1,6 @@
 // Supporters, as the staff pages show them: the shapes the server
 // (lib/server/supporters.ts) gives the components.
+import { staffCopy } from "./content/staff-interface";
 import type { OptOutList } from "./opt-outs";
 import type { SortColumns, SortDirection } from "./staff-sort";
 
@@ -110,3 +111,8 @@ export type SupporterFilter = {
 };
 
 export const SUPPORTERS_PAGE_SIZE = 200;
+
+/** A supporter's page's name: theirs, or the stand-in for one with none. */
+export function supporterTitle(summary: Pick<SupporterSummary, "name">): string {
+  return summary.name ?? staffCopy.supporters.noName;
+}

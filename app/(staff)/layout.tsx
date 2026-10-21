@@ -7,7 +7,7 @@ import { staffCopy } from "@/lib/content/staff-interface";
 // shows.
 // Every page here calls requireStaff().
 export const metadata: Metadata = {
-  title: staffCopy.metaTitle,
+  title: { default: staffCopy.metaTitle, template: `%s - ${staffCopy.metaTitle}` },
   robots: { index: false, follow: false },
 };
 

@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { listPoliticians, politiciansSearch } from "@/lib/server/politicians";
 import { requireStaff } from "@/lib/server/staff-auth";
@@ -8,6 +9,8 @@ import StaffNav from "../_components/StaffNav";
 import StaffPage from "../_components/ui/StaffPage";
 
 type Search = { q?: string; house?: string; campaign?: string; email?: string; sort?: string; dir?: string };
+
+export const metadata: Metadata = { title: staffCopy.politicians.title };
 
 export default async function PoliticiansPage({ searchParams }: { searchParams: Promise<Search> }) {
   const { email, permissions } = await requireStaff();

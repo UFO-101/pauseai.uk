@@ -134,6 +134,8 @@
   /* States */
   --danger: #b00020;
   --success-bg: #e8f5e9;
+  --status-red: #b00020;
+  --status-red-bg: #fbe3e6;
   --status-amber: #8a5a00;
   --status-amber-bg: #fcebcf;
   --status-green: #1f6b36;

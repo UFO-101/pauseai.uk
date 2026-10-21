@@ -62,7 +62,7 @@ test("the supporters list after the Luma import, filtered and sorted", async ({ 
   await expect(page.getByRole("link", { name: "Fay Follower" })).toHaveCount(0);
   // Four: the fifth guest declined every event.
   await expect(page.getByText(copy.count(4, 1, 1))).toBeVisible();
-  const names = await page.getByRole("table").getByRole("link").allTextContents();
+  const names = await page.locator("tbody").getByRole("link").allTextContents();
   expect(names).toEqual([...names].sort());
   await frame(page, "filtered to those who registered, by name");
 
@@ -75,13 +75,14 @@ test("the supporters list after the Luma import, filtered and sorted", async ({ 
   // A heading sorts the list; clicking it again reverses it.
   await page.getByRole("combobox", { name: copy.filters.source }).selectOption("");
   await page.getByRole("button", { name: copy.filters.filter }).click();
-  await page.getByRole("link", { name: copy.columns.name }).click();
-  await expect(page).toHaveURL(/sort=name&dir=asc/);
+  // Already sorted by name from the field, so the first click reverses it, and the next puts it back.
   await page.getByRole("link", { name: copy.columns.name }).click();
   await expect(page).toHaveURL(/sort=name&dir=desc/);
-  const first = await page.getByRole("table").getByRole("link").first().textContent();
-  expect(first).toBe("Sam Fixture");
-  await frame(page, "sorted by name, reversed, by clicking the heading twice");
+  expect(await page.locator("tbody").getByRole("link").first().textContent()).toBe("Sam Fixture");
+  await frame(page, "sorted by name, reversed, by clicking the heading");
+  await page.getByRole("link", { name: copy.columns.name }).click();
+  await expect(page).toHaveURL(/sort=name&dir=asc/);
+  expect(await page.locator("tbody").getByRole("link").first().textContent()).toBe("Alex Fixture");
 });
 
 test("a supporter's page: who they are, what they gave, their history, and an opt-out from Luma's webhook", async ({

@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { found } from "@/lib/found";
 import { blockOn } from "@/lib/server/email";
@@ -10,7 +11,15 @@ import Breadcrumb from "../../_components/Breadcrumb";
 import StaffNav from "../../_components/StaffNav";
 import StaffPage from "../../_components/ui/StaffPage";
 
-export default async function PoliticianPage({ params }: { params: Promise<{ id: string }> }) {
+type Params = { params: Promise<{ id: string }> };
+
+export async function generateMetadata({ params }: Params): Promise<Metadata> {
+  await requireStaff();
+  const politician = found(await getPolitician(found(politicianId((await params).id))));
+  return { title: politician.name };
+}
+
+export default async function PoliticianPage({ params }: Params) {
   const { email, permissions } = await requireStaff();
   const politician = found(await getPolitician(found(politicianId((await params).id))));
   return (

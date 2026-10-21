@@ -17,7 +17,8 @@ function distinct(items: { value: string | null; source: SupporterSource; at: st
   const given = new Map<string, Given>();
   for (const item of items) {
     if (!item.value) continue;
-    const at = item.at ?? "";
+    // The database gives a Date, the examples a string: one shape, to compare and sort.
+    const at = item.at ? new Date(item.at).toISOString() : "";
     const seen = given.get(item.value);
     if (seen) {
       seen.sources.add(item.source);

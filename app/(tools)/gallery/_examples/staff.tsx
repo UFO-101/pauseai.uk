@@ -900,13 +900,14 @@ export const staff: Group = {
           ),
         },
         {
-          label: "Many lines, folded; and an error",
+          label: "Many lines, folded; a failure; and a result that stopped short",
           render: () => (
             <StaffPage as="div">
               <ResultBox summary="An example result with a lot of detail" lines={OPEN_UP_TO + 1}>
                 <p>Folded detail</p>
               </ResultBox>
-              <ResultBox summary="An example failure" error />
+              <ResultBox summary="An example failure" tone="failed" />
+              <ResultBox summary="An example result that stopped before finishing" tone="incomplete" />
             </StaffPage>
           ),
         },
@@ -938,6 +939,15 @@ export const staff: Group = {
               <RunBox run={exampleAppliedSync} label="An example job" summary="an example summary" lines={1}>
                 <p>Detail</p>
               </RunBox>
+            </StaffPage>
+          ),
+        },
+        {
+          label: "A run that stopped before it finished, and one that failed",
+          render: () => (
+            <StaffPage as="div">
+              <RunBox run={exampleAppliedSync} summary="an example summary" incomplete />
+              <RunBox run={exampleFailedRun("sync-mps", "An example error", { id: 5 })} summary={null} />
             </StaffPage>
           ),
         },

@@ -1,5 +1,5 @@
+import Image from "next/image";
 import Link from "next/link";
-import Brand from "@/components/layout/Brand";
 import { Button } from "@/components/ui/Button";
 import { staffCopy } from "@/lib/content/staff-interface";
 import type { Permission } from "@/lib/staff-permissions";
@@ -24,23 +24,26 @@ type Props = {
  * current one marked but still a link, so it's the way back from a page
  * under it; who's logged in and the way out; on a phone, a bar with the
  * current page's name opening the same as a dropdown. A group shows only
- * to those with its permission. The logo at the top is the way to the home
- * page.
+ * to those with its permission. The pause symbol and name at the top are the
+ * way to the home page.
  */
 export default function StaffNav({ email, account = false, permissions = [], current }: Props) {
-  // The logo: the way home, except at home.
-  const title = (
-    <div className={styles.title}>
-      <Brand href={current === "home" ? undefined : "/staff"} />
-    </div>
+  // The pause symbol and the name: the way home, except at home.
+  const mark = (
+    <>
+      <Image src="/images/logos/Pause-Symbol.svg" alt="" width={616} height={616} className={styles.mark} />
+      <span>{staffCopy.nav.title}</span>
+    </>
   );
-  if (!email) {
-    return (
-      <div className={styles.bar}>
-        <Brand />
-      </div>
+  const title =
+    current === "home" ? (
+      <span className={styles.title}>{mark}</span>
+    ) : (
+      <Link href="/staff" className={styles.title}>
+        {mark}
+      </Link>
     );
-  }
+  if (!email) return <div className={styles.bar}>{title}</div>;
 
   const groups = (account ? sectionsFor(permissions) : []).map((section) => (
     <section key={section.id} className={styles.group}>

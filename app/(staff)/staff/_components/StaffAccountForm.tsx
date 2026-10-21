@@ -3,10 +3,11 @@
 import { useState } from "react";
 import { Checkbox, TextInput } from "@/components/ui/Controls";
 import { Field, Hint } from "@/components/ui/Field";
-import { FilterForm } from "@/components/ui/Form";
+import { FilterForm, FormStack } from "@/components/ui/Form";
 import { SubmitButton } from "@/components/ui/SubmitButton";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { PERMISSIONS, type Permission } from "@/lib/staff-permissions";
+import styles from "./StaffForms.module.css";
 
 type Action = (form: FormData) => void | Promise<void>;
 
@@ -19,13 +20,15 @@ type Props = {
 
 /**
  * One account's form: a checkbox per permission and Save, sending
- * "permission:<name>" for each ticked box (lib/staff-forms.ts).
+ * "permission:<name>" for each ticked box (lib/staff-forms.ts). In a row of
+ * the table it's a row; for someone new, a stack.
  */
 export default function StaffAccountForm({ email, permissions, save }: Props) {
   const [ticked, setTicked] = useState(new Set(permissions));
   const label = email ?? staffCopy.accounts.addTitle;
+  const Form = email === undefined ? FormStack : FilterForm;
   return (
-    <FilterForm action={save} aria-label={label}>
+    <Form action={save} aria-label={label} className={email === undefined ? styles.form : undefined}>
       {email === undefined ? (
         <Field label={staffCopy.accounts.emailLabel}>
           <TextInput name="email" type="email" required />
@@ -54,6 +57,6 @@ export default function StaffAccountForm({ email, permissions, save }: Props) {
         {staffCopy.accounts.save}
       </SubmitButton>
       {email === undefined && <Hint>{staffCopy.accounts.noPermissionHint}</Hint>}
-    </FilterForm>
+    </Form>
   );
 }

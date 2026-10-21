@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { site } from "@/lib/content/site";
 import { CONTROLAI_LETTER_PAGE } from "@/lib/controlai-letter";
@@ -20,6 +21,8 @@ import Tag from "@/components/ui/Tag";
  * of them against Parliament, the signatories from Airtable, ControlAI's
  * letter from the web, and the Luma calendar. Each with its newest run.
  */
+export const metadata: Metadata = { title: staffCopy.import.pageTitle };
+
 export default async function ImportPage() {
   const { email, permissions } = await requireStaff();
   const [syncs, check, signatoryImport, controlAiImport, lumaImport] = await Promise.all([
@@ -33,6 +36,26 @@ export default async function ImportPage() {
     <StaffPage nav={<StaffNav email={email} account permissions={permissions} current="import" />}>
       <h1>{staffCopy.import.pageTitle}</h1>
       <ImportCards>
+        <ImportCard
+          title={
+            <>
+              {staffCopy.luma.title} <Tag tone="amber">{staffCopy.import.luma}</Tag>
+              <Tag tone="blue">{staffCopy.import.hourly}</Tag>
+            </>
+          }
+          intro={
+            <>
+              {staffCopy.luma.intro.before}
+              <a href={site.social.luma} target="_blank" rel="noreferrer">
+                {staffCopy.luma.intro.link}
+              </a>
+              {staffCopy.luma.intro.after}
+            </>
+          }
+          actions={<JobActions action={importLumaNow} label={staffCopy.luma.importNow} job="import-luma" />}
+        >
+          <RunList runs={asList(lumaImport)} none={staffCopy.luma.never} />
+        </ImportCard>
         <ImportCard
           title={
             <>
@@ -79,27 +102,6 @@ export default async function ImportPage() {
         <ImportCard
           title={
             <>
-              {staffCopy.import.title} <Tag tone="amber">{staffCopy.import.airtable}</Tag>
-              <Tag>{staffCopy.import.oneOff}</Tag>
-            </>
-          }
-          intro={
-            <>
-              {staffCopy.import.intro.before}
-              <a href={PARLIAMENTARIANS_TABLE_URL} target="_blank" rel="noreferrer">
-                {staffCopy.import.intro.link}
-              </a>
-              {staffCopy.import.intro.after}
-            </>
-          }
-          actions={<JobActions action={importFromAirtable} label={staffCopy.import.button} job="import-signatories" />}
-        >
-          <RunList runs={asList(signatoryImport)} none={staffCopy.import.none} />
-        </ImportCard>
-
-        <ImportCard
-          title={
-            <>
               {staffCopy.controlAi.title} <Tag tone="green">{staffCopy.import.web}</Tag>
               <Tag tone="blue">{staffCopy.import.nightly}</Tag>
             </>
@@ -123,22 +125,22 @@ export default async function ImportPage() {
         <ImportCard
           title={
             <>
-              {staffCopy.luma.title} <Tag tone="amber">{staffCopy.import.luma}</Tag>
-              <Tag tone="blue">{staffCopy.import.hourly}</Tag>
+              {staffCopy.import.title} <Tag tone="amber">{staffCopy.import.airtable}</Tag>
+              <Tag>{staffCopy.import.oneOff}</Tag>
             </>
           }
           intro={
             <>
-              {staffCopy.luma.intro.before}
-              <a href={site.social.luma} target="_blank" rel="noreferrer">
-                {staffCopy.luma.intro.link}
+              {staffCopy.import.intro.before}
+              <a href={PARLIAMENTARIANS_TABLE_URL} target="_blank" rel="noreferrer">
+                {staffCopy.import.intro.link}
               </a>
-              {staffCopy.luma.intro.after}
+              {staffCopy.import.intro.after}
             </>
           }
-          actions={<JobActions action={importLumaNow} label={staffCopy.luma.importNow} job="import-luma" />}
+          actions={<JobActions action={importFromAirtable} label={staffCopy.import.button} job="import-signatories" />}
         >
-          <RunList runs={asList(lumaImport)} none={staffCopy.luma.never} />
+          <RunList runs={asList(signatoryImport)} none={staffCopy.import.none} />
         </ImportCard>
       </ImportCards>
     </StaffPage>

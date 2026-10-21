@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { recentLetters } from "@/lib/server/letters";
 import { requireStaff } from "@/lib/server/staff-auth";
@@ -6,6 +7,8 @@ import LetterFilters from "../_components/LetterFilters";
 import LettersTable from "../_components/LettersTable";
 import StaffNav from "../_components/StaffNav";
 import StaffPage from "../_components/ui/StaffPage";
+
+export const metadata: Metadata = { title: staffCopy.letters.title };
 
 export default async function LettersPage({ searchParams }: { searchParams: Promise<{ status?: string }> }) {
   const { email, permissions } = await requireStaff();

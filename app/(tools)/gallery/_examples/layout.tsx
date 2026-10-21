@@ -39,14 +39,6 @@ export const layout: Group = {
           ),
         },
         {
-          label: "The logo, as a link elsewhere, as in the staff sidebar",
-          render: () => (
-            <div className="container">
-              <Brand href="/staff" />
-            </div>
-          ),
-        },
-        {
           label: "The logo, plain, as in the footer",
           render: () => (
             <div className="container">

@@ -6,6 +6,19 @@
   margin-block: 1rem;
 }
 
+/* A run that failed is red, one that stopped before finishing amber: a thick edge and a tint. */
+.failed {
+  border-color: var(--status-red);
+  border-left-width: 6px;
+  background: var(--status-red-bg);
+}
+
+.incomplete {
+  border-color: var(--status-amber);
+  border-left-width: 6px;
+  background: var(--status-amber-bg);
+}
+
 .sync ul {
   margin: 0.25rem 0 0.75rem;
 }

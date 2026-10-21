@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { staffCopy } from "@/lib/content/staff-interface";
 import LoginCard from "../_components/LoginCard";
 import LoginForm from "../_components/LoginForm";
@@ -5,6 +6,8 @@ import StaffNav from "../_components/StaffNav";
 import StaffPage from "../_components/ui/StaffPage";
 
 // Open to anyone: it's where staff log in, so it doesn't call requireStaff().
+export const metadata: Metadata = { title: staffCopy.login.title };
+
 export default async function LoginPage({
   searchParams,
 }: {
