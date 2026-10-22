@@ -80,7 +80,8 @@
   line-height: 1.25rem;
 }
 
-.blockedBody p {
+.blockedBody p,
+.blockedBody form {
   margin: 0 0 var(--space-3);
 }
 

@@ -874,6 +874,8 @@ describe("PoliticianDetails", () => {
     expect(notice.element().querySelector("p")!.textContent).toBe(
       copy.why(MP.email!, exampleBlock.reason, "2026-10-12 09:10"),
     );
+    // The example's reason ends in a full stop, so the sentence doesn't add a second.
+    expect(notice.element().querySelector("p")!.textContent).not.toContain("..");
     const fix = `${copy.fix.before}${copy.fix.link}${copy.fix.after}`;
     expect(notice.element().textContent).toContain(fix);
     await expect

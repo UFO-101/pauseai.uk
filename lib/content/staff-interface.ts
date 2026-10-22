@@ -328,8 +328,9 @@ export const staffCopy = {
     // Under their name, when their address is blocked: what's happened, what to check, and the form.
     blocked: {
       title: "Letters to this MP aren't being sent",
+      // Postmark's reason sometimes ends in a full stop and sometimes doesn't.
       why: (address: string, reason: string, since: string) =>
-        `Email to ${address} bounced on ${since} with the error: ${reason}.`,
+        `Email to ${address} bounced on ${since} with the error: ${reason.replace(/\.+$/, "")}.`,
       // "nightly import" links to the MP import's page.
       fix: {
         before: "If the address is wrong, correct it in Airtable. Then trigger the ",
