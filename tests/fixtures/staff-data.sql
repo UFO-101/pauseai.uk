@@ -321,12 +321,14 @@ UPDATE audit_log SET details = jsonb_set(details, '{politicianId}', to_jsonb((SE
 -- ----------------------------------------------------------- supporters
 
 -- One supporter per email, linked to everything with that email, as the
--- matcher makes them; created when their first record was. Five arrived
--- the week before last and nine in the last week.
+-- matcher makes them; created when their first record was. Fewer arrived
+-- the week before last than in the last week.
 WITH emails AS (
   SELECT email, coalesce(contact_since, (SELECT min(g.registered_at) FROM luma_guests g WHERE g.user_id = p.user_id)) AS first_seen FROM luma_people p
   UNION ALL
   SELECT lower(trim(sender_email)), created_at FROM letters WHERE reply_hash LIKE 'seed-%'
+  UNION ALL
+  SELECT email, joined_at FROM members
 ), firsts AS (
   SELECT email, min(first_seen) AS first_seen FROM emails GROUP BY email
 ), made AS (
@@ -337,6 +339,9 @@ WITH emails AS (
 ), luma_links AS (
   INSERT INTO supporter_links (supporter_id, luma_user_id, matched_by, matched_value, linked_at)
   SELECT k.id, p.user_id, 'email', k.email, now() - interval '1 hour' FROM keyed k JOIN luma_people p ON p.email = k.email
+), member_links AS (
+  INSERT INTO supporter_links (supporter_id, member_id, matched_by, matched_value, linked_at)
+  SELECT k.id, m.id, 'email', k.email, m.first_seen_at FROM keyed k JOIN members m ON m.email = k.email
 )
 INSERT INTO supporter_links (supporter_id, letter_id, matched_by, matched_value, linked_at)
 SELECT k.id, l.id, 'email', k.email, l.created_at FROM keyed k JOIN letters l ON lower(trim(l.sender_email)) = k.email;

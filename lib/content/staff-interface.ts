@@ -167,8 +167,11 @@ export const staffCopy = {
       lumaContact: "Follows Luma",
       registered: "Luma events",
       letter: "Wrote to MP",
+      member: "⁂ Member",
+      // Beside Member, what they chose on the join form; the other choices get none.
+      intents: { Volunteer: "⁂ Volunteer", Lead: "⁂ Lead" } as Record<string, string>,
     },
-    sources: { luma: "Luma", letter: "Letter" } as Record<string, string>,
+    sources: { luma: "Luma", letter: "Letter", member: "⁂ Member" } as Record<string, string>,
     lists: { "luma-calendar": "Luma calendar emails", "pauseai-updates": "⁂ PauseAI updates" } as Record<
       string,
       string
@@ -178,12 +181,40 @@ export const staffCopy = {
       emails: "Email",
       phone: "Phone",
       postcode: "Postcode",
+      city: "⁂ City",
+      joined: "⁂ Joined PauseAI",
+      /** Where the join form was: through our own site, or on another. */
+      joinedOn: (site: string) => (site === "pauseai.uk" ? `⁂ through ${site}` : `⁂ on ${site}`),
+      /** What they chose on the join form; "Keep informed" and "None" say nothing more. */
+      intents: {
+        Volunteer: "⁂ wants to volunteer",
+        Lead: "⁂ wants to lead",
+        "Act now": "⁂ wants to act now",
+      } as Record<string, string>,
+      noLongerMember: "⁂ no longer shared with us",
       firstSeen: "First seen",
       lastActive: "Last activity",
       /** Where a detail came from and when: "Luma, 26 Sept 2026". */
       from: (sources: string, when: string) => `${sources}, ${when}`,
       optedOut: (since: string) => `unsubscribed ${since}`,
       notOptedOut: "subscribed",
+      // Where an address stands on a list, after "subscribed" or "unsubscribed": who told us.
+      via: { "luma-webhook": "⁂ via Luma" } as Record<string, string>,
+      // The members' updates: what they did with "Keep me informed" on joining.
+      joining: {
+        declined: (when: string) => `⁂ opted out when joining, ${when} (left “Keep me informed” unticked)`,
+        rejoined: (when: string) => `⁂ opted out when joining, then asked for updates on re-joining ${when}`,
+        asked: (when: string) => `⁂ asked for updates when joining, ${when}`,
+        required: (when: string) => `⁂ on the list from joining, ${when} (the form required it)`,
+        unasked: (when: string) => `⁂ on the list from joining, ${when} (the form didn't ask)`,
+      },
+      /** After each line about the members' updates, while their later unsubscribes are only in CiviCRM. */
+      civicrmCaveat: "⁂ unsubscribes made since, in CiviCRM, aren't known here",
+      // In the history, why the import opted someone out of the updates or back in.
+      importReasons: {
+        "opted-out": "⁂ left “Keep me informed” unticked when joining",
+        resubscribed: "⁂ ticked “Keep me informed” on re-joining",
+      } as Record<string, string>,
       activityTitle: "History",
       noActivity: "Nothing yet.",
       kinds: {
@@ -191,6 +222,7 @@ export const staffCopy = {
         "luma-registered": "Registered for",
         letter: "Wrote to",
         "letter-replied": "Letter answered by",
+        "member-joined": "⁂ Joined PauseAI",
         "opted-out": "Unsubscribed from",
         resubscribed: "Subscribed again to",
       } as Record<string, string>,

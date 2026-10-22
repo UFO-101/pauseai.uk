@@ -56,7 +56,7 @@ import SupporterBadges from "./SupporterBadges";
 import SupporterDetails from "./SupporterDetails";
 import SupporterFilters from "./SupporterFilters";
 import SupportersTable from "./SupportersTable";
-import { exampleSupporter, exampleSupporterDetails } from "./SupportersTable.examples";
+import { exampleMemberDetails, exampleSupporter, exampleSupporterDetails } from "./SupportersTable.examples";
 import { supportersSearch } from "@/lib/staff-search";
 import Table from "@/components/ui/Table";
 
@@ -1586,6 +1586,19 @@ describe("SupporterBadges", () => {
     await rerender(<SupporterBadges supporter={{ ...exampleSupporter, lumaContact: false, events: 0, letters: 0 }} />);
     expect(document.body.textContent!.trim()).toBe("");
   });
+
+  it("marks a member, and beside it whether they want to volunteer or lead, but nothing for a member no longer", async () => {
+    const badges = staffCopy.supporters.badges;
+    const member = exampleMemberDetails.summary;
+    const { rerender } = await render(<SupporterBadges supporter={member} />);
+    expect(document.body.textContent!.trim()).toBe(`${badges.member}${badges.intents.Volunteer}`);
+    await rerender(<SupporterBadges supporter={{ ...member, intent: "Act now" }} />);
+    expect(document.body.textContent!.trim()).toBe(badges.member);
+    await rerender(<SupporterBadges supporter={{ ...member, intent: null }} />);
+    expect(document.body.textContent!.trim()).toBe(badges.member);
+    await rerender(<SupporterBadges supporter={{ ...member, member: false }} />);
+    expect(document.body.textContent!.trim()).toBe("");
+  });
 });
 
 describe("SupportersTable", () => {
@@ -1734,6 +1747,7 @@ describe("SupporterDetails", () => {
               postcode: "m11ae",
               latitude: null,
               longitude: null,
+              city: null,
             },
             {
               source: "luma",
@@ -1742,6 +1756,7 @@ describe("SupporterDetails", () => {
               postcode: "M1  1AE",
               latitude: null,
               longitude: null,
+              city: null,
             },
           ],
         }}
@@ -1776,6 +1791,7 @@ describe("SupporterDetails", () => {
           identities: [{ source: "luma", email: "x@example.com", name: "", seenAt: null }],
           contacts: [],
           links: [],
+          members: [],
           activity: [
             {
               source: "luma",
@@ -1883,6 +1899,70 @@ describe("SupporterDetails", () => {
       )
       .toBeVisible();
     await expect.element(page.getByText(`old@example.com (${copy.sources.letter})`, { exact: false })).toBeVisible();
+  });
+});
+
+describe("SupporterDetails, a member", () => {
+  const copy = staffCopy.supporters;
+  const [member] = exampleMemberDetails.members;
+  const [, updates] = exampleMemberDetails.optOuts;
+
+  it("says how they joined, their city, where they stand on the updates and why, and the history with the reasons", async () => {
+    await render(<SupporterDetails supporter={exampleMemberDetails} />);
+    await expect
+      .element(page.getByText(`Cardiff (${copy.detail.from(copy.sources.member, "11 Oct 2026")})`))
+      .toBeVisible();
+    await expect
+      .element(page.getByText(`10 Jul 2026, ${copy.detail.joinedOn("pauseai.uk")}, ${copy.detail.intents.Volunteer}`))
+      .toBeVisible();
+    await expect.element(page.getByText(copy.detail.joining.rejoined("11 Oct 2026"), { exact: false })).toBeVisible();
+    // The caveat follows the updates' line alone.
+    expect(page.getByText(copy.detail.civicrmCaveat, { exact: false }).all()).toHaveLength(1);
+    const history = page.getByRole("list", { name: copy.detail.activityTitle });
+    expect(history.element().textContent).toContain(
+      `${copy.detail.kinds["member-joined"]} ${copy.detail.joinedOn("pauseai.uk")}`,
+    );
+    expect(history.element().textContent).toContain(copy.detail.importReasons["opted-out"]);
+    expect(history.element().textContent).toContain(copy.detail.importReasons.resubscribed);
+  });
+
+  it("words each way they can stand on the updates, and a join with nothing more to say", async () => {
+    const line = (status: (typeof updates)["status"], source: string | null = null) => ({
+      ...updates,
+      status,
+      source,
+      at: "2026-09-12T10:00:00Z",
+    });
+    await render(
+      <SupporterDetails
+        supporter={{
+          ...exampleMemberDetails,
+          summary: { ...exampleMemberDetails.summary, emails: ["a@example.com", "b@example.com"] },
+          members: [
+            { ...member, id: "recA", sourcePage: "pauseai.info/join", intent: "None" },
+            { ...member, id: "recB", sourcePage: null, intent: null, removed: true },
+          ],
+          activity: [{ ...exampleMemberDetails.activity[2], detail: null }],
+          optOuts: [
+            line("declined", "airtable-import"),
+            { ...line("asked"), address: "b@example.com" },
+            { ...line("required"), list: "luma-calendar" },
+            { ...line("unasked"), list: "luma-calendar", address: "b@example.com" },
+            { ...line("unsubscribed", "somewhere-new"), address: "c@example.com" },
+          ],
+        }}
+      />,
+    );
+    await expect
+      .element(page.getByText(`10 Jul 2026, ${copy.detail.joinedOn("pauseai.info/join")}`, { exact: true }))
+      .toBeVisible();
+    await expect.element(page.getByText(`10 Jul 2026, ${copy.detail.noLongerMember}`, { exact: true })).toBeVisible();
+    for (const status of ["declined", "asked", "required", "unasked"] as const)
+      await expect.element(page.getByText(copy.detail.joining[status]("12 Sept 2026"), { exact: false })).toBeVisible();
+    await expect.element(page.getByText(copy.detail.optedOut("12 Sept 2026"), { exact: false })).toBeVisible();
+    const history = page.getByRole("list", { name: copy.detail.activityTitle });
+    expect(history.element().textContent).toContain(copy.detail.kinds["member-joined"]);
+    expect(history.element().textContent).not.toContain(copy.detail.joinedOn("pauseai.uk"));
   });
 });
 

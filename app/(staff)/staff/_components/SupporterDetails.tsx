@@ -3,7 +3,13 @@ import { Muted } from "@/components/ui/Text";
 import { campaignBySlug, campaignPath, displayPostcode } from "@/lib/email-your-mp";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { staffDate, staffTime } from "@/lib/staff-time";
-import type { SupporterActivity, SupporterDetails as Details, SupporterSource } from "@/lib/supporters";
+import type {
+  SupporterActivity,
+  SupporterDetails as Details,
+  SupporterMember,
+  SupporterOptOut,
+  SupporterSource,
+} from "@/lib/supporters";
 import SupporterBadges from "./SupporterBadges";
 import styles from "./Details.module.css";
 
@@ -91,14 +97,46 @@ function Subject({ item }: { item: SupporterActivity }) {
     );
   }
   if (item.kind === "opted-out" || item.kind === "resubscribed") {
+    // The import's own opt-outs say why: what the member did with "Keep me informed".
+    const reason = item.source === "airtable-import" ? copy.detail.importReasons[item.kind] : undefined;
     return (
       <>
         {copy.lists[item.title ?? ""] ?? item.title}
+        {reason && <Muted> · {reason}</Muted>}
         {item.detail && <Muted> · {item.detail}</Muted>}
       </>
     );
   }
+  if (item.kind === "member-joined") {
+    return item.detail ? <Muted>{copy.detail.joinedOn(item.detail)}</Muted> : null;
+  }
   return null;
+}
+
+/** How a member joined: when, where the form was, and what they chose to do; or that they're no longer shared with us. */
+function joining(member: SupporterMember): string {
+  return [
+    staffDate(member.joinedAt),
+    member.sourcePage && copy.detail.joinedOn(member.sourcePage),
+    copy.detail.intents[member.intent ?? ""],
+    member.removed && copy.detail.noLongerMember,
+  ]
+    .filter(Boolean)
+    .join(", ");
+}
+
+/** Where an address stands on a list, and why. */
+function standing(optOut: SupporterOptOut): string {
+  const when = optOut.at ? staffDate(optOut.at) : "";
+  const via = copy.detail.via[optOut.source ?? ""];
+  switch (optOut.status) {
+    case "subscribed":
+      return copy.detail.notOptedOut;
+    case "unsubscribed":
+      return via ? `${copy.detail.optedOut(when)}, ${via}` : copy.detail.optedOut(when);
+    default:
+      return copy.detail.joining[optOut.status](when);
+  }
 }
 
 /**
@@ -106,13 +144,14 @@ function Subject({ item }: { item: SupporterActivity }) {
  * value with where it came from; then everything they did, newest first.
  */
 export default function SupporterDetails({ supporter }: { supporter: Details }) {
-  const { summary, identities, contacts, activity, optOuts } = supporter;
+  const { summary, identities, contacts, members, activity, optOuts } = supporter;
   const emails = distinct(identities.map((i) => ({ value: i.email, source: i.source, at: i.seenAt })));
   const phones = distinct(contacts.map((c) => ({ value: c.phone, source: c.source, at: c.at })));
   const postcodes = distinct(
     contacts.map((c) => ({ value: c.postcode, source: c.source, at: c.at })),
     displayPostcode,
   );
+  const cities = distinct(contacts.map((c) => ({ value: c.city, source: c.source, at: c.at })));
   return (
     <>
       <h1>
@@ -123,11 +162,19 @@ export default function SupporterDetails({ supporter }: { supporter: Details }) 
         <Fact label={copy.detail.emails} values={emails} />
         <Fact label={copy.detail.phone} values={phones} />
         <Fact label={copy.detail.postcode} values={postcodes} />
+        <Fact label={copy.detail.city} values={cities} />
+        {members.map((member) => (
+          <div key={member.id} className={styles.pair}>
+            <dt>{copy.detail.joined}</dt>
+            <dd>{joining(member)}</dd>
+          </div>
+        ))}
         {optOuts.map((optOut) => (
           <div key={`${optOut.list}-${optOut.address}`} className={styles.pair}>
             <dt>{copy.lists[optOut.list]}</dt>
             <dd>
-              {optOut.since === null ? copy.detail.notOptedOut : copy.detail.optedOut(staffDate(optOut.since))}
+              {standing(optOut)}
+              {optOut.list === "pauseai-updates" && <Muted> · {copy.detail.civicrmCaveat}</Muted>}
               {emails.length > 1 && <Muted> · {optOut.address}</Muted>}
             </dd>
           </div>

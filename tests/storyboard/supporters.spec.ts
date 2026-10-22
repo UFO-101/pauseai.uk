@@ -7,6 +7,7 @@ import {
   fakeTurnstile,
   fillLetter,
   importLuma,
+  importMembers,
   logInAsStaff,
   lookUpTestMp,
   postLumaWebhook,
@@ -153,6 +154,84 @@ test("a letter writer is a supporter too, linked from the letters page", async (
   await expect(page.getByText(copy.detail.kinds.letter, { exact: false }).first()).toBeVisible();
   await expect(page.getByText("ZZ9 9ZZ", { exact: false })).toBeVisible();
   await frame(page, "the letter writer's page: the letter, and the postcode they gave");
+});
+
+test("a member who also wrote to their MP is one supporter, with how they joined", async ({
+  page,
+  request,
+  flowDatabase,
+}) => {
+  await syncMps(request, BASE);
+  await fakeTurnstile(page);
+  await lookUpTestMp(page, BASE, TEST_MPS[0]);
+  await fillLetter(page, "lee.letter@example.com");
+  await sendLetter(page, TEST_MPS[0]);
+  await importMembers(request, BASE);
+
+  await logInWithSupporters(page, flowDatabase);
+  await page.goto(`${BASE}/staff/supporters`);
+  const lee = page.getByRole("row").filter({ hasText: "lee.letter@example.com" });
+  await expect(lee).toContainText(copy.badges.member);
+  await expect(lee).toContainText(copy.badges.letter);
+  await frame(page, "the list: the members, and Lee, who also wrote to their MP");
+
+  await lee.getByRole("link").first().click();
+  await expect(page).toHaveURL(/\/staff\/supporters\/\d+$/);
+  await expect(page.getByRole("heading", { level: 1 })).toContainText(copy.badges.member);
+  await expect(page.getByText("29 Nov 2025", { exact: true }).first()).toBeVisible();
+  await expect(page.getByText(copy.detail.joining.unasked("29 Nov 2025"), { exact: false })).toBeVisible();
+  const history = page.getByRole("list", { name: copy.detail.activityTitle });
+  await expect(history.getByText(copy.detail.kinds["member-joined"], { exact: false })).toBeVisible();
+  await expect(history.getByText(copy.detail.kinds.letter, { exact: false })).toBeVisible();
+  await frame(page, "Lee's page: joined before the form asked about updates, then wrote to their MP");
+});
+
+test("a member who left Keep me informed unticked is opted out of the updates", async ({
+  page,
+  request,
+  flowDatabase,
+}) => {
+  await importMembers(request, BASE);
+  await logInWithSupporters(page, flowDatabase);
+  await page.goto(`${BASE}/staff/supporters`);
+  await page.getByRole("combobox", { name: copy.filters.lists }).selectOption("1");
+  await page.getByRole("button", { name: copy.filters.filter }).click();
+  await expect(page.getByText(copy.count(1, 1, 1))).toBeVisible();
+  const owen = page.getByRole("row").filter({ hasText: "Owen Member" });
+  await expect(owen).toContainText(copy.lists["pauseai-updates"]);
+  await frame(page, "the list of everyone unsubscribed: Owen, from the updates");
+
+  await owen.getByRole("link", { name: "Owen Member" }).click();
+  await expect(page.getByText(copy.detail.joining.declined("6 Oct 2026"), { exact: false })).toBeVisible();
+  await expect(
+    page.getByText(`6 Oct 2026, ${copy.detail.joinedOn("pauseai.uk")}, ${copy.detail.intents["Act now"]}`),
+  ).toBeVisible();
+  const history = page.getByRole("list", { name: copy.detail.activityTitle });
+  await expect(history.getByText(copy.detail.importReasons["opted-out"], { exact: false })).toBeVisible();
+  await frame(page, "Owen's page: opted out of the updates on joining, and why");
+});
+
+test("a member who re-joined and ticked Keep me informed has their opt-out lifted", async ({
+  page,
+  request,
+  flowDatabase,
+}) => {
+  // Rhea left it unticked on an earlier record, which the import opted out.
+  runSql(
+    flowDatabase,
+    `INSERT INTO opt_outs (address, list, source, source_ref, unsubscribed_at)
+     VALUES ('rhea.member@example.com', 'pauseai-updates', 'airtable-import', 'recMemberRheaOld', '2026-07-10T00:00:00Z')`,
+  );
+  await importMembers(request, BASE);
+  await logInWithSupporters(page, flowDatabase);
+  await page.goto(`${BASE}/staff/supporters`);
+  await page.getByRole("link", { name: "Rhea Member" }).click();
+  await expect(page.getByText(copy.detail.joining.rejoined("11 Oct 2026"), { exact: false })).toBeVisible();
+  await expect(page.getByText(copy.detail.civicrmCaveat, { exact: false })).toBeVisible();
+  const history = page.getByRole("list", { name: copy.detail.activityTitle });
+  await expect(history.getByText(copy.detail.importReasons.resubscribed, { exact: false })).toBeVisible();
+  await expect(history.getByText(copy.detail.importReasons["opted-out"], { exact: false })).toBeVisible();
+  await frame(page, "Rhea's page: opted out on joining, then asked for the updates on re-joining");
 });
 
 test("erasing a supporter: gone from the list and the next import, with the audit entry", async ({

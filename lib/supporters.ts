@@ -5,7 +5,7 @@ import type { OptOutList } from "./opt-outs";
 import type { SortColumns, SortDirection } from "./staff-sort";
 
 /** Where a supporter's records come from (lib/server/supporter-sources.ts). */
-export const SUPPORTER_SOURCES = ["luma", "letter"] as const;
+export const SUPPORTER_SOURCES = ["luma", "letter", "member"] as const;
 export type SupporterSource = (typeof SUPPORTER_SOURCES)[number];
 
 export function isSupporterSource(value: string): value is SupporterSource {
@@ -30,15 +30,20 @@ export type SupporterSummary = {
   letters: number;
   /** The lists any of their addresses is opted out of. */
   optedOut: OptOutList[];
+  /** Whether they're a PauseAI member now: a member's record we read at the last import. */
+  member: boolean;
+  /** What their newest such record chose on the join form: Keep informed, Act now, Volunteer, Lead or None. */
+  intent: string | null;
 };
 
 /** What a supporter did, from any source: `kind` says what, `title` and `detail` which and how. */
 export type SupporterActivity = {
   source: string;
   at: string;
-  kind: "luma-contact" | "luma-registered" | "letter" | "letter-replied" | "opted-out" | "resubscribed";
+  kind:
+    "luma-contact" | "luma-registered" | "letter" | "letter-replied" | "member-joined" | "opted-out" | "resubscribed";
   title: string | null;
-  /** Who or what it was with: the event's status, the MP's name, or the address. */
+  /** Who or what it was with: the event's status, the MP's name, the site they joined on, or the address. */
   detail: string | null;
   href: string | null;
   /** A letter's status; null for every other kind. */
@@ -48,7 +53,7 @@ export type SupporterActivity = {
 /** A name and email one source gave, and when the person was first seen there. */
 export type SupporterIdentity = { source: SupporterSource; email: string; name: string; seenAt: string | null };
 
-/** A phone, postcode or place one source gave, and when. */
+/** A phone, postcode, city or place one source gave, and when. */
 export type SupporterContact = {
   source: SupporterSource;
   at: string;
@@ -56,6 +61,23 @@ export type SupporterContact = {
   postcode: string | null;
   latitude: number | null;
   longitude: number | null;
+  city: string | null;
+};
+
+/** One of the supporter's member records: how and when they joined, and what they said to "Keep me informed". */
+export type SupporterMember = {
+  id: string;
+  email: string;
+  /** Their first join. */
+  joinedAt: string;
+  /** This record's. */
+  createdAt: string;
+  /** The site the join form was on, if it was recorded. */
+  sourcePage: string | null;
+  intent: string | null;
+  keepInformed: boolean;
+  /** Not read at the last import: no longer shared with us, or gone from the dataset. */
+  removed: boolean;
 };
 
 /** Why a source record is this supporter's. */
@@ -67,11 +89,19 @@ export type SupporterLink = {
   linkedAt: string;
 };
 
-/** Whether one of the supporter's addresses is opted out of a list, and if so since when and by what. */
+/**
+ * Where one of the supporter's addresses stands on a list, and why:
+ * subscribed, as far as we know; unsubscribed, told by `source`; or, for
+ * the members' updates, what they did on joining: declined (left "Keep me
+ * informed" unticked), rejoined (declined, then ticked it on re-joining),
+ * asked (ticked it), or on the list because the form required the box
+ * (required) or had none (unasked). `at` is when.
+ */
 export type SupporterOptOut = {
   list: OptOutList;
   address: string;
-  since: string | null;
+  status: "subscribed" | "unsubscribed" | "declined" | "rejoined" | "asked" | "required" | "unasked";
+  at: string | null;
   source: string | null;
 };
 
@@ -80,6 +110,7 @@ export type SupporterDetails = {
   identities: SupporterIdentity[];
   contacts: SupporterContact[];
   links: SupporterLink[];
+  members: SupporterMember[];
   activity: SupporterActivity[];
   optOuts: SupporterOptOut[];
 };

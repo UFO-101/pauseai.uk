@@ -1,5 +1,6 @@
 import "server-only";
 import type { MembersImportResult } from "@/lib/import-runs";
+import { KEEP_INFORMED_FREE_FROM } from "@/lib/members";
 import { query, transaction, type Queryable } from "./db";
 import { keepingFailure, recordRun } from "./import-runs";
 import { airtableToken, fetchMembers, type MemberToImport } from "./outside-services/airtable";
@@ -17,13 +18,6 @@ import { linkSupporters } from "./supporters";
 // import never lifts an opt-out another source recorded.
 
 const JOB = "import-members";
-
-/**
- * The day the join form's "Keep me informed" became a free choice. Before
- * it the form required the box, or had none, so a tick from then says
- * nothing and an unticked box isn't an opt-out.
- */
-export const KEEP_INFORMED_FREE_FROM = "2026-06-30T00:00:00Z";
 
 /** Upserts the members, but none erased; returns how many were added and how many changed. */
 async function upsertMembers(members: MemberToImport[], db: Queryable): Promise<{ added: number; changed: number }> {

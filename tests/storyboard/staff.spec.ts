@@ -259,15 +259,17 @@ test("the members import copies the UK members, skips one erased, and finds noth
     removed: 0,
     optedOut: 1,
     resubscribed: 0,
-    supportersAdded: 0,
-    linked: 0,
+    supportersAdded: 7,
+    linked: 7,
   };
   await expect(page.getByText(staffCopy.members.result(first))).toBeVisible();
   await page.getByRole("heading", { name: staffCopy.members.title }).scrollIntoViewIfNeeded();
   await frame(page, "the members import's first run: every member copied but the erased one");
 
   await page.getByRole("button", { name: staffCopy.members.importNow }).click();
-  await expect(page.getByText(staffCopy.members.result({ ...first, added: 0, optedOut: 0 }))).toBeVisible();
+  await expect(
+    page.getByText(staffCopy.members.result({ ...first, added: 0, optedOut: 0, supportersAdded: 0, linked: 0 })),
+  ).toBeVisible();
   await expect(page.getByText(staffCopy.runs.status.unchanged)).toBeVisible();
   await page.getByRole("heading", { name: staffCopy.members.title }).scrollIntoViewIfNeeded();
   await frame(page, "run again: nothing new");

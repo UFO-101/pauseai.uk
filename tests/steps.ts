@@ -60,6 +60,14 @@ export function addStaffAccount(database: string, email: string, permissions: st
   );
 }
 
+/** Copies the fixture Airtable's members into the flow's database through the hourly import's own route. */
+export async function importMembers(request: APIRequestContext, base: string) {
+  const res = await request.post(`${base}/api/cron/import-members`, {
+    headers: { Authorization: "Bearer fixture-cron-secret" },
+  });
+  if (!res.ok()) throw new Error(`Members import on ${base} failed: ${res.status()} ${await res.text()}`);
+}
+
 /** Copies the fixture Luma calendar into the flow's database through the hourly import's own route. */
 export async function importLuma(request: APIRequestContext, base: string) {
   const res = await request.post(`${base}/api/cron/import-luma`, {

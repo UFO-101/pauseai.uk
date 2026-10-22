@@ -14,6 +14,8 @@ export const exampleSupporter: SupporterSummary = {
   events: 2,
   letters: 1,
   optedOut: ["luma-calendar"],
+  member: false,
+  intent: null,
 };
 
 /** Everything a supporter's page shows, for Jane. */
@@ -24,7 +26,15 @@ export const exampleSupporterDetails: SupporterDetails = {
     { source: "letter", email: "jane.e@example.org", name: "Jane Example", seenAt: "2026-10-05T09:00:00Z" },
   ],
   contacts: [
-    { source: "letter", at: "2026-10-05T09:00:00Z", phone: null, postcode: "M1 1AE", latitude: null, longitude: null },
+    {
+      source: "letter",
+      at: "2026-10-05T09:00:00Z",
+      phone: null,
+      postcode: "M1 1AE",
+      latitude: null,
+      longitude: null,
+      city: null,
+    },
     {
       source: "luma",
       at: "2026-09-20T10:00:00Z",
@@ -32,6 +42,7 @@ export const exampleSupporterDetails: SupporterDetails = {
       postcode: "M2 2BB",
       latitude: 53.4794,
       longitude: -2.2453,
+      city: "Manchester",
     },
   ],
   links: [
@@ -50,6 +61,7 @@ export const exampleSupporterDetails: SupporterDetails = {
       linkedAt: "2026-10-05T09:00:00Z",
     },
   ],
+  members: [],
   activity: [
     {
       source: "luma-webhook",
@@ -98,7 +110,104 @@ export const exampleSupporterDetails: SupporterDetails = {
     },
   ],
   optOuts: [
-    { list: "luma-calendar", address: "jane@example.com", since: "2026-10-12T18:30:00Z", source: "luma-webhook" },
-    { list: "luma-calendar", address: "jane.e@example.org", since: null, source: null },
+    {
+      list: "luma-calendar",
+      address: "jane@example.com",
+      status: "unsubscribed",
+      at: "2026-10-12T18:30:00Z",
+      source: "luma-webhook",
+    },
+    { list: "luma-calendar", address: "jane.e@example.org", status: "subscribed", at: null, source: null },
+  ],
+};
+
+/** A member who joined through our site wanting to volunteer, opted out of the updates on joining, then re-joined asking for them. */
+export const exampleMemberDetails: SupporterDetails = {
+  summary: {
+    ...exampleSupporter,
+    id: 8,
+    name: "Rhea Member",
+    emails: ["rhea@example.com"],
+    phone: null,
+    postcode: null,
+    sources: ["member"],
+    lumaContact: false,
+    events: 0,
+    letters: 0,
+    optedOut: [],
+    member: true,
+    intent: "Volunteer",
+  },
+  identities: [{ source: "member", email: "rhea@example.com", name: "Rhea Member", seenAt: "2026-07-10T00:00:00Z" }],
+  contacts: [
+    {
+      source: "member",
+      at: "2026-10-11T08:00:00Z",
+      phone: null,
+      postcode: null,
+      latitude: null,
+      longitude: null,
+      city: "Cardiff",
+    },
+  ],
+  links: [
+    {
+      source: "member",
+      sourceId: "recRhea",
+      matchedBy: "email",
+      matchedValue: "rhea@example.com",
+      linkedAt: "2026-10-11T08:47:00Z",
+    },
+  ],
+  members: [
+    {
+      id: "recRhea",
+      email: "rhea@example.com",
+      joinedAt: "2026-07-10T00:00:00Z",
+      createdAt: "2026-10-11T08:00:00Z",
+      sourcePage: "pauseai.uk",
+      intent: "Volunteer",
+      keepInformed: true,
+      removed: false,
+    },
+  ],
+  activity: [
+    {
+      source: "airtable-import",
+      at: "2026-10-11T08:00:00Z",
+      kind: "resubscribed",
+      title: "pauseai-updates",
+      detail: "rhea@example.com",
+      href: null,
+      status: null,
+    },
+    {
+      source: "airtable-import",
+      at: "2026-07-10T00:00:00Z",
+      kind: "opted-out",
+      title: "pauseai-updates",
+      detail: "rhea@example.com",
+      href: null,
+      status: null,
+    },
+    {
+      source: "member",
+      at: "2026-07-10T00:00:00Z",
+      kind: "member-joined",
+      title: "Volunteer",
+      detail: "pauseai.uk",
+      href: "https://airtable.com/appWPTGqZmUcs3NWu/tblL1icZBhTV1gQ9o/recRhea",
+      status: null,
+    },
+  ],
+  optOuts: [
+    { list: "luma-calendar", address: "rhea@example.com", status: "subscribed", at: null, source: null },
+    {
+      list: "pauseai-updates",
+      address: "rhea@example.com",
+      status: "rejoined",
+      at: "2026-10-11T08:00:00Z",
+      source: "airtable-import",
+    },
   ],
 };

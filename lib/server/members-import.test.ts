@@ -68,8 +68,8 @@ describeWithDatabase("importMembers", () => {
       removed: 0,
       optedOut: 0,
       resubscribed: 0,
-      supportersAdded: 0,
-      linked: 0,
+      supportersAdded: 1,
+      linked: 1,
     });
     // Every column but the import's own bookkeeping holds what Airtable gave.
     const [row] = await query<Record<string, unknown>>("SELECT * FROM members");

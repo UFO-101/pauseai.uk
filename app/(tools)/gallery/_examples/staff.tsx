@@ -48,7 +48,11 @@ import SupporterBadges from "@/app/(staff)/staff/_components/SupporterBadges";
 import SupporterDetails from "@/app/(staff)/staff/_components/SupporterDetails";
 import SupporterFilters from "@/app/(staff)/staff/_components/SupporterFilters";
 import SupportersTable from "@/app/(staff)/staff/_components/SupportersTable";
-import { exampleSupporter, exampleSupporterDetails } from "@/app/(staff)/staff/_components/SupportersTable.examples";
+import {
+  exampleMemberDetails,
+  exampleSupporter,
+  exampleSupporterDetails,
+} from "@/app/(staff)/staff/_components/SupportersTable.examples";
 import { supportersSearch } from "@/lib/staff-search";
 import StaffPage from "@/app/(staff)/staff/_components/ui/StaffPage";
 import Tag from "@/components/ui/Tag";
@@ -313,6 +317,14 @@ export const staff: Group = {
             </StaffPage>
           ),
         },
+        {
+          label: "A member who wants to volunteer",
+          render: () => (
+            <StaffPage as="div">
+              <SupporterBadges supporter={exampleMemberDetails.summary} />
+            </StaffPage>
+          ),
+        },
       ],
     },
     {
@@ -324,6 +336,14 @@ export const staff: Group = {
           render: () => (
             <StaffPage as="div">
               <SupporterDetails supporter={exampleSupporterDetails} />
+            </StaffPage>
+          ),
+        },
+        {
+          label: "A member who opted out of the updates on joining, then asked for them on re-joining",
+          render: () => (
+            <StaffPage as="div">
+              <SupporterDetails supporter={exampleMemberDetails} />
             </StaffPage>
           ),
         },
@@ -345,6 +365,7 @@ export const staff: Group = {
                   identities: [{ source: "luma", email: "x@example.com", name: "", seenAt: null }],
                   contacts: [],
                   links: [],
+                  members: [],
                   activity: [],
                   optOuts: [],
                 }}
