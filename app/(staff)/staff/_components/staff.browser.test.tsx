@@ -40,6 +40,7 @@ import { exampleDashboard, exampleQuietDashboard } from "./StaffDashboard.exampl
 import Sparkline from "./Sparkline";
 import StaffHome from "./StaffHome";
 import AccountsNotice from "./AccountsNotice";
+import Alert from "./Alert";
 import Breadcrumb from "./Breadcrumb";
 import EraseLink from "./EraseLink";
 import ImportCard, { ImportCards } from "./ImportCard";
@@ -152,7 +153,6 @@ describe("StaffHome", () => {
     await expect
       .element(page.getByRole("heading", { level: 2, name: staffCopy.home.dashboard.sections.mps }))
       .toBeVisible();
-    await expect.element(page.getByText(staffCopy.home.none, { exact: false })).not.toBeInTheDocument();
   });
 
   it("without an account, says so and whom to ask, and shows nothing else", async () => {
@@ -162,7 +162,7 @@ describe("StaffHome", () => {
     expect(page.getByRole("link").all()).toHaveLength(0);
   });
 
-  it("without permissions, says so and whom to ask, over the dashboard", async () => {
+  it("without permissions, shows the dashboard and nothing about permissions", async () => {
     await render(
       <StaffHome
         account
@@ -171,10 +171,9 @@ describe("StaffHome", () => {
         dashboard={exampleDashboard}
       />,
     );
-    await expect.element(page.getByText(staffCopy.home.none, { exact: false })).toBeVisible();
     await expect
       .element(page.getByText(staffCopy.home.ask("admin@pauseai.uk, jo@pauseai.uk"), { exact: false }))
-      .toBeVisible();
+      .not.toBeInTheDocument();
     await expect
       .element(page.getByRole("heading", { level: 2, name: staffCopy.home.dashboard.sections.supporters }))
       .toBeVisible();
@@ -291,7 +290,7 @@ describe("StaffDashboard", () => {
     expect(changeClass(mps[1])).toMatch(/bad/);
     expect(changeClass(supporters[1])).toMatch(/good/);
     // The sparklines, on registrations and new supporters only, with the week's count on each point.
-    const sparkline = (label: string) => page.getByRole("img", { name: copy.series(label) });
+    const sparkline = (label: string) => page.getByRole("img", { name: copy.series(label, 7, 8) });
     await expect.element(sparkline(copy.metrics.eventRegistrations(277))).toBeVisible();
     await expect.element(sparkline(copy.metrics.supportersAdded(176))).toBeVisible();
     // Pointing at a point names its week by the day it begins.
@@ -315,7 +314,7 @@ describe("StaffDashboard", () => {
 
     // A quiet month: nothing reads "None", with no test letters and no bar; the change is over 30 days.
     await rerender(<StaffDashboard dashboard={exampleQuietDashboard} permissions={[]} />);
-    const month = page.getByRole("img", { name: copy.series(copy.metrics.eventRegistrations(4)) }).element();
+    const month = page.getByRole("img", { name: copy.series(copy.metrics.eventRegistrations(4), 30, 8) }).element();
     const monthBox = month.getBoundingClientRect();
     month.dispatchEvent(
       new PointerEvent("pointermove", { clientX: monthBox.right - 1, clientY: monthBox.top, bubbles: true }),
@@ -504,11 +503,25 @@ describe("RemoveAccountForm", () => {
 });
 
 describe("AccountsNotice", () => {
-  it("says why a change was refused, or nothing", async () => {
+  it("says why a change was refused, as an error, or nothing", async () => {
     const { rerender } = await render(<AccountsNotice notice="last-admin" />);
-    await expect.element(page.getByRole("status")).toHaveTextContent(staffCopy.accounts.lastAdmin);
+    const error = page.getByRole("alert");
+    await expect.element(error).toHaveTextContent(staffCopy.accounts.lastAdmin);
+    expect(error.element().firstElementChild!.tagName.toLowerCase()).toBe("svg");
+    expect(error.element().className).toMatch(/red/);
     await rerender(<AccountsNotice notice="" />);
-    expect(page.getByRole("status").all()).toHaveLength(0);
+    expect(page.getByRole("alert").all()).toHaveLength(0);
+  });
+});
+
+describe("Alert", () => {
+  it("is an error read out at once in red, or something waiting in amber", async () => {
+    const { rerender } = await render(<Alert>Broken.</Alert>);
+    await expect.element(page.getByRole("alert")).toHaveTextContent("Broken.");
+    expect(getComputedStyle(page.getByRole("alert").element()).borderLeftWidth).toBe("1px");
+    await rerender(<Alert tone="amber">Waiting.</Alert>);
+    await expect.element(page.getByRole("status")).toHaveTextContent("Waiting.");
+    expect(page.getByRole("status").element().className).toMatch(/amber/);
   });
 });
 
@@ -1243,9 +1256,10 @@ describe("RunList", () => {
       { changes: { added: [1, 2, 3, 4, 5, 6].map((n) => mp(n)), removed: [], changed: [] } },
       { id: 9, status: "held" },
     );
-    await render(<RunList runs={[big, applied]} none="None" decide={() => {}} />);
+    // The newest run starts unfolded, however long; the same run further down starts folded.
+    await render(<RunList runs={[applied, big]} none="None" decide={() => {}} />);
     const folds = page.getByRole("group").all();
-    expect(folds.map((fold) => (fold.element() as HTMLDetailsElement).open)).toEqual([false, true]);
+    expect(folds.map((fold) => (fold.element() as HTMLDetailsElement).open)).toEqual([true, false]);
     await expect.element(page.getByText("Seat 1: MP 1", { exact: true })).not.toBeVisible();
     await expect.element(page.getByRole("button", { name: staffCopy.syncs.apply })).toBeVisible();
     await page.getByText(`${staffCopy.syncs.added} 6`, { exact: false }).click();
@@ -1299,8 +1313,8 @@ describe("RunList", () => {
         ]}
       />,
     );
-    // Six problems is more than a few lines, so the box starts folded.
-    await page.getByText(staffCopy.check.problems(6), { exact: false }).click();
+    // Six problems is more than a few lines, but it's the newest run, so it starts unfolded.
+    expect((page.getByRole("group").element() as HTMLDetailsElement).open).toBe(true);
     const row = (constituency: string) => page.getByRole("row").filter({ hasText: constituency });
     await expect.element(row("Gone")).toHaveTextContent(`Gone${staffCopy.check.kinds.extra}Former MP`);
     await expect

@@ -15,6 +15,7 @@ import DevLogin from "@/app/(staff)/staff/_components/DevLogin";
 import LoginCard from "@/app/(staff)/staff/_components/LoginCard";
 import LoginForm from "@/app/(staff)/staff/_components/LoginForm";
 import PoliticianFilters from "@/app/(staff)/staff/_components/PoliticianFilters";
+import Alert from "@/app/(staff)/staff/_components/Alert";
 import AlertIcon from "@/app/(staff)/staff/_components/AlertIcon";
 import ResultBox, { OPEN_UP_TO } from "@/app/(staff)/staff/_components/ResultBox";
 import Run from "@/app/(staff)/staff/_components/Run";
@@ -442,7 +443,7 @@ export const staff: Group = {
           ),
         },
         {
-          label: "For someone with no permissions: whom to ask, over the dashboard",
+          label: "For someone with no permissions: the dashboard, its supporter tiles not links",
           render: () => (
             <StaffPage as="div">
               <StaffHome
@@ -501,6 +502,21 @@ export const staff: Group = {
           render: () => (
             <StaffPage as="div">
               <RemoveAccountFormExample />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "Alert",
+      file: "app/(staff)/staff/_components/Alert.tsx",
+      variants: [
+        {
+          label: "An error, and something waiting",
+          render: () => (
+            <StaffPage as="div">
+              <Alert>An example of something that went wrong.</Alert>
+              <Alert tone="amber">An example of something waiting for a person.</Alert>
             </StaffPage>
           ),
         },

@@ -504,10 +504,10 @@ test("without an account, a staff member sees only whom to ask; an admin adds, c
   await page.goto(`${BASE}/staff/politicians`);
   await expect(page).toHaveURL(`${BASE}/staff`);
 
-  // With an account and no permissions: the ordinary pages, and that they have none.
+  // With an account and no permissions: the dashboard and the ordinary pages.
   addStaffAccount(flowDatabase, staffEmail());
   await page.goto(`${BASE}/staff`);
-  await expect(page.getByText(staffCopy.home.none, { exact: false })).toBeVisible();
+  await expect(page.getByText(staffCopy.home.dashboard.sections.mps)).toBeVisible();
   // The sidebar (hidden behind the bar's menu on a phone, so read from the DOM) offers the ordinary pages and not the admin's.
   await expect(page.locator('nav a[href="/staff/politicians"]').first()).toBeAttached();
   await expect(page.locator('nav a[href="/staff/accounts"]')).toHaveCount(0);

@@ -10,15 +10,14 @@ type Props = {
   permissions: Permission[];
   /** The admins, to ask. */
   admins: string[];
-  /** The week's numbers and the imports' endings, for someone with an account. */
+  /** What needs a person and the window's numbers, for someone with an account. */
   dashboard?: Dashboard;
 };
 
 /**
  * The home page's body: without an account, whom to ask for one; with
- * one, the dashboard under a title only screen readers hear, and if they
- * have no permissions, whom to ask for them. The pages and permissions are
- * in the sidebar.
+ * one, the dashboard under a title only screen readers hear. The pages and
+ * permissions are in the sidebar.
  */
 export default function StaffHome({ account, permissions, admins, dashboard }: Props) {
   const who = admins.join(", ");
@@ -35,11 +34,6 @@ export default function StaffHome({ account, permissions, admins, dashboard }: P
   return (
     <>
       <h1 className={styles.title}>{staffCopy.home.title}</h1>
-      {permissions.length === 0 && (
-        <p>
-          {staffCopy.home.none} {staffCopy.home.ask(who)}
-        </p>
-      )}
       {dashboard && <StaffDashboard dashboard={dashboard} permissions={permissions} />}
     </>
   );

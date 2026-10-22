@@ -64,13 +64,13 @@ export const staffCopy = {
         // Why it's held, and what to do.
         heldSyncDetail:
           "That's a lot of MPs, so please check it, and approve or decline it. Fix any problems in Airtable.",
-        decide: "Open Import",
+        decide: "Review import",
         blockedMp: (name: string) => `${name}'s email is bouncing`,
         blockedMpDetail: "Find a working email for this MP if it has changed, or unblock if working now.",
-        openMp: "Open MP",
-        failedImport: (job: string) => `⁂ ${job} failed`,
-        failedImportDetail: (error: string, at: string) => `⁂ ${error} · ${at}`,
-        seeRun: "See run",
+        openMp: "Fix MP email",
+        failedImport: (job: string) => `Import '${job}' failed`,
+        failedImportDetail: (error: string, at: string) => `${error} · ${at}`,
+        seeRun: "See failed run",
       },
       // The window: its length in days, each a link but the one shown.
       window: (days: number) => `${days} days`,
@@ -91,7 +91,7 @@ export const staffCopy = {
         unsubscribes: (n: number) => (n === 1 ? "unsubscribe from Luma emails" : "unsubscribes from Luma emails"),
       } as Record<string, (n: number) => string>,
       // A count of nothing, instead of a 0.
-      none: "⁂ None",
+      none: "None",
       // Beside the letters' number: those to the test MPs, left out of it.
       testLetters: (n: number) => `+${n} test`,
       // Under the number: against the window before.
@@ -100,14 +100,17 @@ export const staffCopy = {
         down: (n: number, days: number) => `▼ ${n} on the ${days} days before`,
         same: (days: number) => `Same as the ${days} days before`,
       },
-      // A sparkline: its name for screen readers, and the label on a point.
-      series: (what: string) => `⁂ ${what}, the last eight windows`,
+      // A sparkline's name, which only screen readers read: the tile's label
+      // ("event registrations"), and the span the line covers.
+      series: (what: string, days: number, points: number) =>
+        days === 7
+          ? `⁂ Sparkline of ${what}, week by week over the last ${points} weeks`
+          : `⁂ Sparkline of ${what}, ${days} days at a time over the last ${days * points} days`,
       // A point's label: the window it counts, by the day it begins.
       seriesPoint: (days: number, from: string, n: number) =>
-        days === 7 ? `⁂ Week beginning ${from}: ${n}` : `⁂ ${days} days beginning ${from}: ${n}`,
+        days === 7 ? `Week beginning ${from}: ${n}` : `${days} days beginning ${from}: ${n}`,
     },
     noAccount: "You don't have a staff account yet.",
-    none: "You have no permissions.",
     ask: (admins: string) => `Ask ${admins}.`,
   },
   // The supporters list (/staff/supporters) and a supporter's page.

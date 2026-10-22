@@ -15,6 +15,7 @@ import {
   isCampaignMetric,
   isSeriesMetric,
   METRIC_LINKS,
+  SERIES_POINTS,
   type SeriesMetric,
 } from "@/lib/staff-dashboard";
 import type { Permission } from "@/lib/staff-permissions";
@@ -134,7 +135,7 @@ function Tile({
       {isCampaignMetric(metric) && <CampaignBar counts={dashboard.byCampaign[metric as CampaignMetric]} />}
       {isSeriesMetric(metric) && (
         <Sparkline
-          name={copy.series(label)}
+          name={copy.series(label, dashboard.days, SERIES_POINTS)}
           values={dashboard.series[metric as SeriesMetric].map((point) => point.count)}
           labels={dashboard.series[metric as SeriesMetric].map((point) =>
             copy.seriesPoint(dashboard.days, staffDate(point.from), point.count),

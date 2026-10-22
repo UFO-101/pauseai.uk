@@ -43,13 +43,14 @@ function Decision({ id, decision, decide }: { id: number; decision: "apply" | "d
 }
 
 /** A copy of the MPs from Airtable: who was added, removed and changed. A held one can be applied or discarded, given `decide`. */
-function SyncRun({ run, decide }: { run: MpSync; decide?: Decide }) {
-  if (run.status === "failed") return <RunBox run={run} summary={null} />;
+function SyncRun({ run, decide, open }: { run: MpSync; decide?: Decide; open?: boolean }) {
+  if (run.status === "failed") return <RunBox run={run} summary={null} open={open} />;
   const { added, removed, changed } = run.result.changes;
   const count = changeCount(run.result.changes);
   return (
     <RunBox
       run={run}
+      open={open}
 
       lines={count}
       summary={
@@ -95,13 +96,14 @@ function sides(problem: MpProblem): [string, string] {
 }
 
 /** A check of Airtable's MPs against Parliament's: where they disagree. */
-function CheckRun({ run }: { run: MpCheck }) {
-  if (run.status === "failed") return <RunBox run={run} summary={null} />;
+function CheckRun({ run, open }: { run: MpCheck; open?: boolean }) {
+  if (run.status === "failed") return <RunBox run={run} summary={null} open={open} />;
   const { problems } = run.result;
   const count = problems.length;
   return (
     <RunBox
       run={run}
+      open={open}
 
       lines={count}
       summary={count === 0 ? staffCopy.check.allGood : staffCopy.check.problems(count)}
@@ -136,11 +138,11 @@ function CheckRun({ run }: { run: MpCheck }) {
 }
 
 /** A copy of ControlAI's letter's signatories: what it did, and the names it couldn't place. */
-function ControlAiRun({ run }: { run: ControlAiImport }) {
-  if (run.status === "failed") return <RunBox run={run} summary={null} />;
+function ControlAiRun({ run, open }: { run: ControlAiImport; open?: boolean }) {
+  if (run.status === "failed") return <RunBox run={run} summary={null} open={open} />;
   const { result } = run;
   return (
-    <RunBox run={run} summary={staffCopy.controlAi.result(result)} lines={result.problems.length}>
+    <RunBox run={run} summary={staffCopy.controlAi.result(result)} lines={result.problems.length} open={open}>
       {result.problems.length > 0 && (
         <Table>
           <thead>
@@ -167,17 +169,20 @@ function ControlAiRun({ run }: { run: ControlAiImport }) {
 }
 
 /** A copy of the signatories from Airtable: the counts. */
-function SignatoryRun({ run }: { run: SignatoryImport }) {
-  return <RunBox run={run} summary={run.status === "failed" ? null : staffCopy.import.result(run.result)} />;
+function SignatoryRun({ run, open }: { run: SignatoryImport; open?: boolean }) {
+  return (
+    <RunBox run={run} summary={run.status === "failed" ? null : staffCopy.import.result(run.result)} open={open} />
+  );
 }
 
 /** A copy of the Luma calendar: the counts, and why it stopped early, if it did. */
-function LumaRun({ run }: { run: LumaImport }) {
-  if (run.status === "failed") return <RunBox run={run} summary={null} />;
+function LumaRun({ run, open }: { run: LumaImport; open?: boolean }) {
+  if (run.status === "failed") return <RunBox run={run} summary={null} open={open} />;
   const { stoppedBy } = run.result;
   return (
     <RunBox
       run={run}
+      open={open}
 
       incomplete={stoppedBy !== undefined}
       summary={
@@ -190,18 +195,18 @@ function LumaRun({ run }: { run: LumaImport }) {
   );
 }
 
-/** One run from the import log, as its job's page shows it. */
-export default function Run({ run, decide }: { run: AnyImportRun; decide?: Decide }) {
+/** One run from the import log, as its job's page shows it; `open` starts its detail unfolded, however long. */
+export default function Run({ run, decide, open }: { run: AnyImportRun; decide?: Decide; open?: boolean }) {
   switch (run.job) {
     case "sync-mps":
-      return <SyncRun run={run} decide={decide} />;
+      return <SyncRun run={run} decide={decide} open={open} />;
     case "check-mps":
-      return <CheckRun run={run} />;
+      return <CheckRun run={run} open={open} />;
     case "import-controlai":
-      return <ControlAiRun run={run} />;
+      return <ControlAiRun run={run} open={open} />;
     case "import-signatories":
-      return <SignatoryRun run={run} />;
+      return <SignatoryRun run={run} open={open} />;
     case "import-luma":
-      return <LumaRun run={run} />;
+      return <LumaRun run={run} open={open} />;
   }
 }
