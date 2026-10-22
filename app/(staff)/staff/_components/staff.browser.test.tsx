@@ -280,6 +280,8 @@ describe("StaffDashboard", () => {
       .element(mps[2])
       .toHaveTextContent(`5${copy.metrics.mpsSigned(5)} ${pm.title} · 3 ${bill.title} · 2${copy.change.up(2, 7)}`);
     await expect.element(events[1]).toHaveTextContent(`9${copy.metrics.eventsHeld(9)}${copy.change.up(3, 7)}`);
+    // With a bar, the letters tile takes two columns, so its legend fits.
+    expect(mps[0].element().className).toMatch(/wide/);
     // The bar's segments are as wide as each campaign's share.
     const segments = mps[0].element().querySelectorAll("[data-campaign]");
     expect([...segments].map((segment) => (segment as HTMLElement).style.flexGrow)).toEqual(["9", "3", "", ""]);
@@ -330,6 +332,22 @@ describe("StaffDashboard", () => {
       .element(quiet[1])
       .toHaveTextContent(`${copy.none}${copy.metrics.lettersReplied(0)}${copy.change.down(1, 30)}`);
     expect(quiet[0].element().querySelectorAll("[data-campaign]")).toHaveLength(0);
+    // With no bar the letters tile takes one column like the rest; a line of nothing but zeros isn't drawn.
+    expect(quiet[0].element().className).not.toMatch(/wide/);
+    const flat = {
+      ...exampleQuietDashboard,
+      series: {
+        ...exampleQuietDashboard.series,
+        supportersAdded: exampleQuietDashboard.series.supportersAdded.map((point) => ({ ...point, count: 0 })),
+      },
+    };
+    await rerender(<StaffDashboard dashboard={flat} permissions={[]} />);
+    await expect
+      .element(page.getByRole("img", { name: copy.series(copy.metrics.supportersAdded(0), 30, 8) }))
+      .not.toBeInTheDocument();
+    await expect
+      .element(page.getByRole("img", { name: copy.series(copy.metrics.eventRegistrations(4), 30, 8) }))
+      .toBeVisible();
     await expect.element(page.getByText(copy.testLetters(0))).not.toBeInTheDocument();
   });
 });

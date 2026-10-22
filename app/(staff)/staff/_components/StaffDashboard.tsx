@@ -16,7 +16,6 @@ import {
   isSeriesMetric,
   METRIC_LINKS,
   SERIES_POINTS,
-  type SeriesMetric,
 } from "@/lib/staff-dashboard";
 import type { Permission } from "@/lib/staff-permissions";
 import { staffDate, staffDay, staffTime } from "@/lib/staff-time";
@@ -82,10 +81,9 @@ function Change({ count, worse, days }: { count: Count; worse: boolean; days: Da
   );
 }
 
-/** A bar split by campaign under a number, with each campaign's share in the legend. Nothing when the number is nothing. */
+/** A bar split by campaign under a number, with each campaign's share in the legend. Only for a number some campaign counted. */
 function CampaignBar({ counts }: { counts: Record<string, number> }) {
   const parts = campaigns.filter((campaign) => counts[campaign.slug] > 0);
-  if (parts.length === 0) return null;
   return (
     <>
       <span className={styles.bar} aria-hidden="true">
@@ -123,6 +121,10 @@ function Tile({
   const { href, permission, worse } = METRIC_LINKS[metric];
   const count = dashboard.counts[metric];
   const label = copy.metrics[metric](count.current);
+  // A bar only when some campaign counted, and the tile is wide only to fit one; a line only when some window counted.
+  const bar = isCampaignMetric(metric) && Object.values(dashboard.byCampaign[metric]).some((n) => n > 0);
+  const series = isSeriesMetric(metric) ? dashboard.series[metric] : [];
+  const line = series.some((point) => point.count > 0);
   const inside = (
     <>
       <span className={styles.number}>
@@ -132,14 +134,12 @@ function Tile({
         )}
       </span>
       <span className={styles.label}>{label}</span>
-      {isCampaignMetric(metric) && <CampaignBar counts={dashboard.byCampaign[metric as CampaignMetric]} />}
-      {isSeriesMetric(metric) && (
+      {bar && <CampaignBar counts={dashboard.byCampaign[metric as CampaignMetric]} />}
+      {line && (
         <Sparkline
           name={copy.series(label, dashboard.days, SERIES_POINTS)}
-          values={dashboard.series[metric as SeriesMetric].map((point) => point.count)}
-          labels={dashboard.series[metric as SeriesMetric].map((point) =>
-            copy.seriesPoint(dashboard.days, staffDate(point.from), point.count),
-          )}
+          values={series.map((point) => point.count)}
+          labels={series.map((point) => copy.seriesPoint(dashboard.days, staffDate(point.from), point.count))}
         />
       )}
       <Change count={count} worse={worse === true} days={dashboard.days} />
@@ -147,7 +147,7 @@ function Tile({
   );
   const linked = href !== undefined && (!permission || permissions.includes(permission));
   return (
-    <li className={isCampaignMetric(metric) ? styles.wide : undefined}>
+    <li className={bar ? styles.wide : undefined}>
       {linked ? (
         <Link href={href} className={styles.tile}>
           {inside}
