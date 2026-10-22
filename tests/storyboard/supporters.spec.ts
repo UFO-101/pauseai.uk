@@ -124,7 +124,8 @@ test("a supporter's page: who they are, what they gave, their history, and an op
     recorded: true,
   });
   await page.reload();
-  await expect(page.getByText(/^subscribed/)).toBeVisible();
+  // Following again, since before Luma's webhook: we can't be sure.
+  await expect(page.getByText(reasons["luma-calendar"].following("20 Sept 2026"), { exact: false })).toBeVisible();
   await expect(history.getByText(copy.detail.kinds.resubscribed, { exact: false })).toBeVisible();
   await frame(page, "subscribed again: the list says so, and the history keeps both");
 
@@ -233,13 +234,11 @@ test("a member who re-joined and ticked Keep me informed has their opt-out lifte
   await logInWithSupporters(page, flowDatabase);
   await page.goto(`${BASE}/staff/supporters`);
   await page.getByRole("link", { name: "Rhea Member" }).click();
-  // The opt-out lifted: on the updates, as asked when re-joining. "Why?" unfolds how we know.
+  // The opt-out lifted: on the updates, as asked when re-joining. The ? by its name says how we know.
   await expect(
     page.getByText(copy.detail.permissions.reasons["pauseai-updates"].asked("11 Oct 2026"), { exact: false }),
   ).toBeVisible();
-  await page
-    .getByText(copy.detail.permissions.reasons["pauseai-updates"].asked("11 Oct 2026"), { exact: false })
-    .click();
+  await page.getByRole("button", { name: copy.detail.permissions.why }).first().click();
   await expect(page.getByText(copy.detail.permissions.details["pauseai-updates"])).toBeVisible();
   const history = page.getByRole("list", { name: copy.detail.activityTitle });
   await expect(history.getByText(copy.detail.importReasons.resubscribed, { exact: false })).toBeVisible();

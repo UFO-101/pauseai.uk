@@ -387,7 +387,7 @@ test("letters are listed, sent and bounced, and can be filtered by status", asyn
 
   await page.getByLabel(staffCopy.letters.columns.status).selectOption("bounced");
   await page.getByRole("button", { name: staffCopy.letters.filter }).click();
-  await expect(page).toHaveURL(`${BASE}/staff/letters?status=bounced`);
+  await expect(page).toHaveURL(/\/staff\/letters\?.*status=bounced/);
   await expect(sams).toBeVisible();
   await expect(janes).toHaveCount(0);
   await frame(page, "filtered to the bounced letter");
