@@ -206,7 +206,19 @@ describe("StaffDashboard", () => {
     expect(callout.element().firstElementChild!.tagName.toLowerCase()).toBe("svg");
     expect(callout.getByRole("heading", { level: 2 }).element().textContent).toBe(copy.actionsTitle);
     expect(callout.element().className).toMatch(/red/);
-    expect(getComputedStyle(callout.element()).borderLeftWidth).toBe("1px");
+    // A thin border in the status colour all the way round, and the rules between items in the same colour.
+    const style = getComputedStyle(callout.element());
+    expect(style.borderLeftWidth).toBe("1px");
+    expect(style.borderLeftColor).toBe(style.borderTopColor);
+    expect(style.borderLeftColor).not.toBe(getComputedStyle(document.body).borderLeftColor);
+    const rule = getComputedStyle(callout.getByRole("listitem").nth(1).element()).borderTopColor;
+    expect(rule).not.toBe("rgba(0, 0, 0, 0)");
+    // The heading is larger and bolder than the items' words; the buttons are smaller than the usual small one.
+    const heading = getComputedStyle(callout.getByRole("heading", { level: 2 }).element());
+    const words = getComputedStyle(callout.getByRole("listitem").first().element().querySelector("span")!);
+    expect(parseFloat(heading.fontSize)).toBeGreaterThan(parseFloat(words.fontSize));
+    expect(Number(heading.fontWeight)).toBeGreaterThan(Number(words.fontWeight));
+    expect(getComputedStyle(callout.getByRole("link").first().element()).paddingTop).toBe("4px");
     // With only a held import, which is waiting rather than broken, it's amber.
     await rerender(
       <StaffDashboard

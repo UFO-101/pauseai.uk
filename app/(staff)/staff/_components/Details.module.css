@@ -56,7 +56,7 @@
 
 /* A politician whose address is blocked: one red alert under the name,
    its icon at the left and beside it the title, why, what to check, and
-   the form. Tinted, with the ordinary border. */
+   the form. Tinted, with a thin red border. */
 .blocked {
   display: flex;
   gap: var(--space-3);
@@ -64,7 +64,7 @@
   max-width: 40rem;
   margin-block: var(--space-4);
   padding: var(--space-4);
-  border: 1px solid var(--border);
+  border: 1px solid var(--status-red);
   border-radius: var(--radius-md);
   background: var(--status-red-bg);
 }
