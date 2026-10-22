@@ -1,9 +1,9 @@
 import type { Dashboard, SeriesPoint } from "@/lib/staff-dashboard";
 
-/** Weekly counts as a sparkline's points, the last week ending at the example's `asOf`. */
-function weekly(counts: number[]): SeriesPoint[] {
+/** Counts as a sparkline's points, windows of `days`, the last ending at the example's `asOf`. */
+function windows(counts: number[], days = 7): SeriesPoint[] {
   return counts.map((count, i) => ({
-    from: new Date(Date.UTC(2026, 9, 21, 12) - (counts.length - i) * 7 * 24 * 60 * 60 * 1000).toISOString(),
+    from: new Date(Date.UTC(2026, 9, 21, 12) - (counts.length - i) * days * 24 * 60 * 60 * 1000).toISOString(),
     count,
   }));
 }
@@ -32,8 +32,8 @@ export const exampleDashboard: Dashboard = {
     mpsSigned: { "regulate-letter-pm": 3, "support-sobel-bill": 2 },
   },
   series: {
-    eventRegistrations: weekly([70, 105, 376, 144, 220, 338, 498, 277]),
-    supportersAdded: weekly([37, 57, 168, 58, 157, 223, 437, 176]),
+    eventRegistrations: windows([70, 105, 376, 144, 220, 338, 498, 277]),
+    supportersAdded: windows([37, 57, 168, 58, 157, 223, 437, 176]),
   },
   actions: [
     { kind: "held-sync", at: "2026-10-21T00:00:00.000Z", added: 0, removed: 21, changed: 3 },
@@ -65,8 +65,8 @@ export const exampleQuietDashboard: Dashboard = {
   testLetters: 0,
   byCampaign: { lettersSent: {}, mpsSigned: {} },
   series: {
-    eventRegistrations: weekly([0, 2, 0, 1, 3, 0, 4, 4]),
-    supportersAdded: weekly([0, 0, 0, 0, 0, 0, 2, 0]),
+    eventRegistrations: windows([0, 2, 0, 1, 3, 0, 4, 4], 30),
+    supportersAdded: windows([0, 0, 0, 0, 0, 0, 2, 0], 30),
   },
   actions: [],
 };

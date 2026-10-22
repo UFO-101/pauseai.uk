@@ -60,7 +60,7 @@ export const staffCopy = {
       // What's waiting for someone, shown only when something is: each kind of item, its detail, and its button.
       actionsTitle: "Needs a person",
       actions: {
-        heldSync: "⁂ MP import held",
+        heldSync: "MP import held",
         // Why it's held: the change is bigger than an import makes without a person checking.
         heldSyncDetail: (
           changes: number,
@@ -71,45 +71,47 @@ export const staffCopy = {
           since: string,
         ) =>
           `⁂ ${changes} MPs would change, more than the ${limit} an import changes without someone checking: ${added} added, ${removed} gone, ${changed} changed · since ${since}`,
-        decide: "⁂ Apply or discard",
+        decide: "Apply or discard",
         blockedMp: (name: string) => `⁂ ${name}'s email bounced`,
-        blockedMpDetail: (reason: string, since: string) => `⁂ Address blocked since ${since}: ${reason}`,
-        openMp: "⁂ Open MP",
+        blockedMpDetail: (reason: string, since: string) => `Address blocked since ${since}: ${reason}`,
+        openMp: "Open MP",
         failedImport: (job: string) => `⁂ ${job} failed`,
         failedImportDetail: (error: string, at: string) => `⁂ ${error} · ${at}`,
-        seeRun: "⁂ See run",
+        seeRun: "See run",
       },
       // The window: its length in days, each a link but the one shown.
       window: (days: number) => `${days} days`,
       windows: "Show",
       sections: {
-        mps: "⁂ MPs",
-        events: "⁂ Events",
-        supporters: "⁂ Supporters",
+        mps: "MPs",
+        events: "Events",
+        supporters: "Supporters",
       } as Record<string, string>,
       // After each number: what it counts, for one and for more.
       metrics: {
-        lettersSent: (n: number) => (n === 1 ? "⁂ letter to an MP" : "⁂ letters to MPs"),
-        lettersReplied: (n: number) => (n === 1 ? "⁂ letter got a reply" : "⁂ letters got a reply"),
-        mpsSigned: (n: number) => (n === 1 ? "⁂ MP signed" : "⁂ MPs signed"),
-        eventRegistrations: (n: number) => (n === 1 ? "⁂ event registration" : "⁂ event registrations"),
-        eventsHeld: (n: number) => (n === 1 ? "⁂ event held" : "⁂ events held"),
-        supportersAdded: (n: number) => (n === 1 ? "⁂ new supporter" : "⁂ new supporters"),
-        unsubscribes: (n: number) => (n === 1 ? "⁂ unsubscribe from Luma emails" : "⁂ unsubscribes from Luma emails"),
+        lettersSent: (n: number) => (n === 1 ? "letter to an MP" : "letters to MPs"),
+        lettersReplied: (n: number) => (n === 1 ? "letter got a reply" : "letters got a reply"),
+        mpsSigned: (n: number) => (n === 1 ? "MP signed" : "MPs signed"),
+        eventRegistrations: (n: number) => (n === 1 ? "event registration" : "event registrations"),
+        eventsHeld: (n: number) => (n === 1 ? "event held" : "events held"),
+        supportersAdded: (n: number) => (n === 1 ? "new supporter" : "new supporters"),
+        unsubscribes: (n: number) => (n === 1 ? "unsubscribe from Luma emails" : "unsubscribes from Luma emails"),
       } as Record<string, (n: number) => string>,
       // A count of nothing, instead of a 0.
       none: "⁂ None",
       // Beside the letters' number: those to the test MPs, left out of it.
-      testLetters: (n: number) => `⁂ +${n} test`,
+      testLetters: (n: number) => `+${n} test`,
       // Under the number: against the window before.
       change: {
-        up: (n: number, days: number) => `⁂ ▲ ${n} on the ${days} days before`,
-        down: (n: number, days: number) => `⁂ ▼ ${n} on the ${days} days before`,
-        same: (days: number) => `⁂ Same as the ${days} days before`,
+        up: (n: number, days: number) => `▲ ${n} on the ${days} days before`,
+        down: (n: number, days: number) => `▼ ${n} on the ${days} days before`,
+        same: (days: number) => `Same as the ${days} days before`,
       },
       // A sparkline: its name for screen readers, and the label on a point.
       series: (what: string) => `⁂ ${what}, the last eight windows`,
-      seriesPoint: (from: string, n: number) => `⁂ From ${from}: ${n}`,
+      // A point's label: the window it counts, by the day it begins.
+      seriesPoint: (days: number, from: string, n: number) =>
+        days === 7 ? `⁂ Week beginning ${from}: ${n}` : `⁂ ${days} days beginning ${from}: ${n}`,
     },
     noAccount: "You don't have a staff account yet.",
     none: "You have no permissions.",

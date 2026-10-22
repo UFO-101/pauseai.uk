@@ -84,8 +84,9 @@ export default function PrivacyPolicy() {
           Turnstile guards the form; Postmark sends the letter from an address of
           ours and forwards the MP's reply to the sender; we keep the sender's
           details, the subject, campaign, MP and status, not the letter's text;
-          bounces and spam complaints are kept against the address; the policy
-          team keeps a copy of the sender, subject and message in Airtable. */}
+          bounces and spam complaints are kept against the address; each letter
+          is Bcc'd, and each reply forwarded, to the policy team's inbox
+          (REPLIES_INBOX), which is in Gmail. */}
       <h2>⁂ Email your MP</h2>
       <p>
         ⁂ When you write to your MP through this site, we keep your name, email address, postal address and postcode,
@@ -93,9 +94,9 @@ export default function PrivacyPolicy() {
         along with whether you ticked the box to hear about events and ways to help. Your postcode goes to postcodes.io
         to find your constituency, and the form is protected by Cloudflare Turnstile. Postmark sends the letter from an
         address of ours, so that your MP&apos;s reply comes back to us and is forwarded to you; we keep that a reply
-        came and who from, not the reply. We don&apos;t keep the letter&apos;s text here; our policy team keeps a copy
-        of the letter, with your name and email, in Airtable. If an email to you or to your MP bounces or is marked as
-        spam, we keep a record of that against the address so we don&apos;t send to it again.
+        came and who from, not the reply. We don&apos;t keep the letter&apos;s text here; a copy of your letter, and of
+        your MP&apos;s reply, is emailed to our policy team&apos;s inbox in Gmail. If an email to you or to your MP
+        bounces or is marked as spam, we keep a record of that against the address so we don&apos;t send to it again.
       </p>
 
       <h2>⁂ Events and Luma</h2>
@@ -126,6 +127,9 @@ export default function PrivacyPolicy() {
         <li>⁂ Cloudflare: our nightly database backup, kept for 90 days, and Turnstile, the anti-spam check.</li>
         <li>⁂ postcodes.io: looking up postcodes; it keeps nothing.</li>
         <li>⁂ Airtable: our policy team&apos;s copy of letters.</li>
+        <li>
+          ⁂ Google (Gmail): our policy team&apos;s inbox, which gets a copy of each letter and of each MP&apos;s reply.
+        </li>
       </ul>
 
       <h2>⁂ How long we keep it</h2>

@@ -3,6 +3,7 @@ import { render } from "vitest-browser-react";
 import { page } from "vitest/browser";
 import { campaigns } from "@/lib/content/email-your-mp";
 import { campaignPath } from "@/lib/email-your-mp";
+import { staffDate } from "@/lib/staff-time";
 import { jobTitles, staffCopy } from "@/lib/content/staff-interface";
 import { MAX_UNCHECKED_CHANGES } from "@/lib/mps";
 import type { AnyImportRun, ControlAiImport, MpCheck, MpSync, SignatoryImport } from "@/lib/import-runs";
@@ -184,7 +185,7 @@ describe("StaffHome", () => {
 describe("StaffDashboard", () => {
   const copy = staffCopy.home.dashboard;
 
-  it("lists what needs a person in a box of its own, a dot and a button each, or shows nothing", async () => {
+  it("lists what needs a person under a label, an alert each with its icon and button, or shows nothing", async () => {
     const { rerender } = await render(<StaffDashboard dashboard={exampleDashboard} permissions={[]} />);
     const items = page.getByRole("list", { name: copy.actionsTitle }).getByRole("listitem").all();
     expect(items.map((item) => item.element().textContent)).toEqual([
@@ -192,10 +193,13 @@ describe("StaffDashboard", () => {
       `${copy.actions.blockedMp("Bouncy McTestface MP")}${copy.actions.blockedMpDetail("The address does not exist", "19 Oct 2026")}${copy.actions.openMp}`,
       `${copy.actions.failedImport(jobTitles["import-controlai"])}${copy.actions.failedImportDetail("No PDF linked", "2026-10-21 02:00")}${copy.actions.seeRun}`,
     ]);
-    const dot = (i: number) => items[i].element().querySelector("span")!.className;
-    expect(dot(0)).toMatch(/amber/);
-    expect(dot(1)).toMatch(/red/);
-    expect(dot(2)).toMatch(/red/);
+    // Each item is its own alert: amber with a pause while it waits, red with a warning when something's broken.
+    const tone = (i: number) => items[i].element().className.match(/amber|red/)?.[0];
+    expect([0, 1, 2].map(tone)).toEqual(["amber", "red", "red"]);
+    const icon = (i: number) => items[i].element().querySelector("svg path")!.getAttribute("d")!;
+    expect(icon(1)).toBe(icon(2));
+    expect(icon(0)).not.toBe(icon(1));
+    expect(getComputedStyle(items[1].element()).borderLeftWidth).toBe("1px");
     await expect
       .element(page.getByRole("link", { name: copy.actions.decide }))
       .toHaveAttribute("href", "/staff/import-data/mps");
@@ -205,18 +209,12 @@ describe("StaffDashboard", () => {
     await expect
       .element(page.getByRole("link", { name: copy.actions.seeRun }))
       .toHaveAttribute("href", "/staff/import-data/controlai");
-    // The heading is inside the box. Red while something in it is broken; amber when it's only waiting.
-    const box = page.getByRole("region", { name: copy.actionsTitle });
-    expect(box.getByRole("heading", { level: 2 }).element().textContent).toBe(copy.actionsTitle);
-    const panel = () => box.element().className;
-    expect(panel()).toMatch(/urgent/);
-    await rerender(
-      <StaffDashboard
-        dashboard={{ ...exampleDashboard, actions: exampleDashboard.actions.slice(0, 1) }}
-        permissions={[]}
-      />,
-    );
-    expect(panel()).not.toMatch(/urgent/);
+    // A small label over them, in capitals, and no box around them all.
+    const section = page.getByRole("region", { name: copy.actionsTitle });
+    const label = section.getByRole("heading", { level: 2 }).element();
+    expect(label.textContent).toBe(copy.actionsTitle);
+    expect(getComputedStyle(label).textTransform).toBe("uppercase");
+    expect(getComputedStyle(section.element()).borderTopWidth).toBe("0px");
 
     await rerender(<StaffDashboard dashboard={exampleQuietDashboard} permissions={[]} />);
     await expect.element(page.getByText(copy.actionsTitle)).not.toBeInTheDocument();
@@ -270,6 +268,13 @@ describe("StaffDashboard", () => {
     const sparkline = (label: string) => page.getByRole("img", { name: copy.series(label) });
     await expect.element(sparkline(copy.metrics.eventRegistrations(277))).toBeVisible();
     await expect.element(sparkline(copy.metrics.supportersAdded(176))).toBeVisible();
+    // Pointing at a point names its week by the day it begins.
+    const line = sparkline(copy.metrics.eventRegistrations(277)).element();
+    const box = line.getBoundingClientRect();
+    line.dispatchEvent(new PointerEvent("pointermove", { clientX: box.right - 1, clientY: box.top, bubbles: true }));
+    await expect
+      .element(page.getByRole("status"))
+      .toHaveTextContent(copy.seriesPoint(7, staffDate(exampleDashboard.series.eventRegistrations[7].from), 277));
     expect(page.getByRole("img").all()).toHaveLength(2);
     // The whole tile is the link; a tile with no page isn't one.
     const tileLink = (text: string) => page.getByText(text).element().closest("a");
@@ -284,6 +289,14 @@ describe("StaffDashboard", () => {
 
     // A quiet month: nothing reads "None", with no test letters and no bar; the change is over 30 days.
     await rerender(<StaffDashboard dashboard={exampleQuietDashboard} permissions={[]} />);
+    const month = page.getByRole("img", { name: copy.series(copy.metrics.eventRegistrations(4)) }).element();
+    const monthBox = month.getBoundingClientRect();
+    month.dispatchEvent(
+      new PointerEvent("pointermove", { clientX: monthBox.right - 1, clientY: monthBox.top, bubbles: true }),
+    );
+    await expect
+      .element(page.getByRole("status"))
+      .toHaveTextContent(copy.seriesPoint(30, staffDate(exampleQuietDashboard.series.eventRegistrations[7].from), 4));
     const quiet = group("mps");
     await expect
       .element(quiet[0])

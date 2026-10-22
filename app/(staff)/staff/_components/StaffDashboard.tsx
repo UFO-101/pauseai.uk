@@ -27,13 +27,28 @@ import { Muted } from "@/components/ui/Text";
 
 const copy = staffCopy.home.dashboard;
 
-/** One thing waiting for a person: a dot for how bad, what it is, its detail, and its button. */
+/** A small icon for how bad an item is: a pause for something waiting, a warning triangle for something broken. */
+function AlertIcon({ tone }: { tone: "amber" | "red" }) {
+  return (
+    <svg className={styles.icon} viewBox="0 0 24 24" aria-hidden="true">
+      <path
+        d={
+          tone === "amber"
+            ? "M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm0 2a8 8 0 1 1 0 16 8 8 0 0 1 0-16zM9 8v8h2V8H9zm4 0v8h2V8h-2z"
+            : "M12 2 1 21h22L12 2zm0 4.8L19.5 19h-15L12 6.8zM11 10v5h2v-5h-2zm0 6v2h2v-2h-2z"
+        }
+      />
+    </svg>
+  );
+}
+
+/** One thing waiting for a person, as an alert of its own: tinted amber while it waits, red when something's broken, with its icon, what it is, its detail, and its button. */
 function Action({ action }: { action: DashboardAction }) {
   const words = copy.actions;
   const [tone, title, detail, button, href] =
     action.kind === "held-sync"
       ? [
-          styles.amber,
+          "amber" as const,
           words.heldSync,
           words.heldSyncDetail(
             action.added + action.removed + action.changed,
@@ -48,22 +63,22 @@ function Action({ action }: { action: DashboardAction }) {
         ]
       : action.kind === "blocked-mp"
         ? [
-            styles.red,
+            "red" as const,
             words.blockedMp(action.name),
             words.blockedMpDetail(action.reason, staffDate(action.at)),
             words.openMp,
             `/staff/politicians/${action.politicianId}`,
           ]
         : [
-            styles.red,
+            "red" as const,
             words.failedImport(jobTitles[action.job]),
             words.failedImportDetail(action.error, staffTime(action.at)),
             words.seeRun,
             importPath(action.job),
           ];
   return (
-    <li className={styles.action}>
-      <span className={`${styles.dot} ${tone}`} aria-hidden="true" />
+    <li className={`${styles.action} ${styles[tone]}`}>
+      <AlertIcon tone={tone} />
       <span className={styles.what}>
         <span>{title}</span>
         <Muted>{detail}</Muted>
@@ -143,7 +158,7 @@ function Tile({
           name={copy.series(label)}
           values={dashboard.series[metric as SeriesMetric].map((point) => point.count)}
           labels={dashboard.series[metric as SeriesMetric].map((point) =>
-            copy.seriesPoint(staffDate(point.from), point.count),
+            copy.seriesPoint(dashboard.days, staffDate(point.from), point.count),
           )}
         />
       )}
@@ -188,8 +203,8 @@ function Tiles({
 }
 
 /**
- * The home page's dashboard: what needs a person, in a box of its own,
- * only when something does; the day and the window, with the other windows as links; the
+ * The home page's dashboard: what needs a person, an alert for each
+ * thing, only when something does; the day and the window, with the other windows as links; the
  * window's numbers in three groups, each against the window before.
  */
 export default function StaffDashboard({
@@ -202,11 +217,10 @@ export default function StaffDashboard({
   return (
     <>
       {dashboard.actions.length > 0 && (
-        <section
-          className={`${styles.actions} ${dashboard.actions.some((action) => action.kind !== "held-sync") ? styles.urgent : ""}`}
-          aria-labelledby="actions-title"
-        >
-          <h2 id="actions-title">{copy.actionsTitle}</h2>
+        <section className={styles.actions} aria-labelledby="actions-title">
+          <h2 id="actions-title" className={styles.actionsLabel}>
+            {copy.actionsTitle}
+          </h2>
           <ul aria-label={copy.actionsTitle}>
             {dashboard.actions.map((action, i) => (
               <Action key={i} action={action} />

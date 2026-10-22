@@ -6,26 +6,22 @@
   font-size: var(--text-lg);
 }
 
-/* What needs a person: a tinted box with the ordinary border, its heading inside,
-   amber while everything in it is only waiting, red once something in it
-   is broken. Under the heading, a row each: its dot, its words, and its
-   button at the end, no wider than a line that reads. */
+/* What needs a person: a small label, then an alert for each item, no
+   wider than a line that reads. Each is tinted by how bad it is, amber
+   while it waits and red when something is broken, with the ordinary
+   border; its icon, its words, and its button at the end. */
 .actions {
   max-width: 40rem;
   margin: 0 0 var(--space-6);
-  padding: var(--space-4);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  background: var(--status-amber-bg);
 }
 
-.actions.urgent {
-  background: var(--status-red-bg);
-}
-
-.actions h2 {
-  margin: 0 0 var(--space-3);
-  font-size: var(--text-lg);
+.actionsLabel {
+  margin: 0 0 var(--space-2);
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 
 .actions ul {
@@ -41,10 +37,31 @@
   grid-template-columns: auto minmax(0, 1fr) auto;
   gap: var(--space-3);
   align-items: center;
-  padding: var(--space-2) var(--space-3);
+  padding: var(--space-3);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
-  background: var(--surface);
+}
+
+.action.amber {
+  background: var(--status-amber-bg);
+}
+
+.action.red {
+  background: var(--status-red-bg);
+}
+
+.icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  fill: currentcolor;
+}
+
+.amber .icon {
+  color: var(--status-amber);
+}
+
+.red .icon {
+  color: var(--status-red);
 }
 
 .what {
@@ -52,22 +69,6 @@
   gap: var(--space-1);
   min-width: 0;
   font-size: var(--text-sm);
-}
-
-/* A dot: amber for something waiting, red for something broken. */
-.dot {
-  width: 0.6rem;
-  height: 0.6rem;
-  border-radius: var(--radius-pill);
-  background: var(--border-strong);
-}
-
-.dot.amber {
-  background: var(--status-amber);
-}
-
-.dot.red {
-  background: var(--status-red);
 }
 
 /* The day, then the windows: the one shown in bold, the others links. */
