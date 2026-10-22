@@ -386,7 +386,7 @@ export const staffCopy = {
       after:
         " are marked as signed for the “Support the Artificial Superintelligence Bill” campaign. This can't be changed by hand.",
     },
-    importNow: "Import ControlAI letter",
+    importNow: "Import ControlAI letter now",
     never: "Not read yet.",
     result: (r: { signatories: number; matched: number; added: number; removed: number }) =>
       `${r.signatories} names, ${r.matched} found here; ${r.added} added, ${r.removed} removed.`,
@@ -402,7 +402,7 @@ export const staffCopy = {
       link: "our Luma calendar",
       after: ", who registered for each, and who follows the calendar, every hour.",
     },
-    importNow: "Import Luma",
+    importNow: "Import Luma now",
     never: "Not imported yet.",
     // The counts of a run, then why it stopped early, if it did.
     result: (r: {
@@ -433,7 +433,7 @@ export const staffCopy = {
     },
     /** The test MPs (lib/test-mps.json) aren't in Airtable; every import adds any that are missing. */
     testMps: "Each import also adds the test MPs, who aren’t in Airtable, if any are missing.",
-    syncNow: "Import MPs",
+    syncNow: "Import MPs now",
     none: "Not yet imported.",
     added: "Added",
     removed: "Removed",
@@ -467,7 +467,7 @@ export const staffCopy = {
       after:
         ", and lists where they disagree. Nothing is changed: fix problems in Airtable, and the next import copies the fix.",
     },
-    checkNow: "Check MPs",
+    checkNow: "Check MPs now",
     never: "Never checked",
     allGood: "All good.",
     problems: (n: number) => `${n} problem${n === 1 ? "" : "s"}`,
@@ -504,7 +504,7 @@ export const staffCopy = {
     hourly: "Hourly",
     oneOff: "One-off",
     checkOnly: "Check only",
-    button: "Import signatories",
+    button: "Import signatories now",
     none: "Not imported yet.",
     note: "From Airtable",
     // matched + added is everyone ticked in Airtable; alreadySet is those of them already marked here.
