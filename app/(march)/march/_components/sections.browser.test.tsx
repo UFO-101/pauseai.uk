@@ -65,10 +65,22 @@ describe("the sign-up's sections", () => {
     }
   });
 
-  it("shows only the crowd on a phone", async () => {
-    await render(<SignupPhotos />);
-    expect(page.getByRole("img").all()).toHaveLength(1);
-    await expect.element(page.getByRole("img", { name: /A crowd of marchers/ })).toBeVisible();
+  it("has a phone swipe through the photos one at a time, the dots following", async () => {
+    const { container } = await render(<SignupPhotos />);
+    const track = container.querySelector<HTMLElement>(`.${m("photo-track")}`)!;
+    const dots = [...container.querySelectorAll(`.${m("photo-dot")}`)];
+    const shown = () => dots.map((dot) => dot.classList.contains(m("photo-dot-shown")));
+    expect(page.getByRole("img").all()).toHaveLength(4);
+    expect(shown()).toEqual([true, false, false, false]);
+    await expect.element(page.getByRole("img", { name: /orange PauseAI banner/ })).toBeInViewport();
+    await expect.element(page.getByRole("img", { name: /A crowd of marchers/ })).not.toBeInViewport();
+
+    // A scroll that stops partway along snaps to the nearest photo.
+    track.scrollTo({ left: track.clientWidth * 1.8, behavior: "instant" });
+    await expect.poll(shown).toEqual([false, false, true, false]);
+    const crowd = page.getByRole("img", { name: /A crowd of marchers/ }).element();
+    await expect.poll(() => crowd.getBoundingClientRect().left - track.getBoundingClientRect().left).toBeCloseTo(0, 0);
+    await expect.element(page.getByRole("img", { name: /A crowd of marchers/ })).toBeInViewport({ ratio: 1 });
   });
 
   it("maps the route's start and end", async () => {
