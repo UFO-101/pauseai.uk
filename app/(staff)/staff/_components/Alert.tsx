@@ -1,18 +1,15 @@
 import type { ReactNode } from "react";
-import AlertIcon from "./AlertIcon";
-import styles from "./Alert.module.css";
+import Strip from "./ui/Strip";
 
 /**
- * A message that something is wrong or waiting, drawn as the staff pages'
- * alerts are: the status tint, a thin border in its colour, and its icon at
- * the left. Red for an error, read out at once (role="alert"); amber for
- * something waiting.
+ * A message that something is wrong or waiting, as a strip read out at
+ * once (ui/Strip): red for an error, as an alert; amber for something
+ * waiting, as a status.
  */
 export default function Alert({ tone = "red", children }: { tone?: "amber" | "red"; children: ReactNode }) {
   return (
-    <div className={`${styles.alert} ${styles[tone]}`} role={tone === "red" ? "alert" : "status"}>
-      <AlertIcon tone={tone} />
-      <div className={styles.body}>{children}</div>
-    </div>
+    <Strip tone={tone} announce>
+      <span>{children}</span>
+    </Strip>
   );
 }

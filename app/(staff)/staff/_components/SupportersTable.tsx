@@ -1,6 +1,4 @@
 import Link from "next/link";
-import { ButtonLink } from "@/components/ui/Button";
-import Actions from "@/components/ui/Actions";
 import Table from "@/components/ui/Table";
 import { Muted } from "@/components/ui/Text";
 import { staffCopy } from "@/lib/content/staff-interface";
@@ -9,6 +7,7 @@ import type { SupportersSearch } from "@/lib/staff-search";
 import { staffDate } from "@/lib/staff-time";
 import { parseSort, sortHref } from "@/lib/staff-sort";
 import { SUPPORTER_SORTS, type SupporterSort } from "@/lib/supporters";
+import Paging from "./Paging";
 import SortHeading from "./SortHeading";
 import SupporterBadges from "./SupporterBadges";
 import styles from "./SupportersTable.module.css";
@@ -86,22 +85,7 @@ export default function SupportersTable({ page, search }: { page: SupportersPage
           ))}
         </tbody>
       </Table>
-      {page.pages > 1 && (
-        <div className={styles.paging}>
-          <Actions>
-            {current > 1 && (
-              <ButtonLink variant="ghost" size="small" href={pageHref(search, current - 1)}>
-                {copy.previous}
-              </ButtonLink>
-            )}
-            {current < page.pages && (
-              <ButtonLink variant="ghost" size="small" href={pageHref(search, current + 1)}>
-                {copy.next}
-              </ButtonLink>
-            )}
-          </Actions>
-        </div>
-      )}
+      <Paging page={current} pages={page.pages} href={(n) => pageHref(search, n)} />
     </>
   );
 }

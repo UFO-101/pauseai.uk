@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { SubmitButton } from "@/components/ui/SubmitButton";
 import { SOBEL_BILL_CAMPAIGN } from "@/lib/controlai-letter";
 import { campaignBySlug, trackedCampaigns } from "@/lib/email-your-mp";
 import { staffCopy } from "@/lib/content/staff-interface";
@@ -16,19 +15,17 @@ const bill = campaignBySlug(SOBEL_BILL_CAMPAIGN)!;
 
 type Props = {
   politicians: Politician[];
-  /** Marks one as signed, or not, for a campaign staff record: politicianId, campaign, signed. */
-  markSigned: (form: FormData) => void | Promise<void>;
   /** The list's filters and sort as typed, for the headings' links. */
   search?: Record<string, string>;
 };
 
 /**
  * Politicians, how many letters they've had and answered, and their status
- * for each campaign. The letter to the PM is marked signed here, with a
- * button. The bill's column only shows who signed ControlAI's letter:
- * that's set by the nightly import, never by hand.
+ * for each campaign. Statuses are changed on each politician's page; the
+ * bill's column shows who signed ControlAI's letter, set by the nightly
+ * import.
  */
-export default function PoliticianTable({ politicians, markSigned, search = {} }: Props) {
+export default function PoliticianTable({ politicians, search = {} }: Props) {
   if (politicians.length === 0) return <p>{staffCopy.politicians.none}</p>;
   const { sort, dir, ...filters } = search;
   const current = parseSort(POLITICIAN_SORTS, "name", sort, dir);
@@ -74,21 +71,15 @@ export default function PoliticianTable({ politicians, markSigned, search = {} }
             {trackedCampaigns.map((c) => {
               const status = p.statuses[c.slug];
               return (
-                <td key={c.slug}>
-                  <form className={styles.signed} action={markSigned} aria-label={`${c.title}: ${p.name}`}>
-                    <input type="hidden" name="politicianId" value={p.id} />
-                    <input type="hidden" name="campaign" value={c.slug} />
-                    <input type="hidden" name="signed" value={status ? "" : "1"} />
-                    {status && (
-                      <span>
-                        {staffCopy.statuses[status.status]}
-                        {status.date && <Muted> {status.date}</Muted>}
-                      </span>
-                    )}
-                    <SubmitButton variant="ghost" size="small">
-                      {status ? staffCopy.politicians.unmarkSigned : staffCopy.politicians.markSigned}
-                    </SubmitButton>
-                  </form>
+                <td key={c.slug} className={styles.signed}>
+                  {status ? (
+                    <>
+                      {staffCopy.statuses[status.status]}
+                      {status.date && <Muted> {status.date}</Muted>}
+                    </>
+                  ) : (
+                    <Muted>{staffCopy.statuses.none}</Muted>
+                  )}
                 </td>
               );
             })}

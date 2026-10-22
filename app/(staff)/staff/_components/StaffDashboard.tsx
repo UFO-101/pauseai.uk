@@ -19,7 +19,8 @@ import {
 } from "@/lib/staff-dashboard";
 import type { Permission } from "@/lib/staff-permissions";
 import { staffDate, staffDay, staffTime } from "@/lib/staff-time";
-import AlertIcon from "./AlertIcon";
+import Grid, { spanClass } from "./ui/Grid";
+import Strip from "./ui/Strip";
 import Sparkline from "./Sparkline";
 import styles from "./StaffDashboard.module.css";
 import { ButtonLink } from "@/components/ui/Button";
@@ -27,7 +28,7 @@ import { Muted } from "@/components/ui/Text";
 
 const copy = staffCopy.home.dashboard;
 
-/** One thing waiting for a person: what it is, its detail, and its button. */
+/** One thing waiting for a person, as a strip: amber waiting for a decision, red broken; what it is, its detail, and its button. */
 function Action({ action }: { action: DashboardAction }) {
   const words = copy.actions;
   const [title, detail, button, href] =
@@ -52,21 +53,20 @@ function Action({ action }: { action: DashboardAction }) {
             importPath(action.job),
           ];
   return (
-    <li className={styles.action}>
-      <span className={styles.what}>
+    <li>
+      <Strip
+        tone={action.kind === "held-sync" ? "amber" : "red"}
+        action={
+          <ButtonLink href={href} variant="primary" size="small" fit>
+            {button}
+          </ButtonLink>
+        }
+      >
         <span>{title}</span>
-        <Muted>{detail}</Muted>
-      </span>
-      <ButtonLink href={href} variant="primary" size="small" fit>
-        {button}
-      </ButtonLink>
+        <span>{detail}</span>
+      </Strip>
     </li>
   );
-}
-
-/** The callout's colour: amber while everything in it is only waiting for a decision, red once something in it is broken. */
-function actionsTone(actions: DashboardAction[]): "amber" | "red" {
-  return actions.every((action) => action.kind === "held-sync") ? "amber" : "red";
 }
 
 /** The window against the one before: up or down by how many, green when that's good and red when it's bad, or the same. */
@@ -147,7 +147,7 @@ function Tile({
   );
   const linked = href !== undefined && (!permission || permissions.includes(permission));
   return (
-    <li className={bar ? styles.wide : undefined}>
+    <li className={spanClass(bar ? 4 : 2)}>
       {linked ? (
         <Link href={href} className={styles.tile}>
           {inside}
@@ -173,17 +173,17 @@ function Tiles({
   return (
     <>
       <h2 className={styles.heading}>{copy.sections[section]}</h2>
-      <ul className={styles.tiles} aria-label={copy.sections[section]}>
+      <Grid as="ul" label={copy.sections[section]} even>
         {metrics.map((metric) => (
           <Tile key={metric} metric={metric} dashboard={dashboard} permissions={permissions} />
         ))}
-      </ul>
+      </Grid>
     </>
   );
 }
 
 /**
- * The home page's dashboard: what needs a person, in one callout, only
+ * The home page's dashboard: what needs a person, a strip each, only
  * when something does; the day and the window, with the other windows as links; the
  * window's numbers in three groups, each against the window before.
  */
@@ -197,22 +197,11 @@ export default function StaffDashboard({
   return (
     <>
       {dashboard.actions.length > 0 && (
-        <section
-          className={`${styles.actions} ${styles[actionsTone(dashboard.actions)]}`}
-          aria-labelledby="actions-title"
-        >
-          <AlertIcon tone={actionsTone(dashboard.actions)} />
-          <div className={styles.actionsBody}>
-            <h2 id="actions-title" className={styles.actionsTitle}>
-              {copy.actionsTitle}
-            </h2>
-            <ul aria-label={copy.actionsTitle}>
-              {dashboard.actions.map((action, i) => (
-                <Action key={i} action={action} />
-              ))}
-            </ul>
-          </div>
-        </section>
+        <ul className={styles.actions} aria-label={copy.actionsTitle}>
+          {dashboard.actions.map((action, i) => (
+            <Action key={i} action={action} />
+          ))}
+        </ul>
       )}
       <p className={styles.window}>
         <strong>{staffDay(dashboard.asOf)}</strong>

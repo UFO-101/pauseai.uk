@@ -32,6 +32,7 @@ export async function markSigned(form: FormData): Promise<void> {
     email,
   );
   revalidatePath("/staff/politicians");
+  revalidatePath(`/staff/politicians/${parsed.politicianId}`);
 }
 
 export async function editSigner(form: FormData): Promise<void> {

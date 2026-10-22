@@ -48,9 +48,9 @@ export function PoliticianFormExample() {
   );
 }
 
-/** The table of politicians, its marks as signed logged: one function for both examples, so pressing one covers it. */
+/** The table of politicians: one function for both examples. */
 function LoggedPoliticianTable({ politicians }: { politicians: Politician[] }) {
-  return <Logged>{(log) => <PoliticianTable politicians={politicians} markSigned={log("markSigned")} />}</Logged>;
+  return <PoliticianTable politicians={politicians} />;
 }
 
 /** An MP who signed the letter to the PM, and a test peer, no longer sitting, whose address is blocked, who signed ControlAI's letter. */
@@ -104,6 +104,7 @@ export function PoliticianDetailsExample({
             fromAirtable ? { ...examplePolitician, emailBlocked: blocked } : { ...examplePolitician, airtableId: null }
           }
           action={log("action")}
+          markSigned={log("markSigned")}
           block={blocked ? { ...exampleBlock, address: examplePolitician.email! } : undefined}
           letters={[{ ...exampleLetter, mpName: examplePolitician.name, politicianId: examplePolitician.id }]}
           history={examplePoliticianHistory}

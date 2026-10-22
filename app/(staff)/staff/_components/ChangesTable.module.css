@@ -1,0 +1,29 @@
+/* When, on one line: a date and time split over two read badly. */
+.when {
+  white-space: nowrap;
+}
+
+/* The JSON column's heading: for a screen reader, not to widen the column. */
+.hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* An entry's details as logged, over the page until clicked away. */
+.json {
+  max-width: min(40rem, 90vw);
+  max-height: 80vh;
+  margin: auto;
+  padding: var(--space-4);
+  overflow: auto;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  color: var(--text);
+  font-size: var(--text-sm);
+  white-space: pre-wrap;
+}

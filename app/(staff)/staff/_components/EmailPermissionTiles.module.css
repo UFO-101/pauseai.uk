@@ -1,57 +1,10 @@
-/* A tile per topic, in a row that wraps: what it is, the answer in large
-   coloured type with a matching top edge, then why, with "Why?" at the end
-   of the line to unfold how we know. */
-.tiles {
+/* A strip per topic (ui/Strip), down the mailing lists' card. */
+.list {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
-  gap: var(--space-3);
-  max-width: 52rem;
+  gap: var(--space-2);
   margin: 0;
   padding: 0;
   list-style: none;
-}
-
-.tile {
-  display: grid;
-  align-content: start;
-  gap: var(--space-1);
-  padding: var(--space-3) var(--space-4);
-  border: 1px solid var(--border);
-  border-top: 4px solid var(--status-green);
-  border-radius: var(--radius-lg);
-  background: var(--surface);
-}
-
-.tile[data-send="no"] {
-  border-top-color: var(--status-red);
-}
-
-.tile[data-send="unsure"] {
-  border-top-color: var(--status-amber);
-}
-
-/* The blocked tile spans the row. */
-.wide {
-  grid-column: 1 / -1;
-}
-
-.topic {
-  color: var(--text-secondary);
-  font-size: var(--text-sm);
-  font-weight: 600;
-}
-
-.answer {
-  color: var(--status-green);
-  font-size: var(--text-lg);
-}
-
-.tile[data-send="no"] .answer {
-  color: var(--status-red);
-}
-
-.tile[data-send="unsure"] .answer {
-  color: var(--status-amber);
 }
 
 .reason {

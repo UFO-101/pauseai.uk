@@ -6,6 +6,7 @@ import { airtableToken, fetchMps } from "./outside-services/airtable";
 import { logChange } from "./audit";
 import { query, transaction, type Queryable } from "./db";
 import { keepingFailure, recordRun } from "./import-runs";
+import { changedFields } from "@/lib/field-changes";
 
 // Copies the sitting MPs from Airtable into the politicians table, nightly
 // (app/api/cron/sync-mps) or when staff ask. A sync that would change more
@@ -64,7 +65,9 @@ async function ensureTestMps(db?: Queryable): Promise<void> {
  * (lib/server/politicians.ts, politicianHistory).
  */
 async function applyMps(mps: SyncedMp[], db: Queryable): Promise<void> {
-  const changes = compareMps(await sittingMps(db), mps);
+  const before = await sittingMps(db);
+  const changes = compareMps(before, mps);
+  const was = new Map(before.map((mp) => [mp.airtableId, mp]));
   for (const mp of mps) {
     const [{ id }] = await query<{ id: number }>(
       `INSERT INTO politicians (airtable_id, house, name, salutation, constituency, party, email)
@@ -79,7 +82,9 @@ async function applyMps(mps: SyncedMp[], db: Queryable): Promise<void> {
     if (changes.added.some((added) => added.airtableId === airtableId)) {
       await logChange(SYNC, "add politician", { id, airtableId, house: "commons", ...details }, db);
     } else if (changes.changed.some((changed) => changed.airtableId === airtableId)) {
-      await logChange(SYNC, "edit politician", { id, airtableId, house: "commons", ...details }, db);
+      // What changed, each field before and after, and their name to know them by.
+      const changed = changedFields(was.get(airtableId)!, mp);
+      await logChange(SYNC, "edit politician", { id, airtableId, name: mp.name, changed }, db);
     }
   }
   const gone = await query<{ id: number; name: string }>(

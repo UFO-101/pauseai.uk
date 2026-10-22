@@ -1,39 +1,5 @@
-/* How a job's newest run ended, on its card: a tinted strip, the ending in
-   bold, the time at the end. Plain for a run that changed nothing, was
-   discarded, or never ran. */
-.status {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-1) var(--space-3);
-  align-items: baseline;
-  margin: 0;
-  padding: var(--space-2) var(--space-3);
-  border-radius: var(--radius-md);
-  background: var(--surface-2);
-  color: var(--text-secondary);
-}
-
-.status strong {
-  font-size: var(--text-md);
-}
-
+/* How a job's newest run ended, on its card (ui/Strip): the time at the right. */
 .when {
-  margin-left: auto;
   font-size: var(--text-sm);
   font-variant-numeric: tabular-nums;
-}
-
-.green {
-  background: var(--status-green-bg);
-  color: var(--status-green);
-}
-
-.amber {
-  background: var(--status-amber-bg);
-  color: var(--status-amber);
-}
-
-.red {
-  background: var(--status-red-bg);
-  color: var(--status-red);
 }

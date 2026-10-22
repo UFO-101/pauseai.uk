@@ -12,6 +12,7 @@ import JobActions from "./JobActions";
 import type { Decide } from "./Run";
 import RunList from "./RunList";
 import Tag from "@/components/ui/Tag";
+import Strip from "./ui/Strip";
 
 // Every import and check: the overview at /staff/import-data, a card each,
 // and each job's own page, with its button and every run it has made.
@@ -95,15 +96,21 @@ function Intro({ job, airtableTable }: { job: ImportJob; airtableTable: string }
   );
 }
 
-/** How a job's newest run ended, and when, in a strip tinted to match; or that it has never run. */
+/** How a job's newest run ended, and when, in a strip tinted to match (ui/Strip); or that it has never run. */
 function NewestRun({ job, run }: { job: ImportJob; run: AnyImportRun | undefined }) {
-  if (!run) return <p className={styles.status}>{ABOUT[job].none}</p>;
-  const tone = runTone(run);
+  if (!run)
+    return (
+      // A job that has never run: said plainly, not as a status in bold.
+      <Strip>{ABOUT[job].none}</Strip>
+    );
   return (
-    <p className={tone ? `${styles.status} ${styles[tone]}` : styles.status}>
-      <strong>{staffCopy.runs.status[runStatus(run)]}</strong>
-      <span className={styles.when}>{staffTime(run.at)}</span>
-    </p>
+    <Strip
+      tone={runTone(run) ?? "plain"}
+      icon={false}
+      action={<span className={styles.when}>{staffTime(run.at)}</span>}
+    >
+      <span>{staffCopy.runs.status[runStatus(run)]}</span>
+    </Strip>
   );
 }
 

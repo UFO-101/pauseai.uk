@@ -4,6 +4,7 @@ import {
   emailsSearch,
   letterId,
   lettersSearch,
+  pageNumber,
   politicianId,
   supporterId,
   supportersSearch,
@@ -103,6 +104,13 @@ describe("accountsSearch", () => {
     expect(accountsSearch({ notice: "not-pauseai" })).toEqual({ notice: "not-pauseai" });
     expect(accountsSearch({ notice: "x" })).toEqual({ notice: "" });
     expect(accountsSearch({})).toEqual({ notice: "" });
+  });
+});
+
+describe("pageNumber", () => {
+  it("reads a page from 1, or the first page", () => {
+    expect(pageNumber("3")).toBe(3);
+    for (const page of ["0", "x", "", undefined]) expect(pageNumber(page)).toBe(1);
   });
 });
 

@@ -58,6 +58,7 @@ export const staffCopy = {
     // three groups, each against the window before.
     dashboard: {
       // What's waiting for someone, shown only when something is: each kind of item, its detail, and its button.
+      // The list's name, read out by a screen reader; not shown.
       actionsTitle: "Needs a person",
       actions: {
         heldSync: (changes: number) => `MP import would change ${changes} MPs`,
@@ -69,7 +70,7 @@ export const staffCopy = {
         blockedMpDetail: "Find a working email for this MP if it has changed, or unblock if working now.",
         openMp: "Fix MP email",
         failedImport: (job: string) => `Import '${job}' failed`,
-        failedImportDetail: (error: string, at: string) => `${error} · ${at}`,
+        failedImportDetail: (error: string, at: string) => `Error: "${error}" · ${at}`,
         seeRun: "See failed run",
       },
       // The window: its length in days, each a link but the one shown.
@@ -118,8 +119,6 @@ export const staffCopy = {
     title: "Supporters",
     none: "Nobody found.",
     count: (total: number, page: number, pages: number) => `${total} supporters; page ${page} of ${pages}.`,
-    previous: "Previous",
-    next: "Next",
     filters: {
       search: "Name, email or phone",
       source: "Source",
@@ -317,7 +316,7 @@ export const staffCopy = {
   } as Record<string, string>,
   statuses: {
     signed: "Signed",
-    none: "None",
+    none: "Not signed",
   } as Record<string, string>,
   politicians: {
     title: "Politicians",
@@ -340,7 +339,7 @@ export const staffCopy = {
     // The button in each campaign's column, and the bill's column, which
     // only the import from ControlAI's letter sets.
     markSigned: "Mark as signed",
-    unmarkSigned: "Undo",
+    unmarkSigned: "Remove signature",
     signedControlAi: "Signed ControlAI letter",
   },
   fields: {
@@ -380,6 +379,10 @@ export const staffCopy = {
     } as Record<string, string>,
     // On an MP from Airtable, after the source, which links to their record there.
     editInAirtable: ", update name / email there.",
+    // On the bill's row of the campaigns panel: its status isn't set by hand.
+    fromControlAi: "set each night from ControlAI's letter",
+    // On each row of the campaigns panel: the link to the campaign's public page.
+    campaignPage: "Campaign page",
     // Under their name: what they are, in their house, and where for.
     roles: {
       commons: "MP",
@@ -396,16 +399,27 @@ export const staffCopy = {
     // Under their name, when their address is blocked: what's happened, what to check, and the form.
     blocked: {
       title: "Letters to this MP aren't being sent",
-      // Postmark's reason sometimes ends in a full stop and sometimes doesn't.
-      why: (address: string, reason: string, since: string) =>
-        `Email to ${address} bounced on ${since} with the error: ${reason.replace(/\.+$/, "")}.`,
-      // "nightly import" links to the MP import's page.
-      fix: {
-        before: "If the address is wrong, correct it in Airtable. Then trigger the ",
-        link: "nightly import",
-        after: ", and unblock it below. If the bounce was a one-off, just unblock it.",
+      // Around the address, which is in bold. Postmark's reason sometimes ends in a full stop and sometimes doesn't.
+      why: {
+        before: "Email to ",
+        after: (reason: string, since: string) => ` bounced on ${since} with the error: ${reason.replace(/\.+$/, "")}.`,
       },
-      all: "All blocked emails",
+      // Under it, two things to do, side by side. If the address is wrong: correct it in
+      // Airtable (linked to their record, or the table for an MP not from it), then run
+      // the import (linked to its page). A new address isn't blocked.
+      wrong: {
+        title: "Address wrong?",
+        before: "Correct it in ",
+        airtable: "Airtable",
+        middle: ", then run the ",
+        link: "nightly import",
+        after: ". The new address isn't blocked.",
+      },
+      // If the address is right: unblock it, with the note of why.
+      right: {
+        title: "Address right?",
+        text: "If the bounce was a one-off, unblock it.",
+      },
     },
   },
   // The page of blocked addresses (/staff/blocked-emails), and the bounces and complaints that blocked them.
@@ -445,7 +459,8 @@ export const staffCopy = {
     } as Record<string, string>,
     // A complaint can't be undone by staff, only by the person.
     cantReset: "Can't be unblocked: they marked our email as spam.",
-    note: "Note - give reason",
+    // In the unblock form's field, and its name: the note for the audit log.
+    note: "Why unblock it?",
     unblock: "Unblock",
     problemsTitle: "History",
   },
@@ -568,6 +583,8 @@ export const staffCopy = {
       discarded: "Discarded",
     } as Record<string, string>,
     by: (who: string) => `by ${who}`,
+    // A failed run's error, as it came.
+    error: (error: string) => `Error: "${error}"`,
     decidedBy: (who: string) => `decided by ${who}`,
   },
   check: {
@@ -656,12 +673,55 @@ export const staffCopy = {
     },
     consent: { yes: "Yes", no: "No" },
   },
+  // Under a list of more than one page.
+  paging: {
+    previous: "Previous",
+    next: "Next",
+  },
   changes: {
     title: "Audit log",
     at: "When",
     actor: "Who",
     action: "What",
     details: "Details",
+    // The details as they were logged.
+    json: "JSON",
+    // In the details: someone no longer here (erased, or never named), by their ID.
+    gone: (id: string) => `#${id}`,
+    noPermissions: "No permissions",
+    // A field with nothing in it, before or after an edit.
+    empty: "(none)",
+    // Each logged field's name, before its value, where the politician fields' names don't cover it.
+    labels: {
+      airtableId: "Airtable",
+      address: "Address",
+      note: "Note",
+      reference: "Request",
+      reason: "Reason",
+      kind: "Kind",
+      status: "Status",
+      campaign: "Campaign",
+      date: "Date",
+      from: "Before",
+      to: "Permissions",
+      permissions: "Permissions",
+      pdfUrl: "PDF",
+      error: "Error",
+    } as Record<string, string>,
+    // A held MP import decided, linked to the import's page.
+    run: (id: string) => `Import run ${id}`,
+    // After each number an import, a sync or an erasure logged: what it counted.
+    counts: {
+      added: "added",
+      removed: "removed",
+      changed: "changed",
+      matched: "matched",
+      alreadySet: "already signed",
+      problems: "problems",
+      lumaUsers: "Luma people",
+      letters: "letters",
+      members: "member records",
+    } as Record<string, string>,
   },
 };
 

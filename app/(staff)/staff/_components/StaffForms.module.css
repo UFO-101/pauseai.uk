@@ -7,7 +7,7 @@
 }
 
 .form {
-  max-width: 32rem;
+  max-width: var(--staff-measure);
   margin-block: var(--space-4);
 }
 

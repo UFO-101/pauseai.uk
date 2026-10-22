@@ -3,6 +3,7 @@ import { render } from "vitest-browser-react";
 import { page, userEvent } from "vitest/browser";
 import { campaigns } from "@/lib/content/email-your-mp";
 import { campaignPath } from "@/lib/email-your-mp";
+import { importPath } from "@/lib/import-runs";
 import { staffDate } from "@/lib/staff-time";
 import { jobTitles, staffCopy } from "@/lib/content/staff-interface";
 import type { AnyImportRun, ControlAiImport, MpCheck, MpSync, SignatoryImport } from "@/lib/import-runs";
@@ -12,7 +13,7 @@ import EmailBlockFilters from "./EmailBlockFilters";
 import EmailBlocksTable from "./EmailBlocksTable";
 import { exampleBlock, exampleComplaint, exampleProblems } from "./EmailBlocksTable.examples";
 import EmailProblemsTable from "./EmailProblemsTable";
-import { exampleChange } from "./ChangesTable.examples";
+import { exampleChanges } from "./ChangesTable.examples";
 import LettersTable from "./LettersTable";
 import { exampleLetter } from "./LettersTable.examples";
 import JobActions from "./JobActions";
@@ -737,7 +738,7 @@ describe("LoginForm", () => {
 });
 
 describe("PoliticianDetails", () => {
-  const none = { letters: [], history: [], airtableTable: "https://airtable.com/app/tbl" };
+  const none = { markSigned: vi.fn(), letters: [], history: [], airtableTable: "https://airtable.com/app/tbl" };
 
   it("heads the page with their name, boxes what's known with each campaign's status, and edits a signer the team added", async () => {
     const { fn } = action();
@@ -825,6 +826,7 @@ describe("PoliticianDetails", () => {
         airtableTable="https://airtable.com/app/tbl"
         politician={peer}
         action={vi.fn()}
+        markSigned={vi.fn()}
         unblock={vi.fn()}
         letters={[
           { ...exampleLetter, mpName: MP.name, politicianId: MP.id },
@@ -932,6 +934,62 @@ describe("PoliticianDetails", () => {
     await expect.element(list.getByRole("link", { name: "gone" })).not.toBeInTheDocument();
   });
 
+  it("gives each campaign a card: its status, who set it, and the button to change it where staff record it", async () => {
+    const { fn, sent } = action();
+    await render(
+      <PoliticianDetails
+        {...none}
+        politician={{
+          ...MP,
+          statuses: {
+            ...MP.statuses,
+            "old-campaign": { ...MP.statuses[pm.slug], date: null, note: "Kept" },
+          },
+        }}
+        markSigned={fn}
+        action={vi.fn()}
+        unblock={vi.fn()}
+      />,
+    );
+    const card = (title: string) => page.getByRole("region", { name: title });
+    const pmCard = card(pm.title);
+    await expect.element(pmCard).toHaveTextContent(`${staffCopy.statuses.signed}, 1 Oct 2026`);
+    await expect.element(pmCard.getByText(staffCopy.politician.setBy("jo@pauseai.uk", "2 Oct 2026"))).toBeVisible();
+    await expect.element(pmCard.getByRole("link", { name: pm.title })).toHaveAttribute("href", campaignPath(pm));
+    // The bill's status isn't set by hand: no button, and the card says why.
+    const billCard = card(bill.title);
+    await expect.element(billCard.getByText(staffCopy.statuses.none)).toBeVisible();
+    await expect.element(billCard.getByText(staffCopy.politician.fromControlAi)).toBeVisible();
+    expect(billCard.getByRole("button").all()).toHaveLength(0);
+    // A campaign no longer run: its status, by its slug, with no button.
+    const old = card("old-campaign");
+    await expect.element(old).toHaveTextContent(`${staffCopy.statuses.signed} · Kept`);
+    expect(old.getByRole("button").all()).toHaveLength(0);
+
+    await pmCard.getByRole("button", { name: staffCopy.politicians.unmarkSigned }).click();
+    await vi.waitFor(() => expect(sent).toHaveLength(1));
+    expect(sent[0]).toEqual({ politicianId: "7", campaign: pm.slug, signed: "" });
+  });
+
+  it("offers to mark them signed where they haven't", async () => {
+    const { fn, sent } = action();
+    await render(
+      <PoliticianDetails
+        {...none}
+        politician={{ ...MP, statuses: {} }}
+        markSigned={fn}
+        action={vi.fn()}
+        unblock={vi.fn()}
+      />,
+    );
+    await page
+      .getByRole("region", { name: pm.title })
+      .getByRole("button", { name: staffCopy.politicians.markSigned })
+      .click();
+    await vi.waitFor(() => expect(sent).toHaveLength(1));
+    expect(sent[0]).toEqual({ politicianId: "7", campaign: pm.slug, signed: "1" });
+  });
+
   it("says in one place that letters aren't being sent, why, what to check, and unblocks it with a note", async () => {
     const { fn, sent } = action();
     const { rerender } = await render(
@@ -950,16 +1008,15 @@ describe("PoliticianDetails", () => {
     expect(notice.element().firstElementChild!.tagName.toLowerCase()).toBe("svg");
     expect(getComputedStyle(notice.element()).display).toBe("flex");
     expect(notice.element().querySelector("p")!.textContent).toBe(
-      copy.why(MP.email!, exampleBlock.reason, "2026-10-12 09:10"),
+      `${copy.why.before}${MP.email}${copy.why.after(exampleBlock.reason, "2026-10-12 09:10")}`,
     );
+    expect(notice.element().querySelector("p strong")!.textContent).toBe(MP.email);
     // The example's reason ends in a full stop, so the sentence doesn't add a second.
     expect(notice.element().querySelector("p")!.textContent).not.toContain("..");
-    const fix = `${copy.fix.before}${copy.fix.link}${copy.fix.after}`;
-    expect(notice.element().textContent).toContain(fix);
+    await expect.element(notice.getByRole("heading", { name: copy.wrong.title })).toBeVisible();
     await expect
-      .element(notice.getByRole("link", { name: copy.fix.link }))
+      .element(notice.getByRole("link", { name: copy.wrong.link }))
       .toHaveAttribute("href", "/staff/import-data/mps");
-    await expect.element(notice.getByRole("link", { name: copy.all })).toHaveAttribute("href", "/staff/blocked-emails");
     // The address in the facts is just the address.
     expect(page.getByText(MP.email!, { exact: true }).element().tagName).toBe("DD");
     await page.getByLabelText(staffCopy.emails.note).fill("Fixed in Airtable");
@@ -976,7 +1033,7 @@ describe("PoliticianDetails", () => {
         {...none}
       />,
     );
-    expect(notice.element().textContent).not.toContain(copy.fix.before);
+    expect(notice.element().textContent).not.toContain(copy.wrong.before);
     await expect.element(notice.getByText(staffCopy.emails.cantReset)).toBeVisible();
   });
 });
@@ -1207,7 +1264,6 @@ describe("PoliticianTable headings", () => {
     await render(
       <PoliticianTable
         politicians={[MP]}
-        markSigned={vi.fn()}
         search={{ q: "x", house: "", campaign: "", email: "", sort: "party", dir: "asc" }}
       />,
     );
@@ -1221,8 +1277,7 @@ describe("PoliticianTable headings", () => {
 });
 
 describe("PoliticianTable", () => {
-  it("lists each politician with their status for each campaign, and marks the letter to the PM signed or not", async () => {
-    const { fn, sent } = action();
+  it("lists each politician with their status for each campaign, and no buttons", async () => {
     const testMp = {
       ...MP,
       id: 8,
@@ -1238,7 +1293,6 @@ describe("PoliticianTable", () => {
           MP,
           { ...testMp, statuses: { [bill.slug]: { ...MP.statuses[pm.slug], updatedBy: "controlai" } } },
         ]}
-        markSigned={fn}
       />,
     );
     await expect
@@ -1263,29 +1317,21 @@ describe("PoliticianTable", () => {
       .element(page.getByRole("link", { name: staffCopy.politicians.columns.replies }))
       .toHaveAttribute("href", "/staff/politicians?sort=replies&dir=desc");
 
-    // Polly has signed the letter to the PM, with the date; the test MP hasn't.
-    const polly = page.getByRole("form", { name: `${pm.title}: Polly Placeholder` });
-    await expect.element(polly.getByText(new RegExp(`^${staffCopy.statuses.signed}`))).toBeVisible();
-    await expect.element(polly.getByText("2026-10-01")).toBeVisible();
-    // Not signed: just the button, no status to read against it.
-    const testy = page.getByRole("form", { name: `${pm.title}: Testy McTestface MP` });
-    await expect.element(testy.getByText(staffCopy.statuses.signed)).not.toBeInTheDocument();
+    // Polly has signed the letter to the PM, with the date; the test MP hasn't. Each is changed on their page.
+    const pmColumn = 6;
+    const cell = (name: string) =>
+      page.getByRole("row").filter({ hasText: name }).getByRole("cell").all()[pmColumn].element();
+    expect(cell("Polly Placeholder").textContent).toBe(`${staffCopy.statuses.signed} 2026-10-01`);
+    expect(getComputedStyle(cell("Polly Placeholder")).whiteSpace).toBe("nowrap");
+    expect(cell("Testy McTestface MP").textContent).toBe(staffCopy.statuses.none);
 
-    // The bill's column says who signed ControlAI's letter, with no button.
+    // The bill's column says who signed ControlAI's letter.
     await expect.element(page.getByText(staffCopy.politicians.signedControlAi)).toBeVisible();
-    expect(page.getByRole("button").all()).toHaveLength(2);
-
-    await polly.getByRole("button", { name: staffCopy.politicians.unmarkSigned }).click();
-    await testy.getByRole("button", { name: staffCopy.politicians.markSigned }).click();
-    await vi.waitFor(() => expect(sent).toHaveLength(2));
-    expect(sent).toEqual([
-      { politicianId: "7", campaign: pm.slug, signed: "" },
-      { politicianId: "8", campaign: pm.slug, signed: "1" },
-    ]);
+    expect(page.getByRole("button").all()).toHaveLength(0);
   });
 
   it("says when nobody matches", async () => {
-    await render(<PoliticianTable politicians={[]} markSigned={() => {}} />);
+    await render(<PoliticianTable politicians={[]} />);
     await expect.element(page.getByText(staffCopy.politicians.none)).toBeVisible();
   });
 });
@@ -1612,10 +1658,63 @@ describe("RunList", () => {
 });
 
 describe("ChangesTable", () => {
-  it("lists who changed what", async () => {
-    await render(<ChangesTable changes={[exampleChange]} />);
-    await expect.element(page.getByRole("cell", { name: "jo@pauseai.uk" })).toBeVisible();
-    await expect.element(page.getByText('{"politicianId":7}')).toBeVisible();
+  it("lists who changed what, when on one line, and every field each logged, in words, linked where there's a page", async () => {
+    await render(<ChangesTable changes={exampleChanges} airtableTable="https://airtable.com/app/tbl" />);
+    const copy = staffCopy.changes;
+    const fields = staffCopy.fields;
+    const labels = copy.labels;
+    const rows = page.getByRole("row").all().slice(1);
+    expect(getComputedStyle(rows[0].element().querySelector("td")!).whiteSpace).toBe("nowrap");
+    expect(rows[0].element().children[1].textContent).toBe("jo@pauseai.uk");
+    const details = rows.map((row) => row.element().children[3].textContent);
+    const signed = staffCopy.politician.statusSet(staffCopy.statuses.signed);
+    const cleared = staffCopy.politician.statusCleared;
+    const odd = staffCopy.politician.statusSet("odd");
+    const count = (n: number, key: string) => `${n} ${copy.counts[key]}`;
+    expect(details).toEqual([
+      `Polly Placeholder · ${signed.before}${pm.title}${signed.after}, 2026-10-01 · ${labels.note} By email`,
+      `${copy.gone("99")} · ${cleared.before}gone-campaign${cleared.after}`,
+      `Polly Placeholder · ${labels.airtableId} recPolly · ${fields.party} Labour → Independent · ${fields.email} ${copy.empty} → polly@example.org`,
+      `Polly Placeholder · ${labels.airtableId} recPolly · ${fields.house} ${staffCopy.houses.commons} · ${fields.salutation} Ms Placeholder · ${fields.constituency} Ipswich · ${fields.party} Labour`,
+      "Old MP",
+      `polly@example.org · ${labels.kind} ${staffCopy.emails.kinds.hard}`,
+      `polly@example.org · ${labels.note} Fixed in Airtable`,
+      "Jane Example",
+      copy.gone("4"),
+      `${copy.gone("5")} · ${labels.reference} ICO-12 · ${count(1, "lumaUsers")} · ${count(2, "letters")} · ${count(0, "members")}`,
+      `sam@pauseai.uk · ${labels.to} ${copy.noPermissions}`,
+      `sam@pauseai.uk · ${copy.noPermissions} → ${staffCopy.accounts.names.supporters}, ${staffCopy.accounts.names.admin}`,
+      `sam@pauseai.uk · ${labels.permissions} ${staffCopy.accounts.names.supporters}, retired`,
+      `${count(3, "added")} · ${count(40, "removed")} · ${count(2, "changed")}`,
+      copy.run("12"),
+      `${labels.reason} a test · Ids [1,2] · ${fields.house} atlantis · ${labels.status} ${staffCopy.statuses.signed}`,
+      `odd@example.org · ${labels.kind} weird`,
+      `Polly Placeholder · ${odd.before}${pm.title}${odd.after}`,
+      `2 widgets · ${labels.status} maybe · ${labels.campaign} ${pm.title}`,
+      `Old MP · ${fields.house} ${staffCopy.houses.commons} → ${staffCopy.houses.lords} · ${fields.party} Labour → ${copy.empty}`,
+    ]);
+    const href = (i: number) => rows[i].element().children[3].querySelector("a")?.getAttribute("href");
+    expect([0, 1, 4, 7, 8, 14].map(href)).toEqual([
+      "/staff/politicians/7",
+      undefined,
+      undefined,
+      "/staff/supporters/3",
+      "/staff/supporters/4",
+      importPath("sync-mps"),
+    ]);
+    // The Airtable ID leads to the record, in a new tab.
+    const record = rows[2].getByRole("link", { name: "recPolly" });
+    await expect.element(record).toHaveAttribute("href", "https://airtable.com/app/tbl/recPolly");
+    await expect.element(record).toHaveAttribute("target", "_blank");
+  });
+
+  it("opens each entry's details as logged from a button at the right", async () => {
+    await render(<ChangesTable changes={exampleChanges.slice(4, 5)} airtableTable="https://airtable.com/app/tbl" />);
+    const json = page.getByText('"name": "Old MP"', { exact: false });
+    await expect.element(json).not.toBeVisible();
+    await page.getByRole("button", { name: staffCopy.changes.json }).click();
+    await expect.element(json).toBeVisible();
+    expect(json.element().textContent).toBe(JSON.stringify(exampleChanges[4].details, null, 2));
   });
 });
 
@@ -1767,10 +1866,10 @@ describe("SupportersTable", () => {
     await expect.element(page.getByText(copy.moreEmails(1))).toBeVisible();
     await expect.element(page.getByRole("cell", { name: "1 Mar 2026" }).first()).toBeVisible();
     await expect
-      .element(page.getByRole("link", { name: copy.previous }))
+      .element(page.getByRole("link", { name: staffCopy.paging.previous }))
       .toHaveAttribute("href", "/staff/supporters?q=j");
     await expect
-      .element(page.getByRole("link", { name: copy.next }))
+      .element(page.getByRole("link", { name: staffCopy.paging.next }))
       .toHaveAttribute("href", "/staff/supporters?q=j&page=3");
   });
 
@@ -1795,7 +1894,7 @@ describe("SupportersTable", () => {
       <SupportersTable search={supportersSearch({})} page={{ supporters: [exampleSupporter], total: 1, pages: 1 }} />,
     );
     await expect.element(page.getByRole("link", { name: "Jane Example" })).toBeVisible();
-    expect(page.getByRole("link", { name: staffCopy.supporters.next }).all()).toHaveLength(0);
+    expect(page.getByRole("link", { name: staffCopy.paging.next }).all()).toHaveLength(0);
     await rerender(
       <SupportersTable
         search={supportersSearch({ page: "2" })}
@@ -1803,10 +1902,10 @@ describe("SupportersTable", () => {
       />,
     );
     await expect
-      .element(page.getByRole("link", { name: staffCopy.supporters.previous }))
+      .element(page.getByRole("link", { name: staffCopy.paging.previous }))
       .toHaveAttribute("href", "/staff/supporters");
     await expect
-      .element(page.getByRole("link", { name: staffCopy.supporters.next }))
+      .element(page.getByRole("link", { name: staffCopy.paging.next }))
       .toHaveAttribute("href", "/staff/supporters?page=3");
     await rerender(<SupportersTable search={supportersSearch({})} page={{ supporters: [], total: 0, pages: 1 }} />);
     await expect.element(page.getByText(staffCopy.supporters.none)).toBeVisible();

@@ -149,10 +149,20 @@ test("staff log in, set a status that shows on /campaigns, and log out", async (
   await expect(page.getByRole("link", { name: "Testy McTestface MP" })).toBeVisible();
   await frame(page, "the politicians list");
 
-  const form = page.getByRole("form", { name: `${pm.title}: Polly Placeholder` });
-  await form.getByRole("button", { name: staffCopy.politicians.markSigned }).click();
-  await expect(form.getByText(new RegExp(`^${staffCopy.statuses.signed}`))).toBeVisible();
+  // Signed on their page, in the campaign's row of the panel beside their details.
+  await page.getByRole("link", { name: "Polly Placeholder" }).click();
+  const card = page.getByRole("group", { name: pm.title });
+  await expect(card.getByText(staffCopy.statuses.none)).toBeVisible();
+  await frame(page, "Polly Placeholder's page: the campaigns beside her details");
+  await card.getByRole("button", { name: staffCopy.politicians.markSigned }).click();
+  await expect(card.getByText(new RegExp(`^${staffCopy.statuses.signed}`))).toBeVisible();
+  await expect(card.getByRole("button", { name: staffCopy.politicians.unmarkSigned })).toBeVisible();
   await frame(page, "Polly Placeholder marked as signed");
+  await page.getByRole("link", { name: staffCopy.nav.politicians }).first().click();
+  const pollyRow = page.getByRole("row").filter({ hasText: "Polly Placeholder" });
+  await expect(pollyRow).toContainText(staffCopy.statuses.signed);
+  await expect(pollyRow.getByRole("button")).toHaveCount(0);
+  await frame(page, "the list shows it, with no buttons");
 
   const signed = await (await request.get(`${BASE}/api/signatories`)).json();
   expect(signed).toContainEqual(expect.objectContaining({ name: "Polly Placeholder", house: "commons" }));

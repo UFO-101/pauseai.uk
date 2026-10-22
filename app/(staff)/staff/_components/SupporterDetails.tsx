@@ -7,6 +7,7 @@ import { givenPlaces, supporterPlace } from "@/lib/supporter-place";
 import type { SupporterActivity, SupporterDetails as Details, SupporterSource } from "@/lib/supporters";
 import EmailPermissionTiles from "./EmailPermissionTiles";
 import SupporterBadges from "./SupporterBadges";
+import Grid, { Card } from "./ui/Grid";
 import styles from "./Details.module.css";
 
 const copy = staffCopy.supporters;
@@ -146,48 +147,48 @@ export default function SupporterDetails({ supporter }: { supporter: Details }) 
         {summary.name ?? copy.noName} <SupporterBadges supporter={summary} />
       </h1>
 
-      <dl className={`${styles.facts} ${styles.main}`}>
-        <Fact label={copy.detail.emails} values={emails} />
-        <Fact label={copy.detail.phone} values={phones} />
-        <Fact label={copy.detail.postcode} values={postcodes} />
-        <Fact label={copy.detail.city} values={cities} />
-        {summary.firstSeenAt && (
-          <>
-            <dt>{copy.detail.firstSeen}</dt>
-            <dd>{staffDate(summary.firstSeenAt)}</dd>
-          </>
-        )}
-        {summary.lastActiveAt && (
-          <>
-            <dt>{copy.detail.lastActive}</dt>
-            <dd>{staffDate(summary.lastActiveAt)}</dd>
-          </>
-        )}
-      </dl>
-
-      <section aria-labelledby="subscriptions">
-        <h2 id="subscriptions">{copy.detail.listsTitle}</h2>
-        <EmailPermissionTiles permissions={permissions} />
-      </section>
-
-      <section aria-labelledby="history">
-        <h2 id="history">{copy.detail.activityTitle}</h2>
-        {activity.length === 0 ? (
-          <p>{copy.detail.noActivity}</p>
-        ) : (
-          <ol className={styles.history} aria-label={copy.detail.activityTitle}>
-            {activity.map((item, i) => (
-              <li key={i}>
-                <span className={styles.when}>{staffTime(item.at)}</span>
-                <span>
-                  {copy.detail.kinds[item.kind]}{" "}
-                  <Subject item={item} letters={`/staff/letters/supporter/${summary.id}`} />
-                </span>
-              </li>
-            ))}
-          </ol>
-        )}
-      </section>
+      <Grid>
+        <Card span={4} as="div">
+          <dl className={styles.facts}>
+            <Fact label={copy.detail.emails} values={emails} />
+            <Fact label={copy.detail.phone} values={phones} />
+            <Fact label={copy.detail.postcode} values={postcodes} />
+            <Fact label={copy.detail.city} values={cities} />
+            {summary.firstSeenAt && (
+              <>
+                <dt>{copy.detail.firstSeen}</dt>
+                <dd>{staffDate(summary.firstSeenAt)}</dd>
+              </>
+            )}
+            {summary.lastActiveAt && (
+              <>
+                <dt>{copy.detail.lastActive}</dt>
+                <dd>{staffDate(summary.lastActiveAt)}</dd>
+              </>
+            )}
+          </dl>
+        </Card>
+        <Card span={2} look="aside" title={copy.detail.listsTitle} id="subscriptions">
+          <EmailPermissionTiles permissions={permissions} />
+        </Card>
+        <Card span={6} look="log" title={copy.detail.activityTitle} id="history">
+          {activity.length === 0 ? (
+            <p className={styles.none}>{copy.detail.noActivity}</p>
+          ) : (
+            <ol className={styles.history} aria-label={copy.detail.activityTitle}>
+              {activity.map((item, i) => (
+                <li key={i}>
+                  <span className={styles.when}>{staffTime(item.at)}</span>
+                  <span>
+                    {copy.detail.kinds[item.kind]}{" "}
+                    <Subject item={item} letters={`/staff/letters/supporter/${summary.id}`} />
+                  </span>
+                </li>
+              ))}
+            </ol>
+          )}
+        </Card>
+      </Grid>
     </>
   );
 }

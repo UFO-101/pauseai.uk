@@ -7,7 +7,7 @@ import ChangesTable from "@/app/(staff)/staff/_components/ChangesTable";
 import EmailBlockFilters from "@/app/(staff)/staff/_components/EmailBlockFilters";
 import { exampleProblems } from "@/app/(staff)/staff/_components/EmailBlocksTable.examples";
 import EmailProblemsTable from "@/app/(staff)/staff/_components/EmailProblemsTable";
-import { exampleChange } from "@/app/(staff)/staff/_components/ChangesTable.examples";
+import { exampleChanges } from "@/app/(staff)/staff/_components/ChangesTable.examples";
 import LetterFilters from "@/app/(staff)/staff/_components/LetterFilters";
 import LetterLink from "@/app/(staff)/staff/_components/LetterLink";
 import LettersTable from "@/app/(staff)/staff/_components/LettersTable";
@@ -58,6 +58,8 @@ import {
 } from "@/app/(staff)/staff/_components/SupportersTable.examples";
 import { supportersSearch } from "@/lib/staff-search";
 import StaffPage from "@/app/(staff)/staff/_components/ui/StaffPage";
+import Grid, { Card } from "@/app/(staff)/staff/_components/ui/Grid";
+import Strip from "@/app/(staff)/staff/_components/ui/Strip";
 import Tag from "@/components/ui/Tag";
 import { campaigns } from "@/lib/content/email-your-mp";
 import { staffCopy } from "@/lib/content/staff-interface";
@@ -205,6 +207,120 @@ export const staff: Group = {
             >
               <h1>Letters</h1>
               <p>The page takes the width beside the sidebar.</p>
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "Grid",
+      file: "app/(staff)/staff/_components/ui/Grid.tsx",
+      variants: [
+        {
+          label:
+            "Six columns on a wide screen, two below: cards taking a half, two-thirds and a third, then a sixth each",
+          render: () => (
+            <StaffPage as="div">
+              <Grid>
+                <Card span={3}>A half</Card>
+                <Card span={3}>A half</Card>
+                <Card span={4}>Two-thirds, beside</Card>
+                <Card span={2}>
+                  a third, taller than it: each is as tall as what&apos;s in it, so this one is longer.
+                </Card>
+                {[1, 2, 3, 4, 5, 6].map((n) => (
+                  <Card key={n} span={1}>
+                    A sixth
+                  </Card>
+                ))}
+              </Grid>
+            </StaffPage>
+          ),
+        },
+        {
+          label: "Even: things of one kind, each as tall as its row",
+          render: () => (
+            <StaffPage as="div">
+              <Grid even>
+                <Card span={2}>A third</Card>
+                <Card span={2}>A third, with more in it than the others, which grow to match.</Card>
+                <Card span={2}>A third</Card>
+              </Grid>
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "Card",
+      file: "app/(staff)/staff/_components/ui/Grid.tsx",
+      variants: [
+        {
+          label: "With a title, and a strip and a line in it",
+          render: () => (
+            <StaffPage as="div">
+              <Grid>
+                <Card span={3} title="An example card" id="example-card">
+                  <Strip tone="green">
+                    <span>Done</span>
+                  </Strip>
+                  <p>A line under it.</p>
+                </Card>
+              </Grid>
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "Strip",
+      file: "app/(staff)/staff/_components/ui/Strip.tsx",
+      variants: [
+        {
+          label: "Each tone: plain, green, amber and red, with an action at the right",
+          render: () => (
+            <StaffPage as="div">
+              <div style={{ display: "grid", gap: "8px" }}>
+                <Strip>
+                  <span>Not signed</span>
+                </Strip>
+                <Strip tone="green">
+                  <span>Signed, 1 Oct 2026</span>
+                  <span>Set by jo@pauseai.uk</span>
+                </Strip>
+                <Strip
+                  tone="amber"
+                  action={
+                    <Button variant="primary" size="small">
+                      Review import
+                    </Button>
+                  }
+                >
+                  <span>MP import would change 42 MPs</span>
+                  <span>Check it, and approve or decline it.</span>
+                </Strip>
+                <Strip
+                  tone="red"
+                  action={
+                    <Button variant="primary" size="small">
+                      Fix MP email
+                    </Button>
+                  }
+                >
+                  <span>Bouncy McTestface MP&apos;s email is bouncing</span>
+                  <span>Find a working email, or unblock it.</span>
+                </Strip>
+              </div>
+            </StaffPage>
+          ),
+        },
+        {
+          label: "An answer, not a warning: no icon",
+          render: () => (
+            <StaffPage as="div">
+              <Strip tone="red" icon={false}>
+                <span>Won&apos;t email</span>
+              </Strip>
             </StaffPage>
           ),
         },
@@ -1079,21 +1195,10 @@ export const staff: Group = {
       file: "app/(staff)/staff/_components/ChangesTable.tsx",
       variants: [
         {
-          label: "Who changed what",
+          label: "One of each kind of entry, in words, and one of a kind it doesn't know",
           render: () => (
             <StaffPage as="div">
-              <ChangesTable
-                changes={[
-                  exampleChange,
-                  {
-                    id: 2,
-                    at: "2026-10-12T02:00:00Z",
-                    actor: "sync",
-                    action: "apply MP sync",
-                    details: { id: 3 },
-                  },
-                ]}
-              />
+              <ChangesTable changes={exampleChanges} airtableTable="https://airtable.com/app/tbl" />
             </StaffPage>
           ),
         },

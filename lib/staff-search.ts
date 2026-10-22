@@ -50,6 +50,11 @@ export function emailsSearch({ kind = "" }: { kind?: string }): { kind: string; 
   return { kind, filter: kind === "hard" || kind === "complaint" ? kind : undefined };
 }
 
+/** A list's page from its URL: a whole number from 1, or the first page. */
+export function pageNumber(page = ""): number {
+  return /^\d+$/.test(page) && Number(page) > 0 ? Number(page) : 1;
+}
+
 /** A letter's ID from its page's URL: a whole number, or undefined. */
 export function letterId(id: string): number | undefined {
   return politicianId(id);
@@ -102,7 +107,7 @@ export function supportersSearch({
     unsubscribed: unsubscribed !== "" || undefined,
     sort: sorting.key,
     dir: sorting.dir,
-    page: /^\d+$/.test(page) && Number(page) > 0 ? Number(page) : 1,
+    page: pageNumber(page),
   };
   return { q, source, registered, active, from, to, unsubscribed, sort, dir, page, erased, filter };
 }

@@ -1,0 +1,6 @@
+/* The note's field and Unblock on one line: the field takes the room the
+   button leaves, and the button wraps under it only when there's none. */
+.why {
+  flex: 1 1 10rem;
+  min-width: 0;
+}

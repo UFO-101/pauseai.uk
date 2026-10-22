@@ -1,232 +1,236 @@
 # Permissions update
 
-Three changes to who can use the staff interface and what they see:
+This plan makes three changes to who can use the staff interface and what
+they can see there:
 
-1. Everyone with a pauseai.uk address gets a staff account, with no
-   permissions, the first time they log in. Joseph wants this.
+1. Anyone with a pauseai.uk address gets a staff account the first time
+   they log in. The account starts with no permissions. Joseph asked for
+   this.
 2. A member of the public's details (supporter data) show only to staff
-   with the `supporters` permission, on every page, not only in the
-   Supporters section.
+   who have the `supporters` permission. This applies on every page, not
+   only in the Supporters section.
 3. The staff accounts table shows more about each account: when it was
-   added, when they last logged in, how many sessions they have open, and a
-   button to log them out of all of them.
+   added, when its owner last logged in, how many sessions they have open,
+   and a button that logs them out of all of them.
 
-Change 1 is why change 2 matters now. Today an admin chooses who gets an
-account, so an account with no permissions is someone they trusted. Once
-every pauseai.uk address gets one by logging in, "has an account" means
-only "has a pauseai.uk mailbox". Any supporter data an account alone can
-see would then be open to everyone on the domain.
+Change 1 is the reason change 2 matters now. At the moment an admin
+decides who gets an account, so even an account with no permissions
+belongs to someone an admin trusted. Once anyone at pauseai.uk gets an
+account just by logging in, having an account proves only that you have a
+pauseai.uk mailbox. Any supporter data that an account with no
+permissions can see would then be open to everyone on the domain.
 
-## How permissions work today
+## How permissions work now
 
-- Every staff page, Server Action and route handler calls
-  `requireStaff(needs)` first (`lib/server/staff-auth.ts`). `needs` is one
-  of three:
-  - a login: the home page and logging out;
-  - an account: the default;
-  - a permission: `supporters` or `admin`.
+- Every staff page, Server Action and route handler starts by calling
+  `requireStaff(needs)` (`lib/server/staff-auth.ts`). `needs` is one of
+  three levels:
+  - **a login**: enough for the home page and for logging out;
+  - **an account**: the default;
+  - **a permission**: `supporters` or `admin`.
 
-  If you don't have what's needed, you're sent to `/staff`.
-- The sections (`lib/staff-sections.ts`) are:
-  - **Supporters** (`supporters`);
-  - **Politicians** and **Letters** (an account);
-  - **Import** and **Blocked emails** (an account);
-  - **Accounts** and **Changes** (`admin`).
+  Anyone without the level a page needs is sent back to `/staff`.
+- The sections (`lib/staff-sections.ts`) need these levels:
+  - **Supporters**: `supporters`;
+  - **Politicians** and **Letters**: an account;
+  - **Import** and **Blocked emails**: an account;
+  - **Accounts** and **Changes**: `admin`.
 
-  The navigation and the dashboard hide the sections you can't open.
-- So a permission switches off whole pages, and nothing within a page.
-- Anyone can ask for a login link for a pauseai.uk address, and gets a
-  session. Without an account the home page says "You don't have a staff
-  account yet" and whom to ask.
+  The navigation and the dashboard hide any section you can't open.
+- So a permission opens or closes whole pages. Nothing on a page is
+  hidden by permission.
+- Anyone can ask for a login link for a pauseai.uk address and get a
+  session with it. Someone who has a session but no account sees "You
+  don't have a staff account yet" on the home page, and who to ask for
+  one.
 
-## The rule: permissions are about kinds of data
+## The rule: each permission covers a kind of data
 
-| Data                                                                                               | Who sees it                    |
-| -------------------------------------------------------------------------------------------------- | ------------------------------ |
-| Politicians and campaigns: names, roles, statuses, letter counts, politicians' addresses           | Any account                    |
-| Supporters: a member of the public's name, email, postcode, letters, lists, events and history     | `supporters`                   |
-| Staff and the system: accounts, sessions, the raw audit log                                        | `admin`                        |
+| Data                                                                                                | Who sees it  |
+| --------------------------------------------------------------------------------------------------- | ------------ |
+| Politicians and campaigns: names, roles, statuses, letter counts and politicians' addresses         | Any account  |
+| Supporters: a member of the public's name, email, postcode, letters, lists, events and history      | `supporters` |
+| Staff and the system: accounts, sessions and the raw audit log                                      | `admin`      |
 
-A page is open to the kind of data it is mostly about. Any supporter data
-on a page open to more people is redacted for those without `supporters`.
-"Who wrote to which MP" is supporter data, even on an MP's page.
+A page that shows supporter data needs `supporters`, and a permission
+still opens or closes whole pages. Who wrote to which MP counts as
+supporter data, even on the MP's page.
 
 ## Where supporter data shows outside the Supporters section
 
-| Where                                                    | What                                                                  | Today                            |
-| -------------------------------------------------------- | --------------------------------------------------------------------- | -------------------------------- |
-| Letters (`/staff/letters`)                               | Each sender's name, email and consent                                 | **Open** to any account          |
-| Letters search                                           | Matches sender name and email (`recentLetters`, `lib/server/letters.ts`) | **Open**: searching for an address reveals whether that person wrote |
-| An MP's page, the letter history                         | Each sender, linked to their page                                     | **Open** to any account          |
-| Blocked emails, the blocked list                         | Every blocked address, a supporter's too (a forwarded reply that bounced) | **Open** to any account     |
-| Blocked emails, History                                  | Every bounce and complaint, the address and what was sent             | **Open** to any account          |
-| Changes (`/staff/audit-log`)                             | Supporter emails in some entries' details                             | `admin` only                     |
+| Where                                     | What it shows                                                                              | Who can see it now                                                       |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------ |
+| Letters (`/staff/letters`)                | Each sender's name and email, and whether they consented                                   | **Any account**                                                          |
+| The letters search                        | Results matching a sender's name or email (`recentLetters`, `lib/server/letters.ts`)       | **Any account**. Searching for an address shows whether that person wrote |
+| An MP's page, the letter history          | Each sender, linked to their page                                                          | **Any account**                                                          |
+| Blocked emails, the blocked list          | Every blocked address, including a supporter's (for example, a forwarded reply that bounced) | **Any account**                                                        |
+| Blocked emails, History                   | Every bounce and complaint, with the address and what was sent                             | **Any account**                                                          |
+| Changes (`/staff/audit-log`)              | Supporters' emails, in the details of some entries                                         | `admin` only                                                             |
 
-These don't show supporter data: the import pages (counts only), the
-dashboard (counts only), the staff alert email (the MP and their address)
-and the accounts page.
+These show no supporter data: the import pages and the dashboard (counts
+only), the alert email to staff (the MP and their address) and the
+accounts page.
 
 ## 1. An account for everyone at pauseai.uk
 
-When a login link is redeemed (`app/(staff)/staff/api/callback/route.ts`)
-for an address with no account, add one with no permissions. `added_by` is
-`'login'`, and the audit log records it as "add staff account" by
-`'login'`. Having no account then happens only to someone an admin turned
-away. The "You don't have a staff account yet" home page stays for them.
+When someone uses a login link (`app/(staff)/staff/api/callback/route.ts`)
+and their address has no account, one is added for them with no
+permissions. Its `added_by` is `'login'`, and the audit log records
+"add staff account" by `'login'`. Everyone who logs in then has an
+account, so the "You don't have a staff account yet" home page is no
+longer needed.
 
-The catch is removing someone. Today an admin removes an account by
-deleting its row. With accounts made on login, the next login would make
-it again. Options:
+Anyone at pauseai.uk can be staff, paid or volunteer. When someone
+leaves, their Google account is suspended or deleted, so they can't get
+another login link. That makes the mailbox what decides who can log in,
+and removal here only has to tidy up:
 
-- **A. Removed accounts are kept, marked removed** (a `removed_at`
-  column). Logging in doesn't bring a removed account back, and
-  `requireStaff` treats one as no account. Removing someone also ends
-  their sessions. An admin can add them back. **Recommended**: removal
-  still means something.
-- **B. No removing, only taking away permissions.** Anyone with a
-  pauseai.uk mailbox can see the account-level pages. Losing the mailbox
-  (when someone leaves, in Google Workspace) is what ends access.
-  Simplest, but then nothing here can shut out someone who still has their
-  mailbox.
-- **C. Make accounts on login only for addresses never seen before**,
-  remembering every address that has had one. This is A without the
-  column showing on the table. Harder to explain.
+- **Remove** deletes the account and ends all its sessions at once. A
+  session left open would otherwise last up to 30 days, renewed on use,
+  after the mailbox closed. Today `requireStaff` already turns away a
+  session whose account has gone, since sessions are kept by email
+  rather than by account.
+- Logging in again makes a new account with no permissions. That's only
+  possible while the mailbox still works, so it doesn't undo a leaver's
+  removal.
+- To limit someone who is staying, an admin takes away their
+  permissions. They still see the pages that need only an account, which
+  after stage 1 show no supporter data.
 
-Either way, the Add form stays, so an admin can give permissions before
-someone's first login.
+Two things this relies on:
+
+- A suspended or deleted Google account doesn't receive mail. I believe
+  that's so, but haven't checked it in Google's documentation.
+- When someone leaves, their mail isn't forwarded to someone else, or
+  their address added as an alias of another account. If it is, whoever
+  gets their mail can log in as them. They'd get an account with no
+  permissions, so no supporter data, but the audit log would show the
+  leaver's address for what they did.
+
+The Add form stays, so an admin can give someone permissions before they
+first log in.
 
 ## 2. Supporter data only with `supporters`
 
-### Redact on the server
+Rather than hiding parts of pages, move the pages that show supporter
+data behind `supporters`:
 
-The functions that fetch letters, an MP's letter history, blocks and
-email problems would take the viewer's permissions, and return a sender
-or address as either the details or `null`. They'd be typed so a page
-can't show what it wasn't given. Hiding them in the component instead would
-be safe only while it's a server component: given to a client component,
-the hidden emails would still go to the browser in the page's data.
+- **Letters** (`/staff/letters`, a letter's page and a supporter's
+  letters) moves into the Supporters section and needs `supporters`. Its
+  search goes with it.
+- **Blocked emails** needs `supporters` too. It's in the Data section
+  with the import pages, which stay open to any account. An MP's blocked
+  address can still be unblocked by any account, from the alert on the
+  MP's page.
+- **An MP's page** is the one page that stays open to any account and
+  shows letters. Its page component fetches the letters only for staff
+  with `supporters`, and passes an empty list otherwise, so the history
+  shows just the MP's own changes. It's one line, in a server component,
+  so the senders never reach the browser. The letter counts in the
+  politicians table stay, since they name nobody.
 
-- **Letters search:** without `supporters`, the search matches only the
-  MP's name and the subject, not the sender.
-- **Blocked emails:** an address that isn't a politician's shows as "a
-  supporter's address", with what was sent and why it was blocked.
-  Unblocking it needs `supporters`, since the form names the address. An
-  MP's blocked address stays open to everyone, so anyone can unblock an
-  MP who has fixed their address in Airtable.
-
-### One component for a supporter
-
-`Supporter`: their name linked to their page, or, without the
-permission, a plain "a supporter" (copy needed). Used wherever a sender
-shows: the letters table and an MP's letter history.
-
-### Letters: hide part of the page, or all of it?
-
-- **A. Hide the senders, keep the page open to everyone** (done on the
-  server as above). Anyone can see what's been sent to whom,
-  and which MPs answered. **Recommended.**
-- **B. Put the whole Letters page under `supporters`.** Simpler, and it
-  fits "a permission switches off pages". But staff without it lose
-  the list of letters to each MP, and the MP's page would still need A
-  for its history.
+Staff without `supporters` lose the list of letters to each MP. They keep
+the counts.
 
 ### `admin` includes `supporters`
 
-An admin can tick `supporters` for themselves anyway. So
-`requireStaff("supporters")` passes for an admin, and the accounts table
-shows the `supporters` box ticked and disabled for an admin. Then the audit
-log needs no redaction.
+An admin can give themselves `supporters` anyway, by ticking the box. So
+`requireStaff("supporters")` would let an admin through, and the accounts
+table would show the `supporters` box ticked, and greyed out, for every
+admin. Then the audit log needs nothing hidden.
 
-The other way is to keep them separate and redact supporter emails in the
-audit log for an admin without `supporters`. That's more code, for a line
-an admin can cross by ticking a box.
+The alternative is to keep the two separate, and hide supporters' emails
+in the audit log from an admin without `supporters`. That's more code to
+stop something an admin can get round by ticking a box.
 
-### A check that fails when supporter data leaks
+### A check that fails if supporter data leaks
 
-A storyboard flow logs in with an account with no permissions, opens
-every staff page that account can open, and fails if any fixture
-supporter's name or email appears in the response. That includes the data
-Next sends with the page (the RSC payload), not only what's shown. It
-plays the part `tests/checks/staff-auth.test.ts` plays for
-`requireStaff`: a new page that shows supporter data fails the gate,
-whoever writes it.
+A storyboard flow logs in with an account that has no permissions, opens
+every staff page that account can reach, and fails if any fixture
+supporter's name or email appears in the response. That includes the
+data Next sends along with the page (the RSC payload), not just what's on
+screen. It does for supporter data what `tests/checks/staff-auth.test.ts`
+does for `requireStaff`: whoever writes a new page that shows supporter
+data, the gate fails.
 
-### Optional: log each viewing of supporter data
+### Optional: log every viewing of supporter data
 
-A supporter's page logs "view supporter". The Letters page and an MP's
-page, showing senders to someone with `supporters`, don't. That's needed
-to answer "who has seen my details" fully. I'd leave it until it's asked
-for: it would log a viewing at every visit to the Letters page.
+A supporter's page already logs "view supporter". The Letters page and an
+MP's page don't log anything when they show senders. Logging them would be needed to answer "who has seen my
+details?" in full. I'd leave it until someone asks for it, because it
+would log a viewing every time anyone opens the Letters page.
 
 ## 3. More on the staff accounts table
 
-The table's columns would be: email, permissions, added (date and by
-whom), last login, sessions open, and the buttons.
+The table's columns would be: email, permissions, added (the date and
+who by), last login, sessions open, and the buttons.
 
-- **Added:** `added_at` and `added_by` exist already. "By login" for
-  accounts made on first login.
-- **Last login:** expired sessions are deleted when a new one starts
-  (`createSession`), so they can't tell it. Options:
-  - **A. `last_login_at` on `staff_accounts`, set by `createSession`.**
-    When they last got a new session. **Recommended.**
+- **Added:** `added_at` and `added_by` already exist. Accounts made on
+  first login show "by login".
+- **Last login:** the sessions can't tell us this, because expired
+  sessions are deleted whenever a new one starts (`createSession`). Two
+  ways to record it:
+  - **A. `last_login_at` on `staff_accounts`, set by `createSession`**:
+    the last time they started a new session. **Recommended.**
   - **B. `last_seen_at`, set on every page load.** `sessionEmail` already
-    updates the session on every request, so this is one more column in
-    that update. It's more useful for "is this account still used?" with
-    30-day sessions renewed on use, where someone may not log in again for
-    months.
+    updates the session on every request, so this adds one column to that
+    update. It's a better answer to "is this account still in use?".
+    Sessions last 30 days and are renewed on use, so someone may not log
+    in again for months while still using the site.
 
-  Both could be shown. I'd start with A and add B if wanted.
-- **Sessions open:** a count of `staff_sessions` not yet expired.
-- **Log out everywhere:** a button on each row that has sessions. It
-  deletes them at once, like Remove and each tick, admin only, and is
-  logged as "end staff sessions". On your own row it logs you out too,
-  and says so first.
-  Optionally the same button for yourself on the staff home, for a lost
-  laptop, needing no permission.
+  We could show both. I'd start with A, and add B if it's wanted.
+- **Sessions open:** the number of the account's `staff_sessions` that
+  haven't expired.
+- **Log out everywhere:** a button on each row with sessions open. It
+  deletes them straight away, like Remove and each tick do. Only admins
+  can use it, and it's logged as "end staff sessions". On your own row it
+  logs you out too, and warns you first.
+  Optionally, the staff home could have the same button for your own
+  sessions, for a lost laptop, with no permission needed.
 
 ## Data protection
 
-`docs/data-protection.md` needs:
+`docs/data-protection.md` needs these changes:
 
-- **Staff row:** add last login (and last seen, if B). Accounts are now
-  made for every pauseai.uk address that logs in. Accounts are kept after
-  removal (if option A).
-- **Assessment, Risks:** "Disclosure of political opinions through a
-  staff account" is met by the `supporters` permission on every page that
-  shows supporter data, and by the leak check. It also says "a week's
-  sessions", which is wrong today: sessions are a day, or 30 days renewed
-  on use.
+- **The staff row:** add last login (and last seen, if we choose B). Say
+  that an account is now made for every pauseai.uk address that logs in,
+  volunteers' included, and that access ends when someone's Google
+  account is suspended or deleted.
+- **Assessment, Risks:** the risk "Disclosure of political opinions
+  through a staff account" is now met by requiring `supporters` on every
+  page that shows supporter data, and by the leak check. The same section
+  says sessions last "a week", which is already wrong: a session lasts a
+  day, or 30 days renewed on use.
 
-This is staff data, so the privacy policy and erasure are unchanged.
+This is all data about staff, so the privacy policy and erasure don't
+change.
 
 ## Stages
 
-Each stage gets its tests, frames, gallery examples and copy placeholders.
+Each stage comes with its tests, storyboard frames, gallery examples and
+placeholder copy.
 
-1. **Supporter data on the server, and the leak check.**
-   - Redaction in `recentLetters`, the MP history, `listBlocks` and
-     `recentProblems`.
-   - The `Supporter` component, in the letters table and an MP's history.
-   - The letters search and blocked emails changes.
-   - `admin` includes `supporters`.
+1. **Supporter data only with `supporters`, and the leak check.**
+   - Letters and Blocked emails need `supporters`, and Letters moves into
+     the Supporters section.
+   - An MP's page shows letters only to staff with `supporters`.
+   - `admin` including `supporters`.
    - The leak-check flow.
 
-   First, because stage 2 opens the account-level pages to everyone.
-2. **Accounts on first login.** Removal per option A, B or C, a migration
-   if A, and the home page and docs.
+   This comes first, because stage 2 opens the pages that need only an
+   account to everyone at pauseai.uk.
+2. **Accounts on first login.** Remove ends the account's sessions, and
+   the home page and the docs change.
 3. **The accounts table.**
-   - Added, last login and sessions open.
+   - The added, last login and sessions open columns.
    - Log out everywhere.
-   - A migration for `last_login_at`.
+   - A migration adding `last_login_at`.
 
 ## Questions
 
-1. Who has pauseai.uk addresses: only staff, or volunteers too? And does
-   someone's mailbox close when they leave? That decides between options A
-   and B for removal.
-2. Letters: hide the senders (A) or the whole page (B)?
-3. Should an admin always have `supporters`?
-4. Last login (A), last seen (B), or both?
-5. Log out everywhere for yourself too, on the staff home?
-6. Is there a broader related change to fit in: a new permission, say, for
-   letters or campaigns?
+1. Should an admin always have `supporters`?
+2. Record last login (A), last seen (B), or both?
+3. Should there be a "log out everywhere" button for your own sessions on
+   the staff home?
+4. Is there a bigger change to permissions to fit in at the same time,
+   such as a new permission for letters or campaigns?

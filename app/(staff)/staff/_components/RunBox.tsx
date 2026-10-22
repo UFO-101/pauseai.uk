@@ -30,7 +30,7 @@ export default function RunBox({ run, summary, lines, open, actions, children }:
         <Muted> · {run.startedBy === NIGHTLY ? staffCopy.import.nightly : staffCopy.runs.by(run.startedBy)}</Muted>
       )}
       {run.decidedBy && <Muted> · {staffCopy.runs.decidedBy(run.decidedBy)}</Muted>}
-      {failed ? <> · {run.error}</> : <Muted> · {summary}</Muted>}
+      {failed ? <> · {staffCopy.runs.error(run.error)}</> : <Muted> · {summary}</Muted>}
     </>
   );
   return (
