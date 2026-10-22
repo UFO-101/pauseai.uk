@@ -282,7 +282,8 @@ export const staffCopy = {
       admin: "Admin",
       supporters: "Supporters",
     } as Record<string, string>,
-    // Under the table, after each permission's name: what it opens.
+    // Under the table, a heading, then after each permission's name: what it opens.
+    permissionsKey: "Permissions key",
     opens: {
       supporters: "the supporter pages: who has come to events, follows the calendar or wrote to their MP.",
       admin: "this page, to add and remove staff and set permissions, and the audit log.",
@@ -293,10 +294,6 @@ export const staffCopy = {
       addedBy: "Added by",
       addedAt: "Added at",
     },
-    save: "Save",
-    // Beside Save, while a row is ticked differently from what's saved: the way back, and that it isn't saved.
-    undo: "⁂ Undo",
-    unsaved: "⁂ Not saved yet",
     // Under the last row: the field for the address of someone new (its
     // label, read aloud) and its button, which adds them as a row, saved
     // with the others.

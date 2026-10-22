@@ -177,7 +177,7 @@ export function StaffAccountsTableExample() {
     <Logged>
       {(log) => (
         <StaffAccountsTable
-          saveAll={log("saveStaffAccounts")}
+          save={log("saveStaffAccount")}
           remove={log("removeStaffAccount")}
           accounts={[
             {

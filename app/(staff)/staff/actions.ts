@@ -6,15 +6,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { type ImportJob, importPath } from "@/lib/import-runs";
 import { now } from "@/lib/now";
-import {
-  accountsFrom,
-  eraseFrom,
-  idFrom,
-  permissionsFrom,
-  politicianDetailsFrom,
-  signedFrom,
-  unblockFrom,
-} from "@/lib/staff-forms";
+import { eraseFrom, idFrom, permissionsFrom, politicianDetailsFrom, signedFrom, unblockFrom } from "@/lib/staff-forms";
 import { importControlAiLetter } from "@/lib/server/controlai-import";
 import { unblock } from "@/lib/server/email";
 import { eraseSupporter } from "@/lib/server/erasure";
@@ -135,20 +127,16 @@ function accountsPage(change: AccountChange): never {
 }
 
 /**
- * The accounts page's Save: gives each address in the table an account
- * with exactly the permissions ticked in its row, one after another, as
- * the admin; someone added there gets one then. A change refused (the last
- * admin, an address not at pauseai.uk) is said on the page; the others are
- * kept.
+ * The accounts page: gives an address an account with exactly the
+ * permissions in the form, adding it if it has none, as the admin. A
+ * change refused (the last admin, an address not at pauseai.uk) is said on
+ * the page.
  */
-export async function saveStaffAccountsNow(form: FormData): Promise<void> {
+export async function saveStaffAccountNow(form: FormData): Promise<void> {
   const { email } = await requireStaff("admin");
-  let result: AccountChange = "unchanged";
-  for (const account of accountsFrom(form)) {
-    const change = await saveStaffAccount(account.email, account.permissions, email);
-    if (change !== "changed" && change !== "unchanged") result = change;
-  }
-  accountsPage(result);
+  const parsed = permissionsFrom(form);
+  if (!parsed) return;
+  accountsPage(await saveStaffAccount(parsed.email, parsed.permissions, email));
 }
 
 /** The accounts page: removes an account, ending its sessions. */

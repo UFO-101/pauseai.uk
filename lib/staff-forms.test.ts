@@ -1,13 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  accountsFrom,
-  eraseFrom,
-  idFrom,
-  permissionsFrom,
-  politicianDetailsFrom,
-  signedFrom,
-  unblockFrom,
-} from "./staff-forms";
+import { eraseFrom, idFrom, permissionsFrom, politicianDetailsFrom, signedFrom, unblockFrom } from "./staff-forms";
 
 function form(fields: Record<string, string | Blob>) {
   const data = new FormData();
@@ -75,28 +67,6 @@ describe("unblockFrom", () => {
     expect(unblockFrom(form({ address: "jo@example.org", note: "  " }))).toBeUndefined();
     expect(unblockFrom(form({ address: "nobody" }))).toBeUndefined();
     expect(unblockFrom(form({}))).toBeUndefined();
-  });
-});
-
-describe("accountsFrom", () => {
-  it("reads each account, lowercased, with the permissions its address is ticked for", () => {
-    const data = new FormData();
-    for (const [name, value] of [
-      ["account", " Jo@PauseAI.uk "],
-      ["account", "sam@pauseai.uk"],
-      ["account", "nobody"],
-      ["account", new Blob(["x@pauseai.uk"])],
-      ["permission:admin", "jo@pauseai.uk"],
-      ["permission:supporters", "JO@pauseai.uk"],
-      ["permission:supporters", "sam@pauseai.uk"],
-      ["permission:root", "sam@pauseai.uk"],
-    ] as const)
-      data.append(name, value);
-    expect(accountsFrom(data)).toEqual([
-      { email: "jo@pauseai.uk", permissions: ["supporters", "admin"] },
-      { email: "sam@pauseai.uk", permissions: ["supporters"] },
-    ]);
-    expect(accountsFrom(new FormData())).toEqual([]);
   });
 });
 

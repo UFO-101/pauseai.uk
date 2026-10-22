@@ -66,32 +66,13 @@ export type PermissionsForm = { email: string; permissions: Permission[] };
 
 /**
  * One account: whose, and each permission's checkbox, named
- * "permission:<name>", ticked or not. The form to remove someone sends
- * only whose.
+ * "permission:<name>", ticked or not: the accounts table sends one per
+ * change, and the form to remove someone only whose.
  */
 export function permissionsFrom(form: FormData): PermissionsForm | undefined {
   const email = text(form, "email").toLowerCase();
   if (!email.includes("@")) return undefined;
   return { email, permissions: PERMISSIONS.filter((permission) => form.get(`permission:${permission}`) !== null) };
-}
-
-/**
- * The accounts table's Save: each account in it ("account"), and for each
- * permission, "permission:<name>" once per account ticked for it, its
- * address the value. Addresses that aren't one are left out.
- */
-export function accountsFrom(form: FormData): PermissionsForm[] {
-  const addresses = (name: string) =>
-    form
-      .getAll(name)
-      .filter((value) => typeof value === "string")
-      .map((value) => value.trim().toLowerCase());
-  return addresses("account")
-    .filter((email) => email.includes("@"))
-    .map((email) => ({
-      email,
-      permissions: PERMISSIONS.filter((permission) => addresses(`permission:${permission}`).includes(email)),
-    }));
 }
 
 export type EraseForm = { id: number; reference: string };

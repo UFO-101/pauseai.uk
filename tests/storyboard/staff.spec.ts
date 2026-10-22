@@ -567,23 +567,21 @@ test("without an account, a staff member sees only whom to ask; an admin adds, c
   await page.goto(`${BASE}/staff/accounts`);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(staffCopy.accounts.title);
   await frame(page, "the accounts page: the seeded admin and this admin");
-  // Added under the last row: a row of their own, marked, not saved yet; removing a saved account waits for Save.
+  // Added under the last row, at once: an account with no permissions.
   await page.getByRole("textbox", { name: staffCopy.accounts.addTitle }).fill(colleague);
   await page.getByRole("button", { name: staffCopy.accounts.add }).click();
   const row = page.getByRole("row").filter({ hasText: colleague });
-  await expect(page.getByRole("status")).toHaveText(staffCopy.accounts.unsaved);
-  await expect(
-    page.getByRole("row").filter({ hasText: staffEmail() }).getByRole("button", { name: staffCopy.accounts.remove }),
-  ).toBeDisabled();
-  await frame(page, "the colleague added, not saved yet");
-
-  await row.getByRole("checkbox", { name: staffCopy.accounts.names.supporters }).check();
-  await frame(page, "the supporters box ticked for them");
-  await page.getByRole("button", { name: staffCopy.accounts.save }).click();
-  await expect(page.getByRole("status")).toHaveCount(0);
   await expect(row).toContainText(staffEmail());
-  await expect(row.getByRole("checkbox", { name: staffCopy.accounts.names.supporters })).toBeChecked();
-  await frame(page, "saved: an account, with the supporters permission");
+  await expect(page.getByRole("textbox", { name: staffCopy.accounts.addTitle })).toHaveValue("");
+  await frame(page, "the colleague added, with no permissions");
+
+  // A box ticked is saved at once: still ticked after a reload.
+  const supporters = row.getByRole("checkbox", { name: staffCopy.accounts.names.supporters });
+  await supporters.check();
+  await expect(supporters).toBeEnabled();
+  await page.reload();
+  await expect(supporters).toBeChecked();
+  await frame(page, "given the supporters permission");
 
   await row.getByRole("button", { name: staffCopy.accounts.remove }).click();
   await expect(page.getByRole("row").filter({ hasText: colleague })).toHaveCount(0);

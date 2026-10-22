@@ -1,12 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { type FormEvent, useOptimistic, useState, useTransition } from "react";
 import { Button } from "@/components/ui/Button";
 import { Checkbox, TextInput } from "@/components/ui/Controls";
 import { FieldError } from "@/components/ui/Field";
 import Table from "@/components/ui/Table";
-import Tag from "@/components/ui/Tag";
-import { SubmitButton } from "@/components/ui/SubmitButton";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { isStaffEmail, PERMISSIONS, type Permission } from "@/lib/staff-permissions";
 import type { StaffAccount } from "@/lib/server/staff-accounts";
@@ -16,84 +14,107 @@ import styles from "./StaffAccountsTable.module.css";
 
 type Action = (form: FormData) => void | Promise<void>;
 
-/** Whether two lists of permissions hold the same ones. */
-function same(a: readonly Permission[], b: readonly Permission[]): boolean {
-  return a.length === b.length && a.every((permission) => b.includes(permission));
+/** The form an account's permissions are saved with: whose, and "permission:<name>" for each ticked (lib/staff-forms.ts). */
+function accountForm(email: string, permissions: readonly Permission[]): FormData {
+  const form = new FormData();
+  form.set("email", email);
+  for (const permission of permissions) form.set(`permission:${permission}`, "on");
+  return form;
 }
 
-/** A row: an account saved, or someone added here and not saved yet (`added`). */
-type Row = StaffAccount & { added?: boolean };
+/**
+ * An account's checkboxes, a box per permission. A tick is saved at once:
+ * the boxes show it straight away, and are off until it's saved. One
+ * refused (the last admin) goes back to what's saved, and the page says why.
+ */
+function PermissionBoxes({ account, save }: { account: StaffAccount; save: Action }) {
+  const [saving, startSaving] = useTransition();
+  const [shown, show] = useOptimistic(account.permissions);
+  const tick = (permission: Permission, on: boolean) => {
+    const next = PERMISSIONS.filter((p) => (p === permission ? on : shown.includes(p)));
+    startSaving(async () => {
+      show(next);
+      await save(accountForm(account.email, next));
+    });
+  };
+  return (
+    <div className={styles.boxes} role="group" aria-label={account.email} aria-busy={saving}>
+      {PERMISSIONS.map((permission) => (
+        <Checkbox
+          key={permission}
+          checked={shown.includes(permission)}
+          disabled={saving}
+          onChange={(on) => tick(permission, on)}
+        >
+          {staffCopy.accounts.names[permission]}
+        </Checkbox>
+      ))}
+    </div>
+  );
+}
 
 /** Why an address typed to add can't be: not at pauseai.uk, or already in the table. */
 type AddProblem = "not-pauseai" | "exists";
 
 /**
- * Every account, a checkbox per permission in its row and, at the right, a
- * button to remove it; under the last row, a field to add someone. One
- * Save, under the table, sends every row ("account") and, for each ticked
- * box, the row's address as "permission:<name>" (lib/staff-forms.ts), so
- * someone added is a row like the others, given an account when it's
- * saved. A row added, or ticked differently from what's saved, is marked,
- * and until it's saved or undone Save says so, the browser asks before
- * leaving, and removing an account, which would lose it, is off. Then what
- * each permission opens.
+ * Under the last row: the address of someone to add, and Add, which gives
+ * them an account at once, with no permissions; their row then sets more.
+ * An address not at pauseai.uk, or in the table already, is refused here.
+ */
+function AddRow({ accounts, add }: { accounts: StaffAccount[]; add: Action }) {
+  const [problem, setProblem] = useState<AddProblem>();
+  const copy = staffCopy.accounts;
+  const address = (form: FormData) =>
+    String(form.get("email") ?? "")
+      .trim()
+      .toLowerCase();
+  // Checked before the form is sent, so a refused address stays in the field to be put right.
+  const check = (event: FormEvent<HTMLFormElement>) => {
+    const email = address(new FormData(event.currentTarget));
+    const found = !isStaffEmail(email) ? "not-pauseai" : accounts.some((a) => a.email === email) ? "exists" : undefined;
+    setProblem(found);
+    if (found) event.preventDefault();
+  };
+  const submit = (form: FormData) => add(accountForm(address(form), []));
+  return (
+    <tr>
+      <td colSpan={5}>
+        <form action={submit} onSubmit={check} aria-label={copy.addTitle} className={styles.add}>
+          <TextInput
+            name="email"
+            type="email"
+            required
+            aria-label={copy.addTitle}
+            aria-invalid={problem !== undefined}
+          />
+          <Button type="submit" variant="ghost" size="small">
+            {copy.add}
+          </Button>
+          {problem && (
+            <FieldError announce="alert">{problem === "exists" ? copy.alreadyThere : copy.notPauseai}</FieldError>
+          )}
+        </form>
+      </td>
+    </tr>
+  );
+}
+
+/**
+ * Every account, a checkbox per permission in its row, each tick saved at
+ * once, and at the right a button to remove it; under the last row, a
+ * field to add someone. Then, under its own heading, what each permission
+ * opens.
  */
 export default function StaffAccountsTable({
   accounts,
-  saveAll,
+  save,
   remove,
 }: {
   accounts: StaffAccount[];
-  saveAll: Action;
+  /** Gives an address an account with exactly the permissions in the form, adding it if it has none. */
+  save: Action;
   remove: Action;
 }) {
-  // What's ticked in each row changed here, by address; a row not in it shows what's saved.
-  const [ticked, setTicked] = useState<Record<string, Permission[]>>({});
-  // Addresses added here, not saved yet, in the order they were added.
-  const [added, setAdded] = useState<string[]>([]);
-  const [typed, setTyped] = useState("");
-  const [problem, setProblem] = useState<AddProblem>();
-  const rows: Row[] = [
-    ...accounts,
-    ...added.map((email) => ({ email, permissions: [], addedBy: "", addedAt: "", added: true })),
-  ];
-  const shown = (row: Row) => ticked[row.email] ?? row.permissions;
-  const changed = (row: Row) => row.added === true || !same(shown(row), row.permissions);
-  const unsaved = rows.some(changed);
-
-  useEffect(() => {
-    if (!unsaved) return;
-    const ask = (event: BeforeUnloadEvent) => event.preventDefault();
-    window.addEventListener("beforeunload", ask);
-    return () => window.removeEventListener("beforeunload", ask);
-  }, [unsaved]);
-
-  const tick = (row: Row, permission: Permission, on: boolean) =>
-    setTicked((was) => {
-      const others = (was[row.email] ?? row.permissions).filter((p) => p !== permission);
-      return { ...was, [row.email]: on ? [...others, permission] : others };
-    });
-
-  const add = () => {
-    const email = typed.trim().toLowerCase();
-    if (!email) return;
-    if (!isStaffEmail(email)) return setProblem("not-pauseai");
-    if (rows.some((row) => row.email === email)) return setProblem("exists");
-    setAdded((was) => [...was, email]);
-    setTyped("");
-    setProblem(undefined);
-  };
-
-  const drop = (email: string) => {
-    setAdded((was) => was.filter((other) => other !== email));
-    setTicked((was) => Object.fromEntries(Object.entries(was).filter(([other]) => other !== email)));
-  };
-
-  const undo = () => {
-    setTicked({});
-    setAdded([]);
-  };
-
   const copy = staffCopy.accounts;
   const columns = copy.columns;
   return (
@@ -109,93 +130,29 @@ export default function StaffAccountsTable({
           </tr>
         </thead>
         <tbody>
-          {rows.map((row) => (
-            <tr key={row.email} className={changed(row) ? styles.changed : undefined}>
-              <td>{row.email}</td>
+          {accounts.map((account) => (
+            <tr key={account.email}>
+              <td>{account.email}</td>
               <td>
-                <div className={styles.boxes} role="group" aria-label={row.email}>
-                  {PERMISSIONS.map((permission) => (
-                    <Checkbox
-                      key={permission}
-                      checked={shown(row).includes(permission)}
-                      onChange={(on) => tick(row, permission, on)}
-                    >
-                      {copy.names[permission]}
-                    </Checkbox>
-                  ))}
-                </div>
+                <PermissionBoxes account={account} save={save} />
               </td>
-              <td>{row.addedBy}</td>
-              <td>{row.addedAt && staffTime(row.addedAt)}</td>
+              <td>{account.addedBy}</td>
+              <td>{staffTime(account.addedAt)}</td>
               <td>
-                {row.added ? (
-                  <Button type="button" variant="ghost" size="small" onClick={() => drop(row.email)}>
-                    {copy.remove}
-                  </Button>
-                ) : (
-                  <RemoveAccountForm email={row.email} remove={remove} disabled={unsaved} />
-                )}
+                <RemoveAccountForm email={account.email} remove={remove} />
               </td>
             </tr>
           ))}
         </tbody>
         <tfoot>
-          <tr>
-            <td colSpan={5}>
-              <div className={styles.add}>
-                <TextInput
-                  type="email"
-                  aria-label={copy.addTitle}
-                  aria-invalid={problem !== undefined}
-                  value={typed}
-                  onChange={(event) => setTyped(event.target.value)}
-                  onKeyDown={(event) => {
-                    if (event.key !== "Enter") return;
-                    event.preventDefault();
-                    add();
-                  }}
-                />
-                <Button type="button" variant="ghost" size="small" onClick={add}>
-                  {copy.add}
-                </Button>
-                {problem && (
-                  <FieldError announce="alert">{problem === "exists" ? copy.alreadyThere : copy.notPauseai}</FieldError>
-                )}
-              </div>
-            </td>
-          </tr>
+          <AddRow accounts={accounts} add={save} />
         </tfoot>
       </Table>
-      <form action={saveAll} aria-label={columns.permissions} className={styles.save}>
-        {rows.flatMap((row) => [
-          <input key={row.email} type="hidden" name="account" value={row.email} />,
-          ...shown(row).map((permission) => (
-            <input
-              key={`${row.email} ${permission}`}
-              type="hidden"
-              name={`permission:${permission}`}
-              value={row.email}
-            />
-          )),
-        ])}
-        <SubmitButton variant="primary" size="small" disabled={!unsaved}>
-          {copy.save}
-        </SubmitButton>
-        {unsaved && (
-          <>
-            <Button type="button" variant="ghost" size="small" onClick={undo}>
-              {copy.undo}
-            </Button>
-            <span role="status">{copy.unsaved}</span>
-          </>
-        )}
-      </form>
+      <h2>{copy.permissionsKey}</h2>
       <dl className={styles.permissions}>
         {PERMISSIONS.map((permission) => (
           <div key={permission}>
-            <dt>
-              <Tag>{copy.names[permission]}</Tag>
-            </dt>
+            <dt>{copy.names[permission]}</dt>
             <dd>{copy.opens[permission]}</dd>
           </div>
         ))}

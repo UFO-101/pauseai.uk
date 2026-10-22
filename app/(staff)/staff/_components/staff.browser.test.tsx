@@ -79,13 +79,10 @@ const AT = "2026-10-15 02:00";
 /** A stand-in Server Action that keeps what it was sent. */
 function action() {
   const sent: Record<string, FormDataEntryValue>[] = [];
-  // Each form whole, for a name sent more than once.
-  const form: FormData[] = [];
   const fn = vi.fn((data: FormData) => {
     sent.push(Object.fromEntries(data));
-    form.push(data);
   });
-  return { fn, sent, form };
+  return { fn, sent };
 }
 
 describe("StaffNav", () => {
@@ -469,13 +466,13 @@ describe("StaffAccountsTable", () => {
   ] satisfies StaffAccount[];
 
   const renderTable = async () => {
-    const saveAll = action();
+    const save = action();
     const remove = action();
-    await render(<StaffAccountsTable saveAll={saveAll.fn} remove={remove.fn} accounts={accounts} />);
-    return { saveAll, remove };
+    await render(<StaffAccountsTable save={save.fn} remove={remove.fn} accounts={accounts} />);
+    return { save, remove };
   };
 
-  it("lists every account, centred in its row, with its boxes and a Remove at the right", async () => {
+  it("lists every account, centred in its row, with its boxes, a Remove at the right, and a key to the permissions", async () => {
     const { remove } = await renderTable();
     await expect.element(page.getByRole("cell", { name: "2026-10-20 09:00" })).toBeVisible();
     expect(getComputedStyle(page.getByRole("cell", { name: "2026-10-20 09:00" }).element()).verticalAlign).toBe(
@@ -489,7 +486,10 @@ describe("StaffAccountsTable", () => {
         .map((box) => box.element().parentElement!.textContent),
     ).toEqual([staffCopy.accounts.names.supporters, staffCopy.accounts.names.admin]);
     await expect.element(jo.getByRole("checkbox", { name: staffCopy.accounts.names.supporters })).toBeChecked();
-    // What each permission opens, a row each: its name, then what it opens.
+    // Under its heading, what each permission opens, a row each: its name in bold, then what it opens.
+    await expect
+      .element(page.getByRole("heading", { level: 2, name: staffCopy.accounts.permissionsKey }))
+      .toBeVisible();
     const opens = [...document.querySelectorAll("dl > div")].map((row) => [
       row.querySelector("dt")!.textContent,
       row.querySelector("dd")!.textContent,
@@ -498,9 +498,7 @@ describe("StaffAccountsTable", () => {
       [staffCopy.accounts.names.supporters, staffCopy.accounts.opens.supporters],
       [staffCopy.accounts.names.admin, staffCopy.accounts.opens.admin],
     ]);
-    // Nothing changed: nothing to save.
-    await expect.element(page.getByRole("button", { name: staffCopy.accounts.save })).toBeDisabled();
-    await expect.element(page.getByRole("status")).not.toBeInTheDocument();
+    expect(Number(getComputedStyle(document.querySelector("dt")!).fontWeight)).toBeGreaterThanOrEqual(600);
 
     await page
       .getByRole("form", { name: `${staffCopy.accounts.remove}: jo@pauseai.uk` })
@@ -510,114 +508,60 @@ describe("StaffAccountsTable", () => {
     expect(remove.sent[0]).toEqual({ email: "jo@pauseai.uk" });
   });
 
-  it("adds someone as a row, saved with the others, refusing an address not at pauseai.uk or in the table already", async () => {
-    const { saveAll, remove } = await renderTable();
+  it("saves a tick at once: whose, and every permission now ticked in the row", async () => {
+    const { save } = await renderTable();
+    const jo = page.getByRole("group", { name: "jo@pauseai.uk" });
+    await jo.getByRole("checkbox", { name: staffCopy.accounts.names.admin }).click();
+    await vi.waitFor(() => expect(save.sent).toHaveLength(1));
+    expect(save.sent[0]).toEqual({ email: "jo@pauseai.uk", "permission:supporters": "on", "permission:admin": "on" });
+    await jo.getByRole("checkbox", { name: staffCopy.accounts.names.supporters }).click();
+    await vi.waitFor(() => expect(save.sent).toHaveLength(2));
+    expect(save.sent[1]).toEqual({ email: "jo@pauseai.uk" });
+  });
+
+  it("shows a tick straight away, its row's boxes off until it's saved, then what's saved", async () => {
+    let done = () => {};
+    const save = vi.fn(() => new Promise<void>((resolve) => (done = resolve)));
+    await render(<StaffAccountsTable save={save} remove={vi.fn()} accounts={accounts} />);
+    const jo = page.getByRole("group", { name: "jo@pauseai.uk" });
+    const admin = jo.getByRole("checkbox", { name: staffCopy.accounts.names.admin });
+    await admin.click();
+    await expect.element(admin).toBeChecked();
+    await expect.element(admin).toBeDisabled();
+    await expect.element(jo).toHaveAttribute("aria-busy", "true");
+    // Another row isn't held up.
+    await expect
+      .element(page.getByRole("group", { name: "admin@pauseai.uk" }).getByRole("checkbox").first())
+      .toBeEnabled();
+    // Saved, or refused, the row shows what the page was given: here, unchanged.
+    done();
+    await expect.element(admin).toBeEnabled();
+    await expect.element(admin).not.toBeChecked();
+  });
+
+  it("adds someone at once, refusing an address not at pauseai.uk or in the table already, and keeping it to put right", async () => {
+    const { save } = await renderTable();
     const field = page.getByRole("textbox", { name: staffCopy.accounts.addTitle });
     const addButton = page.getByRole("button", { name: staffCopy.accounts.add });
-    // Nothing typed: nothing to add.
-    await addButton.click();
-    await expect.element(page.getByRole("status")).not.toBeInTheDocument();
 
     await field.fill("sam@example.com");
     await addButton.click();
     await expect.element(page.getByRole("alert")).toHaveTextContent(staffCopy.accounts.notPauseai);
     await expect.element(field).toHaveAttribute("aria-invalid", "true");
+    await expect.element(field).toHaveValue("sam@example.com");
     await field.fill("JO@pauseai.uk");
     await addButton.click();
     await expect.element(page.getByRole("alert")).toHaveTextContent(staffCopy.accounts.alreadyThere);
+    expect(save.sent).toHaveLength(0);
 
-    // Enter adds too: a row, marked, its boxes unticked, and the field empty again.
+    // Enter adds too: an account with no permissions, and the field empty again.
     await userEvent.fill(field, " Sam@PauseAI.uk ");
     await userEvent.keyboard("{Enter}");
-    const sam = page.getByRole("row").filter({ hasText: "sam@pauseai.uk" });
-    await expect.element(sam).toBeVisible();
-    expect(sam.element().className).toMatch(/changed/);
-    expect(
-      sam
-        .getByRole("checkbox")
-        .all()
-        .map((box) => box.element().matches(":checked")),
-    ).toEqual([false, false]);
+    await vi.waitFor(() => expect(save.sent).toHaveLength(1));
+    expect(save.sent[0]).toEqual({ email: "sam@pauseai.uk" });
     await expect.element(field).toHaveValue("");
     await expect.element(page.getByRole("alert")).not.toBeInTheDocument();
-    await expect.element(page.getByRole("status")).toHaveTextContent(staffCopy.accounts.unsaved);
-    // Another key does nothing but type.
-    await userEvent.type(field, "x");
-    await expect.element(field).toHaveValue("x");
-
-    // Saved with the rest, as an account with the boxes ticked in its row.
-    await sam.getByRole("checkbox", { name: staffCopy.accounts.names.supporters }).click();
-    await page.getByRole("button", { name: staffCopy.accounts.save }).click();
-    await vi.waitFor(() => expect(saveAll.sent).toHaveLength(1));
-    expect(saveAll.form[0].getAll("account")).toEqual(["admin@pauseai.uk", "jo@pauseai.uk", "sam@pauseai.uk"]);
-    expect(saveAll.form[0].getAll("permission:supporters")).toEqual(["jo@pauseai.uk", "sam@pauseai.uk"]);
-    expect(remove.sent).toHaveLength(0);
-  });
-
-  it("drops someone added before it's saved, with what was ticked for them", async () => {
-    const { remove } = await renderTable();
-    const field = page.getByRole("textbox", { name: staffCopy.accounts.addTitle });
-    await field.fill("sam@pauseai.uk");
-    await page.getByRole("button", { name: staffCopy.accounts.add }).click();
-    const sam = page.getByRole("row").filter({ hasText: "sam@pauseai.uk" });
-    await sam.getByRole("checkbox", { name: staffCopy.accounts.names.admin }).click();
-    await sam.getByRole("button", { name: staffCopy.accounts.remove }).click();
-    await expect.element(sam).not.toBeInTheDocument();
-    await expect.element(page.getByRole("status")).not.toBeInTheDocument();
-    expect(remove.sent).toHaveLength(0);
-    // Added again, they start with nothing ticked.
-    await field.fill("sam@pauseai.uk");
-    await page.getByRole("button", { name: staffCopy.accounts.add }).click();
-    await expect.element(sam.getByRole("checkbox", { name: staffCopy.accounts.names.admin })).not.toBeChecked();
-  });
-
-  it("marks a changed row, says it isn't saved, asks before leaving, and turns off removing until it's saved", async () => {
-    const { saveAll } = await renderTable();
-    const jo = page.getByRole("group", { name: "jo@pauseai.uk" });
-    const admin = page.getByRole("group", { name: "admin@pauseai.uk" });
-    await jo.getByRole("checkbox", { name: staffCopy.accounts.names.admin }).click();
-    await expect.element(page.getByRole("status")).toHaveTextContent(staffCopy.accounts.unsaved);
-    const joRow = page.getByRole("row").filter({ hasText: "jo@pauseai.uk" }).element();
-    const adminRow = page.getByRole("row").filter({ hasText: "migration" }).element();
-    expect(joRow.className).toMatch(/changed/);
-    expect(adminRow.className).not.toMatch(/changed/);
-    for (const button of page.getByRole("button", { name: staffCopy.accounts.remove }).all()) {
-      await expect.element(button).toBeDisabled();
-    }
-    const leaving = new Event("beforeunload", { cancelable: true });
-    window.dispatchEvent(leaving);
-    expect(leaving.defaultPrevented).toBe(true);
-
-    // Ticked back as it was: not a change.
-    await jo.getByRole("checkbox", { name: staffCopy.accounts.names.admin }).click();
-    await expect.element(page.getByRole("status")).not.toBeInTheDocument();
-    expect(joRow.className).not.toMatch(/changed/);
-    const stay = new Event("beforeunload", { cancelable: true });
-    window.dispatchEvent(stay);
-    expect(stay.defaultPrevented).toBe(false);
-
-    // Two rows changed, then saved together: every account, and each box ticked by address.
-    await jo.getByRole("checkbox", { name: staffCopy.accounts.names.supporters }).click();
-    await admin.getByRole("checkbox", { name: staffCopy.accounts.names.supporters }).click();
-    await page.getByRole("button", { name: staffCopy.accounts.save }).click();
-    await vi.waitFor(() => expect(saveAll.sent).toHaveLength(1));
-    const sent = saveAll.form[0];
-    expect(sent.getAll("account")).toEqual(["admin@pauseai.uk", "jo@pauseai.uk"]);
-    expect(sent.getAll("permission:admin")).toEqual(["admin@pauseai.uk"]);
-    expect(sent.getAll("permission:supporters")).toEqual(["admin@pauseai.uk"]);
-  });
-
-  it("undoes every change, someone added too", async () => {
-    await renderTable();
-    await page.getByRole("textbox", { name: staffCopy.accounts.addTitle }).fill("sam@pauseai.uk");
-    await page.getByRole("button", { name: staffCopy.accounts.add }).click();
-    const jo = page.getByRole("group", { name: "jo@pauseai.uk" });
-    await jo.getByRole("checkbox", { name: staffCopy.accounts.names.supporters }).click();
-    await expect.element(jo.getByRole("checkbox", { name: staffCopy.accounts.names.supporters })).not.toBeChecked();
-    await page.getByRole("button", { name: staffCopy.accounts.undo }).click();
-    await expect.element(jo.getByRole("checkbox", { name: staffCopy.accounts.names.supporters })).toBeChecked();
-    await expect.element(page.getByRole("button", { name: staffCopy.accounts.save })).toBeDisabled();
-    await expect.element(page.getByRole("row").filter({ hasText: "sam@pauseai.uk" })).not.toBeInTheDocument();
+    await expect.element(field).toHaveAttribute("aria-invalid", "false");
   });
 });
 
