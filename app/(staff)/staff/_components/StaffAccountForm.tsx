@@ -7,6 +7,7 @@ import { FilterForm } from "@/components/ui/Form";
 import { SubmitButton } from "@/components/ui/SubmitButton";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { PERMISSIONS, type Permission } from "@/lib/staff-permissions";
+import styles from "./StaffForms.module.css";
 
 type Action = (form: FormData) => void | Promise<void>;
 
@@ -39,7 +40,7 @@ export default function StaffAccountForm({ email, permissions, save }: Props) {
     );
   }
   return (
-    <FilterForm action={save} aria-label={email}>
+    <FilterForm action={save} aria-label={email} className={styles.centred}>
       <input type="hidden" name="email" value={email} />
       {PERMISSIONS.map((permission) => (
         <Checkbox
