@@ -57,7 +57,7 @@ function Action({ action }: { action: DashboardAction }) {
         <span>{title}</span>
         <Muted>{detail}</Muted>
       </span>
-      <ButtonLink href={href} variant={action.kind === "held-sync" ? "primary" : "ghost"} size="small" fit>
+      <ButtonLink href={href} variant="primary" size="small" fit>
         {button}
       </ButtonLink>
     </li>

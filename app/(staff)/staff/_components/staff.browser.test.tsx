@@ -219,6 +219,12 @@ describe("StaffDashboard", () => {
     expect(parseFloat(heading.fontSize)).toBeGreaterThan(parseFloat(words.fontSize));
     expect(Number(heading.fontWeight)).toBeGreaterThan(Number(words.fontWeight));
     expect(getComputedStyle(callout.getByRole("link").first().element()).paddingTop).toBe("4px");
+    // Every item's button is the same: the primary, in orange.
+    const looks = callout
+      .getByRole("link")
+      .all()
+      .map((link) => getComputedStyle(link.element()).backgroundColor);
+    expect(new Set(looks).size).toBe(1);
     // With only a held import, which is waiting rather than broken, it's amber.
     await rerender(
       <StaffDashboard
