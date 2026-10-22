@@ -6,7 +6,7 @@ import { m } from "./classes";
 
 const copy = marchSignupCopy.thanks;
 
-/** The last card: thanks, where to manage the registration, and the form again for someone else. */
+/** The last card: thanks, where to read more, and the form again for someone else. */
 export default function ThanksCard({
   onRegisterAnother,
   motion,
@@ -24,11 +24,6 @@ export default function ThanksCard({
       <p>
         You should receive an email shortly with a calendar invite. We&rsquo;ll send you an update with more info closer
         to the date.
-      </p>
-      <p>
-        <a className={m("inline-link")} href={march.lumaUrl} target="_blank" rel="noreferrer">
-          {copy.manage}
-        </a>
       </p>
       <p>
         In the meantime, read more about who we are at{" "}
