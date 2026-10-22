@@ -6,6 +6,21 @@
   max-width: 100%;
 }
 
+/* A politician's name, and under it, close, what they are. */
+.heading {
+  margin-bottom: var(--space-5);
+}
+
+.heading h1 {
+  margin-bottom: var(--space-1);
+}
+
+.heading p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--text-lg);
+}
+
 /* The box: a label and its values on each row. */
 .facts {
   display: grid;

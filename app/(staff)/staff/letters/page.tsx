@@ -18,7 +18,7 @@ export default async function LettersPage({ searchParams }: { searchParams: Prom
     <StaffPage nav={<StaffNav email={email} account permissions={permissions} current="letters" />}>
       <h1>{staffCopy.letters.title}</h1>
       <LetterFilters search={search} />
-      <LettersTable letters={letters} />
+      <LettersTable letters={letters} showSenders={permissions.includes("supporters")} />
     </StaffPage>
   );
 }

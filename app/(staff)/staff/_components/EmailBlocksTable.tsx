@@ -16,7 +16,7 @@ export default function EmailBlocksTable({
   blocks: EmailBlock[];
   unblock: (form: FormData) => void | Promise<void>;
 }) {
-  if (blocks.length === 0) return <p>{staffCopy.emails.none}</p>;
+  if (blocks.length === 0) return <p>{staffCopy.emails.noBlocks}</p>;
   const columns = staffCopy.emails.columns;
   return (
     <Table>

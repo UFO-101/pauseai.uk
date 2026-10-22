@@ -107,6 +107,7 @@ export function PoliticianDetailsExample({
           action={log("action")}
           block={blocked ? { ...exampleBlock, address: examplePolitician.email! } : undefined}
           letters={[{ ...exampleLetter, mpName: examplePolitician.name, politicianId: examplePolitician.id }]}
+          showSenders
           history={examplePoliticianHistory}
           unblock={log("unblock")}
           airtableTable="https://airtable.com/appExample/tblExample"

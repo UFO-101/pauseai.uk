@@ -36,15 +36,22 @@ function CampaignName({ slug }: { slug: string }) {
   return campaign ? <Link href={campaignPath(campaign)}>{campaign.title}</Link> : <>{slug}</>;
 }
 
-/** A letter: who wrote it, linked to their supporter once they're one, the campaign, and how it ended. */
-function Sender({ letter }: { letter: LetterSummary }) {
+/**
+ * A letter: who wrote it, linked to their supporter once they're one, for
+ * staff who may see supporters; then the campaign.
+ */
+function Sender({ letter, show }: { letter: LetterSummary; show: boolean }) {
   return (
     <>
-      {letter.supporterId === null ? (
-        letter.senderName
-      ) : (
-        <Link href={`/staff/supporters/${letter.supporterId}`}>{letter.senderName}</Link>
-      )}
+      {show &&
+        (letter.supporterId === null ? (
+          <> {letter.senderName}</>
+        ) : (
+          <>
+            {" "}
+            <Link href={`/staff/supporters/${letter.supporterId}`}>{letter.senderName}</Link>
+          </>
+        ))}
       <Muted>
         {" · "}
         <CampaignName slug={letter.campaign} />
@@ -53,15 +60,17 @@ function Sender({ letter }: { letter: LetterSummary }) {
   );
 }
 
-/** The letters as history: each written, and each answered, as its own line. */
-function letterEntries(letters: LetterSummary[]): Entry[] {
+/** The letters as history: each written, and each answered, as its own line; who wrote only if `showSenders`. */
+function letterEntries(letters: LetterSummary[], showSenders: boolean): Entry[] {
+  const words = showSenders ? copy.history : copy.historyUnnamed;
   return letters.flatMap((letter) => [
     {
       key: `letter-${letter.id}`,
       at: letter.createdAt,
       what: (
         <>
-          {copy.history.letter} <Sender letter={letter} />
+          {words.letter}
+          <Sender letter={letter} show={showSenders} />
           <Muted> · {staffCopy.letters.status[letter.status] ?? letter.status}</Muted>
         </>
       ),
@@ -73,7 +82,8 @@ function letterEntries(letters: LetterSummary[]): Entry[] {
             at: letter.repliedAt,
             what: (
               <>
-                {copy.history["letter-replied"]} <Sender letter={letter} />
+                {words["letter-replied"]}
+                <Sender letter={letter} show={showSenders} />
               </>
             ),
           },
@@ -118,13 +128,14 @@ function Detail({ change }: { change: PoliticianChange }) {
 }
 
 /**
- * A politician's page, laid out like a supporter's: their name and tags;
+ * A politician's page, laid out like a supporter's: their name and tags,
+ * and under it what they are;
  * one box of what we hold, with where they came from and each campaign's
  * status; if their address is blocked, why, and a way to unblock it; one
  * history of the letters written to them, the replies, and everything the
  * audit log says about them, newest first; and at the foot, the form to
- * edit a signer the policy team added. Airtable's MPs are edited there, and
- * the test MPs not at all.
+ * edit a signer the policy team added. Airtable's MPs are edited there, their
+ * source linking to their record, and the test MPs not at all.
  */
 export default function PoliticianDetails({
   politician,
@@ -132,6 +143,7 @@ export default function PoliticianDetails({
   block,
   unblock,
   letters,
+  showSenders,
   history,
   airtableTable,
 }: {
@@ -140,13 +152,15 @@ export default function PoliticianDetails({
   block?: EmailBlock;
   unblock: (form: FormData) => void | Promise<void>;
   letters: LetterSummary[];
+  /** Whether to say who wrote each letter: only to staff who may see supporters. */
+  showSenders: boolean;
   history: PoliticianChange[];
   /** Airtable's table of MPs, which the server knows; an MP's record there is under it. */
   airtableTable: string;
 }) {
   const editable = politician.airtableId === null && !politician.isTest;
   const entries: Entry[] = [
-    ...letterEntries(letters),
+    ...letterEntries(letters, showSenders),
     ...history.map((change) => ({
       key: `change-${change.id}`,
       at: change.at,
@@ -165,10 +179,13 @@ export default function PoliticianDetails({
       : copy.sources.staff;
   return (
     <>
-      <h1>
-        {politician.name}
-        {politician.isTest && <Tag>{staffCopy.politicians.testMp}</Tag>}
-      </h1>
+      <header className={styles.heading}>
+        <h1>
+          {politician.name}
+          {politician.isTest && <Tag>{staffCopy.politicians.testMp}</Tag>}
+        </h1>
+        <p>{copy.role(copy.roles[politician.house], politician.constituency, politician.sitting)}</p>
+      </header>
       {block && (
         <section className={styles.blocked} aria-labelledby="blocked-title">
           <AlertIcon tone="red" />
@@ -195,7 +212,18 @@ export default function PoliticianDetails({
         <Fact label={staffCopy.fields.constituency}>{politician.constituency}</Fact>
         <Fact label={staffCopy.fields.party}>{politician.party}</Fact>
         <Fact label={staffCopy.fields.email}>{politician.email ?? staffCopy.politicians.noEmail}</Fact>
-        <Fact label={copy.source}>{source}</Fact>
+        <Fact label={copy.source}>
+          {politician.airtableId ? (
+            <>
+              <a href={`${airtableTable}/${politician.airtableId}`} target="_blank" rel="noreferrer">
+                {source}
+              </a>
+              {copy.editInAirtable}
+            </>
+          ) : (
+            source
+          )}
+        </Fact>
         {Object.entries(politician.statuses).map(([slug, status]) => (
           <div key={slug} className={styles.pair}>
             <dt>{campaignBySlug(slug)?.title ?? slug}</dt>
@@ -224,21 +252,11 @@ export default function PoliticianDetails({
         </ol>
       )}
 
-      <h2>{copy.detailsTitle}</h2>
-      {editable ? (
-        <PoliticianForm action={action} politician={politician} />
-      ) : (
-        <p>
-          {copy.fromAirtable.before}
-          <a
-            href={politician.airtableId ? `${airtableTable}/${politician.airtableId}` : airtableTable}
-            target="_blank"
-            rel="noreferrer"
-          >
-            {copy.fromAirtable.link}
-          </a>
-          {copy.fromAirtable.after}
-        </p>
+      {editable && (
+        <>
+          <h2>{copy.detailsTitle}</h2>
+          <PoliticianForm action={action} politician={politician} />
+        </>
       )}
     </>
   );

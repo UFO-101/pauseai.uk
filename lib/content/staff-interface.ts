@@ -384,12 +384,24 @@ export const staffCopy = {
       "block address": "Address blocked",
       "unblock address": "Address unblocked",
     } as Record<string, string>,
-    // On an MP from Airtable, instead of the form: "Airtable" links to their record there.
-    fromAirtable: {
-      before: "Information about the MP is imported from ",
-      link: "Airtable",
-      after: ", update name / email there.",
-    },
+    // A letter and its reply, for staff who may not see supporters, so not who wrote it.
+    historyUnnamed: {
+      letter: "⁂ Letter",
+      "letter-replied": "⁂ Answered a letter",
+    } as Record<string, string>,
+    // On an MP from Airtable, after the source, which links to their record there.
+    editInAirtable: ", update name / email there.",
+    // Under their name: what they are, in their house, and where for.
+    roles: {
+      commons: "⁂ MP",
+      lords: "⁂ Member of the House of Lords",
+      "scottish-parliament": "⁂ MSP",
+      senedd: "⁂ MS",
+      "ni-assembly": "⁂ MLA",
+      other: "⁂ Politician",
+    } as Record<string, string>,
+    role: (role: string, constituency: string | null, sitting: boolean) =>
+      `${sitting ? "" : "Formerly "}${role}${constituency ? ` for ${constituency}` : ""}`,
     save: "Save",
     notFound: "Politician not found.",
     // Under their name, when their address is blocked: what's happened, what to check, and the form.
@@ -411,7 +423,10 @@ export const staffCopy = {
   emails: {
     title: "Blocked emails",
     intro: "Nothing is sent to these addresses until they're unblocked.",
-    none: "None.",
+    // Instead of the table, when no address is blocked, or none of the cause filtered for.
+    noBlocks: "⁂ No addresses are blocked.",
+    // Instead of the history, when nothing has bounced or been complained about.
+    noProblems: "⁂ Nothing has bounced or been marked as spam.",
     allKinds: "All",
     filter: "Filter",
     kinds: {
@@ -428,6 +443,8 @@ export const staffCopy = {
       refused: "Not sent since",
       at: "When",
       email: "Email",
+      // In the history: what the email that bounced was, a letter or one of ours.
+      sent: "⁂ What was sent",
     },
     letter: (id: number) => `Letter ${id}`,
     purposes: {
@@ -440,7 +457,7 @@ export const staffCopy = {
     cantReset: "Can't be unblocked: they marked our email as spam.",
     note: "Note - give reason",
     unblock: "Unblock",
-    problemsTitle: "Recent",
+    problemsTitle: "History",
   },
   // The email staff get when a letter hard-bounces or is complained about.
   // Postmark's reason sometimes ends in a full stop and sometimes doesn't.

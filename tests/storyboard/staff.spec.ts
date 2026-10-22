@@ -280,13 +280,17 @@ test("a politician's own page", async ({ page, request, flowDatabase }) => {
   await logIn(page, flowDatabase);
   await page.goto(`${BASE}/staff/politicians`);
   await page.getByRole("link", { name: "Testy McTestface MP" }).click();
-  // Their name, tagged as a test MP; the box of what we hold; nothing in their history yet.
+  // Their name, tagged as a test MP, and what they are; the box of what we hold; nothing in their history
+  // yet; and no form, as a test MP isn't edited.
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(
     `Testy McTestface MP${staffCopy.politicians.testMp}`,
   );
+  await expect(
+    page.getByText(staffCopy.politician.role(staffCopy.politician.roles.commons, "Testshire", true)),
+  ).toBeVisible();
   await expect(page.getByText(staffCopy.politician.sources.test)).toBeVisible();
   await expect(page.getByText(staffCopy.politician.noHistory)).toBeVisible();
-  await expect(page.getByRole("heading", { name: staffCopy.politician.detailsTitle })).toBeVisible();
+  await expect(page.getByRole("heading", { name: staffCopy.politician.detailsTitle })).toBeHidden();
   await frame(page, "the test MP's page");
 
   // The way back, above the name; then the list sorted by a heading, and reversed.

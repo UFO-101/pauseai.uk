@@ -5,7 +5,7 @@ import { staffTime } from "@/lib/staff-time";
 
 /** The latest bounces and complaints, soft bounces too, and what each email was. */
 export default function EmailProblemsTable({ problems }: { problems: ProblemSummary[] }) {
-  if (problems.length === 0) return <p>{staffCopy.emails.none}</p>;
+  if (problems.length === 0) return <p>{staffCopy.emails.noProblems}</p>;
   const columns = staffCopy.emails.columns;
   return (
     <Table>
@@ -15,7 +15,7 @@ export default function EmailProblemsTable({ problems }: { problems: ProblemSumm
           <th>{columns.address}</th>
           <th>{columns.kind}</th>
           <th>{columns.reason}</th>
-          <th>{columns.email}</th>
+          <th>{columns.sent}</th>
         </tr>
       </thead>
       <tbody>
