@@ -15,6 +15,7 @@ import lumaGuests from "./luma-guests.json";
 import lumaContacts from "./luma-contacts.json";
 import airtableMps from "./airtable-mps.json";
 import airtableSignatories from "./airtable-signatories.json";
+import airtableMembers from "./airtable-members.json";
 import parliamentMembers from "./parliament-members.json";
 import controlaiLetter from "./controlai-letter.json";
 
@@ -73,6 +74,11 @@ export function fixtureResponse(url: string, init?: RequestInit): Response | und
   }
   if (hostname === "public-api.luma.com" && pathname === "/v1/calendars/contacts/list") {
     return json(pageOf(lumaContacts.entries, searchParams.get("pagination_cursor"), 2));
+  }
+  if (hostname.endsWith("airtable.com") && pathname.endsWith("/tblL1icZBhTV1gQ9o")) {
+    // The global members' table: the members staff-data.sql holds, as of
+    // FIXTURE_NOW, and one erased there.
+    return json(airtableMembers);
   }
   if (hostname.endsWith("airtable.com") && pathname.startsWith("/v0/")) {
     // The MPs (lib/server/outside-services/airtable.ts asks for the House of Commons), or the signatories.

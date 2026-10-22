@@ -15,6 +15,12 @@ const TABLE_ID = "tblH3ks9wqQHLpYx3";
 /** The table in Airtable's own interface, for staff to open. */
 export const PARLIAMENTARIANS_TABLE_URL = `https://airtable.com/${BASE_ID}/${TABLE_ID}`;
 
+// Stichting PauseAI's "Members & Actions" base: everyone who joined
+// PauseAI, worldwide. Its Members table is theirs; we read the UK members
+// we may hold (MEMBERS_FORMULA).
+const MEMBERS_BASE_ID = "appWPTGqZmUcs3NWu";
+const MEMBERS_TABLE_ID = "tblL1icZBhTV1gQ9o";
+
 export class AirtableRequestError extends Error {}
 
 /** AIRTABLE_TOKEN, or throws: without it, nothing can be read from Airtable. */
@@ -30,8 +36,13 @@ const MAX_PAGES = 100;
 
 type AirtableRecord = { id: string; fields: Record<string, unknown> };
 
-/** Every record matching `formula`, with only `fields`. */
-async function fetchRecords(token: string, formula: string, fields: readonly string[]): Promise<AirtableRecord[]> {
+/** Every record in `table` (base and table IDs) matching `formula`, with only `fields`. */
+async function fetchRecords(
+  token: string,
+  formula: string,
+  fields: readonly string[],
+  table = `${BASE_ID}/${TABLE_ID}`,
+): Promise<AirtableRecord[]> {
   const params = new URLSearchParams();
   params.set("filterByFormula", formula);
   for (const field of fields) params.append("fields[]", field);
@@ -41,7 +52,7 @@ async function fetchRecords(token: string, formula: string, fields: readonly str
   do {
     if (++pages > MAX_PAGES) throw new AirtableRequestError(`Airtable pagination exceeded ${MAX_PAGES} pages`);
     if (offset) params.set("offset", offset);
-    const res = await outsideFetch(`https://api.airtable.com/v0/${BASE_ID}/${TABLE_ID}?${params.toString()}`, {
+    const res = await outsideFetch(`https://api.airtable.com/v0/${table}?${params.toString()}`, {
       headers: { Authorization: `Bearer ${token}` },
       cache: "no-store",
     });
@@ -104,4 +115,77 @@ export async function fetchSignatoriesForImport(token: string): Promise<Signator
     email: text(record, "Email"),
     body: text(record, "Body"),
   }));
+}
+
+// UK members who shared their details with PauseAI UK on the join form, or
+// joined before it asked (from July 2026), less the losing half of each
+// merged duplicate.
+export const MEMBERS_FORMULA =
+  "AND({Country}='United Kingdom',OR({GDPR chapter share permission}=TRUE(),IS_BEFORE({Created Datetime},'2026-07-01')),{Merged into}=BLANK())";
+
+/** The only fields copied from a member's record: what the members table stores (docs/data-protection.md). */
+export const MEMBER_FIELDS = [
+  "Full name",
+  "Email",
+  "Phone",
+  "City",
+  "Zip code",
+  "Joined Datetime",
+  "Created Datetime",
+  "Last Modified",
+  "Email subscription",
+  "Email subscription (old)",
+  "GDPR chapter share permission",
+  "Source page",
+  "Intent",
+] as const;
+
+export type MemberToImport = {
+  id: string;
+  /** Trimmed and lowercased. */
+  email: string;
+  name: string;
+  phone: string | null;
+  city: string | null;
+  postcode: string | null;
+  /** Their first join. Airtable gives a day: the record's own time when it's that day, else its midnight. */
+  joinedAt: string;
+  createdAt: string;
+  /** "Keep me informed": ticked, and not "No" in the older Yes/No field. */
+  keepInformed: boolean;
+  sharePermission: boolean;
+  sourcePage: string | null;
+  intent: string | null;
+  modifiedAt: string;
+};
+
+/** A checkbox: Airtable leaves out an unticked one. */
+function ticked(record: AirtableRecord, field: string): boolean {
+  return record.fields[field] === true;
+}
+
+/** Every UK member we may hold, without those with no email. */
+export async function fetchMembers(token: string): Promise<MemberToImport[]> {
+  const records = await fetchRecords(token, MEMBERS_FORMULA, MEMBER_FIELDS, `${MEMBERS_BASE_ID}/${MEMBERS_TABLE_ID}`);
+  return records
+    .map((record) => {
+      const createdAt = text(record, "Created Datetime");
+      const joined = text(record, "Joined Datetime");
+      return {
+        id: record.id,
+        email: text(record, "Email").toLowerCase(),
+        name: text(record, "Full name"),
+        phone: text(record, "Phone") || null,
+        city: text(record, "City") || null,
+        postcode: text(record, "Zip code") || null,
+        joinedAt: !joined || createdAt.startsWith(joined) ? createdAt : `${joined}T00:00:00.000Z`,
+        createdAt,
+        keepInformed: ticked(record, "Email subscription") && text(record, "Email subscription (old)") !== "No",
+        sharePermission: ticked(record, "GDPR chapter share permission"),
+        sourcePage: text(record, "Source page") || null,
+        intent: text(record, "Intent") || null,
+        modifiedAt: text(record, "Last Modified"),
+      };
+    })
+    .filter((member) => member.email !== "");
 }
