@@ -32,6 +32,8 @@ const TABLES = [
   "luma_guests",
   "luma_import_state",
   "luma_people",
+  "members",
+  "members_erased",
   "opt_outs",
   "politicians",
   "staff_login_links",

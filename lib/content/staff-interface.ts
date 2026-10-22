@@ -169,7 +169,10 @@ export const staffCopy = {
       letter: "Wrote to MP",
     },
     sources: { luma: "Luma", letter: "Letter" } as Record<string, string>,
-    lists: { "luma-calendar": "Luma calendar emails" } as Record<string, string>,
+    lists: { "luma-calendar": "Luma calendar emails", "pauseai-updates": "⁂ PauseAI updates" } as Record<
+      string,
+      string
+    >,
     // A supporter's page: one box of what we know, then the history.
     detail: {
       emails: "Email",
@@ -432,6 +435,30 @@ export const staffCopy = {
       running: "Another run was already going.",
     } as Record<string, string>,
   },
+  // The hourly copy of PauseAI's UK members (lib/server/members-import.ts),
+  // on the import page.
+  members: {
+    title: "⁂ PauseAI members in the UK",
+    intro: {
+      before: "⁂ Everyone in the UK who joined PauseAI through ",
+      link: "⁂ the join form",
+      after:
+        "⁂ and shared their details with PauseAI UK, or joined before the form asked, copied from the global team's Airtable.",
+    },
+    importNow: "⁂ Import members now",
+    never: "⁂ Not imported yet.",
+    result: (r: {
+      members: number;
+      added: number;
+      changed: number;
+      removed: number;
+      optedOut: number;
+      resubscribed: number;
+      supportersAdded: number;
+      linked: number;
+    }) =>
+      `⁂ ${r.members} members read: ${r.added} added, ${r.changed} changed, ${r.removed} removed; ${r.optedOut} opted out of updates, ${r.resubscribed} back in; ${r.supportersAdded} new supporters, ${r.linked} linked.`,
+  },
   syncs: {
     title: "Members of Parliament from Airtable",
     // With a link to the table in the middle.
@@ -563,4 +590,5 @@ export const jobTitles: Record<ImportJob, string> = {
   "import-controlai": staffCopy.controlAi.title,
   "import-signatories": staffCopy.import.title,
   "import-luma": staffCopy.luma.title,
+  "import-members": staffCopy.members.title,
 };

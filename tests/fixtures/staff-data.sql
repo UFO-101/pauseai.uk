@@ -140,6 +140,31 @@ INSERT INTO opt_outs (address, list, source, source_ref, unsubscribed_at, resubs
   ('erased.seed@example.com', 'luma-calendar', 'luma-webhook', 'seed-unsubscribe-erased', now() - interval '60 days', NULL),
   ('sam.fixture@example.com', 'luma-calendar', 'luma-webhook', 'seed-unsubscribe-sam', now() - interval '20 days', now() - interval '17 days');
 
+-- -------------------------------------------------------------- members
+
+-- The members airtable-members.json holds, by the same IDs and, at
+-- FIXTURE_NOW, the same values, so an import there changes nothing; and one
+-- gone from it, marked removed. Jane, Tom and Lee are also a Luma guest or a
+-- letter writer. Kit ticked "Keep me informed" when the form required it,
+-- Tom before it had the box, and Lee left it unticked then; Owen left it
+-- unticked when it was a choice, so is opted out of the updates; Rhea did
+-- too on an earlier record, and ticked it on re-joining, which lifted that.
+INSERT INTO members (id, email, name, phone, city, postcode, joined_at, created_at, keep_informed, share_permission, source_page, intent, source_modified_at, first_seen_at, changed_at, removed_at) VALUES
+  ('recMemberJane', 'jane.fixture@example.com', 'Jane Fixture', NULL, 'Manchester', 'M1 1AE', '2026-09-12T10:00:00Z', '2026-09-12T10:00:00Z', true, true, 'pauseai.uk', 'Volunteer', '2026-09-12T10:00:00Z', '2026-09-12T10:05:00Z', '2026-09-12T10:05:00Z', NULL),
+  ('recMemberMara', 'mara.member@example.com', 'Mara Member', '+447700900123', 'London', NULL, now() - interval '3 days 2 hours 30 minutes', now() - interval '3 days 2 hours 30 minutes', true, true, 'pauseai.info/join', 'Lead', now() - interval '3 days 2 hours 29 minutes', now() - interval '3 days 2 hours', now() - interval '3 days 2 hours', NULL),
+  ('recMemberOwen', 'owen.member@example.com', 'Owen Member', NULL, 'Bristol', NULL, now() - interval '9 days 22 hours', now() - interval '9 days 22 hours', false, true, 'pauseai.uk', 'Act now', now() - interval '9 days 22 hours', now() - interval '9 days 21 hours', now() - interval '9 days 21 hours', NULL),
+  ('recMemberRhea', 'rhea.member@example.com', 'Rhea Member', NULL, 'Cardiff', NULL, '2026-07-10T00:00:00Z', now() - interval '5 days 4 hours', true, true, 'pauseai.info/subscribe', 'Keep informed', now() - interval '5 days 4 hours', now() - interval '5 days 3 hours', now() - interval '5 days 3 hours', NULL),
+  ('recMemberKit', 'kit.member@example.com', 'Kit Member', NULL, 'Oxford', 'OX1 1AA', '2026-03-03T18:00:00Z', '2026-03-03T18:00:00Z', true, false, NULL, 'Volunteer', '2026-08-29T17:33:10Z', '2026-09-01T00:00:00Z', '2026-09-01T00:00:00Z', NULL),
+  ('recMemberTom', 'tom.seed@example.com', 'Tom Seed', '+447700900456', 'London', NULL, '2024-11-03T00:00:00Z', '2025-06-06T06:18:44Z', true, false, NULL, NULL, '2026-08-29T17:33:12Z', '2026-09-01T00:00:00Z', '2026-09-01T00:00:00Z', NULL),
+  ('recMemberLee', 'lee.letter@example.com', 'Lee Letter', NULL, 'Bristol', 'BS1 1AA', '2025-11-29T21:06:16Z', '2025-11-29T21:06:16Z', false, false, NULL, 'None', '2026-08-29T17:33:13Z', '2026-09-01T00:00:00Z', '2026-09-01T00:00:00Z', NULL),
+  ('recMemberGil', 'gil.member@example.com', 'Gil Member', NULL, 'Leeds', 'LS1 1AA', '2026-08-01T12:00:00Z', '2026-08-01T12:00:00Z', true, true, 'pauseai.uk', 'Act now', '2026-08-01T12:00:00Z', '2026-09-01T00:00:00Z', now() - interval '2 days', now() - interval '2 days');
+-- Erin, erased with her Luma user (the audit log's erasure), is still in
+-- Airtable's table: the import skips her.
+INSERT INTO members_erased (id, erased_at) VALUES ('recMemberErased', now() - interval '15 days');
+INSERT INTO opt_outs (address, list, source, source_ref, unsubscribed_at, resubscribed_at) VALUES
+  ('owen.member@example.com', 'pauseai-updates', 'airtable-import', 'recMemberOwen', now() - interval '9 days 22 hours', NULL),
+  ('rhea.member@example.com', 'pauseai-updates', 'airtable-import', 'recMemberRheaOld', '2026-07-10T00:00:00Z', now() - interval '5 days 4 hours');
+
 -- -------------------------------------------------------------- letters
 
 -- Letters to the test MPs in every state. Seven sent in the last week and
@@ -246,7 +271,10 @@ INSERT INTO import_runs (at, job, started_by, status, error, result, decided_by)
   (now() - interval '1 day' + interval '1 hour', 'check-mps', 'nightly', 'ok', NULL, '{"problems": [{"kind": "email", "constituency": "Cities of London and Westminster", "name": "Polly Placeholder", "airtable": "polly.placeholder.mp@parliament.uk", "parliament": ["polly.placeholder@parliament.uk"]}, {"kind": "missing", "constituency": "New Seat", "parliament": "Nina New"}]}', NULL),
   (now() - interval '2 days' + interval '2 hours', 'import-controlai', 'nightly', 'ok', NULL, '{"pdfUrl": "https://images.controlai.com/letter.pdf", "signatories": 86, "matched": 74, "added": 1, "removed": 0, "problems": [{"name": "Baroness Nobody", "kind": "nobody", "candidates": []}]}', NULL),
   (now() - interval '1 day' + interval '2 hours', 'import-controlai', 'nightly', 'failed', 'No PDF linked from the letter page', '{}', NULL),
-  (now() - interval '30 days', 'import-signatories', 'admin@pauseai.uk', 'ok', NULL, '{"matched": 2, "added": 1, "alreadySet": 0}', NULL);
+  (now() - interval '30 days', 'import-signatories', 'admin@pauseai.uk', 'ok', NULL, '{"matched": 2, "added": 1, "alreadySet": 0}', NULL),
+  (now() - interval '1 day' + interval '47 minutes', 'import-members', 'nightly', 'failed', 'Airtable request failed with status 503: Service Unavailable', '{}', NULL),
+  (now() - interval '3 days 2 hours 13 minutes', 'import-members', 'nightly', 'ok', NULL, '{"members": 7, "added": 1, "changed": 0, "removed": 0, "optedOut": 0, "resubscribed": 0, "supportersAdded": 1, "linked": 1}', NULL),
+  (now() - interval '1 hour' + interval '47 minutes', 'import-members', 'nightly', 'unchanged', NULL, '{"members": 8, "added": 0, "changed": 0, "removed": 0, "optedOut": 0, "resubscribed": 0, "supportersAdded": 0, "linked": 0}', NULL);
 
 -- ------------------------------------------------------------ audit log
 

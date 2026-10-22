@@ -3,6 +3,7 @@ import {
   type ControlAiImportResult,
   type ImportJob,
   type LumaImportResult,
+  type MembersImportResult,
   type MpCheckResult,
   type MpSync,
   type MpSyncResult,
@@ -17,6 +18,7 @@ type Results = {
   "import-controlai": ControlAiImportResult;
   "import-signatories": SignatoryImportResult;
   "import-luma": LumaImportResult;
+  "import-members": MembersImportResult;
 };
 type RunOf<Job extends ImportJob> = Extract<AnyImportRun, { job: Job }>;
 
@@ -84,6 +86,18 @@ export const exampleLumaResult: LumaImportResult = {
   supportersAdded: 2,
   linked: 3,
   requests: 21,
+};
+
+/** What a run of the members import did: a few new members, one of whom left Keep me informed unticked. */
+export const exampleMembersResult: MembersImportResult = {
+  members: 1505,
+  added: 3,
+  changed: 1,
+  removed: 0,
+  optedOut: 1,
+  resubscribed: 0,
+  supportersAdded: 2,
+  linked: 3,
 };
 
 /** What a read of ControlAI's letter found, with every name placed. */

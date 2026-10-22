@@ -4,7 +4,14 @@ import type { ControlAiMatchProblem } from "./controlai-letter";
 import type { MpProblem } from "./mp-check";
 import type { MpChanges, SyncedMp } from "./mps";
 
-export const IMPORT_JOBS = ["import-luma", "sync-mps", "check-mps", "import-controlai", "import-signatories"] as const;
+export const IMPORT_JOBS = [
+  "import-luma",
+  "sync-mps",
+  "check-mps",
+  "import-controlai",
+  "import-signatories",
+  "import-members",
+] as const;
 export type ImportJob = (typeof IMPORT_JOBS)[number];
 
 export function isImportJob(value: string): value is ImportJob {
@@ -18,6 +25,7 @@ const IMPORT_SLUGS: Record<ImportJob, string> = {
   "check-mps": "mp-check",
   "import-controlai": "controlai",
   "import-signatories": "signatories",
+  "import-members": "members",
 };
 
 /** Where a job's page is. */
@@ -101,7 +109,24 @@ export type LumaImportResult = {
 };
 export type LumaImport = ImportRun<"import-luma", LumaImportResult>;
 
-export type AnyImportRun = MpSync | MpCheck | ControlAiImport | SignatoryImport | LumaImport;
+/** What a run of the members import did: counts of what it copied. */
+export type MembersImportResult = {
+  /** Members read from the membership dataset. */
+  members: number;
+  /** Members added, changed, or marked as removed. */
+  added: number;
+  changed: number;
+  removed: number;
+  /** Opt-outs from the members' updates recorded, and lifted, this run. */
+  optedOut: number;
+  resubscribed: number;
+  /** Supporters made for people seen for the first time, and source records linked to a supporter. */
+  supportersAdded: number;
+  linked: number;
+};
+export type MembersImport = ImportRun<"import-members", MembersImportResult>;
+
+export type AnyImportRun = MpSync | MpCheck | ControlAiImport | SignatoryImport | LumaImport | MembersImport;
 
 /** How a run ended, as a colour: green when it went well, amber held or stopped short, red failed; none when it changed nothing, was discarded, or never ran. */
 export function runTone(run: AnyImportRun | undefined): "green" | "amber" | "red" | undefined {

@@ -18,6 +18,9 @@ import Tag from "@/components/ui/Tag";
 
 const words = staffCopy.import;
 
+/** PauseAI's join form, where the members come from. */
+const JOIN_FORM = "https://pauseai.info/join";
+
 /** Each job's lozenges, all plain, so only how its runs ended is in colour: where it reads from, how often, and what kind of job it is. */
 const TAGS: Record<ImportJob, string[]> = {
   "import-luma": [words.luma, words.hourly],
@@ -25,6 +28,7 @@ const TAGS: Record<ImportJob, string[]> = {
   "check-mps": [words.web, words.nightly, words.checkOnly],
   "import-controlai": [words.web, words.nightly],
   "import-signatories": [words.airtable, words.oneOff],
+  "import-members": [words.airtable, words.hourly],
 };
 
 /** Each job's description, around a link to where it reads from, and its button and what to say before its first run. */
@@ -64,6 +68,12 @@ const ABOUT: Record<
     none: staffCopy.controlAi.never,
   },
   "import-signatories": { intro: words.intro, button: words.button, none: words.none },
+  "import-members": {
+    intro: staffCopy.members.intro,
+    href: JOIN_FORM,
+    button: staffCopy.members.importNow,
+    none: staffCopy.members.never,
+  },
 };
 
 function Tags({ job }: { job: ImportJob }) {

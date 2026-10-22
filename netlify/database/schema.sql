@@ -151,7 +151,7 @@ CREATE TABLE public.import_runs (
     decided_by text,
     decided_at timestamp with time zone,
     CONSTRAINT import_runs_check CHECK (((status = 'failed'::text) = (error IS NOT NULL))),
-    CONSTRAINT import_runs_job_check CHECK ((job = ANY (ARRAY['sync-mps'::text, 'check-mps'::text, 'import-controlai'::text, 'import-signatories'::text, 'import-luma'::text]))),
+    CONSTRAINT import_runs_job_check CHECK ((job = ANY (ARRAY['sync-mps'::text, 'check-mps'::text, 'import-controlai'::text, 'import-signatories'::text, 'import-luma'::text, 'import-members'::text]))),
     CONSTRAINT import_runs_status_check CHECK ((status = ANY (ARRAY['ok'::text, 'failed'::text, 'unchanged'::text, 'held'::text, 'applied'::text, 'discarded'::text])))
 );
 
@@ -302,6 +302,39 @@ CREATE TABLE public.luma_people (
 );
 
 --
+-- Name: members; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.members (
+    id text NOT NULL,
+    email text NOT NULL,
+    name text DEFAULT ''::text NOT NULL,
+    phone text,
+    city text,
+    postcode text,
+    joined_at timestamp with time zone NOT NULL,
+    created_at timestamp with time zone NOT NULL,
+    keep_informed boolean NOT NULL,
+    share_permission boolean NOT NULL,
+    source_page text,
+    intent text,
+    source_modified_at timestamp with time zone NOT NULL,
+    first_seen_at timestamp with time zone DEFAULT now() NOT NULL,
+    changed_at timestamp with time zone DEFAULT now() NOT NULL,
+    removed_at timestamp with time zone,
+    CONSTRAINT members_email_check CHECK ((email = lower(email)))
+);
+
+--
+-- Name: members_erased; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.members_erased (
+    id text NOT NULL,
+    erased_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+--
 -- Name: opt_outs; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -314,8 +347,8 @@ CREATE TABLE public.opt_outs (
     unsubscribed_at timestamp with time zone NOT NULL,
     resubscribed_at timestamp with time zone,
     CONSTRAINT opt_outs_address_check CHECK ((address = lower(address))),
-    CONSTRAINT opt_outs_list_check CHECK ((list = 'luma-calendar'::text)),
-    CONSTRAINT opt_outs_source_check CHECK ((source = 'luma-webhook'::text))
+    CONSTRAINT opt_outs_list_check CHECK ((list = ANY (ARRAY['luma-calendar'::text, 'pauseai-updates'::text]))),
+    CONSTRAINT opt_outs_source_check CHECK ((source = ANY (ARRAY['luma-webhook'::text, 'airtable-import'::text])))
 );
 
 --
@@ -819,6 +852,20 @@ ALTER TABLE ONLY public.luma_people
     ADD CONSTRAINT luma_people_pkey PRIMARY KEY (user_id);
 
 --
+-- Name: members_erased members_erased_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.members_erased
+    ADD CONSTRAINT members_erased_pkey PRIMARY KEY (id);
+
+--
+-- Name: members members_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.members
+    ADD CONSTRAINT members_pkey PRIMARY KEY (id);
+
+--
 -- Name: opt_outs opt_outs_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1003,6 +1050,12 @@ CREATE INDEX luma_guests_user ON public.luma_guests USING btree (user_id, regist
 --
 
 CREATE INDEX luma_people_email ON public.luma_people USING btree (email);
+
+--
+-- Name: members_email; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX members_email ON public.members USING btree (email);
 
 --
 -- Name: opt_outs_open; Type: INDEX; Schema: public; Owner: -

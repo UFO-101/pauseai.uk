@@ -1,6 +1,14 @@
 import { SubmitButton } from "@/components/ui/SubmitButton";
 import { staffCopy } from "@/lib/content/staff-interface";
-import type { AnyImportRun, ControlAiImport, LumaImport, MpCheck, MpSync, SignatoryImport } from "@/lib/import-runs";
+import type {
+  AnyImportRun,
+  ControlAiImport,
+  LumaImport,
+  MembersImport,
+  MpCheck,
+  MpSync,
+  SignatoryImport,
+} from "@/lib/import-runs";
 import type { MpProblem } from "@/lib/mp-check";
 import { changeCount, type SyncedMp } from "@/lib/mps";
 import RunBox from "./RunBox";
@@ -195,6 +203,13 @@ function LumaRun({ run, open }: { run: LumaImport; open?: boolean }) {
   );
 }
 
+/** A copy of the members: the counts. */
+function MembersRun({ run, open }: { run: MembersImport; open?: boolean }) {
+  return (
+    <RunBox run={run} summary={run.status === "failed" ? null : staffCopy.members.result(run.result)} open={open} />
+  );
+}
+
 /** One run from the import log, as its job's page shows it; `open` starts its detail unfolded, however long. */
 export default function Run({ run, decide, open }: { run: AnyImportRun; decide?: Decide; open?: boolean }) {
   switch (run.job) {
@@ -208,5 +223,7 @@ export default function Run({ run, decide, open }: { run: AnyImportRun; decide?:
       return <SignatoryRun run={run} open={open} />;
     case "import-luma":
       return <LumaRun run={run} open={open} />;
+    case "import-members":
+      return <MembersRun run={run} open={open} />;
   }
 }

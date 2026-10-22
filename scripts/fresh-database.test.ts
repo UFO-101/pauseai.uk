@@ -171,8 +171,14 @@ describe.skipIf(process.env.NETLIFY === "true")("copying a database", () => {
           "check-mps",
           "import-controlai",
           "import-luma",
+          "import-members",
           "import-signatories",
           "sync-mps",
+        ]);
+        // Opt-outs from every list, told by every source.
+        expect(runSql(name, "SELECT DISTINCT list || ' ' || source FROM opt_outs ORDER BY 1")).toEqual([
+          "luma-calendar luma-webhook",
+          "pauseai-updates airtable-import",
         ]);
         expect(runSql(name, "SELECT DISTINCT status FROM import_runs ORDER BY 1")).toEqual([
           "applied",

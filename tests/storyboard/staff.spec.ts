@@ -243,6 +243,36 @@ test("the Luma import copies the calendar's events, guests and contacts, and fin
   await frame(page, "run again: nothing new");
 });
 
+test("the members import copies the UK members, skips one erased, and finds nothing new the second time", async ({
+  page,
+  flowDatabase,
+}) => {
+  runSql(flowDatabase, "INSERT INTO members_erased (id) VALUES ('recMemberErased')");
+  await logIn(page, flowDatabase);
+  await page.goto(`${BASE}/staff/import-data/members`);
+  await page.getByRole("button", { name: staffCopy.members.importNow }).click();
+  // The fixture's eight members, one of them erased; one left Keep me informed unticked when it was a choice.
+  const first = {
+    members: 8,
+    added: 7,
+    changed: 0,
+    removed: 0,
+    optedOut: 1,
+    resubscribed: 0,
+    supportersAdded: 0,
+    linked: 0,
+  };
+  await expect(page.getByText(staffCopy.members.result(first))).toBeVisible();
+  await page.getByRole("heading", { name: staffCopy.members.title }).scrollIntoViewIfNeeded();
+  await frame(page, "the members import's first run: every member copied but the erased one");
+
+  await page.getByRole("button", { name: staffCopy.members.importNow }).click();
+  await expect(page.getByText(staffCopy.members.result({ ...first, added: 0, optedOut: 0 }))).toBeVisible();
+  await expect(page.getByText(staffCopy.runs.status.unchanged)).toBeVisible();
+  await page.getByRole("heading", { name: staffCopy.members.title }).scrollIntoViewIfNeeded();
+  await frame(page, "run again: nothing new");
+});
+
 test("a politician's own page", async ({ page, request, flowDatabase }) => {
   await syncMps(request, BASE);
   await logIn(page, flowDatabase);

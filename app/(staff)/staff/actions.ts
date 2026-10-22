@@ -11,6 +11,7 @@ import { importControlAiLetter } from "@/lib/server/controlai-import";
 import { unblock } from "@/lib/server/email";
 import { eraseSupporter } from "@/lib/server/erasure";
 import { importLuma } from "@/lib/server/luma-import";
+import { importMembers } from "@/lib/server/members-import";
 import { checkMps } from "@/lib/server/mp-check";
 import { decideHeldSync, syncMps } from "@/lib/server/mp-sync";
 import { setStatus, updatePolitician } from "@/lib/server/politicians";
@@ -81,6 +82,11 @@ export async function importControlAiNow(): Promise<void> {
 export async function importLumaNow(): Promise<void> {
   const { email } = await requireStaff();
   await run("import-luma", importLuma(email));
+}
+
+export async function importMembersNow(): Promise<void> {
+  const { email } = await requireStaff();
+  await run("import-members", importMembers(email));
 }
 
 export async function importFromAirtable(): Promise<void> {

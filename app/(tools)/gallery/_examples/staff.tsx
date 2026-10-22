@@ -27,6 +27,7 @@ import {
   exampleControlAiResult,
   exampleFailedRun,
   exampleLumaResult,
+  exampleMembersResult,
   exampleRun,
   exampleSyncedMp,
 } from "@/app/(staff)/staff/_components/RunList.examples";
@@ -138,6 +139,14 @@ const RUNS: Record<ImportJob, Variant> = {
     render: () => (
       <StaffPage as="div">
         <Run run={exampleRun("import-luma", { ...exampleLumaResult, eventsLeft: 4, stoppedBy: "time" })} />
+      </StaffPage>
+    ),
+  },
+  "import-members": {
+    label: "A members import that found new members",
+    render: () => (
+      <StaffPage as="div">
+        <Run run={exampleRun("import-members", exampleMembersResult)} />
       </StaffPage>
     ),
   },
