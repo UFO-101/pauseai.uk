@@ -342,6 +342,26 @@ export const staff: Group = {
           ),
         },
         {
+          label: "Following the calendar since its webhook, and don't know of the updates",
+          render: () => (
+            <StaffPage as="div">
+              <EmailPermissionTiles
+                permissions={[
+                  {
+                    topic: "luma-calendar",
+                    address: "nia@example.com",
+                    send: "yes",
+                    reason: "following",
+                    at: "2026-10-23T09:00:00Z",
+                    source: "luma",
+                  },
+                  ...exampleMemberDetails.permissions.slice(1).map((p) => ({ ...p, address: "nia@example.com" })),
+                ]}
+              />
+            </StaffPage>
+          ),
+        },
+        {
           label: "A blocked address",
           render: () => (
             <StaffPage as="div">

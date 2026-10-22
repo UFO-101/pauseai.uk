@@ -92,7 +92,11 @@ INSERT INTO luma_people (user_id, email, name, contact_since, changed_at) VALUES
   ('usr-seed-17', 'ines.seed@example.com', 'Ines Seed', NULL, now() - interval '1 day'),
   ('usr-seed-18', 'kwame.seed@example.com', 'Kwame Seed', now() - interval '6 days', now() - interval '1 day'),
   ('usr-seed-19', 'mia.seed@example.com', 'Mia Seed', NULL, now() - interval '1 day'),
-  ('usr-seed-20', 'erased.seed@example.com', 'Erin Erased', now() - interval '70 days', now() - interval '1 day');
+  ('usr-seed-20', 'erased.seed@example.com', 'Erin Erased', now() - interval '70 days', now() - interval '1 day'),
+  -- Following since an hour ago: after Luma's webhook went live in a database
+  -- made now, so we'd email her (lib/email-permissions.ts); the others
+  -- followed before it, so we can't be sure.
+  ('usr-seed-21', 'nia.seed@example.com', 'Nia Seed', now() - interval '1 hour', now() - interval '1 hour');
 INSERT INTO luma_erased (user_id, erased_at) VALUES ('usr-seed-20', now() - interval '15 days');
 INSERT INTO luma_import_state (list, full_pass_at, cursor) VALUES
   ('events', now() - interval '1 hour', ''),
