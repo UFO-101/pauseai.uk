@@ -1,4 +1,3 @@
-import { Hint } from "@/components/ui/Field";
 import Table from "@/components/ui/Table";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { PERMISSIONS } from "@/lib/staff-permissions";
@@ -7,12 +6,14 @@ import { staffTime } from "@/lib/staff-time";
 import RemoveAccountForm from "./RemoveAccountForm";
 import StaffAccountForm from "./StaffAccountForm";
 import styles from "./StaffAccountsTable.module.css";
+import Tag from "@/components/ui/Tag";
 
 type Action = (form: FormData) => void | Promise<void>;
 
 /**
  * Every account, each row a form to change its permissions and, at the
- * right, a button to remove it; what each permission opens; and under
+ * right, a button to remove it; what each permission opens, a row each,
+ * its name in a lozenge; and under
  * them a form to add someone, who then gets permissions in their row.
  */
 export default function StaffAccountsTable({
@@ -58,11 +59,16 @@ export default function StaffAccountsTable({
           </tbody>
         </Table>
       </div>
-      <Hint>
-        {PERMISSIONS.map(
-          (permission) => `${staffCopy.accounts.names[permission]}: ${staffCopy.accounts.opens[permission]}`,
-        ).join(" ")}
-      </Hint>
+      <dl className={styles.permissions}>
+        {PERMISSIONS.map((permission) => (
+          <div key={permission}>
+            <dt>
+              <Tag>{staffCopy.accounts.names[permission]}</Tag>
+            </dt>
+            <dd>{staffCopy.accounts.opens[permission]}</dd>
+          </div>
+        ))}
+      </dl>
       <h2>{staffCopy.accounts.addTitle}</h2>
       <StaffAccountForm permissions={[]} save={save} notPauseai={notPauseai} />
     </>

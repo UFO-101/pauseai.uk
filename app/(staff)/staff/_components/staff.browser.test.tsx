@@ -438,7 +438,15 @@ describe("StaffAccountsTable", () => {
         .all()
         .map((box) => box.element().getAttribute("name")),
     ).toEqual(["permission:supporters", "permission:admin"]);
-    await expect.element(page.getByText(staffCopy.accounts.opens.supporters, { exact: false })).toBeVisible();
+    // What each permission opens, a row each: its name, then what it opens.
+    const opens = [...document.querySelectorAll("dl > div")].map((row) => [
+      row.querySelector("dt")!.textContent,
+      row.querySelector("dd")!.textContent,
+    ]);
+    expect(opens).toEqual([
+      [staffCopy.accounts.names.supporters, staffCopy.accounts.opens.supporters],
+      [staffCopy.accounts.names.admin, staffCopy.accounts.opens.admin],
+    ]);
     await expect.element(jo.getByRole("checkbox", { name: staffCopy.accounts.names.supporters })).toBeChecked();
     await jo.getByRole("checkbox", { name: staffCopy.accounts.names.admin }).click();
     await jo.getByRole("button", { name: staffCopy.accounts.save }).click();
