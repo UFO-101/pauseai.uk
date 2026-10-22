@@ -241,7 +241,7 @@ export const staffCopy = {
     // Beside the button, at the foot of the supporter's page.
     note: "If they've asked to be forgotten, for example a GDPR request.",
     intro:
-      "For when someone asks to be forgotten, for example a GDPR erasure request. Everything we hold about this person is deleted: letters, event registrations, their Luma contact. We keep references to them in blocked addresses and unsubscribes.",
+      "⁂ For when someone asks to be forgotten, for example a GDPR erasure request. Everything we hold about this person is deleted: letters, event registrations, their Luma contact, our copy of their PauseAI membership. We keep references to them in blocked addresses and unsubscribes. The global team's own copy of their membership has to be erased by asking them.",
     referenceLabel: "Request reference",
     referenceHint:
       "Put the number or date of the request for the audit log. Don't give personal information about the person as that gets logged.",

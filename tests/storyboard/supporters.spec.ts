@@ -272,3 +272,26 @@ test("erasing a supporter: gone from the list and the next import, with the audi
   await expect(page.getByText("Request of 16 Oct 2026")).toBeVisible();
   await frame(page, "the audit log: the erasure, by its reference, with no name or address");
 });
+
+test("erasing a member: gone from the list, and the next members import doesn't bring them back", async ({
+  page,
+  request,
+  flowDatabase,
+}) => {
+  await importMembers(request, BASE);
+  await logInWithSupporters(page, flowDatabase);
+  await page.goto(`${BASE}/staff/supporters`);
+  await page.getByRole("link", { name: "Mara Member" }).click();
+  await page.getByRole("link", { name: staffCopy.erase.title }).click();
+  await page.getByRole("textbox", { name: staffCopy.erase.referenceLabel }).fill("Request of 16 Oct 2026");
+  await page.getByRole("checkbox", { name: staffCopy.erase.confirm }).check();
+  await page.getByRole("button", { name: staffCopy.erase.button }).click();
+  await expect(page.getByRole("status")).toHaveText(staffCopy.erase.done);
+  await expect(page.getByRole("link", { name: "Mara Member" })).toHaveCount(0);
+
+  await importMembers(request, BASE);
+  await page.reload();
+  await expect(page.getByText(copy.count(7, 1, 1))).toBeVisible();
+  await expect(page.getByRole("link", { name: "Mara Member" })).toHaveCount(0);
+  await frame(page, "the list after the next members import: still without Mara");
+});
