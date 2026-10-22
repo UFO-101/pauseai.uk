@@ -131,11 +131,13 @@ describe.skipIf(process.env.NETLIFY === "true")("copying a database", () => {
             "SELECT count(*) FROM letters t WHERE NOT EXISTS (SELECT 1 FROM supporter_links l WHERE l.letter_id = t.id)",
           ),
         ).toEqual(["0"]);
-        expect(runSql(name, "SELECT DISTINCT sources::text FROM supporters_summary ORDER BY 1")).toEqual([
-          "{letter,luma}",
-          "{letter}",
-          "{luma}",
-        ]);
+        // Sorted byte by byte, so the order is the same whatever the database's collation.
+        expect(
+          runSql(
+            name,
+            'SELECT s FROM (SELECT DISTINCT sources::text AS s FROM supporters_summary) d ORDER BY s COLLATE "C"',
+          ),
+        ).toEqual(["{letter,luma}", "{letter}", "{luma}"]);
         expect(runSql(name, "SELECT count(*) FROM supporters_summary WHERE opted_out <> '{}'")).not.toEqual(["0"]);
         // Letters in every state, and every kind of event about them.
         expect(runSql(name, "SELECT DISTINCT status FROM letters ORDER BY 1")).toEqual([
