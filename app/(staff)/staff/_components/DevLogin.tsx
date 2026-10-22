@@ -7,8 +7,9 @@ const copy = staffCopy.devLogin;
 
 /**
  * The dev login, only in a fixture build (DATA_FIXTURES=1): under the
- * login card, a box in the development colour, a button per account that
- * signs in as them at once, with no email. Given no accounts, as outside a
+ * login card, a box in the development colour, a button per address that
+ * signs in as them at once, with no email; the last has no account, to see
+ * what someone not yet added sees. Given no addresses, as outside a
  * fixture build (lib/server/dev-login.ts), it's nothing; the route refuses
  * it there too.
  */

@@ -636,7 +636,7 @@ export const staff: Group = {
               <LoginCard title={staffCopy.login.title}>
                 <LoginForm />
               </LoginCard>
-              <DevLogin accounts={["admin@pauseai.uk", "jo@pauseai.uk", "sam@pauseai.uk"]} />
+              <DevLogin accounts={["admin@pauseai.uk", "jo@pauseai.uk", "sam@pauseai.uk", "nobody@pauseai.uk"]} />
             </StaffPage>
           ),
         },
