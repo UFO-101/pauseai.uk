@@ -32,8 +32,6 @@ export type SupporterSummary = {
   optedOut: OptOutList[];
   /** Whether they're a PauseAI member now: a member's record we read at the last import. */
   member: boolean;
-  /** What their newest such record chose on the join form: Keep informed, Act now, Volunteer, Lead or None. */
-  intent: string | null;
 };
 
 /** What a supporter did, from any source: `kind` says what, `title` and `detail` which and how. */

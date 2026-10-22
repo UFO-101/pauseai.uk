@@ -1001,65 +1001,65 @@ describe("ImportOverview", () => {
   it("is a card per job, each a link to its page, with how its newest run ended, or that it never ran", async () => {
     const newest: (AnyImportRun | undefined)[] = [
       ran("import-luma", { ...exampleLumaResult, stoppedBy: "time" }, { at: "2026-10-21T11:17:00Z" }),
+      ran("import-members", exampleMembersResult, { at: "2026-10-21T11:47:00Z" }),
       exampleHeldSync,
       ran("check-mps", { problems: [] }, { at: "2026-10-21T01:00:00Z", status: "ok" }),
       failed("import-controlai", "No PDF linked", { at: "2026-10-21T02:00:00Z" }),
       undefined,
-      ran("import-members", exampleMembersResult, { at: "2026-10-21T11:47:00Z" }),
     ];
     await render(<ImportOverview newest={newest} airtableTable="https://airtable.com/table" />);
     await expect.element(page.getByRole("heading", { level: 1, name: staffCopy.import.pageTitle })).toBeVisible();
     const cards = [...document.querySelectorAll("section")];
     expect(cards.map((card) => card.querySelector("h2 a")!.getAttribute("href"))).toEqual([
       "/staff/import-data/luma",
+      "/staff/import-data/members",
       "/staff/import-data/mps",
       "/staff/import-data/mp-check",
       "/staff/import-data/controlai",
       "/staff/import-data/signatories",
-      "/staff/import-data/members",
     ]);
     expect(cards.map((card) => card.querySelector("h2 a")!.textContent)).toEqual([
       jobTitles["import-luma"],
+      jobTitles["import-members"],
       jobTitles["sync-mps"],
       jobTitles["check-mps"],
       jobTitles["import-controlai"],
       jobTitles["import-signatories"],
-      jobTitles["import-members"],
     ]);
     // Under the name, how the newest run ended, tinted to match.
     const status = (i: number) => cards[i].querySelector("h2 + div > p")!;
     expect(status(0).textContent).toBe(`${staffCopy.runs.status.ok} · ${staffCopy.runs.incomplete}2026-10-21 11:17`);
-    expect([0, 1, 2, 3, 5].map((i) => status(i).className.match(/green|amber|red/)?.[0])).toEqual([
+    expect([0, 1, 2, 3, 4].map((i) => status(i).className.match(/green|amber|red/)?.[0])).toEqual([
       "amber",
+      "green",
       "amber",
       "green",
       "red",
-      "green",
     ]);
-    expect(status(4).textContent).toBe(staffCopy.import.none);
-    expect(status(4).className).not.toMatch(/green|amber|red/);
+    expect(status(5).textContent).toBe(staffCopy.import.none);
+    expect(status(5).className).not.toMatch(/green|amber|red/);
     // The Airtable jobs link the table they read; the MP import also says the test MPs stay.
-    expect(cards[1].querySelector(":scope > p a")!.getAttribute("href")).toBe("https://airtable.com/table");
-    expect(cards[1].querySelector(":scope > p")!.textContent).toContain(staffCopy.syncs.testMps);
-    expect(cards[4].querySelector(":scope > p a")!.getAttribute("href")).toBe("https://airtable.com/table");
-    expect(cards[2].querySelector(":scope > p")!.textContent).not.toContain(staffCopy.syncs.testMps);
+    expect(cards[2].querySelector(":scope > p a")!.getAttribute("href")).toBe("https://airtable.com/table");
+    expect(cards[2].querySelector(":scope > p")!.textContent).toContain(staffCopy.syncs.testMps);
+    expect(cards[5].querySelector(":scope > p a")!.getAttribute("href")).toBe("https://airtable.com/table");
+    expect(cards[3].querySelector(":scope > p")!.textContent).not.toContain(staffCopy.syncs.testMps);
     // The members come from the join form.
-    expect(cards[5].querySelector(":scope > p a")!.getAttribute("href")).toBe("https://pauseai.info/join");
+    expect(cards[1].querySelector(":scope > p a")!.getAttribute("href")).toBe("https://pauseai.info/join");
   });
 
   it("shows an applied run in green, and one that changed nothing or was discarded plainly", async () => {
     const discarded = ran("sync-mps", { changes: { added: [], removed: [], changed: [] } }, { status: "discarded" });
     const unchanged = ran("import-luma", exampleLumaResult, { status: "unchanged" });
     const { rerender } = await render(
-      <ImportOverview newest={[unchanged, exampleAppliedSync, undefined, undefined, undefined]} airtableTable="x" />,
+      <ImportOverview newest={[unchanged, undefined, exampleAppliedSync, undefined, undefined]} airtableTable="x" />,
     );
     const status = (i: number) => document.querySelectorAll("section")[i].querySelector("h2 + div > p")!.className;
     expect(status(0)).not.toMatch(/green|amber|red/);
-    expect(status(1)).toMatch(/green/);
+    expect(status(2)).toMatch(/green/);
     await rerender(
-      <ImportOverview newest={[undefined, discarded, undefined, undefined, undefined]} airtableTable="x" />,
+      <ImportOverview newest={[undefined, undefined, discarded, undefined, undefined]} airtableTable="x" />,
     );
-    expect(status(1)).not.toMatch(/green|amber|red/);
+    expect(status(2)).not.toMatch(/green|amber|red/);
   });
 });
 
@@ -1615,14 +1615,10 @@ describe("SupporterBadges", () => {
     expect(document.body.textContent!.trim()).toBe("");
   });
 
-  it("marks a member, and beside it whether they want to volunteer or lead, but nothing for a member no longer", async () => {
+  it("marks a member, but not a member no longer", async () => {
     const badges = staffCopy.supporters.badges;
     const member = exampleMemberDetails.summary;
     const { rerender } = await render(<SupporterBadges supporter={member} />);
-    expect(document.body.textContent!.trim()).toBe(`${badges.member}${badges.intents.Volunteer}`);
-    await rerender(<SupporterBadges supporter={{ ...member, intent: "Act now" }} />);
-    expect(document.body.textContent!.trim()).toBe(badges.member);
-    await rerender(<SupporterBadges supporter={{ ...member, intent: null }} />);
     expect(document.body.textContent!.trim()).toBe(badges.member);
     await rerender(<SupporterBadges supporter={{ ...member, member: false }} />);
     expect(document.body.textContent!.trim()).toBe("");
@@ -1732,7 +1728,7 @@ describe("SupporterDetails", () => {
       .element(history.getByRole("link", { name: campaigns[0].title }).first())
       .toHaveAttribute("href", campaignPath(campaigns[0]));
     expect(history.element().textContent).toContain(
-      `${copy.detail.kinds.letter} Polly Placeholder · ${campaigns[0].title} · ${staffCopy.letters.status.sent}`,
+      `${copy.detail.kinds.letter} Polly Placeholder ${copy.detail.about} ${campaigns[0].title} · ${staffCopy.letters.status.sent}`,
     );
 
     await expect.element(history.getByText(copy.lists["luma-calendar"], { exact: false })).toBeVisible();
@@ -1758,7 +1754,9 @@ describe("SupporterDetails", () => {
       />,
     );
     const old = page.getByRole("list", { name: copy.detail.activityTitle });
-    expect(old.element().textContent).toContain(`${copy.detail.kinds.letter} Gone MP · old-campaign · queued`);
+    expect(old.element().textContent).toContain(
+      `${copy.detail.kinds.letter} Gone MP ${copy.detail.about} old-campaign · queued`,
+    );
     expect(old.getByRole("link").all()).toHaveLength(0);
 
     // The same postcode typed differently is one line, in the usual form, with both sources.

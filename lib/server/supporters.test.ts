@@ -266,7 +266,6 @@ describeWithDatabase("listSupporters and getSupporter", () => {
       letters: 0,
       optedOut: [],
       member: false,
-      intent: null,
     });
     expect(page.supporters[0].optedOut).toEqual(["luma-calendar"]);
     expect(await listSupporters({ sort: "active", dir: "desc", page: 2 })).toEqual({
@@ -426,7 +425,6 @@ describeWithDatabase("members as supporters", () => {
     expect(jane.summary).toMatchObject({
       sources: ["letter", "member"],
       member: true,
-      intent: "Volunteer",
       phone: "+447700900123",
       firstSeenAt: new Date("2024-03-23T00:00:00Z"),
     });
@@ -465,7 +463,7 @@ describeWithDatabase("members as supporters", () => {
     // A member no longer read is no longer one, though what they gave stays.
     await query("UPDATE members SET removed_at = now()");
     const removed = (await getSupporter(await supporterWith("jane@example.com")))!;
-    expect(removed.summary).toMatchObject({ member: false, intent: null, sources: ["letter", "member"] });
+    expect(removed.summary).toMatchObject({ member: false, sources: ["letter", "member"] });
     expect(removed.members[0].removed).toBe(true);
     expect(removed.optOuts.map((o) => o.list)).toEqual(["luma-calendar"]);
   });

@@ -121,8 +121,7 @@ Where they come from:
   where they come from, so a move to CiviCRM keeps them. A member no
   longer read is marked removed and kept, with their links, until
   erased; the summary's `member` is false for them, so they lose the
-  Member badge. The summary's `intent` is what they chose on the join
-  form, for a Volunteer or Lead badge.
+  Member badge.
 
 **Erasure.** When someone asks to be forgotten, staff erase the supporter
 from their page (`lib/server/erasure.ts`), under the request's reference.

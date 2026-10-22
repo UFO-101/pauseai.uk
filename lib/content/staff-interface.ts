@@ -167,11 +167,9 @@ export const staffCopy = {
       lumaContact: "Follows Luma",
       registered: "Luma events",
       letter: "Wrote to MP",
-      member: "⁂ Member",
-      // Beside Member, what they chose on the join form; the other choices get none.
-      intents: { Volunteer: "⁂ Volunteer", Lead: "⁂ Lead" } as Record<string, string>,
+      member: "Member",
     },
-    sources: { luma: "Luma", letter: "Letter", member: "⁂ Member" } as Record<string, string>,
+    sources: { luma: "Luma", letter: "Letter", member: "Member" } as Record<string, string>,
     lists: { "luma-calendar": "Luma calendar emails", "pauseai-updates": "⁂ PauseAI updates" } as Record<
       string,
       string
@@ -181,15 +179,15 @@ export const staffCopy = {
       emails: "Email",
       phone: "Phone",
       postcode: "Postcode",
-      city: "⁂ City",
-      joined: "⁂ Joined PauseAI",
+      city: "City",
+      joined: "Joined PauseAI",
       /** Where the join form was: through our own site, or on another. */
-      joinedOn: (site: string) => (site === "pauseai.uk" ? `⁂ through ${site}` : `⁂ on ${site}`),
+      joinedOn: (site: string) => (site === "pauseai.uk" ? `through ${site}` : `on ${site}`),
       /** What they chose on the join form; "Keep informed" and "None" say nothing more. */
       intents: {
-        Volunteer: "⁂ wants to volunteer",
-        Lead: "⁂ wants to lead",
-        "Act now": "⁂ wants to act now",
+        Volunteer: "wants to volunteer",
+        Lead: "wants to lead",
+        "Act now": "wants to act now",
       } as Record<string, string>,
       noLongerMember: "⁂ no longer shared with us",
       firstSeen: "First seen",
@@ -216,13 +214,15 @@ export const staffCopy = {
         resubscribed: "⁂ ticked “Keep me informed” on re-joining",
       } as Record<string, string>,
       activityTitle: "History",
+      // Between the MP a letter went to, or who answered it, and its campaign.
+      about: "about",
       noActivity: "Nothing yet.",
       kinds: {
         "luma-contact": "Followed the Luma calendar",
         "luma-registered": "Registered for",
         letter: "Wrote to",
         "letter-replied": "Letter answered by",
-        "member-joined": "⁂ Joined PauseAI",
+        "member-joined": "Joined PauseAI",
         "opted-out": "Unsubscribed from",
         resubscribed: "Subscribed again to",
       } as Record<string, string>,
@@ -470,15 +470,15 @@ export const staffCopy = {
   // The hourly copy of PauseAI's UK members (lib/server/members-import.ts),
   // on the import page.
   members: {
-    title: "⁂ PauseAI members in the UK",
+    title: "PauseAI members in the UK",
     intro: {
-      before: "⁂ Everyone in the UK who joined PauseAI through ",
-      link: "⁂ the join form",
+      before: "Everyone in the UK who joined PauseAI Global through ",
+      link: "the join form",
       after:
-        "⁂ and shared their details with PauseAI UK, or joined before the form asked, copied from the global team's Airtable.",
+        " and shared their details with PauseAI UK, or joined before the form asked. Copied from the global team's Airtable.",
     },
-    importNow: "⁂ Import members now",
-    never: "⁂ Not imported yet.",
+    importNow: "Import members now",
+    never: "Not imported yet.",
     result: (r: {
       members: number;
       added: number;
@@ -489,7 +489,7 @@ export const staffCopy = {
       supportersAdded: number;
       linked: number;
     }) =>
-      `⁂ ${r.members} members read: ${r.added} added, ${r.changed} changed, ${r.removed} removed; ${r.optedOut} opted out of updates, ${r.resubscribed} back in; ${r.supportersAdded} new supporters, ${r.linked} linked.`,
+      `${r.members} members read: ${r.added} added, ${r.changed} changed, ${r.removed} removed; ${r.optedOut} opted out of updates, ${r.resubscribed} back in; ${r.supportersAdded} new supporters, ${r.linked} linked.`,
   },
   syncs: {
     title: "Members of Parliament from Airtable",

@@ -6,11 +6,11 @@ import type { MpChanges, SyncedMp } from "./mps";
 
 export const IMPORT_JOBS = [
   "import-luma",
+  "import-members",
   "sync-mps",
   "check-mps",
   "import-controlai",
   "import-signatories",
-  "import-members",
 ] as const;
 export type ImportJob = (typeof IMPORT_JOBS)[number];
 

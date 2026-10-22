@@ -318,7 +318,7 @@ export const staff: Group = {
           ),
         },
         {
-          label: "A member who wants to volunteer",
+          label: "A member",
           render: () => (
             <StaffPage as="div">
               <SupporterBadges supporter={exampleMemberDetails.summary} />
@@ -715,6 +715,7 @@ export const staff: Group = {
                     { ...exampleLumaResult, stoppedBy: "time" },
                     { at: "2026-10-21T11:17:00Z" },
                   ),
+                  exampleRun("import-members", exampleMembersResult, { at: "2026-10-21T11:47:00Z" }),
                   exampleRun(
                     "sync-mps",
                     { changes: { added: [], removed: [exampleSyncedMp(2)], changed: [] }, mps: [] },

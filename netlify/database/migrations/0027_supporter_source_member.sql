@@ -2,7 +2,7 @@
 -- a member's record links to a supporter by email, like a Luma user or a
 -- letter, and provides the same three views. Contact details gain a city,
 -- which members give, and the summary says whether the supporter is a
--- member now, not one removed, and what they chose to do on the join form.
+-- member now, not one removed.
 
 ALTER TABLE supporter_links ADD COLUMN member_id text UNIQUE REFERENCES members (id) ON DELETE CASCADE;
 ALTER TABLE supporter_links DROP CONSTRAINT supporter_links_check;
@@ -72,8 +72,7 @@ CREATE OR REPLACE VIEW supporter_identity AS
   SELECT k.supporter_id, 'member', s.email, s.name, s.seen_at
   FROM supporter_source_member s JOIN supporter_links k ON k.member_id = s.source_id;
 
--- As before, and then whether they're a member now (a record not removed)
--- and what their newest such record chose on the join form.
+-- As before, and then whether they're a member now: a record not removed.
 CREATE OR REPLACE VIEW supporters_summary AS
 WITH ident AS (
   SELECT supporter_id,
@@ -99,14 +98,13 @@ WITH ident AS (
   FROM supporter_identity i JOIN opt_outs o ON o.address = i.email AND o.resubscribed_at IS NULL
   GROUP BY i.supporter_id
 ), mem AS (
-  SELECT k.supporter_id, (array_agg(m.intent ORDER BY m.created_at DESC, m.id))[1] AS intent
+  SELECT DISTINCT k.supporter_id
   FROM supporter_links k JOIN members m ON m.id = k.member_id WHERE m.removed_at IS NULL
-  GROUP BY k.supporter_id
 )
 SELECT s.id, ident.name, ident.emails, contact.phone, contact.postcode, ident.sources,
   coalesce(act.luma_contact, false) AS luma_contact, ident.first_seen_at, act.last_active_at,
   coalesce(act.events, 0) AS events, coalesce(act.letters, 0) AS letters, opted.opted_out,
-  mem.supporter_id IS NOT NULL AS member, mem.intent
+  mem.supporter_id IS NOT NULL AS member
 FROM supporters s
 LEFT JOIN ident ON ident.supporter_id = s.id
 LEFT JOIN act ON act.supporter_id = s.id

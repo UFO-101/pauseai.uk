@@ -15,7 +15,6 @@ export const exampleSupporter: SupporterSummary = {
   letters: 1,
   optedOut: ["luma-calendar"],
   member: false,
-  intent: null,
 };
 
 /** Everything a supporter's page shows, for Jane. */
@@ -136,7 +135,6 @@ export const exampleMemberDetails: SupporterDetails = {
     letters: 0,
     optedOut: [],
     member: true,
-    intent: "Volunteer",
   },
   identities: [{ source: "member", email: "rhea@example.com", name: "Rhea Member", seenAt: "2026-07-10T00:00:00Z" }],
   contacts: [

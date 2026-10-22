@@ -87,7 +87,7 @@ function Subject({ item }: { item: SupporterActivity }) {
         <Muted>
           {item.title && (
             <>
-              {" · "}
+              {` ${copy.detail.about} `}
               {campaign ? <Link href={campaignPath(campaign)}>{campaign.title}</Link> : item.title}
             </>
           )}
