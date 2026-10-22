@@ -786,15 +786,18 @@
 
 /* ── Photo strip ───────────────────────────────────────────────────────
    Four frames, full bleed, separated by the same hard rules as everything
-   else. */
+   else; on a phone, a carousel of them, one at a time. */
 
 .photo-strip {
+  position: relative;
+  border-top: var(--march-stroke) solid var(--march-line);
+  border-bottom: var(--march-stroke) solid var(--march-line);
+}
+.photo-track {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: var(--march-stroke);
   background: var(--march-line);
-  border-top: var(--march-stroke) solid var(--march-line);
-  border-bottom: var(--march-stroke) solid var(--march-line);
 }
 .photo-item {
   margin: 0;
@@ -807,6 +810,29 @@
   height: 100%;
   aspect-ratio: 3 / 2;
   object-fit: cover;
+}
+/* The carousel's dots, a phone's only: one per photo, the one in view
+   filled orange. */
+.photo-dots {
+  display: none;
+  position: absolute;
+  right: 0;
+  bottom: 14px;
+  left: 0;
+  justify-content: center;
+  gap: 10px;
+  pointer-events: none;
+}
+.photo-dot {
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--march-ink);
+  border-radius: 50%;
+  background: var(--march-paper);
+  transition: background-color 0.15s ease;
+}
+.photo-dot-shown {
+  background: var(--march-orange);
 }
 
 /* ── On the day ────────────────────────────────────────────────────────
@@ -1126,7 +1152,7 @@
 }
 
 @media (max-width: 860px) {
-  .photo-strip {
+  .photo-track {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
@@ -1230,13 +1256,22 @@
     grid-template-columns: 1fr;
     gap: 40px;
   }
-  /* A phone shows one photo, the crowd, full width. The others are display:
-     none, so their lazy images are never fetched. */
-  .photo-strip {
-    grid-template-columns: 1fr;
+  /* A phone shows one photo at a time, full width, in a carousel that
+     snaps to each in turn: a swipe moves one photo, never past the next. */
+  .photo-track {
+    display: flex;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
   }
-  .photo-item:not(:nth-child(3)) {
-    display: none;
+  .photo-item {
+    flex: 0 0 100%;
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+  }
+  .photo-dots {
+    display: flex;
   }
   .signup {
     --panel-shadow: 6px;

@@ -143,3 +143,30 @@ test("tapping Register leaves no app highlighted under the finger", { tag: "@pho
   expect(styles.map(([, transform]) => transform)).toEqual(styles.map(() => "none"));
   await frame(page, "the share card, no app highlighted");
 });
+
+test("swiping through the photos, a dot for each", { tag: "@phone-only" }, async ({ page }) => {
+  await openSignup(page);
+  const strip = page.getByRole("region", { name: "Photos from previous marches" });
+  await strip.scrollIntoViewIfNeeded();
+  await scrollSettled(page);
+  await frame(page, "the first photo, its dot filled");
+
+  // A swipe let go short of the next photo still lands it flush with the
+  // screen's left edge.
+  const track = strip.locator("div").first();
+  const swipeTo = async (photo: number, name: RegExp) => {
+    await track.evaluate(
+      (el, photo) => el.scrollTo({ left: el.clientWidth * (photo - 0.3), behavior: "instant" }),
+      photo,
+    );
+    const img = strip.getByRole("img", { name });
+    await expect(img).toBeInViewport({ ratio: 1 });
+    await expect.poll(async () => (await img.boundingBox())!.x).toBeCloseTo(0, 0);
+  };
+  await swipeTo(1, /No-one wins the race/);
+  await frame(page, "the second photo, its dot filled");
+  await swipeTo(2, /A crowd of marchers/);
+  await frame(page, "the third photo, its dot filled");
+  await swipeTo(3, /Commit to safety/);
+  await frame(page, "the last photo, its dot filled");
+});
