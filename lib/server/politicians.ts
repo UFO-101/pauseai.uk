@@ -246,14 +246,15 @@ export async function signatories(campaign: string): Promise<Signatory[]> {
 export type PoliticianChange = AuditEntry;
 
 /**
- * Everything the audit log holds about one politician, newest first:
- * edits to their details, their campaign statuses set, and their address
+ * Everything the audit log holds about one politician, newest first: their
+ * row added, their details edited, by staff or the MP sync, their leaving,
+ * their campaign statuses set, by staff or an import, and their address
  * blocked or unblocked.
  */
 export async function politicianHistory(id: number, email: string | null): Promise<PoliticianChange[]> {
   return query<PoliticianChange>(
     `SELECT id::int AS id, at, actor, action, details FROM audit_log
-     WHERE (action = 'edit politician' AND (details->>'id')::bigint = $1)
+     WHERE (action IN ('add politician', 'edit politician', 'remove politician') AND (details->>'id')::bigint = $1)
         OR (action = 'set status' AND (details->>'politicianId')::bigint = $1)
         OR (action IN ('block address', 'unblock address') AND $2::text IS NOT NULL AND details->>'address' = lower($2))
      ORDER BY at DESC, id DESC`,

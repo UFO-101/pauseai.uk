@@ -307,7 +307,9 @@ export const staffCopy = {
     columns: {
       address: "Address",
       kind: "Cause",
+      "add politician": "Added",
       since: "Since",
+      "remove politician": "No longer sitting",
       reason: "Reason",
       whose: "Whose",
       refused: "Not sent since",

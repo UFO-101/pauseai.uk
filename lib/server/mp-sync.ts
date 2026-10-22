@@ -13,6 +13,8 @@ import { keepingFailure, recordRun } from "./import-runs";
 // goes in the import log (import-runs.ts), as "sync-mps".
 
 const JOB = "sync-mps";
+/** The audit log's actor for what the sync does by itself. */
+const SYNC = "sync";
 
 export type SyncResult = { status: "applied" | "held" | "unchanged"; changes: MpChanges };
 
@@ -55,24 +57,39 @@ async function ensureTestMps(db?: Queryable): Promise<void> {
   }
 }
 
-/** Makes the table match `mps`: adds and updates them, and marks the rest as no longer sitting. */
+/**
+ * Makes the table match `mps`: adds and updates them, and marks the rest as
+ * no longer sitting. Each politician added, changed or marked gets their
+ * own entry in the audit log, by their row's id, so their page can tell it
+ * (lib/server/politicians.ts, politicianHistory).
+ */
 async function applyMps(mps: SyncedMp[], db: Queryable): Promise<void> {
+  const changes = compareMps(await sittingMps(db), mps);
   for (const mp of mps) {
-    await query(
+    const [{ id }] = await query<{ id: number }>(
       `INSERT INTO politicians (airtable_id, house, name, salutation, constituency, party, email)
        VALUES ($1, 'commons', $2, $3, $4, $5, $6)
        ON CONFLICT (airtable_id) DO UPDATE
-       SET house = 'commons', name = $2, salutation = $3, constituency = $4, party = $5, email = $6, sitting = true, updated_at = now()`,
+       SET house = 'commons', name = $2, salutation = $3, constituency = $4, party = $5, email = $6, sitting = true, updated_at = now()
+       RETURNING id::int AS id`,
       [mp.airtableId, mp.name, mp.salutation, mp.constituency, mp.party, mp.email],
       db,
     );
+    const { airtableId, ...details } = mp;
+    if (changes.added.some((added) => added.airtableId === airtableId)) {
+      await logChange(SYNC, "add politician", { id, airtableId, house: "commons", ...details }, db);
+    } else if (changes.changed.some((changed) => changed.airtableId === airtableId)) {
+      await logChange(SYNC, "edit politician", { id, airtableId, house: "commons", ...details }, db);
+    }
   }
-  await query(
+  const gone = await query<{ id: number; name: string }>(
     `UPDATE politicians SET sitting = false, updated_at = now()
-     WHERE airtable_id IS NOT NULL AND sitting AND NOT (airtable_id = ANY($1::text[]))`,
+     WHERE airtable_id IS NOT NULL AND sitting AND NOT (airtable_id = ANY($1::text[]))
+     RETURNING id::int AS id, name`,
     [mps.map((mp) => mp.airtableId)],
     db,
   );
+  for (const mp of gone) await logChange(SYNC, "remove politician", mp, db);
 }
 
 /**
@@ -98,7 +115,7 @@ export function syncMps(startedBy: string): Promise<SyncResult> {
       const result: MpSyncResult = status === "held" ? { changes, mps: fetched } : { changes };
       await recordRun(JOB, startedBy, status, result, db);
       await logChange(
-        "sync",
+        SYNC,
         status === "held" ? "hold MP sync" : "apply MP sync",
         { added: changes.added.length, removed: changes.removed.length, changed: changes.changed.length },
         db,

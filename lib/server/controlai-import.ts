@@ -43,16 +43,16 @@ export function importControlAiLetter(startedBy: string): Promise<ControlAiImpor
       );
       const { matched, problems } = matchSignatories(signatories, candidates);
       const ids = [...matched.keys()];
-      const added = await query(
+      const added = await query<{ politician_id: number }>(
         `INSERT INTO campaign_statuses (politician_id, campaign, status, updated_by)
          SELECT id, $2, 'signed', $3 FROM unnest($1::bigint[]) AS id
-         ON CONFLICT (politician_id, campaign) DO NOTHING RETURNING politician_id`,
+         ON CONFLICT (politician_id, campaign) DO NOTHING RETURNING politician_id::int AS politician_id`,
         [ids, SOBEL_BILL_CAMPAIGN, CONTROLAI],
         db,
       );
-      const removed = await query(
+      const removed = await query<{ politician_id: number }>(
         `DELETE FROM campaign_statuses WHERE campaign = $2 AND updated_by = $3 AND NOT (politician_id = ANY($1::bigint[]))
-         RETURNING politician_id`,
+         RETURNING politician_id::int AS politician_id`,
         [ids, SOBEL_BILL_CAMPAIGN, CONTROLAI],
         db,
       );
@@ -71,6 +71,23 @@ export function importControlAiLetter(startedBy: string): Promise<ControlAiImpor
           { added: added.length, removed: removed.length, problems: problems.length },
           db,
         );
+        // And one entry per politician, as setting a status by hand logs it, so their page can tell it.
+        for (const { politician_id: politicianId } of added) {
+          await logChange(
+            CONTROLAI,
+            "set status",
+            { politicianId, campaign: SOBEL_BILL_CAMPAIGN, status: "signed", date: null, note: "" },
+            db,
+          );
+        }
+        for (const { politician_id: politicianId } of removed) {
+          await logChange(
+            CONTROLAI,
+            "set status",
+            { politicianId, campaign: SOBEL_BILL_CAMPAIGN, status: null, date: null, note: "" },
+            db,
+          );
+        }
       }
       await recordRun(JOB, startedBy, "ok", result, db);
       return result;

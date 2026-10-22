@@ -246,14 +246,22 @@ INSERT INTO import_runs (at, job, started_by, status, error, result, decided_by)
 
 -- Who did what, as the staff pages and the jobs log it: every kind of entry.
 INSERT INTO audit_log (at, actor, action, details) VALUES
-  (now() - interval '60 days', 'sync', 'apply MP sync', '{"added": 2, "removed": 0, "changed": 0}'),
+  (now() - interval '60 days', 'sync', 'add politician', '{"id": 0, "airtableId": "recDummy", "house": "commons", "name": "Ms Dora Dummy", "salutation": "Ms Dummy", "constituency": "Hackney North and Stoke Newington", "party": "Labour", "email": "mp90001.office@parliament.uk"}'),
+  (now() - interval '60 days', 'sync', 'add politician', '{"id": 0, "airtableId": "recPlaceholder", "house": "commons", "name": "Polly Placeholder", "salutation": "Ms Placeholder", "constituency": "Cities of London and Westminster", "party": "Labour (Co-op)", "email": "polly.placeholder.mp@parliament.uk"}'),
+  (now() - interval '60 days', 'sync', 'add politician', '{"id": 0, "airtableId": "recGone", "house": "commons", "name": "Gordon Gone", "salutation": "Mr Gone", "constituency": "Former Seat", "party": "Independent", "email": "gordon.gone.mp@parliament.uk"}'),
+  (now() - interval '60 days', 'sync', 'apply MP sync', '{"added": 3, "removed": 0, "changed": 0}'),
   (now() - interval '40 days', 'admin@pauseai.uk', 'add staff account', '{"email": "jo@pauseai.uk", "to": ["supporters"]}'),
   (now() - interval '40 days', 'admin@pauseai.uk', 'add staff account', '{"email": "gone@pauseai.uk", "to": []}'),
+  (now() - interval '30 days', 'admin@pauseai.uk', 'add politician', '{"id": 0, "house": "lords", "name": "Lord Seedling of Example", "constituency": null, "party": "Crossbench", "email": null}'),
   (now() - interval '30 days', 'admin@pauseai.uk', 'import signatories from Airtable', '{"matched": 2, "added": 1, "alreadySet": 0}'),
   (now() - interval '25 days', 'admin@pauseai.uk', 'remove staff account', '{"email": "gone@pauseai.uk", "permissions": []}'),
   (now() - interval '20 days', 'sync', 'hold MP sync', '{"added": 0, "removed": 1, "changed": 0}'),
   (now() - interval '19 days', 'jo@pauseai.uk', 'discard held MP sync', '{"id": 6}'),
+  (now() - interval '18 days', 'sync', 'remove politician', '{"id": 0, "name": "Gordon Gone"}'),
   (now() - interval '18 days', 'admin@pauseai.uk', 'apply held MP sync', '{"id": 8}'),
+  (now() - interval '10 days', 'controlai', 'import ControlAI letter', '{"added": 1, "removed": 0, "problems": 1}'),
+  (now() - interval '10 days', 'controlai', 'set status', '{"politicianId": 0, "campaign": "support-sobel-bill", "status": "signed", "date": null, "note": ""}'),
+  (now() - interval '9 days', 'sync', 'edit politician', '{"id": 0, "airtableId": "recPlaceholder", "house": "commons", "name": "Polly Placeholder", "salutation": "Ms Placeholder", "constituency": "Cities of London and Westminster", "party": "Labour (Co-op)", "email": "polly.placeholder.mp@parliament.uk"}'),
   (now() - interval '15 days', 'jo@pauseai.uk', 'erase supporter', '{"id": 99, "reference": "GDPR-2026-014", "letters": 1, "lumaUsers": ["usr-seed-20"]}'),
   (now() - interval '12 days', 'sam@pauseai.uk', 'edit politician', '{"id": 0, "house": "lords", "name": "Lord Seedling of Example", "salutation": "Lord Seedling", "constituency": null, "party": "Crossbench", "email": null}'),
   (now() - interval '12 days' + interval '1 minute', 'postmark', 'block address', '{"address": "no-such-mailbox@pauseai.uk", "kind": "hard"}'),
@@ -269,7 +277,9 @@ INSERT INTO audit_log (at, actor, action, details) VALUES
   (now() - interval '1 day' + interval '2 hours', 'nightly', 'import ControlAI letter', '{"error": "No PDF linked from the letter page"}'),
   (now() - interval '2 hours', 'jo@pauseai.uk', 'view supporter', '{"id": 4}');
 -- The entries about a politician name their row.
-UPDATE audit_log SET details = jsonb_set(details, '{id}', to_jsonb((SELECT id FROM politicians WHERE name = 'Lord Seedling of Example'))) WHERE action = 'edit politician';
+UPDATE audit_log a SET details = jsonb_set(a.details, '{id}', to_jsonb(p.id)) FROM politicians p
+  WHERE a.action IN ('add politician', 'edit politician', 'remove politician') AND p.name = a.details->>'name';
+UPDATE audit_log SET details = jsonb_set(details, '{politicianId}', to_jsonb((SELECT id FROM politicians WHERE name = 'Lord Seedling of Example'))) WHERE action = 'set status' AND actor = 'controlai';
 UPDATE audit_log SET details = jsonb_set(details, '{politicianId}', to_jsonb((SELECT id FROM politicians WHERE test_postcode = 'ZZ99ZZ'))) WHERE action = 'set status' AND details->>'campaign' = 'support-sobel-bill';
 UPDATE audit_log SET details = jsonb_set(details, '{politicianId}', to_jsonb((SELECT id FROM politicians WHERE airtable_id = 'recDummy'))) WHERE action = 'set status' AND details->>'note' = '';
 UPDATE audit_log SET details = jsonb_set(details, '{politicianId}', to_jsonb((SELECT id FROM politicians WHERE test_postcode = 'ZZ99ZH'))) WHERE action = 'set status' AND details->>'note' = 'Confirmed by their office';

@@ -235,9 +235,14 @@ describeWithDatabase("politicians", () => {
       address: "polly.placeholder.mp@parliament.uk",
       note: "Back",
     });
+    // As the imports log them: added, and no longer sitting.
+    await logChange("jo@pauseai.uk", "add politician", { id: peer, name: "Lord Example" });
+    await logChange("sync", "remove politician", { id: peer, name: "Lord Example" });
     // Not theirs: a held sync's run with the same id, and someone else's status.
     await logChange("jo@pauseai.uk", "apply held MP sync", { id: peer });
     expect((await politicianHistory(peer, null)).map((c) => [c.action, c.actor])).toEqual([
+      ["remove politician", "sync"],
+      ["add politician", "jo@pauseai.uk"],
       ["set status", "jo@pauseai.uk"],
       ["edit politician", "sam@pauseai.uk"],
     ]);

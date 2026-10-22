@@ -88,6 +88,7 @@ function Detail({ change }: { change: PoliticianChange }) {
         </>
       );
     }
+    case "add politician":
     case "edit politician":
       return (
         <>

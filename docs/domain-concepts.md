@@ -205,6 +205,39 @@ staff email, or the name of what did it: `sync`, `controlai`, `postmark`.
 Staff read it at `/staff/audit-log`. A new kind of change logs itself the
 same way, inside the same transaction as the change.
 
+### What is logged, and when
+
+The rule: **every change to a record about a person or a politician is
+logged once, against that record, by whoever or whatever made it**, in the
+same transaction, so the record's own page can tell its history
+(`politicianHistory` in `lib/server/politicians.ts`; a supporter's
+history comes from the records themselves). A job that changes many
+records logs one summary entry for the run, and one entry per record it
+changed. Reading is logged only where the data is personal: each viewing
+of a supporter's page. Nothing else about reading is logged.
+
+| Action                                                                        | Actor              | When                                                       | Details name                                         |
+| ----------------------------------------------------------------------------- | ------------------ | ---------------------------------------------------------- | ---------------------------------------------------- |
+| `add politician`                                                              | `sync`, staff      | The MP sync adds an MP; the signatory import adds a signer | `id`, and their details                              |
+| `edit politician`                                                             | `sync`, staff      | The MP sync changes an MP's details; staff edit a signer   | `id`, and their details after                        |
+| `remove politician`                                                           | `sync`             | The MP sync finds an MP no longer in Airtable              | `id`, `name`                                         |
+| `set status`                                                                  | staff, `controlai` | A campaign status set or cleared, by hand or by the import | `politicianId`, `campaign`, `status`, `date`, `note` |
+| `apply MP sync`, `hold MP sync`, `apply held MP sync`, `discard held MP sync` | `sync`, staff      | Each sync's outcome, and each decision on a held one       | counts, or the run's `id`                            |
+| `import ControlAI letter`                                                     | `controlai`        | A read of the letter that set or cleared any status        | counts                                               |
+| `import signatories from Airtable`                                            | staff              | The one-off import                                         | counts                                               |
+| `block address`, `unblock address`                                            | `postmark`, staff  | A bounce or complaint blocks an address; staff unblock it  | `address`, and the `kind` or the `note`              |
+| `add staff account`, `set staff permissions`, `remove staff account`          | staff              | The accounts page                                          | `email`, and the permissions `from` and `to`         |
+| `view supporter`                                                              | staff              | A supporter's page is opened                               | `id`                                                 |
+| `erase supporter`                                                             | staff              | A supporter is erased                                      | `id`, the request's `reference`, and what went       |
+
+Details never carry a supporter's name or address: a supporter is named by
+`id`, and an erasure by its reference, so the log stays after the person is
+gone. A politician's details are public, so theirs are logged in full.
+
+A new kind of change adds a row here and logs itself the same way. If it
+changes a politician, it names `id` or `politicianId` so `politicianHistory`
+finds it; if it blocks or frees an address, `address`.
+
 ## Staff
 
 Anyone with a pauseai.uk email address can log in, with a link sent to
