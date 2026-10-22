@@ -9,15 +9,24 @@ import {
 } from "./staff-search";
 
 describe("lettersSearch", () => {
-  it("filters by a status", () => {
-    expect(lettersSearch({ status: "sent" })).toEqual({ status: "sent", filter: "sent" });
+  const none = { status: undefined, search: undefined, answered: undefined, supporterId: undefined };
+
+  it("filters by a status, a search, whether answered and a supporter", () => {
+    expect(lettersSearch({ status: "sent", q: " jane ", answered: "yes", supporter: "7" })).toEqual({
+      status: "sent",
+      q: " jane ",
+      answered: "yes",
+      supporter: "7",
+      filter: { status: "sent", search: "jane", answered: true, supporterId: 7 },
+    });
+    expect(lettersSearch({ answered: "no" }).filter).toEqual({ ...none, answered: false });
   });
 
-  it("filters by nothing when there's no status, or one there isn't", () => {
-    expect(lettersSearch({})).toEqual({ status: "", filter: undefined });
-    expect(lettersSearch({ status: "nope" })).toEqual({ status: "nope", filter: undefined });
+  it("filters by nothing when each is blank or unknown", () => {
+    expect(lettersSearch({})).toEqual({ status: "", q: "", answered: "", supporter: "", filter: none });
+    expect(lettersSearch({ status: "nope", q: "  ", answered: "maybe", supporter: "x" }).filter).toEqual(none);
     // A name every object inherits isn't a status.
-    expect(lettersSearch({ status: "toString" })).toEqual({ status: "toString", filter: undefined });
+    expect(lettersSearch({ status: "toString" }).filter).toEqual(none);
   });
 });
 

@@ -1197,7 +1197,7 @@ export const staff: Group = {
           label: "One status picked",
           render: () => (
             <StaffPage as="div">
-              <LetterFilters status="bounced" />
+              <LetterFilters search={{ status: "bounced", q: "", answered: "", supporter: "" }} />
             </StaffPage>
           ),
         },

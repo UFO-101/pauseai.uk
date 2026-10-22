@@ -5,9 +5,40 @@ import { staffCopy } from "@/lib/content/staff-interface";
 import { parseSort } from "@/lib/staff-sort";
 import { isSupporterSource, SUPPORTER_SORTS, type SupporterFilter } from "@/lib/supporters";
 
-/** The letters page's status filter. */
-export function lettersSearch({ status = "" }: { status?: string }): { status: string; filter?: string } {
-  return { status, filter: Object.hasOwn(staffCopy.letters.status, status) ? status : undefined };
+export type LettersSearch = {
+  status: string;
+  q: string;
+  /** "yes" or "no". */
+  answered: string;
+  /** A supporter's ID: their letters alone, from their page. No field shows it. */
+  supporter: string;
+};
+
+/** Which letters the letters page lists (recentLetters in lib/server/letters.ts). */
+export type LetterFilter = {
+  /** A letter's status, or "replied" (a person replied) or "auto_reply" (a machine did). */
+  status?: string;
+  /** Over the sender's name and email, the MP's name and the subject. */
+  search?: string;
+  /** Whether the MP replied. */
+  answered?: boolean;
+  supporterId?: number;
+};
+
+/** The letters page's filters, as the URL gives them and as the server applies them. */
+export function lettersSearch({
+  status = "",
+  q = "",
+  answered = "",
+  supporter = "",
+}: Partial<LettersSearch>): LettersSearch & { filter: LetterFilter } {
+  const filter: LetterFilter = {
+    status: Object.hasOwn(staffCopy.letters.status, status) ? status : undefined,
+    search: q.trim() || undefined,
+    answered: answered === "yes" ? true : answered === "no" ? false : undefined,
+    supporterId: supporterId(supporter),
+  };
+  return { status, q, answered, supporter, filter };
 }
 
 /** A politician's ID from their page's URL: a whole number, or undefined. */

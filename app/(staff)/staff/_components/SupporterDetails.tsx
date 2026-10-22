@@ -66,8 +66,8 @@ function Fact({ label, values }: { label: string; values: Given[] }) {
   );
 }
 
-/** What an activity was about: the event, the MP and campaign, or the list. */
-function Subject({ item }: { item: SupporterActivity }) {
+/** What an activity was about: the event, the MP and campaign, or the list. `letters` lists the supporter's letters. */
+function Subject({ item, letters }: { item: SupporterActivity; letters: string }) {
   if (item.kind === "luma-registered") {
     const status = copy.detail.statuses[item.detail ?? ""];
     return (
@@ -78,7 +78,8 @@ function Subject({ item }: { item: SupporterActivity }) {
     );
   }
   if (item.kind === "letter" || item.kind === "letter-replied") {
-    // The MP, linked to their page; the campaign, linked to its public page while it's still one; then a letter's status.
+    // The MP, linked to their page; the campaign, linked to its public page while it's still one; then a letter's
+    // status, linked to the supporter's letters on the letters page.
     const campaign = campaignBySlug(item.title ?? "");
     return (
       <>
@@ -90,7 +91,12 @@ function Subject({ item }: { item: SupporterActivity }) {
               {campaign ? <Link href={campaignPath(campaign)}>{campaign.title}</Link> : item.title}
             </>
           )}
-          {item.status && ` · ${staffCopy.letters.status[item.status] ?? item.status}`}
+          {item.status && (
+            <>
+              {" · "}
+              <Link href={letters}>{staffCopy.letters.status[item.status] ?? item.status}</Link>
+            </>
+          )}
         </Muted>
       </>
     );
@@ -196,7 +202,8 @@ export default function SupporterDetails({ supporter }: { supporter: Details }) 
             <li key={i}>
               <span className={styles.when}>{staffTime(item.at)}</span>
               <span>
-                {copy.detail.kinds[item.kind]} <Subject item={item} />
+                {copy.detail.kinds[item.kind]}{" "}
+                <Subject item={item} letters={`/staff/letters?supporter=${summary.id}`} />
               </span>
             </li>
           ))}

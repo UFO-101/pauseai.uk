@@ -56,9 +56,10 @@ import ErasedNotice from "./ErasedNotice";
 import SupporterBadges from "./SupporterBadges";
 import SupporterDetails from "./SupporterDetails";
 import SupporterFilters from "./SupporterFilters";
+import LetterFilters from "./LetterFilters";
 import SupportersTable from "./SupportersTable";
 import { exampleMemberDetails, exampleSupporter, exampleSupporterDetails } from "./SupportersTable.examples";
-import { supportersSearch } from "@/lib/staff-search";
+import { lettersSearch, supportersSearch } from "@/lib/staff-search";
 import Table from "@/components/ui/Table";
 
 const [pm, bill] = campaigns;
@@ -1584,6 +1585,34 @@ describe("LettersTable", () => {
   });
 });
 
+describe("LetterFilters", () => {
+  const copy = staffCopy.letters;
+
+  it("is a GET form to the letters, with each filter as typed", async () => {
+    const { filter, ...search } = lettersSearch({ q: "jane", status: "sent", answered: "no" });
+    void filter;
+    await render(<LetterFilters search={search} />);
+    const box = page.getByRole("searchbox", { name: copy.search });
+    await expect.element(box).toHaveValue("jane");
+    const form = box.element().closest("form")!;
+    expect(form.getAttribute("method")).toBe("get");
+    expect(form.getAttribute("action")).toBe("/staff/letters");
+    await expect.element(page.getByRole("combobox", { name: copy.columns.status })).toHaveValue("sent");
+    await expect.element(page.getByRole("combobox", { name: copy.columns.replied })).toHaveValue("no");
+    expect(form.querySelector("input[name=supporter]")).toBeNull();
+    await expect.element(page.getByText(copy.oneSupporter)).not.toBeInTheDocument();
+  });
+
+  it("keeps one supporter's filter through the form, says so, and leads back to everyone's", async () => {
+    const { filter, ...search } = lettersSearch({ supporter: "7" });
+    void filter;
+    await render(<LetterFilters search={search} />);
+    await expect.element(page.getByText(copy.oneSupporter)).toBeVisible();
+    await expect.element(page.getByRole("link", { name: copy.everyone })).toHaveAttribute("href", "/staff/letters");
+    expect(document.querySelector<HTMLInputElement>("form input[name=supporter]")!.value).toBe("7");
+  });
+});
+
 describe("SupporterFilters", () => {
   it("is a GET form to the list, with each filter as typed", async () => {
     await render(
@@ -1757,7 +1786,13 @@ describe("SupporterDetails", () => {
     expect(old.element().textContent).toContain(
       `${copy.detail.kinds.letter} Gone MP ${copy.detail.about} old-campaign · queued`,
     );
-    expect(old.getByRole("link").all()).toHaveLength(0);
+    // Only the status links, to the supporter's letters.
+    expect(
+      old
+        .getByRole("link")
+        .all()
+        .map((link) => link.element().getAttribute("href")),
+    ).toEqual([`/staff/letters?supporter=${exampleSupporterDetails.summary.id}`]);
 
     // The same postcode typed differently is one line, in the usual form, with both sources.
     await first.unmount();
