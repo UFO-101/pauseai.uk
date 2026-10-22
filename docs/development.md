@@ -248,8 +248,9 @@ Then postcode `SW1A 1AA` finds Polly Placeholder.
 
 Open http://localhost:3000/staff/login. In a fixture build the login card
 has a hatched purple box under it, the dev login: a button per account
-(admin@pauseai.uk, which every database starts with, and the seed's
-jo@pauseai.uk and sam@pauseai.uk) and one for nobody@pauseai.uk, which has
+(admin@pauseai.uk, which every database starts with, and which
+`db:reset` gives the supporters permission as well as admin; and the
+seed's jo@pauseai.uk and sam@pauseai.uk) and one for nobody@pauseai.uk, which has
 no account, each signing you in at once, with no email.
 It exists only with `DATA_FIXTURES=1`; its route is a 404 anywhere else.
 
