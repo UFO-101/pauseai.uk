@@ -20,8 +20,8 @@ type Props = {
 };
 
 /**
- * The staff interface's navigation: a sidebar with the pages in groups, the
- * current one marked but still a link, so it's the way back from a page
+ * The staff interface's navigation: a sidebar with Home, then the pages in
+ * groups, the current one marked but still a link, so it's the way back from a page
  * under it; who's logged in and the way out; on a phone, a bar with the
  * current page's name opening the same as a dropdown. A group shows only
  * to those with its permission. The pause symbol and name at the top are the
@@ -45,6 +45,18 @@ export default function StaffNav({ email, account = false, permissions = [], cur
     );
   if (!email) return <div className={styles.bar}>{title}</div>;
 
+  // Home first, on its own, then the groups; without an account, only home.
+  const home = (
+    <section className={styles.group}>
+      <ul>
+        <li>
+          <Link href="/staff" aria-current={current === "home" ? "page" : undefined}>
+            {staffCopy.nav.home}
+          </Link>
+        </li>
+      </ul>
+    </section>
+  );
   const groups = (account ? sectionsFor(permissions) : []).map((section) => (
     <section key={section.id} className={styles.group}>
       <h2>{staffCopy.nav.sections[section.id]}</h2>
@@ -65,6 +77,7 @@ export default function StaffNav({ email, account = false, permissions = [], cur
       {title}
       {/* Wider screens: the groups down the side, then who's logged in and the way out. */}
       <div className={styles.sidebar}>
+        {home}
         {groups}
         <div className={styles.foot}>
           {who}
@@ -79,6 +92,7 @@ export default function StaffNav({ email, account = false, permissions = [], cur
       <details className={styles.menu}>
         <summary>{current && staffCopy.nav[current]}</summary>
         <div>
+          {home}
           {groups}
           <hr />
           {who}

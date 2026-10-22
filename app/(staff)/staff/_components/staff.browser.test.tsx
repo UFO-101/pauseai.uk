@@ -85,6 +85,8 @@ describe("StaffNav", () => {
     // The sidebar is for wider screens than the test's, so it's read from the DOM.
     const nav = document.querySelector("nav")!;
     expect(nav.querySelector("span[class*=who]")!.textContent).toBe("jo@pauseai.uk");
+    // Home leads the list, a link like the rest.
+    expect(nav.querySelector('a[href="/staff"]:not([class])')!.textContent).toBe(staffCopy.nav.home);
     const current = nav.querySelector('a[aria-current="page"]')!;
     expect(current.textContent).toBe(staffCopy.nav.politicians);
     expect(current.getAttribute("href")).toBe("/staff/politicians");
