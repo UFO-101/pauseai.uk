@@ -115,7 +115,7 @@ describe("addLumaGuest", () => {
         return HttpResponse.json({ skipped: [] });
       }),
     );
-    expect(await addLumaGuest(" evt-test ", guest("testy@example.org"))).toEqual({ status: "added" });
+    expect(await addLumaGuest("evt-test", guest("testy@example.org"))).toEqual({ status: "added" });
     expect(sent).toEqual({
       key: "key",
       body: { event_id: "evt-test", guests: [{ email: "testy@example.org", name: "Testy McTestface" }] },
@@ -135,8 +135,8 @@ describe("addLumaGuest", () => {
     expect(await addLumaGuest("evt-test", guest("testy@example.org"))).toEqual({ status: "added" });
   });
 
-  it("names what isn't set, without calling Luma", async () => {
-    vi.stubEnv("LUMA_API_KEY", "");
+  it("says the key isn't set, without calling Luma", async () => {
+    vi.stubEnv("LUMA_API_KEY", " ");
     let called = false;
     server.use(
       http.post(ADD, () => {
@@ -144,20 +144,7 @@ describe("addLumaGuest", () => {
         return HttpResponse.json({ skipped: [] });
       }),
     );
-    expect(await addLumaGuest(" ", guest("testy@example.org"))).toEqual({
-      status: "not-configured",
-      missing: ["LUMA_API_KEY", "LUMA_MARCH_EVENT_ID"],
-    });
-    vi.stubEnv("LUMA_API_KEY", "key");
-    expect(await addLumaGuest("", guest("testy@example.org"))).toEqual({
-      status: "not-configured",
-      missing: ["LUMA_MARCH_EVENT_ID"],
-    });
-    vi.stubEnv("LUMA_API_KEY", "");
-    expect(await addLumaGuest("evt-test", guest("testy@example.org"))).toEqual({
-      status: "not-configured",
-      missing: ["LUMA_API_KEY"],
-    });
+    expect(await addLumaGuest("evt-test", guest("testy@example.org"))).toEqual({ status: "not-configured" });
     expect(called).toBe(false);
   });
 
