@@ -1,9 +1,9 @@
-import type { MarchRegisterResult } from "../actions";
+import type { MarchRegisterResult } from "@/lib/march-registration";
 import { m } from "./classes";
 import SignupFlow from "./SignupFlow";
 
-/** The register band: what to expect, and the form and the cards after it. `register` is the form's Server Action. */
-export default function SignupRegister({ register }: { register: (input: unknown) => Promise<MarchRegisterResult> }) {
+/** The register band: what to expect, and the form and the cards after it. `register` is as SignupFlow's. */
+export default function SignupRegister({ register }: { register?: (input: unknown) => Promise<MarchRegisterResult> }) {
   return (
     <section id="register" className={m("band band-ink")}>
       <div className={m("container register-grid")}>

@@ -1,6 +1,6 @@
-// Checking what the march sign-up form sends (app/(march)/march/actions.ts).
+// Checking what the march sign-up form sends (app/api/march/register/route.ts).
 // It runs on the server, where it counts: the browser's `required` and
-// type="email" are only a convenience, and a Server Action can be posted to
+// type="email" are only a convenience, and the route can be posted to
 // directly.
 import { marchSignupCopy } from "@/lib/content/march-signup";
 
@@ -9,6 +9,13 @@ export type MarchRegistration = { name: string; email: string };
 export type MarchRegistrationCheck =
   | { ok: true; registration: MarchRegistration }
   | { ok: false; errors: Partial<Record<keyof MarchRegistration, string>> };
+
+/** What registering came to, as app/api/march/register answers it. */
+export type MarchRegisterResult =
+  | { ok: true }
+  | (Extract<MarchRegistrationCheck, { ok: false }> & { reason: "invalid" })
+  /** Not on the guest list: Luma failed, skipped them, or isn't set up. */
+  | { ok: false; reason: "luma-failed" };
 
 const MAX_NAME_LENGTH = 100;
 /** The longest address SMTP allows. */

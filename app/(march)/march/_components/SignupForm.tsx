@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState, type FormEvent } from "react";
 import { march } from "@/lib/content/march";
 import { marchSignupCopy } from "@/lib/content/march-signup";
-import type { MarchRegisterResult } from "../actions";
+import type { MarchRegisterResult } from "@/lib/march-registration";
 import { cardMotionProps, type CardMotion } from "./card-motion";
 import { m } from "./classes";
 
@@ -19,8 +19,8 @@ function errorFor(result: Exclude<MarchRegisterResult, { ok: true }> | "unreacha
 }
 
 /**
- * The registration form, the register band's first card. `register` is the
- * Server Action (app/(march)/march/actions.ts), which adds the person to the
+ * The registration form, the register band's first card. `register` sends it
+ * to app/api/march/register (./register.ts), which adds the person to the
  * Luma event; once it has, `onRegistered` moves on to the share card.
  * Phone, city, postcode and the mailing list opt-in are asked for, but not sent yet.
  */
@@ -55,7 +55,7 @@ export default function SignupForm({
     try {
       result = await register(signup);
     } catch {
-      // The action couldn't be reached: offline, or a deploy in flight.
+      // The server couldn't be reached, or erred.
       result = "unreachable";
     }
     if (result === "unreachable" || !result.ok) {

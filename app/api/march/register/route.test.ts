@@ -1,7 +1,15 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { http, HttpResponse } from "msw";
 import { server } from "@/tests/fixtures/msw";
-import { registerForMarch } from "./actions";
+import { POST } from "./route";
+
+/** Posts a body, JSON unless it's a string already, and reads the answer. */
+async function registerForMarch(body: unknown) {
+  const sent = typeof body === "string" ? body : JSON.stringify(body);
+  const res = await POST(new Request("http://localhost/api/march/register", { method: "POST", body: sent }));
+  expect(res.status).toBe(200);
+  return res.json();
+}
 
 const ADD = "https://public-api.luma.com/v1/events/guests/add";
 const person = { name: "Testy McTestface", email: "testy@example.org", phone: "", city: "", postcode: "" };
@@ -17,7 +25,7 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-describe("registerForMarch", () => {
+describe("POST /api/march/register", () => {
   it("adds the person to the march's event", async () => {
     let body: unknown;
     server.use(
@@ -40,6 +48,7 @@ describe("registerForMarch", () => {
       errors: { email: "Please enter a valid email address." },
     });
     expect((await registerForMarch(null)).ok).toBe(false);
+    expect((await registerForMarch("not JSON")).ok).toBe(false);
   });
 
   it("tells a bot it worked, without adding anyone", async () => {

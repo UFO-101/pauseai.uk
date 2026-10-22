@@ -317,7 +317,7 @@ Luma's add-guests call (`addLumaGuest` in
 confirmation. It needs `LUMA_API_KEY`, the key the rest of the site uses,
 from the calendar that owns the event (Luma Plus).
 
-The event is `MARCH_EVENT_ID` in `app/(march)/march/actions.ts`, its API ID
+The event is `MARCH_EVENT_ID` in `app/api/march/register/route.ts`, its API ID
 (`evt-…`): on Luma, open the event's manage page, and it's in the address
 (`luma.com/event/manage/evt-…`). It's a test event,
 [Luma API Testing](https://luma.com/qry332td), on every deploy, until the
