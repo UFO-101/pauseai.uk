@@ -102,3 +102,12 @@ export type LumaImportResult = {
 export type LumaImport = ImportRun<"import-luma", LumaImportResult>;
 
 export type AnyImportRun = MpSync | MpCheck | ControlAiImport | SignatoryImport | LumaImport;
+
+/** How a run ended, as a colour: green when it went well, amber held or stopped short, red failed; none when it changed nothing, was discarded, or never ran. */
+export function runTone(run: AnyImportRun | undefined): "green" | "amber" | "red" | undefined {
+  if (!run) return undefined;
+  if (run.status === "failed") return "red";
+  if (run.status === "held") return "amber";
+  if (run.job === "import-luma" && run.result.stoppedBy !== undefined) return "amber";
+  return run.status === "ok" || run.status === "applied" ? "green" : undefined;
+}

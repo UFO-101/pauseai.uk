@@ -941,10 +941,9 @@ describe("ImportJobPage", () => {
     // The lozenges are plain: only a run's ending is in colour.
     const lozenges = [...page.getByRole("heading", { level: 1 }).element().querySelectorAll("span")];
     expect(lozenges.map((tag) => tag.className.match(/green|amber|red|blue/))).toEqual([null, null]);
-    // How the newest run ended, in the same strip as its card: the held one, amber.
-    const now = page.getByRole("heading", { level: 1 }).element().nextElementSibling!;
-    expect(now.textContent).toBe(`${staffCopy.runs.status.held}2026-10-12 02:00`);
-    expect(now.className).toMatch(/amber/);
+    // No strip under the title: the newest run, in the history, carries the colour.
+    expect(page.getByRole("heading", { level: 1 }).element().nextElementSibling!.tagName).toBe("P");
+    expect(page.getByRole("heading", { level: 1 }).element().nextElementSibling!.className).toBe("");
     await page.getByRole("button", { name: staffCopy.syncs.syncNow }).click();
     await vi.waitFor(() => expect(run).toHaveBeenCalledOnce());
     expect(
@@ -957,7 +956,7 @@ describe("ImportJobPage", () => {
     await vi.waitFor(() => expect(sent).toEqual([{ id: "3", decision: "apply" }]));
 
     await rerender(<ImportJobPage job="check-mps" runs={[]} run={run} decide={fn} airtableTable="x" />);
-    expect(page.getByText(staffCopy.check.never).all()).toHaveLength(2);
+    await expect.element(page.getByText(staffCopy.check.never)).toBeVisible();
     await expect
       .element(page.getByRole("link", { name: staffCopy.check.intro.link }))
       .toHaveAttribute("target", "_blank");
@@ -1316,11 +1315,13 @@ describe("RunList", () => {
     await expect
       .element(second)
       .toHaveTextContent(`${staffCopy.runs.status.failed} ${AT} · ${staffCopy.import.nightly} · Luma answered 500`);
-    // The history is plain, a failure too: only the job's newest run is in colour, above it.
-    expect(second.element().querySelector("[class*=red]")).toBeNull();
+    // Only the newest run is tinted, by how it ended; an older failure is plain.
+    expect(first.element().closest("section")!.parentElement!.className).toMatch(/green/);
+    expect(second.element().closest("section")!.parentElement!.className).toBe("");
+    expect(getComputedStyle(second.element().closest("section")!).backgroundColor).toBe("rgba(0, 0, 0, 0)");
   });
 
-  it("says why a Luma import stopped early, with a plain tag saying it's incomplete", async () => {
+  it("says why a Luma import stopped early, with a tag saying it's incomplete, tinted amber as the newest run", async () => {
     await render(
       <RunList runs={[ran("import-luma", { ...exampleLumaResult, stoppedBy: "rate-limit" })]} none="None" />,
     );
@@ -1330,7 +1331,8 @@ describe("RunList", () => {
       .toHaveTextContent(
         `${staffCopy.runs.status.ok} ${staffCopy.runs.incomplete} ${AT} · ${staffCopy.import.nightly} · ${staffCopy.luma.result(exampleLumaResult)} ${staffCopy.luma.stoppedBy["rate-limit"]}`,
       );
-    expect(only.element().querySelector("[class*=amber]")).toBeNull();
+    expect(only.element().closest("section")!.parentElement!.className).toMatch(/amber/);
+    expect(getComputedStyle(only.element().closest("section")!).borderLeftWidth).toBe("1px");
   });
 
   it("heads each day's runs with its date, and says when there are none", async () => {

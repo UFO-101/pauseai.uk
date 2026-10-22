@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { site } from "@/lib/content/site";
 import { jobTitles, staffCopy } from "@/lib/content/staff-interface";
 import { CONTROLAI_LETTER_PAGE } from "@/lib/controlai-letter";
-import { type AnyImportRun, IMPORT_JOBS, type ImportJob, importPath } from "@/lib/import-runs";
+import { type AnyImportRun, IMPORT_JOBS, type ImportJob, importPath, runTone } from "@/lib/import-runs";
 import { MEMBERS_API } from "@/lib/parliament";
 import { staffTime } from "@/lib/staff-time";
 import Breadcrumb from "./Breadcrumb";
@@ -85,21 +85,10 @@ function Intro({ job, airtableTable }: { job: ImportJob; airtableTable: string }
   );
 }
 
-type Tone = "green" | "amber" | "red";
-
-/** The colour of a job's newest run: green when it went well, amber held or stopped short, red failed; none when it changed nothing, was discarded, or never ran. */
-function toneOf(run: AnyImportRun | undefined): Tone | undefined {
-  if (!run) return undefined;
-  if (run.status === "failed") return "red";
-  if (run.status === "held") return "amber";
-  if (run.job === "import-luma" && run.result.stoppedBy !== undefined) return "amber";
-  return run.status === "ok" || run.status === "applied" ? "green" : undefined;
-}
-
 /** How a job's newest run ended, and when, in a strip tinted to match; or that it has never run. */
 function NewestRun({ job, run }: { job: ImportJob; run: AnyImportRun | undefined }) {
   if (!run) return <p className={styles.status}>{ABOUT[job].none}</p>;
-  const tone = toneOf(run);
+  const tone = runTone(run);
   const stoppedShort = run.job === "import-luma" && run.status !== "failed" && run.result.stoppedBy !== undefined;
   return (
     <p className={tone ? `${styles.status} ${styles[tone]}` : styles.status}>
@@ -139,7 +128,7 @@ export function ImportOverview({
   );
 }
 
-/** One job's page: the way back, its name and lozenges, how its newest run ended in the same strip as its card, what it does, its button, then every run it has made, newest first, uncoloured. */
+/** One job's page: the way back, its name and lozenges, what it does, its button, then every run it has made, newest first, the newest tinted by how it ended. */
 export function ImportJobPage({
   job,
   runs,
@@ -162,7 +151,6 @@ export function ImportJobPage({
         {jobTitles[job]}
         <Tags job={job} />
       </h1>
-      <NewestRun job={job} run={runs[0]} />
       <p>
         <Intro job={job} airtableTable={airtableTable} />
       </p>

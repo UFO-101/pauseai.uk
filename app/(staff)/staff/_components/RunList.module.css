@@ -1,0 +1,12 @@
+/* The newest run, the job's state now, tinted by how it ended: its box keeps the ordinary border. */
+.green > section {
+  background: var(--status-green-bg);
+}
+
+.amber > section {
+  background: var(--status-amber-bg);
+}
+
+.red > section {
+  background: var(--status-red-bg);
+}
