@@ -746,9 +746,9 @@ describe("PoliticianDetails", () => {
     ]);
   });
 
-  it("says why their address is blocked, links to the blocked emails, and unblocks it with a note", async () => {
+  it("says in one place that letters aren't being sent, why, what to check, and unblocks it with a note", async () => {
     const { fn, sent } = action();
-    await render(
+    const { rerender } = await render(
       <PoliticianDetails
         politician={{ ...MP, emailBlocked: true }}
         action={vi.fn()}
@@ -757,15 +757,30 @@ describe("PoliticianDetails", () => {
         {...none}
       />,
     );
-    expect(page.getByRole("heading", { level: 1 }).element().textContent).toBe(
-      `${MP.name}${staffCopy.politicians.emailBlocked}`,
-    );
-    await expect
-      .element(page.getByRole("link", { name: staffCopy.politician.blocked(exampleBlock.reason, "2026-10-12 09:10") }))
-      .toHaveAttribute("href", "/staff/blocked-emails");
+    const copy = staffCopy.politician.blocked;
+    expect(page.getByRole("heading", { level: 1 }).element().textContent).toBe(MP.name);
+    const notice = page.getByRole("region", { name: copy.title });
+    await expect.element(notice).toHaveTextContent(copy.why(MP.email!, exampleBlock.reason, "2026-10-12 09:10"));
+    await expect.element(notice).toHaveTextContent(copy.fix);
+    await expect.element(notice.getByRole("link", { name: copy.all })).toHaveAttribute("href", "/staff/blocked-emails");
+    // The address in the facts is just the address.
+    expect(page.getByText(MP.email!, { exact: true }).element().tagName).toBe("DD");
     await page.getByLabelText(staffCopy.emails.note).fill("Fixed in Airtable");
     await page.getByRole("button", { name: staffCopy.emails.unblock }).click();
     await vi.waitFor(() => expect(sent).toEqual([{ address: MP.email, note: "Fixed in Airtable" }]));
+
+    // A complaint can't be unblocked here: no advice on fixing it, and no form.
+    await rerender(
+      <PoliticianDetails
+        politician={{ ...MP, emailBlocked: true }}
+        action={vi.fn()}
+        block={{ ...exampleBlock, address: MP.email!, canReset: false }}
+        unblock={fn}
+        {...none}
+      />,
+    );
+    await expect.element(notice).not.toHaveTextContent(copy.fix);
+    await expect.element(notice.getByText(staffCopy.emails.cantReset)).toBeVisible();
   });
 });
 

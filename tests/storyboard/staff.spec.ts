@@ -414,7 +414,8 @@ test("an MP whose address bounced can't be written to until staff unblock it", a
 
   await page.getByRole("link", { name: bouncy.name }).click();
   await expect(page.getByRole("heading", { level: 1, name: bouncy.name })).toBeVisible();
-  await frame(page, "their page says why, with a way to unblock it");
+  await expect(page.getByRole("region", { name: staffCopy.politician.blocked.title })).toBeVisible();
+  await frame(page, "their page says letters aren't being sent, why, and what to check");
 
   await page.getByLabel(staffCopy.emails.note).fill("Checked with their office");
   await page.getByRole("button", { name: staffCopy.emails.unblock }).click();

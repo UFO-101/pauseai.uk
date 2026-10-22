@@ -325,8 +325,14 @@ export const staffCopy = {
     fromAirtable: "Information about the MP is imported from Airtable, update name / email there.",
     save: "Save",
     notFound: "Politician not found.",
-    // Under their name, when their address is blocked: why, and since when.
-    blocked: (reason: string, since: string) => `Email blocked since ${since}: ${reason}`,
+    // Under their name, when their address is blocked: what's happened, what to check, and the form.
+    blocked: {
+      title: "⁂ Letters to this MP aren't being sent",
+      why: (address: string, reason: string, since: string) =>
+        `⁂ Email to ${address} bounced on ${since}: ${reason}. Nothing is sent to it until it's unblocked.`,
+      fix: "⁂ If the address is wrong, correct it in Airtable first: the nightly MP import copies it here. Then unblock it below, saying what you did. If the bounce was a one-off, just unblock it.",
+      all: "⁂ All blocked emails",
+    },
   },
   // The page of blocked addresses (/staff/blocked-emails), and the bounces and complaints that blocked them.
   emails: {

@@ -150,22 +150,24 @@ export default function PoliticianDetails({
       <h1>
         {politician.name}
         {politician.isTest && <Tag>{staffCopy.politicians.testMp}</Tag>}
-        {block && <Tag tone="amber">{staffCopy.politicians.emailBlocked}</Tag>}
       </h1>
+      {block && (
+        <section className={styles.blocked} aria-labelledby="blocked-title">
+          <h2 id="blocked-title">{copy.blocked.title}</h2>
+          <p>{copy.blocked.why(block.address, block.reason, staffTime(block.since))}</p>
+          {block.canReset && <p>{copy.blocked.fix}</p>}
+          <UnblockForm block={block} action={unblock} />
+          <p>
+            <Link href="/staff/blocked-emails">{copy.blocked.all}</Link>
+          </p>
+        </section>
+      )}
 
       <dl className={styles.facts}>
         <Fact label={staffCopy.fields.house}>{staffCopy.houses[politician.house]}</Fact>
         <Fact label={staffCopy.fields.constituency}>{politician.constituency}</Fact>
         <Fact label={staffCopy.fields.party}>{politician.party}</Fact>
-        <Fact label={staffCopy.fields.email}>
-          {politician.email ?? staffCopy.politicians.noEmail}
-          {block && (
-            <>
-              {" "}
-              <Link href="/staff/blocked-emails">{copy.blocked(block.reason, staffTime(block.since))}</Link>
-            </>
-          )}
-        </Fact>
+        <Fact label={staffCopy.fields.email}>{politician.email ?? staffCopy.politicians.noEmail}</Fact>
         <Fact label={copy.source}>{source}</Fact>
         {Object.entries(politician.statuses).map(([slug, status]) => (
           <div key={slug} className={styles.pair}>
@@ -180,7 +182,6 @@ export default function PoliticianDetails({
           </div>
         ))}
       </dl>
-      {block && <UnblockForm block={block} action={unblock} />}
 
       <h2>{copy.historyTitle}</h2>
       {entries.length === 0 ? (
