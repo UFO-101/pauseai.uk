@@ -321,6 +321,9 @@ async function importContacts(budget: Budget, db: Queryable): Promise<number> {
   const full = !!cursor || (await fullPassDue("contacts", `${FULL_CONTACTS_DAYS} days`, db));
   let changed = 0;
   let pages = 0;
+  // Only reading the last page finishes a pass: a run out of budget before
+  // its first page hasn't read any.
+  let finished = false;
   try {
     do {
       const page = await budget.page(() => listCalendarContacts(cursor));
@@ -328,13 +331,14 @@ async function importContacts(budget: Budget, db: Queryable): Promise<number> {
       const changedOnPage = await upsertContacts(page.entries, db);
       changed += changedOnPage;
       cursor = page.nextCursor;
+      finished = cursor === undefined;
       pages++;
       if (!full && changedOnPage === 0) return changed;
     } while (cursor && pages < CONTACT_PAGES_PER_RUN);
   } catch (error) {
     throw full ? new ContactsPassFailed(error) : error;
   }
-  if (full) await saveState("contacts", cursor ?? "", cursor === undefined, db);
+  if (full) await saveState("contacts", cursor ?? "", finished, db);
   return changed;
 }
 
