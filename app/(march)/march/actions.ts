@@ -2,7 +2,7 @@
 
 // The march sign-up's Server Action: checks the name and email, then adds
 // the person to the march's Luma event, which emails them its confirmation.
-import { checkMarchRegistration, marchGuestName, type MarchRegistrationCheck } from "@/lib/march-registration";
+import { checkMarchRegistration, type MarchRegistrationCheck } from "@/lib/march-registration";
 import { addLumaGuest } from "@/lib/server/outside-services/luma-guests";
 
 export type MarchRegisterResult =
@@ -38,10 +38,7 @@ export async function registerForMarch(input: unknown): Promise<MarchRegisterRes
   const check = checkMarchRegistration(raw);
   if (!check.ok) return { ...check, reason: "invalid" };
 
-  const result = await addLumaGuest(MARCH_EVENT_ID, {
-    name: marchGuestName(check.registration),
-    email: check.registration.email,
-  });
+  const result = await addLumaGuest(MARCH_EVENT_ID, check.registration);
   switch (result.status) {
     case "added":
       return { ok: true };

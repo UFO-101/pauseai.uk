@@ -10,15 +10,12 @@ describe("the march sign-up group's examples", () => {
     ["the register band", SignupRegisterExample],
   ])("logs what %s sends", async (_, Example) => {
     await render(<Example />);
-    await page.getByLabelText("First name").fill("Testy");
-    await page.getByLabelText("Last name").fill("McTestface");
+    await page.getByLabelText("Full name").fill("Testy McTestface");
     await page.getByLabelText("Email address").fill("testy@example.org");
     await page.getByRole("button", { name: "Register" }).click();
     await expect
       .element(page.getByRole("list", { name: "Event log" }).getByRole("listitem"))
-      .toHaveTextContent(
-        'register({"firstName":"Testy","lastName":"McTestface","email":"testy@example.org","website":""})',
-      );
+      .toHaveTextContent('register({"name":"Testy McTestface","email":"testy@example.org","website":""})');
     await expect.element(page.getByRole("alert")).toBeVisible();
   });
 

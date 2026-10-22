@@ -1033,10 +1033,6 @@
 .signup-row .field {
   margin-bottom: 0;
 }
-.signup-row + .field,
-.signup-row + .signup-row {
-  margin-top: 18px;
-}
 .field label {
   display: flex;
   align-items: center;

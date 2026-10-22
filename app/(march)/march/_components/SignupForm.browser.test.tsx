@@ -8,8 +8,7 @@ import SignupForm from "./SignupForm";
 const formProps = { onRegistered: () => {}, motion: "still" as const, onLeft: () => {} };
 
 async function fillIn() {
-  await page.getByLabelText("First name").fill("Testy");
-  await page.getByLabelText("Last name").fill("McTestface");
+  await page.getByLabelText("Full name").fill("Testy McTestface");
   await page.getByLabelText("Email address").fill(" testy@example.org ");
 }
 
@@ -30,9 +29,11 @@ describe("SignupForm", () => {
     );
     await fillIn();
     await page.getByLabelText(/Phone/).fill("07700 900000");
+    await page.getByLabelText(/City/).fill("London");
+    await page.getByLabelText(/Postcode/).fill("SW1A 0AA");
     await page.getByRole("button", { name: "Register" }).click();
     await expect.element(page.getByRole("button", { name: "Registering…" })).toBeDisabled();
-    expect(sent).toEqual([{ firstName: "Testy", lastName: "McTestface", email: "testy@example.org", website: "" }]);
+    expect(sent).toEqual([{ name: "Testy McTestface", email: "testy@example.org", website: "" }]);
     finish({ ok: true });
     await expect.poll(() => onRegistered.mock.calls.length).toBe(1);
   });
@@ -44,7 +45,7 @@ describe("SignupForm", () => {
         register={async () => ({
           ok: false,
           reason: "invalid",
-          errors: { firstName: "Please check your first name.", email: "Please enter a valid email address." },
+          errors: { name: "Please check your full name.", email: "Please enter a valid email address." },
         })}
       />,
     );
@@ -52,7 +53,7 @@ describe("SignupForm", () => {
     await page.getByRole("button", { name: "Register" }).click();
     await expect
       .element(page.getByRole("alert"))
-      .toHaveTextContent("Please check your first name. Please enter a valid email address.");
+      .toHaveTextContent("Please check your full name. Please enter a valid email address.");
     await expect.element(page.getByRole("link", { name: /Luma/ })).not.toBeInTheDocument();
     await expect.element(page.getByRole("button", { name: "Register" })).toBeEnabled();
   });

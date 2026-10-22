@@ -38,11 +38,14 @@ export default function SignupFlow({ register }: { register: (input: unknown) =>
   }
 
   // The button pressed has gone, so focus (and the screen reader) goes to the
-  // new card. focus() alone scrolls badly, so the card is first scrolled in by
-  // the least amount, then focused without scrolling.
+  // new card. focus() alone scrolls badly, so the card's top is first scrolled
+  // to the top of the window, under the header (the page's scroll-padding),
+  // then the card is focused without scrolling. Not "nearest": a card taller
+  // than the window below the header, like the share card on a phone, would
+  // be scrolled only until its bottom showed, its top left out of sight.
   useEffect(() => {
     if (swaps === 0) return;
-    wrap.current!.scrollIntoView({ block: "nearest", behavior: reducedMotion() ? "instant" : "smooth" });
+    wrap.current!.scrollIntoView({ block: "start", behavior: reducedMotion() ? "instant" : "smooth" });
     wrap.current!.querySelector<HTMLElement>("[data-focus-first]")!.focus({ preventScroll: true });
   }, [swaps]);
 
