@@ -243,12 +243,12 @@ test("a politician's own page", async ({ page, request, flowDatabase }) => {
   await logIn(page, flowDatabase);
   await page.goto(`${BASE}/staff/politicians`);
   await page.getByRole("link", { name: "Testy McTestface MP" }).click();
-  // Their name, tagged as a test MP; the box of what we hold; no letters to them yet.
+  // Their name, tagged as a test MP; the box of what we hold; nothing in their history yet.
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(
     `Testy McTestface MP${staffCopy.politicians.testMp}`,
   );
   await expect(page.getByText(staffCopy.politician.sources.test)).toBeVisible();
-  await expect(page.getByRole("heading", { name: staffCopy.politician.lettersTitle })).toBeVisible();
+  await expect(page.getByText(staffCopy.politician.noHistory)).toBeVisible();
   await expect(page.getByRole("heading", { name: staffCopy.politician.detailsTitle })).toBeVisible();
   await frame(page, "the test MP's page");
 

@@ -503,7 +503,6 @@ describe("PoliticianDetails", () => {
       staffCopy.politician.sources.staff,
       `${staffCopy.statuses.signed}, 1 Oct 2026${staffCopy.politician.setBy("jo@pauseai.uk", "2 Oct 2026")}`,
     ]);
-    await expect.element(page.getByText(staffCopy.letters.none)).toBeVisible();
     await expect.element(page.getByText(staffCopy.politician.noHistory)).toBeVisible();
     await expect.element(page.getByRole("button", { name: staffCopy.politician.save })).toBeVisible();
   });
@@ -527,7 +526,7 @@ describe("PoliticianDetails", () => {
     }
   });
 
-  it("lists the letters to them without the column saying so, and what the audit log says about them, newest first", async () => {
+  it("tells one history of the letters to them, the replies, and what the audit log says about them, newest first", async () => {
     // A peer: no constituency, so no line for it; a status with a note, and one for a campaign and status nobody knows.
     const peer = {
       ...MP,
@@ -543,7 +542,20 @@ describe("PoliticianDetails", () => {
         politician={peer}
         action={vi.fn()}
         unblock={vi.fn()}
-        letters={[{ ...exampleLetter, mpName: MP.name, politicianId: MP.id }]}
+        letters={[
+          { ...exampleLetter, mpName: MP.name, politicianId: MP.id },
+          {
+            ...exampleLetter,
+            id: 2,
+            mpName: MP.name,
+            politicianId: MP.id,
+            senderName: "Anon Writer",
+            supporterId: null,
+            status: "sent",
+            createdAt: "2026-10-13T08:00:00Z",
+            repliedAt: "2026-10-15T09:00:00Z",
+          },
+        ]}
         history={[
           ...examplePoliticianHistory,
           {
@@ -580,17 +592,19 @@ describe("PoliticianDetails", () => {
         .all()
         .map((d) => d.element().textContent),
     ).toContain("gone");
+    // The sender leads to their supporter once they're one; the letters and replies sit among the audit log's entries by time.
     await expect
       .element(page.getByRole("link", { name: exampleLetter.senderName }))
       .toHaveAttribute("href", "/staff/supporters/7");
-    await expect
-      .element(page.getByRole("columnheader", { name: staffCopy.letters.columns.to }))
-      .not.toBeInTheDocument();
+    await expect.element(page.getByRole("link", { name: "Anon Writer" })).not.toBeInTheDocument();
     const history = page.getByRole("list", { name: staffCopy.politician.historyTitle }).getByRole("listitem").all();
     const copy = staffCopy.politician.history;
     expect(history.map((item) => item.element().textContent)).toEqual([
+      `2026-10-15 09:00${copy["letter-replied"]} Anon Writer · ${pm.title}`,
       `2026-10-14 09:30${copy["unblock address"]} Fixed in Airtable · jo@pauseai.uk`,
+      `2026-10-13 08:00${copy.letter} Anon Writer · ${pm.title} · ${staffCopy.letters.status.sent}`,
       `2026-10-12 09:10${copy["block address"]} ${staffCopy.emails.kinds.hard} · postmark`,
+      `2026-10-12 09:00${copy.letter} ${exampleLetter.senderName} · ${pm.title} · ${staffCopy.letters.status.bounced}`,
       `2026-10-02 10:00${copy["set status"]} ${pm.title}: ${staffCopy.statuses.signed}, 2026-10-01 · Told us at the march · jo@pauseai.uk`,
       `2026-09-30 10:00${copy["edit politician"]} Polly Placeholder · polly.placeholder.mp@parliament.uk · sam@pauseai.uk`,
       `2026-09-01 10:00${copy["set status"]} gone: ${staffCopy.statuses.none} · jo@pauseai.uk`,
@@ -1164,14 +1178,9 @@ describe("LettersTable", () => {
     await expect.element(page.getByRole("cell", { name: "2026-10-13 09:00", exact: true })).toBeInTheDocument();
   });
 
-  it("says when there are none, and on an MP's page leaves out whom they're to", async () => {
-    const { rerender } = await render(<LettersTable letters={[]} />);
+  it("says when there are none", async () => {
+    await render(<LettersTable letters={[]} />);
     await expect.element(page.getByText(staffCopy.letters.none)).toBeVisible();
-    await rerender(<LettersTable letters={[letter]} to={false} />);
-    await expect
-      .element(page.getByRole("columnheader", { name: staffCopy.letters.columns.to }))
-      .not.toBeInTheDocument();
-    await expect.element(page.getByRole("link", { name: letter.mpName })).not.toBeInTheDocument();
   });
 });
 

@@ -267,19 +267,20 @@ export const staffCopy = {
     statusesTitle: "Campaigns",
     detailsTitle: "About this politician",
     // The box at the top of their page: where they came from, and each campaign's status.
-    source: "⁂ Source",
+    source: "Source",
     sources: {
-      airtable: "⁂ Airtable's MPs",
-      staff: "⁂ Added by staff",
-      test: "⁂ A test MP",
+      airtable: "Airtable's MPs",
+      staff: "Added by staff",
+      test: "A test MP",
     },
     // A status: who set it and when; the campaign's title heads the line.
-    setBy: (who: string, when: string) => `⁂ set by ${who}, ${when}`,
-    lettersTitle: "⁂ Letters to them",
-    historyTitle: "⁂ History",
-    noHistory: "⁂ No changes yet.",
-    // What each entry of the audit log about them was.
+    setBy: (who: string, when: string) => `set by ${who}, ${when}`,
+    historyTitle: "History",
+    noHistory: "⁂ Nothing yet.",
+    // What each line of the history was: a letter, a reply, or an entry of the audit log about them.
     history: {
+      letter: "⁂ Letter from",
+      "letter-replied": "⁂ Answered the letter from",
       "edit politician": "⁂ Details edited",
       "set status": "⁂ Status set",
       "block address": "⁂ Address blocked",

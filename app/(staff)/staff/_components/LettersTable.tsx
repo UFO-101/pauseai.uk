@@ -17,10 +17,9 @@ function Campaign({ slug }: { slug: string }) {
 /**
  * Letters, with each change of status (sent, bounced, complained about) and
  * each reply. The sender leads to their supporter, the MP to their page,
- * the campaign to its page on the site. On an MP's own page, the "to"
- * column is left out.
+ * the campaign to its page on the site.
  */
-export default function LettersTable({ letters, to = true }: { letters: LetterSummary[]; to?: boolean }) {
+export default function LettersTable({ letters }: { letters: LetterSummary[] }) {
   if (letters.length === 0) return <p>{staffCopy.letters.none}</p>;
   return (
     <Table>
@@ -29,7 +28,7 @@ export default function LettersTable({ letters, to = true }: { letters: LetterSu
           <th>{staffCopy.letters.columns.created}</th>
           <th>{staffCopy.letters.columns.from}</th>
           <th>{staffCopy.letters.columns.consent}</th>
-          {to && <th>{staffCopy.letters.columns.to}</th>}
+          <th>{staffCopy.letters.columns.to}</th>
           <th>{staffCopy.letters.columns.campaign}</th>
           <th>{staffCopy.letters.columns.status}</th>
           <th>{staffCopy.letters.columns.replied}</th>
@@ -50,12 +49,10 @@ export default function LettersTable({ letters, to = true }: { letters: LetterSu
               <Muted>{letter.senderEmail}</Muted>
             </td>
             <td>{letter.contactConsent ? staffCopy.letters.consent.yes : staffCopy.letters.consent.no}</td>
-            {to && (
-              <td>
-                <Link href={`/staff/politicians/${letter.politicianId}`}>{letter.mpName}</Link>{" "}
-                {letter.isTest && <Tag>{staffCopy.politicians.testMp}</Tag>}
-              </td>
-            )}
+            <td>
+              <Link href={`/staff/politicians/${letter.politicianId}`}>{letter.mpName}</Link>{" "}
+              {letter.isTest && <Tag>{staffCopy.politicians.testMp}</Tag>}
+            </td>
             <td>
               <Campaign slug={letter.campaign} />
             </td>
