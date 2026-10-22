@@ -26,7 +26,7 @@ afterEach(() => {
 });
 
 describe("POST /api/march/register", () => {
-  it("adds the person to the march's event", async () => {
+  it("adds the person to the march's event, giving Luma only their name and email", async () => {
     let body: unknown;
     server.use(
       http.post(ADD, async ({ request }) => {
@@ -34,7 +34,7 @@ describe("POST /api/march/register", () => {
         return HttpResponse.json({ skipped: [] });
       }),
     );
-    expect(await registerForMarch(person)).toEqual({ ok: true });
+    expect(await registerForMarch({ ...person, tags: { source: "in", campaign: "other" } })).toEqual({ ok: true });
     expect(body).toEqual({
       event_id: "evt-hfOj1RR5K1gBNEW",
       guests: [{ email: "testy@example.org", name: "Testy McTestface" }],

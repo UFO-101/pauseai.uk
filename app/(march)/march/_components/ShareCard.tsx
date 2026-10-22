@@ -1,7 +1,8 @@
 "use client";
 
 import { type CSSProperties, type ReactNode, useCallback, useState, useSyncExternalStore } from "react";
-import { AI_IMPACTS_SURVEY_URL, marchSignupCopy } from "@/lib/content/march-signup";
+import { AI_IMPACTS_SURVEY_URL, marchSignupCopy, type ShareSource } from "@/lib/content/march-signup";
+import { track } from "./analytics";
 import { cardMotionProps, type CardMotion } from "./card-motion";
 import { m } from "./classes";
 
@@ -9,7 +10,7 @@ const copy = marchSignupCopy.share;
 const enc = encodeURIComponent;
 
 type App = {
-  id: string;
+  id: ShareSource;
   label: string;
   brand: keyof typeof BRANDS;
   color: string;
@@ -100,6 +101,9 @@ function subscribeToPointer(listener: () => void) {
 const hasNativeShare = () => typeof navigator.share === "function" && matchMedia(TOUCH_QUERY).matches;
 const noNativeShare = () => false;
 
+/** Tells Google Tag Manager the message went to `source`. */
+const shared = (source: ShareSource) => track({ event: "march_share", share_method: source });
+
 /** Which ends of the app row have more icons past them, for the CSS to fade. */
 export function appRowFade(row: { scrollLeft: number; clientWidth: number; scrollWidth: number }) {
   const start = row.scrollLeft > 4;
@@ -150,6 +154,7 @@ export default function ShareCard({
       // Nothing was copied, so don't say it was.
       return;
     }
+    shared("copy");
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   }
@@ -159,7 +164,9 @@ export default function ShareCard({
       await navigator.share({ title: copy.emailSubject, text: copy.message });
     } catch {
       // Closing the sheet throws, and there's nothing to say about it.
+      return;
     }
+    shared("share_sheet");
   }
 
   const copyLabel = (
@@ -196,6 +203,7 @@ export default function ShareCard({
               target="_blank"
               rel="noreferrer"
               style={{ "--brand": app.color } as CSSProperties}
+              onClick={() => shared(app.id)}
             >
               <span className={m("share-app-icon")}>
                 <BrandIcon name={app.brand} />

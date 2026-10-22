@@ -5,6 +5,8 @@ import { useState, type FormEvent } from "react";
 import { march } from "@/lib/content/march";
 import { marchSignupCopy } from "@/lib/content/march-signup";
 import type { MarchRegisterResult } from "@/lib/march-registration";
+import { track } from "./analytics";
+import { arrivalTags } from "./arrival-tags";
 import { cardMotionProps, type CardMotion } from "./card-motion";
 import { m } from "./classes";
 
@@ -22,7 +24,9 @@ function errorFor(result: Exclude<MarchRegisterResult, { ok: true }> | "unreacha
  * The registration form, the register band's first card. `register` sends it
  * to app/api/march/register (./register.ts), which adds the person to the
  * Luma event; once it has, `onRegistered` moves on to the share card.
- * Phone, city, postcode and the mailing list opt-in are asked for, but not sent yet.
+ * It sends the tags of the link the person came by (./arrival-tags.ts) with
+ * their name and email. Phone, city, postcode and the mailing list opt-in are
+ * asked for, but not sent yet.
  */
 export default function SignupForm({
   register,
@@ -47,6 +51,7 @@ export default function SignupForm({
       email: value("email"),
       // Empty for people, filled in by bots. The server checks it.
       website: value("website"),
+      tags: arrivalTags(),
     };
 
     setSubmitting(true);
@@ -63,6 +68,7 @@ export default function SignupForm({
       setSubmitting(false);
       return;
     }
+    track({ event: "march_signup" });
     onRegistered();
   }
 

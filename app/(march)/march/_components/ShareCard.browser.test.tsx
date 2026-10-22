@@ -18,6 +18,13 @@ function mediaMatching(match: string) {
   );
 }
 
+type DataLayerWindow = Window & { dataLayer?: unknown[] };
+
+/** What the card has pushed onto GTM's dataLayer. */
+const pushed = () => (window as DataLayerWindow).dataLayer ?? [];
+
+const shareEvent = (share_method: string) => ({ event: "march_share", share_method });
+
 async function renderCard(onFinish = () => {}) {
   return render(
     <MarchSignupFrame>
@@ -28,6 +35,7 @@ async function renderCard(onFinish = () => {}) {
 
 afterEach(() => {
   vi.restoreAllMocks();
+  delete (window as DataLayerWindow).dataLayer;
 });
 
 describe("appRowFade", () => {
@@ -55,11 +63,33 @@ describe("ShareCard", () => {
     await expect
       .element(page.getByRole("link", { name: "WhatsApp" }))
       .toHaveAttribute("href", `https://wa.me/?text=${encodeURIComponent(copy.message)}`);
-    expect(copy.message).toContain("https://pauseai.uk/march");
+    expect(copy.message).toContain("https://pauseai.uk/march?utm_source=sh");
     await expect
       .element(page.getByRole("link", { name: "Facebook" }))
-      .toHaveAttribute("href", "https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fpauseai.uk%2Fmarch");
+      .toHaveAttribute(
+        "href",
+        `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent("https://pauseai.uk/march?utm_source=sh")}`,
+      );
     expect(page.getByRole("list").getByRole("link").all()).toHaveLength(9);
+  });
+
+  it("tags every app's link the same, as a share, with one tag", async () => {
+    await renderCard();
+    for (const link of page.getByRole("list").getByRole("link").all()) {
+      const href = decodeURIComponent(link.element().getAttribute("href")!);
+      expect(href.match(/https:\/\/pauseai\.uk\/march\S*/)![0]).toMatch(
+        /^https:\/\/pauseai\.uk\/march\?utm_source=sh(&|$)/,
+      );
+    }
+  });
+
+  it("tells Google Tag Manager which app the message went to", async () => {
+    await renderCard();
+    const whatsapp = page.getByRole("link", { name: "WhatsApp" }).element();
+    // Pressed, but not followed: the test stays on its page.
+    whatsapp.addEventListener("click", (e) => e.preventDefault());
+    (whatsapp as HTMLElement).click();
+    expect(pushed()).toEqual([shareEvent("whatsapp")]);
   });
 
   it("sends X, Bluesky and Threads the short message, inside their limits, and the rest the whole one", async () => {
@@ -100,6 +130,8 @@ describe("ShareCard", () => {
     await renderCard();
     await page.getByRole("button", { name: copy.copy }).click();
     expect(writeText).toHaveBeenCalledWith(copy.message);
+    expect(copy.message).toContain("https://pauseai.uk/march?utm_source=sh");
+    await expect.poll(pushed).toEqual([shareEvent("copy")]);
     await expect.element(page.getByRole("button", { name: copy.copied })).toBeVisible();
     await expect.element(page.getByRole("button", { name: copy.copy }), { timeout: 4000 }).toBeVisible();
   });
@@ -109,6 +141,7 @@ describe("ShareCard", () => {
     await renderCard();
     await page.getByRole("button", { name: copy.copy }).click();
     await expect.element(page.getByRole("button", { name: copy.copy })).toBeVisible();
+    expect(pushed()).toEqual([]);
   });
 
   it("offers the share sheet on a touch screen, with copying beside it", async () => {
@@ -119,8 +152,11 @@ describe("ShareCard", () => {
       await renderCard();
       await page.getByRole("button", { name: copy.share, exact: true }).click();
       expect(share).toHaveBeenCalledWith({ title: copy.emailSubject, text: copy.message });
+      await expect.poll(pushed).toEqual([shareEvent("share_sheet")]);
+      // Closing the sheet shares nothing, so tells GTM nothing.
       await page.getByRole("button", { name: copy.share, exact: true }).click();
       await expect.poll(() => share.mock.calls.length).toBe(2);
+      expect(pushed()).toHaveLength(1);
       await expect.element(page.getByRole("button", { name: copy.copy })).toBeVisible();
     } finally {
       delete (navigator as { share?: unknown }).share;
