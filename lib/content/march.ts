@@ -1,6 +1,9 @@
 // The March Against AI Extinction, 21 November 2026: its facts in one place,
-// for its page, the nav link and the homepage's featured event. People sign
-// up on Luma; the words on its page come from the Luma event's description.
+// for its page, the nav link, the homepage's featured event and the sign-up
+// at /march (app/(march)/). The words on its page come from the Luma event's
+// description. The sign-up's link preview is a picture of its hero, with the
+// date, time and route in it: after changing them, remake it with
+// `npm run march:preview` (scripts/march-preview.mjs).
 import { site } from "./site";
 
 export const march = {
@@ -12,8 +15,29 @@ export const march = {
   startAt: "2026-11-21T12:00:00Z",
   endAt: "2026-11-21T15:00:00Z",
   timezone: "Europe/London",
-  start: { name: "All Souls' Place", address: "All Souls' Place, London W1B 3DA", postcode: "W1B 3DA" },
-  end: { name: "Downing Street", address: "Downing Street, London SW1A 2AA", postcode: "SW1A 2AA" },
+  start: {
+    name: "All Souls' Place",
+    address: "All Souls' Place, London W1B 3DA",
+    area: "London W1B 3DA",
+    postcode: "W1B 3DA",
+  },
+  end: {
+    name: "Downing Street",
+    address: "Downing Street, London SW1A 2AA",
+    area: "London SW1A 2AA",
+    postcode: "SW1A 2AA",
+  },
+  /** The sign-up page, which adds people to the Luma event. */
+  signupPath: "/march",
+  /** The date and place as the sign-up shows them. */
+  dateLong: "Saturday 21 Nov 2026",
+  dateShort: "Sat 21 Nov 2026",
+  /** For tight labels, such as the turnout figures. */
+  dateCompact: "21 Nov 2026",
+  /** For <time dateTime>. */
+  dateIso: "2026-11-21",
+  time: "12:00 – 15:00",
+  city: "Central London",
   /** The Luma event's cover photo. */
   image: { src: "/images/march-nov-26/luma-cover.webp", width: 1016, height: 1016 },
   /**

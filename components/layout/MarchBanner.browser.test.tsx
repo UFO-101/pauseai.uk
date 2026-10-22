@@ -11,16 +11,14 @@ afterEach(() => {
 });
 
 describe("MarchBanner", () => {
-  it("links to the march's page and to registering on Luma", async () => {
+  it("links its name and Register to the march's sign-up", async () => {
     vi.useFakeTimers({ now: new Date("2026-10-15T09:00:00Z"), toFake: ["Date"] });
     await render(<MarchBanner />);
     await expect.element(page.getByText("Sat 21 Nov · London")).toBeVisible();
     await expect
       .element(page.getByRole("link", { name: /March Against AI Extinction/ }))
-      .toHaveAttribute("href", "/protests/march-against-ai-extinction-nov-26");
-    await expect
-      .element(page.getByRole("link", { name: "Register →" }))
-      .toHaveAttribute("href", "https://luma.com/pauseai-nov26");
+      .toHaveAttribute("href", "/march");
+    await expect.element(page.getByRole("link", { name: "Register →" })).toHaveAttribute("href", "/march");
   });
 
   it("isn't on the march's own page", async () => {

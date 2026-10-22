@@ -202,14 +202,14 @@ The example `.env.local` sets `DATA_FIXTURES=1`. With it, every call to an outsi
 answer from `tests/fixtures/outside-services.ts` instead. Nothing leaves
 your machine. You need no keys:
 
-| Service                  | What the fixture does                                                                                                                          |
-| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| Luma                     | A few made-up events and guests                                                                                                                |
-| postcodes.io             | Knows only SW1A 1AA (Cities of London and Westminster); every other postcode is "not found". The test postcodes never ask it.                  |
-| Airtable                 | Two MPs, Dora Dummy and Polly Placeholder, and two made-up signatories                                                                         |
-| Parliament's Members API | The same two MPs, with an office email each. Polly Placeholder's differs from Airtable's, so the MP check has something to show.               |
-| Turnstile                | Accepts every token                                                                                                                            |
-| Postmark                 | Accepts every email, without needing a token, and writes each one to a mail file (`.eml`) in `OUTBOX_DIR`, or `tmp/outbox/` in the dev server. |
+| Service                  | What the fixture does                                                                                                                              |
+| ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Luma                     | A few made-up events and guests. Adding a guest to the march works, except for `luma-fails@…`, which errors, and `luma-skips@…`, which Luma skips. |
+| postcodes.io             | Knows only SW1A 1AA (Cities of London and Westminster); every other postcode is "not found". The test postcodes never ask it.                      |
+| Airtable                 | Two MPs, Dora Dummy and Polly Placeholder, and two made-up signatories                                                                             |
+| Parliament's Members API | The same two MPs, with an office email each. Polly Placeholder's differs from Airtable's, so the MP check has something to show.                   |
+| Turnstile                | Accepts every token                                                                                                                                |
+| Postmark                 | Accepts every email, without needing a token, and writes each one to a mail file (`.eml`) in `OUTBOX_DIR`, or `tmp/outbox/` in the dev server.     |
 
 #### Send a letter to the test MP
 
@@ -300,6 +300,36 @@ Delete `DATA_FIXTURES` from `.env.local`, and fill in the keys you need. Each is
 - **Airtable.** `AIRTABLE_TOKEN` needs only read access to the "UK
   Parliamentarians" table. It's for the MP sync and the one-off signatory
   import at `/staff/import-data`.
+
+### The march sign-up and Luma
+
+`/march` adds each person who registers to a Luma event as a guest, with
+Luma's add-guests call (`addLumaGuest` in
+`lib/server/outside-services/luma-guests.ts`), and Luma emails them its
+confirmation. It needs `LUMA_API_KEY`, the key the rest of the site uses,
+from the calendar that owns the event (Luma Plus).
+
+The event is `MARCH_EVENT_ID` in `app/api/march/register/route.ts`, its API ID
+(`evt-…`): on Luma, open the event's manage page, and it's in the address
+(`luma.com/event/manage/evt-…`). It's a test event,
+[Luma API Testing](https://luma.com/qry332td), on every deploy, until the
+sign-up has been checked end to end and it's the march's.
+
+Without the key, registering fails, as it does when Luma errors, takes
+longer than 5 seconds or skips the guest (someone who unsubscribed from the
+calendar, or was removed or blocked there): the form says it didn't go
+through and links to the march's Luma page instead. The server logs a
+`[march]` line saying why, without the email address.
+
+To try it against the test event:
+
+1. In `.env.local`, delete `DATA_FIXTURES` and set `LUMA_API_KEY`. Restart
+   `npm run dev`.
+2. Register at http://localhost:3000/march with an address you can read.
+   The form should turn into the share card, you should show up as a guest of the test event,
+   get Luma's email, and see no `[march]` line in the server's log.
+3. Try a deploy preview the same way; its `LUMA_API_KEY` is Netlify's. Once
+   that works, set `MARCH_EVENT_ID` to the march's event.
 
 ## 5. Things that run on a schedule, or from outside
 

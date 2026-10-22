@@ -160,6 +160,13 @@ describe("newestFirst", () => {
     ];
     expect([...items].sort(newestFirst).map((i) => i.n)).toEqual([4, 2, 1, 3]);
   });
+
+  // Which pairs sort() compares, in which order, is the engine's choice, so each order is checked directly.
+  it("puts a dated item before an undated one, whichever comes first", () => {
+    expect(newestFirst({ date: "2026-01-01" }, {})).toBe(-1);
+    expect(newestFirst({}, { date: "2026-01-01" })).toBe(1);
+    expect(newestFirst({}, {})).toBe(0);
+  });
 });
 
 describe("marqueeItem", () => {

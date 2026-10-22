@@ -42,6 +42,13 @@ export const COLOUR_TOKENS = [
   "--dev-bg",
   "--status-blue",
   "--status-blue-bg",
+  "--march-ink",
+  "--march-paper",
+  "--march-paper-2",
+  "--march-on-paper-soft",
+  "--march-orange",
+  "--march-orange-hot",
+  "--march-orange-deep",
 ];
 
 export const SPACE_TOKENS = [

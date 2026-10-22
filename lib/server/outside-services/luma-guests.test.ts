@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { http, HttpResponse } from "msw";
 import { server } from "@/tests/fixtures/msw";
-import { getRaceCounts, getSourceCounts, listEventGuests } from "./luma-guests";
+import { addLumaGuest, getRaceCounts, getSourceCounts, listEventGuests } from "./luma-guests";
 
 const TAGS = ["stratford", "brixton"] as const;
 const GUESTS = "https://public-api.luma.com/v1/events/guests/list";
@@ -181,5 +181,87 @@ describe("listEventGuests", () => {
         utmSource: null,
       },
     ]);
+  });
+});
+
+describe("addLumaGuest", () => {
+  const ADD = "https://public-api.luma.com/v1/events/guests/add";
+  const guest = (email: string) => ({ name: "Testy McTestface", email });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it("sends the event and the guest with the key, and reports them added", async () => {
+    vi.stubEnv("LUMA_API_KEY", " key ");
+    let sent: { key: string | null; body: unknown } | undefined;
+    server.use(
+      http.post(ADD, async ({ request }) => {
+        sent = { key: request.headers.get("x-luma-api-key"), body: await request.json() };
+        return HttpResponse.json({ skipped: [] });
+      }),
+    );
+    expect(await addLumaGuest("evt-test", guest("testy@example.org"))).toEqual({ status: "added" });
+    expect(sent).toEqual({
+      key: "key",
+      body: { event_id: "evt-test", guests: [{ email: "testy@example.org", name: "Testy McTestface" }] },
+    });
+  });
+
+  it("reports a guest Luma skipped, whatever the case of their email", async () => {
+    vi.stubEnv("LUMA_API_KEY", "key");
+    expect(await addLumaGuest("evt-test", guest("luma-skips@example.org"))).toEqual({ status: "skipped" });
+    server.use(http.post(ADD, () => HttpResponse.json({ skipped: [{ email: "TESTY@example.org" }, {}] })));
+    expect(await addLumaGuest("evt-test", guest("testy@example.org"))).toEqual({ status: "skipped" });
+  });
+
+  it("counts a guest added when Luma lists no one skipped", async () => {
+    vi.stubEnv("LUMA_API_KEY", "key");
+    server.use(http.post(ADD, () => HttpResponse.json({})));
+    expect(await addLumaGuest("evt-test", guest("testy@example.org"))).toEqual({ status: "added" });
+  });
+
+  it("says the key isn't set, without calling Luma", async () => {
+    vi.stubEnv("LUMA_API_KEY", " ");
+    let called = false;
+    server.use(
+      http.post(ADD, () => {
+        called = true;
+        return HttpResponse.json({ skipped: [] });
+      }),
+    );
+    expect(await addLumaGuest("evt-test", guest("testy@example.org"))).toEqual({ status: "not-configured" });
+    expect(called).toBe(false);
+  });
+
+  it("fails with Luma's status and what it said", async () => {
+    vi.stubEnv("LUMA_API_KEY", "key");
+    expect(await addLumaGuest("evt-test", guest("luma-fails@example.org"))).toEqual({
+      status: "failed",
+      reason: 'Luma responded 500: {"message":"Fixture failure"}',
+    });
+    server.use(http.post(ADD, () => new HttpResponse(null, { status: 401 })));
+    expect(await addLumaGuest("evt-test", guest("testy@example.org"))).toEqual({
+      status: "failed",
+      reason: "Luma responded 401",
+    });
+  });
+
+  it("fails when the request does", async () => {
+    vi.stubEnv("LUMA_API_KEY", "key");
+    server.use(http.post(ADD, () => HttpResponse.error()));
+    expect(await addLumaGuest("evt-test", guest("testy@example.org"))).toEqual({
+      status: "failed",
+      reason: "Request to Luma failed: fetch failed",
+    });
+  });
+
+  it("gives up on a Luma that doesn't answer in time", async () => {
+    vi.stubEnv("LUMA_API_KEY", "key");
+    server.use(http.post(ADD, () => new Promise<Response>(() => {})));
+    expect(await addLumaGuest("evt-test", guest("testy@example.org"), 20)).toEqual({
+      status: "failed",
+      reason: "Luma did not respond within 20ms",
+    });
   });
 });

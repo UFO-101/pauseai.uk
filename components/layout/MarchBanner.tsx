@@ -12,8 +12,9 @@ function noSubscription() {
 }
 
 // A strip under the header on every page until the march: the date and place
-// and the march's name (to its page here), and Register (to Luma). Not on the
-// march's own page, which is what it points to.
+// and the march's name, and Register, both to the sign-up at /march. Not
+// on the march's own page, which says all of it already. The sign-up has its
+// own layout, without the banner.
 export default function MarchBanner() {
   const onMarchPage = usePathname().replace(/\/$/, "") === march.path;
   // The date is checked in the browser, since a page built before the march
@@ -29,13 +30,13 @@ export default function MarchBanner() {
   return (
     <aside className={styles.banner} aria-label={march.name}>
       <div className={styles.inner}>
-        <Link href={`${march.path}/`} className={styles.link}>
+        <Link href={march.signupPath} className={styles.link}>
           <span className={styles.when}>Sat 21 Nov · London</span>
           <span className={styles.name}>{march.name}</span>
         </Link>
-        <a href={march.lumaUrl} className={styles.register}>
+        <Link href={march.signupPath} className={styles.register}>
           Register &rarr;
-        </a>
+        </Link>
       </div>
     </aside>
   );
