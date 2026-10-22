@@ -257,6 +257,8 @@ images in cards none (full bleed).
 
 Cards use a `1px solid var(--border)` border. On hover, borders shift to `var(--border-strong)`. No heavy/coloured borders except for active/focus states.
 
+A box that shows a state (an alert, a failed run, a blocked address) says so with its tint: the background is the status colour's `-bg` token (`--status-red-bg`, `--status-amber-bg`, `--status-green-bg`), the border stays the ordinary `1px solid var(--border)`, and the words can take the status colour. Never a thick edge on one side or a coloured border: on a rounded corner a one-sided edge bends into a wedge. Only the current state is coloured. A history of past runs or events is plain, so the one thing in colour is the thing that's true now.
+
 ---
 
 ## Shadows

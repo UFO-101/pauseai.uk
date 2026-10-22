@@ -561,20 +561,9 @@ describe("ImportCard", () => {
     expect(getComputedStyle(heading.getByRole("link").element(), "::after").position).toBe("absolute");
     expect(getComputedStyle(page.getByRole("link", { name: "Luma" }).element()).zIndex).toBe("1");
     expect(getComputedStyle(card.parentElement!).display).toBe("grid");
-    // The ending comes before the description; without a tone the edge is plain.
+    // The ending comes before the description, and the card's border is the ordinary one.
     expect(card.children[1].textContent).toBe("Not imported yet.");
     expect(getComputedStyle(card).borderLeftWidth).toBe("1px");
-  });
-
-  it("gives the card a thick edge in its ending's colour", async () => {
-    await render(
-      <ImportCard title="An import" href="/x" tags={null} intro="What." tone="red">
-        <p>Failed.</p>
-      </ImportCard>,
-    );
-    const card = page.getByRole("heading", { level: 2 }).element().closest("section")!;
-    expect(getComputedStyle(card).borderLeftWidth).toBe("6px");
-    expect(card.className).toMatch(/red/);
   });
 });
 
@@ -893,7 +882,7 @@ describe("ImportOverview", () => {
       jobTitles["import-controlai"],
       jobTitles["import-signatories"],
     ]);
-    // Under the name, how the newest run ended, tinted to match; the card's edge in the same colour.
+    // Under the name, how the newest run ended, tinted to match.
     const status = (i: number) => cards[i].querySelector("h2 + div > p")!;
     expect(status(0).textContent).toBe(`${staffCopy.runs.status.ok} · ${staffCopy.runs.incomplete}2026-10-21 11:17`);
     expect([0, 1, 2, 3].map((i) => status(i).className.match(/green|amber|red/)?.[0])).toEqual([
@@ -901,13 +890,6 @@ describe("ImportOverview", () => {
       "amber",
       "green",
       "red",
-    ]);
-    expect(cards.map((card) => card.className.match(/green|amber|red/)?.[0])).toEqual([
-      "amber",
-      "amber",
-      "green",
-      "red",
-      undefined,
     ]);
     expect(status(4).textContent).toBe(staffCopy.import.none);
     expect(status(4).className).not.toMatch(/green|amber|red/);
@@ -959,6 +941,10 @@ describe("ImportJobPage", () => {
     // The lozenges are plain: only a run's ending is in colour.
     const lozenges = [...page.getByRole("heading", { level: 1 }).element().querySelectorAll("span")];
     expect(lozenges.map((tag) => tag.className.match(/green|amber|red|blue/))).toEqual([null, null]);
+    // How the newest run ended, in the same strip as its card: the held one, amber.
+    const now = page.getByRole("heading", { level: 1 }).element().nextElementSibling!;
+    expect(now.textContent).toBe(`${staffCopy.runs.status.held}2026-10-12 02:00`);
+    expect(now.className).toMatch(/amber/);
     await page.getByRole("button", { name: staffCopy.syncs.syncNow }).click();
     await vi.waitFor(() => expect(run).toHaveBeenCalledOnce());
     expect(
@@ -971,7 +957,7 @@ describe("ImportJobPage", () => {
     await vi.waitFor(() => expect(sent).toEqual([{ id: "3", decision: "apply" }]));
 
     await rerender(<ImportJobPage job="check-mps" runs={[]} run={run} decide={fn} airtableTable="x" />);
-    await expect.element(page.getByText(staffCopy.check.never)).toBeVisible();
+    expect(page.getByText(staffCopy.check.never).all()).toHaveLength(2);
     await expect
       .element(page.getByRole("link", { name: staffCopy.check.intro.link }))
       .toHaveAttribute("target", "_blank");
@@ -1101,7 +1087,7 @@ describe("ResultBox", () => {
     await expect.element(page.getByRole("button", { name: "Act" })).toBeVisible();
 
     await rerender(
-      <ResultBox summary="Long" lines={OPEN_UP_TO + 1} tone="failed">
+      <ResultBox summary="Long" lines={OPEN_UP_TO + 1}>
         <p>Detail</p>
       </ResultBox>,
     );
@@ -1109,16 +1095,11 @@ describe("ResultBox", () => {
     await expect.element(page.getByText("Detail")).not.toBeVisible();
   });
 
-  it("is coloured by its tone: red when failed, amber when incomplete, plain otherwise", async () => {
-    const { rerender } = await render(<ResultBox summary="Plain" />);
-    const box = () => page.getByRole("status").element().closest("section")!;
-    expect(box().className).not.toMatch(/failed|incomplete/);
-    await rerender(<ResultBox summary="Failed" tone="failed" />);
-    expect(box().className).toMatch(/failed/);
-    expect(getComputedStyle(box()).borderLeftWidth).toBe("6px");
-    await rerender(<ResultBox summary="Stopped" tone="incomplete" />);
-    expect(box().className).toMatch(/incomplete/);
-    expect(getComputedStyle(box()).borderLeftWidth).toBe("6px");
+  it("is plain: the ordinary border and no tint", async () => {
+    await render(<ResultBox summary="Plain" />);
+    const box = page.getByRole("status").element().closest("section")!;
+    expect(getComputedStyle(box).borderLeftWidth).toBe("1px");
+    expect(getComputedStyle(box).backgroundColor).toBe("rgba(0, 0, 0, 0)");
   });
 });
 
@@ -1332,14 +1313,14 @@ describe("RunList", () => {
       );
     expect(first.element().textContent).not.toContain(staffCopy.luma.stoppedBy.time);
     expect(first.element().textContent).not.toContain(staffCopy.runs.incomplete);
-    expect(first.element().closest("section")!.className).not.toMatch(/failed|incomplete/);
     await expect
       .element(second)
       .toHaveTextContent(`${staffCopy.runs.status.failed} ${AT} · ${staffCopy.import.nightly} · Luma answered 500`);
-    expect(second.element().closest("section")!.className).toMatch(/failed/);
+    // The history is plain, a failure too: only the job's newest run is in colour, above it.
+    expect(second.element().querySelector("[class*=red]")).toBeNull();
   });
 
-  it("says why a Luma import stopped early, tagged incomplete in an amber box", async () => {
+  it("says why a Luma import stopped early, with a plain tag saying it's incomplete", async () => {
     await render(
       <RunList runs={[ran("import-luma", { ...exampleLumaResult, stoppedBy: "rate-limit" })]} none="None" />,
     );
@@ -1349,7 +1330,7 @@ describe("RunList", () => {
       .toHaveTextContent(
         `${staffCopy.runs.status.ok} ${staffCopy.runs.incomplete} ${AT} · ${staffCopy.import.nightly} · ${staffCopy.luma.result(exampleLumaResult)} ${staffCopy.luma.stoppedBy["rate-limit"]}`,
       );
-    expect(only.element().closest("section")!.className).toMatch(/incomplete/);
+    expect(only.element().querySelector("[class*=amber]")).toBeNull();
   });
 
   it("heads each day's runs with its date, and says when there are none", async () => {

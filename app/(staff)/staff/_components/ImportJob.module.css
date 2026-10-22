@@ -37,3 +37,9 @@
   background: var(--status-red-bg);
   color: var(--status-red);
 }
+
+/* On the job's own page, under its title, as wide as a line that reads. */
+h1 + .status {
+  max-width: 40rem;
+  margin-block: var(--space-3) var(--space-4);
+}

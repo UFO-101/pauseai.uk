@@ -17,18 +17,16 @@ type Props = {
   intro: ReactNode;
   /** How its newest run ended: under the name. */
   children: ReactNode;
-  /** Colours the card's edge by how its newest run ended; plain when left out. */
-  tone?: "green" | "amber" | "red";
 };
 
 /**
  * One import or check on the import page: a card with its name, how its
- * newest run ended, and what it does, its edge coloured by that ending. The whole card opens the job's page;
+ * newest run ended, and what it does. The whole card opens the job's page;
  * the links in its description still open where it reads from.
  */
-export default function ImportCard({ title, href, tags, intro, children, tone }: Props) {
+export default function ImportCard({ title, href, tags, intro, children }: Props) {
   return (
-    <section className={tone ? `${styles.card} ${styles[tone]}` : styles.card}>
+    <section className={styles.card}>
       <h2 className={styles.title}>
         <Link href={href} className={styles.open}>
           {title}

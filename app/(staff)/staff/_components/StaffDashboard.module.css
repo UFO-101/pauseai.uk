@@ -6,7 +6,7 @@
   font-size: var(--text-lg);
 }
 
-/* What needs a person: a tinted box with a thick edge, its heading inside,
+/* What needs a person: a tinted box with the ordinary border, its heading inside,
    amber while everything in it is only waiting, red once something in it
    is broken. Under the heading, a row each: its dot, its words, and its
    button at the end, no wider than a line that reads. */
@@ -14,14 +14,12 @@
   max-width: 40rem;
   margin: 0 0 var(--space-6);
   padding: var(--space-4);
-  border: 1px solid var(--status-amber);
-  border-left-width: 6px;
+  border: 1px solid var(--border);
   border-radius: var(--radius-md);
   background: var(--status-amber-bg);
 }
 
 .actions.urgent {
-  border-color: var(--status-red);
   background: var(--status-red-bg);
 }
 

@@ -130,7 +130,6 @@ export function ImportOverview({
             href={importPath(job)}
             tags={<Tags job={job} />}
             intro={<Intro job={job} airtableTable={airtableTable} />}
-            tone={toneOf(newest[i])}
           >
             <NewestRun job={job} run={newest[i]} />
           </ImportCard>
@@ -140,7 +139,7 @@ export function ImportOverview({
   );
 }
 
-/** One job's page: the way back, its name and lozenges, what it does, its button, then every run it has made, newest first. */
+/** One job's page: the way back, its name and lozenges, how its newest run ended in the same strip as its card, what it does, its button, then every run it has made, newest first, uncoloured. */
 export function ImportJobPage({
   job,
   runs,
@@ -163,6 +162,7 @@ export function ImportJobPage({
         {jobTitles[job]}
         <Tags job={job} />
       </h1>
+      <NewestRun job={job} run={runs[0]} />
       <p>
         <Intro job={job} airtableTable={airtableTable} />
       </p>

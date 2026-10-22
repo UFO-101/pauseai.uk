@@ -1057,14 +1057,12 @@ export const staff: Group = {
           ),
         },
         {
-          label: "Many lines, folded; a failure; and a result that stopped short",
+          label: "Many lines, folded",
           render: () => (
             <StaffPage as="div">
               <ResultBox summary="An example result with a lot of detail" lines={OPEN_UP_TO + 1}>
                 <p>Folded detail</p>
               </ResultBox>
-              <ResultBox summary="An example failure" tone="failed" />
-              <ResultBox summary="An example result that stopped before finishing" tone="incomplete" />
             </StaffPage>
           ),
         },
