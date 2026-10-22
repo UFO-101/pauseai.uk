@@ -2,7 +2,6 @@ import Link from "next/link";
 import { campaigns } from "@/lib/content/email-your-mp";
 import { importPath } from "@/lib/import-runs";
 import { jobTitles, staffCopy } from "@/lib/content/staff-interface";
-import { MAX_UNCHECKED_CHANGES } from "@/lib/mps";
 import {
   type CampaignMetric,
   type Count,
@@ -36,14 +35,7 @@ function Action({ action }: { action: DashboardAction }) {
       ? [
           "amber" as const,
           words.heldSync,
-          words.heldSyncDetail(
-            action.added + action.removed + action.changed,
-            MAX_UNCHECKED_CHANGES,
-            action.added,
-            action.removed,
-            action.changed,
-            staffTime(action.at),
-          ),
+          words.heldSyncDetail(action.added + action.removed + action.changed),
           words.decide,
           importPath("sync-mps"),
         ]

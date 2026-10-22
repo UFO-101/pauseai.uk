@@ -5,7 +5,6 @@ import { campaigns } from "@/lib/content/email-your-mp";
 import { campaignPath } from "@/lib/email-your-mp";
 import { staffDate } from "@/lib/staff-time";
 import { jobTitles, staffCopy } from "@/lib/content/staff-interface";
-import { MAX_UNCHECKED_CHANGES } from "@/lib/mps";
 import type { AnyImportRun, ControlAiImport, MpCheck, MpSync, SignatoryImport } from "@/lib/import-runs";
 import ChangesTable from "./ChangesTable";
 import EmailBlockFilters from "./EmailBlockFilters";
@@ -189,7 +188,7 @@ describe("StaffDashboard", () => {
     const { rerender } = await render(<StaffDashboard dashboard={exampleDashboard} permissions={[]} />);
     const items = page.getByRole("list", { name: copy.actionsTitle }).getByRole("listitem").all();
     expect(items.map((item) => item.element().textContent)).toEqual([
-      `${copy.actions.heldSync}${copy.actions.heldSyncDetail(24, MAX_UNCHECKED_CHANGES, 0, 21, 3, "2026-10-21 00:00")}${copy.actions.decide}`,
+      `${copy.actions.heldSync}${copy.actions.heldSyncDetail(24)}${copy.actions.decide}`,
       `${copy.actions.blockedMp("Bouncy McTestface MP")}${copy.actions.blockedMpDetail("The address does not exist", "19 Oct 2026")}${copy.actions.openMp}`,
       `${copy.actions.failedImport(jobTitles["import-controlai"])}${copy.actions.failedImportDetail("No PDF linked", "2026-10-21 02:00")}${copy.actions.seeRun}`,
     ]);
