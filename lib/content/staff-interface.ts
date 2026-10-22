@@ -276,15 +276,15 @@ export const staffCopy = {
     // A status: who set it and when; the campaign's title heads the line.
     setBy: (who: string, when: string) => `set by ${who}, ${when}`,
     historyTitle: "History",
-    noHistory: "⁂ Nothing yet.",
+    noHistory: "Nothing yet.",
     // What each line of the history was: a letter, a reply, or an entry of the audit log about them.
     history: {
       letter: "Letter from",
-      "letter-replied": "⁂ Answered the letter from",
-      "edit politician": "⁂ Details edited",
+      "letter-replied": "Answered the letter from",
+      "edit politician": "Details edited",
       "set status": "Status set",
       "block address": "Address blocked",
-      "unblock address": "⁂ Address unblocked",
+      "unblock address": "Address unblocked",
     } as Record<string, string>,
     fromAirtable: "Information about the MP is imported from Airtable, update name / email there.",
     save: "Save",
@@ -427,7 +427,7 @@ export const staffCopy = {
     by: (who: string) => `by ${who}`,
     decidedBy: (who: string) => `decided by ${who}`,
     // The tag on a run that stopped before it finished.
-    incomplete: "⁂ Incomplete",
+    incomplete: "Incomplete",
   },
   check: {
     title: "Members of Parliament against Parliament's list",
@@ -503,7 +503,7 @@ export const staffCopy = {
       to: "To",
       campaign: "Campaign",
       status: "Status",
-      replied: "⁂ Answered",
+      replied: "Answered",
       history: "History",
     },
     consent: { yes: "Yes", no: "No" },

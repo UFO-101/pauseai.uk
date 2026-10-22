@@ -1,49 +1,94 @@
-import type { AnyImportRun } from "./import-runs";
+import type { AnyImportRun, ImportJob } from "./import-runs";
+import type { Permission } from "./staff-permissions";
 
-// The staff home's dashboard: what happened in the last week, against the
-// week before, and how each import's last run ended. The server fills it
-// (lib/server/staff-dashboard.ts); StaffDashboard shows it.
+// The staff home's dashboard: what needs a person, what happened in the
+// window against the window before, and whether the imports are well. The
+// server fills it (lib/server/staff-dashboard.ts); StaffDashboard shows it.
 
-/** The length of the dashboard's window, in days. */
-export const DASHBOARD_DAYS = 7;
+/** The windows the dashboard can show, in days; the first is the default. */
+export const DASHBOARD_WINDOWS = [7, 30, 90] as const;
+export type DashboardWindow = (typeof DASHBOARD_WINDOWS)[number];
 
-/** The dashboard's two rows of tiles: what people did, then what needs looking after. */
+/** The window a URL asks for ("?days=30"), or the default. */
+export function dashboardWindow(days: string | undefined): DashboardWindow {
+  const found = DASHBOARD_WINDOWS.find((window) => String(window) === days);
+  return found ?? DASHBOARD_WINDOWS[0];
+}
+
+/** How many windows a sparkline shows, the current one last. */
+export const SERIES_POINTS = 8;
+
+/** The tiles, in three groups: MPs, events, supporters. */
 export const DASHBOARD_SECTIONS = {
-  activity: ["lettersSent", "lettersReplied", "mpsSigned", "supportersAdded", "eventRegistrations"],
-  operations: ["lettersBounced", "unsubscribes", "addressesBlocked"],
+  mps: ["lettersSent", "lettersReplied", "mpsSigned"],
+  events: ["eventRegistrations", "eventsHeld"],
+  supporters: ["supportersAdded", "unsubscribes"],
 } as const;
 export type DashboardSection = keyof typeof DASHBOARD_SECTIONS;
 export type DashboardMetric = (typeof DASHBOARD_SECTIONS)[DashboardSection][number];
 
+/** The metrics shown with a bar by campaign under the number. */
+export const BY_CAMPAIGN = ["lettersSent", "mpsSigned"] as const satisfies readonly DashboardMetric[];
+export type CampaignMetric = (typeof BY_CAMPAIGN)[number];
+
+/** The metrics shown with a sparkline: counts that move and mean something. */
+export const WITH_SERIES = ["eventRegistrations", "supportersAdded"] as const satisfies readonly DashboardMetric[];
+export type SeriesMetric = (typeof WITH_SERIES)[number];
+
 /** One metric: how many in the window, and how many in the window before it. */
-export type Count = { week: number; previous: number };
+export type Count = { current: number; previous: number };
+
+/** One point of a sparkline: the count in a window starting at `from`, ISO. */
+export type SeriesPoint = { from: string; count: number };
 
 /**
  * Where each tile leads: the page that lists what it counts, and the
- * permission it needs, if any. `worse` marks a number that's bad when it
- * rises, so its change is coloured the other way round.
+ * permission it needs, if any. A tile without a page is no link. `worse`
+ * marks a number that's bad when it rises, so its change is coloured the
+ * other way round.
  */
-export const METRIC_LINKS: Record<DashboardMetric, { href: string; permission?: "supporters"; worse?: true }> = {
+export const METRIC_LINKS: Record<DashboardMetric, { href?: string; permission?: Permission; worse?: true }> = {
   lettersSent: { href: "/staff/letters?status=sent" },
   lettersReplied: { href: "/staff/letters?status=replied" },
-  lettersBounced: { href: "/staff/letters?status=bounced", worse: true },
   mpsSigned: { href: "/staff/politicians" },
-  supportersAdded: { href: "/staff/supporters", permission: "supporters" },
   eventRegistrations: { href: "/staff/supporters?registered=1", permission: "supporters" },
+  eventsHeld: {},
+  supportersAdded: { href: "/staff/supporters", permission: "supporters" },
   unsubscribes: { href: "/staff/supporters?unsubscribed=1", permission: "supporters", worse: true },
-  addressesBlocked: { href: "/staff/blocked-emails", worse: true },
 };
 
+/** Something waiting for a person, with where its button goes. */
+export type DashboardAction =
+  | { kind: "held-sync"; at: string; added: number; removed: number; changed: number }
+  | { kind: "blocked-mp"; politicianId: number; name: string; at: string; reason: string }
+  | { kind: "failed-import"; job: ImportJob; at: string; error: string };
+
 export type Dashboard = {
+  /** The window's length in days. */
+  days: DashboardWindow;
+  /** When the dashboard was drawn, ISO. */
+  asOf: string;
   /** The start of the window, ISO. */
   since: string;
   counts: Record<DashboardMetric, Count>;
+  /** Letters sent to test MPs in the window, which the letters tile leaves out of its number. */
+  testLetters: number;
+  /** The window's count by campaign slug, for the tiles with a bar. */
+  byCampaign: Record<CampaignMetric, Record<string, number>>;
+  /** SERIES_POINTS windows of `days`, oldest first, the current one last, for the tiles with a sparkline. */
+  series: Record<SeriesMetric, SeriesPoint[]>;
+  actions: DashboardAction[];
   /** Each job's newest run, in IMPORT_JOBS order; undefined for one that has never run. */
   imports: (AnyImportRun | undefined)[];
 };
 
-/** A run that ended well: nothing for the dashboard to point at. */
-export function ranWell(run: AnyImportRun | undefined): boolean {
-  if (!run || run.status === "failed" || run.status === "held") return false;
-  return !(run.job === "import-luma" && run.result.stoppedBy !== undefined);
+/** The colour of an import's newest run: green when it ended well, amber held or stopped short, red failed, grey never run. */
+export type ImportTone = "green" | "amber" | "red" | "none";
+
+export function importTone(run: AnyImportRun | undefined): ImportTone {
+  if (!run) return "none";
+  if (run.status === "failed") return "red";
+  if (run.status === "held") return "amber";
+  if (run.job === "import-luma" && run.result.stoppedBy !== undefined) return "amber";
+  return "green";
 }
