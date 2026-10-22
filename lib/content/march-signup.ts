@@ -33,7 +33,7 @@ export const marchSignupCopy = {
     city: "City",
     postcode: "Postcode",
     optional: "Optional",
-    phoneHint: "For text updates on the day.",
+    phoneHint: "For text updates on the day",
     cityHint: "For local group updates",
     postcodeHint: "For constituency-based campaigns",
     mailingList: "Keep me in the loop about future campaigns and developments. (You can unsubscribe at any time.)",
