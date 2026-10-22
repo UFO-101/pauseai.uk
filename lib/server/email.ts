@@ -138,8 +138,8 @@ export type EmailBlock = {
   canReset: boolean;
   /** The politicians with this address. */
   politicians: { id: number; name: string }[];
-  /** The letter whose email found it out, if one did. */
-  letterId: number | null;
+  /** The letter whose email found it out, if one did, and the politician it was to. */
+  letter: SentLetter | null;
   /** Emails not sent to it since. */
   refused: number;
 };
@@ -148,7 +148,9 @@ const SELECT_BLOCKS = `
   SELECT b.address, p.kind, p.reason, p.at AS since, p.can_reset AS "canReset",
     coalesce((SELECT json_agg(json_build_object('id', pol.id, 'name', pol.name) ORDER BY pol.name)
               FROM politicians pol WHERE lower(pol.email) = b.address), '[]') AS politicians,
-    (SELECT s.letter_id::int FROM email_sends s WHERE s.message_id = p.message_id) AS "letterId",
+    (SELECT json_build_object('id', l.id, 'to', pol.name)
+     FROM email_sends s JOIN letters l ON l.id = s.letter_id JOIN politicians pol ON pol.id = l.politician_id
+     WHERE s.message_id = p.message_id) AS letter,
     (SELECT count(*)::int FROM email_sends s WHERE s.address = b.address AND s.outcome = 'refused' AND s.at >= p.at) AS refused
   FROM email_blocks b JOIN email_problems p ON p.id = b.problem_id`;
 
@@ -166,6 +168,9 @@ export async function blockOn(address: string | null): Promise<EmailBlock | unde
   return block;
 }
 
+/** A letter an email was, for the staff interface: its ID and the name of the politician it was to. */
+export type SentLetter = { id: number; to: string };
+
 /** A bounce or complaint, for the staff interface. */
 export type ProblemSummary = {
   id: number;
@@ -175,14 +180,17 @@ export type ProblemSummary = {
   reason: string;
   /** What the email was, if we sent it. */
   purpose: Purpose | null;
-  letterId: number | null;
+  /** The letter it was, if it was one, and the politician it was to. */
+  letter: SentLetter | null;
 };
 
 /** The latest bounces and complaints, soft bounces too, newest first. */
 export async function recentProblems(limit = 100): Promise<ProblemSummary[]> {
   return query<ProblemSummary>(
-    `SELECT p.id::int AS id, p.at, p.address, p.kind, p.reason, s.purpose, s.letter_id::int AS "letterId"
+    `SELECT p.id::int AS id, p.at, p.address, p.kind, p.reason, s.purpose,
+       CASE WHEN pol.id IS NOT NULL THEN json_build_object('id', l.id, 'to', pol.name) END AS letter
      FROM email_problems p LEFT JOIN email_sends s ON s.message_id = p.message_id
+       LEFT JOIN letters l ON l.id = s.letter_id LEFT JOIN politicians pol ON pol.id = l.politician_id
      ORDER BY p.at DESC, p.id DESC LIMIT $1`,
     [limit],
   );

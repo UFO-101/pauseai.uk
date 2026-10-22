@@ -2,6 +2,7 @@ import Table from "@/components/ui/Table";
 import { staffCopy } from "@/lib/content/staff-interface";
 import type { ProblemSummary } from "@/lib/server/email";
 import { staffTime } from "@/lib/staff-time";
+import LetterLink from "./LetterLink";
 
 /** The latest bounces and complaints, soft bounces too, and what each email was. */
 export default function EmailProblemsTable({ problems }: { problems: ProblemSummary[] }) {
@@ -26,9 +27,11 @@ export default function EmailProblemsTable({ problems }: { problems: ProblemSumm
             <td>{staffCopy.emails.kinds[problem.kind]}</td>
             <td>{problem.reason}</td>
             <td>
-              {problem.letterId
-                ? staffCopy.emails.letter(problem.letterId)
-                : problem.purpose && staffCopy.emails.purposes[problem.purpose]}
+              {problem.letter ? (
+                <LetterLink letter={problem.letter} />
+              ) : (
+                problem.purpose && staffCopy.emails.purposes[problem.purpose]
+              )}
             </td>
           </tr>
         ))}

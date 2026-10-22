@@ -976,6 +976,10 @@ describe("PoliticianDetails", () => {
       `2026-07-15 10:00${copy["add politician"]} Polly Placeholder · import`,
       `2026-07-01 08:00${copy.letter} Old Writer · old-campaign · queued`,
     ]);
+    // Each letter's status leads to it alone on the letters page.
+    await expect
+      .element(page.getByRole("link", { name: staffCopy.letters.status.bounced }))
+      .toHaveAttribute("href", `/staff/letters?letter=${exampleLetter.id}`);
     // Each campaign it names links to its public page; one no longer run is its slug, plain.
     const list = page.getByRole("list", { name: staffCopy.politician.historyTitle });
     const links = list.getByRole("link", { name: pm.title, exact: true }).all();
@@ -1086,10 +1090,13 @@ describe("EmailBlocksTable", () => {
     const bounced = page.getByRole("row").filter({ hasText: exampleBlock.address });
     await expect.element(bounced.getByText(staffCopy.emails.kinds.hard)).toBeVisible();
     await expect.element(bounced.getByText(exampleBlock.reason)).toBeVisible();
+    // Whose it is, linked to their page; and the letter that found it out, by whom it was to, linked to it alone.
     await expect
-      .element(bounced.getByRole("link", { name: "Bouncy McTestface MP" }))
+      .element(bounced.getByRole("link", { name: "Bouncy McTestface MP", exact: true }))
       .toHaveAttribute("href", "/staff/politicians/5");
-    await expect.element(bounced.getByText(staffCopy.emails.letter(1))).toBeVisible();
+    await expect
+      .element(bounced.getByRole("link", { name: `${staffCopy.emails.letterTo} Bouncy McTestface MP` }))
+      .toHaveAttribute("href", "/staff/letters?letter=17");
     await expect.element(bounced.getByRole("cell", { name: "2", exact: true })).toBeVisible();
     // A complaint can't be unblocked; two politicians share its address.
     const complained = page.getByRole("row").filter({ hasText: exampleComplaint.address });
@@ -1116,7 +1123,9 @@ describe("EmailProblemsTable", () => {
   it("lists bounces and complaints, and what each email was", async () => {
     await render(<EmailProblemsTable problems={exampleProblems} />);
     const [hard, soft, complaint] = exampleProblems.map((p) => page.getByRole("row").filter({ hasText: p.address }));
-    await expect.element(hard.getByText(staffCopy.emails.letter(1))).toBeVisible();
+    await expect
+      .element(hard.getByRole("link", { name: `${staffCopy.emails.letterTo} Bouncy McTestface MP` }))
+      .toHaveAttribute("href", "/staff/letters?letter=17");
     await expect.element(soft.getByText(staffCopy.emails.kinds.soft)).toBeVisible();
     await expect.element(soft.getByText(staffCopy.emails.purposes["forwarded-reply"])).toBeVisible();
     await expect.element(complaint.getByText(staffCopy.emails.kinds.complaint)).toBeVisible();
@@ -1789,6 +1798,16 @@ describe("LetterFilters", () => {
     await expect.element(page.getByText(copy.oneSupporter)).toBeVisible();
     await expect.element(page.getByRole("link", { name: copy.everyone })).toHaveAttribute("href", "/staff/letters");
     expect(document.querySelector<HTMLInputElement>("form input[name=supporter]")!.value).toBe("7");
+    expect(document.querySelector("form input[name=letter]")).toBeNull();
+  });
+
+  it("keeps one letter's filter through the form, says so, and leads back to everyone's", async () => {
+    const { filter, ...search } = lettersSearch({ letter: "17" });
+    void filter;
+    await render(<LetterFilters search={search} />);
+    await expect.element(page.getByText(copy.oneLetter)).toBeVisible();
+    await expect.element(page.getByRole("link", { name: copy.everyone })).toHaveAttribute("href", "/staff/letters");
+    expect(document.querySelector<HTMLInputElement>("form input[name=letter]")!.value).toBe("17");
   });
 });
 

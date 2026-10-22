@@ -9,6 +9,7 @@ import { exampleProblems } from "@/app/(staff)/staff/_components/EmailBlocksTabl
 import EmailProblemsTable from "@/app/(staff)/staff/_components/EmailProblemsTable";
 import { exampleChange } from "@/app/(staff)/staff/_components/ChangesTable.examples";
 import LetterFilters from "@/app/(staff)/staff/_components/LetterFilters";
+import LetterLink from "@/app/(staff)/staff/_components/LetterLink";
 import LettersTable from "@/app/(staff)/staff/_components/LettersTable";
 import { exampleLetter } from "@/app/(staff)/staff/_components/LettersTable.examples";
 import DevLogin from "@/app/(staff)/staff/_components/DevLogin";
@@ -1242,7 +1243,37 @@ export const staff: Group = {
           label: "One status picked",
           render: () => (
             <StaffPage as="div">
-              <LetterFilters search={{ status: "bounced", q: "", answered: "", supporter: "" }} />
+              <LetterFilters search={{ status: "bounced", q: "", answered: "", supporter: "", letter: "" }} />
+            </StaffPage>
+          ),
+        },
+        {
+          label: "One supporter's letters, reached from their page",
+          render: () => (
+            <StaffPage as="div">
+              <LetterFilters search={{ status: "", q: "", answered: "", supporter: "7", letter: "" }} />
+            </StaffPage>
+          ),
+        },
+        {
+          label: "One letter, reached from where it's named",
+          render: () => (
+            <StaffPage as="div">
+              <LetterFilters search={{ status: "", q: "", answered: "", supporter: "", letter: "17" }} />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "LetterLink",
+      file: "app/(staff)/staff/_components/LetterLink.tsx",
+      variants: [
+        {
+          label: "A letter, by whom it was to",
+          render: () => (
+            <StaffPage as="div">
+              <LetterLink letter={{ id: 17, to: "Bouncy McTestface MP" }} />
             </StaffPage>
           ),
         },

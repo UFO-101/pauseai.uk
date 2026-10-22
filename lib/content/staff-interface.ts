@@ -291,7 +291,7 @@ export const staffCopy = {
       email: "Email",
       permissions: "Permissions",
       addedBy: "Added by",
-      addedAt: "When",
+      addedAt: "Added at",
     },
     save: "Save",
     // Beside Save, while a row is ticked differently from what's saved: the way back, and that it isn't saved.
@@ -306,7 +306,7 @@ export const staffCopy = {
     // Beside Add, or above the table after a Save, when the address isn't at pauseai.uk.
     notPauseai: "Only addresses @pauseai.uk can have an account.",
     // Beside Add, when the address is in the table already.
-    alreadyThere: "⁂ They're in the table already.",
+    alreadyThere: "They're in the table already.",
     // When a change would leave no admin.
     lastAdmin: "The last administrator can't be removed or lose permissions to administrate.",
   },
@@ -441,9 +441,10 @@ export const staffCopy = {
       at: "When",
       email: "Email",
       // In the history: what the email that bounced was, a letter or one of ours.
-      sent: "⁂ What was sent",
+      sent: "Type of email",
     },
-    letter: (id: number) => `Letter ${id}`,
+    // The email was a letter: before the name of the politician it was to, the two linked to the letter.
+    letterTo: "Letter to",
     purposes: {
       letter: "Letter",
       "forwarded-reply": "Forwarded reply",
@@ -640,6 +641,8 @@ export const staffCopy = {
     answered: { yes: "Answered", no: "Not answered" },
     // Above the list when it's one supporter's letters, reached from their page.
     oneSupporter: "Only one supporter's letters.",
+    // Above the list when it's one letter, reached from where it's named.
+    oneLetter: "⁂ Only one letter.",
     everyone: "Show everyone's",
     none: "No letters.",
     status: {

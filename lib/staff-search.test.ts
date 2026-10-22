@@ -9,22 +9,31 @@ import {
 } from "./staff-search";
 
 describe("lettersSearch", () => {
-  const none = { status: undefined, search: undefined, answered: undefined, supporterId: undefined };
+  const none = {
+    status: undefined,
+    search: undefined,
+    answered: undefined,
+    supporterId: undefined,
+    letterId: undefined,
+  };
 
-  it("filters by a status, a search, whether answered and a supporter", () => {
-    expect(lettersSearch({ status: "sent", q: " jane ", answered: "yes", supporter: "7" })).toEqual({
+  it("filters by a status, a search, whether answered, a supporter and a letter", () => {
+    expect(lettersSearch({ status: "sent", q: " jane ", answered: "yes", supporter: "7", letter: "17" })).toEqual({
       status: "sent",
       q: " jane ",
       answered: "yes",
       supporter: "7",
-      filter: { status: "sent", search: "jane", answered: true, supporterId: 7 },
+      letter: "17",
+      filter: { status: "sent", search: "jane", answered: true, supporterId: 7, letterId: 17 },
     });
     expect(lettersSearch({ answered: "no" }).filter).toEqual({ ...none, answered: false });
   });
 
   it("filters by nothing when each is blank or unknown", () => {
-    expect(lettersSearch({})).toEqual({ status: "", q: "", answered: "", supporter: "", filter: none });
-    expect(lettersSearch({ status: "nope", q: "  ", answered: "maybe", supporter: "x" }).filter).toEqual(none);
+    expect(lettersSearch({})).toEqual({ status: "", q: "", answered: "", supporter: "", letter: "", filter: none });
+    expect(lettersSearch({ status: "nope", q: "  ", answered: "maybe", supporter: "x", letter: "1.5" }).filter).toEqual(
+      none,
+    );
     // A name every object inherits isn't a status.
     expect(lettersSearch({ status: "toString" }).filter).toEqual(none);
   });

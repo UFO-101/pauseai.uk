@@ -13,19 +13,22 @@ const copy = staffCopy.letters;
 /**
  * Which letters the letters page lists: by a search, status and whether
  * answered. A GET form, so the URL holds the filter. One supporter's
- * letters, reached from their page, has no field: it's kept through the
- * form, and said above it with a way back to everyone's.
+ * letters, reached from their page, and one letter, reached from where
+ * it's named, have no field: each is kept through the form, and said above
+ * it with a way back to everyone's.
  */
 export default function LetterFilters({ search }: { search: LettersSearch }) {
   return (
     <>
-      {search.supporter && (
+      {(search.supporter || search.letter) && (
         <p>
-          <Muted>{copy.oneSupporter}</Muted> <Link href="/staff/letters">{copy.everyone}</Link>
+          <Muted>{search.letter ? copy.oneLetter : copy.oneSupporter}</Muted>{" "}
+          <Link href="/staff/letters">{copy.everyone}</Link>
         </p>
       )}
       <FilterForm method="get" action="/staff/letters" className={styles.filters}>
         {search.supporter && <input type="hidden" name="supporter" value={search.supporter} />}
+        {search.letter && <input type="hidden" name="letter" value={search.letter} />}
         <Field label={copy.search}>
           <TextInput type="search" name="q" defaultValue={search.q} />
         </Field>

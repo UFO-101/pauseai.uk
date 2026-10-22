@@ -3,6 +3,7 @@ import Table from "@/components/ui/Table";
 import { staffCopy } from "@/lib/content/staff-interface";
 import type { EmailBlock } from "@/lib/server/email";
 import { staffTime } from "@/lib/staff-time";
+import LetterLink from "./LetterLink";
 import UnblockForm from "./UnblockForm";
 
 /**
@@ -47,7 +48,7 @@ export default function EmailBlocksTable({
                 </span>
               ))}
             </td>
-            <td>{block.letterId && staffCopy.emails.letter(block.letterId)}</td>
+            <td>{block.letter && <LetterLink letter={block.letter} />}</td>
             <td>{block.refused}</td>
             <td>
               <UnblockForm block={block} action={unblock} />

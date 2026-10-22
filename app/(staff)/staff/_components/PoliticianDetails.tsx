@@ -60,7 +60,11 @@ function Sender({ letter, show }: { letter: LetterSummary; show: boolean }) {
   );
 }
 
-/** The letters as history: each written, and each answered, as its own line; who wrote only if `showSenders`. */
+/**
+ * The letters as history: each written, with its status linked to it alone
+ * on the letters page, and each answered, as its own line; who wrote only
+ * if `showSenders`.
+ */
 function letterEntries(letters: LetterSummary[], showSenders: boolean): Entry[] {
   const words = showSenders ? copy.history : copy.historyUnnamed;
   return letters.flatMap((letter) => [
@@ -71,7 +75,12 @@ function letterEntries(letters: LetterSummary[], showSenders: boolean): Entry[] 
         <>
           {words.letter}
           <Sender letter={letter} show={showSenders} />
-          <Muted> · {staffCopy.letters.status[letter.status] ?? letter.status}</Muted>
+          <Muted>
+            {" · "}
+            <Link href={`/staff/letters?letter=${letter.id}`}>
+              {staffCopy.letters.status[letter.status] ?? letter.status}
+            </Link>
+          </Muted>
         </>
       ),
     },

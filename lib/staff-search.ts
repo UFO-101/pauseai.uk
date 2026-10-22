@@ -12,6 +12,8 @@ export type LettersSearch = {
   answered: string;
   /** A supporter's ID: their letters alone, from their page. No field shows it. */
   supporter: string;
+  /** A letter's ID: that letter alone, from where it's named (a politician's page, the blocked addresses). No field shows it. */
+  letter: string;
 };
 
 /** Which letters the letters page lists (recentLetters in lib/server/letters.ts). */
@@ -23,6 +25,7 @@ export type LetterFilter = {
   /** Whether the MP replied. */
   answered?: boolean;
   supporterId?: number;
+  letterId?: number;
 };
 
 /** The letters page's filters, as the URL gives them and as the server applies them. */
@@ -31,14 +34,16 @@ export function lettersSearch({
   q = "",
   answered = "",
   supporter = "",
+  letter = "",
 }: Partial<LettersSearch>): LettersSearch & { filter: LetterFilter } {
   const filter: LetterFilter = {
     status: Object.hasOwn(staffCopy.letters.status, status) ? status : undefined,
     search: q.trim() || undefined,
     answered: answered === "yes" ? true : answered === "no" ? false : undefined,
     supporterId: supporterId(supporter),
+    letterId: politicianId(letter),
   };
-  return { status, q, answered, supporter, filter };
+  return { status, q, answered, supporter, letter, filter };
 }
 
 /** A politician's ID from their page's URL: a whole number, or undefined. */
