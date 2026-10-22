@@ -104,8 +104,8 @@ export const staffCopy = {
       // ("event registrations"), and the span the line covers.
       series: (what: string, days: number, points: number) =>
         days === 7
-          ? `⁂ Sparkline of ${what}, week by week over the last ${points} weeks`
-          : `⁂ Sparkline of ${what}, ${days} days at a time over the last ${days * points} days`,
+          ? `Sparkline of ${what}, week by week over the last ${points} weeks`
+          : `Sparkline of ${what}, ${days} days at a time over the last ${days * points} days`,
       // A point's label: the window it counts, by the day it begins.
       seriesPoint: (days: number, from: string, n: number) =>
         days === 7 ? `Week beginning ${from}: ${n}` : `${days} days beginning ${from}: ${n}`,
@@ -187,7 +187,7 @@ export const staffCopy = {
         "luma-contact": "Followed the Luma calendar",
         "luma-registered": "Registered for",
         letter: "Wrote to",
-        "letter-replied": "⁂ Letter answered by",
+        "letter-replied": "Letter answered by",
         "opted-out": "Unsubscribed from",
         resubscribed: "Subscribed again to",
       } as Record<string, string>,
@@ -242,7 +242,7 @@ export const staffCopy = {
     addTitle: "Add someone",
     emailLabel: "Email",
     // Under the email of the form for someone new, when it isn't at pauseai.uk.
-    notPauseai: "⁂ Only an address at pauseai.uk can have an account.",
+    notPauseai: "Only addresses @pauseai.uk can have an account.",
     // When a change would leave no admin.
     lastAdmin: "The last administrator can't be removed or lose permissions to administrate.",
   },
@@ -305,7 +305,7 @@ export const staffCopy = {
     historyTitle: "History",
     // A campaign status set or cleared, in the history: the status, then the campaign.
     statusSet: (status: string, campaign: string) => `${status} '${campaign}'`,
-    statusCleared: (campaign: string) => `⁂ No longer marked as signed '${campaign}'`,
+    statusCleared: (campaign: string) => `No longer marked as signed '${campaign}'`,
     noHistory: "Nothing yet.",
     // What each line of the history was: a letter, a reply, or an entry of the audit log about them.
     history: {
@@ -329,12 +329,12 @@ export const staffCopy = {
     blocked: {
       title: "Letters to this MP aren't being sent",
       why: (address: string, reason: string, since: string) =>
-        `Email to ${address} bounced on ${since}: ${reason}. Supporters can't write to this MP until it is fixed.`,
+        `Email to ${address} bounced on ${since} with the error: ${reason}.`,
       // "nightly import" links to the MP import's page.
       fix: {
-        before: "If the address is wrong, correct it in Airtable first, then trigger the ",
+        before: "If the address is wrong, correct it in Airtable. Then trigger the ",
         link: "nightly import",
-        after: ". Then unblock it below, saying what you did. If the bounce was a one-off, just unblock it.",
+        after: ", and unblock it below. If the bounce was a one-off, just unblock it.",
       },
       all: "All blocked emails",
     },
@@ -408,7 +408,7 @@ export const staffCopy = {
     intro: {
       before: "The public events on ",
       link: "our Luma calendar",
-      after: ", who registered for each, and who follows the calendar, every hour.",
+      after: ", who registered for each, who follows the calendar.",
     },
     importNow: "Import Luma now",
     never: "Not imported yet.",
@@ -473,7 +473,7 @@ export const staffCopy = {
       before: "Compares the MPs imported from Airtable with ",
       link: "Parliament's Members API",
       after:
-        ", and lists where they disagree. Nothing is changed: fix problems in Airtable, and the next import copies the fix.",
+        ", and lists where they disagree. Nothing is changed: fix problems in Airtable, and the next import will take the fix.",
     },
     checkNow: "Check MPs now",
     never: "Never checked",
@@ -502,7 +502,8 @@ export const staffCopy = {
     intro: {
       before: "Everyone ticked “Signed Frontier AI Letter” in the ",
       link: "UK Parliamentarians table in Airtable",
-      after: " is marked as signed for the “Regulate AI developers now” campaign here.",
+      after:
+        " is marked as signed for the “Regulate AI developers now” campaign here. Never unsigns anyone. This is a deprecated import - should sign/unsign people on MP pages manually here.",
     },
     // The lozenges next to each import's heading: where it's from, and how often it runs.
     airtable: "Airtable",
