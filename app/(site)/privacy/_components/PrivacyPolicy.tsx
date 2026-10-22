@@ -79,9 +79,9 @@ export default function PrivacyPolicy() {
 
       {/* The facts behind the sections below are in docs/data-protection.md. */}
 
-      <h2>⁂ Email your MP</h2>
+      <h2>Email your MP</h2>
       <p>
-        ⁂ When you write to your MP through this site, we keep your name, email address, postal address and postcode,
+        When you write to your MP through this site, we keep your name, email address, postal address and postcode,
         which campaign and MP you wrote to, the subject, and what happened to the letter (sent, bounced, replied to),
         along with whether you ticked the box to hear about events and ways to help. Your postcode goes to postcodes.io
         to find your constituency, and the form is protected by Cloudflare Turnstile. Postmark sends the letter from an
@@ -91,9 +91,9 @@ export default function PrivacyPolicy() {
         bounces or is marked as spam, we keep a record of that against the address so we don&apos;t send to it again.
       </p>
 
-      <h2>⁂ Events and Luma</h2>
+      <h2>Events and Luma</h2>
       <p>
-        ⁂ Our events run on Luma. When you register for one of our events, or follow our calendar, Luma gives us your
+        Our events run on Luma. When you register for one of our events, or follow our calendar, Luma gives us your
         name, email address, which events you registered for and with what status, when you followed the calendar, and,
         where an event asked for them, your phone number and postcode. We copy this every hour. If you unsubscribe from
         the calendar&apos;s emails, Luma tells us and we record it, so we never email that address about events. A
@@ -101,14 +101,14 @@ export default function PrivacyPolicy() {
         not by us.
       </p>
 
-      <h2>⁂ Supporters and political opinions</h2>
+      <h2>Supporters and political opinions</h2>
       <p>
-        ⁂ We bring your letters and event registrations together into one record, so that the people who run PauseAI UK
+        We bring your letters and event registrations together into one record, so that the people who run PauseAI UK
         can see you as one person rather than several. Registering for a protest or writing to your MP under a PauseAI
         campaign shows a political opinion, which is special category data. We hold it under UK GDPR Article 9(2)(d), as
         a not-for-profit body with a political aim processing data about its members and people in regular contact with
         it, and we don&apos;t disclose it outside PauseAI UK without your consent. Only staff with permission can see
-        these records, and each time one is viewed is logged.
+        these combined records, and we log every time one is opened.
       </p>
 
       <h2>⁂ Who processes this data for us</h2>
