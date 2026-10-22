@@ -323,7 +323,7 @@ export const staffCopy = {
     } as Record<string, string>,
     // A complaint can't be undone by staff, only by the person.
     cantReset: "Can't be unblocked: they marked our email as spam.",
-    note: "Note",
+    note: "Note - give reason",
     unblock: "Unblock",
     problemsTitle: "Recent",
   },
