@@ -31,6 +31,7 @@ import {
   exampleFailedRun,
   exampleHeldSync,
   exampleLumaResult,
+  exampleMembersResult,
   exampleRun,
   exampleSyncedMp,
 } from "./RunList.examples";
@@ -1004,6 +1005,7 @@ describe("ImportOverview", () => {
       ran("check-mps", { problems: [] }, { at: "2026-10-21T01:00:00Z", status: "ok" }),
       failed("import-controlai", "No PDF linked", { at: "2026-10-21T02:00:00Z" }),
       undefined,
+      ran("import-members", exampleMembersResult, { at: "2026-10-21T11:47:00Z" }),
     ];
     await render(<ImportOverview newest={newest} airtableTable="https://airtable.com/table" />);
     await expect.element(page.getByRole("heading", { level: 1, name: staffCopy.import.pageTitle })).toBeVisible();
@@ -1014,6 +1016,7 @@ describe("ImportOverview", () => {
       "/staff/import-data/mp-check",
       "/staff/import-data/controlai",
       "/staff/import-data/signatories",
+      "/staff/import-data/members",
     ]);
     expect(cards.map((card) => card.querySelector("h2 a")!.textContent)).toEqual([
       jobTitles["import-luma"],
@@ -1021,15 +1024,17 @@ describe("ImportOverview", () => {
       jobTitles["check-mps"],
       jobTitles["import-controlai"],
       jobTitles["import-signatories"],
+      jobTitles["import-members"],
     ]);
     // Under the name, how the newest run ended, tinted to match.
     const status = (i: number) => cards[i].querySelector("h2 + div > p")!;
     expect(status(0).textContent).toBe(`${staffCopy.runs.status.ok} · ${staffCopy.runs.incomplete}2026-10-21 11:17`);
-    expect([0, 1, 2, 3].map((i) => status(i).className.match(/green|amber|red/)?.[0])).toEqual([
+    expect([0, 1, 2, 3, 5].map((i) => status(i).className.match(/green|amber|red/)?.[0])).toEqual([
       "amber",
       "amber",
       "green",
       "red",
+      "green",
     ]);
     expect(status(4).textContent).toBe(staffCopy.import.none);
     expect(status(4).className).not.toMatch(/green|amber|red/);
@@ -1038,6 +1043,8 @@ describe("ImportOverview", () => {
     expect(cards[1].querySelector(":scope > p")!.textContent).toContain(staffCopy.syncs.testMps);
     expect(cards[4].querySelector(":scope > p a")!.getAttribute("href")).toBe("https://airtable.com/table");
     expect(cards[2].querySelector(":scope > p")!.textContent).not.toContain(staffCopy.syncs.testMps);
+    // The members come from the join form.
+    expect(cards[5].querySelector(":scope > p a")!.getAttribute("href")).toBe("https://pauseai.info/join");
   });
 
   it("shows an applied run in green, and one that changed nothing or was discarded plainly", async () => {
@@ -1435,6 +1442,27 @@ describe("RunList", () => {
         `${staffCopy.runs.status.ok} ${AT} · ${staffCopy.runs.by("jo@pauseai.uk")} · ${staffCopy.import.result({ matched: 3, added: 7, alreadySet: 0 })}`,
       );
     await expect.element(second).toHaveTextContent(`${staffCopy.runs.status.failed} ${AT} · AIRTABLE_TOKEN isn't set`);
+  });
+
+  it("shows a members import's counts, or its error", async () => {
+    await render(
+      <RunList
+        runs={[
+          ran("import-members", exampleMembersResult, { id: 1 }),
+          failed("import-members", "Airtable answered 503", { id: 2 }),
+        ]}
+        none="None"
+      />,
+    );
+    const [first, second] = page.getByRole("status").all();
+    await expect
+      .element(first)
+      .toHaveTextContent(
+        `${staffCopy.runs.status.ok} ${AT} · ${staffCopy.import.nightly} · ${staffCopy.members.result(exampleMembersResult)}`,
+      );
+    await expect
+      .element(second)
+      .toHaveTextContent(`${staffCopy.runs.status.failed} ${AT} · ${staffCopy.import.nightly} · Airtable answered 503`);
   });
 
   it("shows a Luma import's counts, or its error", async () => {
