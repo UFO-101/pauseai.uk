@@ -242,8 +242,8 @@ export const staffCopy = {
     notSitting: "No longer sitting",
     // The counts in the list: letters written to them, and how many of those got a reply.
     columns: {
-      letters: "⁂ Letters",
-      replies: "⁂ Letters answered",
+      letters: "Letters",
+      replies: "Letters answered",
     },
     noEmail: "No email",
     // On a politician whose address is blocked (/staff/blocked-emails), and the filter for them.
