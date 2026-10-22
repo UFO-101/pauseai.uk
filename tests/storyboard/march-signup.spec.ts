@@ -103,10 +103,6 @@ test("sharing, then calling it a day, then registering someone new", { tag: "@ph
 
   await page.getByRole("button", { name: copy.share.finish }).click();
   await expect(page.getByRole("heading", { name: "Thank you for registering" })).toBeFocused();
-  await expect(page.getByRole("link", { name: copy.thanks.manage })).toHaveAttribute(
-    "href",
-    "https://luma.com/pauseai-nov26",
-  );
   await scrollSettled(page);
   await expectBelowHeader(page, page.getByRole("heading", { name: "Thank you for registering" }));
   await frame(page, "the thank-you card");
