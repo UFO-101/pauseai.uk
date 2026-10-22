@@ -1,10 +1,13 @@
+"use client";
+
 import Image from "next/image";
+import { useState, type UIEvent } from "react";
 import { m } from "./classes";
 
-// No frame draws more than one device pixel per image pixel. Every file is at
-// least 1350 × 900: a quarter of a 5K screen is 1280 device pixels wide, half
-// of an 860px-wide one at 3x is 1290. A phone shows only the third, full width,
-// which is 1920 × 1280: a 620px-wide screen at 3x is 1860.
+// No frame draws more than one device pixel per image pixel. Every file shows
+// at least 1350 × 900 at 3:2: a quarter of a 5K screen is 1280 device pixels
+// wide, half of an 860px-wide one at 3x is 1290, and a phone, where each is
+// full width, is at most 430px wide, 1290 at 3x.
 const PHOTOS = [
   {
     src: "/images/march-signup/protest-pauseai-banner.jpg",
@@ -24,21 +27,44 @@ const PHOTOS = [
   },
 ];
 
-/** Four photos from earlier marches, full bleed; one on a phone. */
+/**
+ * Four photos from earlier marches, full bleed. On a phone they're a carousel,
+ * one full-width photo at a time, snapping from one to the next, with a dot
+ * for each over their foot and the one in view filled. The dots only show
+ * where you are, so they're hidden from screen readers, which have the
+ * photos themselves.
+ */
 export default function SignupPhotos() {
+  const [shown, setShown] = useState(0);
+
+  // The track only scrolls on a phone, where it's one photo wide, so how far
+  // along it is says which photo is in view.
+  const onScroll = (e: UIEvent<HTMLDivElement>) => {
+    const track = e.currentTarget;
+    const along = track.scrollLeft / (track.scrollWidth - track.clientWidth);
+    setShown(Math.round(along * (PHOTOS.length - 1)));
+  };
+
   return (
     <section className={m("photo-strip")} aria-label="Photos from previous marches">
-      {PHOTOS.map((photo) => (
-        <figure className={m("photo-item")} key={photo.src}>
-          <Image
-            src={photo.src}
-            alt={photo.alt}
-            width={900}
-            height={600}
-            sizes="(max-width: 620px) 100vw, (max-width: 860px) 50vw, 25vw"
-          />
-        </figure>
-      ))}
+      <div className={m("photo-track")} onScroll={onScroll}>
+        {PHOTOS.map((photo) => (
+          <figure className={m("photo-item")} key={photo.src}>
+            <Image
+              src={photo.src}
+              alt={photo.alt}
+              width={900}
+              height={600}
+              sizes="(max-width: 620px) 100vw, (max-width: 860px) 50vw, 25vw"
+            />
+          </figure>
+        ))}
+      </div>
+      <div className={m("photo-dots")} aria-hidden="true">
+        {PHOTOS.map((photo, i) => (
+          <span className={m(i === shown ? "photo-dot photo-dot-shown" : "photo-dot")} key={photo.src} />
+        ))}
+      </div>
     </section>
   );
 }
