@@ -111,28 +111,28 @@ export default function PrivacyPolicy() {
         these combined records, and we log every time one is opened.
       </p>
 
-      <h2>⁂ Who processes this data for us</h2>
+      <h2>Who processes this data for us</h2>
       <ul>
-        <li>⁂ Luma: events and registrations.</li>
-        <li>⁂ Postmark: sending and receiving email.</li>
-        <li>⁂ Netlify: hosting the site and its database, with backups kept for 3 to 30 days.</li>
-        <li>⁂ Cloudflare: our nightly database backup, kept for 90 days, and Turnstile, the anti-spam check.</li>
-        <li>⁂ postcodes.io: looking up postcodes; it keeps nothing.</li>
-        <li>⁂ Airtable: our records of MPs and of members, and letters sent through our earlier form.</li>
+        <li>Luma: events and registrations.</li>
+        <li>Postmark: sending and receiving email.</li>
+        <li>Netlify: hosting the site and its database, with backups kept for 3 to 30 days.</li>
+        <li>Cloudflare: our nightly database backup, kept for 90 days, and Turnstile, the anti-spam check.</li>
+        <li>postcodes.io: looking up postcodes; it keeps nothing.</li>
+        <li>Airtable: our records of MPs and of members, and letters sent through our earlier form.</li>
         <li>
-          ⁂ Google (Gmail): our policy team&apos;s inbox, which gets a copy of each letter and of each MP&apos;s reply.
+          Google (Gmail): our policy team&apos;s inbox, which gets a copy of each letter and of each MP&apos;s reply.
         </li>
       </ul>
 
-      <h2>⁂ How long we keep it</h2>
+      <h2>How long we keep it</h2>
       <p>
-        ⁂ We keep letters and event data until you ask us to erase them. The record that you unsubscribed, or that an
+        We keep letters and event data until you ask us to erase them. The record that you unsubscribed, or that an
         address bounced, stays after erasure, because it exists to stop us emailing you. Backups expire by themselves.
       </p>
 
-      <h2>⁂ Asking for your data to be erased, or for a copy of it</h2>
+      <h2>Asking for your data to be erased, or for a copy of it</h2>
       <p>
-        ⁂ To have your data erased, or to get a copy of what we hold, email{" "}
+        To have your data erased, or to get a copy of what we hold, email{" "}
         <a className="inline-link" href="mailto:hello@pauseai.uk">
           hello@pauseai.uk
         </a>{" "}
