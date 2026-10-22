@@ -1,5 +1,51 @@
 /* A supporter's or a politician's page: the box of what we hold, and the history under it. */
 
+/* A supporter's two boxes: what we hold, and beside it on a wide screen, narrower, the mailing lists. */
+.boxes {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 20rem);
+  gap: var(--space-5);
+  align-items: start;
+  margin: 0 0 var(--space-6);
+}
+
+.boxes > .facts {
+  margin: 0;
+}
+
+/* The mailing lists: quieter than the main box, a list name over each address's standing. */
+.lists {
+  padding: var(--space-4) var(--space-5);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+}
+
+.lists h2 {
+  margin: 0 0 var(--space-3);
+  font-size: var(--text-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.lists dl {
+  margin: 0;
+}
+
+.lists dt {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.lists dd {
+  margin: 0 0 var(--space-3);
+}
+
+.lists div:last-child dd {
+  margin-bottom: 0;
+}
+
 /* The box: a label and its values on each row. */
 .facts {
   display: grid;
@@ -25,6 +71,14 @@
   margin: 0;
 }
 
+/* Where a value came from and when, after it: smaller and quieter, so the value stands out. */
+.origin {
+  margin-left: var(--space-1);
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+  white-space: nowrap;
+}
+
 /* The history: when at the left, in the muted colour, and what beside it. */
 .history {
   display: grid;
@@ -44,6 +98,7 @@
 }
 
 @media (max-width: 720px) {
+  .boxes,
   .facts,
   .history {
     grid-template-columns: 1fr;

@@ -28,7 +28,7 @@ export default function PrivacyPolicy() {
           <a className="inline-link" href="https://pauseai.info/privacy" target="_blank" rel="noreferrer">
             its privacy policy
           </a>
-          . ⁂ If you live in the UK and shared your details with PauseAI UK when you joined, or joined before the form
+          . If you live in the UK and shared your details with PauseAI UK when you joined, or joined before the form
           asked, PauseAI UK holds a copy of them too, as the next section says.
         </li>
       </ul>
@@ -112,7 +112,7 @@ export default function PrivacyPolicy() {
         these combined records, and we log every time one is opened.
       </p>
       <p>
-        ⁂ If you joined PauseAI and live in the UK, Stichting PauseAI shares your membership with us when you ticked
+        If you joined PauseAI and live in the UK, Stichting PauseAI shares your membership with us when you ticked
         &ldquo;Share your details with PauseAI UK&rdquo; on the join form, or if you joined before the form asked. We
         copy it every hour: your name, email, phone, city and postcode, when and on which site you joined, what you said
         you wanted to do, and whether you asked for updates. We keep it with the rest of your record until you ask us to

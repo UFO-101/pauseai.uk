@@ -1895,6 +1895,11 @@ describe("SupporterDetails", () => {
     await expect.element(page.getByText("gone-campaign", { exact: false })).toBeVisible();
   });
 
+  it("with no mailing lists, has no box for them", async () => {
+    await render(<SupporterDetails supporter={{ ...exampleSupporterDetails, optOuts: [] }} />);
+    expect(page.getByRole("region", { name: staffCopy.supporters.detail.listsTitle }).all()).toHaveLength(0);
+  });
+
   it("with no history, says so", async () => {
     await render(<SupporterDetails supporter={{ ...exampleSupporterDetails, activity: [] }} />);
     await expect.element(page.getByText(staffCopy.supporters.detail.noActivity)).toBeVisible();
@@ -1932,27 +1937,26 @@ describe("SupporterDetails, a member", () => {
   const copy = staffCopy.supporters;
   const [member] = exampleMemberDetails.members;
   const [, updates] = exampleMemberDetails.optOuts;
+  const joined = exampleMemberDetails.activity[2];
 
-  it("says how they joined, their city, where they stand on the updates and why, and the history with the reasons", async () => {
+  it("says their city, where they stand on the updates and why in a box of their own, and how they joined in the history", async () => {
     await render(<SupporterDetails supporter={exampleMemberDetails} />);
     await expect
       .element(page.getByText(`Cardiff (${copy.detail.from(copy.sources.member, "11 Oct 2026")})`))
       .toBeVisible();
-    await expect
-      .element(page.getByText(`10 Jul 2026, ${copy.detail.joinedOn("pauseai.uk")}, ${copy.detail.intents.Volunteer}`))
-      .toBeVisible();
-    await expect.element(page.getByText(copy.detail.joining.rejoined("11 Oct 2026"), { exact: false })).toBeVisible();
+    const lists = page.getByRole("region", { name: copy.detail.listsTitle });
+    await expect.element(lists.getByText(copy.detail.joining.rejoined("11 Oct 2026"), { exact: false })).toBeVisible();
     // The caveat follows the updates' line alone.
     expect(page.getByText(copy.detail.civicrmCaveat, { exact: false }).all()).toHaveLength(1);
     const history = page.getByRole("list", { name: copy.detail.activityTitle });
     expect(history.element().textContent).toContain(
-      `${copy.detail.kinds["member-joined"]} ${copy.detail.joinedOn("pauseai.uk")}`,
+      `${copy.detail.kinds["member-joined"]} ${copy.detail.joinedOn("pauseai.uk")}, ${copy.detail.intents.Volunteer}`,
     );
     expect(history.element().textContent).toContain(copy.detail.importReasons["opted-out"]);
     expect(history.element().textContent).toContain(copy.detail.importReasons.resubscribed);
   });
 
-  it("words each way they can stand on the updates, and a join with nothing more to say", async () => {
+  it("words each way they can stand on the updates, and a join with less to say", async () => {
     const line = (status: (typeof updates)["status"], source: string | null = null) => ({
       ...updates,
       status,
@@ -1964,11 +1968,12 @@ describe("SupporterDetails, a member", () => {
         supporter={{
           ...exampleMemberDetails,
           summary: { ...exampleMemberDetails.summary, emails: ["a@example.com", "b@example.com"] },
-          members: [
-            { ...member, id: "recA", sourcePage: "pauseai.info/join", intent: "None" },
-            { ...member, id: "recB", sourcePage: null, intent: null, removed: true },
+          members: [{ ...member, removed: true }],
+          activity: [
+            { ...joined, detail: null },
+            { ...joined, title: "None", detail: "pauseai.info/join" },
+            { ...joined, title: null, detail: null },
           ],
-          activity: [{ ...exampleMemberDetails.activity[2], detail: null }],
           optOuts: [
             line("declined", "airtable-import"),
             { ...line("asked"), address: "b@example.com" },
@@ -1979,16 +1984,20 @@ describe("SupporterDetails, a member", () => {
         }}
       />,
     );
-    await expect
-      .element(page.getByText(`10 Jul 2026, ${copy.detail.joinedOn("pauseai.info/join")}`, { exact: true }))
-      .toBeVisible();
-    await expect.element(page.getByText(`10 Jul 2026, ${copy.detail.noLongerMember}`, { exact: true })).toBeVisible();
     for (const status of ["declined", "asked", "required", "unasked"] as const)
       await expect.element(page.getByText(copy.detail.joining[status]("12 Sept 2026"), { exact: false })).toBeVisible();
     await expect.element(page.getByText(copy.detail.optedOut("12 Sept 2026"), { exact: false })).toBeVisible();
     const history = page.getByRole("list", { name: copy.detail.activityTitle });
-    expect(history.element().textContent).toContain(copy.detail.kinds["member-joined"]);
-    expect(history.element().textContent).not.toContain(copy.detail.joinedOn("pauseai.uk"));
+    // What they chose alone, where the form was alone, and neither.
+    const lines = history
+      .getByRole("listitem")
+      .all()
+      .map((item) => item.element().textContent);
+    expect(lines.map((line) => line!.slice(16))).toEqual([
+      `${copy.detail.kinds["member-joined"]} ${copy.detail.intents.Volunteer}`,
+      `${copy.detail.kinds["member-joined"]} ${copy.detail.joinedOn("pauseai.info/join")}`,
+      `${copy.detail.kinds["member-joined"]} `,
+    ]);
   });
 });
 

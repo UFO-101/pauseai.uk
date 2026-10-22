@@ -204,7 +204,7 @@ test("a member who left Keep me informed unticked is opted out of the updates", 
   await owen.getByRole("link", { name: "Owen Member" }).click();
   await expect(page.getByText(copy.detail.joining.declined("6 Oct 2026"), { exact: false })).toBeVisible();
   await expect(
-    page.getByText(`6 Oct 2026, ${copy.detail.joinedOn("pauseai.uk")}, ${copy.detail.intents["Act now"]}`),
+    page.getByText(`${copy.detail.joinedOn("pauseai.uk")}, ${copy.detail.intents["Act now"]}`),
   ).toBeVisible();
   const history = page.getByRole("list", { name: copy.detail.activityTitle });
   await expect(history.getByText(copy.detail.importReasons["opted-out"], { exact: false })).toBeVisible();

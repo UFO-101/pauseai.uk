@@ -6,7 +6,6 @@ import { staffDate, staffTime } from "@/lib/staff-time";
 import type {
   SupporterActivity,
   SupporterDetails as Details,
-  SupporterMember,
   SupporterOptOut,
   SupporterSource,
 } from "@/lib/supporters";
@@ -59,7 +58,7 @@ function Fact({ label, values }: { label: string; values: Given[] }) {
       <dd>
         {values.map((given) => (
           <div key={given.value}>
-            {given.value} <Muted>({origin(given)})</Muted>
+            {given.value} <span className={styles.origin}>({origin(given)})</span>
           </div>
         ))}
       </dd>
@@ -108,21 +107,13 @@ function Subject({ item }: { item: SupporterActivity }) {
     );
   }
   if (item.kind === "member-joined") {
-    return item.detail ? <Muted>{copy.detail.joinedOn(item.detail)}</Muted> : null;
+    // Where the join form was, and what they chose on it, if either says anything.
+    const said = [item.detail && copy.detail.joinedOn(item.detail), copy.detail.intents[item.title ?? ""]]
+      .filter(Boolean)
+      .join(", ");
+    return said ? <Muted>{said}</Muted> : null;
   }
   return null;
-}
-
-/** How a member joined: when, where the form was, and what they chose to do; or that they're no longer shared with us. */
-function joining(member: SupporterMember): string {
-  return [
-    staffDate(member.joinedAt),
-    member.sourcePage && copy.detail.joinedOn(member.sourcePage),
-    copy.detail.intents[member.intent ?? ""],
-    member.removed && copy.detail.noLongerMember,
-  ]
-    .filter(Boolean)
-    .join(", ");
 }
 
 /** Where an address stands on a list, and why. */
@@ -144,7 +135,7 @@ function standing(optOut: SupporterOptOut): string {
  * value with where it came from; then everything they did, newest first.
  */
 export default function SupporterDetails({ supporter }: { supporter: Details }) {
-  const { summary, identities, contacts, members, activity, optOuts } = supporter;
+  const { summary, identities, contacts, activity, optOuts } = supporter;
   const emails = distinct(identities.map((i) => ({ value: i.email, source: i.source, at: i.seenAt })));
   const phones = distinct(contacts.map((c) => ({ value: c.phone, source: c.source, at: c.at })));
   const postcodes = distinct(
@@ -158,40 +149,43 @@ export default function SupporterDetails({ supporter }: { supporter: Details }) 
         {summary.name ?? copy.noName} <SupporterBadges supporter={summary} />
       </h1>
 
-      <dl className={styles.facts}>
-        <Fact label={copy.detail.emails} values={emails} />
-        <Fact label={copy.detail.phone} values={phones} />
-        <Fact label={copy.detail.postcode} values={postcodes} />
-        <Fact label={copy.detail.city} values={cities} />
-        {members.map((member) => (
-          <div key={member.id} className={styles.pair}>
-            <dt>{copy.detail.joined}</dt>
-            <dd>{joining(member)}</dd>
-          </div>
-        ))}
-        {optOuts.map((optOut) => (
-          <div key={`${optOut.list}-${optOut.address}`} className={styles.pair}>
-            <dt>{copy.lists[optOut.list]}</dt>
-            <dd>
-              {standing(optOut)}
-              {optOut.list === "pauseai-updates" && <Muted> · {copy.detail.civicrmCaveat}</Muted>}
-              {emails.length > 1 && <Muted> · {optOut.address}</Muted>}
-            </dd>
-          </div>
-        ))}
-        {summary.firstSeenAt && (
-          <>
-            <dt>{copy.detail.firstSeen}</dt>
-            <dd>{staffDate(summary.firstSeenAt)}</dd>
-          </>
+      <div className={styles.boxes}>
+        <dl className={styles.facts}>
+          <Fact label={copy.detail.emails} values={emails} />
+          <Fact label={copy.detail.phone} values={phones} />
+          <Fact label={copy.detail.postcode} values={postcodes} />
+          <Fact label={copy.detail.city} values={cities} />
+          {summary.firstSeenAt && (
+            <>
+              <dt>{copy.detail.firstSeen}</dt>
+              <dd>{staffDate(summary.firstSeenAt)}</dd>
+            </>
+          )}
+          {summary.lastActiveAt && (
+            <>
+              <dt>{copy.detail.lastActive}</dt>
+              <dd>{staffDate(summary.lastActiveAt)}</dd>
+            </>
+          )}
+        </dl>
+        {optOuts.length > 0 && (
+          <section className={styles.lists} aria-label={copy.detail.listsTitle}>
+            <h2>{copy.detail.listsTitle}</h2>
+            <dl>
+              {optOuts.map((optOut) => (
+                <div key={`${optOut.list}-${optOut.address}`}>
+                  <dt>{copy.lists[optOut.list]}</dt>
+                  <dd>
+                    {standing(optOut)}
+                    {optOut.list === "pauseai-updates" && <Muted> · {copy.detail.civicrmCaveat}</Muted>}
+                    {emails.length > 1 && <Muted> · {optOut.address}</Muted>}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          </section>
         )}
-        {summary.lastActiveAt && (
-          <>
-            <dt>{copy.detail.lastActive}</dt>
-            <dd>{staffDate(summary.lastActiveAt)}</dd>
-          </>
-        )}
-      </dl>
+      </div>
 
       <h2>{copy.detail.activityTitle}</h2>
       {activity.length === 0 ? (

@@ -180,7 +180,6 @@ export const staffCopy = {
       phone: "Phone",
       postcode: "Postcode",
       city: "City",
-      joined: "Joined PauseAI",
       /** Where the join form was: through our own site, or on another. */
       joinedOn: (site: string) => (site === "pauseai.uk" ? `through ${site}` : `on ${site}`),
       /** What they chose on the join form; "Keep informed" and "None" say nothing more. */
@@ -189,11 +188,12 @@ export const staffCopy = {
         Lead: "wants to lead",
         "Act now": "wants to act now",
       } as Record<string, string>,
-      noLongerMember: "⁂ no longer shared with us",
       firstSeen: "First seen",
       lastActive: "Last activity",
       /** Where a detail came from and when: "Luma, 26 Sept 2026". */
       from: (sources: string, when: string) => `${sources}, ${when}`,
+      // The box beside the main one: where each address stands on each mailing list.
+      listsTitle: "Mailing lists",
       optedOut: (since: string) => `unsubscribed ${since}`,
       notOptedOut: "subscribed",
       // Where an address stands on a list, after "subscribed" or "unsubscribed": who told us.
