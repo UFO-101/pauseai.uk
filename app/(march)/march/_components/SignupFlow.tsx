@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { MarchRegisterResult } from "../actions";
+import type { MarchRegisterResult } from "@/lib/march-registration";
 import type { CardMotion } from "./card-motion";
 import { m } from "./classes";
 import ShareCard from "./ShareCard";
 import SignupForm from "./SignupForm";
+import { registerForMarch } from "./register";
 import ThanksCard from "./ThanksCard";
 
 type Card = "form" | "share" | "thanks";
@@ -15,9 +16,14 @@ const reducedMotion = () => matchMedia("(prefers-reduced-motion: reduce)").match
 /**
  * The register band's cards, one at a time, each swapped in place for the
  * next: the form, then, once registered, the share card, then a thank-you,
- * which can start the form again for someone else.
+ * which can start the form again for someone else. `register` sends the
+ * form; it's app/api/march/register unless a test or the gallery gives one.
  */
-export default function SignupFlow({ register }: { register: (input: unknown) => Promise<MarchRegisterResult> }) {
+export default function SignupFlow({
+  register = registerForMarch,
+}: {
+  register?: (input: unknown) => Promise<MarchRegisterResult>;
+}) {
   const [card, setCard] = useState<Card>("form");
   const [motion, setMotion] = useState<CardMotion>("still");
   const [next, setNext] = useState<Card>("form");

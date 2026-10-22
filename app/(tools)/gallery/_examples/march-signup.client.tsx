@@ -1,9 +1,9 @@
 "use client";
 
 // The march sign-up's examples that call back: the cards, whose callbacks
-// log, and the form and the register band, whose Server Action is a stand-in
+// log, and the form and the register band, whose register is a stand-in
 // that logs what it's sent and says Luma failed, so the form stays put.
-import type { MarchRegisterResult } from "@/app/(march)/march/actions";
+import type { MarchRegisterResult } from "@/lib/march-registration";
 import MarchSignupFrame from "@/app/(march)/march/_components/MarchSignupFrame";
 import ShareCard from "@/app/(march)/march/_components/ShareCard";
 import SignupForm from "@/app/(march)/march/_components/SignupForm";

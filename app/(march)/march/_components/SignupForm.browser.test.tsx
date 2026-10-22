@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { render } from "vitest-browser-react";
 import { page, userEvent } from "vitest/browser";
-import type { MarchRegisterResult } from "../actions";
+import type { MarchRegisterResult } from "@/lib/march-registration";
 import SignupForm from "./SignupForm";
 
 /** The form, still, with nothing listening for it to move on. */

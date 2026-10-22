@@ -1,6 +1,5 @@
 import { march } from "@/lib/content/march";
 import { pageMetadata } from "@/lib/metadata";
-import { registerForMarch } from "./actions";
 import SignupCase from "./_components/SignupCase";
 import SignupDay from "./_components/SignupDay";
 import SignupDemand from "./_components/SignupDemand";
@@ -26,7 +25,7 @@ export default function MarchSignupPage() {
       <SignupTurnout />
       <SignupPhotos />
       <SignupDay />
-      <SignupRegister register={registerForMarch} />
+      <SignupRegister />
     </main>
   );
 }

@@ -48,6 +48,18 @@ describe("SignupFlow", () => {
     await expect.poll(() => document.activeElement).toBe(name.element());
   });
 
+  it("sends the form to the march's endpoint when not given a register", async () => {
+    const fetch = vi.spyOn(window, "fetch").mockResolvedValue(Response.json({ ok: true }));
+    await render(
+      <MarchSignupFrame>
+        <SignupFlow />
+      </MarchSignupFrame>,
+    );
+    await register();
+    await expect.element(shareHeading()).toBeVisible();
+    expect(fetch).toHaveBeenCalledWith("/api/march/register", expect.objectContaining({ method: "POST" }));
+  });
+
   it("keeps the share card within a phone's width, its app row scrolling instead", async () => {
     await page.viewport(390, 844);
     await render(
