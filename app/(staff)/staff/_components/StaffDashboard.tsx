@@ -20,27 +20,13 @@ import {
 } from "@/lib/staff-dashboard";
 import type { Permission } from "@/lib/staff-permissions";
 import { staffDate, staffDay, staffTime } from "@/lib/staff-time";
+import AlertIcon from "./AlertIcon";
 import Sparkline from "./Sparkline";
 import styles from "./StaffDashboard.module.css";
 import { ButtonLink } from "@/components/ui/Button";
 import { Muted } from "@/components/ui/Text";
 
 const copy = staffCopy.home.dashboard;
-
-/** A small icon for how bad an item is: a pause for something waiting, a warning triangle for something broken. */
-function AlertIcon({ tone }: { tone: "amber" | "red" }) {
-  return (
-    <svg className={styles.icon} viewBox="0 0 24 24" aria-hidden="true">
-      <path
-        d={
-          tone === "amber"
-            ? "M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm0 2a8 8 0 1 1 0 16 8 8 0 0 1 0-16zM9 8v8h2V8H9zm4 0v8h2V8h-2z"
-            : "M12 2 1 21h22L12 2zm0 4.8L19.5 19h-15L12 6.8zM11 10v5h2v-5h-2zm0 6v2h2v-2h-2z"
-        }
-      />
-    </svg>
-  );
-}
 
 /** One thing waiting for a person, as an alert of its own: tinted amber while it waits, red when something's broken, with its icon, what it is, its detail, and its button. */
 function Action({ action }: { action: DashboardAction }) {

@@ -15,6 +15,7 @@ import DevLogin from "@/app/(staff)/staff/_components/DevLogin";
 import LoginCard from "@/app/(staff)/staff/_components/LoginCard";
 import LoginForm from "@/app/(staff)/staff/_components/LoginForm";
 import PoliticianFilters from "@/app/(staff)/staff/_components/PoliticianFilters";
+import AlertIcon from "@/app/(staff)/staff/_components/AlertIcon";
 import ResultBox, { OPEN_UP_TO } from "@/app/(staff)/staff/_components/ResultBox";
 import Run from "@/app/(staff)/staff/_components/Run";
 import RunBox from "@/app/(staff)/staff/_components/RunBox";
@@ -590,6 +591,20 @@ export const staff: Group = {
                   </tr>
                 </tbody>
               </Table>
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "AlertIcon",
+      file: "app/(staff)/staff/_components/AlertIcon.tsx",
+      variants: [
+        {
+          label: "Waiting, and broken",
+          render: () => (
+            <StaffPage as="div">
+              <AlertIcon tone="amber" /> <AlertIcon tone="red" />
             </StaffPage>
           ),
         },

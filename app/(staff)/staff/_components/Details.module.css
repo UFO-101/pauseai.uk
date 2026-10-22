@@ -54,8 +54,13 @@
   }
 }
 
-/* A politician whose address is blocked: one red notice under the name, saying so, why, what to check, and the form. */
+/* A politician whose address is blocked: one red alert under the name,
+   its icon at the left and beside it the title, why, what to check, and
+   the form. Tinted, with the ordinary border. */
 .blocked {
+  display: flex;
+  gap: var(--space-3);
+  align-items: flex-start;
   max-width: 40rem;
   margin-block: var(--space-4);
   padding: var(--space-4);
@@ -64,16 +69,21 @@
   background: var(--status-red-bg);
 }
 
-.blocked h2 {
-  margin: 0 0 var(--space-2);
-  color: var(--status-red);
-  font-size: var(--text-lg);
+.blockedBody {
+  min-width: 0;
 }
 
-.blocked p {
+.blockedBody h2 {
+  margin: 0 0 var(--space-2);
+  color: var(--status-red);
+  font-size: var(--text-md);
+  line-height: 1.25rem;
+}
+
+.blockedBody p {
   margin: 0 0 var(--space-3);
 }
 
-.blocked > :last-child {
+.blockedBody > :last-child {
   margin-bottom: 0;
 }

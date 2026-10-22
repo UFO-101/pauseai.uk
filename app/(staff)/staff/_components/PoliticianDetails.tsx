@@ -8,6 +8,7 @@ import type { Politician, PoliticianChange } from "@/lib/server/politicians";
 import { staffDate, staffTime } from "@/lib/staff-time";
 import styles from "./Details.module.css";
 import PoliticianForm from "./PoliticianForm";
+import AlertIcon from "./AlertIcon";
 import UnblockForm from "./UnblockForm";
 import Tag from "@/components/ui/Tag";
 import { Muted } from "@/components/ui/Text";
@@ -154,13 +155,16 @@ export default function PoliticianDetails({
       </h1>
       {block && (
         <section className={styles.blocked} aria-labelledby="blocked-title">
-          <h2 id="blocked-title">{copy.blocked.title}</h2>
-          <p>{copy.blocked.why(block.address, block.reason, staffTime(block.since))}</p>
-          {block.canReset && <p>{copy.blocked.fix}</p>}
-          <UnblockForm block={block} action={unblock} />
-          <p>
-            <Link href="/staff/blocked-emails">{copy.blocked.all}</Link>
-          </p>
+          <AlertIcon tone="red" />
+          <div className={styles.blockedBody}>
+            <h2 id="blocked-title">{copy.blocked.title}</h2>
+            <p>{copy.blocked.why(block.address, block.reason, staffTime(block.since))}</p>
+            {block.canReset && <p>{copy.blocked.fix}</p>}
+            <UnblockForm block={block} action={unblock} />
+            <p>
+              <Link href="/staff/blocked-emails">{copy.blocked.all}</Link>
+            </p>
+          </div>
         </section>
       )}
 

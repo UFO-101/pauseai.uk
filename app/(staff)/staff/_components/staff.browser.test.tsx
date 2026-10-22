@@ -792,6 +792,9 @@ describe("PoliticianDetails", () => {
     const copy = staffCopy.politician.blocked;
     expect(page.getByRole("heading", { level: 1 }).element().textContent).toBe(MP.name);
     const notice = page.getByRole("region", { name: copy.title });
+    // An alert: the warning icon at the left, the rest beside it.
+    expect(notice.element().firstElementChild!.tagName.toLowerCase()).toBe("svg");
+    expect(getComputedStyle(notice.element()).display).toBe("flex");
     expect(notice.element().querySelector("p")!.textContent).toBe(
       copy.why(MP.email!, exampleBlock.reason, "2026-10-12 09:10"),
     );

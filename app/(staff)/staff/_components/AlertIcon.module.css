@@ -1,0 +1,15 @@
+/* An alert's icon: a little larger than the text, in the status colour. */
+.icon {
+  flex: none;
+  width: 1.25rem;
+  height: 1.25rem;
+  fill: currentcolor;
+}
+
+.amber {
+  color: var(--status-amber);
+}
+
+.red {
+  color: var(--status-red);
+}
