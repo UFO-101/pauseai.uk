@@ -6,27 +6,49 @@
   font-size: var(--text-lg);
 }
 
-/* What needs a person: a small label, then an alert for each item, no
-   wider than a line that reads. Each is tinted by how bad it is, amber
-   while it waits and red when something is broken, with the ordinary
-   border; its icon, its words, and its button at the end. */
+/* What needs a person: one callout, no wider than a line that reads, with
+   its icon at the left and, beside it, the heading and a row for each
+   item, ruled apart. Amber while everything in it is only waiting, red
+   once something is broken; tinted, with the ordinary border. */
 .actions {
+  display: flex;
+  gap: var(--space-3);
+  align-items: flex-start;
   max-width: 40rem;
   margin: 0 0 var(--space-6);
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
 }
 
-.actionsLabel {
+.actions.amber {
+  background: var(--status-amber-bg);
+}
+
+.actions.red {
+  background: var(--status-red-bg);
+}
+
+.actionsBody {
+  flex: 1;
+  min-width: 0;
+}
+
+.actionsTitle {
   margin: 0 0 var(--space-2);
-  color: var(--text-secondary);
-  font-size: var(--text-xs);
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  font-size: var(--text-md);
+  line-height: 1.25rem;
 }
 
-.actions ul {
-  display: grid;
-  gap: var(--space-2);
+.amber .actionsTitle {
+  color: var(--status-amber);
+}
+
+.red .actionsTitle {
+  color: var(--status-red);
+}
+
+.actionsBody ul {
   margin: 0;
   padding: 0;
   list-style: none;
@@ -34,20 +56,14 @@
 
 .action {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: var(--space-3);
   align-items: center;
-  padding: var(--space-3);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
+  padding-block: var(--space-2);
 }
 
-.action.amber {
-  background: var(--status-amber-bg);
-}
-
-.action.red {
-  background: var(--status-red-bg);
+.action + .action {
+  border-top: 1px solid var(--border);
 }
 
 .what {
@@ -220,11 +236,11 @@ a.tile:focus-visible {
   }
 
   .action {
-    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .action > :last-child {
-    grid-column: 2;
+    justify-self: start;
   }
 }
 

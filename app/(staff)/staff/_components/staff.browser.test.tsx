@@ -184,7 +184,7 @@ describe("StaffHome", () => {
 describe("StaffDashboard", () => {
   const copy = staffCopy.home.dashboard;
 
-  it("lists what needs a person under a label, an alert each with its icon and button, or shows nothing", async () => {
+  it("lists what needs a person in one callout with its icon, a button each, or shows nothing", async () => {
     const { rerender } = await render(<StaffDashboard dashboard={exampleDashboard} permissions={[]} />);
     const items = page.getByRole("list", { name: copy.actionsTitle }).getByRole("listitem").all();
     expect(items.map((item) => item.element().textContent)).toEqual([
@@ -192,13 +192,6 @@ describe("StaffDashboard", () => {
       `${copy.actions.blockedMp("Bouncy McTestface MP")}${copy.actions.blockedMpDetail}${copy.actions.openMp}`,
       `${copy.actions.failedImport(jobTitles["import-controlai"])}${copy.actions.failedImportDetail("No PDF linked", "2026-10-21 02:00")}${copy.actions.seeRun}`,
     ]);
-    // Each item is its own alert: amber with a pause while it waits, red with a warning when something's broken.
-    const tone = (i: number) => items[i].element().className.match(/amber|red/)?.[0];
-    expect([0, 1, 2].map(tone)).toEqual(["amber", "red", "red"]);
-    const icon = (i: number) => items[i].element().querySelector("svg path")!.getAttribute("d")!;
-    expect(icon(1)).toBe(icon(2));
-    expect(icon(0)).not.toBe(icon(1));
-    expect(getComputedStyle(items[1].element()).borderLeftWidth).toBe("1px");
     await expect
       .element(page.getByRole("link", { name: copy.actions.decide }))
       .toHaveAttribute("href", "/staff/import-data/mps");
@@ -208,12 +201,20 @@ describe("StaffDashboard", () => {
     await expect
       .element(page.getByRole("link", { name: copy.actions.seeRun }))
       .toHaveAttribute("href", "/staff/import-data/controlai");
-    // A small label over them, in capitals, and no box around them all.
-    const section = page.getByRole("region", { name: copy.actionsTitle });
-    const label = section.getByRole("heading", { level: 2 }).element();
-    expect(label.textContent).toBe(copy.actionsTitle);
-    expect(getComputedStyle(label).textTransform).toBe("uppercase");
-    expect(getComputedStyle(section.element()).borderTopWidth).toBe("0px");
+    // One callout: the warning icon, then the heading and the items; red, as something in it is broken.
+    const callout = page.getByRole("region", { name: copy.actionsTitle });
+    expect(callout.element().firstElementChild!.tagName.toLowerCase()).toBe("svg");
+    expect(callout.getByRole("heading", { level: 2 }).element().textContent).toBe(copy.actionsTitle);
+    expect(callout.element().className).toMatch(/red/);
+    expect(getComputedStyle(callout.element()).borderLeftWidth).toBe("1px");
+    // With only a held import, which is waiting rather than broken, it's amber.
+    await rerender(
+      <StaffDashboard
+        dashboard={{ ...exampleDashboard, actions: exampleDashboard.actions.slice(0, 1) }}
+        permissions={[]}
+      />,
+    );
+    expect(callout.element().className).toMatch(/amber/);
 
     await rerender(<StaffDashboard dashboard={exampleQuietDashboard} permissions={[]} />);
     await expect.element(page.getByText(copy.actionsTitle)).not.toBeInTheDocument();

@@ -27,13 +27,12 @@ import { Muted } from "@/components/ui/Text";
 
 const copy = staffCopy.home.dashboard;
 
-/** One thing waiting for a person, as an alert of its own: tinted amber while it waits, red when something's broken, with its icon, what it is, its detail, and its button. */
+/** One thing waiting for a person: what it is, its detail, and its button. */
 function Action({ action }: { action: DashboardAction }) {
   const words = copy.actions;
-  const [tone, title, detail, button, href] =
+  const [title, detail, button, href] =
     action.kind === "held-sync"
       ? [
-          "amber" as const,
           words.heldSync(action.added + action.removed + action.changed),
           words.heldSyncDetail,
           words.decide,
@@ -41,22 +40,19 @@ function Action({ action }: { action: DashboardAction }) {
         ]
       : action.kind === "blocked-mp"
         ? [
-            "red" as const,
             words.blockedMp(action.name),
             words.blockedMpDetail,
             words.openMp,
             `/staff/politicians/${action.politicianId}`,
           ]
         : [
-            "red" as const,
             words.failedImport(jobTitles[action.job]),
             words.failedImportDetail(action.error, staffTime(action.at)),
             words.seeRun,
             importPath(action.job),
           ];
   return (
-    <li className={`${styles.action} ${styles[tone]}`}>
-      <AlertIcon tone={tone} />
+    <li className={styles.action}>
       <span className={styles.what}>
         <span>{title}</span>
         <Muted>{detail}</Muted>
@@ -66,6 +62,11 @@ function Action({ action }: { action: DashboardAction }) {
       </ButtonLink>
     </li>
   );
+}
+
+/** The callout's colour: amber while everything in it is only waiting for a decision, red once something in it is broken. */
+function actionsTone(actions: DashboardAction[]): "amber" | "red" {
+  return actions.every((action) => action.kind === "held-sync") ? "amber" : "red";
 }
 
 /** The window against the one before: up or down by how many, green when that's good and red when it's bad, or the same. */
@@ -181,8 +182,8 @@ function Tiles({
 }
 
 /**
- * The home page's dashboard: what needs a person, an alert for each
- * thing, only when something does; the day and the window, with the other windows as links; the
+ * The home page's dashboard: what needs a person, in one callout, only
+ * when something does; the day and the window, with the other windows as links; the
  * window's numbers in three groups, each against the window before.
  */
 export default function StaffDashboard({
@@ -195,15 +196,21 @@ export default function StaffDashboard({
   return (
     <>
       {dashboard.actions.length > 0 && (
-        <section className={styles.actions} aria-labelledby="actions-title">
-          <h2 id="actions-title" className={styles.actionsLabel}>
-            {copy.actionsTitle}
-          </h2>
-          <ul aria-label={copy.actionsTitle}>
-            {dashboard.actions.map((action, i) => (
-              <Action key={i} action={action} />
-            ))}
-          </ul>
+        <section
+          className={`${styles.actions} ${styles[actionsTone(dashboard.actions)]}`}
+          aria-labelledby="actions-title"
+        >
+          <AlertIcon tone={actionsTone(dashboard.actions)} />
+          <div className={styles.actionsBody}>
+            <h2 id="actions-title" className={styles.actionsTitle}>
+              {copy.actionsTitle}
+            </h2>
+            <ul aria-label={copy.actionsTitle}>
+              {dashboard.actions.map((action, i) => (
+                <Action key={i} action={action} />
+              ))}
+            </ul>
+          </div>
         </section>
       )}
       <p className={styles.window}>
