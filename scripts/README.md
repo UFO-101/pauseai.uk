@@ -25,10 +25,11 @@ where there's an npm script. Each file's opening comment has the details.
 
 ## Content and data
 
-| Script                           | Run with                                          | What it does                                                                                                                                                                                              |
-| -------------------------------- | ------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `generate-ai-sentiment-data.mjs` | `npm run data:ai-sentiment`                       | Turns the AI Sentiment 2026 CSVs in `data/` into the JSON beside them, which `/global-ai-sentiment-2026` shows. Run it after editing a CSV.                                                               |
-| `detect-face-positions.mjs`      | `npm run data:story-image-detect-faces -- <file>` | Finds the face in a photo in `public/images/people/` and sets that person's `imageStyle` in `lib/content/people.ts`. `--dry-run` only prints it. Always name the file: without one, it resets everyone's. |
+| Script                           | Run with                                          | What it does                                                                                                                                                                                                                                                 |
+| -------------------------------- | ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `generate-ai-sentiment-data.mjs` | `npm run data:ai-sentiment`                       | Turns the AI Sentiment 2026 CSVs in `data/` into the JSON beside them, which `/global-ai-sentiment-2026` shows. Run it after editing a CSV.                                                                                                                  |
+| `detect-face-positions.mjs`      | `npm run data:story-image-detect-faces -- <file>` | Finds the face in a photo in `public/images/people/` and sets that person's `imageStyle` in `lib/content/people.ts`. `--dry-run` only prints it. Always name the file: without one, it resets everyone's.                                                    |
+| `march-preview.mjs`              | `npm run march:preview`                           | Remakes the link preview for `/march`, a picture of its hero, in `public/images/march-signup/`, from the dev server (`npm run dev`, or pass another base URL). Run it after changing the march's date, time or route in `lib/content/march.ts`, or the hero. |
 
 `docs/development.md`, section 5, covers the photos.
 
