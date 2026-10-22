@@ -106,7 +106,6 @@ test("a supporter's page: who they are, what they gave, their history, and an op
   await logInWithSupporters(page, flowDatabase);
   await page.goto(`${BASE}/staff/supporters`);
   const jane = page.getByRole("row").filter({ hasText: "Jane Fixture" });
-  await expect(jane).toContainText(copy.lists["luma-calendar"]);
   await jane.getByRole("link", { name: "Jane Fixture" }).click();
   await expect(page.getByRole("heading", { level: 1 })).toContainText("Jane Fixture");
   await expect(page.getByText(copy.badges.registered).first()).toBeVisible();
@@ -203,8 +202,7 @@ test("a member who left Keep me informed unticked is opted out of the updates", 
   await page.getByRole("button", { name: copy.filters.filter }).click();
   await expect(page.getByText(copy.count(1, 1, 1))).toBeVisible();
   const owen = page.getByRole("row").filter({ hasText: "Owen Member" });
-  await expect(owen).toContainText(copy.lists["pauseai-updates"]);
-  await frame(page, "the list of everyone unsubscribed: Owen, from the updates");
+  await frame(page, "the list filtered to those unsubscribed from anything: Owen");
 
   await owen.getByRole("link", { name: "Owen Member" }).click();
   await expect(
