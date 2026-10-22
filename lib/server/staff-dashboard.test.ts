@@ -90,7 +90,8 @@ describeWithDatabase("dashboard", () => {
       supportersAdded: { current: 1, previous: 1 },
       unsubscribes: { current: 1, previous: 0 },
     });
-    expect(result.testLetters).toBe(1);
+    // The test MP's two letters: one delivered, one that bounced after it was sent.
+    expect(result.testLetters).toBe(2);
     expect(result.byCampaign).toEqual({
       lettersSent: { "regulate-letter-pm": 1 },
       mpsSigned: { "regulate-letter-pm": 1 },

@@ -22,6 +22,7 @@ const RUN_NOW: Record<ImportJob, () => Promise<void>> = {
 };
 
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
+  await requireStaff();
   return { title: jobTitles[found(jobBySlug((await params).job))] };
 }
 

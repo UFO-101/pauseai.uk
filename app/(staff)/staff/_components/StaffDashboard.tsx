@@ -103,14 +103,14 @@ function CampaignBar({ counts }: { counts: Record<string, number> }) {
           />
         ))}
       </span>
-      <ul className={styles.legend}>
+      <span className={styles.legend}>
         {parts.map((campaign, i) => (
-          <li key={campaign.slug}>
+          <span key={campaign.slug}>
             <span className={styles.swatch} data-campaign={i} aria-hidden="true" /> {campaign.title} ·{" "}
             {counts[campaign.slug]}
-          </li>
+          </span>
         ))}
-      </ul>
+      </span>
     </>
   );
 }

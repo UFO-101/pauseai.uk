@@ -95,7 +95,7 @@ describe("StaffNav", () => {
     expect(nav.querySelector('a[href="/staff/import-data"]')!.textContent).toBe(staffCopy.nav.import);
     expect(nav.querySelector('a[href="/staff/accounts"]')!.textContent).toBe(staffCopy.nav.accounts);
     expect(nav.querySelector('a[href="/staff/letters"]')!.textContent).toBe(staffCopy.nav.letters);
-    expect([...nav.querySelectorAll("h2")].map((h) => h.textContent).slice(0, 4)).toEqual(
+    expect([...nav.querySelectorAll("h2")].map((h) => h.textContent).slice(0, 3)).toEqual(
       ["politicians", "data", "admin"].map((id) => staffCopy.nav.sections[id]),
     );
     expect(nav.querySelector('a[href="/staff/supporters"]')).toBeNull();
@@ -249,12 +249,12 @@ describe("StaffDashboard", () => {
     await expect
       .element(mps[0])
       .toHaveTextContent(
-        `12${copy.testLetters(2)}${copy.metrics.lettersSent(12)}${pm.title} · 9${bill.title} · 3${copy.change.up(4, 7)}`,
+        `12${copy.testLetters(2)}${copy.metrics.lettersSent(12)} ${pm.title} · 9 ${bill.title} · 3${copy.change.up(4, 7)}`,
       );
     await expect.element(mps[1]).toHaveTextContent(`3${copy.metrics.lettersReplied(3)}${copy.change.down(2, 7)}`);
     await expect
       .element(mps[2])
-      .toHaveTextContent(`5${copy.metrics.mpsSigned(5)}${pm.title} · 3${bill.title} · 2${copy.change.up(2, 7)}`);
+      .toHaveTextContent(`5${copy.metrics.mpsSigned(5)} ${pm.title} · 3 ${bill.title} · 2${copy.change.up(2, 7)}`);
     await expect.element(events[1]).toHaveTextContent(`9${copy.metrics.eventsHeld(9)}${copy.change.up(3, 7)}`);
     // The bar's segments are as wide as each campaign's share.
     const segments = mps[0].element().querySelectorAll("[data-campaign]");
@@ -269,7 +269,7 @@ describe("StaffDashboard", () => {
     const sparkline = (label: string) => page.getByRole("img", { name: copy.series(label) });
     await expect.element(sparkline(copy.metrics.eventRegistrations(277))).toBeVisible();
     await expect.element(sparkline(copy.metrics.supportersAdded(176))).toBeVisible();
-    expect(page.getByRole("img").all()).toHaveLength(2 + 5);
+    expect(page.getByRole("img").all()).toHaveLength(2);
     // The whole tile is the link; a tile with no page isn't one.
     const tileLink = (text: string) => page.getByText(text).element().closest("a");
     expect(tileLink(copy.metrics.lettersReplied(3))?.getAttribute("href")).toBe("/staff/letters?status=replied");
@@ -320,7 +320,8 @@ describe("Sparkline", () => {
     pointAt("pointerdown", box.width - 1);
     await expect.element(page.getByRole("status")).toHaveTextContent(labels[7]);
     expect(circles[0].getAttribute("class")).not.toMatch(/marked/);
-    pointAt("pointerleave", 0);
+    // React hears the pointer leaving from pointerout.
+    pointAt("pointerout", -10);
     await expect.element(page.getByRole("status")).not.toBeInTheDocument();
   });
 
@@ -682,6 +683,19 @@ describe("PoliticianDetails", () => {
             createdAt: "2026-10-13T08:00:00Z",
             repliedAt: "2026-10-15T09:00:00Z",
           },
+          // A campaign and a status nobody knows any more, shown as they're stored.
+          {
+            ...exampleLetter,
+            id: 3,
+            mpName: MP.name,
+            politicianId: MP.id,
+            senderName: "Old Writer",
+            supporterId: null,
+            campaign: "old-campaign",
+            status: "queued",
+            createdAt: "2026-07-01T08:00:00Z",
+            repliedAt: null,
+          },
         ]}
         history={[
           ...examplePoliticianHistory,
@@ -701,6 +715,13 @@ describe("PoliticianDetails", () => {
           },
           { id: 6, at: "2026-08-10T10:00:00Z", actor: "postmark", action: "block address", details: { kind: "weird" } },
           { id: 5, at: "2026-08-01T10:00:00Z", actor: "x", action: "strange", details: {} },
+          {
+            id: 4,
+            at: "2026-07-15T10:00:00Z",
+            actor: "import",
+            action: "add politician",
+            details: { politicianId: 7, name: "Polly Placeholder" },
+          },
         ]}
       />,
     );
@@ -738,6 +759,8 @@ describe("PoliticianDetails", () => {
       `2026-08-15 10:00${staffCopy.politician.statusSet("odd", pm.title)} · jo@pauseai.uk`,
       `2026-08-10 10:00${copy["block address"]} weird · postmark`,
       "2026-08-01 10:00strange  · x",
+      `2026-07-15 10:00${copy["add politician"]} Polly Placeholder · import`,
+      `2026-07-01 08:00${copy.letter} Old Writer · old-campaign · queued`,
     ]);
   });
 
@@ -755,8 +778,10 @@ describe("PoliticianDetails", () => {
     const copy = staffCopy.politician.blocked;
     expect(page.getByRole("heading", { level: 1 }).element().textContent).toBe(MP.name);
     const notice = page.getByRole("region", { name: copy.title });
-    await expect.element(notice).toHaveTextContent(copy.why(MP.email!, exampleBlock.reason, "2026-10-12 09:10"));
-    await expect.element(notice).toHaveTextContent(copy.fix);
+    expect(notice.element().querySelector("p")!.textContent).toBe(
+      copy.why(MP.email!, exampleBlock.reason, "2026-10-12 09:10"),
+    );
+    expect(notice.element().textContent).toContain(copy.fix);
     await expect.element(notice.getByRole("link", { name: copy.all })).toHaveAttribute("href", "/staff/blocked-emails");
     // The address in the facts is just the address.
     expect(page.getByText(MP.email!, { exact: true }).element().tagName).toBe("DD");
@@ -774,7 +799,7 @@ describe("PoliticianDetails", () => {
         {...none}
       />,
     );
-    await expect.element(notice).not.toHaveTextContent(copy.fix);
+    expect(notice.element().textContent).not.toContain(copy.fix);
     await expect.element(notice.getByText(staffCopy.emails.cantReset)).toBeVisible();
   });
 });
@@ -894,10 +919,10 @@ describe("ImportOverview", () => {
     expect(status(4).textContent).toBe(staffCopy.import.none);
     expect(status(4).className).not.toMatch(/green|amber|red/);
     // The Airtable jobs link the table they read; the MP import also says the test MPs stay.
-    expect(cards[1].querySelector("p a")!.getAttribute("href")).toBe("https://airtable.com/table");
-    expect(cards[1].querySelector("p")!.textContent).toContain(staffCopy.syncs.testMps);
-    expect(cards[4].querySelector("p a")!.getAttribute("href")).toBe("https://airtable.com/table");
-    expect(cards[2].querySelector("p")!.textContent).not.toContain(staffCopy.syncs.testMps);
+    expect(cards[1].querySelector(":scope > p a")!.getAttribute("href")).toBe("https://airtable.com/table");
+    expect(cards[1].querySelector(":scope > p")!.textContent).toContain(staffCopy.syncs.testMps);
+    expect(cards[4].querySelector(":scope > p a")!.getAttribute("href")).toBe("https://airtable.com/table");
+    expect(cards[2].querySelector(":scope > p")!.textContent).not.toContain(staffCopy.syncs.testMps);
   });
 
   it("shows an applied run in green, and one that changed nothing or was discarded plainly", async () => {

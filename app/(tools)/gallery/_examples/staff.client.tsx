@@ -7,6 +7,7 @@ import type { EmailBlock } from "@/lib/server/email";
 import type { Politician } from "@/lib/server/politicians";
 import EmailBlocksTable from "@/app/(staff)/staff/_components/EmailBlocksTable";
 import { exampleBlock, exampleComplaint } from "@/app/(staff)/staff/_components/EmailBlocksTable.examples";
+import { ImportJobPage } from "@/app/(staff)/staff/_components/ImportJob";
 import JobActions from "@/app/(staff)/staff/_components/JobActions";
 import PoliticianDetails from "@/app/(staff)/staff/_components/PoliticianDetails";
 import PoliticianForm from "@/app/(staff)/staff/_components/PoliticianForm";
@@ -19,7 +20,7 @@ import RemoveAccountForm from "@/app/(staff)/staff/_components/RemoveAccountForm
 import StaffAccountForm from "@/app/(staff)/staff/_components/StaffAccountForm";
 import StaffAccountsTable from "@/app/(staff)/staff/_components/StaffAccountsTable";
 import UnblockForm from "@/app/(staff)/staff/_components/UnblockForm";
-import { exampleHeldSync } from "@/app/(staff)/staff/_components/RunList.examples";
+import { exampleFailedRun, exampleHeldSync, exampleRun } from "@/app/(staff)/staff/_components/RunList.examples";
 import { Logged } from "../_components/wiring";
 
 const [pm, bill] = campaigns;
@@ -129,6 +130,37 @@ export function UnblockFormExample() {
           <UnblockForm block={exampleComplaint} action={log("unblock")} />
         </>
       )}
+    </Logged>
+  );
+}
+
+/** A job's page, its button and any held sync's buttons logged: the MP check with three runs, or the signatory import, never run. */
+export function ImportJobPageExample({ never = false }: { never?: boolean }) {
+  return (
+    <Logged>
+      {(log) =>
+        never ? (
+          <ImportJobPage
+            job="import-signatories"
+            runs={[]}
+            run={log("run")}
+            decide={log("decide")}
+            airtableTable="https://airtable.com/"
+          />
+        ) : (
+          <ImportJobPage
+            job="check-mps"
+            runs={[
+              exampleRun("check-mps", { problems: [] }, { id: 7, at: "2026-11-03T01:00:00Z" }),
+              exampleFailedRun("check-mps", "Parliament answered 500", { id: 6, at: "2026-11-02T01:00:00Z" }),
+              exampleRun("check-mps", { problems: [] }, { id: 5, at: "2026-11-01T01:00:00Z" }),
+            ]}
+            run={log("run")}
+            decide={log("decide")}
+            airtableTable="https://airtable.com/"
+          />
+        )
+      }
     </Logged>
   );
 }

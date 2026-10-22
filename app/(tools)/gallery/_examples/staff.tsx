@@ -18,7 +18,7 @@ import PoliticianFilters from "@/app/(staff)/staff/_components/PoliticianFilters
 import ResultBox, { OPEN_UP_TO } from "@/app/(staff)/staff/_components/ResultBox";
 import Run from "@/app/(staff)/staff/_components/Run";
 import RunBox from "@/app/(staff)/staff/_components/RunBox";
-import { ImportJobPage, ImportOverview } from "@/app/(staff)/staff/_components/ImportJob";
+import { ImportOverview } from "@/app/(staff)/staff/_components/ImportJob";
 import RunList from "@/app/(staff)/staff/_components/RunList";
 import {
   exampleAppliedSync,
@@ -56,6 +56,7 @@ import type { Group, Variant } from "../_components/types";
 import {
   EmailBlocksTableExample,
   HeldSyncExample,
+  ImportJobPageExample,
   JobActionsExample,
   PoliticianDetailsExample,
   PoliticianFormExample,
@@ -677,17 +678,7 @@ export const staff: Group = {
           label: "The MP check's page: its button and every run, by day",
           render: () => (
             <StaffPage as="div">
-              <ImportJobPage
-                job="check-mps"
-                runs={[
-                  exampleRun("check-mps", { problems: [] }, { id: 7, at: "2026-11-03T01:00:00Z" }),
-                  exampleFailedRun("check-mps", "Parliament answered 500", { id: 6, at: "2026-11-02T01:00:00Z" }),
-                  exampleRun("check-mps", { problems: [] }, { id: 5, at: "2026-11-01T01:00:00Z" }),
-                ]}
-                run={() => {}}
-                decide={() => {}}
-                airtableTable="https://airtable.com/"
-              />
+              <ImportJobPageExample />
             </StaffPage>
           ),
         },
@@ -695,13 +686,7 @@ export const staff: Group = {
           label: "A job that has never run",
           render: () => (
             <StaffPage as="div">
-              <ImportJobPage
-                job="import-signatories"
-                runs={[]}
-                run={() => {}}
-                decide={() => {}}
-                airtableTable="https://airtable.com/"
-              />
+              <ImportJobPageExample never />
             </StaffPage>
           ),
         },

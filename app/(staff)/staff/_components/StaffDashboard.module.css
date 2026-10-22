@@ -173,11 +173,8 @@ a.tile:focus-visible {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-1) var(--space-4);
-  margin: 0;
-  padding: 0;
   color: var(--text-secondary);
   font-size: var(--text-sm);
-  list-style: none;
 }
 
 .swatch {
