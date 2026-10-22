@@ -2,8 +2,10 @@ import type { APIRequestContext, Page } from "@playwright/test";
 import { campaigns, copy } from "@/lib/content/email-your-mp";
 import { jobTitles, staffCopy } from "@/lib/content/staff-interface";
 import type { ImportJob } from "@/lib/import-runs";
+import { staffDate } from "@/lib/staff-time";
 import { TEST_MPS } from "@/lib/test-mps";
 import { runSql } from "@/scripts/fresh-database.mjs";
+import { FIXTURE_NOW } from "../fixture-env.mjs";
 import { ROUTES } from "../routes";
 import {
   addStaffAccount,
@@ -136,7 +138,7 @@ test("staff log in, set a status that shows on /campaigns, and log out", async (
   await expect(page).toHaveURL(`${BASE}/staff`);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(staffCopy.home.title);
   await expect(page.getByText(staffEmail()).first()).toBeAttached();
-  await expect(page.getByText(staffCopy.home.dashboard.sections.mps)).toBeVisible();
+  await expect(page.getByRole("heading", { level: 2, name: staffCopy.home.dashboard.sections.mps })).toBeVisible();
   await frame(page, "the staff home, just logged in as an admin");
 
   // The pages are in the sidebar; on a phone, behind the bar's menu.
@@ -279,7 +281,8 @@ test("an import's own page lists every run it has made, and the import page show
   await expect(page.getByRole("row").filter({ hasText: "Cities of London and Westminster" })).toBeVisible();
   await check.click();
   await expect(page.getByRole("row").filter({ hasText: "Cities of London and Westminster" })).toHaveCount(2);
-  await expect(page.getByRole("heading", { level: 2 })).toHaveCount(1);
+  // One day's heading over both: the fixture clock's day.
+  await expect(page.getByRole("heading", { level: 2, name: staffDate(FIXTURE_NOW) })).toHaveCount(1);
   await frame(page, "the MP check's page: both its runs");
 
   // The import page: each job's newest run on its card; the MP import's, from the start of the flow.
@@ -507,7 +510,7 @@ test("without an account, a staff member sees only whom to ask; an admin adds, c
   // With an account and no permissions: the dashboard and the ordinary pages.
   addStaffAccount(flowDatabase, staffEmail());
   await page.goto(`${BASE}/staff`);
-  await expect(page.getByText(staffCopy.home.dashboard.sections.mps)).toBeVisible();
+  await expect(page.getByRole("heading", { level: 2, name: staffCopy.home.dashboard.sections.mps })).toBeVisible();
   // The sidebar (hidden behind the bar's menu on a phone, so read from the DOM) offers the ordinary pages and not the admin's.
   await expect(page.locator('nav a[href="/staff/politicians"]').first()).toBeAttached();
   await expect(page.locator('nav a[href="/staff/accounts"]')).toHaveCount(0);
