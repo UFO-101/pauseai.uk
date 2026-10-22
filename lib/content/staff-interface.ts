@@ -22,7 +22,7 @@ export const staffCopy = {
     // Beside each address: what it may do.
     permissions: (names: string) => `⁂ ${names} permissions`,
     noPermissions: "Account with no extra permissions",
-    noAccount: "⁂ no account: sees only whom to ask",
+    noAccount: "No account",
   },
   // The email with the login link.
   loginEmail: {
