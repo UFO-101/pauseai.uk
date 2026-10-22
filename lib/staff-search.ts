@@ -55,6 +55,11 @@ export function pageNumber(page = ""): number {
   return /^\d+$/.test(page) && Number(page) > 0 ? Number(page) : 1;
 }
 
+/** A list's URL at a page: the first page at the list's own, any other with `?page=`. */
+export function pagePath(path: string, page: number): string {
+  return page > 1 ? `${path}?page=${page}` : path;
+}
+
 /** A letter's ID from its page's URL: a whole number, or undefined. */
 export function letterId(id: string): number | undefined {
   return politicianId(id);

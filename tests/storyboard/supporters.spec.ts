@@ -287,7 +287,8 @@ test("erasing a supporter: gone from the list and the next import, with the audi
   addStaffAccount(flowDatabase, staffEmail(), ["admin", "supporters"]);
   await page.goto(`${BASE}/staff/audit-log`);
   await expect(page.getByRole("cell", { name: "erase supporter" })).toBeVisible();
-  await expect(page.getByText("Request of 16 Oct 2026")).toBeVisible();
+  // In the entry's details; its JSON, behind its button, has it too.
+  await expect(page.getByText("Request of 16 Oct 2026").filter({ visible: true })).toBeVisible();
   await frame(page, "the audit log: the erasure, by its reference, with no name or address");
 });
 

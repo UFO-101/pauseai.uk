@@ -3,7 +3,7 @@ import { staffCopy } from "@/lib/content/staff-interface";
 import { recentChanges } from "@/lib/server/audit";
 import { PARLIAMENTARIANS_TABLE_URL } from "@/lib/server/outside-services/airtable";
 import { requireStaff } from "@/lib/server/staff-auth";
-import { pageNumber } from "@/lib/staff-search";
+import { pageNumber, pagePath } from "@/lib/staff-search";
 import ChangesTable from "../_components/ChangesTable";
 import Paging from "../_components/Paging";
 import StaffNav from "../_components/StaffNav";
@@ -19,7 +19,7 @@ export default async function ChangesPage({ searchParams }: { searchParams: Prom
     <StaffPage nav={<StaffNav email={email} account permissions={permissions} current="changes" />}>
       <h1>{staffCopy.changes.title}</h1>
       <ChangesTable changes={changes} airtableTable={PARLIAMENTARIANS_TABLE_URL} />
-      <Paging page={page} pages={pages} href={(n) => (n > 1 ? `/staff/audit-log?page=${n}` : "/staff/audit-log")} />
+      <Paging page={page} pages={pages} href={(n) => pagePath("/staff/audit-log", n)} />
     </StaffPage>
   );
 }

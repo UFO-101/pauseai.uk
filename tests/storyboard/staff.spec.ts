@@ -488,7 +488,8 @@ test("an MP whose address bounced can't be written to until staff unblock it", a
   await frame(page, "unblocked");
 
   await page.goto(`${BASE}/staff/audit-log`);
-  await expect(page.getByText("Checked with their office")).toBeVisible();
+  // In the entry's details; its JSON, behind its button, has it too.
+  await expect(page.getByText("Checked with their office").filter({ visible: true })).toBeVisible();
   await frame(page, "the audit log: blocked by Postmark, unblocked by staff");
 
   await lookUpTestMp(page, BASE, bouncy);

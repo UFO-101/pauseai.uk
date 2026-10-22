@@ -8,6 +8,9 @@ import EmailBlockFilters from "@/app/(staff)/staff/_components/EmailBlockFilters
 import { exampleProblems } from "@/app/(staff)/staff/_components/EmailBlocksTable.examples";
 import EmailProblemsTable from "@/app/(staff)/staff/_components/EmailProblemsTable";
 import { exampleChanges } from "@/app/(staff)/staff/_components/ChangesTable.examples";
+import AuditDetail, { FieldChanges } from "@/app/(staff)/staff/_components/AuditDetail";
+import CampaignName from "@/app/(staff)/staff/_components/CampaignName";
+import Paging from "@/app/(staff)/staff/_components/Paging";
 import LetterFilters from "@/app/(staff)/staff/_components/LetterFilters";
 import LetterLink from "@/app/(staff)/staff/_components/LetterLink";
 import LettersTable from "@/app/(staff)/staff/_components/LettersTable";
@@ -1185,6 +1188,64 @@ export const staff: Group = {
           render: () => (
             <StaffPage as="div">
               <LettersTable letters={[]} />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "AuditDetail",
+      file: "app/(staff)/staff/_components/AuditDetail.tsx",
+      variants: [
+        {
+          label: "An MP's status set, in words, linked to their page and the campaign's",
+          render: () => (
+            <StaffPage as="div">
+              <AuditDetail change={exampleChanges[0]} airtableTable="https://airtable.com/app/tbl" />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "FieldChanges",
+      file: "app/(staff)/staff/_components/AuditDetail.tsx",
+      variants: [
+        {
+          label: "What an edit changed, each field before and after",
+          render: () => (
+            <StaffPage as="div">
+              <FieldChanges changed={{ party: ["Labour", "Independent"], email: [null, "polly@example.org"] }} />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "CampaignName",
+      file: "app/(staff)/staff/_components/CampaignName.tsx",
+      variants: [
+        {
+          label: "A campaign linked to its page, and one no longer run, by its slug",
+          render: () => (
+            <StaffPage as="div">
+              <p>
+                <CampaignName slug={pm.slug} /> · <CampaignName slug="old-campaign" />
+              </p>
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "Paging",
+      file: "app/(staff)/staff/_components/Paging.tsx",
+      variants: [
+        {
+          label: "The middle page of three: the way back and on",
+          render: () => (
+            <StaffPage as="div">
+              <Paging page={2} pages={3} href={(n) => `#page-${n}`} />
             </StaffPage>
           ),
         },

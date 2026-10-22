@@ -97,4 +97,5 @@ export const exampleChanges: LoggedChange[] = [
     name: "Old MP",
     changed: { house: ["commons", "lords"], party: ["Labour", null] },
   }),
+  change(21, "jo@pauseai.uk", "apply held MP sync", { id: 13 }),
 ];

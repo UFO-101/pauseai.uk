@@ -5,6 +5,7 @@ import {
   letterId,
   lettersSearch,
   pageNumber,
+  pagePath,
   politicianId,
   supporterId,
   supportersSearch,
@@ -111,6 +112,13 @@ describe("pageNumber", () => {
   it("reads a page from 1, or the first page", () => {
     expect(pageNumber("3")).toBe(3);
     for (const page of ["0", "x", "", undefined]) expect(pageNumber(page)).toBe(1);
+  });
+});
+
+describe("pagePath", () => {
+  it("gives the first page at the list's own URL, and any other with its number", () => {
+    expect(pagePath("/staff/audit-log", 1)).toBe("/staff/audit-log");
+    expect(pagePath("/staff/audit-log", 2)).toBe("/staff/audit-log?page=2");
   });
 });
 

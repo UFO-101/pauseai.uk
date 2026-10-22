@@ -38,6 +38,7 @@ import {
   exampleSyncedMp,
 } from "./RunList.examples";
 import StaffNav from "./StaffNav";
+import { spanClass } from "./ui/Grid";
 import StaffDashboard from "./StaffDashboard";
 import { exampleDashboard, exampleQuietDashboard } from "./StaffDashboard.examples";
 import Sparkline from "./Sparkline";
@@ -195,9 +196,10 @@ describe("StaffHome", () => {
 describe("StaffDashboard", () => {
   const copy = staffCopy.home.dashboard;
 
-  it("lists what needs a person in one callout with its icon, a button each, or shows nothing", async () => {
+  it("lists what needs a person as a strip each, red when broken and amber when waiting, a button each, or nothing", async () => {
     const { rerender } = await render(<StaffDashboard dashboard={exampleDashboard} permissions={[]} />);
-    const items = page.getByRole("list", { name: copy.actionsTitle }).getByRole("listitem").all();
+    const list = page.getByRole("list", { name: copy.actionsTitle });
+    const items = list.getByRole("listitem").all();
     expect(items.map((item) => item.element().textContent)).toEqual([
       `${copy.actions.heldSync(24)}${copy.actions.heldSyncDetail}${copy.actions.decide}`,
       `${copy.actions.blockedMp("Bouncy McTestface MP")}${copy.actions.blockedMpDetail}${copy.actions.openMp}`,
@@ -212,49 +214,24 @@ describe("StaffDashboard", () => {
     await expect
       .element(page.getByRole("link", { name: copy.actions.seeRun }))
       .toHaveAttribute("href", "/staff/import-data/controlai");
-    // One callout: the warning icon, then the heading and the items; red, as something in it is broken.
-    const callout = page.getByRole("region", { name: copy.actionsTitle });
-    expect(callout.element().firstElementChild!.tagName.toLowerCase()).toBe("svg");
-    expect(callout.getByRole("heading", { level: 2 }).element().textContent).toBe(copy.actionsTitle);
-    expect(callout.element().className).toMatch(/red/);
-    // A thin border in the status colour all the way round, and the rules between items in the same colour.
-    const style = getComputedStyle(callout.element());
-    expect(style.borderLeftWidth).toBe("1px");
-    expect(style.borderLeftColor).toBe(style.borderTopColor);
-    expect(style.borderLeftColor).not.toBe(getComputedStyle(document.body).borderLeftColor);
-    const rule = getComputedStyle(callout.getByRole("listitem").nth(1).element()).borderTopColor;
-    expect(rule).not.toBe("rgba(0, 0, 0, 0)");
-    // The heading is larger and bolder than the items' words; the buttons are smaller than the usual small one.
-    const heading = getComputedStyle(callout.getByRole("heading", { level: 2 }).element());
-    const words = getComputedStyle(
-      callout.getByRole("listitem").first().element().querySelector("span > span:first-child")!,
-    );
-    expect(parseFloat(heading.fontSize)).toBeGreaterThan(parseFloat(words.fontSize));
-    expect(Number(heading.fontWeight)).toBeGreaterThan(Number(words.fontWeight));
-    // Each item's title stands out from its detail: larger and bolder.
-    const detail = getComputedStyle(
-      callout.getByRole("listitem").first().element().querySelector("span > span:last-child")!,
-    );
-    expect(parseFloat(words.fontSize)).toBeGreaterThan(parseFloat(detail.fontSize));
-    expect(Number(words.fontWeight)).toBeGreaterThan(Number(detail.fontWeight));
-    expect(getComputedStyle(callout.getByRole("link").first().element()).paddingTop).toBe("4px");
-    // Every item's button is the same: the primary, in orange.
-    const looks = callout
+    // No heading: the strips speak for themselves. Each its icon first; the held import amber, the rest red.
+    expect(page.getByRole("heading", { name: copy.actionsTitle }).all()).toHaveLength(0);
+    const strips = items.map((item) => item.element().firstElementChild!);
+    expect(strips.map((strip) => strip.firstElementChild!.tagName.toLowerCase())).toEqual(["svg", "svg", "svg"]);
+    expect(strips.map((strip) => strip.className.match(/amber|red/)?.[0])).toEqual(["amber", "red", "red"]);
+    expect(getComputedStyle(strips[0]).borderLeftWidth).toBe("0px");
+    // Each title stands out from its detail; the buttons are the small light ones, all alike.
+    const [title, detail] = [...strips[0].querySelector("div")!.children].map((el) => getComputedStyle(el));
+    expect(Number(title.fontWeight)).toBeGreaterThan(Number(detail.fontWeight));
+    expect(getComputedStyle(list.getByRole("link").first().element()).paddingTop).toBe("4px");
+    const looks = list
       .getByRole("link")
       .all()
       .map((link) => getComputedStyle(link.element()).backgroundColor);
     expect(new Set(looks).size).toBe(1);
-    // With only a held import, which is waiting rather than broken, it's amber.
-    await rerender(
-      <StaffDashboard
-        dashboard={{ ...exampleDashboard, actions: exampleDashboard.actions.slice(0, 1) }}
-        permissions={[]}
-      />,
-    );
-    expect(callout.element().className).toMatch(/amber/);
 
     await rerender(<StaffDashboard dashboard={exampleQuietDashboard} permissions={[]} />);
-    await expect.element(page.getByText(copy.actionsTitle)).not.toBeInTheDocument();
+    expect(page.getByRole("list", { name: copy.actionsTitle }).all()).toHaveLength(0);
   });
 
   it("heads the numbers with the day and the window, the other windows as links", async () => {
@@ -292,8 +269,9 @@ describe("StaffDashboard", () => {
       .element(mps[2])
       .toHaveTextContent(`5${copy.metrics.mpsSigned(5)} ${pm.title} · 3 ${bill.title} · 2${copy.change.up(2, 7)}`);
     await expect.element(events[1]).toHaveTextContent(`9${copy.metrics.eventsHeld(9)}${copy.change.up(3, 7)}`);
-    // With a bar, the letters tile takes two columns, so its legend fits.
-    expect(mps[0].element().className).toMatch(/wide/);
+    // With a bar, the letters tile takes two-thirds of the grid, so its legend fits; the rest a third.
+    expect(mps[0].element().className).toBe(spanClass(4));
+    expect(mps[1].element().className).toBe(spanClass(2));
     // The bar's segments are as wide as each campaign's share.
     const segments = mps[0].element().querySelectorAll("[data-campaign]");
     expect([...segments].map((segment) => (segment as HTMLElement).style.flexGrow)).toEqual(["9", "3", "", ""]);
@@ -344,8 +322,8 @@ describe("StaffDashboard", () => {
       .element(quiet[1])
       .toHaveTextContent(`${copy.none}${copy.metrics.lettersReplied(0)}${copy.change.down(1, 30)}`);
     expect(quiet[0].element().querySelectorAll("[data-campaign]")).toHaveLength(0);
-    // With no bar the letters tile takes one column like the rest; a line of nothing but zeros isn't drawn.
-    expect(quiet[0].element().className).not.toMatch(/wide/);
+    // With no bar the letters tile takes a third like the rest; a line of nothing but zeros isn't drawn.
+    expect(quiet[0].element().className).toBe(spanClass(2));
     const flat = {
       ...exampleQuietDashboard,
       series: {
@@ -594,7 +572,10 @@ describe("Alert", () => {
   it("is an error read out at once in red, or something waiting in amber", async () => {
     const { rerender } = await render(<Alert>Broken.</Alert>);
     await expect.element(page.getByRole("alert")).toHaveTextContent("Broken.");
-    expect(getComputedStyle(page.getByRole("alert").element()).borderLeftWidth).toBe("1px");
+    // A strip: its icon first, tinted, no border.
+    expect(page.getByRole("alert").element().firstElementChild!.tagName.toLowerCase()).toBe("svg");
+    expect(page.getByRole("alert").element().className).toMatch(/red/);
+    expect(getComputedStyle(page.getByRole("alert").element()).borderLeftWidth).toBe("0px");
     await rerender(<Alert tone="amber">Waiting.</Alert>);
     await expect.element(page.getByRole("status")).toHaveTextContent("Waiting.");
     expect(page.getByRole("status").element().className).toMatch(/amber/);
@@ -740,7 +721,7 @@ describe("LoginForm", () => {
 describe("PoliticianDetails", () => {
   const none = { markSigned: vi.fn(), letters: [], history: [], airtableTable: "https://airtable.com/app/tbl" };
 
-  it("heads the page with their name, boxes what's known with each campaign's status, and edits a signer the team added", async () => {
+  it("heads the page with their name, a card of what's known beside one of campaigns, and edits a signer the team added", async () => {
     const { fn } = action();
     await render(
       <PoliticianDetails
@@ -757,8 +738,8 @@ describe("PoliticianDetails", () => {
       MP.party,
       staffCopy.politicians.noEmail,
       staffCopy.politician.sources.staff,
-      `${staffCopy.statuses.signed}, 1 Oct 2026${staffCopy.politician.setBy("jo@pauseai.uk", "2 Oct 2026")}`,
     ]);
+    await expect.element(page.getByRole("region", { name: staffCopy.politician.statusesTitle })).toBeVisible();
     await expect.element(page.getByText(staffCopy.politician.noHistory)).toBeVisible();
     await expect.element(page.getByRole("button", { name: staffCopy.politician.save })).toBeVisible();
   });
@@ -874,6 +855,13 @@ describe("PoliticianDetails", () => {
           { id: 6, at: "2026-08-10T10:00:00Z", actor: "postmark", action: "block address", details: { kind: "weird" } },
           { id: 5, at: "2026-08-01T10:00:00Z", actor: "x", action: "strange", details: {} },
           {
+            id: 9,
+            at: "2026-07-20T10:00:00Z",
+            actor: "sync",
+            action: "edit politician",
+            details: { id: 7, name: "Polly Placeholder", changed: { party: ["Labour", "Labour (Co-op)"] } },
+          },
+          {
             id: 4,
             at: "2026-07-15T10:00:00Z",
             actor: "import",
@@ -888,15 +876,9 @@ describe("PoliticianDetails", () => {
       MP.party,
       MP.email,
       `${staffCopy.politician.sources.airtable}${staffCopy.politician.editInAirtable}`,
-      `${staffCopy.statuses.signed}, 1 Oct 2026 · Told us at the march${staffCopy.politician.setBy("jo@pauseai.uk", "2 Oct 2026")}`,
-      `odd${staffCopy.politician.setBy("jo@pauseai.uk", "2 Oct 2026")}`,
     ]);
-    expect(
-      page
-        .getByRole("term")
-        .all()
-        .map((d) => d.element().textContent),
-    ).toContain("gone");
+    // Each status is in the campaigns card, a campaign no longer run by its slug.
+    expect(page.getByRole("group", { name: "gone" }).element().textContent).toContain("odd");
     // The sender leads to their supporter once they're one; the letters and replies sit among the audit log's entries by time.
     await expect
       .element(page.getByRole("link", { name: exampleLetter.senderName }))
@@ -918,6 +900,7 @@ describe("PoliticianDetails", () => {
       `2026-08-15 10:00${statusLine(staffCopy.politician.statusSet("odd"), pm.title)} · jo@pauseai.uk`,
       `2026-08-10 10:00${copy["block address"]} weird · postmark`,
       "2026-08-01 10:00strange  · x",
+      `2026-07-20 10:00${copy["edit politician"]} Polly Placeholder · ${staffCopy.fields.party} Labour → Labour (Co-op) · sync`,
       `2026-07-15 10:00${copy["add politician"]} Polly Placeholder · import`,
       `2026-07-01 08:00${copy.letter} Old Writer · old-campaign · queued`,
     ]);
@@ -934,7 +917,7 @@ describe("PoliticianDetails", () => {
     await expect.element(list.getByRole("link", { name: "gone" })).not.toBeInTheDocument();
   });
 
-  it("gives each campaign a card: its status, who set it, and the button to change it where staff record it", async () => {
+  it("gives each campaign a row in the campaigns card: its status as a strip, who set it, and the button where staff record it", async () => {
     const { fn, sent } = action();
     await render(
       <PoliticianDetails
@@ -951,22 +934,30 @@ describe("PoliticianDetails", () => {
         unblock={vi.fn()}
       />,
     );
-    const card = (title: string) => page.getByRole("region", { name: title });
-    const pmCard = card(pm.title);
-    await expect.element(pmCard).toHaveTextContent(`${staffCopy.statuses.signed}, 1 Oct 2026`);
-    await expect.element(pmCard.getByText(staffCopy.politician.setBy("jo@pauseai.uk", "2 Oct 2026"))).toBeVisible();
-    await expect.element(pmCard.getByRole("link", { name: pm.title })).toHaveAttribute("href", campaignPath(pm));
-    // The bill's status isn't set by hand: no button, and the card says why.
-    const billCard = card(bill.title);
-    await expect.element(billCard.getByText(staffCopy.statuses.none)).toBeVisible();
-    await expect.element(billCard.getByText(staffCopy.politician.fromControlAi)).toBeVisible();
-    expect(billCard.getByRole("button").all()).toHaveLength(0);
-    // A campaign no longer run: its status, by its slug, with no button.
-    const old = card("old-campaign");
-    await expect.element(old).toHaveTextContent(`${staffCopy.statuses.signed} · Kept`);
+    const row = (title: string) => page.getByRole("group", { name: title });
+    const pmRow = row(pm.title);
+    expect(pmRow.element().textContent).toContain(`${staffCopy.statuses.signed}, 1 Oct 2026`);
+    await expect
+      .element(pmRow.getByText(staffCopy.politician.setBy("jo@pauseai.uk", "2 Oct 2026"), { exact: false }))
+      .toBeVisible();
+    await expect
+      .element(pmRow.getByRole("link", { name: staffCopy.politician.campaignPage }))
+      .toHaveAttribute("href", campaignPath(pm));
+    // Signed: a green strip.
+    expect(pmRow.element().querySelector("[class*=green]")).not.toBeNull();
+    // The bill's status isn't set by hand: no button, and its strip says why; not signed, a plain strip.
+    const billRow = row(bill.title);
+    await expect.element(billRow.getByText(staffCopy.statuses.none)).toBeVisible();
+    await expect.element(billRow.getByText(staffCopy.politician.fromControlAi)).toBeVisible();
+    expect(billRow.getByRole("button").all()).toHaveLength(0);
+    expect(billRow.element().querySelector("[class*=green]")).toBeNull();
+    // A campaign no longer run: its status, by its slug, with no button and no link.
+    const old = row("old-campaign");
+    expect(old.element().textContent).toContain(`${staffCopy.statuses.signed}Kept · `);
     expect(old.getByRole("button").all()).toHaveLength(0);
+    expect(old.getByRole("link").all()).toHaveLength(0);
 
-    await pmCard.getByRole("button", { name: staffCopy.politicians.unmarkSigned }).click();
+    await pmRow.getByRole("button", { name: staffCopy.politicians.unmarkSigned }).click();
     await vi.waitFor(() => expect(sent).toHaveLength(1));
     expect(sent[0]).toEqual({ politicianId: "7", campaign: pm.slug, signed: "" });
   });
@@ -983,7 +974,7 @@ describe("PoliticianDetails", () => {
       />,
     );
     await page
-      .getByRole("region", { name: pm.title })
+      .getByRole("group", { name: pm.title })
       .getByRole("button", { name: staffCopy.politicians.markSigned })
       .click();
     await vi.waitFor(() => expect(sent).toHaveLength(1));
@@ -1004,9 +995,15 @@ describe("PoliticianDetails", () => {
     const copy = staffCopy.politician.blocked;
     expect(page.getByRole("heading", { level: 1 }).element().textContent).toBe(MP.name);
     const notice = page.getByRole("region", { name: copy.title });
-    // An alert: the warning icon at the left, the rest beside it.
-    expect(notice.element().firstElementChild!.tagName.toLowerCase()).toBe("svg");
-    expect(getComputedStyle(notice.element()).display).toBe("flex");
+    // A red strip: the warning icon at the left, the rest beside it.
+    const strip = notice.element().firstElementChild!;
+    expect(strip.firstElementChild!.tagName.toLowerCase()).toBe("svg");
+    expect(strip.className).toMatch(/red/);
+    // Its two choices side by side: the address wrong, or right.
+    expect([...notice.element().querySelectorAll("h3")].map((h) => h.textContent)).toEqual([
+      copy.wrong.title,
+      copy.right.title,
+    ]);
     expect(notice.element().querySelector("p")!.textContent).toBe(
       `${copy.why.before}${MP.email}${copy.why.after(exampleBlock.reason, "2026-10-12 09:10")}`,
     );
@@ -1017,11 +1014,30 @@ describe("PoliticianDetails", () => {
     await expect
       .element(notice.getByRole("link", { name: copy.wrong.link }))
       .toHaveAttribute("href", "/staff/import-data/mps");
-    // The address in the facts is just the address.
-    expect(page.getByText(MP.email!, { exact: true }).element().tagName).toBe("DD");
+    // The address is in bold in the strip, and in the facts it's just the address.
+    expect(
+      page
+        .getByText(MP.email!, { exact: true })
+        .all()
+        .map((el) => el.element().tagName),
+    ).toEqual(["STRONG", "DD"]);
     await page.getByLabelText(staffCopy.emails.note).fill("Fixed in Airtable");
     await page.getByRole("button", { name: staffCopy.emails.unblock }).click();
     await vi.waitFor(() => expect(sent).toEqual([{ address: MP.email, note: "Fixed in Airtable" }]));
+
+    // An MP not from Airtable: correcting the address links to the table, as they have no record in it.
+    await rerender(
+      <PoliticianDetails
+        politician={{ ...MP, airtableId: null, emailBlocked: true }}
+        action={vi.fn()}
+        block={{ ...exampleBlock, address: MP.email! }}
+        unblock={fn}
+        {...none}
+      />,
+    );
+    await expect
+      .element(notice.getByRole("link", { name: copy.wrong.airtable }))
+      .toHaveAttribute("href", "https://airtable.com/app/tbl");
 
     // A complaint can't be unblocked here: no advice on fixing it, and no form.
     await rerender(
@@ -1157,7 +1173,7 @@ describe("ImportOverview", () => {
       jobTitles["import-signatories"],
     ]);
     // Under the name, how the newest run ended, tinted to match.
-    const status = (i: number) => cards[i].querySelector("h2 + div > p")!;
+    const status = (i: number) => cards[i].querySelector("h2 + div > div")!;
     expect(status(0).textContent).toBe(`${staffCopy.runs.status.incomplete}2026-10-21 11:17`);
     expect([0, 1, 2, 3, 4].map((i) => status(i).className.match(/green|amber|red/)?.[0])).toEqual([
       "amber",
@@ -1183,7 +1199,7 @@ describe("ImportOverview", () => {
     const { rerender } = await render(
       <ImportOverview newest={[unchanged, undefined, exampleAppliedSync, undefined, undefined]} airtableTable="x" />,
     );
-    const status = (i: number) => document.querySelectorAll("section")[i].querySelector("h2 + div > p")!.className;
+    const status = (i: number) => document.querySelectorAll("section")[i].querySelector("h2 + div > div")!.className;
     expect(status(0)).not.toMatch(/green|amber|red/);
     expect(status(2)).toMatch(/green/);
     await rerender(
@@ -1524,7 +1540,7 @@ describe("RunList", () => {
     await expect.element(page.getByText(/86 names/)).toBeVisible();
     await expect.element(page.getByRole("table")).not.toBeInTheDocument();
     expect(page.getByText(staffCopy.runs.status.failed).element().closest("section")).toHaveTextContent(
-      `${staffCopy.runs.status.failed} ${AT} · ${staffCopy.import.nightly} · No PDF linked`,
+      `${staffCopy.runs.status.failed} ${AT} · ${staffCopy.import.nightly} · ${staffCopy.runs.error("No PDF linked")}`,
     );
   });
 
@@ -1560,7 +1576,9 @@ describe("RunList", () => {
       .toHaveTextContent(
         `${staffCopy.runs.status.ok} ${AT} · ${staffCopy.runs.by("jo@pauseai.uk")} · ${staffCopy.import.result({ matched: 3, added: 7, alreadySet: 0 })}`,
       );
-    await expect.element(second).toHaveTextContent(`${staffCopy.runs.status.failed} ${AT} · AIRTABLE_TOKEN isn't set`);
+    await expect
+      .element(second)
+      .toHaveTextContent(`${staffCopy.runs.status.failed} ${AT} · ${staffCopy.runs.error("AIRTABLE_TOKEN isn't set")}`);
   });
 
   it("shows a members import's counts, or its error", async () => {
@@ -1581,7 +1599,9 @@ describe("RunList", () => {
       );
     await expect
       .element(second)
-      .toHaveTextContent(`${staffCopy.runs.status.failed} ${AT} · ${staffCopy.import.nightly} · Airtable answered 503`);
+      .toHaveTextContent(
+        `${staffCopy.runs.status.failed} ${AT} · ${staffCopy.import.nightly} · ${staffCopy.runs.error("Airtable answered 503")}`,
+      );
   });
 
   it("says how many pages of contacts a Luma run read, and that the contacts are still being read", async () => {
@@ -1616,7 +1636,9 @@ describe("RunList", () => {
     expect(first.element().textContent).not.toContain(staffCopy.runs.status.incomplete);
     await expect
       .element(second)
-      .toHaveTextContent(`${staffCopy.runs.status.failed} ${AT} · ${staffCopy.import.nightly} · Luma answered 500`);
+      .toHaveTextContent(
+        `${staffCopy.runs.status.failed} ${AT} · ${staffCopy.import.nightly} · ${staffCopy.runs.error("Luma answered 500")}`,
+      );
     // Only the newest run is tinted, by how it ended; an older failure is plain.
     expect(first.element().closest("section")!.parentElement!.className).toMatch(/green/);
     expect(second.element().closest("section")!.parentElement!.className).toBe("");
@@ -1692,6 +1714,7 @@ describe("ChangesTable", () => {
       `Polly Placeholder · ${odd.before}${pm.title}${odd.after}`,
       `2 widgets · ${labels.status} maybe · ${labels.campaign} ${pm.title}`,
       `Old MP · ${fields.house} ${staffCopy.houses.commons} → ${staffCopy.houses.lords} · ${fields.party} Labour → ${copy.empty}`,
+      copy.run("13"),
     ]);
     const href = (i: number) => rows[i].element().children[3].querySelector("a")?.getAttribute("href");
     expect([0, 1, 4, 7, 8, 14].map(href)).toEqual([
@@ -1913,7 +1936,7 @@ describe("SupportersTable", () => {
 });
 
 describe("SupporterDetails", () => {
-  it("shows one box of what we hold, each value with where it came from, and the history with its links", async () => {
+  it("shows a card of what we hold, each value with where it came from, and the history with its links", async () => {
     const copy = staffCopy.supporters;
     const first = await render(<SupporterDetails supporter={exampleSupporterDetails} />);
     await expect.element(page.getByRole("heading", { level: 1, name: /Jane Example/ })).toBeVisible();
@@ -1925,10 +1948,14 @@ describe("SupporterDetails", () => {
     await expect.element(page.getByText("+447700900001", { exact: false })).toBeVisible();
     await expect.element(page.getByText("M1 1AE", { exact: false })).toBeVisible();
     expect(page.getByRole("table").all()).toHaveLength(0);
-    // Under the box, whether we'd email her about each topic.
+    // Beside the facts, whether we'd email her about each topic.
     const subscriptions = page.getByRole("region", { name: copy.detail.listsTitle });
     await expect
-      .element(subscriptions.getByText(copy.detail.permissions.reasons["luma-calendar"].unsubscribed("12 Oct 2026")))
+      .element(
+        subscriptions.getByText(copy.detail.permissions.reasons["luma-calendar"].unsubscribed("12 Oct 2026"), {
+          exact: false,
+        }),
+      )
       .toBeVisible();
     await expect.element(page.getByText("1 Mar 2026", { exact: true })).toBeVisible();
     // The history: what, linked, with a status only when it isn't approved.
@@ -2216,13 +2243,19 @@ describe("EmailPermissionTiles", () => {
   const copy = staffCopy.supporters.detail.permissions;
   const tiles = () => [...document.querySelectorAll("li")];
 
-  it("is a tile a topic: the answer, why in a few words, and how we know behind the ? by its name", async () => {
+  it("is a strip a topic: its name and the answer, why in a few words, and how we know behind the ?", async () => {
     await render(<EmailPermissionTiles permissions={exampleSupporterDetails.permissions} />);
     expect(tiles().map((tile) => tile.dataset.send)).toEqual(["no", "yes"]);
     expect(tiles()[0].textContent).toBe(
-      `${copy.topics["luma-calendar"]}?${copy.no}${copy.reasons["luma-calendar"].unsubscribed("12 Oct 2026")}${copy.details["luma-calendar"]}`,
+      `${copy.topics["luma-calendar"]}: ${copy.no}${copy.reasons["luma-calendar"].unsubscribed("12 Oct 2026")}?${copy.details["luma-calendar"]}`,
     );
-    expect(tiles()[1].querySelector("strong")!.textContent).toBe(copy.yes);
+    expect(tiles()[1].querySelector("span")!.textContent).toBe(
+      `${copy.topics["events-and-ways-to-help"]}: ${copy.yes}`,
+    );
+    // Green we'd email them, plain we wouldn't; an answer, so no warning icon.
+    expect(tiles()[1].firstElementChild!.className).toMatch(/green/);
+    expect(tiles()[0].firstElementChild!.className).not.toMatch(/green|amber|red|undefined/);
+    expect(tiles()[0].querySelector("svg")).toBeNull();
     // How we know shows when the ? is clicked.
     await expect.element(page.getByText(copy.details["luma-calendar"])).not.toBeVisible();
     await page.getByRole("button", { name: copy.why }).first().click();
@@ -2232,7 +2265,8 @@ describe("EmailPermissionTiles", () => {
   it("says don't know where an unsubscribe may not have reached us", async () => {
     await render(<EmailPermissionTiles permissions={exampleMemberDetails.permissions} />);
     expect(tiles()[1].dataset.send).toBe("unsure");
-    expect(tiles()[1].querySelector("strong")!.textContent).toBe(copy.unsure);
+    expect(tiles()[1].querySelector("span")!.textContent).toContain(copy.unsure);
+    expect(tiles()[1].firstElementChild!.className).toMatch(/amber/);
   });
 
   it("names the address when there's more than one, and falls back to the reason's own name", async () => {
@@ -2292,7 +2326,7 @@ describe("EmailPermissionTiles", () => {
         permissions={[{ ...blocked, source: "soft" }, { ...exampleSupporterDetails.permissions[1] }]}
       />,
     );
-    expect(tiles()[0].textContent).toBe(`gus@example.com${copy.blocked}${copy.seeBlocked}`);
+    expect(tiles()[0].textContent).toBe(`gus@example.com: ${copy.blocked}${copy.seeBlocked}`);
     expect(tiles()).toHaveLength(2);
   });
 });
