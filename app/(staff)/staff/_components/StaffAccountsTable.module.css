@@ -1,0 +1,25 @@
+/* The accounts table: each row holds a form with checkboxes and a button,
+   so every cell's text sits on their middle. */
+.accounts :is(th, td) {
+  vertical-align: middle;
+}
+
+/* What each permission opens: its name in a lozenge, and beside it, what it
+   opens, a row each, lined up in two columns. */
+.permissions {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: var(--space-2) var(--space-3);
+  max-width: 40rem;
+  margin: var(--space-4) 0;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+}
+
+.permissions > div {
+  display: contents;
+}
+
+.permissions dd {
+  margin: 0;
+}

@@ -1,0 +1,9 @@
+/* A column heading that sorts the table: the heading's own colour and weight, with an underline on hover only. */
+.heading {
+  color: inherit;
+  text-decoration: none;
+}
+
+.heading:hover {
+  text-decoration: underline;
+}

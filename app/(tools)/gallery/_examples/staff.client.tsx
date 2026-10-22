@@ -7,14 +7,20 @@ import type { EmailBlock } from "@/lib/server/email";
 import type { Politician } from "@/lib/server/politicians";
 import EmailBlocksTable from "@/app/(staff)/staff/_components/EmailBlocksTable";
 import { exampleBlock, exampleComplaint } from "@/app/(staff)/staff/_components/EmailBlocksTable.examples";
+import { ImportJobPage } from "@/app/(staff)/staff/_components/ImportJob";
 import JobActions from "@/app/(staff)/staff/_components/JobActions";
 import PoliticianDetails from "@/app/(staff)/staff/_components/PoliticianDetails";
 import PoliticianForm from "@/app/(staff)/staff/_components/PoliticianForm";
 import PoliticianTable from "@/app/(staff)/staff/_components/PoliticianTable";
-import { examplePolitician } from "@/app/(staff)/staff/_components/PoliticianTable.examples";
+import { examplePolitician, examplePoliticianHistory } from "@/app/(staff)/staff/_components/PoliticianTable.examples";
+import { exampleLetter } from "@/app/(staff)/staff/_components/LettersTable.examples";
 import Run from "@/app/(staff)/staff/_components/Run";
+import EraseForm from "@/app/(staff)/staff/_components/EraseForm";
+import RemoveAccountForm from "@/app/(staff)/staff/_components/RemoveAccountForm";
+import StaffAccountForm from "@/app/(staff)/staff/_components/StaffAccountForm";
+import StaffAccountsTable from "@/app/(staff)/staff/_components/StaffAccountsTable";
 import UnblockForm from "@/app/(staff)/staff/_components/UnblockForm";
-import { exampleHeldSync } from "@/app/(staff)/staff/_components/RunList.examples";
+import { exampleFailedRun, exampleHeldSync, exampleRun } from "@/app/(staff)/staff/_components/RunList.examples";
 import { Logged } from "../_components/wiring";
 
 const [pm, bill] = campaigns;
@@ -100,7 +106,10 @@ export function PoliticianDetailsExample({
           }
           action={log("action")}
           block={blocked ? { ...exampleBlock, address: examplePolitician.email! } : undefined}
+          letters={[{ ...exampleLetter, mpName: examplePolitician.name, politicianId: examplePolitician.id }]}
+          history={examplePoliticianHistory}
           unblock={log("unblock")}
+          airtableTable="https://airtable.com/appExample/tblExample"
         />
       )}
     </Logged>
@@ -126,7 +135,83 @@ export function UnblockFormExample() {
   );
 }
 
-/** An import's button, its runs logged, and the link to its history. */
+/** A job's page, its button and any held sync's buttons logged: the MP check with three runs, or the signatory import, never run. */
+export function ImportJobPageExample({ never = false }: { never?: boolean }) {
+  return (
+    <Logged>
+      {(log) =>
+        never ? (
+          <ImportJobPage
+            job="import-signatories"
+            runs={[]}
+            run={log("run")}
+            decide={log("decide")}
+            airtableTable="https://airtable.com/"
+          />
+        ) : (
+          <ImportJobPage
+            job="check-mps"
+            runs={[
+              exampleRun("check-mps", { problems: [] }, { id: 7, at: "2026-11-03T01:00:00Z" }),
+              exampleFailedRun("check-mps", "Parliament answered 500", { id: 6, at: "2026-11-02T01:00:00Z" }),
+              exampleRun("check-mps", { problems: [] }, { id: 5, at: "2026-11-01T01:00:00Z" }),
+            ]}
+            run={log("run")}
+            decide={log("decide")}
+            airtableTable="https://airtable.com/"
+          />
+        )
+      }
+    </Logged>
+  );
+}
+
+/** An import's button, its runs logged. */
 export function JobActionsExample() {
-  return <Logged>{(log) => <JobActions action={log("action")} label="Check now" job="check-mps" />}</Logged>;
+  return <Logged>{(log) => <JobActions action={log("action")} label="Check now" />}</Logged>;
+}
+
+/** The seeded admin, an admin and someone with no permissions, each row's forms logged. */
+export function StaffAccountsTableExample() {
+  return (
+    <Logged>
+      {(log) => (
+        <StaffAccountsTable
+          save={log("saveStaffAccount")}
+          remove={log("removeStaffAccount")}
+          accounts={[
+            {
+              email: "admin@pauseai.uk",
+              permissions: ["admin"],
+              addedBy: "migration",
+              addedAt: "2026-10-16T12:00:00Z",
+            },
+            {
+              email: "jo@pauseai.uk",
+              permissions: ["admin"],
+              addedBy: "admin@pauseai.uk",
+              addedAt: "2026-10-20T09:00:00Z",
+            },
+            { email: "sam@pauseai.uk", permissions: [], addedBy: "jo@pauseai.uk", addedAt: "2026-10-21T10:30:00Z" },
+          ]}
+        />
+      )}
+    </Logged>
+  );
+}
+
+export function StaffAccountFormExample() {
+  return <Logged>{(log) => <StaffAccountForm permissions={[]} save={log("saveStaffAccount")} />}</Logged>;
+}
+
+export function RemoveAccountFormExample() {
+  return <Logged>{(log) => <RemoveAccountForm email="sam@pauseai.uk" remove={log("removeStaffAccount")} />}</Logged>;
+}
+
+export function EraseFormExample() {
+  return (
+    <Logged>
+      {(log) => <EraseForm supporter={{ id: 7, name: "Jane Example" }} action={log("eraseSupporterNow")} />}
+    </Logged>
+  );
 }

@@ -35,6 +35,11 @@ const REDIRECTS = [
     to: "/global-ai-sentiment-2026",
   },
   {
+    name: "the Glasgow local group's old path, since it became the Scotland local group",
+    from: "/glasgow",
+    to: "/scotland",
+  },
+  {
     // Temporary: there's no list of protests yet, so it goes to the current one.
     name: "the protests section, to the current protest",
     from: "/protests",

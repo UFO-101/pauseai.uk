@@ -55,7 +55,7 @@ const SERVICES = [
   // Luma's API, not its event pages, which are ordinary links.
   {
     name: "Luma's API",
-    files: ["luma-calendar.ts", "luma-guests.ts"],
+    files: ["luma-api.ts", "luma-calendar.ts", "luma-guests.ts"],
     host: "(?:api2|public-api)\\.luma\\.com",
     why: "and its key stays on the server",
   },

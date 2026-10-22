@@ -1,0 +1,76 @@
+import Table from "@/components/ui/Table";
+import { staffCopy } from "@/lib/content/staff-interface";
+import { PERMISSIONS } from "@/lib/staff-permissions";
+import type { StaffAccount } from "@/lib/server/staff-accounts";
+import { staffTime } from "@/lib/staff-time";
+import RemoveAccountForm from "./RemoveAccountForm";
+import StaffAccountForm from "./StaffAccountForm";
+import styles from "./StaffAccountsTable.module.css";
+import Tag from "@/components/ui/Tag";
+
+type Action = (form: FormData) => void | Promise<void>;
+
+/**
+ * Every account, each row a form to change its permissions and, at the
+ * right, a button to remove it; what each permission opens, a row each,
+ * its name in a lozenge; and under
+ * them a form to add someone, who then gets permissions in their row.
+ */
+export default function StaffAccountsTable({
+  accounts,
+  save,
+  remove,
+  notPauseai = false,
+}: {
+  accounts: StaffAccount[];
+  save: Action;
+  remove: Action;
+  /** The last address added wasn't at pauseai.uk: the form for someone new says so. */
+  notPauseai?: boolean;
+}) {
+  const columns = staffCopy.accounts.columns;
+  return (
+    <>
+      <div className={styles.accounts}>
+        <Table>
+          <thead>
+            <tr>
+              <th>{columns.email}</th>
+              <th>{columns.permissions}</th>
+              <th>{columns.addedBy}</th>
+              <th>{columns.addedAt}</th>
+              <th />
+            </tr>
+          </thead>
+          <tbody>
+            {accounts.map((account) => (
+              <tr key={account.email}>
+                <td>{account.email}</td>
+                <td>
+                  <StaffAccountForm email={account.email} permissions={account.permissions} save={save} />
+                </td>
+                <td>{account.addedBy}</td>
+                <td>{staffTime(account.addedAt)}</td>
+                <td>
+                  <RemoveAccountForm email={account.email} remove={remove} />
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </Table>
+      </div>
+      <dl className={styles.permissions}>
+        {PERMISSIONS.map((permission) => (
+          <div key={permission}>
+            <dt>
+              <Tag>{staffCopy.accounts.names[permission]}</Tag>
+            </dt>
+            <dd>{staffCopy.accounts.opens[permission]}</dd>
+          </div>
+        ))}
+      </dl>
+      <h2>{staffCopy.accounts.addTitle}</h2>
+      <StaffAccountForm permissions={[]} save={save} notPauseai={notPauseai} />
+    </>
+  );
+}

@@ -1,6 +1,5 @@
 import type { ReactNode } from "react";
 import styles from "./ResultBox.module.css";
-import { ErrorText } from "@/components/ui/Text";
 import Actions from "@/components/ui/Actions";
 
 /** A result with more lines than this starts folded, so one big run doesn't fill the page. */
@@ -11,12 +10,12 @@ type Props = {
   summary: ReactNode;
   /** How many lines the detail has: more than OPEN_UP_TO starts folded. */
   lines?: number;
+  /** Starts unfolded however long the detail is: the newest run, the job's state now. */
+  open?: boolean;
   /** Buttons that stay outside the fold, such as apply and discard. */
   actions?: ReactNode;
   /** The detail: lists or a table. None, and there's nothing to fold. */
   children?: ReactNode;
-  /** Marks a failed run. */
-  error?: boolean;
   "aria-label"?: string;
 };
 
@@ -24,12 +23,12 @@ type Props = {
  * The box every import's and check's result is shown in: a summary line,
  * and under it, folded with the browser's arrow, the detail.
  */
-export default function ResultBox({ summary, lines = 0, actions, children, error, ...rest }: Props) {
-  const line = error ? <ErrorText>{summary}</ErrorText> : <span>{summary}</span>;
+export default function ResultBox({ summary, lines = 0, open = false, actions, children, ...rest }: Props) {
+  const line = <span>{summary}</span>;
   return (
     <section className={styles.sync} aria-label={rest["aria-label"]}>
       {children ? (
-        <details open={lines <= OPEN_UP_TO}>
+        <details open={open || lines <= OPEN_UP_TO}>
           <summary>{line}</summary>
           {children}
         </details>

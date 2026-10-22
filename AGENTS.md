@@ -91,7 +91,7 @@ Before you say a change is done, run `npm test`. That's both Vitest projects wit
 
 ## Never write final copy
 
-People write the words visitors and recipients read: page text, letters, emails, form labels and messages. When code needs copy that doesn't exist yet, write a placeholder. Start it with ⁂ and write it in Latin, e.g. "⁂ Lorem ipsum dolor sit amet", so it can't be mistaken for the real thing.
+People write the words visitors and recipients read: page text, letters, emails, form labels and messages. When code needs copy that doesn't exist yet, write a placeholder: a draft in plain English that starts with ⁂, e.g. "⁂ Import the calendar now", so a person can see what the words must say and it can't be mistaken for the real thing.
 
 `tests/checks/placeholder-copy.test.ts` fails while ⁂ appears anywhere in the repo outside this file. So placeholders can't be merged by accident.
 

@@ -76,9 +76,9 @@ describe("Nav", () => {
     expect(container.querySelector("header img")?.getAttribute("src")).toContain("manchester_logo");
     expect(container.querySelector('nav a[href="/#join"]')).not.toBeNull();
 
-    navigation.pathname = "/glasgow/";
+    navigation.pathname = "/scotland/";
     await rerender(<Nav />);
-    await expect.element(page.getByText("Glasgow Group")).toBeVisible();
+    await expect.element(page.getByText("Scotland Group")).toBeVisible();
   });
 
   it("sets the header height for the stylesheet", async () => {

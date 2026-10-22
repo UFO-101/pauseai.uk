@@ -1,4 +1,5 @@
-import { campaignBySlug } from "@/lib/email-your-mp";
+import Link from "next/link";
+import { campaignBySlug, campaignPath } from "@/lib/email-your-mp";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { staffTime } from "@/lib/staff-time";
 import type { LetterSummary } from "@/lib/server/letters";
@@ -7,7 +8,17 @@ import { Muted } from "@/components/ui/Text";
 import Tag from "@/components/ui/Tag";
 import Table from "@/components/ui/Table";
 
-/** Letters, with each change of status (sent, bounced, complained about) and each reply. */
+/** The campaign's title, linked to its page on the site; a slug no campaign has any more, as it is. */
+function Campaign({ slug }: { slug: string }) {
+  const campaign = campaignBySlug(slug);
+  return campaign ? <Link href={campaignPath(campaign)}>{campaign.title}</Link> : slug;
+}
+
+/**
+ * Letters, with each change of status (sent, bounced, complained about) and
+ * each reply. The sender leads to their supporter, the MP to their page,
+ * the campaign to its page on the site.
+ */
 export default function LettersTable({ letters }: { letters: LetterSummary[] }) {
   if (letters.length === 0) return <p>{staffCopy.letters.none}</p>;
   return (
@@ -29,15 +40,22 @@ export default function LettersTable({ letters }: { letters: LetterSummary[] }) 
           <tr key={letter.id}>
             <td>{staffTime(letter.createdAt)}</td>
             <td>
-              {letter.senderName}
+              {letter.supporterId === null ? (
+                letter.senderName
+              ) : (
+                <Link href={`/staff/supporters/${letter.supporterId}`}>{letter.senderName}</Link>
+              )}
               <br />
               <Muted>{letter.senderEmail}</Muted>
             </td>
             <td>{letter.contactConsent ? staffCopy.letters.consent.yes : staffCopy.letters.consent.no}</td>
             <td>
-              {letter.mpName} {letter.isTest && <Tag>{staffCopy.politicians.testMp}</Tag>}
+              <Link href={`/staff/politicians/${letter.politicianId}`}>{letter.mpName}</Link>{" "}
+              {letter.isTest && <Tag>{staffCopy.politicians.testMp}</Tag>}
             </td>
-            <td>{campaignBySlug(letter.campaign)?.title ?? letter.campaign}</td>
+            <td>
+              <Campaign slug={letter.campaign} />
+            </td>
             <td>{staffCopy.letters.status[letter.status] ?? letter.status}</td>
             <td>{letter.repliedAt && staffTime(letter.repliedAt)}</td>
             <td>

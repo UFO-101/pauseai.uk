@@ -12,15 +12,15 @@ const WHATSAPP = { label: "Join the WhatsApp community", href: site.whatsappUrl,
 const WEST_OF_ENGLAND_LINKTREE = "https://linktr.ee/PauseAI_West_of_England";
 
 export const localGroupPages: Record<LocalGroupName, LocalGroupPageContent> = {
-  Glasgow: {
-    name: "Glasgow",
+  Scotland: {
+    name: "Scotland",
     hero: {
       lede: "Bringing AI safety conversations to Scotland with public events, panels, and community organising.",
       actions: [
         { label: "View event calendar", href: site.social.luma, variant: "primary", newTab: true },
         { ...WHATSAPP, variant: "ghost" },
       ],
-      photo: "/images/local-groups/glasgow/GlasgowUniUnion.jpg",
+      photo: "/images/local-groups/scotland/GlasgowUniUnion.jpg",
     },
     activities: {
       gridStyle: { gridTemplateColumns: "1fr" },
@@ -28,7 +28,7 @@ export const localGroupPages: Record<LocalGroupName, LocalGroupPageContent> = {
         {
           title: "AI Risk – A Conversation We All Need to Have",
           text: "A public discussion unpacking the risks and responsibilities around advanced AI systems, featuring local voices and hands-on conversation.",
-          image: "/images/local-groups/glasgow/GlasgowUniUnion.jpg",
+          image: "/images/local-groups/scotland/GlasgowUniUnion.jpg",
           href: "https://luma.com/5bmd6rx8",
           style: { maxWidth: 480 },
         },

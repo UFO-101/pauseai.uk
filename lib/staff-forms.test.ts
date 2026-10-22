@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { idFrom, politicianDetailsFrom, signedFrom, unblockFrom } from "./staff-forms";
+import { eraseFrom, idFrom, permissionsFrom, politicianDetailsFrom, signedFrom, unblockFrom } from "./staff-forms";
 
 function form(fields: Record<string, string | Blob>) {
   const data = new FormData();
@@ -60,11 +60,41 @@ describe("unblockFrom", () => {
       address: "jo@example.org",
       note: "fixed",
     });
-    expect(unblockFrom(form({ address: "jo@example.org" }))).toEqual({ address: "jo@example.org", note: "" });
   });
 
-  it("refuses anything that isn't an address", () => {
+  it("refuses anything that isn't an address, and an unblock with no note", () => {
+    expect(unblockFrom(form({ address: "jo@example.org" }))).toBeUndefined();
+    expect(unblockFrom(form({ address: "jo@example.org", note: "  " }))).toBeUndefined();
     expect(unblockFrom(form({ address: "nobody" }))).toBeUndefined();
     expect(unblockFrom(form({}))).toBeUndefined();
+  });
+});
+
+describe("permissionsFrom", () => {
+  it("reads whose, lowercased, and which boxes are ticked", () => {
+    expect(permissionsFrom(form({ email: " Jo@PauseAI.uk ", "permission:supporters": "on" }))).toEqual({
+      email: "jo@pauseai.uk",
+      permissions: ["supporters"],
+    });
+    expect(permissionsFrom(form({ email: "jo@pauseai.uk" }))).toEqual({ email: "jo@pauseai.uk", permissions: [] });
+    expect(
+      permissionsFrom(form({ email: "jo@pauseai.uk", "permission:admin": "on", "permission:root": "on" })),
+    ).toEqual({
+      email: "jo@pauseai.uk",
+      permissions: ["admin"],
+    });
+    expect(permissionsFrom(form({ email: "nobody", "permission:admin": "on" }))).toBeUndefined();
+  });
+});
+
+describe("eraseFrom", () => {
+  it("needs the supporter, a reference and the confirmation box", () => {
+    expect(eraseFrom(form({ id: "7", reference: " ICO-123 ", confirm: "on" }))).toEqual({
+      id: 7,
+      reference: "ICO-123",
+    });
+    expect(eraseFrom(form({ id: "7", reference: "", confirm: "on" }))).toBeUndefined();
+    expect(eraseFrom(form({ id: "7", reference: "x" }))).toBeUndefined();
+    expect(eraseFrom(form({ id: "x", reference: "x", confirm: "on" }))).toBeUndefined();
   });
 });

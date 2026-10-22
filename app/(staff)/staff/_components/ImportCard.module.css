@@ -1,0 +1,83 @@
+/* The import page: a card per job, in a grid. */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(24rem, 1fr));
+  gap: var(--space-5);
+  margin-top: var(--space-5);
+}
+
+/* A card: its parts spaced down it. The title's link stretches over the
+   whole card, so the card is the target; hovering it brings the border up
+   to the accent. */
+.card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+  padding: var(--space-5);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.card:hover {
+  border-color: var(--accent);
+  box-shadow: 0 4px 16px var(--shadow);
+}
+
+.card:has(.open:focus-visible) {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-offset);
+}
+
+.title {
+  margin: 0;
+  font-size: var(--text-lg);
+}
+
+.open {
+  color: var(--text);
+  text-decoration: none;
+}
+
+.open:focus-visible {
+  outline: none;
+}
+
+.open::after {
+  position: absolute;
+  inset: 0;
+  content: "";
+}
+
+/* The description's own links sit above the stretched one. */
+.intro {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.intro a {
+  position: relative;
+  z-index: 1;
+}
+
+/* How the newest run ended, under the name. */
+.status {
+  min-width: 0;
+}
+
+@media (max-width: 720px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card {
+    transition: none;
+  }
+}

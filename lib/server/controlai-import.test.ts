@@ -68,8 +68,20 @@ describeWithDatabase("importControlAiLetter", () => {
       { name: "Sam Smith", updatedBy: "controlai" },
     ]);
     expect(await recentControlAiImports()).toMatchObject([{ status: "ok", startedBy: "jo@pauseai.uk", result }]);
-    expect(await query("SELECT actor, action, details FROM audit_log")).toEqual([
+    // The run's summary, then a status entry per politician, as setting one by hand logs it.
+    expect(await query("SELECT actor, action, details FROM audit_log ORDER BY id LIMIT 1")).toEqual([
       { actor: "controlai", action: "import ControlAI letter", details: { added: 4, removed: 0, problems: 2 } },
+    ]);
+    expect(
+      await query(
+        `SELECT p.name, a.details->>'status' AS status FROM audit_log a JOIN politicians p ON p.id = (a.details->>'politicianId')::bigint
+         WHERE a.action = 'set status' AND a.actor = 'controlai' ORDER BY p.name`,
+      ),
+    ).toEqual([
+      { name: "Lord Example", status: "signed" },
+      { name: "Ms Dora Dummy", status: "signed" },
+      { name: "Polly Placeholder", status: "signed" },
+      { name: "Sam Smith", status: "signed" },
     ]);
   });
 
@@ -96,7 +108,9 @@ describeWithDatabase("importControlAiLetter", () => {
     ).toEqual([{ n: 1 }]);
     // Nothing changed, so nothing to log.
     expect(await importControlAiLetter(NIGHTLY)).toMatchObject({ added: 0, removed: 0 });
-    expect(await query("SELECT count(*)::int AS n FROM audit_log")).toEqual([{ n: 1 }]);
+    expect(await query("SELECT count(*)::int AS n FROM audit_log WHERE action = 'import ControlAI letter'")).toEqual([
+      { n: 1 },
+    ]);
   });
 
   it("keeps the failure and changes nothing when the page has no PDF, or too few names", async () => {

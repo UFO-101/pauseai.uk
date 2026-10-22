@@ -27,9 +27,18 @@ const TABLES = [
   "import_runs",
   "letter_events",
   "letters",
+  "luma_erased",
+  "luma_events",
+  "luma_guests",
+  "luma_import_state",
+  "luma_people",
+  "opt_outs",
   "politicians",
   "staff_login_links",
+  "staff_accounts",
   "staff_sessions",
+  "supporter_links",
+  "supporters",
 ];
 
 /**

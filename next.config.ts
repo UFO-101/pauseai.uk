@@ -138,6 +138,8 @@ const nextConfig: NextConfig = {
       // Staff alerts about bounced letters linked to the blocked emails page
       // under its first name.
       { source: "/staff/blocked-addresses", destination: "/staff/blocked-emails", permanent: true },
+      // The Glasgow local group became the Scotland local group.
+      { source: "/glasgow", destination: "/scotland", permanent: true },
       // There's no list of protests yet, so /protests goes to the current one.
       // Temporary, so browsers don't remember it when the next protest comes.
       { source: "/protests", destination: march.path, permanent: false },

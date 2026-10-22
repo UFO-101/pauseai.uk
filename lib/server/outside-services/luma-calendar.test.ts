@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { http, HttpResponse } from "msw";
 import { server } from "@/tests/fixtures/msw";
-import { getEvents } from "./luma-calendar";
+import { getEvents, listCalendarContacts, listCalendarEvents } from "./luma-calendar";
 
 const CALENDAR = "https://public-api.luma.com/v1/calendars/events/list";
 
@@ -186,5 +186,122 @@ describe("getEvents", () => {
   it("returns nothing when the request fails", async () => {
     server.use(http.get(CALENDAR, () => HttpResponse.error()));
     expect(await getEvents()).toEqual([]);
+  });
+});
+
+describe("listCalendarEvents", () => {
+  beforeEach(() => vi.stubEnv("LUMA_API_KEY", "k"));
+  afterEach(() => vi.unstubAllEnvs());
+
+  it("asks for every event newest first, ours and others', and reads the fixture's public ones with their IDs", async () => {
+    let request: Request | undefined;
+    server.use(
+      http.get(CALENDAR, ({ request: r }) => {
+        request = r;
+        return undefined;
+      }),
+    );
+    const page = await listCalendarEvents();
+    const params = new URL(request!.url).searchParams;
+    expect(params.get("sort_direction")).toBe("desc");
+    expect(params.has("before")).toBe(false);
+    expect(params.has("after")).toBe(false);
+    expect(params.get("pagination_limit")).toBe("50");
+    expect(params.get("pagination_cursor")).toBeNull();
+    expect(params.getAll("access")).toEqual(["manage", "view"]);
+    expect(page.entries).toHaveLength(9);
+    expect(page.entries[0]).toMatchObject({
+      id: "evt-fixture-london-protest",
+      url: "fixture-london-protest",
+      access: "manage",
+      place: { latitude: 51.5007, longitude: -0.1263 },
+    });
+    expect(page.nextCursor).toBeUndefined();
+  });
+
+  it("passes the cursor on, takes api_id and access view, and drops entries that aren't public events", async () => {
+    let cursor: string | null = null;
+    server.use(
+      http.get(CALENDAR, ({ request }) => {
+        cursor = new URL(request.url).searchParams.get("pagination_cursor");
+        return HttpResponse.json({
+          entries: [
+            {
+              api_id: "evt-old",
+              url: "x",
+              name: "X",
+              start_at: "2026-01-01T00:00:00Z",
+              visibility: "public",
+              access: "view",
+            },
+            { url: "no-id", name: "Y", start_at: "2026-01-01T00:00:00Z", visibility: "public" },
+            { id: "evt-private", url: "p", name: "P", start_at: "2026-01-01T00:00:00Z", visibility: "private" },
+            null,
+          ],
+          has_more: true,
+          next_cursor: "c3",
+        });
+      }),
+    );
+    const page = await listCalendarEvents("c2");
+    expect(cursor).toBe("c2");
+    expect(page.entries.map((e) => [e.id, e.access])).toEqual([["evt-old", "view"]]);
+    expect(page.nextCursor).toBe("c3");
+  });
+});
+
+describe("listCalendarContacts", () => {
+  const CONTACTS = "https://public-api.luma.com/v1/calendars/contacts/list";
+  beforeEach(() => vi.stubEnv("LUMA_API_KEY", "k"));
+  afterEach(() => vi.unstubAllEnvs());
+
+  it("asks for the contacts newest first, and reads the fixture's", async () => {
+    let request: Request | undefined;
+    server.use(
+      http.get(CONTACTS, ({ request: r }) => {
+        request = r;
+        return undefined;
+      }),
+    );
+    const page = await listCalendarContacts();
+    const params = new URL(request!.url).searchParams;
+    expect(params.get("sort_column")).toBe("created_at");
+    expect(params.get("sort_direction")).toBe("desc");
+    expect(params.get("pagination_cursor")).toBeNull();
+    expect(page.entries).toEqual([
+      {
+        userId: "usr-fixture-3",
+        email: "alex.fixture@example.com",
+        name: "Alex Fixture",
+        createdAt: "2026-10-01T09:00:00.000Z",
+      },
+      {
+        userId: "usr-fixture-1",
+        email: "jane.fixture@example.com",
+        name: "Jane Fixture",
+        createdAt: "2026-09-20T09:00:00.000Z",
+      },
+    ]);
+    expect(page.nextCursor).toBe("page-2");
+    expect((await listCalendarContacts("page-2")).entries).toHaveLength(1);
+  });
+
+  it("takes id for a contact without user_id and no name, and drops one without an email or a date", async () => {
+    server.use(
+      http.get(CONTACTS, () =>
+        HttpResponse.json({
+          entries: [
+            { id: "usr-a", email: "a@example.com", name: null, created_at: "2026-01-01T00:00:00Z" },
+            { user_id: "usr-b", created_at: "2026-01-01T00:00:00Z" },
+            { user_id: "usr-c", email: "c@example.com" },
+            null,
+          ],
+          has_more: false,
+        }),
+      ),
+    );
+    expect((await listCalendarContacts()).entries).toEqual([
+      { userId: "usr-a", email: "a@example.com", name: "", createdAt: "2026-01-01T00:00:00Z" },
+    ]);
   });
 });

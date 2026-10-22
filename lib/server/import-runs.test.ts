@@ -22,9 +22,6 @@ describeWithDatabase("the import log", () => {
     expect(await latestRun("check-mps")).toMatchObject({ id });
     expect(await latestRun("sync-mps")).toMatchObject({ error: "not an Error" });
     expect(await latestRun("import-controlai")).toBeUndefined();
-    // Every job's, newest first, or just a few.
-    expect((await listRuns()).map((run) => run.job)).toEqual(["sync-mps", "sync-mps", "sync-mps", "check-mps"]);
-    expect(await listRuns(undefined, 1)).toHaveLength(1);
   });
 
   it("keepingFailure keeps a failure and throws it on, and leaves success to the work", async () => {

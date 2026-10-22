@@ -1,10 +1,11 @@
 import { notFound } from "next/navigation";
+import { fixturesEnabled } from "@/lib/fixtures-enabled";
 import { found } from "@/lib/found";
 import type { Group } from "./types";
 
 /** Only fixture builds have a gallery: its forms and examples aren't for the public. */
 export function galleryEnabled(): boolean {
-  return process.env.DATA_FIXTURES === "1";
+  return fixturesEnabled();
 }
 
 /** A 404 outside a fixture build. */

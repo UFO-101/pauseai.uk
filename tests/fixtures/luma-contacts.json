@@ -1,0 +1,26 @@
+{
+  "entries": [
+    {
+      "id": "usr-fixture-3",
+      "user_id": "usr-fixture-3",
+      "email": "alex.fixture@example.com",
+      "name": "Alex Fixture",
+      "created_at": "2026-10-01T09:00:00.000Z"
+    },
+    {
+      "id": "usr-fixture-1",
+      "user_id": "usr-fixture-1",
+      "email": "jane.fixture@example.com",
+      "name": "Jane Fixture",
+      "created_at": "2026-09-20T09:00:00.000Z"
+    },
+    {
+      "id": "usr-fixture-6",
+      "user_id": "usr-fixture-6",
+      "email": "follower.fixture@example.com",
+      "name": "Fay Follower",
+      "created_at": "2026-08-01T09:00:00.000Z"
+    }
+  ],
+  "has_more": false
+}

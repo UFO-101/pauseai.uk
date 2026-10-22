@@ -69,6 +69,17 @@
   box-shadow: 0 0 0 2px rgb(var(--pause-orange-rgb) / 0.35);
 }
 
+/* Something that can't be undone: red, and only red. */
+.btn.danger {
+  background: var(--danger);
+  color: var(--white);
+}
+
+.btn.danger:hover {
+  background: var(--danger);
+  box-shadow: 0 0 0 2px rgb(var(--black-rgb) / 0.15);
+}
+
 .btn.small {
   padding: var(--button-padding, 9px 14px);
   font-size: var(--button-font-size, 14px);

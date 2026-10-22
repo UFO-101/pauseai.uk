@@ -1,0 +1,13 @@
+/* The supporters list. */
+
+/* The badges in a row, with room between them. */
+.badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+
+/* The way to the pages before and after, clear of the table's last row. */
+.paging {
+  margin-top: var(--space-4);
+}

@@ -194,6 +194,10 @@ describeWithDatabase("submitLetter", () => {
     expect(letter).not.toHaveProperty("body");
     expect(letter).not.toHaveProperty("body_html");
     expect(letter.sent_at).not.toBeNull();
+    // The sender is a supporter from the moment the letter is kept.
+    expect(await query("SELECT letter_id::int AS letter_id, matched_value FROM supporter_links")).toEqual([
+      { letter_id: Number(letter.id), matched_value: "jane@example.com" },
+    ]);
     expect(
       (await query<{ status: string }>("SELECT status FROM letter_events ORDER BY id")).map((e) => e.status),
     ).toEqual(["sending", "sent"]);

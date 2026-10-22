@@ -7,6 +7,7 @@ import {
   getPolitician,
   isHouse,
   listPoliticians,
+  politicianHistory,
   politiciansSearch,
   setStatus,
   signatories,
@@ -14,6 +15,7 @@ import {
   updatePolitician,
 } from "./politicians";
 import { recordProblem } from "./email";
+import { logChange } from "./audit";
 
 const PM = "regulate-letter-pm";
 const BILL = "support-sobel-bill";
@@ -37,23 +39,43 @@ describe("isHouse", () => {
 
 describe("politiciansSearch", () => {
   it("keeps what was typed, and filters by it", () => {
-    expect(politiciansSearch({ q: "Jo", house: "lords", campaign: BILL, email: "blocked" })).toEqual({
+    expect(
+      politiciansSearch({ q: "Jo", house: "lords", campaign: BILL, email: "blocked", sort: "party", dir: "desc" }),
+    ).toEqual({
       q: "Jo",
       house: "lords",
       campaign: BILL,
       email: "blocked",
-      filter: { search: "Jo", house: "lords", campaign: BILL, emailBlocked: true },
+      sort: "party",
+      dir: "desc",
+      filter: { search: "Jo", house: "lords", campaign: BILL, emailBlocked: true, sort: { key: "party", dir: "desc" } },
     });
   });
 
   it("filters by nothing that's blank, missing or not a house", () => {
-    const none = { search: undefined, house: undefined, campaign: undefined, emailBlocked: undefined };
-    expect(politiciansSearch({})).toEqual({ q: "", house: "", campaign: "", email: "", filter: none });
-    expect(politiciansSearch({ q: "", house: "hogwarts", campaign: "", email: "other" })).toEqual({
+    const none = {
+      search: undefined,
+      house: undefined,
+      campaign: undefined,
+      emailBlocked: undefined,
+      sort: { key: "name", dir: "asc" },
+    };
+    expect(politiciansSearch({})).toEqual({
+      q: "",
+      house: "",
+      campaign: "",
+      email: "",
+      sort: "",
+      dir: "",
+      filter: none,
+    });
+    expect(politiciansSearch({ q: "", house: "hogwarts", campaign: "", email: "other", sort: "age" })).toEqual({
       q: "",
       house: "hogwarts",
       campaign: "",
       email: "other",
+      sort: "age",
+      dir: "",
       filter: none,
     });
   });
@@ -124,6 +146,13 @@ describeWithDatabase("politicians", () => {
     expect((await listPoliticians({ search: "westminster" })).map((p) => p.id)).toEqual([mp]);
     expect((await listPoliticians({ search: "CROSSBENCH" })).map((p) => p.id)).toEqual([peer]);
     expect((await listPoliticians({ house: "lords" })).map((p) => p.id)).toEqual([peer]);
+    // Sorted by a column, either way, the test MPs staying first.
+    const byParty = (dir: "asc" | "desc") =>
+      listPoliticians({ sort: { key: "party", dir } }).then((rows) =>
+        rows.filter((p) => !p.isTest).map((p) => p.party),
+      );
+    expect(await byParty("asc")).toEqual([...(await byParty("asc"))].sort());
+    expect(await byParty("desc")).toEqual([...(await byParty("asc"))].reverse());
     expect((await listPoliticians({ campaign: PM })).map((p) => p.id)).toEqual([peer]);
     expect(await listPoliticians({}, 1)).toHaveLength(1);
     expect((await listPoliticians({ search: "Polly" }))[0]).toEqual({
@@ -138,8 +167,23 @@ describeWithDatabase("politicians", () => {
       isTest: false,
       sitting: true,
       emailBlocked: false,
+      letters: 0,
+      replies: 0,
       statuses: {},
     });
+  });
+
+  it("counts the letters to each politician, leaving out those never sent, and how many were answered", async () => {
+    const mp = await addTestPolitician();
+    await query(
+      `INSERT INTO letters (campaign, politician_id, sender_name, sender_email, sender_address, sender_postcode, contact_consent, subject, reply_hash, status, replied_at)
+       VALUES ('regulate-letter-pm', $1, 'A', 'a@example.com', 'x', 'ZZ9 9ZZ', false, 'S', 'a', 'sent', now()),
+              ('regulate-letter-pm', $1, 'B', 'b@example.com', 'x', 'ZZ9 9ZZ', false, 'S', 'b', 'bounced', NULL),
+              ('regulate-letter-pm', $1, 'C', 'c@example.com', 'x', 'ZZ9 9ZZ', false, 'S', 'c', 'not_sent', NULL)`,
+      [mp],
+    );
+    expect(await getPolitician(mp)).toMatchObject({ letters: 2, replies: 1 });
+    expect((await listPoliticians({ sort: { key: "letters", dir: "desc" } }))[0].id).toBe(mp);
   });
 
   it("knows whose address is blocked, whatever its case, and lists only them when asked", async () => {
@@ -171,6 +215,41 @@ describeWithDatabase("politicians", () => {
 
     const actions = await query<{ action: string }>("SELECT action FROM audit_log ORDER BY id");
     expect(actions.map((a) => a.action)).toEqual(["edit politician"]);
+  });
+
+  it("tells one politician's history from the audit log: edits, statuses, and their address blocked or unblocked, newest first", async () => {
+    const peer = await addPeer();
+    const mp = await addTestPolitician();
+    await updatePolitician(peer, { ...PEER, party: "Labour" }, "sam@pauseai.uk");
+    await setStatus(mp, PM, { status: "signed", date: null, note: "" }, "jo@pauseai.uk");
+    await setStatus(peer, PM, { status: "signed", date: null, note: "" }, "jo@pauseai.uk");
+    await recordProblem({
+      address: "Polly.Placeholder.MP@parliament.uk",
+      kind: "hard",
+      reason: "Gone",
+      messageId: "m",
+      canReset: true,
+    });
+    // As unblock() logs it, without asking the provider.
+    await logChange("jo@pauseai.uk", "unblock address", {
+      address: "polly.placeholder.mp@parliament.uk",
+      note: "Back",
+    });
+    // As the imports log them: added, and no longer sitting.
+    await logChange("jo@pauseai.uk", "add politician", { id: peer, name: "Lord Example" });
+    await logChange("sync", "remove politician", { id: peer, name: "Lord Example" });
+    // Not theirs: a held sync's run with the same id, and someone else's status.
+    await logChange("jo@pauseai.uk", "apply held MP sync", { id: peer });
+    expect((await politicianHistory(peer, null)).map((c) => [c.action, c.actor])).toEqual([
+      ["remove politician", "sync"],
+      ["add politician", "jo@pauseai.uk"],
+      ["set status", "jo@pauseai.uk"],
+      ["edit politician", "sam@pauseai.uk"],
+    ]);
+    const history = await politicianHistory(mp, "Polly.Placeholder.MP@parliament.uk");
+    expect(history.map((c) => c.action)).toEqual(["unblock address", "block address", "set status"]);
+    expect(history[0].details).toEqual({ address: "polly.placeholder.mp@parliament.uk", note: "Back" });
+    expect(await politicianHistory(mp, null)).toHaveLength(1);
   });
 
   it("lists who signed, by name, never the test MP or those without a status", async () => {

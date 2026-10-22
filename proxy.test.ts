@@ -40,4 +40,15 @@ describe("proxy", () => {
     }
     expect(visit("/staff", "staff_session=anything").headers.get("x-middleware-next")).toBe("1");
   });
+
+  it("renews a kept session's cookies for another 30 days on every request, and leaves a browser session's alone", () => {
+    const kept = visit("/staff/letters", "staff_session=tok; staff_keep=1");
+    expect(kept.headers.get("x-middleware-next")).toBe("1");
+    const cookies = kept.headers.getSetCookie();
+    expect(cookies.find((c) => c.startsWith("staff_session="))).toMatch(
+      /^staff_session=tok; Path=\/staff; .*Max-Age=2592000/,
+    );
+    expect(cookies.find((c) => c.startsWith("staff_keep="))).toMatch(/Max-Age=2592000/);
+    expect(visit("/staff/letters", "staff_session=tok").headers.getSetCookie()).toEqual([]);
+  });
 });

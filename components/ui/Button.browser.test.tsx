@@ -61,6 +61,12 @@ describe("Button", () => {
     expect(style.borderTopColor).toBe("rgb(229, 114, 38)");
   });
 
+  it("is red for something that can't be undone", async () => {
+    await render(<Button variant="danger">Erase</Button>);
+    const button = page.getByRole("button", { name: "Erase" }).element();
+    expect(getComputedStyle(button).backgroundColor).toBe("rgb(176, 0, 32)");
+  });
+
   it("fills a phone's width, unless told to fit", async () => {
     await render(
       <div style={{ width: 300 }}>

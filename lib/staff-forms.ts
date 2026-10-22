@@ -1,6 +1,7 @@
 // Reads the staff interface's forms. Anything that doesn't fit is refused
 // (undefined) rather than guessed at.
 import { trackedCampaigns } from "@/lib/email-your-mp";
+import { PERMISSIONS, type Permission } from "@/lib/staff-permissions";
 
 const HOUSES = ["commons", "lords", "scottish-parliament", "senedd", "ni-assembly", "other"];
 
@@ -53,9 +54,32 @@ export function signedFrom(form: FormData): SignedForm | undefined {
 
 export type UnblockForm = { address: string; note: string };
 
-/** Unblocking an address: which, and the note for the audit log. */
+/** Unblocking an address: which, and the note for the audit log; none without both. */
 export function unblockFrom(form: FormData): UnblockForm | undefined {
   const address = text(form, "address").toLowerCase();
-  if (!address.includes("@")) return undefined;
-  return { address, note: text(form, "note") };
+  const note = text(form, "note");
+  if (!address.includes("@") || !note) return undefined;
+  return { address, note };
+}
+
+export type PermissionsForm = { email: string; permissions: Permission[] };
+
+/**
+ * An account's form: whose, and each permission's checkbox, named
+ * "permission:<name>", ticked or not. The remove form sends only whose.
+ */
+export function permissionsFrom(form: FormData): PermissionsForm | undefined {
+  const email = text(form, "email").toLowerCase();
+  if (!email.includes("@")) return undefined;
+  return { email, permissions: PERMISSIONS.filter((permission) => form.get(`permission:${permission}`) !== null) };
+}
+
+export type EraseForm = { id: number; reference: string };
+
+/** The erase form on a supporter's page: whom, and the request's reference, which must be given. */
+export function eraseFrom(form: FormData): EraseForm | undefined {
+  const id = idFrom(form);
+  const reference = text(form, "reference");
+  if (!id || !reference || text(form, "confirm") === "") return undefined;
+  return { id, reference };
 }

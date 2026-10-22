@@ -6,13 +6,10 @@ import { query, type Queryable } from "./db";
 // signatories from Airtable, the check against Parliament, and ControlAI's
 // letter. Each run is a row: when, who started it, how it ended, why it
 // failed, and the job's own account of what it found. Failures are kept
-// too, so /staff/import-data can say what went wrong,
-// and so are runs that changed nothing, so they can say when a job last ran.
-// /staff/import-history lists them all. The types are in lib/import-runs.ts,
+// too, so each job's page under /staff/import-data can say what went
+// wrong, and so are runs that changed nothing, so it can say when the job
+// last ran. Each job's page lists all of its runs. The types are in lib/import-runs.ts,
 // for the components.
-
-/** The most runs the history page lists. */
-const HISTORY_LIMIT = 1000;
 
 const COLUMNS = `id::int AS id, at, job, started_by AS "startedBy", status, error, result, decided_by AS "decidedBy"`;
 
@@ -63,10 +60,7 @@ export async function latestRun<Run extends AnyImportRun>(job: Run["job"]): Prom
   return run;
 }
 
-/** The runs, newest first: one job's, or every job's. */
-export async function listRuns(job?: ImportJob, limit = HISTORY_LIMIT): Promise<AnyImportRun[]> {
-  return query<AnyImportRun>(
-    `SELECT ${COLUMNS} FROM import_runs WHERE $1::text IS NULL OR job = $1 ORDER BY at DESC, id DESC LIMIT $2`,
-    [job ?? null, limit],
-  );
+/** Every run of one job, newest first, for its page. */
+export async function listRuns(job: ImportJob): Promise<AnyImportRun[]> {
+  return query<AnyImportRun>(`SELECT ${COLUMNS} FROM import_runs WHERE job = $1 ORDER BY at DESC, id DESC`, [job]);
 }

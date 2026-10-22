@@ -1,6 +1,6 @@
 import { SubmitButton } from "@/components/ui/SubmitButton";
 import { staffCopy } from "@/lib/content/staff-interface";
-import type { AnyImportRun, ControlAiImport, MpCheck, MpSync, SignatoryImport } from "@/lib/import-runs";
+import type { AnyImportRun, ControlAiImport, LumaImport, MpCheck, MpSync, SignatoryImport } from "@/lib/import-runs";
 import type { MpProblem } from "@/lib/mp-check";
 import { changeCount, type SyncedMp } from "@/lib/mps";
 import RunBox from "./RunBox";
@@ -9,8 +9,6 @@ import Table from "@/components/ui/Table";
 
 /** The Server Action that applies or discards a held MP sync. */
 export type Decide = (formData: FormData) => void | Promise<void>;
-
-type Common = { label?: string };
 
 function Mps({ heading, mps }: { heading: string; mps: SyncedMp[] }) {
   if (mps.length === 0) return null;
@@ -45,14 +43,15 @@ function Decision({ id, decision, decide }: { id: number; decision: "apply" | "d
 }
 
 /** A copy of the MPs from Airtable: who was added, removed and changed. A held one can be applied or discarded, given `decide`. */
-function SyncRun({ run, decide, label }: { run: MpSync; decide?: Decide } & Common) {
-  if (run.status === "failed") return <RunBox run={run} summary={null} label={label} />;
+function SyncRun({ run, decide, open }: { run: MpSync; decide?: Decide; open?: boolean }) {
+  if (run.status === "failed") return <RunBox run={run} summary={null} open={open} />;
   const { added, removed, changed } = run.result.changes;
   const count = changeCount(run.result.changes);
   return (
     <RunBox
       run={run}
-      label={label}
+      open={open}
+
       lines={count}
       summary={
         <>
@@ -97,14 +96,15 @@ function sides(problem: MpProblem): [string, string] {
 }
 
 /** A check of Airtable's MPs against Parliament's: where they disagree. */
-function CheckRun({ run, label }: { run: MpCheck } & Common) {
-  if (run.status === "failed") return <RunBox run={run} summary={null} label={label} />;
+function CheckRun({ run, open }: { run: MpCheck; open?: boolean }) {
+  if (run.status === "failed") return <RunBox run={run} summary={null} open={open} />;
   const { problems } = run.result;
   const count = problems.length;
   return (
     <RunBox
       run={run}
-      label={label}
+      open={open}
+
       lines={count}
       summary={count === 0 ? staffCopy.check.allGood : staffCopy.check.problems(count)}
     >
@@ -138,11 +138,11 @@ function CheckRun({ run, label }: { run: MpCheck } & Common) {
 }
 
 /** A copy of ControlAI's letter's signatories: what it did, and the names it couldn't place. */
-function ControlAiRun({ run, label }: { run: ControlAiImport } & Common) {
-  if (run.status === "failed") return <RunBox run={run} summary={null} label={label} />;
+function ControlAiRun({ run, open }: { run: ControlAiImport; open?: boolean }) {
+  if (run.status === "failed") return <RunBox run={run} summary={null} open={open} />;
   const { result } = run;
   return (
-    <RunBox run={run} label={label} summary={staffCopy.controlAi.result(result)} lines={result.problems.length}>
+    <RunBox run={run} summary={staffCopy.controlAi.result(result)} lines={result.problems.length} open={open}>
       {result.problems.length > 0 && (
         <Table>
           <thead>
@@ -169,25 +169,44 @@ function ControlAiRun({ run, label }: { run: ControlAiImport } & Common) {
 }
 
 /** A copy of the signatories from Airtable: the counts. */
-function SignatoryRun({ run, label }: { run: SignatoryImport } & Common) {
+function SignatoryRun({ run, open }: { run: SignatoryImport; open?: boolean }) {
   return (
-    <RunBox run={run} label={label} summary={run.status === "failed" ? null : staffCopy.import.result(run.result)} />
+    <RunBox run={run} summary={run.status === "failed" ? null : staffCopy.import.result(run.result)} open={open} />
   );
 }
 
-/**
- * One run from the import log, shown the same way wherever it appears: on
- * its job's page, and on the history page with its job's name (`label`).
- */
-export default function Run({ run, decide, label }: { run: AnyImportRun; decide?: Decide; label?: string }) {
+/** A copy of the Luma calendar: the counts, and why it stopped early, if it did. */
+function LumaRun({ run, open }: { run: LumaImport; open?: boolean }) {
+  if (run.status === "failed") return <RunBox run={run} summary={null} open={open} />;
+  const { stoppedBy } = run.result;
+  return (
+    <RunBox
+      run={run}
+      open={open}
+
+      incomplete={stoppedBy !== undefined}
+      summary={
+        <>
+          {staffCopy.luma.result(run.result)}
+          {stoppedBy && <> {staffCopy.luma.stoppedBy[stoppedBy]}</>}
+        </>
+      }
+    />
+  );
+}
+
+/** One run from the import log, as its job's page shows it; `open` starts its detail unfolded, however long. */
+export default function Run({ run, decide, open }: { run: AnyImportRun; decide?: Decide; open?: boolean }) {
   switch (run.job) {
     case "sync-mps":
-      return <SyncRun run={run} decide={decide} label={label} />;
+      return <SyncRun run={run} decide={decide} open={open} />;
     case "check-mps":
-      return <CheckRun run={run} label={label} />;
+      return <CheckRun run={run} open={open} />;
     case "import-controlai":
-      return <ControlAiRun run={run} label={label} />;
+      return <ControlAiRun run={run} open={open} />;
     case "import-signatories":
-      return <SignatoryRun run={run} label={label} />;
+      return <SignatoryRun run={run} open={open} />;
+    case "import-luma":
+      return <LumaRun run={run} open={open} />;
   }
 }

@@ -19,7 +19,7 @@ const ABOUT_LINKS = [
 ];
 const LOCAL_GROUP_LINKS = [
   ["/london/", "London"],
-  ["/glasgow/", "Glasgow"],
+  ["/scotland/", "Scotland"],
   ["/oxford/", "Oxford"],
   ["/leicester/", "Leicester"],
   ["/manchester/", "Manchester"],

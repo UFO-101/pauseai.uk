@@ -7,3 +7,8 @@ export function staffDate(at: string): string {
 export function staffTime(at: string): string {
   return new Date(at).toISOString().slice(0, 16).replace("T", " ");
 }
+
+/** The day as a heading reads it: weekday, day and month, in UTC. "Friday 16 October". */
+export function staffDay(at: string): string {
+  return new Date(at).toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" });
+}

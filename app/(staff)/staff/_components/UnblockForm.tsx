@@ -7,8 +7,9 @@ import { staffCopy } from "@/lib/content/staff-interface";
 import type { EmailBlock } from "@/lib/server/email";
 
 /**
- * Unblocks an address, with a note of why for the audit log: on the
- * addresses page and a politician's page. A complaint can't be unblocked.
+ * Unblocks an address, with a note of why for the audit log, which it
+ * won't send without: on the addresses page and a politician's page. A
+ * complaint can't be unblocked.
  */
 export default function UnblockForm({
   block,
@@ -22,7 +23,7 @@ export default function UnblockForm({
     <FilterForm action={action} aria-label={`${staffCopy.emails.unblock}: ${block.address}`}>
       <input type="hidden" name="address" value={block.address} />
       <Field label={staffCopy.emails.note}>
-        <TextInput name="note" />
+        <TextInput name="note" required />
       </Field>
       <SubmitButton variant="ghost" size="small">
         {staffCopy.emails.unblock}

@@ -7,7 +7,9 @@ export type SourceCounts = {
   total: number;
 };
 
-export type GuestEntry = { guest?: { approval_status?: string; utm_source?: string | null; registered_at?: string } };
+export type GuestEntry = {
+  guest?: { approval_status?: string; utm_source?: string | null; registered_at?: string | null };
+};
 
 /**
  * Tallies an event's registrations by utm_source. Tags are matched

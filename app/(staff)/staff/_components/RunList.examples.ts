@@ -2,6 +2,7 @@ import {
   type AnyImportRun,
   type ControlAiImportResult,
   type ImportJob,
+  type LumaImportResult,
   type MpCheckResult,
   type MpSync,
   type MpSyncResult,
@@ -15,6 +16,7 @@ type Results = {
   "check-mps": MpCheckResult;
   "import-controlai": ControlAiImportResult;
   "import-signatories": SignatoryImportResult;
+  "import-luma": LumaImportResult;
 };
 type RunOf<Job extends ImportJob> = Extract<AnyImportRun, { job: Job }>;
 
@@ -70,6 +72,19 @@ export const exampleAppliedSync: MpSync = exampleRun(
   { changes: { added: [], removed: [], changed: [exampleSyncedMp(4)] } },
   { id: 2, at: "2026-10-11T02:00:00Z", status: "applied", decidedBy: "jo@pauseai.uk" },
 );
+
+/** What a run of the Luma import did: every event read, nothing left over. */
+export const exampleLumaResult: LumaImportResult = {
+  events: 2,
+  eventsSynced: 9,
+  eventsLeft: 0,
+  guestsChanged: 14,
+  people: 3,
+  contacts: 1,
+  supportersAdded: 2,
+  linked: 3,
+  requests: 21,
+};
 
 /** What a read of ControlAI's letter found, with every name placed. */
 export const exampleControlAiResult: ControlAiImportResult = {

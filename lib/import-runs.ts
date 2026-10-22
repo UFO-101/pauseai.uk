@@ -4,11 +4,30 @@ import type { ControlAiMatchProblem } from "./controlai-letter";
 import type { MpProblem } from "./mp-check";
 import type { MpChanges, SyncedMp } from "./mps";
 
-export const IMPORT_JOBS = ["sync-mps", "check-mps", "import-controlai", "import-signatories"] as const;
+export const IMPORT_JOBS = ["import-luma", "sync-mps", "check-mps", "import-controlai", "import-signatories"] as const;
 export type ImportJob = (typeof IMPORT_JOBS)[number];
 
 export function isImportJob(value: string): value is ImportJob {
   return (IMPORT_JOBS as readonly string[]).includes(value);
+}
+
+/** Each job's page, /staff/import-data/<slug>: its button and every run. */
+const IMPORT_SLUGS: Record<ImportJob, string> = {
+  "import-luma": "luma",
+  "sync-mps": "mps",
+  "check-mps": "mp-check",
+  "import-controlai": "controlai",
+  "import-signatories": "signatories",
+};
+
+/** Where a job's page is. */
+export function importPath(job: ImportJob): string {
+  return `/staff/import-data/${IMPORT_SLUGS[job]}`;
+}
+
+/** The job a page's slug names, if any. */
+export function jobBySlug(slug: string): ImportJob | undefined {
+  return IMPORT_JOBS.find((job) => IMPORT_SLUGS[job] === slug);
 }
 
 /** Who starts the scheduled runs (netlify/functions/). Staff runs are started by the staff member's email. */
@@ -59,4 +78,36 @@ export type ControlAiImport = ImportRun<"import-controlai", ControlAiImportResul
 export type SignatoryImportResult = { matched: number; added: number; alreadySet: number };
 export type SignatoryImport = ImportRun<"import-signatories", SignatoryImportResult>;
 
-export type AnyImportRun = MpSync | MpCheck | ControlAiImport | SignatoryImport;
+/** What a run of the Luma import did: counts of what it copied, and what stopped it, if anything did. */
+export type LumaImportResult = {
+  /** Events added, changed or removed. */
+  events: number;
+  /** Events whose guest list was read in full. */
+  eventsSynced: number;
+  /** Events still waiting for their guest list, for the next run. */
+  eventsLeft: number;
+  /** Guest rows added, changed or marked as removed. */
+  guestsChanged: number;
+  /** People added or changed. */
+  people: number;
+  /** Contacts whose joining date was set. */
+  contacts: number;
+  /** Supporters made for people seen for the first time, and source records linked to a supporter. */
+  supportersAdded: number;
+  linked: number;
+  requests: number;
+  /** Why the run stopped before it was done: its time was up, Luma's rate limit was near, or another run had the lock. */
+  stoppedBy?: "time" | "rate-limit" | "running";
+};
+export type LumaImport = ImportRun<"import-luma", LumaImportResult>;
+
+export type AnyImportRun = MpSync | MpCheck | ControlAiImport | SignatoryImport | LumaImport;
+
+/** How a run ended, as a colour: green when it went well, amber held or stopped short, red failed; none when it changed nothing, was discarded, or never ran. */
+export function runTone(run: AnyImportRun | undefined): "green" | "amber" | "red" | undefined {
+  if (!run) return undefined;
+  if (run.status === "failed") return "red";
+  if (run.status === "held") return "amber";
+  if (run.job === "import-luma" && run.result.stoppedBy !== undefined) return "amber";
+  return run.status === "ok" || run.status === "applied" ? "green" : undefined;
+}

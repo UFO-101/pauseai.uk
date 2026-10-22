@@ -4,14 +4,17 @@ import { type AnyImportRun, NIGHTLY } from "@/lib/import-runs";
 import { staffTime } from "@/lib/staff-time";
 import ResultBox from "./ResultBox";
 import { Muted } from "@/components/ui/Text";
+import Tag from "@/components/ui/Tag";
 
 type Props = {
   run: AnyImportRun;
   /** The job's own summary of what the run found. Not shown for a failed run, whose error is. */
   summary: ReactNode;
-  /** The job's name, first on the line, where runs of different jobs are listed together. */
-  label?: string;
+  /** The run stopped before it finished: a tag says so. The history is plain; only the job's newest run, above it, is in colour. */
+  incomplete?: boolean;
   lines?: number;
+  /** Starts unfolded, however long its detail (ResultBox). */
+  open?: boolean;
   actions?: ReactNode;
   children?: ReactNode;
 };
@@ -21,12 +24,19 @@ type Props = {
  * started it, and what it found, or why it failed, on the line; the job's
  * detail folded under it.
  */
-export default function RunBox({ run, summary, label, lines, actions, children }: Props) {
+export default function RunBox({ run, summary, incomplete, lines, open, actions, children }: Props) {
   const failed = run.status === "failed";
+  const status = staffCopy.runs.status[run.status];
   const line = (
     <>
-      {label && <>{label} · </>}
-      <strong>{staffCopy.runs.status[run.status]}</strong> <Muted>{staffTime(run.at)}</Muted>
+      <strong>{status}</strong>
+      {incomplete && (
+        <>
+          {" "}
+          <Tag>{staffCopy.runs.incomplete}</Tag>
+        </>
+      )}{" "}
+      <Muted>{staffTime(run.at)}</Muted>
       {run.startedBy && (
         <Muted> · {run.startedBy === NIGHTLY ? staffCopy.import.nightly : staffCopy.runs.by(run.startedBy)}</Muted>
       )}
@@ -35,7 +45,7 @@ export default function RunBox({ run, summary, label, lines, actions, children }
     </>
   );
   return (
-    <ResultBox error={failed} summary={line} lines={lines} actions={actions} aria-label={run.at}>
+    <ResultBox summary={line} lines={lines} open={open} actions={actions} aria-label={run.at}>
       {failed ? undefined : children}
     </ResultBox>
   );

@@ -22,7 +22,7 @@ const NO_PHOTO = people.find((person) => !person.imageSrc && person.name)!;
 const ANONYMOUS = people.find((person) => !person.name)!;
 const LONG = people.find((person) => isLongStory(person) && person.imageSrc)!;
 
-const PLACES = ["London", "Manchester", "Glasgow"];
+const PLACES = ["London", "Manchester", "Scotland"];
 const EVENTS = [1, 2, 3, 4, 5, 6].map((n) =>
   exampleEvent(n, n % 2 ? { geo_address_info: { city: PLACES[n % 3] } } : { name: `Online event ${n}` }),
 );
@@ -124,7 +124,7 @@ export const areas: Group = {
       file: "components/events/LocalGroupEvents.tsx",
       variants: [
         { label: "Upcoming and past", render: () => <LocalGroupEvents localGroupName="London" />, server: true },
-        { label: "Nothing upcoming", render: () => <LocalGroupEvents localGroupName="Glasgow" />, server: true },
+        { label: "Nothing upcoming", render: () => <LocalGroupEvents localGroupName="Scotland" />, server: true },
       ],
     },
     {
@@ -133,7 +133,7 @@ export const areas: Group = {
       variants: [
         {
           label: "Events, what we've done and contact, no badge",
-          render: () => <LocalGroupPage content={localGroupPages.Glasgow} />,
+          render: () => <LocalGroupPage content={localGroupPages.Scotland} />,
           server: true,
         },
         {

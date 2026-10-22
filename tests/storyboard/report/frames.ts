@@ -20,6 +20,7 @@ export const SECTION_ORDER = [
   "march-signup",
   "home-events",
   "staff",
+  "supporters",
   "collateral",
   "consent",
   "mobile-nav",

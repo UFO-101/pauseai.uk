@@ -1,7 +1,7 @@
 import type { CSSProperties } from "react";
 
 /** Every local group with a page, so a page cannot ask for one that does not exist. */
-export type LocalGroupName = "Glasgow" | "Manchester" | "West of England" | "Leicester" | "Oxford" | "London";
+export type LocalGroupName = "Scotland" | "Manchester" | "West of England" | "Leicester" | "Oxford" | "London";
 
 export type LocalGroup = {
   name: LocalGroupName;
@@ -36,8 +36,8 @@ export type LocalGroup = {
 // reach its own card. Within each side the cards run north to south.
 export const localGroups: LocalGroup[] = [
   {
-    name: "Glasgow",
-    href: "/glasgow",
+    name: "Scotland",
+    href: "/scotland",
     blurb: "Building momentum with public events and community outreach.",
     imageSrc: "/images/documentary-screening/G4W9UyLXwAA9ISl.jpeg",
     lng: -4.2518,

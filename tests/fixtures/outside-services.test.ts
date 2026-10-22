@@ -13,8 +13,28 @@ describe("fixtureResponse", () => {
     expect(past.entries[0].url).toBe("https://luma.com/fixture-past-london-march");
   });
 
-  it("serves the guest list and Airtable", async () => {
-    expect((await fixtureResponse("https://public-api.luma.com/v1/event/get-guests?x=1")!.json()).has_more).toBe(false);
+  it("serves every event, public or not, when asked for neither period", async () => {
+    const all = await fixtureResponse("https://public-api.luma.com/v1/calendars/events/list?x=1")!.json();
+    expect(all.entries.map((e: { visibility: string }) => e.visibility)).toContain("private");
+    expect(all.entries.length).toBeGreaterThan(8);
+  });
+
+  it("serves an event's guests over two pages, with IDs of their own, and the contacts", async () => {
+    const guests = "https://public-api.luma.com/v1/events/guests/list?event_id=evt-1";
+    const first = await fixtureResponse(guests)!.json();
+    expect(first.entries.map((g: { id: string }) => g.id)).toEqual(["gst-1-evt-1", "gst-2-evt-1", "gst-3-evt-1"]);
+    expect(first.has_more).toBe(true);
+    const second = await fixtureResponse(`${guests}&pagination_cursor=${first.next_cursor}`)!.json();
+    expect(second.entries).toHaveLength(2);
+    expect(second.has_more).toBe(false);
+    const noEvent = await fixtureResponse("https://public-api.luma.com/v1/events/guests/list")!.json();
+    expect(noEvent.entries[0].id).toBe("gst-1-");
+    const contacts = await fixtureResponse("https://public-api.luma.com/v1/calendars/contacts/list?x=1")!.json();
+    expect(contacts.entries).toHaveLength(2);
+    expect(contacts.has_more).toBe(true);
+  });
+
+  it("serves Airtable", async () => {
     expect((await fixtureResponse("https://eu.airtable.com/v0/app/tbl")!.json()).records).toHaveLength(2);
   });
 
