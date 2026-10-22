@@ -228,7 +228,7 @@ describeWithDatabase("importLuma", () => {
     expect(await importLuma("jo@pauseai.uk")).toMatchObject({ events: 1, eventsSynced: 0, requests: 2 });
   });
 
-  it("stops at the first events page with nothing new, and once a day reads every page and drops events gone from the calendar", async () => {
+  it("stops at the first events page with nothing new, and once a day reads every page and marks events gone from the calendar removed", async () => {
     const luma = fakeLuma({
       events: [event("evt-3", days(3)), event("evt-2", days(2)), event("evt-1", days(1))],
       guests: { "evt-1": [guest(1)] },
@@ -244,14 +244,31 @@ describeWithDatabase("importLuma", () => {
     expect((await importLuma("jo@pauseai.uk")).events).toBe(1);
     expect(luma.requests.filter((r) => r.startsWith("events"))).toEqual(["events", "events@1"]);
 
-    // Due one: every page, and the event no longer listed goes, with its guests.
-    await query("UPDATE luma_import_state SET full_pass_at = now() - interval '1 day' WHERE list = 'events'");
-    luma.events.pop();
+    // Due one: every page, and the event no longer listed is marked removed, keeping its guests.
+    const fullPassDue = () =>
+      query("UPDATE luma_import_state SET full_pass_at = now() - interval '1 day' WHERE list = 'events'");
+    const removed = () => query<{ id: string }>("SELECT id FROM luma_events WHERE removed_at IS NOT NULL");
+    await fullPassDue();
+    const gone = luma.events.pop()!;
+    luma.requests.length = 0;
+    expect((await importLuma("jo@pauseai.uk")).events).toBe(1);
+    expect(luma.requests.filter((r) => r.startsWith("events"))).toEqual(["events", "events@1"]);
+    expect(await removed()).toEqual([{ id: "evt-1" }]);
+    expect(await guestRows()).toHaveLength(1);
+
+    // Its guests aren't read while it's removed, however long since they were.
+    await setSynced("evt-1", "100 days");
     luma.requests.length = 0;
     await importLuma("jo@pauseai.uk");
-    expect(luma.requests.filter((r) => r.startsWith("events"))).toEqual(["events", "events@1"]);
-    expect((await eventRows()).map((e) => e.id)).toEqual(["evt-2", "evt-3"]);
-    expect(await guestRows()).toEqual([]);
+    expect(luma.requests).not.toContain("guests:evt-1");
+
+    // A second full pass leaves it as it was; listed again, it's back.
+    await fullPassDue();
+    expect((await importLuma("jo@pauseai.uk")).events).toBe(0);
+    luma.events.push(gone);
+    await fullPassDue();
+    expect((await importLuma("jo@pauseai.uk")).events).toBe(1);
+    expect(await removed()).toEqual([]);
   });
 
   it("reads guests again when due, live events first, then never read, then settled, with failed ones last", async () => {

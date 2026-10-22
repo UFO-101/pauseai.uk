@@ -35,7 +35,7 @@ const SOURCES: Record<DashboardMetric, { from: string; at: string }> = {
     from: "luma_guests WHERE approval_status = 'approved' AND removed_at IS NULL",
     at: "registered_at",
   },
-  eventsHeld: { from: "luma_events WHERE true", at: "start_at" },
+  eventsHeld: { from: "luma_events WHERE removed_at IS NULL", at: "start_at" },
   supportersAdded: { from: "supporters WHERE true", at: "created_at" },
   unsubscribes: { from: "opt_outs WHERE resubscribed_at IS NULL", at: "unsubscribed_at" },
 };

@@ -39,12 +39,13 @@ describeWithDatabase("dashboard", () => {
     await query(
       "INSERT INTO supporters (created_at) VALUES ('2026-10-20T00:00:00Z'), ('2026-10-10T00:00:00Z'), ('2026-09-15T00:00:00Z')",
     );
-    // Events: one held this week, one the week before, one to come; registrations this week, three weeks ago, and ones that don't count.
+    // Events: one held this week, one the week before, one to come, one this week gone from the calendar; registrations this week, three weeks ago, and ones that don't count.
     await query(
-      `INSERT INTO luma_events (id, name, url, start_at, access) VALUES
-         ('e1', 'This week', 'https://luma.com/e1', '2026-10-18T18:00:00Z', 'manage'),
-         ('e2', 'Last week', 'https://luma.com/e2', '2026-10-08T18:00:00Z', 'manage'),
-         ('e3', 'To come', 'https://luma.com/e3', '2030-01-01T00:00:00Z', 'manage');
+      `INSERT INTO luma_events (id, name, url, start_at, access, removed_at) VALUES
+         ('e1', 'This week', 'https://luma.com/e1', '2026-10-18T18:00:00Z', 'manage', NULL),
+         ('e2', 'Last week', 'https://luma.com/e2', '2026-10-08T18:00:00Z', 'manage', NULL),
+         ('e3', 'To come', 'https://luma.com/e3', '2030-01-01T00:00:00Z', 'manage', NULL),
+         ('e4', 'Removed', 'https://luma.com/e4', '2026-10-18T18:00:00Z', 'manage', '2026-10-19T00:00:00Z');
        INSERT INTO luma_people (user_id, email, name) VALUES ('u1', 'u1@example.com', 'U1'), ('u2', 'u2@example.com', 'U2'), ('u3', 'u3@example.com', 'U3');
        INSERT INTO luma_guests (id, event_id, user_id, approval_status, registered_at, removed_at) VALUES
          ('g1', 'e3', 'u1', 'approved', '2026-10-19T00:00:00Z', NULL),

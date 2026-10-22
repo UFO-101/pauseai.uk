@@ -103,16 +103,16 @@ async function saveState(list: ImportList, cursor: string, finished: boolean, db
   );
 }
 
-/** Upserts an event; returns whether anything was new or different. */
+/** Upserts an event, listed again if it was removed; returns whether anything was new or different. */
 async function upsertEvent(event: CalendarEvent, db: Queryable): Promise<boolean> {
   const rows = await query(
     `INSERT INTO luma_events (id, name, url, start_at, access, city, latitude, longitude)
      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
      ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, url = EXCLUDED.url, start_at = EXCLUDED.start_at,
        access = EXCLUDED.access, city = EXCLUDED.city, latitude = EXCLUDED.latitude, longitude = EXCLUDED.longitude,
-       changed_at = now()
-     WHERE (luma_events.name, luma_events.url, luma_events.start_at, luma_events.access, luma_events.city, luma_events.latitude, luma_events.longitude)
-       IS DISTINCT FROM (EXCLUDED.name, EXCLUDED.url, EXCLUDED.start_at, EXCLUDED.access, EXCLUDED.city, EXCLUDED.latitude, EXCLUDED.longitude)
+       removed_at = NULL, changed_at = now()
+     WHERE (luma_events.name, luma_events.url, luma_events.start_at, luma_events.access, luma_events.city, luma_events.latitude, luma_events.longitude, luma_events.removed_at)
+       IS DISTINCT FROM (EXCLUDED.name, EXCLUDED.url, EXCLUDED.start_at, EXCLUDED.access, EXCLUDED.city, EXCLUDED.latitude, EXCLUDED.longitude, NULL)
      RETURNING id`,
     [
       event.id,
@@ -132,7 +132,8 @@ async function upsertEvent(event: CalendarEvent, db: Queryable): Promise<boolean
 /**
  * The events, newest first: page by page until a page holds nothing new or
  * changed, or on a full pass, to the end, after which events gone from the
- * calendar go too.
+ * calendar's list are marked removed. Their guests stay: the list leaves out
+ * an event made private as well as one deleted.
  */
 async function importEvents(budget: Budget, db: Queryable): Promise<number> {
   const full = await fullPassDue("events", `${FULL_EVENTS_HOURS} hours`, db);
@@ -152,7 +153,13 @@ async function importEvents(budget: Budget, db: Queryable): Promise<number> {
     if (!full && changedOnPage === 0) return changed;
   } while (cursor);
   if (full) {
-    await query("DELETE FROM luma_events WHERE NOT (id = ANY($1::text[]))", [seen], db);
+    const removed = await query(
+      `UPDATE luma_events SET removed_at = now(), changed_at = now()
+       WHERE removed_at IS NULL AND NOT (id = ANY($1::text[])) RETURNING id`,
+      [seen],
+      db,
+    );
+    changed += removed.length;
     await saveState("events", "", true, db);
   }
   return changed;
@@ -162,13 +169,14 @@ async function importEvents(budget: Budget, db: Queryable): Promise<number> {
  * The events whose guests are due a read, first first: live ones not read
  * in the last hour; never read, newest first; settled ones last read within
  * three days of their start, or over a month ago. An event whose last read
- * failed goes to the back. Only our own events: Luma shows no guests for one
- * another calendar runs.
+ * failed goes to the back. Only our own events still listed: Luma shows no
+ * guests for one another calendar runs, and a removed one's are kept as last
+ * read.
  */
 async function eventsDueGuests(db: Queryable): Promise<string[]> {
   const rows = await query<{ id: string }>(
     `SELECT id FROM luma_events
-     WHERE access = 'manage' AND (
+     WHERE access = 'manage' AND removed_at IS NULL AND (
        (start_at > now() - $1::interval AND (guests_synced_at IS NULL OR guests_synced_at < now() - interval '1 hour'))
        OR guests_synced_at IS NULL
        OR (start_at <= now() - $1::interval

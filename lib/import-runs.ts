@@ -80,7 +80,7 @@ export type SignatoryImport = ImportRun<"import-signatories", SignatoryImportRes
 
 /** What a run of the Luma import did: counts of what it copied, and what stopped it, if anything did. */
 export type LumaImportResult = {
-  /** Events added or changed. */
+  /** Events added, changed or removed. */
   events: number;
   /** Events whose guest list was read in full. */
   eventsSynced: number;

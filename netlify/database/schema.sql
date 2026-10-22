@@ -254,6 +254,7 @@ CREATE TABLE public.luma_events (
     changed_at timestamp with time zone DEFAULT now() NOT NULL,
     guests_synced_at timestamp with time zone,
     guests_error text,
+    removed_at timestamp with time zone,
     CONSTRAINT luma_events_access_check CHECK ((access = ANY (ARRAY['manage'::text, 'view'::text]))),
     CONSTRAINT luma_events_check CHECK (((latitude IS NULL) = (longitude IS NULL)))
 );
