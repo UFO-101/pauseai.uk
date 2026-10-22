@@ -100,8 +100,8 @@ async function heldSyncs(): Promise<DashboardAction[]> {
 
 /** Every sitting politician whose address is blocked, with the problem that blocked it, oldest first. */
 async function blockedMps(): Promise<DashboardAction[]> {
-  const rows = await query<{ politicianId: number; name: string; at: Date; reason: string }>(
-    `SELECT p.id::int AS "politicianId", p.name, pr.at, pr.reason
+  const rows = await query<{ politicianId: number; name: string; at: Date }>(
+    `SELECT p.id::int AS "politicianId", p.name, pr.at
      FROM politicians p JOIN email_blocks b ON b.address = lower(p.email) JOIN email_problems pr ON pr.id = b.problem_id
      WHERE p.sitting ORDER BY pr.at, p.id`,
   );

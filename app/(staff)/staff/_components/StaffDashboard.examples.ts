@@ -42,7 +42,6 @@ export const exampleDashboard: Dashboard = {
       politicianId: 7,
       name: "Bouncy McTestface MP",
       at: "2026-10-19T09:30:00.000Z",
-      reason: "The address does not exist",
     },
     { kind: "failed-import", job: "import-controlai", at: "2026-10-21T02:00:00.000Z", error: "No PDF linked" },
   ],

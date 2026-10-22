@@ -108,7 +108,6 @@ describeWithDatabase("dashboard", () => {
         politicianId: real,
         name: "Polly Placeholder",
         at: "2026-10-19T09:30:00.000Z",
-        reason: "Mailbox full",
       },
       { kind: "failed-import", job: "import-luma", at: expect.any(String), error: "Luma answered 500" },
     ]);

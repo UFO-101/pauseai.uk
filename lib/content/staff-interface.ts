@@ -66,7 +66,8 @@ export const staffCopy = {
           `This import would change ${changes} MPs, which is a lot. So please check it is correct and apply or discard it.`,
         decide: "Open Import",
         blockedMp: (name: string) => `⁂ ${name}'s email bounced`,
-        blockedMpDetail: (reason: string, since: string) => `Address blocked since ${since}: ${reason}`,
+        blockedMpDetail: (since: string) =>
+          `Find a working email for this MP, the address has been blocked since ${since}.`,
         openMp: "Open MP",
         failedImport: (job: string) => `⁂ ${job} failed`,
         failedImportDetail: (error: string, at: string) => `⁂ ${error} · ${at}`,

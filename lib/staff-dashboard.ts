@@ -60,7 +60,7 @@ export const METRIC_LINKS: Record<DashboardMetric, { href?: string; permission?:
 /** Something waiting for a person, with where its button goes. */
 export type DashboardAction =
   | { kind: "held-sync"; at: string; added: number; removed: number; changed: number }
-  | { kind: "blocked-mp"; politicianId: number; name: string; at: string; reason: string }
+  | { kind: "blocked-mp"; politicianId: number; name: string; at: string }
   | { kind: "failed-import"; job: ImportJob; at: string; error: string };
 
 export type Dashboard = {
