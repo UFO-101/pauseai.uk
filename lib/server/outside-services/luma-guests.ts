@@ -129,13 +129,10 @@ const ADD_GUEST_TIMEOUT_MS = 5000;
  * What adding a guest came to. "added" means Luma took the request: it adds
  * guests in the background, so it doesn't prove the guest is there yet.
  * "skipped" is Luma declining this guest (unsubscribed from the calendar,
- * removed or blocked). "not-configured" names the settings that are missing.
+ * removed or blocked). "not-configured" is LUMA_API_KEY not being set.
  */
 export type LumaAddGuestResult =
-  | { status: "added" }
-  | { status: "skipped" }
-  | { status: "not-configured"; missing: string[] }
-  | { status: "failed"; reason: string };
+  { status: "added" } | { status: "skipped" } | { status: "not-configured" } | { status: "failed"; reason: string };
 
 /**
  * Registers one guest for an event, through Luma's add-guests call
@@ -150,15 +147,13 @@ export async function addLumaGuest(
   timeoutMs = ADD_GUEST_TIMEOUT_MS,
 ): Promise<LumaAddGuestResult> {
   const key = process.env.LUMA_API_KEY?.trim();
-  const event = eventId.trim();
-  const missing = [...(key ? [] : ["LUMA_API_KEY"]), ...(event ? [] : ["LUMA_MARCH_EVENT_ID"])];
-  if (missing.length > 0) return { status: "not-configured", missing };
+  if (!key) return { status: "not-configured" };
 
   try {
     const res = await outsideFetch("https://public-api.luma.com/v1/events/guests/add", {
       method: "POST",
-      headers: { "content-type": "application/json", accept: "application/json", "x-luma-api-key": key! },
-      body: JSON.stringify({ event_id: event, guests: [{ email: guest.email, name: guest.name }] }),
+      headers: { "content-type": "application/json", accept: "application/json", "x-luma-api-key": key },
+      body: JSON.stringify({ event_id: eventId, guests: [{ email: guest.email, name: guest.name }] }),
       signal: AbortSignal.timeout(timeoutMs),
     });
     if (!res.ok) {
