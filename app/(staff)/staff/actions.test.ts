@@ -229,8 +229,10 @@ describeWithDatabase("staff Server Actions", () => {
     vi.stubEnv("POSTMARK_SERVER_TOKEN", "server-token");
     const bounce = { address: "a@example.org", messageId: null, kind: "hard" as const, reason: "", canReset: true };
     await recordProblem(bounce);
-    await unblockAddress(form({ address: "nobody", note: "" }));
+    await unblockAddress(form({ address: "nobody", note: "Fixed" }));
+    await unblockAddress(form({ address: "A@example.org", note: " " }));
     expect(revalidatePath).not.toHaveBeenCalled();
+    expect(await isBlocked("a@example.org")).toBe(true);
     await unblockAddress(form({ address: "A@example.org", note: "Fixed" }));
     expect(await isBlocked("a@example.org")).toBe(false);
     expect(await query("SELECT actor, action, details FROM audit_log WHERE action = 'unblock address'")).toEqual([
@@ -246,7 +248,7 @@ describeWithDatabase("staff Server Actions", () => {
       http.post("https://api.postmarkapp.com/message-streams/*", () => new HttpResponse(null, { status: 500 })),
     );
     await recordProblem({ address: "a@example.org", messageId: null, kind: "hard", reason: "", canReset: true });
-    await unblockAddress(form({ address: "a@example.org", note: "" }));
+    await unblockAddress(form({ address: "a@example.org", note: "Fixed" }));
     expect(await isBlocked("a@example.org")).toBe(true);
     expect(error).toHaveBeenCalled();
     error.mockRestore();

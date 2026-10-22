@@ -109,10 +109,12 @@ export async function recordProblem(problem: DeliveryProblem): Promise<boolean> 
 
 /**
  * Unblocks an address: asks the provider to send to it again, then deletes
- * its block, and logs who did it and why. Refused for a complaint, which only
- * the person can undo. Returns whether it was unblocked.
+ * its block, and logs who did it and why. Refused without a note of why
+ * (the audit log refuses one too), and for a complaint, which only the
+ * person can undo. Returns whether it was unblocked.
  */
 export async function unblock(address: string, staff: string, note: string): Promise<boolean> {
+  if (!note.trim()) return false;
   const [block] = await query<{ canReset: boolean }>(
     `SELECT p.can_reset AS "canReset" FROM email_blocks b JOIN email_problems p ON p.id = b.problem_id WHERE b.address = $1`,
     [address],

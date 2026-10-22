@@ -717,6 +717,13 @@ ALTER TABLE ONLY public.audit_log
     ADD CONSTRAINT audit_log_pkey PRIMARY KEY (id);
 
 --
+-- Name: audit_log audit_log_unblock_note; Type: CHECK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE public.audit_log
+    ADD CONSTRAINT audit_log_unblock_note CHECK (((action <> 'unblock address'::text) OR (btrim(COALESCE((details ->> 'note'::text), ''::text)) <> ''::text))) NOT VALID;
+
+--
 -- Name: campaign_statuses campaign_statuses_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 

@@ -884,8 +884,15 @@ describe("EmailBlocksTable", () => {
     const complained = page.getByRole("row").filter({ hasText: exampleComplaint.address });
     await expect.element(complained.getByText(staffCopy.emails.cantReset)).toBeVisible();
     await expect.element(complained.getByText("A, B")).toBeVisible();
+    // Without a note the browser won't send it; with one, it does.
+    const note = bounced.getByLabelText(staffCopy.emails.note);
+    expect((note.element() as HTMLInputElement).required).toBe(true);
     await bounced.getByRole("button", { name: staffCopy.emails.unblock }).click();
-    await vi.waitFor(() => expect(sent).toEqual([{ address: exampleBlock.address, note: "" }]));
+    await expect.element(note).toHaveFocus();
+    expect(sent).toEqual([]);
+    await note.fill("Fixed in Airtable");
+    await bounced.getByRole("button", { name: staffCopy.emails.unblock }).click();
+    await vi.waitFor(() => expect(sent).toEqual([{ address: exampleBlock.address, note: "Fixed in Airtable" }]));
   });
 
   it("says when there are none", async () => {

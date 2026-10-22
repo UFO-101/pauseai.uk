@@ -54,11 +54,12 @@ export function signedFrom(form: FormData): SignedForm | undefined {
 
 export type UnblockForm = { address: string; note: string };
 
-/** Unblocking an address: which, and the note for the audit log. */
+/** Unblocking an address: which, and the note for the audit log; none without both. */
 export function unblockFrom(form: FormData): UnblockForm | undefined {
   const address = text(form, "address").toLowerCase();
-  if (!address.includes("@")) return undefined;
-  return { address, note: text(form, "note") };
+  const note = text(form, "note");
+  if (!address.includes("@") || !note) return undefined;
+  return { address, note };
 }
 
 export type PermissionsForm = { email: string; permissions: Permission[] };

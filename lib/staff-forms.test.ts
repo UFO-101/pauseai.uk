@@ -60,10 +60,11 @@ describe("unblockFrom", () => {
       address: "jo@example.org",
       note: "fixed",
     });
-    expect(unblockFrom(form({ address: "jo@example.org" }))).toEqual({ address: "jo@example.org", note: "" });
   });
 
-  it("refuses anything that isn't an address", () => {
+  it("refuses anything that isn't an address, and an unblock with no note", () => {
+    expect(unblockFrom(form({ address: "jo@example.org" }))).toBeUndefined();
+    expect(unblockFrom(form({ address: "jo@example.org", note: "  " }))).toBeUndefined();
     expect(unblockFrom(form({ address: "nobody" }))).toBeUndefined();
     expect(unblockFrom(form({}))).toBeUndefined();
   });

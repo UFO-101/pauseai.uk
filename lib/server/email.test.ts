@@ -154,17 +154,37 @@ describeWithDatabase("unblock", () => {
   it("refuses a complaint, one Postmark can't reset, and an address that isn't blocked", async () => {
     await recordProblem({ ...BOUNCE, kind: "complaint" });
     await recordProblem({ ...BOUNCE, address: "b@example.org", canReset: false });
-    expect(await unblock("jo@example.org", "sam@pauseai.uk", "")).toBe(false);
-    expect(await unblock("b@example.org", "sam@pauseai.uk", "")).toBe(false);
-    expect(await unblock("c@example.org", "sam@pauseai.uk", "")).toBe(false);
+    expect(await unblock("jo@example.org", "sam@pauseai.uk", "Fixed")).toBe(false);
+    expect(await unblock("b@example.org", "sam@pauseai.uk", "Fixed")).toBe(false);
+    expect(await unblock("c@example.org", "sam@pauseai.uk", "Fixed")).toBe(false);
     expect(await isBlocked("jo@example.org")).toBe(true);
   });
 
   it("leaves it blocked if Postmark can't be reached", async () => {
     server.use(http.post(UNSUPPRESS, () => new HttpResponse(null, { status: 500 })));
     await recordProblem(BOUNCE);
-    await expect(unblock("jo@example.org", "sam@pauseai.uk", "")).rejects.toThrow("500");
+    await expect(unblock("jo@example.org", "sam@pauseai.uk", "Fixed")).rejects.toThrow("500");
     expect(await isBlocked("jo@example.org")).toBe(true);
+  });
+
+  it("refuses without a note, before asking Postmark, and the audit log refuses one without a note too", async () => {
+    let asked = false;
+    server.use(
+      http.post(UNSUPPRESS, () => {
+        asked = true;
+        return HttpResponse.json({ Suppressions: [] });
+      }),
+    );
+    await recordProblem(BOUNCE);
+    expect(await unblock("jo@example.org", "sam@pauseai.uk", " ")).toBe(false);
+    expect(asked).toBe(false);
+    expect(await isBlocked("jo@example.org")).toBe(true);
+    await expect(
+      query("INSERT INTO audit_log (actor, action, details) VALUES ('x', 'unblock address', '{\"note\": \" \"}')"),
+    ).rejects.toThrow(/audit_log_unblock_note/);
+    await expect(
+      query("INSERT INTO audit_log (actor, action, details) VALUES ('x', 'unblock address', '{}')"),
+    ).rejects.toThrow(/audit_log_unblock_note/);
   });
 
   it("says it wasn't unblocked if someone else got there first", async () => {
@@ -175,7 +195,7 @@ describeWithDatabase("unblock", () => {
         return HttpResponse.json({ Suppressions: [] });
       }),
     );
-    expect(await unblock("jo@example.org", "sam@pauseai.uk", "")).toBe(false);
+    expect(await unblock("jo@example.org", "sam@pauseai.uk", "Fixed")).toBe(false);
     expect((await audit()).map((a) => a.action)).toEqual(["block address"]);
   });
 });
