@@ -122,10 +122,10 @@ the address: `email_problems`,
 `email_blocks` and `opt_outs`. The Luma user's ID goes in `luma_erased`,
 which the import skips, so they never come back; a new Luma account later
 is a new supporter. The audit log entry carries the supporter's ID and the
-reference, never a name or address. Luma's own records, and the policy
-team's copy of each letter's sender in Airtable ("Web form emails"),
-aren't reached from here: an erasure has to go there by hand
-(`docs/data-protection.md`).
+reference, never a name or address. Luma's own records, the copies of
+letters and replies in the policy team's Gmail inbox, and letters sent
+through the earlier form in Airtable ("Web form emails") aren't reached
+from here: an erasure has to go there by hand (`docs/data-protection.md`).
 
 A new source is a table of its own, a column and a widened `CHECK` on
 `supporter_links`, its three views and its arms of the union views, a

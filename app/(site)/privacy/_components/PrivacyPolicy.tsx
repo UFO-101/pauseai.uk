@@ -126,7 +126,7 @@ export default function PrivacyPolicy() {
         <li>⁂ Netlify: hosting the site and its database, with backups kept for 3 to 30 days.</li>
         <li>⁂ Cloudflare: our nightly database backup, kept for 90 days, and Turnstile, the anti-spam check.</li>
         <li>⁂ postcodes.io: looking up postcodes; it keeps nothing.</li>
-        <li>⁂ Airtable: our policy team&apos;s copy of letters.</li>
+        <li>⁂ Airtable: our records of MPs and of members, and letters sent through our earlier form.</li>
         <li>
           ⁂ Google (Gmail): our policy team&apos;s inbox, which gets a copy of each letter and of each MP&apos;s reply.
         </li>
