@@ -561,6 +561,20 @@ describe("ImportCard", () => {
     expect(getComputedStyle(heading.getByRole("link").element(), "::after").position).toBe("absolute");
     expect(getComputedStyle(page.getByRole("link", { name: "Luma" }).element()).zIndex).toBe("1");
     expect(getComputedStyle(card.parentElement!).display).toBe("grid");
+    // The ending comes before the description; without a tone the edge is plain.
+    expect(card.children[1].textContent).toBe("Not imported yet.");
+    expect(getComputedStyle(card).borderLeftWidth).toBe("1px");
+  });
+
+  it("gives the card a thick edge in its ending's colour", async () => {
+    await render(
+      <ImportCard title="An import" href="/x" tags={null} intro="What." tone="red">
+        <p>Failed.</p>
+      </ImportCard>,
+    );
+    const card = page.getByRole("heading", { level: 2 }).element().closest("section")!;
+    expect(getComputedStyle(card).borderLeftWidth).toBe("6px");
+    expect(card.className).toMatch(/red/);
   });
 });
 
@@ -879,13 +893,24 @@ describe("ImportOverview", () => {
       jobTitles["import-controlai"],
       jobTitles["import-signatories"],
     ]);
-    const foot = (i: number) => cards[i].lastElementChild!;
-    expect(foot(0).textContent).toBe(`${staffCopy.runs.status.ok}${staffCopy.runs.incomplete} 2026-10-21 11:17`);
-    expect(foot(0).querySelectorAll("span")[0].className).toMatch(/green/);
-    expect(foot(0).querySelectorAll("span")[1].className).toMatch(/amber/);
-    expect(foot(1).querySelector("span")!.className).toMatch(/amber/);
-    expect(foot(3).querySelector("span")!.className).toMatch(/red/);
-    expect(foot(4).textContent).toBe(staffCopy.import.none);
+    // Under the name, how the newest run ended, tinted to match; the card's edge in the same colour.
+    const status = (i: number) => cards[i].querySelector("h2 + div > p")!;
+    expect(status(0).textContent).toBe(`${staffCopy.runs.status.ok} · ${staffCopy.runs.incomplete}2026-10-21 11:17`);
+    expect([0, 1, 2, 3].map((i) => status(i).className.match(/green|amber|red/)?.[0])).toEqual([
+      "amber",
+      "amber",
+      "green",
+      "red",
+    ]);
+    expect(cards.map((card) => card.className.match(/green|amber|red/)?.[0])).toEqual([
+      "amber",
+      "amber",
+      "green",
+      "red",
+      undefined,
+    ]);
+    expect(status(4).textContent).toBe(staffCopy.import.none);
+    expect(status(4).className).not.toMatch(/green|amber|red/);
     // The Airtable jobs link the table they read; the MP import also says the test MPs stay.
     expect(cards[1].querySelector("p a")!.getAttribute("href")).toBe("https://airtable.com/table");
     expect(cards[1].querySelector("p")!.textContent).toContain(staffCopy.syncs.testMps);
@@ -893,19 +918,19 @@ describe("ImportOverview", () => {
     expect(cards[2].querySelector("p")!.textContent).not.toContain(staffCopy.syncs.testMps);
   });
 
-  it("tags an applied run green, and one that changed nothing or was discarded plainly", async () => {
+  it("shows an applied run in green, and one that changed nothing or was discarded plainly", async () => {
     const discarded = ran("sync-mps", { changes: { added: [], removed: [], changed: [] } }, { status: "discarded" });
     const unchanged = ran("import-luma", exampleLumaResult, { status: "unchanged" });
     const { rerender } = await render(
       <ImportOverview newest={[unchanged, exampleAppliedSync, undefined, undefined, undefined]} airtableTable="x" />,
     );
-    const tags = [...document.querySelectorAll("section")].map((card) => card.lastElementChild!.querySelector("span"));
-    expect(tags[0]!.className).not.toMatch(/green|amber|red/);
-    expect(tags[1]!.className).toMatch(/green/);
+    const status = (i: number) => document.querySelectorAll("section")[i].querySelector("h2 + div > p")!.className;
+    expect(status(0)).not.toMatch(/green|amber|red/);
+    expect(status(1)).toMatch(/green/);
     await rerender(
       <ImportOverview newest={[undefined, discarded, undefined, undefined, undefined]} airtableTable="x" />,
     );
-    expect(page.getByText(staffCopy.runs.status.discarded).element().className).not.toMatch(/green|amber|red/);
+    expect(status(1)).not.toMatch(/green|amber|red/);
   });
 });
 
@@ -931,6 +956,9 @@ describe("ImportJobPage", () => {
     expect(page.getByRole("heading", { level: 1 }).element().textContent).toBe(
       `${jobTitles["sync-mps"]}${staffCopy.import.airtable}${staffCopy.import.nightly}`,
     );
+    // The lozenges are plain: only a run's ending is in colour.
+    const lozenges = [...page.getByRole("heading", { level: 1 }).element().querySelectorAll("span")];
+    expect(lozenges.map((tag) => tag.className.match(/green|amber|red|blue/))).toEqual([null, null]);
     await page.getByRole("button", { name: staffCopy.syncs.syncNow }).click();
     await vi.waitFor(() => expect(run).toHaveBeenCalledOnce());
     expect(

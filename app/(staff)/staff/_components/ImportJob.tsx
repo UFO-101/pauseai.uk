@@ -6,34 +6,25 @@ import { type AnyImportRun, IMPORT_JOBS, type ImportJob, importPath } from "@/li
 import { MEMBERS_API } from "@/lib/parliament";
 import { staffTime } from "@/lib/staff-time";
 import Breadcrumb from "./Breadcrumb";
+import styles from "./ImportJob.module.css";
 import ImportCard, { ImportCards } from "./ImportCard";
 import JobActions from "./JobActions";
 import type { Decide } from "./Run";
 import RunList from "./RunList";
-import Tag, { type TagTone } from "@/components/ui/Tag";
-import { Muted } from "@/components/ui/Text";
+import Tag from "@/components/ui/Tag";
 
 // Every import and check: the overview at /staff/import-data, a card each,
 // and each job's own page, with its button and every run it has made.
 
 const words = staffCopy.import;
 
-/** Each job's lozenges: where it reads from, how often, and what kind of job it is. */
-const TAGS: Record<ImportJob, { tone?: TagTone; text: string }[]> = {
-  "import-luma": [
-    { tone: "amber", text: words.luma },
-    { tone: "blue", text: words.hourly },
-  ],
-  "sync-mps": [
-    { tone: "amber", text: words.airtable },
-    { tone: "blue", text: words.nightly },
-  ],
-  "check-mps": [{ tone: "green", text: words.web }, { tone: "blue", text: words.nightly }, { text: words.checkOnly }],
-  "import-controlai": [
-    { tone: "green", text: words.web },
-    { tone: "blue", text: words.nightly },
-  ],
-  "import-signatories": [{ tone: "amber", text: words.airtable }, { text: words.oneOff }],
+/** Each job's lozenges, all plain, so only how its runs ended is in colour: where it reads from, how often, and what kind of job it is. */
+const TAGS: Record<ImportJob, string[]> = {
+  "import-luma": [words.luma, words.hourly],
+  "sync-mps": [words.airtable, words.nightly],
+  "check-mps": [words.web, words.nightly, words.checkOnly],
+  "import-controlai": [words.web, words.nightly],
+  "import-signatories": [words.airtable, words.oneOff],
 };
 
 /** Each job's description, around a link to where it reads from, and its button and what to say before its first run. */
@@ -76,11 +67,7 @@ const ABOUT: Record<
 };
 
 function Tags({ job }: { job: ImportJob }) {
-  return TAGS[job].map(({ tone, text }) => (
-    <Tag key={text} tone={tone}>
-      {text}
-    </Tag>
-  ));
+  return TAGS[job].map((text) => <Tag key={text}>{text}</Tag>);
 }
 
 /** What the job does, with its source linked. Airtable's table link is the server's, so it comes in as a prop. */
@@ -98,22 +85,27 @@ function Intro({ job, airtableTable }: { job: ImportJob; airtableTable: string }
   );
 }
 
-/** How a job's newest run ended, and when: a tag, red for failed and amber for held or stopped short; or that it has never run. */
+type Tone = "green" | "amber" | "red";
+
+/** The colour of a job's newest run: green when it went well, amber held or stopped short, red failed; none when it changed nothing, was discarded, or never ran. */
+function toneOf(run: AnyImportRun | undefined): Tone | undefined {
+  if (!run) return undefined;
+  if (run.status === "failed") return "red";
+  if (run.status === "held") return "amber";
+  if (run.job === "import-luma" && run.result.stoppedBy !== undefined) return "amber";
+  return run.status === "ok" || run.status === "applied" ? "green" : undefined;
+}
+
+/** How a job's newest run ended, and when, in a strip tinted to match; or that it has never run. */
 function NewestRun({ job, run }: { job: ImportJob; run: AnyImportRun | undefined }) {
-  if (!run) return <Muted>{ABOUT[job].none}</Muted>;
-  const tone: TagTone | undefined =
-    run.status === "failed"
-      ? "red"
-      : run.status === "held"
-        ? "amber"
-        : run.status === "ok" || run.status === "applied"
-          ? "green"
-          : undefined;
+  if (!run) return <p className={styles.status}>{ABOUT[job].none}</p>;
+  const tone = toneOf(run);
   const stoppedShort = run.job === "import-luma" && run.status !== "failed" && run.result.stoppedBy !== undefined;
   return (
-    <p>
-      <Tag tone={tone}>{staffCopy.runs.status[run.status]}</Tag>
-      {stoppedShort && <Tag tone="amber">{staffCopy.runs.incomplete}</Tag>} <Muted>{staffTime(run.at)}</Muted>
+    <p className={tone ? `${styles.status} ${styles[tone]}` : styles.status}>
+      <strong>{staffCopy.runs.status[run.status]}</strong>
+      {stoppedShort && <strong> · {staffCopy.runs.incomplete}</strong>}
+      <span className={styles.when}>{staffTime(run.at)}</span>
     </p>
   );
 }
@@ -138,6 +130,7 @@ export function ImportOverview({
             href={importPath(job)}
             tags={<Tags job={job} />}
             intro={<Intro job={job} airtableTable={airtableTable} />}
+            tone={toneOf(newest[i])}
           >
             <NewestRun job={job} run={newest[i]} />
           </ImportCard>
