@@ -22,7 +22,7 @@ import PoliticianForm from "./PoliticianForm";
 import PoliticianTable from "./PoliticianTable";
 import { examplePolitician, examplePoliticianHistory } from "./PoliticianTable.examples";
 import ResultBox, { OPEN_UP_TO } from "./ResultBox";
-import RunFilters from "./RunFilters";
+import { ImportJobPage, ImportOverview } from "./ImportJob";
 import RunList from "./RunList";
 import {
   exampleAppliedSync,
@@ -96,7 +96,7 @@ describe("StaffNav", () => {
     expect(nav.querySelector('a[href="/staff/accounts"]')!.textContent).toBe(staffCopy.nav.accounts);
     expect(nav.querySelector('a[href="/staff/letters"]')!.textContent).toBe(staffCopy.nav.letters);
     expect([...nav.querySelectorAll("h2")].map((h) => h.textContent).slice(0, 4)).toEqual(
-      ["politicians", "email", "data", "admin"].map((id) => staffCopy.nav.sections[id]),
+      ["politicians", "data", "admin"].map((id) => staffCopy.nav.sections[id]),
     );
     expect(nav.querySelector('a[href="/staff/supporters"]')).toBeNull();
     // On a phone, a dropdown instead: the current page, with the groups, the email and the way out under it once opened.
@@ -197,13 +197,13 @@ describe("StaffDashboard", () => {
     expect(dot(2)).toMatch(/red/);
     await expect
       .element(page.getByRole("link", { name: copy.actions.decide }))
-      .toHaveAttribute("href", "/staff/import-data");
+      .toHaveAttribute("href", "/staff/import-data/mps");
     await expect
       .element(page.getByRole("link", { name: copy.actions.openMp }))
       .toHaveAttribute("href", "/staff/politicians/7");
     await expect
       .element(page.getByRole("link", { name: copy.actions.seeRun }))
-      .toHaveAttribute("href", "/staff/import-data");
+      .toHaveAttribute("href", "/staff/import-data/controlai");
     // The heading is inside the box. Red while something in it is broken; amber when it's only waiting.
     const box = page.getByRole("region", { name: copy.actionsTitle });
     expect(box.getByRole("heading", { level: 2 }).element().textContent).toBe(copy.actionsTitle);
@@ -532,23 +532,35 @@ describe("SortHeading", () => {
 });
 
 describe("ImportCard", () => {
-  it("is a card with its title, what it does, its actions and its runs, in a grid", async () => {
+  it("is a card with its title as the link to its page, its lozenges, what it does and its newest run, in a grid", async () => {
     await render(
       <ImportCards>
-        <ImportCard title="An import" intro="What it copies." actions={<button type="button">Go</button>}>
+        <ImportCard
+          title="An import"
+          href="/staff/import-data/luma"
+          tags={<span>Hourly</span>}
+          intro={<a href="https://luma.com">Luma</a>}
+        >
           <p>Not imported yet.</p>
         </ImportCard>
-        <ImportCard title="Another" intro="More." actions={<button type="button">Go too</button>}>
+        <ImportCard title="Another" href="/x" tags={null} intro="More.">
           <p>Never.</p>
         </ImportCard>
       </ImportCards>,
     );
-    await expect.element(page.getByRole("heading", { level: 2, name: "An import" })).toBeVisible();
-    await expect.element(page.getByText("What it copies.")).toBeVisible();
-    await expect.element(page.getByRole("button", { name: "Go" })).toBeVisible();
+    const heading = page.getByRole("heading", { level: 2, name: "An import Hourly" });
+    await expect.element(heading).toBeVisible();
+    await expect
+      .element(heading.getByRole("link", { name: "An import" }))
+      .toHaveAttribute("href", "/staff/import-data/luma");
+    await expect.element(page.getByRole("link", { name: "Luma" })).toHaveAttribute("href", "https://luma.com");
     await expect.element(page.getByText("Not imported yet.")).toBeVisible();
-    const grid = page.getByRole("heading", { level: 2, name: "Another" }).element().closest("section")!.parentElement!;
-    expect(getComputedStyle(grid).display).toBe("grid");
+    // The title's link covers the card; the description's own link sits above it.
+    const card = heading.element().closest("section")!;
+    expect(getComputedStyle(card).position).toBe("relative");
+    expect(getComputedStyle(heading.getByRole("link").element(), "::after").position).toBe("absolute");
+    expect(getComputedStyle(page.getByRole("link", { name: "Luma" }).element()).zIndex).toBe("1");
+    expect(getComputedStyle(card.parentElement!).display).toBe("grid");
   });
 });
 
@@ -832,14 +844,109 @@ describe("EmailBlockFilters", () => {
 });
 
 describe("JobActions", () => {
-  it("runs the job, and links to all its runs", async () => {
+  it("runs the job", async () => {
     const fn = vi.fn();
-    await render(<JobActions action={fn} label="Run it" job="check-mps" />);
+    await render(<JobActions action={fn} label="Run it" />);
     await page.getByRole("button", { name: "Run it" }).click();
     await vi.waitFor(() => expect(fn).toHaveBeenCalledOnce());
+    expect(page.getByRole("link").all()).toHaveLength(0);
+  });
+});
+
+describe("ImportOverview", () => {
+  it("is a card per job, each a link to its page, with how its newest run ended, or that it never ran", async () => {
+    const newest: (AnyImportRun | undefined)[] = [
+      ran("import-luma", { ...exampleLumaResult, stoppedBy: "time" }, { at: "2026-10-21T11:17:00Z" }),
+      exampleHeldSync,
+      ran("check-mps", { problems: [] }, { at: "2026-10-21T01:00:00Z", status: "ok" }),
+      failed("import-controlai", "No PDF linked", { at: "2026-10-21T02:00:00Z" }),
+      undefined,
+    ];
+    await render(<ImportOverview newest={newest} airtableTable="https://airtable.com/table" />);
+    await expect.element(page.getByRole("heading", { level: 1, name: staffCopy.import.pageTitle })).toBeVisible();
+    const cards = [...document.querySelectorAll("section")];
+    expect(cards.map((card) => card.querySelector("h2 a")!.getAttribute("href"))).toEqual([
+      "/staff/import-data/luma",
+      "/staff/import-data/mps",
+      "/staff/import-data/mp-check",
+      "/staff/import-data/controlai",
+      "/staff/import-data/signatories",
+    ]);
+    expect(cards.map((card) => card.querySelector("h2 a")!.textContent)).toEqual([
+      jobTitles["import-luma"],
+      jobTitles["sync-mps"],
+      jobTitles["check-mps"],
+      jobTitles["import-controlai"],
+      jobTitles["import-signatories"],
+    ]);
+    const foot = (i: number) => cards[i].lastElementChild!;
+    expect(foot(0).textContent).toBe(`${staffCopy.runs.status.ok}${staffCopy.runs.incomplete} 2026-10-21 11:17`);
+    expect(foot(0).querySelectorAll("span")[0].className).toMatch(/green/);
+    expect(foot(0).querySelectorAll("span")[1].className).toMatch(/amber/);
+    expect(foot(1).querySelector("span")!.className).toMatch(/amber/);
+    expect(foot(3).querySelector("span")!.className).toMatch(/red/);
+    expect(foot(4).textContent).toBe(staffCopy.import.none);
+    // The Airtable jobs link the table they read; the MP import also says the test MPs stay.
+    expect(cards[1].querySelector("p a")!.getAttribute("href")).toBe("https://airtable.com/table");
+    expect(cards[1].querySelector("p")!.textContent).toContain(staffCopy.syncs.testMps);
+    expect(cards[4].querySelector("p a")!.getAttribute("href")).toBe("https://airtable.com/table");
+    expect(cards[2].querySelector("p")!.textContent).not.toContain(staffCopy.syncs.testMps);
+  });
+
+  it("tags an applied run green, and one that changed nothing or was discarded plainly", async () => {
+    const discarded = ran("sync-mps", { changes: { added: [], removed: [], changed: [] } }, { status: "discarded" });
+    const unchanged = ran("import-luma", exampleLumaResult, { status: "unchanged" });
+    const { rerender } = await render(
+      <ImportOverview newest={[unchanged, exampleAppliedSync, undefined, undefined, undefined]} airtableTable="x" />,
+    );
+    const tags = [...document.querySelectorAll("section")].map((card) => card.lastElementChild!.querySelector("span"));
+    expect(tags[0]!.className).not.toMatch(/green|amber|red/);
+    expect(tags[1]!.className).toMatch(/green/);
+    await rerender(
+      <ImportOverview newest={[undefined, discarded, undefined, undefined, undefined]} airtableTable="x" />,
+    );
+    expect(page.getByText(staffCopy.runs.status.discarded).element().className).not.toMatch(/green|amber|red/);
+  });
+});
+
+describe("ImportJobPage", () => {
+  it("leads back to the overview, names the job with its lozenges, runs it, and lists every run by day", async () => {
+    const run = vi.fn();
+    const { fn, sent } = action();
+    const runs: AnyImportRun[] = [
+      exampleHeldSync,
+      exampleAppliedSync,
+      ran(
+        "sync-mps",
+        { changes: { added: [], removed: [], changed: [] } },
+        { id: 1, at: "2026-10-11T01:00:00Z", status: "unchanged" },
+      ),
+    ];
+    const { rerender } = await render(
+      <ImportJobPage job="sync-mps" runs={runs} run={run} decide={fn} airtableTable="https://airtable.com/table" />,
+    );
     await expect
-      .element(page.getByRole("link", { name: staffCopy.history.showAll }))
-      .toHaveAttribute("href", "/staff/import-history?job=check-mps");
+      .element(page.getByRole("navigation", { name: staffCopy.import.pageTitle }).getByRole("link"))
+      .toHaveAttribute("href", "/staff/import-data");
+    expect(page.getByRole("heading", { level: 1 }).element().textContent).toBe(
+      `${jobTitles["sync-mps"]}${staffCopy.import.airtable}${staffCopy.import.nightly}`,
+    );
+    await page.getByRole("button", { name: staffCopy.syncs.syncNow }).click();
+    await vi.waitFor(() => expect(run).toHaveBeenCalledOnce());
+    expect(
+      page
+        .getByRole("heading", { level: 2 })
+        .all()
+        .map((h) => h.element().textContent),
+    ).toEqual(["12 Oct 2026", "11 Oct 2026"]);
+    await page.getByRole("button", { name: staffCopy.syncs.apply }).click();
+    await vi.waitFor(() => expect(sent).toEqual([{ id: "3", decision: "apply" }]));
+
+    await rerender(<ImportJobPage job="check-mps" runs={[]} run={run} decide={fn} airtableTable="x" />);
+    await expect.element(page.getByText(staffCopy.check.never)).toBeVisible();
+    await expect
+      .element(page.getByRole("link", { name: staffCopy.check.intro.link }))
+      .toHaveAttribute("target", "_blank");
   });
 });
 
@@ -1217,37 +1324,23 @@ describe("RunList", () => {
     expect(only.element().closest("section")!.className).toMatch(/incomplete/);
   });
 
-  it("on the history page, names each run's job and heads each day's runs with its date; says when there are none", async () => {
+  it("heads each day's runs with its date, and says when there are none", async () => {
     const runs: AnyImportRun[] = [
       ran("check-mps", { problems: [] }, { id: 7, at: "2026-11-03T01:00:00Z" }),
-      ran("import-luma", exampleLumaResult, { id: 10, at: "2026-11-03T00:17:00Z" }),
-      ran("import-controlai", controlAi, { id: 8, at: "2026-11-02T02:00:00Z" }),
-      ran("import-signatories", { matched: 1, added: 0, alreadySet: 0 }, { id: 9, at: "2026-11-02T00:30:00Z" }),
-      applied,
+      ran("check-mps", { problems: [] }, { id: 10, at: "2026-11-03T00:17:00Z" }),
+      ran("check-mps", { problems: [] }, { id: 8, at: "2026-11-02T02:00:00Z" }),
     ];
-    const { rerender } = await render(<RunList runs={runs} none="None" history />);
-    for (const job of ["sync-mps", "check-mps", "import-controlai", "import-signatories", "import-luma"] as const) {
-      await expect.element(page.getByText(`${jobTitles[job]} ·`, { exact: false })).toBeVisible();
-    }
+    const { rerender } = await render(<RunList runs={runs} none="None" />);
     expect(
       page
         .getByRole("heading", { level: 2 })
         .all()
         .map((h) => h.element().textContent),
-    ).toEqual(["3 Nov 2026", "2 Nov 2026", "11 Oct 2026"]);
+    ).toEqual(["3 Nov 2026", "2 Nov 2026"]);
+    // The page is one job's, so no run is labelled with it.
+    await expect.element(page.getByText(`${jobTitles["check-mps"]} ·`, { exact: false })).not.toBeInTheDocument();
     await rerender(<RunList runs={[]} none="Nothing here" />);
     await expect.element(page.getByText("Nothing here")).toBeVisible();
-  });
-});
-
-describe("RunFilters", () => {
-  it("is a GET form to the history page, with the job filled in", async () => {
-    await render(<RunFilters job="check-mps" />);
-    const select = page.getByRole("combobox", { name: staffCopy.history.job, exact: true });
-    await expect.element(select).toHaveValue("check-mps");
-    const form = select.element().closest("form")!;
-    expect(form.getAttribute("method")).toBe("get");
-    expect(form.getAttribute("action")).toBe("/staff/import-history");
   });
 });
 

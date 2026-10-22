@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { campaigns } from "@/lib/content/email-your-mp";
+import { importPath } from "@/lib/import-runs";
 import { jobTitles, staffCopy } from "@/lib/content/staff-interface";
 import { MAX_UNCHECKED_CHANGES } from "@/lib/mps";
 import {
@@ -26,9 +27,6 @@ import { Muted } from "@/components/ui/Text";
 
 const copy = staffCopy.home.dashboard;
 
-/** Where the held MP import and a failed run are shown. */
-const IMPORTS_PAGE = "/staff/import-data";
-
 /** One thing waiting for a person: a dot for how bad, what it is, its detail, and its button. */
 function Action({ action }: { action: DashboardAction }) {
   const words = copy.actions;
@@ -46,7 +44,7 @@ function Action({ action }: { action: DashboardAction }) {
             staffTime(action.at),
           ),
           words.decide,
-          IMPORTS_PAGE,
+          importPath("sync-mps"),
         ]
       : action.kind === "blocked-mp"
         ? [
@@ -61,7 +59,7 @@ function Action({ action }: { action: DashboardAction }) {
             words.failedImport(jobTitles[action.job]),
             words.failedImportDetail(action.error, staffTime(action.at)),
             words.seeRun,
-            IMPORTS_PAGE,
+            importPath(action.job),
           ];
   return (
     <li className={styles.action}>

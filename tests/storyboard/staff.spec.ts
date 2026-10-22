@@ -162,8 +162,11 @@ test("staff log in, set a status that shows on /campaigns, and log out", async (
   await expect(page.getByRole("cell", { name: "set status" }).first()).toBeVisible();
   await frame(page, "the audit log");
 
+  // The import page: a card per job; each opens the job's own page.
   await page.goto(`${BASE}/staff/import-data`);
   await frame(page, "the import page");
+  await page.getByRole("link", { name: jobTitles["import-controlai"] }).click();
+  await expect(page).toHaveURL(`${BASE}/staff/import-data/controlai`);
 
   // The fixture ControlAI letter is signed by Polly Placeholder MP, so the bill's column says so.
   await page.getByRole("button", { name: staffCopy.controlAi.importNow }).click();
@@ -176,7 +179,7 @@ test("staff log in, set a status that shows on /campaigns, and log out", async (
   await frame(page, "the politicians list says who signed ControlAI's letter");
 
   // The fixture Airtable gives Polly Placeholder an email Parliament doesn't list.
-  await page.goto(`${BASE}/staff/import-data`);
+  await page.goto(`${BASE}/staff/import-data/mp-check`);
   await page.getByRole("button", { name: staffCopy.check.checkNow }).click();
   const blake = page.getByRole("row").filter({ hasText: "Cities of London and Westminster" });
   await expect(blake).toContainText(staffCopy.check.kinds.email);
@@ -201,7 +204,7 @@ test("the Luma import copies the calendar's events, guests and contacts, and fin
   flowDatabase,
 }) => {
   await logIn(page, flowDatabase);
-  await page.goto(`${BASE}/staff/import-data`);
+  await page.goto(`${BASE}/staff/import-data/luma`);
   await page.getByRole("button", { name: staffCopy.luma.importNow }).click();
   // The fixture calendar: nine public events and a private one, five guests each over two pages, three contacts.
   const first = {
@@ -262,26 +265,31 @@ test("a politician's own page", async ({ page, request, flowDatabase }) => {
   await frame(page, "the politicians sorted by constituency, reversed");
 });
 
-test("the import history lists every run, and filters to one job", async ({ page, request, flowDatabase }) => {
+test("an import's own page lists every run it has made, and the import page shows the newest", async ({
+  page,
+  request,
+  flowDatabase,
+}) => {
   await syncMps(request, BASE);
   await logIn(page, flowDatabase);
-  await page.goto(`${BASE}/staff/import-data`);
-  await page.getByRole("button", { name: staffCopy.check.checkNow }).click();
+  // The check, twice: its page lists both runs, under the day's heading, and none of the MP import's.
+  await page.goto(`${BASE}/staff/import-data/mp-check`);
+  const check = page.getByRole("button", { name: staffCopy.check.checkNow });
+  await check.click();
   await expect(page.getByRole("row").filter({ hasText: "Cities of London and Westminster" })).toBeVisible();
+  await check.click();
+  await expect(page.getByRole("row").filter({ hasText: "Cities of London and Westminster" })).toHaveCount(2);
+  await expect(page.getByRole("heading", { level: 2 })).toHaveCount(1);
+  await frame(page, "the MP check's page: both its runs");
 
-  // Each run in the history starts with its job's title, unlike the filter's options.
-  const runs = (job: ImportJob) => page.getByText(`${jobTitles[job]} ·`);
-  await page.goto(`${BASE}/staff/import-history`);
-  await expect(runs("sync-mps")).toBeVisible();
-  await expect(runs("check-mps")).toBeVisible();
-  await frame(page, "the import history: the MP import, then the check");
-
-  await page.getByLabel(staffCopy.history.job).selectOption("sync-mps");
-  await page.getByRole("button", { name: staffCopy.history.filter, exact: true }).click();
-  await expect(page).toHaveURL(`${BASE}/staff/import-history?job=sync-mps`);
-  await expect(runs("sync-mps")).toBeVisible();
-  await expect(runs("check-mps")).toHaveCount(0);
-  await frame(page, "filtered to the MP import");
+  // The import page: each job's newest run on its card; the MP import's, from the start of the flow.
+  await page.getByRole("navigation", { name: staffCopy.import.pageTitle }).getByRole("link").click();
+  await expect(page).toHaveURL(`${BASE}/staff/import-data`);
+  const card = (job: ImportJob) =>
+    page.locator("section").filter({ has: page.getByRole("link", { name: jobTitles[job] }) });
+  await expect(card("check-mps").getByText(staffCopy.runs.status.ok)).toBeVisible();
+  await expect(card("import-controlai").getByText(staffCopy.controlAi.never)).toBeVisible();
+  await frame(page, "the import page: the check done, ControlAI's letter never read");
 });
 
 /** The shared inbox in a fixture build (tests/fixture-env.mjs), where staff alerts go. */
@@ -448,7 +456,7 @@ test("an MP import that would change too many is held, then discarded, and then 
     Number(runSql(flowDatabase, "SELECT count(*) FROM politicians WHERE name LIKE 'Gone %' AND sitting")[0]);
 
   await logIn(page, flowDatabase, ["admin"]);
-  await page.goto(`${BASE}/staff/import-data`);
+  await page.goto(`${BASE}/staff/import-data/mps`);
   await page.getByRole("button", { name: staffCopy.syncs.syncNow }).click();
   await expect(page.getByRole("button", { name: staffCopy.syncs.apply })).toBeVisible();
   await expect(page.getByText(`${staffCopy.syncs.removed} 21`).first()).toBeVisible();
@@ -461,7 +469,7 @@ test("an MP import that would change too many is held, then discarded, and then 
   await expect(page.getByText(staffCopy.home.dashboard.actions.heldSync)).toBeVisible();
   await frame(page, "the home: the held import needs a person");
   await page.getByRole("link", { name: staffCopy.home.dashboard.actions.decide }).click();
-  await expect(page).toHaveURL(`${BASE}/staff/import-data`);
+  await expect(page).toHaveURL(`${BASE}/staff/import-data/mps`);
 
   await page.getByRole("button", { name: staffCopy.syncs.discard }).click();
   await expect(page.getByRole("button", { name: staffCopy.syncs.apply })).toHaveCount(0);

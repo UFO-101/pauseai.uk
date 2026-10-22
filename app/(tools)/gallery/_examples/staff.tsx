@@ -18,7 +18,7 @@ import PoliticianFilters from "@/app/(staff)/staff/_components/PoliticianFilters
 import ResultBox, { OPEN_UP_TO } from "@/app/(staff)/staff/_components/ResultBox";
 import Run from "@/app/(staff)/staff/_components/Run";
 import RunBox from "@/app/(staff)/staff/_components/RunBox";
-import RunFilters from "@/app/(staff)/staff/_components/RunFilters";
+import { ImportJobPage, ImportOverview } from "@/app/(staff)/staff/_components/ImportJob";
 import RunList from "@/app/(staff)/staff/_components/RunList";
 import {
   exampleAppliedSync,
@@ -78,7 +78,6 @@ const PAGES: Record<StaffPageName, true> = {
   letters: true,
   emails: true,
   import: true,
-  history: true,
   changes: true,
   accounts: true,
 };
@@ -605,17 +604,16 @@ export const staff: Group = {
             <StaffPage as="div">
               <ImportCards>
                 <ImportCard
-                  title={
-                    <>
-                      An import <Tag tone="blue">Nightly</Tag>
-                    </>
-                  }
+                  title="An import"
+                  href="/staff/import-data/signatories"
+                  tags={<Tag tone="blue">Nightly</Tag>}
                   intro="What it copies, and from where."
-                  actions={<JobActionsExample />}
                 >
-                  <Run run={exampleRun("import-signatories", { matched: 3, added: 7, alreadySet: 0 })} />
+                  <p>
+                    <Tag tone="green">Done</Tag> 2026-10-15 02:00
+                  </p>
                 </ImportCard>
-                <ImportCard title="Another" intro="Never run." actions={<JobActionsExample />}>
+                <ImportCard title="Another" href="/staff/import-data/luma" tags={null} intro="Never run.">
                   <p>Not imported yet.</p>
                 </ImportCard>
               </ImportCards>
@@ -632,9 +630,78 @@ export const staff: Group = {
           label: "One card on its own",
           render: () => (
             <StaffPage as="div">
-              <ImportCard title="An import" intro="What it copies." actions={<JobActionsExample />}>
+              <ImportCard title="An import" href="/staff/import-data/luma" tags={null} intro="What it copies.">
                 <p>Not imported yet.</p>
               </ImportCard>
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "ImportOverview",
+      file: "app/(staff)/staff/_components/ImportJob.tsx",
+      variants: [
+        {
+          label: "Every job: one stopped short, one held, one failed, one never run",
+          render: () => (
+            <StaffPage as="div">
+              <ImportOverview
+                newest={[
+                  exampleRun(
+                    "import-luma",
+                    { ...exampleLumaResult, stoppedBy: "time" },
+                    { at: "2026-10-21T11:17:00Z" },
+                  ),
+                  exampleRun(
+                    "sync-mps",
+                    { changes: { added: [], removed: [exampleSyncedMp(2)], changed: [] }, mps: [] },
+                    { at: "2026-10-21T00:00:00Z", status: "held" },
+                  ),
+                  exampleRun("check-mps", { problems: [] }, { at: "2026-10-21T01:00:00Z" }),
+                  exampleFailedRun("import-controlai", "No PDF linked", { at: "2026-10-21T02:00:00Z" }),
+                  undefined,
+                ]}
+                airtableTable="https://airtable.com/"
+              />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "ImportJobPage",
+      file: "app/(staff)/staff/_components/ImportJob.tsx",
+      variants: [
+        {
+          label: "The MP check's page: its button and every run, by day",
+          render: () => (
+            <StaffPage as="div">
+              <ImportJobPage
+                job="check-mps"
+                runs={[
+                  exampleRun("check-mps", { problems: [] }, { id: 7, at: "2026-11-03T01:00:00Z" }),
+                  exampleFailedRun("check-mps", "Parliament answered 500", { id: 6, at: "2026-11-02T01:00:00Z" }),
+                  exampleRun("check-mps", { problems: [] }, { id: 5, at: "2026-11-01T01:00:00Z" }),
+                ]}
+                run={() => {}}
+                decide={() => {}}
+                airtableTable="https://airtable.com/"
+              />
+            </StaffPage>
+          ),
+        },
+        {
+          label: "A job that has never run",
+          render: () => (
+            <StaffPage as="div">
+              <ImportJobPage
+                job="import-signatories"
+                runs={[]}
+                run={() => {}}
+                decide={() => {}}
+                airtableTable="https://airtable.com/"
+              />
             </StaffPage>
           ),
         },
@@ -741,7 +808,7 @@ export const staff: Group = {
       file: "app/(staff)/staff/_components/JobActions.tsx",
       variants: [
         {
-          label: "A job's button and its history",
+          label: "A job's button",
           render: () => (
             <StaffPage as="div">
               <JobActionsExample />
@@ -1023,10 +1090,10 @@ export const staff: Group = {
       file: "app/(staff)/staff/_components/RunBox.tsx",
       variants: [
         {
-          label: "A run, its job named, with detail",
+          label: "A run, with detail",
           render: () => (
             <StaffPage as="div">
-              <RunBox run={exampleAppliedSync} label="An example job" summary="an example summary" lines={1}>
+              <RunBox run={exampleAppliedSync} summary="an example summary" lines={1}>
                 <p>Detail</p>
               </RunBox>
             </StaffPage>
@@ -1048,11 +1115,10 @@ export const staff: Group = {
       file: "app/(staff)/staff/_components/RunList.tsx",
       variants: [
         {
-          label: "The history page: each job named, each day headed",
+          label: "A job's page: each day headed",
           render: () => (
             <StaffPage as="div">
               <RunList
-                history
                 none="None"
                 runs={[
                   exampleRun("check-mps", { problems: [] }, { id: 7, at: "2026-11-03T01:00:00Z" }),
@@ -1087,20 +1153,6 @@ export const staff: Group = {
           render: () => (
             <StaffPage as="div">
               <LetterFilters status="bounced" />
-            </StaffPage>
-          ),
-        },
-      ],
-    },
-    {
-      name: "RunFilters",
-      file: "app/(staff)/staff/_components/RunFilters.tsx",
-      variants: [
-        {
-          label: "One job picked",
-          render: () => (
-            <StaffPage as="div">
-              <RunFilters job="check-mps" />
             </StaffPage>
           ),
         },

@@ -10,8 +10,6 @@ type Props = {
   run: AnyImportRun;
   /** The job's own summary of what the run found. Not shown for a failed run, whose error is. */
   summary: ReactNode;
-  /** The job's name, first on the line, where runs of different jobs are listed together. */
-  label?: string;
   /** The run stopped before it finished: the box is amber, with a tag saying so. A failed run is red by itself. */
   incomplete?: boolean;
   lines?: number;
@@ -24,12 +22,11 @@ type Props = {
  * started it, and what it found, or why it failed, on the line; the job's
  * detail folded under it.
  */
-export default function RunBox({ run, summary, label, incomplete, lines, actions, children }: Props) {
+export default function RunBox({ run, summary, incomplete, lines, actions, children }: Props) {
   const failed = run.status === "failed";
   const status = staffCopy.runs.status[run.status];
   const line = (
     <>
-      {label && <>{label} · </>}
       {failed ? <Tag tone="red">{status}</Tag> : <strong>{status}</strong>}
       {incomplete && (
         <>

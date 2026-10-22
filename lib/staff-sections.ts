@@ -4,9 +4,8 @@ import type { Permission } from "./staff-permissions";
 // navigation. A group with a permission shows only to those who have it;
 // its pages require it (requireStaff(permission)).
 
-export type StaffPageId =
-  "supporters" | "politicians" | "letters" | "emails" | "import" | "history" | "accounts" | "changes";
-export type StaffSectionId = "supporters" | "politicians" | "email" | "data" | "admin";
+export type StaffPageId = "supporters" | "politicians" | "letters" | "emails" | "import" | "accounts" | "changes";
+export type StaffSectionId = "supporters" | "politicians" | "data" | "admin";
 
 export type StaffSection = {
   id: StaffSectionId;
@@ -23,12 +22,11 @@ export const STAFF_SECTIONS: readonly StaffSection[] = [
       { id: "letters", href: "/staff/letters" },
     ],
   },
-  { id: "email", pages: [{ id: "emails", href: "/staff/blocked-emails" }] },
   {
     id: "data",
     pages: [
       { id: "import", href: "/staff/import-data" },
-      { id: "history", href: "/staff/import-history" },
+      { id: "emails", href: "/staff/blocked-emails" },
     ],
   },
   {

@@ -188,12 +188,14 @@ staff press its button, and
 every run is recorded (`import_runs`): when, who started it (`nightly` or a
 staff email), how it ended, why it failed, and the job's own account of
 what it found. A run can be held for staff to decide on, as a large MP sync
-is. `/staff/import-data` shows each job's newest run, `/staff/import-history`
-all of them.
+is. `/staff/import-data` shows each job's newest run on a card, and each
+job's own page (`/staff/import-data/<slug>`, `importPath()` in
+`lib/import-runs.ts`) its button and every run.
 
 A new job is a name in `IMPORT_JOBS` and the `import_runs` CHECK, a result
-type, a function that records its run, a box on the import page, and a
-scheduled function if it runs on a schedule. A job that has more to do
+type, a function that records its run, a slug in `IMPORT_SLUGS`, its
+lozenges and description in `ImportJob.tsx`, its button's Server Action in
+the job page, and a scheduled function if it runs on a schedule. A job that has more to do
 than a run allows, as the Luma import has, keeps its place and says in
 its result what's left.
 

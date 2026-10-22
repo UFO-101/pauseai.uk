@@ -18,6 +18,7 @@ export const DYNAMIC_EXAMPLES: Record<string, string> = {
   "/people/[slug]": `/people/${personSlug(people[0])}`,
   // Without a session this redirects to the login page, which is what the
   // smoke test sees.
+  "/staff/import-data/[job]": "/staff/import-data/luma",
   "/staff/politicians/[id]": "/staff/politicians/1",
   "/staff/supporters/[id]": "/staff/supporters/1",
   "/staff/supporters/[id]/erase": "/staff/supporters/1/erase",

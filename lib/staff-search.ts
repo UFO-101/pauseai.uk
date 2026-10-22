@@ -2,14 +2,8 @@
 // it filters by, leaving out anything blank or unknown. lib/staff-forms.ts
 // reads their forms.
 import { staffCopy } from "@/lib/content/staff-interface";
-import { isImportJob, type ImportJob } from "@/lib/import-runs";
 import { parseSort } from "@/lib/staff-sort";
 import { isSupporterSource, SUPPORTER_SORTS, type SupporterFilter } from "@/lib/supporters";
-
-/** The import history's job filter. */
-export function historySearch({ job = "" }: { job?: string }): { job: string; filter?: ImportJob } {
-  return { job, filter: isImportJob(job) ? job : undefined };
-}
 
 /** The letters page's status filter. */
 export function lettersSearch({ status = "" }: { status?: string }): { status: string; filter?: string } {

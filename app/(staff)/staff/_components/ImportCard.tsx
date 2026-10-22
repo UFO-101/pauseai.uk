@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { ReactNode } from "react";
 import styles from "./ImportCard.module.css";
 
@@ -7,23 +8,32 @@ export function ImportCards({ children }: { children: ReactNode }) {
 }
 
 type Props = {
-  /** The job's name, with its lozenges. */
-  title: ReactNode;
+  /** The job's name: the link to its page. */
+  title: string;
+  href: string;
+  /** Its lozenges, after the name. */
+  tags: ReactNode;
   /** What it does, and where from. */
   intro: ReactNode;
-  /** Its button and the way to its runs. */
-  actions: ReactNode;
-  /** Its newest run, or that it has never run. */
+  /** How its newest run ended. */
   children: ReactNode;
 };
 
-/** One import or check on the import page: a card with what it does, its button, and its newest run. */
-export default function ImportCard({ title, intro, actions, children }: Props) {
+/**
+ * One import or check on the import page: a card with its name, what it
+ * does, and how its newest run ended. The whole card opens the job's page;
+ * the links in its description still open where it reads from.
+ */
+export default function ImportCard({ title, href, tags, intro, children }: Props) {
   return (
     <section className={styles.card}>
-      <h2 className={styles.title}>{title}</h2>
+      <h2 className={styles.title}>
+        <Link href={href} className={styles.open}>
+          {title}
+        </Link>
+        {tags}
+      </h2>
       <p className={styles.intro}>{intro}</p>
-      {actions}
       <div className={styles.runs}>{children}</div>
     </section>
   );

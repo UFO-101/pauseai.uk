@@ -39,7 +39,6 @@ export const staffCopy = {
     sections: {
       supporters: "Supporters",
       politicians: "Politicians",
-      email: "Email",
       data: "Data",
       admin: "Admin",
     } as Record<string, string>,
@@ -47,7 +46,6 @@ export const staffCopy = {
     politicians: "Politicians",
     import: "Import data",
     changes: "Audit log",
-    history: "Import history",
     letters: "Letters to MPs",
     emails: "Blocked emails",
     logout: "Log out",
@@ -243,10 +241,10 @@ export const staffCopy = {
     // The button on the form for someone new.
     add: "Add",
     remove: "Remove",
-    // Under the email of the form for someone new, when it isn't at pauseai.uk.
-    notPauseai: "⁂ Only an address at pauseai.uk can have an account.",
     addTitle: "Add someone",
     emailLabel: "Email",
+    // Under the email of the form for someone new, when it isn't at pauseai.uk.
+    notPauseai: "⁂ Only an address at pauseai.uk can have an account.",
     // When a change would leave no admin.
     lastAdmin: "The last administrator can't be removed or lose permissions to administrate.",
   },
@@ -305,11 +303,11 @@ export const staffCopy = {
       test: "A test MP",
     },
     // A status: who set it and when; the campaign's title heads the line.
+    setBy: (who: string, when: string) => `set by ${who}, ${when}`,
+    historyTitle: "History",
     // A campaign status set or cleared, in the history: the status, then the campaign.
     statusSet: (status: string, campaign: string) => `${status} '${campaign}'`,
     statusCleared: (campaign: string) => `⁂ No longer marked as signed '${campaign}'`,
-    setBy: (who: string, when: string) => `set by ${who}, ${when}`,
-    historyTitle: "History",
     noHistory: "Nothing yet.",
     // What each line of the history was: a letter, a reply, or an entry of the audit log about them.
     history: {
@@ -443,17 +441,7 @@ export const staffCopy = {
     apply: "Apply",
     discard: "Discard",
   },
-  // The history page: every run of every job, newest first, with a job filter.
-  history: {
-    title: "Import history",
-    /** The filter's name for screen readers only. */
-    job: "Import or check",
-    allJobs: "All",
-    filter: "Show",
-    none: "No runs yet.",
-    /** Beside each job's button on the import page. */
-    showAll: "All runs",
-  },
+
   // The line every run in the import log starts with (RunBox): how it
   // ended, when, who started it, and for a held MP import, who decided it.
   runs: {
@@ -558,7 +546,7 @@ export const staffCopy = {
   },
 };
 
-/** Each job in the import log, by the title of its section on the import page: the history page's filter and lines. */
+/** Each job in the import log, by the title of its card on the import page and of its own page. */
 export const jobTitles: Record<ImportJob, string> = {
   "sync-mps": staffCopy.syncs.title,
   "check-mps": staffCopy.check.title,

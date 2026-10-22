@@ -11,6 +11,25 @@ export function isImportJob(value: string): value is ImportJob {
   return (IMPORT_JOBS as readonly string[]).includes(value);
 }
 
+/** Each job's page, /staff/import-data/<slug>: its button and every run. */
+const IMPORT_SLUGS: Record<ImportJob, string> = {
+  "import-luma": "luma",
+  "sync-mps": "mps",
+  "check-mps": "mp-check",
+  "import-controlai": "controlai",
+  "import-signatories": "signatories",
+};
+
+/** Where a job's page is. */
+export function importPath(job: ImportJob): string {
+  return `/staff/import-data/${IMPORT_SLUGS[job]}`;
+}
+
+/** The job a page's slug names, if any. */
+export function jobBySlug(slug: string): ImportJob | undefined {
+  return IMPORT_JOBS.find((job) => IMPORT_SLUGS[job] === slug);
+}
+
 /** Who starts the scheduled runs (netlify/functions/). Staff runs are started by the staff member's email. */
 /** A job's newest run as a list for RunList: itself, or none if it has never run. */
 export function asList<Run>(run: Run | undefined): Run[] {

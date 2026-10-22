@@ -97,6 +97,9 @@ describeWithDatabase("staff Server Actions", () => {
     await importControlAiNow();
     expect((await getPolitician(id))!.statuses["support-sobel-bill"]).toMatchObject({ updatedBy: "controlai" });
     expect(revalidatePath).toHaveBeenCalledWith("/staff/import-data");
+    // Its own page, the overview, and the home page's actions.
+    expect(revalidatePath).toHaveBeenCalledWith("/staff/import-data/controlai");
+    expect(revalidatePath).toHaveBeenCalledWith("/staff");
 
     const error = vi.spyOn(console, "error").mockImplementation(() => {});
     server.use(http.get("https://controlai.org/uk-pm-letter", () => new HttpResponse(null, { status: 500 })));

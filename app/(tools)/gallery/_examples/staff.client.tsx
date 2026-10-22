@@ -133,9 +133,9 @@ export function UnblockFormExample() {
   );
 }
 
-/** An import's button, its runs logged, and the link to its history. */
+/** An import's button, its runs logged. */
 export function JobActionsExample() {
-  return <Logged>{(log) => <JobActions action={log("action")} label="Check now" job="check-mps" />}</Logged>;
+  return <Logged>{(log) => <JobActions action={log("action")} label="Check now" />}</Logged>;
 }
 
 /** The seeded admin, an admin and someone with no permissions, each row's forms logged. */

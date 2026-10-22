@@ -2,23 +2,11 @@ import { describe, expect, it } from "vitest";
 import {
   accountsSearch,
   emailsSearch,
-  historySearch,
   lettersSearch,
   politicianId,
   supporterId,
   supportersSearch,
 } from "./staff-search";
-
-describe("historySearch", () => {
-  it("filters by a job", () => {
-    expect(historySearch({ job: "sync-mps" })).toEqual({ job: "sync-mps", filter: "sync-mps" });
-  });
-
-  it("filters by nothing when there's no job, or one there isn't", () => {
-    expect(historySearch({})).toEqual({ job: "", filter: undefined });
-    expect(historySearch({ job: "nope" })).toEqual({ job: "nope", filter: undefined });
-  });
-});
 
 describe("lettersSearch", () => {
   it("filters by a status", () => {
@@ -91,7 +79,6 @@ describe("supportersSearch", () => {
     });
     expect(all.q).toBe(" jane ");
     expect(supportersSearch({ registered: "on" }).filter).toMatchObject({ registered: true });
-    expect(accountsSearch({ notice: "not-pauseai" })).toEqual({ notice: "not-pauseai" });
     const bad = supportersSearch({ source: "x", active: "7", from: "soon", sort: "x", page: "0" });
     expect(bad.filter).toEqual({ sort: "active", dir: "desc", page: 1 });
     expect(supportersSearch({ active: "older", sort: "first" }).filter).toMatchObject({
@@ -104,6 +91,7 @@ describe("supportersSearch", () => {
 describe("accountsSearch", () => {
   it("keeps only the notice it knows", () => {
     expect(accountsSearch({ notice: "last-admin" })).toEqual({ notice: "last-admin" });
+    expect(accountsSearch({ notice: "not-pauseai" })).toEqual({ notice: "not-pauseai" });
     expect(accountsSearch({ notice: "x" })).toEqual({ notice: "" });
     expect(accountsSearch({})).toEqual({ notice: "" });
   });

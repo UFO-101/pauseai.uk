@@ -4,6 +4,7 @@
 // calls requireStaff() before anything else (tests/checks/staff-auth.test.ts).
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { type ImportJob, importPath } from "@/lib/import-runs";
 import { now } from "@/lib/now";
 import { eraseFrom, idFrom, permissionsFrom, politicianDetailsFrom, signedFrom, unblockFrom } from "@/lib/staff-forms";
 import { importControlAiLetter } from "@/lib/server/controlai-import";
@@ -41,43 +42,50 @@ export async function editSigner(form: FormData): Promise<void> {
   revalidatePath(`/staff/politicians/${id}`);
 }
 
+/** Refreshes the pages that show a job's runs: its own, the overview of every job, and the home page's actions. */
+function refreshImport(job: ImportJob): void {
+  revalidatePath(importPath(job));
+  revalidatePath("/staff/import-data");
+  revalidatePath("/staff");
+}
+
 /**
- * Runs an import or check, then refreshes its page. A failure is in the
- * import log, shown on the page like a nightly one, so it's logged rather
+ * Runs an import or check, then refreshes its pages. A failure is in the
+ * import log, shown on its page like a nightly one, so it's logged rather
  * than crashing the page.
  */
-async function run(path: string, work: Promise<unknown>): Promise<void> {
+async function run(job: ImportJob, work: Promise<unknown>): Promise<void> {
   try {
     await work;
   } catch (error) {
     console.error(error);
   }
-  revalidatePath(path);
+  refreshImport(job);
 }
 
 export async function syncNow(): Promise<void> {
   const { email } = await requireStaff();
-  await run("/staff/import-data", syncMps(email));
+  await run("sync-mps", syncMps(email));
 }
 
 export async function checkNow(): Promise<void> {
   const { email } = await requireStaff();
-  await run("/staff/import-data", checkMps(email));
+  await run("check-mps", checkMps(email));
 }
 
 export async function importControlAiNow(): Promise<void> {
   const { email } = await requireStaff();
-  await run("/staff/import-data", importControlAiLetter(email));
+  await run("import-controlai", importControlAiLetter(email));
 }
 
 export async function importLumaNow(): Promise<void> {
   const { email } = await requireStaff();
-  await run("/staff/import-data", importLuma(email));
+  await run("import-luma", importLuma(email));
 }
 
 export async function importFromAirtable(): Promise<void> {
   const { email } = await requireStaff();
-  await run("/staff/import-data", importSignatories(email));
+  await run("import-signatories", importSignatories(email));
 }
 
 export async function decideSync(form: FormData): Promise<void> {
@@ -86,7 +94,7 @@ export async function decideSync(form: FormData): Promise<void> {
   const decision = form.get("decision");
   if (!id || (decision !== "apply" && decision !== "discard")) return;
   await decideHeldSync(id, decision, email);
-  revalidatePath("/staff/import-data");
+  refreshImport("sync-mps");
 }
 
 /**
