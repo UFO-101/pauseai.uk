@@ -79,14 +79,6 @@ export default function PrivacyPolicy() {
 
       {/* The facts behind the sections below are in docs/data-protection.md. */}
 
-      {/* Email your MP: the form takes name, email, address and postcode and the
-          consent checkbox; the postcode goes to postcodes.io for the constituency;
-          Turnstile guards the form; Postmark sends the letter from an address of
-          ours and forwards the MP's reply to the sender; we keep the sender's
-          details, the subject, campaign, MP and status, not the letter's text;
-          bounces and spam complaints are kept against the address; each letter
-          is Bcc'd, and each reply forwarded, to the policy team's inbox
-          (REPLIES_INBOX), which is in Gmail. */}
       <h2>⁂ Email your MP</h2>
       <p>
         ⁂ When you write to your MP through this site, we keep your name, email address, postal address and postcode,
