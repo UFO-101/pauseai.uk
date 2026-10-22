@@ -87,6 +87,12 @@
   font-size: var(--text-sm);
 }
 
+/* An item's title: bold and a step larger than its detail, below the heading's size. */
+.what > :first-child {
+  font-size: var(--text-md);
+  font-weight: 600;
+}
+
 /* The day, then the windows: the one shown in bold, the others links. */
 .window {
   display: flex;

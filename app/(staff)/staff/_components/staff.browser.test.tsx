@@ -215,9 +215,17 @@ describe("StaffDashboard", () => {
     expect(rule).not.toBe("rgba(0, 0, 0, 0)");
     // The heading is larger and bolder than the items' words; the buttons are smaller than the usual small one.
     const heading = getComputedStyle(callout.getByRole("heading", { level: 2 }).element());
-    const words = getComputedStyle(callout.getByRole("listitem").first().element().querySelector("span")!);
+    const words = getComputedStyle(
+      callout.getByRole("listitem").first().element().querySelector("span > span:first-child")!,
+    );
     expect(parseFloat(heading.fontSize)).toBeGreaterThan(parseFloat(words.fontSize));
     expect(Number(heading.fontWeight)).toBeGreaterThan(Number(words.fontWeight));
+    // Each item's title stands out from its detail: larger and bolder.
+    const detail = getComputedStyle(
+      callout.getByRole("listitem").first().element().querySelector("span > span:last-child")!,
+    );
+    expect(parseFloat(words.fontSize)).toBeGreaterThan(parseFloat(detail.fontSize));
+    expect(Number(words.fontWeight)).toBeGreaterThan(Number(detail.fontWeight));
     expect(getComputedStyle(callout.getByRole("link").first().element()).paddingTop).toBe("4px");
     // Every item's button is the same: the primary, in orange.
     const looks = callout
