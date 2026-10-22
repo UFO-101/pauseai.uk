@@ -44,7 +44,7 @@ async function register(input: unknown): Promise<MarchRegisterResult> {
       console.error("[march] Luma skipped the guest (unsubscribed, removed or blocked on the calendar).");
       break;
     case "not-configured":
-      console.error(`[march] Can't add the guest to Luma: ${result.missing.join(" and ")} not set.`);
+      console.error("[march] Can't add the guest to Luma: LUMA_API_KEY not set.");
       break;
     case "failed":
       console.error(`[march] Couldn't add the guest to Luma: ${result.reason}`);
