@@ -4,10 +4,12 @@ import Image from "next/image";
 import { useState, type UIEvent } from "react";
 import { m } from "./classes";
 
-// No frame draws more than one device pixel per image pixel. Every file shows
-// at least 1350 × 900 at 3:2: a quarter of a 5K screen is 1280 device pixels
-// wide, half of an 860px-wide one at 3x is 1290, and a phone, where each is
-// full width, is at most 430px wide, 1290 at 3x.
+// Above 620px no frame draws more than one device pixel per image pixel. Every
+// file shows at least 1350 × 900 at 3:2: a quarter of a 5K screen is 1280
+// device pixels wide, half of an 860px-wide one at 3x is 1290. At 620px and
+// below each is full width, up to 1860 device pixels at 3x. The 1920-wide
+// files cover that; the placards, 1350 wide at 3:2, cover a phone up to 450px
+// wide at 3x, and are drawn up to 1.4 device pixels per image pixel beyond.
 const PHOTOS = [
   {
     src: "/images/march-signup/protest-pauseai-banner.jpg",
