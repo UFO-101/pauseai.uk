@@ -111,19 +111,12 @@ export async function listSupporters(filter: SupporterFilter): Promise<Supporter
   }[filter.sort];
   const dir = filter.dir === "asc" ? "ASC" : "DESC";
   const order = `${column} ${dir} NULLS LAST, s.last_active_at DESC NULLS LAST, s.id ${dir}`;
-  // The planner prices the summary view's subqueries for every supporter
-  // high enough to JIT-compile the list, which takes seconds where Postgres
-  // has JIT (CI's image) and saves nothing at this size; so not here.
-  const rows = await transaction(async (db) => {
-    await query("SET LOCAL jit = off", [], db);
-    return query<SupporterSummary & { total: number }>(
-      `SELECT ${SUMMARY_COLUMNS}, count(*) OVER ()::int AS total FROM supporters_summary s
-       ${where.length ? `WHERE ${where.join(" AND ")}` : ""}
-       ORDER BY ${order} LIMIT ${add(SUPPORTERS_PAGE_SIZE)} OFFSET ${add((filter.page - 1) * SUPPORTERS_PAGE_SIZE)}`,
-      values,
-      db,
-    );
-  });
+  const rows = await query<SupporterSummary & { total: number }>(
+    `SELECT ${SUMMARY_COLUMNS}, count(*) OVER ()::int AS total FROM supporters_summary s
+     ${where.length ? `WHERE ${where.join(" AND ")}` : ""}
+     ORDER BY ${order} LIMIT ${add(SUPPORTERS_PAGE_SIZE)} OFFSET ${add((filter.page - 1) * SUPPORTERS_PAGE_SIZE)}`,
+    values,
+  );
   const total = rows[0]?.total ?? 0;
   return {
     supporters: rows.map(({ total, ...row }) => {

@@ -277,8 +277,6 @@ describeWithDatabase("listSupporters and getSupporter", () => {
   it("filters by name, email or phone, source, registration, activity, first sign-up, opt-outs and postcode, and sorts", async () => {
     await people();
     expect(await names({ search: "JANE" })).toEqual(["Jane"]);
-    // The list turns JIT off for its own transaction only: it's on again after, as Postgres has it by default.
-    expect(await query("SHOW jit")).toEqual([{ jit: "on" }]);
     expect(await names({ search: "pat@" })).toEqual(["Pat"]);
     expect(await names({ search: "0900001" })).toEqual(["Jane"]);
     expect(await names({ source: "letter" })).toEqual(["Pat"]);

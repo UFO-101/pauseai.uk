@@ -666,49 +666,52 @@ ALTER TABLE public.supporters ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
 --
 
 CREATE VIEW public.supporters_summary AS
- SELECT id,
-    ( SELECT i.name
-           FROM public.supporter_identity i
-          WHERE ((i.supporter_id = s.id) AND (i.name <> ''::text))
-          ORDER BY i.seen_at DESC NULLS LAST
-         LIMIT 1) AS name,
-    ( SELECT array_agg(DISTINCT i.email ORDER BY i.email) AS array_agg
-           FROM public.supporter_identity i
-          WHERE (i.supporter_id = s.id)) AS emails,
-    ( SELECT c.phone
-           FROM public.supporter_contact c
-          WHERE ((c.supporter_id = s.id) AND (c.phone IS NOT NULL))
-          ORDER BY c.at DESC
-         LIMIT 1) AS phone,
-    ( SELECT c.postcode
-           FROM public.supporter_contact c
-          WHERE ((c.supporter_id = s.id) AND (c.postcode IS NOT NULL))
-          ORDER BY c.at DESC
-         LIMIT 1) AS postcode,
-    ( SELECT array_agg(DISTINCT i.source ORDER BY i.source) AS array_agg
-           FROM public.supporter_identity i
-          WHERE (i.supporter_id = s.id)) AS sources,
-    (EXISTS ( SELECT 1
-           FROM public.supporter_activity a
-          WHERE ((a.supporter_id = s.id) AND (a.kind = 'luma-contact'::text)))) AS luma_contact,
-    ( SELECT min(i.seen_at) AS min
-           FROM public.supporter_identity i
-          WHERE (i.supporter_id = s.id)) AS first_seen_at,
-    ( SELECT max(a.at) AS max
-           FROM public.supporter_activity a
-          WHERE (a.supporter_id = s.id)) AS last_active_at,
-    ( SELECT (count(*))::integer AS count
-           FROM public.supporter_activity a
-          WHERE ((a.supporter_id = s.id) AND (a.kind = 'luma-registered'::text) AND (a.detail <> 'declined'::text))) AS events,
-    ( SELECT (count(*))::integer AS count
-           FROM public.supporter_activity a
-          WHERE ((a.supporter_id = s.id) AND (a.kind = 'letter'::text))) AS letters,
-    ( SELECT array_agg(DISTINCT o.list ORDER BY o.list) AS array_agg
-           FROM public.opt_outs o
-          WHERE ((o.resubscribed_at IS NULL) AND (o.address IN ( SELECT i.email
-                   FROM public.supporter_identity i
-                  WHERE (i.supporter_id = s.id))))) AS opted_out
-   FROM public.supporters s;
+ WITH ident AS (
+         SELECT supporter_identity.supporter_id,
+            (array_agg(supporter_identity.name ORDER BY supporter_identity.seen_at DESC NULLS LAST, supporter_identity.name) FILTER (WHERE (supporter_identity.name <> ''::text)))[1] AS name,
+            array_agg(DISTINCT supporter_identity.email ORDER BY supporter_identity.email) AS emails,
+            array_agg(DISTINCT supporter_identity.source ORDER BY supporter_identity.source) AS sources,
+            min(supporter_identity.seen_at) AS first_seen_at
+           FROM public.supporter_identity
+          GROUP BY supporter_identity.supporter_id
+        ), act AS (
+         SELECT supporter_activity.supporter_id,
+            bool_or((supporter_activity.kind = 'luma-contact'::text)) AS luma_contact,
+            max(supporter_activity.at) AS last_active_at,
+            (count(*) FILTER (WHERE ((supporter_activity.kind = 'luma-registered'::text) AND (supporter_activity.detail <> 'declined'::text))))::integer AS events,
+            (count(*) FILTER (WHERE (supporter_activity.kind = 'letter'::text)))::integer AS letters
+           FROM public.supporter_activity
+          GROUP BY supporter_activity.supporter_id
+        ), contact AS (
+         SELECT supporter_contact.supporter_id,
+            (array_agg(supporter_contact.phone ORDER BY supporter_contact.at DESC, supporter_contact.phone) FILTER (WHERE (supporter_contact.phone IS NOT NULL)))[1] AS phone,
+            (array_agg(supporter_contact.postcode ORDER BY supporter_contact.at DESC, supporter_contact.postcode) FILTER (WHERE (supporter_contact.postcode IS NOT NULL)))[1] AS postcode
+           FROM public.supporter_contact
+          GROUP BY supporter_contact.supporter_id
+        ), opted AS (
+         SELECT i.supporter_id,
+            array_agg(DISTINCT o.list ORDER BY o.list) AS opted_out
+           FROM (public.supporter_identity i
+             JOIN public.opt_outs o ON (((o.address = i.email) AND (o.resubscribed_at IS NULL))))
+          GROUP BY i.supporter_id
+        )
+ SELECT s.id,
+    ident.name,
+    ident.emails,
+    contact.phone,
+    contact.postcode,
+    ident.sources,
+    COALESCE(act.luma_contact, false) AS luma_contact,
+    ident.first_seen_at,
+    act.last_active_at,
+    COALESCE(act.events, 0) AS events,
+    COALESCE(act.letters, 0) AS letters,
+    opted.opted_out
+   FROM ((((public.supporters s
+     LEFT JOIN ident ON ((ident.supporter_id = s.id)))
+     LEFT JOIN act ON ((act.supporter_id = s.id)))
+     LEFT JOIN contact ON ((contact.supporter_id = s.id)))
+     LEFT JOIN opted ON ((opted.supporter_id = s.id)));
 
 --
 -- Name: audit_log audit_log_pkey; Type: CONSTRAINT; Schema: public; Owner: -
