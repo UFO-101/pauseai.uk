@@ -45,4 +45,32 @@ describeWithDatabase("recentLetters", () => {
     expect((await recentLetters({ status: "auto_reply" })).map((l) => l.id)).toEqual([1]);
     expect(await recentLetters({ limit: 1 })).toHaveLength(1);
   });
+
+  it("filters by a search over sender, MP and subject, by whether answered, and by supporter", async () => {
+    const mp = await addTestMp();
+    for (const [hash, name, email, subject] of [
+      ["a", "Jane Smith", "jane@example.com", "Please act"],
+      ["b", "Sam Jones", "sam@example.com", "AI risk"],
+    ]) {
+      await query(
+        `INSERT INTO letters (campaign, politician_id, sender_name, sender_email, sender_address, sender_postcode, contact_consent, subject, reply_hash, status)
+         VALUES ('regulate-letter-pm', $1, $2, $3, 'x', 'ZZ9 9ZZ', false, $4, $5, 'sent')`,
+        [mp, name, email, subject, hash],
+      );
+    }
+    await query("UPDATE letters SET replied_at = now() WHERE id = 2");
+    await query("INSERT INTO supporters DEFAULT VALUES");
+    await query(
+      "INSERT INTO supporter_links (supporter_id, letter_id, matched_by, matched_value) VALUES (1, 1, 'email', 'jane@example.com')",
+    );
+    const ids = async (filter: Parameters<typeof recentLetters>[0]) => (await recentLetters(filter)).map((l) => l.id);
+    expect(await ids({ search: "SMITH" })).toEqual([1]);
+    expect(await ids({ search: "sam@" })).toEqual([2]);
+    expect(await ids({ search: "risk" })).toEqual([2]);
+    expect(await ids({ search: "McTestface" })).toEqual([2, 1]);
+    expect(await ids({ answered: true })).toEqual([2]);
+    expect(await ids({ answered: false })).toEqual([1]);
+    expect(await ids({ supporterId: 1 })).toEqual([1]);
+    expect(await ids({ supporterId: 2 })).toEqual([]);
+  });
 });

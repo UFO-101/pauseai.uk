@@ -2,7 +2,14 @@ import type { ReactNode } from "react";
 import { site } from "@/lib/content/site";
 import { jobTitles, staffCopy } from "@/lib/content/staff-interface";
 import { CONTROLAI_LETTER_PAGE } from "@/lib/controlai-letter";
-import { type AnyImportRun, IMPORT_JOBS, type ImportJob, importPath, runTone } from "@/lib/import-runs";
+import {
+  type AnyImportRun,
+  IMPORT_JOBS,
+  type ImportJob,
+  importPath,
+  lumaRunIncomplete,
+  runTone,
+} from "@/lib/import-runs";
 import { MEMBERS_API } from "@/lib/parliament";
 import { staffTime } from "@/lib/staff-time";
 import Breadcrumb from "./Breadcrumb";
@@ -18,6 +25,9 @@ import Tag from "@/components/ui/Tag";
 
 const words = staffCopy.import;
 
+/** PauseAI's join form, where the members come from. */
+const JOIN_FORM = "https://pauseai.info/join";
+
 /** Each job's lozenges, all plain, so only how its runs ended is in colour: where it reads from, how often, and what kind of job it is. */
 const TAGS: Record<ImportJob, string[]> = {
   "import-luma": [words.luma, words.hourly],
@@ -25,6 +35,7 @@ const TAGS: Record<ImportJob, string[]> = {
   "check-mps": [words.web, words.nightly, words.checkOnly],
   "import-controlai": [words.web, words.nightly],
   "import-signatories": [words.airtable, words.oneOff],
+  "import-members": [words.airtable, words.hourly],
 };
 
 /** Each job's description, around a link to where it reads from, and its button and what to say before its first run. */
@@ -64,6 +75,12 @@ const ABOUT: Record<
     none: staffCopy.controlAi.never,
   },
   "import-signatories": { intro: words.intro, button: words.button, none: words.none },
+  "import-members": {
+    intro: staffCopy.members.intro,
+    href: JOIN_FORM,
+    button: staffCopy.members.importNow,
+    none: staffCopy.members.never,
+  },
 };
 
 function Tags({ job }: { job: ImportJob }) {
@@ -89,7 +106,7 @@ function Intro({ job, airtableTable }: { job: ImportJob; airtableTable: string }
 function NewestRun({ job, run }: { job: ImportJob; run: AnyImportRun | undefined }) {
   if (!run) return <p className={styles.status}>{ABOUT[job].none}</p>;
   const tone = runTone(run);
-  const stoppedShort = run.job === "import-luma" && run.status !== "failed" && run.result.stoppedBy !== undefined;
+  const stoppedShort = run.job === "import-luma" && run.status !== "failed" && lumaRunIncomplete(run.result);
   return (
     <p className={tone ? `${styles.status} ${styles[tone]}` : styles.status}>
       <strong>{staffCopy.runs.status[run.status]}</strong>

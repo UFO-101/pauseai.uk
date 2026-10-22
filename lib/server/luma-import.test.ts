@@ -171,6 +171,7 @@ describeWithDatabase("importLuma", () => {
       guestsChanged: 4,
       people: 3,
       contacts: 2,
+      contactPages: 1,
       supportersAdded: 4,
       linked: 4,
       requests: 4,
@@ -217,6 +218,7 @@ describeWithDatabase("importLuma", () => {
       guestsChanged: 0,
       people: 0,
       contacts: 0,
+      contactPages: 1,
       supportersAdded: 0,
       linked: 0,
       requests: 2,
@@ -362,6 +364,9 @@ describeWithDatabase("importLuma", () => {
       guestsChanged: 0,
       people: 0,
       contacts: 0,
+      // A full pass over the contacts is due, and none of it read.
+      contactPages: 0,
+      contactsPassGoing: true,
       supportersAdded: 0,
       linked: 0,
       requests: 0,
@@ -394,8 +399,12 @@ describeWithDatabase("importLuma", () => {
     const luma = fakeLuma({ contacts, pageSize: 1 });
     const contactRequests = () => luma.requests.filter((r) => r.startsWith("contacts"));
 
-    // The first run starts the first full pass: ten pages, and the cursor kept.
-    expect((await importLuma("jo@pauseai.uk")).contacts).toBe(10);
+    // The first run starts the first full pass: ten pages, and the cursor kept, still going.
+    expect(await importLuma("jo@pauseai.uk")).toMatchObject({
+      contacts: 10,
+      contactPages: 10,
+      contactsPassGoing: true,
+    });
     expect(contactRequests()).toHaveLength(10);
     expect(await query("SELECT cursor, full_pass_at FROM luma_import_state WHERE list = 'contacts'")).toEqual([
       { cursor: "10", full_pass_at: null },
@@ -403,7 +412,9 @@ describeWithDatabase("importLuma", () => {
 
     // The next finishes it.
     luma.requests.length = 0;
-    expect((await importLuma("jo@pauseai.uk")).contacts).toBe(2);
+    const second = await importLuma("jo@pauseai.uk");
+    expect(second).toMatchObject({ contacts: 2, contactPages: 2 });
+    expect(second.contactsPassGoing).toBeUndefined();
     expect(contactRequests()).toEqual(["contacts@10", "contacts@11"]);
     const [state] = await query<{ cursor: string; full_pass_at: Date | null }>(
       "SELECT cursor, full_pass_at FROM luma_import_state WHERE list = 'contacts'",
@@ -419,6 +430,27 @@ describeWithDatabase("importLuma", () => {
     luma.requests.length = 0;
     expect((await importLuma("jo@pauseai.uk")).contacts).toBe(1);
     expect(contactRequests()).toEqual(["contacts", "contacts@1"]);
+
+    // Between passes, every page new reads to the end of the list, and no pass is going.
+    luma.contacts = [contact(14), contact(15)];
+    luma.requests.length = 0;
+    const toTheEnd = await importLuma("jo@pauseai.uk");
+    expect(toTheEnd).toMatchObject({ contacts: 2, contactPages: 2 });
+    expect(toTheEnd.contactsPassGoing).toBeUndefined();
+  });
+
+  it("doesn't count a full pass of the contacts as done when the run ran out before reading any", async () => {
+    // Luma's rate limit is near after the events' page, so the contacts aren't read.
+    const luma = fakeLuma({ contacts: [contact(1), contact(2)], pageSize: 1, remaining: 10 });
+    expect((await importLuma("jo@pauseai.uk")).stoppedBy).toBe("rate-limit");
+    expect(await query("SELECT cursor, full_pass_at FROM luma_import_state WHERE list = 'contacts'")).toEqual([
+      { cursor: "", full_pass_at: null },
+    ]);
+    // The next run, with room, reads the whole pass.
+    luma.remaining = undefined;
+    luma.requests.length = 0;
+    expect((await importLuma("jo@pauseai.uk")).contacts).toBe(2);
+    expect(luma.requests.filter((r) => r.startsWith("contacts"))).toEqual(["contacts", "contacts@1"]);
   });
 
   it("drops a contacts cursor Luma no longer honours, failing that run, and starts the pass again on the next", async () => {

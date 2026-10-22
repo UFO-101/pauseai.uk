@@ -16,6 +16,7 @@ import {
   importControlAiNow,
   importFromAirtable,
   importLumaNow,
+  importMembersNow,
   markSigned,
   removeStaffAccountNow,
   saveStaffAccountNow,
@@ -64,6 +65,7 @@ describeWithDatabase("staff Server Actions", () => {
       () => decideSync(form({ id: "1", decision: "apply" })),
       () => importFromAirtable(),
       () => importLumaNow(),
+      () => importMembersNow(),
       () => saveStaffAccountNow(form({ email: "x@pauseai.uk", "permission:admin": "on" })),
       () => removeStaffAccountNow(form({ email: "x@pauseai.uk" })),
       () => eraseSupporterNow(form({ id: "1", reference: "r", confirm: "on" })),
@@ -159,6 +161,13 @@ describeWithDatabase("staff Server Actions", () => {
     expect(await runs()).toEqual([{ job: "import-luma", status: "ok", startedBy: "jo@pauseai.uk" }]);
     expect(await query("SELECT count(*)::int AS n FROM luma_events")).toEqual([{ n: 9 }]);
     expect(revalidatePath).toHaveBeenCalledWith("/staff/import-data");
+  });
+
+  it("importMembersNow copies the members as the staff member", async () => {
+    await importMembersNow();
+    expect(await runs()).toEqual([{ job: "import-members", status: "ok", startedBy: "jo@pauseai.uk" }]);
+    expect(await query("SELECT count(*)::int AS n FROM members")).toEqual([{ n: 8 }]);
+    expect(revalidatePath).toHaveBeenCalledWith("/staff/import-data/members");
   });
 
   it("editSigner edits a signer from outside Airtable's MPs, and ignores a bad form", async () => {

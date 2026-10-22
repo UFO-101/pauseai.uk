@@ -5,11 +5,20 @@
 // adds the fake supporters too (tests/fixtures/staff-data.sql), and the test
 // MPs whatever TEST_MP_EMAIL says, since their letters go to the fixture
 // outbox anyway. Reads all three from .env.local, the way `npm run dev` does.
+// Its admin account is given the supporters permission too, so the one
+// account a fresh database has opens every staff page.
 //
 // It wipes the database if it already exists, so it only works on a
 // database on this machine: never on Netlify's.
 import nextEnv from "@next/env";
-import { addFixtureData, addTestMps, isLocal, resetDatabase, migrationFiles } from "./fresh-database.mjs";
+import {
+  addFixtureData,
+  addTestMps,
+  giveAdminSupporters,
+  isLocal,
+  resetDatabase,
+  migrationFiles,
+} from "./fresh-database.mjs";
 import { recordApplied } from "./db-migrate.mjs";
 
 nextEnv.loadEnvConfig(process.cwd(), true);
@@ -29,6 +38,7 @@ if (!isLocal(url)) {
 resetDatabase(url);
 // Made with every migration, so db:migrate knows there's nothing to apply.
 recordApplied(url, migrationFiles());
+giveAdminSupporters(url);
 const fixtures = Boolean(process.env.DATA_FIXTURES);
 const email = process.env.TEST_MP_EMAIL?.trim() || (fixtures ? "test-mp@example.org" : undefined);
 if (email) addTestMps(url, email);

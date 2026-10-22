@@ -5,7 +5,15 @@ import { type ImportJob, jobBySlug } from "@/lib/import-runs";
 import { PARLIAMENTARIANS_TABLE_URL } from "@/lib/server/outside-services/airtable";
 import { listRuns } from "@/lib/server/import-runs";
 import { requireStaff } from "@/lib/server/staff-auth";
-import { checkNow, decideSync, importControlAiNow, importFromAirtable, importLumaNow, syncNow } from "../../actions";
+import {
+  checkNow,
+  decideSync,
+  importControlAiNow,
+  importFromAirtable,
+  importLumaNow,
+  importMembersNow,
+  syncNow,
+} from "../../actions";
 import { ImportJobPage } from "../../_components/ImportJob";
 import StaffNav from "../../_components/StaffNav";
 import StaffPage from "../../_components/ui/StaffPage";
@@ -19,6 +27,7 @@ const RUN_NOW: Record<ImportJob, () => Promise<void>> = {
   "check-mps": checkNow,
   "import-controlai": importControlAiNow,
   "import-signatories": importFromAirtable,
+  "import-members": importMembersNow,
 };
 
 export async function generateMetadata({ params }: Params): Promise<Metadata> {

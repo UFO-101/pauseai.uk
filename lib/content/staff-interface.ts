@@ -167,27 +167,94 @@ export const staffCopy = {
       lumaContact: "Follows Luma",
       registered: "Luma events",
       letter: "Wrote to MP",
+      member: "Member",
     },
-    sources: { luma: "Luma", letter: "Letter" } as Record<string, string>,
-    lists: { "luma-calendar": "Luma calendar emails" } as Record<string, string>,
+    sources: { luma: "Luma", letter: "Letter", member: "Member" } as Record<string, string>,
+    lists: { "luma-calendar": "Luma calendar emails", "pauseai-updates": "PauseAI updates" } as Record<string, string>,
     // A supporter's page: one box of what we know, then the history.
     detail: {
       emails: "Email",
       phone: "Phone",
       postcode: "Postcode",
+      city: "City",
+      /** Where the join form was: through our own site, or on another. */
+      joinedOn: (site: string) => (site === "pauseai.uk" ? `through ${site}` : `on ${site}`),
+      /** What they chose on the join form; "Keep informed" and "None" say nothing more. */
+      intents: {
+        Volunteer: "wants to volunteer",
+        Lead: "wants to lead",
+        "Act now": "wants to act now",
+      } as Record<string, string>,
       firstSeen: "First seen",
       lastActive: "Last activity",
+      /** Where a city came from when it's their newest event's, not one they gave. */
+      fromEvent: (when: string) => `their newest Luma event, ${when}`,
       /** Where a detail came from and when: "Luma, 26 Sept 2026". */
       from: (sources: string, when: string) => `${sources}, ${when}`,
-      optedOut: (since: string) => `unsubscribed ${since}`,
-      notOptedOut: "subscribed",
+      // Under the main box: a tile per topic, saying whether we'd email them about it, and why.
+      listsTitle: "Subscriptions",
+      permissions: {
+        topics: {
+          "luma-calendar": "Luma calendar emails",
+          "pauseai-updates": "PauseAI updates",
+          "events-and-ways-to-help": "Events and ways to help",
+        } as Record<string, string>,
+        yes: "Will email",
+        no: "Won't email",
+        // A yes that an unsubscribe we can't see may have undone.
+        unsure: "Don't know",
+        why: "details",
+        // The short reason under the answer, by topic and reason, with when.
+        reasons: {
+          "luma-calendar": {
+            following: (when: string) => `Following the calendar since ${when}`,
+            unsubscribed: (when: string) => `Unsubscribed ${when}, via Luma`,
+            "not-following": () => "Never followed the calendar",
+          },
+          "pauseai-updates": {
+            asked: (when: string) => `Asked for them when joining, ${when}`,
+            joined: (when: string) => `On the list since joining, ${when}`,
+            declined: (when: string) => `Left “Keep me informed” unticked when joining, ${when}`,
+            unsubscribed: (when: string) => `Unsubscribed ${when}`,
+            removed: () => "No longer shared with us",
+          },
+          "events-and-ways-to-help": {
+            asked: (when: string) => `Agreed on their letter, ${when}`,
+            declined: (when: string) => `Didn't agree on their letter, ${when}`,
+          },
+        } as Record<string, Record<string, (when: string) => string>>,
+        // Behind "Why?": how we know, and what we can't.
+        details: {
+          "luma-calendar":
+            "Luma emails the calendar's followers about new events. People can unsubscribe from those emails without unfollowing, and we only hear of that since 22 Oct 2026, when we added a webhook. Anyone following from before then is “Don't know”.",
+          "pauseai-updates":
+            "“Keep me informed” on the join form has been optional since 30 June 2026. Before then everyone who joined was on the list. Unsubscribes since joining are in CiviCRM, which we don't read yet, so we usually have to put “Don't know” here.",
+          "events-and-ways-to-help":
+            "The box on Email your MP, “Tell me about events where I can talk to my MP and ways to help PauseAI”, on their newest letter.",
+        } as Record<string, string>,
+        // One tile in place of the topics', when the address is blocked.
+        blocked: "Won't email: address blocked",
+        blockedBecause: {
+          hard: (when: string) => `An email to it bounced, ${when}.`,
+          complaint: (when: string) => `They marked an email as spam, ${when}.`,
+        } as Record<string, (when: string) => string>,
+        seeBlocked: "See blocked emails",
+      },
+      // In the history, why the import opted someone out of the updates or back in.
+      importReasons: {
+        "opted-out": "left “Keep me informed” unticked when joining",
+        resubscribed: "ticked “Keep me informed” on re-joining",
+      } as Record<string, string>,
       activityTitle: "History",
+      // Between the MP a letter went to, or who answered it, and its campaign.
+      about: "about",
       noActivity: "Nothing yet.",
       kinds: {
         "luma-contact": "Followed the Luma calendar",
         "luma-registered": "Registered for",
         letter: "Wrote to",
         "letter-replied": "Letter answered by",
+        "member-joined": "Joined PauseAI",
         "opted-out": "Unsubscribed from",
         resubscribed: "Subscribed again to",
       } as Record<string, string>,
@@ -206,7 +273,7 @@ export const staffCopy = {
     // Beside the button, at the foot of the supporter's page.
     note: "If they've asked to be forgotten, for example a GDPR request.",
     intro:
-      "For when someone asks to be forgotten, for example a GDPR erasure request. Everything we hold about this person is deleted: letters, event registrations, their Luma contact. We keep references to them in blocked addresses and unsubscribes.",
+      "For when someone asks to be forgotten, for example a GDPR erasure request. Everything we hold about this person is deleted: letters, event registrations, their Luma contact, our copy of their PauseAI membership. We keep references to them in blocked addresses and unsubscribes. The global team's own copy of their membership has to be erased by asking them.",
     referenceLabel: "Request reference",
     referenceHint:
       "Put the number or date of the request for the audit log. Don't give personal information about the person as that gets logged.",
@@ -426,11 +493,39 @@ export const staffCopy = {
       requests: number;
     }) =>
       `${r.events} events changed; ${r.eventsSynced} guest lists read, ${r.eventsLeft} waiting; ${r.guestsChanged} guests, ${r.people} people, ${r.contacts} contacts changed; ${r.supportersAdded} new supporters, ${r.linked} linked; ${r.requests} requests.`,
+    // After the counts, how many pages of contacts the run read (runs kept before this was recorded don't say).
+    contactPages: (pages: number) => `${pages} pages of contacts read.`,
+    // After that, while a full pass over the contacts is part-way through.
+    contactsPassGoing: "Still reading every contact: the next runs read the rest.",
     stoppedBy: {
       time: "Stopped: out of time.",
       "rate-limit": "Stopped: near Luma's rate limit.",
       running: "Another run was already going.",
     } as Record<string, string>,
+  },
+  // The hourly copy of PauseAI's UK members (lib/server/members-import.ts),
+  // on the import page.
+  members: {
+    title: "PauseAI members in the UK",
+    intro: {
+      before: "Everyone in the UK who joined PauseAI Global through ",
+      link: "the join form",
+      after:
+        " and shared their details with PauseAI UK, or joined before the form asked. Copied from the global team's Airtable.",
+    },
+    importNow: "Import members now",
+    never: "Not imported yet.",
+    result: (r: {
+      members: number;
+      added: number;
+      changed: number;
+      removed: number;
+      optedOut: number;
+      resubscribed: number;
+      supportersAdded: number;
+      linked: number;
+    }) =>
+      `${r.members} members read: ${r.added} added, ${r.changed} changed, ${r.removed} removed; ${r.optedOut} opted out of updates, ${r.resubscribed} back in; ${r.supportersAdded} new supporters, ${r.linked} linked.`,
   },
   syncs: {
     title: "Members of Parliament from Airtable",
@@ -525,6 +620,12 @@ export const staffCopy = {
     title: "Letters to MPs",
     allStatuses: "All",
     filter: "Filter",
+    search: "Sender, MP or subject",
+    // The Answered filter: whether the MP replied.
+    answered: { yes: "Answered", no: "Not answered" },
+    // Above the list when it's one supporter's letters, reached from their page.
+    oneSupporter: "Only one supporter's letters.",
+    everyone: "Show everyone's",
     none: "No letters.",
     status: {
       sending: "Sending",
@@ -563,4 +664,5 @@ export const jobTitles: Record<ImportJob, string> = {
   "import-controlai": staffCopy.controlAi.title,
   "import-signatories": staffCopy.import.title,
   "import-luma": staffCopy.luma.title,
+  "import-members": staffCopy.members.title,
 };

@@ -1,3 +1,4 @@
+import type { EmailPermission } from "@/lib/email-permissions";
 import type { SupporterDetails, SupporterSummary } from "@/lib/supporters";
 
 /** A supporter known from Luma and a letter: two emails, a phone, registered twice, opted out of the calendar's emails. */
@@ -14,6 +15,7 @@ export const exampleSupporter: SupporterSummary = {
   events: 2,
   letters: 1,
   optedOut: ["luma-calendar"],
+  member: false,
 };
 
 /** Everything a supporter's page shows, for Jane. */
@@ -24,7 +26,15 @@ export const exampleSupporterDetails: SupporterDetails = {
     { source: "letter", email: "jane.e@example.org", name: "Jane Example", seenAt: "2026-10-05T09:00:00Z" },
   ],
   contacts: [
-    { source: "letter", at: "2026-10-05T09:00:00Z", phone: null, postcode: "M1 1AE", latitude: null, longitude: null },
+    {
+      source: "letter",
+      at: "2026-10-05T09:00:00Z",
+      phone: null,
+      postcode: "M1 1AE",
+      latitude: null,
+      longitude: null,
+      city: null,
+    },
     {
       source: "luma",
       at: "2026-09-20T10:00:00Z",
@@ -32,6 +42,7 @@ export const exampleSupporterDetails: SupporterDetails = {
       postcode: "M2 2BB",
       latitude: 53.4794,
       longitude: -2.2453,
+      city: "Manchester",
     },
   ],
   links: [
@@ -97,8 +108,120 @@ export const exampleSupporterDetails: SupporterDetails = {
       status: null,
     },
   ],
-  optOuts: [
-    { list: "luma-calendar", address: "jane@example.com", since: "2026-10-12T18:30:00Z", source: "luma-webhook" },
-    { list: "luma-calendar", address: "jane.e@example.org", since: null, source: null },
+  permissions: [
+    {
+      topic: "luma-calendar",
+      address: "jane@example.com",
+      send: "no",
+      reason: "unsubscribed",
+      at: "2026-10-12T18:30:00Z",
+      source: "luma-webhook",
+    },
+    {
+      topic: "events-and-ways-to-help",
+      address: "jane@example.com",
+      send: "yes",
+      reason: "asked",
+      at: "2026-10-05T09:00:00Z",
+      source: "letter",
+    },
   ],
 };
+
+/** A member who joined through our site wanting to volunteer, opted out of the updates on joining, then re-joined asking for them; never followed the calendar. */
+export const exampleMemberDetails: SupporterDetails = {
+  summary: {
+    ...exampleSupporter,
+    id: 8,
+    name: "Rhea Member",
+    emails: ["rhea@example.com"],
+    phone: null,
+    postcode: null,
+    sources: ["member"],
+    lumaContact: false,
+    events: 0,
+    letters: 0,
+    optedOut: [],
+    member: true,
+  },
+  identities: [{ source: "member", email: "rhea@example.com", name: "Rhea Member", seenAt: "2026-07-10T00:00:00Z" }],
+  contacts: [
+    {
+      source: "member",
+      at: "2026-10-11T08:00:00Z",
+      phone: null,
+      postcode: null,
+      latitude: null,
+      longitude: null,
+      city: "Cardiff",
+    },
+  ],
+  links: [
+    {
+      source: "member",
+      sourceId: "recRhea",
+      matchedBy: "email",
+      matchedValue: "rhea@example.com",
+      linkedAt: "2026-10-11T08:47:00Z",
+    },
+  ],
+  activity: [
+    {
+      source: "airtable-import",
+      at: "2026-10-11T08:00:00Z",
+      kind: "resubscribed",
+      title: "pauseai-updates",
+      detail: "rhea@example.com",
+      href: null,
+      status: null,
+    },
+    {
+      source: "airtable-import",
+      at: "2026-07-10T00:00:00Z",
+      kind: "opted-out",
+      title: "pauseai-updates",
+      detail: "rhea@example.com",
+      href: null,
+      status: null,
+    },
+    {
+      source: "member",
+      at: "2026-07-10T00:00:00Z",
+      kind: "member-joined",
+      title: "Volunteer",
+      detail: "pauseai.uk",
+      href: "https://airtable.com/appWPTGqZmUcs3NWu/tblL1icZBhTV1gQ9o/recRhea",
+      status: null,
+    },
+  ],
+  permissions: [
+    {
+      topic: "luma-calendar",
+      address: "rhea@example.com",
+      send: "no",
+      reason: "not-following",
+      at: null,
+      source: null,
+    },
+    {
+      topic: "pauseai-updates",
+      address: "rhea@example.com",
+      send: "unsure",
+      reason: "asked",
+      at: "2026-10-11T08:00:00Z",
+      source: "member",
+    },
+  ],
+};
+
+/** A supporter whose only address is blocked: they marked a letter as spam. */
+export const exampleBlockedPermissions: EmailPermission[] = (["luma-calendar", "events-and-ways-to-help"] as const).map(
+  (topic) => ({
+    topic,
+    address: "gus@example.com",
+    send: "no",
+    reason: "blocked",
+    at: "2026-10-05T12:00:00Z",
+    source: "complaint",
+  }),
+);

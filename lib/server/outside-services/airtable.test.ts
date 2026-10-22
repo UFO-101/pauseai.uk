@@ -1,7 +1,15 @@
 import { describe, expect, it } from "vitest";
 import { http, HttpResponse } from "msw";
 import { server } from "@/tests/fixtures/msw";
-import { AirtableRequestError, fetchMps, fetchSignatoriesForImport, MPS_FORMULA } from "./airtable";
+import {
+  AirtableRequestError,
+  fetchMembers,
+  fetchMps,
+  fetchSignatoriesForImport,
+  MEMBER_FIELDS,
+  MEMBERS_FORMULA,
+  MPS_FORMULA,
+} from "./airtable";
 
 const AIRTABLE = "https://api.airtable.com/v0/*";
 
@@ -116,6 +124,94 @@ describe("fetchMps", () => {
       "Constituency",
       "Party",
       "Email",
+    ]);
+  });
+});
+
+describe("fetchMembers", () => {
+  it("reads the UK members we may hold from the members table, with only the fields we keep", async () => {
+    const requests = serve({
+      records: [
+        record(
+          {
+            "Full name": " Jane Example ",
+            Email: " Jane@Example.com ",
+            Phone: "+447700900123",
+            City: "Manchester",
+            "Zip code": "M1 1AE",
+            "Joined Datetime": "2026-09-12",
+            "Created Datetime": "2026-09-12T10:00:00.000Z",
+            "Last Modified": "2026-09-13T10:00:00.000Z",
+            "Email subscription": true,
+            "GDPR chapter share permission": true,
+            "Source page": "pauseai.uk",
+            Intent: "Volunteer",
+            Bio: "not this",
+          },
+          "recJane",
+        ),
+      ],
+    });
+
+    expect(await fetchMembers("t")).toEqual([
+      {
+        id: "recJane",
+        email: "jane@example.com",
+        name: "Jane Example",
+        phone: "+447700900123",
+        city: "Manchester",
+        postcode: "M1 1AE",
+        joinedAt: "2026-09-12T10:00:00.000Z",
+        createdAt: "2026-09-12T10:00:00.000Z",
+        keepInformed: true,
+        sharePermission: true,
+        sourcePage: "pauseai.uk",
+        intent: "Volunteer",
+        modifiedAt: "2026-09-13T10:00:00.000Z",
+      },
+    ]);
+    const url = new URL(requests[0].url);
+    expect(url.pathname).toBe("/v0/appWPTGqZmUcs3NWu/tblL1icZBhTV1gQ9o");
+    expect(url.searchParams.get("filterByFormula")).toBe(MEMBERS_FORMULA);
+    expect(url.searchParams.getAll("fields[]")).toEqual([...MEMBER_FIELDS]);
+  });
+
+  it("dates a re-join from its first day, counts the old field's No as unticked, and skips a record with no email", async () => {
+    serve({
+      records: [
+        record(
+          {
+            Email: "a@example.com",
+            "Joined Datetime": "2024-03-23",
+            "Created Datetime": "2026-07-02T08:00:00.000Z",
+            "Last Modified": "2026-07-02T08:00:00.000Z",
+            "Email subscription": true,
+            "Email subscription (old)": "No",
+          },
+          "recA",
+        ),
+        record({ "Created Datetime": "2026-07-02T08:00:00.000Z" }, "recNoEmail"),
+        record({ Email: "b@example.com", "Created Datetime": "2026-07-03T08:00:00.000Z" }, "recB"),
+      ],
+    });
+
+    expect(await fetchMembers("t")).toEqual([
+      {
+        id: "recA",
+        email: "a@example.com",
+        name: "",
+        phone: null,
+        city: null,
+        postcode: null,
+        joinedAt: "2024-03-23T00:00:00.000Z",
+        createdAt: "2026-07-02T08:00:00.000Z",
+        keepInformed: false,
+        sharePermission: false,
+        sourcePage: null,
+        intent: null,
+        modifiedAt: "2026-07-02T08:00:00.000Z",
+      },
+      expect.objectContaining({ id: "recB", joinedAt: "2026-07-03T08:00:00.000Z", keepInformed: false }),
     ]);
   });
 });

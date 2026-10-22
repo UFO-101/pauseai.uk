@@ -163,6 +163,15 @@ export function addTestMps(url, email) {
  * contacts, letters to the test MPs, an opt-out. For a development database
  * with DATA_FIXTURES=1, after addTestMps.
  */
+/**
+ * Gives the migrations' admin account the supporters permission too, so a
+ * local database opens every staff page to it. Live databases keep the
+ * migration's admin alone.
+ */
+export function giveAdminSupporters(url) {
+  psql(url, "-c", "UPDATE staff_accounts SET permissions = '{admin,supporters}' WHERE email = 'admin@pauseai.uk'");
+}
+
 export function addFixtureData(url) {
   psql(url, "-1", "-f", FIXTURE_DATA);
 }

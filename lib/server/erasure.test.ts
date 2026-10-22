@@ -3,14 +3,19 @@ import { query } from "@/lib/server/db";
 import { addTestMp, describeWithDatabase, useTestDatabase } from "@/tests/database";
 import { eraseSupporter } from "./erasure";
 import { importLuma } from "./luma-import";
+import { importMembers } from "./members-import";
 import { linkSupporters } from "./supporters";
 
-beforeEach(() => vi.stubEnv("LUMA_API_KEY", "k"));
+beforeEach(() => {
+  vi.stubEnv("LUMA_API_KEY", "k");
+  vi.stubEnv("AIRTABLE_TOKEN", "t");
+});
 afterEach(() => vi.unstubAllEnvs());
 
 async function janeWithEverything(mp: number): Promise<number> {
-  // Jane: a Luma user with registrations, a letter with a reply forwarded to her, a bounce record, and an opt-out.
+  // Jane: a Luma user with registrations, a member, a letter with a reply forwarded to her, a bounce record, and an opt-out.
   await importLuma("test");
+  await importMembers("test");
   const [{ id: letterId }] = await query<{ id: number }>(
     `INSERT INTO letters (campaign, politician_id, sender_name, sender_email, sender_address, sender_postcode, contact_consent, subject, reply_hash, status)
      VALUES ('regulate-letter-pm', $1, 'Jane', 'jane.fixture@example.com', 'x', 'ZZ9 9ZZ', true, 'S', 'h1', 'sent') RETURNING id::int AS id`,
@@ -45,7 +50,7 @@ describeWithDatabase("eraseSupporter", () => {
     const mp = await addTestMp();
     const id = await janeWithEverything(mp);
 
-    expect(await eraseSupporter(id, "ICO-123", "jo@pauseai.uk")).toEqual({ lumaUsers: 1, letters: 1 });
+    expect(await eraseSupporter(id, "ICO-123", "jo@pauseai.uk")).toEqual({ lumaUsers: 1, letters: 1, members: 1 });
     expect(await query("SELECT 1 FROM supporters WHERE id = $1", [id])).toEqual([]);
     expect(await query("SELECT 1 FROM luma_people WHERE user_id = 'usr-fixture-1'")).toEqual([]);
     expect(await query("SELECT 1 FROM luma_guests WHERE user_id = 'usr-fixture-1'")).toEqual([]);
@@ -57,21 +62,27 @@ describeWithDatabase("eraseSupporter", () => {
       { address: "replies@example.org", letter_id: null },
     ]);
     expect(await query("SELECT count(*)::int AS n FROM email_problems")).toEqual([{ n: 1 }]);
-    expect(await query("SELECT count(*)::int AS n FROM opt_outs")).toEqual([{ n: 1 }]);
+    expect(await query("SELECT count(*)::int AS n FROM opt_outs WHERE address = 'jane.fixture@example.com'")).toEqual([
+      { n: 1 },
+    ]);
     expect(await query("SELECT user_id FROM luma_erased")).toEqual([{ user_id: "usr-fixture-1" }]);
+    expect(await query("SELECT 1 FROM members WHERE email = 'jane.fixture@example.com'")).toEqual([]);
+    expect(await query("SELECT id FROM members_erased")).toEqual([{ id: "recMemberJane" }]);
     expect(await query("SELECT actor, action, details FROM audit_log ORDER BY id DESC LIMIT 1")).toEqual([
       {
         actor: "jo@pauseai.uk",
         action: "erase supporter",
-        details: { id, reference: "ICO-123", lumaUsers: 1, letters: 1 },
+        details: { id, reference: "ICO-123", lumaUsers: 1, letters: 1, members: 1 },
       },
     ]);
     // Everyone else is still there, and the next import doesn't bring Jane back.
-    expect(await query("SELECT count(*)::int AS n FROM supporters")).toEqual([{ n: 5 }]);
+    expect(await query("SELECT count(*)::int AS n FROM supporters")).toEqual([{ n: 12 }]);
     await query("UPDATE luma_events SET guests_synced_at = NULL");
     await importLuma("test");
+    await importMembers("test");
     expect(await query("SELECT 1 FROM luma_people WHERE user_id = 'usr-fixture-1'")).toEqual([]);
-    expect(await query("SELECT count(*)::int AS n FROM supporters")).toEqual([{ n: 5 }]);
+    expect(await query("SELECT 1 FROM members WHERE id = 'recMemberJane'")).toEqual([]);
+    expect(await query("SELECT count(*)::int AS n FROM supporters")).toEqual([{ n: 12 }]);
   });
 
   it("does nothing for a supporter that doesn't exist", async () => {

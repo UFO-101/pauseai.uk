@@ -27,6 +27,7 @@ import {
   exampleControlAiResult,
   exampleFailedRun,
   exampleLumaResult,
+  exampleMembersResult,
   exampleRun,
   exampleSyncedMp,
 } from "@/app/(staff)/staff/_components/RunList.examples";
@@ -44,10 +45,16 @@ import { exampleDashboard, exampleQuietDashboard } from "@/app/(staff)/staff/_co
 import Sparkline from "@/app/(staff)/staff/_components/Sparkline";
 import StaffHome from "@/app/(staff)/staff/_components/StaffHome";
 import SupporterBadges from "@/app/(staff)/staff/_components/SupporterBadges";
+import EmailPermissionTiles from "@/app/(staff)/staff/_components/EmailPermissionTiles";
 import SupporterDetails from "@/app/(staff)/staff/_components/SupporterDetails";
 import SupporterFilters from "@/app/(staff)/staff/_components/SupporterFilters";
 import SupportersTable from "@/app/(staff)/staff/_components/SupportersTable";
-import { exampleSupporter, exampleSupporterDetails } from "@/app/(staff)/staff/_components/SupportersTable.examples";
+import {
+  exampleBlockedPermissions,
+  exampleMemberDetails,
+  exampleSupporter,
+  exampleSupporterDetails,
+} from "@/app/(staff)/staff/_components/SupportersTable.examples";
 import { supportersSearch } from "@/lib/staff-search";
 import StaffPage from "@/app/(staff)/staff/_components/ui/StaffPage";
 import Tag from "@/components/ui/Tag";
@@ -134,10 +141,25 @@ const RUNS: Record<ImportJob, Variant> = {
     ),
   },
   "import-luma": {
-    label: "A Luma import cut short by its time",
+    label: "A Luma import cut short by its time, and one still reading every contact",
     render: () => (
       <StaffPage as="div">
         <Run run={exampleRun("import-luma", { ...exampleLumaResult, eventsLeft: 4, stoppedBy: "time" })} />
+        <Run
+          run={exampleRun(
+            "import-luma",
+            { ...exampleLumaResult, contactPages: 10, contactsPassGoing: true },
+            { id: 2 },
+          )}
+        />
+      </StaffPage>
+    ),
+  },
+  "import-members": {
+    label: "A members import that found new members",
+    render: () => (
+      <StaffPage as="div">
+        <Run run={exampleRun("import-members", exampleMembersResult)} />
       </StaffPage>
     ),
   },
@@ -304,6 +326,56 @@ export const staff: Group = {
             </StaffPage>
           ),
         },
+        {
+          label: "A member",
+          render: () => (
+            <StaffPage as="div">
+              <SupporterBadges supporter={exampleMemberDetails.summary} />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "EmailPermissionTiles",
+      file: "app/(staff)/staff/_components/EmailPermissionTiles.tsx",
+      variants: [
+        {
+          label: "Will and won't email, by topic",
+          render: () => (
+            <StaffPage as="div">
+              <EmailPermissionTiles permissions={exampleSupporterDetails.permissions} />
+            </StaffPage>
+          ),
+        },
+        {
+          label: "Following the calendar since its webhook, and don't know of the updates",
+          render: () => (
+            <StaffPage as="div">
+              <EmailPermissionTiles
+                permissions={[
+                  {
+                    topic: "luma-calendar",
+                    address: "nia@example.com",
+                    send: "yes",
+                    reason: "following",
+                    at: "2026-10-23T09:00:00Z",
+                    source: "luma",
+                  },
+                  ...exampleMemberDetails.permissions.slice(1).map((p) => ({ ...p, address: "nia@example.com" })),
+                ]}
+              />
+            </StaffPage>
+          ),
+        },
+        {
+          label: "A blocked address",
+          render: () => (
+            <StaffPage as="div">
+              <EmailPermissionTiles permissions={exampleBlockedPermissions} />
+            </StaffPage>
+          ),
+        },
       ],
     },
     {
@@ -315,6 +387,14 @@ export const staff: Group = {
           render: () => (
             <StaffPage as="div">
               <SupporterDetails supporter={exampleSupporterDetails} />
+            </StaffPage>
+          ),
+        },
+        {
+          label: "A member who opted out of the updates on joining, then asked for them on re-joining",
+          render: () => (
+            <StaffPage as="div">
+              <SupporterDetails supporter={exampleMemberDetails} />
             </StaffPage>
           ),
         },
@@ -337,7 +417,7 @@ export const staff: Group = {
                   contacts: [],
                   links: [],
                   activity: [],
-                  optOuts: [],
+                  permissions: [],
                 }}
               />
             </StaffPage>
@@ -685,6 +765,7 @@ export const staff: Group = {
                     { ...exampleLumaResult, stoppedBy: "time" },
                     { at: "2026-10-21T11:17:00Z" },
                   ),
+                  exampleRun("import-members", exampleMembersResult, { at: "2026-10-21T11:47:00Z" }),
                   exampleRun(
                     "sync-mps",
                     { changes: { added: [], removed: [exampleSyncedMp(2)], changed: [] }, mps: [] },
@@ -1166,7 +1247,7 @@ export const staff: Group = {
           label: "One status picked",
           render: () => (
             <StaffPage as="div">
-              <LetterFilters status="bounced" />
+              <LetterFilters search={{ status: "bounced", q: "", answered: "", supporter: "" }} />
             </StaffPage>
           ),
         },

@@ -151,7 +151,7 @@ CREATE TABLE public.import_runs (
     decided_by text,
     decided_at timestamp with time zone,
     CONSTRAINT import_runs_check CHECK (((status = 'failed'::text) = (error IS NOT NULL))),
-    CONSTRAINT import_runs_job_check CHECK ((job = ANY (ARRAY['sync-mps'::text, 'check-mps'::text, 'import-controlai'::text, 'import-signatories'::text, 'import-luma'::text]))),
+    CONSTRAINT import_runs_job_check CHECK ((job = ANY (ARRAY['sync-mps'::text, 'check-mps'::text, 'import-controlai'::text, 'import-signatories'::text, 'import-luma'::text, 'import-members'::text]))),
     CONSTRAINT import_runs_status_check CHECK ((status = ANY (ARRAY['ok'::text, 'failed'::text, 'unchanged'::text, 'held'::text, 'applied'::text, 'discarded'::text])))
 );
 
@@ -302,6 +302,39 @@ CREATE TABLE public.luma_people (
 );
 
 --
+-- Name: members; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.members (
+    id text NOT NULL,
+    email text NOT NULL,
+    name text DEFAULT ''::text NOT NULL,
+    phone text,
+    city text,
+    postcode text,
+    joined_at timestamp with time zone NOT NULL,
+    created_at timestamp with time zone NOT NULL,
+    keep_informed boolean NOT NULL,
+    share_permission boolean NOT NULL,
+    source_page text,
+    intent text,
+    source_modified_at timestamp with time zone NOT NULL,
+    first_seen_at timestamp with time zone DEFAULT now() NOT NULL,
+    changed_at timestamp with time zone DEFAULT now() NOT NULL,
+    removed_at timestamp with time zone,
+    CONSTRAINT members_email_check CHECK ((email = lower(email)))
+);
+
+--
+-- Name: members_erased; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.members_erased (
+    id text NOT NULL,
+    erased_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+--
 -- Name: opt_outs; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -314,8 +347,8 @@ CREATE TABLE public.opt_outs (
     unsubscribed_at timestamp with time zone NOT NULL,
     resubscribed_at timestamp with time zone,
     CONSTRAINT opt_outs_address_check CHECK ((address = lower(address))),
-    CONSTRAINT opt_outs_list_check CHECK ((list = 'luma-calendar'::text)),
-    CONSTRAINT opt_outs_source_check CHECK ((source = 'luma-webhook'::text))
+    CONSTRAINT opt_outs_list_check CHECK ((list = ANY (ARRAY['luma-calendar'::text, 'pauseai-updates'::text]))),
+    CONSTRAINT opt_outs_source_check CHECK ((source = ANY (ARRAY['luma-webhook'::text, 'airtable-import'::text])))
 );
 
 --
@@ -459,6 +492,20 @@ UNION ALL
   WHERE (g.removed_at IS NULL);
 
 --
+-- Name: supporter_activity_member; Type: VIEW; Schema: public; Owner: -
+--
+
+CREATE VIEW public.supporter_activity_member AS
+ SELECT id AS source_id,
+    joined_at AS at,
+    'member-joined'::text AS kind,
+    intent AS title,
+    source_page AS detail,
+    ('https://airtable.com/appWPTGqZmUcs3NWu/tblL1icZBhTV1gQ9o/'::text || id) AS href,
+    NULL::text AS status
+   FROM public.members m;
+
+--
 -- Name: supporter_links; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -470,7 +517,8 @@ CREATE TABLE public.supporter_links (
     matched_by text NOT NULL,
     matched_value text NOT NULL,
     linked_at timestamp with time zone DEFAULT now() NOT NULL,
-    CONSTRAINT supporter_links_check CHECK ((num_nonnulls(luma_user_id, letter_id) = 1)),
+    member_id text,
+    CONSTRAINT supporter_links_check CHECK ((num_nonnulls(luma_user_id, letter_id, member_id) = 1)),
     CONSTRAINT supporter_links_matched_by_check CHECK ((matched_by = 'email'::text)),
     CONSTRAINT supporter_links_matched_value_check CHECK ((matched_value = lower(matched_value)))
 );
@@ -527,7 +575,18 @@ UNION ALL
      JOIN ( SELECT DISTINCT supporter_links.supporter_id,
             supporter_links.matched_value
            FROM public.supporter_links) k ON ((k.matched_value = o.address)))
-  WHERE (o.resubscribed_at IS NOT NULL);
+  WHERE (o.resubscribed_at IS NOT NULL)
+UNION ALL
+ SELECT k.supporter_id,
+    'member'::text AS source,
+    a.at,
+    a.kind,
+    a.title,
+    a.detail,
+    a.href,
+    a.status
+   FROM (public.supporter_activity_member a
+     JOIN public.supporter_links k ON ((k.member_id = a.source_id)));
 
 --
 -- Name: supporter_contact_letter; Type: VIEW; Schema: public; Owner: -
@@ -539,7 +598,8 @@ CREATE VIEW public.supporter_contact_letter AS
     NULL::text AS phone,
     sender_postcode AS postcode,
     NULL::double precision AS latitude,
-    NULL::double precision AS longitude
+    NULL::double precision AS longitude,
+    NULL::text AS city
    FROM public.letters l;
 
 --
@@ -552,9 +612,24 @@ CREATE VIEW public.supporter_contact_luma AS
     g.phone,
     g.postcode,
     e.latitude,
-    e.longitude
+    e.longitude,
+    e.city
    FROM (public.luma_guests g
      JOIN public.luma_events e ON ((e.id = g.event_id)));
+
+--
+-- Name: supporter_contact_member; Type: VIEW; Schema: public; Owner: -
+--
+
+CREATE VIEW public.supporter_contact_member AS
+ SELECT id AS source_id,
+    created_at AS at,
+    phone,
+    postcode,
+    NULL::double precision AS latitude,
+    NULL::double precision AS longitude,
+    city
+   FROM public.members m;
 
 --
 -- Name: supporter_contact; Type: VIEW; Schema: public; Owner: -
@@ -567,7 +642,8 @@ CREATE VIEW public.supporter_contact AS
     c.phone,
     c.postcode,
     c.latitude,
-    c.longitude
+    c.longitude,
+    c.city
    FROM (public.supporter_contact_luma c
      JOIN public.supporter_links k ON ((k.luma_user_id = c.source_id)))
 UNION ALL
@@ -577,9 +653,21 @@ UNION ALL
     c.phone,
     c.postcode,
     c.latitude,
-    c.longitude
+    c.longitude,
+    c.city
    FROM (public.supporter_contact_letter c
-     JOIN public.supporter_links k ON ((k.letter_id = c.source_id)));
+     JOIN public.supporter_links k ON ((k.letter_id = c.source_id)))
+UNION ALL
+ SELECT k.supporter_id,
+    'member'::text AS source,
+    c.at,
+    c.phone,
+    c.postcode,
+    c.latitude,
+    c.longitude,
+    c.city
+   FROM (public.supporter_contact_member c
+     JOIN public.supporter_links k ON ((k.member_id = c.source_id)));
 
 --
 -- Name: supporter_source_letter; Type: VIEW; Schema: public; Owner: -
@@ -606,6 +694,17 @@ CREATE VIEW public.supporter_source_luma AS
    FROM public.luma_people p;
 
 --
+-- Name: supporter_source_member; Type: VIEW; Schema: public; Owner: -
+--
+
+CREATE VIEW public.supporter_source_member AS
+ SELECT id AS source_id,
+    email,
+    name,
+    joined_at AS seen_at
+   FROM public.members m;
+
+--
 -- Name: supporter_identity; Type: VIEW; Schema: public; Owner: -
 --
 
@@ -624,7 +723,15 @@ UNION ALL
     s.name,
     s.seen_at
    FROM (public.supporter_source_letter s
-     JOIN public.supporter_links k ON ((k.letter_id = s.source_id)));
+     JOIN public.supporter_links k ON ((k.letter_id = s.source_id)))
+UNION ALL
+ SELECT k.supporter_id,
+    'member'::text AS source,
+    s.email,
+    s.name,
+    s.seen_at
+   FROM (public.supporter_source_member s
+     JOIN public.supporter_links k ON ((k.member_id = s.source_id)));
 
 --
 -- Name: supporter_links_id_seq; Type: SEQUENCE; Schema: public; Owner: -
@@ -694,6 +801,11 @@ CREATE VIEW public.supporters_summary AS
            FROM (public.supporter_identity i
              JOIN public.opt_outs o ON (((o.address = i.email) AND (o.resubscribed_at IS NULL))))
           GROUP BY i.supporter_id
+        ), mem AS (
+         SELECT DISTINCT k.supporter_id
+           FROM (public.supporter_links k
+             JOIN public.members m ON ((m.id = k.member_id)))
+          WHERE (m.removed_at IS NULL)
         )
  SELECT s.id,
     ident.name,
@@ -706,12 +818,14 @@ CREATE VIEW public.supporters_summary AS
     act.last_active_at,
     COALESCE(act.events, 0) AS events,
     COALESCE(act.letters, 0) AS letters,
-    opted.opted_out
-   FROM ((((public.supporters s
+    opted.opted_out,
+    (mem.supporter_id IS NOT NULL) AS member
+   FROM (((((public.supporters s
      LEFT JOIN ident ON ((ident.supporter_id = s.id)))
      LEFT JOIN act ON ((act.supporter_id = s.id)))
      LEFT JOIN contact ON ((contact.supporter_id = s.id)))
-     LEFT JOIN opted ON ((opted.supporter_id = s.id)));
+     LEFT JOIN opted ON ((opted.supporter_id = s.id)))
+     LEFT JOIN mem ON ((mem.supporter_id = s.id)));
 
 --
 -- Name: audit_log audit_log_pkey; Type: CONSTRAINT; Schema: public; Owner: -
@@ -819,6 +933,20 @@ ALTER TABLE ONLY public.luma_people
     ADD CONSTRAINT luma_people_pkey PRIMARY KEY (user_id);
 
 --
+-- Name: members_erased members_erased_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.members_erased
+    ADD CONSTRAINT members_erased_pkey PRIMARY KEY (id);
+
+--
+-- Name: members members_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.members
+    ADD CONSTRAINT members_pkey PRIMARY KEY (id);
+
+--
 -- Name: opt_outs opt_outs_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -887,6 +1015,13 @@ ALTER TABLE ONLY public.supporter_links
 
 ALTER TABLE ONLY public.supporter_links
     ADD CONSTRAINT supporter_links_luma_user_id_key UNIQUE (luma_user_id);
+
+--
+-- Name: supporter_links supporter_links_member_id_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.supporter_links
+    ADD CONSTRAINT supporter_links_member_id_key UNIQUE (member_id);
 
 --
 -- Name: supporter_links supporter_links_pkey; Type: CONSTRAINT; Schema: public; Owner: -
@@ -1005,6 +1140,12 @@ CREATE INDEX luma_guests_user ON public.luma_guests USING btree (user_id, regist
 CREATE INDEX luma_people_email ON public.luma_people USING btree (email);
 
 --
+-- Name: members_email; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX members_email ON public.members USING btree (email);
+
+--
 -- Name: opt_outs_open; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -1102,6 +1243,13 @@ ALTER TABLE ONLY public.supporter_links
 
 ALTER TABLE ONLY public.supporter_links
     ADD CONSTRAINT supporter_links_luma_user_id_fkey FOREIGN KEY (luma_user_id) REFERENCES public.luma_people(user_id) ON DELETE CASCADE;
+
+--
+-- Name: supporter_links supporter_links_member_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.supporter_links
+    ADD CONSTRAINT supporter_links_member_id_fkey FOREIGN KEY (member_id) REFERENCES public.members(id) ON DELETE CASCADE;
 
 --
 -- Name: supporter_links supporter_links_supporter_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -

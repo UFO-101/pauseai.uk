@@ -1,5 +1,4 @@
 import "server-only";
-import { OPT_OUT_LISTS } from "@/lib/opt-outs";
 import type {
   SupporterActivity,
   SupporterContact,
@@ -7,11 +6,11 @@ import type {
   SupporterFilter,
   SupporterIdentity,
   SupporterLink,
-  SupporterOptOut,
   SupporterSummary,
 } from "@/lib/supporters";
 import { SUPPORTERS_PAGE_SIZE } from "@/lib/supporters";
 import { query, transaction, type Queryable } from "./db";
+import { permissionsFor } from "./email-permissions";
 import { SUPPORTER_SOURCES } from "./supporter-sources";
 
 // Supporters: one per person, tied to each record about them in a source
@@ -77,7 +76,7 @@ export async function linkSupporters(db?: Queryable): Promise<LinkResult> {
 
 const SUMMARY_COLUMNS = `s.id::int AS id, s.name, coalesce(s.emails, '{}') AS emails, s.phone, s.postcode,
   coalesce(s.sources, '{}') AS sources, s.luma_contact AS "lumaContact", s.first_seen_at AS "firstSeenAt",
-  s.last_active_at AS "lastActiveAt", s.events, s.letters, coalesce(s.opted_out, '{}') AS "optedOut"`;
+  s.last_active_at AS "lastActiveAt", s.events, s.letters, coalesce(s.opted_out, '{}') AS "optedOut", s.member`;
 
 export type SupportersPage = { supporters: SupporterSummary[]; total: number; pages: number };
 
@@ -135,14 +134,15 @@ export async function getSupporter(id: number): Promise<SupporterDetails | undef
     [id],
   );
   if (!summary) return undefined;
-  const [identities, contacts, links, activity, optOuts] = await Promise.all([
+  const [identities, contacts, links, activity, permissions] = await Promise.all([
     query<SupporterIdentity>(
       `SELECT source, email, name, seen_at AS "seenAt" FROM supporter_identity WHERE supporter_id = $1 ORDER BY seen_at NULLS LAST, email`,
       [id],
     ),
     query<SupporterContact>(
-      `SELECT source, at, phone, postcode, latitude, longitude FROM supporter_contact
-       WHERE supporter_id = $1 AND (phone IS NOT NULL OR postcode IS NOT NULL OR latitude IS NOT NULL) ORDER BY at DESC`,
+      `SELECT source, at, phone, postcode, latitude, longitude, city FROM supporter_contact
+       WHERE supporter_id = $1 AND (phone IS NOT NULL OR postcode IS NOT NULL OR latitude IS NOT NULL OR city IS NOT NULL)
+       ORDER BY at DESC`,
       [id],
     ),
     query<SupporterLink>(
@@ -156,18 +156,7 @@ export async function getSupporter(id: number): Promise<SupporterDetails | undef
       "SELECT source, at, kind, title, detail, href, status FROM supporter_activity WHERE supporter_id = $1 ORDER BY at DESC, kind",
       [id],
     ),
-    query<{ list: string; address: string; since: string; source: string }>(
-      `SELECT o.list, o.address, o.unsubscribed_at AS since, o.source FROM opt_outs o
-       WHERE o.resubscribed_at IS NULL AND o.address IN (SELECT email FROM supporter_identity WHERE supporter_id = $1)`,
-      [id],
-    ),
+    permissionsFor(summary.emails),
   ]);
-  // Every list we know of, for every address: opted out or not.
-  const lists: SupporterOptOut[] = OPT_OUT_LISTS.flatMap((list) =>
-    summary.emails.map((address) => {
-      const open = optOuts.find((o) => o.list === list && o.address === address);
-      return { list, address, since: open?.since ?? null, source: open?.source ?? null };
-    }),
-  );
-  return { summary, identities, contacts, links, activity, optOuts: lists };
+  return { summary, identities, contacts, links, activity, permissions };
 }

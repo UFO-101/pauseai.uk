@@ -309,9 +309,13 @@ async function upsertContacts(contacts: CalendarContact[], db: Queryable): Promi
  * The contacts, newest first, until a page holds nothing new. Once a week a
  * full pass, a few pages a run from a kept cursor, for anyone missed. A
  * cursor Luma no longer honours is dropped, so the next run starts the
- * pass again.
+ * pass again. Says how many contacts changed, how many pages it read, and
+ * whether a full pass is still going.
  */
-async function importContacts(budget: Budget, db: Queryable): Promise<number> {
+async function importContacts(
+  budget: Budget,
+  db: Queryable,
+): Promise<{ changed: number; pages: number; going: boolean }> {
   const [state] = await query<{ cursor: string }>(
     "SELECT cursor FROM luma_import_state WHERE list = $1",
     ["contacts"],
@@ -321,6 +325,9 @@ async function importContacts(budget: Budget, db: Queryable): Promise<number> {
   const full = !!cursor || (await fullPassDue("contacts", `${FULL_CONTACTS_DAYS} days`, db));
   let changed = 0;
   let pages = 0;
+  // Only reading the last page finishes a pass: a run out of budget before
+  // its first page hasn't read any.
+  let finished = false;
   try {
     do {
       const page = await budget.page(() => listCalendarContacts(cursor));
@@ -328,14 +335,15 @@ async function importContacts(budget: Budget, db: Queryable): Promise<number> {
       const changedOnPage = await upsertContacts(page.entries, db);
       changed += changedOnPage;
       cursor = page.nextCursor;
+      finished = cursor === undefined;
       pages++;
-      if (!full && changedOnPage === 0) return changed;
+      if (!full && changedOnPage === 0) return { changed, pages, going: false };
     } while (cursor && pages < CONTACT_PAGES_PER_RUN);
   } catch (error) {
     throw full ? new ContactsPassFailed(error) : error;
   }
-  if (full) await saveState("contacts", cursor ?? "", cursor === undefined, db);
-  return changed;
+  if (full) await saveState("contacts", cursor ?? "", finished, db);
+  return { changed, pages, going: full && !finished };
 }
 
 /**
@@ -389,7 +397,10 @@ function run(startedBy: string, budgetMs: number): Promise<LumaImportResult> {
       result.people += counts.people;
     }
     result.eventsLeft = due.length - result.eventsSynced;
-    result.contacts = await importContacts(budget, db);
+    const contacts = await importContacts(budget, db);
+    result.contacts = contacts.changed;
+    result.contactPages = contacts.pages;
+    if (contacts.going) result.contactsPassGoing = true;
     // Anyone new, from any source, gets their supporter; letters written since the last run too.
     const links = await linkSupporters(db);
     result.supportersAdded = links.supportersAdded;

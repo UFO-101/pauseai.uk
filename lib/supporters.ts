@@ -1,11 +1,12 @@
 // Supporters, as the staff pages show them: the shapes the server
 // (lib/server/supporters.ts) gives the components.
 import { staffCopy } from "./content/staff-interface";
+import type { EmailPermission } from "./email-permissions";
 import type { OptOutList } from "./opt-outs";
 import type { SortColumns, SortDirection } from "./staff-sort";
 
 /** Where a supporter's records come from (lib/server/supporter-sources.ts). */
-export const SUPPORTER_SOURCES = ["luma", "letter"] as const;
+export const SUPPORTER_SOURCES = ["luma", "letter", "member"] as const;
 export type SupporterSource = (typeof SUPPORTER_SOURCES)[number];
 
 export function isSupporterSource(value: string): value is SupporterSource {
@@ -30,15 +31,18 @@ export type SupporterSummary = {
   letters: number;
   /** The lists any of their addresses is opted out of. */
   optedOut: OptOutList[];
+  /** Whether they're a PauseAI member now: a member's record we read at the last import. */
+  member: boolean;
 };
 
 /** What a supporter did, from any source: `kind` says what, `title` and `detail` which and how. */
 export type SupporterActivity = {
   source: string;
   at: string;
-  kind: "luma-contact" | "luma-registered" | "letter" | "letter-replied" | "opted-out" | "resubscribed";
+  kind:
+    "luma-contact" | "luma-registered" | "letter" | "letter-replied" | "member-joined" | "opted-out" | "resubscribed";
   title: string | null;
-  /** Who or what it was with: the event's status, the MP's name, or the address. */
+  /** Who or what it was with: the event's status, the MP's name, the site they joined on, or the address. */
   detail: string | null;
   href: string | null;
   /** A letter's status; null for every other kind. */
@@ -48,7 +52,7 @@ export type SupporterActivity = {
 /** A name and email one source gave, and when the person was first seen there. */
 export type SupporterIdentity = { source: SupporterSource; email: string; name: string; seenAt: string | null };
 
-/** A phone, postcode or place one source gave, and when. */
+/** A phone, postcode, city or place one source gave, and when. */
 export type SupporterContact = {
   source: SupporterSource;
   at: string;
@@ -56,6 +60,7 @@ export type SupporterContact = {
   postcode: string | null;
   latitude: number | null;
   longitude: number | null;
+  city: string | null;
 };
 
 /** Why a source record is this supporter's. */
@@ -67,21 +72,14 @@ export type SupporterLink = {
   linkedAt: string;
 };
 
-/** Whether one of the supporter's addresses is opted out of a list, and if so since when and by what. */
-export type SupporterOptOut = {
-  list: OptOutList;
-  address: string;
-  since: string | null;
-  source: string | null;
-};
-
 export type SupporterDetails = {
   summary: SupporterSummary;
   identities: SupporterIdentity[];
   contacts: SupporterContact[];
   links: SupporterLink[];
   activity: SupporterActivity[];
-  optOuts: SupporterOptOut[];
+  /** Whether we may email each of their addresses about each topic, and why. */
+  permissions: EmailPermission[];
 };
 
 /** What the list can be sorted by, a column heading or the Sort by field, and which way a first click goes. */

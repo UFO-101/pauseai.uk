@@ -265,6 +265,7 @@ describeWithDatabase("listSupporters and getSupporter", () => {
       events: 1,
       letters: 0,
       optedOut: [],
+      member: false,
     });
     expect(page.supporters[0].optedOut).toEqual(["luma-calendar"]);
     expect(await listSupporters({ sort: "active", dir: "desc", page: 2 })).toEqual({
@@ -326,6 +327,7 @@ describeWithDatabase("listSupporters and getSupporter", () => {
         postcode: null,
         latitude: 51.5,
         longitude: -0.1,
+        city: "London",
       },
     ]);
     expect(sam.links).toEqual([
@@ -338,21 +340,17 @@ describeWithDatabase("listSupporters and getSupporter", () => {
       },
     ]);
     expect(sam.activity.map((a) => a.kind)).toEqual(["opted-out", "luma-registered"]);
-    expect(sam.optOuts).toEqual([
-      {
-        list: "luma-calendar",
-        address: "sam@example.com",
-        since: new Date("2026-10-12T00:00:00Z"),
-        source: "luma-webhook",
-      },
-    ]);
+    // Whether we'd email each address about each topic (lib/server/email-permissions.ts).
+    expect(sam.permissions.map((p) => [p.topic, p.send, p.reason])).toEqual([["luma-calendar", "no", "unsubscribed"]]);
 
     const [{ id: pat }] = await query<{ id: number }>(
       "SELECT supporter_id::int AS id FROM supporter_links WHERE letter_id IS NOT NULL",
     );
     const details = (await getSupporter(pat))!;
     expect(details.links[0]).toMatchObject({ source: "letter", sourceId: expect.stringMatching(/^\d+$/) });
-    expect(details.optOuts).toEqual([{ list: "luma-calendar", address: "pat@example.com", since: null, source: null }]);
+    expect(details.permissions.map((p) => [p.address, p.topic, p.send])).toEqual([
+      ["pat@example.com", "events-and-ways-to-help", "yes"],
+    ]);
     expect(details.contacts).toEqual([
       {
         source: "letter",
@@ -361,8 +359,98 @@ describeWithDatabase("listSupporters and getSupporter", () => {
         postcode: "ZZ9 9ZZ",
         latitude: null,
         longitude: null,
+        city: null,
       },
     ]);
     expect(await getSupporter(999)).toBeUndefined();
+  });
+});
+
+/** A member's record, joined on `created`, ticking "Keep me informed" unless told otherwise. */
+async function member(id: string, email: string, created: string, more: Record<string, unknown> = {}) {
+  await query(
+    `INSERT INTO members (id, email, name, phone, city, postcode, joined_at, created_at, keep_informed, share_permission,
+       source_page, intent, source_modified_at, removed_at)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, true, $10, $11, $8, $12)`,
+    [
+      id,
+      email,
+      more.name ?? "A Member",
+      more.phone ?? null,
+      more.city ?? null,
+      more.postcode ?? null,
+      more.joinedAt ?? created,
+      created,
+      more.keepInformed ?? true,
+      more.sourcePage ?? null,
+      more.intent ?? null,
+      more.removedAt ?? null,
+    ],
+  );
+}
+
+/** The supporter with this address. */
+async function supporterWith(email: string): Promise<number> {
+  const [{ id }] = await query<{ id: number }>(
+    "SELECT supporter_id::int AS id FROM supporter_links WHERE matched_value = $1 LIMIT 1",
+    [email],
+  );
+  return id;
+}
+
+describeWithDatabase("members as supporters", () => {
+  useTestDatabase();
+
+  it("links a member to the supporter with their email, with their city, joining and what they chose", async () => {
+    const mp = await addTestMp();
+    await letter("jane@example.com", "Jane Smith", mp, { createdAt: "2026-10-05T09:00:00Z" });
+    await member("recJane", "jane@example.com", "2026-09-12T10:00:00Z", {
+      name: "Jane M",
+      joinedAt: "2024-03-23T00:00:00Z",
+      phone: "+447700900123",
+      city: "Manchester",
+      sourcePage: "pauseai.uk",
+      intent: "Volunteer",
+    });
+    expect(await linkSupporters()).toEqual({ supportersAdded: 1, linked: 2 });
+    const jane = (await getSupporter(await supporterWith("jane@example.com")))!;
+    expect(jane.summary).toMatchObject({
+      sources: ["letter", "member"],
+      member: true,
+      phone: "+447700900123",
+      firstSeenAt: new Date("2024-03-23T00:00:00Z"),
+    });
+    expect(jane.contacts).toContainEqual({
+      source: "member",
+      at: new Date("2026-09-12T10:00:00Z"),
+      phone: "+447700900123",
+      postcode: null,
+      latitude: null,
+      longitude: null,
+      city: "Manchester",
+    });
+    expect(jane.permissions.find((p) => p.topic === "pauseai-updates")).toMatchObject({
+      send: "unsure",
+      reason: "asked",
+    });
+    expect(jane.activity).toContainEqual({
+      source: "member",
+      at: new Date("2024-03-23T00:00:00Z"),
+      kind: "member-joined",
+      title: "Volunteer",
+      detail: "pauseai.uk",
+      href: "https://airtable.com/appWPTGqZmUcs3NWu/tblL1icZBhTV1gQ9o/recJane",
+      status: null,
+    });
+    expect(jane.links.map((l) => l.source).sort()).toEqual(["letter", "member"]);
+
+    // A member no longer read is no longer one, though what they gave stays.
+    await query("UPDATE members SET removed_at = now()");
+    const removed = (await getSupporter(await supporterWith("jane@example.com")))!;
+    expect(removed.summary).toMatchObject({ member: false, sources: ["letter", "member"] });
+    expect(removed.permissions.find((p) => p.topic === "pauseai-updates")).toMatchObject({
+      send: "no",
+      reason: "removed",
+    });
   });
 });

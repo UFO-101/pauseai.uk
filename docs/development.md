@@ -248,8 +248,9 @@ Then postcode `SW1A 1AA` finds Polly Placeholder.
 
 Open http://localhost:3000/staff/login. In a fixture build the login card
 has a hatched purple box under it, the dev login: a button per account
-(admin@pauseai.uk, which every database starts with, and the seed's
-jo@pauseai.uk and sam@pauseai.uk) and one for nobody@pauseai.uk, which has
+(admin@pauseai.uk, which every database starts with, and which
+`db:reset` gives the supporters permission as well as admin; and the
+seed's jo@pauseai.uk and sam@pauseai.uk) and one for nobody@pauseai.uk, which has
 no account, each signing you in at once, with no email.
 It exists only with `DATA_FIXTURES=1`; its route is a 404 anywhere else.
 
@@ -312,6 +313,7 @@ call these routes. Locally, with `CRON_SECRET=dev` in `.env.local`:
 curl -X POST -H "Authorization: Bearer dev" localhost:3000/api/cron/sync-mps
 curl -X POST -H "Authorization: Bearer dev" localhost:3000/api/cron/check-mps
 curl -X POST -H "Authorization: Bearer dev" localhost:3000/api/cron/import-luma   # the hourly Luma import; with fixtures, the fixture calendar
+curl -X POST -H "Authorization: Bearer dev" localhost:3000/api/cron/import-members   # the hourly members import; with fixtures, the fixture members
 ```
 
 **Postmark's webhooks.** Set `POSTMARK_WEBHOOK_USER=postmark` and
@@ -439,5 +441,6 @@ Set up outside the code:
 - **Luma's webhook:** in Luma, the PauseAI UK calendar, Settings → Developer → Webhooks: a webhook for `https://pauseai.uk/api/luma/webhook` with the event types Calendar Person Unsubscribed and Calendar Person Subscribed. Its secret (`whsec_…`) goes into Netlify as `LUMA_WEBHOOK_SECRET`. Luma retries a delivery that isn't answered 2xx three more times, after 1, 2 and 4 minutes, and only sends unsubscribes that happen after the webhook exists. To check it works: unsubscribe a staff address from the calendar's emails and look for its row in `opt_outs`; subscribe again and see whether Luma sends `calendar.person.subscribed` and the row's `resubscribed_at` is set, which its docs don't promise.
 - **Nightly jobs:** the MP sync runs at midnight UTC, the check against Parliament at 01:00 and the ControlAI import at 02:00. The check makes about 650 requests to Parliament, which took 12–18 seconds from a laptop on 14 Oct 2026. A Netlify scheduled function gets 30 seconds, so a nightly check that starts timing out has outgrown it.
 - **The Luma import** runs at 17 minutes past every hour, with `LUMA_API_KEY`. Each run fetches for about 20 seconds, then stops and records how many events are still waiting, so the first copy of the calendar (about 430 requests on 21 Oct 2026) takes a few runs; after that a run is a handful of requests. It leaves 50 of Luma's 200 requests a minute for the site's own fetches, and stops early if Luma answers 429. Run it by hand from `/staff/import-data` to see where it's got to.
+- **The members import** runs at 47 minutes past every hour, with `AIRTABLE_TOKEN`, which needs read access to Stichting PauseAI's "Members & Actions" base (`appWPTGqZmUcs3NWu`) as well as the MPs' base; the global team grant it. A run reads every UK member we may hold, about 15 requests, which counts against the global team's Airtable plan's monthly API calls. Run it by hand from `/staff/import-data`.
 - **A new database:** run the MP sync, then the signatory import, both from `/staff/import-data`, and check the signatories. Until the sync has run, Email your MP finds no MPs.
 - **Staff accounts:** every database starts with one account, `admin@pauseai.uk`, with the admin permission. Log in as it and add everyone else on `/staff/accounts`: an account alone opens the ordinary pages; the supporters permission opens the supporter pages, admin the accounts page and the audit log. Give admin to at least one other person; the last admin can't be removed. The hourly Luma import fills the supporter pages over its first few runs, and links every letter already written; run it from `/staff/import-data` to watch it. An erasure request is handled as `docs/data-protection.md` says.

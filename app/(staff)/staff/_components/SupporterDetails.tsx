@@ -3,14 +3,17 @@ import { Muted } from "@/components/ui/Text";
 import { campaignBySlug, campaignPath, displayPostcode } from "@/lib/email-your-mp";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { staffDate, staffTime } from "@/lib/staff-time";
+import { givenPlaces, supporterPlace } from "@/lib/supporter-place";
 import type { SupporterActivity, SupporterDetails as Details, SupporterSource } from "@/lib/supporters";
+import EmailPermissionTiles from "./EmailPermissionTiles";
 import SupporterBadges from "./SupporterBadges";
 import styles from "./Details.module.css";
 
 const copy = staffCopy.supporters;
 
 /** One value we hold, and where and when it came from: the sources that gave it, and the first time. */
-type Given = { value: string; sources: Set<SupporterSource>; since: string };
+/** `event` marks a city that's an event's they registered for, not one they gave. */
+type Given = { value: string; sources: Set<SupporterSource>; since: string; event?: boolean };
 
 /**
  * The distinct values of a detail, each with its sources and when it was
@@ -40,6 +43,7 @@ function distinct(
 
 /** Where a value came from and when, in words. */
 function origin(given: Given): string {
+  if (given.event) return copy.detail.fromEvent(staffDate(given.since));
   const sources = [...given.sources].map((source) => copy.sources[source]).join(", ");
   return given.since ? copy.detail.from(sources, staffDate(given.since)) : sources;
 }
@@ -53,7 +57,7 @@ function Fact({ label, values }: { label: string; values: Given[] }) {
       <dd>
         {values.map((given) => (
           <div key={given.value}>
-            {given.value} <Muted>({origin(given)})</Muted>
+            {given.value} <span className={styles.origin}>({origin(given)})</span>
           </div>
         ))}
       </dd>
@@ -61,8 +65,8 @@ function Fact({ label, values }: { label: string; values: Given[] }) {
   );
 }
 
-/** What an activity was about: the event, the MP and campaign, or the list. */
-function Subject({ item }: { item: SupporterActivity }) {
+/** What an activity was about: the event, the MP and campaign, or the list. `letters` lists the supporter's letters. */
+function Subject({ item, letters }: { item: SupporterActivity; letters: string }) {
   if (item.kind === "luma-registered") {
     const status = copy.detail.statuses[item.detail ?? ""];
     return (
@@ -73,7 +77,8 @@ function Subject({ item }: { item: SupporterActivity }) {
     );
   }
   if (item.kind === "letter" || item.kind === "letter-replied") {
-    // The MP, linked to their page; the campaign, linked to its public page while it's still one; then a letter's status.
+    // The MP, linked to their page; the campaign, linked to its public page while it's still one; then a letter's
+    // status, linked to the supporter's letters on the letters page.
     const campaign = campaignBySlug(item.title ?? "");
     return (
       <>
@@ -81,22 +86,37 @@ function Subject({ item }: { item: SupporterActivity }) {
         <Muted>
           {item.title && (
             <>
-              {" · "}
+              {` ${copy.detail.about} `}
               {campaign ? <Link href={campaignPath(campaign)}>{campaign.title}</Link> : item.title}
             </>
           )}
-          {item.status && ` · ${staffCopy.letters.status[item.status] ?? item.status}`}
+          {item.status && (
+            <>
+              {" · "}
+              <Link href={letters}>{staffCopy.letters.status[item.status] ?? item.status}</Link>
+            </>
+          )}
         </Muted>
       </>
     );
   }
   if (item.kind === "opted-out" || item.kind === "resubscribed") {
+    // The import's own opt-outs say why: what the member did with "Keep me informed".
+    const reason = item.source === "airtable-import" ? copy.detail.importReasons[item.kind] : undefined;
     return (
       <>
         {copy.lists[item.title ?? ""] ?? item.title}
+        {reason && <Muted> · {reason}</Muted>}
         {item.detail && <Muted> · {item.detail}</Muted>}
       </>
     );
+  }
+  if (item.kind === "member-joined") {
+    // Where the join form was, and what they chose on it, if either says anything.
+    const said = [item.detail && copy.detail.joinedOn(item.detail), copy.detail.intents[item.title ?? ""]]
+      .filter(Boolean)
+      .join(", ");
+    return said ? <Muted>{said}</Muted> : null;
   }
   return null;
 }
@@ -106,32 +126,31 @@ function Subject({ item }: { item: SupporterActivity }) {
  * value with where it came from; then everything they did, newest first.
  */
 export default function SupporterDetails({ supporter }: { supporter: Details }) {
-  const { summary, identities, contacts, activity, optOuts } = supporter;
+  const { summary, identities, contacts, activity, permissions } = supporter;
   const emails = distinct(identities.map((i) => ({ value: i.email, source: i.source, at: i.seenAt })));
   const phones = distinct(contacts.map((c) => ({ value: c.phone, source: c.source, at: c.at })));
   const postcodes = distinct(
     contacts.map((c) => ({ value: c.postcode, source: c.source, at: c.at })),
     displayPostcode,
   );
+  // The cities they gave us; failing those, their newest event's (supporterPlace).
+  const given = distinct(givenPlaces(contacts).map((c) => ({ value: c.city, source: c.source, at: c.at })));
+  const place = supporterPlace(contacts);
+  const cities: Given[] =
+    given.length > 0 || !place?.city
+      ? given
+      : [{ value: place.city, sources: new Set([place.source]), since: new Date(place.at).toISOString(), event: true }];
   return (
     <>
       <h1>
         {summary.name ?? copy.noName} <SupporterBadges supporter={summary} />
       </h1>
 
-      <dl className={styles.facts}>
+      <dl className={`${styles.facts} ${styles.main}`}>
         <Fact label={copy.detail.emails} values={emails} />
         <Fact label={copy.detail.phone} values={phones} />
         <Fact label={copy.detail.postcode} values={postcodes} />
-        {optOuts.map((optOut) => (
-          <div key={`${optOut.list}-${optOut.address}`} className={styles.pair}>
-            <dt>{copy.lists[optOut.list]}</dt>
-            <dd>
-              {optOut.since === null ? copy.detail.notOptedOut : copy.detail.optedOut(staffDate(optOut.since))}
-              {emails.length > 1 && <Muted> · {optOut.address}</Muted>}
-            </dd>
-          </div>
-        ))}
+        <Fact label={copy.detail.city} values={cities} />
         {summary.firstSeenAt && (
           <>
             <dt>{copy.detail.firstSeen}</dt>
@@ -146,21 +165,29 @@ export default function SupporterDetails({ supporter }: { supporter: Details }) 
         )}
       </dl>
 
-      <h2>{copy.detail.activityTitle}</h2>
-      {activity.length === 0 ? (
-        <p>{copy.detail.noActivity}</p>
-      ) : (
-        <ol className={styles.history} aria-label={copy.detail.activityTitle}>
-          {activity.map((item, i) => (
-            <li key={i}>
-              <span className={styles.when}>{staffTime(item.at)}</span>
-              <span>
-                {copy.detail.kinds[item.kind]} <Subject item={item} />
-              </span>
-            </li>
-          ))}
-        </ol>
-      )}
+      <section aria-labelledby="subscriptions">
+        <h2 id="subscriptions">{copy.detail.listsTitle}</h2>
+        <EmailPermissionTiles permissions={permissions} />
+      </section>
+
+      <section aria-labelledby="history">
+        <h2 id="history">{copy.detail.activityTitle}</h2>
+        {activity.length === 0 ? (
+          <p>{copy.detail.noActivity}</p>
+        ) : (
+          <ol className={styles.history} aria-label={copy.detail.activityTitle}>
+            {activity.map((item, i) => (
+              <li key={i}>
+                <span className={styles.when}>{staffTime(item.at)}</span>
+                <span>
+                  {copy.detail.kinds[item.kind]}{" "}
+                  <Subject item={item} letters={`/staff/letters?supporter=${summary.id}`} />
+                </span>
+              </li>
+            ))}
+          </ol>
+        )}
+      </section>
     </>
   );
 }

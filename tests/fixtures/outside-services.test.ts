@@ -38,6 +38,13 @@ describe("fixtureResponse", () => {
     expect((await fixtureResponse("https://eu.airtable.com/v0/app/tbl")!.json()).records).toHaveLength(2);
   });
 
+  it("serves Airtable's members from the members table", async () => {
+    const members = await fixtureResponse(
+      "https://api.airtable.com/v0/appWPTGqZmUcs3NWu/tblL1icZBhTV1gQ9o?x=1",
+    )!.json();
+    expect(members.records[0].id).toBe("recMemberJane");
+  });
+
   it("serves Airtable's MPs when asked for the House of Commons", async () => {
     const formula = encodeURIComponent("AND({Body}='House of Commons')");
     const mps = await fixtureResponse(`https://eu.airtable.com/v0/app/tbl?filterByFormula=${formula}`)!.json();
