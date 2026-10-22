@@ -1,26 +1,24 @@
 import { describe, expect, it } from "vitest";
-import { checkMarchRegistration, marchGuestName } from "./march-registration";
+import { checkMarchRegistration } from "./march-registration";
 
-const valid = { firstName: "Testy", lastName: "McTestface", email: "testy@example.org" };
+const valid = { name: "Testy McTestface", email: "testy@example.org" };
 
 describe("checkMarchRegistration", () => {
   it("takes a name and an email, trimmed, and nothing else", () => {
     const result = checkMarchRegistration({
-      firstName: "  Testy ",
-      lastName: "McTestface",
+      name: "  Testy McTestface ",
       email: " testy@example.org ",
       phone: "0",
+      postcode: "SW1A 0AA",
     });
     expect(result).toEqual({ ok: true, registration: valid });
-    expect(marchGuestName(valid)).toBe("Testy McTestface");
   });
 
   it("asks for each field that's missing", () => {
-    expect(checkMarchRegistration({ firstName: "", lastName: " ", email: "" })).toEqual({
+    expect(checkMarchRegistration({ name: " ", email: "" })).toEqual({
       ok: false,
       errors: {
-        firstName: "Please enter your first name.",
-        lastName: "Please enter your last name.",
+        name: "Please enter your full name.",
         email: "Please enter your email address.",
       },
     });
@@ -28,18 +26,16 @@ describe("checkMarchRegistration", () => {
 
   it("treats anything but an object of strings as missing", () => {
     expect(checkMarchRegistration(null).ok).toBe(false);
-    expect(checkMarchRegistration({ firstName: 1, lastName: [], email: {} }).ok).toBe(false);
+    expect(checkMarchRegistration({ name: [], email: {} }).ok).toBe(false);
   });
 
   it("refuses a name that's too long or has control characters in it", () => {
-    expect(checkMarchRegistration({ ...valid, firstName: "x".repeat(101) })).toEqual({
-      ok: false,
-      errors: { firstName: "Please check your first name." },
-    });
-    expect(checkMarchRegistration({ ...valid, lastName: "Mc\nTestface" })).toEqual({
-      ok: false,
-      errors: { lastName: "Please check your last name." },
-    });
+    for (const name of ["x".repeat(101), "Testy\nMcTestface"]) {
+      expect(checkMarchRegistration({ ...valid, name }), name).toEqual({
+        ok: false,
+        errors: { name: "Please check your full name." },
+      });
+    }
   });
 
   it("refuses an email that isn't one", () => {

@@ -19,13 +19,15 @@ export const AI_IMPACTS_SURVEY_URL = "https://aiimpacts.org/wp-content/uploads/2
 export const marchSignupCopy = {
   form: {
     head: "Count me in",
-    firstName: "First name",
-    lastName: "Last name",
+    name: "Full name",
     email: "Email address",
     phone: "Phone",
     city: "City",
+    postcode: "Postcode",
     optional: "Optional",
     phoneHint: "For text updates on the day.",
+    cityHint: "For local group updates",
+    postcodeHint: "For constituency-based campaigns",
     mailingList: "Keep me in the loop about future campaigns and developments. (You can unsubscribe at any time.)",
     honeypot: "Leave this empty",
     submit: "Register",
