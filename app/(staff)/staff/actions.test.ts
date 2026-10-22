@@ -19,7 +19,6 @@ import {
   importMembersNow,
   markSigned,
   removeStaffAccountNow,
-  saveStaffAccountNow,
   saveStaffAccountsNow,
   syncNow,
   unblockAddress,
@@ -67,7 +66,6 @@ describeWithDatabase("staff Server Actions", () => {
       () => importFromAirtable(),
       () => importLumaNow(),
       () => importMembersNow(),
-      () => saveStaffAccountNow(form({ email: "x@pauseai.uk", "permission:admin": "on" })),
       () => removeStaffAccountNow(form({ email: "x@pauseai.uk" })),
       () => saveStaffAccountsNow(form({ account: "jo@pauseai.uk", "permission:admin": "jo@pauseai.uk" })),
       () => eraseSupporterNow(form({ id: "1", reference: "r", confirm: "on" })),
@@ -148,8 +146,9 @@ describeWithDatabase("staff Server Actions", () => {
     ]);
   });
 
-  it("saveStaffAccountNow and removeStaffAccountNow need admin, then keep the accounts, going back to the page", async () => {
-    const save = () => saveStaffAccountNow(form({ email: "Sam@pauseai.uk", "permission:supporters": "on" }));
+  it("saveStaffAccountsNow adds someone new and removeStaffAccountNow removes them, as an admin, going back to the page", async () => {
+    const save = () =>
+      saveStaffAccountsNow(form({ account: "Sam@pauseai.uk", "permission:supporters": "Sam@pauseai.uk" }));
     expect(await expectRedirect(save)).toBe("/staff");
     await saveStaffAccount("jo@pauseai.uk", ["admin"], "a");
     expect(await expectRedirect(save)).toBe("/staff/accounts");
@@ -159,19 +158,18 @@ describeWithDatabase("staff Server Actions", () => {
     ]);
     expect(revalidatePath).toHaveBeenCalledWith("/staff/accounts");
     // The last admin can't lose admin, and the page says so.
-    expect(await expectRedirect(() => saveStaffAccountNow(form({ email: "jo@pauseai.uk" })))).toBe(
+    expect(await expectRedirect(() => saveStaffAccountsNow(form({ account: "jo@pauseai.uk" })))).toBe(
       "/staff/accounts?notice=last-admin",
     );
     expect(await expectRedirect(() => removeStaffAccountNow(form({ email: "sam@pauseai.uk" })))).toBe(
       "/staff/accounts",
     );
     expect(await query("SELECT count(*)::int AS n FROM staff_accounts")).toEqual([{ n: 1 }]);
-    // An address not at pauseai.uk is refused, and the form says so.
-    expect(await expectRedirect(() => saveStaffAccountNow(form({ email: "sam@example.com" })))).toBe(
+    // An address not at pauseai.uk is refused, and the page says so.
+    expect(await expectRedirect(() => saveStaffAccountsNow(form({ account: "sam@example.com" })))).toBe(
       "/staff/accounts?notice=not-pauseai",
     );
     // A bad form does nothing.
-    await saveStaffAccountNow(form({ email: "nobody" }));
     await removeStaffAccountNow(form({ email: "nobody" }));
     expect(await query("SELECT count(*)::int AS n FROM staff_accounts")).toEqual([{ n: 1 }]);
   });

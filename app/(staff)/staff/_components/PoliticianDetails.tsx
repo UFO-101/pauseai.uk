@@ -208,7 +208,6 @@ export default function PoliticianDetails({
       )}
 
       <dl className={styles.facts}>
-        <Fact label={staffCopy.fields.house}>{staffCopy.houses[politician.house]}</Fact>
         <Fact label={staffCopy.fields.constituency}>{politician.constituency}</Fact>
         <Fact label={staffCopy.fields.party}>{politician.party}</Fact>
         <Fact label={staffCopy.fields.email}>{politician.email ?? staffCopy.politicians.noEmail}</Fact>

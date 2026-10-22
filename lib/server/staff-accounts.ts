@@ -1,8 +1,7 @@
 import "server-only";
-import type { Permission } from "@/lib/staff-permissions";
+import { isStaffEmail, type Permission } from "@/lib/staff-permissions";
 import { logChange } from "./audit";
 import { query, transaction, type Queryable } from "./db";
-import { isStaffEmail } from "./staff-login";
 
 // Who may use the staff pages (staff_accounts): read on every request by
 // requireStaff(), kept by admins on /staff/accounts, each change in the

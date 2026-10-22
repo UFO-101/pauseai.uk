@@ -297,15 +297,16 @@ export const staffCopy = {
     // Beside Save, while a row is ticked differently from what's saved: the way back, and that it isn't saved.
     undo: "⁂ Undo",
     unsaved: "⁂ Not saved yet",
-    // Under the email of the form for someone new, while the table has changes not saved.
-    saveFirst: "⁂ Save or undo the changes above first.",
-    // The button on the form for someone new.
+    // Under the last row: the field for the address of someone new (its
+    // label, read aloud) and its button, which adds them as a row, saved
+    // with the others.
+    addTitle: "Add someone",
     add: "Add",
     remove: "Remove",
-    addTitle: "Add someone",
-    emailLabel: "Email",
-    // Under the email of the form for someone new, when it isn't at pauseai.uk.
+    // Beside Add, or above the table after a Save, when the address isn't at pauseai.uk.
     notPauseai: "Only addresses @pauseai.uk can have an account.",
+    // Beside Add, when the address is in the table already.
+    alreadyThere: "⁂ They're in the table already.",
     // When a change would leave no admin.
     lastAdmin: "The last administrator can't be removed or lose permissions to administrate.",
   },
@@ -389,12 +390,12 @@ export const staffCopy = {
     editInAirtable: ", update name / email there.",
     // Under their name: what they are, in their house, and where for.
     roles: {
-      commons: "⁂ MP",
-      lords: "⁂ Member of the House of Lords",
-      "scottish-parliament": "⁂ MSP",
-      senedd: "⁂ MS",
-      "ni-assembly": "⁂ MLA",
-      other: "⁂ Politician",
+      commons: "MP",
+      lords: "Member of the House of Lords",
+      "scottish-parliament": "MSP",
+      senedd: "MS",
+      "ni-assembly": "MLA",
+      other: "Politician",
     } as Record<string, string>,
     role: (role: string, constituency: string | null, sitting: boolean) =>
       `${sitting ? "" : "Formerly "}${role}${constituency ? ` for ${constituency}` : ""}`,

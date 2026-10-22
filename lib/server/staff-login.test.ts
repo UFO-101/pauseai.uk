@@ -5,14 +5,8 @@ import { server } from "@/tests/fixtures/msw";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { describeWithDatabase, useTestDatabase } from "@/tests/database";
 import { query } from "./db";
-import {
-  HOURLY_LINKS,
-  isStaffEmail,
-  loginBrowser,
-  loginBrowserCookie,
-  sendLoginLink,
-  redeemLoginLink,
-} from "./staff-login";
+import { isStaffEmail } from "@/lib/staff-permissions";
+import { HOURLY_LINKS, loginBrowser, loginBrowserCookie, sendLoginLink, redeemLoginLink } from "./staff-login";
 
 const POSTMARK = "https://api.postmarkapp.com/email";
 type Sent = { From: string; To: string; Subject: string; TextBody: string };

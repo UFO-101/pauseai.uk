@@ -16,7 +16,6 @@ import { examplePolitician, examplePoliticianHistory } from "@/app/(staff)/staff
 import { exampleLetter } from "@/app/(staff)/staff/_components/LettersTable.examples";
 import Run from "@/app/(staff)/staff/_components/Run";
 import EraseForm from "@/app/(staff)/staff/_components/EraseForm";
-import AddAccountForm from "@/app/(staff)/staff/_components/AddAccountForm";
 import RemoveAccountForm from "@/app/(staff)/staff/_components/RemoveAccountForm";
 import StaffAccountsTable from "@/app/(staff)/staff/_components/StaffAccountsTable";
 import UnblockForm from "@/app/(staff)/staff/_components/UnblockForm";
@@ -179,7 +178,6 @@ export function StaffAccountsTableExample() {
       {(log) => (
         <StaffAccountsTable
           saveAll={log("saveStaffAccounts")}
-          add={log("saveStaffAccount")}
           remove={log("removeStaffAccount")}
           accounts={[
             {
@@ -200,10 +198,6 @@ export function StaffAccountsTableExample() {
       )}
     </Logged>
   );
-}
-
-export function AddAccountFormExample({ waiting = false }: { waiting?: boolean }) {
-  return <Logged>{(log) => <AddAccountForm save={log("saveStaffAccount")} waiting={waiting} />}</Logged>;
 }
 
 export function RemoveAccountFormExample() {

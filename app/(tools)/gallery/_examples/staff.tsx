@@ -72,7 +72,6 @@ import {
   PoliticianTableEmptyExample,
   PoliticianTableExample,
   EraseFormExample,
-  AddAccountFormExample,
   StaffAccountsTableExample,
   RemoveAccountFormExample,
   UnblockFormExample,
@@ -548,32 +547,10 @@ export const staff: Group = {
       file: "app/(staff)/staff/_components/StaffAccountsTable.tsx",
       variants: [
         {
-          label: "Three accounts, and the form for someone new",
+          label: "Three accounts, and the field to add someone under them",
           render: () => (
             <StaffPage as="div">
               <StaffAccountsTableExample />
-            </StaffPage>
-          ),
-        },
-      ],
-    },
-    {
-      name: "AddAccountForm",
-      file: "app/(staff)/staff/_components/AddAccountForm.tsx",
-      variants: [
-        {
-          label: "Their address and Add",
-          render: () => (
-            <StaffPage as="div">
-              <AddAccountFormExample />
-            </StaffPage>
-          ),
-        },
-        {
-          label: "Off while the table above has changes not saved",
-          render: () => (
-            <StaffPage as="div">
-              <AddAccountFormExample waiting />
             </StaffPage>
           ),
         },

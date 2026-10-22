@@ -66,8 +66,8 @@ export type PermissionsForm = { email: string; permissions: Permission[] };
 
 /**
  * One account: whose, and each permission's checkbox, named
- * "permission:<name>", ticked or not. The forms to add and to remove
- * someone send only whose.
+ * "permission:<name>", ticked or not. The form to remove someone sends
+ * only whose.
  */
 export function permissionsFrom(form: FormData): PermissionsForm | undefined {
   const email = text(form, "email").toLowerCase();

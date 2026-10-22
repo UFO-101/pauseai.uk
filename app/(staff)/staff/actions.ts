@@ -134,18 +134,12 @@ function accountsPage(change: AccountChange): never {
   redirect(change === "changed" || change === "unchanged" ? "/staff/accounts" : `/staff/accounts?notice=${change}`);
 }
 
-/** The accounts page: gives an address an account with exactly the permissions ticked, as the admin. */
-export async function saveStaffAccountNow(form: FormData): Promise<void> {
-  const { email } = await requireStaff("admin");
-  const parsed = permissionsFrom(form);
-  if (!parsed) return;
-  accountsPage(await saveStaffAccount(parsed.email, parsed.permissions, email));
-}
-
 /**
- * The accounts page's Save: gives each account in the table exactly the
- * permissions ticked in its row, one after another, as the admin. A change
- * refused (the last admin) is said on the page; the others are kept.
+ * The accounts page's Save: gives each address in the table an account
+ * with exactly the permissions ticked in its row, one after another, as
+ * the admin; someone added there gets one then. A change refused (the last
+ * admin, an address not at pauseai.uk) is said on the page; the others are
+ * kept.
  */
 export async function saveStaffAccountsNow(form: FormData): Promise<void> {
   const { email } = await requireStaff("admin");

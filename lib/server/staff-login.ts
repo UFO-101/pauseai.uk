@@ -7,6 +7,7 @@ import { query, transaction } from "./db";
 import { send } from "./email";
 import { notifyDomain } from "./outside-services/postmark";
 import { randomId } from "./random-id";
+import { isStaffEmail } from "@/lib/staff-permissions";
 
 // Logging in by email: a staff member types their pauseai.uk address and
 // gets a link. The link only works in the browser that asked for it, which
@@ -17,11 +18,6 @@ import { randomId } from "./random-id";
 const LINK_MINUTES = 15;
 /** At most this many login emails an hour to one address. */
 export const HOURLY_LINKS = 5;
-
-/** Exactly an address at pauseai.uk: not a subdomain, and not anything else. */
-export function isStaffEmail(email: string): boolean {
-  return /^[^\s@]+@pauseai\.uk$/i.test(email);
-}
 
 function hash(token: string): string {
   return createHash("sha256").update(token).digest("hex");
