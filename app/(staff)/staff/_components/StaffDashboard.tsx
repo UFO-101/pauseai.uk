@@ -34,8 +34,8 @@ function Action({ action }: { action: DashboardAction }) {
     action.kind === "held-sync"
       ? [
           "amber" as const,
-          words.heldSync,
-          words.heldSyncDetail(action.added + action.removed + action.changed),
+          words.heldSync(action.added + action.removed + action.changed),
+          words.heldSyncDetail,
           words.decide,
           importPath("sync-mps"),
         ]

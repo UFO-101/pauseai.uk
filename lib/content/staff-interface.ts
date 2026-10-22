@@ -60,10 +60,10 @@ export const staffCopy = {
       // What's waiting for someone, shown only when something is: each kind of item, its detail, and its button.
       actionsTitle: "Needs a person",
       actions: {
-        heldSync: "MP import held",
+        heldSync: (changes: number) => `MP import would change ${changes} MPs`,
         // Why it's held, and what to do.
-        heldSyncDetail: (changes: number) =>
-          `This import would change ${changes} MPs, which is a lot. So please check it is correct and apply or discard it.`,
+        heldSyncDetail:
+          "That's a lot of MPs, so please check it, and approve or decline it. Fix any problems in Airtable.",
         decide: "Open Import",
         blockedMp: (name: string) => `⁂ ${name}'s email bounced`,
         blockedMpDetail: (since: string) =>

@@ -188,7 +188,7 @@ describe("StaffDashboard", () => {
     const { rerender } = await render(<StaffDashboard dashboard={exampleDashboard} permissions={[]} />);
     const items = page.getByRole("list", { name: copy.actionsTitle }).getByRole("listitem").all();
     expect(items.map((item) => item.element().textContent)).toEqual([
-      `${copy.actions.heldSync}${copy.actions.heldSyncDetail(24)}${copy.actions.decide}`,
+      `${copy.actions.heldSync(24)}${copy.actions.heldSyncDetail}${copy.actions.decide}`,
       `${copy.actions.blockedMp("Bouncy McTestface MP")}${copy.actions.blockedMpDetail("19 Oct 2026")}${copy.actions.openMp}`,
       `${copy.actions.failedImport(jobTitles["import-controlai"])}${copy.actions.failedImportDetail("No PDF linked", "2026-10-21 02:00")}${copy.actions.seeRun}`,
     ]);

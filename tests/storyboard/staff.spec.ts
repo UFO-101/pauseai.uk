@@ -466,7 +466,7 @@ test("an MP import that would change too many is held, then discarded, and then 
 
   // The home page says so, first thing, with a button back to the decision.
   await page.goto(`${BASE}/staff`);
-  await expect(page.getByText(staffCopy.home.dashboard.actions.heldSync)).toBeVisible();
+  await expect(page.getByText(staffCopy.home.dashboard.actions.heldSync(21))).toBeVisible();
   await frame(page, "the home: the held import needs a person");
   await page.getByRole("link", { name: staffCopy.home.dashboard.actions.decide }).click();
   await expect(page).toHaveURL(`${BASE}/staff/import-data/mps`);
