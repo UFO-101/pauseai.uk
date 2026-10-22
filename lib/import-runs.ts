@@ -104,6 +104,10 @@ export type LumaImportResult = {
   supportersAdded: number;
   linked: number;
   requests: number;
+  /** Pages of the calendar's contacts read. */
+  contactPages?: number;
+  /** A full pass over the contacts is part-way through: later runs read the rest. */
+  contactsPassGoing?: boolean;
   /** Why the run stopped before it was done: its time was up, Luma's rate limit was near, or another run had the lock. */
   stoppedBy?: "time" | "rate-limit" | "running";
 };
@@ -128,11 +132,16 @@ export type MembersImport = ImportRun<"import-members", MembersImportResult>;
 
 export type AnyImportRun = MpSync | MpCheck | ControlAiImport | SignatoryImport | LumaImport | MembersImport;
 
+/** Whether a Luma run left work for later: it was cut short, or the contacts pass is still going. */
+export function lumaRunIncomplete(result: LumaImportResult): boolean {
+  return result.stoppedBy !== undefined || result.contactsPassGoing === true;
+}
+
 /** How a run ended, as a colour: green when it went well, amber held or stopped short, red failed; none when it changed nothing, was discarded, or never ran. */
 export function runTone(run: AnyImportRun | undefined): "green" | "amber" | "red" | undefined {
   if (!run) return undefined;
   if (run.status === "failed") return "red";
   if (run.status === "held") return "amber";
-  if (run.job === "import-luma" && run.result.stoppedBy !== undefined) return "amber";
+  if (run.job === "import-luma" && lumaRunIncomplete(run.result)) return "amber";
   return run.status === "ok" || run.status === "applied" ? "green" : undefined;
 }

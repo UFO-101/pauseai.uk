@@ -1473,6 +1473,20 @@ describe("RunList", () => {
       .toHaveTextContent(`${staffCopy.runs.status.failed} ${AT} · ${staffCopy.import.nightly} · Airtable answered 503`);
   });
 
+  it("says how many pages of contacts a Luma run read, and that the contacts are still being read", async () => {
+    await render(
+      <RunList
+        runs={[ran("import-luma", { ...exampleLumaResult, contactPages: 10, contactsPassGoing: true }, { id: 1 })]}
+        none="None"
+      />,
+    );
+    const [run] = page.getByRole("status").all();
+    expect(run.element().textContent).toContain(
+      `${staffCopy.luma.result(exampleLumaResult)} ${staffCopy.luma.contactPages(10)} ${staffCopy.luma.contactsPassGoing}`,
+    );
+    expect(run.element().textContent).toContain(staffCopy.runs.incomplete);
+  });
+
   it("shows a Luma import's counts, or its error", async () => {
     const luma = exampleLumaResult;
     await render(

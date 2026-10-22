@@ -1,13 +1,14 @@
 import { SubmitButton } from "@/components/ui/SubmitButton";
 import { staffCopy } from "@/lib/content/staff-interface";
-import type {
-  AnyImportRun,
-  ControlAiImport,
-  LumaImport,
-  MembersImport,
-  MpCheck,
-  MpSync,
-  SignatoryImport,
+import {
+  type AnyImportRun,
+  type ControlAiImport,
+  type LumaImport,
+  lumaRunIncomplete,
+  type MembersImport,
+  type MpCheck,
+  type MpSync,
+  type SignatoryImport,
 } from "@/lib/import-runs";
 import type { MpProblem } from "@/lib/mp-check";
 import { changeCount, type SyncedMp } from "@/lib/mps";
@@ -183,20 +184,21 @@ function SignatoryRun({ run, open }: { run: SignatoryImport; open?: boolean }) {
   );
 }
 
-/** A copy of the Luma calendar: the counts, and why it stopped early, if it did. */
+/** A copy of the Luma calendar: the counts, why it stopped early if it did, and whether the contacts are still being read. */
 function LumaRun({ run, open }: { run: LumaImport; open?: boolean }) {
   if (run.status === "failed") return <RunBox run={run} summary={null} open={open} />;
-  const { stoppedBy } = run.result;
+  const { stoppedBy, contactPages, contactsPassGoing } = run.result;
   return (
     <RunBox
       run={run}
       open={open}
-
-      incomplete={stoppedBy !== undefined}
+      incomplete={lumaRunIncomplete(run.result)}
       summary={
         <>
           {staffCopy.luma.result(run.result)}
+          {contactPages !== undefined && <> {staffCopy.luma.contactPages(contactPages)}</>}
           {stoppedBy && <> {staffCopy.luma.stoppedBy[stoppedBy]}</>}
+          {contactsPassGoing && <> {staffCopy.luma.contactsPassGoing}</>}
         </>
       }
     />

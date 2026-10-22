@@ -141,10 +141,17 @@ const RUNS: Record<ImportJob, Variant> = {
     ),
   },
   "import-luma": {
-    label: "A Luma import cut short by its time",
+    label: "A Luma import cut short by its time, and one still reading every contact",
     render: () => (
       <StaffPage as="div">
         <Run run={exampleRun("import-luma", { ...exampleLumaResult, eventsLeft: 4, stoppedBy: "time" })} />
+        <Run
+          run={exampleRun(
+            "import-luma",
+            { ...exampleLumaResult, contactPages: 10, contactsPassGoing: true },
+            { id: 2 },
+          )}
+        />
       </StaffPage>
     ),
   },

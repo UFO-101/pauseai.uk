@@ -31,6 +31,8 @@ it("colours a run by how it ended: green done or applied, amber held or stopped 
   expect(runTone(exampleHeldSync)).toBe("amber");
   expect(runTone(exampleRun("import-luma", { ...exampleLumaResult, stoppedBy: "time" }))).toBe("amber");
   expect(runTone(exampleRun("import-luma", exampleLumaResult))).toBe("green");
+  // The contacts still being read leaves work for later too.
+  expect(runTone(exampleRun("import-luma", { ...exampleLumaResult, contactsPassGoing: true }))).toBe("amber");
   expect(runTone(exampleFailedRun("check-mps", "boom", {}))).toBe("red");
   expect(runTone(exampleRun("import-luma", exampleLumaResult, { status: "unchanged" }))).toBeUndefined();
   expect(runTone(undefined)).toBeUndefined();
