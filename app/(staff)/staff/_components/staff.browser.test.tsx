@@ -827,7 +827,11 @@ describe("PoliticianDetails", () => {
     expect(notice.element().querySelector("p")!.textContent).toBe(
       copy.why(MP.email!, exampleBlock.reason, "2026-10-12 09:10"),
     );
-    expect(notice.element().textContent).toContain(copy.fix);
+    const fix = `${copy.fix.before}${copy.fix.link}${copy.fix.after}`;
+    expect(notice.element().textContent).toContain(fix);
+    await expect
+      .element(notice.getByRole("link", { name: copy.fix.link }))
+      .toHaveAttribute("href", "/staff/import-data/mps");
     await expect.element(notice.getByRole("link", { name: copy.all })).toHaveAttribute("href", "/staff/blocked-emails");
     // The address in the facts is just the address.
     expect(page.getByText(MP.email!, { exact: true }).element().tagName).toBe("DD");
@@ -845,7 +849,7 @@ describe("PoliticianDetails", () => {
         {...none}
       />,
     );
-    expect(notice.element().textContent).not.toContain(copy.fix);
+    expect(notice.element().textContent).not.toContain(copy.fix.before);
     await expect.element(notice.getByText(staffCopy.emails.cantReset)).toBeVisible();
   });
 });

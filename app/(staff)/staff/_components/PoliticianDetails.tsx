@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { campaignBySlug } from "@/lib/email-your-mp";
+import { importPath } from "@/lib/import-runs";
 import type { EmailBlock } from "@/lib/server/email";
 import type { LetterSummary } from "@/lib/server/letters";
 import type { Politician, PoliticianChange } from "@/lib/server/politicians";
@@ -162,7 +163,13 @@ export default function PoliticianDetails({
           <div className={styles.blockedBody}>
             <h2 id="blocked-title">{copy.blocked.title}</h2>
             <p>{copy.blocked.why(block.address, block.reason, staffTime(block.since))}</p>
-            {block.canReset && <p>{copy.blocked.fix}</p>}
+            {block.canReset && (
+              <p>
+                {copy.blocked.fix.before}
+                <Link href={importPath("sync-mps")}>{copy.blocked.fix.link}</Link>
+                {copy.blocked.fix.after}
+              </p>
+            )}
             <UnblockForm block={block} action={unblock} />
             <p>
               <Link href="/staff/blocked-emails">{copy.blocked.all}</Link>
