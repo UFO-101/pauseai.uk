@@ -38,8 +38,11 @@ export type SupporterActivity = {
   at: string;
   kind: "luma-contact" | "luma-registered" | "letter" | "letter-replied" | "opted-out" | "resubscribed";
   title: string | null;
+  /** Who or what it was with: the event's status, the MP's name, or the address. */
   detail: string | null;
   href: string | null;
+  /** A letter's status; null for every other kind. */
+  status: string | null;
 };
 
 /** A name and email one source gave, and when the person was first seen there. */

@@ -153,7 +153,7 @@ export async function getSupporter(id: number): Promise<SupporterDetails | undef
       [id],
     ),
     query<SupporterActivity>(
-      "SELECT source, at, kind, title, detail, href FROM supporter_activity WHERE supporter_id = $1 ORDER BY at DESC, kind",
+      "SELECT source, at, kind, title, detail, href, status FROM supporter_activity WHERE supporter_id = $1 ORDER BY at DESC, kind",
       [id],
     ),
     query<{ list: string; address: string; since: string; source: string }>(

@@ -138,19 +138,49 @@ describeWithDatabase("linkSupporters", () => {
       title: string | null;
       detail: string | null;
       href: string | null;
-    }>("SELECT source, kind, title, detail, href FROM supporter_activity ORDER BY at");
+      status: string | null;
+    }>("SELECT source, kind, title, detail, href, status FROM supporter_activity ORDER BY at");
     expect(activity).toEqual([
-      { source: "luma", kind: "luma-contact", title: null, detail: null, href: null },
-      { source: "luma-webhook", kind: "opted-out", title: "luma-calendar", detail: "jane@example.com", href: null },
-      { source: "luma-webhook", kind: "resubscribed", title: "luma-calendar", detail: "jane@example.com", href: null },
-      { source: "luma", kind: "luma-registered", title: "evt-1", detail: "approved", href: "https://luma.com/evt-1" },
-      { source: "luma", kind: "luma-registered", title: "evt-2", detail: "declined", href: "https://luma.com/evt-2" },
+      { source: "luma", kind: "luma-contact", title: null, detail: null, href: null, status: null },
+      {
+        source: "luma-webhook",
+        kind: "opted-out",
+        title: "luma-calendar",
+        detail: "jane@example.com",
+        href: null,
+        status: null,
+      },
+      {
+        source: "luma-webhook",
+        kind: "resubscribed",
+        title: "luma-calendar",
+        detail: "jane@example.com",
+        href: null,
+        status: null,
+      },
+      {
+        source: "luma",
+        kind: "luma-registered",
+        title: "evt-1",
+        detail: "approved",
+        href: "https://luma.com/evt-1",
+        status: null,
+      },
+      {
+        source: "luma",
+        kind: "luma-registered",
+        title: "evt-2",
+        detail: "declined",
+        href: "https://luma.com/evt-2",
+        status: null,
+      },
       {
         source: "letter",
         kind: "letter",
         title: "regulate-letter-pm",
-        detail: "Testy McTestface MP · sent",
-        href: "/staff/letters",
+        detail: "Testy McTestface MP",
+        href: `/staff/politicians/${mp}`,
+        status: "sent",
       },
       {
         source: "letter",
@@ -158,8 +188,16 @@ describeWithDatabase("linkSupporters", () => {
         title: "regulate-letter-pm",
         detail: "Testy McTestface MP",
         href: `/staff/politicians/${mp}`,
+        status: null,
       },
-      { source: "luma-webhook", kind: "opted-out", title: "luma-calendar", detail: "jane@example.com", href: null },
+      {
+        source: "luma-webhook",
+        kind: "opted-out",
+        title: "luma-calendar",
+        detail: "jane@example.com",
+        href: null,
+        status: null,
+      },
     ]);
     expect(await query("SELECT source, phone, postcode, latitude FROM supporter_contact ORDER BY at")).toEqual([
       { source: "luma", phone: "+447700900001", postcode: "M1 1AE", latitude: 51.5 },

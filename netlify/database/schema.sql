@@ -414,8 +414,9 @@ CREATE VIEW public.supporter_activity_letter AS
     l.created_at AS at,
     'letter'::text AS kind,
     l.campaign AS title,
-    ((p.name || ' · '::text) || l.status) AS detail,
-    '/staff/letters'::text AS href
+    p.name AS detail,
+    ('/staff/politicians/'::text || p.id) AS href,
+    l.status
    FROM (public.letters l
      JOIN public.politicians p ON ((p.id = l.politician_id)))
 UNION ALL
@@ -424,7 +425,8 @@ UNION ALL
     'letter-replied'::text AS kind,
     l.campaign AS title,
     p.name AS detail,
-    ('/staff/politicians/'::text || p.id) AS href
+    ('/staff/politicians/'::text || p.id) AS href,
+    NULL::text AS status
    FROM (public.letters l
      JOIN public.politicians p ON ((p.id = l.politician_id)))
   WHERE (l.replied_at IS NOT NULL);
@@ -439,7 +441,8 @@ CREATE VIEW public.supporter_activity_luma AS
     'luma-contact'::text AS kind,
     NULL::text AS title,
     NULL::text AS detail,
-    NULL::text AS href
+    NULL::text AS href,
+    NULL::text AS status
    FROM public.luma_people p
   WHERE (p.contact_since IS NOT NULL)
 UNION ALL
@@ -448,7 +451,8 @@ UNION ALL
     'luma-registered'::text AS kind,
     e.name AS title,
     g.approval_status AS detail,
-    ('https://luma.com/'::text || e.url) AS href
+    ('https://luma.com/'::text || e.url) AS href,
+    NULL::text AS status
    FROM (public.luma_guests g
      JOIN public.luma_events e ON ((e.id = g.event_id)))
   WHERE (g.removed_at IS NULL);
@@ -481,7 +485,8 @@ CREATE VIEW public.supporter_activity AS
     a.kind,
     a.title,
     a.detail,
-    a.href
+    a.href,
+    a.status
    FROM (public.supporter_activity_luma a
      JOIN public.supporter_links k ON ((k.luma_user_id = a.source_id)))
 UNION ALL
@@ -491,7 +496,8 @@ UNION ALL
     a.kind,
     a.title,
     a.detail,
-    a.href
+    a.href,
+    a.status
    FROM (public.supporter_activity_letter a
      JOIN public.supporter_links k ON ((k.letter_id = a.source_id)))
 UNION ALL
@@ -501,7 +507,8 @@ UNION ALL
     'opted-out'::text AS kind,
     o.list AS title,
     o.address AS detail,
-    NULL::text AS href
+    NULL::text AS href,
+    NULL::text AS status
    FROM (public.opt_outs o
      JOIN ( SELECT DISTINCT supporter_links.supporter_id,
             supporter_links.matched_value
@@ -513,7 +520,8 @@ UNION ALL
     'resubscribed'::text AS kind,
     o.list AS title,
     o.address AS detail,
-    NULL::text AS href
+    NULL::text AS href,
+    NULL::text AS status
    FROM (public.opt_outs o
      JOIN ( SELECT DISTINCT supporter_links.supporter_id,
             supporter_links.matched_value

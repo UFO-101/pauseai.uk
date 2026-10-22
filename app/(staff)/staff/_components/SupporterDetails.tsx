@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Muted } from "@/components/ui/Text";
-import { campaignBySlug, displayPostcode } from "@/lib/email-your-mp";
+import { campaignBySlug, campaignPath, displayPostcode } from "@/lib/email-your-mp";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { staffDate, staffTime } from "@/lib/staff-time";
 import type { SupporterActivity, SupporterDetails as Details, SupporterSource } from "@/lib/supporters";
@@ -73,11 +73,20 @@ function Subject({ item }: { item: SupporterActivity }) {
     );
   }
   if (item.kind === "letter" || item.kind === "letter-replied") {
-    const campaign = campaignBySlug(item.title ?? "")?.title ?? item.title;
+    // The MP, linked to their page; the campaign, linked to its public page while it's still one; then a letter's status.
+    const campaign = campaignBySlug(item.title ?? "");
     return (
       <>
-        {item.detail}
-        {campaign && <Muted> · {item.href ? <Link href={item.href}>{campaign}</Link> : campaign}</Muted>}
+        {item.href ? <Link href={item.href}>{item.detail}</Link> : item.detail}
+        <Muted>
+          {item.title && (
+            <>
+              {" · "}
+              {campaign ? <Link href={campaignPath(campaign)}>{campaign.title}</Link> : item.title}
+            </>
+          )}
+          {item.status && ` · ${staffCopy.letters.status[item.status] ?? item.status}`}
+        </Muted>
       </>
     );
   }

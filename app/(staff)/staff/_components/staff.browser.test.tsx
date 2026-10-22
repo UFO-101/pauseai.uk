@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { render } from "vitest-browser-react";
 import { page } from "vitest/browser";
 import { campaigns } from "@/lib/content/email-your-mp";
+import { campaignPath } from "@/lib/email-your-mp";
 import { jobTitles, staffCopy } from "@/lib/content/staff-interface";
 import { MAX_UNCHECKED_CHANGES } from "@/lib/mps";
 import type { AnyImportRun, ControlAiImport, MpCheck, MpSync, SignatoryImport } from "@/lib/import-runs";
@@ -1567,12 +1568,42 @@ describe("SupporterDetails", () => {
       .element(history.getByRole("link", { name: "PauseAI Manchester Social" }))
       .toHaveAttribute("href", "https://luma.com/fixture-manchester-social");
     expect(history.element().textContent).not.toContain("approved");
+    // A letter: the MP links to their page, the campaign to its public page, and the letter's status follows.
+    await expect
+      .element(history.getByRole("link", { name: "Polly Placeholder" }).first())
+      .toHaveAttribute("href", "/staff/politicians/1");
     await expect
       .element(history.getByRole("link", { name: campaigns[0].title }).first())
-      .toHaveAttribute("href", "/staff/politicians/1");
-    await expect.element(history.getByText("Polly Placeholder", { exact: false }).first()).toBeVisible();
+      .toHaveAttribute("href", campaignPath(campaigns[0]));
+    expect(history.element().textContent).toContain(
+      `${copy.detail.kinds.letter} Polly Placeholder · ${campaigns[0].title} · ${staffCopy.letters.status.sent}`,
+    );
+
     await expect.element(history.getByText(copy.lists["luma-calendar"], { exact: false })).toBeVisible();
     await expect.element(history.getByText(copy.detail.kinds["luma-contact"], { exact: false })).toBeVisible();
+
+    // A letter for a campaign nobody runs any more, with no page to link: its name and status as stored.
+    await first.rerender(
+      <SupporterDetails
+        supporter={{
+          ...exampleSupporterDetails,
+          activity: [
+            {
+              source: "letter",
+              at: "2026-10-05T09:00:00Z",
+              kind: "letter",
+              title: "old-campaign",
+              detail: "Gone MP",
+              href: null,
+              status: "queued",
+            },
+          ],
+        }}
+      />,
+    );
+    const old = page.getByRole("list", { name: copy.detail.activityTitle });
+    expect(old.element().textContent).toContain(`${copy.detail.kinds.letter} Gone MP · old-campaign · queued`);
+    expect(old.getByRole("link").all()).toHaveLength(0);
 
     // The same postcode typed differently is one line, in the usual form, with both sources.
     await first.unmount();
@@ -1638,6 +1669,7 @@ describe("SupporterDetails", () => {
               title: "Thing",
               detail: "waitlist",
               href: null,
+              status: null,
             },
             {
               source: "luma",
@@ -1646,6 +1678,7 @@ describe("SupporterDetails", () => {
               title: "Other",
               detail: "session",
               href: null,
+              status: null,
             },
             {
               source: "luma",
@@ -1654,6 +1687,7 @@ describe("SupporterDetails", () => {
               title: "Bare",
               detail: null,
               href: null,
+              status: null,
             },
             {
               source: "x",
@@ -1662,6 +1696,7 @@ describe("SupporterDetails", () => {
               title: "other-list",
               detail: null,
               href: null,
+              status: null,
             },
             {
               source: "x",
@@ -1670,14 +1705,16 @@ describe("SupporterDetails", () => {
               title: null,
               detail: "x@example.com",
               href: null,
+              status: null,
             },
             {
               source: "letter",
               at: "2026-01-03T00:00:00Z",
               kind: "letter",
               title: "gone-campaign",
-              detail: "An MP · sent",
+              detail: "An MP",
               href: null,
+              status: "sent",
             },
             {
               source: "letter",
@@ -1686,6 +1723,7 @@ describe("SupporterDetails", () => {
               title: null,
               detail: null,
               href: null,
+              status: null,
             },
           ],
           optOuts: [],
