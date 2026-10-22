@@ -7,13 +7,10 @@ import ThanksCard from "./ThanksCard";
 const copy = marchSignupCopy.thanks;
 
 describe("ThanksCard", () => {
-  it("links to managing the registration on Luma, and quietly offers the form again", async () => {
+  it("thanks them, and quietly offers the form again", async () => {
     const onRegisterAnother = vi.fn();
     await render(<ThanksCard onRegisterAnother={onRegisterAnother} motion="still" onLeft={() => {}} />);
     await expect.element(page.getByRole("heading", { name: "Thank you for registering" })).toBeVisible();
-    await expect
-      .element(page.getByRole("link", { name: copy.manage }))
-      .toHaveAttribute("href", "https://luma.com/pauseai-nov26");
     await expect.element(page.getByRole("link", { name: "PauseAI UK" })).toHaveAttribute("href", "/");
     await page.getByRole("button", { name: copy.registerAnother }).click();
     expect(onRegisterAnother).toHaveBeenCalledOnce();

@@ -83,7 +83,6 @@ export const marchSignupCopy = {
     finish: "I can’t think of anywhere else",
   },
   thanks: {
-    manage: "Manage your registration on Luma",
     registerAnother: "Register someone new",
   },
 };
