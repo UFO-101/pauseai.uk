@@ -3,12 +3,8 @@ import { Muted } from "@/components/ui/Text";
 import { campaignBySlug, campaignPath, displayPostcode } from "@/lib/email-your-mp";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { staffDate, staffTime } from "@/lib/staff-time";
-import type {
-  SupporterActivity,
-  SupporterDetails as Details,
-  SupporterOptOut,
-  SupporterSource,
-} from "@/lib/supporters";
+import type { SupporterActivity, SupporterDetails as Details, SupporterSource } from "@/lib/supporters";
+import EmailPermissionTiles from "./EmailPermissionTiles";
 import SupporterBadges from "./SupporterBadges";
 import styles from "./Details.module.css";
 
@@ -122,26 +118,12 @@ function Subject({ item, letters }: { item: SupporterActivity; letters: string }
   return null;
 }
 
-/** Where an address stands on a list, and why. */
-function standing(optOut: SupporterOptOut): string {
-  const when = optOut.at ? staffDate(optOut.at) : "";
-  const via = copy.detail.via[optOut.source ?? ""];
-  switch (optOut.status) {
-    case "subscribed":
-      return copy.detail.notOptedOut;
-    case "unsubscribed":
-      return via ? `${copy.detail.optedOut(when)}, ${via}` : copy.detail.optedOut(when);
-    default:
-      return copy.detail.joining[optOut.status](when);
-  }
-}
-
 /**
  * A supporter's page: their name and badges; one box of what we hold, each
  * value with where it came from; then everything they did, newest first.
  */
 export default function SupporterDetails({ supporter }: { supporter: Details }) {
-  const { summary, identities, contacts, activity, optOuts } = supporter;
+  const { summary, identities, contacts, activity, permissions } = supporter;
   const emails = distinct(identities.map((i) => ({ value: i.email, source: i.source, at: i.seenAt })));
   const phones = distinct(contacts.map((c) => ({ value: c.phone, source: c.source, at: c.at })));
   const postcodes = distinct(
@@ -174,23 +156,10 @@ export default function SupporterDetails({ supporter }: { supporter: Details }) 
         )}
       </dl>
 
-      {optOuts.length > 0 && (
-        <section aria-labelledby="subscriptions">
-          <h2 id="subscriptions">{copy.detail.listsTitle}</h2>
-          <dl className={styles.lists}>
-            {optOuts.map((optOut) => (
-              <div key={`${optOut.list}-${optOut.address}`}>
-                <dt>
-                  {copy.lists[optOut.list]}
-                  {emails.length > 1 && <Muted> · {optOut.address}</Muted>}
-                </dt>
-                <dd>{standing(optOut)}</dd>
-                {optOut.list === "pauseai-updates" && <dd className={styles.caveat}>{copy.detail.civicrmCaveat}</dd>}
-              </div>
-            ))}
-          </dl>
-        </section>
-      )}
+      <section aria-labelledby="subscriptions">
+        <h2 id="subscriptions">{copy.detail.listsTitle}</h2>
+        <EmailPermissionTiles permissions={permissions} />
+      </section>
 
       <section aria-labelledby="history">
         <h2 id="history">{copy.detail.activityTitle}</h2>

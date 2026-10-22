@@ -1,3 +1,4 @@
+import type { EmailPermission } from "@/lib/email-permissions";
 import type { SupporterDetails, SupporterSummary } from "@/lib/supporters";
 
 /** A supporter known from Luma and a letter: two emails, a phone, registered twice, opted out of the calendar's emails. */
@@ -60,7 +61,6 @@ export const exampleSupporterDetails: SupporterDetails = {
       linkedAt: "2026-10-05T09:00:00Z",
     },
   ],
-  members: [],
   activity: [
     {
       source: "luma-webhook",
@@ -108,19 +108,27 @@ export const exampleSupporterDetails: SupporterDetails = {
       status: null,
     },
   ],
-  optOuts: [
+  permissions: [
     {
-      list: "luma-calendar",
+      topic: "luma-calendar",
       address: "jane@example.com",
-      status: "unsubscribed",
+      send: "no",
+      reason: "unsubscribed",
       at: "2026-10-12T18:30:00Z",
       source: "luma-webhook",
     },
-    { list: "luma-calendar", address: "jane.e@example.org", status: "subscribed", at: null, source: null },
+    {
+      topic: "events-and-ways-to-help",
+      address: "jane@example.com",
+      send: "yes",
+      reason: "asked",
+      at: "2026-10-05T09:00:00Z",
+      source: "letter",
+    },
   ],
 };
 
-/** A member who joined through our site wanting to volunteer, opted out of the updates on joining, then re-joined asking for them. */
+/** A member who joined through our site wanting to volunteer, opted out of the updates on joining, then re-joined asking for them; never followed the calendar. */
 export const exampleMemberDetails: SupporterDetails = {
   summary: {
     ...exampleSupporter,
@@ -157,18 +165,6 @@ export const exampleMemberDetails: SupporterDetails = {
       linkedAt: "2026-10-11T08:47:00Z",
     },
   ],
-  members: [
-    {
-      id: "recRhea",
-      email: "rhea@example.com",
-      joinedAt: "2026-07-10T00:00:00Z",
-      createdAt: "2026-10-11T08:00:00Z",
-      sourcePage: "pauseai.uk",
-      intent: "Volunteer",
-      keepInformed: true,
-      removed: false,
-    },
-  ],
   activity: [
     {
       source: "airtable-import",
@@ -198,14 +194,34 @@ export const exampleMemberDetails: SupporterDetails = {
       status: null,
     },
   ],
-  optOuts: [
-    { list: "luma-calendar", address: "rhea@example.com", status: "subscribed", at: null, source: null },
+  permissions: [
     {
-      list: "pauseai-updates",
+      topic: "luma-calendar",
       address: "rhea@example.com",
-      status: "rejoined",
+      send: "no",
+      reason: "not-following",
+      at: null,
+      source: null,
+    },
+    {
+      topic: "pauseai-updates",
+      address: "rhea@example.com",
+      send: "unsure",
+      reason: "asked",
       at: "2026-10-11T08:00:00Z",
-      source: "airtable-import",
+      source: "member",
     },
   ],
 };
+
+/** A supporter whose only address is blocked: they marked a letter as spam. */
+export const exampleBlockedPermissions: EmailPermission[] = (["luma-calendar", "events-and-ways-to-help"] as const).map(
+  (topic) => ({
+    topic,
+    address: "gus@example.com",
+    send: "no",
+    reason: "blocked",
+    at: "2026-10-05T12:00:00Z",
+    source: "complaint",
+  }),
+);

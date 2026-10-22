@@ -46,21 +46,21 @@ describeWithDatabase("permissionsFor", () => {
         .filter((p) => p.address === address)
         .map((p) => [p.topic, p.send, p.reason, p.at && new Date(p.at).toISOString()]);
     expect(of("jane@example.com")).toEqual([
-      ["luma-calendar", false, "unsubscribed", "2026-10-16T00:00:00.000Z"],
-      ["pauseai-updates", true, "asked", "2026-09-12T00:00:00.000Z"],
-      ["events-and-ways-to-help", true, "asked", "2026-10-05T00:00:00.000Z"],
+      ["luma-calendar", "no", "unsubscribed", "2026-10-16T00:00:00.000Z"],
+      ["pauseai-updates", "unsure", "asked", "2026-09-12T00:00:00.000Z"],
+      ["events-and-ways-to-help", "yes", "asked", "2026-10-05T00:00:00.000Z"],
     ]);
     expect(of("gus@example.com").map(([, send, reason]) => [send, reason])).toEqual([
-      [false, "blocked"],
-      [false, "blocked"],
-      [false, "blocked"],
+      ["no", "blocked"],
+      ["no", "blocked"],
+      ["no", "blocked"],
     ]);
-    expect(of("nobody@example.com").map(([, , reason]) => reason)).toEqual(["not-following", "not-asked", "not-asked"]);
+    // Nothing to do with any topic: no answers at all.
+    expect(of("nobody@example.com")).toEqual([]);
     // In the order asked, a topic at a time.
     expect(permissions.map((p) => p.address)).toEqual([
       ...Array(3).fill("jane@example.com"),
       ...Array(3).fill("gus@example.com"),
-      ...Array(3).fill("nobody@example.com"),
     ]);
   });
 });

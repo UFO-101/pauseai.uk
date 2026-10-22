@@ -189,22 +189,55 @@ export const staffCopy = {
       lastActive: "Last activity",
       /** Where a detail came from and when: "Luma, 26 Sept 2026". */
       from: (sources: string, when: string) => `${sources}, ${when}`,
-      // The column beside the main box: where each address stands on each mailing list.
+      // Under the main box: a tile per topic, saying whether we'd email them about it, and why.
       listsTitle: "Subscriptions",
-      optedOut: (since: string) => `unsubscribed ${since}`,
-      notOptedOut: "subscribed",
-      // Where an address stands on a list, after "subscribed" or "unsubscribed": who told us.
-      via: { "luma-webhook": "via Luma" } as Record<string, string>,
-      // The members' updates: what they did with "Keep me informed" on joining.
-      joining: {
-        declined: (when: string) => `opted out when joining, ${when} (left “Keep me informed” unticked)`,
-        rejoined: (when: string) => `opted out when joining, then asked for updates on re-joining ${when}`,
-        asked: (when: string) => `asked for updates when joining, ${when}`,
-        required: (when: string) => `on the list from joining, ${when} (the form required it)`,
-        unasked: (when: string) => `on the list from joining, ${when} (the form didn't ask)`,
+      permissions: {
+        topics: {
+          "luma-calendar": "Luma calendar emails",
+          "pauseai-updates": "PauseAI updates",
+          "events-and-ways-to-help": "Events and ways to help",
+        } as Record<string, string>,
+        yes: "Will email",
+        no: "Won't email",
+        // A yes that an unsubscribe we can't see may have undone.
+        unsure: "Don't know",
+        why: "details",
+        // The short reason under the answer, by topic and reason, with when.
+        reasons: {
+          "luma-calendar": {
+            following: (when: string) => `Following the calendar since ${when}`,
+            unsubscribed: (when: string) => `Unsubscribed ${when}, via Luma`,
+            "not-following": () => "Never followed the calendar",
+          },
+          "pauseai-updates": {
+            asked: (when: string) => `Asked for them when joining, ${when}`,
+            joined: (when: string) => `On the list since joining, ${when}`,
+            declined: (when: string) => `Left “Keep me informed” unticked when joining, ${when}`,
+            unsubscribed: (when: string) => `Unsubscribed ${when}`,
+            removed: () => "No longer shared with us",
+          },
+          "events-and-ways-to-help": {
+            asked: (when: string) => `Agreed on their letter, ${when}`,
+            declined: (when: string) => `Didn't agree on their letter, ${when}`,
+          },
+        } as Record<string, Record<string, (when: string) => string>>,
+        // Behind "Why?": how we know, and what we can't.
+        details: {
+          "luma-calendar":
+            "Luma can send emails about future events if the user is following the calendar. They can separately from that unsubscribe, although we only know that since 22 Oct 2026 when we added a webhook.",
+          "pauseai-updates":
+            "“Keep me informed” on the join form has been optional since 30 June 2026. Before then everyone who joined was on the list. Unsubscribes since joining are in CiviCRM, which we don't read yet. The updates have been sent from CiviCRM since 28 June 2026, so whether we'd email someone is shown as don't know.",
+          "events-and-ways-to-help":
+            "The box on Email your MP, “Tell me about events where I can talk to my MP and ways to help PauseAI”, on their newest letter.",
+        } as Record<string, string>,
+        // One tile in place of the topics', when the address is blocked.
+        blocked: "Won't email: address blocked",
+        blockedBecause: {
+          hard: (when: string) => `An email to it bounced, ${when}.`,
+          complaint: (when: string) => `They marked an email as spam, ${when}.`,
+        } as Record<string, (when: string) => string>,
+        seeBlocked: "See blocked emails",
       },
-      /** After each line about the members' updates, while their later unsubscribes are only in CiviCRM. */
-      civicrmCaveat: "Unsubscribes made since, in CiviCRM, aren't known here yet.",
       // In the history, why the import opted someone out of the updates or back in.
       importReasons: {
         "opted-out": "left “Keep me informed” unticked when joining",

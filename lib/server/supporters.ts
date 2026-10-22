@@ -1,6 +1,4 @@
 import "server-only";
-import { KEEP_INFORMED_FREE_FROM, KEEP_INFORMED_REQUIRED_FROM } from "@/lib/members";
-import { OPT_OUT_LISTS, type OptOutList } from "@/lib/opt-outs";
 import type {
   SupporterActivity,
   SupporterContact,
@@ -8,12 +6,11 @@ import type {
   SupporterFilter,
   SupporterIdentity,
   SupporterLink,
-  SupporterMember,
-  SupporterOptOut,
   SupporterSummary,
 } from "@/lib/supporters";
 import { SUPPORTERS_PAGE_SIZE } from "@/lib/supporters";
 import { query, transaction, type Queryable } from "./db";
+import { permissionsFor } from "./email-permissions";
 import { SUPPORTER_SOURCES } from "./supporter-sources";
 
 // Supporters: one per person, tied to each record about them in a source
@@ -137,7 +134,7 @@ export async function getSupporter(id: number): Promise<SupporterDetails | undef
     [id],
   );
   if (!summary) return undefined;
-  const [identities, contacts, links, members, activity, optOuts] = await Promise.all([
+  const [identities, contacts, links, activity, permissions] = await Promise.all([
     query<SupporterIdentity>(
       `SELECT source, email, name, seen_at AS "seenAt" FROM supporter_identity WHERE supporter_id = $1 ORDER BY seen_at NULLS LAST, email`,
       [id],
@@ -155,70 +152,11 @@ export async function getSupporter(id: number): Promise<SupporterDetails | undef
        FROM supporter_links l WHERE l.supporter_id = $1 ORDER BY l.id`,
       [id],
     ),
-    query<SupporterMember>(
-      `SELECT m.id, m.email, m.joined_at AS "joinedAt", m.created_at AS "createdAt", m.source_page AS "sourcePage",
-         m.intent, m.keep_informed AS "keepInformed", m.removed_at IS NOT NULL AS removed
-       FROM members m JOIN supporter_links k ON k.member_id = m.id WHERE k.supporter_id = $1
-       ORDER BY m.created_at DESC, m.id`,
-      [id],
-    ),
     query<SupporterActivity>(
       "SELECT source, at, kind, title, detail, href, status FROM supporter_activity WHERE supporter_id = $1 ORDER BY at DESC, kind",
       [id],
     ),
-    query<OptOutRow>(
-      `SELECT o.list, o.address, o.source, o.unsubscribed_at AS "unsubscribedAt", o.resubscribed_at AS "resubscribedAt"
-       FROM opt_outs o WHERE o.address IN (SELECT email FROM supporter_identity WHERE supporter_id = $1)
-       ORDER BY o.resubscribed_at DESC NULLS FIRST, o.id DESC`,
-      [id],
-    ),
+    permissionsFor(summary.emails),
   ]);
-  const lists = OPT_OUT_LISTS.flatMap((list) =>
-    summary.emails.flatMap((address) => mailingList(list, address, optOuts, members)),
-  );
-  return { summary, identities, contacts, links, members, activity, optOuts: lists };
-}
-
-type OptOutRow = {
-  list: string;
-  address: string;
-  source: string;
-  unsubscribedAt: string;
-  resubscribedAt: string | null;
-};
-
-/**
- * Where an address stands on a list, from its opt-outs (any lifted one after
- * those in force, newest first) and, for the members' updates, the member
- * record with that address that we read last: what they did with "Keep me
- * informed" on joining. Nothing for the members' updates and an address no
- * member has: we don't know it's on that list.
- */
-function mailingList(
-  list: OptOutList,
-  address: string,
-  optOuts: OptOutRow[],
-  members: SupporterMember[],
-): SupporterOptOut[] {
-  const rows = optOuts.filter((o) => o.list === list && o.address === address);
-  const open = rows.find((o) => o.resubscribedAt === null);
-  if (open) {
-    const status = open.source === "airtable-import" ? "declined" : "unsubscribed";
-    return [{ list, address, status, at: open.unsubscribedAt, source: open.source }];
-  }
-  if (list === "luma-calendar") return [{ list, address, status: "subscribed", at: null, source: null }];
-  const member = members.find((m) => m.email === address && !m.removed);
-  if (!member) return [];
-  const lifted = rows.find((o) => o.source === "airtable-import");
-  if (lifted) return [{ list, address, status: "rejoined", at: lifted.resubscribedAt, source: lifted.source }];
-  const joined = new Date(member.createdAt);
-  const status =
-    joined >= new Date(KEEP_INFORMED_FREE_FROM)
-      ? member.keepInformed
-        ? "asked"
-        : "declined"
-      : joined >= new Date(KEEP_INFORMED_REQUIRED_FROM)
-        ? "required"
-        : "unasked";
-  return [{ list, address, status, at: member.createdAt, source: null }];
+  return { summary, identities, contacts, links, activity, permissions };
 }

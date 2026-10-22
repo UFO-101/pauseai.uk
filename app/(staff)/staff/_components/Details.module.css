@@ -6,27 +6,6 @@
   max-width: 100%;
 }
 
-/* Each list: its name, then where the address stands. */
-.lists {
-  display: grid;
-  gap: var(--space-4);
-  margin: 0;
-}
-
-.lists dt {
-  font-weight: 600;
-}
-
-.lists dd {
-  margin: var(--space-1) 0 0;
-}
-
-/* What the site can't know about the list, in small print. */
-.caveat {
-  color: var(--text-secondary);
-  font-size: var(--text-sm);
-}
-
 /* The box: a label and its values on each row. */
 .facts {
   display: grid;

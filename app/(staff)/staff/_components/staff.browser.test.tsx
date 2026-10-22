@@ -58,7 +58,13 @@ import SupporterDetails from "./SupporterDetails";
 import SupporterFilters from "./SupporterFilters";
 import LetterFilters from "./LetterFilters";
 import SupportersTable from "./SupportersTable";
-import { exampleMemberDetails, exampleSupporter, exampleSupporterDetails } from "./SupportersTable.examples";
+import {
+  exampleBlockedPermissions,
+  exampleMemberDetails,
+  exampleSupporter,
+  exampleSupporterDetails,
+} from "./SupportersTable.examples";
+import EmailPermissionTiles from "./EmailPermissionTiles";
 import { lettersSearch, supportersSearch } from "@/lib/staff-search";
 import Table from "@/components/ui/Table";
 
@@ -1739,9 +1745,11 @@ describe("SupporterDetails", () => {
     await expect.element(page.getByText("+447700900001", { exact: false })).toBeVisible();
     await expect.element(page.getByText("M1 1AE", { exact: false })).toBeVisible();
     expect(page.getByRole("table").all()).toHaveLength(0);
-    // The one list, per address: opted out on one, subscribed on the other.
-    await expect.element(page.getByText(copy.detail.optedOut("12 Oct 2026"), { exact: false })).toBeVisible();
-    await expect.element(page.getByText(/^subscribed/)).toBeVisible();
+    // Under the box, whether we'd email her about each topic.
+    const subscriptions = page.getByRole("region", { name: copy.detail.listsTitle });
+    await expect
+      .element(subscriptions.getByText(copy.detail.permissions.reasons["luma-calendar"].unsubscribed("12 Oct 2026")))
+      .toBeVisible();
     await expect.element(page.getByText("1 Mar 2026", { exact: true })).toBeVisible();
     // The history: what, linked, with a status only when it isn't approved.
     const history = page.getByRole("list", { name: copy.detail.activityTitle });
@@ -1852,7 +1860,6 @@ describe("SupporterDetails", () => {
           identities: [{ source: "luma", email: "x@example.com", name: "", seenAt: null }],
           contacts: [],
           links: [],
-          members: [],
           activity: [
             {
               source: "luma",
@@ -1918,7 +1925,7 @@ describe("SupporterDetails", () => {
               status: null,
             },
           ],
-          optOuts: [],
+          permissions: [],
         }}
       />,
     );
@@ -1928,11 +1935,6 @@ describe("SupporterDetails", () => {
     await expect.element(page.getByText(copy.detail.statuses.waitlist, { exact: false })).toBeVisible();
     await expect.element(page.getByText("other-list", { exact: false })).toBeVisible();
     await expect.element(page.getByText("gone-campaign", { exact: false })).toBeVisible();
-  });
-
-  it("with no mailing lists, has no box for them", async () => {
-    await render(<SupporterDetails supporter={{ ...exampleSupporterDetails, optOuts: [] }} />);
-    expect(page.getByRole("region", { name: staffCopy.supporters.detail.listsTitle }).all()).toHaveLength(0);
   });
 
   it("with no history, says so", async () => {
@@ -1970,19 +1972,18 @@ describe("SupporterDetails", () => {
 
 describe("SupporterDetails, a member", () => {
   const copy = staffCopy.supporters;
-  const [member] = exampleMemberDetails.members;
-  const [, updates] = exampleMemberDetails.optOuts;
   const joined = exampleMemberDetails.activity[2];
 
-  it("says their city, where they stand on the updates and why in a box of their own, and how they joined in the history", async () => {
+  it("says their city, whether we'd email them about each topic, and how they joined in the history", async () => {
     await render(<SupporterDetails supporter={exampleMemberDetails} />);
     await expect
       .element(page.getByText(`Cardiff (${copy.detail.from(copy.sources.member, "11 Oct 2026")})`))
       .toBeVisible();
-    const lists = page.getByRole("region", { name: copy.detail.listsTitle });
-    await expect.element(lists.getByText(copy.detail.joining.rejoined("11 Oct 2026"), { exact: false })).toBeVisible();
-    // The caveat follows the updates' line alone.
-    expect(page.getByText(copy.detail.civicrmCaveat, { exact: false }).all()).toHaveLength(1);
+    await expect
+      .element(
+        page.getByText(copy.detail.permissions.reasons["pauseai-updates"].asked("11 Oct 2026"), { exact: false }),
+      )
+      .toBeVisible();
     const history = page.getByRole("list", { name: copy.detail.activityTitle });
     expect(history.element().textContent).toContain(
       `${copy.detail.kinds["member-joined"]} ${copy.detail.joinedOn("pauseai.uk")}, ${copy.detail.intents.Volunteer}`,
@@ -1991,37 +1992,19 @@ describe("SupporterDetails, a member", () => {
     expect(history.element().textContent).toContain(copy.detail.importReasons.resubscribed);
   });
 
-  it("words each way they can stand on the updates, and a join with less to say", async () => {
-    const line = (status: (typeof updates)["status"], source: string | null = null) => ({
-      ...updates,
-      status,
-      source,
-      at: "2026-09-12T10:00:00Z",
-    });
+  it("words a join with less to say", async () => {
     await render(
       <SupporterDetails
         supporter={{
           ...exampleMemberDetails,
-          summary: { ...exampleMemberDetails.summary, emails: ["a@example.com", "b@example.com"] },
-          members: [{ ...member, removed: true }],
           activity: [
             { ...joined, detail: null },
             { ...joined, title: "None", detail: "pauseai.info/join" },
             { ...joined, title: null, detail: null },
           ],
-          optOuts: [
-            line("declined", "airtable-import"),
-            { ...line("asked"), address: "b@example.com" },
-            { ...line("required"), list: "luma-calendar" },
-            { ...line("unasked"), list: "luma-calendar", address: "b@example.com" },
-            { ...line("unsubscribed", "somewhere-new"), address: "c@example.com" },
-          ],
         }}
       />,
     );
-    for (const status of ["declined", "asked", "required", "unasked"] as const)
-      await expect.element(page.getByText(copy.detail.joining[status]("12 Sept 2026"), { exact: false })).toBeVisible();
-    await expect.element(page.getByText(copy.detail.optedOut("12 Sept 2026"), { exact: false })).toBeVisible();
     const history = page.getByRole("list", { name: copy.detail.activityTitle });
     // What they chose alone, where the form was alone, and neither.
     const lines = history
@@ -2033,6 +2016,67 @@ describe("SupporterDetails, a member", () => {
       `${copy.detail.kinds["member-joined"]} ${copy.detail.joinedOn("pauseai.info/join")}`,
       `${copy.detail.kinds["member-joined"]} `,
     ]);
+  });
+});
+
+describe("EmailPermissionTiles", () => {
+  const copy = staffCopy.supporters.detail.permissions;
+  const tiles = () => [...document.querySelectorAll("li")];
+
+  it("is a tile a topic: the answer, why in a few words, and how we know behind the ? by its name", async () => {
+    await render(<EmailPermissionTiles permissions={exampleSupporterDetails.permissions} />);
+    expect(tiles().map((tile) => tile.dataset.send)).toEqual(["no", "yes"]);
+    expect(tiles()[0].textContent).toBe(
+      `${copy.topics["luma-calendar"]}?${copy.no}${copy.reasons["luma-calendar"].unsubscribed("12 Oct 2026")}${copy.details["luma-calendar"]}`,
+    );
+    expect(tiles()[1].querySelector("strong")!.textContent).toBe(copy.yes);
+    // How we know shows when the ? is clicked.
+    await expect.element(page.getByText(copy.details["luma-calendar"])).not.toBeVisible();
+    await page.getByRole("button", { name: copy.why }).first().click();
+    await expect.element(page.getByText(copy.details["luma-calendar"])).toBeVisible();
+  });
+
+  it("says don't know where an unsubscribe may not have reached us", async () => {
+    await render(<EmailPermissionTiles permissions={exampleMemberDetails.permissions} />);
+    expect(tiles()[1].dataset.send).toBe("unsure");
+    expect(tiles()[1].querySelector("strong")!.textContent).toBe(copy.unsure);
+  });
+
+  it("names the address when there's more than one, and falls back to the reason's own name", async () => {
+    const [luma] = exampleSupporterDetails.permissions;
+    await render(
+      <EmailPermissionTiles
+        permissions={[
+          { ...luma, reason: "joined", at: null },
+          { ...luma, address: "other@example.com" },
+        ]}
+      />,
+    );
+    expect(tiles()[0].textContent).toContain(`${copy.topics["luma-calendar"]} · jane@example.com`);
+    expect(tiles()[0].textContent).toContain(`${copy.no}joined`);
+    expect(tiles()[1].textContent).toContain("other@example.com");
+  });
+
+  it("gives a blocked address one tile, saying why and linking to the blocked emails", async () => {
+    await render(<EmailPermissionTiles permissions={exampleBlockedPermissions} />);
+    expect(tiles()).toHaveLength(1);
+    expect(tiles()[0].textContent).toBe(
+      `${copy.blocked}${copy.blockedBecause.complaint("5 Oct 2026")} ${copy.seeBlocked}`,
+    );
+    await expect
+      .element(page.getByRole("link", { name: copy.seeBlocked }))
+      .toHaveAttribute("href", "/staff/blocked-emails");
+  });
+
+  it("names a blocked address among several, and leaves out a cause it has no words for", async () => {
+    const [blocked] = exampleBlockedPermissions;
+    await render(
+      <EmailPermissionTiles
+        permissions={[{ ...blocked, source: "soft" }, { ...exampleSupporterDetails.permissions[1] }]}
+      />,
+    );
+    expect(tiles()[0].textContent).toBe(`gus@example.com${copy.blocked}${copy.seeBlocked}`);
+    expect(tiles()).toHaveLength(2);
   });
 });
 

@@ -45,10 +45,12 @@ import { exampleDashboard, exampleQuietDashboard } from "@/app/(staff)/staff/_co
 import Sparkline from "@/app/(staff)/staff/_components/Sparkline";
 import StaffHome from "@/app/(staff)/staff/_components/StaffHome";
 import SupporterBadges from "@/app/(staff)/staff/_components/SupporterBadges";
+import EmailPermissionTiles from "@/app/(staff)/staff/_components/EmailPermissionTiles";
 import SupporterDetails from "@/app/(staff)/staff/_components/SupporterDetails";
 import SupporterFilters from "@/app/(staff)/staff/_components/SupporterFilters";
 import SupportersTable from "@/app/(staff)/staff/_components/SupportersTable";
 import {
+  exampleBlockedPermissions,
   exampleMemberDetails,
   exampleSupporter,
   exampleSupporterDetails,
@@ -328,6 +330,28 @@ export const staff: Group = {
       ],
     },
     {
+      name: "EmailPermissionTiles",
+      file: "app/(staff)/staff/_components/EmailPermissionTiles.tsx",
+      variants: [
+        {
+          label: "Will and won't email, by topic",
+          render: () => (
+            <StaffPage as="div">
+              <EmailPermissionTiles permissions={exampleSupporterDetails.permissions} />
+            </StaffPage>
+          ),
+        },
+        {
+          label: "A blocked address",
+          render: () => (
+            <StaffPage as="div">
+              <EmailPermissionTiles permissions={exampleBlockedPermissions} />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
       name: "SupporterDetails",
       file: "app/(staff)/staff/_components/SupporterDetails.tsx",
       variants: [
@@ -365,9 +389,8 @@ export const staff: Group = {
                   identities: [{ source: "luma", email: "x@example.com", name: "", seenAt: null }],
                   contacts: [],
                   links: [],
-                  members: [],
                   activity: [],
-                  optOuts: [],
+                  permissions: [],
                 }}
               />
             </StaffPage>

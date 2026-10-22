@@ -340,24 +340,16 @@ describeWithDatabase("listSupporters and getSupporter", () => {
       },
     ]);
     expect(sam.activity.map((a) => a.kind)).toEqual(["opted-out", "luma-registered"]);
-    expect(sam.optOuts).toEqual([
-      {
-        list: "luma-calendar",
-        address: "sam@example.com",
-        status: "unsubscribed",
-        at: new Date("2026-10-12T00:00:00Z"),
-        source: "luma-webhook",
-      },
-    ]);
-    expect(sam.members).toEqual([]);
+    // Whether we'd email each address about each topic (lib/server/email-permissions.ts).
+    expect(sam.permissions.map((p) => [p.topic, p.send, p.reason])).toEqual([["luma-calendar", "no", "unsubscribed"]]);
 
     const [{ id: pat }] = await query<{ id: number }>(
       "SELECT supporter_id::int AS id FROM supporter_links WHERE letter_id IS NOT NULL",
     );
     const details = (await getSupporter(pat))!;
     expect(details.links[0]).toMatchObject({ source: "letter", sourceId: expect.stringMatching(/^\d+$/) });
-    expect(details.optOuts).toEqual([
-      { list: "luma-calendar", address: "pat@example.com", status: "subscribed", at: null, source: null },
+    expect(details.permissions.map((p) => [p.address, p.topic, p.send])).toEqual([
+      ["pat@example.com", "events-and-ways-to-help", "yes"],
     ]);
     expect(details.contacts).toEqual([
       {
@@ -437,18 +429,10 @@ describeWithDatabase("members as supporters", () => {
       longitude: null,
       city: "Manchester",
     });
-    expect(jane.members).toEqual([
-      {
-        id: "recJane",
-        email: "jane@example.com",
-        joinedAt: new Date("2024-03-23T00:00:00Z"),
-        createdAt: new Date("2026-09-12T10:00:00Z"),
-        sourcePage: "pauseai.uk",
-        intent: "Volunteer",
-        keepInformed: true,
-        removed: false,
-      },
-    ]);
+    expect(jane.permissions.find((p) => p.topic === "pauseai-updates")).toMatchObject({
+      send: "unsure",
+      reason: "asked",
+    });
     expect(jane.activity).toContainEqual({
       source: "member",
       at: new Date("2024-03-23T00:00:00Z"),
@@ -464,41 +448,9 @@ describeWithDatabase("members as supporters", () => {
     await query("UPDATE members SET removed_at = now()");
     const removed = (await getSupporter(await supporterWith("jane@example.com")))!;
     expect(removed.summary).toMatchObject({ member: false, sources: ["letter", "member"] });
-    expect(removed.members[0].removed).toBe(true);
-    expect(removed.optOuts.map((o) => o.list)).toEqual(["luma-calendar"]);
-  });
-
-  it("says where each member's address stands on the updates, and why", async () => {
-    await member("recAsked", "asked@example.com", "2026-09-12T10:00:00Z");
-    await member("recDeclined", "declined@example.com", "2026-09-12T10:00:00Z", { keepInformed: false });
-    await member("recNotYet", "notyet@example.com", "2026-09-12T10:00:00Z", { keepInformed: false });
-    await member("recRequired", "required@example.com", "2026-03-03T10:00:00Z", { keepInformed: true });
-    await member("recUnasked", "unasked@example.com", "2025-11-29T10:00:00Z", { keepInformed: false });
-    await member("recRejoined", "rejoined@example.com", "2026-10-11T08:00:00Z");
-    await member("recOther", "other@example.com", "2026-09-12T10:00:00Z");
-    await query(
-      `INSERT INTO opt_outs (address, list, source, source_ref, unsubscribed_at, resubscribed_at) VALUES
-         ('declined@example.com', 'pauseai-updates', 'airtable-import', 'recDeclined', '2026-09-12T10:00:00Z', NULL),
-         ('rejoined@example.com', 'pauseai-updates', 'airtable-import', 'recOld', '2026-07-10T00:00:00Z', '2026-10-11T08:00:00Z'),
-         ('other@example.com', 'pauseai-updates', 'airtable-import', 'recOld2', '2026-07-10T00:00:00Z', '2026-08-01T00:00:00Z'),
-         ('other@example.com', 'pauseai-updates', 'airtable-import', 'recOld3', '2026-07-11T00:00:00Z', '2026-08-02T00:00:00Z')`,
-    );
-    await linkSupporters();
-    const updates = async (email: string) =>
-      (await getSupporter(await supporterWith(email)))!.optOuts.filter((o) => o.list === "pauseai-updates");
-    const at = (iso: string) => new Date(iso);
-    expect(await updates("asked@example.com")).toMatchObject([{ status: "asked", at: at("2026-09-12T10:00:00Z") }]);
-    expect(await updates("declined@example.com")).toMatchObject([
-      { status: "declined", at: at("2026-09-12T10:00:00Z"), source: "airtable-import" },
-    ]);
-    // Unticked, before the import has recorded its opt-out.
-    expect(await updates("notyet@example.com")).toMatchObject([{ status: "declined", source: null }]);
-    expect(await updates("required@example.com")).toMatchObject([{ status: "required" }]);
-    expect(await updates("unasked@example.com")).toMatchObject([{ status: "unasked" }]);
-    expect(await updates("rejoined@example.com")).toMatchObject([
-      { status: "rejoined", at: at("2026-10-11T08:00:00Z") },
-    ]);
-    // Of two lifted, the newest.
-    expect(await updates("other@example.com")).toMatchObject([{ status: "rejoined", at: at("2026-08-02T00:00:00Z") }]);
+    expect(removed.permissions.find((p) => p.topic === "pauseai-updates")).toMatchObject({
+      send: "no",
+      reason: "removed",
+    });
   });
 });

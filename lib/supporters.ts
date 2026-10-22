@@ -1,6 +1,7 @@
 // Supporters, as the staff pages show them: the shapes the server
 // (lib/server/supporters.ts) gives the components.
 import { staffCopy } from "./content/staff-interface";
+import type { EmailPermission } from "./email-permissions";
 import type { OptOutList } from "./opt-outs";
 import type { SortColumns, SortDirection } from "./staff-sort";
 
@@ -62,22 +63,6 @@ export type SupporterContact = {
   city: string | null;
 };
 
-/** One of the supporter's member records: how and when they joined, and what they said to "Keep me informed". */
-export type SupporterMember = {
-  id: string;
-  email: string;
-  /** Their first join. */
-  joinedAt: string;
-  /** This record's. */
-  createdAt: string;
-  /** The site the join form was on, if it was recorded. */
-  sourcePage: string | null;
-  intent: string | null;
-  keepInformed: boolean;
-  /** Not read at the last import: no longer shared with us, or gone from the dataset. */
-  removed: boolean;
-};
-
 /** Why a source record is this supporter's. */
 export type SupporterLink = {
   source: SupporterSource;
@@ -87,30 +72,14 @@ export type SupporterLink = {
   linkedAt: string;
 };
 
-/**
- * Where one of the supporter's addresses stands on a list, and why:
- * subscribed, as far as we know; unsubscribed, told by `source`; or, for
- * the members' updates, what they did on joining: declined (left "Keep me
- * informed" unticked), rejoined (declined, then ticked it on re-joining),
- * asked (ticked it), or on the list because the form required the box
- * (required) or had none (unasked). `at` is when.
- */
-export type SupporterOptOut = {
-  list: OptOutList;
-  address: string;
-  status: "subscribed" | "unsubscribed" | "declined" | "rejoined" | "asked" | "required" | "unasked";
-  at: string | null;
-  source: string | null;
-};
-
 export type SupporterDetails = {
   summary: SupporterSummary;
   identities: SupporterIdentity[];
   contacts: SupporterContact[];
   links: SupporterLink[];
-  members: SupporterMember[];
   activity: SupporterActivity[];
-  optOuts: SupporterOptOut[];
+  /** Whether we may email each of their addresses about each topic, and why. */
+  permissions: EmailPermission[];
 };
 
 /** What the list can be sorted by, a column heading or the Sort by field, and which way a first click goes. */

@@ -111,7 +111,8 @@ test("a supporter's page: who they are, what they gave, their history, and an op
   await expect(page.getByRole("heading", { level: 1 })).toContainText("Jane Fixture");
   await expect(page.getByText(copy.badges.registered).first()).toBeVisible();
   await expect(page.getByText("+447700900001", { exact: false })).toBeVisible();
-  await expect(page.getByText(copy.detail.optedOut("16 Oct 2026"), { exact: false })).toBeVisible();
+  const reasons = copy.detail.permissions.reasons;
+  await expect(page.getByText(reasons["luma-calendar"].unsubscribed("16 Oct 2026"), { exact: false })).toBeVisible();
   const history = page.getByRole("list", { name: copy.detail.activityTitle });
   await expect(history.getByText(copy.detail.kinds["opted-out"], { exact: false }).first()).toBeVisible();
   await frame(page, "Jane's page: opted out of the calendar's emails, with her phone, postcode and registrations");
@@ -179,7 +180,10 @@ test("a member who also wrote to their MP is one supporter, with how they joined
   await expect(page).toHaveURL(/\/staff\/supporters\/\d+$/);
   await expect(page.getByRole("heading", { level: 1 })).toContainText(copy.badges.member);
   await expect(page.getByText("29 Nov 2025", { exact: true }).first()).toBeVisible();
-  await expect(page.getByText(copy.detail.joining.unasked("29 Nov 2025"), { exact: false })).toBeVisible();
+  // Joined before "Keep me informed" was a choice: on the updates.
+  await expect(
+    page.getByText(copy.detail.permissions.reasons["pauseai-updates"].joined("29 Nov 2025"), { exact: false }),
+  ).toBeVisible();
   const history = page.getByRole("list", { name: copy.detail.activityTitle });
   await expect(history.getByText(copy.detail.kinds["member-joined"], { exact: false })).toBeVisible();
   await expect(history.getByText(copy.detail.kinds.letter, { exact: false })).toBeVisible();
@@ -202,7 +206,10 @@ test("a member who left Keep me informed unticked is opted out of the updates", 
   await frame(page, "the list of everyone unsubscribed: Owen, from the updates");
 
   await owen.getByRole("link", { name: "Owen Member" }).click();
-  await expect(page.getByText(copy.detail.joining.declined("6 Oct 2026"), { exact: false })).toBeVisible();
+  await expect(
+    page.getByText(copy.detail.permissions.reasons["pauseai-updates"].declined("6 Oct 2026"), { exact: false }),
+  ).toBeVisible();
+  await expect(page.getByText(copy.detail.permissions.no).first()).toBeVisible();
   await expect(
     page.getByText(`${copy.detail.joinedOn("pauseai.uk")}, ${copy.detail.intents["Act now"]}`),
   ).toBeVisible();
@@ -226,8 +233,14 @@ test("a member who re-joined and ticked Keep me informed has their opt-out lifte
   await logInWithSupporters(page, flowDatabase);
   await page.goto(`${BASE}/staff/supporters`);
   await page.getByRole("link", { name: "Rhea Member" }).click();
-  await expect(page.getByText(copy.detail.joining.rejoined("11 Oct 2026"), { exact: false })).toBeVisible();
-  await expect(page.getByText(copy.detail.civicrmCaveat, { exact: false })).toBeVisible();
+  // The opt-out lifted: on the updates, as asked when re-joining. "Why?" unfolds how we know.
+  await expect(
+    page.getByText(copy.detail.permissions.reasons["pauseai-updates"].asked("11 Oct 2026"), { exact: false }),
+  ).toBeVisible();
+  await page
+    .getByText(copy.detail.permissions.reasons["pauseai-updates"].asked("11 Oct 2026"), { exact: false })
+    .click();
+  await expect(page.getByText(copy.detail.permissions.details["pauseai-updates"])).toBeVisible();
   const history = page.getByRole("list", { name: copy.detail.activityTitle });
   await expect(history.getByText(copy.detail.importReasons.resubscribed, { exact: false })).toBeVisible();
   await expect(history.getByText(copy.detail.importReasons["opted-out"], { exact: false })).toBeVisible();
