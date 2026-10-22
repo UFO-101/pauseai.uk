@@ -247,6 +247,58 @@ page (`/gallery/forms`) shows every field, table and tag at both.
 
 ---
 
+## Staff pages
+
+Every staff page is laid out from the same few pieces, so a component added
+or removed doesn't bring a width, a box or an alert of its own. A
+component's look is its own; where it sits and how wide it is are the
+page's.
+
+**The grid** (`ui/Grid`). Six columns when it's at least 1,000px wide;
+below that, two. Everything boxed is an item of a grid and says how much
+of the row it takes: a sixth, a third, a half, two-thirds or all (`span`
+1, 2, 3, 4 or 6). On two columns, a sixth takes one and anything wider takes the row; a tile (`spanClass("tile")`) is a third on six columns and one of the two below, so a phone has two tiles a row and one card. Items are as
+tall as what's in them; a grid of things of one kind side by side (the
+dashboard's tiles, the import jobs) is `even`, each as tall as its row.
+The content is never wider than 88rem, so the columns don't stretch on a
+big monitor.
+
+**Widths.** A component never sets its own `max-width` or `width`: the
+grid gives a box its width, and anything read line by line (a form, a
+short list) takes the measure, `var(--staff-measure)`.
+`tests/checks/staff-widths.test.ts` fails otherwise, but for the few it
+lists with their reasons (a popover, the login page's card, a field).
+
+**Surfaces.** Each one means one thing:
+
+| Surface                        | Look                                                       | For                                                                                          |
+| ------------------------------ | ---------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| The page                       | the background, no box                                     | headings, prose, the history, tables                                                         |
+| A record (`Card`, the default) | white                                                      | the thing a page is about, or a thing to open: an MP's or a supporter's facts, an import job |
+| An aside (`Card look="aside"`) | the second tint, `--surface-2`                             | what sits beside a record: an MP's campaigns, a supporter's mailing lists                    |
+| A log (`Card look="log"`)      | the palest of the accent: `--accent-light` at 30% on white | a history, each entry ruled from the next                                                    |
+| A tile                         | white, bordered, an item of an `even` grid                 | sets of like things: the dashboard's numbers                                                 |
+| A strip (`ui/Strip`)           | the tone's tint, no border, `--radius-md`                  | how something stands: green done or signed, amber waiting, red broken, plain neither         |
+
+Every card has the same edge, a `1px` `--border` and `--radius-lg`; only
+its fill changes, and only among those three, all warm. Colour stays for
+meaning: orange for what you can press, the status colours for state.
+
+**No box under or beside a box** but a card or tile in the same grid. A
+card holds strips, rows and fields, never another card.
+
+**Strips, not alerts.** Anything that needs a person is a red or amber
+strip, with its icon at the left and its button at the right: a strip
+each at the top of the home page, one at the top of an MP's page whose
+address is blocked, one for an error after a form. Inside a card, a strip
+is that thing's state: an import job's newest run, a campaign's status, a
+mailing list's answer. A strip that's an answer, not a warning, leaves out
+the icon (`icon={false}`).
+
+The gallery's staff group shows each piece and each page built from them.
+
+---
+
 ## Borders
 
 Corners are the `--radius-*` tokens (above): buttons and fields
@@ -257,7 +309,7 @@ images in cards none (full bleed).
 
 Cards use a `1px solid var(--border)` border. On hover, borders shift to `var(--border-strong)`. No heavy/coloured borders except for active/focus states.
 
-A box that shows a state says so with its tint: the background is the status colour's `-bg` token (`--status-red-bg`, `--status-amber-bg`, `--status-green-bg`), and the words can take the status colour. An alert, which asks someone to act (the home page's "Needs a person", a blocked address on an MP's page), also takes a thin `1px` border in the status colour all the way round, with any rules inside it in the same colour at a quarter strength (`color-mix(in srgb, var(--status-red) 25%, transparent)`), since the ordinary border disappears against the tint. A state that's only shown, such as the newest run in a job's history or a card's status line, keeps the ordinary border or none. Never a thick edge on one side: on a rounded corner it bends into a wedge. Only the current state is coloured. A history of past runs or events is plain, so the one thing in colour is the thing that's true now.
+A box that shows a state says so with its tint: the background is the status colour's `-bg` token (`--status-red-bg`, `--status-amber-bg`, `--status-green-bg`), and the words can take the status colour. On staff pages that's a strip, with no border (above, "Staff pages"); a past run in a job's history keeps the ordinary border. Never a thick edge on one side: on a rounded corner it bends into a wedge. Only the current state is coloured. A history of past runs or events is plain, so the one thing in colour is the thing that's true now.
 
 ---
 

@@ -264,10 +264,8 @@ describeWithDatabase("listSupporters and getSupporter", () => {
       lastActiveAt: new Date("2026-10-10T10:00:00Z"),
       events: 1,
       letters: 0,
-      optedOut: [],
       member: false,
     });
-    expect(page.supporters[0].optedOut).toEqual(["luma-calendar"]);
     expect(await listSupporters({ sort: "active", dir: "desc", page: 2 })).toEqual({
       supporters: [],
       total: 0,

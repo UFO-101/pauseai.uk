@@ -66,8 +66,8 @@ describeWithDatabase("staff Server Actions", () => {
       () => importFromAirtable(),
       () => importLumaNow(),
       () => importMembersNow(),
-      () => saveStaffAccountNow(form({ email: "x@pauseai.uk", "permission:admin": "on" })),
       () => removeStaffAccountNow(form({ email: "x@pauseai.uk" })),
+      () => saveStaffAccountNow(form({ email: "jo@pauseai.uk", "permission:admin": "on" })),
       () => eraseSupporterNow(form({ id: "1", reference: "r", confirm: "on" })),
       () => unblockAddress(form({ address: "a@example.org", note: "" })),
     ];
@@ -113,7 +113,7 @@ describeWithDatabase("staff Server Actions", () => {
     ]);
   });
 
-  it("saveStaffAccountNow and removeStaffAccountNow need admin, then keep the accounts, going back to the page", async () => {
+  it("saveStaffAccountNow adds or changes an account and removeStaffAccountNow removes one, as an admin, going back to the page", async () => {
     const save = () => saveStaffAccountNow(form({ email: "Sam@pauseai.uk", "permission:supporters": "on" }));
     expect(await expectRedirect(save)).toBe("/staff");
     await saveStaffAccount("jo@pauseai.uk", ["admin"], "a");
@@ -131,7 +131,7 @@ describeWithDatabase("staff Server Actions", () => {
       "/staff/accounts",
     );
     expect(await query("SELECT count(*)::int AS n FROM staff_accounts")).toEqual([{ n: 1 }]);
-    // An address not at pauseai.uk is refused, and the form says so.
+    // An address not at pauseai.uk is refused, and the page says so.
     expect(await expectRedirect(() => saveStaffAccountNow(form({ email: "sam@example.com" })))).toBe(
       "/staff/accounts?notice=not-pauseai",
     );

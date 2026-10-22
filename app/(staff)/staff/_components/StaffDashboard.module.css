@@ -1,96 +1,18 @@
 /* The home page's dashboard: what needs a person, the day and the window,
-   then three groups of tiles. */
+   then three groups of tiles, each a grid (ui/Grid). */
 
 .heading {
   margin: var(--space-6) 0 var(--space-3);
   font-size: var(--text-lg);
 }
 
-/* What needs a person: one callout, no wider than a line that reads, with
-   its icon at the left and, beside it, the heading and a row for each
-   item, ruled apart. Amber while everything in it is only waiting, red
-   once something is broken: tinted, with a thin border and rules in the
-   same colour. */
+/* What needs a person, at the top: a strip each, a little apart; then room before the day. */
 .actions {
-  display: flex;
-  gap: var(--space-3);
-  align-items: flex-start;
-  /* Its buttons small and light, so they don't outweigh the words (Button.module.css). */
-  --button-padding: 4px 12px;
-  --button-font-size: var(--text-sm);
-  --button-font-weight: 500;
-
-  max-width: 40rem;
-  margin: 0 0 var(--space-6);
-  padding: var(--space-4);
-  border: 1px solid;
-  border-radius: var(--radius-md);
-}
-
-.actions.amber {
-  --alert: var(--status-amber);
-
-  border-color: var(--alert);
-  background: var(--status-amber-bg);
-}
-
-.actions.red {
-  --alert: var(--status-red);
-
-  border-color: var(--alert);
-  background: var(--status-red-bg);
-}
-
-.actionsBody {
-  flex: 1;
-  min-width: 0;
-}
-
-/* The heading: larger and bolder than the items under it. */
-.actionsTitle {
-  margin: 0 0 var(--space-2);
-  font-size: var(--text-lg);
-  font-weight: 700;
-  line-height: 1.25rem;
-}
-
-.amber .actionsTitle {
-  color: var(--status-amber);
-}
-
-.red .actionsTitle {
-  color: var(--status-red);
-}
-
-.actionsBody ul {
-  margin: 0;
+  display: grid;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-5);
   padding: 0;
   list-style: none;
-}
-
-.action {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: var(--space-3);
-  align-items: center;
-  padding-block: var(--space-2);
-}
-
-.action + .action {
-  border-top: 1px solid color-mix(in srgb, var(--alert) 25%, transparent);
-}
-
-.what {
-  display: grid;
-  gap: var(--space-1);
-  min-width: 0;
-  font-size: var(--text-sm);
-}
-
-/* An item's title: bold and a step larger than its detail, below the heading's size. */
-.what > :first-child {
-  font-size: var(--text-md);
-  font-weight: 600;
 }
 
 /* The day, then the windows: the one shown in bold, the others links. */
@@ -104,20 +26,6 @@
 .windows {
   display: flex;
   gap: var(--space-2);
-}
-
-.tiles {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr));
-  gap: var(--space-3);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-/* A tile with a bar by campaign takes two columns, so its legend fits on a line. */
-.wide {
-  grid-column: span 2;
 }
 
 /* A tile: the window's number large, what it counts under it, a bar or a
@@ -240,27 +148,14 @@ a.tile:focus-visible {
   color: var(--status-red);
 }
 
-/* A phone: two tiles to a row, a little tighter. */
+/* A phone: the tiles a little tighter. */
 @media (max-width: 720px) {
-  .tiles {
-    grid-template-columns: repeat(2, 1fr);
-    gap: var(--space-2);
-  }
-
   .tile {
     padding: var(--space-3) var(--space-4);
   }
 
   .number {
     font-size: 2.5rem;
-  }
-
-  .action {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .action > :last-child {
-    justify-self: start;
   }
 }
 

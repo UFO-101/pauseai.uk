@@ -1,0 +1,99 @@
+/* The staff pages' grid (docs/style-guide.md, "Staff pages"). It sizes its
+   columns by its own width, not the window's, since the sidebar takes some
+   of the window: two columns, in which only a sixth sits beside another
+   and anything wider takes the row; then six from 1,000px. */
+.frame {
+  container-type: inline-size;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-5);
+  /* Each item as tall as what's in it, not its row's tallest. */
+  align-items: start;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Like things, side by side (tiles, the import jobs): each as tall as its
+   row, so a row's line up. */
+.even {
+  align-items: stretch;
+}
+
+.s2,
+.s3,
+.s4,
+.s6 {
+  grid-column: 1 / -1;
+}
+
+/* A phone: the gap tighter. */
+@container (max-width: 30rem) {
+  .grid {
+    gap: var(--space-3);
+  }
+}
+
+@container (min-width: 62.5rem) {
+  .grid {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+
+  .s1 {
+    grid-column: span 1;
+  }
+
+  .tile {
+    grid-column: span 2;
+  }
+
+  .s2 {
+    grid-column: span 2;
+  }
+
+  .s3 {
+    grid-column: span 3;
+  }
+
+  .s4 {
+    grid-column: span 4;
+  }
+}
+
+/* A card: like the import page's, its parts spaced down it. Every card has
+   the same edge; what it's for sets only its fill, from one warm family. */
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+  padding: var(--space-5);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+
+/* The thing a page is about, or a thing to open: white. */
+.record {
+  background: var(--surface);
+}
+
+/* Beside a record: the page's second tint; a plain strip in it is white,
+   so it still stands off the card (ui/Strip). */
+.aside {
+  --strip-plain: var(--surface);
+
+  background: var(--surface-2);
+}
+
+/* A history: the palest of the accent. */
+.log {
+  background: color-mix(in srgb, var(--accent-light) 30%, var(--surface));
+}
+
+.title {
+  margin: 0;
+  font-size: var(--text-lg);
+}

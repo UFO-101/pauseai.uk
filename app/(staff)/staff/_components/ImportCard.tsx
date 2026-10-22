@@ -1,10 +1,11 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import styles from "./ImportCard.module.css";
+import Grid, { Card } from "./ui/Grid";
 
 /** The import page's cards, side by side where there's room. */
 export function ImportCards({ children }: { children: ReactNode }) {
-  return <div className={styles.grid}>{children}</div>;
+  return <Grid even>{children}</Grid>;
 }
 
 type Props = {
@@ -26,7 +27,7 @@ type Props = {
  */
 export default function ImportCard({ title, href, tags, intro, children }: Props) {
   return (
-    <section className={styles.card}>
+    <Card span={2} className={styles.card}>
       <h2 className={styles.title}>
         <Link href={href} className={styles.open}>
           {title}
@@ -35,6 +36,6 @@ export default function ImportCard({ title, href, tags, intro, children }: Props
       </h2>
       <div className={styles.status}>{children}</div>
       <p className={styles.intro}>{intro}</p>
-    </section>
+    </Card>
   );
 }

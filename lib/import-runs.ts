@@ -133,15 +133,24 @@ export type MembersImport = ImportRun<"import-members", MembersImportResult>;
 export type AnyImportRun = MpSync | MpCheck | ControlAiImport | SignatoryImport | LumaImport | MembersImport;
 
 /** Whether a Luma run left work for later: it was cut short, or the contacts pass is still going. */
-export function lumaRunIncomplete(result: LumaImportResult): boolean {
+function lumaRunIncomplete(result: LumaImportResult): boolean {
   return result.stoppedBy !== undefined || result.contactsPassGoing === true;
+}
+
+/**
+ * How a run ended, as its line in the import log says it: its status, or
+ * for a Luma import that left work for later, "incomplete", in place of
+ * "ok" or "unchanged".
+ */
+export function runStatus(run: AnyImportRun): string {
+  if (run.job === "import-luma" && run.status !== "failed" && lumaRunIncomplete(run.result)) return "incomplete";
+  return run.status;
 }
 
 /** How a run ended, as a colour: green when it went well, amber held or stopped short, red failed; none when it changed nothing, was discarded, or never ran. */
 export function runTone(run: AnyImportRun | undefined): "green" | "amber" | "red" | undefined {
   if (!run) return undefined;
   if (run.status === "failed") return "red";
-  if (run.status === "held") return "amber";
-  if (run.job === "import-luma" && lumaRunIncomplete(run.result)) return "amber";
+  if (run.status === "held" || runStatus(run) === "incomplete") return "amber";
   return run.status === "ok" || run.status === "applied" ? "green" : undefined;
 }

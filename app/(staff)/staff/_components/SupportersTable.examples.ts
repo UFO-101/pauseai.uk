@@ -14,7 +14,6 @@ export const exampleSupporter: SupporterSummary = {
   lastActiveAt: "2026-10-12T18:30:00Z",
   events: 2,
   letters: 1,
-  optedOut: ["luma-calendar"],
   member: false,
 };
 
@@ -141,7 +140,6 @@ export const exampleMemberDetails: SupporterDetails = {
     lumaContact: false,
     events: 0,
     letters: 0,
-    optedOut: [],
     member: true,
   },
   identities: [{ source: "member", email: "rhea@example.com", name: "Rhea Member", seenAt: "2026-07-10T00:00:00Z" }],

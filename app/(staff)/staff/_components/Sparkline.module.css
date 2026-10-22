@@ -19,6 +19,14 @@
   vector-effect: non-scaling-stroke;
 }
 
+/* Zero: a hairline the line rises from. */
+.zero {
+  stroke: var(--border-strong);
+  stroke-width: 1;
+  stroke-dasharray: 2 2;
+  vector-effect: non-scaling-stroke;
+}
+
 .point {
   fill: var(--accent);
   opacity: 0;

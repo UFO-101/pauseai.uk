@@ -65,8 +65,9 @@ export function unblockFrom(form: FormData): UnblockForm | undefined {
 export type PermissionsForm = { email: string; permissions: Permission[] };
 
 /**
- * An account's form: whose, and each permission's checkbox, named
- * "permission:<name>", ticked or not. The remove form sends only whose.
+ * One account: whose, and each permission's checkbox, named
+ * "permission:<name>", ticked or not: the accounts table sends one per
+ * change, and the form to remove someone only whose.
  */
 export function permissionsFrom(form: FormData): PermissionsForm | undefined {
   const email = text(form, "email").toLowerCase();

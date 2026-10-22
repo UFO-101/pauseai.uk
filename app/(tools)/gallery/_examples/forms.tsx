@@ -317,6 +317,35 @@ export const forms: Group = {
             </Densities>
           ),
         },
+        {
+          label: "Centred in each row, for rows with buttons",
+          render: () => (
+            <Densities>
+              {() => (
+                <Table align="middle">
+                  <thead>
+                    <tr>
+                      <th>Email</th>
+                      <th>Added</th>
+                      <th />
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>jo@example.org</td>
+                      <td>2026-10-20 09:00</td>
+                      <td>
+                        <Button variant="ghost" size="small">
+                          Remove
+                        </Button>
+                      </td>
+                    </tr>
+                  </tbody>
+                </Table>
+              )}
+            </Densities>
+          ),
+        },
       ],
     },
     {

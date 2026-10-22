@@ -238,10 +238,10 @@ describeWithDatabase("listBlocks, blockOn and recentProblems", () => {
         { id: polly, name: "Polly Placeholder" },
         { id: mp, name: "Testy McTestface MP" },
       ],
-      letterId,
+      letter: { id: letterId, to: "Testy McTestface MP" },
       refused: 1,
     });
-    expect(blocks[0]).toMatchObject({ kind: "complaint", politicians: [], letterId: null, refused: 0 });
+    expect(blocks[0]).toMatchObject({ kind: "complaint", politicians: [], letter: null, refused: 0 });
     expect((await listBlocks("complaint")).map((b) => b.address)).toEqual(["other@example.org"]);
 
     expect(await blockOn("Test-MP@example.org")).toMatchObject({ address: "test-mp@example.org" });
@@ -249,9 +249,14 @@ describeWithDatabase("listBlocks, blockOn and recentProblems", () => {
     expect(await blockOn(null)).toBeUndefined();
 
     expect(await recentProblems()).toEqual([
-      expect.objectContaining({ address: "soft@example.org", kind: "soft", purpose: null, letterId: null }),
+      expect.objectContaining({ address: "soft@example.org", kind: "soft", purpose: null, letter: null }),
       expect.objectContaining({ address: "other@example.org", kind: "complaint" }),
-      expect.objectContaining({ address: "test-mp@example.org", kind: "hard", purpose: "letter", letterId }),
+      expect.objectContaining({
+        address: "test-mp@example.org",
+        kind: "hard",
+        purpose: "letter",
+        letter: { id: letterId, to: "Testy McTestface MP" },
+      }),
     ]);
     expect(await recentProblems(1)).toHaveLength(1);
   });

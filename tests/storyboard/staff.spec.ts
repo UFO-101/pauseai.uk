@@ -149,10 +149,20 @@ test("staff log in, set a status that shows on /campaigns, and log out", async (
   await expect(page.getByRole("link", { name: "Testy McTestface MP" })).toBeVisible();
   await frame(page, "the politicians list");
 
-  const form = page.getByRole("form", { name: `${pm.title}: Polly Placeholder` });
-  await form.getByRole("button", { name: staffCopy.politicians.markSigned }).click();
-  await expect(form.getByText(new RegExp(`^${staffCopy.statuses.signed}`))).toBeVisible();
+  // Signed on their page, in the campaign's row of the panel beside their details.
+  await page.getByRole("link", { name: "Polly Placeholder" }).click();
+  const card = page.getByRole("group", { name: pm.title });
+  await expect(card.getByText(staffCopy.statuses.none)).toBeVisible();
+  await frame(page, "Polly Placeholder's page: the campaigns beside her details");
+  await card.getByRole("button", { name: staffCopy.politicians.markSigned }).click();
+  await expect(card.getByText(new RegExp(`^${staffCopy.statuses.signed}`))).toBeVisible();
+  await expect(card.getByRole("button", { name: staffCopy.politicians.unmarkSigned })).toBeVisible();
   await frame(page, "Polly Placeholder marked as signed");
+  await page.getByRole("link", { name: staffCopy.nav.politicians }).first().click();
+  const pollyRow = page.getByRole("row").filter({ hasText: "Polly Placeholder" });
+  await expect(pollyRow).toContainText(staffCopy.statuses.signed);
+  await expect(pollyRow.getByRole("button")).toHaveCount(0);
+  await frame(page, "the list shows it, with no buttons");
 
   const signed = await (await request.get(`${BASE}/api/signatories`)).json();
   expect(signed).toContainEqual(expect.objectContaining({ name: "Polly Placeholder", house: "commons" }));
@@ -280,13 +290,17 @@ test("a politician's own page", async ({ page, request, flowDatabase }) => {
   await logIn(page, flowDatabase);
   await page.goto(`${BASE}/staff/politicians`);
   await page.getByRole("link", { name: "Testy McTestface MP" }).click();
-  // Their name, tagged as a test MP; the box of what we hold; nothing in their history yet.
+  // Their name, tagged as a test MP, and what they are; the box of what we hold; nothing in their history
+  // yet; and no form, as a test MP isn't edited.
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(
     `Testy McTestface MP${staffCopy.politicians.testMp}`,
   );
+  await expect(
+    page.getByText(staffCopy.politician.role(staffCopy.politician.roles.commons, "Testshire", true)),
+  ).toBeVisible();
   await expect(page.getByText(staffCopy.politician.sources.test)).toBeVisible();
   await expect(page.getByText(staffCopy.politician.noHistory)).toBeVisible();
-  await expect(page.getByRole("heading", { name: staffCopy.politician.detailsTitle })).toBeVisible();
+  await expect(page.getByRole("heading", { name: staffCopy.politician.detailsTitle })).toBeHidden();
   await frame(page, "the test MP's page");
 
   // The way back, above the name; then the list sorted by a heading, and reversed.
@@ -413,9 +427,17 @@ test("a letter that bounces: staff are emailed, and the address is blocked", asy
   await page.goto(`${BASE}/staff/blocked-emails`);
   // The blocked addresses, above the recent problems.
   const blocked = page.getByRole("table").first().getByRole("row").filter({ hasText: BOUNCY_ADDRESS });
-  await expect(blocked.getByRole("link", { name: bouncy.name })).toBeVisible();
+  await expect(blocked.getByRole("link", { name: bouncy.name, exact: true })).toBeVisible();
   await expect(blocked).toContainText(staffCopy.emails.kinds.hard);
   await frame(page, "the address, blocked, with the letter that found it out");
+
+  // The letter, by whom it was to, leads to its own page: its row from the letters list.
+  await blocked.getByRole("link", { name: `${staffCopy.emails.letterTo} ${bouncy.name}` }).click();
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(staffCopy.letters.oneTitle(bouncy.name));
+  await expect(page.getByRole("row").filter({ hasText: sender })).toContainText(staffCopy.letters.status.bounced);
+  await frame(page, "the letter's page");
+  await page.getByRole("link", { name: staffCopy.nav.letters }).first().click();
+  await expect(page).toHaveURL(`${BASE}/staff/letters`);
 });
 
 test("an MP whose address bounced can't be written to until staff unblock it", async ({
@@ -466,7 +488,8 @@ test("an MP whose address bounced can't be written to until staff unblock it", a
   await frame(page, "unblocked");
 
   await page.goto(`${BASE}/staff/audit-log`);
-  await expect(page.getByText("Checked with their office")).toBeVisible();
+  // In the entry's details; its JSON, behind its button, has it too.
+  await expect(page.getByText("Checked with their office").filter({ visible: true })).toBeVisible();
   await frame(page, "the audit log: blocked by Postmark, unblocked by staff");
 
   await lookUpTestMp(page, BASE, bouncy);
@@ -560,16 +583,20 @@ test("without an account, a staff member sees only whom to ask; an admin adds, c
   await page.goto(`${BASE}/staff/accounts`);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(staffCopy.accounts.title);
   await frame(page, "the accounts page: the seeded admin and this admin");
-  const add = page.getByRole("form", { name: staffCopy.accounts.addTitle });
-  await add.getByRole("textbox", { name: staffCopy.accounts.emailLabel }).fill(colleague);
-  await add.getByRole("button", { name: staffCopy.accounts.add }).click();
+  // Added under the last row, at once: an account with no permissions.
+  await page.getByRole("textbox", { name: staffCopy.accounts.addTitle }).fill(colleague);
+  await page.getByRole("button", { name: staffCopy.accounts.add }).click();
   const row = page.getByRole("row").filter({ hasText: colleague });
   await expect(row).toContainText(staffEmail());
+  await expect(page.getByRole("textbox", { name: staffCopy.accounts.addTitle })).toHaveValue("");
   await frame(page, "the colleague added, with no permissions");
 
-  await row.getByRole("checkbox", { name: staffCopy.accounts.names.supporters }).check();
-  await row.getByRole("button", { name: staffCopy.accounts.save }).click();
-  await expect(row.getByRole("checkbox", { name: staffCopy.accounts.names.supporters })).toBeChecked();
+  // A box ticked is saved at once: still ticked after a reload.
+  const supporters = row.getByRole("checkbox", { name: staffCopy.accounts.names.supporters });
+  await supporters.check();
+  await expect(supporters).toBeEnabled();
+  await page.reload();
+  await expect(supporters).toBeChecked();
   await frame(page, "given the supporters permission");
 
   await row.getByRole("button", { name: staffCopy.accounts.remove }).click();

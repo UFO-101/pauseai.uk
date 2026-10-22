@@ -30,12 +30,14 @@ export function Checkbox({
   id,
   name,
   checked,
+  disabled,
   onChange,
   children,
 }: {
   id?: string;
   name?: string;
   checked: boolean;
+  disabled?: boolean;
   onChange: (checked: boolean) => void;
   children: ReactNode;
 }) {
@@ -47,6 +49,7 @@ export function Checkbox({
         type="checkbox"
         className={styles.checkbox}
         checked={checked}
+        disabled={disabled}
         onChange={(e) => onChange(e.target.checked)}
       />
       <span>{children}</span>

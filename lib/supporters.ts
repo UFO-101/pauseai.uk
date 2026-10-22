@@ -2,7 +2,6 @@
 // (lib/server/supporters.ts) gives the components.
 import { staffCopy } from "./content/staff-interface";
 import type { EmailPermission } from "./email-permissions";
-import type { OptOutList } from "./opt-outs";
 import type { SortColumns, SortDirection } from "./staff-sort";
 
 /** Where a supporter's records come from (lib/server/supporter-sources.ts). */
@@ -29,8 +28,6 @@ export type SupporterSummary = {
   /** Events registered for, declined ones left out. */
   events: number;
   letters: number;
-  /** The lists any of their addresses is opted out of. */
-  optedOut: OptOutList[];
   /** Whether they're a PauseAI member now: a member's record we read at the last import. */
   member: boolean;
 };
@@ -111,7 +108,7 @@ export type SupporterFilter = {
   page: number;
 };
 
-export const SUPPORTERS_PAGE_SIZE = 200;
+export const SUPPORTERS_PAGE_SIZE = 100;
 
 /** A supporter's page's name: theirs, or the stand-in for one with none. */
 export function supporterTitle(summary: Pick<SupporterSummary, "name">): string {

@@ -443,6 +443,9 @@ import("@/tests/next-headers"))` and put the session cookie in
   must call `requireStaff()` as its first statement, or `tests/checks/staff-auth.test.ts`
   fails. Each exported function is checked on its own, so every action in
   a `"use server"` file needs its own call.
+- A staff component sets no width of its own: the page's grid and the
+  measure do (`docs/style-guide.md`, "Staff pages"), or
+  `tests/checks/staff-widths.test.ts` fails.
 - A new page needs nothing extra: the route list picks it up. A new dynamic
   route (`[slug]`) needs an example in `tests/routes.ts`, or
   `tests/routes.test.ts` fails.

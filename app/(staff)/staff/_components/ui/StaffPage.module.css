@@ -4,6 +4,11 @@
 /* Full width, so a wide table scrolls inside its Table instead of widening
    the whole page on a phone. */
 .page {
+  /* The one width for things read line by line (a form, a short list),
+     set by a page or a layout piece, never a component itself
+     (docs/style-guide.md, "Staff pages"). */
+  --staff-measure: 40rem;
+
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   width: 100%;
@@ -19,6 +24,13 @@
 
 .content > :first-child {
   margin-top: 0;
+}
+
+/* Nothing wider than this, so the grid's six columns (ui/Grid) don't
+   stretch past reading on a big monitor. With no weight of its own
+   (:where), so anything narrower, such as the login card, keeps its width. */
+:where(.content > *) {
+  max-width: 88rem;
 }
 
 /* The navigation's column: the muted surface, ruled off from the page. */

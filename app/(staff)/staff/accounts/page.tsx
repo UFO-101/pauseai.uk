@@ -24,7 +24,6 @@ export default async function AccountsPage({ searchParams }: { searchParams: Pro
         accounts={await listStaffAccounts()}
         save={saveStaffAccountNow}
         remove={removeStaffAccountNow}
-        notPauseai={notice === "not-pauseai"}
       />
     </StaffPage>
   );

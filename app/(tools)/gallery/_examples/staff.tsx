@@ -7,8 +7,12 @@ import ChangesTable from "@/app/(staff)/staff/_components/ChangesTable";
 import EmailBlockFilters from "@/app/(staff)/staff/_components/EmailBlockFilters";
 import { exampleProblems } from "@/app/(staff)/staff/_components/EmailBlocksTable.examples";
 import EmailProblemsTable from "@/app/(staff)/staff/_components/EmailProblemsTable";
-import { exampleChange } from "@/app/(staff)/staff/_components/ChangesTable.examples";
+import { exampleChanges } from "@/app/(staff)/staff/_components/ChangesTable.examples";
+import AuditDetail, { FieldChanges } from "@/app/(staff)/staff/_components/AuditDetail";
+import CampaignName from "@/app/(staff)/staff/_components/CampaignName";
+import Paging from "@/app/(staff)/staff/_components/Paging";
 import LetterFilters from "@/app/(staff)/staff/_components/LetterFilters";
+import LetterLink from "@/app/(staff)/staff/_components/LetterLink";
 import LettersTable from "@/app/(staff)/staff/_components/LettersTable";
 import { exampleLetter } from "@/app/(staff)/staff/_components/LettersTable.examples";
 import DevLogin from "@/app/(staff)/staff/_components/DevLogin";
@@ -57,6 +61,8 @@ import {
 } from "@/app/(staff)/staff/_components/SupportersTable.examples";
 import { supportersSearch } from "@/lib/staff-search";
 import StaffPage from "@/app/(staff)/staff/_components/ui/StaffPage";
+import Grid, { Card } from "@/app/(staff)/staff/_components/ui/Grid";
+import Strip from "@/app/(staff)/staff/_components/ui/Strip";
 import Tag from "@/components/ui/Tag";
 import { campaigns } from "@/lib/content/email-your-mp";
 import { staffCopy } from "@/lib/content/staff-interface";
@@ -72,7 +78,6 @@ import {
   PoliticianTableEmptyExample,
   PoliticianTableExample,
   EraseFormExample,
-  StaffAccountFormExample,
   StaffAccountsTableExample,
   RemoveAccountFormExample,
   UnblockFormExample,
@@ -211,6 +216,120 @@ export const staff: Group = {
       ],
     },
     {
+      name: "Grid",
+      file: "app/(staff)/staff/_components/ui/Grid.tsx",
+      variants: [
+        {
+          label:
+            "Six columns on a wide screen, two below: cards taking a half, two-thirds and a third, then a sixth each",
+          render: () => (
+            <StaffPage as="div">
+              <Grid>
+                <Card span={3}>A half</Card>
+                <Card span={3}>A half</Card>
+                <Card span={4}>Two-thirds, beside</Card>
+                <Card span={2}>
+                  a third, taller than it: each is as tall as what&apos;s in it, so this one is longer.
+                </Card>
+                {[1, 2, 3, 4, 5, 6].map((n) => (
+                  <Card key={n} span={1}>
+                    A sixth
+                  </Card>
+                ))}
+              </Grid>
+            </StaffPage>
+          ),
+        },
+        {
+          label: "Even: things of one kind, each as tall as its row",
+          render: () => (
+            <StaffPage as="div">
+              <Grid even>
+                <Card span={2}>A third</Card>
+                <Card span={2}>A third, with more in it than the others, which grow to match.</Card>
+                <Card span={2}>A third</Card>
+              </Grid>
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "Card",
+      file: "app/(staff)/staff/_components/ui/Grid.tsx",
+      variants: [
+        {
+          label: "With a title, and a strip and a line in it",
+          render: () => (
+            <StaffPage as="div">
+              <Grid>
+                <Card span={3} title="An example card" id="example-card">
+                  <Strip tone="green">
+                    <span>Done</span>
+                  </Strip>
+                  <p>A line under it.</p>
+                </Card>
+              </Grid>
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "Strip",
+      file: "app/(staff)/staff/_components/ui/Strip.tsx",
+      variants: [
+        {
+          label: "Each tone: plain, green, amber and red, with an action at the right",
+          render: () => (
+            <StaffPage as="div">
+              <div style={{ display: "grid", gap: "8px" }}>
+                <Strip>
+                  <span>Not signed</span>
+                </Strip>
+                <Strip tone="green">
+                  <span>Signed, 1 Oct 2026</span>
+                  <span>Set by jo@pauseai.uk</span>
+                </Strip>
+                <Strip
+                  tone="amber"
+                  action={
+                    <Button variant="primary" size="small">
+                      Review import
+                    </Button>
+                  }
+                >
+                  <span>MP import would change 42 MPs</span>
+                  <span>Check it, and approve or decline it.</span>
+                </Strip>
+                <Strip
+                  tone="red"
+                  action={
+                    <Button variant="primary" size="small">
+                      Fix MP email
+                    </Button>
+                  }
+                >
+                  <span>Bouncy McTestface MP&apos;s email is bouncing</span>
+                  <span>Find a working email, or unblock it.</span>
+                </Strip>
+              </div>
+            </StaffPage>
+          ),
+        },
+        {
+          label: "An answer, not a warning: no icon",
+          render: () => (
+            <StaffPage as="div">
+              <Strip tone="red" icon={false}>
+                <span>Won&apos;t email</span>
+              </Strip>
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
       name: "StaffNav",
       file: "app/(staff)/staff/_components/StaffNav.tsx",
       variants: [
@@ -294,7 +413,6 @@ export const staff: Group = {
                       sources: ["letter"],
                       lumaContact: false,
                       events: 0,
-                      optedOut: [],
                     },
                   ],
                   total: 120,
@@ -411,7 +529,6 @@ export const staff: Group = {
                     events: 0,
                     letters: 0,
                     lumaContact: false,
-                    optedOut: [],
                   },
                   identities: [{ source: "luma", email: "x@example.com", name: "", seenAt: null }],
                   contacts: [],
@@ -550,24 +667,10 @@ export const staff: Group = {
       file: "app/(staff)/staff/_components/StaffAccountsTable.tsx",
       variants: [
         {
-          label: "Three accounts, and the form for someone new",
+          label: "Three accounts, and the field to add someone under them",
           render: () => (
             <StaffPage as="div">
               <StaffAccountsTableExample />
-            </StaffPage>
-          ),
-        },
-      ],
-    },
-    {
-      name: "StaffAccountForm",
-      file: "app/(staff)/staff/_components/StaffAccountForm.tsx",
-      variants: [
-        {
-          label: "For someone new: their address, the boxes and Save",
-          render: () => (
-            <StaffPage as="div">
-              <StaffAccountFormExample />
             </StaffPage>
           ),
         },
@@ -1091,25 +1194,72 @@ export const staff: Group = {
       ],
     },
     {
+      name: "AuditDetail",
+      file: "app/(staff)/staff/_components/AuditDetail.tsx",
+      variants: [
+        {
+          label: "An MP's status set, in words, linked to their page and the campaign's",
+          render: () => (
+            <StaffPage as="div">
+              <AuditDetail change={exampleChanges[0]} airtableTable="https://airtable.com/app/tbl" />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "FieldChanges",
+      file: "app/(staff)/staff/_components/AuditDetail.tsx",
+      variants: [
+        {
+          label: "What an edit changed, each field before and after",
+          render: () => (
+            <StaffPage as="div">
+              <FieldChanges changed={{ party: ["Labour", "Independent"], email: [null, "polly@example.org"] }} />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "CampaignName",
+      file: "app/(staff)/staff/_components/CampaignName.tsx",
+      variants: [
+        {
+          label: "A campaign linked to its page, and one no longer run, by its slug",
+          render: () => (
+            <StaffPage as="div">
+              <p>
+                <CampaignName slug={pm.slug} /> · <CampaignName slug="old-campaign" />
+              </p>
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "Paging",
+      file: "app/(staff)/staff/_components/Paging.tsx",
+      variants: [
+        {
+          label: "The middle page of three: the way back and on",
+          render: () => (
+            <StaffPage as="div">
+              <Paging page={2} pages={3} href={(n) => `#page-${n}`} />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
       name: "ChangesTable",
       file: "app/(staff)/staff/_components/ChangesTable.tsx",
       variants: [
         {
-          label: "Who changed what",
+          label: "One of each kind of entry, in words, and one of a kind it doesn't know",
           render: () => (
             <StaffPage as="div">
-              <ChangesTable
-                changes={[
-                  exampleChange,
-                  {
-                    id: 2,
-                    at: "2026-10-12T02:00:00Z",
-                    actor: "sync",
-                    action: "apply MP sync",
-                    details: { id: 3 },
-                  },
-                ]}
-              />
+              <ChangesTable changes={exampleChanges} airtableTable="https://airtable.com/app/tbl" />
             </StaffPage>
           ),
         },
@@ -1198,7 +1348,10 @@ export const staff: Group = {
           label: "A run that stopped before it finished, and one that failed",
           render: () => (
             <StaffPage as="div">
-              <RunBox run={exampleAppliedSync} summary="an example summary" incomplete />
+              <RunBox
+                run={exampleRun("import-luma", { ...exampleLumaResult, stoppedBy: "time" })}
+                summary="an example summary"
+              />
               <RunBox run={exampleFailedRun("sync-mps", "An example error", { id: 5 })} summary={null} />
             </StaffPage>
           ),
@@ -1247,7 +1400,21 @@ export const staff: Group = {
           label: "One status picked",
           render: () => (
             <StaffPage as="div">
-              <LetterFilters search={{ status: "bounced", q: "", answered: "", supporter: "" }} />
+              <LetterFilters search={{ status: "bounced", q: "", answered: "" }} />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "LetterLink",
+      file: "app/(staff)/staff/_components/LetterLink.tsx",
+      variants: [
+        {
+          label: "A letter, by whom it was to",
+          render: () => (
+            <StaffPage as="div">
+              <LetterLink letter={{ id: 17, to: "Bouncy McTestface MP" }} />
             </StaffPage>
           ),
         },

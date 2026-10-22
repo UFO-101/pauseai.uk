@@ -18,17 +18,17 @@ const HEIGHT = 32;
 const PAD = 3;
 
 /**
- * A thin line of counts under a tile's label, the last point marked.
- * Pointing at it marks the nearest point and says its period and count.
+ * A thin line of counts under a tile's label, the last point marked, over a
+ * faint baseline that is zero: the bottom is always zero, so a line near it
+ * is near none. Pointing at it marks the nearest point and says its period
+ * and count.
  */
 export default function Sparkline({ values, labels, name }: Props) {
   const [pointed, setPointed] = useState<number | null>(null);
   const last = values.length - 1;
-  const max = Math.max(...values);
-  const min = Math.min(...values);
-  const range = max - min || 1;
+  const max = Math.max(...values) || 1;
   const x = (i: number) => PAD + (i * (WIDTH - 2 * PAD)) / (last || 1);
-  const y = (value: number) => HEIGHT - PAD - ((value - min) / range) * (HEIGHT - 2 * PAD);
+  const y = (value: number) => HEIGHT - PAD - (value / max) * (HEIGHT - 2 * PAD);
   const point = (event: PointerEvent<SVGSVGElement>) => {
     const box = event.currentTarget.getBoundingClientRect();
     const share = (event.clientX - box.left) / box.width;
@@ -44,6 +44,7 @@ export default function Sparkline({ values, labels, name }: Props) {
         onPointerDown={point}
         onPointerLeave={() => setPointed(null)}
       >
+        <line className={styles.zero} x1={0} x2={WIDTH} y1={y(0)} y2={y(0)} />
         <polyline fill="none" points={values.map((value, i) => `${x(i)},${y(value)}`).join(" ")} />
         {values.map((value, i) => (
           <circle

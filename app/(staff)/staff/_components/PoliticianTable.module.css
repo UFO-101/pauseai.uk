@@ -1,10 +1,7 @@
 /* The politicians table. */
 
-/* The status and its button, in a campaign's column of the politicians list. */
+/* A campaign's status, and when, on one line. */
 .signed {
-  display: flex;
-  gap: 0.5rem;
-  align-items: center;
   white-space: nowrap;
 }
 

@@ -164,9 +164,18 @@ describeWithDatabase("syncMps", () => {
       ),
     );
     expect((await syncMps(NIGHTLY)).status).toBe("applied");
+    // Only what changed, before and after, with her name to know her by.
     expect(
-      await query("SELECT actor, details->>'email' AS email FROM audit_log WHERE action = 'edit politician'"),
-    ).toEqual([{ actor: "sync", email: "dora.dummy.mp@parliament.uk" }]);
+      await query(
+        "SELECT actor, details->>'name' AS name, details->'changed' AS changed FROM audit_log WHERE action = 'edit politician'",
+      ),
+    ).toEqual([
+      {
+        actor: "sync",
+        name: "Ms Dora Dummy",
+        changed: { email: [expect.any(String), "dora.dummy.mp@parliament.uk"] },
+      },
+    ]);
   });
 
   it("holds a sync that changes many MPs, until someone applies it", async () => {

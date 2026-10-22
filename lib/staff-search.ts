@@ -10,8 +10,6 @@ export type LettersSearch = {
   q: string;
   /** "yes" or "no". */
   answered: string;
-  /** A supporter's ID: their letters alone, from their page. No field shows it. */
-  supporter: string;
 };
 
 /** Which letters the letters page lists (recentLetters in lib/server/letters.ts). */
@@ -22,7 +20,10 @@ export type LetterFilter = {
   search?: string;
   /** Whether the MP replied. */
   answered?: boolean;
+  /** One supporter's letters (/staff/letters/supporter/[id]). */
   supporterId?: number;
+  /** One letter (/staff/letters/[id]). */
+  letterId?: number;
 };
 
 /** The letters page's filters, as the URL gives them and as the server applies them. */
@@ -30,15 +31,13 @@ export function lettersSearch({
   status = "",
   q = "",
   answered = "",
-  supporter = "",
 }: Partial<LettersSearch>): LettersSearch & { filter: LetterFilter } {
   const filter: LetterFilter = {
     status: Object.hasOwn(staffCopy.letters.status, status) ? status : undefined,
     search: q.trim() || undefined,
     answered: answered === "yes" ? true : answered === "no" ? false : undefined,
-    supporterId: supporterId(supporter),
   };
-  return { status, q, answered, supporter, filter };
+  return { status, q, answered, filter };
 }
 
 /** A politician's ID from their page's URL: a whole number, or undefined. */
@@ -49,6 +48,21 @@ export function politicianId(id: string): number | undefined {
 /** The blocked addresses page's filter: blocked by a hard bounce, or a complaint. */
 export function emailsSearch({ kind = "" }: { kind?: string }): { kind: string; filter?: "hard" | "complaint" } {
   return { kind, filter: kind === "hard" || kind === "complaint" ? kind : undefined };
+}
+
+/** A list's page from its URL: a whole number from 1, or the first page. */
+export function pageNumber(page = ""): number {
+  return /^\d+$/.test(page) && Number(page) > 0 ? Number(page) : 1;
+}
+
+/** A list's URL at a page: the first page at the list's own, any other with `?page=`. */
+export function pagePath(path: string, page: number): string {
+  return page > 1 ? `${path}?page=${page}` : path;
+}
+
+/** A letter's ID from its page's URL: a whole number, or undefined. */
+export function letterId(id: string): number | undefined {
+  return politicianId(id);
 }
 
 /** A supporter's ID from their page's URL: a whole number, or undefined. */
@@ -98,7 +112,7 @@ export function supportersSearch({
     unsubscribed: unsubscribed !== "" || undefined,
     sort: sorting.key,
     dir: sorting.dir,
-    page: /^\d+$/.test(page) && Number(page) > 0 ? Number(page) : 1,
+    page: pageNumber(page),
   };
   return { q, source, registered, active, from, to, unsubscribed, sort, dir, page, erased, filter };
 }

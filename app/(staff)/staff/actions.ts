@@ -32,6 +32,7 @@ export async function markSigned(form: FormData): Promise<void> {
     email,
   );
   revalidatePath("/staff/politicians");
+  revalidatePath(`/staff/politicians/${parsed.politicianId}`);
 }
 
 export async function editSigner(form: FormData): Promise<void> {
@@ -126,7 +127,12 @@ function accountsPage(change: AccountChange): never {
   redirect(change === "changed" || change === "unchanged" ? "/staff/accounts" : `/staff/accounts?notice=${change}`);
 }
 
-/** The accounts page: gives an address an account with exactly the permissions ticked, as the admin. */
+/**
+ * The accounts page: gives an address an account with exactly the
+ * permissions in the form, adding it if it has none, as the admin. A
+ * change refused (the last admin, an address not at pauseai.uk) is said on
+ * the page.
+ */
 export async function saveStaffAccountNow(form: FormData): Promise<void> {
   const { email } = await requireStaff("admin");
   const parsed = permissionsFrom(form);

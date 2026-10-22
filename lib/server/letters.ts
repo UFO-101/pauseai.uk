@@ -33,6 +33,7 @@ export async function recentLetters({
   search,
   answered,
   supporterId,
+  letterId,
   politicianId,
   limit = 200,
 }: LetterFilter & { politicianId?: number; limit?: number } = {}): Promise<LetterSummary[]> {
@@ -49,7 +50,16 @@ export async function recentLetters({
        AND ($4::text IS NULL OR l.sender_name ILIKE $4 OR l.sender_email ILIKE $4 OR p.name ILIKE $4 OR l.subject ILIKE $4)
        AND ($5::boolean IS NULL OR (l.replied_at IS NOT NULL) = $5)
        AND ($6::bigint IS NULL OR EXISTS (SELECT 1 FROM supporter_links k WHERE k.letter_id = l.id AND k.supporter_id = $6))
+       AND ($7::bigint IS NULL OR l.id = $7)
      ORDER BY l.created_at DESC, l.id DESC LIMIT $2`,
-    [status ?? null, limit, politicianId ?? null, search ? `%${search}%` : null, answered ?? null, supporterId ?? null],
+    [
+      status ?? null,
+      limit,
+      politicianId ?? null,
+      search ? `%${search}%` : null,
+      answered ?? null,
+      supporterId ?? null,
+      letterId ?? null,
+    ],
   );
 }

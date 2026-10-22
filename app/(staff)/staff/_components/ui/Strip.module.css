@@ -1,0 +1,68 @@
+/* A strip: the tint of its tone, no border, its icon, its words, then its
+   action at the right, wrapping under them on a narrow screen. Like the
+   import cards' status. */
+.strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-3);
+  align-items: center;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  /* Plain is the second tint, or white on a card that's tinted itself (ui/Grid). */
+  background: var(--strip-plain, var(--surface-2));
+  color: var(--text);
+  /* Its buttons small and light, so they don't outweigh the words (Button.module.css). */
+  --button-padding: 4px 12px;
+  --button-font-size: var(--text-sm);
+  --button-font-weight: 500;
+}
+
+.green {
+  background: var(--status-green-bg);
+}
+
+.amber {
+  background: var(--status-amber-bg);
+}
+
+.red {
+  background: var(--status-red-bg);
+}
+
+/* Its words: the first line bold in the tone's colour, the rest as they are. */
+.body {
+  display: grid;
+  flex: 1;
+  gap: var(--space-1);
+  min-width: min(100%, 10rem);
+}
+
+.body > :first-child {
+  font-weight: 600;
+}
+
+.green .body > :first-child {
+  color: var(--status-green);
+}
+
+.amber .body > :first-child {
+  color: var(--status-amber);
+}
+
+.red .body > :first-child {
+  color: var(--status-red);
+}
+
+.body > * {
+  margin: 0;
+}
+
+.action {
+  flex-shrink: 0;
+}
+
+/* The icon by the first line, however many lines follow. */
+.strip > svg {
+  align-self: flex-start;
+  margin-top: 2px;
+}

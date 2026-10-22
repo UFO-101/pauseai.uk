@@ -7,7 +7,7 @@
 }
 
 .form {
-  max-width: 32rem;
+  max-width: var(--staff-measure);
   margin-block: var(--space-4);
 }
 
@@ -18,9 +18,4 @@
 /* A field that needn't be wider than its longest choice. */
 .narrow {
   max-width: 28rem;
-}
-
-/* A row of checkboxes and a button, in a table's row: on one middle line, rather than along the bottom as fields with labels are. */
-.centred {
-  align-items: center;
 }

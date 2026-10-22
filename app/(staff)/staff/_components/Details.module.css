@@ -1,21 +1,49 @@
-/* A supporter's or a politician's page: the box of what we hold, and the history under it. */
+/* A supporter's or a politician's page: the card of what we hold (ui/Grid), and the history under it. */
 
-/* A supporter's box: only as wide as what's in it. */
-.main {
-  width: fit-content;
-  max-width: 100%;
+/* A politician's name, and under it, close, what they are. */
+.heading {
+  margin-bottom: var(--space-5);
 }
 
-/* The box: a label and its values on each row. */
+.heading h1 {
+  margin-bottom: var(--space-1);
+}
+
+.heading p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--text-lg);
+}
+
+/* What we hold, in its card: a label and its values on each row. */
 .facts {
   display: grid;
-  grid-template-columns: max-content 1fr;
+  grid-template-columns: max-content minmax(0, 1fr);
   gap: var(--space-2) var(--space-5);
-  margin: 0 0 var(--space-6);
-  padding: var(--space-4) var(--space-5);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  background: var(--surface);
+  margin: 0;
+}
+
+/* A campaign in the campaigns card: its name, its status strip, its link;
+   ruled from the one above. */
+.campaign {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.campaign + .campaign {
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border);
+}
+
+/* Who set a status and how, under it; the link to the campaign. */
+.campaignMeta {
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+}
+
+.campaign a.campaignMeta {
+  color: var(--accent);
+  white-space: nowrap;
 }
 
 /* A row that has to be one element (a list's line, keyed). */
@@ -39,17 +67,36 @@
   white-space: nowrap;
 }
 
-/* The history: when at the left, in the muted colour, and what beside it. */
+/* The history, in its card: when at the left, in the muted colour, and
+   what beside it, each entry ruled from the next. */
 .history {
   display: grid;
-  grid-template-columns: max-content 1fr;
-  gap: var(--space-2) var(--space-4);
+  grid-template-columns: max-content minmax(0, 1fr);
+  margin: 0;
   padding: 0;
   list-style: none;
 }
 
 .history li {
   display: contents;
+}
+
+.history li > * {
+  padding-block: var(--space-2);
+}
+
+.history li + li > * {
+  border-top: 1px solid var(--border);
+}
+
+.history .when {
+  padding-right: var(--space-4);
+}
+
+/* A card with nothing in it yet. */
+.none {
+  margin: 0;
+  color: var(--text-secondary);
 }
 
 .when {
@@ -67,39 +114,80 @@
   .facts dd {
     margin-bottom: var(--space-2);
   }
+
+  /* An entry's time above its words, close, and the rule only above the time. */
+  .history li > :last-child {
+    padding-top: 0;
+  }
+
+  .history li + li > :last-child {
+    border-top: 0;
+  }
 }
 
-/* A politician whose address is blocked: one red alert under the name,
-   its icon at the left and beside it the title, why, what to check, and
-   the form. Tinted, with a thin red border. */
+/* A politician whose address is blocked: one red strip under the name
+   (ui/Strip), its title and why, then the two things to do side by side,
+   each half the strip, split by a rule and not boxed, one above the other
+   on a narrow screen. */
 .blocked {
-  display: flex;
-  gap: var(--space-3);
-  align-items: flex-start;
-  max-width: 40rem;
-  margin-block: var(--space-4);
-  padding: var(--space-4);
-  border: 1px solid var(--status-red);
-  border-radius: var(--radius-md);
-  background: var(--status-red-bg);
+  margin-bottom: var(--space-5);
 }
 
-.blockedBody {
-  min-width: 0;
+.blocked h2 {
+  font-size: var(--text-lg);
 }
 
-.blockedBody h2 {
-  margin: 0 0 var(--space-2);
-  color: var(--status-red);
+.fixes {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: var(--space-2);
+  padding-top: var(--space-3);
+  border-top: 1px solid color-mix(in srgb, var(--status-red) 25%, transparent);
+}
+
+/* Each choice, unboxed, the two split by a rule like the one above them. */
+.fixes > div {
+  display: grid;
+  align-content: start;
+  gap: var(--space-2);
+  padding-right: var(--space-5);
+}
+
+.fixes > div + div {
+  padding: 0 0 0 var(--space-5);
+  border-left: 1px solid color-mix(in srgb, var(--status-red) 25%, transparent);
+}
+
+/* A choice alone (a complaint, which only the unblock form answers) takes the width. */
+.fixes > div:only-child {
+  grid-column: 1 / -1;
+  padding: 0;
+  border: 0;
+}
+
+.fixes h3 {
+  margin: 0;
   font-size: var(--text-md);
-  line-height: 1.25rem;
 }
 
-.blockedBody p,
-.blockedBody form {
-  margin: 0 0 var(--space-3);
+.fixes p {
+  margin: 0;
 }
 
-.blockedBody > :last-child {
-  margin-bottom: 0;
+/* A narrow screen: one above the other, the rule between them across. */
+@media (max-width: 720px) {
+  .fixes {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .fixes > div {
+    padding: 0;
+  }
+
+  .fixes > div + div {
+    margin-top: var(--space-3);
+    padding: var(--space-3) 0 0;
+    border-top: 1px solid color-mix(in srgb, var(--status-red) 25%, transparent);
+    border-left: 0;
+  }
 }

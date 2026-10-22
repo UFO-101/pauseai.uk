@@ -5,6 +5,7 @@ import { parseSort, type SortSpec } from "@/lib/staff-sort";
 import { POLITICIAN_COLUMNS, POLITICIAN_SORTS, type PoliticianSort } from "@/lib/politician-sort";
 import { query, transaction, type Queryable } from "./db";
 import { type AuditEntry, logChange } from "./audit";
+import { changedFields } from "@/lib/field-changes";
 
 // Politicians and their status for each campaign. MPs are copied from
 // Airtable nightly (mp-sync.ts); other signers came from the signatory
@@ -186,14 +187,18 @@ export type PoliticianDetails = {
  */
 export async function updatePolitician(id: number, details: PoliticianDetails, staff: string): Promise<boolean> {
   return transaction(async (db) => {
-    const updated = await query(
-      `UPDATE politicians SET house = $2, name = $3, salutation = $4, constituency = $5, party = $6, email = $7, updated_at = now()
-       WHERE id = $1 AND airtable_id IS NULL AND NOT is_test RETURNING id`,
+    // Returns the row as it was, to log what changed.
+    const [was] = await query<PoliticianDetails>(
+      `UPDATE politicians p SET house = $2, name = $3, salutation = $4, constituency = $5, party = $6, email = $7, updated_at = now()
+       FROM (SELECT id, house, name, salutation, constituency, party, email FROM politicians WHERE id = $1 FOR UPDATE) old
+       WHERE p.id = old.id AND p.airtable_id IS NULL AND NOT p.is_test
+       RETURNING old.house, old.name, old.salutation, old.constituency, old.party, old.email`,
       [id, details.house, details.name, details.salutation, details.constituency, details.party, details.email],
       db,
     );
-    if (updated.length) await logChange(staff, "edit politician", { id, ...details }, db);
-    return updated.length > 0;
+    if (!was) return false;
+    await logChange(staff, "edit politician", { id, name: details.name, changed: changedFields(was, details) }, db);
+    return true;
   });
 }
 

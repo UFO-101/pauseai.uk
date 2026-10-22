@@ -76,7 +76,7 @@ export async function linkSupporters(db?: Queryable): Promise<LinkResult> {
 
 const SUMMARY_COLUMNS = `s.id::int AS id, s.name, coalesce(s.emails, '{}') AS emails, s.phone, s.postcode,
   coalesce(s.sources, '{}') AS sources, s.luma_contact AS "lumaContact", s.first_seen_at AS "firstSeenAt",
-  s.last_active_at AS "lastActiveAt", s.events, s.letters, coalesce(s.opted_out, '{}') AS "optedOut", s.member`;
+  s.last_active_at AS "lastActiveAt", s.events, s.letters, s.member`;
 
 export type SupportersPage = { supporters: SupporterSummary[]; total: number; pages: number };
 

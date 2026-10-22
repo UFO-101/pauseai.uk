@@ -4,7 +4,6 @@ import {
   type AnyImportRun,
   type ControlAiImport,
   type LumaImport,
-  lumaRunIncomplete,
   type MembersImport,
   type MpCheck,
   type MpSync,
@@ -192,7 +191,6 @@ function LumaRun({ run, open }: { run: LumaImport; open?: boolean }) {
     <RunBox
       run={run}
       open={open}
-      incomplete={lumaRunIncomplete(run.result)}
       summary={
         <>
           {staffCopy.luma.result(run.result)}

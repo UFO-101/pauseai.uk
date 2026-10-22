@@ -3,6 +3,7 @@ import Link from "next/link";
 import { staffCopy } from "@/lib/content/staff-interface";
 import type { EmailPermission } from "@/lib/email-permissions";
 import { staffDate } from "@/lib/staff-time";
+import Strip from "./ui/Strip";
 import styles from "./EmailPermissionTiles.module.css";
 
 const copy = staffCopy.supporters.detail.permissions;
@@ -13,26 +14,32 @@ function reason(permission: EmailPermission): string {
   return words ? words(permission.at ? staffDate(permission.at) : "") : permission.reason;
 }
 
-/** One topic: whether we'd email them about it, large, then why in a few words; how we know is behind the "?" by its name. */
+/** A topic's answer as a strip's colour: green we'd email them, plain we wouldn't, amber we don't know. */
+const TONES = { yes: "green", no: "plain", unsure: "amber" } as const;
+
+/** One topic, a strip: its name and whether we'd email them about it, then why in a few words; how we know is behind the "?" by its name. */
 function Tile({ permission, address }: { permission: EmailPermission; address?: string }) {
   const id = `why-${permission.topic}-${permission.address.replace(/\W/g, "-")}`;
   return (
-    <li className={styles.tile} data-send={permission.send}>
-      <span className={styles.topic}>
-        {copy.topics[permission.topic]}
-        {address && ` · ${address}`}
-        <button
-          type="button"
-          className={styles.help}
-          popoverTarget={id}
-          aria-label={copy.why}
-          style={{ anchorName: `--${id}` } as React.CSSProperties}
-        >
-          ?
-        </button>
-      </span>
-      <strong className={styles.answer}>{copy[permission.send]}</strong>
-      <span className={styles.reason}>{reason(permission)}</span>
+    <li data-send={permission.send}>
+      <Strip tone={TONES[permission.send]} icon={false}>
+        <span>
+          {copy.topics[permission.topic]}
+          {address && ` · ${address}`}: {copy[permission.send]}
+        </span>
+        <span className={styles.reason}>
+          {reason(permission)}
+          <button
+            type="button"
+            className={styles.help}
+            popoverTarget={id}
+            aria-label={copy.why}
+            style={{ anchorName: `--${id}` } as React.CSSProperties}
+          >
+            ?
+          </button>
+        </span>
+      </Strip>
       <div
         id={id}
         popover="auto"
@@ -45,31 +52,35 @@ function Tile({ permission, address }: { permission: EmailPermission; address?: 
   );
 }
 
-/** A blocked address: one tile in place of its topics', since nothing goes to it. */
+/** A blocked address: one red strip in place of its topics', since nothing goes to it. */
 function Blocked({ permission, address }: { permission: EmailPermission; address?: string }) {
   const because = copy.blockedBecause[permission.source ?? ""];
   return (
-    <li className={`${styles.tile} ${styles.wide}`} data-send="no">
-      {address && <span className={styles.topic}>{address}</span>}
-      <strong className={styles.answer}>{copy.blocked}</strong>
-      <span className={styles.reason}>
-        {because && `${because(staffDate(permission.at!))} `}
-        <Link href="/staff/blocked-emails">{copy.seeBlocked}</Link>
-      </span>
+    <li data-send="no">
+      <Strip tone="red">
+        <span>
+          {address && `${address}: `}
+          {copy.blocked}
+        </span>
+        <span className={styles.reason}>
+          {because && `${because(staffDate(permission.at!))} `}
+          <Link href="/staff/blocked-emails">{copy.seeBlocked}</Link>
+        </span>
+      </Strip>
     </li>
   );
 }
 
 /**
- * Whether we'd email a supporter about each topic, a tile each, for each
- * of their addresses; an address that's blocked gets one tile. The address
- * is named only when they have more than one.
+ * Whether we'd email a supporter about each topic, a strip each, for each
+ * of their addresses; an address that's blocked gets one. The address is
+ * named only when they have more than one.
  */
 export default function EmailPermissionTiles({ permissions }: { permissions: EmailPermission[] }) {
   const addresses = [...new Set(permissions.map((p) => p.address))];
   const named = addresses.length > 1;
   return (
-    <ul className={styles.tiles}>
+    <ul className={styles.list}>
       {addresses.flatMap((address) => {
         const own = permissions.filter((p) => p.address === address);
         const label = named ? address : undefined;

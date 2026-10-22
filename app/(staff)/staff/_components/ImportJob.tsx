@@ -2,14 +2,7 @@ import type { ReactNode } from "react";
 import { site } from "@/lib/content/site";
 import { jobTitles, staffCopy } from "@/lib/content/staff-interface";
 import { CONTROLAI_LETTER_PAGE } from "@/lib/controlai-letter";
-import {
-  type AnyImportRun,
-  IMPORT_JOBS,
-  type ImportJob,
-  importPath,
-  lumaRunIncomplete,
-  runTone,
-} from "@/lib/import-runs";
+import { type AnyImportRun, IMPORT_JOBS, type ImportJob, importPath, runStatus, runTone } from "@/lib/import-runs";
 import { MEMBERS_API } from "@/lib/parliament";
 import { staffTime } from "@/lib/staff-time";
 import Breadcrumb from "./Breadcrumb";
@@ -19,6 +12,7 @@ import JobActions from "./JobActions";
 import type { Decide } from "./Run";
 import RunList from "./RunList";
 import Tag from "@/components/ui/Tag";
+import Strip from "./ui/Strip";
 
 // Every import and check: the overview at /staff/import-data, a card each,
 // and each job's own page, with its button and every run it has made.
@@ -102,17 +96,20 @@ function Intro({ job, airtableTable }: { job: ImportJob; airtableTable: string }
   );
 }
 
-/** How a job's newest run ended, and when, in a strip tinted to match; or that it has never run. */
+/** How a job's newest run ended, and when, in a strip tinted to match (ui/Strip); or that it has never run. */
 function NewestRun({ job, run }: { job: ImportJob; run: AnyImportRun | undefined }) {
-  if (!run) return <p className={styles.status}>{ABOUT[job].none}</p>;
-  const tone = runTone(run);
-  const stoppedShort = run.job === "import-luma" && run.status !== "failed" && lumaRunIncomplete(run.result);
+  if (!run)
+    return (
+      // A job that has never run: said plainly, not as a status in bold.
+      <Strip>{ABOUT[job].none}</Strip>
+    );
   return (
-    <p className={tone ? `${styles.status} ${styles[tone]}` : styles.status}>
-      <strong>{staffCopy.runs.status[run.status]}</strong>
-      {stoppedShort && <strong> · {staffCopy.runs.incomplete}</strong>}
-      <span className={styles.when}>{staffTime(run.at)}</span>
-    </p>
+    <Strip tone={runTone(run) ?? "plain"} icon={false}>
+      <span className={styles.line}>
+        {staffCopy.runs.status[runStatus(run)]}
+        <span className={styles.when}>{staffTime(run.at)}</span>
+      </span>
+    </Strip>
   );
 }
 

@@ -72,5 +72,6 @@ describeWithDatabase("recentLetters", () => {
     expect(await ids({ answered: false })).toEqual([1]);
     expect(await ids({ supporterId: 1 })).toEqual([1]);
     expect(await ids({ supporterId: 2 })).toEqual([]);
+    expect(await ids({ letterId: 1 })).toEqual([1]);
   });
 });

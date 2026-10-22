@@ -2,29 +2,31 @@ import { describe, expect, it } from "vitest";
 import {
   accountsSearch,
   emailsSearch,
+  letterId,
   lettersSearch,
+  pageNumber,
+  pagePath,
   politicianId,
   supporterId,
   supportersSearch,
 } from "./staff-search";
 
 describe("lettersSearch", () => {
-  const none = { status: undefined, search: undefined, answered: undefined, supporterId: undefined };
+  const none = { status: undefined, search: undefined, answered: undefined };
 
-  it("filters by a status, a search, whether answered and a supporter", () => {
-    expect(lettersSearch({ status: "sent", q: " jane ", answered: "yes", supporter: "7" })).toEqual({
+  it("filters by a status, a search and whether answered", () => {
+    expect(lettersSearch({ status: "sent", q: " jane ", answered: "yes" })).toEqual({
       status: "sent",
       q: " jane ",
       answered: "yes",
-      supporter: "7",
-      filter: { status: "sent", search: "jane", answered: true, supporterId: 7 },
+      filter: { status: "sent", search: "jane", answered: true },
     });
     expect(lettersSearch({ answered: "no" }).filter).toEqual({ ...none, answered: false });
   });
 
   it("filters by nothing when each is blank or unknown", () => {
-    expect(lettersSearch({})).toEqual({ status: "", q: "", answered: "", supporter: "", filter: none });
-    expect(lettersSearch({ status: "nope", q: "  ", answered: "maybe", supporter: "x" }).filter).toEqual(none);
+    expect(lettersSearch({})).toEqual({ status: "", q: "", answered: "", filter: none });
+    expect(lettersSearch({ status: "nope", q: "  ", answered: "maybe" }).filter).toEqual(none);
     // A name every object inherits isn't a status.
     expect(lettersSearch({ status: "toString" }).filter).toEqual(none);
   });
@@ -103,6 +105,27 @@ describe("accountsSearch", () => {
     expect(accountsSearch({ notice: "not-pauseai" })).toEqual({ notice: "not-pauseai" });
     expect(accountsSearch({ notice: "x" })).toEqual({ notice: "" });
     expect(accountsSearch({})).toEqual({ notice: "" });
+  });
+});
+
+describe("pageNumber", () => {
+  it("reads a page from 1, or the first page", () => {
+    expect(pageNumber("3")).toBe(3);
+    for (const page of ["0", "x", "", undefined]) expect(pageNumber(page)).toBe(1);
+  });
+});
+
+describe("pagePath", () => {
+  it("gives the first page at the list's own URL, and any other with its number", () => {
+    expect(pagePath("/staff/audit-log", 1)).toBe("/staff/audit-log");
+    expect(pagePath("/staff/audit-log", 2)).toBe("/staff/audit-log?page=2");
+  });
+});
+
+describe("letterId", () => {
+  it("is a whole number from the URL", () => {
+    expect(letterId("17")).toBe(17);
+    expect(letterId("x")).toBeUndefined();
   });
 });
 

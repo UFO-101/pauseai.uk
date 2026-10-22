@@ -5,6 +5,7 @@ import { campaigns } from "@/lib/content/email-your-mp";
 import { staffCopy } from "@/lib/content/staff-interface";
 import {
   HeldSyncExample,
+  PoliticianDetailsExample,
   PoliticianFormExample,
   PoliticianTableEmptyExample,
   PoliticianTableExample,
@@ -34,16 +35,17 @@ describe("the staff examples", () => {
       );
   });
 
-  it("logs marking a politician signed, and undoing it", async () => {
-    await render(<PoliticianTableExample />);
+  it("logs removing a politician's signature on their page", async () => {
+    await render(<PoliticianDetailsExample />);
     await page.getByRole("button", { name: staffCopy.politicians.unmarkSigned }).click();
     await expect
       .element(log().nth(0))
       .toHaveTextContent(`markSigned({"politicianId":"7","campaign":"${pm.slug}","signed":""})`);
-    await page.getByRole("button", { name: staffCopy.politicians.markSigned }).click();
-    await expect
-      .element(log().nth(1))
-      .toHaveTextContent(`markSigned({"politicianId":"8","campaign":"${pm.slug}","signed":"1"})`);
+  });
+
+  it("lists politicians with no buttons", async () => {
+    await render(<PoliticianTableExample />);
+    expect(page.getByRole("button").all()).toHaveLength(0);
   });
 
   it("says when no politician matches", async () => {

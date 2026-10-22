@@ -8,7 +8,7 @@ export const exampleBlock: EmailBlock = {
   since: "2026-10-12T09:10:00Z",
   canReset: true,
   politicians: [{ id: 5, name: "Bouncy McTestface MP" }],
-  letterId: 1,
+  letter: { id: 17, to: "Bouncy McTestface MP" },
   refused: 2,
 };
 
@@ -20,7 +20,7 @@ export const exampleComplaint: EmailBlock = {
   since: "2026-10-11T15:00:00Z",
   canReset: false,
   politicians: [],
-  letterId: null,
+  letter: null,
   refused: 0,
 };
 
@@ -33,7 +33,7 @@ export const exampleProblems: ProblemSummary[] = [
     kind: "hard",
     reason: exampleBlock.reason,
     purpose: "letter",
-    letterId: 1,
+    letter: { id: 17, to: "Bouncy McTestface MP" },
   },
   {
     id: 2,
@@ -42,7 +42,7 @@ export const exampleProblems: ProblemSummary[] = [
     kind: "soft",
     reason: "Mailbox full",
     purpose: "forwarded-reply",
-    letterId: null,
+    letter: null,
   },
   {
     id: 1,
@@ -51,6 +51,6 @@ export const exampleProblems: ProblemSummary[] = [
     kind: "complaint",
     reason: "",
     purpose: null,
-    letterId: null,
+    letter: null,
   },
 ];
