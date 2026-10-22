@@ -61,7 +61,6 @@ export default function SupportersTable({ page, search }: { page: SupportersPage
             {heading("active", copy.columns.lastActive)}
             {heading("events", copy.columns.events)}
             {heading("letters", copy.columns.letters)}
-            <th>{copy.columns.optedOut}</th>
           </tr>
         </thead>
         <tbody>
@@ -83,7 +82,6 @@ export default function SupportersTable({ page, search }: { page: SupportersPage
               <td>{supporter.lastActiveAt && staffDate(supporter.lastActiveAt)}</td>
               <td>{supporter.events}</td>
               <td>{supporter.letters}</td>
-              <td>{supporter.optedOut.map((list) => copy.lists[list]).join(", ")}</td>
             </tr>
           ))}
         </tbody>

@@ -55,10 +55,10 @@ test("the supporters list after the Luma import, filtered and sorted", async ({ 
 
   await page.getByRole("searchbox", { name: copy.filters.search }).fill("fixture@example");
   await page.getByRole("combobox", { name: copy.filters.events }).selectOption("1");
-  await page.getByRole("combobox", { name: copy.filters.sort }).selectOption("name");
   await page.getByRole("button", { name: copy.filters.filter }).click();
   await expect(page).toHaveURL(/\/staff\/supporters\?q=fixture%40example&/);
   await expect(page).toHaveURL(/registered=1/);
+  await page.getByRole("link", { name: copy.columns.name }).click();
   await expect(page).toHaveURL(/sort=name/);
   await expect(page.getByRole("link", { name: "Fay Follower" })).toHaveCount(0);
   // Four: the fifth guest declined every event.

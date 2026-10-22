@@ -294,7 +294,6 @@ export const staff: Group = {
                       sources: ["letter"],
                       lumaContact: false,
                       events: 0,
-                      optedOut: [],
                     },
                   ],
                   total: 120,
@@ -411,7 +410,6 @@ export const staff: Group = {
                     events: 0,
                     letters: 0,
                     lumaContact: false,
-                    optedOut: [],
                   },
                   identities: [{ source: "luma", email: "x@example.com", name: "", seenAt: null }],
                   contacts: [],
@@ -1215,7 +1213,10 @@ export const staff: Group = {
           label: "A run that stopped before it finished, and one that failed",
           render: () => (
             <StaffPage as="div">
-              <RunBox run={exampleAppliedSync} summary="an example summary" incomplete />
+              <RunBox
+                run={exampleRun("import-luma", { ...exampleLumaResult, stoppedBy: "time" })}
+                summary="an example summary"
+              />
               <RunBox run={exampleFailedRun("sync-mps", "An example error", { id: 5 })} summary={null} />
             </StaffPage>
           ),

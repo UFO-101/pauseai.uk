@@ -1,5 +1,5 @@
 import { expect, it } from "vitest";
-import { asList, IMPORT_JOBS, importPath, isImportJob, jobBySlug, runTone } from "./import-runs";
+import { asList, IMPORT_JOBS, importPath, isImportJob, jobBySlug, runStatus, runTone } from "./import-runs";
 import {
   exampleAppliedSync,
   exampleFailedRun,
@@ -23,6 +23,16 @@ it("gives each job a page of its own, and finds the job from its page's slug", (
   expect(importPath("check-mps")).toBe("/staff/import-data/mp-check");
   for (const job of IMPORT_JOBS) expect(jobBySlug(importPath(job).split("/").pop()!)).toBe(job);
   expect(jobBySlug("history")).toBeUndefined();
+});
+
+it("says a Luma import that left work for later is incomplete, in place of done or unchanged, but not failed", () => {
+  expect(runStatus(exampleRun("import-luma", { ...exampleLumaResult, stoppedBy: "time" }))).toBe("incomplete");
+  expect(
+    runStatus(exampleRun("import-luma", { ...exampleLumaResult, contactsPassGoing: true }, { status: "unchanged" })),
+  ).toBe("incomplete");
+  expect(runStatus(exampleRun("import-luma", exampleLumaResult))).toBe("ok");
+  expect(runStatus(exampleFailedRun("import-luma", "boom", {}))).toBe("failed");
+  expect(runStatus(exampleHeldSync)).toBe("held");
 });
 
 it("colours a run by how it ended: green done or applied, amber held or stopped short, red failed, none otherwise", () => {

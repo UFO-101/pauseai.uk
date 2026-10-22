@@ -7,7 +7,10 @@ import type { SupportersSearch } from "@/lib/staff-search";
 import { SUPPORTER_SOURCES } from "@/lib/supporters";
 import styles from "./StaffForms.module.css";
 
-/** Search, filter and sort the supporters list. A GET form, so the URL holds the filter. */
+/**
+ * Search and filter the supporters list. A GET form, so the URL holds the
+ * filter. The table's column headings sort it; the form keeps that sort.
+ */
 export default function SupporterFilters({ search }: { search: SupportersSearch }) {
   const copy = staffCopy.supporters.filters;
   return (
@@ -53,15 +56,8 @@ export default function SupporterFilters({ search }: { search: SupportersSearch 
       <Field label={copy.to}>
         <TextInput type="date" name="to" defaultValue={search.to} />
       </Field>
-      <Field label={copy.sort}>
-        <Select name="sort" defaultValue={search.sort}>
-          {Object.entries(copy.sorts).map(([value, label]) => (
-            <option key={value} value={value}>
-              {label}
-            </option>
-          ))}
-        </Select>
-      </Field>
+      {search.sort && <input type="hidden" name="sort" value={search.sort} />}
+      {search.dir && <input type="hidden" name="dir" value={search.dir} />}
       <Button variant="primary" size="small" type="submit">
         {copy.filter}
       </Button>

@@ -1148,7 +1148,7 @@ describe("ImportOverview", () => {
     ]);
     // Under the name, how the newest run ended, tinted to match.
     const status = (i: number) => cards[i].querySelector("h2 + div > p")!;
-    expect(status(0).textContent).toBe(`${staffCopy.runs.status.ok} · ${staffCopy.runs.incomplete}2026-10-21 11:17`);
+    expect(status(0).textContent).toBe(`${staffCopy.runs.status.incomplete}2026-10-21 11:17`);
     expect([0, 1, 2, 3, 4].map((i) => status(i).className.match(/green|amber|red/)?.[0])).toEqual([
       "amber",
       "green",
@@ -1596,7 +1596,7 @@ describe("RunList", () => {
     expect(run.element().textContent).toContain(
       `${staffCopy.luma.result(exampleLumaResult)} ${staffCopy.luma.contactPages(10)} ${staffCopy.luma.contactsPassGoing}`,
     );
-    expect(run.element().textContent).toContain(staffCopy.runs.incomplete);
+    expect(run.element().textContent).toMatch(new RegExp(`^${staffCopy.runs.status.incomplete} `));
   });
 
   it("shows a Luma import's counts, or its error", async () => {
@@ -1614,7 +1614,7 @@ describe("RunList", () => {
         `${staffCopy.runs.status.ok} ${AT} · ${staffCopy.import.nightly} · ${staffCopy.luma.result(luma)}`,
       );
     expect(first.element().textContent).not.toContain(staffCopy.luma.stoppedBy.time);
-    expect(first.element().textContent).not.toContain(staffCopy.runs.incomplete);
+    expect(first.element().textContent).not.toContain(staffCopy.runs.status.incomplete);
     await expect
       .element(second)
       .toHaveTextContent(`${staffCopy.runs.status.failed} ${AT} · ${staffCopy.import.nightly} · Luma answered 500`);
@@ -1624,7 +1624,7 @@ describe("RunList", () => {
     expect(getComputedStyle(second.element().closest("section")!).backgroundColor).toBe("rgba(0, 0, 0, 0)");
   });
 
-  it("says why a Luma import stopped early, with a tag saying it's incomplete, tinted amber as the newest run", async () => {
+  it("says why a Luma import stopped early, as incomplete in place of done, tinted amber as the newest run", async () => {
     await render(
       <RunList runs={[ran("import-luma", { ...exampleLumaResult, stoppedBy: "rate-limit" })]} none="None" />,
     );
@@ -1632,7 +1632,7 @@ describe("RunList", () => {
     await expect
       .element(only)
       .toHaveTextContent(
-        `${staffCopy.runs.status.ok} ${staffCopy.runs.incomplete} ${AT} · ${staffCopy.import.nightly} · ${staffCopy.luma.result(exampleLumaResult)} ${staffCopy.luma.stoppedBy["rate-limit"]}`,
+        `${staffCopy.runs.status.incomplete} ${AT} · ${staffCopy.import.nightly} · ${staffCopy.luma.result(exampleLumaResult)} ${staffCopy.luma.stoppedBy["rate-limit"]}`,
       );
     expect(only.element().closest("section")!.parentElement!.className).toMatch(/amber/);
     expect(getComputedStyle(only.element().closest("section")!).borderLeftWidth).toBe("1px");
@@ -1761,10 +1761,24 @@ describe("LetterFilters", () => {
 });
 
 describe("SupporterFilters", () => {
+  it("sends no sort when the list has its default one", async () => {
+    await render(<SupporterFilters search={supportersSearch({})} />);
+    const form = page.getByRole("searchbox", { name: staffCopy.supporters.filters.search }).element().closest("form")!;
+    expect(new FormData(form).has("sort")).toBe(false);
+    expect(new FormData(form).has("dir")).toBe(false);
+  });
+
   it("is a GET form to the list, with each filter as typed", async () => {
     await render(
       <SupporterFilters
-        search={supportersSearch({ q: "jane", source: "luma", active: "90", registered: "1", sort: "name" })}
+        search={supportersSearch({
+          q: "jane",
+          source: "luma",
+          active: "90",
+          registered: "1",
+          sort: "name",
+          dir: "desc",
+        })}
       />,
     );
     const copy = staffCopy.supporters.filters;
@@ -1775,7 +1789,9 @@ describe("SupporterFilters", () => {
     expect(form.getAttribute("action")).toBe("/staff/supporters");
     await expect.element(page.getByRole("combobox", { name: copy.source })).toHaveValue("luma");
     await expect.element(page.getByRole("combobox", { name: copy.active })).toHaveValue("90");
-    await expect.element(page.getByRole("combobox", { name: copy.sort })).toHaveValue("name");
+    // The headings sort; filtering keeps their sort.
+    expect(new FormData(form).get("sort")).toBe("name");
+    expect(new FormData(form).get("dir")).toBe("desc");
     await expect.element(page.getByRole("combobox", { name: copy.events })).toHaveValue("1");
     await expect.element(page.getByRole("combobox", { name: copy.lists })).toHaveValue("");
   });
@@ -1802,17 +1818,14 @@ describe("SupporterBadges", () => {
 });
 
 describe("SupportersTable", () => {
-  it("lists each supporter with a link to their page, their emails, badges, dates and opt-outs, and pages", async () => {
+  it("lists each supporter with a link to their page, their emails, badges and dates, and pages", async () => {
     const copy = staffCopy.supporters;
     const search = supportersSearch({ q: "j", page: "2" });
     await render(
       <SupportersTable
         search={search}
         page={{
-          supporters: [
-            exampleSupporter,
-            { ...exampleSupporter, id: 8, name: null, emails: ["sam@example.com"], optedOut: [] },
-          ],
+          supporters: [exampleSupporter, { ...exampleSupporter, id: 8, name: null, emails: ["sam@example.com"] }],
           total: 120,
           pages: 3,
         }}
@@ -1824,7 +1837,6 @@ describe("SupportersTable", () => {
       .toHaveAttribute("href", "/staff/supporters/7");
     await expect.element(page.getByRole("link", { name: copy.noName })).toHaveAttribute("href", "/staff/supporters/8");
     await expect.element(page.getByText(copy.moreEmails(1))).toBeVisible();
-    await expect.element(page.getByRole("cell", { name: copy.lists["luma-calendar"] })).toBeVisible();
     await expect.element(page.getByRole("cell", { name: "1 Mar 2026" }).first()).toBeVisible();
     await expect
       .element(page.getByRole("link", { name: copy.previous }))
@@ -1994,7 +2006,6 @@ describe("SupporterDetails", () => {
             lumaContact: false,
             events: 0,
             letters: 0,
-            optedOut: [],
             firstSeenAt: null,
             lastActiveAt: null,
           },

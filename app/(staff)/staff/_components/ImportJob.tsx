@@ -2,14 +2,7 @@ import type { ReactNode } from "react";
 import { site } from "@/lib/content/site";
 import { jobTitles, staffCopy } from "@/lib/content/staff-interface";
 import { CONTROLAI_LETTER_PAGE } from "@/lib/controlai-letter";
-import {
-  type AnyImportRun,
-  IMPORT_JOBS,
-  type ImportJob,
-  importPath,
-  lumaRunIncomplete,
-  runTone,
-} from "@/lib/import-runs";
+import { type AnyImportRun, IMPORT_JOBS, type ImportJob, importPath, runStatus, runTone } from "@/lib/import-runs";
 import { MEMBERS_API } from "@/lib/parliament";
 import { staffTime } from "@/lib/staff-time";
 import Breadcrumb from "./Breadcrumb";
@@ -106,11 +99,9 @@ function Intro({ job, airtableTable }: { job: ImportJob; airtableTable: string }
 function NewestRun({ job, run }: { job: ImportJob; run: AnyImportRun | undefined }) {
   if (!run) return <p className={styles.status}>{ABOUT[job].none}</p>;
   const tone = runTone(run);
-  const stoppedShort = run.job === "import-luma" && run.status !== "failed" && lumaRunIncomplete(run.result);
   return (
     <p className={tone ? `${styles.status} ${styles[tone]}` : styles.status}>
-      <strong>{staffCopy.runs.status[run.status]}</strong>
-      {stoppedShort && <strong> · {staffCopy.runs.incomplete}</strong>}
+      <strong>{staffCopy.runs.status[runStatus(run)]}</strong>
       <span className={styles.when}>{staffTime(run.at)}</span>
     </p>
   );

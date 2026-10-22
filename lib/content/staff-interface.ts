@@ -140,14 +140,6 @@ export const staffCopy = {
       from: "First seen from",
       to: "First seen to",
       unsubscribed: "Unsubscribed",
-      sort: "Sort by",
-      sorts: {
-        active: "Last activity",
-        first: "First sign-up",
-        name: "Name",
-        events: "Luma events",
-        letters: "Letters to MP",
-      } as Record<string, string>,
       filter: "Search",
     },
     columns: {
@@ -158,7 +150,6 @@ export const staffCopy = {
       lastActive: "Last activity",
       events: "Luma events",
       letters: "Letters to MP",
-      optedOut: "Unsubscribed",
     },
     noName: "(no name)",
     moreEmails: (n: number) => `+${n}`,
@@ -570,9 +561,12 @@ export const staffCopy = {
 
   // The line every run in the import log starts with (RunBox): how it
   // ended, when, who started it, and for a held MP import, who decided it.
+  // A Luma import that left work for later is incomplete in place of done
+  // or unchanged.
   runs: {
     status: {
       ok: "Done",
+      incomplete: "Incomplete",
       failed: "Failed",
       unchanged: "Unchanged",
       held: "Held",
@@ -581,8 +575,6 @@ export const staffCopy = {
     } as Record<string, string>,
     by: (who: string) => `by ${who}`,
     decidedBy: (who: string) => `decided by ${who}`,
-    // The tag on a run that stopped before it finished.
-    incomplete: "Incomplete",
   },
   check: {
     title: "Members of Parliament against Parliament's list",
