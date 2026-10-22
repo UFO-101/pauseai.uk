@@ -22,7 +22,7 @@ function errorFor(result: Exclude<MarchRegisterResult, { ok: true }> | "unreacha
  * The registration form, the register band's first card. `register` is the
  * Server Action (app/(march)/march/actions.ts), which adds the person to the
  * Luma event; once it has, `onRegistered` moves on to the share card.
- * Phone, city and the mailing list opt-in are asked for, but not sent yet.
+ * Phone, city, postcode and the mailing list opt-in are asked for, but not sent yet.
  */
 export default function SignupForm({
   register,
@@ -43,8 +43,7 @@ export default function SignupForm({
     const form = new FormData(e.currentTarget);
     const value = (name: string) => String(form.get(name)).trim();
     const signup = {
-      firstName: value("firstName"),
-      lastName: value("lastName"),
+      name: value("name"),
       email: value("email"),
       // Empty for people, filled in by bots. The server checks it.
       website: value("website"),
@@ -71,15 +70,9 @@ export default function SignupForm({
     <form className={m("signup")} method="post" onSubmit={handleSubmit} {...cardMotionProps(motion, onLeft)}>
       <p className={m("signup-head")}>{copy.head}</p>
 
-      <div className={m("signup-row")}>
-        <div className={m("field")}>
-          <label htmlFor="firstName">{copy.firstName}</label>
-          <input id="firstName" name="firstName" type="text" autoComplete="given-name" required data-focus-first />
-        </div>
-        <div className={m("field")}>
-          <label htmlFor="lastName">{copy.lastName}</label>
-          <input id="lastName" name="lastName" type="text" autoComplete="family-name" required />
-        </div>
+      <div className={m("field")}>
+        <label htmlFor="name">{copy.name}</label>
+        <input id="name" name="name" type="text" autoComplete="name" required data-focus-first />
       </div>
 
       <div className={m("field")}>
@@ -87,19 +80,28 @@ export default function SignupForm({
         <input id="email" name="email" type="email" autoComplete="email" required />
       </div>
 
+      <div className={m("field")}>
+        <label htmlFor="phone">
+          {copy.phone} <span className={m("optional")}>{copy.optional}</span>
+        </label>
+        <input id="phone" name="phone" type="tel" autoComplete="tel" />
+        <p className={m("hint")}>{copy.phoneHint}</p>
+      </div>
+
       <div className={m("signup-row")}>
-        <div className={m("field")}>
-          <label htmlFor="phone">
-            {copy.phone} <span className={m("optional")}>{copy.optional}</span>
-          </label>
-          <input id="phone" name="phone" type="tel" autoComplete="tel" />
-          <p className={m("hint")}>{copy.phoneHint}</p>
-        </div>
         <div className={m("field")}>
           <label htmlFor="city">
             {copy.city} <span className={m("optional")}>{copy.optional}</span>
           </label>
           <input id="city" name="city" type="text" autoComplete="address-level2" />
+          <p className={m("hint")}>{copy.cityHint}</p>
+        </div>
+        <div className={m("field")}>
+          <label htmlFor="postcode">
+            {copy.postcode} <span className={m("optional")}>{copy.optional}</span>
+          </label>
+          <input id="postcode" name="postcode" type="text" autoComplete="postal-code" />
+          <p className={m("hint")}>{copy.postcodeHint}</p>
         </div>
       </div>
 

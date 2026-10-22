@@ -4,7 +4,7 @@ import { server } from "@/tests/fixtures/msw";
 import { registerForMarch } from "./actions";
 
 const ADD = "https://public-api.luma.com/v1/events/guests/add";
-const person = { firstName: "Testy", lastName: "McTestface", email: "testy@example.org", phone: "", city: "" };
+const person = { name: "Testy McTestface", email: "testy@example.org", phone: "", city: "", postcode: "" };
 
 beforeEach(() => {
   vi.stubEnv("LUMA_API_KEY", "key");

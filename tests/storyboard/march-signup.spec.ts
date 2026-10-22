@@ -1,4 +1,4 @@
-import type { Page } from "@playwright/test";
+import type { Locator, Page } from "@playwright/test";
 import { marchSignupCopy as copy } from "@/lib/content/march-signup";
 import { BASE, expect, frame, test } from "./fixtures";
 import { hydrated, layoutSettled, scrollSettled } from "./settle";
@@ -16,12 +16,19 @@ async function openSignup(page: Page) {
   await layoutSettled(page, "main");
 }
 
+/** A new card's title, scrolled to the top of the window but clear of the header. */
+async function expectBelowHeader(page: Page, title: Locator) {
+  const bar = (await header(page).boundingBox())!;
+  const top = (await title.boundingBox())!.y;
+  expect(top).toBeGreaterThanOrEqual(bar.y + bar.height);
+  expect(top).toBeLessThan(page.viewportSize()!.height / 2);
+}
+
 /** Fills in the form at the foot of the page, reached by the hero's button. */
 async function fillIn(page: Page, email: string) {
   await page.getByRole("link", { name: "Register now" }).click();
   await scrollSettled(page);
-  await page.getByLabel(copy.form.firstName).fill("Testy");
-  await page.getByLabel(copy.form.lastName).fill("McTestface");
+  await page.getByLabel(copy.form.name).fill("Testy McTestface");
   await page.getByLabel(copy.form.email).fill(email);
 }
 
@@ -46,6 +53,7 @@ test("registering, and the form turns into the share card", { tag: "@phone" }, a
   await expect(page).toHaveURL(`${BASE}/march#register`);
   await expect(page.getByRole("link", { name: copy.share.impact.link })).toBeVisible();
   await scrollSettled(page);
+  await expectBelowHeader(page, title);
   await frame(page, "the share card, where the form was");
 });
 
@@ -100,10 +108,11 @@ test("sharing, then calling it a day, then registering someone new", { tag: "@ph
     "https://luma.com/pauseai-nov26",
   );
   await scrollSettled(page);
+  await expectBelowHeader(page, page.getByRole("heading", { name: "Thank you for registering" }));
   await frame(page, "the thank-you card");
 
   await page.getByRole("button", { name: copy.thanks.registerAnother }).click();
-  await expect(page.getByLabel(copy.form.firstName)).toBeFocused();
+  await expect(page.getByLabel(copy.form.name)).toBeFocused();
   await expect(page.getByLabel(copy.form.email)).toHaveValue("");
   await scrollSettled(page);
   await frame(page, "the form again, empty, for someone new");

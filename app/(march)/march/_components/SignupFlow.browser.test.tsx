@@ -16,8 +16,7 @@ async function renderFlow() {
 }
 
 async function register() {
-  await page.getByLabelText("First name").fill("Testy");
-  await page.getByLabelText("Last name").fill("McTestface");
+  await page.getByLabelText("Full name").fill("Testy McTestface");
   await page.getByLabelText("Email address").fill("testy@example.org");
   await page.getByRole("button", { name: copy.form.submit, exact: true }).click();
 }
@@ -37,16 +36,16 @@ describe("SignupFlow", () => {
     await register();
     await expect.element(shareHeading()).toBeVisible();
     await expect.poll(() => document.activeElement).toBe(shareHeading().element());
-    expect(page.getByLabelText("First name").query()).toBeNull();
+    expect(page.getByLabelText("Full name").query()).toBeNull();
 
     await page.getByRole("button", { name: copy.share.finish }).click();
     await expect.element(thanksHeading()).toBeVisible();
     await expect.poll(() => document.activeElement).toBe(thanksHeading().element());
 
     await page.getByRole("button", { name: copy.thanks.registerAnother }).click();
-    const firstName = page.getByLabelText("First name");
-    await expect.element(firstName).toHaveValue("");
-    await expect.poll(() => document.activeElement).toBe(firstName.element());
+    const name = page.getByLabelText("Full name");
+    await expect.element(name).toHaveValue("");
+    await expect.poll(() => document.activeElement).toBe(name.element());
   });
 
   it("keeps the share card within a phone's width, its app row scrolling instead", async () => {
@@ -62,6 +61,19 @@ describe("SignupFlow", () => {
     await expect.element(shareHeading()).toBeVisible();
     const card = shareHeading().element().parentElement!;
     expect(card.getBoundingClientRect().width).toBeLessThanOrEqual(390);
+    await page.viewport(1280, 900);
+  });
+
+  it("scrolls a card taller than the window to its top, not its bottom", async () => {
+    await page.viewport(360, 500);
+    await renderFlow();
+    await register();
+    await expect.element(shareHeading()).toBeVisible();
+    const card = shareHeading().element().parentElement!;
+    expect(card.getBoundingClientRect().height).toBeGreaterThan(500);
+    // Under the room the page keeps for its header, and the card wrapper's own margin.
+    const above = parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop) + 16;
+    await expect.poll(() => Math.round(card.getBoundingClientRect().top)).toBe(above);
     await page.viewport(1280, 900);
   });
 

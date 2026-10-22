@@ -4,7 +4,7 @@
 // directly.
 import { marchSignupCopy } from "@/lib/content/march-signup";
 
-export type MarchRegistration = { firstName: string; lastName: string; email: string };
+export type MarchRegistration = { name: string; email: string };
 
 export type MarchRegistrationCheck =
   | { ok: true; registration: MarchRegistration }
@@ -21,29 +21,18 @@ const text = (input: unknown) => (typeof input === "string" ? input.trim() : "")
 
 export function checkMarchRegistration(input: unknown): MarchRegistrationCheck {
   const raw = (input && typeof input === "object" ? input : {}) as Record<string, unknown>;
-  const firstName = text(raw.firstName);
-  const lastName = text(raw.lastName);
+  const name = text(raw.name);
   const email = text(raw.email);
   const { errors: words } = marchSignupCopy;
   const errors: Partial<Record<keyof MarchRegistration, string>> = {};
 
-  for (const [field, value, label] of [
-    ["firstName", firstName, "first name"],
-    ["lastName", lastName, "last name"],
-  ] as const) {
-    if (!value) errors[field] = words.missing(label);
-    else if (value.length > MAX_NAME_LENGTH || CONTROL_CHARS.test(value)) errors[field] = words.check(label);
-  }
+  if (!name) errors.name = words.missing("full name");
+  else if (name.length > MAX_NAME_LENGTH || CONTROL_CHARS.test(name)) errors.name = words.check("full name");
 
   if (!email) errors.email = words.emailMissing;
   else if (email.length > MAX_EMAIL_LENGTH || CONTROL_CHARS.test(email) || !EMAIL_PATTERN.test(email))
     errors.email = words.emailInvalid;
 
   if (Object.keys(errors).length > 0) return { ok: false, errors };
-  return { ok: true, registration: { firstName, lastName, email } };
-}
-
-/** The one name Luma takes. */
-export function marchGuestName({ firstName, lastName }: MarchRegistration): string {
-  return `${firstName} ${lastName}`;
+  return { ok: true, registration: { name, email } };
 }
