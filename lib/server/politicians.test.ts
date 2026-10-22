@@ -167,8 +167,23 @@ describeWithDatabase("politicians", () => {
       isTest: false,
       sitting: true,
       emailBlocked: false,
+      letters: 0,
+      replies: 0,
       statuses: {},
     });
+  });
+
+  it("counts the letters to each politician, leaving out those never sent, and how many were answered", async () => {
+    const mp = await addTestPolitician();
+    await query(
+      `INSERT INTO letters (campaign, politician_id, sender_name, sender_email, sender_address, sender_postcode, contact_consent, subject, reply_hash, status, replied_at)
+       VALUES ('regulate-letter-pm', $1, 'A', 'a@example.com', 'x', 'ZZ9 9ZZ', false, 'S', 'a', 'sent', now()),
+              ('regulate-letter-pm', $1, 'B', 'b@example.com', 'x', 'ZZ9 9ZZ', false, 'S', 'b', 'bounced', NULL),
+              ('regulate-letter-pm', $1, 'C', 'c@example.com', 'x', 'ZZ9 9ZZ', false, 'S', 'c', 'not_sent', NULL)`,
+      [mp],
+    );
+    expect(await getPolitician(mp)).toMatchObject({ letters: 2, replies: 1 });
+    expect((await listPoliticians({ sort: { key: "letters", dir: "desc" } }))[0].id).toBe(mp);
   });
 
   it("knows whose address is blocked, whatever its case, and lists only them when asked", async () => {

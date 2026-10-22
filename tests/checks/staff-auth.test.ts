@@ -18,7 +18,13 @@ import { afterEach, describe, expect, it } from "vitest";
 // routes (asking for a link, and where it goes) are how staff get a session,
 // so they can't require one.
 const ROOT = "app/(staff)";
-const OPEN = new Set(["staff/login/page.tsx", "staff/api/login/route.ts", "staff/api/callback/route.ts"]);
+const OPEN = new Set([
+  "staff/login/page.tsx",
+  "staff/api/login/route.ts",
+  "staff/api/callback/route.ts",
+  // The dev login: a fixture build's one-click session, a 404 anywhere else.
+  "staff/api/dev-login/route.ts",
+]);
 
 function files(dir: string): string[] {
   return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {

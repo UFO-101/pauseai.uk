@@ -40,6 +40,9 @@ export type Politician = {
   sitting: boolean;
   /** Their address bounced or complained, so nothing is sent to it (lib/server/email.ts). */
   emailBlocked: boolean;
+  /** Letters written to them (bar those never sent), and how many of those got a reply. */
+  letters: number;
+  replies: number;
   statuses: Record<string, StatusRecord>;
 };
 
@@ -79,6 +82,8 @@ const SELECT_POLITICIANS = `
   SELECT p.id::int AS id, p.airtable_id AS "airtableId", p.house, p.name, p.salutation, p.constituency,
     p.party, p.email, p.is_test AS "isTest", p.sitting,
     EXISTS (SELECT 1 FROM email_blocks b WHERE b.address = lower(p.email)) AS "emailBlocked",
+    (SELECT count(*)::int FROM letters l WHERE l.politician_id = p.id AND l.status <> 'not_sent') AS "letters",
+    (SELECT count(*)::int FROM letters l WHERE l.politician_id = p.id AND l.replied_at IS NOT NULL) AS "replies",
     json_object_agg(s.campaign, json_build_object(
       'status', s.status, 'date', to_char(s.status_date, 'YYYY-MM-DD'), 'note', s.note,
       'updatedAt', s.updated_at, 'updatedBy', s.updated_by

@@ -42,5 +42,8 @@ export const LOGIN_LINK_PATH = "/staff/api/callback";
  */
 export const LOGIN_BROWSER_COOKIE = "staff_login";
 
-/** Staff paths that work without a session: the login page and the two steps of logging in. */
-export const OPEN_STAFF_PATHS = [LOGIN_PATH, "/staff/api/login", LOGIN_LINK_PATH];
+/** The dev login's route (DevLogin): a session at once, in a fixture build only. */
+export const DEV_LOGIN_PATH = "/staff/api/dev-login";
+
+/** Staff paths that work without a session: the login page, the two steps of logging in, and the dev login. */
+export const OPEN_STAFF_PATHS = [LOGIN_PATH, "/staff/api/login", LOGIN_LINK_PATH, DEV_LOGIN_PATH];

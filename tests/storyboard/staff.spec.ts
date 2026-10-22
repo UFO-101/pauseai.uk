@@ -38,6 +38,18 @@ async function logIn(page: Page, database: string, permissions: string[] = []) {
   return logInAsStaff(page, BASE, staffEmail());
 }
 
+test("the dev login signs in as a seeded account in one click, in a fixture build", async ({ page, flowDatabase }) => {
+  addStaffAccount(flowDatabase, "jo@pauseai.uk", ["supporters"]);
+  await page.goto(`${BASE}/staff/login`);
+  const dev = page.getByRole("region", { name: staffCopy.devLogin.title });
+  await expect(dev.getByRole("button", { name: "admin@pauseai.uk" })).toBeVisible();
+  await frame(page, "the login page in a fixture build: the dev login under the card");
+  await dev.getByRole("button", { name: "jo@pauseai.uk" }).click();
+  await expect(page).toHaveURL(`${BASE}/staff`);
+  await expect(page.getByText("jo@pauseai.uk").first()).toBeAttached();
+  await frame(page, "signed in as jo, with the supporters permission");
+});
+
 test("every staff page, without a session, goes to the login page", async ({ request }) => {
   expect(STAFF_PAGES.length).toBeGreaterThan(4);
   for (const route of STAFF_PAGES) {

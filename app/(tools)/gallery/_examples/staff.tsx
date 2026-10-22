@@ -11,6 +11,7 @@ import { exampleChange } from "@/app/(staff)/staff/_components/ChangesTable.exam
 import LetterFilters from "@/app/(staff)/staff/_components/LetterFilters";
 import LettersTable from "@/app/(staff)/staff/_components/LettersTable";
 import { exampleLetter } from "@/app/(staff)/staff/_components/LettersTable.examples";
+import DevLogin from "@/app/(staff)/staff/_components/DevLogin";
 import LoginCard from "@/app/(staff)/staff/_components/LoginCard";
 import LoginForm from "@/app/(staff)/staff/_components/LoginForm";
 import PoliticianFilters from "@/app/(staff)/staff/_components/PoliticianFilters";
@@ -619,6 +620,23 @@ export const staff: Group = {
               <LoginCard title={staffCopy.login.title}>
                 <LoginForm />
               </LoginCard>
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "DevLogin",
+      file: "app/(staff)/staff/_components/DevLogin.tsx",
+      variants: [
+        {
+          label: "Under the login card, in a fixture build only",
+          render: () => (
+            <StaffPage as="div">
+              <LoginCard title={staffCopy.login.title}>
+                <LoginForm />
+              </LoginCard>
+              <DevLogin accounts={["admin@pauseai.uk", "jo@pauseai.uk", "sam@pauseai.uk"]} />
             </StaffPage>
           ),
         },

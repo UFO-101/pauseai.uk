@@ -38,6 +38,8 @@ export const COLOUR_TOKENS = [
   "--status-amber-bg",
   "--status-green",
   "--status-green-bg",
+  "--dev",
+  "--dev-bg",
   "--status-blue",
   "--status-blue-bg",
 ];

@@ -113,16 +113,20 @@ This:
   them. Bouncy McTestface MP (ZZ99ZH) always has `no-such-mailbox@pauseai.uk`,
   which doesn't exist, so letters to them bounce. They're listed in
   `lib/test-mps.json`.
-- with `DATA_FIXTURES=1`, adds fake data (`tests/fixtures/staff-data.sql`),
-  so every staff page has something on it: the Luma fixtures' guests and
-  contacts at four of its events, and Airtable's two MPs, under the same
-  IDs, so an import writes the same rows rather than doubling them; letters
-  to the test MPs in every state, one answered, one bounced and blocking
-  Bouncy's address; an address that complained; a status on Polly
-  Placeholder; one person unsubscribed from the calendar's emails and one
-  who subscribed again; import runs in every state; staff accounts for
-  jo@pauseai.uk (supporters) and sam@pauseai.uk (none) beside the
-  migration's admin; and an audit log of all that. Without `TEST_MP_EMAIL`,
+- with `DATA_FIXTURES=1`, adds fake data (`tests/fixtures/staff-data.sql`)
+  to every table, so every staff page has something on it and the home
+  page's dashboard has a number in each tile for the last week and the week
+  before: the Luma fixtures' people and events and Airtable's two MPs under
+  their own IDs (so an import writes the same rows rather than doubling
+  them) plus made-up people, events, registrations of every status and an
+  erased person; twenty letters to the test MPs in every state, with
+  replies, an out-of-office, bounces that blocked Bouncy's address, a soft
+  bounce and a spam complaint; unsubscribes, one undone; a peer added by
+  staff and an MP who has left; statuses set this week and last; every
+  job's runs in every state, including a sync held for a decision; staff
+  accounts for jo@pauseai.uk (supporters, with a kept session) and
+  sam@pauseai.uk (none) beside the migration's admin; and an audit log of
+  all that. Dates are relative to when it runs. Without `TEST_MP_EMAIL`,
   the test MPs still go in, with `test-mp@example.org`, since the letters go
   to the fixture outbox anyway. The storyboard's flows start from an empty
   database, without this.
@@ -242,16 +246,22 @@ Then postcode `SW1A 1AA` finds Polly Placeholder.
 
 #### Log in to the staff interface
 
-1. Open http://localhost:3000/staff/login, and type admin@pauseai.uk, the
-   account every database starts with. Any other address at pauseai.uk can
-   log in too, but sees only a note saying whom to ask until an admin adds
-   it on `/staff/accounts`.
+Open http://localhost:3000/staff/login. In a fixture build the login card
+has a hatched purple box under it, the dev login: a button per account
+(admin@pauseai.uk, which every database starts with, and the seed's
+jo@pauseai.uk and sam@pauseai.uk) that signs you in at once, with no email.
+It exists only with `DATA_FIXTURES=1`; its route is a 404 anywhere else.
+
+To go through the real login instead:
+
+1. Type an address at pauseai.uk in the card. Any such address can log in,
+   but one without an account sees only a note saying whom to ask until an
+   admin adds it on `/staff/accounts`.
 2. The login email is the newest file in `tmp/outbox/`. Open the
    `/staff/api/callback?token=…` link in it, in the same browser.
 
 You're at `/staff`, logged in for a day, or for 30 days with "Keep me signed
-in" ticked. This goes through the real login code: only Postmark is a
-fixture.
+in" ticked. Only Postmark is a fixture.
 
 #### See every component
 

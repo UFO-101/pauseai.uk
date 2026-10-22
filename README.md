@@ -21,7 +21,7 @@ With Node 22, Docker and `psql`:
 npm install
 docker compose up -d         # Postgres for the site and the tests
 cp .env.example .env.local   # set TEST_MP_EMAIL to your email
-npm run db:reset
+npm run db:reset             # makes the database, with the test MPs and plenty of fake data to look at
 npm run dev                  # http://localhost:3000, with every outside service faked
 ```
 

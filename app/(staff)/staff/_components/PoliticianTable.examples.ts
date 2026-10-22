@@ -16,6 +16,8 @@ export const examplePolitician: Politician = {
   isTest: false,
   sitting: true,
   emailBlocked: false,
+  letters: 4,
+  replies: 1,
   statuses: {
     [pm.slug]: {
       status: "signed",

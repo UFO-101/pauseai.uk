@@ -40,6 +40,7 @@ import AccountsNotice from "./AccountsNotice";
 import Breadcrumb from "./Breadcrumb";
 import EraseLink from "./EraseLink";
 import ImportCard, { ImportCards } from "./ImportCard";
+import DevLogin from "./DevLogin";
 import KeepSignedIn from "./KeepSignedIn";
 import RemoveAccountForm from "./RemoveAccountForm";
 import SortHeading from "./SortHeading";
@@ -230,6 +231,26 @@ describe("StaffDashboard", () => {
     await rerender(<StaffDashboard dashboard={well} permissions={[]} />);
     await expect.element(page.getByRole("link", { name: copy.allWell })).toHaveAttribute("href", "/staff/import-data");
     await expect.element(page.getByRole("list", { name: copy.importsTitle })).not.toBeInTheDocument();
+  });
+});
+
+describe("DevLogin", () => {
+  it("offers a button per account, each a form posting that address to the dev login route", async () => {
+    await render(<DevLogin accounts={["admin@pauseai.uk", "jo@pauseai.uk"]} />);
+    const box = page.getByRole("region", { name: staffCopy.devLogin.title });
+    await expect.element(box.getByText(staffCopy.devLogin.hint)).toBeVisible();
+    const forms = box.element().querySelectorAll("form");
+    expect([...forms].map((f) => [f.getAttribute("action"), f.querySelector("input")!.value])).toEqual([
+      ["/staff/api/dev-login", "admin@pauseai.uk"],
+      ["/staff/api/dev-login", "jo@pauseai.uk"],
+    ]);
+    await expect.element(box.getByRole("button", { name: "jo@pauseai.uk" })).toBeVisible();
+    expect(getComputedStyle(box.element()).borderTopStyle).toBe("dashed");
+  });
+
+  it("is nothing outside a fixture build, where there are no accounts to offer", async () => {
+    await render(<DevLogin accounts={undefined} />);
+    await expect.element(page.getByRole("region", { name: staffCopy.devLogin.title })).not.toBeInTheDocument();
   });
 });
 
@@ -739,6 +760,18 @@ describe("PoliticianTable", () => {
     await expect.element(page.getByText(staffCopy.politicians.notSitting)).toBeVisible();
     await expect.element(page.getByText(staffCopy.politicians.emailBlocked)).toBeVisible();
     await expect.element(page.getByRole("cell", { name: staffCopy.houses.lords })).toBeVisible();
+    // The counts of letters and replies, each heading a sort.
+    const pollyRow = page.getByRole("row").filter({ hasText: "Polly Placeholder" });
+    expect(
+      pollyRow
+        .getByRole("cell")
+        .all()
+        .map((c) => c.element().textContent)
+        .slice(4, 6),
+    ).toEqual(["4", "1"]);
+    await expect
+      .element(page.getByRole("link", { name: staffCopy.politicians.columns.replies }))
+      .toHaveAttribute("href", "/staff/politicians?sort=replies&dir=desc");
 
     // Polly has signed the letter to the PM, with the date; the test MP hasn't.
     const polly = page.getByRole("form", { name: `${pm.title}: Polly Placeholder` });

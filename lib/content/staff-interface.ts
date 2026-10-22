@@ -15,6 +15,11 @@ export const staffCopy = {
     failed: "The link you used has expired or has been used already. Please request a new one.",
     elsewhere: "The link you used was made in another browser. Either open it there, or request a new one here.",
   },
+  // The dev login's box under the login card, in a fixture build only.
+  devLogin: {
+    title: "⁂ Development only: sign in now as",
+    hint: "⁂ No email, no link. This box exists only with DATA_FIXTURES=1 and never on the live site.",
+  },
   // The email with the login link.
   loginEmail: {
     subject: "Confirm sign in to PauseAI UK",
@@ -57,7 +62,7 @@ export const staffCopy = {
       // After each number: what it counts, for one and for more.
       metrics: {
         lettersSent: (n: number) => (n === 1 ? "⁂ letter to an MP" : "⁂ letters to MPs"),
-        lettersReplied: (n: number) => (n === 1 ? "⁂ reply from an MP" : "⁂ replies from MPs"),
+        lettersReplied: (n: number) => (n === 1 ? "⁂ letter answered by an MP" : "⁂ letters answered by MPs"),
         lettersBounced: (n: number) => (n === 1 ? "⁂ letter bounced" : "⁂ letters bounced"),
         mpsSigned: (n: number) => (n === 1 ? "⁂ MP marked as signed" : "⁂ MPs marked as signed"),
         supportersAdded: (n: number) => (n === 1 ? "⁂ new supporter" : "⁂ new supporters"),
@@ -153,7 +158,7 @@ export const staffCopy = {
         "luma-contact": "Followed the Luma calendar",
         "luma-registered": "Registered for",
         letter: "Wrote to",
-        "letter-replied": "Reply from",
+        "letter-replied": "⁂ Letter answered by",
         "opted-out": "Unsubscribed from",
         resubscribed: "Subscribed again to",
       } as Record<string, string>,
@@ -231,6 +236,11 @@ export const staffCopy = {
     none: "None found.",
     testMp: "Test",
     notSitting: "No longer sitting",
+    // The counts in the list: letters written to them, and how many of those got a reply.
+    columns: {
+      letters: "⁂ Letters",
+      replies: "⁂ Letters answered",
+    },
     noEmail: "No email",
     // On a politician whose address is blocked (/staff/blocked-emails), and the filter for them.
     emailBlocked: "Email blocked",
@@ -488,7 +498,7 @@ export const staffCopy = {
       to: "To",
       campaign: "Campaign",
       status: "Status",
-      replied: "Replied",
+      replied: "⁂ Answered",
       history: "History",
     },
     consent: { yes: "Yes", no: "No" },

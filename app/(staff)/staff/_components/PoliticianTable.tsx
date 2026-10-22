@@ -23,9 +23,10 @@ type Props = {
 };
 
 /**
- * Politicians and their status for each campaign. The letter to the PM is
- * marked signed here, with a button. The bill's column only shows who
- * signed ControlAI's letter: that's set by the nightly import, never by hand.
+ * Politicians, how many letters they've had and answered, and their status
+ * for each campaign. The letter to the PM is marked signed here, with a
+ * button. The bill's column only shows who signed ControlAI's letter:
+ * that's set by the nightly import, never by hand.
  */
 export default function PoliticianTable({ politicians, markSigned, search = {} }: Props) {
   if (politicians.length === 0) return <p>{staffCopy.politicians.none}</p>;
@@ -48,6 +49,8 @@ export default function PoliticianTable({ politicians, markSigned, search = {} }
           {heading("house", staffCopy.fields.house)}
           {heading("constituency", staffCopy.fields.constituency)}
           {heading("party", staffCopy.fields.party)}
+          {heading("letters", staffCopy.politicians.columns.letters)}
+          {heading("replies", staffCopy.politicians.columns.replies)}
           {trackedCampaigns.map((c) => (
             <th key={c.slug}>{c.title}</th>
           ))}
@@ -66,6 +69,8 @@ export default function PoliticianTable({ politicians, markSigned, search = {} }
             <td>{staffCopy.houses[p.house]}</td>
             <td>{p.constituency}</td>
             <td>{p.party}</td>
+            <td className={styles.count}>{p.letters}</td>
+            <td className={styles.count}>{p.replies}</td>
             {trackedCampaigns.map((c) => {
               const status = p.statuses[c.slug];
               return (
