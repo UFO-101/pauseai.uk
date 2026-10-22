@@ -132,23 +132,25 @@ describeWithDatabase("politicians", () => {
     ]);
   });
 
-  it("lists politicians by name, the test MP among them, filtered by search, house and campaign", async () => {
+  it("lists politicians, the test MP first, filtered by search, house and campaign", async () => {
     const mp = await addTestPolitician();
     const peer = await addPeer();
     await addTestMp();
     await setStatus(peer, PM, { status: "signed", date: null, note: "" }, "jo@pauseai.uk");
 
     expect((await listPoliticians()).map((p) => p.name)).toEqual([
+      "Testy McTestface MP",
       "Lord Example",
       "Polly Placeholder",
-      "Testy McTestface MP",
     ]);
     expect((await listPoliticians({ search: "westminster" })).map((p) => p.id)).toEqual([mp]);
     expect((await listPoliticians({ search: "CROSSBENCH" })).map((p) => p.id)).toEqual([peer]);
     expect((await listPoliticians({ house: "lords" })).map((p) => p.id)).toEqual([peer]);
-    // Sorted by a column, either way.
+    // Sorted by a column, either way, the test MPs staying first.
     const byParty = (dir: "asc" | "desc") =>
-      listPoliticians({ sort: { key: "party", dir } }).then((rows) => rows.map((p) => p.party));
+      listPoliticians({ sort: { key: "party", dir } }).then((rows) =>
+        rows.filter((p) => !p.isTest).map((p) => p.party),
+      );
     expect(await byParty("asc")).toEqual([...(await byParty("asc"))].sort());
     expect(await byParty("desc")).toEqual([...(await byParty("asc"))].reverse());
     expect((await listPoliticians({ campaign: PM })).map((p) => p.id)).toEqual([peer]);

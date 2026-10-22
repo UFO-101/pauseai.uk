@@ -1060,16 +1060,7 @@ export const staff: Group = {
                     ],
                   },
                 ]}
-                showSenders
               />
-            </StaffPage>
-          ),
-        },
-        {
-          label: "For staff who may not see supporters: no sender or consent",
-          render: () => (
-            <StaffPage as="div">
-              <LettersTable letters={[exampleLetter]} showSenders={false} />
             </StaffPage>
           ),
         },
@@ -1077,7 +1068,7 @@ export const staff: Group = {
           label: "None",
           render: () => (
             <StaffPage as="div">
-              <LettersTable letters={[]} showSenders />
+              <LettersTable letters={[]} />
             </StaffPage>
           ),
         },

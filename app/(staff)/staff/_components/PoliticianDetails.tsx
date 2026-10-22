@@ -36,22 +36,15 @@ function CampaignName({ slug }: { slug: string }) {
   return campaign ? <Link href={campaignPath(campaign)}>{campaign.title}</Link> : <>{slug}</>;
 }
 
-/**
- * A letter: who wrote it, linked to their supporter once they're one, for
- * staff who may see supporters; then the campaign.
- */
-function Sender({ letter, show }: { letter: LetterSummary; show: boolean }) {
+/** A letter: who wrote it, linked to their supporter once they're one, the campaign, and how it ended. */
+function Sender({ letter }: { letter: LetterSummary }) {
   return (
     <>
-      {show &&
-        (letter.supporterId === null ? (
-          <> {letter.senderName}</>
-        ) : (
-          <>
-            {" "}
-            <Link href={`/staff/supporters/${letter.supporterId}`}>{letter.senderName}</Link>
-          </>
-        ))}
+      {letter.supporterId === null ? (
+        letter.senderName
+      ) : (
+        <Link href={`/staff/supporters/${letter.supporterId}`}>{letter.senderName}</Link>
+      )}
       <Muted>
         {" · "}
         <CampaignName slug={letter.campaign} />
@@ -62,19 +55,16 @@ function Sender({ letter, show }: { letter: LetterSummary; show: boolean }) {
 
 /**
  * The letters as history: each written, with its status linked to it alone
- * on the letters page, and each answered, as its own line; who wrote only
- * if `showSenders`.
+ * on the letters page, and each answered, as its own line.
  */
-function letterEntries(letters: LetterSummary[], showSenders: boolean): Entry[] {
-  const words = showSenders ? copy.history : copy.historyUnnamed;
+function letterEntries(letters: LetterSummary[]): Entry[] {
   return letters.flatMap((letter) => [
     {
       key: `letter-${letter.id}`,
       at: letter.createdAt,
       what: (
         <>
-          {words.letter}
-          <Sender letter={letter} show={showSenders} />
+          {copy.history.letter} <Sender letter={letter} />
           <Muted>
             {" · "}
             <Link href={`/staff/letters?letter=${letter.id}`}>
@@ -91,8 +81,7 @@ function letterEntries(letters: LetterSummary[], showSenders: boolean): Entry[] 
             at: letter.repliedAt,
             what: (
               <>
-                {words["letter-replied"]}
-                <Sender letter={letter} show={showSenders} />
+                {copy.history["letter-replied"]} <Sender letter={letter} />
               </>
             ),
           },
@@ -152,7 +141,6 @@ export default function PoliticianDetails({
   block,
   unblock,
   letters,
-  showSenders,
   history,
   airtableTable,
 }: {
@@ -161,15 +149,13 @@ export default function PoliticianDetails({
   block?: EmailBlock;
   unblock: (form: FormData) => void | Promise<void>;
   letters: LetterSummary[];
-  /** Whether to say who wrote each letter: only to staff who may see supporters. */
-  showSenders: boolean;
   history: PoliticianChange[];
   /** Airtable's table of MPs, which the server knows; an MP's record there is under it. */
   airtableTable: string;
 }) {
   const editable = politician.airtableId === null && !politician.isTest;
   const entries: Entry[] = [
-    ...letterEntries(letters, showSenders),
+    ...letterEntries(letters),
     ...history.map((change) => ({
       key: `change-${change.id}`,
       at: change.at,

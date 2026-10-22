@@ -34,9 +34,7 @@ see would then be open to everyone on the domain.
   - **Accounts** and **Changes** (`admin`).
 
   The navigation and the dashboard hide the sections you can't open.
-- So a permission switches off whole pages. Two parts of pages are the
-  exception: the Letters page and an MP's letter history. They hide
-  senders unless you have `supporters` (`showSenders`, on this branch).
+- So a permission switches off whole pages, and nothing within a page.
 - Anyone can ask for a login link for a pauseai.uk address, and gets a
   session. Without an account the home page says "You don't have a staff
   account yet" and whom to ask.
@@ -57,9 +55,9 @@ on a page open to more people is redacted for those without `supporters`.
 
 | Where                                                    | What                                                                  | Today                            |
 | -------------------------------------------------------- | --------------------------------------------------------------------- | -------------------------------- |
-| Letters (`/staff/letters`)                               | Each sender's name, email and consent                                 | Hidden without `supporters` (this branch) |
+| Letters (`/staff/letters`)                               | Each sender's name, email and consent                                 | **Open** to any account          |
 | Letters search                                           | Matches sender name and email (`recentLetters`, `lib/server/letters.ts`) | **Open**: searching for an address reveals whether that person wrote |
-| An MP's page, the letter history                         | Each sender, linked to their page                                     | Hidden without `supporters` (this branch) |
+| An MP's page, the letter history                         | Each sender, linked to their page                                     | **Open** to any account          |
 | Blocked emails, the blocked list                         | Every blocked address, a supporter's too (a forwarded reply that bounced) | **Open** to any account     |
 | Blocked emails, History                                  | Every bounce and complaint, the address and what was sent             | **Open** to any account          |
 | Changes (`/staff/audit-log`)                             | Supporter emails in some entries' details                             | `admin` only                     |
@@ -104,10 +102,9 @@ someone's first login.
 The functions that fetch letters, an MP's letter history, blocks and
 email problems would take the viewer's permissions, and return a sender
 or address as either the details or `null`. They'd be typed so a page
-can't show what it wasn't given. Today `showSenders` is safe only because
-`LettersTable` and `PoliticianDetails` are server components. Given to a
-client component, the hidden emails would still go to the browser in the
-page's data.
+can't show what it wasn't given. Hiding them in the component instead would
+be safe only while it's a server component: given to a client component,
+the hidden emails would still go to the browser in the page's data.
 
 - **Letters search:** without `supporters`, the search matches only the
   MP's name and the subject, not the sender.
@@ -121,13 +118,12 @@ page's data.
 
 `Supporter`: their name linked to their page, or, without the
 permission, a plain "a supporter" (copy needed). Used wherever a sender
-shows. It replaces the `showSenders` prop on `LettersTable` and
-`PoliticianDetails`.
+shows: the letters table and an MP's letter history.
 
 ### Letters: hide part of the page, or all of it?
 
-- **A. Hide the senders, keep the page open to everyone** (this branch,
-  done on the server as above). Anyone can see what's been sent to whom,
+- **A. Hide the senders, keep the page open to everyone** (done on the
+  server as above). Anyone can see what's been sent to whom,
   and which MPs answered. **Recommended.**
 - **B. Put the whole Letters page under `supporters`.** Simpler, and it
   fits "a permission switches off pages". But staff without it lose
@@ -182,9 +178,9 @@ whom), last login, sessions open, and the buttons.
   Both could be shown. I'd start with A and add B if wanted.
 - **Sessions open:** a count of `staff_sessions` not yet expired.
 - **Log out everywhere:** a button on each row that has sessions. It
-  deletes them, admin only, and is logged as "end staff sessions". It's
-  its own form, like Remove, so it works while permission changes are
-  unsaved. On your own row it logs you out too, and says so first.
+  deletes them at once, like Remove and each tick, admin only, and is
+  logged as "end staff sessions". On your own row it logs you out too,
+  and says so first.
   Optionally the same button for yourself on the staff home, for a lost
   laptop, needing no permission.
 
@@ -210,7 +206,7 @@ Each stage gets its tests, frames, gallery examples and copy placeholders.
 1. **Supporter data on the server, and the leak check.**
    - Redaction in `recentLetters`, the MP history, `listBlocks` and
      `recentProblems`.
-   - The `Supporter` component, replacing `showSenders`.
+   - The `Supporter` component, in the letters table and an MP's history.
    - The letters search and blocked emails changes.
    - `admin` includes `supporters`.
    - The leak-check flow.
@@ -232,6 +228,5 @@ Each stage gets its tests, frames, gallery examples and copy placeholders.
 3. Should an admin always have `supporters`?
 4. Last login (A), last seen (B), or both?
 5. Log out everywhere for yourself too, on the staff home?
-6. Is this the "broader related change" for the parked `showSenders`
-   todo, or is there something else (a new permission, say, for letters or
-   campaigns)?
+6. Is there a broader related change to fit in: a new permission, say, for
+   letters or campaigns?

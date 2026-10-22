@@ -134,7 +134,7 @@ export function politiciansSearch({
   return { q, house, campaign, email, sort, dir, filter };
 }
 
-/** Politicians for the staff interface, by the column asked for, by name to start; the test MPs among the rest. */
+/** Politicians for the staff interface: the test MPs first, then by the column asked for, by name to start. */
 export async function listPoliticians(filter: PoliticianFilter = {}, limit = 200): Promise<Politician[]> {
   const where: string[] = [];
   const values: unknown[] = [];
@@ -160,7 +160,7 @@ export async function listPoliticians(filter: PoliticianFilter = {}, limit = 200
   values.push(limit);
   const rows = await query<Row>(
     `${SELECT_POLITICIANS} ${where.length ? `WHERE ${where.join(" AND ")}` : ""}
-     GROUP BY p.id ORDER BY ${POLITICIAN_COLUMNS[filter.sort?.key ?? "name"]} ${filter.sort?.dir === "desc" ? "DESC" : "ASC"} NULLS LAST, p.name LIMIT $${values.length}`,
+     GROUP BY p.id ORDER BY p.is_test DESC, ${POLITICIAN_COLUMNS[filter.sort?.key ?? "name"]} ${filter.sort?.dir === "desc" ? "DESC" : "ASC"} NULLS LAST, p.name LIMIT $${values.length}`,
     values,
   );
   return rows.map(toPolitician);

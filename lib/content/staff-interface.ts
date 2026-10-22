@@ -378,11 +378,6 @@ export const staffCopy = {
       "block address": "Address blocked",
       "unblock address": "Address unblocked",
     } as Record<string, string>,
-    // A letter and its reply, for staff who may not see supporters, so not who wrote it.
-    historyUnnamed: {
-      letter: "⁂ Letter",
-      "letter-replied": "⁂ Answered a letter",
-    } as Record<string, string>,
     // On an MP from Airtable, after the source, which links to their record there.
     editInAirtable: ", update name / email there.",
     // Under their name: what they are, in their house, and where for.
@@ -418,9 +413,9 @@ export const staffCopy = {
     title: "Blocked emails",
     intro: "Nothing is sent to these addresses until they're unblocked.",
     // Instead of the table, when no address is blocked, or none of the cause filtered for.
-    noBlocks: "⁂ No addresses are blocked.",
+    noBlocks: "No addresses are blocked.",
     // Instead of the history, when nothing has bounced or been complained about.
-    noProblems: "⁂ Nothing has bounced or been marked as spam.",
+    noProblems: "Nothing has bounced or been marked as spam.",
     allKinds: "All",
     filter: "Filter",
     kinds: {
@@ -639,7 +634,7 @@ export const staffCopy = {
     // Above the list when it's one supporter's letters, reached from their page.
     oneSupporter: "Only one supporter's letters.",
     // Above the list when it's one letter, reached from where it's named.
-    oneLetter: "⁂ Only one letter.",
+    oneLetter: "Only one letter.",
     everyone: "Show everyone's",
     none: "No letters.",
     status: {

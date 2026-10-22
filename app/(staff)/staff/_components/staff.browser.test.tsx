@@ -737,7 +737,7 @@ describe("LoginForm", () => {
 });
 
 describe("PoliticianDetails", () => {
-  const none = { letters: [], showSenders: true, history: [], airtableTable: "https://airtable.com/app/tbl" };
+  const none = { letters: [], history: [], airtableTable: "https://airtable.com/app/tbl" };
 
   it("heads the page with their name, boxes what's known with each campaign's status, and edits a signer the team added", async () => {
     const { fn } = action();
@@ -824,7 +824,6 @@ describe("PoliticianDetails", () => {
       <PoliticianDetails
         airtableTable="https://airtable.com/app/tbl"
         politician={peer}
-        showSenders
         action={vi.fn()}
         unblock={vi.fn()}
         letters={[
@@ -931,37 +930,6 @@ describe("PoliticianDetails", () => {
     for (const link of links) await expect.element(link).toHaveAttribute("href", campaignPath(pm));
     await expect.element(list.getByRole("link", { name: "old-campaign" })).not.toBeInTheDocument();
     await expect.element(list.getByRole("link", { name: "gone" })).not.toBeInTheDocument();
-  });
-
-  it("leaves out who wrote each letter for staff who may not see supporters", async () => {
-    await render(
-      <PoliticianDetails
-        {...none}
-        showSenders={false}
-        politician={MP}
-        action={vi.fn()}
-        unblock={vi.fn()}
-        letters={[
-          { ...exampleLetter, mpName: MP.name, politicianId: MP.id, repliedAt: "2026-10-15T09:00:00Z" },
-          {
-            ...exampleLetter,
-            id: 2,
-            supporterId: null,
-            senderName: "Anon Writer",
-            mpName: MP.name,
-            politicianId: MP.id,
-          },
-        ]}
-      />,
-    );
-    const copy = staffCopy.politician.historyUnnamed;
-    const history = page.getByRole("list", { name: staffCopy.politician.historyTitle }).getByRole("listitem").all();
-    expect(history.map((item) => item.element().textContent)).toEqual([
-      `2026-10-15 09:00${copy["letter-replied"]} · ${pm.title}`,
-      `2026-10-12 09:00${copy.letter} · ${pm.title} · ${staffCopy.letters.status.bounced}`,
-      `2026-10-12 09:00${copy.letter} · ${pm.title} · ${staffCopy.letters.status.bounced}`,
-    ]);
-    await expect.element(page.getByText(exampleLetter.senderName)).not.toBeInTheDocument();
   });
 
   it("says in one place that letters aren't being sent, why, what to check, and unblocks it with a note", async () => {
@@ -1670,7 +1638,6 @@ describe("LettersTable", () => {
             events: [{ at: letter.createdAt, status: "strange", details: {} }],
           },
         ]}
-        showSenders
       />,
     );
     await expect.element(page.getByText("jane@example.com").first()).toBeInTheDocument();
@@ -1698,21 +1665,8 @@ describe("LettersTable", () => {
     await expect.element(page.getByRole("cell", { name: "2026-10-13 09:00", exact: true })).toBeInTheDocument();
   });
 
-  it("leaves out who wrote, and their consent, for staff who may not see supporters", async () => {
-    await render(<LettersTable letters={[letter]} showSenders={false} />);
-    await expect.element(page.getByRole("link", { name: letter.mpName })).toBeVisible();
-    await expect.element(page.getByText(letter.senderName)).not.toBeInTheDocument();
-    await expect.element(page.getByText(letter.senderEmail)).not.toBeInTheDocument();
-    await expect
-      .element(page.getByRole("columnheader", { name: staffCopy.letters.columns.from }))
-      .not.toBeInTheDocument();
-    await expect
-      .element(page.getByRole("columnheader", { name: staffCopy.letters.columns.consent }))
-      .not.toBeInTheDocument();
-  });
-
   it("says when there are none", async () => {
-    await render(<LettersTable letters={[]} showSenders />);
+    await render(<LettersTable letters={[]} />);
     await expect.element(page.getByText(staffCopy.letters.none)).toBeVisible();
   });
 });
@@ -2267,7 +2221,7 @@ describe("EmailPermissionTiles", () => {
 
 describe("LettersTable, a sender not yet a supporter", () => {
   it("shows the name without a link", async () => {
-    await render(<LettersTable letters={[{ ...exampleLetter, supporterId: null }]} showSenders />);
+    await render(<LettersTable letters={[{ ...exampleLetter, supporterId: null }]} />);
     await expect.element(page.getByText(exampleLetter.senderName, { exact: false })).toBeVisible();
     expect(page.getByRole("link", { name: exampleLetter.senderName }).all()).toHaveLength(0);
   });

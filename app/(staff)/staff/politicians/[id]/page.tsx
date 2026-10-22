@@ -38,7 +38,6 @@ export default async function PoliticianPage({ params }: Params) {
         block={block}
         unblock={unblockAddress}
         letters={letters}
-        showSenders={permissions.includes("supporters")}
         history={history}
         airtableTable={PARLIAMENTARIANS_TABLE_URL}
       />
