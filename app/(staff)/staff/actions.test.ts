@@ -20,6 +20,7 @@ import {
   markSigned,
   removeStaffAccountNow,
   saveStaffAccountNow,
+  saveStaffAccountsNow,
   syncNow,
   unblockAddress,
 } from "./actions";
@@ -68,6 +69,7 @@ describeWithDatabase("staff Server Actions", () => {
       () => importMembersNow(),
       () => saveStaffAccountNow(form({ email: "x@pauseai.uk", "permission:admin": "on" })),
       () => removeStaffAccountNow(form({ email: "x@pauseai.uk" })),
+      () => saveStaffAccountsNow(form({ account: "jo@pauseai.uk", "permission:admin": "jo@pauseai.uk" })),
       () => eraseSupporterNow(form({ id: "1", reference: "r", confirm: "on" })),
       () => unblockAddress(form({ address: "a@example.org", note: "" })),
     ];
@@ -110,6 +112,39 @@ describeWithDatabase("staff Server Actions", () => {
     expect(await runs()).toEqual([
       { job: "import-controlai", status: "ok", startedBy: "jo@pauseai.uk" },
       { job: "import-controlai", status: "failed", startedBy: "jo@pauseai.uk" },
+    ]);
+  });
+
+  it("saveStaffAccountsNow needs admin, then saves every row, keeping the rest when one is refused", async () => {
+    const table = (rows: [string, string[]][]) => {
+      const data = new FormData();
+      for (const [email, permissions] of rows) {
+        data.append("account", email);
+        for (const permission of permissions) data.append(`permission:${permission}`, email);
+      }
+      return data;
+    };
+    await saveStaffAccount("sam@pauseai.uk", [], "test");
+    const save = table([
+      ["jo@pauseai.uk", ["admin"]],
+      ["sam@pauseai.uk", ["supporters"]],
+    ]);
+    expect(await expectRedirect(() => saveStaffAccountsNow(save))).toBe("/staff");
+    await saveStaffAccount("jo@pauseai.uk", ["admin"], "a");
+    expect(await expectRedirect(() => saveStaffAccountsNow(save))).toBe("/staff/accounts");
+    expect(await query("SELECT email, permissions FROM staff_accounts ORDER BY email")).toEqual([
+      { email: "jo@pauseai.uk", permissions: ["admin"] },
+      { email: "sam@pauseai.uk", permissions: ["supporters"] },
+    ]);
+    // Jo, the last admin, can't lose admin; Sam's row is still saved, and the page says why Jo's wasn't.
+    const refused = table([
+      ["jo@pauseai.uk", []],
+      ["sam@pauseai.uk", []],
+    ]);
+    expect(await expectRedirect(() => saveStaffAccountsNow(refused))).toBe("/staff/accounts?notice=last-admin");
+    expect(await query("SELECT email, permissions FROM staff_accounts ORDER BY email")).toEqual([
+      { email: "jo@pauseai.uk", permissions: ["admin"] },
+      { email: "sam@pauseai.uk", permissions: [] },
     ]);
   });
 

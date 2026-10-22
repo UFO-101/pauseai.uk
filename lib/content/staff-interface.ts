@@ -303,6 +303,11 @@ export const staffCopy = {
       addedAt: "When",
     },
     save: "Save",
+    // Beside Save, while a row is ticked differently from what's saved: the way back, and that it isn't saved.
+    undo: "⁂ Undo",
+    unsaved: "⁂ Not saved yet",
+    // Under the email of the form for someone new, while the table has changes not saved.
+    saveFirst: "⁂ Save or undo the changes above first.",
     // The button on the form for someone new.
     add: "Add",
     remove: "Remove",

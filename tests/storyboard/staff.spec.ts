@@ -571,8 +571,13 @@ test("without an account, a staff member sees only whom to ask; an admin adds, c
   await expect(row).toContainText(staffEmail());
   await frame(page, "the colleague added, with no permissions");
 
+  // A box ticked: the row is marked and not saved yet, and adding or removing waits for Save.
   await row.getByRole("checkbox", { name: staffCopy.accounts.names.supporters }).check();
-  await row.getByRole("button", { name: staffCopy.accounts.save }).click();
+  await expect(page.getByRole("status")).toHaveText(staffCopy.accounts.unsaved);
+  await expect(row.getByRole("button", { name: staffCopy.accounts.remove })).toBeDisabled();
+  await frame(page, "the supporters box ticked, not saved yet");
+  await page.getByRole("button", { name: staffCopy.accounts.save }).click();
+  await expect(page.getByRole("status")).toHaveCount(0);
   await expect(row.getByRole("checkbox", { name: staffCopy.accounts.names.supporters })).toBeChecked();
   await frame(page, "given the supporters permission");
 

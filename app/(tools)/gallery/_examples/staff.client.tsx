@@ -16,8 +16,8 @@ import { examplePolitician, examplePoliticianHistory } from "@/app/(staff)/staff
 import { exampleLetter } from "@/app/(staff)/staff/_components/LettersTable.examples";
 import Run from "@/app/(staff)/staff/_components/Run";
 import EraseForm from "@/app/(staff)/staff/_components/EraseForm";
+import AddAccountForm from "@/app/(staff)/staff/_components/AddAccountForm";
 import RemoveAccountForm from "@/app/(staff)/staff/_components/RemoveAccountForm";
-import StaffAccountForm from "@/app/(staff)/staff/_components/StaffAccountForm";
 import StaffAccountsTable from "@/app/(staff)/staff/_components/StaffAccountsTable";
 import UnblockForm from "@/app/(staff)/staff/_components/UnblockForm";
 import { exampleFailedRun, exampleHeldSync, exampleRun } from "@/app/(staff)/staff/_components/RunList.examples";
@@ -178,7 +178,8 @@ export function StaffAccountsTableExample() {
     <Logged>
       {(log) => (
         <StaffAccountsTable
-          save={log("saveStaffAccount")}
+          saveAll={log("saveStaffAccounts")}
+          add={log("saveStaffAccount")}
           remove={log("removeStaffAccount")}
           accounts={[
             {
@@ -201,8 +202,8 @@ export function StaffAccountsTableExample() {
   );
 }
 
-export function StaffAccountFormExample() {
-  return <Logged>{(log) => <StaffAccountForm permissions={[]} save={log("saveStaffAccount")} />}</Logged>;
+export function AddAccountFormExample({ waiting = false }: { waiting?: boolean }) {
+  return <Logged>{(log) => <AddAccountForm save={log("saveStaffAccount")} waiting={waiting} />}</Logged>;
 }
 
 export function RemoveAccountFormExample() {

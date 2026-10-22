@@ -3,7 +3,7 @@ import { staffCopy } from "@/lib/content/staff-interface";
 import { requireStaff } from "@/lib/server/staff-auth";
 import { listStaffAccounts } from "@/lib/server/staff-accounts";
 import { accountsSearch } from "@/lib/staff-search";
-import { removeStaffAccountNow, saveStaffAccountNow } from "../actions";
+import { removeStaffAccountNow, saveStaffAccountNow, saveStaffAccountsNow } from "../actions";
 import AccountsNotice from "../_components/AccountsNotice";
 import StaffAccountsTable from "../_components/StaffAccountsTable";
 import StaffNav from "../_components/StaffNav";
@@ -22,7 +22,8 @@ export default async function AccountsPage({ searchParams }: { searchParams: Pro
       <AccountsNotice notice={notice} />
       <StaffAccountsTable
         accounts={await listStaffAccounts()}
-        save={saveStaffAccountNow}
+        saveAll={saveStaffAccountsNow}
+        add={saveStaffAccountNow}
         remove={removeStaffAccountNow}
         notPauseai={notice === "not-pauseai"}
       />

@@ -18,3 +18,8 @@
   text-align: left;
   vertical-align: top;
 }
+
+.middle th,
+.middle td {
+  vertical-align: middle;
+}

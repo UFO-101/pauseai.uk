@@ -6,7 +6,15 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { type ImportJob, importPath } from "@/lib/import-runs";
 import { now } from "@/lib/now";
-import { eraseFrom, idFrom, permissionsFrom, politicianDetailsFrom, signedFrom, unblockFrom } from "@/lib/staff-forms";
+import {
+  accountsFrom,
+  eraseFrom,
+  idFrom,
+  permissionsFrom,
+  politicianDetailsFrom,
+  signedFrom,
+  unblockFrom,
+} from "@/lib/staff-forms";
 import { importControlAiLetter } from "@/lib/server/controlai-import";
 import { unblock } from "@/lib/server/email";
 import { eraseSupporter } from "@/lib/server/erasure";
@@ -132,6 +140,21 @@ export async function saveStaffAccountNow(form: FormData): Promise<void> {
   const parsed = permissionsFrom(form);
   if (!parsed) return;
   accountsPage(await saveStaffAccount(parsed.email, parsed.permissions, email));
+}
+
+/**
+ * The accounts page's Save: gives each account in the table exactly the
+ * permissions ticked in its row, one after another, as the admin. A change
+ * refused (the last admin) is said on the page; the others are kept.
+ */
+export async function saveStaffAccountsNow(form: FormData): Promise<void> {
+  const { email } = await requireStaff("admin");
+  let result: AccountChange = "unchanged";
+  for (const account of accountsFrom(form)) {
+    const change = await saveStaffAccount(account.email, account.permissions, email);
+    if (change !== "changed" && change !== "unchanged") result = change;
+  }
+  accountsPage(result);
 }
 
 /** The accounts page: removes an account, ending its sessions. */
