@@ -279,11 +279,11 @@ export const staffCopy = {
     noHistory: "⁂ Nothing yet.",
     // What each line of the history was: a letter, a reply, or an entry of the audit log about them.
     history: {
-      letter: "⁂ Letter from",
+      letter: "Letter from",
       "letter-replied": "⁂ Answered the letter from",
       "edit politician": "⁂ Details edited",
-      "set status": "⁂ Status set",
-      "block address": "⁂ Address blocked",
+      "set status": "Status set",
+      "block address": "Address blocked",
       "unblock address": "⁂ Address unblocked",
     } as Record<string, string>,
     fromAirtable: "Information about the MP is imported from Airtable, update name / email there.",
