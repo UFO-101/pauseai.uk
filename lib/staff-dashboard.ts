@@ -83,7 +83,7 @@ export type Dashboard = {
 };
 
 /** The colour of an import's newest run: green when it ended well, amber held or stopped short, red failed, grey never run. */
-export type ImportTone = "green" | "amber" | "red" | "none";
+type ImportTone = "green" | "amber" | "red" | "none";
 
 export function importTone(run: AnyImportRun | undefined): ImportTone {
   if (!run) return "none";
@@ -91,4 +91,12 @@ export function importTone(run: AnyImportRun | undefined): ImportTone {
   if (run.status === "held") return "amber";
   if (run.job === "import-luma" && run.result.stoppedBy !== undefined) return "amber";
   return "green";
+}
+
+export function isCampaignMetric(metric: DashboardMetric): metric is CampaignMetric {
+  return (BY_CAMPAIGN as readonly DashboardMetric[]).includes(metric);
+}
+
+export function isSeriesMetric(metric: DashboardMetric): metric is SeriesMetric {
+  return (WITH_SERIES as readonly DashboardMetric[]).includes(metric);
 }

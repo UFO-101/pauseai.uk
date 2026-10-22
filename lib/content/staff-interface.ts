@@ -56,32 +56,58 @@ export const staffCopy = {
   // in groups, and which permissions you have, or that you have none.
   home: {
     title: "Home",
-    // The dashboard: the last week's numbers, each over its total, then how each import's last run ended.
+    // The dashboard: what needs a person, then the window's numbers in
+    // three groups, each against the window before, then the imports' health.
     dashboard: {
-      title: (days: number) => `⁂ The last ${days} days`,
+      // What's waiting for someone: each kind of item, its detail, and its button.
+      actionsTitle: "Needs a person",
+      nothingToDo: "⁂ Nothing needs a person.",
+      actions: {
+        heldSync: "⁂ MP import held",
+        heldSyncDetail: (added: number, removed: number, changed: number, since: string) =>
+          `⁂ ${added} MPs would be added, ${removed} would go, ${changed} would change · since ${since}`,
+        decide: "⁂ Decide",
+        blockedMp: (name: string) => `⁂ ${name}'s email bounced`,
+        blockedMpDetail: (reason: string, since: string) => `⁂ Address blocked since ${since}: ${reason}`,
+        openMp: "⁂ Open MP",
+        failedImport: (job: string) => `⁂ ${job} failed`,
+        failedImportDetail: (error: string, at: string) => `⁂ ${error} · ${at}`,
+        seeRun: "⁂ See run",
+      },
+      // The window: its length in days, each a link but the one shown.
+      window: (days: number) => `⁂ ${days} days`,
+      windows: "⁂ Show",
       sections: {
-        activity: "Activity",
-        operations: "Operations",
+        mps: "⁂ MPs",
+        events: "⁂ Events",
+        supporters: "⁂ Supporters",
       } as Record<string, string>,
       // After each number: what it counts, for one and for more.
       metrics: {
         lettersSent: (n: number) => (n === 1 ? "⁂ letter to an MP" : "⁂ letters to MPs"),
-        lettersReplied: (n: number) => (n === 1 ? "⁂ letter answered by an MP" : "⁂ letters answered by MPs"),
-        lettersBounced: (n: number) => (n === 1 ? "⁂ letter bounced" : "⁂ letters bounced"),
-        mpsSigned: (n: number) => (n === 1 ? "⁂ MP marked as signed" : "⁂ MPs marked as signed"),
-        supportersAdded: (n: number) => (n === 1 ? "⁂ new supporter" : "⁂ new supporters"),
+        lettersReplied: (n: number) => (n === 1 ? "⁂ letter got a reply" : "⁂ letters got a reply"),
+        mpsSigned: (n: number) => (n === 1 ? "⁂ MP signed" : "⁂ MPs signed"),
         eventRegistrations: (n: number) => (n === 1 ? "⁂ event registration" : "⁂ event registrations"),
+        eventsHeld: (n: number) => (n === 1 ? "⁂ event held" : "⁂ events held"),
+        supportersAdded: (n: number) => (n === 1 ? "⁂ new supporter" : "⁂ new supporters"),
         unsubscribes: (n: number) => (n === 1 ? "⁂ unsubscribe from Luma emails" : "⁂ unsubscribes from Luma emails"),
-        addressesBlocked: (n: number) => (n === 1 ? "⁂ email address blocked" : "⁂ email addresses blocked"),
       } as Record<string, (n: number) => string>,
-      // Under the number: against the week before.
+      // A count of nothing, instead of a 0.
+      none: "⁂ None",
+      // Beside the letters' number: those to the test MPs, left out of it.
+      testLetters: (n: number) => `⁂ +${n} test`,
+      // Under the number: against the window before.
       change: {
-        up: (n: number) => `▲ ${n} on the week before`,
-        down: (n: number) => `▼ ${n} on the week before`,
-        same: "Same as the week before",
+        up: (n: number, days: number) => `⁂ ▲ ${n} on the ${days} days before`,
+        down: (n: number, days: number) => `⁂ ▼ ${n} on the ${days} days before`,
+        same: (days: number) => `⁂ Same as the ${days} days before`,
       },
+      // A sparkline: its name for screen readers, and the label on a point.
+      series: (what: string) => `⁂ ${what}, the last eight windows`,
+      seriesPoint: (from: string, n: number) => `⁂ From ${from}: ${n}`,
       importsTitle: "Imports",
       allWell: "All imports running well.",
+      notWell: (n: number) => (n === 1 ? "⁂ An import isn't running well." : `⁂ ${n} imports aren't running well.`),
       neverRun: "Never run",
     },
     noAccount: "You don't have a staff account yet.",
@@ -281,7 +307,9 @@ export const staffCopy = {
     history: {
       letter: "Letter from",
       "letter-replied": "Answered the letter from",
+      "add politician": "Added",
       "edit politician": "Details edited",
+      "remove politician": "No longer sitting",
       "set status": "Status set",
       "block address": "Address blocked",
       "unblock address": "Address unblocked",
@@ -307,9 +335,7 @@ export const staffCopy = {
     columns: {
       address: "Address",
       kind: "Cause",
-      "add politician": "Added",
       since: "Since",
-      "remove politician": "No longer sitting",
       reason: "Reason",
       whose: "Whose",
       refused: "Not sent since",

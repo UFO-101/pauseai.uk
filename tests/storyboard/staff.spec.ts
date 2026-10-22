@@ -136,7 +136,7 @@ test("staff log in, set a status that shows on /campaigns, and log out", async (
   await expect(page).toHaveURL(`${BASE}/staff`);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(staffCopy.home.title);
   await expect(page.getByText(staffEmail()).first()).toBeAttached();
-  await expect(page.getByText(staffCopy.home.dashboard.sections.activity)).toBeVisible();
+  await expect(page.getByText(staffCopy.home.dashboard.sections.mps)).toBeVisible();
   await frame(page, "the staff home, just logged in as an admin");
 
   // The pages are in the sidebar; on a phone, behind the bar's menu.
@@ -392,6 +392,12 @@ test("an MP whose address bounced can't be written to until staff unblock it", a
   await frame(page, "the form says the MP can't be reached");
 
   await logIn(page, flowDatabase, ["admin"]);
+  // The home page says the MP's email bounced, first thing, with a button to their page.
+  await expect(page.getByText(staffCopy.home.dashboard.actions.blockedMp(bouncy.name))).toBeVisible();
+  await frame(page, "the home: the bounced address needs a person");
+  await page.getByRole("link", { name: staffCopy.home.dashboard.actions.openMp }).click();
+  await expect(page.getByRole("heading", { level: 1, name: bouncy.name })).toBeVisible();
+
   await page.goto(`${BASE}/staff/politicians`);
   const bouncysRow = page.getByRole("row").filter({ hasText: bouncy.name });
   await expect(bouncysRow).toContainText(staffCopy.politicians.emailBlocked);
@@ -449,6 +455,13 @@ test("an MP import that would change too many is held, then discarded, and then 
   expect(sitting()).toBe(21);
   await frame(page, "the import held: 21 MPs would go");
 
+  // The home page says so, first thing, with a button back to the decision.
+  await page.goto(`${BASE}/staff`);
+  await expect(page.getByText(staffCopy.home.dashboard.actions.heldSync)).toBeVisible();
+  await frame(page, "the home: the held import needs a person");
+  await page.getByRole("link", { name: staffCopy.home.dashboard.actions.decide }).click();
+  await expect(page).toHaveURL(`${BASE}/staff/import-data`);
+
   await page.getByRole("button", { name: staffCopy.syncs.discard }).click();
   await expect(page.getByRole("button", { name: staffCopy.syncs.apply })).toHaveCount(0);
   await expect(page.getByText(staffCopy.runs.status.discarded).first()).toBeVisible();
@@ -490,6 +503,11 @@ test("without an account, a staff member sees only whom to ask; an admin adds, c
   await expect(page.locator('nav a[href="/staff/politicians"]').first()).toBeAttached();
   await expect(page.locator('nav a[href="/staff/accounts"]')).toHaveCount(0);
   await frame(page, "the staff home with an account and no permissions");
+  // The dashboard over a longer window, from the links under the day.
+  await page.getByRole("link", { name: staffCopy.home.dashboard.window(30) }).click();
+  await expect(page).toHaveURL(`${BASE}/staff?days=30`);
+  await expect(page.getByText(staffCopy.home.dashboard.change.same(30)).first()).toBeVisible();
+  await frame(page, "the home over the last 30 days");
   await page.goto(`${BASE}/staff/accounts`);
   await expect(page).toHaveURL(`${BASE}/staff`);
 

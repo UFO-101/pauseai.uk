@@ -38,7 +38,8 @@ import KeepSignedIn from "@/app/(staff)/staff/_components/KeepSignedIn";
 import SortHeading from "@/app/(staff)/staff/_components/SortHeading";
 import Table from "@/components/ui/Table";
 import StaffDashboard from "@/app/(staff)/staff/_components/StaffDashboard";
-import { exampleDashboard } from "@/app/(staff)/staff/_components/StaffDashboard.examples";
+import { exampleDashboard, exampleQuietDashboard } from "@/app/(staff)/staff/_components/StaffDashboard.examples";
+import Sparkline from "@/app/(staff)/staff/_components/Sparkline";
 import StaffHome from "@/app/(staff)/staff/_components/StaffHome";
 import SupporterBadges from "@/app/(staff)/staff/_components/SupporterBadges";
 import SupporterDetails from "@/app/(staff)/staff/_components/SupporterDetails";
@@ -375,7 +376,7 @@ export const staff: Group = {
       file: "app/(staff)/staff/_components/StaffDashboard.tsx",
       variants: [
         {
-          label: "A busy week, for someone who may see supporters",
+          label: "A busy week with something waiting of each kind, for someone who may see supporters",
           render: () => (
             <StaffPage as="div">
               <StaffDashboard dashboard={exampleDashboard} permissions={["supporters"]} />
@@ -387,6 +388,36 @@ export const staff: Group = {
           render: () => (
             <StaffPage as="div">
               <StaffDashboard dashboard={exampleDashboard} permissions={[]} />
+            </StaffPage>
+          ),
+        },
+        {
+          label: "A quiet month: nothing waiting, nothing counted, every import well",
+          render: () => (
+            <StaffPage as="div">
+              <StaffDashboard dashboard={exampleQuietDashboard} permissions={["supporters"]} />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "Sparkline",
+      file: "app/(staff)/staff/_components/Sparkline.tsx",
+      variants: [
+        {
+          label: "Eight weeks of registrations: point at it for a week's count",
+          render: () => (
+            <StaffPage as="div">
+              <div style={{ maxWidth: "16rem" }}>
+                <Sparkline
+                  name="Event registrations, the last eight weeks"
+                  values={exampleDashboard.series.eventRegistrations.map((point) => point.count)}
+                  labels={exampleDashboard.series.eventRegistrations.map(
+                    (point) => `From ${point.from.slice(0, 10)}: ${point.count}`,
+                  )}
+                />
+              </div>
             </StaffPage>
           ),
         },

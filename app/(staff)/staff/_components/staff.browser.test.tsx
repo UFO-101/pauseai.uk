@@ -34,7 +34,8 @@ import {
 } from "./RunList.examples";
 import StaffNav from "./StaffNav";
 import StaffDashboard from "./StaffDashboard";
-import { exampleDashboard } from "./StaffDashboard.examples";
+import { exampleDashboard, exampleQuietDashboard } from "./StaffDashboard.examples";
+import Sparkline from "./Sparkline";
 import StaffHome from "./StaffHome";
 import AccountsNotice from "./AccountsNotice";
 import Breadcrumb from "./Breadcrumb";
@@ -144,7 +145,7 @@ describe("StaffHome", () => {
     );
     await expect.element(page.getByRole("heading", { level: 1, name: staffCopy.home.title })).toBeVisible();
     await expect
-      .element(page.getByRole("heading", { level: 2, name: staffCopy.home.dashboard.sections.activity }))
+      .element(page.getByRole("heading", { level: 2, name: staffCopy.home.dashboard.sections.mps }))
       .toBeVisible();
     await expect.element(page.getByText(staffCopy.home.none, { exact: false })).not.toBeInTheDocument();
   });
@@ -170,7 +171,7 @@ describe("StaffHome", () => {
       .element(page.getByText(staffCopy.home.ask("admin@pauseai.uk, jo@pauseai.uk"), { exact: false }))
       .toBeVisible();
     await expect
-      .element(page.getByRole("heading", { level: 2, name: staffCopy.home.dashboard.sections.operations }))
+      .element(page.getByRole("heading", { level: 2, name: staffCopy.home.dashboard.sections.supporters }))
       .toBeVisible();
   });
 });
@@ -178,60 +179,180 @@ describe("StaffHome", () => {
 describe("StaffDashboard", () => {
   const copy = staffCopy.home.dashboard;
 
-  it("shows each number for the week as a sentence, with its change on the week before, linked where the person may see it", async () => {
-    const { rerender } = await render(<StaffDashboard dashboard={exampleDashboard} permissions={["supporters"]} />);
-    await expect.element(page.getByText(copy.title(7))).toBeVisible();
-    const activity = page.getByRole("list", { name: copy.sections.activity }).getByRole("listitem").all();
-    const operations = page.getByRole("list", { name: copy.sections.operations }).getByRole("listitem").all();
-    expect(activity).toHaveLength(5);
-    expect(operations).toHaveLength(3);
-    await expect.element(activity[0]).toHaveTextContent(`12${copy.metrics.lettersSent(12)}${copy.change.up(4)}`);
-    await expect.element(activity[1]).toHaveTextContent(`3${copy.metrics.lettersReplied(3)}${copy.change.down(2)}`);
-    await expect.element(activity[2]).toHaveTextContent(`2${copy.metrics.mpsSigned(2)}${copy.change.same}`);
-    await expect.element(operations[0]).toHaveTextContent(`1${copy.metrics.lettersBounced(1)}${copy.change.up(1)}`);
-    // Up is green for letters, red for bounces; down is red for replies, green for unsubscribes.
-    const changeClass = (item: ReturnType<typeof page.getByRole>) =>
-      item.element().querySelector("span:last-child")!.className;
-    expect(changeClass(activity[0])).toMatch(/good/);
-    expect(changeClass(activity[1])).toMatch(/bad/);
-    expect(changeClass(operations[0])).toMatch(/bad/);
-    expect(changeClass(operations[1])).toMatch(/good/);
-    // The whole tile is the link.
-    const tileLink = (text: string) => page.getByText(text).element().closest("a");
-    expect(tileLink(copy.metrics.lettersReplied(3))?.getAttribute("href")).toBe("/staff/letters?status=replied");
-    expect(tileLink(copy.metrics.supportersAdded(18))?.getAttribute("href")).toBe("/staff/supporters");
-    expect(tileLink(copy.metrics.lettersReplied(3))?.textContent).toContain("3");
+  it("lists what needs a person, a dot and a button each, or says nothing does", async () => {
+    const { rerender } = await render(<StaffDashboard dashboard={exampleDashboard} permissions={[]} />);
+    const items = page.getByRole("list", { name: copy.actionsTitle }).getByRole("listitem").all();
+    expect(items.map((item) => item.element().textContent)).toEqual([
+      `${copy.actions.heldSync}${copy.actions.heldSyncDetail(0, 21, 3, "2026-10-21 00:00")}${copy.actions.decide}`,
+      `${copy.actions.blockedMp("Bouncy McTestface MP")}${copy.actions.blockedMpDetail("The address does not exist", "19 Oct 2026")}${copy.actions.openMp}`,
+      `${copy.actions.failedImport(jobTitles["import-controlai"])}${copy.actions.failedImportDetail("No PDF linked", "2026-10-21 02:00")}${copy.actions.seeRun}`,
+    ]);
+    const dot = (i: number) => items[i].element().querySelector("span")!.className;
+    expect(dot(0)).toMatch(/amber/);
+    expect(dot(1)).toMatch(/red/);
+    expect(dot(2)).toMatch(/red/);
+    await expect
+      .element(page.getByRole("link", { name: copy.actions.decide }))
+      .toHaveAttribute("href", "/staff/import-data");
+    await expect
+      .element(page.getByRole("link", { name: copy.actions.openMp }))
+      .toHaveAttribute("href", "/staff/politicians/7");
+    await expect
+      .element(page.getByRole("link", { name: copy.actions.seeRun }))
+      .toHaveAttribute("href", "/staff/import-data");
+    await expect.element(page.getByText(copy.nothingToDo)).not.toBeInTheDocument();
 
-    await rerender(<StaffDashboard dashboard={exampleDashboard} permissions={[]} />);
-    expect(tileLink(copy.metrics.supportersAdded(18))).toBeNull();
-    await expect.element(page.getByText(copy.metrics.supportersAdded(18))).toBeVisible();
-    expect(tileLink(copy.metrics.lettersSent(12))?.getAttribute("href")).toBe("/staff/letters?status=sent");
+    await rerender(<StaffDashboard dashboard={exampleQuietDashboard} permissions={[]} />);
+    await expect.element(page.getByText(copy.nothingToDo)).toBeVisible();
+    await expect.element(page.getByRole("list", { name: copy.actionsTitle })).not.toBeInTheDocument();
   });
 
-  it("lists only the imports whose newest run didn't end well, tagged by how it ended, or says all is well", async () => {
+  it("heads the numbers with the day and the window, the other windows as links", async () => {
     const { rerender } = await render(<StaffDashboard dashboard={exampleDashboard} permissions={[]} />);
-    const items = page.getByRole("list", { name: copy.importsTitle }).getByRole("listitem").all();
-    expect(items.map((item) => item.element().textContent)).toEqual([
-      `${jobTitles["import-luma"]} ${staffCopy.runs.status.ok}${staffCopy.runs.incomplete} 2026-10-21 11:17`,
-      `${jobTitles["import-controlai"]} ${staffCopy.runs.status.failed} 2026-10-21 02:00`,
-      `${jobTitles["import-signatories"]} ${copy.neverRun}`,
+    await expect.element(page.getByText("Wednesday 21 October")).toBeVisible();
+    const current = page.getByText(copy.window(7));
+    await expect.element(current).toHaveAttribute("aria-current", "true");
+    expect(current.element().closest("a")).toBeNull();
+    await expect.element(page.getByRole("link", { name: copy.window(30) })).toHaveAttribute("href", "/staff?days=30");
+    await expect.element(page.getByRole("link", { name: copy.window(90) })).toHaveAttribute("href", "/staff?days=90");
+
+    await rerender(<StaffDashboard dashboard={exampleQuietDashboard} permissions={[]} />);
+    await expect.element(page.getByRole("link", { name: copy.window(7) })).toHaveAttribute("href", "/staff");
+    expect(page.getByText(copy.window(30)).element().closest("a")).toBeNull();
+  });
+
+  it("shows each number in its group with its change on the window before, linked where the person may see it", async () => {
+    const { rerender } = await render(<StaffDashboard dashboard={exampleDashboard} permissions={["supporters"]} />);
+    const group = (section: string) =>
+      page.getByRole("list", { name: copy.sections[section] }).getByRole("listitem").all();
+    const mps = group("mps");
+    const events = group("events");
+    const supporters = group("supporters");
+    expect(mps).toHaveLength(3);
+    expect(events).toHaveLength(2);
+    expect(supporters).toHaveLength(2);
+    // The letters tile: the number, the test letters apart, the label, the bar's legend, then the change.
+    await expect
+      .element(mps[0])
+      .toHaveTextContent(
+        `12${copy.testLetters(2)}${copy.metrics.lettersSent(12)}${pm.title} · 9${bill.title} · 3${copy.change.up(4, 7)}`,
+      );
+    await expect.element(mps[1]).toHaveTextContent(`3${copy.metrics.lettersReplied(3)}${copy.change.down(2, 7)}`);
+    await expect
+      .element(mps[2])
+      .toHaveTextContent(`5${copy.metrics.mpsSigned(5)}${pm.title} · 3${bill.title} · 2${copy.change.up(2, 7)}`);
+    await expect.element(events[1]).toHaveTextContent(`9${copy.metrics.eventsHeld(9)}${copy.change.up(3, 7)}`);
+    // The bar's segments are as wide as each campaign's share.
+    const segments = mps[0].element().querySelectorAll("[data-campaign]");
+    expect([...segments].map((segment) => (segment as HTMLElement).style.flexGrow)).toEqual(["9", "3", "", ""]);
+    // Up is green for letters, red for unsubscribes; down is red for replies, green for unsubscribes.
+    const changeClass = (item: ReturnType<typeof page.getByRole>) =>
+      item.element().querySelector(":scope > * > span:last-child")!.className;
+    expect(changeClass(mps[0])).toMatch(/good/);
+    expect(changeClass(mps[1])).toMatch(/bad/);
+    expect(changeClass(supporters[1])).toMatch(/good/);
+    // The sparklines, on registrations and new supporters only, with the week's count on each point.
+    const sparkline = (label: string) => page.getByRole("img", { name: copy.series(label) });
+    await expect.element(sparkline(copy.metrics.eventRegistrations(277))).toBeVisible();
+    await expect.element(sparkline(copy.metrics.supportersAdded(176))).toBeVisible();
+    expect(page.getByRole("img").all()).toHaveLength(2 + 5);
+    // The whole tile is the link; a tile with no page isn't one.
+    const tileLink = (text: string) => page.getByText(text).element().closest("a");
+    expect(tileLink(copy.metrics.lettersReplied(3))?.getAttribute("href")).toBe("/staff/letters?status=replied");
+    expect(tileLink(copy.metrics.supportersAdded(176))?.getAttribute("href")).toBe("/staff/supporters");
+    expect(tileLink(copy.metrics.eventsHeld(9))).toBeNull();
+
+    await rerender(<StaffDashboard dashboard={exampleDashboard} permissions={[]} />);
+    expect(tileLink(copy.metrics.supportersAdded(176))).toBeNull();
+    await expect.element(page.getByText(copy.metrics.supportersAdded(176))).toBeVisible();
+    expect(tileLink(copy.metrics.lettersSent(12))?.getAttribute("href")).toBe("/staff/letters?status=sent");
+
+    // A quiet month: nothing reads "None", with no test letters and no bar; the change is over 30 days.
+    await rerender(<StaffDashboard dashboard={exampleQuietDashboard} permissions={[]} />);
+    const quiet = group("mps");
+    await expect
+      .element(quiet[0])
+      .toHaveTextContent(`${copy.none}${copy.metrics.lettersSent(0)}${copy.change.same(30)}`);
+    await expect
+      .element(quiet[1])
+      .toHaveTextContent(`${copy.none}${copy.metrics.lettersReplied(0)}${copy.change.down(1, 30)}`);
+    expect(quiet[0].element().querySelectorAll("[data-campaign]")).toHaveLength(0);
+    await expect.element(page.getByText(copy.testLetters(0))).not.toBeInTheDocument();
+  });
+
+  it("sums the imports up in one block: red with how many aren't well, or green, with a dot per job", async () => {
+    const { rerender } = await render(<StaffDashboard dashboard={exampleDashboard} permissions={[]} />);
+    const block = page.getByRole("link", { name: new RegExp(copy.notWell(3)) });
+    await expect.element(block).toHaveAttribute("href", "/staff/import-data");
+    expect(block.element().className).toMatch(/unwell/);
+    const dots = block.element().querySelectorAll("[role='img']");
+    expect([...dots].map((dot) => dot.getAttribute("aria-label"))).toEqual([
+      `${jobTitles["import-luma"]}: ${staffCopy.runs.status.ok}`,
+      `${jobTitles["sync-mps"]}: ${staffCopy.runs.status.unchanged}`,
+      `${jobTitles["check-mps"]}: ${staffCopy.runs.status.ok}`,
+      `${jobTitles["import-controlai"]}: ${staffCopy.runs.status.failed}`,
+      `${jobTitles["import-signatories"]}: ${copy.neverRun}`,
     ]);
-    const tag = (i: number, n = 0) => items[i].element().querySelectorAll("span")[n].className;
-    expect(tag(0)).toMatch(/amber/);
-    expect(tag(0, 1)).toMatch(/amber/);
-    expect(tag(1)).toMatch(/red/);
-    expect(tag(2)).not.toMatch(/red|amber|green/);
-    await expect.element(page.getByText(copy.allWell)).not.toBeInTheDocument();
+    expect(dots[0].className).toMatch(/amber/);
+    expect(dots[1].className).toMatch(/green/);
+    expect(dots[3].className).toMatch(/red/);
+    expect(dots[4].className).not.toMatch(/amber|green|red/);
 
     const held = { ...exampleDashboard, imports: [...exampleDashboard.imports] };
     held.imports[1] = exampleHeldSync;
     await rerender(<StaffDashboard dashboard={held} permissions={[]} />);
-    expect(page.getByText(staffCopy.runs.status.held).element().className).toMatch(/amber/);
+    await expect.element(page.getByRole("link", { name: new RegExp(copy.notWell(4)) })).toBeVisible();
 
-    const well = { ...exampleDashboard, imports: exampleDashboard.imports.map(() => exampleAppliedSync) };
-    await rerender(<StaffDashboard dashboard={well} permissions={[]} />);
-    await expect.element(page.getByRole("link", { name: copy.allWell })).toHaveAttribute("href", "/staff/import-data");
-    await expect.element(page.getByRole("list", { name: copy.importsTitle })).not.toBeInTheDocument();
+    await rerender(<StaffDashboard dashboard={exampleQuietDashboard} permissions={[]} />);
+    const well = page.getByRole("link", { name: new RegExp(copy.allWell) });
+    await expect.element(well).toBeVisible();
+    expect(well.element().className).toMatch(/well/);
+    expect(well.element().className).not.toMatch(/unwell/);
+  });
+});
+
+describe("Sparkline", () => {
+  const values = [70, 105, 376, 144, 220, 338, 498, 277];
+  const labels = values.map((value, i) => `Week ${i}: ${value}`);
+
+  it("draws the counts as a line with the last point marked, and says a point's count when pointed at", async () => {
+    await render(<Sparkline values={values} labels={labels} name="Registrations" />);
+    const chart = page.getByRole("img", { name: "Registrations" });
+    await expect.element(chart).toBeVisible();
+    const circles = chart.element().querySelectorAll("circle");
+    expect(circles).toHaveLength(8);
+    expect([...circles].filter((circle) => /marked/.test(circle.getAttribute("class") ?? ""))).toHaveLength(1);
+    expect(circles[7].getAttribute("class")).toMatch(/marked/);
+    await expect.element(page.getByRole("status")).not.toBeInTheDocument();
+
+    const box = chart.element().getBoundingClientRect();
+    const pointAt = (type: string, x: number) =>
+      chart
+        .element()
+        .dispatchEvent(new PointerEvent(type, { clientX: box.left + x, clientY: box.top + 5, bubbles: true }));
+    pointAt("pointermove", 1);
+    await expect.element(page.getByRole("status")).toHaveTextContent(labels[0]);
+    expect(circles[0].getAttribute("class")).toMatch(/marked/);
+    pointAt("pointerdown", box.width - 1);
+    await expect.element(page.getByRole("status")).toHaveTextContent(labels[7]);
+    expect(circles[0].getAttribute("class")).not.toMatch(/marked/);
+    pointAt("pointerleave", 0);
+    await expect.element(page.getByRole("status")).not.toBeInTheDocument();
+  });
+
+  it("draws a flat line for one count, or counts all the same", async () => {
+    const { rerender } = await render(<Sparkline values={[5]} labels={["Only: 5"]} name="One" />);
+    const points = () => page.getByRole("img").element().querySelector("polyline")!.getAttribute("points")!;
+    expect(points()).not.toMatch(/NaN/);
+    await rerender(<Sparkline values={[2, 2, 2]} labels={["a", "b", "c"]} name="Flat" />);
+    expect(points()).not.toMatch(/NaN/);
+    expect(
+      new Set(
+        points()
+          .split(" ")
+          .map((point) => point.split(",")[1]),
+      ).size,
+    ).toBe(1);
   });
 });
 

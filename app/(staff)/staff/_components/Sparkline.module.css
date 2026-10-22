@@ -1,0 +1,44 @@
+/* A sparkline: the line fills the tile's width and keeps its shape; its label floats over the pointed-at point. */
+.chart {
+  position: relative;
+  display: block;
+  width: 100%;
+}
+
+.chart svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+  touch-action: none;
+}
+
+.chart polyline {
+  stroke: var(--accent);
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+
+.point {
+  fill: var(--accent);
+  opacity: 0;
+}
+
+.marked {
+  fill: var(--accent);
+}
+
+.label {
+  position: absolute;
+  z-index: 1;
+  transform: translate(-50%, calc(-100% - var(--space-1)));
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  background: var(--text);
+  color: var(--bg);
+  font-size: var(--text-xs);
+  line-height: 1.3;
+  white-space: nowrap;
+  pointer-events: none;
+  font-variant-numeric: tabular-nums;
+}
