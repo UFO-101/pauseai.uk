@@ -1,33 +1,9 @@
 /* A supporter's or a politician's page: the box of what we hold, and the history under it. */
 
-/* A supporter's page: what we hold, then the history; on a wide screen
-   their subscriptions in a column to the right. On a narrow one the
-   subscriptions come between the two. */
-.layout {
-  display: grid;
-  grid-template-areas:
-    "main side"
-    "below side";
-  grid-template-columns: minmax(0, 1fr) minmax(0, 18rem);
-  grid-template-rows: auto 1fr;
-  gap: 0 var(--space-6);
-  align-items: start;
-}
-
+/* A supporter's box: only as wide as what's in it. */
 .main {
-  grid-area: main;
-}
-
-.side {
-  grid-area: side;
-}
-
-.below {
-  grid-area: below;
-}
-
-.side h2 {
-  margin-top: 0;
+  width: fit-content;
+  max-width: 100%;
 }
 
 /* Each list: its name, then where the address stands. */
@@ -49,16 +25,6 @@
 .caveat {
   color: var(--text-secondary);
   font-size: var(--text-sm);
-}
-
-@media (max-width: 960px) {
-  .layout {
-    grid-template-areas:
-      "main"
-      "side"
-      "below";
-    grid-template-columns: minmax(0, 1fr);
-  }
 }
 
 /* The box: a label and its values on each row. */
