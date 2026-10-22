@@ -903,10 +903,28 @@ ALTER TABLE ONLY public.supporters
     ADD CONSTRAINT supporters_pkey PRIMARY KEY (id);
 
 --
+-- Name: audit_log_address_blocks; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX audit_log_address_blocks ON public.audit_log USING btree (((details ->> 'address'::text))) WHERE (action = ANY (ARRAY['block address'::text, 'unblock address'::text]));
+
+--
 -- Name: audit_log_at; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX audit_log_at ON public.audit_log USING btree (at DESC);
+
+--
+-- Name: audit_log_politician_edits; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX audit_log_politician_edits ON public.audit_log USING btree ((((details ->> 'id'::text))::bigint)) WHERE (action = ANY (ARRAY['add politician'::text, 'edit politician'::text, 'remove politician'::text]));
+
+--
+-- Name: audit_log_status_sets; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX audit_log_status_sets ON public.audit_log USING btree ((((details ->> 'politicianId'::text))::bigint)) WHERE (action = 'set status'::text);
 
 --
 -- Name: campaign_statuses_campaign; Type: INDEX; Schema: public; Owner: -
