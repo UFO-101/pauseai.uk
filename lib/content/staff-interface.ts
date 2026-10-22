@@ -59,9 +59,8 @@ export const staffCopy = {
     // The dashboard: what needs a person, then the window's numbers in
     // three groups, each against the window before.
     dashboard: {
-      // What's waiting for someone: each kind of item, its detail, and its button.
+      // What's waiting for someone, shown only when something is: each kind of item, its detail, and its button.
       actionsTitle: "Needs a person",
-      nothingToDo: "⁂ Nothing needs a person.",
       actions: {
         heldSync: "⁂ MP import held",
         // Why it's held: the change is bigger than an import makes without a person checking.

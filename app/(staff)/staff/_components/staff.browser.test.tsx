@@ -144,7 +144,10 @@ describe("StaffHome", () => {
         dashboard={exampleDashboard}
       />,
     );
-    await expect.element(page.getByRole("heading", { level: 1, name: staffCopy.home.title })).toBeVisible();
+    // The title is for screen readers only: the dashboard is the page.
+    const title = page.getByRole("heading", { level: 1, name: staffCopy.home.title });
+    await expect.element(title).toBeInTheDocument();
+    expect(title.element().getBoundingClientRect().width).toBeLessThanOrEqual(1);
     await expect
       .element(page.getByRole("heading", { level: 2, name: staffCopy.home.dashboard.sections.mps }))
       .toBeVisible();
@@ -180,7 +183,7 @@ describe("StaffHome", () => {
 describe("StaffDashboard", () => {
   const copy = staffCopy.home.dashboard;
 
-  it("lists what needs a person, a dot and a button each, or says nothing does", async () => {
+  it("lists what needs a person in a box of its own, a dot and a button each, or shows nothing", async () => {
     const { rerender } = await render(<StaffDashboard dashboard={exampleDashboard} permissions={[]} />);
     const items = page.getByRole("list", { name: copy.actionsTitle }).getByRole("listitem").all();
     expect(items.map((item) => item.element().textContent)).toEqual([
@@ -201,9 +204,10 @@ describe("StaffDashboard", () => {
     await expect
       .element(page.getByRole("link", { name: copy.actions.seeRun }))
       .toHaveAttribute("href", "/staff/import-data");
-    await expect.element(page.getByText(copy.nothingToDo)).not.toBeInTheDocument();
-    // Red while something in it is broken; amber when it's only waiting.
-    const panel = () => page.getByRole("list", { name: copy.actionsTitle }).element().className;
+    // The heading is inside the box. Red while something in it is broken; amber when it's only waiting.
+    const box = page.getByRole("region", { name: copy.actionsTitle });
+    expect(box.getByRole("heading", { level: 2 }).element().textContent).toBe(copy.actionsTitle);
+    const panel = () => box.element().className;
     expect(panel()).toMatch(/urgent/);
     await rerender(
       <StaffDashboard
@@ -214,8 +218,7 @@ describe("StaffDashboard", () => {
     expect(panel()).not.toMatch(/urgent/);
 
     await rerender(<StaffDashboard dashboard={exampleQuietDashboard} permissions={[]} />);
-    await expect.element(page.getByText(copy.nothingToDo)).toBeVisible();
-    await expect.element(page.getByRole("list", { name: copy.actionsTitle })).not.toBeInTheDocument();
+    await expect.element(page.getByText(copy.actionsTitle)).not.toBeInTheDocument();
   });
 
   it("heads the numbers with the day and the window, the other windows as links", async () => {

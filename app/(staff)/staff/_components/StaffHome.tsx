@@ -2,6 +2,7 @@ import { staffCopy } from "@/lib/content/staff-interface";
 import type { Dashboard } from "@/lib/staff-dashboard";
 import type { Permission } from "@/lib/staff-permissions";
 import StaffDashboard from "./StaffDashboard";
+import styles from "./StaffHome.module.css";
 
 type Props = {
   /** Whether they have an account. Without one: just whom to ask. */
@@ -15,8 +16,9 @@ type Props = {
 
 /**
  * The home page's body: without an account, whom to ask for one; with
- * one, the dashboard, and if they have no permissions, whom to ask for
- * them. The pages and permissions are in the sidebar.
+ * one, the dashboard under a title only screen readers hear, and if they
+ * have no permissions, whom to ask for them. The pages and permissions are
+ * in the sidebar.
  */
 export default function StaffHome({ account, permissions, admins, dashboard }: Props) {
   const who = admins.join(", ");
@@ -32,7 +34,7 @@ export default function StaffHome({ account, permissions, admins, dashboard }: P
   }
   return (
     <>
-      <h1>{staffCopy.home.title}</h1>
+      <h1 className={styles.title}>{staffCopy.home.title}</h1>
       {permissions.length === 0 && (
         <p>
           {staffCopy.home.none} {staffCopy.home.ask(who)}

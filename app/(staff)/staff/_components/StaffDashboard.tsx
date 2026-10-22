@@ -190,8 +190,8 @@ function Tiles({
 }
 
 /**
- * The home page's dashboard: what needs a person, only when something
- * does; the day and the window, with the other windows as links; the
+ * The home page's dashboard: what needs a person, in a box of its own,
+ * only when something does; the day and the window, with the other windows as links; the
  * window's numbers in three groups, each against the window before.
  */
 export default function StaffDashboard({
@@ -203,20 +203,18 @@ export default function StaffDashboard({
 }) {
   return (
     <>
-      <h2 className={styles.heading}>{copy.actionsTitle}</h2>
-      {dashboard.actions.length === 0 ? (
-        <p>
-          <Muted>{copy.nothingToDo}</Muted>
-        </p>
-      ) : (
-        <ul
+      {dashboard.actions.length > 0 && (
+        <section
           className={`${styles.actions} ${dashboard.actions.some((action) => action.kind !== "held-sync") ? styles.urgent : ""}`}
-          aria-label={copy.actionsTitle}
+          aria-labelledby="actions-title"
         >
-          {dashboard.actions.map((action, i) => (
-            <Action key={i} action={action} />
-          ))}
-        </ul>
+          <h2 id="actions-title">{copy.actionsTitle}</h2>
+          <ul aria-label={copy.actionsTitle}>
+            {dashboard.actions.map((action, i) => (
+              <Action key={i} action={action} />
+            ))}
+          </ul>
+        </section>
       )}
       <p className={styles.window}>
         <strong>{staffDay(dashboard.asOf)}</strong>
