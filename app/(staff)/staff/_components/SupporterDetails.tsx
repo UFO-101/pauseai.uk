@@ -3,6 +3,7 @@ import { Muted } from "@/components/ui/Text";
 import { campaignBySlug, campaignPath, displayPostcode } from "@/lib/email-your-mp";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { staffDate, staffTime } from "@/lib/staff-time";
+import { givenPlaces, supporterPlace } from "@/lib/supporter-place";
 import type { SupporterActivity, SupporterDetails as Details, SupporterSource } from "@/lib/supporters";
 import EmailPermissionTiles from "./EmailPermissionTiles";
 import SupporterBadges from "./SupporterBadges";
@@ -11,7 +12,8 @@ import styles from "./Details.module.css";
 const copy = staffCopy.supporters;
 
 /** One value we hold, and where and when it came from: the sources that gave it, and the first time. */
-type Given = { value: string; sources: Set<SupporterSource>; since: string };
+/** `event` marks a city that's an event's they registered for, not one they gave. */
+type Given = { value: string; sources: Set<SupporterSource>; since: string; event?: boolean };
 
 /**
  * The distinct values of a detail, each with its sources and when it was
@@ -41,6 +43,7 @@ function distinct(
 
 /** Where a value came from and when, in words. */
 function origin(given: Given): string {
+  if (given.event) return copy.detail.fromEvent(staffDate(given.since));
   const sources = [...given.sources].map((source) => copy.sources[source]).join(", ");
   return given.since ? copy.detail.from(sources, staffDate(given.since)) : sources;
 }
@@ -130,7 +133,13 @@ export default function SupporterDetails({ supporter }: { supporter: Details }) 
     contacts.map((c) => ({ value: c.postcode, source: c.source, at: c.at })),
     displayPostcode,
   );
-  const cities = distinct(contacts.map((c) => ({ value: c.city, source: c.source, at: c.at })));
+  // The cities they gave us; failing those, their newest event's (supporterPlace).
+  const given = distinct(givenPlaces(contacts).map((c) => ({ value: c.city, source: c.source, at: c.at })));
+  const place = supporterPlace(contacts);
+  const cities: Given[] =
+    given.length > 0 || !place?.city
+      ? given
+      : [{ value: place.city, sources: new Set([place.source]), since: new Date(place.at).toISOString(), event: true }];
   return (
     <>
       <h1>

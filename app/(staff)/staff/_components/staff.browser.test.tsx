@@ -65,6 +65,7 @@ import {
   exampleSupporterDetails,
 } from "./SupportersTable.examples";
 import EmailPermissionTiles from "./EmailPermissionTiles";
+import type { EmailReason, EmailTopic } from "@/lib/email-permissions";
 import { lettersSearch, supportersSearch } from "@/lib/staff-search";
 import Table from "@/components/ui/Table";
 
@@ -1937,6 +1938,20 @@ describe("SupporterDetails", () => {
     await expect.element(page.getByText("gone-campaign", { exact: false })).toBeVisible();
   });
 
+  it("shows the city of their newest event only when they gave none, and none from an event without one", async () => {
+    const copy = staffCopy.supporters;
+    // Jane gave no city; her newest event was in Manchester.
+    const { rerender } = await render(<SupporterDetails supporter={exampleSupporterDetails} />);
+    await expect
+      .element(page.getByText(`Manchester (${copy.detail.fromEvent("20 Sept 2026")})`, { exact: true }))
+      .toBeVisible();
+    const [letter, luma] = exampleSupporterDetails.contacts;
+    await rerender(
+      <SupporterDetails supporter={{ ...exampleSupporterDetails, contacts: [letter, { ...luma, city: null }] }} />,
+    );
+    expect(page.getByText(copy.detail.city, { exact: true }).all()).toHaveLength(0);
+  });
+
   it("with no history, says so", async () => {
     await render(<SupporterDetails supporter={{ ...exampleSupporterDetails, activity: [] }} />);
     await expect.element(page.getByText(staffCopy.supporters.detail.noActivity)).toBeVisible();
@@ -2066,6 +2081,30 @@ describe("EmailPermissionTiles", () => {
     await expect
       .element(page.getByRole("link", { name: copy.seeBlocked }))
       .toHaveAttribute("href", "/staff/blocked-emails");
+  });
+
+  it("words every reason it can give, with when", async () => {
+    const [luma] = exampleSupporterDetails.permissions;
+    const permissions = Object.entries(copy.reasons).flatMap(([topic, reasons]) =>
+      Object.keys(reasons).map((reason) => ({
+        ...luma,
+        topic: topic as EmailTopic,
+        reason: reason as EmailReason,
+        at: "2026-09-12T10:00:00Z",
+      })),
+    );
+    await render(<EmailPermissionTiles permissions={permissions} />);
+    for (const [topic, reasons] of Object.entries(copy.reasons))
+      for (const words of Object.values(reasons))
+        expect(document.body.textContent, topic).toContain(words("12 Sept 2026"));
+  });
+
+  it("says a bounce blocked an address, and nothing of a block it can't date", async () => {
+    const [blocked] = exampleBlockedPermissions;
+    const { rerender } = await render(<EmailPermissionTiles permissions={[{ ...blocked, source: "hard" }]} />);
+    expect(tiles()[0].textContent).toContain(copy.blockedBecause.hard("5 Oct 2026"));
+    await rerender(<EmailPermissionTiles permissions={[{ ...blocked, source: null }]} />);
+    expect(tiles()[0].textContent).toBe(`${copy.blocked}${copy.seeBlocked}`);
   });
 
   it("names a blocked address among several, and leaves out a cause it has no words for", async () => {

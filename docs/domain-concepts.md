@@ -123,6 +123,13 @@ Where they come from:
   erased; the summary's `member` is false for them, so they lose the
   Member badge.
 
+**Where they are.** `supporterPlace()` (`lib/supporter-place.ts`) gives a
+supporter's best-known place from their contact details: the newest a
+source says they gave themselves (a member's city), or failing that the
+newest event they registered for, since Luma's places are its events'.
+The supporter's page shows the cities they gave, or else that one; finding
+supporters near somewhere would use it too.
+
 **Erasure.** When someone asks to be forgotten, staff erase the supporter
 from their page (`lib/server/erasure.ts`), under the request's reference.
 For each source, what that source holds goes: a letter with its events
@@ -166,13 +173,33 @@ June 2026; before, the form required it or had none,
 lifts that opt-out when the address ticks the box freely on the same
 record or a later one, a re-join. It never lifts another source's.
 Airtable never learns of an unsubscribe after joining: those are in
-CiviCRM, which isn't read yet, so the supporter's page says so beside the
-list.
+CiviCRM, which isn't read yet.
 
-Nothing reads `opt_outs` to stop email yet. When the site mails
-supporters, each purpose names the lists that stop it, and `send()` checks
-them as it checks `email_blocks`. A new list is a name in the `CHECK`s on
-`list` and `source`, and whatever records it.
+A new list is a name in the `CHECK`s on `list` and `source`, and whatever
+records it.
+
+### Whether we'd email someone
+
+One place decides whether we may email an address about each topic, and
+why (`emailPermissions()` in `lib/email-permissions.ts`, with the facts
+gathered by `permissionsFor()` in `lib/server/email-permissions.ts`). The
+topics are the Luma calendar's emails, the PauseAI updates, and news of
+events and ways to help from the consent box on a letter. Each answer is
+yes, no or unsure, with a reason from a short list, when, and which
+source said so:
+
+- a blocked address (`email_blocks`, below) is no to everything;
+- then an opt-out in force is no;
+- then each topic's source: following the calendar; the newest member
+  record's "Keep me informed"; the newest letter's consent box.
+
+Unsure is a yes that an unsubscribe we can't see may have undone:
+following the calendar since before Luma's webhook told us of
+unsubscribes, and every member on the updates, which CiviCRM sends. A
+topic the address has had nothing to do with (no Luma account, never a
+member, no letter) has no answer. The supporter's page shows a tile per
+answer. Nothing sends email by it yet; when the site mails supporters,
+`send()` asks it for the purpose's topic as it checks `email_blocks`.
 
 ## Email
 

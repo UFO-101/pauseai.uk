@@ -8,7 +8,7 @@ import { KEEP_INFORMED_FREE_FROM } from "./members";
  * From when Luma tells us of each unsubscribe from the calendar's emails
  * (its webhook). Someone following since before may have left unheard.
  */
-export const LUMA_WEBHOOK_FROM = "2026-10-22T00:00:00Z";
+const LUMA_WEBHOOK_FROM = "2026-10-22T00:00:00Z";
 
 /** What we might email someone about. */
 export const EMAIL_TOPICS = ["luma-calendar", "pauseai-updates", "events-and-ways-to-help"] as const;

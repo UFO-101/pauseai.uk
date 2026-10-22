@@ -187,6 +187,8 @@ export const staffCopy = {
       } as Record<string, string>,
       firstSeen: "First seen",
       lastActive: "Last activity",
+      /** Where a city came from when it's their newest event's, not one they gave. */
+      fromEvent: (when: string) => `⁂ their newest Luma event, ${when}`,
       /** Where a detail came from and when: "Luma, 26 Sept 2026". */
       from: (sources: string, when: string) => `${sources}, ${when}`,
       // Under the main box: a tile per topic, saying whether we'd email them about it, and why.
