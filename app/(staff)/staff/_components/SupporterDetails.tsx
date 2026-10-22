@@ -155,8 +155,8 @@ export default function SupporterDetails({ supporter }: { supporter: Details }) 
         {summary.name ?? copy.noName} <SupporterBadges supporter={summary} />
       </h1>
 
-      <div className={styles.boxes}>
-        <dl className={styles.facts}>
+      <div className={styles.layout}>
+        <dl className={`${styles.facts} ${styles.main}`}>
           <Fact label={copy.detail.emails} values={emails} />
           <Fact label={copy.detail.phone} values={phones} />
           <Fact label={copy.detail.postcode} values={postcodes} />
@@ -174,41 +174,44 @@ export default function SupporterDetails({ supporter }: { supporter: Details }) 
             </>
           )}
         </dl>
+
         {optOuts.length > 0 && (
-          <section className={styles.lists} aria-label={copy.detail.listsTitle}>
-            <h2>{copy.detail.listsTitle}</h2>
-            <dl>
+          <section className={styles.side} aria-labelledby="subscriptions">
+            <h2 id="subscriptions">{copy.detail.listsTitle}</h2>
+            <dl className={styles.lists}>
               {optOuts.map((optOut) => (
                 <div key={`${optOut.list}-${optOut.address}`}>
-                  <dt>{copy.lists[optOut.list]}</dt>
-                  <dd>
-                    {standing(optOut)}
-                    {optOut.list === "pauseai-updates" && <Muted> · {copy.detail.civicrmCaveat}</Muted>}
+                  <dt>
+                    {copy.lists[optOut.list]}
                     {emails.length > 1 && <Muted> · {optOut.address}</Muted>}
-                  </dd>
+                  </dt>
+                  <dd>{standing(optOut)}</dd>
+                  {optOut.list === "pauseai-updates" && <dd className={styles.caveat}>{copy.detail.civicrmCaveat}</dd>}
                 </div>
               ))}
             </dl>
           </section>
         )}
-      </div>
 
-      <h2>{copy.detail.activityTitle}</h2>
-      {activity.length === 0 ? (
-        <p>{copy.detail.noActivity}</p>
-      ) : (
-        <ol className={styles.history} aria-label={copy.detail.activityTitle}>
-          {activity.map((item, i) => (
-            <li key={i}>
-              <span className={styles.when}>{staffTime(item.at)}</span>
-              <span>
-                {copy.detail.kinds[item.kind]}{" "}
-                <Subject item={item} letters={`/staff/letters?supporter=${summary.id}`} />
-              </span>
-            </li>
-          ))}
-        </ol>
-      )}
+        <section className={styles.below} aria-labelledby="history">
+          <h2 id="history">{copy.detail.activityTitle}</h2>
+          {activity.length === 0 ? (
+            <p>{copy.detail.noActivity}</p>
+          ) : (
+            <ol className={styles.history} aria-label={copy.detail.activityTitle}>
+              {activity.map((item, i) => (
+                <li key={i}>
+                  <span className={styles.when}>{staffTime(item.at)}</span>
+                  <span>
+                    {copy.detail.kinds[item.kind]}{" "}
+                    <Subject item={item} letters={`/staff/letters?supporter=${summary.id}`} />
+                  </span>
+                </li>
+              ))}
+            </ol>
+          )}
+        </section>
+      </div>
     </>
   );
 }

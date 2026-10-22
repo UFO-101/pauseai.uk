@@ -1,49 +1,64 @@
 /* A supporter's or a politician's page: the box of what we hold, and the history under it. */
 
-/* A supporter's two boxes: what we hold, and beside it on a wide screen, narrower, the mailing lists. */
-.boxes {
+/* A supporter's page: what we hold, then the history; on a wide screen
+   their subscriptions in a column to the right. On a narrow one the
+   subscriptions come between the two. */
+.layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 20rem);
-  gap: var(--space-5);
+  grid-template-areas:
+    "main side"
+    "below side";
+  grid-template-columns: minmax(0, 1fr) minmax(0, 18rem);
+  grid-template-rows: auto 1fr;
+  gap: 0 var(--space-6);
   align-items: start;
-  margin: 0 0 var(--space-6);
 }
 
-.boxes > .facts {
-  margin: 0;
+.main {
+  grid-area: main;
 }
 
-/* The mailing lists: quieter than the main box, a list name over each address's standing. */
+.side {
+  grid-area: side;
+}
+
+.below {
+  grid-area: below;
+}
+
+.side h2 {
+  margin-top: 0;
+}
+
+/* Each list: its name, then where the address stands. */
 .lists {
-  padding: var(--space-4) var(--space-5);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  color: var(--text-secondary);
-  font-size: var(--text-sm);
-}
-
-.lists h2 {
-  margin: 0 0 var(--space-3);
-  font-size: var(--text-sm);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.lists dl {
+  display: grid;
+  gap: var(--space-4);
   margin: 0;
 }
 
 .lists dt {
-  color: var(--text);
   font-weight: 600;
 }
 
 .lists dd {
-  margin: 0 0 var(--space-3);
+  margin: var(--space-1) 0 0;
 }
 
-.lists div:last-child dd {
-  margin-bottom: 0;
+/* What the site can't know about the list, in small print. */
+.caveat {
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+}
+
+@media (max-width: 960px) {
+  .layout {
+    grid-template-areas:
+      "main"
+      "side"
+      "below";
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 /* The box: a label and its values on each row. */

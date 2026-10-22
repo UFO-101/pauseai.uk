@@ -170,10 +170,7 @@ export const staffCopy = {
       member: "Member",
     },
     sources: { luma: "Luma", letter: "Letter", member: "Member" } as Record<string, string>,
-    lists: { "luma-calendar": "Luma calendar emails", "pauseai-updates": "⁂ PauseAI updates" } as Record<
-      string,
-      string
-    >,
+    lists: { "luma-calendar": "Luma calendar emails", "pauseai-updates": "PauseAI updates" } as Record<string, string>,
     // A supporter's page: one box of what we know, then the history.
     detail: {
       emails: "Email",
@@ -192,26 +189,26 @@ export const staffCopy = {
       lastActive: "Last activity",
       /** Where a detail came from and when: "Luma, 26 Sept 2026". */
       from: (sources: string, when: string) => `${sources}, ${when}`,
-      // The box beside the main one: where each address stands on each mailing list.
-      listsTitle: "Mailing lists",
+      // The column beside the main box: where each address stands on each mailing list.
+      listsTitle: "Subscriptions",
       optedOut: (since: string) => `unsubscribed ${since}`,
       notOptedOut: "subscribed",
       // Where an address stands on a list, after "subscribed" or "unsubscribed": who told us.
-      via: { "luma-webhook": "⁂ via Luma" } as Record<string, string>,
+      via: { "luma-webhook": "via Luma" } as Record<string, string>,
       // The members' updates: what they did with "Keep me informed" on joining.
       joining: {
-        declined: (when: string) => `⁂ opted out when joining, ${when} (left “Keep me informed” unticked)`,
-        rejoined: (when: string) => `⁂ opted out when joining, then asked for updates on re-joining ${when}`,
-        asked: (when: string) => `⁂ asked for updates when joining, ${when}`,
-        required: (when: string) => `⁂ on the list from joining, ${when} (the form required it)`,
-        unasked: (when: string) => `⁂ on the list from joining, ${when} (the form didn't ask)`,
+        declined: (when: string) => `opted out when joining, ${when} (left “Keep me informed” unticked)`,
+        rejoined: (when: string) => `opted out when joining, then asked for updates on re-joining ${when}`,
+        asked: (when: string) => `asked for updates when joining, ${when}`,
+        required: (when: string) => `on the list from joining, ${when} (the form required it)`,
+        unasked: (when: string) => `on the list from joining, ${when} (the form didn't ask)`,
       },
       /** After each line about the members' updates, while their later unsubscribes are only in CiviCRM. */
-      civicrmCaveat: "⁂ unsubscribes made since, in CiviCRM, aren't known here",
+      civicrmCaveat: "Unsubscribes made since, in CiviCRM, aren't known here yet.",
       // In the history, why the import opted someone out of the updates or back in.
       importReasons: {
-        "opted-out": "⁂ left “Keep me informed” unticked when joining",
-        resubscribed: "⁂ ticked “Keep me informed” on re-joining",
+        "opted-out": "left “Keep me informed” unticked when joining",
+        resubscribed: "ticked “Keep me informed” on re-joining",
       } as Record<string, string>,
       activityTitle: "History",
       // Between the MP a letter went to, or who answered it, and its campaign.
