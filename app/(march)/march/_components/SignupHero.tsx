@@ -29,7 +29,7 @@ export default function SignupHero() {
           <span className={m("hero-title-hit")}>AI Extinction</span>
         </h1>
 
-        <p className={m("hero-lede")}>Join us for the biggest ever AI protest.</p>
+        <p className={m("hero-lede")}>Join us for the biggest ever AI safety protest.</p>
 
         <div className={m("hero-facts")}>
           <div className={m("hero-fact")}>

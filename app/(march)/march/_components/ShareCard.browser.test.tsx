@@ -62,6 +62,20 @@ describe("ShareCard", () => {
     expect(page.getByRole("list").getByRole("link").all()).toHaveLength(9);
   });
 
+  it("sends X, Bluesky and Threads the short message, inside their limits, and the rest the whole one", async () => {
+    await renderCard();
+    const text = (name: string, param: string) =>
+      new URL(page.getByRole("link", { name, exact: true }).element().getAttribute("href")!).searchParams.get(param);
+    expect(text("X", "text")).toBe(copy.shortMessage);
+    expect(text("Bluesky", "text")).toBe(copy.shortMessage);
+    expect(text("Threads", "text")).toBe(copy.shortMessage);
+    expect(text("WhatsApp", "text")).toBe(copy.message);
+    expect(text("Telegram", "url")).toBe(copy.message);
+    expect(text("Email", "body")).toBe(copy.message);
+    expect(copy.message.endsWith(copy.shortMessage)).toBe(true);
+    expect([...copy.shortMessage].length).toBeLessThanOrEqual(280);
+  });
+
   it("has the share button at the foot of the card, under the places to post", async () => {
     await renderCard();
     const apps = page.getByRole("list").element().getBoundingClientRect();
