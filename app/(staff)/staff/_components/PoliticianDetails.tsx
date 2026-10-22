@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { staffCopy } from "@/lib/content/staff-interface";
-import { campaignBySlug } from "@/lib/email-your-mp";
+import { campaignBySlug, campaignPath } from "@/lib/email-your-mp";
 import { importPath } from "@/lib/import-runs";
 import type { EmailBlock } from "@/lib/server/email";
 import type { LetterSummary } from "@/lib/server/letters";
@@ -30,6 +30,12 @@ function Fact({ label, children }: { label: string; children: React.ReactNode })
 /** One line of the history: when, and what, already in words. */
 type Entry = { key: string; at: string; what: ReactNode };
 
+/** A campaign by its name, linked to its public page; one no longer run, by its slug, plain. */
+function CampaignName({ slug }: { slug: string }) {
+  const campaign = campaignBySlug(slug);
+  return campaign ? <Link href={campaignPath(campaign)}>{campaign.title}</Link> : <>{slug}</>;
+}
+
 /** A letter: who wrote it, linked to their supporter once they're one, the campaign, and how it ended. */
 function Sender({ letter }: { letter: LetterSummary }) {
   return (
@@ -39,7 +45,10 @@ function Sender({ letter }: { letter: LetterSummary }) {
       ) : (
         <Link href={`/staff/supporters/${letter.supporterId}`}>{letter.senderName}</Link>
       )}
-      <Muted> · {campaignBySlug(letter.campaign)?.title ?? letter.campaign}</Muted>
+      <Muted>
+        {" · "}
+        <CampaignName slug={letter.campaign} />
+      </Muted>
     </>
   );
 }
@@ -79,12 +88,15 @@ function Detail({ change }: { change: PoliticianChange }) {
   const text = (key: string) => (typeof details[key] === "string" ? (details[key] as string) : "");
   switch (change.action) {
     case "set status": {
-      const campaign = campaignBySlug(text("campaign"))?.title ?? text("campaign");
+      const words =
+        details.status === null
+          ? copy.statusCleared
+          : copy.statusSet(staffCopy.statuses[text("status")] ?? text("status"));
       return (
         <>
-          {details.status === null
-            ? copy.statusCleared(campaign)
-            : copy.statusSet(staffCopy.statuses[text("status")] ?? text("status"), campaign)}
+          {words.before}
+          <CampaignName slug={text("campaign")} />
+          {words.after}
           {text("date") && `, ${text("date")}`}
           {text("note") && <Muted> · {text("note")}</Muted>}
         </>

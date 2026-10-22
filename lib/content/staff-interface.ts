@@ -303,9 +303,9 @@ export const staffCopy = {
     // A status: who set it and when; the campaign's title heads the line.
     setBy: (who: string, when: string) => `set by ${who}, ${when}`,
     historyTitle: "History",
-    // A campaign status set or cleared, in the history: the status, then the campaign.
-    statusSet: (status: string, campaign: string) => `${status} '${campaign}'`,
-    statusCleared: (campaign: string) => `No longer marked as signed '${campaign}'`,
+    // A campaign status set or cleared, in the history: around the campaign's name, which links to its page.
+    statusSet: (status: string) => ({ before: `${status} '`, after: "'" }),
+    statusCleared: { before: "No longer marked as signed '", after: "'" },
     noHistory: "Nothing yet.",
     // What each line of the history was: a letter, a reply, or an entry of the audit log about them.
     history: {

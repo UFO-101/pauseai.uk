@@ -835,6 +835,8 @@ describe("PoliticianDetails", () => {
       .element(page.getByRole("link", { name: exampleLetter.senderName }))
       .toHaveAttribute("href", "/staff/supporters/7");
     await expect.element(page.getByRole("link", { name: "Anon Writer" })).not.toBeInTheDocument();
+    const statusLine = (words: { before: string; after: string }, campaign: string) =>
+      `${words.before}${campaign}${words.after}`;
     const history = page.getByRole("list", { name: staffCopy.politician.historyTitle }).getByRole("listitem").all();
     const copy = staffCopy.politician.history;
     expect(history.map((item) => item.element().textContent)).toEqual([
@@ -843,15 +845,22 @@ describe("PoliticianDetails", () => {
       `2026-10-13 08:00${copy.letter} Anon Writer · ${pm.title} · ${staffCopy.letters.status.sent}`,
       `2026-10-12 09:10${copy["block address"]} ${staffCopy.emails.kinds.hard} · postmark`,
       `2026-10-12 09:00${copy.letter} ${exampleLetter.senderName} · ${pm.title} · ${staffCopy.letters.status.bounced}`,
-      `2026-10-02 10:00${staffCopy.politician.statusSet(staffCopy.statuses.signed, pm.title)}, 2026-10-01 · Told us at the march · jo@pauseai.uk`,
+      `2026-10-02 10:00${statusLine(staffCopy.politician.statusSet(staffCopy.statuses.signed), pm.title)}, 2026-10-01 · Told us at the march · jo@pauseai.uk`,
       `2026-09-30 10:00${copy["edit politician"]} Polly Placeholder · polly.placeholder.mp@parliament.uk · sam@pauseai.uk`,
-      `2026-09-01 10:00${staffCopy.politician.statusCleared("gone")} · jo@pauseai.uk`,
-      `2026-08-15 10:00${staffCopy.politician.statusSet("odd", pm.title)} · jo@pauseai.uk`,
+      `2026-09-01 10:00${statusLine(staffCopy.politician.statusCleared, "gone")} · jo@pauseai.uk`,
+      `2026-08-15 10:00${statusLine(staffCopy.politician.statusSet("odd"), pm.title)} · jo@pauseai.uk`,
       `2026-08-10 10:00${copy["block address"]} weird · postmark`,
       "2026-08-01 10:00strange  · x",
       `2026-07-15 10:00${copy["add politician"]} Polly Placeholder · import`,
       `2026-07-01 08:00${copy.letter} Old Writer · old-campaign · queued`,
     ]);
+    // Each campaign it names links to its public page; one no longer run is its slug, plain.
+    const list = page.getByRole("list", { name: staffCopy.politician.historyTitle });
+    const links = list.getByRole("link", { name: pm.title, exact: true }).all();
+    expect(links.length).toBeGreaterThan(1);
+    for (const link of links) await expect.element(link).toHaveAttribute("href", campaignPath(pm));
+    await expect.element(list.getByRole("link", { name: "old-campaign" })).not.toBeInTheDocument();
+    await expect.element(list.getByRole("link", { name: "gone" })).not.toBeInTheDocument();
   });
 
   it("says in one place that letters aren't being sent, why, what to check, and unblocks it with a note", async () => {
