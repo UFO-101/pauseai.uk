@@ -443,6 +443,13 @@ describe("StaffAccountForm", () => {
     await vi.waitFor(() => expect(sent).toHaveLength(1));
     expect(sent[0]).toEqual({ email: "new@pauseai.uk" });
   });
+
+  it("for someone new, says when the last address tried wasn't at pauseai.uk", async () => {
+    const { rerender } = await render(<StaffAccountForm permissions={[]} save={vi.fn()} />);
+    await expect.element(page.getByText(staffCopy.accounts.notPauseai)).not.toBeInTheDocument();
+    await rerender(<StaffAccountForm permissions={[]} save={vi.fn()} notPauseai />);
+    await expect.element(page.getByText(staffCopy.accounts.notPauseai)).toBeVisible();
+  });
 });
 
 describe("RemoveAccountForm", () => {

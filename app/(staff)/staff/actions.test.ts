@@ -126,6 +126,10 @@ describeWithDatabase("staff Server Actions", () => {
       "/staff/accounts",
     );
     expect(await query("SELECT count(*)::int AS n FROM staff_accounts")).toEqual([{ n: 1 }]);
+    // An address not at pauseai.uk is refused, and the form says so.
+    expect(await expectRedirect(() => saveStaffAccountNow(form({ email: "sam@example.com" })))).toBe(
+      "/staff/accounts?notice=not-pauseai",
+    );
     // A bad form does nothing.
     await saveStaffAccountNow(form({ email: "nobody" }));
     await removeStaffAccountNow(form({ email: "nobody" }));

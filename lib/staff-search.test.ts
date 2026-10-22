@@ -91,6 +91,7 @@ describe("supportersSearch", () => {
     });
     expect(all.q).toBe(" jane ");
     expect(supportersSearch({ registered: "on" }).filter).toMatchObject({ registered: true });
+    expect(accountsSearch({ notice: "not-pauseai" })).toEqual({ notice: "not-pauseai" });
     const bad = supportersSearch({ source: "x", active: "7", from: "soon", sort: "x", page: "0" });
     expect(bad.filter).toEqual({ sort: "active", dir: "desc", page: 1 });
     expect(supportersSearch({ active: "older", sort: "first" }).filter).toMatchObject({

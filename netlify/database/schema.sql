@@ -375,6 +375,7 @@ CREATE TABLE public.staff_accounts (
     added_by text NOT NULL,
     added_at timestamp with time zone DEFAULT now() NOT NULL,
     CONSTRAINT staff_accounts_email_check CHECK ((email = lower(email))),
+    CONSTRAINT staff_accounts_email_pauseai CHECK ((email ~ '^[^@[:space:]]+@pauseai\.uk$'::text)),
     CONSTRAINT staff_accounts_permissions_check CHECK ((permissions <@ ARRAY['admin'::text, 'supporters'::text]))
 );
 

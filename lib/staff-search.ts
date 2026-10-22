@@ -80,5 +80,5 @@ export function supportersSearch({
 
 /** The accounts page's notice, after a refused change. */
 export function accountsSearch({ notice = "" }: { notice?: string }): { notice: string } {
-  return { notice: notice === "last-admin" ? notice : "" };
+  return { notice: notice === "last-admin" || notice === "not-pauseai" ? notice : "" };
 }

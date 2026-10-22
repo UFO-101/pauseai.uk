@@ -15,7 +15,7 @@ import { decideHeldSync, syncMps } from "@/lib/server/mp-sync";
 import { setStatus, updatePolitician } from "@/lib/server/politicians";
 import { importSignatories } from "@/lib/server/signatory-import";
 import { requireStaff } from "@/lib/server/staff-auth";
-import { removeStaffAccount, saveStaffAccount } from "@/lib/server/staff-accounts";
+import { type AccountChange, removeStaffAccount, saveStaffAccount } from "@/lib/server/staff-accounts";
 
 /** The button in the politicians list: marks one as signed today, or as not signed. */
 export async function markSigned(form: FormData): Promise<void> {
@@ -107,9 +107,9 @@ export async function unblockAddress(form: FormData): Promise<void> {
 }
 
 /** Where the accounts page goes after a change: back to itself, saying why if the change was refused. */
-function accountsPage(change: "changed" | "unchanged" | "last-admin"): never {
+function accountsPage(change: AccountChange): never {
   revalidatePath("/staff/accounts");
-  redirect(change === "last-admin" ? "/staff/accounts?notice=last-admin" : "/staff/accounts");
+  redirect(change === "changed" || change === "unchanged" ? "/staff/accounts" : `/staff/accounts?notice=${change}`);
 }
 
 /** The accounts page: gives an address an account with exactly the permissions ticked, as the admin. */

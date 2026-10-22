@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Checkbox, TextInput } from "@/components/ui/Controls";
-import { Field } from "@/components/ui/Field";
+import { Field, FieldError, FieldGroup } from "@/components/ui/Field";
 import { FilterForm } from "@/components/ui/Form";
 import { SubmitButton } from "@/components/ui/SubmitButton";
 import { staffCopy } from "@/lib/content/staff-interface";
@@ -16,6 +16,8 @@ type Props = {
   email?: string;
   permissions: Permission[];
   save: Action;
+  /** For someone new: the last address tried wasn't at pauseai.uk. */
+  notPauseai?: boolean;
 };
 
 /**
@@ -25,14 +27,17 @@ type Props = {
  * boxes, so they start with an account alone and get permissions in their
  * row of the table.
  */
-export default function StaffAccountForm({ email, permissions, save }: Props) {
+export default function StaffAccountForm({ email, permissions, save, notPauseai = false }: Props) {
   const [ticked, setTicked] = useState(new Set(permissions));
   if (email === undefined) {
     return (
       <FilterForm action={save} aria-label={staffCopy.accounts.addTitle}>
-        <Field label={staffCopy.accounts.emailLabel}>
-          <TextInput name="email" type="email" required />
-        </Field>
+        <FieldGroup>
+          <Field label={staffCopy.accounts.emailLabel}>
+            <TextInput name="email" type="email" required />
+          </Field>
+          {notPauseai && <FieldError>{staffCopy.accounts.notPauseai}</FieldError>}
+        </FieldGroup>
         <SubmitButton variant="primary" size="small">
           {staffCopy.accounts.add}
         </SubmitButton>

@@ -2,6 +2,7 @@ import "server-only";
 import type { Permission } from "@/lib/staff-permissions";
 import { logChange } from "./audit";
 import { query, transaction, type Queryable } from "./db";
+import { isStaffEmail } from "./staff-login";
 
 // Who may use the staff pages (staff_accounts): read on every request by
 // requireStaff(), kept by admins on /staff/accounts, each change in the
@@ -41,8 +42,11 @@ export async function admins(db?: Queryable): Promise<string[]> {
   return rows.map((row) => row.email);
 }
 
-/** How a change to an account ended: done, nothing to do, or refused because it would leave no admin. */
-export type AccountChange = "changed" | "unchanged" | "last-admin";
+/**
+ * How a change to an account ended: done, nothing to do, or refused,
+ * because it would leave no admin or the address isn't at pauseai.uk.
+ */
+export type AccountChange = "changed" | "unchanged" | "last-admin" | "not-pauseai";
 
 function normalise(email: string, permissions: Permission[]): [string, Permission[]] {
   return [email.trim().toLowerCase(), [...new Set(permissions)].sort()];
@@ -57,10 +61,12 @@ async function wouldLeaveNoAdmin(email: string, db: Queryable): Promise<boolean>
 /**
  * Gives `email` an account with exactly `permissions`, or an existing
  * account exactly those, as `by`, logging the change. Refuses to take
- * admin from the last admin.
+ * admin from the last admin, and an address not at pauseai.uk, which the
+ * table refuses too.
  */
 export async function saveStaffAccount(email: string, permissions: Permission[], by: string): Promise<AccountChange> {
   const [address, to] = normalise(email, permissions);
+  if (!isStaffEmail(address)) return "not-pauseai";
   return transaction(async (db) => {
     const [row] = await query<{ permissions: Permission[] }>(
       "SELECT permissions FROM staff_accounts WHERE email = $1 FOR UPDATE",

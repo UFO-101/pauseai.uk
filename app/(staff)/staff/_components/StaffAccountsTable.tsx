@@ -19,10 +19,13 @@ export default function StaffAccountsTable({
   accounts,
   save,
   remove,
+  notPauseai = false,
 }: {
   accounts: StaffAccount[];
   save: Action;
   remove: Action;
+  /** The last address added wasn't at pauseai.uk: the form for someone new says so. */
+  notPauseai?: boolean;
 }) {
   const columns = staffCopy.accounts.columns;
   return (
@@ -61,7 +64,7 @@ export default function StaffAccountsTable({
         ).join(" ")}
       </Hint>
       <h2>{staffCopy.accounts.addTitle}</h2>
-      <StaffAccountForm permissions={[]} save={save} />
+      <StaffAccountForm permissions={[]} save={save} notPauseai={notPauseai} />
     </>
   );
 }

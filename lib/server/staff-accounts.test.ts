@@ -44,6 +44,15 @@ describeWithDatabase("staff accounts", () => {
     ]);
   });
 
+  it("refuses an address not at pauseai.uk, and so does the table", async () => {
+    expect(await saveStaffAccount("jo@example.com", [], "admin@pauseai.uk")).toBe("not-pauseai");
+    expect(await saveStaffAccount("jo@sub.pauseai.uk", [], "admin@pauseai.uk")).toBe("not-pauseai");
+    await expect(query("INSERT INTO staff_accounts (email, added_by) VALUES ('jo@example.com', 'x')")).rejects.toThrow(
+      /staff_accounts_email_pauseai/,
+    );
+    expect(await listStaffAccounts()).toEqual([]);
+  });
+
   it("removes an account with its sessions and links, and does nothing for one that isn't there", async () => {
     await saveStaffAccount("jo@pauseai.uk", ["admin"], "x");
     await saveStaffAccount("sam@pauseai.uk", ["supporters"], "x");

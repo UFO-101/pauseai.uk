@@ -243,6 +243,8 @@ export const staffCopy = {
     // The button on the form for someone new.
     add: "Add",
     remove: "Remove",
+    // Under the email of the form for someone new, when it isn't at pauseai.uk.
+    notPauseai: "⁂ Only an address at pauseai.uk can have an account.",
     addTitle: "Add someone",
     emailLabel: "Email",
     // When a change would leave no admin.
