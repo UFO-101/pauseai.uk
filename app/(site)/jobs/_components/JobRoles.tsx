@@ -16,7 +16,7 @@ export default function JobRoles() {
         <JobRole title="Operations specialist">
           <Salary>
             <p>
-              <strong>Expected salary range: £50k - £100k</strong>
+              <strong>Expected salary range: £80k - £100k</strong>
               <br />
               <strong>This can potentially be a part time role. But full time applicants are preferred.</strong>
             </p>
