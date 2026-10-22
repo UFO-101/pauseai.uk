@@ -120,6 +120,7 @@ export default function PoliticianDetails({
   unblock,
   letters,
   history,
+  airtableTable,
 }: {
   politician: Politician;
   action: (form: FormData) => void | Promise<void>;
@@ -127,6 +128,8 @@ export default function PoliticianDetails({
   unblock: (form: FormData) => void | Promise<void>;
   letters: LetterSummary[];
   history: PoliticianChange[];
+  /** Airtable's table of MPs, which the server knows; an MP's record there is under it. */
+  airtableTable: string;
 }) {
   const editable = politician.airtableId === null && !politician.isTest;
   const entries: Entry[] = [
@@ -203,7 +206,21 @@ export default function PoliticianDetails({
       )}
 
       <h2>{copy.detailsTitle}</h2>
-      {editable ? <PoliticianForm action={action} politician={politician} /> : <p>{copy.fromAirtable}</p>}
+      {editable ? (
+        <PoliticianForm action={action} politician={politician} />
+      ) : (
+        <p>
+          {copy.fromAirtable.before}
+          <a
+            href={politician.airtableId ? `${airtableTable}/${politician.airtableId}` : airtableTable}
+            target="_blank"
+            rel="noreferrer"
+          >
+            {copy.fromAirtable.link}
+          </a>
+          {copy.fromAirtable.after}
+        </p>
+      )}
     </>
   );
 }

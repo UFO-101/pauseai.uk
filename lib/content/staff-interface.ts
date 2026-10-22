@@ -65,9 +65,8 @@ export const staffCopy = {
         heldSyncDetail:
           "That's a lot of MPs, so please check it, and approve or decline it. Fix any problems in Airtable.",
         decide: "Open Import",
-        blockedMp: (name: string) => `⁂ ${name}'s email bounced`,
-        blockedMpDetail: (since: string) =>
-          `Find a working email for this MP, the address has been blocked since ${since}.`,
+        blockedMp: (name: string) => `${name}'s email is bouncing`,
+        blockedMpDetail: "Find a working email for this MP if it has changed, or unblock if working now.",
         openMp: "Open MP",
         failedImport: (job: string) => `⁂ ${job} failed`,
         failedImportDetail: (error: string, at: string) => `⁂ ${error} · ${at}`,
@@ -315,7 +314,12 @@ export const staffCopy = {
       "block address": "Address blocked",
       "unblock address": "Address unblocked",
     } as Record<string, string>,
-    fromAirtable: "Information about the MP is imported from Airtable, update name / email there.",
+    // On an MP from Airtable, instead of the form: "Airtable" links to their record there.
+    fromAirtable: {
+      before: "Information about the MP is imported from ",
+      link: "Airtable",
+      after: ", update name / email there.",
+    },
     save: "Save",
     notFound: "Politician not found.",
     // Under their name, when their address is blocked: what's happened, what to check, and the form.

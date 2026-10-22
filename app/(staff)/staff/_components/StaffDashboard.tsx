@@ -43,7 +43,7 @@ function Action({ action }: { action: DashboardAction }) {
         ? [
             "red" as const,
             words.blockedMp(action.name),
-            words.blockedMpDetail(staffDate(action.at)),
+            words.blockedMpDetail,
             words.openMp,
             `/staff/politicians/${action.politicianId}`,
           ]

@@ -109,6 +109,7 @@ export function PoliticianDetailsExample({
           letters={[{ ...exampleLetter, mpName: examplePolitician.name, politicianId: examplePolitician.id }]}
           history={examplePoliticianHistory}
           unblock={log("unblock")}
+          airtableTable="https://airtable.com/appExample/tblExample"
         />
       )}
     </Logged>

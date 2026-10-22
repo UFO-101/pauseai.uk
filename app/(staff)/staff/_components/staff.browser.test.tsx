@@ -189,7 +189,7 @@ describe("StaffDashboard", () => {
     const items = page.getByRole("list", { name: copy.actionsTitle }).getByRole("listitem").all();
     expect(items.map((item) => item.element().textContent)).toEqual([
       `${copy.actions.heldSync(24)}${copy.actions.heldSyncDetail}${copy.actions.decide}`,
-      `${copy.actions.blockedMp("Bouncy McTestface MP")}${copy.actions.blockedMpDetail("19 Oct 2026")}${copy.actions.openMp}`,
+      `${copy.actions.blockedMp("Bouncy McTestface MP")}${copy.actions.blockedMpDetail}${copy.actions.openMp}`,
       `${copy.actions.failedImport(jobTitles["import-controlai"])}${copy.actions.failedImportDetail("No PDF linked", "2026-10-21 02:00")}${copy.actions.seeRun}`,
     ]);
     // Each item is its own alert: amber with a pause while it waits, red with a warning when something's broken.
@@ -622,7 +622,7 @@ describe("LoginForm", () => {
 });
 
 describe("PoliticianDetails", () => {
-  const none = { letters: [], history: [] };
+  const none = { letters: [], history: [], airtableTable: "https://airtable.com/app/tbl" };
 
   it("heads the page with their name, boxes what's known with each campaign's status, and edits a signer the team added", async () => {
     const { fn } = action();
@@ -657,7 +657,17 @@ describe("PoliticianDetails", () => {
       const { unmount } = await render(
         <PoliticianDetails politician={politician} action={fn} unblock={vi.fn()} {...none} />,
       );
-      await expect.element(page.getByText(staffCopy.politician.fromAirtable)).toBeVisible();
+      // "Airtable" links to the MP's own record there, or to the table for a test MP, who has none.
+      const airtable = page.getByRole("link", { name: staffCopy.politician.fromAirtable.link, exact: true });
+      await expect
+        .element(airtable)
+        .toHaveAttribute(
+          "href",
+          politician.airtableId
+            ? `https://airtable.com/app/tbl/${politician.airtableId}`
+            : "https://airtable.com/app/tbl",
+        );
+      await expect.element(airtable).toHaveAttribute("target", "_blank");
       await expect.element(page.getByText(source)).toBeVisible();
       await expect.element(page.getByRole("button", { name: staffCopy.politician.save })).not.toBeInTheDocument();
       expect(page.getByRole("heading", { level: 1 }).element().textContent).toBe(
@@ -680,6 +690,7 @@ describe("PoliticianDetails", () => {
     } as unknown as typeof MP;
     await render(
       <PoliticianDetails
+        airtableTable="https://airtable.com/app/tbl"
         politician={peer}
         action={vi.fn()}
         unblock={vi.fn()}

@@ -3,6 +3,7 @@ import { staffCopy } from "@/lib/content/staff-interface";
 import { found } from "@/lib/found";
 import { blockOn } from "@/lib/server/email";
 import { recentLetters } from "@/lib/server/letters";
+import { PARLIAMENTARIANS_TABLE_URL } from "@/lib/server/outside-services/airtable";
 import { getPolitician, politicianHistory } from "@/lib/server/politicians";
 import { requireStaff } from "@/lib/server/staff-auth";
 import { politicianId } from "@/lib/staff-search";
@@ -38,6 +39,7 @@ export default async function PoliticianPage({ params }: Params) {
         unblock={unblockAddress}
         letters={letters}
         history={history}
+        airtableTable={PARLIAMENTARIANS_TABLE_URL}
       />
     </StaffPage>
   );
