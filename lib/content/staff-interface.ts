@@ -82,8 +82,8 @@ export const staffCopy = {
         seeRun: "⁂ See run",
       },
       // The window: its length in days, each a link but the one shown.
-      window: (days: number) => `⁂ ${days} days`,
-      windows: "⁂ Show",
+      window: (days: number) => `${days} days`,
+      windows: "Show",
       sections: {
         mps: "⁂ MPs",
         events: "⁂ Events",
