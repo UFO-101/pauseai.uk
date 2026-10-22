@@ -494,9 +494,9 @@ export const staffCopy = {
     }) =>
       `${r.events} events changed; ${r.eventsSynced} guest lists read, ${r.eventsLeft} waiting; ${r.guestsChanged} guests, ${r.people} people, ${r.contacts} contacts changed; ${r.supportersAdded} new supporters, ${r.linked} linked; ${r.requests} requests.`,
     // After the counts, how many pages of contacts the run read (runs kept before this was recorded don't say).
-    contactPages: (pages: number) => `⁂ ${pages} pages of contacts read.`,
+    contactPages: (pages: number) => `${pages} pages of contacts read.`,
     // After that, while a full pass over the contacts is part-way through.
-    contactsPassGoing: "⁂ Still reading every contact: the next runs read the rest.",
+    contactsPassGoing: "Still reading every contact: the next runs read the rest.",
     stoppedBy: {
       time: "Stopped: out of time.",
       "rate-limit": "Stopped: near Luma's rate limit.",
