@@ -53,8 +53,6 @@ export function fixtureEnv({ outboxDir }) {
     LUMA_API_KEY: "fixture",
     // tests/luma-webhooks.ts signs the storyboard's webhooks with it.
     LUMA_WEBHOOK_SECRET: "fixture-luma-webhook-secret",
-    // The march sign-up's event (app/(march)/march/actions.ts).
-    LUMA_MARCH_EVENT_ID: "evt-fixture",
     AIRTABLE_TOKEN: "fixture",
     STRIPE_WALL_OF_THANKS_KEY: "fixture",
     // Not one of Cloudflare's test secrets, which are refused outside
