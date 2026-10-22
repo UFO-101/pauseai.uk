@@ -80,20 +80,20 @@ email can send one letter per campaign, except to a test MP.
 ## Supporters
 
 One row per person we know of (`supporters`), tied to each record about
-them in a source by `supporter_links`: a Luma user (`luma_user_id`) or a
-letter (`letter_id`), matched by trimmed, lowercased email and nothing
+them in a source by `supporter_links`: a Luma user (`luma_user_id`), a
+letter (`letter_id`) or a member (`member_id`), matched by trimmed, lowercased email and nothing
 more, so `jane+luma@` and `jane@` are two people. The supporter holds no
 name, email, phone or place of its own: those come from the linked
 records, newest first. `linkSupporters()` (`lib/server/supporters.ts`)
-only adds links, runs at the end of each Luma import and when a letter is
-kept, and is set-based, so running it again does nothing.
+only adds links, runs at the end of each Luma and members import and when
+a letter is kept, and is set-based, so running it again does nothing.
 
 Each source (`lib/server/supporter-sources.ts`) gives three views in one
 shape, made in the migrations: `supporter_source_<name>` (`source_id`,
 `email`, `name`, `seen_at`) for the matcher, `supporter_activity_<name>`
-(`source_id`, `at`, `kind`, `title`, `detail`, `href`) for the history,
-and `supporter_contact_<name>` (`source_id`, `at`, `phone`, `postcode`,
-`latitude`, `longitude`) for contact details and places.
+(`source_id`, `at`, `kind`, `title`, `detail`, `href`, `status`) for the
+history, and `supporter_contact_<name>` (`source_id`, `at`, `phone`,
+`postcode`, `latitude`, `longitude`, `city`) for contact details and places.
 `supporter_identity`, `supporter_activity` and `supporter_contact` union
 them by supporter, and `supporters_summary` is one row per supporter for
 the list. Only staff with the `supporters` permission see them
@@ -112,20 +112,32 @@ Where they come from:
 - **Letters.** The sender of each letter (`sender_name`, `sender_email`,
   `sender_postcode`, `contact_consent`), still columns on the letter, now
   linked to a supporter.
+- **Members.** PauseAI's members in the UK whom we may hold: those who
+  ticked "Share your details with PauseAI UK" on the join form, or joined
+  before it asked (from July 2026). The hourly import
+  (`lib/server/members-import.ts`) reads them from Stichting PauseAI's
+  "Members & Actions" Airtable base into `members`, keyed by the Airtable
+  record ID, which CiviCRM keeps too: the names say what the rows are, not
+  where they come from, so a move to CiviCRM keeps them. A member no
+  longer read is marked removed and kept, with their links, until
+  erased; the summary's `member` is false for them, so they lose the
+  Member badge. The summary's `intent` is what they chose on the join
+  form, for a Volunteer or Lead badge.
 
 **Erasure.** When someone asks to be forgotten, staff erase the supporter
 from their page (`lib/server/erasure.ts`), under the request's reference.
 For each source, what that source holds goes: a letter with its events
 and the copies of replies forwarded to the sender; a Luma user with their
-registrations and contact. What stays is what exists to stop us mailing
+registrations and contact; a member's record. What stays is what exists to stop us mailing
 the address: `email_problems`,
 `email_blocks` and `opt_outs`. The Luma user's ID goes in `luma_erased`,
 which the import skips, so they never come back; a new Luma account later
-is a new supporter. The audit log entry carries the supporter's ID and the
+is a new supporter. A member's record ID goes in `members_erased` in the
+same way. The audit log entry carries the supporter's ID and the
 reference, never a name or address. Luma's own records, the copies of
 letters and replies in the policy team's Gmail inbox, and letters sent
-through the earlier form in Airtable ("Web form emails") aren't reached
-from here: an erasure has to go there by hand (`docs/data-protection.md`).
+through the earlier form in Airtable ("Web form emails") and Stichting
+PauseAI's own copy of a member aren't reached from here: an erasure has to go there by hand (`docs/data-protection.md`).
 
 A new source is a table of its own, a column and a widened `CHECK` on
 `supporter_links`, its three views and its arms of the union views, a
@@ -138,13 +150,25 @@ in, if it has (`opt_outs`, `lib/server/opt-outs.ts`). Keyed by address,
 not supporter, because an unsubscribe can arrive before we know whose
 address it is; the supporter pages join it to every address a supporter
 has. An address is opted out of a list while it has an open row, one at
-most per list. The only list so far is `luma-calendar`, the calendar's
-emails, told to us by Luma's `calendar.person.unsubscribed` webhook
+most per list. A list is named for what was opted out of, not for what
+told us, so an address has one opt-out in force per list whoever reported
+it. There are two lists. `luma-calendar`, the calendar's emails, is told to us by Luma's `calendar.person.unsubscribed` webhook
 (`/api/luma/webhook`, `lib/server/luma-webhooks.ts`), keyed by Luma's
 `Webhook-Id` so a redelivery changes nothing; `calendar.person.subscribed`
 closes the row. Luma doesn't say whether it was an unsubscribe, a block or
 a spam report, and keeps no history, so only opt-outs after the webhook was
 set up are known.
+
+`pauseai-updates` is the members' updates, the join form's "Keep me
+informed". The members import (`airtable-import`) opts out an address
+whose record left the box unticked when it was a free choice (from 30
+June 2026; before, the form required it or had none,
+`lib/members.ts`), dated when they joined and keyed by the record, and
+lifts that opt-out when the address ticks the box freely on the same
+record or a later one, a re-join. It never lifts another source's.
+Airtable never learns of an unsubscribe after joining: those are in
+CiviCRM, which isn't read yet, so the supporter's page says so beside the
+list.
 
 Nothing reads `opt_outs` to stop email yet. When the site mails
 supporters, each purpose names the lists that stop it, and `send()` checks
@@ -182,8 +206,8 @@ opt-outs ("Opt-outs", above) as well as the blocks here.
 ## Imports
 
 A job that copies data in from outside: the MP sync, the check against
-Parliament, the ControlAI letter, the signatory import, the Luma import
-(`IMPORT_JOBS` in `lib/import-runs.ts`). Each runs on a schedule or when
+Parliament, the ControlAI letter, the signatory import, the Luma import,
+the members import (`IMPORT_JOBS` in `lib/import-runs.ts`). Each runs on a schedule or when
 staff press its button, and
 every run is recorded (`import_runs`): when, who started it (`nightly` or a
 staff email), how it ended, why it failed, and the job's own account of
