@@ -633,7 +633,7 @@ export const staffCopy = {
     answered: { yes: "Answered", no: "Not answered" },
     // The titles of a letter's own page, and of a supporter's letters' page.
     oneTitle: (mp: string) => `Letter to ${mp}`,
-    fromTitle: (name: string) => `⁂ Letters from ${name}`,
+    fromTitle: (name: string) => `Letters from ${name}`,
     none: "No letters.",
     status: {
       sending: "Sending",
