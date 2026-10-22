@@ -5,15 +5,20 @@ import { query } from "@/lib/server/db";
 import { isBlocked, recordProblem } from "@/lib/server/email";
 import { getPolitician } from "@/lib/server/politicians";
 import { createSession } from "@/lib/server/staff-auth";
+import { saveStaffAccount } from "@/lib/server/staff-accounts";
 import { addTestPolitician, describeWithDatabase, useTestDatabase } from "@/tests/database";
 import { expectRedirect, requestCookies } from "@/tests/next-headers";
 import {
   checkNow,
   decideSync,
   editSigner,
+  eraseSupporterNow,
   importControlAiNow,
   importFromAirtable,
+  importLumaNow,
   markSigned,
+  removeStaffAccountNow,
+  saveStaffAccountNow,
   syncNow,
   unblockAddress,
 } from "./actions";
@@ -41,6 +46,8 @@ describeWithDatabase("staff Server Actions", () => {
     requestCookies.clear();
     revalidatePath.mockClear();
     requestCookies.set("staff_session", await createSession("jo@pauseai.uk"));
+    // Every action needs an account; the permissions come per test.
+    await saveStaffAccount("jo@pauseai.uk", [], "test");
     vi.stubEnv("AIRTABLE_TOKEN", "token");
   });
   afterEach(() => vi.unstubAllEnvs());
@@ -56,6 +63,10 @@ describeWithDatabase("staff Server Actions", () => {
       () => checkNow(),
       () => decideSync(form({ id: "1", decision: "apply" })),
       () => importFromAirtable(),
+      () => importLumaNow(),
+      () => saveStaffAccountNow(form({ email: "x@pauseai.uk", "permission:admin": "on" })),
+      () => removeStaffAccountNow(form({ email: "x@pauseai.uk" })),
+      () => eraseSupporterNow(form({ id: "1", reference: "r", confirm: "on" })),
       () => unblockAddress(form({ address: "a@example.org", note: "" })),
     ];
     for (const attempt of attempts) expect(await expectRedirect(attempt)).toBe("/staff/login");
@@ -86,6 +97,9 @@ describeWithDatabase("staff Server Actions", () => {
     await importControlAiNow();
     expect((await getPolitician(id))!.statuses["support-sobel-bill"]).toMatchObject({ updatedBy: "controlai" });
     expect(revalidatePath).toHaveBeenCalledWith("/staff/import-data");
+    // Its own page, the overview, and the home page's actions.
+    expect(revalidatePath).toHaveBeenCalledWith("/staff/import-data/controlai");
+    expect(revalidatePath).toHaveBeenCalledWith("/staff");
 
     const error = vi.spyOn(console, "error").mockImplementation(() => {});
     server.use(http.get("https://controlai.org/uk-pm-letter", () => new HttpResponse(null, { status: 500 })));
@@ -95,6 +109,56 @@ describeWithDatabase("staff Server Actions", () => {
       { job: "import-controlai", status: "ok", startedBy: "jo@pauseai.uk" },
       { job: "import-controlai", status: "failed", startedBy: "jo@pauseai.uk" },
     ]);
+  });
+
+  it("saveStaffAccountNow and removeStaffAccountNow need admin, then keep the accounts, going back to the page", async () => {
+    const save = () => saveStaffAccountNow(form({ email: "Sam@pauseai.uk", "permission:supporters": "on" }));
+    expect(await expectRedirect(save)).toBe("/staff");
+    await saveStaffAccount("jo@pauseai.uk", ["admin"], "a");
+    expect(await expectRedirect(save)).toBe("/staff/accounts");
+    expect(await query("SELECT email, permissions, added_by FROM staff_accounts ORDER BY email")).toEqual([
+      { email: "jo@pauseai.uk", permissions: ["admin"], added_by: "test" },
+      { email: "sam@pauseai.uk", permissions: ["supporters"], added_by: "jo@pauseai.uk" },
+    ]);
+    expect(revalidatePath).toHaveBeenCalledWith("/staff/accounts");
+    // The last admin can't lose admin, and the page says so.
+    expect(await expectRedirect(() => saveStaffAccountNow(form({ email: "jo@pauseai.uk" })))).toBe(
+      "/staff/accounts?notice=last-admin",
+    );
+    expect(await expectRedirect(() => removeStaffAccountNow(form({ email: "sam@pauseai.uk" })))).toBe(
+      "/staff/accounts",
+    );
+    expect(await query("SELECT count(*)::int AS n FROM staff_accounts")).toEqual([{ n: 1 }]);
+    // An address not at pauseai.uk is refused, and the form says so.
+    expect(await expectRedirect(() => saveStaffAccountNow(form({ email: "sam@example.com" })))).toBe(
+      "/staff/accounts?notice=not-pauseai",
+    );
+    // A bad form does nothing.
+    await saveStaffAccountNow(form({ email: "nobody" }));
+    await removeStaffAccountNow(form({ email: "nobody" }));
+    expect(await query("SELECT count(*)::int AS n FROM staff_accounts")).toEqual([{ n: 1 }]);
+  });
+
+  it("eraseSupporterNow needs the supporters permission, erases, and goes to the list; a bad form or no such supporter does nothing", async () => {
+    vi.stubEnv("LUMA_API_KEY", "k");
+    const erase = () => eraseSupporterNow(form({ id: "1", reference: "ICO-1", confirm: "on" }));
+    expect(await expectRedirect(erase)).toBe("/staff");
+    await saveStaffAccount("jo@pauseai.uk", ["supporters"], "a");
+    await importLumaNow();
+    expect(await expectRedirect(erase)).toBe("/staff/supporters?erased=1");
+    expect(await query("SELECT 1 FROM supporters WHERE id = 1")).toEqual([]);
+    expect(revalidatePath).toHaveBeenCalledWith("/staff", "layout");
+    await erase();
+    await eraseSupporterNow(form({ id: "2", reference: "" }));
+    expect(await query("SELECT count(*)::int AS n FROM supporters")).toEqual([{ n: 5 }]);
+  });
+
+  it("importLumaNow copies the Luma calendar as the staff member", async () => {
+    vi.stubEnv("LUMA_API_KEY", "k");
+    await importLumaNow();
+    expect(await runs()).toEqual([{ job: "import-luma", status: "ok", startedBy: "jo@pauseai.uk" }]);
+    expect(await query("SELECT count(*)::int AS n FROM luma_events")).toEqual([{ n: 9 }]);
+    expect(revalidatePath).toHaveBeenCalledWith("/staff/import-data");
   });
 
   it("editSigner edits a signer from outside Airtable's MPs, and ignores a bad form", async () => {
@@ -165,8 +229,10 @@ describeWithDatabase("staff Server Actions", () => {
     vi.stubEnv("POSTMARK_SERVER_TOKEN", "server-token");
     const bounce = { address: "a@example.org", messageId: null, kind: "hard" as const, reason: "", canReset: true };
     await recordProblem(bounce);
-    await unblockAddress(form({ address: "nobody", note: "" }));
+    await unblockAddress(form({ address: "nobody", note: "Fixed" }));
+    await unblockAddress(form({ address: "A@example.org", note: " " }));
     expect(revalidatePath).not.toHaveBeenCalled();
+    expect(await isBlocked("a@example.org")).toBe(true);
     await unblockAddress(form({ address: "A@example.org", note: "Fixed" }));
     expect(await isBlocked("a@example.org")).toBe(false);
     expect(await query("SELECT actor, action, details FROM audit_log WHERE action = 'unblock address'")).toEqual([
@@ -182,7 +248,7 @@ describeWithDatabase("staff Server Actions", () => {
       http.post("https://api.postmarkapp.com/message-streams/*", () => new HttpResponse(null, { status: 500 })),
     );
     await recordProblem({ address: "a@example.org", messageId: null, kind: "hard", reason: "", canReset: true });
-    await unblockAddress(form({ address: "a@example.org", note: "" }));
+    await unblockAddress(form({ address: "a@example.org", note: "Fixed" }));
     expect(await isBlocked("a@example.org")).toBe(true);
     expect(error).toHaveBeenCalled();
     error.mockRestore();

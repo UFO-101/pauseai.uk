@@ -2,23 +2,79 @@
   "entries": [
     {
       "api_id": "gst-1",
-      "guest": { "approval_status": "approved", "utm_source": "brixton", "registered_at": "2026-09-26T12:00:00.000Z" }
+      "id": "gst-1",
+      "user_id": "usr-fixture-1",
+      "user_email": "Jane.Fixture@example.com",
+      "user_name": "Jane Fixture",
+      "approval_status": "approved",
+      "utm_source": "brixton",
+      "registered_at": "2026-09-26T12:00:00.000Z",
+      "phone_number": "+447700900001",
+      "registration_answers": [
+        {
+          "label": "What's your postcode?",
+          "question_id": "q-1",
+          "question_type": "text",
+          "answer": "M1 1AE",
+          "value": "M1 1AE"
+        }
+      ]
     },
     {
       "api_id": "gst-2",
-      "guest": { "approval_status": "approved", "utm_source": "stratford", "registered_at": "2026-09-26T12:30:00.000Z" }
+      "id": "gst-2",
+      "user_id": "usr-fixture-2",
+      "user_email": "sam.fixture@example.com",
+      "user_name": "Sam Fixture",
+      "approval_status": "approved",
+      "utm_source": "stratford",
+      "registered_at": "2026-09-26T12:30:00.000Z",
+      "phone_number": null,
+      "registration_answers": []
     },
     {
       "api_id": "gst-3",
-      "guest": { "approval_status": "approved", "utm_source": "brixton", "registered_at": "2026-10-10T12:00:00.000Z" }
+      "id": "gst-3",
+      "user_id": "usr-fixture-3",
+      "user_email": "alex.fixture@example.com",
+      "user_name": "Alex Fixture",
+      "approval_status": "approved",
+      "utm_source": "brixton",
+      "registered_at": "2026-10-10T12:00:00.000Z",
+      "phone_number": null,
+      "registration_answers": [
+        {
+          "label": "Discord handle",
+          "question_id": "q-2",
+          "question_type": "text",
+          "answer": "alex#1234",
+          "value": "alex#1234"
+        }
+      ]
     },
     {
       "api_id": "gst-4",
-      "guest": { "approval_status": "declined", "utm_source": "brixton", "registered_at": "2026-10-10T12:30:00.000Z" }
+      "id": "gst-4",
+      "user_id": "usr-fixture-4",
+      "user_email": "declined.fixture@example.com",
+      "user_name": "Dee Clined",
+      "approval_status": "declined",
+      "utm_source": "brixton",
+      "registered_at": "2026-10-10T12:30:00.000Z",
+      "phone_number": null,
+      "registration_answers": null
     },
     {
       "api_id": "gst-5",
-      "guest": { "approval_status": "approved", "utm_source": null, "registered_at": "2026-10-10T13:00:00.000Z" }
+      "id": "gst-5",
+      "user_id": "usr-fixture-5",
+      "user_email": "pat.fixture@example.com",
+      "user_name": "Pat Fixture",
+      "approval_status": "approved",
+      "utm_source": null,
+      "registered_at": "2026-10-10T13:00:00.000Z",
+      "phone_number": "+447700900005",
+      "registration_answers": []
     }
   ],
   "has_more": false

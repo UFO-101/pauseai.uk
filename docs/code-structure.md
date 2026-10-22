@@ -12,9 +12,9 @@ route next to that route.
 
 ```
 app/
-  layout.tsx              root: fonts, metadata, footer, cookie consent
+  layout.tsx              root: fonts, metadata, cookie consent
   not-found.tsx
-  (site)/                 public pages; layout.tsx renders <Nav>
+  (site)/                 public pages; layout.tsx renders <Nav> and <Footer>
   (tools)/                unlisted volunteer tools and trackers; layout.tsx
                           renders <Nav> and turns analytics off
     gallery/              the component gallery: every component on fixture
@@ -171,8 +171,8 @@ the code should go instead. The rules below say which ones are enforced.
   `lib/content/staff-interface.ts`. So the wording can be changed in one
   file without touching the code, and components and tests refer to it by
   name (`staffCopy.syncs.syncNow`), so changing it breaks nothing. Words
-  not written yet are placeholders: Latin, starting with the asterism
-  (U+2042), so they can't be mistaken for real copy.
+  not written yet are placeholders: a draft in English, starting with the
+  asterism (U+2042), so they can't be mistaken for real copy.
   `tests/checks/placeholder-copy.test.ts` fails while any are left, which stops them
   being deployed (AGENTS.md).
 - **Names say which one.** There will be many campaigns, letters, imports
@@ -184,6 +184,10 @@ the code should go instead. The rules below say which ones are enforced.
   name. Pass the data (an MP's statuses) rather than unpicking one case of
   it at the call site (`signedControlAiLetter`), so the next campaign
   doesn't widen the call site too.
+- **Personal data changes the privacy record.** A change that adds,
+  copies or uses data about a person, or a new processor, updates
+  `docs/data-protection.md` and the privacy policy in the same change,
+  and a plan for one says what it does to both and to erasure first.
 - **Comments describe the code as it is**: what it does and why, never
   its history (what it replaced, what changed, which plan brought it).
   History is for commit messages. Nothing references `plans/`, which is
@@ -245,6 +249,41 @@ lower(address))`) when our own code writes them, so equality is plain `=`.
 - **History tables are insert-only** (`audit_log`, `email_problems`,
   `letter_events`). The current state is derived from them, or kept in a
   second table written in the same transaction (`email_blocks`).
+
+### How fast a query has to be
+
+Most tables here stay small (staff accounts, import state, a few hundred
+MPs), and most queries look rows up by a key that's already indexed. Those
+need no thought. Two kinds of query do, and get it when they're written:
+
+- **One a page runs on every view, over a table that keeps growing**
+  (`audit_log`, `letters`, `luma_guests`, `supporters`, `import_runs`). It
+  reads only the rows it shows: an index on what it filters by, or a
+  `LIMIT`. A field inside `jsonb` details gets an expression index, partial
+  to the rows it applies to, written exactly as the query writes it, casts
+  included, or Postgres won't use it (`audit_log_status_sets`, for a
+  politician's history).
+- **One that builds a row for each of many things from several sources**
+  (a list of supporters, each with their name, emails, counts and latest
+  activity). It groups each source once and joins the results, rather than
+  running a subquery per column for every row (`supporters_summary`).
+  Subqueries over views of views, once per row, are what the planner prices
+  highest.
+
+For either, check it before calling it done: fill a throwaway database to
+about the size the real data will reach in a year (`scripts/fresh-database.mjs`
+with the fixtures, then `generate_series` for the bulk), and run
+`EXPLAIN (ANALYZE)` on the query as the code builds it. It should read an
+index rather than scan the whole table, and take milliseconds. Also look at
+the planner's cost on a fresh, never-analysed database, as the tests' are:
+above 100,000 (`jit_above_cost`), Postgres compiles the query first where it
+has JIT, as CI's image does, which can take seconds
+for a query that runs in milliseconds. This container's Postgres has no JIT
+(`pg_jit_available()` is false), so a query too costly for CI still passes
+here; the cost is the only warning.
+
+Beyond that, no speculative indexes: one costs every write to its table and
+is easy to add later, when a query that's actually used turns out slow.
 
 ## Styling
 

@@ -3,7 +3,6 @@ import localFont from "next/font/local";
 import { Lato } from "next/font/google";
 import "@/styles/tokens.css";
 import "@/styles/base.css";
-import Footer from "@/components/layout/Footer";
 import CookieConsent from "@/components/layout/CookieConsent";
 import FooterYear from "@/components/layout/FooterYear";
 import JsonLd from "@/components/layout/JsonLd";
@@ -95,7 +94,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <CookieConsent analytics={analytics}>
           <JsonLd data={organizationJsonLd} />
           {children}
-          <Footer />
         </CookieConsent>
         <FooterYear />
       </body>

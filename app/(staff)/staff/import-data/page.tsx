@@ -1,84 +1,22 @@
+import type { Metadata } from "next";
 import { staffCopy } from "@/lib/content/staff-interface";
-import { CONTROLAI_LETTER_PAGE } from "@/lib/controlai-letter";
-import { asList, type ControlAiImport, type MpCheck, type SignatoryImport } from "@/lib/import-runs";
-import { MEMBERS_API } from "@/lib/parliament";
+import { IMPORT_JOBS } from "@/lib/import-runs";
 import { PARLIAMENTARIANS_TABLE_URL } from "@/lib/server/outside-services/airtable";
 import { latestRun } from "@/lib/server/import-runs";
-import { syncsToShow } from "@/lib/server/mp-sync";
 import { requireStaff } from "@/lib/server/staff-auth";
-import { checkNow, decideSync, importControlAiNow, importFromAirtable, syncNow } from "../actions";
-import JobActions from "../_components/JobActions";
-import RunList from "../_components/RunList";
-import StaffHeader from "../_components/StaffHeader";
+import { ImportOverview } from "../_components/ImportJob";
+import StaffNav from "../_components/StaffNav";
 import StaffPage from "../_components/ui/StaffPage";
-import Tag from "@/components/ui/Tag";
 
-/**
- * Every import and check: the MPs from Airtable and the check of them against
- * Parliament, the signatories from Airtable, and ControlAI's letter from the
- * web. Each with its newest run.
- */
+export const metadata: Metadata = { title: staffCopy.import.pageTitle };
+
+/** Every import and check, a card each, with how its newest run ended; each card opens the job's page. */
 export default async function ImportPage() {
-  const { email } = await requireStaff();
-  const [syncs, check, signatoryImport, controlAiImport] = await Promise.all([
-    syncsToShow(),
-    latestRun<MpCheck>("check-mps"),
-    latestRun<SignatoryImport>("import-signatories"),
-    latestRun<ControlAiImport>("import-controlai"),
-  ]);
+  const { email, permissions } = await requireStaff();
+  const newest = await Promise.all(IMPORT_JOBS.map((job) => latestRun(job)));
   return (
-    <StaffPage>
-      <StaffHeader email={email} current="import" />
-      <h1>{staffCopy.import.pageTitle}</h1>
-
-      <h2>
-        {staffCopy.syncs.title} <Tag tone="amber">{staffCopy.import.airtable}</Tag>
-        <Tag tone="blue">{staffCopy.import.nightly}</Tag>
-      </h2>
-      <p>
-        {staffCopy.syncs.intro.before}
-        <a href={PARLIAMENTARIANS_TABLE_URL}>{staffCopy.syncs.intro.link}</a>
-        {staffCopy.syncs.intro.after} {staffCopy.syncs.testMps}
-      </p>
-      <JobActions action={syncNow} label={staffCopy.syncs.syncNow} job="sync-mps" />
-      <RunList runs={syncs} none={staffCopy.syncs.none} decide={decideSync} />
-
-      <h2>
-        {staffCopy.check.title} <Tag tone="green">{staffCopy.import.web}</Tag>
-        <Tag tone="blue">{staffCopy.import.nightly}</Tag>
-        <Tag>{staffCopy.import.checkOnly}</Tag>
-      </h2>
-      <p>
-        {staffCopy.check.intro.before}
-        <a href={MEMBERS_API}>{staffCopy.check.intro.link}</a>
-        {staffCopy.check.intro.after}
-      </p>
-      <JobActions action={checkNow} label={staffCopy.check.checkNow} job="check-mps" />
-      <RunList runs={asList(check)} none={staffCopy.check.never} />
-
-      <h2>
-        {staffCopy.import.title} <Tag tone="amber">{staffCopy.import.airtable}</Tag>
-        <Tag>{staffCopy.import.oneOff}</Tag>
-      </h2>
-      <p>
-        {staffCopy.import.intro.before}
-        <a href={PARLIAMENTARIANS_TABLE_URL}>{staffCopy.import.intro.link}</a>
-        {staffCopy.import.intro.after}
-      </p>
-      <JobActions action={importFromAirtable} label={staffCopy.import.button} job="import-signatories" />
-      <RunList runs={asList(signatoryImport)} none={staffCopy.import.none} />
-
-      <h2>
-        {staffCopy.controlAi.title} <Tag tone="green">{staffCopy.import.web}</Tag>
-        <Tag tone="blue">{staffCopy.import.nightly}</Tag>
-      </h2>
-      <p>
-        {staffCopy.controlAi.intro.before}
-        <a href={CONTROLAI_LETTER_PAGE}>{staffCopy.controlAi.intro.link}</a>
-        {staffCopy.controlAi.intro.after}
-      </p>
-      <JobActions action={importControlAiNow} label={staffCopy.controlAi.importNow} job="import-controlai" />
-      <RunList runs={asList(controlAiImport)} none={staffCopy.controlAi.never} />
+    <StaffPage nav={<StaffNav email={email} account permissions={permissions} current="import" />}>
+      <ImportOverview newest={newest} airtableTable={PARLIAMENTARIANS_TABLE_URL} />
     </StaffPage>
   );
 }

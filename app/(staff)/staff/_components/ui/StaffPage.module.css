@@ -1,10 +1,42 @@
-/* A staff page's <main>. */
+/* A staff page's <main>: the page, and with a navigation, the sidebar's
+   column beside it, tinted so the two read apart. */
 
-/* The body is a flex column, where .container's auto margins would size the
-   page to its widest table. Full width keeps a wide table scrolling inside
-   its Table instead of widening the whole page on a phone. */
+/* Full width, so a wide table scrolls inside its Table instead of widening
+   the whole page on a phone. */
 .page {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
   width: 100%;
+  min-height: 60vh;
   box-sizing: border-box;
-  padding-block: var(--space-6) var(--space-8);
+}
+
+/* The page's own column. Its side padding matches .container's. */
+.content {
+  min-width: 0;
+  padding: var(--space-6) var(--space-5) var(--space-8);
+}
+
+.content > :first-child {
+  margin-top: 0;
+}
+
+/* The navigation's column: the muted surface, ruled off from the page. */
+.side {
+  padding: var(--space-3) var(--space-5);
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
+}
+
+/* The sidebar's column, on screens wide enough; the breakpoint matches StaffNav's. */
+@media (min-width: 721px) {
+  .withNav {
+    grid-template-columns: 14rem minmax(0, 1fr);
+  }
+
+  .side {
+    padding: var(--space-6) var(--space-5);
+    border-bottom: 0;
+    border-right: 1px solid var(--border);
+  }
 }

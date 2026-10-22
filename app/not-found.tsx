@@ -1,3 +1,4 @@
+import Footer from "@/components/layout/Footer";
 import Nav from "@/components/layout/Nav";
 import { ButtonLink } from "@/components/ui/Button";
 import ProsePage from "@/components/ui/ProsePage";
@@ -16,6 +17,7 @@ export default function NotFound() {
           </ButtonLink>
         </ProsePage>
       </main>
+      <Footer />
     </>
   );
 }

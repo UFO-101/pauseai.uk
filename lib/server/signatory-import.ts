@@ -56,17 +56,19 @@ export function importSignatories(staff: string): Promise<SignatoryImportResult>
         if (id === undefined) {
           // Not a sitting MP: a peer, an MSP, MS or MLA, or someone else
           // (such as a former MP), for the policy team to check.
+          const details = {
+            house: houseFor(signatory),
+            name: signatory.name,
+            constituency: signatory.constituency || null,
+            party: signatory.party,
+            email: signatory.email || null,
+          };
           [{ id }] = await query<{ id: number }>(
             `INSERT INTO politicians (house, name, constituency, party, email) VALUES ($1, $2, $3, $4, $5) RETURNING id::int AS id`,
-            [
-              houseFor(signatory),
-              signatory.name,
-              signatory.constituency || null,
-              signatory.party,
-              signatory.email || null,
-            ],
+            [details.house, details.name, details.constituency, details.party, details.email],
             db,
           );
+          await logChange(staff, "add politician", { id, ...details }, db);
           result.added++;
         } else {
           result.matched++;

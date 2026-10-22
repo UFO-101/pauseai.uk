@@ -1,0 +1,90 @@
+/* A supporter's or a politician's page: the box of what we hold, and the history under it. */
+
+/* The box: a label and its values on each row. */
+.facts {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: var(--space-2) var(--space-5);
+  margin: 0 0 var(--space-6);
+  padding: var(--space-4) var(--space-5);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+
+/* A row that has to be one element (a list's line, keyed). */
+.pair {
+  display: contents;
+}
+
+.facts dt {
+  font-weight: 600;
+}
+
+.facts dd {
+  margin: 0;
+}
+
+/* The history: when at the left, in the muted colour, and what beside it. */
+.history {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: var(--space-2) var(--space-4);
+  padding: 0;
+  list-style: none;
+}
+
+.history li {
+  display: contents;
+}
+
+.when {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 720px) {
+  .facts,
+  .history {
+    grid-template-columns: 1fr;
+  }
+
+  .facts dd {
+    margin-bottom: var(--space-2);
+  }
+}
+
+/* A politician whose address is blocked: one red alert under the name,
+   its icon at the left and beside it the title, why, what to check, and
+   the form. Tinted, with a thin red border. */
+.blocked {
+  display: flex;
+  gap: var(--space-3);
+  align-items: flex-start;
+  max-width: 40rem;
+  margin-block: var(--space-4);
+  padding: var(--space-4);
+  border: 1px solid var(--status-red);
+  border-radius: var(--radius-md);
+  background: var(--status-red-bg);
+}
+
+.blockedBody {
+  min-width: 0;
+}
+
+.blockedBody h2 {
+  margin: 0 0 var(--space-2);
+  color: var(--status-red);
+  font-size: var(--text-md);
+  line-height: 1.25rem;
+}
+
+.blockedBody p,
+.blockedBody form {
+  margin: 0 0 var(--space-3);
+}
+
+.blockedBody > :last-child {
+  margin-bottom: 0;
+}

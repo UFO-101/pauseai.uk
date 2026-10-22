@@ -1,8 +1,10 @@
 import "server-only";
 import type { CampaignStatus } from "@/lib/content/email-your-mp";
 import type { Mp, MpStatuses } from "@/lib/email-your-mp";
+import { parseSort, type SortSpec } from "@/lib/staff-sort";
+import { POLITICIAN_COLUMNS, POLITICIAN_SORTS, type PoliticianSort } from "@/lib/politician-sort";
 import { query, transaction, type Queryable } from "./db";
-import { logChange } from "./audit";
+import { type AuditEntry, logChange } from "./audit";
 
 // Politicians and their status for each campaign. MPs are copied from
 // Airtable nightly (mp-sync.ts); other signers came from the signatory
@@ -38,6 +40,9 @@ export type Politician = {
   sitting: boolean;
   /** Their address bounced or complained, so nothing is sent to it (lib/server/email.ts). */
   emailBlocked: boolean;
+  /** Letters written to them (bar those never sent), and how many of those got a reply. */
+  letters: number;
+  replies: number;
   statuses: Record<string, StatusRecord>;
 };
 
@@ -77,6 +82,8 @@ const SELECT_POLITICIANS = `
   SELECT p.id::int AS id, p.airtable_id AS "airtableId", p.house, p.name, p.salutation, p.constituency,
     p.party, p.email, p.is_test AS "isTest", p.sitting,
     EXISTS (SELECT 1 FROM email_blocks b WHERE b.address = lower(p.email)) AS "emailBlocked",
+    (SELECT count(*)::int FROM letters l WHERE l.politician_id = p.id AND l.status <> 'not_sent') AS "letters",
+    (SELECT count(*)::int FROM letters l WHERE l.politician_id = p.id AND l.replied_at IS NOT NULL) AS "replies",
     json_object_agg(s.campaign, json_build_object(
       'status', s.status, 'date', to_char(s.status_date, 'YYYY-MM-DD'), 'note', s.note,
       'updatedAt', s.updated_at, 'updatedBy', s.updated_by
@@ -95,6 +102,7 @@ export type PoliticianFilter = {
   campaign?: string;
   /** Only those whose address is blocked. */
   emailBlocked?: boolean;
+  sort?: SortSpec<PoliticianSort>;
 };
 
 /**
@@ -106,22 +114,27 @@ export function politiciansSearch({
   house = "",
   campaign = "",
   email = "",
+  sort = "",
+  dir = "",
 }: {
   q?: string;
   house?: string;
   campaign?: string;
   email?: string;
+  sort?: string;
+  dir?: string;
 }) {
   const filter: PoliticianFilter = {
     search: q || undefined,
     house: isHouse(house) ? house : undefined,
     campaign: campaign || undefined,
     emailBlocked: email === "blocked" || undefined,
+    sort: parseSort(POLITICIAN_SORTS, "name", sort, dir),
   };
-  return { q, house, campaign, email, filter };
+  return { q, house, campaign, email, sort, dir, filter };
 }
 
-/** Politicians for the staff interface: the test MP first, then by name. */
+/** Politicians for the staff interface: the test MPs first, then by the column asked for, by name to start. */
 export async function listPoliticians(filter: PoliticianFilter = {}, limit = 200): Promise<Politician[]> {
   const where: string[] = [];
   const values: unknown[] = [];
@@ -147,7 +160,7 @@ export async function listPoliticians(filter: PoliticianFilter = {}, limit = 200
   values.push(limit);
   const rows = await query<Row>(
     `${SELECT_POLITICIANS} ${where.length ? `WHERE ${where.join(" AND ")}` : ""}
-     GROUP BY p.id ORDER BY p.is_test DESC, p.name LIMIT $${values.length}`,
+     GROUP BY p.id ORDER BY p.is_test DESC, ${POLITICIAN_COLUMNS[filter.sort?.key ?? "name"]} ${filter.sort?.dir === "desc" ? "DESC" : "ASC"} NULLS LAST, p.name LIMIT $${values.length}`,
     values,
   );
   return rows.map(toPolitician);
@@ -226,5 +239,25 @@ export async function signatories(campaign: string): Promise<Signatory[]> {
      WHERE s.campaign = $1 AND s.status = 'signed' AND NOT p.is_test
      ORDER BY p.name`,
     [campaign],
+  );
+}
+
+/** A change to one politician from the audit log: who, when, what, and the details logged. */
+export type PoliticianChange = AuditEntry;
+
+/**
+ * Everything the audit log holds about one politician, newest first: their
+ * row added, their details edited, by staff or the MP sync, their leaving,
+ * their campaign statuses set, by staff or an import, and their address
+ * blocked or unblocked.
+ */
+export async function politicianHistory(id: number, email: string | null): Promise<PoliticianChange[]> {
+  return query<PoliticianChange>(
+    `SELECT id::int AS id, at, actor, action, details FROM audit_log
+     WHERE (action IN ('add politician', 'edit politician', 'remove politician') AND (details->>'id')::bigint = $1)
+        OR (action = 'set status' AND (details->>'politicianId')::bigint = $1)
+        OR (action IN ('block address', 'unblock address') AND $2::text IS NOT NULL AND details->>'address' = lower($2))
+     ORDER BY at DESC, id DESC`,
+    [id, email],
   );
 }

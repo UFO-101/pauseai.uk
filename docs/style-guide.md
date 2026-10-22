@@ -257,6 +257,8 @@ images in cards none (full bleed).
 
 Cards use a `1px solid var(--border)` border. On hover, borders shift to `var(--border-strong)`. No heavy/coloured borders except for active/focus states.
 
+A box that shows a state says so with its tint: the background is the status colour's `-bg` token (`--status-red-bg`, `--status-amber-bg`, `--status-green-bg`), and the words can take the status colour. An alert, which asks someone to act (the home page's "Needs a person", a blocked address on an MP's page), also takes a thin `1px` border in the status colour all the way round, with any rules inside it in the same colour at a quarter strength (`color-mix(in srgb, var(--status-red) 25%, transparent)`), since the ordinary border disappears against the tint. A state that's only shown, such as the newest run in a job's history or a card's status line, keeps the ordinary border or none. Never a thick edge on one side: on a rounded corner it bends into a wedge. Only the current state is coloured. A history of past runs or events is plain, so the one thing in colour is the thing that's true now.
+
 ---
 
 ## Shadows

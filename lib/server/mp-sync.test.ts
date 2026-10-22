@@ -73,7 +73,17 @@ describeWithDatabase("syncMps", () => {
     expect(sync.result.changes.added.map((mp) => mp.airtableId)).toEqual(["recPlaceholder", "recDummy"]);
     // Applied, so the full list isn't needed again.
     expect(sync.result.mps).toBeUndefined();
-    expect(await query("SELECT actor, action FROM audit_log")).toEqual([{ actor: "sync", action: "apply MP sync" }]);
+    // The run's summary, and one entry per MP added, by their row.
+    expect(await query("SELECT actor, action, details->>'name' AS name FROM audit_log ORDER BY id")).toEqual([
+      { actor: "sync", action: "add politician", name: "Polly Placeholder" },
+      { actor: "sync", action: "add politician", name: "Ms Dora Dummy" },
+      { actor: "sync", action: "apply MP sync", name: null },
+    ]);
+    expect(
+      await query(
+        "SELECT count(*)::int AS n FROM audit_log a JOIN politicians p ON p.id = (a.details->>'id')::bigint WHERE a.action = 'add politician'",
+      ),
+    ).toEqual([{ n: 2 }]);
   });
 
   it("does nothing when nothing has changed, except keep the test MPs' inbox up to date, and records that", async () => {
@@ -123,6 +133,40 @@ describeWithDatabase("syncMps", () => {
     expect(result.status).toBe("applied");
     expect(result.changes.removed.map((mp) => mp.airtableId)).toEqual(["recPlaceholder"]);
     expect((await politicians()).find((p) => p.airtable_id === "recPlaceholder")!.sitting).toBe(false);
+    // The MP who left is logged by their row, and nothing is logged for Dora, who didn't change.
+    expect(
+      await query(
+        "SELECT action, details->>'name' AS name FROM audit_log WHERE action LIKE '% politician' ORDER BY id",
+      ),
+    ).toEqual([
+      { action: "add politician", name: "Polly Placeholder" },
+      { action: "add politician", name: "Ms Dora Dummy" },
+      { action: "remove politician", name: "Polly Placeholder" },
+    ]);
+
+    // A change to an MP's details is logged as an edit, by the sync.
+    server.use(
+      http.get(AIRTABLE, () =>
+        HttpResponse.json({
+          records: [
+            {
+              id: "recDummy",
+              fields: {
+                "Full name or Title": "Ms Dora Dummy",
+                Salutation: "Ms Dummy",
+                Constituency: "Hackney North and Stoke Newington",
+                Party: "Labour",
+                Email: "dora.dummy.mp@parliament.uk",
+              },
+            },
+          ],
+        }),
+      ),
+    );
+    expect((await syncMps(NIGHTLY)).status).toBe("applied");
+    expect(
+      await query("SELECT actor, details->>'email' AS email FROM audit_log WHERE action = 'edit politician'"),
+    ).toEqual([{ actor: "sync", email: "dora.dummy.mp@parliament.uk" }]);
   });
 
   it("holds a sync that changes many MPs, until someone applies it", async () => {
@@ -157,10 +201,11 @@ describeWithDatabase("syncMps", () => {
 
     expect((await politicians()).filter((p) => p.sitting && !p.is_test)).toHaveLength(25);
     expect((await recentSyncs())[0].status).toBe("discarded");
-    expect((await query<{ action: string }>("SELECT action FROM audit_log ORDER BY id")).map((r) => r.action)).toEqual([
-      "hold MP sync",
-      "discard held MP sync",
-    ]);
+    expect(
+      (await query<{ action: string }>("SELECT action FROM audit_log WHERE action LIKE '%MP sync' ORDER BY id")).map(
+        (r) => r.action,
+      ),
+    ).toEqual(["hold MP sync", "discard held MP sync"]);
 
     // The page shows the newest run, plus any held one still waiting: not the discarded one.
     await syncMps(NIGHTLY);

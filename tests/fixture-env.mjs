@@ -51,6 +51,8 @@ export function fixtureEnv({ outboxDir }) {
     // every request to Google (tests/storyboard/fixtures.ts).
     ANALYTICS: "1",
     LUMA_API_KEY: "fixture",
+    // tests/luma-webhooks.ts signs the storyboard's webhooks with it.
+    LUMA_WEBHOOK_SECRET: "fixture-luma-webhook-secret",
     AIRTABLE_TOKEN: "fixture",
     // Not one of Cloudflare's test secrets, which are refused outside
     // development. The Turnstile fixture passes every token.

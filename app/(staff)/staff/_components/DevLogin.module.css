@@ -1,0 +1,45 @@
+/* The dev login: a box nobody could take for part of the real login, in the
+   development colour, hatched, under the login card at the same width. */
+.dev {
+  max-width: 24rem;
+  margin: 1.5rem auto 0;
+  padding: 1rem 1.5rem 1.25rem;
+  border: 2px dashed var(--dev);
+  border-radius: var(--radius-md);
+  background: repeating-linear-gradient(
+    -45deg,
+    var(--dev-bg),
+    var(--dev-bg) 10px,
+    var(--surface) 10px,
+    var(--surface) 20px
+  );
+  color: var(--dev);
+}
+
+.title {
+  margin: 0;
+  font-size: var(--text-md);
+}
+
+.hint {
+  margin: var(--space-1) 0 var(--space-3);
+  font-size: var(--text-sm);
+}
+
+/* A line per address: its button, then what it is. */
+.choices {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--text-sm);
+}
+
+/* The button in its own column, the description beside it, wrapping within its own column rather than under the button. */
+.choices li {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: var(--space-3);
+  align-items: center;
+}

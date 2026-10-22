@@ -12,6 +12,7 @@ import { createHash } from "node:crypto";
 import lumaFuture from "./luma-calendar-future.json";
 import lumaPast from "./luma-calendar-past.json";
 import lumaGuests from "./luma-guests.json";
+import lumaContacts from "./luma-contacts.json";
 import airtableMps from "./airtable-mps.json";
 import airtableSignatories from "./airtable-signatories.json";
 import parliamentMembers from "./parliament-members.json";
@@ -34,14 +35,44 @@ const OUTCODES: Record<string, { latitude: number; longitude: number; admin_dist
   M1: { latitude: 53.4794, longitude: -2.2353, admin_district: ["Manchester"] },
 };
 
+/** An event on the calendar that isn't public, which the import leaves out. */
+const LUMA_PRIVATE_EVENT = {
+  id: "evt-fixture-private-planning",
+  url: "https://luma.com/fixture-private-planning",
+  name: "Organisers' planning call",
+  start_at: "2030-03-20T19:00:00.000Z",
+  visibility: "private",
+  access: "manage",
+  platform: "luma",
+  geo_address_json: null,
+  coordinate: null,
+};
+
+/** A list as Luma pages it: the first `size` entries, then, from cursor "page-2", the rest. */
+function pageOf<T>(entries: T[], cursor: string | null, size: number) {
+  if (cursor === "page-2") return { entries: entries.slice(size), has_more: false };
+  return { entries: entries.slice(0, size), has_more: entries.length > size, next_cursor: "page-2" };
+}
+
 export function fixtureResponse(url: string, init?: RequestInit): Response | undefined {
   const { hostname, pathname, searchParams } = new URL(url);
   if (hostname === "public-api.luma.com" && pathname === "/v1/calendars/events/list") {
-    // lib/server/outside-services/luma-calendar.ts asks for past events with "before", upcoming with "after".
-    return json(searchParams.has("before") ? lumaPast : lumaFuture);
+    // lib/server/outside-services/luma-calendar.ts asks for past events with
+    // "before", upcoming with "after"; the import asks for every event, and
+    // gets both, and a private one it must leave out.
+    if (searchParams.has("before")) return json(lumaPast);
+    if (searchParams.has("after")) return json(lumaFuture);
+    return json({ entries: [...lumaFuture.entries, ...lumaPast.entries, LUMA_PRIVATE_EVENT], has_more: false });
   }
-  if (hostname === "public-api.luma.com" && pathname === "/v1/event/get-guests") {
-    return json(lumaGuests);
+  if (hostname === "public-api.luma.com" && pathname === "/v1/events/guests/list") {
+    // The same guests for every event, each guest row's ID made unique to
+    // the event, over two pages: the first three, then the rest.
+    const eventId = searchParams.get("event_id") ?? "";
+    const guests = lumaGuests.entries.map((guest) => ({ ...guest, id: `${guest.id}-${eventId}`, api_id: undefined }));
+    return json(pageOf(guests, searchParams.get("pagination_cursor"), 3));
+  }
+  if (hostname === "public-api.luma.com" && pathname === "/v1/calendars/contacts/list") {
+    return json(pageOf(lumaContacts.entries, searchParams.get("pagination_cursor"), 2));
   }
   if (hostname.endsWith("airtable.com") && pathname.startsWith("/v0/")) {
     // The MPs (lib/server/outside-services/airtable.ts asks for the House of Commons), or the signatories.

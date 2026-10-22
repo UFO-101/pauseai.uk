@@ -7,3 +7,8 @@
   align-items: center;
   white-space: nowrap;
 }
+
+/* The counts of letters and replies: figures that line up. */
+.count {
+  font-variant-numeric: tabular-nums;
+}

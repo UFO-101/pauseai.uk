@@ -88,6 +88,21 @@ describeWithDatabase("importSignatories", () => {
     expect(await query("SELECT action FROM audit_log WHERE action LIKE 'import%'")).toEqual([
       { action: "import signatories from Airtable" },
     ]);
+    // Each signer added is logged by their row, by whoever ran the import.
+    expect(
+      await query(
+        `SELECT a.actor, p.name FROM audit_log a JOIN politicians p ON p.id = (a.details->>'id')::bigint
+         WHERE a.action = 'add politician' ORDER BY p.name`,
+      ),
+    ).toEqual([
+      { actor: "jo@pauseai.uk", name: "Ann MSP" },
+      { actor: "jo@pauseai.uk", name: "Bryn MS" },
+      { actor: "jo@pauseai.uk", name: "Ciara MLA" },
+      { actor: "jo@pauseai.uk", name: "Former MP" },
+      { actor: "jo@pauseai.uk", name: "Lord Example" },
+      { actor: "jo@pauseai.uk", name: "Lord Unlisted" },
+      { actor: "jo@pauseai.uk", name: "Someone" },
+    ]);
   });
 
   it("can run again without adding anyone twice or overwriting a status", async () => {

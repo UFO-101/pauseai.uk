@@ -19,6 +19,7 @@ export const SECTION_ORDER = [
   "campaigns",
   "home-events",
   "staff",
+  "supporters",
   "collateral",
   "consent",
   "mobile-nav",

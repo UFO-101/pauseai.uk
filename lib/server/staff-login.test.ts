@@ -104,7 +104,7 @@ describeWithDatabase("login links", () => {
     expect(rows).not.toContain(token);
     expect(rows).not.toContain(BROWSER);
 
-    expect(await redeemLoginLink(token, BROWSER)).toEqual({ email: "jo@pauseai.uk" });
+    expect(await redeemLoginLink(token, BROWSER)).toEqual({ email: "jo@pauseai.uk", remember: false });
     expect(await redeemLoginLink(token, BROWSER)).toEqual({ refused: "failed" });
     expect(await redeemLoginLink("made-up", BROWSER)).toEqual({ refused: "failed" });
     expect(await redeemLoginLink("", BROWSER)).toEqual({ refused: "failed" });
@@ -116,8 +116,14 @@ describeWithDatabase("login links", () => {
     await sendLoginLink("jo@pauseai.uk", REQUEST, BROWSER);
     await sendLoginLink("jo@pauseai.uk", REQUEST, BROWSER);
     const token = (seed: string) => createHash("sha256").update(seed).digest().toString("base64url");
-    expect(await redeemLoginLink(token("login jo@pauseai.uk 1"), BROWSER)).toEqual({ email: "jo@pauseai.uk" });
-    expect(await redeemLoginLink(token("login jo@pauseai.uk 0"), BROWSER)).toEqual({ email: "jo@pauseai.uk" });
+    expect(await redeemLoginLink(token("login jo@pauseai.uk 1"), BROWSER)).toEqual({
+      email: "jo@pauseai.uk",
+      remember: false,
+    });
+    expect(await redeemLoginLink(token("login jo@pauseai.uk 0"), BROWSER)).toEqual({
+      email: "jo@pauseai.uk",
+      remember: false,
+    });
   });
 
   it("works only in the browser that asked, and isn't used up anywhere else", async () => {
@@ -127,7 +133,13 @@ describeWithDatabase("login links", () => {
 
     expect(await redeemLoginLink(token, OTHER_BROWSER)).toEqual({ refused: "elsewhere" });
     expect(await redeemLoginLink(token, "")).toEqual({ refused: "elsewhere" });
-    expect(await redeemLoginLink(token, BROWSER)).toEqual({ email: "jo@pauseai.uk" });
+    expect(await redeemLoginLink(token, BROWSER)).toEqual({ email: "jo@pauseai.uk", remember: false });
+  });
+
+  it('keeps "Keep me signed in" with the link, for the session it starts', async () => {
+    const sent = postmark();
+    await sendLoginLink("jo@pauseai.uk", REQUEST, BROWSER, true);
+    expect(await redeemLoginLink(tokenFrom(sent[0]), BROWSER)).toEqual({ email: "jo@pauseai.uk", remember: true });
   });
 
   it("sends nothing to anyone else, or without an address to link to", async () => {

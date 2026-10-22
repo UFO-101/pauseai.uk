@@ -1,0 +1,14 @@
+/* The way back, small, just above the title. */
+.crumb {
+  margin-bottom: var(--space-2);
+  font-size: var(--text-sm);
+}
+
+.crumb a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.crumb a:hover {
+  text-decoration: underline;
+}

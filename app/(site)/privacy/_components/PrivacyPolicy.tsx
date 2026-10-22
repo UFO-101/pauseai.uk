@@ -77,6 +77,70 @@ export default function PrivacyPolicy() {
         <strong>Legal basis:</strong> our legitimate interest in understanding how the site is used.
       </p>
 
+      {/* The facts behind the sections below are in docs/data-protection.md. */}
+
+      <h2>Email your MP</h2>
+      <p>
+        When you write to your MP through this site, we keep your name, email address, postal address and postcode,
+        which campaign and MP you wrote to, the subject, and what happened to the letter (sent, bounced, replied to),
+        along with whether you ticked the box to hear about events and ways to help. Your postcode goes to postcodes.io
+        to find your constituency, and the form is protected by Cloudflare Turnstile. Postmark sends the letter from an
+        address of ours, so that your MP&apos;s reply comes back to us and is forwarded to you; we keep that a reply
+        came and who from, not the reply. We don&apos;t keep the letter&apos;s text here; a copy of your letter, and of
+        your MP&apos;s reply, is emailed to our policy team&apos;s inbox in Gmail. If an email to you or to your MP
+        bounces or is marked as spam, we keep a record of that against the address so we don&apos;t send to it again.
+      </p>
+
+      <h2>Events and Luma</h2>
+      <p>
+        Our events run on Luma. When you register for one of our events, or follow our calendar, Luma gives us your
+        name, email address, which events you registered for and with what status, when you followed the calendar, and,
+        where an event asked for them, your phone number and postcode. We copy this every hour. If you unsubscribe from
+        the calendar&apos;s emails, Luma tells us and we record it, so we never email that address about events. A
+        postcode you type on our home page to see events near you goes to postcodes.io and is kept only in your browser,
+        not by us.
+      </p>
+
+      <h2>Supporters and political opinions</h2>
+      <p>
+        We bring your letters and event registrations together into one record, so that the people who run PauseAI UK
+        can see you as one person rather than several. Registering for a protest or writing to your MP under a PauseAI
+        campaign shows a political opinion, which is special category data. We hold it under UK GDPR Article 9(2)(d), as
+        a not-for-profit body with a political aim processing data about its members and people in regular contact with
+        it, and we don&apos;t disclose it outside PauseAI UK without your consent. Only staff with permission can see
+        these combined records, and we log every time one is opened.
+      </p>
+
+      <h2>Who processes this data for us</h2>
+      <ul>
+        <li>Luma: events and registrations.</li>
+        <li>Postmark: sending and receiving email.</li>
+        <li>Netlify: hosting the site and its database, with backups kept for 3 to 30 days.</li>
+        <li>Cloudflare: our nightly database backup, kept for 90 days, and Turnstile, the anti-spam check.</li>
+        <li>postcodes.io: looking up postcodes; it keeps nothing.</li>
+        <li>Airtable: our records of MPs and of members, and letters sent through our earlier form.</li>
+        <li>
+          Google (Gmail): our policy team&apos;s inbox, which gets a copy of each letter and of each MP&apos;s reply.
+        </li>
+      </ul>
+
+      <h2>How long we keep it</h2>
+      <p>
+        We keep letters and event data until you ask us to erase them. The record that you unsubscribed, or that an
+        address bounced, stays after erasure, because it exists to stop us emailing you. Backups expire by themselves.
+      </p>
+
+      <h2>Asking for your data to be erased, or for a copy of it</h2>
+      <p>
+        To have your data erased, or to get a copy of what we hold, email{" "}
+        <a className="inline-link" href="mailto:hello@pauseai.uk">
+          hello@pauseai.uk
+        </a>{" "}
+        from the address we hold for you and say which you want. We reply within a month. Erasure removes everything we
+        hold about you except what we keep so as not to email you again; we also remove you from our Luma calendar and
+        ask our policy team to erase their copy. If you&apos;re not satisfied, you can complain to the ICO.
+      </p>
+
       <h2>Who we share donation data with</h2>
       <p>
         We do not sell your personal data. We share donation data only with the providers that help us operate, each

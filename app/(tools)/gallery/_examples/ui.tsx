@@ -17,7 +17,12 @@ import type { Group } from "../_components/types";
 import { LightboxExample, SubmitButtonExample } from "./ui.client";
 
 // Every value of a look's union, so a new one is a type error until it's here.
-const VARIANTS: Record<ButtonVariant, string> = { primary: "Primary", ghost: "Ghost", light: "Light" };
+const VARIANTS: Record<ButtonVariant, string> = {
+  primary: "Primary",
+  ghost: "Ghost",
+  light: "Light",
+  danger: "Danger",
+};
 const SIZES: Record<ButtonSize | "medium", ButtonSize | undefined> = {
   small: "small",
   medium: undefined,

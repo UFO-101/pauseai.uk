@@ -5,6 +5,7 @@ import { Field, FieldError } from "@/components/ui/Field";
 import { FormStack } from "@/components/ui/Form";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { LOGIN_PATH } from "@/lib/staff-session";
+import KeepSignedIn from "./KeepSignedIn";
 import styles from "./StaffForms.module.css";
 
 /**
@@ -32,6 +33,7 @@ export default function LoginForm({ sent, failed, elsewhere }: { sent?: string; 
         <Field label={staffCopy.login.emailLabel}>
           <TextInput name="email" type="email" autoComplete="email" required />
         </Field>
+        <KeepSignedIn />
         <div>
           <Button variant="primary" size="small" fit type="submit">
             {staffCopy.login.button}

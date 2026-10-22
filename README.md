@@ -21,7 +21,7 @@ With Node 22, Docker and `psql`:
 npm install
 docker compose up -d         # Postgres for the site and the tests
 cp .env.example .env.local   # set TEST_MP_EMAIL to your email
-npm run db:reset
+npm run db:reset             # makes the database, with the test MPs and plenty of fake data to look at
 npm run dev                  # http://localhost:3000, with every outside service faked
 ```
 
@@ -33,6 +33,7 @@ Try Email your MP with postcode ZZ99ZZ; the letter lands in `tmp/outbox/`. The r
 - [docs/development.md](docs/development.md): setting up local development in full
 - [docs/code-structure.md](docs/code-structure.md): where code lives, and the rules for it, including comments
 - [docs/testing.md](docs/testing.md): how it's tested
+- [docs/data-protection.md](docs/data-protection.md): what personal data the site holds, why, and how it's erased
 - [docs/style-guide.md](docs/style-guide.md): design, and where to find every component
 - [scripts/README.md](scripts/README.md): what each script does
 - [backup/README.md](backup/README.md): the nightly database backup to Cloudflare, and restoring one

@@ -92,7 +92,8 @@ databases: every test file makes its own.
 
 ### Make a database for the dev server
 
-Set `TEST_MP_EMAIL` in `.env.local` to your email. Then:
+Set `TEST_MP_EMAIL` in `.env.local` to your email, and keep the example's
+`DATA_FIXTURES=1` for fake supporters to look at. Then:
 
 ```bash
 npm run db:reset
@@ -112,6 +113,23 @@ This:
   them. Bouncy McTestface MP (ZZ99ZH) always has `no-such-mailbox@pauseai.uk`,
   which doesn't exist, so letters to them bounce. They're listed in
   `lib/test-mps.json`.
+- with `DATA_FIXTURES=1`, adds fake data (`tests/fixtures/staff-data.sql`)
+  to every table, so every staff page has something on it and the home
+  page's dashboard has a number in each tile for the last week and the week
+  before: the Luma fixtures' people and events and Airtable's two MPs under
+  their own IDs (so an import writes the same rows rather than doubling
+  them) plus made-up people, events, registrations of every status and an
+  erased person; twenty letters to the test MPs in every state, with
+  replies, an out-of-office, bounces that blocked Bouncy's address, a soft
+  bounce and a spam complaint; unsubscribes, one undone; a peer added by
+  staff and an MP who has left; statuses set this week and last; every
+  job's runs in every state, including a sync held for a decision; staff
+  accounts for jo@pauseai.uk (supporters, with a kept session) and
+  sam@pauseai.uk (none) beside the migration's admin; and an audit log of
+  all that. Dates are relative to when it runs. Without `TEST_MP_EMAIL`,
+  the test MPs still go in, with `test-mp@example.org`, since the letters go
+  to the fixture outbox anyway. The storyboard's flows start from an empty
+  database, without this.
 
 Run it again whenever you want a clean database. It wipes everything. It
 refuses a URL that isn't on your own machine, so it can't touch the live
@@ -228,13 +246,23 @@ Then postcode `SW1A 1AA` finds Polly Placeholder.
 
 #### Log in to the staff interface
 
-1. Open http://localhost:3000/staff/login, and type any address at
-   pauseai.uk, such as staff@pauseai.uk.
+Open http://localhost:3000/staff/login. In a fixture build the login card
+has a hatched purple box under it, the dev login: a button per account
+(admin@pauseai.uk, which every database starts with, and the seed's
+jo@pauseai.uk and sam@pauseai.uk) and one for nobody@pauseai.uk, which has
+no account, each signing you in at once, with no email.
+It exists only with `DATA_FIXTURES=1`; its route is a 404 anywhere else.
+
+To go through the real login instead:
+
+1. Type an address at pauseai.uk in the card. Any such address can log in,
+   but one without an account sees only a note saying whom to ask until an
+   admin adds it on `/staff/accounts`.
 2. The login email is the newest file in `tmp/outbox/`. Open the
    `/staff/api/callback?token=…` link in it, in the same browser.
 
-You're at `/staff`, logged in for 12 hours. This goes through the real
-login code: only Postmark is a fixture.
+You're at `/staff`, logged in for a day, or for 30 days with "Keep me signed
+in" ticked. Only Postmark is a fixture.
 
 #### See every component
 
@@ -277,12 +305,13 @@ Delete `DATA_FIXTURES` from `.env.local`, and fill in the keys you need. Each is
 
 None of these run under `npm run dev` by themselves. Call them by hand.
 
-**The daily jobs.** On Netlify, scheduled functions in `netlify/functions/`
+**The scheduled jobs.** On Netlify, scheduled functions in `netlify/functions/`
 call these routes. Locally, with `CRON_SECRET=dev` in `.env.local`:
 
 ```bash
 curl -X POST -H "Authorization: Bearer dev" localhost:3000/api/cron/sync-mps
 curl -X POST -H "Authorization: Bearer dev" localhost:3000/api/cron/check-mps
+curl -X POST -H "Authorization: Bearer dev" localhost:3000/api/cron/import-luma   # the hourly Luma import; with fixtures, the fixture calendar
 ```
 
 **Postmark's webhooks.** Set `POSTMARK_WEBHOOK_USER=postmark` and
@@ -301,6 +330,23 @@ curl -u postmark:secret -H 'Content-Type: application/json' localhost:3000/api/p
 
 With `REPLIES_INBOX` set, the reply is forwarded there too. With fixtures,
 both copies land in the outbox.
+
+**Luma's webhook.** Set `LUMA_WEBHOOK_SECRET=whsec_dev`, then post a
+payload in Luma's format, signed as Luma signs it: the `Webhook-Signature`
+header is `t=<unix seconds>,v1=<hex>`, the HMAC-SHA256 of `<t>.<body>` with
+the secret, and `Webhook-Id` is the delivery's ID, which stops a redelivery
+counting twice. A timestamp over five minutes old is refused.
+
+```bash
+BODY='{"type":"calendar.person.unsubscribed","data":{"id":"usr-1","email":"someone@example.com"}}'
+T=$(date +%s)
+SIG=$(printf '%s.%s' "$T" "$BODY" | openssl dgst -sha256 -hmac whsec_dev | sed 's/.* //')
+curl -H 'Content-Type: application/json' -H "Webhook-Id: msg_1" -H "Webhook-Signature: t=$T,v1=$SIG" \
+  localhost:3000/api/luma/webhook -d "$BODY"
+```
+
+The address gets an open row in `opt_outs`; a `calendar.person.subscribed`
+payload for it closes the row.
 
 **Centring a person's photo.** The People page crops each photo to a
 square. `imageStyle` in `lib/content/people.ts` sets which part shows, as a
@@ -346,7 +392,7 @@ npm run format                  # Prettier, on everything but plans/ (format:che
   export NETLIFY_DB_URL=$(node scripts/fresh-database.mjs pauseai_storyboard --test-mp test-mp@example.org)
   DATA_FIXTURES=1 FIXTURE_NOW=2026-10-16T12:00:00.000Z ANALYTICS=1 LUMA_API_KEY=fixture AIRTABLE_TOKEN=fixture \
     TURNSTILE_SECRET_KEY=fixture NEXT_PUBLIC_TURNSTILE_SITE_KEY=fixture TEST_MP_EMAIL=test-mp@example.org \
-    CRON_SECRET=fixture-cron-secret \
+    CRON_SECRET=fixture-cron-secret LUMA_WEBHOOK_SECRET=fixture-luma-webhook-secret \
     POSTMARK_SERVER_TOKEN=fixture POSTMARK_WEBHOOK_USER=postmark POSTMARK_WEBHOOK_PASSWORD=fixture-webhook-password \
     REPLIES_INBOX=replies@example.org OUTBOX_DIR=/tmp/pauseai-storyboard-outbox \
     npx next build
@@ -390,5 +436,8 @@ Set up outside the code:
 
 - **Settings:** every environment variable is in [.env.example](../.env.example), with what it's for. Netlify needs the same ones.
 - **Postmark:** a server, and two sending domains, each with DKIM, Return-Path and DMARC. `letters.pauseai.uk` sends letters to representatives and is the inbound domain, with its MX pointing at `inbound.postmarkapp.com`. `notify.pauseai.uk` sends everything else, such as forwarded replies and staff emails. Its webhooks carry basic auth in the URL, e.g. `https://postmark:<password>@pauseai.uk/api/postmark/bounce`: Bounce and Spam complaint go to `/api/postmark/bounce`, Inbound to `/api/postmark/inbound`.
+- **Luma's webhook:** in Luma, the PauseAI UK calendar, Settings → Developer → Webhooks: a webhook for `https://pauseai.uk/api/luma/webhook` with the event types Calendar Person Unsubscribed and Calendar Person Subscribed. Its secret (`whsec_…`) goes into Netlify as `LUMA_WEBHOOK_SECRET`. Luma retries a delivery that isn't answered 2xx three more times, after 1, 2 and 4 minutes, and only sends unsubscribes that happen after the webhook exists. To check it works: unsubscribe a staff address from the calendar's emails and look for its row in `opt_outs`; subscribe again and see whether Luma sends `calendar.person.subscribed` and the row's `resubscribed_at` is set, which its docs don't promise.
 - **Nightly jobs:** the MP sync runs at midnight UTC, the check against Parliament at 01:00 and the ControlAI import at 02:00. The check makes about 650 requests to Parliament, which took 12–18 seconds from a laptop on 14 Oct 2026. A Netlify scheduled function gets 30 seconds, so a nightly check that starts timing out has outgrown it.
+- **The Luma import** runs at 17 minutes past every hour, with `LUMA_API_KEY`. Each run fetches for about 20 seconds, then stops and records how many events are still waiting, so the first copy of the calendar (about 430 requests on 21 Oct 2026) takes a few runs; after that a run is a handful of requests. It leaves 50 of Luma's 200 requests a minute for the site's own fetches, and stops early if Luma answers 429. Run it by hand from `/staff/import-data` to see where it's got to.
 - **A new database:** run the MP sync, then the signatory import, both from `/staff/import-data`, and check the signatories. Until the sync has run, Email your MP finds no MPs.
+- **Staff accounts:** every database starts with one account, `admin@pauseai.uk`, with the admin permission. Log in as it and add everyone else on `/staff/accounts`: an account alone opens the ordinary pages; the supporters permission opens the supporter pages, admin the accounts page and the audit log. Give admin to at least one other person; the last admin can't be removed. The hourly Luma import fills the supporter pages over its first few runs, and links every letter already written; run it from `/staff/import-data` to watch it. An erasure request is handled as `docs/data-protection.md` says.

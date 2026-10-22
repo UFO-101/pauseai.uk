@@ -134,10 +134,17 @@
   /* States */
   --danger: #b00020;
   --success-bg: #e8f5e9;
+  --status-red: #b00020;
+  --status-red-bg: #fbe3e6;
   --status-amber: #8a5a00;
   --status-amber-bg: #fcebcf;
   --status-green: #1f6b36;
   --status-green-bg: #e3f3e6;
+
+  /* Development only: things that exist in a fixture build and never on the
+     live site, such as the dev login. Nothing else is this colour. */
+  --dev: #5b2a86;
+  --dev-bg: #efe4fb;
   --status-blue: #1d4e89;
   --status-blue-bg: #dbe8f7;
 }
