@@ -155,6 +155,10 @@
     background: var(--bg);
     /* Extends the backdrop past the edges, so focus rings on the controls scrolling beneath do not peek out. */
     box-shadow: 0 0 0 12px var(--bg);
+    /* Always on a layer of its own. It usually sits between pixels, and when Chrome paints it with the page,
+       which it does in some paints and not others, the gallery's slide thumbnails land a pixel apart from their
+       borders. */
+    will-change: transform;
   }
 
   .pin .frame {
