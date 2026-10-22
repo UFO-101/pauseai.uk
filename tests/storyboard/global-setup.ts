@@ -31,7 +31,9 @@ export default function globalSetup(): void {
        LOOP
          EXECUTE format('ALTER TABLE public.%I ALTER COLUMN %I SET DEFAULT fixture.now()', col.table_name, col.column_name);
        END LOOP;
-     END $$;`,
+     END $$;
+     -- The rows the migrations wrote got the real clock's time.
+     UPDATE staff_accounts SET added_at = fixture.now() WHERE added_by = 'migration';`,
   );
 
   // The outbox fills up over runs, and every email in it is read each time a flow looks.
