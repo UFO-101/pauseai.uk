@@ -86,12 +86,13 @@
 
 /* A politician whose address is blocked: one red alert under the name,
    its icon at the left and beside it the title, why, what to check, and
-   the form. Tinted, with a thin red border. */
+   the form. Tinted, with a thin red border. As wide as the dashboard's
+   "Needs a person" (StaffDashboard.module.css). */
 .blocked {
   display: flex;
   gap: var(--space-3);
   align-items: flex-start;
-  max-width: 40rem;
+  max-width: 47rem;
   margin-block: var(--space-4);
   padding: var(--space-4);
   border: 1px solid var(--status-red);

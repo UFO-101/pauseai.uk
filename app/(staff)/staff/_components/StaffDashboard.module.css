@@ -6,7 +6,7 @@
   font-size: var(--text-lg);
 }
 
-/* What needs a person: one callout, no wider than a line that reads, with
+/* What needs a person: one callout, about as wide as a row of three tiles, with
    its icon at the left and, beside it, the heading and a row for each
    item, ruled apart. Amber while everything in it is only waiting, red
    once something is broken: tinted, with a thin border and rules in the
@@ -20,7 +20,7 @@
   --button-font-size: var(--text-sm);
   --button-font-weight: 500;
 
-  max-width: 40rem;
+  max-width: 47rem;
   margin: 0 0 var(--space-6);
   padding: var(--space-4);
   border: 1px solid;
