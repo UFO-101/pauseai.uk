@@ -19,6 +19,10 @@ export const staffCopy = {
   devLogin: {
     title: "⁂ Development only: sign in now as",
     hint: "⁂ No email, no link. This box exists only with DATA_FIXTURES=1 and never on the live site.",
+    // Beside each address: what it may do.
+    permissions: (names: string) => `⁂ ${names} permissions`,
+    noPermissions: "⁂ an account with no permissions",
+    noAccount: "⁂ no account: sees only whom to ask",
   },
   // The email with the login link.
   loginEmail: {

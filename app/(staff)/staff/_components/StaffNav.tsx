@@ -24,9 +24,8 @@ type Props = {
  * current one marked but still a link, so it's the way back from a page
  * under it; who's logged in and the way out; on a phone, a bar with the
  * current page's name opening the same as a dropdown. A group shows only
- * to those with its permission; who's logged in has their permissions under
- * their address. The pause symbol and name at the top are the way to the
- * home page.
+ * to those with its permission. The pause symbol and name at the top are the
+ * way to the home page.
  */
 export default function StaffNav({ email, account = false, permissions = [], current }: Props) {
   // The pause symbol and the name: the way home, except at home.
@@ -60,18 +59,7 @@ export default function StaffNav({ email, account = false, permissions = [], cur
       </ul>
     </section>
   ));
-  // Who's logged in, and under it their permissions, when they have any.
-  const who = (
-    <span className={styles.who}>
-      {email}
-      {permissions.length > 0 && (
-        <>
-          <br />
-          {permissions.map((p) => staffCopy.accounts.names[p]).join(", ")}
-        </>
-      )}
-    </span>
-  );
+  const who = <span className={styles.who}>{email}</span>;
   return (
     <nav className={styles.nav} aria-label={staffCopy.nav.title}>
       {title}

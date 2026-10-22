@@ -84,8 +84,7 @@ describe("StaffNav", () => {
     await expect.element(page.getByRole("link", { name: staffCopy.nav.title })).toHaveAttribute("href", "/staff");
     // The sidebar is for wider screens than the test's, so it's read from the DOM.
     const nav = document.querySelector("nav")!;
-    // Who's logged in, with their permissions under the address.
-    expect(nav.querySelector("span[class*=who]")!.textContent).toBe(`jo@pauseai.uk${staffCopy.accounts.names.admin}`);
+    expect(nav.querySelector("span[class*=who]")!.textContent).toBe("jo@pauseai.uk");
     const current = nav.querySelector('a[aria-current="page"]')!;
     expect(current.textContent).toBe(staffCopy.nav.politicians);
     expect(current.getAttribute("href")).toBe("/staff/politicians");
@@ -235,8 +234,15 @@ describe("StaffDashboard", () => {
 });
 
 describe("DevLogin", () => {
-  it("offers a button per account, each a form posting that address to the dev login route", async () => {
-    await render(<DevLogin accounts={["admin@pauseai.uk", "jo@pauseai.uk"]} />);
+  it("offers a button per address with what it is, each a form posting that address to the dev login route", async () => {
+    await render(
+      <DevLogin
+        accounts={[
+          { email: "admin@pauseai.uk", description: "Admin permissions" },
+          { email: "jo@pauseai.uk", description: "no account" },
+        ]}
+      />,
+    );
     const box = page.getByRole("region", { name: staffCopy.devLogin.title });
     await expect.element(box.getByText(staffCopy.devLogin.hint)).toBeVisible();
     const forms = box.element().querySelectorAll("form");
@@ -245,6 +251,7 @@ describe("DevLogin", () => {
       ["/staff/api/dev-login", "jo@pauseai.uk"],
     ]);
     await expect.element(box.getByRole("button", { name: "jo@pauseai.uk" })).toBeVisible();
+    await expect.element(box.getByText("no account")).toBeVisible();
     expect(getComputedStyle(box.element()).borderTopStyle).toBe("dashed");
   });
 

@@ -26,9 +26,19 @@
   font-size: var(--text-sm);
 }
 
-/* A button per account, wrapping. */
-.buttons {
+/* A line per address: its button, then what it is. */
+.choices {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--text-sm);
+}
+
+.choices li {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-2);
+  gap: var(--space-1) var(--space-3);
+  align-items: center;
 }
