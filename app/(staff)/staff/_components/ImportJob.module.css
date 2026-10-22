@@ -1,5 +1,16 @@
-/* How a job's newest run ended, on its card (ui/Strip): the time at the right. */
+/* How a job's newest run ended, on its card (ui/Strip): the ending, and on
+   the same line at the right, the time, in the strip's words so it doesn't
+   wrap under them as an action would. */
+.line {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-3);
+  align-items: baseline;
+  justify-content: space-between;
+}
+
 .when {
   font-size: var(--text-sm);
+  font-weight: 400;
   font-variant-numeric: tabular-nums;
 }

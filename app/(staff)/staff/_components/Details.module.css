@@ -43,6 +43,7 @@
 
 .campaign a.campaignMeta {
   color: var(--accent);
+  white-space: nowrap;
 }
 
 /* A row that has to be one element (a list's line, keyed). */
@@ -112,6 +113,15 @@
 
   .facts dd {
     margin-bottom: var(--space-2);
+  }
+
+  /* An entry's time above its words, close, and the rule only above the time. */
+  .history li > :last-child {
+    padding-top: 0;
+  }
+
+  .history li + li > :last-child {
+    border-top: 0;
   }
 }
 

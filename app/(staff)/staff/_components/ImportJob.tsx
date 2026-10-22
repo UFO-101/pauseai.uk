@@ -104,12 +104,11 @@ function NewestRun({ job, run }: { job: ImportJob; run: AnyImportRun | undefined
       <Strip>{ABOUT[job].none}</Strip>
     );
   return (
-    <Strip
-      tone={runTone(run) ?? "plain"}
-      icon={false}
-      action={<span className={styles.when}>{staffTime(run.at)}</span>}
-    >
-      <span>{staffCopy.runs.status[runStatus(run)]}</span>
+    <Strip tone={runTone(run) ?? "plain"} icon={false}>
+      <span className={styles.line}>
+        {staffCopy.runs.status[runStatus(run)]}
+        <span className={styles.when}>{staffTime(run.at)}</span>
+      </span>
     </Strip>
   );
 }

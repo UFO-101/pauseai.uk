@@ -257,8 +257,7 @@ page's.
 **The grid** (`ui/Grid`). Six columns when it's at least 1,000px wide;
 below that, two. Everything boxed is an item of a grid and says how much
 of the row it takes: a sixth, a third, a half, two-thirds or all (`span`
-1, 2, 3, 4 or 6). On two columns, a sixth takes one and anything wider
-takes the row, so a phone gets two tiles a row and one card. Items are as
+1, 2, 3, 4 or 6). On two columns, a sixth takes one and anything wider takes the row; a tile (`spanClass("tile")`) is a third on six columns and one of the two below, so a phone has two tiles a row and one card. Items are as
 tall as what's in them; a grid of things of one kind side by side (the
 dashboard's tiles, the import jobs) is `even`, each as tall as its row.
 The content is never wider than 88rem, so the columns don't stretch on a

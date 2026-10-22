@@ -147,7 +147,7 @@ function Tile({
   );
   const linked = href !== undefined && (!permission || permissions.includes(permission));
   return (
-    <li className={spanClass(bar ? 4 : 2)}>
+    <li className={spanClass(bar ? 4 : "tile")}>
       {linked ? (
         <Link href={href} className={styles.tile}>
           {inside}

@@ -271,7 +271,7 @@ describe("StaffDashboard", () => {
     await expect.element(events[1]).toHaveTextContent(`9${copy.metrics.eventsHeld(9)}${copy.change.up(3, 7)}`);
     // With a bar, the letters tile takes two-thirds of the grid, so its legend fits; the rest a third.
     expect(mps[0].element().className).toBe(spanClass(4));
-    expect(mps[1].element().className).toBe(spanClass(2));
+    expect(mps[1].element().className).toBe(spanClass("tile"));
     // The bar's segments are as wide as each campaign's share.
     const segments = mps[0].element().querySelectorAll("[data-campaign]");
     expect([...segments].map((segment) => (segment as HTMLElement).style.flexGrow)).toEqual(["9", "3", "", ""]);
@@ -323,7 +323,7 @@ describe("StaffDashboard", () => {
       .toHaveTextContent(`${copy.none}${copy.metrics.lettersReplied(0)}${copy.change.down(1, 30)}`);
     expect(quiet[0].element().querySelectorAll("[data-campaign]")).toHaveLength(0);
     // With no bar the letters tile takes a third like the rest; a line of nothing but zeros isn't drawn.
-    expect(quiet[0].element().className).toBe(spanClass(2));
+    expect(quiet[0].element().className).toBe(spanClass("tile"));
     const flat = {
       ...exampleQuietDashboard,
       series: {

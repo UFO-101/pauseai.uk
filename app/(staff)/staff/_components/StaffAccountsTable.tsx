@@ -82,6 +82,7 @@ function AddRow({ accounts, add }: { accounts: StaffAccount[]; add: Action }) {
             type="email"
             required
             aria-label={copy.addTitle}
+            placeholder={copy.addTitle}
             aria-invalid={problem !== undefined}
           />
           <Button type="submit" variant="ghost" size="small">

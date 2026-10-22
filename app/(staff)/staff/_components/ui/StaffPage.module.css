@@ -27,8 +27,9 @@
 }
 
 /* Nothing wider than this, so the grid's six columns (ui/Grid) don't
-   stretch past reading on a big monitor. */
-.content > * {
+   stretch past reading on a big monitor. With no weight of its own
+   (:where), so anything narrower, such as the login card, keeps its width. */
+:where(.content > *) {
   max-width: 88rem;
 }
 
