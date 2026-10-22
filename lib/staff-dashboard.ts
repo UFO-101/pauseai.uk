@@ -1,8 +1,8 @@
-import type { AnyImportRun, ImportJob } from "./import-runs";
+import type { ImportJob } from "./import-runs";
 import type { Permission } from "./staff-permissions";
 
-// The staff home's dashboard: what needs a person, what happened in the
-// window against the window before, and whether the imports are well. The
+// The staff home's dashboard: what needs a person, and what happened in
+// the window against the window before. The
 // server fills it (lib/server/staff-dashboard.ts); StaffDashboard shows it.
 
 /** The windows the dashboard can show, in days; the first is the default. */
@@ -78,20 +78,7 @@ export type Dashboard = {
   /** SERIES_POINTS windows of `days`, oldest first, the current one last, for the tiles with a sparkline. */
   series: Record<SeriesMetric, SeriesPoint[]>;
   actions: DashboardAction[];
-  /** Each job's newest run, in IMPORT_JOBS order; undefined for one that has never run. */
-  imports: (AnyImportRun | undefined)[];
 };
-
-/** The colour of an import's newest run: green when it ended well, amber held or stopped short, red failed, grey never run. */
-type ImportTone = "green" | "amber" | "red" | "none";
-
-export function importTone(run: AnyImportRun | undefined): ImportTone {
-  if (!run) return "none";
-  if (run.status === "failed") return "red";
-  if (run.status === "held") return "amber";
-  if (run.job === "import-luma" && run.result.stoppedBy !== undefined) return "amber";
-  return "green";
-}
 
 export function isCampaignMetric(metric: DashboardMetric): metric is CampaignMetric {
   return (BY_CAMPAIGN as readonly DashboardMetric[]).includes(metric);

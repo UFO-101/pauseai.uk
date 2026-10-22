@@ -392,7 +392,7 @@ export const staff: Group = {
           ),
         },
         {
-          label: "A quiet month: nothing waiting, nothing counted, every import well",
+          label: "A quiet month: nothing waiting, nothing counted",
           render: () => (
             <StaffPage as="div">
               <StaffDashboard dashboard={exampleQuietDashboard} permissions={["supporters"]} />

@@ -75,7 +75,7 @@ describeWithDatabase("dashboard", () => {
     return { real, gone, test };
   }
 
-  it("counts each metric in the week and the week before, leaving test MPs out, with the breakdowns, series, actions and runs", async () => {
+  it("counts each metric in the week and the week before, leaving test MPs out, with the breakdowns, series and actions", async () => {
     const { real } = await fill();
     const result = await dashboard(7);
     expect(result.days).toBe(7);
@@ -110,13 +110,6 @@ describeWithDatabase("dashboard", () => {
         reason: "Mailbox full",
       },
       { kind: "failed-import", job: "import-luma", at: expect.any(String), error: "Luma answered 500" },
-    ]);
-    expect(result.imports.map((run) => run && [run.job, run.status])).toEqual([
-      ["import-luma", "failed"],
-      ["sync-mps", "held"],
-      ["check-mps", "ok"],
-      undefined,
-      undefined,
     ]);
   });
 

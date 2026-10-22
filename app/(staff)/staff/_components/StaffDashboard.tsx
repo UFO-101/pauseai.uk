@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { campaigns } from "@/lib/content/email-your-mp";
 import { jobTitles, staffCopy } from "@/lib/content/staff-interface";
-import { IMPORT_JOBS } from "@/lib/import-runs";
 import { MAX_UNCHECKED_CHANGES } from "@/lib/mps";
 import {
   type CampaignMetric,
@@ -13,7 +12,6 @@ import {
   type DashboardMetric,
   type DashboardSection,
   type DashboardWindow,
-  importTone,
   isCampaignMetric,
   isSeriesMetric,
   METRIC_LINKS,
@@ -191,37 +189,10 @@ function Tiles({
   );
 }
 
-/** The imports in one block: green when every job's newest run ended well, red otherwise, with a dot per job. */
-function Health({ dashboard }: { dashboard: Dashboard }) {
-  const tones = dashboard.imports.map(importTone);
-  const wrong = tones.filter((tone) => tone !== "green").length;
-  return (
-    <Link href={IMPORTS_PAGE} className={`${styles.health} ${wrong === 0 ? styles.well : styles.unwell}`}>
-      <span>{wrong === 0 ? copy.allWell : copy.notWell(wrong)}</span>
-      <span className={styles.dots}>
-        {IMPORT_JOBS.map((job, i) => {
-          const run = dashboard.imports[i];
-          const ended = run ? staffCopy.runs.status[run.status] : copy.neverRun;
-          return (
-            <span
-              key={job}
-              className={tones[i] === "none" ? styles.dot : `${styles.dot} ${styles[tones[i]]}`}
-              role="img"
-              aria-label={`${jobTitles[job]}: ${ended}`}
-              title={`${jobTitles[job]}: ${ended}`}
-            />
-          );
-        })}
-      </span>
-    </Link>
-  );
-}
-
 /**
  * The home page's dashboard: what needs a person, only when something
  * does; the day and the window, with the other windows as links; the
- * window's numbers in three groups, each against the window before; and
- * the imports' health in one block.
+ * window's numbers in three groups, each against the window before.
  */
 export default function StaffDashboard({
   dashboard,
@@ -267,8 +238,6 @@ export default function StaffDashboard({
       {(Object.keys(DASHBOARD_SECTIONS) as DashboardSection[]).map((section) => (
         <Tiles key={section} section={section} dashboard={dashboard} permissions={permissions} />
       ))}
-      <h2 className={styles.heading}>{copy.importsTitle}</h2>
-      <Health dashboard={dashboard} />
     </>
   );
 }

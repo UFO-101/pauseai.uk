@@ -1,5 +1,5 @@
 /* The home page's dashboard: what needs a person, the day and the window,
-   three groups of tiles, then the imports' health in one block. */
+   then three groups of tiles. */
 
 .heading {
   margin: var(--space-6) 0 var(--space-3);
@@ -46,7 +46,7 @@
   font-size: var(--text-sm);
 }
 
-/* A dot: amber for something waiting, red for something broken, green for well, grey for never. */
+/* A dot: amber for something waiting, red for something broken. */
 .dot {
   width: 0.6rem;
   height: 0.6rem;
@@ -60,10 +60,6 @@
 
 .dot.red {
   background: var(--status-red);
-}
-
-.dot.green {
-  background: var(--status-green);
 }
 
 /* The day, then the windows: the one shown in bold, the others links. */
@@ -214,39 +210,6 @@ a.tile:focus-visible {
 
 .bad {
   color: var(--status-red);
-}
-
-/* The imports: one tinted block, green or red, with a dot per job at the end. */
-.health {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2) var(--space-4);
-  align-items: center;
-  padding: var(--space-3) var(--space-4);
-  border-radius: var(--radius-md);
-  font-weight: 600;
-  text-decoration: none;
-}
-
-.health.well {
-  background: var(--status-green-bg);
-  color: var(--status-green);
-}
-
-.health.unwell {
-  background: var(--status-red-bg);
-  color: var(--status-red);
-}
-
-.health:focus-visible {
-  outline: var(--focus-ring);
-  outline-offset: var(--focus-offset);
-}
-
-.dots {
-  display: flex;
-  gap: var(--space-1);
-  margin-left: auto;
 }
 
 /* A phone: two tiles to a row, a little tighter. */

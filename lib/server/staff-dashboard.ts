@@ -19,8 +19,8 @@ import { latestRun } from "./import-runs";
 
 // Fills the staff home's dashboard (lib/staff-dashboard.ts): the counts in
 // the window and the one before it, in one query; the campaign breakdowns
-// and the sparklines' series, a query each; what needs a person; and each
-// import's newest run.
+// and the sparklines' series, a query each; and what needs a person,
+// including any import whose newest run failed.
 
 /** Letters, statuses and their politician, so test MPs can be left out. */
 const LETTERS = "letters l JOIN politicians p ON p.id = l.politician_id";
@@ -143,6 +143,5 @@ export async function dashboard(days: DashboardWindow): Promise<Dashboard> {
     byCampaign: { lettersSent: letterCampaigns, mpsSigned: signedCampaigns },
     series: { eventRegistrations: registrations, supportersAdded: supporters },
     actions: [...held, ...blocked, ...failed],
-    imports,
   };
 }

@@ -57,7 +57,7 @@ export const staffCopy = {
   home: {
     title: "Home",
     // The dashboard: what needs a person, then the window's numbers in
-    // three groups, each against the window before, then the imports' health.
+    // three groups, each against the window before.
     dashboard: {
       // What's waiting for someone: each kind of item, its detail, and its button.
       actionsTitle: "Needs a person",
@@ -113,10 +113,6 @@ export const staffCopy = {
       // A sparkline: its name for screen readers, and the label on a point.
       series: (what: string) => `⁂ ${what}, the last eight windows`,
       seriesPoint: (from: string, n: number) => `⁂ From ${from}: ${n}`,
-      importsTitle: "Imports",
-      allWell: "All imports running well.",
-      notWell: (n: number) => (n === 1 ? "⁂ An import isn't running well." : `⁂ ${n} imports aren't running well.`),
-      neverRun: "Never run",
     },
     noAccount: "You don't have a staff account yet.",
     none: "You have no permissions.",

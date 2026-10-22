@@ -290,36 +290,6 @@ describe("StaffDashboard", () => {
     expect(quiet[0].element().querySelectorAll("[data-campaign]")).toHaveLength(0);
     await expect.element(page.getByText(copy.testLetters(0))).not.toBeInTheDocument();
   });
-
-  it("sums the imports up in one block: red with how many aren't well, or green, with a dot per job", async () => {
-    const { rerender } = await render(<StaffDashboard dashboard={exampleDashboard} permissions={[]} />);
-    const block = page.getByRole("link", { name: new RegExp(copy.notWell(3)) });
-    await expect.element(block).toHaveAttribute("href", "/staff/import-data");
-    expect(block.element().className).toMatch(/unwell/);
-    const dots = block.element().querySelectorAll("[role='img']");
-    expect([...dots].map((dot) => dot.getAttribute("aria-label"))).toEqual([
-      `${jobTitles["import-luma"]}: ${staffCopy.runs.status.ok}`,
-      `${jobTitles["sync-mps"]}: ${staffCopy.runs.status.unchanged}`,
-      `${jobTitles["check-mps"]}: ${staffCopy.runs.status.ok}`,
-      `${jobTitles["import-controlai"]}: ${staffCopy.runs.status.failed}`,
-      `${jobTitles["import-signatories"]}: ${copy.neverRun}`,
-    ]);
-    expect(dots[0].className).toMatch(/amber/);
-    expect(dots[1].className).toMatch(/green/);
-    expect(dots[3].className).toMatch(/red/);
-    expect(dots[4].className).not.toMatch(/amber|green|red/);
-
-    const held = { ...exampleDashboard, imports: [...exampleDashboard.imports] };
-    held.imports[1] = exampleHeldSync;
-    await rerender(<StaffDashboard dashboard={held} permissions={[]} />);
-    await expect.element(page.getByRole("link", { name: new RegExp(copy.notWell(4)) })).toBeVisible();
-
-    await rerender(<StaffDashboard dashboard={exampleQuietDashboard} permissions={[]} />);
-    const well = page.getByRole("link", { name: new RegExp(copy.allWell) });
-    await expect.element(well).toBeVisible();
-    expect(well.element().className).toMatch(/well/);
-    expect(well.element().className).not.toMatch(/unwell/);
-  });
 });
 
 describe("Sparkline", () => {

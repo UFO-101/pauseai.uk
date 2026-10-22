@@ -1,5 +1,4 @@
 import type { Dashboard, SeriesPoint } from "@/lib/staff-dashboard";
-import { exampleAppliedSync, exampleFailedRun, exampleLumaResult, exampleRun } from "./RunList.examples";
 
 /** Weekly counts as a sparkline's points, the last week ending at the example's `asOf`. */
 function weekly(counts: number[]): SeriesPoint[] {
@@ -12,8 +11,7 @@ function weekly(counts: number[]): SeriesPoint[] {
 /**
  * A busy week with something waiting of each kind: a held MP import, an MP
  * whose address is blocked, and a failed import. Every tile has a number,
- * up or down on the week before; the Luma import stopped short, the
- * ControlAI import failed, the signatories never ran.
+ * up or down on the week before.
  */
 export const exampleDashboard: Dashboard = {
   days: 7,
@@ -48,24 +46,9 @@ export const exampleDashboard: Dashboard = {
     },
     { kind: "failed-import", job: "import-controlai", at: "2026-10-21T02:00:00.000Z", error: "No PDF linked" },
   ],
-  imports: [
-    exampleRun(
-      "import-luma",
-      { ...exampleLumaResult, eventsLeft: 4, stoppedBy: "time" },
-      { id: 5, at: "2026-10-21T11:17:00Z" },
-    ),
-    exampleRun(
-      "sync-mps",
-      { changes: { added: [], removed: [], changed: [] } },
-      { id: 4, at: "2026-10-21T00:00:00Z", status: "unchanged" },
-    ),
-    exampleRun("check-mps", { problems: [] }, { id: 3, at: "2026-10-21T01:00:00Z" }),
-    exampleFailedRun("import-controlai", "No PDF linked", { id: 2, at: "2026-10-21T02:00:00Z" }),
-    undefined,
-  ],
 };
 
-/** A quiet month: nothing waiting, nothing counted but a few registrations, every import well. */
+/** A quiet month: nothing waiting, nothing counted but a few registrations. */
 export const exampleQuietDashboard: Dashboard = {
   days: 30,
   asOf: exampleDashboard.asOf,
@@ -86,5 +69,4 @@ export const exampleQuietDashboard: Dashboard = {
     supportersAdded: weekly([0, 0, 0, 0, 0, 0, 2, 0]),
   },
   actions: [],
-  imports: exampleDashboard.imports.map(() => exampleAppliedSync),
 };
