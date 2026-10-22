@@ -15,7 +15,7 @@ describe("the march sign-up group's examples", () => {
     await page.getByRole("button", { name: "Register" }).click();
     await expect
       .element(page.getByRole("list", { name: "Event log" }).getByRole("listitem"))
-      .toHaveTextContent('register({"name":"Testy McTestface","email":"testy@example.org","website":""})');
+      .toHaveTextContent('register({"name":"Testy McTestface","email":"testy@example.org","website":"","tags":{}})');
     await expect.element(page.getByRole("alert")).toBeVisible();
   });
 

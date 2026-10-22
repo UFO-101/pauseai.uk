@@ -10,6 +10,15 @@ import { hydrated, layoutSettled, scrollSettled } from "./settle";
 
 const header = (page: Page) => page.getByRole("banner");
 
+type DataLayerWindow = Window & { dataLayer?: Record<string, unknown>[] };
+
+/** The march's events the page has pushed onto GTM's dataLayer. */
+function marchEvents(page: Page) {
+  return page.evaluate(() =>
+    ((window as DataLayerWindow).dataLayer ?? []).filter((e) => String(e.event).startsWith("march_")),
+  );
+}
+
 async function openSignup(page: Page) {
   await page.goto(`${BASE}/march`);
   await hydrated(page);
@@ -57,6 +66,17 @@ test("registering, and the form turns into the share card", { tag: "@phone" }, a
   await frame(page, "the share card, where the form was");
 });
 
+test("arriving by a tagged link, registering sends its tag", async ({ page }, testInfo) => {
+  await page.goto(`${BASE}/march?utm_source=in`);
+  await hydrated(page);
+  await layoutSettled(page, "main");
+  await fillIn(page, `tagged-${testInfo.testId}@example.org`);
+  const sent = page.waitForRequest("**/api/march/register");
+  await page.getByRole("button", { name: copy.form.submit, exact: true }).click();
+  expect((await sent).postDataJSON().tags).toEqual({ source: "in" });
+  await expect(page.getByRole("heading", { name: copy.share.title })).toBeFocused();
+});
+
 test("a registration Luma doesn't take", { tag: "@phone" }, async ({ page }) => {
   await openSignup(page);
   await fillIn(page, "luma-fails@example.org");
@@ -97,6 +117,7 @@ test("sharing, then calling it a day, then registering someone new", { tag: "@ph
   await page.getByRole("button", { name: copy.share.copy }).click();
   await expect(page.getByRole("button", { name: copy.share.copied })).toBeVisible();
   expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(copy.share.message);
+  expect(await marchEvents(page)).toEqual([{ event: "march_signup" }, { event: "march_share", share_method: "copy" }]);
   await page.getByRole("button", { name: copy.share.copy }).waitFor();
   await scrollSettled(page);
   await frame(page, "the message copied");

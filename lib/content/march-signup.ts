@@ -3,8 +3,33 @@
 import { march } from "./march";
 import { site } from "./site";
 
-/** The sign-up page's address, as people share it. */
+/** The sign-up page's address. */
 const signupUrl = `${site.url}${march.signupPath}`;
+
+/**
+ * Where the share card sends the message: each app in its row, the copied
+ * message, and a phone's share sheet.
+ */
+export type ShareSource =
+  | "whatsapp"
+  | "telegram"
+  | "x"
+  | "bluesky"
+  | "facebook"
+  | "threads"
+  | "linkedin"
+  | "reddit"
+  | "email"
+  | "copy"
+  | "share_sheet";
+
+/*
+ * Every tracked link to the sign-up has one tag, a short utm_source code that
+ * says where it came from. The codes are listed in docs/march-links.md.
+ */
+
+/** The sign-up's address as every share option gives it out, tagged as a share. */
+const shareUrl = `${signupUrl}?utm_source=sh`;
 
 const emailSubject = `The biggest ever AI safety protest - ${march.city}, ${march.dateLong}`;
 
@@ -14,7 +39,7 @@ const shortMessage =
   `Saturday 21 November 2026, 12–3pm\n` +
   `Start: All Souls’ Place, London W1B 3DA\n` +
   `End: Downing Street, London SW1A 2AA\n\n` +
-  `Register now: ${signupUrl}`;
+  `Register now: ${shareUrl}`;
 
 /**
  * AI Impacts' survey of 1,580 AI researchers, December 2024 ("Advanced AI
@@ -75,7 +100,8 @@ export const marchSignupCopy = {
       shortMessage,
     /** The message for X, Bluesky and Threads, inside their 280, 300 and 500-character limits. */
     shortMessage,
-    url: signupUrl,
+    /** The sign-up's address, for the share options that take a link alone. */
+    url: shareUrl,
     emailSubject,
     share: "Share",
     copy: "Copy message",

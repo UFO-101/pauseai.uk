@@ -11,7 +11,26 @@ describe("checkMarchRegistration", () => {
       phone: "0",
       postcode: "SW1A 0AA",
     });
-    expect(result).toEqual({ ok: true, registration: valid });
+    expect(result).toEqual({ ok: true, registration: { ...valid, tags: {} } });
+  });
+
+  it("keeps the tags of the link they came by, and leaves out any that don't look like tags", () => {
+    const tags = {
+      source: " in ",
+      medium: "x".repeat(101),
+      campaign: "other",
+      term: "a\nb",
+      content: 7,
+      other: "kept out",
+    };
+    expect(checkMarchRegistration({ ...valid, tags })).toEqual({
+      ok: true,
+      registration: { ...valid, tags: { source: "in", campaign: "other" } },
+    });
+    expect(checkMarchRegistration({ ...valid, tags: "in" })).toEqual({
+      ok: true,
+      registration: { ...valid, tags: {} },
+    });
   });
 
   it("asks for each field that's missing", () => {
