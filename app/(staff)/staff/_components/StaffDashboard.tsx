@@ -2,6 +2,7 @@ import Link from "next/link";
 import { campaigns } from "@/lib/content/email-your-mp";
 import { jobTitles, staffCopy } from "@/lib/content/staff-interface";
 import { IMPORT_JOBS } from "@/lib/import-runs";
+import { MAX_UNCHECKED_CHANGES } from "@/lib/mps";
 import {
   type CampaignMetric,
   type Count,
@@ -38,7 +39,14 @@ function Action({ action }: { action: DashboardAction }) {
       ? [
           styles.amber,
           words.heldSync,
-          words.heldSyncDetail(action.added, action.removed, action.changed, staffTime(action.at)),
+          words.heldSyncDetail(
+            action.added + action.removed + action.changed,
+            MAX_UNCHECKED_CHANGES,
+            action.added,
+            action.removed,
+            action.changed,
+            staffTime(action.at),
+          ),
           words.decide,
           IMPORTS_PAGE,
         ]
@@ -230,7 +238,10 @@ export default function StaffDashboard({
           <Muted>{copy.nothingToDo}</Muted>
         </p>
       ) : (
-        <ul className={styles.actions} aria-label={copy.actionsTitle}>
+        <ul
+          className={`${styles.actions} ${dashboard.actions.some((action) => action.kind !== "held-sync") ? styles.urgent : ""}`}
+          aria-label={copy.actionsTitle}
+        >
           {dashboard.actions.map((action, i) => (
             <Action key={i} action={action} />
           ))}

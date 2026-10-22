@@ -3,6 +3,7 @@ import { render } from "vitest-browser-react";
 import { page } from "vitest/browser";
 import { campaigns } from "@/lib/content/email-your-mp";
 import { jobTitles, staffCopy } from "@/lib/content/staff-interface";
+import { MAX_UNCHECKED_CHANGES } from "@/lib/mps";
 import type { AnyImportRun, ControlAiImport, MpCheck, MpSync, SignatoryImport } from "@/lib/import-runs";
 import ChangesTable from "./ChangesTable";
 import EmailBlockFilters from "./EmailBlockFilters";
@@ -183,7 +184,7 @@ describe("StaffDashboard", () => {
     const { rerender } = await render(<StaffDashboard dashboard={exampleDashboard} permissions={[]} />);
     const items = page.getByRole("list", { name: copy.actionsTitle }).getByRole("listitem").all();
     expect(items.map((item) => item.element().textContent)).toEqual([
-      `${copy.actions.heldSync}${copy.actions.heldSyncDetail(0, 21, 3, "2026-10-21 00:00")}${copy.actions.decide}`,
+      `${copy.actions.heldSync}${copy.actions.heldSyncDetail(24, MAX_UNCHECKED_CHANGES, 0, 21, 3, "2026-10-21 00:00")}${copy.actions.decide}`,
       `${copy.actions.blockedMp("Bouncy McTestface MP")}${copy.actions.blockedMpDetail("The address does not exist", "19 Oct 2026")}${copy.actions.openMp}`,
       `${copy.actions.failedImport(jobTitles["import-controlai"])}${copy.actions.failedImportDetail("No PDF linked", "2026-10-21 02:00")}${copy.actions.seeRun}`,
     ]);
@@ -201,6 +202,16 @@ describe("StaffDashboard", () => {
       .element(page.getByRole("link", { name: copy.actions.seeRun }))
       .toHaveAttribute("href", "/staff/import-data");
     await expect.element(page.getByText(copy.nothingToDo)).not.toBeInTheDocument();
+    // Red while something in it is broken; amber when it's only waiting.
+    const panel = () => page.getByRole("list", { name: copy.actionsTitle }).element().className;
+    expect(panel()).toMatch(/urgent/);
+    await rerender(
+      <StaffDashboard
+        dashboard={{ ...exampleDashboard, actions: exampleDashboard.actions.slice(0, 1) }}
+        permissions={[]}
+      />,
+    );
+    expect(panel()).not.toMatch(/urgent/);
 
     await rerender(<StaffDashboard dashboard={exampleQuietDashboard} permissions={[]} />);
     await expect.element(page.getByText(copy.nothingToDo)).toBeVisible();

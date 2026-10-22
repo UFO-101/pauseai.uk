@@ -6,15 +6,26 @@
   font-size: var(--text-lg);
 }
 
-/* What needs a person: a row each, its dot, its words, and its button at the end,
-   no wider than a line that reads, so the button stays near its words. */
+/* What needs a person: a tinted panel with a thick edge, amber while
+   everything in it is only waiting, red once something in it is broken.
+   Inside, a row each, its dot, its words, and its button at the end, no
+   wider than a line that reads, so the button stays near its words. */
 .actions {
   display: grid;
   gap: var(--space-2);
   max-width: 40rem;
   margin: 0;
-  padding: 0;
+  padding: var(--space-3);
+  border: 1px solid var(--status-amber);
+  border-left-width: 6px;
+  border-radius: var(--radius-md);
+  background: var(--status-amber-bg);
   list-style: none;
+}
+
+.actions.urgent {
+  border-color: var(--status-red);
+  background: var(--status-red-bg);
 }
 
 .action {

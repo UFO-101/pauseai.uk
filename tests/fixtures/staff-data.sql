@@ -11,7 +11,7 @@
 -- by the same IDs, so an import writes the same rows again rather than
 -- doubling them. The rest are made up, with "seed" in their IDs. The
 -- letters go to the test MPs (lib/test-mps.json), which must be in the
--- database already. Supporters and their links are written at the end as
+-- database already, and most recent ones then to Airtable's two. Supporters and their links are written at the end as
 -- the matcher (lib/server/supporters.ts) would make them: one per email.
 
 -- ---------------------------------------------------------------- staff
@@ -175,6 +175,12 @@ INSERT INTO letters (campaign, politician_id, sender_name, sender_email, sender_
 SELECT s.campaign, p.id, s.sender, s.email, s.address, s.sender_postcode, s.consent, s.subject, 'seed-' || s.hash, s.status,
        now() - s.created, now() - s.sent + interval '4 seconds', now() - s.replied
 FROM seed_letters s JOIN politicians p ON p.test_postcode = s.postcode;
+-- Most of the recent letters went to Airtable's two MPs, so the dashboard,
+-- which leaves the test MPs out, counts them; the bounces stay on Bouncy's.
+UPDATE letters SET politician_id = (SELECT id FROM politicians WHERE airtable_id = 'recDummy')
+WHERE reply_hash IN ('seed-prev-lee', 'seed-prev-li', 'seed-week-ben', 'seed-week-kwame', 'seed-week-noah');
+UPDATE letters SET politician_id = (SELECT id FROM politicians WHERE airtable_id = 'recPlaceholder')
+WHERE reply_hash IN ('seed-prev-omar', 'seed-week-sam', 'seed-week-grace', 'seed-week-mia');
 
 -- Their history: sending, then sent, then what followed.
 INSERT INTO letter_events (letter_id, at, status, details) SELECT id, created_at, 'sending', '{}' FROM letters WHERE reply_hash LIKE 'seed-%';

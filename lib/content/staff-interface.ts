@@ -64,9 +64,17 @@ export const staffCopy = {
       nothingToDo: "⁂ Nothing needs a person.",
       actions: {
         heldSync: "⁂ MP import held",
-        heldSyncDetail: (added: number, removed: number, changed: number, since: string) =>
-          `⁂ ${added} MPs would be added, ${removed} would go, ${changed} would change · since ${since}`,
-        decide: "⁂ Decide",
+        // Why it's held: the change is bigger than an import makes without a person checking.
+        heldSyncDetail: (
+          changes: number,
+          limit: number,
+          added: number,
+          removed: number,
+          changed: number,
+          since: string,
+        ) =>
+          `⁂ ${changes} MPs would change, more than the ${limit} an import changes without someone checking: ${added} added, ${removed} gone, ${changed} changed · since ${since}`,
+        decide: "⁂ Apply or discard",
         blockedMp: (name: string) => `⁂ ${name}'s email bounced`,
         blockedMpDetail: (reason: string, since: string) => `⁂ Address blocked since ${since}: ${reason}`,
         openMp: "⁂ Open MP",
