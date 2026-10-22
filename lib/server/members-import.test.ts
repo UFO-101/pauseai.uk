@@ -226,6 +226,43 @@ describeWithDatabase("importMembers", () => {
     expect((await importMembers("nightly")).resubscribed).toBe(0);
   });
 
+  it("opts out a re-join that leaves the box unticked after an earlier opt-out was lifted", async () => {
+    const first = member("back@example.com", "2026-08-01T00:00:00.000Z", { "Email subscription": false });
+    const ticked = member("back@example.com", "2026-09-01T00:00:00.000Z");
+    serve({ recFirst: first });
+    await importMembers("nightly");
+    serve({ recFirst: first, recTicked: ticked });
+    expect((await importMembers("nightly")).resubscribed).toBe(1);
+    serve({
+      recFirst: first,
+      recTicked: ticked,
+      recAgain: member("back@example.com", "2026-10-01T00:00:00.000Z", { "Email subscription": false }),
+    });
+    expect((await importMembers("nightly")).optedOut).toBe(1);
+    expect(await optOuts()).toEqual([
+      {
+        address: "back@example.com",
+        source_ref: "recFirst",
+        unsubscribed_at: new Date("2026-08-01T00:00:00.000Z"),
+        resubscribed_at: new Date("2026-09-01T00:00:00.000Z"),
+      },
+      {
+        address: "back@example.com",
+        source_ref: "recAgain",
+        unsubscribed_at: new Date("2026-10-01T00:00:00.000Z"),
+        resubscribed_at: null,
+      },
+    ]);
+  });
+
+  it("records no opt-out for an unticked record when a later one ticked the box", async () => {
+    serve({
+      recEarly: member("later@example.com", "2026-08-01T00:00:00.000Z", { "Email subscription": false }),
+      recLate: member("later@example.com", "2026-09-01T00:00:00.000Z"),
+    });
+    expect((await importMembers("nightly")).optedOut).toBe(0);
+  });
+
   it("keeps a failed run, rolling back the rest", async () => {
     server.use(http.get(MEMBERS, () => HttpResponse.json({ error: "NOT_AUTHORIZED" }, { status: 403 })));
     await expect(importMembers("nightly")).rejects.toThrow("status 403");

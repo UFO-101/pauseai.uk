@@ -75,15 +75,22 @@ async function markRemoved(ids: string[], db: Queryable): Promise<number> {
 /**
  * An opt-out from the members' updates for each member who left "Keep me
  * informed" unticked when it was a free choice, dated when they joined,
- * unless their address is opted out already. Keyed by the record, so a
- * record's opt-out is recorded once, even after it's lifted.
+ * unless a later record of theirs ticked it freely or their address is
+ * opted out already (opt_outs_open: of two such records, the earlier
+ * wins). Keyed by the record, so a record's opt-out is recorded once, even
+ * after it's lifted.
  */
 async function recordOptOuts(db: Queryable): Promise<number> {
   const rows = await query(
     `INSERT INTO opt_outs (address, list, source, source_ref, unsubscribed_at)
-     SELECT DISTINCT ON (email) email, 'pauseai-updates', 'airtable-import', id, created_at FROM members
-     WHERE removed_at IS NULL AND NOT keep_informed AND created_at >= $1
-     ORDER BY email, created_at
+     SELECT m.email, 'pauseai-updates', 'airtable-import', m.id, m.created_at FROM members m
+     WHERE m.removed_at IS NULL AND NOT m.keep_informed AND m.created_at >= $1
+       AND NOT EXISTS (
+         SELECT 1 FROM members later
+         WHERE later.email = m.email AND later.removed_at IS NULL AND later.keep_informed
+           AND later.created_at > m.created_at
+       )
+     ORDER BY m.email, m.created_at
      ON CONFLICT DO NOTHING RETURNING id`,
     [KEEP_INFORMED_FREE_FROM],
     db,

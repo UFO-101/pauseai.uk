@@ -124,10 +124,12 @@ in doubt.
   events, wrote to their MP or joined PauseAI in the UK: name, contact
   details, which events, which letters, how they joined. So that staff can see who is involved and, later, tell
   people about events near them.
-- **Necessity.** The site already held the letters, and Luma already
-  held the registrations; the change is a copy of Luma's data and a link
-  between the two. Without it, staff export guest lists by hand into
-  spreadsheets, which is less secure and less erasable.
+- **Necessity.** The site already held the letters, Luma the
+  registrations and Stichting PauseAI's member database the members who
+  shared their details with us; the change is a copy of Luma's data and
+  of those members, and a link between them. Without it, staff export
+  guest lists and members by hand into spreadsheets, which is less secure
+  and less erasable.
 - **Risks.** Disclosure of political opinions through a staff account:
   met by the `supporters` permission, login by emailed link to a
   pauseai.uk address, a week's sessions, and the audit log of each
@@ -140,7 +142,8 @@ in doubt.
   Inaccuracy: the data is Luma's and the member database's own, refreshed
   hourly.
 - **Rights.** Access and erasure as above; objection by unsubscribing in
-  Luma, which the webhook records.
+  Luma, which the webhook records, or by leaving "Keep me informed"
+  unticked when joining, which the members import records.
 - **Conclusion.** The processing is necessary and proportionate for a
   political not-for-profit's contact with its supporters, with the
   measures above. Reviewed when a source or a use is added.

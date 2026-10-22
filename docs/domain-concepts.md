@@ -169,8 +169,8 @@ set up are known.
 informed". The members import (`airtable-import`) opts out an address
 whose record left the box unticked when it was a free choice (from 30
 June 2026; before, the form required it or had none,
-`lib/members.ts`), dated when they joined and keyed by the record, and
-lifts that opt-out when the address ticks the box freely on the same
+`lib/members.ts`) and no later record of theirs ticked it, dated when
+they joined and keyed by the record, and lifts that opt-out when the address ticks the box freely on the same
 record or a later one, a re-join. It never lifts another source's.
 Airtable never learns of an unsubscribe after joining: those are in
 CiviCRM, which isn't read yet.
