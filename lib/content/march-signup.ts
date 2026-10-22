@@ -6,7 +6,15 @@ import { site } from "./site";
 /** The sign-up page's address, as people share it. */
 const signupUrl = `${site.url}${march.signupPath}`;
 
-const emailSubject = `The biggest ever AI protest - ${march.city}, ${march.dateLong}`;
+const emailSubject = `The biggest ever AI safety protest - ${march.city}, ${march.dateLong}`;
+
+/** The end of the share message, and the whole of it where posts are short. */
+const shortMessage =
+  `PauseAI UK is organising a march through Central London, expected to be the biggest ever AI safety protest.\n\n` +
+  `Saturday 21 November 2026, 12–3pm\n` +
+  `Start: All Souls’ Place, London W1B 3DA\n` +
+  `End: Downing Street, London SW1A 2AA\n\n` +
+  `Register now: ${signupUrl}`;
 
 /**
  * AI Impacts' survey of 1,580 AI researchers, December 2024 ("Advanced AI
@@ -59,10 +67,14 @@ export const marchSignupCopy = {
       bold: "as many people and groups as you can think of",
       after: ". Our entire future is at stake.",
     },
+    /** The message every share option sends, but X, Bluesky and Threads. */
     message:
-      `[TO DO: share message] \n\n` +
-      `Register here: ${signupUrl} \n\n` +
-      `(Can't go? Help us spread the word instead by forwarding this message - thank you!)`,
+      `📣 March with me against AI extinction!\n\n` +
+      `AI companies are racing to develop superintelligent, fully autonomous agents that can outperform humans at all cognitive tasks. Experts warn that this risks humanity permanently losing control – how can we control something that is smarter than us?\n\n` +
+      `Just a year ago, this was a theoretical concern. As of today, AI agents have broken out of containment and hacked external systems at least a dozen times. We must pause frontier AI development before it's too late.\n\n` +
+      shortMessage,
+    /** The message for X, Bluesky and Threads, inside their 280, 300 and 500-character limits. */
+    shortMessage,
     url: signupUrl,
     emailSubject,
     share: "Share",
