@@ -10,10 +10,6 @@ export type LettersSearch = {
   q: string;
   /** "yes" or "no". */
   answered: string;
-  /** A supporter's ID: their letters alone, from their page. No field shows it. */
-  supporter: string;
-  /** A letter's ID: that letter alone, from where it's named (a politician's page, the blocked addresses). No field shows it. */
-  letter: string;
 };
 
 /** Which letters the letters page lists (recentLetters in lib/server/letters.ts). */
@@ -24,7 +20,9 @@ export type LetterFilter = {
   search?: string;
   /** Whether the MP replied. */
   answered?: boolean;
+  /** One supporter's letters (/staff/letters/supporter/[id]). */
   supporterId?: number;
+  /** One letter (/staff/letters/[id]). */
   letterId?: number;
 };
 
@@ -33,17 +31,13 @@ export function lettersSearch({
   status = "",
   q = "",
   answered = "",
-  supporter = "",
-  letter = "",
 }: Partial<LettersSearch>): LettersSearch & { filter: LetterFilter } {
   const filter: LetterFilter = {
     status: Object.hasOwn(staffCopy.letters.status, status) ? status : undefined,
     search: q.trim() || undefined,
     answered: answered === "yes" ? true : answered === "no" ? false : undefined,
-    supporterId: supporterId(supporter),
-    letterId: politicianId(letter),
   };
-  return { status, q, answered, supporter, letter, filter };
+  return { status, q, answered, filter };
 }
 
 /** A politician's ID from their page's URL: a whole number, or undefined. */
@@ -54,6 +48,11 @@ export function politicianId(id: string): number | undefined {
 /** The blocked addresses page's filter: blocked by a hard bounce, or a complaint. */
 export function emailsSearch({ kind = "" }: { kind?: string }): { kind: string; filter?: "hard" | "complaint" } {
   return { kind, filter: kind === "hard" || kind === "complaint" ? kind : undefined };
+}
+
+/** A letter's ID from its page's URL: a whole number, or undefined. */
+export function letterId(id: string): number | undefined {
+  return politicianId(id);
 }
 
 /** A supporter's ID from their page's URL: a whole number, or undefined. */

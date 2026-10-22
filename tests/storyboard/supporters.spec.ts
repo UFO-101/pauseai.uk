@@ -155,6 +155,14 @@ test("a letter writer is a supporter too, linked from the letters page", async (
   await expect(page.getByText(copy.detail.kinds.letter, { exact: false }).first()).toBeVisible();
   await expect(page.getByText("ZZ9 9ZZ", { exact: false })).toBeVisible();
   await frame(page, "the letter writer's page: the letter, and the postcode they gave");
+
+  // The letter's status leads to their letters, and back.
+  await page.getByRole("link", { name: staffCopy.letters.status.sent }).click();
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(staffCopy.letters.fromTitle("Jane Smith"));
+  await expect(page.getByRole("row").filter({ hasText: sender })).toBeVisible();
+  await frame(page, "their letters");
+  await page.getByRole("navigation", { name: "Jane Smith" }).getByRole("link").click();
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("Jane Smith");
 });
 
 test("a member who also wrote to their MP is one supporter, with how they joined", async ({

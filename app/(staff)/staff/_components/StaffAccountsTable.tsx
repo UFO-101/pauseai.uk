@@ -64,10 +64,7 @@ type AddProblem = "not-pauseai" | "exists";
 function AddRow({ accounts, add }: { accounts: StaffAccount[]; add: Action }) {
   const [problem, setProblem] = useState<AddProblem>();
   const copy = staffCopy.accounts;
-  const address = (form: FormData) =>
-    String(form.get("email") ?? "")
-      .trim()
-      .toLowerCase();
+  const address = (form: FormData) => String(form.get("email")).trim().toLowerCase();
   // Checked before the form is sent, so a refused address stays in the field to be put right.
   const check = (event: FormEvent<HTMLFormElement>) => {
     const email = address(new FormData(event.currentTarget));

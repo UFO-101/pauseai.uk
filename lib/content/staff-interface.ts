@@ -285,8 +285,8 @@ export const staffCopy = {
     // Under the table, a heading, then after each permission's name: what it opens.
     permissionsKey: "Permissions key",
     opens: {
-      supporters: "the supporter pages: who has come to events, follows the calendar or wrote to their MP.",
-      admin: "this page, to add and remove staff and set permissions, and the audit log.",
+      supporters: "View information about supporters, include personal details.",
+      admin: "Set permissions for staff accounts and view the audit log.",
     } as Record<string, string>,
     columns: {
       email: "Email",
@@ -631,11 +631,9 @@ export const staffCopy = {
     search: "Sender, MP or subject",
     // The Answered filter: whether the MP replied.
     answered: { yes: "Answered", no: "Not answered" },
-    // Above the list when it's one supporter's letters, reached from their page.
-    oneSupporter: "Only one supporter's letters.",
-    // Above the list when it's one letter, reached from where it's named.
-    oneLetter: "Only one letter.",
-    everyone: "Show everyone's",
+    // The titles of a letter's own page, and of a supporter's letters' page.
+    oneTitle: (mp: string) => `Letter to ${mp}`,
+    fromTitle: (name: string) => `⁂ Letters from ${name}`,
     none: "No letters.",
     status: {
       sending: "Sending",

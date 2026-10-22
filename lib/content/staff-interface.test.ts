@@ -22,6 +22,11 @@ describe("staff interface copy", () => {
     }
   });
 
+  it("names a letter's page by whom it was to, and a supporter's letters' by who wrote them", () => {
+    expect(staffCopy.letters.oneTitle("Testy MP")).toContain("Testy MP");
+    expect(staffCopy.letters.fromTitle("Jane Smith")).toContain("Jane Smith");
+  });
+
   it("names every house and status", () => {
     expect(Object.keys(staffCopy.houses)).toEqual([
       "commons",

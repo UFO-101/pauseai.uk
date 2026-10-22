@@ -54,8 +54,8 @@ function Sender({ letter }: { letter: LetterSummary }) {
 }
 
 /**
- * The letters as history: each written, with its status linked to it alone
- * on the letters page, and each answered, as its own line.
+ * The letters as history: each written, with its status linked to the
+ * letter's page, and each answered, as its own line.
  */
 function letterEntries(letters: LetterSummary[]): Entry[] {
   return letters.flatMap((letter) => [
@@ -67,9 +67,7 @@ function letterEntries(letters: LetterSummary[]): Entry[] {
           {copy.history.letter} <Sender letter={letter} />
           <Muted>
             {" · "}
-            <Link href={`/staff/letters?letter=${letter.id}`}>
-              {staffCopy.letters.status[letter.status] ?? letter.status}
-            </Link>
+            <Link href={`/staff/letters/${letter.id}`}>{staffCopy.letters.status[letter.status] ?? letter.status}</Link>
           </Muted>
         </>
       ),

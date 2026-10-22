@@ -1234,23 +1234,7 @@ export const staff: Group = {
           label: "One status picked",
           render: () => (
             <StaffPage as="div">
-              <LetterFilters search={{ status: "bounced", q: "", answered: "", supporter: "", letter: "" }} />
-            </StaffPage>
-          ),
-        },
-        {
-          label: "One supporter's letters, reached from their page",
-          render: () => (
-            <StaffPage as="div">
-              <LetterFilters search={{ status: "", q: "", answered: "", supporter: "7", letter: "" }} />
-            </StaffPage>
-          ),
-        },
-        {
-          label: "One letter, reached from where it's named",
-          render: () => (
-            <StaffPage as="div">
-              <LetterFilters search={{ status: "", q: "", answered: "", supporter: "", letter: "17" }} />
+              <LetterFilters search={{ status: "bounced", q: "", answered: "" }} />
             </StaffPage>
           ),
         },

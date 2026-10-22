@@ -78,7 +78,7 @@ function Subject({ item, letters }: { item: SupporterActivity; letters: string }
   }
   if (item.kind === "letter" || item.kind === "letter-replied") {
     // The MP, linked to their page; the campaign, linked to its public page while it's still one; then a letter's
-    // status, linked to the supporter's letters on the letters page.
+    // status, linked to the page of the supporter's letters.
     const campaign = campaignBySlug(item.title ?? "");
     return (
       <>
@@ -181,7 +181,7 @@ export default function SupporterDetails({ supporter }: { supporter: Details }) 
                 <span className={styles.when}>{staffTime(item.at)}</span>
                 <span>
                   {copy.detail.kinds[item.kind]}{" "}
-                  <Subject item={item} letters={`/staff/letters?supporter=${summary.id}`} />
+                  <Subject item={item} letters={`/staff/letters/supporter/${summary.id}`} />
                 </span>
               </li>
             ))}
