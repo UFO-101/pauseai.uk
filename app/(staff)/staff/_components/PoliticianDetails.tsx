@@ -78,11 +78,11 @@ function Detail({ change }: { change: PoliticianChange }) {
   switch (change.action) {
     case "set status": {
       const campaign = campaignBySlug(text("campaign"))?.title ?? text("campaign");
-      const status =
-        details.status === null ? staffCopy.statuses.none : (staffCopy.statuses[text("status")] ?? text("status"));
       return (
         <>
-          {campaign}: {status}
+          {details.status === null
+            ? copy.statusCleared(campaign)
+            : copy.statusSet(staffCopy.statuses[text("status")] ?? text("status"), campaign)}
           {text("date") && `, ${text("date")}`}
           {text("note") && <Muted> · {text("note")}</Muted>}
         </>
@@ -135,7 +135,8 @@ export default function PoliticianDetails({
       at: change.at,
       what: (
         <>
-          {copy.history[change.action] ?? change.action} <Detail change={change} /> <Muted>· {change.actor}</Muted>
+          {change.action !== "set status" && <>{copy.history[change.action] ?? change.action} </>}
+          <Detail change={change} /> <Muted>· {change.actor}</Muted>
         </>
       ),
     })),

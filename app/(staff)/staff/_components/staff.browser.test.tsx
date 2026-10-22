@@ -710,10 +710,10 @@ describe("PoliticianDetails", () => {
       `2026-10-13 08:00${copy.letter} Anon Writer · ${pm.title} · ${staffCopy.letters.status.sent}`,
       `2026-10-12 09:10${copy["block address"]} ${staffCopy.emails.kinds.hard} · postmark`,
       `2026-10-12 09:00${copy.letter} ${exampleLetter.senderName} · ${pm.title} · ${staffCopy.letters.status.bounced}`,
-      `2026-10-02 10:00${copy["set status"]} ${pm.title}: ${staffCopy.statuses.signed}, 2026-10-01 · Told us at the march · jo@pauseai.uk`,
+      `2026-10-02 10:00${staffCopy.politician.statusSet(staffCopy.statuses.signed, pm.title)}, 2026-10-01 · Told us at the march · jo@pauseai.uk`,
       `2026-09-30 10:00${copy["edit politician"]} Polly Placeholder · polly.placeholder.mp@parliament.uk · sam@pauseai.uk`,
-      `2026-09-01 10:00${copy["set status"]} gone: ${staffCopy.statuses.none} · jo@pauseai.uk`,
-      `2026-08-15 10:00${copy["set status"]} ${pm.title}: odd · jo@pauseai.uk`,
+      `2026-09-01 10:00${staffCopy.politician.statusCleared("gone")} · jo@pauseai.uk`,
+      `2026-08-15 10:00${staffCopy.politician.statusSet("odd", pm.title)} · jo@pauseai.uk`,
       `2026-08-10 10:00${copy["block address"]} weird · postmark`,
       "2026-08-01 10:00strange  · x",
     ]);

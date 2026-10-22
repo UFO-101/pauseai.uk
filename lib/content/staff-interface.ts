@@ -303,6 +303,9 @@ export const staffCopy = {
       test: "A test MP",
     },
     // A status: who set it and when; the campaign's title heads the line.
+    // A campaign status set or cleared, in the history: the status, then the campaign.
+    statusSet: (status: string, campaign: string) => `${status} '${campaign}'`,
+    statusCleared: (campaign: string) => `⁂ No longer marked as signed '${campaign}'`,
     setBy: (who: string, when: string) => `set by ${who}, ${when}`,
     historyTitle: "History",
     noHistory: "Nothing yet.",
@@ -313,7 +316,6 @@ export const staffCopy = {
       "add politician": "Added",
       "edit politician": "Details edited",
       "remove politician": "No longer sitting",
-      "set status": "Status set",
       "block address": "Address blocked",
       "unblock address": "Address unblocked",
     } as Record<string, string>,
