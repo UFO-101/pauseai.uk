@@ -39,14 +39,14 @@ const APPS: App[] = [
     brand: "x",
     color: "#0F0F0F",
     // No url parameter: X appends it to the text, which already has the link.
-    href: `https://x.com/intent/post?text=${enc(copy.message)}`,
+    href: `https://x.com/intent/post?text=${enc(copy.shortMessage)}`,
   },
   {
     id: "bluesky",
     label: "Bluesky",
     brand: "bluesky",
     color: "#0285FF",
-    href: `https://bsky.app/intent/compose?text=${enc(copy.message)}`,
+    href: `https://bsky.app/intent/compose?text=${enc(copy.shortMessage)}`,
   },
   {
     id: "facebook",
@@ -60,7 +60,7 @@ const APPS: App[] = [
     label: "Threads",
     brand: "threads",
     color: "#0F0F0F",
-    href: `https://www.threads.com/intent/post?text=${enc(copy.message)}`,
+    href: `https://www.threads.com/intent/post?text=${enc(copy.shortMessage)}`,
   },
   {
     id: "linkedin",
