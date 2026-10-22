@@ -17,7 +17,7 @@ export const staffCopy = {
   },
   // The dev login's box under the login card, in a fixture build only.
   devLogin: {
-    title: "⁂ Development only: sign in now as",
+    title: "Development only: sign in now as",
     hint: "⁂ No email, no link. This box exists only with DATA_FIXTURES=1 and never on the live site.",
     // Beside each address: what it may do.
     permissions: (names: string) => `${names} permissions`,
