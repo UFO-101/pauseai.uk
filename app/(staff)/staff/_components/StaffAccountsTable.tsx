@@ -104,14 +104,17 @@ export default function StaffAccountsTable({
         </tbody>
       </Table>
       <form action={saveAll} aria-label={columns.permissions} className={styles.save}>
-        {accounts.map((account) => (
-          <span key={account.email}>
-            <input type="hidden" name="account" value={account.email} />
-            {shown(account).map((permission) => (
-              <input key={permission} type="hidden" name={`permission:${permission}`} value={account.email} />
-            ))}
-          </span>
-        ))}
+        {accounts.flatMap((account) => [
+          <input key={account.email} type="hidden" name="account" value={account.email} />,
+          ...shown(account).map((permission) => (
+            <input
+              key={`${account.email} ${permission}`}
+              type="hidden"
+              name={`permission:${permission}`}
+              value={account.email}
+            />
+          )),
+        ])}
         <SubmitButton variant="primary" size="small" disabled={!unsaved}>
           {staffCopy.accounts.save}
         </SubmitButton>
