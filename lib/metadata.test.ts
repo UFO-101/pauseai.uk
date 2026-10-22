@@ -46,4 +46,16 @@ describe("pageMetadata", () => {
     });
     expect(meta.description).toBe("Support us.");
   });
+
+  it("takes a page's own preview images", () => {
+    const own = { url: "/images/x/open-graph-1200-630.jpg", width: 1200, height: 630 };
+    const meta = pageMetadata({
+      title: "X",
+      description: "d",
+      path: "/x",
+      images: { openGraph: own, twitter: "/images/x/open-graph-1600-840.jpg" },
+    });
+    expect(meta.openGraph?.images).toEqual([own]);
+    expect(meta.twitter?.images).toEqual(["/images/x/open-graph-1600-840.jpg"]);
+  });
 });

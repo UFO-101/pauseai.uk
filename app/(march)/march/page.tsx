@@ -14,6 +14,11 @@ export const metadata = pageMetadata({
   path: march.signupPath,
   absoluteTitle: true,
   openGraph: { title: `${march.name} — ${march.dateLong}` },
+  // The hero, as a picture: its photo, headline, date and place.
+  images: {
+    openGraph: { url: "/images/march-signup/open-graph-1200-630.jpg", width: 1200, height: 630 },
+    twitter: "/images/march-signup/open-graph-1600-840.jpg",
+  },
 });
 
 export default function MarchSignupPage() {
