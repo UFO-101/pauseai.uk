@@ -226,9 +226,9 @@ export const staffCopy = {
         // Behind "Why?": how we know, and what we can't.
         details: {
           "luma-calendar":
-            "Luma can send emails about future events if the user is following the calendar. They can separately from that unsubscribe, although we only know that since 22 Oct 2026 when we added a webhook.",
+            "Luma emails the calendar's followers about new events. People can unsubscribe from those emails without unfollowing, and we only hear of that since 22 Oct 2026, when we added a webhook, so anyone following from before then is “Don't know”.",
           "pauseai-updates":
-            "“Keep me informed” on the join form has been optional since 30 June 2026. Before then everyone who joined was on the list. Unsubscribes since joining are in CiviCRM, which we don't read yet. CiviCRM has held the members' updates list since 28 June 2026 (the first mailing from it went out in July), so whether we'd email someone is shown as don't know.",
+            "“Keep me informed” on the join form has been optional since 30 June 2026. Before then everyone who joined was on the list. Unsubscribes since joining are in CiviCRM, which we don't read yet, so we usually have to put “Don't know” here.",
           "events-and-ways-to-help":
             "The box on Email your MP, “Tell me about events where I can talk to my MP and ways to help PauseAI”, on their newest letter.",
         } as Record<string, string>,
