@@ -11,12 +11,19 @@ export type MarchRegisterResult =
   /** Not on the guest list: Luma failed, skipped them, or isn't set up. */
   | { ok: false; reason: "luma-failed" };
 
+/**
+ * The Luma event registrants are added to: "Luma API Testing"
+ * (https://luma.com/qry332td), a test event on the PauseAI UK calendar, so the
+ * sign-up can be checked end to end on a deploy preview. Every deploy uses it,
+ * production too, until it's the march's event.
+ */
+const MARCH_EVENT_ID = "evt-hfOj1RR5K1gBNEW";
+
 /** The form's honeypot field: hidden from people, filled in by bots that fill in everything. */
 const HONEYPOT_FIELD = "website";
 
 /**
- * Called by SignupForm. The event is LUMA_MARCH_EVENT_ID's, so a deploy can
- * point at a test event. The logs leave out the email address.
+ * Called by SignupForm. The logs leave out the email address.
  */
 export async function registerForMarch(input: unknown): Promise<MarchRegisterResult> {
   const raw = (input && typeof input === "object" ? input : {}) as Record<string, unknown>;
@@ -31,7 +38,7 @@ export async function registerForMarch(input: unknown): Promise<MarchRegisterRes
   const check = checkMarchRegistration(raw);
   if (!check.ok) return { ...check, reason: "invalid" };
 
-  const result = await addLumaGuest(process.env.LUMA_MARCH_EVENT_ID ?? "", {
+  const result = await addLumaGuest(MARCH_EVENT_ID, {
     name: marchGuestName(check.registration),
     email: check.registration.email,
   });

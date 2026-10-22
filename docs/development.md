@@ -307,33 +307,30 @@ Delete `DATA_FIXTURES` from `.env.local`, and fill in the keys you need. Each is
 `/march` adds each person who registers to a Luma event as a guest, with
 Luma's add-guests call (`addLumaGuest` in
 `lib/server/outside-services/luma-guests.ts`), and Luma emails them its
-confirmation. Two settings, both server-only:
+confirmation. It needs `LUMA_API_KEY`, the key the rest of the site uses,
+from the calendar that owns the event (Luma Plus).
 
-- `LUMA_API_KEY`: the key the rest of the site uses, from the calendar
-  that owns the event (Luma Plus).
-- `LUMA_MARCH_EVENT_ID`: the event to add them to, `evt-…`. Not secret. It's
-  the event's API ID: on Luma, open the event's manage page, and it's in the
-  address (`luma.com/event/manage/evt-…`). Point it at a test event until
-  the sign-up has been checked end to end, then at the march's.
+The event is `MARCH_EVENT_ID` in `app/(march)/march/actions.ts`, its API ID
+(`evt-…`): on Luma, open the event's manage page, and it's in the address
+(`luma.com/event/manage/evt-…`). It's a test event,
+[Luma API Testing](https://luma.com/qry332td), on every deploy, until the
+sign-up has been checked end to end and it's the march's.
 
-Without either, registering fails, as it does when Luma errors, takes
+Without the key, registering fails, as it does when Luma errors, takes
 longer than 5 seconds or skips the guest (someone who unsubscribed from the
 calendar, or was removed or blocked there): the form says it didn't go
 through and links to the march's Luma page instead. The server logs a
 `[march]` line saying why, without the email address.
 
-To try it against a test event:
+To try it against the test event:
 
-1. On the PauseAI UK calendar, make a private event and copy its `evt-…` ID.
-2. In `.env.local`, delete `DATA_FIXTURES`, set `LUMA_API_KEY` and set
-   `LUMA_MARCH_EVENT_ID` to the test event's ID. Restart `npm run dev`.
-3. Register at http://localhost:3000/march with an address you can read.
+1. In `.env.local`, delete `DATA_FIXTURES` and set `LUMA_API_KEY`. Restart
+   `npm run dev`.
+2. Register at http://localhost:3000/march with an address you can read.
    The form should turn into the share card, you should show up as a guest of the test event,
    get Luma's email, and see no `[march]` line in the server's log.
-4. On Netlify, set `LUMA_MARCH_EVENT_ID` for the deploy previews (the
-   environment variable's "Deploy Previews" context) to the test event, and
-   try a preview the same way. Set it for production to the march's event
-   once that works.
+3. Try a deploy preview the same way; its `LUMA_API_KEY` is Netlify's. Once
+   that works, set `MARCH_EVENT_ID` to the march's event.
 
 ## 5. Things that run on a schedule, or from outside
 
@@ -425,7 +422,7 @@ npm run format                  # Prettier, on everything but plans/ (format:che
 
   ```bash
   export NETLIFY_DB_URL=$(node scripts/fresh-database.mjs pauseai_storyboard --test-mp test-mp@example.org)
-  DATA_FIXTURES=1 FIXTURE_NOW=2026-10-16T12:00:00.000Z ANALYTICS=1 LUMA_API_KEY=fixture LUMA_MARCH_EVENT_ID=evt-fixture AIRTABLE_TOKEN=fixture \
+  DATA_FIXTURES=1 FIXTURE_NOW=2026-10-16T12:00:00.000Z ANALYTICS=1 LUMA_API_KEY=fixture AIRTABLE_TOKEN=fixture \
     TURNSTILE_SECRET_KEY=fixture NEXT_PUBLIC_TURNSTILE_SITE_KEY=fixture TEST_MP_EMAIL=test-mp@example.org \
     CRON_SECRET=fixture-cron-secret LUMA_WEBHOOK_SECRET=fixture-luma-webhook-secret \
     POSTMARK_SERVER_TOKEN=fixture POSTMARK_WEBHOOK_USER=postmark POSTMARK_WEBHOOK_PASSWORD=fixture-webhook-password \

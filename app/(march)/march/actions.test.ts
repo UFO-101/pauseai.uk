@@ -8,7 +8,6 @@ const person = { firstName: "Testy", lastName: "McTestface", email: "testy@examp
 
 beforeEach(() => {
   vi.stubEnv("LUMA_API_KEY", "key");
-  vi.stubEnv("LUMA_MARCH_EVENT_ID", "evt-test");
   vi.spyOn(console, "error").mockImplementation(() => {});
   vi.spyOn(console, "warn").mockImplementation(() => {});
 });
@@ -19,7 +18,7 @@ afterEach(() => {
 });
 
 describe("registerForMarch", () => {
-  it("adds the person to the event named by LUMA_MARCH_EVENT_ID", async () => {
+  it("adds the person to the march's event", async () => {
     let body: unknown;
     server.use(
       http.post(ADD, async ({ request }) => {
@@ -28,7 +27,10 @@ describe("registerForMarch", () => {
       }),
     );
     expect(await registerForMarch(person)).toEqual({ ok: true });
-    expect(body).toEqual({ event_id: "evt-test", guests: [{ email: "testy@example.org", name: "Testy McTestface" }] });
+    expect(body).toEqual({
+      event_id: "evt-hfOj1RR5K1gBNEW",
+      guests: [{ email: "testy@example.org", name: "Testy McTestface" }],
+    });
   });
 
   it("says why it won't take a name or email", async () => {
@@ -77,9 +79,9 @@ describe("registerForMarch", () => {
     );
   });
 
-  it("fails, rather than pretending, when there's no event to add them to", async () => {
-    vi.stubEnv("LUMA_MARCH_EVENT_ID", undefined);
+  it("fails, rather than pretending, when there's no Luma key", async () => {
+    vi.stubEnv("LUMA_API_KEY", undefined);
     expect(await registerForMarch(person)).toEqual({ ok: false, reason: "luma-failed" });
-    expect(console.error).toHaveBeenCalledWith("[march] Can't add the guest to Luma: LUMA_MARCH_EVENT_ID not set.");
+    expect(console.error).toHaveBeenCalledWith("[march] Can't add the guest to Luma: LUMA_API_KEY not set.");
   });
 });
