@@ -388,7 +388,8 @@ describe("Sparkline", () => {
     );
     const chart = page.getByRole("img", { name: "Registrations" });
     await expect.element(chart).toBeVisible();
-    const circles = chart.element().querySelectorAll("circle");
+    // The points: the lines after the line of counts, the first being the baseline.
+    const circles = chart.element().querySelectorAll("polyline ~ line");
     expect(circles).toHaveLength(8);
     expect([...circles].filter((circle) => /marked/.test(circle.getAttribute("class") ?? ""))).toHaveLength(1);
     expect(circles[7].getAttribute("class")).toMatch(/marked/);

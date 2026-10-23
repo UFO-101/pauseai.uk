@@ -15,7 +15,7 @@ type Props = {
   to: string;
 };
 
-/** The drawing's size in its own units; the browser scales it to the tile's width. */
+/** The drawing's size in its own units; the browser stretches it to the tile's width and the chart's fixed height. */
 const WIDTH = 100;
 const HEIGHT = 32;
 const PAD = 3;
@@ -39,35 +39,40 @@ export default function Sparkline({ values, labels, name, from, to }: Props) {
   };
   return (
     <span className={styles.chart}>
-      <svg
-        viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
-        role="img"
-        aria-label={name}
-        onPointerMove={point}
-        onPointerDown={point}
-        onPointerLeave={() => setPointed(null)}
-      >
-        <line className={styles.zero} x1={0} x2={WIDTH} y1={y(0)} y2={y(0)} />
-        <polyline fill="none" points={values.map((value, i) => `${x(i)},${y(value)}`).join(" ")} />
-        {values.map((value, i) => (
-          <circle
-            key={i}
-            cx={x(i)}
-            cy={y(value)}
-            r="2.5"
-            className={i === last || i === pointed ? styles.marked : styles.point}
-          />
-        ))}
-      </svg>
-      {pointed !== null && (
-        <span
-          className={styles.label}
-          role="status"
-          style={{ left: `${x(pointed)}%`, top: `${(y(values[pointed]) / HEIGHT) * 100}%` }}
+      <span className={styles.plot}>
+        <svg
+          viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
+          preserveAspectRatio="none"
+          role="img"
+          aria-label={name}
+          onPointerMove={point}
+          onPointerDown={point}
+          onPointerLeave={() => setPointed(null)}
         >
-          {labels[pointed]}
-        </span>
-      )}
+          <line className={styles.zero} x1={0} x2={WIDTH} y1={y(0)} y2={y(0)} />
+          <polyline fill="none" points={values.map((value, i) => `${x(i)},${y(value)}`).join(" ")} />
+          {/* Each point a line of no length with a round cap, which stays a circle however the drawing is stretched. */}
+          {values.map((value, i) => (
+            <line
+              key={i}
+              x1={x(i)}
+              x2={x(i)}
+              y1={y(value)}
+              y2={y(value)}
+              className={i === last || i === pointed ? styles.marked : styles.point}
+            />
+          ))}
+        </svg>
+        {pointed !== null && (
+          <span
+            className={styles.label}
+            role="status"
+            style={{ left: `${x(pointed)}%`, top: `${(y(values[pointed]) / HEIGHT) * 100}%` }}
+          >
+            {labels[pointed]}
+          </span>
+        )}
+      </span>
       <span className={styles.ends} aria-hidden="true">
         <span>{from}</span>
         <span>{to}</span>

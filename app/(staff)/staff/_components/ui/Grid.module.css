@@ -6,10 +6,13 @@
   container-type: inline-size;
 }
 
+/* --grid-gap is the gap, for what inside works out a column's width from its own. */
 .grid {
+  --grid-gap: var(--space-5);
+
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--space-5);
+  gap: var(--grid-gap);
   /* Each item as tall as what's in it, not its row's tallest. */
   align-items: start;
   margin: 0;
@@ -33,7 +36,7 @@
 /* A phone: the gap tighter. */
 @container (max-width: 30rem) {
   .grid {
-    gap: var(--space-3);
+    --grid-gap: var(--space-3);
   }
 }
 
