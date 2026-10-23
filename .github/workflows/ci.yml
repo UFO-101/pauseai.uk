@@ -69,6 +69,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # Azure's Ubuntu mirror sometimes stalls partway through a download, and
+      # apt waits on it for as long as the job may run. Every apt-get below,
+      # Playwright's too, gives up on one that sends nothing for 20 seconds and
+      # tries it again, up to three times.
+      - name: Make apt retry stalled downloads
+        run: echo 'Acquire::Retries "3"; Acquire::http::Timeout "20"; Acquire::https::Timeout "20";' | sudo tee /etc/apt/apt.conf.d/80-retries
+
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
@@ -93,15 +100,19 @@ jobs:
 
       - name: Install Playwright browser
         if: steps.playwright-cache.outputs.cache-hit != 'true'
+        # A stall that gets past apt's own retries fails here, not at the job's limit.
+        timeout-minutes: 5
         run: npx playwright install --with-deps chromium
 
       - name: Install Playwright system dependencies
         if: steps.playwright-cache.outputs.cache-hit == 'true'
+        timeout-minutes: 4
         run: npx playwright install-deps chromium
 
       # pg_dump 18, to match the server, for the test that checks
       # netlify/database/schema.sql is up to date. The runner's own is older.
       - name: Install the Postgres 18 client
+        timeout-minutes: 4
         run: |
           sudo apt-get install -y postgresql-common
           sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
@@ -157,6 +168,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # Azure's Ubuntu mirror sometimes stalls partway through a download, and
+      # apt waits on it for as long as the job may run. Every apt-get below,
+      # Playwright's too, gives up on one that sends nothing for 20 seconds and
+      # tries it again, up to three times.
+      - name: Make apt retry stalled downloads
+        run: echo 'Acquire::Retries "3"; Acquire::http::Timeout "20"; Acquire::https::Timeout "20";' | sudo tee /etc/apt/apt.conf.d/80-retries
+
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
@@ -183,6 +201,8 @@ jobs:
       # downloading the rest costs more than it proves.
       - name: Install Playwright browser
         if: steps.playwright-cache.outputs.cache-hit != 'true'
+        # A stall that gets past apt's own retries fails here, not at the job's limit.
+        timeout-minutes: 5
         run: npx playwright install --with-deps chromium
 
       # The cache holds the browser but not the apt packages it links against,
@@ -190,11 +210,13 @@ jobs:
       # the system libraries installing.
       - name: Install Playwright system dependencies
         if: steps.playwright-cache.outputs.cache-hit == 'true'
+        timeout-minutes: 4
         run: npx playwright install-deps chromium
 
       # pg_dump 18, to match the server: the build below runs the unit tests,
       # including the one that checks netlify/database/schema.sql is up to date.
       - name: Install the Postgres 18 client
+        timeout-minutes: 4
         run: |
           sudo apt-get install -y postgresql-common
           sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
@@ -245,6 +267,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # Azure's Ubuntu mirror sometimes stalls partway through a download, and
+      # apt waits on it for as long as the job may run. Every apt-get below,
+      # Playwright's too, gives up on one that sends nothing for 20 seconds and
+      # tries it again, up to three times.
+      - name: Make apt retry stalled downloads
+        run: echo 'Acquire::Retries "3"; Acquire::http::Timeout "20"; Acquire::https::Timeout "20";' | sudo tee /etc/apt/apt.conf.d/80-retries
+
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
@@ -258,6 +287,7 @@ jobs:
       # The server too, not just the client: each backup is restored into a
       # scratch Postgres of its own, made with initdb and pg_ctl.
       - name: Install Postgres 18
+        timeout-minutes: 4
         run: |
           sudo apt-get install -y postgresql-common
           sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
