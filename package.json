@@ -1,6 +1,9 @@
 {
   "name": "pauseai-uk",
   "private": true,
+  "engines": {
+    "node": "22.x"
+  },
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "vitest run --project node && npm run lint && npm run lint:css && next build",

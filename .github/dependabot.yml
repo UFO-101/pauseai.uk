@@ -30,7 +30,7 @@ updates:
       # the compiler API, which TypeScript 7.0 doesn't have.
       - dependency-name: typescript
         update-types: ["version-update:semver-major"]
-      # The types follow the Node version CI and Netlify run.
+      # The types follow the Node version in .nvmrc.
       - dependency-name: "@types/node"
         update-types: ["version-update:semver-major"]
 
