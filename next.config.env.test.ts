@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { campaigns } from "@/lib/content/email-your-mp";
 
 // next.config.ts reads the environment once, when it's loaded, to decide
 // where CSP reports go. Each test loads a fresh copy under a given environment.
@@ -43,12 +44,16 @@ describe("CSP reporting endpoint", () => {
 });
 
 describe("redirects", () => {
-  it("keeps old story links, the campaigns-v2 links, old staff alert links, the Glasgow group's old path and malformed backlinks working", async () => {
+  it("keeps old story links, the campaigns-v2 links, /campaigns to the first campaign, old staff alert links, the Glasgow group's old path and malformed backlinks working", async () => {
     const config = await loadConfig({});
     const redirects = await config.redirects!();
     expect(redirects).toContainEqual({ source: "/stories", destination: "/people", permanent: true });
     expect(redirects).toContainEqual({ source: "/stories/:slug", destination: "/people/:slug", permanent: true });
-    expect(redirects).toContainEqual({ source: "/campaigns-v2", destination: "/campaigns", permanent: true });
+    expect(redirects).toContainEqual({
+      source: "/campaigns-v2",
+      destination: `/campaigns/${campaigns[0].slug}`,
+      permanent: true,
+    });
     expect(redirects).toContainEqual({
       source: "/campaigns-v2/:path*",
       destination: "/campaigns/:path*",
@@ -62,6 +67,7 @@ describe("redirects", () => {
     expect(redirects).toContainEqual({ source: "/glasgow", destination: "/scotland", permanent: true });
     expect(redirects.filter((r) => !r.permanent)).toEqual([
       { source: "/protests", destination: "/protests/march-against-ai-extinction-nov-26", permanent: false },
+      { source: "/campaigns", destination: `/campaigns/${campaigns[0].slug}`, permanent: false },
     ]);
   });
 });
