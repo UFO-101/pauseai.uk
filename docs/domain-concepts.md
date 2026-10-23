@@ -96,7 +96,11 @@ history, and `supporter_contact_<name>` (`source_id`, `at`, `phone`,
 `postcode`, `latitude`, `longitude`, `city`) for contact details and places.
 `supporter_identity`, `supporter_activity` and `supporter_contact` union
 them by supporter, and `supporters_summary` is one row per supporter for
-the list. Only staff with the `supporters` permission see them
+the list. When a supporter was first seen, the earliest `seen_at` of their
+records (`supporter_first_seen`), is kept on the supporter
+(`supporters.first_seen_at`) by `refreshSupporterFacts()`
+(`lib/server/supporter-facts.ts`), which `linkSupporters()` runs, so the
+staff home counts new supporters by it without working it out each time. Only staff with the `supporters` permission see them
 (`/staff/supporters`), and each viewing of a supporter's page is an audit
 log entry.
 

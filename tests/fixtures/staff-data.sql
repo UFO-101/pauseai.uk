@@ -349,3 +349,6 @@ WITH emails AS (
 )
 INSERT INTO supporter_links (supporter_id, letter_id, matched_by, matched_value, linked_at)
 SELECT k.id, l.id, 'email', k.email, l.created_at FROM keyed k JOIN letters l ON lower(trim(l.sender_email)) = k.email;
+
+-- Each supporter's first seen, as refreshSupporterFacts() (lib/server/supporter-facts.ts) sets it after linking.
+UPDATE supporters s SET first_seen_at = f.first_seen_at FROM supporter_first_seen f WHERE f.supporter_id = s.id;

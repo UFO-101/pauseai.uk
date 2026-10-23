@@ -11,6 +11,7 @@ import type {
 import { SUPPORTERS_PAGE_SIZE } from "@/lib/supporters";
 import { query, transaction, type Queryable } from "./db";
 import { permissionsFor } from "./email-permissions";
+import { refreshSupporterFacts } from "./supporter-facts";
 import { SUPPORTER_SOURCES } from "./supporter-sources";
 
 // Supporters: one per person, tied to each record about them in a source
@@ -35,7 +36,8 @@ const CANDIDATE_COLUMNS = SUPPORTER_SOURCES.map((s) => `c.${s.column}`).join(", 
 /**
  * Links every unlinked source record to a supporter: to the supporter an
  * existing link matched on the same email, or else to a new one, made for
- * each new email. Set-based, in one transaction (`db`'s, or its own).
+ * each new email; then brings what's worked out about each supporter up to
+ * date. Set-based, in one transaction (`db`'s, or its own).
  */
 export async function linkSupporters(db?: Queryable): Promise<LinkResult> {
   if (!db) return transaction(linkSupporters);
@@ -71,6 +73,7 @@ export async function linkSupporters(db?: Queryable): Promise<LinkResult> {
     db,
   );
   await query("DROP TABLE candidates, new_supporters", [], db);
+  await refreshSupporterFacts(db);
   return { supportersAdded: added.length, linked: existing.length + fresh.length };
 }
 

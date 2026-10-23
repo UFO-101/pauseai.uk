@@ -10,6 +10,7 @@ import { send } from "./email";
 import { headerName, lettersDomain } from "./outside-services/postmark";
 import { randomId } from "./random-id";
 import { checkNotSpam } from "./outside-services/turnstile";
+import { refreshSupporterFacts } from "./supporter-facts";
 import { linkSupporters } from "./supporters";
 
 // A letter from the form, sent from the letter's own
@@ -270,7 +271,11 @@ export async function submitLetter(form: LetterForm): Promise<SubmitResult> {
     throw new Error("the email wasn't sent");
   } catch (error) {
     console.error(`Couldn't send letter ${id ?? "(not saved)"}:`, error);
-    if (id !== undefined) await query("DELETE FROM letters WHERE id = $1", [id]);
+    if (id !== undefined) {
+      await query("DELETE FROM letters WHERE id = $1", [id]);
+      // Its sender may have been first seen by it.
+      await refreshSupporterFacts();
+    }
     return fail(500, copy.errors.failed);
   }
 }
