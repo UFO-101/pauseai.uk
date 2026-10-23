@@ -16,7 +16,7 @@ export type StaffPageLink = { id: StaffPageId; href: string; permission?: Permis
 
 export type StaffSection = { id: StaffSectionId; pages: StaffPageLink[] };
 
-export const STAFF_SECTIONS: readonly StaffSection[] = [
+const STAFF_SECTIONS: readonly StaffSection[] = [
   {
     id: "supporters",
     pages: [

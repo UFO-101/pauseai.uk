@@ -224,7 +224,10 @@ test("an admin sees when each account last logged in and was seen, and its sessi
   const row = page.getByRole("row").filter({ hasText: colleague });
   await expect(row).toContainText(staffCopy.accounts.addedByLogin);
   // The seeded admin has never logged in; this admin's own row warns that ending its sessions ends theirs.
-  await expect(page.getByRole("row").filter({ hasText: "admin@pauseai.uk" })).toContainText(staffCopy.accounts.never);
+  const seeded = page
+    .getByRole("row")
+    .filter({ has: page.getByRole("cell", { name: "admin@pauseai.uk", exact: true }) });
+  await expect(seeded).toContainText(staffCopy.accounts.never);
   await expect(page.getByRole("row").filter({ hasText: staffEmail() })).toContainText(staffCopy.accounts.endsYours);
   await frame(page, "the accounts page: added by login, last login and seen, and sessions open");
 
