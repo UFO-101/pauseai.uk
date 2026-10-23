@@ -31,7 +31,7 @@ export default function StaffHome({
       {sessions > 1 && (
         <form action={logOutEverywhere} className={styles.sessions}>
           <Muted>{staffCopy.home.sessions(sessions)}</Muted>{" "}
-          <SubmitButton variant="ghost" size="small">
+          <SubmitButton variant="ghost" size="small" fit>
             {staffCopy.home.logOutEverywhere}
           </SubmitButton>
         </form>

@@ -65,7 +65,7 @@ function EndSessionsForm({ account, yours, end }: { account: StaffAccount; yours
   return (
     <form action={end} aria-label={`${copy.endSessions}: ${account.email}`}>
       <input type="hidden" name="email" value={account.email} />
-      <SubmitButton variant="ghost" size="small">
+      <SubmitButton variant="ghost" size="small" fit>
         {copy.endSessions}
       </SubmitButton>
       {yours && (
@@ -113,7 +113,7 @@ function AddRow({ accounts, add }: { accounts: StaffAccount[]; add: Action }) {
             placeholder={copy.addTitle}
             aria-invalid={problem !== undefined}
           />
-          <Button type="submit" variant="ghost" size="small">
+          <Button type="submit" variant="ghost" size="small" fit>
             {copy.add}
           </Button>
           {problem && (
