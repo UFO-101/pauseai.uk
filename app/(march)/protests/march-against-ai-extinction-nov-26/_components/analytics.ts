@@ -10,8 +10,9 @@ export type MarchEvent =
 /**
  * Sends the event straight to Google Analytics through gtag, not through
  * Google Tag Manager, so it needs no tag in GTM. gtag is there only once
- * components/layout/CookieConsent.tsx has loaded GA: on the live site, for
- * someone who hasn't declined analytics. Without it, nothing is sent.
+ * components/layout/CookieConsent.tsx has loaded GA: in a build with analytics
+ * on (lib/analytics.ts), for someone who hasn't declined them. Without it,
+ * nothing is sent.
  */
 export function track({ event, ...params }: MarchEvent) {
   const w = window as typeof window & { gtag?: (...args: unknown[]) => void };
