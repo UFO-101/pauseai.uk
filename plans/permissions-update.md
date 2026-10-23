@@ -50,12 +50,14 @@ two new pages.
    open to any account. The Data section goes.
 9. **The leak check**, a storyboard flow that fails the gate if supporter
    data reaches an account without `supporters`.
-10. **The accounts table** shows added, last login, last seen and
+10. **A check that the sidebar and the pages agree** on each page's
+    permission, in `tests/checks/staff-auth.test.ts`.
+11. **The accounts table** shows added, last login, last seen and
     sessions open, with log out everywhere on each row (section 3).
-11. **Log out everywhere for yourself**, a quiet line on the staff home.
-12. **A migration** adding `last_login_at` and `last_seen_at` to
+12. **Log out everywhere for yourself**, a quiet line on the staff home.
+13. **A migration** adding `last_login_at` and `last_seen_at` to
     `staff_accounts`.
-13. **`docs/data-protection.md`** (below).
+14. **`docs/data-protection.md`** (below).
 
 Nothing changes for `admin`: it doesn't include `supporters`, and
 imports stay open to any account.
@@ -156,6 +158,14 @@ name or email is in the response, the RSC payload included. Like
 `tests/checks/staff-auth.test.ts` for `requireStaff`, it fails the gate
 on any new page that shows supporter data to the wrong people.
 
+**The sidebar and the pages agree.** `tests/checks/staff-auth.test.ts`
+already fails if a staff page, route handler or Server Action doesn't
+call `requireStaff` first. It also checks, for each page in
+`lib/staff-sections.ts`, that the page's `requireStaff` and its
+`generateMetadata`'s ask for the permission the sidebar gives it, no more
+and no less. So the sidebar never shows a page that turns you away, and a
+page can't quietly need less than the sidebar says.
+
 A supporter's page logs "view supporter". The Letters pages don't, so
 "who has seen my details?" can be answered only for a supporter's page.
 
@@ -215,7 +225,8 @@ copy.
 1. **Supporter data and the leak check:** Letters behind `supporters` and
    the links into it, an MP's letters without senders, the two Blocked
    emails pages, the sidebar's sections (Import into admin, permissions
-   per page), and the leak-check flow.
+   per page) with the check that they agree with the pages, and the
+   leak-check flow.
 2. **Accounts on first login:** made in the callback, Remove ends
    sessions, the no-account page and "login" level go, and the docs.
 3. **The accounts table:** the new columns and their migration, and log
