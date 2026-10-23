@@ -75,15 +75,16 @@ then log in as them.
 - **Letters** moves into the Supporters section. Links into it from pages
   open to any account (an MP's history, Blocked MP emails' history, the
   dashboard's letters tiles) show only with `supporters`.
-- **Blocked emails splits in two**, both using `EmailBlocksTable`,
-  `EmailProblemsTable`, the filter by kind of block and `UnblockForm`.
-  `listBlocks` and `recentProblems` take a scope and filter in the query.
-  Blocked MP emails has politicians' addresses. Blocked supporter emails
-  has every other address, staff ones included. They split by the
-  address, not what was sent, so a bounce whose email isn't known still
-  lands somewhere, and an address no longer a politician's falls on the
-  supporter side. `unblockAddress` checks the same: unblocking anything
-  but a politician's address needs `supporters`.
+- **Blocked emails splits into two pages.** Only the pages split:
+  blocking stays one system, with one table of blocks and one of
+  bounces. Each page is a few lines, using the same components
+  (`EmailBlocksTable`, `EmailProblemsTable`, the filter, `UnblockForm`),
+  and `listBlocks` and `recentProblems` take a scope: a politician's
+  address, or any other (staff ones included). So a bounce whose email
+  isn't known still shows somewhere, and an address no longer a
+  politician's falls on the supporter side. `unblockAddress` checks the
+  same: unblocking anything but a politician's address needs
+  `supporters`.
 - **An MP's page**, without `supporters`, lists letters from a function
   that doesn't select the sender: date, campaign, status and reply, with
   no links. Left out in the query, so senders never reach the browser.
