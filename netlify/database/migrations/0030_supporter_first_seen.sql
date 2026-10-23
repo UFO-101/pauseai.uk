@@ -5,12 +5,11 @@
 
 -- The earliest any of their records saw them: a Luma contact or first
 -- registration, a letter, joining. Every supporter, with null when no record
--- gives a time. A subquery per supporter, so asking for a few reads only
--- their records.
+-- gives a time.
 CREATE VIEW supporter_first_seen AS
-  SELECT s.id AS supporter_id,
-    (SELECT min(i.seen_at) FROM supporter_identity i WHERE i.supporter_id = s.id) AS first_seen_at
-  FROM supporters s;
+  SELECT s.id AS supporter_id, min(i.seen_at) AS first_seen_at
+  FROM supporters s LEFT JOIN supporter_identity i ON i.supporter_id = s.id
+  GROUP BY s.id;
 
 ALTER TABLE supporters ADD COLUMN first_seen_at timestamptz;
 UPDATE supporters s SET first_seen_at = f.first_seen_at FROM supporter_first_seen f WHERE f.supporter_id = s.id;
