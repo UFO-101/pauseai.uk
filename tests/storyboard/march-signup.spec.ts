@@ -13,8 +13,8 @@ const header = (page: Page) => page.getByRole("banner");
 type DataLayerWindow = Window & { dataLayer?: ArrayLike<unknown>[] };
 
 /**
- * The events the page has sent to GA through gtag: the commands CookieConsent's
- * gtag queued on the dataLayer, there to stay, since the fixtures block gtag.js.
+ * The events the page has sent to GA through gtag, read off the dataLayer, where
+ * CookieConsent's gtag pushes every command.
  */
 function marchEvents(page: Page) {
   return page.evaluate(() =>
