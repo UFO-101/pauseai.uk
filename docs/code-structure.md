@@ -145,7 +145,9 @@ the code should go instead. The rules below say which ones are enforced.
   Schema changes are new files in `netlify/database/migrations/`, which
   Netlify applies before each production publish and to each preview's copy
   of the database. They must be backward compatible (expand, then contract)
-  and work with or without a transaction around the file. With each one,
+  and work with or without a transaction around the file. Once pushed, a
+  migration is never edited: a preview's database may have applied it, and
+  Netlify refuses a migration changed since, so a change is a new file. With each one,
   run `npm run db:schema` and commit `netlify/database/schema.sql`, the
   whole schema as the migrations leave it, so the PR shows what changed. A
   test fails while it's out of date. Tables follow the SQL rules below.
