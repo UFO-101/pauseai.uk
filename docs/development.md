@@ -6,8 +6,9 @@ the short version, and `.env.example` lists the environment variables.
 
 ## 1. What you need
 
-- **Node 24**, the version in `.nvmrc`, which Netlify and CI use too.
-  `npm install` refuses any other (`engine-strict` in `.npmrc`).
+- **Node 24**, the version in `.nvmrc`, which Netlify and CI use too, at
+  24.22.1 or later. `npm install` refuses anything else (`engines` in
+  `package.json`, with `engine-strict` in `.npmrc`).
 - **Docker**, to run Postgres 18 from `docker-compose.yml`, matching
   production: Netlify Database runs PostgreSQL 18.6, and CI uses 18 too. Or
   a Postgres 18 installed natively (below).
