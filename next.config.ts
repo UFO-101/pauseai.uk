@@ -153,7 +153,7 @@ const nextConfig: NextConfig = {
       { source: "/campaigns", destination: `/campaigns/${campaigns[0].slug}`, permanent: false },
       // The march's short link, for posters and links given out, keeping its
       // utm_source. Temporary, so it can point to the next march.
-      { source: "/march", destination: march.path, permanent: false },
+      { source: march.shortPath, destination: march.path, permanent: false },
       // Old backlink used a space instead of a hyphen in the filename.
       // Source matches the raw request path, so the space must stay percent-encoded.
       { source: "/pdfs/Donor%20Prospectus.pdf", destination: "/pdfs/Donor-Prospectus.pdf", permanent: true },
