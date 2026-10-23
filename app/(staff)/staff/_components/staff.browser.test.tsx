@@ -21,7 +21,6 @@ import LoginCard from "./LoginCard";
 import LoginForm from "./LoginForm";
 import PoliticianDetails from "./PoliticianDetails";
 import PoliticianFilters from "./PoliticianFilters";
-import PoliticianForm from "./PoliticianForm";
 import PoliticianTable from "./PoliticianTable";
 import { examplePolitician, examplePoliticianHistory } from "./PoliticianTable.examples";
 import ResultBox, { OPEN_UP_TO } from "./ResultBox";
@@ -95,7 +94,7 @@ describe("StaffNav", () => {
     await render(<StaffNav />);
     await expect.element(page.getByText(staffCopy.nav.title)).toBeVisible();
     await expect.element(page.getByRole("navigation")).not.toBeInTheDocument();
-    await expect.element(page.getByRole("button")).not.toBeInTheDocument();
+    await expect.element(page.getByRole("textbox")).not.toBeInTheDocument();
   });
 
   it("groups the pages by permission, marks the current one but keeps it a link, says who's logged in, and logs out with a POST", async () => {
@@ -384,13 +383,18 @@ describe("Sparkline", () => {
   const labels = values.map((value, i) => `Week ${i}: ${value}`);
 
   it("draws the counts as a line with the last point marked, and says a point's count when pointed at", async () => {
-    await render(<Sparkline values={values} labels={labels} name="Registrations" />);
+    await render(
+      <Sparkline values={values} labels={labels} name="Registrations" from="28 Aug 2026" to="23 Oct 2026" />,
+    );
     const chart = page.getByRole("img", { name: "Registrations" });
     await expect.element(chart).toBeVisible();
-    const circles = chart.element().querySelectorAll("circle");
+    // The points: the lines after the line of counts, the first being the baseline.
+    const circles = chart.element().querySelectorAll("polyline ~ line");
     expect(circles).toHaveLength(8);
     expect([...circles].filter((circle) => /marked/.test(circle.getAttribute("class") ?? ""))).toHaveLength(1);
     expect(circles[7].getAttribute("class")).toMatch(/marked/);
+    await expect.element(page.getByText("28 Aug 2026")).toBeVisible();
+    await expect.element(page.getByText("23 Oct 2026")).toBeVisible();
     await expect.element(page.getByRole("status")).not.toBeInTheDocument();
 
     const box = chart.element().getBoundingClientRect();
@@ -410,10 +414,10 @@ describe("Sparkline", () => {
   });
 
   it("draws a flat line for one count, or counts all the same", async () => {
-    const { rerender } = await render(<Sparkline values={[5]} labels={["Only: 5"]} name="One" />);
+    const { rerender } = await render(<Sparkline values={[5]} labels={["Only: 5"]} name="One" from="a" to="b" />);
     const points = () => page.getByRole("img").element().querySelector("polyline")!.getAttribute("points")!;
     expect(points()).not.toMatch(/NaN/);
-    await rerender(<Sparkline values={[2, 2, 2]} labels={["a", "b", "c"]} name="Flat" />);
+    await rerender(<Sparkline values={[2, 2, 2]} labels={["a", "b", "c"]} name="Flat" from="a" to="b" />);
     expect(points()).not.toMatch(/NaN/);
     expect(
       new Set(
@@ -425,7 +429,7 @@ describe("Sparkline", () => {
   });
 
   it("puts zero at the bottom, on the baseline, even when no count is zero, and draws counts of all zero there", async () => {
-    const { rerender } = await render(<Sparkline values={[50, 100]} labels={["a", "b"]} name="High" />);
+    const { rerender } = await render(<Sparkline values={[50, 100]} labels={["a", "b"]} name="High" from="a" to="b" />);
     const chart = () => page.getByRole("img").element();
     const baseline = () => Number(chart().querySelector("line")!.getAttribute("y1"));
     const heights = () =>
@@ -437,7 +441,7 @@ describe("Sparkline", () => {
     // Half the top count is halfway between the top point and the baseline.
     const [half, top] = heights();
     expect(half).toBeCloseTo((top + baseline()) / 2);
-    await rerender(<Sparkline values={[0, 0]} labels={["a", "b"]} name="None" />);
+    await rerender(<Sparkline values={[0, 0]} labels={["a", "b"]} name="None" from="a" to="b" />);
     expect(heights()).toEqual([baseline(), baseline()]);
   });
 });
@@ -827,15 +831,9 @@ describe("PoliticianDetails", () => {
     airtableTable: "https://airtable.com/app/tbl",
   };
 
-  it("heads the page with their name, a card of what's known beside one of campaigns, and edits a signer the team added", async () => {
-    const { fn } = action();
+  it("heads the page with their name, and a card of what's known beside one of campaigns", async () => {
     await render(
-      <PoliticianDetails
-        politician={{ ...MP, airtableId: null, email: null }}
-        action={fn}
-        unblock={vi.fn()}
-        {...none}
-      />,
+      <PoliticianDetails politician={{ ...MP, airtableId: null, email: null }} unblock={vi.fn()} {...none} />,
     );
     await expect.element(page.getByRole("heading", { level: 1, name: MP.name })).toBeVisible();
     const facts = page.getByRole("definition").all();
@@ -847,18 +845,15 @@ describe("PoliticianDetails", () => {
     ]);
     await expect.element(page.getByRole("region", { name: staffCopy.politician.statusesTitle })).toBeVisible();
     await expect.element(page.getByText(staffCopy.politician.noHistory)).toBeVisible();
-    await expect.element(page.getByRole("button", { name: staffCopy.politician.save })).toBeVisible();
+    await expect.element(page.getByRole("textbox")).not.toBeInTheDocument();
   });
 
-  it("sends Airtable's MPs to Airtable, and lets no one edit a test MP; each says where they came from", async () => {
-    const { fn } = action();
+  it("sends Airtable's MPs to Airtable; each says where they came from", async () => {
     for (const [politician, source] of [
       [MP, staffCopy.politician.sources.airtable],
       [{ ...MP, airtableId: null, isTest: true }, staffCopy.politician.sources.test],
     ] as const) {
-      const { unmount } = await render(
-        <PoliticianDetails politician={politician} action={fn} unblock={vi.fn()} {...none} />,
-      );
+      const { unmount } = await render(<PoliticianDetails politician={politician} unblock={vi.fn()} {...none} />);
       // An MP from Airtable: the source links to their own record there. A test MP has none, and no link.
       const record = page.getByRole("link", { name: source, exact: true });
       if (politician.airtableId) {
@@ -871,10 +866,6 @@ describe("PoliticianDetails", () => {
         await expect.element(record).not.toBeInTheDocument();
         await expect.element(page.getByText(source)).toBeVisible();
       }
-      await expect
-        .element(page.getByRole("heading", { name: staffCopy.politician.detailsTitle }))
-        .not.toBeInTheDocument();
-      await expect.element(page.getByRole("button", { name: staffCopy.politician.save })).not.toBeInTheDocument();
       expect(page.getByRole("heading", { level: 1 }).element().textContent).toBe(
         politician.isTest ? `${MP.name}${staffCopy.politicians.testMp}` : MP.name,
       );
@@ -889,9 +880,7 @@ describe("PoliticianDetails", () => {
       [{ ...MP, house: "lords", constituency: null }, role(roles.lords, null, true)],
       [{ ...MP, sitting: false }, role(roles.commons, MP.constituency, false)],
     ] as const) {
-      const { unmount } = await render(
-        <PoliticianDetails politician={politician} action={vi.fn()} unblock={vi.fn()} {...none} />,
-      );
+      const { unmount } = await render(<PoliticianDetails politician={politician} unblock={vi.fn()} {...none} />);
       await expect.element(page.getByText(words, { exact: true })).toBeVisible();
       await unmount();
     }
@@ -912,7 +901,6 @@ describe("PoliticianDetails", () => {
       <PoliticianDetails
         airtableTable="https://airtable.com/app/tbl"
         politician={peer}
-        action={vi.fn()}
         markSigned={vi.fn()}
         unblock={vi.fn()}
         letters={{
@@ -1031,7 +1019,6 @@ describe("PoliticianDetails", () => {
       <PoliticianDetails
         {...none}
         politician={MP}
-        action={vi.fn()}
         unblock={vi.fn()}
         letters={{
           senders: false,
@@ -1076,7 +1063,6 @@ describe("PoliticianDetails", () => {
           },
         }}
         markSigned={fn}
-        action={vi.fn()}
         unblock={vi.fn()}
       />,
     );
@@ -1111,13 +1097,7 @@ describe("PoliticianDetails", () => {
   it("offers to mark them signed where they haven't", async () => {
     const { fn, sent } = action();
     await render(
-      <PoliticianDetails
-        {...none}
-        politician={{ ...MP, statuses: {} }}
-        markSigned={fn}
-        action={vi.fn()}
-        unblock={vi.fn()}
-      />,
+      <PoliticianDetails {...none} politician={{ ...MP, statuses: {} }} markSigned={fn} unblock={vi.fn()} />,
     );
     await page
       .getByRole("group", { name: pm.title })
@@ -1132,7 +1112,6 @@ describe("PoliticianDetails", () => {
     const { rerender } = await render(
       <PoliticianDetails
         politician={{ ...MP, emailBlocked: true }}
-        action={vi.fn()}
         block={{ ...exampleBlock, address: MP.email! }}
         unblock={fn}
         {...none}
@@ -1175,7 +1154,6 @@ describe("PoliticianDetails", () => {
     await rerender(
       <PoliticianDetails
         politician={{ ...MP, airtableId: null, emailBlocked: true }}
-        action={vi.fn()}
         block={{ ...exampleBlock, address: MP.email! }}
         unblock={fn}
         {...none}
@@ -1189,7 +1167,6 @@ describe("PoliticianDetails", () => {
     await rerender(
       <PoliticianDetails
         politician={{ ...MP, emailBlocked: true }}
-        action={vi.fn()}
         block={{ ...exampleBlock, address: MP.email!, canReset: false }}
         unblock={fn}
         {...none}
@@ -1543,27 +1520,6 @@ describe("ResultBox", () => {
   });
 });
 
-describe("PoliticianForm", () => {
-  it("edits a signer, filled in with their details", async () => {
-    const { fn, sent } = action();
-    await render(
-      <PoliticianForm
-        action={fn}
-        politician={{ ...MP, airtableId: null, constituency: null, email: null, house: "senedd" }}
-      />,
-    );
-    await expect
-      .element(page.getByRole("combobox", { name: staffCopy.fields.house, exact: true }))
-      .toHaveValue("senedd");
-    await expect
-      .element(page.getByRole("textbox", { name: staffCopy.fields.name, exact: true }))
-      .toHaveValue("Polly Placeholder");
-    await page.getByRole("button", { name: staffCopy.politician.save }).click();
-    await vi.waitFor(() => expect(sent).toHaveLength(1));
-    expect(sent[0]).toMatchObject({ id: "7", house: "senedd", salutation: "Ms Placeholder", party: "Labour (Co-op)" });
-  });
-});
-
 describe("RunList", () => {
   const mp = exampleSyncedMp;
   const held = exampleHeldSync;
@@ -1619,7 +1575,7 @@ describe("RunList", () => {
     await expect.element(page.getByText(/status 422/)).toBeVisible();
     await expect.element(page.getByText(staffCopy.runs.status.unchanged)).toBeVisible();
     await expect.element(page.getByText(staffCopy.runs.status.held)).toBeVisible();
-    await expect.element(page.getByRole("button")).not.toBeInTheDocument();
+    await expect.element(page.getByRole("textbox")).not.toBeInTheDocument();
   });
 
   it("lists each check's problems, with what Airtable and Parliament say", async () => {
@@ -1754,12 +1710,12 @@ describe("RunList", () => {
     await expect
       .element(first)
       .toHaveTextContent(
-        `${staffCopy.runs.status.ok} ${AT} · ${staffCopy.import.nightly} · ${staffCopy.members.result(exampleMembersResult)}`,
+        `${staffCopy.runs.status.ok} ${AT} · ${staffCopy.import.hourly} · ${staffCopy.members.result(exampleMembersResult)}`,
       );
     await expect
       .element(second)
       .toHaveTextContent(
-        `${staffCopy.runs.status.failed} ${AT} · ${staffCopy.import.nightly} · ${staffCopy.runs.error("Airtable answered 503")}`,
+        `${staffCopy.runs.status.failed} ${AT} · ${staffCopy.import.hourly} · ${staffCopy.runs.error("Airtable answered 503")}`,
       );
   });
 
@@ -1789,14 +1745,14 @@ describe("RunList", () => {
     await expect
       .element(first)
       .toHaveTextContent(
-        `${staffCopy.runs.status.ok} ${AT} · ${staffCopy.import.nightly} · ${staffCopy.luma.result(luma)}`,
+        `${staffCopy.runs.status.ok} ${AT} · ${staffCopy.import.hourly} · ${staffCopy.luma.result(luma)}`,
       );
     expect(first.element().textContent).not.toContain(staffCopy.luma.stoppedBy.time);
     expect(first.element().textContent).not.toContain(staffCopy.runs.status.incomplete);
     await expect
       .element(second)
       .toHaveTextContent(
-        `${staffCopy.runs.status.failed} ${AT} · ${staffCopy.import.nightly} · ${staffCopy.runs.error("Luma answered 500")}`,
+        `${staffCopy.runs.status.failed} ${AT} · ${staffCopy.import.hourly} · ${staffCopy.runs.error("Luma answered 500")}`,
       );
     // Only the newest run is tinted, by how it ended; an older failure is plain.
     expect(first.element().closest("section")!.parentElement!.className).toMatch(/green/);
@@ -1812,7 +1768,7 @@ describe("RunList", () => {
     await expect
       .element(only)
       .toHaveTextContent(
-        `${staffCopy.runs.status.incomplete} ${AT} · ${staffCopy.import.nightly} · ${staffCopy.luma.result(exampleLumaResult)} ${staffCopy.luma.stoppedBy["rate-limit"]}`,
+        `${staffCopy.runs.status.incomplete} ${AT} · ${staffCopy.import.hourly} · ${staffCopy.luma.result(exampleLumaResult)} ${staffCopy.luma.stoppedBy["rate-limit"]}`,
       );
     expect(only.element().closest("section")!.parentElement!.className).toMatch(/amber/);
     expect(getComputedStyle(only.element().closest("section")!).borderLeftWidth).toBe("1px");

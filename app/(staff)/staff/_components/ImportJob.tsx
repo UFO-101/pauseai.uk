@@ -2,7 +2,15 @@ import type { ReactNode } from "react";
 import { site } from "@/lib/content/site";
 import { jobTitles, staffCopy } from "@/lib/content/staff-interface";
 import { CONTROLAI_LETTER_PAGE } from "@/lib/controlai-letter";
-import { type AnyImportRun, IMPORT_JOBS, type ImportJob, importPath, runStatus, runTone } from "@/lib/import-runs";
+import {
+  type AnyImportRun,
+  IMPORT_JOBS,
+  JOB_SCHEDULES,
+  type ImportJob,
+  importPath,
+  runStatus,
+  runTone,
+} from "@/lib/import-runs";
 import { MEMBERS_API } from "@/lib/parliament";
 import { staffTime } from "@/lib/staff-time";
 import Breadcrumb from "./Breadcrumb";
@@ -24,12 +32,12 @@ const JOIN_FORM = "https://pauseai.info/join";
 
 /** Each job's lozenges, all plain, so only how its runs ended is in colour: where it reads from, how often, and what kind of job it is. */
 const TAGS: Record<ImportJob, string[]> = {
-  "import-luma": [words.luma, words.hourly],
-  "sync-mps": [words.airtable, words.nightly],
-  "check-mps": [words.web, words.nightly, words.checkOnly],
-  "import-controlai": [words.web, words.nightly],
-  "import-signatories": [words.airtable, words.oneOff],
-  "import-members": [words.airtable, words.hourly],
+  "import-luma": [words.luma, words[JOB_SCHEDULES["import-luma"]]],
+  "sync-mps": [words.airtable, words[JOB_SCHEDULES["sync-mps"]]],
+  "check-mps": [words.web, words[JOB_SCHEDULES["check-mps"]], words.checkOnly],
+  "import-controlai": [words.web, words[JOB_SCHEDULES["import-controlai"]]],
+  "import-signatories": [words.airtable, words[JOB_SCHEDULES["import-signatories"]]],
+  "import-members": [words.airtable, words[JOB_SCHEDULES["import-members"]]],
 };
 
 /** Each job's description, around a link to where it reads from, and its button and what to say before its first run. */

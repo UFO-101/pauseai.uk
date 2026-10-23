@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { staffCopy } from "@/lib/content/staff-interface";
-import { type AnyImportRun, NIGHTLY, runStatus } from "@/lib/import-runs";
+import { type AnyImportRun, JOB_SCHEDULES, NIGHTLY, runStatus } from "@/lib/import-runs";
 import { staffTime } from "@/lib/staff-time";
 import ResultBox from "./ResultBox";
 import { Muted } from "@/components/ui/Text";
@@ -27,7 +27,10 @@ export default function RunBox({ run, summary, lines, open, actions, children }:
     <>
       <strong>{staffCopy.runs.status[runStatus(run)]}</strong> <Muted>{staffTime(run.at)}</Muted>
       {run.startedBy && (
-        <Muted> · {run.startedBy === NIGHTLY ? staffCopy.import.nightly : staffCopy.runs.by(run.startedBy)}</Muted>
+        <Muted>
+          {" "}
+          · {run.startedBy === NIGHTLY ? staffCopy.import[JOB_SCHEDULES[run.job]] : staffCopy.runs.by(run.startedBy)}
+        </Muted>
       )}
       {run.decidedBy && <Muted> · {staffCopy.runs.decidedBy(run.decidedBy)}</Muted>}
       {failed ? <> · {staffCopy.runs.error(run.error)}</> : <Muted> · {summary}</Muted>}

@@ -5,7 +5,6 @@ import { parseSort, type SortSpec } from "@/lib/staff-sort";
 import { POLITICIAN_COLUMNS, POLITICIAN_SORTS, type PoliticianSort } from "@/lib/politician-sort";
 import { query, transaction, type Queryable } from "./db";
 import { type AuditEntry, logChange } from "./audit";
-import { changedFields } from "@/lib/field-changes";
 
 // Politicians and their status for each campaign. MPs are copied from
 // Airtable nightly (mp-sync.ts); other signers came from the signatory
@@ -170,36 +169,6 @@ export async function listPoliticians(filter: PoliticianFilter = {}, limit = 200
 export async function getPolitician(id: number): Promise<Politician | undefined> {
   const [row] = await query<Row>(`${SELECT_POLITICIANS} WHERE p.id = $1 GROUP BY p.id`, [id]);
   return row && toPolitician(row);
-}
-
-export type PoliticianDetails = {
-  house: House;
-  name: string;
-  salutation: string;
-  constituency: string | null;
-  party: string;
-  email: string | null;
-};
-
-/**
- * Edits a politician added by hand. MPs from Parliament are left to the
- * sync, which would only overwrite the change.
- */
-export async function updatePolitician(id: number, details: PoliticianDetails, staff: string): Promise<boolean> {
-  return transaction(async (db) => {
-    // Returns the row as it was, to log what changed.
-    const [was] = await query<PoliticianDetails>(
-      `UPDATE politicians p SET house = $2, name = $3, salutation = $4, constituency = $5, party = $6, email = $7, updated_at = now()
-       FROM (SELECT id, house, name, salutation, constituency, party, email FROM politicians WHERE id = $1 FOR UPDATE) old
-       WHERE p.id = old.id AND p.airtable_id IS NULL AND NOT p.is_test
-       RETURNING old.house, old.name, old.salutation, old.constituency, old.party, old.email`,
-      [id, details.house, details.name, details.salutation, details.constituency, details.party, details.email],
-      db,
-    );
-    if (!was) return false;
-    await logChange(staff, "edit politician", { id, name: details.name, changed: changedFields(was, details) }, db);
-    return true;
-  });
 }
 
 export type StatusChange = { status: CampaignStatus | null; date: string | null; note: string };

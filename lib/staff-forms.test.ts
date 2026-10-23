@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { eraseFrom, idFrom, permissionsFrom, politicianDetailsFrom, signedFrom, unblockFrom } from "./staff-forms";
+import { eraseFrom, idFrom, permissionsFrom, signedFrom, unblockFrom } from "./staff-forms";
 
 function form(fields: Record<string, string | Blob>) {
   const data = new FormData();
@@ -13,28 +13,6 @@ describe("idFrom", () => {
     expect(idFrom(form({ politicianId: "3" }), "politicianId")).toBe(3);
     for (const id of ["0", "-1", "1.5", "x", ""]) expect(idFrom(form({ id }))).toBeUndefined();
     expect(idFrom(form({ id: new Blob(["1"]) }))).toBeUndefined();
-  });
-});
-
-describe("politicianDetailsFrom", () => {
-  it("reads a signer's details, with blanks as none", () => {
-    expect(
-      politicianDetailsFrom(
-        form({ house: "senedd", name: " Jo ", salutation: "", constituency: "", party: "P", email: "" }),
-      ),
-    ).toEqual({
-      house: "senedd",
-      name: "Jo",
-      salutation: "",
-      constituency: null,
-      party: "P",
-      email: null,
-    });
-  });
-
-  it("needs a known house and a name", () => {
-    expect(politicianDetailsFrom(form({ house: "hogwarts", name: "Jo" }))).toBeUndefined();
-    expect(politicianDetailsFrom(form({ house: "lords", name: " " }))).toBeUndefined();
   });
 });
 

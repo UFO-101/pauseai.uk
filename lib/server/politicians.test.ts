@@ -12,7 +12,6 @@ import {
   setStatus,
   signatories,
   statusesOf,
-  updatePolitician,
 } from "./politicians";
 import { recordProblem } from "./email";
 import { logChange } from "./audit";
@@ -201,26 +200,15 @@ describeWithDatabase("politicians", () => {
     expect((await listPoliticians({ emailBlocked: true })).map((p) => p.id)).toEqual([mp]);
   });
 
-  it("edits other signers, but not MPs from Parliament or the test MP", async () => {
-    const peer = await addPeer();
-    expect(await updatePolitician(peer, { ...PEER, party: "Labour" }, "sam@pauseai.uk")).toBe(true);
-    expect((await getPolitician(peer))!.party).toBe("Labour");
-
-    const mp = await addTestPolitician();
-    const test = await addTestMp();
-    expect(await updatePolitician(mp, PEER, "sam@pauseai.uk")).toBe(false);
-    expect(await updatePolitician(test, PEER, "sam@pauseai.uk")).toBe(false);
-    expect((await getPolitician(mp))!.name).toBe("Polly Placeholder");
+  it("finds no politician by an unknown id", async () => {
     expect(await getPolitician(999)).toBeUndefined();
-
-    const actions = await query<{ action: string }>("SELECT action FROM audit_log ORDER BY id");
-    expect(actions.map((a) => a.action)).toEqual(["edit politician"]);
   });
 
   it("tells one politician's history from the audit log: edits, statuses, and their address blocked or unblocked, newest first", async () => {
     const peer = await addPeer();
     const mp = await addTestPolitician();
-    await updatePolitician(peer, { ...PEER, party: "Labour" }, "sam@pauseai.uk");
+    // As the MP sync logs an edit.
+    await logChange("sam@pauseai.uk", "edit politician", { id: peer, name: "Lord Example" });
     await setStatus(mp, PM, { status: "signed", date: null, note: "" }, "jo@pauseai.uk");
     await setStatus(peer, PM, { status: "signed", date: null, note: "" }, "jo@pauseai.uk");
     await recordProblem({

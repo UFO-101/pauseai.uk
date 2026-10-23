@@ -7,7 +7,6 @@ import { exampleLetter } from "@/app/(staff)/staff/_components/LettersTable.exam
 import {
   HeldSyncExample,
   PoliticianDetailsExample,
-  PoliticianFormExample,
   PoliticianTableEmptyExample,
   PoliticianTableExample,
 } from "./staff.client";
@@ -24,16 +23,6 @@ describe("the staff examples", () => {
     await expect.element(log().nth(0)).toHaveTextContent('decide({"id":"3","decision":"apply"})');
     await page.getByRole("button", { name: staffCopy.syncs.discard }).click();
     await expect.element(log().nth(1)).toHaveTextContent('decide({"id":"3","decision":"discard"})');
-  });
-
-  it("logs the politician form's save", async () => {
-    await render(<PoliticianFormExample />);
-    await page.getByRole("button", { name: staffCopy.politician.save }).click();
-    await expect
-      .element(log().nth(0))
-      .toHaveTextContent(
-        'action({"id":"9","house":"lords","name":"Lord Example","salutation":"Lord Example","constituency":"","party":"Crossbench","email":""})',
-      );
   });
 
   it("logs removing a politician's signature on their page", async () => {

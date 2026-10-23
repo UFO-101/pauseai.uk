@@ -13,7 +13,6 @@ import type { LetterSummary, PoliticianLetters, UnsignedLetter } from "@/lib/ser
 import type { Politician, PoliticianChange } from "@/lib/server/politicians";
 import { staffDate, staffTime } from "@/lib/staff-time";
 import styles from "./Details.module.css";
-import PoliticianForm from "./PoliticianForm";
 import Grid, { Card } from "./ui/Grid";
 import Strip from "./ui/Strip";
 import UnblockForm from "./UnblockForm";
@@ -224,13 +223,11 @@ function CampaignRow({
  * for one staff record (ui/Grid); if their address is blocked, why, and a way to unblock it; one
  * history of the letters written to them, the replies, and everything the
  * audit log says about them, newest first, the letters' senders only when
- * it's given them; and at the foot, the form to
- * edit a signer the policy team added. Airtable's MPs are edited there, their
- * source linking to their record, and the test MPs not at all.
+ * it's given them. Nothing here edits them: an Airtable MP's source links
+ * to their record there.
  */
 export default function PoliticianDetails({
   politician,
-  action,
   markSigned,
   block,
   unblock,
@@ -239,7 +236,6 @@ export default function PoliticianDetails({
   airtableTable,
 }: {
   politician: Politician;
-  action: (form: FormData) => void | Promise<void>;
   /** Marks them as signed, or not, for a campaign staff record: politicianId, campaign, signed. */
   markSigned: (form: FormData) => void | Promise<void>;
   block?: EmailBlock;
@@ -250,7 +246,6 @@ export default function PoliticianDetails({
   /** Airtable's table of MPs, which the server knows; an MP's record there is under it. */
   airtableTable: string;
 }) {
-  const editable = politician.airtableId === null && !politician.isTest;
   const entries: Entry[] = [
     ...letterEntries(letters),
     ...history.map((change) => ({
@@ -356,13 +351,6 @@ export default function PoliticianDetails({
           )}
         </Card>
       </Grid>
-
-      {editable && (
-        <>
-          <h2>{copy.detailsTitle}</h2>
-          <PoliticianForm action={action} politician={politician} />
-        </>
-      )}
     </>
   );
 }

@@ -10,7 +10,6 @@ import { exampleBlock, exampleComplaint } from "@/app/(staff)/staff/_components/
 import { ImportJobPage } from "@/app/(staff)/staff/_components/ImportJob";
 import JobActions from "@/app/(staff)/staff/_components/JobActions";
 import PoliticianDetails from "@/app/(staff)/staff/_components/PoliticianDetails";
-import PoliticianForm from "@/app/(staff)/staff/_components/PoliticianForm";
 import PoliticianTable from "@/app/(staff)/staff/_components/PoliticianTable";
 import { examplePolitician, examplePoliticianHistory } from "@/app/(staff)/staff/_components/PoliticianTable.examples";
 import { exampleLetter } from "@/app/(staff)/staff/_components/LettersTable.examples";
@@ -23,30 +22,6 @@ import { exampleFailedRun, exampleHeldSync, exampleRun } from "@/app/(staff)/sta
 import { Logged } from "../_components/wiring";
 
 const [pm, bill] = campaigns;
-
-/** The form for a peer added by an import: no constituency, no email. */
-export function PoliticianFormExample() {
-  return (
-    <Logged>
-      {(log) => (
-        <PoliticianForm
-          action={log("action")}
-          politician={{
-            ...examplePolitician,
-            id: 9,
-            airtableId: null,
-            house: "lords",
-            name: "Lord Example",
-            salutation: "Lord Example",
-            constituency: null,
-            party: "Crossbench",
-            email: null,
-          }}
-        />
-      )}
-    </Logged>
-  );
-}
 
 /** The table of politicians: one function for both examples. */
 function LoggedPoliticianTable({ politicians }: { politicians: Politician[] }) {
@@ -107,7 +82,6 @@ export function PoliticianDetailsExample({
           politician={
             fromAirtable ? { ...examplePolitician, emailBlocked: blocked } : { ...examplePolitician, airtableId: null }
           }
-          action={log("action")}
           markSigned={log("markSigned")}
           block={blocked ? { ...exampleBlock, address: examplePolitician.email! } : undefined}
           letters={

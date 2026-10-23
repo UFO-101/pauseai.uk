@@ -33,11 +33,17 @@
    the text's colour; hovering one brings its border and number up to the
    accent. */
 .tile {
+  /* A sparkline is as tall as it would be in a tile one column wide, though
+     its tile is two (Sparkline): that tile's inner width, from this one's,
+     the grid's gap and the padding at the sides. */
+  --tile-side: var(--space-5);
+  --sparkline-width: calc((100cqi + 2 * var(--tile-side) - var(--grid-gap)) / 2 - 2 * var(--tile-side));
+
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
   height: 100%;
-  padding: var(--space-4) var(--space-5);
+  padding: var(--space-4) var(--tile-side);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   background: var(--surface);
@@ -151,7 +157,9 @@ a.tile:focus-visible {
 /* A phone: the tiles a little tighter. */
 @media (max-width: 720px) {
   .tile {
-    padding: var(--space-3) var(--space-4);
+    --tile-side: var(--space-4);
+
+    padding-block: var(--space-3);
   }
 
   .number {

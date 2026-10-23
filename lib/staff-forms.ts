@@ -3,8 +3,6 @@
 import { trackedCampaigns } from "@/lib/email-your-mp";
 import { PERMISSIONS, type Permission } from "@/lib/staff-permissions";
 
-const HOUSES = ["commons", "lords", "scottish-parliament", "senedd", "ni-assembly", "other"];
-
 function text(form: FormData, name: string): string {
   const value = form.get(name);
   return typeof value === "string" ? value.trim() : "";
@@ -14,29 +12,6 @@ function text(form: FormData, name: string): string {
 export function idFrom(form: FormData, name = "id"): number | undefined {
   const value = text(form, name);
   return /^\d+$/.test(value) && Number(value) > 0 ? Number(value) : undefined;
-}
-
-export type PoliticianDetailsForm = {
-  house: "commons" | "lords" | "scottish-parliament" | "senedd" | "ni-assembly" | "other";
-  name: string;
-  salutation: string;
-  constituency: string | null;
-  party: string;
-  email: string | null;
-};
-
-export function politicianDetailsFrom(form: FormData): PoliticianDetailsForm | undefined {
-  const house = text(form, "house");
-  const name = text(form, "name");
-  if (!HOUSES.includes(house) || !name) return undefined;
-  return {
-    house: house as PoliticianDetailsForm["house"],
-    name,
-    salutation: text(form, "salutation"),
-    constituency: text(form, "constituency") || null,
-    party: text(form, "party"),
-    email: text(form, "email") || null,
-  };
 }
 
 export type SignedForm = { politicianId: number; campaign: string; signed: boolean };

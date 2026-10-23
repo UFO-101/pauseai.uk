@@ -121,7 +121,7 @@ function Tile({
   const { href, permission, worse } = METRIC_LINKS[metric];
   const count = dashboard.counts[metric];
   const label = copy.metrics[metric](count.current);
-  // A bar only when some campaign counted, and the tile is a third, not a sixth, only to fit one; a line only when some window counted.
+  // A bar only when some campaign counted, a line only when some window counted; the tile is a third, not a sixth, only to fit one.
   const bar = isCampaignMetric(metric) && Object.values(dashboard.byCampaign[metric]).some((n) => n > 0);
   const series = isSeriesMetric(metric) ? dashboard.series[metric] : [];
   const line = series.some((point) => point.count > 0);
@@ -140,6 +140,8 @@ function Tile({
           name={copy.series(label, dashboard.days, SERIES_POINTS)}
           values={series.map((point) => point.count)}
           labels={series.map((point) => copy.seriesPoint(dashboard.days, staffDate(point.from), point.count))}
+          from={staffDate(series[0].from)}
+          to={staffDate(dashboard.asOf)}
         />
       )}
       <Change count={count} worse={worse === true} days={dashboard.days} />
@@ -147,7 +149,7 @@ function Tile({
   );
   const linked = href !== undefined && (!permission || permissions.includes(permission));
   return (
-    <li className={spanClass(bar ? 2 : 1)}>
+    <li className={spanClass(bar || line ? 2 : 1)}>
       {linked ? (
         <Link href={href} className={styles.tile}>
           {inside}
