@@ -107,6 +107,9 @@ test("sharing, then calling it a day, then registering someone new", { tag: "@ph
   await fillIn(page, "testy@example.org");
   await page.getByRole("button", { name: copy.form.submit, exact: true }).click();
   await expect(page.getByRole("heading", { name: copy.share.title })).toBeFocused();
+  // The card glides into place first: pressing Copy mid-glide would scroll the
+  // button into view and stop the page wherever the glide had got to.
+  await scrollSettled(page);
 
   await page.getByRole("button", { name: copy.share.copy }).click();
   await expect(page.getByRole("button", { name: copy.share.copied })).toBeVisible();
