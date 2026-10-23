@@ -165,9 +165,6 @@ INSERT INTO members (id, email, name, phone, city, postcode, joined_at, created_
 -- Erin, erased with her Luma user (the audit log's erasure), is still in
 -- Airtable's table: the import skips her.
 INSERT INTO members_erased (id, erased_at) VALUES ('recMemberErased', now() - interval '15 days');
-INSERT INTO opt_outs (address, list, source, source_ref, unsubscribed_at, resubscribed_at) VALUES
-  ('owen.member@example.com', 'pauseai-updates', 'airtable-import', 'recMemberOwen', now() - interval '9 days 22 hours', NULL),
-  ('rhea.member@example.com', 'pauseai-updates', 'airtable-import', 'recMemberRheaOld', '2026-07-10T00:00:00Z', now() - interval '5 days 4 hours');
 
 -- -------------------------------------------------------------- letters
 
@@ -277,8 +274,8 @@ INSERT INTO import_runs (at, job, started_by, status, error, result, decided_by)
   (now() - interval '1 day' + interval '2 hours', 'import-controlai', 'nightly', 'failed', 'No PDF linked from the letter page', '{}', NULL),
   (now() - interval '30 days', 'import-signatories', 'admin@pauseai.uk', 'ok', NULL, '{"matched": 2, "added": 1, "alreadySet": 0}', NULL),
   (now() - interval '1 day' + interval '47 minutes', 'import-members', 'nightly', 'failed', 'Airtable request failed with status 503: Service Unavailable', '{}', NULL),
-  (now() - interval '3 days 2 hours 13 minutes', 'import-members', 'nightly', 'ok', NULL, '{"members": 7, "added": 1, "changed": 0, "removed": 0, "optedOut": 0, "resubscribed": 0, "supportersAdded": 1, "linked": 1}', NULL),
-  (now() - interval '1 hour' + interval '47 minutes', 'import-members', 'nightly', 'unchanged', NULL, '{"members": 8, "added": 0, "changed": 0, "removed": 0, "optedOut": 0, "resubscribed": 0, "supportersAdded": 0, "linked": 0}', NULL);
+  (now() - interval '3 days 2 hours 13 minutes', 'import-members', 'nightly', 'ok', NULL, '{"members": 7, "added": 1, "changed": 0, "removed": 0, "supportersAdded": 1, "linked": 1}', NULL),
+  (now() - interval '1 hour' + interval '47 minutes', 'import-members', 'nightly', 'unchanged', NULL, '{"members": 8, "added": 0, "changed": 0, "removed": 0, "supportersAdded": 0, "linked": 0}', NULL);
 
 -- ------------------------------------------------------------ audit log
 

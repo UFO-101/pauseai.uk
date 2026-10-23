@@ -102,7 +102,7 @@ describeWithDatabase("linkSupporters", () => {
     expect((await links()).find((r) => r.letter_id === second)).toBeDefined();
   });
 
-  it("gives the views each supporter's name, emails, contact details, activity and opt-outs", async () => {
+  it("gives the views each supporter's name, emails, contact details, activity and opt-outs in their history", async () => {
     const mp = await addTestMp();
     await lumaUser("usr-1", "jane@example.com", "Jane L", "evt-1", {
       contactSince: "2026-08-01T00:00:00Z",
@@ -137,7 +137,6 @@ describeWithDatabase("linkSupporters", () => {
       last_active_at: new Date("2026-10-07T00:00:00Z"),
       events: 1,
       letters: 1,
-      opted_out: ["luma-calendar"],
     });
     const activity = await query<{
       source: string;
@@ -219,12 +218,12 @@ describeWithDatabase("linkSupporters", () => {
     await lumaUser("usr-5", "pat@example.com", "Pat", "evt-9");
     await query("UPDATE luma_guests SET removed_at = now()");
     await linkSupporters();
-    const rows = await query<{ name: string | null; events: number; opted_out: string[] | null }>(
-      "SELECT name, events, opted_out FROM supporters_summary ORDER BY id",
+    const rows = await query<{ name: string | null; events: number }>(
+      "SELECT name, events FROM supporters_summary ORDER BY id",
     );
     expect(rows).toEqual([
-      { name: null, events: 0, opted_out: null },
-      { name: "Pat", events: 0, opted_out: null },
+      { name: null, events: 0 },
+      { name: "Pat", events: 0 },
     ]);
   });
 });
@@ -272,6 +271,16 @@ describeWithDatabase("listSupporters and getSupporter", () => {
       events: 1,
       letters: 0,
       member: false,
+      permissions: [
+        {
+          topic: "luma-calendar",
+          address: "jane@example.com",
+          send: "unsure",
+          reason: "following",
+          at: "2026-01-01T00:00:00+00:00",
+          source: "luma",
+        },
+      ],
     });
     expect(await listSupporters({ sort: "active", dir: "desc", page: 2 })).toEqual({
       supporters: [],
@@ -287,6 +296,12 @@ describeWithDatabase("listSupporters and getSupporter", () => {
     expect(await names({ search: "0900001" })).toEqual(["Jane"]);
     expect(await names({ source: "letter" })).toEqual(["Pat"]);
     expect(await names({ registered: true })).toEqual(["Sam", "Jane", "Old"]);
+    expect(await names({ unsubscribed: true })).toEqual(["Sam"]);
+    // Leaving "Keep me informed" unticked isn't an unsubscribe.
+    await query(
+      `INSERT INTO members (id, email, name, joined_at, created_at, keep_informed, share_permission, source_modified_at)
+       VALUES ('recOld', 'old@example.com', 'Old', '2026-09-01T00:00:00Z', '2026-09-01T00:00:00Z', false, true, '2026-09-01T00:00:00Z')`,
+    );
     expect(await names({ unsubscribed: true })).toEqual(["Sam"]);
     expect(await names({ from: "2026-06-01", to: "2026-06-01" })).toEqual(["Pat"]);
     expect(await names({ from: "2026-06-02" })).toEqual([]);

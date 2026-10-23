@@ -6,6 +6,7 @@ import type {
   SupporterFilter,
   SupporterIdentity,
   SupporterLink,
+  SupporterRow,
   SupporterSummary,
 } from "@/lib/supporters";
 import { SUPPORTERS_PAGE_SIZE } from "@/lib/supporters";
@@ -82,7 +83,7 @@ const SUMMARY_COLUMNS = `s.id::int AS id, s.name, coalesce(s.emails, '{}') AS em
   coalesce(s.sources, '{}') AS sources, s.luma_contact AS "lumaContact", s.first_seen_at AS "firstSeenAt",
   s.last_active_at AS "lastActiveAt", s.events, s.letters, s.member`;
 
-export type SupportersPage = { supporters: SupporterSummary[]; total: number; pages: number };
+export type SupportersPage = { supporters: SupporterRow[]; total: number; pages: number };
 
 /** One page of the list, filtered and sorted. */
 export async function listSupporters(filter: SupporterFilter): Promise<SupportersPage> {
@@ -104,7 +105,10 @@ export async function listSupporters(filter: SupporterFilter): Promise<Supporter
   else if (filter.active) where.push(`s.last_active_at > now() - ${add(`${filter.active} days`)}::interval`);
   if (filter.from) where.push(`s.first_seen_at >= ${add(filter.from)}::date`);
   if (filter.to) where.push(`s.first_seen_at < ${add(filter.to)}::date + 1`);
-  if (filter.unsubscribed) where.push("s.opted_out IS NOT NULL");
+  if (filter.unsubscribed)
+    where.push(
+      "s.id IN (SELECT i.supporter_id FROM supporter_identity i JOIN email_unsubscribes u ON u.address = i.email)",
+    );
   const column = {
     active: "s.last_active_at",
     first: "s.first_seen_at",
@@ -121,10 +125,11 @@ export async function listSupporters(filter: SupporterFilter): Promise<Supporter
     values,
   );
   const total = rows[0]?.total ?? 0;
+  const permissions = await permissionsFor(rows.flatMap((row) => row.emails));
   return {
     supporters: rows.map(({ total, ...row }) => {
       void total;
-      return row;
+      return { ...row, permissions: permissions.filter((p) => row.emails.includes(p.address)) };
     }),
     total,
     pages: Math.max(1, Math.ceil(total / SUPPORTERS_PAGE_SIZE)),

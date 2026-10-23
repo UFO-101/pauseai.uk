@@ -32,6 +32,9 @@ export type SupporterSummary = {
   member: boolean;
 };
 
+/** One row of the list, with whether we'd email each of their addresses about each topic. */
+export type SupporterRow = SupporterSummary & { permissions: EmailPermission[] };
+
 /** What a supporter did, from any source: `kind` says what, `title` and `detail` which and how. */
 export type SupporterActivity = {
   source: string;
@@ -102,6 +105,7 @@ export type SupporterFilter = {
   from?: string;
   /** First sign-up up to this day, yyyy-mm-dd. */
   to?: string;
+  /** Unsubscribed from any topic, through its source's own unsubscribe. */
   unsubscribed?: boolean;
   sort: SupporterSort;
   dir: SortDirection;

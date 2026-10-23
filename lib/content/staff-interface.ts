@@ -145,6 +145,7 @@ export const staffCopy = {
       name: "Name",
       email: "Email",
       badges: "Activities",
+      subscriptions: "Subscriptions",
       firstSeen: "First sign-up",
       lastActive: "Last activity",
       events: "Luma events",
@@ -158,6 +159,18 @@ export const staffCopy = {
       registered: "Luma events",
       letter: "Wrote to MP",
       member: "Member",
+    },
+    // In the list, a lozenge per topic we'd email them about.
+    subscriptions: {
+      topics: {
+        "luma-calendar": "Luma",
+        "pauseai-updates": "Updates",
+        "events-and-ways-to-help": "Events and help",
+      } as Record<string, string>,
+      // A yes that an unsubscribe we can't see may have undone.
+      unsure: (topic: string) => `${topic}, unsure`,
+      // Every address they have is blocked.
+      blocked: "Blocked",
     },
     sources: { luma: "Luma", letter: "Letter", member: "Member" } as Record<string, string>,
     lists: { "luma-calendar": "Luma calendar emails", "pauseai-updates": "PauseAI updates" } as Record<string, string>,
@@ -230,11 +243,6 @@ export const staffCopy = {
         } as Record<string, (when: string) => string>,
         seeBlocked: "See blocked emails",
       },
-      // In the history, why the import opted someone out of the updates or back in.
-      importReasons: {
-        "opted-out": "left “Keep me informed” unticked when joining",
-        resubscribed: "ticked “Keep me informed” on re-joining",
-      } as Record<string, string>,
       activityTitle: "History",
       // Between the MP a letter went to, or who answered it, and its campaign.
       about: "about",
@@ -542,12 +550,10 @@ export const staffCopy = {
       added: number;
       changed: number;
       removed: number;
-      optedOut: number;
-      resubscribed: number;
       supportersAdded: number;
       linked: number;
     }) =>
-      `${r.members} members read: ${r.added} added, ${r.changed} changed, ${r.removed} removed; ${r.optedOut} opted out of updates, ${r.resubscribed} back in; ${r.supportersAdded} new supporters, ${r.linked} linked.`,
+      `${r.members} members read: ${r.added} added, ${r.changed} changed, ${r.removed} removed; ${r.supportersAdded} new supporters, ${r.linked} linked.`,
   },
   syncs: {
     title: "Members of Parliament from Airtable",

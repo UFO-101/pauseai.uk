@@ -55,6 +55,7 @@ import SortHeading from "./SortHeading";
 import StaffAccountsTable from "./StaffAccountsTable";
 import EraseForm from "./EraseForm";
 import ErasedNotice from "./ErasedNotice";
+import SubscriptionBadges from "./SubscriptionBadges";
 import SupporterBadges from "./SupporterBadges";
 import SupporterDetails from "./SupporterDetails";
 import SupporterFilters from "./SupporterFilters";
@@ -64,6 +65,7 @@ import {
   exampleBlockedPermissions,
   exampleMemberDetails,
   exampleSupporter,
+  exampleSupporterRows,
   exampleSupporterDetails,
 } from "./SupportersTable.examples";
 import EmailPermissionTiles from "./EmailPermissionTiles";
@@ -1847,6 +1849,36 @@ describe("SupporterFilters", () => {
   });
 });
 
+describe("SubscriptionBadges", () => {
+  const copy = staffCopy.supporters.subscriptions;
+
+  it("shows each topic we'd email them about, amber when we can't be sure, and nothing for a no", async () => {
+    const { rerender } = await render(<SubscriptionBadges permissions={exampleSupporterRows[0].permissions} />);
+    expect(document.body.textContent!.trim()).toBe(copy.topics["events-and-ways-to-help"]);
+    await rerender(<SubscriptionBadges permissions={exampleSupporterRows[1].permissions} />);
+    await expect.element(page.getByText(copy.unsure(copy.topics["luma-calendar"]))).toBeVisible();
+    await expect.element(page.getByText(copy.unsure(copy.topics["pauseai-updates"]))).toBeVisible();
+    await rerender(<SubscriptionBadges permissions={[]} />);
+    expect(document.body.textContent!.trim()).toBe("");
+  });
+
+  it("takes the best answer across their addresses, leaving out a blocked one, and says blocked when every one is", async () => {
+    const [jane] = exampleSupporterRows[0].permissions;
+    const { rerender } = await render(
+      <SubscriptionBadges
+        permissions={[
+          jane,
+          { ...jane, address: "jane.e@example.org", send: "yes", reason: "following" },
+          ...exampleBlockedPermissions,
+        ]}
+      />,
+    );
+    expect(document.body.textContent!.trim()).toBe(copy.topics["luma-calendar"]);
+    await rerender(<SubscriptionBadges permissions={exampleBlockedPermissions} />);
+    expect(document.body.textContent!.trim()).toBe(copy.blocked);
+  });
+});
+
 describe("SupporterBadges", () => {
   it("shows what the supporter is to us, and nothing for someone who is nothing yet", async () => {
     const { rerender } = await render(<SupporterBadges supporter={exampleSupporter} />);
@@ -1875,7 +1907,7 @@ describe("SupportersTable", () => {
       <SupportersTable
         search={search}
         page={{
-          supporters: [exampleSupporter, { ...exampleSupporter, id: 8, name: null, emails: ["sam@example.com"] }],
+          supporters: exampleSupporterRows,
           total: 120,
           pages: 3,
         }}
@@ -1887,6 +1919,7 @@ describe("SupportersTable", () => {
       .toHaveAttribute("href", "/staff/supporters/7");
     await expect.element(page.getByRole("link", { name: copy.noName })).toHaveAttribute("href", "/staff/supporters/8");
     await expect.element(page.getByText(copy.moreEmails(1))).toBeVisible();
+    await expect.element(page.getByText(copy.subscriptions.blocked)).toBeVisible();
     await expect.element(page.getByRole("cell", { name: "1 Mar 2026" }).first()).toBeVisible();
     await expect
       .element(page.getByRole("link", { name: staffCopy.paging.previous }))
@@ -1901,7 +1934,7 @@ describe("SupportersTable", () => {
     await render(
       <SupportersTable
         search={supportersSearch({ source: "luma", sort: "events", dir: "desc" })}
-        page={{ supporters: [exampleSupporter], total: 1, pages: 1 }}
+        page={{ supporters: [exampleSupporterRows[0]], total: 1, pages: 1 }}
       />,
     );
     const events = page.getByRole("link", { name: copy.columns.events });
@@ -1914,14 +1947,17 @@ describe("SupportersTable", () => {
 
   it("on the first of one page, has no paging, and says when nobody is found", async () => {
     const { rerender } = await render(
-      <SupportersTable search={supportersSearch({})} page={{ supporters: [exampleSupporter], total: 1, pages: 1 }} />,
+      <SupportersTable
+        search={supportersSearch({})}
+        page={{ supporters: [exampleSupporterRows[0]], total: 1, pages: 1 }}
+      />,
     );
     await expect.element(page.getByRole("link", { name: "Jane Example" })).toBeVisible();
     expect(page.getByRole("link", { name: staffCopy.paging.next }).all()).toHaveLength(0);
     await rerender(
       <SupportersTable
         search={supportersSearch({ page: "2" })}
-        page={{ supporters: [exampleSupporter], total: 101, pages: 3 }}
+        page={{ supporters: [exampleSupporterRows[0]], total: 101, pages: 3 }}
       />,
     );
     await expect
@@ -2192,7 +2228,7 @@ describe("SupporterDetails", () => {
 
 describe("SupporterDetails, a member", () => {
   const copy = staffCopy.supporters;
-  const joined = exampleMemberDetails.activity[2];
+  const joined = exampleMemberDetails.activity[0];
 
   it("says their city, whether we'd email them about each topic, and how they joined in the history", async () => {
     await render(<SupporterDetails supporter={exampleMemberDetails} />);
@@ -2208,8 +2244,6 @@ describe("SupporterDetails, a member", () => {
     expect(history.element().textContent).toContain(
       `${copy.detail.kinds["member-joined"]} ${copy.detail.joinedOn("pauseai.uk")}, ${copy.detail.intents.Volunteer}`,
     );
-    expect(history.element().textContent).toContain(copy.detail.importReasons["opted-out"]);
-    expect(history.element().textContent).toContain(copy.detail.importReasons.resubscribed);
   });
 
   it("words a join with less to say", async () => {

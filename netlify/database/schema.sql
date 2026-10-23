@@ -21,6 +21,54 @@ SET xmloption = content;
 SET client_min_messages = warning;
 SET row_security = off;
 
+--
+-- Name: email_permission(text, text); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.email_permission(for_topic text, for_address text) RETURNS TABLE(send text, reason text, at timestamp with time zone, source text)
+    LANGUAGE sql STABLE
+    AS $$
+SELECT r.send, r.reason, r.at, r.source FROM (
+  -- A block overrides everything.
+  SELECT 1, 'no', 'blocked', p.at, p.kind
+  FROM email_blocks b JOIN email_problems p ON p.id = b.problem_id WHERE b.address = for_address
+  UNION ALL
+  -- Then an opt-out in force.
+  SELECT 2, 'no', 'unsubscribed', o.unsubscribed_at, o.source
+  FROM opt_outs o WHERE o.address = for_address AND o.list = for_topic AND o.resubscribed_at IS NULL
+  UNION ALL
+  -- Following the calendar: unsure from before 22 Oct 2026, when Luma's
+  -- webhook started telling us of unsubscribes.
+  SELECT 3, CASE WHEN f.since < '2026-10-22T00:00:00Z' THEN 'unsure' ELSE 'yes' END, 'following', f.since, 'luma'
+  FROM (SELECT min(l.contact_since) AS since FROM luma_people l WHERE l.email = for_address) f
+  WHERE for_topic = 'luma-calendar' AND f.since IS NOT NULL
+  UNION ALL
+  SELECT 4, 'no', 'not-following', NULL, NULL WHERE for_topic = 'luma-calendar'
+  UNION ALL
+  -- The newest member record, one still shared before one removed. Every
+  -- yes is unsure: the updates are sent from CiviCRM, whose unsubscribes
+  -- we don't read.
+  SELECT 3,
+    CASE WHEN m.removed_at IS NOT NULL THEN 'no'
+      WHEN m.created_at < '2026-06-30T00:00:00Z' OR m.keep_informed THEN 'unsure' ELSE 'no' END,
+    CASE WHEN m.removed_at IS NOT NULL THEN 'removed'
+      WHEN m.created_at < '2026-06-30T00:00:00Z' THEN 'joined'
+      WHEN m.keep_informed THEN 'asked' ELSE 'declined' END,
+    m.created_at, 'member'
+  FROM (SELECT * FROM members m WHERE m.email = for_address
+        ORDER BY m.removed_at IS NOT NULL, m.created_at DESC, m.id LIMIT 1) m
+  WHERE for_topic = 'pauseai-updates'
+  UNION ALL
+  -- The consent box on the newest letter.
+  SELECT 3, CASE WHEN l.contact_consent THEN 'yes' ELSE 'no' END,
+    CASE WHEN l.contact_consent THEN 'asked' ELSE 'declined' END, l.created_at, 'letter'
+  FROM (SELECT * FROM letters l WHERE lower(trim(l.sender_email)) = for_address
+        ORDER BY l.created_at DESC, l.id DESC LIMIT 1) l
+  WHERE for_topic = 'events-and-ways-to-help'
+) r (rank, send, reason, at, source)
+ORDER BY r.rank LIMIT 1
+$$;
+
 SET default_tablespace = '';
 
 SET default_table_access_method = heap;
@@ -74,6 +122,111 @@ CREATE TABLE public.email_blocks (
     problem_id bigint NOT NULL,
     CONSTRAINT email_blocks_address_check CHECK ((address = lower(address)))
 );
+
+--
+-- Name: letters; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.letters (
+    id bigint NOT NULL,
+    campaign text NOT NULL,
+    politician_id bigint NOT NULL,
+    sender_name text NOT NULL,
+    sender_email text NOT NULL,
+    sender_address text NOT NULL,
+    sender_postcode text NOT NULL,
+    contact_consent boolean NOT NULL,
+    subject text NOT NULL,
+    reply_hash text NOT NULL,
+    status text NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    sent_at timestamp with time zone,
+    replied_at timestamp with time zone,
+    CONSTRAINT letters_status_check CHECK ((status = ANY (ARRAY['sending'::text, 'sent'::text, 'not_sent'::text, 'bounced'::text, 'spam_complaint'::text])))
+);
+
+--
+-- Name: luma_people; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.luma_people (
+    user_id text NOT NULL,
+    email text NOT NULL,
+    name text DEFAULT ''::text NOT NULL,
+    contact_since timestamp with time zone,
+    changed_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT luma_people_email_check CHECK ((email = lower(email)))
+);
+
+--
+-- Name: members; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.members (
+    id text NOT NULL,
+    email text NOT NULL,
+    name text DEFAULT ''::text NOT NULL,
+    phone text,
+    city text,
+    postcode text,
+    joined_at timestamp with time zone NOT NULL,
+    created_at timestamp with time zone NOT NULL,
+    keep_informed boolean NOT NULL,
+    share_permission boolean NOT NULL,
+    source_page text,
+    intent text,
+    source_modified_at timestamp with time zone NOT NULL,
+    first_seen_at timestamp with time zone DEFAULT now() NOT NULL,
+    changed_at timestamp with time zone DEFAULT now() NOT NULL,
+    removed_at timestamp with time zone,
+    CONSTRAINT members_email_check CHECK ((email = lower(email)))
+);
+
+--
+-- Name: opt_outs; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.opt_outs (
+    id bigint NOT NULL,
+    address text NOT NULL,
+    list text NOT NULL,
+    source text NOT NULL,
+    source_ref text NOT NULL,
+    unsubscribed_at timestamp with time zone NOT NULL,
+    resubscribed_at timestamp with time zone,
+    CONSTRAINT opt_outs_address_check CHECK ((address = lower(address))),
+    CONSTRAINT opt_outs_list_check CHECK ((list = ANY (ARRAY['luma-calendar'::text, 'pauseai-updates'::text]))),
+    CONSTRAINT opt_outs_source_check CHECK ((source = 'luma-webhook'::text))
+);
+
+--
+-- Name: email_permissions; Type: VIEW; Schema: public; Owner: -
+--
+
+CREATE VIEW public.email_permissions AS
+ SELECT t.topic,
+    t.address,
+    d.send,
+    d.reason,
+    d.at,
+    d.source
+   FROM (( SELECT 'luma-calendar'::text AS topic,
+            luma_people.email AS address
+           FROM public.luma_people
+        UNION
+         SELECT 'pauseai-updates'::text,
+            members.email
+           FROM public.members
+        UNION
+         SELECT 'events-and-ways-to-help'::text,
+            lower(TRIM(BOTH FROM letters.sender_email)) AS lower
+           FROM public.letters
+        UNION
+         SELECT opt_outs.list,
+            opt_outs.address
+           FROM public.opt_outs
+          WHERE (opt_outs.resubscribed_at IS NULL)) t
+     CROSS JOIN LATERAL public.email_permission(t.topic, t.address) d(send, reason, at, source));
 
 --
 -- Name: email_problems; Type: TABLE; Schema: public; Owner: -
@@ -137,6 +290,21 @@ ALTER TABLE public.email_sends ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY 
 );
 
 --
+-- Name: email_unsubscribes; Type: VIEW; Schema: public; Owner: -
+--
+
+CREATE VIEW public.email_unsubscribes AS
+ SELECT o.list AS topic,
+    o.address,
+    d.send,
+    d.reason,
+    d.at,
+    d.source
+   FROM (public.opt_outs o
+     CROSS JOIN LATERAL public.email_permission(o.list, o.address) d(send, reason, at, source))
+  WHERE ((o.resubscribed_at IS NULL) AND (d.reason = 'unsubscribed'::text));
+
+--
 -- Name: import_runs; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -191,28 +359,6 @@ ALTER TABLE public.letter_events ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTIT
     NO MINVALUE
     NO MAXVALUE
     CACHE 1
-);
-
---
--- Name: letters; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.letters (
-    id bigint NOT NULL,
-    campaign text NOT NULL,
-    politician_id bigint NOT NULL,
-    sender_name text NOT NULL,
-    sender_email text NOT NULL,
-    sender_address text NOT NULL,
-    sender_postcode text NOT NULL,
-    contact_consent boolean NOT NULL,
-    subject text NOT NULL,
-    reply_hash text NOT NULL,
-    status text NOT NULL,
-    created_at timestamp with time zone DEFAULT now() NOT NULL,
-    sent_at timestamp with time zone,
-    replied_at timestamp with time zone,
-    CONSTRAINT letters_status_check CHECK ((status = ANY (ARRAY['sending'::text, 'sent'::text, 'not_sent'::text, 'bounced'::text, 'spam_complaint'::text])))
 );
 
 --
@@ -289,66 +435,12 @@ CREATE TABLE public.luma_import_state (
 );
 
 --
--- Name: luma_people; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.luma_people (
-    user_id text NOT NULL,
-    email text NOT NULL,
-    name text DEFAULT ''::text NOT NULL,
-    contact_since timestamp with time zone,
-    changed_at timestamp with time zone DEFAULT now() NOT NULL,
-    CONSTRAINT luma_people_email_check CHECK ((email = lower(email)))
-);
-
---
--- Name: members; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.members (
-    id text NOT NULL,
-    email text NOT NULL,
-    name text DEFAULT ''::text NOT NULL,
-    phone text,
-    city text,
-    postcode text,
-    joined_at timestamp with time zone NOT NULL,
-    created_at timestamp with time zone NOT NULL,
-    keep_informed boolean NOT NULL,
-    share_permission boolean NOT NULL,
-    source_page text,
-    intent text,
-    source_modified_at timestamp with time zone NOT NULL,
-    first_seen_at timestamp with time zone DEFAULT now() NOT NULL,
-    changed_at timestamp with time zone DEFAULT now() NOT NULL,
-    removed_at timestamp with time zone,
-    CONSTRAINT members_email_check CHECK ((email = lower(email)))
-);
-
---
 -- Name: members_erased; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.members_erased (
     id text NOT NULL,
     erased_at timestamp with time zone DEFAULT now() NOT NULL
-);
-
---
--- Name: opt_outs; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.opt_outs (
-    id bigint NOT NULL,
-    address text NOT NULL,
-    list text NOT NULL,
-    source text NOT NULL,
-    source_ref text NOT NULL,
-    unsubscribed_at timestamp with time zone NOT NULL,
-    resubscribed_at timestamp with time zone,
-    CONSTRAINT opt_outs_address_check CHECK ((address = lower(address))),
-    CONSTRAINT opt_outs_list_check CHECK ((list = ANY (ARRAY['luma-calendar'::text, 'pauseai-updates'::text]))),
-    CONSTRAINT opt_outs_source_check CHECK ((source = ANY (ARRAY['luma-webhook'::text, 'airtable-import'::text])))
 );
 
 --
@@ -806,12 +898,6 @@ CREATE VIEW public.supporters_summary AS
             (array_agg(supporter_contact.postcode ORDER BY supporter_contact.at DESC, supporter_contact.postcode) FILTER (WHERE (supporter_contact.postcode IS NOT NULL)))[1] AS postcode
            FROM public.supporter_contact
           GROUP BY supporter_contact.supporter_id
-        ), opted AS (
-         SELECT i.supporter_id,
-            array_agg(DISTINCT o.list ORDER BY o.list) AS opted_out
-           FROM (public.supporter_identity i
-             JOIN public.opt_outs o ON (((o.address = i.email) AND (o.resubscribed_at IS NULL))))
-          GROUP BY i.supporter_id
         ), mem AS (
          SELECT DISTINCT k.supporter_id
            FROM (public.supporter_links k
@@ -829,13 +915,11 @@ CREATE VIEW public.supporters_summary AS
     act.last_active_at,
     COALESCE(act.events, 0) AS events,
     COALESCE(act.letters, 0) AS letters,
-    opted.opted_out,
     (mem.supporter_id IS NOT NULL) AS member
-   FROM (((((public.supporters s
+   FROM ((((public.supporters s
      LEFT JOIN ident ON ((ident.supporter_id = s.id)))
      LEFT JOIN act ON ((act.supporter_id = s.id)))
      LEFT JOIN contact ON ((contact.supporter_id = s.id)))
-     LEFT JOIN opted ON ((opted.supporter_id = s.id)))
      LEFT JOIN mem ON ((mem.supporter_id = s.id)));
 
 --
@@ -1119,6 +1203,12 @@ CREATE INDEX import_runs_job_at ON public.import_runs USING btree (job, at DESC,
 --
 
 CREATE INDEX letter_events_letter_id ON public.letter_events USING btree (letter_id, at);
+
+--
+-- Name: letters_sender_address; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX letters_sender_address ON public.letters USING btree (lower(TRIM(BOTH FROM sender_email)));
 
 --
 -- Name: letters_sender_email_campaign; Type: INDEX; Schema: public; Owner: -

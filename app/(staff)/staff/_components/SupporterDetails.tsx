@@ -102,12 +102,9 @@ function Subject({ item, letters }: { item: SupporterActivity; letters: string }
     );
   }
   if (item.kind === "opted-out" || item.kind === "resubscribed") {
-    // The import's own opt-outs say why: what the member did with "Keep me informed".
-    const reason = item.source === "airtable-import" ? copy.detail.importReasons[item.kind] : undefined;
     return (
       <>
         {copy.lists[item.title ?? ""] ?? item.title}
-        {reason && <Muted> · {reason}</Muted>}
         {item.detail && <Muted> · {item.detail}</Muted>}
       </>
     );

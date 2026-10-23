@@ -9,7 +9,7 @@ import { query, type Queryable } from "./db";
 // it to stop email yet.
 
 /** What can record an opt-out. */
-export type OptOutSource = "luma-webhook" | "airtable-import";
+export type OptOutSource = "luma-webhook";
 
 export type OptOut = {
   address: string;

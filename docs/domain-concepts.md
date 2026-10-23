@@ -169,15 +169,11 @@ closes the row. Luma doesn't say whether it was an unsubscribe, a block or
 a spam report, and keeps no history, so only opt-outs after the webhook was
 set up are known.
 
-`pauseai-updates` is the members' updates, the join form's "Keep me
-informed". The members import (`airtable-import`) opts out an address
-whose record left the box unticked when it was a free choice (from 30
-June 2026; before, the form required it or had none,
-`lib/members.ts`) and no later record of theirs ticked it, dated when
-they joined and keyed by the record, and lifts that opt-out when the address ticks the box freely on the same
-record or a later one, a re-join. It never lifts another source's.
-Airtable never learns of an unsubscribe after joining: those are in
-CiviCRM, which isn't read yet.
+An opt-out is only ever a real unsubscribe, told us by the list's own
+sender. `pauseai-updates`, the members' updates, has none yet: they're
+sent from CiviCRM, which isn't read. Leaving "Keep me informed" unticked
+on joining isn't an opt-out; the member record says it, and the email
+permissions read it there.
 
 A new list is a name in the `CHECK`s on `list` and `source`, and whatever
 records it.
@@ -185,25 +181,33 @@ records it.
 ### Whether we'd email someone
 
 One place decides whether we may email an address about each topic, and
-why (`emailPermissions()` in `lib/email-permissions.ts`, with the facts
-gathered by `permissionsFor()` in `lib/server/email-permissions.ts`). The
-topics are the Luma calendar's emails, the PauseAI updates, and news of
-events and ways to help from the consent box on a letter. Each answer is
-yes, no or unsure, with a reason from a short list, when, and which
-source said so:
+why: the `email_permissions` view
+(`netlify/database/migrations/0032_email_permissions.sql`, where each
+reason is explained). Everything that asks reads it: the supporter's page
+and the list's Subscriptions column, through `permissionsFor()` in
+`lib/server/email-permissions.ts`; the list's Unsubscribed filter; and the
+staff home's count of Luma unsubscribes. Nothing else reads `opt_outs`
+to answer it, and `tests/checks/opt-outs.test.ts` fails if code outside
+`lib/server/opt-outs.ts` and erasure does.
+
+The topics are the Luma calendar's emails, the PauseAI updates, and news
+of events and ways to help from the consent box on a letter. Each answer
+is yes, no or unsure, with a reason from a short list, when, and which
+source said so. The first rule that matches wins:
 
 - a blocked address (`email_blocks`, below) is no to everything;
 - then an opt-out in force is no;
 - then each topic's source: following the calendar; the newest member
-  record's "Keep me informed"; the newest letter's consent box.
+  record's "Keep me informed" (a free choice from 30 June 2026; before,
+  everyone who joined was on the list); the newest letter's consent box.
 
 Unsure is a yes that an unsubscribe we can't see may have undone:
 following the calendar since before Luma's webhook told us of
 unsubscribes, and every member on the updates, which CiviCRM sends. A
 topic the address has had nothing to do with (no Luma account, never a
-member, no letter) has no answer. The supporter's page shows a tile per
-answer. Nothing sends email by it yet; when the site mails supporters,
-`send()` asks it for the purpose's topic as it checks `email_blocks`.
+member, no letter) has no row. Nothing sends email by it yet; when the
+site mails supporters, `send()` asks it for the purpose's topic as it
+checks `email_blocks`.
 
 ## Email
 

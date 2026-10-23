@@ -121,9 +121,6 @@ export type MembersImportResult = {
   added: number;
   changed: number;
   removed: number;
-  /** Opt-outs from the members' updates recorded, and lifted, this run. */
-  optedOut: number;
-  resubscribed: number;
   /** Supporters made for people seen for the first time, and source records linked to a supporter. */
   supportersAdded: number;
   linked: number;
