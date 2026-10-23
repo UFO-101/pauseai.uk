@@ -12,7 +12,7 @@ import {
   WEBHOOK_AUTH,
 } from "../steps";
 import { BASE, emailFrame, expect, frame, test } from "./fixtures";
-import { hydrated, wholePage } from "./settle";
+import { wholePage } from "./settle";
 
 // Email your MP, end to end on fixture data. ZZ99ZZ finds the test
 // MP, so the whole flow runs as it would for a real one. Emails go to the
@@ -476,31 +476,6 @@ test("the nav's Campaigns menu links each campaign's page", { tag: "@desktop-onl
   await expect(bill).toBeHidden();
   await frame(page, "the bill's page, from the menu");
 });
-
-test(
-  "the nav's Campaigns link opens the first campaign with no moment of empty page",
-  { tag: "@desktop-only" },
-  async ({ page }) => {
-    // On every animation frame from the first, whether the site's header and footer were there with no page
-    // between them, as a redirect while rendering leaves them for a moment on a client-side navigation.
-    await page.addInitScript(() => {
-      const seen: string[] = [];
-      Object.assign(window, { emptyPage: seen });
-      const look = () => {
-        if (document.querySelector("footer") && !document.querySelector("main")) seen.push(location.pathname);
-        requestAnimationFrame(look);
-      };
-      requestAnimationFrame(look);
-    });
-    await page.goto(`${BASE}/`);
-    await hydrated(page);
-    await page.getByRole("link", { name: "Campaigns", exact: true }).click();
-    await expect(page).toHaveURL(`${BASE}/campaigns/${campaigns[0].slug}`);
-    await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
-    await frame(page, "the first campaign, from the nav's Campaigns link");
-    expect(await page.evaluate(() => (window as unknown as { emptyPage: string[] }).emptyPage)).toEqual([]);
-  },
-);
 
 test("the campaign pages are in search and the sitemap, and the old /campaigns-v2 links redirect", async ({
   page,

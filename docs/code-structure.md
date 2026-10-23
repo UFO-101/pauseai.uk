@@ -76,6 +76,12 @@ the code should go instead. The rules below say which ones are enforced.
   the content in `lib/content/`, which is partly JSX. Tests and the
   component gallery may reach across. An ESLint rule enforces it (`LAYERS`
   in `eslint.config.mjs`).
+- **Redirects are in `next.config.ts`.** A path that only sends people
+  elsewhere is an entry in its `redirects()`, never a page that calls
+  `redirect()`: on a click within the site, a page that redirects while
+  rendering shows the layout's header and footer with nothing between them
+  for a moment. A `page.tsx` may not import `redirect` or
+  `permanentRedirect` (`PAGE_REDIRECT` in `eslint.config.mjs`).
 - **Pages are thin.** A `page.tsx` holds its metadata, its data loading
   (calling `lib/`) and the order of its sections. Content and markup belong
   in components, and helper functions in `lib/`, where they can be tested.
