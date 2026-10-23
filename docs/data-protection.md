@@ -56,7 +56,8 @@ no disclosure outside the body without consent. It needs:
 ## "Keep me informed"
 
 The join form's box, stored as `members.keep_informed`, meant different
-things by when the record was made (`lib/members.ts`):
+things by when the record was made (the `email_permissions` view reads it
+so):
 
 - before February 2026 there was no box, and every sign-up joined the
   mailing list;

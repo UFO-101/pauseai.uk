@@ -152,7 +152,6 @@ describe.skipIf(process.env.NETLIFY === "true")("copying a database", () => {
           "{luma}",
           "{member}",
         ]);
-        expect(runSql(name, "SELECT count(*) FROM supporters_summary WHERE opted_out <> '{}'")).not.toEqual(["0"]);
         // Letters in every state, and every kind of event about them.
         expect(runSql(name, "SELECT DISTINCT status FROM letters ORDER BY 1")).toEqual([
           "bounced",
@@ -189,10 +188,21 @@ describe.skipIf(process.env.NETLIFY === "true")("copying a database", () => {
           "import-signatories",
           "sync-mps",
         ]);
-        // Opt-outs from every list, told by every source.
+        // Opt-outs told by every source, and every answer to whether we'd email someone.
         expect(runSql(name, "SELECT DISTINCT list || ' ' || source FROM opt_outs ORDER BY 1")).toEqual([
           "luma-calendar luma-webhook",
-          "pauseai-updates airtable-import",
+        ]);
+        expect(runSql(name, "SELECT DISTINCT send || ' ' || reason FROM email_permissions ORDER BY 1")).toEqual([
+          "no blocked",
+          "no declined",
+          "no not-following",
+          "no removed",
+          "no unsubscribed",
+          "unsure asked",
+          "unsure following",
+          "unsure joined",
+          "yes asked",
+          "yes following",
         ]);
         expect(runSql(name, "SELECT DISTINCT status FROM import_runs ORDER BY 1")).toEqual([
           "applied",

@@ -261,14 +261,12 @@ test("the members import copies the UK members, skips one erased, and finds noth
   await logIn(page, flowDatabase);
   await page.goto(`${BASE}/staff/import-data/members`);
   await page.getByRole("button", { name: staffCopy.members.importNow }).click();
-  // The fixture's eight members, one of them erased; one left Keep me informed unticked when it was a choice.
+  // The fixture's eight members, one of them erased.
   const first = {
     members: 8,
     added: 7,
     changed: 0,
     removed: 0,
-    optedOut: 1,
-    resubscribed: 0,
     supportersAdded: 7,
     linked: 7,
   };
@@ -278,7 +276,7 @@ test("the members import copies the UK members, skips one erased, and finds noth
 
   await page.getByRole("button", { name: staffCopy.members.importNow }).click();
   await expect(
-    page.getByText(staffCopy.members.result({ ...first, added: 0, optedOut: 0, supportersAdded: 0, linked: 0 })),
+    page.getByText(staffCopy.members.result({ ...first, added: 0, supportersAdded: 0, linked: 0 })),
   ).toBeVisible();
   await expect(page.getByText(staffCopy.runs.status.unchanged)).toBeVisible();
   await page.getByRole("heading", { name: staffCopy.members.title }).scrollIntoViewIfNeeded();

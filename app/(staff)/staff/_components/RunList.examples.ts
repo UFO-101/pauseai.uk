@@ -94,8 +94,6 @@ export const exampleMembersResult: MembersImportResult = {
   added: 3,
   changed: 1,
   removed: 0,
-  optedOut: 1,
-  resubscribed: 0,
   supportersAdded: 2,
   linked: 3,
 };

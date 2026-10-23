@@ -57,9 +57,11 @@ describeWithDatabase("dashboard", () => {
          ('g3', 'e3', 'u3', 'declined', '2026-10-19T00:00:00Z', NULL),
          ('g4', 'e3', 'u3', 'approved', '2026-10-19T00:00:00Z', '2026-10-20T00:00:00Z'),
          ('g5', 'e1', 'u3', 'approved', '2026-10-01T00:00:00Z', NULL);
+       -- Unsubscribed: u1, whose block is its answer instead; u2, back again; u3, who counts.
        INSERT INTO opt_outs (address, list, source, source_ref, unsubscribed_at, resubscribed_at) VALUES
          ('u1@example.com', 'luma-calendar', 'luma-webhook', 'r1', '2026-10-20T00:00:00Z', NULL),
-         ('u2@example.com', 'luma-calendar', 'luma-webhook', 'r2', '2026-10-20T00:00:00Z', '2026-10-21T00:00:00Z');`,
+         ('u2@example.com', 'luma-calendar', 'luma-webhook', 'r2', '2026-10-20T00:00:00Z', '2026-10-21T00:00:00Z'),
+         ('u3@example.com', 'luma-calendar', 'luma-webhook', 'r3', '2026-10-20T00:00:00Z', NULL);`,
     );
     // Blocked: the real MP's address, which needs a person; a politician who has left, and a supporter, which don't.
     await query(

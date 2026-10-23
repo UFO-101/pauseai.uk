@@ -9,6 +9,7 @@ import { parseSort, sortHref } from "@/lib/staff-sort";
 import { SUPPORTER_SORTS, type SupporterSort } from "@/lib/supporters";
 import Paging from "./Paging";
 import SortHeading from "./SortHeading";
+import SubscriptionBadges from "./SubscriptionBadges";
 import SupporterBadges from "./SupporterBadges";
 import styles from "./SupportersTable.module.css";
 
@@ -56,6 +57,7 @@ export default function SupportersTable({ page, search }: { page: SupportersPage
             {heading("name", copy.columns.name)}
             <th>{copy.columns.email}</th>
             <th>{copy.columns.badges}</th>
+            <th>{copy.columns.subscriptions}</th>
             {heading("first", copy.columns.firstSeen)}
             {heading("active", copy.columns.lastActive)}
             {heading("events", copy.columns.events)}
@@ -75,6 +77,11 @@ export default function SupportersTable({ page, search }: { page: SupportersPage
               <td>
                 <div className={styles.badges}>
                   <SupporterBadges supporter={supporter} />
+                </div>
+              </td>
+              <td>
+                <div className={styles.badges}>
+                  <SubscriptionBadges permissions={supporter.permissions} />
                 </div>
               </td>
               <td>{supporter.firstSeenAt && staffDate(supporter.firstSeenAt)}</td>

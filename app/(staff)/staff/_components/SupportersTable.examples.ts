@@ -1,5 +1,5 @@
 import type { EmailPermission } from "@/lib/email-permissions";
-import type { SupporterDetails, SupporterSummary } from "@/lib/supporters";
+import type { SupporterDetails, SupporterRow, SupporterSummary } from "@/lib/supporters";
 
 /** A supporter known from Luma and a letter: two emails, a phone, registered twice, opted out of the calendar's emails. */
 export const exampleSupporter: SupporterSummary = {
@@ -165,24 +165,6 @@ export const exampleMemberDetails: SupporterDetails = {
   ],
   activity: [
     {
-      source: "airtable-import",
-      at: "2026-10-11T08:00:00Z",
-      kind: "resubscribed",
-      title: "pauseai-updates",
-      detail: "rhea@example.com",
-      href: null,
-      status: null,
-    },
-    {
-      source: "airtable-import",
-      at: "2026-07-10T00:00:00Z",
-      kind: "opted-out",
-      title: "pauseai-updates",
-      detail: "rhea@example.com",
-      href: null,
-      status: null,
-    },
-    {
       source: "member",
       at: "2026-07-10T00:00:00Z",
       kind: "member-joined",
@@ -223,3 +205,48 @@ export const exampleBlockedPermissions: EmailPermission[] = (["luma-calendar", "
     source: "complaint",
   }),
 );
+
+/** Rows of the list: Jane, unsubscribed from the calendar's emails but agreed on her letter; Sam, a member following the calendar since before its webhook; Gus, blocked. */
+export const exampleSupporterRows: SupporterRow[] = [
+  { ...exampleSupporter, permissions: exampleSupporterDetails.permissions },
+  {
+    ...exampleSupporter,
+    id: 8,
+    name: null,
+    emails: ["sam@example.com"],
+    phone: null,
+    postcode: null,
+    sources: ["luma", "member"],
+    events: 0,
+    letters: 0,
+    member: true,
+    permissions: [
+      {
+        topic: "luma-calendar",
+        address: "sam@example.com",
+        send: "unsure",
+        reason: "following",
+        at: "2026-09-20T00:00:00Z",
+        source: "luma",
+      },
+      {
+        topic: "pauseai-updates",
+        address: "sam@example.com",
+        send: "unsure",
+        reason: "asked",
+        at: "2026-09-12T00:00:00Z",
+        source: "member",
+      },
+    ],
+  },
+  {
+    ...exampleSupporter,
+    id: 9,
+    name: "Gus Blocked",
+    emails: ["gus@example.com"],
+    sources: ["letter"],
+    lumaContact: false,
+    events: 0,
+    permissions: exampleBlockedPermissions,
+  },
+];

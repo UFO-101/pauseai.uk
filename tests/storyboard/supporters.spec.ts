@@ -199,21 +199,31 @@ test("a member who also wrote to their MP is one supporter, with how they joined
   await frame(page, "Lee's page: joined before the form asked about updates, then wrote to their MP");
 });
 
-test("a member who left Keep me informed unticked is opted out of the updates", async ({
+test("the list says what each supporter gets, and filters to those who unsubscribed", async ({
   page,
   request,
   flowDatabase,
 }) => {
+  await importLuma(request, BASE);
   await importMembers(request, BASE);
   await logInWithSupporters(page, flowDatabase);
   await page.goto(`${BASE}/staff/supporters`);
+  await expect(page.getByRole("columnheader", { name: copy.columns.subscriptions })).toBeVisible();
+  await frame(page, "the list, with what each supporter gets by topic");
+
   await page.getByRole("combobox", { name: copy.filters.lists }).selectOption("1");
   await page.getByRole("button", { name: copy.filters.filter }).click();
-  await expect(page.getByText(copy.count(1, 1, 1))).toBeVisible();
-  const owen = page.getByRole("row").filter({ hasText: "Owen Member" });
-  await frame(page, "the list filtered to those unsubscribed from anything: Owen");
+  await expect(page.getByRole("row").filter({ hasText: "Tom Seed" })).toBeVisible();
+  // Owen left Keep me informed unticked, which isn't an unsubscribe.
+  await expect(page.getByRole("row").filter({ hasText: "Owen Member" })).toHaveCount(0);
+  await frame(page, "filtered to those who unsubscribed: Luma told us of each");
+});
 
-  await owen.getByRole("link", { name: "Owen Member" }).click();
+test("a member who left Keep me informed unticked won't get the updates", async ({ page, request, flowDatabase }) => {
+  await importMembers(request, BASE);
+  await logInWithSupporters(page, flowDatabase);
+  await page.goto(`${BASE}/staff/supporters`);
+  await page.getByRole("link", { name: "Owen Member" }).click();
   await expect(
     page.getByText(copy.detail.permissions.reasons["pauseai-updates"].declined("6 Oct 2026"), { exact: false }),
   ).toBeVisible();
@@ -221,36 +231,26 @@ test("a member who left Keep me informed unticked is opted out of the updates", 
   await expect(
     page.getByText(`${copy.detail.joinedOn("pauseai.uk")}, ${copy.detail.intents["Act now"]}`),
   ).toBeVisible();
-  const history = page.getByRole("list", { name: copy.detail.activityTitle });
-  await expect(history.getByText(copy.detail.importReasons["opted-out"], { exact: false })).toBeVisible();
-  await frame(page, "Owen's page: opted out of the updates on joining, and why");
+  await frame(page, "Owen's page: declined the updates on joining");
 });
 
-test("a member who re-joined and ticked Keep me informed has their opt-out lifted", async ({
+test("a member who re-joined and ticked Keep me informed is on the updates", async ({
   page,
   request,
   flowDatabase,
 }) => {
-  // Rhea left it unticked on an earlier record, which the import opted out.
-  runSql(
-    flowDatabase,
-    `INSERT INTO opt_outs (address, list, source, source_ref, unsubscribed_at)
-     VALUES ('rhea.member@example.com', 'pauseai-updates', 'airtable-import', 'recMemberRheaOld', '2026-07-10T00:00:00Z')`,
-  );
+  // Rhea left it unticked on an earlier record; the newest decides.
   await importMembers(request, BASE);
   await logInWithSupporters(page, flowDatabase);
   await page.goto(`${BASE}/staff/supporters`);
   await page.getByRole("link", { name: "Rhea Member" }).click();
-  // The opt-out lifted: on the updates, as asked when re-joining. The ? by its name says how we know.
+  // On the updates, as asked when re-joining. The ? by its name says how we know.
   await expect(
     page.getByText(copy.detail.permissions.reasons["pauseai-updates"].asked("11 Oct 2026"), { exact: false }),
   ).toBeVisible();
   await page.getByRole("button", { name: copy.detail.permissions.why }).first().click();
   await expect(page.getByText(copy.detail.permissions.details["pauseai-updates"])).toBeVisible();
-  const history = page.getByRole("list", { name: copy.detail.activityTitle });
-  await expect(history.getByText(copy.detail.importReasons.resubscribed, { exact: false })).toBeVisible();
-  await expect(history.getByText(copy.detail.importReasons["opted-out"], { exact: false })).toBeVisible();
-  await frame(page, "Rhea's page: opted out on joining, then asked for the updates on re-joining");
+  await frame(page, "Rhea's page: asked for the updates on re-joining");
 });
 
 test("erasing a supporter: gone from the list and the next import, with the audit entry", async ({

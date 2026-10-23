@@ -49,6 +49,7 @@ import { exampleDashboard, exampleQuietDashboard } from "@/app/(staff)/staff/_co
 import Sparkline from "@/app/(staff)/staff/_components/Sparkline";
 import StaffHome from "@/app/(staff)/staff/_components/StaffHome";
 import SupporterBadges from "@/app/(staff)/staff/_components/SupporterBadges";
+import SubscriptionBadges from "@/app/(staff)/staff/_components/SubscriptionBadges";
 import EmailPermissionTiles from "@/app/(staff)/staff/_components/EmailPermissionTiles";
 import SupporterDetails from "@/app/(staff)/staff/_components/SupporterDetails";
 import SupporterFilters from "@/app/(staff)/staff/_components/SupporterFilters";
@@ -57,6 +58,7 @@ import {
   exampleBlockedPermissions,
   exampleMemberDetails,
   exampleSupporter,
+  exampleSupporterRows,
   exampleSupporterDetails,
 } from "@/app/(staff)/staff/_components/SupportersTable.examples";
 import { supportersSearch } from "@/lib/staff-search";
@@ -395,26 +397,13 @@ export const staff: Group = {
       file: "app/(staff)/staff/_components/SupportersTable.tsx",
       variants: [
         {
-          label: "Two supporters, one page of three",
+          label: "Three supporters, one page of three",
           render: () => (
             <StaffPage as="div">
               <SupportersTable
                 search={supportersSearch({ page: "2" })}
                 page={{
-                  supporters: [
-                    exampleSupporter,
-                    {
-                      ...exampleSupporter,
-                      id: 8,
-                      name: null,
-                      emails: ["sam@example.com"],
-                      phone: null,
-                      postcode: null,
-                      sources: ["letter"],
-                      lumaContact: false,
-                      events: 0,
-                    },
-                  ],
+                  supporters: exampleSupporterRows,
                   total: 120,
                   pages: 3,
                 }}
@@ -449,6 +438,36 @@ export const staff: Group = {
           render: () => (
             <StaffPage as="div">
               <SupporterBadges supporter={exampleMemberDetails.summary} />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "SubscriptionBadges",
+      file: "app/(staff)/staff/_components/SubscriptionBadges.tsx",
+      variants: [
+        {
+          label: "Agreed on their letter, unsubscribed from the calendar's emails",
+          render: () => (
+            <StaffPage as="div">
+              <SubscriptionBadges permissions={exampleSupporterRows[0].permissions} />
+            </StaffPage>
+          ),
+        },
+        {
+          label: "Can't be sure of either",
+          render: () => (
+            <StaffPage as="div">
+              <SubscriptionBadges permissions={exampleSupporterRows[1].permissions} />
+            </StaffPage>
+          ),
+        },
+        {
+          label: "Every address blocked",
+          render: () => (
+            <StaffPage as="div">
+              <SubscriptionBadges permissions={exampleBlockedPermissions} />
             </StaffPage>
           ),
         },

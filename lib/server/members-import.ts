@@ -1,6 +1,5 @@
 import "server-only";
 import type { MembersImportResult } from "@/lib/import-runs";
-import { KEEP_INFORMED_FREE_FROM } from "@/lib/members";
 import { query, transaction, type Queryable } from "./db";
 import { keepingFailure, recordRun } from "./import-runs";
 import { airtableToken, fetchMembers, type MemberToImport } from "./outside-services/airtable";
@@ -14,9 +13,8 @@ import { linkSupporters } from "./supporters";
 // row only when a value differs; a member no longer read is marked
 // removed, and kept, with their links, until they're erased.
 //
-// "Keep me informed" left unticked, when ticking it was a free choice, is
-// an opt-out from the members' updates (opt_outs, "pauseai-updates"). The
-// import never lifts an opt-out another source recorded.
+// Whether a member asked for the updates, "Keep me informed", is read from
+// their record by the email_permissions view.
 
 const JOB = "import-members";
 
@@ -73,55 +71,6 @@ async function markRemoved(ids: string[], db: Queryable): Promise<number> {
   return rows.length;
 }
 
-/**
- * An opt-out from the members' updates for each member who left "Keep me
- * informed" unticked when it was a free choice, dated when they joined,
- * unless a later record of theirs ticked it freely or their address is
- * opted out already (opt_outs_open: of two such records, the earlier
- * wins). Keyed by the record, so a record's opt-out is recorded once, even
- * after it's lifted.
- */
-async function recordOptOuts(db: Queryable): Promise<number> {
-  const rows = await query(
-    `INSERT INTO opt_outs (address, list, source, source_ref, unsubscribed_at)
-     SELECT m.email, 'pauseai-updates', 'airtable-import', m.id, m.created_at FROM members m
-     WHERE m.removed_at IS NULL AND NOT m.keep_informed AND m.created_at >= $1
-       AND NOT EXISTS (
-         SELECT 1 FROM members later
-         WHERE later.email = m.email AND later.removed_at IS NULL AND later.keep_informed
-           AND later.created_at > m.created_at
-       )
-     ORDER BY m.email, m.created_at
-     ON CONFLICT DO NOTHING RETURNING id`,
-    [KEEP_INFORMED_FREE_FROM],
-    db,
-  );
-  return rows.length;
-}
-
-/**
- * Lifts the import's own opt-outs where the same address has since ticked
- * "Keep me informed" freely: on the same record, when it was last changed,
- * or on a record made after the opt-out, a re-join, when that was made.
- */
-async function liftOptOuts(db: Queryable): Promise<number> {
-  const rows = await query(
-    `UPDATE opt_outs o SET resubscribed_at = r.at
-     FROM (
-       SELECT o.id, min(CASE WHEN m.id = o.source_ref THEN m.source_modified_at ELSE m.created_at END) AS at
-       FROM opt_outs o JOIN members m ON m.email = o.address
-       WHERE o.list = 'pauseai-updates' AND o.source = 'airtable-import' AND o.resubscribed_at IS NULL
-         AND m.removed_at IS NULL AND m.keep_informed AND m.created_at >= $1
-         AND (m.id = o.source_ref OR m.created_at > o.unsubscribed_at)
-       GROUP BY o.id
-     ) r
-     WHERE o.id = r.id RETURNING o.id`,
-    [KEEP_INFORMED_FREE_FROM],
-    db,
-  );
-  return rows.length;
-}
-
 /** Runs the import, keeping the run. A failure, of Airtable's or the database's, rolls the run back. */
 export function importMembers(startedBy: string): Promise<MembersImportResult> {
   return keepingFailure(JOB, startedBy, async () => {
@@ -136,13 +85,11 @@ export function importMembers(startedBy: string): Promise<MembersImportResult> {
           members.map((m) => m.id),
           db,
         ),
-        optedOut: await recordOptOuts(db),
-        resubscribed: await liftOptOuts(db),
         ...(await linkSupporters(db)),
       };
       // A record already linked may have changed, so everyone's facts, not only the newly linked.
       await refreshSupporterFacts(db);
-      const anything = added + changed + result.removed + result.optedOut + result.resubscribed + result.linked;
+      const anything = added + changed + result.removed + result.linked;
       await recordRun(JOB, startedBy, anything > 0 ? "ok" : "unchanged", result, db);
       return result;
     });

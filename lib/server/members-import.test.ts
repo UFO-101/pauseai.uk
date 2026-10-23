@@ -37,11 +37,6 @@ function member(email: string, created: string, fields: Record<string, unknown> 
   };
 }
 
-const optOuts = () =>
-  query<{ address: string; source_ref: string; unsubscribed_at: Date; resubscribed_at: Date | null }>(
-    "SELECT address, source_ref, unsubscribed_at, resubscribed_at FROM opt_outs ORDER BY id",
-  );
-
 beforeEach(() => vi.stubEnv("AIRTABLE_TOKEN", "t"));
 afterEach(() => vi.unstubAllEnvs());
 
@@ -66,8 +61,6 @@ describeWithDatabase("importMembers", () => {
       added: 1,
       changed: 0,
       removed: 0,
-      optedOut: 0,
-      resubscribed: 0,
       supportersAdded: 1,
       linked: 1,
     });
@@ -131,136 +124,8 @@ describeWithDatabase("importMembers", () => {
   it("never copies an erased member back", async () => {
     await query("INSERT INTO members_erased (id) VALUES ('recGone')");
     serve({ recGone: member("gone@example.com", "2026-09-01T00:00:00Z", { "Email subscription": false }) });
-    expect(await importMembers("nightly")).toMatchObject({ members: 1, added: 0, optedOut: 0 });
+    expect(await importMembers("nightly")).toMatchObject({ members: 1, added: 0 });
     expect(await query("SELECT id FROM members")).toEqual([]);
-    expect(await optOuts()).toEqual([]);
-  });
-
-  it("opts out a member who left Keep me informed unticked when it was a choice, once", async () => {
-    serve({
-      // Unticked from 30 June 2026: an opt-out, dated when they joined.
-      recFree: member("free@example.com", "2026-07-02T08:00:00.000Z", { "Email subscription": false }),
-      // Ticked, but No in the older field.
-      recOld: member("old@example.com", "2026-07-03T08:00:00.000Z", { "Email subscription (old)": "No" }),
-      // Unticked before then, when the form required it or had no box: nothing.
-      recBefore: member("before@example.com", "2026-06-29T23:00:00.000Z", { "Email subscription": false }),
-      recTicked: member("ticked@example.com", "2026-07-02T08:00:00.000Z"),
-    });
-    expect((await importMembers("nightly")).optedOut).toBe(2);
-    expect(await optOuts()).toEqual([
-      {
-        address: "free@example.com",
-        source_ref: "recFree",
-        unsubscribed_at: new Date("2026-07-02T08:00:00.000Z"),
-        resubscribed_at: null,
-      },
-      {
-        address: "old@example.com",
-        source_ref: "recOld",
-        unsubscribed_at: new Date("2026-07-03T08:00:00.000Z"),
-        resubscribed_at: null,
-      },
-    ]);
-    expect((await importMembers("nightly")).optedOut).toBe(0);
-    const [{ list, source }] = await query<{ list: string; source: string }>(
-      "SELECT list, source FROM opt_outs LIMIT 1",
-    );
-    expect({ list, source }).toEqual({ list: "pauseai-updates", source: "airtable-import" });
-  });
-
-  it("records one opt-out for an address two unticked records share, and none where one is in force", async () => {
-    await query(
-      `INSERT INTO opt_outs (address, list, source, source_ref, unsubscribed_at)
-       VALUES ('held@example.com', 'pauseai-updates', 'airtable-import', 'recEarlier', '2026-07-01T00:00:00Z')`,
-    );
-    serve({
-      recTwin1: member("twin@example.com", "2026-08-02T00:00:00.000Z", { "Email subscription": false }),
-      recTwin2: member("twin@example.com", "2026-08-01T00:00:00.000Z", { "Email subscription": false }),
-      recHeld: member("held@example.com", "2026-08-01T00:00:00.000Z", { "Email subscription": false }),
-    });
-    expect((await importMembers("nightly")).optedOut).toBe(1);
-    expect((await optOuts()).map((o) => o.source_ref)).toEqual(["recEarlier", "recTwin2"]);
-  });
-
-  it("leaves a removed member's opt-out alone, and records none for them", async () => {
-    serve({ recA: member("a@example.com", "2026-08-01T00:00:00.000Z", { "Email subscription": false }) });
-    await importMembers("nightly");
-    serve({});
-    await importMembers("nightly");
-    await query("DELETE FROM opt_outs");
-    expect((await importMembers("nightly")).optedOut).toBe(0);
-  });
-
-  it("lifts its own opt-out when the address ticks the box freely, on a re-join or on the same record", async () => {
-    await query(
-      `INSERT INTO opt_outs (address, list, source, source_ref, unsubscribed_at) VALUES
-         ('rejoin@example.com', 'pauseai-updates', 'airtable-import', 'recOld', '2026-07-10T00:00:00Z'),
-         ('same@example.com', 'pauseai-updates', 'airtable-import', 'recSame', '2026-07-10T00:00:00Z'),
-         ('luma@example.com', 'luma-calendar', 'luma-webhook', 'w1', '2026-07-10T00:00:00Z'),
-         ('earlier@example.com', 'pauseai-updates', 'airtable-import', 'recLater', '2026-09-10T00:00:00Z'),
-         ('required@example.com', 'pauseai-updates', 'airtable-import', 'recX', '2026-07-10T00:00:00Z')`,
-    );
-    serve({
-      // A new record, made after the opt-out: lifted when it was made.
-      recNew: member("rejoin@example.com", "2026-10-11T08:00:00.000Z", { "Last Modified": "2026-10-12T00:00:00.000Z" }),
-      // The opt-out's own record, ticked since: lifted when it changed.
-      recSame: member("same@example.com", "2026-07-10T00:00:00.000Z", { "Last Modified": "2026-10-01T00:00:00.000Z" }),
-      // Another source's opt-out stands.
-      recLuma: member("luma@example.com", "2026-10-11T08:00:00.000Z"),
-      // A ticked record older than the opt-out doesn't lift it.
-      recOlder: member("earlier@example.com", "2026-08-01T00:00:00.000Z", {
-        "Last Modified": "2026-10-01T00:00:00.000Z",
-      }),
-      // Nor does a tick from when the box was required.
-      recRequired: member("required@example.com", "2026-03-01T00:00:00.000Z", {
-        "Last Modified": "2026-10-01T00:00:00.000Z",
-      }),
-    });
-    expect((await importMembers("nightly")).resubscribed).toBe(2);
-    expect(
-      await query("SELECT address, resubscribed_at FROM opt_outs WHERE resubscribed_at IS NOT NULL ORDER BY address"),
-    ).toEqual([
-      { address: "rejoin@example.com", resubscribed_at: new Date("2026-10-11T08:00:00.000Z") },
-      { address: "same@example.com", resubscribed_at: new Date("2026-10-01T00:00:00.000Z") },
-    ]);
-    expect((await importMembers("nightly")).resubscribed).toBe(0);
-  });
-
-  it("opts out a re-join that leaves the box unticked after an earlier opt-out was lifted", async () => {
-    const first = member("back@example.com", "2026-08-01T00:00:00.000Z", { "Email subscription": false });
-    const ticked = member("back@example.com", "2026-09-01T00:00:00.000Z");
-    serve({ recFirst: first });
-    await importMembers("nightly");
-    serve({ recFirst: first, recTicked: ticked });
-    expect((await importMembers("nightly")).resubscribed).toBe(1);
-    serve({
-      recFirst: first,
-      recTicked: ticked,
-      recAgain: member("back@example.com", "2026-10-01T00:00:00.000Z", { "Email subscription": false }),
-    });
-    expect((await importMembers("nightly")).optedOut).toBe(1);
-    expect(await optOuts()).toEqual([
-      {
-        address: "back@example.com",
-        source_ref: "recFirst",
-        unsubscribed_at: new Date("2026-08-01T00:00:00.000Z"),
-        resubscribed_at: new Date("2026-09-01T00:00:00.000Z"),
-      },
-      {
-        address: "back@example.com",
-        source_ref: "recAgain",
-        unsubscribed_at: new Date("2026-10-01T00:00:00.000Z"),
-        resubscribed_at: null,
-      },
-    ]);
-  });
-
-  it("records no opt-out for an unticked record when a later one ticked the box", async () => {
-    serve({
-      recEarly: member("later@example.com", "2026-08-01T00:00:00.000Z", { "Email subscription": false }),
-      recLate: member("later@example.com", "2026-09-01T00:00:00.000Z"),
-    });
-    expect((await importMembers("nightly")).optedOut).toBe(0);
   });
 
   it("keeps a failed run, rolling back the rest", async () => {
