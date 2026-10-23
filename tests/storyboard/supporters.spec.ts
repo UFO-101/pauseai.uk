@@ -206,6 +206,8 @@ test("the list says what each supporter gets, and filters to those who unsubscri
 }) => {
   await importLuma(request, BASE);
   await importMembers(request, BASE);
+  // Jane unsubscribed from the calendar's emails, and Luma told us.
+  await postLumaWebhook(request, BASE, "calendar.person.unsubscribed", "jane.fixture@example.com", "msg_1");
   await logInWithSupporters(page, flowDatabase);
   await page.goto(`${BASE}/staff/supporters`);
   await expect(page.getByRole("columnheader", { name: copy.columns.subscriptions })).toBeVisible();
@@ -213,10 +215,11 @@ test("the list says what each supporter gets, and filters to those who unsubscri
 
   await page.getByRole("combobox", { name: copy.filters.lists }).selectOption("1");
   await page.getByRole("button", { name: copy.filters.filter }).click();
-  await expect(page.getByRole("row").filter({ hasText: "Tom Seed" })).toBeVisible();
+  await expect(page.getByText(copy.count(1, 1, 1))).toBeVisible();
+  await expect(page.getByRole("row").filter({ hasText: "Jane Fixture" })).toBeVisible();
   // Owen left Keep me informed unticked, which isn't an unsubscribe.
   await expect(page.getByRole("row").filter({ hasText: "Owen Member" })).toHaveCount(0);
-  await frame(page, "filtered to those who unsubscribed: Luma told us of each");
+  await frame(page, "filtered to those who unsubscribed: Jane, whom Luma told us of");
 });
 
 test("a member who left Keep me informed unticked won't get the updates", async ({ page, request, flowDatabase }) => {
