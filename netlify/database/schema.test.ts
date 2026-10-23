@@ -8,7 +8,7 @@ import {
   pgDumpMajor,
   SCHEMA_FILE,
 } from "@/scripts/db-schema.mjs";
-import { describeWithDatabase } from "@/tests/database";
+import { describeWithDatabase, MAKES_DATABASES } from "@/tests/database";
 
 describe("normaliseSchema", () => {
   it("drops what differs between runs and machines, and starts with the header", () => {
@@ -39,6 +39,7 @@ const rightPgDump = pgDumpMajor() === PG_DUMP_MAJOR;
 describeWithDatabase("netlify/database/schema.sql", () => {
   it.skipIf(!rightPgDump && !process.env.CI)(
     `matches the migrations (if this fails, run \`npm run db:schema\` and commit the file; needs pg_dump ${PG_DUMP_MAJOR})`,
+    MAKES_DATABASES,
     () => {
       expect(currentSchema(), "schema.sql is out of date: run `npm run db:schema` and commit it").toBe(
         readFileSync(SCHEMA_FILE, "utf8"),

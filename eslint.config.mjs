@@ -226,13 +226,24 @@ const COMPONENT_IMPORTS = {
   group: ["@/components", "@/components/**"],
   message: "lib/ is logic and data, without React components. See LAYERS in eslint.config.mjs.",
 };
+// A page that sends people elsewhere does it in next.config.ts's
+// redirects(), not with redirect() while rendering: on a click within the
+// site, a page that redirects leaves the layout's header and footer with
+// nothing between them for a moment.
+const PAGE_REDIRECT = {
+  name: "next/navigation",
+  importNames: ["redirect", "permanentRedirect"],
+  message:
+    "Send people elsewhere from next.config.ts's redirects(): a page that redirects while rendering shows the layout empty for a moment on a client-side navigation.",
+};
 const LAYERS = [
   { files: ["app/**/*.{ts,tsx}", "components/**/*.{ts,tsx}", "lib/**/*.{ts,tsx}"], patterns: ROUTE_IMPORTS },
+  { files: ["app/**/page.tsx"], patterns: ROUTE_IMPORTS, paths: [PAGE_REDIRECT] },
   { files: ["lib/**/*.{ts,tsx}"], ignores: ["lib/content/**"], patterns: [...ROUTE_IMPORTS, COMPONENT_IMPORTS] },
-].map(({ files, ignores = [], patterns }) => ({
+].map(({ files, ignores = [], patterns, paths = [] }) => ({
   files,
   ignores: ["**/*.test.{ts,tsx}", "app/(tools)/gallery/**", ...ignores],
-  rules: { "@typescript-eslint/no-restricted-imports": ["error", { patterns }] },
+  rules: { "@typescript-eslint/no-restricted-imports": ["error", { patterns, paths }] },
 }));
 
 const eslintConfig = defineConfig([

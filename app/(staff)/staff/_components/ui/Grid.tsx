@@ -18,11 +18,10 @@ const SPANS: Record<Span, string> = {
 
 /**
  * The class that sets an item of a `Grid` to take `span` columns, for an
- * item that isn't a `Card` (a tile, a list item). `"tile"` is a third on a
- * wide screen and half the row below, so a phone has two tiles a row.
+ * item that isn't a `Card` (a tile, a list item).
  */
-export function spanClass(span: Span | "tile"): string {
-  return span === "tile" ? styles.tile : SPANS[span];
+export function spanClass(span: Span): string {
+  return SPANS[span];
 }
 
 /**

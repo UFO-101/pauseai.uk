@@ -314,6 +314,8 @@ describeWithDatabase("submitLetter", () => {
     postmark(() => HttpResponse.json({ ErrorCode: 300, Message: "Invalid email request" }, { status: 422 }));
     expect(await submitLetter(FORM)).toMatchObject({ status: 500, message: copy.errors.failed });
     expect(await query("SELECT id FROM letters")).toEqual([]);
+    // Nor its sender as first seen by it.
+    expect(await query("SELECT first_seen_at FROM supporters")).toEqual([{ first_seen_at: null }]);
 
     postmark();
     expect(await submitLetter(FORM)).toEqual({ ok: true });

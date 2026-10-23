@@ -2,7 +2,8 @@
 // each, and every word the tool shows or sends. Each campaign's page has its
 // own words (app/(site)/campaigns/<slug>/page.tsx).
 
-import { signedControlAiLetter } from "@/lib/controlai-letter";
+// Relative, as next.config.ts imports this file and its loader resolves only its own "@/" imports.
+import { signedControlAiLetter } from "../controlai-letter";
 
 /** What the MP has done for one campaign, as recorded by the policy team. */
 export type CampaignStatus = "signed";

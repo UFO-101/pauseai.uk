@@ -734,6 +734,27 @@ UNION ALL
      JOIN public.supporter_links k ON ((k.member_id = s.source_id)));
 
 --
+-- Name: supporters; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.supporters (
+    id bigint NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    first_seen_at timestamp with time zone
+);
+
+--
+-- Name: supporter_first_seen; Type: VIEW; Schema: public; Owner: -
+--
+
+CREATE VIEW public.supporter_first_seen AS
+ SELECT id AS supporter_id,
+    ( SELECT min(i.seen_at) AS min
+           FROM public.supporter_identity i
+          WHERE (i.supporter_id = s.id)) AS first_seen_at
+   FROM public.supporters s;
+
+--
 -- Name: supporter_links_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
@@ -744,15 +765,6 @@ ALTER TABLE public.supporter_links ALTER COLUMN id ADD GENERATED ALWAYS AS IDENT
     NO MINVALUE
     NO MAXVALUE
     CACHE 1
-);
-
---
--- Name: supporters; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.supporters (
-    id bigint NOT NULL,
-    created_at timestamp with time zone DEFAULT now() NOT NULL
 );
 
 --
@@ -777,8 +789,7 @@ CREATE VIEW public.supporters_summary AS
          SELECT supporter_identity.supporter_id,
             (array_agg(supporter_identity.name ORDER BY supporter_identity.seen_at DESC NULLS LAST, supporter_identity.name) FILTER (WHERE (supporter_identity.name <> ''::text)))[1] AS name,
             array_agg(DISTINCT supporter_identity.email ORDER BY supporter_identity.email) AS emails,
-            array_agg(DISTINCT supporter_identity.source ORDER BY supporter_identity.source) AS sources,
-            min(supporter_identity.seen_at) AS first_seen_at
+            array_agg(DISTINCT supporter_identity.source ORDER BY supporter_identity.source) AS sources
            FROM public.supporter_identity
           GROUP BY supporter_identity.supporter_id
         ), act AS (
@@ -814,7 +825,7 @@ CREATE VIEW public.supporters_summary AS
     contact.postcode,
     ident.sources,
     COALESCE(act.luma_contact, false) AS luma_contact,
-    ident.first_seen_at,
+    s.first_seen_at,
     act.last_active_at,
     COALESCE(act.events, 0) AS events,
     COALESCE(act.letters, 0) AS letters,
@@ -1180,6 +1191,12 @@ CREATE INDEX supporter_links_matched ON public.supporter_links USING btree (matc
 --
 
 CREATE INDEX supporter_links_supporter ON public.supporter_links USING btree (supporter_id);
+
+--
+-- Name: supporters_first_seen; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX supporters_first_seen ON public.supporters USING btree (first_seen_at);
 
 --
 -- Name: campaign_statuses campaign_statuses_politician_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -

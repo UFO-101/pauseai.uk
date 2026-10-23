@@ -1,5 +1,6 @@
 import type { NextConfig } from "next";
 import { EVENT_IMAGE_HOSTS } from "@/lib/event-image-hosts";
+import { campaigns } from "@/lib/content/email-your-mp";
 import { march } from "@/lib/content/march";
 
 // Third-party origins the site actually depends on. Kept here as one list so
@@ -133,7 +134,7 @@ const nextConfig: NextConfig = {
       { source: "/stories/:slug", destination: "/people/:slug", permanent: true },
       // Email your MP's campaign pages were built at /campaigns-v2 before
       // replacing /campaigns, and links to them were shared while testing.
-      { source: "/campaigns-v2", destination: "/campaigns", permanent: true },
+      { source: "/campaigns-v2", destination: `/campaigns/${campaigns[0].slug}`, permanent: true },
       { source: "/campaigns-v2/:path*", destination: "/campaigns/:path*", permanent: true },
       // Staff alerts about bounced letters linked to the blocked emails page
       // under its first name.
@@ -143,6 +144,11 @@ const nextConfig: NextConfig = {
       // There's no list of protests yet, so /protests goes to the current one.
       // Temporary, so browsers don't remember it when the next protest comes.
       { source: "/protests", destination: march.path, permanent: false },
+      // /campaigns goes to the first campaign in priority order, which can
+      // change, so temporary. Here rather than a page's redirect(): a page
+      // that redirects while rendering leaves the site's header and footer
+      // with nothing between them for a moment on a client-side navigation.
+      { source: "/campaigns", destination: `/campaigns/${campaigns[0].slug}`, permanent: false },
       // Old backlink used a space instead of a hyphen in the filename.
       // Source matches the raw request path, so the space must stay percent-encoded.
       { source: "/pdfs/Donor%20Prospectus.pdf", destination: "/pdfs/Donor-Prospectus.pdf", permanent: true },

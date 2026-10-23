@@ -151,7 +151,8 @@ test("a letter writer is a supporter too, linked from the letters page", async (
   await page.goto(`${BASE}/staff/letters`);
   await page.getByRole("row").filter({ hasText: sender }).getByRole("link", { name: "Jane Smith" }).click();
   await expect(page.getByRole("heading", { level: 1 })).toContainText("Jane Smith");
-  await expect(page.getByText(copy.badges.letter)).toBeVisible();
+  // Exactly, as Next's route announcer reads out the heading, badge and all, after a navigation.
+  await expect(page.getByText(copy.badges.letter, { exact: true })).toBeVisible();
   await expect(page.getByText(copy.detail.kinds.letter, { exact: false }).first()).toBeVisible();
   await expect(page.getByText("ZZ9 9ZZ", { exact: false })).toBeVisible();
   await frame(page, "the letter writer's page: the letter, and the postcode they gave");

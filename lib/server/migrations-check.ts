@@ -13,7 +13,9 @@ const MIGRATIONS = join(process.cwd(), "netlify", "database", "migrations");
 
 /** The migration names in the order they're applied: "0001_politicians_and_staff", ... */
 export function migrationNames(dir = MIGRATIONS): string[] {
-  return readdirSync(dir)
+  // Not traced into the deployed server: only the dev server reads the folder, and a path Turbopack can't
+  // follow would otherwise have it include the whole project.
+  return readdirSync(/* turbopackIgnore: true */ dir)
     .filter((file) => /^\d+_[a-z0-9_-]+\.sql$/.test(file))
     .sort()
     .map((file) => file.replace(/\.sql$/, ""));

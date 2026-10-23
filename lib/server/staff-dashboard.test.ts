@@ -35,9 +35,13 @@ describeWithDatabase("dashboard", () => {
        VALUES ($1, 'regulate-letter-pm', 'signed', 'x', '2026-10-15T00:00:00Z'), ($2, 'support-sobel-bill', 'signed', 'x', '2026-10-16T00:00:00Z')`,
       [real, test],
     );
-    // Supporters: this week, the week before, and five weeks ago.
+    // Supporters first seen this week, the week before, and five weeks ago; and two linked this week, one first
+    // seen last year and one by no record with a time, which aren't new.
     await query(
-      "INSERT INTO supporters (created_at) VALUES ('2026-10-20T00:00:00Z'), ('2026-10-10T00:00:00Z'), ('2026-09-15T00:00:00Z')",
+      `INSERT INTO supporters (created_at, first_seen_at) VALUES
+         ('2026-10-20T00:00:00Z', '2026-10-20T00:00:00Z'), ('2026-10-20T00:00:00Z', '2026-10-10T00:00:00Z'),
+         ('2026-10-20T00:00:00Z', '2026-09-15T00:00:00Z'), ('2026-10-20T00:00:00Z', '2025-10-20T00:00:00Z'),
+         ('2026-10-20T00:00:00Z', NULL)`,
     );
     // Events: one held this week, one the week before, one to come, one this week gone from the calendar; registrations this week, three weeks ago, and ones that don't count.
     await query(

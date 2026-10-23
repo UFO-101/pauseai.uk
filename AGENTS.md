@@ -40,6 +40,10 @@ If the prek Git hook is installed (`npm run hooks:install`), commits run Prettie
 
 Running one Vitest project (`npm run test:node`, `npm run test:browser`) or one file doesn't check coverage, so it isn't the gate. The tests that need a database make their own in Postgres (`docs/testing.md`).
 
+## Pull request descriptions are short
+
+A title, then a bullet or two per change: what it does and why, in plain words. Leave out what the diff or the commits already say (file lists, how it was tested beyond "the CI gate passes") and anything left for later but a line saying so.
+
 ## The storyboard
 
 `tests/storyboard/` is one Playwright suite that drives every flow on fixture data (`docs/testing.md`, "The storyboard"). A spec file is a section, a test a flow, and each `await frame(page, "caption")` a frame: a caption and, in the review, a screenshot (the whole page at the top, the window once scrolled). `docs/testing.md`, "What the storyboard covers", lists what each section drives; a new spec file or route handler needs a line there.

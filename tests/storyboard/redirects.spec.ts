@@ -46,6 +46,13 @@ const REDIRECTS = [
     to: "/protests/march-against-ai-extinction-nov-26",
     permanent: false,
   },
+  {
+    // Temporary: the first campaign in priority order can change.
+    name: "the campaigns section, to the first campaign",
+    from: "/campaigns",
+    to: "/campaigns/regulate-letter-pm",
+    permanent: false,
+  },
 ];
 
 for (const { name, from, to, permanent = true } of REDIRECTS) {

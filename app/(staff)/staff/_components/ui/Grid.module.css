@@ -46,10 +46,6 @@
     grid-column: span 1;
   }
 
-  .tile {
-    grid-column: span 2;
-  }
-
   .s2 {
     grid-column: span 2;
   }

@@ -76,6 +76,12 @@ the code should go instead. The rules below say which ones are enforced.
   the content in `lib/content/`, which is partly JSX. Tests and the
   component gallery may reach across. An ESLint rule enforces it (`LAYERS`
   in `eslint.config.mjs`).
+- **Redirects are in `next.config.ts`.** A path that only sends people
+  elsewhere is an entry in its `redirects()`, never a page that calls
+  `redirect()`: on a click within the site, a page that redirects while
+  rendering shows the layout's header and footer with nothing between them
+  for a moment. A `page.tsx` may not import `redirect` or
+  `permanentRedirect` (`PAGE_REDIRECT` in `eslint.config.mjs`).
 - **Pages are thin.** A `page.tsx` holds its metadata, its data loading
   (calling `lib/`) and the order of its sections. Content and markup belong
   in components, and helper functions in `lib/`, where they can be tested.
@@ -139,7 +145,9 @@ the code should go instead. The rules below say which ones are enforced.
   Schema changes are new files in `netlify/database/migrations/`, which
   Netlify applies before each production publish and to each preview's copy
   of the database. They must be backward compatible (expand, then contract)
-  and work with or without a transaction around the file. With each one,
+  and work with or without a transaction around the file. Once pushed, a
+  migration is never edited: a preview's database may have applied it, and
+  Netlify refuses a migration changed since, so a change is a new file. With each one,
   run `npm run db:schema` and commit `netlify/database/schema.sql`, the
   whole schema as the migrations leave it, so the PR shows what changed. A
   test fails while it's out of date. Tables follow the SQL rules below.
