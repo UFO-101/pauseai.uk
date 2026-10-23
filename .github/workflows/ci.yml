@@ -18,7 +18,8 @@ jobs:
       - name: Set up Node
         uses: actions/setup-node@v7
         with:
-          node-version: "22"
+          node-version-file: .nvmrc
+          check-latest: true
           cache: "npm"
 
       - name: Install dependencies
@@ -79,7 +80,8 @@ jobs:
       - name: Set up Node
         uses: actions/setup-node@v7
         with:
-          node-version: "22"
+          node-version-file: .nvmrc
+          check-latest: true
           cache: "npm"
 
       - name: Install dependencies
@@ -132,7 +134,8 @@ jobs:
       - name: Set up Node
         uses: actions/setup-node@v7
         with:
-          node-version: "22"
+          node-version-file: .nvmrc
+          check-latest: true
           cache: "npm"
 
       - name: Install dependencies
@@ -178,7 +181,8 @@ jobs:
       - name: Set up Node
         uses: actions/setup-node@v7
         with:
-          node-version: "22"
+          node-version-file: .nvmrc
+          check-latest: true
           cache: "npm"
 
       - name: Install dependencies
@@ -277,7 +281,8 @@ jobs:
       - name: Set up Node
         uses: actions/setup-node@v7
         with:
-          node-version: "22"
+          node-version-file: .nvmrc
+          check-latest: true
           cache: "npm"
           cache-dependency-path: backup/package-lock.json
 

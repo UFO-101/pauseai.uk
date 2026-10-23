@@ -2,7 +2,7 @@
 # client tools (pg_dump, pg_restore, psql) and the server, for the scratch
 # copy each backup is restored into. Postgres's own apt repository, so the
 # version matches the live database.
-FROM node:24-bookworm-slim
+FROM node:24.22.1-bookworm-slim
 
 RUN apt-get update \
   && apt-get install -y --no-install-recommends ca-certificates postgresql-common \

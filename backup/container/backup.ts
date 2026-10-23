@@ -4,7 +4,6 @@ import { createReadStream } from "node:fs";
 import { mkdtemp, rm, stat } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { fileURLToPath } from "node:url";
 
 // What the container does: dump the live database, prove the dump restores,
 // and count what's in it. The counts come from the restored copy, not the
@@ -29,7 +28,7 @@ export type TimestampColumns = Record<string, string>;
 const IDENTIFIER = /^[a-z_][a-z0-9_]*$/;
 
 /** Sets restored sequences to follow their columns' values, which dumps leave out. */
-export const RESTORE_SEQUENCES = fileURLToPath(new URL("./restore-sequences.sql", import.meta.url));
+export const RESTORE_SEQUENCES = join(import.meta.dirname, "restore-sequences.sql");
 
 /**
  * Runs a command, resolving with its standard output. A failure names the

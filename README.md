@@ -15,7 +15,7 @@ How they're built is in [docs/domain-concepts.md](docs/domain-concepts.md).
 
 ## Run it locally
 
-With Node 22, Docker and `psql`:
+With Node 24, Docker and `psql`:
 
 ```bash
 npm install
