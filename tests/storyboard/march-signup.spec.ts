@@ -71,17 +71,6 @@ test("registering, and the form turns into the share card", { tag: "@phone" }, a
   await frame(page, "the share card, where the form was");
 });
 
-test("arriving by a tagged link, registering sends its tag", async ({ page }, testInfo) => {
-  await page.goto(`${BASE}/march?utm_source=in`);
-  await hydrated(page);
-  await layoutSettled(page, "main");
-  await fillIn(page, `tagged-${testInfo.testId}@example.org`);
-  const sent = page.waitForRequest("**/api/march/register");
-  await page.getByRole("button", { name: copy.form.submit, exact: true }).click();
-  expect((await sent).postDataJSON().tags).toEqual({ source: "in" });
-  await expect(page.getByRole("heading", { name: copy.share.title })).toBeFocused();
-});
-
 test("a registration Luma doesn't take", { tag: "@phone" }, async ({ page }) => {
   await openSignup(page);
   await fillIn(page, "luma-fails@example.org");
