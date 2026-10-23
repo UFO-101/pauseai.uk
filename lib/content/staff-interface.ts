@@ -332,7 +332,7 @@ export const staffCopy = {
     // Under the last row: the field for the address of someone new (its
     // label, read aloud) and its button, which adds them as a row, saved
     // with the others.
-    addTitle: "Add someone",
+    addTitle: "Add email",
     add: "Add",
     remove: "Remove",
     // Beside Add, or above the table after a Save, when the address isn't at pauseai.uk.
