@@ -57,7 +57,8 @@ function PermissionBoxes({ account, save }: { account: StaffAccount; save: Actio
 
 /**
  * The button that ends every session an account has, for a row with any
- * open; on your own row, with the warning that it ends yours too.
+ * open; on your own row, with the warning that it ends yours too on its
+ * own line under it.
  */
 function EndSessionsForm({ account, yours, end }: { account: StaffAccount; yours: boolean; end: Action }) {
   const copy = staffCopy.accounts;
@@ -69,10 +70,9 @@ function EndSessionsForm({ account, yours, end }: { account: StaffAccount; yours
         {copy.endSessions}
       </SubmitButton>
       {yours && (
-        <>
-          {" "}
+        <p className={styles.warning}>
           <Muted>{copy.endsYours}</Muted>
-        </>
+        </p>
       )}
     </form>
   );

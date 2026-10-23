@@ -16,13 +16,15 @@
 
 -- ---------------------------------------------------------------- staff
 
--- The migration's admin; someone who may see supporters, with a kept
--- session; someone with an account alone; and someone removed last month.
-INSERT INTO staff_accounts (email, permissions, added_by, added_at) VALUES
-  ('jo@pauseai.uk', '{supporters}', 'admin@pauseai.uk', now() - interval '40 days'),
-  ('sam@pauseai.uk', '{}', 'admin@pauseai.uk', now() - interval '6 days');
+-- The migration's admin; someone who may see supporters, logged in on two
+-- devices, one session kept; someone with an account alone, who has never
+-- logged in; and someone removed last month.
+INSERT INTO staff_accounts (email, permissions, added_by, added_at, last_login_at, last_seen_at) VALUES
+  ('jo@pauseai.uk', '{supporters}', 'admin@pauseai.uk', now() - interval '40 days', now() - interval '3 hours', now() - interval '20 minutes'),
+  ('sam@pauseai.uk', '{}', 'admin@pauseai.uk', now() - interval '6 days', NULL, NULL);
 INSERT INTO staff_sessions (token_hash, email, created_at, expires_at, remember) VALUES
   ('seed-session-jo-kept', 'jo@pauseai.uk', now() - interval '3 days', now() + interval '27 days', true),
+  ('seed-session-jo-phone', 'jo@pauseai.uk', now() - interval '3 hours', now() + interval '21 hours', false),
   ('seed-session-jo-old', 'jo@pauseai.uk', now() - interval '20 days', now() - interval '19 days', false);
 INSERT INTO staff_login_links (token_hash, email, browser_hash, created_at, expires_at, used_at, remember) VALUES
   ('seed-link-used', 'jo@pauseai.uk', 'seed-browser', now() - interval '3 days', now() - interval '3 days' + interval '15 minutes', now() - interval '3 days' + interval '2 minutes', true),
