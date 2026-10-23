@@ -25,12 +25,12 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
 
 /** One supporter's letters, from their page, which is the way back. */
 export default async function SupporterLettersPage({ params }: Params) {
-  const { email, permissions } = await requireStaff("supporters");
+  const { email, permissions, sessions } = await requireStaff("supporters");
   const { summary } = await supporterOf(params);
   const name = supporterTitle(summary);
   const letters = await recentLetters({ supporterId: summary.id });
   return (
-    <StaffPage nav={<StaffNav email={email} permissions={permissions} current="supporters" />}>
+    <StaffPage nav={<StaffNav email={email} permissions={permissions} sessions={sessions} current="supporters" />}>
       <Breadcrumb href={`/staff/supporters/${summary.id}`}>{name}</Breadcrumb>
       <h1>{staffCopy.letters.fromTitle(name)}</h1>
       <LettersTable letters={letters} />

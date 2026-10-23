@@ -14,11 +14,11 @@ export const metadata: Metadata = { title: staffCopy.emails.titles.supporters };
 
 /** Every blocked address but politicians', staff's and unknown ones included, and their bounces and complaints. */
 export default async function SupporterEmailsPage({ searchParams }: { searchParams: Promise<{ kind?: string }> }) {
-  const { email, permissions } = await requireStaff("supporters");
+  const { email, permissions, sessions } = await requireStaff("supporters");
   const { kind, filter } = emailsSearch(await searchParams);
   const [blocks, problems] = await Promise.all([listBlocks("others", filter), recentProblems("others")]);
   return (
-    <StaffPage nav={<StaffNav email={email} permissions={permissions} current="supporterEmails" />}>
+    <StaffPage nav={<StaffNav email={email} permissions={permissions} sessions={sessions} current="supporterEmails" />}>
       <h1>{staffCopy.emails.titles.supporters}</h1>
       <p>{staffCopy.emails.intro}</p>
       <EmailBlockFilters kind={kind} action="/staff/supporters/blocked-emails" />

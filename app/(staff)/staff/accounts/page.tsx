@@ -13,10 +13,10 @@ import StaffPage from "../_components/ui/StaffPage";
 export const metadata: Metadata = { title: staffCopy.accounts.title };
 
 export default async function AccountsPage({ searchParams }: { searchParams: Promise<{ notice?: string }> }) {
-  const { email, permissions } = await requireStaff("admin");
+  const { email, permissions, sessions } = await requireStaff("admin");
   const { notice } = accountsSearch(await searchParams);
   return (
-    <StaffPage nav={<StaffNav email={email} permissions={permissions} current="accounts" />}>
+    <StaffPage nav={<StaffNav email={email} permissions={permissions} sessions={sessions} current="accounts" />}>
       <h1>{staffCopy.accounts.title}</h1>
       <p>{staffCopy.accounts.intro}</p>
       <AccountsNotice notice={notice} />

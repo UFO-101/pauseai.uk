@@ -38,6 +38,7 @@ import {
   exampleSyncedMp,
 } from "./RunList.examples";
 import StaffNav from "./StaffNav";
+import StaffSessions from "./StaffSessions";
 import { spanClass } from "./ui/Grid";
 import StaffDashboard from "./StaffDashboard";
 import { exampleDashboard, exampleQuietDashboard } from "./StaffDashboard.examples";
@@ -144,6 +145,18 @@ describe("StaffNav", () => {
     expect(nav.querySelector("summary")!.textContent).toBe(staffCopy.nav.home);
   });
 
+  it("with more than one session, links faintly to the page of them under Log out, there and in the phone's menu", async () => {
+    const { rerender } = await render(<StaffNav email="jo@pauseai.uk" permissions={[]} sessions={3} current="home" />);
+    const links = document.querySelectorAll('a[href="/staff/sessions"]');
+    expect([...links].map((a) => a.textContent)).toEqual([staffCopy.nav.sessions(3), staffCopy.nav.sessions(3)]);
+    expect(links[0].getAttribute("aria-current")).toBeNull();
+    await rerender(<StaffNav email="jo@pauseai.uk" permissions={[]} sessions={3} current="sessions" />);
+    expect(document.querySelector('a[href="/staff/sessions"]')!.getAttribute("aria-current")).toBe("page");
+    expect(document.querySelector("summary")!.textContent).toBe(staffCopy.sessions.title);
+    await rerender(<StaffNav email="jo@pauseai.uk" permissions={[]} sessions={1} current="home" />);
+    expect(document.querySelector('a[href="/staff/sessions"]')).toBeNull();
+  });
+
   it("shows the Supporters section, Letters in it, to someone with supporters", async () => {
     await render(<StaffNav email="jo@pauseai.uk" permissions={["supporters"]} current="letters" />);
     const nav = document.querySelector("nav")!;
@@ -158,32 +171,60 @@ describe("StaffNav", () => {
   });
 });
 
-describe("StaffHome", () => {
-  it("shows the dashboard under a title only screen readers hear", async () => {
+describe("StaffSessions", () => {
+  it("lists each session, marks this browser's, and logs out of all of them with a POST", async () => {
     await render(
-      <StaffHome
-        permissions={["admin", "supporters"]}
-        dashboard={exampleDashboard}
-        sessions={1}
-        logOutEverywhere={vi.fn()}
+      <StaffSessions
+        sessions={[
+          {
+            id: "session-1",
+            userAgent: "Mozilla/5.0 (X11; Linux x86_64; rv:131.0) Gecko/20100101 Firefox/131.0",
+            startedAt: "2026-10-22T09:00:00Z",
+            expiresAt: "2026-10-23T09:00:00Z",
+            remember: false,
+            current: true,
+          },
+          {
+            id: "session-2",
+            userAgent: null,
+            startedAt: "2026-10-20T08:00:00Z",
+            expiresAt: "2026-11-21T08:00:00Z",
+            remember: true,
+            current: false,
+          },
+        ]}
       />,
     );
+    const copy = staffCopy.sessions;
+    const rows = page.getByRole("row").all().slice(1);
+    expect(rows.map((row) => row.element().textContent)).toEqual([
+      `FirefoxLinux2026-10-22 09:002026-10-23 09:00${copy.kept.no}${copy.thisBrowser}${staffCopy.nav.logout}`,
+      `${copy.unknown}${copy.unknown}2026-10-20 08:002026-11-21 08:00${copy.kept.yes}${staffCopy.nav.logout}`,
+    ]);
+    const form = page.getByRole("button", { name: copy.logOutEverywhere }).element().closest("form")!;
+    expect(form.getAttribute("method")).toBe("post");
+    expect(form.getAttribute("action")).toBe("/staff/api/logout");
+    expect(new FormData(form).get("everywhere")).toBe("1");
+    // Its rows are centred, as they hold buttons.
+    expect(getComputedStyle(page.getByRole("cell", { name: copy.kept.yes }).element()).verticalAlign).toBe("middle");
+    // Each row's Log out ends that one.
+    const ones = page.getByRole("button", { name: staffCopy.nav.logout }).all();
+    expect(ones.map((button) => new FormData(button.element().closest("form")!).get("session"))).toEqual([
+      "session-1",
+      "session-2",
+    ]);
+  });
+});
+
+describe("StaffHome", () => {
+  it("shows the dashboard under a title only screen readers hear", async () => {
+    await render(<StaffHome permissions={["admin", "supporters"]} dashboard={exampleDashboard} />);
     const title = page.getByRole("heading", { level: 1, name: staffCopy.home.title });
     await expect.element(title).toBeInTheDocument();
     expect(title.element().getBoundingClientRect().width).toBeLessThanOrEqual(1);
     await expect
       .element(page.getByRole("heading", { level: 2, name: staffCopy.home.dashboard.sections.mps }))
       .toBeVisible();
-    // One session, this one: nothing to say.
-    await expect.element(page.getByText(staffCopy.home.sessions(1))).not.toBeInTheDocument();
-  });
-
-  it("with more than one session open, says how many at its foot, and ends them all", async () => {
-    const logOut = vi.fn();
-    await render(<StaffHome permissions={[]} dashboard={exampleDashboard} sessions={3} logOutEverywhere={logOut} />);
-    await expect.element(page.getByText(staffCopy.home.sessions(3))).toBeVisible();
-    await page.getByRole("button", { name: staffCopy.home.logOutEverywhere }).click();
-    await vi.waitFor(() => expect(logOut).toHaveBeenCalled());
   });
 });
 

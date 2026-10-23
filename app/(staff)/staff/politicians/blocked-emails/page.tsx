@@ -14,12 +14,12 @@ export const metadata: Metadata = { title: staffCopy.emails.titles.mps };
 
 /** Politicians' blocked addresses, and their bounces and complaints. The letters they name lead to them only with `supporters`. */
 export default async function MpEmailsPage({ searchParams }: { searchParams: Promise<{ kind?: string }> }) {
-  const { email, permissions } = await requireStaff();
+  const { email, permissions, sessions } = await requireStaff();
   const { kind, filter } = emailsSearch(await searchParams);
   const [blocks, problems] = await Promise.all([listBlocks("politicians", filter), recentProblems("politicians")]);
   const letterLinks = permissions.includes("supporters");
   return (
-    <StaffPage nav={<StaffNav email={email} permissions={permissions} current="mpEmails" />}>
+    <StaffPage nav={<StaffNav email={email} permissions={permissions} sessions={sessions} current="mpEmails" />}>
       <h1>{staffCopy.emails.titles.mps}</h1>
       <p>{staffCopy.emails.intro}</p>
       <EmailBlockFilters kind={kind} action="/staff/politicians/blocked-emails" />

@@ -193,18 +193,26 @@ async function otherBrowser(browser: Browser, database: string, email: string): 
   return page;
 }
 
-test("logged in on two browsers, the home says so at its foot, and logs out of both", async ({
+test("logged in on two browsers, a faint link under Log out leads to both sessions, and logs out of both", async ({
   page,
   browser,
   flowDatabase,
 }) => {
   const other = await otherBrowser(browser, flowDatabase, staffEmail());
   await logIn(page, flowDatabase);
-  await expect(page.getByText(staffCopy.home.sessions(2))).toBeVisible();
-  await page.getByText(staffCopy.home.sessions(2)).scrollIntoViewIfNeeded();
-  await frame(page, "the home's foot: logged in on two devices");
+  const link = page.getByRole("link", { name: staffCopy.nav.sessions(2) }).filter({ visible: true });
+  // On a phone, the link is in the bar's menu.
+  if ((await link.count()) === 0) await page.locator("summary").click();
+  await expect(link).toBeVisible();
+  await frame(page, "the home: a faint link under Log out, logged in on two devices");
 
-  await page.getByRole("button", { name: staffCopy.home.logOutEverywhere }).click();
+  await link.click();
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(staffCopy.sessions.title);
+  await expect(page.getByRole("row")).toHaveCount(3);
+  await expect(page.getByRole("row").filter({ hasText: staffCopy.sessions.thisBrowser })).toHaveCount(1);
+  await frame(page, "your sessions: this browser's and the other one");
+
+  await page.getByRole("button", { name: staffCopy.sessions.logOutEverywhere }).click();
   await expect(page).toHaveURL(`${BASE}/staff/login`);
   await other.goto(`${BASE}/staff`);
   await expect(other).toHaveURL(`${BASE}/staff/login`);

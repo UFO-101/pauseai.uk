@@ -2,7 +2,15 @@ import { beforeEach, expect, it, vi } from "vitest";
 import { describeWithDatabase, useTestDatabase } from "@/tests/database";
 import { expectRedirect, requestCookies } from "@/tests/next-headers";
 import { query } from "./db";
-import { createSession, deleteSession, openSessions, requireStaff, sessionEmail } from "./staff-auth";
+import {
+  createSession,
+  deleteSession,
+  endSession,
+  listSessions,
+  requireStaff,
+  sessionEmail,
+  sessionId,
+} from "./staff-auth";
 import { saveStaffAccount } from "./staff-accounts";
 
 vi.mock("next/headers", () => import("@/tests/next-headers"));
@@ -63,7 +71,7 @@ describeWithDatabase("staff sessions", () => {
   it("requireStaff returns the staff member for a current session, with their permissions", async () => {
     const token = await createSession("jo@pauseai.uk");
     requestCookies.set("staff_session", token);
-    expect(await requireStaff()).toEqual({ email: "jo@pauseai.uk", token, permissions: [] });
+    expect(await requireStaff()).toEqual({ email: "jo@pauseai.uk", token, permissions: [], sessions: 1 });
     expect(await expectRedirect(() => requireStaff("supporters"))).toBe("/staff");
     await saveStaffAccount("jo@pauseai.uk", ["supporters"], "a");
     expect(await requireStaff("supporters")).toMatchObject({ permissions: ["supporters"] });
@@ -73,14 +81,45 @@ describeWithDatabase("staff sessions", () => {
     expect(await expectRedirect(() => requireStaff())).toBe("/staff/login");
   });
 
-  it("counts a staff member's sessions not yet expired", async () => {
-    expect(await openSessions("jo@pauseai.uk")).toBe(0);
-    await createSession("jo@pauseai.uk");
-    await createSession("jo@pauseai.uk");
+  it("requireStaff counts the sessions open, and listSessions lists them, newest first, marking this one", async () => {
+    const kept = await createSession("jo@pauseai.uk", true);
+    await query("UPDATE staff_sessions SET created_at = now() - interval '1 day'");
+    const token = await createSession("jo@pauseai.uk");
+    const gone = await createSession("jo@pauseai.uk");
+    await query(
+      "UPDATE staff_sessions SET expires_at = now() - interval '1 minute' WHERE token_hash = encode(sha256($1::bytea), 'hex')",
+      [gone],
+    );
     await createSession("sam@pauseai.uk");
-    expect(await openSessions("Jo@pauseai.uk")).toBe(2);
-    await query("UPDATE staff_sessions SET expires_at = now() - interval '1 minute' WHERE email = 'sam@pauseai.uk'");
-    expect(await openSessions("sam@pauseai.uk")).toBe(0);
+    requestCookies.set("staff_session", token);
+    expect(await requireStaff()).toMatchObject({ email: "jo@pauseai.uk", sessions: 2 });
+    const sessions = await listSessions("jo@pauseai.uk", token);
+    expect(sessions.map((s) => [s.remember, s.current])).toEqual([
+      [false, true],
+      [true, false],
+    ]);
+    expect(sessions[1].startedAt).toBeInstanceOf(Date);
+    // Without a User-Agent, none is kept.
+    expect(sessions.map((s) => s.userAgent)).toEqual([null, null]);
+    expect(await listSessions("jo@pauseai.uk", kept)).toMatchObject([
+      { current: false },
+      { current: true, id: sessionId(kept) },
+    ]);
+    // Ending one: only your own, logged.
+    expect(await endSession("sam@pauseai.uk", sessionId(kept))).toBe(false);
+    expect(await endSession("Jo@pauseai.uk", sessionId(kept))).toBe(true);
+    expect(await listSessions("jo@pauseai.uk", token)).toHaveLength(1);
+    expect(await query("SELECT actor, details FROM audit_log WHERE action = 'end staff sessions'")).toEqual([
+      { actor: "jo@pauseai.uk", details: { email: "jo@pauseai.uk", sessions: 1 } },
+    ]);
+  });
+
+  it("keeps the User-Agent a session began with, cut to a length no browser's reaches", async () => {
+    const firefox = "Mozilla/5.0 (X11; Linux x86_64; rv:131.0) Gecko/20100101 Firefox/131.0";
+    const token = await createSession("jo@pauseai.uk", false, firefox);
+    await createSession("jo@pauseai.uk", false, "x".repeat(2000));
+    const agents = (await listSessions("jo@pauseai.uk", token)).map((s) => s.userAgent);
+    expect(agents.sort()).toEqual(["x".repeat(512), firefox].sort());
   });
 
   it("requireStaff sends anyone else to the login page", async () => {

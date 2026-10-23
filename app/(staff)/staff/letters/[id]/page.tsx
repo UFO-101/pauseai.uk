@@ -24,10 +24,10 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
 
 /** One letter, as its row in the letters list: where a letter is named elsewhere leads here. */
 export default async function LetterPage({ params }: Params) {
-  const { email, permissions } = await requireStaff("supporters");
+  const { email, permissions, sessions } = await requireStaff("supporters");
   const letter = await letterOf(params);
   return (
-    <StaffPage nav={<StaffNav email={email} permissions={permissions} current="letters" />}>
+    <StaffPage nav={<StaffNav email={email} permissions={permissions} sessions={sessions} current="letters" />}>
       <Breadcrumb href="/staff/letters">{staffCopy.nav.letters}</Breadcrumb>
       <h1>{staffCopy.letters.oneTitle(letter.mpName)}</h1>
       <LettersTable letters={[letter]} />

@@ -87,6 +87,9 @@ function problems(name: string, source: string): string[] {
   return found;
 }
 
+/** The staff pages under no section of the navigation: the home page, and your sessions, linked under Log out. */
+const OUTSIDE_NAVIGATION = new Set(["/staff", "/staff/sessions"]);
+
 /** The string a requireStaff() call in this code asks for: a permission, "account", or undefined for none given. */
 function requirement(node: ts.Node): string | undefined {
   if (ts.isCallExpression(node) && ts.isIdentifier(node.expression) && node.expression.text === "requireStaff") {
@@ -99,13 +102,13 @@ function requirement(node: ts.Node): string | undefined {
 /**
  * What's wrong with one page's permission: its default export, or its
  * generateMetadata, asking requireStaff() for something other than the
- * permission lib/staff-sections.ts gives the page it's under. The home
- * page, under none, asks for an account.
+ * permission lib/staff-sections.ts gives the page it's under. The pages
+ * outside the navigation's sections ask for an account.
  */
 function permissionProblems(name: string, source: string): string[] {
   const path = `/${name.replace(/\/?page\.tsx$/, "")}`;
   const page = staffPageOf(path);
-  if (!page && path !== "/staff") return [`${name}: ${path} isn't under any page in lib/staff-sections.ts`];
+  if (!page && !OUTSIDE_NAVIGATION.has(path)) return [`${name}: ${path} isn't under any page in lib/staff-sections.ts`];
   const wanted = page?.permission ?? "account";
   const file = ts.createSourceFile(name, source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
   return file.statements.flatMap((statement) => {

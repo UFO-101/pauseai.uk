@@ -18,7 +18,6 @@ import {
   importLumaNow,
   importMembersNow,
   endStaffSessionsNow,
-  logOutEverywhere,
   markSigned,
   removeStaffAccountNow,
   saveStaffAccountNow,
@@ -72,7 +71,6 @@ describeWithDatabase("staff Server Actions", () => {
       () => eraseSupporterNow(form({ id: "1", reference: "r", confirm: "on" })),
       () => unblockAddress(form({ address: "a@example.org", note: "" })),
       () => endStaffSessionsNow(form({ email: "jo@pauseai.uk" })),
-      () => logOutEverywhere(),
     ];
     for (const attempt of attempts) expect(await expectRedirect(attempt)).toBe("/staff/login");
     expect(await statusCount()).toBe(0);
@@ -254,14 +252,6 @@ describeWithDatabase("staff Server Actions", () => {
     expect(await query("SELECT actor, action FROM audit_log WHERE action = 'end staff sessions'")).toEqual([
       { actor: "jo@pauseai.uk", action: "end staff sessions" },
     ]);
-  });
-
-  it("logOutEverywhere ends every session of your own, this one too, and goes to the login page", async () => {
-    await createSession("jo@pauseai.uk", true);
-    await createSession("sam@pauseai.uk");
-    expect(await expectRedirect(logOutEverywhere)).toBe("/staff/login");
-    expect(await query("SELECT email FROM staff_sessions")).toEqual([{ email: "sam@pauseai.uk" }]);
-    expect(await expectRedirect(logOutEverywhere)).toBe("/staff/login");
   });
 
   it("unblockAddress unblocks an address, with the note, and refreshes every staff page", async () => {

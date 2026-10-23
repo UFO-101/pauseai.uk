@@ -15,6 +15,8 @@ export async function POST(request: NextRequest) {
     return new NextResponse(null, { status: 400 });
   }
   const response = NextResponse.redirect(siteUrl("/staff", request), 303);
-  response.cookies.set(sessionCookie(await createSession(email.trim().toLowerCase()), false));
+  response.cookies.set(
+    sessionCookie(await createSession(email.trim().toLowerCase(), false, request.headers.get("user-agent")), false),
+  );
   return response;
 }

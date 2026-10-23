@@ -80,6 +80,19 @@
   overflow-wrap: anywhere;
 }
 
+/* Under Log out: how many sessions are open, faint, as few need it. */
+.sessions {
+  justify-self: start;
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+  text-decoration: none;
+}
+
+.sessions:hover,
+.sessions[aria-current="page"] {
+  text-decoration: underline;
+}
+
 /* Wider screens: the sidebar, with the groups spaced down it and the foot after them. */
 .sidebar {
   display: grid;

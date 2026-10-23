@@ -18,9 +18,6 @@ import Run from "@/app/(staff)/staff/_components/Run";
 import EraseForm from "@/app/(staff)/staff/_components/EraseForm";
 import RemoveAccountForm from "@/app/(staff)/staff/_components/RemoveAccountForm";
 import StaffAccountsTable from "@/app/(staff)/staff/_components/StaffAccountsTable";
-import { exampleDashboard } from "@/app/(staff)/staff/_components/StaffDashboard.examples";
-import StaffHome from "@/app/(staff)/staff/_components/StaffHome";
-import type { Permission } from "@/lib/staff-permissions";
 import UnblockForm from "@/app/(staff)/staff/_components/UnblockForm";
 import { exampleFailedRun, exampleHeldSync, exampleRun } from "@/app/(staff)/staff/_components/RunList.examples";
 import { Logged } from "../_components/wiring";
@@ -254,22 +251,6 @@ export function EraseFormExample() {
   return (
     <Logged>
       {(log) => <EraseForm supporter={{ id: 7, name: "Jane Example" }} action={log("eraseSupporterNow")} />}
-    </Logged>
-  );
-}
-
-/** The home's dashboard, for someone logged in on `sessions` devices, ending them logged. */
-export function StaffHomeExample({ permissions, sessions = 1 }: { permissions: Permission[]; sessions?: number }) {
-  return (
-    <Logged>
-      {(log) => (
-        <StaffHome
-          permissions={permissions}
-          dashboard={exampleDashboard}
-          sessions={sessions}
-          logOutEverywhere={log("logOutEverywhere")}
-        />
-      )}
     </Logged>
   );
 }

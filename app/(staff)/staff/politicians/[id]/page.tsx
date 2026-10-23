@@ -22,7 +22,7 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
 }
 
 export default async function PoliticianPage({ params }: Params) {
-  const { email, permissions } = await requireStaff();
+  const { email, permissions, sessions } = await requireStaff();
   const politician = found(await getPolitician(found(politicianId((await params).id))));
   const [block, letters, history] = await Promise.all([
     blockOn(politician.email),
@@ -30,7 +30,7 @@ export default async function PoliticianPage({ params }: Params) {
     politicianHistory(politician.id, politician.email),
   ]);
   return (
-    <StaffPage nav={<StaffNav email={email} permissions={permissions} current="politicians" />}>
+    <StaffPage nav={<StaffNav email={email} permissions={permissions} sessions={sessions} current="politicians" />}>
       <Breadcrumb href="/staff/politicians">{staffCopy.nav.politicians}</Breadcrumb>
       <PoliticianDetails
         politician={politician}

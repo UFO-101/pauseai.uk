@@ -1,0 +1,20 @@
+import type { Metadata } from "next";
+import { staffCopy } from "@/lib/content/staff-interface";
+import { listSessions, requireStaff } from "@/lib/server/staff-auth";
+import StaffNav from "../_components/StaffNav";
+import StaffSessions from "../_components/StaffSessions";
+import StaffPage from "../_components/ui/StaffPage";
+
+export const metadata: Metadata = { title: staffCopy.sessions.title };
+
+/** Your own sessions, from the link under Log out, and the way to end them all. */
+export default async function SessionsPage() {
+  const { email, token, permissions, sessions } = await requireStaff();
+  return (
+    <StaffPage nav={<StaffNav email={email} permissions={permissions} sessions={sessions} current="sessions" />}>
+      <h1>{staffCopy.sessions.title}</h1>
+      <p>{staffCopy.sessions.intro}</p>
+      <StaffSessions sessions={await listSessions(email, token)} />
+    </StaffPage>
+  );
+}

@@ -334,8 +334,8 @@ The accounts page shows when each account was added and by whom (or by
 its login), when it last logged in and was last seen (`last_login_at` and
 `last_seen_at`, kept on the account, as sessions are deleted when they
 end), and its sessions open, which an admin can end. Anyone logged in on
-more than one device can end all their own sessions from the foot of the
-staff home.
+more than one device sees how many under Log out, linked to the page of
+their sessions (`/staff/sessions`), where they can end them all.
 
 Each page in the navigation, and so each page under it, has the permission
 `lib/staff-sections.ts` gives it, and asks for it in `requireStaff()`: an

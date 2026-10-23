@@ -21,10 +21,10 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
 
 /** Erasing one supporter: a page of its own, so it's never done by accident. */
 export default async function EraseSupporterPage({ params }: Params) {
-  const { email, permissions } = await requireStaff("supporters");
+  const { email, permissions, sessions } = await requireStaff("supporters");
   const supporter = found(await getSupporter(found(supporterId((await params).id))));
   return (
-    <StaffPage nav={<StaffNav email={email} permissions={permissions} current="supporters" />}>
+    <StaffPage nav={<StaffNav email={email} permissions={permissions} sessions={sessions} current="supporters" />}>
       <Breadcrumb href={`/staff/supporters/${supporter.summary.id}`}>{staffCopy.nav.supporters}</Breadcrumb>
       <EraseForm supporter={supporter.summary} action={eraseSupporterNow} />
     </StaffPage>

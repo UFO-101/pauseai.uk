@@ -5,3 +5,7 @@
 -- first login made.
 ALTER TABLE staff_accounts ADD COLUMN last_login_at timestamptz;
 ALTER TABLE staff_accounts ADD COLUMN last_seen_at timestamptz;
+
+-- The User-Agent of the browser a session began in, so the page of your
+-- sessions can say which browser and system each is. Gone with the session.
+ALTER TABLE staff_sessions ADD COLUMN user_agent text;

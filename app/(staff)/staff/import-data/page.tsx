@@ -12,10 +12,10 @@ export const metadata: Metadata = { title: staffCopy.import.pageTitle };
 
 /** Every import and check, a card each, with how its newest run ended; each card opens the job's page. */
 export default async function ImportPage() {
-  const { email, permissions } = await requireStaff();
+  const { email, permissions, sessions } = await requireStaff();
   const newest = await Promise.all(IMPORT_JOBS.map((job) => latestRun(job)));
   return (
-    <StaffPage nav={<StaffNav email={email} permissions={permissions} current="import" />}>
+    <StaffPage nav={<StaffNav email={email} permissions={permissions} sessions={sessions} current="import" />}>
       <ImportOverview newest={newest} airtableTable={PARLIAMENTARIANS_TABLE_URL} />
     </StaffPage>
   );

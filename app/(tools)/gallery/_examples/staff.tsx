@@ -45,6 +45,8 @@ import KeepSignedIn from "@/app/(staff)/staff/_components/KeepSignedIn";
 import SortHeading from "@/app/(staff)/staff/_components/SortHeading";
 import Table from "@/components/ui/Table";
 import StaffDashboard from "@/app/(staff)/staff/_components/StaffDashboard";
+import StaffHome from "@/app/(staff)/staff/_components/StaffHome";
+import StaffSessions from "@/app/(staff)/staff/_components/StaffSessions";
 import { exampleDashboard, exampleQuietDashboard } from "@/app/(staff)/staff/_components/StaffDashboard.examples";
 import Sparkline from "@/app/(staff)/staff/_components/Sparkline";
 import SupporterBadges from "@/app/(staff)/staff/_components/SupporterBadges";
@@ -71,7 +73,6 @@ import type { ImportJob } from "@/lib/import-runs";
 import type { Group, Variant } from "../_components/types";
 import {
   EmailBlocksTableExample,
-  StaffHomeExample,
   HeldSyncExample,
   ImportJobPageExample,
   JobActionsExample,
@@ -90,6 +91,7 @@ const [pm] = campaigns;
 // Every page the navigation can mark as current, so a new one is a type error until it's here.
 const PAGES: Record<StaffPageName, true> = {
   home: true,
+  sessions: true,
   supporters: true,
   letters: true,
   supporterEmails: true,
@@ -354,6 +356,14 @@ export const staff: Group = {
           render: () => (
             <StaffPage as="div">
               <StaffNav email="jo@pauseai.uk" permissions={["supporters"]} current="letters" />
+            </StaffPage>
+          ),
+        },
+        {
+          label: "Logged in on three devices: the faint link under Log out",
+          render: () => (
+            <StaffPage as="div">
+              <StaffNav email="jo@pauseai.uk" permissions={[]} sessions={3} current="home" />
             </StaffPage>
           ),
         },
@@ -647,7 +657,7 @@ export const staff: Group = {
           label: "For an admin: the dashboard",
           render: () => (
             <StaffPage as="div">
-              <StaffHomeExample permissions={["admin", "supporters"]} />
+              <StaffHome permissions={["admin", "supporters"]} dashboard={exampleDashboard} />
             </StaffPage>
           ),
         },
@@ -655,15 +665,53 @@ export const staff: Group = {
           label: "For someone with no permissions: the dashboard, its supporter tiles not links",
           render: () => (
             <StaffPage as="div">
-              <StaffHomeExample permissions={[]} />
+              <StaffHome permissions={[]} dashboard={exampleDashboard} />
             </StaffPage>
           ),
         },
+      ],
+    },
+    {
+      name: "StaffSessions",
+      file: "app/(staff)/staff/_components/StaffSessions.tsx",
+      variants: [
         {
-          label: "Logged in on three devices: the line at the foot, to log out of all of them",
+          label: "Three sessions: this browser's, a kept one on a phone, and one from a browser we can't name",
           render: () => (
             <StaffPage as="div">
-              <StaffHomeExample permissions={[]} sessions={3} />
+              <StaffSessions
+                sessions={[
+                  {
+                    id: "session-1",
+                    userAgent:
+                      "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.1 Safari/605.1.15",
+
+                    startedAt: "2026-10-22T09:00:00Z",
+                    expiresAt: "2026-10-23T09:00:00Z",
+                    remember: false,
+                    current: true,
+                  },
+                  {
+                    id: "session-2",
+                    userAgent:
+                      "Mozilla/5.0 (iPhone; CPU iPhone OS 18_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/130.0.6723.90 Mobile/15E148 Safari/604.1",
+
+                    startedAt: "2026-10-20T08:00:00Z",
+                    expiresAt: "2026-11-21T08:00:00Z",
+                    remember: true,
+                    current: false,
+                  },
+                  {
+                    id: "session-3",
+                    userAgent: null,
+
+                    startedAt: "2026-10-19T18:30:00Z",
+                    expiresAt: "2026-10-20T18:30:00Z",
+                    remember: false,
+                    current: false,
+                  },
+                ]}
+              />
             </StaffPage>
           ),
         },

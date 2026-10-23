@@ -49,12 +49,30 @@ export const staffCopy = {
     supporterEmails: "⁂ Blocked supporter emails",
     mpEmails: "⁂ Blocked MP emails",
     logout: "Log out",
+    // Under Log out, faintly, only with more than one session open: how many, linked to the page of them.
+    sessions: (n: number) => `⁂ ${n} sessions`,
   },
-  // The home page: the dashboard, and at its foot, with more than one session open, how many and a way to end them all.
+  // The page of your own sessions (/staff/sessions): one row each, and a way to end them all.
+  sessions: {
+    title: "⁂ Your sessions",
+    intro: "⁂ Each browser you've logged in on, until you log out there or the session ends.",
+    columns: {
+      browser: "⁂ Browser",
+      system: "⁂ System",
+      started: "⁂ Logged in",
+      ends: "⁂ Ends",
+      kept: "⁂ Kept signed in",
+    },
+    kept: { yes: "⁂ Yes", no: "⁂ No" } as Record<string, string>,
+    // Beside the session of the browser looking.
+    thisBrowser: "⁂ This browser",
+    // A browser or system we can't name from what the browser sent.
+    unknown: "⁂ Unknown",
+    logOutEverywhere: "⁂ Log out of all of them",
+  },
+  // The home page: the dashboard.
   home: {
     title: "Home",
-    sessions: (n: number) => `⁂ You're logged in on ${n} devices.`,
-    logOutEverywhere: "⁂ Log out of all of them",
     // The dashboard: what needs a person, then the window's numbers in
     // three groups, each against the window before.
     dashboard: {
