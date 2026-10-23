@@ -1,10 +1,12 @@
 # Links to the march sign-up
 
-Every tracked link to the march sign-up at pauseai.uk/march has one tag,
+The march sign-up is at pauseai.uk/protests/march-against-ai-extinction-nov-26. The short pauseai.uk/march
+redirects there, keeping the tags, so it's the one to give out. Every
+tracked link to the sign-up has one tag,
 utm_source, a short code saying where the link came from, and nothing else.
 Google Analytics counts visits, and registrations, by it; this page is the
 key. The sign-up also sends the tags a visitor arrived with along with their
-registration (`app/(march)/march/_components/arrival-tags.ts`), for storing
+registration (`app/(march)/protests/march-against-ai-extinction-nov-26/_components/arrival-tags.ts`), for storing
 alongside it.
 
 With only a source, GA puts these visits in its Unassigned channel: find
@@ -58,7 +60,7 @@ the tag is lost, and the visit counts as untagged.
 ## The sign-up's events
 
 The sign-up pushes two events onto Google Tag Manager's dataLayer
-(`app/(march)/march/_components/analytics.ts`), as the rest of the site does:
+(`app/(march)/protests/march-against-ai-extinction-nov-26/_components/analytics.ts`), as the rest of the site does:
 
 | Event          | When                                                                                     | Data                                                                                                                                  |
 | -------------- | ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |

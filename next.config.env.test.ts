@@ -62,6 +62,7 @@ describe("redirects", () => {
     expect(redirects).toContainEqual({ source: "/glasgow", destination: "/scotland", permanent: true });
     expect(redirects.filter((r) => !r.permanent)).toEqual([
       { source: "/protests", destination: "/protests/march-against-ai-extinction-nov-26", permanent: false },
+      { source: "/march", destination: "/protests/march-against-ai-extinction-nov-26", permanent: false },
     ]);
   });
 });

@@ -3,7 +3,7 @@ import { marchSignupCopy as copy } from "@/lib/content/march-signup";
 import { BASE, expect, frame, test } from "./fixtures";
 import { hydrated, layoutSettled, scrollSettled } from "./settle";
 
-// The march sign-up at /march (app/(march)/): its own header, which drops in
+// The march sign-up, the march's page (app/(march)/): its own header, which drops in
 // past the hero; the form, which adds the person to the Luma event (the
 // fixture takes every guest but luma-fails@ and luma-skips@); and the cards
 // it turns into, in place: the share card, then the thank-you.
@@ -20,7 +20,7 @@ function marchEvents(page: Page) {
 }
 
 async function openSignup(page: Page) {
-  await page.goto(`${BASE}/march`);
+  await page.goto(`${BASE}/protests/march-against-ai-extinction-nov-26`);
   await hydrated(page);
   await layoutSettled(page, "main");
 }
@@ -59,7 +59,7 @@ test("registering, and the form turns into the share card", { tag: "@phone" }, a
   await page.getByRole("button", { name: copy.form.submit, exact: true }).click();
   const title = page.getByRole("heading", { name: copy.share.title });
   await expect(title).toBeFocused();
-  await expect(page).toHaveURL(`${BASE}/march#register`);
+  await expect(page).toHaveURL(`${BASE}/protests/march-against-ai-extinction-nov-26#register`);
   await expect(page.getByRole("link", { name: copy.share.impact.link })).toBeVisible();
   await scrollSettled(page);
   await expectBelowHeader(page, title);
@@ -86,7 +86,7 @@ test("a registration Luma doesn't take", { tag: "@phone" }, async ({ page }) => 
     "href",
     "https://luma.com/pauseai-nov26",
   );
-  await expect(page).toHaveURL(`${BASE}/march#register`);
+  await expect(page).toHaveURL(`${BASE}/protests/march-against-ai-extinction-nov-26#register`);
   await frame(page, "the form says it didn't go through, and offers Luma's page");
 });
 

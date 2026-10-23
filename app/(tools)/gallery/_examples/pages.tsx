@@ -19,8 +19,6 @@ import ShareYourStory from "@/app/(site)/people/_components/ShareYourStory";
 import StoryGrid from "@/app/(site)/people/_components/StoryGrid";
 import PressKit from "@/app/(site)/press/_components/PressKit";
 import PrivacyPolicy from "@/app/(site)/privacy/_components/PrivacyPolicy";
-import MarchArticle from "@/app/(site)/protests/march-against-ai-extinction-nov-26/_components/MarchArticle";
-import MarchHero from "@/app/(site)/protests/march-against-ai-extinction-nov-26/_components/MarchHero";
 import ChangeSteps from "@/app/(site)/theory-of-change/_components/ChangeSteps";
 import ChangeForeword from "@/app/(site)/theory-of-change/_components/Foreword";
 import About from "@/app/(site)/what-is-pauseai-uk/_components/About";
@@ -58,16 +56,6 @@ export const pages: Group = {
   id: "pages",
   title: "The other pages",
   examples: [
-    {
-      name: "MarchHero",
-      file: "app/(site)/protests/march-against-ai-extinction-nov-26/_components/MarchHero.tsx",
-      variants: [{ label: "When, where, and Register", render: () => <MarchHero /> }],
-    },
-    {
-      name: "MarchArticle",
-      file: "app/(site)/protests/march-against-ai-extinction-nov-26/_components/MarchArticle.tsx",
-      variants: [{ label: "The march's whole description", render: () => <MarchArticle /> }],
-    },
     {
       name: "About",
       file: "app/(site)/what-is-pauseai-uk/_components/About.tsx",

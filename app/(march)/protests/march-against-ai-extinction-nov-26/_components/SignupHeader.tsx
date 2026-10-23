@@ -61,11 +61,11 @@ export default function SignupHeader({ overHero }: { overHero: boolean }) {
           <Link className={m("site-brand-logo")} href="/" aria-label="PauseAI UK">
             <Image src="/images/logos/PauseAI-Logo-Transparent.svg" alt="" width={178} height={48} priority />
           </Link>
-          <Link className={m("site-wordmark")} href={march.signupPath}>
+          <Link className={m("site-wordmark")} href={march.path}>
             March Against <span className={m("site-wordmark-hit")}>AI Extinction</span>
           </Link>
         </div>
-        <Link className={m("btn header-cta")} href={`${march.signupPath}#register`}>
+        <Link className={m("btn header-cta")} href={`${march.path}#register`}>
           Register
         </Link>
       </div>

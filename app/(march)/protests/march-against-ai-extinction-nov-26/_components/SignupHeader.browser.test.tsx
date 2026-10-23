@@ -42,8 +42,10 @@ describe("SignupHeader", () => {
     await expect.element(page.getByRole("link", { name: "PauseAI UK" })).toHaveAttribute("href", "/");
     await expect
       .element(page.getByRole("link", { name: "March Against AI Extinction" }))
-      .toHaveAttribute("href", "/march");
-    await expect.element(page.getByRole("link", { name: "Register" })).toHaveAttribute("href", "/march#register");
+      .toHaveAttribute("href", "/protests/march-against-ai-extinction-nov-26");
+    await expect
+      .element(page.getByRole("link", { name: "Register" }))
+      .toHaveAttribute("href", "/protests/march-against-ai-extinction-nov-26#register");
   });
 
   it("tells the page its height, for anchors to clear it", async () => {

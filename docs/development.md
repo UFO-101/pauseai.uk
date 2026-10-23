@@ -304,7 +304,8 @@ Delete `DATA_FIXTURES` from `.env.local`, and fill in the keys you need. Each is
 
 ### The march sign-up and Luma
 
-`/march` adds each person who registers to a Luma event as a guest, with
+The march's page, the sign-up at
+`/protests/march-against-ai-extinction-nov-26`, adds each person who registers to a Luma event as a guest, with
 Luma's add-guests call (`addLumaGuest` in
 `lib/server/outside-services/luma-guests.ts`), and Luma emails them its
 confirmation. It needs `LUMA_API_KEY`, the key the rest of the site uses,
@@ -326,7 +327,7 @@ To try it against the test event:
 
 1. In `.env.local`, delete `DATA_FIXTURES` and set `LUMA_API_KEY`. Restart
    `npm run dev`.
-2. Register at http://localhost:3000/march with an address you can read.
+2. Register at http://localhost:3000/march (which redirects to the march's page) with an address you can read.
    The form should turn into the share card, you should show up as a guest of the test event,
    get Luma's email, and see no `[march]` line in the server's log.
 3. Try a deploy preview the same way; its `LUMA_API_KEY` is Netlify's. Once
