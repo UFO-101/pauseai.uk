@@ -55,7 +55,7 @@ export const staffCopy = {
   // The page of your own sessions (/staff/sessions): one row each, and a way to end them all.
   sessions: {
     title: "Your sessions",
-    intro: "Each browser you're logged in to PauseAI Staff pages.",
+    intro: "Everywhere you're logged in to the PauseAI Staff pages.",
     columns: {
       browser: "Browser",
       system: "System",
