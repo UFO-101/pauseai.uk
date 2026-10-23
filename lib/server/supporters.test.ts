@@ -78,6 +78,13 @@ describeWithDatabase("linkSupporters", () => {
     expect(rows.find((r) => r.letter_id === sams)).toBeDefined();
     expect(rows.find((r) => r.luma_user_id === "usr-3")).toBeUndefined();
     expect(await query("SELECT count(*)::int AS n FROM supporters")).toEqual([{ n: 3 }]);
+    // Each is first seen by their earliest record; Jane L by none, with neither a contact date nor a registration.
+    expect(
+      await query(
+        "SELECT s.first_seen_at AS at FROM supporters s JOIN supporter_first_seen f ON f.supporter_id = s.id WHERE s.first_seen_at IS DISTINCT FROM f.first_seen_at",
+      ),
+    ).toEqual([]);
+    expect(await query("SELECT count(first_seen_at)::int AS n FROM supporters")).toEqual([{ n: 2 }]);
 
     expect(await linkSupporters()).toEqual({ supportersAdded: 0, linked: 0 });
     expect(await links()).toEqual(rows);

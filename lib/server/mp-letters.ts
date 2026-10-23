@@ -272,9 +272,17 @@ export async function submitLetter(form: LetterForm): Promise<SubmitResult> {
   } catch (error) {
     console.error(`Couldn't send letter ${id ?? "(not saved)"}:`, error);
     if (id !== undefined) {
-      await query("DELETE FROM letters WHERE id = $1", [id]);
+      const sender = await query<{ id: number }>(
+        `WITH sender AS (SELECT supporter_id FROM supporter_links WHERE letter_id = $1),
+           gone AS (DELETE FROM letters WHERE id = $1)
+         SELECT supporter_id::int AS id FROM sender`,
+        [id],
+      );
       // Its sender may have been first seen by it.
-      await refreshSupporterFacts();
+      await refreshSupporterFacts(
+        undefined,
+        sender.map((row) => row.id),
+      );
     }
     return fail(500, copy.errors.failed);
   }

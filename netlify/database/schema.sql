@@ -748,11 +748,11 @@ CREATE TABLE public.supporters (
 --
 
 CREATE VIEW public.supporter_first_seen AS
- SELECT s.id AS supporter_id,
-    min(i.seen_at) AS first_seen_at
-   FROM (public.supporters s
-     LEFT JOIN public.supporter_identity i ON ((i.supporter_id = s.id)))
-  GROUP BY s.id;
+ SELECT id AS supporter_id,
+    ( SELECT min(i.seen_at) AS min
+           FROM public.supporter_identity i
+          WHERE (i.supporter_id = s.id)) AS first_seen_at
+   FROM public.supporters s;
 
 --
 -- Name: supporter_links_id_seq; Type: SEQUENCE; Schema: public; Owner: -

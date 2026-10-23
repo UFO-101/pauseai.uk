@@ -13,7 +13,7 @@ describeWithDatabase("refreshSupporterFacts", () => {
        JOIN supporter_links k ON k.supporter_id = s.id ORDER BY k.luma_user_id`,
     );
 
-  it("sets each supporter's first seen to their earliest record, null with none that gives a time, and writes only what changed", async () => {
+  it("sets each supporter's first seen to their earliest record, null with none that gives a time, for those asked for or everyone, writing only what changed", async () => {
     await query(
       `INSERT INTO luma_events (id, name, url, start_at, access) VALUES ('evt-1', 'E', 'https://luma.com/e', '2026-06-01T00:00:00Z', 'manage');
        INSERT INTO luma_people (user_id, email, name, contact_since) VALUES
@@ -24,8 +24,15 @@ describeWithDatabase("refreshSupporterFacts", () => {
        INSERT INTO supporter_links (supporter_id, luma_user_id, matched_by, matched_value) VALUES
          (1, 'usr-1', 'email', 'a@example.com'), (2, 'usr-2', 'email', 'b@example.com'), (3, 'usr-3', 'email', 'c@example.com')`,
     );
+    // Only those asked for, when given some.
+    expect(await refreshSupporterFacts(undefined, [2, 3])).toBe(1);
+    expect(await firstSeen()).toEqual([
+      { user: "usr-1", at: null },
+      { user: "usr-2", at: new Date("2026-05-02T00:00:00Z") },
+      { user: "usr-3", at: null },
+    ]);
     // usr-3 has neither a contact date nor a registration, so already reads null.
-    expect(await refreshSupporterFacts()).toBe(2);
+    expect(await refreshSupporterFacts()).toBe(1);
     expect(await firstSeen()).toEqual([
       { user: "usr-1", at: new Date("2026-03-01T00:00:00Z") },
       { user: "usr-2", at: new Date("2026-05-02T00:00:00Z") },

@@ -2,6 +2,7 @@ import "server-only";
 import type { LumaImportResult } from "@/lib/import-runs";
 import { query, transaction, type Queryable } from "./db";
 import { keepingFailure, recordRun } from "./import-runs";
+import { refreshSupporterFacts } from "./supporter-facts";
 import { linkSupporters } from "./supporters";
 import { LumaRateLimited, type LumaPage } from "./outside-services/luma-api";
 import {
@@ -403,6 +404,8 @@ function run(startedBy: string, budgetMs: number): Promise<LumaImportResult> {
     if (contacts.going) result.contactsPassGoing = true;
     // Anyone new, from any source, gets their supporter; letters written since the last run too.
     const links = await linkSupporters(db);
+    // A record already linked may have changed, so everyone's facts, not only the newly linked.
+    await refreshSupporterFacts(db);
     result.supportersAdded = links.supportersAdded;
     result.linked = links.linked;
     result.requests = budget.requests;

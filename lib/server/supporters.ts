@@ -36,18 +36,18 @@ const CANDIDATE_COLUMNS = SUPPORTER_SOURCES.map((s) => `c.${s.column}`).join(", 
 /**
  * Links every unlinked source record to a supporter: to the supporter an
  * existing link matched on the same email, or else to a new one, made for
- * each new email; then brings what's worked out about each supporter up to
- * date. Set-based, in one transaction (`db`'s, or its own).
+ * each new email; then brings what's worked out about each supporter it
+ * linked up to date. Set-based, in one transaction (`db`'s, or its own).
  */
 export async function linkSupporters(db?: Queryable): Promise<LinkResult> {
   if (!db) return transaction(linkSupporters);
   await query(`CREATE TEMP TABLE candidates ON COMMIT DROP AS ${CANDIDATES}`, [], db);
   // The email already belongs to a supporter.
-  const existing = await query(
+  const existing = await query<{ id: number }>(
     `INSERT INTO supporter_links (supporter_id, ${COLUMNS}, matched_by, matched_value)
      SELECT DISTINCT ON (${CANDIDATE_COLUMNS}) l.supporter_id, ${CANDIDATE_COLUMNS}, 'email', c.email
      FROM candidates c JOIN supporter_links l ON l.matched_by = 'email' AND l.matched_value = c.email
-     RETURNING id`,
+     RETURNING supporter_id::int AS id`,
     [],
     db,
   );
@@ -65,15 +65,16 @@ export async function linkSupporters(db?: Queryable): Promise<LinkResult> {
     [],
     db,
   );
-  const fresh = await query(
+  const fresh = await query<{ id: number }>(
     `INSERT INTO supporter_links (supporter_id, ${COLUMNS}, matched_by, matched_value)
      SELECT n.id, ${CANDIDATE_COLUMNS}, 'email', c.email FROM candidates c JOIN new_supporters n USING (email)
-     RETURNING id`,
+     RETURNING supporter_id::int AS id`,
     [],
     db,
   );
   await query("DROP TABLE candidates, new_supporters", [], db);
-  await refreshSupporterFacts(db);
+  const linkedTo = [...new Set([...existing, ...fresh].map((link) => link.id))];
+  if (linkedTo.length > 0) await refreshSupporterFacts(db, linkedTo);
   return { supportersAdded: added.length, linked: existing.length + fresh.length };
 }
 
