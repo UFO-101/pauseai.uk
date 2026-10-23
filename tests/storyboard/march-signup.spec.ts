@@ -10,23 +10,18 @@ import { hydrated, layoutSettled, scrollSettled } from "./settle";
 
 const header = (page: Page) => page.getByRole("banner");
 
-type GtagWindow = Window & { gtag?: (...args: unknown[]) => void; gtagCalls?: unknown[][] };
+type DataLayerWindow = Window & { dataLayer?: ArrayLike<unknown>[] };
 
 /**
- * Stands in for GA's gtag, which fixture builds don't load, keeping the calls
- * the page makes to it, for marchEvents to read.
+ * The events the page has sent to GA through gtag: the commands CookieConsent's
+ * gtag queued on the dataLayer, there to stay, since the fixtures block gtag.js.
  */
-function recordGtag(page: Page) {
-  return page.addInitScript(() => {
-    const w = window as GtagWindow;
-    w.gtagCalls = [];
-    w.gtag = (...args) => w.gtagCalls!.push(args);
-  });
-}
-
-/** The events the page has sent to GA through gtag. */
 function marchEvents(page: Page) {
-  return page.evaluate(() => ((window as GtagWindow).gtagCalls ?? []).filter(([command]) => command === "event"));
+  return page.evaluate(() =>
+    ((window as DataLayerWindow).dataLayer ?? [])
+      .map((entry) => Array.from(entry))
+      .filter(([command]) => command === "event"),
+  );
 }
 
 async function openSignup(page: Page) {
@@ -119,7 +114,6 @@ test("the scroll cue glides past the hero, and the header comes with it", async 
 
 test("sharing, then calling it a day, then registering someone new", { tag: "@phone" }, async ({ page, context }) => {
   await context.grantPermissions(["clipboard-read", "clipboard-write"]);
-  await recordGtag(page);
   await openSignup(page);
   await fillIn(page, "testy@example.org");
   await page.getByRole("button", { name: copy.form.submit, exact: true }).click();
