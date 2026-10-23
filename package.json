@@ -32,7 +32,7 @@
     "d3-geo": "^3.1.1",
     "jsqr": "^1.4.0",
     "jszip": "^3.10.2",
-    "next": "^16.4.1",
+    "next": "^16.4.2",
     "pdf-lib": "^1.17.1",
     "pg": "^8.23.1",
     "qrcode-generator": "^2.0.4",
@@ -40,10 +40,10 @@
     "react-dom": "^19.3.1",
     "server-only": "^0.0.1",
     "topojson-client": "^3.1.0",
-    "unpdf": "^1.9.0"
+    "unpdf": "^1.9.1"
   },
   "devDependencies": {
-    "@j178/prek": "0.5.4",
+    "@j178/prek": "0.5.7",
     "@jsx-email/doiuse-email": "1.0.4",
     "@playwright/test": "^1.64.1",
     "@tensorflow-models/blazeface": "^0.1.0",
@@ -59,11 +59,11 @@
     "@types/react-dom": "^19.3.0",
     "@types/topojson-client": "^3.1.5",
     "@types/topojson-specification": "^1.0.5",
-    "@vitest/browser-playwright": "^5.0.4",
-    "@vitest/coverage-v8": "^5.0.4",
+    "@vitest/browser-playwright": "^5.0.5",
+    "@vitest/coverage-v8": "^5.0.5",
     "eslint": "^9.39.5",
-    "eslint-config-next": "^16.4.1",
-    "knip": "6.39.0",
+    "eslint-config-next": "^16.4.2",
+    "knip": "6.42.1",
     "msw": "^3.0.3",
     "pngjs": "^7.0.0",
     "prettier": "3.9.10",
@@ -71,7 +71,7 @@
     "stylelint": "17.16.0",
     "stylelint-config-recommended": "18.0.0",
     "typescript": "^6.0.3",
-    "vitest": "^5.0.4",
+    "vitest": "^5.0.5",
     "vitest-browser-react": "^2.3.0"
   },
   "overrides": {
