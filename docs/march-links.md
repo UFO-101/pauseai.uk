@@ -59,25 +59,22 @@ the tag is lost, and the visit counts as untagged.
 
 ## The sign-up's events
 
-The sign-up pushes two events onto Google Tag Manager's dataLayer
-(`app/(march)/protests/march-against-ai-extinction-nov-26/_components/analytics.ts`), as the rest of the site does:
+The sign-up sends two events straight to Google Analytics through gtag
+(`app/(march)/protests/march-against-ai-extinction-nov-26/_components/analytics.ts`), the way GA gets page views,
+with `gtag("config", "G-DLLRWZCYD7")` in `components/layout/CookieConsent.tsx`:
 
 | Event          | When                                                                                     | Data                                                                                                                                  |
 | -------------- | ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
 | `march_signup` | Someone registered: Luma took them                                                       | None                                                                                                                                  |
 | `march_share`  | Someone shared: pressed an app, copied the message, or shared from a phone's share sheet | `share_method`: `whatsapp`, `telegram`, `x`, `bluesky`, `facebook`, `threads`, `linkedin`, `reddit`, `email`, `copy` or `share_sheet` |
 
-They reach Google Analytics only through a tag in GTM (container
-GTM-K7P36Q7F). To set it up:
+They don't go through Google Tag Manager (container GTM-K7P36Q7F), so
+nothing in GTM needs setting up. Don't add a GA4 event tag for them there:
+GA would count each one twice. They're sent only where GA is loaded: on the
+live site, for someone who hasn't declined analytics.
 
-1. Variables: a Data Layer Variable, its name `share_method`.
-2. Triggers: a Custom Event trigger, its event name
-   `march_signup|march_share`, "Use regex matching" ticked.
-3. Tags: a "Google Analytics: GA4 Event" tag, measurement ID G-DLLRWZCYD7,
-   event name `{{Event}}`, an event parameter `share_method` set to the
-   variable, fired by that trigger. Publish the container.
-4. In GA, Admin, Events: mark `march_signup` as a key event. Admin, Custom
-   definitions: a custom dimension, event-scoped, for `share_method`.
+In GA, Admin, Events: mark `march_signup` as a key event. Admin, Custom
+definitions: a custom dimension, event-scoped, for `share_method`.
 
 ## Seeing it in Google Analytics
 

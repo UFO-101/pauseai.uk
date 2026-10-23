@@ -10,13 +10,23 @@ import { hydrated, layoutSettled, scrollSettled } from "./settle";
 
 const header = (page: Page) => page.getByRole("banner");
 
-type DataLayerWindow = Window & { dataLayer?: Record<string, unknown>[] };
+type GtagWindow = Window & { gtag?: (...args: unknown[]) => void; gtagCalls?: unknown[][] };
 
-/** The march's events the page has pushed onto GTM's dataLayer. */
+/**
+ * Stands in for GA's gtag, which fixture builds don't load, keeping the calls
+ * the page makes to it, for marchEvents to read.
+ */
+function recordGtag(page: Page) {
+  return page.addInitScript(() => {
+    const w = window as GtagWindow;
+    w.gtagCalls = [];
+    w.gtag = (...args) => w.gtagCalls!.push(args);
+  });
+}
+
+/** The events the page has sent to GA through gtag. */
 function marchEvents(page: Page) {
-  return page.evaluate(() =>
-    ((window as DataLayerWindow).dataLayer ?? []).filter((e) => String(e.event).startsWith("march_")),
-  );
+  return page.evaluate(() => ((window as GtagWindow).gtagCalls ?? []).filter(([command]) => command === "event"));
 }
 
 async function openSignup(page: Page) {
@@ -109,6 +119,7 @@ test("the scroll cue glides past the hero, and the header comes with it", async 
 
 test("sharing, then calling it a day, then registering someone new", { tag: "@phone" }, async ({ page, context }) => {
   await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+  await recordGtag(page);
   await openSignup(page);
   await fillIn(page, "testy@example.org");
   await page.getByRole("button", { name: copy.form.submit, exact: true }).click();
@@ -117,7 +128,10 @@ test("sharing, then calling it a day, then registering someone new", { tag: "@ph
   await page.getByRole("button", { name: copy.share.copy }).click();
   await expect(page.getByRole("button", { name: copy.share.copied })).toBeVisible();
   expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(copy.share.message);
-  expect(await marchEvents(page)).toEqual([{ event: "march_signup" }, { event: "march_share", share_method: "copy" }]);
+  expect(await marchEvents(page)).toEqual([
+    ["event", "march_signup", {}],
+    ["event", "march_share", { share_method: "copy" }],
+  ]);
   await page.getByRole("button", { name: copy.share.copy }).waitFor();
   await scrollSettled(page);
   await frame(page, "the message copied");

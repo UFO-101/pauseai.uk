@@ -101,7 +101,7 @@ function subscribeToPointer(listener: () => void) {
 const hasNativeShare = () => typeof navigator.share === "function" && matchMedia(TOUCH_QUERY).matches;
 const noNativeShare = () => false;
 
-/** Tells Google Tag Manager the message went to `source`. */
+/** Tells Google Analytics the message went to `source`. */
 const shared = (source: ShareSource) => track({ event: "march_share", share_method: source });
 
 /** Which ends of the app row have more icons past them, for the CSS to fade. */

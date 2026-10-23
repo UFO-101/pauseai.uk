@@ -1,6 +1,6 @@
 import type { ShareSource } from "@/lib/content/march-signup";
 
-/** The sign-up's events, as Google Tag Manager gets them. */
+/** The sign-up's events, as Google Analytics gets them. */
 export type MarchEvent =
   /** Registered: Luma took them. */
   | { event: "march_signup" }
@@ -8,12 +8,12 @@ export type MarchEvent =
   | { event: "march_share"; share_method: ShareSource };
 
 /**
- * Tells Google Tag Manager, through its dataLayer, as the rest of the site
- * does. GTM reads it only once components/layout/CookieConsent.tsx has loaded
- * it: on the live site, for someone who hasn't declined analytics.
+ * Sends the event straight to Google Analytics through gtag, not through
+ * Google Tag Manager, so it needs no tag in GTM. gtag is there only once
+ * components/layout/CookieConsent.tsx has loaded GA: on the live site, for
+ * someone who hasn't declined analytics. Without it, nothing is sent.
  */
-export function track(event: MarchEvent) {
-  const w = window as typeof window & { dataLayer?: unknown[] };
-  w.dataLayer = w.dataLayer || [];
-  w.dataLayer.push(event);
+export function track({ event, ...params }: MarchEvent) {
+  const w = window as typeof window & { gtag?: (...args: unknown[]) => void };
+  w.gtag?.("event", event, params);
 }
