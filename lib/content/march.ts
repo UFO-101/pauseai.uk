@@ -1,13 +1,13 @@
 // The March Against AI Extinction, 21 November 2026: its facts in one place,
-// for its page, the nav link, the homepage's featured event and the sign-up
-// at /march (app/(march)/). The words on its page come from the Luma event's
-// description. The sign-up's link preview is a picture of its hero, with the
-// date, time and route in it: after changing them, remake it with
-// `npm run march:preview` (scripts/march-preview.mjs).
+// for its page, the sign-up (app/(march)/), and the march banner. The page's
+// link preview is a picture of its hero, with the date, time and route in it:
+// after changing them, remake it with `npm run march:preview`
+// (scripts/march-preview.mjs).
 import { site } from "./site";
 
 export const march = {
   name: "March Against AI Extinction",
+  /** The march's page, the sign-up, which adds people to the Luma event. */
   path: "/protests/march-against-ai-extinction-nov-26",
   /** The Luma event: where people register, and its slug in the calendar feed. */
   lumaUrl: "https://luma.com/pauseai-nov26",
@@ -27,8 +27,6 @@ export const march = {
     area: "London SW1A 2AA",
     postcode: "SW1A 2AA",
   },
-  /** The sign-up page, which adds people to the Luma event. */
-  signupPath: "/march",
   /** The date and place as the sign-up shows them. */
   dateLong: "Saturday 21 Nov 2026",
   dateShort: "Sat 21 Nov 2026",
@@ -41,7 +39,7 @@ export const march = {
   /** The Luma event's cover photo. */
   image: { src: "/images/march-nov-26/luma-cover.webp", width: 1016, height: 1016 },
   /**
-   * The nav link and the homepage feature show until the day after the march
+   * The march banner shows until the day after the march
    * ends: midnight at the start of Monday 23 November, UK time (GMT then).
    */
   promoteUntil: "2026-11-23T00:00:00Z",
@@ -86,7 +84,7 @@ export function marchEventJsonLd(): Record<string, unknown> {
   };
 }
 
-/** Whether the nav and homepage still point people to the march. */
+/** Whether the march banner still points people to the march. */
 export function isMarchPromoted(now: Date): boolean {
   return now < new Date(march.promoteUntil);
 }

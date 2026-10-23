@@ -21,8 +21,9 @@ app/
                           data, fixture builds only (docs/testing.md)
   (staff)/staff/          the staff interface, behind email login; no <Nav>,
                           no analytics, noindex
-  (march)/march/          the march sign-up: a sub-site in
-                          its own style, with its own header and the site's
+  (march)/protests/march-against-ai-extinction-nov-26/
+                          the march's page, its sign-up: a sub-site in its
+                          own style, with its own header and the site's
                           footer (Styling, below)
   api/                    route handlers, only for things that need a URL
   sitemap.ts, robots.ts
@@ -367,7 +368,8 @@ only a variant. The look itself (colours, type, buttons, cards) is in
 
 ### The march sign-up
 
-`/march` (`app/(march)/march/`) is a sub-site in its
+`/protests/march-against-ai-extinction-nov-26` (`app/(march)/protests/march-against-ai-extinction-nov-26/`)
+is a sub-site in its
 own poster style, deliberately unlike the rest of the site: ink and paper,
 a hotter orange, Anton for headings, square corners and hard shadows. It
 follows the rules above, with these exceptions:

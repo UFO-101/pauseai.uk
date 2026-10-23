@@ -1,4 +1,5 @@
-import { march } from "@/lib/content/march";
+import JsonLd from "@/components/layout/JsonLd";
+import { march, marchEventJsonLd } from "@/lib/content/march";
 import { pageMetadata } from "@/lib/metadata";
 import SignupCase from "./_components/SignupCase";
 import SignupDay from "./_components/SignupDay";
@@ -11,7 +12,7 @@ import SignupTurnout from "./_components/SignupTurnout";
 export const metadata = pageMetadata({
   title: `${march.name} — ${march.dateShort}, ${march.city}`,
   description: `Join the biggest ever march for AI safety. ${march.dateLong}, ${march.city} — organised by PauseAI UK.`,
-  path: march.signupPath,
+  path: march.path,
   absoluteTitle: true,
   openGraph: { title: `${march.name} — ${march.dateLong}` },
   // The hero, as a picture: its photo, headline, date and place. Remade by
@@ -25,6 +26,7 @@ export const metadata = pageMetadata({
 export default function MarchSignupPage() {
   return (
     <main id="main">
+      <JsonLd data={marchEventJsonLd()} />
       <SignupHero />
       <SignupCase />
       <SignupDemand />

@@ -63,12 +63,12 @@ describe("ShareCard", () => {
     await expect
       .element(page.getByRole("link", { name: "WhatsApp" }))
       .toHaveAttribute("href", `https://wa.me/?text=${encodeURIComponent(copy.message)}`);
-    expect(copy.message).toContain("https://pauseai.uk/march?utm_source=sh");
+    expect(copy.message).toContain("https://pauseai.uk/protests/march-against-ai-extinction-nov-26?utm_source=sh");
     await expect
       .element(page.getByRole("link", { name: "Facebook" }))
       .toHaveAttribute(
         "href",
-        `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent("https://pauseai.uk/march?utm_source=sh")}`,
+        `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent("https://pauseai.uk/protests/march-against-ai-extinction-nov-26?utm_source=sh")}`,
       );
     expect(page.getByRole("list").getByRole("link").all()).toHaveLength(9);
   });
@@ -130,7 +130,7 @@ describe("ShareCard", () => {
     await renderCard();
     await page.getByRole("button", { name: copy.copy }).click();
     expect(writeText).toHaveBeenCalledWith(copy.message);
-    expect(copy.message).toContain("https://pauseai.uk/march?utm_source=sh");
+    expect(copy.message).toContain("https://pauseai.uk/protests/march-against-ai-extinction-nov-26?utm_source=sh");
     await expect.poll(pushed).toEqual([shareEvent("copy")]);
     await expect.element(page.getByRole("button", { name: copy.copied })).toBeVisible();
     await expect.element(page.getByRole("button", { name: copy.copy }), { timeout: 4000 }).toBeVisible();

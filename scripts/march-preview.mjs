@@ -11,7 +11,7 @@
 // the page (the Register button, the scroll cue, the header, the cookie banner
 // and Next's dev badge), and writes public/images/march-signup/
 // open-graph-1200-630.jpg (Open Graph) and open-graph-1600-840.jpg (X), the
-// same layout at 4/3 the pixels. app/(march)/march/page.tsx names them.
+// same layout at 4/3 the pixels. app/(march)/protests/march-against-ai-extinction-nov-26/page.tsx names them.
 import { chromium } from "@playwright/test";
 import sharp from "sharp";
 
@@ -35,7 +35,7 @@ try {
     ["1600-840", 4 / 3],
   ]) {
     const page = await browser.newPage({ viewport: { width: 1200, height: 630 }, deviceScaleFactor: scale });
-    await page.goto(`${base}/march`, { waitUntil: "networkidle" });
+    await page.goto(`${base}/protests/march-against-ai-extinction-nov-26`, { waitUntil: "networkidle" });
     await page.addStyleTag({ content: css });
     await page.evaluate(() => document.fonts.ready);
     const hero = page.locator("section:has(> [class*='hero-inner'])");

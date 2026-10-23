@@ -53,6 +53,13 @@ const REDIRECTS = [
     to: "/campaigns/regulate-letter-pm",
     permanent: false,
   },
+  {
+    // Temporary, so it can point to the next march.
+    name: "the march's short link, to its page",
+    from: "/march",
+    to: "/protests/march-against-ai-extinction-nov-26",
+    permanent: false,
+  },
 ];
 
 for (const { name, from, to, permanent = true } of REDIRECTS) {

@@ -4,7 +4,7 @@ import { march } from "./march";
 import { site } from "./site";
 
 /** The sign-up page's address. */
-const signupUrl = `${site.url}${march.signupPath}`;
+const signupUrl = `${site.url}${march.path}`;
 
 /**
  * Where the share card sends the message: each app in its row, the copied
