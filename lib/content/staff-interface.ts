@@ -145,7 +145,7 @@ export const staffCopy = {
       name: "Name",
       email: "Email",
       badges: "Activities",
-      subscriptions: "⁂ Subscriptions",
+      subscriptions: "Subscriptions",
       firstSeen: "First sign-up",
       lastActive: "Last activity",
       events: "Luma events",
@@ -163,14 +163,14 @@ export const staffCopy = {
     // In the list, a lozenge per topic we'd email them about.
     subscriptions: {
       topics: {
-        "luma-calendar": "⁂ Luma",
-        "pauseai-updates": "⁂ Updates",
-        "events-and-ways-to-help": "⁂ Events and help",
+        "luma-calendar": "Luma",
+        "pauseai-updates": "Updates",
+        "events-and-ways-to-help": "Events and help",
       } as Record<string, string>,
       // A yes that an unsubscribe we can't see may have undone.
-      unsure: (topic: string) => `⁂ ${topic}, unsure`,
+      unsure: (topic: string) => `${topic}, unsure`,
       // Every address they have is blocked.
-      blocked: "⁂ Blocked",
+      blocked: "Blocked",
     },
     sources: { luma: "Luma", letter: "Letter", member: "Member" } as Record<string, string>,
     lists: { "luma-calendar": "Luma calendar emails", "pauseai-updates": "PauseAI updates" } as Record<string, string>,
