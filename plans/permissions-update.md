@@ -5,9 +5,10 @@
 2. **Supporter data needs `supporters`**, wherever it shows.
 3. **The accounts table shows more**, and anyone can end sessions.
 
-Change 2 comes first. Today an admin chooses who gets an account, so even
-one with no permissions is someone trusted. After change 1 it means only a
-pauseai.uk mailbox.
+Change 1 is why change 2 is needed: today an admin chooses who gets an
+account, so even one with no permissions is someone trusted. After change
+1 it means only a pauseai.uk mailbox. All three go in one pull request, a
+commit or more each.
 
 ## The rule
 
@@ -130,16 +131,12 @@ In `docs/data-protection.md`:
 
 The privacy policy and erasure don't change.
 
-## Stages
+## Commits
 
 Each with its tests, storyboard frames, gallery examples and placeholder
-copy.
-
-1. **Supporter data** (section 2), with the new sidebar and both checks.
-   First, because stage 2 opens every account-level page to everyone at
-   pauseai.uk.
-2. **Accounts on first login** (section 1).
-3. **The accounts table** (section 3).
+copy, in one pull request: supporter data (section 2) with the new
+sidebar and both checks, then accounts on first login (section 1), then
+the accounts table (section 3).
 
 ## Decided against
 
