@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { render } from "vitest-browser-react";
 import { page, userEvent } from "vitest/browser";
 import type { MarchRegisterResult } from "@/lib/march-registration";
@@ -12,17 +12,24 @@ async function fillIn() {
   await page.getByLabelText("Email address").fill(" testy@example.org ");
 }
 
-type DataLayerWindow = Window & { dataLayer?: unknown[] };
+type GtagWindow = Window & { gtag?: (...args: unknown[]) => void };
 
-/** What the form has pushed onto GTM's dataLayer. */
-const pushed = () => (window as DataLayerWindow).dataLayer ?? [];
+let gtagCalls: unknown[][] = [];
+
+/** The events the form has sent to GA through gtag, each as track() was given it. */
+const pushed = () => gtagCalls.map(([, event, params]) => ({ event, ...(params as object) }));
+
+beforeEach(() => {
+  gtagCalls = [];
+  (window as GtagWindow).gtag = (...args) => gtagCalls.push(args);
+});
 
 afterEach(() => {
-  delete (window as DataLayerWindow).dataLayer;
+  delete (window as GtagWindow).gtag;
 });
 
 describe("SignupForm", () => {
-  it("sends the name and email, then tells GTM and moves on", async () => {
+  it("sends the name and email, then tells GA and moves on", async () => {
     const onRegistered = vi.fn();
     const sent: unknown[] = [];
     let finish: (result: MarchRegisterResult) => void = () => {};

@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { renderToString } from "react-dom/server";
 import { render } from "vitest-browser-react";
 import { page } from "vitest/browser";
@@ -18,10 +18,17 @@ function mediaMatching(match: string) {
   );
 }
 
-type DataLayerWindow = Window & { dataLayer?: unknown[] };
+type GtagWindow = Window & { gtag?: (...args: unknown[]) => void };
 
-/** What the card has pushed onto GTM's dataLayer. */
-const pushed = () => (window as DataLayerWindow).dataLayer ?? [];
+let gtagCalls: unknown[][] = [];
+
+/** The events the card has sent to GA through gtag, each as track() was given it. */
+const pushed = () => gtagCalls.map(([, event, params]) => ({ event, ...(params as object) }));
+
+beforeEach(() => {
+  gtagCalls = [];
+  (window as GtagWindow).gtag = (...args) => gtagCalls.push(args);
+});
 
 const shareEvent = (share_method: string) => ({ event: "march_share", share_method });
 
@@ -35,7 +42,7 @@ async function renderCard(onFinish = () => {}) {
 
 afterEach(() => {
   vi.restoreAllMocks();
-  delete (window as DataLayerWindow).dataLayer;
+  delete (window as GtagWindow).gtag;
 });
 
 describe("appRowFade", () => {
@@ -83,7 +90,7 @@ describe("ShareCard", () => {
     }
   });
 
-  it("tells Google Tag Manager which app the message went to", async () => {
+  it("tells Google Analytics which app the message went to", async () => {
     await renderCard();
     const whatsapp = page.getByRole("link", { name: "WhatsApp" }).element();
     // Pressed, but not followed: the test stays on its page.
@@ -153,7 +160,7 @@ describe("ShareCard", () => {
       await page.getByRole("button", { name: copy.share, exact: true }).click();
       expect(share).toHaveBeenCalledWith({ title: copy.emailSubject, text: copy.message });
       await expect.poll(pushed).toEqual([shareEvent("share_sheet")]);
-      // Closing the sheet shares nothing, so tells GTM nothing.
+      // Closing the sheet shares nothing, so tells GA nothing.
       await page.getByRole("button", { name: copy.share, exact: true }).click();
       await expect.poll(() => share.mock.calls.length).toBe(2);
       expect(pushed()).toHaveLength(1);

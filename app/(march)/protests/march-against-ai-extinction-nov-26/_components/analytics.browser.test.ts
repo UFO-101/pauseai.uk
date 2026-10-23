@@ -1,25 +1,27 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { track } from "./analytics";
 
-type DataLayerWindow = Window & { dataLayer?: unknown[] };
+type GtagWindow = Window & { gtag?: (...args: unknown[]) => void; dataLayer?: unknown[] };
 
 afterEach(() => {
-  delete (window as DataLayerWindow).dataLayer;
+  delete (window as GtagWindow).gtag;
+  delete (window as GtagWindow).dataLayer;
 });
 
 describe("track", () => {
-  it("pushes the event onto GTM's dataLayer, making it if it isn't there yet", () => {
+  it("sends the event to GA through gtag, its data as the event's parameters", () => {
+    const gtag = vi.fn();
+    (window as GtagWindow).gtag = gtag;
     track({ event: "march_signup" });
     track({ event: "march_share", share_method: "whatsapp" });
-    expect((window as DataLayerWindow).dataLayer).toEqual([
-      { event: "march_signup" },
-      { event: "march_share", share_method: "whatsapp" },
+    expect(gtag.mock.calls).toEqual([
+      ["event", "march_signup", {}],
+      ["event", "march_share", { share_method: "whatsapp" }],
     ]);
   });
 
-  it("adds to the dataLayer GTM already has", () => {
-    (window as DataLayerWindow).dataLayer = [{ event: "gtm.js" }];
-    track({ event: "march_signup" });
-    expect((window as DataLayerWindow).dataLayer).toEqual([{ event: "gtm.js" }, { event: "march_signup" }]);
+  it("sends nothing, and pushes nothing for GTM, while GA isn't loaded", () => {
+    expect(() => track({ event: "march_signup" })).not.toThrow();
+    expect((window as GtagWindow).dataLayer).toBeUndefined();
   });
 });
