@@ -326,7 +326,10 @@ test("an import's own page lists every run it has made, and the import page show
   await check.click();
   await expect(page.getByRole("row").filter({ hasText: "Cities of London and Westminster" })).toHaveCount(2);
   // One day's heading over both: the fixture clock's day.
-  await expect(page.getByRole("heading", { level: 2, name: staffDate(FIXTURE_NOW) })).toHaveCount(1);
+  const day = page.getByRole("heading", { level: 2, name: staffDate(FIXTURE_NOW) });
+  await expect(day).toHaveCount(1);
+  // Where the second run leaves the window depends on when its result arrives, so the frame starts at the day.
+  await day.evaluate((heading) => heading.scrollIntoView({ block: "start" }));
   await frame(page, "the MP check's page: both its runs");
 
   // The import page: each job's newest run on its card; the MP import's, from the start of the flow.
