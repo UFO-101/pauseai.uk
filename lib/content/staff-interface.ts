@@ -22,7 +22,7 @@ export const staffCopy = {
     // Beside each address: what it may do.
     permissions: (names: string) => `${names} permissions`,
     noPermissions: "Account with no permissions",
-    noAccount: "No account",
+    noAccount: "No account yet: logging in makes one",
   },
   // The email with the login link.
   loginEmail: {
@@ -35,11 +35,10 @@ export const staffCopy = {
     title: "PauseAI Staff",
     home: "Home",
     accounts: "Staff accounts",
-    // The groups the pages are in, on the home page.
+    // The sections the pages are in, in the sidebar.
     sections: {
       supporters: "Supporters",
       politicians: "Politicians",
-      data: "Data",
       admin: "Admin",
     } as Record<string, string>,
     supporters: "Supporters",
@@ -47,11 +46,31 @@ export const staffCopy = {
     import: "Import data",
     changes: "Audit log",
     letters: "Letters to MPs",
-    emails: "Blocked emails",
+    supporterEmails: "Blocked supporter emails",
+    mpEmails: "Blocked MP emails",
     logout: "Log out",
+    // Under Log out, faintly, only with more than one session open: how many, linked to the page of them.
+    sessions: (n: number) => `${n} sessions`,
   },
-  // The home page: whom to ask for an account; or the pages you can see,
-  // in groups, and which permissions you have, or that you have none.
+  // The page of your own sessions (/staff/sessions): one row each, and a way to end them all.
+  sessions: {
+    title: "Your sessions",
+    intro: "Everywhere you're logged in to the PauseAI Staff pages.",
+    columns: {
+      browser: "Browser",
+      system: "System",
+      started: "Logged in",
+      ends: "Ends",
+      kept: "Kept signed in",
+    },
+    kept: { yes: "Yes", no: "No" } as Record<string, string>,
+    // Beside the session of the browser looking.
+    thisBrowser: "This browser",
+    // A browser or system we can't name from what the browser sent.
+    unknown: "Unknown",
+    logOutEverywhere: "Log out of all of them",
+  },
+  // The home page: the dashboard.
   home: {
     title: "Home",
     // The dashboard: what needs a person, then the window's numbers in
@@ -111,8 +130,6 @@ export const staffCopy = {
       seriesPoint: (days: number, from: string, n: number) =>
         days === 7 ? `Week beginning ${from}: ${n}` : `${days} days beginning ${from}: ${n}`,
     },
-    noAccount: "You don't have a staff account yet.",
-    ask: (admins: string) => `Ask ${admins}.`,
   },
   // The supporters list (/staff/supporters) and a supporter's page.
   supporters: {
@@ -284,7 +301,8 @@ export const staffCopy = {
   // pages, and what each may do.
   accounts: {
     title: "Staff accounts",
-    intro: "Only people with a @pauseai.uk address who are in this list can log in. ",
+    intro:
+      "Everyone with a @pauseai.uk address gets an account, with no permissions, the first time they log in. Add someone here to give them permissions before then.",
     names: {
       admin: "Admin",
       supporters: "Supporters",
@@ -298,13 +316,23 @@ export const staffCopy = {
     columns: {
       email: "Email",
       permissions: "Permissions",
-      addedBy: "Added by",
-      addedAt: "Added at",
+      added: "Added",
+      lastLogin: "Last login",
+      lastSeen: "Last seen",
+      sessions: "Sessions open",
     },
+    // In the Added column, after when: who added the account, or that its first login did.
+    addedBy: (who: string) => `by ${who}`,
+    addedByLogin: "by login",
+    // For an account that has never logged in or been seen.
+    never: "Never",
+    // On each row with sessions open: ends them all; on your own row, the warning beside it.
+    endSessions: "Log out everywhere",
+    endsYours: "This logs you out too.",
     // Under the last row: the field for the address of someone new (its
     // label, read aloud) and its button, which adds them as a row, saved
     // with the others.
-    addTitle: "Add someone",
+    addTitle: "Add email",
     add: "Add",
     remove: "Remove",
     // Beside Add, or above the table after a Save, when the address isn't at pauseai.uk.
@@ -341,7 +369,7 @@ export const staffCopy = {
       replies: "Letters answered",
     },
     noEmail: "No email",
-    // On a politician whose address is blocked (/staff/blocked-emails), and the filter for them.
+    // On a politician whose address is blocked (/staff/politicians/blocked-emails), and the filter for them.
     emailBlocked: "Email blocked",
     anyEmail: "All",
     // The button in each campaign's column, and the bill's column, which
@@ -379,6 +407,9 @@ export const staffCopy = {
     history: {
       letter: "Letter from",
       "letter-replied": "Answered the letter from",
+      // Without the supporters permission, a letter doesn't say who wrote it.
+      unsignedLetter: "Letter written to them",
+      "unsigned-letter-replied": "Answered a letter",
       "add politician": "Added",
       "edit politician": "Details edited",
       "remove politician": "No longer sitting",
@@ -430,9 +461,14 @@ export const staffCopy = {
       },
     },
   },
-  // The page of blocked addresses (/staff/blocked-emails), and the bounces and complaints that blocked them.
+  // The pages of blocked addresses (/staff/politicians/blocked-emails and
+  // /staff/supporters/blocked-emails), and the bounces and complaints that blocked them.
   emails: {
-    title: "Blocked emails",
+    // The two pages: politicians' addresses, and everyone else's.
+    titles: {
+      mps: "Blocked MP emails",
+      supporters: "Blocked supporter emails",
+    },
     intro: "Nothing is sent to these addresses until they're unblocked.",
     // Instead of the table, when no address is blocked, or none of the cause filtered for.
     noBlocks: "No addresses are blocked.",

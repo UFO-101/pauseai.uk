@@ -4,8 +4,14 @@ import type { ProblemSummary } from "@/lib/server/email";
 import { staffTime } from "@/lib/staff-time";
 import LetterLink from "./LetterLink";
 
-/** The latest bounces and complaints, soft bounces too, and what each email was. */
-export default function EmailProblemsTable({ problems }: { problems: ProblemSummary[] }) {
+/** The latest bounces and complaints, soft bounces too, and what each email was: a letter, linked to it with `letterLinks`. */
+export default function EmailProblemsTable({
+  problems,
+  letterLinks,
+}: {
+  problems: ProblemSummary[];
+  letterLinks: boolean;
+}) {
   if (problems.length === 0) return <p>{staffCopy.emails.noProblems}</p>;
   const columns = staffCopy.emails.columns;
   return (
@@ -28,7 +34,7 @@ export default function EmailProblemsTable({ problems }: { problems: ProblemSumm
             <td>{problem.reason}</td>
             <td>
               {problem.letter ? (
-                <LetterLink letter={problem.letter} />
+                <LetterLink letter={problem.letter} linked={letterLinks} />
               ) : (
                 problem.purpose && staffCopy.emails.purposes[problem.purpose]
               )}

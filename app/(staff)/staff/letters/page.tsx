@@ -11,11 +11,11 @@ import StaffPage from "../_components/ui/StaffPage";
 export const metadata: Metadata = { title: staffCopy.letters.title };
 
 export default async function LettersPage({ searchParams }: { searchParams: Promise<Partial<LettersSearch>> }) {
-  const { email, permissions } = await requireStaff();
+  const { email, permissions, sessions } = await requireStaff("supporters");
   const { filter, ...search } = lettersSearch(await searchParams);
   const letters = await recentLetters(filter);
   return (
-    <StaffPage nav={<StaffNav email={email} account permissions={permissions} current="letters" />}>
+    <StaffPage nav={<StaffNav email={email} permissions={permissions} sessions={sessions} current="letters" />}>
       <h1>{staffCopy.letters.title}</h1>
       <LetterFilters search={search} />
       <LettersTable letters={letters} />

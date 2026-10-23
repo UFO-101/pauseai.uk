@@ -13,11 +13,11 @@ import StaffPage from "../_components/ui/StaffPage";
 export const metadata: Metadata = { title: staffCopy.supporters.title };
 
 export default async function SupportersPage({ searchParams }: { searchParams: Promise<Partial<SupportersSearch>> }) {
-  const { email, permissions } = await requireStaff("supporters");
+  const { email, permissions, sessions } = await requireStaff("supporters");
   const { filter, ...search } = supportersSearch(await searchParams);
   const page = await listSupporters(filter);
   return (
-    <StaffPage nav={<StaffNav email={email} account permissions={permissions} current="supporters" />}>
+    <StaffPage nav={<StaffNav email={email} permissions={permissions} sessions={sessions} current="supporters" />}>
       <h1>{staffCopy.supporters.title}</h1>
       <ErasedNotice erased={search.erased} />
       <SupporterFilters search={search} />

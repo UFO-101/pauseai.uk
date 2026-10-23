@@ -12,11 +12,11 @@ import StaffPage from "../_components/ui/StaffPage";
 export const metadata: Metadata = { title: staffCopy.changes.title };
 
 export default async function ChangesPage({ searchParams }: { searchParams: Promise<{ page?: string }> }) {
-  const { email, permissions } = await requireStaff("admin");
+  const { email, permissions, sessions } = await requireStaff("admin");
   const page = pageNumber((await searchParams).page);
   const { changes, pages } = await recentChanges(page);
   return (
-    <StaffPage nav={<StaffNav email={email} account permissions={permissions} current="changes" />}>
+    <StaffPage nav={<StaffNav email={email} permissions={permissions} sessions={sessions} current="changes" />}>
       <h1>{staffCopy.changes.title}</h1>
       <ChangesTable changes={changes} airtableTable={PARLIAMENTARIANS_TABLE_URL} />
       <Paging page={page} pages={pages} href={(n) => pagePath("/staff/audit-log", n)} />

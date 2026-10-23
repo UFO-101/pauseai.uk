@@ -1,19 +1,25 @@
 import "server-only";
-import { isStaffEmail, type Permission } from "@/lib/staff-permissions";
+import { ADDED_BY_LOGIN, isStaffEmail, type Permission } from "@/lib/staff-permissions";
 import { logChange } from "./audit";
 import { query, transaction, type Queryable } from "./db";
 
-// Who may use the staff pages (staff_accounts): read on every request by
-// requireStaff(), kept by admins on /staff/accounts, each change in the
-// audit log. Logging in stays open to any pauseai.uk address; without an
-// account, the home page says whom to ask. admin@pauseai.uk starts with an
+// Who uses the staff pages, and with which permissions (staff_accounts):
+// read on every request by requireStaff(), kept by admins on
+// /staff/accounts, each change in the audit log. Any pauseai.uk address can
+// log in, and gets an account with no permissions the first time it does,
+// so the mailbox decides who can log in. admin@pauseai.uk starts with an
 // account and the admin permission (the migration), as an ordinary row.
 
 export type StaffAccount = {
   email: string;
   permissions: Permission[];
+  /** The admin who added it, or ADDED_BY_LOGIN. */
   addedBy: string;
   addedAt: string;
+  lastLoginAt: string | null;
+  lastSeenAt: string | null;
+  /** Sessions not yet expired. */
+  sessions: number;
 };
 
 /** The account for `email`, if it has one. */
@@ -24,11 +30,43 @@ export async function accountOf(email: string): Promise<{ permissions: Permissio
   return row;
 }
 
-/** Every account, by address. */
+/**
+ * Gives `email` an account with no permissions if it has none, as on its
+ * first login, logging it as added by its own login.
+ */
+export async function accountOnLogin(email: string): Promise<void> {
+  const [address] = normalise(email, []);
+  await transaction(async (db) => {
+    const added = await query(
+      `INSERT INTO staff_accounts (email, permissions, added_by) VALUES ($1, '{}', $2)
+       ON CONFLICT (email) DO NOTHING RETURNING email`,
+      [address, ADDED_BY_LOGIN],
+      db,
+    );
+    if (added.length) await logChange(address, "add staff account", { email: address, to: [] }, db);
+  });
+}
+
+/** Every account, by address, with when it last logged in and was seen, and its sessions open. */
 export async function listStaffAccounts(): Promise<StaffAccount[]> {
   return query<StaffAccount>(
-    `SELECT email, permissions, added_by AS "addedBy", added_at AS "addedAt" FROM staff_accounts ORDER BY email`,
+    `SELECT a.email, a.permissions, a.added_by AS "addedBy", a.added_at AS "addedAt",
+       a.last_login_at AS "lastLoginAt", a.last_seen_at AS "lastSeenAt", coalesce(s.sessions, 0) AS sessions
+     FROM staff_accounts a
+     LEFT JOIN (SELECT lower(email) AS email, count(*)::int AS sessions FROM staff_sessions
+                WHERE expires_at > now() GROUP BY lower(email)) s ON s.email = a.email
+     ORDER BY a.email`,
   );
+}
+
+/** Ends every session `email` has, as `by`, logging it when there were any. Returns how many. */
+export async function endStaffSessions(email: string, by: string): Promise<number> {
+  const [address] = normalise(email, []);
+  return transaction(async (db) => {
+    const ended = await query("DELETE FROM staff_sessions WHERE lower(email) = $1 RETURNING 1", [address], db);
+    if (ended.length) await logChange(by, "end staff sessions", { email: address, sessions: ended.length }, db);
+    return ended.length;
+  });
 }
 
 /** The addresses to ask for an account or a permission: every admin. */

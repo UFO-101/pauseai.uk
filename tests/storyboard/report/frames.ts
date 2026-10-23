@@ -20,6 +20,7 @@ export const SECTION_ORDER = [
   "home-events",
   "staff",
   "supporters",
+  "permissions",
   "collateral",
   "consent",
   "mobile-nav",

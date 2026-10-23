@@ -137,8 +137,10 @@ const nextConfig: NextConfig = {
       { source: "/campaigns-v2", destination: `/campaigns/${campaigns[0].slug}`, permanent: true },
       { source: "/campaigns-v2/:path*", destination: "/campaigns/:path*", permanent: true },
       // Staff alerts about bounced letters linked to the blocked emails page
-      // under its first name.
-      { source: "/staff/blocked-addresses", destination: "/staff/blocked-emails", permanent: true },
+      // under its first two names, before it split in two; the letters were
+      // to politicians.
+      { source: "/staff/blocked-addresses", destination: "/staff/politicians/blocked-emails", permanent: true },
+      { source: "/staff/blocked-emails", destination: "/staff/politicians/blocked-emails", permanent: true },
       // The Glasgow local group became the Scotland local group.
       { source: "/glasgow", destination: "/scotland", permanent: true },
       // There's no list of protests yet, so /protests goes to the current one.

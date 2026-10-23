@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { found } from "@/lib/found";
 import { blockOn } from "@/lib/server/email";
-import { recentLetters } from "@/lib/server/letters";
+import { politicianLetters } from "@/lib/server/letters";
 import { PARLIAMENTARIANS_TABLE_URL } from "@/lib/server/outside-services/airtable";
 import { getPolitician, politicianHistory } from "@/lib/server/politicians";
 import { requireStaff } from "@/lib/server/staff-auth";
@@ -22,15 +22,15 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
 }
 
 export default async function PoliticianPage({ params }: Params) {
-  const { email, permissions } = await requireStaff();
+  const { email, permissions, sessions } = await requireStaff();
   const politician = found(await getPolitician(found(politicianId((await params).id))));
   const [block, letters, history] = await Promise.all([
     blockOn(politician.email),
-    recentLetters({ politicianId: politician.id }),
+    politicianLetters(politician.id, permissions),
     politicianHistory(politician.id, politician.email),
   ]);
   return (
-    <StaffPage nav={<StaffNav email={email} account permissions={permissions} current="politicians" />}>
+    <StaffPage nav={<StaffNav email={email} permissions={permissions} sessions={sessions} current="politicians" />}>
       <Breadcrumb href="/staff/politicians">{staffCopy.nav.politicians}</Breadcrumb>
       <PoliticianDetails
         politician={politician}

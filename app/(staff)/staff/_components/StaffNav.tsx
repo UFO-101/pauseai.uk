@@ -6,28 +6,29 @@ import type { Permission } from "@/lib/staff-permissions";
 import { sectionsFor, type StaffPageId } from "@/lib/staff-sections";
 import styles from "./StaffNav.module.css";
 
-/** The pages the navigation can mark as current: the home page, or any page in a group. */
-export type StaffPage = "home" | StaffPageId;
+/** The pages the navigation can mark as current: the home page, your sessions, or any page in a section. */
+export type StaffPage = "home" | "sessions" | StaffPageId;
 
 type Props = {
   /** Who's logged in. Without it, on the login page, just the title. */
   email?: string;
-  /** Whether they have an account. Without one there are no groups to show, only who they are and the way out. */
-  account?: boolean;
-  /** Their permissions, which decide the groups they see. */
+  /** Their permissions, which decide the pages they see. */
   permissions?: Permission[];
+  /** How many sessions they have open: with more than one, a faint link under Log out to the page of them. */
+  sessions?: number;
   current?: StaffPage;
 };
 
 /**
  * The staff interface's navigation: a sidebar with Home, then the pages in
- * groups, the current one marked but still a link, so it's the way back from a page
+ * sections, the current one marked but still a link, so it's the way back from a page
  * under it; who's logged in and the way out; on a phone, a bar with the
- * current page's name opening the same as a dropdown. A group shows only
- * to those with its permission. The pause symbol and name at the top are the
+ * current page's name opening the same as a dropdown. Under Log out, with
+ * more than one session open, a faint link to the page of them. Each page shows
+ * only to those with its permission (lib/staff-sections.ts). The pause symbol and name at the top are the
  * way to the home page.
  */
-export default function StaffNav({ email, account = false, permissions = [], current }: Props) {
+export default function StaffNav({ email, permissions = [], sessions = 1, current }: Props) {
   // The pause symbol and the name: the way home, except at home.
   const mark = (
     <>
@@ -45,7 +46,7 @@ export default function StaffNav({ email, account = false, permissions = [], cur
     );
   if (!email) return <div className={styles.bar}>{title}</div>;
 
-  // Home first, on its own, then the groups; without an account, only home.
+  // Home first, on its own, then the sections.
   const home = (
     <section className={styles.group}>
       <ul>
@@ -57,7 +58,7 @@ export default function StaffNav({ email, account = false, permissions = [], cur
       </ul>
     </section>
   );
-  const groups = (account ? sectionsFor(permissions) : []).map((section) => (
+  const groups = sectionsFor(permissions).map((section) => (
     <section key={section.id} className={styles.group}>
       <h2>{staffCopy.nav.sections[section.id]}</h2>
       <ul>
@@ -72,6 +73,11 @@ export default function StaffNav({ email, account = false, permissions = [], cur
     </section>
   ));
   const who = <span className={styles.who}>{email}</span>;
+  const others = sessions > 1 && (
+    <Link href="/staff/sessions" className={styles.sessions} aria-current={current === "sessions" ? "page" : undefined}>
+      {staffCopy.nav.sessions(sessions)}
+    </Link>
+  );
   return (
     <nav className={styles.nav} aria-label={staffCopy.nav.title}>
       {title}
@@ -86,11 +92,12 @@ export default function StaffNav({ email, account = false, permissions = [], cur
               {staffCopy.nav.logout}
             </Button>
           </form>
+          {others}
         </div>
       </div>
       {/* A phone: a dropdown at the right of the bar, the current page with an arrow. */}
       <details className={styles.menu}>
-        <summary>{current && staffCopy.nav[current]}</summary>
+        <summary>{current && (current === "sessions" ? staffCopy.sessions.title : staffCopy.nav[current])}</summary>
         <div>
           {home}
           {groups}
@@ -101,6 +108,7 @@ export default function StaffNav({ email, account = false, permissions = [], cur
               {staffCopy.nav.logout}
             </button>
           </form>
+          {others}
         </div>
       </details>
     </nav>

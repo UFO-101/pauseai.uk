@@ -13,7 +13,12 @@ export async function GET(request: NextRequest) {
   const result = await redeemLoginLink(token, request.cookies.get(LOGIN_BROWSER_COOKIE)?.value ?? "");
   if ("refused" in result) return NextResponse.redirect(siteUrl(`${LOGIN_PATH}?${result.refused}=1`, request), 303);
   const response = NextResponse.redirect(siteUrl("/staff", request), 303);
-  response.cookies.set(sessionCookie(await createSession(result.email, result.remember), result.remember));
+  response.cookies.set(
+    sessionCookie(
+      await createSession(result.email, result.remember, request.headers.get("user-agent")),
+      result.remember,
+    ),
+  );
   if (result.remember) response.cookies.set(keepCookie());
   response.cookies.delete({ name: LOGIN_BROWSER_COOKIE, path: "/staff" });
   return response;

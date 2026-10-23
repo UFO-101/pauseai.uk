@@ -18,16 +18,16 @@ async function letterOf(params: Params["params"]) {
 }
 
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
-  await requireStaff();
+  await requireStaff("supporters");
   return { title: staffCopy.letters.oneTitle((await letterOf(params)).mpName) };
 }
 
 /** One letter, as its row in the letters list: where a letter is named elsewhere leads here. */
 export default async function LetterPage({ params }: Params) {
-  const { email, permissions } = await requireStaff();
+  const { email, permissions, sessions } = await requireStaff("supporters");
   const letter = await letterOf(params);
   return (
-    <StaffPage nav={<StaffNav email={email} account permissions={permissions} current="letters" />}>
+    <StaffPage nav={<StaffNav email={email} permissions={permissions} sessions={sessions} current="letters" />}>
       <Breadcrumb href="/staff/letters">{staffCopy.nav.letters}</Breadcrumb>
       <h1>{staffCopy.letters.oneTitle(letter.mpName)}</h1>
       <LettersTable letters={[letter]} />

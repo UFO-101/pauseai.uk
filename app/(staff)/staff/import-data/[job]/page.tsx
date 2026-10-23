@@ -37,11 +37,11 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
 
 /** One import or check: what it does, its button, and every run it has made, newest first. */
 export default async function ImportJobRoute({ params }: Params) {
-  const { email, permissions } = await requireStaff();
+  const { email, permissions, sessions } = await requireStaff();
   const job = found(jobBySlug((await params).job));
   const runs = await listRuns(job);
   return (
-    <StaffPage nav={<StaffNav email={email} account permissions={permissions} current="import" />}>
+    <StaffPage nav={<StaffNav email={email} permissions={permissions} sessions={sessions} current="import" />}>
       <ImportJobPage
         job={job}
         runs={runs}

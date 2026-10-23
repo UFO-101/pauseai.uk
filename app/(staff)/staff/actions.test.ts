@@ -17,6 +17,7 @@ import {
   importFromAirtable,
   importLumaNow,
   importMembersNow,
+  endStaffSessionsNow,
   markSigned,
   removeStaffAccountNow,
   saveStaffAccountNow,
@@ -47,8 +48,7 @@ describeWithDatabase("staff Server Actions", () => {
     requestCookies.clear();
     revalidatePath.mockClear();
     requestCookies.set("staff_session", await createSession("jo@pauseai.uk"));
-    // Every action needs an account; the permissions come per test.
-    await saveStaffAccount("jo@pauseai.uk", [], "test");
+    // The session made jo an account, with no permissions; they come per test.
     vi.stubEnv("AIRTABLE_TOKEN", "token");
   });
   afterEach(() => vi.unstubAllEnvs());
@@ -70,6 +70,7 @@ describeWithDatabase("staff Server Actions", () => {
       () => saveStaffAccountNow(form({ email: "jo@pauseai.uk", "permission:admin": "on" })),
       () => eraseSupporterNow(form({ id: "1", reference: "r", confirm: "on" })),
       () => unblockAddress(form({ address: "a@example.org", note: "" })),
+      () => endStaffSessionsNow(form({ email: "jo@pauseai.uk" })),
     ];
     for (const attempt of attempts) expect(await expectRedirect(attempt)).toBe("/staff/login");
     expect(await statusCount()).toBe(0);
@@ -119,7 +120,7 @@ describeWithDatabase("staff Server Actions", () => {
     await saveStaffAccount("jo@pauseai.uk", ["admin"], "a");
     expect(await expectRedirect(save)).toBe("/staff/accounts");
     expect(await query("SELECT email, permissions, added_by FROM staff_accounts ORDER BY email")).toEqual([
-      { email: "jo@pauseai.uk", permissions: ["admin"], added_by: "test" },
+      { email: "jo@pauseai.uk", permissions: ["admin"], added_by: "login" },
       { email: "sam@pauseai.uk", permissions: ["supporters"], added_by: "jo@pauseai.uk" },
     ]);
     expect(revalidatePath).toHaveBeenCalledWith("/staff/accounts");
@@ -234,8 +235,28 @@ describeWithDatabase("staff Server Actions", () => {
     expect(revalidatePath).toHaveBeenCalledWith("/staff/import-data");
   });
 
+  it("endStaffSessionsNow ends an account's sessions, as an admin, going back to the page", async () => {
+    await createSession("sam@pauseai.uk");
+    const end = () => endStaffSessionsNow(form({ email: "sam@pauseai.uk" }));
+    expect(await expectRedirect(end)).toBe("/staff");
+    expect(await query("SELECT count(*)::int AS n FROM staff_sessions WHERE email = 'sam@pauseai.uk'")).toEqual([
+      { n: 1 },
+    ]);
+    await saveStaffAccount("jo@pauseai.uk", ["admin"], "a");
+    expect(await expectRedirect(end)).toBe("/staff/accounts");
+    expect(await query("SELECT count(*)::int AS n FROM staff_sessions WHERE email = 'sam@pauseai.uk'")).toEqual([
+      { n: 0 },
+    ]);
+    // A bad form does nothing.
+    await endStaffSessionsNow(form({ email: "nobody" }));
+    expect(await query("SELECT actor, action FROM audit_log WHERE action = 'end staff sessions'")).toEqual([
+      { actor: "jo@pauseai.uk", action: "end staff sessions" },
+    ]);
+  });
+
   it("unblockAddress unblocks an address, with the note, and refreshes every staff page", async () => {
     vi.stubEnv("POSTMARK_SERVER_TOKEN", "server-token");
+    await saveStaffAccount("jo@pauseai.uk", ["supporters"], "test");
     const bounce = { address: "a@example.org", messageId: null, kind: "hard" as const, reason: "", canReset: true };
     await recordProblem(bounce);
     await unblockAddress(form({ address: "nobody", note: "Fixed" }));
@@ -250,8 +271,20 @@ describeWithDatabase("staff Server Actions", () => {
     expect(revalidatePath).toHaveBeenCalledWith("/staff", "layout");
   });
 
+  it("unblockAddress unblocks only a politician's address without supporters", async () => {
+    vi.stubEnv("POSTMARK_SERVER_TOKEN", "server-token");
+    await addTestPolitician({ email: "Polly@example.org" });
+    for (const address of ["polly@example.org", "jane@example.com"]) {
+      await recordProblem({ address, messageId: null, kind: "hard", reason: "", canReset: true });
+      await unblockAddress(form({ address, note: "Fixed" }));
+    }
+    expect(await isBlocked("polly@example.org")).toBe(false);
+    expect(await isBlocked("jane@example.com")).toBe(true);
+  });
+
   it("unblockAddress leaves the address blocked, and logs why, if Postmark can't be reached", async () => {
     vi.stubEnv("POSTMARK_SERVER_TOKEN", "server-token");
+    await saveStaffAccount("jo@pauseai.uk", ["supporters"], "test");
     const error = vi.spyOn(console, "error").mockImplementation(() => {});
     server.use(
       http.post("https://api.postmarkapp.com/message-streams/*", () => new HttpResponse(null, { status: 500 })),

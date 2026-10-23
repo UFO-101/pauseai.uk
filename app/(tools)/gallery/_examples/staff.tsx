@@ -45,9 +45,10 @@ import KeepSignedIn from "@/app/(staff)/staff/_components/KeepSignedIn";
 import SortHeading from "@/app/(staff)/staff/_components/SortHeading";
 import Table from "@/components/ui/Table";
 import StaffDashboard from "@/app/(staff)/staff/_components/StaffDashboard";
+import StaffHome from "@/app/(staff)/staff/_components/StaffHome";
+import StaffSessions from "@/app/(staff)/staff/_components/StaffSessions";
 import { exampleDashboard, exampleQuietDashboard } from "@/app/(staff)/staff/_components/StaffDashboard.examples";
 import Sparkline from "@/app/(staff)/staff/_components/Sparkline";
-import StaffHome from "@/app/(staff)/staff/_components/StaffHome";
 import SupporterBadges from "@/app/(staff)/staff/_components/SupporterBadges";
 import SubscriptionBadges from "@/app/(staff)/staff/_components/SubscriptionBadges";
 import EmailPermissionTiles from "@/app/(staff)/staff/_components/EmailPermissionTiles";
@@ -90,10 +91,12 @@ const [pm] = campaigns;
 // Every page the navigation can mark as current, so a new one is a type error until it's here.
 const PAGES: Record<StaffPageName, true> = {
   home: true,
+  sessions: true,
   supporters: true,
-  politicians: true,
   letters: true,
-  emails: true,
+  supporterEmails: true,
+  politicians: true,
+  mpEmails: true,
   import: true,
   changes: true,
   accounts: true,
@@ -206,10 +209,7 @@ export const staff: Group = {
         {
           label: "With the navigation beside it",
           render: () => (
-            <StaffPage
-              as="div"
-              nav={<StaffNav email="jo@pauseai.uk" account permissions={["admin"]} current="letters" />}
-            >
+            <StaffPage as="div" nav={<StaffNav email="jo@pauseai.uk" permissions={["admin"]} current="letters" />}>
               <h1>Letters</h1>
               <p>The page takes the width beside the sidebar.</p>
             </StaffPage>
@@ -344,18 +344,26 @@ export const staff: Group = {
           ),
         },
         {
-          label: "For someone with no account: who they are and the way out",
+          label: "For someone without permissions: the pages any account opens",
           render: () => (
             <StaffPage as="div">
-              <StaffNav email="jo@pauseai.uk" current="home" />
+              <StaffNav email="jo@pauseai.uk" permissions={[]} current="politicians" />
             </StaffPage>
           ),
         },
         {
-          label: "For someone without the admin permission: the open groups",
+          label: "With the supporters permission",
           render: () => (
             <StaffPage as="div">
-              <StaffNav email="jo@pauseai.uk" account permissions={[]} current="politicians" />
+              <StaffNav email="jo@pauseai.uk" permissions={["supporters"]} current="letters" />
+            </StaffPage>
+          ),
+        },
+        {
+          label: "Logged in on three devices: the faint link under Log out",
+          render: () => (
+            <StaffPage as="div">
+              <StaffNav email="jo@pauseai.uk" permissions={[]} sessions={3} current="home" />
             </StaffPage>
           ),
         },
@@ -649,12 +657,7 @@ export const staff: Group = {
           label: "For an admin: the dashboard",
           render: () => (
             <StaffPage as="div">
-              <StaffHome
-                account
-                permissions={["admin", "supporters"]}
-                admins={["admin@pauseai.uk"]}
-                dashboard={exampleDashboard}
-              />
+              <StaffHome permissions={["admin", "supporters"]} dashboard={exampleDashboard} />
             </StaffPage>
           ),
         },
@@ -662,20 +665,53 @@ export const staff: Group = {
           label: "For someone with no permissions: the dashboard, its supporter tiles not links",
           render: () => (
             <StaffPage as="div">
-              <StaffHome
-                account
-                permissions={[]}
-                admins={["admin@pauseai.uk", "jo@pauseai.uk"]}
-                dashboard={exampleDashboard}
-              />
+              <StaffHome permissions={[]} dashboard={exampleDashboard} />
             </StaffPage>
           ),
         },
+      ],
+    },
+    {
+      name: "StaffSessions",
+      file: "app/(staff)/staff/_components/StaffSessions.tsx",
+      variants: [
         {
-          label: "For someone with no account: whom to ask",
+          label: "Three sessions: this browser's, a kept one on a phone, and one from a browser we can't name",
           render: () => (
             <StaffPage as="div">
-              <StaffHome account={false} permissions={[]} admins={["admin@pauseai.uk"]} />
+              <StaffSessions
+                sessions={[
+                  {
+                    id: "session-1",
+                    userAgent:
+                      "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.1 Safari/605.1.15",
+
+                    startedAt: "2026-10-22T09:00:00Z",
+                    expiresAt: "2026-10-23T09:00:00Z",
+                    remember: false,
+                    current: true,
+                  },
+                  {
+                    id: "session-2",
+                    userAgent:
+                      "Mozilla/5.0 (iPhone; CPU iPhone OS 18_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/130.0.6723.90 Mobile/15E148 Safari/604.1",
+
+                    startedAt: "2026-10-20T08:00:00Z",
+                    expiresAt: "2026-11-21T08:00:00Z",
+                    remember: true,
+                    current: false,
+                  },
+                  {
+                    id: "session-3",
+                    userAgent: null,
+
+                    startedAt: "2026-10-19T18:30:00Z",
+                    expiresAt: "2026-10-20T18:30:00Z",
+                    remember: false,
+                    current: false,
+                  },
+                ]}
+              />
             </StaffPage>
           ),
         },
@@ -1020,6 +1056,14 @@ export const staff: Group = {
             </StaffPage>
           ),
         },
+        {
+          label: "Without the supporters permission: letters without who wrote them",
+          render: () => (
+            <StaffPage as="div">
+              <PoliticianDetailsExample fromAirtable senders={false} />
+            </StaffPage>
+          ),
+        },
       ],
     },
     {
@@ -1100,6 +1144,14 @@ export const staff: Group = {
           ),
         },
         {
+          label: "Without the supporters permission: the letter named, not linked",
+          render: () => (
+            <StaffPage as="div">
+              <EmailBlocksTableExample letterLinks={false} />
+            </StaffPage>
+          ),
+        },
+        {
           label: "None",
           render: () => (
             <StaffPage as="div">
@@ -1131,8 +1183,8 @@ export const staff: Group = {
           label: "All, and complaints only",
           render: () => (
             <StaffPage as="div">
-              <EmailBlockFilters kind="" />
-              <EmailBlockFilters kind="complaint" />
+              <EmailBlockFilters kind="" action="/staff/politicians/blocked-emails" />
+              <EmailBlockFilters kind="complaint" action="/staff/politicians/blocked-emails" />
             </StaffPage>
           ),
         },
@@ -1146,7 +1198,15 @@ export const staff: Group = {
           label: "A letter's hard bounce, a forwarded reply's soft one, and a complaint about an email we didn't log",
           render: () => (
             <StaffPage as="div">
-              <EmailProblemsTable problems={exampleProblems} />
+              <EmailProblemsTable problems={exampleProblems} letterLinks />
+            </StaffPage>
+          ),
+        },
+        {
+          label: "Without the supporters permission: the letter named, not linked",
+          render: () => (
+            <StaffPage as="div">
+              <EmailProblemsTable problems={exampleProblems} letterLinks={false} />
             </StaffPage>
           ),
         },
@@ -1154,7 +1214,7 @@ export const staff: Group = {
           label: "None",
           render: () => (
             <StaffPage as="div">
-              <EmailProblemsTable problems={[]} />
+              <EmailProblemsTable problems={[]} letterLinks />
             </StaffPage>
           ),
         },
@@ -1433,7 +1493,15 @@ export const staff: Group = {
           label: "A letter, by whom it was to",
           render: () => (
             <StaffPage as="div">
-              <LetterLink letter={{ id: 17, to: "Bouncy McTestface MP" }} />
+              <LetterLink letter={{ id: 17, to: "Bouncy McTestface MP" }} linked />
+            </StaffPage>
+          ),
+        },
+        {
+          label: "Not linked, for staff without the supporters permission",
+          render: () => (
+            <StaffPage as="div">
+              <LetterLink letter={{ id: 17, to: "Bouncy McTestface MP" }} linked={false} />
             </StaffPage>
           ),
         },

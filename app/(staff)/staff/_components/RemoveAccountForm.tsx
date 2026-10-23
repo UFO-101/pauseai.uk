@@ -17,7 +17,7 @@ export default function RemoveAccountForm({
   return (
     <form action={remove} aria-label={`${staffCopy.accounts.remove}: ${email}`}>
       <input type="hidden" name="email" value={email} />
-      <SubmitButton variant="ghost" size="small" disabled={disabled}>
+      <SubmitButton variant="ghost" size="small" fit disabled={disabled}>
         {staffCopy.accounts.remove}
       </SubmitButton>
     </form>

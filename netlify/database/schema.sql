@@ -500,6 +500,8 @@ CREATE TABLE public.staff_accounts (
     permissions text[] DEFAULT '{}'::text[] NOT NULL,
     added_by text NOT NULL,
     added_at timestamp with time zone DEFAULT now() NOT NULL,
+    last_login_at timestamp with time zone,
+    last_seen_at timestamp with time zone,
     CONSTRAINT staff_accounts_email_check CHECK ((email = lower(email))),
     CONSTRAINT staff_accounts_email_pauseai CHECK ((email ~ '^[^@[:space:]]+@pauseai\.uk$'::text)),
     CONSTRAINT staff_accounts_permissions_check CHECK ((permissions <@ ARRAY['admin'::text, 'supporters'::text]))
@@ -528,7 +530,8 @@ CREATE TABLE public.staff_sessions (
     email text NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     expires_at timestamp with time zone NOT NULL,
-    remember boolean DEFAULT false NOT NULL
+    remember boolean DEFAULT false NOT NULL,
+    user_agent text
 );
 
 --

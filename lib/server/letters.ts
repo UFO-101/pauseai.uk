@@ -1,4 +1,5 @@
 import "server-only";
+import type { Permission } from "@/lib/staff-permissions";
 import type { LetterFilter } from "@/lib/staff-search";
 import { query } from "./db";
 
@@ -62,4 +63,30 @@ export async function recentLetters({
       letterId ?? null,
     ],
   );
+}
+
+/** A letter on an MP's page for staff without `supporters`: what happened to it, and nothing of who wrote it. */
+export type UnsignedLetter = Pick<LetterSummary, "id" | "campaign" | "status" | "createdAt" | "repliedAt">;
+
+/** An MP's letters: with their senders, or without. */
+export type PoliticianLetters =
+  { senders: true; letters: LetterSummary[] } | { senders: false; letters: UnsignedLetter[] };
+
+/** The letters to a politician, newest first, selecting nothing of their senders, so none reach the page. */
+async function unsignedLetters(politicianId: number, limit = 200): Promise<UnsignedLetter[]> {
+  return query<UnsignedLetter>(
+    `SELECT id::int AS id, campaign, status, created_at AS "createdAt", replied_at AS "repliedAt"
+     FROM letters WHERE politician_id = $1 ORDER BY created_at DESC, id DESC LIMIT $2`,
+    [politicianId, limit],
+  );
+}
+
+/** The letters to a politician, for a staff member: who sent them only with `supporters`. */
+export async function politicianLetters(
+  politicianId: number,
+  permissions: readonly Permission[],
+): Promise<PoliticianLetters> {
+  return permissions.includes("supporters")
+    ? { senders: true, letters: await recentLetters({ politicianId }) }
+    : { senders: false, letters: await unsignedLetters(politicianId) };
 }

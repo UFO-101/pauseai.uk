@@ -8,7 +8,7 @@ import { type ImportJob, importPath } from "@/lib/import-runs";
 import { now } from "@/lib/now";
 import { eraseFrom, idFrom, permissionsFrom, politicianDetailsFrom, signedFrom, unblockFrom } from "@/lib/staff-forms";
 import { importControlAiLetter } from "@/lib/server/controlai-import";
-import { unblock } from "@/lib/server/email";
+import { isPoliticianAddress, unblock } from "@/lib/server/email";
 import { eraseSupporter } from "@/lib/server/erasure";
 import { importLuma } from "@/lib/server/luma-import";
 import { importMembers } from "@/lib/server/members-import";
@@ -17,7 +17,12 @@ import { decideHeldSync, syncMps } from "@/lib/server/mp-sync";
 import { setStatus, updatePolitician } from "@/lib/server/politicians";
 import { importSignatories } from "@/lib/server/signatory-import";
 import { requireStaff } from "@/lib/server/staff-auth";
-import { type AccountChange, removeStaffAccount, saveStaffAccount } from "@/lib/server/staff-accounts";
+import {
+  type AccountChange,
+  endStaffSessions,
+  removeStaffAccount,
+  saveStaffAccount,
+} from "@/lib/server/staff-accounts";
 
 /** The button in the politicians list: marks one as signed today, or as not signed. */
 export async function markSigned(form: FormData): Promise<void> {
@@ -105,13 +110,15 @@ export async function decideSync(form: FormData): Promise<void> {
 }
 
 /**
- * Unblocks an address, on the addresses page or a politician's. If the
- * provider can't be reached, it's logged and the address stays blocked.
+ * Unblocks an address, on either blocked emails page or a politician's.
+ * Any address but a politician's needs `supporters`, as its page does. If
+ * the provider can't be reached, it's logged and the address stays blocked.
  */
 export async function unblockAddress(form: FormData): Promise<void> {
-  const { email } = await requireStaff();
+  const { email, permissions } = await requireStaff();
   const parsed = unblockFrom(form);
   if (!parsed) return;
+  if (!permissions.includes("supporters") && !(await isPoliticianAddress(parsed.address))) return;
   try {
     await unblock(parsed.address, email, parsed.note);
   } catch (error) {
@@ -146,6 +153,15 @@ export async function removeStaffAccountNow(form: FormData): Promise<void> {
   const parsed = permissionsFrom(form);
   if (!parsed) return;
   accountsPage(await removeStaffAccount(parsed.email, email));
+}
+
+/** The accounts page: ends every session of an account, as the admin; their own included, which logs them out. */
+export async function endStaffSessionsNow(form: FormData): Promise<void> {
+  const { email } = await requireStaff("admin");
+  const parsed = permissionsFrom(form);
+  if (!parsed) return;
+  await endStaffSessions(parsed.email, email);
+  accountsPage("changed");
 }
 
 /**

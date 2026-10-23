@@ -375,7 +375,7 @@ async function sentLetterId(page: Page, database: string, sender: string, mp = T
   await fillLetter(page, sender);
   await sendLetter(page, mp);
   await page.goto(`${BASE}/staff/letters`);
-  if (page.url().endsWith("/staff/login")) await logIn(page, database);
+  if (page.url().endsWith("/staff/login")) await logIn(page, database, ["supporters"]);
   await page.goto(`${BASE}/staff/letters`);
   const row = page.getByRole("row").filter({ hasText: sender });
   await expect(row).toContainText(staffCopy.letters.status.sent);
@@ -422,10 +422,10 @@ test("a letter that bounces: staff are emailed, and the address is blocked", asy
   const alert = newestEmail(
     (email) => email.To === STAFF_INBOX && email.Subject === staffCopy.alert.subject(bouncy.name),
   );
-  expect(alert?.TextBody).toContain(`${BASE}/staff/blocked-emails`);
+  expect(alert?.TextBody).toContain(`${BASE}/staff/politicians/blocked-emails`);
   await emailFrame(page, alert!, "the email staff get about it");
 
-  await page.goto(`${BASE}/staff/blocked-emails`);
+  await page.goto(`${BASE}/staff/politicians/blocked-emails`);
   // The blocked addresses, above the recent problems.
   const blocked = page.getByRole("table").first().getByRole("row").filter({ hasText: BOUNCY_ADDRESS });
   await expect(blocked.getByRole("link", { name: bouncy.name, exact: true })).toBeVisible();
@@ -549,28 +549,18 @@ test("an MP import that would change too many is held, then discarded, and then 
   await frame(page, "the audit log: who discarded and who applied");
 });
 
-test("without an account, a staff member sees only whom to ask; an admin adds, changes and removes accounts", async ({
+test("a first login makes an account with no permissions; an admin adds, changes and removes accounts", async ({
   page,
   flowDatabase,
 }, testInfo) => {
   const colleague = `colleague-${testInfo.testId.replace(/\W/g, "").slice(-8)}@pauseai.uk`;
-  // Logged in with no account: the home page says so, and every other page comes back here.
+  // Logged in for the first time, with no account: one is made, with no permissions, so the dashboard and the pages any account opens.
   await logInAsStaff(page, BASE, staffEmail());
-  await expect(page.getByText(staffCopy.home.noAccount, { exact: false })).toBeVisible();
-  await expect(page.getByText(staffCopy.home.ask("admin@pauseai.uk"), { exact: false })).toBeVisible();
-  await expect(page.getByRole("link", { name: staffCopy.nav.politicians })).toHaveCount(0);
-  await frame(page, "the staff home for someone with no account");
-  await page.goto(`${BASE}/staff/politicians`);
-  await expect(page).toHaveURL(`${BASE}/staff`);
-
-  // With an account and no permissions: the dashboard and the ordinary pages.
-  addStaffAccount(flowDatabase, staffEmail());
-  await page.goto(`${BASE}/staff`);
   await expect(page.getByRole("heading", { level: 2, name: staffCopy.home.dashboard.sections.mps })).toBeVisible();
   // The sidebar (hidden behind the bar's menu on a phone, so read from the DOM) offers the ordinary pages and not the admin's.
   await expect(page.locator('nav a[href="/staff/politicians"]').first()).toBeAttached();
   await expect(page.locator('nav a[href="/staff/accounts"]')).toHaveCount(0);
-  await frame(page, "the staff home with an account and no permissions");
+  await frame(page, "the staff home after a first login: an account with no permissions");
   // The dashboard over a longer window, from the links under the day.
   await page.getByRole("link", { name: staffCopy.home.dashboard.window(30) }).click();
   await expect(page).toHaveURL(`${BASE}/staff?days=30`);
@@ -607,7 +597,11 @@ test("without an account, a staff member sees only whom to ask; an admin adds, c
   await page.goto(`${BASE}/staff/audit-log`);
   await expect(page.getByRole("cell", { name: "add staff account" }).first()).toBeVisible();
   await expect(page.getByRole("cell", { name: "remove staff account" })).toBeVisible();
-  await frame(page, "the audit log: added, changed and removed");
+  // The first login's account, added by the login itself.
+  await expect(
+    page.getByRole("row").filter({ hasText: "add staff account" }).filter({ hasText: staffEmail() }).first(),
+  ).toBeVisible();
+  await frame(page, "the audit log: added on first login, then added, changed and removed");
 });
 
 test("staff pages are kept out of search and the sitemap", async ({ page, request }) => {

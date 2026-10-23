@@ -16,14 +16,18 @@
 
 -- ---------------------------------------------------------------- staff
 
--- The migration's admin; someone who may see supporters, with a kept
--- session; someone with an account alone; and someone removed last month.
-INSERT INTO staff_accounts (email, permissions, added_by, added_at) VALUES
-  ('jo@pauseai.uk', '{supporters}', 'admin@pauseai.uk', now() - interval '40 days'),
-  ('sam@pauseai.uk', '{}', 'admin@pauseai.uk', now() - interval '6 days');
-INSERT INTO staff_sessions (token_hash, email, created_at, expires_at, remember) VALUES
-  ('seed-session-jo-kept', 'jo@pauseai.uk', now() - interval '3 days', now() + interval '27 days', true),
-  ('seed-session-jo-old', 'jo@pauseai.uk', now() - interval '20 days', now() - interval '19 days', false);
+-- The migration's admin; someone who may see supporters, logged in on two
+-- devices, one session kept; someone with an account alone, who has never
+-- logged in; and someone removed last month.
+INSERT INTO staff_accounts (email, permissions, added_by, added_at, last_login_at, last_seen_at) VALUES
+  ('jo@pauseai.uk', '{supporters}', 'admin@pauseai.uk', now() - interval '40 days', now() - interval '3 hours', now() - interval '20 minutes'),
+  ('sam@pauseai.uk', '{}', 'admin@pauseai.uk', now() - interval '6 days', NULL, NULL);
+INSERT INTO staff_sessions (token_hash, email, created_at, expires_at, remember, user_agent) VALUES
+  ('seed-session-jo-kept', 'jo@pauseai.uk', now() - interval '3 days', now() + interval '27 days', true,
+   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.1 Safari/605.1.15'),
+  ('seed-session-jo-phone', 'jo@pauseai.uk', now() - interval '3 hours', now() + interval '21 hours', false,
+   'Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Mobile Safari/537.36'),
+  ('seed-session-jo-old', 'jo@pauseai.uk', now() - interval '20 days', now() - interval '19 days', false, NULL);
 INSERT INTO staff_login_links (token_hash, email, browser_hash, created_at, expires_at, used_at, remember) VALUES
   ('seed-link-used', 'jo@pauseai.uk', 'seed-browser', now() - interval '3 days', now() - interval '3 days' + interval '15 minutes', now() - interval '3 days' + interval '2 minutes', true),
   ('seed-link-expired', 'sam@pauseai.uk', 'seed-browser', now() - interval '1 day', now() - interval '1 day' + interval '15 minutes', NULL, false);

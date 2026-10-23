@@ -1,7 +1,7 @@
 import { expect, it } from "vitest";
 import { addTestMp, describeWithDatabase, useTestDatabase } from "@/tests/database";
 import { query } from "./db";
-import { recentLetters } from "./letters";
+import { politicianLetters, recentLetters } from "./letters";
 
 describeWithDatabase("recentLetters", () => {
   useTestDatabase();
@@ -73,5 +73,37 @@ describeWithDatabase("recentLetters", () => {
     expect(await ids({ supporterId: 1 })).toEqual([1]);
     expect(await ids({ supporterId: 2 })).toEqual([]);
     expect(await ids({ letterId: 1 })).toEqual([1]);
+  });
+});
+
+describeWithDatabase("politicianLetters", () => {
+  useTestDatabase();
+
+  it("gives an MP's letters with their senders only to staff with supporters, and selects nothing of them otherwise", async () => {
+    const mp = await addTestMp();
+    await query(
+      `INSERT INTO letters (campaign, politician_id, sender_name, sender_email, sender_address, sender_postcode, contact_consent, subject, reply_hash, status, replied_at)
+       VALUES ('regulate-letter-pm', $1, 'Jane', 'jane@example.com', 'x', 'ZZ9 9ZZ', false, 'S', 'a', 'sent', now())`,
+      [mp],
+    );
+    const withSenders = await politicianLetters(mp, ["supporters"]);
+    expect(withSenders.senders).toBe(true);
+    expect(withSenders.letters).toMatchObject([{ id: 1, senderName: "Jane", senderEmail: "jane@example.com" }]);
+
+    const without = await politicianLetters(mp, ["admin"]);
+    expect(without).toEqual({
+      senders: false,
+      letters: [
+        {
+          id: 1,
+          campaign: "regulate-letter-pm",
+          status: "sent",
+          createdAt: expect.any(Date),
+          repliedAt: expect.any(Date),
+        },
+      ],
+    });
+    expect(JSON.stringify(without)).not.toMatch(/Jane|jane@|ZZ9/);
+    expect(await politicianLetters(mp + 1, [])).toEqual({ senders: false, letters: [] });
   });
 });

@@ -295,6 +295,14 @@ is that thing's state: an import job's newest run, a campaign's status, a
 mailing list's answer. A strip that's an answer, not a warning, leaves out
 the icon (`icon={false}`).
 
+**Tables** (`components/ui/Table`). A cell's content sits at its top, so
+the lines of text in a row start level, however many lines each cell
+wraps to. A table whose rows hold buttons, checkboxes or fields is
+`align="middle"`: a control is taller than a line of text, so at the top
+the text beside it sits higher than the button's label and the row looks
+uneven. Centred, the text lines up with the control's middle (the
+accounts table, your sessions).
+
 The gallery's staff group shows each piece and each page built from them.
 
 ---

@@ -221,7 +221,8 @@ your machine. You need no keys:
 4. The letter is sent: it's the newest `.eml` file in `tmp/outbox/`, with its PDFs
    attached. Open it in a mail app or a text editor.
 
-`/staff/letters` shows it, once you've logged in.
+`/staff/letters` shows it, once you've logged in with the `supporters`
+permission.
 
 To see a campaign's page move on to the next, look up ZZ99ZS instead: that
 MP has already signed, so the letter to the PM moves on to the bill. ZZ99ZN

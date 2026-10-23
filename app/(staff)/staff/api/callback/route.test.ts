@@ -3,6 +3,7 @@ import { http, HttpResponse } from "msw";
 import { NextRequest } from "next/server";
 import { server } from "@/tests/fixtures/msw";
 import { sessionEmail } from "@/lib/server/staff-auth";
+import { accountOf } from "@/lib/server/staff-accounts";
 import { loginBrowser, sendLoginLink } from "@/lib/server/staff-login";
 import { describeWithDatabase, useTestDatabase } from "@/tests/database";
 import { GET } from "./route";
@@ -42,7 +43,7 @@ const setsSession = (res: Response) => res.headers.getSetCookie().some((c) => c.
 describeWithDatabase("GET /staff/api/callback", () => {
   useTestDatabase();
 
-  it("starts a session for a current link opened in the browser that asked, and goes to /staff", async () => {
+  it("starts a session for a current link opened in the browser that asked, with an account, and goes to /staff", async () => {
     const res = await open(await linkToken());
 
     expect(res.status).toBe(303);
@@ -56,6 +57,8 @@ describeWithDatabase("GET /staff/api/callback", () => {
     expect(session).not.toMatch(/Max-Age/);
     expect(res.headers.getSetCookie().find((c) => c.startsWith("staff_keep="))).toBeUndefined();
     expect(await sessionEmail(session.split(";")[0].split("=")[1])).toBe("jo@pauseai.uk");
+    // Their first login, so it gave them an account with no permissions.
+    expect(await accountOf("jo@pauseai.uk")).toEqual({ permissions: [] });
     // The browser's login cookie has done its job.
     expect(res.headers.getSetCookie().find((c) => c.startsWith("staff_login="))).toMatch(
       /^staff_login=; Path=\/staff; .*(Max-Age=0|Expires=Thu, 01 Jan 1970)/,

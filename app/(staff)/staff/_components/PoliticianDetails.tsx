@@ -9,7 +9,7 @@ import { FieldChanges } from "./AuditDetail";
 import type { FieldChange } from "@/lib/field-changes";
 import { importPath } from "@/lib/import-runs";
 import type { EmailBlock } from "@/lib/server/email";
-import type { LetterSummary } from "@/lib/server/letters";
+import type { LetterSummary, PoliticianLetters, UnsignedLetter } from "@/lib/server/letters";
 import type { Politician, PoliticianChange } from "@/lib/server/politicians";
 import { staffDate, staffTime } from "@/lib/staff-time";
 import styles from "./Details.module.css";
@@ -53,39 +53,57 @@ function Sender({ letter }: { letter: LetterSummary }) {
   );
 }
 
+/** A letter without its sender: its campaign, and how it ended, as words, not a link to the letter. */
+function Unsigned({ letter, status }: { letter: UnsignedLetter; status: boolean }) {
+  return (
+    <Muted>
+      {" · "}
+      <CampaignName slug={letter.campaign} />
+      {status && <> · {staffCopy.letters.status[letter.status] ?? letter.status}</>}
+    </Muted>
+  );
+}
+
 /**
- * The letters as history: each written, with its status linked to the
- * letter's page, and each answered, as its own line.
+ * The letters as history: each written, and each answered, as its own
+ * line. With their senders, each names who wrote it, its status linked to
+ * the letter's page; without, only the campaign and the status.
  */
-function letterEntries(letters: LetterSummary[]): Entry[] {
-  return letters.flatMap((letter) => [
-    {
-      key: `letter-${letter.id}`,
-      at: letter.createdAt,
-      what: (
+function letterEntries({ senders, letters }: PoliticianLetters): Entry[] {
+  const lines = (letter: LetterSummary | UnsignedLetter, written: ReactNode, replied: ReactNode): Entry[] => [
+    { key: `letter-${letter.id}`, at: letter.createdAt, what: written },
+    ...(letter.repliedAt ? [{ key: `replied-${letter.id}`, at: letter.repliedAt, what: replied }] : []),
+  ];
+  if (!senders) {
+    return letters.flatMap((letter) =>
+      lines(
+        letter,
         <>
-          {copy.history.letter} <Sender letter={letter} />
-          <Muted>
-            {" · "}
-            <Link href={`/staff/letters/${letter.id}`}>{staffCopy.letters.status[letter.status] ?? letter.status}</Link>
-          </Muted>
-        </>
+          {copy.history.unsignedLetter}
+          <Unsigned letter={letter} status />
+        </>,
+        <>
+          {copy.history["unsigned-letter-replied"]}
+          <Unsigned letter={letter} status={false} />
+        </>,
       ),
-    },
-    ...(letter.repliedAt
-      ? [
-          {
-            key: `replied-${letter.id}`,
-            at: letter.repliedAt,
-            what: (
-              <>
-                {copy.history["letter-replied"]} <Sender letter={letter} />
-              </>
-            ),
-          },
-        ]
-      : []),
-  ]);
+    );
+  }
+  return letters.flatMap((letter) =>
+    lines(
+      letter,
+      <>
+        {copy.history.letter} <Sender letter={letter} />
+        <Muted>
+          {" · "}
+          <Link href={`/staff/letters/${letter.id}`}>{staffCopy.letters.status[letter.status] ?? letter.status}</Link>
+        </Muted>
+      </>,
+      <>
+        {copy.history["letter-replied"]} <Sender letter={letter} />
+      </>,
+    ),
+  );
 }
 
 /** What an entry of the audit log about them says, beyond its kind: the status, the note, the reason. */
@@ -205,7 +223,8 @@ function CampaignRow({
  * card of their status for each campaign, with the button to change it
  * for one staff record (ui/Grid); if their address is blocked, why, and a way to unblock it; one
  * history of the letters written to them, the replies, and everything the
- * audit log says about them, newest first; and at the foot, the form to
+ * audit log says about them, newest first, the letters' senders only when
+ * it's given them; and at the foot, the form to
  * edit a signer the policy team added. Airtable's MPs are edited there, their
  * source linking to their record, and the test MPs not at all.
  */
@@ -225,7 +244,8 @@ export default function PoliticianDetails({
   markSigned: (form: FormData) => void | Promise<void>;
   block?: EmailBlock;
   unblock: (form: FormData) => void | Promise<void>;
-  letters: LetterSummary[];
+  /** Their letters, with who sent each only for staff with `supporters`. */
+  letters: PoliticianLetters;
   history: PoliticianChange[];
   /** Airtable's table of MPs, which the server knows; an MP's record there is under it. */
   airtableTable: string;

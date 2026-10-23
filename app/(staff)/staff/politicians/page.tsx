@@ -12,11 +12,11 @@ type Search = { q?: string; house?: string; campaign?: string; email?: string; s
 export const metadata: Metadata = { title: staffCopy.politicians.title };
 
 export default async function PoliticiansPage({ searchParams }: { searchParams: Promise<Search> }) {
-  const { email, permissions } = await requireStaff();
+  const { email, permissions, sessions } = await requireStaff();
   const { q, house, campaign, email: emailFilter, sort, dir, filter } = politiciansSearch(await searchParams);
   const politicians = await listPoliticians(filter);
   return (
-    <StaffPage nav={<StaffNav email={email} account permissions={permissions} current="politicians" />}>
+    <StaffPage nav={<StaffNav email={email} permissions={permissions} sessions={sessions} current="politicians" />}>
       <h1>{staffCopy.politicians.title}</h1>
       <PoliticianFilters search={q} house={house} campaign={campaign} email={emailFilter} />
       <PoliticianTable politicians={politicians} search={{ q, house, campaign, email: emailFilter, sort, dir }} />

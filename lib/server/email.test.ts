@@ -8,6 +8,7 @@ import {
   bareAddress,
   blockOn,
   isBlocked,
+  isPoliticianAddress,
   listBlocks,
   recentProblems,
   recordProblem,
@@ -123,7 +124,7 @@ describeWithDatabase("recordProblem", () => {
     expect(await recordProblem({ ...BOUNCE, kind: "complaint", canReset: true })).toBe(true);
     expect(await recordProblem(BOUNCE)).toBe(false);
     expect(await recordProblem({ ...BOUNCE, kind: "complaint" })).toBe(false);
-    expect(await listBlocks()).toMatchObject([{ kind: "complaint", canReset: false }]);
+    expect(await listBlocks("others")).toMatchObject([{ kind: "complaint", canReset: false }]);
   });
 });
 
@@ -226,31 +227,45 @@ describeWithDatabase("listBlocks, blockOn and recentProblems", () => {
        (now() + interval '1 minute', 'letter', 'test-mp@example.org', 'refused')`,
     );
 
-    const blocks = await listBlocks();
-    expect(blocks.map((b) => b.address)).toEqual(["other@example.org", "test-mp@example.org"]);
-    expect(blocks[1]).toEqual({
-      address: "test-mp@example.org",
-      kind: "hard",
-      reason: "Unknown user",
-      since: expect.any(Date),
-      canReset: true,
-      politicians: [
-        { id: polly, name: "Polly Placeholder" },
-        { id: mp, name: "Testy McTestface MP" },
-      ],
-      letter: { id: letterId, to: "Testy McTestface MP" },
-      refused: 1,
-    });
-    expect(blocks[0]).toMatchObject({ kind: "complaint", politicians: [], letter: null, refused: 0 });
-    expect((await listBlocks("complaint")).map((b) => b.address)).toEqual(["other@example.org"]);
+    // A politician's address is on their side; the rest, unknown ones too, on the other.
+    const blocks = await listBlocks("politicians");
+    expect(blocks).toEqual([
+      {
+        address: "test-mp@example.org",
+        kind: "hard",
+        reason: "Unknown user",
+        since: expect.any(Date),
+        canReset: true,
+        politicians: [
+          { id: polly, name: "Polly Placeholder" },
+          { id: mp, name: "Testy McTestface MP" },
+        ],
+        letter: { id: letterId, to: "Testy McTestface MP" },
+        refused: 1,
+      },
+    ]);
+    expect(await listBlocks("others")).toEqual([
+      expect.objectContaining({
+        address: "other@example.org",
+        kind: "complaint",
+        politicians: [],
+        letter: null,
+        refused: 0,
+      }),
+    ]);
+    expect(await listBlocks("politicians", "complaint")).toEqual([]);
+    expect((await listBlocks("others", "complaint")).map((b) => b.address)).toEqual(["other@example.org"]);
+    expect(await listBlocks("others", "hard")).toEqual([]);
 
     expect(await blockOn("Test-MP@example.org")).toMatchObject({ address: "test-mp@example.org" });
     expect(await blockOn("soft@example.org")).toBeUndefined();
     expect(await blockOn(null)).toBeUndefined();
 
-    expect(await recentProblems()).toEqual([
+    expect(await recentProblems("others")).toEqual([
       expect.objectContaining({ address: "soft@example.org", kind: "soft", purpose: null, letter: null }),
       expect.objectContaining({ address: "other@example.org", kind: "complaint" }),
+    ]);
+    expect(await recentProblems("politicians")).toEqual([
       expect.objectContaining({
         address: "test-mp@example.org",
         kind: "hard",
@@ -258,7 +273,19 @@ describeWithDatabase("listBlocks, blockOn and recentProblems", () => {
         letter: { id: letterId, to: "Testy McTestface MP" },
       }),
     ]);
-    expect(await recentProblems(1)).toHaveLength(1);
+    expect(await recentProblems("others", 1)).toHaveLength(1);
+
+    // An address no longer a politician's moves to the other side.
+    await query("UPDATE politicians SET email = NULL WHERE email ILIKE 'test-mp@example.org'");
+    expect(await listBlocks("politicians")).toEqual([]);
+    expect((await listBlocks("others")).map((b) => b.address)).toEqual(["other@example.org", "test-mp@example.org"]);
+  });
+
+  it("isPoliticianAddress says whether an address is a politician's, however it's written", async () => {
+    await addTestPolitician({ email: "Polly@example.org" });
+    expect(await isPoliticianAddress("polly@example.org")).toBe(true);
+    expect(await isPoliticianAddress('"Polly" <POLLY@example.org>')).toBe(true);
+    expect(await isPoliticianAddress("jane@example.com")).toBe(false);
   });
 });
 

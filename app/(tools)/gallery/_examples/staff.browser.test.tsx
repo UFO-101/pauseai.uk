@@ -3,6 +3,7 @@ import { render } from "vitest-browser-react";
 import { page } from "vitest/browser";
 import { campaigns } from "@/lib/content/email-your-mp";
 import { staffCopy } from "@/lib/content/staff-interface";
+import { exampleLetter } from "@/app/(staff)/staff/_components/LettersTable.examples";
 import {
   HeldSyncExample,
   PoliticianDetailsExample,
@@ -41,6 +42,12 @@ describe("the staff examples", () => {
     await expect
       .element(log().nth(0))
       .toHaveTextContent(`markSigned({"politicianId":"7","campaign":"${pm.slug}","signed":""})`);
+  });
+
+  it("shows a politician's letters without who wrote them", async () => {
+    await render(<PoliticianDetailsExample fromAirtable senders={false} />);
+    await expect.element(page.getByText(staffCopy.politician.history.unsignedLetter, { exact: false })).toBeVisible();
+    await expect.element(page.getByText(exampleLetter.senderName)).not.toBeInTheDocument();
   });
 
   it("lists politicians with no buttons", async () => {
