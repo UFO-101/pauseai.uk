@@ -1,0 +1,61 @@
+# Dependabot: one pull request a week that updates every dependency in the
+# repository: the site's npm packages, the backup Worker's, the backup
+# container's base image, and the GitHub Actions CI uses.
+# https://docs.github.com/en/code-security/dependabot/working-with-dependabot/configuring-multi-ecosystem-updates
+#
+# The ignores are major versions something else here can't take yet. Each
+# says what blocks it; take it out when that's gone.
+version: 2
+
+multi-ecosystem-groups:
+  weekly:
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Europe/London
+
+updates:
+  - package-ecosystem: npm
+    directory: /
+    patterns: ["*"]
+    multi-ecosystem-group: weekly
+    ignore:
+      # eslint-config-next brings eslint-plugin-react, -import and -jsx-a11y,
+      # which accept ESLint 9 at most.
+      - dependency-name: eslint
+        update-types: ["version-update:semver-major"]
+      # typescript-eslint (through eslint-config-next) needs TypeScript below
+      # 6.1, and tests/checks/staff-auth.test.ts and thin-pages.test.ts use
+      # the compiler API, which TypeScript 7.0 doesn't have.
+      - dependency-name: typescript
+        update-types: ["version-update:semver-major"]
+      # The types follow the Node version CI and Netlify run.
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
+
+  - package-ecosystem: npm
+    directory: /backup
+    patterns: ["*"]
+    multi-ecosystem-group: weekly
+    ignore:
+      # The backup Worker keeps the site's TypeScript and Node types.
+      - dependency-name: typescript
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
+
+  - package-ecosystem: docker
+    directory: /backup
+    patterns: ["*"]
+    multi-ecosystem-group: weekly
+    ignore:
+      # CI doesn't build the container, so a new Node major is a change to
+      # make by hand and try with a backup and restore.
+      - dependency-name: node
+        update-types: ["version-update:semver-major"]
+
+  - package-ecosystem: github-actions
+    directory: /
+    patterns: ["*"]
+    multi-ecosystem-group: weekly
