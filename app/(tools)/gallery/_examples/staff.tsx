@@ -91,9 +91,10 @@ const [pm] = campaigns;
 const PAGES: Record<StaffPageName, true> = {
   home: true,
   supporters: true,
-  politicians: true,
   letters: true,
-  emails: true,
+  supporterEmails: true,
+  politicians: true,
+  mpEmails: true,
   import: true,
   changes: true,
   accounts: true,
@@ -352,10 +353,18 @@ export const staff: Group = {
           ),
         },
         {
-          label: "For someone without the admin permission: the open groups",
+          label: "For someone without permissions: the pages any account opens",
           render: () => (
             <StaffPage as="div">
               <StaffNav email="jo@pauseai.uk" account permissions={[]} current="politicians" />
+            </StaffPage>
+          ),
+        },
+        {
+          label: "With the supporters permission",
+          render: () => (
+            <StaffPage as="div">
+              <StaffNav email="jo@pauseai.uk" account permissions={["supporters"]} current="letters" />
             </StaffPage>
           ),
         },
@@ -1020,6 +1029,14 @@ export const staff: Group = {
             </StaffPage>
           ),
         },
+        {
+          label: "Without the supporters permission: letters without who wrote them",
+          render: () => (
+            <StaffPage as="div">
+              <PoliticianDetailsExample fromAirtable senders={false} />
+            </StaffPage>
+          ),
+        },
       ],
     },
     {
@@ -1100,6 +1117,14 @@ export const staff: Group = {
           ),
         },
         {
+          label: "Without the supporters permission: the letter named, not linked",
+          render: () => (
+            <StaffPage as="div">
+              <EmailBlocksTableExample letterLinks={false} />
+            </StaffPage>
+          ),
+        },
+        {
           label: "None",
           render: () => (
             <StaffPage as="div">
@@ -1131,8 +1156,8 @@ export const staff: Group = {
           label: "All, and complaints only",
           render: () => (
             <StaffPage as="div">
-              <EmailBlockFilters kind="" />
-              <EmailBlockFilters kind="complaint" />
+              <EmailBlockFilters kind="" action="/staff/politicians/blocked-emails" />
+              <EmailBlockFilters kind="complaint" action="/staff/politicians/blocked-emails" />
             </StaffPage>
           ),
         },
@@ -1146,7 +1171,15 @@ export const staff: Group = {
           label: "A letter's hard bounce, a forwarded reply's soft one, and a complaint about an email we didn't log",
           render: () => (
             <StaffPage as="div">
-              <EmailProblemsTable problems={exampleProblems} />
+              <EmailProblemsTable problems={exampleProblems} letterLinks />
+            </StaffPage>
+          ),
+        },
+        {
+          label: "Without the supporters permission: the letter named, not linked",
+          render: () => (
+            <StaffPage as="div">
+              <EmailProblemsTable problems={exampleProblems} letterLinks={false} />
             </StaffPage>
           ),
         },
@@ -1154,7 +1187,7 @@ export const staff: Group = {
           label: "None",
           render: () => (
             <StaffPage as="div">
-              <EmailProblemsTable problems={[]} />
+              <EmailProblemsTable problems={[]} letterLinks />
             </StaffPage>
           ),
         },
@@ -1433,7 +1466,15 @@ export const staff: Group = {
           label: "A letter, by whom it was to",
           render: () => (
             <StaffPage as="div">
-              <LetterLink letter={{ id: 17, to: "Bouncy McTestface MP" }} />
+              <LetterLink letter={{ id: 17, to: "Bouncy McTestface MP" }} linked />
+            </StaffPage>
+          ),
+        },
+        {
+          label: "Not linked, for staff without the supporters permission",
+          render: () => (
+            <StaffPage as="div">
+              <LetterLink letter={{ id: 17, to: "Bouncy McTestface MP" }} linked={false} />
             </StaffPage>
           ),
         },

@@ -44,7 +44,7 @@ const letterProblem: Hook = async ({ letterId }, problem, request) => {
         letter.mpName,
         problem.address,
         problem.reason,
-        siteUrl("/staff/blocked-emails", request).href,
+        siteUrl("/staff/politicians/blocked-emails", request).href,
       ),
       Tag: "staff-alert",
     },

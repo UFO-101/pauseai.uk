@@ -64,7 +64,7 @@ function Blocked({ permission, address }: { permission: EmailPermission; address
         </span>
         <span className={styles.reason}>
           {because && `${because(staffDate(permission.at!))} `}
-          <Link href="/staff/blocked-emails">{copy.seeBlocked}</Link>
+          <Link href="/staff/supporters/blocked-emails">{copy.seeBlocked}</Link>
         </span>
       </Strip>
     </li>

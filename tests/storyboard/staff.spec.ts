@@ -375,7 +375,7 @@ async function sentLetterId(page: Page, database: string, sender: string, mp = T
   await fillLetter(page, sender);
   await sendLetter(page, mp);
   await page.goto(`${BASE}/staff/letters`);
-  if (page.url().endsWith("/staff/login")) await logIn(page, database);
+  if (page.url().endsWith("/staff/login")) await logIn(page, database, ["supporters"]);
   await page.goto(`${BASE}/staff/letters`);
   const row = page.getByRole("row").filter({ hasText: sender });
   await expect(row).toContainText(staffCopy.letters.status.sent);
@@ -422,10 +422,10 @@ test("a letter that bounces: staff are emailed, and the address is blocked", asy
   const alert = newestEmail(
     (email) => email.To === STAFF_INBOX && email.Subject === staffCopy.alert.subject(bouncy.name),
   );
-  expect(alert?.TextBody).toContain(`${BASE}/staff/blocked-emails`);
+  expect(alert?.TextBody).toContain(`${BASE}/staff/politicians/blocked-emails`);
   await emailFrame(page, alert!, "the email staff get about it");
 
-  await page.goto(`${BASE}/staff/blocked-emails`);
+  await page.goto(`${BASE}/staff/politicians/blocked-emails`);
   // The blocked addresses, above the recent problems.
   const blocked = page.getByRole("table").first().getByRole("row").filter({ hasText: BOUNCY_ADDRESS });
   await expect(blocked.getByRole("link", { name: bouncy.name, exact: true })).toBeVisible();

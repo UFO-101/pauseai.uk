@@ -11,7 +11,7 @@ import StaffPage from "../_components/ui/StaffPage";
 export const metadata: Metadata = { title: staffCopy.letters.title };
 
 export default async function LettersPage({ searchParams }: { searchParams: Promise<Partial<LettersSearch>> }) {
-  const { email, permissions } = await requireStaff();
+  const { email, permissions } = await requireStaff("supporters");
   const { filter, ...search } = lettersSearch(await searchParams);
   const letters = await recentLetters(filter);
   return (

@@ -3,6 +3,7 @@ import { tmpdir } from "node:os";
 import { dirname, join, relative } from "node:path";
 import ts from "typescript";
 import { afterEach, describe, expect, it } from "vitest";
+import { staffPageOf } from "@/lib/staff-sections";
 
 // Every staff page, route handler and Server Action under app/(staff)/ must
 // call requireStaff() first. proxy.ts only checks that a cookie exists; this
@@ -86,6 +87,42 @@ function problems(name: string, source: string): string[] {
   return found;
 }
 
+/** The string a requireStaff() call in this code asks for: a permission, "account", or undefined for none given. */
+function requirement(node: ts.Node): string | undefined {
+  if (ts.isCallExpression(node) && ts.isIdentifier(node.expression) && node.expression.text === "requireStaff") {
+    const [arg] = node.arguments;
+    return arg && ts.isStringLiteral(arg) ? arg.text : arg ? arg.getText() : undefined;
+  }
+  return ts.forEachChild(node, requirement);
+}
+
+/**
+ * What's wrong with one page's permission: its default export, or its
+ * generateMetadata, asking requireStaff() for something other than the
+ * permission lib/staff-sections.ts gives the page it's under. The home
+ * page, under none, asks for a login.
+ */
+function permissionProblems(name: string, source: string): string[] {
+  const path = `/${name.replace(/\/?page\.tsx$/, "")}`;
+  const page = staffPageOf(path);
+  if (!page && path !== "/staff") return [`${name}: ${path} isn't under any page in lib/staff-sections.ts`];
+  const wanted = page?.permission ?? (path === "/staff" ? "login" : "account");
+  const file = ts.createSourceFile(name, source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
+  return file.statements.flatMap((statement) => {
+    if (!ts.isFunctionDeclaration(statement) || !isExported(statement) || !statement.body) return [];
+    const fn = statement.name?.text ?? "default export";
+    const asked = requirement(statement.body.statements[0]) ?? "account";
+    return asked === wanted ? [] : [`${name}: ${fn} asks for ${asked}, but its page needs ${wanted}`];
+  });
+}
+
+/** Every staff page's permission problems. */
+function misplaced(root: string): string[] {
+  return entryPoints(root)
+    .filter(({ name }) => !OPEN.has(name) && /(^|\/)page\.tsx$/.test(name))
+    .flatMap(({ name, source }) => permissionProblems(name, source));
+}
+
 function unprotected(root: string): string[] {
   return entryPoints(root)
     .filter(({ name }) => !OPEN.has(name))
@@ -96,6 +133,10 @@ describe("staff auth", () => {
   it("every staff page, route and Server Action calls requireStaff() first", () => {
     expect(unprotected(ROOT)).toEqual([]);
     expect(entryPoints(ROOT).length).toBeGreaterThan(OPEN.size);
+  });
+
+  it("every staff page asks for the permission its place in the navigation gives it", () => {
+    expect(misplaced(ROOT)).toEqual([]);
   });
 
   describe("on a made-up staff interface", () => {
@@ -174,6 +215,29 @@ describe("staff auth", () => {
         "staff/w/page.tsx: can't check `export { Page as default };`; export a function declared here",
         "staff/x/page.tsx: Page doesn't call requireStaff() first",
         "staff/z/page.tsx: can't check `export default Page;`; export a function declared here",
+      ]);
+    });
+    it("finds each page asking for a permission other than its place gives it, or with no place", () => {
+      const root = tree({
+        "staff/page.tsx": 'export default async function Home() { await requireStaff("login"); }',
+        "staff/politicians/[id]/page.tsx": [
+          "export async function generateMetadata() { await requireStaff(); }",
+          "export default async function Page() { await requireStaff(); }",
+        ].join("\n"),
+        "staff/supporters/[id]/page.tsx": [
+          "export async function generateMetadata() { await requireStaff(); }",
+          'export default async function Page() { await requireStaff("supporters"); }',
+        ].join("\n"),
+        "staff/accounts/page.tsx": "export default async function Page() { await requireStaff(PERMISSION); }",
+        "staff/letters/page.tsx": 'export default async function Page() { await requireStaff("account"); }',
+        "staff/elsewhere/page.tsx": "export default async function Page() { await requireStaff(); }",
+        "staff/login/page.tsx": "export default function Login() {}",
+      });
+      expect(misplaced(root).sort()).toEqual([
+        "staff/accounts/page.tsx: Page asks for PERMISSION, but its page needs admin",
+        "staff/elsewhere/page.tsx: /staff/elsewhere isn't under any page in lib/staff-sections.ts",
+        "staff/letters/page.tsx: Page asks for account, but its page needs supporters",
+        "staff/supporters/[id]/page.tsx: generateMetadata asks for account, but its page needs supporters",
       ]);
     });
   });

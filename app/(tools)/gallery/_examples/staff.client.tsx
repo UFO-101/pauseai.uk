@@ -92,10 +92,14 @@ export function HeldSyncExample() {
 export function PoliticianDetailsExample({
   fromAirtable = false,
   blocked = false,
+  senders = true,
 }: {
   fromAirtable?: boolean;
   blocked?: boolean;
+  /** Whether the letters say who wrote them, as for staff with the supporters permission. */
+  senders?: boolean;
 }) {
+  const letter = { ...exampleLetter, mpName: examplePolitician.name, politicianId: examplePolitician.id };
   return (
     <Logged>
       {(log) => (
@@ -106,7 +110,22 @@ export function PoliticianDetailsExample({
           action={log("action")}
           markSigned={log("markSigned")}
           block={blocked ? { ...exampleBlock, address: examplePolitician.email! } : undefined}
-          letters={[{ ...exampleLetter, mpName: examplePolitician.name, politicianId: examplePolitician.id }]}
+          letters={
+            senders
+              ? { senders, letters: [letter] }
+              : {
+                  senders,
+                  letters: [
+                    {
+                      id: letter.id,
+                      campaign: letter.campaign,
+                      status: letter.status,
+                      createdAt: letter.createdAt,
+                      repliedAt: letter.repliedAt,
+                    },
+                  ],
+                }
+          }
           history={examplePoliticianHistory}
           unblock={log("unblock")}
           airtableTable="https://airtable.com/appExample/tblExample"
@@ -117,8 +136,16 @@ export function PoliticianDetailsExample({
 }
 
 /** Blocked addresses, a bounce and a complaint unless told otherwise, their unblocking logged. */
-export function EmailBlocksTableExample({ blocks = [exampleBlock, exampleComplaint] }: { blocks?: EmailBlock[] }) {
-  return <Logged>{(log) => <EmailBlocksTable blocks={blocks} unblock={log("unblock")} />}</Logged>;
+export function EmailBlocksTableExample({
+  blocks = [exampleBlock, exampleComplaint],
+  letterLinks = true,
+}: {
+  blocks?: EmailBlock[];
+  letterLinks?: boolean;
+}) {
+  return (
+    <Logged>{(log) => <EmailBlocksTable blocks={blocks} unblock={log("unblock")} letterLinks={letterLinks} />}</Logged>
+  );
 }
 
 /** The unblock form for a bounce, logged, and what shows for a complaint instead. */

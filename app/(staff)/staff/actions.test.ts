@@ -236,6 +236,7 @@ describeWithDatabase("staff Server Actions", () => {
 
   it("unblockAddress unblocks an address, with the note, and refreshes every staff page", async () => {
     vi.stubEnv("POSTMARK_SERVER_TOKEN", "server-token");
+    await saveStaffAccount("jo@pauseai.uk", ["supporters"], "test");
     const bounce = { address: "a@example.org", messageId: null, kind: "hard" as const, reason: "", canReset: true };
     await recordProblem(bounce);
     await unblockAddress(form({ address: "nobody", note: "Fixed" }));
@@ -250,8 +251,20 @@ describeWithDatabase("staff Server Actions", () => {
     expect(revalidatePath).toHaveBeenCalledWith("/staff", "layout");
   });
 
+  it("unblockAddress unblocks only a politician's address without supporters", async () => {
+    vi.stubEnv("POSTMARK_SERVER_TOKEN", "server-token");
+    await addTestPolitician({ email: "Polly@example.org" });
+    for (const address of ["polly@example.org", "jane@example.com"]) {
+      await recordProblem({ address, messageId: null, kind: "hard", reason: "", canReset: true });
+      await unblockAddress(form({ address, note: "Fixed" }));
+    }
+    expect(await isBlocked("polly@example.org")).toBe(false);
+    expect(await isBlocked("jane@example.com")).toBe(true);
+  });
+
   it("unblockAddress leaves the address blocked, and logs why, if Postmark can't be reached", async () => {
     vi.stubEnv("POSTMARK_SERVER_TOKEN", "server-token");
+    await saveStaffAccount("jo@pauseai.uk", ["supporters"], "test");
     const error = vi.spyOn(console, "error").mockImplementation(() => {});
     server.use(
       http.post("https://api.postmarkapp.com/message-streams/*", () => new HttpResponse(null, { status: 500 })),

@@ -48,8 +48,8 @@ export type SeriesPoint = { from: string; count: number };
  * other way round.
  */
 export const METRIC_LINKS: Record<DashboardMetric, { href?: string; permission?: Permission; worse?: true }> = {
-  lettersSent: { href: "/staff/letters?status=sent" },
-  lettersReplied: { href: "/staff/letters?status=replied" },
+  lettersSent: { href: "/staff/letters?status=sent", permission: "supporters" },
+  lettersReplied: { href: "/staff/letters?status=replied", permission: "supporters" },
   mpsSigned: { href: "/staff/politicians" },
   eventRegistrations: { href: "/staff/supporters?registered=1", permission: "supporters" },
   eventsHeld: {},

@@ -154,11 +154,30 @@ const SELECT_BLOCKS = `
     (SELECT count(*)::int FROM email_sends s WHERE s.address = b.address AND s.outcome = 'refused' AND s.at >= p.at) AS refused
   FROM email_blocks b JOIN email_problems p ON p.id = b.problem_id`;
 
-/** Every blocked address, newest first, or only those blocked by a hard bounce or a complaint. */
-export async function listBlocks(kind?: EmailBlock["kind"]): Promise<EmailBlock[]> {
-  return query<EmailBlock>(`${SELECT_BLOCKS} WHERE $1::text IS NULL OR p.kind = $1 ORDER BY p.at DESC, b.address`, [
-    kind ?? null,
-  ]);
+/**
+ * Which addresses a list is of: politicians', or every other, staff's and
+ * unknown ones included, which may be supporters'. Each has its own page,
+ * so an address that's no longer a politician's moves to the other.
+ */
+export type EmailScope = "politicians" | "others";
+
+/** Whether `column` is a politician's address, or isn't, for `scope`. */
+function inScope(column: string, scope: EmailScope): string {
+  return `${scope === "politicians" ? "" : "NOT "}EXISTS (SELECT 1 FROM politicians pol WHERE lower(pol.email) = ${column})`;
+}
+
+/** Whether an address is a politician's. */
+export async function isPoliticianAddress(address: string): Promise<boolean> {
+  const [row] = await query(`SELECT 1 WHERE ${inScope("$1", "politicians")}`, [bareAddress(address)]);
+  return !!row;
+}
+
+/** Every blocked address in `scope`, newest first, or only those blocked by a hard bounce or a complaint. */
+export async function listBlocks(scope: EmailScope, kind?: EmailBlock["kind"]): Promise<EmailBlock[]> {
+  return query<EmailBlock>(
+    `${SELECT_BLOCKS} WHERE ($1::text IS NULL OR p.kind = $1) AND ${inScope("b.address", scope)} ORDER BY p.at DESC, b.address`,
+    [kind ?? null],
+  );
 }
 
 /** The block on an address, if it has one, such as a politician's, who may have none. */
@@ -184,13 +203,14 @@ export type ProblemSummary = {
   letter: SentLetter | null;
 };
 
-/** The latest bounces and complaints, soft bounces too, newest first. */
-export async function recentProblems(limit = 100): Promise<ProblemSummary[]> {
+/** The latest bounces and complaints to addresses in `scope`, soft bounces too, newest first. */
+export async function recentProblems(scope: EmailScope, limit = 100): Promise<ProblemSummary[]> {
   return query<ProblemSummary>(
     `SELECT p.id::int AS id, p.at, p.address, p.kind, p.reason, s.purpose,
        CASE WHEN pol.id IS NOT NULL THEN json_build_object('id', l.id, 'to', pol.name) END AS letter
      FROM email_problems p LEFT JOIN email_sends s ON s.message_id = p.message_id
        LEFT JOIN letters l ON l.id = s.letter_id LEFT JOIN politicians pol ON pol.id = l.politician_id
+     WHERE ${inScope("p.address", scope)}
      ORDER BY p.at DESC, p.id DESC LIMIT $1`,
     [limit],
   );

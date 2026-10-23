@@ -132,9 +132,11 @@ in doubt.
   guest lists and members by hand into spreadsheets, which is less secure
   and less erasable.
 - **Risks.** Disclosure of political opinions through a staff account:
-  met by the `supporters` permission, login by emailed link to a
-  pauseai.uk address, a week's sessions, and the audit log of each
-  viewing. Keeping data longer than needed: met by erasure on request and
+  met by the `supporters` permission on every page with supporter data
+  but the audit log, which only admins see; a storyboard check that, with
+  no permissions, no staff page holds a supporter's name or email; login
+  by emailed link to a pauseai.uk address; sessions of a day, or 30 days
+  renewed on use; and the audit log of each viewing. Keeping data longer than needed: met by erasure on request and
   the backups' expiry. Mailing someone who opted out: met by `opt_outs`
   being kept after erasure and checked by any future mailing.
   Mailing a member who unsubscribed after joining: Airtable doesn't know

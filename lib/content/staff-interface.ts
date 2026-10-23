@@ -35,11 +35,10 @@ export const staffCopy = {
     title: "PauseAI Staff",
     home: "Home",
     accounts: "Staff accounts",
-    // The groups the pages are in, on the home page.
+    // The sections the pages are in, in the sidebar.
     sections: {
       supporters: "Supporters",
       politicians: "Politicians",
-      data: "Data",
       admin: "Admin",
     } as Record<string, string>,
     supporters: "Supporters",
@@ -47,7 +46,8 @@ export const staffCopy = {
     import: "Import data",
     changes: "Audit log",
     letters: "Letters to MPs",
-    emails: "Blocked emails",
+    supporterEmails: "⁂ Blocked supporter emails",
+    mpEmails: "⁂ Blocked MP emails",
     logout: "Log out",
   },
   // The home page: whom to ask for an account; or the pages you can see,
@@ -341,7 +341,7 @@ export const staffCopy = {
       replies: "Letters answered",
     },
     noEmail: "No email",
-    // On a politician whose address is blocked (/staff/blocked-emails), and the filter for them.
+    // On a politician whose address is blocked (/staff/politicians/blocked-emails), and the filter for them.
     emailBlocked: "Email blocked",
     anyEmail: "All",
     // The button in each campaign's column, and the bill's column, which
@@ -379,6 +379,9 @@ export const staffCopy = {
     history: {
       letter: "Letter from",
       "letter-replied": "Answered the letter from",
+      // Without the supporters permission, a letter doesn't say who wrote it.
+      unsignedLetter: "⁂ Letter written",
+      "unsigned-letter-replied": "⁂ Answered a letter",
       "add politician": "Added",
       "edit politician": "Details edited",
       "remove politician": "No longer sitting",
@@ -430,9 +433,14 @@ export const staffCopy = {
       },
     },
   },
-  // The page of blocked addresses (/staff/blocked-emails), and the bounces and complaints that blocked them.
+  // The pages of blocked addresses (/staff/politicians/blocked-emails and
+  // /staff/supporters/blocked-emails), and the bounces and complaints that blocked them.
   emails: {
-    title: "Blocked emails",
+    // The two pages: politicians' addresses, and everyone else's.
+    titles: {
+      mps: "⁂ Blocked MP emails",
+      supporters: "⁂ Blocked supporter emails",
+    },
     intro: "Nothing is sent to these addresses until they're unblocked.",
     // Instead of the table, when no address is blocked, or none of the cause filtered for.
     noBlocks: "No addresses are blocked.",

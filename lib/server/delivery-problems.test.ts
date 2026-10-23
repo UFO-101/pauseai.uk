@@ -80,7 +80,7 @@ describeWithDatabase("handleDeliveryProblem", () => {
           "Testy McTestface MP",
           "test-mp@example.org",
           "Unknown user",
-          "https://pauseai.uk/staff/blocked-emails",
+          "https://pauseai.uk/staff/politicians/blocked-emails",
         ),
       }),
     ]);

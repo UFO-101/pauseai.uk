@@ -219,9 +219,12 @@ why, to whom, and whether it went.
 When an email bounces or its recipient marks it as spam, the problem is
 recorded against the address (`email_problems`). A hard bounce or a
 complaint blocks the address (`email_blocks`), and `send()` won't send to a
-blocked address, for any purpose. Staff see blocked addresses at
-`/staff/blocked-emails` and on the politician's page, and can unblock a
-bounced one, which asks Postmark to send to it again. A complaint can't be
+blocked address, for any purpose. Staff see politicians' blocked addresses
+at `/staff/politicians/blocked-emails` and on the politician's page, and
+every other (supporters', staff's and unknown ones), with `supporters`, at
+`/staff/supporters/blocked-emails`: two pages over the same tables, split by
+whether the address is a politician's now. Staff can unblock a bounced
+one, which asks Postmark to send to it again. A complaint can't be
 unblocked.
 
 What a bounce means depends on the email's purpose, so each purpose can
@@ -306,19 +309,28 @@ lasts a day, or 30 days renewed on use with "Keep me signed in".
 
 Seeing anything needs a staff account (`staff_accounts`, kept by admins on
 `/staff/accounts`): without one, the home page says whom to ask, and every
-other page sends you there. An account opens the ordinary pages
-(politicians, letters, blocked emails, imports). Permissions open more
-(`lib/staff-permissions.ts`): `supporters` the supporter pages, `admin` the
-accounts page and the audit log. `admin@pauseai.uk` starts with an account
-and the admin permission, as an ordinary row the migration adds. Removing
-an account ends its sessions; the last admin can't be removed or lose
-admin. A page says what it needs in `requireStaff()`: a login, an account
-(the default) or a permission. The groups of pages a staff member sees are
-in `lib/staff-sections.ts`. Every change to an account is an audit log
-entry.
+other page sends you there. An account opens the pages about politicians
+and campaigns (politicians, an MP's page, Blocked MP emails, imports).
+Permissions open more (`lib/staff-permissions.ts`): `supporters` every page
+with a member of the public's details (supporters, letters, who wrote to
+which MP, Blocked supporter emails), `admin` the accounts page and the
+audit log. `admin` doesn't include `supporters`. An MP's page is the one
+page that shows less without a permission: without `supporters`, its
+letters come from a query that doesn't select their senders, so none reach
+the browser. `admin@pauseai.uk` starts with an account and the admin
+permission, as an ordinary row the migration adds. Removing an account ends
+its sessions; the last admin can't be removed or lose admin.
 
-A new permission is a name in `PERMISSIONS` and the table's `CHECK`, and a
-group of pages behind it in `STAFF_SECTIONS`.
+Each page in the navigation, and so each page under it, has the permission
+`lib/staff-sections.ts` gives it, and asks for it in `requireStaff()`: a
+login (the home page), an account (the default) or a permission.
+`tests/checks/staff-auth.test.ts` checks the two agree, and the
+`permissions` storyboard section checks that, with no permissions, no page
+holds a supporter's name or email. Every change to an account is an audit
+log entry.
+
+A new permission is a name in `PERMISSIONS` and the table's `CHECK`, and the
+pages it opens given it in `STAFF_SECTIONS`.
 
 ## The public site's content
 

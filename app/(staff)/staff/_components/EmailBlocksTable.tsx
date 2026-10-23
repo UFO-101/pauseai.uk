@@ -8,14 +8,17 @@ import UnblockForm from "./UnblockForm";
 
 /**
  * The blocked addresses: why, since when, whose, the letter that found it
- * out, how many emails haven't been sent since, and a way to unblock each.
+ * out (a link to it with `letterLinks`), how many emails haven't been sent
+ * since, and a way to unblock each.
  */
 export default function EmailBlocksTable({
   blocks,
   unblock,
+  letterLinks,
 }: {
   blocks: EmailBlock[];
   unblock: (form: FormData) => void | Promise<void>;
+  letterLinks: boolean;
 }) {
   if (blocks.length === 0) return <p>{staffCopy.emails.noBlocks}</p>;
   const columns = staffCopy.emails.columns;
@@ -48,7 +51,7 @@ export default function EmailBlocksTable({
                 </span>
               ))}
             </td>
-            <td>{block.letter && <LetterLink letter={block.letter} />}</td>
+            <td>{block.letter && <LetterLink letter={block.letter} linked={letterLinks} />}</td>
             <td>{block.refused}</td>
             <td>
               <UnblockForm block={block} action={unblock} />
