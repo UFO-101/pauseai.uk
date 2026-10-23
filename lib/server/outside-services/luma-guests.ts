@@ -1,6 +1,7 @@
 import "server-only";
 import { tallySources, type GuestEntry, type SourceCounts } from "@/lib/trackers";
 import { LUMA_PAGE_SIZE, lumaList, type LumaPage } from "./luma-api";
+import { outsideFetch } from "./outside-fetch";
 
 // An event's guest list, through Luma's official API: for the flyering
 // trackers' tallies, and for the import, which keeps each guest.
