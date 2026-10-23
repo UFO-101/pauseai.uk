@@ -9,6 +9,8 @@ export const march = {
   name: "March Against AI Extinction",
   /** The march's page, the sign-up, which adds people to the Luma event. */
   path: "/protests/march-against-ai-extinction-nov-26",
+  /** Redirects to `path`, keeping its tags: the link to give out, short enough for a post or a poster. */
+  shortPath: "/march",
   /** The Luma event: where people register, and its slug in the calendar feed. */
   lumaUrl: "https://luma.com/pauseai-nov26",
   lumaSlug: "pauseai-nov26",

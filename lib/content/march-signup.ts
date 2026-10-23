@@ -3,8 +3,8 @@
 import { march } from "./march";
 import { site } from "./site";
 
-/** The sign-up page's address. */
-const signupUrl = `${site.url}${march.path}`;
+/** The sign-up's short link, which redirects to the march's page. */
+const signupUrl = `${site.url}${march.shortPath}`;
 
 /**
  * Where the share card sends the message: each app in its row, the copied
