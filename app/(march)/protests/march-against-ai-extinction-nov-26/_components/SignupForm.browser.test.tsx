@@ -49,33 +49,11 @@ describe("SignupForm", () => {
     await page.getByLabelText(/Postcode/).fill("SW1A 0AA");
     await page.getByRole("button", { name: "Register" }).click();
     await expect.element(page.getByRole("button", { name: "Registering…" })).toBeDisabled();
-    expect(sent).toEqual([{ name: "Testy McTestface", email: "testy@example.org", website: "", tags: {} }]);
+    expect(sent).toEqual([{ name: "Testy McTestface", email: "testy@example.org", website: "" }]);
     expect(pushed()).toEqual([]);
     finish({ ok: true });
     await expect.poll(() => onRegistered.mock.calls.length).toBe(1);
     expect(pushed()).toEqual([{ event: "march_signup" }]);
-  });
-
-  it("sends the tags of the link they came by", async () => {
-    const start = location.href;
-    history.replaceState(null, "", `${location.pathname}?utm_source=in`);
-    const sent: unknown[] = [];
-    try {
-      await render(
-        <SignupForm
-          {...formProps}
-          register={async (input) => {
-            sent.push(input);
-            return { ok: true };
-          }}
-        />,
-      );
-      await fillIn();
-      await page.getByRole("button", { name: "Register" }).click();
-      await expect.poll(() => sent).toEqual([expect.objectContaining({ tags: { source: "in" } })]);
-    } finally {
-      history.replaceState(null, "", start);
-    }
   });
 
   it("says what to fix in the name or email, and stays", async () => {

@@ -5,9 +5,8 @@ redirects there, keeping the tags, so it's the one to give out. Every
 tracked link to the sign-up has one tag,
 utm_source, a short code saying where the link came from, and nothing else.
 Google Analytics counts visits, and registrations, by it; this page is the
-key. The sign-up also sends the tags a visitor arrived with along with their
-registration (`app/(march)/protests/march-against-ai-extinction-nov-26/_components/arrival-tags.ts`), for storing
-alongside it.
+key. GA reads it from the page's address; the registration itself doesn't
+keep it.
 
 With only a source, GA puts these visits in its Unassigned channel: find
 them by Session source.

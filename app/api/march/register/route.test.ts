@@ -34,7 +34,7 @@ describe("POST /api/march/register", () => {
         return HttpResponse.json({ skipped: [] });
       }),
     );
-    expect(await registerForMarch({ ...person, tags: { source: "in", campaign: "other" } })).toEqual({ ok: true });
+    expect(await registerForMarch(person)).toEqual({ ok: true });
     expect(body).toEqual({
       event_id: "evt-hfOj1RR5K1gBNEW",
       guests: [{ email: "testy@example.org", name: "Testy McTestface" }],

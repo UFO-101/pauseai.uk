@@ -36,8 +36,6 @@ async function register(input: unknown): Promise<MarchRegisterResult> {
   const check = checkMarchRegistration(raw);
   if (!check.ok) return { ...check, reason: "invalid" };
 
-  // Luma gets the name and email. The registration's arrival tags, where the
-  // person found the link, go no further yet.
   const result = await addLumaGuest(MARCH_EVENT_ID, check.registration);
   switch (result.status) {
     case "added":

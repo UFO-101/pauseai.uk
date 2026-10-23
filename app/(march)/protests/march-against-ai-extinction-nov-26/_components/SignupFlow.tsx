@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { MarchRegisterResult } from "@/lib/march-registration";
-import { rememberArrivalTags } from "./arrival-tags";
 import type { CardMotion } from "./card-motion";
 import { m } from "./classes";
 import ShareCard from "./ShareCard";
@@ -43,8 +42,6 @@ export default function SignupFlow({
     setNext(to);
     setMotion("leaving");
   }
-
-  useEffect(rememberArrivalTags, []);
 
   // The button pressed has gone, so focus (and the screen reader) goes to the
   // new card. focus() alone scrolls badly, so the card's top is first scrolled
