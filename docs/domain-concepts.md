@@ -330,6 +330,13 @@ the browser. `admin@pauseai.uk` starts with an account and the admin
 permission, as an ordinary row the migration adds. Removing an account ends
 its sessions; the last admin can't be removed or lose admin.
 
+The accounts page shows when each account was added and by whom (or by
+its login), when it last logged in and was last seen (`last_login_at` and
+`last_seen_at`, kept on the account, as sessions are deleted when they
+end), and its sessions open, which an admin can end. Anyone logged in on
+more than one device can end all their own sessions from the foot of the
+staff home.
+
 Each page in the navigation, and so each page under it, has the permission
 `lib/staff-sections.ts` gives it, and asks for it in `requireStaff()`: an
 account (the default) or a permission.

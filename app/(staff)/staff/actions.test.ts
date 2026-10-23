@@ -17,6 +17,8 @@ import {
   importFromAirtable,
   importLumaNow,
   importMembersNow,
+  endStaffSessionsNow,
+  logOutEverywhere,
   markSigned,
   removeStaffAccountNow,
   saveStaffAccountNow,
@@ -69,6 +71,8 @@ describeWithDatabase("staff Server Actions", () => {
       () => saveStaffAccountNow(form({ email: "jo@pauseai.uk", "permission:admin": "on" })),
       () => eraseSupporterNow(form({ id: "1", reference: "r", confirm: "on" })),
       () => unblockAddress(form({ address: "a@example.org", note: "" })),
+      () => endStaffSessionsNow(form({ email: "jo@pauseai.uk" })),
+      () => logOutEverywhere(),
     ];
     for (const attempt of attempts) expect(await expectRedirect(attempt)).toBe("/staff/login");
     expect(await statusCount()).toBe(0);
@@ -231,6 +235,33 @@ describeWithDatabase("staff Server Actions", () => {
     ]);
     expect(await query("SELECT name FROM politicians")).toEqual([{ name: "Lord X" }]);
     expect(revalidatePath).toHaveBeenCalledWith("/staff/import-data");
+  });
+
+  it("endStaffSessionsNow ends an account's sessions, as an admin, going back to the page", async () => {
+    await createSession("sam@pauseai.uk");
+    const end = () => endStaffSessionsNow(form({ email: "sam@pauseai.uk" }));
+    expect(await expectRedirect(end)).toBe("/staff");
+    expect(await query("SELECT count(*)::int AS n FROM staff_sessions WHERE email = 'sam@pauseai.uk'")).toEqual([
+      { n: 1 },
+    ]);
+    await saveStaffAccount("jo@pauseai.uk", ["admin"], "a");
+    expect(await expectRedirect(end)).toBe("/staff/accounts");
+    expect(await query("SELECT count(*)::int AS n FROM staff_sessions WHERE email = 'sam@pauseai.uk'")).toEqual([
+      { n: 0 },
+    ]);
+    // A bad form does nothing.
+    await endStaffSessionsNow(form({ email: "nobody" }));
+    expect(await query("SELECT actor, action FROM audit_log WHERE action = 'end staff sessions'")).toEqual([
+      { actor: "jo@pauseai.uk", action: "end staff sessions" },
+    ]);
+  });
+
+  it("logOutEverywhere ends every session of your own, this one too, and goes to the login page", async () => {
+    await createSession("jo@pauseai.uk", true);
+    await createSession("sam@pauseai.uk");
+    expect(await expectRedirect(logOutEverywhere)).toBe("/staff/login");
+    expect(await query("SELECT email FROM staff_sessions")).toEqual([{ email: "sam@pauseai.uk" }]);
+    expect(await expectRedirect(logOutEverywhere)).toBe("/staff/login");
   });
 
   it("unblockAddress unblocks an address, with the note, and refreshes every staff page", async () => {

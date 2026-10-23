@@ -50,9 +50,11 @@ export const staffCopy = {
     mpEmails: "⁂ Blocked MP emails",
     logout: "Log out",
   },
-  // The home page: the dashboard.
+  // The home page: the dashboard, and at its foot, with more than one session open, how many and a way to end them all.
   home: {
     title: "Home",
+    sessions: (n: number) => `⁂ You're logged in on ${n} devices.`,
+    logOutEverywhere: "⁂ Log out of all of them",
     // The dashboard: what needs a person, then the window's numbers in
     // three groups, each against the window before.
     dashboard: {
@@ -296,9 +298,19 @@ export const staffCopy = {
     columns: {
       email: "Email",
       permissions: "Permissions",
-      addedBy: "Added by",
-      addedAt: "Added at",
+      added: "⁂ Added",
+      lastLogin: "⁂ Last login",
+      lastSeen: "⁂ Last seen",
+      sessions: "⁂ Sessions open",
     },
+    // In the Added column, after when: who added the account, or that its first login did.
+    addedBy: (who: string) => `⁂ by ${who}`,
+    addedByLogin: "⁂ by login",
+    // For an account that has never logged in or been seen.
+    never: "⁂ Never",
+    // On each row with sessions open: ends them all; on your own row, the warning beside it.
+    endSessions: "⁂ Log out everywhere",
+    endsYours: "⁂ This logs you out too.",
     // Under the last row: the field for the address of someone new (its
     // label, read aloud) and its button, which adds them as a row, saved
     // with the others.

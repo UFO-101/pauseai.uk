@@ -17,7 +17,13 @@ import { decideHeldSync, syncMps } from "@/lib/server/mp-sync";
 import { setStatus, updatePolitician } from "@/lib/server/politicians";
 import { importSignatories } from "@/lib/server/signatory-import";
 import { requireStaff } from "@/lib/server/staff-auth";
-import { type AccountChange, removeStaffAccount, saveStaffAccount } from "@/lib/server/staff-accounts";
+import {
+  type AccountChange,
+  endStaffSessions,
+  removeStaffAccount,
+  saveStaffAccount,
+} from "@/lib/server/staff-accounts";
+import { LOGIN_PATH } from "@/lib/staff-session";
 
 /** The button in the politicians list: marks one as signed today, or as not signed. */
 export async function markSigned(form: FormData): Promise<void> {
@@ -148,6 +154,22 @@ export async function removeStaffAccountNow(form: FormData): Promise<void> {
   const parsed = permissionsFrom(form);
   if (!parsed) return;
   accountsPage(await removeStaffAccount(parsed.email, email));
+}
+
+/** The accounts page: ends every session of an account, as the admin; their own included, which logs them out. */
+export async function endStaffSessionsNow(form: FormData): Promise<void> {
+  const { email } = await requireStaff("admin");
+  const parsed = permissionsFrom(form);
+  if (!parsed) return;
+  await endStaffSessions(parsed.email, email);
+  accountsPage("changed");
+}
+
+/** The staff home: ends every session of the staff member's own, this one included, then goes to the login page. */
+export async function logOutEverywhere(): Promise<void> {
+  const { email } = await requireStaff();
+  await endStaffSessions(email, email);
+  redirect(LOGIN_PATH);
 }
 
 /**

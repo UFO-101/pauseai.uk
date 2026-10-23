@@ -47,7 +47,6 @@ import Table from "@/components/ui/Table";
 import StaffDashboard from "@/app/(staff)/staff/_components/StaffDashboard";
 import { exampleDashboard, exampleQuietDashboard } from "@/app/(staff)/staff/_components/StaffDashboard.examples";
 import Sparkline from "@/app/(staff)/staff/_components/Sparkline";
-import StaffHome from "@/app/(staff)/staff/_components/StaffHome";
 import SupporterBadges from "@/app/(staff)/staff/_components/SupporterBadges";
 import SubscriptionBadges from "@/app/(staff)/staff/_components/SubscriptionBadges";
 import EmailPermissionTiles from "@/app/(staff)/staff/_components/EmailPermissionTiles";
@@ -72,6 +71,7 @@ import type { ImportJob } from "@/lib/import-runs";
 import type { Group, Variant } from "../_components/types";
 import {
   EmailBlocksTableExample,
+  StaffHomeExample,
   HeldSyncExample,
   ImportJobPageExample,
   JobActionsExample,
@@ -647,7 +647,7 @@ export const staff: Group = {
           label: "For an admin: the dashboard",
           render: () => (
             <StaffPage as="div">
-              <StaffHome permissions={["admin", "supporters"]} dashboard={exampleDashboard} />
+              <StaffHomeExample permissions={["admin", "supporters"]} />
             </StaffPage>
           ),
         },
@@ -655,7 +655,15 @@ export const staff: Group = {
           label: "For someone with no permissions: the dashboard, its supporter tiles not links",
           render: () => (
             <StaffPage as="div">
-              <StaffHome permissions={[]} dashboard={exampleDashboard} />
+              <StaffHomeExample permissions={[]} />
+            </StaffPage>
+          ),
+        },
+        {
+          label: "Logged in on three devices: the line at the foot, to log out of all of them",
+          render: () => (
+            <StaffPage as="div">
+              <StaffHomeExample permissions={[]} sessions={3} />
             </StaffPage>
           ),
         },

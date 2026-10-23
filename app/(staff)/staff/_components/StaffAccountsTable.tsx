@@ -6,9 +6,11 @@ import { Checkbox, TextInput } from "@/components/ui/Controls";
 import { FieldError } from "@/components/ui/Field";
 import Table from "@/components/ui/Table";
 import { staffCopy } from "@/lib/content/staff-interface";
-import { isStaffEmail, PERMISSIONS, type Permission } from "@/lib/staff-permissions";
+import { ADDED_BY_LOGIN, isStaffEmail, PERMISSIONS, type Permission } from "@/lib/staff-permissions";
 import type { StaffAccount } from "@/lib/server/staff-accounts";
 import { staffTime } from "@/lib/staff-time";
+import { SubmitButton } from "@/components/ui/SubmitButton";
+import { Muted } from "@/components/ui/Text";
 import RemoveAccountForm from "./RemoveAccountForm";
 import styles from "./StaffAccountsTable.module.css";
 
@@ -53,6 +55,32 @@ function PermissionBoxes({ account, save }: { account: StaffAccount; save: Actio
   );
 }
 
+/**
+ * The button that ends every session an account has, for a row with any
+ * open; on your own row, with the warning that it ends yours too.
+ */
+function EndSessionsForm({ account, yours, end }: { account: StaffAccount; yours: boolean; end: Action }) {
+  const copy = staffCopy.accounts;
+  if (account.sessions === 0) return null;
+  return (
+    <form action={end} aria-label={`${copy.endSessions}: ${account.email}`}>
+      <input type="hidden" name="email" value={account.email} />
+      <SubmitButton variant="ghost" size="small">
+        {copy.endSessions}
+      </SubmitButton>
+      {yours && (
+        <>
+          {" "}
+          <Muted>{copy.endsYours}</Muted>
+        </>
+      )}
+    </form>
+  );
+}
+
+/** When, or never. */
+const when = (at: string | null) => (at ? staffTime(at) : staffCopy.accounts.never);
+
 /** Why an address typed to add can't be: not at pauseai.uk, or already in the table. */
 type AddProblem = "not-pauseai" | "exists";
 
@@ -75,7 +103,7 @@ function AddRow({ accounts, add }: { accounts: StaffAccount[]; add: Action }) {
   const submit = (form: FormData) => add(accountForm(address(form), []));
   return (
     <tr>
-      <td colSpan={5}>
+      <td colSpan={7}>
         <form action={submit} onSubmit={check} aria-label={copy.addTitle} className={styles.add}>
           <TextInput
             name="email"
@@ -98,20 +126,26 @@ function AddRow({ accounts, add }: { accounts: StaffAccount[]; add: Action }) {
 }
 
 /**
- * Every account, a checkbox per permission in its row, each tick saved at
- * once, and at the right a button to remove it; under the last row, a
- * field to add someone. Then, under its own heading, what each permission
- * opens.
+ * Every account: a checkbox per permission in its row, each tick saved at
+ * once; when and by whom it was added; when it last logged in and was
+ * seen; its sessions open; and at the right, a button to end those
+ * sessions and one to remove it. Under the last row, a field to add
+ * someone. Then, under its own heading, what each permission opens.
  */
 export default function StaffAccountsTable({
   accounts,
+  you,
   save,
   remove,
+  endSessions,
 }: {
   accounts: StaffAccount[];
+  /** The admin looking, whose own row warns that ending its sessions ends theirs. */
+  you: string;
   /** Gives an address an account with exactly the permissions in the form, adding it if it has none. */
   save: Action;
   remove: Action;
+  endSessions: Action;
 }) {
   const copy = staffCopy.accounts;
   const columns = copy.columns;
@@ -122,8 +156,10 @@ export default function StaffAccountsTable({
           <tr>
             <th>{columns.email}</th>
             <th>{columns.permissions}</th>
-            <th>{columns.addedBy}</th>
-            <th>{columns.addedAt}</th>
+            <th>{columns.added}</th>
+            <th>{columns.lastLogin}</th>
+            <th>{columns.lastSeen}</th>
+            <th>{columns.sessions}</th>
             <th />
           </tr>
         </thead>
@@ -134,10 +170,18 @@ export default function StaffAccountsTable({
               <td>
                 <PermissionBoxes account={account} save={save} />
               </td>
-              <td>{account.addedBy}</td>
-              <td>{staffTime(account.addedAt)}</td>
               <td>
-                <RemoveAccountForm email={account.email} remove={remove} />
+                {staffTime(account.addedAt)}{" "}
+                <Muted>{account.addedBy === ADDED_BY_LOGIN ? copy.addedByLogin : copy.addedBy(account.addedBy)}</Muted>
+              </td>
+              <td>{when(account.lastLoginAt)}</td>
+              <td>{when(account.lastSeenAt)}</td>
+              <td>{account.sessions}</td>
+              <td>
+                <div className={styles.buttons}>
+                  <EndSessionsForm account={account} yours={account.email === you} end={endSessions} />
+                  <RemoveAccountForm email={account.email} remove={remove} />
+                </div>
               </td>
             </tr>
           ))}

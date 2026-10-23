@@ -18,6 +18,9 @@ import Run from "@/app/(staff)/staff/_components/Run";
 import EraseForm from "@/app/(staff)/staff/_components/EraseForm";
 import RemoveAccountForm from "@/app/(staff)/staff/_components/RemoveAccountForm";
 import StaffAccountsTable from "@/app/(staff)/staff/_components/StaffAccountsTable";
+import { exampleDashboard } from "@/app/(staff)/staff/_components/StaffDashboard.examples";
+import StaffHome from "@/app/(staff)/staff/_components/StaffHome";
+import type { Permission } from "@/lib/staff-permissions";
 import UnblockForm from "@/app/(staff)/staff/_components/UnblockForm";
 import { exampleFailedRun, exampleHeldSync, exampleRun } from "@/app/(staff)/staff/_components/RunList.examples";
 import { Logged } from "../_components/wiring";
@@ -198,7 +201,7 @@ export function JobActionsExample() {
   return <Logged>{(log) => <JobActions action={log("action")} label="Check now" />}</Logged>;
 }
 
-/** The seeded admin, an admin and someone with no permissions, each row's forms logged. */
+/** The seeded admin, never logged in; an admin looking, logged in twice; and someone their first login added; each row's forms logged. */
 export function StaffAccountsTableExample() {
   return (
     <Logged>
@@ -206,20 +209,36 @@ export function StaffAccountsTableExample() {
         <StaffAccountsTable
           save={log("saveStaffAccount")}
           remove={log("removeStaffAccount")}
+          endSessions={log("endStaffSessions")}
+          you="jo@pauseai.uk"
           accounts={[
             {
               email: "admin@pauseai.uk",
               permissions: ["admin"],
               addedBy: "migration",
               addedAt: "2026-10-16T12:00:00Z",
+              lastLoginAt: null,
+              lastSeenAt: null,
+              sessions: 0,
             },
             {
               email: "jo@pauseai.uk",
               permissions: ["admin"],
               addedBy: "admin@pauseai.uk",
               addedAt: "2026-10-20T09:00:00Z",
+              lastLoginAt: "2026-10-22T08:00:00Z",
+              lastSeenAt: "2026-10-22T09:15:00Z",
+              sessions: 2,
             },
-            { email: "sam@pauseai.uk", permissions: [], addedBy: "jo@pauseai.uk", addedAt: "2026-10-21T10:30:00Z" },
+            {
+              email: "sam@pauseai.uk",
+              permissions: [],
+              addedBy: "login",
+              addedAt: "2026-10-21T10:30:00Z",
+              lastLoginAt: "2026-10-21T10:30:00Z",
+              lastSeenAt: "2026-10-21T11:00:00Z",
+              sessions: 1,
+            },
           ]}
         />
       )}
@@ -235,6 +254,22 @@ export function EraseFormExample() {
   return (
     <Logged>
       {(log) => <EraseForm supporter={{ id: 7, name: "Jane Example" }} action={log("eraseSupporterNow")} />}
+    </Logged>
+  );
+}
+
+/** The home's dashboard, for someone logged in on `sessions` devices, ending them logged. */
+export function StaffHomeExample({ permissions, sessions = 1 }: { permissions: Permission[]; sessions?: number }) {
+  return (
+    <Logged>
+      {(log) => (
+        <StaffHome
+          permissions={permissions}
+          dashboard={exampleDashboard}
+          sessions={sessions}
+          logOutEverywhere={log("logOutEverywhere")}
+        />
+      )}
     </Logged>
   );
 }

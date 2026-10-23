@@ -2,7 +2,14 @@ import { expect, it } from "vitest";
 import { query } from "@/lib/server/db";
 import { createSession, sessionEmail } from "@/lib/server/staff-auth";
 import { describeWithDatabase, useTestDatabase } from "@/tests/database";
-import { accountOf, admins, listStaffAccounts, removeStaffAccount, saveStaffAccount } from "./staff-accounts";
+import {
+  accountOf,
+  admins,
+  endStaffSessions,
+  listStaffAccounts,
+  removeStaffAccount,
+  saveStaffAccount,
+} from "./staff-accounts";
 
 const log = () =>
   query<{ actor: string; action: string; details: unknown }>(
@@ -41,6 +48,40 @@ describeWithDatabase("staff accounts", () => {
         details: { email: "jo@pauseai.uk", from: [], to: ["admin", "supporters"] },
       },
       { actor: "jo@pauseai.uk", action: "add staff account", details: { email: "sam@pauseai.uk", to: ["supporters"] } },
+    ]);
+  });
+
+  it("lists when each last logged in and was seen, never until it has, and its sessions not yet expired", async () => {
+    await saveStaffAccount("sam@pauseai.uk", [], "admin@pauseai.uk");
+    const jo = await createSession("jo@pauseai.uk");
+    await createSession("Jo@pauseai.uk", true);
+    await createSession("jo@pauseai.uk");
+    await query(
+      "UPDATE staff_sessions SET expires_at = now() - interval '1 minute' WHERE NOT remember AND token_hash <> encode(sha256($1::bytea), 'hex')",
+      [jo],
+    );
+    await query(
+      "UPDATE staff_accounts SET last_seen_at = now() - interval '1 hour', last_login_at = now() - interval '2 hours' WHERE email = 'jo@pauseai.uk'",
+    );
+    expect(await sessionEmail(jo)).toBe("jo@pauseai.uk");
+    const [joRow, samRow] = await listStaffAccounts();
+    expect(joRow).toMatchObject({ email: "jo@pauseai.uk", addedBy: "login", sessions: 2 });
+    // Seen just now, through the session; logged in two hours ago.
+    expect(Date.now() - new Date(joRow.lastSeenAt!).getTime()).toBeLessThan(60_000);
+    expect(new Date(joRow.lastLoginAt!).getTime()).toBeLessThan(new Date(joRow.lastSeenAt!).getTime());
+    expect(samRow).toMatchObject({ email: "sam@pauseai.uk", lastLoginAt: null, lastSeenAt: null, sessions: 0 });
+  });
+
+  it("ends every session of an account, logging it, and logs nothing when there were none", async () => {
+    const jo = await createSession("jo@pauseai.uk");
+    await createSession("jo@pauseai.uk");
+    const sam = await createSession("sam@pauseai.uk");
+    expect(await endStaffSessions("Jo@pauseai.uk", "admin@pauseai.uk")).toBe(2);
+    expect(await endStaffSessions("jo@pauseai.uk", "admin@pauseai.uk")).toBe(0);
+    expect(await sessionEmail(jo)).toBeUndefined();
+    expect(await sessionEmail(sam)).toBe("sam@pauseai.uk");
+    expect((await log()).filter((entry) => entry.action === "end staff sessions")).toEqual([
+      { actor: "admin@pauseai.uk", action: "end staff sessions", details: { email: "jo@pauseai.uk", sessions: 2 } },
     ]);
   });
 

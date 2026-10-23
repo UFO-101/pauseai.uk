@@ -1,4 +1,4 @@
-import type { APIRequestContext, Page } from "@playwright/test";
+import type { APIRequestContext, Browser, Page } from "@playwright/test";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { IMPORT_JOBS, importPath } from "@/lib/import-runs";
 import { TEST_MPS } from "@/lib/test-mps";
@@ -16,10 +16,11 @@ import {
   syncMps,
   WEBHOOK_AUTH,
 } from "../steps";
-import { BASE, expect, frame, test } from "./fixtures";
+import { BASE, expect, flowStorageState, frame, test } from "./fixtures";
 
-// What staff see by permission: supporter data only with `supporters`,
-// wherever it would show. Each flow on its own database.
+// Who sees what: supporter data only with `supporters`, wherever it would
+// show; and the sessions an account has, which an admin, or its owner, can
+// end. Each flow on its own database.
 
 const staffEmail = () => `staff-${test.info().testId.replace(/\W/g, "").slice(-8)}@pauseai.uk`;
 const testy = TEST_MPS[0];
@@ -182,4 +183,60 @@ test("a supporter's bounced address is on Blocked supporter emails, not Blocked 
   await row.getByRole("button", { name: staffCopy.emails.unblock }).click();
   await expect(page.getByText(staffCopy.emails.noBlocks)).toBeVisible();
   await frame(page, "unblocked");
+});
+
+/** Logs `email` in in a browser of its own, on the flow's database, and returns its page. */
+async function otherBrowser(browser: Browser, database: string, email: string): Promise<Page> {
+  const context = await browser.newContext({ storageState: flowStorageState(database) });
+  const page = await context.newPage();
+  await logInAsStaff(page, BASE, email);
+  return page;
+}
+
+test("logged in on two browsers, the home says so at its foot, and logs out of both", async ({
+  page,
+  browser,
+  flowDatabase,
+}) => {
+  const other = await otherBrowser(browser, flowDatabase, staffEmail());
+  await logIn(page, flowDatabase);
+  await expect(page.getByText(staffCopy.home.sessions(2))).toBeVisible();
+  await page.getByText(staffCopy.home.sessions(2)).scrollIntoViewIfNeeded();
+  await frame(page, "the home's foot: logged in on two devices");
+
+  await page.getByRole("button", { name: staffCopy.home.logOutEverywhere }).click();
+  await expect(page).toHaveURL(`${BASE}/staff/login`);
+  await other.goto(`${BASE}/staff`);
+  await expect(other).toHaveURL(`${BASE}/staff/login`);
+  await frame(other, "the other browser, logged out too");
+  await other.context().close();
+});
+
+test("an admin sees when each account last logged in and was seen, and its sessions, and logs a colleague out everywhere", async ({
+  page,
+  browser,
+  flowDatabase,
+}, testInfo) => {
+  const colleague = `colleague-${testInfo.testId.replace(/\W/g, "").slice(-8)}@pauseai.uk`;
+  const theirs = await otherBrowser(browser, flowDatabase, colleague);
+  await logIn(page, flowDatabase, ["admin"]);
+  await page.goto(`${BASE}/staff/accounts`);
+  const row = page.getByRole("row").filter({ hasText: colleague });
+  await expect(row).toContainText(staffCopy.accounts.addedByLogin);
+  // The seeded admin has never logged in; this admin's own row warns that ending its sessions ends theirs.
+  await expect(page.getByRole("row").filter({ hasText: "admin@pauseai.uk" })).toContainText(staffCopy.accounts.never);
+  await expect(page.getByRole("row").filter({ hasText: staffEmail() })).toContainText(staffCopy.accounts.endsYours);
+  await frame(page, "the accounts page: added by login, last login and seen, and sessions open");
+
+  await row.getByRole("button", { name: staffCopy.accounts.endSessions }).click();
+  await expect(row.getByRole("button", { name: staffCopy.accounts.endSessions })).toHaveCount(0);
+  await expect(row.getByRole("cell").nth(5)).toHaveText("0");
+  await frame(page, "the colleague logged out everywhere");
+  await theirs.goto(`${BASE}/staff`);
+  await expect(theirs).toHaveURL(`${BASE}/staff/login`);
+
+  await page.goto(`${BASE}/staff/audit-log`);
+  await expect(page.getByRole("cell", { name: "end staff sessions" })).toBeVisible();
+  await frame(page, "the audit log: who ended whose sessions");
+  await theirs.context().close();
 });

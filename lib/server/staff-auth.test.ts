@@ -2,7 +2,7 @@ import { beforeEach, expect, it, vi } from "vitest";
 import { describeWithDatabase, useTestDatabase } from "@/tests/database";
 import { expectRedirect, requestCookies } from "@/tests/next-headers";
 import { query } from "./db";
-import { createSession, deleteSession, requireStaff, sessionEmail } from "./staff-auth";
+import { createSession, deleteSession, openSessions, requireStaff, sessionEmail } from "./staff-auth";
 import { saveStaffAccount } from "./staff-accounts";
 
 vi.mock("next/headers", () => import("@/tests/next-headers"));
@@ -71,6 +71,16 @@ describeWithDatabase("staff sessions", () => {
     // A session whose account has gone goes to the login page.
     await query("DELETE FROM staff_accounts WHERE email = 'jo@pauseai.uk'");
     expect(await expectRedirect(() => requireStaff())).toBe("/staff/login");
+  });
+
+  it("counts a staff member's sessions not yet expired", async () => {
+    expect(await openSessions("jo@pauseai.uk")).toBe(0);
+    await createSession("jo@pauseai.uk");
+    await createSession("jo@pauseai.uk");
+    await createSession("sam@pauseai.uk");
+    expect(await openSessions("Jo@pauseai.uk")).toBe(2);
+    await query("UPDATE staff_sessions SET expires_at = now() - interval '1 minute' WHERE email = 'sam@pauseai.uk'");
+    expect(await openSessions("sam@pauseai.uk")).toBe(0);
   });
 
   it("requireStaff sends anyone else to the login page", async () => {

@@ -23,6 +23,7 @@ function hash(token: string): string {
  */
 export async function createSession(email: string, remember = false): Promise<string> {
   await accountOnLogin(email);
+  await query("UPDATE staff_accounts SET last_login_at = now(), last_seen_at = now() WHERE email = lower($1)", [email]);
   const token = randomBytes(32).toString("base64url");
   await query("DELETE FROM staff_sessions WHERE expires_at < now()");
   await query(
@@ -33,14 +34,31 @@ export async function createSession(email: string, remember = false): Promise<st
   return token;
 }
 
-/** The staff member a session token belongs to, if it's current. A kept session is renewed for another 30 days. */
+/**
+ * The staff member a session token belongs to, if it's current, who is
+ * then seen now. A kept session is renewed for another 30 days.
+ */
 export async function sessionEmail(token: string): Promise<string | undefined> {
   const [row] = await query<{ email: string }>(
-    `UPDATE staff_sessions SET expires_at = CASE WHEN remember THEN now() + interval '${KEEP_DAYS} days' ELSE expires_at END
-     WHERE token_hash = $1 AND expires_at > now() RETURNING email`,
+    `WITH session AS (
+       UPDATE staff_sessions SET expires_at = CASE WHEN remember THEN now() + interval '${KEEP_DAYS} days' ELSE expires_at END
+       WHERE token_hash = $1 AND expires_at > now() RETURNING email
+     ), seen AS (
+       UPDATE staff_accounts SET last_seen_at = now() WHERE email IN (SELECT lower(email) FROM session)
+     )
+     SELECT email FROM session`,
     [hash(token)],
   );
   return row?.email;
+}
+
+/** How many sessions `email` has open, not yet expired. */
+export async function openSessions(email: string): Promise<number> {
+  const [{ count }] = await query<{ count: number }>(
+    "SELECT count(*)::int AS count FROM staff_sessions WHERE lower(email) = lower($1) AND expires_at > now()",
+    [email],
+  );
+  return count;
 }
 
 export async function deleteSession(token: string): Promise<void> {

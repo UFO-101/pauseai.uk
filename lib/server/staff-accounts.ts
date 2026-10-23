@@ -1,5 +1,5 @@
 import "server-only";
-import { isStaffEmail, type Permission } from "@/lib/staff-permissions";
+import { ADDED_BY_LOGIN, isStaffEmail, type Permission } from "@/lib/staff-permissions";
 import { logChange } from "./audit";
 import { query, transaction, type Queryable } from "./db";
 
@@ -13,8 +13,13 @@ import { query, transaction, type Queryable } from "./db";
 export type StaffAccount = {
   email: string;
   permissions: Permission[];
+  /** The admin who added it, or ADDED_BY_LOGIN. */
   addedBy: string;
   addedAt: string;
+  lastLoginAt: string | null;
+  lastSeenAt: string | null;
+  /** Sessions not yet expired. */
+  sessions: number;
 };
 
 /** The account for `email`, if it has one. */
@@ -24,9 +29,6 @@ export async function accountOf(email: string): Promise<{ permissions: Permissio
   ]);
   return row;
 }
-
-/** Who added an account made on its first login. */
-export const ADDED_BY_LOGIN = "login";
 
 /**
  * Gives `email` an account with no permissions if it has none, as on its
@@ -45,11 +47,26 @@ export async function accountOnLogin(email: string): Promise<void> {
   });
 }
 
-/** Every account, by address. */
+/** Every account, by address, with when it last logged in and was seen, and its sessions open. */
 export async function listStaffAccounts(): Promise<StaffAccount[]> {
   return query<StaffAccount>(
-    `SELECT email, permissions, added_by AS "addedBy", added_at AS "addedAt" FROM staff_accounts ORDER BY email`,
+    `SELECT a.email, a.permissions, a.added_by AS "addedBy", a.added_at AS "addedAt",
+       a.last_login_at AS "lastLoginAt", a.last_seen_at AS "lastSeenAt", coalesce(s.sessions, 0) AS sessions
+     FROM staff_accounts a
+     LEFT JOIN (SELECT lower(email) AS email, count(*)::int AS sessions FROM staff_sessions
+                WHERE expires_at > now() GROUP BY lower(email)) s ON s.email = a.email
+     ORDER BY a.email`,
   );
+}
+
+/** Ends every session `email` has, as `by`, logging it when there were any. Returns how many. */
+export async function endStaffSessions(email: string, by: string): Promise<number> {
+  const [address] = normalise(email, []);
+  return transaction(async (db) => {
+    const ended = await query("DELETE FROM staff_sessions WHERE lower(email) = $1 RETURNING 1", [address], db);
+    if (ended.length) await logChange(by, "end staff sessions", { email: address, sessions: ended.length }, db);
+    return ended.length;
+  });
 }
 
 /** The addresses to ask for an account or a permission: every admin. */

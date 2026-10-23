@@ -160,13 +160,30 @@ describe("StaffNav", () => {
 
 describe("StaffHome", () => {
   it("shows the dashboard under a title only screen readers hear", async () => {
-    await render(<StaffHome permissions={["admin", "supporters"]} dashboard={exampleDashboard} />);
+    await render(
+      <StaffHome
+        permissions={["admin", "supporters"]}
+        dashboard={exampleDashboard}
+        sessions={1}
+        logOutEverywhere={vi.fn()}
+      />,
+    );
     const title = page.getByRole("heading", { level: 1, name: staffCopy.home.title });
     await expect.element(title).toBeInTheDocument();
     expect(title.element().getBoundingClientRect().width).toBeLessThanOrEqual(1);
     await expect
       .element(page.getByRole("heading", { level: 2, name: staffCopy.home.dashboard.sections.mps }))
       .toBeVisible();
+    // One session, this one: nothing to say.
+    await expect.element(page.getByText(staffCopy.home.sessions(1))).not.toBeInTheDocument();
+  });
+
+  it("with more than one session open, says how many at its foot, and ends them all", async () => {
+    const logOut = vi.fn();
+    await render(<StaffHome permissions={[]} dashboard={exampleDashboard} sessions={3} logOutEverywhere={logOut} />);
+    await expect.element(page.getByText(staffCopy.home.sessions(3))).toBeVisible();
+    await page.getByRole("button", { name: staffCopy.home.logOutEverywhere }).click();
+    await vi.waitFor(() => expect(logOut).toHaveBeenCalled());
   });
 });
 
@@ -414,28 +431,90 @@ describe("DevLogin", () => {
 
 describe("StaffAccountsTable", () => {
   const accounts = [
-    { email: "admin@pauseai.uk", permissions: ["admin"], addedBy: "migration", addedAt: "2026-10-16T12:00:00Z" },
+    {
+      email: "admin@pauseai.uk",
+      permissions: ["admin"],
+      addedBy: "migration",
+      addedAt: "2026-10-16T12:00:00Z",
+      lastLoginAt: "2026-10-22T08:00:00Z",
+      lastSeenAt: "2026-10-22T09:15:00Z",
+      sessions: 2,
+    },
     {
       email: "jo@pauseai.uk",
       permissions: ["supporters"],
       addedBy: "admin@pauseai.uk",
       addedAt: "2026-10-20T09:00:00Z",
+      lastLoginAt: null,
+      lastSeenAt: null,
+      sessions: 0,
+    },
+    {
+      email: "sam@pauseai.uk",
+      permissions: [],
+      addedBy: "login",
+      addedAt: "2026-10-21T10:30:00Z",
+      lastLoginAt: "2026-10-21T10:30:00Z",
+      lastSeenAt: "2026-10-21T11:00:00Z",
+      sessions: 1,
     },
   ] satisfies StaffAccount[];
 
   const renderTable = async () => {
     const save = action();
     const remove = action();
-    await render(<StaffAccountsTable save={save.fn} remove={remove.fn} accounts={accounts} />);
-    return { save, remove };
+    const end = action();
+    await render(
+      <StaffAccountsTable
+        save={save.fn}
+        remove={remove.fn}
+        endSessions={end.fn}
+        accounts={accounts}
+        you="admin@pauseai.uk"
+      />,
+    );
+    return { save, remove, end };
   };
+
+  it("says when each was added and by whom, or by its login, when last logged in and seen, and its sessions open", async () => {
+    await renderTable();
+    const row = (email: string) =>
+      page
+        .getByRole("row")
+        .filter({ hasText: email })
+        .getByRole("cell")
+        .all()
+        .map((cell) => cell.element().textContent);
+    const copy = staffCopy.accounts;
+    expect(row("jo@pauseai.uk").slice(2, 6)).toEqual([
+      `2026-10-20 09:00 ${copy.addedBy("admin@pauseai.uk")}`,
+      copy.never,
+      copy.never,
+      "0",
+    ]);
+    expect(row("sam@pauseai.uk").slice(2, 6)).toEqual([
+      `2026-10-21 10:30 ${copy.addedByLogin}`,
+      "2026-10-21 10:30",
+      "2026-10-21 11:00",
+      "1",
+    ]);
+  });
+
+  it("ends an account's sessions from its row, only where it has some, warning on your own row that it ends yours", async () => {
+    const { end } = await renderTable();
+    const form = (email: string) => page.getByRole("form", { name: `${staffCopy.accounts.endSessions}: ${email}` });
+    await expect.element(form("jo@pauseai.uk")).not.toBeInTheDocument();
+    await expect.element(form("admin@pauseai.uk").getByText(staffCopy.accounts.endsYours)).toBeVisible();
+    await expect.element(form("sam@pauseai.uk").getByText(staffCopy.accounts.endsYours)).not.toBeInTheDocument();
+    await form("sam@pauseai.uk").getByRole("button").click();
+    await vi.waitFor(() => expect(end.sent).toEqual([{ email: "sam@pauseai.uk" }]));
+  });
 
   it("lists every account, centred in its row, with its boxes, a Remove at the right, and a key to the permissions", async () => {
     const { remove } = await renderTable();
-    await expect.element(page.getByRole("cell", { name: "2026-10-20 09:00" })).toBeVisible();
-    expect(getComputedStyle(page.getByRole("cell", { name: "2026-10-20 09:00" }).element()).verticalAlign).toBe(
-      "middle",
-    );
+    const cell = page.getByRole("cell", { name: "2026-10-22 08:00", exact: true });
+    await expect.element(cell).toBeVisible();
+    expect(getComputedStyle(cell.element()).verticalAlign).toBe("middle");
     const jo = page.getByRole("group", { name: "jo@pauseai.uk" });
     expect(
       jo
@@ -480,7 +559,9 @@ describe("StaffAccountsTable", () => {
   it("shows a tick straight away, its row's boxes off until it's saved, then what's saved", async () => {
     let done = () => {};
     const save = vi.fn(() => new Promise<void>((resolve) => (done = resolve)));
-    await render(<StaffAccountsTable save={save} remove={vi.fn()} accounts={accounts} />);
+    await render(
+      <StaffAccountsTable save={save} remove={vi.fn()} endSessions={vi.fn()} accounts={accounts} you="jo@pauseai.uk" />,
+    );
     const jo = page.getByRole("group", { name: "jo@pauseai.uk" });
     const admin = jo.getByRole("checkbox", { name: staffCopy.accounts.names.admin });
     await admin.click();
@@ -513,10 +594,10 @@ describe("StaffAccountsTable", () => {
     expect(save.sent).toHaveLength(0);
 
     // Enter adds too: an account with no permissions, and the field empty again.
-    await userEvent.fill(field, " Sam@PauseAI.uk ");
+    await userEvent.fill(field, " Lee@PauseAI.uk ");
     await userEvent.keyboard("{Enter}");
     await vi.waitFor(() => expect(save.sent).toHaveLength(1));
-    expect(save.sent[0]).toEqual({ email: "sam@pauseai.uk" });
+    expect(save.sent[0]).toEqual({ email: "lee@pauseai.uk" });
     await expect.element(field).toHaveValue("");
     await expect.element(page.getByRole("alert")).not.toBeInTheDocument();
     await expect.element(field).toHaveAttribute("aria-invalid", "false");
