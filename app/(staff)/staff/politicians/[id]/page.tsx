@@ -7,7 +7,7 @@ import { PARLIAMENTARIANS_TABLE_URL } from "@/lib/server/outside-services/airtab
 import { getPolitician, politicianHistory } from "@/lib/server/politicians";
 import { requireStaff } from "@/lib/server/staff-auth";
 import { politicianId } from "@/lib/staff-search";
-import { editSigner, markSigned, unblockAddress } from "../../actions";
+import { markSigned, unblockAddress } from "../../actions";
 import PoliticianDetails from "../../_components/PoliticianDetails";
 import Breadcrumb from "../../_components/Breadcrumb";
 import StaffNav from "../../_components/StaffNav";
@@ -34,7 +34,6 @@ export default async function PoliticianPage({ params }: Params) {
       <Breadcrumb href="/staff/politicians">{staffCopy.nav.politicians}</Breadcrumb>
       <PoliticianDetails
         politician={politician}
-        action={editSigner}
         markSigned={markSigned}
         block={block}
         unblock={unblockAddress}

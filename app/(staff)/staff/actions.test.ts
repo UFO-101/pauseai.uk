@@ -11,7 +11,6 @@ import { expectRedirect, requestCookies } from "@/tests/next-headers";
 import {
   checkNow,
   decideSync,
-  editSigner,
   eraseSupporterNow,
   importControlAiNow,
   importFromAirtable,
@@ -59,7 +58,6 @@ describeWithDatabase("staff Server Actions", () => {
     const attempts = [
       () => markSigned(form({ politicianId: String(id), campaign: PM, signed: "1" })),
       () => importControlAiNow(),
-      () => editSigner(form({ id: String(id), house: "lords", name: "X" })),
       () => syncNow(),
       () => checkNow(),
       () => decideSync(form({ id: "1", decision: "apply" })),
@@ -169,15 +167,6 @@ describeWithDatabase("staff Server Actions", () => {
     expect(await runs()).toEqual([{ job: "import-members", status: "ok", startedBy: "jo@pauseai.uk" }]);
     expect(await query("SELECT count(*)::int AS n FROM members")).toEqual([{ n: 8 }]);
     expect(revalidatePath).toHaveBeenCalledWith("/staff/import-data/members");
-  });
-
-  it("editSigner edits a signer from outside Airtable's MPs, and ignores a bad form", async () => {
-    const id = await addTestPolitician({ airtableId: null, house: "lords", name: "Lord X" });
-    await editSigner(form({ id: String(id), house: "lords", name: "Lord Y" }));
-    expect((await getPolitician(id))!.name).toBe("Lord Y");
-    await editSigner(form({ id: String(id), house: "lords", name: "" }));
-    await editSigner(form({ id: "x", house: "lords", name: "Lord Z" }));
-    expect((await getPolitician(id))!.name).toBe("Lord Y");
   });
 
   it("checkNow checks the MPs against Parliament's", async () => {

@@ -46,7 +46,7 @@ export const staffCopy = {
     import: "Import data",
     changes: "Audit log",
     letters: "Letters to MPs",
-    supporterEmails: "Blocked supporter emails",
+    supporterEmails: "Blocked emails",
     mpEmails: "Blocked MP emails",
     logout: "Log out",
     // Under Log out, faintly, only with more than one session open: how many, linked to the page of them.
@@ -388,7 +388,6 @@ export const staffCopy = {
   },
   politician: {
     statusesTitle: "Campaigns",
-    detailsTitle: "About this politician",
     // The box at the top of their page: where they came from, and each campaign's status.
     source: "Source",
     sources: {
@@ -433,7 +432,6 @@ export const staffCopy = {
     } as Record<string, string>,
     role: (role: string, constituency: string | null, sitting: boolean) =>
       `${sitting ? "" : "Formerly "}${role}${constituency ? ` for ${constituency}` : ""}`,
-    save: "Save",
     notFound: "Politician not found.",
     // Under their name, when their address is blocked: what's happened, what to check, and the form.
     blocked: {

@@ -10,6 +10,9 @@ type Props = {
   labels: string[];
   /** The chart's name for screen readers. */
   name: string;
+  /** The dates under its two ends: when the first point's period begins, and when the last ends. */
+  from: string;
+  to: string;
 };
 
 /** The drawing's size in its own units; the browser scales it to the tile's width. */
@@ -20,10 +23,10 @@ const PAD = 3;
 /**
  * A thin line of counts under a tile's label, the last point marked, over a
  * faint baseline that is zero: the bottom is always zero, so a line near it
- * is near none. Pointing at it marks the nearest point and says its period
- * and count.
+ * is near none. Under its ends, the dates it runs between. Pointing at it
+ * marks the nearest point and says its period and count.
  */
-export default function Sparkline({ values, labels, name }: Props) {
+export default function Sparkline({ values, labels, name, from, to }: Props) {
   const [pointed, setPointed] = useState<number | null>(null);
   const last = values.length - 1;
   const max = Math.max(...values) || 1;
@@ -65,6 +68,10 @@ export default function Sparkline({ values, labels, name }: Props) {
           {labels[pointed]}
         </span>
       )}
+      <span className={styles.ends} aria-hidden="true">
+        <span>{from}</span>
+        <span>{to}</span>
+      </span>
     </span>
   );
 }

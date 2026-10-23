@@ -77,7 +77,6 @@ import {
   ImportJobPageExample,
   JobActionsExample,
   PoliticianDetailsExample,
-  PoliticianFormExample,
   PoliticianTableEmptyExample,
   PoliticianTableExample,
   EraseFormExample,
@@ -635,13 +634,15 @@ export const staff: Group = {
           label: "Eight weeks of registrations: point at it for a week's count",
           render: () => (
             <StaffPage as="div">
-              <div style={{ maxWidth: "16rem" }}>
+              <div style={{ maxWidth: "24rem" }}>
                 <Sparkline
                   name="Event registrations, the last eight weeks"
                   values={exampleDashboard.series.eventRegistrations.map((point) => point.count)}
                   labels={exampleDashboard.series.eventRegistrations.map(
                     (point) => `From ${point.from.slice(0, 10)}: ${point.count}`,
                   )}
+                  from={exampleDashboard.series.eventRegistrations[0].from.slice(0, 10)}
+                  to={exampleDashboard.asOf.slice(0, 10)}
                 />
               </div>
             </StaffPage>
@@ -1112,20 +1113,6 @@ export const staff: Group = {
           render: () => (
             <StaffPage as="div">
               <PoliticianTableEmptyExample />
-            </StaffPage>
-          ),
-        },
-      ],
-    },
-    {
-      name: "PoliticianForm",
-      file: "app/(staff)/staff/_components/PoliticianForm.tsx",
-      variants: [
-        {
-          label: "A peer with no constituency or email",
-          render: () => (
-            <StaffPage as="div">
-              <PoliticianFormExample />
             </StaffPage>
           ),
         },

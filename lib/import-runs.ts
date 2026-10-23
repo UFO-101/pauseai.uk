@@ -28,6 +28,16 @@ const IMPORT_SLUGS: Record<ImportJob, string> = {
   "import-members": "members",
 };
 
+/** How often each job runs on its own, matching its schedule in netlify/functions/; a one-off is only run by staff. */
+export const JOB_SCHEDULES: Record<ImportJob, "hourly" | "nightly" | "oneOff"> = {
+  "import-luma": "hourly",
+  "import-members": "hourly",
+  "sync-mps": "nightly",
+  "check-mps": "nightly",
+  "import-controlai": "nightly",
+  "import-signatories": "oneOff",
+};
+
 /** Where a job's page is. */
 export function importPath(job: ImportJob): string {
   return `/staff/import-data/${IMPORT_SLUGS[job]}`;
@@ -38,12 +48,12 @@ export function jobBySlug(slug: string): ImportJob | undefined {
   return IMPORT_JOBS.find((job) => IMPORT_SLUGS[job] === slug);
 }
 
-/** Who starts the scheduled runs (netlify/functions/). Staff runs are started by the staff member's email. */
 /** A job's newest run as a list for RunList: itself, or none if it has never run. */
 export function asList<Run>(run: Run | undefined): Run[] {
   return run ? [run] : [];
 }
 
+/** Who starts the scheduled runs (netlify/functions/), whatever their schedule. Staff runs are started by the staff member's email. */
 export const NIGHTLY = "nightly";
 
 /** ok or failed; a sync-mps run is instead unchanged, held, applied or discarded. */

@@ -6,7 +6,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { type ImportJob, importPath } from "@/lib/import-runs";
 import { now } from "@/lib/now";
-import { eraseFrom, idFrom, permissionsFrom, politicianDetailsFrom, signedFrom, unblockFrom } from "@/lib/staff-forms";
+import { eraseFrom, idFrom, permissionsFrom, signedFrom, unblockFrom } from "@/lib/staff-forms";
 import { importControlAiLetter } from "@/lib/server/controlai-import";
 import { isPoliticianAddress, unblock } from "@/lib/server/email";
 import { eraseSupporter } from "@/lib/server/erasure";
@@ -14,7 +14,7 @@ import { importLuma } from "@/lib/server/luma-import";
 import { importMembers } from "@/lib/server/members-import";
 import { checkMps } from "@/lib/server/mp-check";
 import { decideHeldSync, syncMps } from "@/lib/server/mp-sync";
-import { setStatus, updatePolitician } from "@/lib/server/politicians";
+import { setStatus } from "@/lib/server/politicians";
 import { importSignatories } from "@/lib/server/signatory-import";
 import { requireStaff } from "@/lib/server/staff-auth";
 import {
@@ -38,15 +38,6 @@ export async function markSigned(form: FormData): Promise<void> {
   );
   revalidatePath("/staff/politicians");
   revalidatePath(`/staff/politicians/${parsed.politicianId}`);
-}
-
-export async function editSigner(form: FormData): Promise<void> {
-  const { email } = await requireStaff();
-  const id = idFrom(form);
-  const details = politicianDetailsFrom(form);
-  if (!id || !details) return;
-  await updatePolitician(id, details, email);
-  revalidatePath(`/staff/politicians/${id}`);
 }
 
 /** Refreshes the pages that show a job's runs: its own, the overview of every job, and the home page's actions. */
