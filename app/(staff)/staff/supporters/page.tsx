@@ -17,7 +17,7 @@ export default async function SupportersPage({ searchParams }: { searchParams: P
   const { filter, ...search } = supportersSearch(await searchParams);
   const page = await listSupporters(filter);
   return (
-    <StaffPage nav={<StaffNav email={email} account permissions={permissions} current="supporters" />}>
+    <StaffPage nav={<StaffNav email={email} permissions={permissions} current="supporters" />}>
       <h1>{staffCopy.supporters.title}</h1>
       <ErasedNotice erased={search.erased} />
       <SupporterFilters search={search} />

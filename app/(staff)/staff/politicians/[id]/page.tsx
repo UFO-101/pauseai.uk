@@ -30,7 +30,7 @@ export default async function PoliticianPage({ params }: Params) {
     politicianHistory(politician.id, politician.email),
   ]);
   return (
-    <StaffPage nav={<StaffNav email={email} account permissions={permissions} current="politicians" />}>
+    <StaffPage nav={<StaffNav email={email} permissions={permissions} current="politicians" />}>
       <Breadcrumb href="/staff/politicians">{staffCopy.nav.politicians}</Breadcrumb>
       <PoliticianDetails
         politician={politician}

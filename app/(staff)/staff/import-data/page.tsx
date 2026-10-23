@@ -15,7 +15,7 @@ export default async function ImportPage() {
   const { email, permissions } = await requireStaff();
   const newest = await Promise.all(IMPORT_JOBS.map((job) => latestRun(job)));
   return (
-    <StaffPage nav={<StaffNav email={email} account permissions={permissions} current="import" />}>
+    <StaffPage nav={<StaffNav email={email} permissions={permissions} current="import" />}>
       <ImportOverview newest={newest} airtableTable={PARLIAMENTARIANS_TABLE_URL} />
     </StaffPage>
   );

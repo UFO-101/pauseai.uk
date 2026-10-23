@@ -98,7 +98,7 @@ describe("StaffNav", () => {
   });
 
   it("groups the pages by permission, marks the current one but keeps it a link, says who's logged in, and logs out with a POST", async () => {
-    await render(<StaffNav email="jo@pauseai.uk" account permissions={["admin"]} current="politicians" />);
+    await render(<StaffNav email="jo@pauseai.uk" permissions={["admin"]} current="politicians" />);
     // The title is the way home, except at home.
     await expect.element(page.getByRole("link", { name: staffCopy.nav.title })).toHaveAttribute("href", "/staff");
     // The sidebar is for wider screens than the test's, so it's read from the DOM.
@@ -135,7 +135,7 @@ describe("StaffNav", () => {
   });
 
   it("shows the admin section with only Import to someone without the permission, and at home the title isn't a link", async () => {
-    await render(<StaffNav email="jo@pauseai.uk" account permissions={[]} current="home" />);
+    await render(<StaffNav email="jo@pauseai.uk" permissions={[]} current="home" />);
     await expect.element(page.getByRole("link", { name: staffCopy.nav.title })).not.toBeInTheDocument();
     const nav = document.querySelector("nav")!;
     expect(nav.querySelector('a[href="/staff/accounts"]')).toBeNull();
@@ -145,7 +145,7 @@ describe("StaffNav", () => {
   });
 
   it("shows the Supporters section, Letters in it, to someone with supporters", async () => {
-    await render(<StaffNav email="jo@pauseai.uk" account permissions={["supporters"]} current="letters" />);
+    await render(<StaffNav email="jo@pauseai.uk" permissions={["supporters"]} current="letters" />);
     const nav = document.querySelector("nav")!;
     const supporters = [...nav.querySelectorAll("section")].find(
       (section) => section.querySelector("h2")?.textContent === staffCopy.nav.sections.supporters,
@@ -156,56 +156,16 @@ describe("StaffNav", () => {
       "/staff/supporters/blocked-emails",
     ]);
   });
-
-  it("shows no groups at all to someone without an account, only who they are and the way out", async () => {
-    await render(<StaffNav email="jo@pauseai.uk" current="home" />);
-    const nav = document.querySelector("nav")!;
-    expect(nav.querySelectorAll("a[href^='/staff/']")).toHaveLength(0);
-    await expect.element(page.getByText("jo@pauseai.uk").first()).toBeInTheDocument();
-    expect(document.querySelectorAll('form[action="/staff/api/logout"]')).toHaveLength(2);
-  });
 });
 
 describe("StaffHome", () => {
-  it("shows the dashboard to someone with an account, and nothing about permissions when they have some", async () => {
-    await render(
-      <StaffHome
-        account
-        permissions={["admin", "supporters"]}
-        admins={["admin@pauseai.uk"]}
-        dashboard={exampleDashboard}
-      />,
-    );
-    // The title is for screen readers only: the dashboard is the page.
+  it("shows the dashboard under a title only screen readers hear", async () => {
+    await render(<StaffHome permissions={["admin", "supporters"]} dashboard={exampleDashboard} />);
     const title = page.getByRole("heading", { level: 1, name: staffCopy.home.title });
     await expect.element(title).toBeInTheDocument();
     expect(title.element().getBoundingClientRect().width).toBeLessThanOrEqual(1);
     await expect
       .element(page.getByRole("heading", { level: 2, name: staffCopy.home.dashboard.sections.mps }))
-      .toBeVisible();
-  });
-
-  it("without an account, says so and whom to ask, and shows nothing else", async () => {
-    await render(<StaffHome account={false} permissions={[]} admins={["admin@pauseai.uk"]} />);
-    await expect.element(page.getByText(staffCopy.home.noAccount, { exact: false })).toBeVisible();
-    await expect.element(page.getByText(staffCopy.home.ask("admin@pauseai.uk"), { exact: false })).toBeVisible();
-    expect(page.getByRole("link").all()).toHaveLength(0);
-  });
-
-  it("without permissions, shows the dashboard and nothing about permissions", async () => {
-    await render(
-      <StaffHome
-        account
-        permissions={[]}
-        admins={["admin@pauseai.uk", "jo@pauseai.uk"]}
-        dashboard={exampleDashboard}
-      />,
-    );
-    await expect
-      .element(page.getByText(staffCopy.home.ask("admin@pauseai.uk, jo@pauseai.uk"), { exact: false }))
-      .not.toBeInTheDocument();
-    await expect
-      .element(page.getByRole("heading", { level: 2, name: staffCopy.home.dashboard.sections.supporters }))
       .toBeVisible();
   });
 });

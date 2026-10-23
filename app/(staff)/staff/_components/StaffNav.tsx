@@ -12,22 +12,20 @@ export type StaffPage = "home" | StaffPageId;
 type Props = {
   /** Who's logged in. Without it, on the login page, just the title. */
   email?: string;
-  /** Whether they have an account. Without one there are no groups to show, only who they are and the way out. */
-  account?: boolean;
-  /** Their permissions, which decide the groups they see. */
+  /** Their permissions, which decide the pages they see. */
   permissions?: Permission[];
   current?: StaffPage;
 };
 
 /**
  * The staff interface's navigation: a sidebar with Home, then the pages in
- * groups, the current one marked but still a link, so it's the way back from a page
+ * sections, the current one marked but still a link, so it's the way back from a page
  * under it; who's logged in and the way out; on a phone, a bar with the
- * current page's name opening the same as a dropdown. A group shows only
- * to those with its permission. The pause symbol and name at the top are the
+ * current page's name opening the same as a dropdown. Each page shows
+ * only to those with its permission (lib/staff-sections.ts). The pause symbol and name at the top are the
  * way to the home page.
  */
-export default function StaffNav({ email, account = false, permissions = [], current }: Props) {
+export default function StaffNav({ email, permissions = [], current }: Props) {
   // The pause symbol and the name: the way home, except at home.
   const mark = (
     <>
@@ -45,7 +43,7 @@ export default function StaffNav({ email, account = false, permissions = [], cur
     );
   if (!email) return <div className={styles.bar}>{title}</div>;
 
-  // Home first, on its own, then the groups; without an account, only home.
+  // Home first, on its own, then the sections.
   const home = (
     <section className={styles.group}>
       <ul>
@@ -57,7 +55,7 @@ export default function StaffNav({ email, account = false, permissions = [], cur
       </ul>
     </section>
   );
-  const groups = (account ? sectionsFor(permissions) : []).map((section) => (
+  const groups = sectionsFor(permissions).map((section) => (
     <section key={section.id} className={styles.group}>
       <h2>{staffCopy.nav.sections[section.id]}</h2>
       <ul>

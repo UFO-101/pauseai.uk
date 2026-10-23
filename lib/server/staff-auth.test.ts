@@ -46,19 +46,31 @@ describeWithDatabase("staff sessions", () => {
     expect(await query("SELECT email FROM staff_sessions")).toEqual([{ email: "new@pauseai.uk" }]);
   });
 
-  it("requireStaff returns the staff member for a current session, with their account and permissions", async () => {
+  it("gives an address an account with no permissions on its first login, logged, and keeps an existing one", async () => {
+    await createSession("jo@pauseai.uk");
+    await saveStaffAccount("sam@pauseai.uk", ["admin"], "jo@pauseai.uk");
+    await createSession("sam@pauseai.uk");
+    await createSession("jo@pauseai.uk");
+    expect(await query("SELECT email, permissions, added_by FROM staff_accounts ORDER BY email")).toEqual([
+      { email: "jo@pauseai.uk", permissions: [], added_by: "login" },
+      { email: "sam@pauseai.uk", permissions: ["admin"], added_by: "jo@pauseai.uk" },
+    ]);
+    expect(
+      await query("SELECT actor, action, details FROM audit_log WHERE details->>'email' = 'jo@pauseai.uk'"),
+    ).toEqual([{ actor: "jo@pauseai.uk", action: "add staff account", details: { email: "jo@pauseai.uk", to: [] } }]);
+  });
+
+  it("requireStaff returns the staff member for a current session, with their permissions", async () => {
     const token = await createSession("jo@pauseai.uk");
     requestCookies.set("staff_session", token);
-    // Without an account: only a login is satisfied; a page needing an account sends them home.
-    expect(await requireStaff("login")).toEqual({ email: "jo@pauseai.uk", token, account: false, permissions: [] });
-    expect(await expectRedirect(() => requireStaff())).toBe("/staff");
-    expect(await expectRedirect(() => requireStaff("supporters"))).toBe("/staff");
-    await saveStaffAccount("jo@pauseai.uk", [], "a");
-    expect(await requireStaff()).toEqual({ email: "jo@pauseai.uk", token, account: true, permissions: [] });
+    expect(await requireStaff()).toEqual({ email: "jo@pauseai.uk", token, permissions: [] });
     expect(await expectRedirect(() => requireStaff("supporters"))).toBe("/staff");
     await saveStaffAccount("jo@pauseai.uk", ["supporters"], "a");
-    expect(await requireStaff("supporters")).toMatchObject({ account: true, permissions: ["supporters"] });
+    expect(await requireStaff("supporters")).toMatchObject({ permissions: ["supporters"] });
     expect(await expectRedirect(() => requireStaff("admin"))).toBe("/staff");
+    // A session whose account has gone goes to the login page.
+    await query("DELETE FROM staff_accounts WHERE email = 'jo@pauseai.uk'");
+    expect(await expectRedirect(() => requireStaff())).toBe("/staff/login");
   });
 
   it("requireStaff sends anyone else to the login page", async () => {

@@ -30,7 +30,7 @@ export default async function SupporterLettersPage({ params }: Params) {
   const name = supporterTitle(summary);
   const letters = await recentLetters({ supporterId: summary.id });
   return (
-    <StaffPage nav={<StaffNav email={email} account permissions={permissions} current="supporters" />}>
+    <StaffPage nav={<StaffNav email={email} permissions={permissions} current="supporters" />}>
       <Breadcrumb href={`/staff/supporters/${summary.id}`}>{name}</Breadcrumb>
       <h1>{staffCopy.letters.fromTitle(name)}</h1>
       <LettersTable letters={letters} />

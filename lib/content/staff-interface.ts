@@ -22,7 +22,7 @@ export const staffCopy = {
     // Beside each address: what it may do.
     permissions: (names: string) => `${names} permissions`,
     noPermissions: "Account with no permissions",
-    noAccount: "No account",
+    noAccount: "⁂ No account yet: logging in makes one",
   },
   // The email with the login link.
   loginEmail: {
@@ -50,8 +50,7 @@ export const staffCopy = {
     mpEmails: "⁂ Blocked MP emails",
     logout: "Log out",
   },
-  // The home page: whom to ask for an account; or the pages you can see,
-  // in groups, and which permissions you have, or that you have none.
+  // The home page: the dashboard.
   home: {
     title: "Home",
     // The dashboard: what needs a person, then the window's numbers in
@@ -111,8 +110,6 @@ export const staffCopy = {
       seriesPoint: (days: number, from: string, n: number) =>
         days === 7 ? `Week beginning ${from}: ${n}` : `${days} days beginning ${from}: ${n}`,
     },
-    noAccount: "You don't have a staff account yet.",
-    ask: (admins: string) => `Ask ${admins}.`,
   },
   // The supporters list (/staff/supporters) and a supporter's page.
   supporters: {
@@ -284,7 +281,8 @@ export const staffCopy = {
   // pages, and what each may do.
   accounts: {
     title: "Staff accounts",
-    intro: "Only people with a @pauseai.uk address who are in this list can log in. ",
+    intro:
+      "⁂ Everyone with a @pauseai.uk address gets an account, with no permissions, the first time they log in. Add someone here to give them permissions before then.",
     names: {
       admin: "Admin",
       supporters: "Supporters",

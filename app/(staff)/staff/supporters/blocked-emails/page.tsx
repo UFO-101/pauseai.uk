@@ -18,7 +18,7 @@ export default async function SupporterEmailsPage({ searchParams }: { searchPara
   const { kind, filter } = emailsSearch(await searchParams);
   const [blocks, problems] = await Promise.all([listBlocks("others", filter), recentProblems("others")]);
   return (
-    <StaffPage nav={<StaffNav email={email} account permissions={permissions} current="supporterEmails" />}>
+    <StaffPage nav={<StaffNav email={email} permissions={permissions} current="supporterEmails" />}>
       <h1>{staffCopy.emails.titles.supporters}</h1>
       <p>{staffCopy.emails.intro}</p>
       <EmailBlockFilters kind={kind} action="/staff/supporters/blocked-emails" />

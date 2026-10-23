@@ -5,23 +5,24 @@ import { redirect } from "next/navigation";
 import type { Permission } from "@/lib/staff-permissions";
 import { KEEP_DAYS, LOGIN_PATH, SESSION_COOKIE, SESSION_HOURS } from "@/lib/staff-session";
 import { query } from "./db";
-import { accountOf } from "./staff-accounts";
+import { accountOf, accountOnLogin } from "./staff-accounts";
 
 // Staff sessions, kept in the database. Every staff page, Server Action and
 // route handler calls requireStaff() first, saying what it needs: an
-// account (the default), a permission, or just a login (the home page and
-// logging out); tests/checks/staff-auth.test.ts fails if one doesn't.
-// proxy.ts only turns away requests with no cookie.
+// account (the default) or a permission; tests/checks/staff-auth.test.ts
+// fails if one doesn't. proxy.ts only turns away requests with no cookie.
 
 function hash(token: string): string {
   return createHash("sha256").update(token).digest("hex");
 }
 
 /**
- * Starts a session for a staff member: for a day, or with "Keep me signed
- * in", 30 days. Returns the token for the cookie.
+ * Starts a session for a staff member, giving them an account if it's
+ * their first login: for a day, or with "Keep me signed in", 30 days.
+ * Returns the token for the cookie.
  */
 export async function createSession(email: string, remember = false): Promise<string> {
+  await accountOnLogin(email);
   const token = randomBytes(32).toString("base64url");
   await query("DELETE FROM staff_sessions WHERE expires_at < now()");
   await query(
@@ -46,32 +47,24 @@ export async function deleteSession(token: string): Promise<void> {
   await query("DELETE FROM staff_sessions WHERE token_hash = $1", [hash(token)]);
 }
 
-export type Staff = {
-  email: string;
-  token: string;
-  /** Whether they have a staff account, which the pages need. */
-  account: boolean;
-  permissions: Permission[];
-};
+export type Staff = { email: string; token: string; permissions: Permission[] };
 
-/** What a page needs: a login, an account (the default), or a permission. */
-export type StaffNeeds = "login" | "account" | Permission;
+/** What a page needs: an account (the default), or a permission. */
+export type StaffNeeds = "account" | Permission;
 
-/** Where someone without the account or permission a page needs is sent: the staff home, which says whom to ask. */
+/** Where someone without the permission a page needs is sent: the staff home. */
 const STAFF_HOME = "/staff";
 
 /**
- * The logged-in staff member, with their account and permissions. Anyone
- * else is sent to the login page; someone without what the page needs,
- * to the staff home.
+ * The logged-in staff member, with their permissions. Anyone else, and a
+ * session whose account has gone, is sent to the login page; someone
+ * without the permission the page needs, to the staff home.
  */
 export async function requireStaff(needs: StaffNeeds = "account"): Promise<Staff> {
   const token = (await cookies()).get(SESSION_COOKIE)?.value;
   const email = token ? await sessionEmail(token) : undefined;
-  if (!token || !email) redirect(LOGIN_PATH);
-  const account = await accountOf(email);
-  const permissions = account?.permissions ?? [];
-  if (needs !== "login" && !account) redirect(STAFF_HOME);
-  if (needs !== "login" && needs !== "account" && !permissions.includes(needs)) redirect(STAFF_HOME);
-  return { email, token, account: account !== undefined, permissions };
+  const account = email ? await accountOf(email) : undefined;
+  if (!token || !email || !account) redirect(LOGIN_PATH);
+  if (needs !== "account" && !account.permissions.includes(needs)) redirect(STAFF_HOME);
+  return { email, token, permissions: account.permissions };
 }

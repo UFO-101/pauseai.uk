@@ -207,10 +207,7 @@ export const staff: Group = {
         {
           label: "With the navigation beside it",
           render: () => (
-            <StaffPage
-              as="div"
-              nav={<StaffNav email="jo@pauseai.uk" account permissions={["admin"]} current="letters" />}
-            >
+            <StaffPage as="div" nav={<StaffNav email="jo@pauseai.uk" permissions={["admin"]} current="letters" />}>
               <h1>Letters</h1>
               <p>The page takes the width beside the sidebar.</p>
             </StaffPage>
@@ -345,18 +342,10 @@ export const staff: Group = {
           ),
         },
         {
-          label: "For someone with no account: who they are and the way out",
-          render: () => (
-            <StaffPage as="div">
-              <StaffNav email="jo@pauseai.uk" current="home" />
-            </StaffPage>
-          ),
-        },
-        {
           label: "For someone without permissions: the pages any account opens",
           render: () => (
             <StaffPage as="div">
-              <StaffNav email="jo@pauseai.uk" account permissions={[]} current="politicians" />
+              <StaffNav email="jo@pauseai.uk" permissions={[]} current="politicians" />
             </StaffPage>
           ),
         },
@@ -364,7 +353,7 @@ export const staff: Group = {
           label: "With the supporters permission",
           render: () => (
             <StaffPage as="div">
-              <StaffNav email="jo@pauseai.uk" account permissions={["supporters"]} current="letters" />
+              <StaffNav email="jo@pauseai.uk" permissions={["supporters"]} current="letters" />
             </StaffPage>
           ),
         },
@@ -658,12 +647,7 @@ export const staff: Group = {
           label: "For an admin: the dashboard",
           render: () => (
             <StaffPage as="div">
-              <StaffHome
-                account
-                permissions={["admin", "supporters"]}
-                admins={["admin@pauseai.uk"]}
-                dashboard={exampleDashboard}
-              />
+              <StaffHome permissions={["admin", "supporters"]} dashboard={exampleDashboard} />
             </StaffPage>
           ),
         },
@@ -671,20 +655,7 @@ export const staff: Group = {
           label: "For someone with no permissions: the dashboard, its supporter tiles not links",
           render: () => (
             <StaffPage as="div">
-              <StaffHome
-                account
-                permissions={[]}
-                admins={["admin@pauseai.uk", "jo@pauseai.uk"]}
-                dashboard={exampleDashboard}
-              />
-            </StaffPage>
-          ),
-        },
-        {
-          label: "For someone with no account: whom to ask",
-          render: () => (
-            <StaffPage as="div">
-              <StaffHome account={false} permissions={[]} admins={["admin@pauseai.uk"]} />
+              <StaffHome permissions={[]} dashboard={exampleDashboard} />
             </StaffPage>
           ),
         },

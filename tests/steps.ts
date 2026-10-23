@@ -48,8 +48,8 @@ export async function syncMps(request: APIRequestContext, base: string) {
 
 /**
  * Gives `email` a staff account in a flow's database, with `permissions`,
- * as an admin would on /staff/accounts: without one, a staff member sees
- * only the home page.
+ * as an admin would on /staff/accounts. Logging in without one makes one
+ * with no permissions.
  */
 export function addStaffAccount(database: string, email: string, permissions: string[] = []) {
   const list = `{${permissions.join(",")}}`;

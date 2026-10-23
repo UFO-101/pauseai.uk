@@ -100,13 +100,13 @@ function requirement(node: ts.Node): string | undefined {
  * What's wrong with one page's permission: its default export, or its
  * generateMetadata, asking requireStaff() for something other than the
  * permission lib/staff-sections.ts gives the page it's under. The home
- * page, under none, asks for a login.
+ * page, under none, asks for an account.
  */
 function permissionProblems(name: string, source: string): string[] {
   const path = `/${name.replace(/\/?page\.tsx$/, "")}`;
   const page = staffPageOf(path);
   if (!page && path !== "/staff") return [`${name}: ${path} isn't under any page in lib/staff-sections.ts`];
-  const wanted = page?.permission ?? (path === "/staff" ? "login" : "account");
+  const wanted = page?.permission ?? "account";
   const file = ts.createSourceFile(name, source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
   return file.statements.flatMap((statement) => {
     if (!ts.isFunctionDeclaration(statement) || !isExported(statement) || !statement.body) return [];
@@ -219,7 +219,7 @@ describe("staff auth", () => {
     });
     it("finds each page asking for a permission other than its place gives it, or with no place", () => {
       const root = tree({
-        "staff/page.tsx": 'export default async function Home() { await requireStaff("login"); }',
+        "staff/page.tsx": "export default async function Home() { await requireStaff(); }",
         "staff/politicians/[id]/page.tsx": [
           "export async function generateMetadata() { await requireStaff(); }",
           "export default async function Page() { await requireStaff(); }",

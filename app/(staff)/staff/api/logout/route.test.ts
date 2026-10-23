@@ -14,7 +14,7 @@ describeWithDatabase("POST /staff/api/logout", () => {
   });
   afterEach(() => vi.unstubAllEnvs());
 
-  it("ends the session, clears the cookies and goes to the login page, account or not", async () => {
+  it("ends the session, clears the cookies and goes to the login page", async () => {
     const token = await createSession("jo@pauseai.uk");
     requestCookies.set("staff_session", token);
 

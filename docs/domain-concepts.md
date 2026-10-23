@@ -305,12 +305,21 @@ finds it; if it blocks or frees an address, `address`.
 
 Anyone with a pauseai.uk email address can log in, with a link sent to
 that address (`lib/server/staff-auth.ts`, `staff-login.ts`). A session
-lasts a day, or 30 days renewed on use with "Keep me signed in".
+lasts a day, or 30 days renewed on use with "Keep me signed in". Anyone at
+pauseai.uk can be staff, paid or volunteer: the mailbox decides who can log
+in, and a leaver's Google account is suspended or deleted, so no login link
+reaches them. That relies on a suspended or deleted Google account not
+receiving mail, and on a leaver's mail not being forwarded or aliased to
+someone else, who could then log in as them.
 
-Seeing anything needs a staff account (`staff_accounts`, kept by admins on
-`/staff/accounts`): without one, the home page says whom to ask, and every
-other page sends you there. An account opens the pages about politicians
-and campaigns (politicians, an MP's page, Blocked MP emails, imports).
+The first login gives an address a staff account (`staff_accounts`) with
+no permissions, added by `login`; admins give permissions on
+`/staff/accounts`, where they can also add someone before their first
+login. To limit someone who's staying, take away their permissions: after
+Remove, logging in again makes a new account with none.
+
+An account opens the pages about politicians and campaigns (politicians,
+an MP's page, Blocked MP emails, imports).
 Permissions open more (`lib/staff-permissions.ts`): `supporters` every page
 with a member of the public's details (supporters, letters, who wrote to
 which MP, Blocked supporter emails), `admin` the accounts page and the
@@ -322,8 +331,8 @@ permission, as an ordinary row the migration adds. Removing an account ends
 its sessions; the last admin can't be removed or lose admin.
 
 Each page in the navigation, and so each page under it, has the permission
-`lib/staff-sections.ts` gives it, and asks for it in `requireStaff()`: a
-login (the home page), an account (the default) or a permission.
+`lib/staff-sections.ts` gives it, and asks for it in `requireStaff()`: an
+account (the default) or a permission.
 `tests/checks/staff-auth.test.ts` checks the two agree, and the
 `permissions` storyboard section checks that, with no permissions, no page
 holds a supporter's name or email. Every change to an account is an audit

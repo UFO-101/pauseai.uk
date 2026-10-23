@@ -16,7 +16,7 @@ export default async function AccountsPage({ searchParams }: { searchParams: Pro
   const { email, permissions } = await requireStaff("admin");
   const { notice } = accountsSearch(await searchParams);
   return (
-    <StaffPage nav={<StaffNav email={email} account permissions={permissions} current="accounts" />}>
+    <StaffPage nav={<StaffNav email={email} permissions={permissions} current="accounts" />}>
       <h1>{staffCopy.accounts.title}</h1>
       <p>{staffCopy.accounts.intro}</p>
       <AccountsNotice notice={notice} />

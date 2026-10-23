@@ -19,7 +19,7 @@ export default async function MpEmailsPage({ searchParams }: { searchParams: Pro
   const [blocks, problems] = await Promise.all([listBlocks("politicians", filter), recentProblems("politicians")]);
   const letterLinks = permissions.includes("supporters");
   return (
-    <StaffPage nav={<StaffNav email={email} account permissions={permissions} current="mpEmails" />}>
+    <StaffPage nav={<StaffNav email={email} permissions={permissions} current="mpEmails" />}>
       <h1>{staffCopy.emails.titles.mps}</h1>
       <p>{staffCopy.emails.intro}</p>
       <EmailBlockFilters kind={kind} action="/staff/politicians/blocked-emails" />

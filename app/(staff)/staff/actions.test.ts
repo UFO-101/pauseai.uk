@@ -47,8 +47,7 @@ describeWithDatabase("staff Server Actions", () => {
     requestCookies.clear();
     revalidatePath.mockClear();
     requestCookies.set("staff_session", await createSession("jo@pauseai.uk"));
-    // Every action needs an account; the permissions come per test.
-    await saveStaffAccount("jo@pauseai.uk", [], "test");
+    // The session made jo an account, with no permissions; they come per test.
     vi.stubEnv("AIRTABLE_TOKEN", "token");
   });
   afterEach(() => vi.unstubAllEnvs());
@@ -119,7 +118,7 @@ describeWithDatabase("staff Server Actions", () => {
     await saveStaffAccount("jo@pauseai.uk", ["admin"], "a");
     expect(await expectRedirect(save)).toBe("/staff/accounts");
     expect(await query("SELECT email, permissions, added_by FROM staff_accounts ORDER BY email")).toEqual([
-      { email: "jo@pauseai.uk", permissions: ["admin"], added_by: "test" },
+      { email: "jo@pauseai.uk", permissions: ["admin"], added_by: "login" },
       { email: "sam@pauseai.uk", permissions: ["supporters"], added_by: "jo@pauseai.uk" },
     ]);
     expect(revalidatePath).toHaveBeenCalledWith("/staff/accounts");

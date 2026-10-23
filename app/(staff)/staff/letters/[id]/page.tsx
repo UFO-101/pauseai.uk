@@ -27,7 +27,7 @@ export default async function LetterPage({ params }: Params) {
   const { email, permissions } = await requireStaff("supporters");
   const letter = await letterOf(params);
   return (
-    <StaffPage nav={<StaffNav email={email} account permissions={permissions} current="letters" />}>
+    <StaffPage nav={<StaffNav email={email} permissions={permissions} current="letters" />}>
       <Breadcrumb href="/staff/letters">{staffCopy.nav.letters}</Breadcrumb>
       <h1>{staffCopy.letters.oneTitle(letter.mpName)}</h1>
       <LettersTable letters={[letter]} />

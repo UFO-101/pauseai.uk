@@ -15,7 +15,7 @@ export default async function LettersPage({ searchParams }: { searchParams: Prom
   const { filter, ...search } = lettersSearch(await searchParams);
   const letters = await recentLetters(filter);
   return (
-    <StaffPage nav={<StaffNav email={email} account permissions={permissions} current="letters" />}>
+    <StaffPage nav={<StaffNav email={email} permissions={permissions} current="letters" />}>
       <h1>{staffCopy.letters.title}</h1>
       <LetterFilters search={search} />
       <LettersTable letters={letters} />

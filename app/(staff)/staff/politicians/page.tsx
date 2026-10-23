@@ -16,7 +16,7 @@ export default async function PoliticiansPage({ searchParams }: { searchParams: 
   const { q, house, campaign, email: emailFilter, sort, dir, filter } = politiciansSearch(await searchParams);
   const politicians = await listPoliticians(filter);
   return (
-    <StaffPage nav={<StaffNav email={email} account permissions={permissions} current="politicians" />}>
+    <StaffPage nav={<StaffNav email={email} permissions={permissions} current="politicians" />}>
       <h1>{staffCopy.politicians.title}</h1>
       <PoliticianFilters search={q} house={house} campaign={campaign} email={emailFilter} />
       <PoliticianTable politicians={politicians} search={{ q, house, campaign, email: emailFilter, sort, dir }} />

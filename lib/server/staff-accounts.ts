@@ -3,10 +3,11 @@ import { isStaffEmail, type Permission } from "@/lib/staff-permissions";
 import { logChange } from "./audit";
 import { query, transaction, type Queryable } from "./db";
 
-// Who may use the staff pages (staff_accounts): read on every request by
-// requireStaff(), kept by admins on /staff/accounts, each change in the
-// audit log. Logging in stays open to any pauseai.uk address; without an
-// account, the home page says whom to ask. admin@pauseai.uk starts with an
+// Who uses the staff pages, and with which permissions (staff_accounts):
+// read on every request by requireStaff(), kept by admins on
+// /staff/accounts, each change in the audit log. Any pauseai.uk address can
+// log in, and gets an account with no permissions the first time it does,
+// so the mailbox decides who can log in. admin@pauseai.uk starts with an
 // account and the admin permission (the migration), as an ordinary row.
 
 export type StaffAccount = {
@@ -22,6 +23,26 @@ export async function accountOf(email: string): Promise<{ permissions: Permissio
     email.trim().toLowerCase(),
   ]);
   return row;
+}
+
+/** Who added an account made on its first login. */
+export const ADDED_BY_LOGIN = "login";
+
+/**
+ * Gives `email` an account with no permissions if it has none, as on its
+ * first login, logging it as added by its own login.
+ */
+export async function accountOnLogin(email: string): Promise<void> {
+  const [address] = normalise(email, []);
+  await transaction(async (db) => {
+    const added = await query(
+      `INSERT INTO staff_accounts (email, permissions, added_by) VALUES ($1, '{}', $2)
+       ON CONFLICT (email) DO NOTHING RETURNING email`,
+      [address, ADDED_BY_LOGIN],
+      db,
+    );
+    if (added.length) await logChange(address, "add staff account", { email: address, to: [] }, db);
+  });
 }
 
 /** Every account, by address. */

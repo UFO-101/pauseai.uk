@@ -41,7 +41,7 @@ export default async function ImportJobRoute({ params }: Params) {
   const job = found(jobBySlug((await params).job));
   const runs = await listRuns(job);
   return (
-    <StaffPage nav={<StaffNav email={email} account permissions={permissions} current="import" />}>
+    <StaffPage nav={<StaffNav email={email} permissions={permissions} current="import" />}>
       <ImportJobPage
         job={job}
         runs={runs}

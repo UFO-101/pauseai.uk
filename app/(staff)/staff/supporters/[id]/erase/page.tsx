@@ -24,7 +24,7 @@ export default async function EraseSupporterPage({ params }: Params) {
   const { email, permissions } = await requireStaff("supporters");
   const supporter = found(await getSupporter(found(supporterId((await params).id))));
   return (
-    <StaffPage nav={<StaffNav email={email} account permissions={permissions} current="supporters" />}>
+    <StaffPage nav={<StaffNav email={email} permissions={permissions} current="supporters" />}>
       <Breadcrumb href={`/staff/supporters/${supporter.summary.id}`}>{staffCopy.nav.supporters}</Breadcrumb>
       <EraseForm supporter={supporter.summary} action={eraseSupporterNow} />
     </StaffPage>
