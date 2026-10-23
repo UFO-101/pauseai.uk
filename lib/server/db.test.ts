@@ -155,13 +155,19 @@ describeWithDatabase("the database", () => {
       freshDatabase(flow);
       requestCookies.set(FLOW_DATABASE_COOKIE, flow);
       try {
+        // The flow pool lets an idle connection go after a second, which a
+        // loaded machine can take to drop the database, leaving no connection
+        // to cut off. Its idle timer is a fake, so it never fires.
+        vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
         await pid();
         dropDatabase(flow);
+        vi.useRealTimers();
         await vi.waitFor(() => expect(emit).toHaveBeenCalledWith("error", expect.any(Error), expect.anything()), {
           timeout: MAKES_DATABASES.timeout,
         });
         expect(error).not.toHaveBeenCalled();
       } finally {
+        vi.useRealTimers();
         error.mockRestore();
         emit.mockRestore();
       }
