@@ -12,4 +12,6 @@ export default async function syncMps(): Promise<Response> {
   return new Response(body);
 }
 
-export const config = { schedule: "@daily" };
+// 00:21 UTC, after that hour's Luma (17 past) and members (19 past) imports,
+// sharing their wake of the database (import-luma.ts).
+export const config = { schedule: "21 0 * * *" };

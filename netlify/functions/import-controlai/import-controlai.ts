@@ -13,6 +13,7 @@ export default async function importControlAi(): Promise<Response> {
   return new Response(body);
 }
 
-// 02:00 UTC, after the sync (midnight) and the check (01:00), so the MPs
-// it matches against are that night's.
-export const config = { schedule: "0 2 * * *" };
+// 02:21 UTC, after the sync (00:21) and the check (01:21), so the MPs it
+// matches against are that night's, and after that hour's imports, sharing
+// their wake of the database (import-luma.ts).
+export const config = { schedule: "21 2 * * *" };

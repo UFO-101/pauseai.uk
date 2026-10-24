@@ -13,6 +13,9 @@ export default async function importLuma(): Promise<Response> {
   return new Response(body);
 }
 
-// Every hour, off the hour, so it never coincides with the nightly jobs or
-// with everyone else's on-the-hour fetches of Luma.
+// Every hour, off the hour, away from everyone else's on-the-hour fetches of
+// Luma. The database sleeps after five minutes without a query (Netlify's
+// default "Sleep on inactivity") and is billed for every minute it's awake,
+// so every other scheduled job starts within a few minutes of this one: one
+// wake an hour, not one each.
 export const config = { schedule: "17 * * * *" };

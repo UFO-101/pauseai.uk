@@ -1,6 +1,16 @@
 [build]
   command = "npm run build"
   publish = ".next"
+  # Skips the build (exit 0) when nothing since the last one changes the site:
+  # only docs, plans, CI, the backup Worker, the top-level Markdown or tests.
+  # Each production deploy costs credits. A first build, or a rebuild of the
+  # same commit, always builds.
+  ignore = """
+    [ -n "$CACHED_COMMIT_REF" ] && [ "$CACHED_COMMIT_REF" != "$COMMIT_REF" ] &&
+    git diff --quiet "$CACHED_COMMIT_REF" "$COMMIT_REF" -- . ':(exclude)docs' ':(exclude)plans' \
+      ':(exclude).github' ':(exclude)backup' ':(exclude,top)*.md' ':(exclude,glob)**/*.test.ts' \
+      ':(exclude,glob)**/*.test.tsx'
+  """
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"

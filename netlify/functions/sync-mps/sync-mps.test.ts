@@ -10,8 +10,8 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllEnvs());
 
 describe("the nightly MP sync function", () => {
-  it("runs daily, and asks the site to sync with the secret", async () => {
-    expect(config.schedule).toBe("@daily");
+  it("runs daily, just after the hourly imports, and asks the site to sync with the secret", async () => {
+    expect(config.schedule).toBe("21 0 * * *");
     let auth: string | null = null;
     server.use(
       http.post("https://pauseai.uk/api/cron/sync-mps", ({ request }) => {

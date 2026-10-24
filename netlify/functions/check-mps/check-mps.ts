@@ -13,6 +13,7 @@ export default async function checkMps(): Promise<Response> {
   return new Response(body);
 }
 
-// 01:00 UTC, an hour after the sync (@daily, midnight UTC), so it checks
-// that night's copy.
-export const config = { schedule: "0 1 * * *" };
+// 01:21 UTC, an hour after the sync (00:21), so it checks that night's copy,
+// and after that hour's imports, sharing their wake of the database
+// (import-luma.ts).
+export const config = { schedule: "21 1 * * *" };

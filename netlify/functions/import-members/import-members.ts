@@ -12,6 +12,6 @@ export default async function importMembers(): Promise<Response> {
   return new Response(body);
 }
 
-// Every hour, off the hour and half an hour from the Luma import, so it
-// never coincides with the nightly jobs.
-export const config = { schedule: "47 * * * *" };
+// Every hour, two minutes after the Luma import (at most 30 seconds) starts,
+// so the two never overlap but share the database's wake (import-luma.ts).
+export const config = { schedule: "19 * * * *" };
