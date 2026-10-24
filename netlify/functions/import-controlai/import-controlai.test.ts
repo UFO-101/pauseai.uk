@@ -9,9 +9,9 @@ beforeEach(() => {
 });
 afterEach(() => vi.unstubAllEnvs());
 
-describe("the nightly ControlAI import function", () => {
+describe("the daily ControlAI import function", () => {
   it("runs daily, after the sync and the check, and asks the site to import with the secret", async () => {
-    expect(config.schedule).toBe("21 2 * * *");
+    expect(config.schedule).toBe("25 6 * * *");
     let auth: string | null = null;
     server.use(
       http.post("https://pauseai.uk/api/cron/import-controlai", ({ request }) => {

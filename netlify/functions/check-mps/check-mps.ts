@@ -1,5 +1,5 @@
 // Netlify scheduled function (a folder, so its test can sit beside it
-// without becoming a function too): nightly, asks the site to check the MPs
+// without becoming a function too): each morning, asks the site to check the MPs
 // copied from Airtable against Parliament's (app/api/cron/check-mps).
 // Scheduled functions run only on published production deploys. URL is set
 // by Netlify; CRON_SECRET by us.
@@ -13,7 +13,7 @@ export default async function checkMps(): Promise<Response> {
   return new Response(body);
 }
 
-// 01:21 UTC, an hour after the sync (00:21), so it checks that night's copy,
-// and after that hour's imports, sharing their wake of the database
+// 06:23 UTC, two minutes after the sync (06:21, at most 30 seconds), so it
+// checks that day's copy, sharing the same wake of the database
 // (import-luma.ts).
-export const config = { schedule: "21 1 * * *" };
+export const config = { schedule: "23 6 * * *" };
