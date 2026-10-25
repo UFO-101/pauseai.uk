@@ -44,6 +44,7 @@ export const HIDDEN_ROUTES = [
   "/trackers",
   "/trackers/2026-09-26-flyering",
   "/trackers/2026-10-10-flyering",
+  "/trackers/2026-10-25-flyering",
 ];
 
 /** The staff interface, which nothing links to. */
