@@ -2,7 +2,7 @@
   command = "npm run build"
   publish = ".next"
   # Skips the build (exit 0) when nothing since the last one changes the site:
-  # only docs, plans, CI, the backup Worker, the top-level Markdown or tests.
+  # only docs, plans, CI, the backup Worker, Markdown anywhere or tests.
   # Each production deploy costs credits. A first build, or a rebuild of the
   # same commit, always builds.
   ignore = """
