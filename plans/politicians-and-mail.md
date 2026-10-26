@@ -48,7 +48,8 @@ Everything else points at them, many to one:
 ```
 ask_statuses ─────→ notable_people, asks
 letters ──────────→ notable_people
-supporter_letters → asks
+supporter_letters → campaigns
+campaigns ────────→ asks
 pauseai_letters ──→ mailings
 mailings ─────────→ asks
 letter_events ────→ letters
@@ -114,16 +115,27 @@ letter, come to an event.
   `frontier-ai-letter`, the one ask staff mark in the site; the rest are
   past.
 
-- **Campaigns** stay in `lib/content/email-your-mp.ts`, each naming one
-  ask, and which status counts as done: `regulate-letter-pm` asks for
-  `frontier-ai-letter` and `support-sobel-bill` for
-  `controlai-statement`, both `signed`. A test checks every ask named in
-  code exists. Email your MP reads the MP's statuses, keyed by ask
-  (`MpStatuses`), as it now reads them by campaign: a campaign whose ask
-  the MP has met is skipped for the next (`isDone`), and a letter's text
-  can depend on any ask, as the Sobel bill letter thanks an MP who signed
-  `controlai-statement` (`signedControlAiLetter`). The ask a supporter's
-  letter records is its campaign's.
+- **`campaigns`**: one letter many supporters send, the twin of
+  `mailings`. Slug, title, and the ask if any. The rest stays in code
+  (`lib/content/email-your-mp.ts`), as it's copy: subject, letter,
+  attachments, `done` with its `alreadyDone` and `movedOn`, and the
+  priority order. A test checks every campaign in code has a row with
+  its slug. A row needs no code: pauseai.info's old campaigns are rows
+  only.
+
+  | Campaign             | Ask                   | In code |
+  | -------------------- | --------------------- | ------- |
+  | `regulate-letter-pm` | `frontier-ai-letter`  | yes     |
+  | `support-sobel-bill` | `controlai-statement` | yes     |
+  | `pauseai-info-frontier-ai`  | `frontier-ai-letter`  | no      |
+  | `pauseai-info-liability`    | `liability-letter`    | no      |
+  | `pauseai-info-deepmind`     | `deepmind-letter`     | no      |
+
+  Email your MP reads the MP's statuses keyed by ask (`MpStatuses`), as
+  it now reads them by campaign: a campaign whose ask the MP has met is
+  skipped for the next (`isDone`), and a letter's text can depend on any
+  ask, as the Sobel bill letter thanks an MP who signed
+  `controlai-statement` (`signedControlAiLetter`).
 
 ### Letters
 
@@ -135,9 +147,9 @@ letter, come to an event.
   PauseAI letters only; a skipped letter is `not_sent`. `letter_events`
   (sent, skipped, bounced, replied, auto-reply) and
   `email_sends.letter_id` point here.
-- **`supporter_letters`**: the ask, required, and the sender's name,
-  email, address, postcode, consent and `reply_hash`. `supporter_links` points here, and erasure
-  deletes the row.
+- **`supporter_letters`**: the campaign, and the sender's name, email,
+  address, postcode, consent and `reply_hash`. `supporter_links` points
+  here, and erasure deletes the row.
 - **`pauseai_letters`**: the mailing, the sender, and the values merged
   into the template for this person.
 - **`mailings`**: one mail to many people. Title, ask if any (an
@@ -153,20 +165,18 @@ letter, come to an event.
   gzipped with its attachments, in Netlify Blobs. A reply to a supporter's
   letter is forwarded and logged as an event, as now, but not stored.
 
-A supporter's letter records its ask, not its campaign. The Letters to
-MPs filter, the one-letter-per-sender rule (now per ask) and a
-supporter's activity all use the ask. A PauseAI letter has its mailing's
-ask, so who was asked and hasn't answered comes from mailings. If two campaigns ever share an ask, a `campaign` column can
-come back.
+A letter's ask is its campaign's or its mailing's, never its own. Who
+was asked and hasn't answered comes from those.
 
 ## Phase 1: Data
 
 1. **Parent tables and renames.** Add `notable_people` and point every
    reference to a politician at it (letters, statuses,
    `politicianHistory`). Split the sender's details and the
-   campaign, as an ask, off `letters` into `supporter_letters`, and point `supporter_links`, the supporter views
-   and `email_permission()` and its view there. Rename `campaign_statuses` to
-   `ask_statuses` and add `asks`. Its own commit, as it touches a lot of
+   campaign off `letters` into `supporter_letters`, and point
+   `supporter_links`, the supporter views and `email_permission()` and its
+   view there. Add `asks` and `campaigns`, and rename
+   `campaign_statuses` to `ask_statuses`. Its own commit, as it touches a lot of
    code.
 2. **Status instead of `sitting`.** Email your MP and every filter that
    meant sitting now mean `in_office`.
@@ -225,14 +235,15 @@ come back.
    senders become supporters. They came from pauseai.info's old UK tool
    (`/uk-email-mp`, 18 July 2025 to 19 October 2026), which wrote each
    letter to Airtable for an automation to send. We import the 718 that
-   were sent and skip 13 marked spam, invalid or unsent. Its Campaign
-   gives the ask: Frontier AI letter (620, `frontier-ai-letter`),
-   Liability letter (77, `liability-letter`) and DeepMind letter (21,
-   `deepmind-letter`). Its "Attending Parliament 23 June 2026" tick, about
-   the sender, isn't imported. The consent box
-   arrived on 23 September 2026, so the 651 earlier letters count as no
-   consent. A letter already in `supporter_letters` (same sender,
-   politician and ask) is skipped.
+   were sent and skip 13 marked spam, invalid or unsent. Airtable's
+   Campaign gives ours: Frontier AI letter (620,
+   `pauseai-info-frontier-ai`), Liability letter (77,
+   `pauseai-info-liability`) and DeepMind letter (21,
+   `pauseai-info-deepmind`). The "Attending Parliament 23 June 2026"
+   tick, about the sender, isn't imported. The consent box arrived on 23
+   September 2026, so the 651 earlier letters count as no consent. A
+   letter already in `supporter_letters` from the same sender to the same
+   politician for the same ask is skipped.
 7. **Import Go to Parliament, once.** Each MP a constituent was booked to
    meet gets a status on `go-to-parliament-oct-2026` (20 October 2026, the
    House of Commons) from "MP Meeting Status". Nothing about the
