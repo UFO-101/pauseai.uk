@@ -116,7 +116,12 @@ letter, come to an event.
   ask, and which status counts as done: `regulate-letter-pm` asks for
   `frontier-ai-letter` and `support-sobel-bill` for
   `controlai-statement`, both `signed`. A test checks every ask named in
-  code exists.
+  code exists. Email your MP reads the MP's statuses, keyed by ask
+  (`MpStatuses`), as it now reads them by campaign: a campaign whose ask
+  the MP has met is skipped for the next (`isDone`), and a letter's text
+  can depend on any ask, as the Sobel bill letter thanks an MP who signed
+  `controlai-statement` (`signedControlAiLetter`). The ask a supporter's
+  letter records is its campaign's.
 
 ### Letters
 
