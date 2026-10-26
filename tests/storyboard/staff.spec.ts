@@ -545,55 +545,79 @@ test("an MP whose address bounced can't be written to until staff unblock it", a
   await frame(page, "the form writes to them again");
 });
 
-test("an MP import that would change too many is held, then discarded, and then applied", async ({
+test("a politician import that would change too many is held, then discarded, and then applied", async ({
   page,
   request,
   flowDatabase,
 }) => {
   await syncPoliticians(request, BASE);
-  // Twenty-one MPs Airtable no longer lists: the next import would remove
-  // them all, more than it may without a person checking.
+  // Twenty-one MPs Airtable no longer lists: the next import would mark them
+  // all gone from it, more than it may without a person checking.
   runSql(
     flowDatabase,
-    `INSERT INTO politicians (airtable_id, house, name, constituency)
-     SELECT 'recGone' || n, 'commons', 'Gone McTestface ' || n || ' MP', 'Gone ' || n FROM generate_series(1, 21) n`,
+    `WITH people AS (
+       INSERT INTO notable_people (kind, airtable_id, name)
+       SELECT 'politician', 'recGone' || n, 'Gone McTestface ' || n || ' MP' FROM generate_series(1, 21) n RETURNING id, name
+     )
+     INSERT INTO politicians (id, house, constituency) SELECT id, 'commons', replace(replace(name, ' MP', ''), 'McTestface ', '') FROM people`,
   );
-  const sitting = () =>
-    Number(runSql(flowDatabase, "SELECT count(*) FROM politicians WHERE name LIKE 'Gone %' AND sitting")[0]);
+  const inAirtable = () =>
+    Number(
+      runSql(
+        flowDatabase,
+        "SELECT count(*) FROM notable_people WHERE name LIKE 'Gone %' AND airtable_removed_at IS NULL",
+      )[0],
+    );
 
   await logIn(page, flowDatabase, ["admin"]);
-  await page.goto(`${BASE}/staff/import-data/mps`);
+  await page.goto(`${BASE}/staff/import-data/politicians`);
   await page.getByRole("button", { name: staffCopy.syncs.syncNow }).click();
   await expect(page.getByRole("button", { name: staffCopy.syncs.apply })).toBeVisible();
   await expect(page.getByText(`${staffCopy.syncs.removed} 21`).first()).toBeVisible();
   await expect(page.getByText("Gone 1: Gone McTestface 1 MP")).toBeAttached();
-  expect(sitting()).toBe(21);
-  await frame(page, "the import held: 21 MPs would go");
+  expect(inAirtable()).toBe(21);
+  await frame(page, "the import held: 21 politicians would be gone from Airtable");
 
   // The home page says so, first thing, with a button back to the decision.
   await page.goto(`${BASE}/staff`);
   await expect(page.getByText(staffCopy.home.dashboard.actions.heldSync(21))).toBeVisible();
   await frame(page, "the home: the held import needs a person");
   await page.getByRole("link", { name: staffCopy.home.dashboard.actions.decide }).click();
-  await expect(page).toHaveURL(`${BASE}/staff/import-data/mps`);
+  await expect(page).toHaveURL(`${BASE}/staff/import-data/politicians`);
 
   await page.getByRole("button", { name: staffCopy.syncs.discard }).click();
   await expect(page.getByRole("button", { name: staffCopy.syncs.apply })).toHaveCount(0);
   await expect(page.getByText(staffCopy.runs.status.discarded).first()).toBeVisible();
-  expect(sitting()).toBe(21);
+  expect(inAirtable()).toBe(21);
   await frame(page, "discarded: nobody changed");
 
   await page.getByRole("button", { name: staffCopy.syncs.syncNow }).click();
   await page.getByRole("button", { name: staffCopy.syncs.apply }).click();
   await expect(page.getByRole("button", { name: staffCopy.syncs.apply })).toHaveCount(0);
   await expect(page.getByText(staffCopy.runs.decidedBy(staffEmail())).first()).toBeVisible();
-  expect(sitting()).toBe(0);
-  await frame(page, "held again, then applied: the 21 are no longer sitting");
+  expect(inAirtable()).toBe(0);
+  await frame(page, "held again, then applied: the 21 are marked gone from Airtable, and kept");
 
   await page.goto(`${BASE}/staff/audit-log`);
-  await expect(page.getByRole("cell", { name: "apply held MP sync" })).toBeVisible();
-  await expect(page.getByRole("cell", { name: "discard held MP sync" })).toBeVisible();
+  await expect(page.getByRole("cell", { name: "apply held politician sync" })).toBeVisible();
+  await expect(page.getByRole("cell", { name: "discard held politician sync" })).toBeVisible();
   await frame(page, "the audit log: who discarded and who applied");
+});
+
+test("a politician import that renames anyone is held, in case Airtable reused the record", async ({
+  page,
+  request,
+  flowDatabase,
+}) => {
+  await syncPoliticians(request, BASE);
+  // Polly's record had another name here: Airtable now names someone else in it.
+  runSql(flowDatabase, "UPDATE notable_people SET name = 'Penny Previous' WHERE airtable_id = 'recPlaceholder'");
+  await logIn(page, flowDatabase, ["admin"]);
+  await page.goto(`${BASE}/staff/import-data/politicians`);
+  await page.getByRole("button", { name: staffCopy.syncs.syncNow }).click();
+  await expect(page.getByRole("button", { name: staffCopy.syncs.apply })).toBeVisible();
+  await expect(page.getByText("Penny Previous → Polly Placeholder")).toBeVisible();
+  await frame(page, "held: one record renamed, shown from and to");
 });
 
 test("a first login makes an account with no permissions; an admin adds, changes and removes accounts", async ({
