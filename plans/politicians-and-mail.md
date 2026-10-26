@@ -77,7 +77,9 @@ letter, come to an event.
 
   Whoever set a status owns it: staff, or an import (`airtable`,
   `controlai`). An import changes only its own, and leaves alone a status
-  staff have set.
+  staff have set: our database wins. For now that only arises on
+  `frontier-ai-letter`, the one ask staff mark in the site; the rest are
+  past.
 
 - **Campaigns** stay in `lib/content/email-your-mp.ts`, each naming one
   ask, and which status counts as done: `regulate-letter-pm` asks for
