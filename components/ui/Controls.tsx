@@ -13,6 +13,22 @@ export function TextInput(props: InputProps) {
   return <input {...props} className={styles.control} />;
 }
 
+/**
+ * Two dates side by side, a dash between: from and to, each a date field
+ * with its own name and label. Goes in a FieldSet, which names the pair.
+ */
+export function DateRange({ from, to }: { from: DateProps; to: DateProps }) {
+  return (
+    <span className={styles.dateRange}>
+      <input {...from} type="date" className={styles.control} />
+      <span aria-hidden="true">–</span>
+      <input {...to} type="date" className={styles.control} />
+    </span>
+  );
+}
+
+type DateProps = Omit<InputProps, "type"> & { "aria-label": string };
+
 export function Select(props: Omit<SelectHTMLAttributes<HTMLSelectElement>, "className">) {
   return <select {...props} className={styles.control} />;
 }

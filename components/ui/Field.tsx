@@ -21,6 +21,19 @@ export function Field({ label, className, children }: { label: ReactNode; classN
 }
 
 /**
+ * A field of more than one control, such as a DateRange: a fieldset, its
+ * label's words the legend over them. Each control needs its own label.
+ */
+export function FieldSet({ label, children }: { label: ReactNode; children: ReactNode }) {
+  return (
+    <fieldset className={`${styles.field} ${styles.fieldset}`}>
+      <legend className={`${styles.label} ${styles.legend}`}>{label}</legend>
+      {children}
+    </fieldset>
+  );
+}
+
+/**
  * A field's label on its own, over a control elsewhere: a <label> for the
  * control `htmlFor` names, or a <span> over a group of buttons. `note`
  * follows it in lighter type.

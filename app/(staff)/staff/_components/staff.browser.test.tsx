@@ -1957,6 +1957,7 @@ describe("SupporterFilters", () => {
           activity: "registered",
           subscription: "pauseai-updates:declined",
           active: "90",
+          from: "2026-01-01",
           sort: "name",
           dir: "desc",
         })}
@@ -1978,6 +1979,9 @@ describe("SupporterFilters", () => {
     // The headings sort; filtering keeps their sort.
     expect(new FormData(form).get("sort")).toBe("name");
     expect(new FormData(form).get("dir")).toBe("desc");
+    await expect.element(page.getByRole("group", { name: columns.firstSeen })).toBeVisible();
+    expect((page.getByLabelText(copy.from).element() as HTMLInputElement).value).toBe("2026-01-01");
+    expect((page.getByLabelText(copy.to).element() as HTMLInputElement).value).toBe("");
     const subscriptions = page.getByRole("combobox", { name: columns.subscriptions });
     await expect.element(subscriptions).toHaveValue("pauseai-updates:declined");
     // Each topic's reasons, under its name, then a block, which is every topic's.

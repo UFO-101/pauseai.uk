@@ -1,6 +1,6 @@
 import { Button, ButtonLink } from "@/components/ui/Button";
-import { Select, TextInput } from "@/components/ui/Controls";
-import { Field } from "@/components/ui/Field";
+import { DateRange, Select, TextInput } from "@/components/ui/Controls";
+import { Field, FieldSet } from "@/components/ui/Field";
 import { FilterForm } from "@/components/ui/Form";
 import { staffCopy } from "@/lib/content/staff-interface";
 import type { SupportersSearch } from "@/lib/staff-search";
@@ -58,12 +58,12 @@ export default function SupporterFilters({ search }: { search: SupportersSearch 
           ))}
         </Select>
       </Field>
-      <Field label={copy.from}>
-        <TextInput type="date" name="from" defaultValue={search.from} />
-      </Field>
-      <Field label={copy.to}>
-        <TextInput type="date" name="to" defaultValue={search.to} />
-      </Field>
+      <FieldSet label={columns.firstSeen}>
+        <DateRange
+          from={{ name: "from", defaultValue: search.from, "aria-label": copy.from }}
+          to={{ name: "to", defaultValue: search.to, "aria-label": copy.to }}
+        />
+      </FieldSet>
       {search.sort && <input type="hidden" name="sort" value={search.sort} />}
       {search.dir && <input type="hidden" name="dir" value={search.dir} />}
       <Button variant="primary" size="small" type="submit">

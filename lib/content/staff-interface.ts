@@ -141,23 +141,24 @@ export const staffCopy = {
       // The other filters are named after their columns.
       anyActivity: "Any",
       anySubscription: "Any",
-      // An option in the Subscriptions filter, under its topic's name: a reason the topic gives.
+      // An option in the Subscriptions filter, under its topic's name: a reason the topic gives,
+      // short, as the closed select shows only the one chosen.
       states: {
         "luma-calendar": {
-          following: "⁂ A contact of the calendar",
-          unsubscribed: "⁂ Unsubscribed, via Luma",
-          "not-following": "⁂ Not a contact of the calendar",
+          following: "⁂ Luma: contact",
+          unsubscribed: "⁂ Luma: unsubscribed",
+          "not-following": "⁂ Luma: not a contact",
         },
         "pauseai-updates": {
-          asked: "⁂ Asked for them when joining",
-          joined: "⁂ On the list since joining, before 30 June 2026",
-          declined: "⁂ Left “Keep me informed” unticked when joining",
-          unsubscribed: "⁂ Unsubscribed",
-          removed: "No longer shared with us",
+          asked: "⁂ Updates: asked",
+          joined: "⁂ Updates: joined before July 2026",
+          declined: "⁂ Updates: declined",
+          unsubscribed: "⁂ Updates: unsubscribed",
+          removed: "⁂ Updates: removed",
         },
         "events-and-ways-to-help": {
-          asked: "⁂ Agreed on their letter",
-          declined: "⁂ Didn't agree on their letter",
+          asked: "⁂ Events: agreed",
+          declined: "⁂ Events: didn't agree",
         },
       } as Record<string, Record<string, string>>,
       anyTime: "Any time",

@@ -13,6 +13,20 @@
   font-weight: 600;
 }
 
+/* A field of several controls: a fieldset without the browser's box, its
+   legend a label. A legend sits outside the grid, so it keeps the gap itself. */
+.fieldset {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.legend {
+  margin-bottom: var(--field-gap);
+  padding: 0;
+}
+
 /* A label on its own, over a control that follows it. */
 .standalone {
   display: block;

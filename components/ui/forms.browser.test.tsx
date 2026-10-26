@@ -2,8 +2,8 @@ import { describe, expect, it, vi } from "vitest";
 import { render } from "vitest-browser-react";
 import { page, userEvent } from "vitest/browser";
 import { Button } from "./Button";
-import { Checkbox, FileInput, Segmented, Select, TextArea, TextInput } from "./Controls";
-import { Field, FieldError, FieldGroup, Hint, Label } from "./Field";
+import { Checkbox, DateRange, FileInput, Segmented, Select, TextArea, TextInput } from "./Controls";
+import { Field, FieldError, FieldGroup, FieldSet, Hint, Label } from "./Field";
 import { FilterForm, FormStack } from "./Form";
 
 const style = (element: Element) => getComputedStyle(element);
@@ -230,5 +230,28 @@ describe("FormStack and FilterForm", () => {
     expect(boxes.map((box) => Math.round(box.bottom))).toEqual(
       [button.bottom, button.bottom, button.bottom].map(Math.round),
     );
+  });
+});
+
+describe("FieldSet and DateRange", () => {
+  it("names a pair of dates, each with its own name and label, side by side", async () => {
+    await page.viewport(1280, 800);
+    await render(
+      <form aria-label="Dates">
+        <FieldSet label="Signed up">
+          <DateRange
+            from={{ name: "from", defaultValue: "2026-01-01", "aria-label": "Signed up from" }}
+            to={{ name: "to", "aria-label": "Signed up to" }}
+          />
+        </FieldSet>
+      </form>,
+    );
+    await expect.element(page.getByRole("group", { name: "Signed up" })).toBeVisible();
+    const from = page.getByLabelText("Signed up from").element() as HTMLInputElement;
+    const to = page.getByLabelText("Signed up to").element() as HTMLInputElement;
+    expect([from.type, to.type]).toEqual(["date", "date"]);
+    const form = new FormData(page.getByRole("form", { name: "Dates" }).element() as HTMLFormElement);
+    expect([form.get("from"), form.get("to")]).toEqual(["2026-01-01", ""]);
+    expect(Math.round(from.getBoundingClientRect().top)).toBe(Math.round(to.getBoundingClientRect().top));
   });
 });
