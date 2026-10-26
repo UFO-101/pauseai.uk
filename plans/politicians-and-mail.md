@@ -157,7 +157,16 @@ Each step is a commit or more, in this order.
    apart only by date).
 
 6. **Once: Web form emails** into `supporter_letters`, so their senders
-   become supporters (questions 1 and 2).
+   become supporters. These are the public's letters to their MP through
+   pauseai.info's old UK tool (`/uk-email-mp`, 18 July 2025 to 19 October
+   2026, `src/routes/api/uk-send-mp-email` in pauseai-website). It wrote
+   each letter to this table, and an Airtable automation sent it. The tool
+   now redirects to pauseai.uk, so nothing new arrives. Only the 718 sent
+   are imported, leaving out 13 marked spam, invalid or never sent. Its
+   consent checkbox came on 23 September 2026; the 651 letters from before
+   have no answer, which counts as no. A letter matching one already in
+   `letters` (same sender, politician and ask) is skipped, in case someone
+   used both tools.
 7. **Once: Go to Parliament.** For each MP a constituent was booked to
    meet, an event status on `go-to-parliament-oct-2026` (Tuesday 20
    October 2026, the House of Commons), from Airtable's "MP Meeting
@@ -372,26 +381,19 @@ policy and erasure:
 
 ## Open questions
 
-1. **Which web form letters to import.** Of 733, 718 were sent; the
-   other 13 were spam, invalid or never sent. Import only the 718? Of
-   those, 651 have no answer to contact consent: count blank as no?
-2. **Is the old web form still live?** Its Frontier AI letters kept
-   arriving until 15 October 2026, after Email your MP took over that
-   campaign. If it's live, the import isn't one-off, and it must skip
-   letters already in `letters` (same sender, politician and ask).
-3. **Imported letters' campaign.** Every letter names an ask, so imported
+1. **Imported letters' campaign.** Every letter names an ask, so imported
    ones are covered. A supporter's letter also names the site campaign it
    was written through, which imported ones don't have. Make that column
    nullable, or add the old campaigns as campaigns without a page?
-4. **Airtable's judgement fields**: Recommended, Important target,
+2. **Airtable's judgement fields**: Recommended, Important target,
    Personal connection and Notes. They help decide who to mail, but they're
    the policy team's opinions, edited in Airtable. Import them as columns
    on politicians?
-5. **Airtable's Test records.** Skip them, and keep our own test MPs
+3. **Airtable's Test records.** Skip them, and keep our own test MPs
    (`lib/test-mps.json`)?
-6. **The Google Cloud project.** Who creates it? A pauseai.uk Workspace
+4. **The Google Cloud project.** Who creates it? A pauseai.uk Workspace
    admin has to own it.
-7. **Ask slugs for the old mailings** (`documentary-screening`,
+5. **Ask slugs for the old mailings** (`documentary-screening`,
    `westminster-hall-debate` and the rest, in phase 1 step 5). Are these
    asks at all, or just mailings? An invitation to a screening is an ask;
    a briefing on an amendment may not be.
