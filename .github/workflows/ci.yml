@@ -109,13 +109,17 @@ jobs:
       - name: Install Playwright system dependencies
         if: steps.playwright-cache.outputs.cache-hit == 'true'
         # A mirror that trickles rather than stalls gets past apt's retries,
-        # so each attempt has two minutes, and a slow one is stopped (timeout
-        # signals sudo's apt-get too) and tried again, three times in all.
-        timeout-minutes: 7
+        # so each attempt has two minutes and is tried again, three times in
+        # all. Timeout stops npx but not the apt-get it started under sudo,
+        # which holds dpkg's lock, so that is killed and waited for before
+        # dpkg finishes anything it left half done.
+        timeout-minutes: 8
         run: |
           for attempt in 1 2 3; do
-            timeout 120 npx playwright install-deps chromium && exit 0
+            timeout --kill-after=10 120 npx playwright install-deps chromium && exit 0
             echo "::warning::Playwright's system dependencies, attempt $attempt, failed or took over two minutes"
+            sudo pkill -KILL -x apt-get || true
+            while pgrep -x apt-get > /dev/null || pgrep -x dpkg > /dev/null; do sleep 1; done
             sudo dpkg --configure -a
           done
           exit 1
@@ -224,13 +228,17 @@ jobs:
       - name: Install Playwright system dependencies
         if: steps.playwright-cache.outputs.cache-hit == 'true'
         # A mirror that trickles rather than stalls gets past apt's retries,
-        # so each attempt has two minutes, and a slow one is stopped (timeout
-        # signals sudo's apt-get too) and tried again, three times in all.
-        timeout-minutes: 7
+        # so each attempt has two minutes and is tried again, three times in
+        # all. Timeout stops npx but not the apt-get it started under sudo,
+        # which holds dpkg's lock, so that is killed and waited for before
+        # dpkg finishes anything it left half done.
+        timeout-minutes: 8
         run: |
           for attempt in 1 2 3; do
-            timeout 120 npx playwright install-deps chromium && exit 0
+            timeout --kill-after=10 120 npx playwright install-deps chromium && exit 0
             echo "::warning::Playwright's system dependencies, attempt $attempt, failed or took over two minutes"
+            sudo pkill -KILL -x apt-get || true
+            while pgrep -x apt-get > /dev/null || pgrep -x dpkg > /dev/null; do sleep 1; done
             sudo dpkg --configure -a
           done
           exit 1
