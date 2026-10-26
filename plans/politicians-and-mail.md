@@ -76,9 +76,16 @@ notable_people ──┬── politicians                (later: journalists, f
   Who set a status decides who may change it, as now: staff, or an import
   (`controlai`, `airtable`), which changes only its own.
 
-- **Campaigns** stay in `lib/content/email-your-mp.ts` and name the ask
-  that counts as done: `done: { ask: "frontier-ai-letter", status:
-  "signed" }`. A test checks that every ask the code names exists.
+- **Campaigns** stay in `lib/content/email-your-mp.ts`, and each names
+  exactly one ask: `regulate-letter-pm` the `frontier-ai-letter`,
+  `support-sobel-bill` the `controlai-statement`. A campaign that can be
+  done names the status that counts: `done: { ask: "frontier-ai-letter",
+  status: "signed" }`. A test checks every ask the code names exists.
+  Letters record the ask, not the campaign: the Letters filter, the one
+  letter per sender rule (now per ask) and a supporter's activity all use
+  it, and the attachments come from the campaign the form was on when it
+  sent. If two campaigns ever share an ask, a nullable `campaign` comes
+  back then.
 
 **Letters**
 
@@ -381,19 +388,15 @@ policy and erasure:
 
 ## Open questions
 
-1. **Imported letters' campaign.** Every letter names an ask, so imported
-   ones are covered. A supporter's letter also names the site campaign it
-   was written through, which imported ones don't have. Make that column
-   nullable, or add the old campaigns as campaigns without a page?
-2. **Airtable's judgement fields**: Recommended, Important target,
+1. **Airtable's judgement fields**: Recommended, Important target,
    Personal connection and Notes. They help decide who to mail, but they're
    the policy team's opinions, edited in Airtable. Import them as columns
    on politicians?
-3. **Airtable's Test records.** Skip them, and keep our own test MPs
+2. **Airtable's Test records.** Skip them, and keep our own test MPs
    (`lib/test-mps.json`)?
-4. **The Google Cloud project.** Who creates it? A pauseai.uk Workspace
+3. **The Google Cloud project.** Who creates it? A pauseai.uk Workspace
    admin has to own it.
-5. **Ask slugs for the old mailings** (`documentary-screening`,
+4. **Ask slugs for the old mailings** (`documentary-screening`,
    `westminster-hall-debate` and the rest, in phase 1 step 5). Are these
    asks at all, or just mailings? An invitation to a screening is an ask;
    a briefing on an amendment may not be.
