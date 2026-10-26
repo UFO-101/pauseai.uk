@@ -3,7 +3,7 @@
 import type { ImportJob } from "@/lib/import-runs";
 
 export const staffCopy = {
-  metaTitle: "Pause AI Staff",
+  metaTitle: "PauseAI Staff",
   login: {
     title: "Staff log in",
     intro: "Enter your staff email to sign in on this browser.",
@@ -33,7 +33,7 @@ export const staffCopy = {
   nav: {
     // At the left of the bar, and the way to the home page.
     title: "PauseAI Staff",
-    home: "Home",
+    home: "Dashboard",
     accounts: "Staff accounts",
     // The sections the pages are in, in the sidebar.
     sections: {
@@ -73,7 +73,7 @@ export const staffCopy = {
   },
   // The home page: the dashboard.
   home: {
-    title: "Home",
+    title: "Dashboard",
     // The dashboard: what needs a person, then the window's numbers in
     // three groups, each against the window before.
     dashboard: {
