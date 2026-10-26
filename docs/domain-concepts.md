@@ -9,6 +9,25 @@ where code goes and how it's written is in `docs/code-structure.md`.
 Each section says what the concept is, where it lives, how to add another
 of its kind, and what it doesn't cover yet.
 
+## A full history of everyone
+
+We keep the whole history of our activity with everyone: every letter,
+email, signature, meeting and status, for politicians and supporters
+alike. A record is never deleted because it stopped being current. A
+politician who leaves office, a person a source no longer lists or an event
+taken off Luma is marked as such and kept, along with everything that points
+at it. What came from an outside source says which one, so a page can say
+"from Airtable" rather than present it as something staff set. The one
+exception is erasure: a supporter who asks to be forgotten is removed
+(`docs/data-protection.md`).
+
+What a letter said is kept only where it isn't sensitive. A supporter's
+letter to a politician, and the politician's reply to it, can show the
+supporter's political opinions and personal circumstances, so neither's
+text is kept: only who, when, and what happened to it. A letter PauseAI
+sends a politician, and their reply, are kept in full, since they're our
+own words and a public figure's answer in their public role.
+
 ## Politicians
 
 Anyone we campaign at: MPs, peers, MSPs, members of the Senedd and the
