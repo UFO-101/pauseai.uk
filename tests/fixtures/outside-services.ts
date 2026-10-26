@@ -119,13 +119,13 @@ export function fixtureResponse(url: string, init?: RequestInit): Response | und
       value: [{ type: "Parliamentary office", typeId: 1, email: `mp${contact[1]}.office@parliament.uk ` }],
     });
   }
-  // ControlAI's letter page, and its PDF: made by pdf-lib, naming the
-  // fixture MPs, a peer, and names nobody has.
   if (hostname === "api.stripe.com" && pathname === "/v1/checkout/sessions") {
     // Completed checkouts: donors who said yes, one who said no, one who gave
     // twice, and one from before the wall of thanks question was asked.
     return json(stripeCheckoutSessions);
   }
+  // ControlAI's letter page, and its PDF: made by pdf-lib, naming the
+  // fixture MPs, a peer, and names nobody has.
   if (hostname === "controlai.org" && pathname === "/uk-pm-letter") {
     return new Response(controlaiLetter.html, { headers: { "Content-Type": "text/html" } });
   }
