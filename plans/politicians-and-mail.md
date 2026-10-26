@@ -140,6 +140,9 @@ Each step is a commit or more, in this order.
    big change for a person to check. A changed name on an existing record
    is held too: it could be Airtable reusing a record for someone new,
    which would hand the old person's history to them.
+   Records ticked Test in Airtable are skipped; the site keeps its own
+   test MPs (`lib/test-mps.json`), and phase 2 adds one whose Gmail send
+   bounces.
 4. **Signed statuses** from Airtable's flags, owned by `airtable`, so the
    sync changes or removes only its own. `lib/server/signatory-import.ts`
    is folded into this.
@@ -415,11 +418,9 @@ policy and erasure:
 
 ## Open questions
 
-1. **Airtable's Test records.** Skip them, and keep our own test MPs
-   (`lib/test-mps.json`)?
-2. **The Google Cloud project.** Who creates it? A pauseai.uk Workspace
+1. **The Google Cloud project.** Who creates it? A pauseai.uk Workspace
    admin has to own it.
-3. **Ask slugs for the old mailings** (`documentary-screening`,
+2. **Ask slugs for the old mailings** (`documentary-screening`,
    `westminster-hall-debate` and the rest, in phase 1 step 5). Are these
    asks at all, or just mailings? An invitation to a screening is an ask;
    a briefing on an amendment may not be.
