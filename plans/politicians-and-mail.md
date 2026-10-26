@@ -385,12 +385,8 @@ still does there.
   party change with its real date and reason. Our audit log can't, as it
   only knows when the sync saw the change.
 - Staff set any ask's status, not just those of `trackedCampaigns`.
-- Asks are added on `/staff/asks`, if a migration each has become a
-  nuisance.
 - The syncs stop and leave the Import page. Politicians keep their
   `airtable_id`.
-- Perhaps Parliament's member IDs, so a re-elected member's two records
-  can be merged.
 
 ## Across all phases
 
@@ -458,3 +454,15 @@ Data protection, agreed before building and recorded in
   - drop them, so everyone has just name and salutation, and add a
     required `sort_name` ("King of Lothbury, Lord") if sorting by
     surname is wanted.
+
+- **Adding asks in the site.** A migration adds each ask until phase 3.
+  Should staff add them on `/staff/asks`, and from which phase? A new
+  event needs a developer until then.
+- **Parliament's member IDs.** Worth storing in phase 3, so a re-elected
+  member's two records can be merged?
+- **Who agrees the data protection** before phase 1's web form import
+  (Across all phases).
+- **When to merge `docs/domain-concepts.md`.** Its "full history"
+  section says we keep PauseAI's letters and replies, which only phase 2
+  builds. Merge it with phase 1 or 2, or hold that paragraph back until
+  then?
