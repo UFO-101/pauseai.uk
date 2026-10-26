@@ -2,27 +2,28 @@
 
 Two features, the second built on the first:
 
-1. **Politician data.** Everything in Airtable's "UK Politicians" base
-   comes into our database: all five bodies, everyone who has left, what
-   each has signed or agreed to, every email PauseAI has sent them, and
-   the letters the public sent them through the old web form.
+1. **Politician data.** Airtable's "UK Politicians" base comes into our
+   database: all five bodies, everyone who has left, what each has
+   signed or agreed to, PauseAI's 2026 emails to them, and the letters
+   the public sent them through pauseai.info's old web form.
 2. **Mail from PauseAI to politicians.** Staff filter the politicians
    page, press "Mail these", write one mail and schedule it. It goes from
    their own Gmail, and the whole thread can be read in `/staff`.
 
 Three phases, one pull request each:
 
-| Phase               | What staff get                                                               |
-| ------------------- | ---------------------------------------------------------------------------- |
-| 1. Data             | Every politician, past and present, with their asks and every letter to them |
-| 2. Mail politicians | Mailings sent from Gmail, with bounces and whole threads                     |
-| 3. Leave Airtable   | Politicians edited in the site; the Airtable sync stops                      |
+| Phase               | What staff get                                                     |
+| ------------------- | ------------------------------------------------------------------ |
+| 1. Data             | Every politician, past and present, with their asks and letters    |
+| 2. Mail politicians | Mailings sent from Gmail, with bounces and whole threads           |
+| 3. Leave Airtable   | Politicians edited in the site; the Airtable sync stops            |
 
 ## Rules
 
 - **Airtable is read, never written.** It's the master copy until phase 3.
-  Mail sent from the site isn't in Airtable, so its "Email count" and
-  "Most recent email" undercount until then.
+  Where Airtable and our database disagree on something staff set in the
+  site, ours wins. Mail sent from the site isn't in Airtable, so its
+  "Email count" and "Most recent email" undercount until then.
 - **We keep a full history of everyone** (`docs/domain-concepts.md`). A
   politician who leaves office is marked, not removed. Imported data says
   where it came from.
@@ -66,21 +67,20 @@ else.
 - **`notable_people`**: everyone we campaign at. Kind (`politician` for
   now), name, forename, surname, salutation, email, status, notes,
   `important_target`, `personal_connection`, `airtable_id`,
-  `airtable_removed_at`. Status replaces `sitting`: `in_office`, `died`,
-  `retired` or `left_office`.
+  `airtable_removed_at`.
   - **Name** is what they're known as in public, with any title that's
     part of it: "Claire Coutinho", "Sir John Hayes", "Lord McFall of
-    Alcluith". It's what staff pages show, and it's required. From
-    Airtable's "Full name or Title".
-  - **Forename and surname** are for sorting and mail merge. They're
-    nullable, and a CHECK requires both or neither: peers have only
-    their title. In Airtable, every MP, MSP, MS and MLA has both; no peer
-    has either. Whether to keep them is an open question
-    (below).
+    Alcluith". Required; it's what staff pages show.
+  - **Forename and surname** are for sorting and mail merge. Nullable,
+    with a CHECK for both or neither: peers have only their title. Open
+    question (below).
   - **Salutation** follows "Dear": "Ms Coutinho", "Sir John", "Lord
     McFall".
-- **`politicians`**: house, constituency, party, country, city, test
-  postcode.
+  - **Status** replaces `sitting`: `in_office`, `died`, `retired` or
+    `left_office`.
+- **`politicians`**: house (as now: `commons`, `lords`,
+  `scottish-parliament`, `senedd`, `ni-assembly`, `other`), constituency,
+  party, country, city, test postcode.
 
 Supporters stay separate. They're merged from several sources
 (`supporter_links`); notable people aren't.
@@ -93,8 +93,8 @@ letter, come to an event.
 - **`asks`**: slug, title, kind (`letter` or `event`), date. A migration
   adds each.
 - **`ask_statuses`** (was `campaign_statuses`): one person's answer to one
-  ask, with a date, a note, and who set it. A foreign key on
-  `(kind, status)` allows only the statuses of the ask's kind:
+  ask, with a date, a note, and who set it. No answer, no row. A foreign
+  key on `(kind, status)` allows only the statuses of the ask's kind:
 
   | Kind   | Status             | Meaning                                                    |
   | ------ | ------------------ | ---------------------------------------------------------- |
@@ -107,13 +107,12 @@ letter, come to an event.
   | Event  | `declined_surgery` | No, but they offered the constituent a surgery appointment |
   | Event  | `passed_on`        | They passed the invitation on to someone else              |
 
-  These are all for now; a new one is added when an event needs it.
+  A new status is added when an event needs it.
 
   Whoever set a status owns it: staff, or an import (`airtable`,
   `controlai`). An import changes only its own, and leaves alone a status
-  staff have set: our database wins. For now that only arises on
-  `frontier-ai-letter`, the one ask staff mark in the site; the rest are
-  past.
+  staff have set. Today staff set only `frontier-ai-letter`, through
+  `regulate-letter-pm`, the one campaign with `done`.
 
 - **`campaigns`**: one letter many supporters send, the twin of
   `mailings`. Slug, title, and the ask if any. The rest stays in code
@@ -123,13 +122,13 @@ letter, come to an event.
   its slug. A row needs no code: pauseai.info's old campaigns are rows
   only.
 
-  | Campaign             | Ask                   | In code |
-  | -------------------- | --------------------- | ------- |
-  | `regulate-letter-pm` | `frontier-ai-letter`  | yes     |
-  | `support-sobel-bill` | `controlai-statement` | yes     |
-  | `pauseai-info-frontier-ai`  | `frontier-ai-letter`  | no      |
-  | `pauseai-info-liability`    |                       | no      |
-  | `pauseai-info-deepmind`     | `deepmind-letter`     | no      |
+  | Campaign                   | Ask                   | In code |
+  | -------------------------- | --------------------- | ------- |
+  | `regulate-letter-pm`       | `frontier-ai-letter`  | yes     |
+  | `support-sobel-bill`       | `controlai-statement` | yes     |
+  | `pauseai-info-frontier-ai` | `frontier-ai-letter`  | no      |
+  | `pauseai-info-liability`   |                       | no      |
+  | `pauseai-info-deepmind`    | `deepmind-letter`     | no      |
 
   Email your MP reads the MP's statuses keyed by ask (`MpStatuses`), as
   it now reads them by campaign: a campaign whose ask the MP has met is
@@ -142,46 +141,78 @@ letter, come to an event.
 - **`letters`**: every letter to a notable person. Kind (`supporter` or
   `pauseai`), the person, created and sent times, status, our
   `Message-ID`, and the provider's message and thread IDs. Status is as
-  now (`sending`, `sent`, `not_sent`,
-  `bounced`, `spam_complaint`), plus `scheduled` and `cancelled` for
-  PauseAI letters only; a skipped letter is `not_sent`. `letter_events`
-  (sent, skipped, bounced, replied, auto-reply) and
-  `email_sends.letter_id` point here.
+  now (`sending`, `sent`, `not_sent`, `bounced`, `spam_complaint`), plus
+  `scheduled` and `cancelled` for PauseAI letters only; a skipped letter
+  is `not_sent`. `letter_events` (sent, skipped, bounced, replied,
+  auto-reply) and `email_sends.letter_id` point here. Imported letters
+  get no events: their sent time says it.
 - **`supporter_letters`**: the campaign, and the sender's name, email,
   address, postcode, consent and `reply_hash`. `supporter_links` points
   here, and erasure deletes the row.
 - **`pauseai_letters`**: the mailing, the sender, and the values merged
   into the template for this person.
 - **`mailings`**: one mail to many people. Title, ask if any (an
-  invitation may ask nothing we record), subject,
-  body template, attachments, sender, who made it, when it's due. A
-  person's mail is re-rendered from the template and their merge values,
-  not stored. The mailing keeps the rendered template it was sent with,
-  so a change to the renderer can't change it. Mailings imported from
-  Airtable have no template, which a CHECK allows only for them.
-- **`letter_messages`**: every later message in a PauseAI letter's
-  thread, the politician's replies and the sender's answers. From, date,
-  subject, `Message-ID`, attachment names, and the key of the raw message,
-  gzipped with its attachments, in Netlify Blobs. A reply to a supporter's
-  letter is forwarded and logged as an event, as now, but not stored.
+  invitation may ask nothing we record), subject, body template,
+  attachments, sender, who made it, when it's due. A person's mail is
+  re-rendered from the template and their merge values, not stored. The
+  mailing keeps the rendered template it was sent with, so a change to
+  the renderer can't change it. Mailings imported from Airtable have no
+  template, text or threads, which a CHECK allows only for them.
+- **`letter_messages`** (phase 2): every later message in a PauseAI
+  letter's thread, the politician's replies and the sender's answers.
+  From, date, subject, `Message-ID`, attachment names, and the key of the
+  raw message, gzipped with its attachments, in Netlify Blobs. A reply to
+  a supporter's letter is forwarded and logged as an event, as now, but
+  not stored.
 
 A letter's ask is its campaign's or its mailing's, never its own. Who
 was asked and hasn't answered comes from those.
 
+## Airtable
+
+Base `appBInVvIm6opJ1Ob`. `lib/server/outside-services/airtable.ts` is
+the only file that talks to Airtable, and lists the fields it reads.
+
+| Table                     | ID                  | Used for          |
+| ------------------------- | ------------------- | ----------------- |
+| UK Parliamentarians       | `tblH3ks9wqQHLpYx3` | Steps 3 and 4     |
+| Emails                    | `tblp4nH5Jymq48rcm` | Step 5            |
+| Web form emails           | `tblkzjrRHiZiqMDGR` | Step 6, once      |
+| Go to Parliament Oct 2026 | `tblminXS1xSuBbEjz` | Step 7, once      |
+
 ## Phase 1: Data
 
-1. **Parent tables and renames.** Add `notable_people` and point every
-   reference to a politician at it (letters, statuses,
-   `politicianHistory`). Split the sender's details and the
-   campaign off `letters` into `supporter_letters`, and point
-   `supporter_links`, the supporter views and `email_permission()` and its
-   view there. Add `asks` and `campaigns`, and rename
-   `campaign_statuses` to `ask_statuses`. Its own commit, as it touches a lot of
-   code.
+1. **Parent tables and renames**, in one migration and its own commit,
+   as it touches a lot of code.
+   - Add `notable_people`, moving the shared columns up from
+     `politicians`, and point every reference to a politician at it
+     (letters, statuses, `politicianHistory`).
+   - Split the sender's details and the campaign off `letters` into
+     `supporter_letters`. Point `supporter_links`, the supporter views,
+     `email_permission()` and the `email_permissions` view there; the
+     function and view read `letters.sender_email` today.
+   - Add `asks` and `campaigns` with their rows, and rename
+     `campaign_statuses` to `ask_statuses`.
 2. **Status instead of `sitting`.** Email your MP and every filter that
    meant sitting now mean `in_office`.
-3. **Sync every body.** `sync-politicians` replaces `sync-mps`: all of UK
-   Parliamentarians, nightly, keyed by Airtable record ID.
+3. **Sync every body.** `sync-politicians` replaces `sync-mps`
+   (`lib/server/mp-sync.ts`): all of UK Parliamentarians, nightly, keyed
+   by Airtable record ID.
+
+   | Our column            | Airtable field                                      |
+   | --------------------- | --------------------------------------------------- |
+   | name                  | Full name or Title                                  |
+   | forename, surname     | Forename, Surname; empty becomes null               |
+   | salutation            | Salutation                                          |
+   | email                 | Email                                               |
+   | status                | Status: blank `in_office`, Died `died`, Retired `retired`, No longer in office `left_office` |
+   | house                 | Body, mapped as `lib/server/signatory-import.ts` does |
+   | constituency, party   | Constituency, Party                                 |
+   | country, city         | Country, City                                       |
+   | notes                 | Notes, plus a line "Recommended" if ticked (15)     |
+   | `important_target`    | Important target (98)                               |
+   | `personal_connection` | Personal connection (7)                             |
+
    - A large change is held for a person to check, as now. So is a name
      change on an existing record, which may be Airtable reusing it for
      someone new.
@@ -189,62 +220,67 @@ was asked and hasn't answered comes from those.
      (`lib/test-mps.json`).
    - A record deleted from Airtable keeps its status and gets
      `airtable_removed_at`.
-   - Notes go into `notes`, with a line "Recommended" for the 15 ticked
-     so. Important target (98) and Personal connection (7) go into their
-     columns.
 4. **Statuses**, owned by `airtable`, replacing
    `lib/server/signatory-import.ts`:
 
-   | Ask                         | What it is                                                                                    | Airtable field                     | Politicians                      |
-   | --------------------------- | --------------------------------------------------------------------------------------------- | ---------------------------------- | -------------------------------- |
-   | `frontier-ai-letter`        | Our open letter to the Prime Minister on frontier AI; Email your MP's current campaign        | Signed Frontier AI Letter          | 10                               |
-   | `deepmind-letter`           | Our 2025 letter to Sir Demis Hassabis of Google DeepMind (`/campaigns/dear-sir-demis-2025`)    | Signed DeepMind Letter             | 63                               |
-   | `controlai-statement`       | ControlAI's statement; imported from ControlAI as now                                         | ControlAI Signatory                | 167                              |
-   | `edinburgh-conference-2026` | A conference in Edinburgh, November 2026, invited in October                                  | Edinburgh Conference November 2026 | 50 Declined, 1 Passed on request |
+   | Ask                         | What it is                                                        | Airtable field                     | Politicians                       |
+   | --------------------------- | ----------------------------------------------------------------- | ---------------------------------- | --------------------------------- |
+   | `frontier-ai-letter`        | Our open letter to the Prime Minister on frontier AI              | Signed Frontier AI Letter          | 10                                |
+   | `deepmind-letter`           | Our 2025 letter to Sir Demis Hassabis (`/campaigns/dear-sir-demis-2025`) | Signed DeepMind Letter             | 63                                |
+   | `controlai-statement`       | ControlAI's statement, imported from ControlAI as now             | ControlAI Signatory                | 167                               |
+   | `edinburgh-conference-2026` | A conference in Edinburgh, November 2026                          | Edinburgh Conference November 2026 | 50 Declined, 1 Passed on request  |
 
-   Not imported: "Parliament meeting 23 June 2026" (one MP) and "London
-   2026 Panel" (four); "Signed Liability Letter", which no one did;
-   Responded and Declined on the letters; "Responded
-   PauseAI Documentary Screening invitation" (2), which has no ask; "Sent DeepMind
-   letter publication email", which the Emails sync covers; the
-   per-person PDFs; the AI "Custom sentence".
+   Edinburgh's answers map Going to `going`, Declined to `declined` and
+   Passed on request to `passed_on`.
+
+   Not imported: "Parliament meeting 23 June 2026" (one MP), "London
+   2026 Panel" (four), "Signed Liability Letter" (none); Responded and
+   Declined on the letters; "Responded PauseAI Documentary Screening
+   invitation" (2) and "Sent DeepMind letter publication email", both
+   2025; the per-person PDFs; the "Custom sentence".
 
 5. **Emails sync** into `pauseai_letters`, nightly, adding rows by
    Airtable record ID, for 2026 only. Airtable has no text, Message-ID
    or thread, so a row records who, when, and Personalized and AI
-   Generated. Each 2026 mailing becomes an imported `mailings` row:
+   Generated. Each mailing is a tick box on the email, and each 2026 one
+   becomes an imported `mailings` row:
 
-   | Airtable's mailing                     | Emails | When     | Ask                         |
+   | Airtable's tick box                    | Emails | When     | Ask                         |
    | -------------------------------------- | ------ | -------- | --------------------------- |
    | CSRB Iqbal Amendment                   | 12     | Jun 2026 |                             |
    | Edinburgh Conference Nov 26 Invitation | 186    | Oct 2026 | `edinburgh-conference-2026` |
    | Ben Lake October 2026 Debate           | 72     | Oct 2026 |                             |
 
-   The 2025 emails aren't imported: the DeepMind letter and its
-   follow-ups (4,368, Jun–Aug, the only mailing with no tick box), the
-   Documentary Invitation (703) and the Westminster Hall Debate
-   Invitation (341). The statuses from 2025 asks are, in step 4.
-   "Frontier AI" and "Liability Bill" are ticked on no email, so they're
-   not mailings. One empty record, with no politician, is skipped.
+   Not imported: the 2025 emails (the DeepMind letter and its follow-ups,
+   4,368 with no box ticked; Documentary Invitation, 703; Westminster
+   Hall Debate Invitation, 341). Their asks' statuses still come in
+   step 4. "Frontier AI" and "Liability Bill" are ticked on no email. One
+   empty record, with no politician, is skipped. A new tick box is
+   reported on the Import page and held, not guessed at.
 
 6. **Import web form letters, once**, into `supporter_letters`, so their
    senders become supporters. They came from pauseai.info's old UK tool
    (`/uk-email-mp`, 18 July 2025 to 19 October 2026), which wrote each
-   letter to Airtable for an automation to send. We import the 718 that
-   were sent and skip 13 marked spam, invalid or unsent. Airtable's
-   Campaign gives ours: Frontier AI letter (620,
-   `pauseai-info-frontier-ai`), Liability letter (77,
-   `pauseai-info-liability`) and DeepMind letter (21,
-   `pauseai-info-deepmind`). The "Attending Parliament 23 June 2026"
-   tick, about the sender, isn't imported. The consent box arrived on 23
-   September 2026, so the 651 earlier letters count as no consent. A
-   letter already in `supporter_letters` from the same sender to the same
-   politician for the same ask is skipped; the liability campaign has no
-   ask, and nothing else asked for it.
+   letter to Airtable for an automation to send.
+   - We import the 718 that were sent and skip 13 marked spam, invalid
+     or unsent.
+   - Campaign gives ours: Frontier AI letter (620,
+     `pauseai-info-frontier-ai`), Liability letter (77,
+     `pauseai-info-liability`) and DeepMind letter (21,
+     `pauseai-info-deepmind`).
+   - Sender name, email and postcode, Recipient, Subject, and sent at
+     "Email Sent Time". Not the Message, nor "Attending Parliament 23 June
+     2026", which is about the sender. The form asked for no address, so
+     `supporter_letters.sender_address` allows empty for these.
+   - The consent box arrived on 23 September 2026, so the 651 earlier
+     letters, with Contact consent blank, count as no consent.
+   - A letter already in `supporter_letters` from the same sender to the
+     same politician for the same ask is skipped.
 7. **Import Go to Parliament, once.** Each MP a constituent was booked to
    meet gets a status on `go-to-parliament-oct-2026` (20 October 2026, the
-   House of Commons) from "MP Meeting Status". Nothing about the
-   constituent is imported.
+   House of Commons) from "MP Meeting Status", through the guest's "UK
+   Parliamentarians" link. Nothing about the constituent is imported.
+   Eight of the 121 guests have a status, for six MPs.
 
    | MP Meeting Status                | Status             |
    | -------------------------------- | ------------------ |
@@ -255,18 +291,18 @@ was asked and hasn't answered comes from those.
    | Declined                         | `declined`         |
    | Declined but surgery appointment | `declined_surgery` |
 
-   Edinburgh's answers map the same way: Going, Declined, and Passed on
-   request (`passed_on`).
+   One MP has two guests, one "Meeting with staff" and one "Tentative
+   meeting with staff"; the firmer, `meeting_staff`, wins.
 
 ### Staff pages
 
 - **Politicians**: filters for body, status, party, important target,
   personal connection, removed from Airtable, and signed or not signed an
   ask; columns for status and asks signed.
-- **A politician's page**: status; each ask's status with its note and
-  who set it, or "from Airtable"; supporter letters; PauseAI letters, with
-  date, ask and whether personalised. Setting a status (Signed for a
-  letter, a select for an event) takes a note.
+- **A politician's page**: status and notes; each ask's status with its
+  note and who set it, or "from Airtable"; supporter letters; PauseAI
+  letters, with date, mailing and whether personalised. Setting a status
+  (Signed for a letter, a select for an event) takes a note.
 - **Letters to MPs**: supporter letters only, imported ones marked.
 - **Supporters**: web form senders, with the web form as their source.
 - **Asks** (`/staff/asks`, new, read-only): each ask, its kind and date,
@@ -279,8 +315,10 @@ was asked and hasn't answered comes from those.
 ### Tests
 
 The politicians filters. A politician's page with statuses from Airtable,
-one who has left office, and imported PauseAI letters. A sync held for a
-changed name. Each one-off import.
+one who has left office, a peer with no forename, and imported PauseAI
+letters. A sync held for a changed name, and one for a new Emails tick
+box. A staff status the sync leaves alone. Each one-off import, including
+blank consent and a duplicate skipped.
 
 ## Phase 2: Mail politicians
 
@@ -427,21 +465,26 @@ examples for new components, and a line in `docs/testing.md`.
 Data protection, agreed before building and recorded in
 `docs/data-protection.md`, the privacy policy and erasure:
 
-- **Web form senders**: a new source of supporter letters (name, email,
-  postcode, consent, not the message), erased like any supporter letter.
-- **Staff mailboxes**: `gmail.readonly` lets the site read a connected
-  mailbox whole. It reads only the IDs of new messages, and fetches only
-  those in our letters' threads and bounces. Tokens are encrypted, and
-  deleted when a staff member disconnects or their account is removed.
-- **PauseAI letters and politicians' replies**: kept in full, as public
-  figures in their public role. A reply may mention a constituent or a
-  member of staff; we keep it anyway, and the policy says so.
-- **Google**: a processor for staff mail, as it already is for the policy
-  inbox.
+- **Web form senders** (phase 1): a new source of supporter letters
+  (name, email, postcode, consent, not the message), erased like any
+  supporter letter.
+- **Staff mailboxes** (phase 2): `gmail.readonly` lets the site read a
+  connected mailbox whole. It reads only the IDs of new messages, and
+  fetches only those in our letters' threads and bounces. Tokens are
+  encrypted, and deleted when a staff member disconnects or their account
+  is removed.
+- **PauseAI letters and politicians' replies** (phase 2): kept in full,
+  as public figures in their public role. A reply may mention a
+  constituent or a member of staff; we keep it anyway, and the policy
+  says so.
+- **Google** (phase 2): a processor for staff mail, as it already is for
+  the policy inbox.
 
 ## Not in these phases
 
 - A custom sentence per person, and PDFs per person.
+- The 2025 emails, and the text and threads of imported mailings. They
+  could be found later by searching the sender's Gmail Sent folder.
 - Open tracking. Gmail would need a tracking pixel, which looks like spam,
   and Apple Mail fakes opens anyway.
 - Follow-ups sent by the site, and leaving out anyone we've been in touch
@@ -464,6 +507,8 @@ Data protection, agreed before building and recorded in
 
 ## Open questions
 
+### Phase 1
+
 - **Forename and surname.** Every notable person has a name and a
   salutation, but only some have a forename and surname, which isn't
   uniform. In Airtable:
@@ -477,23 +522,27 @@ Data protection, agreed before building and recorded in
   | Lord Bird             |          |            | Lord Bird   |
   | Lord King of Lothbury |          |            | Lord King   |
 
-  Peers have neither; their surname is inside the title, in a different
-  place. The salutation follows no one rule from the name ("Dr Cooper"
-  but "Sir Gavin"), so it stays its own field either way. The choice:
+  Every MP, MSP, MS and MLA has both; no peer has either, as their
+  surname is inside the title. The salutation follows no one rule from
+  the name ("Dr Cooper" but "Sir Gavin"), so it stays its own field
+  either way. The choice:
   - keep forename and surname, both or neither, for sorting and a
-    `{forename}` merge field;
+    `{forename}` merge field (the plan as written);
   - drop them, so everyone has just name and salutation, and add a
     required `sort_name` ("King of Lothbury, Lord") if sorting by
     surname is wanted.
 
-- **Adding asks in the site.** A migration adds each ask until phase 3.
-  Should staff add them on `/staff/asks`, and from which phase? A new
-  event needs a developer until then.
+- **Who agrees the data protection** for the web form senders, before
+  step 6.
+- **When to merge `docs/domain-concepts.md`.** Its "full history"
+  section, already on this branch, says we keep PauseAI's letters and
+  replies, which only phase 2 builds. Hold that paragraph back until
+  phase 2, or merge it as it is?
+
+### Later
+
+- **Adding asks in the site.** A migration adds each ask until phase 3,
+  so a new event needs a developer. Should staff add them on
+  `/staff/asks`, and from which phase?
 - **Parliament's member IDs.** Worth storing in phase 3, so a re-elected
   member's two records can be merged?
-- **Who agrees the data protection** before phase 1's web form import
-  (Across all phases).
-- **When to merge `docs/domain-concepts.md`.** Its "full history"
-  section says we keep PauseAI's letters and replies, which only phase 2
-  builds. Merge it with phase 1 or 2, or hold that paragraph back until
-  then?
