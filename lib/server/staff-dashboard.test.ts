@@ -75,12 +75,12 @@ describeWithDatabase("dashboard", () => {
          (3, '2026-10-19T00:00:00Z', 'u1@example.com', 'complaint', '', false);
        INSERT INTO email_blocks (address, problem_id) VALUES ('polly.placeholder.mp@parliament.uk', 1), ('gone@parliament.uk', 2), ('u1@example.com', 3);`,
     );
-    // Runs: the Luma import's newest failed; an MP sync is held; the check is well.
+    // Runs: the Luma import's newest failed; a politician sync is held; the check is well.
     await recordRun("import-luma", "jo", "ok", { events: 1 });
     await recordFailure("import-luma", "jo", new Error("Luma answered 500"));
     await query(
       `INSERT INTO import_runs (at, job, started_by, status, result) VALUES
-         ('2026-10-21T00:00:00Z', 'sync-mps', 'nightly', 'held', '{"changes": {"added": [], "removed": [{"airtableId": "a"}, {"airtableId": "b"}], "changed": []}, "mps": []}')`,
+         ('2026-10-21T00:00:00Z', 'sync-politicians', 'nightly', 'held', '{"changes": {"added": [], "removed": [{"airtableId": "a"}, {"airtableId": "b"}], "changed": []}, "records": []}')`,
     );
     await recordRun("check-mps", "nightly", "ok", { problems: [] });
     return { real, gone, test };

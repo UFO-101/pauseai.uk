@@ -13,7 +13,7 @@ import {
   logInAsStaff,
   lookUpTestMp,
   sendLetter,
-  syncMps,
+  syncPoliticians,
   WEBHOOK_AUTH,
 } from "../steps";
 import { BASE, expect, flowStorageState, frame, test } from "./fixtures";
@@ -67,7 +67,7 @@ test("with no permissions, no page shows a supporter's name or email, nor sends 
   request,
   flowDatabase,
 }, testInfo) => {
-  await syncMps(request, BASE);
+  await syncPoliticians(request, BASE);
   await importLuma(request, BASE);
   await importMembers(request, BASE);
   const sender = `jane+${testInfo.testId}@example.com`;
@@ -115,7 +115,7 @@ test("without supporters, Letters and Blocked supporter emails are closed, and B
   request,
   flowDatabase,
 }, testInfo) => {
-  await syncMps(request, BASE);
+  await syncPoliticians(request, BASE);
   const bouncy = TEST_MPS.find((mp) => mp.postcode === "ZZ99ZH")!;
   await fakeTurnstile(page);
   await lookUpTestMp(page, BASE, bouncy);
@@ -164,7 +164,7 @@ test("a supporter's bounced address is on Blocked supporter emails, not Blocked 
   request,
   flowDatabase,
 }) => {
-  await syncMps(request, BASE);
+  await syncPoliticians(request, BASE);
   await importLuma(request, BASE);
   await postBounce(request, "jane.fixture@example.com");
   await logIn(page, flowDatabase, ["supporters"]);

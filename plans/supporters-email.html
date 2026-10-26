@@ -104,7 +104,10 @@ svg .done { fill: var(--ok); font-weight: 700; font-size: 11.5px; }
 <ul>
   <li><b>Supporters:</b> UK members (Airtable) and Luma people, imported hourly, linked with letter writers.</li>
   <li><b><code>email_permission()</code>:</b> yes, no or unsure for each address and topic. Members are "unsure" for PauseAI updates, as CiviCRM's unsubscribes are invisible.</li>
-  <li><b>The Luma topic</b> means "may we message them through Luma". Registering for an event makes someone a contact, and the link in every event blast unsubscribes them from all our Luma email, which the webhook records since 22 Oct. It isn't consent to the weekly: Luma's terms need "explicit consent".</li>
+  <li><b>The Luma topic</b> means "may we message them through Luma". It isn't consent to the weekly: Luma's terms need "explicit consent".</li>
+  <li><b>Luma's contacts are its email list.</b> Registering for an event or following the calendar adds someone. Unsubscribing by the link in any event blast, or marking one as spam, takes them off the list (the dashboard's People page and the API alike) and turns Follow off; so does our removing or blocking them. Following again puts them back as they were, with their first join date. Unfollowing changes nothing that matters for email. Tested by hand, 26 Oct.</li>
+  <li><b>The webhook</b> tells us of an unsubscribe at once, but not of someone following again, nor of removals and blocks. So the import's full pass over the contacts, daily, records the rest: a contact it doesn't list is opted out, and one who reappears is opted back in. A contact is then a yes, however old; "unsure" goes for Luma. Built on branch <code>luma-contacts-gone</code>.</li>
+  <li><b>Registered but never a contact:</b> 43 people registered and were approved for our own events but aren't on the list. They most likely unsubscribed before the webhook existed, so they're a no.</li>
 </ul>
 
 <h2>4. The blocker: CiviCRM's unsubscribes</h2>
@@ -113,7 +116,7 @@ svg .done { fill: var(--ok); font-weight: 700; font-size: 11.5px; }
 <tr><th>Source</th><th>Status</th><th>Covers</th></tr>
 <tr><td><b>Global: the UK list's unsubscribes</b></td><td><span class="tag t-warn">to ask</span></td><td>All of it: the blocker</td></tr>
 <tr><td>MailerLite and MailerSend suppressions</td><td><span class="tag t-warn">not asked</span></td><td>Global newsletter and welcome-email unsubscribes, complaints, bounces; not the UK weekly. Global's sync already has them in one file (<code>suppressions-&lt;runid&gt;.json</code>)</td></tr>
-<tr><td>Luma webhook</td><td><span class="tag t-ok">built</span></td><td>Our Luma email, since 22 Oct</td></tr>
+<tr><td>Luma webhook and contacts pass</td><td><span class="tag t-ok">built</span></td><td>Our Luma email: unsubscribes at once, the rest within a day</td></tr>
 <tr><td>Postmark</td><td><span class="tag t-ok">built</span></td><td>Bounces and complaints on our own sends</td></tr>
 <tr><td>CiviCRM reports; "remove me" replies</td><td><span class="tag t-warn">by hand</span></td><td>Each weekly's few unsubscribes, if chapter admins can see names</td></tr>
 <tr><td>Asking</td><td><span class="tag t-warn">fallback</span></td><td>Everyone who clicks</td></tr>

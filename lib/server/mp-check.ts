@@ -1,7 +1,7 @@
 import "server-only";
 import { checkAgainstParliament, type MpProblem } from "@/lib/mp-check";
 import { keepingFailure, recordRun } from "./import-runs";
-import { sittingMps } from "./mp-sync";
+import { mpsInOffice } from "./politician-sync";
 import { currentMps } from "./outside-services/parliament";
 
 // Compares the MPs copied from Airtable with Parliament's, nightly
@@ -11,11 +11,11 @@ import { currentMps } from "./outside-services/parliament";
 
 const JOB = "check-mps";
 
-/** Checks the sitting MPs against Parliament's, keeping the result, or the failure. */
+/** Checks the MPs in office against Parliament's, keeping the result, or the failure. */
 export function checkMps(startedBy: string): Promise<MpProblem[]> {
   return keepingFailure(JOB, startedBy, async () => {
     const parliament = await currentMps();
-    const problems = checkAgainstParliament(await sittingMps(), parliament);
+    const problems = checkAgainstParliament(await mpsInOffice(), parliament);
     await recordRun(JOB, startedBy, "ok", { problems });
     return problems;
   });

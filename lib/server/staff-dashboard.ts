@@ -95,13 +95,13 @@ async function series(metric: SeriesMetric, until: Date, days: DashboardWindow):
   });
 }
 
-/** Every MP sync still held for a decision, oldest first. */
+/** Every politician sync still held for a decision, oldest first. */
 async function heldSyncs(): Promise<DashboardAction[]> {
   const rows = await query<{ at: Date; added: number; removed: number; changed: number }>(
     `SELECT at, jsonb_array_length(result->'changes'->'added')::int AS added,
             jsonb_array_length(result->'changes'->'removed')::int AS removed,
             jsonb_array_length(result->'changes'->'changed')::int AS changed
-     FROM import_runs WHERE job = 'sync-mps' AND status = 'held' ORDER BY at, id`,
+     FROM import_runs WHERE job = 'sync-politicians' AND status = 'held' ORDER BY at, id`,
   );
   return rows.map(({ at, ...counts }) => ({ kind: "held-sync", at: at.toISOString(), ...counts }));
 }

@@ -7,7 +7,7 @@ import { campaignPath } from "@/lib/email-your-mp";
 import { importPath } from "@/lib/import-runs";
 import { staffDate } from "@/lib/staff-time";
 import { jobTitles, staffCopy } from "@/lib/content/staff-interface";
-import type { AnyImportRun, ControlAiImport, MpCheck, MpSync, SignatoryImport } from "@/lib/import-runs";
+import type { AnyImportRun, ControlAiImport, MpCheck, PoliticianSync } from "@/lib/import-runs";
 import type { StaffAccount } from "@/lib/server/staff-accounts";
 import ChangesTable from "./ChangesTable";
 import EmailBlockFilters from "./EmailBlockFilters";
@@ -30,12 +30,15 @@ import RunList from "./RunList";
 import {
   exampleAppliedSync,
   exampleControlAiResult,
+  exampleEmailsResult,
   exampleFailedRun,
+  exampleGoToParliamentResult,
   exampleHeldSync,
   exampleLumaResult,
   exampleMembersResult,
   exampleRun,
   exampleSyncedMp,
+  exampleWebFormResult,
 } from "./RunList.examples";
 import StaffNav from "./StaffNav";
 import StaffSessions from "./StaffSessions";
@@ -243,7 +246,7 @@ describe("StaffDashboard", () => {
     ]);
     await expect
       .element(page.getByRole("link", { name: copy.actions.decide }))
-      .toHaveAttribute("href", "/staff/import-data/mps");
+      .toHaveAttribute("href", "/staff/import-data/politicians");
     await expect
       .element(page.getByRole("link", { name: copy.actions.openMp }))
       .toHaveAttribute("href", "/staff/politicians/7");
@@ -1198,7 +1201,7 @@ describe("PoliticianDetails", () => {
     await expect.element(notice.getByRole("heading", { name: copy.wrong.title })).toBeVisible();
     await expect
       .element(notice.getByRole("link", { name: copy.wrong.link }))
-      .toHaveAttribute("href", "/staff/import-data/mps");
+      .toHaveAttribute("href", "/staff/import-data/politicians");
     // The address is in bold in the strip, and in the facts it's just the address.
     expect(
       page
@@ -1345,52 +1348,70 @@ describe("ImportOverview", () => {
       ran("import-luma", { ...exampleLumaResult, stoppedBy: "time" }, { at: "2026-10-21T11:17:00Z" }),
       ran("import-members", exampleMembersResult, { at: "2026-10-21T11:47:00Z" }),
       exampleHeldSync,
+      ran("sync-emails", exampleEmailsResult, { at: "2026-10-21T06:22:00Z" }),
       ran("check-mps", { problems: [] }, { at: "2026-10-21T01:00:00Z", status: "ok" }),
       failed("import-controlai", "No PDF linked", { at: "2026-10-21T02:00:00Z" }),
+      ran("import-web-form-letters", exampleWebFormResult, { at: "2026-10-20T09:00:00Z" }),
       undefined,
     ];
-    await render(<ImportOverview newest={newest} airtableTable="https://airtable.com/table" />);
+    await render(<ImportOverview newest={newest} airtableTable="https://airtable.com/app/tblPoliticians" />);
     await expect.element(page.getByRole("heading", { level: 1, name: staffCopy.import.pageTitle })).toBeVisible();
     const cards = [...document.querySelectorAll("section")];
     expect(cards.map((card) => card.querySelector("h2 a")!.getAttribute("href"))).toEqual([
       "/staff/import-data/luma",
       "/staff/import-data/members",
-      "/staff/import-data/mps",
+      "/staff/import-data/politicians",
+      "/staff/import-data/emails",
       "/staff/import-data/mp-check",
       "/staff/import-data/controlai",
-      "/staff/import-data/signatories",
+      "/staff/import-data/web-form-letters",
+      "/staff/import-data/go-to-parliament",
     ]);
     expect(cards.map((card) => card.querySelector("h2 a")!.textContent)).toEqual([
       jobTitles["import-luma"],
       jobTitles["import-members"],
-      jobTitles["sync-mps"],
+      jobTitles["sync-politicians"],
+      jobTitles["sync-emails"],
       jobTitles["check-mps"],
       jobTitles["import-controlai"],
-      jobTitles["import-signatories"],
+      jobTitles["import-web-form-letters"],
+      jobTitles["import-go-to-parliament"],
     ]);
     // Under the name, how the newest run ended, tinted to match.
     const status = (i: number) => cards[i].querySelector("h2 + div > div")!;
     expect(status(0).textContent).toBe(`${staffCopy.runs.status.incomplete}2026-10-21 11:17`);
-    expect([0, 1, 2, 3, 4].map((i) => status(i).className.match(/green|amber|red/)?.[0])).toEqual([
+    // The Emails sync held some back, so it's amber too.
+    expect([0, 1, 2, 3, 4, 5, 6].map((i) => status(i).className.match(/green|amber|red/)?.[0])).toEqual([
       "amber",
       "green",
+      "amber",
       "amber",
       "green",
       "red",
+      "green",
     ]);
-    expect(status(5).textContent).toBe(staffCopy.import.none);
-    expect(status(5).className).not.toMatch(/green|amber|red/);
-    // The Airtable jobs link the table they read; the MP import also says the test MPs stay.
-    expect(cards[2].querySelector(":scope > p a")!.getAttribute("href")).toBe("https://airtable.com/table");
+    expect(status(7).textContent).toBe(staffCopy.goToParliament.never);
+    expect(status(7).className).not.toMatch(/green|amber|red/);
+    // The Airtable jobs link the table they read; the politicians' sync also says the test MPs stay.
+    const link = (i: number) => cards[i].querySelector(":scope > p a")!.getAttribute("href");
+    expect(link(2)).toBe("https://airtable.com/app/tblPoliticians");
     expect(cards[2].querySelector(":scope > p")!.textContent).toContain(staffCopy.syncs.testMps);
-    expect(cards[5].querySelector(":scope > p a")!.getAttribute("href")).toBe("https://airtable.com/table");
-    expect(cards[3].querySelector(":scope > p")!.textContent).not.toContain(staffCopy.syncs.testMps);
+    expect([3, 6, 7].map(link)).toEqual([
+      "https://airtable.com/app/tblp4nH5Jymq48rcm",
+      "https://airtable.com/app/tblkzjrRHiZiqMDGR",
+      "https://airtable.com/app/tblminXS1xSuBbEjz",
+    ]);
+    expect(cards[4].querySelector(":scope > p")!.textContent).not.toContain(staffCopy.syncs.testMps);
     // The members come from the join form.
     expect(cards[1].querySelector(":scope > p a")!.getAttribute("href")).toBe("https://pauseai.info/join");
   });
 
   it("shows an applied run in green, and one that changed nothing or was discarded plainly", async () => {
-    const discarded = ran("sync-mps", { changes: { added: [], removed: [], changed: [] } }, { status: "discarded" });
+    const discarded = ran(
+      "sync-politicians",
+      { changes: { added: [], removed: [], changed: [] } },
+      { status: "discarded" },
+    );
     const unchanged = ran("import-luma", exampleLumaResult, { status: "unchanged" });
     const { rerender } = await render(
       <ImportOverview newest={[unchanged, undefined, exampleAppliedSync, undefined, undefined]} airtableTable="x" />,
@@ -1413,19 +1434,25 @@ describe("ImportJobPage", () => {
       exampleHeldSync,
       exampleAppliedSync,
       ran(
-        "sync-mps",
+        "sync-politicians",
         { changes: { added: [], removed: [], changed: [] } },
         { id: 1, at: "2026-10-11T01:00:00Z", status: "unchanged" },
       ),
     ];
     const { rerender } = await render(
-      <ImportJobPage job="sync-mps" runs={runs} run={run} decide={fn} airtableTable="https://airtable.com/table" />,
+      <ImportJobPage
+        job="sync-politicians"
+        runs={runs}
+        run={run}
+        decide={fn}
+        airtableTable="https://airtable.com/table"
+      />,
     );
     await expect
       .element(page.getByRole("navigation", { name: staffCopy.import.pageTitle }).getByRole("link"))
       .toHaveAttribute("href", "/staff/import-data");
     expect(page.getByRole("heading", { level: 1 }).element().textContent).toBe(
-      `${jobTitles["sync-mps"]}${staffCopy.import.airtable}${staffCopy.import.nightly}`,
+      `${jobTitles["sync-politicians"]}${staffCopy.import.airtable}${staffCopy.import.nightly}`,
     );
     // The lozenges are plain: only a run's ending is in colour.
     const lozenges = [...page.getByRole("heading", { level: 1 }).element().querySelectorAll("span")];
@@ -1624,11 +1651,17 @@ describe("RunList", () => {
     await render(<RunList runs={[held, applied]} none="None" decide={fn} />);
     await expect.element(page.getByText(staffCopy.runs.status.held)).toBeVisible();
     await expect
-      .element(page.getByText(`${staffCopy.syncs.added} 1, ${staffCopy.syncs.removed} 1`, { exact: false }))
+      .element(page.getByText(`${staffCopy.syncs.added} 2, ${staffCopy.syncs.removed} 1`, { exact: false }))
       .toBeVisible();
     await expect.element(page.getByText("Seat 1: MP 1", { exact: true })).toBeVisible();
     await expect.element(page.getByText(`Seat 2: MP 2 (${staffCopy.politicians.noEmail})`)).toBeVisible();
-    await expect.element(page.getByText(`${staffCopy.syncs.changed} (1)`)).toBeVisible();
+    await expect.element(page.getByText(`${staffCopy.syncs.changed} (1)`).first()).toBeVisible();
+    // A peer by their house, a renamed record from and to, and the statuses it set.
+    await expect.element(page.getByText(`${staffCopy.houses.lords}: Lord Example`)).toBeVisible();
+    await expect.element(page.getByText("MP 6 → Someone New")).toBeVisible();
+    await expect
+      .element(page.getByText(staffCopy.syncs.statuses({ added: 3, changed: 1, removed: 0 }), { exact: false }))
+      .toBeVisible();
     await expect.element(page.getByText(staffCopy.runs.decidedBy("jo@pauseai.uk"), { exact: false })).toBeVisible();
     expect(page.getByRole("button", { name: staffCopy.syncs.apply }).all()).toHaveLength(1);
 
@@ -1638,8 +1671,8 @@ describe("RunList", () => {
   });
 
   it("starts a sync with many changes folded to its status line, with the buttons still there", async () => {
-    const big: MpSync = ran(
-      "sync-mps",
+    const big: PoliticianSync = ran(
+      "sync-politicians",
       { changes: { added: [1, 2, 3, 4, 5, 6].map((n) => mp(n)), removed: [], changed: [] } },
       { id: 9, status: "held" },
     );
@@ -1654,14 +1687,14 @@ describe("RunList", () => {
   });
 
   it("shows a failed or unchanged sync as one line, and a held one without buttons where nothing can be decided", async () => {
-    const unchanged: MpSync = ran(
-      "sync-mps",
+    const unchanged: PoliticianSync = ran(
+      "sync-politicians",
       { changes: { added: [], removed: [], changed: [] } },
       { id: 5, status: "unchanged" },
     );
     await render(
       <RunList
-        runs={[failed("sync-mps", "Airtable request failed with status 422", { id: 6 }), unchanged, held]}
+        runs={[failed("sync-politicians", "Airtable request failed with status 422", { id: 6 }), unchanged, held]}
         none="None"
       />,
     );
@@ -1772,21 +1805,46 @@ describe("RunList", () => {
     await expect.element(page.getByText("Lord Sample, Lord Sample of Elsewhere")).toBeVisible();
   });
 
-  it("says what each signatory import did, who ran it, or why it failed", async () => {
-    const runs: SignatoryImport[] = [
-      ran("import-signatories", { matched: 3, added: 7, alreadySet: 0 }, { id: 2, startedBy: "jo@pauseai.uk" }),
-      failed("import-signatories", "AIRTABLE_TOKEN isn't set", { id: 1, startedBy: null }),
+  it("says what each one-off import did, who ran it, or why it failed", async () => {
+    const runs: AnyImportRun[] = [
+      ran("import-web-form-letters", exampleWebFormResult, { id: 3, startedBy: "jo@pauseai.uk" }),
+      ran("import-go-to-parliament", exampleGoToParliamentResult, { id: 2, startedBy: "jo@pauseai.uk" }),
+      failed("import-go-to-parliament", "AIRTABLE_TOKEN isn't set", { id: 1, startedBy: null }),
     ];
     await render(<RunList runs={runs} none="None" />);
-    const [first, second] = page.getByRole("status").all();
+    for (const words of [
+      staffCopy.webForm.result(exampleWebFormResult),
+      staffCopy.goToParliament.result(exampleGoToParliamentResult),
+      staffCopy.runs.error("AIRTABLE_TOKEN isn't set"),
+    ]) {
+      await expect.element(page.getByText(words, { exact: false })).toBeVisible();
+    }
+    expect(page.getByText(staffCopy.runs.by("jo@pauseai.uk"), { exact: false }).all()).toHaveLength(2);
+  });
+
+  it("lists the emails an Emails sync held back, with the boxes ticked, or says why it failed", async () => {
+    const { rerender } = await render(
+      <RunList
+        runs={[
+          ran("sync-emails", exampleEmailsResult, { id: 2 }),
+          failed("sync-emails", "Airtable answered 503", { id: 1 }),
+        ]}
+        none="None"
+      />,
+    );
+    await expect.element(page.getByText(staffCopy.runs.status.incomplete)).toBeVisible();
     await expect
-      .element(first)
-      .toHaveTextContent(
-        `${staffCopy.runs.status.ok} ${AT} · ${staffCopy.runs.by("jo@pauseai.uk")} · ${staffCopy.import.result({ matched: 3, added: 7, alreadySet: 0 })}`,
-      );
-    await expect
-      .element(second)
-      .toHaveTextContent(`${staffCopy.runs.status.failed} ${AT} · ${staffCopy.runs.error("AIRTABLE_TOKEN isn't set")}`);
+      .element(page.getByText(staffCopy.pauseaiEmails.result(exampleEmailsResult), { exact: false }))
+      .toBeVisible();
+    await expect.element(page.getByText(`recEmail1: ${staffCopy.pauseaiEmails.noBoxes}`)).toBeVisible();
+    await expect.element(page.getByText("recEmail2: CSRB Iqbal Amendment, Ben Lake October 2026 Debate")).toBeVisible();
+    await expect.element(page.getByText(/Airtable answered 503/)).toBeVisible();
+    // With every email placed, nothing to list, and nothing amber.
+    await rerender(
+      <RunList runs={[ran("sync-emails", { ...exampleEmailsResult, unplaced: [] }, { id: 3 })]} none="None" />,
+    );
+    await expect.element(page.getByText(/recEmail/)).not.toBeInTheDocument();
+    await expect.element(page.getByText(staffCopy.runs.status.ok)).toBeVisible();
   });
 
   it("shows a members import's counts, or its error", async () => {
@@ -1923,6 +1981,8 @@ describe("ChangesTable", () => {
       `2 widgets · ${labels.status} maybe · ${labels.campaign} ${pm.title}`,
       `Old MP · ${fields.house} ${staffCopy.houses.commons} → ${staffCopy.houses.lords} · ${fields.party} Labour → ${copy.empty}`,
       copy.run("13"),
+      copy.run("14"),
+      copy.run("15"),
     ]);
     const href = (i: number) => rows[i].element().children[3].querySelector("a")?.getAttribute("href");
     expect([0, 1, 4, 7, 8, 14].map(href)).toEqual([
@@ -1931,7 +1991,7 @@ describe("ChangesTable", () => {
       undefined,
       "/staff/supporters/3",
       "/staff/supporters/4",
-      importPath("sync-mps"),
+      importPath("sync-politicians"),
     ]);
     // The Airtable ID leads to the record, in a new tab.
     const record = rows[2].getByRole("link", { name: "recPolly" });

@@ -636,6 +636,49 @@ export const staffCopy = {
   },
   // The hourly copy of PauseAI's UK members (lib/server/members-import.ts),
   // on the import page.
+  // PauseAI's 2026 emails to politicians, from Airtable's Emails table.
+  pauseaiEmails: {
+    title: "⁂ PauseAI's emails to politicians",
+    intro: {
+      before: "⁂ From the ",
+      link: "Emails table in Airtable",
+      after:
+        "⁂: each email sent since January 2026, once, as a letter of the mailing whose box is ticked. An email with no box we know ticked waits until a developer adds its mailing.",
+    },
+    importNow: "⁂ Import emails now",
+    never: "Not imported yet.",
+    result: (r: { read: number; added: number; waiting: number; noPolitician: number; unplaced: unknown[] }) =>
+      `⁂ ${r.read} emails read: ${r.added} added, ${r.waiting} waiting for their politician, ${r.noPolitician} with no politician, ${r.unplaced.length} with no mailing we know.`,
+    // The emails with no mailing we know, by their Airtable record, and the boxes they have ticked.
+    unplaced: "⁂ No mailing we know",
+    noBoxes: "⁂ no box ticked",
+  },
+  // The one-off import of the letters sent through pauseai.info's old form.
+  webForm: {
+    title: "⁂ Letters from pauseai.info's old form",
+    intro: {
+      before: "⁂ Once: the letters supporters sent to politicians through pauseai.info, from the ",
+      link: "Web form emails table in Airtable",
+      after: "⁂, so their senders become supporters. Not the letters' text.",
+    },
+    importNow: "⁂ Import the letters",
+    never: "Not imported yet.",
+    result: (r: { read: number; imported: number; skipped: number; alreadyHere: number; noPolitician: number }) =>
+      `⁂ ${r.read} letters read: ${r.imported} imported, ${r.skipped} spam, invalid or unsent, ${r.alreadyHere} already here, ${r.noPolitician} to a politician not here.`,
+  },
+  // The one-off import of the meetings for Go to Parliament.
+  goToParliament: {
+    title: "⁂ Go to Parliament, 20 October 2026",
+    intro: {
+      before: "⁂ Once: each MP's meeting with a constituent, from the ",
+      link: "Go to Parliament table in Airtable",
+      after: "⁂. Nothing about the constituents.",
+    },
+    importNow: "⁂ Import the meetings",
+    never: "Not imported yet.",
+    result: (r: { guests: number; mps: number; added: number; changed: number; notFound: number }) =>
+      `⁂ ${r.guests} guests with a meeting, with ${r.mps} MPs: ${r.added} statuses set, ${r.changed} changed, ${r.notFound} MPs not here.`,
+  },
   members: {
     title: "PauseAI members in the UK",
     intro: {
@@ -657,20 +700,27 @@ export const staffCopy = {
       `${r.members} members read: ${r.added} added, ${r.changed} changed, ${r.removed} removed; ${r.supportersAdded} new supporters, ${r.linked} linked.`,
   },
   syncs: {
-    title: "Members of Parliament from Airtable",
+    title: "⁂ Politicians from Airtable",
     // With a link to the table in the middle.
     intro: {
-      before: "From the ",
+      before: "⁂ From the ",
       link: "UK Parliamentarians table in Airtable",
-      after: ": everyone whose Body is “House of Commons” and whose Status is blank.",
+      after:
+        "⁂: every politician in every body, but those ticked Test, with whether they signed the letters and their answer to the Edinburgh conference. A run that changes many people, or anyone's name, waits for you to check it.",
     },
     /** The test MPs (lib/test-mps.json) aren't in Airtable; every import adds any that are missing. */
     testMps: "Each import also adds the test MPs, who aren’t in Airtable, if any are missing.",
-    syncNow: "Import MPs now",
+    syncNow: "⁂ Import politicians now",
     none: "Not yet imported.",
     added: "Added",
-    removed: "Removed",
+    // Those whose record is no longer in Airtable.
+    removed: "⁂ Gone from Airtable",
     changed: "Changed",
+    // A record whose name changed, which may be Airtable reusing it for someone new: from, to.
+    renamed: "⁂ Renamed",
+    // The statuses it set from Airtable's tick boxes, after the counts of people.
+    statuses: (s: { added: number; changed: number; removed: number }) =>
+      `⁂ Statuses: ${s.added} set, ${s.changed} changed, ${s.removed} taken away.`,
     apply: "Apply",
     discard: "Discard",
   },
@@ -723,16 +773,9 @@ export const staffCopy = {
     noEmail: "None",
   },
   import: {
-    // The page, with every import: the MPs and the signatories from
-    // Airtable, and ControlAI's letter from the web.
+    // The page, with every import: the politicians from Airtable, ControlAI's
+    // letter from the web, Luma and the members.
     pageTitle: "Import data",
-    title: "Signatories of the 2026 letter to the Prime Minister",
-    intro: {
-      before: "Everyone ticked “Signed Frontier AI Letter” in the ",
-      link: "UK Parliamentarians table in Airtable",
-      after:
-        " is marked as signed for the “Regulate AI developers now” campaign here. Never unsigns anyone. This is a deprecated import - should sign/unsign people on MP pages manually here.",
-    },
     // The lozenges next to each import's heading: where it's from, and how often it runs.
     airtable: "Airtable",
     web: "Web",
@@ -741,12 +784,6 @@ export const staffCopy = {
     hourly: "Hourly",
     oneOff: "One-off",
     checkOnly: "Check only",
-    button: "Import signatories now",
-    none: "Not imported yet.",
-    note: "From Airtable",
-    // matched + added is everyone ticked in Airtable; alreadySet is those of them already marked here.
-    result: (r: { matched: number; added: number; alreadySet: number }) =>
-      `${r.matched + r.added} ticked in Airtable: ${r.matched} matched politicians already here, ${r.added} added as new, ${r.alreadySet} were already marked as signed.`,
   },
   letters: {
     title: "Letters to MPs",
@@ -836,10 +873,12 @@ export const staffCopy = {
 
 /** Each job in the import log, by the title of its card on the import page and of its own page. */
 export const jobTitles: Record<ImportJob, string> = {
-  "sync-mps": staffCopy.syncs.title,
+  "sync-politicians": staffCopy.syncs.title,
+  "sync-emails": staffCopy.pauseaiEmails.title,
+  "import-web-form-letters": staffCopy.webForm.title,
+  "import-go-to-parliament": staffCopy.goToParliament.title,
   "check-mps": staffCopy.check.title,
   "import-controlai": staffCopy.controlAi.title,
-  "import-signatories": staffCopy.import.title,
   "import-luma": staffCopy.luma.title,
   "import-members": staffCopy.members.title,
 };

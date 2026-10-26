@@ -1,5 +1,12 @@
 import "server-only";
-import type { SyncedMp } from "@/lib/mps";
+import {
+  CONTROLAI_STATEMENT_ASK,
+  DEEPMIND_LETTER_ASK,
+  EDINBURGH_CONFERENCE_ASK,
+  FRONTIER_AI_LETTER_ASK,
+  type AskStatus,
+} from "@/lib/asks";
+import type { PoliticianRecord, SyncedPolitician } from "@/lib/politician-sync";
 import { outsideFetch } from "./outside-fetch";
 
 // Only file allowed to talk to api.airtable.com (enforced by the
@@ -7,8 +14,9 @@ import { outsideFetch } from "./outside-fetch";
 // whitelists below can't be bypassed by a new call site elsewhere. Read only.
 //
 // Airtable's "UK Parliamentarians" table is the source of truth for who the
-// MPs are and their emails. Who has signed what
-// lives in our database; the signatories are read from here once, to import.
+// politicians are, their emails, and their answers to the asks it records.
+// The site copies them nightly (lib/server/politician-sync.ts); staff set
+// the rest of the statuses in our database.
 const BASE_ID = "appBInVvIm6opJ1Ob";
 const TABLE_ID = "tblH3ks9wqQHLpYx3";
 
@@ -73,47 +81,240 @@ function text(record: AirtableRecord, field: string): string {
   return typeof value === "string" ? value.trim() : "";
 }
 
-// Status is blank while they're in office; otherwise Died, Retired or No
-// longer in office.
-export const MPS_FORMULA = "AND({Body}='House of Commons',{Status}=BLANK())";
-const MP_FIELDS = ["Full name or Title", "Salutation", "Constituency", "Party", "Email"] as const;
+// Every politician but the records ticked Test: the site keeps its own test
+// MPs (lib/test-mps.json).
+export const POLITICIANS_FORMULA = "NOT({Test})";
 
-/** The sitting MPs, sorted by constituency. */
-export async function fetchMps(token: string): Promise<SyncedMp[]> {
-  const records = await fetchRecords(token, MPS_FORMULA, MP_FIELDS);
-  return records
-    .map((record) => ({
-      airtableId: record.id,
-      name: text(record, "Full name or Title"),
-      salutation: text(record, "Salutation"),
-      constituency: text(record, "Constituency"),
-      party: text(record, "Party"),
-      email: text(record, "Email") || null,
-    }))
-    .sort((a, b) => a.constituency.localeCompare(b.constituency));
-}
-
-const SIGNATORY_FIELDS = ["Full name or Title", "Party", "Constituency", "Email", "Body"] as const;
-
-export type SignatoryToImport = {
-  airtableId: string;
-  name: string;
-  party: string;
-  constituency: string;
-  email: string;
-  body: string;
+/**
+ * The fields that record an answer to an ask (lib/asks.ts), each with the
+ * ask and the status each of its values means: a tick box means signed, and
+ * a select one of its answers. A value it doesn't know is refused.
+ */
+const ASK_FIELDS: Record<string, { ask: string; statuses: Record<string, AskStatus> }> = {
+  "Signed Frontier AI Letter": { ask: FRONTIER_AI_LETTER_ASK, statuses: { true: "signed" } },
+  "Signed DeepMind Letter": { ask: DEEPMIND_LETTER_ASK, statuses: { true: "signed" } },
+  "ControlAI Signatory": { ask: CONTROLAI_STATEMENT_ASK, statuses: { true: "signed" } },
+  "Edinburgh Conference November 2026": {
+    ask: EDINBURGH_CONFERENCE_ASK,
+    statuses: { Going: "going", Declined: "declined", "Passed on request": "passed_on" },
+  },
 };
 
-/** Everyone who signed the letter to the Prime Minister. */
-export async function fetchSignatoriesForImport(token: string): Promise<SignatoryToImport[]> {
-  const records = await fetchRecords(token, "{Signed Frontier AI Letter}=TRUE()", SIGNATORY_FIELDS);
-  return records.map((record) => ({
+/** The only fields read from a politician's record. */
+export const POLITICIAN_FIELDS = [
+  "Full name or Title",
+  "Forename",
+  "Surname",
+  "Salutation",
+  "Email",
+  "Status",
+  "Body",
+  "Constituency",
+  "Party",
+  "Country",
+  "City",
+  "Notes",
+  "Recommended",
+  "Important target",
+  "Personal connection",
+  ...Object.keys(ASK_FIELDS),
+] as const;
+
+const STATUSES: Record<string, SyncedPolitician["status"]> = {
+  "": "in_office",
+  Died: "died",
+  Retired: "retired",
+  "No longer in office": "left_office",
+};
+
+const HOUSES: Record<string, SyncedPolitician["house"]> = {
+  "House of Commons": "commons",
+  "House of Lords": "lords",
+  "Scottish Parliament": "scottish-parliament",
+  "Welsh Parliament": "senedd",
+  "Northern Ireland Assembly": "ni-assembly",
+};
+
+const COUNTRIES: Record<string, SyncedPolitician["country"]> = {
+  England: "england",
+  Scotland: "scotland",
+  Wales: "wales",
+  "Northern Ireland": "northern-ireland",
+};
+
+/**
+ * One record as a politician. Without a Body, someone with no constituency
+ * is a peer; a Status or Country it doesn't know is refused, so the sync
+ * fails rather than guess. Forename and surname are both kept, or neither.
+ */
+function politicianFrom(record: AirtableRecord): SyncedPolitician {
+  const body = text(record, "Body");
+  const constituency = text(record, "Constituency") || null;
+  const status = STATUSES[text(record, "Status")];
+  if (!status) throw new AirtableRequestError(`Unknown Status "${text(record, "Status")}" on ${record.id}`);
+  const country = text(record, "Country");
+  if (country && !COUNTRIES[country]) throw new AirtableRequestError(`Unknown Country "${country}" on ${record.id}`);
+  const forename = text(record, "Forename");
+  const surname = text(record, "Surname");
+  const named = forename !== "" && surname !== "";
+  return {
     airtableId: record.id,
     name: text(record, "Full name or Title"),
+    forename: named ? forename : null,
+    surname: named ? surname : null,
+    salutation: text(record, "Salutation"),
+    email: text(record, "Email") || null,
+    status,
+    house: HOUSES[body] ?? (body || constituency ? "other" : "lords"),
+    constituency,
     party: text(record, "Party"),
-    constituency: text(record, "Constituency"),
-    email: text(record, "Email"),
-    body: text(record, "Body"),
+    country: COUNTRIES[country] ?? null,
+    city: text(record, "City") || null,
+    notes: [text(record, "Notes"), ticked(record, "Recommended") ? "Recommended" : ""].filter(Boolean).join("\n"),
+    importantTarget: ticked(record, "Important target"),
+    personalConnection: ticked(record, "Personal connection"),
+  };
+}
+
+/** A record's answers to the asks, by the ask's slug. */
+function statusesFrom(record: AirtableRecord): Record<string, AskStatus> {
+  return Object.fromEntries(
+    Object.entries(ASK_FIELDS).flatMap(([field, { ask, statuses }]) => {
+      const value = record.fields[field];
+      if (value === undefined || value === false || value === "") return [];
+      const status = statuses[String(value)];
+      if (!status) throw new AirtableRequestError(`Unknown ${field} "${String(value)}" on ${record.id}`);
+      return [[ask, status]];
+    }),
+  );
+}
+
+/** Every politician in UK Parliamentarians but the test records, with their answers to the asks, by name. */
+export async function fetchPoliticians(token: string): Promise<PoliticianRecord[]> {
+  const records = await fetchRecords(token, POLITICIANS_FORMULA, POLITICIAN_FIELDS);
+  return records
+    .map((record) => ({ politician: politicianFrom(record), statuses: statusesFrom(record) }))
+    .sort((a, b) => a.politician.name.localeCompare(b.politician.name));
+}
+
+/** The asks the politicians' records answer, which the sync alone sets from them. */
+export const AIRTABLE_ASKS = Object.values(ASK_FIELDS).map((field) => field.ask);
+
+/** A link to records in another table: their IDs. */
+function links(record: AirtableRecord, field: string): string[] {
+  const value = record.fields[field];
+  return Array.isArray(value) ? value.filter((id): id is string => typeof id === "string") : [];
+}
+
+// PauseAI's emails to politicians, a record each, with a tick box for the
+// mailing it was part of. Only those from 2026 are copied.
+const EMAILS_TABLE_ID = "tblp4nH5Jymq48rcm";
+export const EMAILS_FORMULA = "IS_AFTER({Timestamp},'2025-12-31T23:59:59.000Z')";
+
+export type EmailToImport = {
+  airtableId: string;
+  /** When it was sent. */
+  at: string;
+  /** The politicians' Airtable record IDs: one, unless the record is broken. */
+  politicians: string[];
+  personalised: boolean;
+  aiGenerated: boolean;
+  /** Which of the mailings' tick boxes are ticked. */
+  mailings: string[];
+};
+
+/** PauseAI's 2026 emails to politicians, reading the tick boxes of the mailings named `mailingFields`. */
+export async function fetchEmails(token: string, mailingFields: readonly string[]): Promise<EmailToImport[]> {
+  const fields = ["Timestamp", "UK Parliamentarian", "Personalized", "AI Generated", ...mailingFields];
+  const records = await fetchRecords(token, EMAILS_FORMULA, fields, `${BASE_ID}/${EMAILS_TABLE_ID}`);
+  return records.map((record) => ({
+    airtableId: record.id,
+    at: text(record, "Timestamp"),
+    politicians: links(record, "UK Parliamentarian"),
+    personalised: ticked(record, "Personalized"),
+    aiGenerated: ticked(record, "AI Generated"),
+    mailings: mailingFields.filter((field) => ticked(record, field)),
+  }));
+}
+
+// The letters supporters sent through pauseai.info's old form, which wrote
+// each to Airtable for an automation to send. Never the message itself.
+const WEB_FORM_TABLE_ID = "tblkzjrRHiZiqMDGR";
+const WEB_FORM_FIELDS = [
+  "Sender email",
+  "Sender name",
+  "Sender postcode",
+  "Recipient",
+  "Subject",
+  "Form Submitted Timestamp",
+  "Email Sent Time",
+  "Spam",
+  "Invalid, can't send",
+  "Campaign",
+  "Contact consent",
+] as const;
+
+export type WebFormLetterToImport = {
+  airtableId: string;
+  senderName: string;
+  senderEmail: string;
+  senderPostcode: string;
+  /** The politician's Airtable record ID: one, unless the record is broken. */
+  recipients: string[];
+  subject: string;
+  /** Airtable's Campaign: "Frontier AI letter", "Liability letter" or "DeepMind letter". */
+  campaign: string;
+  submittedAt: string | null;
+  /** When the automation sent it, if it did. */
+  sentAt: string | null;
+  spam: boolean;
+  invalid: boolean;
+  /** "Contact consent": ticked Yes. Blank, as on every letter before the box was added, is no. */
+  consent: boolean;
+};
+
+/** Every letter in the old form's table. */
+export async function fetchWebFormLetters(token: string): Promise<WebFormLetterToImport[]> {
+  const records = await fetchRecords(token, "TRUE()", WEB_FORM_FIELDS, `${BASE_ID}/${WEB_FORM_TABLE_ID}`);
+  return records.map((record) => ({
+    airtableId: record.id,
+    senderName: text(record, "Sender name"),
+    senderEmail: text(record, "Sender email"),
+    senderPostcode: text(record, "Sender postcode"),
+    recipients: links(record, "Recipient"),
+    subject: text(record, "Subject"),
+    campaign: text(record, "Campaign"),
+    submittedAt: text(record, "Form Submitted Timestamp") || null,
+    sentAt: text(record, "Email Sent Time") || null,
+    spam: ticked(record, "Spam"),
+    invalid: ticked(record, "Invalid, can't send"),
+    consent: text(record, "Contact consent") === "Yes",
+  }));
+}
+
+// Go to Parliament, 20 October 2026: a record per guest, with whether a
+// meeting with their MP was arranged. Only the MP and that are read.
+const GO_TO_PARLIAMENT_TABLE_ID = "tblminXS1xSuBbEjz";
+export const GO_TO_PARLIAMENT_FORMULA = "{MP Meeting Status}!=''";
+
+export type MeetingToImport = {
+  /** The MPs' Airtable record IDs. */
+  politicians: string[];
+  /** "MP Meeting Status": Secured, Tentative yes, Meeting with staff, and so on. */
+  status: string;
+};
+
+/** Every guest whose meeting with their MP has a status, by the MP. */
+export async function fetchGoToParliamentMeetings(token: string): Promise<MeetingToImport[]> {
+  const records = await fetchRecords(
+    token,
+    GO_TO_PARLIAMENT_FORMULA,
+    ["UK Parliamentarians", "MP Meeting Status"],
+    `${BASE_ID}/${GO_TO_PARLIAMENT_TABLE_ID}`,
+  );
+  return records.map((record) => ({
+    politicians: links(record, "UK Parliamentarians"),
+    status: text(record, "MP Meeting Status"),
   }));
 }
 

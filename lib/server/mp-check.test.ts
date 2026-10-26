@@ -9,7 +9,7 @@ import { listRuns } from "./import-runs";
 import { checkMps } from "./mp-check";
 
 const recentChecks = () => listRuns("check-mps") as Promise<MpCheck[]>;
-import { syncMps } from "./mp-sync";
+import { syncPoliticians } from "./politician-sync";
 
 beforeEach(() => vi.stubEnv("AIRTABLE_TOKEN", "token"));
 afterEach(() => vi.unstubAllEnvs());
@@ -18,7 +18,7 @@ describeWithDatabase("checkMps", () => {
   useTestDatabase();
 
   it("compares the MPs copied from Airtable with Parliament's, and keeps what it finds", async () => {
-    await syncMps(NIGHTLY);
+    await syncPoliticians(NIGHTLY);
     expect(await recentChecks()).toEqual([]);
 
     // The fixture Airtable gives Polly Placeholder an email Parliament doesn't list.

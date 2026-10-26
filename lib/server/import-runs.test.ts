@@ -9,18 +9,25 @@ describeWithDatabase("the import log", () => {
 
   it("keeps each run with who started it and what it found, newest first, a job at a time", async () => {
     const id = await recordRun("check-mps", "nightly", "ok", { problems: [] });
-    await recordRun("sync-mps", "jo@pauseai.uk", "unchanged", { changes: {} });
-    await recordFailure("sync-mps", "nightly", new Error("Airtable request failed with status 422"));
-    await recordFailure("sync-mps", "nightly", "not an Error");
+    await recordRun("sync-politicians", "jo@pauseai.uk", "unchanged", { changes: {} });
+    await recordFailure("sync-politicians", "nightly", new Error("Airtable request failed with status 422"));
+    await recordFailure("sync-politicians", "nightly", "not an Error");
 
-    expect(await listRuns("sync-mps")).toMatchObject([
-      { job: "sync-mps", status: "failed", startedBy: "nightly", error: "not an Error", result: {}, decidedBy: null },
+    expect(await listRuns("sync-politicians")).toMatchObject([
+      {
+        job: "sync-politicians",
+        status: "failed",
+        startedBy: "nightly",
+        error: "not an Error",
+        result: {},
+        decidedBy: null,
+      },
       { status: "failed", startedBy: "nightly", error: "Airtable request failed with status 422", result: {} },
       { status: "unchanged", startedBy: "jo@pauseai.uk", error: null, result: { changes: {} } },
     ]);
     expect(await listRuns("check-mps")).toMatchObject([{ id, status: "ok", result: { problems: [] } }]);
     expect(await latestRun("check-mps")).toMatchObject({ id });
-    expect(await latestRun("sync-mps")).toMatchObject({ error: "not an Error" });
+    expect(await latestRun("sync-politicians")).toMatchObject({ error: "not an Error" });
     expect(await latestRun("import-controlai")).toBeUndefined();
   });
 
@@ -66,7 +73,7 @@ describeWithDatabase("migration 0013_import_runs", () => {
     ).toEqual([
       {
         at: new Date("2026-10-13T00:00:00Z"),
-        job: "sync-mps",
+        job: "sync-politicians",
         startedBy: null,
         status: "discarded",
         error: null,
@@ -74,11 +81,13 @@ describeWithDatabase("migration 0013_import_runs", () => {
         decidedBy: "jo@pauseai.uk",
         decidedAt: new Date("2026-10-13T09:00:00Z"),
       },
-      expect.objectContaining({ job: "sync-mps", status: "applied", result: { changes: JSON.parse(changes) } }),
+      expect.objectContaining({ job: "sync-politicians", status: "applied", result: { changes: JSON.parse(changes) } }),
       expect.objectContaining({ job: "check-mps", status: "ok", result: { problems: [{ kind: "extra" }] } }),
+      // Held, then discarded by 0035_politician_imports, as only MPs were read.
       expect.objectContaining({
-        job: "sync-mps",
-        status: "held",
+        job: "sync-politicians",
+        status: "discarded",
+        decidedBy: "sync",
         result: { changes: JSON.parse(changes), mps: JSON.parse(mps) },
       }),
       expect.objectContaining({

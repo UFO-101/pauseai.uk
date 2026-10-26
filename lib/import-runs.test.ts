@@ -2,6 +2,7 @@ import { expect, it } from "vitest";
 import { asList, IMPORT_JOBS, importPath, isImportJob, jobBySlug, runStatus, runTone } from "./import-runs";
 import {
   exampleAppliedSync,
+  exampleEmailsResult,
   exampleFailedRun,
   exampleHeldSync,
   exampleLumaResult,
@@ -9,7 +10,8 @@ import {
 } from "@/app/(staff)/staff/_components/RunList.examples";
 
 it("knows the jobs", () => {
-  expect(isImportJob("sync-mps")).toBe(true);
+  expect(isImportJob("sync-politicians")).toBe(true);
+  expect(isImportJob("sync-mps")).toBe(false);
   expect(isImportJob("")).toBe(false);
   expect(isImportJob("sync-peers")).toBe(false);
 });
@@ -33,6 +35,12 @@ it("says a Luma import that left work for later is incomplete, in place of done 
   expect(runStatus(exampleRun("import-luma", exampleLumaResult))).toBe("ok");
   expect(runStatus(exampleFailedRun("import-luma", "boom", {}))).toBe("failed");
   expect(runStatus(exampleHeldSync)).toBe("held");
+});
+
+it("says an Emails sync that held emails back is incomplete, but not one that held none, or failed", () => {
+  expect(runStatus(exampleRun("sync-emails", exampleEmailsResult))).toBe("incomplete");
+  expect(runStatus(exampleRun("sync-emails", { ...exampleEmailsResult, unplaced: [] }))).toBe("ok");
+  expect(runStatus(exampleFailedRun("sync-emails", "boom", {}))).toBe("failed");
 });
 
 it("colours a run by how it ended: green done or applied, amber held or stopped short, red failed, none otherwise", () => {

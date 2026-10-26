@@ -140,14 +140,14 @@ export function UnblockFormExample() {
   );
 }
 
-/** A job's page, its button and any held sync's buttons logged: the MP check with three runs, or the signatory import, never run. */
+/** A job's page, its button and any held sync's buttons logged: the MP check with three runs, or the web form import, never run. */
 export function ImportJobPageExample({ never = false }: { never?: boolean }) {
   return (
     <Logged>
       {(log) =>
         never ? (
           <ImportJobPage
-            job="import-signatories"
+            job="import-web-form-letters"
             runs={[]}
             run={log("run")}
             decide={log("decide")}

@@ -13,9 +13,11 @@ import { eraseSupporter } from "@/lib/server/erasure";
 import { importLuma } from "@/lib/server/luma-import";
 import { importMembers } from "@/lib/server/members-import";
 import { checkMps } from "@/lib/server/mp-check";
-import { decideHeldSync, syncMps } from "@/lib/server/mp-sync";
+import { decideHeldSync, syncPoliticians } from "@/lib/server/politician-sync";
+import { syncEmails } from "@/lib/server/emails-sync";
+import { importGoToParliament } from "@/lib/server/go-to-parliament-import";
+import { importWebFormLetters } from "@/lib/server/web-form-import";
 import { setStatus } from "@/lib/server/politicians";
-import { importSignatories } from "@/lib/server/signatory-import";
 import { requireStaff } from "@/lib/server/staff-auth";
 import {
   type AccountChange,
@@ -63,7 +65,22 @@ async function run(job: ImportJob, work: Promise<unknown>): Promise<void> {
 
 export async function syncNow(): Promise<void> {
   const { email } = await requireStaff();
-  await run("sync-mps", syncMps(email));
+  await run("sync-politicians", syncPoliticians(email));
+}
+
+export async function syncEmailsNow(): Promise<void> {
+  const { email } = await requireStaff();
+  await run("sync-emails", syncEmails(email));
+}
+
+export async function importWebFormLettersNow(): Promise<void> {
+  const { email } = await requireStaff();
+  await run("import-web-form-letters", importWebFormLetters(email));
+}
+
+export async function importGoToParliamentNow(): Promise<void> {
+  const { email } = await requireStaff();
+  await run("import-go-to-parliament", importGoToParliament(email));
 }
 
 export async function checkNow(): Promise<void> {
@@ -86,18 +103,13 @@ export async function importMembersNow(): Promise<void> {
   await run("import-members", importMembers(email));
 }
 
-export async function importFromAirtable(): Promise<void> {
-  const { email } = await requireStaff();
-  await run("import-signatories", importSignatories(email));
-}
-
 export async function decideSync(form: FormData): Promise<void> {
   const { email } = await requireStaff();
   const id = idFrom(form);
   const decision = form.get("decision");
   if (!id || (decision !== "apply" && decision !== "discard")) return;
   await decideHeldSync(id, decision, email);
-  refreshImport("sync-mps");
+  refreshImport("sync-politicians");
 }
 
 /**

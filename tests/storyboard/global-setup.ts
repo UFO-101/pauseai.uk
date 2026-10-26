@@ -4,8 +4,8 @@ import { FIXTURE_NOW, FLOW_DATABASE_PREFIX, OUTBOX_DIR, TEMPLATE_DATABASE, TEST_
 
 // Before the flows: the template database each flow's is copied from
 // (fixtures.ts), migrated and with the test MPs, as the build's own database
-// is made. Flows that need the fixture MPs sync them in themselves
-// (syncMps in tests/steps.ts).
+// is made. Flows that need the fixture politicians sync them in themselves
+// (syncPoliticians in tests/steps.ts).
 //
 // The server's clock is fixed at FIXTURE_NOW (lib/now.ts); so is the
 // database's: a now() in a `fixture` schema, which each flow's database puts

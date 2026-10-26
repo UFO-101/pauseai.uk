@@ -5,31 +5,57 @@ import {
   type ControlAiImport,
   type LumaImport,
   type MembersImport,
+  type EmailSync,
+  type GoToParliamentImport,
   type MpCheck,
-  type MpSync,
-  type SignatoryImport,
+  type PoliticianSync,
+  type WebFormImport,
 } from "@/lib/import-runs";
 import type { MpProblem } from "@/lib/mp-check";
-import { changeCount, type SyncedMp } from "@/lib/mps";
+import { changeCount, type Renamed, type SyncedPolitician } from "@/lib/politician-sync";
 import RunBox from "./RunBox";
 import { Muted } from "@/components/ui/Text";
 import Table from "@/components/ui/Table";
 
-/** The Server Action that applies or discards a held MP sync. */
+/** The Server Action that applies or discards a held politician sync. */
 export type Decide = (formData: FormData) => void | Promise<void>;
 
-function Mps({ heading, mps }: { heading: string; mps: SyncedMp[] }) {
-  if (mps.length === 0) return null;
+/**
+ * Politicians a sync added, lost or changed, each by where they sit and
+ * their name. Runs from before every body was read have only MPs, without
+ * a house.
+ */
+function Politicians({ heading, politicians }: { heading: string; politicians: Partial<SyncedPolitician>[] }) {
+  if (politicians.length === 0) return null;
   return (
     <>
       <h4>
-        {heading} ({mps.length})
+        {heading} ({politicians.length})
       </h4>
       <ul>
-        {mps.map((mp) => (
-          <li key={mp.airtableId}>
-            {mp.constituency}: {mp.name}
-            {mp.email ? "" : ` (${staffCopy.politicians.noEmail})`}
+        {politicians.map((p) => (
+          <li key={p.airtableId}>
+            {p.constituency ?? staffCopy.houses[p.house!]}: {p.name}
+            {p.email ? "" : ` (${staffCopy.politicians.noEmail})`}
+          </li>
+        ))}
+      </ul>
+    </>
+  );
+}
+
+/** The records whose names changed, from and to. */
+function RenamedList({ renamed }: { renamed: Renamed[] }) {
+  if (renamed.length === 0) return null;
+  return (
+    <>
+      <h4>
+        {staffCopy.syncs.renamed} ({renamed.length})
+      </h4>
+      <ul>
+        {renamed.map((r) => (
+          <li key={r.airtableId}>
+            {r.from} → {r.to}
           </li>
         ))}
       </ul>
@@ -50,10 +76,15 @@ function Decision({ id, decision, decide }: { id: number; decision: "apply" | "d
   );
 }
 
-/** A copy of the MPs from Airtable: who was added, removed and changed. A held one can be applied or discarded, given `decide`. */
-function SyncRun({ run, decide, open }: { run: MpSync; decide?: Decide; open?: boolean }) {
+/**
+ * A copy of the politicians from Airtable: who was added, removed and
+ * changed, whose names changed, and the statuses it set. A held one can be
+ * applied or discarded, given `decide`.
+ */
+function SyncRun({ run, decide, open }: { run: PoliticianSync; decide?: Decide; open?: boolean }) {
   if (run.status === "failed") return <RunBox run={run} summary={null} open={open} />;
   const { added, removed, changed } = run.result.changes;
+  const renamed = run.result.renamed ?? [];
   const count = changeCount(run.result.changes);
   return (
     <RunBox
@@ -65,6 +96,7 @@ function SyncRun({ run, decide, open }: { run: MpSync; decide?: Decide; open?: b
         <>
           {staffCopy.syncs.added} {added.length}, {staffCopy.syncs.removed} {removed.length}, {staffCopy.syncs.changed}{" "}
           {changed.length}
+          {run.result.statuses && <> {staffCopy.syncs.statuses(run.result.statuses)}</>}
         </>
       }
       actions={
@@ -79,9 +111,10 @@ function SyncRun({ run, decide, open }: { run: MpSync; decide?: Decide; open?: b
     >
       {count > 0 && (
         <>
-          <Mps heading={staffCopy.syncs.added} mps={added} />
-          <Mps heading={staffCopy.syncs.removed} mps={removed} />
-          <Mps heading={staffCopy.syncs.changed} mps={changed} />
+          <RenamedList renamed={renamed} />
+          <Politicians heading={staffCopy.syncs.added} politicians={added} />
+          <Politicians heading={staffCopy.syncs.removed} politicians={removed} />
+          <Politicians heading={staffCopy.syncs.changed} politicians={changed} />
         </>
       )}
     </RunBox>
@@ -176,10 +209,45 @@ function ControlAiRun({ run, open }: { run: ControlAiImport; open?: boolean }) {
   );
 }
 
-/** A copy of the signatories from Airtable: the counts. */
-function SignatoryRun({ run, open }: { run: SignatoryImport; open?: boolean }) {
+/** A copy of PauseAI's emails from Airtable: the counts, and the emails held back for a mailing nobody has added. */
+function EmailsRun({ run, open }: { run: EmailSync; open?: boolean }) {
+  if (run.status === "failed") return <RunBox run={run} summary={null} open={open} />;
+  const { unplaced } = run.result;
   return (
-    <RunBox run={run} summary={run.status === "failed" ? null : staffCopy.import.result(run.result)} open={open} />
+    <RunBox run={run} summary={staffCopy.pauseaiEmails.result(run.result)} lines={unplaced.length} open={open}>
+      {unplaced.length > 0 && (
+        <>
+          <h4>
+            {staffCopy.pauseaiEmails.unplaced} ({unplaced.length})
+          </h4>
+          <ul>
+            {unplaced.map((email) => (
+              <li key={email.airtableId}>
+                {email.airtableId}: {email.mailings.join(", ") || staffCopy.pauseaiEmails.noBoxes}
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+    </RunBox>
+  );
+}
+
+/** The one-off copy of pauseai.info's web form letters: the counts. */
+function WebFormRun({ run, open }: { run: WebFormImport; open?: boolean }) {
+  return (
+    <RunBox run={run} summary={run.status === "failed" ? null : staffCopy.webForm.result(run.result)} open={open} />
+  );
+}
+
+/** The one-off copy of Go to Parliament's meetings: the counts. */
+function GoToParliamentRun({ run, open }: { run: GoToParliamentImport; open?: boolean }) {
+  return (
+    <RunBox
+      run={run}
+      summary={run.status === "failed" ? null : staffCopy.goToParliament.result(run.result)}
+      open={open}
+    />
   );
 }
 
@@ -213,14 +281,18 @@ function MembersRun({ run, open }: { run: MembersImport; open?: boolean }) {
 /** One run from the import log, as its job's page shows it; `open` starts its detail unfolded, however long. */
 export default function Run({ run, decide, open }: { run: AnyImportRun; decide?: Decide; open?: boolean }) {
   switch (run.job) {
-    case "sync-mps":
+    case "sync-politicians":
       return <SyncRun run={run} decide={decide} open={open} />;
+    case "sync-emails":
+      return <EmailsRun run={run} open={open} />;
+    case "import-web-form-letters":
+      return <WebFormRun run={run} open={open} />;
+    case "import-go-to-parliament":
+      return <GoToParliamentRun run={run} open={open} />;
     case "check-mps":
       return <CheckRun run={run} open={open} />;
     case "import-controlai":
       return <ControlAiRun run={run} open={open} />;
-    case "import-signatories":
-      return <SignatoryRun run={run} open={open} />;
     case "import-luma":
       return <LumaRun run={run} open={open} />;
     case "import-members":

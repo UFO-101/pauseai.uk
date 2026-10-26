@@ -13,7 +13,9 @@ import {
   decideSync,
   eraseSupporterNow,
   importControlAiNow,
-  importFromAirtable,
+  importGoToParliamentNow,
+  importWebFormLettersNow,
+  syncEmailsNow,
   importLumaNow,
   importMembersNow,
   endStaffSessionsNow,
@@ -61,7 +63,9 @@ describeWithDatabase("staff Server Actions", () => {
       () => syncNow(),
       () => checkNow(),
       () => decideSync(form({ id: "1", decision: "apply" })),
-      () => importFromAirtable(),
+      () => syncEmailsNow(),
+      () => importWebFormLettersNow(),
+      () => importGoToParliamentNow(),
       () => importLumaNow(),
       () => importMembersNow(),
       () => removeStaffAccountNow(form({ email: "x@pauseai.uk" })),
@@ -180,10 +184,10 @@ describeWithDatabase("staff Server Actions", () => {
     expect(revalidatePath).toHaveBeenCalledWith("/staff/import-data");
   });
 
-  it("syncNow copies the MPs from Airtable, and keeps a failure rather than crashing the page", async () => {
+  it("syncNow copies the politicians from Airtable, and keeps a failure rather than crashing the page", async () => {
     await syncNow();
     expect(await query("SELECT count(*)::int AS n FROM notable_people WHERE airtable_id IS NOT NULL")).toEqual([
-      { n: 2 },
+      { n: 6 },
     ]);
     expect(revalidatePath).toHaveBeenCalledWith("/staff/import-data");
 
@@ -192,8 +196,8 @@ describeWithDatabase("staff Server Actions", () => {
     await syncNow();
     expect(error).toHaveBeenCalledOnce();
     expect(await runs()).toEqual([
-      { job: "sync-mps", status: "applied", startedBy: "jo@pauseai.uk" },
-      { job: "sync-mps", status: "failed", startedBy: "jo@pauseai.uk" },
+      { job: "sync-politicians", status: "applied", startedBy: "jo@pauseai.uk" },
+      { job: "sync-politicians", status: "failed", startedBy: "jo@pauseai.uk" },
     ]);
   });
 
@@ -210,25 +214,19 @@ describeWithDatabase("staff Server Actions", () => {
     ]);
   });
 
-  it("importFromAirtable imports the signatories, keeping the run, or the failure when Airtable isn't set up", async () => {
-    vi.stubEnv("AIRTABLE_TOKEN", "");
-    const error = vi.spyOn(console, "error").mockImplementation(() => {});
-    await importFromAirtable();
-    expect(error).toHaveBeenCalledOnce();
-
-    vi.stubEnv("AIRTABLE_TOKEN", "token");
-    server.use(
-      http.get("https://*.airtable.com/v0/*", () =>
-        HttpResponse.json({ records: [{ id: "r", fields: { "Full name or Title": "Lord X" } }] }),
-      ),
-    );
-    await importFromAirtable();
-    expect(await runs()).toEqual([
-      { job: "import-signatories", status: "failed", startedBy: "jo@pauseai.uk" },
-      { job: "import-signatories", status: "ok", startedBy: "jo@pauseai.uk" },
+  it("runs the Emails sync and the one-off imports as the staff member, keeping a failure rather than crashing the page", async () => {
+    await syncNow();
+    await syncEmailsNow();
+    await importWebFormLettersNow();
+    await importGoToParliamentNow();
+    expect((await runs()).slice(1)).toEqual([
+      { job: "sync-emails", status: "ok", startedBy: "jo@pauseai.uk" },
+      { job: "import-web-form-letters", status: "ok", startedBy: "jo@pauseai.uk" },
+      { job: "import-go-to-parliament", status: "ok", startedBy: "jo@pauseai.uk" },
     ]);
-    expect(await query("SELECT name FROM notable_people")).toEqual([{ name: "Lord X" }]);
-    expect(revalidatePath).toHaveBeenCalledWith("/staff/import-data");
+    expect(revalidatePath).toHaveBeenCalledWith("/staff/import-data/emails");
+    expect(revalidatePath).toHaveBeenCalledWith("/staff/import-data/web-form-letters");
+    expect(revalidatePath).toHaveBeenCalledWith("/staff/import-data/go-to-parliament");
   });
 
   it("endStaffSessionsNow ends an account's sessions, as an admin, going back to the page", async () => {

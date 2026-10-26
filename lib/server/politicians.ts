@@ -282,14 +282,8 @@ export type StatusChange = { status: AskStatus | null; date: string | null; note
  * The ask's kind comes from the asks table, whose foreign keys refuse a
  * status the kind doesn't allow.
  */
-export async function setStatus(
-  politicianId: number,
-  ask: string,
-  change: StatusChange,
-  staff: string,
-  db?: Queryable,
-): Promise<void> {
-  const write = async (db: Queryable) => {
+export async function setStatus(politicianId: number, ask: string, change: StatusChange, staff: string): Promise<void> {
+  await transaction(async (db) => {
     if (change.status) {
       await query(
         `INSERT INTO ask_statuses (notable_person_id, ask, ask_kind, status, status_date, note, updated_by)
@@ -303,8 +297,7 @@ export async function setStatus(
       await query("DELETE FROM ask_statuses WHERE notable_person_id = $1 AND ask = $2", [politicianId, ask], db);
     }
     await logChange(staff, "set status", { politicianId, ask, ...change }, db);
-  };
-  await (db ? write(db) : transaction(write));
+  });
 }
 
 export type Signatory = { name: string; party: string; constituency: string; house: House };

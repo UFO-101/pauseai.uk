@@ -1,10 +1,12 @@
 import { isOfficialName } from "./constituencies";
-import type { SyncedMp } from "./mps";
 import type { ParliamentMp } from "./parliament";
 
 // Where Airtable's MPs disagree with Parliament's Members API, or with the
 // official constituency names, for the policy team to look at
 // (/staff/import-data). Nothing is changed by it.
+
+/** An MP in office, as copied from Airtable. */
+export type AirtableMp = { name: string; constituency: string; email: string | null };
 
 export type MpProblem =
   /** Parliament has an MP for a constituency Airtable hasn't. */
@@ -34,7 +36,7 @@ export function plainName(name: string): string {
  * The problems, by constituency. An MP Parliament lists no email for isn't
  * one: Airtable fills those gaps.
  */
-export function checkAgainstParliament(airtable: SyncedMp[], parliament: ParliamentMp[]): MpProblem[] {
+export function checkAgainstParliament(airtable: AirtableMp[], parliament: ParliamentMp[]): MpProblem[] {
   const ours = new Map(airtable.map((mp) => [mp.constituency, mp]));
   const theirs = new Map(parliament.map((mp) => [mp.constituency, mp]));
   const problems: MpProblem[] = [];

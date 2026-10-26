@@ -341,7 +341,7 @@ export default function PoliticianDetails({
                       {copy.blocked.wrong.airtable}
                     </a>
                     {copy.blocked.wrong.middle}
-                    <Link href={importPath("sync-mps")}>{copy.blocked.wrong.link}</Link>
+                    <Link href={importPath("sync-politicians")}>{copy.blocked.wrong.link}</Link>
                     {copy.blocked.wrong.after}
                   </p>
                 </div>

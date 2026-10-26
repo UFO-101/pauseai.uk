@@ -38,7 +38,7 @@ function Action({ action }: { action: DashboardAction }) {
           words.heldSync(action.added + action.removed + action.changed),
           words.heldSyncDetail,
           words.decide,
-          importPath("sync-mps"),
+          importPath("sync-politicians"),
         ]
       : action.kind === "blocked-mp"
         ? [

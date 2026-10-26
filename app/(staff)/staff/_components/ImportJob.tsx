@@ -33,10 +33,12 @@ const JOIN_FORM = "https://pauseai.info/join";
 /** Each job's lozenges, all plain, so only how its runs ended is in colour: where it reads from, how often, and what kind of job it is. */
 const TAGS: Record<ImportJob, string[]> = {
   "import-luma": [words.luma, words[JOB_SCHEDULES["import-luma"]]],
-  "sync-mps": [words.airtable, words[JOB_SCHEDULES["sync-mps"]]],
+  "sync-politicians": [words.airtable, words[JOB_SCHEDULES["sync-politicians"]]],
+  "sync-emails": [words.airtable, words[JOB_SCHEDULES["sync-emails"]]],
+  "import-web-form-letters": [words.airtable, words[JOB_SCHEDULES["import-web-form-letters"]]],
+  "import-go-to-parliament": [words.airtable, words[JOB_SCHEDULES["import-go-to-parliament"]]],
   "check-mps": [words.web, words[JOB_SCHEDULES["check-mps"]], words.checkOnly],
   "import-controlai": [words.web, words[JOB_SCHEDULES["import-controlai"]]],
-  "import-signatories": [words.airtable, words[JOB_SCHEDULES["import-signatories"]]],
   "import-members": [words.airtable, words[JOB_SCHEDULES["import-members"]]],
 };
 
@@ -45,7 +47,7 @@ const ABOUT: Record<
   ImportJob,
   {
     intro: { before: string; link: string; after: string };
-    /** Where it reads from; Airtable's table when left out. */
+    /** Where it reads from: a page, or another table of the same Airtable base, by its ID; the politicians' table when left out. */
     href?: string;
     also?: string;
     button: string;
@@ -58,11 +60,29 @@ const ABOUT: Record<
     button: staffCopy.luma.importNow,
     none: staffCopy.luma.never,
   },
-  "sync-mps": {
+  "sync-politicians": {
     intro: staffCopy.syncs.intro,
     also: staffCopy.syncs.testMps,
     button: staffCopy.syncs.syncNow,
     none: staffCopy.syncs.none,
+  },
+  "sync-emails": {
+    intro: staffCopy.pauseaiEmails.intro,
+    href: "tblp4nH5Jymq48rcm",
+    button: staffCopy.pauseaiEmails.importNow,
+    none: staffCopy.pauseaiEmails.never,
+  },
+  "import-web-form-letters": {
+    intro: staffCopy.webForm.intro,
+    href: "tblkzjrRHiZiqMDGR",
+    button: staffCopy.webForm.importNow,
+    none: staffCopy.webForm.never,
+  },
+  "import-go-to-parliament": {
+    intro: staffCopy.goToParliament.intro,
+    href: "tblminXS1xSuBbEjz",
+    button: staffCopy.goToParliament.importNow,
+    none: staffCopy.goToParliament.never,
   },
   "check-mps": {
     intro: staffCopy.check.intro,
@@ -76,7 +96,6 @@ const ABOUT: Record<
     button: staffCopy.controlAi.importNow,
     none: staffCopy.controlAi.never,
   },
-  "import-signatories": { intro: words.intro, button: words.button, none: words.none },
   "import-members": {
     intro: staffCopy.members.intro,
     href: JOIN_FORM,
@@ -95,7 +114,11 @@ function Intro({ job, airtableTable }: { job: ImportJob; airtableTable: string }
   return (
     <>
       {intro.before}
-      <a href={href ?? airtableTable} target="_blank" rel="noreferrer">
+      <a
+        href={href?.startsWith("tbl") ? airtableTable.replace(/[^/]*$/, href) : (href ?? airtableTable)}
+        target="_blank"
+        rel="noreferrer"
+      >
         {intro.link}
       </a>
       {intro.after}
@@ -162,7 +185,7 @@ export function ImportJobPage({
   runs: AnyImportRun[];
   /** The Server Action that runs the job now. */
   run: () => void | Promise<void>;
-  /** Applies or discards a held MP sync. */
+  /** Applies or discards a held politician sync. */
   decide: Decide;
   airtableTable: string;
 }): ReactNode {

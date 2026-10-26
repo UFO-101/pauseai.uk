@@ -19,7 +19,7 @@ import {
   openLookup,
   newestEmailTo,
   sendLetter,
-  syncMps,
+  syncPoliticians,
   WEBHOOK_AUTH,
 } from "../steps";
 import { BASE, emailFrame, expect, flowStorageState, frame, test } from "./fixtures";
@@ -133,7 +133,7 @@ test("a login link works once, and only in the browser that asked for it", async
 });
 
 test("staff log in, set a status that shows on /campaigns, and log out", async ({ page, request, flowDatabase }) => {
-  await syncMps(request, BASE);
+  await syncPoliticians(request, BASE);
   await logIn(page, flowDatabase, ["admin"]);
   // Logging in lands on the home page: the dashboard, with this admin's permission under their address in the sidebar.
   await expect(page).toHaveURL(`${BASE}/staff`);
@@ -324,7 +324,7 @@ test("the members import copies the UK members, skips one erased, and finds noth
 });
 
 test("a politician's own page", async ({ page, request, flowDatabase }) => {
-  await syncMps(request, BASE);
+  await syncPoliticians(request, BASE);
   await logIn(page, flowDatabase);
   await page.goto(`${BASE}/staff/politicians`);
   await page.getByRole("link", { name: "Testy McTestface MP" }).click();
@@ -355,7 +355,7 @@ test("an import's own page lists every run it has made, and the import page show
   request,
   flowDatabase,
 }) => {
-  await syncMps(request, BASE);
+  await syncPoliticians(request, BASE);
   await logIn(page, flowDatabase);
   // The check, twice: its page lists both runs, under the day's heading, and none of the MP import's.
   await page.goto(`${BASE}/staff/import-data/mp-check`);
@@ -550,7 +550,7 @@ test("an MP import that would change too many is held, then discarded, and then 
   request,
   flowDatabase,
 }) => {
-  await syncMps(request, BASE);
+  await syncPoliticians(request, BASE);
   // Twenty-one MPs Airtable no longer lists: the next import would remove
   // them all, more than it may without a person checking.
   runSql(

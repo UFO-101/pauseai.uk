@@ -12,7 +12,7 @@ import {
   lookUpTestMp,
   postLumaWebhook,
   sendLetter,
-  syncMps,
+  syncPoliticians,
 } from "../steps";
 import { BASE, expect, frame, test } from "./fixtures";
 
@@ -151,7 +151,7 @@ test("a letter writer is a supporter too, linked from the letters page", async (
   request,
   flowDatabase,
 }, testInfo) => {
-  await syncMps(request, BASE);
+  await syncPoliticians(request, BASE);
   const sender = `jane+${testInfo.testId}@example.com`;
   await fakeTurnstile(page);
   await lookUpTestMp(page, BASE, TEST_MPS[0]);
@@ -182,7 +182,7 @@ test("a member who also wrote to their MP is one supporter, with how they joined
   request,
   flowDatabase,
 }) => {
-  await syncMps(request, BASE);
+  await syncPoliticians(request, BASE);
   await fakeTurnstile(page);
   await lookUpTestMp(page, BASE, TEST_MPS[0]);
   await fillLetter(page, "lee.letter@example.com");
