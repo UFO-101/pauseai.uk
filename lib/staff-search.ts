@@ -3,6 +3,7 @@
 // reads their forms.
 import { staffCopy } from "@/lib/content/staff-interface";
 import { emailState } from "@/lib/email-permissions";
+import type { BlocksFilter } from "@/lib/server/email";
 import { campaignBySlug } from "@/lib/email-your-mp";
 import { parseSort } from "@/lib/staff-sort";
 import { isSupporterBadge, SUPPORTER_SORTS, type SupporterFilter } from "@/lib/supporters";
@@ -14,23 +15,32 @@ export type LettersSearch = {
   answered: string;
   /** A campaign's slug. */
   campaign: string;
+  /** "yes" or "no". */
+  consent: string;
 };
 
 /** Which letters the letters page lists (recentLetters in lib/server/letters.ts). */
 export type LetterFilter = {
   /** A letter's status, or "replied" (a person replied) or "auto_reply" (a machine did). */
   status?: string;
-  /** Over the sender's name and email, the MP's name and the subject. */
+  /** Over the sender's name and email, and the MP's name. */
   search?: string;
   /** Whether the MP replied. */
   answered?: boolean;
   /** A campaign's slug. */
   campaign?: string;
+  /** Whether the sender agreed to hear about events and ways to help. */
+  consent?: boolean;
   /** One supporter's letters (/staff/letters/supporter/[id]). */
   supporterId?: number;
   /** One letter (/staff/letters/[id]). */
   letterId?: number;
 };
+
+/** A yes-or-no filter: "yes" or "no", or neither. */
+function yesOrNo(value: string): boolean | undefined {
+  return value === "yes" ? true : value === "no" ? false : undefined;
+}
 
 /** The letters page's filters, as the URL gives them and as the server applies them. */
 export function lettersSearch({
@@ -38,14 +48,16 @@ export function lettersSearch({
   q = "",
   answered = "",
   campaign = "",
+  consent = "",
 }: Partial<LettersSearch>): LettersSearch & { filter: LetterFilter } {
   const filter: LetterFilter = {
     status: Object.hasOwn(staffCopy.letters.status, status) ? status : undefined,
     search: q.trim() || undefined,
-    answered: answered === "yes" ? true : answered === "no" ? false : undefined,
+    answered: yesOrNo(answered),
     campaign: campaignBySlug(campaign)?.slug,
+    consent: yesOrNo(consent),
   };
-  return { status, q, answered, campaign, filter };
+  return { status, q, answered, campaign, consent, filter };
 }
 
 /** A politician's ID from their page's URL: a whole number, or undefined. */
@@ -53,9 +65,17 @@ export function politicianId(id: string): number | undefined {
   return /^\d+$/.test(id) ? Number(id) : undefined;
 }
 
-/** The blocked addresses page's filter: blocked by a hard bounce, or a complaint. */
-export function emailsSearch({ kind = "" }: { kind?: string }): { kind: string; filter?: "hard" | "complaint" } {
-  return { kind, filter: kind === "hard" || kind === "complaint" ? kind : undefined };
+/** The blocked addresses page's filters: a search of the addresses, and blocked by a hard bounce, or a complaint. */
+export function emailsSearch({ q = "", kind = "" }: { q?: string; kind?: string }): {
+  q: string;
+  kind: string;
+  filter: BlocksFilter;
+} {
+  return {
+    q,
+    kind,
+    filter: { kind: kind === "hard" || kind === "complaint" ? kind : undefined, search: q.trim() || undefined },
+  };
 }
 
 /** A list's page from its URL: a whole number from 1, or the first page. */
@@ -83,9 +103,6 @@ export type SupportersSearch = {
   activity: string;
   /** "blocked", or "<topic>:<reason>". */
   subscription: string;
-  active: string;
-  from: string;
-  to: string;
   sort: string;
   dir: string;
   page: string;
@@ -93,16 +110,11 @@ export type SupportersSearch = {
   erased: string;
 };
 
-const DAY = /^\d{4}-\d{2}-\d{2}$/;
-
 /** The supporters list's filters and sort, each as typed and as applied. */
 export function supportersSearch({
   q = "",
   activity = "",
   subscription = "",
-  active = "",
-  from = "",
-  to = "",
   sort = "",
   dir = "",
   page = "",
@@ -113,14 +125,11 @@ export function supportersSearch({
     search: q.trim() || undefined,
     activity: isSupporterBadge(activity) ? activity : undefined,
     subscription: emailState(subscription),
-    active: active === "30" || active === "90" || active === "365" || active === "older" ? active : undefined,
-    from: DAY.test(from) ? from : undefined,
-    to: DAY.test(to) ? to : undefined,
     sort: sorting.key,
     dir: sorting.dir,
     page: pageNumber(page),
   };
-  return { q, activity, subscription, active, from, to, sort, dir, page, erased, filter };
+  return { q, activity, subscription, sort, dir, page, erased, filter };
 }
 
 /** The accounts page's notice, after a refused change. */

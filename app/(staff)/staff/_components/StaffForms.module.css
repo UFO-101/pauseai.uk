@@ -6,6 +6,20 @@
   margin-block: var(--space-4);
 }
 
+/* On a wide screen, each filter no wider than this, so a list's row of
+   them fits a desktop's width; a select cuts off a long choice once it's
+   chosen. On a phone each takes the width, a row each. */
+@media (min-width: 40rem) {
+  .filters > * {
+    max-width: 10.5rem;
+  }
+
+  /* The search, wide enough for a label that names what it searches. */
+  .filters > :first-child {
+    max-width: 16rem;
+  }
+}
+
 .form {
   max-width: var(--staff-measure);
   margin-block: var(--space-4);

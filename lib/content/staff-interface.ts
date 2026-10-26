@@ -161,16 +161,6 @@ export const staffCopy = {
           declined: "Events: didn't agree",
         },
       } as Record<string, Record<string, string>>,
-      anyTime: "Any time",
-      activeWithin: {
-        "30": "In the last 30 days",
-        "90": "In the last 90 days",
-        "365": "In the last year",
-        older: "Over a year ago",
-      } as Record<string, string>,
-      from: "First sign-up from",
-      to: "First sign-up to",
-      filter: "Filter",
     },
     columns: {
       name: "Name",
@@ -370,10 +360,13 @@ export const staffCopy = {
   } as Record<string, string>,
   politicians: {
     title: "Politicians",
-    search: "Search",
-    searchButton: "Filter",
+    // The search box's label: what it searches.
+    search: "Name, constituency, party or email",
     allHouses: "All houses",
+    allParties: "All parties",
     anyCampaign: "Any campaign",
+    // In the Campaigns filter: everyone with a status for any campaign.
+    signedAny: "Signed any",
     none: "None found.",
     testMp: "Test",
     notSitting: "No longer sitting",
@@ -383,9 +376,8 @@ export const staffCopy = {
       replies: "Letters answered",
     },
     noEmail: "No email",
-    // On a politician whose address is blocked (/staff/politicians/blocked-emails), and the filter for them.
+    // On a politician whose address is blocked (/staff/politicians/blocked-emails).
     emailBlocked: "Email blocked",
-    anyEmail: "All",
     // The button in each campaign's column, and the bill's column, which
     // only the import from ControlAI's letter sets.
     markSigned: "Mark as signed",
@@ -487,7 +479,6 @@ export const staffCopy = {
     // Instead of the history, when nothing has bounced or been complained about.
     noProblems: "Nothing has bounced or been marked as spam.",
     allKinds: "All",
-    filter: "Filter",
     kinds: {
       hard: "Bounced",
       soft: "Soft bounce",
@@ -698,8 +689,7 @@ export const staffCopy = {
   letters: {
     title: "Letters to MPs",
     allStatuses: "All",
-    filter: "Filter",
-    search: "Sender, MP or subject",
+    search: "Sender or MP",
     // The Answered filter: whether the MP replied.
     answered: { yes: "Answered", no: "Not answered" },
     // The titles of a letter's own page, and of a supporter's letters' page.
@@ -727,7 +717,9 @@ export const staffCopy = {
     },
     consent: { yes: "Yes", no: "No" },
   },
-  // Beside a list's filter button: the list with none.
+  // The button beside a list's search box; its other filters apply as soon as they're chosen.
+  search: "Search",
+  // After a list's filters: the list with none.
   resetFilters: "Reset filters",
   // Under a list of more than one page.
   paging: {

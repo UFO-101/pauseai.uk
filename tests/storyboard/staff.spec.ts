@@ -211,6 +211,45 @@ test("staff log in, set a status that shows on /campaigns, and log out", async (
   await expect(page).toHaveURL(`${BASE}/staff/login`);
 });
 
+test("the MPs signed tile leads to the one who signed, then to everyone who signed anything, newest first", async ({
+  page,
+  request,
+  flowDatabase,
+}) => {
+  await syncMps(request, BASE);
+  await logIn(page, flowDatabase, ["admin"]);
+  await page.goto(`${BASE}/staff/politicians`);
+  await page.getByRole("link", { name: "Polly Placeholder" }).click();
+  await page
+    .getByRole("group", { name: pm.title })
+    .getByRole("button", { name: staffCopy.politicians.markSigned })
+    .click();
+  await expect(page.getByRole("button", { name: staffCopy.politicians.unmarkSigned })).toBeVisible();
+
+  // One signed this week: the tile is their page.
+  await page.goto(`${BASE}/staff`);
+  const tile = page.getByRole("link").filter({ hasText: staffCopy.home.dashboard.metrics.mpsSigned(1) });
+  await frame(page, "the home: one MP signed this week");
+  await tile.click();
+  await expect(page.getByRole("heading", { level: 1, name: "Polly Placeholder" })).toBeVisible();
+  await frame(page, "the tile leads to her page");
+
+  // ControlAI's letter adds several: the tile is everyone who signed anything, newest first.
+  await page.goto(`${BASE}/staff/import-data/controlai`);
+  await page.getByRole("button", { name: staffCopy.controlAi.importNow }).click();
+  await expect(page.getByText(/6 names/)).toBeVisible();
+  await page.goto(`${BASE}/staff`);
+  await page
+    .getByRole("link")
+    .filter({ hasText: staffCopy.home.dashboard.metrics.mpsSigned(2) })
+    .click();
+  await expect(page).toHaveURL(`${BASE}/staff/politicians?campaign=any&sort=signed`);
+  await expect(page.getByLabel(staffCopy.politician.statusesTitle)).toHaveValue("any");
+  await expect(page.getByRole("row").filter({ hasText: "Polly Placeholder" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Testy McTestface MP" })).toHaveCount(0);
+  await frame(page, "everyone who signed anything, newest first");
+});
+
 test("the Luma import copies the calendar's events, guests and contacts, and finds nothing new the second time", async ({
   page,
   flowDatabase,
@@ -400,7 +439,6 @@ test("letters are listed, sent and bounced, and can be filtered by status and ca
   await frame(page, "the letters list: one sent, one bounced, with Postmark's reason in its history");
 
   await page.getByLabel(staffCopy.letters.columns.status).selectOption("bounced");
-  await page.getByRole("button", { name: staffCopy.letters.filter }).click();
   await expect(page).toHaveURL(/\/staff\/letters\?.*status=bounced/);
   await expect(sams).toBeVisible();
   await expect(janes).toHaveCount(0);
@@ -408,7 +446,6 @@ test("letters are listed, sent and bounced, and can be filtered by status and ca
 
   // Both letters are to the first campaign, so the other has none.
   await page.getByLabel(staffCopy.letters.columns.campaign).selectOption(campaigns[1].slug);
-  await page.getByRole("button", { name: staffCopy.letters.filter }).click();
   await expect(page).toHaveURL(new RegExp(`campaign=${campaigns[1].slug}`));
   await expect(page.getByText(staffCopy.letters.none)).toBeVisible();
   await frame(page, "filtered to the other campaign: no letters");
@@ -482,14 +519,10 @@ test("an MP whose address bounced can't be written to until staff unblock it", a
   await expect(bouncysRow).toContainText(staffCopy.politicians.emailBlocked);
   await frame(page, "the politicians list marks their address as blocked");
 
-  await page.getByLabel(staffCopy.fields.email).selectOption("blocked");
-  await page.getByRole("button", { name: staffCopy.politicians.searchButton }).click();
-  await expect(page).toHaveURL(/[?&]email=blocked/);
-  await expect(page.getByRole("link", { name: "Testy McTestface MP" })).toHaveCount(0);
-  await expect(page.getByRole("row").filter({ hasText: bouncy.name })).toContainText(
-    staffCopy.politicians.emailBlocked,
-  );
-  await frame(page, "the politicians whose address is blocked");
+  // Blocked MP emails lists them, and is the way to them.
+  await page.goto(`${BASE}/staff/politicians/blocked-emails`);
+  await expect(page.getByRole("row").filter({ hasText: bouncy.name })).toBeVisible();
+  await frame(page, "Blocked MP emails lists their address");
 
   await page.getByRole("link", { name: bouncy.name }).click();
   await expect(page.getByRole("heading", { level: 1, name: bouncy.name })).toBeVisible();

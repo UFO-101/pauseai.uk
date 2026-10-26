@@ -43,7 +43,8 @@ export type SeriesPoint = { from: string; count: number };
 
 /**
  * Where each tile leads: the page that lists what it counts, and the
- * permission it needs, if any. A tile without a page is no link. `worse`
+ * permission it needs, if any. A tile without a page is no link; the MPs
+ * signed tile's page depends on who signed (signedHref). `worse`
  * marks a number that's bad when it rises, so its change is coloured the
  * other way round.
  */
@@ -79,10 +80,22 @@ export type Dashboard = {
   testLetters: number;
   /** The window's count by campaign slug, for the tiles with a bar. */
   byCampaign: Record<CampaignMetric, Record<string, number>>;
+  /** The politician who signed in the window, when only one did, for any number of campaigns. */
+  signedMp: number | null;
   /** SERIES_POINTS windows of `days`, oldest first, the current one last, for the tiles with a sparkline. */
   series: Record<SeriesMetric, SeriesPoint[]>;
   actions: DashboardAction[];
 };
+
+/**
+ * Where the MPs signed tile leads: the page of the one politician who
+ * signed in the window, or everyone who has signed any campaign, newest
+ * first, or with no signatures in the window, all the politicians.
+ */
+export function signedHref({ signedMp, counts }: Pick<Dashboard, "signedMp" | "counts">): string {
+  if (signedMp !== null) return `/staff/politicians/${signedMp}`;
+  return counts.mpsSigned.current > 0 ? "/staff/politicians?campaign=any&sort=signed" : "/staff/politicians";
+}
 
 export function isCampaignMetric(metric: DashboardMetric): metric is CampaignMetric {
   return (BY_CAMPAIGN as readonly DashboardMetric[]).includes(metric);

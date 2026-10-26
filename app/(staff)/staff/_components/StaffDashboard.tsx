@@ -16,6 +16,7 @@ import {
   isSeriesMetric,
   METRIC_LINKS,
   SERIES_POINTS,
+  signedHref,
 } from "@/lib/staff-dashboard";
 import type { Permission } from "@/lib/staff-permissions";
 import { staffDate, staffDay, staffTime } from "@/lib/staff-time";
@@ -118,7 +119,8 @@ function Tile({
   dashboard: Dashboard;
   permissions: readonly Permission[];
 }) {
-  const { href, permission, worse } = METRIC_LINKS[metric];
+  const { permission, worse } = METRIC_LINKS[metric];
+  const href = metric === "mpsSigned" ? signedHref(dashboard) : METRIC_LINKS[metric].href;
   const count = dashboard.counts[metric];
   const label = copy.metrics[metric](count.current);
   // A bar only when some campaign counted, a line only when some window counted; the tile is a third, not a sixth, only to fit one.

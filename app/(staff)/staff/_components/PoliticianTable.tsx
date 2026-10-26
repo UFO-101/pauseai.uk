@@ -21,7 +21,8 @@ type Props = {
 
 /**
  * Politicians, how many letters they've had and answered, and their status
- * for each campaign. Statuses are changed on each politician's page; the
+ * for each campaign. Every heading sorts the list; a campaign's, by when
+ * the status was recorded. Statuses are changed on each politician's page; the
  * bill's column shows who signed ControlAI's letter, set by the nightly
  * import.
  */
@@ -31,6 +32,7 @@ export default function PoliticianTable({ politicians, search = {} }: Props) {
   const current = parseSort(POLITICIAN_SORTS, "name", sort, dir);
   const heading = (key: PoliticianSort, label: string) => (
     <SortHeading
+      key={key}
       sortKey={key}
       current={current}
       href={sortHref("/staff/politicians", filters, POLITICIAN_SORTS, current, key)}
@@ -48,10 +50,8 @@ export default function PoliticianTable({ politicians, search = {} }: Props) {
           {heading("party", staffCopy.fields.party)}
           {heading("letters", staffCopy.politicians.columns.letters)}
           {heading("replies", staffCopy.politicians.columns.replies)}
-          {trackedCampaigns.map((c) => (
-            <th key={c.slug}>{c.title}</th>
-          ))}
-          <th>{bill.title}</th>
+          {trackedCampaigns.map((c) => heading(c.slug, c.title))}
+          {heading(bill.slug, bill.title)}
         </tr>
       </thead>
       <tbody>

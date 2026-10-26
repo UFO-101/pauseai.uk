@@ -303,6 +303,21 @@ the text beside it sits higher than the button's label and the row looks
 uneven. Centred, the text lines up with the control's middle (the
 accounts table, your sessions).
 
+**Filters** (`StaffFilters`). A list's filters are a row above it, and
+they follow its table:
+
+- A filter has the name of the column it filters, and the filters come in
+  the columns' order. Not every column gets one, only those someone will
+  filter by.
+- The search box comes first, labelled with what it searches, and its
+  button, the only one, beside it. A search waits for the button, or
+  Enter, so the list doesn't change while someone types. Every other
+  filter applies as soon as it's chosen. Reset filters comes last.
+- The row fits the page's width on a desktop at full width, never
+  wrapping there: a filter whose options would make it too wide gets
+  shorter options, or isn't one.
+- The filters keep the table's sort, and Reset clears both.
+
 The gallery's staff group shows each piece and each page built from them.
 
 ---

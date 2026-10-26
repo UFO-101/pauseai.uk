@@ -1,32 +1,30 @@
 import { Button, ButtonLink } from "@/components/ui/Button";
 import { campaigns } from "@/lib/content/email-your-mp";
 import { staffCopy } from "@/lib/content/staff-interface";
-import styles from "./StaffForms.module.css";
+import type { PoliticiansSearch } from "@/lib/server/politicians";
 import { Select, TextInput } from "@/components/ui/Controls";
 import { Field } from "@/components/ui/Field";
-import { FilterForm } from "@/components/ui/Form";
-
-export type Filters = { search: string; house: string; campaign: string; email: string };
+import StaffFilters from "./StaffFilters";
 
 /**
- * Search and filter the politicians list. A GET form, so the URL holds the
- * filter. Keyed on the filters, so a new URL, such as Reset's, gives a fresh
- * form, not the old choices.
+ * Search and filter the politicians list, among `parties`: the search,
+ * then the table's columns in its order. The column headings sort it; the form keeps that sort. Keyed on
+ * the filters, so a new URL, such as Reset's, gives a fresh form, not the
+ * old choices.
  */
-export default function PoliticianFilters({ search, house, campaign, email }: Filters) {
+export default function PoliticianFilters({ search, parties }: { search: PoliticiansSearch; parties: string[] }) {
+  const copy = staffCopy.politicians;
   return (
-    <FilterForm
-      key={[search, house, campaign, email].join("\n")}
-      method="get"
-      action="/staff/politicians"
-      className={styles.filters}
-    >
-      <Field label={staffCopy.politicians.search}>
-        <TextInput type="search" name="q" defaultValue={search} />
+    <StaffFilters key={JSON.stringify(search)} action="/staff/politicians">
+      <Field label={copy.search}>
+        <TextInput type="search" name="q" defaultValue={search.q} />
       </Field>
+      <Button variant="primary" size="small" type="submit">
+        {staffCopy.search}
+      </Button>
       <Field label={staffCopy.fields.house}>
-        <Select name="house" defaultValue={house}>
-          <option value="">{staffCopy.politicians.allHouses}</option>
+        <Select name="house" defaultValue={search.house}>
+          <option value="">{copy.allHouses}</option>
           {Object.entries(staffCopy.houses).map(([value, label]) => (
             <option key={value} value={value}>
               {label}
@@ -34,9 +32,20 @@ export default function PoliticianFilters({ search, house, campaign, email }: Fi
           ))}
         </Select>
       </Field>
+      <Field label={staffCopy.fields.party}>
+        <Select name="party" defaultValue={search.party}>
+          <option value="">{copy.allParties}</option>
+          {parties.map((party) => (
+            <option key={party} value={party}>
+              {party}
+            </option>
+          ))}
+        </Select>
+      </Field>
       <Field label={staffCopy.politician.statusesTitle}>
-        <Select name="campaign" defaultValue={campaign}>
-          <option value="">{staffCopy.politicians.anyCampaign}</option>
+        <Select name="campaign" defaultValue={search.campaign}>
+          <option value="">{copy.anyCampaign}</option>
+          <option value="any">{copy.signedAny}</option>
           {/* Every campaign: the bill's status comes from ControlAI's letter rather than staff, but it's a status. */}
           {campaigns.map((c) => (
             <option key={c.slug} value={c.slug}>
@@ -45,18 +54,11 @@ export default function PoliticianFilters({ search, house, campaign, email }: Fi
           ))}
         </Select>
       </Field>
-      <Field label={staffCopy.fields.email}>
-        <Select name="email" defaultValue={email}>
-          <option value="">{staffCopy.politicians.anyEmail}</option>
-          <option value="blocked">{staffCopy.politicians.emailBlocked}</option>
-        </Select>
-      </Field>
-      <Button variant="primary" size="small" type="submit">
-        {staffCopy.politicians.searchButton}
-      </Button>
+      {search.sort && <input type="hidden" name="sort" value={search.sort} />}
+      {search.dir && <input type="hidden" name="dir" value={search.dir} />}
       <ButtonLink variant="ghost" size="small" href="/staff/politicians">
         {staffCopy.resetFilters}
       </ButtonLink>
-    </FilterForm>
+    </StaffFilters>
   );
 }

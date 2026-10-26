@@ -98,11 +98,20 @@ export type PoliticianFilter = {
   /** Matches name, constituency, party or email. */
   search?: string;
   house?: House;
-  /** Only those with a status for this campaign. */
+  party?: string;
+  /** Only those with a status for this campaign, or with "any", for any campaign. */
   campaign?: string;
-  /** Only those whose address is blocked. */
-  emailBlocked?: boolean;
   sort?: SortSpec<PoliticianSort>;
+};
+
+/** The politicians page's URL: each filter and the sort, as typed. */
+export type PoliticiansSearch = {
+  q: string;
+  house: string;
+  party: string;
+  campaign: string;
+  sort: string;
+  dir: string;
 };
 
 /**
@@ -112,26 +121,27 @@ export type PoliticianFilter = {
 export function politiciansSearch({
   q = "",
   house = "",
+  party = "",
   campaign = "",
-  email = "",
   sort = "",
   dir = "",
-}: {
-  q?: string;
-  house?: string;
-  campaign?: string;
-  email?: string;
-  sort?: string;
-  dir?: string;
-}) {
+}: Partial<PoliticiansSearch>): PoliticiansSearch & { filter: PoliticianFilter } {
   const filter: PoliticianFilter = {
     search: q || undefined,
     house: isHouse(house) ? house : undefined,
+    party: party || undefined,
     campaign: campaign || undefined,
-    emailBlocked: email === "blocked" || undefined,
     sort: parseSort(POLITICIAN_SORTS, "name", sort, dir),
   };
-  return { q, house, campaign, email, sort, dir, filter };
+  return { q, house, party, campaign, sort, dir, filter };
+}
+
+/** Every party a politician is in, for the list's filter. */
+export async function listParties(): Promise<string[]> {
+  const rows = await query<{ party: string }>(
+    "SELECT DISTINCT party FROM politicians WHERE party <> '' ORDER BY party",
+  );
+  return rows.map((row) => row.party);
 }
 
 /** Politicians for the staff interface: the test MPs first, then by the column asked for, by name to start. */
@@ -148,14 +158,17 @@ export async function listPoliticians(filter: PoliticianFilter = {}, limit = 200
     values.push(filter.house);
     where.push(`p.house = $${values.length}`);
   }
-  if (filter.campaign) {
+  if (filter.party) {
+    values.push(filter.party);
+    where.push(`p.party = $${values.length}`);
+  }
+  if (filter.campaign === "any") {
+    where.push("EXISTS (SELECT 1 FROM campaign_statuses c WHERE c.politician_id = p.id)");
+  } else if (filter.campaign) {
     values.push(filter.campaign);
     where.push(
       `EXISTS (SELECT 1 FROM campaign_statuses c WHERE c.politician_id = p.id AND c.campaign = $${values.length})`,
     );
-  }
-  if (filter.emailBlocked) {
-    where.push("EXISTS (SELECT 1 FROM email_blocks b WHERE b.address = lower(p.email))");
   }
   values.push(limit);
   const rows = await query<Row>(
