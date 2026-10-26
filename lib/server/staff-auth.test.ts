@@ -105,6 +105,14 @@ describeWithDatabase("staff sessions", () => {
       { current: false },
       { current: true, id: sessionId(kept) },
     ]);
+    // Begun at the same moment, this one comes first, whatever the tokens.
+    await query("UPDATE staff_sessions SET created_at = now()");
+    for (const current of [token, kept]) {
+      expect((await listSessions("jo@pauseai.uk", current)).map((s) => s.id)).toEqual([
+        sessionId(current),
+        sessionId(current === token ? kept : token),
+      ]);
+    }
     // Ending one: only your own, logged.
     expect(await endSession("sam@pauseai.uk", sessionId(kept))).toBe(false);
     expect(await endSession("Jo@pauseai.uk", sessionId(kept))).toBe(true);
