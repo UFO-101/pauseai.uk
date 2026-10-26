@@ -6,15 +6,28 @@
   border-radius: 14px;
   padding: var(--space-5);
 }
+/* The heading, bold and orange, centred between two sparkles. */
 .heading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
   font-family: inherit;
-  font-size: 11.5px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  line-height: 1.5;
-  color: var(--text-secondary);
-  margin: 0 0 var(--space-1);
+  font-size: 21px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+  text-align: center;
+  color: var(--accent);
+  margin: 0 0 var(--space-3);
+}
+.sparkle {
+  flex: none;
+  font-size: 0.7em;
+}
+.sparkle:last-child {
+  font-size: 0.5em;
+  align-self: flex-start;
 }
 .list {
   list-style: none;
@@ -42,8 +55,27 @@
   color: var(--text-secondary);
   white-space: nowrap;
 }
-.count {
-  margin: var(--space-3) 0 0;
-  font-size: var(--text-sm);
-  color: var(--text-secondary);
+
+/* Five rows tall once there are more names than that. It rolls upwards
+   slowly by itself to the oldest name (DonateThanks), has no scrollbar, can be dragged with a
+   mouse, and fades at the top and bottom so the names come and go softly. */
+.window {
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+.window::-webkit-scrollbar {
+  display: none;
+}
+.rolling {
+  max-height: 210px;
+  cursor: grab;
+  -webkit-mask-image: linear-gradient(transparent, var(--black) 18px, var(--black) calc(100% - 28px), transparent);
+  mask-image: linear-gradient(transparent, var(--black) 18px, var(--black) calc(100% - 28px), transparent);
+}
+.dragging {
+  cursor: grabbing;
+  user-select: none;
+}
+.rolling .list {
+  padding: 12px 0 20px;
 }

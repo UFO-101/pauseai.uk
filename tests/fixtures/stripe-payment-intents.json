@@ -1,0 +1,77 @@
+{
+  "object": "list",
+  "url": "/v1/payment_intents",
+  "has_more": false,
+  "data": [
+    {
+      "id": "pi_fixture_morag_oct",
+      "created": 1792497600,
+      "status": "succeeded",
+      "customer": "cus_fixture_morag",
+      "description": "Subscription update",
+      "payment_details": {
+        "order_reference": "in_fixture_morag_oct"
+      }
+    },
+    {
+      "id": "pi_fixture_private_oct",
+      "created": 1792411200,
+      "status": "succeeded",
+      "customer": "cus_fixture_private",
+      "description": "Subscription update",
+      "payment_details": {
+        "order_reference": "in_fixture_private_oct"
+      }
+    },
+    {
+      "id": "pi_fixture_sam_bus",
+      "created": 1792324800,
+      "status": "succeeded",
+      "customer": "cus_fixture_sam",
+      "description": "Bus to the march",
+      "payment_details": {
+        "order_reference": null
+      }
+    },
+    {
+      "id": "pi_fixture_chen_failed",
+      "created": 1792065600,
+      "status": "requires_payment_method",
+      "customer": "cus_fixture_chen",
+      "description": "Subscription update",
+      "payment_details": {
+        "order_reference": "in_fixture_chen_oct"
+      }
+    },
+    {
+      "id": "pi_fixture_chen_sep",
+      "created": 1790424000,
+      "status": "succeeded",
+      "customer": "cus_fixture_chen",
+      "description": "Subscription update",
+      "payment_details": {
+        "order_reference": "in_fixture_chen_sep"
+      }
+    },
+    {
+      "id": "pi_fixture_morag_sep",
+      "created": 1789905600,
+      "status": "succeeded",
+      "customer": "cus_fixture_morag",
+      "description": "Subscription update",
+      "payment_details": {
+        "order_reference": "in_fixture_morag_sep"
+      }
+    },
+    {
+      "id": "pi_fixture_morag_first",
+      "created": 1785067200,
+      "status": "succeeded",
+      "customer": "cus_fixture_morag",
+      "description": "Subscription creation",
+      "payment_details": {
+        "order_reference": "cs_live_fixture_morag"
+      }
+    }
+  ]
+}

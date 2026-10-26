@@ -65,9 +65,9 @@ export default function PrivacyPolicy() {
         basis: our legitimate interest in responding).
       </p>
       <p>
-        ⁂ When you donate, we ask if you&rsquo;re happy to be named on our wall of thanks. If you say yes, our donate
-        page shows the name you gave and the month you donated (legal basis: your explicit consent). Your latest answer
-        is the one that counts. To come off, email hello@pauseai.uk and we&rsquo;ll change your answer to no.
+        When you donate, we ask if you&rsquo;re happy to be named on our wall of thanks. If you say yes, our donate page
+        shows the name you gave and the date you donated (legal basis: your explicit consent). Your latest answer is the
+        one that counts. To come off, email hello@pauseai.uk and we&rsquo;ll change your answer to no.
       </p>
 
       <h2>Website analytics</h2>

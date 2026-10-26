@@ -106,7 +106,7 @@ export const blogDonateEvents: Group = {
       file: "app/(site)/donate/_components/DonateThanks.tsx",
       variants: [
         {
-          label: "The latest five of six, and how many in all",
+          label: "Six donors, more than fit, so the list rolls",
           render: () => (
             <div className="container" style={{ maxWidth: 480 }}>
               <DonateThanks donors={exampleDonors} />
