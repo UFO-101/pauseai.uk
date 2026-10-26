@@ -69,9 +69,10 @@ else.
     part of it: "Claire Coutinho", "Sir John Hayes", "Lord McFall of
     Alcluith". It's what staff pages show, and it's required. From
     Airtable's "Full name or Title".
-  - **Forename and surname** are for sorting and mail merge, and may be
-    empty: peers have only their title. In Airtable, every MP, MSP, MS
-    and MLA has both; no peer has either.
+  - **Forename and surname** are for sorting and mail merge. They're
+    nullable, and a CHECK requires both or neither: peers have only
+    their title. In Airtable, every MP, MSP, MS and MLA has both; no peer
+    has either.
   - **Salutation** follows "Dear": "Ms Coutinho", "Sir John", "Lord
     McFall".
 - **`politicians`**: house, constituency, party, country, city, test
