@@ -92,7 +92,9 @@ notable_people ──┬── politicians                (later: journalists, f
 - **`letters`**: every letter to a notable person, from anyone. Id, kind
   (`supporter` or `pauseai`), the person, the ask, when it was created and
   sent, status, our `Message-ID`, and the provider's message and thread
-  IDs. `letter_events` (sent, skipped, bounced, replied, auto-reply) and
+  IDs. The ask is required on a supporter's letter, by a CHECK, and
+  optional on PauseAI's: an invitation or a briefing asks nothing we
+  record. `letter_events` (sent, skipped, bounced, replied, auto-reply) and
   `email_sends.letter_id` point here for both kinds.
 - **`supporter_letters`**: what only a supporter's letter has. The sender's
   name, email, address, postcode, consent and `reply_hash`.
@@ -100,8 +102,11 @@ notable_people ──┬── politicians                (later: journalists, f
 - **`pauseai_letters`**: what only PauseAI's has. The mailing, the staff
   member who sent it, the backend, and the values merged into the
   template for this person.
-- **`mailings`**: one mail to many people. The ask, subject and body
-  template, attachments, who made it, the backend, and when it's due.
+- **`mailings`**: one mail to many people. A title, the ask if any,
+  subject and body template, attachments, who made it, the backend, and
+  when it's due. Phase 1 creates it for the mailings imported from
+  Airtable, which have no template (allowed, by a CHECK, only on imported
+  ones); phase 2 sends them.
   Each person's mail isn't stored, only their merge values, and it's
   re-rendered to show it. The mailing keeps the rendered template it was
   sent with, so a later change to the renderer can't change what it
@@ -133,24 +138,25 @@ Each step is a commit or more, in this order.
    Records ticked Test in Airtable are skipped; the site keeps its own
    test MPs (`lib/test-mps.json`), and phase 2 adds one whose Gmail send
    bounces.
-4. **Signed statuses** from Airtable's flags, owned by `airtable`, so the
-   sync changes or removes only its own. `lib/server/signatory-import.ts`
-   is folded into this.
+4. **Statuses** from Airtable's fields, owned by `airtable`, so the sync
+   changes or removes only its own. `lib/server/signatory-import.ts` is
+   folded into this. An ask is something with a status to record; a
+   mailing with nothing to record isn't one (step 5).
 
-   | Airtable field            | Politicians | Ask                                                       |
-   | ------------------------- | ----------- | --------------------------------------------------------- |
-   | Signed Frontier AI Letter | 10          | `frontier-ai-letter`, which `regulate-letter-pm` asks for |
-   | Signed DeepMind Letter    | 63          | `deepmind-letter`                                         |
-   | Signed Liability Letter   | 0           | `liability-letter`                                        |
-   | ControlAI Signatory       | 167         | `controlai-statement`, still imported from ControlAI      |
-| Edinburgh Conference November 2026 | 50 Declined, 1 Passed on request | `edinburgh-conference-2026` |
-| Parliament meeting 23 June 2026 | 1 | `parliament-meeting-2026-06-23`, as `going` |
-| London 2026 Panel | 4 | `london-2026-panel`, as `going` |
+   | Airtable field                     | Politicians                      | Ask                                                       |
+   | ---------------------------------- | -------------------------------- | --------------------------------------------------------- |
+   | Signed Frontier AI Letter          | 10                               | `frontier-ai-letter`, which `regulate-letter-pm` asks for |
+   | Signed DeepMind Letter             | 63                               | `deepmind-letter`                                         |
+   | Signed Liability Letter            | 0                                | `liability-letter`                                        |
+   | ControlAI Signatory                | 167                              | `controlai-statement`, still imported from ControlAI      |
+   | Edinburgh Conference November 2026 | 50 Declined, 1 Passed on request | `edinburgh-conference-2026`                               |
+   | Parliament meeting 23 June 2026    | 1                                | `parliament-meeting-2026-06-23`, as `going`               |
+   | London 2026 Panel                  | 4                                | `london-2026-panel`, as `going`                           |
 
    Not imported: the letters' Responded and Declined, "Responded PauseAI
-   Documentary Screening invitation" (2), "Sent DeepMind letter
-   publication email" (the Emails import covers it), the per-person PDFs
-   and briefings, and the AI "Custom sentence".
+   Documentary Screening invitation" (2, with no ask to hold them), "Sent
+   DeepMind letter publication email" (the Emails import covers it), the
+   per-person PDFs and briefings, and the AI "Custom sentence".
 
    The sync also brings Airtable's Notes (106) into
    `notable_people.notes`. Its three ticks, Important target (98),
@@ -159,17 +165,19 @@ Each step is a commit or more, in this order.
 
 5. **Emails sync** into `pauseai_letters`, nightly with the politicians.
    It adds rows by Airtable record ID and never touches rows the site
-   sent. No text, as Airtable has none: who, when, the ask, and
-   Personalized and AI Generated.
+   sent. No text, as Airtable has none: who, when, and Personalized and
+   AI Generated. Each of Airtable's mailings becomes an imported
+   `mailings` row, with a title, its ask if it has one, and no template,
+   and each email points at it:
 
-   | Airtable's mailing                     | Emails | When         | Ask                        |
-   | -------------------------------------- | ------ | ------------ | -------------------------- |
-   | None ticked                            | 4,369  | Jun–Aug 2025 | `deepmind-letter`          |
-   | Documentary Invitation                 | 703    | Oct 2025     | `documentary-screening`    |
-   | Westminster Hall Debate Invitation     | 341    | Dec 2025     | `westminster-hall-debate`  |
+   | Airtable's mailing                     | Emails | When         | Ask                         |
+   | -------------------------------------- | ------ | ------------ | --------------------------- |
+   | None ticked                            | 4,369  | Jun–Aug 2025 | `deepmind-letter`           |
+   | Documentary Invitation                 | 703    | Oct 2025     |                             |
+   | Westminster Hall Debate Invitation     | 341    | Dec 2025     |                             |
    | Edinburgh Conference Nov 26 Invitation | 186    | Oct 2026     | `edinburgh-conference-2026` |
-   | Ben Lake October 2026 Debate           | 72     | Oct 2026     | `ben-lake-debate-2026`     |
-   | CSRB Iqbal Amendment                   | 12     |              | `csrb-iqbal-amendment`     |
+   | Ben Lake October 2026 Debate           | 72     | Oct 2026     |                             |
+   | CSRB Iqbal Amendment                   | 12     |              |                             |
 
    The unticked emails are the DeepMind letter: 1,304 of the 1,307
    politicians with a DeepMind Letter PDF got them, and nobody else did,
@@ -408,10 +416,6 @@ policy and erasure:
 
 1. **The Google Cloud project.** Joseph creates it, as the Workspace
    admin; phase 2 writes the steps for him. Open until he has.
-2. **Ask slugs for the old mailings** (`documentary-screening`,
-   `westminster-hall-debate` and the rest, in phase 1 step 5). Are these
-   asks at all, or just mailings? An invitation to a screening is an ask;
-   a briefing on an amendment may not be.
 3. **Airtable's three ticks**: Important target (98), Recommended (15),
    Personal connection (7). Not imported until we know from Joseph what
    each means and what people do with it. The answer decides the shape:
