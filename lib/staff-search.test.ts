@@ -52,12 +52,11 @@ describe("supportersSearch", () => {
   it("reads each filter as typed and as applied, dropping what it doesn't know", () => {
     expect(supportersSearch({})).toEqual({
       q: "",
-      source: "",
-      registered: "",
+      activity: "",
+      subscription: "",
       active: "",
       from: "",
       to: "",
-      unsubscribed: "",
       sort: "",
       dir: "",
       page: "",
@@ -66,31 +65,28 @@ describe("supportersSearch", () => {
     });
     const all = supportersSearch({
       q: " jane ",
-      source: "luma",
-      registered: "1",
+      activity: "registered",
+      subscription: "luma-calendar:unsubscribed",
       active: "90",
       from: "2026-01-01",
       to: "2026-12-31",
-      unsubscribed: "1",
       sort: "name",
       dir: "desc",
       page: "3",
     });
     expect(all.filter).toEqual({
       search: "jane",
-      source: "luma",
-      registered: true,
+      activity: "registered",
+      subscription: { topic: "luma-calendar", reason: "unsubscribed" },
       active: "90",
       from: "2026-01-01",
       to: "2026-12-31",
-      unsubscribed: true,
       sort: "name",
       dir: "desc",
       page: 3,
     });
     expect(all.q).toBe(" jane ");
-    expect(supportersSearch({ registered: "on" }).filter).toMatchObject({ registered: true });
-    const bad = supportersSearch({ source: "x", active: "7", from: "soon", sort: "x", page: "0" });
+    const bad = supportersSearch({ activity: "x", subscription: "x", active: "7", from: "soon", sort: "x", page: "0" });
     expect(bad.filter).toEqual({ sort: "active", dir: "desc", page: 1 });
     expect(supportersSearch({ active: "older", sort: "first" }).filter).toMatchObject({
       active: "older",

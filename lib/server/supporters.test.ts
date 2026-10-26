@@ -289,20 +289,33 @@ describeWithDatabase("listSupporters and getSupporter", () => {
     });
   });
 
-  it("filters by name, email or phone, source, registration, activity, first sign-up, opt-outs and postcode, and sorts", async () => {
+  it("filters by name, email or phone, activities, subscriptions, first sign-up and postcode, and sorts", async () => {
     await people();
     expect(await names({ search: "JANE" })).toEqual(["Jane"]);
     expect(await names({ search: "pat@" })).toEqual(["Pat"]);
     expect(await names({ search: "0900001" })).toEqual(["Jane"]);
-    expect(await names({ source: "letter" })).toEqual(["Pat"]);
-    expect(await names({ registered: true })).toEqual(["Sam", "Jane", "Old"]);
-    expect(await names({ unsubscribed: true })).toEqual(["Sam"]);
+    expect(await names({ activity: "letter" })).toEqual(["Pat"]);
+    expect(await names({ activity: "registered" })).toEqual(["Sam", "Jane", "Old"]);
+    expect(await names({ activity: "lumaContact" })).toEqual(["Jane"]);
+    expect(await names({ activity: "member" })).toEqual([]);
+    const unsubscribed = { topic: "luma-calendar", reason: "unsubscribed" } as const;
+    expect(await names({ subscription: unsubscribed })).toEqual(["Sam"]);
+    expect(await names({ subscription: { topic: "luma-calendar", reason: "not-following" } })).toEqual(["Old"]);
+    expect(await names({ subscription: { topic: "events-and-ways-to-help", reason: "asked" } })).toEqual(["Pat"]);
     // Leaving "Keep me informed" unticked isn't an unsubscribe.
     await query(
       `INSERT INTO members (id, email, name, joined_at, created_at, keep_informed, share_permission, source_modified_at)
        VALUES ('recOld', 'old@example.com', 'Old', '2026-09-01T00:00:00Z', '2026-09-01T00:00:00Z', false, true, '2026-09-01T00:00:00Z')`,
     );
-    expect(await names({ unsubscribed: true })).toEqual(["Sam"]);
+    expect(await names({ subscription: unsubscribed })).toEqual(["Sam"]);
+    expect(await names({ subscription: { topic: "pauseai-updates", reason: "declined" } })).toEqual(["Old"]);
+    // A block is every topic's answer, and outranks the unsubscribe.
+    await query(
+      `WITH p AS (INSERT INTO email_problems (address, kind, at, can_reset) VALUES ('sam@example.com', 'hard', '2026-10-13T00:00:00Z', false) RETURNING id)
+       INSERT INTO email_blocks (address, problem_id) SELECT 'sam@example.com', id FROM p`,
+    );
+    expect(await names({ subscription: { reason: "blocked" } })).toEqual(["Sam"]);
+    expect(await names({ subscription: unsubscribed })).toEqual([]);
     expect(await names({ from: "2026-06-01", to: "2026-06-01" })).toEqual(["Pat"]);
     expect(await names({ from: "2026-06-02" })).toEqual([]);
     expect(await names({ to: "2025-12-31" })).toEqual(["Sam", "Old"]);

@@ -390,10 +390,17 @@ export const staff: Group = {
       file: "app/(staff)/staff/_components/SupporterFilters.tsx",
       variants: [
         {
-          label: "The list's filters, with a search typed and a box ticked",
+          label: "The list's filters, with a search typed and two chosen",
           render: () => (
             <StaffPage as="div">
-              <SupporterFilters search={supportersSearch({ q: "jane", registered: "1", sort: "name" })} />
+              <SupporterFilters
+                search={supportersSearch({
+                  q: "jane",
+                  activity: "registered",
+                  subscription: "luma-calendar:unsubscribed",
+                  sort: "name",
+                })}
+              />
             </StaffPage>
           ),
         },

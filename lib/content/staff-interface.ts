@@ -138,14 +138,28 @@ export const staffCopy = {
     count: (total: number, page: number, pages: number) => `${total} supporters; page ${page} of ${pages}.`,
     filters: {
       search: "Name, email or phone",
-      source: "Source",
-      anySource: "Any",
-      events: "Luma events",
-      anyEvents: "Any",
-      registered: "Registered for one or more",
-      lists: "Mailing lists",
-      anyList: "Any",
-      active: "Last active",
+      // The other filters are named after their columns.
+      anyActivity: "Any",
+      anySubscription: "Any",
+      // An option in the Subscriptions filter, under its topic's name: a reason the topic gives.
+      states: {
+        "luma-calendar": {
+          following: "⁂ Following the calendar",
+          unsubscribed: "⁂ Unsubscribed, via Luma",
+          "not-following": "Never followed the calendar",
+        },
+        "pauseai-updates": {
+          asked: "⁂ Asked for them when joining",
+          joined: "⁂ On the list since joining, before 30 June 2026",
+          declined: "⁂ Left “Keep me informed” unticked when joining",
+          unsubscribed: "⁂ Unsubscribed",
+          removed: "No longer shared with us",
+        },
+        "events-and-ways-to-help": {
+          asked: "⁂ Agreed on their letter",
+          declined: "⁂ Didn't agree on their letter",
+        },
+      } as Record<string, Record<string, string>>,
       anyTime: "Any time",
       activeWithin: {
         "30": "In the last 30 days",
@@ -153,9 +167,8 @@ export const staffCopy = {
         "365": "In the last year",
         older: "Over a year ago",
       } as Record<string, string>,
-      from: "First seen from",
-      to: "First seen to",
-      unsubscribed: "Unsubscribed",
+      from: "First sign-up from",
+      to: "First sign-up to",
       filter: "Search",
     },
     columns: {

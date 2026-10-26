@@ -51,10 +51,14 @@ export const METRIC_LINKS: Record<DashboardMetric, { href?: string; permission?:
   lettersSent: { href: "/staff/letters?status=sent", permission: "supporters" },
   lettersReplied: { href: "/staff/letters?status=replied", permission: "supporters" },
   mpsSigned: { href: "/staff/politicians" },
-  eventRegistrations: { href: "/staff/supporters?registered=1", permission: "supporters" },
+  eventRegistrations: { href: "/staff/supporters?activity=registered", permission: "supporters" },
   eventsHeld: {},
   supportersAdded: { href: "/staff/supporters", permission: "supporters" },
-  unsubscribes: { href: "/staff/supporters?unsubscribed=1", permission: "supporters", worse: true },
+  unsubscribes: {
+    href: "/staff/supporters?subscription=luma-calendar:unsubscribed",
+    permission: "supporters",
+    worse: true,
+  },
 };
 
 /** Something waiting for a person, with where its button goes. */

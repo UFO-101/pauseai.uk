@@ -4,43 +4,50 @@ import { Field } from "@/components/ui/Field";
 import { FilterForm } from "@/components/ui/Form";
 import { staffCopy } from "@/lib/content/staff-interface";
 import type { SupportersSearch } from "@/lib/staff-search";
-import { SUPPORTER_SOURCES } from "@/lib/supporters";
+import { EMAIL_TOPIC_REASONS, EMAIL_TOPICS } from "@/lib/email-permissions";
+import { SUPPORTER_BADGES } from "@/lib/supporters";
 import styles from "./StaffForms.module.css";
 
 /**
  * Search and filter the supporters list. A GET form, so the URL holds the
- * filter. The table's column headings sort it; the form keeps that sort.
+ * filter. Each filter is named after the column it filters on. The table's
+ * column headings sort it; the form keeps that sort.
  */
 export default function SupporterFilters({ search }: { search: SupportersSearch }) {
   const copy = staffCopy.supporters.filters;
+  const { columns } = staffCopy.supporters;
+  const topics = staffCopy.supporters.detail.permissions.topics;
   return (
     <FilterForm method="get" action="/staff/supporters" className={styles.filters}>
       <Field label={copy.search}>
         <TextInput type="search" name="q" defaultValue={search.q} />
       </Field>
-      <Field label={copy.source}>
-        <Select name="source" defaultValue={search.source}>
-          <option value="">{copy.anySource}</option>
-          {SUPPORTER_SOURCES.map((source) => (
-            <option key={source} value={source}>
-              {staffCopy.supporters.sources[source]}
+      <Field label={columns.badges}>
+        <Select name="activity" defaultValue={search.activity}>
+          <option value="">{copy.anyActivity}</option>
+          {SUPPORTER_BADGES.map((badge) => (
+            <option key={badge} value={badge}>
+              {staffCopy.supporters.badges[badge]}
             </option>
           ))}
         </Select>
       </Field>
-      <Field label={copy.events}>
-        <Select name="registered" defaultValue={search.registered}>
-          <option value="">{copy.anyEvents}</option>
-          <option value="1">{copy.registered}</option>
+      <Field label={columns.subscriptions}>
+        <Select name="subscription" defaultValue={search.subscription}>
+          <option value="">{copy.anySubscription}</option>
+          {EMAIL_TOPICS.map((topic) => (
+            <optgroup key={topic} label={topics[topic]}>
+              {EMAIL_TOPIC_REASONS[topic].map((reason) => (
+                <option key={reason} value={`${topic}:${reason}`}>
+                  {copy.states[topic][reason]}
+                </option>
+              ))}
+            </optgroup>
+          ))}
+          <option value="blocked">{staffCopy.supporters.subscriptions.blocked}</option>
         </Select>
       </Field>
-      <Field label={copy.lists}>
-        <Select name="unsubscribed" defaultValue={search.unsubscribed}>
-          <option value="">{copy.anyList}</option>
-          <option value="1">{copy.unsubscribed}</option>
-        </Select>
-      </Field>
-      <Field label={copy.active}>
+      <Field label={columns.lastActive}>
         <Select name="active" defaultValue={search.active}>
           <option value="">{copy.anyTime}</option>
           {Object.entries(copy.activeWithin).map(([value, label]) => (

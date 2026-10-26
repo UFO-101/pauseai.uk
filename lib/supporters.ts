@@ -1,15 +1,19 @@
 // Supporters, as the staff pages show them: the shapes the server
 // (lib/server/supporters.ts) gives the components.
 import { staffCopy } from "./content/staff-interface";
-import type { EmailPermission } from "./email-permissions";
+import type { EmailPermission, EmailState } from "./email-permissions";
 import type { SortColumns, SortDirection } from "./staff-sort";
 
 /** Where a supporter's records come from (lib/server/supporter-sources.ts). */
 export const SUPPORTER_SOURCES = ["luma", "letter", "member"] as const;
 export type SupporterSource = (typeof SUPPORTER_SOURCES)[number];
 
-export function isSupporterSource(value: string): value is SupporterSource {
-  return (SUPPORTER_SOURCES as readonly string[]).includes(value);
+/** The lozenges in the list's Activities column, in its order: a member, follows the calendar, registered for events, wrote to their MP. */
+export const SUPPORTER_BADGES = ["member", "lumaContact", "registered", "letter"] as const;
+export type SupporterBadge = (typeof SUPPORTER_BADGES)[number];
+
+export function isSupporterBadge(value: string): value is SupporterBadge {
+  return (SUPPORTER_BADGES as readonly string[]).includes(value);
 }
 
 /** One row of the list: what's known of a supporter across their sources. */
@@ -96,17 +100,16 @@ export type SupporterSort = keyof typeof SUPPORTER_SORTS;
 export type SupporterFilter = {
   /** Over names, emails and phones. */
   search?: string;
-  source?: SupporterSource;
-  /** Registered for at least one event. */
-  registered?: boolean;
+  /** Has this lozenge in the Activities column. */
+  activity?: SupporterBadge;
   /** Last active within this many days, or longer ago than a year. */
   active?: "30" | "90" | "365" | "older";
   /** First sign-up from this day, yyyy-mm-dd. */
   from?: string;
   /** First sign-up up to this day, yyyy-mm-dd. */
   to?: string;
-  /** Unsubscribed from any topic, through its source's own unsubscribe. */
-  unsubscribed?: boolean;
+  /** Has this answer about a topic, or is blocked, at any of their addresses. */
+  subscription?: EmailState;
   sort: SupporterSort;
   dir: SortDirection;
   page: number;

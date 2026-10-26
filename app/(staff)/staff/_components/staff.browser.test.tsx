@@ -1938,9 +1938,9 @@ describe("SupporterFilters", () => {
       <SupporterFilters
         search={supportersSearch({
           q: "jane",
-          source: "luma",
+          activity: "registered",
+          subscription: "pauseai-updates:declined",
           active: "90",
-          registered: "1",
           sort: "name",
           dir: "desc",
         })}
@@ -1952,13 +1952,33 @@ describe("SupporterFilters", () => {
     const form = search.element().closest("form")!;
     expect(form.getAttribute("method")).toBe("get");
     expect(form.getAttribute("action")).toBe("/staff/supporters");
-    await expect.element(page.getByRole("combobox", { name: copy.source })).toHaveValue("luma");
-    await expect.element(page.getByRole("combobox", { name: copy.active })).toHaveValue("90");
+    const columns = staffCopy.supporters.columns;
+    await expect.element(page.getByRole("combobox", { name: columns.badges })).toHaveValue("registered");
+    await expect.element(page.getByRole("combobox", { name: columns.lastActive })).toHaveValue("90");
     // The headings sort; filtering keeps their sort.
     expect(new FormData(form).get("sort")).toBe("name");
     expect(new FormData(form).get("dir")).toBe("desc");
-    await expect.element(page.getByRole("combobox", { name: copy.events })).toHaveValue("1");
-    await expect.element(page.getByRole("combobox", { name: copy.lists })).toHaveValue("");
+    const subscriptions = page.getByRole("combobox", { name: columns.subscriptions });
+    await expect.element(subscriptions).toHaveValue("pauseai-updates:declined");
+    // Each topic's reasons, under its name, then a block, which is every topic's.
+    const select = subscriptions.element() as HTMLSelectElement;
+    expect([...select.querySelectorAll("optgroup")].map((group) => group.label)).toEqual(
+      Object.values(staffCopy.supporters.detail.permissions.topics),
+    );
+    expect([...select.options].map((option) => option.value)).toEqual([
+      "",
+      "luma-calendar:following",
+      "luma-calendar:unsubscribed",
+      "luma-calendar:not-following",
+      "pauseai-updates:asked",
+      "pauseai-updates:joined",
+      "pauseai-updates:declined",
+      "pauseai-updates:unsubscribed",
+      "pauseai-updates:removed",
+      "events-and-ways-to-help:asked",
+      "events-and-ways-to-help:declined",
+      "blocked",
+    ]);
   });
 });
 
@@ -2046,16 +2066,16 @@ describe("SupportersTable", () => {
     const copy = staffCopy.supporters;
     await render(
       <SupportersTable
-        search={supportersSearch({ source: "luma", sort: "events", dir: "desc" })}
+        search={supportersSearch({ activity: "letter", sort: "events", dir: "desc" })}
         page={{ supporters: [exampleSupporterRows[0]], total: 1, pages: 1 }}
       />,
     );
     const events = page.getByRole("link", { name: copy.columns.events });
-    await expect.element(events).toHaveAttribute("href", "/staff/supporters?source=luma&sort=events&dir=asc");
+    await expect.element(events).toHaveAttribute("href", "/staff/supporters?activity=letter&sort=events&dir=asc");
     expect(events.element().closest("th")!.getAttribute("aria-sort")).toBe("descending");
     await expect
       .element(page.getByRole("link", { name: copy.columns.name }))
-      .toHaveAttribute("href", "/staff/supporters?source=luma&sort=name&dir=asc");
+      .toHaveAttribute("href", "/staff/supporters?activity=letter&sort=name&dir=asc");
   });
 
   it("on the first of one page, has no paging, and says when nobody is found", async () => {
