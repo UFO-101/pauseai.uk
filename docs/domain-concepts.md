@@ -110,7 +110,8 @@ Where they come from:
   public event on our calendar into `luma_events`, each registered guest
   into `luma_guests` (phone, a postcode answer, `utm_source`; never Luma's
   invited-only rows) and every Luma user into `luma_people`, with when
-  they joined the calendar as a contact. Luma's own IDs are the keys, and
+  they joined the calendar as a contact and when a read of the contacts
+  last listed them. Luma's own IDs are the keys, and
   only the import writes these tables. The site's events pages still read
   Luma live.
 - **Letters.** The sender of each letter (`sender_name`, `sender_email`,
