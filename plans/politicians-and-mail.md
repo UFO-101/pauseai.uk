@@ -58,7 +58,7 @@ The flags we import, as one status each:
 
 Not imported: Responded and Declined, the per-person PDFs and briefings,
 the AI "Custom sentence", Recommended, Important target, Personal
-connection and Notes. (Question 4 asks about the last four.)
+connection and Notes. (Question 3 asks about the last four.)
 
 Emails, by mailing ticked:
 
@@ -157,17 +157,19 @@ Steps, a commit or more each:
    the hold for big changes. A name change on an existing record is held
    for a person to check, since it may be Airtable reusing a record for
    someone new, which would move the old person's history to them.
-   Airtable's Test records aren't imported (question 5).
+   Airtable's Test records aren't imported (question 4).
 4. **Signed statuses** from the four flags above, owned by `airtable`
    (`updated_by`), as the ControlAI import owns its own: the sync changes
    or removes only those. `lib/server/signatory-import.ts` goes, folded
    into this.
 5. **Emails sync** into `pauseai_letters`, nightly with the politicians,
    adding rows by Airtable record ID and never touching rows the site
-   sent. The unticked Jun–Aug 2025 emails get `deepmind-letter`
-   (question 1).
+   sent. The unticked Jun–Aug 2025 emails get `deepmind-letter`: 1,304 of the
+   1,307 politicians with a DeepMind Letter PDF got them, and nobody else
+   did, most three or four each (the letter and its follow-ups, which
+   can't be told apart but by date).
 6. **One-off: Web form emails** into `supporter_letters`, so their
-   senders become supporters with the consent they gave (question 2).
+   senders become supporters with the consent they gave (question 1).
 7. **One-off: Go to Parliament** onto politicians: a status on the ask
    `go-to-parliament-oct-2026` (Tuesday 20 October 2026, the House of
    Commons) for each MP a constituent was booked to
@@ -331,21 +333,19 @@ erasure, to agree before building:
 
 ## Open questions
 
-1. **The 4,369 unticked emails** of Jun–Aug 2025: the DeepMind letter? A
-   question for Joseph.
-2. **Which web form emails to import.** Only those sent ("Email Sent Time"
+1. **Which web form emails to import.** Only those sent ("Email Sent Time"
    set, not Spam, not "Invalid, can't send")? And contact consent "Yes"
    becomes `contact_consent`, blank becomes no?
-3. **Web form letters' campaigns.** Every letter now names an ask, so the
+2. **Web form letters' campaigns.** Every letter now names an ask, so the
    imported DeepMind, Liability and Frontier AI letters have one. A
    supporter's letter also names the site campaign it was written through;
    the imported ones have none. Make that campaign nullable for imported
    letters, or add the old campaigns as campaigns with no page?
-4. **Airtable's judgement fields**: Recommended, Important target,
+3. **Airtable's judgement fields**: Recommended, Important target,
    Personal connection, Notes. Import them as columns on politicians? They
    decide who gets mailed, but they're the policy team's opinions, edited
    in Airtable.
-5. **Airtable's Test records**: skip them and keep our own test MPs
+4. **Airtable's Test records**: skip them and keep our own test MPs
    (`lib/test-mps.json`)?
-6. **The Google Cloud project**: who creates it? It needs a pauseai.uk
+5. **The Google Cloud project**: who creates it? It needs a pauseai.uk
    Workspace admin to own it.
