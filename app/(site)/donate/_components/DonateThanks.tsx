@@ -2,7 +2,7 @@ import type { ThankedDonor } from "@/lib/server/outside-services/stripe";
 import styles from "./DonateThanks.module.css";
 
 /** How many of the latest donors the box names. */
-export const LATEST = 5;
+const LATEST = 5;
 
 const MONTH = new Intl.DateTimeFormat("en-GB", { month: "long", year: "numeric", timeZone: "Europe/London" });
 
