@@ -1,10 +1,12 @@
 import Image from "next/image";
 import Link from "next/link";
+import type { ThankedDonor } from "@/lib/server/outside-services/stripe";
 import DonateForm from "./DonateForm";
+import DonateThanks from "./DonateThanks";
 import styles from "./DonateIntro.module.css";
 
-// The donate form, with why to give beside it.
-export default function DonateIntro() {
+// The donate form and the latest donors under it, with why to give beside them.
+export default function DonateIntro({ donors }: { donors: ThankedDonor[] }) {
   return (
     <section className={styles.intro}>
       <div className="container">
@@ -66,6 +68,7 @@ export default function DonateIntro() {
 
           <div className={styles.form}>
             <DonateForm />
+            <DonateThanks donors={donors} />
           </div>
         </div>
       </div>

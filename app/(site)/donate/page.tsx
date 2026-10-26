@@ -1,4 +1,5 @@
 import { pageMetadata } from "@/lib/metadata";
+import { getThankedDonors } from "@/lib/server/outside-services/stripe";
 import DonateIntro from "./_components/DonateIntro";
 import DonateBottom from "./_components/DonateBottom";
 
@@ -13,11 +14,13 @@ export const metadata = pageMetadata({
   },
 });
 
-export default function DonatePage() {
+// The donors under the form come from Stripe (getThankedDonors, cached for an hour).
+export default async function DonatePage() {
+  const donors = await getThankedDonors();
   return (
     <>
       <main>
-        <DonateIntro />
+        <DonateIntro donors={donors} />
 
         <DonateBottom />
       </main>

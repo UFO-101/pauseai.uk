@@ -7,6 +7,8 @@ import PostList from "@/app/(site)/blog/_components/PostList";
 import DonateBottom from "@/app/(site)/donate/_components/DonateBottom";
 import DonateForm from "@/app/(site)/donate/_components/DonateForm";
 import DonateIntro from "@/app/(site)/donate/_components/DonateIntro";
+import DonateThanks from "@/app/(site)/donate/_components/DonateThanks";
+import { exampleDonors } from "@/app/(site)/donate/_components/DonateThanks.examples";
 import FindYourGroup from "@/app/(site)/events/_components/FindYourGroup";
 import { findPost, postsNewestFirst, type BlogPost } from "@/lib/content/blog";
 import type { Group } from "../_components/types";
@@ -77,7 +79,13 @@ export const blogDonateEvents: Group = {
     {
       name: "DonateIntro",
       file: "app/(site)/donate/_components/DonateIntro.tsx",
-      variants: [{ label: "Why to give, beside the form", render: () => <DonateIntro /> }],
+      variants: [
+        {
+          label: "Why to give, beside the form and the latest donors",
+          render: () => <DonateIntro donors={exampleDonors} />,
+        },
+        { label: "Before anyone has said yes", render: () => <DonateIntro donors={[]} /> },
+      ],
     },
     {
       name: "DonateForm",
@@ -88,6 +96,28 @@ export const blogDonateEvents: Group = {
           render: () => (
             <div className="container" style={{ maxWidth: 480 }}>
               <DonateForm />
+            </div>
+          ),
+        },
+      ],
+    },
+    {
+      name: "DonateThanks",
+      file: "app/(site)/donate/_components/DonateThanks.tsx",
+      variants: [
+        {
+          label: "Six donors, more than fit, so the list rolls",
+          render: () => (
+            <div className="container" style={{ maxWidth: 480 }}>
+              <DonateThanks donors={exampleDonors} />
+            </div>
+          ),
+        },
+        {
+          label: "One donor",
+          render: () => (
+            <div className="container" style={{ maxWidth: 480 }}>
+              <DonateThanks donors={exampleDonors.slice(0, 1)} />
             </div>
           ),
         },

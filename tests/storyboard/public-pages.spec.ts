@@ -44,6 +44,7 @@ const HYDRATION = /hydrat|did not match|server rendered HTML/i;
 // Text a page shows only when it really renders tests/fixtures rather than
 // the live APIs, so the other flows are checking a known state.
 const FIXTURE_TEXT: Record<string, string> = {
+  "/donate": "Ada Pemberton",
   "/events": "PauseAI London: Protest at Parliament",
   "/manchester": "PauseAI Manchester Social",
 };

@@ -18,6 +18,8 @@ import airtableSignatories from "./airtable-signatories.json";
 import airtableMembers from "./airtable-members.json";
 import parliamentMembers from "./parliament-members.json";
 import controlaiLetter from "./controlai-letter.json";
+import stripeCheckoutSessions from "./stripe-checkout-sessions.json";
+import stripePaymentIntents from "./stripe-payment-intents.json";
 
 /** A UUID-shaped id that depends only on `text`. */
 function fixtureUuid(text: string): string {
@@ -117,6 +119,16 @@ export function fixtureResponse(url: string, init?: RequestInit): Response | und
     return json({
       value: [{ type: "Parliamentary office", typeId: 1, email: `mp${contact[1]}.office@parliament.uk ` }],
     });
+  }
+  if (hostname === "api.stripe.com" && pathname === "/v1/checkout/sessions") {
+    // Completed checkouts: donors who said yes, one who said no, one who gave
+    // twice, and one from before the wall of thanks question was asked.
+    return json(stripeCheckoutSessions);
+  }
+  if (hostname === "api.stripe.com" && pathname === "/v1/payment_intents") {
+    // Payments: monthly ones for donors who said yes and one who said no, a
+    // failed one, and a ticket, which isn't a gift.
+    return json(stripePaymentIntents);
   }
   // ControlAI's letter page, and its PDF: made by pdf-lib, naming the
   // fixture MPs, a peer, and names nobody has.
