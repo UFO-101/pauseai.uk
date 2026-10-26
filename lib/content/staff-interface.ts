@@ -161,6 +161,16 @@ export const staffCopy = {
           declined: "Events: didn't agree",
         },
       } as Record<string, Record<string, string>>,
+      anyTime: "Any time",
+      activeWithin: {
+        "30": "In the last 30 days",
+        "90": "In the last 90 days",
+        "365": "In the last year",
+        older: "Over a year ago",
+      } as Record<string, string>,
+      from: "First sign-up from",
+      to: "First sign-up to",
+      filter: "Filter",
     },
     columns: {
       name: "Name",
@@ -354,35 +364,73 @@ export const staffCopy = {
     "ni-assembly": "Northern Ireland Assembly",
     other: "Other",
   } as Record<string, string>,
+  // A person's answer to an ask (lib/asks.ts): a letter's, then an event's.
   statuses: {
     signed: "Signed",
     none: "Not signed",
+    going: "⁂ Going",
+    tentative: "⁂ Tentative",
+    meeting_staff: "⁂ Staff meeting instead",
+    tentative_staff: "⁂ Staff tentative",
+    declined: "⁂ Declined",
+    declined_surgery: "⁂ Declined, offered a surgery",
+    passed_on: "⁂ Passed it on",
+    // No answer to an event's invitation.
+    noAnswer: "⁂ No answer",
+  } as Record<string, string>,
+  // Whether a notable person is in office.
+  personStatuses: {
+    in_office: "⁂ In office",
+    died: "⁂ Died",
+    retired: "⁂ Retired",
+    left_office: "⁂ No longer in office",
+  } as Record<string, string>,
+  countries: {
+    england: "⁂ England",
+    scotland: "⁂ Scotland",
+    wales: "⁂ Wales",
+    "northern-ireland": "⁂ Northern Ireland",
   } as Record<string, string>,
   politicians: {
     title: "Politicians",
-    // The search box's label: what it searches.
-    search: "Name, constituency, party or email",
+    search: "Search",
+    searchButton: "Filter",
     allHouses: "All houses",
-    allParties: "All parties",
-    anyCampaign: "Any campaign",
-    // In the Campaigns filter: everyone with a status for any campaign.
-    signedAny: "Signed any",
+    // The filters: in office or not, party, Airtable's markers, and an answer to an ask.
+    status: "⁂ Status",
+    anyStatus: "⁂ Any status",
+    party: "⁂ Party",
+    anyParty: "⁂ Any party",
+    flag: "⁂ Marked",
+    anyFlag: "⁂ Anything",
+    flags: {
+      important: "⁂ Important target",
+      connection: "⁂ Personal connection",
+      removed: "⁂ No longer in Airtable",
+    } as Record<string, string>,
+    ask: "⁂ Ask",
+    anyAsk: "⁂ Any ask",
+    answer: "⁂ Answer",
+    // With an ask chosen: anyone who answered, a given answer, or nobody who answered.
+    anyAnswer: "⁂ Answered",
+    noAnswer: "⁂ Not answered",
     none: "None found.",
     testMp: "Test",
-    notSitting: "No longer sitting",
     // The counts in the list: letters written to them, and how many of those got a reply.
     columns: {
       letters: "Letters",
       replies: "Letters answered",
+      status: "⁂ Status",
+      // The letters they've signed.
+      signed: "⁂ Signed",
     },
     noEmail: "No email",
-    // On a politician whose address is blocked (/staff/politicians/blocked-emails).
+    // On a politician whose address is blocked (/staff/politicians/blocked-emails), and the filter for them.
     emailBlocked: "Email blocked",
-    // The button in each campaign's column, and the bill's column, which
-    // only the import from ControlAI's letter sets.
+    anyEmail: "All",
+    // The button on an ask staff record by hand.
     markSigned: "Mark as signed",
     unmarkSigned: "Remove signature",
-    signedControlAi: "Signed ControlAI letter",
   },
   fields: {
     name: "Name",
@@ -393,18 +441,33 @@ export const staffCopy = {
     house: "House",
   },
   politician: {
-    statusesTitle: "Campaigns",
+    statusesTitle: "⁂ Asks",
     // The box at the top of their page: where they came from, and each campaign's status.
     source: "Source",
     sources: {
-      airtable: "Airtable's MPs",
+      airtable: "⁂ Airtable's UK Parliamentarians",
       staff: "Added by staff",
       test: "A test MP",
     },
-    // A status: who set it and when; the campaign's title heads the line.
+    // A status: who set it and when; the ask's title heads the line. An import's is "from" it.
     setBy: (who: string, when: string) => `set by ${who}, ${when}`,
+    fromImport: { airtable: "⁂ from Airtable", controlai: "⁂ from ControlAI's letter" } as Record<string, string>,
+    // The form on an ask staff record: its name, the note's field, and Save for an event's answer.
+    setStatus: "⁂ Set status",
+    note: "⁂ Note",
+    save: "⁂ Save",
+    // The fields of the box at the top.
+    status: "⁂ Status",
+    country: "⁂ Country",
+    city: "⁂ City",
+    notes: "⁂ Notes",
+    // Airtable's markers, as tags by their name.
+    importantTarget: "⁂ Important target",
+    personalConnection: "⁂ Personal connection",
+    // When their record was no longer in Airtable.
+    airtableRemoved: (when: string) => `⁂ No longer in Airtable since ${when}`,
     historyTitle: "History",
-    // A campaign status set or cleared, in the history: around the campaign's name, which links to its page.
+    // A status set or cleared, in the history: around the ask's name.
     statusSet: (status: string) => ({ before: `${status} '`, after: "'" }),
     statusCleared: { before: "No longer marked as signed '", after: "'" },
     noHistory: "Nothing yet.",
@@ -417,16 +480,14 @@ export const staffCopy = {
       "unsigned-letter-replied": "Answered a letter",
       "add politician": "Added",
       "edit politician": "Details edited",
-      "remove politician": "No longer sitting",
+      "remove politician": "⁂ No longer in Airtable",
       "block address": "Address blocked",
       "unblock address": "Address unblocked",
     } as Record<string, string>,
     // On an MP from Airtable, after the source, which links to their record there.
     editInAirtable: ", update name / email there.",
-    // On the bill's row of the campaigns panel: its status isn't set by hand.
-    fromControlAi: "set each night from ControlAI's letter",
-    // On each row of the campaigns panel: the link to the campaign's public page.
-    campaignPage: "Campaign page",
+    // On an ask that isn't set by hand: where its statuses come from.
+    importedAsk: "⁂ set each night by an import",
     // Under their name: what they are, in their house, and where for.
     roles: {
       commons: "MP",
@@ -436,8 +497,8 @@ export const staffCopy = {
       "ni-assembly": "MLA",
       other: "Politician",
     } as Record<string, string>,
-    role: (role: string, constituency: string | null, sitting: boolean) =>
-      `${sitting ? "" : "Formerly "}${role}${constituency ? ` for ${constituency}` : ""}`,
+    role: (role: string, constituency: string | null, inOffice: boolean) =>
+      `${inOffice ? "" : "Formerly "}${role}${constituency ? ` for ${constituency}` : ""}`,
     notFound: "Politician not found.",
     // Under their name, when their address is blocked: what's happened, what to check, and the form.
     blocked: {
@@ -479,6 +540,7 @@ export const staffCopy = {
     // Instead of the history, when nothing has bounced or been complained about.
     noProblems: "Nothing has bounced or been marked as spam.",
     allKinds: "All",
+    filter: "Filter",
     kinds: {
       hard: "Bounced",
       soft: "Soft bounce",
@@ -689,7 +751,8 @@ export const staffCopy = {
   letters: {
     title: "Letters to MPs",
     allStatuses: "All",
-    search: "Sender or MP",
+    filter: "Filter",
+    search: "Sender, MP or subject",
     // The Answered filter: whether the MP replied.
     answered: { yes: "Answered", no: "Not answered" },
     // The titles of a letter's own page, and of a supporter's letters' page.
@@ -717,9 +780,7 @@ export const staffCopy = {
     },
     consent: { yes: "Yes", no: "No" },
   },
-  // The button beside a list's search box; its other filters apply as soon as they're chosen.
-  search: "Search",
-  // After a list's filters: the list with none.
+  // Beside a list's filter button: the list with none.
   resetFilters: "Reset filters",
   // Under a list of more than one page.
   paging: {

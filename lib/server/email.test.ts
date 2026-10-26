@@ -1,7 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { http, HttpResponse } from "msw";
 import { server } from "@/tests/fixtures/msw";
-import { addTestMp, addTestPolitician, describeWithDatabase, useDatabaseUpTo, useTestDatabase } from "@/tests/database";
+import {
+  addTestLetter,
+  addTestMp,
+  addTestPolitician,
+  describeWithDatabase,
+  useDatabaseUpTo,
+  useTestDatabase,
+} from "@/tests/database";
 import { migrate } from "@/scripts/db-migrate.mjs";
 import { query } from "./db";
 import {
@@ -207,11 +214,7 @@ describeWithDatabase("listBlocks, blockOn and recentProblems", () => {
   it("list each blocked address with whose it is, the letter that found it out, and emails not sent since", async () => {
     const mp = await addTestMp();
     const polly = await addTestPolitician({ email: "Test-MP@example.org" });
-    const [{ id: letterId }] = await query<{ id: number }>(
-      `INSERT INTO letters (campaign, politician_id, sender_name, sender_email, sender_address, sender_postcode, contact_consent, subject, reply_hash, status)
-       VALUES ('regulate-letter-pm', $1, 'Jane', 'jane@example.com', 'x', 'ZZ9 9ZZ', false, 'S', 'h', 'sent') RETURNING id::int AS id`,
-      [mp],
-    );
+    const letterId = await addTestLetter({ politicianId: mp, senderName: "Jane", senderEmail: "jane@example.com" });
     await query(
       `INSERT INTO email_sends (at, purpose, letter_id, address, outcome, message_id)
        VALUES (now() - interval '1 day', 'letter', $1, 'test-mp@example.org', 'sent', 'msg-1')`,
@@ -278,7 +281,7 @@ describeWithDatabase("listBlocks, blockOn and recentProblems", () => {
     expect(await recentProblems("others", 1)).toHaveLength(1);
 
     // An address no longer a politician's moves to the other side.
-    await query("UPDATE politicians SET email = NULL WHERE email ILIKE 'test-mp@example.org'");
+    await query("UPDATE notable_people SET email = NULL WHERE email ILIKE 'test-mp@example.org'");
     expect(await listBlocks("politicians")).toEqual([]);
     expect((await listBlocks("others")).map((b) => b.address)).toEqual(["other@example.org", "test-mp@example.org"]);
   });

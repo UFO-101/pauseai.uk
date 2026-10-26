@@ -3,9 +3,11 @@ import { campaigns, copy } from "@/lib/content/email-your-mp";
 import {
   addressLines,
   campaignBySlug,
+  campaignForAsk,
   campaignPath,
   campaignToMoveTo,
   chooseCampaign,
+  trackedAsks,
   trackedCampaigns,
   draftLetter,
   isDone,
@@ -41,19 +43,25 @@ describe("campaigns", () => {
   });
 
   it("counts a campaign done only with the status it asks for", () => {
-    expect(isDone(letterToPm, { [letterToPm.slug]: "signed" })).toBe(true);
-    expect(isDone(letterToPm, { [bill.slug]: "signed" })).toBe(false);
+    expect(isDone(letterToPm, { [letterToPm.ask!]: "signed" })).toBe(true);
+    expect(isDone(letterToPm, { [bill.ask!]: "signed" })).toBe(false);
     expect(isDone(letterToPm, {})).toBe(false);
   });
 
   it("never counts a campaign without a done status as done", () => {
     expect(bill.done).toBeUndefined();
     expect(isDone(bill, {})).toBe(false);
-    expect(isDone(bill, { [bill.slug]: "signed" })).toBe(false);
+    expect(isDone(bill, { [bill.ask!]: "signed" })).toBe(false);
   });
 
-  it("leaves campaigns nobody has done out of the staff interface", () => {
+  it("leaves campaigns nobody has done out of the staff interface, which records their asks", () => {
     expect(trackedCampaigns).toEqual([letterToPm]);
+    expect(trackedAsks).toEqual(["frontier-ai-letter"]);
+  });
+
+  it("finds the campaign that makes an ask", () => {
+    expect(campaignForAsk("controlai-statement")).toBe(bill);
+    expect(campaignForAsk("deepmind-letter")).toBeUndefined();
   });
 
   it("ends with a campaign nobody has done, so there's always one to move on to", () => {
@@ -62,13 +70,13 @@ describe("campaigns", () => {
 
   it("picks the first campaign the MP hasn't done", () => {
     expect(chooseCampaign({})).toBe(letterToPm);
-    expect(chooseCampaign({ [letterToPm.slug]: "signed" })).toBe(bill);
+    expect(chooseCampaign({ [letterToPm.ask!]: "signed" })).toBe(bill);
   });
 
   it("moves on from a campaign the MP has done to the first they haven't", () => {
     expect(campaignToMoveTo(letterToPm, {})).toBeUndefined();
-    expect(campaignToMoveTo(letterToPm, { [letterToPm.slug]: "signed" })).toBe(bill);
-    expect(campaignToMoveTo(bill, { [letterToPm.slug]: "signed", [bill.slug]: "signed" })).toBeUndefined();
+    expect(campaignToMoveTo(letterToPm, { [letterToPm.ask!]: "signed" })).toBe(bill);
+    expect(campaignToMoveTo(bill, { [letterToPm.ask!]: "signed", [bill.ask!]: "signed" })).toBeUndefined();
   });
 
   it("has a page for each campaign", () => {
@@ -87,7 +95,7 @@ describe("letters", () => {
   });
 
   it("thanks an MP who signed ControlAI's letter, in the bill's letter only, and still asks them to the debate", () => {
-    const signed = { ...details, statuses: { [bill.slug]: "signed" as const } };
+    const signed = { ...details, statuses: { [bill.ask!]: "signed" as const } };
     expect(toText(draftLetter(bill, signed, ADDRESS))).toContain(copy.sobelBill.letterThanks);
     expect(toText(draftLetter(bill, signed, ADDRESS))).toContain("second reading debate");
     expect(toText(draftLetter(bill, details, ADDRESS))).not.toContain(copy.sobelBill.letterThanks);

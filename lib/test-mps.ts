@@ -21,7 +21,7 @@ export type TestMp = {
   noEmail?: boolean;
   /** Always this address, whatever TEST_MP_EMAIL is. */
   email?: string;
-  /** What they've done when first added, by campaign slug. Staff can change it. */
+  /** What they've done when first added, by ask (lib/asks.ts). Staff can change it. */
   statuses: Record<string, "signed">;
 };
 

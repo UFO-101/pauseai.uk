@@ -29,7 +29,8 @@ import { BASE, emailFrame, expect, flowStorageState, frame, test } from "./fixtu
 // tests/steps.ts): there's no login bypass.
 
 const STAFF_PAGES = ROUTES.filter((route) => route.startsWith("/staff") && !route.startsWith("/staff/login"));
-const [pm] = campaigns;
+/** The letter to the PM's ask, by its title in the asks table. */
+const PM_LETTER = "Our open letter to the Prime Minister on frontier AI";
 
 /** This flow's own staff address: flows run alongside each other, and share the outbox. Short, as real ones are. */
 const staffEmail = () => `staff-${test.info().testId.replace(/\W/g, "").slice(-8)}@pauseai.uk`;
@@ -68,7 +69,7 @@ test("staff API routes and Server Actions, without a session, change nothing", a
   // A Server Action is a POST to the page, naming the action in a header.
   const action = await request.post(`${BASE}/staff/politicians`, {
     headers: { "Next-Action": "0000000000000000000000000000000000000000" },
-    multipart: { politicianId: "1", campaign: pm.slug, signed: "1" },
+    multipart: { politicianId: "1", ask: "frontier-ai-letter", status: "signed" },
     maxRedirects: 0,
   });
   expect(action.status()).toBe(307);
@@ -149,18 +150,20 @@ test("staff log in, set a status that shows on /campaigns, and log out", async (
   await expect(page.getByRole("link", { name: "Testy McTestface MP" })).toBeVisible();
   await frame(page, "the politicians list");
 
-  // Signed on their page, in the campaign's row of the panel beside their details.
+  // Signed on their page, in the ask's row of the panel beside their details, with a note.
   await page.getByRole("link", { name: "Polly Placeholder" }).click();
-  const card = page.getByRole("group", { name: pm.title });
+  const card = page.getByRole("group", { name: PM_LETTER });
   await expect(card.getByText(staffCopy.statuses.none)).toBeVisible();
-  await frame(page, "Polly Placeholder's page: the campaigns beside her details");
+  await frame(page, "Polly Placeholder's page: the asks beside her details");
+  await card.getByLabel(staffCopy.politician.note).fill("Told us at the march");
   await card.getByRole("button", { name: staffCopy.politicians.markSigned }).click();
   await expect(card.getByText(new RegExp(`^${staffCopy.statuses.signed}`))).toBeVisible();
+  await expect(card.getByText(/Told us at the march/)).toBeVisible();
   await expect(card.getByRole("button", { name: staffCopy.politicians.unmarkSigned })).toBeVisible();
   await frame(page, "Polly Placeholder marked as signed");
   await page.getByRole("link", { name: staffCopy.nav.politicians }).first().click();
   const pollyRow = page.getByRole("row").filter({ hasText: "Polly Placeholder" });
-  await expect(pollyRow).toContainText(staffCopy.statuses.signed);
+  await expect(pollyRow).toContainText(PM_LETTER);
   await expect(pollyRow.getByRole("button")).toHaveCount(0);
   await frame(page, "the list shows it, with no buttons");
 
@@ -185,9 +188,7 @@ test("staff log in, set a status that shows on /campaigns, and log out", async (
   await expect(page.getByText(/6 names/)).toBeVisible();
   await frame(page, "ControlAI's letter imported");
   await page.goto(`${BASE}/staff/politicians`);
-  await expect(page.getByRole("row").filter({ hasText: "Polly Placeholder" })).toContainText(
-    staffCopy.politicians.signedControlAi,
-  );
+  await expect(page.getByRole("row").filter({ hasText: "Polly Placeholder" })).toContainText("ControlAI's statement");
   await frame(page, "the politicians list says who signed ControlAI's letter");
 
   // The fixture Airtable gives Polly Placeholder an email Parliament doesn't list.

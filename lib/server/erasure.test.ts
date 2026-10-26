@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { query } from "@/lib/server/db";
-import { addTestMp, describeWithDatabase, useTestDatabase } from "@/tests/database";
+import { addTestLetter, addTestMp, describeWithDatabase, useTestDatabase } from "@/tests/database";
 import { eraseSupporter } from "./erasure";
 import { importLuma } from "./luma-import";
 import { importMembers } from "./members-import";
@@ -16,11 +16,13 @@ async function janeWithEverything(mp: number): Promise<number> {
   // Jane: a Luma user with registrations, a member, a letter with a reply forwarded to her, a bounce record, and an opt-out.
   await importLuma("test");
   await importMembers("test");
-  const [{ id: letterId }] = await query<{ id: number }>(
-    `INSERT INTO letters (campaign, politician_id, sender_name, sender_email, sender_address, sender_postcode, contact_consent, subject, reply_hash, status)
-     VALUES ('regulate-letter-pm', $1, 'Jane', 'jane.fixture@example.com', 'x', 'ZZ9 9ZZ', true, 'S', 'h1', 'sent') RETURNING id::int AS id`,
-    [mp],
-  );
+  const letterId = await addTestLetter({
+    politicianId: mp,
+    senderName: "Jane",
+    senderEmail: "jane.fixture@example.com",
+    contactConsent: true,
+    replyHash: "h1",
+  });
   await query("INSERT INTO letter_events (letter_id, status, details) VALUES ($1, 'sent', '{}')", [letterId]);
   await query(
     `INSERT INTO email_sends (purpose, letter_id, address, outcome, message_id) VALUES
@@ -54,7 +56,7 @@ describeWithDatabase("eraseSupporter", () => {
     expect(await query("SELECT 1 FROM supporters WHERE id = $1", [id])).toEqual([]);
     expect(await query("SELECT 1 FROM luma_people WHERE user_id = 'usr-fixture-1'")).toEqual([]);
     expect(await query("SELECT 1 FROM luma_guests WHERE user_id = 'usr-fixture-1'")).toEqual([]);
-    expect(await query("SELECT 1 FROM letters WHERE sender_email = 'jane.fixture@example.com'")).toEqual([]);
+    expect(await query("SELECT 1 FROM supporter_letters WHERE sender_email = 'jane.fixture@example.com'")).toEqual([]);
     expect(await query("SELECT count(*)::int AS n FROM letter_events")).toEqual([{ n: 0 }]);
     // The letter's own send and the copy to the shared inbox stay, without their letter; the one to Jane goes.
     expect(await query("SELECT address, letter_id FROM email_sends ORDER BY id")).toEqual([

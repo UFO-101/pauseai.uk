@@ -73,7 +73,7 @@ describe("EmailYourMpTool", () => {
   });
 
   it("goes on to the next campaign's page if the MP has done this one, saying where it came from", async () => {
-    respond = async () => Response.json({ ok: true, mp: MP, statuses: { [letterToPm.slug]: "signed" } });
+    respond = async () => Response.json({ ok: true, mp: MP, statuses: { [letterToPm.ask!]: "signed" } });
     await render(<EmailYourMpTool campaignSlug={letterToPm.slug} />);
     await lookUp();
 
@@ -100,7 +100,7 @@ describe("EmailYourMpTool", () => {
 
   it("moves on from the PM letter to the bill even with a status for the bill, as nobody has done that", async () => {
     respond = async () =>
-      Response.json({ ok: true, mp: MP, statuses: { [letterToPm.slug]: "signed", [bill.slug]: "signed" } });
+      Response.json({ ok: true, mp: MP, statuses: { [letterToPm.ask!]: "signed", [bill.ask!]: "signed" } });
     await render(<EmailYourMpTool campaignSlug={letterToPm.slug} />);
     await lookUp();
 
@@ -111,7 +111,7 @@ describe("EmailYourMpTool", () => {
     vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
       throw new DOMException("blocked", "SecurityError");
     });
-    respond = async () => Response.json({ ok: true, mp: MP, statuses: { [letterToPm.slug]: "signed" } });
+    respond = async () => Response.json({ ok: true, mp: MP, statuses: { [letterToPm.ask!]: "signed" } });
     await render(<EmailYourMpTool campaignSlug={letterToPm.slug} />);
     await lookUp();
 

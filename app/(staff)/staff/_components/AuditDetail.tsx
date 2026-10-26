@@ -146,7 +146,7 @@ export default function AuditDetail({ change, airtableTable }: { change: LoggedC
       break;
   }
   if (change.action === "set status") {
-    take("status", "campaign", "date");
+    take("status", "ask", "campaign", "date");
     const words =
       details.status === null
         ? staffCopy.politician.statusCleared
@@ -154,7 +154,8 @@ export default function AuditDetail({ change, airtableTable }: { change: LoggedC
     lead.push(
       <>
         {words.before}
-        <CampaignName slug={text("campaign")} />
+        {/* By ask's slug, or, logged before asks, by campaign. */}
+        {details.ask ? text("ask") : <CampaignName slug={text("campaign")} />}
         {words.after}
         {text("date") && `, ${text("date")}`}
       </>,

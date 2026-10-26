@@ -4,7 +4,15 @@ import { useEffect, useId, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { copy } from "@/lib/content/email-your-mp";
-import { campaignBySlug, campaignPath, campaignToMoveTo, isDone, type Mp, type MpStatuses } from "@/lib/email-your-mp";
+import {
+  campaignBySlug,
+  campaignForAsk,
+  campaignPath,
+  campaignToMoveTo,
+  isDone,
+  type Mp,
+  type MpStatuses,
+} from "@/lib/email-your-mp";
 import type { Place } from "@/lib/events";
 import { TEST_MPS, type TestMp } from "@/lib/test-mps";
 import { readLookup, saveLookup } from "./draft";
@@ -41,7 +49,7 @@ function testMpLine(mp: TestMp): string {
     ? [copy.lookup.testMpNoEmail]
     : mp.email
       ? [copy.lookup.testMpBounces]
-      : Object.keys(mp.statuses).map((slug) => copy.lookup.testMpSigned(campaignBySlug(slug)!.title));
+      : Object.keys(mp.statuses).map((ask) => copy.lookup.testMpSigned(campaignForAsk(ask)!.title));
   return `${postcode} (${mp.name})${purpose.length ? `: ${purpose.join(", ")}` : ""}`;
 }
 

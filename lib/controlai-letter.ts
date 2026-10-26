@@ -5,9 +5,11 @@
 // in nightly, and nobody edits that status by hand. The caller fetches and
 // extracts the text; this is the parsing and the matching.
 
+import { CONTROLAI_STATEMENT_ASK } from "./asks";
+
 export const CONTROLAI_LETTER_PAGE = "https://controlai.org/uk-pm-letter";
 
-/** The campaign whose status the letter sets. */
+/** The campaign for the bill, whose ask is the letter. */
 export const SOBEL_BILL_CAMPAIGN = "support-sobel-bill";
 
 /**
@@ -16,7 +18,7 @@ export const SOBEL_BILL_CAMPAIGN = "support-sobel-bill";
  * changes what its page and letter say.
  */
 export function signedControlAiLetter(statuses: Partial<Record<string, string>>): boolean {
-  return statuses[SOBEL_BILL_CAMPAIGN] === "signed";
+  return statuses[CONTROLAI_STATEMENT_ASK] === "signed";
 }
 
 /** `updated_by` on the statuses the letter sets, which nothing else writes. */

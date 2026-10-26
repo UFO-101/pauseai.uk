@@ -1,6 +1,6 @@
 import { expect, it } from "vitest";
 import type { EmailTopic } from "@/lib/email-permissions";
-import { addTestMp, describeWithDatabase, useTestDatabase } from "@/tests/database";
+import { addTestLetter, addTestMp, describeWithDatabase, useTestDatabase } from "@/tests/database";
 import { query } from "./db";
 import { permissionsFor } from "./email-permissions";
 
@@ -24,11 +24,13 @@ async function member(id: string, email: string, createdAt: string, keepInformed
 
 /** A letter from `email`, with the consent box ticked or not. */
 async function letter(mp: number, email: string, consent: boolean, at: string) {
-  await query(
-    `INSERT INTO letters (campaign, politician_id, sender_name, sender_email, sender_address, sender_postcode, contact_consent, subject, reply_hash, status, created_at)
-     VALUES ('regulate-letter-pm', $1, 'X', $2, 'x', 'ZZ9 9ZZ', $3, 'S', $4, 'sent', $5)`,
-    [mp, email, consent, `${email}-${at}`, at],
-  );
+  await addTestLetter({
+    politicianId: mp,
+    senderEmail: email,
+    contactConsent: consent,
+    replyHash: `${email}-${at}`,
+    createdAt: at,
+  });
 }
 
 /** An opt-out from Luma's webhook, lifted at `resubscribedAt` if given. */

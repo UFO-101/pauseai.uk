@@ -1,7 +1,7 @@
 /* The politicians table. */
 
-/* A campaign's status, and when, on one line. */
-.signed {
+/* Whether they're in office, on one line. */
+.status {
   white-space: nowrap;
 }
 

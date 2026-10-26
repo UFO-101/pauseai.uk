@@ -3,13 +3,11 @@
 // own words (app/(site)/campaigns/<slug>/page.tsx).
 
 // Relative, as next.config.ts imports this file and its loader resolves only its own "@/" imports.
+import { CONTROLAI_STATEMENT_ASK, FRONTIER_AI_LETTER_ASK, type AskStatus, type AskStatuses } from "../asks";
 import { signedControlAiLetter } from "../controlai-letter";
 
-/** What the MP has done for one campaign, as recorded by the policy team. */
-export type CampaignStatus = "signed";
-
-/** Each campaign's status for one MP, keyed by campaign slug. */
-export type MpStatuses = Partial<Record<string, CampaignStatus>>;
+/** The MP's answer to each ask, keyed by the ask's slug (lib/asks.ts). */
+export type MpStatuses = AskStatuses;
 
 /** What a letter needs to know about who it's from and who it's to. */
 export type LetterDetails = {
@@ -33,11 +31,14 @@ export type Attachment = {
 type CampaignCommon = {
   /**
    * The page is app/(site)/campaigns/<slug>/page.tsx, which has the
-   * page's own words. Letters and MP statuses in the database are keyed by it.
+   * page's own words. Letters in the database are keyed by it, and each
+   * campaign has a row in the campaigns table, with the same title and ask.
    */
   slug: string;
   /** Its name in the staff interface. */
   title: string;
+  /** What it asks the MP to do, whose answer we record (lib/asks.ts), if anything. */
+  ask?: string;
   subject: string;
   /**
    * The letter to an MP who hasn't done it yet, through the sign-off and
@@ -57,8 +58,9 @@ type CampaignCommon = {
 export type Campaign = CampaignCommon &
   (
     | {
-        /** The status that means this MP has done what the campaign asks. */
-        done: CampaignStatus;
+        ask: string;
+        /** The ask's status that means this MP has done what the campaign asks. */
+        done: AskStatus;
         /**
          * Shown instead of the form when the MP has already done it but the
          * page couldn't move on, because the browser wouldn't keep the lookup.
@@ -82,6 +84,7 @@ export const campaigns: Campaign[] = [
   {
     slug: "regulate-letter-pm",
     title: "Regulate AI developers now",
+    ask: FRONTIER_AI_LETTER_ASK,
     done: "signed",
     subject: "Request to co-sign letter on frontier AI risks",
     // The letter to the MP, drafted for the sender to edit.
@@ -120,6 +123,7 @@ ${d.senderName}`,
   {
     slug: "support-sobel-bill",
     title: "Support the Artificial Superintelligence Bill",
+    ask: CONTROLAI_STATEMENT_ASK,
     // No "done": everyone is asked to go to the debate, so it's always there
     // to move on to.
     subject: "Request to support the Artificial Superintelligence Bill",

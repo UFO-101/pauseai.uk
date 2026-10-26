@@ -227,7 +227,7 @@ describe.skipIf(process.env.NETLIFY === "true")("copying a database", () => {
           lettersSent: ["letters WHERE sent_at IS NOT NULL", "sent_at"],
           lettersReplied: ["letters WHERE replied_at IS NOT NULL", "replied_at"],
           lettersBounced: ["letter_events WHERE status = 'bounced'", "at"],
-          mpsSigned: ["campaign_statuses WHERE status = 'signed'", "updated_at"],
+          mpsSigned: ["ask_statuses WHERE status = 'signed'", "updated_at"],
           supportersAdded: ["supporters WHERE true", "created_at"],
           eventRegistrations: [
             "luma_guests WHERE approval_status = 'approved' AND removed_at IS NULL",

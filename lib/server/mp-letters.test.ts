@@ -152,7 +152,7 @@ describeWithDatabase("submitLetter", () => {
 
     expect(await submitLetter(FORM)).toEqual({ ok: true });
 
-    const [letter] = await query<Record<string, unknown>>("SELECT * FROM letters");
+    const [letter] = await query<Record<string, unknown>>("SELECT * FROM letters JOIN supporter_letters USING (id)");
     expect(letter.reply_hash).toMatch(/^jane\.smith\.\d{6}$/);
     const address = `${letter.reply_hash}@letters.pauseai.uk`;
     expect(sent).toHaveLength(1);
@@ -207,7 +207,7 @@ describeWithDatabase("submitLetter", () => {
     vi.stubEnv("REPLIES_INBOX", "");
     const sent = postmark();
     await submitLetter(FORM);
-    const [{ reply_hash }] = await query<{ reply_hash: string }>("SELECT reply_hash FROM letters");
+    const [{ reply_hash }] = await query<{ reply_hash: string }>("SELECT reply_hash FROM supporter_letters");
     expect(sent[0].Bcc).toBeUndefined();
     expect(sent[0].ReplyTo).toBe(
       `"Jane Smith" <jane@example.com>, "PauseAI Letters" <${reply_hash}@letters.pauseai.uk>`,
@@ -263,7 +263,7 @@ describeWithDatabase("submitLetter", () => {
       status: 400,
       message: copy.errors.noRecipient,
     });
-    await query("UPDATE politicians SET email = NULL WHERE is_test");
+    await query("UPDATE notable_people SET email = NULL WHERE id IN (SELECT id FROM politicians WHERE is_test)");
     expect(await submitLetter(FORM)).toMatchObject({ status: 400, message: copy.errors.noRecipient });
   });
 
@@ -303,7 +303,7 @@ describeWithDatabase("submitLetter", () => {
     expect(await submitLetter(FORM)).toEqual({ ok: true });
     const digits = (seed: string) =>
       String(createHash("sha256").update(seed).digest().readUInt32BE() % 1_000_000).padStart(6, "0");
-    const letters = await query<{ reply_hash: string }>("SELECT reply_hash FROM letters ORDER BY id");
+    const letters = await query<{ reply_hash: string }>("SELECT reply_hash FROM supporter_letters ORDER BY id");
     expect(letters.map((l) => l.reply_hash)).toEqual([
       `jane.smith.${digits("letter jane@example.com 0")}`,
       `jane.smith.${digits("letter jane@example.com 1")}`,

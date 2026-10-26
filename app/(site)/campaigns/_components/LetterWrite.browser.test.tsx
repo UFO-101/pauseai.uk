@@ -26,7 +26,7 @@ describe("LetterWrite", () => {
   });
 
   it("says so above the bill's letter when the MP signed ControlAI's letter, and nowhere else", async () => {
-    saveLookup({ ...LOOKUP, campaign: bill.slug, statuses: { [bill.slug]: "signed" } });
+    saveLookup({ ...LOOKUP, campaign: bill.slug, statuses: { [bill.ask!]: "signed" } });
     const signed = await render(<LetterWrite campaignSlug={bill.slug} />);
     await expect.element(page.getByText(copy.sobelBill.signedNote.after, { exact: false })).toBeVisible();
     await expect
@@ -41,7 +41,7 @@ describe("LetterWrite", () => {
     await expect.element(page.getByText(copy.sobelBill.signedNote.after, { exact: false })).not.toBeInTheDocument();
     unsigned.unmount();
 
-    saveLookup({ ...LOOKUP, statuses: { [bill.slug]: "signed" } });
+    saveLookup({ ...LOOKUP, statuses: { [bill.ask!]: "signed" } });
     await render(<LetterWrite campaignSlug={letterToPm.slug} />);
     await expect.element(editor()).toBeVisible();
     await expect.element(page.getByText(copy.sobelBill.signedNote.after, { exact: false })).not.toBeInTheDocument();

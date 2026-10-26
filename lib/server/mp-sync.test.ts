@@ -13,14 +13,17 @@ const JO = "jo@pauseai.uk";
 
 type Row = { airtable_id: string | null; name: string; email: string | null; sitting: boolean; is_test: boolean };
 const politicians = () =>
-  query<Row>("SELECT airtable_id, name, email, sitting, is_test FROM politicians ORDER BY is_test, airtable_id, name");
+  query<Row>(
+    `SELECT n.airtable_id, n.name, n.email, n.status = 'in_office' AS sitting, p.is_test
+     FROM notable_people n JOIN politicians p ON p.id = n.id ORDER BY p.is_test, n.airtable_id, n.name`,
+  );
 
 // Airtable's API, matched without naming its host, which only lib/server/outside-services/airtable.ts does.
 const AIRTABLE = "https://*.airtable.com/v0/*";
 
 const testStatuses = () =>
   query(
-    "SELECT p.test_postcode, s.campaign, s.status FROM campaign_statuses s JOIN politicians p ON p.id = s.politician_id WHERE p.is_test ORDER BY p.test_postcode",
+    "SELECT p.test_postcode, s.ask, s.status FROM ask_statuses s JOIN politicians p ON p.id = s.notable_person_id WHERE p.is_test ORDER BY p.test_postcode",
   );
 
 beforeEach(() => {
@@ -65,8 +68,8 @@ describeWithDatabase("syncMps", () => {
       { airtable_id: null, name: "Testy McTestface MP", email: "test-mp@example.org", sitting: true, is_test: true },
     ]);
     expect(await testStatuses()).toEqual([
-      { test_postcode: "ZZ99ZB", campaign: "support-sobel-bill", status: "signed" },
-      { test_postcode: "ZZ99ZS", campaign: "regulate-letter-pm", status: "signed" },
+      { test_postcode: "ZZ99ZB", ask: "controlai-statement", status: "signed" },
+      { test_postcode: "ZZ99ZS", ask: "frontier-ai-letter", status: "signed" },
     ]);
     const [sync] = await recentSyncs();
     expect(sync).toMatchObject({ status: "applied", startedBy: NIGHTLY, error: null, decidedBy: null });
@@ -104,7 +107,7 @@ describeWithDatabase("syncMps", () => {
 
   it("leaves the test MPs' statuses to staff once they're added", async () => {
     await syncMps(NIGHTLY);
-    await query("DELETE FROM campaign_statuses");
+    await query("DELETE FROM ask_statuses");
     await syncMps(NIGHTLY);
     expect(await testStatuses()).toEqual([]);
   });

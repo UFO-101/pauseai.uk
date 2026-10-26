@@ -25,7 +25,7 @@ export const exampleChanges: LoggedChange[] = [
   ),
   change(2, "controlai", "set status", {
     politicianId: 99,
-    campaign: "gone-campaign",
+    ask: "controlai-statement",
     status: null,
     date: null,
     note: "",

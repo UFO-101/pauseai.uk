@@ -196,7 +196,7 @@ export async function submitLetter(form: LetterForm): Promise<SubmitResult> {
     await randomId(4, async () => {
       // The sender and how many they've sent: a different seed for each letter.
       const [{ sent }] = await query<{ sent: number }>(
-        "SELECT count(*)::int AS sent FROM letters WHERE lower(sender_email) = lower($1)",
+        "SELECT count(*)::int AS sent FROM supporter_letters WHERE lower(sender_email) = lower($1)",
         [form.email],
       );
       return `letter ${form.email} ${sent}`;
@@ -210,20 +210,26 @@ export async function submitLetter(form: LetterForm): Promise<SubmitResult> {
       await query("SELECT pg_advisory_xact_lock(hashtext(lower($1)))", [form.email], db);
       if (!mp.isTest) {
         const [{ count }] = await query<{ count: number }>(
-          `SELECT count(*)::int AS count FROM letters l JOIN politicians p ON p.id = l.politician_id
-           WHERE lower(l.sender_email) = lower($1) AND l.campaign = $2 AND NOT p.is_test AND l.status <> 'not_sent'`,
+          `SELECT count(*)::int AS count FROM supporter_letters s JOIN letters l ON l.id = s.id
+             JOIN politicians p ON p.id = l.notable_person_id
+           WHERE lower(s.sender_email) = lower($1) AND s.campaign = $2 AND NOT p.is_test AND l.status <> 'not_sent'`,
           [form.email, campaign.slug],
           db,
         );
         if (count > 0) return undefined;
       }
       const [{ id }] = await query<{ id: number }>(
-        `INSERT INTO letters (campaign, politician_id, sender_name, sender_email, sender_address, sender_postcode,
-           contact_consent, subject, reply_hash, status)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'sending') RETURNING id::int AS id`,
+        `INSERT INTO letters (kind, notable_person_id, status) VALUES ('supporter', $1, 'sending') RETURNING id::int AS id`,
+        [mp.id],
+        db,
+      );
+      await query(
+        `INSERT INTO supporter_letters (id, campaign, sender_name, sender_email, sender_address, sender_postcode,
+           contact_consent, subject, reply_hash)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
         [
+          id,
           campaign.slug,
-          mp.id,
           form.name,
           form.email,
           form.address,

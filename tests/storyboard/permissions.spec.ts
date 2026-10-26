@@ -60,7 +60,7 @@ async function postBounce(request: APIRequestContext, address: string) {
 
 /** The ID of the politician named `name` in the flow's database. */
 const politicianId = (database: string, name: string) =>
-  runSql(database, `SELECT id FROM politicians WHERE name = '${name}'`)[0];
+  runSql(database, `SELECT id FROM notable_people WHERE name = '${name}'`)[0];
 
 test("with no permissions, no page shows a supporter's name or email, nor sends one in its RSC payload", async ({
   page,

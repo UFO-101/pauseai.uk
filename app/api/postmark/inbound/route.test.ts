@@ -2,7 +2,7 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { http, HttpResponse } from "msw";
 import { server } from "@/tests/fixtures/msw";
 import { query } from "@/lib/server/db";
-import { addTestMp, describeWithDatabase, useTestDatabase } from "@/tests/database";
+import { addTestLetter, addTestMp, describeWithDatabase, useTestDatabase } from "@/tests/database";
 import { webhookRequest } from "@/tests/postmark-webhooks";
 import { POST } from "./route";
 
@@ -28,11 +28,12 @@ describeWithDatabase("POST /api/postmark/inbound", () => {
 
   it("forwards a reply to a letter, and records who it came from, not its text", async () => {
     const mp = await addTestMp();
-    await query(
-      `INSERT INTO letters (campaign, politician_id, sender_name, sender_email, sender_address, sender_postcode, contact_consent, subject, reply_hash, status)
-       VALUES ('regulate-letter-pm', $1, 'Jane', 'jane@example.com', 'x', 'ZZ9 9ZZ', false, 'S', 'jane.482913', 'sent')`,
-      [mp],
-    );
+    await addTestLetter({
+      politicianId: mp,
+      senderName: "Jane",
+      senderEmail: "jane@example.com",
+      replyHash: "jane.482913",
+    });
     const to: string[] = [];
     server.use(
       http.post("https://api.postmarkapp.com/email", async ({ request }) => {
@@ -46,7 +47,9 @@ describeWithDatabase("POST /api/postmark/inbound", () => {
     expect(await query("SELECT status, details FROM letter_events")).toEqual([
       { status: "replied", details: { from: "test-mp@example.org", name: "Testy McTestface MP", messageId: null } },
     ]);
-    expect(JSON.stringify(await query("SELECT * FROM letters"))).not.toContain("Thanks.");
+    expect(JSON.stringify(await query("SELECT * FROM letters JOIN supporter_letters USING (id)"))).not.toContain(
+      "Thanks.",
+    );
   });
 
   it("answers 200 to mail for no letter, or a body that isn't JSON", async () => {

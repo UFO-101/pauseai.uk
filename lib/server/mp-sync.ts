@@ -6,6 +6,7 @@ import { airtableToken, fetchMps } from "./outside-services/airtable";
 import { logChange } from "./audit";
 import { query, transaction, type Queryable } from "./db";
 import { keepingFailure, recordRun } from "./import-runs";
+import { addPolitician } from "./politicians";
 import { changedFields } from "@/lib/field-changes";
 
 // Copies the sitting MPs from Airtable into the politicians table, nightly
@@ -19,11 +20,12 @@ const SYNC = "sync";
 
 export type SyncResult = { status: "applied" | "held" | "unchanged"; changes: MpChanges };
 
-/** The MPs copied from Airtable who are still sitting, by constituency. */
+/** The MPs copied from Airtable who are still in office, by constituency. */
 export async function sittingMps(db?: Queryable): Promise<SyncedMp[]> {
   return query<SyncedMp>(
-    `SELECT airtable_id AS "airtableId", name, salutation, constituency, party, email
-     FROM politicians WHERE airtable_id IS NOT NULL AND sitting ORDER BY constituency`,
+    `SELECT n.airtable_id AS "airtableId", n.name, n.salutation, p.constituency, p.party, n.email
+     FROM notable_people n JOIN politicians p ON p.id = n.id
+     WHERE n.airtable_id IS NOT NULL AND n.status = 'in_office' ORDER BY p.constituency`,
     [],
     db,
   );
@@ -35,23 +37,27 @@ export async function sittingMps(db?: Queryable): Promise<SyncedMp[]> {
  * an address of their own. Their statuses
  * are set only when they're added, so staff can change them.
  */
-async function ensureTestMps(db?: Queryable): Promise<void> {
+async function ensureTestMps(db: Queryable): Promise<void> {
   const email = process.env.TEST_MP_EMAIL?.trim() || null;
   for (const mp of TEST_MPS) {
-    const [{ id, added }] = await query<{ id: number; added: boolean }>(
-      `INSERT INTO politicians (house, name, salutation, constituency, email, is_test, test_postcode)
-       VALUES ('commons', $1, $2, $3, $4, true, $5)
-       ON CONFLICT (test_postcode) DO UPDATE SET email = $4, updated_at = now()
-       -- xmax is 0 on a row this statement inserted, not on one it updated.
-       RETURNING id::int AS id, xmax = 0 AS added`,
-      [mp.name, mp.salutation, mp.constituency, mp.noEmail ? null : (mp.email ?? email), mp.postcode],
+    const address = mp.noEmail ? null : (mp.email ?? email);
+    const [existing] = await query<{ id: number }>(
+      `UPDATE notable_people SET email = $2, updated_at = now()
+       WHERE id = (SELECT id FROM politicians WHERE test_postcode = $1) RETURNING id::int AS id`,
+      [mp.postcode, address],
       db,
     );
-    if (!added) continue;
-    for (const [campaign, status] of Object.entries(mp.statuses)) {
+    if (existing) continue;
+    const id = await addPolitician(
+      { house: "commons", name: mp.name, salutation: mp.salutation, constituency: mp.constituency, email: address },
+      db,
+      mp.postcode,
+    );
+    for (const [ask, status] of Object.entries(mp.statuses)) {
       await query(
-        "INSERT INTO campaign_statuses (politician_id, campaign, status, updated_by) VALUES ($1, $2, $3, 'sync')",
-        [id, campaign, status],
+        `INSERT INTO ask_statuses (notable_person_id, ask, ask_kind, status, updated_by)
+         SELECT $1, slug, kind, $3, 'sync' FROM asks WHERE slug = $2`,
+        [id, ask, status],
         db,
       );
     }
@@ -69,15 +75,20 @@ async function applyMps(mps: SyncedMp[], db: Queryable): Promise<void> {
   const changes = compareMps(before, mps);
   const was = new Map(before.map((mp) => [mp.airtableId, mp]));
   for (const mp of mps) {
-    const [{ id }] = await query<{ id: number }>(
-      `INSERT INTO politicians (airtable_id, house, name, salutation, constituency, party, email)
-       VALUES ($1, 'commons', $2, $3, $4, $5, $6)
-       ON CONFLICT (airtable_id) DO UPDATE
-       SET house = 'commons', name = $2, salutation = $3, constituency = $4, party = $5, email = $6, sitting = true, updated_at = now()
-       RETURNING id::int AS id`,
-      [mp.airtableId, mp.name, mp.salutation, mp.constituency, mp.party, mp.email],
+    const [existing] = await query<{ id: number }>(
+      `UPDATE notable_people SET name = $2, salutation = $3, email = $4, status = 'in_office', updated_at = now()
+       WHERE airtable_id = $1 RETURNING id::int AS id`,
+      [mp.airtableId, mp.name, mp.salutation, mp.email],
       db,
     );
+    if (existing) {
+      await query(
+        "UPDATE politicians SET house = 'commons', constituency = $2, party = $3 WHERE id = $1",
+        [existing.id, mp.constituency, mp.party],
+        db,
+      );
+    }
+    const id = existing?.id ?? (await addPolitician({ ...mp, house: "commons" }, db));
     const { airtableId, ...details } = mp;
     if (changes.added.some((added) => added.airtableId === airtableId)) {
       await logChange(SYNC, "add politician", { id, airtableId, house: "commons", ...details }, db);
@@ -88,8 +99,8 @@ async function applyMps(mps: SyncedMp[], db: Queryable): Promise<void> {
     }
   }
   const gone = await query<{ id: number; name: string }>(
-    `UPDATE politicians SET sitting = false, updated_at = now()
-     WHERE airtable_id IS NOT NULL AND sitting AND NOT (airtable_id = ANY($1::text[]))
+    `UPDATE notable_people SET status = 'left_office', updated_at = now()
+     WHERE airtable_id IS NOT NULL AND status = 'in_office' AND NOT (airtable_id = ANY($1::text[]))
      RETURNING id::int AS id, name`,
     [mps.map((mp) => mp.airtableId)],
     db,

@@ -203,7 +203,7 @@ export function LetterWriteExample() {
 /** The bill's letter to an MP who signed ControlAI's letter: a note above it. */
 export function LetterWriteSignedExample() {
   return (
-    <Seeded lookup={{ ...exampleLookup, campaign: bill.slug, statuses: { [bill.slug]: "signed" } }}>
+    <Seeded lookup={{ ...exampleLookup, campaign: bill.slug, statuses: { [bill.ask!]: "signed" } }}>
       <LetterWrite campaignSlug={bill.slug} />
     </Seeded>
   );

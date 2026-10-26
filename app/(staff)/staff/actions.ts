@@ -6,7 +6,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { type ImportJob, importPath } from "@/lib/import-runs";
 import { now } from "@/lib/now";
-import { eraseFrom, idFrom, permissionsFrom, signedFrom, unblockFrom } from "@/lib/staff-forms";
+import { eraseFrom, idFrom, permissionsFrom, statusFrom, unblockFrom } from "@/lib/staff-forms";
 import { importControlAiLetter } from "@/lib/server/controlai-import";
 import { isPoliticianAddress, unblock } from "@/lib/server/email";
 import { eraseSupporter } from "@/lib/server/erasure";
@@ -24,16 +24,16 @@ import {
   saveStaffAccount,
 } from "@/lib/server/staff-accounts";
 
-/** The button in the politicians list: marks one as signed today, or as not signed. */
-export async function markSigned(form: FormData): Promise<void> {
+/** The form on a politician's page: sets their answer to an ask, dated today, with its note, or clears it. */
+export async function setAskStatus(form: FormData): Promise<void> {
   const { email } = await requireStaff();
-  const parsed = signedFrom(form);
+  const parsed = statusFrom(form);
   if (!parsed) return;
   const today = now().toISOString().slice(0, 10);
   await setStatus(
     parsed.politicianId,
-    parsed.campaign,
-    { status: parsed.signed ? "signed" : null, date: parsed.signed ? today : null, note: "" },
+    parsed.ask,
+    { status: parsed.status, date: parsed.status ? today : null, note: parsed.status ? parsed.note : "" },
     email,
   );
   revalidatePath("/staff/politicians");

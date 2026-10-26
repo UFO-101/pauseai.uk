@@ -149,10 +149,11 @@ export function addTestMps(url, email) {
   // SQL string literals: psql -c doesn't substitute variables.
   const literal = (value) => `'${String(value).replace(/'/g, "''")}'`;
   const sql = TEST_MPS.map((mp) => [
-    `INSERT INTO politicians (house, name, salutation, constituency, email, is_test, test_postcode) VALUES ('commons', ${[mp.name, mp.salutation, mp.constituency].map(literal).join(", ")}, ${mp.noEmail ? "NULL" : literal(mp.email ?? email)}, true, ${literal(mp.postcode)});`,
+    `WITH person AS (INSERT INTO notable_people (kind, name, salutation, email) VALUES ('politician', ${[mp.name, mp.salutation].map(literal).join(", ")}, ${mp.noEmail ? "NULL" : literal(mp.email ?? email)}) RETURNING id)
+     INSERT INTO politicians (id, house, constituency, is_test, test_postcode) SELECT id, 'commons', ${literal(mp.constituency)}, true, ${literal(mp.postcode)} FROM person;`,
     ...Object.entries(mp.statuses).map(
-      ([campaign, status]) =>
-        `INSERT INTO campaign_statuses (politician_id, campaign, status, updated_by) SELECT id, ${literal(campaign)}, ${literal(status)}, 'sync' FROM politicians WHERE test_postcode = ${literal(mp.postcode)};`,
+      ([ask, status]) =>
+        `INSERT INTO ask_statuses (notable_person_id, ask, ask_kind, status, updated_by) SELECT p.id, a.slug, a.kind, ${literal(status)}, 'sync' FROM politicians p, asks a WHERE p.test_postcode = ${literal(mp.postcode)} AND a.slug = ${literal(ask)};`,
     ),
   ]).flat();
   psql(url, "-c", sql.join("\n"));

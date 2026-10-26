@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { query } from "@/lib/server/db";
-import { addTestMp, describeWithDatabase, useTestDatabase } from "@/tests/database";
+import { addTestLetter, addTestMp, describeWithDatabase, useTestDatabase } from "@/tests/database";
 import { webhookRequest } from "@/tests/postmark-webhooks";
 import { POST } from "./route";
 
@@ -26,11 +26,7 @@ describeWithDatabase("POST /api/postmark/bounce", () => {
 
   it("records a bounce on the letter, and blocks the address", async () => {
     const mp = await addTestMp();
-    const [{ id }] = await query<{ id: number }>(
-      `INSERT INTO letters (campaign, politician_id, sender_name, sender_email, sender_address, sender_postcode, contact_consent, subject, reply_hash, status)
-       VALUES ('regulate-letter-pm', $1, 'Jane', 'jane@example.com', 'x', 'ZZ9 9ZZ', false, 'S', 'h', 'sent') RETURNING id::int AS id`,
-      [mp],
-    );
+    const id = await addTestLetter({ politicianId: mp, senderName: "Jane", senderEmail: "jane@example.com" });
     await query(
       "INSERT INTO email_sends (purpose, letter_id, address, outcome, message_id) VALUES ('letter', $1, 'test-mp@example.org', 'sent', 'msg-1')",
       [id],

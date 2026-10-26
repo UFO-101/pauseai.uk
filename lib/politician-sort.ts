@@ -27,7 +27,7 @@ export const POLITICIAN_SORTS: SortColumns<PoliticianSort> = {
 
 /** Each sort's column in the query (lib/server/politicians.ts). Slugs are ours, so safe in SQL. */
 export const POLITICIAN_COLUMNS: Record<PoliticianSort, string> = {
-  name: "p.name",
+  name: "n.name",
   house: "p.house",
   constituency: "p.constituency",
   party: "p.party",

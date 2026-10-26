@@ -147,9 +147,9 @@ export type EmailBlock = {
 const SELECT_BLOCKS = `
   SELECT b.address, p.kind, p.reason, p.at AS since, p.can_reset AS "canReset",
     coalesce((SELECT json_agg(json_build_object('id', pol.id, 'name', pol.name) ORDER BY pol.name)
-              FROM politicians pol WHERE lower(pol.email) = b.address), '[]') AS politicians,
+              FROM notable_people pol WHERE lower(pol.email) = b.address), '[]') AS politicians,
     (SELECT json_build_object('id', l.id, 'to', pol.name)
-     FROM email_sends s JOIN letters l ON l.id = s.letter_id JOIN politicians pol ON pol.id = l.politician_id
+     FROM email_sends s JOIN letters l ON l.id = s.letter_id JOIN notable_people pol ON pol.id = l.notable_person_id
      WHERE s.message_id = p.message_id) AS letter,
     (SELECT count(*)::int FROM email_sends s WHERE s.address = b.address AND s.outcome = 'refused' AND s.at >= p.at) AS refused
   FROM email_blocks b JOIN email_problems p ON p.id = b.problem_id`;
@@ -163,7 +163,7 @@ export type EmailScope = "politicians" | "others";
 
 /** Whether `column` is a politician's address, or isn't, for `scope`. */
 function inScope(column: string, scope: EmailScope): string {
-  return `${scope === "politicians" ? "" : "NOT "}EXISTS (SELECT 1 FROM politicians pol WHERE lower(pol.email) = ${column})`;
+  return `${scope === "politicians" ? "" : "NOT "}EXISTS (SELECT 1 FROM notable_people pol WHERE lower(pol.email) = ${column})`;
 }
 
 /** Whether an address is a politician's. */
@@ -213,7 +213,7 @@ export async function recentProblems(scope: EmailScope, limit = 100): Promise<Pr
     `SELECT p.id::int AS id, p.at, p.address, p.kind, p.reason, s.purpose,
        CASE WHEN pol.id IS NOT NULL THEN json_build_object('id', l.id, 'to', pol.name) END AS letter
      FROM email_problems p LEFT JOIN email_sends s ON s.message_id = p.message_id
-       LEFT JOIN letters l ON l.id = s.letter_id LEFT JOIN politicians pol ON pol.id = l.politician_id
+       LEFT JOIN letters l ON l.id = s.letter_id LEFT JOIN notable_people pol ON pol.id = l.notable_person_id
      WHERE ${inScope("p.address", scope)}
      ORDER BY p.at DESC, p.id DESC LIMIT $1`,
     [limit],

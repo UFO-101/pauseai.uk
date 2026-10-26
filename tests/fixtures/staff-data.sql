@@ -36,25 +36,34 @@ INSERT INTO staff_login_links (token_hash, email, browser_hash, created_at, expi
 
 -- Airtable's two MPs, as the sync copies them; a peer the signatory import
 -- added, whom staff may edit; and an MP who has left, kept for their letters.
-INSERT INTO politicians (airtable_id, house, name, salutation, constituency, party, email, sitting, created_at, updated_at) VALUES
-  ('recDummy', 'commons', 'Ms Dora Dummy', 'Ms Dummy', 'Hackney North and Stoke Newington', 'Labour', 'mp90001.office@parliament.uk', true, now() - interval '60 days', now() - interval '60 days'),
-  ('recPlaceholder', 'commons', 'Polly Placeholder', 'Ms Placeholder', 'Cities of London and Westminster', 'Labour (Co-op)', 'polly.placeholder.mp@parliament.uk', true, now() - interval '60 days', now() - interval '9 days'),
-  (NULL, 'lords', 'Lord Seedling of Example', 'Lord Seedling', NULL, 'Crossbench', NULL, true, now() - interval '30 days', now() - interval '12 days'),
-  ('recGone', 'commons', 'Gordon Gone', 'Mr Gone', 'Former Seat', 'Independent', 'gordon.gone.mp@parliament.uk', false, now() - interval '60 days', now() - interval '20 days');
+CREATE TEMP TABLE seed_politicians (airtable_id text, house text, name text, forename text, surname text, salutation text, constituency text, party text, email text, status text, created interval, updated interval);
+INSERT INTO seed_politicians VALUES
+  ('recDummy', 'commons', 'Ms Dora Dummy', 'Dora', 'Dummy', 'Ms Dummy', 'Hackney North and Stoke Newington', 'Labour', 'mp90001.office@parliament.uk', 'in_office', '60 days', '60 days'),
+  ('recPlaceholder', 'commons', 'Polly Placeholder', 'Polly', 'Placeholder', 'Ms Placeholder', 'Cities of London and Westminster', 'Labour (Co-op)', 'polly.placeholder.mp@parliament.uk', 'in_office', '60 days', '9 days'),
+  (NULL, 'lords', 'Lord Seedling of Example', NULL, NULL, 'Lord Seedling', NULL, 'Crossbench', NULL, 'in_office', '30 days', '12 days'),
+  ('recGone', 'commons', 'Gordon Gone', 'Gordon', 'Gone', 'Mr Gone', 'Former Seat', 'Independent', 'gordon.gone.mp@parliament.uk', 'left_office', '60 days', '20 days');
+WITH people AS (
+  INSERT INTO notable_people (kind, airtable_id, name, forename, surname, salutation, email, status, created_at, updated_at)
+  SELECT 'politician', airtable_id, name, forename, surname, salutation, email, status, now() - created, now() - updated
+  FROM seed_politicians RETURNING id, name
+)
+INSERT INTO politicians (id, house, constituency, party)
+SELECT p.id, s.house, s.constituency, s.party FROM people p JOIN seed_politicians s USING (name);
+DROP TABLE seed_politicians;
 
 -- Statuses: Polly signed the letter to the PM last month; Dora this week;
 -- the peer backs the bill, from ControlAI's letter, the week before; Backy
 -- McTestface MP's bill status (lib/test-mps.json) was already there.
-INSERT INTO campaign_statuses (politician_id, campaign, status, status_date, note, updated_by, updated_at)
-SELECT id, 'regulate-letter-pm', 'signed', (now() - interval '35 days')::date, 'Told us at the march', 'jo@pauseai.uk', now() - interval '34 days' FROM politicians WHERE airtable_id = 'recPlaceholder';
-INSERT INTO campaign_statuses (politician_id, campaign, status, status_date, note, updated_by, updated_at)
-SELECT id, 'regulate-letter-pm', 'signed', (now() - interval '2 days')::date, '', 'sam@pauseai.uk', now() - interval '2 days' FROM politicians WHERE airtable_id = 'recDummy';
-INSERT INTO campaign_statuses (politician_id, campaign, status, status_date, note, updated_by, updated_at)
-SELECT id, 'support-sobel-bill', 'signed', NULL, 'From ControlAI''s letter', 'import', now() - interval '10 days' FROM politicians WHERE name = 'Lord Seedling of Example';
-INSERT INTO campaign_statuses (politician_id, campaign, status, status_date, note, updated_by, updated_at)
-SELECT id, 'support-sobel-bill', 'signed', (now() - interval '3 days')::date, '', 'jo@pauseai.uk', now() - interval '3 days' FROM politicians WHERE test_postcode = 'ZZ99ZZ';
-INSERT INTO campaign_statuses (politician_id, campaign, status, status_date, note, updated_by, updated_at)
-SELECT id, 'regulate-letter-pm', 'signed', (now() - interval '1 day')::date, 'Confirmed by their office', 'jo@pauseai.uk', now() - interval '1 day' FROM politicians WHERE test_postcode = 'ZZ99ZH';
+INSERT INTO ask_statuses (notable_person_id, ask, ask_kind, status, status_date, note, updated_by, updated_at)
+SELECT id, 'frontier-ai-letter', 'letter', 'signed', (now() - interval '35 days')::date, 'Told us at the march', 'jo@pauseai.uk', now() - interval '34 days' FROM notable_people WHERE airtable_id = 'recPlaceholder';
+INSERT INTO ask_statuses (notable_person_id, ask, ask_kind, status, status_date, note, updated_by, updated_at)
+SELECT id, 'frontier-ai-letter', 'letter', 'signed', (now() - interval '2 days')::date, '', 'sam@pauseai.uk', now() - interval '2 days' FROM notable_people WHERE airtable_id = 'recDummy';
+INSERT INTO ask_statuses (notable_person_id, ask, ask_kind, status, status_date, note, updated_by, updated_at)
+SELECT id, 'controlai-statement', 'letter', 'signed', NULL, 'From ControlAI''s letter', 'import', now() - interval '10 days' FROM notable_people WHERE name = 'Lord Seedling of Example';
+INSERT INTO ask_statuses (notable_person_id, ask, ask_kind, status, status_date, note, updated_by, updated_at)
+SELECT id, 'controlai-statement', 'letter', 'signed', (now() - interval '3 days')::date, '', 'jo@pauseai.uk', now() - interval '3 days' FROM politicians WHERE test_postcode = 'ZZ99ZZ';
+INSERT INTO ask_statuses (notable_person_id, ask, ask_kind, status, status_date, note, updated_by, updated_at)
+SELECT id, 'frontier-ai-letter', 'letter', 'signed', (now() - interval '1 day')::date, 'Confirmed by their office', 'jo@pauseai.uk', now() - interval '1 day' FROM politicians WHERE test_postcode = 'ZZ99ZH';
 
 -- ----------------------------------------------------------------- luma
 
@@ -203,32 +212,37 @@ INSERT INTO seed_letters VALUES
   ('week-nora', 'ZZ99ZN', 'regulate-letter-pm', 'Nora Noaddress', 'nora@example.com', '5 Fixture Close, Norwich', 'NR1 1AA', false, 'A pause on frontier AI', 'not_sent', '2 days', NULL, NULL),
   ('week-sending', 'ZZ99ZZ', 'regulate-letter-pm', 'Sal Sending', 'sal.sending@example.com', '15 Seed Row, Hull', 'HU1 1AA', true, 'Regulate AI', 'sending', '20 minutes', NULL, NULL),
   ('week-spam', 'ZZ99ZS', 'regulate-letter-pm', 'Grumpy Gus', 'grumpy@example.com', '16 Seed Row, York', 'YO1 7HH', false, 'Stop AI', 'spam_complaint', '5 days', '5 days', NULL);
-INSERT INTO letters (campaign, politician_id, sender_name, sender_email, sender_address, sender_postcode, contact_consent, subject, reply_hash, status, created_at, sent_at, replied_at)
-SELECT s.campaign, p.id, s.sender, s.email, s.address, s.sender_postcode, s.consent, s.subject, 'seed-' || s.hash, s.status,
-       now() - s.created, now() - s.sent + interval '4 seconds', now() - s.replied
-FROM seed_letters s JOIN politicians p ON p.test_postcode = s.postcode;
+CREATE TEMP TABLE seeded_letters ON COMMIT DROP AS
+SELECT nextval(pg_get_serial_sequence('letters', 'id')) AS id, s.* FROM seed_letters s;
+INSERT INTO letters (id, kind, notable_person_id, status, created_at, sent_at, replied_at) OVERRIDING SYSTEM VALUE
+SELECT s.id, 'supporter', p.id, s.status, now() - s.created, now() - s.sent + interval '4 seconds', now() - s.replied
+FROM seeded_letters s JOIN politicians p ON p.test_postcode = s.postcode;
+INSERT INTO supporter_letters (id, campaign, sender_name, sender_email, sender_address, sender_postcode, contact_consent, subject, reply_hash)
+SELECT s.id, s.campaign, s.sender, s.email, s.address, s.sender_postcode, s.consent, s.subject, 'seed-' || s.hash FROM seeded_letters s;
 -- Most of the recent letters went to Airtable's two MPs, so the dashboard,
 -- which leaves the test MPs out, counts them; the bounces stay on Bouncy's.
-UPDATE letters SET politician_id = (SELECT id FROM politicians WHERE airtable_id = 'recDummy')
-WHERE reply_hash IN ('seed-prev-lee', 'seed-prev-li', 'seed-week-ben', 'seed-week-kwame', 'seed-week-noah');
-UPDATE letters SET politician_id = (SELECT id FROM politicians WHERE airtable_id = 'recPlaceholder')
-WHERE reply_hash IN ('seed-prev-omar', 'seed-week-sam', 'seed-week-grace', 'seed-week-mia');
+UPDATE letters SET notable_person_id = (SELECT id FROM notable_people WHERE airtable_id = 'recDummy')
+WHERE id IN (SELECT id FROM supporter_letters WHERE reply_hash IN ('seed-prev-lee', 'seed-prev-li', 'seed-week-ben', 'seed-week-kwame', 'seed-week-noah'));
+UPDATE letters SET notable_person_id = (SELECT id FROM notable_people WHERE airtable_id = 'recPlaceholder')
+WHERE id IN (SELECT id FROM supporter_letters WHERE reply_hash IN ('seed-prev-omar', 'seed-week-sam', 'seed-week-grace', 'seed-week-mia'));
+-- The seed letters, with their handles.
+CREATE TEMP VIEW seed_letter_rows AS SELECT l.*, s.reply_hash FROM letters l JOIN supporter_letters s USING (id) WHERE s.reply_hash LIKE 'seed-%';
 
 -- Their history: sending, then sent, then what followed.
-INSERT INTO letter_events (letter_id, at, status, details) SELECT id, created_at, 'sending', '{}' FROM letters WHERE reply_hash LIKE 'seed-%';
-INSERT INTO letter_events (letter_id, at, status, details) SELECT id, sent_at, 'sent', jsonb_build_object('messageId', 'seed-message-' || id) FROM letters WHERE reply_hash LIKE 'seed-%' AND sent_at IS NOT NULL;
-INSERT INTO letter_events (letter_id, at, status, details) SELECT id, created_at + interval '1 second', 'not_sent', '{"reason": "The MP has no email address"}' FROM letters WHERE status = 'not_sent' AND reply_hash LIKE 'seed-%';
-INSERT INTO letter_events (letter_id, at, status, details) SELECT id, replied_at, 'replied', jsonb_build_object('from', 'The office of ' || (SELECT name FROM politicians WHERE id = politician_id)) FROM letters WHERE replied_at IS NOT NULL AND reply_hash LIKE 'seed-%';
-INSERT INTO letter_events (letter_id, at, status, details) SELECT id, sent_at + interval '2 minutes', 'auto_reply', '{"from": "Backy McTestface MP", "subject": "Out of office"}' FROM letters WHERE reply_hash IN ('seed-prev-ahmed', 'seed-week-mia');
-INSERT INTO letter_events (letter_id, at, status, details) SELECT id, sent_at + interval '1 minute', 'bounced', '{"type": "HardBounce", "description": "The address does not exist"}' FROM letters WHERE status = 'bounced' AND reply_hash LIKE 'seed-%';
-INSERT INTO letter_events (letter_id, at, status, details) SELECT id, sent_at + interval '3 hours', 'spam_complaint', '{"type": "SpamComplaint"}' FROM letters WHERE status = 'spam_complaint' AND reply_hash LIKE 'seed-%';
+INSERT INTO letter_events (letter_id, at, status, details) SELECT id, created_at, 'sending', '{}' FROM seed_letter_rows WHERE true;
+INSERT INTO letter_events (letter_id, at, status, details) SELECT id, sent_at, 'sent', jsonb_build_object('messageId', 'seed-message-' || id) FROM seed_letter_rows WHERE sent_at IS NOT NULL;
+INSERT INTO letter_events (letter_id, at, status, details) SELECT id, created_at + interval '1 second', 'not_sent', '{"reason": "The MP has no email address"}' FROM seed_letter_rows WHERE status = 'not_sent';
+INSERT INTO letter_events (letter_id, at, status, details) SELECT id, replied_at, 'replied', jsonb_build_object('from', 'The office of ' || (SELECT name FROM notable_people WHERE id = notable_person_id)) FROM seed_letter_rows WHERE replied_at IS NOT NULL;
+INSERT INTO letter_events (letter_id, at, status, details) SELECT id, sent_at + interval '2 minutes', 'auto_reply', '{"from": "Backy McTestface MP", "subject": "Out of office"}' FROM seed_letter_rows WHERE reply_hash IN ('seed-prev-ahmed', 'seed-week-mia');
+INSERT INTO letter_events (letter_id, at, status, details) SELECT id, sent_at + interval '1 minute', 'bounced', '{"type": "HardBounce", "description": "The address does not exist"}' FROM seed_letter_rows WHERE status = 'bounced';
+INSERT INTO letter_events (letter_id, at, status, details) SELECT id, sent_at + interval '3 hours', 'spam_complaint', '{"type": "SpamComplaint"}' FROM seed_letter_rows WHERE status = 'spam_complaint';
 
 -- Every email that went out, or didn't: the letters, two forwarded replies,
 -- staff login links, a bounce alert; one refused by a block, one that failed.
 INSERT INTO email_sends (at, purpose, letter_id, address, outcome, message_id)
-SELECT sent_at, 'letter', id, (SELECT coalesce(email, '') FROM politicians WHERE id = politician_id), 'sent', 'seed-message-' || id FROM letters WHERE sent_at IS NOT NULL AND reply_hash LIKE 'seed-%';
+SELECT sent_at, 'letter', id, (SELECT coalesce(email, '') FROM notable_people WHERE id = notable_person_id), 'sent', 'seed-message-' || id FROM seed_letter_rows WHERE sent_at IS NOT NULL;
 INSERT INTO email_sends (at, purpose, letter_id, address, outcome, message_id)
-SELECT replied_at + interval '1 minute', 'forwarded-reply', id, 'replies@pauseai.uk', 'sent', 'seed-forward-' || id FROM letters WHERE replied_at IS NOT NULL AND reply_hash IN ('seed-week-sam', 'seed-week-grace');
+SELECT replied_at + interval '1 minute', 'forwarded-reply', id, 'replies@pauseai.uk', 'sent', 'seed-forward-' || id FROM seed_letter_rows WHERE replied_at IS NOT NULL AND reply_hash IN ('seed-week-sam', 'seed-week-grace');
 INSERT INTO email_sends (at, purpose, letter_id, address, outcome, message_id) VALUES
   (now() - interval '3 days', 'staff-login', NULL, 'jo@pauseai.uk', 'sent', 'seed-login-jo'),
   (now() - interval '1 day', 'staff-login', NULL, 'sam@pauseai.uk', 'sent', 'seed-login-sam'),
@@ -246,10 +260,10 @@ INSERT INTO email_problems (id, at, address, message_id, kind, reason, can_reset
   (4, now() - interval '5 days' + interval '3 hours', 'grumpy@example.com', NULL, 'complaint', 'Marked as spam', false, '{"type": "SpamComplaint"}'),
   (5, now() - interval '4 days', 'polly.placeholder.mp@parliament.uk', NULL, 'soft', 'Mailbox full', true, '{"type": "SoftBounce"}'),
   (6, now() - interval '3 days' + interval '1 minute', 'no-such-mailbox@pauseai.uk', NULL, 'hard', 'The address does not exist', true, '{"type": "HardBounce"}');
-UPDATE email_problems p SET message_id = 'seed-message-' || l.id FROM letters l WHERE l.reply_hash = 'seed-prev-bounce-1' AND p.id = 1;
-UPDATE email_problems p SET message_id = 'seed-message-' || l.id FROM letters l WHERE l.reply_hash = 'seed-prev-bounce-2' AND p.id = 2;
-UPDATE email_problems p SET message_id = 'seed-message-' || l.id FROM letters l WHERE l.reply_hash = 'seed-week-spam' AND p.id = 4;
-UPDATE email_problems p SET message_id = 'seed-message-' || l.id FROM letters l WHERE l.reply_hash = 'seed-week-bounce' AND p.id = 6;
+UPDATE email_problems p SET message_id = 'seed-message-' || l.id FROM seed_letter_rows l WHERE l.reply_hash = 'seed-prev-bounce-1' AND p.id = 1;
+UPDATE email_problems p SET message_id = 'seed-message-' || l.id FROM seed_letter_rows l WHERE l.reply_hash = 'seed-prev-bounce-2' AND p.id = 2;
+UPDATE email_problems p SET message_id = 'seed-message-' || l.id FROM seed_letter_rows l WHERE l.reply_hash = 'seed-week-spam' AND p.id = 4;
+UPDATE email_problems p SET message_id = 'seed-message-' || l.id FROM seed_letter_rows l WHERE l.reply_hash = 'seed-week-bounce' AND p.id = 6;
 -- Blocked: Bouncy's address by the first bounce, Gordon's by his, Gus by his
 -- complaint. Polly's soft bounce blocked nothing.
 INSERT INTO email_blocks (address, problem_id) VALUES
@@ -301,7 +315,7 @@ INSERT INTO audit_log (at, actor, action, details) VALUES
   (now() - interval '18 days', 'sync', 'remove politician', '{"id": 0, "name": "Gordon Gone"}'),
   (now() - interval '18 days', 'admin@pauseai.uk', 'apply held MP sync', '{"id": 8}'),
   (now() - interval '10 days', 'controlai', 'import ControlAI letter', '{"added": 1, "removed": 0, "problems": 1}'),
-  (now() - interval '10 days', 'controlai', 'set status', '{"politicianId": 0, "campaign": "support-sobel-bill", "status": "signed", "date": null, "note": ""}'),
+  (now() - interval '10 days', 'controlai', 'set status', '{"politicianId": 0, "ask": "controlai-statement", "status": "signed", "date": null, "note": ""}'),
   (now() - interval '9 days', 'sync', 'edit politician', '{"id": 0, "airtableId": "recPlaceholder", "house": "commons", "name": "Polly Placeholder", "salutation": "Ms Placeholder", "constituency": "Cities of London and Westminster", "party": "Labour (Co-op)", "email": "polly.placeholder.mp@parliament.uk"}'),
   (now() - interval '15 days', 'jo@pauseai.uk', 'erase supporter', '{"id": 99, "reference": "GDPR-2026-014", "letters": 1, "lumaUsers": 1, "members": 1}'),
   (now() - interval '12 days', 'sam@pauseai.uk', 'edit politician', '{"id": 0, "house": "lords", "name": "Lord Seedling of Example", "salutation": "Lord Seedling", "constituency": null, "party": "Crossbench", "email": null}'),
@@ -311,18 +325,18 @@ INSERT INTO audit_log (at, actor, action, details) VALUES
   (now() - interval '5 days' + interval '3 hours', 'postmark', 'block address', '{"address": "grumpy@example.com", "kind": "complaint"}'),
   (now() - interval '4 days', 'admin@pauseai.uk', 'set staff permissions', '{"email": "sam@pauseai.uk", "from": [], "to": []}'),
   (now() - interval '3 days', 'jo@pauseai.uk', 'view supporter', '{"id": 1}'),
-  (now() - interval '3 days', 'jo@pauseai.uk', 'set status', '{"politicianId": 0, "campaign": "support-sobel-bill", "status": "signed", "date": null, "note": ""}'),
-  (now() - interval '2 days', 'sam@pauseai.uk', 'set status', '{"politicianId": 0, "campaign": "regulate-letter-pm", "status": "signed", "date": null, "note": ""}'),
+  (now() - interval '3 days', 'jo@pauseai.uk', 'set status', '{"politicianId": 0, "ask": "controlai-statement", "status": "signed", "date": null, "note": ""}'),
+  (now() - interval '2 days', 'sam@pauseai.uk', 'set status', '{"politicianId": 0, "ask": "frontier-ai-letter", "status": "signed", "date": null, "note": ""}'),
   (now() - interval '2 days' + interval '1 hour', 'jo@pauseai.uk', 'unblock address', '{"address": "polly.placeholder.mp@parliament.uk", "note": "Mailbox emptied, their office says"}'),
-  (now() - interval '1 day', 'jo@pauseai.uk', 'set status', '{"politicianId": 0, "campaign": "regulate-letter-pm", "status": "signed", "date": null, "note": "Confirmed by their office"}'),
+  (now() - interval '1 day', 'jo@pauseai.uk', 'set status', '{"politicianId": 0, "ask": "frontier-ai-letter", "status": "signed", "date": null, "note": "Confirmed by their office"}'),
   (now() - interval '1 day' + interval '2 hours', 'nightly', 'import ControlAI letter', '{"error": "No PDF linked from the letter page"}'),
   (now() - interval '2 hours', 'jo@pauseai.uk', 'view supporter', '{"id": 4}');
 -- The entries about a politician name their row.
-UPDATE audit_log a SET details = jsonb_set(a.details, '{id}', to_jsonb(p.id)) FROM politicians p
+UPDATE audit_log a SET details = jsonb_set(a.details, '{id}', to_jsonb(p.id)) FROM notable_people p
   WHERE a.action IN ('add politician', 'edit politician', 'remove politician') AND p.name = a.details->>'name';
-UPDATE audit_log SET details = jsonb_set(details, '{politicianId}', to_jsonb((SELECT id FROM politicians WHERE name = 'Lord Seedling of Example'))) WHERE action = 'set status' AND actor = 'controlai';
-UPDATE audit_log SET details = jsonb_set(details, '{politicianId}', to_jsonb((SELECT id FROM politicians WHERE test_postcode = 'ZZ99ZZ'))) WHERE action = 'set status' AND details->>'campaign' = 'support-sobel-bill';
-UPDATE audit_log SET details = jsonb_set(details, '{politicianId}', to_jsonb((SELECT id FROM politicians WHERE airtable_id = 'recDummy'))) WHERE action = 'set status' AND details->>'note' = '';
+UPDATE audit_log SET details = jsonb_set(details, '{politicianId}', to_jsonb((SELECT id FROM notable_people WHERE name = 'Lord Seedling of Example'))) WHERE action = 'set status' AND actor = 'controlai';
+UPDATE audit_log SET details = jsonb_set(details, '{politicianId}', to_jsonb((SELECT id FROM politicians WHERE test_postcode = 'ZZ99ZZ'))) WHERE action = 'set status' AND details->>'ask' = 'controlai-statement';
+UPDATE audit_log SET details = jsonb_set(details, '{politicianId}', to_jsonb((SELECT id FROM notable_people WHERE airtable_id = 'recDummy'))) WHERE action = 'set status' AND details->>'note' = '';
 UPDATE audit_log SET details = jsonb_set(details, '{politicianId}', to_jsonb((SELECT id FROM politicians WHERE test_postcode = 'ZZ99ZH'))) WHERE action = 'set status' AND details->>'note' = 'Confirmed by their office';
 
 -- ----------------------------------------------------------- supporters
@@ -333,7 +347,7 @@ UPDATE audit_log SET details = jsonb_set(details, '{politicianId}', to_jsonb((SE
 WITH emails AS (
   SELECT email, coalesce(contact_since, (SELECT min(g.registered_at) FROM luma_guests g WHERE g.user_id = p.user_id)) AS first_seen FROM luma_people p
   UNION ALL
-  SELECT lower(trim(sender_email)), created_at FROM letters WHERE reply_hash LIKE 'seed-%'
+  SELECT lower(trim(s.sender_email)), l.created_at FROM seed_letter_rows l JOIN supporter_letters s USING (id)
   UNION ALL
   SELECT email, joined_at FROM members
 ), firsts AS (
@@ -351,7 +365,7 @@ WITH emails AS (
   SELECT k.id, m.id, 'email', k.email, m.first_seen_at FROM keyed k JOIN members m ON m.email = k.email
 )
 INSERT INTO supporter_links (supporter_id, letter_id, matched_by, matched_value, linked_at)
-SELECT k.id, l.id, 'email', k.email, l.created_at FROM keyed k JOIN letters l ON lower(trim(l.sender_email)) = k.email;
+SELECT k.id, l.id, 'email', k.email, l.created_at FROM keyed k JOIN supporter_letters s ON lower(trim(s.sender_email)) = k.email JOIN letters l ON l.id = s.id;
 
 -- Each supporter's first seen, as refreshSupporterFacts() (lib/server/supporter-facts.ts) sets it after linking.
 UPDATE supporters s SET first_seen_at = f.first_seen_at FROM supporter_first_seen f WHERE f.supporter_id = s.id;

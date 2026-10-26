@@ -12,7 +12,7 @@ const recentSignatoryImports = () => listRuns("import-signatories");
 
 // Airtable's API, matched without naming its host, which only lib/server/outside-services/airtable.ts does.
 const AIRTABLE = "https://*.airtable.com/v0/*";
-const PM = "regulate-letter-pm";
+const PM = "frontier-ai-letter";
 
 function airtable(...people: Record<string, string>[]) {
   server.use(
@@ -74,7 +74,8 @@ describeWithDatabase("importSignatories", () => {
         updatedBy: "jo@pauseai.uk",
       });
     const added = await query(
-      "SELECT house, name, constituency, party, email FROM politicians WHERE airtable_id IS NULL AND NOT is_test ORDER BY id",
+      `SELECT p.house, n.name, p.constituency, p.party, n.email FROM notable_people n JOIN politicians p ON p.id = n.id
+       WHERE n.airtable_id IS NULL AND NOT p.is_test ORDER BY n.id`,
     );
     expect(added).toEqual([
       { house: "lords", name: "Lord Example", constituency: null, party: "Crossbench", email: null },
@@ -91,7 +92,7 @@ describeWithDatabase("importSignatories", () => {
     // Each signer added is logged by their row, by whoever ran the import.
     expect(
       await query(
-        `SELECT a.actor, p.name FROM audit_log a JOIN politicians p ON p.id = (a.details->>'id')::bigint
+        `SELECT a.actor, p.name FROM audit_log a JOIN notable_people p ON p.id = (a.details->>'id')::bigint
          WHERE a.action = 'add politician' ORDER BY p.name`,
       ),
     ).toEqual([
@@ -121,7 +122,9 @@ describeWithDatabase("importSignatories", () => {
       note: "Checked",
       updatedBy: "sam@pauseai.uk",
     });
-    expect(await query("SELECT count(*)::int AS n FROM politicians WHERE name = 'Lord Example'")).toEqual([{ n: 1 }]);
+    expect(await query("SELECT count(*)::int AS n FROM notable_people WHERE name = 'Lord Example'")).toEqual([
+      { n: 1 },
+    ]);
   });
 
   it("fails, keeping the failure, without a token", async () => {

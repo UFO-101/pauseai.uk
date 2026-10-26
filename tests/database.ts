@@ -19,8 +19,8 @@ export const describeWithDatabase = describe.skipIf(process.env.NETLIFY === "tru
 export const MAKES_DATABASES = { timeout: 30_000 };
 
 const TABLES = [
+  "ask_statuses",
   "audit_log",
-  "campaign_statuses",
   "email_blocks",
   "email_problems",
   "email_sends",
@@ -34,11 +34,13 @@ const TABLES = [
   "luma_people",
   "members",
   "members_erased",
+  "notable_people",
   "opt_outs",
   "politicians",
   "staff_login_links",
   "staff_accounts",
   "staff_sessions",
+  "supporter_letters",
   "supporter_links",
   "supporters",
 ];
@@ -89,31 +91,85 @@ type MpRow = {
   airtableId?: string | null;
   house?: string;
   name?: string;
+  forename?: string | null;
+  surname?: string | null;
   salutation?: string;
   constituency?: string | null;
   party?: string;
   email?: string | null;
   /** Makes them a test MP, found by this postcode. */
   testPostcode?: string;
-  sitting?: boolean;
+  status?: string;
 };
 
-/** Adds a politician straight into the table, and returns their ID. */
+/** Adds a politician straight into the tables, and returns their ID. */
 export async function addTestPolitician(row: MpRow = {}): Promise<number> {
   const [{ id }] = await query<{ id: number }>(
-    `INSERT INTO politicians (airtable_id, house, name, salutation, constituency, party, email, is_test, test_postcode, sitting)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id::int AS id`,
+    `INSERT INTO notable_people (kind, airtable_id, name, forename, surname, salutation, email, status)
+     VALUES ('politician', $1, $2, $3, $4, $5, $6, $7) RETURNING id::int AS id`,
     [
       row.airtableId === undefined ? "recPlaceholder" : row.airtableId,
-      row.house ?? "commons",
       row.name ?? "Polly Placeholder",
+      row.forename === undefined ? "Polly" : row.forename,
+      row.surname === undefined ? "Placeholder" : row.surname,
       row.salutation ?? "Ms Placeholder",
+      row.email === undefined ? "polly.placeholder.mp@parliament.uk" : row.email,
+      row.status ?? "in_office",
+    ],
+  );
+  await query(
+    `INSERT INTO politicians (id, house, constituency, party, is_test, test_postcode) VALUES ($1, $2, $3, $4, $5, $6)`,
+    [
+      id,
+      row.house ?? "commons",
       row.constituency === undefined ? "Cities of London and Westminster" : row.constituency,
       row.party ?? "Labour (Co-op)",
-      row.email === undefined ? "polly.placeholder.mp@parliament.uk" : row.email,
       row.testPostcode !== undefined,
       row.testPostcode ?? null,
-      row.sitting ?? true,
+    ],
+  );
+  return id;
+}
+
+/** A letter from a supporter, straight into the tables: its row and its sender's. Returns its ID. */
+export async function addTestLetter(letter: {
+  politicianId: number;
+  campaign?: string;
+  status?: string;
+  senderName?: string;
+  senderEmail?: string;
+  senderPostcode?: string;
+  contactConsent?: boolean;
+  subject?: string;
+  replyHash?: string;
+  createdAt?: string;
+  sentAt?: string | null;
+  repliedAt?: string | null;
+}): Promise<number> {
+  const [{ id }] = await query<{ id: number }>(
+    `INSERT INTO letters (kind, notable_person_id, status, created_at, sent_at, replied_at)
+     VALUES ('supporter', $1, $2, coalesce($3::timestamptz, now()), $4, $5) RETURNING id::int AS id`,
+    [
+      letter.politicianId,
+      letter.status ?? "sent",
+      letter.createdAt ?? null,
+      letter.sentAt ?? null,
+      letter.repliedAt ?? null,
+    ],
+  );
+  await query(
+    `INSERT INTO supporter_letters (id, campaign, sender_name, sender_email, sender_address, sender_postcode,
+       contact_consent, subject, reply_hash)
+     VALUES ($1, $2, $3, $4, '1 Example Street', $5, $6, $7, $8)`,
+    [
+      id,
+      letter.campaign ?? "regulate-letter-pm",
+      letter.senderName ?? "Sam Sender",
+      letter.senderEmail ?? "sam@example.com",
+      letter.senderPostcode ?? "SW1A 1AA",
+      letter.contactConsent ?? false,
+      letter.subject ?? "A letter",
+      letter.replyHash ?? `reply-${id}`,
     ],
   );
   return id;

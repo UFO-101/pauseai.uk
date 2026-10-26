@@ -23,7 +23,7 @@ const nothing: Hook = async () => {};
 const letterProblem: Hook = async ({ letterId }, problem, request) => {
   const status = problem.kind === "complaint" ? "spam_complaint" : "bounced";
   const [letter] = await query<{ mpName: string }>(
-    `UPDATE letters l SET status = $2 FROM politicians p WHERE l.id = $1 AND p.id = l.politician_id
+    `UPDATE letters l SET status = $2 FROM notable_people p WHERE l.id = $1 AND p.id = l.notable_person_id
      RETURNING p.name AS "mpName"`,
     [letterId, status],
   );

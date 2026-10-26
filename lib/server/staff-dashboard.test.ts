@@ -1,5 +1,5 @@
 import { afterEach, expect, it, vi } from "vitest";
-import { addTestMp, addTestPolitician, describeWithDatabase, useTestDatabase } from "@/tests/database";
+import { addTestLetter, addTestMp, addTestPolitician, describeWithDatabase, useTestDatabase } from "@/tests/database";
 import { query } from "./db";
 import { recordFailure, recordRun } from "./import-runs";
 import { dashboard } from "./staff-dashboard";
@@ -16,23 +16,27 @@ describeWithDatabase("dashboard", () => {
       airtableId: "recGone",
       name: "Gordon Gone",
       email: "gone@parliament.uk",
-      sitting: false,
+      status: "left_office",
     });
     const test = await addTestMp();
     // Letters to the real MP: one this week, replied to this week; one the week before; one long ago. Letters to the test MP are counted apart.
+    for (const [campaign, politicianId, senderEmail, status, sentAt, repliedAt] of [
+      ["regulate-letter-pm", real, "old@example.com", "sent", "2026-09-01T10:00:00Z", "2026-09-02T10:00:00Z"],
+      ["support-sobel-bill", real, "last@example.com", "sent", "2026-10-10T10:00:00Z", null],
+      ["regulate-letter-pm", real, "new@example.com", "sent", "2026-10-20T10:00:00Z", "2026-10-20T15:00:00Z"],
+      ["regulate-letter-pm", test, "test@example.com", "sent", "2026-10-19T10:00:00Z", "2026-10-19T12:00:00Z"],
+      ["regulate-letter-pm", test, "bounce@example.com", "bounced", "2026-10-18T10:00:00Z", null],
+    ] as const) {
+      await addTestLetter({ campaign, politicianId, senderEmail, status, sentAt, repliedAt });
+    }
+    // The real MP signed two letters this week, one of them an ask no campaign in code makes; the test MP's
+    // status doesn't count, nor does Airtable's, which records signatures from before the site.
     await query(
-      `INSERT INTO letters (campaign, politician_id, sender_name, sender_email, sender_address, sender_postcode, contact_consent, subject, reply_hash, status, sent_at, replied_at)
-       VALUES ('regulate-letter-pm', $1, 'Old', 'old@example.com', 'x', 'ZZ9 9ZZ', false, 'S', 'a', 'sent', '2026-09-01T10:00:00Z', '2026-09-02T10:00:00Z'),
-              ('support-sobel-bill', $1, 'Last', 'last@example.com', 'x', 'ZZ9 9ZZ', false, 'S', 'b', 'sent', '2026-10-10T10:00:00Z', NULL),
-              ('regulate-letter-pm', $1, 'New', 'new@example.com', 'x', 'ZZ9 9ZZ', false, 'S', 'c', 'sent', '2026-10-20T10:00:00Z', '2026-10-20T15:00:00Z'),
-              ('regulate-letter-pm', $2, 'Test', 'test@example.com', 'x', 'ZZ9 9ZZ', false, 'S', 'd', 'sent', '2026-10-19T10:00:00Z', '2026-10-19T12:00:00Z'),
-              ('regulate-letter-pm', $2, 'Bounce', 'bounce@example.com', 'x', 'ZZ9 9ZZ', false, 'S', 'e', 'bounced', '2026-10-18T10:00:00Z', NULL)`,
-      [real, test],
-    );
-    // The real MP signed this week; the test MP's status doesn't count.
-    await query(
-      `INSERT INTO campaign_statuses (politician_id, campaign, status, updated_by, updated_at)
-       VALUES ($1, 'regulate-letter-pm', 'signed', 'x', '2026-10-15T00:00:00Z'), ($2, 'support-sobel-bill', 'signed', 'x', '2026-10-16T00:00:00Z')`,
+      `INSERT INTO ask_statuses (notable_person_id, ask, ask_kind, status, updated_by, updated_at)
+       VALUES ($1, 'frontier-ai-letter', 'letter', 'signed', 'x', '2026-10-15T00:00:00Z'),
+              ($1, 'deepmind-letter', 'letter', 'signed', 'x', '2026-10-17T00:00:00Z'),
+              ($1, 'controlai-statement', 'letter', 'signed', 'airtable', '2026-10-18T00:00:00Z'),
+              ($2, 'controlai-statement', 'letter', 'signed', 'x', '2026-10-16T00:00:00Z')`,
       [real, test],
     );
     // Supporters first seen this week, the week before, and five weeks ago; and two linked this week, one first
@@ -91,7 +95,7 @@ describeWithDatabase("dashboard", () => {
     expect(result.counts).toEqual({
       lettersSent: { current: 1, previous: 1 },
       lettersReplied: { current: 1, previous: 0 },
-      mpsSigned: { current: 1, previous: 0 },
+      mpsSigned: { current: 2, previous: 0 },
       eventRegistrations: { current: 2, previous: 0 },
       eventsHeld: { current: 1, previous: 1 },
       supportersAdded: { current: 1, previous: 1 },
@@ -101,7 +105,7 @@ describeWithDatabase("dashboard", () => {
     expect(result.testLetters).toBe(2);
     expect(result.byCampaign).toEqual({
       lettersSent: { "regulate-letter-pm": 1 },
-      mpsSigned: { "regulate-letter-pm": 1 },
+      mpsSigned: { "regulate-letter-pm": 1, "deepmind-letter": 1 },
     });
     // Only the real MP signed, so the tile leads to them.
     expect(result.signedMp).toBe(real);

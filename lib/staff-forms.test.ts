@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { eraseFrom, idFrom, permissionsFrom, signedFrom, unblockFrom } from "./staff-forms";
+import { eraseFrom, idFrom, permissionsFrom, statusFrom, unblockFrom } from "./staff-forms";
 
 function form(fields: Record<string, string | Blob>) {
   const data = new FormData();
@@ -16,19 +16,25 @@ describe("idFrom", () => {
   });
 });
 
-describe("signedFrom", () => {
-  const base = { politicianId: "4", campaign: "regulate-letter-pm", signed: "1" };
+describe("statusFrom", () => {
+  const base = { politicianId: "4", ask: "frontier-ai-letter", status: "signed", note: " At the march " };
 
-  it("reads the button: signed, or not", () => {
-    expect(signedFrom(form(base))).toEqual({ politicianId: 4, campaign: "regulate-letter-pm", signed: true });
-    expect(signedFrom(form({ ...base, signed: "" }))!.signed).toBe(false);
+  it("reads the form: the status and its note, or blank to clear it", () => {
+    expect(statusFrom(form(base))).toEqual({
+      politicianId: 4,
+      ask: "frontier-ai-letter",
+      status: "signed",
+      note: "At the march",
+    });
+    expect(statusFrom(form({ ...base, status: "" }))!.status).toBeNull();
   });
 
-  it("refuses an unknown politician or campaign", () => {
-    expect(signedFrom(form({ ...base, politicianId: "x" }))).toBeUndefined();
-    expect(signedFrom(form({ ...base, campaign: "nope" }))).toBeUndefined();
-    // The bill's status is set from ControlAI's letter, never by hand.
-    expect(signedFrom(form({ ...base, campaign: "support-sobel-bill" }))).toBeUndefined();
+  it("refuses an unknown politician, ask or status", () => {
+    expect(statusFrom(form({ ...base, politicianId: "x" }))).toBeUndefined();
+    expect(statusFrom(form({ ...base, ask: "nope" }))).toBeUndefined();
+    expect(statusFrom(form({ ...base, status: "maybe" }))).toBeUndefined();
+    // ControlAI's statement is set from its letter, never by hand.
+    expect(statusFrom(form({ ...base, ask: "controlai-statement" }))).toBeUndefined();
   });
 });
 

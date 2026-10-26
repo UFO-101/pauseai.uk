@@ -16,7 +16,7 @@ describeWithDatabase("POST /api/email-your-mp/lookup", () => {
 
   it("returns the MP and their statuses", async () => {
     const id = await addTestPolitician();
-    await setStatus(id, "regulate-letter-pm", { status: "signed", date: null, note: "" }, "jo@pauseai.uk");
+    await setStatus(id, "frontier-ai-letter", { status: "signed", date: null, note: "" }, "jo@pauseai.uk");
     const res = await lookup({ postcode: "SW1A 1AA" });
     expect(await res.json()).toEqual({
       ok: true,
@@ -29,7 +29,7 @@ describeWithDatabase("POST /api/email-your-mp/lookup", () => {
         isTest: false,
         unreachable: false,
       },
-      statuses: { "regulate-letter-pm": "signed" },
+      statuses: { "frontier-ai-letter": "signed" },
       place: { latitude: 51.501009, longitude: -0.141588 },
     });
   });

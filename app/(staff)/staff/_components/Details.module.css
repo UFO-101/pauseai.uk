@@ -46,6 +46,18 @@
   white-space: nowrap;
 }
 
+/* A status's note and its button on one line: the field takes the room
+   the button leaves, and the button wraps under it only when there's none. */
+.note {
+  flex: 1 1 10rem;
+  min-width: 0;
+}
+
+/* Notes kept as they were written, a line each. */
+.notes {
+  white-space: pre-line;
+}
+
 /* A row that has to be one element (a list's line, keyed). */
 .pair {
   display: contents;

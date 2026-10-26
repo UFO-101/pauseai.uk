@@ -1,4 +1,6 @@
 import { describe, expect, it } from "vitest";
+import { ASK_STATUSES } from "@/lib/asks";
+import { COUNTRIES, PERSON_STATUSES } from "@/lib/server/politicians";
 import { staffCopy } from "./staff-interface";
 
 describe("staff interface copy", () => {
@@ -36,6 +38,11 @@ describe("staff interface copy", () => {
       "ni-assembly",
       "other",
     ]);
-    expect(Object.keys(staffCopy.statuses)).toEqual(["signed", "none"]);
+    // Every status any kind of ask allows, and the words for no answer.
+    expect(Object.keys(staffCopy.statuses).sort()).toEqual(
+      [...Object.values(ASK_STATUSES).flat(), "none", "noAnswer"].sort(),
+    );
+    expect(Object.keys(staffCopy.personStatuses)).toEqual([...PERSON_STATUSES]);
+    expect(Object.keys(staffCopy.countries)).toEqual([...COUNTRIES]);
   });
 });

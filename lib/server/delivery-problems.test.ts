@@ -2,7 +2,7 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { http, HttpResponse } from "msw";
 import { server } from "@/tests/fixtures/msw";
 import { staffCopy } from "@/lib/content/staff-interface";
-import { addTestMp, describeWithDatabase, useTestDatabase } from "@/tests/database";
+import { addTestLetter, addTestMp, describeWithDatabase, useTestDatabase } from "@/tests/database";
 import { query } from "./db";
 import { handleDeliveryProblem } from "./delivery-problems";
 import type { DeliveryProblem, Purpose } from "./email";
@@ -45,11 +45,7 @@ describeWithDatabase("handleDeliveryProblem", () => {
   /** A sent letter to the test MP, its email logged as msg-1, or an email of another purpose. */
   async function sentEmail(purpose: Purpose = "letter"): Promise<number> {
     const mp = await addTestMp();
-    const [{ id }] = await query<{ id: number }>(
-      `INSERT INTO letters (campaign, politician_id, sender_name, sender_email, sender_address, sender_postcode, contact_consent, subject, reply_hash, status)
-       VALUES ('regulate-letter-pm', $1, 'Jane', 'jane@example.com', 'x', 'ZZ9 9ZZ', false, 'S', 'h', 'sent') RETURNING id::int AS id`,
-      [mp],
-    );
+    const id = await addTestLetter({ politicianId: mp, senderName: "Jane", senderEmail: "jane@example.com" });
     await query(
       "INSERT INTO email_sends (purpose, letter_id, address, outcome, message_id) VALUES ($1, $2, 'test-mp@example.org', 'sent', 'msg-1')",
       [purpose, purpose === "letter" ? id : null],
