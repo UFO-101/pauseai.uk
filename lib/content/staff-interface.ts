@@ -145,20 +145,20 @@ export const staffCopy = {
       // short, as the closed select shows only the one chosen.
       states: {
         "luma-calendar": {
-          following: "⁂ Luma: contact",
-          unsubscribed: "⁂ Luma: unsubscribed",
-          "not-following": "⁂ Luma: not a contact",
+          following: "Luma: contact",
+          unsubscribed: "Luma: unsubscribed",
+          "not-following": "Luma: not a contact",
         },
         "pauseai-updates": {
-          asked: "⁂ Updates: asked",
-          joined: "⁂ Updates: joined before July 2026",
-          declined: "⁂ Updates: declined",
-          unsubscribed: "⁂ Updates: unsubscribed",
-          removed: "⁂ Updates: removed",
+          asked: "Updates: asked",
+          joined: "Updates: joined before July 2026",
+          declined: "Updates: declined",
+          unsubscribed: "Updates: unsubscribed",
+          removed: "Updates: removed",
         },
         "events-and-ways-to-help": {
-          asked: "⁂ Events: agreed",
-          declined: "⁂ Events: didn't agree",
+          asked: "Events: agreed",
+          declined: "Events: didn't agree",
         },
       } as Record<string, Record<string, string>>,
       anyTime: "Any time",
@@ -186,7 +186,7 @@ export const staffCopy = {
     moreEmails: (n: number) => `+${n}`,
     // The badges: the sources a supporter is in, and what they did there.
     badges: {
-      lumaContact: "⁂ Luma contact",
+      lumaContact: "Luma contact",
       registered: "Luma events",
       letter: "Wrote to MP",
       member: "Member",
@@ -241,9 +241,9 @@ export const staffCopy = {
         // The short reason under the answer, by topic and reason, with when.
         reasons: {
           "luma-calendar": {
-            following: (when: string) => `⁂ A contact of the calendar since ${when}`,
+            following: (when: string) => `A contact of the calendar since ${when}`,
             unsubscribed: (when: string) => `Unsubscribed ${when}, via Luma`,
-            "not-following": () => "⁂ Not a contact of the calendar",
+            "not-following": () => "Not a contact of the calendar",
           },
           "pauseai-updates": {
             asked: (when: string) => `Asked for them when joining, ${when}`,
@@ -260,7 +260,7 @@ export const staffCopy = {
         // Behind "Why?": how we know, and what we can't.
         details: {
           "luma-calendar":
-            "⁂ Luma emails the calendar's contacts about new events, unless they've unsubscribed. Registering for an event makes someone a contact, as following the calendar does. We hear of unsubscribes only since 22 Oct 2026, when we added a webhook, so a contact from before then is “Don't know”. Luma doesn't tell us when someone unfollows.",
+            "Luma emails the calendar's contacts about new events, unless they've unsubscribed. Registering for an event makes someone a contact, as following the calendar does. We hear of unsubscribes only since 22 Oct 2026, when we added a webhook, so a contact from before then is “Don't know”. Luma doesn't tell us when someone unfollows.",
           "pauseai-updates":
             "“Keep me informed” on the join form has been optional since 30 June 2026. Before then everyone who joined was on the list. Unsubscribes since joining are in CiviCRM, which we don't read yet, so we usually have to put “Don't know” here.",
           "events-and-ways-to-help":
@@ -279,7 +279,7 @@ export const staffCopy = {
       about: "about",
       noActivity: "Nothing yet.",
       kinds: {
-        "luma-contact": "⁂ Became a contact of the Luma calendar",
+        "luma-contact": "Became a contact of the Luma calendar",
         "luma-registered": "Registered for",
         letter: "Wrote to",
         "letter-replied": "Letter answered by",
@@ -554,7 +554,7 @@ export const staffCopy = {
     intro: {
       before: "The public events on ",
       link: "our Luma calendar",
-      after: "⁂ , who registered for each, and the calendar's contacts.",
+      after: ", who registered for each, and the calendar's contacts.",
     },
     importNow: "Import Luma now",
     never: "Not imported yet.",
@@ -728,7 +728,7 @@ export const staffCopy = {
     consent: { yes: "Yes", no: "No" },
   },
   // Beside a list's filter button: the list with none.
-  resetFilters: "⁂ Reset filters",
+  resetFilters: "Reset filters",
   // Under a list of more than one page.
   paging: {
     previous: "Previous",

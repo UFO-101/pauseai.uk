@@ -1916,7 +1916,12 @@ describe("LetterFilters", () => {
   const copy = staffCopy.letters;
 
   it("is a GET form to the letters, with each filter as typed", async () => {
-    const { filter, ...search } = lettersSearch({ q: "jane", status: "sent", answered: "no" });
+    const { filter, ...search } = lettersSearch({
+      q: "jane",
+      status: "sent",
+      answered: "no",
+      campaign: "support-sobel-bill",
+    });
     void filter;
     await render(<LetterFilters search={search} />);
     const box = page.getByRole("searchbox", { name: copy.search });
@@ -1926,6 +1931,7 @@ describe("LetterFilters", () => {
     expect(form.getAttribute("action")).toBe("/staff/letters");
     await expect.element(page.getByRole("combobox", { name: copy.columns.status })).toHaveValue("sent");
     await expect.element(page.getByRole("combobox", { name: copy.columns.replied })).toHaveValue("no");
+    await expect.element(page.getByRole("combobox", { name: copy.columns.campaign })).toHaveValue("support-sobel-bill");
     await expect
       .element(page.getByRole("link", { name: staffCopy.resetFilters }))
       .toHaveAttribute("href", "/staff/letters");

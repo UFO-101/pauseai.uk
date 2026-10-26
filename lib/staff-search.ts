@@ -3,6 +3,7 @@
 // reads their forms.
 import { staffCopy } from "@/lib/content/staff-interface";
 import { emailState } from "@/lib/email-permissions";
+import { campaignBySlug } from "@/lib/email-your-mp";
 import { parseSort } from "@/lib/staff-sort";
 import { isSupporterBadge, SUPPORTER_SORTS, type SupporterFilter } from "@/lib/supporters";
 
@@ -11,6 +12,8 @@ export type LettersSearch = {
   q: string;
   /** "yes" or "no". */
   answered: string;
+  /** A campaign's slug. */
+  campaign: string;
 };
 
 /** Which letters the letters page lists (recentLetters in lib/server/letters.ts). */
@@ -21,6 +24,8 @@ export type LetterFilter = {
   search?: string;
   /** Whether the MP replied. */
   answered?: boolean;
+  /** A campaign's slug. */
+  campaign?: string;
   /** One supporter's letters (/staff/letters/supporter/[id]). */
   supporterId?: number;
   /** One letter (/staff/letters/[id]). */
@@ -32,13 +37,15 @@ export function lettersSearch({
   status = "",
   q = "",
   answered = "",
+  campaign = "",
 }: Partial<LettersSearch>): LettersSearch & { filter: LetterFilter } {
   const filter: LetterFilter = {
     status: Object.hasOwn(staffCopy.letters.status, status) ? status : undefined,
     search: q.trim() || undefined,
     answered: answered === "yes" ? true : answered === "no" ? false : undefined,
+    campaign: campaignBySlug(campaign)?.slug,
   };
-  return { status, q, answered, filter };
+  return { status, q, answered, campaign, filter };
 }
 
 /** A politician's ID from their page's URL: a whole number, or undefined. */

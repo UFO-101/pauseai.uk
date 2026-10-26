@@ -33,6 +33,7 @@ export async function recentLetters({
   status,
   search,
   answered,
+  campaign,
   supporterId,
   letterId,
   politicianId,
@@ -52,6 +53,7 @@ export async function recentLetters({
        AND ($5::boolean IS NULL OR (l.replied_at IS NOT NULL) = $5)
        AND ($6::bigint IS NULL OR EXISTS (SELECT 1 FROM supporter_links k WHERE k.letter_id = l.id AND k.supporter_id = $6))
        AND ($7::bigint IS NULL OR l.id = $7)
+       AND ($8::text IS NULL OR l.campaign = $8)
      ORDER BY l.created_at DESC, l.id DESC LIMIT $2`,
     [
       status ?? null,
@@ -61,6 +63,7 @@ export async function recentLetters({
       answered ?? null,
       supporterId ?? null,
       letterId ?? null,
+      campaign ?? null,
     ],
   );
 }

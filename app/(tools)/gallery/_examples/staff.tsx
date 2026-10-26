@@ -1470,10 +1470,10 @@ export const staff: Group = {
       file: "app/(staff)/staff/_components/LetterFilters.tsx",
       variants: [
         {
-          label: "One status picked",
+          label: "One status and a campaign picked",
           render: () => (
             <StaffPage as="div">
-              <LetterFilters search={{ status: "bounced", q: "", answered: "" }} />
+              <LetterFilters search={{ status: "bounced", q: "", answered: "", campaign: "regulate-letter-pm" }} />
             </StaffPage>
           ),
         },

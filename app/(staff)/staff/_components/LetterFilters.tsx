@@ -2,6 +2,7 @@ import { Button, ButtonLink } from "@/components/ui/Button";
 import { Select, TextInput } from "@/components/ui/Controls";
 import { Field } from "@/components/ui/Field";
 import { FilterForm } from "@/components/ui/Form";
+import { campaigns } from "@/lib/content/email-your-mp";
 import { staffCopy } from "@/lib/content/staff-interface";
 import type { LettersSearch } from "@/lib/staff-search";
 import styles from "./StaffForms.module.css";
@@ -9,8 +10,8 @@ import styles from "./StaffForms.module.css";
 const copy = staffCopy.letters;
 
 /**
- * Which letters the letters page lists: by a search, status and whether
- * answered. A GET form, so the URL holds the filter. Keyed on the filters,
+ * Which letters the letters page lists: by a search, campaign, status and
+ * whether answered. A GET form, so the URL holds the filter. Keyed on the filters,
  * so a new URL, such as Reset's, gives a fresh form, not the old choices.
  */
 export default function LetterFilters({ search }: { search: LettersSearch }) {
@@ -18,6 +19,16 @@ export default function LetterFilters({ search }: { search: LettersSearch }) {
     <FilterForm key={JSON.stringify(search)} method="get" action="/staff/letters" className={styles.filters}>
       <Field label={copy.search}>
         <TextInput type="search" name="q" defaultValue={search.q} />
+      </Field>
+      <Field label={copy.columns.campaign}>
+        <Select name="campaign" defaultValue={search.campaign}>
+          <option value="">{copy.allStatuses}</option>
+          {campaigns.map((campaign) => (
+            <option key={campaign.slug} value={campaign.slug}>
+              {campaign.title}
+            </option>
+          ))}
+        </Select>
       </Field>
       <Field label={copy.columns.status}>
         <Select name="status" defaultValue={search.status}>
