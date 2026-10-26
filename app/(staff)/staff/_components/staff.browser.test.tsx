@@ -1440,7 +1440,6 @@ describe("PoliticianFilters", () => {
     house: "lords",
     party: "Labour",
     campaign: pm.slug,
-    email: "blocked",
     sort: pm.slug,
     dir: "asc",
   };
@@ -1457,7 +1456,6 @@ describe("PoliticianFilters", () => {
       "Labour",
     ]);
     await expect.element(select(staffCopy.politician.statusesTitle)).toHaveValue(pm.slug);
-    await expect.element(select(staffCopy.fields.email)).toHaveValue("blocked");
     const form = page.getByRole("searchbox").element().closest("form")!;
     expect(form.getAttribute("method")).toBe("get");
     expect(form.getAttribute("action")).toBe("/staff/politicians");
@@ -1480,10 +1478,7 @@ describe("PoliticianFilters", () => {
 describe("PoliticianTable headings", () => {
   it("sort the list, the current one marked, reversing on a second click", async () => {
     await render(
-      <PoliticianTable
-        politicians={[MP]}
-        search={{ q: "x", house: "", campaign: "", email: "", sort: "party", dir: "asc" }}
-      />,
+      <PoliticianTable politicians={[MP]} search={{ q: "x", house: "", campaign: "", sort: "party", dir: "asc" }} />,
     );
     const party = page.getByRole("link", { name: staffCopy.fields.party });
     await expect.element(party).toHaveAttribute("href", "/staff/politicians?q=x&sort=party&dir=desc");

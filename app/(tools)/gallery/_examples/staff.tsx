@@ -1102,7 +1102,7 @@ export const staff: Group = {
           render: () => (
             <StaffPage as="div">
               <PoliticianFilters
-                search={{ q: "", house: "", party: "", campaign: "", email: "", sort: "", dir: "" }}
+                search={{ q: "", house: "", party: "", campaign: "", sort: "", dir: "" }}
                 parties={parties}
               />
               <PoliticianFilters
@@ -1111,7 +1111,6 @@ export const staff: Group = {
                   house: "lords",
                   party: "Labour",
                   campaign: pm.slug,
-                  email: "blocked",
                   sort: "",
                   dir: "",
                 }}

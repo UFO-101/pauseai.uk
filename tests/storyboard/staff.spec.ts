@@ -517,13 +517,10 @@ test("an MP whose address bounced can't be written to until staff unblock it", a
   await expect(bouncysRow).toContainText(staffCopy.politicians.emailBlocked);
   await frame(page, "the politicians list marks their address as blocked");
 
-  await page.getByLabel(staffCopy.fields.email).selectOption("blocked");
-  await expect(page).toHaveURL(/[?&]email=blocked/);
-  await expect(page.getByRole("link", { name: "Testy McTestface MP" })).toHaveCount(0);
-  await expect(page.getByRole("row").filter({ hasText: bouncy.name })).toContainText(
-    staffCopy.politicians.emailBlocked,
-  );
-  await frame(page, "the politicians whose address is blocked");
+  // Blocked MP emails lists them, and is the way to them.
+  await page.goto(`${BASE}/staff/politicians/blocked-emails`);
+  await expect(page.getByRole("row").filter({ hasText: bouncy.name })).toBeVisible();
+  await frame(page, "Blocked MP emails lists their address");
 
   await page.getByRole("link", { name: bouncy.name }).click();
   await expect(page.getByRole("heading", { level: 1, name: bouncy.name })).toBeVisible();

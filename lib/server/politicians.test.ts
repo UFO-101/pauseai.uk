@@ -45,7 +45,6 @@ describe("politiciansSearch", () => {
         house: "lords",
         party: "Green",
         campaign: BILL,
-        email: "blocked",
         sort: "party",
         dir: "desc",
       }),
@@ -54,7 +53,6 @@ describe("politiciansSearch", () => {
       house: "lords",
       party: "Green",
       campaign: BILL,
-      email: "blocked",
       sort: "party",
       dir: "desc",
       filter: {
@@ -62,7 +60,6 @@ describe("politiciansSearch", () => {
         house: "lords",
         party: "Green",
         campaign: BILL,
-        emailBlocked: true,
         sort: { key: "party", dir: "desc" },
       },
     });
@@ -74,7 +71,6 @@ describe("politiciansSearch", () => {
       house: undefined,
       party: undefined,
       campaign: undefined,
-      emailBlocked: undefined,
       sort: { key: "name", dir: "asc" },
     };
     expect(politiciansSearch({})).toEqual({
@@ -82,17 +78,15 @@ describe("politiciansSearch", () => {
       house: "",
       party: "",
       campaign: "",
-      email: "",
       sort: "",
       dir: "",
       filter: none,
     });
-    expect(politiciansSearch({ q: "", house: "hogwarts", campaign: "", email: "other", sort: "age" })).toEqual({
+    expect(politiciansSearch({ q: "", house: "hogwarts", campaign: "", sort: "age" })).toEqual({
       q: "",
       house: "hogwarts",
       party: "",
       campaign: "",
-      email: "other",
       sort: "age",
       dir: "",
       filter: none,
@@ -213,7 +207,7 @@ describeWithDatabase("politicians", () => {
     expect((await listPoliticians({ sort: { key: "letters", dir: "desc" } }))[0].id).toBe(mp);
   });
 
-  it("knows whose address is blocked, whatever its case, and lists only them when asked", async () => {
+  it("knows whose address is blocked, whatever its case, in the list too", async () => {
     const mp = await addTestPolitician();
     await addPeer();
     await recordProblem({
@@ -225,7 +219,7 @@ describeWithDatabase("politicians", () => {
     });
     expect(await findSittingMp("Cities of London and Westminster")).toMatchObject({ unreachable: true });
     expect((await getPolitician(mp))!.emailBlocked).toBe(true);
-    expect((await listPoliticians({ emailBlocked: true })).map((p) => p.id)).toEqual([mp]);
+    expect((await listPoliticians()).filter((p) => p.emailBlocked).map((p) => p.id)).toEqual([mp]);
   });
 
   it("finds no politician by an unknown id", async () => {

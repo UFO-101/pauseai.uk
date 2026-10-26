@@ -8,8 +8,7 @@ import StaffFilters from "./StaffFilters";
 
 /**
  * Search and filter the politicians list, among `parties`: the search,
- * then the table's columns in its order, then whether their address is
- * blocked. The column headings sort it; the form keeps that sort. Keyed on
+ * then the table's columns in its order. The column headings sort it; the form keeps that sort. Keyed on
  * the filters, so a new URL, such as Reset's, gives a fresh form, not the
  * old choices.
  */
@@ -52,12 +51,6 @@ export default function PoliticianFilters({ search, parties }: { search: Politic
               {c.title}
             </option>
           ))}
-        </Select>
-      </Field>
-      <Field label={staffCopy.fields.email}>
-        <Select name="email" defaultValue={search.email}>
-          <option value="">{copy.anyEmail}</option>
-          <option value="blocked">{copy.emailBlocked}</option>
         </Select>
       </Field>
       {search.sort && <input type="hidden" name="sort" value={search.sort} />}

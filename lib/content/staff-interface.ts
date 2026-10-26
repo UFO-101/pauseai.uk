@@ -373,9 +373,8 @@ export const staffCopy = {
       replies: "Letters answered",
     },
     noEmail: "No email",
-    // On a politician whose address is blocked (/staff/politicians/blocked-emails), and the filter for them.
+    // On a politician whose address is blocked (/staff/politicians/blocked-emails).
     emailBlocked: "Email blocked",
-    anyEmail: "All",
     // The button in each campaign's column, and the bill's column, which
     // only the import from ControlAI's letter sets.
     markSigned: "Mark as signed",

@@ -101,8 +101,6 @@ export type PoliticianFilter = {
   party?: string;
   /** Only those with a status for this campaign. */
   campaign?: string;
-  /** Only those whose address is blocked. */
-  emailBlocked?: boolean;
   sort?: SortSpec<PoliticianSort>;
 };
 
@@ -112,8 +110,6 @@ export type PoliticiansSearch = {
   house: string;
   party: string;
   campaign: string;
-  /** "blocked". */
-  email: string;
   sort: string;
   dir: string;
 };
@@ -127,7 +123,6 @@ export function politiciansSearch({
   house = "",
   party = "",
   campaign = "",
-  email = "",
   sort = "",
   dir = "",
 }: Partial<PoliticiansSearch>): PoliticiansSearch & { filter: PoliticianFilter } {
@@ -136,10 +131,9 @@ export function politiciansSearch({
     house: isHouse(house) ? house : undefined,
     party: party || undefined,
     campaign: campaign || undefined,
-    emailBlocked: email === "blocked" || undefined,
     sort: parseSort(POLITICIAN_SORTS, "name", sort, dir),
   };
-  return { q, house, party, campaign, email, sort, dir, filter };
+  return { q, house, party, campaign, sort, dir, filter };
 }
 
 /** Every party a politician is in, for the list's filter. */
@@ -173,9 +167,6 @@ export async function listPoliticians(filter: PoliticianFilter = {}, limit = 200
     where.push(
       `EXISTS (SELECT 1 FROM campaign_statuses c WHERE c.politician_id = p.id AND c.campaign = $${values.length})`,
     );
-  }
-  if (filter.emailBlocked) {
-    where.push("EXISTS (SELECT 1 FROM email_blocks b WHERE b.address = lower(p.email))");
   }
   values.push(limit);
   const rows = await query<Row>(

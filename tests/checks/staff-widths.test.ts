@@ -22,6 +22,7 @@ const ALLOWED: Record<string, string> = {
   "DevLogin.module.css .dev": "the login page",
   // A control's width inside a form.
   "StaffForms.module.css .narrow": "a field",
+  "StaffForms.module.css .filters > *": "a filter, so a row of them fits the page",
   "StaffAccountsTable.module.css .add input": "a field",
 };
 

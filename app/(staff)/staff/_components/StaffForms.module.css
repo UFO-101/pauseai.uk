@@ -6,6 +6,12 @@
   margin-block: var(--space-4);
 }
 
+/* Each filter no wider than this, so a list's row of them fits a desktop's
+   width; a select cuts off a long choice once it's chosen. */
+.filters > * {
+  max-width: 12rem;
+}
+
 .form {
   max-width: var(--staff-measure);
   margin-block: var(--space-4);
