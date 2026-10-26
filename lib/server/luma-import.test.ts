@@ -113,6 +113,14 @@ const contact = (n: number, createdAt = "2026-09-01T00:00:00.000Z") => ({
   created_at: createdAt,
 });
 
+const optOuts = () =>
+  query<{ address: string; source: string; resubscribed_at: Date | null }>(
+    "SELECT address, source, resubscribed_at FROM opt_outs ORDER BY id",
+  );
+/** Makes the contacts' full pass due. */
+const passDue = () =>
+  query("UPDATE luma_import_state SET full_pass_at = now() - interval '21 hours' WHERE list = 'contacts'");
+
 const runs = () =>
   query<{ status: string; error: string | null; result: Record<string, unknown> }>(
     "SELECT status, error, result FROM import_runs ORDER BY id",
@@ -394,10 +402,14 @@ describeWithDatabase("importLuma", () => {
     ]);
   });
 
-  it("reads contacts until a page holds nothing new, and once a week every page, ten a run", async () => {
+  it("reads contacts until a page holds nothing new, and every 20 hours every page, ten a run", async () => {
     const contacts = Array.from({ length: 12 }, (_, i) => contact(i + 1));
     const luma = fakeLuma({ contacts, pageSize: 1 });
     const contactRequests = () => luma.requests.filter((r) => r.startsWith("contacts"));
+    // A contact from an earlier import that Luma no longer lists: only a finished pass says they've gone.
+    await query(
+      "INSERT INTO luma_people (user_id, email, contact_since) VALUES ('usr-99', 'person99@example.com', now())",
+    );
 
     // The first run starts the first full pass: ten pages, and the cursor kept, still going.
     expect(await importLuma("jo@pauseai.uk")).toMatchObject({
@@ -409,11 +421,13 @@ describeWithDatabase("importLuma", () => {
     expect(await query("SELECT cursor, full_pass_at FROM luma_import_state WHERE list = 'contacts'")).toEqual([
       { cursor: "10", full_pass_at: null },
     ]);
+    expect(await optOuts()).toEqual([]);
 
-    // The next finishes it.
+    // The next finishes it: two contacts more, and the one it never listed opted out.
     luma.requests.length = 0;
     const second = await importLuma("jo@pauseai.uk");
-    expect(second).toMatchObject({ contacts: 2, contactPages: 2 });
+    expect(second).toMatchObject({ contacts: 3, contactPages: 2 });
+    expect(await optOuts()).toMatchObject([{ address: "person99@example.com", resubscribed_at: null }]);
     expect(second.contactsPassGoing).toBeUndefined();
     expect(contactRequests()).toEqual(["contacts@10", "contacts@11"]);
     const [state] = await query<{ cursor: string; full_pass_at: Date | null }>(
@@ -469,5 +483,61 @@ describeWithDatabase("importLuma", () => {
     luma.failContactsCursor = "1";
     await expect(importLuma("jo@pauseai.uk")).rejects.toThrow("Luma answered 500");
     expect(await query("SELECT cursor FROM luma_import_state WHERE list = 'contacts'")).toEqual([{ cursor: "" }]);
+  });
+  it("opts out a contact a full pass doesn't list, once, and ends that when a later pass lists them again", async () => {
+    const luma = fakeLuma({ contacts: [contact(1), contact(2), contact(3)] });
+    // Someone who only registered for an event was never a contact, so can't leave.
+    await query("INSERT INTO luma_people (user_id, email) VALUES ('usr-9', 'person9@example.com')");
+    expect((await importLuma("jo@pauseai.uk")).contacts).toBe(3);
+    expect(await optOuts()).toEqual([]);
+
+    // Person 2 unsubscribes: Luma stops listing them, and the next pass opts them out.
+    luma.contacts = [contact(1), contact(3)];
+    await passDue();
+    expect((await importLuma("jo@pauseai.uk")).contacts).toBe(1);
+    expect(await optOuts()).toEqual([
+      { address: "person2@example.com", source: "luma-contacts", resubscribed_at: null },
+    ]);
+    // The pass after changes nothing: they're opted out already.
+    await passDue();
+    expect((await importLuma("jo@pauseai.uk")).contacts).toBe(0);
+    expect(await optOuts()).toHaveLength(1);
+
+    // They follow again: Luma lists them as before, and the next pass ends the opt-out.
+    luma.contacts = [contact(1), contact(2), contact(3)];
+    await passDue();
+    expect((await importLuma("jo@pauseai.uk")).contacts).toBe(1);
+    const [back] = await optOuts();
+    expect(back.resubscribed_at).not.toBeNull();
+  });
+
+  it("keeps an opt-out begun after the pass listed the address, and one for an address another contact still has", async () => {
+    const luma = fakeLuma({ contacts: [contact(1), contact(2)] });
+    await importLuma("jo@pauseai.uk");
+    // Person 1 unsubscribes after this pass reads their page; Luma's webhook says so.
+    await query(
+      `INSERT INTO opt_outs (address, list, source, source_ref, unsubscribed_at)
+       VALUES ('person1@example.com', 'luma-calendar', 'luma-webhook', 'msg_1', now() + interval '1 minute')`,
+    );
+    // A second Luma account with person 2's address, no longer listed, while the first still is.
+    await query(
+      "INSERT INTO luma_people (user_id, email, contact_since) VALUES ('usr-20', 'person2@example.com', now())",
+    );
+    luma.contacts = [contact(1), contact(2)];
+    await passDue();
+    expect((await importLuma("jo@pauseai.uk")).contacts).toBe(0);
+    expect(await optOuts()).toEqual([
+      { address: "person1@example.com", source: "luma-webhook", resubscribed_at: null },
+    ]);
+  });
+
+  it("finishes a pass whose start wasn't noted without opting anyone out", async () => {
+    fakeLuma({ contacts: [contact(1), contact(2)], pageSize: 1 });
+    await query("INSERT INTO luma_import_state (list, cursor) VALUES ('contacts', '1')");
+    await query(
+      "INSERT INTO luma_people (user_id, email, contact_since) VALUES ('usr-5', 'person5@example.com', now())",
+    );
+    expect(await importLuma("jo@pauseai.uk")).toMatchObject({ contacts: 1, contactPages: 1 });
+    expect(await optOuts()).toEqual([]);
   });
 });

@@ -25,7 +25,7 @@ export type SupporterSummary = {
   phone: string | null;
   postcode: string | null;
   sources: SupporterSource[];
-  /** Whether they're a contact of the Luma calendar, as registering for an event or following it makes them. */
+  /** Whether they're a contact of the Luma calendar now, as registering for an event or following it makes them, and unsubscribing undoes. */
   lumaContact: boolean;
   firstSeenAt: string | null;
   lastActiveAt: string | null;

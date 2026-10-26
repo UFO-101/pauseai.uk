@@ -190,6 +190,7 @@ describe.skipIf(process.env.NETLIFY === "true")("copying a database", () => {
         ]);
         // Opt-outs told by every source, and every answer to whether we'd email someone.
         expect(runSql(name, "SELECT DISTINCT list || ' ' || source FROM opt_outs ORDER BY 1")).toEqual([
+          "luma-calendar luma-contacts",
           "luma-calendar luma-webhook",
         ]);
         expect(runSql(name, "SELECT DISTINCT send || ' ' || reason FROM email_permissions ORDER BY 1")).toEqual([
@@ -199,7 +200,6 @@ describe.skipIf(process.env.NETLIFY === "true")("copying a database", () => {
           "no removed",
           "no unsubscribed",
           "unsure asked",
-          "unsure following",
           "unsure joined",
           "yes asked",
           "yes following",

@@ -82,7 +82,7 @@ describeWithDatabase("permissionsFor", () => {
     expect(await answer("gus@example.com", "events-and-ways-to-help")).toEqual(blocked);
   });
 
-  it("emails the calendar's contacts, unsure of those from before its webhook, not those who unsubscribed or never were one", async () => {
+  it("emails the calendar's contacts, however long ago they joined, not those who unsubscribed or never were one", async () => {
     await luma("new@example.com", "2026-10-22T09:00:00Z");
     expect(await answer("new@example.com", "luma-calendar")).toEqual([
       "yes",
@@ -90,10 +90,10 @@ describeWithDatabase("permissionsFor", () => {
       "2026-10-22T09:00:00.000Z",
       "luma",
     ]);
-    // A contact since before Luma told us of unsubscribes: they may have left unheard.
+    // Luma's list leaves out anyone who unsubscribed, so a contact from long ago is still one.
     await luma("old@example.com", "2026-09-20T00:00:00Z");
     expect(await answer("old@example.com", "luma-calendar")).toEqual([
-      "unsure",
+      "yes",
       "following",
       "2026-09-20T00:00:00.000Z",
       "luma",

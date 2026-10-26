@@ -132,7 +132,8 @@ describeWithDatabase("linkSupporters", () => {
       phone: "+447700900001",
       postcode: "SW1A 1AA",
       sources: ["letter", "luma"],
-      luma_contact: true,
+      // A contact, but not now: her second opt-out is still open.
+      luma_contact: false,
       first_seen_at: new Date("2026-08-01T00:00:00Z"),
       last_active_at: new Date("2026-10-07T00:00:00Z"),
       events: 1,
@@ -239,7 +240,11 @@ describeWithDatabase("listSupporters and getSupporter", () => {
       phone: "+447700900001",
       postcode: "M1 1AE",
     });
-    await lumaUser("usr-2", "sam@example.com", "Sam", "evt-1", { registeredAt: "2025-01-10T10:00:00Z" });
+    // Sam was a contact, but unsubscribed, so isn't one now.
+    await lumaUser("usr-2", "sam@example.com", "Sam", "evt-1", {
+      registeredAt: "2025-01-10T10:00:00Z",
+      contactSince: "2025-01-10T10:00:00Z",
+    });
     await lumaUser("usr-3", "old@example.com", "Old", "evt-1", { registeredAt: "2024-01-10T10:00:00Z" });
     await letter("pat@example.com", "Pat", mp, { createdAt: "2026-06-01T09:00:00Z" });
     await query(
@@ -275,7 +280,7 @@ describeWithDatabase("listSupporters and getSupporter", () => {
         {
           topic: "luma-calendar",
           address: "jane@example.com",
-          send: "unsure",
+          send: "yes",
           reason: "following",
           at: "2026-01-01T00:00:00+00:00",
           source: "luma",
@@ -355,7 +360,7 @@ describeWithDatabase("listSupporters and getSupporter", () => {
         linkedAt: expect.any(Date),
       },
     ]);
-    expect(sam.activity.map((a) => a.kind)).toEqual(["opted-out", "luma-registered"]);
+    expect(sam.activity.map((a) => a.kind)).toEqual(["opted-out", "luma-contact", "luma-registered"]);
     // Whether we'd email each address about each topic (lib/server/email-permissions.ts).
     expect(sam.permissions.map((p) => [p.topic, p.send, p.reason])).toEqual([["luma-calendar", "no", "unsubscribed"]]);
 

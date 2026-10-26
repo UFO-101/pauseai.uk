@@ -80,12 +80,12 @@ export type StaffSession = {
   current: boolean;
 };
 
-/** Every session `email` has open, newest first, marking the one `token` is. */
+/** Every session `email` has open, newest first, this one first of those begun together, marking it. */
 export async function listSessions(email: string, token: string): Promise<StaffSession[]> {
   return query<StaffSession>(
     `SELECT token_hash AS id, user_agent AS "userAgent", created_at AS "startedAt", expires_at AS "expiresAt", remember, token_hash = $2 AS current
      FROM staff_sessions WHERE lower(email) = lower($1) AND expires_at > now()
-     ORDER BY created_at DESC, token_hash`,
+     ORDER BY created_at DESC, token_hash = $2 DESC, token_hash`,
     [email, hash(token)],
   );
 }

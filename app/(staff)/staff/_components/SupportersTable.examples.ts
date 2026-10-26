@@ -224,7 +224,7 @@ export const exampleSupporterRows: SupporterRow[] = [
       {
         topic: "luma-calendar",
         address: "sam@example.com",
-        send: "unsure",
+        send: "yes",
         reason: "following",
         at: "2026-09-20T00:00:00Z",
         source: "luma",

@@ -110,7 +110,8 @@ Where they come from:
   public event on our calendar into `luma_events`, each registered guest
   into `luma_guests` (phone, a postcode answer, `utm_source`; never Luma's
   invited-only rows) and every Luma user into `luma_people`, with when
-  they joined the calendar as a contact. Luma's own IDs are the keys, and
+  they joined the calendar as a contact and when a read of the contacts
+  last listed them. Luma's own IDs are the keys, and
   only the import writes these tables. The site's events pages still read
   Luma live.
 - **Letters.** The sender of each letter (`sender_name`, `sender_email`,
@@ -162,12 +163,29 @@ address it is; the supporter pages join it to every address a supporter
 has. An address is opted out of a list while it has an open row, one at
 most per list. A list is named for what was opted out of, not for what
 told us, so an address has one opt-out in force per list whoever reported
-it. There are two lists. `luma-calendar`, the calendar's emails, is told to us by Luma's `calendar.person.unsubscribed` webhook
-(`/api/luma/webhook`, `lib/server/luma-webhooks.ts`), keyed by Luma's
-`Webhook-Id` so a redelivery changes nothing; `calendar.person.subscribed`
-closes the row. Luma doesn't say whether it was an unsubscribe, a block or
-a spam report, and keeps no history, so only opt-outs after the webhook was
-set up are known.
+it. There are two lists. `luma-calendar` is the calendar's emails, which
+Luma sends to the calendar's contacts. Unsubscribing from one, marking one
+as spam, or being removed or blocked by us takes someone off that list;
+following the calendar again puts them back as they were, with the date
+they first joined. Unfollowing changes neither. We checked this with a
+staff member's own Luma account against `/v1/calendars/contacts/list` in
+October 2026. Two things tell us:
+
+- Luma's `calendar.person.unsubscribed` webhook (`/api/luma/webhook`,
+  `lib/server/luma-webhooks.ts`), at once, keyed by Luma's `Webhook-Id`
+  so a redelivery changes nothing. Luma doesn't say whether it was an
+  unsubscribe, a block or a spam report. `calendar.person.subscribed`
+  closes the row, but Luma sends it for a new follower, not for one coming
+  back.
+- The Luma import's full pass over the contacts, every 20 hours
+  (`recordContactsPass`). A contact it doesn't list is opted out, as
+  `luma-contacts`, from when it noticed, unless they already are; an open
+  opt-out begun before it listed them again is closed. That catches what
+  the webhook doesn't: returns, removals, blocks, and anyone who left
+  before the webhook was set up on 22 Oct 2026.
+
+So someone who leaves, comes back and leaves again within a pass has one
+opt-out, not two: the second unsubscribe finds the first still open.
 
 An opt-out is only ever a real unsubscribe, told us by the list's own
 sender. `pauseai-updates`, the members' updates, has none yet: they're
@@ -198,13 +216,13 @@ source said so. The first rule that matches wins:
 - a blocked address (`email_blocks`, below) is no to everything;
 - then an opt-out in force is no;
 - then each topic's source: being a contact of the Luma calendar, which
-  registering for an event makes someone, as following it does; the newest member
+  registering for an event makes someone, as following it does, whenever
+  they joined (Luma's list leaves out anyone who left); the newest member
   record's "Keep me informed" (a free choice from 30 June 2026; before,
   everyone who joined was on the list); the newest letter's consent box.
 
-Unsure is a yes that an unsubscribe we can't see may have undone: a
-contact of the calendar since before Luma's webhook told us of
-unsubscribes (an unfollow Luma never tells us of, so it changes nothing), and every member on the updates, which CiviCRM sends. A
+Unsure is a yes that an unsubscribe we can't see may have undone: every
+member on the updates, which CiviCRM sends. A
 topic the address has had nothing to do with (no Luma account, never a
 member, no letter) has no row. Nothing sends email by it yet; when the
 site mails supporters, `send()` asks it for the purpose's topic as it
