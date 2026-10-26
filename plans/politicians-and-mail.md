@@ -43,6 +43,7 @@ no other table.
 ```
 notable_people ──┬── politicians                (later: journalists, famous people)
                  ├── ask_statuses ── asks
+                 ├── notable_people_tags ── tags
                  └── letters ──┬── supporter_letters
                                ├── pauseai_letters ── mailings
                                ├── letter_events
@@ -76,6 +77,15 @@ notable_people ──┬── politicians                (later: journalists, f
   Who set a status decides who may change it, as now: staff, or an import
   (`controlai`, `airtable`), which changes only its own.
 
+- **`tags`** and **`notable_people_tags`**: staff judgements about a
+  person, such as "Important target". A tag is a row (name unique ignoring
+  case, description, who made it) and tagging is a join with foreign keys,
+  so filters stay reliable. Staff tag people from the list; making,
+  renaming, merging and deleting tags is a separate page. Tags are for
+  judgements, never facts: anything with fixed values or that the site acts
+  on (an ask, body, party, status) stays a column or a status. Who tagged
+  decides who may untag, like statuses: staff, or `airtable` for the
+  synced ones.
 - **Campaigns** stay in `lib/content/email-your-mp.ts`, and each names
   exactly one ask: `regulate-letter-pm` the `frontier-ai-letter`,
   `support-sobel-bill` the `controlai-statement`. A campaign that can be
@@ -140,9 +150,18 @@ Each step is a commit or more, in this order.
    | Signed DeepMind Letter    | 63          | `deepmind-letter`                                         |
    | Signed Liability Letter   | 0           | `liability-letter`                                        |
    | ControlAI Signatory       | 167         | `controlai-statement`, still imported from ControlAI      |
+| Edinburgh Conference November 2026 | 50 Declined, 1 Passed on request | `edinburgh-conference-2026` |
+| Parliament meeting 23 June 2026 | 1 | `parliament-meeting-2026-06-23`, as `going` |
+| London 2026 Panel | 4 | `london-2026-panel`, as `going` |
 
-   Not imported: Responded, Declined, the per-person PDFs and briefings,
-   and the AI "Custom sentence".
+   Not imported: the letters' Responded and Declined, "Responded PauseAI
+   Documentary Screening invitation" (2), "Sent DeepMind letter
+   publication email" (the Emails import covers it), the per-person PDFs
+   and briefings, and the AI "Custom sentence".
+
+   The sync also brings Airtable's Notes (106) into
+   `notable_people.notes`, and its three ticks in as tags: Important
+   target (98), Recommended (15), Personal connection (7).
 
 5. **Emails sync** into `pauseai_letters`, nightly with the politicians.
    It adds rows by Airtable record ID and never touches rows the site
@@ -206,6 +225,9 @@ on request (`passed_on`).
   Airtable's web form.
 - **Supporters.** Web form senders appear, with the web form as their
   source.
+- **Tags** (`/staff/tags`, new). Make, rename, merge and delete tags. A
+  politician's page shows theirs and lets staff tag and untag from the
+  list; the politicians page filters by tag.
 - **Asks** (`/staff/asks`, new, read-only). Each ask, its kind and date,
   and how many people have each status.
 - **Import.** `sync-politicians`, the Emails sync and the two one-off
@@ -388,15 +410,11 @@ policy and erasure:
 
 ## Open questions
 
-1. **Airtable's judgement fields**: Recommended, Important target,
-   Personal connection and Notes. They help decide who to mail, but they're
-   the policy team's opinions, edited in Airtable. Import them as columns
-   on politicians?
-2. **Airtable's Test records.** Skip them, and keep our own test MPs
+1. **Airtable's Test records.** Skip them, and keep our own test MPs
    (`lib/test-mps.json`)?
-3. **The Google Cloud project.** Who creates it? A pauseai.uk Workspace
+2. **The Google Cloud project.** Who creates it? A pauseai.uk Workspace
    admin has to own it.
-4. **Ask slugs for the old mailings** (`documentary-screening`,
+3. **Ask slugs for the old mailings** (`documentary-screening`,
    `westminster-hall-debate` and the rest, in phase 1 step 5). Are these
    asks at all, or just mailings? An invitation to a screening is an ask;
    a briefing on an amendment may not be.
