@@ -18,5 +18,8 @@
   },
   "dependencies": {
     "@cloudflare/containers": "0.3.7"
+  },
+  "overrides": {
+    "undici": "7.30.1"
   }
 }
