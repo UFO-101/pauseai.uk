@@ -362,7 +362,7 @@ export const staffCopy = {
     title: "Politicians",
     search: "Search",
     allHouses: "All houses",
-    allParties: "⁂ All parties",
+    allParties: "All parties",
     anyCampaign: "Any campaign",
     none: "None found.",
     testMp: "Test",
@@ -715,7 +715,7 @@ export const staffCopy = {
     consent: { yes: "Yes", no: "No" },
   },
   // The button beside a list's search box; its other filters apply as soon as they're chosen.
-  search: "⁂ Search",
+  search: "Search",
   // After a list's filters: the list with none.
   resetFilters: "Reset filters",
   // Under a list of more than one page.
