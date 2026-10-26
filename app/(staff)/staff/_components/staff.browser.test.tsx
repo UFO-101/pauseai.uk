@@ -794,7 +794,7 @@ describe("ImportCard", () => {
         </ImportCard>
       </ImportCards>,
     );
-    const heading = page.getByRole("heading", { level: 2, name: "An import Hourly" });
+    const heading = page.getByRole("heading", { level: 3, name: "An import Hourly" });
     await expect.element(heading).toBeVisible();
     await expect
       .element(heading.getByRole("link", { name: "An import" }))
@@ -1413,8 +1413,15 @@ describe("ImportOverview", () => {
     ];
     await render(<ImportOverview newest={newest} airtableTable="https://airtable.com/app/tblPoliticians" />);
     await expect.element(page.getByRole("heading", { level: 1, name: staffCopy.import.pageTitle })).toBeVisible();
+    // A heading for each schedule, its jobs' cards under it.
+    expect(
+      page
+        .getByRole("heading", { level: 2 })
+        .all()
+        .map((h) => h.element().textContent),
+    ).toEqual([staffCopy.import.hourly, staffCopy.import.nightly, staffCopy.import.oneOff]);
     const cards = [...document.querySelectorAll("section")];
-    expect(cards.map((card) => card.querySelector("h2 a")!.getAttribute("href"))).toEqual([
+    expect(cards.map((card) => card.querySelector("h3 a")!.getAttribute("href"))).toEqual([
       "/staff/import-data/luma",
       "/staff/import-data/members",
       "/staff/import-data/politicians",
@@ -1424,7 +1431,7 @@ describe("ImportOverview", () => {
       "/staff/import-data/web-form-letters",
       "/staff/import-data/go-to-parliament",
     ]);
-    expect(cards.map((card) => card.querySelector("h2 a")!.textContent)).toEqual([
+    expect(cards.map((card) => card.querySelector("h3 a")!.textContent)).toEqual([
       jobTitles["import-luma"],
       jobTitles["import-members"],
       jobTitles["sync-politicians"],
@@ -1435,7 +1442,7 @@ describe("ImportOverview", () => {
       jobTitles["import-go-to-parliament"],
     ]);
     // Under the name, how the newest run ended, tinted to match.
-    const status = (i: number) => cards[i].querySelector("h2 + div > div")!;
+    const status = (i: number) => cards[i].querySelector("h3 + div > div")!;
     expect(status(0).textContent).toBe(`${staffCopy.runs.status.incomplete}2026-10-21 11:17`);
     // The Emails sync held some back, so it's amber too.
     expect([0, 1, 2, 3, 4, 5, 6].map((i) => status(i).className.match(/green|amber|red/)?.[0])).toEqual([
@@ -1463,7 +1470,7 @@ describe("ImportOverview", () => {
     expect(cards[1].querySelector(":scope > p a")!.getAttribute("href")).toBe("https://pauseai.info/join");
   });
 
-  it("shows an applied run in green, and one that changed nothing or was discarded plainly", async () => {
+  it("shows an applied run, and one that changed nothing, in green, and one discarded plainly", async () => {
     const discarded = ran(
       "sync-politicians",
       { changes: { added: [], removed: [], changed: [] } },
@@ -1473,8 +1480,8 @@ describe("ImportOverview", () => {
     const { rerender } = await render(
       <ImportOverview newest={[unchanged, undefined, exampleAppliedSync, undefined, undefined]} airtableTable="x" />,
     );
-    const status = (i: number) => document.querySelectorAll("section")[i].querySelector("h2 + div > div")!.className;
-    expect(status(0)).not.toMatch(/green|amber|red/);
+    const status = (i: number) => document.querySelectorAll("section")[i].querySelector("h3 + div > div")!.className;
+    expect(status(0)).toMatch(/green/);
     expect(status(2)).toMatch(/green/);
     await rerender(
       <ImportOverview newest={[undefined, undefined, discarded, undefined, undefined]} airtableTable="x" />,
@@ -1679,7 +1686,7 @@ describe("PoliticianTable", () => {
         .all()
         .map((c) => c.element().textContent);
     // Whether they're in office, the counts of letters and replies, each heading a sort, and their answer to each
-    // ask they've answered, a line each, in the asks' order, the answer in bold.
+    // ask they've answered, a line each, in the asks' order, the answer in bold first.
     expect(cells("Polly Placeholder").slice(4, 7)).toEqual([staffCopy.personStatuses.in_office, "4", "1"]);
     const answers = (name: string) =>
       page
@@ -1689,16 +1696,16 @@ describe("PoliticianTable", () => {
         .all()
         .map((li) => li.element().textContent);
     expect(answers("Polly Placeholder")).toEqual([
-      `${ask("edinburgh-conference-2026").title} ${staffCopy.statuses.declined}`,
-      `${ask("frontier-ai-letter").title} ${staffCopy.statuses.signed}`,
+      `${staffCopy.statuses.declined} ${ask("edinburgh-conference-2026").title}`,
+      `${staffCopy.statuses.signed} ${ask("frontier-ai-letter").title}`,
     ]);
     expect(
       page.getByRole("row").filter({ hasText: "Polly Placeholder" }).getByText(staffCopy.statuses.declined).element()
         .tagName,
     ).toBe("STRONG");
     expect(answers("Testy McTestface MP")).toEqual([
-      `${ask("frontier-ai-letter").title} ${staffCopy.statuses.signed}`,
-      `${ask("controlai-statement").title} ${staffCopy.statuses.signed}`,
+      `${staffCopy.statuses.signed} ${ask("frontier-ai-letter").title}`,
+      `${staffCopy.statuses.signed} ${ask("controlai-statement").title}`,
     ]);
     expect(cells("Testy McTestface MP")[4]).toBe(staffCopy.personStatuses.retired);
     expect(cells("Nora Nothing").at(-1)).toBe(staffCopy.politicians.noAsks);

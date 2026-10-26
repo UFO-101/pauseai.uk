@@ -220,10 +220,10 @@ export function runStatus(run: AnyImportRun): string {
   return run.status;
 }
 
-/** How a run ended, as a colour: green when it went well, amber held or stopped short, red failed; none when it changed nothing, was discarded, or never ran. */
+/** How a run ended, as a colour: green when it went well, changing something or nothing, amber held or stopped short, red failed; none when it was discarded, or never ran. */
 export function runTone(run: AnyImportRun | undefined): "green" | "amber" | "red" | undefined {
   if (!run) return undefined;
   if (run.status === "failed") return "red";
   if (run.status === "held" || runStatus(run) === "incomplete") return "amber";
-  return run.status === "ok" || run.status === "applied" ? "green" : undefined;
+  return run.status === "discarded" ? undefined : "green";
 }

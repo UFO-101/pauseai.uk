@@ -77,8 +77,8 @@ export default function PoliticianTable({ politicians, asks, search = {} }: Prop
                   <ul className={styles.asks}>
                     {answered.map((ask) => (
                       <li key={ask.slug}>
-                        <span className={styles.ask}>{ask.title}</span>{" "}
-                        <strong>{staffCopy.statuses[p.statuses[ask.slug].status]}</strong>
+                        <strong>{staffCopy.statuses[p.statuses[ask.slug].status]}</strong>{" "}
+                        <span className={styles.ask}>{ask.title}</span>
                       </li>
                     ))}
                   </ul>

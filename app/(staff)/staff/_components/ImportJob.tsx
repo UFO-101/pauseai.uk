@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { Fragment, type ReactNode } from "react";
 import { site } from "@/lib/content/site";
 import { jobTitles, staffCopy } from "@/lib/content/staff-interface";
 import { CONTROLAI_LETTER_PAGE } from "@/lib/controlai-letter";
@@ -104,8 +104,10 @@ const ABOUT: Record<
   },
 };
 
-function Tags({ job }: { job: ImportJob }) {
-  return TAGS[job].map((text) => <Tag key={text}>{text}</Tag>);
+/** A job's lozenges; on the overview, whose headings say how often each runs, without that one. */
+function Tags({ job, schedule = true }: { job: ImportJob; schedule?: boolean }) {
+  const often = words[JOB_SCHEDULES[job]];
+  return TAGS[job].filter((text) => schedule || text !== often).map((text) => <Tag key={text}>{text}</Tag>);
 }
 
 /** What the job does, with its source linked. Airtable's table link is the server's, so it comes in as a prop. */
@@ -145,6 +147,10 @@ function NewestRun({ job, run }: { job: ImportJob; run: AnyImportRun | undefined
 }
 
 /** /staff/import-data: a card per job, each a link to its page, with how its newest run ended. */
+/** The overview's sections, each the jobs that run that often, in this order. */
+const SCHEDULES = ["hourly", "nightly", "oneOff"] as const;
+
+/** Every job, a card each, under a heading for how often it runs: hourly, nightly, then the one-off imports. */
 export function ImportOverview({
   newest,
   airtableTable,
@@ -156,19 +162,26 @@ export function ImportOverview({
   return (
     <>
       <h1>{words.pageTitle}</h1>
-      <ImportCards>
-        {IMPORT_JOBS.map((job, i) => (
-          <ImportCard
-            key={job}
-            title={jobTitles[job]}
-            href={importPath(job)}
-            tags={<Tags job={job} />}
-            intro={<Intro job={job} airtableTable={airtableTable} />}
-          >
-            <NewestRun job={job} run={newest[i]} />
-          </ImportCard>
-        ))}
-      </ImportCards>
+      {SCHEDULES.map((schedule) => (
+        <Fragment key={schedule}>
+          <h2>{words[schedule]}</h2>
+          <ImportCards>
+            {IMPORT_JOBS.map((job, i) =>
+              JOB_SCHEDULES[job] === schedule ? (
+                <ImportCard
+                  key={job}
+                  title={jobTitles[job]}
+                  href={importPath(job)}
+                  tags={<Tags job={job} schedule={false} />}
+                  intro={<Intro job={job} airtableTable={airtableTable} />}
+                >
+                  <NewestRun job={job} run={newest[i]} />
+                </ImportCard>
+              ) : null,
+            )}
+          </ImportCards>
+        </Fragment>
+      ))}
     </>
   );
 }

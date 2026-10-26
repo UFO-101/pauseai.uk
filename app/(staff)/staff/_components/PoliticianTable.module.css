@@ -10,20 +10,14 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* Their answer to each ask they've answered: a line each, the ask in the
-   secondary colour and the answer in bold after it. Each line stays whole,
-   so the table gives the column the room and wraps the shorter columns,
-   such as the constituency, instead. */
+/* Their answer to each ask they've answered: a line each, the answer in
+   bold, then the ask in the secondary colour, which wraps under it. */
 .asks {
   display: grid;
   gap: var(--space-1);
   margin: 0;
   padding: 0;
   list-style: none;
-}
-
-.asks li {
-  white-space: nowrap;
 }
 
 .ask {

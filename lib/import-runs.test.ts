@@ -43,7 +43,7 @@ it("says an Emails sync that held emails back is incomplete, but not one that he
   expect(runStatus(exampleFailedRun("sync-emails", "boom", {}))).toBe("failed");
 });
 
-it("colours a run by how it ended: green done or applied, amber held or stopped short, red failed, none otherwise", () => {
+it("colours a run by how it ended: green done, applied or unchanged, amber held or stopped short, red failed, none otherwise", () => {
   expect(runTone(exampleRun("check-mps", { problems: [] }))).toBe("green");
   expect(runTone(exampleAppliedSync)).toBe("green");
   expect(runTone(exampleHeldSync)).toBe("amber");
@@ -52,6 +52,7 @@ it("colours a run by how it ended: green done or applied, amber held or stopped 
   // The contacts still being read leaves work for later too.
   expect(runTone(exampleRun("import-luma", { ...exampleLumaResult, contactsPassGoing: true }))).toBe("amber");
   expect(runTone(exampleFailedRun("check-mps", "boom", {}))).toBe("red");
-  expect(runTone(exampleRun("import-luma", exampleLumaResult, { status: "unchanged" }))).toBeUndefined();
+  expect(runTone(exampleRun("import-luma", exampleLumaResult, { status: "unchanged" }))).toBe("green");
+  expect(runTone(exampleRun("check-mps", { problems: [] }, { status: "discarded" }))).toBeUndefined();
   expect(runTone(undefined)).toBeUndefined();
 });

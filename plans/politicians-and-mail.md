@@ -456,6 +456,16 @@ still does there.
 - Staff set any ask's status, not just those of `trackedCampaigns`.
 - The syncs stop and leave the Import page. Politicians keep their
   `airtable_id`.
+- The check against Parliament's list ("Members of Parliament against
+  Parliament's list", `lib/server/mp-check.ts`) covers the Lords, the
+  Scottish Parliament and the Senedd as well as the Commons: peers from
+  Parliament's Members API, MSPs from the Scottish Parliament's, and MSs
+  from the Senedd's, each reporting where we disagree and changing
+  nothing. Which APIs, and what each gives (an email? a party?), is to be
+  found out.
+- A one-off update of everyone's details from those official lists, once
+  Airtable is left: names, parties, constituencies, emails, and who has
+  left office, held for a person to check like a large sync.
 
 ## Across all phases
 

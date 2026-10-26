@@ -599,7 +599,7 @@ export const staffCopy = {
       before: "MPs and peers who signed ",
       link: "the letter",
       after:
-        " are marked as signed for the “Support the Artificial Superintelligence Bill” campaign. This can't be changed by hand.",
+        "⁂ are marked as having signed ControlAI's statement, which the “Support the Artificial Superintelligence Bill” campaign asks for. This can't be changed by hand.",
     },
     importNow: "Import ControlAI letter now",
     never: "Not read yet.",
@@ -648,10 +648,10 @@ export const staffCopy = {
   pauseaiEmails: {
     title: "⁂ PauseAI's emails to politicians",
     intro: {
-      before: "⁂ From the ",
+      before: "⁂ Each email PauseAI has sent a politician since January 2026 is copied once from the ",
       link: "Emails table in Airtable",
       after:
-        "⁂: each email sent since January 2026, once, as a letter of the mailing whose box is ticked. An email with no box we know ticked waits until a developer adds its mailing.",
+        "⁂, as a letter of the mailing whose box is ticked. An email with no box we know ticked waits until a developer adds its mailing.",
     },
     importNow: "⁂ Import emails now",
     never: "Not imported yet.",
@@ -665,9 +665,9 @@ export const staffCopy = {
   webForm: {
     title: "⁂ Letters from pauseai.info's old form",
     intro: {
-      before: "⁂ Once: the letters supporters sent to politicians through pauseai.info, from the ",
+      before: "⁂ This copies, once, the letters supporters sent politicians through pauseai.info from the ",
       link: "Web form emails table in Airtable",
-      after: "⁂, so their senders become supporters. Not the letters' text.",
+      after: "⁂, so their senders become supporters. It doesn't copy the letters' text.",
     },
     importNow: "⁂ Import the letters",
     never: "Not imported yet.",
@@ -678,9 +678,9 @@ export const staffCopy = {
   goToParliament: {
     title: "⁂ Go to Parliament, 20 October 2026",
     intro: {
-      before: "⁂ Once: each MP's meeting with a constituent, from the ",
+      before: "⁂ This copies, once, each MP's meeting with a constituent from the ",
       link: "Go to Parliament table in Airtable",
-      after: "⁂. Nothing about the constituents.",
+      after: "⁂. It copies nothing about the constituents.",
     },
     importNow: "⁂ Import the meetings",
     never: "Not imported yet.",
@@ -711,10 +711,10 @@ export const staffCopy = {
     title: "⁂ Politicians from Airtable",
     // With a link to the table in the middle.
     intro: {
-      before: "⁂ From the ",
+      before: "⁂ Every politician in every body is copied from the ",
       link: "UK Parliamentarians table in Airtable",
       after:
-        "⁂: every politician in every body, but those ticked Test, with whether they signed the letters and their answer to the Edinburgh conference. A run that changes many people, or anyone's name, waits for you to check it.",
+        "⁂, but those ticked Test, with whether they signed the letters and their answer to the Edinburgh conference. A run that changes many people, or anyone's name, waits for you to check it.",
     },
     /** The test MPs (lib/test-mps.json) aren't in Airtable; every import adds any that are missing. */
     testMps: "Each import also adds the test MPs, who aren’t in Airtable, if any are missing.",
