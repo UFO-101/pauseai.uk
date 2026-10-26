@@ -11,11 +11,19 @@ describeWithDatabase("asks and campaigns", () => {
 
   it("lists every ask, newest first, those without a date last", async () => {
     const asks = await listAsks();
+    expect(asks.map((ask) => [ask.slug, ask.date])).toEqual([
+      ["edinburgh-conference-2026", "2026-11-01"],
+      ["go-to-parliament-oct-2026", "2026-10-20"],
+      ["controlai-statement", "2026-09-11"],
+      ["frontier-ai-letter", "2026-06-18"],
+      ["deepmind-letter", "2025-08-29"],
+    ]);
     expect(asks[0]).toEqual({
-      slug: "go-to-parliament-oct-2026",
+      slug: "edinburgh-conference-2026",
       title: expect.any(String),
       kind: "event",
-      date: "2026-10-20",
+      date: "2026-11-01",
+      url: "https://luma.com/6jp2nqe9",
     });
     expect(asks.map((ask) => ask.slug).sort()).toEqual(
       [
@@ -38,6 +46,15 @@ describeWithDatabase("asks and campaigns", () => {
     expect(counts["edinburgh-conference-2026"]).toEqual({ declined: 2 });
     expect(counts["frontier-ai-letter"]).toEqual({ signed: 1 });
     expect(counts["deepmind-letter"]).toEqual({});
+    // Who asks each: supporters in a campaign, PauseAI in a mailing.
+    const by = Object.fromEntries((await asksWithCounts()).map((ask) => [ask.slug, [ask.bySupporters, ask.byPauseai]]));
+    expect(by).toEqual({
+      "frontier-ai-letter": [true, false],
+      "deepmind-letter": [true, false],
+      "controlai-statement": [true, false],
+      "edinburgh-conference-2026": [false, true],
+      "go-to-parliament-oct-2026": [false, false],
+    });
   });
 
   it("has a row for every campaign in code, with its title and ask", async () => {

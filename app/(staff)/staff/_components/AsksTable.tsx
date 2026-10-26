@@ -8,9 +8,21 @@ import { Muted } from "@/components/ui/Text";
 
 const copy = staffCopy.asks;
 
+/** Who asks it: supporters, PauseAI, or both, a line each. */
+function AskedBy({ ask }: { ask: AskWithCounts }) {
+  return (
+    <>
+      {ask.bySupporters && <div>{copy.askedBy.supporters}</div>}
+      {ask.byPauseai && <div>{copy.askedBy.pauseai}</div>}
+    </>
+  );
+}
+
 /**
- * Every ask: its title, kind and date, and how many politicians gave each
- * answer its kind allows, each count linked to the politicians who gave it.
+ * Every ask, newest first: its title, kind and date, who asks it, a link to
+ * the letter or the event, and how many politicians gave each answer its
+ * kind allows, each count linked to the politicians who gave it. A link to
+ * another site opens in a new tab.
  */
 export default function AsksTable({ asks }: { asks: AskWithCounts[] }) {
   return (
@@ -20,6 +32,8 @@ export default function AsksTable({ asks }: { asks: AskWithCounts[] }) {
           <th>{copy.columns.ask}</th>
           <th>{copy.columns.kind}</th>
           <th>{copy.columns.date}</th>
+          <th>{copy.columns.askedBy}</th>
+          <th>{copy.columns.link}</th>
           <th>{copy.columns.answers}</th>
         </tr>
       </thead>
@@ -31,6 +45,19 @@ export default function AsksTable({ asks }: { asks: AskWithCounts[] }) {
               <td>{ask.title}</td>
               <td>{copy.kinds[ask.kind]}</td>
               <td>{ask.date && staffDate(ask.date)}</td>
+              <td>
+                <AskedBy ask={ask} />
+              </td>
+              <td>
+                {ask.url &&
+                  (ask.url.startsWith("/") ? (
+                    <Link href={ask.url}>{copy.open[ask.kind]}</Link>
+                  ) : (
+                    <a href={ask.url} target="_blank" rel="noreferrer">
+                      {copy.open[ask.kind]}
+                    </a>
+                  ))}
+              </td>
               <td>
                 {answers.length === 0 ? (
                   <Muted>{copy.noAnswers}</Muted>

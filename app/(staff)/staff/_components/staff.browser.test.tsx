@@ -1610,35 +1610,47 @@ describe("PoliticianTable headings", () => {
 });
 
 describe("AsksTable", () => {
-  it("lists each ask with its kind and date, and each answer's count, linked to who gave it", async () => {
+  it("lists each ask with its kind, date, who asks it, its link, and each answer's count, linked to who gave it", async () => {
     await render(<AsksTable asks={exampleAsksWithCounts} />);
+    const row = (title: string) => page.getByRole("row").filter({ hasText: title });
     const cells = (title: string) =>
-      page
-        .getByRole("row")
-        .filter({ hasText: title })
+      row(title)
         .getByRole("cell")
         .all()
         .map((c) => c.element().textContent);
     const copy = staffCopy.asks;
-    // The answers in the order the kind lists them.
     expect(cells(exampleAsks[0].title)).toEqual([
       exampleAsks[0].title,
       copy.kinds.event,
-      "20 Oct 2026",
+      "1 Nov 2026",
+      copy.askedBy.pauseai,
+      copy.open.event,
+      // The answers in the order the kind lists them.
       [
-        copy.count(staffCopy.statuses.going, 2),
-        copy.count(staffCopy.statuses.tentative, 1),
-        copy.count(staffCopy.statuses.meeting_staff, 1),
-        copy.count(staffCopy.statuses.declined_surgery, 1),
+        copy.count(staffCopy.statuses.going, 3),
+        copy.count(staffCopy.statuses.declined, 50),
+        copy.count(staffCopy.statuses.passed_on, 1),
       ].join(" · "),
     ]);
-    expect(cells(exampleAsks[2].title)).toEqual([
-      exampleAsks[2].title,
+    // Asked by nobody we record, with no link.
+    expect(cells(exampleAsks[1].title).slice(3, 5)).toEqual(["", ""]);
+    // No date; asked by both.
+    expect(cells(exampleAsks[3].title)).toEqual([
+      exampleAsks[3].title,
       copy.kinds.letter,
       "",
+      `${copy.askedBy.supporters}${copy.askedBy.pauseai}`,
+      copy.open.letter,
       copy.count(staffCopy.statuses.signed, 10),
     ]);
-    expect(cells(exampleAsks[3].title).at(-1)).toBe(copy.noAnswers);
+    expect(cells(exampleAsks[2].title).at(-1)).toBe(copy.noAnswers);
+    // Another site's page opens in a new tab; ours in this one.
+    const event = row(exampleAsks[0].title).getByRole("link", { name: copy.open.event });
+    await expect.element(event).toHaveAttribute("href", "https://luma.com/example");
+    await expect.element(event).toHaveAttribute("target", "_blank");
+    const ours = row(exampleAsks[3].title).getByRole("link", { name: copy.open.letter });
+    await expect.element(ours).toHaveAttribute("href", "/pdfs/example.pdf");
+    await expect.element(ours).not.toHaveAttribute("target");
     await expect
       .element(page.getByRole("link", { name: copy.count(staffCopy.statuses.passed_on, 1) }))
       .toHaveAttribute("href", "/staff/politicians?ask=edinburgh-conference-2026&answer=passed_on");
@@ -1704,8 +1716,8 @@ describe("PoliticianTable", () => {
         .tagName,
     ).toBe("STRONG");
     expect(answers("Testy McTestface MP")).toEqual([
-      `${staffCopy.statuses.signed} ${ask("frontier-ai-letter").title}`,
       `${staffCopy.statuses.signed} ${ask("controlai-statement").title}`,
+      `${staffCopy.statuses.signed} ${ask("frontier-ai-letter").title}`,
     ]);
     expect(cells("Testy McTestface MP")[4]).toBe(staffCopy.personStatuses.retired);
     expect(cells("Nora Nothing").at(-1)).toBe(staffCopy.politicians.noAsks);

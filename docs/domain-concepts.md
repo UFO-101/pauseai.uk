@@ -69,7 +69,9 @@ else would need a way to find them (a region for an MSP, a list for peers).
 
 Something we ask notable people to do whose answer we record: sign a
 letter, come to an event (`asks`, `lib/asks.ts`). Each has a slug, a title,
-a kind (`letter` or `event`) and a date. A migration adds each.
+a kind (`letter` or `event`), a date, and a link to the letter or the
+event. A migration adds each. Supporters ask it when a campaign's letter
+does, and PauseAI when a mailing does.
 
 A person's answer to an ask is a status (`ask_statuses`): one row per
 person per ask, with a status, a date, a note, and who set it; no answer,
@@ -87,8 +89,8 @@ ControlAI's statement from its letter (`updated_by` `controlai`,
 `lib/server/controlai-import.ts`); the politician sync sets the letters and
 the conference Airtable records (`airtable`, `AIRTABLE_ASKS`); the one-off
 Go to Parliament import its meetings (`airtable`,
-`lib/server/go-to-parliament-import.ts`). `/staff/asks` lists the asks and
-how many gave each answer.
+`lib/server/go-to-parliament-import.ts`). `/staff/asks` lists the asks, newest
+first, who asks each, and how many gave each answer.
 
 ## Campaigns
 

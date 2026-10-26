@@ -11,25 +11,36 @@ export type Ask = {
   kind: AskKind;
   /** yyyy-mm-dd, the event's or the letter's, if known. */
   date: string | null;
+  /** Where to read the letter or see the event: a path of ours, or another site's page. */
+  url: string | null;
 };
 
-/** An ask, with how many people have given each answer. */
-export type AskWithCounts = Ask & { counts: Partial<Record<AskStatus, number>> };
+/**
+ * An ask, with how many people have given each answer, and who asks it:
+ * supporters, in a campaign's letter, or PauseAI, in a mailing.
+ */
+export type AskWithCounts = Ask & {
+  counts: Partial<Record<AskStatus, number>>;
+  bySupporters: boolean;
+  byPauseai: boolean;
+};
 
 /** A campaign's row: its title, and the ask it makes, if any. */
 export type CampaignRow = { slug: string; title: string; ask: string | null };
 
-const SELECT_ASKS = `SELECT a.slug, a.title, a.kind, to_char(a.date, 'YYYY-MM-DD') AS date FROM asks a`;
+const ASK_COLUMNS = "a.slug, a.title, a.kind, to_char(a.date, 'YYYY-MM-DD') AS date, a.url";
 
 /** Every ask, newest first, those without a date last. */
 export async function listAsks(): Promise<Ask[]> {
-  return query<Ask>(`${SELECT_ASKS} ORDER BY a.date DESC NULLS LAST, a.title`);
+  return query<Ask>(`SELECT ${ASK_COLUMNS} FROM asks a ORDER BY a.date DESC NULLS LAST, a.title`);
 }
 
 /** Every ask, as listAsks() orders them, with how many have each status. */
 export async function asksWithCounts(): Promise<AskWithCounts[]> {
   return query<AskWithCounts>(
-    `SELECT a.slug, a.title, a.kind, to_char(a.date, 'YYYY-MM-DD') AS date,
+    `SELECT ${ASK_COLUMNS},
+       EXISTS (SELECT 1 FROM campaigns c WHERE c.ask = a.slug) AS "bySupporters",
+       EXISTS (SELECT 1 FROM mailings m WHERE m.ask = a.slug) AS "byPauseai",
        coalesce((SELECT json_object_agg(c.status, c.count) FROM (
          SELECT s.status, count(*)::int AS count FROM ask_statuses s WHERE s.ask = a.slug GROUP BY s.status
        ) c), '{}') AS counts

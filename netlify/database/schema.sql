@@ -107,8 +107,10 @@ CREATE TABLE public.asks (
     title text NOT NULL,
     kind text NOT NULL,
     date date,
+    url text,
     CONSTRAINT asks_kind_check CHECK ((kind = ANY (ARRAY['letter'::text, 'event'::text]))),
-    CONSTRAINT asks_slug_check CHECK ((slug ~ '^[a-z0-9]+(-[a-z0-9]+)*$'::text))
+    CONSTRAINT asks_slug_check CHECK ((slug ~ '^[a-z0-9]+(-[a-z0-9]+)*$'::text)),
+    CONSTRAINT asks_url_check CHECK ((url ~ '^(https://|/)'::text))
 );
 
 --

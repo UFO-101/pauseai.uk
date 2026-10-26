@@ -69,20 +69,25 @@ INSERT INTO ask_kind_statuses (kind, status) VALUES
   ('event', 'declined_surgery'),
   ('event', 'passed_on');
 
--- `date` is the event's, or the letter's if it has one.
+-- `date` is the event's, or the letter's: when it was published, or first
+-- asked for. `url` is where to read it or see the event: a page of ours, by
+-- its path, or another site's.
 CREATE TABLE asks (
   slug text PRIMARY KEY CHECK (slug ~ '^[a-z0-9]+(-[a-z0-9]+)*$'),
   title text NOT NULL,
   kind text NOT NULL CHECK (kind IN ('letter', 'event')),
   date date,
+  url text CHECK (url ~ '^(https://|/)'),
   UNIQUE (slug, kind)
 );
-INSERT INTO asks (slug, title, kind, date) VALUES
-  ('frontier-ai-letter', 'Our open letter to the Prime Minister on frontier AI', 'letter', NULL),
-  ('deepmind-letter', 'Our 2025 letter to Sir Demis Hassabis', 'letter', NULL),
-  ('controlai-statement', 'ControlAI''s statement', 'letter', NULL),
-  ('edinburgh-conference-2026', 'A conference in Edinburgh, November 2026', 'event', NULL),
-  ('go-to-parliament-oct-2026', 'Go to Parliament, at the House of Commons', 'event', '2026-10-20');
+INSERT INTO asks (slug, title, kind, date, url) VALUES
+  ('frontier-ai-letter', 'Our open letter to the Prime Minister on frontier AI', 'letter', '2026-06-18',
+    '/pdfs/Frontier-AI-Open-Letter.pdf'),
+  ('deepmind-letter', 'Our 2025 letter to Sir Demis Hassabis', 'letter', '2025-08-29', '/campaigns/dear-sir-demis-2025'),
+  ('controlai-statement', 'ControlAI''s statement', 'letter', '2026-09-11', 'https://controlai.org/uk-pm-letter'),
+  ('edinburgh-conference-2026', 'A conference in Edinburgh, November 2026', 'event', '2026-11-01',
+    'https://luma.com/6jp2nqe9'),
+  ('go-to-parliament-oct-2026', 'Go to Parliament, at the House of Commons', 'event', '2026-10-20', NULL);
 
 -- One letter many supporters send, and the ask it makes, if any. Its words
 -- are in code (lib/content/email-your-mp.ts), or nowhere for the old

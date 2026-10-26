@@ -1,20 +1,49 @@
 import type { Ask, AskWithCounts } from "@/lib/server/asks";
 import type { Politician, PoliticianChange } from "@/lib/server/politicians";
 
-/** The asks, as the migrations add them, a letter and an event of each kind. */
+/** The asks, as the migrations add them, newest first: two events and two letters, one with no date or link, linked to our pages and others'. */
 export const exampleAsks: Ask[] = [
-  { slug: "go-to-parliament-oct-2026", title: "Example Day at Parliament", kind: "event", date: "2026-10-20" },
-  { slug: "edinburgh-conference-2026", title: "Example Conference", kind: "event", date: null },
-  { slug: "frontier-ai-letter", title: "Example Letter to the PM", kind: "letter", date: null },
-  { slug: "controlai-statement", title: "Example Statement", kind: "letter", date: null },
+  {
+    slug: "edinburgh-conference-2026",
+    title: "Example Conference",
+    kind: "event",
+    date: "2026-11-01",
+    url: "https://luma.com/example",
+  },
+  {
+    slug: "go-to-parliament-oct-2026",
+    title: "Example Day at Parliament",
+    kind: "event",
+    date: "2026-10-20",
+    url: null,
+  },
+  {
+    slug: "controlai-statement",
+    title: "Example Statement",
+    kind: "letter",
+    date: "2026-09-11",
+    url: "https://example.org/statement",
+  },
+  {
+    slug: "frontier-ai-letter",
+    title: "Example Letter to the PM",
+    kind: "letter",
+    date: null,
+    url: "/pdfs/example.pdf",
+  },
 ];
 
 /** The asks with how many gave each answer: a letter signed, an event answered every way it allows, and one nobody has answered. */
 export const exampleAsksWithCounts: AskWithCounts[] = [
-  { ...exampleAsks[0], counts: { going: 2, tentative: 1, meeting_staff: 1, declined_surgery: 1 } },
-  { ...exampleAsks[1], counts: { declined: 50, passed_on: 1, going: 3 } },
-  { ...exampleAsks[2], counts: { signed: 10 } },
-  { ...exampleAsks[3], counts: {} },
+  { ...exampleAsks[0], counts: { declined: 50, passed_on: 1, going: 3 }, bySupporters: false, byPauseai: true },
+  {
+    ...exampleAsks[1],
+    counts: { going: 2, tentative: 1, meeting_staff: 1, declined_surgery: 1 },
+    bySupporters: false,
+    byPauseai: false,
+  },
+  { ...exampleAsks[2], counts: {}, bySupporters: true, byPauseai: false },
+  { ...exampleAsks[3], counts: { signed: 10 }, bySupporters: true, byPauseai: true },
 ];
 
 /** An MP in office who has signed the letter to the PM, and declined the conference, from Airtable. */

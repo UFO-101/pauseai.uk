@@ -43,7 +43,7 @@ export const staffCopy = {
     } as Record<string, string>,
     supporters: "Supporters",
     politicians: "Politicians",
-    asks: "⁂ Asks",
+    asks: "Asks",
     import: "Import data",
     changes: "Audit log",
     letters: "Letters to MPs",
@@ -437,11 +437,22 @@ export const staffCopy = {
   },
   // The asks page: each ask, its kind and date, and how many gave each answer.
   asks: {
-    title: "⁂ Asks",
-    intro: "⁂ What we ask politicians to do, and how many have answered each way. A developer adds a new ask.",
-    columns: { ask: "⁂ Ask", kind: "⁂ Kind", date: "⁂ Date", answers: "⁂ Answers" },
-    kinds: { letter: "⁂ Letter", event: "⁂ Event" } as Record<string, string>,
-    noAnswers: "⁂ No answers yet",
+    title: "Asks",
+    intro: "What we ask notable people to do when writing to them. Make a PR to add new ask.",
+    columns: {
+      ask: "Ask",
+      kind: "Kind",
+      date: "Date",
+      // Who asks it: supporters, in a campaign's letter, or PauseAI, in a mailing; or both.
+      askedBy: "⁂ Asked by",
+      link: "⁂ Link",
+      answers: "Answers",
+    },
+    kinds: { letter: "Letter", event: "Event" } as Record<string, string>,
+    askedBy: { supporters: "⁂ Supporters", pauseai: "⁂ PauseAI" },
+    // The link to the letter or the event's page.
+    open: { letter: "⁂ Read the letter", event: "⁂ See the event" } as Record<string, string>,
+    noAnswers: "No answers yet",
     // Each answer's count links to the politicians who gave it.
     count: (status: string, n: number) => `${status}: ${n}`,
   },
