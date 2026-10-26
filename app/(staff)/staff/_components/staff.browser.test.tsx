@@ -2076,7 +2076,7 @@ describe("SubscriptionBadges", () => {
     const { rerender } = await render(<SubscriptionBadges permissions={exampleSupporterRows[0].permissions} />);
     expect(document.body.textContent!.trim()).toBe(copy.topics["events-and-ways-to-help"]);
     await rerender(<SubscriptionBadges permissions={exampleSupporterRows[1].permissions} />);
-    await expect.element(page.getByText(copy.unsure(copy.topics["luma-calendar"]))).toBeVisible();
+    await expect.element(page.getByText(copy.topics["luma-calendar"], { exact: true })).toBeVisible();
     await expect.element(page.getByText(copy.unsure(copy.topics["pauseai-updates"]))).toBeVisible();
     await rerender(<SubscriptionBadges permissions={[]} />);
     expect(document.body.textContent!.trim()).toBe("");

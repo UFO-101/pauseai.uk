@@ -2,6 +2,7 @@ import "server-only";
 import type { LumaImportResult } from "@/lib/import-runs";
 import { query, transaction, type Queryable } from "./db";
 import { keepingFailure, recordRun } from "./import-runs";
+import { recordContactsPass } from "./opt-outs";
 import { refreshSupporterFacts } from "./supporter-facts";
 import { linkSupporters } from "./supporters";
 import { LumaRateLimited, type LumaPage } from "./outside-services/luma-api";
@@ -15,7 +16,8 @@ import { type EventGuest, listEventGuests } from "./outside-services/luma-guests
 
 // Copies our Luma calendar into luma_events, luma_people and luma_guests:
 // every public event, the guests who registered for each, and the
-// calendar's contacts. Hourly (app/api/cron/import-luma) or when staff
+// calendar's contacts, and from them who has left the calendar or come
+// back (recordContactsPass). Hourly (app/api/cron/import-luma) or when staff
 // ask, each run in the import log (import-runs.ts, as "import-luma").
 //
 // A run has about 20 seconds (Netlify's scheduled functions stop at 30) and
@@ -36,8 +38,8 @@ const LIVE_DAYS = 3;
 const SETTLED_DAYS = 30;
 /** A full pass over every event, for edits to old ones and deletions, this often. */
 const FULL_EVENTS_HOURS = 20;
-/** A full pass over every contact this often, a few pages each run. */
-const FULL_CONTACTS_DAYS = 7;
+/** A full pass over every contact this often, a few pages each run: it's how we see who left or came back. */
+const FULL_CONTACTS_HOURS = 20;
 const CONTACT_PAGES_PER_RUN = 10;
 
 type ImportList = "events" | "contacts";
@@ -284,7 +286,7 @@ async function importGuests(eventId: string, budget: Budget, db: Queryable): Pro
   return counts;
 }
 
-/** Sets when each contact joined the calendar; returns how many that was news for. */
+/** Sets when each contact joined the calendar, and that they're listed now; returns how many the join was news for. */
 async function upsertContacts(contacts: CalendarContact[], db: Queryable): Promise<number> {
   const unique = [...new Map(contacts.map((contact) => [contact.userId, contact])).values()];
   const rows = await query(
@@ -303,27 +305,48 @@ async function upsertContacts(contacts: CalendarContact[], db: Queryable): Promi
     ],
     db,
   );
+  await query(
+    "UPDATE luma_people SET contact_seen_at = now() WHERE user_id = ANY($1::text[])",
+    [unique.map((c) => c.userId)],
+    db,
+  );
   return rows.length;
 }
 
+/** Notes that a full pass over the contacts begins now, and returns when. */
+async function startContactsPass(db: Queryable): Promise<Date> {
+  const [state] = await query<{ pass_started_at: Date }>(
+    `INSERT INTO luma_import_state (list, pass_started_at) VALUES ('contacts', now())
+     ON CONFLICT (list) DO UPDATE SET pass_started_at = now() RETURNING pass_started_at`,
+    [],
+    db,
+  );
+  return state.pass_started_at;
+}
+
 /**
- * The contacts, newest first, until a page holds nothing new. Once a week a
- * full pass, a few pages a run from a kept cursor, for anyone missed. A
- * cursor Luma no longer honours is dropped, so the next run starts the
- * pass again. Says how many contacts changed, how many pages it read, and
- * whether a full pass is still going.
+ * The contacts, newest first, until a page holds nothing new. Every 20
+ * hours a full pass, a few pages a run from a kept cursor, for anyone
+ * missed; when it ends, the contacts it didn't list have left the calendar
+ * and those it did may have come back (recordContactsPass). A pass whose
+ * start wasn't noted ends without that. A cursor Luma no longer honours is
+ * dropped, so the next run starts the pass again. Says how many contacts
+ * and opt-outs changed, how many pages it read, and whether a full pass is
+ * still going.
  */
 async function importContacts(
   budget: Budget,
   db: Queryable,
 ): Promise<{ changed: number; pages: number; going: boolean }> {
-  const [state] = await query<{ cursor: string }>(
-    "SELECT cursor FROM luma_import_state WHERE list = $1",
+  const [state] = await query<{ cursor: string; pass_started_at: Date | null }>(
+    "SELECT cursor, pass_started_at FROM luma_import_state WHERE list = $1",
     ["contacts"],
     db,
   );
   let cursor: string | undefined = state?.cursor || undefined;
-  const full = !!cursor || (await fullPassDue("contacts", `${FULL_CONTACTS_DAYS} days`, db));
+  const full = !!cursor || (await fullPassDue("contacts", `${FULL_CONTACTS_HOURS} hours`, db));
+  // A pass beginning now notes when; one going on has noted it.
+  const passStartedAt = full && !cursor ? await startContactsPass(db) : state?.pass_started_at;
   let changed = 0;
   let pages = 0;
   // Only reading the last page finishes a pass: a run out of budget before
@@ -344,6 +367,7 @@ async function importContacts(
     throw full ? new ContactsPassFailed(error) : error;
   }
   if (full) await saveState("contacts", cursor ?? "", finished, db);
+  if (full && finished && passStartedAt) changed += await recordContactsPass(passStartedAt, db);
   return { changed, pages, going: full && !finished };
 }
 

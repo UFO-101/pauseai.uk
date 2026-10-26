@@ -26,10 +26,12 @@ function post(payload: unknown, headers: Partial<Record<string, string | null>> 
 describeWithDatabase("POST /api/luma/webhook", () => {
   useTestDatabase();
 
-  it("records an unsubscribe, and the address subscribing again", async () => {
+  it("records an unsubscribe, and the address subscribing again, saying so in the log", async () => {
+    vi.spyOn(console, "info").mockImplementation(() => {});
     const res = await post(lumaPersonWebhook("calendar.person.unsubscribed", "jane@example.com"));
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ recorded: true });
+    expect(console.info).toHaveBeenLastCalledWith("Luma webhook msg_1, calendar.person.unsubscribed: recorded");
     expect(await query("SELECT address, resubscribed_at FROM opt_outs")).toEqual([
       { address: "jane@example.com", resubscribed_at: null },
     ]);
@@ -37,6 +39,9 @@ describeWithDatabase("POST /api/luma/webhook", () => {
     expect(await (await post(lumaPersonWebhook("calendar.person.unsubscribed", "jane@example.com"))).json()).toEqual({
       recorded: false,
     });
+    expect(console.info).toHaveBeenLastCalledWith(
+      "Luma webhook msg_1, calendar.person.unsubscribed: nothing to record",
+    );
     const back = await post(lumaPersonWebhook("calendar.person.subscribed", "jane@example.com"), {
       "webhook-id": "msg_2",
     });

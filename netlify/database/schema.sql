@@ -37,9 +37,8 @@ SELECT r.send, r.reason, r.at, r.source FROM (
   SELECT 2, 'no', 'unsubscribed', o.unsubscribed_at, o.source
   FROM opt_outs o WHERE o.address = for_address AND o.list = for_topic AND o.resubscribed_at IS NULL
   UNION ALL
-  -- Following the calendar: unsure from before 22 Oct 2026, when Luma's
-  -- webhook started telling us of unsubscribes.
-  SELECT 3, CASE WHEN f.since < '2026-10-22T00:00:00Z' THEN 'unsure' ELSE 'yes' END, 'following', f.since, 'luma'
+  -- A contact of the calendar.
+  SELECT 3, 'yes', 'following', f.since, 'luma'
   FROM (SELECT min(l.contact_since) AS since FROM luma_people l WHERE l.email = for_address) f
   WHERE for_topic = 'luma-calendar' AND f.since IS NOT NULL
   UNION ALL
@@ -155,6 +154,7 @@ CREATE TABLE public.luma_people (
     name text DEFAULT ''::text NOT NULL,
     contact_since timestamp with time zone,
     changed_at timestamp with time zone DEFAULT now() NOT NULL,
+    contact_seen_at timestamp with time zone,
     CONSTRAINT luma_people_email_check CHECK ((email = lower(email)))
 );
 
@@ -196,7 +196,7 @@ CREATE TABLE public.opt_outs (
     resubscribed_at timestamp with time zone,
     CONSTRAINT opt_outs_address_check CHECK ((address = lower(address))),
     CONSTRAINT opt_outs_list_check CHECK ((list = ANY (ARRAY['luma-calendar'::text, 'pauseai-updates'::text]))),
-    CONSTRAINT opt_outs_source_check CHECK ((source = 'luma-webhook'::text))
+    CONSTRAINT opt_outs_source_check CHECK ((source = ANY (ARRAY['luma-webhook'::text, 'luma-contacts'::text])))
 );
 
 --
@@ -431,6 +431,7 @@ CREATE TABLE public.luma_import_state (
     list text NOT NULL,
     full_pass_at timestamp with time zone,
     cursor text DEFAULT ''::text NOT NULL,
+    pass_started_at timestamp with time zone,
     CONSTRAINT luma_import_state_list_check CHECK ((list = ANY (ARRAY['events'::text, 'contacts'::text])))
 );
 
@@ -913,7 +914,9 @@ CREATE VIEW public.supporters_summary AS
     contact.phone,
     contact.postcode,
     ident.sources,
-    COALESCE(act.luma_contact, false) AS luma_contact,
+    (COALESCE(act.luma_contact, false) AND (NOT (EXISTS ( SELECT 1
+           FROM public.opt_outs o
+          WHERE ((o.list = 'luma-calendar'::text) AND (o.resubscribed_at IS NULL) AND (o.address = ANY (ident.emails))))))) AS luma_contact,
     s.first_seen_at,
     act.last_active_at,
     COALESCE(act.events, 0) AS events,
