@@ -177,17 +177,20 @@ come back.
 4. **Statuses**, owned by `airtable`, replacing
    `lib/server/signatory-import.ts`:
 
-   | Airtable field                     | Politicians                      | Ask                                          |
-   | ---------------------------------- | -------------------------------- | -------------------------------------------- |
-   | Signed Frontier AI Letter          | 10                               | `frontier-ai-letter`                         |
-   | Signed DeepMind Letter             | 63                               | `deepmind-letter`                            |
-   | Signed Liability Letter            | 0                                | `liability-letter`                           |
-   | ControlAI Signatory                | 167                              | `controlai-statement`, from ControlAI as now |
-   | Edinburgh Conference November 2026 | 50 Declined, 1 Passed on request | `edinburgh-conference-2026`                  |
-   | Parliament meeting 23 June 2026    | 1                                | `parliament-meeting-2026-06-23`, `going`     |
-   | London 2026 Panel                  | 4                                | `london-2026-panel`, `going`                 |
+   | Ask                         | What it is                                                                                    | Airtable field                     | Politicians                      |
+   | --------------------------- | --------------------------------------------------------------------------------------------- | ---------------------------------- | -------------------------------- |
+   | `frontier-ai-letter`        | Our open letter to the Prime Minister on frontier AI; Email your MP's current campaign        | Signed Frontier AI Letter          | 10                               |
+   | `deepmind-letter`           | Our 2025 letter to Sir Demis Hassabis of Google DeepMind (`/campaigns/dear-sir-demis-2025`)    | Signed DeepMind Letter             | 63                               |
+   | `liability-letter`          | Our letter on AI liability, with a policy briefing; supporters wrote about it May–June 2026   | Signed Liability Letter            | 0                                |
+   | `controlai-statement`       | ControlAI's statement; imported from ControlAI as now                                         | ControlAI Signatory                | 167                              |
+   | `edinburgh-conference-2026` | A conference in Edinburgh, November 2026, invited in October                                  | Edinburgh Conference November 2026 | 50 Declined, 1 Passed on request |
+   | `london-2026-panel`         | Probably the Parliamentary conference after PauseCon London, September 2026; Joseph to confirm | London 2026 Panel                  | 4, `going`                       |
 
-   Not imported: Responded and Declined on the letters; "Responded PauseAI
+   No one has signed the liability letter, but it's an ask all the same,
+   as 77 web form letters asked for it (step 6).
+
+   Not imported: "Parliament meeting 23 June 2026", one MP; Responded and
+   Declined on the letters; "Responded PauseAI
    Documentary Screening invitation" (2), which has no ask; "Sent DeepMind
    letter publication email", which the Emails sync covers; the
    per-person PDFs; the AI "Custom sentence".
@@ -214,7 +217,11 @@ come back.
    senders become supporters. They came from pauseai.info's old UK tool
    (`/uk-email-mp`, 18 July 2025 to 19 October 2026), which wrote each
    letter to Airtable for an automation to send. We import the 718 that
-   were sent and skip 13 marked spam, invalid or unsent. The consent box
+   were sent and skip 13 marked spam, invalid or unsent. Its Campaign
+   gives the ask: Frontier AI letter (620, `frontier-ai-letter`),
+   Liability letter (77, `liability-letter`) and DeepMind letter (21,
+   `deepmind-letter`). Its "Attending Parliament 23 June 2026" tick, about
+   the sender, isn't imported. The consent box
    arrived on 23 September 2026, so the 651 earlier letters count as no
    consent. A letter already in `letters` (same sender, politician and
    ask) is skipped.
