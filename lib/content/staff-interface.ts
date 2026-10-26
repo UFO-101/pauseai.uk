@@ -360,7 +360,8 @@ export const staffCopy = {
   } as Record<string, string>,
   politicians: {
     title: "Politicians",
-    search: "Search",
+    // The search box's label: what it searches.
+    search: "Name, constituency, party or email",
     allHouses: "All houses",
     allParties: "All parties",
     anyCampaign: "Any campaign",

@@ -11,7 +11,12 @@
    chosen. On a phone each takes the width, a row each. */
 @media (min-width: 40rem) {
   .filters > * {
-    max-width: 12rem;
+    max-width: 10.5rem;
+  }
+
+  /* The search, wide enough for a label that names what it searches. */
+  .filters > :first-child {
+    max-width: 16rem;
   }
 }
 

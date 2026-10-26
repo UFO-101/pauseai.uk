@@ -23,6 +23,7 @@ const ALLOWED: Record<string, string> = {
   // A control's width inside a form.
   "StaffForms.module.css .narrow": "a field",
   "StaffForms.module.css .filters > *": "a filter, so a row of them fits the page",
+  "StaffForms.module.css .filters > :first-child": "the search, so its label fits",
   "StaffAccountsTable.module.css .add input": "a field",
 };
 
