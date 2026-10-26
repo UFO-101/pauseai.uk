@@ -406,8 +406,8 @@ policy and erasure:
 
 ## Open questions
 
-1. **The Google Cloud project.** Who creates it? A pauseai.uk Workspace
-   admin has to own it.
+1. **The Google Cloud project.** Joseph creates it, as the Workspace
+   admin; phase 2 writes the steps for him. Open until he has.
 2. **Ask slugs for the old mailings** (`documentary-screening`,
    `westminster-hall-debate` and the rest, in phase 1 step 5). Are these
    asks at all, or just mailings? An invitation to a screening is an ask;
