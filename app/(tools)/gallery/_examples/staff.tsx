@@ -3,8 +3,11 @@
 // politicians, letters, runs and changes. Their links go to /staff pages,
 // which send anyone without a session to the login page.
 import { Button } from "@/components/ui/Button";
+import { Select, TextInput } from "@/components/ui/Controls";
+import { Field } from "@/components/ui/Field";
 import ChangesTable from "@/app/(staff)/staff/_components/ChangesTable";
 import EmailBlockFilters from "@/app/(staff)/staff/_components/EmailBlockFilters";
+import StaffFilters from "@/app/(staff)/staff/_components/StaffFilters";
 import { exampleProblems } from "@/app/(staff)/staff/_components/EmailBlocksTable.examples";
 import EmailProblemsTable from "@/app/(staff)/staff/_components/EmailProblemsTable";
 import { exampleChanges } from "@/app/(staff)/staff/_components/ChangesTable.examples";
@@ -91,10 +94,21 @@ import {
 } from "./staff.client";
 
 const [pm] = campaigns;
+/** The parties a filter of politicians picks from. */
+const parties = ["Conservative", "Green", "Labour", "Liberal Democrat"];
 
 /** The politicians list's filters, none chosen. */
-const EMPTY_POLITICIAN_FILTERS = { q: "", house: "", status: "", party: "", flag: "", ask: "", answer: "", email: "" };
-const EXAMPLE_PARTIES = ["Example Party", "Sample Party"];
+const EMPTY_POLITICIAN_FILTERS = {
+  q: "",
+  house: "",
+  status: "",
+  party: "",
+  flag: "",
+  ask: "",
+  answer: "",
+  sort: "",
+  dir: "",
+};
 
 // Every page the navigation can mark as current, so a new one is a type error until it's here.
 const PAGES: Record<StaffPageName, true> = {
@@ -1118,19 +1132,20 @@ export const staff: Group = {
           label: "Empty, and filled in",
           render: () => (
             <StaffPage as="div">
-              <PoliticianFilters {...EMPTY_POLITICIAN_FILTERS} asks={exampleAsks} parties={EXAMPLE_PARTIES} />
+              <PoliticianFilters search={EMPTY_POLITICIAN_FILTERS} asks={exampleAsks} parties={parties} />
               <PoliticianFilters
-                {...EMPTY_POLITICIAN_FILTERS}
-                q="example"
-                house="lords"
-                status="in_office"
-                party="Example Party"
-                flag="important"
-                ask="edinburgh-conference-2026"
-                answer="declined"
-                email="blocked"
+                search={{
+                  ...EMPTY_POLITICIAN_FILTERS,
+                  q: "example",
+                  house: "lords",
+                  status: "in_office",
+                  party: "Labour",
+                  flag: "important",
+                  ask: "edinburgh-conference-2026",
+                  answer: "declined",
+                }}
                 asks={exampleAsks}
-                parties={EXAMPLE_PARTIES}
+                parties={parties}
               />
             </StaffPage>
           ),
@@ -1218,15 +1233,42 @@ export const staff: Group = {
       ],
     },
     {
+      name: "StaffFilters",
+      file: "app/(staff)/staff/_components/StaffFilters.tsx",
+      variants: [
+        {
+          label: "A search with its button, then a select, which applies when chosen",
+          render: () => (
+            <StaffPage as="div">
+              <StaffFilters action="/staff/politicians/blocked-emails">
+                <Field label="Address">
+                  <TextInput type="search" name="q" />
+                </Field>
+                <Button variant="primary" size="small" type="submit">
+                  Search
+                </Button>
+                <Field label="Cause">
+                  <Select name="kind">
+                    <option value="">All</option>
+                    <option value="hard">Bounced</option>
+                  </Select>
+                </Field>
+              </StaffFilters>
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
       name: "EmailBlockFilters",
       file: "app/(staff)/staff/_components/EmailBlockFilters.tsx",
       variants: [
         {
-          label: "All, and complaints only",
+          label: "All, and complaints to a search",
           render: () => (
             <StaffPage as="div">
-              <EmailBlockFilters kind="" action="/staff/politicians/blocked-emails" />
-              <EmailBlockFilters kind="complaint" action="/staff/politicians/blocked-emails" />
+              <EmailBlockFilters q="" kind="" action="/staff/politicians/blocked-emails" />
+              <EmailBlockFilters q="example.org" kind="complaint" action="/staff/politicians/blocked-emails" />
             </StaffPage>
           ),
         },
@@ -1518,10 +1560,12 @@ export const staff: Group = {
       file: "app/(staff)/staff/_components/LetterFilters.tsx",
       variants: [
         {
-          label: "One status and a campaign picked",
+          label: "One status, a campaign and consent picked",
           render: () => (
             <StaffPage as="div">
-              <LetterFilters search={{ status: "bounced", q: "", answered: "", campaign: "regulate-letter-pm" }} />
+              <LetterFilters
+                search={{ status: "bounced", q: "", answered: "", campaign: "regulate-letter-pm", consent: "yes" }}
+              />
             </StaffPage>
           ),
         },

@@ -149,8 +149,8 @@ describeWithDatabase("dashboard", () => {
       email: null,
     });
     await query(
-      `INSERT INTO campaign_statuses (politician_id, campaign, status, updated_by, updated_at)
-       VALUES ($1, 'support-sobel-bill', 'signed', 'x', '2026-10-17T00:00:00Z')`,
+      `INSERT INTO ask_statuses (notable_person_id, ask, ask_kind, status, updated_by, updated_at)
+       VALUES ($1, 'controlai-statement', 'letter', 'signed', 'x', '2026-10-17T00:00:00Z')`,
       [peer],
     );
     expect((await dashboard(7)).signedMp).toBeNull();

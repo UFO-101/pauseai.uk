@@ -162,16 +162,6 @@ export const staffCopy = {
           declined: "Events: didn't agree",
         },
       } as Record<string, Record<string, string>>,
-      anyTime: "Any time",
-      activeWithin: {
-        "30": "In the last 30 days",
-        "90": "In the last 90 days",
-        "365": "In the last year",
-        older: "Over a year ago",
-      } as Record<string, string>,
-      from: "First sign-up from",
-      to: "First sign-up to",
-      filter: "Filter",
     },
     columns: {
       name: "Name",
@@ -397,14 +387,13 @@ export const staffCopy = {
   } as Record<string, string>,
   politicians: {
     title: "Politicians",
-    search: "Search",
-    searchButton: "Filter",
+    // The search box's label: what it searches.
+    search: "Name, constituency, party or email",
     allHouses: "All houses",
-    // The filters: in office or not, party, Airtable's markers, and an answer to an ask.
+    allParties: "All parties",
+    // The filters: in office or not, Airtable's markers, and an answer to an ask.
     status: "⁂ Status",
     anyStatus: "⁂ Any status",
-    party: "⁂ Party",
-    anyParty: "⁂ Any party",
     flag: "⁂ Marked",
     anyFlag: "⁂ Anything",
     flags: {
@@ -414,8 +403,9 @@ export const staffCopy = {
     } as Record<string, string>,
     ask: "⁂ Ask",
     anyAsk: "⁂ Any ask",
+    // An answer to the ask chosen, or with none chosen, to any ask: anyone who answered, a given answer, or
+    // nobody who answered.
     answer: "Answer",
-    // With an ask chosen: anyone who answered, a given answer, or nobody who answered.
     anyAnswer: "Answered",
     noAnswer: "Not answered",
     none: "None found.",
@@ -431,9 +421,8 @@ export const staffCopy = {
     // In that column, when they've answered none.
     noAsks: "⁂ None",
     noEmail: "No email",
-    // On a politician whose address is blocked (/staff/politicians/blocked-emails), and the filter for them.
+    // On a politician whose address is blocked (/staff/politicians/blocked-emails).
     emailBlocked: "Email blocked",
-    anyEmail: "All",
     // The button on an ask staff record by hand.
     markSigned: "Mark as signed",
     unmarkSigned: "Remove signature",
@@ -560,7 +549,6 @@ export const staffCopy = {
     // Instead of the history, when nothing has bounced or been complained about.
     noProblems: "Nothing has bounced or been marked as spam.",
     allKinds: "All",
-    filter: "Filter",
     kinds: {
       hard: "Bounced",
       soft: "Soft bounce",
@@ -808,8 +796,7 @@ export const staffCopy = {
   letters: {
     title: "Letters to MPs",
     allStatuses: "All",
-    filter: "Filter",
-    search: "Sender, MP or subject",
+    search: "Sender or MP",
     // The Answered filter: whether the MP replied.
     answered: { yes: "Answered", no: "Not answered" },
     // The titles of a letter's own page, and of a supporter's letters' page.
@@ -839,7 +826,9 @@ export const staffCopy = {
     // Beside a letter sent through pauseai.info's old form, copied from Airtable.
     imported: "⁂ pauseai.info",
   },
-  // Beside a list's filter button: the list with none.
+  // The button beside a list's search box; its other filters apply as soon as they're chosen.
+  search: "Search",
+  // After a list's filters: the list with none.
   resetFilters: "Reset filters",
   // Under a list of more than one page.
   paging: {

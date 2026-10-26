@@ -133,12 +133,10 @@ export type PoliticianFilter = {
   personalConnection?: boolean;
   /** Only those whose record is no longer in Airtable. */
   airtableRemoved?: boolean;
-  /** Their answer to an ask: with `answer`, only those who gave it, or "none" for those who gave none. */
+  /** Only those who answered this ask: in the way `answer` says, if given. */
   ask?: string;
-  /** A status, "none" for no answer, or, when undefined, any answer. */
+  /** Only those who gave this answer, to `ask` or, without one, to any ask; "none" for those who gave none. */
   answer?: string;
-  /** Only those whose address is blocked. */
-  emailBlocked?: boolean;
   sort?: SortSpec<PoliticianSort>;
 };
 
@@ -152,7 +150,6 @@ export type PoliticiansSearch = {
   flag: string;
   ask: string;
   answer: string;
-  email: string;
   sort: string;
   dir: string;
 };
@@ -169,7 +166,6 @@ export function politiciansSearch({
   flag = "",
   ask = "",
   answer = "",
-  email = "",
   sort = "",
   dir = "",
 }: Partial<PoliticiansSearch>): PoliticiansSearch & { filter: PoliticianFilter } {
@@ -182,11 +178,10 @@ export function politiciansSearch({
     personalConnection: flag === "connection" || undefined,
     airtableRemoved: flag === "removed" || undefined,
     ask: ask || undefined,
-    answer: (ask && answer) || undefined,
-    emailBlocked: email === "blocked" || undefined,
+    answer: answer || undefined,
     sort: parseSort(POLITICIAN_SORTS, "name", sort, dir),
   };
-  return { q, house, status, party, flag, ask, answer, email, sort, dir, filter };
+  return { q, house, status, party, flag, ask, answer, sort, dir, filter };
 }
 
 /** Politicians for the staff interface: the test MPs first, then by the column asked for, by name to start. */
@@ -209,17 +204,14 @@ export async function listPoliticians(filter: PoliticianFilter = {}, limit = 200
   if (filter.importantTarget) where.push("n.important_target");
   if (filter.personalConnection) where.push("n.personal_connection");
   if (filter.airtableRemoved) where.push("n.airtable_removed_at IS NOT NULL");
-  if (filter.ask) {
-    const ask = value(filter.ask);
+  if (filter.ask || filter.answer) {
+    const ask = filter.ask ? ` AND a.ask = ${value(filter.ask)}` : "";
     if (filter.answer === "none") {
-      where.push(`NOT EXISTS (SELECT 1 FROM ask_statuses a WHERE a.notable_person_id = n.id AND a.ask = ${ask})`);
+      where.push(`NOT EXISTS (SELECT 1 FROM ask_statuses a WHERE a.notable_person_id = n.id${ask})`);
     } else {
       const answer = filter.answer ? ` AND a.status = ${value(filter.answer)}` : "";
-      where.push(`EXISTS (SELECT 1 FROM ask_statuses a WHERE a.notable_person_id = n.id AND a.ask = ${ask}${answer})`);
+      where.push(`EXISTS (SELECT 1 FROM ask_statuses a WHERE a.notable_person_id = n.id${ask}${answer})`);
     }
-  }
-  if (filter.emailBlocked) {
-    where.push("EXISTS (SELECT 1 FROM email_blocks b WHERE b.address = lower(n.email))");
   }
   const rows = await query<Row>(
     `${SELECT_POLITICIANS} ${where.length ? `WHERE ${where.join(" AND ")}` : ""}
@@ -262,8 +254,8 @@ export async function addPolitician(politician: NewPolitician, db: Queryable, te
   return id;
 }
 
-/** Every party a politician has, for the list's filter. */
-export async function politicianParties(): Promise<string[]> {
+/** Every party a politician is in, for the list's filter. */
+export async function listParties(): Promise<string[]> {
   const rows = await query<{ party: string }>(
     "SELECT DISTINCT party FROM politicians WHERE party <> '' ORDER BY party",
   );

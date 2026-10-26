@@ -47,7 +47,7 @@ export default function PoliticianTable({ politicians, asks, search = {} }: Prop
           <th>{staffCopy.politicians.columns.status}</th>
           {heading("letters", staffCopy.politicians.columns.letters)}
           {heading("replies", staffCopy.politicians.columns.replies)}
-          <th>{staffCopy.politicians.columns.asks}</th>
+          {heading("asks", staffCopy.politicians.columns.asks)}
         </tr>
       </thead>
       <tbody>

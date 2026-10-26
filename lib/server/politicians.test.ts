@@ -8,8 +8,8 @@ import {
   getPolitician,
   isHouse,
   isPersonStatus,
+  listParties,
   listPoliticians,
-  politicianParties,
   politicianHistory,
   politiciansSearch,
   setStatus,
@@ -57,7 +57,6 @@ describe("politiciansSearch", () => {
       flag: "important",
       ask: BILL,
       answer: "signed",
-      email: "blocked",
       sort: "party",
       dir: "desc",
     };
@@ -73,7 +72,6 @@ describe("politiciansSearch", () => {
         airtableRemoved: undefined,
         ask: BILL,
         answer: "signed",
-        emailBlocked: true,
         sort: { key: "party", dir: "desc" },
       },
     });
@@ -81,7 +79,7 @@ describe("politiciansSearch", () => {
     expect(politiciansSearch({ flag: "removed" }).filter).toMatchObject({ airtableRemoved: true });
   });
 
-  it("filters by nothing that's blank, missing or unknown, nor by an answer without an ask", () => {
+  it("filters by nothing that's blank, missing or unknown", () => {
     const none = {
       search: undefined,
       house: undefined,
@@ -92,7 +90,6 @@ describe("politiciansSearch", () => {
       airtableRemoved: undefined,
       ask: undefined,
       answer: undefined,
-      emailBlocked: undefined,
       sort: { key: "name", dir: "asc" },
     };
     const blank = {
@@ -103,7 +100,6 @@ describe("politiciansSearch", () => {
       flag: "",
       ask: "",
       answer: "",
-      email: "",
       sort: "",
       dir: "",
     };
@@ -112,8 +108,6 @@ describe("politiciansSearch", () => {
       house: "hogwarts",
       status: "sitting",
       flag: "other",
-      answer: "signed",
-      email: "other",
       sort: "age",
     };
     expect(politiciansSearch(unknown)).toEqual({ ...blank, ...unknown, filter: none });
@@ -204,6 +198,7 @@ describeWithDatabase("politicians", () => {
     expect(await byParty("asc")).toEqual([...(await byParty("asc"))].sort());
     expect(await byParty("desc")).toEqual([...(await byParty("asc"))].reverse());
     expect((await listPoliticians({ ask: PM })).map((p) => p.id)).toEqual([peer]);
+    expect((await listPoliticians({ party: (await getPolitician(peer))!.party })).map((p) => p.id)).toEqual([peer]);
     expect(await listPoliticians({}, 1)).toHaveLength(1);
     expect((await listPoliticians({ search: "Polly" }))[0]).toEqual({
       id: mp,
@@ -229,6 +224,14 @@ describeWithDatabase("politicians", () => {
       replies: 0,
       statuses: {},
     });
+    // The Asks column sorts by when their newest answer was recorded, newest first, those without last.
+    await setStatus(mp, PM, { status: "signed", date: null, note: "" }, "jo@pauseai.uk");
+    const byAsks = await listPoliticians({ sort: { key: "asks", dir: "desc" } });
+    expect(byAsks.filter((p) => !p.isTest).map((p) => p.id)).toEqual([mp, peer]);
+    // Everyone who signed anything, by their newest answer.
+    await setStatus(peer, BILL, { status: "signed", date: null, note: "" }, "jo@pauseai.uk");
+    const signed = await listPoliticians({ answer: "signed", sort: { key: "asks", dir: "desc" } });
+    expect(signed.map((p) => p.id)).toEqual([peer, mp]);
   });
 
   it("counts the letters to each politician, leaving out those never sent, and how many were answered", async () => {
@@ -240,7 +243,7 @@ describeWithDatabase("politicians", () => {
     expect((await listPoliticians({ sort: { key: "letters", dir: "desc" } }))[0].id).toBe(mp);
   });
 
-  it("knows whose address is blocked, whatever its case, and lists only them when asked", async () => {
+  it("knows whose address is blocked, whatever its case, in the list too", async () => {
     const mp = await addTestPolitician();
     await addPeer();
     await recordProblem({
@@ -252,7 +255,7 @@ describeWithDatabase("politicians", () => {
     });
     expect(await findMpInOffice("Cities of London and Westminster")).toMatchObject({ unreachable: true });
     expect((await getPolitician(mp))!.emailBlocked).toBe(true);
-    expect((await listPoliticians({ emailBlocked: true })).map((p) => p.id)).toEqual([mp]);
+    expect((await listPoliticians()).filter((p) => p.emailBlocked).map((p) => p.id)).toEqual([mp]);
   });
 
   it("filters by status, party, Airtable's markers, and an answer to an ask or none", async () => {
@@ -275,8 +278,11 @@ describeWithDatabase("politicians", () => {
     expect(await ids({ ask: EDINBURGH })).toEqual([mp, peer].sort());
     expect(await ids({ ask: EDINBURGH, answer: "going" })).toEqual([peer]);
     expect(await ids({ ask: EDINBURGH, answer: "none" })).toEqual([retired]);
+    // An answer to any ask, or none to any.
+    expect(await ids({ answer: "going" })).toEqual([peer]);
+    expect(await ids({ answer: "none" })).toEqual([retired]);
     // The parties to choose from, without the blank one.
-    expect(await politicianParties()).toEqual(["Crossbench", "Labour (Co-op)"]);
+    expect(await listParties()).toEqual(["Crossbench", "Labour (Co-op)"]);
   });
 
   it("adds a politician, as their two rows, and a test MP by their postcode", async () => {

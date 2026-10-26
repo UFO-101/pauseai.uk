@@ -72,23 +72,26 @@ test("the politicians list, filtered by status, marker and an answer to an ask, 
   await page.goto(`${BASE}/staff/politicians`);
   const filters = staffCopy.politicians;
   const rows = page.getByRole("row");
+  // Each filter applies as soon as it's chosen.
   await page.getByRole("combobox", { name: filters.status, exact: true }).selectOption("retired");
-  await page.getByRole("button", { name: filters.searchButton }).click();
+  await expect(page).toHaveURL(/status=retired/);
   await expect(rows.filter({ hasText: "Rita Retired" })).toBeVisible();
   await expect(rows.filter({ hasText: "Polly Placeholder" })).toHaveCount(0);
   await frame(page, "only those who retired");
 
   await page.getByRole("combobox", { name: filters.status, exact: true }).selectOption("");
+  await expect(page).toHaveURL(`${BASE}/staff/politicians`);
   await page.getByRole("combobox", { name: filters.flag, exact: true }).selectOption("connection");
-  await page.getByRole("button", { name: filters.searchButton }).click();
+  await expect(page).toHaveURL(/flag=connection/);
   await expect(rows.filter({ hasText: "Morag Example" })).toBeVisible();
   await expect(rows).toHaveCount(2);
   await frame(page, "only personal connections");
 
   await page.getByRole("combobox", { name: filters.flag, exact: true }).selectOption("");
+  await expect(page).toHaveURL(`${BASE}/staff/politicians`);
   await page.getByRole("combobox", { name: filters.ask, exact: true }).selectOption("edinburgh-conference-2026");
+  await expect(page).toHaveURL(/ask=edinburgh-conference-2026$/);
   await page.getByRole("combobox", { name: filters.answer, exact: true }).selectOption("none");
-  await page.getByRole("button", { name: filters.searchButton }).click();
   await expect(page).toHaveURL(/ask=edinburgh-conference-2026&answer=none/);
   await expect(rows.filter({ hasText: "Polly Placeholder" })).toHaveCount(0);
   await expect(rows.filter({ hasText: "Ms Dora Dummy" })).toBeVisible();

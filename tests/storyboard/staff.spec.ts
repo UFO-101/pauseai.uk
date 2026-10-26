@@ -217,12 +217,12 @@ test("the MPs signed tile leads to the one who signed, then to everyone who sign
   request,
   flowDatabase,
 }) => {
-  await syncMps(request, BASE);
+  await syncPoliticians(request, BASE);
   await logIn(page, flowDatabase, ["admin"]);
   await page.goto(`${BASE}/staff/politicians`);
   await page.getByRole("link", { name: "Polly Placeholder" }).click();
   await page
-    .getByRole("group", { name: pm.title })
+    .getByRole("group", { name: PM_LETTER })
     .getByRole("button", { name: staffCopy.politicians.markSigned })
     .click();
   await expect(page.getByRole("button", { name: staffCopy.politicians.unmarkSigned })).toBeVisible();
@@ -244,8 +244,8 @@ test("the MPs signed tile leads to the one who signed, then to everyone who sign
     .getByRole("link")
     .filter({ hasText: staffCopy.home.dashboard.metrics.mpsSigned(2) })
     .click();
-  await expect(page).toHaveURL(`${BASE}/staff/politicians?campaign=any&sort=signed`);
-  await expect(page.getByLabel(staffCopy.politician.statusesTitle)).toHaveValue("any");
+  await expect(page).toHaveURL(`${BASE}/staff/politicians?answer=signed&sort=asks`);
+  await expect(page.getByRole("combobox", { name: staffCopy.politicians.answer, exact: true })).toHaveValue("signed");
   await expect(page.getByRole("row").filter({ hasText: "Polly Placeholder" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Testy McTestface MP" })).toHaveCount(0);
   await frame(page, "everyone who signed anything, newest first");

@@ -15,7 +15,6 @@ export const exampleLetter: LetterSummary = {
   politicianId: 3,
   isTest: true,
   imported: false,
-  subject: "S",
   createdAt: "2026-10-12T09:00:00Z",
   sentAt: "2026-10-12T09:05:00Z",
   repliedAt: null,

@@ -72,7 +72,7 @@ describeWithDatabase("recentLetters", () => {
     await query("UPDATE supporter_letters SET campaign = 'support-sobel-bill' WHERE id = 2");
     expect(await ids({ campaign: "support-sobel-bill" })).toEqual([2]);
     expect(await ids({ campaign: "regulate-letter-pm" })).toEqual([1]);
-    await query("UPDATE letters SET contact_consent = true WHERE id = 1");
+    await query("UPDATE supporter_letters SET contact_consent = true WHERE id = 1");
     expect(await ids({ consent: true })).toEqual([1]);
     expect(await ids({ consent: false })).toEqual([2]);
     expect(await ids({ supporterId: 1 })).toEqual([1]);
