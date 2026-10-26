@@ -166,7 +166,9 @@ it. There are two lists. `luma-calendar` is the calendar's emails, which
 Luma sends to the calendar's contacts. Unsubscribing from one, marking one
 as spam, or being removed or blocked by us takes someone off that list;
 following the calendar again puts them back as they were, with the date
-they first joined. Unfollowing changes neither. Two things tell us:
+they first joined. Unfollowing changes neither. We checked this with a
+staff member's own Luma account against `/v1/calendars/contacts/list` in
+October 2026. Two things tell us:
 
 - Luma's `calendar.person.unsubscribed` webhook (`/api/luma/webhook`,
   `lib/server/luma-webhooks.ts`), at once, keyed by Luma's `Webhook-Id`
