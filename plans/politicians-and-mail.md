@@ -210,25 +210,22 @@ was asked and hasn't answered comes from those.
    per-person PDFs; the AI "Custom sentence".
 
 5. **Emails sync** into `pauseai_letters`, nightly, adding rows by
-   Airtable record ID. Airtable has no text, so a row records who, when,
-   and Personalized and AI Generated. Each Airtable mailing becomes an
-   imported `mailings` row:
+   Airtable record ID, for 2026 only. Airtable has no text, Message-ID
+   or thread, so a row records who, when, and Personalized and AI
+   Generated. Each 2026 mailing becomes an imported `mailings` row:
 
-   | Airtable's mailing                     | Emails | When         | Ask                         |
-   | -------------------------------------- | ------ | ------------ | --------------------------- |
-   | None ticked                            | 4,368  | Jun–Aug 2025 | `deepmind-letter`           |
-   | Documentary Invitation                 | 703    | Oct 2025     |                             |
-   | Westminster Hall Debate Invitation     | 341    | Dec 2025     |                             |
-   | Edinburgh Conference Nov 26 Invitation | 186    | Oct 2026     | `edinburgh-conference-2026` |
-   | Ben Lake October 2026 Debate           | 72     | Oct 2026     |                             |
-   | CSRB Iqbal Amendment                   | 12     | Jun 2026     |                             |
+   | Airtable's mailing                     | Emails | When     | Ask                         |
+   | -------------------------------------- | ------ | -------- | --------------------------- |
+   | CSRB Iqbal Amendment                   | 12     | Jun 2026 |                             |
+   | Edinburgh Conference Nov 26 Invitation | 186    | Oct 2026 | `edinburgh-conference-2026` |
+   | Ben Lake October 2026 Debate           | 72     | Oct 2026 |                             |
 
-   Airtable's Emails table has one tick box per mailing, and the first
-   mailing has none: the DeepMind letter and its follow-ups. 1,304 of the
-   1,307 politicians with a DeepMind Letter PDF got them, most three or
-   four each, and nobody else did. Its "Frontier AI" and "Liability Bill"
-   boxes are ticked on no email, so they're not mailings. One empty
-   record, with no politician, is skipped.
+   The 2025 emails aren't imported: the DeepMind letter and its
+   follow-ups (4,368, Jun–Aug, the only mailing with no tick box), the
+   Documentary Invitation (703) and the Westminster Hall Debate
+   Invitation (341). The statuses from 2025 asks are, in step 4.
+   "Frontier AI" and "Liability Bill" are ticked on no email, so they're
+   not mailings. One empty record, with no politician, is skipped.
 
 6. **Import web form letters, once**, into `supporter_letters`, so their
    senders become supporters. They came from pauseai.info's old UK tool
