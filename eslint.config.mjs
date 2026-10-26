@@ -66,6 +66,8 @@ const SERVICES = [
     why: "and email is sent with send() from lib/server/email.ts",
   },
   { name: "postcodes.io", files: ["postcodes.ts"], host: "api\\.postcodes\\.io" },
+  // Stripe's API, not the donate links, which are payment pages on donate.stripe.com.
+  { name: "Stripe's API", files: ["stripe.ts"], host: "api\\.stripe\\.com", why: "and its key stays on the server" },
   // Turnstile's server-side check, not the widget's script, which the browser loads.
   { name: "Turnstile", files: ["turnstile.ts"], host: "challenges\\.cloudflare\\.com.turnstile.v0.siteverify" },
 ].map((service) => ({ ...service, files: service.files.map((file) => `${OUTSIDE}/${file}`) }));

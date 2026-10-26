@@ -64,6 +64,10 @@ export default function PrivacyPolicy() {
         If you email us about a donation, we keep your message and contact details so we can deal with your query (legal
         basis: our legitimate interest in responding).
       </p>
+      <p>
+        ⁂ Lorem ipsum dolor sit amet, consectetur adipiscing elit: sed do eiusmod tempor incididunt ut labore et dolore
+        magna aliqua.
+      </p>
 
       <h2>Website analytics</h2>
       <p>

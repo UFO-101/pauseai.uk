@@ -18,6 +18,7 @@ import airtableSignatories from "./airtable-signatories.json";
 import airtableMembers from "./airtable-members.json";
 import parliamentMembers from "./parliament-members.json";
 import controlaiLetter from "./controlai-letter.json";
+import stripeCheckoutSessions from "./stripe-checkout-sessions.json";
 
 /** A UUID-shaped id that depends only on `text`. */
 function fixtureUuid(text: string): string {
@@ -120,6 +121,11 @@ export function fixtureResponse(url: string, init?: RequestInit): Response | und
   }
   // ControlAI's letter page, and its PDF: made by pdf-lib, naming the
   // fixture MPs, a peer, and names nobody has.
+  if (hostname === "api.stripe.com" && pathname === "/v1/checkout/sessions") {
+    // Completed checkouts: donors who said yes, one who said no, one who gave
+    // twice, and one from before the wall of thanks question was asked.
+    return json(stripeCheckoutSessions);
+  }
   if (hostname === "controlai.org" && pathname === "/uk-pm-letter") {
     return new Response(controlaiLetter.html, { headers: { "Content-Type": "text/html" } });
   }

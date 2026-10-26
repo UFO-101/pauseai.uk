@@ -4,6 +4,8 @@ import { page } from "vitest/browser";
 import DonateBottom from "./DonateBottom";
 import DonateForm, { DEFAULT_AMOUNT, MONTHLY_URLS, ONE_OFF_URL } from "./DonateForm";
 import DonateIntro from "./DonateIntro";
+import DonateThanks from "./DonateThanks";
+import { exampleDonors } from "./DonateThanks.examples";
 
 const { navigate } = vi.hoisted(() => ({ navigate: vi.fn() }));
 vi.mock("@/lib/navigate", () => ({ navigate }));
@@ -52,7 +54,7 @@ describe("donate page sections", () => {
     vi.spyOn(HTMLIFrameElement.prototype, "src", "set").mockImplementation(() => {});
     await render(
       <>
-        <DonateIntro />
+        <DonateIntro donors={exampleDonors} />
         <DonateBottom />
       </>,
     );
@@ -61,5 +63,28 @@ describe("donate page sections", () => {
       .element(page.getByRole("link", { name: "Read our donation policies →" }))
       .toHaveAttribute("href", "/governance#donation-policies");
     await expect.element(page.getByRole("button", { name: /Donate £/ })).toBeVisible();
+    await expect.element(page.getByText("Ada Pemberton")).toBeVisible();
+  });
+});
+
+describe("DonateThanks", () => {
+  it("names the latest five donors, each with the month they gave, and counts them all", async () => {
+    await render(<DonateThanks donors={exampleDonors} />);
+    const donors = page.getByRole("listitem");
+    await expect.element(donors.nth(0)).toHaveTextContent("Ada PembertonOctober 2026");
+    await expect.element(donors.nth(4)).toHaveTextContent("Chen WeiAugust 2026");
+    expect(donors.all()).toHaveLength(5);
+    await expect.element(page.getByText("Morag Fraser")).not.toBeInTheDocument();
+    await expect.element(page.getByText(/\b6\b/)).toBeVisible();
+  });
+
+  it("dates a gift late on the last day of a month by the month it was in the UK", async () => {
+    await render(<DonateThanks donors={[{ name: "Late Night", givenAt: "2026-07-31T23:30:00.000Z" }]} />);
+    await expect.element(page.getByRole("listitem")).toHaveTextContent("Late NightAugust 2026");
+  });
+
+  it("shows nothing before anyone has said yes", async () => {
+    const { container } = await render(<DonateThanks donors={[]} />);
+    expect(container.innerHTML).toBe("");
   });
 });

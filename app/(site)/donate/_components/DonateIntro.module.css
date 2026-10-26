@@ -34,6 +34,8 @@
   grid-area: form;
   align-self: start;
   display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 .intro h1 {
   font-size: clamp(38px, 4.6vw, 56px);

@@ -1,0 +1,49 @@
+/* The latest donors on the wall of thanks, in a box under the donate form. */
+
+.thanks {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: var(--space-5);
+}
+.heading {
+  font-family: inherit;
+  font-size: 11.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  line-height: 1.5;
+  color: var(--text-secondary);
+  margin: 0 0 var(--space-1);
+}
+.list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.donor {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: 9px 0;
+  border-top: 1px solid var(--border);
+  font-size: 15px;
+}
+.donor:first-child {
+  border-top: none;
+}
+.name {
+  font-weight: 600;
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+.when {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+.count {
+  margin: var(--space-3) 0 0;
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}

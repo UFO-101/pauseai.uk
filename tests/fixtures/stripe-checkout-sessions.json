@@ -1,0 +1,77 @@
+{
+  "object": "list",
+  "url": "/v1/checkout/sessions",
+  "has_more": false,
+  "data": [
+    {
+      "id": "cs_live_fixture_ada_again",
+      "created": 1792152000,
+      "customer_details": { "name": "Ada Pemberton", "email": "Ada.Pemberton@example.org" },
+      "custom_fields": [
+        { "key": "areyouhappytobenamedonourwallofthanks", "type": "dropdown", "dropdown": { "value": "yes" } }
+      ]
+    },
+    {
+      "id": "cs_live_fixture_tom",
+      "created": 1791892800,
+      "customer_details": { "name": "Tom Okafor", "email": "tom.okafor@example.org" },
+      "custom_fields": [
+        { "key": "areyouhappytobenamedonourwallofthanks", "type": "dropdown", "dropdown": { "value": "yes" } }
+      ]
+    },
+    {
+      "id": "cs_live_fixture_private",
+      "created": 1791806400,
+      "customer_details": { "name": "Not Shown", "email": "private@example.org" },
+      "custom_fields": [
+        { "key": "areyouhappytobenamedonourwallofthanks", "type": "dropdown", "dropdown": { "value": "no" } }
+      ]
+    },
+    {
+      "id": "cs_live_fixture_priya",
+      "created": 1790856000,
+      "customer_details": { "name": "Priya Raman", "email": "priya@example.org" },
+      "custom_fields": [
+        { "key": "areyouhappytobenamedonourwallofthanks", "type": "dropdown", "dropdown": { "value": "yes" } }
+      ]
+    },
+    {
+      "id": "cs_live_fixture_sam",
+      "created": 1789560000,
+      "customer_details": { "name": "Sam Whitlock", "email": "sam@example.org" },
+      "custom_fields": [
+        { "key": "areyouhappytobenamedonourwallofthanks", "type": "dropdown", "dropdown": { "value": "yes" } }
+      ]
+    },
+    {
+      "id": "cs_live_fixture_chen",
+      "created": 1787745600,
+      "customer_details": { "name": "Chen Wei", "email": "chen.wei@example.org" },
+      "custom_fields": [
+        { "key": "areyouhappytobenamedonourwallofthanks", "type": "dropdown", "dropdown": { "value": "yes" } }
+      ]
+    },
+    {
+      "id": "cs_live_fixture_morag",
+      "created": 1785067200,
+      "customer_details": { "name": "Morag Fraser", "email": "morag@example.org" },
+      "custom_fields": [
+        { "key": "areyouhappytobenamedonourwallofthanks", "type": "dropdown", "dropdown": { "value": "yes" } }
+      ]
+    },
+    {
+      "id": "cs_live_fixture_ada",
+      "created": 1782388800,
+      "customer_details": { "name": "Ada Pemberton", "email": "ada.pemberton@example.org" },
+      "custom_fields": [
+        { "key": "areyouhappytobenamedonourwallofthanks", "type": "dropdown", "dropdown": { "value": "yes" } }
+      ]
+    },
+    {
+      "id": "cs_live_fixture_before_the_question",
+      "created": 1780574400,
+      "customer_details": { "name": "Early Donor", "email": "early@example.org" },
+      "custom_fields": []
+    }
+  ]
+}
