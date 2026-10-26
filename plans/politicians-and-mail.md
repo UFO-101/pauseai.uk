@@ -202,7 +202,7 @@ was asked and hasn't answered comes from those.
    | `liability-letter`          | Our letter on AI liability, with a policy briefing; supporters wrote about it May–June 2026   | Signed Liability Letter            | 0                                |
    | `controlai-statement`       | ControlAI's statement; imported from ControlAI as now                                         | ControlAI Signatory                | 167                              |
    | `edinburgh-conference-2026` | A conference in Edinburgh, November 2026, invited in October                                  | Edinburgh Conference November 2026 | 50 Declined, 1 Passed on request |
-   | `london-2026-panel`         | Probably the Parliamentary conference after PauseCon London, September 2026; Joseph to confirm | London 2026 Panel                  | 4, `going`                       |
+   | `london-2026-panel`         | Probably the conference after PauseCon London, House of Commons, 7 September 2026; Joseph to confirm | London 2026 Panel                  | 4, `going`                       |
 
    No one has signed the liability letter, but it's an ask all the same,
    as 77 web form letters asked for it (step 6).
@@ -466,7 +466,8 @@ Data protection, agreed before building and recorded in
 - **The Google Cloud project** (phase 2, step 3).
 - **What "London 2026 Panel" was**, and its date (phase 1, step 4). Two
   of its four, Chi Onwurah and Lord Clement-Jones, spoke at the
-  Parliamentary conference after PauseCon London in September 2026; Ben
+  conference after PauseCon London (House of Commons, 7 September 2026,
+  [Luma](https://luma.com/pauseai-y5ov)); Ben
   Spencer and George Freeman aren't in our write-up of it.
 
 ## Open questions
