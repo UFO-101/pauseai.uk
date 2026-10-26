@@ -33,19 +33,30 @@ Three phases, one pull request each:
 
 ## Data model
 
+Two parent tables. Each holds what all its kinds share, and a child row
+adds what only its kind has, one to one:
+
 ```
-notable_people ──┬── politicians              (later: journalists, famous people)
-                 ├── ask_statuses ── asks
-                 └── letters ──┬── supporter_letters
-                               ├── pauseai_letters ── mailings
-                               ├── letter_events
-                               └── letter_messages (PauseAI letters only)
+notable_people ─── politicians       (later: journalists, famous people)
+
+letters ──┬── supporter_letters
+          └── pauseai_letters
 ```
 
-`notable_people` and `letters` are parent tables: each holds what all its
-kinds share, and everything else points at the parent. A child table
-joins it by a composite foreign key `(id, kind)`. A new kind, such as
-journalists, adds a child table and changes nothing else.
+Everything else points at them, many to one:
+
+```
+ask_statuses ──→ notable_people, asks
+letters ───────→ notable_people, asks
+pauseai_letters → mailings
+letter_events ──→ letters
+letter_messages → pauseai_letters
+```
+
+A child row joins its parent by a composite foreign key `(id, kind)`, so
+it can only be the kind its parent says. Links point at the parent, so a
+new kind, such as journalists, adds a child table and changes nothing
+else.
 
 ### People
 
