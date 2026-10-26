@@ -445,6 +445,10 @@ Data protection, agreed before building and recorded in
 ## Waiting on Joseph
 
 - **The Google Cloud project** (phase 2, step 3).
+- **What "London 2026 Panel" was**, and its date (phase 1, step 4). Two
+  of its four, Chi Onwurah and Lord Clement-Jones, spoke at the
+  Parliamentary conference after PauseCon London in September 2026; Ben
+  Spencer and George Freeman aren't in our write-up of it.
 
 ## Open questions
 
