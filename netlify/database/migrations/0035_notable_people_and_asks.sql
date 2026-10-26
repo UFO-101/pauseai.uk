@@ -213,7 +213,7 @@ CREATE OR REPLACE VIEW email_permissions AS
   ) t
   CROSS JOIN LATERAL email_permission(t.topic, t.address) d;
 
--- As in 0032, but the consent box is the newest supporter letter's.
+-- As in 0034, but the consent box is the newest supporter letter's.
 CREATE OR REPLACE FUNCTION email_permission(for_topic text, for_address text)
 RETURNS TABLE (send text, reason text, at timestamptz, source text)
 LANGUAGE sql STABLE AS $$
@@ -226,9 +226,8 @@ SELECT r.send, r.reason, r.at, r.source FROM (
   SELECT 2, 'no', 'unsubscribed', o.unsubscribed_at, o.source
   FROM opt_outs o WHERE o.address = for_address AND o.list = for_topic AND o.resubscribed_at IS NULL
   UNION ALL
-  -- Following the calendar: unsure from before 22 Oct 2026, when Luma's
-  -- webhook started telling us of unsubscribes.
-  SELECT 3, CASE WHEN f.since < '2026-10-22T00:00:00Z' THEN 'unsure' ELSE 'yes' END, 'following', f.since, 'luma'
+  -- A contact of the calendar.
+  SELECT 3, 'yes', 'following', f.since, 'luma'
   FROM (SELECT min(l.contact_since) AS since FROM luma_people l WHERE l.email = for_address) f
   WHERE for_topic = 'luma-calendar' AND f.since IS NOT NULL
   UNION ALL

@@ -363,7 +363,7 @@ export const staffCopy = {
     signed: "Signed",
     none: "Not signed",
     going: "Going",
-    tentative: "Tentative",
+    tentative: "Tentatively going",
     meeting_staff: "Staff meeting instead",
     tentative_staff: "Staff tentative",
     declined: "Declined",

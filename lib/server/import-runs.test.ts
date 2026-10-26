@@ -83,7 +83,7 @@ describeWithDatabase("migration 0013_import_runs", () => {
       },
       expect.objectContaining({ job: "sync-politicians", status: "applied", result: { changes: JSON.parse(changes) } }),
       expect.objectContaining({ job: "check-mps", status: "ok", result: { problems: [{ kind: "extra" }] } }),
-      // Held, then discarded by 0035_politician_imports, as only MPs were read.
+      // Held, then discarded by 0036_politician_imports, as only MPs were read.
       expect.objectContaining({
         job: "sync-politicians",
         status: "discarded",

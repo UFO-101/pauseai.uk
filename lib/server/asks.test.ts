@@ -70,8 +70,8 @@ describeWithDatabase("asks and campaigns", () => {
   });
 });
 
-describeWithDatabase("migration 0034_notable_people_and_asks", () => {
-  const db = useDatabaseUpTo("0033");
+describeWithDatabase("migration 0035_notable_people_and_asks", () => {
+  const db = useDatabaseUpTo("0034");
 
   it("moves politicians, letters and statuses into the new tables, keeping their IDs", async () => {
     const [{ id: mp }] = await query<{ id: number }>(
@@ -104,7 +104,7 @@ describeWithDatabase("migration 0034_notable_people_and_asks", () => {
       [mp, gone],
     );
 
-    expect(migrate(db.url, { appliedUpTo: "0033" })).toContain("0034_notable_people_and_asks");
+    expect(migrate(db.url, { appliedUpTo: "0034" })).toContain("0035_notable_people_and_asks");
 
     expect(
       await query(
