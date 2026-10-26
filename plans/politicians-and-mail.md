@@ -349,7 +349,12 @@ Attachments belong to the mailing and are the same for everyone.
 ## Phase 3: Leave Airtable
 
 - Staff add politicians (they can't today), edit every field the sync
-  owned, and change a status when someone leaves office.
+  owned, and change a status when someone leaves office, with the date it
+  happened and a note (a resignation, the by-election that followed).
+  Airtable keeps these in Notes as free text: of its 106 notes, 71 record
+  a status or party change with its real date and reason, which our audit
+  log can't (it knows only when the sync saw it). The other 35 are notes
+  only staff know ("Wants to be kept informed", "Ill in a nursing home").
 - Staff set any ask's status by hand, not only those of
   `trackedCampaigns`.
 - Asks can be added from `/staff/asks`, if a migration each has become a
