@@ -91,8 +91,8 @@ INSERT INTO asks (slug, title, kind, date, url, asked_by) VALUES
     'https://controlai.org/uk-pm-letter', '{supporters}'),
   ('edinburgh-conference-2026', 'Edinburgh conference, November 2026', 'event', '2026-11-01',
     'https://luma.com/6jp2nqe9', '{pauseai}'),
-  ('go-to-parliament-oct-2026', 'Constituent meetings at Parliament, October 2026', 'event', '2026-10-20', NULL,
-    '{supporters}');
+  ('go-to-parliament-oct-2026', 'Constituent meetings at Parliament, October 2026', 'event', '2026-10-20',
+    'https://luma.com/pauseai-0g9r', '{supporters}');
 
 -- One letter many supporters send, and the ask it makes, if any. Its words
 -- are in code (lib/content/email-your-mp.ts), or nowhere for the old
