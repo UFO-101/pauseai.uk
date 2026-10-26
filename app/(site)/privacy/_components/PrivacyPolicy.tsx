@@ -96,13 +96,6 @@ export default function PrivacyPolicy() {
         your MP&apos;s reply, is emailed to our policy team&apos;s inbox in Gmail. If an email to you or to your MP
         bounces or is marked as spam, we keep a record of that against the address so we don&apos;t send to it again.
       </p>
-      <p>
-        ⁂ If you wrote to a politician through the form on pauseai.info between July 2025 and October 2026, we copied
-        your name, email address and postcode, the campaign, the politician, the subject, when it was sent and whether
-        you ticked the box to hear from us (the form had no box before 23 September 2026, so we count those letters as
-        no) from our records in Airtable, so that you are one supporter with the rest of what you have done with us. We
-        did not copy your letter.
-      </p>
 
       <h2>Events and Luma</h2>
       <p>

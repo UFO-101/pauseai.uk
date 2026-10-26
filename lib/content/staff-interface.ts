@@ -397,7 +397,7 @@ export const staffCopy = {
     flag: "Marked",
     anyFlag: "Anything",
     flags: {
-      important: "⁂Important target",
+      important: "Important target",
       connection: "Personal connection",
       removed: "No longer in Airtable",
     } as Record<string, string>,
@@ -419,7 +419,7 @@ export const staffCopy = {
       asks: "Asks",
     },
     // In that column, when they've answered none.
-    noAsks: "⁂ None",
+    noAsks: "None",
     noEmail: "No email",
     // On a politician whose address is blocked (/staff/politicians/blocked-emails).
     emailBlocked: "Email blocked",
@@ -464,21 +464,21 @@ export const staffCopy = {
     },
     // A status: who set it and when; the ask's title heads the line. An import's is "from" it.
     setBy: (who: string, when: string) => `set by ${who}, ${when}`,
-    fromImport: { airtable: "⁂ from Airtable", controlai: "⁂ from ControlAI's letter" } as Record<string, string>,
+    fromImport: { airtable: "from Airtable", controlai: "from ControlAI's letter" } as Record<string, string>,
     // The form on an ask staff record: its name, the note's field, and Save for an event's answer.
-    setStatus: "⁂ Set status",
-    note: "⁂ Note",
-    save: "⁂ Save",
+    setStatus: "Set status",
+    note: "Note",
+    save: "Save",
     // The fields of the box at the top.
-    status: "⁂ Status",
-    country: "⁂ Country",
-    city: "⁂ City",
-    notes: "⁂ Notes",
+    status: "Status",
+    country: "Country",
+    city: "City",
+    notes: "Notes",
     // Airtable's markers, as tags by their name.
-    importantTarget: "⁂ Important target",
-    personalConnection: "⁂ Personal connection",
+    importantTarget: "Important target",
+    personalConnection: "Personal connection",
     // When their record was no longer in Airtable.
-    airtableRemoved: (when: string) => `⁂ No longer in Airtable since ${when}`,
+    airtableRemoved: (when: string) => `No longer in Airtable since ${when}`,
     historyTitle: "History",
     // A status set or cleared, in the history: around the ask's name.
     statusSet: (status: string) => ({ before: `${status} '`, after: "'" }),
@@ -492,19 +492,19 @@ export const staffCopy = {
       unsignedLetter: "Letter written to them",
       "unsigned-letter-replied": "Answered a letter",
       // A letter of one of PauseAI's mailings, by its mailing, and how it was written.
-      "pauseai-letter": "⁂ Email from PauseAI:",
+      "pauseai-letter": "Email from PauseAI:",
       "add politician": "Added",
       "edit politician": "Details edited",
-      "remove politician": "⁂ No longer in Airtable",
+      "remove politician": "No longer in Airtable",
       "block address": "Address blocked",
       "unblock address": "Address unblocked",
     } as Record<string, string>,
     // On an MP from Airtable, after the source, which links to their record there.
     editInAirtable: ", update name / email there.",
     // On an ask that isn't set by hand: where its statuses come from.
-    importedAsk: "⁂ set each night by an import",
-    personalised: "⁂ personalised",
-    aiGenerated: "⁂ written with AI",
+    importedAsk: "set each night by an import",
+    personalised: "personalised",
+    aiGenerated: "written with AI",
     // Under their name: what they are, in their house, and where for.
     roles: {
       commons: "MP",
@@ -607,7 +607,7 @@ export const staffCopy = {
       before: "MPs and peers who signed ",
       link: "the letter",
       after:
-        "⁂ are marked as having signed “ControlAI's statement to the Prime Minister”. This can't be changed by hand.",
+        "are marked as having signed “ControlAI's statement to the Prime Minister”. This can't be changed by hand.",
     },
     importNow: "Import ControlAI letter now",
     never: "Not read yet.",
@@ -660,13 +660,13 @@ export const staffCopy = {
       link: "Emails table in Airtable",
       after: ". Only transfers known ones, the import code needs updating if a new mailing is added.",
     },
-    importNow: "⁂ Import emails now",
+    importNow: "Import emails now",
     never: "Not imported yet.",
     result: (r: { read: number; added: number; waiting: number; noPolitician: number; unplaced: unknown[] }) =>
-      `⁂ ${r.read} emails read: ${r.added} added, ${r.waiting} waiting for their politician, ${r.noPolitician} with no politician, ${r.unplaced.length} with no mailing we know.`,
+      `${r.read} emails read: ${r.added} added, ${r.waiting} waiting for their politician, ${r.noPolitician} with no politician, ${r.unplaced.length} with no mailing we know.`,
     // The emails with no mailing we know, by their Airtable record, and the boxes they have ticked.
-    unplaced: "⁂ No mailing we know",
-    noBoxes: "⁂ no box ticked",
+    unplaced: "No mailing we know",
+    noBoxes: "no box ticked",
   },
   // The one-off import of the letters sent through pauseai.info's old form.
   webForm: {
@@ -726,17 +726,17 @@ export const staffCopy = {
     },
     /** The test MPs (lib/test-mps.json) aren't in Airtable; every import adds any that are missing. */
     testMps: "Each import also adds our own test MPs, who aren’t in Airtable, if any are missing.",
-    syncNow: "⁂ Import politicians now",
+    syncNow: "Import politicians now",
     none: "Not yet imported.",
     added: "Added",
     // Those whose record is no longer in Airtable.
-    removed: "⁂ Gone from Airtable",
+    removed: "Gone from Airtable",
     changed: "Changed",
     // A record whose name changed, which may be Airtable reusing it for someone new: from, to.
-    renamed: "⁂ Renamed",
+    renamed: "Renamed",
     // The statuses it set from Airtable's tick boxes, after the counts of people.
     statuses: (s: { added: number; changed: number; removed: number }) =>
-      `⁂ Statuses: ${s.added} set, ${s.changed} changed, ${s.removed} taken away.`,
+      `Statuses: ${s.added} set, ${s.changed} changed, ${s.removed} taken away.`,
     apply: "Apply",
     discard: "Discard",
   },
@@ -832,7 +832,7 @@ export const staffCopy = {
     },
     consent: { yes: "Yes", no: "No" },
     // Beside a letter sent through pauseai.info's old form, copied from Airtable.
-    imported: "⁂ pauseai.info",
+    imported: "pauseai.info",
   },
   // The button beside a list's search box; its other filters apply as soon as they're chosen.
   search: "Search",
