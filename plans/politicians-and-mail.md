@@ -104,8 +104,11 @@ letter, come to an event.
   `pauseai`), the person, the ask, created and sent times, status, our
   `Message-ID`, and the provider's message and thread IDs. A supporter's
   letter must have an ask; PauseAI's may not, as an invitation may ask
-  nothing we record. `letter_events` (sent, skipped, bounced, replied,
-  auto-reply) and `email_sends.letter_id` point here.
+  nothing we record. Status is as now (`sending`, `sent`, `not_sent`,
+  `bounced`, `spam_complaint`), plus `scheduled` and `cancelled` for
+  PauseAI letters only; a skipped letter is `not_sent`. `letter_events`
+  (sent, skipped, bounced, replied, auto-reply) and
+  `email_sends.letter_id` point here.
 - **`supporter_letters`**: the sender's name, email, address, postcode,
   consent and `reply_hash`. `supporter_links` points here, and erasure
   deletes the row.
@@ -134,7 +137,7 @@ come back.
    reference to a politician at it (letters, statuses,
    `politicianHistory`). Split the sender's details off `letters` into
    `supporter_letters`, and point `supporter_links`, the supporter views
-   and `email_permissions` there. Rename `campaign_statuses` to
+   and `email_permission()` and its view there. Rename `campaign_statuses` to
    `ask_statuses` and add `asks`. Its own commit, as it touches a lot of
    code.
 2. **Status instead of `sitting`.** Email your MP and every filter that
@@ -258,7 +261,8 @@ the same backends.
 In code, `MailBackend` is a type (send one email; how many more today),
 and `postmark(stream)` and `gmail(staffAccount)` return plain objects of
 that type. The fixture outbox is a third. `email_sends` records the
-backend and sender address.
+backend and sender address, and its purposes gain `mailing` and
+`mailing-test`, the test send to yourself.
 
 ### Steps
 
@@ -275,7 +279,8 @@ backend and sender address.
    ([user type](https://support.google.com/cloud/answer/15549945)).
    Scopes: `gmail.send` and `gmail.readonly`
    ([scopes](https://developers.google.com/workspace/gmail/api/auth/scopes)).
-   Any staff account can connect. Its refresh token is stored encrypted.
+   Any staff account can connect. `staff_accounts` stores its refresh
+   token, encrypted, and the last `historyId` read (step 6).
 4. **Mailings.** "Mail these", the editor, preview, test send, schedule.
    Scheduling fixes the recipients, one `pauseai_letters` row each. At
    send time, anyone whose address is blocked or who has left office is
