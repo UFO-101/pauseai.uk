@@ -14,7 +14,7 @@ export default function DonateThanks({ donors }: { donors: ThankedDonor[] }) {
   return (
     <section className={styles.thanks} aria-labelledby="donate-thanks">
       <h2 id="donate-thanks" className={styles.heading}>
-        ⁂ Lorem ipsum
+        ⁂ Thank you to our latest donors
       </h2>
       <ul className={styles.list}>
         {donors.slice(0, LATEST).map((donor) => (
@@ -26,7 +26,7 @@ export default function DonateThanks({ donors }: { donors: ThankedDonor[] }) {
           </li>
         ))}
       </ul>
-      <p className={styles.count}>⁂ Dolor sit amet, {donors.length} consectetur.</p>
+      <p className={styles.count}>⁂ {donors.length} donors have said yes to being named on our wall of thanks.</p>
     </section>
   );
 }
