@@ -128,7 +128,7 @@ letter, come to an event.
   | `regulate-letter-pm` | `frontier-ai-letter`  | yes     |
   | `support-sobel-bill` | `controlai-statement` | yes     |
   | `pauseai-info-frontier-ai`  | `frontier-ai-letter`  | no      |
-  | `pauseai-info-liability`    | `liability-letter`    | no      |
+  | `pauseai-info-liability`    |                       | no      |
   | `pauseai-info-deepmind`     | `deepmind-letter`     | no      |
 
   Email your MP reads the MP's statuses keyed by ask (`MpStatuses`), as
@@ -199,15 +199,12 @@ was asked and hasn't answered comes from those.
    | --------------------------- | --------------------------------------------------------------------------------------------- | ---------------------------------- | -------------------------------- |
    | `frontier-ai-letter`        | Our open letter to the Prime Minister on frontier AI; Email your MP's current campaign        | Signed Frontier AI Letter          | 10                               |
    | `deepmind-letter`           | Our 2025 letter to Sir Demis Hassabis of Google DeepMind (`/campaigns/dear-sir-demis-2025`)    | Signed DeepMind Letter             | 63                               |
-   | `liability-letter`          | Our letter on AI liability, with a policy briefing; supporters wrote about it May–June 2026   | Signed Liability Letter            | 0                                |
    | `controlai-statement`       | ControlAI's statement; imported from ControlAI as now                                         | ControlAI Signatory                | 167                              |
    | `edinburgh-conference-2026` | A conference in Edinburgh, November 2026, invited in October                                  | Edinburgh Conference November 2026 | 50 Declined, 1 Passed on request |
 
-   No one has signed the liability letter, but it's an ask all the same,
-   as 77 web form letters asked for it (step 6).
-
    Not imported: "Parliament meeting 23 June 2026" (one MP) and "London
-   2026 Panel" (four); Responded and Declined on the letters; "Responded
+   2026 Panel" (four); "Signed Liability Letter", which no one did;
+   Responded and Declined on the letters; "Responded
    PauseAI Documentary Screening invitation" (2), which has no ask; "Sent DeepMind
    letter publication email", which the Emails sync covers; the
    per-person PDFs; the AI "Custom sentence".
@@ -242,7 +239,8 @@ was asked and hasn't answered comes from those.
    tick, about the sender, isn't imported. The consent box arrived on 23
    September 2026, so the 651 earlier letters count as no consent. A
    letter already in `supporter_letters` from the same sender to the same
-   politician for the same ask is skipped.
+   politician for the same ask is skipped; the liability campaign has no
+   ask, and nothing else asked for it.
 7. **Import Go to Parliament, once.** Each MP a constituent was booked to
    meet gets a status on `go-to-parliament-oct-2026` (20 October 2026, the
    House of Commons) from "MP Meeting Status". Nothing about the
