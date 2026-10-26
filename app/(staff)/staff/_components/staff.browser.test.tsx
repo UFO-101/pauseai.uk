@@ -1933,6 +1933,15 @@ describe("LetterFilters", () => {
 });
 
 describe("SupporterFilters", () => {
+  it("shows a new URL's filters, not the old form's choices", async () => {
+    const columns = staffCopy.supporters.columns;
+    const { rerender } = await render(<SupporterFilters search={supportersSearch({ activity: "letter" })} />);
+    await page.getByRole("combobox", { name: columns.subscriptions }).selectOptions("blocked");
+    await rerender(<SupporterFilters search={supportersSearch({})} />);
+    await expect.element(page.getByRole("combobox", { name: columns.badges })).toHaveValue("");
+    await expect.element(page.getByRole("combobox", { name: columns.subscriptions })).toHaveValue("");
+  });
+
   it("sends no sort when the list has its default one", async () => {
     await render(<SupporterFilters search={supportersSearch({})} />);
     const form = page.getByRole("searchbox", { name: staffCopy.supporters.filters.search }).element().closest("form")!;

@@ -10,11 +10,12 @@ const copy = staffCopy.letters;
 
 /**
  * Which letters the letters page lists: by a search, status and whether
- * answered. A GET form, so the URL holds the filter.
+ * answered. A GET form, so the URL holds the filter. Keyed on the filters,
+ * so a new URL, such as Reset's, gives a fresh form, not the old choices.
  */
 export default function LetterFilters({ search }: { search: LettersSearch }) {
   return (
-    <FilterForm method="get" action="/staff/letters" className={styles.filters}>
+    <FilterForm key={JSON.stringify(search)} method="get" action="/staff/letters" className={styles.filters}>
       <Field label={copy.search}>
         <TextInput type="search" name="q" defaultValue={search.q} />
       </Field>

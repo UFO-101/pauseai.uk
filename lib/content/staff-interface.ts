@@ -169,7 +169,7 @@ export const staffCopy = {
       } as Record<string, string>,
       from: "First sign-up from",
       to: "First sign-up to",
-      filter: "Search",
+      filter: "Filter",
     },
     columns: {
       name: "Name",
@@ -370,7 +370,7 @@ export const staffCopy = {
   politicians: {
     title: "Politicians",
     search: "Search",
-    searchButton: "Search",
+    searchButton: "Filter",
     allHouses: "All houses",
     anyCampaign: "Any campaign",
     none: "None found.",

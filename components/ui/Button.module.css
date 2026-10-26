@@ -17,6 +17,9 @@
   justify-content: center;
   padding: var(--button-padding, 14px 24px);
   border-radius: 8px;
+  /* Set here, as a <button> doesn't inherit them and a link does, so the two are the same size. */
+  font-family: inherit;
+  line-height: 1.2;
   font-weight: var(--button-font-weight, 600);
   font-size: var(--button-font-size, 15px);
   text-decoration: none;

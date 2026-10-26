@@ -8,10 +8,19 @@ import { FilterForm } from "@/components/ui/Form";
 
 export type Filters = { search: string; house: string; campaign: string; email: string };
 
-/** Search and filter the politicians list. A GET form, so the URL holds the filter. */
+/**
+ * Search and filter the politicians list. A GET form, so the URL holds the
+ * filter. Keyed on the filters, so a new URL, such as Reset's, gives a fresh
+ * form, not the old choices.
+ */
 export default function PoliticianFilters({ search, house, campaign, email }: Filters) {
   return (
-    <FilterForm method="get" action="/staff/politicians" className={styles.filters}>
+    <FilterForm
+      key={[search, house, campaign, email].join("\n")}
+      method="get"
+      action="/staff/politicians"
+      className={styles.filters}
+    >
       <Field label={staffCopy.politicians.search}>
         <TextInput type="search" name="q" defaultValue={search} />
       </Field>

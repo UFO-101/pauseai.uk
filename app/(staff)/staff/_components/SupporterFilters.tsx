@@ -11,14 +11,15 @@ import styles from "./StaffForms.module.css";
 /**
  * Search and filter the supporters list. A GET form, so the URL holds the
  * filter. Each filter is named after the column it filters on. The table's
- * column headings sort it; the form keeps that sort.
+ * column headings sort it; the form keeps that sort. Keyed on the filters,
+ * so a new URL, such as Reset's, gives a fresh form, not the old choices.
  */
 export default function SupporterFilters({ search }: { search: SupportersSearch }) {
   const copy = staffCopy.supporters.filters;
   const { columns } = staffCopy.supporters;
   const topics = staffCopy.supporters.detail.permissions.topics;
   return (
-    <FilterForm method="get" action="/staff/supporters" className={styles.filters}>
+    <FilterForm key={JSON.stringify(search)} method="get" action="/staff/supporters" className={styles.filters}>
       <Field label={copy.search}>
         <TextInput type="search" name="q" defaultValue={search.q} />
       </Field>
