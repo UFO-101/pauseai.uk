@@ -1,24 +1,33 @@
 import { Button, ButtonLink } from "@/components/ui/Button";
 import { Select, TextInput } from "@/components/ui/Controls";
 import { Field } from "@/components/ui/Field";
-import { FilterForm } from "@/components/ui/Form";
 import { campaigns } from "@/lib/content/email-your-mp";
 import { staffCopy } from "@/lib/content/staff-interface";
 import type { LettersSearch } from "@/lib/staff-search";
-import styles from "./StaffForms.module.css";
+import StaffFilters from "./StaffFilters";
 
 const copy = staffCopy.letters;
 
 /**
- * Which letters the letters page lists: by a search, campaign, status and
- * whether answered. A GET form, so the URL holds the filter. Keyed on the filters,
- * so a new URL, such as Reset's, gives a fresh form, not the old choices.
+ * Which letters the letters page lists: by a search of the sender and MP,
+ * then the table's columns in its order. Keyed on the filters, so a new
+ * URL, such as Reset's, gives a fresh form, not the old choices.
  */
 export default function LetterFilters({ search }: { search: LettersSearch }) {
   return (
-    <FilterForm key={JSON.stringify(search)} method="get" action="/staff/letters" className={styles.filters}>
+    <StaffFilters key={JSON.stringify(search)} action="/staff/letters">
       <Field label={copy.search}>
         <TextInput type="search" name="q" defaultValue={search.q} />
+      </Field>
+      <Button variant="primary" size="small" type="submit">
+        {staffCopy.search}
+      </Button>
+      <Field label={copy.columns.consent}>
+        <Select name="consent" defaultValue={search.consent}>
+          <option value="">{copy.allStatuses}</option>
+          <option value="yes">{copy.consent.yes}</option>
+          <option value="no">{copy.consent.no}</option>
+        </Select>
       </Field>
       <Field label={copy.columns.campaign}>
         <Select name="campaign" defaultValue={search.campaign}>
@@ -47,12 +56,9 @@ export default function LetterFilters({ search }: { search: LettersSearch }) {
           <option value="no">{copy.answered.no}</option>
         </Select>
       </Field>
-      <Button variant="primary" size="small" type="submit">
-        {copy.filter}
-      </Button>
       <ButtonLink variant="ghost" size="small" href="/staff/letters">
         {staffCopy.resetFilters}
       </ButtonLink>
-    </FilterForm>
+    </StaffFilters>
   );
 }

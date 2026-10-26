@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { render } from "vitest-browser-react";
 import { page, userEvent } from "vitest/browser";
+import { navigation } from "@/tests/browser/navigation";
 import { campaigns } from "@/lib/content/email-your-mp";
 import { campaignPath } from "@/lib/email-your-mp";
 import { importPath } from "@/lib/import-runs";
@@ -338,7 +339,23 @@ describe("StaffDashboard", () => {
     await expect.element(page.getByText(copy.metrics.supportersAdded(176))).toBeVisible();
     // The letters are supporter data: the tiles count them, but lead nowhere.
     expect(tileLink(copy.metrics.lettersSent(12))).toBeNull();
-    expect(tileLink(copy.metrics.mpsSigned(5))?.getAttribute("href")).toBe("/staff/politicians");
+    // Several signed: those who signed the campaign most did, newest first.
+    expect(tileLink(copy.metrics.mpsSigned(5))?.getAttribute("href")).toBe(
+      `/staff/politicians?campaign=${pm.slug}&sort=${pm.slug}`,
+    );
+    // One signed: their page.
+    await rerender(
+      <StaffDashboard
+        dashboard={{
+          ...exampleDashboard,
+          counts: { ...exampleDashboard.counts, mpsSigned: { current: 1, previous: 3 } },
+          byCampaign: { ...exampleDashboard.byCampaign, mpsSigned: { [bill.slug]: 1 } },
+          signedMp: 7,
+        }}
+        permissions={[]}
+      />,
+    );
+    expect(tileLink(copy.metrics.mpsSigned(1))?.getAttribute("href")).toBe("/staff/politicians/7");
 
     // A quiet month: nothing reads "None", with no test letters and no bar; the change is over 30 days.
     await rerender(<StaffDashboard dashboard={exampleQuietDashboard} permissions={[]} />);
@@ -358,6 +375,8 @@ describe("StaffDashboard", () => {
       .element(quiet[1])
       .toHaveTextContent(`${copy.none}${copy.metrics.lettersReplied(0)}${copy.change.down(1, 30)}`);
     expect(quiet[0].element().querySelectorAll("[data-campaign]")).toHaveLength(0);
+    // Nobody signed: every politician.
+    expect(tileLink(copy.metrics.mpsSigned(0))?.getAttribute("href")).toBe("/staff/politicians");
     // With no bar the letters tile takes a sixth like the rest; a line of nothing but zeros isn't drawn.
     expect(quiet[0].element().className).toBe(spanClass(1));
     const flat = {
@@ -1260,12 +1279,35 @@ describe("EmailProblemsTable", () => {
 });
 
 describe("EmailBlockFilters", () => {
-  it("is a GET form to its page, filled in with the current filter", async () => {
-    await render(<EmailBlockFilters kind="complaint" action="/staff/politicians/blocked-emails" />);
-    await expect.element(page.getByRole("combobox")).toHaveValue("complaint");
+  it("is a GET form to its page, filled in with the current filters", async () => {
+    await render(<EmailBlockFilters q="example.org" kind="complaint" action="/staff/politicians/blocked-emails" />);
+    await expect
+      .element(page.getByRole("searchbox", { name: staffCopy.emails.columns.address }))
+      .toHaveValue("example.org");
+    await expect.element(page.getByRole("combobox", { name: staffCopy.emails.columns.kind })).toHaveValue("complaint");
     const form = page.getByRole("combobox").element().closest("form")!;
     expect(form.getAttribute("method")).toBe("get");
     expect(form.getAttribute("action")).toBe("/staff/politicians/blocked-emails");
+  });
+});
+
+describe("StaffFilters", () => {
+  const filters = <EmailBlockFilters q="" kind="hard" action="/staff/supporters/blocked-emails" />;
+
+  it("applies a select as soon as it's changed, leaving blank filters out of the URL", async () => {
+    await render(filters);
+    await page.getByRole("combobox").selectOptions("complaint");
+    await vi.waitFor(() => expect(navigation.pushed).toEqual(["/staff/supporters/blocked-emails?kind=complaint"]));
+    await page.getByRole("combobox").selectOptions("");
+    await vi.waitFor(() => expect(navigation.pushed.at(-1)).toBe("/staff/supporters/blocked-emails"));
+  });
+
+  it("waits for the button to search, not each key typed", async () => {
+    await render(filters);
+    await userEvent.fill(page.getByRole("searchbox"), "bob@");
+    expect(navigation.pushed).toEqual([]);
+    await page.getByRole("button", { name: staffCopy.search }).click();
+    await vi.waitFor(() => expect(navigation.pushed).toEqual(["/staff/supporters/blocked-emails?q=bob%40&kind=hard"]));
   });
 });
 
@@ -1393,25 +1435,45 @@ describe("ImportJobPage", () => {
 });
 
 describe("PoliticianFilters", () => {
-  it("is a GET form to /staff, filled in with the current filter", async () => {
-    await render(<PoliticianFilters search="blake" house="lords" campaign={pm.slug} email="blocked" />);
+  const search = {
+    q: "blake",
+    house: "lords",
+    party: "Labour",
+    campaign: pm.slug,
+    email: "blocked",
+    sort: pm.slug,
+    dir: "asc",
+  };
+
+  it("is a GET form to the list, filled in with the current filters and keeping the sort", async () => {
+    await render(<PoliticianFilters search={search} parties={["Green", "Labour"]} />);
     await expect.element(page.getByRole("searchbox")).toHaveValue("blake");
-    await expect
-      .element(page.getByRole("combobox", { name: staffCopy.fields.house, exact: true }))
-      .toHaveValue("lords");
-    await expect
-      .element(page.getByRole("combobox", { name: staffCopy.politician.statusesTitle, exact: true }))
-      .toHaveValue(pm.slug);
-    await expect
-      .element(page.getByRole("combobox", { name: staffCopy.fields.email, exact: true }))
-      .toHaveValue("blocked");
+    const select = (name: string) => page.getByRole("combobox", { name, exact: true });
+    await expect.element(select(staffCopy.fields.house)).toHaveValue("lords");
+    await expect.element(select(staffCopy.fields.party)).toHaveValue("Labour");
+    expect([...(select(staffCopy.fields.party).element() as HTMLSelectElement).options].map((o) => o.value)).toEqual([
+      "",
+      "Green",
+      "Labour",
+    ]);
+    await expect.element(select(staffCopy.politician.statusesTitle)).toHaveValue(pm.slug);
+    await expect.element(select(staffCopy.fields.email)).toHaveValue("blocked");
     const form = page.getByRole("searchbox").element().closest("form")!;
     expect(form.getAttribute("method")).toBe("get");
     expect(form.getAttribute("action")).toBe("/staff/politicians");
+    expect(new FormData(form).get("sort")).toBe(pm.slug);
+    expect(new FormData(form).get("dir")).toBe("asc");
     // Reset is the list with no filter.
     await expect
       .element(page.getByRole("link", { name: staffCopy.resetFilters }))
       .toHaveAttribute("href", "/staff/politicians");
+  });
+
+  it("sends no sort when the list has its default one", async () => {
+    await render(<PoliticianFilters search={{ ...search, sort: "", dir: "" }} parties={[]} />);
+    const form = page.getByRole("searchbox").element().closest("form")!;
+    expect(new FormData(form).has("sort")).toBe(false);
+    expect(new FormData(form).has("dir")).toBe(false);
   });
 });
 
@@ -1921,6 +1983,7 @@ describe("LetterFilters", () => {
       status: "sent",
       answered: "no",
       campaign: "support-sobel-bill",
+      consent: "yes",
     });
     void filter;
     await render(<LetterFilters search={search} />);
@@ -1932,6 +1995,7 @@ describe("LetterFilters", () => {
     await expect.element(page.getByRole("combobox", { name: copy.columns.status })).toHaveValue("sent");
     await expect.element(page.getByRole("combobox", { name: copy.columns.replied })).toHaveValue("no");
     await expect.element(page.getByRole("combobox", { name: copy.columns.campaign })).toHaveValue("support-sobel-bill");
+    await expect.element(page.getByRole("combobox", { name: copy.columns.consent })).toHaveValue("yes");
     await expect
       .element(page.getByRole("link", { name: staffCopy.resetFilters }))
       .toHaveAttribute("href", "/staff/letters");
@@ -1962,8 +2026,6 @@ describe("SupporterFilters", () => {
           q: "jane",
           activity: "registered",
           subscription: "pauseai-updates:declined",
-          active: "90",
-          from: "2026-01-01",
           sort: "name",
           dir: "desc",
         })}
@@ -1981,13 +2043,9 @@ describe("SupporterFilters", () => {
       .toHaveAttribute("href", "/staff/supporters");
     const columns = staffCopy.supporters.columns;
     await expect.element(page.getByRole("combobox", { name: columns.badges })).toHaveValue("registered");
-    await expect.element(page.getByRole("combobox", { name: columns.lastActive })).toHaveValue("90");
     // The headings sort; filtering keeps their sort.
     expect(new FormData(form).get("sort")).toBe("name");
     expect(new FormData(form).get("dir")).toBe("desc");
-    await expect.element(page.getByRole("group", { name: columns.firstSeen })).toBeVisible();
-    expect((page.getByLabelText(copy.from).element() as HTMLInputElement).value).toBe("2026-01-01");
-    expect((page.getByLabelText(copy.to).element() as HTMLInputElement).value).toBe("");
     const subscriptions = page.getByRole("combobox", { name: columns.subscriptions });
     await expect.element(subscriptions).toHaveValue("pauseai-updates:declined");
     // Each topic's reasons, under its name, then a block, which is every topic's.

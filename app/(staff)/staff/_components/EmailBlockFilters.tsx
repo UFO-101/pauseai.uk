@@ -1,24 +1,27 @@
 import { Button } from "@/components/ui/Button";
-import { Select } from "@/components/ui/Controls";
+import { Select, TextInput } from "@/components/ui/Controls";
 import { Field } from "@/components/ui/Field";
-import { FilterForm } from "@/components/ui/Form";
 import { staffCopy } from "@/lib/content/staff-interface";
-import styles from "./StaffForms.module.css";
+import StaffFilters from "./StaffFilters";
 
-/** Which blocked addresses the page at `action` lists: those that bounced, or complained. A GET form, so the URL holds the filter. */
-export default function EmailBlockFilters({ kind, action }: { kind: string; action: string }) {
+/** Which blocked addresses the page at `action` lists: those like a search, and those that bounced, or complained. */
+export default function EmailBlockFilters({ q, kind, action }: { q: string; kind: string; action: string }) {
+  const { columns, kinds } = staffCopy.emails;
   return (
-    <FilterForm method="get" action={action} className={styles.filters}>
-      <Field label={staffCopy.emails.columns.kind}>
-        <Select name="kind" defaultValue={kind}>
-          <option value="">{staffCopy.emails.allKinds}</option>
-          <option value="hard">{staffCopy.emails.kinds.hard}</option>
-          <option value="complaint">{staffCopy.emails.kinds.complaint}</option>
-        </Select>
+    <StaffFilters key={[q, kind].join("\n")} action={action}>
+      <Field label={columns.address}>
+        <TextInput type="search" name="q" defaultValue={q} />
       </Field>
       <Button variant="primary" size="small" type="submit">
-        {staffCopy.emails.filter}
+        {staffCopy.search}
       </Button>
-    </FilterForm>
+      <Field label={columns.kind}>
+        <Select name="kind" defaultValue={kind}>
+          <option value="">{staffCopy.emails.allKinds}</option>
+          <option value="hard">{kinds.hard}</option>
+          <option value="complaint">{kinds.complaint}</option>
+        </Select>
+      </Field>
+    </StaffFilters>
   );
 }

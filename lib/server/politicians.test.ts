@@ -6,6 +6,7 @@ import {
   findTestMp,
   getPolitician,
   isHouse,
+  listParties,
   listPoliticians,
   politicianHistory,
   politiciansSearch,
@@ -39,15 +40,31 @@ describe("isHouse", () => {
 describe("politiciansSearch", () => {
   it("keeps what was typed, and filters by it", () => {
     expect(
-      politiciansSearch({ q: "Jo", house: "lords", campaign: BILL, email: "blocked", sort: "party", dir: "desc" }),
+      politiciansSearch({
+        q: "Jo",
+        house: "lords",
+        party: "Green",
+        campaign: BILL,
+        email: "blocked",
+        sort: "party",
+        dir: "desc",
+      }),
     ).toEqual({
       q: "Jo",
       house: "lords",
+      party: "Green",
       campaign: BILL,
       email: "blocked",
       sort: "party",
       dir: "desc",
-      filter: { search: "Jo", house: "lords", campaign: BILL, emailBlocked: true, sort: { key: "party", dir: "desc" } },
+      filter: {
+        search: "Jo",
+        house: "lords",
+        party: "Green",
+        campaign: BILL,
+        emailBlocked: true,
+        sort: { key: "party", dir: "desc" },
+      },
     });
   });
 
@@ -55,6 +72,7 @@ describe("politiciansSearch", () => {
     const none = {
       search: undefined,
       house: undefined,
+      party: undefined,
       campaign: undefined,
       emailBlocked: undefined,
       sort: { key: "name", dir: "asc" },
@@ -62,6 +80,7 @@ describe("politiciansSearch", () => {
     expect(politiciansSearch({})).toEqual({
       q: "",
       house: "",
+      party: "",
       campaign: "",
       email: "",
       sort: "",
@@ -71,6 +90,7 @@ describe("politiciansSearch", () => {
     expect(politiciansSearch({ q: "", house: "hogwarts", campaign: "", email: "other", sort: "age" })).toEqual({
       q: "",
       house: "hogwarts",
+      party: "",
       campaign: "",
       email: "other",
       sort: "age",
@@ -153,6 +173,14 @@ describeWithDatabase("politicians", () => {
     expect(await byParty("asc")).toEqual([...(await byParty("asc"))].sort());
     expect(await byParty("desc")).toEqual([...(await byParty("asc"))].reverse());
     expect((await listPoliticians({ campaign: PM })).map((p) => p.id)).toEqual([peer]);
+    expect((await listPoliticians({ party: (await getPolitician(peer))!.party })).map((p) => p.id)).toEqual([peer]);
+    expect(await listParties()).toEqual(
+      [...new Set((await listPoliticians()).map((p) => p.party).filter(Boolean))].sort(),
+    );
+    // A campaign's column sorts by when the status was recorded, newest first, those without last.
+    await setStatus(mp, PM, { status: "signed", date: null, note: "" }, "jo@pauseai.uk");
+    const byPm = await listPoliticians({ sort: { key: PM, dir: "desc" } });
+    expect(byPm.filter((p) => !p.isTest).map((p) => p.id)).toEqual([mp, peer]);
     expect(await listPoliticians({}, 1)).toHaveLength(1);
     expect((await listPoliticians({ search: "Polly" }))[0]).toEqual({
       id: mp,

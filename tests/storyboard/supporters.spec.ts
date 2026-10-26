@@ -57,11 +57,14 @@ test("the supporters list after the Luma import, filtered, reset and sorted", as
   await expect(page.getByRole("link", { name: "Fay Follower" })).toBeVisible();
   await frame(page, "every supporter the import found, newest activity first");
 
+  // The search waits for its button; a select applies as soon as it's chosen, keeping the search.
   await page.getByRole("searchbox", { name: copy.filters.search }).fill("fixture@example");
+  await page.getByRole("button", { name: staffCopy.search }).click();
+  await expect(page).toHaveURL(/\/staff\/supporters\?q=fixture%40example$/);
+  await expect(page.getByText(copy.count(5, 1, 1))).toBeVisible();
+  await frame(page, "searched for fixture@example");
   await page.getByRole("combobox", { name: copy.columns.badges }).selectOption("registered");
-  await page.getByRole("button", { name: copy.filters.filter }).click();
-  await expect(page).toHaveURL(/\/staff\/supporters\?q=fixture%40example&/);
-  await expect(page).toHaveURL(/activity=registered/);
+  await expect(page).toHaveURL(/\/staff\/supporters\?q=fixture%40example&activity=registered$/);
   await page.getByRole("link", { name: copy.columns.name }).click();
   await expect(page).toHaveURL(/sort=name/);
   await expect(page.getByRole("link", { name: "Fay Follower" })).toHaveCount(0);
@@ -72,7 +75,6 @@ test("the supporters list after the Luma import, filtered, reset and sorted", as
   await frame(page, "filtered to those who registered, by name");
 
   await page.getByRole("combobox", { name: copy.columns.badges }).selectOption("letter");
-  await page.getByRole("button", { name: copy.filters.filter }).click();
   await expect(page.getByText(copy.none)).toBeVisible();
   await frame(page, "nobody from letters yet");
 
@@ -218,7 +220,6 @@ test("the list says what each supporter gets, and filters by it", async ({ page,
   await frame(page, "the list, with what each supporter gets by topic");
 
   await page.getByRole("combobox", { name: copy.columns.subscriptions }).selectOption("luma-calendar:unsubscribed");
-  await page.getByRole("button", { name: copy.filters.filter }).click();
   await expect(page.getByText(copy.count(1, 1, 1))).toBeVisible();
   await expect(page.getByRole("row").filter({ hasText: "Jane Fixture" })).toBeVisible();
   // Owen left Keep me informed unticked, which isn't an unsubscribe.
@@ -226,7 +227,6 @@ test("the list says what each supporter gets, and filters by it", async ({ page,
   await frame(page, "filtered to those who unsubscribed: Jane, whom Luma told us of");
 
   await page.getByRole("combobox", { name: copy.columns.subscriptions }).selectOption("pauseai-updates:declined");
-  await page.getByRole("button", { name: copy.filters.filter }).click();
   await expect(page).toHaveURL(/subscription=pauseai-updates%3Adeclined/);
   await expect(page.getByRole("row").filter({ hasText: "Owen Member" })).toBeVisible();
   await expect(page.getByRole("row").filter({ hasText: "Jane Fixture" })).toHaveCount(0);

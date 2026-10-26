@@ -253,9 +253,11 @@ describeWithDatabase("listBlocks, blockOn and recentProblems", () => {
         refused: 0,
       }),
     ]);
-    expect(await listBlocks("politicians", "complaint")).toEqual([]);
-    expect((await listBlocks("others", "complaint")).map((b) => b.address)).toEqual(["other@example.org"]);
-    expect(await listBlocks("others", "hard")).toEqual([]);
+    expect(await listBlocks("politicians", { kind: "complaint" })).toEqual([]);
+    expect((await listBlocks("others", { kind: "complaint" })).map((b) => b.address)).toEqual(["other@example.org"]);
+    expect(await listBlocks("others", { kind: "hard" })).toEqual([]);
+    expect((await listBlocks("others", { search: "OTHER@" })).map((b) => b.address)).toEqual(["other@example.org"]);
+    expect(await listBlocks("others", { search: "nobody" })).toEqual([]);
 
     expect(await blockOn("Test-MP@example.org")).toMatchObject({ address: "test-mp@example.org" });
     expect(await blockOn("soft@example.org")).toBeUndefined();

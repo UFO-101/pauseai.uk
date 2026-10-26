@@ -172,11 +172,15 @@ export async function isPoliticianAddress(address: string): Promise<boolean> {
   return !!row;
 }
 
-/** Every blocked address in `scope`, newest first, or only those blocked by a hard bounce or a complaint. */
-export async function listBlocks(scope: EmailScope, kind?: EmailBlock["kind"]): Promise<EmailBlock[]> {
+/** Which blocked addresses to list: those blocked by a hard bounce or a complaint, and those with `search` in them. */
+export type BlocksFilter = { kind?: "hard" | "complaint"; search?: string };
+
+/** Every blocked address in `scope` that `filter` lets through, newest first. */
+export async function listBlocks(scope: EmailScope, filter: BlocksFilter = {}): Promise<EmailBlock[]> {
   return query<EmailBlock>(
-    `${SELECT_BLOCKS} WHERE ($1::text IS NULL OR p.kind = $1) AND ${inScope("b.address", scope)} ORDER BY p.at DESC, b.address`,
-    [kind ?? null],
+    `${SELECT_BLOCKS} WHERE ($1::text IS NULL OR p.kind = $1) AND ($2::text IS NULL OR b.address ILIKE $2)
+       AND ${inScope("b.address", scope)} ORDER BY p.at DESC, b.address`,
+    [filter.kind ?? null, filter.search ? `%${filter.search}%` : null],
   );
 }
 

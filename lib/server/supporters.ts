@@ -109,10 +109,6 @@ export async function listSupporters(filter: SupporterFilter): Promise<Supporter
     );
   }
   if (filter.activity) where.push(BADGE_CONDITIONS[filter.activity]);
-  if (filter.active === "older") where.push("s.last_active_at <= now() - interval '365 days'");
-  else if (filter.active) where.push(`s.last_active_at > now() - ${add(`${filter.active} days`)}::interval`);
-  if (filter.from) where.push(`s.first_seen_at >= ${add(filter.from)}::date`);
-  if (filter.to) where.push(`s.first_seen_at < ${add(filter.to)}::date + 1`);
   if (filter.subscription) {
     const { topic, reason } = filter.subscription;
     where.push(

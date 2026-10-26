@@ -12,22 +12,31 @@ import {
 } from "./staff-search";
 
 describe("lettersSearch", () => {
-  const none = { status: undefined, search: undefined, answered: undefined, campaign: undefined };
+  const none = { status: undefined, search: undefined, answered: undefined, campaign: undefined, consent: undefined };
 
-  it("filters by a status, a search, whether answered and a campaign", () => {
-    expect(lettersSearch({ status: "sent", q: " jane ", answered: "yes", campaign: "regulate-letter-pm" })).toEqual({
+  it("filters by a status, a search, whether answered, a campaign and consent", () => {
+    expect(
+      lettersSearch({ status: "sent", q: " jane ", answered: "yes", campaign: "regulate-letter-pm", consent: "yes" }),
+    ).toEqual({
       status: "sent",
       q: " jane ",
       answered: "yes",
       campaign: "regulate-letter-pm",
-      filter: { status: "sent", search: "jane", answered: true, campaign: "regulate-letter-pm" },
+      consent: "yes",
+      filter: { status: "sent", search: "jane", answered: true, campaign: "regulate-letter-pm", consent: true },
     });
-    expect(lettersSearch({ answered: "no" }).filter).toEqual({ ...none, answered: false });
+    expect(lettersSearch({ answered: "no", consent: "no" }).filter).toEqual({
+      ...none,
+      answered: false,
+      consent: false,
+    });
   });
 
   it("filters by nothing when each is blank or unknown", () => {
-    expect(lettersSearch({})).toEqual({ status: "", q: "", answered: "", campaign: "", filter: none });
-    expect(lettersSearch({ status: "nope", q: "  ", answered: "maybe", campaign: "nope" }).filter).toEqual(none);
+    expect(lettersSearch({})).toEqual({ status: "", q: "", answered: "", campaign: "", consent: "", filter: none });
+    expect(
+      lettersSearch({ status: "nope", q: "  ", answered: "maybe", campaign: "nope", consent: "maybe" }).filter,
+    ).toEqual(none);
     // A name every object inherits isn't a status.
     expect(lettersSearch({ status: "toString" }).filter).toEqual(none);
   });
@@ -42,10 +51,15 @@ describe("politicianId", () => {
 
 describe("emailsSearch", () => {
   it("filters by a hard bounce or a complaint, and by nothing else", () => {
-    expect(emailsSearch({ kind: "complaint" })).toEqual({ kind: "complaint", filter: "complaint" });
-    expect(emailsSearch({ kind: "hard" })).toEqual({ kind: "hard", filter: "hard" });
-    expect(emailsSearch({ kind: "soft" })).toEqual({ kind: "soft", filter: undefined });
-    expect(emailsSearch({})).toEqual({ kind: "", filter: undefined });
+    expect(emailsSearch({ kind: "complaint" })).toEqual({ q: "", kind: "complaint", filter: { kind: "complaint" } });
+    expect(emailsSearch({ kind: "hard" }).filter).toEqual({ kind: "hard" });
+    expect(emailsSearch({ kind: "soft" }).filter).toEqual({});
+    expect(emailsSearch({})).toEqual({ q: "", kind: "", filter: {} });
+  });
+
+  it("searches the addresses for what was typed, trimmed", () => {
+    expect(emailsSearch({ q: " bob@ " })).toEqual({ q: " bob@ ", kind: "", filter: { search: "bob@" } });
+    expect(emailsSearch({ q: "  " }).filter).toEqual({});
   });
 });
 
@@ -55,9 +69,6 @@ describe("supportersSearch", () => {
       q: "",
       activity: "",
       subscription: "",
-      active: "",
-      from: "",
-      to: "",
       sort: "",
       dir: "",
       page: "",
@@ -68,9 +79,6 @@ describe("supportersSearch", () => {
       q: " jane ",
       activity: "registered",
       subscription: "luma-calendar:unsubscribed",
-      active: "90",
-      from: "2026-01-01",
-      to: "2026-12-31",
       sort: "name",
       dir: "desc",
       page: "3",
@@ -79,20 +87,14 @@ describe("supportersSearch", () => {
       search: "jane",
       activity: "registered",
       subscription: { topic: "luma-calendar", reason: "unsubscribed" },
-      active: "90",
-      from: "2026-01-01",
-      to: "2026-12-31",
       sort: "name",
       dir: "desc",
       page: 3,
     });
     expect(all.q).toBe(" jane ");
-    const bad = supportersSearch({ activity: "x", subscription: "x", active: "7", from: "soon", sort: "x", page: "0" });
+    const bad = supportersSearch({ activity: "x", subscription: "x", sort: "x", page: "0" });
     expect(bad.filter).toEqual({ sort: "active", dir: "desc", page: 1 });
-    expect(supportersSearch({ active: "older", sort: "first" }).filter).toMatchObject({
-      active: "older",
-      sort: "first",
-    });
+    expect(supportersSearch({ sort: "first" }).filter).toMatchObject({ sort: "first" });
   });
 });
 

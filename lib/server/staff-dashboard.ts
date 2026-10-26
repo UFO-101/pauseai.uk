@@ -108,17 +108,28 @@ async function blockedMps(): Promise<DashboardAction[]> {
   return rows.map(({ at, ...rest }) => ({ kind: "blocked-mp", at: at.toISOString(), ...rest }));
 }
 
+/** The politician who signed in the window, if only one did. */
+async function signedMp(since: string, until: string): Promise<number | null> {
+  const { from, at } = SOURCES.mpsSigned;
+  const rows = await query<{ id: number }>(
+    `SELECT DISTINCT p.id::int AS id FROM ${from} AND ${at} >= $1 AND ${at} < $2 LIMIT 2`,
+    [since, until],
+  );
+  return rows.length === 1 ? rows[0].id : null;
+}
+
 /** The dashboard as of now: the last `days` days against the `days` before, and what's waiting. */
 export async function dashboard(days: DashboardWindow): Promise<Dashboard> {
   const at = now();
   const until = at.toISOString();
   const since = new Date(at.getTime() - days * DAY_MS).toISOString();
   const before = new Date(at.getTime() - 2 * days * DAY_MS).toISOString();
-  const [[row], [letterCampaigns, signedCampaigns], [registrations, supporters], held, blocked, imports] =
+  const [[row], [letterCampaigns, signedCampaigns], [registrations, supporters], signer, held, blocked, imports] =
     await Promise.all([
       query<Record<string, number>>(`SELECT ${COUNTS}`, [since, before, until]),
       Promise.all(BY_CAMPAIGN.map((metric) => byCampaign(metric, since, until))),
       Promise.all(WITH_SERIES.map((metric) => series(metric, at, days))),
+      signedMp(since, until),
       heldSyncs(),
       blockedMps(),
       Promise.all(IMPORT_JOBS.map((job) => latestRun(job))),
@@ -141,6 +152,7 @@ export async function dashboard(days: DashboardWindow): Promise<Dashboard> {
     counts,
     testLetters: row.testLetters,
     byCampaign: { lettersSent: letterCampaigns, mpsSigned: signedCampaigns },
+    signedMp: signer,
     series: { eventRegistrations: registrations, supportersAdded: supporters },
     actions: [...held, ...blocked, ...failed],
   };

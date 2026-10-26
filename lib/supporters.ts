@@ -102,12 +102,6 @@ export type SupporterFilter = {
   search?: string;
   /** Has this lozenge in the Activities column. */
   activity?: SupporterBadge;
-  /** Last active within this many days, or longer ago than a year. */
-  active?: "30" | "90" | "365" | "older";
-  /** First sign-up from this day, yyyy-mm-dd. */
-  from?: string;
-  /** First sign-up up to this day, yyyy-mm-dd. */
-  to?: string;
   /** Has this answer about a topic, or is blocked, at any of their addresses. */
   subscription?: EmailState;
   sort: SupporterSort;

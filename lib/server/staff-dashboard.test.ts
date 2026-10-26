@@ -103,6 +103,8 @@ describeWithDatabase("dashboard", () => {
       lettersSent: { "regulate-letter-pm": 1 },
       mpsSigned: { "regulate-letter-pm": 1 },
     });
+    // Only the real MP signed, so the tile leads to them.
+    expect(result.signedMp).toBe(real);
     // Eight weeks, oldest first, the current week last: the registration three weeks ago, then this week's two.
     expect(result.series.eventRegistrations.map((point) => point.count)).toEqual([0, 0, 0, 0, 0, 1, 0, 2]);
     expect(result.series.supportersAdded.map((point) => point.count)).toEqual([0, 0, 1, 0, 0, 0, 1, 1]);
@@ -121,7 +123,7 @@ describeWithDatabase("dashboard", () => {
   });
 
   it("counts over a longer window, with the series in windows of that length", async () => {
-    await fill();
+    const { real } = await fill();
     const result = await dashboard(30);
     expect(result.days).toBe(30);
     expect(result.since).toBe("2026-09-21T12:00:00.000Z");
@@ -130,5 +132,23 @@ describeWithDatabase("dashboard", () => {
     expect(result.counts.supportersAdded).toEqual({ current: 2, previous: 1 });
     expect(result.series.supportersAdded.map((point) => point.count)).toEqual([0, 0, 0, 0, 0, 0, 1, 2]);
     expect(result.series.supportersAdded[7].from).toBe(result.since);
+    expect(result.signedMp).toBe(real);
+  });
+
+  it("names no one politician when more than one signed", async () => {
+    await fill();
+    const peer = await addTestPolitician({
+      airtableId: null,
+      name: "Lord Example",
+      house: "lords",
+      constituency: null,
+      email: null,
+    });
+    await query(
+      `INSERT INTO campaign_statuses (politician_id, campaign, status, updated_by, updated_at)
+       VALUES ($1, 'support-sobel-bill', 'signed', 'x', '2026-10-17T00:00:00Z')`,
+      [peer],
+    );
+    expect((await dashboard(7)).signedMp).toBeNull();
   });
 });

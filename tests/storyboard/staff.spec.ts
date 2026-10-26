@@ -29,7 +29,7 @@ import { BASE, emailFrame, expect, flowStorageState, frame, test } from "./fixtu
 // tests/steps.ts): there's no login bypass.
 
 const STAFF_PAGES = ROUTES.filter((route) => route.startsWith("/staff") && !route.startsWith("/staff/login"));
-const [pm] = campaigns;
+const [pm, bill] = campaigns;
 
 /** This flow's own staff address: flows run alongside each other, and share the outbox. Short, as real ones are. */
 const staffEmail = () => `staff-${test.info().testId.replace(/\W/g, "").slice(-8)}@pauseai.uk`;
@@ -209,6 +209,43 @@ test("staff log in, set a status that shows on /campaigns, and log out", async (
   await frame(page, "logged out");
   await page.goto(`${BASE}/staff`);
   await expect(page).toHaveURL(`${BASE}/staff/login`);
+});
+
+test("the MPs signed tile leads to the one who signed, then to everyone who signed, newest first", async ({
+  page,
+  request,
+  flowDatabase,
+}) => {
+  await syncMps(request, BASE);
+  await logIn(page, flowDatabase, ["admin"]);
+  await page.goto(`${BASE}/staff/politicians`);
+  await page.getByRole("link", { name: "Polly Placeholder" }).click();
+  await page
+    .getByRole("group", { name: pm.title })
+    .getByRole("button", { name: staffCopy.politicians.markSigned })
+    .click();
+  await expect(page.getByRole("button", { name: staffCopy.politicians.unmarkSigned })).toBeVisible();
+
+  // One signed this week: the tile is their page.
+  await page.goto(`${BASE}/staff`);
+  const tile = page.getByRole("link").filter({ hasText: staffCopy.home.dashboard.metrics.mpsSigned(1) });
+  await frame(page, "the home: one MP signed this week");
+  await tile.click();
+  await expect(page.getByRole("heading", { level: 1, name: "Polly Placeholder" })).toBeVisible();
+  await frame(page, "the tile leads to her page");
+
+  // ControlAI's letter adds several: the tile is the list of the bill's signers, newest first.
+  await page.goto(`${BASE}/staff/import-data/controlai`);
+  await page.getByRole("button", { name: staffCopy.controlAi.importNow }).click();
+  await expect(page.getByText(/6 names/)).toBeVisible();
+  await page.goto(`${BASE}/staff`);
+  await page
+    .getByRole("link")
+    .filter({ hasText: staffCopy.home.dashboard.metrics.mpsSigned(2) })
+    .click();
+  await expect(page).toHaveURL(`${BASE}/staff/politicians?campaign=${bill.slug}&sort=${bill.slug}`);
+  await expect(page.getByRole("columnheader", { name: bill.title })).toHaveAttribute("aria-sort", "descending");
+  await frame(page, "the politicians who signed the bill, newest first");
 });
 
 test("the Luma import copies the calendar's events, guests and contacts, and finds nothing new the second time", async ({
@@ -400,7 +437,6 @@ test("letters are listed, sent and bounced, and can be filtered by status and ca
   await frame(page, "the letters list: one sent, one bounced, with Postmark's reason in its history");
 
   await page.getByLabel(staffCopy.letters.columns.status).selectOption("bounced");
-  await page.getByRole("button", { name: staffCopy.letters.filter }).click();
   await expect(page).toHaveURL(/\/staff\/letters\?.*status=bounced/);
   await expect(sams).toBeVisible();
   await expect(janes).toHaveCount(0);
@@ -408,7 +444,6 @@ test("letters are listed, sent and bounced, and can be filtered by status and ca
 
   // Both letters are to the first campaign, so the other has none.
   await page.getByLabel(staffCopy.letters.columns.campaign).selectOption(campaigns[1].slug);
-  await page.getByRole("button", { name: staffCopy.letters.filter }).click();
   await expect(page).toHaveURL(new RegExp(`campaign=${campaigns[1].slug}`));
   await expect(page.getByText(staffCopy.letters.none)).toBeVisible();
   await frame(page, "filtered to the other campaign: no letters");
@@ -483,7 +518,6 @@ test("an MP whose address bounced can't be written to until staff unblock it", a
   await frame(page, "the politicians list marks their address as blocked");
 
   await page.getByLabel(staffCopy.fields.email).selectOption("blocked");
-  await page.getByRole("button", { name: staffCopy.politicians.searchButton }).click();
   await expect(page).toHaveURL(/[?&]email=blocked/);
   await expect(page.getByRole("link", { name: "Testy McTestface MP" })).toHaveCount(0);
   await expect(page.getByRole("row").filter({ hasText: bouncy.name })).toContainText(

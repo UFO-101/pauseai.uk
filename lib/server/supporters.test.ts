@@ -316,9 +316,6 @@ describeWithDatabase("listSupporters and getSupporter", () => {
     );
     expect(await names({ subscription: { reason: "blocked" } })).toEqual(["Sam"]);
     expect(await names({ subscription: unsubscribed })).toEqual([]);
-    expect(await names({ from: "2026-06-01", to: "2026-06-01" })).toEqual(["Pat"]);
-    expect(await names({ from: "2026-06-02" })).toEqual([]);
-    expect(await names({ to: "2025-12-31" })).toEqual(["Sam", "Old"]);
     expect(await names({ sort: "first", dir: "asc" })).toEqual(["Old", "Sam", "Jane", "Pat"]);
     expect(await names({ sort: "first", dir: "desc" })).toEqual(["Pat", "Jane", "Sam", "Old"]);
     expect(await names({ sort: "name", dir: "asc" })).toEqual(["Jane", "Old", "Pat", "Sam"]);
@@ -326,20 +323,6 @@ describeWithDatabase("listSupporters and getSupporter", () => {
     expect(await names({ sort: "events", dir: "desc" })).toEqual(["Sam", "Jane", "Old", "Pat"]);
     expect(await names({ sort: "letters", dir: "desc" })).toEqual(["Pat", "Sam", "Jane", "Old"]);
     expect(await names({ sort: "active", dir: "asc" })).toEqual(["Old", "Pat", "Jane", "Sam"]);
-  });
-
-  it("filters by how recently they were active, against the clock", async () => {
-    const mp = await addTestMp();
-    const at = (days: number) => new Date(Date.now() - days * 86_400_000).toISOString();
-    await letter("a@example.com", "Week", mp, { createdAt: at(7) });
-    await letter("b@example.com", "Season", mp, { createdAt: at(60) });
-    await letter("c@example.com", "Year", mp, { createdAt: at(200) });
-    await letter("d@example.com", "Ages", mp, { createdAt: at(400) });
-    await linkSupporters();
-    expect(await names({ active: "30" })).toEqual(["Week"]);
-    expect(await names({ active: "90" })).toEqual(["Week", "Season"]);
-    expect(await names({ active: "365" })).toEqual(["Week", "Season", "Year"]);
-    expect(await names({ active: "older" })).toEqual(["Ages"]);
   });
 
   it("gives one supporter's details: identities, contact details, links, activity and each list's opt-out", async () => {
