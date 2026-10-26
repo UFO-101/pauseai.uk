@@ -93,10 +93,18 @@ letter, come to an event.
   ask, with a date, a note, and who set it. A foreign key on
   `(kind, status)` allows only the statuses of the ask's kind:
 
-  | Kind   | Statuses                                                                                              |
-  | ------ | ----------------------------------------------------------------------------------------------------- |
-  | Letter | `signed`                                                                                              |
-  | Event  | `going`, `tentative`, `meeting_staff`, `tentative_staff`, `declined`, `declined_surgery`, `passed_on` |
+  | Kind   | Status             | Meaning                                                    |
+  | ------ | ------------------ | ---------------------------------------------------------- |
+  | Letter | `signed`           | They signed it                                             |
+  | Event  | `going`            | They'll be there                                           |
+  | Event  | `tentative`        | Probably, not confirmed                                    |
+  | Event  | `meeting_staff`    | A member of their staff comes instead                      |
+  | Event  | `tentative_staff`  | Their staff probably come, not confirmed                   |
+  | Event  | `declined`         | No                                                         |
+  | Event  | `declined_surgery` | No, but they offered the constituent a surgery appointment |
+  | Event  | `passed_on`        | They passed the invitation on to someone else              |
+
+  These are all for now; a new one is added when an event needs it.
 
   Whoever set a status owns it: staff, or an import (`airtable`,
   `controlai`). An import changes only its own, and leaves alone a status
