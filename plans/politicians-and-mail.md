@@ -72,7 +72,8 @@ else.
   - **Forename and surname** are for sorting and mail merge. They're
     nullable, and a CHECK requires both or neither: peers have only
     their title. In Airtable, every MP, MSP, MS and MLA has both; no peer
-    has either.
+    has either. Whether to keep them is an open question
+    (below).
   - **Salutation** follows "Dear": "Ms Coutinho", "Sir John", "Lord
     McFall".
 - **`politicians`**: house, constituency, party, country, city, test
@@ -433,3 +434,27 @@ Data protection, agreed before building and recorded in
 ## Waiting on Joseph
 
 - **The Google Cloud project** (phase 2, step 3).
+
+## Open questions
+
+- **Forename and surname.** Every notable person has a name and a
+  salutation, but only some have a forename and surname, which isn't
+  uniform. In Airtable:
+
+  | Full name or Title    | Forename | Surname    | Salutation  |
+  | --------------------- | -------- | ---------- | ----------- |
+  | Luke Myer             | Luke     | Myer       | Mr Myer     |
+  | Dr Beccy Cooper       | Beccy    | Cooper     | Dr Cooper   |
+  | Sir Gavin Williamson  | Gavin    | Williamson | Sir Gavin   |
+  | Dame Jackie Baillie   | Jackie   | Baillie    | Dame Jackie |
+  | Lord Bird             |          |            | Lord Bird   |
+  | Lord King of Lothbury |          |            | Lord King   |
+
+  Peers have neither; their surname is inside the title, in a different
+  place. The salutation follows no one rule from the name ("Dr Cooper"
+  but "Sir Gavin"), so it stays its own field either way. The choice:
+  - keep forename and surname, both or neither, for sorting and a
+    `{forename}` merge field;
+  - drop them, so everyone has just name and salutation, and add a
+    required `sort_name` ("King of Lothbury, Lord") if sorting by
+    surname is wanted.
