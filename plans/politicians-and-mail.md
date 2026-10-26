@@ -8,14 +8,14 @@ Two features, the second built on the first:
    the letters the public sent them through the old web form.
 2. **Mail from PauseAI to politicians.** Staff filter the politicians
    page, press "Mail these", write one mail and schedule it. It goes from
-   their own Gmail, or from Postmark for big sends.
+   their own Gmail.
 
 Three phases, one pull request each:
 
 | Phase               | What staff get                                                                  |
 | ------------------- | ------------------------------------------------------------------------------- |
 | 1. Data             | Every politician, past and present, with their asks and every letter to them    |
-| 2. Mail politicians | Mailings from the politicians page, by Gmail or Postmark, with bounces, replies |
+| 2. Mail politicians | Mailings from the politicians page, sent from Gmail, with bounces and threads    |
 | 3. Leave Airtable   | Politicians edited in the site; the Airtable sync stops                         |
 
 ## Rules
@@ -39,7 +39,7 @@ notable_people ──┬── politicians              (later: journalists, fam
                  └── letters ──┬── supporter_letters
                                ├── pauseai_letters ── mailings
                                ├── letter_events
-                               └── letter_replies (PauseAI letters only)
+                               └── letter_messages (PauseAI letters only)
 ```
 
 `notable_people` and `letters` are parent tables: each holds what all its
@@ -50,9 +50,10 @@ as journalists, adds a child table and changes nothing else.
 
 - **`notable_people`**: everyone we campaign at. Kind (`politician` for
   now), name, salutation, email, status, notes, `important_target`,
-  `personal_connection`, `airtable_id`. Status
-  replaces `sitting`: `in_office`, `died`, `retired`, `left_office`, or
-  `removed_from_airtable`.
+  `personal_connection`, `airtable_id`, `airtable_removed_at`. Status
+  replaces `sitting`: `in_office`, `died`, `retired` or `left_office`.
+  A record deleted from Airtable keeps its status and gets
+  `airtable_removed_at`, which the politicians page can filter on.
 - **`politicians`**: what only a politician has. House, constituency,
   party, forename, surname, country, city, test postcode. A composite
   foreign key `(id, kind)` ties each row to a `politician`.
@@ -106,9 +107,12 @@ letter, come to an event.
   with, so a later change to the renderer can't change it. Mailings
   imported from Airtable have no template, which a CHECK allows only for
   them.
-- **`letter_replies`**: a politician's reply to a PauseAI letter. From,
-  date, subject, `Message-ID`, attachment names, and the key of the raw
-  message in Netlify Blobs, gzipped with its attachments. A reply to a
+- **`letter_messages`**: every later message in a PauseAI letter's Gmail
+  thread: the politician's replies, and the staff member's answers sent
+  from their own Gmail. From, date, subject, `Message-ID`, attachment
+  names, and the key of the raw message in Netlify Blobs, gzipped with
+  its attachments. With the letter itself, re-rendered, that's the whole
+  thread, viewable in `/staff` whoever sent it. A reply to a
   supporter's letter is forwarded and logged as an event, as now, but not
   stored.
 
@@ -236,10 +240,14 @@ per mailing:
   ([limits](https://support.google.com/a/answer/166852)). Gmail never
   reports spam complaints.
 - **Postmark**, transactional or broadcast stream. Made for volume, with
-  bounce and complaint webhooks, but reads as bulk mail.
+  bounce and complaint webhooks, but reads as bulk mail, and broadcast
+  mail must carry an unsubscribe link
+  ([message streams](https://postmarkapp.com/message-streams)).
 
-The new-mailing page suggests Gmail for tens of people and Postmark for
-hundreds; staff can change it.
+Mailings to politicians use Gmail only. They're like one letter with a
+big BCC, so they carry no unsubscribe link, which rules out Postmark's
+broadcast stream; Postmark is for bulk mail to supporters. A mailing
+bigger than the sender's daily limit is left for later (below).
 
 In code, `MailBackend` is a type (send one email; how many more today),
 and `postmark(stream)` and `gmail(staffAccount)` return plain objects of
@@ -266,9 +274,9 @@ records the backend and sender address. Bulk mail to supporters
    Scheduling fixes the recipients, one `pauseai_letters` row each. At
    send time, anyone whose address is blocked or who has left office is
    skipped and logged.
-5. **The `send-mail` job**, every few minutes. It reads the next due time
-   from a Netlify Blob, so it wakes the database only when mail is due.
-   Each run sends what fits in 30 seconds
+5. **The `send-mail` job**, hourly, in the database wake the other
+   scheduled jobs share, so a mailing goes out on the hour after its
+   time. Each run sends what fits in 30 seconds
    ([limit](https://docs.netlify.com/build/functions/scheduled-functions/))
    and leaves the rest to the next run. Gmail allows about 60 sends a
    minute per person
@@ -282,17 +290,18 @@ records the backend and sender address. Bulk mail to supporters
      like a Postmark bounce;
    - an **auto-reply** if it has `Auto-Submitted` or similar. It's logged
      as an event;
-   - otherwise a **reply**. It's fetched raw (`messages.get`,
-     `format=raw`), gzipped into Netlify Blobs, and recorded in
-     `letter_replies`.
+   - otherwise a **reply**, or the sender's answer to one. It's fetched
+     raw (`messages.get`, `format=raw`), gzipped into Netlify Blobs, and
+     recorded in `letter_messages`.
+
+   Nothing else in the mailbox is fetched: the history feed gives
+   message and thread IDs, and the site fetches only messages whose
+   thread is one of our letters' (or a bounce, below).
 
    Bounces from remote servers may not join the thread. A search for
    `from:mailer-daemon OR from:postmaster newer_than:3d` finds them.
 
-7. **Replies to Postmark mailings** arrive like replies to supporter
-   letters: at a `reply_hash` address on `letters.pauseai.uk`, through the
-   inbound webhook. They're stored as above and forwarded to the sender.
-8. **Backups.** The backup Worker (`backup/`) pulls new reply blobs
+7. **Backups.** The backup Worker (`backup/`) pulls new reply blobs
    through a read-only route on the site. The site never writes to
    Cloudflare.
 
@@ -315,20 +324,21 @@ Attachments are the mailing's, the same for everyone.
 
 ### Staff pages
 
-- **Your staff account**: Connect Gmail and Disconnect, the connected
-  address, and today's sends against the cap.
+- **Your staff account**: Connect Gmail, with what the site will and
+  won't read in your mailbox; Disconnect; the connected address, and today's sends against the cap.
 - **Politicians**: a "not mailed for this ask" filter, and "Mail these",
   which opens a new mailing with the filtered list.
 - **Mailings** (`/staff/mailings`, new):
-  - the list: ask, sender, backend, when, and counts sent, skipped,
+  - the list: ask, sender, when, and counts sent, skipped,
     bounced and replied;
   - new and edit: recipients with untick boxes, subject, body,
     attachments, sender, time;
   - preview as any recipient, and a test send to yourself;
   - schedule and cancel;
   - a mailing's page, with every recipient's outcome.
-- **A politician's page**: their PauseAI letters, each opening as sent;
-  replies, with attachments; bounces from either backend.
+- **A politician's page**: their PauseAI letters, each opening its whole
+  thread: the letter as sent, then every reply and answer in order, with
+  attachments; bounces.
 - **Blocked MP emails**: bounces found in Gmail, marked as such.
 - **Import**: runs of `send-mail` and the Gmail check.
 
@@ -337,12 +347,17 @@ Attachments are the mailing's, the same for everyone.
 Connecting Gmail, against a fake Google. "Mail these" through to
 scheduling, and a mailing's page after sending. A test politician whose
 Gmail send bounces, shown on their page and in Blocked MP emails. A reply
-on a politician's page. The parsers against the samples from step 1: each
+on a politician's page, and the sender's answer to it in the same
+thread. The parsers against the samples from step 1: each
 gives the right `DeliveryProblem`, or none for a delay. The whole path
 from the history feed to a blocked address to the next send refused,
 against a fake Gmail.
 
 ## Phase 3: Leave Airtable
+
+Starts once the first two real mailings have gone from the site. Joseph
+then stops editing Airtable, and this phase moves what he still does
+there into the site.
 
 - Staff add politicians, edit everything the sync owned, and change a
   status with the date and a note (a resignation, the by-election after).
@@ -370,6 +385,11 @@ Data protection, agreed before building and recorded in
   postcode, consent, not the message), erased like any supporter letter.
 - **Gmail tokens**: encrypted, deleted when a staff member disconnects or
   their account is removed.
+- **Reading staff mailboxes**: `gmail.readonly` lets the site read a
+  connected staff member's whole mailbox. It reads only the list of new
+  message and thread IDs, and fetches the messages in our letters'
+  threads and the bounces; nothing else. The Connect Gmail page says so
+  before they connect, and `docs/data-protection.md` records it.
 - **PauseAI letters and politicians' replies**: kept in full, as public
   figures in their public role. A reply may mention a constituent or a
   member of staff; we keep it anyway, and the policy says so.
@@ -388,6 +408,9 @@ Data protection, agreed before building and recorded in
 - Journalists and famous people.
 - Bulk mail to supporters (`plans/supporters-email.html`).
 - A permission for sending mailings, if one is needed.
+- Mailings bigger than Gmail's 2,000 a day. Either Gmail sends them over
+  several days, or they go by Postmark's broadcast stream with an
+  unsubscribe link.
 - Tags, and fields staff add themselves. Joseph adds fields in Airtable
   to attach a file to an email, track replies to it, and track who's
   coming to an event. Mailings, replies and asks cover those, so we'll
