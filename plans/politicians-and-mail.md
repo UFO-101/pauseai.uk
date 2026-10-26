@@ -338,7 +338,12 @@ Attachments are the mailing's, the same for everyone.
   - a mailing's page, with every recipient's outcome.
 - **A politician's page**: their PauseAI letters, each opening its whole
   thread: the letter as sent, then every reply and answer in order, with
-  attachments; bounces.
+  attachments; bounces. For the staff member who sent it, "Open in
+  Gmail" opens the thread in their mailbox in a new tab:
+  `https://mail.google.com/mail/u/{sender}/#all/{threadId}`, where
+  `/u/{sender}` picks their account if they're signed in to several. That
+  URL isn't a documented API, so step 1 checks it works with the API's
+  thread IDs.
 - **Blocked MP emails**: bounces found in Gmail, marked as such.
 - **Import**: runs of `send-mail` and the Gmail check.
 
