@@ -46,14 +46,14 @@ const TEST_LETTERS = { from: `${LETTERS} WHERE l.sent_at IS NOT NULL AND p.is_te
 /** The column a campaign breakdown groups by. */
 const CAMPAIGN_OF: Record<CampaignMetric, string> = { lettersSent: "l.campaign", mpsSigned: "s.campaign" };
 
-/** $1 is the window's start, $2 the window before's, $3 now. */
+/** $1 is the window's start, $2 the window before's, $3 now; the window runs up to now, and includes it. */
 const COUNTS = [
   ...Object.entries(SOURCES).map(
     ([metric, { from, at }]) =>
-      `(SELECT count(*)::int FROM ${from} AND ${at} >= $1 AND ${at} < $3) AS "${metric}_current",
+      `(SELECT count(*)::int FROM ${from} AND ${at} >= $1 AND ${at} <= $3) AS "${metric}_current",
        (SELECT count(*)::int FROM ${from} AND ${at} >= $2 AND ${at} < $1) AS "${metric}_previous"`,
   ),
-  `(SELECT count(*)::int FROM ${TEST_LETTERS.from} AND ${TEST_LETTERS.at} >= $1 AND ${TEST_LETTERS.at} < $3) AS "testLetters"`,
+  `(SELECT count(*)::int FROM ${TEST_LETTERS.from} AND ${TEST_LETTERS.at} >= $1 AND ${TEST_LETTERS.at} <= $3) AS "testLetters"`,
 ].join(",\n");
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -62,7 +62,7 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 async function byCampaign(metric: CampaignMetric, since: string, until: string): Promise<Record<string, number>> {
   const { from, at } = SOURCES[metric];
   const rows = await query<{ campaign: string; count: number }>(
-    `SELECT ${CAMPAIGN_OF[metric]} AS campaign, count(*)::int AS count FROM ${from} AND ${at} >= $1 AND ${at} < $2
+    `SELECT ${CAMPAIGN_OF[metric]} AS campaign, count(*)::int AS count FROM ${from} AND ${at} >= $1 AND ${at} <= $2
      GROUP BY ${CAMPAIGN_OF[metric]} ORDER BY ${CAMPAIGN_OF[metric]}`,
     [since, until],
   );
@@ -77,7 +77,7 @@ async function series(metric: SeriesMetric, until: Date, days: DashboardWindow):
   // Bucket 0 is the current window, counting back.
   const rows = await query<{ bucket: number; count: number }>(
     `SELECT floor(extract(epoch FROM ($2::timestamptz - ${at})) / $3)::int AS bucket, count(*)::int AS count
-     FROM ${from} AND ${at} >= $1 AND ${at} < $2 GROUP BY bucket`,
+     FROM ${from} AND ${at} >= $1 AND ${at} <= $2 GROUP BY bucket`,
     [start.toISOString(), until.toISOString(), days * 24 * 60 * 60],
   );
   const counts = new Map(rows.map((row) => [row.bucket, row.count]));
@@ -112,7 +112,7 @@ async function blockedMps(): Promise<DashboardAction[]> {
 async function signedMp(since: string, until: string): Promise<number | null> {
   const { from, at } = SOURCES.mpsSigned;
   const rows = await query<{ id: number }>(
-    `SELECT DISTINCT p.id::int AS id FROM ${from} AND ${at} >= $1 AND ${at} < $2 LIMIT 2`,
+    `SELECT DISTINCT p.id::int AS id FROM ${from} AND ${at} >= $1 AND ${at} <= $2 LIMIT 2`,
     [since, until],
   );
   return rows.length === 1 ? rows[0].id : null;

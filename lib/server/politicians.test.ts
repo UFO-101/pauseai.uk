@@ -177,10 +177,6 @@ describeWithDatabase("politicians", () => {
     expect(await listParties()).toEqual(
       [...new Set((await listPoliticians()).map((p) => p.party).filter(Boolean))].sort(),
     );
-    // A campaign's column sorts by when the status was recorded, newest first, those without last.
-    await setStatus(mp, PM, { status: "signed", date: null, note: "" }, "jo@pauseai.uk");
-    const byPm = await listPoliticians({ sort: { key: PM, dir: "desc" } });
-    expect(byPm.filter((p) => !p.isTest).map((p) => p.id)).toEqual([mp, peer]);
     expect(await listPoliticians({}, 1)).toHaveLength(1);
     expect((await listPoliticians({ search: "Polly" }))[0]).toEqual({
       id: mp,
@@ -198,6 +194,10 @@ describeWithDatabase("politicians", () => {
       replies: 0,
       statuses: {},
     });
+    // A campaign's column sorts by when the status was recorded, newest first, those without last.
+    await setStatus(mp, PM, { status: "signed", date: null, note: "" }, "jo@pauseai.uk");
+    const byPm = await listPoliticians({ sort: { key: PM, dir: "desc" } });
+    expect(byPm.filter((p) => !p.isTest).map((p) => p.id)).toEqual([mp, peer]);
   });
 
   it("counts the letters to each politician, leaving out those never sent, and how many were answered", async () => {

@@ -154,14 +154,19 @@ describeWithDatabase("the database", () => {
       const emit = vi.spyOn(Pool.prototype, "emit");
       freshDatabase(flow);
       requestCookies.set(FLOW_DATABASE_COOKIE, flow);
+      // The flow's pool closes an idle connection after a second, and starting psql can take longer than
+      // that on a busy machine, leaving nothing to cut off; its timer waits until the database is gone.
+      vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
       try {
         await pid();
         dropDatabase(flow);
+        vi.useRealTimers();
         await vi.waitFor(() => expect(emit).toHaveBeenCalledWith("error", expect.any(Error), expect.anything()), {
           timeout: MAKES_DATABASES.timeout,
         });
         expect(error).not.toHaveBeenCalled();
       } finally {
+        vi.useRealTimers();
         error.mockRestore();
         emit.mockRestore();
       }

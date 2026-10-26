@@ -6,7 +6,7 @@ import { FilterForm } from "@/components/ui/Form";
 import styles from "./StaffForms.module.css";
 
 /** The list at `action` with the form's filters, leaving out the blank ones. */
-export function filterHref(action: string, form: HTMLFormElement): string {
+function filterHref(action: string, form: HTMLFormElement): string {
   const params = new URLSearchParams();
   for (const [name, value] of new FormData(form)) if (value) params.set(name, value as string);
   const query = params.toString();

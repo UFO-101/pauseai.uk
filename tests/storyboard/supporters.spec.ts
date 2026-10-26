@@ -61,8 +61,9 @@ test("the supporters list after the Luma import, filtered, reset and sorted", as
   await page.getByRole("searchbox", { name: copy.filters.search }).fill("fixture@example");
   await page.getByRole("button", { name: staffCopy.search }).click();
   await expect(page).toHaveURL(/\/staff\/supporters\?q=fixture%40example$/);
-  await expect(page.getByText(copy.count(5, 1, 1))).toBeVisible();
-  await frame(page, "searched for fixture@example");
+  // Every one of them has an address at fixture@example.
+  await expect(page.getByText(copy.count(6, 1, 1))).toBeVisible();
+  await frame(page, "searched for fixture@example: all six");
   await page.getByRole("combobox", { name: copy.columns.badges }).selectOption("registered");
   await expect(page).toHaveURL(/\/staff\/supporters\?q=fixture%40example&activity=registered$/);
   await page.getByRole("link", { name: copy.columns.name }).click();
