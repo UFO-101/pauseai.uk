@@ -108,8 +108,17 @@ jobs:
 
       - name: Install Playwright system dependencies
         if: steps.playwright-cache.outputs.cache-hit == 'true'
-        timeout-minutes: 4
-        run: npx playwright install-deps chromium
+        # A mirror that trickles rather than stalls gets past apt's retries,
+        # so each attempt has two minutes, and a slow one is stopped (timeout
+        # signals sudo's apt-get too) and tried again, three times in all.
+        timeout-minutes: 7
+        run: |
+          for attempt in 1 2 3; do
+            timeout 120 npx playwright install-deps chromium && exit 0
+            echo "::warning::Playwright's system dependencies, attempt $attempt, failed or took over two minutes"
+            sudo dpkg --configure -a
+          done
+          exit 1
 
       # pg_dump 18, to match the server, for the test that checks
       # netlify/database/schema.sql is up to date. The runner's own is older.
@@ -214,8 +223,17 @@ jobs:
       # the system libraries installing.
       - name: Install Playwright system dependencies
         if: steps.playwright-cache.outputs.cache-hit == 'true'
-        timeout-minutes: 4
-        run: npx playwright install-deps chromium
+        # A mirror that trickles rather than stalls gets past apt's retries,
+        # so each attempt has two minutes, and a slow one is stopped (timeout
+        # signals sudo's apt-get too) and tried again, three times in all.
+        timeout-minutes: 7
+        run: |
+          for attempt in 1 2 3; do
+            timeout 120 npx playwright install-deps chromium && exit 0
+            echo "::warning::Playwright's system dependencies, attempt $attempt, failed or took over two minutes"
+            sudo dpkg --configure -a
+          done
+          exit 1
 
       # pg_dump 18, to match the server: the build below runs the unit tests,
       # including the one that checks netlify/database/schema.sql is up to date.
