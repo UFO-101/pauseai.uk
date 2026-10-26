@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { dashboardWindow, isCampaignMetric, isSeriesMetric, signedHref } from "./staff-dashboard";
+import { type Dashboard, dashboardWindow, isCampaignMetric, isSeriesMetric, signedHref } from "./staff-dashboard";
 
 describe("dashboardWindow", () => {
   it("is the window the URL asks for, or the default", () => {
@@ -19,16 +19,11 @@ it("knows which metrics have a bar by campaign, and which a sparkline", () => {
 });
 
 describe("signedHref", () => {
-  const byCampaign = { lettersSent: {}, mpsSigned: {} };
+  const counts = (current: number) => ({ mpsSigned: { current, previous: 0 } }) as Dashboard["counts"];
 
-  it("leads to the one politician who signed, or those who signed the campaign most did, or everyone", () => {
-    expect(signedHref({ signedMp: 7, byCampaign })).toBe("/staff/politicians/7");
-    expect(
-      signedHref({
-        signedMp: null,
-        byCampaign: { ...byCampaign, mpsSigned: { "regulate-letter-pm": 1, "support-sobel-bill": 4 } },
-      }),
-    ).toBe("/staff/politicians?campaign=support-sobel-bill&sort=support-sobel-bill");
-    expect(signedHref({ signedMp: null, byCampaign })).toBe("/staff/politicians");
+  it("leads to the one politician who signed, or everyone who signed anything, or every politician", () => {
+    expect(signedHref({ signedMp: 7, counts: counts(1) })).toBe("/staff/politicians/7");
+    expect(signedHref({ signedMp: null, counts: counts(4) })).toBe("/staff/politicians?campaign=any&sort=signed");
+    expect(signedHref({ signedMp: null, counts: counts(0) })).toBe("/staff/politicians");
   });
 });

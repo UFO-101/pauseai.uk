@@ -192,6 +192,10 @@ describeWithDatabase("politicians", () => {
     await setStatus(mp, PM, { status: "signed", date: null, note: "" }, "jo@pauseai.uk");
     const byPm = await listPoliticians({ sort: { key: PM, dir: "desc" } });
     expect(byPm.filter((p) => !p.isTest).map((p) => p.id)).toEqual([mp, peer]);
+    // Everyone who signed anything, by their newest signature in any campaign.
+    await setStatus(peer, BILL, { status: "signed", date: null, note: "" }, "jo@pauseai.uk");
+    const signed = await listPoliticians({ campaign: "any", sort: { key: "signed", dir: "desc" } });
+    expect(signed.map((p) => p.id)).toEqual([peer, mp]);
   });
 
   it("counts the letters to each politician, leaving out those never sent, and how many were answered", async () => {

@@ -29,7 +29,7 @@ import { BASE, emailFrame, expect, flowStorageState, frame, test } from "./fixtu
 // tests/steps.ts): there's no login bypass.
 
 const STAFF_PAGES = ROUTES.filter((route) => route.startsWith("/staff") && !route.startsWith("/staff/login"));
-const [pm, bill] = campaigns;
+const [pm] = campaigns;
 
 /** This flow's own staff address: flows run alongside each other, and share the outbox. Short, as real ones are. */
 const staffEmail = () => `staff-${test.info().testId.replace(/\W/g, "").slice(-8)}@pauseai.uk`;
@@ -211,7 +211,7 @@ test("staff log in, set a status that shows on /campaigns, and log out", async (
   await expect(page).toHaveURL(`${BASE}/staff/login`);
 });
 
-test("the MPs signed tile leads to the one who signed, then to everyone who signed, newest first", async ({
+test("the MPs signed tile leads to the one who signed, then to everyone who signed anything, newest first", async ({
   page,
   request,
   flowDatabase,
@@ -234,7 +234,7 @@ test("the MPs signed tile leads to the one who signed, then to everyone who sign
   await expect(page.getByRole("heading", { level: 1, name: "Polly Placeholder" })).toBeVisible();
   await frame(page, "the tile leads to her page");
 
-  // ControlAI's letter adds several: the tile is the list of the bill's signers, newest first.
+  // ControlAI's letter adds several: the tile is everyone who signed anything, newest first.
   await page.goto(`${BASE}/staff/import-data/controlai`);
   await page.getByRole("button", { name: staffCopy.controlAi.importNow }).click();
   await expect(page.getByText(/6 names/)).toBeVisible();
@@ -243,9 +243,11 @@ test("the MPs signed tile leads to the one who signed, then to everyone who sign
     .getByRole("link")
     .filter({ hasText: staffCopy.home.dashboard.metrics.mpsSigned(2) })
     .click();
-  await expect(page).toHaveURL(`${BASE}/staff/politicians?campaign=${bill.slug}&sort=${bill.slug}`);
-  await expect(page.getByRole("columnheader", { name: bill.title })).toHaveAttribute("aria-sort", "descending");
-  await frame(page, "the politicians who signed the bill, newest first");
+  await expect(page).toHaveURL(`${BASE}/staff/politicians?campaign=any&sort=signed`);
+  await expect(page.getByLabel(staffCopy.politician.statusesTitle)).toHaveValue("any");
+  await expect(page.getByRole("row").filter({ hasText: "Polly Placeholder" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Testy McTestface MP" })).toHaveCount(0);
+  await frame(page, "everyone who signed anything, newest first");
 });
 
 test("the Luma import copies the calendar's events, guests and contacts, and finds nothing new the second time", async ({

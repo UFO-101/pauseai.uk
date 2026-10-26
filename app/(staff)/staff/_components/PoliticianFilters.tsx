@@ -45,6 +45,7 @@ export default function PoliticianFilters({ search, parties }: { search: Politic
       <Field label={staffCopy.politician.statusesTitle}>
         <Select name="campaign" defaultValue={search.campaign}>
           <option value="">{copy.anyCampaign}</option>
+          <option value="any">{copy.signedAny}</option>
           {/* Every campaign: the bill's status comes from ControlAI's letter rather than staff, but it's a status. */}
           {campaigns.map((c) => (
             <option key={c.slug} value={c.slug}>

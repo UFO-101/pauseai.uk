@@ -365,6 +365,8 @@ export const staffCopy = {
     allHouses: "All houses",
     allParties: "All parties",
     anyCampaign: "Any campaign",
+    // In the Campaigns filter: everyone with a status for any campaign.
+    signedAny: "⁂ Signed any",
     none: "None found.",
     testMp: "Test",
     notSitting: "No longer sitting",

@@ -99,7 +99,7 @@ export type PoliticianFilter = {
   search?: string;
   house?: House;
   party?: string;
-  /** Only those with a status for this campaign. */
+  /** Only those with a status for this campaign, or with "any", for any campaign. */
   campaign?: string;
   sort?: SortSpec<PoliticianSort>;
 };
@@ -162,7 +162,9 @@ export async function listPoliticians(filter: PoliticianFilter = {}, limit = 200
     values.push(filter.party);
     where.push(`p.party = $${values.length}`);
   }
-  if (filter.campaign) {
+  if (filter.campaign === "any") {
+    where.push("EXISTS (SELECT 1 FROM campaign_statuses c WHERE c.politician_id = p.id)");
+  } else if (filter.campaign) {
     values.push(filter.campaign);
     where.push(
       `EXISTS (SELECT 1 FROM campaign_statuses c WHERE c.politician_id = p.id AND c.campaign = $${values.length})`,

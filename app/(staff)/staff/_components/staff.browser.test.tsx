@@ -339,9 +339,9 @@ describe("StaffDashboard", () => {
     await expect.element(page.getByText(copy.metrics.supportersAdded(176))).toBeVisible();
     // The letters are supporter data: the tiles count them, but lead nowhere.
     expect(tileLink(copy.metrics.lettersSent(12))).toBeNull();
-    // Several signed: those who signed the campaign most did, newest first.
+    // Several signed: everyone who signed anything, newest first.
     expect(tileLink(copy.metrics.mpsSigned(5))?.getAttribute("href")).toBe(
-      `/staff/politicians?campaign=${pm.slug}&sort=${pm.slug}`,
+      "/staff/politicians?campaign=any&sort=signed",
     );
     // One signed: their page.
     await rerender(
@@ -1456,6 +1456,10 @@ describe("PoliticianFilters", () => {
       "Labour",
     ]);
     await expect.element(select(staffCopy.politician.statusesTitle)).toHaveValue(pm.slug);
+    // No filter, anyone who signed something, then each campaign.
+    expect(
+      [...(select(staffCopy.politician.statusesTitle).element() as HTMLSelectElement).options].map((o) => o.value),
+    ).toEqual(["", "any", ...campaigns.map((c) => c.slug)]);
     const form = page.getByRole("searchbox").element().closest("form")!;
     expect(form.getAttribute("method")).toBe("get");
     expect(form.getAttribute("action")).toBe("/staff/politicians");
