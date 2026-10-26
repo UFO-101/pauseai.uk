@@ -10,8 +10,8 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllEnvs());
 
 describe("the hourly Luma import function", () => {
-  it("runs hourly, off the hour, and asks the site to import with the secret", async () => {
-    expect(config.schedule).toBe("17 * * * *");
+  it("runs hourly from 06:17 to 23:17 UTC, and asks the site to import with the secret", async () => {
+    expect(config.schedule).toBe("17 6-23 * * *");
     let auth: string | null = null;
     server.use(
       http.post("https://pauseai.uk/api/cron/import-luma", ({ request }) => {

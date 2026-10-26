@@ -1,5 +1,5 @@
 // Netlify scheduled function (a folder, so its test can sit beside it
-// without becoming a function too): nightly, asks the site to copy the
+// without becoming a function too): each morning, asks the site to copy the
 // signatories of ControlAI's letter to the PM into the bill's statuses
 // (app/api/cron/import-controlai). Scheduled functions run only on
 // published production deploys. URL is set by Netlify; CRON_SECRET by us.
@@ -13,6 +13,7 @@ export default async function importControlAi(): Promise<Response> {
   return new Response(body);
 }
 
-// 02:00 UTC, after the sync (midnight) and the check (01:00), so the MPs
-// it matches against are that night's.
-export const config = { schedule: "0 2 * * *" };
+// 06:25 UTC, after the sync (06:21) and the check (06:23), so the MPs it
+// matches against are that day's, sharing the same wake of the database
+// (import-luma.ts).
+export const config = { schedule: "25 6 * * *" };

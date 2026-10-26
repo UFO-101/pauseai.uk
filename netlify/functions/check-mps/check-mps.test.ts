@@ -9,9 +9,9 @@ beforeEach(() => {
 });
 afterEach(() => vi.unstubAllEnvs());
 
-describe("the nightly MP check function", () => {
-  it("runs daily, an hour after the sync, and asks the site to check with the secret", async () => {
-    expect(config.schedule).toBe("0 1 * * *");
+describe("the daily MP check function", () => {
+  it("runs daily, just after the sync, and asks the site to check with the secret", async () => {
+    expect(config.schedule).toBe("23 6 * * *");
     let auth: string | null = null;
     server.use(
       http.post("https://pauseai.uk/api/cron/check-mps", ({ request }) => {

@@ -10,8 +10,8 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllEnvs());
 
 describe("the hourly members import function", () => {
-  it("runs hourly, off the hour, and asks the site to import with the secret", async () => {
-    expect(config.schedule).toBe("47 * * * *");
+  it("runs hourly, just after the Luma import, and asks the site to import with the secret", async () => {
+    expect(config.schedule).toBe("19 6-23 * * *");
     let auth: string | null = null;
     server.use(
       http.post("https://pauseai.uk/api/cron/import-members", ({ request }) => {
