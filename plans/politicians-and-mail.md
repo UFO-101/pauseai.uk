@@ -390,9 +390,14 @@ Data protection, agreed before building and recorded in
 
 - **The Google Cloud project** (phase 2, step 3).
 - **Airtable's three ticks**: Important target (98), Recommended (15),
-  Personal connection (7). What each means and how it's used decides what
-  it becomes: a priority, a link to the person with the connection, a
-  source, or tags. If tags: each tagging records who, when and a note,
-  removals are logged, each tag has a description, and tags only filter,
-  never trigger anything. Facts (asks, body, party, status) are never
-  tags.
+  Personal connection (7). So far Joseph says:
+  - Recommended is just a note, so it becomes a line in the person's
+    notes ("Recommended", from Airtable).
+  - Important target and Personal connection are things he sometimes
+    filters on, so they must be filterable.
+
+  Still to find out: whether more markers like these will come, which
+  decides between two columns on `notable_people` and tags. If tags: each
+  tagging records who, when and a note, removals are logged, each tag has
+  a description, and tags only filter, never trigger anything. Facts
+  (asks, body, party, status) are never tags.
