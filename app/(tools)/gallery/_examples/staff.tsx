@@ -390,10 +390,17 @@ export const staff: Group = {
       file: "app/(staff)/staff/_components/SupporterFilters.tsx",
       variants: [
         {
-          label: "The list's filters, with a search typed and a box ticked",
+          label: "The list's filters, with a search typed and two chosen",
           render: () => (
             <StaffPage as="div">
-              <SupporterFilters search={supportersSearch({ q: "jane", registered: "1", sort: "name" })} />
+              <SupporterFilters
+                search={supportersSearch({
+                  q: "jane",
+                  activity: "registered",
+                  subscription: "luma-calendar:unsubscribed",
+                  sort: "name",
+                })}
+              />
             </StaffPage>
           ),
         },
@@ -493,7 +500,7 @@ export const staff: Group = {
           ),
         },
         {
-          label: "Following the calendar since its webhook, and don't know of the updates",
+          label: "A contact of the calendar since its webhook, and don't know of the updates",
           render: () => (
             <StaffPage as="div">
               <EmailPermissionTiles
@@ -1463,10 +1470,10 @@ export const staff: Group = {
       file: "app/(staff)/staff/_components/LetterFilters.tsx",
       variants: [
         {
-          label: "One status picked",
+          label: "One status and a campaign picked",
           render: () => (
             <StaffPage as="div">
-              <LetterFilters search={{ status: "bounced", q: "", answered: "" }} />
+              <LetterFilters search={{ status: "bounced", q: "", answered: "", campaign: "regulate-letter-pm" }} />
             </StaffPage>
           ),
         },

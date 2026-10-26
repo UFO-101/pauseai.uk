@@ -185,7 +185,7 @@ why: the `email_permissions` view
 (`netlify/database/migrations/0032_email_permissions.sql`, where each
 reason is explained). Everything that asks reads it: the supporter's page
 and the list's Subscriptions column, through `permissionsFor()` in
-`lib/server/email-permissions.ts`; the list's Unsubscribed filter; and the
+`lib/server/email-permissions.ts`; the list's Subscriptions filter; and the
 staff home's count of Luma unsubscribes. Nothing else reads `opt_outs`
 to answer it, and `tests/checks/opt-outs.test.ts` fails if code outside
 `lib/server/opt-outs.ts` and erasure does.
@@ -197,13 +197,14 @@ source said so. The first rule that matches wins:
 
 - a blocked address (`email_blocks`, below) is no to everything;
 - then an opt-out in force is no;
-- then each topic's source: following the calendar; the newest member
+- then each topic's source: being a contact of the Luma calendar, which
+  registering for an event makes someone, as following it does; the newest member
   record's "Keep me informed" (a free choice from 30 June 2026; before,
   everyone who joined was on the list); the newest letter's consent box.
 
-Unsure is a yes that an unsubscribe we can't see may have undone:
-following the calendar since before Luma's webhook told us of
-unsubscribes, and every member on the updates, which CiviCRM sends. A
+Unsure is a yes that an unsubscribe we can't see may have undone: a
+contact of the calendar since before Luma's webhook told us of
+unsubscribes (an unfollow Luma never tells us of, so it changes nothing), and every member on the updates, which CiviCRM sends. A
 topic the address has had nothing to do with (no Luma account, never a
 member, no letter) has no row. Nothing sends email by it yet; when the
 site mails supporters, `send()` asks it for the purpose's topic as it

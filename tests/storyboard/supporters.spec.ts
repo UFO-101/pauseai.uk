@@ -43,21 +43,25 @@ test("without the supporters permission, the list is closed and the home page do
   await expect(page).toHaveURL(`${BASE}/staff`);
 });
 
-test("the supporters list after the Luma import, filtered and sorted", async ({ page, request, flowDatabase }) => {
+test("the supporters list after the Luma import, filtered, reset and sorted", async ({
+  page,
+  request,
+  flowDatabase,
+}) => {
   await importLuma(request, BASE);
   await logInWithSupporters(page, flowDatabase);
   await page.getByRole("link", { name: staffCopy.nav.supporters }).first().click();
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(copy.title);
-  // Five guests and a follower who never registered.
+  // Five guests and a contact who never registered.
   await expect(page.getByText(copy.count(6, 1, 1))).toBeVisible();
   await expect(page.getByRole("link", { name: "Fay Follower" })).toBeVisible();
   await frame(page, "every supporter the import found, newest activity first");
 
   await page.getByRole("searchbox", { name: copy.filters.search }).fill("fixture@example");
-  await page.getByRole("combobox", { name: copy.filters.events }).selectOption("1");
+  await page.getByRole("combobox", { name: copy.columns.badges }).selectOption("registered");
   await page.getByRole("button", { name: copy.filters.filter }).click();
   await expect(page).toHaveURL(/\/staff\/supporters\?q=fixture%40example&/);
-  await expect(page).toHaveURL(/registered=1/);
+  await expect(page).toHaveURL(/activity=registered/);
   await page.getByRole("link", { name: copy.columns.name }).click();
   await expect(page).toHaveURL(/sort=name/);
   await expect(page.getByRole("link", { name: "Fay Follower" })).toHaveCount(0);
@@ -67,23 +71,27 @@ test("the supporters list after the Luma import, filtered and sorted", async ({ 
   expect(names).toEqual([...names].sort());
   await frame(page, "filtered to those who registered, by name");
 
-  await page.getByRole("combobox", { name: copy.filters.events }).selectOption("");
-  await page.getByRole("combobox", { name: copy.filters.source }).selectOption("letter");
+  await page.getByRole("combobox", { name: copy.columns.badges }).selectOption("letter");
   await page.getByRole("button", { name: copy.filters.filter }).click();
   await expect(page.getByText(copy.none)).toBeVisible();
   await frame(page, "nobody from letters yet");
 
+  // Reset clears every filter, and the sort.
+  await page.getByRole("link", { name: staffCopy.resetFilters }).click();
+  await expect(page).toHaveURL(`${BASE}/staff/supporters`);
+  await expect(page.getByText(copy.count(6, 1, 1))).toBeVisible();
+  await expect(page.getByRole("searchbox", { name: copy.filters.search })).toHaveValue("");
+  await expect(page.getByRole("combobox", { name: copy.columns.badges })).toHaveValue("");
+  await frame(page, "reset: every supporter again, newest activity first");
+
   // A heading sorts the list; clicking it again reverses it.
-  await page.getByRole("combobox", { name: copy.filters.source }).selectOption("");
-  await page.getByRole("button", { name: copy.filters.filter }).click();
-  // Already sorted by name from the field, so the first click reverses it, and the next puts it back.
-  await page.getByRole("link", { name: copy.columns.name }).click();
-  await expect(page).toHaveURL(/sort=name&dir=desc/);
-  expect(await page.locator("tbody").getByRole("link").first().textContent()).toBe("Sam Fixture");
-  await frame(page, "sorted by name, reversed, by clicking the heading");
   await page.getByRole("link", { name: copy.columns.name }).click();
   await expect(page).toHaveURL(/sort=name&dir=asc/);
   expect(await page.locator("tbody").getByRole("link").first().textContent()).toBe("Alex Fixture");
+  await page.getByRole("link", { name: copy.columns.name }).click();
+  await expect(page).toHaveURL(/sort=name&dir=desc/);
+  expect(await page.locator("tbody").getByRole("link").first().textContent()).toBe("Sam Fixture");
+  await frame(page, "sorted by name, reversed, by clicking the heading twice");
 });
 
 test("a supporter's page: who they are, what they gave, their history, and an opt-out from Luma's webhook", async ({
@@ -123,7 +131,7 @@ test("a supporter's page: who they are, what they gave, their history, and an op
     recorded: true,
   });
   await page.reload();
-  // Following again, since before Luma's webhook: we can't be sure.
+  // A contact again, since before Luma's webhook: we can't be sure.
   await expect(page.getByText(reasons["luma-calendar"].following("20 Sept 2026"), { exact: false })).toBeVisible();
   await expect(history.getByText(copy.detail.kinds.resubscribed, { exact: false })).toBeVisible();
   await frame(page, "subscribed again: the list says so, and the history keeps both");
@@ -199,11 +207,7 @@ test("a member who also wrote to their MP is one supporter, with how they joined
   await frame(page, "Lee's page: joined before the form asked about updates, then wrote to their MP");
 });
 
-test("the list says what each supporter gets, and filters to those who unsubscribed", async ({
-  page,
-  request,
-  flowDatabase,
-}) => {
+test("the list says what each supporter gets, and filters by it", async ({ page, request, flowDatabase }) => {
   await importLuma(request, BASE);
   await importMembers(request, BASE);
   // Jane unsubscribed from the calendar's emails, and Luma told us.
@@ -213,13 +217,20 @@ test("the list says what each supporter gets, and filters to those who unsubscri
   await expect(page.getByRole("columnheader", { name: copy.columns.subscriptions })).toBeVisible();
   await frame(page, "the list, with what each supporter gets by topic");
 
-  await page.getByRole("combobox", { name: copy.filters.lists }).selectOption("1");
+  await page.getByRole("combobox", { name: copy.columns.subscriptions }).selectOption("luma-calendar:unsubscribed");
   await page.getByRole("button", { name: copy.filters.filter }).click();
   await expect(page.getByText(copy.count(1, 1, 1))).toBeVisible();
   await expect(page.getByRole("row").filter({ hasText: "Jane Fixture" })).toBeVisible();
   // Owen left Keep me informed unticked, which isn't an unsubscribe.
   await expect(page.getByRole("row").filter({ hasText: "Owen Member" })).toHaveCount(0);
   await frame(page, "filtered to those who unsubscribed: Jane, whom Luma told us of");
+
+  await page.getByRole("combobox", { name: copy.columns.subscriptions }).selectOption("pauseai-updates:declined");
+  await page.getByRole("button", { name: copy.filters.filter }).click();
+  await expect(page).toHaveURL(/subscription=pauseai-updates%3Adeclined/);
+  await expect(page.getByRole("row").filter({ hasText: "Owen Member" })).toBeVisible();
+  await expect(page.getByRole("row").filter({ hasText: "Jane Fixture" })).toHaveCount(0);
+  await frame(page, "filtered to those who left Keep me informed unticked: Owen");
 });
 
 test("a member who left Keep me informed unticked won't get the updates", async ({ page, request, flowDatabase }) => {

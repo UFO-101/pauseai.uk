@@ -2,14 +2,18 @@
 // it filters by, leaving out anything blank or unknown. lib/staff-forms.ts
 // reads their forms.
 import { staffCopy } from "@/lib/content/staff-interface";
+import { emailState } from "@/lib/email-permissions";
+import { campaignBySlug } from "@/lib/email-your-mp";
 import { parseSort } from "@/lib/staff-sort";
-import { isSupporterSource, SUPPORTER_SORTS, type SupporterFilter } from "@/lib/supporters";
+import { isSupporterBadge, SUPPORTER_SORTS, type SupporterFilter } from "@/lib/supporters";
 
 export type LettersSearch = {
   status: string;
   q: string;
   /** "yes" or "no". */
   answered: string;
+  /** A campaign's slug. */
+  campaign: string;
 };
 
 /** Which letters the letters page lists (recentLetters in lib/server/letters.ts). */
@@ -20,6 +24,8 @@ export type LetterFilter = {
   search?: string;
   /** Whether the MP replied. */
   answered?: boolean;
+  /** A campaign's slug. */
+  campaign?: string;
   /** One supporter's letters (/staff/letters/supporter/[id]). */
   supporterId?: number;
   /** One letter (/staff/letters/[id]). */
@@ -31,13 +37,15 @@ export function lettersSearch({
   status = "",
   q = "",
   answered = "",
+  campaign = "",
 }: Partial<LettersSearch>): LettersSearch & { filter: LetterFilter } {
   const filter: LetterFilter = {
     status: Object.hasOwn(staffCopy.letters.status, status) ? status : undefined,
     search: q.trim() || undefined,
     answered: answered === "yes" ? true : answered === "no" ? false : undefined,
+    campaign: campaignBySlug(campaign)?.slug,
   };
-  return { status, q, answered, filter };
+  return { status, q, answered, campaign, filter };
 }
 
 /** A politician's ID from their page's URL: a whole number, or undefined. */
@@ -72,12 +80,12 @@ export function supporterId(id: string): number | undefined {
 
 export type SupportersSearch = {
   q: string;
-  source: string;
-  registered: string;
+  activity: string;
+  /** "blocked", or "<topic>:<reason>". */
+  subscription: string;
   active: string;
   from: string;
   to: string;
-  unsubscribed: string;
   sort: string;
   dir: string;
   page: string;
@@ -90,12 +98,11 @@ const DAY = /^\d{4}-\d{2}-\d{2}$/;
 /** The supporters list's filters and sort, each as typed and as applied. */
 export function supportersSearch({
   q = "",
-  source = "",
-  registered = "",
+  activity = "",
+  subscription = "",
   active = "",
   from = "",
   to = "",
-  unsubscribed = "",
   sort = "",
   dir = "",
   page = "",
@@ -104,17 +111,16 @@ export function supportersSearch({
   const sorting = parseSort(SUPPORTER_SORTS, "active", sort, dir);
   const filter: SupporterFilter = {
     search: q.trim() || undefined,
-    source: isSupporterSource(source) ? source : undefined,
-    registered: registered !== "" || undefined,
+    activity: isSupporterBadge(activity) ? activity : undefined,
+    subscription: emailState(subscription),
     active: active === "30" || active === "90" || active === "365" || active === "older" ? active : undefined,
     from: DAY.test(from) ? from : undefined,
     to: DAY.test(to) ? to : undefined,
-    unsubscribed: unsubscribed !== "" || undefined,
     sort: sorting.key,
     dir: sorting.dir,
     page: pageNumber(page),
   };
-  return { q, source, registered, active, from, to, unsubscribed, sort, dir, page, erased, filter };
+  return { q, activity, subscription, active, from, to, sort, dir, page, erased, filter };
 }
 
 /** The accounts page's notice, after a refused change. */

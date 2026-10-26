@@ -46,7 +46,7 @@ describeWithDatabase("recentLetters", () => {
     expect(await recentLetters({ limit: 1 })).toHaveLength(1);
   });
 
-  it("filters by a search over sender, MP and subject, by whether answered, and by supporter", async () => {
+  it("filters by a search over sender, MP and subject, by whether answered, by campaign, and by supporter", async () => {
     const mp = await addTestMp();
     for (const [hash, name, email, subject] of [
       ["a", "Jane Smith", "jane@example.com", "Please act"],
@@ -70,6 +70,9 @@ describeWithDatabase("recentLetters", () => {
     expect(await ids({ search: "McTestface" })).toEqual([2, 1]);
     expect(await ids({ answered: true })).toEqual([2]);
     expect(await ids({ answered: false })).toEqual([1]);
+    await query("UPDATE letters SET campaign = 'support-sobel-bill' WHERE id = 2");
+    expect(await ids({ campaign: "support-sobel-bill" })).toEqual([2]);
+    expect(await ids({ campaign: "regulate-letter-pm" })).toEqual([1]);
     expect(await ids({ supporterId: 1 })).toEqual([1]);
     expect(await ids({ supporterId: 2 })).toEqual([]);
     expect(await ids({ letterId: 1 })).toEqual([1]);

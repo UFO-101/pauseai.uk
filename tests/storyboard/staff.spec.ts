@@ -381,7 +381,7 @@ async function sentLetterId(page: Page, database: string, sender: string, mp = T
   return (await row.locator("code").first().textContent())!.match(/"messageId":"([\w-]+)"/)![1];
 }
 
-test("letters are listed, sent and bounced, and can be filtered by status", async ({
+test("letters are listed, sent and bounced, and can be filtered by status and campaign, and reset", async ({
   page,
   request,
   flowDatabase,
@@ -405,6 +405,20 @@ test("letters are listed, sent and bounced, and can be filtered by status", asyn
   await expect(sams).toBeVisible();
   await expect(janes).toHaveCount(0);
   await frame(page, "filtered to the bounced letter");
+
+  // Both letters are to the first campaign, so the other has none.
+  await page.getByLabel(staffCopy.letters.columns.campaign).selectOption(campaigns[1].slug);
+  await page.getByRole("button", { name: staffCopy.letters.filter }).click();
+  await expect(page).toHaveURL(new RegExp(`campaign=${campaigns[1].slug}`));
+  await expect(page.getByText(staffCopy.letters.none)).toBeVisible();
+  await frame(page, "filtered to the other campaign: no letters");
+
+  await page.getByRole("link", { name: staffCopy.resetFilters }).click();
+  await expect(page).toHaveURL(`${BASE}/staff/letters`);
+  await expect(janes).toBeVisible();
+  await expect(sams).toBeVisible();
+  await expect(page.getByLabel(staffCopy.letters.columns.campaign)).toHaveValue("");
+  await frame(page, "reset: both letters again");
 });
 
 test("a letter that bounces: staff are emailed, and the address is blocked", async ({

@@ -3,8 +3,8 @@
 // interface's.
 import { Button } from "@/components/ui/Button";
 import Actions from "@/components/ui/Actions";
-import { FileInput, Select, TextArea, TextInput } from "@/components/ui/Controls";
-import { Field, FieldError, FieldGroup, Hint, Label } from "@/components/ui/Field";
+import { DateRange, FileInput, Select, TextArea, TextInput } from "@/components/ui/Controls";
+import { Field, FieldError, FieldGroup, FieldSet, Hint, Label } from "@/components/ui/Field";
 import { FilterForm, FormStack } from "@/components/ui/Form";
 import StatusMessage from "@/components/ui/StatusMessage";
 import Table from "@/components/ui/Table";
@@ -33,6 +33,46 @@ export const forms: Group = {
                 <Field label="Example email">
                   <TextInput type="email" defaultValue="someone@example.org" />
                 </Field>
+              )}
+            </Densities>
+          ),
+        },
+      ],
+    },
+    {
+      name: "FieldSet",
+      file: "components/ui/Field.tsx",
+      variants: [
+        {
+          label: "A label over a date range",
+          render: () => (
+            <Densities>
+              {() => (
+                <FieldSet label="Example dates">
+                  <DateRange
+                    from={{ "aria-label": "Example from", defaultValue: "2026-01-01" }}
+                    to={{ "aria-label": "Example to" }}
+                  />
+                </FieldSet>
+              )}
+            </Densities>
+          ),
+        },
+      ],
+    },
+    {
+      name: "DateRange",
+      file: "components/ui/Controls.tsx",
+      variants: [
+        {
+          label: "From a day to another",
+          render: () => (
+            <Densities>
+              {() => (
+                <DateRange
+                  from={{ "aria-label": "Example from", defaultValue: "2026-01-01" }}
+                  to={{ "aria-label": "Example to", defaultValue: "2026-12-31" }}
+                />
               )}
             </Densities>
           ),

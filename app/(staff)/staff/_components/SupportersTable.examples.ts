@@ -127,7 +127,7 @@ export const exampleSupporterDetails: SupporterDetails = {
   ],
 };
 
-/** A member who joined through our site wanting to volunteer, opted out of the updates on joining, then re-joined asking for them; never followed the calendar. */
+/** A member who joined through our site wanting to volunteer, opted out of the updates on joining, then re-joined asking for them; never a contact of the Luma calendar. */
 export const exampleMemberDetails: SupporterDetails = {
   summary: {
     ...exampleSupporter,
@@ -206,7 +206,7 @@ export const exampleBlockedPermissions: EmailPermission[] = (["luma-calendar", "
   }),
 );
 
-/** Rows of the list: Jane, unsubscribed from the calendar's emails but agreed on her letter; Sam, a member following the calendar since before its webhook; Gus, blocked. */
+/** Rows of the list: Jane, unsubscribed from the calendar's emails but agreed on her letter; Sam, a member and a contact of the calendar since before its webhook; Gus, blocked. */
 export const exampleSupporterRows: SupporterRow[] = [
   { ...exampleSupporter, permissions: exampleSupporterDetails.permissions },
   {

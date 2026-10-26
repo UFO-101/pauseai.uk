@@ -16,6 +16,17 @@
   font-weight: 400;
 }
 
+/* From and to, in one row, each as wide as a date needs. */
+.dateRange {
+  display: flex;
+  gap: var(--space-1);
+  align-items: center;
+}
+
+.dateRange .control {
+  width: auto;
+}
+
 .textarea {
   height: auto;
   min-height: calc(var(--control-height) * 2);

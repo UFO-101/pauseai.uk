@@ -1,6 +1,7 @@
 import "server-only";
 import type {
   SupporterActivity,
+  SupporterBadge,
   SupporterContact,
   SupporterDetails,
   SupporterFilter,
@@ -83,6 +84,14 @@ const SUMMARY_COLUMNS = `s.id::int AS id, s.name, coalesce(s.emails, '{}') AS em
   coalesce(s.sources, '{}') AS sources, s.luma_contact AS "lumaContact", s.first_seen_at AS "firstSeenAt",
   s.last_active_at AS "lastActiveAt", s.events, s.letters, s.member`;
 
+/** When a supporter has each lozenge in the Activities column, as SupporterBadges shows them. */
+const BADGE_CONDITIONS: Record<SupporterBadge, string> = {
+  member: "s.member",
+  lumaContact: "s.luma_contact",
+  registered: "s.events > 0",
+  letter: "s.letters > 0",
+};
+
 export type SupportersPage = { supporters: SupporterRow[]; total: number; pages: number };
 
 /** One page of the list, filtered and sorted. */
@@ -99,16 +108,18 @@ export async function listSupporters(filter: SupporterFilter): Promise<Supporter
       `(s.name ILIKE ${like} OR s.phone ILIKE ${like} OR EXISTS (SELECT 1 FROM unnest(s.emails) e WHERE e ILIKE ${like}))`,
     );
   }
-  if (filter.source) where.push(`${add(filter.source)} = ANY(s.sources)`);
-  if (filter.registered) where.push("s.events > 0");
+  if (filter.activity) where.push(BADGE_CONDITIONS[filter.activity]);
   if (filter.active === "older") where.push("s.last_active_at <= now() - interval '365 days'");
   else if (filter.active) where.push(`s.last_active_at > now() - ${add(`${filter.active} days`)}::interval`);
   if (filter.from) where.push(`s.first_seen_at >= ${add(filter.from)}::date`);
   if (filter.to) where.push(`s.first_seen_at < ${add(filter.to)}::date + 1`);
-  if (filter.unsubscribed)
+  if (filter.subscription) {
+    const { topic, reason } = filter.subscription;
     where.push(
-      "s.id IN (SELECT i.supporter_id FROM supporter_identity i JOIN email_unsubscribes u ON u.address = i.email)",
+      `s.id IN (SELECT i.supporter_id FROM supporter_identity i JOIN email_permissions p ON p.address = i.email
+       WHERE p.reason = ${add(reason)}${topic ? ` AND p.topic = ${add(topic)}` : ""})`,
     );
+  }
   const column = {
     active: "s.last_active_at",
     first: "s.first_seen_at",

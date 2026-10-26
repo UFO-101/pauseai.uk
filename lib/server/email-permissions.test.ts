@@ -4,7 +4,7 @@ import { addTestMp, describeWithDatabase, useTestDatabase } from "@/tests/databa
 import { query } from "./db";
 import { permissionsFor } from "./email-permissions";
 
-/** A Luma account, following the calendar since `since` or not following it. */
+/** A Luma account, a contact of the calendar since `since` or not one. */
 async function luma(email: string, since: string | null) {
   await query("INSERT INTO luma_people (user_id, email, contact_since) VALUES ($1, $2, $3)", [
     `usr-${email}`,
@@ -82,7 +82,7 @@ describeWithDatabase("permissionsFor", () => {
     expect(await answer("gus@example.com", "events-and-ways-to-help")).toEqual(blocked);
   });
 
-  it("emails the calendar's followers, unsure of those from before its webhook, not those who unsubscribed or never followed", async () => {
+  it("emails the calendar's contacts, unsure of those from before its webhook, not those who unsubscribed or never were one", async () => {
     await luma("new@example.com", "2026-10-22T09:00:00Z");
     expect(await answer("new@example.com", "luma-calendar")).toEqual([
       "yes",
@@ -90,7 +90,7 @@ describeWithDatabase("permissionsFor", () => {
       "2026-10-22T09:00:00.000Z",
       "luma",
     ]);
-    // Following since before Luma told us of unsubscribes: they may have left unheard.
+    // A contact since before Luma told us of unsubscribes: they may have left unheard.
     await luma("old@example.com", "2026-09-20T00:00:00Z");
     expect(await answer("old@example.com", "luma-calendar")).toEqual([
       "unsure",
@@ -110,7 +110,7 @@ describeWithDatabase("permissionsFor", () => {
     await luma("back@example.com", "2026-10-22T09:00:00Z");
     await lumaOptOut("back@example.com", "2026-10-22T10:00:00Z", "2026-10-22T11:00:00Z");
     expect(await answer("back@example.com", "luma-calendar")).toEqual(expect.arrayContaining(["yes", "following"]));
-    // Registered for an event without following.
+    // Known from an event, but not a contact of the calendar.
     await luma("guest@example.com", null);
     expect(await answer("guest@example.com", "luma-calendar")).toEqual(["no", "not-following", null, null]);
     // An unsubscribe can arrive before we know whose address it is.
