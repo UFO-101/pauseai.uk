@@ -32,7 +32,7 @@ export const exampleAsks: Ask[] = [
     title: "Example Letter to the PM",
     kind: "letter",
     date: null,
-    url: "/pdfs/example.pdf",
+    url: "/pdfs/Frontier-AI-Open-Letter.pdf",
     askedBy: ["supporters", "pauseai"],
   },
 ];

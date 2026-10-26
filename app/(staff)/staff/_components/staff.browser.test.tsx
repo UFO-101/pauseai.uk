@@ -1648,7 +1648,7 @@ describe("AsksTable", () => {
     await expect.element(event).toHaveAttribute("href", "https://luma.com/example");
     await expect.element(event).toHaveAttribute("target", "_blank");
     const ours = row(exampleAsks[3].title).getByRole("link", { name: exampleAsks[3].title });
-    await expect.element(ours).toHaveAttribute("href", "/pdfs/example.pdf");
+    await expect.element(ours).toHaveAttribute("href", "/pdfs/Frontier-AI-Open-Letter.pdf");
     await expect.element(ours).not.toHaveAttribute("target");
     await expect
       .element(page.getByRole("link", { name: copy.count(staffCopy.statuses.passed_on, 1) }))
