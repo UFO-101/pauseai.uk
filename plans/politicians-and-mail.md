@@ -46,11 +46,13 @@ letters ──┬── supporter_letters
 Everything else points at them, many to one:
 
 ```
-ask_statuses ──→ notable_people, asks
-letters ───────→ notable_people, asks
-pauseai_letters → mailings
-letter_events ──→ letters
-letter_messages → pauseai_letters
+ask_statuses ─────→ notable_people, asks
+letters ──────────→ notable_people
+supporter_letters → asks
+pauseai_letters ──→ mailings
+mailings ─────────→ asks
+letter_events ────→ letters
+letter_messages ──→ pauseai_letters
 ```
 
 A child row joins its parent by a composite foreign key `(id, kind)`, so
@@ -126,20 +128,20 @@ letter, come to an event.
 ### Letters
 
 - **`letters`**: every letter to a notable person. Kind (`supporter` or
-  `pauseai`), the person, the ask, created and sent times, status, our
-  `Message-ID`, and the provider's message and thread IDs. A supporter's
-  letter must have an ask; PauseAI's may not, as an invitation may ask
-  nothing we record. Status is as now (`sending`, `sent`, `not_sent`,
+  `pauseai`), the person, created and sent times, status, our
+  `Message-ID`, and the provider's message and thread IDs. Status is as
+  now (`sending`, `sent`, `not_sent`,
   `bounced`, `spam_complaint`), plus `scheduled` and `cancelled` for
   PauseAI letters only; a skipped letter is `not_sent`. `letter_events`
   (sent, skipped, bounced, replied, auto-reply) and
   `email_sends.letter_id` point here.
-- **`supporter_letters`**: the sender's name, email, address, postcode,
-  consent and `reply_hash`. `supporter_links` points here, and erasure
+- **`supporter_letters`**: the ask, required, and the sender's name,
+  email, address, postcode, consent and `reply_hash`. `supporter_links` points here, and erasure
   deletes the row.
 - **`pauseai_letters`**: the mailing, the sender, and the values merged
   into the template for this person.
-- **`mailings`**: one mail to many people. Title, ask if any, subject,
+- **`mailings`**: one mail to many people. Title, ask if any (an
+  invitation may ask nothing we record), subject,
   body template, attachments, sender, who made it, when it's due. A
   person's mail is re-rendered from the template and their merge values,
   not stored. The mailing keeps the rendered template it was sent with,
@@ -151,17 +153,18 @@ letter, come to an event.
   gzipped with its attachments, in Netlify Blobs. A reply to a supporter's
   letter is forwarded and logged as an event, as now, but not stored.
 
-Letters record the ask, not the campaign. The Letters to MPs filter, the
-one-letter-per-sender rule (now per ask) and a supporter's activity all
-use the ask. If two campaigns ever share an ask, a `campaign` column can
+A supporter's letter records its ask, not its campaign. The Letters to
+MPs filter, the one-letter-per-sender rule (now per ask) and a
+supporter's activity all use the ask. A PauseAI letter has its mailing's
+ask, so who was asked and hasn't answered comes from mailings. If two campaigns ever share an ask, a `campaign` column can
 come back.
 
 ## Phase 1: Data
 
 1. **Parent tables and renames.** Add `notable_people` and point every
    reference to a politician at it (letters, statuses,
-   `politicianHistory`). Split the sender's details off `letters` into
-   `supporter_letters`, and point `supporter_links`, the supporter views
+   `politicianHistory`). Split the sender's details and the
+   campaign, as an ask, off `letters` into `supporter_letters`, and point `supporter_links`, the supporter views
    and `email_permission()` and its view there. Rename `campaign_statuses` to
    `ask_statuses` and add `asks`. Its own commit, as it touches a lot of
    code.
@@ -228,8 +231,8 @@ come back.
    `deepmind-letter`). Its "Attending Parliament 23 June 2026" tick, about
    the sender, isn't imported. The consent box
    arrived on 23 September 2026, so the 651 earlier letters count as no
-   consent. A letter already in `letters` (same sender, politician and
-   ask) is skipped.
+   consent. A letter already in `supporter_letters` (same sender,
+   politician and ask) is skipped.
 7. **Import Go to Parliament, once.** Each MP a constituent was booked to
    meet gets a status on `go-to-parliament-oct-2026` (20 October 2026, the
    House of Commons) from "MP Meeting Status". Nothing about the
