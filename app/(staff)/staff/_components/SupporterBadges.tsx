@@ -2,7 +2,7 @@ import Tag from "@/components/ui/Tag";
 import { staffCopy } from "@/lib/content/staff-interface";
 import type { SupporterSummary } from "@/lib/supporters";
 
-/** What a supporter is to us, as lozenges: a member, follows the calendar, registered for events, wrote to their MP. */
+/** What a supporter is to us, as lozenges: a member, a contact of the Luma calendar, registered for events, wrote to their MP. */
 export default function SupporterBadges({ supporter }: { supporter: SupporterSummary }) {
   const badges = staffCopy.supporters.badges;
   return (

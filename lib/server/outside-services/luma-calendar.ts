@@ -142,7 +142,7 @@ export async function listCalendarEvents(cursor?: string): Promise<LumaPage<Cale
   };
 }
 
-/** Someone who follows the calendar, and since when. */
+/** A contact of the calendar, and since when. */
 export type CalendarContact = { userId: string; email: string; name: string; createdAt: string };
 
 type ApiContact = { id?: string; user_id?: string; email?: string; name?: string | null; created_at?: string } | null;

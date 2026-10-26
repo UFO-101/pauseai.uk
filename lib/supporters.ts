@@ -8,7 +8,7 @@ import type { SortColumns, SortDirection } from "./staff-sort";
 export const SUPPORTER_SOURCES = ["luma", "letter", "member"] as const;
 export type SupporterSource = (typeof SUPPORTER_SOURCES)[number];
 
-/** The lozenges in the list's Activities column, in its order: a member, follows the calendar, registered for events, wrote to their MP. */
+/** The lozenges in the list's Activities column, in its order: a member, a contact of the Luma calendar, registered for events, wrote to their MP. */
 export const SUPPORTER_BADGES = ["member", "lumaContact", "registered", "letter"] as const;
 export type SupporterBadge = (typeof SUPPORTER_BADGES)[number];
 
@@ -25,7 +25,7 @@ export type SupporterSummary = {
   phone: string | null;
   postcode: string | null;
   sources: SupporterSource[];
-  /** Whether they follow the Luma calendar. */
+  /** Whether they're a contact of the Luma calendar, as registering for an event or following it makes them. */
   lumaContact: boolean;
   firstSeenAt: string | null;
   lastActiveAt: string | null;

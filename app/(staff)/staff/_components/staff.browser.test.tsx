@@ -1408,6 +1408,10 @@ describe("PoliticianFilters", () => {
     const form = page.getByRole("searchbox").element().closest("form")!;
     expect(form.getAttribute("method")).toBe("get");
     expect(form.getAttribute("action")).toBe("/staff/politicians");
+    // Reset is the list with no filter.
+    await expect
+      .element(page.getByRole("link", { name: staffCopy.resetFilters }))
+      .toHaveAttribute("href", "/staff/politicians");
   });
 });
 
@@ -1922,6 +1926,9 @@ describe("LetterFilters", () => {
     expect(form.getAttribute("action")).toBe("/staff/letters");
     await expect.element(page.getByRole("combobox", { name: copy.columns.status })).toHaveValue("sent");
     await expect.element(page.getByRole("combobox", { name: copy.columns.replied })).toHaveValue("no");
+    await expect
+      .element(page.getByRole("link", { name: staffCopy.resetFilters }))
+      .toHaveAttribute("href", "/staff/letters");
   });
 });
 
@@ -1952,6 +1959,10 @@ describe("SupporterFilters", () => {
     const form = search.element().closest("form")!;
     expect(form.getAttribute("method")).toBe("get");
     expect(form.getAttribute("action")).toBe("/staff/supporters");
+    // Reset clears the sort too.
+    await expect
+      .element(page.getByRole("link", { name: staffCopy.resetFilters }))
+      .toHaveAttribute("href", "/staff/supporters");
     const columns = staffCopy.supporters.columns;
     await expect.element(page.getByRole("combobox", { name: columns.badges })).toHaveValue("registered");
     await expect.element(page.getByRole("combobox", { name: columns.lastActive })).toHaveValue("90");

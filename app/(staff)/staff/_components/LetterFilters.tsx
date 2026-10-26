@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/Button";
+import { Button, ButtonLink } from "@/components/ui/Button";
 import { Select, TextInput } from "@/components/ui/Controls";
 import { Field } from "@/components/ui/Field";
 import { FilterForm } from "@/components/ui/Form";
@@ -38,6 +38,9 @@ export default function LetterFilters({ search }: { search: LettersSearch }) {
       <Button variant="primary" size="small" type="submit">
         {copy.filter}
       </Button>
+      <ButtonLink variant="ghost" size="small" href="/staff/letters">
+        {staffCopy.resetFilters}
+      </ButtonLink>
     </FilterForm>
   );
 }

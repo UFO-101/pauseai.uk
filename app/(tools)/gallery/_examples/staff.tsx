@@ -500,7 +500,7 @@ export const staff: Group = {
           ),
         },
         {
-          label: "Following the calendar since its webhook, and don't know of the updates",
+          label: "A contact of the calendar since its webhook, and don't know of the updates",
           render: () => (
             <StaffPage as="div">
               <EmailPermissionTiles

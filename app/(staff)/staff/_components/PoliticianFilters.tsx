@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/Button";
+import { Button, ButtonLink } from "@/components/ui/Button";
 import { campaigns } from "@/lib/content/email-your-mp";
 import { staffCopy } from "@/lib/content/staff-interface";
 import styles from "./StaffForms.module.css";
@@ -45,6 +45,9 @@ export default function PoliticianFilters({ search, house, campaign, email }: Fi
       <Button variant="primary" size="small" type="submit">
         {staffCopy.politicians.searchButton}
       </Button>
+      <ButtonLink variant="ghost" size="small" href="/staff/politicians">
+        {staffCopy.resetFilters}
+      </ButtonLink>
     </FilterForm>
   );
 }
