@@ -49,7 +49,8 @@ as journalists, adds a child table and changes nothing else.
 ### People
 
 - **`notable_people`**: everyone we campaign at. Kind (`politician` for
-  now), name, salutation, email, status, notes, `airtable_id`. Status
+  now), name, salutation, email, status, notes, `important_target`,
+  `personal_connection`, `airtable_id`. Status
   replaces `sitting`: `in_office`, `died`, `retired`, `left_office`, or
   `removed_from_airtable`.
 - **`politicians`**: what only a politician has. House, constituency,
@@ -133,7 +134,9 @@ column can come back.
    is held too, as it may be Airtable reusing a record for someone new,
    which would give them the old person's history. Records ticked Test
    are skipped; the site keeps its own test MPs (`lib/test-mps.json`).
-   Airtable's Notes go into `notable_people.notes`.
+   Airtable's Notes go into `notable_people.notes`, with a line
+   "Recommended" for the 15 ticked so. Its Important target (98) and
+   Personal connection (7) ticks go into the two boolean columns.
 4. **Statuses**, owned by `airtable`. This replaces
    `lib/server/signatory-import.ts`.
 
@@ -150,8 +153,7 @@ column can come back.
    Not imported: Responded and Declined on the letters; "Responded PauseAI
    Documentary Screening invitation" (2), which has no ask; "Sent DeepMind
    letter publication email", which the Emails sync covers; the
-   per-person PDFs; the AI "Custom sentence"; and the three ticks waiting
-   on Joseph (below).
+   per-person PDFs; and the AI "Custom sentence".
 
 5. **Emails sync** into `pauseai_letters`, nightly. It adds rows by
    Airtable record ID and never touches mail the site sent. Airtable has
@@ -198,8 +200,9 @@ column can come back.
 
 ### Staff pages
 
-- **Politicians**: filters for body, status, party, and signed or not
-  signed an ask; columns for status and asks signed.
+- **Politicians**: filters for body, status, party, important target,
+  personal connection, and signed or not signed an ask; columns for
+  status and asks signed.
 - **A politician's page**: status; each ask's status with its note and who
   set it, or "from Airtable"; supporter letters; PauseAI letters, with
   date, ask and whether personalised. The status control (Signed for a
@@ -385,19 +388,12 @@ Data protection, agreed before building and recorded in
 - Journalists and famous people.
 - Bulk mail to supporters (`plans/supporters-email.html`).
 - A permission for sending mailings, if one is needed.
+- Tags, and fields staff add themselves. Joseph adds fields in Airtable
+  to attach a file to an email, track replies to it, and track who's
+  coming to an event. Mailings, replies and asks cover those, so we'll
+  see what's still missing once they're in use. Until then a new marker
+  is a column, added by migration.
 
 ## Waiting on Joseph
 
 - **The Google Cloud project** (phase 2, step 3).
-- **Airtable's three ticks**: Important target (98), Recommended (15),
-  Personal connection (7). So far Joseph says:
-  - Recommended is just a note, so it becomes a line in the person's
-    notes ("Recommended", from Airtable).
-  - Important target and Personal connection are things he sometimes
-    filters on, so they must be filterable.
-
-  Still to find out: whether more markers like these will come, which
-  decides between two columns on `notable_people` and tags. If tags: each
-  tagging records who, when and a note, removals are logged, each tag has
-  a description, and tags only filter, never trigger anything. Facts
-  (asks, body, party, status) are never tags.
