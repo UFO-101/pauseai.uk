@@ -372,15 +372,15 @@ export const staffCopy = {
   statuses: {
     signed: "Signed",
     none: "Not signed",
-    going: "⁂ Going",
-    tentative: "⁂ Tentative",
-    meeting_staff: "⁂ Staff meeting instead",
-    tentative_staff: "⁂ Staff tentative",
-    declined: "⁂ Declined",
-    declined_surgery: "⁂ Declined, offered a surgery",
-    passed_on: "⁂ Passed it on",
+    going: "Going",
+    tentative: "Tentative",
+    meeting_staff: "Staff meeting instead",
+    tentative_staff: "Staff tentative",
+    declined: "Declined",
+    declined_surgery: "Declined, offered a surgery",
+    passed_on: "Passed it on",
     // No answer to an event's invitation.
-    noAnswer: "⁂ No answer",
+    noAnswer: "No answer",
   } as Record<string, string>,
   // Whether a notable person is in office.
   personStatuses: {
@@ -414,10 +414,10 @@ export const staffCopy = {
     } as Record<string, string>,
     ask: "⁂ Ask",
     anyAsk: "⁂ Any ask",
-    answer: "⁂ Answer",
+    answer: "Answer",
     // With an ask chosen: anyone who answered, a given answer, or nobody who answered.
-    anyAnswer: "⁂ Answered",
-    noAnswer: "⁂ Not answered",
+    anyAnswer: "Answered",
+    noAnswer: "Not answered",
     none: "None found.",
     testMp: "Test",
     // The counts in the list: letters written to them, and how many of those got a reply.
@@ -425,9 +425,11 @@ export const staffCopy = {
       letters: "Letters",
       replies: "Letters answered",
       status: "⁂ Status",
-      // The letters they've signed.
-      signed: "⁂ Signed",
+      // Their answer to each ask they've answered.
+      asks: "⁂ Asks",
     },
+    // In that column, when they've answered none.
+    noAsks: "⁂ None",
     noEmail: "No email",
     // On a politician whose address is blocked (/staff/politicians/blocked-emails), and the filter for them.
     emailBlocked: "Email blocked",

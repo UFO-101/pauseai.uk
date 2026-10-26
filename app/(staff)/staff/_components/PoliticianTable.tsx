@@ -12,7 +12,7 @@ import Table from "@/components/ui/Table";
 
 type Props = {
   politicians: Politician[];
-  /** Every ask, for the titles of the letters they've signed. */
+  /** Every ask, for their titles, in the order the asks page lists them. */
   asks: Ask[];
   /** The list's filters and sort as typed, for the headings' links. */
   search?: Record<string, string>;
@@ -20,8 +20,8 @@ type Props = {
 
 /**
  * Politicians: whether they're in office, how many letters they've had
- * and answered, and the letters they've signed. Statuses are changed on
- * each politician's page.
+ * and answered, and their answer to each ask they've answered, a line
+ * each. Statuses are changed on each politician's page.
  */
 export default function PoliticianTable({ politicians, asks, search = {} }: Props) {
   if (politicians.length === 0) return <p>{staffCopy.politicians.none}</p>;
@@ -36,7 +36,6 @@ export default function PoliticianTable({ politicians, asks, search = {} }: Prop
       {label}
     </SortHeading>
   );
-  const letters = asks.filter((ask) => ask.kind === "letter");
   return (
     <Table>
       <thead>
@@ -48,12 +47,12 @@ export default function PoliticianTable({ politicians, asks, search = {} }: Prop
           <th>{staffCopy.politicians.columns.status}</th>
           {heading("letters", staffCopy.politicians.columns.letters)}
           {heading("replies", staffCopy.politicians.columns.replies)}
-          <th>{staffCopy.politicians.columns.signed}</th>
+          <th>{staffCopy.politicians.columns.asks}</th>
         </tr>
       </thead>
       <tbody>
         {politicians.map((p) => {
-          const signed = letters.filter((ask) => p.statuses[ask.slug]?.status === "signed");
+          const answered = asks.filter((ask) => p.statuses[ask.slug]);
           return (
             <tr key={p.id}>
               <td>
@@ -74,7 +73,18 @@ export default function PoliticianTable({ politicians, asks, search = {} }: Prop
               <td className={styles.count}>{p.letters}</td>
               <td className={styles.count}>{p.replies}</td>
               <td>
-                {signed.length ? signed.map((ask) => ask.title).join(", ") : <Muted>{staffCopy.statuses.none}</Muted>}
+                {answered.length ? (
+                  <ul className={styles.asks}>
+                    {answered.map((ask) => (
+                      <li key={ask.slug}>
+                        <span className={styles.ask}>{ask.title}</span>{" "}
+                        <strong>{staffCopy.statuses[p.statuses[ask.slug].status]}</strong>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <Muted>{staffCopy.politicians.noAsks}</Muted>
+                )}
               </td>
             </tr>
           );

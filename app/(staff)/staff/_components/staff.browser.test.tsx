@@ -1590,7 +1590,7 @@ describe("AsksTable", () => {
 });
 
 describe("PoliticianTable", () => {
-  it("lists each politician with whether they're in office and the letters they've signed, and no buttons", async () => {
+  it("lists each politician with whether they're in office and their answer to each ask, and no buttons", async () => {
     const testMp = {
       ...MP,
       id: 8,
@@ -1629,21 +1629,30 @@ describe("PoliticianTable", () => {
         .getByRole("cell")
         .all()
         .map((c) => c.element().textContent);
-    // Whether they're in office, the counts of letters and replies, each heading a sort, and the letters they've
-    // signed, by title; an event they've answered isn't one.
-    expect(cells("Polly Placeholder").slice(4)).toEqual([
-      staffCopy.personStatuses.in_office,
-      "4",
-      "1",
-      ask("frontier-ai-letter").title,
+    // Whether they're in office, the counts of letters and replies, each heading a sort, and their answer to each
+    // ask they've answered, a line each, in the asks' order, the answer in bold.
+    expect(cells("Polly Placeholder").slice(4, 7)).toEqual([staffCopy.personStatuses.in_office, "4", "1"]);
+    const answers = (name: string) =>
+      page
+        .getByRole("row")
+        .filter({ hasText: name })
+        .getByRole("listitem")
+        .all()
+        .map((li) => li.element().textContent);
+    expect(answers("Polly Placeholder")).toEqual([
+      `${ask("edinburgh-conference-2026").title} ${staffCopy.statuses.declined}`,
+      `${ask("frontier-ai-letter").title} ${staffCopy.statuses.signed}`,
     ]);
-    expect(cells("Testy McTestface MP").slice(4)).toEqual([
-      staffCopy.personStatuses.retired,
-      "4",
-      "1",
-      `${ask("frontier-ai-letter").title}, ${ask("controlai-statement").title}`,
+    expect(
+      page.getByRole("row").filter({ hasText: "Polly Placeholder" }).getByText(staffCopy.statuses.declined).element()
+        .tagName,
+    ).toBe("STRONG");
+    expect(answers("Testy McTestface MP")).toEqual([
+      `${ask("frontier-ai-letter").title} ${staffCopy.statuses.signed}`,
+      `${ask("controlai-statement").title} ${staffCopy.statuses.signed}`,
     ]);
-    expect(cells("Nora Nothing").at(-1)).toBe(staffCopy.statuses.none);
+    expect(cells("Testy McTestface MP")[4]).toBe(staffCopy.personStatuses.retired);
+    expect(cells("Nora Nothing").at(-1)).toBe(staffCopy.politicians.noAsks);
     expect(
       getComputedStyle(page.getByRole("cell", { name: staffCopy.personStatuses.retired }).first().element()).whiteSpace,
     ).toBe("nowrap");

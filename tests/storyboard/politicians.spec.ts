@@ -53,8 +53,8 @@ test("a peer with only their title, an MSP, and an MP who left office", async ({
   await frame(page, "a peer: a member of the Lords, who signed the DeepMind letter");
 
   await openPolitician(page, "Morag Example");
-  await expect(page.getByText(copy.personalConnection)).toBeVisible();
-  await expect(page.getByText(staffCopy.countries.scotland)).toBeVisible();
+  await expect(page.getByText(copy.personalConnection, { exact: true })).toBeVisible();
+  await expect(page.getByText(staffCopy.countries.scotland, { exact: true })).toBeVisible();
   await frame(page, "an MSP, a personal connection, going to the conference and sent its invitation by AI");
 
   await openPolitician(page, "Gordon Gone");
