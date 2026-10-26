@@ -146,7 +146,9 @@ INSERT INTO opt_outs (address, list, source, source_ref, unsubscribed_at, resubs
   ('tom.seed@example.com', 'luma-calendar', 'luma-webhook', 'seed-unsubscribe-tom', now() - interval '5 days', NULL),
   ('yuki.seed@example.com', 'luma-calendar', 'luma-webhook', 'seed-unsubscribe-yuki', now() - interval '10 days', NULL),
   ('erased.seed@example.com', 'luma-calendar', 'luma-webhook', 'seed-unsubscribe-erased', now() - interval '60 days', NULL),
-  ('sam.fixture@example.com', 'luma-calendar', 'luma-webhook', 'seed-unsubscribe-sam', now() - interval '20 days', now() - interval '17 days');
+  ('sam.fixture@example.com', 'luma-calendar', 'luma-webhook', 'seed-unsubscribe-sam', now() - interval '20 days', now() - interval '17 days'),
+  -- Gone from Luma's list of contacts with no webhook, as after a removal: the contacts pass noticed.
+  ('ahmed.seed@example.com', 'luma-calendar', 'luma-contacts', 'usr-seed-12 seed-pass', now() - interval '1 day', NULL);
 
 -- -------------------------------------------------------------- members
 
