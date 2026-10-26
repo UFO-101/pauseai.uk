@@ -12,7 +12,7 @@ import { FieldChanges } from "./AuditDetail";
 import type { FieldChange } from "@/lib/field-changes";
 import { importPath } from "@/lib/import-runs";
 import type { EmailBlock } from "@/lib/server/email";
-import type { LetterSummary, PoliticianLetters, UnsignedLetter } from "@/lib/server/letters";
+import type { LetterSummary, PauseaiLetter, PoliticianLetters, UnsignedLetter } from "@/lib/server/letters";
 import type { Politician, PoliticianChange } from "@/lib/server/politicians";
 import { staffDate, staffTime } from "@/lib/staff-time";
 import styles from "./Details.module.css";
@@ -106,6 +106,23 @@ function letterEntries({ senders, letters }: PoliticianLetters): Entry[] {
       </>,
     ),
   );
+}
+
+/** PauseAI's letters, each a line: the mailing, and whether it was personalised or written with AI. */
+function pauseaiEntries(letters: PauseaiLetter[]): Entry[] {
+  return letters.map((letter) => ({
+    key: `pauseai-${letter.id}`,
+    at: letter.at,
+    what: (
+      <>
+        {copy.history["pauseai-letter"]} {letter.mailing}
+        <Muted>
+          {letter.personalised && ` · ${copy.personalised}`}
+          {letter.aiGenerated && ` · ${copy.aiGenerated}`}
+        </Muted>
+      </>
+    ),
+  }));
 }
 
 /** What an entry of the audit log about them says, beyond its kind: the status, the note, the reason. */
@@ -273,6 +290,7 @@ export default function PoliticianDetails({
   block,
   unblock,
   letters,
+  pauseaiLetters = [],
   history,
   airtableTable,
 }: {
@@ -285,12 +303,15 @@ export default function PoliticianDetails({
   unblock: (form: FormData) => void | Promise<void>;
   /** Their letters, with who sent each only for staff with `supporters`. */
   letters: PoliticianLetters;
+  /** PauseAI's letters to them. */
+  pauseaiLetters?: PauseaiLetter[];
   history: PoliticianChange[];
   /** Airtable's table of MPs, which the server knows; an MP's record there is under it. */
   airtableTable: string;
 }) {
   const entries: Entry[] = [
     ...letterEntries(letters),
+    ...pauseaiEntries(pauseaiLetters),
     ...history.map((change) => ({
       key: `change-${change.id}`,
       at: change.at,

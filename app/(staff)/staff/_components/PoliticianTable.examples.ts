@@ -1,4 +1,4 @@
-import type { Ask } from "@/lib/server/asks";
+import type { Ask, AskWithCounts } from "@/lib/server/asks";
 import type { Politician, PoliticianChange } from "@/lib/server/politicians";
 
 /** The asks, as the migrations add them, a letter and an event of each kind. */
@@ -7,6 +7,14 @@ export const exampleAsks: Ask[] = [
   { slug: "edinburgh-conference-2026", title: "Example Conference", kind: "event", date: null },
   { slug: "frontier-ai-letter", title: "Example Letter to the PM", kind: "letter", date: null },
   { slug: "controlai-statement", title: "Example Statement", kind: "letter", date: null },
+];
+
+/** The asks with how many gave each answer: a letter signed, an event answered every way it allows, and one nobody has answered. */
+export const exampleAsksWithCounts: AskWithCounts[] = [
+  { ...exampleAsks[0], counts: { going: 2, tentative: 1, meeting_staff: 1, declined_surgery: 1 } },
+  { ...exampleAsks[1], counts: { declined: 50, passed_on: 1, going: 3 } },
+  { ...exampleAsks[2], counts: { signed: 10 } },
+  { ...exampleAsks[3], counts: {} },
 ];
 
 /** An MP in office who has signed the letter to the PM, and declined the conference, from Airtable. */

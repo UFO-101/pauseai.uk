@@ -1,7 +1,7 @@
 import { expect, it } from "vitest";
 import { addTestLetter, addTestMp, describeWithDatabase, useTestDatabase } from "@/tests/database";
 import { query } from "./db";
-import { politicianLetters, recentLetters } from "./letters";
+import { pauseaiLetters, politicianLetters, recentLetters } from "./letters";
 
 describeWithDatabase("recentLetters", () => {
   useTestDatabase();
@@ -112,5 +112,49 @@ describeWithDatabase("politicianLetters", () => {
     });
     expect(JSON.stringify(without)).not.toMatch(/Jane|jane@|ZZ9/);
     expect(await politicianLetters(mp + 1, [])).toEqual({ senders: false, letters: [] });
+  });
+});
+
+describeWithDatabase("pauseaiLetters", () => {
+  useTestDatabase();
+
+  it("lists PauseAI's letters to a politician, newest first, with their mailing and how they were written", async () => {
+    const mp = await addTestMp();
+    for (const [at, personalised, ai] of [
+      ["2026-06-10T09:00:00Z", false, true],
+      ["2026-10-01T09:00:00Z", true, false],
+    ] as const) {
+      const [{ id }] = await query<{ id: number }>(
+        "INSERT INTO letters (kind, notable_person_id, status, created_at, sent_at) VALUES ('pauseai', $1, 'sent', $2, $2) RETURNING id::int AS id",
+        [mp, at],
+      );
+      await query(
+        `INSERT INTO pauseai_letters (id, mailing_id, personalised, ai_generated)
+         SELECT $1, id, $2, $3 FROM mailings WHERE airtable_field = 'CSRB Iqbal Amendment'`,
+        [id, personalised, ai],
+      );
+    }
+    // A supporter's letter isn't one of them, nor is it on the letters page as PauseAI's.
+    await addTestLetter({ politicianId: mp });
+    expect(await pauseaiLetters(mp)).toEqual([
+      {
+        id: 2,
+        mailing: "CSRB Iqbal Amendment",
+        status: "sent",
+        at: new Date("2026-10-01T09:00:00Z"),
+        personalised: true,
+        aiGenerated: false,
+      },
+      {
+        id: 1,
+        mailing: "CSRB Iqbal Amendment",
+        status: "sent",
+        at: new Date("2026-06-10T09:00:00Z"),
+        personalised: false,
+        aiGenerated: true,
+      },
+    ]);
+    expect((await recentLetters()).map((l) => [l.id, l.imported])).toEqual([[3, false]]);
+    expect(await pauseaiLetters(mp + 1)).toEqual([]);
   });
 });

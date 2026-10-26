@@ -151,6 +151,7 @@ describe.skipIf(process.env.NETLIFY === "true")("copying a database", () => {
           "{luma,member}",
           "{luma}",
           "{member}",
+          "{web-form}",
         ]);
         // Letters in every state, and every kind of event about them.
         expect(runSql(name, "SELECT DISTINCT status FROM letters ORDER BY 1")).toEqual([

@@ -23,7 +23,13 @@ import LoginForm from "./LoginForm";
 import PoliticianDetails from "./PoliticianDetails";
 import PoliticianFilters from "./PoliticianFilters";
 import PoliticianTable from "./PoliticianTable";
-import { exampleAsks, examplePolitician, examplePoliticianHistory } from "./PoliticianTable.examples";
+import {
+  exampleAsks,
+  exampleAsksWithCounts,
+  examplePolitician,
+  examplePoliticianHistory,
+} from "./PoliticianTable.examples";
+import AsksTable from "./AsksTable";
 import ResultBox, { OPEN_UP_TO } from "./ResultBox";
 import { ImportJobPage, ImportOverview } from "./ImportJob";
 import RunList from "./RunList";
@@ -919,9 +925,15 @@ describe("PoliticianDetails", () => {
   it("tells one history of the letters to them, the replies, and what the audit log says about them, newest first", async () => {
     // A peer: no constituency, country, city or notes, so no line for them.
     const peer = { ...MP, constituency: null, country: null, city: null, notes: "" };
+    const fromPauseai = { mailing: "Example Mailing", status: "sent", personalised: false, aiGenerated: false };
     await render(
       <PoliticianDetails
         {...none}
+        pauseaiLetters={[
+          { ...fromPauseai, id: 11, at: "2026-10-03T08:00:00Z", personalised: true },
+          { ...fromPauseai, id: 12, at: "2026-09-02T08:00:00Z", aiGenerated: true },
+          { ...fromPauseai, id: 13, at: "2026-06-01T08:00:00Z" },
+        ]}
         politician={peer}
         unblock={vi.fn()}
         letters={{
@@ -1019,8 +1031,10 @@ describe("PoliticianDetails", () => {
       `2026-10-13 08:00${copy.letter} Anon Writer · ${pm.title} · ${staffCopy.letters.status.sent}`,
       `2026-10-12 09:10${copy["block address"]} ${staffCopy.emails.kinds.hard} · postmark`,
       `2026-10-12 09:00${copy.letter} ${exampleLetter.senderName} · ${pm.title} · ${staffCopy.letters.status.bounced}`,
+      `2026-10-03 08:00${copy["pauseai-letter"]} Example Mailing · ${staffCopy.politician.personalised}`,
       `2026-10-02 10:00${statusLine(staffCopy.politician.statusSet(staffCopy.statuses.signed), ask("frontier-ai-letter").title)}, 2026-10-01 · Told us at the march · jo@pauseai.uk`,
       `2026-09-30 10:00${copy["edit politician"]} Polly Placeholder · polly.placeholder.mp@parliament.uk · sam@pauseai.uk`,
+      `2026-09-02 08:00${copy["pauseai-letter"]} Example Mailing · ${staffCopy.politician.aiGenerated}`,
       `2026-09-01 10:00${statusLine(staffCopy.politician.statusCleared, "gone")} · jo@pauseai.uk`,
       `2026-08-15 10:00${statusLine(staffCopy.politician.statusSet("odd"), pm.title)} · jo@pauseai.uk`,
       `2026-08-12 10:00${statusLine(staffCopy.politician.statusSet(staffCopy.statuses.signed), "an-old-ask")} · airtable`,
@@ -1029,6 +1043,7 @@ describe("PoliticianDetails", () => {
       `2026-07-20 10:00${copy["edit politician"]} Polly Placeholder · ${staffCopy.fields.party} Labour → Labour (Co-op) · sync`,
       `2026-07-15 10:00${copy["add politician"]} Polly Placeholder · import`,
       `2026-07-01 08:00${copy.letter} Old Writer · old-campaign · queued`,
+      `2026-06-01 08:00${copy["pauseai-letter"]} Example Mailing`,
     ]);
     // Each letter's status leads to it alone on the letters page.
     await expect
@@ -1538,6 +1553,42 @@ describe("PoliticianTable headings", () => {
   });
 });
 
+describe("AsksTable", () => {
+  it("lists each ask with its kind and date, and each answer's count, linked to who gave it", async () => {
+    await render(<AsksTable asks={exampleAsksWithCounts} />);
+    const cells = (title: string) =>
+      page
+        .getByRole("row")
+        .filter({ hasText: title })
+        .getByRole("cell")
+        .all()
+        .map((c) => c.element().textContent);
+    const copy = staffCopy.asks;
+    // The answers in the order the kind lists them.
+    expect(cells(exampleAsks[0].title)).toEqual([
+      exampleAsks[0].title,
+      copy.kinds.event,
+      "20 Oct 2026",
+      [
+        copy.count(staffCopy.statuses.going, 2),
+        copy.count(staffCopy.statuses.tentative, 1),
+        copy.count(staffCopy.statuses.meeting_staff, 1),
+        copy.count(staffCopy.statuses.declined_surgery, 1),
+      ].join(" · "),
+    ]);
+    expect(cells(exampleAsks[2].title)).toEqual([
+      exampleAsks[2].title,
+      copy.kinds.letter,
+      "",
+      copy.count(staffCopy.statuses.signed, 10),
+    ]);
+    expect(cells(exampleAsks[3].title).at(-1)).toBe(copy.noAnswers);
+    await expect
+      .element(page.getByRole("link", { name: copy.count(staffCopy.statuses.passed_on, 1) }))
+      .toHaveAttribute("href", "/staff/politicians?ask=edinburgh-conference-2026&answer=passed_on");
+  });
+});
+
 describe("PoliticianTable", () => {
   it("lists each politician with whether they're in office and the letters they've signed, and no buttons", async () => {
     const testMp = {
@@ -2023,6 +2074,7 @@ describe("LettersTable", () => {
             campaign: "gone",
             status: "odd",
             isTest: false,
+            imported: true,
             contactConsent: false,
             repliedAt: "2026-10-13T09:00:00Z",
             events: [{ at: letter.createdAt, status: "strange", details: {} }],
@@ -2031,6 +2083,13 @@ describe("LettersTable", () => {
       />,
     );
     await expect.element(page.getByText("jane@example.com").first()).toBeInTheDocument();
+    // One sent through pauseai.info's old form says so, by its campaign.
+    expect(
+      page
+        .getByText(staffCopy.letters.imported)
+        .all()
+        .map((tag) => tag.element().closest("td")!.textContent),
+    ).toEqual([`gone ${staffCopy.letters.imported}`]);
     // The campaign leads to its page on the site, the MP to their page, the sender to their supporter.
     await expect
       .element(page.getByRole("link", { name: pm.title }).first())
@@ -2041,7 +2100,7 @@ describe("LettersTable", () => {
     await expect
       .element(page.getByRole("link", { name: letter.senderName }).first())
       .toHaveAttribute("href", "/staff/supporters/7");
-    await expect.element(page.getByText("gone")).toBeInTheDocument();
+    await expect.element(page.getByRole("cell", { name: /^gone/ })).toBeInTheDocument();
     await expect.element(page.getByText("odd")).toBeInTheDocument();
     await expect
       .element(page.getByRole("cell", { name: staffCopy.letters.consent.yes, exact: true }))

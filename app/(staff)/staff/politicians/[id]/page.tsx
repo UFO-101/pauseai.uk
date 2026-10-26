@@ -3,7 +3,7 @@ import { staffCopy } from "@/lib/content/staff-interface";
 import { found } from "@/lib/found";
 import { listAsks } from "@/lib/server/asks";
 import { blockOn } from "@/lib/server/email";
-import { politicianLetters } from "@/lib/server/letters";
+import { pauseaiLetters, politicianLetters } from "@/lib/server/letters";
 import { PARLIAMENTARIANS_TABLE_URL } from "@/lib/server/outside-services/airtable";
 import { getPolitician, politicianHistory } from "@/lib/server/politicians";
 import { requireStaff } from "@/lib/server/staff-auth";
@@ -25,10 +25,11 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
 export default async function PoliticianPage({ params }: Params) {
   const { email, permissions, sessions } = await requireStaff();
   const politician = found(await getPolitician(found(politicianId((await params).id))));
-  const [asks, block, letters, history] = await Promise.all([
+  const [asks, block, letters, fromPauseai, history] = await Promise.all([
     listAsks(),
     blockOn(politician.email),
     politicianLetters(politician.id, permissions),
+    pauseaiLetters(politician.id),
     politicianHistory(politician.id, politician.email),
   ]);
   return (
@@ -41,6 +42,7 @@ export default async function PoliticianPage({ params }: Params) {
         block={block}
         unblock={unblockAddress}
         letters={letters}
+        pauseaiLetters={fromPauseai}
         history={history}
         airtableTable={PARLIAMENTARIANS_TABLE_URL}
       />

@@ -65,3 +65,16 @@ ALTER TABLE supporter_letters ADD COLUMN airtable_id text UNIQUE;
 ALTER TABLE supporter_letters ALTER COLUMN reply_hash DROP NOT NULL;
 ALTER TABLE supporter_letters ADD CONSTRAINT supporter_letters_reply_hash_check
   CHECK ((reply_hash IS NULL) = (airtable_id IS NOT NULL));
+
+-- A supporter who wrote through the old form has it as their source, rather
+-- than the site's letter.
+CREATE OR REPLACE VIEW supporter_identity AS
+  SELECT k.supporter_id, 'luma'::text AS source, s.email, s.name, s.seen_at
+  FROM supporter_source_luma s JOIN supporter_links k ON k.luma_user_id = s.source_id
+  UNION ALL
+  SELECT k.supporter_id, CASE WHEN x.airtable_id IS NULL THEN 'letter' ELSE 'web-form' END, s.email, s.name, s.seen_at
+  FROM supporter_source_letter s JOIN supporter_links k ON k.letter_id = s.source_id
+    JOIN supporter_letters x ON x.id = s.source_id
+  UNION ALL
+  SELECT k.supporter_id, 'member', s.email, s.name, s.seen_at
+  FROM supporter_source_member s JOIN supporter_links k ON k.member_id = s.source_id;

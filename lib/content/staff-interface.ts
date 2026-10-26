@@ -43,6 +43,7 @@ export const staffCopy = {
     } as Record<string, string>,
     supporters: "Supporters",
     politicians: "Politicians",
+    asks: "⁂ Asks",
     import: "Import data",
     changes: "Audit log",
     letters: "Letters to MPs",
@@ -203,7 +204,10 @@ export const staffCopy = {
       // Every address they have is blocked.
       blocked: "Blocked",
     },
-    sources: { luma: "Luma", letter: "Letter", member: "Member" } as Record<string, string>,
+    sources: { luma: "Luma", letter: "Letter", "web-form": "⁂ pauseai.info letter", member: "Member" } as Record<
+      string,
+      string
+    >,
     lists: { "luma-calendar": "Luma calendar emails", "pauseai-updates": "PauseAI updates" } as Record<string, string>,
     // A supporter's page: one box of what we know, then the history.
     detail: {
@@ -440,6 +444,16 @@ export const staffCopy = {
     email: "Email",
     house: "House",
   },
+  // The asks page: each ask, its kind and date, and how many gave each answer.
+  asks: {
+    title: "⁂ Asks",
+    intro: "⁂ What we ask politicians to do, and how many have answered each way. A developer adds a new ask.",
+    columns: { ask: "⁂ Ask", kind: "⁂ Kind", date: "⁂ Date", answers: "⁂ Answers" },
+    kinds: { letter: "⁂ Letter", event: "⁂ Event" } as Record<string, string>,
+    noAnswers: "⁂ No answers yet",
+    // Each answer's count links to the politicians who gave it.
+    count: (status: string, n: number) => `${status}: ${n}`,
+  },
   politician: {
     statusesTitle: "⁂ Asks",
     // The box at the top of their page: where they came from, and each campaign's status.
@@ -478,6 +492,8 @@ export const staffCopy = {
       // Without the supporters permission, a letter doesn't say who wrote it.
       unsignedLetter: "Letter written to them",
       "unsigned-letter-replied": "Answered a letter",
+      // A letter of one of PauseAI's mailings, by its mailing, and how it was written.
+      "pauseai-letter": "⁂ Email from PauseAI:",
       "add politician": "Added",
       "edit politician": "Details edited",
       "remove politician": "⁂ No longer in Airtable",
@@ -488,6 +504,8 @@ export const staffCopy = {
     editInAirtable: ", update name / email there.",
     // On an ask that isn't set by hand: where its statuses come from.
     importedAsk: "⁂ set each night by an import",
+    personalised: "⁂ personalised",
+    aiGenerated: "⁂ written with AI",
     // Under their name: what they are, in their house, and where for.
     roles: {
       commons: "MP",
@@ -816,6 +834,8 @@ export const staffCopy = {
       history: "History",
     },
     consent: { yes: "Yes", no: "No" },
+    // Beside a letter sent through pauseai.info's old form, copied from Airtable.
+    imported: "⁂ pauseai.info",
   },
   // Beside a list's filter button: the list with none.
   resetFilters: "Reset filters",

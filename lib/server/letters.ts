@@ -19,6 +19,8 @@ export type LetterSummary = {
   politicianId: number;
   isTest: boolean;
   subject: string;
+  /** Sent through pauseai.info's old form, and copied from Airtable. */
+  imported: boolean;
   createdAt: string;
   sentAt: string | null;
   /** When a reply from anyone but the sender first reached us. */
@@ -41,7 +43,7 @@ export async function recentLetters({
 }: LetterFilter & { politicianId?: number; limit?: number } = {}): Promise<LetterSummary[]> {
   return query<LetterSummary>(
     `SELECT l.id::int AS id, s.campaign, l.status, s.sender_name AS "senderName", s.sender_email AS "senderEmail",
-       s.contact_consent AS "contactConsent", n.name AS "mpName", n.id::int AS "politicianId", p.is_test AS "isTest", s.subject, l.created_at AS "createdAt", l.sent_at AS "sentAt", l.replied_at AS "repliedAt",
+       s.contact_consent AS "contactConsent", n.name AS "mpName", n.id::int AS "politicianId", p.is_test AS "isTest", s.subject, s.airtable_id IS NOT NULL AS imported, l.created_at AS "createdAt", l.sent_at AS "sentAt", l.replied_at AS "repliedAt",
        (SELECT k.supporter_id::int FROM supporter_links k WHERE k.letter_id = l.id) AS "supporterId",
        coalesce((SELECT json_agg(json_build_object('at', e.at, 'status', e.status, 'details', e.details) ORDER BY e.at, e.id)
                  FROM letter_events e WHERE e.letter_id = l.id), '[]') AS events
@@ -66,6 +68,28 @@ export async function recentLetters({
       letterId ?? null,
       campaign ?? null,
     ],
+  );
+}
+
+/** A letter of a mailing from PauseAI to a politician: when, which mailing, and how it was written. */
+export type PauseaiLetter = {
+  id: number;
+  mailing: string;
+  status: string;
+  /** When it was sent, or else made. */
+  at: string;
+  personalised: boolean;
+  aiGenerated: boolean;
+};
+
+/** PauseAI's letters to a politician, newest first. */
+export async function pauseaiLetters(politicianId: number): Promise<PauseaiLetter[]> {
+  return query<PauseaiLetter>(
+    `SELECT l.id::int AS id, m.title AS mailing, l.status, coalesce(l.sent_at, l.created_at) AS at, p.personalised,
+       p.ai_generated AS "aiGenerated"
+     FROM pauseai_letters p JOIN letters l USING (id) JOIN mailings m ON m.id = p.mailing_id
+     WHERE l.notable_person_id = $1 ORDER BY l.created_at DESC, l.id DESC`,
+    [politicianId],
   );
 }
 

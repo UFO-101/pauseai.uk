@@ -204,14 +204,14 @@ The example `.env.local` sets `DATA_FIXTURES=1`. With it, every call to an outsi
 answer from `tests/fixtures/outside-services.ts` instead. Nothing leaves
 your machine. You need no keys:
 
-| Service                  | What the fixture does                                                                                                                          |
-| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| Luma                     | A few made-up events and guests                                                                                                                |
-| postcodes.io             | Knows only SW1A 1AA (Cities of London and Westminster); every other postcode is "not found". The test postcodes never ask it.                  |
-| Airtable                 | Two MPs, Dora Dummy and Polly Placeholder, and two made-up signatories                                                                         |
-| Parliament's Members API | The same two MPs, with an office email each. Polly Placeholder's differs from Airtable's, so the MP check has something to show.               |
-| Turnstile                | Accepts every token                                                                                                                            |
-| Postmark                 | Accepts every email, without needing a token, and writes each one to a mail file (`.eml`) in `OUTBOX_DIR`, or `tmp/outbox/` in the dev server. |
+| Service                  | What the fixture does                                                                                                                                       |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Luma                     | A few made-up events and guests                                                                                                                             |
+| postcodes.io             | Knows only SW1A 1AA (Cities of London and Westminster); every other postcode is "not found". The test postcodes never ask it.                               |
+| Airtable                 | A politician of each body, one retired and one who left, with their statuses; PauseAI's emails to them; the old form's letters; Go to Parliament's meetings |
+| Parliament's Members API | The same two MPs, with an office email each. Polly Placeholder's differs from Airtable's, so the MP check has something to show.                            |
+| Turnstile                | Accepts every token                                                                                                                                         |
+| Postmark                 | Accepts every email, without needing a token, and writes each one to a mail file (`.eml`) in `OUTBOX_DIR`, or `tmp/outbox/` in the dev server.              |
 
 #### Send a letter to the test MP
 
@@ -238,11 +238,12 @@ Outside production, letters can only go to the test MP. That's checked
 both when the form is sent and when the letter is, so locally you can look
 real MPs up but not send to them. That's on purpose.
 
-To look them up with fixtures, add the two fixture MPs first:
+To look them up with fixtures, add the fixture politicians first (with
+PauseAI's fixture emails to them):
 
 ```bash
 # With CRON_SECRET=dev in .env.local (restart the dev server after editing it):
-curl -X POST -H "Authorization: Bearer dev" localhost:3000/api/cron/sync-mps
+curl -X POST -H "Authorization: Bearer dev" localhost:3000/api/cron/sync-politicians
 ```
 
 Then postcode `SW1A 1AA` finds Polly Placeholder.
@@ -278,13 +279,14 @@ its variants, a page per group, on fixture data. It's there only with
 
 Delete `DATA_FIXTURES` from `.env.local`, and fill in the keys you need. Each is explained there. Things to know:
 
-- **MPs.** The database starts with only the test MP. With `AIRTABLE_TOKEN`
-  set, copy the real MPs from Airtable, then check them against Parliament
+- **Politicians.** The database starts with only the test MPs. With
+  `AIRTABLE_TOKEN` set, copy the real politicians from Airtable, and
+  PauseAI's 2026 emails to them, then check the MPs against Parliament
   (about 650 lookups, which takes a minute):
 
   ```bash
   # With CRON_SECRET=dev in .env.local:
-  curl -X POST -H "Authorization: Bearer dev" localhost:3000/api/cron/sync-mps
+  curl -X POST -H "Authorization: Bearer dev" localhost:3000/api/cron/sync-politicians
   curl -X POST -H "Authorization: Bearer dev" localhost:3000/api/cron/check-mps
   ```
 
@@ -301,9 +303,11 @@ Delete `DATA_FIXTURES` from `.env.local`, and fill in the keys you need. Each is
 - **Staff login.** The link is emailed through Postmark, so with the test
   token it never arrives. Use fixtures to log in, or a real server token and
   your own pauseai.uk address.
-- **Airtable.** `AIRTABLE_TOKEN` needs only read access to the "UK
-  Parliamentarians" table. It's for the MP sync and the one-off signatory
-  import at `/staff/import-data`.
+- **Airtable.** `AIRTABLE_TOKEN` needs read access to the UK
+  Parliamentarians base's "UK Parliamentarians", "Emails", "Web form
+  emails" and "Go to Parliament Oct 2026" tables, and to the members' base.
+  They're for the politician and Emails syncs and the two one-off imports at
+  `/staff/import-data`.
 
 ## 5. Things that run on a schedule, or from outside
 
@@ -313,7 +317,7 @@ None of these run under `npm run dev` by themselves. Call them by hand.
 call these routes. Locally, with `CRON_SECRET=dev` in `.env.local`:
 
 ```bash
-curl -X POST -H "Authorization: Bearer dev" localhost:3000/api/cron/sync-mps
+curl -X POST -H "Authorization: Bearer dev" localhost:3000/api/cron/sync-politicians
 curl -X POST -H "Authorization: Bearer dev" localhost:3000/api/cron/check-mps
 curl -X POST -H "Authorization: Bearer dev" localhost:3000/api/cron/import-luma   # the hourly Luma import; with fixtures, the fixture calendar
 curl -X POST -H "Authorization: Bearer dev" localhost:3000/api/cron/import-members   # the hourly members import; with fixtures, the fixture members
@@ -422,7 +426,7 @@ See [testing.md](testing.md) for the rules.
 | `role "..." does not exist`                               | Create a superuser for yourself (`createuser --superuser`), or set `PGUSER`.                                                                                                                                                                                                       |
 | `permission denied to create database`                    | Your Postgres user needs `CREATEDB`: `alter user <you> createdb;`.                                                                                                                                                                                                                 |
 | `relation "letters" does not exist`                       | The database is older than a migration: `npm run db:migrate` (section 3).                                                                                                                                                                                                          |
-| ZZ99ZZ says no MP found                                   | The database has no test MP. Set `TEST_MP_EMAIL` and run `npm run db:reset`, or run the MP sync.                                                                                                                                                                                   |
+| ZZ99ZZ says no MP found                                   | The database has no test MP. Set `TEST_MP_EMAIL` and run `npm run db:reset`, or run the politician sync.                                                                                                                                                                           |
 | The test MP shows "no email listed"                       | The test MP was added without an email. Set `TEST_MP_EMAIL` and run `npm run db:reset`.                                                                                                                                                                                            |
 | Sending says it failed                                    | Without `DATA_FIXTURES`, check `POSTMARK_SERVER_TOKEN`.                                                                                                                                                                                                                            |
 | An email didn't arrive                                    | The server log says what happened to each email: sent through Postmark, with its MessageID, or written to which outbox file. The dev server doesn't send without a real token: with none, or Postmark's test token `POSTMARK_API_TEST`, it writes the email to the outbox instead. |
@@ -442,8 +446,8 @@ Set up outside the code:
 - **Settings:** every environment variable is in [.env.example](../.env.example), with what it's for. Netlify needs the same ones.
 - **Postmark:** a server, and two sending domains, each with DKIM, Return-Path and DMARC. `letters.pauseai.uk` sends letters to representatives and is the inbound domain, with its MX pointing at `inbound.postmarkapp.com`. `notify.pauseai.uk` sends everything else, such as forwarded replies and staff emails. Its webhooks carry basic auth in the URL, e.g. `https://postmark:<password>@pauseai.uk/api/postmark/bounce`: Bounce and Spam complaint go to `/api/postmark/bounce`, Inbound to `/api/postmark/inbound`.
 - **Luma's webhook:** in Luma, the PauseAI UK calendar, Settings → Developer → Webhooks: a webhook for `https://pauseai.uk/api/luma/webhook` with the event types Calendar Person Unsubscribed and Calendar Person Subscribed. Its secret (`whsec_…`) goes into Netlify as `LUMA_WEBHOOK_SECRET`. Luma retries a delivery that isn't answered 2xx three more times, after 1, 2 and 4 minutes, and only sends unsubscribes that happen after the webhook exists. To check it works: unsubscribe a staff address from the calendar's emails and look for its row in `opt_outs`; follow the calendar again, and the next full pass over the contacts sets the row's `resubscribed_at`, as Luma's webhook doesn't say when someone comes back ([domain concepts](domain-concepts.md#opt-outs)).
-- **Daily jobs:** the MP sync runs at 06:21 UTC, the check against Parliament at 06:23 and the ControlAI import at 06:25, just after the day's first imports. The database sleeps after five minutes without a query and is billed while it's awake, so every scheduled job starts within a few minutes of the Luma import, sharing one wake an hour, and none runs from midnight to six UTC. The check makes about 650 requests to Parliament, which took 12–18 seconds from a laptop on 14 Oct 2026. A Netlify scheduled function gets 30 seconds, so a daily check that starts timing out has outgrown it.
+- **Daily jobs:** the politician sync, then the Emails sync, runs at 06:21 UTC, the check against Parliament at 06:23 and the ControlAI import at 06:25, just after the day's first imports. The database sleeps after five minutes without a query and is billed while it's awake, so every scheduled job starts within a few minutes of the Luma import, sharing one wake an hour, and none runs from midnight to six UTC. The check makes about 650 requests to Parliament, which took 12–18 seconds from a laptop on 14 Oct 2026. A Netlify scheduled function gets 30 seconds, so a daily check that starts timing out has outgrown it.
 - **The Luma import** runs at 17 minutes past every hour from 06:17 to 23:17 UTC, with `LUMA_API_KEY`. Each run fetches for about 20 seconds, then stops and records how many events are still waiting, so the first copy of the calendar (about 430 requests on 21 Oct 2026) takes a few runs; after that a run is a handful of requests. It leaves 50 of Luma's 200 requests a minute for the site's own fetches, and stops early if Luma answers 429. Run it by hand from `/staff/import-data` to see where it's got to.
 - **The members import** runs at 19 minutes past every hour from 06:19 to 23:19 UTC, with `AIRTABLE_TOKEN`, which needs read access to Stichting PauseAI's "Members & Actions" base (`appWPTGqZmUcs3NWu`) as well as the MPs' base; the global team grant it. A run reads every UK member we may hold, about 15 requests, which counts against the global team's Airtable plan's monthly API calls. Run it by hand from `/staff/import-data`.
-- **A new database:** run the MP sync, then the signatory import, both from `/staff/import-data`, and check the signatories. Until the sync has run, Email your MP finds no MPs.
+- **A new database:** run the politician sync from `/staff/import-data`, and apply it, then the Emails sync and the two one-off imports (the web form letters and Go to Parliament). Until the sync has run, Email your MP finds no MPs.
 - **Staff accounts:** every database starts with one account, `admin@pauseai.uk`, with the admin permission. Log in as it and add everyone else on `/staff/accounts`: an account alone opens the ordinary pages; the supporters permission opens the supporter pages, admin the accounts page and the audit log. Give admin to at least one other person; the last admin can't be removed. The hourly Luma import fills the supporter pages over its first few runs, and links every letter already written; run it from `/staff/import-data` to watch it. An erasure request is handled as `docs/data-protection.md` says.

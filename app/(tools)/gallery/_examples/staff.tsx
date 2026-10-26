@@ -71,7 +71,8 @@ import Grid, { Card } from "@/app/(staff)/staff/_components/ui/Grid";
 import Strip from "@/app/(staff)/staff/_components/ui/Strip";
 import Tag from "@/components/ui/Tag";
 import { campaigns } from "@/lib/content/email-your-mp";
-import { exampleAsks } from "@/app/(staff)/staff/_components/PoliticianTable.examples";
+import { exampleAsks, exampleAsksWithCounts } from "@/app/(staff)/staff/_components/PoliticianTable.examples";
+import AsksTable from "@/app/(staff)/staff/_components/AsksTable";
 import { staffCopy } from "@/lib/content/staff-interface";
 import type { ImportJob } from "@/lib/import-runs";
 import type { Group, Variant } from "../_components/types";
@@ -103,6 +104,7 @@ const PAGES: Record<StaffPageName, true> = {
   letters: true,
   supporterEmails: true,
   politicians: true,
+  asks: true,
   mpEmails: true,
   import: true,
   changes: true,
@@ -1130,6 +1132,20 @@ export const staff: Group = {
                 asks={exampleAsks}
                 parties={EXAMPLE_PARTIES}
               />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "AsksTable",
+      file: "app/(staff)/staff/_components/AsksTable.tsx",
+      variants: [
+        {
+          label: "Every ask, with its answers",
+          render: () => (
+            <StaffPage as="div">
+              <AsksTable asks={exampleAsksWithCounts} />
             </StaffPage>
           ),
         },

@@ -931,12 +931,16 @@ CREATE VIEW public.supporter_identity AS
      JOIN public.supporter_links k ON ((k.luma_user_id = s.source_id)))
 UNION ALL
  SELECT k.supporter_id,
-    'letter'::text AS source,
+        CASE
+            WHEN (x.airtable_id IS NULL) THEN 'letter'::text
+            ELSE 'web-form'::text
+        END AS source,
     s.email,
     s.name,
     s.seen_at
-   FROM (public.supporter_source_letter s
+   FROM ((public.supporter_source_letter s
      JOIN public.supporter_links k ON ((k.letter_id = s.source_id)))
+     JOIN public.supporter_letters x ON ((x.id = s.source_id)))
 UNION ALL
  SELECT k.supporter_id,
     'member'::text AS source,
