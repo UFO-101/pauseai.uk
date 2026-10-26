@@ -61,11 +61,21 @@ else.
 ### People
 
 - **`notable_people`**: everyone we campaign at. Kind (`politician` for
-  now), name, salutation, email, status, notes, `important_target`,
-  `personal_connection`, `airtable_id`, `airtable_removed_at`. Status
-  replaces `sitting`: `in_office`, `died`, `retired` or `left_office`.
-- **`politicians`**: house, constituency, party, forename, surname,
-  country, city, test postcode.
+  now), name, forename, surname, salutation, email, status, notes,
+  `important_target`, `personal_connection`, `airtable_id`,
+  `airtable_removed_at`. Status replaces `sitting`: `in_office`, `died`,
+  `retired` or `left_office`.
+  - **Name** is what they're known as in public, with any title that's
+    part of it: "Claire Coutinho", "Sir John Hayes", "Lord McFall of
+    Alcluith". It's what staff pages show, and it's required. From
+    Airtable's "Full name or Title".
+  - **Forename and surname** are for sorting and mail merge, and may be
+    empty: peers have only their title. In Airtable, every MP, MSP, MS
+    and MLA has both; no peer has either.
+  - **Salutation** follows "Dear": "Ms Coutinho", "Sir John", "Lord
+    McFall".
+- **`politicians`**: house, constituency, party, country, city, test
+  postcode.
 
 Supporters stay separate. They're merged from several sources
 (`supporter_links`); notable people aren't.
