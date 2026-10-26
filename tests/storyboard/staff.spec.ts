@@ -30,7 +30,7 @@ import { BASE, emailFrame, expect, flowStorageState, frame, test } from "./fixtu
 
 const STAFF_PAGES = ROUTES.filter((route) => route.startsWith("/staff") && !route.startsWith("/staff/login"));
 /** The letter to the PM's ask, by its title in the asks table. */
-const PM_LETTER = "Our open letter to the Prime Minister on frontier AI";
+const PM_LETTER = "Frontier AI letter to the Prime Minister";
 
 /** This flow's own staff address: flows run alongside each other, and share the outbox. Short, as real ones are. */
 const staffEmail = () => `staff-${test.info().testId.replace(/\W/g, "").slice(-8)}@pauseai.uk`;
@@ -520,10 +520,10 @@ test("an MP whose address bounced can't be written to until staff unblock it", a
   await expect(bouncysRow).toContainText(staffCopy.politicians.emailBlocked);
   await frame(page, "the politicians list marks their address as blocked");
 
-  // Blocked MP emails lists them, and is the way to them.
+  // Politicians' blocked emails lists them, and is the way to them.
   await page.goto(`${BASE}/staff/politicians/blocked-emails`);
   await expect(page.getByRole("row").filter({ hasText: bouncy.name })).toBeVisible();
-  await frame(page, "Blocked MP emails lists their address");
+  await frame(page, "Politicians' blocked emails lists their address");
 
   await page.getByRole("link", { name: bouncy.name }).click();
   await expect(page.getByRole("heading", { level: 1, name: bouncy.name })).toBeVisible();

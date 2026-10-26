@@ -71,23 +71,28 @@ INSERT INTO ask_kind_statuses (kind, status) VALUES
 
 -- `date` is the event's, or the letter's: when it was published, or first
 -- asked for. `url` is where to read it or see the event: a page of ours, by
--- its path, or another site's.
+-- its path, or another site's. `asked_by` is who asks it: supporters, in
+-- their letters or in person, and PauseAI, in its own emails.
 CREATE TABLE asks (
   slug text PRIMARY KEY CHECK (slug ~ '^[a-z0-9]+(-[a-z0-9]+)*$'),
   title text NOT NULL,
   kind text NOT NULL CHECK (kind IN ('letter', 'event')),
   date date,
   url text CHECK (url ~ '^(https://|/)'),
+  asked_by text[] NOT NULL DEFAULT '{}' CHECK (asked_by <@ ARRAY['supporters', 'pauseai']),
   UNIQUE (slug, kind)
 );
-INSERT INTO asks (slug, title, kind, date, url) VALUES
-  ('frontier-ai-letter', 'Our open letter to the Prime Minister on frontier AI', 'letter', '2026-06-18',
-    '/pdfs/Frontier-AI-Open-Letter.pdf'),
-  ('deepmind-letter', 'Our 2025 letter to Sir Demis Hassabis', 'letter', '2025-08-29', '/campaigns/dear-sir-demis-2025'),
-  ('controlai-statement', 'ControlAI''s statement', 'letter', '2026-09-11', 'https://controlai.org/uk-pm-letter'),
-  ('edinburgh-conference-2026', 'A conference in Edinburgh, November 2026', 'event', '2026-11-01',
-    'https://luma.com/6jp2nqe9'),
-  ('go-to-parliament-oct-2026', 'Go to Parliament, at the House of Commons', 'event', '2026-10-20', NULL);
+INSERT INTO asks (slug, title, kind, date, url, asked_by) VALUES
+  ('frontier-ai-letter', 'Frontier AI letter to the Prime Minister', 'letter', '2026-06-18',
+    '/pdfs/Frontier-AI-Open-Letter.pdf', '{supporters}'),
+  ('deepmind-letter', 'DeepMind letter to Sir Demis Hassabis', 'letter', '2025-08-29',
+    '/campaigns/dear-sir-demis-2025', '{supporters}'),
+  ('controlai-statement', 'ControlAI''s statement to the Prime Minister', 'letter', '2026-09-11',
+    'https://controlai.org/uk-pm-letter', '{supporters}'),
+  ('edinburgh-conference-2026', 'Edinburgh conference, November 2026', 'event', '2026-11-01',
+    'https://luma.com/6jp2nqe9', '{pauseai}'),
+  ('go-to-parliament-oct-2026', 'Constituent meetings at Parliament, October 2026', 'event', '2026-10-20', NULL,
+    '{supporters}');
 
 -- One letter many supporters send, and the ask it makes, if any. Its words
 -- are in code (lib/content/email-your-mp.ts), or nowhere for the old

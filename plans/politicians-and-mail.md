@@ -429,14 +429,14 @@ Attachments are the mailing's, the same for everyone.
   The sender also gets "Open in Gmail", opening the thread in a new tab;
   `/u/{sender}` in the link picks their account if they're signed in to
   several. Bounces.
-- **Blocked MP emails**: bounces found in Gmail, marked as such.
+- **Politicians' blocked emails**: bounces found in Gmail, marked as such.
 - **Import**: runs of `send-mail` and the Gmail check.
 
 ### Tests
 
 Connecting Gmail, against a fake Google. "Mail these" through to
 scheduling, and a mailing's page after sending. A test politician whose
-Gmail send bounces, shown on their page and in Blocked MP emails. A thread
+Gmail send bounces, shown on their page and in Politicians' blocked emails. A thread
 on a politician's page with a reply and the sender's answer. The parsers
 against the samples from step 1, each giving the right `DeliveryProblem`,
 or none for a delay. The whole path from the history feed to a blocked

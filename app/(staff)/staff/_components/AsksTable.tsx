@@ -10,30 +10,35 @@ const copy = staffCopy.asks;
 
 /** Who asks it: supporters, PauseAI, or both, a line each. */
 function AskedBy({ ask }: { ask: AskWithCounts }) {
-  return (
-    <>
-      {ask.bySupporters && <div>{copy.askedBy.supporters}</div>}
-      {ask.byPauseai && <div>{copy.askedBy.pauseai}</div>}
-    </>
+  return ask.askedBy.map((asker) => <div key={asker}>{copy.askedBy[asker]}</div>);
+}
+
+/** An ask's title, linked to the letter or the event if we know where it is. A link to another site opens in a new tab. */
+function Title({ ask }: { ask: AskWithCounts }) {
+  if (!ask.url) return ask.title;
+  return ask.url.startsWith("/") ? (
+    <Link href={ask.url}>{ask.title}</Link>
+  ) : (
+    <a href={ask.url} target="_blank" rel="noreferrer">
+      {ask.title}
+    </a>
   );
 }
 
 /**
- * Every ask, newest first: its title, kind and date, who asks it, a link to
- * the letter or the event, and how many politicians gave each answer its
- * kind allows, each count linked to the politicians who gave it. A link to
- * another site opens in a new tab.
+ * Every ask, newest first: its kind, title and date, who asks it, and how
+ * many politicians gave each answer its kind allows, each count linked to
+ * the politicians who gave it.
  */
 export default function AsksTable({ asks }: { asks: AskWithCounts[] }) {
   return (
     <Table>
       <thead>
         <tr>
-          <th>{copy.columns.ask}</th>
           <th>{copy.columns.kind}</th>
+          <th>{copy.columns.ask}</th>
           <th>{copy.columns.date}</th>
           <th>{copy.columns.askedBy}</th>
-          <th>{copy.columns.link}</th>
           <th>{copy.columns.answers}</th>
         </tr>
       </thead>
@@ -42,21 +47,13 @@ export default function AsksTable({ asks }: { asks: AskWithCounts[] }) {
           const answers = ASK_STATUSES[ask.kind].filter((status) => ask.counts[status]);
           return (
             <tr key={ask.slug}>
-              <td>{ask.title}</td>
               <td>{copy.kinds[ask.kind]}</td>
+              <td>
+                <Title ask={ask} />
+              </td>
               <td>{ask.date && staffDate(ask.date)}</td>
               <td>
                 <AskedBy ask={ask} />
-              </td>
-              <td>
-                {ask.url &&
-                  (ask.url.startsWith("/") ? (
-                    <Link href={ask.url}>{copy.open[ask.kind]}</Link>
-                  ) : (
-                    <a href={ask.url} target="_blank" rel="noreferrer">
-                      {copy.open[ask.kind]}
-                    </a>
-                  ))}
               </td>
               <td>
                 {answers.length === 0 ? (

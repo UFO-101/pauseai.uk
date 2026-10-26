@@ -1610,7 +1610,7 @@ describe("PoliticianTable headings", () => {
 });
 
 describe("AsksTable", () => {
-  it("lists each ask with its kind, date, who asks it, its link, and each answer's count, linked to who gave it", async () => {
+  it("lists each ask: its kind, title linked to the letter or event, date, who asks it, and each answer's count, linked to who gave it", async () => {
     await render(<AsksTable asks={exampleAsksWithCounts} />);
     const row = (title: string) => page.getByRole("row").filter({ hasText: title });
     const cells = (title: string) =>
@@ -1620,11 +1620,10 @@ describe("AsksTable", () => {
         .map((c) => c.element().textContent);
     const copy = staffCopy.asks;
     expect(cells(exampleAsks[0].title)).toEqual([
-      exampleAsks[0].title,
       copy.kinds.event,
+      exampleAsks[0].title,
       "1 Nov 2026",
       copy.askedBy.pauseai,
-      copy.open.event,
       // The answers in the order the kind lists them.
       [
         copy.count(staffCopy.statuses.going, 3),
@@ -1633,22 +1632,22 @@ describe("AsksTable", () => {
       ].join(" · "),
     ]);
     // Asked by nobody we record, with no link.
-    expect(cells(exampleAsks[1].title).slice(3, 5)).toEqual(["", ""]);
+    expect(cells(exampleAsks[1].title)[3]).toBe("");
+    expect(row(exampleAsks[1].title).getByRole("link", { name: exampleAsks[1].title }).query()).toBeNull();
     // No date; asked by both.
     expect(cells(exampleAsks[3].title)).toEqual([
-      exampleAsks[3].title,
       copy.kinds.letter,
+      exampleAsks[3].title,
       "",
       `${copy.askedBy.supporters}${copy.askedBy.pauseai}`,
-      copy.open.letter,
       copy.count(staffCopy.statuses.signed, 10),
     ]);
     expect(cells(exampleAsks[2].title).at(-1)).toBe(copy.noAnswers);
     // Another site's page opens in a new tab; ours in this one.
-    const event = row(exampleAsks[0].title).getByRole("link", { name: copy.open.event });
+    const event = row(exampleAsks[0].title).getByRole("link", { name: exampleAsks[0].title });
     await expect.element(event).toHaveAttribute("href", "https://luma.com/example");
     await expect.element(event).toHaveAttribute("target", "_blank");
-    const ours = row(exampleAsks[3].title).getByRole("link", { name: copy.open.letter });
+    const ours = row(exampleAsks[3].title).getByRole("link", { name: exampleAsks[3].title });
     await expect.element(ours).toHaveAttribute("href", "/pdfs/example.pdf");
     await expect.element(ours).not.toHaveAttribute("target");
     await expect

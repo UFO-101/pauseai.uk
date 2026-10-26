@@ -24,6 +24,7 @@ describeWithDatabase("asks and campaigns", () => {
       kind: "event",
       date: "2026-11-01",
       url: "https://luma.com/6jp2nqe9",
+      askedBy: ["pauseai"],
     });
     expect(asks.map((ask) => ask.slug).sort()).toEqual(
       [
@@ -46,14 +47,14 @@ describeWithDatabase("asks and campaigns", () => {
     expect(counts["edinburgh-conference-2026"]).toEqual({ declined: 2 });
     expect(counts["frontier-ai-letter"]).toEqual({ signed: 1 });
     expect(counts["deepmind-letter"]).toEqual({});
-    // Who asks each: supporters in a campaign, PauseAI in a mailing.
-    const by = Object.fromEntries((await asksWithCounts()).map((ask) => [ask.slug, [ask.bySupporters, ask.byPauseai]]));
+    // Who asks each, as the migration sets it.
+    const by = Object.fromEntries((await asksWithCounts()).map((ask) => [ask.slug, ask.askedBy]));
     expect(by).toEqual({
-      "frontier-ai-letter": [true, false],
-      "deepmind-letter": [true, false],
-      "controlai-statement": [true, false],
-      "edinburgh-conference-2026": [false, true],
-      "go-to-parliament-oct-2026": [false, false],
+      "frontier-ai-letter": ["supporters"],
+      "deepmind-letter": ["supporters"],
+      "controlai-statement": ["supporters"],
+      "edinburgh-conference-2026": ["pauseai"],
+      "go-to-parliament-oct-2026": ["supporters"],
     });
   });
 

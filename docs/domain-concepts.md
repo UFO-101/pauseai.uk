@@ -69,9 +69,9 @@ else would need a way to find them (a region for an MSP, a list for peers).
 
 Something we ask notable people to do whose answer we record: sign a
 letter, come to an event (`asks`, `lib/asks.ts`). Each has a slug, a title,
-a kind (`letter` or `event`), a date, and a link to the letter or the
-event. A migration adds each. Supporters ask it when a campaign's letter
-does, and PauseAI when a mailing does.
+a kind (`letter` or `event`), a date, a link to the letter or the
+event, and who asks it: supporters, in their letters or in person, PauseAI,
+in its own emails, or both. A migration adds each.
 
 A person's answer to an ask is a status (`ask_statuses`): one row per
 person per ask, with a status, a date, a note, and who set it; no answer,
@@ -408,10 +408,10 @@ login. To limit someone who's staying, take away their permissions: after
 Remove, logging in again makes a new account with none.
 
 An account opens the pages about politicians and campaigns (politicians,
-an MP's page, Blocked MP emails, imports).
+an MP's page, Politicians' blocked emails, imports).
 Permissions open more (`lib/staff-permissions.ts`): `supporters` every page
 with a member of the public's details (supporters, letters, who wrote to
-which MP, Blocked supporter emails), `admin` the accounts page and the
+which MP, Supporters' blocked emails), `admin` the accounts page and the
 audit log. `admin` doesn't include `supporters`. An MP's page is the one
 page that shows less without a permission: without `supporters`, its
 letters come from a query that doesn't select their senders, so none reach

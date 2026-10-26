@@ -9,6 +9,7 @@ export const exampleAsks: Ask[] = [
     kind: "event",
     date: "2026-11-01",
     url: "https://luma.com/example",
+    askedBy: ["pauseai"],
   },
   {
     slug: "go-to-parliament-oct-2026",
@@ -16,6 +17,7 @@ export const exampleAsks: Ask[] = [
     kind: "event",
     date: "2026-10-20",
     url: null,
+    askedBy: [],
   },
   {
     slug: "controlai-statement",
@@ -23,6 +25,7 @@ export const exampleAsks: Ask[] = [
     kind: "letter",
     date: "2026-09-11",
     url: "https://example.org/statement",
+    askedBy: ["supporters"],
   },
   {
     slug: "frontier-ai-letter",
@@ -30,20 +33,19 @@ export const exampleAsks: Ask[] = [
     kind: "letter",
     date: null,
     url: "/pdfs/example.pdf",
+    askedBy: ["supporters", "pauseai"],
   },
 ];
 
 /** The asks with how many gave each answer: a letter signed, an event answered every way it allows, and one nobody has answered. */
 export const exampleAsksWithCounts: AskWithCounts[] = [
-  { ...exampleAsks[0], counts: { declined: 50, passed_on: 1, going: 3 }, bySupporters: false, byPauseai: true },
+  { ...exampleAsks[0], counts: { declined: 50, passed_on: 1, going: 3 } },
   {
     ...exampleAsks[1],
     counts: { going: 2, tentative: 1, meeting_staff: 1, declined_surgery: 1 },
-    bySupporters: false,
-    byPauseai: false,
   },
-  { ...exampleAsks[2], counts: {}, bySupporters: true, byPauseai: false },
-  { ...exampleAsks[3], counts: { signed: 10 }, bySupporters: true, byPauseai: true },
+  { ...exampleAsks[2], counts: {} },
+  { ...exampleAsks[3], counts: { signed: 10 } },
 ];
 
 /** An MP in office who has signed the letter to the PM, and declined the conference, from Airtable. */

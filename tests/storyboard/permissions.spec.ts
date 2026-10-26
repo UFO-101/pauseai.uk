@@ -110,7 +110,7 @@ test("with no permissions, no page shows a supporter's name or email, nor sends 
   await frame(page, "an MP's page with no permissions: the letter, without who wrote it");
 });
 
-test("without supporters, Letters and Blocked supporter emails are closed, and Blocked MP emails names letters without linking them", async ({
+test("without supporters, Letters and Supporters' blocked emails are closed, and Politicians' blocked emails names letters without linking them", async ({
   page,
   request,
   flowDatabase,
@@ -149,7 +149,7 @@ test("without supporters, Letters and Blocked supporter emails are closed, and B
   const blocked = page.getByRole("table").first().getByRole("row").filter({ hasText: "no-such-mailbox@pauseai.uk" });
   await expect(blocked.getByText(`${staffCopy.emails.letterTo} ${bouncy.name}`)).toBeVisible();
   await expect(page.locator('a[href^="/staff/letters"]')).toHaveCount(0);
-  await frame(page, "Blocked MP emails without supporters: the letter named, not linked");
+  await frame(page, "Politicians' blocked emails without supporters: the letter named, not linked");
 
   // With supporters, the same page links to the letter.
   addStaffAccount(flowDatabase, staffEmail(), ["supporters"]);
@@ -159,7 +159,7 @@ test("without supporters, Letters and Blocked supporter emails are closed, and B
   await frame(page, "with supporters, the letter it names opens");
 });
 
-test("a supporter's bounced address is on Blocked supporter emails, not Blocked MP emails, and staff with supporters unblock it", async ({
+test("a supporter's bounced address is on Supporters' blocked emails, not Politicians' blocked emails, and staff with supporters unblock it", async ({
   page,
   request,
   flowDatabase,
@@ -171,13 +171,13 @@ test("a supporter's bounced address is on Blocked supporter emails, not Blocked 
 
   await page.goto(`${BASE}/staff/politicians/blocked-emails`);
   await expect(page.getByText(staffCopy.emails.noBlocks)).toBeVisible();
-  await frame(page, "Blocked MP emails: nothing, as no MP's address bounced");
+  await frame(page, "Politicians' blocked emails: nothing, as no MP's address bounced");
 
   await page.goto(`${BASE}/staff/supporters/blocked-emails`);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(staffCopy.emails.titles.supporters);
   const row = page.getByRole("table").first().getByRole("row").filter({ hasText: "jane.fixture@example.com" });
   await expect(row).toContainText(staffCopy.emails.kinds.hard);
-  await frame(page, "Blocked supporter emails: Jane's address, bounced");
+  await frame(page, "Supporters' blocked emails: Jane's address, bounced");
 
   await row.getByLabel(staffCopy.emails.note).fill("She gave us a new one");
   await row.getByRole("button", { name: staffCopy.emails.unblock }).click();

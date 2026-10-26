@@ -12,12 +12,15 @@ export const ASK_STATUSES = {
 export type AskKind = keyof typeof ASK_STATUSES;
 export type AskStatus = (typeof ASK_STATUSES)[AskKind][number];
 
+/** Who asks it: supporters, in their letters or in person, or PauseAI, in its own emails. */
+export type Asker = "supporters" | "pauseai";
+
 /** Each ask's status for one person, keyed by the ask's slug. */
 export type AskStatuses = Partial<Record<string, AskStatus>>;
 
-/** Our open letter to the Prime Minister on frontier AI. */
+/** PauseAI's frontier AI letter to the Prime Minister. */
 export const FRONTIER_AI_LETTER_ASK = "frontier-ai-letter";
-/** Our 2025 letter to Sir Demis Hassabis. */
+/** PauseAI's 2025 letter to Sir Demis Hassabis of Google DeepMind. */
 export const DEEPMIND_LETTER_ASK = "deepmind-letter";
 /** ControlAI's statement backing the Artificial Superintelligence Bill. */
 export const CONTROLAI_STATEMENT_ASK = "controlai-statement";
