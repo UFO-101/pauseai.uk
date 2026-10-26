@@ -475,7 +475,7 @@ export const staff: Group = {
           ),
         },
         {
-          label: "Can't be sure of either",
+          label: "On the calendar; can't be sure of the updates",
           render: () => (
             <StaffPage as="div">
               <SubscriptionBadges permissions={exampleSupporterRows[1].permissions} />
