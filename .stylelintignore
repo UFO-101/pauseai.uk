@@ -1,0 +1,3 @@
+# Read before any config is looked up, unlike stylelint.config.mjs's ignoreFiles,
+# so a clone in tmp/ with its own config is never loaded.
+tmp/
