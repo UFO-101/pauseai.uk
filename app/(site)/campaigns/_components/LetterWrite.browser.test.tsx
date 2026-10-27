@@ -1,3 +1,4 @@
+import { CONTROLAI_LETTER_ASK } from "@/lib/asks";
 import { afterEach, describe, expect, it } from "vitest";
 import { render } from "vitest-browser-react";
 import { page } from "vitest/browser";
@@ -26,7 +27,7 @@ describe("LetterWrite", () => {
   });
 
   it("says so above the bill's letter when the MP signed ControlAI's letter, and nowhere else", async () => {
-    saveLookup({ ...LOOKUP, campaign: bill.slug, statuses: { [bill.ask!]: "signed" } });
+    saveLookup({ ...LOOKUP, campaign: bill.slug, statuses: { [CONTROLAI_LETTER_ASK]: "signed" } });
     const signed = await render(<LetterWrite campaignSlug={bill.slug} />);
     await expect.element(page.getByText(copy.sobelBill.signedNote.after, { exact: false })).toBeVisible();
     await expect
@@ -41,7 +42,7 @@ describe("LetterWrite", () => {
     await expect.element(page.getByText(copy.sobelBill.signedNote.after, { exact: false })).not.toBeInTheDocument();
     unsigned.unmount();
 
-    saveLookup({ ...LOOKUP, statuses: { [bill.ask!]: "signed" } });
+    saveLookup({ ...LOOKUP, statuses: { [CONTROLAI_LETTER_ASK]: "signed" } });
     await render(<LetterWrite campaignSlug={letterToPm.slug} />);
     await expect.element(editor()).toBeVisible();
     await expect.element(page.getByText(copy.sobelBill.signedNote.after, { exact: false })).not.toBeInTheDocument();

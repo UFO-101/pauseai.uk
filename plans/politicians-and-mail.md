@@ -125,7 +125,7 @@ letter, come to an event.
   | Campaign                   | Ask                   | In code |
   | -------------------------- | --------------------- | ------- |
   | `regulate-letter-pm`       | `frontier-ai-letter`  | yes     |
-  | `support-sobel-bill`       | `controlai-letter` | yes     |
+  | `support-sobel-bill`       |                       | yes     |
   | `pauseai-info-frontier-ai` | `frontier-ai-letter`  | no      |
   | `pauseai-info-liability`   |                       | no      |
   | `pauseai-info-deepmind`    | `deepmind-letter`     | no      |
@@ -517,6 +517,13 @@ Data protection, agreed before building and recorded in
   missing once they're in use.
 - A permission for sending mailings, if one is needed.
 - Journalists and famous people.
+- What politicians did in Parliament, such as the Artificial Superintelligence
+  Bill's second reading on 13 November 2026, which the Sobel bill campaign
+  asks MPs to attend. It isn't an answer to us, so it's neither a letter nor
+  an event: it would be a kind of its own, with statuses like `spoke`,
+  `voted_for` and `voted_against`, filled by scraping Hansard and the
+  division after the day. Hansard records speakers and votes, not who was
+  in the chamber. Then it could be the campaign's ask.
 - Bulk mail to supporters (`plans/supporters-email.html`).
 
 ## Waiting on Joseph

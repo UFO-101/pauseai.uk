@@ -106,7 +106,7 @@ CREATE TABLE campaigns (
 );
 INSERT INTO campaigns (slug, title, ask) VALUES
   ('regulate-letter-pm', 'Regulate AI developers now', 'frontier-ai-letter'),
-  ('support-sobel-bill', 'Support the Artificial Superintelligence Bill', 'controlai-letter'),
+  ('support-sobel-bill', 'Support the Artificial Superintelligence Bill', NULL),
   ('pauseai-info-frontier-ai', 'Frontier AI letter, from pauseai.info', 'frontier-ai-letter'),
   ('pauseai-info-liability', 'Liability letter, from pauseai.info', NULL),
   ('pauseai-info-deepmind', 'DeepMind letter, from pauseai.info', 'deepmind-letter');

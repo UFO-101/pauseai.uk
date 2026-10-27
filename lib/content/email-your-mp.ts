@@ -123,9 +123,9 @@ ${d.senderName}`,
   {
     slug: "support-sobel-bill",
     title: "Support the Artificial Superintelligence Bill",
-    ask: CONTROLAI_LETTER_ASK,
-    // No "done": everyone is asked to go to the debate, so it's always there
-    // to move on to.
+    // No ask and no "done": everyone is asked to go to the debate, so it's
+    // always there to move on to. Its letter thanks an MP who signed
+    // ControlAI's letter (lib/controlai-letter.ts).
     subject: "Request to support the Artificial Superintelligence Bill",
     letter: (d) =>
       `Dear ${d.salutation},
@@ -176,7 +176,12 @@ export const copy = {
     // Outside production only, under the form: the first test postcode, and
     // the rest, with what each MP is for, behind an arrow.
     testPostcodes: "Dev site takes test postcodes only. Expand for more. Default one: ",
-    testMpSigned: (campaign: string) => `signed “${campaign}”`,
+    testMpSigned: (ask: string) => `signed “${ask}”`,
+    // The asks the test MPs have signed (lib/test-mps.json), by their titles in the asks table.
+    testMpAsks: {
+      [FRONTIER_AI_LETTER_ASK]: "Frontier AI letter to the Prime Minister",
+      [CONTROLAI_LETTER_ASK]: "ControlAI's letter to the Prime Minister",
+    } as Partial<Record<string, string>>,
     testMpNoEmail: "no email",
     testMpBounces: "emails bounce",
     noEmail: "No email found for your MP.",

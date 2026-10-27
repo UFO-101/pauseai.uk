@@ -1,6 +1,6 @@
 import { expect, it } from "vitest";
 import { migrate } from "@/scripts/db-migrate.mjs";
-import { campaigns } from "@/lib/content/email-your-mp";
+import { campaigns, copy } from "@/lib/content/email-your-mp";
 import { addTestPolitician, describeWithDatabase, useDatabaseUpTo, useTestDatabase } from "@/tests/database";
 import { asksWithCounts, listAsks, listCampaigns } from "./asks";
 import { query } from "./db";
@@ -37,6 +37,11 @@ describeWithDatabase("asks and campaigns", () => {
         "go-to-parliament-oct-2026",
       ].sort(),
     );
+  });
+
+  it("names the test MPs' asks by their titles here", async () => {
+    const titles = Object.fromEntries((await listAsks()).map((ask) => [ask.slug, ask.title]));
+    for (const [ask, title] of Object.entries(copy.lookup.testMpAsks)) expect(titles[ask]).toBe(title);
   });
 
   it("counts each ask's answers", async () => {

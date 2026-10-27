@@ -44,14 +44,14 @@ describe("campaigns", () => {
 
   it("counts a campaign done only with the status it asks for", () => {
     expect(isDone(letterToPm, { [letterToPm.ask!]: "signed" })).toBe(true);
-    expect(isDone(letterToPm, { [bill.ask!]: "signed" })).toBe(false);
+    expect(isDone(letterToPm, { "controlai-letter": "signed" })).toBe(false);
     expect(isDone(letterToPm, {})).toBe(false);
   });
 
   it("never counts a campaign without a done status as done", () => {
     expect(bill.done).toBeUndefined();
     expect(isDone(bill, {})).toBe(false);
-    expect(isDone(bill, { [bill.ask!]: "signed" })).toBe(false);
+    expect(isDone(bill, { "controlai-letter": "signed" })).toBe(false);
   });
 
   it("leaves campaigns nobody has done out of the staff interface, which records their asks", () => {
@@ -60,7 +60,8 @@ describe("campaigns", () => {
   });
 
   it("finds the campaign that makes an ask", () => {
-    expect(campaignForAsk("controlai-letter")).toBe(bill);
+    expect(campaignForAsk("frontier-ai-letter")).toBe(letterToPm);
+    expect(campaignForAsk("controlai-letter")).toBeUndefined();
     expect(campaignForAsk("deepmind-letter")).toBeUndefined();
   });
 
@@ -76,7 +77,7 @@ describe("campaigns", () => {
   it("moves on from a campaign the MP has done to the first they haven't", () => {
     expect(campaignToMoveTo(letterToPm, {})).toBeUndefined();
     expect(campaignToMoveTo(letterToPm, { [letterToPm.ask!]: "signed" })).toBe(bill);
-    expect(campaignToMoveTo(bill, { [letterToPm.ask!]: "signed", [bill.ask!]: "signed" })).toBeUndefined();
+    expect(campaignToMoveTo(bill, { [letterToPm.ask!]: "signed", "controlai-letter": "signed" })).toBeUndefined();
   });
 
   it("has a page for each campaign", () => {
@@ -95,7 +96,7 @@ describe("letters", () => {
   });
 
   it("thanks an MP who signed ControlAI's letter, in the bill's letter only, and still asks them to the debate", () => {
-    const signed = { ...details, statuses: { [bill.ask!]: "signed" as const } };
+    const signed = { ...details, statuses: { "controlai-letter": "signed" as const } };
     expect(toText(draftLetter(bill, signed, ADDRESS))).toContain(copy.sobelBill.letterThanks);
     expect(toText(draftLetter(bill, signed, ADDRESS))).toContain("second reading debate");
     expect(toText(draftLetter(bill, details, ADDRESS))).not.toContain(copy.sobelBill.letterThanks);

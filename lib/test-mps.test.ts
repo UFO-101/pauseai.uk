@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { CONTROLAI_LETTER_ASK } from "./asks";
+import { copy } from "./content/email-your-mp";
 import { campaignForAsk, normalisePostcode } from "./email-your-mp";
 import { TEST_MPS } from "./test-mps";
 
@@ -10,8 +11,9 @@ describe("test MPs", () => {
     for (const mp of TEST_MPS) {
       expect(normalisePostcode(mp.postcode)).toBe(mp.postcode);
       for (const [ask, status] of Object.entries(mp.statuses)) {
-        // The bill's campaign is never done, but its ask, ControlAI's letter, can be signed.
+        // ControlAI's letter is no campaign's ask, but the bill's letter thanks an MP who signed it.
         expect(ask === CONTROLAI_LETTER_ASK ? "signed" : campaignForAsk(ask)?.done).toBe(status);
+        expect(copy.lookup.testMpAsks[ask]).toBeDefined();
       }
     }
   });

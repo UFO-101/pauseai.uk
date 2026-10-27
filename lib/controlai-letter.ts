@@ -9,7 +9,7 @@ import { CONTROLAI_LETTER_ASK } from "./asks";
 
 export const CONTROLAI_LETTER_PAGE = "https://controlai.org/uk-pm-letter";
 
-/** The campaign for the bill, whose ask is the letter. */
+/** The campaign for the bill, whose letter thanks an MP who signed ControlAI's. */
 export const SOBEL_BILL_CAMPAIGN = "support-sobel-bill";
 
 /**

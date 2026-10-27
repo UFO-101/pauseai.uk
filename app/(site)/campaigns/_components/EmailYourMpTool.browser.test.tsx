@@ -98,9 +98,9 @@ describe("EmailYourMpTool", () => {
     expect(navigation.pushed).toEqual([]);
   });
 
-  it("moves on from the PM letter to the bill even with a status for the bill, as nobody has done that", async () => {
+  it("moves on from the PM letter to the bill even when the MP signed ControlAI's letter, as nobody has done the bill's", async () => {
     respond = async () =>
-      Response.json({ ok: true, mp: MP, statuses: { [letterToPm.ask!]: "signed", [bill.ask!]: "signed" } });
+      Response.json({ ok: true, mp: MP, statuses: { [letterToPm.ask!]: "signed", "controlai-letter": "signed" } });
     await render(<EmailYourMpTool campaignSlug={letterToPm.slug} />);
     await lookUp();
 
@@ -139,10 +139,14 @@ describe("EmailYourMpTool", () => {
     const items = page.getByRole("listitem");
     await expect
       .element(items.nth(1))
-      .toHaveTextContent(`ZZ9 9ZS (Signy McTestface MP): ${copy.lookup.testMpSigned(letterToPm.title)}`);
+      .toHaveTextContent(
+        `ZZ9 9ZS (Signy McTestface MP): ${copy.lookup.testMpSigned(copy.lookup.testMpAsks["frontier-ai-letter"]!)}`,
+      );
     await expect
       .element(items.nth(2))
-      .toHaveTextContent(`ZZ9 9ZB (Backy McTestface MP): ${copy.lookup.testMpSigned(bill.title)}`);
+      .toHaveTextContent(
+        `ZZ9 9ZB (Backy McTestface MP): ${copy.lookup.testMpSigned(copy.lookup.testMpAsks["controlai-letter"]!)}`,
+      );
     await expect
       .element(items.nth(3))
       .toHaveTextContent(`ZZ9 9ZN (Nomail McTestface MP): ${copy.lookup.testMpNoEmail}`);
