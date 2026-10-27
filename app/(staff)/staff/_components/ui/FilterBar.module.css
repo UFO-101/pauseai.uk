@@ -145,7 +145,12 @@
 .group summary::after {
   content: "›" / "";
   color: var(--muted);
-  transition: rotate 0.15s;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .group summary::after {
+    transition: rotate 0.15s;
+  }
 }
 
 .group[open] summary::after {

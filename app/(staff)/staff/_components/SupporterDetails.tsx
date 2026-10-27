@@ -3,18 +3,23 @@ import { Muted } from "@/components/ui/Text";
 import { campaignBySlug, campaignPath, displayPostcode } from "@/lib/email-your-mp";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { staffDate, staffTime } from "@/lib/staff-time";
-import { givenPlaces, supporterPlace } from "@/lib/supporter-place";
-import type { SupporterActivity, SupporterDetails as Details, SupporterSource } from "@/lib/supporters";
+import { givenPlaces } from "@/lib/supporter-place";
+import type {
+  SupporterActivity,
+  SupporterDetails as Details,
+  SupporterSource,
+  SupporterSummary,
+} from "@/lib/supporters";
 import EmailPermissionTiles from "./EmailPermissionTiles";
 import SupporterBadges from "./SupporterBadges";
-import Grid, { Card } from "./ui/Grid";
+import Grid, { Card, spanClass } from "./ui/Grid";
+import { ListTable, type ListColumn } from "./ui/ListFrame";
 import styles from "./Details.module.css";
 
 const copy = staffCopy.supporters;
 
 /** One value we hold, and where and when it came from: the sources that gave it, and the first time. */
-/** `event` marks a city that's an event's they registered for, not one they gave. */
-type Given = { value: string; sources: Set<SupporterSource>; since: string; event?: boolean };
+type Given = { value: string; sources: Set<SupporterSource>; since: string };
 
 /**
  * The distinct values of a detail, each with its sources and when it was
@@ -44,21 +49,61 @@ function distinct(
 
 /** Where a value came from and when, in words. */
 function origin(given: Given): string {
-  if (given.event) return copy.detail.fromEvent(staffDate(given.since));
   const sources = [...given.sources].map((source) => copy.sources[source]).join(", ");
   return given.since ? copy.detail.from(sources, staffDate(given.since)) : sources;
 }
 
-/** One line of the box: its label, then each value with where it came from. */
-function Fact({ label, values }: { label: string; values: Given[] }) {
+/** The icons by the profile's details: an envelope, a phone, a pin. */
+const ICONS = {
+  email: (
+    <>
+      <rect x="3" y="5" width="18" height="14" rx="2" />
+      <path d="M3 7l9 6 9-6" />
+    </>
+  ),
+  phone: <path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2" />,
+  place: (
+    <>
+      <path d="M12 21s7-6.3 7-12a7 7 0 1 0-14 0c0 5.7 7 12 7 12z" />
+      <circle cx="12" cy="9" r="2.5" />
+    </>
+  ),
+};
+
+/** A detail's label, with its icon if it has one. */
+function Label({ label, icon }: { label: string; icon?: keyof typeof ICONS }) {
+  return (
+    <dt>
+      {icon && (
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          {ICONS[icon]}
+        </svg>
+      )}
+      {label}
+    </dt>
+  );
+}
+
+/** One detail of the profile: its label, then each value, with where it came from under it. */
+function Fact({ label, values, icon }: { label: string; values: Given[]; icon?: keyof typeof ICONS }) {
   if (values.length === 0) return null;
   return (
     <>
-      <dt>{label}</dt>
+      <Label label={label} icon={icon} />
       <dd>
         {values.map((given) => (
           <div key={given.value}>
-            {given.value} <span className={styles.origin}>({origin(given)})</span>
+            {given.value} <span className={styles.origin}>{origin(given)}</span>
           </div>
         ))}
       </dd>
@@ -119,9 +164,67 @@ function Subject({ item, letters }: { item: SupporterActivity; letters: string }
   return null;
 }
 
+/** Where they are, and what it's from, or nothing if we don't know. */
+function PlaceFact({ place }: { place: SupporterSummary["place"] }) {
+  if (!place?.name) return null;
+  return (
+    <>
+      <Label label={copy.detail.place} icon="place" />
+      <dd>
+        {place.name} <span className={styles.origin}>{copy.detail.placeFrom[place.basis](place.given)}</span>
+      </dd>
+    </>
+  );
+}
+
+/** The events they registered for, newest first: when, which, and how it stands. */
+const eventColumns: ListColumn<SupporterActivity>[] = [
+  { key: "at", label: copy.detail.columns.date, short: true, cell: (a) => staffDate(a.at) },
+  {
+    key: "event",
+    label: copy.detail.columns.event,
+    cell: (a) => (a.href ? <Link href={a.href}>{a.title}</Link> : a.title),
+  },
+  {
+    key: "status",
+    label: copy.detail.columns.status,
+    short: true,
+    cell: (a) => copy.detail.statuses[a.detail ?? ""] ?? copy.detail.registered,
+  },
+];
+
+/** Their letters, newest first: when, to whom, in which campaign, and how it stands, linked to their letters. */
+function letterColumns(letters: string): ListColumn<SupporterActivity>[] {
+  return [
+    { key: "at", label: copy.detail.columns.date, short: true, cell: (a) => staffDate(a.at) },
+    {
+      key: "to",
+      label: copy.detail.columns.to,
+      cell: (a) => (a.href ? <Link href={a.href}>{a.detail}</Link> : a.detail),
+    },
+    {
+      key: "campaign",
+      label: copy.detail.columns.campaign,
+      cell: (a) => {
+        const campaign = campaignBySlug(a.title ?? "");
+        return campaign ? <Link href={campaignPath(campaign)}>{campaign.title}</Link> : a.title;
+      },
+    },
+    {
+      key: "letter",
+      label: copy.detail.columns.letter,
+      short: true,
+      cell: (a) => a.status && <Link href={letters}>{staffCopy.letters.status[a.status] ?? a.status}</Link>,
+    },
+  ];
+}
+
 /**
- * A supporter's page: their name and badges; one box of what we hold, each
- * value with where it came from; then everything they did, newest first.
+ * A supporter's page (design C, the profile column): their name and
+ * badges; a narrow card of who they are, each detail with its icon and
+ * where it came from, then whether we'd email them; beside it, tables of
+ * the events they registered for and their letters; and at the foot,
+ * everything they did, newest first, folded.
  */
 export default function SupporterDetails({ supporter }: { supporter: Details }) {
   const { summary, identities, contacts, activity, permissions } = supporter;
@@ -131,13 +234,10 @@ export default function SupporterDetails({ supporter }: { supporter: Details }) 
     contacts.map((c) => ({ value: c.postcode, source: c.source, at: c.at })),
     displayPostcode,
   );
-  // The cities they gave us; failing those, their newest event's (supporterPlace).
-  const given = distinct(givenPlaces(contacts).map((c) => ({ value: c.city, source: c.source, at: c.at })));
-  const place = supporterPlace(contacts);
-  const cities: Given[] =
-    given.length > 0 || !place?.city
-      ? given
-      : [{ value: place.city, sources: new Set([place.source]), since: new Date(place.at).toISOString(), event: true }];
+  const cities = distinct(givenPlaces(contacts).map((c) => ({ value: c.city, source: c.source, at: c.at })));
+  const events = activity.filter((a) => a.kind === "luma-registered");
+  const letters = activity.filter((a) => a.kind === "letter");
+  const lettersPage = `/staff/letters/supporter/${summary.id}`;
   return (
     <>
       <h1>
@@ -145,10 +245,11 @@ export default function SupporterDetails({ supporter }: { supporter: Details }) 
       </h1>
 
       <Grid>
-        <Card span={4} as="div">
-          <dl className={styles.facts}>
-            <Fact label={copy.detail.emails} values={emails} />
-            <Fact label={copy.detail.phone} values={phones} />
+        <Card span={2} as="div">
+          <dl className={styles.profile}>
+            <Fact label={copy.detail.emails} values={emails} icon="email" />
+            <Fact label={copy.detail.phone} values={phones} icon="phone" />
+            <PlaceFact place={summary.place} />
             <Fact label={copy.detail.postcode} values={postcodes} />
             <Fact label={copy.detail.city} values={cities} />
             {summary.firstSeenAt && (
@@ -164,25 +265,51 @@ export default function SupporterDetails({ supporter }: { supporter: Details }) 
               </>
             )}
           </dl>
+          <section aria-labelledby="subscriptions" className={styles.part}>
+            <h3 id="subscriptions" className={styles.partTitle}>
+              {copy.detail.listsTitle}
+            </h3>
+            <EmailPermissionTiles permissions={permissions} />
+          </section>
         </Card>
-        <Card span={2} look="aside" title={copy.detail.listsTitle} id="subscriptions">
-          <EmailPermissionTiles permissions={permissions} />
-        </Card>
+        <div className={`${spanClass(4)} ${styles.tables}`}>
+          <section aria-labelledby="events">
+            <h2 id="events">
+              {copy.detail.eventsTitle}
+              {events.length > 0 && <Muted> {copy.detail.eventsCount(events.length)}</Muted>}
+            </h2>
+            {events.length ? (
+              <ListTable columns={eventColumns} rows={events} rowKey={(a) => `${a.at}${a.title}`} />
+            ) : (
+              <p className={styles.none}>{copy.detail.noEvents}</p>
+            )}
+          </section>
+          <section aria-labelledby="letters">
+            <h2 id="letters">{copy.detail.lettersTitle}</h2>
+            {letters.length ? (
+              <ListTable columns={letterColumns(lettersPage)} rows={letters} rowKey={(a) => `${a.at}${a.detail}`} />
+            ) : (
+              <p className={styles.none}>{copy.detail.noLetters}</p>
+            )}
+          </section>
+        </div>
         <Card span={6} look="log" title={copy.detail.activityTitle} id="history">
           {activity.length === 0 ? (
             <p className={styles.none}>{copy.detail.noActivity}</p>
           ) : (
-            <ol className={styles.history} aria-label={copy.detail.activityTitle}>
-              {activity.map((item, i) => (
-                <li key={i}>
-                  <span className={styles.when}>{staffTime(item.at)}</span>
-                  <span>
-                    {copy.detail.kinds[item.kind]}{" "}
-                    <Subject item={item} letters={`/staff/letters/supporter/${summary.id}`} />
-                  </span>
-                </li>
-              ))}
-            </ol>
+            <details className={styles.folded}>
+              <summary>{copy.detail.showHistory(activity.length)}</summary>
+              <ol className={styles.history} aria-label={copy.detail.activityTitle}>
+                {activity.map((item, i) => (
+                  <li key={i}>
+                    <span className={styles.when}>{staffTime(item.at)}</span>
+                    <span>
+                      {copy.detail.kinds[item.kind]} <Subject item={item} letters={lettersPage} />
+                    </span>
+                  </li>
+                ))}
+              </ol>
+            </details>
           )}
         </Card>
       </Grid>

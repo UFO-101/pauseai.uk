@@ -72,7 +72,8 @@ DROP TABLE seed_politicians;
 -- Made-up politicians, enough for 250 with the test MPs, so the list has
 -- three pages: mostly MPs, then peers and members of the other bodies, each
 -- with a party of their body; a few retired or gone, a few marked, a few
--- with no address.
+-- with no address. Not Airtable's, so a sync leaves them be: the made-up
+-- record ID only joins each to its row here.
 CREATE TEMP TABLE made_politicians AS
 SELECT i, 'recMade' || i AS airtable_id,
   (ARRAY['Alex','Bea','Cal','Dee','Eli','Fay','Gus','Hal','Ivy','Jon','Kit','Lou','Mo','Ned','Ola','Pip','Quin','Ros','Sid','Tess','Uma','Viv','Wes','Zoe'])[1 + i % 24] AS first,
@@ -108,6 +109,7 @@ SELECT p.id, m.house,
     ELSE 'northern-ireland'
   END
 FROM people p JOIN made_politicians m USING (airtable_id);
+UPDATE notable_people SET airtable_id = NULL WHERE airtable_id IN (SELECT airtable_id FROM made_politicians);
 DROP TABLE made_politicians;
 
 -- Statuses: Polly signed the letter to the PM last month; Dora this week;

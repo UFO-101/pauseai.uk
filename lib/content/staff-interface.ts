@@ -36,6 +36,8 @@ export const staffCopy = {
     // The button at the top of the sidebar that folds it to a strip, and back, for a screen reader.
     fold: "Fold the menu",
     unfold: "Unfold the menu",
+    // Beside the fold button's chevron while the menu's open.
+    foldShort: "Fold",
     home: "Dashboard",
     accounts: "Staff accounts",
     // The sections the pages are in, in the sidebar.
@@ -235,8 +237,6 @@ export const staffCopy = {
       } as Record<string, string>,
       firstSeen: "First seen",
       lastActive: "Last activity",
-      /** Where a city came from when it's their newest event's, not one they gave. */
-      fromEvent: (when: string) => `their newest Luma event, ${when}`,
       /** Where a detail came from and when: "Luma, 26 Sept 2026". */
       from: (sources: string, when: string) => `${sources}, ${when}`,
       // Under the main box: a tile per topic, saying whether we'd email them about it, and why.
@@ -289,6 +289,31 @@ export const staffCopy = {
         seeBlocked: "See blocked emails",
       },
       activityTitle: "History",
+      // The history, folded at the foot of the page: the button that opens it.
+      showHistory: (n: number) => `Show all ${n}`,
+      // Where they are, and what it's from: their postcode, a city they gave, or an event's place.
+      place: "Place",
+      placeFrom: {
+        postcode: (given: string) => `from their postcode, ${given}`,
+        city: () => "from the city they gave",
+        event: (given: string) => `from where ${given} was`,
+      } as Record<string, (given: string) => string>,
+      // Beside the box of what we hold: the events they registered for, and their letters, a table each.
+      eventsTitle: "Events",
+      eventsCount: (registered: number) => `${registered} registered`,
+      noEvents: "No events.",
+      lettersTitle: "Letters to MPs",
+      noLetters: "No letters.",
+      columns: {
+        date: "Date",
+        event: "Event",
+        status: "Registration",
+        to: "To",
+        campaign: "Campaign",
+        letter: "Status",
+      },
+      // A registration that went through, where the status says nothing more.
+      registered: "Registered",
       // Between the MP a letter went to, or who answered it, and its campaign.
       about: "about",
       noActivity: "Nothing yet.",

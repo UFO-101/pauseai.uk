@@ -96,7 +96,7 @@ const MP = examplePolitician;
 const ask = (slug: string) => exampleAsks.find((a) => a.slug === slug)!;
 const ran = exampleRun;
 const failed = exampleFailedRun;
-const AT = "2026-10-15 02:00";
+const AT = "15 Oct 2026, 02:00";
 
 /** A stand-in Server Action that keeps what it was sent. */
 function action() {
@@ -123,7 +123,7 @@ describe("StaffNav", () => {
     const nav = document.querySelector("nav")!;
     expect(nav.querySelector("span[class*=who]")!.textContent).toBe("jo@pauseai.uk");
     // Home leads the list, a link like the rest.
-    expect(nav.querySelector('a[href="/staff"]:not([class])')!.textContent).toBe(staffCopy.nav.home);
+    expect(nav.querySelector('a[href="/staff"][class*=page]')!.textContent).toBe(staffCopy.nav.home);
     const current = nav.querySelector('a[aria-current="page"]')!;
     expect(current.textContent).toBe(staffCopy.nav.politicians);
     expect(current.getAttribute("href")).toBe("/staff/politicians");
@@ -215,8 +215,8 @@ describe("StaffSessions", () => {
     const copy = staffCopy.sessions;
     const rows = page.getByRole("row").all().slice(1);
     expect(rows.map((row) => row.element().textContent)).toEqual([
-      `FirefoxLinux2026-10-22 09:002026-10-23 09:00${copy.kept.no}${copy.thisBrowser}${staffCopy.nav.logout}`,
-      `${copy.unknown}${copy.unknown}2026-10-20 08:002026-11-21 08:00${copy.kept.yes}${staffCopy.nav.logout}`,
+      `FirefoxLinux22 Oct 2026, 09:0023 Oct 2026, 09:00${copy.kept.no}${copy.thisBrowser}${staffCopy.nav.logout}`,
+      `${copy.unknown}${copy.unknown}20 Oct 2026, 08:0021 Nov 2026, 08:00${copy.kept.yes}${staffCopy.nav.logout}`,
     ]);
     const form = page.getByRole("button", { name: copy.logOutEverywhere }).element().closest("form")!;
     expect(form.getAttribute("method")).toBe("post");
@@ -255,7 +255,7 @@ describe("StaffDashboard", () => {
     expect(items.map((item) => item.element().textContent)).toEqual([
       `${copy.actions.heldSync(24)}${copy.actions.heldSyncDetail}${copy.actions.decide}`,
       `${copy.actions.blockedMp("Bouncy McTestface MP")}${copy.actions.blockedMpDetail}${copy.actions.openMp}`,
-      `${copy.actions.failedImport(jobTitles["import-controlai"])}${copy.actions.failedImportDetail("No PDF linked", "2026-10-21 02:00")}${copy.actions.seeRun}`,
+      `${copy.actions.failedImport(jobTitles["import-controlai"])}${copy.actions.failedImportDetail("No PDF linked", "21 Oct 2026, 02:00")}${copy.actions.seeRun}`,
     ]);
     await expect
       .element(page.getByRole("link", { name: copy.actions.decide }))
@@ -573,15 +573,15 @@ describe("StaffAccountsTable", () => {
         .map((cell) => cell.element().textContent);
     const copy = staffCopy.accounts;
     expect(row("jo@pauseai.uk").slice(2, 6)).toEqual([
-      `2026-10-20 09:00 ${copy.addedBy("admin@pauseai.uk")}`,
+      `20 Oct 2026, 09:00 ${copy.addedBy("admin@pauseai.uk")}`,
       copy.never,
       copy.never,
       "0",
     ]);
     expect(row("sam@pauseai.uk").slice(2, 6)).toEqual([
-      `2026-10-21 10:30 ${copy.addedByLogin}`,
-      "2026-10-21 10:30",
-      "2026-10-21 11:00",
+      `21 Oct 2026, 10:30 ${copy.addedByLogin}`,
+      "21 Oct 2026, 10:30",
+      "21 Oct 2026, 11:00",
       "1",
     ]);
   });
@@ -598,7 +598,7 @@ describe("StaffAccountsTable", () => {
 
   it("lists every account, centred in its row, with its boxes, a Remove at the right, and a key to the permissions", async () => {
     const { remove } = await renderTable();
-    const cell = page.getByRole("cell", { name: "2026-10-22 08:00", exact: true });
+    const cell = page.getByRole("cell", { name: "22 Oct 2026, 08:00", exact: true });
     await expect.element(cell).toBeVisible();
     expect(getComputedStyle(cell.element()).verticalAlign).toBe("middle");
     const jo = page.getByRole("group", { name: "jo@pauseai.uk" });
@@ -1273,25 +1273,25 @@ describe("PoliticianDetails", () => {
     const history = page.getByRole("list", { name: staffCopy.politician.historyTitle }).getByRole("listitem").all();
     const copy = staffCopy.politician.history;
     expect(history.map((item) => item.element().textContent)).toEqual([
-      `2026-10-15 09:00${copy["letter-replied"]} Anon Writer · ${pm.title}`,
-      `2026-10-14 09:30${copy["unblock address"]} polly.placeholder.mp@parliament.uk · Fixed in Airtable · jo@pauseai.uk`,
-      `2026-10-13 08:00${copy.letter} Anon Writer · ${pm.title} · ${staffCopy.letters.status.sent}`,
-      `2026-10-12 09:10${copy["block address"]} polly.placeholder.mp@parliament.uk · ${staffCopy.emails.kinds.hard} · postmark`,
-      `2026-10-12 09:00${copy.letter} ${exampleLetter.senderName} · ${pm.title} · ${staffCopy.letters.status.bounced}`,
-      `2026-10-03 08:00${copy["pauseai-letter"]} Example Mailing · ${staffCopy.politician.personalised}`,
+      `15 Oct 2026, 09:00${copy["letter-replied"]} Anon Writer · ${pm.title}`,
+      `14 Oct 2026, 09:30${copy["unblock address"]} polly.placeholder.mp@parliament.uk · Fixed in Airtable · jo@pauseai.uk`,
+      `13 Oct 2026, 08:00${copy.letter} Anon Writer · ${pm.title} · ${staffCopy.letters.status.sent}`,
+      `12 Oct 2026, 09:10${copy["block address"]} polly.placeholder.mp@parliament.uk · ${staffCopy.emails.kinds.hard} · postmark`,
+      `12 Oct 2026, 09:00${copy.letter} ${exampleLetter.senderName} · ${pm.title} · ${staffCopy.letters.status.bounced}`,
+      `3 Oct 2026, 08:00${copy["pauseai-letter"]} Example Mailing · ${staffCopy.politician.personalised}`,
       // Dated the day before it was recorded, so on that day.
-      `2026-10-01${statusLine(staffCopy.politician.statusSet(staffCopy.statuses.signed), ask("frontier-ai-letter").title)} · Told us at the march · jo@pauseai.uk`,
-      `2026-09-30 10:00${copy["edit politician"]} Polly Placeholder · polly.placeholder.mp@parliament.uk · sam@pauseai.uk`,
-      `2026-09-02 08:00${copy["pauseai-letter"]} Example Mailing`,
-      `2026-09-01 10:00${statusLine(staffCopy.politician.statusCleared, "gone")} · jo@pauseai.uk`,
-      `2026-08-15 10:00${statusLine(staffCopy.politician.statusSet("odd"), pm.title)} · jo@pauseai.uk`,
-      `2026-08-12 10:00${statusLine(staffCopy.politician.statusSet(staffCopy.statuses.signed), "an-old-ask")} · airtable`,
-      `2026-08-10 10:00${copy["block address"]} polly@example.org · weird · postmark`,
-      "2026-08-01 10:00strange  · x",
-      `2026-07-20 10:00${copy["edit politician"]} Polly Placeholder · ${staffCopy.fields.party} Labour → Labour (Co-op) · sync`,
-      `2026-07-15 10:00${copy["add politician"]} Polly Placeholder · import`,
-      `2026-07-01 08:00${copy.letter} Old Writer · old-campaign · queued`,
-      `2026-06-01 08:00${copy["pauseai-letter"]} Example Mailing`,
+      `1 Oct 2026${statusLine(staffCopy.politician.statusSet(staffCopy.statuses.signed), ask("frontier-ai-letter").title)} · Told us at the march · jo@pauseai.uk`,
+      `30 Sept 2026, 10:00${copy["edit politician"]} Polly Placeholder · polly.placeholder.mp@parliament.uk · sam@pauseai.uk`,
+      `2 Sept 2026, 08:00${copy["pauseai-letter"]} Example Mailing`,
+      `1 Sept 2026, 10:00${statusLine(staffCopy.politician.statusCleared, "gone")} · jo@pauseai.uk`,
+      `15 Aug 2026, 10:00${statusLine(staffCopy.politician.statusSet("odd"), pm.title)} · jo@pauseai.uk`,
+      `12 Aug 2026, 10:00${statusLine(staffCopy.politician.statusSet(staffCopy.statuses.signed), "an-old-ask")} · airtable`,
+      `10 Aug 2026, 10:00${copy["block address"]} polly@example.org · weird · postmark`,
+      "1 Aug 2026, 10:00strange  · x",
+      `20 Jul 2026, 10:00${copy["edit politician"]} Polly Placeholder · ${staffCopy.fields.party} Labour → Labour (Co-op) · sync`,
+      `15 Jul 2026, 10:00${copy["add politician"]} Polly Placeholder · import`,
+      `1 Jul 2026, 08:00${copy.letter} Old Writer · old-campaign · queued`,
+      `1 Jun 2026, 08:00${copy["pauseai-letter"]} Example Mailing`,
     ]);
     // An answer leads to everyone who gave it, the ask to the letter as in the asks card, PauseAI's email to its
     // mailing, an address to its block.
@@ -1350,9 +1350,9 @@ describe("PoliticianDetails", () => {
         .all()
         .map((item) => item.element().textContent),
     ).toEqual([
-      `2026-10-15 09:00${copy["unsigned-letter-replied"]} · ${pm.title}`,
-      `2026-10-13 08:00${copy.unsignedLetter} · ${pm.title} · ${staffCopy.letters.status.sent}`,
-      `2026-07-01 08:00${copy.unsignedLetter} · old-campaign · queued`,
+      `15 Oct 2026, 09:00${copy["unsigned-letter-replied"]} · ${pm.title}`,
+      `13 Oct 2026, 08:00${copy.unsignedLetter} · ${pm.title} · ${staffCopy.letters.status.sent}`,
+      `1 Jul 2026, 08:00${copy.unsignedLetter} · old-campaign · queued`,
     ]);
     expect(list.element().querySelector('a[href^="/staff/"]')).toBeNull();
   });
@@ -1529,7 +1529,7 @@ describe("PoliticianDetails", () => {
       copy.right.title,
     ]);
     expect(notice.element().querySelector("p")!.textContent).toBe(
-      `${copy.why.before}${MP.email}${copy.why.after(exampleBlock.reason, "2026-10-12 09:10")}`,
+      `${copy.why.before}${MP.email}${copy.why.after(exampleBlock.reason, "12 Oct 2026, 09:10")}`,
     );
     expect(notice.element().querySelector("p strong")!.textContent).toBe(MP.email);
     // The example's reason ends in a full stop, so the sentence doesn't add a second.
@@ -1717,7 +1717,7 @@ describe("ImportOverview", () => {
     ]);
     // Under the name, how the newest run ended, tinted to match.
     const status = (i: number) => cards[i].querySelector("h3 + div > div")!;
-    expect(status(0).textContent).toBe(`${staffCopy.runs.status.incomplete}2026-10-21 11:17`);
+    expect(status(0).textContent).toBe(`${staffCopy.runs.status.incomplete}21 Oct 2026, 11:17`);
     // The Emails sync held some back, so it's amber too.
     expect([0, 1, 2, 3, 4, 5, 6].map((i) => status(i).className.match(/green|amber|red/)?.[0])).toEqual([
       "amber",
@@ -2379,7 +2379,7 @@ describe("ChangesTable", () => {
     const odd = staffCopy.politician.statusSet("odd");
     const count = (n: number, key: string) => `${n} ${copy.counts[key]}`;
     expect(details).toEqual([
-      `Polly Placeholder · ${signed.before}${pm.title}${signed.after}, 2026-10-01 · ${labels.note} By email`,
+      `Polly Placeholder · ${signed.before}${pm.title}${signed.after}, 1 Oct 2026 · ${labels.note} By email`,
       `${copy.gone("99")} · ${cleared.before}controlai-letter${cleared.after}`,
       `Polly Placeholder · ${labels.airtableId} recPolly · ${fields.party} Labour → Independent · ${fields.email} ${copy.empty} → polly@example.org`,
       `Polly Placeholder · ${labels.airtableId} recPolly · ${fields.house} ${staffCopy.houses.commons} · ${fields.salutation} Ms Placeholder · ${fields.constituency} Ipswich · ${fields.party} Labour`,
@@ -2481,7 +2481,7 @@ describe("LettersTable", () => {
     await expect.element(page.getByText(/strange/)).toBeInTheDocument();
     await expect.element(page.getByText('{"type":"HardBounce"}', { exact: false })).toBeInTheDocument();
     expect(page.getByText(staffCopy.politicians.testMp).all()).toHaveLength(1);
-    await expect.element(page.getByRole("cell", { name: "2026-10-13 09:00", exact: true })).toBeInTheDocument();
+    await expect.element(page.getByRole("cell", { name: "13 Oct 2026, 09:00", exact: true })).toBeInTheDocument();
   });
 
   it("says when there are none", async () => {
@@ -2625,11 +2625,22 @@ describe("SupporterDetails", () => {
     // Each email, phone and postcode once, with its sources and the first time.
     await expect.element(page.getByText("jane@example.com", { exact: false }).first()).toBeVisible();
     await expect
-      .element(page.getByText(`(${copy.detail.from(copy.sources.luma, "1 Mar 2026")})`, { exact: false }))
+      .element(page.getByText(copy.detail.from(copy.sources.luma, "1 Mar 2026"), { exact: true }))
       .toBeVisible();
     await expect.element(page.getByText("+447700900001", { exact: false })).toBeVisible();
     await expect.element(page.getByText("M1 1AE", { exact: false })).toBeVisible();
-    expect(page.getByRole("table").all()).toHaveLength(0);
+    // Beside the profile, her events and her letters, a table each.
+    const events = page.getByRole("region", { name: copy.detail.eventsTitle, exact: false });
+    await expect
+      .element(events.getByRole("link", { name: "PauseAI Manchester Social" }))
+      .toHaveAttribute("href", "https://luma.com/fixture-manchester-social");
+    const letters = page.getByRole("region", { name: copy.detail.lettersTitle });
+    await expect
+      .element(letters.getByRole("link", { name: "Polly Placeholder" }))
+      .toHaveAttribute("href", "/staff/politicians/1");
+    await expect
+      .element(letters.getByRole("link", { name: staffCopy.letters.status.sent }))
+      .toHaveAttribute("href", `/staff/letters/supporter/${exampleSupporterDetails.summary.id}`);
     // Beside the facts, whether we'd email her about each topic.
     const subscriptions = page.getByRole("region", { name: copy.detail.listsTitle });
     await expect
@@ -2640,7 +2651,8 @@ describe("SupporterDetails", () => {
       )
       .toBeVisible();
     await expect.element(page.getByText("1 Mar 2026", { exact: true })).toBeVisible();
-    // The history: what, linked, with a status only when it isn't approved.
+    // The history, folded until opened: what, linked, with a status only when it isn't approved.
+    await page.getByText(copy.detail.showHistory(exampleSupporterDetails.activity.length)).click();
     const history = page.getByRole("list", { name: copy.detail.activityTitle });
     await expect
       .element(history.getByRole("link", { name: "PauseAI Manchester Social" }))
@@ -2679,6 +2691,7 @@ describe("SupporterDetails", () => {
         }}
       />,
     );
+    openHistory();
     const old = page.getByRole("list", { name: copy.detail.activityTitle });
     expect(old.element().textContent).toContain(
       `${copy.detail.kinds.letter} Gone MP ${copy.detail.about} old-campaign · queued`,
@@ -2723,8 +2736,8 @@ describe("SupporterDetails", () => {
     expect(page.getByText("M1 1AE", { exact: false }).all()).toHaveLength(1);
     await expect
       .element(
-        page.getByText(`(${copy.detail.from(`${copy.sources.letter}, ${copy.sources.luma}`, "20 Sept 2026")})`, {
-          exact: false,
+        page.getByText(copy.detail.from(`${copy.sources.letter}, ${copy.sources.luma}`, "20 Sept 2026"), {
+          exact: true,
         }),
       )
       .toBeVisible();
@@ -2818,25 +2831,45 @@ describe("SupporterDetails", () => {
       />,
     );
     await expect.element(page.getByRole("heading", { level: 1, name: copy.noName })).toBeVisible();
-    await expect.element(page.getByText(`(${copy.sources.luma})`, { exact: false })).toBeVisible();
-    await expect.element(page.getByText("Thing", { exact: false })).toBeVisible();
-    await expect.element(page.getByText(copy.detail.statuses.waitlist, { exact: false })).toBeVisible();
+    await expect.element(page.getByText(copy.sources.luma, { exact: true })).toBeVisible();
+    openHistory();
+    await expect.element(page.getByText("Thing", { exact: false }).first()).toBeVisible();
+    await expect.element(page.getByText(copy.detail.statuses.waitlist, { exact: false }).first()).toBeVisible();
     await expect.element(page.getByText("other-list", { exact: false })).toBeVisible();
-    await expect.element(page.getByText("gone-campaign", { exact: false })).toBeVisible();
+    await expect.element(page.getByText("gone-campaign", { exact: false }).first()).toBeVisible();
   });
 
-  it("shows the city of their newest event only when they gave none, and none from an event without one", async () => {
+  it("says where they are and what it's from, and nothing when we don't know", async () => {
     const copy = staffCopy.supporters;
-    // Jane gave no city; her newest event was in Manchester.
-    const { rerender } = await render(<SupporterDetails supporter={exampleSupporterDetails} />);
+    const place = (basis: "postcode" | "city" | "event", given: string) => ({
+      ...exampleSupporterDetails,
+      summary: { ...exampleSupporter, place: { name: "Leicester", basis, given, country: "england" } },
+    });
+    const { rerender } = await render(<SupporterDetails supporter={place("postcode", "LE1 1AA")} />);
     await expect
-      .element(page.getByText(`Manchester (${copy.detail.fromEvent("20 Sept 2026")})`, { exact: true }))
+      .element(page.getByText(`Leicester ${copy.detail.placeFrom.postcode("LE1 1AA")}`, { exact: true }))
       .toBeVisible();
-    const [letter, luma] = exampleSupporterDetails.contacts;
+    await rerender(<SupporterDetails supporter={place("event", "PauseAI Leicester meetup")} />);
+    await expect
+      .element(page.getByText(copy.detail.placeFrom.event("PauseAI Leicester meetup"), { exact: true }))
+      .toBeVisible();
+    await rerender(<SupporterDetails supporter={place("city", "Leicester")} />);
+    await expect.element(page.getByText(copy.detail.placeFrom.city(""), { exact: true })).toBeVisible();
     await rerender(
-      <SupporterDetails supporter={{ ...exampleSupporterDetails, contacts: [letter, { ...luma, city: null }] }} />,
+      <SupporterDetails
+        supporter={{
+          ...exampleSupporterDetails,
+          summary: { ...exampleSupporter, place: { name: null, basis: "city", given: "x", country: null } },
+        }}
+      />,
     );
-    expect(page.getByText(copy.detail.city, { exact: true }).all()).toHaveLength(0);
+    expect(page.getByText(copy.detail.place, { exact: true }).all()).toHaveLength(0);
+  });
+
+  it("says when there are no events or letters", async () => {
+    await render(<SupporterDetails supporter={{ ...exampleSupporterDetails, activity: [] }} />);
+    await expect.element(page.getByText(staffCopy.supporters.detail.noEvents)).toBeVisible();
+    await expect.element(page.getByText(staffCopy.supporters.detail.noLetters)).toBeVisible();
   });
 
   it("with no history, says so", async () => {
@@ -2863,12 +2896,12 @@ describe("SupporterDetails", () => {
     );
     await expect
       .element(
-        page.getByText(`(${copy.detail.from(`${copy.sources.letter}, ${copy.sources.luma}`, "1 Mar 2026")})`, {
-          exact: false,
+        page.getByText(copy.detail.from(`${copy.sources.letter}, ${copy.sources.luma}`, "1 Mar 2026"), {
+          exact: true,
         }),
       )
       .toBeVisible();
-    await expect.element(page.getByText(`old@example.com (${copy.sources.letter})`, { exact: false })).toBeVisible();
+    await expect.element(page.getByText(`old@example.com ${copy.sources.letter}`, { exact: true })).toBeVisible();
   });
 });
 
@@ -2878,8 +2911,9 @@ describe("SupporterDetails, a member", () => {
 
   it("says their city, whether we'd email them about each topic, and how they joined in the history", async () => {
     await render(<SupporterDetails supporter={exampleMemberDetails} />);
+    openHistory();
     await expect
-      .element(page.getByText(`Cardiff (${copy.detail.from(copy.sources.member, "11 Oct 2026")})`))
+      .element(page.getByText(`Cardiff ${copy.detail.from(copy.sources.member, "11 Oct 2026")}`, { exact: true }))
       .toBeVisible();
     await expect
       .element(
@@ -2905,19 +2939,25 @@ describe("SupporterDetails, a member", () => {
         }}
       />,
     );
+    openHistory();
     const history = page.getByRole("list", { name: copy.detail.activityTitle });
     // What they chose alone, where the form was alone, and neither.
     const lines = history
       .getByRole("listitem")
       .all()
       .map((item) => item.element().textContent);
-    expect(lines.map((line) => line!.slice(16))).toEqual([
+    expect(lines.map((line) => line!.replace(/^\d+ \w+ \d{4}, \d\d:\d\d/, ""))).toEqual([
       `${copy.detail.kinds["member-joined"]} ${copy.detail.intents.Volunteer}`,
       `${copy.detail.kinds["member-joined"]} ${copy.detail.joinedOn("pauseai.info/join")}`,
       `${copy.detail.kinds["member-joined"]} `,
     ]);
   });
 });
+
+/** Opens every folded part of the page, such as a supporter's history. */
+function openHistory() {
+  for (const details of document.querySelectorAll("details")) details.open = true;
+}
 
 describe("EmailPermissionTiles", () => {
   const copy = staffCopy.supporters.detail.permissions;

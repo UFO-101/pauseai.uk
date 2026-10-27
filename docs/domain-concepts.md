@@ -162,8 +162,8 @@ records (`supporter_first_seen`), is kept on the supporter
 (`supporters.first_seen_at`) by `refreshSupporterFacts()`
 (`lib/server/supporter-facts.ts`), which `linkSupporters()` runs, so the
 staff home counts new supporters by it without working it out each time. Only staff with the `supporters` permission see them
-(`/staff/supporters`), and each viewing of a supporter's page is an audit
-log entry.
+(`/staff/supporters`), and each download of a list of them (supporters,
+letters, their blocked addresses) is an audit log entry.
 
 Where they come from:
 
@@ -360,28 +360,30 @@ same transaction, so the record's own page can tell its history
 (`politicianHistory` in `lib/server/politicians.ts`; a supporter's
 history comes from the records themselves). A job that changes many
 records logs one summary entry for the run, and one entry per record it
-changed. Reading is logged only where the data is personal: each viewing
-of a supporter's page. Nothing else about reading is logged.
+changed. Reading is logged only where the data is personal and leaves the
+site: each download of a list of supporters, their letters or their
+blocked addresses. Nothing else about reading is logged.
 
-| Action                                                                                                        | Actor                          | When                                                                        | Details name                                             |
-| ------------------------------------------------------------------------------------------------------------- | ------------------------------ | --------------------------------------------------------------------------- | -------------------------------------------------------- |
-| `add politician`                                                                                              | `sync`                         | The politician sync adds a politician                                       | `id`, and their details                                  |
-| `edit politician`                                                                                             | `sync`                         | The politician sync changes a politician's details, or their record is back | `id`, `name`, and each field `changed`, before and after |
-| `remove politician`                                                                                           | `sync`                         | The politician sync finds a record no longer in Airtable                    | `id`, `name`                                             |
-| `set status`                                                                                                  | staff, `controlai`, `airtable` | A status set or cleared, by hand or by an import                            | `politicianId`, `ask`, `status`, `date`, `note`          |
-| `apply politician sync`, `hold politician sync`, `apply held politician sync`, `discard held politician sync` | `sync`, staff                  | Each sync's outcome, and each decision on a held one                        | counts, or the run's `id`                                |
-| `copy PauseAI emails`                                                                                         | `sync`                         | The Emails sync adds any                                                    | `added`                                                  |
-| `import web form letters`                                                                                     | staff                          | The one-off import of pauseai.info's letters                                | counts                                                   |
-| `import Go to Parliament`                                                                                     | staff                          | The one-off import of its meetings                                          | counts                                                   |
-| `import ControlAI letter`                                                                                     | `controlai`                    | A read of the letter that set or cleared any status                         | counts                                                   |
-| `block address`, `unblock address`                                                                            | `postmark`, staff              | A bounce or complaint blocks an address; staff unblock it                   | `address`, and the `kind` or the `note`                  |
-| `add staff account`, `set staff permissions`, `remove staff account`                                          | staff                          | The accounts page                                                           | `email`, and the permissions `from` and `to`             |
-| `view supporter`                                                                                              | staff                          | A supporter's page is opened                                                | `id`                                                     |
-| `erase supporter`                                                                                             | staff                          | A supporter is erased                                                       | `id`, the request's `reference`, and what went           |
+| Action                                                                                                        | Actor                          | When                                                                        | Details name                                                 |
+| ------------------------------------------------------------------------------------------------------------- | ------------------------------ | --------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| `add politician`                                                                                              | `sync`                         | The politician sync adds a politician                                       | `id`, and their details                                      |
+| `edit politician`                                                                                             | `sync`                         | The politician sync changes a politician's details, or their record is back | `id`, `name`, and each field `changed`, before and after     |
+| `remove politician`                                                                                           | `sync`                         | The politician sync finds a record no longer in Airtable                    | `id`, `name`                                                 |
+| `set status`                                                                                                  | staff, `controlai`, `airtable` | A status set or cleared, by hand or by an import                            | `politicianId`, `ask`, `status`, `date`, `note`              |
+| `apply politician sync`, `hold politician sync`, `apply held politician sync`, `discard held politician sync` | `sync`, staff                  | Each sync's outcome, and each decision on a held one                        | counts, or the run's `id`                                    |
+| `copy PauseAI emails`                                                                                         | `sync`                         | The Emails sync adds any                                                    | `added`                                                      |
+| `import web form letters`                                                                                     | staff                          | The one-off import of pauseai.info's letters                                | counts                                                       |
+| `import Go to Parliament`                                                                                     | staff                          | The one-off import of its meetings                                          | counts                                                       |
+| `import ControlAI letter`                                                                                     | `controlai`                    | A read of the letter that set or cleared any status                         | counts                                                       |
+| `block address`, `unblock address`                                                                            | `postmark`, staff              | A bounce or complaint blocks an address; staff unblock it                   | `address`, and the `kind` or the `note`                      |
+| `add staff account`, `set staff permissions`, `remove staff account`                                          | staff                          | The accounts page                                                           | `email`, and the permissions `from` and `to`                 |
+| `download supporters`, `download letters`, `download blocked emails`                                          | staff                          | A list of them is downloaded, as CSV or JSON                                | the list's `filters` in words, the `format`, how many `rows` |
+| `erase supporter`                                                                                             | staff                          | A supporter is erased                                                       | `id`, the request's `reference`, and what went               |
 
 Entries from before asks and the politician sync keep their own names: a
 status set by `campaign`, `apply MP sync` and the rest, and `import
-signatories from Airtable`.
+signatories from Airtable`. So do `view supporter` entries, from when each
+opening of a supporter's page was logged (`id`).
 
 Details never carry a supporter's name or address: a supporter is named by
 `id`, and an erasure by its reference, so the log stays after the person is

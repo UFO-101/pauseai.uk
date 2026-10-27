@@ -54,6 +54,34 @@ test("the dev login signs in as a seeded account in one click, in a fixture buil
   await frame(page, "signed in as jo, with the supporters permission");
 });
 
+test(
+  "the sidebar folds to a rail of icons, each named on hover, and stays folded on the next page",
+  { tag: "@desktop-only" },
+  async ({ page, flowDatabase }) => {
+    await logIn(page, flowDatabase, ["supporters", "admin"]);
+    await page.goto(`${BASE}/staff/politicians`);
+    const nav = page.getByRole("navigation", { name: staffCopy.nav.title });
+    await expect(nav.getByRole("link", { name: staffCopy.nav.supporters })).toBeVisible();
+    await frame(page, "the sidebar open: each page's icon beside its name, and Fold at its foot");
+
+    await nav.getByRole("button", { name: staffCopy.nav.fold }).click();
+    await expect(nav.getByRole("button", { name: staffCopy.nav.unfold })).toBeVisible();
+    await expect(nav.getByRole("heading", { name: staffCopy.nav.sections.admin })).toBeHidden();
+    await frame(page, "folded: a rail of icons, the sections a rule apart, and the list wider");
+
+    await nav.getByRole("link", { name: staffCopy.nav.supporters }).hover();
+    await frame(page, "a page's name beside its icon, on hover");
+
+    await nav.getByRole("link", { name: staffCopy.nav.supporters }).click();
+    await expect(page).toHaveURL(`${BASE}/staff/supporters`);
+    await expect(nav.getByRole("button", { name: staffCopy.nav.unfold })).toBeVisible();
+    await frame(page, "the next page, still folded");
+
+    await nav.getByRole("button", { name: staffCopy.nav.unfold }).click();
+    await expect(nav.getByRole("heading", { name: staffCopy.nav.sections.admin })).toBeVisible();
+  },
+);
+
 test("every staff page, without a session, goes to the login page, to come back to once logged in", async ({
   request,
 }) => {

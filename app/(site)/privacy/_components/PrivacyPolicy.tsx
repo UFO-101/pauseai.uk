@@ -114,7 +114,12 @@ export default function PrivacyPolicy() {
         campaign shows a political opinion, which is special category data. We hold it under UK GDPR Article 9(2)(d), as
         a not-for-profit body with a political aim processing data about its members and people in regular contact with
         it, and we don&apos;t disclose it outside PauseAI UK without your consent. Only staff with permission can see
-        these combined records, and we log every time one is opened.
+        these combined records, and we log every time a list of them is downloaded.
+      </p>
+      <p>
+        So we can invite you to things near you, we work out roughly where you are: from your postcode, or else a city
+        you gave us, or else where an event you registered for was. Your postcode or city goes to postcodes.io to find
+        the place, and we keep the place with your record.
       </p>
       <p>
         If you joined PauseAI and live in the UK, Stichting PauseAI shares your membership with us when you ticked

@@ -15,9 +15,10 @@ const subscribe = (change: () => void) => {
 const isFolded = () => document.documentElement.dataset.staffNav === "folded";
 
 /**
- * The button at the top of the staff sidebar that folds it to a strip, and
- * unfolds it: on <html>, and remembered in this browser (lib/staff-nav.ts).
- * Wider screens only; a phone has the bar instead.
+ * The button at the foot of the staff sidebar that folds it to a rail of
+ * icons, and unfolds it: on <html>, and remembered in this browser
+ * (lib/staff-nav.ts). A chevron, and Fold beside it while it's open. Wider
+ * screens only; a phone has the bar instead.
  */
 export default function NavFold() {
   const folded = useSyncExternalStore(subscribe, isFolded, () => false);
@@ -41,7 +42,23 @@ export default function NavFold() {
       aria-label={folded ? staffCopy.nav.unfold : staffCopy.nav.fold}
       onClick={toggle}
     >
-      <span aria-hidden="true">{folded ? "»" : "«"}</span>
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+        className={styles.chevron}
+      >
+        <path d="M15 6l-6 6 6 6" />
+      </svg>
+      <span className={styles.text} aria-hidden="true">
+        {staffCopy.nav.foldShort}
+      </span>
     </button>
   );
 }

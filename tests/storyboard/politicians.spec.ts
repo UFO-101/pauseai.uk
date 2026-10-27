@@ -139,35 +139,49 @@ test("the politicians list's houses are tabs, each keeping the other filters", a
   await frame(page, "only the Scottish Parliament");
 });
 
-test("the politicians list pages through many, a count over it", async ({ page, request, flowDatabase }) => {
-  await syncPoliticians(request, BASE);
+test("the politicians list pages through many, a count and downloads over it", async ({ page, flowDatabase }) => {
+  // 245 made-up MPs, with the 5 test MPs 250: three pages.
   runSql(
     flowDatabase,
     `WITH n AS (
        INSERT INTO notable_people (kind, name, salutation, status)
-       SELECT 'politician', 'Lord Member ' || lpad(i::text, 3, '0'), '', 'in_office' FROM generate_series(1, 120) i
+       SELECT 'politician', 'Example Member ' || lpad(i::text, 3, '0'), '', 'in_office' FROM generate_series(1, 245) i
        RETURNING id
-     ) INSERT INTO politicians (id, house, party) SELECT id, 'lords', 'Crossbench' FROM n`,
+     ) INSERT INTO politicians (id, house, constituency, party)
+       SELECT id, 'commons', 'Exampleton ' || id, (ARRAY['Labour', 'Conservative', 'Green'])[1 + id % 3] FROM n`,
   );
   await logIn(page, flowDatabase);
-  await page.goto(`${BASE}/staff/politicians?house=lords`);
+  await page.goto(`${BASE}/staff/politicians?status=any`);
   const copy = staffCopy.politicians;
-  await expect(page.getByText(copy.total(121))).toBeVisible();
-  await page.getByRole("link", { name: staffCopy.paging.next }).scrollIntoViewIfNeeded();
-  await frame(page, "the first hundred peers, and the way to the next page");
+  await expect(page.getByText(copy.total(250))).toBeVisible();
+  await expect(page.getByRole("link", { name: staffCopy.lists.formats.csv })).toHaveAttribute(
+    "href",
+    "/staff/politicians/download?status=any&format=csv",
+  );
+  await frame(page, "every politician: how many, which these are, and the downloads");
+  const pages = page.getByRole("navigation", { name: staffCopy.paging.label });
+  await pages.scrollIntoViewIfNeeded();
+  await frame(page, "the first hundred, and the way to the other pages");
 
-  await page.getByRole("link", { name: staffCopy.paging.next }).click();
-  await expect(page).toHaveURL(/house=lords&page=2/);
-  await expect(page.getByText(copy.total(121))).toBeVisible();
-  await expect(page.getByRole("link", { name: "Lord Member 120" })).toBeVisible();
+  await pages.getByRole("link", { name: staffCopy.paging.next }).click();
+  await expect(page).toHaveURL(/status=any&page=2/);
+  await expect(page.getByText(staffCopy.paging.range(101, 200, 250))).toBeVisible();
   await frame(page, "the second page");
+
+  await page
+    .getByRole("navigation", { name: staffCopy.paging.label })
+    .getByRole("link", { name: staffCopy.paging.page(3) })
+    .click();
+  await expect(page).toHaveURL(/status=any&page=3/);
+  await expect(page.getByText(staffCopy.paging.range(201, 250, 250))).toBeVisible();
+  await frame(page, "the last page: no Next");
 
   // Another house starts from the first page.
   await page
     .getByRole("navigation", { name: staffCopy.fields.house })
-    .getByRole("link", { name: copy.allHouses })
+    .getByRole("link", { name: staffCopy.houses.lords })
     .click();
-  await expect(page).toHaveURL(`${BASE}/staff/politicians`);
+  await expect(page).toHaveURL(`${BASE}/staff/politicians?status=any&house=lords`);
 });
 
 test("searching the politicians: each word anywhere, those not in office, and the nearest to a typo", async ({

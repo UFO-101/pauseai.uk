@@ -490,6 +490,7 @@ A boxed message inside a section is `Callout`.
 - **Sentence case** for labels, buttons and headings: "Your name", "Find my MP", "Send email". Not "Your Name" or "Find My MP". Proper nouns keep their capitals: "MP", "PauseAI", "Airtable".
 - **Full stops** on messages that are sentences: errors, notices, hints and confirmations. "Please enter your name.", "Postcode not found."
 - **No full stops** on labels, buttons, headings, or a word or two of status: "Your email", "Preview", "Sending".
+- **Dates as people say them**: "23 Oct 2026", and with a time, "23 Oct 2026, 10:34", never "2026-10-23". The staff pages' are in UTC (`staffDate` and `staffTime` in `lib/staff-time.ts`). A download keeps the ISO form, for a spreadsheet to read.
 
 ---
 

@@ -3,9 +3,9 @@ export function staffDate(at: string): string {
   return new Date(at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
 }
 
-/** When something happened, for the staff pages: ISO date and time, to the minute, in UTC. "2026-10-16 10:34". */
+/** When something happened, for the staff pages: the day as staffDate says it, and the time to the minute, in UTC. "16 Oct 2026, 10:34". */
 export function staffTime(at: string): string {
-  return new Date(at).toISOString().slice(0, 16).replace("T", " ");
+  return `${staffDate(at)}, ${staffClock(at)}`;
 }
 
 /** The time of day, to the minute, in UTC, for a row under a heading that gives the day. "10:34". */

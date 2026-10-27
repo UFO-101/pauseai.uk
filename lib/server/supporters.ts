@@ -214,7 +214,8 @@ export async function eventChoices(): Promise<EventChoice[]> {
 /** Everything the staff page shows about one supporter, or undefined if there's no such one. */
 export async function getSupporter(id: number): Promise<SupporterDetails | undefined> {
   const [summary] = await query<SupporterSummary>(
-    `SELECT ${SUMMARY_COLUMNS} FROM supporters_summary s WHERE s.id = $1`,
+    `SELECT ${SUMMARY_COLUMNS}, ${PLACE_COLUMNS}
+     FROM supporters_summary s LEFT JOIN supporter_place sp ON sp.supporter_id = s.id WHERE s.id = $1`,
     [id],
   );
   if (!summary) return undefined;
