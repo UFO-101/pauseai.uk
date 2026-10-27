@@ -7,6 +7,7 @@ import ChangesTable from "@/app/(staff)/staff/_components/ChangesTable";
 import EmailBlockFilters from "@/app/(staff)/staff/_components/EmailBlockFilters";
 import FilterBar from "@/app/(staff)/staff/_components/ui/FilterBar";
 import Menu from "@/app/(staff)/staff/_components/ui/Menu";
+import { NationShape, Rosette, StatusDot } from "@/app/(staff)/staff/_components/PoliticianIcons";
 import { exampleProblems } from "@/app/(staff)/staff/_components/EmailBlocksTable.examples";
 import EmailProblemsTable from "@/app/(staff)/staff/_components/EmailProblemsTable";
 import { exampleChanges } from "@/app/(staff)/staff/_components/ChangesTable.examples";
@@ -1411,6 +1412,71 @@ export const staff: Group = {
                 search={{ name: "q", label: "Address" }}
                 filters={EXAMPLE_FILTERS}
               />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "Rosette",
+      file: "app/(staff)/staff/_components/PoliticianIcons.tsx",
+      variants: [
+        {
+          label: "Each party's colour, and grey for one we don't know",
+          render: () => (
+            <StaffPage as="div">
+              <p style={{ display: "flex", gap: "12px" }}>
+                {[
+                  "Labour",
+                  "Conservative",
+                  "Liberal Democrats",
+                  "Scottish National Party",
+                  "Green",
+                  "Plaid Cymru",
+                  "Reform UK",
+                  "DUP",
+                  "Sinn Féin",
+                  "Alliance",
+                  "Crossbench",
+                ].map((party) => (
+                  <Rosette key={party} party={party} />
+                ))}
+              </p>
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "StatusDot",
+      file: "app/(staff)/staff/_components/PoliticianIcons.tsx",
+      variants: [
+        {
+          label: "In office, and not",
+          render: () => (
+            <StaffPage as="div">
+              <p style={{ display: "flex", gap: "12px" }}>
+                <StatusDot inOffice />
+                <StatusDot inOffice={false} />
+              </p>
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "NationShape",
+      file: "app/(staff)/staff/_components/PoliticianIcons.tsx",
+      variants: [
+        {
+          label: "The four nations",
+          render: () => (
+            <StaffPage as="div">
+              <p style={{ display: "flex", gap: "12px" }}>
+                {(["england", "scotland", "wales", "northern-ireland"] as const).map((country) => (
+                  <NationShape key={country} country={country} />
+                ))}
+              </p>
             </StaffPage>
           ),
         },

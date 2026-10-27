@@ -526,6 +526,8 @@ export const staffCopy = {
     status: "Status",
     country: "Country",
     notes: "Notes",
+    // Over how to write to them: their address and salutation.
+    writing: "⁂ Writing to them",
     // Airtable's markers, as tags by their name.
     importantTarget: "Important target",
     personalConnection: "Personal connection",

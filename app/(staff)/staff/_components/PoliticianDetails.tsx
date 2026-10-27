@@ -18,6 +18,7 @@ import { staffDate, staffTime } from "@/lib/staff-time";
 import styles from "./Details.module.css";
 import Grid, { Card } from "./ui/Grid";
 import Strip from "./ui/Strip";
+import { NationShape, Rosette, StatusDot } from "./PoliticianIcons";
 import UnblockForm from "./UnblockForm";
 import Tag from "@/components/ui/Tag";
 import { Muted } from "@/components/ui/Text";
@@ -454,35 +455,70 @@ export default function PoliticianDetails({
 
       <Grid>
         <Card span={3} as="div">
-          <dl className={styles.facts}>
-            <Fact label={copy.status}>{staffCopy.personStatuses[politician.status]}</Fact>
-            <Fact label={staffCopy.fields.constituency}>{politician.constituency}</Fact>
-            <Fact label={staffCopy.fields.party}>{politician.party}</Fact>
-            <Fact label={copy.country}>{politician.country && staffCopy.countries[politician.country]}</Fact>
-            <Fact label={staffCopy.fields.email}>{politician.email ?? staffCopy.politicians.noEmail}</Fact>
-            <Fact label={staffCopy.fields.salutation}>{politician.salutation}</Fact>
-            <Fact label={copy.notes}>
-              {politician.notes && <span className={styles.notes}>{politician.notes}</span>}
-            </Fact>
-            <Fact label={copy.source}>
-              {politician.airtableId ? (
-                <>
-                  <a href={`${airtableTable}/${politician.airtableId}`} target="_blank" rel="noreferrer">
-                    {source}
-                  </a>
-                  {copy.editInAirtable}
-                  {politician.airtableRemovedAt && (
-                    <>
-                      {" "}
-                      <Tag tone="amber">{copy.airtableRemoved(staffDate(politician.airtableRemovedAt))}</Tag>
-                    </>
-                  )}
-                </>
-              ) : (
-                source
-              )}
-            </Fact>
-          </dl>
+          <div className={styles.icons}>
+            {politician.party && (
+              <div className={styles.iconFact}>
+                <Rosette party={politician.party} />
+                <span>
+                  <small>{staffCopy.fields.party}</small>
+                  {politician.party}
+                </span>
+              </div>
+            )}
+            <div className={styles.iconFact}>
+              <StatusDot inOffice={politician.status === "in_office"} />
+              <span>
+                <small>{copy.status}</small>
+                {staffCopy.personStatuses[politician.status]}
+              </span>
+            </div>
+            {politician.country && (
+              <div className={styles.iconFact}>
+                <NationShape country={politician.country} />
+                <span>
+                  <small>{copy.country}</small>
+                  {staffCopy.countries[politician.country]}
+                </span>
+              </div>
+            )}
+          </div>
+          <section className={styles.part}>
+            <h3 className={styles.partTitle}>{copy.writing}</h3>
+            <dl className={styles.facts}>
+              <Fact label={staffCopy.fields.email}>
+                {politician.email ? (
+                  <a href={`mailto:${politician.email}`}>{politician.email}</a>
+                ) : (
+                  staffCopy.politicians.noEmail
+                )}
+              </Fact>
+              <Fact label={staffCopy.fields.salutation}>{politician.salutation}</Fact>
+            </dl>
+          </section>
+          {politician.notes && (
+            <section className={styles.part}>
+              <h3 className={styles.partTitle}>{copy.notes}</h3>
+              <p className={styles.notes}>{politician.notes}</p>
+            </section>
+          )}
+          <p className={styles.source}>
+            {politician.airtableId ? (
+              <>
+                <a href={`${airtableTable}/${politician.airtableId}`} target="_blank" rel="noreferrer">
+                  {source}
+                </a>
+                {copy.editInAirtable}
+                {politician.airtableRemovedAt && (
+                  <>
+                    {" "}
+                    <Tag tone="amber">{copy.airtableRemoved(staffDate(politician.airtableRemovedAt))}</Tag>
+                  </>
+                )}
+              </>
+            ) : (
+              source
+            )}
+          </p>
         </Card>
         <Card span={3} look="aside" title={copy.statusesTitle} id="asks-title">
           <div className={styles.asks}>
