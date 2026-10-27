@@ -158,6 +158,7 @@ export const staffCopy = {
       failed: (text: string) => `${text} (couldn't look it up)`,
       // The Event filter's choices: an event and its day.
       event: "Event",
+      notEvent: "⁂ Not at event",
       eventChoice: (name: string, day: string) => `${name}, ${day}`,
       // The Campaign filter, and its second half: whether they wrote in it.
       campaign: "Campaign",

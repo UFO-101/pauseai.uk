@@ -150,12 +150,12 @@ export async function listSupporters(
   }
   if (filter.phone !== undefined) where.push(`s.phone IS ${filter.phone ? "NOT " : ""}NULL`);
   if (filter.email !== undefined) where.push(`coalesce(cardinality(s.emails), 0) ${filter.email ? ">" : "="} 0`);
-  if (filter.event) {
-    where.push(
-      `EXISTS (SELECT 1 FROM luma_guests g JOIN supporter_links k ON k.luma_user_id = g.user_id
-       WHERE k.supporter_id = s.id AND g.event_id = ANY(${add(filter.event)}) AND g.approval_status <> 'declined')`,
-    );
-  }
+  // Registered for an event, but for declined; and its opposite, for the events not at.
+  const registered = (events: string[]) =>
+    `EXISTS (SELECT 1 FROM luma_guests g JOIN supporter_links k ON k.luma_user_id = g.user_id
+     WHERE k.supporter_id = s.id AND g.event_id = ANY(${add(events)}) AND g.approval_status <> 'declined')`;
+  if (filter.event) where.push(registered(filter.event));
+  if (filter.notEvent) where.push(`NOT ${registered(filter.notEvent)}`);
   if (filter.campaign) {
     where.push(
       `${filter.wrote ? "" : "NOT "}EXISTS (SELECT 1 FROM supporter_links k JOIN supporter_letters l ON l.id = k.letter_id

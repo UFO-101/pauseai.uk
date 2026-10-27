@@ -147,8 +147,9 @@ export type SupportersSearch = {
   /** "yes" or "no". */
   phone: string;
   email: string;
-  /** Luma event IDs. */
+  /** Luma event IDs: those registered for any, and those at none. */
   event: string[];
+  notEvent: string[];
   /** A campaign's slug; with `wrote` "no", those who didn't write in it. */
   campaign: string;
   wrote: string;
@@ -170,9 +171,9 @@ export function supportersSearch(
   const [q, phone, email, campaign, wrote, near, within, sort, dir, page, erased] = (
     ["q", "phone", "email", "campaign", "wrote", "near", "within", "sort", "dir", "page", "erased"] as const
   ).map((name) => firstOf(params[name]));
-  const [activity, subscription, event, country] = (["activity", "subscription", "event", "country"] as const).map(
-    (name) => valuesOf(params[name]),
-  );
+  const [activity, subscription, event, notEvent, country] = (
+    ["activity", "subscription", "event", "notEvent", "country"] as const
+  ).map((name) => valuesOf(params[name]));
   const sorting = parseSort(SUPPORTER_SORTS, "active", sort, dir);
   const badges = activity.filter(isSupporterBadge);
   const states = subscription.flatMap((value) => emailState(value) ?? []);
@@ -185,6 +186,7 @@ export function supportersSearch(
     phone: yesOrNo(phone),
     email: yesOrNo(email),
     event: event.length ? event : undefined,
+    notEvent: notEvent.length ? notEvent : undefined,
     campaign: campaignBySlug(campaign)?.slug,
     wrote: campaignBySlug(campaign) ? wrote !== "no" : undefined,
     country: countries.length ? countries : undefined,
@@ -200,6 +202,7 @@ export function supportersSearch(
     phone,
     email,
     event,
+    notEvent,
     campaign,
     wrote,
     country,

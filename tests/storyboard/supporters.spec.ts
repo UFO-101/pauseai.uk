@@ -1,5 +1,6 @@
 import type { Page } from "@playwright/test";
 import { staffCopy } from "@/lib/content/staff-interface";
+import { staffDate } from "@/lib/staff-time";
 import { TEST_MPS } from "@/lib/test-mps";
 import { runSql } from "@/scripts/fresh-database.mjs";
 import {
@@ -102,6 +103,29 @@ test("the supporters list after the Luma import, filtered, reset and sorted", as
   await expect(page).toHaveURL(/sort=name&dir=desc/);
   expect(await page.locator("tbody").getByRole("link").first().textContent()).toBe("Sam Fixture");
   await frame(page, "sorted by name, reversed, by clicking the heading twice");
+});
+
+test("the supporters not at an event: the guest who declined it, and the contact who never registered", async ({
+  page,
+  request,
+  flowDatabase,
+}) => {
+  await importLuma(request, BASE);
+  await logInWithSupporters(page, flowDatabase);
+  await page.goto(`${BASE}/staff/supporters`);
+  await expect(page.getByText(copy.total(6))).toBeVisible();
+  const march = copy.filters.eventChoice("PauseAI London March", staffDate("2026-02-14T12:00:00Z"));
+  await page.getByRole("button", { name: staffCopy.filters.add }).click();
+  await page.locator("[popover]:popover-open summary", { hasText: new RegExp(`^${copy.filters.notEvent}$`) }).click();
+  await frame(page, "+ Filter's events not at, by name and day");
+  await page.locator("[popover]:popover-open").getByRole("link", { name: march, exact: true }).click();
+  await expect(page).toHaveURL(/\/staff\/supporters\?notEvent=/);
+  // Four guests were approved for it; Dee declined, and Fay follows the calendar but never registered.
+  await expect(page.getByText(copy.total(2))).toBeVisible();
+  expect(await page.locator("tbody").getByRole("link").allTextContents()).toEqual(
+    expect.arrayContaining(["Dee Clined", "Fay Follower"]),
+  );
+  await frame(page, "not at the London March: Dee, who declined, and Fay, who never registered");
 });
 
 test("a supporter's page: who they are, what they gave, their history, and an opt-out from Luma's webhook", async ({

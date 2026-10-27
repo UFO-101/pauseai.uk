@@ -379,6 +379,24 @@ describeWithDatabase("listSupporters and getSupporter", () => {
     });
   });
 
+  it("filters by the events someone isn't at, alone and with those they are", async () => {
+    await people();
+    // At evt-2, Jane is approved and Sam declined, which isn't being at it.
+    await query(
+      `INSERT INTO luma_events (id, name, url, start_at, access) VALUES ('evt-2', 'evt-2', 'evt-2', '2026-11-01T18:00:00Z', 'manage')`,
+    );
+    await query(
+      `INSERT INTO luma_guests (id, event_id, user_id, approval_status, registered_at) VALUES
+       ('gst-j2', 'evt-2', 'usr-1', 'approved', '2026-10-20T10:00:00Z'),
+       ('gst-s2', 'evt-2', 'usr-2', 'declined', '2026-10-20T10:00:00Z')`,
+    );
+    expect(await names({ notEvent: ["evt-2"] })).toEqual(["Sam", "Pat", "Old"]);
+    expect(await names({ notEvent: ["evt-1", "evt-2"] })).toEqual(["Pat"]);
+    expect(await names({ notEvent: ["evt-none"] })).toEqual(["Jane", "Sam", "Pat", "Old"]);
+    expect(await names({ event: ["evt-1"], notEvent: ["evt-2"] })).toEqual(["Sam", "Old"]);
+    expect(await names({ event: ["evt-2"], notEvent: ["evt-2"] })).toEqual([]);
+  });
+
   it("gives one supporter's details: identities, contact details, links, activity and each list's opt-out", async () => {
     await people();
     const [{ id }] = await query<{ id: number }>(

@@ -125,6 +125,8 @@ export type SupporterFilter = {
   email?: boolean;
   /** Registered for any of these Luma events, by ID, but for declined. */
   event?: string[];
+  /** Registered for none of these, or declined: not at any of them. */
+  notEvent?: string[];
   /** Wrote a letter in this campaign, by slug; or, with `wrote` false, never did. */
   campaign?: string;
   wrote?: boolean;

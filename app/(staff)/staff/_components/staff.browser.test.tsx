@@ -3450,6 +3450,7 @@ describe("SupporterFilters", () => {
       copy.columns.badges,
       copy.columns.subscriptions,
       copy.filters.event,
+      copy.filters.notEvent,
       copy.filters.campaign,
     ]);
     const links = await menu(staffCopy.filters.add);
@@ -3457,7 +3458,21 @@ describe("SupporterFilters", () => {
       copy.filters.eventChoice("Oxford talk", "12 Oct 2026"),
       "/staff/supporters?event=evt-2",
     ]);
+    expect(links).toContainEqual([
+      copy.filters.eventChoice("Oxford talk", "12 Oct 2026"),
+      "/staff/supporters?notEvent=evt-2",
+    ]);
     expect(links).toContainEqual([copy.filters.phone.no, "/staff/supporters?phone=no"]);
+  });
+
+  it("has a chip for the events they're at and one for those they're not", async () => {
+    const { filter, ...search } = supportersSearch({ event: "evt-1", notEvent: "evt-2" });
+    void filter;
+    await render(<SupporterFilters search={search} events={events} />);
+    expect(chips()).toEqual([
+      `${copy.filters.event}: ${copy.filters.eventChoice("Leeds social", "20 Oct 2026")}`,
+      `${copy.filters.notEvent}: ${copy.filters.eventChoice("Oxford talk", "12 Oct 2026")}`,
+    ]);
   });
 
   it("says what Near found, or that it found nothing, or couldn't look", async () => {
