@@ -1,10 +1,24 @@
 import { describe, expect, it } from "vitest";
+import { ASK_STATUSES } from "@/lib/asks";
+import { COUNTRIES, PERSON_STATUSES } from "@/lib/server/politicians";
 import { staffCopy } from "./staff-interface";
 
 describe("staff interface copy", () => {
-  it("puts the counts into the import's result", () => {
-    const result = staffCopy.import.result({ matched: 12, added: 3, alreadySet: 4 });
-    for (const n of ["12", "3", "4"]) expect(result).toContain(n);
+  it("puts the counts into each import's result", () => {
+    const sync = staffCopy.syncs.statuses({ added: 12, changed: 3, removed: 4 });
+    for (const n of ["12", "3", "4"]) expect(sync).toContain(n);
+    const emails = staffCopy.pauseaiEmails.result({
+      read: 12,
+      added: 3,
+      waiting: 4,
+      noPolitician: 5,
+      unplaced: [1, 2],
+    });
+    for (const n of ["12", "3", "4", "5", "2"]) expect(emails).toContain(n);
+    const web = staffCopy.webForm.result({ read: 12, imported: 3, skipped: 4, alreadyHere: 5, noPolitician: 6 });
+    for (const n of ["12", "3", "4", "5", "6"]) expect(web).toContain(n);
+    const meetings = staffCopy.goToParliament.result({ guests: 12, mps: 3, added: 4, changed: 5, notFound: 6 });
+    for (const n of ["12", "3", "4", "5", "6"]) expect(meetings).toContain(n);
   });
 
   it("ends the bounce's reason with one full stop, whether Postmark's has one or not", () => {
@@ -36,6 +50,11 @@ describe("staff interface copy", () => {
       "ni-assembly",
       "other",
     ]);
-    expect(Object.keys(staffCopy.statuses)).toEqual(["signed", "none"]);
+    // Every status any kind of ask allows, and the words for no answer.
+    expect(Object.keys(staffCopy.statuses).sort()).toEqual(
+      [...Object.values(ASK_STATUSES).flat(), "none", "noAnswer"].sort(),
+    );
+    expect(Object.keys(staffCopy.personStatuses)).toEqual([...PERSON_STATUSES]);
+    expect(Object.keys(staffCopy.countries)).toEqual([...COUNTRIES]);
   });
 });

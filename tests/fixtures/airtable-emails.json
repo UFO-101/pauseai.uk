@@ -1,0 +1,52 @@
+{
+  "records": [
+    {
+      "id": "recEmailCsrb",
+      "createdTime": "2026-06-10T09:00:00.000Z",
+      "fields": {
+        "Timestamp": "2026-06-10T09:00:00.000Z",
+        "UK Parliamentarian": ["recDummy"],
+        "CSRB Iqbal Amendment": true
+      }
+    },
+    {
+      "id": "recEmailEdinburghPolly",
+      "createdTime": "2026-10-01T10:00:00.000Z",
+      "fields": {
+        "Timestamp": "2026-10-01T10:00:00.000Z",
+        "UK Parliamentarian": ["recPlaceholder"],
+        "Personalized": true,
+        "Edinburgh Conference Nov 26 Invitation": true
+      }
+    },
+    {
+      "id": "recEmailEdinburghMorag",
+      "createdTime": "2026-10-01T10:05:00.000Z",
+      "fields": {
+        "Timestamp": "2026-10-01T10:05:00.000Z",
+        "UK Parliamentarian": ["recMorag"],
+        "AI Generated": true,
+        "Edinburgh Conference Nov 26 Invitation": true
+      }
+    },
+    {
+      "id": "recEmailBenLake",
+      "createdTime": "2026-10-15T08:30:00.000Z",
+      "fields": {
+        "Timestamp": "2026-10-15T08:30:00.000Z",
+        "UK Parliamentarian": ["recDummy"],
+        "Ben Lake October 2026 Debate": true
+      }
+    },
+    {
+      "id": "recEmailEmpty",
+      "createdTime": "2026-07-01T12:00:00.000Z",
+      "fields": { "Timestamp": "2026-07-01T12:00:00.000Z" }
+    },
+    {
+      "id": "recEmailNewBox",
+      "createdTime": "2026-10-20T08:00:00.000Z",
+      "fields": { "Timestamp": "2026-10-20T08:00:00.000Z", "UK Parliamentarian": ["recPlaceholder"] }
+    }
+  ]
+}

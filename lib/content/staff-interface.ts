@@ -3,7 +3,7 @@
 import type { ImportJob } from "@/lib/import-runs";
 
 export const staffCopy = {
-  metaTitle: "Pause AI Staff",
+  metaTitle: "PauseAI Staff",
   login: {
     title: "Staff log in",
     intro: "Enter your staff email to sign in on this browser.",
@@ -33,7 +33,7 @@ export const staffCopy = {
   nav: {
     // At the left of the bar, and the way to the home page.
     title: "PauseAI Staff",
-    home: "Home",
+    home: "Dashboard",
     accounts: "Staff accounts",
     // The sections the pages are in, in the sidebar.
     sections: {
@@ -43,11 +43,12 @@ export const staffCopy = {
     } as Record<string, string>,
     supporters: "Supporters",
     politicians: "Politicians",
+    asks: "Asks",
     import: "Import data",
     changes: "Audit log",
     letters: "Letters to MPs",
     supporterEmails: "Blocked emails",
-    mpEmails: "Blocked MP emails",
+    mpEmails: "Blocked emails",
     logout: "Log out",
     // Under Log out, faintly, only with more than one session open: how many, linked to the page of them.
     sessions: (n: number) => `${n} sessions`,
@@ -72,7 +73,7 @@ export const staffCopy = {
   },
   // The home page: the dashboard.
   home: {
-    title: "Home",
+    title: "Dashboard",
     // The dashboard: what needs a person, then the window's numbers in
     // three groups, each against the window before.
     dashboard: {
@@ -193,7 +194,10 @@ export const staffCopy = {
       // Every address they have is blocked.
       blocked: "Blocked",
     },
-    sources: { luma: "Luma", letter: "Letter", member: "Member" } as Record<string, string>,
+    sources: { luma: "Luma", letter: "Letter", "web-form": "pauseai.info letter", member: "Member" } as Record<
+      string,
+      string
+    >,
     lists: { "luma-calendar": "Luma calendar emails", "pauseai-updates": "PauseAI updates" } as Record<string, string>,
     // A supporter's page: one box of what we know, then the history.
     detail: {
@@ -354,9 +358,32 @@ export const staffCopy = {
     "ni-assembly": "Northern Ireland Assembly",
     other: "Other",
   } as Record<string, string>,
+  // A person's answer to an ask (lib/asks.ts): a letter's, then an event's.
   statuses: {
     signed: "Signed",
     none: "Not signed",
+    going: "Going",
+    tentative: "Tentatively going",
+    meeting_staff: "Staff meeting instead",
+    tentative_staff: "Staff tentative",
+    declined: "Declined",
+    declined_surgery: "Declined, offered a surgery",
+    passed_on: "Passed on invite",
+    // No answer to an event's invitation.
+    noAnswer: "No answer",
+  } as Record<string, string>,
+  // Whether a notable person is in office.
+  personStatuses: {
+    in_office: "In office",
+    died: "Died",
+    retired: "Retired",
+    left_office: "No longer in office",
+  } as Record<string, string>,
+  countries: {
+    england: "England",
+    scotland: "Scotland",
+    wales: "Wales",
+    "northern-ireland": "Northern Ireland",
   } as Record<string, string>,
   politicians: {
     title: "Politicians",
@@ -364,25 +391,41 @@ export const staffCopy = {
     search: "Name, constituency, party or email",
     allHouses: "All houses",
     allParties: "All parties",
-    anyCampaign: "Any campaign",
-    // In the Campaigns filter: everyone with a status for any campaign.
-    signedAny: "Signed any",
+    // The filters: in office or not, Airtable's markers, and an answer to an ask.
+    status: "Status",
+    anyStatus: "Any status",
+    flag: "Marked",
+    anyFlag: "Anything",
+    flags: {
+      important: "Important target",
+      connection: "Personal connection",
+      removed: "No longer in Airtable",
+    } as Record<string, string>,
+    ask: "Ask",
+    anyAsk: "Any ask",
+    // An answer to the ask chosen, or with none chosen, to any ask: anyone who answered, a given answer, or
+    // nobody who answered.
+    answer: "Answer",
+    anyAnswer: "Answered",
+    noAnswer: "Not answered",
     none: "None found.",
     testMp: "Test",
-    notSitting: "No longer sitting",
     // The counts in the list: letters written to them, and how many of those got a reply.
     columns: {
       letters: "Letters",
       replies: "Letters answered",
+      status: "Status",
+      // Their answer to each ask they've answered.
+      asks: "Asks",
     },
+    // In that column, when they've answered none.
+    noAsks: "None",
     noEmail: "No email",
     // On a politician whose address is blocked (/staff/politicians/blocked-emails).
     emailBlocked: "Email blocked",
-    // The button in each campaign's column, and the bill's column, which
-    // only the import from ControlAI's letter sets.
+    // The button on an ask staff record by hand.
     markSigned: "Mark as signed",
     unmarkSigned: "Remove signature",
-    signedControlAi: "Signed ControlAI letter",
   },
   fields: {
     name: "Name",
@@ -392,19 +435,58 @@ export const staffCopy = {
     email: "Email",
     house: "House",
   },
+  // The asks page: each ask, its kind and date, and how many gave each answer.
+  asks: {
+    title: "Asks",
+    intro: "What we ask notable people to do when writing to them. Make a PR to add a new ask.",
+    columns: {
+      ask: "Title",
+      kind: "Kind",
+      date: "Date",
+      // Who asks it: supporters, in a campaign's letter, or PauseAI, in a mailing; or both.
+      askedBy: "Asked by",
+      answers: "Answers",
+    },
+    kinds: { letter: "Sign letter", event: "Attend event" } as Record<string, string>,
+    askedBy: { supporters: "Supporters", pauseai: "PauseAI", controlai: "ControlAI" },
+    noAnswers: "No answers yet",
+    // Each answer's count links to the politicians who gave it.
+    count: (status: string, n: number) => `${status}: ${n}`,
+  },
   politician: {
-    statusesTitle: "Campaigns",
+    statusesTitle: "Asks",
+    // Over an ask's title, leading into it: who asked them, by staffCopy.asks.askedBy, if we know, and to do what.
+    askedThem: (who: string, kind: string) =>
+      `${who ? `${who} asked` : "Asked"} them to ${kind === "letter" ? "sign" : "attend"}`,
     // The box at the top of their page: where they came from, and each campaign's status.
     source: "Source",
     sources: {
-      airtable: "Airtable's MPs",
+      airtable: "Airtable's UK Parliamentarians",
       staff: "Added by staff",
       test: "A test MP",
     },
-    // A status: who set it and when; the campaign's title heads the line.
+    // A status: who set it and when; the ask's title heads the line. An import's is "from" it.
     setBy: (who: string, when: string) => `set by ${who}, ${when}`,
+    fromImport: { airtable: "from Airtable", controlai: "from ControlAI's letter" } as Record<string, string>,
+    // The form on an ask staff record: its name, the note's field and what it asks, and Save for an event's answer.
+    setStatus: "Set status",
+    note: "Note",
+    notePlaceholder: "How do you know?",
+    // Under the answer to an ask staff record: opens the form to change it.
+    edit: "Edit",
+    save: "Save",
+    // The fields of the box at the top.
+    status: "Status",
+    country: "Country",
+    city: "City",
+    notes: "Notes",
+    // Airtable's markers, as tags by their name.
+    importantTarget: "Important target",
+    personalConnection: "Personal connection",
+    // When their record was no longer in Airtable.
+    airtableRemoved: (when: string) => `No longer in Airtable since ${when}`,
     historyTitle: "History",
-    // A campaign status set or cleared, in the history: around the campaign's name, which links to its page.
+    // A status set or cleared, in the history: around the ask's name.
     statusSet: (status: string) => ({ before: `${status} '`, after: "'" }),
     statusCleared: { before: "No longer marked as signed '", after: "'" },
     noHistory: "Nothing yet.",
@@ -415,18 +497,20 @@ export const staffCopy = {
       // Without the supporters permission, a letter doesn't say who wrote it.
       unsignedLetter: "Letter written to them",
       "unsigned-letter-replied": "Answered a letter",
+      // A letter of one of PauseAI's mailings, by its mailing, and how it was written.
+      "pauseai-letter": "Email from PauseAI:",
       "add politician": "Added",
       "edit politician": "Details edited",
-      "remove politician": "No longer sitting",
+      "remove politician": "No longer in Airtable",
       "block address": "Address blocked",
       "unblock address": "Address unblocked",
     } as Record<string, string>,
     // On an MP from Airtable, after the source, which links to their record there.
     editInAirtable: ", update name / email there.",
-    // On the bill's row of the campaigns panel: its status isn't set by hand.
-    fromControlAi: "set each night from ControlAI's letter",
-    // On each row of the campaigns panel: the link to the campaign's public page.
-    campaignPage: "Campaign page",
+    // On an ask that isn't set by hand: where its statuses come from.
+    importedAsk: "set each night by an import",
+    personalised: "personalised",
+    aiGenerated: "written with AI",
     // Under their name: what they are, in their house, and where for.
     roles: {
       commons: "MP",
@@ -436,8 +520,8 @@ export const staffCopy = {
       "ni-assembly": "MLA",
       other: "Politician",
     } as Record<string, string>,
-    role: (role: string, constituency: string | null, sitting: boolean) =>
-      `${sitting ? "" : "Formerly "}${role}${constituency ? ` for ${constituency}` : ""}`,
+    role: (role: string, constituency: string | null, inOffice: boolean) =>
+      `${inOffice ? "" : "Formerly "}${role}${constituency ? ` for ${constituency}` : ""}`,
     notFound: "Politician not found.",
     // Under their name, when their address is blocked: what's happened, what to check, and the form.
     blocked: {
@@ -470,8 +554,8 @@ export const staffCopy = {
   emails: {
     // The two pages: politicians' addresses, and everyone else's.
     titles: {
-      mps: "Blocked MP emails",
-      supporters: "Blocked supporter emails",
+      mps: "Politicians' blocked emails",
+      supporters: "Supporters' blocked emails",
     },
     intro: "Nothing is sent to these addresses until they're unblocked.",
     // Instead of the table, when no address is blocked, or none of the cause filtered for.
@@ -492,12 +576,13 @@ export const staffCopy = {
       whose: "Whose",
       refused: "Not sent since",
       at: "When",
-      email: "Email",
-      // In the history: what the email that bounced was, a letter or one of ours.
+      // What the email that bounced was, a letter or one of ours.
       sent: "Type of email",
     },
     // The email was a letter: before the name of the politician it was to, the two linked to the letter.
     letterTo: "Letter to",
+    // Instead of the type, for an email the site has no record of sending.
+    notRecorded: "Not recorded",
     purposes: {
       letter: "Letter",
       "forwarded-reply": "Forwarded reply",
@@ -528,8 +613,7 @@ export const staffCopy = {
     intro: {
       before: "MPs and peers who signed ",
       link: "the letter",
-      after:
-        " are marked as signed for the “Support the Artificial Superintelligence Bill” campaign. This can't be changed by hand.",
+      after: " are marked as having signed “ControlAI's letter to the Prime Minister”. This can't be changed by hand.",
     },
     importNow: "Import ControlAI letter now",
     never: "Not read yet.",
@@ -574,6 +658,49 @@ export const staffCopy = {
   },
   // The hourly copy of PauseAI's UK members (lib/server/members-import.ts),
   // on the import page.
+  // PauseAI's 2026 emails to politicians, from Airtable's Emails table.
+  pauseaiEmails: {
+    title: "PauseAI's emails to politicians",
+    intro: {
+      before: "Copies each email that PauseAI has sent a politician since January 2026 from the ",
+      link: "Emails table in Airtable",
+      after: ". Only transfers known ones, the import code needs updating if a new mailing is added.",
+    },
+    importNow: "Import emails now",
+    never: "Not imported yet.",
+    result: (r: { read: number; added: number; waiting: number; noPolitician: number; unplaced: unknown[] }) =>
+      `${r.read} emails read: ${r.added} added, ${r.waiting} waiting for their politician, ${r.noPolitician} with no politician, ${r.unplaced.length} with no mailing we know.`,
+    // The emails with no mailing we know, by their Airtable record, and the boxes they have ticked.
+    unplaced: "No mailing we know",
+    noBoxes: "no box ticked",
+  },
+  // The one-off import of the letters sent through pauseai.info's old form.
+  webForm: {
+    title: "Letters from pauseai.info's old write to MP form",
+    intro: {
+      before: "Transfer letters that supporters sent politicians through pauseai.info, reading from ",
+      link: "Web form emails table in Airtable",
+      after: ", making their senders become supporters. It doesn't copy the letters' text.",
+    },
+    importNow: "Import the letters",
+    never: "Not imported yet.",
+    result: (r: { read: number; imported: number; skipped: number; alreadyHere: number; noPolitician: number }) =>
+      `${r.read} letters read: ${r.imported} imported, ${r.skipped} spam, invalid or unsent, ${r.alreadyHere} already here, ${r.noPolitician} to a politician not here.`,
+  },
+  // The one-off import of the meetings for Go to Parliament.
+  goToParliament: {
+    title: "Go to Parliament event, 20 October 2026",
+    intro: {
+      before:
+        "Stores in each MP's record their answer to “Constituent meetings at Parliament, October 2026”. Reads from the ",
+      link: "Go to Parliament table in Airtable",
+      after: ".",
+    },
+    importNow: "Import the meetings",
+    never: "Not imported yet.",
+    result: (r: { guests: number; mps: number; added: number; changed: number; notFound: number }) =>
+      `${r.guests} guests with a meeting, with ${r.mps} MPs: ${r.added} statuses set, ${r.changed} changed, ${r.notFound} MPs not here.`,
+  },
   members: {
     title: "PauseAI members in the UK",
     intro: {
@@ -595,20 +722,27 @@ export const staffCopy = {
       `${r.members} members read: ${r.added} added, ${r.changed} changed, ${r.removed} removed; ${r.supportersAdded} new supporters, ${r.linked} linked.`,
   },
   syncs: {
-    title: "Members of Parliament from Airtable",
+    title: "Politicians from Airtable",
     // With a link to the table in the middle.
     intro: {
-      before: "From the ",
+      before: "Every politician in every body is copied from the ",
       link: "UK Parliamentarians table in Airtable",
-      after: ": everyone whose Body is “House of Commons” and whose Status is blank.",
+      after:
+        ", except the Airtable test MPs. Stores their answers to “Frontier AI letter to the Prime Minister”, “DeepMind letter to Sir Demis Hassabis”, “ControlAI's campaign statement” and “Edinburgh conference, November 2026”. Runs that change lots of data are held for checking.",
     },
     /** The test MPs (lib/test-mps.json) aren't in Airtable; every import adds any that are missing. */
-    testMps: "Each import also adds the test MPs, who aren’t in Airtable, if any are missing.",
-    syncNow: "Import MPs now",
+    testMps: "Each import also adds our own test MPs, who aren’t in Airtable, if any are missing.",
+    syncNow: "Import politicians now",
     none: "Not yet imported.",
     added: "Added",
-    removed: "Removed",
+    // Those whose record is no longer in Airtable.
+    removed: "Gone from Airtable",
     changed: "Changed",
+    // A record whose name changed, which may be Airtable reusing it for someone new: from, to.
+    renamed: "Renamed",
+    // The statuses it set from Airtable's tick boxes, after the counts of people.
+    statuses: (s: { added: number; changed: number; removed: number }) =>
+      `Statuses: ${s.added} set, ${s.changed} changed, ${s.removed} taken away.`,
     apply: "Apply",
     discard: "Discard",
   },
@@ -661,16 +795,9 @@ export const staffCopy = {
     noEmail: "None",
   },
   import: {
-    // The page, with every import: the MPs and the signatories from
-    // Airtable, and ControlAI's letter from the web.
+    // The page, with every import: the politicians from Airtable, ControlAI's
+    // letter from the web, Luma and the members.
     pageTitle: "Import data",
-    title: "Signatories of the 2026 letter to the Prime Minister",
-    intro: {
-      before: "Everyone ticked “Signed Frontier AI Letter” in the ",
-      link: "UK Parliamentarians table in Airtable",
-      after:
-        " is marked as signed for the “Regulate AI developers now” campaign here. Never unsigns anyone. This is a deprecated import - should sign/unsign people on MP pages manually here.",
-    },
     // The lozenges next to each import's heading: where it's from, and how often it runs.
     airtable: "Airtable",
     web: "Web",
@@ -679,12 +806,6 @@ export const staffCopy = {
     hourly: "Hourly",
     oneOff: "One-off",
     checkOnly: "Check only",
-    button: "Import signatories now",
-    none: "Not imported yet.",
-    note: "From Airtable",
-    // matched + added is everyone ticked in Airtable; alreadySet is those of them already marked here.
-    result: (r: { matched: number; added: number; alreadySet: number }) =>
-      `${r.matched + r.added} ticked in Airtable: ${r.matched} matched politicians already here, ${r.added} added as new, ${r.alreadySet} were already marked as signed.`,
   },
   letters: {
     title: "Letters to MPs",
@@ -716,6 +837,8 @@ export const staffCopy = {
       history: "History",
     },
     consent: { yes: "Yes", no: "No" },
+    // Beside a letter sent through pauseai.info's old form, copied from Airtable.
+    imported: "pauseai.info",
   },
   // The button beside a list's search box; its other filters apply as soon as they're chosen.
   search: "Search",
@@ -775,10 +898,12 @@ export const staffCopy = {
 
 /** Each job in the import log, by the title of its card on the import page and of its own page. */
 export const jobTitles: Record<ImportJob, string> = {
-  "sync-mps": staffCopy.syncs.title,
+  "sync-politicians": staffCopy.syncs.title,
+  "sync-emails": staffCopy.pauseaiEmails.title,
+  "import-web-form-letters": staffCopy.webForm.title,
+  "import-go-to-parliament": staffCopy.goToParliament.title,
   "check-mps": staffCopy.check.title,
   "import-controlai": staffCopy.controlAi.title,
-  "import-signatories": staffCopy.import.title,
   "import-luma": staffCopy.luma.title,
   "import-members": staffCopy.members.title,
 };

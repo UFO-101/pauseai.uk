@@ -23,7 +23,7 @@ describe("signedHref", () => {
 
   it("leads to the one politician who signed, or everyone who signed anything, or every politician", () => {
     expect(signedHref({ signedMp: 7, counts: counts(1) })).toBe("/staff/politicians/7");
-    expect(signedHref({ signedMp: null, counts: counts(4) })).toBe("/staff/politicians?campaign=any&sort=signed");
+    expect(signedHref({ signedMp: null, counts: counts(4) })).toBe("/staff/politicians?answer=signed&sort=asks");
     expect(signedHref({ signedMp: null, counts: counts(0) })).toBe("/staff/politicians");
   });
 });

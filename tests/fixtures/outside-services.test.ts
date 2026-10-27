@@ -34,8 +34,16 @@ describe("fixtureResponse", () => {
     expect(contacts.has_more).toBe(true);
   });
 
-  it("serves Airtable", async () => {
-    expect((await fixtureResponse("https://eu.airtable.com/v0/app/tbl")!.json()).records).toHaveLength(2);
+  it("serves each of the UK Parliamentarians base's tables, and nothing for another", async () => {
+    const records = async (table: string) =>
+      (await fixtureResponse(`https://eu.airtable.com/v0/appBInVvIm6opJ1Ob/${table}?x=1`)!.json()).records.map(
+        (r: { id: string }) => r.id,
+      );
+    expect(await records("tblH3ks9wqQHLpYx3")).toContain("recPlaceholder");
+    expect(await records("tblp4nH5Jymq48rcm")).toContain("recEmailCsrb");
+    expect(await records("tblkzjrRHiZiqMDGR")).toContain("recWebDee");
+    expect(await records("tblminXS1xSuBbEjz")).toContain("recGuest1");
+    expect(fixtureResponse("https://eu.airtable.com/v0/appBInVvIm6opJ1Ob/tblOther")).toBeUndefined();
   });
 
   it("serves Airtable's members from the members table", async () => {
@@ -43,12 +51,6 @@ describe("fixtureResponse", () => {
       "https://api.airtable.com/v0/appWPTGqZmUcs3NWu/tblL1icZBhTV1gQ9o?x=1",
     )!.json();
     expect(members.records[0].id).toBe("recMemberJane");
-  });
-
-  it("serves Airtable's MPs when asked for the House of Commons", async () => {
-    const formula = encodeURIComponent("AND({Body}='House of Commons')");
-    const mps = await fixtureResponse(`https://eu.airtable.com/v0/app/tbl?filterByFormula=${formula}`)!.json();
-    expect(mps.records.map((r: { id: string }) => r.id)).toEqual(["recDummy", "recPlaceholder"]);
   });
 
   it("knows one postcode, and 404s the rest", async () => {

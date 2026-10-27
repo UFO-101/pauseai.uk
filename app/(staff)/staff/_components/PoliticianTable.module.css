@@ -1,11 +1,25 @@
 /* The politicians table. */
 
-/* A campaign's status, and when, on one line. */
-.signed {
+/* Whether they're in office, on one line. */
+.status {
   white-space: nowrap;
 }
 
 /* The counts of letters and replies: figures that line up. */
 .count {
   font-variant-numeric: tabular-nums;
+}
+
+/* Their answer to each ask they've answered: a line each, the answer in
+   bold, then the ask in the secondary colour, which wraps under it. */
+.asks {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ask {
+  color: var(--text-secondary);
 }

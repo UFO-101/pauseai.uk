@@ -61,7 +61,8 @@ SELECT r.send, r.reason, r.at, r.source FROM (
   -- The consent box on the newest letter.
   SELECT 3, CASE WHEN l.contact_consent THEN 'yes' ELSE 'no' END,
     CASE WHEN l.contact_consent THEN 'asked' ELSE 'declined' END, l.created_at, 'letter'
-  FROM (SELECT * FROM letters l WHERE lower(trim(l.sender_email)) = for_address
+  FROM (SELECT s.contact_consent, l.created_at FROM supporter_letters s JOIN letters l ON l.id = s.id
+        WHERE lower(trim(s.sender_email)) = for_address
         ORDER BY l.created_at DESC, l.id DESC LIMIT 1) l
   WHERE for_topic = 'events-and-ways-to-help'
 ) r (rank, send, reason, at, source)
@@ -71,6 +72,48 @@ $$;
 SET default_tablespace = '';
 
 SET default_table_access_method = heap;
+
+--
+-- Name: ask_kind_statuses; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.ask_kind_statuses (
+    kind text NOT NULL,
+    status text NOT NULL,
+    CONSTRAINT ask_kind_statuses_kind_check CHECK ((kind = ANY (ARRAY['letter'::text, 'event'::text])))
+);
+
+--
+-- Name: ask_statuses; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.ask_statuses (
+    notable_person_id bigint NOT NULL,
+    ask text NOT NULL,
+    ask_kind text NOT NULL,
+    status text NOT NULL,
+    status_date date,
+    note text DEFAULT ''::text NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_by text NOT NULL
+);
+
+--
+-- Name: asks; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.asks (
+    slug text NOT NULL,
+    title text NOT NULL,
+    kind text NOT NULL,
+    date date,
+    url text,
+    asked_by text[] DEFAULT '{}'::text[] NOT NULL,
+    CONSTRAINT asks_asked_by_check CHECK ((asked_by <@ ARRAY['supporters'::text, 'pauseai'::text, 'controlai'::text])),
+    CONSTRAINT asks_kind_check CHECK ((kind = ANY (ARRAY['letter'::text, 'event'::text]))),
+    CONSTRAINT asks_slug_check CHECK ((slug ~ '^[a-z0-9]+(-[a-z0-9]+)*$'::text)),
+    CONSTRAINT asks_url_check CHECK ((url ~ '^(https://|/)'::text))
+);
 
 --
 -- Name: audit_log; Type: TABLE; Schema: public; Owner: -
@@ -98,18 +141,14 @@ ALTER TABLE public.audit_log ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
 );
 
 --
--- Name: campaign_statuses; Type: TABLE; Schema: public; Owner: -
+-- Name: campaigns; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public.campaign_statuses (
-    politician_id bigint NOT NULL,
-    campaign text NOT NULL,
-    status text NOT NULL,
-    status_date date,
-    note text DEFAULT ''::text NOT NULL,
-    updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    updated_by text NOT NULL,
-    CONSTRAINT campaign_statuses_status_check CHECK ((status = 'signed'::text))
+CREATE TABLE public.campaigns (
+    slug text NOT NULL,
+    title text NOT NULL,
+    ask text,
+    CONSTRAINT campaigns_slug_check CHECK ((slug ~ '^[a-z0-9]+(-[a-z0-9]+)*$'::text))
 );
 
 --
@@ -120,28 +159,6 @@ CREATE TABLE public.email_blocks (
     address text NOT NULL,
     problem_id bigint NOT NULL,
     CONSTRAINT email_blocks_address_check CHECK ((address = lower(address)))
-);
-
---
--- Name: letters; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.letters (
-    id bigint NOT NULL,
-    campaign text NOT NULL,
-    politician_id bigint NOT NULL,
-    sender_name text NOT NULL,
-    sender_email text NOT NULL,
-    sender_address text NOT NULL,
-    sender_postcode text NOT NULL,
-    contact_consent boolean NOT NULL,
-    subject text NOT NULL,
-    reply_hash text NOT NULL,
-    status text NOT NULL,
-    created_at timestamp with time zone DEFAULT now() NOT NULL,
-    sent_at timestamp with time zone,
-    replied_at timestamp with time zone,
-    CONSTRAINT letters_status_check CHECK ((status = ANY (ARRAY['sending'::text, 'sent'::text, 'not_sent'::text, 'bounced'::text, 'spam_complaint'::text])))
 );
 
 --
@@ -200,6 +217,26 @@ CREATE TABLE public.opt_outs (
 );
 
 --
+-- Name: supporter_letters; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.supporter_letters (
+    id bigint NOT NULL,
+    kind text DEFAULT 'supporter'::text NOT NULL,
+    campaign text NOT NULL,
+    sender_name text NOT NULL,
+    sender_email text NOT NULL,
+    sender_address text NOT NULL,
+    sender_postcode text NOT NULL,
+    contact_consent boolean NOT NULL,
+    subject text NOT NULL,
+    reply_hash text,
+    airtable_id text,
+    CONSTRAINT supporter_letters_kind_check CHECK ((kind = 'supporter'::text)),
+    CONSTRAINT supporter_letters_reply_hash_check CHECK (((reply_hash IS NULL) = (airtable_id IS NOT NULL)))
+);
+
+--
 -- Name: email_permissions; Type: VIEW; Schema: public; Owner: -
 --
 
@@ -219,8 +256,8 @@ CREATE VIEW public.email_permissions AS
            FROM public.members
         UNION
          SELECT 'events-and-ways-to-help'::text,
-            lower(TRIM(BOTH FROM letters.sender_email)) AS lower
-           FROM public.letters
+            lower(TRIM(BOTH FROM supporter_letters.sender_email)) AS lower
+           FROM public.supporter_letters
         UNION
          SELECT opt_outs.list,
             opt_outs.address
@@ -319,7 +356,7 @@ CREATE TABLE public.import_runs (
     decided_by text,
     decided_at timestamp with time zone,
     CONSTRAINT import_runs_check CHECK (((status = 'failed'::text) = (error IS NOT NULL))),
-    CONSTRAINT import_runs_job_check CHECK ((job = ANY (ARRAY['sync-mps'::text, 'check-mps'::text, 'import-controlai'::text, 'import-signatories'::text, 'import-luma'::text, 'import-members'::text]))),
+    CONSTRAINT import_runs_job_check CHECK ((job = ANY (ARRAY['sync-politicians'::text, 'check-mps'::text, 'import-controlai'::text, 'import-signatories'::text, 'import-luma'::text, 'import-members'::text, 'sync-emails'::text, 'import-web-form-letters'::text, 'import-go-to-parliament'::text]))),
     CONSTRAINT import_runs_status_check CHECK ((status = ANY (ARRAY['ok'::text, 'failed'::text, 'unchanged'::text, 'held'::text, 'applied'::text, 'discarded'::text])))
 );
 
@@ -359,6 +396,22 @@ ALTER TABLE public.letter_events ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTIT
     NO MINVALUE
     NO MAXVALUE
     CACHE 1
+);
+
+--
+-- Name: letters; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.letters (
+    id bigint NOT NULL,
+    notable_person_id bigint CONSTRAINT letters_politician_id_not_null NOT NULL,
+    status text NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    sent_at timestamp with time zone,
+    replied_at timestamp with time zone,
+    kind text NOT NULL,
+    CONSTRAINT letters_kind_check CHECK ((kind = ANY (ARRAY['supporter'::text, 'pauseai'::text]))),
+    CONSTRAINT letters_status_check CHECK (((status = ANY (ARRAY['sending'::text, 'sent'::text, 'not_sent'::text, 'bounced'::text, 'spam_complaint'::text])) OR ((kind = 'pauseai'::text) AND (status = ANY (ARRAY['scheduled'::text, 'cancelled'::text])))))
 );
 
 --
@@ -436,12 +489,73 @@ CREATE TABLE public.luma_import_state (
 );
 
 --
+-- Name: mailings; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.mailings (
+    id bigint NOT NULL,
+    title text NOT NULL,
+    ask text,
+    airtable_field text NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+--
+-- Name: mailings_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+ALTER TABLE public.mailings ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public.mailings_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+--
 -- Name: members_erased; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.members_erased (
     id text NOT NULL,
     erased_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+--
+-- Name: notable_people; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.notable_people (
+    id bigint NOT NULL,
+    kind text NOT NULL,
+    name text NOT NULL,
+    salutation text DEFAULT ''::text NOT NULL,
+    email text,
+    status text DEFAULT 'in_office'::text NOT NULL,
+    notes text DEFAULT ''::text NOT NULL,
+    important_target boolean DEFAULT false NOT NULL,
+    personal_connection boolean DEFAULT false NOT NULL,
+    airtable_id text,
+    airtable_removed_at timestamp with time zone,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT notable_people_check CHECK (((airtable_removed_at IS NULL) OR (airtable_id IS NOT NULL))),
+    CONSTRAINT notable_people_kind_check CHECK ((kind = 'politician'::text)),
+    CONSTRAINT notable_people_status_check CHECK ((status = ANY (ARRAY['in_office'::text, 'died'::text, 'retired'::text, 'left_office'::text])))
+);
+
+--
+-- Name: notable_people_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+ALTER TABLE public.notable_people ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public.notable_people_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
 );
 
 --
@@ -458,38 +572,37 @@ ALTER TABLE public.opt_outs ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
 );
 
 --
+-- Name: pauseai_letters; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.pauseai_letters (
+    id bigint NOT NULL,
+    kind text DEFAULT 'pauseai'::text NOT NULL,
+    mailing_id bigint NOT NULL,
+    airtable_id text,
+    personalised boolean DEFAULT false NOT NULL,
+    ai_generated boolean DEFAULT false NOT NULL,
+    CONSTRAINT pauseai_letters_kind_check CHECK ((kind = 'pauseai'::text))
+);
+
+--
 -- Name: politicians; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.politicians (
     id bigint NOT NULL,
     house text NOT NULL,
-    name text NOT NULL,
-    salutation text DEFAULT ''::text NOT NULL,
     constituency text,
     party text DEFAULT ''::text NOT NULL,
-    email text,
     is_test boolean DEFAULT false NOT NULL,
-    sitting boolean DEFAULT true NOT NULL,
-    created_at timestamp with time zone DEFAULT now() NOT NULL,
-    updated_at timestamp with time zone DEFAULT now() NOT NULL,
     test_postcode text,
-    airtable_id text,
+    kind text DEFAULT 'politician'::text NOT NULL,
+    country text,
+    city text,
+    CONSTRAINT politicians_country_check CHECK ((country = ANY (ARRAY['england'::text, 'scotland'::text, 'wales'::text, 'northern-ireland'::text]))),
     CONSTRAINT politicians_house_check CHECK ((house = ANY (ARRAY['commons'::text, 'lords'::text, 'scottish-parliament'::text, 'senedd'::text, 'ni-assembly'::text, 'other'::text]))),
+    CONSTRAINT politicians_kind_check CHECK ((kind = 'politician'::text)),
     CONSTRAINT politicians_test_postcode CHECK ((is_test = (test_postcode IS NOT NULL)))
-);
-
---
--- Name: politicians_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
-
-ALTER TABLE public.politicians ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
-    SEQUENCE NAME public.politicians_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1
 );
 
 --
@@ -540,25 +653,27 @@ CREATE TABLE public.staff_sessions (
 --
 
 CREATE VIEW public.supporter_activity_letter AS
- SELECT l.id AS source_id,
+ SELECT s.id AS source_id,
     l.created_at AS at,
     'letter'::text AS kind,
-    l.campaign AS title,
+    s.campaign AS title,
     p.name AS detail,
     ('/staff/politicians/'::text || p.id) AS href,
     l.status
-   FROM (public.letters l
-     JOIN public.politicians p ON ((p.id = l.politician_id)))
+   FROM ((public.supporter_letters s
+     JOIN public.letters l ON ((l.id = s.id)))
+     JOIN public.notable_people p ON ((p.id = l.notable_person_id)))
 UNION ALL
- SELECT l.id AS source_id,
+ SELECT s.id AS source_id,
     l.replied_at AS at,
     'letter-replied'::text AS kind,
-    l.campaign AS title,
+    s.campaign AS title,
     p.name AS detail,
     ('/staff/politicians/'::text || p.id) AS href,
     NULL::text AS status
-   FROM (public.letters l
-     JOIN public.politicians p ON ((p.id = l.politician_id)))
+   FROM ((public.supporter_letters s
+     JOIN public.letters l ON ((l.id = s.id)))
+     JOIN public.notable_people p ON ((p.id = l.notable_person_id)))
   WHERE (l.replied_at IS NOT NULL);
 
 --
@@ -689,14 +804,15 @@ UNION ALL
 --
 
 CREATE VIEW public.supporter_contact_letter AS
- SELECT id AS source_id,
-    created_at AS at,
+ SELECT s.id AS source_id,
+    l.created_at AS at,
     NULL::text AS phone,
-    sender_postcode AS postcode,
+    s.sender_postcode AS postcode,
     NULL::double precision AS latitude,
     NULL::double precision AS longitude,
     NULL::text AS city
-   FROM public.letters l;
+   FROM (public.supporter_letters s
+     JOIN public.letters l ON ((l.id = s.id)));
 
 --
 -- Name: supporter_contact_luma; Type: VIEW; Schema: public; Owner: -
@@ -770,11 +886,12 @@ UNION ALL
 --
 
 CREATE VIEW public.supporter_source_letter AS
- SELECT id AS source_id,
-    lower(TRIM(BOTH FROM sender_email)) AS email,
-    sender_name AS name,
-    created_at AS seen_at
-   FROM public.letters l;
+ SELECT s.id AS source_id,
+    lower(TRIM(BOTH FROM s.sender_email)) AS email,
+    s.sender_name AS name,
+    l.created_at AS seen_at
+   FROM (public.supporter_letters s
+     JOIN public.letters l ON ((l.id = s.id)));
 
 --
 -- Name: supporter_source_luma; Type: VIEW; Schema: public; Owner: -
@@ -814,12 +931,16 @@ CREATE VIEW public.supporter_identity AS
      JOIN public.supporter_links k ON ((k.luma_user_id = s.source_id)))
 UNION ALL
  SELECT k.supporter_id,
-    'letter'::text AS source,
+        CASE
+            WHEN (x.airtable_id IS NULL) THEN 'letter'::text
+            ELSE 'web-form'::text
+        END AS source,
     s.email,
     s.name,
     s.seen_at
-   FROM (public.supporter_source_letter s
+   FROM ((public.supporter_source_letter s
      JOIN public.supporter_links k ON ((k.letter_id = s.source_id)))
+     JOIN public.supporter_letters x ON ((x.id = s.source_id)))
 UNION ALL
  SELECT k.supporter_id,
     'member'::text AS source,
@@ -929,6 +1050,34 @@ CREATE VIEW public.supporters_summary AS
      LEFT JOIN mem ON ((mem.supporter_id = s.id)));
 
 --
+-- Name: ask_kind_statuses ask_kind_statuses_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.ask_kind_statuses
+    ADD CONSTRAINT ask_kind_statuses_pkey PRIMARY KEY (kind, status);
+
+--
+-- Name: ask_statuses ask_statuses_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.ask_statuses
+    ADD CONSTRAINT ask_statuses_pkey PRIMARY KEY (notable_person_id, ask);
+
+--
+-- Name: asks asks_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.asks
+    ADD CONSTRAINT asks_pkey PRIMARY KEY (slug);
+
+--
+-- Name: asks asks_slug_kind_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.asks
+    ADD CONSTRAINT asks_slug_kind_key UNIQUE (slug, kind);
+
+--
 -- Name: audit_log audit_log_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -943,11 +1092,11 @@ ALTER TABLE public.audit_log
     ADD CONSTRAINT audit_log_unblock_note CHECK (((action <> 'unblock address'::text) OR (btrim(COALESCE((details ->> 'note'::text), ''::text)) <> ''::text))) NOT VALID;
 
 --
--- Name: campaign_statuses campaign_statuses_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: campaigns campaigns_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.campaign_statuses
-    ADD CONSTRAINT campaign_statuses_pkey PRIMARY KEY (politician_id, campaign);
+ALTER TABLE ONLY public.campaigns
+    ADD CONSTRAINT campaigns_pkey PRIMARY KEY (slug);
 
 --
 -- Name: email_blocks email_blocks_pkey; Type: CONSTRAINT; Schema: public; Owner: -
@@ -985,18 +1134,18 @@ ALTER TABLE ONLY public.letter_events
     ADD CONSTRAINT letter_events_pkey PRIMARY KEY (id);
 
 --
+-- Name: letters letters_id_kind_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.letters
+    ADD CONSTRAINT letters_id_kind_key UNIQUE (id, kind);
+
+--
 -- Name: letters letters_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.letters
     ADD CONSTRAINT letters_pkey PRIMARY KEY (id);
-
---
--- Name: letters letters_reply_hash_key; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.letters
-    ADD CONSTRAINT letters_reply_hash_key UNIQUE (reply_hash);
 
 --
 -- Name: luma_erased luma_erased_pkey; Type: CONSTRAINT; Schema: public; Owner: -
@@ -1034,6 +1183,20 @@ ALTER TABLE ONLY public.luma_people
     ADD CONSTRAINT luma_people_pkey PRIMARY KEY (user_id);
 
 --
+-- Name: mailings mailings_airtable_field_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.mailings
+    ADD CONSTRAINT mailings_airtable_field_key UNIQUE (airtable_field);
+
+--
+-- Name: mailings mailings_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.mailings
+    ADD CONSTRAINT mailings_pkey PRIMARY KEY (id);
+
+--
 -- Name: members_erased members_erased_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1046,6 +1209,27 @@ ALTER TABLE ONLY public.members_erased
 
 ALTER TABLE ONLY public.members
     ADD CONSTRAINT members_pkey PRIMARY KEY (id);
+
+--
+-- Name: notable_people notable_people_airtable_id_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.notable_people
+    ADD CONSTRAINT notable_people_airtable_id_key UNIQUE (airtable_id);
+
+--
+-- Name: notable_people notable_people_id_kind_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.notable_people
+    ADD CONSTRAINT notable_people_id_kind_key UNIQUE (id, kind);
+
+--
+-- Name: notable_people notable_people_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.notable_people
+    ADD CONSTRAINT notable_people_pkey PRIMARY KEY (id);
 
 --
 -- Name: opt_outs opt_outs_pkey; Type: CONSTRAINT; Schema: public; Owner: -
@@ -1062,11 +1246,18 @@ ALTER TABLE ONLY public.opt_outs
     ADD CONSTRAINT opt_outs_source_source_ref_key UNIQUE (source, source_ref);
 
 --
--- Name: politicians politicians_airtable_id_key; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: pauseai_letters pauseai_letters_airtable_id_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.politicians
-    ADD CONSTRAINT politicians_airtable_id_key UNIQUE (airtable_id);
+ALTER TABLE ONLY public.pauseai_letters
+    ADD CONSTRAINT pauseai_letters_airtable_id_key UNIQUE (airtable_id);
+
+--
+-- Name: pauseai_letters pauseai_letters_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.pauseai_letters
+    ADD CONSTRAINT pauseai_letters_pkey PRIMARY KEY (id);
 
 --
 -- Name: politicians politicians_pkey; Type: CONSTRAINT; Schema: public; Owner: -
@@ -1104,6 +1295,27 @@ ALTER TABLE ONLY public.staff_sessions
     ADD CONSTRAINT staff_sessions_pkey PRIMARY KEY (token_hash);
 
 --
+-- Name: supporter_letters supporter_letters_airtable_id_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.supporter_letters
+    ADD CONSTRAINT supporter_letters_airtable_id_key UNIQUE (airtable_id);
+
+--
+-- Name: supporter_letters supporter_letters_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.supporter_letters
+    ADD CONSTRAINT supporter_letters_pkey PRIMARY KEY (id);
+
+--
+-- Name: supporter_letters supporter_letters_reply_hash_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.supporter_letters
+    ADD CONSTRAINT supporter_letters_reply_hash_key UNIQUE (reply_hash);
+
+--
 -- Name: supporter_links supporter_links_letter_id_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1139,6 +1351,12 @@ ALTER TABLE ONLY public.supporters
     ADD CONSTRAINT supporters_pkey PRIMARY KEY (id);
 
 --
+-- Name: ask_statuses_ask; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX ask_statuses_ask ON public.ask_statuses USING btree (ask, status);
+
+--
 -- Name: audit_log_address_blocks; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -1161,12 +1379,6 @@ CREATE INDEX audit_log_politician_edits ON public.audit_log USING btree ((((deta
 --
 
 CREATE INDEX audit_log_status_sets ON public.audit_log USING btree ((((details ->> 'politicianId'::text))::bigint)) WHERE (action = 'set status'::text);
-
---
--- Name: campaign_statuses_campaign; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX campaign_statuses_campaign ON public.campaign_statuses USING btree (campaign, status);
 
 --
 -- Name: email_problems_address; Type: INDEX; Schema: public; Owner: -
@@ -1211,16 +1423,10 @@ CREATE INDEX import_runs_job_at ON public.import_runs USING btree (job, at DESC,
 CREATE INDEX letter_events_letter_id ON public.letter_events USING btree (letter_id, at);
 
 --
--- Name: letters_sender_address; Type: INDEX; Schema: public; Owner: -
+-- Name: letters_notable_person; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX letters_sender_address ON public.letters USING btree (lower(TRIM(BOTH FROM sender_email)));
-
---
--- Name: letters_sender_email_campaign; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX letters_sender_email_campaign ON public.letters USING btree (lower(sender_email), campaign);
+CREATE INDEX letters_notable_person ON public.letters USING btree (notable_person_id);
 
 --
 -- Name: luma_events_start; Type: INDEX; Schema: public; Owner: -
@@ -1259,10 +1465,16 @@ CREATE INDEX members_email ON public.members USING btree (email);
 CREATE UNIQUE INDEX opt_outs_open ON public.opt_outs USING btree (address, list) WHERE (resubscribed_at IS NULL);
 
 --
--- Name: politicians_sitting_constituency; Type: INDEX; Schema: public; Owner: -
+-- Name: pauseai_letters_mailing; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX politicians_sitting_constituency ON public.politicians USING btree (constituency) WHERE (sitting AND (house = 'commons'::text));
+CREATE INDEX pauseai_letters_mailing ON public.pauseai_letters USING btree (mailing_id);
+
+--
+-- Name: politicians_commons_constituency; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX politicians_commons_constituency ON public.politicians USING btree (constituency) WHERE (house = 'commons'::text);
 
 --
 -- Name: staff_login_links_email_created_at; Type: INDEX; Schema: public; Owner: -
@@ -1275,6 +1487,18 @@ CREATE INDEX staff_login_links_email_created_at ON public.staff_login_links USIN
 --
 
 CREATE INDEX staff_sessions_expires_at ON public.staff_sessions USING btree (expires_at);
+
+--
+-- Name: supporter_letters_sender_address; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX supporter_letters_sender_address ON public.supporter_letters USING btree (lower(TRIM(BOTH FROM sender_email)));
+
+--
+-- Name: supporter_letters_sender_email_campaign; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX supporter_letters_sender_email_campaign ON public.supporter_letters USING btree (lower(sender_email), campaign);
 
 --
 -- Name: supporter_links_matched; Type: INDEX; Schema: public; Owner: -
@@ -1295,11 +1519,32 @@ CREATE INDEX supporter_links_supporter ON public.supporter_links USING btree (su
 CREATE INDEX supporters_first_seen ON public.supporters USING btree (first_seen_at);
 
 --
--- Name: campaign_statuses campaign_statuses_politician_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: ask_statuses ask_statuses_ask_ask_kind_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.campaign_statuses
-    ADD CONSTRAINT campaign_statuses_politician_id_fkey FOREIGN KEY (politician_id) REFERENCES public.politicians(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.ask_statuses
+    ADD CONSTRAINT ask_statuses_ask_ask_kind_fkey FOREIGN KEY (ask, ask_kind) REFERENCES public.asks(slug, kind);
+
+--
+-- Name: ask_statuses ask_statuses_ask_kind_status_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.ask_statuses
+    ADD CONSTRAINT ask_statuses_ask_kind_status_fkey FOREIGN KEY (ask_kind, status) REFERENCES public.ask_kind_statuses(kind, status);
+
+--
+-- Name: ask_statuses ask_statuses_notable_person_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.ask_statuses
+    ADD CONSTRAINT ask_statuses_notable_person_id_fkey FOREIGN KEY (notable_person_id) REFERENCES public.notable_people(id) ON DELETE CASCADE;
+
+--
+-- Name: campaigns campaigns_ask_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.campaigns
+    ADD CONSTRAINT campaigns_ask_fkey FOREIGN KEY (ask) REFERENCES public.asks(slug);
 
 --
 -- Name: email_blocks email_blocks_problem_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
@@ -1323,11 +1568,11 @@ ALTER TABLE ONLY public.letter_events
     ADD CONSTRAINT letter_events_letter_id_fkey FOREIGN KEY (letter_id) REFERENCES public.letters(id) ON DELETE CASCADE;
 
 --
--- Name: letters letters_politician_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: letters letters_notable_person_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.letters
-    ADD CONSTRAINT letters_politician_id_fkey FOREIGN KEY (politician_id) REFERENCES public.politicians(id);
+    ADD CONSTRAINT letters_notable_person_id_fkey FOREIGN KEY (notable_person_id) REFERENCES public.notable_people(id);
 
 --
 -- Name: luma_guests luma_guests_event_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
@@ -1344,11 +1589,53 @@ ALTER TABLE ONLY public.luma_guests
     ADD CONSTRAINT luma_guests_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.luma_people(user_id) ON DELETE CASCADE;
 
 --
+-- Name: mailings mailings_ask_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.mailings
+    ADD CONSTRAINT mailings_ask_fkey FOREIGN KEY (ask) REFERENCES public.asks(slug);
+
+--
+-- Name: pauseai_letters pauseai_letters_id_kind_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.pauseai_letters
+    ADD CONSTRAINT pauseai_letters_id_kind_fkey FOREIGN KEY (id, kind) REFERENCES public.letters(id, kind) ON DELETE CASCADE;
+
+--
+-- Name: pauseai_letters pauseai_letters_mailing_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.pauseai_letters
+    ADD CONSTRAINT pauseai_letters_mailing_id_fkey FOREIGN KEY (mailing_id) REFERENCES public.mailings(id);
+
+--
+-- Name: politicians politicians_notable_person_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.politicians
+    ADD CONSTRAINT politicians_notable_person_fkey FOREIGN KEY (id, kind) REFERENCES public.notable_people(id, kind) ON DELETE CASCADE;
+
+--
+-- Name: supporter_letters supporter_letters_campaign_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.supporter_letters
+    ADD CONSTRAINT supporter_letters_campaign_fkey FOREIGN KEY (campaign) REFERENCES public.campaigns(slug);
+
+--
+-- Name: supporter_letters supporter_letters_letter_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.supporter_letters
+    ADD CONSTRAINT supporter_letters_letter_fkey FOREIGN KEY (id, kind) REFERENCES public.letters(id, kind) ON DELETE CASCADE;
+
+--
 -- Name: supporter_links supporter_links_letter_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.supporter_links
-    ADD CONSTRAINT supporter_links_letter_id_fkey FOREIGN KEY (letter_id) REFERENCES public.letters(id) ON DELETE CASCADE;
+    ADD CONSTRAINT supporter_links_letter_id_fkey FOREIGN KEY (letter_id) REFERENCES public.supporter_letters(id) ON DELETE CASCADE;
 
 --
 -- Name: supporter_links supporter_links_luma_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -

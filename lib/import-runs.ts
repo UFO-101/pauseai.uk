@@ -2,15 +2,17 @@
 // and the staff components that show a run (app/(staff)/staff/_components/Run.tsx).
 import type { ControlAiMatchProblem } from "./controlai-letter";
 import type { MpProblem } from "./mp-check";
-import type { MpChanges, SyncedMp } from "./mps";
+import type { PoliticianChanges, PoliticianRecord, Renamed } from "./politician-sync";
 
 export const IMPORT_JOBS = [
   "import-luma",
   "import-members",
-  "sync-mps",
+  "sync-politicians",
+  "sync-emails",
   "check-mps",
   "import-controlai",
-  "import-signatories",
+  "import-web-form-letters",
+  "import-go-to-parliament",
 ] as const;
 export type ImportJob = (typeof IMPORT_JOBS)[number];
 
@@ -21,10 +23,12 @@ export function isImportJob(value: string): value is ImportJob {
 /** Each job's page, /staff/import-data/<slug>: its button and every run. */
 const IMPORT_SLUGS: Record<ImportJob, string> = {
   "import-luma": "luma",
-  "sync-mps": "mps",
+  "sync-politicians": "politicians",
+  "sync-emails": "emails",
+  "import-web-form-letters": "web-form-letters",
+  "import-go-to-parliament": "go-to-parliament",
   "check-mps": "mp-check",
   "import-controlai": "controlai",
-  "import-signatories": "signatories",
   "import-members": "members",
 };
 
@@ -32,10 +36,12 @@ const IMPORT_SLUGS: Record<ImportJob, string> = {
 export const JOB_SCHEDULES: Record<ImportJob, "hourly" | "nightly" | "oneOff"> = {
   "import-luma": "hourly",
   "import-members": "hourly",
-  "sync-mps": "nightly",
+  "sync-politicians": "nightly",
+  "sync-emails": "nightly",
+  "import-web-form-letters": "oneOff",
+  "import-go-to-parliament": "oneOff",
   "check-mps": "nightly",
   "import-controlai": "nightly",
-  "import-signatories": "oneOff",
 };
 
 /** Where a job's page is. */
@@ -56,7 +62,7 @@ export function asList<Run>(run: Run | undefined): Run[] {
 /** Who starts the scheduled runs (netlify/functions/), whatever their schedule. Staff runs are started by the staff member's email. */
 export const NIGHTLY = "nightly";
 
-/** ok or failed; a sync-mps run is instead unchanged, held, applied or discarded. */
+/** ok or failed; a sync-politicians run is instead unchanged, held, applied or discarded. */
 export type ImportRunStatus = "ok" | "failed" | "unchanged" | "held" | "applied" | "discarded";
 
 /** One run of a job: how it ended, and the job's own account of what it found, unless it failed. */
@@ -73,9 +79,21 @@ export type ImportRun<Job extends ImportJob, Result> = {
   | { status: Exclude<ImportRunStatus, "failed">; error: null; result: Result }
 );
 
-/** What a sync-mps run keeps: a held one also keeps the full list, to apply later. */
-export type MpSyncResult = { changes: MpChanges; mps?: SyncedMp[] };
-export type MpSync = ImportRun<"sync-mps", MpSyncResult>;
+/** Statuses an import set, changed or took away. */
+export type StatusCounts = { added: number; changed: number; removed: number };
+
+/**
+ * What a sync-politicians run keeps: what changed, the names among it, and
+ * the statuses it set. A held one also keeps every record, to apply later.
+ * Runs from before the sync read every body keep only the changes.
+ */
+export type PoliticianSyncResult = {
+  changes: PoliticianChanges;
+  renamed?: Renamed[];
+  statuses?: StatusCounts;
+  records?: PoliticianRecord[];
+};
+export type PoliticianSync = ImportRun<"sync-politicians", PoliticianSyncResult>;
 
 export type MpCheckResult = { problems: MpProblem[] };
 export type MpCheck = ImportRun<"check-mps", MpCheckResult>;
@@ -92,9 +110,6 @@ export type ControlAiImportResult = {
   problems: ControlAiMatchProblem[];
 };
 export type ControlAiImport = ImportRun<"import-controlai", ControlAiImportResult>;
-
-export type SignatoryImportResult = { matched: number; added: number; alreadySet: number };
-export type SignatoryImport = ImportRun<"import-signatories", SignatoryImportResult>;
 
 /** What a run of the Luma import did: counts of what it copied, and what stopped it, if anything did. */
 export type LumaImportResult = {
@@ -137,7 +152,56 @@ export type MembersImportResult = {
 };
 export type MembersImport = ImportRun<"import-members", MembersImportResult>;
 
-export type AnyImportRun = MpSync | MpCheck | ControlAiImport | SignatoryImport | LumaImport | MembersImport;
+/** What a run of the Emails sync did: the emails read, those it added, and those it couldn't. */
+export type EmailSyncResult = {
+  read: number;
+  added: number;
+  /** Emails to a politician who isn't here yet, for a later run. */
+  waiting: number;
+  /** Emails linked to no politician, or several. */
+  noPolitician: number;
+  /** Emails with no known mailing's box ticked, or several: by record, with the boxes ticked. */
+  unplaced: { airtableId: string; mailings: string[] }[];
+};
+export type EmailSync = ImportRun<"sync-emails", EmailSyncResult>;
+
+/** What the one-off import of pauseai.info's web form letters did: the letters read, and what became of each. */
+export type WebFormImportResult = {
+  read: number;
+  imported: number;
+  /** Marked as spam, invalid, or never sent. */
+  skipped: number;
+  /** Already imported, or already here from the same sender to the same politician for the same ask. */
+  alreadyHere: number;
+  /** To a politician who isn't here, or to none or several. */
+  noPolitician: number;
+  supportersAdded: number;
+  linked: number;
+};
+export type WebFormImport = ImportRun<"import-web-form-letters", WebFormImportResult>;
+
+/** What the one-off import of Go to Parliament's meetings did. */
+export type GoToParliamentImportResult = {
+  /** Guests with a meeting status, and the MPs they were to meet. */
+  guests: number;
+  mps: number;
+  /** Statuses set, and changed. */
+  added: number;
+  changed: number;
+  /** MPs who aren't here. */
+  notFound: number;
+};
+export type GoToParliamentImport = ImportRun<"import-go-to-parliament", GoToParliamentImportResult>;
+
+export type AnyImportRun =
+  | PoliticianSync
+  | EmailSync
+  | MpCheck
+  | ControlAiImport
+  | LumaImport
+  | MembersImport
+  | WebFormImport
+  | GoToParliamentImport;
 
 /** Whether a Luma run left work for later: it was cut short, or the contacts pass is still going. */
 function lumaRunIncomplete(result: LumaImportResult): boolean {
@@ -146,18 +210,20 @@ function lumaRunIncomplete(result: LumaImportResult): boolean {
 
 /**
  * How a run ended, as its line in the import log says it: its status, or
- * for a Luma import that left work for later, "incomplete", in place of
- * "ok" or "unchanged".
+ * for a Luma import that left work for later, or an Emails sync that held
+ * some back, "incomplete", in place of "ok" or "unchanged".
  */
 export function runStatus(run: AnyImportRun): string {
   if (run.job === "import-luma" && run.status !== "failed" && lumaRunIncomplete(run.result)) return "incomplete";
+  // Emails held back for a mailing nobody has added yet.
+  if (run.job === "sync-emails" && run.status !== "failed" && run.result.unplaced.length > 0) return "incomplete";
   return run.status;
 }
 
-/** How a run ended, as a colour: green when it went well, amber held or stopped short, red failed; none when it changed nothing, was discarded, or never ran. */
+/** How a run ended, as a colour: green when it went well, changing something or nothing, amber held or stopped short, red failed; none when it was discarded, or never ran. */
 export function runTone(run: AnyImportRun | undefined): "green" | "amber" | "red" | undefined {
   if (!run) return undefined;
   if (run.status === "failed") return "red";
   if (run.status === "held" || runStatus(run) === "incomplete") return "amber";
-  return run.status === "ok" || run.status === "applied" ? "green" : undefined;
+  return run.status === "discarded" ? undefined : "green";
 }

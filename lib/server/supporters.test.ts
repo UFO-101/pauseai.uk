@@ -1,6 +1,6 @@
 import { expect, it } from "vitest";
 import { query, transaction } from "@/lib/server/db";
-import { addTestMp, describeWithDatabase, useTestDatabase } from "@/tests/database";
+import { addTestLetter, addTestMp, describeWithDatabase, useTestDatabase } from "@/tests/database";
 import type { SupporterFilter } from "@/lib/supporters";
 import { getSupporter, linkSupporters, listSupporters } from "./supporters";
 
@@ -35,20 +35,16 @@ async function lumaUser(id: string, email: string, name: string, event?: string,
 }
 
 async function letter(email: string, name: string, mp: number, more: Record<string, unknown> = {}): Promise<number> {
-  const [{ id }] = await query<{ id: number }>(
-    `INSERT INTO letters (campaign, politician_id, sender_name, sender_email, sender_address, sender_postcode, contact_consent, subject, reply_hash, status, created_at, replied_at)
-     VALUES ('regulate-letter-pm', $1, $2, $3, 'x', $4, true, 'S', $5, 'sent', $6, $7) RETURNING id::int AS id`,
-    [
-      mp,
-      name,
-      email,
-      more.postcode ?? "ZZ9 9ZZ",
-      `h-${email}-${Math.random()}`,
-      more.createdAt ?? "2026-10-05T09:00:00Z",
-      more.repliedAt ?? null,
-    ],
-  );
-  return id;
+  return addTestLetter({
+    politicianId: mp,
+    senderName: name,
+    senderEmail: email,
+    senderPostcode: (more.postcode as string | undefined) ?? "ZZ9 9ZZ",
+    contactConsent: true,
+    replyHash: `h-${email}-${Math.random()}`,
+    createdAt: (more.createdAt as string | undefined) ?? "2026-10-05T09:00:00Z",
+    repliedAt: (more.repliedAt as string | undefined) ?? null,
+  });
 }
 
 const links = () =>

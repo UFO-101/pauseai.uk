@@ -4,6 +4,7 @@
 // holds functions, so can't come from the server) or what the tool keeps in
 // the browser: client components with no props, so the server-rendered
 // gallery can place them.
+import { CONTROLAI_LETTER_ASK } from "@/lib/asks";
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { campaigns } from "@/lib/content/email-your-mp";
 import { docFromMarkup, toText } from "@/lib/letter-format";
@@ -203,7 +204,7 @@ export function LetterWriteExample() {
 /** The bill's letter to an MP who signed ControlAI's letter: a note above it. */
 export function LetterWriteSignedExample() {
   return (
-    <Seeded lookup={{ ...exampleLookup, campaign: bill.slug, statuses: { [bill.slug]: "signed" } }}>
+    <Seeded lookup={{ ...exampleLookup, campaign: bill.slug, statuses: { [CONTROLAI_LETTER_ASK]: "signed" } }}>
       <LetterWrite campaignSlug={bill.slug} />
     </Seeded>
   );

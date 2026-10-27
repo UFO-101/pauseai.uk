@@ -40,15 +40,20 @@ export function campaignBySlug(slug: string): Campaign | undefined {
   return campaigns.find((campaign) => campaign.slug === slug);
 }
 
-/**
- * The campaigns staff record a status for: those an MP can have done. A
- * campaign without `done` isn't in the staff interface.
- */
+/** The first campaign, in priority order, that makes this ask. */
+export function campaignForAsk(ask: string): Campaign | undefined {
+  return campaigns.find((campaign) => campaign.ask === ask);
+}
+
+/** The campaigns an MP can have done: those with `done`. */
 export const trackedCampaigns = campaigns.filter((campaign) => campaign.done !== undefined);
 
-/** Whether the MP has done it. Nobody has done a campaign without `done`. */
+/** The asks staff record a status for by hand: those of the campaigns an MP can have done. */
+export const trackedAsks: string[] = trackedCampaigns.map((campaign) => campaign.ask!);
+
+/** Whether the MP has met the campaign's ask. Nobody has done a campaign without `done`. */
 export function isDone(campaign: Campaign, statuses: MpStatuses): boolean {
-  return campaign.done !== undefined && statuses[campaign.slug] === campaign.done;
+  return campaign.done !== undefined && statuses[campaign.ask] === campaign.done;
 }
 
 /**

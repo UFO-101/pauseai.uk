@@ -1,4 +1,5 @@
 import "server-only";
+import { campaignForAsk } from "@/lib/email-your-mp";
 import { IMPORT_JOBS } from "@/lib/import-runs";
 import { now } from "@/lib/now";
 import {
@@ -23,14 +24,19 @@ import { latestRun } from "./import-runs";
 // including any import whose newest run failed.
 
 /** Letters, statuses and their politician, so test MPs can be left out. */
-const LETTERS = "letters l JOIN politicians p ON p.id = l.politician_id";
-const STATUSES = "campaign_statuses s JOIN politicians p ON p.id = s.politician_id";
+const LETTERS = "letters l JOIN politicians p ON p.id = l.notable_person_id";
+const SUPPORTER_LETTERS = `${LETTERS} JOIN supporter_letters sl ON sl.id = l.id`;
+const STATUSES = "ask_statuses s JOIN politicians p ON p.id = s.notable_person_id";
 
 /** Each metric's rows: a table with a condition, and the column that dates them. Counted in each window. */
 const SOURCES: Record<DashboardMetric, { from: string; at: string }> = {
-  lettersSent: { from: `${LETTERS} WHERE l.sent_at IS NOT NULL AND NOT p.is_test`, at: "l.sent_at" },
+  lettersSent: { from: `${SUPPORTER_LETTERS} WHERE l.sent_at IS NOT NULL AND NOT p.is_test`, at: "l.sent_at" },
   lettersReplied: { from: `${LETTERS} WHERE l.replied_at IS NOT NULL AND NOT p.is_test`, at: "l.replied_at" },
-  mpsSigned: { from: `${STATUSES} WHERE s.status = 'signed' AND NOT p.is_test`, at: "s.updated_at" },
+  // Not Airtable's: it records signatures from before the site, with no date.
+  mpsSigned: {
+    from: `${STATUSES} WHERE s.status = 'signed' AND s.updated_by <> 'airtable' AND NOT p.is_test`,
+    at: "s.updated_at",
+  },
   eventRegistrations: {
     from: "luma_guests WHERE approval_status = 'approved' AND removed_at IS NULL",
     at: "registered_at",
@@ -43,8 +49,8 @@ const SOURCES: Record<DashboardMetric, { from: string; at: string }> = {
 /** Letters to test MPs, counted apart from the letters tile's number. */
 const TEST_LETTERS = { from: `${LETTERS} WHERE l.sent_at IS NOT NULL AND p.is_test`, at: "l.sent_at" };
 
-/** The column a campaign breakdown groups by. */
-const CAMPAIGN_OF: Record<CampaignMetric, string> = { lettersSent: "l.campaign", mpsSigned: "s.campaign" };
+/** The column a breakdown groups by: a letter's campaign, a signature's ask. */
+const CAMPAIGN_OF: Record<CampaignMetric, string> = { lettersSent: "sl.campaign", mpsSigned: "s.ask" };
 
 /** $1 is the window's start, $2 the window before's, $3 now; the window runs up to now, and includes it. */
 const COUNTS = [
@@ -66,7 +72,9 @@ async function byCampaign(metric: CampaignMetric, since: string, until: string):
      GROUP BY ${CAMPAIGN_OF[metric]} ORDER BY ${CAMPAIGN_OF[metric]}`,
     [since, until],
   );
-  return Object.fromEntries(rows.map((row) => [row.campaign, row.count]));
+  // A signature is counted under the campaign that made its ask.
+  const key = (value: string) => (metric === "mpsSigned" ? (campaignForAsk(value)?.slug ?? value) : value);
+  return Object.fromEntries(rows.map((row) => [key(row.campaign), row.count]));
 }
 
 /** SERIES_POINTS windows of `days` ending now, oldest first: how many rows fell in each. */
@@ -87,23 +95,23 @@ async function series(metric: SeriesMetric, until: Date, days: DashboardWindow):
   });
 }
 
-/** Every MP sync still held for a decision, oldest first. */
+/** Every politician sync still held for a decision, oldest first. */
 async function heldSyncs(): Promise<DashboardAction[]> {
   const rows = await query<{ at: Date; added: number; removed: number; changed: number }>(
     `SELECT at, jsonb_array_length(result->'changes'->'added')::int AS added,
             jsonb_array_length(result->'changes'->'removed')::int AS removed,
             jsonb_array_length(result->'changes'->'changed')::int AS changed
-     FROM import_runs WHERE job = 'sync-mps' AND status = 'held' ORDER BY at, id`,
+     FROM import_runs WHERE job = 'sync-politicians' AND status = 'held' ORDER BY at, id`,
   );
   return rows.map(({ at, ...counts }) => ({ kind: "held-sync", at: at.toISOString(), ...counts }));
 }
 
-/** Every sitting politician whose address is blocked, with the problem that blocked it, oldest first. */
+/** Every politician in office whose address is blocked, with the problem that blocked it, oldest first. */
 async function blockedMps(): Promise<DashboardAction[]> {
   const rows = await query<{ politicianId: number; name: string; at: Date }>(
     `SELECT p.id::int AS "politicianId", p.name, pr.at
-     FROM politicians p JOIN email_blocks b ON b.address = lower(p.email) JOIN email_problems pr ON pr.id = b.problem_id
-     WHERE p.sitting ORDER BY pr.at, p.id`,
+     FROM notable_people p JOIN email_blocks b ON b.address = lower(p.email) JOIN email_problems pr ON pr.id = b.problem_id
+     WHERE p.status = 'in_office' ORDER BY pr.at, p.id`,
   );
   return rows.map(({ at, ...rest }) => ({ kind: "blocked-mp", at: at.toISOString(), ...rest }));
 }

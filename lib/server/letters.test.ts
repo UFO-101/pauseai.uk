@@ -1,7 +1,7 @@
 import { expect, it } from "vitest";
-import { addTestMp, describeWithDatabase, useTestDatabase } from "@/tests/database";
+import { addTestLetter, addTestMp, describeWithDatabase, useTestDatabase } from "@/tests/database";
 import { query } from "./db";
-import { politicianLetters, recentLetters } from "./letters";
+import { pauseaiLetters, politicianLetters, recentLetters } from "./letters";
 
 describeWithDatabase("recentLetters", () => {
   useTestDatabase();
@@ -12,11 +12,13 @@ describeWithDatabase("recentLetters", () => {
       ["a", "sent"],
       ["b", "sending"],
     ]) {
-      await query(
-        `INSERT INTO letters (campaign, politician_id, sender_name, sender_email, sender_address, sender_postcode, contact_consent, subject, reply_hash, status)
-         VALUES ('regulate-letter-pm', $1, 'Jane', 'jane@example.com', 'x', 'ZZ9 9ZZ', false, 'S', $2, $3)`,
-        [mp, hash, status],
-      );
+      await addTestLetter({
+        politicianId: mp,
+        senderName: "Jane",
+        senderEmail: "jane@example.com",
+        replyHash: hash,
+        status,
+      });
     }
     await query(
       "INSERT INTO letter_events (letter_id, status, details) VALUES (1, 'sending', '{}'), (1, 'sent', '{\"messageId\":\"m\"}')",
@@ -52,11 +54,7 @@ describeWithDatabase("recentLetters", () => {
       ["a", "Jane Smith", "jane@example.com", "Please act"],
       ["b", "Sam Jones", "sam@example.com", "AI risk"],
     ]) {
-      await query(
-        `INSERT INTO letters (campaign, politician_id, sender_name, sender_email, sender_address, sender_postcode, contact_consent, subject, reply_hash, status)
-         VALUES ('regulate-letter-pm', $1, $2, $3, 'x', 'ZZ9 9ZZ', false, $4, $5, 'sent')`,
-        [mp, name, email, subject, hash],
-      );
+      await addTestLetter({ politicianId: mp, senderName: name, senderEmail: email, subject, replyHash: hash });
     }
     await query("UPDATE letters SET replied_at = now() WHERE id = 2");
     await query("INSERT INTO supporters DEFAULT VALUES");
@@ -71,10 +69,10 @@ describeWithDatabase("recentLetters", () => {
     expect(await ids({ search: "McTestface" })).toEqual([2, 1]);
     expect(await ids({ answered: true })).toEqual([2]);
     expect(await ids({ answered: false })).toEqual([1]);
-    await query("UPDATE letters SET campaign = 'support-sobel-bill' WHERE id = 2");
+    await query("UPDATE supporter_letters SET campaign = 'support-sobel-bill' WHERE id = 2");
     expect(await ids({ campaign: "support-sobel-bill" })).toEqual([2]);
     expect(await ids({ campaign: "regulate-letter-pm" })).toEqual([1]);
-    await query("UPDATE letters SET contact_consent = true WHERE id = 1");
+    await query("UPDATE supporter_letters SET contact_consent = true WHERE id = 1");
     expect(await ids({ consent: true })).toEqual([1]);
     expect(await ids({ consent: false })).toEqual([2]);
     expect(await ids({ supporterId: 1 })).toEqual([1]);
@@ -88,11 +86,13 @@ describeWithDatabase("politicianLetters", () => {
 
   it("gives an MP's letters with their senders only to staff with supporters, and selects nothing of them otherwise", async () => {
     const mp = await addTestMp();
-    await query(
-      `INSERT INTO letters (campaign, politician_id, sender_name, sender_email, sender_address, sender_postcode, contact_consent, subject, reply_hash, status, replied_at)
-       VALUES ('regulate-letter-pm', $1, 'Jane', 'jane@example.com', 'x', 'ZZ9 9ZZ', false, 'S', 'a', 'sent', now())`,
-      [mp],
-    );
+    await addTestLetter({
+      politicianId: mp,
+      senderName: "Jane",
+      senderEmail: "jane@example.com",
+      senderPostcode: "ZZ9 9ZZ",
+      repliedAt: new Date().toISOString(),
+    });
     const withSenders = await politicianLetters(mp, ["supporters"]);
     expect(withSenders.senders).toBe(true);
     expect(withSenders.letters).toMatchObject([{ id: 1, senderName: "Jane", senderEmail: "jane@example.com" }]);
@@ -112,5 +112,49 @@ describeWithDatabase("politicianLetters", () => {
     });
     expect(JSON.stringify(without)).not.toMatch(/Jane|jane@|ZZ9/);
     expect(await politicianLetters(mp + 1, [])).toEqual({ senders: false, letters: [] });
+  });
+});
+
+describeWithDatabase("pauseaiLetters", () => {
+  useTestDatabase();
+
+  it("lists PauseAI's letters to a politician, newest first, with their mailing and how they were written", async () => {
+    const mp = await addTestMp();
+    for (const [at, personalised, ai] of [
+      ["2026-06-10T09:00:00Z", false, true],
+      ["2026-10-01T09:00:00Z", true, false],
+    ] as const) {
+      const [{ id }] = await query<{ id: number }>(
+        "INSERT INTO letters (kind, notable_person_id, status, created_at, sent_at) VALUES ('pauseai', $1, 'sent', $2, $2) RETURNING id::int AS id",
+        [mp, at],
+      );
+      await query(
+        `INSERT INTO pauseai_letters (id, mailing_id, personalised, ai_generated)
+         SELECT $1, id, $2, $3 FROM mailings WHERE airtable_field = 'CSRB Iqbal Amendment'`,
+        [id, personalised, ai],
+      );
+    }
+    // A supporter's letter isn't one of them, nor is it on the letters page as PauseAI's.
+    await addTestLetter({ politicianId: mp });
+    expect(await pauseaiLetters(mp)).toEqual([
+      {
+        id: 2,
+        mailing: "CSRB Iqbal Amendment",
+        status: "sent",
+        at: new Date("2026-10-01T09:00:00Z"),
+        personalised: true,
+        aiGenerated: false,
+      },
+      {
+        id: 1,
+        mailing: "CSRB Iqbal Amendment",
+        status: "sent",
+        at: new Date("2026-06-10T09:00:00Z"),
+        personalised: false,
+        aiGenerated: true,
+      },
+    ]);
+    expect((await recentLetters()).map((l) => [l.id, l.imported])).toEqual([[3, false]]);
+    expect(await pauseaiLetters(mp + 1)).toEqual([]);
   });
 });

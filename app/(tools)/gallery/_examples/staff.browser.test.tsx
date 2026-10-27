@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { render } from "vitest-browser-react";
 import { page } from "vitest/browser";
-import { campaigns } from "@/lib/content/email-your-mp";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { exampleLetter } from "@/app/(staff)/staff/_components/LettersTable.examples";
 import {
@@ -10,8 +9,6 @@ import {
   PoliticianTableEmptyExample,
   PoliticianTableExample,
 } from "./staff.client";
-
-const [pm] = campaigns;
 
 // The staff examples' Server Actions are logged, not sent: pressing each adds its line to the event log.
 const log = () => page.getByRole("list", { name: "Event log" }).getByRole("listitem");
@@ -27,10 +24,14 @@ describe("the staff examples", () => {
 
   it("logs removing a politician's signature on their page", async () => {
     await render(<PoliticianDetailsExample />);
+    await page.getByText(staffCopy.politician.edit, { exact: true }).click();
+    await page.getByLabelText(staffCopy.politician.note).fill("Their office wrote");
     await page.getByRole("button", { name: staffCopy.politicians.unmarkSigned }).click();
     await expect
       .element(log().nth(0))
-      .toHaveTextContent(`markSigned({"politicianId":"7","campaign":"${pm.slug}","signed":""})`);
+      .toHaveTextContent(
+        'setStatus({"politicianId":"7","ask":"frontier-ai-letter","status":"","note":"Their office wrote"})',
+      );
   });
 
   it("shows a politician's letters without who wrote them", async () => {

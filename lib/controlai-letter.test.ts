@@ -8,7 +8,6 @@ import {
   pdfUrlIn,
   signatoriesIn,
   signedControlAiLetter,
-  SOBEL_BILL_CAMPAIGN,
 } from "./controlai-letter";
 
 // The letter's text as unpdf extracts it, on 15 Oct 2026.
@@ -24,8 +23,8 @@ describe("pdfUrlIn", () => {
 
 describe("signedControlAiLetter", () => {
   it("is the bill's signed status, and nothing else", () => {
-    expect(signedControlAiLetter({ [SOBEL_BILL_CAMPAIGN]: "signed" })).toBe(true);
-    expect(signedControlAiLetter({ "regulate-letter-pm": "signed" })).toBe(false);
+    expect(signedControlAiLetter({ "controlai-letter": "signed" })).toBe(true);
+    expect(signedControlAiLetter({ "frontier-ai-letter": "signed" })).toBe(false);
     expect(signedControlAiLetter({})).toBe(false);
   });
 });

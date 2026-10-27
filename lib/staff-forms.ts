@@ -1,6 +1,7 @@
 // Reads the staff interface's forms. Anything that doesn't fit is refused
 // (undefined) rather than guessed at.
-import { trackedCampaigns } from "@/lib/email-your-mp";
+import { ASK_STATUSES, type AskStatus } from "@/lib/asks";
+import { trackedAsks } from "@/lib/email-your-mp";
 import { PERMISSIONS, type Permission } from "@/lib/staff-permissions";
 
 function text(form: FormData, name: string): string {
@@ -14,17 +15,22 @@ export function idFrom(form: FormData, name = "id"): number | undefined {
   return /^\d+$/.test(value) && Number(value) > 0 ? Number(value) : undefined;
 }
 
-export type SignedForm = { politicianId: number; campaign: string; signed: boolean };
+export type StatusForm = { politicianId: number; ask: string; status: AskStatus | null; note: string };
 
 /**
- * The button in the politicians list. Only a campaign staff record by hand
- * (trackedCampaigns): the bill's status comes from ControlAI's letter alone.
+ * Setting an answer to an ask on a politician's page: only an ask staff
+ * record by hand (trackedAsks), and a status some kind of ask allows, or
+ * blank to clear it, with a note of how they know. Whether the ask's kind
+ * allows it is the database's to say.
  */
-export function signedFrom(form: FormData): SignedForm | undefined {
+export function statusFrom(form: FormData): StatusForm | undefined {
   const politicianId = idFrom(form, "politicianId");
-  const campaign = text(form, "campaign");
-  if (!politicianId || !trackedCampaigns.some((c) => c.slug === campaign)) return undefined;
-  return { politicianId, campaign, signed: text(form, "signed") === "1" };
+  const ask = text(form, "ask");
+  const status = text(form, "status");
+  const statuses: readonly string[] = Object.values(ASK_STATUSES).flat();
+  const note = text(form, "note");
+  if (!politicianId || !trackedAsks.includes(ask) || (status && !statuses.includes(status)) || !note) return undefined;
+  return { politicianId, ask, status: (status as AskStatus) || null, note };
 }
 
 export type UnblockForm = { address: string; note: string };

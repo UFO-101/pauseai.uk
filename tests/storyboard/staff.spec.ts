@@ -19,7 +19,7 @@ import {
   openLookup,
   newestEmailTo,
   sendLetter,
-  syncMps,
+  syncPoliticians,
   WEBHOOK_AUTH,
 } from "../steps";
 import { BASE, emailFrame, expect, flowStorageState, frame, test } from "./fixtures";
@@ -29,7 +29,8 @@ import { BASE, emailFrame, expect, flowStorageState, frame, test } from "./fixtu
 // tests/steps.ts): there's no login bypass.
 
 const STAFF_PAGES = ROUTES.filter((route) => route.startsWith("/staff") && !route.startsWith("/staff/login"));
-const [pm] = campaigns;
+/** The letter to the PM's ask, by its title in the asks table. */
+const PM_LETTER = "Frontier AI letter to the Prime Minister";
 
 /** This flow's own staff address: flows run alongside each other, and share the outbox. Short, as real ones are. */
 const staffEmail = () => `staff-${test.info().testId.replace(/\W/g, "").slice(-8)}@pauseai.uk`;
@@ -68,7 +69,7 @@ test("staff API routes and Server Actions, without a session, change nothing", a
   // A Server Action is a POST to the page, naming the action in a header.
   const action = await request.post(`${BASE}/staff/politicians`, {
     headers: { "Next-Action": "0000000000000000000000000000000000000000" },
-    multipart: { politicianId: "1", campaign: pm.slug, signed: "1" },
+    multipart: { politicianId: "1", ask: "frontier-ai-letter", status: "signed" },
     maxRedirects: 0,
   });
   expect(action.status()).toBe(307);
@@ -132,7 +133,7 @@ test("a login link works once, and only in the browser that asked for it", async
 });
 
 test("staff log in, set a status that shows on /campaigns, and log out", async ({ page, request, flowDatabase }) => {
-  await syncMps(request, BASE);
+  await syncPoliticians(request, BASE);
   await logIn(page, flowDatabase, ["admin"]);
   // Logging in lands on the home page: the dashboard, with this admin's permission under their address in the sidebar.
   await expect(page).toHaveURL(`${BASE}/staff`);
@@ -149,18 +150,21 @@ test("staff log in, set a status that shows on /campaigns, and log out", async (
   await expect(page.getByRole("link", { name: "Testy McTestface MP" })).toBeVisible();
   await frame(page, "the politicians list");
 
-  // Signed on their page, in the campaign's row of the panel beside their details.
+  // Signed on their page, in the ask's row of the panel beside their details, with a note.
   await page.getByRole("link", { name: "Polly Placeholder" }).click();
-  const card = page.getByRole("group", { name: pm.title });
+  const card = page.getByRole("group", { name: PM_LETTER });
   await expect(card.getByText(staffCopy.statuses.none)).toBeVisible();
-  await frame(page, "Polly Placeholder's page: the campaigns beside her details");
+  await frame(page, "Polly Placeholder's page: the asks beside her details");
+  await card.getByText(staffCopy.politician.edit, { exact: true }).click();
+  await card.getByLabel(staffCopy.politician.note).fill("Told us at the march");
+  await frame(page, "Edit opens the form, with a note of how we know");
   await card.getByRole("button", { name: staffCopy.politicians.markSigned }).click();
-  await expect(card.getByText(new RegExp(`^${staffCopy.statuses.signed}`))).toBeVisible();
-  await expect(card.getByRole("button", { name: staffCopy.politicians.unmarkSigned })).toBeVisible();
+  await expect(card.locator("[class*=answer]")).toHaveText(new RegExp(`^${staffCopy.statuses.signed}`));
+  await expect(card.getByText(/Told us at the march/)).toBeVisible();
   await frame(page, "Polly Placeholder marked as signed");
   await page.getByRole("link", { name: staffCopy.nav.politicians }).first().click();
   const pollyRow = page.getByRole("row").filter({ hasText: "Polly Placeholder" });
-  await expect(pollyRow).toContainText(staffCopy.statuses.signed);
+  await expect(pollyRow).toContainText(PM_LETTER);
   await expect(pollyRow.getByRole("button")).toHaveCount(0);
   await frame(page, "the list shows it, with no buttons");
 
@@ -186,7 +190,7 @@ test("staff log in, set a status that shows on /campaigns, and log out", async (
   await frame(page, "ControlAI's letter imported");
   await page.goto(`${BASE}/staff/politicians`);
   await expect(page.getByRole("row").filter({ hasText: "Polly Placeholder" })).toContainText(
-    staffCopy.politicians.signedControlAi,
+    "ControlAI's campaign statement",
   );
   await frame(page, "the politicians list says who signed ControlAI's letter");
 
@@ -216,15 +220,15 @@ test("the MPs signed tile leads to the one who signed, then to everyone who sign
   request,
   flowDatabase,
 }) => {
-  await syncMps(request, BASE);
+  await syncPoliticians(request, BASE);
   await logIn(page, flowDatabase, ["admin"]);
   await page.goto(`${BASE}/staff/politicians`);
   await page.getByRole("link", { name: "Polly Placeholder" }).click();
-  await page
-    .getByRole("group", { name: pm.title })
-    .getByRole("button", { name: staffCopy.politicians.markSigned })
-    .click();
-  await expect(page.getByRole("button", { name: staffCopy.politicians.unmarkSigned })).toBeVisible();
+  const letter = page.getByRole("group", { name: PM_LETTER });
+  await letter.getByText(staffCopy.politician.edit, { exact: true }).click();
+  await letter.getByLabel(staffCopy.politician.note).fill("They emailed");
+  await letter.getByRole("button", { name: staffCopy.politicians.markSigned }).click();
+  await expect(letter.locator("[class*=answer]")).toHaveText(new RegExp(`^${staffCopy.statuses.signed}`));
 
   // One signed this week: the tile is their page.
   await page.goto(`${BASE}/staff`);
@@ -243,8 +247,8 @@ test("the MPs signed tile leads to the one who signed, then to everyone who sign
     .getByRole("link")
     .filter({ hasText: staffCopy.home.dashboard.metrics.mpsSigned(2) })
     .click();
-  await expect(page).toHaveURL(`${BASE}/staff/politicians?campaign=any&sort=signed`);
-  await expect(page.getByLabel(staffCopy.politician.statusesTitle)).toHaveValue("any");
+  await expect(page).toHaveURL(`${BASE}/staff/politicians?answer=signed&sort=asks`);
+  await expect(page.getByRole("combobox", { name: staffCopy.politicians.answer, exact: true })).toHaveValue("signed");
   await expect(page.getByRole("row").filter({ hasText: "Polly Placeholder" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Testy McTestface MP" })).toHaveCount(0);
   await frame(page, "everyone who signed anything, newest first");
@@ -323,7 +327,7 @@ test("the members import copies the UK members, skips one erased, and finds noth
 });
 
 test("a politician's own page", async ({ page, request, flowDatabase }) => {
-  await syncMps(request, BASE);
+  await syncPoliticians(request, BASE);
   await logIn(page, flowDatabase);
   await page.goto(`${BASE}/staff/politicians`);
   await page.getByRole("link", { name: "Testy McTestface MP" }).click();
@@ -354,7 +358,7 @@ test("an import's own page lists every run it has made, and the import page show
   request,
   flowDatabase,
 }) => {
-  await syncMps(request, BASE);
+  await syncPoliticians(request, BASE);
   await logIn(page, flowDatabase);
   // The check, twice: its page lists both runs, under the day's heading, and none of the MP import's.
   await page.goto(`${BASE}/staff/import-data/mp-check`);
@@ -519,10 +523,10 @@ test("an MP whose address bounced can't be written to until staff unblock it", a
   await expect(bouncysRow).toContainText(staffCopy.politicians.emailBlocked);
   await frame(page, "the politicians list marks their address as blocked");
 
-  // Blocked MP emails lists them, and is the way to them.
+  // Politicians' blocked emails lists them, and is the way to them.
   await page.goto(`${BASE}/staff/politicians/blocked-emails`);
   await expect(page.getByRole("row").filter({ hasText: bouncy.name })).toBeVisible();
-  await frame(page, "Blocked MP emails lists their address");
+  await frame(page, "Politicians' blocked emails lists their address");
 
   await page.getByRole("link", { name: bouncy.name }).click();
   await expect(page.getByRole("heading", { level: 1, name: bouncy.name })).toBeVisible();
@@ -544,55 +548,79 @@ test("an MP whose address bounced can't be written to until staff unblock it", a
   await frame(page, "the form writes to them again");
 });
 
-test("an MP import that would change too many is held, then discarded, and then applied", async ({
+test("a politician import that would change too many is held, then discarded, and then applied", async ({
   page,
   request,
   flowDatabase,
 }) => {
-  await syncMps(request, BASE);
-  // Twenty-one MPs Airtable no longer lists: the next import would remove
-  // them all, more than it may without a person checking.
+  await syncPoliticians(request, BASE);
+  // Twenty-one MPs Airtable no longer lists: the next import would mark them
+  // all gone from it, more than it may without a person checking.
   runSql(
     flowDatabase,
-    `INSERT INTO politicians (airtable_id, house, name, constituency)
-     SELECT 'recGone' || n, 'commons', 'Gone McTestface ' || n || ' MP', 'Gone ' || n FROM generate_series(1, 21) n`,
+    `WITH people AS (
+       INSERT INTO notable_people (kind, airtable_id, name)
+       SELECT 'politician', 'recGone' || n, 'Gone McTestface ' || n || ' MP' FROM generate_series(1, 21) n RETURNING id, name
+     )
+     INSERT INTO politicians (id, house, constituency) SELECT id, 'commons', replace(replace(name, ' MP', ''), 'McTestface ', '') FROM people`,
   );
-  const sitting = () =>
-    Number(runSql(flowDatabase, "SELECT count(*) FROM politicians WHERE name LIKE 'Gone %' AND sitting")[0]);
+  const inAirtable = () =>
+    Number(
+      runSql(
+        flowDatabase,
+        "SELECT count(*) FROM notable_people WHERE name LIKE 'Gone %' AND airtable_removed_at IS NULL",
+      )[0],
+    );
 
   await logIn(page, flowDatabase, ["admin"]);
-  await page.goto(`${BASE}/staff/import-data/mps`);
+  await page.goto(`${BASE}/staff/import-data/politicians`);
   await page.getByRole("button", { name: staffCopy.syncs.syncNow }).click();
   await expect(page.getByRole("button", { name: staffCopy.syncs.apply })).toBeVisible();
   await expect(page.getByText(`${staffCopy.syncs.removed} 21`).first()).toBeVisible();
   await expect(page.getByText("Gone 1: Gone McTestface 1 MP")).toBeAttached();
-  expect(sitting()).toBe(21);
-  await frame(page, "the import held: 21 MPs would go");
+  expect(inAirtable()).toBe(21);
+  await frame(page, "the import held: 21 politicians would be gone from Airtable");
 
   // The home page says so, first thing, with a button back to the decision.
   await page.goto(`${BASE}/staff`);
   await expect(page.getByText(staffCopy.home.dashboard.actions.heldSync(21))).toBeVisible();
   await frame(page, "the home: the held import needs a person");
   await page.getByRole("link", { name: staffCopy.home.dashboard.actions.decide }).click();
-  await expect(page).toHaveURL(`${BASE}/staff/import-data/mps`);
+  await expect(page).toHaveURL(`${BASE}/staff/import-data/politicians`);
 
   await page.getByRole("button", { name: staffCopy.syncs.discard }).click();
   await expect(page.getByRole("button", { name: staffCopy.syncs.apply })).toHaveCount(0);
   await expect(page.getByText(staffCopy.runs.status.discarded).first()).toBeVisible();
-  expect(sitting()).toBe(21);
+  expect(inAirtable()).toBe(21);
   await frame(page, "discarded: nobody changed");
 
   await page.getByRole("button", { name: staffCopy.syncs.syncNow }).click();
   await page.getByRole("button", { name: staffCopy.syncs.apply }).click();
   await expect(page.getByRole("button", { name: staffCopy.syncs.apply })).toHaveCount(0);
   await expect(page.getByText(staffCopy.runs.decidedBy(staffEmail())).first()).toBeVisible();
-  expect(sitting()).toBe(0);
-  await frame(page, "held again, then applied: the 21 are no longer sitting");
+  expect(inAirtable()).toBe(0);
+  await frame(page, "held again, then applied: the 21 are marked gone from Airtable, and kept");
 
   await page.goto(`${BASE}/staff/audit-log`);
-  await expect(page.getByRole("cell", { name: "apply held MP sync" })).toBeVisible();
-  await expect(page.getByRole("cell", { name: "discard held MP sync" })).toBeVisible();
+  await expect(page.getByRole("cell", { name: "apply held politician sync" })).toBeVisible();
+  await expect(page.getByRole("cell", { name: "discard held politician sync" })).toBeVisible();
   await frame(page, "the audit log: who discarded and who applied");
+});
+
+test("a politician import that renames anyone is held, in case Airtable reused the record", async ({
+  page,
+  request,
+  flowDatabase,
+}) => {
+  await syncPoliticians(request, BASE);
+  // Polly's record had another name here: Airtable now names someone else in it.
+  runSql(flowDatabase, "UPDATE notable_people SET name = 'Penny Previous' WHERE airtable_id = 'recPlaceholder'");
+  await logIn(page, flowDatabase, ["admin"]);
+  await page.goto(`${BASE}/staff/import-data/politicians`);
+  await page.getByRole("button", { name: staffCopy.syncs.syncNow }).click();
+  await expect(page.getByRole("button", { name: staffCopy.syncs.apply })).toBeVisible();
+  await expect(page.getByText("Penny Previous → Polly Placeholder")).toBeVisible();
+  await frame(page, "held: one record renamed, shown from and to");
 });
 
 test("a first login makes an account with no permissions; an admin adds, changes and removes accounts", async ({

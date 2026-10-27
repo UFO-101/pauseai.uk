@@ -28,12 +28,12 @@ type Props = {
 export default function ImportCard({ title, href, tags, intro, children }: Props) {
   return (
     <Card span={2} className={styles.card}>
-      <h2 className={styles.title}>
+      <h3 className={styles.title}>
         <Link href={href} className={styles.open}>
           {title}
         </Link>
         {tags}
-      </h2>
+      </h3>
       <div className={styles.status}>{children}</div>
       <p className={styles.intro}>{intro}</p>
     </Card>

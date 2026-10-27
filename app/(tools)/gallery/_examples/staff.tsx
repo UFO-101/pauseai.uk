@@ -32,11 +32,14 @@ import RunList from "@/app/(staff)/staff/_components/RunList";
 import {
   exampleAppliedSync,
   exampleControlAiResult,
+  exampleEmailsResult,
   exampleFailedRun,
+  exampleGoToParliamentResult,
   exampleLumaResult,
   exampleMembersResult,
   exampleRun,
   exampleSyncedMp,
+  exampleWebFormResult,
 } from "@/app/(staff)/staff/_components/RunList.examples";
 import StaffNav, { type StaffPage as StaffPageName } from "@/app/(staff)/staff/_components/StaffNav";
 import AccountsNotice from "@/app/(staff)/staff/_components/AccountsNotice";
@@ -71,6 +74,8 @@ import Grid, { Card } from "@/app/(staff)/staff/_components/ui/Grid";
 import Strip from "@/app/(staff)/staff/_components/ui/Strip";
 import Tag from "@/components/ui/Tag";
 import { campaigns } from "@/lib/content/email-your-mp";
+import { exampleAsks, exampleAsksWithCounts } from "@/app/(staff)/staff/_components/PoliticianTable.examples";
+import AsksTable from "@/app/(staff)/staff/_components/AsksTable";
 import { staffCopy } from "@/lib/content/staff-interface";
 import type { ImportJob } from "@/lib/import-runs";
 import type { Group, Variant } from "../_components/types";
@@ -92,6 +97,19 @@ const [pm] = campaigns;
 /** The parties a filter of politicians picks from. */
 const parties = ["Conservative", "Green", "Labour", "Liberal Democrat"];
 
+/** The politicians list's filters, none chosen. */
+const EMPTY_POLITICIAN_FILTERS = {
+  q: "",
+  house: "",
+  status: "",
+  party: "",
+  flag: "",
+  ask: "",
+  answer: "",
+  sort: "",
+  dir: "",
+};
+
 // Every page the navigation can mark as current, so a new one is a type error until it's here.
 const PAGES: Record<StaffPageName, true> = {
   home: true,
@@ -100,16 +118,17 @@ const PAGES: Record<StaffPageName, true> = {
   letters: true,
   supporterEmails: true,
   politicians: true,
+  asks: true,
   mpEmails: true,
   import: true,
   changes: true,
   accounts: true,
 };
 
-// A run of each job, as its job's page shows it. A held MP sync, with its buttons, is in the client file.
+// A run of each job, as its job's page shows it. A held politician sync, with its buttons, is in the client file.
 const RUNS: Record<ImportJob, Variant> = {
-  "sync-mps": {
-    label: "An MP sync, held for a decision",
+  "sync-politicians": {
+    label: "A politician sync, held for a decision",
     render: () => (
       <StaffPage as="div">
         <HeldSyncExample />
@@ -177,17 +196,27 @@ const RUNS: Record<ImportJob, Variant> = {
       </StaffPage>
     ),
   },
-  "import-signatories": {
-    label: "A signatory import someone started",
+  "import-web-form-letters": {
+    label: "The web form letters, imported by someone",
     render: () => (
       <StaffPage as="div">
-        <Run
-          run={exampleRun(
-            "import-signatories",
-            { matched: 3, added: 7, alreadySet: 0 },
-            { startedBy: "jo@pauseai.uk" },
-          )}
-        />
+        <Run run={exampleRun("import-web-form-letters", exampleWebFormResult, { startedBy: "jo@pauseai.uk" })} />
+      </StaffPage>
+    ),
+  },
+  "import-go-to-parliament": {
+    label: "Go to Parliament's meetings, imported by someone",
+    render: () => (
+      <StaffPage as="div">
+        <Run run={exampleRun("import-go-to-parliament", exampleGoToParliamentResult, { startedBy: "jo@pauseai.uk" })} />
+      </StaffPage>
+    ),
+  },
+  "sync-emails": {
+    label: "PauseAI's emails, some held back",
+    render: () => (
+      <StaffPage as="div">
+        <Run run={exampleRun("sync-emails", exampleEmailsResult)} />
       </StaffPage>
     ),
   },
@@ -938,12 +967,14 @@ export const staff: Group = {
                   ),
                   exampleRun("import-members", exampleMembersResult, { at: "2026-10-21T11:47:00Z" }),
                   exampleRun(
-                    "sync-mps",
-                    { changes: { added: [], removed: [exampleSyncedMp(2)], changed: [] }, mps: [] },
+                    "sync-politicians",
+                    { changes: { added: [], removed: [exampleSyncedMp(2)], changed: [] }, records: [] },
                     { at: "2026-10-21T00:00:00Z", status: "held" },
                   ),
+                  exampleRun("sync-emails", exampleEmailsResult, { at: "2026-10-21T00:01:00Z" }),
                   exampleRun("check-mps", { problems: [] }, { at: "2026-10-21T01:00:00Z" }),
                   exampleFailedRun("import-controlai", "No PDF linked", { at: "2026-10-21T02:00:00Z" }),
+                  exampleRun("import-web-form-letters", exampleWebFormResult, { at: "2026-10-20T09:00:00Z" }),
                   undefined,
                 ]}
                 airtableTable="https://airtable.com/"
@@ -1101,21 +1132,35 @@ export const staff: Group = {
           label: "Empty, and filled in",
           render: () => (
             <StaffPage as="div">
-              <PoliticianFilters
-                search={{ q: "", house: "", party: "", campaign: "", sort: "", dir: "" }}
-                parties={parties}
-              />
+              <PoliticianFilters search={EMPTY_POLITICIAN_FILTERS} asks={exampleAsks} parties={parties} />
               <PoliticianFilters
                 search={{
+                  ...EMPTY_POLITICIAN_FILTERS,
                   q: "example",
                   house: "lords",
+                  status: "in_office",
                   party: "Labour",
-                  campaign: pm.slug,
-                  sort: "",
-                  dir: "",
+                  flag: "important",
+                  ask: "edinburgh-conference-2026",
+                  answer: "declined",
                 }}
+                asks={exampleAsks}
                 parties={parties}
               />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "AsksTable",
+      file: "app/(staff)/staff/_components/AsksTable.tsx",
+      variants: [
+        {
+          label: "Every ask, with its answers",
+          render: () => (
+            <StaffPage as="div">
+              <AsksTable asks={exampleAsksWithCounts} />
             </StaffPage>
           ),
         },
@@ -1442,7 +1487,7 @@ export const staff: Group = {
           label: "A run that failed",
           render: () => (
             <StaffPage as="div">
-              <Run run={exampleFailedRun("import-signatories", "An example error", { id: 4 })} />
+              <Run run={exampleFailedRun("import-web-form-letters", "An example error", { id: 4 })} />
             </StaffPage>
           ),
         },
@@ -1470,7 +1515,7 @@ export const staff: Group = {
                 run={exampleRun("import-luma", { ...exampleLumaResult, stoppedBy: "time" })}
                 summary="an example summary"
               />
-              <RunBox run={exampleFailedRun("sync-mps", "An example error", { id: 5 })} summary={null} />
+              <RunBox run={exampleFailedRun("sync-politicians", "An example error", { id: 5 })} summary={null} />
             </StaffPage>
           ),
         },
@@ -1490,7 +1535,7 @@ export const staff: Group = {
                   exampleRun("check-mps", { problems: [] }, { id: 7, at: "2026-11-03T01:00:00Z" }),
                   exampleRun("import-controlai", exampleControlAiResult, { id: 8, at: "2026-11-02T02:00:00Z" }),
                   exampleRun(
-                    "sync-mps",
+                    "sync-politicians",
                     { changes: { added: [exampleSyncedMp(5)], removed: [], changed: [] } },
                     { id: 6, at: "2026-11-02T00:30:00Z", status: "discarded", decidedBy: "jo@pauseai.uk" },
                   ),

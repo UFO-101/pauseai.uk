@@ -2,7 +2,6 @@
 
 // The staff screens' examples whose Server Actions are props: client
 // components with no props, each action logged rather than sent.
-import { campaigns } from "@/lib/content/email-your-mp";
 import type { EmailBlock } from "@/lib/server/email";
 import type { Politician } from "@/lib/server/politicians";
 import EmailBlocksTable from "@/app/(staff)/staff/_components/EmailBlocksTable";
@@ -11,7 +10,11 @@ import { ImportJobPage } from "@/app/(staff)/staff/_components/ImportJob";
 import JobActions from "@/app/(staff)/staff/_components/JobActions";
 import PoliticianDetails from "@/app/(staff)/staff/_components/PoliticianDetails";
 import PoliticianTable from "@/app/(staff)/staff/_components/PoliticianTable";
-import { examplePolitician, examplePoliticianHistory } from "@/app/(staff)/staff/_components/PoliticianTable.examples";
+import {
+  exampleAsks,
+  examplePolitician,
+  examplePoliticianHistory,
+} from "@/app/(staff)/staff/_components/PoliticianTable.examples";
 import { exampleLetter } from "@/app/(staff)/staff/_components/LettersTable.examples";
 import Run from "@/app/(staff)/staff/_components/Run";
 import EraseForm from "@/app/(staff)/staff/_components/EraseForm";
@@ -21,14 +24,12 @@ import UnblockForm from "@/app/(staff)/staff/_components/UnblockForm";
 import { exampleFailedRun, exampleHeldSync, exampleRun } from "@/app/(staff)/staff/_components/RunList.examples";
 import { Logged } from "../_components/wiring";
 
-const [pm, bill] = campaigns;
-
 /** The table of politicians: one function for both examples. */
 function LoggedPoliticianTable({ politicians }: { politicians: Politician[] }) {
-  return <PoliticianTable politicians={politicians} />;
+  return <PoliticianTable politicians={politicians} asks={exampleAsks} />;
 }
 
-/** An MP who signed the letter to the PM, and a test peer, no longer sitting, whose address is blocked, who signed ControlAI's letter. */
+/** An MP who signed the letter to the PM, and a test peer, retired, whose address is blocked, who signed ControlAI's letter. */
 export function PoliticianTableExample() {
   return (
     <LoggedPoliticianTable
@@ -39,11 +40,13 @@ export function PoliticianTableExample() {
           id: 8,
           name: "Testy McTestface MP",
           isTest: true,
-          sitting: false,
+          status: "retired",
           emailBlocked: true,
           house: "lords",
           constituency: null,
-          statuses: { [bill.slug]: { ...examplePolitician.statuses[pm.slug], updatedBy: "controlai" } },
+          statuses: {
+            "controlai-letter": { ...examplePolitician.statuses["frontier-ai-letter"], updatedBy: "controlai" },
+          },
         },
       ]}
     />
@@ -82,7 +85,8 @@ export function PoliticianDetailsExample({
           politician={
             fromAirtable ? { ...examplePolitician, emailBlocked: blocked } : { ...examplePolitician, airtableId: null }
           }
-          markSigned={log("markSigned")}
+          asks={exampleAsks}
+          setStatus={log("setStatus")}
           block={blocked ? { ...exampleBlock, address: examplePolitician.email! } : undefined}
           letters={
             senders
@@ -136,14 +140,14 @@ export function UnblockFormExample() {
   );
 }
 
-/** A job's page, its button and any held sync's buttons logged: the MP check with three runs, or the signatory import, never run. */
+/** A job's page, its button and any held sync's buttons logged: the MP check with three runs, or the web form import, never run. */
 export function ImportJobPageExample({ never = false }: { never?: boolean }) {
   return (
     <Logged>
       {(log) =>
         never ? (
           <ImportJobPage
-            job="import-signatories"
+            job="import-web-form-letters"
             runs={[]}
             run={log("run")}
             decide={log("decide")}

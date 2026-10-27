@@ -13,8 +13,10 @@ import lumaFuture from "./luma-calendar-future.json";
 import lumaPast from "./luma-calendar-past.json";
 import lumaGuests from "./luma-guests.json";
 import lumaContacts from "./luma-contacts.json";
-import airtableMps from "./airtable-mps.json";
-import airtableSignatories from "./airtable-signatories.json";
+import airtablePoliticians from "./airtable-politicians.json";
+import airtableEmails from "./airtable-emails.json";
+import airtableWebForm from "./airtable-web-form.json";
+import airtableGoToParliament from "./airtable-go-to-parliament.json";
 import airtableMembers from "./airtable-members.json";
 import parliamentMembers from "./parliament-members.json";
 import controlaiLetter from "./controlai-letter.json";
@@ -31,7 +33,7 @@ function json(body: unknown): Response {
   return new Response(JSON.stringify(body), { headers: { "Content-Type": "application/json" } });
 }
 
-// postcodes.io knows one postcode. Its MP is in airtable-mps.json.
+// postcodes.io knows one postcode. Its MP is in airtable-politicians.json.
 const POSTCODES: Record<string, string> = { SW1A1AA: "Cities of London and Westminster" };
 // And one outcode, the first half of a postcode, in Manchester.
 const OUTCODES: Record<string, { latitude: number; longitude: number; admin_district: string[] }> = {
@@ -82,10 +84,19 @@ export function fixtureResponse(url: string, init?: RequestInit): Response | und
     // FIXTURE_NOW, and one erased there.
     return json(airtableMembers);
   }
-  if (hostname.endsWith("airtable.com") && pathname.startsWith("/v0/")) {
-    // The MPs (lib/server/outside-services/airtable.ts asks for the House of Commons), or the signatories.
-    return json(searchParams.get("filterByFormula")?.includes("House of Commons") ? airtableMps : airtableSignatories);
-  }
+  // The UK Parliamentarians base's tables: a politician of each body, one
+  // retired and one who left; PauseAI's 2026 emails to them, of each
+  // mailing, one with no politician and one with no mailing we know; the
+  // web form's letters, with the senders and states the import skips; and
+  // Go to Parliament's meetings, one MP with two guests.
+  const airtable: Record<string, unknown> = {
+    tblH3ks9wqQHLpYx3: airtablePoliticians,
+    tblp4nH5Jymq48rcm: airtableEmails,
+    tblkzjrRHiZiqMDGR: airtableWebForm,
+    tblminXS1xSuBbEjz: airtableGoToParliament,
+  };
+  const table = hostname.endsWith("airtable.com") && airtable[pathname.split("/").at(-1)!];
+  if (table) return json(table);
   if (hostname === "api.postcodes.io" && pathname.startsWith("/postcodes/")) {
     const postcode = decodeURIComponent(pathname.slice("/postcodes/".length)).replace(/\s+/g, "").toUpperCase();
     const constituency = POSTCODES[postcode];

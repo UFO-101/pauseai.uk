@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>UK Weekly Email</title>
+<style>
+:root {
+  --bg: #fbfaf7; --surface: #ffffff; --text: #1d1d1b; --muted: #66645e; --line: #e4e1d9;
+  --accent: #b3261e; --ok: #2e7d32; --warn: #a15c00; --blue: #1f5fa8; --dead: #7a7a7a; --code: #f1efe9;
+  --box: #ffffff; --box2: #f3f0e8; --boxline: #8d8a82;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #161614; --surface: #1f1f1c; --text: #ecebe6; --muted: #a09e96; --line: #34332f;
+    --accent: #ff7a6e; --ok: #7bc47f; --warn: #e5a54b; --blue: #7fb2ec; --dead: #8f8f8f; --code: #2a2a26;
+    --box: #23231f; --box2: #2c2b27; --boxline: #6d6b64;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #161614; --surface: #1f1f1c; --text: #ecebe6; --muted: #a09e96; --line: #34332f;
+  --accent: #ff7a6e; --ok: #7bc47f; --warn: #e5a54b; --blue: #7fb2ec; --dead: #8f8f8f; --code: #2a2a26;
+  --box: #23231f; --box2: #2c2b27; --boxline: #6d6b64;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text);
+  font: 15px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+main { max-width: 1100px; margin: 0 auto; padding: 32px 16px 64px; }
+h1 { font-size: 28px; margin: 0 0 4px; letter-spacing: -0.01em; }
+h2 { font-size: 20px; margin: 44px 0 8px; padding-top: 8px; border-top: 2px solid var(--text); }
+h3 { font-size: 16px; margin: 24px 0 6px; }
+p, li { max-width: 80ch; }
+.sub { color: var(--muted); margin: 0 0 20px; }
+a { color: var(--accent); }
+code { background: var(--code); padding: 1px 5px; border-radius: 3px; font-size: 0.9em; overflow-wrap: anywhere; }
+.table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); margin: 12px 0; }
+table { border-collapse: collapse; width: 100%; min-width: 720px; }
+th, td { text-align: left; vertical-align: top; padding: 7px 10px; border-bottom: 1px solid var(--line); }
+th { font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); background: var(--bg); }
+tr:last-child td { border-bottom: 0; }
+td.n { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.small { font-size: 13px; color: var(--muted); }
+.callout { border-left: 3px solid var(--accent); background: var(--surface); padding: 10px 14px; margin: 16px 0; }
+figure { margin: 18px 0; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 12px; overflow-x: auto; }
+figure svg { width: 100%; min-width: 640px; height: auto; display: block; }
+figcaption { font-size: 13px; color: var(--muted); margin-top: 8px; }
+.tag { display: inline-block; font-size: 11px; font-weight: 600; padding: 1px 6px; border-radius: 3px;
+  border: 1px solid currentColor; white-space: nowrap; }
+.t-ok { color: var(--ok); } .t-warn { color: var(--warn); } .t-bad { color: var(--accent); } .t-dead { color: var(--dead); }
+ol.q > li { margin: 10px 0; }
+footer { margin-top: 48px; color: var(--muted); font-size: 13px; }
+
+/* SVG */
+svg text { fill: var(--text); font: 13px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+svg .muted { fill: var(--muted); font-size: 11.5px; }
+svg .title { font-weight: 700; }
+svg .h { font-weight: 700; font-size: 12px; letter-spacing: 0.05em; fill: var(--muted); }
+svg .box { fill: var(--box); stroke: var(--boxline); stroke-width: 1.2; }
+svg .box2 { fill: var(--box2); stroke: var(--boxline); stroke-width: 1.2; }
+svg .civi { fill: var(--box2); stroke: var(--blue); stroke-width: 1.6; }
+svg .uk { fill: var(--box); stroke: var(--ok); stroke-width: 1.6; }
+svg .gap { fill: none; stroke: var(--accent); stroke-width: 1.4; stroke-dasharray: 5 4; }
+svg .arrow { stroke: var(--text); stroke-width: 1.4; fill: none; marker-end: url(#ah); }
+svg .arrow.ok { stroke: var(--ok); marker-end: url(#ah-ok); }
+svg .arrow.bad { stroke: var(--accent); stroke-dasharray: 5 4; marker-end: url(#ah-bad); }
+svg .arrow.blue { stroke: var(--blue); marker-end: url(#ah-blue); }
+svg .x { fill: var(--accent); font-weight: 700; font-size: 11.5px; }
+svg .done { fill: var(--ok); font-weight: 700; font-size: 11.5px; }
+</style>
+</head>
+<body>
+<main>
+
+<h1>PauseAI UK's weekly email, from pauseai.uk</h1>
+<p class="sub">Plan, draft v6, 26 Oct 2026. The list is partly built; sending isn't.</p>
+
+<div class="callout">
+<b>In short.</b> Joseph writes the UK weekly in CiviCRM and sends it to about 1,260 people. We'll send it from pauseai.uk instead, to our own list, so it can be personal (events near you, your MP) and the UK controls it.
+<ul>
+  <li><b>The blocker: CiviCRM's unsubscribes.</b> People who left the UK weekly did so in CiviCRM, which we can't see. Moving the list without them would email people who asked us to stop.</li>
+  <li><b>The fallback:</b> gather what unsubscribes we can elsewhere, and move people over by asking, so everyone on our list has said yes to pauseai.uk.</li>
+</ul>
+</div>
+
+<h2>1. Today</h2>
+<p>A CiviCRM chapter mailing to the UK list, from <code>hello@pauseai.uk</code>. On 15 Oct: 1,262 recipients, 99.6% delivered, 13.5% clicked, 9 unsubscribed. Apart from Joseph's lead story, it's mostly Luma events, which we can generate: headline events with sign-up counts, and events by local group (<code>eventMatchers</code> in <code>lib/content/local-groups.ts</code>).</p>
+
+<h2>2. Plan</h2>
+<ol>
+  <li><b>Send from pauseai.uk:</b> a "UK weekly" topic in <code>email_permission()</code>, an unsubscribe page, a composer that fills in each person's events and MP, and Postmark's broadcast stream. Postmark vets broadcast senders, so apply early.</li>
+  <li><b>The blocker: ask Global for the UK list's unsubscribes.</b> Its "leave this list", "no bulk email" and "do not email" flags for UK-list addresses, once or as a feed, hashed if that helps, used only to suppress. A read key and an opt-out feed were refused on 19 Oct, so ask for the smallest thing.</li>
+  <li><b>The fallback, if Global says no:</b>
+    <ul>
+      <li><b>Unsubscribes from elsewhere</b> (section 4). They cover part of the UK list, not all of it.</li>
+      <li><b>Move people by asking.</b> A UK weekly from CiviCRM saying the weekly is moving to pauseai.uk, with a button to keep getting it. A click is a yes on pauseai.uk; anyone who doesn't click isn't moved. Repeat it for a few editions, then stop the CiviCRM weekly.</li>
+      <li><b>New people say yes on pauseai.uk</b> (section 5).</li>
+    </ul>
+  </li>
+  <li><b>Alongside:</b> Postmaster Tools and DMARC reports, so we see spam rates; a postcode question on every Luma event.</li>
+</ol>
+<p class="small">Either way, only people with a yes get the weekly from pauseai.uk. Global's unsubscribes let us move people without asking them; without them, we ask.</p>
+
+<h2>3. What's built</h2>
+<ul>
+  <li><b>Supporters:</b> UK members (Airtable) and Luma people, imported hourly, linked with letter writers.</li>
+  <li><b><code>email_permission()</code>:</b> yes, no or unsure for each address and topic. Members are "unsure" for PauseAI updates, as CiviCRM's unsubscribes are invisible.</li>
+  <li><b>The Luma topic</b> means "may we message them through Luma". It isn't consent to the weekly: Luma's terms need "explicit consent".</li>
+  <li><b>Luma's contacts are its email list.</b> Registering for an event or following the calendar adds someone. Unsubscribing by the link in any event blast, or marking one as spam, takes them off the list (the dashboard's People page and the API alike) and turns Follow off; so does our removing or blocking them. Following again puts them back as they were, with their first join date. Unfollowing changes nothing that matters for email. Tested by hand, 26 Oct.</li>
+  <li><b>The webhook</b> tells us of an unsubscribe at once, but not of someone following again, nor of removals and blocks. So the import's full pass over the contacts, daily, records the rest: a contact it doesn't list is opted out, and one who reappears is opted back in. A contact is then a yes, however old; "unsure" goes for Luma. Built on branch <code>luma-contacts-gone</code>.</li>
+  <li><b>Registered but never a contact:</b> 43 people registered and were approved for our own events but aren't on the list. They most likely unsubscribed before the webhook existed, so they're a no.</li>
+</ul>
+
+<h2>4. The blocker: CiviCRM's unsubscribes</h2>
+<p>People leave the UK weekly in CiviCRM: by its footer link (that list also carries urgent UK emails), "stop all PauseAI email", or do-not-email after a complaint or bounce. Airtable keeps "Keep me informed" as it was at sign-up, so we see none of it.</p>
+<div class="table-wrap"><table style="min-width:0">
+<tr><th>Source</th><th>Status</th><th>Covers</th></tr>
+<tr><td><b>Global: the UK list's unsubscribes</b></td><td><span class="tag t-warn">to ask</span></td><td>All of it: the blocker</td></tr>
+<tr><td>MailerLite and MailerSend suppressions</td><td><span class="tag t-warn">not asked</span></td><td>Global newsletter and welcome-email unsubscribes, complaints, bounces; not the UK weekly. Global's sync already has them in one file (<code>suppressions-&lt;runid&gt;.json</code>)</td></tr>
+<tr><td>Luma webhook and contacts pass</td><td><span class="tag t-ok">built</span></td><td>Our Luma email: unsubscribes at once, the rest within a day</td></tr>
+<tr><td>Postmark</td><td><span class="tag t-ok">built</span></td><td>Bounces and complaints on our own sends</td></tr>
+<tr><td>CiviCRM reports; "remove me" replies</td><td><span class="tag t-warn">by hand</span></td><td>Each weekly's few unsubscribes, if chapter admins can see names</td></tr>
+<tr><td>Asking</td><td><span class="tag t-warn">fallback</span></td><td>Everyone who clicks</td></tr>
+</table></div>
+
+<h2>5. Our own list</h2>
+<ul>
+  <li><b>Our own join form</b> on <a href="https://pauseai.uk/#join">pauseai.uk/#join</a> instead of pauseai.info's iframe, with "PauseAI UK can email me", still passing people to Global if they tick it. pauseai.uk brought in 351 of 427 UK signups in October.</li>
+  <li><b>A yes from other places:</b> "Also get the UK weekly?" on Luma registrations, and the consent box on letters, which exists.</li>
+  <li><b>Two weeklies while people move,</b> for anyone on both lists. Keep the move short.</li>
+  <li><b>Politics:</b> it can look like the start of a split. Present it as what Germany already does, and keep passing signups to Global.</li>
+</ul>
+
+<h2>6. Global and the legal pack</h2>
+<p>Jakub, 19 Oct: no read key, as "member data stays in systems Global runs". The <a href="https://github.com/PauseAI/legal-pack">legal pack</a> (v1.0, unsigned) bars exports and other sending tools (clause 2.2) and processors (6), but leaves the UK sole controller of records with nothing from the shared database (2.3), which covers our own list. But the user agreement's "Member Data" includes "event attendees… in whatever system", which may claim our Luma data. Signing 2.2 as drafted would end the members import. The pack isn't compulsory: Germany, France and Spain run their own lists. When we ask for unsubscribes, offer guarantees: suppression only, nothing else kept, revocable.</p>
+
+<h2>7. Who we can reach <span class="tag t-ok">counted 21–23 Oct</span></h2>
+<div class="table-wrap"><table style="min-width:0">
+<tr><th>List</th><th class="n">People</th></tr>
+<tr><td>Luma: calendar contacts and guests (2,188 approved for an event)</td><td class="n">2,615</td></tr>
+<tr><td>Airtable UK members</td><td class="n">1,471</td></tr>
+<tr><td>On both</td><td class="n">615</td></tr>
+<tr><td>CiviCRM UK list</td><td class="n">1,262</td></tr>
+</table></div>
+
+<h2>8. Later: every UK email</h2>
+<p>The weekly comes first; the same system then sends event emails and urgent one-offs. An email is a definition in code (blocks, audience, channel); every send checks <code>email_permission()</code> and is logged. The unsubscribe page offers less instead of nothing (weekly only, urgent only, my local group, a 3-month pause), since people who can choose less don't report spam.</p>
+
+<h2>9. Location</h2>
+<p>A town is enough for events near you; "your MP" needs a full postcode. We have members' city and postcode, Luma postcode answers and letters' postcodes. To get more, ask "Your postcode (the first half is fine)" on every Luma event; the import already picks it up.</p>
+
+<h2>10. Sending</h2>
+<p>Postmark's <a href="https://postmarkapp.com/message-streams">broadcast stream</a>, about $200–300 a year (<a href="https://postmarkapp.com/pricing">pricing</a>), kept apart from MP letters. Spam reports decide placement and should stay below 0.1% (<a href="https://support.google.com/a/answer/81126">Google's sender guidelines</a>), so set up <a href="https://postmaster.google.com/">Postmaster Tools</a> and DMARC reports first. pauseai.uk's DMARC is <code>p=none</code> with no reports today.</p>
+<p>Sending goes through the mail layer built for mail to politicians (<code>plans/politicians-and-mail.md</code>, phase 2): Postmark and a staff member's Gmail are two backends behind one <code>send()</code>, chosen per mailing, so a small local send (20 supporters in one constituency) can go from a person's Gmail and the weekly from Postmark's broadcast stream. Both log to <code>email_sends</code> and share the bounce blocks and <code>email_permission()</code>. A mailing is stored as its template and attachments once, plus each recipient's merge values, not a copy per person; that also keeps a supporter's name in one row erasure can delete.</p>
+
+<h2>11. Data protection</h2>
+<p>Update <code>docs/data-protection.md</code> for: unsubscribes received from Stichting PauseAI (kept after erasure, as opt-outs are), the weekly as a new use with Postmark's broadcast stream, and our join form as a new source. The privacy policy says we email people who said yes, and how to stop.</p>
+
+<h2>12. Open questions</h2>
+<ol class="q">
+  <li><b>Who asks Global</b> for the UK list's unsubscribes, given its leadership is changing? The agreement is with the Stichting's board.</li>
+  <li><b>How long to wait</b> for an answer before moving people by asking?</li>
+  <li><b>The agreement:</b> sign as drafted, or propose changes first? Get the UK's own legal advice before taking on uncapped liability.</li>
+  <li><b>Luma registrants:</b> may we send them the weekly without a yes? The Data (Use and Access) Act 2025 extends the "soft opt-in" to charities. Is it in force, does it cover Safe AI Alliance Ltd, and does registering count? Otherwise ask on registration.</li>
+  <li><b>For Global:</b> can chapter admins see who unsubscribed from a UK mailing? SES complaint counts for UK mailings?</li>
+</ol>
+
+<h2>Sources</h2>
+<ul class="small">
+  <li>Four sample emails and the 15 Oct CiviMail report; Jakub's Discord reply, 19 Oct.</li>
+  <li><a href="https://github.com/PauseAI/legal-pack">PauseAI/legal-pack</a> v1.0 (<code>docs/02a</code>, <code>03</code>).</li>
+  <li>pauseai-civicrm: <code>docs/suppression-reverse-sync.md</code>, <code>docs/member-import-plan.md</code>. pauseai-website: <code>docs/join-form-flow.md</code>.</li>
+  <li>Luma, live and its help pages: <a href="https://help.luma.com/p/managing-calendar-contacts">contacts</a>, <a href="https://help.luma.com/p/sending-newsletters.md">newsletters</a>, <a href="https://help.luma.com/p/webhooks">webhooks</a>.</li>
+</ul>
+
+<footer>Draft v6. Counts are snapshots.</footer>
+</main>
+</body>
+</html>

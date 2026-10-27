@@ -128,7 +128,7 @@ describe.skipIf(process.env.NETLIFY === "true")("copying a database", () => {
         expect(
           runSql(
             name,
-            "SELECT count(*) FROM letters t WHERE NOT EXISTS (SELECT 1 FROM supporter_links l WHERE l.letter_id = t.id)",
+            "SELECT count(*) FROM supporter_letters t WHERE NOT EXISTS (SELECT 1 FROM supporter_links l WHERE l.letter_id = t.id)",
           ),
         ).toEqual(["0"]);
         expect(
@@ -151,6 +151,7 @@ describe.skipIf(process.env.NETLIFY === "true")("copying a database", () => {
           "{luma,member}",
           "{luma}",
           "{member}",
+          "{web-form}",
         ]);
         // Letters in every state, and every kind of event about them.
         expect(runSql(name, "SELECT DISTINCT status FROM letters ORDER BY 1")).toEqual([
@@ -183,11 +184,54 @@ describe.skipIf(process.env.NETLIFY === "true")("copying a database", () => {
         expect(runSql(name, "SELECT DISTINCT job FROM import_runs ORDER BY 1")).toEqual([
           "check-mps",
           "import-controlai",
+          "import-go-to-parliament",
           "import-luma",
           "import-members",
           "import-signatories",
-          "sync-mps",
+          "import-web-form-letters",
+          "sync-emails",
+          "sync-politicians",
         ]);
+        // Politicians in every state, in every body Airtable has but Wales's and Northern Ireland's, and one whose
+        // record is gone from Airtable.
+        expect(runSql(name, "SELECT DISTINCT status FROM notable_people ORDER BY 1")).toEqual([
+          "died",
+          "in_office",
+          "left_office",
+          "retired",
+        ]);
+        expect(runSql(name, "SELECT DISTINCT house FROM politicians ORDER BY 1")).toEqual([
+          "commons",
+          "lords",
+          "scottish-parliament",
+        ]);
+        expect(runSql(name, "SELECT count(*) FROM notable_people WHERE airtable_removed_at IS NOT NULL")).toEqual([
+          "1",
+        ]);
+        // Every answer to every kind of ask, and each import's and staff's.
+        expect(runSql(name, "SELECT DISTINCT ask_kind || ' ' || status FROM ask_statuses ORDER BY 1")).toEqual([
+          "event declined",
+          "event declined_surgery",
+          "event going",
+          "event meeting_staff",
+          "event passed_on",
+          "event tentative",
+          "event tentative_staff",
+          "letter signed",
+        ]);
+        expect(
+          runSql(
+            name,
+            "SELECT DISTINCT CASE WHEN updated_by LIKE '%@%' THEN 'staff' ELSE updated_by END FROM ask_statuses ORDER BY 1",
+          ),
+        ).toEqual(["airtable", "controlai", "staff", "sync"]);
+        // Letters of both kinds: a supporter's through the site and through the old form, and PauseAI's of each mailing.
+        expect(
+          runSql(name, "SELECT DISTINCT kind || ' ' || (airtable_id IS NOT NULL) FROM supporter_letters ORDER BY 1"),
+        ).toEqual(["supporter false", "supporter true"]);
+        expect(
+          runSql(name, "SELECT count(DISTINCT mailing_id) = (SELECT count(*) FROM mailings) FROM pauseai_letters"),
+        ).toEqual(["t"]);
         // Opt-outs told by every source, and every answer to whether we'd email someone.
         expect(runSql(name, "SELECT DISTINCT list || ' ' || source FROM opt_outs ORDER BY 1")).toEqual([
           "luma-calendar luma-contacts",
@@ -227,7 +271,7 @@ describe.skipIf(process.env.NETLIFY === "true")("copying a database", () => {
           lettersSent: ["letters WHERE sent_at IS NOT NULL", "sent_at"],
           lettersReplied: ["letters WHERE replied_at IS NOT NULL", "replied_at"],
           lettersBounced: ["letter_events WHERE status = 'bounced'", "at"],
-          mpsSigned: ["campaign_statuses WHERE status = 'signed'", "updated_at"],
+          mpsSigned: ["ask_statuses WHERE status = 'signed'", "updated_at"],
           supportersAdded: ["supporters WHERE true", "created_at"],
           eventRegistrations: [
             "luma_guests WHERE approval_status = 'approved' AND removed_at IS NULL",

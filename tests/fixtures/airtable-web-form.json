@@ -1,0 +1,120 @@
+{
+  "records": [
+    {
+      "id": "recWebWendyFrontier",
+      "createdTime": "2026-09-25T09:00:00.000Z",
+      "fields": {
+        "Sender name": "Wendy Webform",
+        "Sender email": "Wendy.Webform@example.com",
+        "Sender postcode": "EC1A 1BB",
+        "Recipient": ["recPlaceholder"],
+        "Subject": "Please sign the letter on frontier AI",
+        "Campaign": "Frontier AI letter",
+        "Form Submitted Timestamp": "2026-09-25T09:00:00.000Z",
+        "Email Sent Time": "2026-09-25T09:01:00.000Z",
+        "Contact consent": "Yes"
+      }
+    },
+    {
+      "id": "recWebWendyLiability",
+      "createdTime": "2025-08-01T09:00:00.000Z",
+      "fields": {
+        "Sender name": "Wendy Webform",
+        "Sender email": "wendy.webform@example.com",
+        "Sender postcode": "EC1A 1BB",
+        "Recipient": ["recDummy"],
+        "Subject": "AI companies should be liable",
+        "Campaign": "Liability letter",
+        "Form Submitted Timestamp": "2025-08-01T09:00:00.000Z",
+        "Email Sent Time": "2025-08-01T09:02:00.000Z"
+      }
+    },
+    {
+      "id": "recWebWendyAgain",
+      "createdTime": "2026-10-01T09:00:00.000Z",
+      "fields": {
+        "Sender name": "Wendy Webform",
+        "Sender email": "wendy.webform@example.com",
+        "Sender postcode": "EC1A 1BB",
+        "Recipient": ["recPlaceholder"],
+        "Subject": "Please sign the letter on frontier AI",
+        "Campaign": "Frontier AI letter",
+        "Form Submitted Timestamp": "2026-10-01T09:00:00.000Z",
+        "Email Sent Time": "2026-10-01T09:01:00.000Z",
+        "Contact consent": "No"
+      }
+    },
+    {
+      "id": "recWebDee",
+      "createdTime": "2025-07-20T09:00:00.000Z",
+      "fields": {
+        "Sender name": "Dee Deepmind",
+        "Sender email": "dee.deepmind@example.com",
+        "Sender postcode": "M1 1AE",
+        "Recipient": ["recSeedling"],
+        "Subject": "Dear Sir Demis",
+        "Campaign": "DeepMind letter",
+        "Email Sent Time": "2025-07-20T09:00:30.000Z",
+        "Contact consent": "No"
+      }
+    },
+    {
+      "id": "recWebSpam",
+      "createdTime": "2026-02-01T09:00:00.000Z",
+      "fields": {
+        "Sender name": "Spam Sender",
+        "Sender email": "spam@example.com",
+        "Recipient": ["recDummy"],
+        "Campaign": "Frontier AI letter",
+        "Email Sent Time": "2026-02-01T09:00:30.000Z",
+        "Spam": true
+      }
+    },
+    {
+      "id": "recWebInvalid",
+      "createdTime": "2026-02-02T09:00:00.000Z",
+      "fields": {
+        "Sender name": "Invalid Sender",
+        "Sender email": "invalid@example.com",
+        "Recipient": ["recDummy"],
+        "Campaign": "Frontier AI letter",
+        "Email Sent Time": "2026-02-02T09:00:30.000Z",
+        "Invalid, can't send": true
+      }
+    },
+    {
+      "id": "recWebUnsent",
+      "createdTime": "2026-02-03T09:00:00.000Z",
+      "fields": {
+        "Sender name": "Unsent Sender",
+        "Sender email": "unsent@example.com",
+        "Recipient": ["recDummy"],
+        "Campaign": "Strange new letter",
+        "Form Submitted Timestamp": "2026-02-03T09:00:00.000Z"
+      }
+    },
+    {
+      "id": "recWebNobody",
+      "createdTime": "2026-03-01T09:00:00.000Z",
+      "fields": {
+        "Sender name": "Nora Nowhere",
+        "Sender email": "nora.nowhere@example.com",
+        "Sender postcode": "NR1 1AA",
+        "Recipient": ["recNobody"],
+        "Subject": "Please sign",
+        "Campaign": "Frontier AI letter",
+        "Email Sent Time": "2026-03-01T09:00:30.000Z"
+      }
+    },
+    {
+      "id": "recWebNoRecipient",
+      "createdTime": "2026-03-02T09:00:00.000Z",
+      "fields": {
+        "Sender name": "Rae Recipientless",
+        "Sender email": "rae@example.com",
+        "Campaign": "Frontier AI letter",
+        "Email Sent Time": "2026-03-02T09:00:30.000Z"
+      }
+    }
+  ]
+}

@@ -3,7 +3,8 @@ import { PDFDocument, StandardFonts } from "pdf-lib";
 import { http, HttpResponse } from "msw";
 import { server } from "@/tests/fixtures/msw";
 import { addTestMp, addTestPolitician, describeWithDatabase, useTestDatabase } from "@/tests/database";
-import { SOBEL_BILL_CAMPAIGN, CONTROLAI_LETTER_PAGE } from "@/lib/controlai-letter";
+import { CONTROLAI_LETTER_ASK } from "@/lib/asks";
+import { CONTROLAI_LETTER_PAGE } from "@/lib/controlai-letter";
 import { NIGHTLY } from "@/lib/import-runs";
 import { importControlAiLetter } from "./controlai-import";
 import { listRuns } from "./import-runs";
@@ -25,9 +26,9 @@ async function pdfOf(...lines: string[]): Promise<ArrayBuffer> {
 
 const statuses = () =>
   query<{ name: string; updatedBy: string }>(
-    `SELECT p.name, s.updated_by AS "updatedBy" FROM campaign_statuses s JOIN politicians p ON p.id = s.politician_id
-     WHERE s.campaign = $1 ORDER BY p.name`,
-    [SOBEL_BILL_CAMPAIGN],
+    `SELECT p.name, s.updated_by AS "updatedBy" FROM ask_statuses s JOIN notable_people p ON p.id = s.notable_person_id
+     WHERE s.ask = $1 ORDER BY p.name`,
+    [CONTROLAI_LETTER_ASK],
   );
 
 describeWithDatabase("importControlAiLetter", () => {
@@ -44,7 +45,7 @@ describeWithDatabase("importControlAiLetter", () => {
     await addTestPolitician({ airtableId: null, house: "lords", name: "Lord Sample", constituency: null });
     await addTestPolitician({ airtableId: null, house: "lords", name: "Lord Sample", constituency: null });
     // Gone from the Commons, so not matched.
-    await addTestPolitician({ airtableId: "rec4", name: "Baroness Nobody", sitting: false });
+    await addTestPolitician({ airtableId: "rec4", name: "Baroness Nobody", status: "left_office" });
     await addTestMp();
 
     expect(await recentControlAiImports()).toEqual([]);
@@ -74,15 +75,22 @@ describeWithDatabase("importControlAiLetter", () => {
     ]);
     expect(
       await query(
-        `SELECT p.name, a.details->>'status' AS status FROM audit_log a JOIN politicians p ON p.id = (a.details->>'politicianId')::bigint
+        `SELECT p.name, a.details->>'status' AS status, a.details->>'date' AS date
+         FROM audit_log a JOIN notable_people p ON p.id = (a.details->>'politicianId')::bigint
          WHERE a.action = 'set status' AND a.actor = 'controlai' ORDER BY p.name`,
       ),
     ).toEqual([
-      { name: "Lord Example", status: "signed" },
-      { name: "Ms Dora Dummy", status: "signed" },
-      { name: "Polly Placeholder", status: "signed" },
-      { name: "Sam Smith", status: "signed" },
+      // Those who signed before the letter was delivered on its day; Sam Smith, who signed later, today.
+      { name: "Lord Example", status: "signed", date: "2026-09-11" },
+      { name: "Ms Dora Dummy", status: "signed", date: "2026-09-11" },
+      { name: "Polly Placeholder", status: "signed", date: "2026-09-11" },
+      { name: "Sam Smith", status: "signed", date: (await query<{ d: string }>("SELECT now()::date::text AS d"))[0].d },
     ]);
+    expect(
+      await query("SELECT DISTINCT status_date::text AS date FROM ask_statuses WHERE ask = $1 ORDER BY 1", [
+        CONTROLAI_LETTER_ASK,
+      ]),
+    ).toHaveLength(2);
   });
 
   it("makes the table match the letter: statuses it set go when the name does, others stay", async () => {
@@ -90,10 +98,10 @@ describeWithDatabase("importControlAiLetter", () => {
     const gone = await addTestPolitician({ airtableId: "rec5", name: "Gone Signer", constituency: "Elsewhere" });
     const byHand = await addTestPolitician({ airtableId: "rec6", name: "Hand Set", constituency: "Somewhere" });
     await query(
-      `INSERT INTO campaign_statuses (politician_id, campaign, status, updated_by) VALUES
-       ($1, $4, 'signed', 'controlai'), ($2, $4, 'signed', 'controlai'), ($3, $4, 'signed', 'sync'),
-       ($1, 'regulate-letter-pm', 'signed', 'jo@pauseai.uk')`,
-      [polly, gone, byHand, SOBEL_BILL_CAMPAIGN],
+      `INSERT INTO ask_statuses (notable_person_id, ask, ask_kind, status, updated_by) VALUES
+       ($1, $4, 'letter', 'signed', 'controlai'), ($2, $4, 'letter', 'signed', 'controlai'), ($3, $4, 'letter', 'signed', 'sync'),
+       ($1, 'frontier-ai-letter', 'letter', 'signed', 'jo@pauseai.uk')`,
+      [polly, gone, byHand, CONTROLAI_LETTER_ASK],
     );
 
     const result = await importControlAiLetter(NIGHTLY);
@@ -103,9 +111,9 @@ describeWithDatabase("importControlAiLetter", () => {
       { name: "Hand Set", updatedBy: "sync" },
       { name: "Polly Placeholder", updatedBy: "controlai" },
     ]);
-    expect(
-      await query("SELECT count(*)::int AS n FROM campaign_statuses WHERE campaign = 'regulate-letter-pm'"),
-    ).toEqual([{ n: 1 }]);
+    expect(await query("SELECT count(*)::int AS n FROM ask_statuses WHERE ask = 'frontier-ai-letter'")).toEqual([
+      { n: 1 },
+    ]);
     // Nothing changed, so nothing to log.
     expect(await importControlAiLetter(NIGHTLY)).toMatchObject({ added: 0, removed: 0 });
     expect(await query("SELECT count(*)::int AS n FROM audit_log WHERE action = 'import ControlAI letter'")).toEqual([

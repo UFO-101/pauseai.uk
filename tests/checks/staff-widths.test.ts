@@ -16,6 +16,7 @@ const ALLOWED: Record<string, string> = {
   // Over the page, where the grid doesn't reach.
   "ChangesTable.module.css .json": "a popover",
   "EmailPermissionTiles.module.css .popover": "a popover",
+  "Details.module.css .editPopover": "a popover",
   "StaffNav.module.css .menu > div": "the menu's dropdown",
   // The login page: one card in the middle of the window, with no grid.
   "LoginCard.module.css .login": "the login page",

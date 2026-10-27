@@ -41,7 +41,7 @@ function testMpLine(mp: TestMp): string {
     ? [copy.lookup.testMpNoEmail]
     : mp.email
       ? [copy.lookup.testMpBounces]
-      : Object.keys(mp.statuses).map((slug) => copy.lookup.testMpSigned(campaignBySlug(slug)!.title));
+      : Object.keys(mp.statuses).map((ask) => copy.lookup.testMpSigned(copy.lookup.testMpAsks[ask]!));
   return `${postcode} (${mp.name})${purpose.length ? `: ${purpose.join(", ")}` : ""}`;
 }
 

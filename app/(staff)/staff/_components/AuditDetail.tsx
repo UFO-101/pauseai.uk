@@ -131,10 +131,13 @@ export default function AuditDetail({ change, airtableTable }: { change: LoggedC
       take("id");
       lead.push(copy.gone(String(details.id)));
       break;
+    // Logged by the politician sync, or before it read every body, the MP sync.
+    case "apply held politician sync":
+    case "discard held politician sync":
     case "apply held MP sync":
     case "discard held MP sync":
       take("id");
-      lead.push(<Link href={importPath("sync-mps")}>{copy.run(String(details.id))}</Link>);
+      lead.push(<Link href={importPath("sync-politicians")}>{copy.run(String(details.id))}</Link>);
       break;
     case "add staff account":
     case "set staff permissions":
@@ -146,7 +149,7 @@ export default function AuditDetail({ change, airtableTable }: { change: LoggedC
       break;
   }
   if (change.action === "set status") {
-    take("status", "campaign", "date");
+    take("status", "ask", "campaign", "date");
     const words =
       details.status === null
         ? staffCopy.politician.statusCleared
@@ -154,7 +157,8 @@ export default function AuditDetail({ change, airtableTable }: { change: LoggedC
     lead.push(
       <>
         {words.before}
-        <CampaignName slug={text("campaign")} />
+        {/* By ask's slug, or, logged before asks, by campaign. */}
+        {details.ask ? text("ask") : <CampaignName slug={text("campaign")} />}
         {words.after}
         {text("date") && `, ${text("date")}`}
       </>,

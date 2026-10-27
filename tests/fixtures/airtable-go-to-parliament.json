@@ -1,0 +1,29 @@
+{
+  "records": [
+    {
+      "id": "recGuest1",
+      "createdTime": "2026-09-01T09:00:00.000Z",
+      "fields": { "UK Parliamentarians": ["recPlaceholder"], "MP Meeting Status": "Tentative meeting with staff" }
+    },
+    {
+      "id": "recGuest2",
+      "createdTime": "2026-09-02T09:00:00.000Z",
+      "fields": { "UK Parliamentarians": ["recPlaceholder"], "MP Meeting Status": "Meeting with staff" }
+    },
+    {
+      "id": "recGuest3",
+      "createdTime": "2026-09-03T09:00:00.000Z",
+      "fields": { "UK Parliamentarians": ["recDummy"], "MP Meeting Status": "Secured" }
+    },
+    {
+      "id": "recGuest4",
+      "createdTime": "2026-09-04T09:00:00.000Z",
+      "fields": { "UK Parliamentarians": ["recGone"], "MP Meeting Status": "Declined but surgery appointment" }
+    },
+    {
+      "id": "recGuest5",
+      "createdTime": "2026-09-05T09:00:00.000Z",
+      "fields": { "UK Parliamentarians": ["recNobody"], "MP Meeting Status": "Tentative yes" }
+    }
+  ]
+}

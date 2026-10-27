@@ -2,14 +2,17 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { SubmitButton } from "@/components/ui/SubmitButton";
-import { SOBEL_BILL_CAMPAIGN } from "@/lib/controlai-letter";
-import { campaignBySlug, campaignPath, trackedCampaigns } from "@/lib/email-your-mp";
+import { Select, TextInput } from "@/components/ui/Controls";
+import { FilterForm } from "@/components/ui/Form";
+import { ASK_STATUSES } from "@/lib/asks";
+import { trackedAsks } from "@/lib/email-your-mp";
+import type { Ask } from "@/lib/server/asks";
 import CampaignName from "./CampaignName";
 import { FieldChanges } from "./AuditDetail";
 import type { FieldChange } from "@/lib/field-changes";
 import { importPath } from "@/lib/import-runs";
 import type { EmailBlock } from "@/lib/server/email";
-import type { LetterSummary, PoliticianLetters, UnsignedLetter } from "@/lib/server/letters";
+import type { LetterSummary, PauseaiLetter, PoliticianLetters, UnsignedLetter } from "@/lib/server/letters";
 import type { Politician, PoliticianChange } from "@/lib/server/politicians";
 import { staffDate, staffTime } from "@/lib/staff-time";
 import styles from "./Details.module.css";
@@ -32,8 +35,19 @@ function Fact({ label, children }: { label: string; children: React.ReactNode })
   );
 }
 
-/** One line of the history: when, and what, already in words. */
-type Entry = { key: string; at: string; what: ReactNode };
+/** One line of the history: when, to the minute or, with `day`, only the day, and what, already in words. */
+type Entry = { key: string; at: string; day?: boolean; what: ReactNode };
+
+/**
+ * When an entry of the audit log happened: an answer dated before it was
+ * recorded, as those an import finds already there are, on that day; anything
+ * else when it was logged.
+ */
+function whenOf(change: PoliticianChange): { at: string; day: boolean } {
+  const date = change.action === "set status" && typeof change.details.date === "string" ? change.details.date : "";
+  const logged = new Date(change.at).toISOString();
+  return date && date < logged.slice(0, 10) ? { at: date, day: true } : { at: logged, day: false };
+}
 
 /** A letter: who wrote it, linked to their supporter once they're one, the campaign, and how it ended. */
 function Sender({ letter }: { letter: LetterSummary }) {
@@ -105,8 +119,25 @@ function letterEntries({ senders, letters }: PoliticianLetters): Entry[] {
   );
 }
 
+/** PauseAI's letters, each a line: the mailing, and whether it was personalised or written with AI. */
+function pauseaiEntries(letters: PauseaiLetter[]): Entry[] {
+  return letters.map((letter) => ({
+    key: `pauseai-${letter.id}`,
+    at: letter.at,
+    what: (
+      <>
+        {copy.history["pauseai-letter"]} {letter.mailing}
+        <Muted>
+          {letter.personalised && ` · ${copy.personalised}`}
+          {letter.aiGenerated && ` · ${copy.aiGenerated}`}
+        </Muted>
+      </>
+    ),
+  }));
+}
+
 /** What an entry of the audit log about them says, beyond its kind: the status, the note, the reason. */
-function Detail({ change }: { change: PoliticianChange }) {
+function Detail({ change, asks }: { change: PoliticianChange; asks: Ask[] }) {
   const { details } = change;
   const text = (key: string) => (typeof details[key] === "string" ? (details[key] as string) : "");
   switch (change.action) {
@@ -118,9 +149,13 @@ function Detail({ change }: { change: PoliticianChange }) {
       return (
         <>
           {words.before}
-          <CampaignName slug={text("campaign")} />
+          {/* Logged by ask, or, before asks, by campaign. */}
+          {details.ask ? (
+            (asks.find((ask) => ask.slug === details.ask)?.title ?? text("ask"))
+          ) : (
+            <CampaignName slug={text("campaign")} />
+          )}
           {words.after}
-          {text("date") && `, ${text("date")}`}
           {text("note") && <Muted> · {text("note")}</Muted>}
         </>
       );
@@ -147,70 +182,142 @@ function Detail({ change }: { change: PoliticianChange }) {
   }
 }
 
-/** The campaigns a politician has a card for: those staff record, the bill, then any other they have a status for. */
-function campaignsOf(politician: Politician): string[] {
+/** The asks a politician has a row for: those staff record, then any other they have a status for, in the asks' order. */
+function asksOf(politician: Politician, asks: Ask[]): Ask[] {
   return [
-    ...new Set([...trackedCampaigns.map((c) => c.slug), SOBEL_BILL_CAMPAIGN, ...Object.keys(politician.statuses)]),
+    ...asks.filter((ask) => trackedAsks.includes(ask.slug)),
+    ...asks.filter((ask) => !trackedAsks.includes(ask.slug) && politician.statuses[ask.slug]),
   ];
 }
 
 /**
- * One campaign, a row of the campaigns card: its name and a link to its
- * page; then their status as a strip, green once they've signed, with
- * when, the note and who set it, and for a campaign staff record, the
- * button to mark them signed or remove it. The bill's status comes
- * from the nightly ControlAI import alone, so its strip says so in place
- * of a button.
+ * Setting their answer to an ask staff record, with a note: Signed, or
+ * taking it away, for a letter; one of an event's answers, or none.
  */
-function CampaignRow({
+function StatusForm({
   politician,
-  slug,
-  markSigned,
+  ask,
+  setStatus,
 }: {
   politician: Politician;
-  slug: string;
-  markSigned: (form: FormData) => void | Promise<void>;
+  ask: Ask;
+  setStatus: (form: FormData) => void | Promise<void>;
 }) {
-  const status = politician.statuses[slug];
-  const campaign = campaignBySlug(slug);
-  const tracked = trackedCampaigns.some((c) => c.slug === slug);
-  const button = tracked && (
-    <form action={markSigned}>
-      <input type="hidden" name="politicianId" value={politician.id} />
-      <input type="hidden" name="campaign" value={slug} />
-      <input type="hidden" name="signed" value={status ? "" : "1"} />
-      <SubmitButton variant={status ? "ghost" : "primary"} size="small">
-        {status ? staffCopy.politicians.unmarkSigned : staffCopy.politicians.markSigned}
-      </SubmitButton>
-    </form>
+  const status = politician.statuses[ask.slug];
+  const note = (
+    <span className={styles.note}>
+      <TextInput name="note" aria-label={copy.note} placeholder={copy.notePlaceholder} required />
+    </span>
   );
   return (
-    <div className={styles.campaign} role="group" aria-label={campaign?.title ?? slug}>
-      <span>
-        <strong>{campaign?.title ?? slug}</strong>
-        {campaign && (
-          <>
-            {" · "}
-            <Link className={styles.campaignMeta} href={campaignPath(campaign)}>
-              {copy.campaignPage}
-            </Link>
-          </>
-        )}
-      </span>
-      <Strip tone={status ? "green" : "plain"} action={button}>
-        <span>
-          {status
-            ? `${staffCopy.statuses[status.status] ?? status.status}${status.date ? `, ${staffDate(status.date)}` : ""}`
-            : staffCopy.statuses.none}
-        </span>
+    <FilterForm action={setStatus} aria-label={`${copy.setStatus}: ${ask.title}`}>
+      <input type="hidden" name="politicianId" value={politician.id} />
+      <input type="hidden" name="ask" value={ask.slug} />
+      {ask.kind === "letter" ? (
+        <>
+          <input type="hidden" name="status" value={status ? "" : "signed"} />
+          {note}
+          <SubmitButton variant={status ? "ghost" : "primary"} size="small">
+            {status ? staffCopy.politicians.unmarkSigned : staffCopy.politicians.markSigned}
+          </SubmitButton>
+        </>
+      ) : (
+        <>
+          <Select name="status" defaultValue={status?.status ?? ""} aria-label={copy.status}>
+            <option value="">{staffCopy.statuses.noAnswer}</option>
+            {ASK_STATUSES.event.map((value) => (
+              <option key={value} value={value}>
+                {staffCopy.statuses[value]}
+              </option>
+            ))}
+          </Select>
+          {note}
+          <SubmitButton variant="primary" size="small">
+            {copy.save}
+          </SubmitButton>
+        </>
+      )}
+    </FilterForm>
+  );
+}
+
+/** Answers that are a yes, ticked in green, and a no, crossed. */
+const YES = ["signed", "going"];
+const NO = ["declined", "declined_surgery"];
+
+/** The ask's title, linked to the letter or the event if we know where it is; another site's in a new tab. */
+function AskTitle({ ask }: { ask: Ask }) {
+  if (!ask.url) return ask.title;
+  return ask.url.startsWith("/") ? (
+    <Link href={ask.url}>{ask.title}</Link>
+  ) : (
+    <a href={ask.url} target="_blank" rel="noreferrer">
+      {ask.title}
+    </a>
+  );
+}
+
+/**
+ * One ask, a row of the asks card: who asked them to do what, and when,
+ * leading into the ask's title; the note and who set the answer, or which
+ * import; beside it, in a column of its own, their answer and its date, a
+ * yes ticked in green and a no crossed, and for an ask staff record, Edit
+ * under it, which opens the form to change it in a bubble below.
+ */
+function AskRow({
+  politician,
+  ask,
+  setStatus,
+}: {
+  politician: Politician;
+  ask: Ask;
+  setStatus: (form: FormData) => void | Promise<void>;
+}) {
+  const status = politician.statuses[ask.slug];
+  const none = ask.kind === "letter" ? staffCopy.statuses.none : staffCopy.statuses.noAnswer;
+  const who = new Intl.ListFormat("en-GB").format(ask.askedBy.map((asker) => staffCopy.asks.askedBy[asker]));
+  const asked = [copy.askedThem(who, ask.kind), ask.date && staffDate(ask.date)].filter(Boolean).join(" · ");
+  const tracked = trackedAsks.includes(ask.slug);
+  const editId = `edit-${ask.slug}`;
+  const tone = status && (YES.includes(status.status) ? styles.yes : NO.includes(status.status) ? styles.no : "");
+  return (
+    <div className={styles.ask} role="group" aria-label={ask.title}>
+      <div className={styles.asked}>
+        <span className={styles.askMeta}>{asked}</span>
+        <AskTitle ask={ask} />
         {status && (
-          <span className={styles.campaignMeta}>
+          <span className={styles.askMeta}>
             {status.note && `${status.note} · `}
-            {copy.setBy(status.updatedBy, staffDate(status.updatedAt))}
+            {copy.fromImport[status.updatedBy] ?? copy.setBy(status.updatedBy, staffDate(status.updatedAt))}
           </span>
         )}
-        {slug === SOBEL_BILL_CAMPAIGN && <span className={styles.campaignMeta}>{copy.fromControlAi}</span>}
-      </Strip>
+      </div>
+      <div className={`${styles.answer} ${tone || ""}`}>
+        <span>{status ? staffCopy.statuses[status.status] : none}</span>
+        {status?.date && <span className={styles.askMeta}>{staffDate(status.date)}</span>}
+        {tracked && (
+          <button
+            type="button"
+            className={styles.edit}
+            popoverTarget={editId}
+            style={{ anchorName: `--${editId}` } as React.CSSProperties}
+          >
+            {copy.edit}
+          </button>
+        )}
+      </div>
+      {tracked && (
+        // Keyed on the answer, so a change made from it closes it and empties the note.
+        <div
+          key={status?.updatedAt ?? "none"}
+          id={editId}
+          popover="auto"
+          className={styles.editPopover}
+          style={{ positionAnchor: `--${editId}` } as React.CSSProperties}
+        >
+          <StatusForm politician={politician} ask={ask} setStatus={setStatus} />
+        </div>
+      )}
     </div>
   );
 }
@@ -228,33 +335,40 @@ function CampaignRow({
  */
 export default function PoliticianDetails({
   politician,
-  markSigned,
+  asks,
+  setStatus,
   block,
   unblock,
   letters,
+  pauseaiLetters = [],
   history,
   airtableTable,
 }: {
   politician: Politician;
-  /** Marks them as signed, or not, for a campaign staff record: politicianId, campaign, signed. */
-  markSigned: (form: FormData) => void | Promise<void>;
+  /** Every ask, by the asks table's order. */
+  asks: Ask[];
+  /** Sets their answer to an ask staff record: politicianId, ask, status (blank to clear), note. */
+  setStatus: (form: FormData) => void | Promise<void>;
   block?: EmailBlock;
   unblock: (form: FormData) => void | Promise<void>;
   /** Their letters, with who sent each only for staff with `supporters`. */
   letters: PoliticianLetters;
+  /** PauseAI's letters to them. */
+  pauseaiLetters?: PauseaiLetter[];
   history: PoliticianChange[];
   /** Airtable's table of MPs, which the server knows; an MP's record there is under it. */
   airtableTable: string;
 }) {
   const entries: Entry[] = [
     ...letterEntries(letters),
+    ...pauseaiEntries(pauseaiLetters),
     ...history.map((change) => ({
       key: `change-${change.id}`,
-      at: change.at,
+      ...whenOf(change),
       what: (
         <>
           {change.action !== "set status" && <>{copy.history[change.action] ?? change.action} </>}
-          <Detail change={change} /> <Muted>· {change.actor}</Muted>
+          <Detail change={change} asks={asks} /> <Muted>· {change.actor}</Muted>
         </>
       ),
     })),
@@ -270,8 +384,10 @@ export default function PoliticianDetails({
         <h1>
           {politician.name}
           {politician.isTest && <Tag>{staffCopy.politicians.testMp}</Tag>}
+          {politician.importantTarget && <Tag tone="amber">{copy.importantTarget}</Tag>}
+          {politician.personalConnection && <Tag>{copy.personalConnection}</Tag>}
         </h1>
-        <p>{copy.role(copy.roles[politician.house], politician.constituency, politician.sitting)}</p>
+        <p>{copy.role(copy.roles[politician.house], politician.constituency, politician.status === "in_office")}</p>
       </header>
       {block && (
         <section className={styles.blocked} aria-labelledby="blocked-title">
@@ -296,7 +412,7 @@ export default function PoliticianDetails({
                       {copy.blocked.wrong.airtable}
                     </a>
                     {copy.blocked.wrong.middle}
-                    <Link href={importPath("sync-mps")}>{copy.blocked.wrong.link}</Link>
+                    <Link href={importPath("sync-politicians")}>{copy.blocked.wrong.link}</Link>
                     {copy.blocked.wrong.after}
                   </p>
                 </div>
@@ -314,9 +430,16 @@ export default function PoliticianDetails({
       <Grid>
         <Card span={3} as="div">
           <dl className={styles.facts}>
+            <Fact label={copy.status}>{staffCopy.personStatuses[politician.status]}</Fact>
             <Fact label={staffCopy.fields.constituency}>{politician.constituency}</Fact>
             <Fact label={staffCopy.fields.party}>{politician.party}</Fact>
+            <Fact label={copy.country}>{politician.country && staffCopy.countries[politician.country]}</Fact>
+            <Fact label={copy.city}>{politician.city}</Fact>
             <Fact label={staffCopy.fields.email}>{politician.email ?? staffCopy.politicians.noEmail}</Fact>
+            <Fact label={staffCopy.fields.salutation}>{politician.salutation}</Fact>
+            <Fact label={copy.notes}>
+              {politician.notes && <span className={styles.notes}>{politician.notes}</span>}
+            </Fact>
             <Fact label={copy.source}>
               {politician.airtableId ? (
                 <>
@@ -324,6 +447,12 @@ export default function PoliticianDetails({
                     {source}
                   </a>
                   {copy.editInAirtable}
+                  {politician.airtableRemovedAt && (
+                    <>
+                      {" "}
+                      <Tag tone="amber">{copy.airtableRemoved(staffDate(politician.airtableRemovedAt))}</Tag>
+                    </>
+                  )}
                 </>
               ) : (
                 source
@@ -331,10 +460,12 @@ export default function PoliticianDetails({
             </Fact>
           </dl>
         </Card>
-        <Card span={3} look="aside" title={copy.statusesTitle} id="campaigns-title">
-          {campaignsOf(politician).map((slug) => (
-            <CampaignRow key={slug} politician={politician} slug={slug} markSigned={markSigned} />
-          ))}
+        <Card span={3} look="aside" title={copy.statusesTitle} id="asks-title">
+          <div className={styles.asks}>
+            {asksOf(politician, asks).map((ask) => (
+              <AskRow key={ask.slug} politician={politician} ask={ask} setStatus={setStatus} />
+            ))}
+          </div>
         </Card>
         <Card span={6} look="log" title={copy.historyTitle} id="history-title">
           {entries.length === 0 ? (
@@ -343,7 +474,7 @@ export default function PoliticianDetails({
             <ol className={styles.history} aria-label={copy.historyTitle}>
               {entries.map((entry) => (
                 <li key={entry.key}>
-                  <span className={styles.when}>{staffTime(entry.at)}</span>
+                  <span className={styles.when}>{entry.day ? entry.at : staffTime(entry.at)}</span>
                   <span>{entry.what}</span>
                 </li>
               ))}

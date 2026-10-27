@@ -1,0 +1,101 @@
+{
+  "records": [
+    {
+      "id": "recDummy",
+      "createdTime": "2026-01-01T00:00:00.000Z",
+      "fields": {
+        "Full name or Title": "Ms Dora Dummy",
+        "Forename": "Dora",
+        "Surname": "Dummy",
+        "Salutation": "Ms Dummy",
+        "Body": "House of Commons",
+        "Constituency": "Hackney North and Stoke Newington",
+        "Party": "Labour",
+        "Country": "England",
+        "City": "London",
+        "Email": "mp90001.office@parliament.uk"
+      }
+    },
+    {
+      "id": "recPlaceholder",
+      "createdTime": "2026-01-01T00:00:00.000Z",
+      "fields": {
+        "Full name or Title": "Polly Placeholder",
+        "Forename": "Polly",
+        "Surname": "Placeholder",
+        "Salutation": "Ms Placeholder",
+        "Body": "House of Commons",
+        "Constituency": "Cities of London and Westminster",
+        "Party": "Labour (Co-op)",
+        "Country": "England",
+        "Email": "polly.placeholder.mp@parliament.uk",
+        "Notes": "Met at the example fair.",
+        "Recommended": true,
+        "Important target": true,
+        "ControlAI Signatory": true,
+        "Edinburgh Conference November 2026": "Declined"
+      }
+    },
+    {
+      "id": "recSeedling",
+      "createdTime": "2026-01-02T00:00:00.000Z",
+      "fields": {
+        "Full name or Title": "Lord Seedling of Example",
+        "Salutation": "Lord Seedling",
+        "Body": "House of Lords",
+        "Party": "Crossbench",
+        "Signed DeepMind Letter": true
+      }
+    },
+    {
+      "id": "recMorag",
+      "createdTime": "2026-01-03T00:00:00.000Z",
+      "fields": {
+        "Full name or Title": "Morag Example",
+        "Forename": "Morag",
+        "Surname": "Example",
+        "Salutation": "Ms Example",
+        "Body": "Scottish Parliament",
+        "Constituency": "Exampleshire North",
+        "Party": "Example Party",
+        "Country": "Scotland",
+        "City": "Edinburgh",
+        "Email": "morag.example.msp@parliament.example",
+        "Personal connection": true,
+        "Edinburgh Conference November 2026": "Going"
+      }
+    },
+    {
+      "id": "recRetired",
+      "createdTime": "2026-01-04T00:00:00.000Z",
+      "fields": {
+        "Full name or Title": "Rita Retired",
+        "Forename": "Rita",
+        "Surname": "Retired",
+        "Salutation": "Ms Retired",
+        "Body": "House of Commons",
+        "Constituency": "Old Seat",
+        "Party": "Independent",
+        "Country": "Wales",
+        "Status": "Retired",
+        "Signed Frontier AI Letter": true
+      }
+    },
+    {
+      "id": "recGone",
+      "createdTime": "2026-01-05T00:00:00.000Z",
+      "fields": {
+        "Full name or Title": "Gordon Gone",
+        "Forename": "Gordon",
+        "Surname": "Gone",
+        "Salutation": "Mr Gone",
+        "Body": "House of Commons",
+        "Constituency": "Former Seat",
+        "Party": "Independent",
+        "Country": "England",
+        "Email": "gordon.gone.mp@parliament.uk",
+        "Status": "No longer in office"
+      }
+    }
+  ]
+}

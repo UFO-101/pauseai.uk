@@ -9,10 +9,11 @@ export const exampleBlock: EmailBlock = {
   canReset: true,
   politicians: [{ id: 5, name: "Bouncy McTestface MP" }],
   letter: { id: 17, to: "Bouncy McTestface MP" },
+  purpose: "letter",
   refused: 2,
 };
 
-/** An address blocked by a spam complaint, which can't be unblocked, and isn't a politician's. */
+/** An address blocked by a spam complaint about a forwarded reply, which can't be unblocked, and isn't a politician's. */
 export const exampleComplaint: EmailBlock = {
   address: "sender@example.org",
   kind: "complaint",
@@ -21,10 +22,11 @@ export const exampleComplaint: EmailBlock = {
   canReset: false,
   politicians: [],
   letter: null,
+  purpose: "forwarded-reply",
   refused: 0,
 };
 
-/** That hard bounce, a soft one on a forwarded reply, and the complaint about a login link. */
+/** That hard bounce, a soft one on a forwarded reply, and a complaint about an email the site has no record of sending. */
 export const exampleProblems: ProblemSummary[] = [
   {
     id: 3,

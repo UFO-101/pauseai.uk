@@ -36,14 +36,16 @@ export async function fakeTurnstile(page: Page) {
 }
 
 /**
- * Copies the MPs into the flow's database through the nightly sync's own
- * route (the fixture Parliament: two MPs), and refreshes the test MPs.
+ * Copies the politicians, with Airtable's statuses, and PauseAI's emails to
+ * them into the flow's database through the nightly sync's own route (the
+ * fixture Airtable: a politician of each body, one retired and one who
+ * left), and refreshes the test MPs.
  */
-export async function syncMps(request: APIRequestContext, base: string) {
-  const res = await request.post(`${base}/api/cron/sync-mps`, {
+export async function syncPoliticians(request: APIRequestContext, base: string) {
+  const res = await request.post(`${base}/api/cron/sync-politicians`, {
     headers: { Authorization: "Bearer fixture-cron-secret" },
   });
-  if (!res.ok()) throw new Error(`MP sync on ${base} failed: ${res.status()} ${await res.text()}`);
+  if (!res.ok()) throw new Error(`Politician sync on ${base} failed: ${res.status()} ${await res.text()}`);
 }
 
 /**

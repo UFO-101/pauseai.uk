@@ -36,7 +36,7 @@ describe("a campaign page's sections", () => {
       address: "1 High St",
       postcode: "SW1A 1AA",
       mp: MP,
-      statuses: { [letterToPm.slug]: "signed" },
+      statuses: { [letterToPm.ask!]: "signed" },
       movedFrom: letterToPm.slug,
     });
     await render(<CampaignHero title="The bill" campaignSlug={bill.slug} />);

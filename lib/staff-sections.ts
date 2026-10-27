@@ -9,7 +9,15 @@ import type { Permission } from "./staff-permissions";
 // here says.
 
 export type StaffPageId =
-  "supporters" | "letters" | "supporterEmails" | "politicians" | "mpEmails" | "import" | "accounts" | "changes";
+  | "supporters"
+  | "letters"
+  | "supporterEmails"
+  | "politicians"
+  | "asks"
+  | "mpEmails"
+  | "import"
+  | "accounts"
+  | "changes";
 export type StaffSectionId = "supporters" | "politicians" | "admin";
 
 export type StaffPageLink = { id: StaffPageId; href: string; permission?: Permission };
@@ -29,6 +37,7 @@ const STAFF_SECTIONS: readonly StaffSection[] = [
     id: "politicians",
     pages: [
       { id: "politicians", href: "/staff/politicians" },
+      { id: "asks", href: "/staff/asks" },
       { id: "mpEmails", href: "/staff/politicians/blocked-emails" },
     ],
   },

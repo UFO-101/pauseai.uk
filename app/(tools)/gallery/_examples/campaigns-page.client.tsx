@@ -18,7 +18,7 @@ const [letterToPm, bill] = campaigns;
 const movedOn = {
   ...exampleLookup,
   campaign: bill.slug,
-  statuses: { [letterToPm.slug]: "signed" as const },
+  statuses: { [letterToPm.ask!]: "signed" as const },
   movedFrom: letterToPm.slug,
 };
 

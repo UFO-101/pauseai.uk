@@ -1,24 +1,28 @@
 import {
   type AnyImportRun,
   type ControlAiImportResult,
+  type EmailSyncResult,
+  type GoToParliamentImportResult,
   type ImportJob,
   type LumaImportResult,
   type MembersImportResult,
   type MpCheckResult,
-  type MpSync,
-  type MpSyncResult,
   NIGHTLY,
-  type SignatoryImportResult,
+  type PoliticianSync,
+  type PoliticianSyncResult,
+  type WebFormImportResult,
 } from "@/lib/import-runs";
-import type { SyncedMp } from "@/lib/mps";
+import type { SyncedPolitician } from "@/lib/politician-sync";
 
 type Results = {
-  "sync-mps": MpSyncResult;
+  "sync-politicians": PoliticianSyncResult;
+  "sync-emails": EmailSyncResult;
   "check-mps": MpCheckResult;
   "import-controlai": ControlAiImportResult;
-  "import-signatories": SignatoryImportResult;
   "import-luma": LumaImportResult;
   "import-members": MembersImportResult;
+  "import-web-form-letters": WebFormImportResult;
+  "import-go-to-parliament": GoToParliamentImportResult;
 };
 type RunOf<Job extends ImportJob> = Extract<AnyImportRun, { job: Job }>;
 
@@ -49,31 +53,93 @@ export const exampleFailedRun = <Job extends ImportJob>(
 ): RunOf<Job> => ({ ...exampleRun(job, {} as Results[Job]), status: "failed", error, ...run }) as RunOf<Job>;
 
 /** An MP as a sync copies them from Airtable: "MP 1", of "Seat 1". */
-export const exampleSyncedMp = (id: number, email: string | null = "a@parliament.uk"): SyncedMp => ({
+export const exampleSyncedMp = (id: number, email: string | null = "a@parliament.uk"): SyncedPolitician => ({
   airtableId: `rec${id}`,
   name: `MP ${id}`,
   salutation: "",
+  email,
+  status: "in_office",
+  house: "commons",
   constituency: `Seat ${id}`,
   party: "",
-  email,
+  country: null,
+  city: null,
+  notes: "",
+  importantTarget: false,
+  personalConnection: false,
 });
 
-/** An MP sync held for staff to apply or discard: one MP added, one removed. */
-export const exampleHeldSync: MpSync = exampleRun(
-  "sync-mps",
+/** A peer as a sync copies them: no constituency. */
+const examplePeer: SyncedPolitician = {
+  ...exampleSyncedMp(5),
+  name: "Lord Example",
+  house: "lords",
+  constituency: null,
+};
+
+/**
+ * A sync held for staff to apply or discard: one MP added, one gone from
+ * Airtable, a peer added, and one renamed, with the statuses it set.
+ */
+export const exampleHeldSync: PoliticianSync = exampleRun(
+  "sync-politicians",
   {
-    changes: { added: [exampleSyncedMp(1)], removed: [exampleSyncedMp(2, null)], changed: [] },
-    mps: [exampleSyncedMp(1)],
+    changes: {
+      added: [exampleSyncedMp(1), examplePeer],
+      removed: [exampleSyncedMp(2, null)],
+      changed: [{ ...exampleSyncedMp(6), name: "Someone New" }],
+    },
+    renamed: [{ airtableId: "rec6", from: "MP 6", to: "Someone New" }],
+    statuses: { added: 3, changed: 1, removed: 0 },
+    records: [{ politician: exampleSyncedMp(1), statuses: {} }],
   },
   { id: 3, at: "2026-10-12T02:00:00Z", status: "held" },
 );
 
-/** An MP sync someone applied: one MP changed. */
-export const exampleAppliedSync: MpSync = exampleRun(
-  "sync-mps",
-  { changes: { added: [], removed: [], changed: [exampleSyncedMp(4)] } },
+/** An MP sync someone applied, kept from before the sync read every body: one MP changed. */
+export const exampleAppliedSync: PoliticianSync = exampleRun(
+  "sync-politicians",
+  {
+    changes: {
+      added: [],
+      removed: [],
+      changed: [{ airtableId: "rec4", name: "MP 4", constituency: "Seat 4", email: "a@parliament.uk" }],
+    },
+  } as unknown as PoliticianSyncResult,
   { id: 2, at: "2026-10-11T02:00:00Z", status: "applied", decidedBy: "jo@pauseai.uk" },
 );
+
+/** What a run of the Emails sync did: one email held back for a mailing nobody has added, one with two boxes. */
+export const exampleEmailsResult: EmailSyncResult = {
+  read: 270,
+  added: 12,
+  waiting: 1,
+  noPolitician: 1,
+  unplaced: [
+    { airtableId: "recEmail1", mailings: [] },
+    { airtableId: "recEmail2", mailings: ["CSRB Iqbal Amendment", "Ben Lake October 2026 Debate"] },
+  ],
+};
+
+/** What the one-off import of the web form letters did. */
+export const exampleWebFormResult: WebFormImportResult = {
+  read: 731,
+  imported: 716,
+  skipped: 13,
+  alreadyHere: 2,
+  noPolitician: 0,
+  supportersAdded: 600,
+  linked: 716,
+};
+
+/** What the one-off import of Go to Parliament's meetings did. */
+export const exampleGoToParliamentResult: GoToParliamentImportResult = {
+  guests: 8,
+  mps: 6,
+  added: 6,
+  changed: 0,
+  notFound: 0,
+};
 
 /** What a run of the Luma import did: every event read, nothing left over. */
 export const exampleLumaResult: LumaImportResult = {

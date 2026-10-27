@@ -25,7 +25,7 @@ export const exampleChanges: LoggedChange[] = [
   ),
   change(2, "controlai", "set status", {
     politicianId: 99,
-    campaign: "gone-campaign",
+    ask: "controlai-letter",
     status: null,
     date: null,
     note: "",
@@ -98,4 +98,6 @@ export const exampleChanges: LoggedChange[] = [
     changed: { house: ["commons", "lords"], party: ["Labour", null] },
   }),
   change(21, "jo@pauseai.uk", "apply held MP sync", { id: 13 }),
+  change(22, "jo@pauseai.uk", "apply held politician sync", { id: 14 }),
+  change(23, "jo@pauseai.uk", "discard held politician sync", { id: 15 }),
 ];

@@ -31,7 +31,7 @@ export async function recentChanges(page = 1): Promise<{ changes: LoggedChange[]
   const [{ total }] = await query<{ total: number }>("SELECT count(*)::int AS total FROM audit_log");
   const changes = await query<LoggedChange>(
     `SELECT a.id::int AS id, a.at, a.actor, a.action, a.details,
-       (SELECT json_build_object('id', p.id, 'name', p.name) FROM politicians p
+       (SELECT json_build_object('id', p.id, 'name', p.name) FROM notable_people p
         WHERE p.id::text = CASE WHEN a.action = ANY($2) THEN a.details->>'id' ELSE a.details->>'politicianId' END) AS politician,
        (SELECT json_build_object('id', s.id, 'name', s.name) FROM supporters_summary s
         WHERE a.action = 'view supporter' AND s.id::text = a.details->>'id') AS supporter

@@ -5,7 +5,8 @@ import type { EmailPermission, EmailState } from "./email-permissions";
 import type { SortColumns, SortDirection } from "./staff-sort";
 
 /** Where a supporter's records come from (lib/server/supporter-sources.ts). */
-export const SUPPORTER_SOURCES = ["luma", "letter", "member"] as const;
+/** Where a supporter came from: Luma, a letter through the site or through pauseai.info's old form, or the members. */
+export const SUPPORTER_SOURCES = ["luma", "letter", "web-form", "member"] as const;
 export type SupporterSource = (typeof SUPPORTER_SOURCES)[number];
 
 /** The lozenges in the list's Activities column, in its order: a member, a contact of the Luma calendar, registered for events, wrote to their MP. */

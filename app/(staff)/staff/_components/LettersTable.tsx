@@ -48,7 +48,7 @@ export default function LettersTable({ letters }: { letters: LetterSummary[] }) 
               {letter.isTest && <Tag>{staffCopy.politicians.testMp}</Tag>}
             </td>
             <td>
-              <CampaignName slug={letter.campaign} />
+              <CampaignName slug={letter.campaign} /> {letter.imported && <Tag>{staffCopy.letters.imported}</Tag>}
             </td>
             <td>{staffCopy.letters.status[letter.status] ?? letter.status}</td>
             <td>{letter.repliedAt && staffTime(letter.repliedAt)}</td>

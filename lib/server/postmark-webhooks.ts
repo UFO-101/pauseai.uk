@@ -150,9 +150,9 @@ export async function forwardReply(email: InboundEmail): Promise<string[]> {
   if (!mailboxes.length || ours) return [];
 
   const [letter] = await query<{ id: number; senderName: string; senderEmail: string; mpName: string }>(
-    `SELECT l.id::int AS id, l.sender_name AS "senderName", l.sender_email AS "senderEmail", p.name AS "mpName"
-     FROM letters l JOIN politicians p ON p.id = l.politician_id
-     WHERE l.reply_hash = ANY($1) ORDER BY array_position($1, l.reply_hash) LIMIT 1`,
+    `SELECT l.id::int AS id, s.sender_name AS "senderName", s.sender_email AS "senderEmail", p.name AS "mpName"
+     FROM supporter_letters s JOIN letters l ON l.id = s.id JOIN notable_people p ON p.id = l.notable_person_id
+     WHERE s.reply_hash = ANY($1) ORDER BY array_position($1, s.reply_hash) LIMIT 1`,
     [mailboxes],
   );
   if (!letter) return [];

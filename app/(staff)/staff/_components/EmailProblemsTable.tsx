@@ -1,4 +1,5 @@
 import Table from "@/components/ui/Table";
+import { Muted } from "@/components/ui/Text";
 import { staffCopy } from "@/lib/content/staff-interface";
 import type { ProblemSummary } from "@/lib/server/email";
 import { staffTime } from "@/lib/staff-time";
@@ -35,8 +36,10 @@ export default function EmailProblemsTable({
             <td>
               {problem.letter ? (
                 <LetterLink letter={problem.letter} linked={letterLinks} />
+              ) : problem.purpose ? (
+                staffCopy.emails.purposes[problem.purpose]
               ) : (
-                problem.purpose && staffCopy.emails.purposes[problem.purpose]
+                <Muted>{staffCopy.emails.notRecorded}</Muted>
               )}
             </td>
           </tr>

@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { Fragment, type ReactNode } from "react";
 import { site } from "@/lib/content/site";
 import { jobTitles, staffCopy } from "@/lib/content/staff-interface";
 import { CONTROLAI_LETTER_PAGE } from "@/lib/controlai-letter";
@@ -33,10 +33,12 @@ const JOIN_FORM = "https://pauseai.info/join";
 /** Each job's lozenges, all plain, so only how its runs ended is in colour: where it reads from, how often, and what kind of job it is. */
 const TAGS: Record<ImportJob, string[]> = {
   "import-luma": [words.luma, words[JOB_SCHEDULES["import-luma"]]],
-  "sync-mps": [words.airtable, words[JOB_SCHEDULES["sync-mps"]]],
+  "sync-politicians": [words.airtable, words[JOB_SCHEDULES["sync-politicians"]]],
+  "sync-emails": [words.airtable, words[JOB_SCHEDULES["sync-emails"]]],
+  "import-web-form-letters": [words.airtable, words[JOB_SCHEDULES["import-web-form-letters"]]],
+  "import-go-to-parliament": [words.airtable, words[JOB_SCHEDULES["import-go-to-parliament"]]],
   "check-mps": [words.web, words[JOB_SCHEDULES["check-mps"]], words.checkOnly],
   "import-controlai": [words.web, words[JOB_SCHEDULES["import-controlai"]]],
-  "import-signatories": [words.airtable, words[JOB_SCHEDULES["import-signatories"]]],
   "import-members": [words.airtable, words[JOB_SCHEDULES["import-members"]]],
 };
 
@@ -45,7 +47,7 @@ const ABOUT: Record<
   ImportJob,
   {
     intro: { before: string; link: string; after: string };
-    /** Where it reads from; Airtable's table when left out. */
+    /** Where it reads from: a page, or another table of the same Airtable base, by its ID; the politicians' table when left out. */
     href?: string;
     also?: string;
     button: string;
@@ -58,11 +60,29 @@ const ABOUT: Record<
     button: staffCopy.luma.importNow,
     none: staffCopy.luma.never,
   },
-  "sync-mps": {
+  "sync-politicians": {
     intro: staffCopy.syncs.intro,
     also: staffCopy.syncs.testMps,
     button: staffCopy.syncs.syncNow,
     none: staffCopy.syncs.none,
+  },
+  "sync-emails": {
+    intro: staffCopy.pauseaiEmails.intro,
+    href: "tblp4nH5Jymq48rcm",
+    button: staffCopy.pauseaiEmails.importNow,
+    none: staffCopy.pauseaiEmails.never,
+  },
+  "import-web-form-letters": {
+    intro: staffCopy.webForm.intro,
+    href: "tblkzjrRHiZiqMDGR",
+    button: staffCopy.webForm.importNow,
+    none: staffCopy.webForm.never,
+  },
+  "import-go-to-parliament": {
+    intro: staffCopy.goToParliament.intro,
+    href: "tblminXS1xSuBbEjz",
+    button: staffCopy.goToParliament.importNow,
+    none: staffCopy.goToParliament.never,
   },
   "check-mps": {
     intro: staffCopy.check.intro,
@@ -76,7 +96,6 @@ const ABOUT: Record<
     button: staffCopy.controlAi.importNow,
     none: staffCopy.controlAi.never,
   },
-  "import-signatories": { intro: words.intro, button: words.button, none: words.none },
   "import-members": {
     intro: staffCopy.members.intro,
     href: JOIN_FORM,
@@ -85,8 +104,10 @@ const ABOUT: Record<
   },
 };
 
-function Tags({ job }: { job: ImportJob }) {
-  return TAGS[job].map((text) => <Tag key={text}>{text}</Tag>);
+/** A job's lozenges; on the overview, whose headings say how often each runs, without that one. */
+function Tags({ job, schedule = true }: { job: ImportJob; schedule?: boolean }) {
+  const often = words[JOB_SCHEDULES[job]];
+  return TAGS[job].filter((text) => schedule || text !== often).map((text) => <Tag key={text}>{text}</Tag>);
 }
 
 /** What the job does, with its source linked. Airtable's table link is the server's, so it comes in as a prop. */
@@ -95,7 +116,11 @@ function Intro({ job, airtableTable }: { job: ImportJob; airtableTable: string }
   return (
     <>
       {intro.before}
-      <a href={href ?? airtableTable} target="_blank" rel="noreferrer">
+      <a
+        href={href?.startsWith("tbl") ? airtableTable.replace(/[^/]*$/, href) : (href ?? airtableTable)}
+        target="_blank"
+        rel="noreferrer"
+      >
         {intro.link}
       </a>
       {intro.after}
@@ -122,6 +147,10 @@ function NewestRun({ job, run }: { job: ImportJob; run: AnyImportRun | undefined
 }
 
 /** /staff/import-data: a card per job, each a link to its page, with how its newest run ended. */
+/** The overview's sections, each the jobs that run that often, in this order. */
+const SCHEDULES = ["hourly", "nightly", "oneOff"] as const;
+
+/** Every job, a card each, under a heading for how often it runs: hourly, nightly, then the one-off imports. */
 export function ImportOverview({
   newest,
   airtableTable,
@@ -133,19 +162,26 @@ export function ImportOverview({
   return (
     <>
       <h1>{words.pageTitle}</h1>
-      <ImportCards>
-        {IMPORT_JOBS.map((job, i) => (
-          <ImportCard
-            key={job}
-            title={jobTitles[job]}
-            href={importPath(job)}
-            tags={<Tags job={job} />}
-            intro={<Intro job={job} airtableTable={airtableTable} />}
-          >
-            <NewestRun job={job} run={newest[i]} />
-          </ImportCard>
-        ))}
-      </ImportCards>
+      {SCHEDULES.map((schedule) => (
+        <Fragment key={schedule}>
+          <h2>{words[schedule]}</h2>
+          <ImportCards>
+            {IMPORT_JOBS.map((job, i) =>
+              JOB_SCHEDULES[job] === schedule ? (
+                <ImportCard
+                  key={job}
+                  title={jobTitles[job]}
+                  href={importPath(job)}
+                  tags={<Tags job={job} schedule={false} />}
+                  intro={<Intro job={job} airtableTable={airtableTable} />}
+                >
+                  <NewestRun job={job} run={newest[i]} />
+                </ImportCard>
+              ) : null,
+            )}
+          </ImportCards>
+        </Fragment>
+      ))}
     </>
   );
 }
@@ -162,7 +198,7 @@ export function ImportJobPage({
   runs: AnyImportRun[];
   /** The Server Action that runs the job now. */
   run: () => void | Promise<void>;
-  /** Applies or discards a held MP sync. */
+  /** Applies or discards a held politician sync. */
   decide: Decide;
   airtableTable: string;
 }): ReactNode {

@@ -2,7 +2,7 @@ import "server-only";
 import { normalisePostcode } from "@/lib/email-your-mp";
 import type { Place } from "@/lib/events";
 import { TEST_MPS } from "@/lib/test-mps";
-import { findSittingMp, findTestMp, type FoundMp } from "./politicians";
+import { findMpInOffice, findTestMp, type FoundMp } from "./politicians";
 import { constituencyForPostcode } from "./outside-services/postcodes";
 
 export type FindMpResult =
@@ -24,7 +24,7 @@ export async function findMp(postcode: string): Promise<FindMpResult> {
     }
     const found = await constituencyForPostcode(postcode.trim());
     if (!found.ok) return found;
-    const mp = await findSittingMp(found.constituency);
+    const mp = await findMpInOffice(found.constituency);
     return mp ? { ok: true, mp, ...(found.place && { place: found.place }) } : { ok: false, reason: "no_mp" };
   } catch (error) {
     console.error("Couldn't look up the MP:", error);

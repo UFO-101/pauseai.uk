@@ -1,11 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { addTestMp, addTestPolitician, describeWithDatabase, useTestDatabase } from "@/tests/database";
-import { query } from "./db";
+import { addTestLetter, addTestMp, addTestPolitician, describeWithDatabase, useTestDatabase } from "@/tests/database";
+import { query, transaction } from "./db";
 import {
-  findSittingMp,
+  addPolitician,
+  findMpInOffice,
   findTestMp,
   getPolitician,
   isHouse,
+  isPersonStatus,
   listParties,
   listPoliticians,
   politicianHistory,
@@ -17,8 +19,9 @@ import {
 import { recordProblem } from "./email";
 import { logChange } from "./audit";
 
-const PM = "regulate-letter-pm";
-const BILL = "support-sobel-bill";
+const PM = "frontier-ai-letter";
+const BILL = "controlai-letter";
+const EDINBURGH = "edinburgh-conference-2026";
 const PEER = {
   house: "lords" as const,
   name: "Lord Example",
@@ -37,71 +40,88 @@ describe("isHouse", () => {
   });
 });
 
+describe("isPersonStatus", () => {
+  it("knows whether someone is in office", () => {
+    expect(isPersonStatus("retired")).toBe(true);
+    expect(isPersonStatus("sitting")).toBe(false);
+  });
+});
+
 describe("politiciansSearch", () => {
   it("keeps what was typed, and filters by it", () => {
-    expect(
-      politiciansSearch({
-        q: "Jo",
-        house: "lords",
-        party: "Green",
-        campaign: BILL,
-        sort: "party",
-        dir: "desc",
-      }),
-    ).toEqual({
+    const typed = {
       q: "Jo",
       house: "lords",
-      party: "Green",
-      campaign: BILL,
+      status: "retired",
+      party: "Crossbench",
+      flag: "important",
+      ask: BILL,
+      answer: "signed",
       sort: "party",
       dir: "desc",
+    };
+    expect(politiciansSearch(typed)).toEqual({
+      ...typed,
       filter: {
         search: "Jo",
         house: "lords",
-        party: "Green",
-        campaign: BILL,
+        status: "retired",
+        party: "Crossbench",
+        importantTarget: true,
+        personalConnection: undefined,
+        airtableRemoved: undefined,
+        ask: BILL,
+        answer: "signed",
         sort: { key: "party", dir: "desc" },
       },
     });
+    expect(politiciansSearch({ flag: "connection" }).filter).toMatchObject({ personalConnection: true });
+    expect(politiciansSearch({ flag: "removed" }).filter).toMatchObject({ airtableRemoved: true });
   });
 
-  it("filters by nothing that's blank, missing or not a house", () => {
+  it("filters by nothing that's blank, missing or unknown", () => {
     const none = {
       search: undefined,
       house: undefined,
+      status: undefined,
       party: undefined,
-      campaign: undefined,
+      importantTarget: undefined,
+      personalConnection: undefined,
+      airtableRemoved: undefined,
+      ask: undefined,
+      answer: undefined,
       sort: { key: "name", dir: "asc" },
     };
-    expect(politiciansSearch({})).toEqual({
+    const blank = {
       q: "",
       house: "",
+      status: "",
       party: "",
-      campaign: "",
+      flag: "",
+      ask: "",
+      answer: "",
       sort: "",
       dir: "",
-      filter: none,
-    });
-    expect(politiciansSearch({ q: "", house: "hogwarts", campaign: "", sort: "age" })).toEqual({
-      q: "",
+    };
+    expect(politiciansSearch({})).toEqual({ ...blank, filter: none });
+    const unknown = {
       house: "hogwarts",
-      party: "",
-      campaign: "",
+      status: "sitting",
+      flag: "other",
       sort: "age",
-      dir: "",
-      filter: none,
-    });
+    };
+    expect(politiciansSearch(unknown)).toEqual({ ...blank, ...unknown, filter: none });
   });
 });
 
 describeWithDatabase("politicians", () => {
   useTestDatabase();
 
-  it("finds the sitting MP for a constituency, never one who has left or the test MP", async () => {
+  it("finds the MP in office for a constituency, never one who has left or the test MP", async () => {
     const id = await addTestPolitician();
-    await addTestPolitician({ airtableId: "rec1", name: "Old MP", constituency: "Ipswich", sitting: false });
+    await addTestPolitician({ airtableId: "rec1", name: "Old MP", constituency: "Ipswich", status: "retired" });
     await addTestMp();
-    expect(await findSittingMp("Cities of London and Westminster")).toEqual({
+    expect(await findMpInOffice("Cities of London and Westminster")).toEqual({
       id,
       name: "Polly Placeholder",
       salutation: "Ms Placeholder",
@@ -110,8 +130,8 @@ describeWithDatabase("politicians", () => {
       isTest: false,
       unreachable: false,
     });
-    expect(await findSittingMp("Ipswich")).toBeUndefined();
-    expect(await findSittingMp("Testshire")).toBeUndefined();
+    expect(await findMpInOffice("Ipswich")).toBeUndefined();
+    expect(await findMpInOffice("Testshire")).toBeUndefined();
   });
 
   it("finds a test MP by their postcode", async () => {
@@ -125,7 +145,11 @@ describeWithDatabase("politicians", () => {
     const id = await addTestPolitician();
     await setStatus(id, PM, { status: "signed", date: "2026-10-01", note: "By email" }, "jo@pauseai.uk");
     await setStatus(id, BILL, { status: "signed", date: null, note: "" }, "jo@pauseai.uk");
+    // An event's answer isn't a letter's, so Email your MP isn't given it.
+    await setStatus(id, EDINBURGH, { status: "declined", date: null, note: "" }, "jo@pauseai.uk");
     expect(await statusesOf(id)).toEqual({ [PM]: "signed", [BILL]: "signed" });
+    expect((await getPolitician(id))!.statuses[EDINBURGH]).toMatchObject({ status: "declined" });
+    await setStatus(id, EDINBURGH, { status: null, date: null, note: "" }, "jo@pauseai.uk");
 
     await setStatus(id, BILL, { status: null, date: null, note: "" }, "sam@pauseai.uk");
     expect(await statusesOf(id)).toEqual({ [PM]: "signed" });
@@ -139,13 +163,20 @@ describeWithDatabase("politicians", () => {
     });
     const log = await query<{ actor: string; action: string }>("SELECT actor, action FROM audit_log ORDER BY id");
     expect(log).toEqual([
-      { actor: "jo@pauseai.uk", action: "set status" },
-      { actor: "jo@pauseai.uk", action: "set status" },
+      ...Array(4).fill({ actor: "jo@pauseai.uk", action: "set status" }),
       { actor: "sam@pauseai.uk", action: "set status" },
     ]);
   });
 
-  it("lists politicians, the test MP first, filtered by search, house and campaign", async () => {
+  it("refuses a status the ask's kind doesn't allow", async () => {
+    const id = await addTestPolitician();
+    await expect(setStatus(id, PM, { status: "going", date: null, note: "" }, "jo@pauseai.uk")).rejects.toThrow(
+      /foreign key/,
+    );
+    expect(await statusesOf(id)).toEqual({});
+  });
+
+  it("lists politicians, the test MP first, filtered by search, house and ask", async () => {
     const mp = await addTestPolitician();
     const peer = await addPeer();
     await addTestMp();
@@ -166,47 +197,46 @@ describeWithDatabase("politicians", () => {
       );
     expect(await byParty("asc")).toEqual([...(await byParty("asc"))].sort());
     expect(await byParty("desc")).toEqual([...(await byParty("asc"))].reverse());
-    expect((await listPoliticians({ campaign: PM })).map((p) => p.id)).toEqual([peer]);
+    expect((await listPoliticians({ ask: PM })).map((p) => p.id)).toEqual([peer]);
     expect((await listPoliticians({ party: (await getPolitician(peer))!.party })).map((p) => p.id)).toEqual([peer]);
-    expect(await listParties()).toEqual(
-      [...new Set((await listPoliticians()).map((p) => p.party).filter(Boolean))].sort(),
-    );
     expect(await listPoliticians({}, 1)).toHaveLength(1);
     expect((await listPoliticians({ search: "Polly" }))[0]).toEqual({
       id: mp,
       airtableId: "recPlaceholder",
+      airtableRemovedAt: null,
       house: "commons",
       name: "Polly Placeholder",
       salutation: "Ms Placeholder",
       constituency: "Cities of London and Westminster",
       party: "Labour (Co-op)",
+      country: null,
+      city: null,
       email: "polly.placeholder.mp@parliament.uk",
+      status: "in_office",
+      notes: "",
+      importantTarget: false,
+      personalConnection: false,
       isTest: false,
-      sitting: true,
       emailBlocked: false,
       letters: 0,
       replies: 0,
       statuses: {},
     });
-    // A campaign's column sorts by when the status was recorded, newest first, those without last.
+    // The Asks column sorts by when their newest answer was recorded, newest first, those without last.
     await setStatus(mp, PM, { status: "signed", date: null, note: "" }, "jo@pauseai.uk");
-    const byPm = await listPoliticians({ sort: { key: PM, dir: "desc" } });
-    expect(byPm.filter((p) => !p.isTest).map((p) => p.id)).toEqual([mp, peer]);
-    // Everyone who signed anything, by their newest signature in any campaign.
+    const byAsks = await listPoliticians({ sort: { key: "asks", dir: "desc" } });
+    expect(byAsks.filter((p) => !p.isTest).map((p) => p.id)).toEqual([mp, peer]);
+    // Everyone who signed anything, by their newest answer.
     await setStatus(peer, BILL, { status: "signed", date: null, note: "" }, "jo@pauseai.uk");
-    const signed = await listPoliticians({ campaign: "any", sort: { key: "signed", dir: "desc" } });
+    const signed = await listPoliticians({ answer: "signed", sort: { key: "asks", dir: "desc" } });
     expect(signed.map((p) => p.id)).toEqual([peer, mp]);
   });
 
   it("counts the letters to each politician, leaving out those never sent, and how many were answered", async () => {
     const mp = await addTestPolitician();
-    await query(
-      `INSERT INTO letters (campaign, politician_id, sender_name, sender_email, sender_address, sender_postcode, contact_consent, subject, reply_hash, status, replied_at)
-       VALUES ('regulate-letter-pm', $1, 'A', 'a@example.com', 'x', 'ZZ9 9ZZ', false, 'S', 'a', 'sent', now()),
-              ('regulate-letter-pm', $1, 'B', 'b@example.com', 'x', 'ZZ9 9ZZ', false, 'S', 'b', 'bounced', NULL),
-              ('regulate-letter-pm', $1, 'C', 'c@example.com', 'x', 'ZZ9 9ZZ', false, 'S', 'c', 'not_sent', NULL)`,
-      [mp],
-    );
+    await addTestLetter({ politicianId: mp, repliedAt: new Date().toISOString() });
+    await addTestLetter({ politicianId: mp, status: "bounced" });
+    await addTestLetter({ politicianId: mp, status: "not_sent" });
     expect(await getPolitician(mp)).toMatchObject({ letters: 2, replies: 1 });
     expect((await listPoliticians({ sort: { key: "letters", dir: "desc" } }))[0].id).toBe(mp);
   });
@@ -221,9 +251,45 @@ describeWithDatabase("politicians", () => {
       reason: "",
       canReset: true,
     });
-    expect(await findSittingMp("Cities of London and Westminster")).toMatchObject({ unreachable: true });
+    expect(await findMpInOffice("Cities of London and Westminster")).toMatchObject({ unreachable: true });
     expect((await getPolitician(mp))!.emailBlocked).toBe(true);
     expect((await listPoliticians()).filter((p) => p.emailBlocked).map((p) => p.id)).toEqual([mp]);
+  });
+
+  it("filters by status, party, Airtable's markers, and an answer to an ask or none", async () => {
+    const mp = await addTestPolitician();
+    const peer = await addPeer();
+    const retired = await addTestPolitician({ airtableId: "rec3", name: "Rita Retired", status: "retired", party: "" });
+    await query("UPDATE notable_people SET important_target = true WHERE id = $1", [mp]);
+    await query("UPDATE notable_people SET personal_connection = true WHERE id = $1", [peer]);
+    await query("UPDATE notable_people SET airtable_removed_at = now() WHERE id = $1", [retired]);
+    await setStatus(mp, EDINBURGH, { status: "declined", date: null, note: "" }, "airtable");
+    await setStatus(peer, EDINBURGH, { status: "going", date: null, note: "" }, "airtable");
+    const ids = async (filter: Parameters<typeof listPoliticians>[0]) =>
+      (await listPoliticians(filter)).map((p) => p.id).sort();
+    expect(await ids({ status: "retired" })).toEqual([retired]);
+    expect(await ids({ status: "in_office" })).toEqual([mp, peer].sort());
+    expect(await ids({ party: "Crossbench" })).toEqual([peer]);
+    expect(await ids({ importantTarget: true })).toEqual([mp]);
+    expect(await ids({ personalConnection: true })).toEqual([peer]);
+    expect(await ids({ airtableRemoved: true })).toEqual([retired]);
+    expect(await ids({ ask: EDINBURGH })).toEqual([mp, peer].sort());
+    expect(await ids({ ask: EDINBURGH, answer: "going" })).toEqual([peer]);
+    expect(await ids({ ask: EDINBURGH, answer: "none" })).toEqual([retired]);
+    // An answer to any ask, or none to any.
+    expect(await ids({ answer: "going" })).toEqual([peer]);
+    expect(await ids({ answer: "none" })).toEqual([retired]);
+    // The parties to choose from, without the blank one.
+    expect(await listParties()).toEqual(["Crossbench", "Labour (Co-op)"]);
+  });
+
+  it("adds a politician, as their two rows, and a test MP by their postcode", async () => {
+    const id = await transaction((db) => addPolitician({ house: "lords", name: "Lord Added", email: null }, db));
+    expect(await getPolitician(id)).toMatchObject({ name: "Lord Added", salutation: "", party: "", isTest: false });
+    const test = await transaction((db) =>
+      addPolitician({ house: "commons", name: "Testy", email: null, constituency: "Testshire" }, db, "ZZ99ZZ"),
+    );
+    expect(await findTestMp("ZZ99ZZ")).toMatchObject({ id: test, isTest: true });
   });
 
   it("finds no politician by an unknown id", async () => {
@@ -249,7 +315,7 @@ describeWithDatabase("politicians", () => {
       address: "polly.placeholder.mp@parliament.uk",
       note: "Back",
     });
-    // As the imports log them: added, and no longer sitting.
+    // As the imports log them: added, and gone from Airtable.
     await logChange("jo@pauseai.uk", "add politician", { id: peer, name: "Lord Example" });
     await logChange("sync", "remove politician", { id: peer, name: "Lord Example" });
     // Not theirs: a held sync's run with the same id, and someone else's status.

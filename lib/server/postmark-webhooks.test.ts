@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { http, HttpResponse } from "msw";
 import { server } from "@/tests/fixtures/msw";
 import { copy } from "@/lib/content/email-your-mp";
-import { addTestMp, describeWithDatabase, useTestDatabase } from "@/tests/database";
+import { addTestLetter, addTestMp, describeWithDatabase, useTestDatabase } from "@/tests/database";
 import { query } from "./db";
 import { recordProblem } from "./email";
 import { forwardReply, isAutoReply, isPostmark, deliveryProblem } from "./postmark-webhooks";
@@ -40,14 +40,14 @@ describe("isPostmark", () => {
 /** A sent letter to the test MP. Returns its mailbox: its address, but for the domain. */
 async function sentLetter(mailbox = "jane.smith.482913"): Promise<string> {
   const mp = await addTestMp();
-  const [{ reply_hash }] = await query<{ reply_hash: string }>(
-    `INSERT INTO letters (campaign, politician_id, sender_name, sender_email, sender_address, sender_postcode, contact_consent,
-       subject, reply_hash, status)
-     VALUES ('regulate-letter-pm', $1, 'Jane Smith', 'Jane@Example.com', '1 High St', 'ZZ9 9ZZ', true, 'S', $2, 'sent')
-     RETURNING reply_hash`,
-    [mp, mailbox],
-  );
-  return reply_hash;
+  await addTestLetter({
+    politicianId: mp,
+    senderName: "Jane Smith",
+    senderEmail: "Jane@Example.com",
+    contactConsent: true,
+    replyHash: mailbox,
+  });
+  return mailbox;
 }
 
 describe("deliveryProblem", () => {
@@ -270,12 +270,10 @@ describeWithDatabase("forwardReply", () => {
 
   it("takes the letter Postmark delivered the reply to, when it went to two", async () => {
     await sentLetter();
-    const sam = await query<{ id: number }>(
-      `INSERT INTO letters (campaign, politician_id, sender_name, sender_email, sender_address, sender_postcode, contact_consent,
-         subject, reply_hash, status)
-       SELECT campaign, politician_id, 'Sam', 'sam@example.com', '1 High St', 'ZZ9 9ZZ', true, 'S', 'sam.000001', 'sent'
-       FROM letters RETURNING id::int AS id`,
+    const [{ politicianId }] = await query<{ politicianId: number }>(
+      `SELECT notable_person_id::int AS "politicianId" FROM letters`,
     );
+    const sam = [{ id: await addTestLetter({ politicianId, senderName: "Sam", replyHash: "sam.000001" }) }];
     postmark();
     const both = reply("jane.smith.482913", {
       OriginalRecipient: "sam.000001@letters.pauseai.uk",

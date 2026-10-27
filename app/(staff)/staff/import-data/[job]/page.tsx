@@ -9,9 +9,11 @@ import {
   checkNow,
   decideSync,
   importControlAiNow,
-  importFromAirtable,
+  importGoToParliamentNow,
   importLumaNow,
   importMembersNow,
+  importWebFormLettersNow,
+  syncEmailsNow,
   syncNow,
 } from "../../actions";
 import { ImportJobPage } from "../../_components/ImportJob";
@@ -23,10 +25,12 @@ type Params = { params: Promise<{ job: string }> };
 /** Each job's button: the Server Action that runs it now. */
 const RUN_NOW: Record<ImportJob, () => Promise<void>> = {
   "import-luma": importLumaNow,
-  "sync-mps": syncNow,
+  "sync-politicians": syncNow,
+  "sync-emails": syncEmailsNow,
+  "import-web-form-letters": importWebFormLettersNow,
+  "import-go-to-parliament": importGoToParliamentNow,
   "check-mps": checkNow,
   "import-controlai": importControlAiNow,
-  "import-signatories": importFromAirtable,
   "import-members": importMembersNow,
 };
 

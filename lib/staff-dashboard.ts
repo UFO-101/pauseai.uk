@@ -89,12 +89,12 @@ export type Dashboard = {
 
 /**
  * Where the MPs signed tile leads: the page of the one politician who
- * signed in the window, or everyone who has signed any campaign, newest
+ * signed in the window, or everyone who has signed anything, newest
  * first, or with no signatures in the window, all the politicians.
  */
 export function signedHref({ signedMp, counts }: Pick<Dashboard, "signedMp" | "counts">): string {
   if (signedMp !== null) return `/staff/politicians/${signedMp}`;
-  return counts.mpsSigned.current > 0 ? "/staff/politicians?campaign=any&sort=signed" : "/staff/politicians";
+  return counts.mpsSigned.current > 0 ? "/staff/politicians?answer=signed&sort=asks" : "/staff/politicians";
 }
 
 export function isCampaignMetric(metric: DashboardMetric): metric is CampaignMetric {

@@ -1,0 +1,175 @@
+import type { Page } from "@playwright/test";
+import { jobTitles, staffCopy } from "@/lib/content/staff-interface";
+import { runSql } from "@/scripts/fresh-database.mjs";
+import { addStaffAccount, logInAsStaff, syncPoliticians } from "../steps";
+import { BASE, expect, frame, test } from "./fixtures";
+
+// The politicians from Airtable: every body, their answers to the asks, and
+// PauseAI's emails to them, as the nightly sync copies them from the fixture
+// Airtable (tests/fixtures/airtable-*.json); the asks page; and the one-off
+// imports of pauseai.info's letters and Go to Parliament's meetings.
+
+const copy = staffCopy.politician;
+
+/** This flow's own staff address: flows run alongside each other, and share the outbox. */
+const staffEmail = () => `pol-${test.info().testId.replace(/\W/g, "").slice(-8)}@pauseai.uk`;
+
+async function logIn(page: Page, database: string, permissions: string[] = []) {
+  addStaffAccount(database, staffEmail(), permissions);
+  return logInAsStaff(page, BASE, staffEmail());
+}
+
+/** Opens a politician's page from the list. */
+async function openPolitician(page: Page, name: string) {
+  await page.goto(`${BASE}/staff/politicians`);
+  await page.getByRole("link", { name, exact: true }).click();
+  await expect(page.getByRole("heading", { level: 1 })).toContainText(name);
+}
+
+test("a politician from Airtable: their markers, notes, answers and PauseAI's emails", async ({
+  page,
+  request,
+  flowDatabase,
+}) => {
+  await syncPoliticians(request, BASE);
+  await logIn(page, flowDatabase);
+  await openPolitician(page, "Polly Placeholder");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(`Polly Placeholder${copy.importantTarget}`);
+  await expect(page.getByText("Met at the example fair.")).toBeVisible();
+  const asks = page.getByRole("region", { name: copy.statusesTitle });
+  // ControlAI's campaign statement and her answer to the conference, both from Airtable.
+  await expect(asks.getByText(staffCopy.statuses.declined)).toBeVisible();
+  await expect(asks.getByText(copy.fromImport.airtable).first()).toBeVisible();
+  // The conference's invitation, personalised.
+  await expect(page.getByText(copy.personalised, { exact: false })).toBeVisible();
+  await frame(page, "Polly's page: important, with notes, her answers from Airtable and PauseAI's invitation");
+});
+
+test("a peer with only their title, an MSP, and an MP who left office", async ({ page, request, flowDatabase }) => {
+  await syncPoliticians(request, BASE);
+  await logIn(page, flowDatabase);
+  await openPolitician(page, "Lord Seedling of Example");
+  await expect(page.getByText(copy.role(copy.roles.lords, null, true), { exact: true })).toBeVisible();
+  await frame(page, "a peer: a member of the Lords, who signed the DeepMind letter");
+
+  await openPolitician(page, "Morag Example");
+  await expect(page.getByText(copy.personalConnection, { exact: true })).toBeVisible();
+  await expect(page.getByText(staffCopy.countries.scotland, { exact: true })).toBeVisible();
+  await frame(page, "an MSP, a personal connection, going to the conference and sent its invitation by AI");
+
+  await openPolitician(page, "Gordon Gone");
+  await expect(page.getByText(copy.role(copy.roles.commons, "Former Seat", false), { exact: true })).toBeVisible();
+  await frame(page, "an MP who left office: formerly MP, kept");
+});
+
+test("the politicians list, filtered by status, marker and an answer to an ask, then reset", async ({
+  page,
+  request,
+  flowDatabase,
+}) => {
+  await syncPoliticians(request, BASE);
+  await logIn(page, flowDatabase);
+  await page.goto(`${BASE}/staff/politicians`);
+  const filters = staffCopy.politicians;
+  const rows = page.getByRole("row");
+  // Each filter applies as soon as it's chosen.
+  await page.getByRole("combobox", { name: filters.status, exact: true }).selectOption("retired");
+  await expect(page).toHaveURL(/status=retired/);
+  await expect(rows.filter({ hasText: "Rita Retired" })).toBeVisible();
+  await expect(rows.filter({ hasText: "Polly Placeholder" })).toHaveCount(0);
+  await frame(page, "only those who retired");
+
+  await page.getByRole("combobox", { name: filters.status, exact: true }).selectOption("");
+  await expect(page).toHaveURL(`${BASE}/staff/politicians`);
+  await page.getByRole("combobox", { name: filters.flag, exact: true }).selectOption("connection");
+  await expect(page).toHaveURL(/flag=connection/);
+  await expect(rows.filter({ hasText: "Morag Example" })).toBeVisible();
+  await expect(rows).toHaveCount(2);
+  await frame(page, "only personal connections");
+
+  await page.getByRole("combobox", { name: filters.flag, exact: true }).selectOption("");
+  await expect(page).toHaveURL(`${BASE}/staff/politicians`);
+  await page.getByRole("combobox", { name: filters.ask, exact: true }).selectOption("edinburgh-conference-2026");
+  await expect(page).toHaveURL(/ask=edinburgh-conference-2026$/);
+  await page.getByRole("combobox", { name: filters.answer, exact: true }).selectOption("none");
+  await expect(page).toHaveURL(/ask=edinburgh-conference-2026&answer=none/);
+  await expect(rows.filter({ hasText: "Polly Placeholder" })).toHaveCount(0);
+  await expect(rows.filter({ hasText: "Ms Dora Dummy" })).toBeVisible();
+  await frame(page, "those who haven't answered the conference's invitation");
+
+  await page.getByRole("link", { name: staffCopy.resetFilters }).click();
+  await expect(page).toHaveURL(`${BASE}/staff/politicians`);
+  await expect(rows.filter({ hasText: "Polly Placeholder" })).toBeVisible();
+});
+
+test("the asks page counts each answer, and an answer leads to who gave it", async ({
+  page,
+  request,
+  flowDatabase,
+}) => {
+  await syncPoliticians(request, BASE);
+  await logIn(page, flowDatabase);
+  await page.goto(`${BASE}/staff/asks`);
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(staffCopy.asks.title);
+  await frame(page, "every ask: the letters signed, the conference answered, Go to Parliament not yet");
+  await page.getByRole("link", { name: staffCopy.asks.count(staffCopy.statuses.going, 1) }).click();
+  await expect(page).toHaveURL(/ask=edinburgh-conference-2026&answer=going/);
+  await expect(page.getByRole("row").filter({ hasText: "Morag Example" })).toBeVisible();
+  await expect(page.getByRole("row")).toHaveCount(2);
+  await frame(page, "the politicians going to the conference");
+});
+
+test("PauseAI's emails: copied once, with one held back for a mailing nobody has added", async ({
+  page,
+  request,
+  flowDatabase,
+}) => {
+  await syncPoliticians(request, BASE);
+  await logIn(page, flowDatabase);
+  // The nightly sync copied them; the button finds nothing new.
+  await page.goto(`${BASE}/staff/import-data/emails`);
+  await expect(page.getByRole("heading", { level: 1 })).toContainText(jobTitles["sync-emails"]);
+  await expect(page.getByText("recEmailNewBox", { exact: false }).first()).toBeVisible();
+  await frame(page, "the Emails sync's page: four copied, one held back with no mailing we know");
+  await page.getByRole("button", { name: staffCopy.pauseaiEmails.importNow }).click();
+  await expect(page.getByText(staffCopy.runs.status.incomplete).first()).toBeVisible();
+  expect(runSql(flowDatabase, "SELECT count(*) FROM pauseai_letters")).toEqual(["4"]);
+});
+
+test("the one-off imports: pauseai.info's letters and their senders, and Go to Parliament's meetings", async ({
+  page,
+  request,
+  flowDatabase,
+}) => {
+  await syncPoliticians(request, BASE);
+  await logIn(page, flowDatabase, ["supporters"]);
+  await page.goto(`${BASE}/staff/import-data/web-form-letters`);
+  await page.getByRole("button", { name: staffCopy.webForm.importNow }).click();
+  await expect(
+    page.getByText(staffCopy.webForm.result({ read: 9, imported: 3, skipped: 3, alreadyHere: 1, noPolitician: 2 }), {
+      exact: false,
+    }),
+  ).toBeVisible();
+  await frame(page, "the web form letters: three imported, the rest skipped and why");
+
+  // On the letters page, marked as from the old form; the sender a supporter from it.
+  await page.goto(`${BASE}/staff/letters`);
+  await expect(page.getByText(staffCopy.letters.imported)).toHaveCount(3);
+  await frame(page, "the letters page: the old form's letters marked");
+  await page.getByRole("link", { name: "Dee Deepmind" }).first().click();
+  await expect(page.getByText(staffCopy.supporters.sources["web-form"]).first()).toBeVisible();
+  await frame(page, "a supporter who wrote through the old form");
+
+  await page.goto(`${BASE}/staff/import-data/go-to-parliament`);
+  await page.getByRole("button", { name: staffCopy.goToParliament.importNow }).click();
+  await expect(
+    page.getByText(staffCopy.goToParliament.result({ guests: 5, mps: 4, added: 3, changed: 0, notFound: 1 }), {
+      exact: false,
+    }),
+  ).toBeVisible();
+  await page.goto(`${BASE}/staff/asks`);
+  await expect(
+    page.getByRole("link", { name: staffCopy.asks.count(staffCopy.statuses.meeting_staff, 1) }),
+  ).toBeVisible();
+  await frame(page, "the asks page: Go to Parliament's meetings counted");
+});

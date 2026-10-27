@@ -1,16 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { checkAgainstParliament, plainName } from "./mp-check";
-import type { SyncedMp } from "./mps";
+import { type AirtableMp, checkAgainstParliament, plainName } from "./mp-check";
 import type { ParliamentMp } from "./parliament";
 
-const ours = (constituency: string, name: string, email: string | null): SyncedMp => ({
-  airtableId: `rec${constituency}`,
-  name,
-  salutation: "",
-  constituency,
-  party: "",
-  email,
-});
+const ours = (constituency: string, name: string, email: string | null): AirtableMp => ({ name, constituency, email });
 const theirs = (constituency: string, name: string, emails: string[]): ParliamentMp => ({
   parliamentId: 1,
   name,

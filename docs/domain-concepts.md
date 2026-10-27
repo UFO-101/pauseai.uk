@@ -9,79 +9,140 @@ where code goes and how it's written is in `docs/code-structure.md`.
 Each section says what the concept is, where it lives, how to add another
 of its kind, and what it doesn't cover yet.
 
-## Politicians
+## A full history of everyone
 
-Anyone we campaign at: MPs, peers, MSPs, members of the Senedd and the
-Northern Ireland Assembly, and others (`HOUSES` in
-`lib/server/politicians.ts`; the `politicians` table). Each has a house, a
-name and salutation, a constituency if they have one, a party, an email if
-we know it, and whether they're still sitting. One who leaves is marked as
-no longer sitting, never deleted, so their history stays.
+We keep the whole history of our activity with everyone: every letter,
+email, signature, meeting and status, for politicians and supporters
+alike. A record is never deleted because it stopped being current. A
+politician who leaves office, a person a source no longer lists or an event
+taken off Luma is marked as such and kept, along with everything that points
+at it. What came from an outside source says which one, so a page can say
+"from Airtable" rather than present it as something staff set. The one
+exception is erasure: a supporter who asks to be forgotten is removed
+(`docs/data-protection.md`).
+
+What a letter said is kept only where it isn't sensitive. A supporter's
+letter to a politician, and the politician's reply to it, can show the
+supporter's political opinions and personal circumstances, so neither's
+text is kept: only who, when, and what happened to it. A letter PauseAI
+sends a politician, and their reply, are kept in full, since they're our
+own words and a public figure's answer in their public role.
+
+## Notable people and politicians
+
+Everyone we campaign at is a notable person (`notable_people`): for now,
+only politicians, MPs, peers, MSPs, members of the Senedd and the Northern
+Ireland Assembly, and others (`HOUSES` in `lib/server/politicians.ts`). A
+notable person has what all kinds share: a name as they're known in public,
+with any title that's part of it ("Lord McFall of Alcluith"); a salutation,
+which follows "Dear" and is written by hand, as no rule makes it from the
+name ("Sir Iain", "Bishop"); an email if we know it; notes; Airtable's markers
+(important target, personal connection); and a status, `in_office`, `died`,
+`retired` or `left_office`. A politician (`politicians`) adds a house, a
+constituency if they have one, a party, a country and a city. The child row
+joins its parent by a composite foreign key `(id, kind)`, so it can only be
+the kind its parent says, and everything else points at the parent: a new
+kind, such as journalists, is a new kind and a child table, and changes
+nothing else. One who leaves office is marked, never deleted, so their
+history stays.
 
 Where they come from:
 
-- **MPs** are copied nightly from Airtable, which the policy team keeps,
-  keyed by Airtable's record ID (`lib/server/mp-sync.ts`). A sync that
-  would change more than 20 at once is held for staff to apply or discard.
-  A nightly check compares them with Parliament's Members API and reports
-  differences, changing nothing (`lib/server/mp-check.ts`).
-- **Other signers**, such as peers, were added once from Airtable's
-  signatory list (`lib/server/signatory-import.ts`). Staff can edit a
-  politician's details, but not add one.
+- **Airtable's UK Parliamentarians**, which the policy team keeps, is copied
+  nightly, every body, keyed by the record's ID
+  (`lib/server/politician-sync.ts`), all but the records ticked Test. A
+  sync that would change more than 20 people at once, or anyone's name
+  (which may be Airtable reusing a record for someone new), is held for
+  staff to apply or discard. A record gone from Airtable keeps its status
+  and gets `airtable_removed_at`. A nightly check compares the MPs with
+  Parliament's Members API and reports differences, changing nothing
+  (`lib/server/mp-check.ts`).
 - **Test MPs** are fixed, each found by a test postcode (`lib/test-mps.json`,
   ZZ99Z\*) and each standing for one case: an ordinary MP, one who has
   signed, one with no email, one whose email bounces. A new case that a
   person would see gets a new test MP.
 
-Only a sitting MP in the Commons is found by postcode. Writing to anyone
+Only an MP in office in the Commons is found by postcode. Writing to anyone
 else would need a way to find them (a region for an MSP, a list for peers).
+
+## Asks
+
+Something we ask notable people to do whose answer we record: sign a
+letter, come to an event (`asks`, `lib/asks.ts`). Each has a slug, a title,
+a kind (`letter` or `event`), a date, a link to the letter or the
+event, and who asks it: supporters, in their letters or in person, PauseAI,
+in its own emails, ControlAI, for its own statement and letter, or more than
+one. A migration adds each.
+
+A person's answer to an ask is a status (`ask_statuses`): one row per
+person per ask, with a status, a date, a note, and who set it; no answer,
+no row. Each kind allows its own statuses (`ask_kind_statuses`, mirrored by
+`ASK_STATUSES`): a letter `signed`; an event `going`, `tentative`,
+`meeting_staff`, `tentative_staff`, `declined`, `declined_surgery` or
+`passed_on`. A foreign key on `(ask_kind, status)` refuses any other, and a
+new status is a row there.
+
+Who set a status decides who may change it. Staff set statuses by hand, with
+a note, for the asks of the campaigns they track (`trackedAsks`). An import
+owns the statuses it sets, and changes or removes only those, leaving alone
+a status set by staff or another import: the ControlAI import sets
+ControlAI's letter to the Prime Minister from its PDF (`updated_by`
+`controlai`, `lib/server/controlai-import.ts`); the politician sync sets the
+letters, ControlAI's campaign statement and the conference Airtable records (`airtable`, `AIRTABLE_ASKS`); the one-off
+Go to Parliament import its meetings (`airtable`,
+`lib/server/go-to-parliament-import.ts`). `/staff/asks` lists the asks, newest
+first, who asks each, and how many gave each answer.
 
 ## Campaigns
 
-One thing we ask politicians to do: sign the letter to the PM, come to the
-Sobel bill's debate (`campaigns` in `lib/content/email-your-mp.ts`). Each is
-keyed by its slug, which its page's URL, its letters and its statuses all
-use. The list is in priority order: a person writing to their MP is shown
-the first campaign that MP hasn't done. So the last campaign is one nobody
-has done, and there's always one to move on to.
+One letter many supporters send, for an ask or for none (`campaigns`): sign
+the letter to the PM, come to the Sobel bill's debate. Each is keyed by its
+slug, which its page's URL and its letters use, and its row names its ask.
+The rest is copy, in code (`campaigns` in `lib/content/email-your-mp.ts`):
+its letter, subject and attachments, and, if it can be done, the status of
+its ask that means it is. A test checks each campaign in code has a row
+with the same title and ask; pauseai.info's old campaigns are rows only.
+The list in code is in priority order: a person writing to their MP is
+shown the first campaign whose ask that MP hasn't met. So the last campaign
+is one nobody has done, and there's always one to move on to.
 
-A campaign has its letter, subject and attachments, and, if it can be done,
-the status that means it is. A new campaign is an entry in that list, its
-page in `app/(site)/campaigns/<slug>/`, and a link in the nav.
-
-Campaigns only target politicians, through letters.
-
-## Campaign statuses
-
-What a politician has done for a campaign (`campaign_statuses`): one row per
-politician per campaign, with a status, a date, a note, and who set it. The
-only status so far is `signed`.
-
-Who set it decides who may change it. Staff set statuses by hand for the
-campaigns they track (`trackedCampaigns`). An import owns the statuses it
-sets: the ControlAI import sets the Sobel bill's from ControlAI's letter,
-marked `updated_by` `controlai`, and changes or removes only those
-(`lib/server/controlai-import.ts`). A new outside source of statuses works
-the same way, with its own `updated_by`.
+A new campaign is an entry in that list, its row in a migration, its page
+in `app/(site)/campaigns/<slug>/`, and a link in the nav.
 
 ## Letters
 
-One person's email to one politician for one campaign (`letters`). It's
-sent from an address of its own on `letters.pauseai.uk`, so a reply to it
-comes back to us, matched to the letter by that address, and is forwarded
-to the sender and the policy team. The letter's text isn't kept: the only
-copy is the one Bcc'd to `REPLIES_INBOX`.
+Every letter to a notable person (`letters`): its kind, the person, when it
+was made and sent, and its status (`sending`, `sent`, `not_sent`,
+`bounced`, `spam_complaint`, and for PauseAI's only, `scheduled` and
+`cancelled`), with a log of everything that happened to it
+(`letter_events`), including replies and automatic replies. A child row
+adds what its kind has, joined as notable people are:
 
-A letter has a status (`sending`, `sent`, `not_sent`, `bounced`,
-`spam_complaint`) and a log of everything that happened to it
-(`letter_events`), including replies and automatic replies. Each sender
-email can send one letter per campaign, except to a test MP.
+- **A supporter's letter** (`supporter_letters`): the campaign, and the
+  sender's name, email, address, postcode and consent. Sent through the
+  site, it goes from an address of its own on `letters.pauseai.uk`
+  (`reply_hash`), so a reply comes back to us, matched by that address, and
+  is forwarded to the sender and the policy team. Its text isn't kept: the
+  only copy is the one Bcc'd to `REPLIES_INBOX`. Each sender email can send
+  one letter per campaign, except to a test MP. The letters sent through
+  pauseai.info's old form were imported once from Airtable
+  (`lib/server/web-form-import.ts`), keyed by the record, with no address
+  of their own.
+- **PauseAI's letter** (`pauseai_letters`): one person's letter of a mailing
+  (`mailings`), which may make an ask. Those sent before the site could send
+  them are copied nightly from Airtable's Emails table
+  (`lib/server/emails-sync.ts`), from 2026 on: who, when, and whether it was
+  personalised or written with AI, but no text. Each mailing there is a
+  tick box, named by `mailings.airtable_field`; an email with no box we know
+  is held back and reported until a migration adds its mailing.
+
+A letter's ask is its campaign's or its mailing's, never its own.
 
 ## Supporters
 
 One row per person we know of (`supporters`), tied to each record about
 them in a source by `supporter_links`: a Luma user (`luma_user_id`), a
-letter (`letter_id`) or a member (`member_id`), matched by trimmed, lowercased email and nothing
+supporter's letter (`letter_id`) or a member (`member_id`), matched by trimmed, lowercased email and nothing
 more, so `jane+luma@` and `jane@` are two people. The supporter holds no
 name, email, phone or place of its own: those come from the linked
 records, newest first. `linkSupporters()` (`lib/server/supporters.ts`)
@@ -114,9 +175,11 @@ Where they come from:
   last listed them. Luma's own IDs are the keys, and
   only the import writes these tables. The site's events pages still read
   Luma live.
-- **Letters.** The sender of each letter (`sender_name`, `sender_email`,
-  `sender_postcode`, `contact_consent`), still columns on the letter, now
-  linked to a supporter.
+- **Letters.** The sender of each supporter's letter (`sender_name`,
+  `sender_email`, `sender_postcode`, `contact_consent` on
+  `supporter_letters`). One who wrote through pauseai.info's old form has
+  `web-form` as their source in `supporter_identity`; their consent box
+  arrived on 23 September 2026, so a letter from before it is no.
 - **Members.** PauseAI's members in the UK whom we may hold: those who
   ticked "Share your details with PauseAI UK" on the join form, or joined
   before it asked (from July 2026). The hourly import
@@ -261,13 +324,15 @@ opt-outs ("Opt-outs", above) as well as the blocks here.
 
 ## Imports
 
-A job that copies data in from outside: the MP sync, the check against
-Parliament, the ControlAI letter, the signatory import, the Luma import,
-the members import (`IMPORT_JOBS` in `lib/import-runs.ts`). Each runs on a schedule or when
+A job that copies data in from outside: the politician sync, the Emails
+sync, the check against Parliament, the ControlAI letter, the Luma import,
+the members import, and the one-off imports of pauseai.info's web form
+letters and Go to Parliament's meetings (`IMPORT_JOBS` in
+`lib/import-runs.ts`). Each runs on a schedule or when
 staff press its button, and
 every run is recorded (`import_runs`): when, who started it (`nightly` or a
 staff email), how it ended, why it failed, and the job's own account of
-what it found. A run can be held for staff to decide on, as a large MP sync
+what it found. A run can be held for staff to decide on, as a large politician sync
 is. `/staff/import-data` shows each job's newest run on a card, and each
 job's own page (`/staff/import-data/<slug>`, `importPath()` in
 `lib/import-runs.ts`) its button and every run.
@@ -298,19 +363,25 @@ records logs one summary entry for the run, and one entry per record it
 changed. Reading is logged only where the data is personal: each viewing
 of a supporter's page. Nothing else about reading is logged.
 
-| Action                                                                        | Actor              | When                                                       | Details name                                         |
-| ----------------------------------------------------------------------------- | ------------------ | ---------------------------------------------------------- | ---------------------------------------------------- |
-| `add politician`                                                              | `sync`, staff      | The MP sync adds an MP; the signatory import adds a signer | `id`, and their details                              |
-| `edit politician`                                                             | `sync`             | The MP sync changes an MP's details                        | `id`, and their details after                        |
-| `remove politician`                                                           | `sync`             | The MP sync finds an MP no longer in Airtable              | `id`, `name`                                         |
-| `set status`                                                                  | staff, `controlai` | A campaign status set or cleared, by hand or by the import | `politicianId`, `campaign`, `status`, `date`, `note` |
-| `apply MP sync`, `hold MP sync`, `apply held MP sync`, `discard held MP sync` | `sync`, staff      | Each sync's outcome, and each decision on a held one       | counts, or the run's `id`                            |
-| `import ControlAI letter`                                                     | `controlai`        | A read of the letter that set or cleared any status        | counts                                               |
-| `import signatories from Airtable`                                            | staff              | The one-off import                                         | counts                                               |
-| `block address`, `unblock address`                                            | `postmark`, staff  | A bounce or complaint blocks an address; staff unblock it  | `address`, and the `kind` or the `note`              |
-| `add staff account`, `set staff permissions`, `remove staff account`          | staff              | The accounts page                                          | `email`, and the permissions `from` and `to`         |
-| `view supporter`                                                              | staff              | A supporter's page is opened                               | `id`                                                 |
-| `erase supporter`                                                             | staff              | A supporter is erased                                      | `id`, the request's `reference`, and what went       |
+| Action                                                                                                        | Actor                          | When                                                                        | Details name                                             |
+| ------------------------------------------------------------------------------------------------------------- | ------------------------------ | --------------------------------------------------------------------------- | -------------------------------------------------------- |
+| `add politician`                                                                                              | `sync`                         | The politician sync adds a politician                                       | `id`, and their details                                  |
+| `edit politician`                                                                                             | `sync`                         | The politician sync changes a politician's details, or their record is back | `id`, `name`, and each field `changed`, before and after |
+| `remove politician`                                                                                           | `sync`                         | The politician sync finds a record no longer in Airtable                    | `id`, `name`                                             |
+| `set status`                                                                                                  | staff, `controlai`, `airtable` | A status set or cleared, by hand or by an import                            | `politicianId`, `ask`, `status`, `date`, `note`          |
+| `apply politician sync`, `hold politician sync`, `apply held politician sync`, `discard held politician sync` | `sync`, staff                  | Each sync's outcome, and each decision on a held one                        | counts, or the run's `id`                                |
+| `copy PauseAI emails`                                                                                         | `sync`                         | The Emails sync adds any                                                    | `added`                                                  |
+| `import web form letters`                                                                                     | staff                          | The one-off import of pauseai.info's letters                                | counts                                                   |
+| `import Go to Parliament`                                                                                     | staff                          | The one-off import of its meetings                                          | counts                                                   |
+| `import ControlAI letter`                                                                                     | `controlai`                    | A read of the letter that set or cleared any status                         | counts                                                   |
+| `block address`, `unblock address`                                                                            | `postmark`, staff              | A bounce or complaint blocks an address; staff unblock it                   | `address`, and the `kind` or the `note`                  |
+| `add staff account`, `set staff permissions`, `remove staff account`                                          | staff                          | The accounts page                                                           | `email`, and the permissions `from` and `to`             |
+| `view supporter`                                                                                              | staff                          | A supporter's page is opened                                                | `id`                                                     |
+| `erase supporter`                                                                                             | staff                          | A supporter is erased                                                       | `id`, the request's `reference`, and what went           |
+
+Entries from before asks and the politician sync keep their own names: a
+status set by `campaign`, `apply MP sync` and the rest, and `import
+signatories from Airtable`.
 
 Details never carry a supporter's name or address: a supporter is named by
 `id`, and an erasure by its reference, so the log stays after the person is
@@ -338,10 +409,10 @@ login. To limit someone who's staying, take away their permissions: after
 Remove, logging in again makes a new account with none.
 
 An account opens the pages about politicians and campaigns (politicians,
-an MP's page, Blocked MP emails, imports).
+an MP's page, Politicians' blocked emails, imports).
 Permissions open more (`lib/staff-permissions.ts`): `supporters` every page
 with a member of the public's details (supporters, letters, who wrote to
-which MP, Blocked supporter emails), `admin` the accounts page and the
+which MP, Supporters' blocked emails), `admin` the accounts page and the
 audit log. `admin` doesn't include `supporters`. An MP's page is the one
 page that shows less without a permission: without `supporters`, its
 letters come from a query that doesn't select their senders, so none reach
