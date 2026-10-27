@@ -115,18 +115,18 @@ describe("supportersSearch", () => {
     erased: "",
   };
 
-  it("reads each filter as typed and as applied, a repeated one as a list", () => {
+  it("reads each filter as typed and as applied, a repeated one as a list, its values marked ! left out", () => {
     expect(supportersSearch({})).toEqual({ ...blank, filter: { sort: "active", dir: "desc", page: 1 } });
     const all = supportersSearch({
       q: " jane ",
-      activity: ["registered", "member"],
-      subscription: ["luma-calendar:unsubscribed", "blocked"],
+      activity: ["registered", "member", "!letter"],
+      subscription: ["luma-calendar:unsubscribed", "!blocked"],
       phone: "yes",
       email: "no",
-      event: ["evt-1", "evt-2"],
+      event: ["evt-1", "evt-2", "!evt-3"],
       campaign: "support-sobel-bill",
       wrote: "no",
-      country: ["wales"],
+      country: ["wales", "!scotland"],
       near: " Leeds ",
       within: "25",
       sort: "name",
@@ -136,7 +136,7 @@ describe("supportersSearch", () => {
     expect(all.filter).toEqual({
       search: "jane",
       activity: ["registered", "member"],
-      subscription: [{ topic: "luma-calendar", reason: "unsubscribed" }, { reason: "blocked" }],
+      subscription: [{ topic: "luma-calendar", reason: "unsubscribed" }],
       phone: true,
       email: false,
       event: ["evt-1", "evt-2"],
@@ -144,12 +144,13 @@ describe("supportersSearch", () => {
       wrote: false,
       country: ["wales"],
       near: { text: "Leeds", miles: 25 },
+      not: { activity: ["letter"], subscription: [{ reason: "blocked" }], event: ["evt-3"], country: ["scotland"] },
       sort: "name",
       dir: "desc",
       page: 3,
     });
     expect(all.q).toBe(" jane ");
-    expect(all.activity).toEqual(["registered", "member"]);
+    expect(all.activity).toEqual(["registered", "member", "!letter"]);
     // A campaign alone is those who wrote in it; Near alone is within 10 miles.
     expect(supportersSearch({ campaign: "support-sobel-bill", near: "M1" }).filter).toMatchObject({
       wrote: true,
@@ -159,8 +160,9 @@ describe("supportersSearch", () => {
 
   it("drops what it doesn't know", () => {
     const bad = supportersSearch({
-      activity: "x",
+      activity: ["x", "!x"],
       subscription: "x",
+      event: "!",
       phone: "maybe",
       campaign: "no-such-campaign",
       wrote: "no",

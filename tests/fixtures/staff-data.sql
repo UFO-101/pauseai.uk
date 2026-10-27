@@ -79,12 +79,15 @@ SELECT i, 'recMade' || i AS airtable_id,
   (ARRAY['Alex','Bea','Cal','Dee','Eli','Fay','Gus','Hal','Ivy','Jon','Kit','Lou','Mo','Ned','Ola','Pip','Quin','Ros','Sid','Tess','Uma','Viv','Wes','Zoe'])[1 + i % 24] AS first,
   (ARRAY['Abbott','Barker','Carter','Dalton','Ellis','Fenwick','Garner','Hollis','Ingram','Jarvis','Keller','Lister','Marsh','Norris','Oakley','Parry','Quayle','Rowe','Slater','Thorne','Upton','Vance','Webb','Yates'])[1 + (i / 24 + 5 * i) % 24] AS last,
   (ARRAY['Ashford','Bramley','Colton','Dunmore','Eastwick','Farley','Glenholm','Harwood','Inverby','Kelso','Langley','Morden','Northam','Oxley','Penrith','Rydal','Stanmore','Tarleton','Westby','Yarrow'])[1 + (i * 3) % 20] AS town,
+  -- A peer's territorial title, a place of its own: the town above repeats
+  -- every 20, which would give peers the same names.
+  CASE WHEN i % 10 IN (6, 7) THEN (ARRAY['Ashford','Bramley','Colton','Dunmore','Eastwick','Farley','Glenholm','Harwood','Inverby','Kelso','Langley','Morden','Northam','Oxley','Penrith','Rydal','Stanmore','Tarleton','Westby','Yarrow'])[1 + (i / 10 * 2 + i % 10 - 6 + i / 20) % 20] END AS seat,
   CASE WHEN i % 10 < 6 THEN 'commons' WHEN i % 10 < 8 THEN 'lords' WHEN i % 10 = 8 THEN 'scottish-parliament' WHEN i % 20 = 9 THEN 'senedd' ELSE 'ni-assembly' END AS house
 FROM generate_series(1, 228) i;
 WITH people AS (
   INSERT INTO notable_people (kind, airtable_id, name, salutation, email, status, notes, important_target, personal_connection, created_at, updated_at)
   SELECT 'politician', airtable_id,
-    CASE WHEN house = 'lords' THEN (CASE WHEN i % 4 = 0 THEN 'Baroness ' ELSE 'Lord ' END) || last || ' of ' || town ELSE first || ' ' || last END,
+    CASE WHEN house = 'lords' THEN (CASE WHEN i % 4 = 0 THEN 'Baroness ' ELSE 'Lord ' END) || last || ' of ' || seat ELSE first || ' ' || last END,
     CASE WHEN house = 'lords' THEN (CASE WHEN i % 4 = 0 THEN 'Baroness ' ELSE 'Lord ' END) || last ELSE (CASE WHEN i % 2 = 0 THEN 'Ms ' ELSE 'Mr ' END) || last END,
     CASE WHEN i % 9 = 0 THEN NULL ELSE lower(first || '.' || last || '.' || i) || '@parliament.example' END,
     CASE WHEN i % 15 = 0 THEN 'retired' WHEN i % 23 = 0 THEN 'left_office' ELSE 'in_office' END,

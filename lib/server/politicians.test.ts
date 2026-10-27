@@ -54,15 +54,15 @@ describe("isPersonStatus", () => {
 });
 
 describe("politiciansSearch", () => {
-  it("keeps what was typed, and filters by it, a repeated filter by any of its values", () => {
+  it("keeps what was typed, and filters by it, a repeated filter by any of its values and none of those marked !", () => {
     const typed = {
       q: "Jo",
       house: "lords",
       status: "retired",
-      party: ["Crossbench", "Labour"],
-      flag: ["important", "removed"],
-      country: ["wales"],
-      email: ["none", "blocked"],
+      party: ["Crossbench", "Labour", "!Reform UK"],
+      flag: ["important", "removed", "!connection"],
+      country: ["wales", "!scotland"],
+      email: ["none", "blocked", "!yes"],
       ask: BILL,
       answer: "signed",
       sort: "party",
@@ -81,6 +81,7 @@ describe("politiciansSearch", () => {
         email: ["none", "blocked"],
         ask: BILL,
         answer: "signed",
+        not: { party: ["Reform UK"], flags: ["connection"], country: ["scotland"], email: ["yes"] },
         sort: { key: "party", dir: "desc" },
         page: 3,
       },
@@ -123,7 +124,8 @@ describe("politiciansSearch", () => {
     const unknown = {
       house: "hogwarts",
       status: "sitting",
-      flag: ["other"],
+      party: ["!"],
+      flag: ["other", "!other"],
       country: ["atlantis"],
       email: ["maybe"],
       sort: "age",
@@ -398,6 +400,13 @@ describeWithDatabase("politicians", () => {
     expect(await ids({ email: ["blocked"] })).toEqual([peer]);
     expect(await ids({ email: ["yes"] })).toEqual([mp]);
     expect(await ids({ email: ["yes", "none"] })).toEqual([mp, retired].sort());
+    // Leaving out: those with none of a filter's values; no nation at all is none of them.
+    expect(await ids({ not: { party: ["Crossbench"] } })).toEqual([mp, retired].sort());
+    expect(await ids({ party: ["Crossbench", "Labour (Co-op)"], not: { party: ["Crossbench"] } })).toEqual([mp]);
+    expect(await ids({ party: ["Crossbench"], not: { party: ["Crossbench"] } })).toEqual([]);
+    expect(await ids({ not: { flags: ["important", "removed"] } })).toEqual([peer]);
+    expect(await ids({ not: { country: ["wales"] } })).toEqual([mp, retired].sort());
+    expect(await ids({ not: { email: ["blocked"] } })).toEqual([mp, retired].sort());
     expect(await ids({ ask: EDINBURGH })).toEqual([mp, peer].sort());
     expect(await ids({ ask: EDINBURGH, answer: "going" })).toEqual([peer]);
     expect(await ids({ ask: EDINBURGH, answer: "none" })).toEqual([retired]);

@@ -379,6 +379,36 @@ describeWithDatabase("listSupporters and getSupporter", () => {
     });
   });
 
+  it("leaves out those with any of a filter's values, alone and with those it finds", async () => {
+    await people();
+    // At evt-2, Jane is approved and Sam declined, which isn't being at it.
+    await query(
+      `INSERT INTO luma_events (id, name, url, start_at, access) VALUES ('evt-2', 'evt-2', 'evt-2', '2026-11-01T18:00:00Z', 'manage')`,
+    );
+    await query(
+      `INSERT INTO luma_guests (id, event_id, user_id, approval_status, registered_at) VALUES
+       ('gst-j2', 'evt-2', 'usr-1', 'approved', '2026-10-20T10:00:00Z'),
+       ('gst-s2', 'evt-2', 'usr-2', 'declined', '2026-10-20T10:00:00Z')`,
+    );
+    expect(await names({ not: { event: ["evt-2"] } })).toEqual(["Sam", "Pat", "Old"]);
+    expect(await names({ not: { event: ["evt-1", "evt-2"] } })).toEqual(["Pat"]);
+    expect(await names({ not: { event: ["evt-none"] } })).toEqual(["Jane", "Sam", "Pat", "Old"]);
+    expect(await names({ event: ["evt-1"], not: { event: ["evt-2"] } })).toEqual(["Sam", "Old"]);
+    expect(await names({ event: ["evt-2"], not: { event: ["evt-2"] } })).toEqual([]);
+    expect(await names({ not: { activity: ["letter", "lumaContact"] } })).toEqual(["Sam", "Old"]);
+    expect(await names({ not: { subscription: [{ topic: "events-and-ways-to-help", reason: "asked" }] } })).toEqual([
+      "Jane",
+      "Sam",
+      "Old",
+    ]);
+    // Jane's postcode places her in England; Pat has no place, so isn't in England either.
+    await query(
+      `INSERT INTO postcode_places (postcode, latitude, longitude, place, country)
+       VALUES ('M11AE', 53.4794, -2.2353, 'Manchester', 'england')`,
+    );
+    expect(await names({ not: { country: ["england"] } })).toEqual(["Sam", "Pat", "Old"]);
+  });
+
   it("gives one supporter's details: identities, contact details, links, activity and each list's opt-out", async () => {
     await people();
     const [{ id }] = await query<{ id: number }>(
