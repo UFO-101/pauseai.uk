@@ -1999,7 +1999,7 @@ describe("PoliticianTable", () => {
 
   it("leaves out only a column the filters fix, however alike the rows are", async () => {
     const plain = { ...MP, importantTarget: false };
-    const headings = () => [...document.querySelectorAll("th")].map((th) => th.textContent!.replace(/ [▲▼]$/, ""));
+    const headings = () => [...document.querySelectorAll("th")].map((th) => th.textContent!.replace(/( [▲▼])+$/, ""));
     const { columns } = staffCopy.politicians;
     const after = [
       staffCopy.politicians.flag,

@@ -95,15 +95,16 @@ test(
 );
 
 /**
- * Holds the next request for a page's data (a navigation's, not a
- * prefetch), so a flow can picture the page while it waits; `release` lets
- * it through.
+ * Holds the next request for the page at a URL matching `target` (a
+ * navigation's, not a prefetch: a link hovered fetches its page whole
+ * ahead), so a flow can picture the page while it waits; `release` lets it
+ * through.
  */
-async function holdNextPage(page: Page): Promise<{ release: () => Promise<void> }> {
+async function holdNextPage(page: Page, target: RegExp): Promise<{ release: () => Promise<void> }> {
   let open = () => {};
   const held = new Promise<void>((done) => (open = done));
   let holding = true;
-  const matches = (url: URL) => url.searchParams.has("_rsc");
+  const matches = (url: URL) => url.searchParams.has("_rsc") && target.test(url.search);
   const handler = async (route: Route) => {
     if (!holding || route.request().headers()["next-router-prefetch"]) return route.continue();
     holding = false;
@@ -121,7 +122,10 @@ async function holdNextPage(page: Page): Promise<{ release: () => Promise<void> 
 
 /** Whether the line along the top of the page, while something loads, is showing (StaffPage). */
 const loadingLine = (page: Page) =>
-  page.evaluate(() => getComputedStyle(document.querySelector("main")!, "::before").opacity);
+  page.evaluate(() => {
+    const line = getComputedStyle(document.querySelector("main")!, "::before");
+    return line.content !== "none" && line.opacity === "1";
+  });
 
 test("a sort or search shows chosen at once, the list staying put until the new one arrives", async ({
   page,
@@ -134,22 +138,22 @@ test("a sort or search shows chosen at once, the list staying put until the new 
   await frame(page, "the politicians list, by name, A to Z");
 
   // A sort heading: its arrow turns at once; the rows stay as they were.
-  let next = await holdNextPage(page);
+  let next = await holdNextPage(page, /sort=name&dir=desc/);
   const name = page.getByRole("table").getByRole("link", { name: staffCopy.fields.name });
   await name.click();
   await expect(name).toHaveAttribute("data-pending", "true");
   await expect(name).toContainText("▼");
-  await expect.poll(() => loadingLine(page)).toBe("1");
+  await expect.poll(() => loadingLine(page)).toBe(true);
   await frame(page, "Name clicked again: its arrow turned at once, a line along the top while Z to A loads");
   await next.release();
   await expect(page).toHaveURL(/sort=name&dir=desc/);
-  await expect.poll(() => loadingLine(page)).toBe("0");
+  await expect.poll(() => loadingLine(page)).toBe(false);
 
   // A search, sent from its box without leaving the page.
-  next = await holdNextPage(page);
+  next = await holdNextPage(page, /q=Testy/);
   await page.getByRole("searchbox").fill("Testy");
   await page.getByRole("button", { name: staffCopy.search }).click();
-  await expect.poll(() => loadingLine(page)).toBe("1");
+  await expect.poll(() => loadingLine(page)).toBe(true);
   await frame(page, "a search sent: the list as it was, a line along the top while it looks");
   await next.release();
   await expect(page).toHaveURL(/q=Testy/);
@@ -175,7 +179,7 @@ test("another page shows chosen in the sidebar at once, the page staying put unt
   await asks.filter({ visible: true }).click();
   await expect(asks.filter({ visible: true })).toHaveAttribute("data-pending", "true");
   await expect(page.getByRole("heading", { level: 1, name: staffCopy.politicians.title })).toBeVisible();
-  await expect.poll(() => loadingLine(page)).toBe("1");
+  await expect.poll(() => loadingLine(page)).toBe(true);
   await frame(page, "Asks clicked: marked in the sidebar at once, the politicians still there, a line along the top");
   await release();
   await expect(page.getByRole("heading", { level: 1, name: staffCopy.asks.title })).toBeVisible();
