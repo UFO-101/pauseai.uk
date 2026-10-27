@@ -1,0 +1,23 @@
+/* A menu's box: over the page, a card's border and shadow, scrolling when
+   its choices are many. */
+.menu {
+  max-width: min(22rem, calc(100vw - 2 * var(--space-4)));
+  max-height: min(28rem, 80vh);
+  padding: var(--space-3);
+  overflow: auto;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  box-shadow: 0 6px 24px rgb(var(--text-rgb) / 0.15);
+  color: var(--text);
+  font-size: var(--text-sm);
+}
+
+/* Hung from its button's bottom left, where the browser can anchor it. */
+@supports (position-area: bottom) {
+  .menu {
+    margin: var(--space-2) 0 0;
+    position-area: bottom span-right;
+    position-try-fallbacks: flip-inline;
+  }
+}

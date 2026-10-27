@@ -1,0 +1,119 @@
+/* A list's filters: the search, then the chips, + Filter and Clear all,
+   in a row that wraps, lined up along their bottoms. */
+.bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: end;
+  margin-block: var(--space-4);
+}
+
+/* The search box and its button, side by side, the box wide enough for a
+   label that names what it searches. */
+.search {
+  display: flex;
+  gap: var(--space-3);
+  align-items: end;
+}
+
+.search > :first-child {
+  width: 16rem;
+}
+
+/* The × inside the box, at its right, while there's a search. */
+.box {
+  position: relative;
+  display: block;
+}
+
+.box input {
+  padding-right: 2rem;
+}
+
+.clear {
+  position: absolute;
+  right: 6px;
+  bottom: 7px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--surface-2);
+  color: var(--text-secondary);
+  font-size: 16px;
+  line-height: 22px;
+  text-align: center;
+  text-decoration: none;
+}
+
+/* A filter that's on: a lozenge in the accent, the small button's height. */
+.chip,
+.add {
+  height: 36px;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  background: var(--accent-light);
+  color: var(--text);
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.chip::after {
+  content: " ▾" / "";
+}
+
+/* + Filter: plain, as the small ghost button. */
+.add {
+  border-color: var(--border-strong);
+  background: transparent;
+}
+
+.clearAll {
+  align-self: center;
+  font-size: var(--text-sm);
+}
+
+/* In a menu: each filter's name, then its choices, a link a line. */
+.heading {
+  margin: 0 0 var(--space-1);
+  font-weight: 700;
+}
+
+.group + .group {
+  margin-top: var(--space-3);
+}
+
+.choices {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.choices a {
+  display: block;
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  text-decoration: none;
+}
+
+.choices a:hover {
+  background: var(--surface-2);
+}
+
+.choices a[aria-current] {
+  background: var(--accent-light);
+  font-weight: 700;
+}
+
+.remove {
+  display: block;
+  margin-top: var(--space-2);
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--border);
+}

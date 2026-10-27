@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { render } from "vitest-browser-react";
 import { page, userEvent } from "vitest/browser";
 import { ASK_STATUSES } from "@/lib/asks";
-import { navigation } from "@/tests/browser/navigation";
+import { campaignBySlug } from "@/lib/email-your-mp";
 import { campaigns } from "@/lib/content/email-your-mp";
 import { campaignPath } from "@/lib/email-your-mp";
 import { importPath } from "@/lib/import-runs";
@@ -1652,39 +1652,6 @@ describe("EmailProblemsTable", () => {
   });
 });
 
-describe("EmailBlockFilters", () => {
-  it("is a GET form to its page, filled in with the current filters", async () => {
-    await render(<EmailBlockFilters q="example.org" kind="complaint" action="/staff/politicians/blocked-emails" />);
-    await expect
-      .element(page.getByRole("searchbox", { name: staffCopy.emails.columns.address }))
-      .toHaveValue("example.org");
-    await expect.element(page.getByRole("combobox", { name: staffCopy.emails.columns.kind })).toHaveValue("complaint");
-    const form = page.getByRole("combobox").element().closest("form")!;
-    expect(form.getAttribute("method")).toBe("get");
-    expect(form.getAttribute("action")).toBe("/staff/politicians/blocked-emails");
-  });
-});
-
-describe("StaffFilters", () => {
-  const filters = <EmailBlockFilters q="" kind="hard" action="/staff/supporters/blocked-emails" />;
-
-  it("applies a select as soon as it's changed, leaving blank filters out of the URL", async () => {
-    await render(filters);
-    await page.getByRole("combobox").selectOptions("complaint");
-    await vi.waitFor(() => expect(navigation.pushed).toEqual(["/staff/supporters/blocked-emails?kind=complaint"]));
-    await page.getByRole("combobox").selectOptions("");
-    await vi.waitFor(() => expect(navigation.pushed.at(-1)).toBe("/staff/supporters/blocked-emails"));
-  });
-
-  it("waits for the button to search, not each key typed", async () => {
-    await render(filters);
-    await userEvent.fill(page.getByRole("searchbox"), "bob@");
-    expect(navigation.pushed).toEqual([]);
-    await page.getByRole("button", { name: staffCopy.search }).click();
-    await vi.waitFor(() => expect(navigation.pushed).toEqual(["/staff/supporters/blocked-emails?q=bob%40&kind=hard"]));
-  });
-});
-
 describe("JobActions", () => {
   it("runs the job", async () => {
     const fn = vi.fn();
@@ -1836,71 +1803,6 @@ describe("ImportJobPage", () => {
     await expect
       .element(page.getByRole("link", { name: staffCopy.check.intro.link }))
       .toHaveAttribute("target", "_blank");
-  });
-});
-
-describe("PoliticianFilters", () => {
-  const search = {
-    q: "blake",
-    house: "lords",
-    status: "retired",
-    party: "Labour",
-    flag: "important",
-    ask: "edinburgh-conference-2026",
-    answer: "declined",
-    sort: "asks",
-    dir: "asc",
-    page: "2",
-  };
-
-  it("is a GET form to the list, filled in with the current filters and keeping the sort", async () => {
-    await render(<PoliticianFilters search={search} asks={exampleAsks} parties={["Green", "Labour"]} />);
-    const copy = staffCopy.politicians;
-    await expect.element(page.getByRole("searchbox")).toHaveValue("blake");
-    const select = (name: string) => page.getByRole("combobox", { name, exact: true });
-    const options = (name: string) => [...(select(name).element() as HTMLSelectElement).options].map((o) => o.value);
-    for (const [label, value] of [
-      [staffCopy.fields.party, "Labour"],
-      [copy.status, "retired"],
-      [copy.ask, "edinburgh-conference-2026"],
-      [copy.answer, "declined"],
-      [copy.flag, "important"],
-    ]) {
-      await expect.element(select(label)).toHaveValue(value);
-    }
-    expect(options(staffCopy.fields.party)).toEqual(["", "Green", "Labour"]);
-    // In office unless another status is chosen, or any.
-    expect(options(copy.status)).toEqual(["", "died", "retired", "left_office", "any"]);
-    expect(options(copy.ask)).toEqual(["", ...exampleAsks.map((a) => a.slug)]);
-    // Every answer any ask allows, and none.
-    expect(options(copy.answer)).toEqual(["", "signed", ...ASK_STATUSES.event, "none"]);
-    const form = page.getByRole("searchbox").element().closest("form")!;
-    expect(form.getAttribute("method")).toBe("get");
-    expect(form.getAttribute("action")).toBe("/staff/politicians");
-    expect(new FormData(form).get("house")).toBe("lords");
-    // A new filter starts from the first page.
-    expect(new FormData(form).has("page")).toBe(false);
-    expect(new FormData(form).get("sort")).toBe("asks");
-    expect(new FormData(form).get("dir")).toBe("asc");
-    // Reset is the list with no filter.
-    await expect
-      .element(page.getByRole("link", { name: staffCopy.resetFilters }))
-      .toHaveAttribute("href", "/staff/politicians");
-  });
-
-  it("sends no sort when the list has its default one", async () => {
-    await render(
-      <PoliticianFilters
-        search={{ ...search, house: "", status: "in_office", sort: "", dir: "" }}
-        asks={[]}
-        parties={[]}
-      />,
-    );
-    await expect.element(page.getByRole("combobox", { name: staffCopy.politicians.status })).toHaveValue("");
-    const form = page.getByRole("searchbox").element().closest("form")!;
-    expect(new FormData(form).has("house")).toBe(false);
-    expect(new FormData(form).has("sort")).toBe(false);
-    expect(new FormData(form).has("dir")).toBe(false);
   });
 });
 
@@ -2573,102 +2475,6 @@ describe("LettersTable", () => {
   });
 });
 
-describe("LetterFilters", () => {
-  const copy = staffCopy.letters;
-
-  it("is a GET form to the letters, with each filter as typed", async () => {
-    const { filter, ...search } = lettersSearch({
-      q: "jane",
-      status: "sent",
-      answered: "no",
-      campaign: "support-sobel-bill",
-      consent: "yes",
-    });
-    void filter;
-    await render(<LetterFilters search={search} />);
-    const box = page.getByRole("searchbox", { name: copy.search });
-    await expect.element(box).toHaveValue("jane");
-    const form = box.element().closest("form")!;
-    expect(form.getAttribute("method")).toBe("get");
-    expect(form.getAttribute("action")).toBe("/staff/letters");
-    await expect.element(page.getByRole("combobox", { name: copy.columns.status })).toHaveValue("sent");
-    await expect.element(page.getByRole("combobox", { name: copy.columns.replied })).toHaveValue("no");
-    await expect.element(page.getByRole("combobox", { name: copy.columns.campaign })).toHaveValue("support-sobel-bill");
-    await expect.element(page.getByRole("combobox", { name: copy.columns.consent })).toHaveValue("yes");
-    await expect
-      .element(page.getByRole("link", { name: staffCopy.resetFilters }))
-      .toHaveAttribute("href", "/staff/letters");
-  });
-});
-
-describe("SupporterFilters", () => {
-  it("shows a new URL's filters, not the old form's choices", async () => {
-    const columns = staffCopy.supporters.columns;
-    const { rerender } = await render(<SupporterFilters search={supportersSearch({ activity: "letter" })} />);
-    await page.getByRole("combobox", { name: columns.subscriptions }).selectOptions("blocked");
-    await rerender(<SupporterFilters search={supportersSearch({})} />);
-    await expect.element(page.getByRole("combobox", { name: columns.badges })).toHaveValue("");
-    await expect.element(page.getByRole("combobox", { name: columns.subscriptions })).toHaveValue("");
-  });
-
-  it("sends no sort when the list has its default one", async () => {
-    await render(<SupporterFilters search={supportersSearch({})} />);
-    const form = page.getByRole("searchbox", { name: staffCopy.supporters.filters.search }).element().closest("form")!;
-    expect(new FormData(form).has("sort")).toBe(false);
-    expect(new FormData(form).has("dir")).toBe(false);
-  });
-
-  it("is a GET form to the list, with each filter as typed", async () => {
-    await render(
-      <SupporterFilters
-        search={supportersSearch({
-          q: "jane",
-          activity: "registered",
-          subscription: "pauseai-updates:declined",
-          sort: "name",
-          dir: "desc",
-        })}
-      />,
-    );
-    const copy = staffCopy.supporters.filters;
-    const search = page.getByRole("searchbox", { name: copy.search });
-    await expect.element(search).toHaveValue("jane");
-    const form = search.element().closest("form")!;
-    expect(form.getAttribute("method")).toBe("get");
-    expect(form.getAttribute("action")).toBe("/staff/supporters");
-    // Reset clears the sort too.
-    await expect
-      .element(page.getByRole("link", { name: staffCopy.resetFilters }))
-      .toHaveAttribute("href", "/staff/supporters");
-    const columns = staffCopy.supporters.columns;
-    await expect.element(page.getByRole("combobox", { name: columns.badges })).toHaveValue("registered");
-    // The headings sort; filtering keeps their sort.
-    expect(new FormData(form).get("sort")).toBe("name");
-    expect(new FormData(form).get("dir")).toBe("desc");
-    const subscriptions = page.getByRole("combobox", { name: columns.subscriptions });
-    await expect.element(subscriptions).toHaveValue("pauseai-updates:declined");
-    // Each topic's reasons, under its name, then a block, which is every topic's.
-    const select = subscriptions.element() as HTMLSelectElement;
-    expect([...select.querySelectorAll("optgroup")].map((group) => group.label)).toEqual(
-      Object.values(staffCopy.supporters.detail.permissions.topics),
-    );
-    expect([...select.options].map((option) => option.value)).toEqual([
-      "",
-      "luma-calendar:following",
-      "luma-calendar:unsubscribed",
-      "luma-calendar:not-following",
-      "pauseai-updates:asked",
-      "pauseai-updates:joined",
-      "pauseai-updates:declined",
-      "pauseai-updates:unsubscribed",
-      "pauseai-updates:removed",
-      "events-and-ways-to-help:asked",
-      "events-and-ways-to-help:declined",
-      "blocked",
-    ]);
-  });
-});
-
 describe("SubscriptionBadges", () => {
   const copy = staffCopy.supporters.subscriptions;
 
@@ -3231,5 +3037,129 @@ describe("ErasedNotice", () => {
     await expect.element(page.getByRole("status")).toHaveTextContent(staffCopy.erase.done);
     await rerender(<ErasedNotice erased="" />);
     expect(page.getByRole("status").all()).toHaveLength(0);
+  });
+});
+
+/** The chips of the filters on, by their words. */
+const chips = () =>
+  page
+    .getByRole("button")
+    .all()
+    .map((b) => b.element().textContent)
+    .filter((text) => text !== staffCopy.search && text !== staffCopy.filters.add);
+
+/** Opens a filter's menu, by its button, and gives its links' words and addresses. */
+async function menu(button: string) {
+  await page.getByRole("button", { name: button }).click();
+  const box = document.querySelector<HTMLElement>("[popover]:popover-open")!;
+  return [...box.querySelectorAll("a")].map((a) => [a.textContent, a.getAttribute("href")]);
+}
+
+describe("EmailBlockFilters", () => {
+  it("searches the addresses on its page, and filters by cause", async () => {
+    await render(<EmailBlockFilters q="example.org" kind="complaint" action="/staff/politicians/blocked-emails" />);
+    const { columns, kinds } = staffCopy.emails;
+    await expect.element(page.getByRole("searchbox", { name: columns.address })).toHaveValue("example.org");
+    expect(page.getByRole("searchbox").element().closest("form")!.getAttribute("action")).toBe(
+      "/staff/politicians/blocked-emails",
+    );
+    expect(chips()).toEqual([`${columns.kind}: ${kinds.complaint}`]);
+  });
+});
+
+describe("PoliticianFilters", () => {
+  const copy = staffCopy.politicians;
+  const search = {
+    ...emptyPoliticiansSearch,
+    q: "blake",
+    house: "lords",
+    status: "retired",
+    party: "Labour",
+    ask: "edinburgh-conference-2026",
+    answer: "declined",
+    sort: "asks",
+    dir: "asc",
+    page: "2",
+  };
+
+  it("has a chip for each filter on, the answer named after its ask, and Clear all keeping the house", async () => {
+    await render(<PoliticianFilters search={search} asks={exampleAsks} parties={["Green", "Labour"]} />);
+    const edinburgh = ask("edinburgh-conference-2026").title;
+    expect(chips()).toEqual([
+      `${staffCopy.fields.party}: Labour`,
+      `${copy.status}: ${staffCopy.personStatuses.retired}`,
+      `${copy.ask}: ${edinburgh}`,
+      `${edinburgh}: ${staffCopy.statuses.declined}`,
+    ]);
+    // The answers are the ask's kind's, and none; another ask takes the answer away.
+    expect((await menu(`${edinburgh}: ${staffCopy.statuses.declined}`)).map(([text]) => text)).toEqual([
+      ...ASK_STATUSES.event.map((s) => staffCopy.statuses[s]),
+      copy.noAnswer,
+      staffCopy.filters.remove,
+    ]);
+    const asks = await menu(`${copy.ask}: ${edinburgh}`);
+    expect(asks.find(([text]) => text === ask("frontier-ai-letter").title)![1]).toBe(
+      "/staff/politicians?q=blake&house=lords&status=retired&party=Labour&ask=frontier-ai-letter&sort=asks&dir=asc",
+    );
+    // Status goes back to those in office by its blank choice.
+    expect((await menu(`${copy.status}: ${staffCopy.personStatuses.retired}`))[0]).toEqual([
+      staffCopy.personStatuses.in_office,
+      "/staff/politicians?q=blake&house=lords&party=Labour&ask=edinburgh-conference-2026&answer=declined&sort=asks&dir=asc",
+    ]);
+    // Only Marked is left to add.
+    expect((await menu(staffCopy.filters.add)).map(([text]) => text)).toEqual(Object.values(copy.flags));
+    await expect
+      .element(page.getByRole("link", { name: staffCopy.resetFilters }))
+      .toHaveAttribute("href", "/staff/politicians?house=lords");
+  });
+
+  it("offers an answer only once there's an ask", async () => {
+    await render(<PoliticianFilters search={emptyPoliticiansSearch} asks={exampleAsks} parties={["Green"]} />);
+    const groups = () => [...document.querySelectorAll("[popover] section > p")].map((p) => p.textContent);
+    await page.getByRole("button", { name: staffCopy.filters.add }).click();
+    expect(groups()).toEqual([staffCopy.fields.party, copy.status, copy.ask, copy.flag]);
+    expect(page.getByRole("link", { name: staffCopy.resetFilters }).query()).toBeNull();
+  });
+});
+
+describe("LetterFilters", () => {
+  it("has a chip for each filter on, and the rest under + Filter", async () => {
+    const copy = staffCopy.letters;
+    const { filter, ...search } = lettersSearch({ q: "jane", status: "sent", campaign: "support-sobel-bill" });
+    void filter;
+    await render(<LetterFilters search={search} />);
+    await expect.element(page.getByRole("searchbox", { name: copy.search })).toHaveValue("jane");
+    expect(chips()).toEqual([
+      `${copy.columns.campaign}: ${campaignBySlug("support-sobel-bill")!.title}`,
+      `${copy.columns.status}: ${copy.status.sent}`,
+    ]);
+    const add = await menu(staffCopy.filters.add);
+    expect(add[0]).toEqual([
+      copy.consent.yes,
+      "/staff/letters?status=sent&q=jane&campaign=support-sobel-bill&consent=yes",
+    ]);
+  });
+});
+
+describe("SupporterFilters", () => {
+  it("has a chip for each filter on, a subscription by its topic and reason", async () => {
+    const copy = staffCopy.supporters;
+    const { filter, ...search } = supportersSearch({
+      activity: "registered",
+      subscription: "pauseai-updates:declined",
+      erased: "1",
+    });
+    void filter;
+    await render(<SupporterFilters search={search} />);
+    expect(chips()).toEqual([
+      `${copy.columns.badges}: ${copy.badges.registered}`,
+      `${copy.columns.subscriptions}: ${copy.filters.states["pauseai-updates"].declined}`,
+    ]);
+    // Each topic's reasons, then blocked; the erased notice goes.
+    const choices = await menu(`${copy.columns.subscriptions}: ${copy.filters.states["pauseai-updates"].declined}`);
+    expect(choices.at(-2)).toEqual([
+      copy.subscriptions.blocked,
+      "/staff/supporters?activity=registered&subscription=blocked",
+    ]);
   });
 });

@@ -3,11 +3,10 @@
 // politicians, letters, runs and changes. Their links go to /staff pages,
 // which send anyone without a session to the login page.
 import { Button } from "@/components/ui/Button";
-import { Select, TextInput } from "@/components/ui/Controls";
-import { Field } from "@/components/ui/Field";
 import ChangesTable from "@/app/(staff)/staff/_components/ChangesTable";
 import EmailBlockFilters from "@/app/(staff)/staff/_components/EmailBlockFilters";
-import StaffFilters from "@/app/(staff)/staff/_components/StaffFilters";
+import FilterBar from "@/app/(staff)/staff/_components/ui/FilterBar";
+import Menu from "@/app/(staff)/staff/_components/ui/Menu";
 import { exampleProblems } from "@/app/(staff)/staff/_components/EmailBlocksTable.examples";
 import EmailProblemsTable from "@/app/(staff)/staff/_components/EmailProblemsTable";
 import { exampleChanges } from "@/app/(staff)/staff/_components/ChangesTable.examples";
@@ -122,6 +121,18 @@ const EMPTY_POLITICIAN_FILTERS = {
   dir: "",
   page: "",
 };
+
+// A blocked address list's filter, for the filter bar's examples.
+const EXAMPLE_FILTERS = [
+  {
+    name: "kind",
+    label: "Cause",
+    options: [
+      { value: "hard", label: "Bounced" },
+      { value: "complaint", label: "Complained" },
+    ],
+  },
+];
 
 // Every page the navigation can mark as current, so a new one is a type error until it's here.
 const PAGES: Record<StaffPageName, true> = {
@@ -1379,27 +1390,44 @@ export const staff: Group = {
       ],
     },
     {
-      name: "StaffFilters",
-      file: "app/(staff)/staff/_components/StaffFilters.tsx",
+      name: "FilterBar",
+      file: "app/(staff)/staff/_components/ui/FilterBar.tsx",
       variants: [
         {
-          label: "A search with its button, then a select, which applies when chosen",
+          label: "Nothing on: the search and + Filter",
           render: () => (
             <StaffPage as="div">
-              <StaffFilters action="/staff/politicians/blocked-emails">
-                <Field label="Address">
-                  <TextInput type="search" name="q" />
-                </Field>
-                <Button variant="primary" size="small" type="submit">
-                  Search
-                </Button>
-                <Field label="Cause">
-                  <Select name="kind">
-                    <option value="">All</option>
-                    <option value="hard">Bounced</option>
-                  </Select>
-                </Field>
-              </StaffFilters>
+              <FilterBar path="#" values={{}} search={{ name: "q", label: "Address" }} filters={EXAMPLE_FILTERS} />
+            </StaffPage>
+          ),
+        },
+        {
+          label: "A search and a filter on, each removable, and Clear all",
+          render: () => (
+            <StaffPage as="div">
+              <FilterBar
+                path="#"
+                values={{ q: "example.org", kind: "hard" }}
+                search={{ name: "q", label: "Address" }}
+                filters={EXAMPLE_FILTERS}
+              />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "Menu",
+      file: "app/(staff)/staff/_components/ui/Menu.tsx",
+      variants: [
+        {
+          label: "A button that opens a box of choices",
+          render: () => (
+            <StaffPage as="div">
+              <Menu id="example-menu" label="Choose">
+                <p>One</p>
+                <p>Two</p>
+              </Menu>
             </StaffPage>
           ),
         },

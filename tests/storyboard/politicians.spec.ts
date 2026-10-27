@@ -1,7 +1,7 @@
 import type { Page } from "@playwright/test";
 import { jobTitles, staffCopy } from "@/lib/content/staff-interface";
 import { runSql } from "@/scripts/fresh-database.mjs";
-import { addStaffAccount, logInAsStaff, syncPoliticians } from "../steps";
+import { addFilter, addStaffAccount, changeFilter, logInAsStaff, syncPoliticians } from "../steps";
 import { BASE, expect, frame, test } from "./fixtures";
 
 // The politicians from Airtable: every body, their answers to the asks, and
@@ -72,29 +72,32 @@ test("the politicians list, filtered by status, marker and an answer to an ask, 
   await page.goto(`${BASE}/staff/politicians`);
   const filters = staffCopy.politicians;
   const rows = page.getByRole("row");
-  // Each filter applies as soon as it's chosen.
-  // Those in office, to start.
+  // Those in office, to start; + Filter offers the rest, each applying as soon as it's chosen.
   await expect(rows.filter({ hasText: "Polly Placeholder" })).toBeVisible();
   await expect(rows.filter({ hasText: "Rita Retired" })).toHaveCount(0);
-  await page.getByRole("combobox", { name: filters.status, exact: true }).selectOption("retired");
+  await page.getByRole("button", { name: staffCopy.filters.add }).click();
+  await frame(page, "+ Filter open: every filter's choices");
+  await page.keyboard.press("Escape");
+  await addFilter(page, filters.status, staffCopy.personStatuses.retired);
   await expect(page).toHaveURL(/status=retired/);
   await expect(rows.filter({ hasText: "Rita Retired" })).toBeVisible();
   await expect(rows.filter({ hasText: "Polly Placeholder" })).toHaveCount(0);
-  await frame(page, "only those who retired");
+  await frame(page, "only those who retired, the filter a chip");
 
-  await page.getByRole("combobox", { name: filters.status, exact: true }).selectOption("");
+  await changeFilter(page, `${filters.status}: ${staffCopy.personStatuses.retired}`);
   await expect(page).toHaveURL(`${BASE}/staff/politicians`);
-  await page.getByRole("combobox", { name: filters.flag, exact: true }).selectOption("connection");
+  await addFilter(page, filters.flag, filters.flags.connection);
   await expect(page).toHaveURL(/flag=connection/);
   await expect(rows.filter({ hasText: "Morag Example" })).toBeVisible();
   await expect(rows).toHaveCount(2);
   await frame(page, "only personal connections");
 
-  await page.getByRole("combobox", { name: filters.flag, exact: true }).selectOption("");
+  await changeFilter(page, `${filters.flag}: ${filters.flags.connection}`);
   await expect(page).toHaveURL(`${BASE}/staff/politicians`);
-  await page.getByRole("combobox", { name: filters.ask, exact: true }).selectOption("edinburgh-conference-2026");
+  await addFilter(page, filters.ask, "Edinburgh conference");
   await expect(page).toHaveURL(/ask=edinburgh-conference-2026$/);
-  await page.getByRole("combobox", { name: filters.answer, exact: true }).selectOption("none");
+  // An answer is offered once there's an ask, named after it.
+  await addFilter(page, "Edinburgh conference", filters.noAnswer);
   await expect(page).toHaveURL(/ask=edinburgh-conference-2026&answer=none/);
   await expect(rows.filter({ hasText: "Polly Placeholder" })).toHaveCount(0);
   await expect(rows.filter({ hasText: "Ms Dora Dummy" })).toBeVisible();

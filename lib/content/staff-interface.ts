@@ -141,10 +141,7 @@ export const staffCopy = {
     filters: {
       search: "Name, email or phone",
       // The other filters are named after their columns.
-      anyActivity: "Any",
-      anySubscription: "Any",
-      // An option in the Subscriptions filter, under its topic's name: a reason the topic gives,
-      // short, as the closed select shows only the one chosen.
+      // A choice in the Subscriptions filter, and its chip: a topic and a reason it gives, short.
       states: {
         "luma-calendar": {
           following: "Luma: contact",
@@ -391,23 +388,18 @@ export const staffCopy = {
     // The search box's label: what it searches.
     search: "Name, constituency, party or email",
     allHouses: "All houses",
-    allParties: "All parties",
     // The filters: in office or not, Airtable's markers, and an answer to an ask.
     status: "Status",
     anyStatus: "Any status",
     flag: "Marked",
-    anyFlag: "Anything",
     flags: {
       important: "Important target",
       connection: "Personal connection",
       removed: "No longer in Airtable",
     } as Record<string, string>,
     ask: "Ask",
-    anyAsk: "Any ask",
-    // An answer to the ask chosen, or with none chosen, to any ask: anyone who answered, a given answer, or
-    // nobody who answered.
+    // An answer to the ask chosen, offered once there's an ask; the filter and its chip are named after the ask.
     answer: "Answer",
-    anyAnswer: "Answered",
     noAnswer: "Not answered",
     none: "None found.",
     // Over the list: how many there are, and the page.
@@ -624,7 +616,6 @@ export const staffCopy = {
     noBlocks: "No addresses are blocked.",
     // Instead of the history, when nothing has bounced or been complained about.
     noProblems: "Nothing has bounced or been marked as spam.",
-    allKinds: "All",
     kinds: {
       hard: "Bounced",
       soft: "Soft bounce",
@@ -872,7 +863,6 @@ export const staffCopy = {
     title: "Letters to MPs",
     // Over the list: how many there are, and the page.
     count: (total: number, page: number, pages: number) => `${total} letters; page ${page} of ${pages}.`,
-    allStatuses: "All",
     search: "Sender or MP",
     // The Answered filter: whether the MP replied.
     answered: { yes: "Answered", no: "Not answered" },
@@ -907,6 +897,13 @@ export const staffCopy = {
   search: "Search",
   // After a list's filters: the list with none.
   resetFilters: "Reset filters",
+  // A list's filters: the × in the search box, + Filter, which offers the filters not on, and on a filter's
+  // chip, the way to take it off.
+  filters: {
+    clearSearch: "⁂ Clear the search",
+    add: "⁂ + Filter",
+    remove: "⁂ Remove",
+  },
   // Under a list of more than one page.
   paging: {
     previous: "Previous",

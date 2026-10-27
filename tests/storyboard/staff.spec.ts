@@ -8,16 +8,17 @@ import { runSql } from "@/scripts/fresh-database.mjs";
 import { FIXTURE_NOW } from "../fixture-env.mjs";
 import { ROUTES } from "../routes";
 import {
+  addFilter,
   addStaffAccount,
   askForLoginLink,
   fakeTurnstile,
   fillLetter,
   logInAsStaff,
   loginLinkFor,
-  newestEmail,
   lookUpTestMp,
-  openLookup,
+  newestEmail,
   newestEmailTo,
+  openLookup,
   sendLetter,
   syncPoliticians,
   WEBHOOK_AUTH,
@@ -252,7 +253,9 @@ test("the MPs signed tile leads to the one who signed, then to everyone who sign
     .filter({ hasText: staffCopy.home.dashboard.metrics.mpsSigned(2) })
     .click();
   await expect(page).toHaveURL(`${BASE}/staff/politicians?answer=signed&sort=asks`);
-  await expect(page.getByRole("combobox", { name: staffCopy.politicians.answer, exact: true })).toHaveValue("signed");
+  await expect(
+    page.getByRole("button", { name: `${staffCopy.politicians.answer}: ${staffCopy.statuses.signed}` }),
+  ).toBeVisible();
   await expect(page.getByRole("row").filter({ hasText: "Polly Placeholder" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Testy McTestface MP" })).toHaveCount(0);
   await frame(page, "everyone who signed anything, newest first");
@@ -446,14 +449,14 @@ test("letters are listed, sent and bounced, and can be filtered by status and ca
   await expect(sams).toContainText("HardBounce");
   await frame(page, "the letters list: one sent, one bounced, with Postmark's reason in its history");
 
-  await page.getByLabel(staffCopy.letters.columns.status).selectOption("bounced");
+  await addFilter(page, staffCopy.letters.columns.status, staffCopy.letters.status.bounced);
   await expect(page).toHaveURL(/\/staff\/letters\?.*status=bounced/);
   await expect(sams).toBeVisible();
   await expect(janes).toHaveCount(0);
   await frame(page, "filtered to the bounced letter");
 
   // Both letters are to the first campaign, so the other has none.
-  await page.getByLabel(staffCopy.letters.columns.campaign).selectOption(campaigns[1].slug);
+  await addFilter(page, staffCopy.letters.columns.campaign, campaigns[1].title);
   await expect(page).toHaveURL(new RegExp(`campaign=${campaigns[1].slug}`));
   await expect(page.getByText(staffCopy.letters.none)).toBeVisible();
   await frame(page, "filtered to the other campaign: no letters");
@@ -462,7 +465,9 @@ test("letters are listed, sent and bounced, and can be filtered by status and ca
   await expect(page).toHaveURL(`${BASE}/staff/letters`);
   await expect(janes).toBeVisible();
   await expect(sams).toBeVisible();
-  await expect(page.getByLabel(staffCopy.letters.columns.campaign)).toHaveValue("");
+  await expect(page.getByRole("button", { name: new RegExp(`^${staffCopy.letters.columns.campaign}:`) })).toHaveCount(
+    0,
+  );
   await frame(page, "reset: both letters again");
 });
 
