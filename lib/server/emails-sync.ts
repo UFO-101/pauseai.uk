@@ -3,7 +3,7 @@ import type { EmailSyncResult } from "@/lib/import-runs";
 import { logChange } from "./audit";
 import { query, transaction } from "./db";
 import { keepingFailure, recordRun } from "./import-runs";
-import { airtableToken, fetchEmails } from "./outside-services/airtable";
+import { airtableToken, fetchEmails, fetchTestPoliticianIds } from "./outside-services/airtable";
 
 // Copies PauseAI's 2026 emails to politicians from Airtable's Emails table
 // into pauseai_letters, nightly (app/api/cron/sync-politicians, after the
@@ -11,7 +11,8 @@ import { airtableToken, fetchEmails } from "./outside-services/airtable";
 // "sync-emails". An email is added once, by its record's ID, as a letter of
 // the mailing whose tick box is ticked, to the politician it links to; it's
 // never changed after. Airtable has no text, Message-ID or thread for it.
-// One whose politician isn't here yet waits for the next run. One with no
+// One to a politician ticked Test in Airtable is skipped, as the politicians
+// sync skips them. One whose politician isn't here yet waits for the next run. One with no
 // box of a known mailing ticked, or several, is held back and reported, not
 // guessed at: a new tick box is a new mailings row, added by a migration.
 
@@ -23,10 +24,12 @@ export function syncEmails(startedBy: string): Promise<EmailSyncResult> {
     const mailings = await query<{ id: number; field: string }>(
       "SELECT id::int AS id, airtable_field AS field FROM mailings ORDER BY id",
     );
+    const token = airtableToken();
     const emails = await fetchEmails(
-      airtableToken(),
+      token,
       mailings.map((mailing) => mailing.field),
     );
+    const tests = new Set(await fetchTestPoliticianIds(token));
     const mailingIds = new Map(mailings.map((mailing) => [mailing.field, mailing.id]));
     return transaction(async (db) => {
       const result: EmailSyncResult = { read: emails.length, added: 0, waiting: 0, noPolitician: 0, unplaced: [] };
@@ -45,6 +48,7 @@ export function syncEmails(startedBy: string): Promise<EmailSyncResult> {
           result.noPolitician++;
           continue;
         }
+        if (tests.has(email.politicians[0])) continue;
         if (email.mailings.length !== 1) {
           result.unplaced.push({ airtableId: email.airtableId, mailings: email.mailings });
           continue;

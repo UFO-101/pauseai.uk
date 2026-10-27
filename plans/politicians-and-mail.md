@@ -257,7 +257,8 @@ the only file that talks to Airtable, and lists the fields it reads.
    4,368 with no box ticked; Documentary Invitation, 703; Westminster
    Hall Debate Invitation, 341). Their asks' statuses still come in
    step 4. "Frontier AI" and "Liability Bill" are ticked on no email. One
-   empty record, with no politician, is skipped. A new tick box is
+   empty record, with no politician, is skipped, as is one to a record
+   ticked Test. A new tick box is
    reported on the Import page and held, not guessed at.
 
 6. **Import web form letters, once**, into `supporter_letters`, so their

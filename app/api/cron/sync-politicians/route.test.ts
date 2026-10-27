@@ -32,12 +32,12 @@ describeWithDatabase("POST /api/cron/sync-politicians", () => {
 
   it("copies the emails even when the politicians fail, then fails, keeping both runs", async () => {
     server.use(
-      http.get(
-        "https://*.airtable.com/v0/appBInVvIm6opJ1Ob/tblH3ks9wqQHLpYx3",
-        () => new HttpResponse(null, { status: 500 }),
+      // A Status the sync doesn't know fails it; the Emails sync reads the same table only for Test.
+      http.get("https://*.airtable.com/v0/appBInVvIm6opJ1Ob/tblH3ks9wqQHLpYx3", () =>
+        HttpResponse.json({ records: [{ id: "recOdd", fields: { "Full name or Title": "Odd", Status: "Odd" } }] }),
       ),
     );
-    await expect(call("Bearer s3cret")).rejects.toThrow("status 500");
+    await expect(call("Bearer s3cret")).rejects.toThrow('Unknown Status "Odd"');
     expect(await query("SELECT job, status FROM import_runs ORDER BY id")).toEqual([
       { job: "sync-politicians", status: "failed" },
       { job: "sync-emails", status: "unchanged" },

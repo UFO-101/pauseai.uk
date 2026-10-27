@@ -137,6 +137,34 @@ describeWithDatabase("syncEmails", () => {
     expect(await syncEmails(NIGHTLY)).toMatchObject({ added: 1, waiting: 0 });
   });
 
+  it("skips an email to a politician ticked Test in Airtable, as the politicians sync does", async () => {
+    server.use(
+      http.get("https://*.airtable.com/v0/appBInVvIm6opJ1Ob/tblH3ks9wqQHLpYx3", () =>
+        HttpResponse.json({
+          records: [
+            { id: "recTest", fields: { Test: true } },
+            { id: "recDummy", fields: {} },
+          ],
+        }),
+      ),
+      http.get("https://*.airtable.com/v0/appBInVvIm6opJ1Ob/tblp4nH5Jymq48rcm", () =>
+        HttpResponse.json({
+          records: [
+            {
+              id: "recE1",
+              fields: {
+                Timestamp: "2026-06-10T09:00:00.000Z",
+                "UK Parliamentarian": ["recTest"],
+                "CSRB Iqbal Amendment": true,
+              },
+            },
+          ],
+        }),
+      ),
+    );
+    expect(await syncEmails(NIGHTLY)).toEqual({ read: 1, added: 0, waiting: 0, noPolitician: 0, unplaced: [] });
+  });
+
   it("keeps a failure", async () => {
     vi.stubEnv("AIRTABLE_TOKEN", "");
     await expect(syncEmails(NIGHTLY)).rejects.toThrow("AIRTABLE_TOKEN isn't set");
