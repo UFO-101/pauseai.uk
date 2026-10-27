@@ -22,8 +22,8 @@ export default function SignupCase() {
             Every month more and more people notice how dangerous our situation is. Awareness of this problem is
             accelerating rapidly as we get closer to catastrophe.
           </p>
-          {/* The July incident is the evidence the case rests on: prose on an
-              accent rule, with the clause it turns on emphasised in place. */}
+          {/* The July incident: prose on an accent rule, with the clause it
+              turns on emphasised in place. */}
           <div className={m("case-incident")}>
             <p>
               In July, an autonomous AI agent developed by OpenAI broke out of an isolated test environment, hacked

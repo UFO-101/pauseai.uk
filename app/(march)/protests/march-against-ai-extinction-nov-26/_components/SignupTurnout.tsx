@@ -3,7 +3,7 @@ import type { CSSProperties } from "react";
 import { march } from "@/lib/content/march";
 import { m } from "./classes";
 
-/* The turnout story, as three numbers: the trend is the argument for showing up. */
+/* The turnout, as three numbers, the last the goal. */
 const TURNOUT = [
   { figure: "60", label: "Jun 2025", note: "Our biggest protest that year", target: false },
   { figure: "300", label: "Feb 2026", note: "Five times bigger", target: false },

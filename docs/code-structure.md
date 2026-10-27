@@ -22,9 +22,8 @@ app/
   (staff)/staff/          the staff interface, behind email login; no <Nav>,
                           no analytics, noindex
   (march)/protests/march-against-ai-extinction-nov-26/
-                          the march's page, its sign-up: a sub-site in its
-                          own style, with its own header and the site's
-                          footer (Styling, below)
+                          the march's sign-up, in its own style (Styling,
+                          below)
   api/                    route handlers, only for things that need a URL
   sitemap.ts, robots.ts
 components/               React components used by more than one route

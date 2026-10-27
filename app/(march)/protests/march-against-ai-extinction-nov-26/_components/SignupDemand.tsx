@@ -1,9 +1,6 @@
 import { m } from "./classes";
 
-/*
- * The march's one demand, on the page's one band that is neither ink nor
- * paper: it's the ask, and should be impossible to scroll past unread.
- */
+/* The march's one demand, on the page's one band that is neither ink nor paper. */
 export default function SignupDemand() {
   return (
     <section className={m("demand")} aria-labelledby="demand-title">

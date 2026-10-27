@@ -11,8 +11,7 @@ function noSubscription() {
 }
 
 // A strip under the header on every page until the march: the date and place
-// and the march's name, and Register, both to the march's page, the sign-up.
-// That page has its own layout, without the banner.
+// and the march's name, and Register, both to the march's page.
 export default function MarchBanner() {
   // The date is checked in the browser, since a page built before the march
   // would otherwise keep the banner until it's rebuilt. The server always

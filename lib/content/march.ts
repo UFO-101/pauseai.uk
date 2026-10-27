@@ -1,13 +1,12 @@
 // The March Against AI Extinction, 21 November 2026: its facts in one place,
-// for its page, the sign-up (app/(march)/), and the march banner. The page's
-// link preview is a picture of its hero, with the date, time and route in it:
-// after changing them, remake it with `npm run march:preview`
-// (scripts/march-preview.mjs).
+// for its page (app/(march)/) and the march banner. The page's link preview
+// shows the date, time and route: after changing them, run
+// `npm run march:preview`.
 import { site } from "./site";
 
 export const march = {
   name: "March Against AI Extinction",
-  /** The march's page, the sign-up, which adds people to the Luma event. */
+  /** The march's page, the sign-up. */
   path: "/protests/march-against-ai-extinction-nov-26",
   /** Redirects to `path`, keeping its tags: the link to give out, short enough for a post or a poster. */
   shortPath: "/march",

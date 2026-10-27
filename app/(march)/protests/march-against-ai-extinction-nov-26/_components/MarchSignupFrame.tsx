@@ -13,9 +13,8 @@ export function useSignupHero(): Hero {
 }
 
 /**
- * The march sign-up's frame (app/(march)/protests/march-against-ai-extinction-nov-26/layout.tsx): its type, colours and
- * element styles, and the hero's element for the pieces that need it. The
- * site's footer follows it, from the root layout.
+ * The march sign-up's frame (../layout.tsx): its type, colours and element
+ * styles, and the hero's element for the pieces that need it.
  */
 export default function MarchSignupFrame({ children }: { children: ReactNode }) {
   const [hero, setHero] = useState<HTMLElement | null>(null);

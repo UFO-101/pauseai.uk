@@ -3,10 +3,9 @@ import { marchSignupCopy as copy } from "@/lib/content/march-signup";
 import { BASE, expect, frame, test } from "./fixtures";
 import { hydrated, layoutSettled, scrollSettled } from "./settle";
 
-// The march sign-up, the march's page (app/(march)/): its own header, which drops in
-// past the hero; the form, which adds the person to the Luma event (the
-// fixture takes every guest but luma-fails@ and luma-skips@); and the cards
-// it turns into, in place: the share card, then the thank-you.
+// The march sign-up (app/(march)/): its own header, which drops in past the
+// hero; the form, which adds the person to the Luma event; and the cards it
+// turns into, in place: the share card, then the thank-you.
 
 const header = (page: Page) => page.getByRole("banner");
 

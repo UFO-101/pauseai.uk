@@ -1,13 +1,6 @@
-/* The march sign-up (app/(march)/): a sub-site in its own poster style, louder than the rest of the site: ink
-   and paper bands with nothing in between, one hot orange, Anton set very
-   large and tight for anything that shouts, Inter for anything that
-   explains, square corners, thick rules and hard offset shadows.
-
-   One stylesheet for every component in the sub-site, in the order its
-   rules have to cascade: the frame and its shared pieces (type, buttons,
-   bands, header), then the sign-up page, then its cards. Its rules for
-   elements sit inside :where(.frame), so they weigh what a bare element
-   selector would and the classes below override them. */
+/* The march sign-up's one stylesheet (docs/code-structure.md, "The march
+   sign-up"), in the order its rules cascade: the frame and its shared pieces
+   (type, buttons, bands, header), then the page, then its cards. */
 
 .frame {
   --march-on-ink: var(--white);
@@ -23,8 +16,8 @@
   --march-container: 1200px;
   --march-display: "Anton", "Arial Narrow", system-ui, sans-serif;
   /* The unit of the text measures below: half an em, the width CSS gives
-     "ch" when the font has no zero to measure, as the page's columns were
-     designed at. Inter's own zero is wider, so ch would widen every column. */
+     "ch" when the font has no zero to measure. Inter's zero is wider, so ch
+     would widen every column. */
   --march-ch: 0.5em;
 
   flex: 1 0 auto;
@@ -131,9 +124,7 @@
 }
 
 /* ── Buttons ───────────────────────────────────────────────────────────
-   Square, heavy, and offset against a solid shadow so they read as objects
-   stuck to the page rather than as UI chrome. Pressing pushes the button
-   into its own shadow. */
+   Pressing pushes the button into its own shadow. */
 
 .btn {
   --btn-shadow: var(--march-ink);
@@ -233,9 +224,7 @@
 }
 
 /* ── Header ────────────────────────────────────────────────────────────
-   Ink, and carrying the register CTA whenever it is on screen: the whole
-   site exists to get people to that form. It pairs the PauseAI logo with the
-   march's own name; on narrow screens the name goes and the logo stays. */
+   The PauseAI logo, the march's name and the register button. */
 
 .site-header {
   position: sticky;
@@ -368,10 +357,7 @@
   }
 }
 
-/* ── Hero ──────────────────────────────────────────────────────────────
-   A full-bleed photograph, pushed most of the way to black and to grey, so
-   the type on top of it can be as loud as it needs to be without fighting
-   the picture for attention. */
+/* ── Hero ────────────────────────────────────────────────────────────── */
 
 .hero {
   position: relative;
@@ -391,16 +377,11 @@
 .hero-photo {
   object-fit: cover;
   object-position: center 42%;
-  /* Knocked back, not buried: enough desaturation that the orange headline
-     stays the loudest thing on the band, while the crowd is still plainly a
-     crowd. */
   filter: grayscale(0.45) contrast(1.1);
   z-index: -2;
 }
-/* Two gradients doing separate jobs: the horizontal one darkens the left
-   column so the copy has contrast to sit on, the vertical one darkens the foot
-   of the band behind the scroll cue. The right third is left almost clear
-   — that is where the photograph actually gets to be a photograph. */
+/* The horizontal gradient darkens the left column for the copy, the vertical
+   one the foot of the band behind the scroll cue. */
 .hero-scrim {
   position: absolute;
   inset: 0;
@@ -431,9 +412,8 @@
 }
 .hero-title {
   color: var(--white);
-  /* The orange slab under "Protest" hangs below the text, so a nominal 24px
-     gap read as about 18. This is the slab's depth plus the space the line
-     actually wants. */
+  /* The orange slab under "Protest" hangs below the text: this is its depth
+     plus the gap. */
   margin: 0 0 34px;
   /* Anton is already condensed; a touch more negative tracking at poster
      sizes closes the gaps the caps leave. */
@@ -463,8 +443,7 @@
   color: var(--white);
 }
 
-/* Two hard blocks of fact, each with its label reversed out into a solid
-   bar — closer to an event poster than to an info card. */
+/* Two blocks of fact, each with its label reversed out into a solid bar. */
 .hero-facts {
   display: flex;
   flex-wrap: wrap;
@@ -676,8 +655,7 @@
   text-wrap: balance;
 }
 /* ── Turnout ───────────────────────────────────────────────────────────
-   Three numbers, one trend. The last one is the ask, so it is the only one
-   in the accent. */
+   The last number is the goal, so it alone is in the accent. */
 
 .turnout-head {
   margin: 0 0 20px;
@@ -823,9 +801,8 @@
 }
 
 /* ── On the day ────────────────────────────────────────────────────────
-   The practical part. The route gets the one card, with the same hard ink
-   shadow as the form; what to bring and how to help sit beside it as plain
-   blocks, split by a rule. */
+   The route on a card; what to bring and how to help beside it, split by a
+   rule. */
 
 .day-title {
   margin: 0 0 44px;
@@ -1155,11 +1132,9 @@
     border-top-width: 3px;
     padding-top: 14px;
   }
-  /* Tighter spacing so the whole hero, Register button included, fits a
-     phone's first screen with the URL bar showing (about 360 × 660). On a
-     taller phone the hero's centring shares the spare height out above and
-     below. The bottom padding keeps the scroll cue clear of the button's
-     shadow. */
+  /* Tighter, so the whole hero, Register button included, fits a phone's
+     first screen with the URL bar showing. The bottom padding keeps the
+     scroll cue clear of the button's shadow. */
   .hero {
     padding: 24px 0 64px;
   }
@@ -1281,8 +1256,7 @@
   min-width: 0;
 }
 
-/* Paper on a hard accent shadow, like the form, so the three read as one
-   object. */
+/* Paper on a hard accent shadow, like the form. */
 .share-panel {
   --panel-shadow: 12px;
   max-width: 780px;
@@ -1293,10 +1267,9 @@
   box-shadow: var(--panel-shadow) var(--panel-shadow) 0 var(--march-orange);
 }
 
-/* The swap, in the poster language rather than a soft fade: the card going
-   presses flat into its shadow and is wiped away downwards; the next is wiped
-   on flat, then lifts off its shadow. Under reduced motion SignupFlow swaps
-   them at once. */
+/* The swap: the card going presses flat into its shadow and is wiped away
+   downwards; the next is wiped on flat, then lifts off its shadow. Under
+   reduced motion SignupFlow swaps them at once. */
 .signup[data-motion="leaving"],
 .share-panel[data-motion="leaving"] {
   animation: card-out 200ms ease-in forwards;
@@ -1414,10 +1387,9 @@
   display: flex;
   gap: var(--gap);
   margin: 14px 0 0;
-  /* overflow-x: auto makes overflow-y compute to auto as well, so this row
-     clips vertically as much as it scrolls horizontally. The tiles rise 3px
-     on hover and take a 3px focus ring at a 3px offset — with no padding
-     above them all of that was being sliced off the top edge. */
+  /* overflow-x: auto makes overflow-y compute to auto as well, so the row
+     clips vertically: the padding is room for the tiles' hover rise and
+     focus ring. */
   padding: 10px 0 12px;
   list-style: none;
   overflow-x: auto;
