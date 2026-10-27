@@ -13,10 +13,6 @@
   font-size: var(--text-sm);
 }
 
-.wide {
-  max-width: min(48rem, calc(100vw - 2 * var(--space-4)));
-}
-
 /* Hung from its button's bottom left, where the browser can anchor it. */
 @supports (position-area: bottom) {
   .menu {

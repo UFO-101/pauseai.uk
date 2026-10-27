@@ -117,10 +117,11 @@ const exampleRows: ExampleRow[] = [
   { name: "Dan Dummy", place: "Glasgow", count: 1 },
 ];
 const exampleColumns: ListColumn<ExampleRow>[] = [
-  { key: "name", label: "Name", text: (r) => r.name, cell: (r) => r.name },
-  { key: "place", label: "Place", text: (r) => r.place, cell: (r) => r.place },
-  { key: "count", label: "Letters", short: true, text: (r) => r.count, cell: (r) => r.count },
+  { key: "name", label: "Name", cell: (r) => r.name },
+  { key: "place", label: "Place", cell: (r) => r.place },
+  { key: "count", label: "Letters", short: true, cell: (r) => r.count },
 ];
+const nameOf = (row: ExampleRow) => row.name;
 
 /** Luma events a filter of supporters picks from, newest first. */
 const exampleEventChoices = [
@@ -434,7 +435,7 @@ export const staff: Group = {
           label: "The rows alone, striped, for a table that isn't a whole list",
           render: () => (
             <StaffPage as="div">
-              <ListTable columns={exampleColumns} rows={exampleRows} rowKey={(row) => row.name} />
+              <ListTable columns={exampleColumns} rows={exampleRows} rowKey={nameOf} />
             </StaffPage>
           ),
         },
@@ -1044,7 +1045,7 @@ export const staff: Group = {
                 download={(format) => `#download-${format}`}
                 columns={exampleColumns}
                 rows={exampleRows}
-                rowKey={(row) => row.name}
+                rowKey={nameOf}
                 empty="Nothing found."
               />
             </StaffPage>
@@ -1060,10 +1061,9 @@ export const staff: Group = {
                 page={1}
                 pages={1}
                 pageSize={100}
-                href={(n) => `#page-${n}`}
                 columns={exampleColumns}
                 rows={exampleRows}
-                rowKey={(row) => row.name}
+                rowKey={nameOf}
                 empty="Nothing found."
               />
             </StaffPage>
@@ -1079,10 +1079,9 @@ export const staff: Group = {
                 page={1}
                 pages={1}
                 pageSize={100}
-                href={(n) => `#page-${n}`}
                 columns={exampleColumns}
                 rows={[]}
-                rowKey={(row) => row.name}
+                rowKey={nameOf}
                 empty="Nothing found."
               />
             </StaffPage>

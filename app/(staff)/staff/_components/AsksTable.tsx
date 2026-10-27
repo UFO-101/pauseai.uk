@@ -87,7 +87,6 @@ export default function AsksTable({ asks }: { asks: AskWithCounts[] }) {
       page={1}
       pages={1}
       pageSize={asks.length}
-      href={() => ""}
       download={(format) => `/staff/asks/download?format=${format}`}
       columns={askColumns}
       rows={asks}

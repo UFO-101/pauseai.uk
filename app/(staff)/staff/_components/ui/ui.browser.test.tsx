@@ -4,10 +4,11 @@ import { page, userEvent } from "vitest/browser";
 import { TextInput } from "@/components/ui/Controls";
 import StaffPage from "./StaffPage";
 import Tabs from "./Tabs";
-import FilterBar, { type Filter } from "./FilterBar";
+import FilterBar, { filterWords, type Filter } from "./FilterBar";
 import Menu from "./Menu";
 import ListFrame, { ListTable, type ListColumn } from "./ListFrame";
 import NavFold from "./NavFold";
+import { renderToString } from "react-dom/server";
 import { NAV_FOLD_KEY } from "@/lib/staff-nav";
 import { staffCopy } from "@/lib/content/staff-interface";
 
@@ -521,5 +522,41 @@ describe("NavFold", () => {
       Storage.prototype.setItem = setItem;
       Storage.prototype.removeItem = removeItem;
     }
+  });
+});
+
+describe("filterWords", () => {
+  it("says the search and each filter on, by its choice's words, or as typed when it has none", () => {
+    const filters: Filter[] = [
+      { name: "kind", label: "Kind", repeat: true, options: [{ value: "a", label: "A" }] },
+      { name: "near", label: "Near", options: [] },
+    ];
+    expect(filterWords(filters, { q: ["jo", "x"], kind: ["a", "b"], near: "LS1" }, "q")).toEqual([
+      `${staffCopy.search} jo`,
+      "Kind A",
+      "Kind b",
+      "Near LS1",
+    ]);
+  });
+});
+
+describe("a searchable filter's chip", () => {
+  it("has the box over its choices too", async () => {
+    await render(
+      <FilterBar
+        path="/list"
+        values={{ event: "a" }}
+        search={{ name: "q", label: "Search" }}
+        filters={[{ name: "event", label: "Event", searchable: true, options: [{ value: "a", label: "Leeds" }] }]}
+      />,
+    );
+    await page.getByRole("button", { name: "Event: Leeds" }).click();
+    expect(document.querySelector("[popover]:popover-open input[type=search]")).not.toBeNull();
+  });
+});
+
+describe("NavFold on the server", () => {
+  it("draws open, as the page's script folds it before it shows", () => {
+    expect(renderToString(<NavFold />)).toContain(`aria-expanded="true"`);
   });
 });

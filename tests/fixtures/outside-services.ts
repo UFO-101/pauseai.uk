@@ -144,7 +144,7 @@ export function fixtureResponse(url: string, init?: RequestInit): Response | und
     });
   }
   if (hostname === "api.postcodes.io" && pathname === "/places") {
-    const town = TOWNS[(searchParams.get("q") ?? "").trim().toLowerCase()];
+    const town = TOWNS[String(searchParams.get("q")).trim().toLowerCase()];
     return json({ status: 200, result: town ? [town] : [] });
   }
   if (hostname === "api.postcodes.io" && pathname.startsWith("/postcodes/")) {

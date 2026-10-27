@@ -102,8 +102,8 @@ type Props<Row> = {
   page: number;
   pages: number;
   pageSize: number;
-  /** The list's URL at another page. */
-  href: (page: number) => string;
+  /** The list's URL at another page; a list of one page needs none. */
+  href?: (page: number) => string;
   /** The URL of every row the list's filters find, in a format; none for a list with no downloads. */
   download?: (format: DownloadFormat) => string;
   /** The formats it offers: a spreadsheet's and JSON, and vCards for a list of people. */
@@ -183,7 +183,7 @@ export default function ListFrame<Row>({
         )}
       </div>
       <ListTable columns={columns} rows={rows} rowKey={rowKey} />
-      {pages > 1 && (
+      {pages > 1 && href && (
         <div className={styles.under}>
           <Muted>{staffCopy.paging.range(from, to, total)}</Muted>
           <Paging page={page} pages={pages} href={href} />

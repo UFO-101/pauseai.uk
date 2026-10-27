@@ -163,14 +163,10 @@ export async function listSupporters(
     );
   }
   if (filter.country) where.push(`sp.country = ANY(${add(filter.country)})`);
-  const near = filter.near && (await placeFor(filter.near.text));
-  if (filter.near) {
-    where.push(
-      near && near !== "failed"
-        ? `${milesFrom(add(near.latitude), add(near.longitude))} <= ${add(filter.near.miles)}`
-        : "false",
-    );
-  }
+  // What the Near filter's words are: a place, null for none, "failed"; or undefined with no Near filter.
+  const near = filter.near ? await placeFor(filter.near.text) : undefined;
+  if (near === null || near === "failed") where.push("false");
+  else if (near) where.push(`${milesFrom(add(near.latitude), add(near.longitude))} <= ${add(filter.near!.miles)}`);
   const column = {
     active: "s.last_active_at",
     first: "s.first_seen_at",
@@ -196,7 +192,7 @@ export async function listSupporters(
     }),
     total,
     pages: Math.max(1, Math.ceil(total / SUPPORTERS_PAGE_SIZE)),
-    ...(filter.near && { near }),
+    ...(near !== undefined && { near }),
   };
 }
 

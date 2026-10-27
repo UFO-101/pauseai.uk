@@ -89,7 +89,6 @@ export default function EmailBlocksTable({
       page={1}
       pages={1}
       pageSize={blocks.length}
-      href={() => ""}
       download={download}
       columns={blockColumns(letterLinks, unblock)}
       rows={blocks}

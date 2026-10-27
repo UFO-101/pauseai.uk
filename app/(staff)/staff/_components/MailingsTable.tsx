@@ -68,7 +68,6 @@ export default function MailingsTable({ mailings }: { mailings: MailingSummary[]
       page={1}
       pages={1}
       pageSize={mailings.length}
-      href={() => ""}
       download={(format) => `/staff/mailings/download?format=${format}`}
       columns={mailingColumns}
       rows={mailings}

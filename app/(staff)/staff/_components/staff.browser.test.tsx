@@ -12,25 +12,25 @@ import type { AnyImportRun, ControlAiImport, MpCheck, PoliticianSync } from "@/l
 import type { StaffAccount } from "@/lib/server/staff-accounts";
 import ChangesTable from "./ChangesTable";
 import EmailBlockFilters from "./EmailBlockFilters";
-import EmailBlocksTable from "./EmailBlocksTable";
+import EmailBlocksTable, { blockColumns } from "./EmailBlocksTable";
 import { exampleBlock, exampleComplaint, exampleProblems } from "./EmailBlocksTable.examples";
 import EmailProblemsTable from "./EmailProblemsTable";
 import { exampleChanges } from "./ChangesTable.examples";
-import LettersTable from "./LettersTable";
+import LettersTable, { LettersList, letterColumns } from "./LettersTable";
 import { exampleLetter } from "./LettersTable.examples";
 import JobActions from "./JobActions";
 import LoginCard from "./LoginCard";
 import LoginForm from "./LoginForm";
 import PoliticianDetails from "./PoliticianDetails";
 import PoliticianFilters from "./PoliticianFilters";
-import PoliticianTable from "./PoliticianTable";
+import PoliticianTable, { politicianColumns, politicianContact } from "./PoliticianTable";
 import {
   exampleAsks,
   exampleAsksWithCounts,
   examplePolitician,
   examplePoliticianHistory,
 } from "./PoliticianTable.examples";
-import AsksTable from "./AsksTable";
+import AsksTable, { askColumns } from "./AsksTable";
 import ResultBox, { OPEN_UP_TO } from "./ResultBox";
 import { ImportJobPage, ImportOverview } from "./ImportJob";
 import RunList from "./RunList";
@@ -62,7 +62,7 @@ import DeletePolitician from "./DeletePolitician";
 import PoliticiansList, { HouseTabs } from "./PoliticiansList";
 import { emptyPoliticiansSearch, examplePoliticiansPage } from "./PoliticianTable.examples";
 import MailingDetails from "./MailingDetails";
-import MailingsTable from "./MailingsTable";
+import MailingsTable, { mailingColumns } from "./MailingsTable";
 import { exampleMailing, exampleMailings } from "./MailingsTable.examples";
 import ImportCard, { ImportCards } from "./ImportCard";
 import DevLogin from "./DevLogin";
@@ -72,12 +72,13 @@ import SortHeading from "./SortHeading";
 import StaffAccountsTable from "./StaffAccountsTable";
 import EraseForm from "./EraseForm";
 import ErasedNotice from "./ErasedNotice";
-import SubscriptionBadges from "./SubscriptionBadges";
-import SupporterBadges from "./SupporterBadges";
+import SubscriptionBadges, { subscriptionWords } from "./SubscriptionBadges";
+import SupporterBadges, { supporterBadgeWords } from "./SupporterBadges";
 import SupporterDetails from "./SupporterDetails";
 import SupporterFilters from "./SupporterFilters";
 import LetterFilters from "./LetterFilters";
-import SupportersTable from "./SupportersTable";
+import SupportersTable, { supporterContact } from "./SupportersTable";
+import type { ListColumn } from "./ui/ListFrame";
 import {
   exampleBlockedPermissions,
   exampleMemberDetails,
@@ -2573,6 +2574,25 @@ describe("SupportersTable", () => {
       .toHaveAttribute("href", "/staff/supporters?q=j&page=3");
   });
 
+  it("says where each is, faint when it's only from an event", async () => {
+    const [jane, sam] = exampleSupporterRows;
+    await render(
+      <SupportersTable
+        search={supportersSearch({})}
+        page={{
+          supporters: [
+            { ...jane, place: { name: "Leeds", basis: "postcode", given: "LS1", country: "england" } },
+            { ...sam, place: { name: "Oxford", basis: "event", given: "AI risk talk", country: null } },
+          ],
+          total: 2,
+          pages: 1,
+        }}
+      />,
+    );
+    await expect.element(page.getByRole("cell", { name: "Leeds" })).toBeVisible();
+    expect(page.getByText("Oxford").element().className).toMatch(/muted/);
+  });
+
   it("sorts by a heading, reversing when clicked again, and marks the current one", async () => {
     const copy = staffCopy.supporters;
     await render(
@@ -2816,6 +2836,15 @@ describe("SupporterDetails", () => {
             },
             {
               source: "letter",
+              at: "2026-01-03T00:00:00Z",
+              kind: "letter",
+              title: null,
+              detail: "No campaign MP",
+              href: null,
+              status: null,
+            },
+            {
+              source: "letter",
               at: "2026-01-04T00:00:00Z",
               kind: "letter-replied",
               title: null,
@@ -3053,6 +3082,111 @@ describe("EmailPermissionTiles", () => {
     );
     expect(tiles()[0].textContent).toBe(`gus@example.com: ${copy.blocked}${copy.seeBlocked}`);
     expect(tiles()).toHaveLength(2);
+  });
+});
+
+describe("the lists' paging", () => {
+  it("leads the audit log and the letters through their pages, from the first when none is given", async () => {
+    const { rerender } = await render(
+      <ChangesTable
+        log={{ changes: exampleChanges, total: 250, pages: 3, pageSize: 100 }}
+        page={2}
+        airtableTable="https://airtable.com/app/tbl"
+      />,
+    );
+    await expect
+      .element(page.getByRole("link", { name: staffCopy.paging.next }))
+      .toHaveAttribute("href", "/staff/audit-log?page=3");
+    await rerender(
+      <LettersList
+        letters={[exampleLetter]}
+        total={150}
+        pages={2}
+        pageSize={100}
+        search={{ status: "", q: "", answered: "", campaign: "", consent: "", page: "" }}
+      />,
+    );
+    await expect
+      .element(page.getByRole("link", { name: staffCopy.paging.next }))
+      .toHaveAttribute("href", "/staff/letters?page=2");
+  });
+});
+
+describe("each list's download values and contact cards", () => {
+  const values = <Row,>(columns: ListColumn<Row>[], row: Row) =>
+    Object.fromEntries(columns.filter((c) => c.text).map((c) => [c.key, c.text!(row)]));
+
+  it("asks: their kind, title, date, who asks, and each answer's count", () => {
+    expect(values(askColumns, exampleAsksWithCounts[0])).toMatchObject({ ask: exampleAsksWithCounts[0].title });
+    for (const ask of exampleAsksWithCounts) expect(typeof values(askColumns, ask).answers).toBe("string");
+  });
+
+  it("blocked addresses: whose, and the email that found them out, or nothing", () => {
+    const columns = blockColumns(false);
+    expect(values(columns, exampleBlock)).toMatchObject({
+      whose: "Bouncy McTestface MP",
+      sent: `${staffCopy.emails.letterTo} Bouncy McTestface MP`,
+    });
+    expect(values(columns, exampleComplaint).sent).toBe(staffCopy.emails.purposes["forwarded-reply"]);
+    expect(values(columns, { ...exampleComplaint, purpose: null }).sent).toBeNull();
+  });
+
+  it("letters: the campaign by its title, or its slug once it's gone, and the history", () => {
+    const row = values(letterColumns, exampleLetter);
+    expect(row.campaign).toBe(campaignBySlug(exampleLetter.campaign)?.title);
+    expect(values(letterColumns, { ...exampleLetter, campaign: "gone" }).campaign).toBe("gone");
+    expect(typeof row.history).toBe("string");
+  });
+
+  it("mailings: copied from Airtable, or no sender recorded", () => {
+    expect(exampleMailings.map((m) => values(mailingColumns, m).sender)).toEqual([null, staffCopy.mailings.imported]);
+  });
+
+  it("politicians: every column, and as cards, with what they have", () => {
+    const rows = [
+      { ...examplePolitician, firstActivityAt: "2026-09-01T00:00:00Z", lastActivityAt: "2026-10-01T00:00:00Z" },
+      {
+        ...examplePolitician,
+        id: 8,
+        house: "lords" as const,
+        email: null,
+        party: "",
+        country: null,
+        status: "retired" as const,
+      },
+    ];
+    const columns = politicianColumns(rows, exampleAsks, { status: "any" });
+    expect(values(columns, rows[0])).toMatchObject({
+      house: staffCopy.houses.commons,
+      party: examplePolitician.party,
+      status: staffCopy.personStatuses.in_office,
+      first: "2026-09-01T00:00:00Z",
+      active: "2026-10-01T00:00:00Z",
+    });
+    expect(String(values(columns, rows[0]).asks)).toContain(": ");
+    const card = politicianContact(exampleAsks);
+    expect(card(rows[0])).toMatchObject({ emails: [examplePolitician.email], title: examplePolitician.party });
+    expect(card(rows[1])).toMatchObject({ emails: [], title: null, address: { country: null } });
+  });
+
+  it("supporters: what they are, what they get, and as cards, with what they have", () => {
+    const [jane, sam, gus] = exampleSupporterRows;
+    expect(supporterBadgeWords({ ...sam, lumaContact: true, events: 1, letters: 1 })).toBe(
+      Object.values({
+        m: staffCopy.supporters.badges.member,
+        c: staffCopy.supporters.badges.lumaContact,
+        r: staffCopy.supporters.badges.registered,
+        l: staffCopy.supporters.badges.letter,
+      }).join("; "),
+    );
+    expect(subscriptionWords(sam.permissions)).toContain(staffCopy.supporters.subscriptions.unsure(""));
+    expect(subscriptionWords(gus.permissions)).toBe(staffCopy.supporters.subscriptions.blocked);
+    const placed = { ...jane, place: { name: "Leeds", basis: "postcode" as const, given: "LS1", country: "england" } };
+    expect(supporterContact(placed)).toMatchObject({
+      phones: [jane.phone],
+      address: { locality: "Leeds", country: staffCopy.countries.england },
+    });
+    expect(supporterContact({ ...sam, email: null, place: null })).toMatchObject({ phones: [], emails: sam.emails });
   });
 });
 
