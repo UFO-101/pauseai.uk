@@ -4,7 +4,8 @@
 // plain text itself, so nothing else can get into a letter.
 //
 // Campaign letters are written with a little markup (lib/content/
-// email-your-mp.ts): a blank line between paragraphs, **bold**, _italic_, and
+// email-your-mp.ts): a blank line between paragraphs (spaces on it are
+// ignored), **bold**, _italic_, and
 // lines starting "- " for a bullet list.
 
 export type Mark = { type: "bold" | "italic" };
@@ -39,7 +40,7 @@ function lines(text: string[]): Inline[] {
 /** A campaign's letter, written with the markup above, as the editor's document. */
 export function docFromMarkup(markup: string): LetterDoc {
   const content = markup
-    .split(/\n{2,}/)
+    .split(/\n[ \t]*\n\s*/)
     .filter((part) => part.trim())
     .map((part): Block => {
       const partLines = part.split("\n");

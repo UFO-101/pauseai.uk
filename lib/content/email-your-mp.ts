@@ -98,7 +98,9 @@ AI now poses an extremely serious risk to our national security. Parliamentarian
 
 **The UK has no specific legal standards for frontier AI safety.** No regulator oversees frontier AI development. And UK law does not reliably hold developers liable for damage or deaths caused by their models, even when the danger is predictable, preventable and uniquely enabled by AI.
 
-Please could you add your name to PauseAI's open letter (attached) in support of frontier AI legislation? ⁂ To sign, just send a quick email to ${site.contactEmail}. And could we arrange a short meeting to discuss this important matter?
+Please could you add your name to PauseAI's open letter (attached) in support of frontier AI legislation? To sign, just send a quick email to ${site.contactEmail}.
+
+I would also like you to arrange a short meeting to discuss this important matter.
 
 Thank you for your consideration,
 

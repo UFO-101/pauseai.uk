@@ -31,6 +31,12 @@ describe("docFromMarkup", () => {
     );
     expect(docFromMarkup("- ")).toEqual(doc(list([p()])));
   });
+
+  it("takes a line of only spaces between paragraphs as a blank one", () => {
+    expect(docFromMarkup("One. \n \nTwo.\n\t\n\nThree.")).toEqual(
+      doc(p(text("One. ")), p(text("Two.")), p(text("Three."))),
+    );
+  });
 });
 
 describe("checkDoc", () => {

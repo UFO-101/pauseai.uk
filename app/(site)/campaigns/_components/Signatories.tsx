@@ -14,7 +14,7 @@ export default function Signatories() {
           How to sign
         </h2>
         <p className={styles.howToSignText}>
-          ⁂ If you&rsquo;re an MP or a member of the House of Lords and would like to add your name to this letter,
+          If you&rsquo;re an MP or a member of the House of Lords and would like to add your name to this letter,
           please send us a quick email at <a href={`mailto:${site.contactEmail}`}>{site.contactEmail}</a>.
         </p>
         <p className={styles.pressNote}>
