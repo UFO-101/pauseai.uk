@@ -1,6 +1,6 @@
 import { beforeEach, expect, it, vi } from "vitest";
 import { describeWithDatabase, useTestDatabase } from "@/tests/database";
-import { expectRedirect, requestCookies } from "@/tests/next-headers";
+import { expectRedirect, requestCookies, requestHeaders } from "@/tests/next-headers";
 import { query } from "./db";
 import {
   createSession,
@@ -134,5 +134,15 @@ describeWithDatabase("staff sessions", () => {
     expect(await expectRedirect(requireStaff)).toBe("/staff/login");
     requestCookies.set("staff_session", "made-up");
     expect(await expectRedirect(requireStaff)).toBe("/staff/login");
+  });
+
+  it("requireStaff sends someone whose session has ended to the login page, to come back to the page they asked for", async () => {
+    requestCookies.set("staff_session", "ended");
+    requestHeaders.set("x-staff-path", "/staff/letters?page=2");
+    try {
+      expect(await expectRedirect(requireStaff)).toBe("/staff/login?next=%2Fstaff%2Fletters%3Fpage%3D2");
+    } finally {
+      requestHeaders.delete("x-staff-path");
+    }
   });
 });

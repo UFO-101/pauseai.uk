@@ -22,6 +22,30 @@ SET client_min_messages = warning;
 SET row_security = off;
 
 --
+-- Name: pg_trgm; Type: EXTENSION; Schema: -; Owner: -
+--
+
+CREATE EXTENSION IF NOT EXISTS pg_trgm WITH SCHEMA public;
+
+--
+-- Name: EXTENSION pg_trgm; Type: COMMENT; Schema: -; Owner: -
+--
+
+COMMENT ON EXTENSION pg_trgm IS 'text similarity measurement and index searching based on trigrams';
+
+--
+-- Name: unaccent; Type: EXTENSION; Schema: -; Owner: -
+--
+
+CREATE EXTENSION IF NOT EXISTS unaccent WITH SCHEMA public;
+
+--
+-- Name: EXTENSION unaccent; Type: COMMENT; Schema: -; Owner: -
+--
+
+COMMENT ON EXTENSION unaccent IS 'text search dictionary that removes accents';
+
+--
 -- Name: email_permission(text, text); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -581,7 +605,6 @@ CREATE TABLE public.pauseai_letters (
     mailing_id bigint NOT NULL,
     airtable_id text,
     personalised boolean DEFAULT false NOT NULL,
-    ai_generated boolean DEFAULT false NOT NULL,
     CONSTRAINT pauseai_letters_kind_check CHECK ((kind = 'pauseai'::text))
 );
 
@@ -598,7 +621,6 @@ CREATE TABLE public.politicians (
     test_postcode text,
     kind text DEFAULT 'politician'::text NOT NULL,
     country text,
-    city text,
     CONSTRAINT politicians_country_check CHECK ((country = ANY (ARRAY['england'::text, 'scotland'::text, 'wales'::text, 'northern-ireland'::text]))),
     CONSTRAINT politicians_house_check CHECK ((house = ANY (ARRAY['commons'::text, 'lords'::text, 'scottish-parliament'::text, 'senedd'::text, 'ni-assembly'::text, 'other'::text]))),
     CONSTRAINT politicians_kind_check CHECK ((kind = 'politician'::text)),
@@ -632,7 +654,8 @@ CREATE TABLE public.staff_login_links (
     expires_at timestamp with time zone NOT NULL,
     used_at timestamp with time zone,
     browser_hash text,
-    remember boolean DEFAULT false NOT NULL
+    remember boolean DEFAULT false NOT NULL,
+    next text DEFAULT '/staff'::text NOT NULL
 );
 
 --

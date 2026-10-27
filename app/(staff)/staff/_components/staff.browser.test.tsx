@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { render } from "vitest-browser-react";
 import { page, userEvent } from "vitest/browser";
 import { ASK_STATUSES } from "@/lib/asks";
-import { navigation } from "@/tests/browser/navigation";
+import { campaignBySlug } from "@/lib/email-your-mp";
 import { campaigns } from "@/lib/content/email-your-mp";
 import { campaignPath } from "@/lib/email-your-mp";
 import { importPath } from "@/lib/import-runs";
@@ -58,6 +58,13 @@ import AccountsNotice from "./AccountsNotice";
 import Alert from "./Alert";
 import Breadcrumb from "./Breadcrumb";
 import EraseLink from "./EraseLink";
+import DeletePolitician from "./DeletePolitician";
+import ListCount from "./ListCount";
+import PoliticiansList, { HouseTabs } from "./PoliticiansList";
+import { emptyPoliticiansSearch, examplePoliticiansPage } from "./PoliticianTable.examples";
+import MailingDetails from "./MailingDetails";
+import MailingsTable from "./MailingsTable";
+import { exampleMailing, exampleMailings } from "./MailingsTable.examples";
 import ImportCard, { ImportCards } from "./ImportCard";
 import DevLogin from "./DevLogin";
 import KeepSignedIn from "./KeepSignedIn";
@@ -498,6 +505,11 @@ describe("DevLogin", () => {
     expect(getComputedStyle(box.element()).borderTopStyle).toBe("dashed");
   });
 
+  it("passes on the page to go to once logged in", async () => {
+    await render(<DevLogin accounts={[{ email: "jo@pauseai.uk", description: "no account" }]} next="/staff/letters" />);
+    expect(document.querySelector<HTMLInputElement>('input[name="next"]')!.value).toBe("/staff/letters");
+  });
+
   it("is nothing outside a fixture build, where there are no accounts to offer", async () => {
     await render(<DevLogin accounts={undefined} />);
     await expect.element(page.getByRole("region", { name: staffCopy.devLogin.title })).not.toBeInTheDocument();
@@ -751,6 +763,193 @@ describe("EraseLink", () => {
   });
 });
 
+describe("ListCount", () => {
+  it("says how many faintly, and nothing when there are none", async () => {
+    const { rerender } = await render(<ListCount total={3}>3 things</ListCount>);
+    await expect.element(page.getByText("3 things")).toBeVisible();
+    await rerender(<ListCount total={0}>0 things</ListCount>);
+    await expect.element(page.getByText("0 things")).not.toBeInTheDocument();
+  });
+});
+
+describe("HouseTabs", () => {
+  it("is a tab per house and All, keeping the filters but the page, the house chosen marked", async () => {
+    await render(<HouseTabs search={{ ...emptyPoliticiansSearch, q: "jo", house: "lords", page: "3" }} />);
+    const tabs = page.getByRole("navigation", { name: staffCopy.fields.house });
+    await expect
+      .element(tabs.getByRole("link", { name: staffCopy.politicians.allHouses }))
+      .toHaveAttribute("href", "/staff/politicians?q=jo");
+    const lords = tabs.getByRole("link", { name: staffCopy.houses.lords });
+    await expect.element(lords).toHaveAttribute("aria-current", "page");
+    await expect
+      .element(tabs.getByRole("link", { name: staffCopy.houses.senedd }))
+      .toHaveAttribute("href", "/staff/politicians?q=jo&house=senedd");
+  });
+
+  it("marks All for no house, or one it doesn't know", async () => {
+    await render(<HouseTabs search={{ ...emptyPoliticiansSearch, house: "hogwarts" }} />);
+    await expect
+      .element(page.getByRole("link", { name: staffCopy.politicians.allHouses }))
+      .toHaveAttribute("aria-current", "page");
+  });
+});
+
+describe("PoliticiansList", () => {
+  const copy = staffCopy.politicians;
+  const search = { ...emptyPoliticiansSearch, q: "pol", page: "2" };
+
+  it("is the count, the table and the pages, and links to those the search finds elsewhere", async () => {
+    await render(
+      <PoliticiansList
+        list={{ ...examplePoliticiansPage, total: 150, page: 2, pages: 2, outOfOffice: 3, otherHouses: 2 }}
+        search={search}
+        asks={exampleAsks}
+      />,
+    );
+    await expect.element(page.getByText(copy.count(150, 2, 2))).toBeVisible();
+    await expect.element(page.getByRole("link", { name: "Polly Placeholder" })).toBeVisible();
+    await expect
+      .element(page.getByRole("link", { name: staffCopy.paging.previous }))
+      .toHaveAttribute("href", "/staff/politicians?q=pol");
+    await expect
+      .element(page.getByRole("link", { name: copy.otherHouses(2) }))
+      .toHaveAttribute("href", "/staff/politicians?q=pol");
+    await expect
+      .element(page.getByRole("link", { name: copy.outOfOffice(3) }))
+      .toHaveAttribute("href", "/staff/politicians?q=pol&status=any");
+  });
+
+  it("offers the nearest names when a search finds no one, and nothing more when there's nothing", async () => {
+    const { rerender } = await render(
+      <PoliticiansList
+        list={{ ...examplePoliticiansPage, politicians: [], total: 0, closest: examplePoliticiansPage.politicians }}
+        search={search}
+        asks={exampleAsks}
+      />,
+    );
+    await expect.element(page.getByText(copy.closest)).toBeVisible();
+    await expect.element(page.getByRole("link", { name: "Polly Placeholder" })).toBeVisible();
+    await rerender(
+      <PoliticiansList list={{ ...examplePoliticiansPage, politicians: [], total: 0 }} search={search} asks={[]} />,
+    );
+    await expect.element(page.getByText(copy.none)).toBeVisible();
+    expect(page.getByRole("link").all()).toHaveLength(0);
+  });
+});
+
+describe("MailingsTable", () => {
+  const copy = staffCopy.mailings;
+  const cells = (title: string) =>
+    page
+      .getByRole("row")
+      .filter({ hasText: title })
+      .getByRole("cell")
+      .all()
+      .map((c) => c.element().textContent);
+
+  it("lists each mailing: its page, its ask's politicians, where it came from, when, and its counts", async () => {
+    await render(<MailingsTable mailings={exampleMailings} />);
+    expect(cells("Edinburgh")).toEqual([
+      "Edinburgh Conference Nov 26 Invitation",
+      "Edinburgh conference",
+      copy.imported,
+      "1 Oct 2026",
+      "2",
+      "1",
+      "1",
+      "1",
+    ]);
+    expect(cells("Ben Lake")).toEqual([
+      "Ben Lake October 2026 Debate",
+      "–",
+      copy.notRecorded,
+      copy.notSent,
+      "–",
+      "–",
+      "–",
+      "–",
+    ]);
+    await expect
+      .element(page.getByRole("link", { name: "Edinburgh Conference Nov 26 Invitation" }))
+      .toHaveAttribute("href", "/staff/mailings/2");
+    await expect
+      .element(page.getByRole("link", { name: "Edinburgh conference" }))
+      .toHaveAttribute("href", "/staff/politicians?ask=edinburgh-conference-2026");
+  });
+
+  it("says when there are none", async () => {
+    await render(<MailingsTable mailings={[]} />);
+    await expect.element(page.getByText(copy.none)).toBeVisible();
+  });
+});
+
+describe("MailingDetails", () => {
+  const copy = staffCopy.mailings;
+
+  it("is what the mailing was, that it has no text, and each recipient's outcome, linked to them", async () => {
+    const { rerender } = await render(<MailingDetails mailing={exampleMailing} />);
+    await expect.element(page.getByRole("heading", { level: 1 })).toHaveTextContent(exampleMailing.title);
+    await expect.element(page.getByText(copy.counts(2, 1))).toBeVisible();
+    await expect.element(page.getByText(copy.noText)).toBeVisible();
+    await expect.element(page.getByText(copy.imported)).toBeVisible();
+    await expect
+      .element(page.getByRole("link", { name: "Edinburgh conference" }))
+      .toHaveAttribute("href", "/staff/politicians?ask=edinburgh-conference-2026");
+    const cells = (name: string) =>
+      page
+        .getByRole("row")
+        .filter({ hasText: name })
+        .getByRole("cell")
+        .all()
+        .map((c) => c.element().textContent);
+    expect(cells("Polly")).toEqual([
+      "Polly Placeholder",
+      staffCopy.letters.status.sent,
+      "1 Oct 2026",
+      "3 Oct 2026",
+      copy.personalised,
+    ]);
+    expect(cells("Morag")[4]).toBe(copy.asWritten);
+    expect(cells("Dora")).toEqual(["Dora Dummy", staffCopy.letters.status.not_sent, "–", "–", copy.asWritten]);
+    await expect
+      .element(page.getByRole("link", { name: "Morag Example" }))
+      .toHaveAttribute("href", "/staff/politicians/8");
+    // A status nobody knows any more, as it's stored.
+    await rerender(
+      <MailingDetails
+        mailing={{ ...exampleMailing, recipients: [{ ...exampleMailing.recipients[0], status: "queued" }] }}
+      />,
+    );
+    expect(cells("Polly")[1]).toBe("queued");
+  });
+
+  it("says when there's no ask, and when it isn't sent yet", async () => {
+    await render(<MailingDetails mailing={{ ...exampleMailings[0], recipients: [] }} />);
+    await expect.element(page.getByText(copy.noAsk)).toBeVisible();
+    await expect.element(page.getByText(copy.notSent)).toBeVisible();
+    await expect.element(page.getByText(copy.imported)).not.toBeInTheDocument();
+  });
+});
+
+describe("DeletePolitician", () => {
+  it("is the red button with its note, opening a box that asks to be sure, whose button sends their ID", async () => {
+    const { fn, sent } = action();
+    await render(<DeletePolitician politician={{ id: 7, name: "Polly Placeholder" }} action={fn} />);
+    const copy = staffCopy.politician.delete;
+    await expect.element(page.getByText(copy.note)).toBeVisible();
+    await expect.element(page.getByText(copy.sure("Polly Placeholder"))).not.toBeVisible();
+    await page.getByRole("button", { name: copy.button, exact: true }).click();
+    await expect.element(page.getByText(copy.sure("Polly Placeholder"))).toBeVisible();
+    await page.getByRole("button", { name: copy.confirm }).click();
+    await expect.poll(() => sent).toEqual([{ politicianId: "7" }]);
+  });
+
+  it("is nothing for a politician who can't be deleted", async () => {
+    await render(<DeletePolitician politician={{ id: 7, name: "Polly" }} deletable={false} action={vi.fn()} />);
+    expect(page.getByRole("button").all()).toHaveLength(0);
+  });
+});
+
 describe("SortHeading", () => {
   it("links to the sort, and marks the current one with its direction", async () => {
     await render(
@@ -834,6 +1033,12 @@ describe("LoginForm", () => {
     await expect.element(page.getByRole("checkbox", { name: staffCopy.login.keep })).not.toBeChecked();
     await expect.element(page.getByText(staffCopy.login.failed)).not.toBeInTheDocument();
     await expect.element(page.getByText(staffCopy.login.elsewhere)).not.toBeInTheDocument();
+    expect(document.querySelector('input[name="next"]')).toBeNull();
+  });
+
+  it("passes on the page to go to once logged in", async () => {
+    await render(<LoginForm next="/staff/letters" />);
+    expect(document.querySelector<HTMLInputElement>('input[name="next"]')!.value).toBe("/staff/letters");
   });
 
   it("says why the last link didn't work", async () => {
@@ -863,37 +1068,62 @@ describe("PoliticianDetails", () => {
   };
 
   it("heads the page with their name and Airtable's markers, and a card of what's known beside one of asks", async () => {
-    await render(
+    const { rerender } = await render(
       <PoliticianDetails politician={{ ...MP, airtableId: null, email: null }} unblock={vi.fn()} {...none} />,
     );
     await expect
       .element(page.getByRole("heading", { level: 1 }))
       .toHaveTextContent(`${MP.name}${staffCopy.politician.importantTarget}`);
-    const facts = page.getByRole("definition").all();
-    expect(facts.map((d) => d.element().textContent)).toEqual([
-      staffCopy.personStatuses.in_office,
-      MP.constituency,
-      MP.party,
-      staffCopy.countries.england,
-      MP.city,
-      staffCopy.politicians.noEmail,
-      MP.salutation,
-      MP.notes,
-      staffCopy.politician.sources.staff,
+    // The party, status and country with their icons; the constituency is in the heading.
+    const icons = [...document.querySelectorAll("small")].map((small) => small.parentElement!.textContent);
+    expect(icons).toEqual([
+      `${staffCopy.fields.party}${MP.party}`,
+      `${staffCopy.politician.status}${staffCopy.personStatuses.in_office}`,
+      `${staffCopy.politician.country}${staffCopy.countries.england}`,
     ]);
+    expect(document.querySelectorAll("svg[aria-hidden]")).toHaveLength(2);
+    // How to write to them, then the notes, then where they came from.
+    const facts = page.getByRole("definition").all();
+    expect(facts.map((d) => d.element().textContent)).toEqual([staffCopy.politicians.noEmail, MP.salutation]);
+    await expect.element(page.getByRole("heading", { name: staffCopy.politician.writing })).toBeVisible();
+    await expect
+      .element(page.getByText(`${staffCopy.politician.source} ${staffCopy.politician.sources.staff}`))
+      .toBeVisible();
     // The notes keep their lines.
     expect(getComputedStyle(page.getByText(/example fair/).element()).whiteSpace).toBe("pre-line");
     await expect.element(page.getByRole("region", { name: staffCopy.politician.statusesTitle })).toBeVisible();
     await expect.element(page.getByText(staffCopy.politician.noHistory)).toBeVisible();
     // A personal connection is a tag too; none of the rest is there for someone without them.
-    await render(
+    await rerender(
       <PoliticianDetails
-        politician={{ ...MP, importantTarget: false, personalConnection: true, country: null, city: null, notes: "" }}
+        politician={{ ...MP, importantTarget: false, personalConnection: true, country: null, notes: "" }}
         unblock={vi.fn()}
         {...none}
       />,
     );
     await expect.element(page.getByText(staffCopy.politician.personalConnection)).toBeVisible();
+    await expect.element(page.getByRole("heading", { name: staffCopy.politician.notes })).not.toBeInTheDocument();
+  });
+
+  it("links their address, to write to them, and has no party, country or salutation for someone with none", async () => {
+    await render(
+      <PoliticianDetails
+        politician={{ ...MP, party: "", country: null, status: "retired", salutation: "" }}
+        unblock={vi.fn()}
+        {...none}
+      />,
+    );
+    await expect.element(page.getByRole("link", { name: MP.email! })).toHaveAttribute("href", `mailto:${MP.email}`);
+    expect([...document.querySelectorAll("small")].map((small) => small.textContent)).toEqual([
+      staffCopy.politician.status,
+    ]);
+    // No salutation, no line for it.
+    expect(
+      page
+        .getByRole("term")
+        .all()
+        .map((dt) => dt.element().textContent),
+    ).toEqual([staffCopy.fields.email]);
   });
 
   it("sends Airtable's politicians to Airtable, saying if their record has gone; each says where they came from", async () => {
@@ -907,12 +1137,10 @@ describe("PoliticianDetails", () => {
       if (politician.airtableId) {
         await expect.element(record).toHaveAttribute("href", `https://airtable.com/app/tbl/${politician.airtableId}`);
         await expect.element(record).toHaveAttribute("target", "_blank");
-        await expect
-          .element(page.getByRole("definition").filter({ hasText: staffCopy.politician.editInAirtable }))
-          .toBeVisible();
+        await expect.element(page.getByText(staffCopy.politician.editInAirtable, { exact: false })).toBeVisible();
       } else {
         await expect.element(record).not.toBeInTheDocument();
-        await expect.element(page.getByText(source)).toBeVisible();
+        await expect.element(page.getByText(`${staffCopy.politician.source} ${source}`)).toBeVisible();
         expect(page.getByRole("heading", { level: 1 }).element().textContent).toBe(
           `${MP.name}${staffCopy.politicians.testMp}`,
         );
@@ -943,15 +1171,20 @@ describe("PoliticianDetails", () => {
   });
 
   it("tells one history of the letters to them, the replies, and what the audit log says about them, newest first", async () => {
-    // A peer: no constituency, country, city or notes, so no line for them.
-    const peer = { ...MP, constituency: null, country: null, city: null, notes: "" };
-    const fromPauseai = { mailing: "Example Mailing", status: "sent", personalised: false, aiGenerated: false };
+    // A peer: no constituency, country or notes, so no line for them.
+    const peer = { ...MP, constituency: null, country: null, notes: "" };
+    const fromPauseai = {
+      mailingId: 3,
+      mailing: "Example Mailing",
+      status: "sent",
+      personalised: false,
+    };
     await render(
       <PoliticianDetails
         {...none}
         pauseaiLetters={[
           { ...fromPauseai, id: 11, at: "2026-10-03T08:00:00Z", personalised: true },
-          { ...fromPauseai, id: 12, at: "2026-09-02T08:00:00Z", aiGenerated: true },
+          { ...fromPauseai, id: 12, at: "2026-09-02T08:00:00Z" },
           { ...fromPauseai, id: 13, at: "2026-06-01T08:00:00Z" },
         ]}
         politician={peer}
@@ -1010,7 +1243,13 @@ describe("PoliticianDetails", () => {
             action: "set status",
             details: { politicianId: 7, ask: "an-old-ask", status: "signed", note: "" },
           },
-          { id: 6, at: "2026-08-10T10:00:00Z", actor: "postmark", action: "block address", details: { kind: "weird" } },
+          {
+            id: 6,
+            at: "2026-08-10T10:00:00Z",
+            actor: "postmark",
+            action: "block address",
+            details: { address: "polly@example.org", kind: "weird" },
+          },
           { id: 5, at: "2026-08-01T10:00:00Z", actor: "x", action: "strange", details: {} },
           {
             id: 9,
@@ -1030,13 +1269,7 @@ describe("PoliticianDetails", () => {
       />,
     );
     const facts = page.getByRole("definition").all();
-    expect(facts.map((d) => d.element().textContent)).toEqual([
-      staffCopy.personStatuses.in_office,
-      MP.party,
-      MP.email,
-      MP.salutation,
-      `${staffCopy.politician.sources.airtable}${staffCopy.politician.editInAirtable}`,
-    ]);
+    expect(facts.map((d) => d.element().textContent)).toEqual([MP.email, MP.salutation]);
     // The sender leads to their supporter once they're one; the letters and replies sit among the audit log's entries by time.
     await expect
       .element(page.getByRole("link", { name: exampleLetter.senderName }))
@@ -1048,25 +1281,40 @@ describe("PoliticianDetails", () => {
     const copy = staffCopy.politician.history;
     expect(history.map((item) => item.element().textContent)).toEqual([
       `2026-10-15 09:00${copy["letter-replied"]} Anon Writer · ${pm.title}`,
-      `2026-10-14 09:30${copy["unblock address"]} Fixed in Airtable · jo@pauseai.uk`,
+      `2026-10-14 09:30${copy["unblock address"]} polly.placeholder.mp@parliament.uk · Fixed in Airtable · jo@pauseai.uk`,
       `2026-10-13 08:00${copy.letter} Anon Writer · ${pm.title} · ${staffCopy.letters.status.sent}`,
-      `2026-10-12 09:10${copy["block address"]} ${staffCopy.emails.kinds.hard} · postmark`,
+      `2026-10-12 09:10${copy["block address"]} polly.placeholder.mp@parliament.uk · ${staffCopy.emails.kinds.hard} · postmark`,
       `2026-10-12 09:00${copy.letter} ${exampleLetter.senderName} · ${pm.title} · ${staffCopy.letters.status.bounced}`,
       `2026-10-03 08:00${copy["pauseai-letter"]} Example Mailing · ${staffCopy.politician.personalised}`,
       // Dated the day before it was recorded, so on that day.
       `2026-10-01${statusLine(staffCopy.politician.statusSet(staffCopy.statuses.signed), ask("frontier-ai-letter").title)} · Told us at the march · jo@pauseai.uk`,
       `2026-09-30 10:00${copy["edit politician"]} Polly Placeholder · polly.placeholder.mp@parliament.uk · sam@pauseai.uk`,
-      `2026-09-02 08:00${copy["pauseai-letter"]} Example Mailing · ${staffCopy.politician.aiGenerated}`,
+      `2026-09-02 08:00${copy["pauseai-letter"]} Example Mailing`,
       `2026-09-01 10:00${statusLine(staffCopy.politician.statusCleared, "gone")} · jo@pauseai.uk`,
       `2026-08-15 10:00${statusLine(staffCopy.politician.statusSet("odd"), pm.title)} · jo@pauseai.uk`,
       `2026-08-12 10:00${statusLine(staffCopy.politician.statusSet(staffCopy.statuses.signed), "an-old-ask")} · airtable`,
-      `2026-08-10 10:00${copy["block address"]} weird · postmark`,
+      `2026-08-10 10:00${copy["block address"]} polly@example.org · weird · postmark`,
       "2026-08-01 10:00strange  · x",
       `2026-07-20 10:00${copy["edit politician"]} Polly Placeholder · ${staffCopy.fields.party} Labour → Labour (Co-op) · sync`,
       `2026-07-15 10:00${copy["add politician"]} Polly Placeholder · import`,
       `2026-07-01 08:00${copy.letter} Old Writer · old-campaign · queued`,
       `2026-06-01 08:00${copy["pauseai-letter"]} Example Mailing`,
     ]);
+    // An answer leads to everyone who gave it, the ask to the letter as in the asks card, PauseAI's email to its
+    // mailing, an address to its block.
+    const historyList = page.getByRole("list", { name: staffCopy.politician.historyTitle });
+    await expect
+      .element(historyList.getByRole("link", { name: staffCopy.statuses.signed }).first())
+      .toHaveAttribute("href", "/staff/politicians?ask=frontier-ai-letter&answer=signed");
+    await expect
+      .element(historyList.getByRole("link", { name: ask("frontier-ai-letter").title }))
+      .toHaveAttribute("href", ask("frontier-ai-letter").url!);
+    await expect
+      .element(page.getByRole("link", { name: "Example Mailing" }).first())
+      .toHaveAttribute("href", "/staff/mailings/3");
+    await expect
+      .element(page.getByRole("link", { name: "polly@example.org" }))
+      .toHaveAttribute("href", "/staff/politicians/blocked-emails?q=polly%40example.org");
     // Each letter's status leads to it alone on the letters page.
     await expect
       .element(page.getByRole("link", { name: staffCopy.letters.status.bounced }))
@@ -1297,13 +1545,13 @@ describe("PoliticianDetails", () => {
     await expect
       .element(notice.getByRole("link", { name: copy.wrong.link }))
       .toHaveAttribute("href", "/staff/import-data/politicians");
-    // The address is in bold in the strip, and in the facts it's just the address.
+    // The address is in bold in the strip, and in the facts a link to write to it.
     expect(
       page
         .getByText(MP.email!, { exact: true })
         .all()
         .map((el) => el.element().tagName),
-    ).toEqual(["STRONG", "DD"]);
+    ).toEqual(["STRONG", "A"]);
     await page.getByLabelText(staffCopy.emails.note).fill("Fixed in Airtable");
     await page.getByRole("button", { name: staffCopy.emails.unblock }).click();
     await vi.waitFor(() => expect(sent).toEqual([{ address: MP.email, note: "Fixed in Airtable" }]));
@@ -1419,39 +1667,6 @@ describe("EmailProblemsTable", () => {
   it("says when there are none", async () => {
     await render(<EmailProblemsTable problems={[]} letterLinks />);
     await expect.element(page.getByText(staffCopy.emails.noProblems)).toBeVisible();
-  });
-});
-
-describe("EmailBlockFilters", () => {
-  it("is a GET form to its page, filled in with the current filters", async () => {
-    await render(<EmailBlockFilters q="example.org" kind="complaint" action="/staff/politicians/blocked-emails" />);
-    await expect
-      .element(page.getByRole("searchbox", { name: staffCopy.emails.columns.address }))
-      .toHaveValue("example.org");
-    await expect.element(page.getByRole("combobox", { name: staffCopy.emails.columns.kind })).toHaveValue("complaint");
-    const form = page.getByRole("combobox").element().closest("form")!;
-    expect(form.getAttribute("method")).toBe("get");
-    expect(form.getAttribute("action")).toBe("/staff/politicians/blocked-emails");
-  });
-});
-
-describe("StaffFilters", () => {
-  const filters = <EmailBlockFilters q="" kind="hard" action="/staff/supporters/blocked-emails" />;
-
-  it("applies a select as soon as it's changed, leaving blank filters out of the URL", async () => {
-    await render(filters);
-    await page.getByRole("combobox").selectOptions("complaint");
-    await vi.waitFor(() => expect(navigation.pushed).toEqual(["/staff/supporters/blocked-emails?kind=complaint"]));
-    await page.getByRole("combobox").selectOptions("");
-    await vi.waitFor(() => expect(navigation.pushed.at(-1)).toBe("/staff/supporters/blocked-emails"));
-  });
-
-  it("waits for the button to search, not each key typed", async () => {
-    await render(filters);
-    await userEvent.fill(page.getByRole("searchbox"), "bob@");
-    expect(navigation.pushed).toEqual([]);
-    await page.getByRole("button", { name: staffCopy.search }).click();
-    await vi.waitFor(() => expect(navigation.pushed).toEqual(["/staff/supporters/blocked-emails?q=bob%40&kind=hard"]));
   });
 });
 
@@ -1609,58 +1824,6 @@ describe("ImportJobPage", () => {
   });
 });
 
-describe("PoliticianFilters", () => {
-  const search = {
-    q: "blake",
-    house: "lords",
-    status: "retired",
-    party: "Labour",
-    flag: "important",
-    ask: "edinburgh-conference-2026",
-    answer: "declined",
-    sort: "asks",
-    dir: "asc",
-  };
-
-  it("is a GET form to the list, filled in with the current filters and keeping the sort", async () => {
-    await render(<PoliticianFilters search={search} asks={exampleAsks} parties={["Green", "Labour"]} />);
-    const copy = staffCopy.politicians;
-    await expect.element(page.getByRole("searchbox")).toHaveValue("blake");
-    const select = (name: string) => page.getByRole("combobox", { name, exact: true });
-    const options = (name: string) => [...(select(name).element() as HTMLSelectElement).options].map((o) => o.value);
-    for (const [label, value] of [
-      [staffCopy.fields.house, "lords"],
-      [staffCopy.fields.party, "Labour"],
-      [copy.status, "retired"],
-      [copy.ask, "edinburgh-conference-2026"],
-      [copy.answer, "declined"],
-      [copy.flag, "important"],
-    ]) {
-      await expect.element(select(label)).toHaveValue(value);
-    }
-    expect(options(staffCopy.fields.party)).toEqual(["", "Green", "Labour"]);
-    expect(options(copy.ask)).toEqual(["", ...exampleAsks.map((a) => a.slug)]);
-    // Every answer any ask allows, and none.
-    expect(options(copy.answer)).toEqual(["", "signed", ...ASK_STATUSES.event, "none"]);
-    const form = page.getByRole("searchbox").element().closest("form")!;
-    expect(form.getAttribute("method")).toBe("get");
-    expect(form.getAttribute("action")).toBe("/staff/politicians");
-    expect(new FormData(form).get("sort")).toBe("asks");
-    expect(new FormData(form).get("dir")).toBe("asc");
-    // Reset is the list with no filter.
-    await expect
-      .element(page.getByRole("link", { name: staffCopy.resetFilters }))
-      .toHaveAttribute("href", "/staff/politicians");
-  });
-
-  it("sends no sort when the list has its default one", async () => {
-    await render(<PoliticianFilters search={{ ...search, sort: "", dir: "" }} asks={[]} parties={[]} />);
-    const form = page.getByRole("searchbox").element().closest("form")!;
-    expect(new FormData(form).has("sort")).toBe(false);
-    expect(new FormData(form).has("dir")).toBe(false);
-  });
-});
-
 describe("PoliticianTable headings", () => {
   it("sort the list, the current one marked, reversing on a second click", async () => {
     await render(
@@ -1732,6 +1895,9 @@ describe("PoliticianTable", () => {
       status: "retired" as const,
       emailBlocked: true,
       house: "lords" as const,
+      constituency: null,
+      party: "Crossbench",
+      importantTarget: false,
     };
     await render(
       <PoliticianTable
@@ -1745,7 +1911,14 @@ describe("PoliticianTable", () => {
               "frontier-ai-letter": { ...MP.statuses["frontier-ai-letter"], updatedBy: "airtable" },
             },
           },
-          { ...testMp, id: 9, name: "Nora Nothing", statuses: {} },
+          {
+            ...testMp,
+            id: 9,
+            name: "Nora Nothing",
+            statuses: {},
+            personalConnection: true,
+            airtableRemovedAt: "2026-10-20T02:00:00Z",
+          },
         ]}
       />,
     );
@@ -1764,7 +1937,16 @@ describe("PoliticianTable", () => {
         .map((c) => c.element().textContent);
     // Whether they're in office, the counts of letters and replies, each heading a sort, and their answer to each
     // ask they've answered, a line each, in the asks' order, the answer in bold first.
-    expect(cells("Polly Placeholder").slice(4, 7)).toEqual([staffCopy.personStatuses.in_office, "4", "1"]);
+    const flags = staffCopy.politicians.flags;
+    expect(cells("Polly Placeholder").slice(4, 8)).toEqual([
+      staffCopy.personStatuses.in_office,
+      flags.important,
+      "4",
+      "1",
+    ]);
+    // Airtable's markers as lozenges.
+    expect(cells("Nora Nothing")[5]).toBe(`${flags.connection}${flags.removed}`);
+    expect(cells("Testy McTestface MP")[5]).toBe("");
     const answers = (name: string) =>
       page
         .getByRole("row")
@@ -1798,6 +1980,46 @@ describe("PoliticianTable", () => {
   it("says when nobody matches", async () => {
     await render(<PoliticianTable politicians={[]} asks={exampleAsks} />);
     await expect.element(page.getByText(staffCopy.politicians.none)).toBeVisible();
+  });
+
+  it("leaves out a column that's the same in every row, or blank in all of them", async () => {
+    const plain = { ...MP, importantTarget: false };
+    const headings = () => [...document.querySelectorAll("th")].map((th) => th.textContent!.replace(/ [▲▼]$/, ""));
+    const { rerender } = await render(
+      <PoliticianTable politicians={[plain, { ...plain, id: 8, name: "Other", constituency: "Ipswich" }]} asks={[]} />,
+    );
+    expect(headings()).toEqual([
+      staffCopy.fields.name,
+      staffCopy.fields.constituency,
+      staffCopy.politicians.columns.letters,
+      staffCopy.politicians.columns.replies,
+      staffCopy.politicians.columns.asks,
+    ]);
+    // A column the filters fix, however few rows: a house, a party, one status.
+    await rerender(
+      <PoliticianTable
+        politicians={[{ ...plain, constituency: null }]}
+        asks={[]}
+        search={{ house: "commons", party: "Labour (Co-op)", status: "" }}
+      />,
+    );
+    expect(headings()).toEqual([
+      staffCopy.fields.name,
+      staffCopy.politicians.columns.letters,
+      staffCopy.politicians.columns.replies,
+      staffCopy.politicians.columns.asks,
+    ]);
+    // A row on its own shows what it has, but not a blank.
+    await rerender(<PoliticianTable politicians={[{ ...plain, constituency: null }]} asks={[]} />);
+    expect(headings()).toEqual([
+      staffCopy.fields.name,
+      staffCopy.fields.house,
+      staffCopy.fields.party,
+      staffCopy.politicians.columns.status,
+      staffCopy.politicians.columns.letters,
+      staffCopy.politicians.columns.replies,
+      staffCopy.politicians.columns.asks,
+    ]);
   });
 });
 
@@ -2139,13 +2361,22 @@ describe("RunList", () => {
 });
 
 describe("ChangesTable", () => {
-  it("lists who changed what, when on one line, and every field each logged, in words, linked where there's a page", async () => {
+  it("lists who changed what under a heading for each day, and every field each logged, in words, linked where there's a page", async () => {
     await render(<ChangesTable changes={exampleChanges} airtableTable="https://airtable.com/app/tbl" />);
     const copy = staffCopy.changes;
     const fields = staffCopy.fields;
     const labels = copy.labels;
-    const rows = page.getByRole("row").all().slice(1);
-    expect(getComputedStyle(rows[0].element().querySelector("td")!).whiteSpace).toBe("nowrap");
+    expect(
+      page
+        .getByRole("heading")
+        .all()
+        .map((h) => h.element().textContent),
+    ).toEqual(["12 Oct 2026", "11 Oct 2026"]);
+    const rows = page
+      .getByRole("row")
+      .all()
+      .filter((row) => row.element().querySelector("td"));
+    expect(rows[0].element().children[0].textContent).toBe("09:59");
     expect(rows[0].element().children[1].textContent).toBe("jo@pauseai.uk");
     const details = rows.map((row) => row.element().children[3].textContent);
     const signed = staffCopy.politician.statusSet(staffCopy.statuses.signed);
@@ -2259,102 +2490,6 @@ describe("LettersTable", () => {
   it("says when there are none", async () => {
     await render(<LettersTable letters={[]} />);
     await expect.element(page.getByText(staffCopy.letters.none)).toBeVisible();
-  });
-});
-
-describe("LetterFilters", () => {
-  const copy = staffCopy.letters;
-
-  it("is a GET form to the letters, with each filter as typed", async () => {
-    const { filter, ...search } = lettersSearch({
-      q: "jane",
-      status: "sent",
-      answered: "no",
-      campaign: "support-sobel-bill",
-      consent: "yes",
-    });
-    void filter;
-    await render(<LetterFilters search={search} />);
-    const box = page.getByRole("searchbox", { name: copy.search });
-    await expect.element(box).toHaveValue("jane");
-    const form = box.element().closest("form")!;
-    expect(form.getAttribute("method")).toBe("get");
-    expect(form.getAttribute("action")).toBe("/staff/letters");
-    await expect.element(page.getByRole("combobox", { name: copy.columns.status })).toHaveValue("sent");
-    await expect.element(page.getByRole("combobox", { name: copy.columns.replied })).toHaveValue("no");
-    await expect.element(page.getByRole("combobox", { name: copy.columns.campaign })).toHaveValue("support-sobel-bill");
-    await expect.element(page.getByRole("combobox", { name: copy.columns.consent })).toHaveValue("yes");
-    await expect
-      .element(page.getByRole("link", { name: staffCopy.resetFilters }))
-      .toHaveAttribute("href", "/staff/letters");
-  });
-});
-
-describe("SupporterFilters", () => {
-  it("shows a new URL's filters, not the old form's choices", async () => {
-    const columns = staffCopy.supporters.columns;
-    const { rerender } = await render(<SupporterFilters search={supportersSearch({ activity: "letter" })} />);
-    await page.getByRole("combobox", { name: columns.subscriptions }).selectOptions("blocked");
-    await rerender(<SupporterFilters search={supportersSearch({})} />);
-    await expect.element(page.getByRole("combobox", { name: columns.badges })).toHaveValue("");
-    await expect.element(page.getByRole("combobox", { name: columns.subscriptions })).toHaveValue("");
-  });
-
-  it("sends no sort when the list has its default one", async () => {
-    await render(<SupporterFilters search={supportersSearch({})} />);
-    const form = page.getByRole("searchbox", { name: staffCopy.supporters.filters.search }).element().closest("form")!;
-    expect(new FormData(form).has("sort")).toBe(false);
-    expect(new FormData(form).has("dir")).toBe(false);
-  });
-
-  it("is a GET form to the list, with each filter as typed", async () => {
-    await render(
-      <SupporterFilters
-        search={supportersSearch({
-          q: "jane",
-          activity: "registered",
-          subscription: "pauseai-updates:declined",
-          sort: "name",
-          dir: "desc",
-        })}
-      />,
-    );
-    const copy = staffCopy.supporters.filters;
-    const search = page.getByRole("searchbox", { name: copy.search });
-    await expect.element(search).toHaveValue("jane");
-    const form = search.element().closest("form")!;
-    expect(form.getAttribute("method")).toBe("get");
-    expect(form.getAttribute("action")).toBe("/staff/supporters");
-    // Reset clears the sort too.
-    await expect
-      .element(page.getByRole("link", { name: staffCopy.resetFilters }))
-      .toHaveAttribute("href", "/staff/supporters");
-    const columns = staffCopy.supporters.columns;
-    await expect.element(page.getByRole("combobox", { name: columns.badges })).toHaveValue("registered");
-    // The headings sort; filtering keeps their sort.
-    expect(new FormData(form).get("sort")).toBe("name");
-    expect(new FormData(form).get("dir")).toBe("desc");
-    const subscriptions = page.getByRole("combobox", { name: columns.subscriptions });
-    await expect.element(subscriptions).toHaveValue("pauseai-updates:declined");
-    // Each topic's reasons, under its name, then a block, which is every topic's.
-    const select = subscriptions.element() as HTMLSelectElement;
-    expect([...select.querySelectorAll("optgroup")].map((group) => group.label)).toEqual(
-      Object.values(staffCopy.supporters.detail.permissions.topics),
-    );
-    expect([...select.options].map((option) => option.value)).toEqual([
-      "",
-      "luma-calendar:following",
-      "luma-calendar:unsubscribed",
-      "luma-calendar:not-following",
-      "pauseai-updates:asked",
-      "pauseai-updates:joined",
-      "pauseai-updates:declined",
-      "pauseai-updates:unsubscribed",
-      "pauseai-updates:removed",
-      "events-and-ways-to-help:asked",
-      "events-and-ways-to-help:declined",
-      "blocked",
-    ]);
   });
 });
 
@@ -2920,5 +3055,130 @@ describe("ErasedNotice", () => {
     await expect.element(page.getByRole("status")).toHaveTextContent(staffCopy.erase.done);
     await rerender(<ErasedNotice erased="" />);
     expect(page.getByRole("status").all()).toHaveLength(0);
+  });
+});
+
+/** The chips of the filters on, by their words. */
+const chips = () =>
+  page
+    .getByRole("button")
+    .all()
+    .map((b) => b.element().textContent)
+    .filter((text) => text !== staffCopy.search && text !== staffCopy.filters.add);
+
+/** Opens a filter's menu, by its button, and gives its links' words and addresses. */
+async function menu(button: string) {
+  await userEvent.keyboard("{Escape}");
+  await page.getByRole("button", { name: button }).click();
+  const box = document.querySelector<HTMLElement>("[popover]:popover-open")!;
+  return [...box.querySelectorAll("a")].map((a) => [a.textContent, a.getAttribute("href")]);
+}
+
+describe("EmailBlockFilters", () => {
+  it("searches the addresses on its page, and filters by cause", async () => {
+    await render(<EmailBlockFilters q="example.org" kind="complaint" action="/staff/politicians/blocked-emails" />);
+    const { columns, kinds } = staffCopy.emails;
+    await expect.element(page.getByRole("searchbox", { name: columns.address })).toHaveValue("example.org");
+    expect(page.getByRole("searchbox").element().closest("form")!.getAttribute("action")).toBe(
+      "/staff/politicians/blocked-emails",
+    );
+    expect(chips()).toEqual([`${columns.kind}: ${kinds.complaint}`]);
+  });
+});
+
+describe("PoliticianFilters", () => {
+  const copy = staffCopy.politicians;
+  const search = {
+    ...emptyPoliticiansSearch,
+    q: "blake",
+    house: "lords",
+    status: "retired",
+    party: "Labour",
+    ask: "edinburgh-conference-2026",
+    answer: "declined",
+    sort: "asks",
+    dir: "asc",
+    page: "2",
+  };
+
+  it("has a chip for each filter on, the ask and its answer one, and Clear filters keeping the house", async () => {
+    await render(<PoliticianFilters search={search} asks={exampleAsks} parties={["Green", "Labour"]} />);
+    const edinburgh = ask("edinburgh-conference-2026").title;
+    expect(chips()).toEqual([
+      `${staffCopy.fields.party}: Labour`,
+      `${copy.status}: ${staffCopy.personStatuses.retired}`,
+      edinburgh,
+      staffCopy.statuses.declined,
+    ]);
+    // Any answer, then the answers of the ask's kind, and none; another ask takes the answer away.
+    expect((await menu(staffCopy.statuses.declined)).map(([text]) => text)).toEqual([
+      copy.anyAnswer,
+      ...ASK_STATUSES.event.map((s) => staffCopy.statuses[s]),
+      copy.noAnswer,
+    ]);
+    const asks = await menu(edinburgh);
+    expect(asks.find(([text]) => text === ask("frontier-ai-letter").title)![1]).toBe(
+      "/staff/politicians?q=blake&house=lords&status=retired&party=Labour&ask=frontier-ai-letter&sort=asks&dir=asc",
+    );
+    // Status goes back to those in office by its blank choice.
+    expect((await menu(`${copy.status}: ${staffCopy.personStatuses.retired}`))[0]).toEqual([
+      staffCopy.personStatuses.in_office,
+      "/staff/politicians?q=blake&house=lords&party=Labour&ask=edinburgh-conference-2026&answer=declined&sort=asks&dir=asc",
+    ]);
+    // Only Marked is left to add.
+    expect((await menu(staffCopy.filters.add)).map(([text]) => text)).toEqual(Object.values(copy.flags));
+    await expect
+      .element(page.getByRole("link", { name: staffCopy.resetFilters }))
+      .toHaveAttribute("href", "/staff/politicians?house=lords");
+  });
+
+  it("offers an answer only once there's an ask", async () => {
+    await render(<PoliticianFilters search={emptyPoliticiansSearch} asks={exampleAsks} parties={["Green"]} />);
+    const groups = () => [...document.querySelectorAll("[popover] section > p")].map((p) => p.textContent);
+    await page.getByRole("button", { name: staffCopy.filters.add }).click();
+    expect(groups()).toEqual([staffCopy.fields.party, copy.status, copy.ask, copy.flag]);
+    expect(page.getByRole("link", { name: staffCopy.resetFilters }).query()).toBeNull();
+  });
+});
+
+describe("LetterFilters", () => {
+  it("has a chip for each filter on, and the rest under + Filter", async () => {
+    const copy = staffCopy.letters;
+    const { filter, ...search } = lettersSearch({ q: "jane", status: "sent", campaign: "support-sobel-bill" });
+    void filter;
+    await render(<LetterFilters search={search} />);
+    await expect.element(page.getByRole("searchbox", { name: copy.search })).toHaveValue("jane");
+    expect(chips()).toEqual([
+      `${copy.columns.campaign}: ${campaignBySlug("support-sobel-bill")!.title}`,
+      `${copy.columns.status}: ${copy.status.sent}`,
+    ]);
+    const add = await menu(staffCopy.filters.add);
+    expect(add[0]).toEqual([
+      copy.consent.yes,
+      "/staff/letters?status=sent&q=jane&campaign=support-sobel-bill&consent=yes",
+    ]);
+  });
+});
+
+describe("SupporterFilters", () => {
+  it("has a chip for each filter on, a subscription by its topic and reason", async () => {
+    const copy = staffCopy.supporters;
+    const { filter, ...search } = supportersSearch({
+      activity: "registered",
+      subscription: "pauseai-updates:declined",
+      erased: "1",
+    });
+    void filter;
+    await render(<SupporterFilters search={search} />);
+    expect(chips()).toEqual([
+      `${copy.columns.badges}: ${copy.badges.registered}`,
+      `${copy.columns.subscriptions}: ${copy.filters.states["pauseai-updates"].declined}`,
+    ]);
+    // Each topic's reasons, then blocked; the erased notice goes.
+    const choices = await menu(`${copy.columns.subscriptions}: ${copy.filters.states["pauseai-updates"].declined}`);
+    expect(choices.at(-2)).toEqual([
+      copy.subscriptions.blocked,
+      "/staff/supporters?activity=registered&subscription=blocked",
+    ]);
   });
 });

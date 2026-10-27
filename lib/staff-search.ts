@@ -17,6 +17,7 @@ export type LettersSearch = {
   campaign: string;
   /** "yes" or "no". */
   consent: string;
+  page: string;
 };
 
 /** Which letters the letters page lists (recentLetters in lib/server/letters.ts). */
@@ -49,7 +50,8 @@ export function lettersSearch({
   answered = "",
   campaign = "",
   consent = "",
-}: Partial<LettersSearch>): LettersSearch & { filter: LetterFilter } {
+  page = "",
+}: Partial<LettersSearch>): LettersSearch & { filter: LetterFilter & { page: number } } {
   const filter: LetterFilter = {
     status: Object.hasOwn(staffCopy.letters.status, status) ? status : undefined,
     search: q.trim() || undefined,
@@ -57,7 +59,12 @@ export function lettersSearch({
     campaign: campaignBySlug(campaign)?.slug,
     consent: yesOrNo(consent),
   };
-  return { status, q, answered, campaign, consent, filter };
+  return { status, q, answered, campaign, consent, page, filter: { ...filter, page: pageNumber(page) } };
+}
+
+/** A mailing's ID from its page's URL: a whole number, or undefined. */
+export function mailingId(id: string): number | undefined {
+  return politicianId(id);
 }
 
 /** A politician's ID from their page's URL: a whole number, or undefined. */
@@ -86,6 +93,23 @@ export function pageNumber(page = ""): number {
 /** A list's URL at a page: the first page at the list's own, any other with `?page=`. */
 export function pagePath(path: string, page: number): string {
   return page > 1 ? `${path}?page=${page}` : path;
+}
+
+/** A list's URL with its filters as typed, `changes` made to them, leaving out the blank ones. */
+export function filtersPath(
+  path: string,
+  filters: Record<string, string>,
+  changes: Record<string, string> = {},
+): string {
+  const params = new URLSearchParams();
+  for (const [name, value] of Object.entries({ ...filters, ...changes })) if (value) params.set(name, value);
+  const query = params.toString();
+  return query ? `${path}?${query}` : path;
+}
+
+/** The `page` of a list's URL at page `n`: none for the first. */
+export function pageParam(n: number): { page: string } {
+  return { page: n > 1 ? String(n) : "" };
 }
 
 /** A letter's ID from its page's URL: a whole number, or undefined. */

@@ -1,5 +1,5 @@
 import type { Ask, AskWithCounts } from "@/lib/server/asks";
-import type { Politician, PoliticianChange } from "@/lib/server/politicians";
+import type { Politician, PoliticianChange, PoliticiansPage, PoliticiansSearch } from "@/lib/server/politicians";
 
 /** The asks, as the migrations add them, newest first: two events and two letters, one with no date or link, linked to our pages and others'. */
 export const exampleAsks: Ask[] = [
@@ -59,7 +59,6 @@ export const examplePolitician: Politician = {
   constituency: "Cities of London and Westminster",
   party: "Labour (Co-op)",
   country: "england",
-  city: "London",
   email: "polly.placeholder.mp@parliament.uk",
   status: "in_office",
   notes: "Met at the example fair.\nRecommended",
@@ -85,6 +84,31 @@ export const examplePolitician: Politician = {
       updatedBy: "jo@pauseai.uk",
     },
   },
+};
+
+/** The politicians page's list of Polly alone, with nothing else for a search to say. */
+export const examplePoliticiansPage: PoliticiansPage = {
+  politicians: [examplePolitician],
+  total: 1,
+  page: 1,
+  pages: 1,
+  outOfOffice: 0,
+  otherHouses: 0,
+  closest: [],
+};
+
+/** The politicians page's filters, all blank. */
+export const emptyPoliticiansSearch: PoliticiansSearch = {
+  q: "",
+  house: "",
+  status: "",
+  party: "",
+  flag: "",
+  ask: "",
+  answer: "",
+  sort: "",
+  dir: "",
+  page: "",
 };
 
 /** What the audit log says about Polly: her status set, her address blocked by Postmark and unblocked by staff. */

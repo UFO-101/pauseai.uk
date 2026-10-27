@@ -18,6 +18,7 @@ import {
 import { exampleLetter } from "@/app/(staff)/staff/_components/LettersTable.examples";
 import Run from "@/app/(staff)/staff/_components/Run";
 import EraseForm from "@/app/(staff)/staff/_components/EraseForm";
+import DeletePolitician from "@/app/(staff)/staff/_components/DeletePolitician";
 import RemoveAccountForm from "@/app/(staff)/staff/_components/RemoveAccountForm";
 import StaffAccountsTable from "@/app/(staff)/staff/_components/StaffAccountsTable";
 import UnblockForm from "@/app/(staff)/staff/_components/UnblockForm";
@@ -223,6 +224,16 @@ export function StaffAccountsTableExample() {
 
 export function RemoveAccountFormExample() {
   return <Logged>{(log) => <RemoveAccountForm email="sam@pauseai.uk" remove={log("removeStaffAccount")} />}</Logged>;
+}
+
+export function DeletePoliticianExample() {
+  return (
+    <Logged>
+      {(log) => (
+        <DeletePolitician politician={{ id: 7, name: "Polly Placeholder" }} action={log("deletePoliticianNow")} />
+      )}
+    </Logged>
+  );
 }
 
 export function EraseFormExample() {

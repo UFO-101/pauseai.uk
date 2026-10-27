@@ -11,6 +11,7 @@ import { expectRedirect, requestCookies } from "@/tests/next-headers";
 import {
   checkNow,
   decideSync,
+  deletePoliticianNow,
   eraseSupporterNow,
   importControlAiNow,
   importGoToParliamentNow,
@@ -73,11 +74,25 @@ describeWithDatabase("staff Server Actions", () => {
       () => eraseSupporterNow(form({ id: "1", reference: "r", confirm: "on" })),
       () => unblockAddress(form({ address: "a@example.org", note: "" })),
       () => endStaffSessionsNow(form({ email: "jo@pauseai.uk" })),
+      () => deletePoliticianNow(form({ politicianId: "1" })),
     ];
     for (const attempt of attempts) expect(await expectRedirect(attempt)).toBe("/staff/login");
     expect(await statusCount()).toBe(0);
     expect(await query("SELECT name FROM notable_people")).toEqual([{ name: "Polly Placeholder" }]);
     expect(await query("SELECT count(*)::int AS n FROM import_runs")).toEqual([{ n: 0 }]);
+  });
+
+  it("deletePoliticianNow deletes a politician gone from Airtable and goes to the list; anyone else, or a bad form, it leaves", async () => {
+    const id = await addTestPolitician();
+    const kept = () => query("SELECT count(*)::int AS n FROM notable_people").then(([row]) => row.n);
+    await deletePoliticianNow(form({ politicianId: String(id) }));
+    await deletePoliticianNow(form({ politicianId: "x" }));
+    expect(await kept()).toBe(1);
+    await query("UPDATE notable_people SET airtable_removed_at = now() WHERE id = $1", [id]);
+    expect(await expectRedirect(() => deletePoliticianNow(form({ politicianId: String(id) })))).toBe(
+      "/staff/politicians",
+    );
+    expect(await kept()).toBe(0);
   });
 
   it("setAskStatus marks a politician as signed today, with a note, or not, as the logged-in staff member", async () => {

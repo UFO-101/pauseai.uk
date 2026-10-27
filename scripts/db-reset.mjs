@@ -39,7 +39,7 @@ resetDatabase(url);
 // Made with every migration, so db:migrate knows there's nothing to apply.
 recordApplied(url, migrationFiles());
 giveAdminSupporters(url);
-const fixtures = Boolean(process.env.DATA_FIXTURES);
+const fixtures = process.env.DATA_FIXTURES === "1";
 const email = process.env.TEST_MP_EMAIL?.trim() || (fixtures ? "test-mp@example.org" : undefined);
 if (email) addTestMps(url, email);
 if (fixtures) addFixtureData(url);

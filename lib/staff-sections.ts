@@ -14,6 +14,7 @@ export type StaffPageId =
   | "supporterEmails"
   | "politicians"
   | "asks"
+  | "mailings"
   | "mpEmails"
   | "import"
   | "accounts"
@@ -38,6 +39,7 @@ const STAFF_SECTIONS: readonly StaffSection[] = [
     pages: [
       { id: "politicians", href: "/staff/politicians" },
       { id: "asks", href: "/staff/asks" },
+      { id: "mailings", href: "/staff/mailings" },
       { id: "mpEmails", href: "/staff/politicians/blocked-emails" },
     ],
   },

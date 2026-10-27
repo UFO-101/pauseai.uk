@@ -44,6 +44,7 @@ export const staffCopy = {
     supporters: "Supporters",
     politicians: "Politicians",
     asks: "Asks",
+    mailings: "Mailings",
     import: "Import data",
     changes: "Audit log",
     letters: "Letters to MPs",
@@ -136,14 +137,12 @@ export const staffCopy = {
   supporters: {
     title: "Supporters",
     none: "Nobody found.",
-    count: (total: number, page: number, pages: number) => `${total} supporters; page ${page} of ${pages}.`,
+    count: (total: number, page: number, pages: number) =>
+      `${total} ${total === 1 ? "supporter" : "supporters"}; page ${page} of ${pages}.`,
     filters: {
       search: "Name, email or phone",
       // The other filters are named after their columns.
-      anyActivity: "Any",
-      anySubscription: "Any",
-      // An option in the Subscriptions filter, under its topic's name: a reason the topic gives,
-      // short, as the closed select shows only the one chosen.
+      // A choice in the Subscriptions filter, and its chip: a topic and a reason it gives, short.
       states: {
         "luma-calendar": {
           following: "Luma: contact",
@@ -151,15 +150,15 @@ export const staffCopy = {
           "not-following": "Luma: not a contact",
         },
         "pauseai-updates": {
-          asked: "Updates: asked",
-          joined: "Updates: joined before July 2026",
-          declined: "Updates: declined",
-          unsubscribed: "Updates: unsubscribed",
-          removed: "Updates: removed",
+          asked: "PauseAI: asked",
+          joined: "PauseAI: joined before July 2026",
+          declined: "PauseAI: declined",
+          unsubscribed: "PauseAI: unsubscribed",
+          removed: "PauseAI: removed",
         },
         "events-and-ways-to-help": {
-          asked: "Events: agreed",
-          declined: "Events: didn't agree",
+          asked: "Letter writing: agreed",
+          declined: "Letter writing: didn't agree",
         },
       } as Record<string, Record<string, string>>,
     },
@@ -186,8 +185,8 @@ export const staffCopy = {
     subscriptions: {
       topics: {
         "luma-calendar": "Luma",
-        "pauseai-updates": "Updates",
-        "events-and-ways-to-help": "Events and help",
+        "pauseai-updates": "PauseAI",
+        "events-and-ways-to-help": "Letter writing",
       } as Record<string, string>,
       // A yes that an unsubscribe we can't see may have undone.
       unsure: (topic: string) => `${topic}, unsure`,
@@ -225,7 +224,7 @@ export const staffCopy = {
         topics: {
           "luma-calendar": "Luma calendar emails",
           "pauseai-updates": "PauseAI updates",
-          "events-and-ways-to-help": "Events and ways to help",
+          "events-and-ways-to-help": "Letter writing updates",
         } as Record<string, string>,
         yes: "Will email",
         no: "Won't email",
@@ -390,25 +389,32 @@ export const staffCopy = {
     // The search box's label: what it searches.
     search: "Name, constituency, party or email",
     allHouses: "All houses",
-    allParties: "All parties",
     // The filters: in office or not, Airtable's markers, and an answer to an ask.
     status: "Status",
     anyStatus: "Any status",
     flag: "Marked",
-    anyFlag: "Anything",
     flags: {
       important: "Important target",
       connection: "Personal connection",
       removed: "No longer in Airtable",
     } as Record<string, string>,
     ask: "Ask",
-    anyAsk: "Any ask",
-    // An answer to the ask chosen, or with none chosen, to any ask: anyone who answered, a given answer, or
-    // nobody who answered.
+    // An answer to the ask chosen, in the second half of the ask's chip, its menu named after the ask. With no
+    // ask, as a link from the dashboard can have it, its own chip.
     answer: "Answer",
-    anyAnswer: "Answered",
+    // In the second half of the ask's chip, before an answer is chosen.
+    anyAnswer: "Any answer",
     noAnswer: "Not answered",
     none: "None found.",
+    // Over the list: how many there are, and the page.
+    count: (total: number, page: number, pages: number) =>
+      `${total} ${total === 1 ? "politician" : "politicians"}; page ${page} of ${pages}.`,
+    // Under the list, when a search of those in office finds others too, linked to them all.
+    outOfOffice: (n: number) => `${n} ${n === 1 ? "match" : "matches"} found for politicians not in office`,
+    // The same, when a search of one house finds no one there, linked to every house.
+    otherHouses: (n: number) => `${n} ${n === 1 ? "match" : "matches"} found for politicians in other houses`,
+    // Over the nearest names, when a search finds no one.
+    closest: "No one matches exactly. These are close matches:",
     testMp: "Test",
     // The counts in the list: letters written to them, and how many of those got a reply.
     columns: {
@@ -435,6 +441,52 @@ export const staffCopy = {
     email: "Email",
     house: "House",
   },
+  // The mailings page (/staff/mailings): PauseAI's mails to many politicians, and each one's own page.
+  mailings: {
+    title: "Mailings",
+    intro: "Emails PauseAI has sent to many notable people at once.",
+    none: "No mailings yet.",
+    columns: {
+      title: "Mailing",
+      ask: "Ask",
+      sender: "Sender",
+      sentAt: "Sent",
+      sent: "Sent to",
+      skipped: "Skipped",
+      bounced: "Bounced",
+      replied: "Replied",
+    },
+    // A mailing copied from Airtable, which kept only who got it.
+    imported: "From Airtable",
+    notRecorded: "Not recorded",
+    notSent: "Not sent yet",
+    // A mailing's own page.
+    fields: {
+      ask: "Ask",
+      sender: "Sender",
+      sentAt: "Sent",
+      subject: "Subject",
+      attachments: "Attachments",
+      source: "Source",
+    },
+    noAsk: "None",
+    textTitle: "The email",
+    noText:
+      "Text not avilable. This was imported from the Airtable's Emails table, which keeps only who got it and how it was written. It was sent with Gmail, look there.",
+    recipientsTitle: "Recipients",
+    recipientColumns: {
+      name: "Politician",
+      status: "Outcome",
+      sentAt: "Sent",
+      replied: "Replied",
+      how: "Written",
+    },
+    // How a recipient's letter was written.
+    personalised: "personalised",
+    asWritten: "as written",
+    // Over a mailing's recipients: how many, and how many of those replied.
+    counts: (sent: number, replied: number) => `Sent to ${sent}; ${replied} replied.`,
+  },
   // The asks page: each ask, its kind and date, and how many gave each answer.
   asks: {
     title: "Asks",
@@ -459,9 +511,9 @@ export const staffCopy = {
     askedThem: (who: string, kind: string) =>
       `${who ? `${who} asked` : "Asked"} them to ${kind === "letter" ? "sign" : "attend"}`,
     // The box at the top of their page: where they came from, and each campaign's status.
-    source: "Source",
+    source: "Source:",
     sources: {
-      airtable: "Airtable's UK Parliamentarians",
+      airtable: "Airtable",
       staff: "Added by staff",
       test: "A test MP",
     },
@@ -478,8 +530,9 @@ export const staffCopy = {
     // The fields of the box at the top.
     status: "Status",
     country: "Country",
-    city: "City",
     notes: "Notes",
+    // Over how to write to them: their address and salutation.
+    writing: "Writing to them",
     // Airtable's markers, as tags by their name.
     importantTarget: "Important target",
     personalConnection: "Personal connection",
@@ -505,12 +558,18 @@ export const staffCopy = {
       "block address": "Address blocked",
       "unblock address": "Address unblocked",
     } as Record<string, string>,
+    // At the foot of the page of one whose record has gone from Airtable, and who's had no letters.
+    delete: {
+      button: "Delete",
+      note: "Their record has gone from Airtable and nobody has written to them, so they can be deleted here too.",
+      sure: (name: string) => `Delete ${name}, and their answers to asks, for good?`,
+      confirm: "Delete for good",
+    },
     // On an MP from Airtable, after the source, which links to their record there.
-    editInAirtable: ", update name / email there.",
+    editInAirtable: ", update there.",
     // On an ask that isn't set by hand: where its statuses come from.
     importedAsk: "set each night by an import",
     personalised: "personalised",
-    aiGenerated: "written with AI",
     // Under their name: what they are, in their house, and where for.
     roles: {
       commons: "MP",
@@ -558,11 +617,12 @@ export const staffCopy = {
       supporters: "Supporters' blocked emails",
     },
     intro: "Nothing is sent to these addresses until they're unblocked.",
+    // Over the list: how many are blocked, of those the filters find.
+    count: (n: number) => `${n} blocked ${n === 1 ? "address" : "addresses"}.`,
     // Instead of the table, when no address is blocked, or none of the cause filtered for.
     noBlocks: "No addresses are blocked.",
     // Instead of the history, when nothing has bounced or been complained about.
     noProblems: "Nothing has bounced or been marked as spam.",
-    allKinds: "All",
     kinds: {
       hard: "Bounced",
       soft: "Soft bounce",
@@ -691,8 +751,7 @@ export const staffCopy = {
   goToParliament: {
     title: "Go to Parliament event, 20 October 2026",
     intro: {
-      before:
-        "Stores in each MP's record their answer to “Constituent meetings at Parliament, October 2026”. Reads from the ",
+      before: "Stores in each MP's record their answer to “Constituent meetings at Parliament”. Reads from the ",
       link: "Go to Parliament table in Airtable",
       after: ".",
     },
@@ -728,7 +787,7 @@ export const staffCopy = {
       before: "Every politician in every body is copied from the ",
       link: "UK Parliamentarians table in Airtable",
       after:
-        ", except the Airtable test MPs. Stores their answers to “Frontier AI letter to the Prime Minister”, “DeepMind letter to Sir Demis Hassabis”, “ControlAI's campaign statement” and “Edinburgh conference, November 2026”. Runs that change lots of data are held for checking.",
+        ", except the Airtable test MPs. Stores their answers to “Frontier AI letter to the Prime Minister”, “DeepMind letter to Sir Demis Hassabis”, “ControlAI's campaign statement” and “Edinburgh conference”. Runs that change lots of data are held for checking.",
     },
     /** The test MPs (lib/test-mps.json) aren't in Airtable; every import adds any that are missing. */
     testMps: "Each import also adds our own test MPs, who aren’t in Airtable, if any are missing.",
@@ -809,7 +868,9 @@ export const staffCopy = {
   },
   letters: {
     title: "Letters to MPs",
-    allStatuses: "All",
+    // Over the list: how many there are, and the page.
+    count: (total: number, page: number, pages: number) =>
+      `${total} ${total === 1 ? "letter" : "letters"}; page ${page} of ${pages}.`,
     search: "Sender or MP",
     // The Answered filter: whether the MP replied.
     answered: { yes: "Answered", no: "Not answered" },
@@ -843,7 +904,14 @@ export const staffCopy = {
   // The button beside a list's search box; its other filters apply as soon as they're chosen.
   search: "Search",
   // After a list's filters: the list with none.
-  resetFilters: "Reset filters",
+  resetFilters: "Clear filters",
+  // A list's filters: the × in the search box, + Filter, which offers the filters not on, and on a filter's
+  // chip, the way to take it off.
+  filters: {
+    clearSearch: "Clear the search",
+    add: "+ Filter",
+    remove: "Remove",
+  },
   // Under a list of more than one page.
   paging: {
     previous: "Previous",

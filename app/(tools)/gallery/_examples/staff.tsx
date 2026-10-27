@@ -3,11 +3,11 @@
 // politicians, letters, runs and changes. Their links go to /staff pages,
 // which send anyone without a session to the login page.
 import { Button } from "@/components/ui/Button";
-import { Select, TextInput } from "@/components/ui/Controls";
-import { Field } from "@/components/ui/Field";
 import ChangesTable from "@/app/(staff)/staff/_components/ChangesTable";
 import EmailBlockFilters from "@/app/(staff)/staff/_components/EmailBlockFilters";
-import StaffFilters from "@/app/(staff)/staff/_components/StaffFilters";
+import FilterBar from "@/app/(staff)/staff/_components/ui/FilterBar";
+import Menu from "@/app/(staff)/staff/_components/ui/Menu";
+import { NationShape, Rosette, StatusDot } from "@/app/(staff)/staff/_components/PoliticianIcons";
 import { exampleProblems } from "@/app/(staff)/staff/_components/EmailBlocksTable.examples";
 import EmailProblemsTable from "@/app/(staff)/staff/_components/EmailProblemsTable";
 import { exampleChanges } from "@/app/(staff)/staff/_components/ChangesTable.examples";
@@ -45,6 +45,11 @@ import StaffNav, { type StaffPage as StaffPageName } from "@/app/(staff)/staff/_
 import AccountsNotice from "@/app/(staff)/staff/_components/AccountsNotice";
 import Breadcrumb from "@/app/(staff)/staff/_components/Breadcrumb";
 import EraseLink from "@/app/(staff)/staff/_components/EraseLink";
+import MailingDetails from "@/app/(staff)/staff/_components/MailingDetails";
+import MailingsTable from "@/app/(staff)/staff/_components/MailingsTable";
+import { exampleMailing, exampleMailings } from "@/app/(staff)/staff/_components/MailingsTable.examples";
+import ListCount from "@/app/(staff)/staff/_components/ListCount";
+import PoliticiansList, { HouseTabs } from "@/app/(staff)/staff/_components/PoliticiansList";
 import ErasedNotice from "@/app/(staff)/staff/_components/ErasedNotice";
 import ImportCard, { ImportCards } from "@/app/(staff)/staff/_components/ImportCard";
 import KeepSignedIn from "@/app/(staff)/staff/_components/KeepSignedIn";
@@ -72,9 +77,15 @@ import { supportersSearch } from "@/lib/staff-search";
 import StaffPage from "@/app/(staff)/staff/_components/ui/StaffPage";
 import Grid, { Card } from "@/app/(staff)/staff/_components/ui/Grid";
 import Strip from "@/app/(staff)/staff/_components/ui/Strip";
+import Tabs from "@/app/(staff)/staff/_components/ui/Tabs";
 import Tag from "@/components/ui/Tag";
 import { campaigns } from "@/lib/content/email-your-mp";
-import { exampleAsks, exampleAsksWithCounts } from "@/app/(staff)/staff/_components/PoliticianTable.examples";
+import {
+  exampleAsks,
+  exampleAsksWithCounts,
+  examplePolitician,
+  examplePoliticiansPage,
+} from "@/app/(staff)/staff/_components/PoliticianTable.examples";
 import AsksTable from "@/app/(staff)/staff/_components/AsksTable";
 import { staffCopy } from "@/lib/content/staff-interface";
 import type { ImportJob } from "@/lib/import-runs";
@@ -87,6 +98,7 @@ import {
   PoliticianDetailsExample,
   PoliticianTableEmptyExample,
   PoliticianTableExample,
+  DeletePoliticianExample,
   EraseFormExample,
   StaffAccountsTableExample,
   RemoveAccountFormExample,
@@ -108,7 +120,20 @@ const EMPTY_POLITICIAN_FILTERS = {
   answer: "",
   sort: "",
   dir: "",
+  page: "",
 };
+
+// A blocked address list's filter, for the filter bar's examples.
+const EXAMPLE_FILTERS = [
+  {
+    name: "kind",
+    label: "Cause",
+    options: [
+      { value: "hard", label: "Bounced" },
+      { value: "complaint", label: "Complained" },
+    ],
+  },
+];
 
 // Every page the navigation can mark as current, so a new one is a type error until it's here.
 const PAGES: Record<StaffPageName, true> = {
@@ -119,6 +144,7 @@ const PAGES: Record<StaffPageName, true> = {
   supporterEmails: true,
   politicians: true,
   asks: true,
+  mailings: true,
   mpEmails: true,
   import: true,
   changes: true,
@@ -305,6 +331,29 @@ export const staff: Group = {
                   <p>A line under it.</p>
                 </Card>
               </Grid>
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "Tabs",
+      file: "app/(staff)/staff/_components/ui/Tabs.tsx",
+      variants: [
+        {
+          label: "A list's houses, Lords chosen",
+          render: () => (
+            <StaffPage as="div">
+              <Tabs
+                label="House"
+                current="lords"
+                tabs={[
+                  { key: "", label: "All houses", href: "#" },
+                  { key: "commons", label: "House of Commons", href: "#" },
+                  { key: "lords", label: "House of Lords", href: "#" },
+                  { key: "senedd", label: "Senedd", href: "#" },
+                ]}
+              />
             </StaffPage>
           ),
         },
@@ -860,6 +909,115 @@ export const staff: Group = {
       ],
     },
     {
+      name: "ListCount",
+      file: "app/(staff)/staff/_components/ListCount.tsx",
+      variants: [
+        {
+          label: "Over a list",
+          render: () => (
+            <StaffPage as="div">
+              <ListCount total={150}>150 politicians; page 1 of 2.</ListCount>
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "HouseTabs",
+      file: "app/(staff)/staff/_components/PoliticiansList.tsx",
+      variants: [
+        {
+          label: "The Lords chosen",
+          render: () => (
+            <StaffPage as="div">
+              <HouseTabs search={{ ...EMPTY_POLITICIAN_FILTERS, house: "lords" }} />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "PoliticiansList",
+      file: "app/(staff)/staff/_components/PoliticiansList.tsx",
+      variants: [
+        {
+          label: "A search's page of politicians, with more in other houses and out of office",
+          render: () => (
+            <StaffPage as="div">
+              <PoliticiansList
+                list={{ ...examplePoliticiansPage, total: 150, pages: 2, outOfOffice: 3, otherHouses: 2 }}
+                search={{ ...EMPTY_POLITICIAN_FILTERS, q: "pol" }}
+                asks={exampleAsks}
+              />
+            </StaffPage>
+          ),
+        },
+        {
+          label: "A search that finds no one, with the nearest names",
+          render: () => (
+            <StaffPage as="div">
+              <PoliticiansList
+                list={{ ...examplePoliticiansPage, politicians: [], total: 0, closest: [examplePolitician] }}
+                search={{ ...EMPTY_POLITICIAN_FILTERS, q: "Polly Plaseholder" }}
+                asks={exampleAsks}
+              />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "MailingsTable",
+      file: "app/(staff)/staff/_components/MailingsTable.tsx",
+      variants: [
+        {
+          label: "One from Airtable, sent, with an ask; one not sent yet; and none",
+          render: () => (
+            <StaffPage as="div">
+              <MailingsTable mailings={exampleMailings} />
+              <MailingsTable mailings={[]} />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "MailingDetails",
+      file: "app/(staff)/staff/_components/MailingDetails.tsx",
+      variants: [
+        {
+          label: "A mailing from Airtable, with no text, and its recipients",
+          render: () => (
+            <StaffPage as="div">
+              <MailingDetails mailing={exampleMailing} />
+            </StaffPage>
+          ),
+        },
+        {
+          label: "One with no ask, not sent yet",
+          render: () => (
+            <StaffPage as="div">
+              <MailingDetails mailing={{ ...exampleMailings[0], recipients: [] }} />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "DeletePolitician",
+      file: "app/(staff)/staff/_components/DeletePolitician.tsx",
+      variants: [
+        {
+          label: "At the foot of the page of a politician gone from Airtable",
+          render: () => (
+            <StaffPage as="div">
+              <DeletePoliticianExample />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
       name: "SortHeading",
       file: "app/(staff)/staff/_components/SortHeading.tsx",
       variants: [
@@ -1129,7 +1287,7 @@ export const staff: Group = {
       file: "app/(staff)/staff/_components/PoliticianFilters.tsx",
       variants: [
         {
-          label: "Empty, and filled in",
+          label: "Empty, filled in, and an ask with no answer chosen",
           render: () => (
             <StaffPage as="div">
               <PoliticianFilters search={EMPTY_POLITICIAN_FILTERS} asks={exampleAsks} parties={parties} />
@@ -1144,6 +1302,11 @@ export const staff: Group = {
                   ask: "edinburgh-conference-2026",
                   answer: "declined",
                 }}
+                asks={exampleAsks}
+                parties={parties}
+              />
+              <PoliticianFilters
+                search={{ ...EMPTY_POLITICIAN_FILTERS, ask: "edinburgh-conference-2026" }}
                 asks={exampleAsks}
                 parties={parties}
               />
@@ -1233,27 +1396,109 @@ export const staff: Group = {
       ],
     },
     {
-      name: "StaffFilters",
-      file: "app/(staff)/staff/_components/StaffFilters.tsx",
+      name: "FilterBar",
+      file: "app/(staff)/staff/_components/ui/FilterBar.tsx",
       variants: [
         {
-          label: "A search with its button, then a select, which applies when chosen",
+          label: "Nothing on: the search and + Filter",
           render: () => (
             <StaffPage as="div">
-              <StaffFilters action="/staff/politicians/blocked-emails">
-                <Field label="Address">
-                  <TextInput type="search" name="q" />
-                </Field>
-                <Button variant="primary" size="small" type="submit">
-                  Search
-                </Button>
-                <Field label="Cause">
-                  <Select name="kind">
-                    <option value="">All</option>
-                    <option value="hard">Bounced</option>
-                  </Select>
-                </Field>
-              </StaffFilters>
+              <FilterBar path="#" values={{}} search={{ name: "q", label: "Address" }} filters={EXAMPLE_FILTERS} />
+            </StaffPage>
+          ),
+        },
+        {
+          label: "A search and a filter on, each removable, and Clear filters",
+          render: () => (
+            <StaffPage as="div">
+              <FilterBar
+                path="#"
+                values={{ q: "example.org", kind: "hard" }}
+                search={{ name: "q", label: "Address" }}
+                filters={EXAMPLE_FILTERS}
+              />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "Rosette",
+      file: "app/(staff)/staff/_components/PoliticianIcons.tsx",
+      variants: [
+        {
+          label: "Each party's colour, and grey for one we don't know",
+          render: () => (
+            <StaffPage as="div">
+              <p style={{ display: "flex", gap: "12px" }}>
+                {[
+                  "Labour",
+                  "Conservative",
+                  "Liberal Democrats",
+                  "Scottish National Party",
+                  "Green",
+                  "Plaid Cymru",
+                  "Reform UK",
+                  "DUP",
+                  "Sinn Féin",
+                  "Alliance",
+                  "Crossbench",
+                ].map((party) => (
+                  <Rosette key={party} party={party} />
+                ))}
+              </p>
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "StatusDot",
+      file: "app/(staff)/staff/_components/PoliticianIcons.tsx",
+      variants: [
+        {
+          label: "In office, and not",
+          render: () => (
+            <StaffPage as="div">
+              <p style={{ display: "flex", gap: "12px" }}>
+                <StatusDot inOffice />
+                <StatusDot inOffice={false} />
+              </p>
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "NationShape",
+      file: "app/(staff)/staff/_components/PoliticianIcons.tsx",
+      variants: [
+        {
+          label: "The four nations",
+          render: () => (
+            <StaffPage as="div">
+              <p style={{ display: "flex", gap: "12px" }}>
+                {(["england", "scotland", "wales", "northern-ireland"] as const).map((country) => (
+                  <NationShape key={country} country={country} />
+                ))}
+              </p>
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "Menu",
+      file: "app/(staff)/staff/_components/ui/Menu.tsx",
+      variants: [
+        {
+          label: "A button that opens a box of choices",
+          render: () => (
+            <StaffPage as="div">
+              <Menu id="example-menu" label="Choose">
+                <p>One</p>
+                <p>Two</p>
+              </Menu>
             </StaffPage>
           ),
         },
@@ -1564,7 +1809,14 @@ export const staff: Group = {
           render: () => (
             <StaffPage as="div">
               <LetterFilters
-                search={{ status: "bounced", q: "", answered: "", campaign: "regulate-letter-pm", consent: "yes" }}
+                search={{
+                  status: "bounced",
+                  q: "",
+                  answered: "",
+                  campaign: "regulate-letter-pm",
+                  consent: "yes",
+                  page: "",
+                }}
               />
             </StaffPage>
           ),

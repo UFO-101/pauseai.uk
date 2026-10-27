@@ -11,9 +11,10 @@ function post(body: BodyInit | null) {
   return POST(new NextRequest("https://pauseai.uk/staff/api/dev-login", { method: "POST", body }));
 }
 
-const form = (email: string) => {
+const form = (email: string, next?: string) => {
   const data = new FormData();
   data.set("email", email);
+  if (next) data.set("next", next);
   return data;
 };
 
@@ -27,6 +28,12 @@ describeWithDatabase("POST /staff/api/dev-login", () => {
     expect(res.headers.get("location")).toBe("https://pauseai.uk/staff");
     expect(res.headers.getSetCookie().some((c) => c.startsWith("staff_session="))).toBe(true);
     expect(await query("SELECT email FROM staff_sessions")).toEqual([{ email: "jo@pauseai.uk" }]);
+  });
+
+  it("goes on to the staff page it's given", async () => {
+    vi.stubEnv("DATA_FIXTURES", "1");
+    const res = await post(form("jo@pauseai.uk", "/staff/politicians?house=lords"));
+    expect(res.headers.get("location")).toBe("https://pauseai.uk/staff/politicians?house=lords");
   });
 
   it("refuses an address outside pauseai.uk, a missing one, and a body that isn't a form", async () => {

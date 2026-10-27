@@ -41,7 +41,7 @@ export type SyncResult = {
 };
 
 const SYNCED_COLUMNS = `n.airtable_id AS "airtableId", n.name, n.salutation, n.email, n.status,
-  p.house, p.constituency, p.party, p.country, p.city, n.notes, n.important_target AS "importantTarget",
+  p.house, p.constituency, p.party, p.country, n.notes, n.important_target AS "importantTarget",
   n.personal_connection AS "personalConnection"`;
 
 /** The politicians copied from Airtable whose records it still has, as the sync compares them. */
@@ -118,8 +118,8 @@ async function writePolitician(id: number, p: SyncedPolitician, db: Queryable): 
     db,
   );
   await query(
-    "UPDATE politicians SET house = $2, constituency = $3, party = $4, country = $5, city = $6 WHERE id = $1",
-    [id, p.house, p.constituency, p.party, p.country, p.city],
+    "UPDATE politicians SET house = $2, constituency = $3, party = $4, country = $5 WHERE id = $1",
+    [id, p.house, p.constituency, p.party, p.country],
     db,
   );
 }

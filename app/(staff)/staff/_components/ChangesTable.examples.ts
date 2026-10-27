@@ -1,6 +1,6 @@
 import type { LoggedChange } from "@/lib/server/audit";
 
-/** An entry, at a fixed time, about no one unless it says so. */
+/** An entry, at a fixed time, the last few the day before the rest, about no one unless it says so. */
 function change(
   id: number,
   actor: string,
@@ -8,7 +8,7 @@ function change(
   details: Record<string, unknown>,
   about: Partial<LoggedChange> = {},
 ): LoggedChange {
-  const at = `2026-10-12T09:${String(60 - id).padStart(2, "0")}:00Z`;
+  const at = `2026-10-${id > 20 ? 11 : 12}T09:${String(60 - id).padStart(2, "0")}:00Z`;
   return { id, at, actor, action, details, politician: null, supporter: null, ...about };
 }
 

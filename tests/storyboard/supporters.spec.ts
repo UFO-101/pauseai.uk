@@ -3,7 +3,9 @@ import { staffCopy } from "@/lib/content/staff-interface";
 import { TEST_MPS } from "@/lib/test-mps";
 import { runSql } from "@/scripts/fresh-database.mjs";
 import {
+  addFilter,
   addStaffAccount,
+  changeFilter,
   fakeTurnstile,
   fillLetter,
   importLuma,
@@ -57,14 +59,14 @@ test("the supporters list after the Luma import, filtered, reset and sorted", as
   await expect(page.getByRole("link", { name: "Fay Follower" })).toBeVisible();
   await frame(page, "every supporter the import found, newest activity first");
 
-  // The search waits for its button; a select applies as soon as it's chosen, keeping the search.
+  // The search waits for its button; a filter applies as soon as it's chosen, keeping the search.
   await page.getByRole("searchbox", { name: copy.filters.search }).fill("fixture@example");
   await page.getByRole("button", { name: staffCopy.search }).click();
   await expect(page).toHaveURL(/\/staff\/supporters\?q=fixture%40example$/);
   // Every one of them has an address at fixture@example.
   await expect(page.getByText(copy.count(6, 1, 1))).toBeVisible();
   await frame(page, "searched for fixture@example: all six");
-  await page.getByRole("combobox", { name: copy.columns.badges }).selectOption("registered");
+  await addFilter(page, copy.columns.badges, copy.badges.registered);
   await expect(page).toHaveURL(/\/staff\/supporters\?q=fixture%40example&activity=registered$/);
   await page.getByRole("link", { name: copy.columns.name }).click();
   await expect(page).toHaveURL(/sort=name/);
@@ -75,7 +77,7 @@ test("the supporters list after the Luma import, filtered, reset and sorted", as
   expect(names).toEqual([...names].sort());
   await frame(page, "filtered to those who registered, by name");
 
-  await page.getByRole("combobox", { name: copy.columns.badges }).selectOption("letter");
+  await changeFilter(page, `${copy.columns.badges}: ${copy.badges.registered}`, copy.badges.letter);
   await expect(page.getByText(copy.none)).toBeVisible();
   await frame(page, "nobody from letters yet");
 
@@ -84,7 +86,7 @@ test("the supporters list after the Luma import, filtered, reset and sorted", as
   await expect(page).toHaveURL(`${BASE}/staff/supporters`);
   await expect(page.getByText(copy.count(6, 1, 1))).toBeVisible();
   await expect(page.getByRole("searchbox", { name: copy.filters.search })).toHaveValue("");
-  await expect(page.getByRole("combobox", { name: copy.columns.badges })).toHaveValue("");
+  await expect(page.getByRole("button", { name: `${copy.columns.badges}: ${copy.badges.letter}` })).toHaveCount(0);
   await frame(page, "reset: every supporter again, newest activity first");
 
   // A heading sorts the list; clicking it again reverses it.
@@ -220,14 +222,18 @@ test("the list says what each supporter gets, and filters by it", async ({ page,
   await expect(page.getByRole("columnheader", { name: copy.columns.subscriptions })).toBeVisible();
   await frame(page, "the list, with what each supporter gets by topic");
 
-  await page.getByRole("combobox", { name: copy.columns.subscriptions }).selectOption("luma-calendar:unsubscribed");
+  await addFilter(page, copy.columns.subscriptions, copy.filters.states["luma-calendar"].unsubscribed);
   await expect(page.getByText(copy.count(1, 1, 1))).toBeVisible();
   await expect(page.getByRole("row").filter({ hasText: "Jane Fixture" })).toBeVisible();
   // Owen left Keep me informed unticked, which isn't an unsubscribe.
   await expect(page.getByRole("row").filter({ hasText: "Owen Member" })).toHaveCount(0);
   await frame(page, "filtered to those who unsubscribed: Jane, whom Luma told us of");
 
-  await page.getByRole("combobox", { name: copy.columns.subscriptions }).selectOption("pauseai-updates:declined");
+  await changeFilter(
+    page,
+    `${copy.columns.subscriptions}: ${copy.filters.states["luma-calendar"].unsubscribed}`,
+    copy.filters.states["pauseai-updates"].declined,
+  );
   await expect(page).toHaveURL(/subscription=pauseai-updates%3Adeclined/);
   await expect(page.getByRole("row").filter({ hasText: "Owen Member" })).toBeVisible();
   await expect(page.getByRole("row").filter({ hasText: "Jane Fixture" })).toHaveCount(0);

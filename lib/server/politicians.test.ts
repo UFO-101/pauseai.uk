@@ -3,6 +3,10 @@ import { addTestLetter, addTestMp, addTestPolitician, describeWithDatabase, useT
 import { query, transaction } from "./db";
 import {
   addPolitician,
+  canDeletePolitician,
+  closestPoliticians,
+  countPoliticians,
+  deletePolitician,
   findMpInOffice,
   findTestMp,
   getPolitician,
@@ -11,6 +15,7 @@ import {
   listParties,
   listPoliticians,
   politicianHistory,
+  politiciansPage,
   politiciansSearch,
   setStatus,
   signatories,
@@ -59,6 +64,7 @@ describe("politiciansSearch", () => {
       answer: "signed",
       sort: "party",
       dir: "desc",
+      page: "3",
     };
     expect(politiciansSearch(typed)).toEqual({
       ...typed,
@@ -73,6 +79,7 @@ describe("politiciansSearch", () => {
         ask: BILL,
         answer: "signed",
         sort: { key: "party", dir: "desc" },
+        page: 3,
       },
     });
     expect(politiciansSearch({ flag: "connection" }).filter).toMatchObject({ personalConnection: true });
@@ -83,7 +90,7 @@ describe("politiciansSearch", () => {
     const none = {
       search: undefined,
       house: undefined,
-      status: undefined,
+      status: "in_office",
       party: undefined,
       importantTarget: undefined,
       personalConnection: undefined,
@@ -91,6 +98,7 @@ describe("politiciansSearch", () => {
       ask: undefined,
       answer: undefined,
       sort: { key: "name", dir: "asc" },
+      page: 1,
     };
     const blank = {
       q: "",
@@ -102,6 +110,7 @@ describe("politiciansSearch", () => {
       answer: "",
       sort: "",
       dir: "",
+      page: "",
     };
     expect(politiciansSearch({})).toEqual({ ...blank, filter: none });
     const unknown = {
@@ -111,6 +120,11 @@ describe("politiciansSearch", () => {
       sort: "age",
     };
     expect(politiciansSearch(unknown)).toEqual({ ...blank, ...unknown, filter: none });
+    expect(politiciansSearch({ q: "  " }).filter.search).toBeUndefined();
+  });
+
+  it("is everyone, in office or not, with any status", () => {
+    expect(politiciansSearch({ status: "any" }).filter.status).toBeUndefined();
   });
 });
 
@@ -176,6 +190,68 @@ describeWithDatabase("politicians", () => {
     expect(await statusesOf(id)).toEqual({});
   });
 
+  it("deletes a politician gone from Airtable, with their answers, logging who they were; never one still there, a test MP or one written to", async () => {
+    const gone = await addTestPolitician({ airtableId: "recGone" });
+    const there = await addTestPolitician({ name: "Still There", airtableId: "recThere" });
+    const written = await addTestPolitician({ name: "Written To", airtableId: "recWritten" });
+    const testMp = await addTestMp();
+    await addTestLetter({ politicianId: written });
+    await query("UPDATE notable_people SET airtable_removed_at = now() WHERE id IN ($1, $2)", [gone, written]);
+    await setStatus(gone, PM, { status: "signed", date: null, note: "" }, "jo@pauseai.uk");
+
+    for (const id of [there, written, testMp]) {
+      expect(await canDeletePolitician(id)).toBe(false);
+      expect(await deletePolitician(id, "jo@pauseai.uk")).toBe(false);
+    }
+    expect(await canDeletePolitician(gone)).toBe(true);
+    expect(await deletePolitician(gone, "jo@pauseai.uk")).toBe(true);
+    expect(await getPolitician(gone)).toBeUndefined();
+    expect(await query("SELECT count(*)::int AS n FROM ask_statuses")).toEqual([{ n: 0 }]);
+    expect(await query("SELECT actor, details FROM audit_log WHERE action = 'delete politician'")).toEqual([
+      { actor: "jo@pauseai.uk", details: { id: gone, name: "Polly Placeholder", airtableId: "recGone" } },
+    ]);
+  });
+
+  it("gives the politicians page: the list, its count and pages, and for a search, the others it finds", async () => {
+    await addTestPolitician({ name: "Polly Placeholder" });
+    await addTestPolitician({ name: "Peter Placeholder", status: "retired", airtableId: "recPeter" });
+    await addTestPolitician({ ...PEER, name: "Lord Placeholder", airtableId: "recLord" });
+    const page = (filter: Parameters<typeof politiciansPage>[0]) => politiciansPage(filter);
+
+    expect(await page({ status: "in_office" })).toMatchObject({ total: 2, page: 1, pages: 1, closest: [] });
+    // A search of those in office: how many are out of it.
+    expect(await page({ search: "placeholder", status: "in_office" })).toMatchObject({ total: 2, outOfOffice: 1 });
+    // A search of one house that finds no one there: how many in others, and the nearest names.
+    const lords = await page({ search: "Polly", house: "lords", status: "in_office" });
+    expect(lords).toMatchObject({ total: 0, otherHouses: 1, outOfOffice: 0 });
+    const typo = await page({ search: "Plaseholder", house: "lords" });
+    expect(typo.closest.map((p) => p.name)).toEqual(["Lord Placeholder"]);
+    expect(await page({ search: "zzz", status: "in_office" })).toMatchObject({ otherHouses: 0, closest: [] });
+    expect(await page({ page: 2 })).toMatchObject({ page: 2, politicians: [] });
+  });
+
+  it("finds those in office, or out of it, and counts them", async () => {
+    const mp = await addTestPolitician();
+    const retired = await addTestPolitician({ name: "Old Placeholder", status: "retired", airtableId: "recOld" });
+    expect((await listPoliticians({ status: "in_office" })).map((p) => p.id)).toEqual([mp]);
+    expect((await listPoliticians({ status: "out" })).map((p) => p.id)).toEqual([retired]);
+    expect(await countPoliticians({ search: "placeholder", status: "out" })).toBe(1);
+    expect(await countPoliticians({})).toBe(2);
+  });
+
+  it("offers those whose name or constituency is nearest a search that finds no one, nearest first", async () => {
+    const mp = await addTestPolitician({ name: "Tristan Osborne", constituency: "Chatham and Aylesford" });
+    const other = await addTestPolitician({ name: "Tristram Hunt", constituency: "Stoke", airtableId: "recHunt" });
+    await addPeer();
+    expect((await closestPoliticians({ search: "Tristian Osbourne" })).map((p) => p.id)).toEqual([mp]);
+    expect((await closestPoliticians({ search: "Tristan" })).map((p) => p.id)).toEqual([mp, other]);
+    expect((await closestPoliticians({ search: "Aylesfrod" })).map((p) => p.id)).toEqual([mp]);
+    // Within the other filters.
+    expect(await closestPoliticians({ search: "Tristian Osbourne", house: "lords" })).toEqual([]);
+    expect(await closestPoliticians({ search: "Tristan", status: "in_office" }, 1)).toHaveLength(1);
+    expect(await closestPoliticians({ search: "zzzz" })).toEqual([]);
+  });
+
   it("lists politicians, the test MP first, filtered by search, house and ask", async () => {
     const mp = await addTestPolitician();
     const peer = await addPeer();
@@ -200,6 +276,13 @@ describeWithDatabase("politicians", () => {
     expect((await listPoliticians({ ask: PM })).map((p) => p.id)).toEqual([peer]);
     expect((await listPoliticians({ party: (await getPolitician(peer))!.party })).map((p) => p.id)).toEqual([peer]);
     expect(await listPoliticians({}, 1)).toHaveLength(1);
+    // A page further on.
+    expect((await listPoliticians({ page: 2 }, 1)).map((p) => p.name)).toEqual(["Lord Example"]);
+    // Each word anywhere, ignoring case and accents; a % or _ is only itself.
+    expect((await listPoliticians({ search: "poll westminster" })).map((p) => p.id)).toEqual([mp]);
+    expect((await listPoliticians({ search: "Pólly lords" })).map((p) => p.id)).toEqual([]);
+    expect((await listPoliticians({ search: "Lord Exámple" })).map((p) => p.id)).toEqual([peer]);
+    expect((await listPoliticians({ search: "%" })).map((p) => p.id)).toEqual([]);
     expect((await listPoliticians({ search: "Polly" }))[0]).toEqual({
       id: mp,
       airtableId: "recPlaceholder",
@@ -210,7 +293,6 @@ describeWithDatabase("politicians", () => {
       constituency: "Cities of London and Westminster",
       party: "Labour (Co-op)",
       country: null,
-      city: null,
       email: "polly.placeholder.mp@parliament.uk",
       status: "in_office",
       notes: "",

@@ -303,20 +303,44 @@ the text beside it sits higher than the button's label and the row looks
 uneven. Centred, the text lines up with the control's middle (the
 accounts table, your sessions).
 
-**Filters** (`StaffFilters`). A list's filters are a row above it, and
-they follow its table:
+**Filters** (`ui/FilterBar`). Every list's filters are the same bar
+above it, and a list's own filters component only says what its filters
+are:
 
-- A filter has the name of the column it filters, and the filters come in
-  the columns' order. Not every column gets one, only those someone will
-  filter by.
-- The search box comes first, labelled with what it searches, and its
-  button, the only one, beside it. A search waits for the button, or
-  Enter, so the list doesn't change while someone types. Every other
-  filter applies as soon as it's chosen. Reset filters comes last.
-- The row fits the page's width on a desktop at full width, never
-  wrapping there: a filter whose options would make it too wide gets
-  shorter options, or isn't one.
-- The filters keep the table's sort, and Reset clears both.
+- The search box comes first, "Search" in it until something's typed (its
+  accessible name says what it searches), and its button beside it. A search waits for the button, or Enter, so the list
+  doesn't change while someone types. While there's a search, an × in the
+  box empties it.
+- Only the filters that are on show, each as a chip: the filter's name
+  and its choice, "Party: Labour". A chip opens its choices, and Remove.
+  A filter with more than a dozen choices shows them in two columns, in a
+  wider menu, so a menu scrolls only on a phone.
+  A filter that isn't at its default is on, so a glance at the chips says
+  what the list is filtered by.
+- "+ Filter" opens every other filter, its name and its choices; a choice
+  applies at once. A filter has the name of the column it filters, and
+  they come in the columns' order. Not every column gets one, only those
+  someone will filter by.
+- A filter can come after another (`after`): once that one is on, the
+  two are one chip in two halves, each opening its own choices, and it
+  goes when that one does. An ask's chip is "Edinburgh conference |
+  Declined", "Any answer" in the second half until one is chosen. On its
+  own, as from a link, it's an ordinary chip, "Answer: Signed".
+- Clear filters, last, while anything is on, empties the search and every
+  filter, and the sort. A tab over the list, such as the politicians'
+  houses, isn't a filter: Clear filters keeps it.
+- Every choice is a link, so the URL holds the filters; a new filter
+  starts from the first page. A chip's menu is a popover (`ui/Menu`).
+
+**Tabs** (`ui/Tabs`). Views of one list, side by side over it, the chosen
+one underlined: the politicians' houses. A list has at most one row of
+tabs, for the one choice people make most.
+
+**Counts** (`ListCount`). Over a filtered list, faintly: how many it has,
+and the page.
+
+**Columns that say nothing** are left out: one the same in every row, as
+when a filter fixes it, or blank in all of them (the politicians table).
 
 The gallery's staff group shows each piece and each page built from them.
 

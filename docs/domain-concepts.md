@@ -39,7 +39,7 @@ which follows "Dear" and is written by hand, as no rule makes it from the
 name ("Sir Iain", "Bishop"); an email if we know it; notes; Airtable's markers
 (important target, personal connection); and a status, `in_office`, `died`,
 `retired` or `left_office`. A politician (`politicians`) adds a house, a
-constituency if they have one, a party, a country and a city. The child row
+constituency if they have one, a party and a country. The child row
 joins its parent by a composite foreign key `(id, kind)`, so it can only be
 the kind its parent says, and everything else points at the parent: a new
 kind, such as journalists, is a new kind and a child table, and changes
@@ -132,7 +132,7 @@ adds what its kind has, joined as notable people are:
   (`mailings`), which may make an ask. Those sent before the site could send
   them are copied nightly from Airtable's Emails table
   (`lib/server/emails-sync.ts`), from 2026 on: who, when, and whether it was
-  personalised or written with AI, but no text. Each mailing there is a
+  personalised, but no text. Each mailing there is a
   tick box, named by `mailings.airtable_field`; an email with no box we know
   is held back and reported until a migration adds its mailing.
 

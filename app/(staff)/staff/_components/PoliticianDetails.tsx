@@ -18,6 +18,7 @@ import { staffDate, staffTime } from "@/lib/staff-time";
 import styles from "./Details.module.css";
 import Grid, { Card } from "./ui/Grid";
 import Strip from "./ui/Strip";
+import { NationShape, Rosette, StatusDot } from "./PoliticianIcons";
 import UnblockForm from "./UnblockForm";
 import Tag from "@/components/ui/Tag";
 import { Muted } from "@/components/ui/Text";
@@ -119,42 +120,56 @@ function letterEntries({ senders, letters }: PoliticianLetters): Entry[] {
   );
 }
 
-/** PauseAI's letters, each a line: the mailing, and whether it was personalised or written with AI. */
+/** PauseAI's letters, each a line: the mailing, and whether it was personalised. */
 function pauseaiEntries(letters: PauseaiLetter[]): Entry[] {
   return letters.map((letter) => ({
     key: `pauseai-${letter.id}`,
     at: letter.at,
     what: (
       <>
-        {copy.history["pauseai-letter"]} {letter.mailing}
-        <Muted>
-          {letter.personalised && ` · ${copy.personalised}`}
-          {letter.aiGenerated && ` · ${copy.aiGenerated}`}
-        </Muted>
+        {copy.history["pauseai-letter"]} <Link href={`/staff/mailings/${letter.mailingId}`}>{letter.mailing}</Link>
+        <Muted>{letter.personalised && ` · ${copy.personalised}`}</Muted>
       </>
     ),
   }));
 }
 
-/** What an entry of the audit log about them says, beyond its kind: the status, the note, the reason. */
+/** Stands in for the answer in the copy's words, to put the answer's link there. */
+const ANSWER = "\u0000";
+
+/**
+ * What an entry of the audit log about them says, beyond its kind: the
+ * status, the note, the reason. An answer leads to everyone who gave it to
+ * that ask, and the ask to the letter or event; a blocked address, to the
+ * politicians' blocked emails, searched for it.
+ */
 function Detail({ change, asks }: { change: PoliticianChange; asks: Ask[] }) {
   const { details } = change;
   const text = (key: string) => (typeof details[key] === "string" ? (details[key] as string) : "");
   switch (change.action) {
     case "set status": {
-      const words =
-        details.status === null
-          ? copy.statusCleared
-          : copy.statusSet(staffCopy.statuses[text("status")] ?? text("status"));
+      const ask = asks.find((a) => a.slug === details.ask);
+      const label = staffCopy.statuses[text("status")] ?? text("status");
+      // The answer, where the copy puts it, leads to everyone who gave it to the ask.
+      const answer =
+        details.ask && details.status ? (
+          <Link
+            href={`/staff/politicians?ask=${encodeURIComponent(text("ask"))}&answer=${encodeURIComponent(text("status"))}`}
+          >
+            {label}
+          </Link>
+        ) : (
+          label
+        );
+      const words = details.status === null ? copy.statusCleared : copy.statusSet(ANSWER);
+      const [lead, rest = ""] = words.before.split(ANSWER);
       return (
         <>
-          {words.before}
-          {/* Logged by ask, or, before asks, by campaign. */}
-          {details.ask ? (
-            (asks.find((ask) => ask.slug === details.ask)?.title ?? text("ask"))
-          ) : (
-            <CampaignName slug={text("campaign")} />
-          )}
+          {lead}
+          {words.before.includes(ANSWER) && answer}
+          {rest}
+          {/* Logged by ask, or, before asks, by campaign. The ask leads where it does in the asks card. */}
+          {ask ? <AskTitle ask={ask} /> : details.ask ? text("ask") : <CampaignName slug={text("campaign")} />}
           {words.after}
           {text("note") && <Muted> · {text("note")}</Muted>}
         </>
@@ -176,7 +191,18 @@ function Detail({ change, asks }: { change: PoliticianChange; asks: Ask[] }) {
         </>
       );
     case "block address":
-      return <>{staffCopy.emails.kinds[text("kind")] ?? text("kind")}</>;
+    case "unblock address": {
+      const kind = staffCopy.emails.kinds[text("kind")] ?? text("kind");
+      // An unblock has a note, and a block the kind of problem.
+      return (
+        <>
+          <Link href={`/staff/politicians/blocked-emails?q=${encodeURIComponent(text("address"))}`}>
+            {text("address")}
+          </Link>
+          <Muted> · {kind || text("note")}</Muted>
+        </>
+      );
+    }
     default:
       return <>{text("note")}</>;
   }
@@ -429,36 +455,71 @@ export default function PoliticianDetails({
 
       <Grid>
         <Card span={3} as="div">
-          <dl className={styles.facts}>
-            <Fact label={copy.status}>{staffCopy.personStatuses[politician.status]}</Fact>
-            <Fact label={staffCopy.fields.constituency}>{politician.constituency}</Fact>
-            <Fact label={staffCopy.fields.party}>{politician.party}</Fact>
-            <Fact label={copy.country}>{politician.country && staffCopy.countries[politician.country]}</Fact>
-            <Fact label={copy.city}>{politician.city}</Fact>
-            <Fact label={staffCopy.fields.email}>{politician.email ?? staffCopy.politicians.noEmail}</Fact>
-            <Fact label={staffCopy.fields.salutation}>{politician.salutation}</Fact>
-            <Fact label={copy.notes}>
-              {politician.notes && <span className={styles.notes}>{politician.notes}</span>}
-            </Fact>
-            <Fact label={copy.source}>
-              {politician.airtableId ? (
-                <>
-                  <a href={`${airtableTable}/${politician.airtableId}`} target="_blank" rel="noreferrer">
-                    {source}
-                  </a>
-                  {copy.editInAirtable}
-                  {politician.airtableRemovedAt && (
-                    <>
-                      {" "}
-                      <Tag tone="amber">{copy.airtableRemoved(staffDate(politician.airtableRemovedAt))}</Tag>
-                    </>
-                  )}
-                </>
-              ) : (
-                source
-              )}
-            </Fact>
-          </dl>
+          <div className={styles.icons}>
+            {politician.party && (
+              <div className={styles.iconFact}>
+                <Rosette party={politician.party} />
+                <span>
+                  <small>{staffCopy.fields.party}</small>
+                  {politician.party}
+                </span>
+              </div>
+            )}
+            <div className={styles.iconFact}>
+              <StatusDot inOffice={politician.status === "in_office"} />
+              <span>
+                <small>{copy.status}</small>
+                {staffCopy.personStatuses[politician.status]}
+              </span>
+            </div>
+            {politician.country && (
+              <div className={styles.iconFact}>
+                <NationShape country={politician.country} />
+                <span>
+                  <small>{copy.country}</small>
+                  {staffCopy.countries[politician.country]}
+                </span>
+              </div>
+            )}
+          </div>
+          <section className={styles.part}>
+            <h3 className={styles.partTitle}>{copy.writing}</h3>
+            <dl className={styles.facts}>
+              <Fact label={staffCopy.fields.email}>
+                {politician.email ? (
+                  <a href={`mailto:${politician.email}`}>{politician.email}</a>
+                ) : (
+                  staffCopy.politicians.noEmail
+                )}
+              </Fact>
+              <Fact label={staffCopy.fields.salutation}>{politician.salutation}</Fact>
+            </dl>
+          </section>
+          {politician.notes && (
+            <section className={styles.part}>
+              <h3 className={styles.partTitle}>{copy.notes}</h3>
+              <p className={styles.notes}>{politician.notes}</p>
+            </section>
+          )}
+          <p className={styles.source}>
+            {copy.source}{" "}
+            {politician.airtableId ? (
+              <>
+                <a href={`${airtableTable}/${politician.airtableId}`} target="_blank" rel="noreferrer">
+                  {source}
+                </a>
+                {copy.editInAirtable}
+                {politician.airtableRemovedAt && (
+                  <>
+                    {" "}
+                    <Tag tone="amber">{copy.airtableRemoved(staffDate(politician.airtableRemovedAt))}</Tag>
+                  </>
+                )}
+              </>
+            ) : (
+              source
+            )}
+          </p>
         </Card>
         <Card span={3} look="aside" title={copy.statusesTitle} id="asks-title">
           <div className={styles.asks}>

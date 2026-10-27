@@ -7,16 +7,16 @@ const pages = (permissions: Parameters<typeof sectionsFor>[0]) =>
 describe("sectionsFor", () => {
   it("shows each section with only the pages the permissions open, and hides an empty one", () => {
     expect(pages([])).toEqual([
-      ["politicians", ["politicians", "asks", "mpEmails"]],
+      ["politicians", ["politicians", "asks", "mailings", "mpEmails"]],
       ["admin", ["import"]],
     ]);
     expect(pages(["supporters"])).toEqual([
       ["supporters", ["supporters", "letters", "supporterEmails"]],
-      ["politicians", ["politicians", "asks", "mpEmails"]],
+      ["politicians", ["politicians", "asks", "mailings", "mpEmails"]],
       ["admin", ["import"]],
     ]);
     expect(pages(["admin"])).toEqual([
-      ["politicians", ["politicians", "asks", "mpEmails"]],
+      ["politicians", ["politicians", "asks", "mailings", "mpEmails"]],
       ["admin", ["import", "accounts", "changes"]],
     ]);
   });

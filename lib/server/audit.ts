@@ -21,7 +21,7 @@ export type Named = { id: number; name: string | null };
 export type LoggedChange = AuditEntry & { politician: Named | null; supporter: Named | null };
 
 /** The actions whose details name a politician by `id`; others name one by `politicianId`. */
-const POLITICIAN_ACTIONS = ["add politician", "edit politician", "remove politician"];
+const POLITICIAN_ACTIONS = ["add politician", "edit politician", "remove politician", "delete politician"];
 
 /** Entries on a page of the audit log. */
 export const AUDIT_PAGE_SIZE = 100;

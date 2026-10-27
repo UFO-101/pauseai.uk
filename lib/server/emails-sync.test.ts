@@ -10,7 +10,7 @@ import { syncPoliticians } from "./politician-sync";
 
 const letters = () =>
   query(
-    `SELECT n.name, m.airtable_field AS mailing, l.status, l.sent_at AS "sentAt", p.personalised, p.ai_generated AS "ai"
+    `SELECT n.name, m.airtable_field AS mailing, l.status, l.sent_at AS "sentAt", p.personalised
      FROM pauseai_letters p JOIN letters l USING (id) JOIN mailings m ON m.id = p.mailing_id
        JOIN notable_people n ON n.id = l.notable_person_id
      ORDER BY p.airtable_id`,
@@ -51,7 +51,6 @@ describeWithDatabase("syncEmails", () => {
         status: "sent",
         sentAt: new Date("2026-10-15T08:30:00Z"),
         personalised: false,
-        ai: false,
       },
       {
         name: "Ms Dora Dummy",
@@ -59,7 +58,6 @@ describeWithDatabase("syncEmails", () => {
         status: "sent",
         sentAt: new Date("2026-06-10T09:00:00Z"),
         personalised: false,
-        ai: false,
       },
       {
         name: "Morag Example",
@@ -67,7 +65,6 @@ describeWithDatabase("syncEmails", () => {
         status: "sent",
         sentAt: new Date("2026-10-01T10:05:00Z"),
         personalised: false,
-        ai: true,
       },
       {
         name: "Polly Placeholder",
@@ -75,7 +72,6 @@ describeWithDatabase("syncEmails", () => {
         status: "sent",
         sentAt: new Date("2026-10-01T10:00:00Z"),
         personalised: true,
-        ai: false,
       },
     ]);
     expect(await query("SELECT actor, action, details FROM audit_log WHERE action = 'copy PauseAI emails'")).toEqual([

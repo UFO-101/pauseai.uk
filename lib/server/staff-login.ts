@@ -43,11 +43,17 @@ export function loginBrowserCookie(browser: string) {
 
 /**
  * Emails a login link to a pauseai.uk address, that works only in the
- * browser holding `browser`; `remember` is "Keep me signed in", kept with
- * the link for the session it starts. Says nothing either way, so the form
- * can't be used to find out which addresses work.
+ * browser holding `browser`. Kept with the link for the session it starts:
+ * `remember`, "Keep me signed in", and `next`, the page to go to once
+ * logged in, the staff home unless given. Says nothing either way, so the
+ * form can't be used to find out which addresses work.
  */
-export async function sendLoginLink(typed: string, request: Request, browser: string, remember = false): Promise<void> {
+export async function sendLoginLink(
+  typed: string,
+  request: Request,
+  browser: string,
+  { remember = false, next = "/staff" }: { remember?: boolean; next?: string } = {},
+): Promise<void> {
   const email = typed.trim().toLowerCase();
   if (!isStaffEmail(email)) {
     console.info("No staff login link sent: the address typed isn't at pauseai.uk");
@@ -67,9 +73,9 @@ export async function sendLoginLink(typed: string, request: Request, browser: st
     const token = (await randomId(32, () => `login ${email} ${count}`)).toString("base64url");
     await query("DELETE FROM staff_login_links WHERE created_at < now() - interval '1 day'", [], db);
     await query(
-      `INSERT INTO staff_login_links (token_hash, email, browser_hash, remember, expires_at)
-       VALUES ($1, $2, $3, $4, now() + interval '${LINK_MINUTES} minutes')`,
-      [hash(token), email, hash(browser), remember],
+      `INSERT INTO staff_login_links (token_hash, email, browser_hash, remember, next, expires_at)
+       VALUES ($1, $2, $3, $4, $5, now() + interval '${LINK_MINUTES} minutes')`,
+      [hash(token), email, hash(browser), remember, next],
       db,
     );
     return token;
@@ -93,18 +99,18 @@ export async function sendLoginLink(typed: string, request: Request, browser: st
 }
 
 /**
- * Uses a login link: the address it was sent to, and whether to keep them
- * signed in, if it's current, unused and opened in the browser that asked
+ * Uses a login link: the address it was sent to, whether to keep them
+ * signed in, and the page to go to, if it's current, unused and opened in the browser that asked
  * for it. It then can't be used again. Opened in another browser, it's left
  * as it was: "elsewhere".
  */
 export async function redeemLoginLink(
   token: string,
   browser: string,
-): Promise<{ email: string; remember: boolean } | { refused: "elsewhere" | "failed" }> {
+): Promise<{ email: string; remember: boolean; next: string } | { refused: "elsewhere" | "failed" }> {
   if (!token) return { refused: "failed" };
-  const [link] = await query<{ email: string; remember: boolean }>(
-    "UPDATE staff_login_links SET used_at = now() WHERE token_hash = $1 AND browser_hash = $2 AND used_at IS NULL AND expires_at > now() RETURNING email, remember",
+  const [link] = await query<{ email: string; remember: boolean; next: string }>(
+    "UPDATE staff_login_links SET used_at = now() WHERE token_hash = $1 AND browser_hash = $2 AND used_at IS NULL AND expires_at > now() RETURNING email, remember, next",
     [hash(token), hash(browser)],
   );
   if (link) return link;

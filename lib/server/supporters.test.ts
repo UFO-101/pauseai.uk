@@ -293,6 +293,8 @@ describeWithDatabase("listSupporters and getSupporter", () => {
   it("filters by name, email or phone, activities, subscriptions, first sign-up and postcode, and sorts", async () => {
     await people();
     expect(await names({ search: "JANE" })).toEqual(["Jane"]);
+    expect(await names({ search: "jáne 0900001" })).toEqual(["Jane"]);
+    expect(await names({ search: "jane pat" })).toEqual([]);
     expect(await names({ search: "pat@" })).toEqual(["Pat"]);
     expect(await names({ search: "0900001" })).toEqual(["Jane"]);
     expect(await names({ activity: "letter" })).toEqual(["Pat"]);

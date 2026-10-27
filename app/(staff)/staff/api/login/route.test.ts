@@ -18,10 +18,11 @@ function post(body: BodyInit | null, cookie?: string) {
   );
 }
 
-const form = (email: string, remember = false) => {
+const form = (email: string, remember = false, next?: string) => {
   const data = new FormData();
   data.set("email", email);
   if (remember) data.set("remember", "on");
+  if (next) data.set("next", next);
   return data;
 };
 
@@ -49,12 +50,12 @@ describeWithDatabase("POST /staff/api/login", () => {
     expect(to).toEqual(["jo@pauseai.uk"]);
   });
 
-  it('keeps "Keep me signed in" with the link', async () => {
-    await post(form("jo@pauseai.uk", true));
-    await post(form("jo@pauseai.uk"));
-    expect(await query("SELECT remember FROM staff_login_links ORDER BY created_at")).toEqual([
-      { remember: true },
-      { remember: false },
+  it('keeps "Keep me signed in" with the link, and the staff page to go to', async () => {
+    await post(form("jo@pauseai.uk", true, "/staff/letters?page=2"));
+    await post(form("jo@pauseai.uk", false, "https://evil.example/"));
+    expect(await query("SELECT remember, next FROM staff_login_links ORDER BY created_at")).toEqual([
+      { remember: true, next: "/staff/letters?page=2" },
+      { remember: false, next: "/staff" },
     ]);
   });
 

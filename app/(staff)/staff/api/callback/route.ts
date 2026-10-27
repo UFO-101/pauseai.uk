@@ -8,11 +8,12 @@ import { siteUrl } from "@/lib/site-url";
 // doesn't call requireStaff(); it starts a session only for a current,
 // unused link, opened in the browser that asked for it. Anywhere else (a
 // mail scanner, another device) it says so and leaves the link unused.
+// Logged in, they go to the page they were logging in for.
 export async function GET(request: NextRequest) {
   const token = request.nextUrl.searchParams.get("token") ?? "";
   const result = await redeemLoginLink(token, request.cookies.get(LOGIN_BROWSER_COOKIE)?.value ?? "");
   if ("refused" in result) return NextResponse.redirect(siteUrl(`${LOGIN_PATH}?${result.refused}=1`, request), 303);
-  const response = NextResponse.redirect(siteUrl("/staff", request), 303);
+  const response = NextResponse.redirect(siteUrl(result.next, request), 303);
   response.cookies.set(
     sessionCookie(
       await createSession(result.email, result.remember, request.headers.get("user-agent")),

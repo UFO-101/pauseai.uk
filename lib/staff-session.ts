@@ -47,3 +47,26 @@ export const DEV_LOGIN_PATH = "/staff/api/dev-login";
 
 /** Staff paths that work without a session: the login page, the two steps of logging in, and the dev login. */
 export const OPEN_STAFF_PATHS = [LOGIN_PATH, "/staff/api/login", LOGIN_LINK_PATH, DEV_LOGIN_PATH];
+
+/** Where the login page's `next` is: the staff page to return to once logged in. */
+export const NEXT_PARAM = "next";
+
+/** The header the proxy gives each staff request, with its path and query, for requireStaff() to return to. */
+export const STAFF_PATH_HEADER = "x-staff-path";
+
+/**
+ * Where to go once logged in: `next`, if it's a staff page, or the staff
+ * home. Anything else, such as another site or a login step, is ignored, so
+ * a link can't use the login to send someone off the site.
+ */
+export function afterLogin(next: unknown): string {
+  if (typeof next !== "string" || !/^\/staff([/?]|$)/.test(next)) return "/staff";
+  const path = next.split("?")[0];
+  return OPEN_STAFF_PATHS.includes(path) || path.startsWith("/staff/api/") ? "/staff" : next;
+}
+
+/** The login page, with the staff page to return to afterwards, if there's one. */
+export function loginPath(next: string | undefined): string {
+  const back = afterLogin(next);
+  return back === "/staff" ? LOGIN_PATH : `${LOGIN_PATH}?${NEXT_PARAM}=${encodeURIComponent(back)}`;
+}

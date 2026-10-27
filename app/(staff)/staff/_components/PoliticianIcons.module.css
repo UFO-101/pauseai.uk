@@ -1,0 +1,19 @@
+/* The icons beside a politician's facts. */
+.icon {
+  flex-shrink: 0;
+}
+
+/* The status: a dot the size of the other icons' middles, grey unless in office. */
+.dot {
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+  margin-inline: 7px;
+  border-radius: 50%;
+  background: var(--border-strong);
+}
+
+.in {
+  background: var(--status-green);
+  box-shadow: 0 0 0 4px var(--status-green-bg);
+}

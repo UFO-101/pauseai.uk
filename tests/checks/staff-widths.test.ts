@@ -17,14 +17,15 @@ const ALLOWED: Record<string, string> = {
   "ChangesTable.module.css .json": "a popover",
   "EmailPermissionTiles.module.css .popover": "a popover",
   "Details.module.css .editPopover": "a popover",
+  "DeletePolitician.module.css .confirm": "a popover",
   "StaffNav.module.css .menu > div": "the menu's dropdown",
   // The login page: one card in the middle of the window, with no grid.
   "LoginCard.module.css .login": "the login page",
   "DevLogin.module.css .dev": "the login page",
   // A control's width inside a form.
   "StaffForms.module.css .narrow": "a field",
-  "StaffForms.module.css .filters > *": "a filter, so a row of them fits the page",
-  "StaffForms.module.css .filters > :first-child": "the search, so its label fits",
+  "FilterBar.module.css .search > :first-child": "the search, so its label fits",
+  "Menu.module.css .menu": "a popover",
   "StaffAccountsTable.module.css .add input": "a field",
 };
 

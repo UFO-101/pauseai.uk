@@ -1,0 +1,11 @@
+/* The mailings table, and a mailing's recipients. */
+
+/* The counts: figures that line up. */
+.count {
+  font-variant-numeric: tabular-nums;
+}
+
+/* When, on one line. */
+.when {
+  white-space: nowrap;
+}

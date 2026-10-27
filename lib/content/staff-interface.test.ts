@@ -58,3 +58,15 @@ describe("staff interface copy", () => {
     expect(Object.keys(staffCopy.countries)).toEqual([...COUNTRIES]);
   });
 });
+
+describe("the lists' counts", () => {
+  it("say one or many", () => {
+    const { politicians, emails, letters } = staffCopy;
+    expect(politicians.outOfOffice(1)).not.toBe(politicians.outOfOffice(2).replace("2", "1"));
+    expect(politicians.otherHouses(1)).not.toBe(politicians.otherHouses(2).replace("2", "1"));
+    expect(emails.count(1)).not.toBe(emails.count(2).replace("2", "1"));
+    for (const list of [letters, politicians, staffCopy.supporters]) {
+      expect(list.count(1, 1, 1)).not.toBe(list.count(2, 1, 1).replace("2", "1"));
+    }
+  });
+});

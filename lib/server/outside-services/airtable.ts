@@ -110,7 +110,6 @@ export const POLITICIAN_FIELDS = [
   "Constituency",
   "Party",
   "Country",
-  "City",
   "Notes",
   "Recommended",
   "Important target",
@@ -162,7 +161,6 @@ function politicianFrom(record: AirtableRecord): SyncedPolitician {
     constituency,
     party: text(record, "Party"),
     country: COUNTRIES[country] ?? null,
-    city: text(record, "City") || null,
     notes: [text(record, "Notes"), ticked(record, "Recommended") ? "Recommended" : ""].filter(Boolean).join("\n"),
     importantTarget: ticked(record, "Important target"),
     personalConnection: ticked(record, "Personal connection"),
@@ -218,21 +216,19 @@ export type EmailToImport = {
   /** The politicians' Airtable record IDs: one, unless the record is broken. */
   politicians: string[];
   personalised: boolean;
-  aiGenerated: boolean;
   /** Which of the mailings' tick boxes are ticked. */
   mailings: string[];
 };
 
 /** PauseAI's 2026 emails to politicians, reading the tick boxes of the mailings named `mailingFields`. */
 export async function fetchEmails(token: string, mailingFields: readonly string[]): Promise<EmailToImport[]> {
-  const fields = ["Timestamp", "UK Parliamentarian", "Personalized", "AI Generated", ...mailingFields];
+  const fields = ["Timestamp", "UK Parliamentarian", "Personalized", ...mailingFields];
   const records = await fetchRecords(token, EMAILS_FORMULA, fields, `${BASE_ID}/${EMAILS_TABLE_ID}`);
   return records.map((record) => ({
     airtableId: record.id,
     at: text(record, "Timestamp"),
     politicians: links(record, "UK Parliamentarian"),
     personalised: ticked(record, "Personalized"),
-    aiGenerated: ticked(record, "AI Generated"),
     mailings: mailingFields.filter((field) => ticked(record, field)),
   }));
 }

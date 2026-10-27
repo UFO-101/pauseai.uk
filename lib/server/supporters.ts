@@ -15,6 +15,7 @@ import { query, transaction, type Queryable } from "./db";
 import { permissionsFor } from "./email-permissions";
 import { refreshSupporterFacts } from "./supporter-facts";
 import { SUPPORTER_SOURCES } from "./supporter-sources";
+import { contains, everyWord } from "./search";
 
 // Supporters: one per person, tied to each record about them in a source
 // (supporter_links). Linking is by email, trimmed and lowercased and
@@ -103,9 +104,13 @@ export async function listSupporters(filter: SupporterFilter): Promise<Supporter
     return `$${values.length}`;
   };
   if (filter.search) {
-    const like = add(`%${filter.search}%`);
     where.push(
-      `(s.name ILIKE ${like} OR s.phone ILIKE ${like} OR EXISTS (SELECT 1 FROM unnest(s.emails) e WHERE e ILIKE ${like}))`,
+      everyWord(
+        filter.search,
+        add,
+        (like) =>
+          `${contains("s.name", like)} OR s.phone ILIKE ${like} OR EXISTS (SELECT 1 FROM unnest(s.emails) e WHERE e ILIKE ${like})`,
+      ),
     );
   }
   if (filter.activity) where.push(BADGE_CONDITIONS[filter.activity]);

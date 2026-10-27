@@ -98,7 +98,7 @@ describeWithDatabase("login links", () => {
     expect(rows).not.toContain(token);
     expect(rows).not.toContain(BROWSER);
 
-    expect(await redeemLoginLink(token, BROWSER)).toEqual({ email: "jo@pauseai.uk", remember: false });
+    expect(await redeemLoginLink(token, BROWSER)).toEqual({ email: "jo@pauseai.uk", remember: false, next: "/staff" });
     expect(await redeemLoginLink(token, BROWSER)).toEqual({ refused: "failed" });
     expect(await redeemLoginLink("made-up", BROWSER)).toEqual({ refused: "failed" });
     expect(await redeemLoginLink("", BROWSER)).toEqual({ refused: "failed" });
@@ -113,10 +113,12 @@ describeWithDatabase("login links", () => {
     expect(await redeemLoginLink(token("login jo@pauseai.uk 1"), BROWSER)).toEqual({
       email: "jo@pauseai.uk",
       remember: false,
+      next: "/staff",
     });
     expect(await redeemLoginLink(token("login jo@pauseai.uk 0"), BROWSER)).toEqual({
       email: "jo@pauseai.uk",
       remember: false,
+      next: "/staff",
     });
   });
 
@@ -127,13 +129,17 @@ describeWithDatabase("login links", () => {
 
     expect(await redeemLoginLink(token, OTHER_BROWSER)).toEqual({ refused: "elsewhere" });
     expect(await redeemLoginLink(token, "")).toEqual({ refused: "elsewhere" });
-    expect(await redeemLoginLink(token, BROWSER)).toEqual({ email: "jo@pauseai.uk", remember: false });
+    expect(await redeemLoginLink(token, BROWSER)).toEqual({ email: "jo@pauseai.uk", remember: false, next: "/staff" });
   });
 
   it('keeps "Keep me signed in" with the link, for the session it starts', async () => {
     const sent = postmark();
-    await sendLoginLink("jo@pauseai.uk", REQUEST, BROWSER, true);
-    expect(await redeemLoginLink(tokenFrom(sent[0]), BROWSER)).toEqual({ email: "jo@pauseai.uk", remember: true });
+    await sendLoginLink("jo@pauseai.uk", REQUEST, BROWSER, { remember: true });
+    expect(await redeemLoginLink(tokenFrom(sent[0]), BROWSER)).toEqual({
+      email: "jo@pauseai.uk",
+      remember: true,
+      next: "/staff",
+    });
   });
 
   it("sends nothing to anyone else, or without an address to link to", async () => {
