@@ -456,7 +456,12 @@ still does there.
   Airtable keeps these in Notes: 71 of its 106 notes record a status or
   party change with its real date and reason. Our audit log can't, as it
   only knows when the sync saw the change.
-- Staff set any ask's status, not just those of `trackedCampaigns`.
+- Staff set any ask's status, not just those of `trackedCampaigns`, from
+  the Edit bubble on a politician's page, as they do the Frontier AI
+  letter's now: the asks Airtable filled (ControlAI's campaign statement,
+  the DeepMind letter, the Edinburgh conference), Go to Parliament's, and
+  each new one. Each change takes the date and a note, as now. ControlAI's
+  letter to the Prime Minister stays its import's, read from the PDF.
 - The syncs stop and leave the Import page. Politicians keep their
   `airtable_id`.
 - The check against Parliament's list ("Members of Parliament against
