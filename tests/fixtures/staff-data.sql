@@ -68,7 +68,7 @@ SELECT id, 'frontier-ai-letter', 'letter', 'signed', (now() - interval '35 days'
 INSERT INTO ask_statuses (notable_person_id, ask, ask_kind, status, status_date, note, updated_by, updated_at)
 SELECT id, 'frontier-ai-letter', 'letter', 'signed', (now() - interval '2 days')::date, '', 'sam@pauseai.uk', now() - interval '2 days' FROM notable_people WHERE airtable_id = 'recDummy';
 INSERT INTO ask_statuses (notable_person_id, ask, ask_kind, status, status_date, note, updated_by, updated_at)
-SELECT id, 'controlai-letter', 'letter', 'signed', NULL, 'From ControlAI''s letter', 'controlai', now() - interval '10 days' FROM notable_people WHERE name = 'Lord Seedling of Example';
+SELECT id, 'controlai-letter', 'letter', 'signed', NULL, '', 'controlai', now() - interval '10 days' FROM notable_people WHERE name = 'Lord Seedling of Example';
 INSERT INTO ask_statuses (notable_person_id, ask, ask_kind, status, status_date, note, updated_by, updated_at)
 SELECT id, 'controlai-letter', 'letter', 'signed', (now() - interval '3 days')::date, '', 'jo@pauseai.uk', now() - interval '3 days' FROM politicians WHERE test_postcode = 'ZZ99ZZ';
 INSERT INTO ask_statuses (notable_person_id, ask, ask_kind, status, status_date, note, updated_by, updated_at)
