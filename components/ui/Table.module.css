@@ -8,7 +8,13 @@
 .table {
   width: 100%;
   border-collapse: collapse;
+  background: var(--surface);
   font-size: var(--table-font-size);
+}
+
+/* Striped: every other row tinted, so the eye keeps to a row across. */
+.table > tbody > tr:nth-child(even) > td {
+  background: var(--table-stripe);
 }
 
 .table th,

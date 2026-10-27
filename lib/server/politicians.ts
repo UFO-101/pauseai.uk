@@ -239,14 +239,15 @@ function parameters(): [unknown[], (v: unknown) => string] {
 
 /**
  * A page of politicians for the staff interface: the test MPs first, then by
- * the column asked for, by name to start.
+ * the column asked for, by name to start. A `limit` of null is every one,
+ * for a download.
  */
 export async function listPoliticians(
   filter: PoliticianFilter = {},
-  limit = POLITICIANS_PAGE_SIZE,
+  limit: number | null = POLITICIANS_PAGE_SIZE,
 ): Promise<Politician[]> {
   const [values, value] = parameters();
-  const offset = ((filter.page ?? 1) - 1) * limit;
+  const offset = ((filter.page ?? 1) - 1) * (limit ?? 0);
   const rows = await query<Row>(
     `${SELECT_POLITICIANS} ${politicianWhere(filter, value)}
      GROUP BY n.id, p.id ORDER BY p.is_test DESC, ${POLITICIAN_COLUMNS[filter.sort?.key ?? "name"]} ${filter.sort?.dir === "desc" ? "DESC" : "ASC"} NULLS LAST, n.name, n.id
@@ -276,6 +277,7 @@ export async function politiciansPage(filter: PoliticianFilter) {
     total,
     page: filter.page ?? 1,
     pages: Math.max(1, Math.ceil(total / POLITICIANS_PAGE_SIZE)),
+    pageSize: POLITICIANS_PAGE_SIZE,
     outOfOffice,
     otherHouses,
     closest,

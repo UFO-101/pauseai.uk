@@ -13,7 +13,6 @@ import EmailProblemsTable from "@/app/(staff)/staff/_components/EmailProblemsTab
 import { exampleChanges } from "@/app/(staff)/staff/_components/ChangesTable.examples";
 import AuditDetail, { FieldChanges } from "@/app/(staff)/staff/_components/AuditDetail";
 import CampaignName from "@/app/(staff)/staff/_components/CampaignName";
-import Paging from "@/app/(staff)/staff/_components/Paging";
 import LetterFilters from "@/app/(staff)/staff/_components/LetterFilters";
 import LetterLink from "@/app/(staff)/staff/_components/LetterLink";
 import LettersTable from "@/app/(staff)/staff/_components/LettersTable";
@@ -48,7 +47,7 @@ import EraseLink from "@/app/(staff)/staff/_components/EraseLink";
 import MailingDetails from "@/app/(staff)/staff/_components/MailingDetails";
 import MailingsTable from "@/app/(staff)/staff/_components/MailingsTable";
 import { exampleMailing, exampleMailings } from "@/app/(staff)/staff/_components/MailingsTable.examples";
-import ListCount from "@/app/(staff)/staff/_components/ListCount";
+import ListFrame, { ListTable, type ListColumn } from "@/app/(staff)/staff/_components/ui/ListFrame";
 import PoliticiansList, { HouseTabs } from "@/app/(staff)/staff/_components/PoliticiansList";
 import ErasedNotice from "@/app/(staff)/staff/_components/ErasedNotice";
 import ImportCard, { ImportCards } from "@/app/(staff)/staff/_components/ImportCard";
@@ -106,6 +105,20 @@ import {
 } from "./staff.client";
 
 const [pm] = campaigns;
+/** A list's rows, for the list frame: a name, a place and a count, the place long enough to wrap. */
+type ExampleRow = { name: string; place: string; count: number };
+const exampleRows: ExampleRow[] = [
+  { name: "Ann Example", place: "Hackney North and Stoke Newington", count: 3 },
+  { name: "Bob Sample", place: "Leeds", count: 0 },
+  { name: "Cat Fixture", place: "Ceredigion Preseli", count: 12 },
+  { name: "Dan Dummy", place: "Glasgow", count: 1 },
+];
+const exampleColumns: ListColumn<ExampleRow>[] = [
+  { key: "name", label: "Name", text: (r) => r.name, cell: (r) => r.name },
+  { key: "place", label: "Place", text: (r) => r.place, cell: (r) => r.place },
+  { key: "count", label: "Letters", short: true, text: (r) => r.count, cell: (r) => r.count },
+];
+
 /** The parties a filter of politicians picks from. */
 const parties = ["Conservative", "Green", "Labour", "Liberal Democrat"];
 
@@ -909,14 +922,72 @@ export const staff: Group = {
       ],
     },
     {
-      name: "ListCount",
-      file: "app/(staff)/staff/_components/ListCount.tsx",
+      name: "ListFrame",
+      file: "app/(staff)/staff/_components/ui/ListFrame.tsx",
       variants: [
         {
-          label: "Over a list",
+          label: "Page 6 of 50: how many, the downloads, striped rows, and the pages near this one",
           render: () => (
             <StaffPage as="div">
-              <ListCount total={150}>150 politicians; page 1 of 2.</ListCount>
+              <ListFrame
+                count="5,000 rows"
+                total={5000}
+                page={6}
+                pages={50}
+                pageSize={100}
+                href={(n) => `#page-${n}`}
+                download={(format) => `#download-${format}`}
+                columns={exampleColumns}
+                rows={exampleRows}
+                rowKey={(row) => row.name}
+                empty="Nothing found."
+              />
+            </StaffPage>
+          ),
+        },
+        {
+          label: "One page, with no downloads",
+          render: () => (
+            <StaffPage as="div">
+              <ListFrame
+                count="4 rows"
+                total={4}
+                page={1}
+                pages={1}
+                pageSize={100}
+                href={(n) => `#page-${n}`}
+                columns={exampleColumns}
+                rows={exampleRows}
+                rowKey={(row) => row.name}
+                empty="Nothing found."
+              />
+            </StaffPage>
+          ),
+        },
+        {
+          label: "Nothing found",
+          render: () => (
+            <StaffPage as="div">
+              <ListFrame
+                count="0 rows"
+                total={0}
+                page={1}
+                pages={1}
+                pageSize={100}
+                href={(n) => `#page-${n}`}
+                columns={exampleColumns}
+                rows={[]}
+                rowKey={(row) => row.name}
+                empty="Nothing found."
+              />
+            </StaffPage>
+          ),
+        },
+        {
+          label: "ListTable: the rows alone, for a table that's not a whole list",
+          render: () => (
+            <StaffPage as="div">
+              <ListTable columns={exampleColumns} rows={exampleRows} rowKey={(row) => row.name} />
             </StaffPage>
           ),
         },
@@ -1646,20 +1717,6 @@ export const staff: Group = {
       ],
     },
     {
-      name: "Paging",
-      file: "app/(staff)/staff/_components/Paging.tsx",
-      variants: [
-        {
-          label: "The middle page of three: the way back and on",
-          render: () => (
-            <StaffPage as="div">
-              <Paging page={2} pages={3} href={(n) => `#page-${n}`} />
-            </StaffPage>
-          ),
-        },
-      ],
-    },
-    {
       name: "ChangesTable",
       file: "app/(staff)/staff/_components/ChangesTable.tsx",
       variants: [
@@ -1667,7 +1724,11 @@ export const staff: Group = {
           label: "One of each kind of entry, in words, and one of a kind it doesn't know",
           render: () => (
             <StaffPage as="div">
-              <ChangesTable changes={exampleChanges} airtableTable="https://airtable.com/app/tbl" />
+              <ChangesTable
+                log={{ changes: exampleChanges, total: exampleChanges.length, pages: 1, pageSize: 100 }}
+                page={1}
+                airtableTable="https://airtable.com/app/tbl"
+              />
             </StaffPage>
           ),
         },

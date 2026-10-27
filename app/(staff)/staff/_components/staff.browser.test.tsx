@@ -59,7 +59,6 @@ import Alert from "./Alert";
 import Breadcrumb from "./Breadcrumb";
 import EraseLink from "./EraseLink";
 import DeletePolitician from "./DeletePolitician";
-import ListCount from "./ListCount";
 import PoliticiansList, { HouseTabs } from "./PoliticiansList";
 import { emptyPoliticiansSearch, examplePoliticiansPage } from "./PoliticianTable.examples";
 import MailingDetails from "./MailingDetails";
@@ -763,15 +762,6 @@ describe("EraseLink", () => {
   });
 });
 
-describe("ListCount", () => {
-  it("says how many faintly, and nothing when there are none", async () => {
-    const { rerender } = await render(<ListCount total={3}>3 things</ListCount>);
-    await expect.element(page.getByText("3 things")).toBeVisible();
-    await rerender(<ListCount total={0}>0 things</ListCount>);
-    await expect.element(page.getByText("0 things")).not.toBeInTheDocument();
-  });
-});
-
 describe("HouseTabs", () => {
   it("is a tab per house and All, keeping the filters but the page, the house chosen marked", async () => {
     await render(<HouseTabs search={{ ...emptyPoliticiansSearch, q: "jo", house: "lords", page: "3" }} />);
@@ -806,8 +796,11 @@ describe("PoliticiansList", () => {
         asks={exampleAsks}
       />,
     );
-    await expect.element(page.getByText(copy.count(150, 2, 2))).toBeVisible();
+    await expect.element(page.getByText(copy.total(150))).toBeVisible();
     await expect.element(page.getByRole("link", { name: "Polly Placeholder" })).toBeVisible();
+    await expect
+      .element(page.getByRole("link", { name: staffCopy.lists.formats.csv }))
+      .toHaveAttribute("href", "/staff/politicians/download?q=pol&format=csv");
     await expect
       .element(page.getByRole("link", { name: staffCopy.paging.previous }))
       .toHaveAttribute("href", "/staff/politicians?q=pol");
@@ -2361,24 +2354,26 @@ describe("RunList", () => {
 });
 
 describe("ChangesTable", () => {
-  it("lists who changed what under a heading for each day, and every field each logged, in words, linked where there's a page", async () => {
-    await render(<ChangesTable changes={exampleChanges} airtableTable="https://airtable.com/app/tbl" />);
+  const log = (changes: typeof exampleChanges) => ({ changes, total: changes.length, pages: 1, pageSize: 100 });
+
+  it("lists who changed what, the day in a column of its own, and every field each logged, in words, linked where there's a page", async () => {
+    await render(<ChangesTable log={log(exampleChanges)} page={1} airtableTable="https://airtable.com/app/tbl" />);
     const copy = staffCopy.changes;
     const fields = staffCopy.fields;
     const labels = copy.labels;
-    expect(
-      page
-        .getByRole("heading")
-        .all()
-        .map((h) => h.element().textContent),
-    ).toEqual(["12 Oct 2026", "11 Oct 2026"]);
+    await expect.element(page.getByText(copy.total(exampleChanges.length))).toBeVisible();
+    await expect
+      .element(page.getByRole("link", { name: staffCopy.lists.formats.json }))
+      .toHaveAttribute("href", "/staff/audit-log/download?format=json");
     const rows = page
       .getByRole("row")
       .all()
       .filter((row) => row.element().querySelector("td"));
-    expect(rows[0].element().children[0].textContent).toBe("09:59");
-    expect(rows[0].element().children[1].textContent).toBe("jo@pauseai.uk");
-    const details = rows.map((row) => row.element().children[3].textContent);
+    expect(rows[0].element().children[0].textContent).toBe("12 Oct 2026");
+    expect(rows.at(-1)!.element().children[0].textContent).toBe("11 Oct 2026");
+    expect(rows[0].element().children[1].textContent).toBe("09:59");
+    expect(rows[0].element().children[2].textContent).toBe("jo@pauseai.uk");
+    const details = rows.map((row) => row.element().children[4].textContent);
     const signed = staffCopy.politician.statusSet(staffCopy.statuses.signed);
     const cleared = staffCopy.politician.statusCleared;
     const odd = staffCopy.politician.statusSet("odd");
@@ -2408,7 +2403,7 @@ describe("ChangesTable", () => {
       copy.run("14"),
       copy.run("15"),
     ]);
-    const href = (i: number) => rows[i].element().children[3].querySelector("a")?.getAttribute("href");
+    const href = (i: number) => rows[i].element().children[4].querySelector("a")?.getAttribute("href");
     expect([0, 1, 4, 7, 8, 14].map(href)).toEqual([
       "/staff/politicians/7",
       undefined,
@@ -2424,7 +2419,9 @@ describe("ChangesTable", () => {
   });
 
   it("opens each entry's details as logged from a button at the right", async () => {
-    await render(<ChangesTable changes={exampleChanges.slice(4, 5)} airtableTable="https://airtable.com/app/tbl" />);
+    await render(
+      <ChangesTable log={log(exampleChanges.slice(4, 5))} page={1} airtableTable="https://airtable.com/app/tbl" />,
+    );
     const json = page.getByText('"name": "Old MP"', { exact: false });
     await expect.element(json).not.toBeVisible();
     await page.getByRole("button", { name: staffCopy.changes.json }).click();
@@ -2544,7 +2541,7 @@ describe("SupporterBadges", () => {
 });
 
 describe("SupportersTable", () => {
-  it("lists each supporter with a link to their page, their emails, badges and dates, and pages", async () => {
+  it("lists each supporter with a link to their page, their newest email and phone, badges and dates, and pages", async () => {
     const copy = staffCopy.supporters;
     const search = supportersSearch({ q: "j", page: "2" });
     await render(
@@ -2557,7 +2554,12 @@ describe("SupportersTable", () => {
         }}
       />,
     );
-    await expect.element(page.getByText(copy.count(120, 2, 3))).toBeVisible();
+    await expect.element(page.getByText(copy.total(120))).toBeVisible();
+    await expect.element(page.getByRole("cell", { name: `jane.e@example.org ${copy.moreEmails(1)}` })).toBeVisible();
+    await expect.element(page.getByRole("cell", { name: "+447700900001" }).first()).toBeVisible();
+    await expect
+      .element(page.getByRole("link", { name: staffCopy.lists.formats.csv }))
+      .toHaveAttribute("href", "/staff/supporters/download?q=j&format=csv");
     await expect
       .element(page.getByRole("link", { name: "Jane Example" }))
       .toHaveAttribute("href", "/staff/supporters/7");

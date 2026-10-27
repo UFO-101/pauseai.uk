@@ -33,6 +33,9 @@ export const staffCopy = {
   nav: {
     // At the left of the bar, and the way to the home page.
     title: "PauseAI Staff",
+    // The button at the top of the sidebar that folds it to a strip, and back, for a screen reader.
+    fold: "⁂ Fold the menu",
+    unfold: "⁂ Unfold the menu",
     home: "Dashboard",
     accounts: "Staff accounts",
     // The sections the pages are in, in the sidebar.
@@ -137,8 +140,8 @@ export const staffCopy = {
   supporters: {
     title: "Supporters",
     none: "Nobody found.",
-    count: (total: number, page: number, pages: number) =>
-      `${total} ${total === 1 ? "supporter" : "supporters"}; page ${page} of ${pages}.`,
+    // Over the list: how many there are.
+    total: (total: number) => `${total} ${total === 1 ? "supporter" : "supporters"}`,
     filters: {
       search: "Name, email or phone",
       // The other filters are named after their columns.
@@ -165,6 +168,7 @@ export const staffCopy = {
     columns: {
       name: "Name",
       email: "Email",
+      phone: "Phone",
       badges: "Activities",
       subscriptions: "Subscriptions",
       firstSeen: "First sign-up",
@@ -406,9 +410,8 @@ export const staffCopy = {
     anyAnswer: "Any answer",
     noAnswer: "Not answered",
     none: "None found.",
-    // Over the list: how many there are, and the page.
-    count: (total: number, page: number, pages: number) =>
-      `${total} ${total === 1 ? "politician" : "politicians"}; page ${page} of ${pages}.`,
+    // Over the list: how many there are.
+    total: (total: number) => `${total} ${total === 1 ? "politician" : "politicians"}`,
     // Under the list, when a search of those in office finds others too, linked to them all.
     outOfOffice: (n: number) => `${n} ${n === 1 ? "match" : "matches"} found for politicians not in office`,
     // The same, when a search of one house finds no one there, linked to every house.
@@ -446,6 +449,8 @@ export const staffCopy = {
     title: "Mailings",
     intro: "Emails PauseAI has sent to many notable people at once.",
     none: "No mailings yet.",
+    // Over the list: how many there are.
+    total: (n: number) => `⁂ ${n} ${n === 1 ? "mailing" : "mailings"}`,
     columns: {
       title: "Mailing",
       ask: "Ask",
@@ -491,6 +496,9 @@ export const staffCopy = {
   asks: {
     title: "Asks",
     intro: "What we ask notable people to do when writing to them. Make a PR to add a new ask.",
+    // Over the list: how many there are.
+    total: (n: number) => `⁂ ${n} ${n === 1 ? "ask" : "asks"}`,
+    none: "⁂ No asks yet.",
     columns: {
       ask: "Title",
       kind: "Kind",
@@ -618,7 +626,7 @@ export const staffCopy = {
     },
     intro: "Nothing is sent to these addresses until they're unblocked.",
     // Over the list: how many are blocked, of those the filters find.
-    count: (n: number) => `${n} blocked ${n === 1 ? "address" : "addresses"}.`,
+    count: (n: number) => `${n} blocked ${n === 1 ? "address" : "addresses"}`,
     // Instead of the table, when no address is blocked, or none of the cause filtered for.
     noBlocks: "No addresses are blocked.",
     // Instead of the history, when nothing has bounced or been complained about.
@@ -868,9 +876,8 @@ export const staffCopy = {
   },
   letters: {
     title: "Letters to MPs",
-    // Over the list: how many there are, and the page.
-    count: (total: number, page: number, pages: number) =>
-      `${total} ${total === 1 ? "letter" : "letters"}; page ${page} of ${pages}.`,
+    // Over the list: how many there are.
+    total: (total: number) => `${total} ${total === 1 ? "letter" : "letters"}`,
     search: "Sender or MP",
     // The Answered filter: whether the MP replied.
     answered: { yes: "Answered", no: "Not answered" },
@@ -916,9 +923,28 @@ export const staffCopy = {
   paging: {
     previous: "Previous",
     next: "Next",
+    // The paging's name, for a screen reader.
+    label: "⁂ Pages",
+    // A page's number, for a screen reader.
+    page: (n: number) => `⁂ Page ${n}`,
+    // On a phone, between Previous and Next.
+    of: (page: number, pages: number) => `⁂ Page ${page} of ${pages}`,
+    // Under the list: the rows on this page, of how many.
+    range: (from: number, to: number, total: number) => `⁂ ${from}–${to} of ${total}`,
+  },
+  // Over a list, after its count: the rows on this page, when there's more than one; then its downloads.
+  lists: {
+    showing: (from: number, to: number) => `⁂ showing ${from}–${to}`,
+    downloadAll: (n: number) => `⁂ Download all ${n}`,
+    formats: { csv: "CSV", json: "JSON" },
   },
   changes: {
     title: "Audit log",
+    // Over the list: how many entries there are.
+    total: (n: number) => `⁂ ${n} ${n === 1 ? "entry" : "entries"}`,
+    none: "⁂ Nothing logged yet.",
+    // The column of the day, before the time.
+    day: "⁂ Date",
     at: "When",
     actor: "Who",
     action: "What",

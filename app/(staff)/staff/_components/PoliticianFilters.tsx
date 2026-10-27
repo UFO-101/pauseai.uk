@@ -7,23 +7,14 @@ import FilterBar, { type Filter } from "./ui/FilterBar";
 const copy = staffCopy.politicians;
 
 /**
- * Search and filter the politicians list, among `parties` and `asks`: the
- * search, then the table's columns in its order, then Airtable's markers.
- * Status is those in office unless another is chosen. An answer is offered
- * once there's an ask, from those its kind allows, and goes with it. The
- * house is the tabs over the list, which Clear filters keeps.
+ * The politicians list's filters, among `parties` and `asks`: the table's
+ * columns in its order, then Airtable's markers. Status is those in office
+ * unless another is chosen. An answer is offered once there's an ask, from
+ * those its kind allows, and goes with it.
  */
-export default function PoliticianFilters({
-  search,
-  parties,
-  asks,
-}: {
-  search: PoliticiansSearch;
-  parties: string[];
-  asks: Ask[];
-}) {
+export function politicianFilters(search: PoliticiansSearch, parties: string[], asks: Ask[]): Filter[] {
   const ask = asks.find((a) => a.slug === search.ask);
-  const filters: Filter[] = [
+  return [
     {
       name: "party",
       label: staffCopy.fields.party,
@@ -65,12 +56,27 @@ export default function PoliticianFilters({
       options: Object.entries(copy.flags).map(([value, label]) => ({ value, label })),
     },
   ];
+}
+
+/**
+ * Search and filter the politicians list: the search, then its filters. The
+ * house is the tabs over the list, which Clear filters keeps.
+ */
+export default function PoliticianFilters({
+  search,
+  parties,
+  asks,
+}: {
+  search: PoliticiansSearch;
+  parties: string[];
+  asks: Ask[];
+}) {
   return (
     <FilterBar
       path="/staff/politicians"
       values={search}
       search={{ name: "q", label: copy.search }}
-      filters={filters}
+      filters={politicianFilters(search, parties, asks)}
       keep={["house"]}
     />
   );

@@ -23,6 +23,19 @@ export type Filter = {
 
 const copy = staffCopy.filters;
 
+/**
+ * The search and each filter that's on, in words, as their chips say them:
+ * for a download's filename.
+ */
+export function filterWords(filters: Filter[], values: Record<string, string>, search: string): string[] {
+  const words = values[search] ? [`${staffCopy.search} ${values[search]}`] : [];
+  for (const filter of filters) {
+    const value = values[filter.name];
+    if (value) words.push(`${filter.label} ${filter.options.find((o) => o.value === value)?.label ?? value}`);
+  }
+  return words;
+}
+
 // More choices than this go in columns.
 const MANY = 12;
 

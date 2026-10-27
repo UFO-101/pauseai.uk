@@ -5,10 +5,10 @@ import type { Ask } from "@/lib/server/asks";
 import type { Politician } from "@/lib/server/politicians";
 import { parseSort, sortHref } from "@/lib/staff-sort";
 import SortHeading from "./SortHeading";
+import { ListTable, type ListColumn } from "./ui/ListFrame";
 import styles from "./PoliticianTable.module.css";
 import { Muted } from "@/components/ui/Text";
 import Tag from "@/components/ui/Tag";
-import Table from "@/components/ui/Table";
 
 type Props = {
   politicians: Politician[];
@@ -30,10 +30,17 @@ function Marks({ politician }: { politician: Politician }) {
   );
 }
 
-const marks = (p: Politician) =>
-  [p.importantTarget && "important", p.personalConnection && "connection", p.airtableRemovedAt && "removed"]
+/** Airtable's markers on them, in words, as a download has them. */
+const marks = (p: Politician) => {
+  const { flags } = staffCopy.politicians;
+  return [
+    p.importantTarget && flags.important,
+    p.personalConnection && flags.connection,
+    p.airtableRemovedAt && flags.removed,
+  ]
     .filter(Boolean)
-    .join();
+    .join("; ");
+};
 
 /**
  * Whether a column tells the rows apart: not when every row has the same
@@ -46,15 +53,19 @@ function shows(politicians: Politician[], value: (p: Politician) => string): boo
 }
 
 /**
- * Politicians: their house, constituency and party, whether they're in
- * office, Airtable's markers, how many letters they've had and answered,
- * and their answer to each ask they've answered, a line each. A column that
- * would say the same for every row is left out, as is one the filters fix:
- * a house, a party, or one status, those in office unless another or any
- * is chosen. Statuses are changed on each politician's page.
+ * The politicians list's columns: their name, house, constituency and party,
+ * whether they're in office, Airtable's markers, how many letters they've
+ * had and answered, and their answer to each ask they've answered, a line
+ * each. A column that would say the same for every row is left out, as is
+ * one the filters fix: a house, a party, or one status, those in office
+ * unless another or any is chosen. A download has the same columns, from
+ * every row it has.
  */
-export default function PoliticianTable({ politicians, asks, search = {} }: Props) {
-  if (politicians.length === 0) return <p>{staffCopy.politicians.none}</p>;
+export function politicianColumns(
+  politicians: Politician[],
+  asks: Ask[],
+  search: Record<string, string> = {},
+): ListColumn<Politician>[] {
   const show = {
     house: !Object.hasOwn(staffCopy.houses, search.house ?? "") && shows(politicians, (p) => p.house),
     constituency: shows(politicians, (p) => p.constituency ?? ""),
@@ -66,6 +77,7 @@ export default function PoliticianTable({ politicians, asks, search = {} }: Prop
   const current = parseSort(POLITICIAN_SORTS, "name", sort, dir);
   const heading = (key: PoliticianSort, label: string) => (
     <SortHeading
+      key={key}
       sortKey={key}
       current={current}
       href={sortHref("/staff/politicians", filters, POLITICIAN_SORTS, current, key)}
@@ -73,70 +85,112 @@ export default function PoliticianTable({ politicians, asks, search = {} }: Prop
       {label}
     </SortHeading>
   );
-  return (
-    <Table>
-      <thead>
-        <tr>
-          {heading("name", staffCopy.fields.name)}
-          {show.house && heading("house", staffCopy.fields.house)}
-          {show.constituency && heading("constituency", staffCopy.fields.constituency)}
-          {show.party && heading("party", staffCopy.fields.party)}
-          {show.status && <th>{staffCopy.politicians.columns.status}</th>}
-          {show.marked && <th>{staffCopy.politicians.flag}</th>}
-          {heading("letters", staffCopy.politicians.columns.letters)}
-          {heading("replies", staffCopy.politicians.columns.replies)}
-          {heading("asks", staffCopy.politicians.columns.asks)}
-        </tr>
-      </thead>
-      <tbody>
-        {politicians.map((p) => {
-          const answered = asks.filter((ask) => p.statuses[ask.slug]);
-          return (
-            <tr key={p.id}>
-              <td>
-                <Link href={`/staff/politicians/${p.id}`}>{p.name}</Link>{" "}
-                {p.isTest && <Tag>{staffCopy.politicians.testMp}</Tag>}
-                {p.emailBlocked && <Tag tone="amber">{staffCopy.politicians.emailBlocked}</Tag>}
-              </td>
-              {show.house && <td>{staffCopy.houses[p.house]}</td>}
-              {show.constituency && <td>{p.constituency}</td>}
-              {show.party && <td>{p.party}</td>}
-              {show.status && (
-                <td className={styles.status}>
-                  {p.status === "in_office" ? (
-                    staffCopy.personStatuses[p.status]
-                  ) : (
-                    <Muted>{staffCopy.personStatuses[p.status]}</Muted>
-                  )}
-                </td>
-              )}
-              {show.marked && (
-                <td>
-                  <span className={styles.marks}>
-                    <Marks politician={p} />
-                  </span>
-                </td>
-              )}
-              <td className={styles.count}>{p.letters}</td>
-              <td className={styles.count}>{p.replies}</td>
-              <td>
-                {answered.length ? (
-                  <ul className={styles.asks}>
-                    {answered.map((ask) => (
-                      <li key={ask.slug}>
-                        <strong>{staffCopy.statuses[p.statuses[ask.slug].status]}</strong>{" "}
-                        <span className={styles.ask}>{ask.title}</span>
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <Muted>{staffCopy.politicians.noAsks}</Muted>
-                )}
-              </td>
-            </tr>
-          );
-        })}
-      </tbody>
-    </Table>
-  );
+  const answered = (p: Politician) => asks.filter((ask) => p.statuses[ask.slug]);
+  const columns: (ListColumn<Politician> | false)[] = [
+    {
+      key: "name",
+      label: staffCopy.fields.name,
+      heading: heading("name", staffCopy.fields.name),
+      text: (p) => p.name,
+      cell: (p) => (
+        <>
+          <Link href={`/staff/politicians/${p.id}`}>{p.name}</Link>{" "}
+          {p.isTest && <Tag>{staffCopy.politicians.testMp}</Tag>}
+          {p.emailBlocked && <Tag tone="amber">{staffCopy.politicians.emailBlocked}</Tag>}
+        </>
+      ),
+    },
+    show.house && {
+      key: "house",
+      label: staffCopy.fields.house,
+      heading: heading("house", staffCopy.fields.house),
+      short: true,
+      text: (p) => staffCopy.houses[p.house],
+      cell: (p) => staffCopy.houses[p.house],
+    },
+    show.constituency && {
+      key: "constituency",
+      label: staffCopy.fields.constituency,
+      heading: heading("constituency", staffCopy.fields.constituency),
+      text: (p) => p.constituency,
+      cell: (p) => p.constituency,
+    },
+    show.party && {
+      key: "party",
+      label: staffCopy.fields.party,
+      heading: heading("party", staffCopy.fields.party),
+      short: true,
+      text: (p) => p.party,
+      cell: (p) => p.party,
+    },
+    show.status && {
+      key: "status",
+      label: staffCopy.politicians.columns.status,
+      short: true,
+      text: (p) => staffCopy.personStatuses[p.status],
+      cell: (p) =>
+        p.status === "in_office" ? (
+          staffCopy.personStatuses[p.status]
+        ) : (
+          <Muted>{staffCopy.personStatuses[p.status]}</Muted>
+        ),
+    },
+    show.marked && {
+      key: "marked",
+      label: staffCopy.politicians.flag,
+      text: marks,
+      cell: (p) => (
+        <span className={styles.marks}>
+          <Marks politician={p} />
+        </span>
+      ),
+    },
+    {
+      key: "letters",
+      label: staffCopy.politicians.columns.letters,
+      heading: heading("letters", staffCopy.politicians.columns.letters),
+      short: true,
+      className: styles.count,
+      text: (p) => p.letters,
+      cell: (p) => p.letters,
+    },
+    {
+      key: "replies",
+      label: staffCopy.politicians.columns.replies,
+      heading: heading("replies", staffCopy.politicians.columns.replies),
+      short: true,
+      className: styles.count,
+      text: (p) => p.replies,
+      cell: (p) => p.replies,
+    },
+    {
+      key: "asks",
+      label: staffCopy.politicians.columns.asks,
+      heading: heading("asks", staffCopy.politicians.columns.asks),
+      text: (p) =>
+        answered(p)
+          .map((ask) => `${staffCopy.statuses[p.statuses[ask.slug].status]}: ${ask.title}`)
+          .join("; "),
+      cell: (p) =>
+        answered(p).length ? (
+          <ul className={styles.asks}>
+            {answered(p).map((ask) => (
+              <li key={ask.slug}>
+                <strong>{staffCopy.statuses[p.statuses[ask.slug].status]}</strong>{" "}
+                <span className={styles.ask}>{ask.title}</span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <Muted>{staffCopy.politicians.noAsks}</Muted>
+        ),
+    },
+  ];
+  return columns.filter((column) => column !== false);
+}
+
+/** Politicians, a row each, in the list's columns; or that there are none. */
+export default function PoliticianTable({ politicians, asks, search = {} }: Props) {
+  if (politicians.length === 0) return <p>{staffCopy.politicians.none}</p>;
+  return <ListTable columns={politicianColumns(politicians, asks, search)} rows={politicians} rowKey={(p) => p.id} />;
 }

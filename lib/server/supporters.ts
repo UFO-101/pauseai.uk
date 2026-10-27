@@ -81,7 +81,9 @@ export async function linkSupporters(db?: Queryable): Promise<LinkResult> {
   return { supportersAdded: added.length, linked: existing.length + fresh.length };
 }
 
-const SUMMARY_COLUMNS = `s.id::int AS id, s.name, coalesce(s.emails, '{}') AS emails, s.phone, s.postcode,
+const SUMMARY_COLUMNS = `s.id::int AS id, s.name, coalesce(s.emails, '{}') AS emails,
+  (SELECT i.email FROM supporter_identity i WHERE i.supporter_id = s.id ORDER BY i.seen_at DESC NULLS LAST, i.email LIMIT 1) AS email,
+  s.phone, s.postcode,
   coalesce(s.sources, '{}') AS sources, s.luma_contact AS "lumaContact", s.first_seen_at AS "firstSeenAt",
   s.last_active_at AS "lastActiveAt", s.events, s.letters, s.member`;
 
@@ -95,8 +97,11 @@ const BADGE_CONDITIONS: Record<SupporterBadge, string> = {
 
 export type SupportersPage = { supporters: SupporterRow[]; total: number; pages: number };
 
-/** One page of the list, filtered and sorted. */
-export async function listSupporters(filter: SupporterFilter): Promise<SupportersPage> {
+/** One page of the list, filtered and sorted; with a `limit` of null, every one, for a download. */
+export async function listSupporters(
+  filter: SupporterFilter,
+  limit: number | null = SUPPORTERS_PAGE_SIZE,
+): Promise<SupportersPage> {
   const where: string[] = [];
   const values: unknown[] = [];
   const add = (value: unknown) => {
@@ -133,7 +138,7 @@ export async function listSupporters(filter: SupporterFilter): Promise<Supporter
   const rows = await query<SupporterSummary & { total: number }>(
     `SELECT ${SUMMARY_COLUMNS}, count(*) OVER ()::int AS total FROM supporters_summary s
      ${where.length ? `WHERE ${where.join(" AND ")}` : ""}
-     ORDER BY ${order} LIMIT ${add(SUPPORTERS_PAGE_SIZE)} OFFSET ${add((filter.page - 1) * SUPPORTERS_PAGE_SIZE)}`,
+     ORDER BY ${order} LIMIT ${add(limit)} OFFSET ${add((filter.page - 1) * (limit ?? 0))}`,
     values,
   );
   const total = rows[0]?.total ?? 0;

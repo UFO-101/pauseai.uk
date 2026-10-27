@@ -28,6 +28,14 @@
   text-decoration: none;
 }
 
+/* The title and the fold button, apart at either end. */
+.top {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  justify-content: space-between;
+}
+
 /* The symbol, the height of a line of the name. */
 .mark {
   width: 1.75rem;
@@ -188,5 +196,18 @@
     margin: 0;
     border: 0;
     border-top: 1px solid var(--border);
+  }
+}
+
+/* Folded (NavFold): only the pause symbol and the button to unfold, one
+   under the other. */
+@media (min-width: 721px) {
+  :global(:root[data-staff-nav="folded"]) .top {
+    flex-direction: column;
+  }
+
+  :global(:root[data-staff-nav="folded"]) .name,
+  :global(:root[data-staff-nav="folded"]) .sidebar {
+    display: none;
   }
 }

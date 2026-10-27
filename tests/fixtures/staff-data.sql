@@ -69,6 +69,47 @@ INSERT INTO politicians (id, house, constituency, party, country)
 SELECT p.id, s.house, s.constituency, s.party, s.country FROM people p JOIN seed_politicians s USING (name);
 DROP TABLE seed_politicians;
 
+-- Made-up politicians, enough for 250 with the test MPs, so the list has
+-- three pages: mostly MPs, then peers and members of the other bodies, each
+-- with a party of their body; a few retired or gone, a few marked, a few
+-- with no address.
+CREATE TEMP TABLE made_politicians AS
+SELECT i, 'recMade' || i AS airtable_id,
+  (ARRAY['Alex','Bea','Cal','Dee','Eli','Fay','Gus','Hal','Ivy','Jon','Kit','Lou','Mo','Ned','Ola','Pip','Quin','Ros','Sid','Tess','Uma','Viv','Wes','Zoe'])[1 + i % 24] AS first,
+  (ARRAY['Abbott','Barker','Carter','Dalton','Ellis','Fenwick','Garner','Hollis','Ingram','Jarvis','Keller','Lister','Marsh','Norris','Oakley','Parry','Quayle','Rowe','Slater','Thorne','Upton','Vance','Webb','Yates'])[1 + (i / 24 + 5 * i) % 24] AS last,
+  (ARRAY['Ashford','Bramley','Colton','Dunmore','Eastwick','Farley','Glenholm','Harwood','Inverby','Kelso','Langley','Morden','Northam','Oxley','Penrith','Rydal','Stanmore','Tarleton','Westby','Yarrow'])[1 + (i * 3) % 20] AS town,
+  CASE WHEN i % 10 < 6 THEN 'commons' WHEN i % 10 < 8 THEN 'lords' WHEN i % 10 = 8 THEN 'scottish-parliament' WHEN i % 20 = 9 THEN 'senedd' ELSE 'ni-assembly' END AS house
+FROM generate_series(1, 228) i;
+WITH people AS (
+  INSERT INTO notable_people (kind, airtable_id, name, salutation, email, status, notes, important_target, personal_connection, created_at, updated_at)
+  SELECT 'politician', airtable_id,
+    CASE WHEN house = 'lords' THEN (CASE WHEN i % 4 = 0 THEN 'Baroness ' ELSE 'Lord ' END) || last || ' of ' || town ELSE first || ' ' || last END,
+    CASE WHEN house = 'lords' THEN (CASE WHEN i % 4 = 0 THEN 'Baroness ' ELSE 'Lord ' END) || last ELSE (CASE WHEN i % 2 = 0 THEN 'Ms ' ELSE 'Mr ' END) || last END,
+    CASE WHEN i % 9 = 0 THEN NULL ELSE lower(first || '.' || last || '.' || i) || '@parliament.example' END,
+    CASE WHEN i % 15 = 0 THEN 'retired' WHEN i % 23 = 0 THEN 'left_office' ELSE 'in_office' END,
+    '', i % 17 = 0, i % 19 = 0, now() - make_interval(days => 10 + i % 50), now() - make_interval(days => i % 10)
+  FROM made_politicians RETURNING id, airtable_id
+)
+INSERT INTO politicians (id, house, constituency, party, country)
+SELECT p.id, m.house,
+  CASE WHEN m.house = 'lords' THEN NULL ELSE m.town || ' ' || (ARRAY['North','South','East','West','Central','and District'])[1 + m.i % 6] END,
+  CASE m.house
+    WHEN 'commons' THEN (ARRAY['Labour','Conservative','Liberal Democrat','Reform UK','Green','Scottish National Party','Independent'])[1 + m.i % 7]
+    WHEN 'lords' THEN (ARRAY['Crossbench','Conservative','Labour','Liberal Democrat'])[1 + m.i % 4]
+    WHEN 'scottish-parliament' THEN (ARRAY['Scottish National Party','Scottish Labour','Scottish Conservatives'])[1 + m.i % 3]
+    WHEN 'senedd' THEN (ARRAY['Plaid Cymru','Welsh Labour','Welsh Conservatives'])[1 + m.i % 3]
+    ELSE (ARRAY['DUP','Sinn Féin','Alliance','SDLP'])[1 + m.i % 4]
+  END,
+  CASE m.house
+    WHEN 'commons' THEN (ARRAY['england','england','england','scotland','wales','northern-ireland'])[1 + m.i % 6]
+    WHEN 'lords' THEN NULL
+    WHEN 'scottish-parliament' THEN 'scotland'
+    WHEN 'senedd' THEN 'wales'
+    ELSE 'northern-ireland'
+  END
+FROM people p JOIN made_politicians m USING (airtable_id);
+DROP TABLE made_politicians;
+
 -- Statuses: Polly signed the letter to the PM last month; Dora this week;
 -- the peer backs the bill, from ControlAI's letter, the week before; Backy
 -- McTestface MP's bill status (lib/test-mps.json) was already there. Then

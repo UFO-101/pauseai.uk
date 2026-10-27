@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/Button";
 import { staffCopy } from "@/lib/content/staff-interface";
 import type { Permission } from "@/lib/staff-permissions";
 import { sectionsFor, type StaffPageId } from "@/lib/staff-sections";
+import NavFold from "./ui/NavFold";
 import styles from "./StaffNav.module.css";
 
 /** The pages the navigation can mark as current: the home page, your sessions, or any page in a section. */
@@ -23,7 +24,8 @@ type Props = {
  * The staff interface's navigation: a sidebar with Home, then the pages in
  * sections, the current one marked but still a link, so it's the way back from a page
  * under it; who's logged in and the way out; on a phone, a bar with the
- * current page's name opening the same as a dropdown. Under Log out, with
+ * current page's name opening the same as a dropdown. On wider screens, a
+ * button folds the sidebar to a strip with only the pause symbol. Under Log out, with
  * more than one session open, a faint link to the page of them. Each page shows
  * only to those with its permission (lib/staff-sections.ts). The pause symbol and name at the top are the
  * way to the home page.
@@ -33,7 +35,7 @@ export default function StaffNav({ email, permissions = [], sessions = 1, curren
   const mark = (
     <>
       <Image src="/images/logos/Pause-Symbol.svg" alt="" width={616} height={616} className={styles.mark} priority />
-      <span>{staffCopy.nav.title}</span>
+      <span className={styles.name}>{staffCopy.nav.title}</span>
     </>
   );
   const title =
@@ -80,7 +82,10 @@ export default function StaffNav({ email, permissions = [], sessions = 1, curren
   );
   return (
     <nav className={styles.nav} aria-label={staffCopy.nav.title}>
-      {title}
+      <div className={styles.top}>
+        {title}
+        <NavFold />
+      </div>
       {/* Wider screens: the groups down the side, then who's logged in and the way out. */}
       <div className={styles.sidebar}>
         {home}

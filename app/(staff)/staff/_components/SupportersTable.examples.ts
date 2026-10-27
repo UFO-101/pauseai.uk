@@ -6,6 +6,7 @@ export const exampleSupporter: SupporterSummary = {
   id: 7,
   name: "Jane Example",
   emails: ["jane@example.com", "jane.e@example.org"],
+  email: "jane.e@example.org",
   phone: "+447700900001",
   postcode: "M1 1AE",
   sources: ["letter", "luma"],

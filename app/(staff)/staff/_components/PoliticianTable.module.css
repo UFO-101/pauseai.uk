@@ -1,10 +1,5 @@
 /* The politicians table. */
 
-/* Whether they're in office, on one line. */
-.status {
-  white-space: nowrap;
-}
-
 /* Airtable's markers: lozenges, wrapping under each other in a narrow column. */
 .marks {
   display: flex;

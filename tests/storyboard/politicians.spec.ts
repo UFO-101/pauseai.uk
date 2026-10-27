@@ -152,13 +152,13 @@ test("the politicians list pages through many, a count over it", async ({ page, 
   await logIn(page, flowDatabase);
   await page.goto(`${BASE}/staff/politicians?house=lords`);
   const copy = staffCopy.politicians;
-  await expect(page.getByText(copy.count(121, 1, 2))).toBeVisible();
+  await expect(page.getByText(copy.total(121))).toBeVisible();
   await page.getByRole("link", { name: staffCopy.paging.next }).scrollIntoViewIfNeeded();
   await frame(page, "the first hundred peers, and the way to the next page");
 
   await page.getByRole("link", { name: staffCopy.paging.next }).click();
   await expect(page).toHaveURL(/house=lords&page=2/);
-  await expect(page.getByText(copy.count(121, 2, 2))).toBeVisible();
+  await expect(page.getByText(copy.total(121))).toBeVisible();
   await expect(page.getByRole("link", { name: "Lord Member 120" })).toBeVisible();
   await frame(page, "the second page");
 

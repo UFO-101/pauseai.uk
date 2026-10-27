@@ -45,6 +45,8 @@
   /* Borders & shadows */
   --border: #e8ddd1;
   --border-strong: #d4c4b0;
+  /* Every other row of a table, on white. */
+  --table-stripe: #faf5ef;
   --shadow: rgba(26, 22, 18, 0.08);
   --shadow-strong: rgba(26, 22, 18, 0.14);
 

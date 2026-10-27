@@ -1,0 +1,27 @@
+/* The sidebar's fold button: small and square, at the top of the sidebar. */
+.fold {
+  display: inline-flex;
+  width: 1.75rem;
+  height: 1.75rem;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text-secondary);
+  font: inherit;
+  cursor: pointer;
+}
+
+.fold:hover {
+  color: var(--text);
+  border-color: var(--accent);
+}
+
+/* A phone has the bar, which doesn't fold. */
+@media (max-width: 720px) {
+  .fold {
+    display: none;
+  }
+}

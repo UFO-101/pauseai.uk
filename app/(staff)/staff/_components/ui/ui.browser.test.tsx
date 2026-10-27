@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import { render } from "vitest-browser-react";
 import { page, userEvent } from "vitest/browser";
 import { TextInput } from "@/components/ui/Controls";
@@ -6,6 +6,9 @@ import StaffPage from "./StaffPage";
 import Tabs from "./Tabs";
 import FilterBar, { type Filter } from "./FilterBar";
 import Menu from "./Menu";
+import ListFrame, { ListTable, type ListColumn } from "./ListFrame";
+import NavFold from "./NavFold";
+import { NAV_FOLD_KEY } from "@/lib/staff-nav";
 import { staffCopy } from "@/lib/content/staff-interface";
 
 describe("StaffPage", () => {
@@ -220,5 +223,182 @@ describe("FilterBar's menus", () => {
     expect(document.querySelector("[popover]:popover-open")).not.toBeNull();
     await rerender(bar({ kind: "a" }));
     expect(document.querySelector("[popover]:popover-open")).toBeNull();
+  });
+});
+
+type Row = { name: string; count: number };
+const rows: Row[] = [
+  { name: "Ann", count: 3 },
+  { name: "Bob", count: 0 },
+];
+const columns: ListColumn<Row>[] = [
+  { key: "name", label: "Name", text: (r) => r.name, cell: (r) => r.name },
+  { key: "count", label: "Count", short: true, className: "figure", text: (r) => r.count, cell: (r) => r.count },
+  { key: "button", label: "", heading: <th key="button">Act</th>, cell: () => <button type="button">Go</button> },
+];
+
+describe("ListFrame", () => {
+  const frame = (page: number, pages: number, download = true) => (
+    <StaffPage as="div">
+      <ListFrame
+        count="250 rows"
+        total={250}
+        page={page}
+        pages={pages}
+        pageSize={2}
+        href={(n) => `/list?page=${n}`}
+        download={download ? (format) => `/list/download?format=${format}` : undefined}
+        columns={columns}
+        rows={rows}
+        rowKey={(r) => r.name}
+        empty="None."
+      />
+    </StaffPage>
+  );
+
+  it("says how many, which these are, and offers every one as CSV or JSON", async () => {
+    await render(frame(6, 50));
+    await expect.element(page.getByText("250 rows")).toBeVisible();
+    await expect.element(page.getByText(staffCopy.lists.showing(11, 12), { exact: false })).toBeVisible();
+    await expect.element(page.getByText(staffCopy.lists.downloadAll(250))).toBeVisible();
+    for (const format of ["csv", "json"] as const) {
+      const link = page.getByRole("link", { name: staffCopy.lists.formats[format] });
+      await expect.element(link).toHaveAttribute("href", `/list/download?format=${format}`);
+      await expect.element(link).toHaveAttribute("download");
+    }
+    await expect.element(page.getByText(staffCopy.paging.range(11, 12, 250))).toBeVisible();
+  });
+
+  it("draws a striped table, a short column on one line, a column's own heading", async () => {
+    await render(frame(1, 1));
+    const cells = page.getByRole("row").all().slice(1);
+    const [first, second] = cells.map((row) => getComputedStyle(row.element().querySelector("td")!).backgroundColor);
+    expect(first).not.toBe(second);
+    const count = page.getByRole("cell", { name: "3" }).element();
+    expect(getComputedStyle(count).whiteSpace).toBe("nowrap");
+    expect(count.className).toContain("figure");
+    expect([...document.querySelectorAll("th")].map((th) => th.textContent)).toEqual(["Name", "Count", "Act"]);
+  });
+
+  it("links to the first, the last and the pages near this one, with a gap between", async () => {
+    await render(frame(6, 50));
+    const pages = page.getByRole("navigation", { name: staffCopy.paging.label });
+    expect([...pages.element().querySelectorAll("li")].map((item) => item.textContent)).toEqual([
+      "1",
+      "…",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "…",
+      "50",
+    ]);
+    await expect
+      .element(pages.getByRole("link", { name: staffCopy.paging.page(50) }))
+      .toHaveAttribute("href", "/list?page=50");
+    await expect.element(pages.getByText("6", { exact: true })).toHaveAttribute("aria-current", "page");
+    await expect
+      .element(pages.getByRole("link", { name: staffCopy.paging.previous }))
+      .toHaveAttribute("href", "/list?page=5");
+    await expect
+      .element(pages.getByRole("link", { name: staffCopy.paging.next }))
+      .toHaveAttribute("href", "/list?page=7");
+  });
+
+  it("has no Previous on the first page, no Next on the last", async () => {
+    const { rerender } = await render(frame(1, 3));
+    await expect.element(page.getByRole("link", { name: staffCopy.paging.previous })).not.toBeInTheDocument();
+    await rerender(frame(3, 3));
+    await expect.element(page.getByRole("link", { name: staffCopy.paging.next })).not.toBeInTheDocument();
+  });
+
+  it("on one page, has no paging nor which these are; without downloads, no buttons", async () => {
+    await render(frame(1, 1, false));
+    await expect.element(page.getByRole("navigation")).not.toBeInTheDocument();
+    await expect.element(page.getByText(staffCopy.lists.showing(1, 2), { exact: false })).not.toBeInTheDocument();
+    await expect.element(page.getByRole("link")).not.toBeInTheDocument();
+  });
+
+  it("says what a list with nothing in it says, instead", async () => {
+    await render(
+      <ListFrame
+        count="0 rows"
+        total={0}
+        page={1}
+        pages={1}
+        pageSize={2}
+        href={() => ""}
+        columns={columns}
+        rows={[]}
+        rowKey={(r) => r.name}
+        empty="None."
+      />,
+    );
+    await expect.element(page.getByText("None.")).toBeVisible();
+    await expect.element(page.getByRole("table")).not.toBeInTheDocument();
+  });
+
+  it("is wider than the content's width, and on a phone says the page in place of the numbers", async () => {
+    const { container } = await render(frame(6, 50));
+    const content = container.querySelector("[data-density] > div") as HTMLElement;
+    content.style.width = "2000px";
+    expect(container.querySelector("table")!.getBoundingClientRect().width).toBeGreaterThan(88 * 16);
+    await page.viewport(400, 800);
+    try {
+      await expect.element(page.getByText(staffCopy.paging.of(6, 50))).toBeVisible();
+      expect(getComputedStyle(container.querySelector("ol")!).display).toBe("none");
+    } finally {
+      await page.viewport(1280, 800);
+    }
+  });
+});
+
+describe("ListTable", () => {
+  it("is the rows alone, a cell per column", async () => {
+    await render(<ListTable columns={columns} rows={rows} rowKey={(r) => r.name} />);
+    await expect.element(page.getByRole("cell", { name: "Bob" })).toBeVisible();
+    expect(document.querySelector("th")!.textContent).toBe("Name");
+  });
+});
+
+describe("NavFold", () => {
+  afterEach(() => {
+    delete document.documentElement.dataset.staffNav;
+    localStorage.removeItem(NAV_FOLD_KEY);
+  });
+
+  it("folds the sidebar and unfolds it, on <html> and remembered in this browser", async () => {
+    await render(<NavFold />);
+    const fold = page.getByRole("button", { name: staffCopy.nav.fold });
+    await expect.element(fold).toHaveAttribute("aria-expanded", "true");
+    await fold.click();
+    expect(document.documentElement.dataset.staffNav).toBe("folded");
+    expect(localStorage.getItem(NAV_FOLD_KEY)).toBe("folded");
+    const unfold = page.getByRole("button", { name: staffCopy.nav.unfold });
+    await expect.element(unfold).toHaveAttribute("aria-expanded", "false");
+    await unfold.click();
+    expect(document.documentElement.dataset.staffNav).toBeUndefined();
+    expect(localStorage.getItem(NAV_FOLD_KEY)).toBeNull();
+  });
+
+  it("starts folded when the page already is, and still folds a browser that won't store it", async () => {
+    document.documentElement.dataset.staffNav = "folded";
+    await render(<NavFold />);
+    await expect.element(page.getByRole("button", { name: staffCopy.nav.unfold })).toBeVisible();
+    const setItem = Storage.prototype.setItem;
+    const removeItem = Storage.prototype.removeItem;
+    Storage.prototype.setItem = Storage.prototype.removeItem = () => {
+      throw new Error("no storage");
+    };
+    try {
+      await page.getByRole("button", { name: staffCopy.nav.unfold }).click();
+      expect(document.documentElement.dataset.staffNav).toBeUndefined();
+      await page.getByRole("button", { name: staffCopy.nav.fold }).click();
+      expect(document.documentElement.dataset.staffNav).toBe("folded");
+    } finally {
+      Storage.prototype.setItem = setItem;
+      Storage.prototype.removeItem = removeItem;
+    }
   });
 });

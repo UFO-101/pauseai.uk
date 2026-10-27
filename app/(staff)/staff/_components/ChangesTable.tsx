@@ -1,70 +1,74 @@
 import { staffCopy } from "@/lib/content/staff-interface";
+import { pagePath } from "@/lib/staff-search";
 import { staffClock, staffDate } from "@/lib/staff-time";
-import type { LoggedChange } from "@/lib/server/audit";
+import type { ChangesPage, LoggedChange } from "@/lib/server/audit";
 import IconButton from "@/components/ui/IconButton";
-import Table from "@/components/ui/Table";
 import AuditDetail from "./AuditDetail";
+import ListFrame, { type ListColumn } from "./ui/ListFrame";
 import styles from "./ChangesTable.module.css";
 
+const copy = staffCopy.changes;
+const PATH = "/staff/audit-log";
+
 /**
- * The log of who changed what, a table for each day under a heading: the
- * time; who; what; the details, in words; and at the right, a button that
- * opens the details as logged. `airtableTable` is the table an Airtable ID
- * in the details is a record of.
+ * The audit log's columns: the day and time; who; what; the details, in
+ * words; and at the right, a button that opens the details as logged,
+ * which a download has in place of the words. `airtableTable` is the table
+ * an Airtable ID in the details is a record of.
  */
-export default function ChangesTable({ changes, airtableTable }: { changes: LoggedChange[]; airtableTable: string }) {
-  const days = new Map<string, LoggedChange[]>();
-  for (const change of changes) {
-    const day = staffDate(change.at);
-    days.set(day, [...(days.get(day) ?? []), change]);
-  }
-  return [...days].map(([day, changes]) => (
-    <section key={day}>
-      <h2>{day}</h2>
-      <DayTable changes={changes} airtableTable={airtableTable} />
-    </section>
-  ));
+export function changeColumns(airtableTable: string): ListColumn<LoggedChange>[] {
+  return [
+    { key: "day", label: copy.day, short: true, text: (c) => c.at, cell: (c) => staffDate(c.at) },
+    { key: "at", label: copy.at, short: true, cell: (c) => staffClock(c.at) },
+    { key: "actor", label: copy.actor, text: (c) => c.actor, cell: (c) => c.actor },
+    { key: "action", label: copy.action, text: (c) => c.action, cell: (c) => c.action },
+    { key: "details", label: copy.details, cell: (c) => <AuditDetail change={c} airtableTable={airtableTable} /> },
+    {
+      key: "json",
+      label: copy.json,
+      heading: (
+        <th key="json">
+          <span className={styles.hidden}>{copy.json}</span>
+        </th>
+      ),
+      text: (c) => JSON.stringify(c.details),
+      cell: (c) => (
+        <>
+          <IconButton look="outline" size={28} aria-label={copy.json} popoverTarget={`json-${c.id}`}>
+            {"{}"}
+          </IconButton>
+          <pre id={`json-${c.id}`} popover="auto" className={styles.json}>
+            {JSON.stringify(c.details, null, 2)}
+          </pre>
+        </>
+      ),
+    },
+  ];
 }
 
-function DayTable({ changes, airtableTable }: { changes: LoggedChange[]; airtableTable: string }) {
+/** The log of who changed what, newest first, in the list frame: how many, its downloads, a page of it and the way through the pages. */
+export default function ChangesTable({
+  log,
+  page,
+  airtableTable,
+}: {
+  log: ChangesPage;
+  page: number;
+  airtableTable: string;
+}) {
   return (
-    <Table>
-      <thead>
-        <tr>
-          <th>{staffCopy.changes.at}</th>
-          <th>{staffCopy.changes.actor}</th>
-          <th>{staffCopy.changes.action}</th>
-          <th>{staffCopy.changes.details}</th>
-          <th>
-            <span className={styles.hidden}>{staffCopy.changes.json}</span>
-          </th>
-        </tr>
-      </thead>
-      <tbody>
-        {changes.map((change) => (
-          <tr key={change.id}>
-            <td>{staffClock(change.at)}</td>
-            <td>{change.actor}</td>
-            <td>{change.action}</td>
-            <td>
-              <AuditDetail change={change} airtableTable={airtableTable} />
-            </td>
-            <td>
-              <IconButton
-                look="outline"
-                size={28}
-                aria-label={staffCopy.changes.json}
-                popoverTarget={`json-${change.id}`}
-              >
-                {"{}"}
-              </IconButton>
-              <pre id={`json-${change.id}`} popover="auto" className={styles.json}>
-                {JSON.stringify(change.details, null, 2)}
-              </pre>
-            </td>
-          </tr>
-        ))}
-      </tbody>
-    </Table>
+    <ListFrame
+      count={copy.total(log.total)}
+      total={log.total}
+      page={page}
+      pages={log.pages}
+      pageSize={log.pageSize}
+      href={(n) => pagePath(PATH, n)}
+      download={(format) => `${PATH}/download?format=${format}`}
+      columns={changeColumns(airtableTable)}
+      rows={log.changes}
+      rowKey={(c) => c.id}
+      empty={copy.none}
+    />
   );
 }

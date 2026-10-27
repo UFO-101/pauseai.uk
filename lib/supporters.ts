@@ -23,6 +23,8 @@ export type SupporterSummary = {
   /** The newest name any source gave, or null when none did. */
   name: string | null;
   emails: string[];
+  /** The address any source gave most recently. */
+  email: string | null;
   phone: string | null;
   postcode: string | null;
   sources: SupporterSource[];
