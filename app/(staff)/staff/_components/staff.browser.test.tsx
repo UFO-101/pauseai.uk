@@ -1113,7 +1113,7 @@ describe("PoliticianDetails", () => {
     expect(list.element().querySelector('a[href^="/staff/"]')).toBeNull();
   });
 
-  it("gives each ask staff record, and each they've answered, a row: the answer as a strip, who set it, and the form where staff record it", async () => {
+  it("gives each ask staff record, and each they've answered, a row: the answer first, the ask linked, who asked and when, who set the answer, and the form where staff record it", async () => {
     const { fn, sent } = action();
     const signed = { ...MP.statuses["frontier-ai-letter"], note: "By email" };
     await render(
@@ -1134,23 +1134,62 @@ describe("PoliticianDetails", () => {
         .map((g) => g.element().getAttribute("aria-label")),
     ).toEqual([ask("frontier-ai-letter").title, ask("edinburgh-conference-2026").title]);
     const letter = row("frontier-ai-letter");
-    expect(letter.element().textContent).toContain(`${staffCopy.statuses.signed}, 1 Oct 2026`);
+    // Signed, and when, ticked in green.
+    const answer = (group: typeof letter) => group.element().querySelector("[class*=answer]")!;
+    expect(answer(letter).textContent).toBe(`${staffCopy.statuses.signed}1 Oct 2026`);
+    expect(answer(letter).className).toMatch(/yes/);
+    // The ask's title links to the letter; who asked it and when.
+    await expect
+      .element(letter.getByRole("link", { name: ask("frontier-ai-letter").title }))
+      .toHaveAttribute("href", ask("frontier-ai-letter").url);
+    await expect
+      .element(
+        letter.getByText(
+          staffCopy.politician.askedBy(`${staffCopy.asks.askedBy.supporters} and ${staffCopy.asks.askedBy.pauseai}`),
+        ),
+      )
+      .toBeVisible();
     await expect
       .element(letter.getByText(`By email · ${staffCopy.politician.setBy("jo@pauseai.uk", "2 Oct 2026")}`))
       .toBeVisible();
-    // Signed: a green strip.
-    expect(letter.element().querySelector("[class*=green]")).not.toBeNull();
-    // Declined, from Airtable: a plain strip that says so, and no form, as staff don't record it.
+    // Declined, from Airtable: crossed, not green, with no form, as staff don't record it.
     const event = row("edinburgh-conference-2026");
-    expect(event.element().textContent).toContain(staffCopy.statuses.declined);
+    expect(answer(event).textContent).toBe(staffCopy.statuses.declined);
+    expect(answer(event).className).not.toMatch(/yes/);
     await expect.element(event.getByText(staffCopy.politician.fromImport.airtable)).toBeVisible();
+    await expect
+      .element(event.getByText(`${staffCopy.politician.askedBy(staffCopy.asks.askedBy.pauseai)}, 1 Nov 2026`))
+      .toBeVisible();
     expect(event.getByRole("button").all()).toHaveLength(0);
-    expect(event.element().querySelector("[class*=green]")).toBeNull();
 
+    // Unticked, the signature goes.
+    const signedBox = letter.getByRole("checkbox", { name: staffCopy.statuses.signed });
+    await expect.element(signedBox).toBeChecked();
+    await signedBox.click();
     await letter.getByLabelText(staffCopy.politician.note).fill("Their office wrote");
-    await letter.getByRole("button", { name: staffCopy.politicians.unmarkSigned }).click();
+    await letter.getByRole("button", { name: staffCopy.politician.save }).click();
     await vi.waitFor(() => expect(sent).toHaveLength(1));
-    expect(sent[0]).toEqual({ politicianId: "7", ask: "frontier-ai-letter", status: "", note: "Their office wrote" });
+    expect(sent[0]).toEqual({ politicianId: "7", ask: "frontier-ai-letter", note: "Their office wrote" });
+  });
+
+  it("shows an answer neither yes nor no plainly, and an ask with no link, asker or date by its title alone", async () => {
+    const bare = { ...ask("go-to-parliament-oct-2026"), askedBy: [], date: null };
+    const tentative = { ...MP.statuses["frontier-ai-letter"], status: "tentative" as const, date: null };
+    await render(
+      <PoliticianDetails
+        {...none}
+        asks={[bare]}
+        politician={{ ...MP, statuses: { "go-to-parliament-oct-2026": tentative } }}
+        setStatus={vi.fn()}
+        unblock={vi.fn()}
+      />,
+    );
+    const row = page.getByRole("group", { name: bare.title });
+    const answer = row.element().querySelector("[class*=answer]")!;
+    expect(answer.textContent).toBe(staffCopy.statuses.tentative);
+    expect(answer.className).not.toMatch(/yes/);
+    expect(row.getByRole("link").all()).toHaveLength(0);
+    expect(row.element().textContent).not.toContain(staffCopy.politician.askedBy(""));
   });
 
   it("offers to mark them signed where they haven't", async () => {
@@ -1158,7 +1197,8 @@ describe("PoliticianDetails", () => {
     await render(<PoliticianDetails {...none} politician={{ ...MP, statuses: {} }} setStatus={fn} unblock={vi.fn()} />);
     const letter = page.getByRole("group", { name: ask("frontier-ai-letter").title });
     await expect.element(letter.getByText(staffCopy.statuses.none)).toBeVisible();
-    await letter.getByRole("button", { name: staffCopy.politicians.markSigned }).click();
+    await letter.getByRole("checkbox", { name: staffCopy.statuses.signed }).click();
+    await letter.getByRole("button", { name: staffCopy.politician.save }).click();
     await vi.waitFor(() => expect(sent).toHaveLength(1));
     expect(sent[0]).toEqual({ politicianId: "7", ask: "frontier-ai-letter", status: "signed", note: "" });
   });
@@ -1184,7 +1224,7 @@ describe("PoliticianDetails", () => {
     await row.getByRole("button", { name: staffCopy.politician.save }).click();
     await vi.waitFor(() => expect(sent).toHaveLength(1));
     expect(sent[0]).toEqual({ politicianId: "7", ask: "frontier-ai-letter", status: "going", note: "" });
-    // Going: a green strip, the list starting from their answer.
+    // Going: ticked in green, the list starting from their answer.
     await render(
       <PoliticianDetails
         {...none}
@@ -1198,7 +1238,7 @@ describe("PoliticianDetails", () => {
       />,
     );
     const going = page.getByRole("group", { name: "Example Event" }).last();
-    expect(going.element().querySelector("[class*=green]")).not.toBeNull();
+    expect(going.element().querySelector("[class*=answer]")!.className).toMatch(/yes/);
     await expect.element(going.getByRole("combobox")).toHaveValue("going");
   });
 

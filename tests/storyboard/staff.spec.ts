@@ -155,11 +155,11 @@ test("staff log in, set a status that shows on /campaigns, and log out", async (
   const card = page.getByRole("group", { name: PM_LETTER });
   await expect(card.getByText(staffCopy.statuses.none)).toBeVisible();
   await frame(page, "Polly Placeholder's page: the asks beside her details");
+  await card.getByRole("checkbox", { name: staffCopy.statuses.signed }).check();
   await card.getByLabel(staffCopy.politician.note).fill("Told us at the march");
-  await card.getByRole("button", { name: staffCopy.politicians.markSigned }).click();
-  await expect(card.getByText(new RegExp(`^${staffCopy.statuses.signed}`))).toBeVisible();
+  await card.getByRole("button", { name: staffCopy.politician.save }).click();
+  await expect(card.locator("[class*=answer]")).toHaveText(new RegExp(`^${staffCopy.statuses.signed}`));
   await expect(card.getByText(/Told us at the march/)).toBeVisible();
-  await expect(card.getByRole("button", { name: staffCopy.politicians.unmarkSigned })).toBeVisible();
   await frame(page, "Polly Placeholder marked as signed");
   await page.getByRole("link", { name: staffCopy.nav.politicians }).first().click();
   const pollyRow = page.getByRole("row").filter({ hasText: "Polly Placeholder" });
@@ -221,11 +221,10 @@ test("the MPs signed tile leads to the one who signed, then to everyone who sign
   await logIn(page, flowDatabase, ["admin"]);
   await page.goto(`${BASE}/staff/politicians`);
   await page.getByRole("link", { name: "Polly Placeholder" }).click();
-  await page
-    .getByRole("group", { name: PM_LETTER })
-    .getByRole("button", { name: staffCopy.politicians.markSigned })
-    .click();
-  await expect(page.getByRole("button", { name: staffCopy.politicians.unmarkSigned })).toBeVisible();
+  const letter = page.getByRole("group", { name: PM_LETTER });
+  await letter.getByRole("checkbox", { name: staffCopy.statuses.signed }).check();
+  await letter.getByRole("button", { name: staffCopy.politician.save }).click();
+  await expect(letter.locator("[class*=answer]")).toHaveText(new RegExp(`^${staffCopy.statuses.signed}`));
 
   // One signed this week: the tile is their page.
   await page.goto(`${BASE}/staff`);

@@ -368,7 +368,7 @@ export const staffCopy = {
     tentative_staff: "Staff tentative",
     declined: "Declined",
     declined_surgery: "Declined, offered a surgery",
-    passed_on: "Passed it on",
+    passed_on: "Passed on invite",
     // No answer to an event's invitation.
     noAnswer: "No answer",
   } as Record<string, string>,
@@ -423,9 +423,6 @@ export const staffCopy = {
     noEmail: "No email",
     // On a politician whose address is blocked (/staff/politicians/blocked-emails).
     emailBlocked: "Email blocked",
-    // The button on an ask staff record by hand.
-    markSigned: "Mark as signed",
-    unmarkSigned: "Remove signature",
   },
   fields: {
     name: "Name",
@@ -454,7 +451,9 @@ export const staffCopy = {
     count: (status: string, n: number) => `${status}: ${n}`,
   },
   politician: {
-    statusesTitle: "Asks",
+    statusesTitle: "Responses to things asked",
+    // Under an ask's title: who asked it, by staffCopy.asks.askedBy, then its date.
+    askedBy: (who: string) => `${who} asked`,
     // The box at the top of their page: where they came from, and each campaign's status.
     source: "Source",
     sources: {
@@ -465,7 +464,7 @@ export const staffCopy = {
     // A status: who set it and when; the ask's title heads the line. An import's is "from" it.
     setBy: (who: string, when: string) => `set by ${who}, ${when}`,
     fromImport: { airtable: "from Airtable", controlai: "from ControlAI's letter" } as Record<string, string>,
-    // The form on an ask staff record: its name, the note's field, and Save for an event's answer.
+    // The form on an ask staff record: its name, the note's field, and Save. A letter's is a Signed tick box.
     setStatus: "Set status",
     note: "Note",
     save: "Save",
