@@ -5,6 +5,7 @@
 // Relative, as next.config.ts imports this file and its loader resolves only its own "@/" imports.
 import { CONTROLAI_LETTER_ASK, FRONTIER_AI_LETTER_ASK, type AskStatus, type AskStatuses } from "../asks";
 import { signedControlAiLetter } from "../controlai-letter";
+import { site } from "./site";
 
 /** The MP's answer to each ask, keyed by the ask's slug (lib/asks.ts). */
 export type MpStatuses = AskStatuses;
@@ -97,7 +98,9 @@ AI now poses an extremely serious risk to our national security. Parliamentarian
 
 **The UK has no specific legal standards for frontier AI safety.** No regulator oversees frontier AI development. And UK law does not reliably hold developers liable for damage or deaths caused by their models, even when the danger is predictable, preventable and uniquely enabled by AI.
 
-Please could you add your name to PauseAI's open letter (attached) in support of frontier AI legislation? And could we arrange a short meeting to discuss this important matter?
+Please could you add your name to PauseAI's open letter (attached) in support of frontier AI legislation? To sign, just send a quick email to ${site.policyEmail}.
+
+I would also like you to arrange a short meeting with me to discuss this important matter.
 
 Thank you for your consideration,
 
