@@ -461,6 +461,20 @@ still does there.
   the DeepMind letter, the Edinburgh conference), Go to Parliament's, and
   each new one. Each change takes the date and a note, as now. ControlAI's
   letter to the Prime Minister stays its import's, read from the PDF.
+- A politician's page shows only the asks put to them, so it doesn't fill
+  up with every ask once all are editable. Today it shows every ask staff
+  can set (`trackedAsks`) and any other they've answered, so the Frontier
+  AI letter shows "Not signed" for MSPs who were never sent it.
+  - Who was asked comes from the mailings: each records who got it and
+    names its ask. The Edinburgh invitation went to 186 people, the 129
+    MSPs and Scotland's 57 MPs, which a list of houses on the ask couldn't
+    say.
+  - An ask with no answer shows only to those it was sent to. An ask with
+    no mailing (ControlAI's, supporters' letters, Go to Parliament) shows
+    once there's an answer.
+  - "Add an answer" on the page lists the other asks, so staff can record
+    any answer.
+  - The Asks page counts how many were asked, beside each answer.
 - The syncs stop and leave the Import page. Politicians keep their
   `airtable_id`.
 - The check against Parliament's list ("Members of Parliament against
