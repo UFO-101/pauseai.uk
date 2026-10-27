@@ -20,8 +20,9 @@
   width: 16rem;
 }
 
-/* On a phone, the search takes the row, its box what the button leaves. */
-@media (max-width: 40rem) {
+/* On a phone, the search takes the row, its box what the button leaves
+   (the button fits its text, as Button's phone width is 720px down). */
+@media (max-width: 720px) {
   .search {
     width: 100%;
   }
@@ -29,6 +30,7 @@
   .search > :first-child {
     flex: 1;
     width: auto;
+    min-width: 0;
   }
 }
 

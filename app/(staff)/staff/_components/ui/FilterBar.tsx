@@ -96,7 +96,7 @@ export default function FilterBar({
         {hidden.map(([name, value]) => (
           <input key={name} type="hidden" name={name} value={value} />
         ))}
-        <Button variant="primary" size="small" type="submit">
+        <Button variant="primary" size="small" fit type="submit">
           {staffCopy.search}
         </Button>
       </form>
