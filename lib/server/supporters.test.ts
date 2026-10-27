@@ -2,7 +2,9 @@ import { expect, it } from "vitest";
 import { query, transaction } from "@/lib/server/db";
 import { addTestLetter, addTestMp, describeWithDatabase, useTestDatabase } from "@/tests/database";
 import type { SupporterFilter } from "@/lib/supporters";
-import { getSupporter, linkSupporters, listSupporters } from "./supporters";
+import { http, HttpResponse } from "msw";
+import { server } from "@/tests/fixtures/msw";
+import { eventChoices, getSupporter, linkSupporters, listSupporters } from "./supporters";
 
 /** A Luma user, with a registration for `event` if given. */
 async function lumaUser(id: string, email: string, name: string, event?: string, more: Record<string, unknown> = {}) {
@@ -263,6 +265,7 @@ describeWithDatabase("listSupporters and getSupporter", () => {
       id: expect.any(Number),
       name: "Jane",
       emails: ["jane@example.com"],
+      email: "jane@example.com",
       phone: "+447700900001",
       postcode: "M1 1AE",
       sources: ["luma"],
@@ -272,6 +275,7 @@ describeWithDatabase("listSupporters and getSupporter", () => {
       events: 1,
       letters: 0,
       member: false,
+      place: { name: "London", basis: "event", given: "evt-1", country: null },
       permissions: [
         {
           topic: "luma-calendar",
@@ -297,28 +301,32 @@ describeWithDatabase("listSupporters and getSupporter", () => {
     expect(await names({ search: "jane pat" })).toEqual([]);
     expect(await names({ search: "pat@" })).toEqual(["Pat"]);
     expect(await names({ search: "0900001" })).toEqual(["Jane"]);
-    expect(await names({ activity: "letter" })).toEqual(["Pat"]);
-    expect(await names({ activity: "registered" })).toEqual(["Sam", "Jane", "Old"]);
-    expect(await names({ activity: "lumaContact" })).toEqual(["Jane"]);
-    expect(await names({ activity: "member" })).toEqual([]);
-    const unsubscribed = { topic: "luma-calendar", reason: "unsubscribed" } as const;
-    expect(await names({ subscription: unsubscribed })).toEqual(["Sam"]);
-    expect(await names({ subscription: { topic: "luma-calendar", reason: "not-following" } })).toEqual(["Old"]);
-    expect(await names({ subscription: { topic: "events-and-ways-to-help", reason: "asked" } })).toEqual(["Pat"]);
+    expect(await names({ activity: ["letter"] })).toEqual(["Pat"]);
+    expect(await names({ activity: ["registered"] })).toEqual(["Sam", "Jane", "Old"]);
+    expect(await names({ activity: ["lumaContact"] })).toEqual(["Jane"]);
+    expect(await names({ activity: ["member"] })).toEqual([]);
+    expect(await names({ activity: ["letter", "lumaContact"] })).toEqual(["Jane", "Pat"]);
+    const unsubscribed = [{ topic: "luma-calendar", reason: "unsubscribed" }] as const;
+    expect(await names({ subscription: [...unsubscribed] })).toEqual(["Sam"]);
+    expect(await names({ subscription: [{ topic: "luma-calendar", reason: "not-following" }] })).toEqual(["Old"]);
+    expect(await names({ subscription: [{ topic: "events-and-ways-to-help", reason: "asked" }] })).toEqual(["Pat"]);
+    expect(
+      await names({ subscription: [...unsubscribed, { topic: "events-and-ways-to-help", reason: "asked" }] }),
+    ).toEqual(["Sam", "Pat"]);
     // Leaving "Keep me informed" unticked isn't an unsubscribe.
     await query(
       `INSERT INTO members (id, email, name, joined_at, created_at, keep_informed, share_permission, source_modified_at)
        VALUES ('recOld', 'old@example.com', 'Old', '2026-09-01T00:00:00Z', '2026-09-01T00:00:00Z', false, true, '2026-09-01T00:00:00Z')`,
     );
-    expect(await names({ subscription: unsubscribed })).toEqual(["Sam"]);
-    expect(await names({ subscription: { topic: "pauseai-updates", reason: "declined" } })).toEqual(["Old"]);
+    expect(await names({ subscription: [...unsubscribed] })).toEqual(["Sam"]);
+    expect(await names({ subscription: [{ topic: "pauseai-updates", reason: "declined" }] })).toEqual(["Old"]);
     // A block is every topic's answer, and outranks the unsubscribe.
     await query(
       `WITH p AS (INSERT INTO email_problems (address, kind, at, can_reset) VALUES ('sam@example.com', 'hard', '2026-10-13T00:00:00Z', false) RETURNING id)
        INSERT INTO email_blocks (address, problem_id) SELECT 'sam@example.com', id FROM p`,
     );
-    expect(await names({ subscription: { reason: "blocked" } })).toEqual(["Sam"]);
-    expect(await names({ subscription: unsubscribed })).toEqual([]);
+    expect(await names({ subscription: [{ reason: "blocked" }] })).toEqual(["Sam"]);
+    expect(await names({ subscription: [...unsubscribed] })).toEqual([]);
     expect(await names({ sort: "first", dir: "asc" })).toEqual(["Old", "Sam", "Jane", "Pat"]);
     expect(await names({ sort: "first", dir: "desc" })).toEqual(["Pat", "Jane", "Sam", "Old"]);
     expect(await names({ sort: "name", dir: "asc" })).toEqual(["Jane", "Old", "Pat", "Sam"]);
@@ -326,6 +334,49 @@ describeWithDatabase("listSupporters and getSupporter", () => {
     expect(await names({ sort: "events", dir: "desc" })).toEqual(["Sam", "Jane", "Old", "Pat"]);
     expect(await names({ sort: "letters", dir: "desc" })).toEqual(["Pat", "Sam", "Jane", "Old"]);
     expect(await names({ sort: "active", dir: "asc" })).toEqual(["Old", "Pat", "Jane", "Sam"]);
+  });
+
+  it("filters by phone and email, events, campaigns, nation and nearness, and places each", async () => {
+    await people();
+    expect(await names({ phone: true })).toEqual(["Jane"]);
+    expect(await names({ phone: false })).toEqual(["Sam", "Pat", "Old"]);
+    expect(await names({ email: true })).toEqual(["Sam", "Jane", "Pat", "Old"]);
+    expect(await names({ email: false })).toEqual([]);
+    expect(await names({ event: ["evt-1"] })).toEqual(["Sam", "Jane", "Old"]);
+    expect(await names({ event: ["evt-none", "evt-1"] })).toEqual(["Sam", "Jane", "Old"]);
+    expect(await names({ event: ["evt-none"] })).toEqual([]);
+    expect(await eventChoices()).toEqual([{ id: "evt-1", name: "evt-1", startAt: new Date("2026-10-01T18:00:00Z") }]);
+    const [{ campaign }] = await query<{ campaign: string }>("SELECT campaign FROM supporter_letters LIMIT 1");
+    expect(await names({ campaign, wrote: true })).toEqual(["Pat"]);
+    expect(await names({ campaign, wrote: false })).toEqual(["Sam", "Jane", "Old"]);
+    // Jane's postcode places her in Manchester; the others' events are in London.
+    await query(
+      `INSERT INTO postcode_places (postcode, latitude, longitude, place, country)
+       VALUES ('M11AE', 53.4794, -2.2353, 'Manchester', 'england')`,
+    );
+    const page = await listSupporters({ sort: "name", dir: "asc", page: 1 });
+    expect(page.supporters.map((s) => [s.name, s.place?.name, s.place?.basis])).toEqual([
+      ["Jane", "Manchester", "postcode"],
+      ["Old", "London", "event"],
+      ["Pat", undefined, undefined],
+      ["Sam", "London", "event"],
+    ]);
+    expect(await names({ country: ["england"] })).toEqual(["Jane"]);
+    expect(await names({ country: ["wales"] })).toEqual([]);
+    // Manchester is within 50 miles of Leeds, but not 25; London is neither. A place postcodes.io doesn't know finds no one.
+    const near = await listSupporters({ sort: "name", dir: "asc", page: 1, near: { text: "Leeds", miles: 50 } });
+    expect(near.near).toMatchObject({ place: "Leeds" });
+    expect(near.supporters.map((s) => s.name)).toEqual(["Jane"]);
+    expect(await names({ near: { text: "Leeds", miles: 25 } })).toEqual([]);
+    const nowhere = await listSupporters({ sort: "name", dir: "asc", page: 1, near: { text: "Atlantis", miles: 50 } });
+    expect(nowhere).toMatchObject({ total: 0, near: null });
+    server.use(http.get("https://api.postcodes.io/postcodes/:postcode", () => new HttpResponse(null, { status: 500 })));
+    expect(
+      await listSupporters({ sort: "name", dir: "asc", page: 1, near: { text: "Leeds", miles: 50 } }),
+    ).toMatchObject({
+      total: 0,
+      near: "failed",
+    });
   });
 
   it("gives one supporter's details: identities, contact details, links, activity and each list's opt-out", async () => {

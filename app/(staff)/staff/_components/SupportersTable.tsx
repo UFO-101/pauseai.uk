@@ -2,10 +2,16 @@ import Link from "next/link";
 import { Muted } from "@/components/ui/Text";
 import { staffCopy } from "@/lib/content/staff-interface";
 import type { SupportersPage } from "@/lib/server/supporters";
-import { filtersPath, pageParam, type SupportersSearch } from "@/lib/staff-search";
+import { filtersPath, pageParam, type Params, type SupportersSearch } from "@/lib/staff-search";
 import { staffDate } from "@/lib/staff-time";
 import { parseSort, sortHref } from "@/lib/staff-sort";
-import { SUPPORTER_SORTS, SUPPORTERS_PAGE_SIZE, type SupporterRow, type SupporterSort } from "@/lib/supporters";
+import {
+  SUPPORTER_SORTS,
+  SUPPORTERS_PAGE_SIZE,
+  type SupporterPlaceName,
+  type SupporterRow,
+  type SupporterSort,
+} from "@/lib/supporters";
 import SortHeading from "./SortHeading";
 import SubscriptionBadges, { subscriptionWords } from "./SubscriptionBadges";
 import SupporterBadges, { supporterBadgeWords } from "./SupporterBadges";
@@ -16,7 +22,7 @@ const PATH = "/staff/supporters";
 const copy = staffCopy.supporters;
 
 /** The list's filters as typed, the URL's, without the page or the notice. */
-export function supporterFiltersOf(search: SupportersSearch): Record<string, string> {
+export function supporterFiltersOf(search: SupportersSearch): Params {
   const { page, erased, filter, ...rest } = search as SupportersSearch & { filter?: unknown };
   void page;
   void erased;
@@ -24,9 +30,14 @@ export function supporterFiltersOf(search: SupportersSearch): Record<string, str
   return rest;
 }
 
+/** Where a supporter is: faint when it's only where an event they went to was. */
+function Place({ place }: { place: SupporterPlaceName }) {
+  return place.basis === "event" ? <Muted>{place.name}</Muted> : place.name;
+}
+
 /**
  * The supporters list's columns: their name; their newest email, and how
- * many others they have; their newest phone; what they are to us and what
+ * many others they have; their newest phone; where they are; what they are to us and what
  * we'd email them about, as lozenges; when we first saw them and last saw
  * them do something; and how many events and letters.
  */
@@ -62,6 +73,13 @@ export function supporterColumns(search: SupportersSearch): ListColumn<Supporter
       ),
     },
     { key: "phone", label: copy.columns.phone, short: true, text: (s) => s.phone, cell: (s) => s.phone },
+    {
+      key: "place",
+      label: copy.columns.place,
+      short: true,
+      text: (s) => s.place?.name ?? null,
+      cell: (s) => s.place && <Place place={s.place} />,
+    },
     {
       key: "badges",
       label: copy.columns.badges,

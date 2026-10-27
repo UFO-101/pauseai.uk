@@ -37,6 +37,16 @@ export type SupporterSummary = {
   letters: number;
   /** Whether they're a PauseAI member now: a member's record we read at the last import. */
   member: boolean;
+  /** Where they are, as best we know (the supporter_place view); null if we don't. */
+  place?: SupporterPlaceName | null;
+};
+
+/** A supporter's place: its name, what it's from and what that was (a postcode, a city, an event's name), its nation. */
+export type SupporterPlaceName = {
+  name: string | null;
+  basis: "postcode" | "city" | "event";
+  given: string;
+  country: string | null;
 };
 
 /** One row of the list, with whether we'd email each of their addresses about each topic. */
@@ -99,14 +109,29 @@ export const SUPPORTER_SORTS: SortColumns<"active" | "first" | "name" | "events"
 };
 export type SupporterSort = keyof typeof SUPPORTER_SORTS;
 
-/** The list's filters, as the server applies them. */
+/** How far from a place the Near filter reaches, in miles. */
+export const NEAR_MILES = [5, 10, 25, 50] as const;
+
+/** The list's filters, as the server applies them. A filter that repeats finds those with any of its values. */
 export type SupporterFilter = {
   /** Over names, emails and phones. */
   search?: string;
-  /** Has this lozenge in the Activities column. */
-  activity?: SupporterBadge;
-  /** Has this answer about a topic, or is blocked, at any of their addresses. */
-  subscription?: EmailState;
+  /** Has any of these lozenges in the Activities column. */
+  activity?: SupporterBadge[];
+  /** Has any of these answers about a topic, or is blocked, at any of their addresses. */
+  subscription?: EmailState[];
+  /** Whether we have a phone number for them, and an email. */
+  phone?: boolean;
+  email?: boolean;
+  /** Registered for any of these Luma events, by ID, but for declined. */
+  event?: string[];
+  /** Wrote a letter in this campaign, by slug; or, with `wrote` false, never did. */
+  campaign?: string;
+  wrote?: boolean;
+  /** In any of these nations (supporter_place). */
+  country?: string[];
+  /** Within `miles` of what was typed: a postcode, the first half of one, or a town. */
+  near?: { text: string; miles: number };
   sort: SupporterSort;
   dir: SortDirection;
   page: number;

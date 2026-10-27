@@ -190,12 +190,12 @@ describe("FilterBar", () => {
     await expect.element(page.getByRole("link", { name: staffCopy.resetFilters })).toHaveAttribute("href", "/list");
   });
 
-  it("puts many choices in a wider menu, in columns", async () => {
-    const options = Array.from({ length: 13 }, (_, i) => ({ value: `${i}`, label: `Choice ${i}` }));
+  it("lists every other filter in + Filter, a row each, its choices opening under it, one at a time", async () => {
+    const options = Array.from({ length: 40 }, (_, i) => ({ value: `${i}`, label: `Choice ${i}` }));
     await render(
       <FilterBar
         path="/list"
-        values={{ many: "1" }}
+        values={{}}
         search={{ name: "q", label: "Search" }}
         filters={[
           { name: "many", label: "Many", options },
@@ -203,12 +203,109 @@ describe("FilterBar", () => {
         ]}
       />,
     );
-    await page.getByRole("button", { name: "Many: Choice 1" }).click();
-    const lists = () => [...document.querySelectorAll("[popover]:popover-open ul")];
-    expect(lists().map((ul) => getComputedStyle(ul).columnCount)).toEqual(["2"]);
-    await userEvent.keyboard("{Escape}");
     await page.getByRole("button", { name: staffCopy.filters.add }).click();
-    expect(lists().map((ul) => getComputedStyle(ul).columnCount)).toEqual(["auto"]);
+    const rows = [...document.querySelectorAll<HTMLDetailsElement>("[popover]:popover-open details")];
+    expect(rows.map((row) => row.querySelector("summary")!.textContent)).toEqual(["Many", "Few"]);
+    expect(rows.map((row) => row.open)).toEqual([false, false]);
+    await page.getByText("Many", { exact: true }).click();
+    // A long list scrolls in its row.
+    const list = rows[0].querySelector("ul")!;
+    expect(list.scrollHeight).toBeGreaterThan(list.clientHeight);
+    await page.getByText("Few", { exact: true }).click();
+    expect(rows.map((row) => row.open)).toEqual([false, true]);
+  });
+
+  it("shows a searchable filter's choices only once something's typed, those that have it", async () => {
+    await render(
+      <FilterBar
+        path="/list"
+        values={{}}
+        search={{ name: "q", label: "Search" }}
+        filters={[
+          {
+            name: "event",
+            label: "Event",
+            searchable: true,
+            options: [
+              { value: "a", label: "Leeds social" },
+              { value: "b", label: "Oxford talk" },
+            ],
+          },
+        ]}
+      />,
+    );
+    await page.getByRole("button", { name: staffCopy.filters.add }).click();
+    await page.getByText("Event", { exact: true }).click();
+    const list = document.querySelector<HTMLElement>("[popover]:popover-open ul")!;
+    expect(getComputedStyle(list).display).toBe("none");
+    const box = page.getByRole("searchbox", { name: staffCopy.filters.narrow });
+    await box.fill("oxf");
+    expect(getComputedStyle(list).display).not.toBe("none");
+    expect([...list.querySelectorAll("li")].map((li) => li.hidden)).toEqual([true, false]);
+    await box.fill("");
+    expect(getComputedStyle(list).display).toBe("none");
+  });
+
+  it("takes a place in a small form, keeping the other filters, and says what it found and how far in its chip", async () => {
+    const place: Filter = {
+      name: "near",
+      label: "Near",
+      options: [{ value: "ls1", label: "Leeds" }],
+      place: {
+        within: "within",
+        placeholder: "Postcode or town",
+        distances: [
+          { value: "5", label: "5 miles" },
+          { value: "10", label: "10 miles" },
+        ],
+      },
+    };
+    const kind: Filter = { name: "kind", label: "Kind", repeat: true, options: [{ value: "a", label: "A" }] };
+    const { rerender } = await render(
+      <FilterBar
+        path="/list"
+        values={{ kind: ["a"], page: "2" }}
+        search={{ name: "q", label: "Search" }}
+        filters={[place, kind]}
+      />,
+    );
+    await page.getByRole("button", { name: staffCopy.filters.add }).click();
+    await page.getByText("Near", { exact: true }).click();
+    const form = document.querySelector<HTMLFormElement>("[popover]:popover-open form")!;
+    expect(form.getAttribute("action")).toBe("/list");
+    expect([...new FormData(form)]).toEqual([
+      ["kind", "a"],
+      ["near", ""],
+      ["within", "10"],
+    ]);
+    await userEvent.keyboard("{Escape}");
+    await rerender(
+      <FilterBar
+        path="/list"
+        values={{ near: "ls1", within: "5", kind: ["a"] }}
+        search={{ name: "q", label: "Search" }}
+        filters={[place, kind]}
+      />,
+    );
+    await page.getByRole("button", { name: "Near: Leeds, 5 miles" }).click();
+    const chipForm = document.querySelector<HTMLFormElement>("[popover]:popover-open form")!;
+    expect([...new FormData(chipForm)]).toEqual([
+      ["kind", "a"],
+      ["near", "ls1"],
+      ["within", "5"],
+    ]);
+    expect(document.querySelector("[popover]:popover-open a")!.getAttribute("href")).toBe("/list?kind=a");
+    await userEvent.keyboard("{Escape}");
+    // A distance it doesn't know is the middle one.
+    await rerender(
+      <FilterBar
+        path="/list"
+        values={{ near: "x", within: "7" }}
+        search={{ name: "q", label: "Search" }}
+        filters={[place]}
+      />,
+    );
+    expect([...document.querySelectorAll("button")].map((b) => b.textContent)).toContain("Near: x, 10 miles");
   });
 });
 
@@ -260,7 +357,6 @@ describe("ListFrame", () => {
     await render(frame(6, 50));
     await expect.element(page.getByText("250 rows")).toBeVisible();
     await expect.element(page.getByText(staffCopy.lists.showing(11, 12), { exact: false })).toBeVisible();
-    await expect.element(page.getByText(staffCopy.lists.downloadAll(250))).toBeVisible();
     for (const format of ["csv", "json"] as const) {
       const link = page.getByRole("link", { name: staffCopy.lists.formats[format] });
       await expect.element(link).toHaveAttribute("href", `/list/download?format=${format}`);

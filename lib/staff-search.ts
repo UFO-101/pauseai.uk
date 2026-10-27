@@ -6,7 +6,7 @@ import { emailState } from "@/lib/email-permissions";
 import type { BlocksFilter } from "@/lib/server/email";
 import { campaignBySlug } from "@/lib/email-your-mp";
 import { parseSort } from "@/lib/staff-sort";
-import { isSupporterBadge, SUPPORTER_SORTS, type SupporterFilter } from "@/lib/supporters";
+import { isSupporterBadge, NEAR_MILES, SUPPORTER_SORTS, type SupporterFilter } from "@/lib/supporters";
 
 export type LettersSearch = {
   status: string;
@@ -141,9 +141,21 @@ export function supporterId(id: string): number | undefined {
 
 export type SupportersSearch = {
   q: string;
-  activity: string;
-  /** "blocked", or "<topic>:<reason>". */
-  subscription: string;
+  activity: string[];
+  /** Each "blocked", or "<topic>:<reason>". */
+  subscription: string[];
+  /** "yes" or "no". */
+  phone: string;
+  email: string;
+  /** Luma event IDs. */
+  event: string[];
+  /** A campaign's slug; with `wrote` "no", those who didn't write in it. */
+  campaign: string;
+  wrote: string;
+  country: string[];
+  /** A postcode, the first half of one, or a town; and how many miles from it. */
+  near: string;
+  within: string;
   sort: string;
   dir: string;
   page: string;
@@ -152,25 +164,53 @@ export type SupportersSearch = {
 };
 
 /** The supporters list's filters and sort, each as typed and as applied. */
-export function supportersSearch({
-  q = "",
-  activity = "",
-  subscription = "",
-  sort = "",
-  dir = "",
-  page = "",
-  erased = "",
-}: Partial<SupportersSearch>): SupportersSearch & { filter: SupporterFilter } {
+export function supportersSearch(
+  params: Partial<Record<keyof SupportersSearch, ParamValue>>,
+): SupportersSearch & { filter: SupporterFilter } {
+  const [q, phone, email, campaign, wrote, near, within, sort, dir, page, erased] = (
+    ["q", "phone", "email", "campaign", "wrote", "near", "within", "sort", "dir", "page", "erased"] as const
+  ).map((name) => firstOf(params[name]));
+  const [activity, subscription, event, country] = (["activity", "subscription", "event", "country"] as const).map(
+    (name) => valuesOf(params[name]),
+  );
   const sorting = parseSort(SUPPORTER_SORTS, "active", sort, dir);
+  const badges = activity.filter(isSupporterBadge);
+  const states = subscription.flatMap((value) => emailState(value) ?? []);
+  const countries = country.filter((value) => Object.hasOwn(staffCopy.countries, value));
+  const miles = NEAR_MILES.find((n) => String(n) === within) ?? NEAR_MILES[1];
   const filter: SupporterFilter = {
     search: q.trim() || undefined,
-    activity: isSupporterBadge(activity) ? activity : undefined,
-    subscription: emailState(subscription),
+    activity: badges.length ? badges : undefined,
+    subscription: states.length ? states : undefined,
+    phone: yesOrNo(phone),
+    email: yesOrNo(email),
+    event: event.length ? event : undefined,
+    campaign: campaignBySlug(campaign)?.slug,
+    wrote: campaignBySlug(campaign) ? wrote !== "no" : undefined,
+    country: countries.length ? countries : undefined,
+    near: near.trim() ? { text: near.trim(), miles } : undefined,
     sort: sorting.key,
     dir: sorting.dir,
     page: pageNumber(page),
   };
-  return { q, activity, subscription, sort, dir, page, erased, filter };
+  return {
+    q,
+    activity,
+    subscription,
+    phone,
+    email,
+    event,
+    campaign,
+    wrote,
+    country,
+    near,
+    within,
+    sort,
+    dir,
+    page,
+    erased,
+    filter,
+  };
 }
 
 /** The accounts page's notice, after a refused change. */

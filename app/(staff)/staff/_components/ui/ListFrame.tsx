@@ -115,7 +115,7 @@ type Props<Row> = {
 /**
  * Every staff list (docs/style-guide.md, "Lists"): over the table, how
  * many and which of them this page shows, and buttons to download all of
- * them; the striped table; and under it, which rows these are and the way
+ * them, every page; the striped table; and under it, which rows these are and the way
  * to the other pages. It's as wide as the window, past the content's
  * width, so a wide table wraps less.
  */
@@ -145,7 +145,6 @@ export default function ListFrame<Row>({
         </p>
         {download && (
           <div className={styles.downloads}>
-            <Muted>{copy.downloadAll(total)}</Muted>
             {(["csv", "json"] as const).map((format) => (
               <ButtonAnchor key={format} variant="ghost" size="small" fit href={download(format)} download>
                 <svg

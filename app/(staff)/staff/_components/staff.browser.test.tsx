@@ -3145,7 +3145,7 @@ describe("PoliticianFilters", () => {
 
   it("offers an answer only once there's an ask", async () => {
     await render(<PoliticianFilters search={emptyPoliticiansSearch} asks={exampleAsks} parties={["Green"]} />);
-    const groups = () => [...document.querySelectorAll("[popover] section > p")].map((p) => p.textContent);
+    const groups = () => [...document.querySelectorAll("[popover] details > summary")].map((p) => p.textContent);
     await page.getByRole("button", { name: staffCopy.filters.add }).click();
     expect(groups()).toEqual([
       staffCopy.fields.party,
@@ -3206,15 +3206,20 @@ describe("LetterFilters", () => {
 });
 
 describe("SupporterFilters", () => {
+  const copy = staffCopy.supporters;
+  const events = [
+    { id: "evt-1", name: "Leeds social", startAt: "2026-10-20T18:00:00Z" },
+    { id: "evt-2", name: "Oxford talk", startAt: "2026-10-12T18:00:00Z" },
+  ];
+
   it("has a chip for each filter on, a subscription by its topic and reason", async () => {
-    const copy = staffCopy.supporters;
     const { filter, ...search } = supportersSearch({
       activity: "registered",
       subscription: "pauseai-updates:declined",
       erased: "1",
     });
     void filter;
-    await render(<SupporterFilters search={search} />);
+    await render(<SupporterFilters search={search} events={events} />);
     expect(chips()).toEqual([
       `${copy.columns.badges}: ${copy.badges.registered}`,
       `${copy.columns.subscriptions}: ${copy.filters.states["pauseai-updates"].declined}`,
@@ -3225,5 +3230,55 @@ describe("SupporterFilters", () => {
       copy.subscriptions.blocked,
       "/staff/supporters?activity=registered&subscription=blocked",
     ]);
+  });
+
+  it("offers every filter in the columns' order, events by name and day", async () => {
+    const { filter, ...search } = supportersSearch({});
+    void filter;
+    await render(<SupporterFilters search={search} events={events} />);
+    await page.getByRole("button", { name: staffCopy.filters.add }).click();
+    expect([...document.querySelectorAll("[popover] details > summary")].map((p) => p.textContent)).toEqual([
+      copy.columns.email,
+      copy.columns.phone,
+      staffCopy.politician.country,
+      copy.filters.near,
+      copy.columns.badges,
+      copy.columns.subscriptions,
+      copy.filters.event,
+      copy.filters.campaign,
+    ]);
+    const links = await menu(staffCopy.filters.add);
+    expect(links).toContainEqual([
+      copy.filters.eventChoice("Oxford talk", "12 Oct 2026"),
+      "/staff/supporters?event=evt-2",
+    ]);
+    expect(links).toContainEqual([copy.filters.phone.no, "/staff/supporters?phone=no"]);
+  });
+
+  it("says what Near found, or that it found nothing, or couldn't look", async () => {
+    const near = (text: string) => {
+      const { filter, ...search } = supportersSearch({ near: text, within: "25" });
+      void filter;
+      return search;
+    };
+    const { rerender } = await render(
+      <SupporterFilters
+        search={near("LS1")}
+        events={[]}
+        near={{ latitude: 53.8, longitude: -1.55, place: "Leeds", country: "england" }}
+      />,
+    );
+    expect(chips()).toEqual([`${copy.filters.near}: Leeds, ${copy.filters.miles(25)}`]);
+    await rerender(<SupporterFilters search={near("Atlantis")} events={[]} near={null} />);
+    expect(chips()).toEqual([`${copy.filters.near}: ${copy.filters.notFound("Atlantis")}, ${copy.filters.miles(25)}`]);
+    await rerender(<SupporterFilters search={near("Leeds")} events={[]} near="failed" />);
+    expect(chips()).toEqual([`${copy.filters.near}: ${copy.filters.failed("Leeds")}, ${copy.filters.miles(25)}`]);
+  });
+
+  it("joins a campaign and whether they wrote in it", async () => {
+    const { filter, ...search } = supportersSearch({ campaign: "support-sobel-bill", wrote: "no" });
+    void filter;
+    await render(<SupporterFilters search={search} events={[]} />);
+    expect(chips()).toEqual([campaignBySlug("support-sobel-bill")!.title, copy.filters.wrote.no]);
   });
 });

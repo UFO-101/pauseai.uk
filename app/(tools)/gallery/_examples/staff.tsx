@@ -119,6 +119,13 @@ const exampleColumns: ListColumn<ExampleRow>[] = [
   { key: "count", label: "Letters", short: true, text: (r) => r.count, cell: (r) => r.count },
 ];
 
+/** Luma events a filter of supporters picks from, newest first. */
+const exampleEventChoices = [
+  { id: "evt-1", name: "PauseAI Leicester meetup", startAt: "2026-10-20T18:00:00Z" },
+  { id: "evt-2", name: "AI risk talk", startAt: "2026-10-12T18:00:00Z" },
+  { id: "evt-3", name: "PauseAI London March", startAt: "2026-09-05T11:00:00Z" },
+];
+
 /** The parties a filter of politicians picks from. */
 const parties = ["Conservative", "Green", "Labour", "Liberal Democrat"];
 
@@ -488,17 +495,31 @@ export const staff: Group = {
       file: "app/(staff)/staff/_components/SupporterFilters.tsx",
       variants: [
         {
-          label: "The list's filters, with a search typed and two chosen",
+          label: "The list's filters, with a search typed, two activities, a campaign not written in, and near Leeds",
           render: () => (
             <StaffPage as="div">
               <SupporterFilters
                 search={supportersSearch({
                   q: "jane",
-                  activity: "registered",
+                  activity: ["registered", "member"],
                   subscription: "luma-calendar:unsubscribed",
+                  campaign: "support-sobel-bill",
+                  wrote: "no",
+                  near: "LS1",
+                  within: "25",
                   sort: "name",
                 })}
+                events={exampleEventChoices}
+                near={{ latitude: 53.8, longitude: -1.55, place: "Leeds", country: "england" }}
               />
+            </StaffPage>
+          ),
+        },
+        {
+          label: "Near somewhere postcodes.io doesn't know",
+          render: () => (
+            <StaffPage as="div">
+              <SupporterFilters search={supportersSearch({ near: "Atlantis" })} events={[]} near={null} />
             </StaffPage>
           ),
         },

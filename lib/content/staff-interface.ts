@@ -144,6 +144,22 @@ export const staffCopy = {
     total: (total: number) => `${total} ${total === 1 ? "supporter" : "supporters"}`,
     filters: {
       search: "Name, email or phone",
+      // Whether we have a phone number, or an email, for them.
+      phone: { yes: "Has a phone number", no: "No phone number" },
+      email: { yes: "Has an email", no: "No email" },
+      // The Near filter: a postcode or a town, and how far from it.
+      near: "Near",
+      nearPlaceholder: "Postcode or town",
+      miles: (n: number) => `${n} miles`,
+      // In the Near chip, when what was typed couldn't be placed.
+      notFound: (text: string) => `${text} (not found)`,
+      failed: (text: string) => `${text} (couldn't look it up)`,
+      // The Event filter's choices: an event and its day.
+      event: "Event",
+      eventChoice: (name: string, day: string) => `${name}, ${day}`,
+      // The Campaign filter, and its second half: whether they wrote in it.
+      campaign: "Campaign",
+      wrote: { "": "Wrote", no: "Didn't write" } as Record<string, string>,
       // The other filters are named after their columns.
       // A choice in the Subscriptions filter, and its chip: a topic and a reason it gives, short.
       states: {
@@ -169,6 +185,7 @@ export const staffCopy = {
       name: "Name",
       email: "Email",
       phone: "Phone",
+      place: "Place",
       badges: "Activities",
       subscriptions: "Subscriptions",
       firstSeen: "First sign-up",
@@ -924,6 +941,10 @@ export const staffCopy = {
     clearSearch: "Clear the search",
     add: "+ Filter",
     remove: "Remove",
+    // Over a long list of a filter's choices: narrows them as it's typed in.
+    narrow: "Search these",
+    // A place filter's distance, for a screen reader.
+    within: "Within",
   },
   // Under a list of more than one page.
   paging: {
@@ -938,10 +959,9 @@ export const staffCopy = {
     // Under the list: the rows on this page, of how many.
     range: (from: number, to: number, total: number) => `${from}–${to} of ${total}`,
   },
-  // Over a list, after its count: the rows on this page, when there's more than one; then its downloads.
+  // Over a list, after its count: the rows on this page, when there's more than one; then its downloads, of every page.
   lists: {
     showing: (from: number, to: number) => `showing ${from}–${to}`,
-    downloadAll: (n: number) => `Download all ${n}`,
     formats: { csv: "CSV", json: "JSON" },
   },
   changes: {
