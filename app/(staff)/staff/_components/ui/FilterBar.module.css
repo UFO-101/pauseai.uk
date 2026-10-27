@@ -153,6 +153,19 @@
   margin: calc(-1 * var(--space-2)) 0;
 }
 
+/* Except's heading over its filters: in line with their names, and ruled
+   off from them as they are from each other. */
+.groupsHeading {
+  margin: 0;
+  padding: 0 var(--space-1) var(--space-2);
+  border-bottom: 1px solid var(--border);
+  font-weight: 700;
+}
+
+.groupsHeading + .groups {
+  margin-top: 0;
+}
+
 .group + .group {
   border-top: 1px solid var(--border);
 }

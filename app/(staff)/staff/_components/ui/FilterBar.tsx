@@ -336,7 +336,7 @@ export default function FilterBar({
                 </>
               }
             >
-              <p className={styles.heading}>{copy.exceptHeading}</p>
+              <p className={styles.groupsHeading}>{copy.exceptHeading}</p>
               {groups(negatable, true)}
             </Menu>
           </span>
