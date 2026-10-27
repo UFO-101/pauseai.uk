@@ -117,7 +117,10 @@ test("the supporters not at an event: the guest who declined it, and the contact
   const march = copy.filters.eventChoice("PauseAI London March", staffDate("2026-02-14T12:00:00Z"));
   await page.getByRole("button", { name: staffCopy.filters.add }).click();
   await page.locator("[popover]:popover-open summary", { hasText: new RegExp(`^${copy.filters.notEvent}$`) }).click();
-  await frame(page, "+ Filter's events not at, by name and day");
+  // Its events show once something's typed in its box.
+  await page.locator("[popover]:popover-open").getByRole("searchbox", { name: staffCopy.filters.narrow }).fill("march");
+  await expect(page.locator("[popover]:popover-open").getByRole("link", { name: march, exact: true })).toBeVisible();
+  await frame(page, '+ Filter\'s events not at, narrowed to those with "march"');
   await page.locator("[popover]:popover-open").getByRole("link", { name: march, exact: true }).click();
   await expect(page).toHaveURL(/\/staff\/supporters\?notEvent=/);
   // Four guests were approved for it; Dee declined, and Fay follows the calendar but never registered.

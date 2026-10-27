@@ -80,6 +80,15 @@
   cursor: pointer;
 }
 
+/* A chip too long for the row, such as a long event's on a phone, wraps
+   inside it rather than widening the page. */
+.chip {
+  max-width: 100%;
+  height: auto;
+  min-height: 36px;
+  white-space: normal;
+}
+
 .chip::after {
   content: " ▾" / "";
 }
@@ -87,6 +96,7 @@
 /* A filter and the one after it: one lozenge, cut down the middle. */
 .pair {
   display: flex;
+  max-width: 100%;
 }
 
 .pair > .chip:first-of-type {
