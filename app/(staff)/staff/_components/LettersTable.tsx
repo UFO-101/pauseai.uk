@@ -1,70 +1,144 @@
 import Link from "next/link";
 import CampaignName from "./CampaignName";
 import { staffCopy } from "@/lib/content/staff-interface";
+import { campaignBySlug } from "@/lib/email-your-mp";
 import { staffTime } from "@/lib/staff-time";
 import type { LetterSummary } from "@/lib/server/letters";
+import { filtersPath, pageParam, type LettersSearch } from "@/lib/staff-search";
+import ListFrame, { ListTable, type ListColumn } from "./ui/ListFrame";
 import styles from "./LettersTable.module.css";
 import { Muted } from "@/components/ui/Text";
 import Tag from "@/components/ui/Tag";
-import Table from "@/components/ui/Table";
+
+const PATH = "/staff/letters";
+const copy = staffCopy.letters;
+
+/** A letter's status, in words. */
+const statusOf = (status: string) => copy.status[status] ?? status;
 
 /**
- * Letters, with each change of status (sent, bounced, complained about) and
- * each reply. The sender leads to their supporter, the MP to their page,
- * the campaign to its page on the site.
+ * The letters list's columns: when, the sender (leading to their
+ * supporter) and their email, whether they agreed to hear from us, the MP
+ * (leading to their page), the campaign (leading to its page on the site),
+ * its status, when the MP replied, and each change of status and reply.
  */
-export default function LettersTable({ letters }: { letters: LetterSummary[] }) {
-  if (letters.length === 0) return <p>{staffCopy.letters.none}</p>;
-  return (
-    <Table>
-      <thead>
-        <tr>
-          <th>{staffCopy.letters.columns.created}</th>
-          <th>{staffCopy.letters.columns.from}</th>
-          <th>{staffCopy.letters.columns.consent}</th>
-          <th>{staffCopy.letters.columns.to}</th>
-          <th>{staffCopy.letters.columns.campaign}</th>
-          <th>{staffCopy.letters.columns.status}</th>
-          <th>{staffCopy.letters.columns.replied}</th>
-          <th>{staffCopy.letters.columns.history}</th>
-        </tr>
-      </thead>
-      <tbody>
-        {letters.map((letter) => (
-          <tr key={letter.id}>
-            <td>{staffTime(letter.createdAt)}</td>
-            <td>
-              {letter.supporterId === null ? (
-                letter.senderName
-              ) : (
-                <Link href={`/staff/supporters/${letter.supporterId}`}>{letter.senderName}</Link>
-              )}
-              <br />
-              <Muted>{letter.senderEmail}</Muted>
-            </td>
-            <td>{letter.contactConsent ? staffCopy.letters.consent.yes : staffCopy.letters.consent.no}</td>
-            <td>
-              <Link href={`/staff/politicians/${letter.politicianId}`}>{letter.mpName}</Link>{" "}
-              {letter.isTest && <Tag>{staffCopy.politicians.testMp}</Tag>}
-            </td>
-            <td>
-              <CampaignName slug={letter.campaign} /> {letter.imported && <Tag>{staffCopy.letters.imported}</Tag>}
-            </td>
-            <td>{staffCopy.letters.status[letter.status] ?? letter.status}</td>
-            <td>{letter.repliedAt && staffTime(letter.repliedAt)}</td>
-            <td>
-              <ul className={styles.events}>
-                {letter.events.map((event, i) => (
-                  <li key={i}>
-                    {staffTime(event.at)}: {staffCopy.letters.status[event.status] ?? event.status}
-                    {Object.keys(event.details).length > 0 && <code> {JSON.stringify(event.details)}</code>}
-                  </li>
-                ))}
-              </ul>
-            </td>
-          </tr>
+export const letterColumns: ListColumn<LetterSummary>[] = [
+  {
+    key: "created",
+    label: copy.columns.created,
+    short: true,
+    text: (l) => l.createdAt,
+    cell: (l) => staffTime(l.createdAt),
+  },
+  {
+    key: "from",
+    label: copy.columns.from,
+    text: (l) => `${l.senderName} <${l.senderEmail}>`,
+    cell: (l) => (
+      <>
+        {l.supporterId === null ? (
+          l.senderName
+        ) : (
+          <Link href={`/staff/supporters/${l.supporterId}`}>{l.senderName}</Link>
+        )}
+        <br />
+        <Muted>{l.senderEmail}</Muted>
+      </>
+    ),
+  },
+  {
+    key: "consent",
+    label: copy.columns.consent,
+    short: true,
+    text: (l) => l.contactConsent,
+    cell: (l) => (l.contactConsent ? copy.consent.yes : copy.consent.no),
+  },
+  {
+    key: "to",
+    label: copy.columns.to,
+    text: (l) => l.mpName,
+    cell: (l) => (
+      <>
+        <Link href={`/staff/politicians/${l.politicianId}`}>{l.mpName}</Link>{" "}
+        {l.isTest && <Tag>{staffCopy.politicians.testMp}</Tag>}
+      </>
+    ),
+  },
+  {
+    key: "campaign",
+    label: copy.columns.campaign,
+    text: (l) => campaignBySlug(l.campaign)?.title ?? l.campaign,
+    cell: (l) => (
+      <>
+        <CampaignName slug={l.campaign} /> {l.imported && <Tag>{copy.imported}</Tag>}
+      </>
+    ),
+  },
+  {
+    key: "status",
+    label: copy.columns.status,
+    short: true,
+    text: (l) => statusOf(l.status),
+    cell: (l) => statusOf(l.status),
+  },
+  {
+    key: "replied",
+    label: copy.columns.replied,
+    short: true,
+    text: (l) => l.repliedAt,
+    cell: (l) => l.repliedAt && staffTime(l.repliedAt),
+  },
+  {
+    key: "history",
+    label: copy.columns.history,
+    text: (l) => l.events.map((event) => `${event.at} ${statusOf(event.status)}`).join("; "),
+    cell: (l) => (
+      <ul className={styles.events}>
+        {l.events.map((event, i) => (
+          <li key={i}>
+            {staffTime(event.at)}: {statusOf(event.status)}
+            {Object.keys(event.details).length > 0 && <code> {JSON.stringify(event.details)}</code>}
+          </li>
         ))}
-      </tbody>
-    </Table>
+      </ul>
+    ),
+  },
+];
+
+/** Letters, a row each, in the list's columns; or that there are none. */
+export default function LettersTable({ letters }: { letters: LetterSummary[] }) {
+  if (letters.length === 0) return <p>{copy.none}</p>;
+  return <ListTable columns={letterColumns} rows={letters} rowKey={(l) => l.id} />;
+}
+
+/** The letters page's list, in the list frame: how many, its downloads, the letters and the way through the pages. */
+export function LettersList({
+  letters,
+  total,
+  pages,
+  pageSize,
+  search,
+}: {
+  letters: LetterSummary[];
+  total: number;
+  pages: number;
+  pageSize: number;
+  search: LettersSearch;
+}) {
+  const filters = { ...search, page: "" };
+  return (
+    <ListFrame
+      count={copy.total(total)}
+      total={total}
+      page={Number(search.page) || 1}
+      pages={pages}
+      pageSize={pageSize}
+      href={(n) => filtersPath(PATH, filters, pageParam(n))}
+      download={(format) => filtersPath(`${PATH}/download`, filters, { format })}
+      columns={letterColumns}
+      rows={letters}
+      rowKey={(l) => l.id}
+      empty={copy.none}
+    />
   );
 }

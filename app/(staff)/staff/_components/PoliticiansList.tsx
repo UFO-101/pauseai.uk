@@ -3,9 +3,8 @@ import { staffCopy } from "@/lib/content/staff-interface";
 import type { Ask } from "@/lib/server/asks";
 import type { PoliticiansPage, PoliticiansSearch } from "@/lib/server/politicians";
 import { filtersPath, pageParam } from "@/lib/staff-search";
-import ListCount from "./ListCount";
-import Paging from "./Paging";
-import PoliticianTable from "./PoliticianTable";
+import PoliticianTable, { politicianColumns } from "./PoliticianTable";
+import ListFrame from "./ui/ListFrame";
 import Tabs from "./ui/Tabs";
 
 const PATH = "/staff/politicians";
@@ -32,8 +31,9 @@ export function HouseTabs({ search }: { search: PoliticiansSearch }) {
 }
 
 /**
- * The politicians page's list: how many, the table and the way through its
- * pages; or, when a search finds no one, the nearest names. Under it, how
+ * The politicians page's list, in the list frame: how many, its downloads,
+ * the table and the way through its pages; or, when a search finds no one,
+ * the nearest names. Under it, how
  * many the search finds in other houses or out of office, linked to them.
  * A new filter or sort starts from the first page.
  */
@@ -49,17 +49,26 @@ export default function PoliticiansList({
   const filters = { ...search, page: "" };
   return (
     <>
-      <ListCount total={list.total}>{copy.count(list.total, list.page, list.pages)}</ListCount>
       {list.closest.length > 0 ? (
         <>
           <p>{copy.closest}</p>
           <PoliticianTable politicians={list.closest} asks={asks} search={filters} />
         </>
       ) : (
-        <>
-          <PoliticianTable politicians={list.politicians} asks={asks} search={filters} />
-          <Paging page={list.page} pages={list.pages} href={(n) => filtersPath(PATH, search, pageParam(n))} />
-        </>
+        <ListFrame
+          count={copy.total(list.total)}
+          total={list.total}
+          page={list.page}
+          pages={list.pages}
+          pageSize={list.pageSize}
+          href={(n) => filtersPath(PATH, search, pageParam(n))}
+          download={(format) => filtersPath(`${PATH}/download`, filters, { format })}
+          formats={["csv", "json", "vcf"]}
+          columns={politicianColumns(list.politicians, asks, filters)}
+          rows={list.politicians}
+          rowKey={(p) => p.id}
+          empty={copy.none}
+        />
       )}
       {list.otherHouses > 0 && (
         <p>

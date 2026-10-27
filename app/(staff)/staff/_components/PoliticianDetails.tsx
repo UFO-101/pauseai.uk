@@ -535,7 +535,7 @@ export default function PoliticianDetails({
             <ol className={styles.history} aria-label={copy.historyTitle}>
               {entries.map((entry) => (
                 <li key={entry.key}>
-                  <span className={styles.when}>{entry.day ? entry.at : staffTime(entry.at)}</span>
+                  <span className={styles.when}>{entry.day ? staffDate(entry.at) : staffTime(entry.at)}</span>
                   <span>{entry.what}</span>
                 </li>
               ))}

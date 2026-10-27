@@ -55,6 +55,33 @@
   font-size: var(--text-sm);
 }
 
+/* A page: its icon, then its name. Log out is one too, a form's button. */
+.page {
+  position: relative;
+  display: inline-flex;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.page svg {
+  flex: none;
+}
+
+button.page {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: 500;
+  cursor: pointer;
+}
+
+button.page:hover {
+  color: var(--text);
+}
+
 .group a,
 .linkButton {
   font-weight: 500;
@@ -188,5 +215,62 @@
     margin: 0;
     border: 0;
     border-top: 1px solid var(--border);
+  }
+}
+
+/* Folded (NavFold), on wider screens: a rail of the icons, the sections a
+   rule apart, without their headings. Each name is still read out, and
+   shows beside its icon on hover or focus. */
+@media (min-width: 721px) {
+  :global(:root[data-staff-nav="folded"]) .name,
+  :global(:root[data-staff-nav="folded"]) .group h2,
+  :global(:root[data-staff-nav="folded"]) .who,
+  :global(:root[data-staff-nav="folded"]) .sessions {
+    display: none;
+  }
+
+  :global(:root[data-staff-nav="folded"]) .nav,
+  :global(:root[data-staff-nav="folded"]) .sidebar,
+  :global(:root[data-staff-nav="folded"]) .foot {
+    justify-items: center;
+    gap: var(--space-3);
+  }
+
+  :global(:root[data-staff-nav="folded"]) .sidebar .group + .group {
+    padding-top: var(--space-3);
+    border-top: 1px solid var(--border);
+  }
+
+  :global(:root[data-staff-nav="folded"]) .sidebar .page {
+    padding: var(--space-1);
+    border-radius: var(--radius-sm);
+  }
+
+  :global(:root[data-staff-nav="folded"]) .sidebar .page[aria-current="page"] {
+    background: rgb(var(--text-rgb) / 0.08);
+  }
+
+  :global(:root[data-staff-nav="folded"]) .sidebar .label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  :global(:root[data-staff-nav="folded"]) .sidebar .page:hover .label,
+  :global(:root[data-staff-nav="folded"]) .sidebar .page:focus-visible .label {
+    left: calc(100% + var(--space-2));
+    z-index: 3;
+    width: auto;
+    height: auto;
+    padding: 2px var(--space-2);
+    overflow: visible;
+    clip-path: none;
+    border-radius: var(--radius-sm);
+    background: var(--text);
+    color: var(--surface);
+    font-weight: 500;
   }
 }

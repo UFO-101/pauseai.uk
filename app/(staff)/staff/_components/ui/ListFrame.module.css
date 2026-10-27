@@ -1,0 +1,128 @@
+/* A staff list: the bar over its table, the table, and the paging under it. */
+
+/* As wide as the page's column, past the content's width: a list's columns
+   wrap less on a big screen. */
+.frame {
+  display: grid;
+  gap: var(--space-2);
+  max-width: none;
+}
+
+/* Over the table: the count at the left, the downloads at the right,
+   wrapping under it on a phone; ruled off from what's above. */
+.bar,
+.under {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  align-items: center;
+  justify-content: space-between;
+}
+
+.bar {
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--border);
+}
+
+.count {
+  margin: 0;
+}
+
+/* The Download button: its arrow, its word, and a ▾ for its menu. */
+.download {
+  gap: var(--space-1);
+}
+
+.download::after {
+  content: "▾" / "";
+}
+
+/* Its menu: a format a line. */
+.formats {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.formats a {
+  display: block;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.formats a:hover {
+  background: var(--surface-2);
+}
+
+/* A short column's cells (a house, a date, a count) stay on one line. */
+.short {
+  white-space: nowrap;
+}
+
+/* Previous, the page numbers and Next, in a row. */
+.pages {
+  display: flex;
+  gap: var(--space-1);
+  align-items: center;
+}
+
+.numbers {
+  display: flex;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.number,
+.current,
+.gap {
+  display: inline-flex;
+  min-width: var(--control-height);
+  height: var(--control-height);
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  font-variant-numeric: tabular-nums;
+}
+
+.number {
+  color: var(--text);
+  text-decoration: none;
+}
+
+.number:hover {
+  background: var(--surface-2);
+}
+
+.current {
+  background: var(--text);
+  color: var(--surface);
+  font-weight: 600;
+}
+
+.gap {
+  min-width: auto;
+  color: var(--muted);
+}
+
+/* "Page 6 of 50", for a phone in place of the numbers. */
+.of {
+  display: none;
+  padding: 0 var(--space-2);
+}
+
+@media (max-width: 720px) {
+  .numbers {
+    display: none;
+  }
+
+  .of {
+    display: inline;
+  }
+}

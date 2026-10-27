@@ -419,6 +419,11 @@ Attachments are the mailing's, the same for everyone.
   today's sends against the cap.
 - **Politicians**: a "not mailed for this ask" filter, and "Mail these",
   which opens a new mailing with the filtered list.
+- **Filters stored with a mailing.** The politicians' filters become one
+  structured, validated value, not only a URL's query string, so a
+  mailing keeps the filter that chose its recipients. Its page shows that
+  filter in words and can rerun it, to see who it would pick now. The
+  same structure serves every staff list's filters, supporters' too.
 - **Mailings** (`/staff/mailings`, new):
   - the list: ask, sender, when, and counts sent, skipped, bounced and
     replied;

@@ -1,0 +1,41 @@
+/* The sidebar's fold button, at its foot: a chevron and Fold, quiet, like
+   the links above it; folded, the chevron alone, turned to point out. */
+.fold {
+  display: inline-flex;
+  gap: var(--space-2);
+  align-items: center;
+  justify-self: start;
+  padding: var(--space-1) 0;
+  border: 0;
+  background: none;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.fold:hover {
+  color: var(--text);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .chevron {
+    transition: rotate 0.15s;
+  }
+}
+
+:global(:root[data-staff-nav="folded"]) .chevron {
+  rotate: 180deg;
+}
+
+:global(:root[data-staff-nav="folded"]) .text {
+  display: none;
+}
+
+/* A phone has the bar, which doesn't fold. */
+@media (max-width: 720px) {
+  .fold {
+    display: none;
+  }
+}

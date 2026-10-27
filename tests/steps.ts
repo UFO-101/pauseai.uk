@@ -190,7 +190,10 @@ export async function logInAsStaff(page: Page, base: string, email = "staff@paus
 /** Turns on a list's filter: + Filter, then the choice under the filter's name. */
 export async function addFilter(page: Page, filter: string, choice: string) {
   await page.getByRole("button", { name: staffCopy.filters.add }).click();
-  const group = page.locator("[popover]:popover-open section").filter({ has: page.getByText(filter, { exact: true }) });
+  const group = page
+    .locator("[popover]:popover-open details")
+    .filter({ has: page.locator("summary", { hasText: new RegExp(`^${filter}$`) }) });
+  await group.locator("summary").click();
   await group.getByRole("link", { name: choice, exact: true }).click();
 }
 

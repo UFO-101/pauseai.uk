@@ -16,6 +16,7 @@ import { permissionsFor } from "./email-permissions";
 import { refreshSupporterFacts } from "./supporter-facts";
 import { SUPPORTER_SOURCES } from "./supporter-sources";
 import { contains, everyWord } from "./search";
+import { placeFor, type FoundPlace } from "./outside-services/postcodes";
 
 // Supporters: one per person, tied to each record about them in a source
 // (supporter_links). Linking is by email, trimmed and lowercased and
@@ -81,9 +82,15 @@ export async function linkSupporters(db?: Queryable): Promise<LinkResult> {
   return { supportersAdded: added.length, linked: existing.length + fresh.length };
 }
 
-const SUMMARY_COLUMNS = `s.id::int AS id, s.name, coalesce(s.emails, '{}') AS emails, s.phone, s.postcode,
+const SUMMARY_COLUMNS = `s.id::int AS id, s.name, coalesce(s.emails, '{}') AS emails,
+  (SELECT i.email FROM supporter_identity i WHERE i.supporter_id = s.id ORDER BY i.seen_at DESC NULLS LAST, i.email LIMIT 1) AS email,
+  s.phone, s.postcode,
   coalesce(s.sources, '{}') AS sources, s.luma_contact AS "lumaContact", s.first_seen_at AS "firstSeenAt",
   s.last_active_at AS "lastActiveAt", s.events, s.letters, s.member`;
+
+/** Where they are (the supporter_place view), joined as sp: a place's name and what it's from, or nulls. */
+const PLACE_COLUMNS = `CASE WHEN sp.supporter_id IS NULL THEN NULL
+  ELSE json_build_object('name', sp.place, 'basis', sp.basis, 'given', sp.given, 'country', sp.country) END AS place`;
 
 /** When a supporter has each lozenge in the Activities column, as SupporterBadges shows them. */
 const BADGE_CONDITIONS: Record<SupporterBadge, string> = {
@@ -93,10 +100,28 @@ const BADGE_CONDITIONS: Record<SupporterBadge, string> = {
   letter: "s.letters > 0",
 };
 
-export type SupportersPage = { supporters: SupporterRow[]; total: number; pages: number };
+export type SupportersPage = {
+  supporters: SupporterRow[];
+  total: number;
+  pages: number;
+  /** Where the Near filter's words are, if it's on: a place, none found, or "failed" if postcodes.io couldn't say. */
+  near?: FoundPlace | null | "failed";
+};
 
-/** One page of the list, filtered and sorted. */
-export async function listSupporters(filter: SupporterFilter): Promise<SupportersPage> {
+/** Miles between a supporter's place and the point `lat`, `lon` (the haversine formula, on a round Earth). */
+const milesFrom = (lat: string, lon: string) =>
+  `3958.8 * 2 * asin(sqrt(power(sin(radians(sp.latitude - ${lat}) / 2), 2)
+     + cos(radians(${lat})) * cos(radians(sp.latitude)) * power(sin(radians(sp.longitude - ${lon}) / 2), 2)))`;
+
+/**
+ * One page of the list, filtered and sorted; with a `limit` of null, every
+ * one, for a download. The Near filter's words are looked up at
+ * postcodes.io; a place it can't find finds no one.
+ */
+export async function listSupporters(
+  filter: SupporterFilter,
+  limit: number | null = SUPPORTERS_PAGE_SIZE,
+): Promise<SupportersPage> {
   const where: string[] = [];
   const values: unknown[] = [];
   const add = (value: unknown) => {
@@ -113,14 +138,35 @@ export async function listSupporters(filter: SupporterFilter): Promise<Supporter
       ),
     );
   }
-  if (filter.activity) where.push(BADGE_CONDITIONS[filter.activity]);
+  if (filter.activity) where.push(`(${filter.activity.map((badge) => BADGE_CONDITIONS[badge]).join(" OR ")})`);
   if (filter.subscription) {
-    const { topic, reason } = filter.subscription;
+    const states = filter.subscription.map(
+      ({ topic, reason }) => `(p.reason = ${add(reason)}${topic ? ` AND p.topic = ${add(topic)}` : ""})`,
+    );
     where.push(
       `s.id IN (SELECT i.supporter_id FROM supporter_identity i JOIN email_permissions p ON p.address = i.email
-       WHERE p.reason = ${add(reason)}${topic ? ` AND p.topic = ${add(topic)}` : ""})`,
+       WHERE ${states.join(" OR ")})`,
     );
   }
+  if (filter.phone !== undefined) where.push(`s.phone IS ${filter.phone ? "NOT " : ""}NULL`);
+  if (filter.email !== undefined) where.push(`coalesce(cardinality(s.emails), 0) ${filter.email ? ">" : "="} 0`);
+  if (filter.event) {
+    where.push(
+      `EXISTS (SELECT 1 FROM luma_guests g JOIN supporter_links k ON k.luma_user_id = g.user_id
+       WHERE k.supporter_id = s.id AND g.event_id = ANY(${add(filter.event)}) AND g.approval_status <> 'declined')`,
+    );
+  }
+  if (filter.campaign) {
+    where.push(
+      `${filter.wrote ? "" : "NOT "}EXISTS (SELECT 1 FROM supporter_links k JOIN supporter_letters l ON l.id = k.letter_id
+       WHERE k.supporter_id = s.id AND l.campaign = ${add(filter.campaign)})`,
+    );
+  }
+  if (filter.country) where.push(`sp.country = ANY(${add(filter.country)})`);
+  // What the Near filter's words are: a place, null for none, "failed"; or undefined with no Near filter.
+  const near = filter.near ? await placeFor(filter.near.text) : undefined;
+  if (near === null || near === "failed") where.push("false");
+  else if (near) where.push(`${milesFrom(add(near.latitude), add(near.longitude))} <= ${add(filter.near!.miles)}`);
   const column = {
     active: "s.last_active_at",
     first: "s.first_seen_at",
@@ -131,9 +177,10 @@ export async function listSupporters(filter: SupporterFilter): Promise<Supporter
   const dir = filter.dir === "asc" ? "ASC" : "DESC";
   const order = `${column} ${dir} NULLS LAST, s.last_active_at DESC NULLS LAST, s.id ${dir}`;
   const rows = await query<SupporterSummary & { total: number }>(
-    `SELECT ${SUMMARY_COLUMNS}, count(*) OVER ()::int AS total FROM supporters_summary s
+    `SELECT ${SUMMARY_COLUMNS}, ${PLACE_COLUMNS}, count(*) OVER ()::int AS total
+     FROM supporters_summary s LEFT JOIN supporter_place sp ON sp.supporter_id = s.id
      ${where.length ? `WHERE ${where.join(" AND ")}` : ""}
-     ORDER BY ${order} LIMIT ${add(SUPPORTERS_PAGE_SIZE)} OFFSET ${add((filter.page - 1) * SUPPORTERS_PAGE_SIZE)}`,
+     ORDER BY ${order} LIMIT ${add(limit)} OFFSET ${add((filter.page - 1) * (limit ?? 0))}`,
     values,
   );
   const total = rows[0]?.total ?? 0;
@@ -145,13 +192,26 @@ export async function listSupporters(filter: SupporterFilter): Promise<Supporter
     }),
     total,
     pages: Math.max(1, Math.ceil(total / SUPPORTERS_PAGE_SIZE)),
+    ...(near !== undefined && { near }),
   };
+}
+
+/** A Luma event to filter supporters by: its ID, name and when it starts. */
+export type EventChoice = { id: string; name: string; startAt: string };
+
+/** Our Luma events, newest first, for the Event filter: those we manage, whose guests we know. */
+export async function eventChoices(): Promise<EventChoice[]> {
+  return query<EventChoice>(
+    `SELECT id, name, start_at AS "startAt" FROM luma_events
+     WHERE access = 'manage' AND removed_at IS NULL ORDER BY start_at DESC, id`,
+  );
 }
 
 /** Everything the staff page shows about one supporter, or undefined if there's no such one. */
 export async function getSupporter(id: number): Promise<SupporterDetails | undefined> {
   const [summary] = await query<SupporterSummary>(
-    `SELECT ${SUMMARY_COLUMNS} FROM supporters_summary s WHERE s.id = $1`,
+    `SELECT ${SUMMARY_COLUMNS}, ${PLACE_COLUMNS}
+     FROM supporters_summary s LEFT JOIN supporter_place sp ON sp.supporter_id = s.id WHERE s.id = $1`,
     [id],
   );
   if (!summary) return undefined;

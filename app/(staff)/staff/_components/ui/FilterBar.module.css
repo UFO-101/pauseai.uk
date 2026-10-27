@@ -15,8 +15,9 @@
   align-items: end;
 }
 
+/* Wide enough for the fields it searches, which are its placeholder. */
 .search > :first-child {
-  width: 16rem;
+  width: 20rem;
 }
 
 /* On a phone, the search takes the row, its box what the button leaves
@@ -118,33 +119,63 @@
   font-weight: 700;
 }
 
-/* + Filter's filters, side by side as the menu's width allows. */
+/* + Filter's filters: a row each, ruled apart, its choices opening under it. */
 .groups {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-3) var(--space-5);
-}
-
-.choices {
   display: grid;
-  gap: 2px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
+  min-width: 16rem;
+  margin: calc(-1 * var(--space-2)) 0;
 }
 
-/* Many choices: in two columns, but on a phone. */
-@media (min-width: 721px) {
-  .many {
-    display: block;
-    columns: 2;
-    column-gap: var(--space-5);
+.group + .group {
+  border-top: 1px solid var(--border);
+}
+
+.group summary {
+  display: flex;
+  justify-content: space-between;
+  padding: var(--space-2) var(--space-1);
+  font-weight: 600;
+  list-style: none;
+  cursor: pointer;
+}
+
+.group summary::-webkit-details-marker {
+  display: none;
+}
+
+.group summary::after {
+  content: "›" / "";
+  color: var(--muted);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .group summary::after {
+    transition: rotate 0.15s;
   }
 }
 
-.many li {
-  margin-bottom: 2px;
-  break-inside: avoid;
+.group[open] summary::after {
+  rotate: 90deg;
+}
+
+.group[open] {
+  padding-bottom: var(--space-2);
+}
+
+/* A filter's choices, a link a line; a long list scrolls. */
+.choices {
+  display: grid;
+  gap: 2px;
+  max-height: 18rem;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+/* A searchable list shows nothing until something's typed (ChoiceSearch). */
+.choices[data-search="empty"] {
+  display: none;
 }
 
 .choices a {
@@ -169,4 +200,31 @@
   margin-top: var(--space-2);
   padding-top: var(--space-2);
   border-top: 1px solid var(--border);
+}
+
+/* A place filter's form: the words, how far, and its button, in a row. */
+.placeForm {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: end;
+}
+
+.placeForm > input {
+  width: 12rem;
+}
+
+.placeForm > select {
+  width: auto;
+}
+
+/* The box over a long list of choices, as wide as the menu. */
+.choiceSearch {
+  display: block;
+  margin-bottom: var(--space-2);
+}
+
+.choiceSearch input {
+  width: 100%;
+  box-sizing: border-box;
 }

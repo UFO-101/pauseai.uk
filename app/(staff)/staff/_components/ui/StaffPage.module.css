@@ -51,4 +51,13 @@
     border-bottom: 0;
     border-right: 1px solid var(--border);
   }
+
+  /* Folded (NavFold): a strip as wide as the pause symbol. */
+  :global(:root[data-staff-nav="folded"]) .withNav {
+    grid-template-columns: 4.5rem minmax(0, 1fr);
+  }
+
+  :global(:root[data-staff-nav="folded"]) .side {
+    padding-inline: var(--space-3);
+  }
 }

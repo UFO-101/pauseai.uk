@@ -1,20 +1,29 @@
 import Link from "next/link";
-import Table from "@/components/ui/Table";
 import { Muted } from "@/components/ui/Text";
 import { staffCopy } from "@/lib/content/staff-interface";
 import type { SupportersPage } from "@/lib/server/supporters";
-import type { SupportersSearch } from "@/lib/staff-search";
+import { filtersPath, pageParam, type Params, type SupportersSearch } from "@/lib/staff-search";
 import { staffDate } from "@/lib/staff-time";
 import { parseSort, sortHref } from "@/lib/staff-sort";
-import { SUPPORTER_SORTS, type SupporterSort } from "@/lib/supporters";
-import Paging from "./Paging";
+import {
+  SUPPORTER_SORTS,
+  SUPPORTERS_PAGE_SIZE,
+  type SupporterPlaceName,
+  type SupporterRow,
+  type SupporterSort,
+} from "@/lib/supporters";
 import SortHeading from "./SortHeading";
-import SubscriptionBadges from "./SubscriptionBadges";
-import SupporterBadges from "./SupporterBadges";
+import SubscriptionBadges, { subscriptionWords } from "./SubscriptionBadges";
+import SupporterBadges, { supporterBadgeWords } from "./SupporterBadges";
+import ListFrame, { type ListColumn } from "./ui/ListFrame";
+import type { Contact } from "@/lib/vcard";
 import styles from "./SupportersTable.module.css";
 
+const PATH = "/staff/supporters";
+const copy = staffCopy.supporters;
+
 /** The list's filters as typed, the URL's, without the page or the notice. */
-function filtersOf(search: SupportersSearch): Record<string, string> {
+export function supporterFiltersOf(search: SupportersSearch): Params {
   const { page, erased, filter, ...rest } = search as SupportersSearch & { filter?: unknown };
   void page;
   void erased;
@@ -22,77 +31,159 @@ function filtersOf(search: SupportersSearch): Record<string, string> {
   return rest;
 }
 
-/** The list's URL with the same filters and sort, and another page. */
-function pageHref(search: SupportersSearch, page: number): string {
-  const params = new URLSearchParams();
-  for (const [name, value] of Object.entries(filtersOf(search))) if (value) params.set(name, value);
-  if (page > 1) params.set("page", String(page));
-  const query = params.toString();
-  return query ? `/staff/supporters?${query}` : "/staff/supporters";
+/** Where a supporter is: faint when it's only where an event they went to was. */
+function Place({ place }: { place: SupporterPlaceName }) {
+  return place.basis === "event" ? <Muted>{place.name}</Muted> : place.name;
 }
 
-/** The supporters found, a row each, and the way to the pages before and after. */
-export default function SupportersTable({ page, search }: { page: SupportersPage; search: SupportersSearch }) {
-  const copy = staffCopy.supporters;
-  if (page.supporters.length === 0) return <p>{copy.none}</p>;
-  const current = Number(search.page) || 1;
+/**
+ * The supporters list's columns: who they are (their name; their newest
+ * email, and how many others they have; their newest phone; where they
+ * are); what they are to us and what we'd email them about, as lozenges;
+ * how many events and letters; and when we first saw them and last saw
+ * them do something.
+ */
+export function supporterColumns(search: SupportersSearch): ListColumn<SupporterRow>[] {
   const sort = parseSort(SUPPORTER_SORTS, "active", search.sort, search.dir);
   const heading = (key: SupporterSort, label: string) => (
     <SortHeading
+      key={key}
       sortKey={key}
       current={sort}
-      href={sortHref("/staff/supporters", filtersOf(search), SUPPORTER_SORTS, sort, key)}
+      href={sortHref(PATH, supporterFiltersOf(search), SUPPORTER_SORTS, sort, key)}
     >
       {label}
     </SortHeading>
   );
+  return [
+    {
+      key: "name",
+      label: copy.columns.name,
+      heading: heading("name", copy.columns.name),
+      text: (s) => s.name,
+      cell: (s) => <Link href={`${PATH}/${s.id}`}>{s.name ?? copy.noName}</Link>,
+    },
+    {
+      key: "email",
+      label: copy.columns.email,
+      text: (s) => s.email,
+      cell: (s) => (
+        <>
+          {s.email}
+          {s.emails.length > 1 && <Muted> {copy.moreEmails(s.emails.length - 1)}</Muted>}
+        </>
+      ),
+    },
+    { key: "phone", label: copy.columns.phone, short: true, text: (s) => s.phone, cell: (s) => s.phone },
+    {
+      key: "place",
+      label: copy.columns.place,
+      short: true,
+      text: (s) => s.place?.name ?? null,
+      cell: (s) => s.place && <Place place={s.place} />,
+    },
+    {
+      key: "badges",
+      label: copy.columns.badges,
+      text: supporterBadgeWords,
+      cell: (s) => (
+        <div className={styles.badges}>
+          <SupporterBadges supporter={s} />
+        </div>
+      ),
+    },
+    {
+      key: "subscriptions",
+      label: copy.columns.subscriptions,
+      text: (s) => subscriptionWords(s.permissions),
+      cell: (s) => (
+        <div className={styles.badges}>
+          <SubscriptionBadges permissions={s.permissions} />
+        </div>
+      ),
+    },
+    {
+      key: "events",
+      label: copy.columns.events,
+      heading: heading("events", copy.columns.events),
+      short: true,
+      text: (s) => s.events,
+      cell: (s) => s.events,
+    },
+    {
+      key: "letters",
+      label: copy.columns.letters,
+      heading: heading("letters", copy.columns.letters),
+      short: true,
+      text: (s) => s.letters,
+      cell: (s) => s.letters,
+    },
+    {
+      key: "first",
+      label: copy.columns.firstSeen,
+      heading: heading("first", copy.columns.firstSeen),
+      short: true,
+      text: (s) => s.firstSeenAt,
+      cell: (s) => s.firstSeenAt && staffDate(s.firstSeenAt),
+    },
+    {
+      key: "active",
+      label: copy.columns.lastActive,
+      heading: heading("active", copy.columns.lastActive),
+      short: true,
+      text: (s) => s.lastActiveAt,
+      cell: (s) => s.lastActiveAt && staffDate(s.lastActiveAt),
+    },
+  ];
+}
+
+/**
+ * A supporter as a contact card (lib/vcard.ts): their name, every email,
+ * the newest first, their phone, where they are, and in the note what
+ * they are to us, what we'd email them about, when we first and last saw
+ * them, and how many events and letters.
+ */
+export function supporterContact(s: SupporterRow): Contact {
+  const emails = [s.email, ...s.emails.filter((e) => e !== s.email)].filter((e): e is string => Boolean(e));
+  const note = [
+    supporterBadgeWords(s) && `${copy.columns.badges}: ${supporterBadgeWords(s)}`,
+    subscriptionWords(s.permissions) && `${copy.columns.subscriptions}: ${subscriptionWords(s.permissions)}`,
+    s.firstSeenAt && `${copy.columns.firstSeen}: ${staffDate(s.firstSeenAt)}`,
+    s.lastActiveAt && `${copy.columns.lastActive}: ${staffDate(s.lastActiveAt)}`,
+    `${copy.columns.events}: ${s.events}`,
+    `${copy.columns.letters}: ${s.letters}`,
+  ].filter((line): line is string => Boolean(line));
+  return {
+    name: s.name,
+    emails,
+    phones: s.phone ? [s.phone] : [],
+    address: {
+      locality: s.place?.name,
+      postcode: s.postcode,
+      country: s.place?.country && staffCopy.countries[s.place.country],
+    },
+    note,
+    url: `${PATH}/${s.id}`,
+  };
+}
+
+/** The supporters found, in the list frame: a row each, their downloads and the way through the pages. */
+export default function SupportersTable({ page, search }: { page: SupportersPage; search: SupportersSearch }) {
+  const filters = supporterFiltersOf(search);
   return (
-    <>
-      <p>
-        <Muted>{copy.count(page.total, current, page.pages)}</Muted>
-      </p>
-      <Table>
-        <thead>
-          <tr>
-            {heading("name", copy.columns.name)}
-            <th>{copy.columns.email}</th>
-            <th>{copy.columns.badges}</th>
-            <th>{copy.columns.subscriptions}</th>
-            {heading("first", copy.columns.firstSeen)}
-            {heading("active", copy.columns.lastActive)}
-            {heading("events", copy.columns.events)}
-            {heading("letters", copy.columns.letters)}
-          </tr>
-        </thead>
-        <tbody>
-          {page.supporters.map((supporter) => (
-            <tr key={supporter.id}>
-              <td>
-                <Link href={`/staff/supporters/${supporter.id}`}>{supporter.name ?? copy.noName}</Link>
-              </td>
-              <td>
-                {supporter.emails[0]}
-                {supporter.emails.length > 1 && <Muted> {copy.moreEmails(supporter.emails.length - 1)}</Muted>}
-              </td>
-              <td>
-                <div className={styles.badges}>
-                  <SupporterBadges supporter={supporter} />
-                </div>
-              </td>
-              <td>
-                <div className={styles.badges}>
-                  <SubscriptionBadges permissions={supporter.permissions} />
-                </div>
-              </td>
-              <td>{supporter.firstSeenAt && staffDate(supporter.firstSeenAt)}</td>
-              <td>{supporter.lastActiveAt && staffDate(supporter.lastActiveAt)}</td>
-              <td>{supporter.events}</td>
-              <td>{supporter.letters}</td>
-            </tr>
-          ))}
-        </tbody>
-      </Table>
-      <Paging page={current} pages={page.pages} href={(n) => pageHref(search, n)} />
-    </>
+    <ListFrame
+      count={copy.total(page.total)}
+      total={page.total}
+      page={Number(search.page) || 1}
+      pages={page.pages}
+      pageSize={SUPPORTERS_PAGE_SIZE}
+      href={(n) => filtersPath(PATH, filters, pageParam(n))}
+      download={(format) => filtersPath(`${PATH}/download`, filters, { format })}
+      formats={["csv", "json", "vcf"]}
+      columns={supporterColumns(search)}
+      rows={page.supporters}
+      rowKey={(s) => s.id}
+      empty={copy.none}
+    />
   );
 }

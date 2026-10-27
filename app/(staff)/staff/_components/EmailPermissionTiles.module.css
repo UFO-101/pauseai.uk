@@ -12,13 +12,21 @@
   font-size: var(--text-sm);
 }
 
-/* The "?" by the topic's name, which opens how we know. */
+/* The topic and its answer, with the "?" at the top right, out of the reason's way. */
+.title {
+  display: flex;
+  gap: var(--space-2);
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+/* The "?", which opens how we know. */
 .help {
   display: inline-grid;
   place-items: center;
   width: 1.25rem;
   height: 1.25rem;
-  margin-left: var(--space-2);
+  flex: none;
   padding: 0;
   border: 1px solid var(--border-strong);
   border-radius: 50%;

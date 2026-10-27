@@ -13,10 +13,9 @@ import EmailProblemsTable from "@/app/(staff)/staff/_components/EmailProblemsTab
 import { exampleChanges } from "@/app/(staff)/staff/_components/ChangesTable.examples";
 import AuditDetail, { FieldChanges } from "@/app/(staff)/staff/_components/AuditDetail";
 import CampaignName from "@/app/(staff)/staff/_components/CampaignName";
-import Paging from "@/app/(staff)/staff/_components/Paging";
 import LetterFilters from "@/app/(staff)/staff/_components/LetterFilters";
 import LetterLink from "@/app/(staff)/staff/_components/LetterLink";
-import LettersTable from "@/app/(staff)/staff/_components/LettersTable";
+import LettersTable, { LettersList } from "@/app/(staff)/staff/_components/LettersTable";
 import { exampleLetter } from "@/app/(staff)/staff/_components/LettersTable.examples";
 import DevLogin from "@/app/(staff)/staff/_components/DevLogin";
 import LoginCard from "@/app/(staff)/staff/_components/LoginCard";
@@ -48,7 +47,10 @@ import EraseLink from "@/app/(staff)/staff/_components/EraseLink";
 import MailingDetails from "@/app/(staff)/staff/_components/MailingDetails";
 import MailingsTable from "@/app/(staff)/staff/_components/MailingsTable";
 import { exampleMailing, exampleMailings } from "@/app/(staff)/staff/_components/MailingsTable.examples";
-import ListCount from "@/app/(staff)/staff/_components/ListCount";
+import ListFrame, { ListTable, type ListColumn } from "@/app/(staff)/staff/_components/ui/ListFrame";
+import ChoiceSearch from "@/app/(staff)/staff/_components/ui/ChoiceSearch";
+import NavFold from "@/app/(staff)/staff/_components/ui/NavFold";
+import NavIcon from "@/app/(staff)/staff/_components/NavIcon";
 import PoliticiansList, { HouseTabs } from "@/app/(staff)/staff/_components/PoliticiansList";
 import ErasedNotice from "@/app/(staff)/staff/_components/ErasedNotice";
 import ImportCard, { ImportCards } from "@/app/(staff)/staff/_components/ImportCard";
@@ -106,6 +108,28 @@ import {
 } from "./staff.client";
 
 const [pm] = campaigns;
+/** A list's rows, for the list frame: a name, a place and a count, the place long enough to wrap. */
+type ExampleRow = { name: string; place: string; count: number };
+const exampleRows: ExampleRow[] = [
+  { name: "Ann Example", place: "Hackney North and Stoke Newington", count: 3 },
+  { name: "Bob Sample", place: "Leeds", count: 0 },
+  { name: "Cat Fixture", place: "Ceredigion Preseli", count: 12 },
+  { name: "Dan Dummy", place: "Glasgow", count: 1 },
+];
+const exampleColumns: ListColumn<ExampleRow>[] = [
+  { key: "name", label: "Name", cell: (r) => r.name },
+  { key: "place", label: "Place", cell: (r) => r.place },
+  { key: "count", label: "Letters", short: true, cell: (r) => r.count },
+];
+const nameOf = (row: ExampleRow) => row.name;
+
+/** Luma events a filter of supporters picks from, newest first. */
+const exampleEventChoices = [
+  { id: "evt-1", name: "PauseAI Leicester meetup", startAt: "2026-10-20T18:00:00Z" },
+  { id: "evt-2", name: "AI risk talk", startAt: "2026-10-12T18:00:00Z" },
+  { id: "evt-3", name: "PauseAI London March", startAt: "2026-09-05T11:00:00Z" },
+];
+
 /** The parties a filter of politicians picks from. */
 const parties = ["Conservative", "Green", "Labour", "Liberal Democrat"];
 
@@ -114,8 +138,10 @@ const EMPTY_POLITICIAN_FILTERS = {
   q: "",
   house: "",
   status: "",
-  party: "",
-  flag: "",
+  party: [] as string[],
+  flag: [] as string[],
+  country: [] as string[],
+  email: [] as string[],
   ask: "",
   answer: "",
   sort: "",
@@ -337,6 +363,85 @@ export const staff: Group = {
       ],
     },
     {
+      name: "NavFold",
+      file: "app/(staff)/staff/_components/ui/NavFold.tsx",
+      variants: [
+        {
+          label: "At the sidebar's foot: folds it to a rail of icons, and back",
+          render: () => (
+            <StaffPage as="div">
+              <NavFold />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "NavIcon",
+      file: "app/(staff)/staff/_components/NavIcon.tsx",
+      variants: [
+        {
+          label: "Each page's icon, and Log out's",
+          render: () => (
+            <StaffPage as="div">
+              <p>
+                {(
+                  [
+                    "home",
+                    "supporters",
+                    "letters",
+                    "supporterEmails",
+                    "politicians",
+                    "asks",
+                    "mailings",
+                    "mpEmails",
+                    "import",
+                    "accounts",
+                    "changes",
+                    "logout",
+                  ] as const
+                ).map((id) => (
+                  <NavIcon key={id} id={id} />
+                ))}
+              </p>
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "ChoiceSearch",
+      file: "app/(staff)/staff/_components/ui/ChoiceSearch.tsx",
+      variants: [
+        {
+          label: "Over a long list of choices, which show once something's typed",
+          render: () => (
+            <StaffPage as="div">
+              <ChoiceSearch label="Search these" />
+              <ul data-search="empty">
+                <li>PauseAI Leicester meetup</li>
+                <li>AI risk talk</li>
+              </ul>
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "ListTable",
+      file: "app/(staff)/staff/_components/ui/ListFrame.tsx",
+      variants: [
+        {
+          label: "The rows alone, striped, for a table that isn't a whole list",
+          render: () => (
+            <StaffPage as="div">
+              <ListTable columns={exampleColumns} rows={exampleRows} rowKey={nameOf} />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
       name: "Tabs",
       file: "app/(staff)/staff/_components/ui/Tabs.tsx",
       variants: [
@@ -473,17 +578,31 @@ export const staff: Group = {
       file: "app/(staff)/staff/_components/SupporterFilters.tsx",
       variants: [
         {
-          label: "The list's filters, with a search typed and two chosen",
+          label: "The list's filters, with a search typed, two activities, a campaign not written in, and near Leeds",
           render: () => (
             <StaffPage as="div">
               <SupporterFilters
                 search={supportersSearch({
                   q: "jane",
-                  activity: "registered",
+                  activity: ["registered", "member"],
                   subscription: "luma-calendar:unsubscribed",
+                  campaign: "support-sobel-bill",
+                  wrote: "no",
+                  near: "LS1",
+                  within: "25",
                   sort: "name",
                 })}
+                events={exampleEventChoices}
+                near={{ latitude: 53.8, longitude: -1.55, place: "Leeds", country: "england" }}
               />
+            </StaffPage>
+          ),
+        },
+        {
+          label: "Near somewhere postcodes.io doesn't know",
+          render: () => (
+            <StaffPage as="div">
+              <SupporterFilters search={supportersSearch({ near: "Atlantis" })} events={[]} near={null} />
             </StaffPage>
           ),
         },
@@ -909,14 +1028,62 @@ export const staff: Group = {
       ],
     },
     {
-      name: "ListCount",
-      file: "app/(staff)/staff/_components/ListCount.tsx",
+      name: "ListFrame",
+      file: "app/(staff)/staff/_components/ui/ListFrame.tsx",
       variants: [
         {
-          label: "Over a list",
+          label: "Page 6 of 50: how many, the downloads, striped rows, and the pages near this one",
           render: () => (
             <StaffPage as="div">
-              <ListCount total={150}>150 politicians; page 1 of 2.</ListCount>
+              <ListFrame
+                count="5,000 rows"
+                total={5000}
+                page={6}
+                pages={50}
+                pageSize={100}
+                href={(n) => `#page-${n}`}
+                download={(format) => `#download-${format}`}
+                columns={exampleColumns}
+                rows={exampleRows}
+                rowKey={nameOf}
+                empty="Nothing found."
+              />
+            </StaffPage>
+          ),
+        },
+        {
+          label: "One page, with no downloads",
+          render: () => (
+            <StaffPage as="div">
+              <ListFrame
+                count="4 rows"
+                total={4}
+                page={1}
+                pages={1}
+                pageSize={100}
+                columns={exampleColumns}
+                rows={exampleRows}
+                rowKey={nameOf}
+                empty="Nothing found."
+              />
+            </StaffPage>
+          ),
+        },
+        {
+          label: "Nothing found",
+          render: () => (
+            <StaffPage as="div">
+              <ListFrame
+                count="0 rows"
+                total={0}
+                page={1}
+                pages={1}
+                pageSize={100}
+                columns={exampleColumns}
+                rows={[]}
+                rowKey={nameOf}
+                empty="Nothing found."
+              />
             </StaffPage>
           ),
         },
@@ -1297,8 +1464,10 @@ export const staff: Group = {
                   q: "example",
                   house: "lords",
                   status: "in_office",
-                  party: "Labour",
-                  flag: "important",
+                  party: ["Labour", "Green"],
+                  flag: ["important"],
+                  country: ["wales"],
+                  email: ["blocked"],
                   ask: "edinburgh-conference-2026",
                   answer: "declined",
                 }}
@@ -1550,6 +1719,26 @@ export const staff: Group = {
       ],
     },
     {
+      name: "LettersList",
+      file: "app/(staff)/staff/_components/LettersTable.tsx",
+      variants: [
+        {
+          label: "The letters page's list: how many, Download, and the pages",
+          render: () => (
+            <StaffPage as="div">
+              <LettersList
+                letters={[exampleLetter]}
+                total={150}
+                pages={2}
+                pageSize={100}
+                search={{ status: "", q: "", answered: "", campaign: "", consent: "", page: "2" }}
+              />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
       name: "LettersTable",
       file: "app/(staff)/staff/_components/LettersTable.tsx",
       variants: [
@@ -1646,20 +1835,6 @@ export const staff: Group = {
       ],
     },
     {
-      name: "Paging",
-      file: "app/(staff)/staff/_components/Paging.tsx",
-      variants: [
-        {
-          label: "The middle page of three: the way back and on",
-          render: () => (
-            <StaffPage as="div">
-              <Paging page={2} pages={3} href={(n) => `#page-${n}`} />
-            </StaffPage>
-          ),
-        },
-      ],
-    },
-    {
       name: "ChangesTable",
       file: "app/(staff)/staff/_components/ChangesTable.tsx",
       variants: [
@@ -1667,7 +1842,11 @@ export const staff: Group = {
           label: "One of each kind of entry, in words, and one of a kind it doesn't know",
           render: () => (
             <StaffPage as="div">
-              <ChangesTable changes={exampleChanges} airtableTable="https://airtable.com/app/tbl" />
+              <ChangesTable
+                log={{ changes: exampleChanges, total: exampleChanges.length, pages: 1, pageSize: 100 }}
+                page={1}
+                airtableTable="https://airtable.com/app/tbl"
+              />
             </StaffPage>
           ),
         },

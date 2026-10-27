@@ -26,8 +26,14 @@ const POLITICIAN_ACTIONS = ["add politician", "edit politician", "remove politic
 /** Entries on a page of the audit log. */
 export const AUDIT_PAGE_SIZE = 100;
 
-/** A page of the audit log, newest first, each entry with whom it's about; and how many pages there are. */
-export async function recentChanges(page = 1): Promise<{ changes: LoggedChange[]; pages: number }> {
+/** A page of the audit log and how many entries and pages it has. */
+export type ChangesPage = { changes: LoggedChange[]; total: number; pages: number; pageSize: number };
+
+/**
+ * A page of the audit log, newest first, each entry with whom it's about;
+ * with a `limit` of null, every entry, for a download.
+ */
+export async function recentChanges(page = 1, limit: number | null = AUDIT_PAGE_SIZE): Promise<ChangesPage> {
   const [{ total }] = await query<{ total: number }>("SELECT count(*)::int AS total FROM audit_log");
   const changes = await query<LoggedChange>(
     `SELECT a.id::int AS id, a.at, a.actor, a.action, a.details,
@@ -36,7 +42,7 @@ export async function recentChanges(page = 1): Promise<{ changes: LoggedChange[]
        (SELECT json_build_object('id', s.id, 'name', s.name) FROM supporters_summary s
         WHERE a.action = 'view supporter' AND s.id::text = a.details->>'id') AS supporter
      FROM audit_log a ORDER BY a.at DESC, a.id DESC LIMIT $1 OFFSET $3`,
-    [AUDIT_PAGE_SIZE, POLITICIAN_ACTIONS, (page - 1) * AUDIT_PAGE_SIZE],
+    [limit, POLITICIAN_ACTIONS, (page - 1) * (limit ?? 0)],
   );
-  return { changes, pages: Math.max(1, Math.ceil(total / AUDIT_PAGE_SIZE)) };
+  return { changes, total, pages: Math.max(1, Math.ceil(total / AUDIT_PAGE_SIZE)), pageSize: AUDIT_PAGE_SIZE };
 }

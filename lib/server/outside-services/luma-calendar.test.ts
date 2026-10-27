@@ -215,6 +215,7 @@ describe("listCalendarEvents", () => {
       url: "fixture-london-protest",
       access: "manage",
       place: { latitude: 51.5007, longitude: -0.1263 },
+      tags: ["Big events", "London"],
     });
     expect(page.nextCursor).toBeUndefined();
   });
@@ -233,6 +234,7 @@ describe("listCalendarEvents", () => {
               start_at: "2026-01-01T00:00:00Z",
               visibility: "public",
               access: "view",
+              tags: [{ name: "Online" }, null, { id: "tag-unnamed" }],
             },
             { url: "no-id", name: "Y", start_at: "2026-01-01T00:00:00Z", visibility: "public" },
             { id: "evt-private", url: "p", name: "P", start_at: "2026-01-01T00:00:00Z", visibility: "private" },
@@ -245,7 +247,7 @@ describe("listCalendarEvents", () => {
     );
     const page = await listCalendarEvents("c2");
     expect(cursor).toBe("c2");
-    expect(page.entries.map((e) => [e.id, e.access])).toEqual([["evt-old", "view"]]);
+    expect(page.entries.map((e) => [e.id, e.access, e.tags])).toEqual([["evt-old", "view", ["Online"]]]);
     expect(page.nextCursor).toBe("c3");
   });
 });

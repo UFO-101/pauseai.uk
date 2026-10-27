@@ -97,35 +97,79 @@ describe("emailsSearch", () => {
 });
 
 describe("supportersSearch", () => {
-  it("reads each filter as typed and as applied, dropping what it doesn't know", () => {
-    expect(supportersSearch({})).toEqual({
-      q: "",
-      activity: "",
-      subscription: "",
-      sort: "",
-      dir: "",
-      page: "",
-      erased: "",
-      filter: { sort: "active", dir: "desc", page: 1 },
-    });
+  const blank = {
+    q: "",
+    activity: [],
+    subscription: [],
+    phone: "",
+    email: "",
+    event: [],
+    campaign: "",
+    wrote: "",
+    country: [],
+    near: "",
+    within: "",
+    sort: "",
+    dir: "",
+    page: "",
+    erased: "",
+  };
+
+  it("reads each filter as typed and as applied, a repeated one as a list", () => {
+    expect(supportersSearch({})).toEqual({ ...blank, filter: { sort: "active", dir: "desc", page: 1 } });
     const all = supportersSearch({
       q: " jane ",
-      activity: "registered",
-      subscription: "luma-calendar:unsubscribed",
+      activity: ["registered", "member"],
+      subscription: ["luma-calendar:unsubscribed", "blocked"],
+      phone: "yes",
+      email: "no",
+      event: ["evt-1", "evt-2"],
+      campaign: "support-sobel-bill",
+      wrote: "no",
+      country: ["wales"],
+      near: " Leeds ",
+      within: "25",
       sort: "name",
       dir: "desc",
       page: "3",
     });
     expect(all.filter).toEqual({
       search: "jane",
-      activity: "registered",
-      subscription: { topic: "luma-calendar", reason: "unsubscribed" },
+      activity: ["registered", "member"],
+      subscription: [{ topic: "luma-calendar", reason: "unsubscribed" }, { reason: "blocked" }],
+      phone: true,
+      email: false,
+      event: ["evt-1", "evt-2"],
+      campaign: "support-sobel-bill",
+      wrote: false,
+      country: ["wales"],
+      near: { text: "Leeds", miles: 25 },
       sort: "name",
       dir: "desc",
       page: 3,
     });
     expect(all.q).toBe(" jane ");
-    const bad = supportersSearch({ activity: "x", subscription: "x", sort: "x", page: "0" });
+    expect(all.activity).toEqual(["registered", "member"]);
+    // A campaign alone is those who wrote in it; Near alone is within 10 miles.
+    expect(supportersSearch({ campaign: "support-sobel-bill", near: "M1" }).filter).toMatchObject({
+      wrote: true,
+      near: { text: "M1", miles: 10 },
+    });
+  });
+
+  it("drops what it doesn't know", () => {
+    const bad = supportersSearch({
+      activity: "x",
+      subscription: "x",
+      phone: "maybe",
+      campaign: "no-such-campaign",
+      wrote: "no",
+      country: "atlantis",
+      near: "  ",
+      within: "7",
+      sort: "x",
+      page: "0",
+    });
     expect(bad.filter).toEqual({ sort: "active", dir: "desc", page: 1 });
     expect(supportersSearch({ sort: "first" }).filter).toMatchObject({ sort: "first" });
   });

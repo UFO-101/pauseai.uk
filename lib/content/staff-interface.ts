@@ -33,6 +33,11 @@ export const staffCopy = {
   nav: {
     // At the left of the bar, and the way to the home page.
     title: "PauseAI Staff",
+    // The button at the top of the sidebar that folds it to a strip, and back, for a screen reader.
+    fold: "Fold the menu",
+    unfold: "Unfold the menu",
+    // Beside the fold button's chevron while the menu's open.
+    foldShort: "Fold",
     home: "Dashboard",
     accounts: "Staff accounts",
     // The sections the pages are in, in the sidebar.
@@ -137,10 +142,26 @@ export const staffCopy = {
   supporters: {
     title: "Supporters",
     none: "Nobody found.",
-    count: (total: number, page: number, pages: number) =>
-      `${total} ${total === 1 ? "supporter" : "supporters"}; page ${page} of ${pages}.`,
+    // Over the list: how many there are.
+    total: (total: number) => `${total} ${total === 1 ? "supporter" : "supporters"}`,
     filters: {
       search: "Name, email or phone",
+      // Whether we have a phone number, or an email, for them.
+      phone: { yes: "Has a phone number", no: "No phone number" },
+      email: { yes: "Has an email", no: "No email" },
+      // The Near filter: a postcode or a town, and how far from it.
+      near: "Near",
+      nearPlaceholder: "Postcode or town",
+      miles: (n: number) => `${n} miles`,
+      // In the Near chip, when what was typed couldn't be placed.
+      notFound: (text: string) => `${text} (not found)`,
+      failed: (text: string) => `${text} (couldn't look it up)`,
+      // The Event filter's choices: an event and its day.
+      event: "Event",
+      eventChoice: (name: string, day: string) => `${name}, ${day}`,
+      // The Campaign filter, and its second half: whether they wrote in it.
+      campaign: "Campaign",
+      wrote: { "": "Wrote", no: "Didn't write" } as Record<string, string>,
       // The other filters are named after their columns.
       // A choice in the Subscriptions filter, and its chip: a topic and a reason it gives, short.
       states: {
@@ -165,6 +186,8 @@ export const staffCopy = {
     columns: {
       name: "Name",
       email: "Email",
+      phone: "Phone",
+      place: "Place",
       badges: "Activities",
       subscriptions: "Subscriptions",
       firstSeen: "First sign-up",
@@ -212,10 +235,8 @@ export const staffCopy = {
         Lead: "wants to lead",
         "Act now": "wants to act now",
       } as Record<string, string>,
-      firstSeen: "First seen",
-      lastActive: "Last activity",
-      /** Where a city came from when it's their newest event's, not one they gave. */
-      fromEvent: (when: string) => `their newest Luma event, ${when}`,
+      // From when we first saw them to their last activity.
+      active: "Active",
       /** Where a detail came from and when: "Luma, 26 Sept 2026". */
       from: (sources: string, when: string) => `${sources}, ${when}`,
       // Under the main box: a tile per topic, saying whether we'd email them about it, and why.
@@ -268,6 +289,31 @@ export const staffCopy = {
         seeBlocked: "See blocked emails",
       },
       activityTitle: "History",
+      // The history, folded at the foot of the page: the button that opens it.
+      showHistory: (n: number) => `Show all ${n}`,
+      // Where they are, and what it's from: their postcode, a city they gave, or an event's place.
+      place: "Place",
+      placeFrom: {
+        postcode: (given: string) => `from their postcode, ${given}`,
+        city: () => "from the city they gave",
+        event: (given: string) => `from where ${given} was`,
+      } as Record<string, (given: string) => string>,
+      // Beside the box of what we hold: the events they registered for, and their letters, a table each.
+      eventsTitle: "Events",
+      eventsCount: (registered: number) => `${registered} registered`,
+      noEvents: "No events.",
+      lettersTitle: "Letters to MPs",
+      noLetters: "No letters.",
+      columns: {
+        date: "Date",
+        event: "Event",
+        status: "Registration",
+        to: "To",
+        campaign: "Campaign",
+        letter: "Status",
+      },
+      // A registration that went through, where the status says nothing more.
+      registered: "Registered",
       // Between the MP a letter went to, or who answered it, and its campaign.
       about: "about",
       noActivity: "Nothing yet.",
@@ -392,6 +438,12 @@ export const staffCopy = {
     // The filters: in office or not, Airtable's markers, and an answer to an ask.
     status: "Status",
     anyStatus: "Any status",
+    // The Email filter's choices: whether we can write to them.
+    emailStates: {
+      yes: "Has an address",
+      none: "No address",
+      blocked: "Address blocked",
+    } as Record<string, string>,
     flag: "Marked",
     flags: {
       important: "Important target",
@@ -406,9 +458,8 @@ export const staffCopy = {
     anyAnswer: "Any answer",
     noAnswer: "Not answered",
     none: "None found.",
-    // Over the list: how many there are, and the page.
-    count: (total: number, page: number, pages: number) =>
-      `${total} ${total === 1 ? "politician" : "politicians"}; page ${page} of ${pages}.`,
+    // Over the list: how many there are.
+    total: (total: number) => `${total} ${total === 1 ? "politician" : "politicians"}`,
     // Under the list, when a search of those in office finds others too, linked to them all.
     outOfOffice: (n: number) => `${n} ${n === 1 ? "match" : "matches"} found for politicians not in office`,
     // The same, when a search of one house finds no one there, linked to every house.
@@ -423,6 +474,9 @@ export const staffCopy = {
       status: "Status",
       // Their answer to each ask they've answered.
       asks: "Asks",
+      // The first and last letter to them, reply or answer to an ask.
+      first: "First activity",
+      last: "Last activity",
     },
     // In that column, when they've answered none.
     noAsks: "None",
@@ -446,6 +500,8 @@ export const staffCopy = {
     title: "Mailings",
     intro: "Emails PauseAI has sent to many notable people at once.",
     none: "No mailings yet.",
+    // Over the list: how many there are.
+    total: (n: number) => `${n} ${n === 1 ? "mailing" : "mailings"}`,
     columns: {
       title: "Mailing",
       ask: "Ask",
@@ -491,6 +547,9 @@ export const staffCopy = {
   asks: {
     title: "Asks",
     intro: "What we ask notable people to do when writing to them. Make a PR to add a new ask.",
+    // Over the list: how many there are.
+    total: (n: number) => `${n} ${n === 1 ? "ask" : "asks"}`,
+    none: "No asks yet.",
     columns: {
       ask: "Title",
       kind: "Kind",
@@ -618,7 +677,7 @@ export const staffCopy = {
     },
     intro: "Nothing is sent to these addresses until they're unblocked.",
     // Over the list: how many are blocked, of those the filters find.
-    count: (n: number) => `${n} blocked ${n === 1 ? "address" : "addresses"}.`,
+    count: (n: number) => `${n} blocked ${n === 1 ? "address" : "addresses"}`,
     // Instead of the table, when no address is blocked, or none of the cause filtered for.
     noBlocks: "No addresses are blocked.",
     // Instead of the history, when nothing has bounced or been complained about.
@@ -868,9 +927,8 @@ export const staffCopy = {
   },
   letters: {
     title: "Letters to MPs",
-    // Over the list: how many there are, and the page.
-    count: (total: number, page: number, pages: number) =>
-      `${total} ${total === 1 ? "letter" : "letters"}; page ${page} of ${pages}.`,
+    // Over the list: how many there are.
+    total: (total: number) => `${total} ${total === 1 ? "letter" : "letters"}`,
     search: "Sender or MP",
     // The Answered filter: whether the MP replied.
     answered: { yes: "Answered", no: "Not answered" },
@@ -911,14 +969,38 @@ export const staffCopy = {
     clearSearch: "Clear the search",
     add: "+ Filter",
     remove: "Remove",
+    // Over a long list of a filter's choices: narrows them as it's typed in.
+    narrow: "Search these",
+    // A place filter's distance, for a screen reader.
+    within: "Within",
   },
   // Under a list of more than one page.
   paging: {
     previous: "Previous",
     next: "Next",
+    // The paging's name, for a screen reader.
+    label: "Pages",
+    // A page's number, for a screen reader.
+    page: (n: number) => `Page ${n}`,
+    // On a phone, between Previous and Next.
+    of: (page: number, pages: number) => `Page ${page} of ${pages}`,
+    // Under the list: the rows on this page, of how many.
+    range: (from: number, to: number, total: number) => `${from}–${to} of ${total}`,
+  },
+  // Over a list, after its count: the rows on this page, when there's more than one; then its downloads, of every page.
+  lists: {
+    showing: (from: number, to: number) => `showing ${from}–${to}`,
+    // The button that opens the downloads, of every page, and each format in its menu.
+    download: "Download",
+    formats: { csv: "CSV, for a spreadsheet", json: "JSON, for an agent", vcf: "vCard, for WhatsApp" },
   },
   changes: {
     title: "Audit log",
+    // Over the list: how many entries there are.
+    total: (n: number) => `${n} ${n === 1 ? "entry" : "entries"}`,
+    none: "Nothing logged yet.",
+    // The column of the day, before the time.
+    day: "Date",
     at: "When",
     actor: "Who",
     action: "What",

@@ -32,7 +32,7 @@ export type LetterSummary = {
 /** How many letters the letters page shows at once. */
 export const LETTERS_PAGE_SIZE = 100;
 
-export type LettersPage = { letters: LetterSummary[]; total: number; pages: number };
+export type LettersPage = { letters: LetterSummary[]; total: number; pages: number; pageSize: number };
 
 /** One page of the letters page's list, newest first, and how many the filter finds in all. */
 export async function listLetters({ page = 1, ...filter }: LetterFilter & { page?: number }): Promise<LettersPage> {
@@ -43,6 +43,7 @@ export async function listLetters({ page = 1, ...filter }: LetterFilter & { page
     letters: rows.map(withoutTotal),
     total,
     pages: Math.max(1, Math.ceil(total / LETTERS_PAGE_SIZE)),
+    pageSize: LETTERS_PAGE_SIZE,
   };
 }
 
@@ -52,8 +53,11 @@ function withoutTotal(row: LetterSummary & { total: number }): LetterSummary {
   return letter as LetterSummary;
 }
 
-/** Recent letters, newest first, filtered (LetterFilter), or only those to one politician. */
-export async function recentLetters(filter: LetterFilter & { politicianId?: number; limit?: number } = {}) {
+/**
+ * Recent letters, newest first, filtered (LetterFilter), or only those to
+ * one politician; the newest 200, or `limit`, or with null every one.
+ */
+export async function recentLetters(filter: LetterFilter & { politicianId?: number; limit?: number | null } = {}) {
   return (await letterRows(filter)).map(withoutTotal);
 }
 
@@ -69,7 +73,7 @@ async function letterRows({
   politicianId,
   limit = 200,
   offset = 0,
-}: LetterFilter & { politicianId?: number; limit?: number; offset?: number }): Promise<
+}: LetterFilter & { politicianId?: number; limit?: number | null; offset?: number }): Promise<
   (LetterSummary & { total: number })[]
 > {
   return query<LetterSummary & { total: number }>(

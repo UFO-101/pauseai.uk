@@ -15,9 +15,24 @@ describeWithDatabase("recentLetters", () => {
     expect([second.letters.length, second.total]).toEqual([1, LETTERS_PAGE_SIZE + 1]);
     expect(second.letters[0]).not.toHaveProperty("total");
     // Past the end, none, but still the count.
-    expect(await listLetters({ page: 3 })).toEqual({ letters: [], total: LETTERS_PAGE_SIZE + 1, pages: 2 });
-    expect(await listLetters({ status: "replied" })).toEqual({ letters: [], total: 0, pages: 1 });
-    expect(await listLetters({ status: "replied", page: 2 })).toEqual({ letters: [], total: 0, pages: 1 });
+    expect(await listLetters({ page: 3 })).toEqual({
+      letters: [],
+      total: LETTERS_PAGE_SIZE + 1,
+      pages: 2,
+      pageSize: LETTERS_PAGE_SIZE,
+    });
+    expect(await listLetters({ status: "replied" })).toEqual({
+      letters: [],
+      total: 0,
+      pages: 1,
+      pageSize: LETTERS_PAGE_SIZE,
+    });
+    expect(await listLetters({ status: "replied", page: 2 })).toEqual({
+      letters: [],
+      total: 0,
+      pages: 1,
+      pageSize: LETTERS_PAGE_SIZE,
+    });
   });
 
   it("lists letters newest first, with their history, filtered by status", async () => {

@@ -17,18 +17,17 @@ function reason(permission: EmailPermission): string {
 /** A topic's answer as a strip's colour: green we'd email them, plain we wouldn't, amber we don't know. */
 const TONES = { yes: "green", no: "plain", unsure: "amber" } as const;
 
-/** One topic, a strip: its name and whether we'd email them about it, then why in a few words; how we know is behind the "?" by its name. */
+/** One topic, a strip: its name and whether we'd email them about it, then why in a few words; how we know is behind the "?" at its top right. */
 function Tile({ permission, address }: { permission: EmailPermission; address?: string }) {
   const id = `why-${permission.topic}-${permission.address.replace(/\W/g, "-")}`;
   return (
     <li data-send={permission.send}>
       <Strip tone={TONES[permission.send]} icon={false}>
-        <span>
-          {copy.topics[permission.topic]}
-          {address && ` · ${address}`}: {copy[permission.send]}
-        </span>
-        <span className={styles.reason}>
-          {reason(permission)}
+        <span className={styles.title}>
+          <span>
+            {copy.topics[permission.topic]}
+            {address && ` · ${address}`}: {copy[permission.send]}
+          </span>
           <button
             type="button"
             className={styles.help}
@@ -39,6 +38,7 @@ function Tile({ permission, address }: { permission: EmailPermission; address?: 
             ?
           </button>
         </span>
+        <span className={styles.reason}>{reason(permission)}</span>
       </Strip>
       <div
         id={id}

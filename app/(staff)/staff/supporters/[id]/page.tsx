@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { found } from "@/lib/found";
-import { logChange } from "@/lib/server/audit";
 import { requireStaff } from "@/lib/server/staff-auth";
 import { getSupporter } from "@/lib/server/supporters";
 import { supporterId } from "@/lib/staff-search";
@@ -20,11 +19,10 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   return { title: supporterTitle(supporter.summary) };
 }
 
-/** One supporter: everything known of them, and what they did. Each viewing is in the audit log. */
+/** One supporter: everything known of them, and what they did. */
 export default async function SupporterPage({ params }: Params) {
   const { email, permissions, sessions } = await requireStaff("supporters");
   const supporter = found(await getSupporter(found(supporterId((await params).id))));
-  await logChange(email, "view supporter", { id: supporter.summary.id });
   return (
     <StaffPage nav={<StaffNav email={email} permissions={permissions} sessions={sessions} current="supporters" />}>
       <Breadcrumb href="/staff/supporters">{staffCopy.nav.supporters}</Breadcrumb>

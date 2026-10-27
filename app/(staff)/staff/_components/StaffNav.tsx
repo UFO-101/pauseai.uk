@@ -1,9 +1,10 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Button } from "@/components/ui/Button";
 import { staffCopy } from "@/lib/content/staff-interface";
 import type { Permission } from "@/lib/staff-permissions";
 import { sectionsFor, type StaffPageId } from "@/lib/staff-sections";
+import NavIcon from "./NavIcon";
+import NavFold from "./ui/NavFold";
 import styles from "./StaffNav.module.css";
 
 /** The pages the navigation can mark as current: the home page, your sessions, or any page in a section. */
@@ -23,7 +24,10 @@ type Props = {
  * The staff interface's navigation: a sidebar with Home, then the pages in
  * sections, the current one marked but still a link, so it's the way back from a page
  * under it; who's logged in and the way out; on a phone, a bar with the
- * current page's name opening the same as a dropdown. Under Log out, with
+ * current page's name opening the same as a dropdown. Each page has its
+ * icon beside its name. On wider screens, a button at the foot folds the
+ * sidebar to a rail of the icons, the sections a rule apart, each page's
+ * name showing beside its icon on hover. Under Log out, with
  * more than one session open, a faint link to the page of them. Each page shows
  * only to those with its permission (lib/staff-sections.ts). The pause symbol and name at the top are the
  * way to the home page.
@@ -33,7 +37,7 @@ export default function StaffNav({ email, permissions = [], sessions = 1, curren
   const mark = (
     <>
       <Image src="/images/logos/Pause-Symbol.svg" alt="" width={616} height={616} className={styles.mark} priority />
-      <span>{staffCopy.nav.title}</span>
+      <span className={styles.name}>{staffCopy.nav.title}</span>
     </>
   );
   const title =
@@ -51,8 +55,9 @@ export default function StaffNav({ email, permissions = [], sessions = 1, curren
     <section className={styles.group}>
       <ul>
         <li>
-          <Link href="/staff" aria-current={current === "home" ? "page" : undefined}>
-            {staffCopy.nav.home}
+          <Link href="/staff" className={styles.page} aria-current={current === "home" ? "page" : undefined}>
+            <NavIcon id="home" />
+            <span className={styles.label}>{staffCopy.nav.home}</span>
           </Link>
         </li>
       </ul>
@@ -64,8 +69,9 @@ export default function StaffNav({ email, permissions = [], sessions = 1, curren
       <ul>
         {section.pages.map((page) => (
           <li key={page.id}>
-            <Link href={page.href} aria-current={page.id === current ? "page" : undefined}>
-              {staffCopy.nav[page.id]}
+            <Link href={page.href} className={styles.page} aria-current={page.id === current ? "page" : undefined}>
+              <NavIcon id={page.id} />
+              <span className={styles.label}>{staffCopy.nav[page.id]}</span>
             </Link>
           </li>
         ))}
@@ -88,11 +94,13 @@ export default function StaffNav({ email, permissions = [], sessions = 1, curren
         <div className={styles.foot}>
           {who}
           <form method="post" action="/staff/api/logout">
-            <Button variant="ghost" size="small" type="submit">
-              {staffCopy.nav.logout}
-            </Button>
+            <button type="submit" className={styles.page}>
+              <NavIcon id="logout" />
+              <span className={styles.label}>{staffCopy.nav.logout}</span>
+            </button>
           </form>
           {others}
+          <NavFold />
         </div>
       </div>
       {/* A phone: a dropdown at the right of the bar, the current page with an arrow. */}

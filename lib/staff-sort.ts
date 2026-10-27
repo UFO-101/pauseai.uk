@@ -26,13 +26,15 @@ export function parseSort<Key extends string>(
  */
 export function sortHref<Key extends string>(
   path: string,
-  filters: Record<string, string>,
+  filters: Record<string, string | string[]>,
   columns: SortColumns<Key>,
   current: SortSpec<Key>,
   key: Key,
 ): string {
   const params = new URLSearchParams();
-  for (const [name, value] of Object.entries(filters)) if (value) params.set(name, value);
+  for (const [name, value] of Object.entries(filters)) {
+    for (const one of [value].flat()) if (one) params.append(name, one);
+  }
   params.set("sort", key);
   const flipped = current.dir === "asc" ? "desc" : "asc";
   params.set("dir", key === current.key ? flipped : columns[key]);

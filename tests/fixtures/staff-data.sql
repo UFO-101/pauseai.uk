@@ -69,6 +69,49 @@ INSERT INTO politicians (id, house, constituency, party, country)
 SELECT p.id, s.house, s.constituency, s.party, s.country FROM people p JOIN seed_politicians s USING (name);
 DROP TABLE seed_politicians;
 
+-- Made-up politicians, enough for 250 with the test MPs, so the list has
+-- three pages: mostly MPs, then peers and members of the other bodies, each
+-- with a party of their body; a few retired or gone, a few marked, a few
+-- with no address. Not Airtable's, so a sync leaves them be: the made-up
+-- record ID only joins each to its row here.
+CREATE TEMP TABLE made_politicians AS
+SELECT i, 'recMade' || i AS airtable_id,
+  (ARRAY['Alex','Bea','Cal','Dee','Eli','Fay','Gus','Hal','Ivy','Jon','Kit','Lou','Mo','Ned','Ola','Pip','Quin','Ros','Sid','Tess','Uma','Viv','Wes','Zoe'])[1 + i % 24] AS first,
+  (ARRAY['Abbott','Barker','Carter','Dalton','Ellis','Fenwick','Garner','Hollis','Ingram','Jarvis','Keller','Lister','Marsh','Norris','Oakley','Parry','Quayle','Rowe','Slater','Thorne','Upton','Vance','Webb','Yates'])[1 + (i / 24 + 5 * i) % 24] AS last,
+  (ARRAY['Ashford','Bramley','Colton','Dunmore','Eastwick','Farley','Glenholm','Harwood','Inverby','Kelso','Langley','Morden','Northam','Oxley','Penrith','Rydal','Stanmore','Tarleton','Westby','Yarrow'])[1 + (i * 3) % 20] AS town,
+  CASE WHEN i % 10 < 6 THEN 'commons' WHEN i % 10 < 8 THEN 'lords' WHEN i % 10 = 8 THEN 'scottish-parliament' WHEN i % 20 = 9 THEN 'senedd' ELSE 'ni-assembly' END AS house
+FROM generate_series(1, 228) i;
+WITH people AS (
+  INSERT INTO notable_people (kind, airtable_id, name, salutation, email, status, notes, important_target, personal_connection, created_at, updated_at)
+  SELECT 'politician', airtable_id,
+    CASE WHEN house = 'lords' THEN (CASE WHEN i % 4 = 0 THEN 'Baroness ' ELSE 'Lord ' END) || last || ' of ' || town ELSE first || ' ' || last END,
+    CASE WHEN house = 'lords' THEN (CASE WHEN i % 4 = 0 THEN 'Baroness ' ELSE 'Lord ' END) || last ELSE (CASE WHEN i % 2 = 0 THEN 'Ms ' ELSE 'Mr ' END) || last END,
+    CASE WHEN i % 9 = 0 THEN NULL ELSE lower(first || '.' || last || '.' || i) || '@parliament.example' END,
+    CASE WHEN i % 15 = 0 THEN 'retired' WHEN i % 23 = 0 THEN 'left_office' ELSE 'in_office' END,
+    '', i % 17 = 0, i % 19 = 0, now() - make_interval(days => 10 + i % 50), now() - make_interval(days => i % 10)
+  FROM made_politicians RETURNING id, airtable_id
+)
+INSERT INTO politicians (id, house, constituency, party, country)
+SELECT p.id, m.house,
+  CASE WHEN m.house = 'lords' THEN NULL ELSE m.town || ' ' || (ARRAY['North','South','East','West','Central','and District'])[1 + m.i % 6] END,
+  CASE m.house
+    WHEN 'commons' THEN (ARRAY['Labour','Conservative','Liberal Democrat','Reform UK','Green','Scottish National Party','Independent'])[1 + m.i % 7]
+    WHEN 'lords' THEN (ARRAY['Crossbench','Conservative','Labour','Liberal Democrat'])[1 + m.i % 4]
+    WHEN 'scottish-parliament' THEN (ARRAY['Scottish National Party','Scottish Labour','Scottish Conservatives'])[1 + m.i % 3]
+    WHEN 'senedd' THEN (ARRAY['Plaid Cymru','Welsh Labour','Welsh Conservatives'])[1 + m.i % 3]
+    ELSE (ARRAY['DUP','Sinn Féin','Alliance','SDLP'])[1 + m.i % 4]
+  END,
+  CASE m.house
+    WHEN 'commons' THEN (ARRAY['england','england','england','scotland','wales','northern-ireland'])[1 + m.i % 6]
+    WHEN 'lords' THEN NULL
+    WHEN 'scottish-parliament' THEN 'scotland'
+    WHEN 'senedd' THEN 'wales'
+    ELSE 'northern-ireland'
+  END
+FROM people p JOIN made_politicians m USING (airtable_id);
+UPDATE notable_people SET airtable_id = NULL WHERE airtable_id IN (SELECT airtable_id FROM made_politicians);
+DROP TABLE made_politicians;
+
 -- Statuses: Polly signed the letter to the PM last month; Dora this week;
 -- the peer backs the bill, from ControlAI's letter, the week before; Backy
 -- McTestface MP's bill status (lib/test-mps.json) was already there. Then
@@ -217,6 +260,52 @@ INSERT INTO members (id, email, name, phone, city, postcode, joined_at, created_
 -- Erin, erased with her Luma user (the audit log's erasure), is still in
 -- Airtable's table: the import skips her.
 INSERT INTO members_erased (id, erased_at) VALUES ('recMemberErased', now() - interval '15 days');
+
+-- --------------------------------------------------------------- places
+
+-- Where postcodes.io placed the postcodes and towns above, as the hourly
+-- lookup stores them; the test postcodes it doesn't know.
+INSERT INTO postcode_places (postcode, latitude, longitude, place, country) VALUES
+  ('BS11AA', 51.4545, -2.5879, 'Bristol, City of', 'england'),
+  ('E16AN', 51.5205, -0.0726, 'Tower Hamlets', 'england'),
+  ('E151AA', 51.5413, -0.0039, 'Newham', 'england'),
+  ('EC1A1BB', 51.5202, -0.0978, 'City of London', 'england'),
+  ('G11AA', 55.8609, -4.249, 'Glasgow City', 'scotland'),
+  ('HU11AA', 53.7443, -0.3326, 'Kingston upon Hull, City of', 'england'),
+  ('LE11AA', 52.6345, -1.13, 'Leicester', 'england'),
+  ('LS11AA', 53.797, -1.5492, 'Leeds', 'england'),
+  ('LS27EY', 53.8079, -1.5566, 'Leeds', 'england'),
+  ('M11AE', 53.4794, -2.2353, 'Manchester', 'england'),
+  ('M41HQ', 53.484, -2.237, 'Manchester', 'england'),
+  ('M202RN', 53.4317, -2.2303, 'Manchester', 'england'),
+  ('NR11AA', 52.6286, 1.2925, 'Norwich', 'england'),
+  ('OX11AA', 51.752, -1.2577, 'Oxford', 'england'),
+  ('SE17PB', 51.5007, -0.1167, 'Lambeth', 'england'),
+  ('SK41AA', 53.4106, -2.1575, 'Stockport', 'england'),
+  ('YO17HH', 53.9617, -1.0817, 'York', 'england'),
+  ('SW1A1AA', 51.501009, -0.141588, 'Westminster', 'england'),
+  ('ZZ99ZB', NULL, NULL, NULL, NULL),
+  ('ZZ99ZH', NULL, NULL, NULL, NULL),
+  ('ZZ99ZN', NULL, NULL, NULL, NULL),
+  ('ZZ99ZS', NULL, NULL, NULL, NULL),
+  ('ZZ99ZZ', NULL, NULL, NULL, NULL);
+INSERT INTO named_places (name, latitude, longitude, place, country) VALUES
+  ('manchester', 53.4794, -2.2453, 'Manchester', 'england'),
+  ('london', 51.5072, -0.1276, 'London', 'england'),
+  ('bristol', 51.4545, -2.5879, 'Bristol', 'england'),
+  ('cardiff', 51.4816, -3.1791, 'Cardiff', 'wales'),
+  ('oxford', 51.752, -1.2577, 'Oxford', 'england'),
+  ('leeds', 53.7997, -1.5492, 'Leeds', 'england'),
+  ('glasgow', 55.8642, -4.2518, 'Glasgow', 'scotland'),
+  ('leicester', 52.6369, -1.1398, 'Leicester', 'england');
+-- The calendar's tags: big days and online events, which say nothing of where people live.
+UPDATE luma_events SET tags = '{Big events,London}' WHERE id IN ('evt-fixture-past-london-march', 'evt-fixture-london-protest');
+UPDATE luma_events SET tags = '{Online}' WHERE id IN ('evt-seed-online-training', 'evt-fixture-online-intro');
+UPDATE luma_events SET tags = '{Scotland}' WHERE id IN ('evt-fixture-past-glasgow-stall', 'evt-fixture-scotland-meeting');
+UPDATE luma_events SET tags = '{Manchester}' WHERE id IN ('evt-seed-manchester-talk', 'evt-fixture-manchester-social');
+UPDATE luma_events SET tags = '{Oxford}' WHERE id = 'evt-fixture-oxford-talk';
+UPDATE luma_events SET tags = '{West of England}' WHERE id = 'evt-fixture-bristol-leafleting';
+UPDATE luma_events SET tags = '{Leicester}' WHERE id = 'evt-fixture-leicester-meetup';
 
 -- -------------------------------------------------------------- letters
 

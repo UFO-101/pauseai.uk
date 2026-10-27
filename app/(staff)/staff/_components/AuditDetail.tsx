@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Fragment, type ReactNode } from "react";
 import { Muted } from "@/components/ui/Text";
 import { staffCopy } from "@/lib/content/staff-interface";
+import { staffDate } from "@/lib/staff-time";
 import type { FieldChange } from "@/lib/field-changes";
 import { importPath } from "@/lib/import-runs";
 import type { LoggedChange, Named } from "@/lib/server/audit";
@@ -161,7 +162,7 @@ export default function AuditDetail({ change, airtableTable }: { change: LoggedC
         {/* By ask's slug, or, logged before asks, by campaign. */}
         {details.ask ? text("ask") : <CampaignName slug={text("campaign")} />}
         {words.after}
-        {text("date") && `, ${text("date")}`}
+        {text("date") && `, ${staffDate(text("date"))}`}
       </>,
     );
   }
