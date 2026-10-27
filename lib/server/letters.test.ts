@@ -88,7 +88,8 @@ describeWithDatabase("recentLetters", () => {
     await query("UPDATE letters SET replied_at = now() WHERE id = 2");
     await query("INSERT INTO supporters DEFAULT VALUES");
     await query(
-      "INSERT INTO supporter_links (supporter_id, letter_id, matched_by, matched_value) VALUES (1, 1, 'email', 'jane@example.com')",
+      `INSERT INTO supporter_links (supporter_id, form_entry_id, matched_by, matched_value)
+       SELECT 1, entry_id, 'email', 'jane@example.com' FROM supporter_letters WHERE id = 1`,
     );
     const ids = async (filter: Parameters<typeof recentLetters>[0]) => (await recentLetters(filter)).map((l) => l.id);
     expect(await ids({ search: "SMITH" })).toEqual([1]);
@@ -101,7 +102,9 @@ describeWithDatabase("recentLetters", () => {
     await query("UPDATE supporter_letters SET campaign = 'support-sobel-bill' WHERE id = 2");
     expect(await ids({ campaign: "support-sobel-bill" })).toEqual([2]);
     expect(await ids({ campaign: "regulate-letter-pm" })).toEqual([1]);
-    await query("UPDATE supporter_letters SET contact_consent = true WHERE id = 1");
+    await query(
+      "UPDATE form_entries SET contact_consent = true WHERE id = (SELECT entry_id FROM supporter_letters WHERE id = 1)",
+    );
     expect(await ids({ consent: true })).toEqual([1]);
     expect(await ids({ consent: false })).toEqual([2]);
     expect(await ids({ supporterId: 1 })).toEqual([1]);

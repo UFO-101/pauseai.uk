@@ -2408,7 +2408,7 @@ describe("ChangesTable", () => {
       `polly@example.org · ${labels.note} Fixed in Airtable`,
       "Jane Example",
       copy.gone("4"),
-      `${copy.gone("5")} · ${labels.reference} ICO-12 · ${count(1, "lumaUsers")} · ${count(2, "letters")} · ${count(0, "members")}`,
+      `${copy.gone("5")} · ${labels.reference} ICO-12 · ${count(1, "lumaUsers")} · ${count(2, "formEntries")} · ${count(2, "letters")} · ${count(0, "members")}`,
       `sam@pauseai.uk · ${labels.to} ${copy.noPermissions}`,
       `sam@pauseai.uk · ${copy.noPermissions} → ${staffCopy.accounts.names.supporters}, ${staffCopy.accounts.names.admin}`,
       `sam@pauseai.uk · ${labels.permissions} ${staffCopy.accounts.names.supporters}, retired`,
@@ -2515,7 +2515,7 @@ describe("SubscriptionBadges", () => {
 
   it("shows each topic we'd email them about, amber when we can't be sure, and nothing for a no", async () => {
     const { rerender } = await render(<SubscriptionBadges permissions={exampleSupporterRows[0].permissions} />);
-    expect(document.body.textContent!.trim()).toBe(copy.topics["events-and-ways-to-help"]);
+    expect(document.body.textContent!.trim()).toBe(copy.topics["site-forms"]);
     await rerender(<SubscriptionBadges permissions={exampleSupporterRows[1].permissions} />);
     await expect.element(page.getByText(copy.topics["luma-calendar"], { exact: true })).toBeVisible();
     await expect.element(page.getByText(copy.unsure(copy.topics["pauseai-updates"]))).toBeVisible();
@@ -2721,7 +2721,7 @@ describe("SupporterDetails", () => {
           ...exampleSupporterDetails,
           activity: [
             {
-              source: "letter",
+              source: "email-your-mp",
               at: "2026-10-05T09:00:00Z",
               kind: "letter",
               title: "old-campaign",
@@ -2754,7 +2754,7 @@ describe("SupporterDetails", () => {
           ...exampleSupporterDetails,
           contacts: [
             {
-              source: "letter",
+              source: "email-your-mp",
               at: "2026-10-05T09:00:00Z",
               phone: null,
               postcode: "m11ae",
@@ -2778,7 +2778,7 @@ describe("SupporterDetails", () => {
     expect(page.getByText("M1 1AE", { exact: false }).all()).toHaveLength(1);
     await expect
       .element(
-        page.getByText(copy.detail.from(`${copy.sources.letter}, ${copy.sources.luma}`, "20 Sept 2026"), {
+        page.getByText(copy.detail.from(`${copy.sources["email-your-mp"]}, ${copy.sources.luma}`, "20 Sept 2026"), {
           exact: true,
         }),
       )
@@ -2850,7 +2850,7 @@ describe("SupporterDetails", () => {
               status: null,
             },
             {
-              source: "letter",
+              source: "email-your-mp",
               at: "2026-01-03T00:00:00Z",
               kind: "letter",
               title: "gone-campaign",
@@ -2859,7 +2859,7 @@ describe("SupporterDetails", () => {
               status: "sent",
             },
             {
-              source: "letter",
+              source: "email-your-mp",
               at: "2026-01-03T00:00:00Z",
               kind: "letter",
               title: null,
@@ -2868,7 +2868,7 @@ describe("SupporterDetails", () => {
               status: null,
             },
             {
-              source: "letter",
+              source: "email-your-mp",
               at: "2026-01-04T00:00:00Z",
               kind: "letter-replied",
               title: null,
@@ -2935,10 +2935,10 @@ describe("SupporterDetails", () => {
         supporter={{
           ...exampleSupporterDetails,
           identities: [
-            { source: "letter", email: "jane@example.com", name: "Jane", seenAt: "2026-10-05T09:00:00Z" },
+            { source: "email-your-mp", email: "jane@example.com", name: "Jane", seenAt: "2026-10-05T09:00:00Z" },
             { source: "luma", email: "jane@example.com", name: "Jane", seenAt: "2026-03-01T10:00:00Z" },
             { source: "luma", email: "jane@example.com", name: "Jane", seenAt: null },
-            { source: "letter", email: "old@example.com", name: "Jane", seenAt: null },
+            { source: "email-your-mp", email: "old@example.com", name: "Jane", seenAt: null },
           ],
           contacts: [],
           activity: [],
@@ -2947,12 +2947,14 @@ describe("SupporterDetails", () => {
     );
     await expect
       .element(
-        page.getByText(copy.detail.from(`${copy.sources.letter}, ${copy.sources.luma}`, "1 Mar 2026"), {
+        page.getByText(copy.detail.from(`${copy.sources["email-your-mp"]}, ${copy.sources.luma}`, "1 Mar 2026"), {
           exact: true,
         }),
       )
       .toBeVisible();
-    await expect.element(page.getByText(`old@example.com ${copy.sources.letter}`, { exact: true })).toBeVisible();
+    await expect
+      .element(page.getByText(`old@example.com ${copy.sources["email-your-mp"]}`, { exact: true }))
+      .toBeVisible();
   });
 });
 
@@ -3027,9 +3029,7 @@ describe("EmailPermissionTiles", () => {
     expect(tiles()[0].textContent).toBe(
       `${copy.topics["luma-calendar"]}: ${copy.no}?${copy.reasons["luma-calendar"].unsubscribed("12 Oct 2026")}${copy.details["luma-calendar"]}`,
     );
-    expect(tiles()[1].querySelector("span > span")!.textContent).toBe(
-      `${copy.topics["events-and-ways-to-help"]}: ${copy.yes}`,
-    );
+    expect(tiles()[1].querySelector("span > span")!.textContent).toBe(`${copy.topics["site-forms"]}: ${copy.yes}`);
     // The ? at the top right, out of the reason's way.
     const top = tiles()[0].querySelector("button")!.getBoundingClientRect().top;
     expect(top).toBeLessThan(tiles()[0].querySelector("[class*=reason]")!.getBoundingClientRect().top);

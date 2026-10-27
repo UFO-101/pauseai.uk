@@ -173,7 +173,7 @@ export async function listSupporters(
   if (filter.email !== undefined) where.push(`coalesce(cardinality(s.emails), 0) ${filter.email ? ">" : "="} 0`);
   if (filter.campaign) {
     where.push(
-      `${filter.wrote ? "" : "NOT "}EXISTS (SELECT 1 FROM supporter_links k JOIN supporter_letters l ON l.id = k.letter_id
+      `${filter.wrote ? "" : "NOT "}EXISTS (SELECT 1 FROM supporter_links k JOIN supporter_letters l ON l.entry_id = k.form_entry_id
        WHERE k.supporter_id = s.id AND l.campaign = ${add(filter.campaign)})`,
     );
   }

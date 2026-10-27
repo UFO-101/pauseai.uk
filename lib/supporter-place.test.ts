@@ -12,7 +12,7 @@ describe("givenPlaces", () => {
     const contacts = [
       contact("luma", "2026-10-10T00:00:00Z", "Leeds"),
       contact("member", "2026-09-01T00:00:00Z", "York"),
-      contact("letter", "2026-09-12T00:00:00Z"),
+      contact("email-your-mp", "2026-09-12T00:00:00Z"),
     ];
     expect(givenPlaces(contacts).map((c) => c.city)).toEqual(["York"]);
   });

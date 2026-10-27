@@ -82,13 +82,12 @@ SELECT r.send, r.reason, r.at, r.source FROM (
         ORDER BY m.removed_at IS NOT NULL, m.created_at DESC, m.id LIMIT 1) m
   WHERE for_topic = 'pauseai-updates'
   UNION ALL
-  -- The consent box on the newest letter.
-  SELECT 3, CASE WHEN l.contact_consent THEN 'yes' ELSE 'no' END,
-    CASE WHEN l.contact_consent THEN 'asked' ELSE 'declined' END, l.created_at, 'letter'
-  FROM (SELECT s.contact_consent, l.created_at FROM supporter_letters s JOIN letters l ON l.id = s.id
-        WHERE lower(trim(s.sender_email)) = for_address
-        ORDER BY l.created_at DESC, l.id DESC LIMIT 1) l
-  WHERE for_topic = 'events-and-ways-to-help'
+  -- The box on the newest form entry.
+  SELECT 3, CASE WHEN f.contact_consent THEN 'yes' ELSE 'no' END,
+    CASE WHEN f.contact_consent THEN 'asked' ELSE 'declined' END, f.created_at, f.form
+  FROM (SELECT * FROM form_entries f WHERE lower(trim(f.email)) = for_address
+        ORDER BY f.created_at DESC, f.id DESC LIMIT 1) f
+  WHERE for_topic = 'site-forms'
 ) r (rank, send, reason, at, source)
 ORDER BY r.rank LIMIT 1
 $$;
@@ -186,6 +185,25 @@ CREATE TABLE public.email_blocks (
 );
 
 --
+-- Name: form_entries; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.form_entries (
+    id bigint NOT NULL,
+    form text NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    name text NOT NULL,
+    email text NOT NULL,
+    phone text,
+    address text,
+    city text,
+    postcode text,
+    contact_consent boolean NOT NULL,
+    utm_source text,
+    CONSTRAINT form_entries_form_check CHECK ((form = ANY (ARRAY['email-your-mp'::text, 'web-form'::text])))
+);
+
+--
 -- Name: luma_people; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -241,26 +259,6 @@ CREATE TABLE public.opt_outs (
 );
 
 --
--- Name: supporter_letters; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.supporter_letters (
-    id bigint NOT NULL,
-    kind text DEFAULT 'supporter'::text NOT NULL,
-    campaign text NOT NULL,
-    sender_name text NOT NULL,
-    sender_email text NOT NULL,
-    sender_address text NOT NULL,
-    sender_postcode text NOT NULL,
-    contact_consent boolean NOT NULL,
-    subject text NOT NULL,
-    reply_hash text,
-    airtable_id text,
-    CONSTRAINT supporter_letters_kind_check CHECK ((kind = 'supporter'::text)),
-    CONSTRAINT supporter_letters_reply_hash_check CHECK (((reply_hash IS NULL) = (airtable_id IS NOT NULL)))
-);
-
---
 -- Name: email_permissions; Type: VIEW; Schema: public; Owner: -
 --
 
@@ -279,9 +277,9 @@ CREATE VIEW public.email_permissions AS
             members.email
            FROM public.members
         UNION
-         SELECT 'events-and-ways-to-help'::text,
-            lower(TRIM(BOTH FROM supporter_letters.sender_email)) AS lower
-           FROM public.supporter_letters
+         SELECT 'site-forms'::text,
+            lower(TRIM(BOTH FROM form_entries.email)) AS lower
+           FROM public.form_entries
         UNION
          SELECT opt_outs.list,
             opt_outs.address
@@ -364,6 +362,19 @@ CREATE VIEW public.email_unsubscribes AS
    FROM (public.opt_outs o
      CROSS JOIN LATERAL public.email_permission(o.list, o.address) d(send, reason, at, source))
   WHERE ((o.resubscribed_at IS NULL) AND (d.reason = 'unsubscribed'::text));
+
+--
+-- Name: form_entries_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+ALTER TABLE public.form_entries ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public.form_entries_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
 
 --
 -- Name: import_runs; Type: TABLE; Schema: public; Owner: -
@@ -703,11 +714,27 @@ CREATE TABLE public.staff_sessions (
 );
 
 --
--- Name: supporter_activity_letter; Type: VIEW; Schema: public; Owner: -
+-- Name: supporter_letters; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE VIEW public.supporter_activity_letter AS
- SELECT s.id AS source_id,
+CREATE TABLE public.supporter_letters (
+    id bigint NOT NULL,
+    kind text DEFAULT 'supporter'::text NOT NULL,
+    campaign text NOT NULL,
+    subject text NOT NULL,
+    reply_hash text,
+    airtable_id text,
+    entry_id bigint NOT NULL,
+    CONSTRAINT supporter_letters_kind_check CHECK ((kind = 'supporter'::text)),
+    CONSTRAINT supporter_letters_reply_hash_check CHECK (((reply_hash IS NULL) = (airtable_id IS NOT NULL)))
+);
+
+--
+-- Name: supporter_activity_form; Type: VIEW; Schema: public; Owner: -
+--
+
+CREATE VIEW public.supporter_activity_form AS
+ SELECT s.entry_id AS source_id,
     l.created_at AS at,
     'letter'::text AS kind,
     s.campaign AS title,
@@ -718,7 +745,7 @@ CREATE VIEW public.supporter_activity_letter AS
      JOIN public.letters l ON ((l.id = s.id)))
      JOIN public.notable_people p ON ((p.id = l.notable_person_id)))
 UNION ALL
- SELECT s.id AS source_id,
+ SELECT s.entry_id AS source_id,
     l.replied_at AS at,
     'letter-replied'::text AS kind,
     s.campaign AS title,
@@ -728,7 +755,19 @@ UNION ALL
    FROM ((public.supporter_letters s
      JOIN public.letters l ON ((l.id = s.id)))
      JOIN public.notable_people p ON ((p.id = l.notable_person_id)))
-  WHERE (l.replied_at IS NOT NULL);
+  WHERE (l.replied_at IS NOT NULL)
+UNION ALL
+ SELECT f.id AS source_id,
+    f.created_at AS at,
+    'form-entry'::text AS kind,
+    f.form AS title,
+    f.utm_source AS detail,
+    NULL::text AS href,
+    NULL::text AS status
+   FROM public.form_entries f
+  WHERE (NOT (EXISTS ( SELECT 1
+           FROM public.supporter_letters s
+          WHERE (s.entry_id = f.id))));
 
 --
 -- Name: supporter_activity_luma; Type: VIEW; Schema: public; Owner: -
@@ -778,12 +817,12 @@ CREATE TABLE public.supporter_links (
     id bigint NOT NULL,
     supporter_id bigint NOT NULL,
     luma_user_id text,
-    letter_id bigint,
     matched_by text NOT NULL,
     matched_value text NOT NULL,
     linked_at timestamp with time zone DEFAULT now() NOT NULL,
     member_id text,
-    CONSTRAINT supporter_links_check CHECK ((num_nonnulls(luma_user_id, letter_id, member_id) = 1)),
+    form_entry_id bigint,
+    CONSTRAINT supporter_links_check CHECK ((num_nonnulls(luma_user_id, form_entry_id, member_id) = 1)),
     CONSTRAINT supporter_links_matched_by_check CHECK ((matched_by = 'email'::text)),
     CONSTRAINT supporter_links_matched_value_check CHECK ((matched_value = lower(matched_value)))
 );
@@ -805,15 +844,16 @@ CREATE VIEW public.supporter_activity AS
      JOIN public.supporter_links k ON ((k.luma_user_id = a.source_id)))
 UNION ALL
  SELECT k.supporter_id,
-    'letter'::text AS source,
+    f.form AS source,
     a.at,
     a.kind,
     a.title,
     a.detail,
     a.href,
     a.status
-   FROM (public.supporter_activity_letter a
-     JOIN public.supporter_links k ON ((k.letter_id = a.source_id)))
+   FROM ((public.supporter_activity_form a
+     JOIN public.supporter_links k ON ((k.form_entry_id = a.source_id)))
+     JOIN public.form_entries f ON ((f.id = a.source_id)))
 UNION ALL
  SELECT k.supporter_id,
     o.source,
@@ -854,19 +894,18 @@ UNION ALL
      JOIN public.supporter_links k ON ((k.member_id = a.source_id)));
 
 --
--- Name: supporter_contact_letter; Type: VIEW; Schema: public; Owner: -
+-- Name: supporter_contact_form; Type: VIEW; Schema: public; Owner: -
 --
 
-CREATE VIEW public.supporter_contact_letter AS
- SELECT s.id AS source_id,
-    l.created_at AS at,
-    NULL::text AS phone,
-    s.sender_postcode AS postcode,
+CREATE VIEW public.supporter_contact_form AS
+ SELECT id AS source_id,
+    created_at AS at,
+    phone,
+    postcode,
     NULL::double precision AS latitude,
     NULL::double precision AS longitude,
-    NULL::text AS city
-   FROM (public.supporter_letters s
-     JOIN public.letters l ON ((l.id = s.id)));
+    city
+   FROM public.form_entries f;
 
 --
 -- Name: supporter_contact_luma; Type: VIEW; Schema: public; Owner: -
@@ -914,15 +953,16 @@ CREATE VIEW public.supporter_contact AS
      JOIN public.supporter_links k ON ((k.luma_user_id = c.source_id)))
 UNION ALL
  SELECT k.supporter_id,
-    'letter'::text AS source,
+    f.form AS source,
     c.at,
     c.phone,
     c.postcode,
     c.latitude,
     c.longitude,
     c.city
-   FROM (public.supporter_contact_letter c
-     JOIN public.supporter_links k ON ((k.letter_id = c.source_id)))
+   FROM ((public.supporter_contact_form c
+     JOIN public.supporter_links k ON ((k.form_entry_id = c.source_id)))
+     JOIN public.form_entries f ON ((f.id = c.source_id)))
 UNION ALL
  SELECT k.supporter_id,
     'member'::text AS source,
@@ -936,16 +976,15 @@ UNION ALL
      JOIN public.supporter_links k ON ((k.member_id = c.source_id)));
 
 --
--- Name: supporter_source_letter; Type: VIEW; Schema: public; Owner: -
+-- Name: supporter_source_form; Type: VIEW; Schema: public; Owner: -
 --
 
-CREATE VIEW public.supporter_source_letter AS
- SELECT s.id AS source_id,
-    lower(TRIM(BOTH FROM s.sender_email)) AS email,
-    s.sender_name AS name,
-    l.created_at AS seen_at
-   FROM (public.supporter_letters s
-     JOIN public.letters l ON ((l.id = s.id)));
+CREATE VIEW public.supporter_source_form AS
+ SELECT id AS source_id,
+    lower(TRIM(BOTH FROM email)) AS email,
+    name,
+    created_at AS seen_at
+   FROM public.form_entries f;
 
 --
 -- Name: supporter_source_luma; Type: VIEW; Schema: public; Owner: -
@@ -985,16 +1024,13 @@ CREATE VIEW public.supporter_identity AS
      JOIN public.supporter_links k ON ((k.luma_user_id = s.source_id)))
 UNION ALL
  SELECT k.supporter_id,
-        CASE
-            WHEN (x.airtable_id IS NULL) THEN 'letter'::text
-            ELSE 'web-form'::text
-        END AS source,
+    f.form AS source,
     s.email,
     s.name,
     s.seen_at
-   FROM ((public.supporter_source_letter s
-     JOIN public.supporter_links k ON ((k.letter_id = s.source_id)))
-     JOIN public.supporter_letters x ON ((x.id = s.source_id)))
+   FROM ((public.supporter_source_form s
+     JOIN public.supporter_links k ON ((k.form_entry_id = s.source_id)))
+     JOIN public.form_entries f ON ((f.id = s.source_id)))
 UNION ALL
  SELECT k.supporter_id,
     'member'::text AS source,
@@ -1232,6 +1268,13 @@ ALTER TABLE ONLY public.email_sends
     ADD CONSTRAINT email_sends_pkey PRIMARY KEY (id);
 
 --
+-- Name: form_entries form_entries_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.form_entries
+    ADD CONSTRAINT form_entries_pkey PRIMARY KEY (id);
+
+--
 -- Name: import_runs import_runs_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1428,6 +1471,13 @@ ALTER TABLE ONLY public.supporter_letters
     ADD CONSTRAINT supporter_letters_airtable_id_key UNIQUE (airtable_id);
 
 --
+-- Name: supporter_letters supporter_letters_entry_id_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.supporter_letters
+    ADD CONSTRAINT supporter_letters_entry_id_key UNIQUE (entry_id);
+
+--
 -- Name: supporter_letters supporter_letters_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1442,11 +1492,11 @@ ALTER TABLE ONLY public.supporter_letters
     ADD CONSTRAINT supporter_letters_reply_hash_key UNIQUE (reply_hash);
 
 --
--- Name: supporter_links supporter_links_letter_id_key; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: supporter_links supporter_links_form_entry_id_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.supporter_links
-    ADD CONSTRAINT supporter_links_letter_id_key UNIQUE (letter_id);
+    ADD CONSTRAINT supporter_links_form_entry_id_key UNIQUE (form_entry_id);
 
 --
 -- Name: supporter_links supporter_links_luma_user_id_key; Type: CONSTRAINT; Schema: public; Owner: -
@@ -1537,6 +1587,12 @@ CREATE INDEX email_sends_letter ON public.email_sends USING btree (letter_id);
 CREATE INDEX email_sends_message_id ON public.email_sends USING btree (message_id);
 
 --
+-- Name: form_entries_email; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX form_entries_email ON public.form_entries USING btree (lower(TRIM(BOTH FROM email)));
+
+--
 -- Name: import_runs_job_at; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -1613,18 +1669,6 @@ CREATE INDEX staff_login_links_email_created_at ON public.staff_login_links USIN
 --
 
 CREATE INDEX staff_sessions_expires_at ON public.staff_sessions USING btree (expires_at);
-
---
--- Name: supporter_letters_sender_address; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX supporter_letters_sender_address ON public.supporter_letters USING btree (lower(TRIM(BOTH FROM sender_email)));
-
---
--- Name: supporter_letters_sender_email_campaign; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX supporter_letters_sender_email_campaign ON public.supporter_letters USING btree (lower(sender_email), campaign);
 
 --
 -- Name: supporter_links_matched; Type: INDEX; Schema: public; Owner: -
@@ -1750,6 +1794,13 @@ ALTER TABLE ONLY public.supporter_letters
     ADD CONSTRAINT supporter_letters_campaign_fkey FOREIGN KEY (campaign) REFERENCES public.campaigns(slug);
 
 --
+-- Name: supporter_letters supporter_letters_entry_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.supporter_letters
+    ADD CONSTRAINT supporter_letters_entry_id_fkey FOREIGN KEY (entry_id) REFERENCES public.form_entries(id);
+
+--
 -- Name: supporter_letters supporter_letters_letter_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1757,11 +1808,11 @@ ALTER TABLE ONLY public.supporter_letters
     ADD CONSTRAINT supporter_letters_letter_fkey FOREIGN KEY (id, kind) REFERENCES public.letters(id, kind) ON DELETE CASCADE;
 
 --
--- Name: supporter_links supporter_links_letter_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: supporter_links supporter_links_form_entry_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.supporter_links
-    ADD CONSTRAINT supporter_links_letter_id_fkey FOREIGN KEY (letter_id) REFERENCES public.supporter_letters(id) ON DELETE CASCADE;
+    ADD CONSTRAINT supporter_links_form_entry_id_fkey FOREIGN KEY (form_entry_id) REFERENCES public.form_entries(id) ON DELETE CASCADE;
 
 --
 -- Name: supporter_links supporter_links_luma_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -

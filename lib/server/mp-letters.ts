@@ -196,7 +196,7 @@ export async function submitLetter(form: LetterForm): Promise<SubmitResult> {
     await randomId(4, async () => {
       // The sender and how many they've sent: a different seed for each letter.
       const [{ sent }] = await query<{ sent: number }>(
-        "SELECT count(*)::int AS sent FROM supporter_letters WHERE lower(sender_email) = lower($1)",
+        "SELECT count(*)::int AS sent FROM supporter_letters s JOIN form_entries f ON f.id = s.entry_id WHERE lower(trim(f.email)) = lower(trim($1))",
         [form.email],
       );
       return `letter ${form.email} ${sent}`;
@@ -211,8 +211,8 @@ export async function submitLetter(form: LetterForm): Promise<SubmitResult> {
       if (!mp.isTest) {
         const [{ count }] = await query<{ count: number }>(
           `SELECT count(*)::int AS count FROM supporter_letters s JOIN letters l ON l.id = s.id
-             JOIN politicians p ON p.id = l.notable_person_id
-           WHERE lower(s.sender_email) = lower($1) AND s.campaign = $2 AND NOT p.is_test AND l.status <> 'not_sent'`,
+             JOIN form_entries f ON f.id = s.entry_id JOIN politicians p ON p.id = l.notable_person_id
+           WHERE lower(trim(f.email)) = lower(trim($1)) AND s.campaign = $2 AND NOT p.is_test AND l.status <> 'not_sent'`,
           [form.email, campaign.slug],
           db,
         );
@@ -223,21 +223,15 @@ export async function submitLetter(form: LetterForm): Promise<SubmitResult> {
         [mp.id],
         db,
       );
+      const [entry] = await query<{ id: number }>(
+        `INSERT INTO form_entries (form, name, email, address, postcode, contact_consent)
+         VALUES ('email-your-mp', $1, $2, $3, $4, $5) RETURNING id::int AS id`,
+        [form.name, form.email, form.address, form.postcode.toUpperCase(), form.consent],
+        db,
+      );
       await query(
-        `INSERT INTO supporter_letters (id, campaign, sender_name, sender_email, sender_address, sender_postcode,
-           contact_consent, subject, reply_hash)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
-        [
-          id,
-          campaign.slug,
-          form.name,
-          form.email,
-          form.address,
-          form.postcode.toUpperCase(),
-          form.consent,
-          form.subject,
-          mailbox,
-        ],
+        `INSERT INTO supporter_letters (id, entry_id, campaign, subject, reply_hash) VALUES ($1, $2, $3, $4, $5)`,
+        [id, entry.id, campaign.slug, form.subject, mailbox],
         db,
       );
       await logEvent(id, "sending", {}, db);
@@ -278,12 +272,22 @@ export async function submitLetter(form: LetterForm): Promise<SubmitResult> {
   } catch (error) {
     console.error(`Couldn't send letter ${id ?? "(not saved)"}:`, error);
     if (id !== undefined) {
-      const sender = await query<{ id: number }>(
-        `WITH sender AS (SELECT supporter_id FROM supporter_links WHERE letter_id = $1),
-           gone AS (DELETE FROM letters WHERE id = $1)
-         SELECT supporter_id::int AS id FROM sender`,
-        [id],
-      );
+      // The letter, then the entry made for it, which takes the sender's link with it.
+      const sender = await transaction(async (db) => {
+        const [letter] = await query<{ entryId: number }>(
+          `SELECT s.entry_id::int AS "entryId" FROM supporter_letters s WHERE s.id = $1`,
+          [id],
+          db,
+        );
+        const links = await query<{ id: number }>(
+          "SELECT supporter_id::int AS id FROM supporter_links WHERE form_entry_id = $1",
+          [letter.entryId],
+          db,
+        );
+        await query("DELETE FROM letters WHERE id = $1", [id], db);
+        await query("DELETE FROM form_entries WHERE id = $1", [letter.entryId], db);
+        return links;
+      });
       // Its sender may have been first seen by it.
       await refreshSupporterFacts(
         undefined,

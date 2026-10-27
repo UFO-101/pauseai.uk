@@ -37,9 +37,15 @@ async function janeWithEverything(mp: number): Promise<number> {
   await query(
     `INSERT INTO opt_outs (address, list, source, source_ref, unsubscribed_at) VALUES ('jane.fixture@example.com', 'luma-calendar', 'luma-webhook', 'w', now())`,
   );
+  // An entry with no letter, as a form that only asks for details makes.
+  await query(
+    `INSERT INTO form_entries (form, name, email, phone, contact_consent)
+     VALUES ('web-form', 'Jane', 'jane.fixture@example.com', '07700 900000', true)`,
+  );
   await linkSupporters();
   const [{ id }] = await query<{ id: number }>(
-    "SELECT supporter_id::int AS id FROM supporter_links WHERE letter_id = $1",
+    `SELECT k.supporter_id::int AS id FROM supporter_links k JOIN supporter_letters s ON s.entry_id = k.form_entry_id
+     WHERE s.id = $1`,
     [letterId],
   );
   return id;
@@ -52,11 +58,17 @@ describeWithDatabase("eraseSupporter", () => {
     const mp = await addTestMp();
     const id = await janeWithEverything(mp);
 
-    expect(await eraseSupporter(id, "ICO-123", "jo@pauseai.uk")).toEqual({ lumaUsers: 1, letters: 1, members: 1 });
+    expect(await eraseSupporter(id, "ICO-123", "jo@pauseai.uk")).toEqual({
+      lumaUsers: 1,
+      formEntries: 2,
+      letters: 1,
+      members: 1,
+    });
     expect(await query("SELECT 1 FROM supporters WHERE id = $1", [id])).toEqual([]);
     expect(await query("SELECT 1 FROM luma_people WHERE user_id = 'usr-fixture-1'")).toEqual([]);
     expect(await query("SELECT 1 FROM luma_guests WHERE user_id = 'usr-fixture-1'")).toEqual([]);
-    expect(await query("SELECT 1 FROM supporter_letters WHERE sender_email = 'jane.fixture@example.com'")).toEqual([]);
+    expect(await query("SELECT 1 FROM form_entries WHERE email = 'jane.fixture@example.com'")).toEqual([]);
+    expect(await query("SELECT 1 FROM supporter_letters")).toEqual([]);
     expect(await query("SELECT count(*)::int AS n FROM letter_events")).toEqual([{ n: 0 }]);
     // The letter's own send and the copy to the shared inbox stay, without their letter; the one to Jane goes.
     expect(await query("SELECT address, letter_id FROM email_sends ORDER BY id")).toEqual([
@@ -74,7 +86,7 @@ describeWithDatabase("eraseSupporter", () => {
       {
         actor: "jo@pauseai.uk",
         action: "erase supporter",
-        details: { id, reference: "ICO-123", lumaUsers: 1, letters: 1, members: 1 },
+        details: { id, reference: "ICO-123", lumaUsers: 1, formEntries: 2, letters: 1, members: 1 },
       },
     ]);
     // Everyone else is still there, and the next import doesn't bring Jane back.

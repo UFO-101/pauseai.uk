@@ -141,8 +141,8 @@ describeWithDatabase("migration 0035_notable_people_and_asks", () => {
     ]);
     expect(
       await query(
-        `SELECT l.id::int AS id, l.kind, l.notable_person_id::int AS "personId", s.campaign, s.sender_email AS email
-         FROM letters l JOIN supporter_letters s USING (id) ORDER BY l.id`,
+        `SELECT l.id::int AS id, l.kind, l.notable_person_id::int AS "personId", s.campaign, f.email
+         FROM letters l JOIN supporter_letters s USING (id) JOIN form_entries f ON f.id = s.entry_id ORDER BY l.id`,
       ),
     ).toEqual([
       { id: 1, kind: "supporter", personId: mp, campaign: "regulate-letter-pm", email: "jane@example.com" },
@@ -166,12 +166,10 @@ describeWithDatabase("migration 0035_notable_people_and_asks", () => {
       { name: "Jane", emails: ["jane@example.com"], letters: 1 },
     ]);
     expect(
-      await query(
-        "SELECT topic, address, send FROM email_permissions WHERE topic = 'events-and-ways-to-help' ORDER BY 2",
-      ),
+      await query("SELECT topic, address, send FROM email_permissions WHERE topic = 'site-forms' ORDER BY 2"),
     ).toEqual([
-      { topic: "events-and-ways-to-help", address: "jane@example.com", send: "yes" },
-      { topic: "events-and-ways-to-help", address: "sam@example.com", send: "no" },
+      { topic: "site-forms", address: "jane@example.com", send: "yes" },
+      { topic: "site-forms", address: "sam@example.com", send: "no" },
     ]);
     // A new politician gets the next ID.
     const [{ id }] = await query<{ id: number }>(

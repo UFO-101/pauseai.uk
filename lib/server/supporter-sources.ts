@@ -1,8 +1,8 @@
 import "server-only";
-import type { SupporterSource } from "@/lib/supporters";
+import type { SupporterLinkSource } from "@/lib/supporters";
 
 // Where supporters come from. Each source is a table of records about
-// people (a Luma user, a letter, a member), a column of supporter_links pointing at
+// people (a Luma user, a form entry, a member), a column of supporter_links pointing at
 // it, and three views in the same shape, made in the migrations:
 // supporter_source_<name> (source_id, email, name, seen_at) for the
 // matcher, supporter_activity_<name> (source_id, at, kind, title, detail,
@@ -13,15 +13,16 @@ import type { SupporterSource } from "@/lib/supporters";
 // CHECK to supporter_links, its views, and its arms of the union views.
 
 export type SourceDefinition = {
-  name: SupporterSource;
+  /** The views' suffix. A form entry's supporter_identity source is its form, as staff tell them apart. */
+  name: SupporterLinkSource;
   /** The supporter_links column that points at the source's record. */
-  column: "luma_user_id" | "letter_id" | "member_id";
+  column: "luma_user_id" | "form_entry_id" | "member_id";
   /** The column's type, for casting a source_id into it. */
   type: "text" | "bigint";
 };
 
 export const SUPPORTER_SOURCES: readonly SourceDefinition[] = [
   { name: "luma", column: "luma_user_id", type: "text" },
-  { name: "letter", column: "letter_id", type: "bigint" },
+  { name: "form", column: "form_entry_id", type: "bigint" },
   { name: "member", column: "member_id", type: "text" },
 ];

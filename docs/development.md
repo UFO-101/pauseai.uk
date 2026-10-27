@@ -186,7 +186,7 @@ psql postgresql://postgres:postgres@localhost:5432/pauseai_dev   # your NETLIFY_
 
 ```sql
 select name, constituency, email from politicians where is_test;
-select id, status, sender_email, created_at from letters order by id desc;
+select l.id, l.status, f.email, l.created_at from letters l join supporter_letters s using (id) join form_entries f on f.id = s.entry_id order by l.id desc;
 select * from letter_events order by id desc limit 20;
 ```
 

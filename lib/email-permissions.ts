@@ -5,7 +5,7 @@
 // lib/server/email-permissions.ts reads it.
 
 /** What we might email someone about. */
-export const EMAIL_TOPICS = ["luma-calendar", "pauseai-updates", "events-and-ways-to-help"] as const;
+export const EMAIL_TOPICS = ["luma-calendar", "pauseai-updates", "site-forms"] as const;
 export type EmailTopic = (typeof EMAIL_TOPICS)[number];
 
 /** Why we may or may not email an address about a topic; the view says what each means. */
@@ -16,7 +16,7 @@ export type EmailReason =
 export const EMAIL_TOPIC_REASONS = {
   "luma-calendar": ["following", "unsubscribed", "not-following"],
   "pauseai-updates": ["asked", "joined", "declined", "unsubscribed", "removed"],
-  "events-and-ways-to-help": ["asked", "declined"],
+  "site-forms": ["asked", "declined"],
 } as const satisfies Record<EmailTopic, readonly EmailReason[]>;
 
 /** A reason one topic gave, or blocked, whatever the topic. */

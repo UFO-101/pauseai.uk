@@ -63,7 +63,14 @@ export const exampleChanges: LoggedChange[] = [
   change(7, "jo@pauseai.uk", "unblock address", { address: "polly@example.org", note: "Fixed in Airtable" }),
   change(8, "jo@pauseai.uk", "view supporter", { id: 3 }, { supporter: { id: 3, name: "Jane Example" } }),
   change(9, "jo@pauseai.uk", "view supporter", { id: 4 }, { supporter: { id: 4, name: null } }),
-  change(10, "jo@pauseai.uk", "erase supporter", { id: 5, reference: "ICO-12", lumaUsers: 1, letters: 2, members: 0 }),
+  change(10, "jo@pauseai.uk", "erase supporter", {
+    id: 5,
+    reference: "ICO-12",
+    lumaUsers: 1,
+    formEntries: 2,
+    letters: 2,
+    members: 0,
+  }),
   change(11, "admin@pauseai.uk", "add staff account", { email: "sam@pauseai.uk", to: [] }),
   change(12, "admin@pauseai.uk", "set staff permissions", {
     email: "sam@pauseai.uk",

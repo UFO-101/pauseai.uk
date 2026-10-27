@@ -346,8 +346,12 @@ SELECT nextval(pg_get_serial_sequence('letters', 'id')) AS id, s.* FROM seed_let
 INSERT INTO letters (id, kind, notable_person_id, status, created_at, sent_at, replied_at) OVERRIDING SYSTEM VALUE
 SELECT s.id, 'supporter', p.id, s.status, now() - s.created, now() - s.sent + interval '4 seconds', now() - s.replied
 FROM seeded_letters s JOIN politicians p ON p.test_postcode = s.postcode;
-INSERT INTO supporter_letters (id, campaign, sender_name, sender_email, sender_address, sender_postcode, contact_consent, subject, reply_hash)
-SELECT s.id, s.campaign, s.sender, s.email, s.address, s.sender_postcode, s.consent, s.subject, 'seed-' || s.hash FROM seeded_letters s;
+-- Each sender is a form entry with their letter's ID.
+INSERT INTO form_entries (id, form, created_at, name, email, address, postcode, contact_consent) OVERRIDING SYSTEM VALUE
+SELECT s.id, 'email-your-mp', l.created_at, s.sender, s.email, s.address, s.sender_postcode, s.consent
+FROM seeded_letters s JOIN letters l ON l.id = s.id;
+INSERT INTO supporter_letters (id, entry_id, campaign, subject, reply_hash)
+SELECT s.id, s.id, s.campaign, s.subject, 'seed-' || s.hash FROM seeded_letters s JOIN letters l ON l.id = s.id;
 -- Most of the recent letters went to Airtable's two MPs, so the dashboard,
 -- which leaves the test MPs out, counts them; the bounces stay on Bouncy's.
 UPDATE letters SET notable_person_id = (SELECT id FROM notable_people WHERE airtable_id = 'recDummy')
@@ -417,8 +421,11 @@ SELECT nextval(pg_get_serial_sequence('letters', 'id')) AS id, w.* FROM seed_web
 INSERT INTO letters (id, kind, notable_person_id, status, created_at, sent_at) OVERRIDING SYSTEM VALUE
 SELECT w.id, 'supporter', n.id, 'sent', now() - w.sent, now() - w.sent + interval '1 minute'
 FROM seeded_web_form w JOIN notable_people n ON n.airtable_id = w.politician;
-INSERT INTO supporter_letters (id, campaign, sender_name, sender_email, sender_address, sender_postcode, contact_consent, subject, airtable_id)
-SELECT id, campaign, sender, email, '', postcode, consent, subject, airtable_id FROM seeded_web_form;
+INSERT INTO form_entries (id, form, created_at, name, email, postcode, contact_consent) OVERRIDING SYSTEM VALUE
+SELECT w.id, 'web-form', l.created_at, w.sender, w.email, w.postcode, w.consent FROM seeded_web_form w JOIN letters l ON l.id = w.id;
+INSERT INTO supporter_letters (id, entry_id, campaign, subject, airtable_id)
+SELECT w.id, w.id, w.campaign, w.subject, w.airtable_id FROM seeded_web_form w JOIN letters l ON l.id = w.id;
+SELECT setval(pg_get_serial_sequence('form_entries', 'id'), (SELECT max(id) FROM form_entries));
 
 -- PauseAI's emails, as the Emails sync copies them (airtable-emails.json):
 -- one of each mailing, personalised or not.
@@ -546,7 +553,7 @@ UPDATE audit_log SET details = jsonb_set(details, '{politicianId}', to_jsonb((SE
 WITH emails AS (
   SELECT email, coalesce(contact_since, (SELECT min(g.registered_at) FROM luma_guests g WHERE g.user_id = p.user_id)) AS first_seen FROM luma_people p
   UNION ALL
-  SELECT lower(trim(s.sender_email)), l.created_at FROM letters l JOIN supporter_letters s USING (id)
+  SELECT lower(trim(email)), created_at FROM form_entries
   UNION ALL
   SELECT email, joined_at FROM members
 ), firsts AS (
@@ -563,8 +570,8 @@ WITH emails AS (
   INSERT INTO supporter_links (supporter_id, member_id, matched_by, matched_value, linked_at)
   SELECT k.id, m.id, 'email', k.email, m.first_seen_at FROM keyed k JOIN members m ON m.email = k.email
 )
-INSERT INTO supporter_links (supporter_id, letter_id, matched_by, matched_value, linked_at)
-SELECT k.id, l.id, 'email', k.email, l.created_at FROM keyed k JOIN supporter_letters s ON lower(trim(s.sender_email)) = k.email JOIN letters l ON l.id = s.id;
+INSERT INTO supporter_links (supporter_id, form_entry_id, matched_by, matched_value, linked_at)
+SELECT k.id, f.id, 'email', k.email, f.created_at FROM keyed k JOIN form_entries f ON lower(trim(f.email)) = k.email;
 
 -- Each supporter's first seen, as refreshSupporterFacts() (lib/server/supporter-facts.ts) sets it after linking.
 UPDATE supporters s SET first_seen_at = f.first_seen_at FROM supporter_first_seen f WHERE f.supporter_id = s.id;
