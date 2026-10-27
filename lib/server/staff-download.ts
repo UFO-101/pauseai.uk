@@ -12,7 +12,6 @@ import {
 } from "@/lib/staff-list";
 import { vcardCode, vcardFile, type Contact } from "@/lib/vcard";
 import { logChange } from "./audit";
-import { requireStaff, type StaffNeeds } from "./staff-auth";
 
 /** Each format's media type. */
 const TYPES: Record<DownloadFormat, string> = {
@@ -63,7 +62,8 @@ export type Download<Row> = {
 };
 
 /**
- * A list's download route: for staff with the list's permission, the rows
+ * A list's download route, for `email`, once the route has checked they may
+ * (requireStaff): the rows
  * `load` finds for the URL's filters, in the URL's `format`, or a 404 for
  * any other format, or vCards from a list that isn't of people. A vCard
  * file's contacts are named with a code of its own, which its filename has
@@ -72,11 +72,10 @@ export type Download<Row> = {
  */
 export async function staffDownload<Row>(
   request: NextRequest,
-  needs: StaffNeeds,
+  email: string,
   load: (params: Record<string, string>) => Promise<Download<Row>>,
   log?: string,
 ): Promise<Response> {
-  const { email } = await requireStaff(needs);
   const params = Object.fromEntries(request.nextUrl.searchParams);
   const format = downloadFormat(params.format ?? null);
   if (!format) return new Response(null, { status: 404 });

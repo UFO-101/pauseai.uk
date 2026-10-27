@@ -15,7 +15,7 @@ import AuditDetail, { FieldChanges } from "@/app/(staff)/staff/_components/Audit
 import CampaignName from "@/app/(staff)/staff/_components/CampaignName";
 import LetterFilters from "@/app/(staff)/staff/_components/LetterFilters";
 import LetterLink from "@/app/(staff)/staff/_components/LetterLink";
-import LettersTable from "@/app/(staff)/staff/_components/LettersTable";
+import LettersTable, { LettersList } from "@/app/(staff)/staff/_components/LettersTable";
 import { exampleLetter } from "@/app/(staff)/staff/_components/LettersTable.examples";
 import DevLogin from "@/app/(staff)/staff/_components/DevLogin";
 import LoginCard from "@/app/(staff)/staff/_components/LoginCard";
@@ -48,6 +48,9 @@ import MailingDetails from "@/app/(staff)/staff/_components/MailingDetails";
 import MailingsTable from "@/app/(staff)/staff/_components/MailingsTable";
 import { exampleMailing, exampleMailings } from "@/app/(staff)/staff/_components/MailingsTable.examples";
 import ListFrame, { ListTable, type ListColumn } from "@/app/(staff)/staff/_components/ui/ListFrame";
+import ChoiceSearch from "@/app/(staff)/staff/_components/ui/ChoiceSearch";
+import NavFold from "@/app/(staff)/staff/_components/ui/NavFold";
+import NavIcon from "@/app/(staff)/staff/_components/NavIcon";
 import PoliticiansList, { HouseTabs } from "@/app/(staff)/staff/_components/PoliticiansList";
 import ErasedNotice from "@/app/(staff)/staff/_components/ErasedNotice";
 import ImportCard, { ImportCards } from "@/app/(staff)/staff/_components/ImportCard";
@@ -353,6 +356,85 @@ export const staff: Group = {
                   <p>A line under it.</p>
                 </Card>
               </Grid>
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "NavFold",
+      file: "app/(staff)/staff/_components/ui/NavFold.tsx",
+      variants: [
+        {
+          label: "At the sidebar's foot: folds it to a rail of icons, and back",
+          render: () => (
+            <StaffPage as="div">
+              <NavFold />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "NavIcon",
+      file: "app/(staff)/staff/_components/NavIcon.tsx",
+      variants: [
+        {
+          label: "Each page's icon, and Log out's",
+          render: () => (
+            <StaffPage as="div">
+              <p>
+                {(
+                  [
+                    "home",
+                    "supporters",
+                    "letters",
+                    "supporterEmails",
+                    "politicians",
+                    "asks",
+                    "mailings",
+                    "mpEmails",
+                    "import",
+                    "accounts",
+                    "changes",
+                    "logout",
+                  ] as const
+                ).map((id) => (
+                  <NavIcon key={id} id={id} />
+                ))}
+              </p>
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "ChoiceSearch",
+      file: "app/(staff)/staff/_components/ui/ChoiceSearch.tsx",
+      variants: [
+        {
+          label: "Over a long list of choices, which show once something's typed",
+          render: () => (
+            <StaffPage as="div">
+              <ChoiceSearch label="Search these" />
+              <ul data-search="empty">
+                <li>PauseAI Leicester meetup</li>
+                <li>AI risk talk</li>
+              </ul>
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "ListTable",
+      file: "app/(staff)/staff/_components/ui/ListFrame.tsx",
+      variants: [
+        {
+          label: "The rows alone, striped, for a table that isn't a whole list",
+          render: () => (
+            <StaffPage as="div">
+              <ListTable columns={exampleColumns} rows={exampleRows} rowKey={(row) => row.name} />
             </StaffPage>
           ),
         },
@@ -1006,14 +1088,6 @@ export const staff: Group = {
             </StaffPage>
           ),
         },
-        {
-          label: "ListTable: the rows alone, for a table that's not a whole list",
-          render: () => (
-            <StaffPage as="div">
-              <ListTable columns={exampleColumns} rows={exampleRows} rowKey={(row) => row.name} />
-            </StaffPage>
-          ),
-        },
       ],
     },
     {
@@ -1640,6 +1714,26 @@ export const staff: Group = {
           render: () => (
             <StaffPage as="div">
               <EmailProblemsTable problems={[]} letterLinks />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "LettersList",
+      file: "app/(staff)/staff/_components/LettersTable.tsx",
+      variants: [
+        {
+          label: "The letters page's list: how many, Download, and the pages",
+          render: () => (
+            <StaffPage as="div">
+              <LettersList
+                letters={[exampleLetter]}
+                total={150}
+                pages={2}
+                pageSize={100}
+                search={{ status: "", q: "", answered: "", campaign: "", consent: "", page: "2" }}
+              />
             </StaffPage>
           ),
         },

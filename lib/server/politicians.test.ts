@@ -21,6 +21,7 @@ import {
   signatories,
   statusesOf,
 } from "./politicians";
+import { POLITICIAN_SORTS } from "@/lib/politician-sort";
 import { recordProblem } from "./email";
 import { logChange } from "./audit";
 
@@ -310,12 +311,32 @@ describeWithDatabase("politicians", () => {
       emailBlocked: false,
       letters: 0,
       replies: 0,
+      firstActivityAt: null,
+      lastActivityAt: null,
       statuses: {},
     });
     // The Asks column sorts by when their newest answer was recorded, newest first, those without last.
     await setStatus(mp, PM, { status: "signed", date: null, note: "" }, "jo@pauseai.uk");
     const byAsks = await listPoliticians({ sort: { key: "asks", dir: "desc" } });
     expect(byAsks.filter((p) => !p.isTest).map((p) => p.id)).toEqual([mp, peer]);
+    // An answer is activity: first and last activity sort by it, those with none last.
+    const polly = (await listPoliticians({ search: "Polly" }))[0];
+    expect(polly.firstActivityAt).toEqual(polly.lastActivityAt);
+    expect(polly.lastActivityAt).not.toBeNull();
+    for (const [key, field] of [
+      ["first", "firstActivityAt"],
+      ["active", "lastActivityAt"],
+    ] as const) {
+      const dir = POLITICIAN_SORTS[key];
+      const times = (await listPoliticians({ sort: { key, dir } }))
+        .filter((p) => !p.isTest)
+        .map((p) => (p[field] ? new Date(p[field]!).getTime() : null));
+      const known = times.filter((t): t is number => t !== null);
+      expect(times).toEqual([
+        ...known.toSorted((a, b) => (dir === "asc" ? a - b : b - a)),
+        ...times.filter((t) => t === null),
+      ]);
+    }
     // Everyone who signed anything, by their newest answer.
     await setStatus(peer, BILL, { status: "signed", date: null, note: "" }, "jo@pauseai.uk");
     const signed = await listPoliticians({ answer: "signed", sort: { key: "asks", dir: "desc" } });

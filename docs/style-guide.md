@@ -295,13 +295,40 @@ is that thing's state: an import job's newest run, a campaign's status, a
 mailing list's answer. A strip that's an answer, not a warning, leaves out
 the icon (`icon={false}`).
 
-**Tables** (`components/ui/Table`). A cell's content sits at its top, so
+**Tables** (`components/ui/Table`). White, every other row tinted
+(`--table-stripe`), so the eye keeps to a row across. A cell's content sits at its top, so
 the lines of text in a row start level, however many lines each cell
 wraps to. A table whose rows hold buttons, checkboxes or fields is
 `align="middle"`: a control is taller than a line of text, so at the top
 the text beside it sits higher than the button's label and the row looks
 uneven. Centred, the text lines up with the control's middle (the
 accounts table, your sessions).
+
+**Lists** (`ui/ListFrame`). Every list is one frame, so no list designs
+its own table. A list says its columns once, as data (`ListColumn`): the
+heading, the cell, and the value in a download. The frame draws:
+
+- over the table, ruled off: how many, "250 politicians", and which this
+  page shows, "· showing 101–200"; at the right, Download, whose menu has
+  CSV and JSON of every page the filters find, and vCard for a list of
+  people (each name starting "PauseAI <code> - ", the code one per file,
+  for finding a download's contacts on a phone);
+- the striped table. A short column (a house, a date, a count) never
+  wraps, so the long ones take the room. The frame is as wide as the
+  page's column, past the content's 88rem, so a list wraps less on a big
+  screen;
+- under it, with more than one page: "101–200 of 250", then Previous, the
+  first and last pages and two either side of this one, and Next; on a
+  phone, "Page 6 of 50" in place of the numbers.
+
+A downloaded file is named for the list, its filters and when, in lower
+case with underscores: `politicians_party_labour_2026_10_27_1430.csv`.
+Downloads of supporters, their letters and their blocked addresses go in
+the audit log. A table that isn't a whole list, inside a card, is a
+`ListTable`, or a plain `Table`: striped, with no count or downloads.
+
+Columns go in the same order in every list: who it is, then how it
+stands, then counts, then when.
 
 **Filters** (`ui/FilterBar`). Every list's filters are the same bar
 above it, and a list's own filters component only says what its filters
@@ -313,15 +340,21 @@ are:
   doesn't change while someone types. While there's a search, an × in the
   box empties it.
 - Only the filters that are on show, each as a chip: the filter's name
-  and its choice, "Party: Labour". A chip opens its choices, and Remove.
-  A filter with more than a dozen choices shows them in two columns, in a
-  wider menu, so a menu scrolls only on a phone.
+  and its choice, "Party: Labour". A chip opens its choices, one column,
+  a long list scrolling, and Remove.
   A filter that isn't at its default is on, so a glance at the chips says
   what the list is filtered by.
-- "+ Filter" opens every other filter, its name and its choices; a choice
-  applies at once. A filter has the name of the column it filters, and
-  they come in the columns' order. Not every column gets one, only those
-  someone will filter by.
+- "+ Filter" lists every other filter, a row each, its choices opening
+  under it, one at a time; a choice applies at once. A filter has the
+  name of the column it filters, and they come in the columns' order. Not
+  every column gets one, only those someone will filter by.
+- A filter that makes sense more than once (`repeat`: a party, a nation,
+  an event) can be chosen again, a chip each, and finds what has any of
+  them; different filters must all match. An ask's answer doesn't repeat.
+- A filter with too many choices to read (`searchable`: the events) has a
+  box over them, and shows none until something's typed.
+- A place filter (`place`: Near) is a small form, words and how far, and
+  its chip says what it found: "Near: Leeds, 10 miles".
 - A filter can come after another (`after`): once that one is on, the
   two are one chip in two halves, each opening its own choices, and it
   goes when that one does. An ask's chip is "Edinburgh conference |
@@ -337,8 +370,10 @@ are:
 one underlined: the politicians' houses. A list has at most one row of
 tabs, for the one choice people make most.
 
-**Counts** (`ListCount`). Over a filtered list, faintly: how many it has,
-and the page.
+**The sidebar** (`StaffNav`). Each page has its icon (`NavIcon`) beside
+its name. Fold, at its foot, folds it to a rail of the icons on wider
+screens, the sections a rule apart, each name showing beside its icon on
+hover or focus; the browser remembers it (`lib/staff-nav.ts`).
 
 **Columns that say nothing** are left out: one the same in every row, as
 when a filter fixes it, or blank in all of them (the politicians table).

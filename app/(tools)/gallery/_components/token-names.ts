@@ -17,6 +17,7 @@ export const COLOUR_TOKENS = [
   "--accent-bg",
   "--border",
   "--border-strong",
+  "--table-stripe",
   "--shadow",
   "--shadow-strong",
   "--white",

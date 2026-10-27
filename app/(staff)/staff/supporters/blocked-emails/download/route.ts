@@ -4,6 +4,7 @@ import { blockColumns } from "../../../_components/EmailBlocksTable";
 import { filterWords } from "../../../_components/ui/FilterBar";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { listBlocks } from "@/lib/server/email";
+import { requireStaff } from "@/lib/server/staff-auth";
 import { staffDownload } from "@/lib/server/staff-download";
 import { emailsSearch } from "@/lib/staff-search";
 
@@ -13,9 +14,10 @@ import { emailsSearch } from "@/lib/staff-search";
  * addresses are supporters'.
  */
 export async function GET(request: NextRequest) {
+  const { email } = await requireStaff("supporters");
   return staffDownload(
     request,
-    "supporters",
+    email,
     async (params) => {
       const { q, kind, filter } = emailsSearch(params);
       return {

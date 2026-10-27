@@ -154,11 +154,15 @@ test("the politicians list pages through many, a count and downloads over it", a
   await page.goto(`${BASE}/staff/politicians?status=any`);
   const copy = staffCopy.politicians;
   await expect(page.getByText(copy.total(250))).toBeVisible();
-  await expect(page.getByRole("link", { name: staffCopy.lists.formats.csv })).toHaveAttribute(
-    "href",
-    "/staff/politicians/download?status=any&format=csv",
-  );
-  await frame(page, "every politician: how many, which these are, and the downloads");
+  await frame(page, "every politician: how many, which these are, and Download");
+  await page.getByRole("button", { name: staffCopy.lists.download }).click();
+  const csv = page.getByRole("link", { name: staffCopy.lists.formats.csv });
+  await expect(csv).toHaveAttribute("href", "/staff/politicians/download?status=any&format=csv");
+  await frame(page, "Download's menu: a spreadsheet, JSON, or vCards for WhatsApp");
+  // Every page of them, a line each under the headings.
+  const file = await page.request.get(`${BASE}/staff/politicians/download?status=any&format=csv`);
+  expect((await file.text()).trim().split("\r\n")).toHaveLength(251);
+  await page.keyboard.press("Escape");
   const pages = page.getByRole("navigation", { name: staffCopy.paging.label });
   await pages.scrollIntoViewIfNeeded();
   await frame(page, "the first hundred, and the way to the other pages");

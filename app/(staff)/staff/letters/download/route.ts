@@ -4,6 +4,7 @@ import { letterColumns } from "../../_components/LettersTable";
 import { filterWords } from "../../_components/ui/FilterBar";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { recentLetters } from "@/lib/server/letters";
+import { requireStaff } from "@/lib/server/staff-auth";
 import { staffDownload } from "@/lib/server/staff-download";
 import { lettersSearch } from "@/lib/staff-search";
 
@@ -13,9 +14,10 @@ import { lettersSearch } from "@/lib/staff-search";
  * supporters.
  */
 export async function GET(request: NextRequest) {
+  const { email } = await requireStaff("supporters");
   return staffDownload(
     request,
-    "supporters",
+    email,
     async (params) => {
       const {
         filter: { page, ...filter },

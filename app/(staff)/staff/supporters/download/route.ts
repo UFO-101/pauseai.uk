@@ -3,6 +3,7 @@ import { supporterFilters } from "../../_components/SupporterFilters";
 import { supporterColumns, supporterContact, supporterFiltersOf } from "../../_components/SupportersTable";
 import { filterWords } from "../../_components/ui/FilterBar";
 import { staffCopy } from "@/lib/content/staff-interface";
+import { requireStaff } from "@/lib/server/staff-auth";
 import { staffDownload } from "@/lib/server/staff-download";
 import { eventChoices, listSupporters } from "@/lib/server/supporters";
 import { supportersSearch } from "@/lib/staff-search";
@@ -12,9 +13,10 @@ import { supportersSearch } from "@/lib/staff-search";
  * for its filters; each download goes in the audit log.
  */
 export async function GET(request: NextRequest) {
+  const { email } = await requireStaff("supporters");
   return staffDownload(
     request,
-    "supporters",
+    email,
     async (params) => {
       const { filter, ...search } = supportersSearch(params);
       const [{ supporters, near }, events] = await Promise.all([

@@ -58,7 +58,7 @@ describeWithDatabase("staffDownload", () => {
       contact,
     });
   const route = (contact?: Download<Row>["contact"], log?: string) => (request: Parameters<typeof staffDownload>[0]) =>
-    staffDownload(request, "account", load(contact), log);
+    staffDownload(request, "jo@pauseai.uk", load(contact), log);
 
   it("gives the rows the filters find, in the format asked for, and logs it when asked", async () => {
     const res = await downloadAs(route(undefined, "download people"), "https://pauseai.uk/x?format=csv&q=ann");

@@ -478,6 +478,7 @@ CREATE TABLE public.luma_events (
     guests_synced_at timestamp with time zone,
     guests_error text,
     removed_at timestamp with time zone,
+    tags text[] DEFAULT '{}'::text[] NOT NULL,
     CONSTRAINT luma_events_access_check CHECK ((access = ANY (ARRAY['manage'::text, 'view'::text]))),
     CONSTRAINT luma_events_check CHECK (((latitude IS NULL) = (longitude IS NULL)))
 );
@@ -544,6 +545,21 @@ ALTER TABLE public.mailings ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
 CREATE TABLE public.members_erased (
     id text NOT NULL,
     erased_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+--
+-- Name: named_places; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.named_places (
+    name text NOT NULL,
+    latitude double precision,
+    longitude double precision,
+    place text,
+    country text,
+    looked_up_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT named_places_check CHECK (((latitude IS NULL) = (longitude IS NULL))),
+    CONSTRAINT named_places_name_check CHECK ((name = lower(TRIM(BOTH FROM name))))
 );
 
 --
@@ -625,6 +641,21 @@ CREATE TABLE public.politicians (
     CONSTRAINT politicians_house_check CHECK ((house = ANY (ARRAY['commons'::text, 'lords'::text, 'scottish-parliament'::text, 'senedd'::text, 'ni-assembly'::text, 'other'::text]))),
     CONSTRAINT politicians_kind_check CHECK ((kind = 'politician'::text)),
     CONSTRAINT politicians_test_postcode CHECK ((is_test = (test_postcode IS NOT NULL)))
+);
+
+--
+-- Name: postcode_places; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.postcode_places (
+    postcode text NOT NULL,
+    latitude double precision,
+    longitude double precision,
+    place text,
+    country text,
+    looked_up_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT postcode_places_check CHECK (((latitude IS NULL) = (longitude IS NULL))),
+    CONSTRAINT postcode_places_postcode_check CHECK ((postcode = upper(replace(postcode, ' '::text, ''::text))))
 );
 
 --
@@ -1008,6 +1039,64 @@ ALTER TABLE public.supporter_links ALTER COLUMN id ADD GENERATED ALWAYS AS IDENT
 );
 
 --
+-- Name: supporter_place; Type: VIEW; Schema: public; Owner: -
+--
+
+CREATE VIEW public.supporter_place AS
+ WITH candidates AS (
+         SELECT c.supporter_id,
+            1 AS rank,
+            c.at,
+            p.latitude,
+            p.longitude,
+            p.place,
+            p.country,
+            'postcode'::text AS basis,
+            c.postcode AS given
+           FROM (public.supporter_contact c
+             JOIN public.postcode_places p ON ((p.postcode = upper(replace(c.postcode, ' '::text, ''::text)))))
+          WHERE (p.latitude IS NOT NULL)
+        UNION ALL
+         SELECT c.supporter_id,
+            2,
+            c.at,
+            n.latitude,
+            n.longitude,
+            n.place,
+            n.country,
+            'city'::text,
+            c.city
+           FROM (public.supporter_contact c
+             JOIN public.named_places n ON ((n.name = lower(TRIM(BOTH FROM c.city)))))
+          WHERE ((c.source <> 'luma'::text) AND (n.latitude IS NOT NULL))
+        UNION ALL
+         SELECT k.supporter_id,
+            3,
+            g.registered_at,
+            e.latitude,
+            e.longitude,
+            COALESCE(n.place, e.city) AS "coalesce",
+            n.country,
+            'event'::text,
+            e.name
+           FROM (((public.luma_guests g
+             JOIN public.supporter_links k ON ((k.luma_user_id = g.user_id)))
+             JOIN public.luma_events e ON ((e.id = g.event_id)))
+             LEFT JOIN public.named_places n ON ((n.name = lower(TRIM(BOTH FROM e.city)))))
+          WHERE ((e.latitude IS NOT NULL) AND (g.approval_status <> 'declined'::text) AND (NOT (e.tags && ARRAY['Big events'::text, 'Online'::text])))
+        )
+ SELECT DISTINCT ON (supporter_id) supporter_id,
+    latitude,
+    longitude,
+    place,
+    country,
+    basis,
+    given,
+    at
+   FROM candidates
+  ORDER BY supporter_id, rank, at DESC;
+
+--
 -- Name: supporters_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
@@ -1234,6 +1323,13 @@ ALTER TABLE ONLY public.members
     ADD CONSTRAINT members_pkey PRIMARY KEY (id);
 
 --
+-- Name: named_places named_places_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.named_places
+    ADD CONSTRAINT named_places_pkey PRIMARY KEY (name);
+
+--
 -- Name: notable_people notable_people_airtable_id_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1295,6 +1391,13 @@ ALTER TABLE ONLY public.politicians
 
 ALTER TABLE ONLY public.politicians
     ADD CONSTRAINT politicians_test_postcode_key UNIQUE (test_postcode);
+
+--
+-- Name: postcode_places postcode_places_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.postcode_places
+    ADD CONSTRAINT postcode_places_pkey PRIMARY KEY (postcode);
 
 --
 -- Name: staff_accounts staff_accounts_pkey; Type: CONSTRAINT; Schema: public; Owner: -
