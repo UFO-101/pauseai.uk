@@ -1,6 +1,7 @@
 import type { Page } from "@playwright/test";
 import type { OutboxEmail } from "../fixtures/outbox";
 import { campaigns, copy } from "@/lib/content/email-your-mp";
+import { site } from "@/lib/content/site";
 import {
   fakeTurnstile,
   fillLetter,
@@ -303,7 +304,9 @@ test("the letter's toolbar and a paste from another app: what the preview shows 
   expect(sent.HtmlBody).toContain("<strong>Please reply.</strong>");
   expect(sent.HtmlBody).toMatch(/<ul>\s*<li><p>First reason<\/p><\/li>\s*<li><p>Second reason<\/p><\/li>\s*<\/ul>/);
   expect(sent.HtmlBody).toContain("See this report and red words.");
-  expect(sent.HtmlBody).not.toMatch(/<h1|<a |<ol|style=/);
+  expect(sent.HtmlBody).not.toMatch(/<h1|<ol|style=/);
+  // The pasted link is gone: the only one is the drafted letter's address, which the HTML links.
+  expect(sent.HtmlBody?.match(/<a [^>]*>/g)).toEqual([`<a href="mailto:${site.policyEmail}">`]);
   await emailFrame(page, sent, "the letter as the MP gets it, formatted");
   // All of it above the sign-off, which is as it was drafted.
   expect(sent.TextBody).toMatch(
