@@ -140,6 +140,8 @@ export type EmailBlock = {
   politicians: { id: number; name: string }[];
   /** The letter whose email found it out, if one did, and the politician it was to. */
   letter: SentLetter | null;
+  /** What the email that found it out was, if the site has a record of sending it. */
+  purpose: Purpose | null;
   /** Emails not sent to it since. */
   refused: number;
 };
@@ -151,6 +153,7 @@ const SELECT_BLOCKS = `
     (SELECT json_build_object('id', l.id, 'to', pol.name)
      FROM email_sends s JOIN letters l ON l.id = s.letter_id JOIN notable_people pol ON pol.id = l.notable_person_id
      WHERE s.message_id = p.message_id) AS letter,
+    (SELECT s.purpose FROM email_sends s WHERE s.message_id = p.message_id) AS purpose,
     (SELECT count(*)::int FROM email_sends s WHERE s.address = b.address AND s.outcome = 'refused' AND s.at >= p.at) AS refused
   FROM email_blocks b JOIN email_problems p ON p.id = b.problem_id`;
 

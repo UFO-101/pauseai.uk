@@ -244,6 +244,7 @@ describeWithDatabase("listBlocks, blockOn and recentProblems", () => {
           { id: mp, name: "Testy McTestface MP" },
         ],
         letter: { id: letterId, to: "Testy McTestface MP" },
+        purpose: "letter",
         refused: 1,
       },
     ]);
@@ -253,6 +254,7 @@ describeWithDatabase("listBlocks, blockOn and recentProblems", () => {
         kind: "complaint",
         politicians: [],
         letter: null,
+        purpose: null,
         refused: 0,
       }),
     ]);

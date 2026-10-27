@@ -581,6 +581,8 @@ export const staffCopy = {
     },
     // The email was a letter: before the name of the politician it was to, the two linked to the letter.
     letterTo: "Letter to",
+    // Instead of the type, for an email the site has no record of sending.
+    notRecorded: "Not recorded",
     purposes: {
       letter: "Letter",
       "forwarded-reply": "Forwarded reply",

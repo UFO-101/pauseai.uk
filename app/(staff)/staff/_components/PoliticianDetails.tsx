@@ -426,6 +426,7 @@ export default function PoliticianDetails({
             <Fact label={copy.country}>{politician.country && staffCopy.countries[politician.country]}</Fact>
             <Fact label={copy.city}>{politician.city}</Fact>
             <Fact label={staffCopy.fields.email}>{politician.email ?? staffCopy.politicians.noEmail}</Fact>
+            <Fact label={staffCopy.fields.salutation}>{politician.salutation}</Fact>
             <Fact label={copy.notes}>
               {politician.notes && <span className={styles.notes}>{politician.notes}</span>}
             </Fact>

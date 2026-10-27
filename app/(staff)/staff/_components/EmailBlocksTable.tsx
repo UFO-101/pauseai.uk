@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Table from "@/components/ui/Table";
+import { Muted } from "@/components/ui/Text";
 import { staffCopy } from "@/lib/content/staff-interface";
 import type { EmailBlock } from "@/lib/server/email";
 import { staffTime } from "@/lib/staff-time";
@@ -7,8 +8,8 @@ import LetterLink from "./LetterLink";
 import UnblockForm from "./UnblockForm";
 
 /**
- * The blocked addresses: why, since when, whose, the letter that found it
- * out (a link to it with `letterLinks`), how many emails haven't been sent
+ * The blocked addresses: why, since when, whose, the email that found it
+ * out (a letter linked with `letterLinks`), how many emails haven't been sent
  * since, and a way to unblock each.
  */
 export default function EmailBlocksTable({
@@ -51,7 +52,15 @@ export default function EmailBlocksTable({
                 </span>
               ))}
             </td>
-            <td>{block.letter && <LetterLink letter={block.letter} linked={letterLinks} />}</td>
+            <td>
+              {block.letter ? (
+                <LetterLink letter={block.letter} linked={letterLinks} />
+              ) : block.purpose ? (
+                staffCopy.emails.purposes[block.purpose]
+              ) : (
+                <Muted>{staffCopy.emails.notRecorded}</Muted>
+              )}
+            </td>
             <td>{block.refused}</td>
             <td>
               <UnblockForm block={block} action={unblock} />

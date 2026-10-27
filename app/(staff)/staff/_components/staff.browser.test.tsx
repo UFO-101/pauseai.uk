@@ -877,6 +877,7 @@ describe("PoliticianDetails", () => {
       staffCopy.countries.england,
       MP.city,
       staffCopy.politicians.noEmail,
+      MP.salutation,
       MP.notes,
       staffCopy.politician.sources.staff,
     ]);
@@ -1033,6 +1034,7 @@ describe("PoliticianDetails", () => {
       staffCopy.personStatuses.in_office,
       MP.party,
       MP.email,
+      MP.salutation,
       `${staffCopy.politician.sources.airtable}${staffCopy.politician.editInAirtable}`,
     ]);
     // The sender leads to their supporter once they're one; the letters and replies sit among the audit log's entries by time.
@@ -1346,6 +1348,7 @@ describe("EmailBlocksTable", () => {
               { id: 2, name: "B" },
             ],
           },
+          { ...exampleBlock, address: "unknown@example.org", letter: null, purpose: null },
         ]}
         unblock={fn}
         letterLinks
@@ -1366,6 +1369,10 @@ describe("EmailBlocksTable", () => {
     const complained = page.getByRole("row").filter({ hasText: exampleComplaint.address });
     await expect.element(complained.getByText(staffCopy.emails.cantReset)).toBeVisible();
     await expect.element(complained.getByText("A, B")).toBeVisible();
+    // What the email was: a letter, another of ours, or one the site has no record of.
+    await expect.element(complained.getByText(staffCopy.emails.purposes["forwarded-reply"])).toBeVisible();
+    const unknown = page.getByRole("row").filter({ hasText: "unknown@example.org" });
+    await expect.element(unknown.getByText(staffCopy.emails.notRecorded)).toBeVisible();
     // Without a note the browser won't send it; with one, it does.
     const note = bounced.getByLabelText(staffCopy.emails.note);
     expect((note.element() as HTMLInputElement).required).toBe(true);
@@ -1399,7 +1406,7 @@ describe("EmailProblemsTable", () => {
     await expect.element(soft.getByText(staffCopy.emails.kinds.soft)).toBeVisible();
     await expect.element(soft.getByText(staffCopy.emails.purposes["forwarded-reply"])).toBeVisible();
     await expect.element(complaint.getByText(staffCopy.emails.kinds.complaint)).toBeVisible();
-    expect(complaint.getByRole("cell").last().element().textContent).toBe("");
+    await expect.element(complaint.getByText(staffCopy.emails.notRecorded)).toBeVisible();
   });
 
   it("names a letter without linking to it, without letter links", async () => {
