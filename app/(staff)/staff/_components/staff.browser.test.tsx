@@ -608,7 +608,7 @@ describe("StaffAccountsTable", () => {
       `21 Oct 2026, 10:30 ${copy.addedByLogin}`,
       "21 Oct 2026, 10:30",
       "21 Oct 2026, 11:00",
-      "1",
+      `1${copy.endSessions}`,
     ]);
   });
 

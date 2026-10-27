@@ -6,9 +6,8 @@
   justify-items: start;
 }
 
-/* A row's buttons: ending its sessions, then removing it, side by side,
-   each on one line. */
-.buttons {
+/* How many sessions a row has open, and the button beside it that ends them, on one line. */
+.sessions {
   display: flex;
   gap: var(--space-3);
   align-items: center;

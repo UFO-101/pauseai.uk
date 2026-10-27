@@ -401,9 +401,9 @@ export const staffCopy = {
     addedByLogin: "by login",
     // For an account that has never logged in or been seen.
     never: "Never",
-    // On each row with sessions open: ends every one; on your own row, it says so, as it logs you out too.
-    endSessions: "Log them out",
-    endMySessions: "Log me out",
+    // Beside how many sessions a row has open: ends every one; on your own row, it says they're yours, as it logs you out too.
+    endSessions: "End all",
+    endMySessions: "End all mine",
     // Under the last row: the field for the address of someone new (its
     // label, read aloud) and its button, which adds them as a row, saved
     // with the others.
