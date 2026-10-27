@@ -423,6 +423,9 @@ export const staffCopy = {
     noEmail: "No email",
     // On a politician whose address is blocked (/staff/politicians/blocked-emails).
     emailBlocked: "Email blocked",
+    // The button on an ask staff record by hand.
+    markSigned: "Mark as signed",
+    unmarkSigned: "Remove signature",
   },
   fields: {
     name: "Name",
@@ -451,9 +454,10 @@ export const staffCopy = {
     count: (status: string, n: number) => `${status}: ${n}`,
   },
   politician: {
-    statusesTitle: "Responses to things asked",
-    // Under an ask's title: who asked it, by staffCopy.asks.askedBy, then its date.
-    askedBy: (who: string) => `${who} asked`,
+    statusesTitle: "Asks",
+    // Over an ask's title, leading into it: who asked them, by staffCopy.asks.askedBy, if we know, and to do what.
+    askedThem: (who: string, kind: string) =>
+      `${who ? `${who} asked` : "Asked"} them to ${kind === "letter" ? "sign" : "attend"}`,
     // The box at the top of their page: where they came from, and each campaign's status.
     source: "Source",
     sources: {
@@ -464,9 +468,12 @@ export const staffCopy = {
     // A status: who set it and when; the ask's title heads the line. An import's is "from" it.
     setBy: (who: string, when: string) => `set by ${who}, ${when}`,
     fromImport: { airtable: "from Airtable", controlai: "from ControlAI's letter" } as Record<string, string>,
-    // The form on an ask staff record: its name, the note's field, and Save. A letter's is a Signed tick box.
+    // The form on an ask staff record: its name, the note's field and what it asks, and Save for an event's answer.
     setStatus: "Set status",
     note: "Note",
+    notePlaceholder: "How do you know?",
+    // Under the answer to an ask staff record: opens the form to change it.
+    edit: "Edit",
     save: "Save",
     // The fields of the box at the top.
     status: "Status",

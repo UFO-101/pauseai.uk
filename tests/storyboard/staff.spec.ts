@@ -155,9 +155,10 @@ test("staff log in, set a status that shows on /campaigns, and log out", async (
   const card = page.getByRole("group", { name: PM_LETTER });
   await expect(card.getByText(staffCopy.statuses.none)).toBeVisible();
   await frame(page, "Polly Placeholder's page: the asks beside her details");
-  await card.getByRole("checkbox", { name: staffCopy.statuses.signed }).check();
+  await card.getByText(staffCopy.politician.edit, { exact: true }).click();
   await card.getByLabel(staffCopy.politician.note).fill("Told us at the march");
-  await card.getByRole("button", { name: staffCopy.politician.save }).click();
+  await frame(page, "Edit opens the form, with a note of how we know");
+  await card.getByRole("button", { name: staffCopy.politicians.markSigned }).click();
   await expect(card.locator("[class*=answer]")).toHaveText(new RegExp(`^${staffCopy.statuses.signed}`));
   await expect(card.getByText(/Told us at the march/)).toBeVisible();
   await frame(page, "Polly Placeholder marked as signed");
@@ -222,8 +223,9 @@ test("the MPs signed tile leads to the one who signed, then to everyone who sign
   await page.goto(`${BASE}/staff/politicians`);
   await page.getByRole("link", { name: "Polly Placeholder" }).click();
   const letter = page.getByRole("group", { name: PM_LETTER });
-  await letter.getByRole("checkbox", { name: staffCopy.statuses.signed }).check();
-  await letter.getByRole("button", { name: staffCopy.politician.save }).click();
+  await letter.getByText(staffCopy.politician.edit, { exact: true }).click();
+  await letter.getByLabel(staffCopy.politician.note).fill("They emailed");
+  await letter.getByRole("button", { name: staffCopy.politicians.markSigned }).click();
   await expect(letter.locator("[class*=answer]")).toHaveText(new RegExp(`^${staffCopy.statuses.signed}`));
 
   // One signed this week: the tile is their page.

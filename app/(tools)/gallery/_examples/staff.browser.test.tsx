@@ -24,11 +24,14 @@ describe("the staff examples", () => {
 
   it("logs removing a politician's signature on their page", async () => {
     await render(<PoliticianDetailsExample />);
-    await page.getByRole("checkbox", { name: staffCopy.statuses.signed }).click();
-    await page.getByRole("button", { name: staffCopy.politician.save }).click();
+    await page.getByText(staffCopy.politician.edit, { exact: true }).click();
+    await page.getByLabelText(staffCopy.politician.note).fill("Their office wrote");
+    await page.getByRole("button", { name: staffCopy.politicians.unmarkSigned }).click();
     await expect
       .element(log().nth(0))
-      .toHaveTextContent('setStatus({"politicianId":"7","ask":"frontier-ai-letter","note":""})');
+      .toHaveTextContent(
+        'setStatus({"politicianId":"7","ask":"frontier-ai-letter","status":"","note":"Their office wrote"})',
+      );
   });
 
   it("shows a politician's letters without who wrote them", async () => {

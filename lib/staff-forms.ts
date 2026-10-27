@@ -20,16 +20,17 @@ export type StatusForm = { politicianId: number; ask: string; status: AskStatus 
 /**
  * Setting an answer to an ask on a politician's page: only an ask staff
  * record by hand (trackedAsks), and a status some kind of ask allows, or
- * blank to clear it. Whether the ask's kind allows it is the database's to
- * say.
+ * blank to clear it, with a note of how they know. Whether the ask's kind
+ * allows it is the database's to say.
  */
 export function statusFrom(form: FormData): StatusForm | undefined {
   const politicianId = idFrom(form, "politicianId");
   const ask = text(form, "ask");
   const status = text(form, "status");
   const statuses: readonly string[] = Object.values(ASK_STATUSES).flat();
-  if (!politicianId || !trackedAsks.includes(ask) || (status && !statuses.includes(status))) return undefined;
-  return { politicianId, ask, status: (status as AskStatus) || null, note: text(form, "note") };
+  const note = text(form, "note");
+  if (!politicianId || !trackedAsks.includes(ask) || (status && !statuses.includes(status)) || !note) return undefined;
+  return { politicianId, ask, status: (status as AskStatus) || null, note };
 }
 
 export type UnblockForm = { address: string; note: string };

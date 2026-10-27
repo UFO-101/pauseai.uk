@@ -1136,7 +1136,7 @@ describe("PoliticianDetails", () => {
     const letter = row("frontier-ai-letter");
     // Signed, and when, ticked in green.
     const answer = (group: typeof letter) => group.element().querySelector("[class*=answer]")!;
-    expect(answer(letter).textContent).toBe(`${staffCopy.statuses.signed}1 Oct 2026`);
+    expect(answer(letter).textContent).toBe(`${staffCopy.statuses.signed}1 Oct 2026${staffCopy.politician.edit}`);
     expect(answer(letter).className).toMatch(/yes/);
     // The ask's title links to the letter; who asked it and when.
     await expect
@@ -1145,7 +1145,10 @@ describe("PoliticianDetails", () => {
     await expect
       .element(
         letter.getByText(
-          staffCopy.politician.askedBy(`${staffCopy.asks.askedBy.supporters} and ${staffCopy.asks.askedBy.pauseai}`),
+          staffCopy.politician.askedThem(
+            `${staffCopy.asks.askedBy.supporters} and ${staffCopy.asks.askedBy.pauseai}`,
+            "letter",
+          ),
         ),
       )
       .toBeVisible();
@@ -1158,18 +1161,19 @@ describe("PoliticianDetails", () => {
     expect(answer(event).className).not.toMatch(/yes/);
     await expect.element(event.getByText(staffCopy.politician.fromImport.airtable)).toBeVisible();
     await expect
-      .element(event.getByText(`${staffCopy.politician.askedBy(staffCopy.asks.askedBy.pauseai)}, 1 Nov 2026`))
+      .element(
+        event.getByText(`${staffCopy.politician.askedThem(staffCopy.asks.askedBy.pauseai, "event")} · 1 Nov 2026`),
+      )
       .toBeVisible();
     expect(event.getByRole("button").all()).toHaveLength(0);
 
-    // Unticked, the signature goes.
-    const signedBox = letter.getByRole("checkbox", { name: staffCopy.statuses.signed });
-    await expect.element(signedBox).toBeChecked();
-    await signedBox.click();
+    // The form, behind Edit.
+    expect(letter.getByRole("button", { name: staffCopy.politicians.unmarkSigned }).query()).toBeNull();
+    await letter.getByText(staffCopy.politician.edit, { exact: true }).click();
     await letter.getByLabelText(staffCopy.politician.note).fill("Their office wrote");
-    await letter.getByRole("button", { name: staffCopy.politician.save }).click();
+    await letter.getByRole("button", { name: staffCopy.politicians.unmarkSigned }).click();
     await vi.waitFor(() => expect(sent).toHaveLength(1));
-    expect(sent[0]).toEqual({ politicianId: "7", ask: "frontier-ai-letter", note: "Their office wrote" });
+    expect(sent[0]).toEqual({ politicianId: "7", ask: "frontier-ai-letter", status: "", note: "Their office wrote" });
   });
 
   it("shows an answer neither yes nor no plainly, and an ask with no link, asker or date by its title alone", async () => {
@@ -1189,7 +1193,7 @@ describe("PoliticianDetails", () => {
     expect(answer.textContent).toBe(staffCopy.statuses.tentative);
     expect(answer.className).not.toMatch(/yes/);
     expect(row.getByRole("link").all()).toHaveLength(0);
-    expect(row.element().textContent).not.toContain(staffCopy.politician.askedBy(""));
+    await expect.element(row.getByText(staffCopy.politician.askedThem("", "event"), { exact: true })).toBeVisible();
   });
 
   it("offers to mark them signed where they haven't", async () => {
@@ -1197,10 +1201,15 @@ describe("PoliticianDetails", () => {
     await render(<PoliticianDetails {...none} politician={{ ...MP, statuses: {} }} setStatus={fn} unblock={vi.fn()} />);
     const letter = page.getByRole("group", { name: ask("frontier-ai-letter").title });
     await expect.element(letter.getByText(staffCopy.statuses.none)).toBeVisible();
-    await letter.getByRole("checkbox", { name: staffCopy.statuses.signed }).click();
-    await letter.getByRole("button", { name: staffCopy.politician.save }).click();
+    // Not without a note of how they know.
+    await letter.getByText(staffCopy.politician.edit, { exact: true }).click();
+    const mark = letter.getByRole("button", { name: staffCopy.politicians.markSigned });
+    await mark.click();
+    expect(sent).toHaveLength(0);
+    await letter.getByLabelText(staffCopy.politician.note).fill("They emailed");
+    await mark.click();
     await vi.waitFor(() => expect(sent).toHaveLength(1));
-    expect(sent[0]).toEqual({ politicianId: "7", ask: "frontier-ai-letter", status: "signed", note: "" });
+    expect(sent[0]).toEqual({ politicianId: "7", ask: "frontier-ai-letter", status: "signed", note: "They emailed" });
   });
 
   it("chooses an event's answer from a list, where staff record it", async () => {
@@ -1217,13 +1226,22 @@ describe("PoliticianDetails", () => {
       />,
     );
     const row = page.getByRole("group", { name: "Example Event" });
-    await expect.element(row.getByText(staffCopy.statuses.noAnswer, { exact: true }).first()).toBeVisible();
+    expect(row.element().querySelector("[class*=answer]")!.textContent).toBe(
+      `${staffCopy.statuses.noAnswer}${staffCopy.politician.edit}`,
+    );
+    await row.getByText(staffCopy.politician.edit, { exact: true }).click();
     const select = row.getByRole("combobox", { name: staffCopy.politician.status });
     await expect.element(select).toHaveValue("");
     await select.selectOptions("going");
+    await row.getByLabelText(staffCopy.politician.note).fill("Their office said");
     await row.getByRole("button", { name: staffCopy.politician.save }).click();
     await vi.waitFor(() => expect(sent).toHaveLength(1));
-    expect(sent[0]).toEqual({ politicianId: "7", ask: "frontier-ai-letter", status: "going", note: "" });
+    expect(sent[0]).toEqual({
+      politicianId: "7",
+      ask: "frontier-ai-letter",
+      status: "going",
+      note: "Their office said",
+    });
     // Going: ticked in green, the list starting from their answer.
     await render(
       <PoliticianDetails
@@ -1239,7 +1257,7 @@ describe("PoliticianDetails", () => {
     );
     const going = page.getByRole("group", { name: "Example Event" }).last();
     expect(going.element().querySelector("[class*=answer]")!.className).toMatch(/yes/);
-    await expect.element(going.getByRole("combobox")).toHaveValue("going");
+    expect(going.element().querySelector("select")!.value).toBe("going");
   });
 
   it("says in one place that letters aren't being sent, why, what to check, and unblocks it with a note", async () => {

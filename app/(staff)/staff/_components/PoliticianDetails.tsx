@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { SubmitButton } from "@/components/ui/SubmitButton";
-import { Checkbox, Select, TextInput } from "@/components/ui/Controls";
+import { Select, TextInput } from "@/components/ui/Controls";
 import { FilterForm } from "@/components/ui/Form";
 import { ASK_STATUSES } from "@/lib/asks";
 import { trackedAsks } from "@/lib/email-your-mp";
@@ -181,9 +181,8 @@ function asksOf(politician: Politician, asks: Ask[]): Ask[] {
 }
 
 /**
- * Setting their answer to an ask staff record, with a note: a Signed tick
- * box for a letter, unticked to take it away; one of an event's answers,
- * or none.
+ * Setting their answer to an ask staff record, with a note: Signed, or
+ * taking it away, for a letter; one of an event's answers, or none.
  */
 function StatusForm({
   politician,
@@ -195,30 +194,39 @@ function StatusForm({
   setStatus: (form: FormData) => void | Promise<void>;
 }) {
   const status = politician.statuses[ask.slug];
+  const note = (
+    <span className={styles.note}>
+      <TextInput name="note" aria-label={copy.note} placeholder={copy.notePlaceholder} required />
+    </span>
+  );
   return (
     <FilterForm action={setStatus} aria-label={`${copy.setStatus}: ${ask.title}`}>
       <input type="hidden" name="politicianId" value={politician.id} />
       <input type="hidden" name="ask" value={ask.slug} />
       {ask.kind === "letter" ? (
-        <Checkbox name="status" value="signed" defaultChecked={!!status}>
-          {staffCopy.statuses.signed}
-        </Checkbox>
+        <>
+          <input type="hidden" name="status" value={status ? "" : "signed"} />
+          {note}
+          <SubmitButton variant={status ? "ghost" : "primary"} size="small">
+            {status ? staffCopy.politicians.unmarkSigned : staffCopy.politicians.markSigned}
+          </SubmitButton>
+        </>
       ) : (
-        <Select name="status" defaultValue={status?.status ?? ""} aria-label={copy.status}>
-          <option value="">{staffCopy.statuses.noAnswer}</option>
-          {ASK_STATUSES.event.map((value) => (
-            <option key={value} value={value}>
-              {staffCopy.statuses[value]}
-            </option>
-          ))}
-        </Select>
+        <>
+          <Select name="status" defaultValue={status?.status ?? ""} aria-label={copy.status}>
+            <option value="">{staffCopy.statuses.noAnswer}</option>
+            {ASK_STATUSES.event.map((value) => (
+              <option key={value} value={value}>
+                {staffCopy.statuses[value]}
+              </option>
+            ))}
+          </Select>
+          {note}
+          <SubmitButton variant="primary" size="small">
+            {copy.save}
+          </SubmitButton>
+        </>
       )}
-      <span className={styles.note}>
-        <TextInput name="note" aria-label={copy.note} placeholder={copy.note} />
-      </span>
-      <SubmitButton variant="ghost" size="small">
-        {copy.save}
-      </SubmitButton>
     </FilterForm>
   );
 }
@@ -240,10 +248,11 @@ function AskTitle({ ask }: { ask: Ask }) {
 }
 
 /**
- * One ask, a row of the asks card: their answer and its date in a column
- * of its own, a yes ticked in green and a no crossed; beside it the ask's
- * title, who asked and when, the note and who set the answer, or which
- * import; and for an ask staff record, the form to change it.
+ * One ask, a row of the asks card: who asked them to do what, and when,
+ * leading into the ask's title; the note and who set the answer, or which
+ * import; beside it, in a column of its own, their answer and its date, a
+ * yes ticked in green and a no crossed, and for an ask staff record, Edit
+ * under it, which opens the form to change it in a bubble below.
  */
 function AskRow({
   politician,
@@ -257,25 +266,48 @@ function AskRow({
   const status = politician.statuses[ask.slug];
   const none = ask.kind === "letter" ? staffCopy.statuses.none : staffCopy.statuses.noAnswer;
   const who = new Intl.ListFormat("en-GB").format(ask.askedBy.map((asker) => staffCopy.asks.askedBy[asker]));
-  const asked = [who && copy.askedBy(who), ask.date && staffDate(ask.date)].filter(Boolean).join(", ");
+  const asked = [copy.askedThem(who, ask.kind), ask.date && staffDate(ask.date)].filter(Boolean).join(" · ");
+  const tracked = trackedAsks.includes(ask.slug);
+  const editId = `edit-${ask.slug}`;
   const tone = status && (YES.includes(status.status) ? styles.yes : NO.includes(status.status) ? styles.no : "");
   return (
     <div className={styles.ask} role="group" aria-label={ask.title}>
-      <div className={`${styles.answer} ${tone || ""}`}>
-        <span>{status ? staffCopy.statuses[status.status] : none}</span>
-        {status?.date && <span className={styles.askMeta}>{staffDate(status.date)}</span>}
-      </div>
       <div className={styles.asked}>
+        <span className={styles.askMeta}>{asked}</span>
         <AskTitle ask={ask} />
-        {asked && <span className={styles.askMeta}>{asked}</span>}
         {status && (
           <span className={styles.askMeta}>
             {status.note && `${status.note} · `}
             {copy.fromImport[status.updatedBy] ?? copy.setBy(status.updatedBy, staffDate(status.updatedAt))}
           </span>
         )}
-        {trackedAsks.includes(ask.slug) && <StatusForm politician={politician} ask={ask} setStatus={setStatus} />}
       </div>
+      <div className={`${styles.answer} ${tone || ""}`}>
+        <span>{status ? staffCopy.statuses[status.status] : none}</span>
+        {status?.date && <span className={styles.askMeta}>{staffDate(status.date)}</span>}
+        {tracked && (
+          <button
+            type="button"
+            className={styles.edit}
+            popoverTarget={editId}
+            style={{ anchorName: `--${editId}` } as React.CSSProperties}
+          >
+            {copy.edit}
+          </button>
+        )}
+      </div>
+      {tracked && (
+        // Keyed on the answer, so a change made from it closes it and empties the note.
+        <div
+          key={status?.updatedAt ?? "none"}
+          id={editId}
+          popover="auto"
+          className={styles.editPopover}
+          style={{ positionAnchor: `--${editId}` } as React.CSSProperties}
+        >
+          <StatusForm politician={politician} ask={ask} setStatus={setStatus} />
+        </div>
+      )}
     </div>
   );
 }

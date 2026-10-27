@@ -29,7 +29,8 @@ describe("statusFrom", () => {
     expect(statusFrom(form({ ...base, status: "" }))!.status).toBeNull();
   });
 
-  it("refuses an unknown politician, ask or status", () => {
+  it("refuses an unknown politician, ask or status, or no note", () => {
+    expect(statusFrom(form({ ...base, note: " " }))).toBeUndefined();
     expect(statusFrom(form({ ...base, politicianId: "x" }))).toBeUndefined();
     expect(statusFrom(form({ ...base, ask: "nope" }))).toBeUndefined();
     expect(statusFrom(form({ ...base, status: "maybe" }))).toBeUndefined();
