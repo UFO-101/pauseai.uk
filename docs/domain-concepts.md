@@ -240,10 +240,11 @@ October 2026. Two things tell us:
   unsubscribe, a block or a spam report. `calendar.person.subscribed`
   closes the row, but Luma sends it for a new follower, not for one coming
   back.
-- The Luma import's full pass over the contacts, every 20 hours
-  (`recordContactsPass`). A contact it doesn't list is opted out, as
-  `luma-contacts`, from when it noticed, unless they already are; an open
-  opt-out begun before it listed them again is closed. That catches what
+- The end of each of the Luma import's full passes over the contacts,
+  one after another, ten pages a run (`recordContactsPass`). A contact it
+  doesn't list is opted out, as `luma-contacts`, from when it noticed,
+  unless they already are; an open opt-out begun before it listed them
+  again is closed. That catches what
   the webhook doesn't: returns, removals, blocks, and anyone who left
   before the webhook was set up on 22 Oct 2026.
 

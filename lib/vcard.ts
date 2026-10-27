@@ -2,6 +2,7 @@
 // phones, and WhatsApp Business through them, import): a card each, every
 // name starting "PauseAI <code> - ", the same code for the whole file, so
 // one search on a phone finds everyone one download added.
+import { defaultRandom } from "./shuffle";
 
 /** What a card says of someone: the standard fields we have something for. */
 export type Contact = {
@@ -23,8 +24,8 @@ export type Contact = {
 /** Letters and digits that don't look like each other: no 0 or O, no 1, I or L. */
 const CODE_LETTERS = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
 
-/** A short random code for a download's cards: four letters and digits, about 900,000 of them. */
-export function vcardCode(random: () => number = Math.random): string {
+/** A short random code for a download's cards: four letters and digits, about 900,000 of them. The same in every fixture build (lib/shuffle.ts). */
+export function vcardCode(random: () => number = defaultRandom()): string {
   return Array.from({ length: 4 }, () => CODE_LETTERS[Math.floor(random() * CODE_LETTERS.length)]).join("");
 }
 

@@ -312,7 +312,7 @@ test("the Luma import copies the calendar's events, guests and contacts, and fin
   await page.getByRole("heading", { name: staffCopy.luma.title }).scrollIntoViewIfNeeded();
   await frame(page, "the Luma import's first run: every event, guest and contact copied");
 
-  // Within the hour, nothing is due again: one page of events and one of contacts, both unchanged.
+  // Within the hour, no event is due again: one page of events, unchanged, and the next pass over the contacts' two pages.
   await page.getByRole("button", { name: staffCopy.luma.importNow }).click();
   const again = {
     ...first,
@@ -323,7 +323,7 @@ test("the Luma import copies the calendar's events, guests and contacts, and fin
     contacts: 0,
     supportersAdded: 0,
     linked: 0,
-    requests: 2,
+    requests: 3,
   };
   await expect(page.getByText(staffCopy.luma.result(again))).toBeVisible();
   await expect(page.getByText(staffCopy.runs.status.unchanged)).toBeVisible();

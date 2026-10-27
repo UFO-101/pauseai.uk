@@ -4,6 +4,7 @@ import { query, transaction, type Queryable } from "./db";
 import { keepingFailure, recordRun } from "./import-runs";
 import { recordContactsPass } from "./opt-outs";
 import { refreshSupporterFacts } from "./supporter-facts";
+import { lookUpPlaces } from "./supporter-places";
 import { linkSupporters } from "./supporters";
 import { LumaRateLimited, type LumaPage } from "./outside-services/luma-api";
 import {
@@ -17,7 +18,8 @@ import { type EventGuest, listEventGuests } from "./outside-services/luma-guests
 // Copies our Luma calendar into luma_events, luma_people and luma_guests:
 // every public event, the guests who registered for each, and the
 // calendar's contacts, and from them who has left the calendar or come
-// back (recordContactsPass). Hourly (app/api/cron/import-luma) or when staff
+// back (recordContactsPass); then where new supporters and events are
+// (supporter-places.ts). Hourly (app/api/cron/import-luma) or when staff
 // ask, each run in the import log (import-runs.ts, as "import-luma").
 //
 // A run has about 20 seconds (Netlify's scheduled functions stop at 30) and
@@ -38,8 +40,7 @@ const LIVE_DAYS = 3;
 const SETTLED_DAYS = 30;
 /** A full pass over every event, for edits to old ones and deletions, this often. */
 const FULL_EVENTS_HOURS = 20;
-/** A full pass over every contact this often, a few pages each run: it's how we see who left or came back. */
-const FULL_CONTACTS_HOURS = 20;
+/** The most pages of contacts a run reads. Passes over every contact follow one another, this many pages a run: it's how we see who left or came back. */
 const CONTACT_PAGES_PER_RUN = 10;
 
 type ImportList = "events" | "contacts";
@@ -326,50 +327,61 @@ async function startContactsPass(db: Queryable): Promise<Date> {
 }
 
 /**
- * The contacts, newest first, until a page holds nothing new. Every 20
- * hours a full pass, a few pages a run from a kept cursor, for anyone
- * missed; when it ends, the contacts it didn't list have left the calendar
- * and those it did may have come back (recordContactsPass). A pass whose
- * start wasn't noted ends without that. A cursor Luma no longer honours is
- * dropped, so the next run starts the pass again. Says how many contacts
- * and opt-outs changed, how many pages it read, and whether a full pass is
- * still going.
+ * The contacts: one full pass after another, a few pages a run from a kept
+ * cursor, so that within a few hours of anyone leaving or coming back,
+ * a pass ends that saw it. When a pass ends, the contacts it didn't list
+ * have left the calendar and those it did may have come back
+ * (recordContactsPass). A pass whose start wasn't noted ends without that.
+ * Partway through a pass, a run first reads the newest, until a page holds
+ * nothing new, so a new contact doesn't wait for the pass to come round. A
+ * cursor Luma no longer honours is dropped, so the next run starts the pass
+ * again. Says how many contacts and opt-outs changed, and how many pages it
+ * read.
  */
-async function importContacts(
-  budget: Budget,
-  db: Queryable,
-): Promise<{ changed: number; pages: number; going: boolean }> {
+async function importContacts(budget: Budget, db: Queryable): Promise<{ changed: number; pages: number }> {
   const [state] = await query<{ cursor: string; pass_started_at: Date | null }>(
     "SELECT cursor, pass_started_at FROM luma_import_state WHERE list = $1",
     ["contacts"],
     db,
   );
   let cursor: string | undefined = state?.cursor || undefined;
-  const full = !!cursor || (await fullPassDue("contacts", `${FULL_CONTACTS_HOURS} hours`, db));
-  // A pass beginning now notes when; one going on has noted it.
-  const passStartedAt = full && !cursor ? await startContactsPass(db) : state?.pass_started_at;
   let changed = 0;
   let pages = 0;
+  if (cursor) {
+    let newest: string | undefined;
+    do {
+      const page = await budget.page(() => listCalendarContacts(newest));
+      if (!page) break;
+      const changedOnPage = await upsertContacts(page.entries, db);
+      changed += changedOnPage;
+      newest = page.nextCursor;
+      pages++;
+      if (changedOnPage === 0) break;
+    } while (newest && pages < CONTACT_PAGES_PER_RUN);
+  }
+  // A pass beginning now notes when; one going on has noted it.
+  const passStartedAt = cursor ? state.pass_started_at : await startContactsPass(db);
   // Only reading the last page finishes a pass: a run out of budget before
   // its first page hasn't read any.
   let finished = false;
   try {
-    do {
+    while (pages < CONTACT_PAGES_PER_RUN) {
       const page = await budget.page(() => listCalendarContacts(cursor));
       if (!page) break;
-      const changedOnPage = await upsertContacts(page.entries, db);
-      changed += changedOnPage;
+      changed += await upsertContacts(page.entries, db);
       cursor = page.nextCursor;
-      finished = cursor === undefined;
       pages++;
-      if (!full && changedOnPage === 0) return { changed, pages, going: false };
-    } while (cursor && pages < CONTACT_PAGES_PER_RUN);
+      if (cursor === undefined) {
+        finished = true;
+        break;
+      }
+    }
   } catch (error) {
-    throw full ? new ContactsPassFailed(error) : error;
+    throw new ContactsPassFailed(error);
   }
-  if (full) await saveState("contacts", cursor ?? "", finished, db);
-  if (full && finished && passStartedAt) changed += await recordContactsPass(passStartedAt, db);
-  return { changed, pages, going: full && !finished };
+  await saveState("contacts", cursor ?? "", finished, db);
+  if (finished && passStartedAt) changed += await recordContactsPass(passStartedAt, db);
+  return { changed, pages };
 }
 
 /**
@@ -426,16 +438,24 @@ function run(startedBy: string, budgetMs: number): Promise<LumaImportResult> {
     const contacts = await importContacts(budget, db);
     result.contacts = contacts.changed;
     result.contactPages = contacts.pages;
-    if (contacts.going) result.contactsPassGoing = true;
     // Anyone new, from any source, gets their supporter; letters written since the last run too.
     const links = await linkSupporters(db);
     // A record already linked may have changed, so everyone's facts, not only the newly linked.
     await refreshSupporterFacts(db);
     result.supportersAdded = links.supportersAdded;
     result.linked = links.linked;
+    result.places = await lookUpPlaces(db);
     result.requests = budget.requests;
     if (budget.stoppedBy) result.stoppedBy = budget.stoppedBy;
-    const changed = result.events + result.guestsChanged + result.people + result.contacts + result.linked > 0;
+    const changed =
+      result.events +
+        result.guestsChanged +
+        result.people +
+        result.contacts +
+        result.linked +
+        result.places.postcodes +
+        result.places.towns >
+      0;
     await recordRun(JOB, startedBy, changed ? "ok" : "unchanged", result, db);
     return result;
   });
