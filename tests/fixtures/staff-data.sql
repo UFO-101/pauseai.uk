@@ -276,11 +276,12 @@ INSERT INTO email_sends (at, purpose, letter_id, address, outcome, message_id) V
 
 -- Delivery problems: the bounces that blocked Bouncy's address, a soft
 -- bounce that blocked nothing, a complaint that blocked the sender, and a
--- block from the week before last on an MP's old address.
+-- block from the week before last on an MP's old address, bouncing an email
+-- the site has no record of sending, so of no type we know.
 INSERT INTO email_problems (id, at, address, message_id, kind, reason, can_reset, details) OVERRIDING SYSTEM VALUE VALUES
   (1, now() - interval '12 days' + interval '1 minute', 'no-such-mailbox@pauseai.uk', NULL, 'hard', 'The address does not exist', true, '{"type": "HardBounce"}'),
   (2, now() - interval '10 days' + interval '1 minute', 'no-such-mailbox@pauseai.uk', NULL, 'hard', 'The address does not exist', true, '{"type": "HardBounce"}'),
-  (3, now() - interval '9 days', 'gordon.gone.mp@parliament.uk', NULL, 'hard', 'Mailbox closed', true, '{"type": "HardBounce"}'),
+  (3, now() - interval '9 days', 'gordon.gone.mp@parliament.uk', 'not-sent-by-the-site', 'hard', 'Mailbox closed', true, '{"type": "HardBounce"}'),
   (4, now() - interval '5 days' + interval '3 hours', 'grumpy@example.com', NULL, 'complaint', 'Marked as spam', false, '{"type": "SpamComplaint"}'),
   (5, now() - interval '4 days', 'polly.placeholder.mp@parliament.uk', NULL, 'soft', 'Mailbox full', true, '{"type": "SoftBounce"}'),
   (6, now() - interval '3 days' + interval '1 minute', 'no-such-mailbox@pauseai.uk', NULL, 'hard', 'The address does not exist', true, '{"type": "HardBounce"}');

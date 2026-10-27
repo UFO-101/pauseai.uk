@@ -31,7 +31,7 @@ export default function EmailBlocksTable({
           <th>{columns.since}</th>
           <th>{columns.reason}</th>
           <th>{columns.whose}</th>
-          <th>{columns.email}</th>
+          <th>{columns.sent}</th>
           <th>{columns.refused}</th>
           <th />
         </tr>

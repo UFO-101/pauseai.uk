@@ -576,8 +576,7 @@ export const staffCopy = {
       whose: "Whose",
       refused: "Not sent since",
       at: "When",
-      email: "Email",
-      // In the history: what the email that bounced was, a letter or one of ours.
+      // What the email that bounced was, a letter or one of ours.
       sent: "Type of email",
     },
     // The email was a letter: before the name of the politician it was to, the two linked to the letter.
