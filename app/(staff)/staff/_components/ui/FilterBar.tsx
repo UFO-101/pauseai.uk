@@ -34,11 +34,11 @@ export type Filter = {
 
 const copy = staffCopy.filters;
 
-/** A value of `filter` in words, as its chip says it: its name and choice, or that it's left out. */
-function chipWords(filter: Filter, value: string): string {
+/** A value of `filter` in words: its name and choice, joined by `join`, or that it's left out. */
+function valueWords(filter: Filter, value: string, join: string): string {
   const { value: plain, not } = notValue(value);
   const choice = filter.options.find((o) => o.value === plain)?.label ?? plain;
-  return not ? copy.notChip(filter.label, choice) : `${filter.label}: ${choice}`;
+  return not ? copy.notChip(filter.label, choice) : `${filter.label}${join}${choice}`;
 }
 
 /**
@@ -48,7 +48,7 @@ function chipWords(filter: Filter, value: string): string {
 export function filterWords(filters: Filter[], values: Params, search: string): string[] {
   const words = values[search] ? [`${staffCopy.search} ${firstOf(values[search])}`] : [];
   for (const filter of filters) {
-    for (const value of valuesOf(values[filter.name])) words.push(chipWords(filter, value));
+    for (const value of valuesOf(values[filter.name])) words.push(valueWords(filter, value, " "));
   }
   return words;
 }
@@ -314,7 +314,7 @@ export default function FilterBar({
             );
           }
           if (filter.place) return chip(filter, value, placeLabel(filter, value));
-          return chosen(filter.name).map((one) => chip(filter, one, chipWords(filter, one)));
+          return chosen(filter.name).map((one) => chip(filter, one, valueWords(filter, one, ": ")));
         })}
       {offered.length > 0 &&
         (negatable.length > 0 ? (
