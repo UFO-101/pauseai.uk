@@ -69,9 +69,8 @@ export function syncEmails(startedBy: string): Promise<EmailSyncResult> {
           db,
         );
         await query(
-          `INSERT INTO pauseai_letters (id, mailing_id, airtable_id, personalised, ai_generated)
-           VALUES ($1, $2, $3, $4, $5)`,
-          [id, mailingIds.get(email.mailings[0]), email.airtableId, email.personalised, email.aiGenerated],
+          `INSERT INTO pauseai_letters (id, mailing_id, airtable_id, personalised) VALUES ($1, $2, $3, $4)`,
+          [id, mailingIds.get(email.mailings[0]), email.airtableId, email.personalised],
           db,
         );
         result.added++;

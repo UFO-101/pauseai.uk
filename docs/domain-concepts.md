@@ -132,7 +132,7 @@ adds what its kind has, joined as notable people are:
   (`mailings`), which may make an ask. Those sent before the site could send
   them are copied nightly from Airtable's Emails table
   (`lib/server/emails-sync.ts`), from 2026 on: who, when, and whether it was
-  personalised or written with AI, but no text. Each mailing there is a
+  personalised, but no text. Each mailing there is a
   tick box, named by `mailings.airtable_field`; an email with no box we know
   is held back and reported until a migration adds its mailing.
 

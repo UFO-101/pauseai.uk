@@ -119,24 +119,25 @@ function letterEntries({ senders, letters }: PoliticianLetters): Entry[] {
   );
 }
 
-/** PauseAI's letters, each a line: the mailing, and whether it was personalised or written with AI. */
+/** PauseAI's letters, each a line: the mailing, and whether it was personalised. */
 function pauseaiEntries(letters: PauseaiLetter[]): Entry[] {
   return letters.map((letter) => ({
     key: `pauseai-${letter.id}`,
     at: letter.at,
     what: (
       <>
-        {copy.history["pauseai-letter"]} {letter.mailing}
-        <Muted>
-          {letter.personalised && ` · ${copy.personalised}`}
-          {letter.aiGenerated && ` · ${copy.aiGenerated}`}
-        </Muted>
+        {copy.history["pauseai-letter"]} <Link href={`/staff/mailings/${letter.mailingId}`}>{letter.mailing}</Link>
+        <Muted>{letter.personalised && ` · ${copy.personalised}`}</Muted>
       </>
     ),
   }));
 }
 
-/** What an entry of the audit log about them says, beyond its kind: the status, the note, the reason. */
+/**
+ * What an entry of the audit log about them says, beyond its kind: the
+ * status, the note, the reason. An ask leads to everyone who answered it;
+ * a blocked address, to the politicians' blocked emails, searched for it.
+ */
 function Detail({ change, asks }: { change: PoliticianChange; asks: Ask[] }) {
   const { details } = change;
   const text = (key: string) => (typeof details[key] === "string" ? (details[key] as string) : "");
@@ -151,7 +152,9 @@ function Detail({ change, asks }: { change: PoliticianChange; asks: Ask[] }) {
           {words.before}
           {/* Logged by ask, or, before asks, by campaign. */}
           {details.ask ? (
-            (asks.find((ask) => ask.slug === details.ask)?.title ?? text("ask"))
+            <Link href={`/staff/politicians?ask=${encodeURIComponent(text("ask"))}`}>
+              {asks.find((ask) => ask.slug === details.ask)?.title ?? text("ask")}
+            </Link>
           ) : (
             <CampaignName slug={text("campaign")} />
           )}
@@ -176,7 +179,18 @@ function Detail({ change, asks }: { change: PoliticianChange; asks: Ask[] }) {
         </>
       );
     case "block address":
-      return <>{staffCopy.emails.kinds[text("kind")] ?? text("kind")}</>;
+    case "unblock address": {
+      const kind = staffCopy.emails.kinds[text("kind")] ?? text("kind");
+      // An unblock has a note, and a block the kind of problem.
+      return (
+        <>
+          <Link href={`/staff/politicians/blocked-emails?q=${encodeURIComponent(text("address"))}`}>
+            {text("address")}
+          </Link>
+          <Muted> · {kind || text("note")}</Muted>
+        </>
+      );
+    }
     default:
       return <>{text("note")}</>;
   }

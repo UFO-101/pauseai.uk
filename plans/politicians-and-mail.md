@@ -435,6 +435,14 @@ Attachments are the mailing's, the same for everyone.
 - **Politicians' blocked emails**: bounces found in Gmail, marked as such.
 - **Import**: runs of `send-mail` and the Gmail check.
 
+Before building these pages, design them properly: an artifact with
+several options for each (the mailings list, new and edit with the
+editor and recipients, preview and test send, scheduling, a mailing's
+page, a politician's threads), as screenshots of mock-ups on the real
+staff components, desktop and phone, for staff to choose from. The
+first mailings page (phase 1) is only a start, showing the imported
+mailings.
+
 ### Tests
 
 Connecting Gmail, against a fake Google. "Mail these" through to
@@ -568,5 +576,13 @@ Data protection, agreed before building and recorded in
     mailing.
   - Airtable's "Edinburgh Conference Invitation" attachment is on every
     record, so it says nothing about who was invited.
+  - Open: should the mailings list (`/staff/mailings`) summarise each
+    mailing's audience ("129 MSPs and 57 Scottish MPs"), worked out from
+    its recipients? If it does, an ask with a mailing may not need an
+    audience of its own: the ask's audience would be its mailings', and
+    only asks with no mailing (ControlAI's, supporters' letters, Go to
+    Parliament) would need one set by hand. Or the ask holds the audience
+    and the mailing is checked against it, so it's in one place, not
+    both. Which way round is to discuss.
 - **Parliament's member IDs.** Worth storing in phase 3, so a re-elected
   member's two records can be merged?

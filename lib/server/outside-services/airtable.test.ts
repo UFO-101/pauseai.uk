@@ -225,7 +225,6 @@ describe("fetchEmails", () => {
             Timestamp: "2026-10-01T10:00:00.000Z",
             "UK Parliamentarian": ["recP", 5],
             Personalized: true,
-            "AI Generated": true,
             "Box A": true,
             "Box B": false,
           },
@@ -240,7 +239,6 @@ describe("fetchEmails", () => {
         at: "2026-10-01T10:00:00.000Z",
         politicians: ["recP"],
         personalised: true,
-        aiGenerated: true,
         mailings: ["Box A"],
       },
       {
@@ -248,7 +246,6 @@ describe("fetchEmails", () => {
         at: "2026-06-01T10:00:00.000Z",
         politicians: [],
         personalised: false,
-        aiGenerated: false,
         mailings: [],
       },
     ]);
@@ -259,7 +256,6 @@ describe("fetchEmails", () => {
       "Timestamp",
       "UK Parliamentarian",
       "Personalized",
-      "AI Generated",
       "Box A",
       "Box B",
     ]);

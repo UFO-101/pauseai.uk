@@ -55,7 +55,7 @@ test("a peer with only their title, an MSP, and an MP who left office", async ({
   await openPolitician(page, "Morag Example");
   await expect(page.getByText(copy.personalConnection, { exact: true })).toBeVisible();
   await expect(page.getByText(staffCopy.countries.scotland, { exact: true })).toBeVisible();
-  await frame(page, "an MSP, a personal connection, going to the conference and sent its invitation by AI");
+  await frame(page, "an MSP, a personal connection, going to the conference and sent its invitation");
 
   await openPolitician(page, "Gordon Gone");
   await expect(page.getByText(copy.role(copy.roles.commons, "Former Seat", false), { exact: true })).toBeVisible();
@@ -234,6 +234,31 @@ test("a politician whose record has gone from Airtable, and who's had no letters
   await page.goto(`${BASE}/staff/politicians?status=any`);
   await expect(page.getByRole("link", { name: "Rita Retired" })).toHaveCount(0);
   await frame(page, "the list of everyone, without her");
+});
+
+test("PauseAI's mailings: the list, one mailing's recipients, and back to it from a politician's history", async ({
+  page,
+  request,
+  flowDatabase,
+}) => {
+  await syncPoliticians(request, BASE);
+  await logIn(page, flowDatabase);
+  const mailings = staffCopy.mailings;
+  await page.goto(`${BASE}/staff/mailings`);
+  const invitation = "Edinburgh Conference Nov 26 Invitation";
+  await expect(page.getByRole("row").filter({ hasText: invitation })).toContainText(mailings.imported);
+  await frame(page, "every mailing, newest first, each copied from Airtable");
+
+  await page.getByRole("link", { name: invitation }).click();
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(invitation);
+  await expect(page.getByText(mailings.noText)).toBeVisible();
+  await expect(page.getByRole("row").filter({ hasText: "Polly Placeholder" })).toContainText(mailings.personalised);
+  await frame(page, "the invitation: no text, as Airtable kept none, and its two recipients");
+
+  await page.getByRole("link", { name: "Polly Placeholder" }).click();
+  await page.getByRole("list", { name: copy.historyTitle }).getByRole("link", { name: invitation }).click();
+  await expect(page).toHaveURL(/\/staff\/mailings\/\d+$/);
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(invitation);
 });
 
 test("the asks page counts each answer, and an answer leads to who gave it", async ({

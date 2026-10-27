@@ -45,6 +45,9 @@ import StaffNav, { type StaffPage as StaffPageName } from "@/app/(staff)/staff/_
 import AccountsNotice from "@/app/(staff)/staff/_components/AccountsNotice";
 import Breadcrumb from "@/app/(staff)/staff/_components/Breadcrumb";
 import EraseLink from "@/app/(staff)/staff/_components/EraseLink";
+import MailingDetails from "@/app/(staff)/staff/_components/MailingDetails";
+import MailingsTable from "@/app/(staff)/staff/_components/MailingsTable";
+import { exampleMailing, exampleMailings } from "@/app/(staff)/staff/_components/MailingsTable.examples";
 import ErasedNotice from "@/app/(staff)/staff/_components/ErasedNotice";
 import ImportCard, { ImportCards } from "@/app/(staff)/staff/_components/ImportCard";
 import KeepSignedIn from "@/app/(staff)/staff/_components/KeepSignedIn";
@@ -122,6 +125,7 @@ const PAGES: Record<StaffPageName, true> = {
   supporterEmails: true,
   politicians: true,
   asks: true,
+  mailings: true,
   mpEmails: true,
   import: true,
   changes: true,
@@ -880,6 +884,43 @@ export const staff: Group = {
           render: () => (
             <StaffPage as="div">
               <EraseLink supporterId={7} />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "MailingsTable",
+      file: "app/(staff)/staff/_components/MailingsTable.tsx",
+      variants: [
+        {
+          label: "One from Airtable, sent, with an ask; one not sent yet; and none",
+          render: () => (
+            <StaffPage as="div">
+              <MailingsTable mailings={exampleMailings} />
+              <MailingsTable mailings={[]} />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "MailingDetails",
+      file: "app/(staff)/staff/_components/MailingDetails.tsx",
+      variants: [
+        {
+          label: "A mailing from Airtable, with no text, and its recipients",
+          render: () => (
+            <StaffPage as="div">
+              <MailingDetails mailing={exampleMailing} />
+            </StaffPage>
+          ),
+        },
+        {
+          label: "One with no ask, not sent yet",
+          render: () => (
+            <StaffPage as="div">
+              <MailingDetails mailing={{ ...exampleMailings[0], recipients: [] }} />
             </StaffPage>
           ),
         },

@@ -62,6 +62,11 @@ export function lettersSearch({
   return { status, q, answered, campaign, consent, page, filter: { ...filter, page: pageNumber(page) } };
 }
 
+/** A mailing's ID from its page's URL: a whole number, or undefined. */
+export function mailingId(id: string): number | undefined {
+  return politicianId(id);
+}
+
 /** A politician's ID from their page's URL: a whole number, or undefined. */
 export function politicianId(id: string): number | undefined {
   return /^\d+$/.test(id) ? Number(id) : undefined;

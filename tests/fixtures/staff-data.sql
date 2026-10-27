@@ -329,20 +329,20 @@ INSERT INTO supporter_letters (id, campaign, sender_name, sender_email, sender_a
 SELECT id, campaign, sender, email, '', postcode, consent, subject, airtable_id FROM seeded_web_form;
 
 -- PauseAI's emails, as the Emails sync copies them (airtable-emails.json):
--- one of each mailing, personalised, written by AI, or neither.
-CREATE TEMP TABLE seed_emails (airtable_id text, politician text, mailing text, personalised boolean, ai boolean, sent interval) ON COMMIT DROP;
+-- one of each mailing, personalised or not.
+CREATE TEMP TABLE seed_emails (airtable_id text, politician text, mailing text, personalised boolean, sent interval) ON COMMIT DROP;
 INSERT INTO seed_emails VALUES
-  ('recEmailCsrb', 'recDummy', 'CSRB Iqbal Amendment', false, false, '138 days'),
-  ('recEmailEdinburghPolly', 'recPlaceholder', 'Edinburgh Conference Nov 26 Invitation', true, false, '25 days'),
-  ('recEmailEdinburghMorag', 'recMorag', 'Edinburgh Conference Nov 26 Invitation', false, true, '25 days'),
-  ('recEmailBenLake', 'recDummy', 'Ben Lake October 2026 Debate', false, false, '11 days');
+  ('recEmailCsrb', 'recDummy', 'CSRB Iqbal Amendment', false, '138 days'),
+  ('recEmailEdinburghPolly', 'recPlaceholder', 'Edinburgh Conference Nov 26 Invitation', true, '25 days'),
+  ('recEmailEdinburghMorag', 'recMorag', 'Edinburgh Conference Nov 26 Invitation', false, '25 days'),
+  ('recEmailBenLake', 'recDummy', 'Ben Lake October 2026 Debate', false, '11 days');
 CREATE TEMP TABLE seeded_emails ON COMMIT DROP AS
 SELECT nextval(pg_get_serial_sequence('letters', 'id')) AS id, e.* FROM seed_emails e;
 INSERT INTO letters (id, kind, notable_person_id, status, created_at, sent_at) OVERRIDING SYSTEM VALUE
 SELECT e.id, 'pauseai', n.id, 'sent', now() - e.sent, now() - e.sent
 FROM seeded_emails e JOIN notable_people n ON n.airtable_id = e.politician;
-INSERT INTO pauseai_letters (id, mailing_id, airtable_id, personalised, ai_generated)
-SELECT e.id, m.id, e.airtable_id, e.personalised, e.ai FROM seeded_emails e JOIN mailings m ON m.airtable_field = e.mailing;
+INSERT INTO pauseai_letters (id, mailing_id, airtable_id, personalised)
+SELECT e.id, m.id, e.airtable_id, e.personalised FROM seeded_emails e JOIN mailings m ON m.airtable_field = e.mailing;
 
 -- ---------------------------------------------------------- import log
 

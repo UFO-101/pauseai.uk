@@ -59,6 +59,9 @@ import Alert from "./Alert";
 import Breadcrumb from "./Breadcrumb";
 import EraseLink from "./EraseLink";
 import DeletePolitician from "./DeletePolitician";
+import MailingDetails from "./MailingDetails";
+import MailingsTable from "./MailingsTable";
+import { exampleMailing, exampleMailings } from "./MailingsTable.examples";
 import ImportCard, { ImportCards } from "./ImportCard";
 import DevLogin from "./DevLogin";
 import KeepSignedIn from "./KeepSignedIn";
@@ -757,6 +760,93 @@ describe("EraseLink", () => {
   });
 });
 
+describe("MailingsTable", () => {
+  const copy = staffCopy.mailings;
+  const cells = (title: string) =>
+    page
+      .getByRole("row")
+      .filter({ hasText: title })
+      .getByRole("cell")
+      .all()
+      .map((c) => c.element().textContent);
+
+  it("lists each mailing: its page, its ask's politicians, where it came from, when, and its counts", async () => {
+    await render(<MailingsTable mailings={exampleMailings} />);
+    expect(cells("Edinburgh")).toEqual([
+      "Edinburgh Conference Nov 26 Invitation",
+      "Edinburgh conference",
+      copy.imported,
+      "1 Oct 2026",
+      "2",
+      "1",
+      "1",
+      "1",
+    ]);
+    expect(cells("Ben Lake")).toEqual([
+      "Ben Lake October 2026 Debate",
+      "–",
+      copy.notRecorded,
+      copy.notSent,
+      "–",
+      "–",
+      "–",
+      "–",
+    ]);
+    await expect
+      .element(page.getByRole("link", { name: "Edinburgh Conference Nov 26 Invitation" }))
+      .toHaveAttribute("href", "/staff/mailings/2");
+    await expect
+      .element(page.getByRole("link", { name: "Edinburgh conference" }))
+      .toHaveAttribute("href", "/staff/politicians?ask=edinburgh-conference-2026");
+  });
+
+  it("says when there are none", async () => {
+    await render(<MailingsTable mailings={[]} />);
+    await expect.element(page.getByText(copy.none)).toBeVisible();
+  });
+});
+
+describe("MailingDetails", () => {
+  const copy = staffCopy.mailings;
+
+  it("is what the mailing was, that it has no text, and each recipient's outcome, linked to them", async () => {
+    await render(<MailingDetails mailing={exampleMailing} />);
+    await expect.element(page.getByRole("heading", { level: 1 })).toHaveTextContent(exampleMailing.title);
+    await expect.element(page.getByText(copy.counts(2, 1))).toBeVisible();
+    await expect.element(page.getByText(copy.noText)).toBeVisible();
+    await expect.element(page.getByText(copy.imported)).toBeVisible();
+    await expect
+      .element(page.getByRole("link", { name: "Edinburgh conference" }))
+      .toHaveAttribute("href", "/staff/politicians?ask=edinburgh-conference-2026");
+    const cells = (name: string) =>
+      page
+        .getByRole("row")
+        .filter({ hasText: name })
+        .getByRole("cell")
+        .all()
+        .map((c) => c.element().textContent);
+    expect(cells("Polly")).toEqual([
+      "Polly Placeholder",
+      staffCopy.letters.status.sent,
+      "1 Oct 2026",
+      "3 Oct 2026",
+      copy.personalised,
+    ]);
+    expect(cells("Morag")[4]).toBe(copy.asWritten);
+    expect(cells("Dora")).toEqual(["Dora Dummy", staffCopy.letters.status.not_sent, "–", "–", copy.asWritten]);
+    await expect
+      .element(page.getByRole("link", { name: "Morag Example" }))
+      .toHaveAttribute("href", "/staff/politicians/8");
+  });
+
+  it("says when there's no ask, and when it isn't sent yet", async () => {
+    await render(<MailingDetails mailing={{ ...exampleMailings[0], recipients: [] }} />);
+    await expect.element(page.getByText(copy.noAsk)).toBeVisible();
+    await expect.element(page.getByText(copy.notSent)).toBeVisible();
+    await expect.element(page.getByText(copy.imported)).not.toBeInTheDocument();
+  });
+});
+
 describe("DeletePolitician", () => {
   it("is the red button with its note, opening a box that asks to be sure, whose button sends their ID", async () => {
     const { fn, sent } = action();
@@ -971,13 +1061,18 @@ describe("PoliticianDetails", () => {
   it("tells one history of the letters to them, the replies, and what the audit log says about them, newest first", async () => {
     // A peer: no constituency, country, city or notes, so no line for them.
     const peer = { ...MP, constituency: null, country: null, city: null, notes: "" };
-    const fromPauseai = { mailing: "Example Mailing", status: "sent", personalised: false, aiGenerated: false };
+    const fromPauseai = {
+      mailingId: 3,
+      mailing: "Example Mailing",
+      status: "sent",
+      personalised: false,
+    };
     await render(
       <PoliticianDetails
         {...none}
         pauseaiLetters={[
           { ...fromPauseai, id: 11, at: "2026-10-03T08:00:00Z", personalised: true },
-          { ...fromPauseai, id: 12, at: "2026-09-02T08:00:00Z", aiGenerated: true },
+          { ...fromPauseai, id: 12, at: "2026-09-02T08:00:00Z" },
           { ...fromPauseai, id: 13, at: "2026-06-01T08:00:00Z" },
         ]}
         politician={peer}
@@ -1036,7 +1131,13 @@ describe("PoliticianDetails", () => {
             action: "set status",
             details: { politicianId: 7, ask: "an-old-ask", status: "signed", note: "" },
           },
-          { id: 6, at: "2026-08-10T10:00:00Z", actor: "postmark", action: "block address", details: { kind: "weird" } },
+          {
+            id: 6,
+            at: "2026-08-10T10:00:00Z",
+            actor: "postmark",
+            action: "block address",
+            details: { address: "polly@example.org", kind: "weird" },
+          },
           { id: 5, at: "2026-08-01T10:00:00Z", actor: "x", action: "strange", details: {} },
           {
             id: 9,
@@ -1074,25 +1175,35 @@ describe("PoliticianDetails", () => {
     const copy = staffCopy.politician.history;
     expect(history.map((item) => item.element().textContent)).toEqual([
       `2026-10-15 09:00${copy["letter-replied"]} Anon Writer · ${pm.title}`,
-      `2026-10-14 09:30${copy["unblock address"]} Fixed in Airtable · jo@pauseai.uk`,
+      `2026-10-14 09:30${copy["unblock address"]} polly.placeholder.mp@parliament.uk · Fixed in Airtable · jo@pauseai.uk`,
       `2026-10-13 08:00${copy.letter} Anon Writer · ${pm.title} · ${staffCopy.letters.status.sent}`,
-      `2026-10-12 09:10${copy["block address"]} ${staffCopy.emails.kinds.hard} · postmark`,
+      `2026-10-12 09:10${copy["block address"]} polly.placeholder.mp@parliament.uk · ${staffCopy.emails.kinds.hard} · postmark`,
       `2026-10-12 09:00${copy.letter} ${exampleLetter.senderName} · ${pm.title} · ${staffCopy.letters.status.bounced}`,
       `2026-10-03 08:00${copy["pauseai-letter"]} Example Mailing · ${staffCopy.politician.personalised}`,
       // Dated the day before it was recorded, so on that day.
       `2026-10-01${statusLine(staffCopy.politician.statusSet(staffCopy.statuses.signed), ask("frontier-ai-letter").title)} · Told us at the march · jo@pauseai.uk`,
       `2026-09-30 10:00${copy["edit politician"]} Polly Placeholder · polly.placeholder.mp@parliament.uk · sam@pauseai.uk`,
-      `2026-09-02 08:00${copy["pauseai-letter"]} Example Mailing · ${staffCopy.politician.aiGenerated}`,
+      `2026-09-02 08:00${copy["pauseai-letter"]} Example Mailing`,
       `2026-09-01 10:00${statusLine(staffCopy.politician.statusCleared, "gone")} · jo@pauseai.uk`,
       `2026-08-15 10:00${statusLine(staffCopy.politician.statusSet("odd"), pm.title)} · jo@pauseai.uk`,
       `2026-08-12 10:00${statusLine(staffCopy.politician.statusSet(staffCopy.statuses.signed), "an-old-ask")} · airtable`,
-      `2026-08-10 10:00${copy["block address"]} weird · postmark`,
+      `2026-08-10 10:00${copy["block address"]} polly@example.org · weird · postmark`,
       "2026-08-01 10:00strange  · x",
       `2026-07-20 10:00${copy["edit politician"]} Polly Placeholder · ${staffCopy.fields.party} Labour → Labour (Co-op) · sync`,
       `2026-07-15 10:00${copy["add politician"]} Polly Placeholder · import`,
       `2026-07-01 08:00${copy.letter} Old Writer · old-campaign · queued`,
       `2026-06-01 08:00${copy["pauseai-letter"]} Example Mailing`,
     ]);
+    // An ask leads to everyone who answered it, PauseAI's email to its mailing, an address to its block.
+    await expect
+      .element(page.getByRole("link", { name: ask("frontier-ai-letter").title }).last())
+      .toHaveAttribute("href", "/staff/politicians?ask=frontier-ai-letter");
+    await expect
+      .element(page.getByRole("link", { name: "Example Mailing" }).first())
+      .toHaveAttribute("href", "/staff/mailings/3");
+    await expect
+      .element(page.getByRole("link", { name: "polly@example.org" }))
+      .toHaveAttribute("href", "/staff/politicians/blocked-emails?q=polly%40example.org");
     // Each letter's status leads to it alone on the letters page.
     await expect
       .element(page.getByRole("link", { name: staffCopy.letters.status.bounced }))

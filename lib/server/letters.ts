@@ -106,22 +106,21 @@ async function letterRows({
   );
 }
 
-/** A letter of a mailing from PauseAI to a politician: when, which mailing, and how it was written. */
+/** A letter of a mailing from PauseAI to a politician: when, which mailing, and whether it was personalised. */
 export type PauseaiLetter = {
   id: number;
+  mailingId: number;
   mailing: string;
   status: string;
   /** When it was sent, or else made. */
   at: string;
   personalised: boolean;
-  aiGenerated: boolean;
 };
 
 /** PauseAI's letters to a politician, newest first. */
 export async function pauseaiLetters(politicianId: number): Promise<PauseaiLetter[]> {
   return query<PauseaiLetter>(
-    `SELECT l.id::int AS id, m.title AS mailing, l.status, coalesce(l.sent_at, l.created_at) AS at, p.personalised,
-       p.ai_generated AS "aiGenerated"
+    `SELECT l.id::int AS id, m.id::int AS "mailingId", m.title AS mailing, l.status, coalesce(l.sent_at, l.created_at) AS at, p.personalised
      FROM pauseai_letters p JOIN letters l USING (id) JOIN mailings m ON m.id = p.mailing_id
      WHERE l.notable_person_id = $1 ORDER BY l.created_at DESC, l.id DESC`,
     [politicianId],

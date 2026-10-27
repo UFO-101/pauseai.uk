@@ -44,6 +44,7 @@ export const staffCopy = {
     supporters: "Supporters",
     politicians: "Politicians",
     asks: "Asks",
+    mailings: "Mailings",
     import: "Import data",
     changes: "Audit log",
     letters: "Letters to MPs",
@@ -443,6 +444,52 @@ export const staffCopy = {
     email: "Email",
     house: "House",
   },
+  // The mailings page (/staff/mailings): PauseAI's mails to many politicians, and each one's own page.
+  mailings: {
+    title: "Mailings",
+    intro: "Emails PauseAI has sent to many notable people at once.",
+    none: "No mailings yet.",
+    columns: {
+      title: "Mailing",
+      ask: "Ask",
+      sender: "Sender",
+      sentAt: "Sent",
+      sent: "Sent to",
+      skipped: "Skipped",
+      bounced: "Bounced",
+      replied: "Replied",
+    },
+    // A mailing copied from Airtable, which kept only who got it.
+    imported: "From Airtable",
+    notRecorded: "Not recorded",
+    notSent: "Not sent yet",
+    // A mailing's own page.
+    fields: {
+      ask: "Ask",
+      sender: "Sender",
+      sentAt: "Sent",
+      subject: "Subject",
+      attachments: "Attachments",
+      source: "Source",
+    },
+    noAsk: "None",
+    textTitle: "The email",
+    noText:
+      "Text not avilable. This was imported from the Airtable's Emails table, which keeps only who got it and how it was written. It was sent with Gmail, look there.",
+    recipientsTitle: "Recipients",
+    recipientColumns: {
+      name: "Politician",
+      status: "Outcome",
+      sentAt: "Sent",
+      replied: "Replied",
+      how: "Written",
+    },
+    // How a recipient's letter was written.
+    personalised: "personalised",
+    asWritten: "as written",
+    // Over a mailing's recipients: how many, and how many of those replied.
+    counts: (sent: number, replied: number) => `Sent to ${sent}; ${replied} replied.`,
+  },
   // The asks page: each ask, its kind and date, and how many gave each answer.
   asks: {
     title: "Asks",
@@ -525,7 +572,6 @@ export const staffCopy = {
     // On an ask that isn't set by hand: where its statuses come from.
     importedAsk: "set each night by an import",
     personalised: "personalised",
-    aiGenerated: "written with AI",
     // Under their name: what they are, in their house, and where for.
     roles: {
       commons: "MP",
@@ -574,7 +620,7 @@ export const staffCopy = {
     },
     intro: "Nothing is sent to these addresses until they're unblocked.",
     // Over the list: how many are blocked, of those the filters find.
-    count: (n: number) => `⁂ ${n} blocked ${n === 1 ? "address" : "addresses"}.`,
+    count: (n: number) => `${n} blocked ${n === 1 ? "address" : "addresses"}.`,
     // Instead of the table, when no address is blocked, or none of the cause filtered for.
     noBlocks: "No addresses are blocked.",
     // Instead of the history, when nothing has bounced or been complained about.
@@ -826,7 +872,7 @@ export const staffCopy = {
   letters: {
     title: "Letters to MPs",
     // Over the list: how many there are, and the page.
-    count: (total: number, page: number, pages: number) => `⁂ ${total} letters; page ${page} of ${pages}.`,
+    count: (total: number, page: number, pages: number) => `${total} letters; page ${page} of ${pages}.`,
     allStatuses: "All",
     search: "Sender or MP",
     // The Answered filter: whether the MP replied.

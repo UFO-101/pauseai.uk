@@ -605,7 +605,6 @@ CREATE TABLE public.pauseai_letters (
     mailing_id bigint NOT NULL,
     airtable_id text,
     personalised boolean DEFAULT false NOT NULL,
-    ai_generated boolean DEFAULT false NOT NULL,
     CONSTRAINT pauseai_letters_kind_check CHECK ((kind = 'pauseai'::text))
 );
 

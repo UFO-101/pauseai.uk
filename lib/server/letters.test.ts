@@ -132,20 +132,20 @@ describeWithDatabase("politicianLetters", () => {
 describeWithDatabase("pauseaiLetters", () => {
   useTestDatabase();
 
-  it("lists PauseAI's letters to a politician, newest first, with their mailing and how they were written", async () => {
+  it("lists PauseAI's letters to a politician, newest first, with their mailing and whether personalised", async () => {
     const mp = await addTestMp();
-    for (const [at, personalised, ai] of [
-      ["2026-06-10T09:00:00Z", false, true],
-      ["2026-10-01T09:00:00Z", true, false],
+    for (const [at, personalised] of [
+      ["2026-06-10T09:00:00Z", false],
+      ["2026-10-01T09:00:00Z", true],
     ] as const) {
       const [{ id }] = await query<{ id: number }>(
         "INSERT INTO letters (kind, notable_person_id, status, created_at, sent_at) VALUES ('pauseai', $1, 'sent', $2, $2) RETURNING id::int AS id",
         [mp, at],
       );
       await query(
-        `INSERT INTO pauseai_letters (id, mailing_id, personalised, ai_generated)
-         SELECT $1, id, $2, $3 FROM mailings WHERE airtable_field = 'CSRB Iqbal Amendment'`,
-        [id, personalised, ai],
+        `INSERT INTO pauseai_letters (id, mailing_id, personalised)
+         SELECT $1, id, $2 FROM mailings WHERE airtable_field = 'CSRB Iqbal Amendment'`,
+        [id, personalised],
       );
     }
     // A supporter's letter isn't one of them, nor is it on the letters page as PauseAI's.
@@ -153,19 +153,19 @@ describeWithDatabase("pauseaiLetters", () => {
     expect(await pauseaiLetters(mp)).toEqual([
       {
         id: 2,
+        mailingId: expect.any(Number),
         mailing: "CSRB Iqbal Amendment",
         status: "sent",
         at: new Date("2026-10-01T09:00:00Z"),
         personalised: true,
-        aiGenerated: false,
       },
       {
         id: 1,
+        mailingId: expect.any(Number),
         mailing: "CSRB Iqbal Amendment",
         status: "sent",
         at: new Date("2026-06-10T09:00:00Z"),
         personalised: false,
-        aiGenerated: true,
       },
     ]);
     expect((await recentLetters()).map((l) => [l.id, l.imported])).toEqual([[3, false]]);

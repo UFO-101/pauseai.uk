@@ -53,12 +53,15 @@ test("the dev login signs in as a seeded account in one click, in a fixture buil
   await frame(page, "signed in as jo, with the supporters permission");
 });
 
-test("every staff page, without a session, goes to the login page", async ({ request }) => {
+test("every staff page, without a session, goes to the login page, to come back to once logged in", async ({
+  request,
+}) => {
   expect(STAFF_PAGES.length).toBeGreaterThan(4);
   for (const route of STAFF_PAGES) {
     const res = await request.get(`${BASE}${route}`, { maxRedirects: 0 });
     expect(res.status(), route).toBe(307);
-    expect(res.headers().location, route).toMatch(/\/staff\/login$/);
+    const back = route === "/staff" ? "" : `?next=${encodeURIComponent(route)}`;
+    expect(res.headers().location, route).toBe(`${BASE}/staff/login${back}`);
   }
 });
 
@@ -73,7 +76,7 @@ test("staff API routes and Server Actions, without a session, change nothing", a
     maxRedirects: 0,
   });
   expect(action.status()).toBe(307);
-  expect(action.headers().location).toMatch(/\/staff\/login$/);
+  expect(action.headers().location).toMatch(/\/staff\/login\?next=%2Fstaff%2Fpoliticians$/);
 
   // With a made-up cookie the proxy lets it through, and requireStaff() turns it away.
   const forged = await request.get(`${BASE}/staff`, { headers: { cookie: "staff_session=made-up" }, maxRedirects: 0 });
@@ -417,7 +420,7 @@ async function sentLetterId(page: Page, database: string, sender: string, mp = T
   await fillLetter(page, sender);
   await sendLetter(page, mp);
   await page.goto(`${BASE}/staff/letters`);
-  if (page.url().endsWith("/staff/login")) await logIn(page, database, ["supporters"]);
+  if (new URL(page.url()).pathname === "/staff/login") await logIn(page, database, ["supporters"]);
   await page.goto(`${BASE}/staff/letters`);
   const row = page.getByRole("row").filter({ hasText: sender });
   await expect(row).toContainText(staffCopy.letters.status.sent);
