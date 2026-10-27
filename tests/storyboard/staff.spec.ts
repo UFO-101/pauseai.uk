@@ -62,15 +62,26 @@ test(
     await page.goto(`${BASE}/staff/politicians`);
     const nav = page.getByRole("navigation", { name: staffCopy.nav.title });
     await expect(nav.getByRole("link", { name: staffCopy.nav.supporters })).toBeVisible();
-    await frame(page, "the sidebar open: each page's icon beside its name, and Fold at its foot");
+    await frame(
+      page,
+      "the sidebar open: each page's icon beside its name, and a round fold button on its edge at its foot",
+    );
 
+    // Folding moves the icons sideways only: each stays at the height it was.
+    const heights = () =>
+      nav.locator("li svg, form svg").evaluateAll((icons) => icons.map((icon) => icon.getBoundingClientRect().top));
+    const open = await heights();
     await nav.getByRole("button", { name: staffCopy.nav.fold }).click();
     await expect(nav.getByRole("button", { name: staffCopy.nav.unfold })).toBeVisible();
     await expect(nav.getByRole("heading", { name: staffCopy.nav.sections.admin })).toBeHidden();
-    await frame(page, "folded: a rail of icons, the sections a rule apart, and the list wider");
+    expect(await heights()).toEqual(open);
+    await frame(page, "folded: a rail of icons, each where it was, the sections a rule apart, and the list wider");
 
-    await nav.getByRole("link", { name: staffCopy.nav.supporters }).hover();
-    await frame(page, "a page's name beside its icon, on hover");
+    // Tabbed to, as the frame moves the mouse away: a hover shows the same.
+    await nav.getByRole("link", { name: staffCopy.nav.home }).focus();
+    await page.keyboard.press("Tab");
+    await expect(nav.getByRole("link", { name: staffCopy.nav.supporters })).toBeFocused();
+    await frame(page, "a page's name beside its icon, tabbed to or hovered over");
 
     await nav.getByRole("link", { name: staffCopy.nav.supporters }).click();
     await expect(page).toHaveURL(`${BASE}/staff/supporters`);

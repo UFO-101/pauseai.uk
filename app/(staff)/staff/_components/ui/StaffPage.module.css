@@ -46,8 +46,12 @@
     grid-template-columns: 14rem minmax(0, 1fr);
   }
 
+  /* --side-inline: the padding between the navigation and the rule, which
+     the fold button (NavFold) sits across. */
   .side {
-    padding: var(--space-6) var(--space-5);
+    --side-inline: var(--space-5);
+
+    padding: var(--space-6) var(--side-inline);
     border-bottom: 0;
     border-right: 1px solid var(--border);
   }
@@ -58,6 +62,6 @@
   }
 
   :global(:root[data-staff-nav="folded"]) .side {
-    padding-inline: var(--space-3);
+    --side-inline: var(--space-3);
   }
 }

@@ -6,12 +6,14 @@
   justify-items: start;
 }
 
-/* A row's buttons: ending its sessions, then removing it. */
+/* A row's buttons: ending its sessions, then removing it, side by side,
+   each on one line, their tops level, so a warning under the first hangs
+   below both. */
 .buttons {
   display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2) var(--space-3);
-  align-items: center;
+  gap: var(--space-3);
+  align-items: start;
+  white-space: nowrap;
 }
 
 /* Under Log out everywhere on your own row: that it logs you out too, small, on its own line. */

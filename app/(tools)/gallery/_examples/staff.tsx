@@ -381,10 +381,15 @@ export const staff: Group = {
       file: "app/(staff)/staff/_components/ui/NavFold.tsx",
       variants: [
         {
-          label: "At the sidebar's foot: folds it to a rail of icons, and back",
+          label: "On the sidebar's edge, at its foot: folds it to a rail of icons, and back",
           render: () => (
             <StaffPage as="div">
-              <NavFold />
+              {/* A box for it to sit on the right edge of, as the navigation is. */}
+              <div
+                style={{ position: "relative", width: "10rem", height: "2rem", borderRight: "1px solid var(--border)" }}
+              >
+                <NavFold />
+              </div>
             </StaffPage>
           ),
         },

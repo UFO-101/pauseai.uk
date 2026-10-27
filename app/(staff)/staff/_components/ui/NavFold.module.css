@@ -1,22 +1,31 @@
-/* The sidebar's fold button, at its foot: a chevron and Fold, quiet, like
-   the links above it; folded, the chevron alone, turned to point out. */
+/* The sidebar's fold button: a small round tab across the rule at the
+   sidebar's edge (StaffPage's .side, whose padding --side-inline gives
+   the distance), level with the foot of the navigation, a chevron in it;
+   folded, the chevron turned to point out. Placed against the navigation
+   (StaffNav's .nav), so it stays with it as the page scrolls. */
 .fold {
-  display: inline-flex;
-  gap: var(--space-2);
-  align-items: center;
-  justify-self: start;
-  padding: var(--space-1) 0;
-  border: 0;
-  background: none;
+  --size: 1.625rem;
+
+  position: absolute;
+  right: calc(-1 * var(--side-inline, 0px) - var(--size) / 2);
+  bottom: 0;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: var(--size);
+  height: var(--size);
+  padding: 0;
+  border: 1px solid var(--border-strong);
+  border-radius: 50%;
+  background: var(--surface);
+  box-shadow: 0 1px 4px rgb(var(--black-rgb) / 12%);
   color: var(--text-secondary);
-  font: inherit;
-  font-size: var(--text-sm);
-  font-weight: 500;
   cursor: pointer;
 }
 
 .fold:hover {
   color: var(--text);
+  border-color: var(--text-secondary);
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -27,10 +36,6 @@
 
 :global(:root[data-staff-nav="folded"]) .chevron {
   rotate: 180deg;
-}
-
-:global(:root[data-staff-nav="folded"]) .text {
-  display: none;
 }
 
 /* A phone has the bar, which doesn't fold. */

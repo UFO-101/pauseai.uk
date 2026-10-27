@@ -33,11 +33,9 @@ export const staffCopy = {
   nav: {
     // At the left of the bar, and the way to the home page.
     title: "PauseAI Staff",
-    // The button at the top of the sidebar that folds it to a strip, and back, for a screen reader.
+    // The round button on the sidebar's edge, at its foot, that folds it to a strip, and back, for a screen reader.
     fold: "Fold the menu",
     unfold: "Unfold the menu",
-    // Beside the fold button's chevron while the menu's open.
-    foldShort: "Fold",
     home: "Dashboard",
     accounts: "Staff accounts",
     // The sections the pages are in, in the sidebar.

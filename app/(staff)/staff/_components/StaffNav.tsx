@@ -78,7 +78,12 @@ export default function StaffNav({ email, permissions = [], sessions = 1, curren
       </ul>
     </section>
   ));
-  const who = <span className={styles.who}>{email}</span>;
+  // On one line in the sidebar, cut short if it's long: the whole address on hover.
+  const who = (
+    <span className={styles.who} title={email}>
+      {email}
+    </span>
+  );
   const others = sessions > 1 && (
     <Link href="/staff/sessions" className={styles.sessions} aria-current={current === "sessions" ? "page" : undefined}>
       {staffCopy.nav.sessions(sessions)}
