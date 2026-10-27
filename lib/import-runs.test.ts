@@ -32,6 +32,11 @@ it("says a Luma import that left work for later is incomplete, in place of done 
   expect(
     runStatus(exampleRun("import-luma", { ...exampleLumaResult, contactsPassGoing: true }, { status: "unchanged" })),
   ).toBe("incomplete");
+  const placesFailed = { postcodes: 0, towns: 0, failed: true };
+  expect(runStatus(exampleRun("import-luma", { ...exampleLumaResult, places: placesFailed }))).toBe("incomplete");
+  expect(
+    runStatus(exampleRun("import-luma", { ...exampleLumaResult, places: { ...placesFailed, failed: false } })),
+  ).toBe("ok");
   expect(runStatus(exampleRun("import-luma", exampleLumaResult))).toBe("ok");
   expect(runStatus(exampleFailedRun("import-luma", "boom", {}))).toBe("failed");
   expect(runStatus(exampleHeldSync)).toBe("held");

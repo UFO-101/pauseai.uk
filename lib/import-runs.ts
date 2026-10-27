@@ -111,6 +111,9 @@ export type ControlAiImportResult = {
 };
 export type ControlAiImport = ImportRun<"import-controlai", ControlAiImportResult>;
 
+/** Where supporters are, looked up after a Luma import: the postcodes and towns looked up, and whether postcodes.io failed partway. */
+export type PlacesLookup = { postcodes: number; towns: number; failed: boolean };
+
 /** What a run of the Luma import did: counts of what it copied, and what stopped it, if anything did. */
 export type LumaImportResult = {
   /** Events added, changed or removed. */
@@ -133,6 +136,8 @@ export type LumaImportResult = {
   contactPages?: number;
   /** A full pass over the contacts is part-way through: later runs read the rest. */
   contactsPassGoing?: boolean;
+  /** The postcodes and towns looked up at the end of the run (runs kept before this was recorded don't say). */
+  places?: PlacesLookup;
   /** Why the run stopped before it was done: its time was up, Luma's rate limit was near, or another run had the lock. */
   stoppedBy?: "time" | "rate-limit" | "running";
 };
@@ -203,9 +208,9 @@ export type AnyImportRun =
   | WebFormImport
   | GoToParliamentImport;
 
-/** Whether a Luma run left work for later: it was cut short, or the contacts pass is still going. */
+/** Whether a Luma run left work for later: it was cut short, the contacts pass is still going, or postcodes.io failed. */
 function lumaRunIncomplete(result: LumaImportResult): boolean {
-  return result.stoppedBy !== undefined || result.contactsPassGoing === true;
+  return result.stoppedBy !== undefined || result.contactsPassGoing === true || result.places?.failed === true;
 }
 
 /**

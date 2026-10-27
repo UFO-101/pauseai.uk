@@ -767,6 +767,10 @@ export const staffCopy = {
       `${r.events} events changed; ${r.eventsSynced} guest lists read, ${r.eventsLeft} waiting; ${r.guestsChanged} guests, ${r.people} people, ${r.contacts} contacts changed; ${r.supportersAdded} new supporters, ${r.linked} linked; ${r.requests} requests.`,
     // After the counts, how many pages of contacts the run read (runs kept before this was recorded don't say).
     contactPages: (pages: number) => `${pages} pages of contacts read.`,
+    // After that, the postcodes and towns looked up at postcodes.io for where supporters are (runs kept before this was recorded don't say).
+    places: (p: { postcodes: number; towns: number }) => `⁂ ${p.postcodes} postcodes, ${p.towns} towns looked up.`,
+    // After that, when postcodes.io failed partway: the next run carries on.
+    placesFailed: "⁂ Postcodes.io failed: the next run carries on.",
     // After that, while a full pass over the contacts is part-way through.
     contactsPassGoing: "Still reading every contact: the next runs read the rest.",
     stoppedBy: {

@@ -2287,6 +2287,26 @@ describe("RunList", () => {
     expect(run.element().textContent).toMatch(new RegExp(`^${staffCopy.runs.status.incomplete} `));
   });
 
+  it("says how many postcodes and towns a Luma run looked up, and when postcodes.io failed", async () => {
+    const places = { postcodes: 3, towns: 2, failed: false };
+    await render(
+      <RunList
+        runs={[
+          ran("import-luma", { ...exampleLumaResult, places }, { id: 1 }),
+          ran("import-luma", { ...exampleLumaResult, places: { ...places, failed: true } }, { id: 2 }),
+        ]}
+        none="None"
+      />,
+    );
+    const [found, failed] = page.getByRole("status").all();
+    expect(found.element().textContent).toContain(
+      `${staffCopy.luma.result(exampleLumaResult)} ${staffCopy.luma.places(places)}`,
+    );
+    expect(found.element().textContent).not.toContain(staffCopy.luma.placesFailed);
+    expect(failed.element().textContent).toContain(`${staffCopy.luma.places(places)} ${staffCopy.luma.placesFailed}`);
+    expect(failed.element().textContent).toMatch(new RegExp(`^${staffCopy.runs.status.incomplete} `));
+  });
+
   it("shows a Luma import's counts, or its error", async () => {
     const luma = exampleLumaResult;
     await render(

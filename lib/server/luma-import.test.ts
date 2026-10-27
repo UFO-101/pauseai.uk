@@ -182,6 +182,7 @@ describeWithDatabase("importLuma", () => {
       contactPages: 1,
       supportersAdded: 4,
       linked: 4,
+      places: { postcodes: 1, towns: 1, failed: false },
       requests: 4,
     });
     expect(await query("SELECT count(*)::int AS n FROM supporter_links")).toEqual([{ n: 4 }]);
@@ -229,6 +230,8 @@ describeWithDatabase("importLuma", () => {
       contactPages: 1,
       supportersAdded: 0,
       linked: 0,
+      // Nothing new to look up.
+      places: { postcodes: 0, towns: 0, failed: false },
       requests: 2,
     });
     expect((await runs())[1].status).toBe("unchanged");
@@ -377,6 +380,7 @@ describeWithDatabase("importLuma", () => {
       contactsPassGoing: true,
       supportersAdded: 0,
       linked: 0,
+      places: { postcodes: 0, towns: 0, failed: false },
       requests: 0,
       stoppedBy: "time",
     });

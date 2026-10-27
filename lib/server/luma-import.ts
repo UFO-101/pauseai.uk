@@ -4,6 +4,7 @@ import { query, transaction, type Queryable } from "./db";
 import { keepingFailure, recordRun } from "./import-runs";
 import { recordContactsPass } from "./opt-outs";
 import { refreshSupporterFacts } from "./supporter-facts";
+import { lookUpPlaces } from "./supporter-places";
 import { linkSupporters } from "./supporters";
 import { LumaRateLimited, type LumaPage } from "./outside-services/luma-api";
 import {
@@ -17,7 +18,8 @@ import { type EventGuest, listEventGuests } from "./outside-services/luma-guests
 // Copies our Luma calendar into luma_events, luma_people and luma_guests:
 // every public event, the guests who registered for each, and the
 // calendar's contacts, and from them who has left the calendar or come
-// back (recordContactsPass). Hourly (app/api/cron/import-luma) or when staff
+// back (recordContactsPass); then where new supporters and events are
+// (supporter-places.ts). Hourly (app/api/cron/import-luma) or when staff
 // ask, each run in the import log (import-runs.ts, as "import-luma").
 //
 // A run has about 20 seconds (Netlify's scheduled functions stop at 30) and
@@ -433,9 +435,18 @@ function run(startedBy: string, budgetMs: number): Promise<LumaImportResult> {
     await refreshSupporterFacts(db);
     result.supportersAdded = links.supportersAdded;
     result.linked = links.linked;
+    result.places = await lookUpPlaces(db);
     result.requests = budget.requests;
     if (budget.stoppedBy) result.stoppedBy = budget.stoppedBy;
-    const changed = result.events + result.guestsChanged + result.people + result.contacts + result.linked > 0;
+    const changed =
+      result.events +
+        result.guestsChanged +
+        result.people +
+        result.contacts +
+        result.linked +
+        result.places.postcodes +
+        result.places.towns >
+      0;
     await recordRun(JOB, startedBy, changed ? "ok" : "unchanged", result, db);
     return result;
   });
