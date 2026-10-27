@@ -1,6 +1,6 @@
 import type { NextRequest } from "next/server";
 import { supporterFilters } from "../../_components/SupporterFilters";
-import { supporterColumns, supporterFiltersOf } from "../../_components/SupportersTable";
+import { supporterColumns, supporterContact, supporterFiltersOf } from "../../_components/SupportersTable";
 import { filterWords } from "../../_components/ui/FilterBar";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { staffDownload } from "@/lib/server/staff-download";
@@ -26,6 +26,7 @@ export async function GET(request: NextRequest) {
         filters: filterWords(supporterFilters(search, events, near), supporterFiltersOf(search), "q"),
         columns: supporterColumns(search),
         rows: supporters,
+        contact: supporterContact,
       };
     },
     "download supporters",

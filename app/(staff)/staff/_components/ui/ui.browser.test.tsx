@@ -353,16 +353,41 @@ describe("ListFrame", () => {
     </StaffPage>
   );
 
-  it("says how many, which these are, and offers every one as CSV or JSON", async () => {
+  it("says how many, which these are, and offers every one as CSV or JSON from a Download menu", async () => {
     await render(frame(6, 50));
     await expect.element(page.getByText("250 rows")).toBeVisible();
     await expect.element(page.getByText(staffCopy.lists.showing(11, 12), { exact: false })).toBeVisible();
-    for (const format of ["csv", "json"] as const) {
-      const link = page.getByRole("link", { name: staffCopy.lists.formats[format] });
-      await expect.element(link).toHaveAttribute("href", `/list/download?format=${format}`);
-      await expect.element(link).toHaveAttribute("download");
-    }
+    await page.getByRole("button", { name: staffCopy.lists.download }).click();
+    const links = [...document.querySelectorAll<HTMLAnchorElement>("[popover]:popover-open a")];
+    expect(links.map((a) => [a.textContent, a.getAttribute("href"), a.hasAttribute("download")])).toEqual([
+      [staffCopy.lists.formats.csv, "/list/download?format=csv", true],
+      [staffCopy.lists.formats.json, "/list/download?format=json", true],
+    ]);
+    await userEvent.keyboard("{Escape}");
     await expect.element(page.getByText(staffCopy.paging.range(11, 12, 250))).toBeVisible();
+  });
+
+  it("offers vCards too, for a list of people", async () => {
+    await render(
+      <ListFrame
+        count="2 people"
+        total={2}
+        page={1}
+        pages={1}
+        pageSize={2}
+        href={() => ""}
+        download={(format) => `/people/download?format=${format}`}
+        formats={["csv", "json", "vcf"]}
+        columns={columns}
+        rows={rows}
+        rowKey={(r) => r.name}
+        empty="None."
+      />,
+    );
+    await page.getByRole("button", { name: staffCopy.lists.download }).click();
+    await expect
+      .element(page.getByRole("link", { name: staffCopy.lists.formats.vcf }))
+      .toHaveAttribute("href", "/people/download?format=vcf");
   });
 
   it("draws a striped table, a short column on one line, a column's own heading", async () => {
@@ -413,7 +438,7 @@ describe("ListFrame", () => {
     await render(frame(1, 1, false));
     await expect.element(page.getByRole("navigation")).not.toBeInTheDocument();
     await expect.element(page.getByText(staffCopy.lists.showing(1, 2), { exact: false })).not.toBeInTheDocument();
-    await expect.element(page.getByRole("link")).not.toBeInTheDocument();
+    await expect.element(page.getByRole("button", { name: staffCopy.lists.download })).not.toBeInTheDocument();
   });
 
   it("says what a list with nothing in it says, instead", async () => {

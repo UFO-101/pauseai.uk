@@ -235,8 +235,8 @@ export const staffCopy = {
         Lead: "wants to lead",
         "Act now": "wants to act now",
       } as Record<string, string>,
-      firstSeen: "First seen",
-      lastActive: "Last activity",
+      // From when we first saw them to their last activity.
+      active: "Active",
       /** Where a detail came from and when: "Luma, 26 Sept 2026". */
       from: (sources: string, when: string) => `${sources}, ${when}`,
       // Under the main box: a tile per topic, saying whether we'd email them about it, and why.
@@ -474,6 +474,9 @@ export const staffCopy = {
       status: "Status",
       // Their answer to each ask they've answered.
       asks: "Asks",
+      // The first and last letter to them, reply or answer to an ask.
+      first: "First activity",
+      last: "Last activity",
     },
     // In that column, when they've answered none.
     noAsks: "None",
@@ -987,7 +990,9 @@ export const staffCopy = {
   // Over a list, after its count: the rows on this page, when there's more than one; then its downloads, of every page.
   lists: {
     showing: (from: number, to: number) => `showing ${from}–${to}`,
-    formats: { csv: "CSV", json: "JSON" },
+    // The button that opens the downloads, of every page, and each format in its menu.
+    download: "Download",
+    formats: { csv: "CSV, for a spreadsheet", json: "JSON, for an agent", vcf: "vCard, for WhatsApp" },
   },
   changes: {
     title: "Audit log",

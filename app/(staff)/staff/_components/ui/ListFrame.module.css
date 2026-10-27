@@ -28,15 +28,35 @@
   margin: 0;
 }
 
-.downloads {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-  align-items: center;
+/* The Download button: its arrow, its word, and a ▾ for its menu. */
+.download {
+  gap: var(--space-1);
 }
 
-.downloads a {
-  gap: var(--space-1);
+.download::after {
+  content: "▾" / "";
+}
+
+/* Its menu: a format a line. */
+.formats {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.formats a {
+  display: block;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.formats a:hover {
+  background: var(--surface-2);
 }
 
 /* A short column's cells (a house, a date, a count) stay on one line. */

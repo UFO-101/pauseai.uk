@@ -1,6 +1,6 @@
 import type { NextRequest } from "next/server";
 import { politicianFilters } from "../../_components/PoliticianFilters";
-import { politicianColumns } from "../../_components/PoliticianTable";
+import { politicianColumns, politicianContact } from "../../_components/PoliticianTable";
 import { filterWords } from "../../_components/ui/FilterBar";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { listAsks } from "@/lib/server/asks";
@@ -25,6 +25,7 @@ export async function GET(request: NextRequest) {
       ],
       columns: politicianColumns(politicians, asks, filters),
       rows: politicians,
+      contact: politicianContact(asks),
     };
   });
 }

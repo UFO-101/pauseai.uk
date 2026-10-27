@@ -1,12 +1,13 @@
 // A staff list's parts that aren't drawn: which page numbers its paging
 // offers, its rows as a download, and the download's filename.
 
-/** A download's format. */
-export type DownloadFormat = "csv" | "json";
+/** A download's format: a spreadsheet's, JSON, or contacts' cards (lib/vcard.ts), for a list of people. */
+export const DOWNLOAD_FORMATS = ["csv", "json", "vcf"] as const;
+export type DownloadFormat = (typeof DOWNLOAD_FORMATS)[number];
 
 /** The format a download's URL asks for, or undefined for any other. */
 export function downloadFormat(format: string | null): DownloadFormat | undefined {
-  return format === "csv" || format === "json" ? format : undefined;
+  return DOWNLOAD_FORMATS.find((known) => known === format);
 }
 
 /** A value in a download: text, a number, yes or no, or nothing. */

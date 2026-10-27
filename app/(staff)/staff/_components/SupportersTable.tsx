@@ -16,6 +16,7 @@ import SortHeading from "./SortHeading";
 import SubscriptionBadges, { subscriptionWords } from "./SubscriptionBadges";
 import SupporterBadges, { supporterBadgeWords } from "./SupporterBadges";
 import ListFrame, { type ListColumn } from "./ui/ListFrame";
+import type { Contact } from "@/lib/vcard";
 import styles from "./SupportersTable.module.css";
 
 const PATH = "/staff/supporters";
@@ -36,10 +37,11 @@ function Place({ place }: { place: SupporterPlaceName }) {
 }
 
 /**
- * The supporters list's columns: their name; their newest email, and how
- * many others they have; their newest phone; where they are; what they are to us and what
- * we'd email them about, as lozenges; when we first saw them and last saw
- * them do something; and how many events and letters.
+ * The supporters list's columns: who they are (their name; their newest
+ * email, and how many others they have; their newest phone; where they
+ * are); what they are to us and what we'd email them about, as lozenges;
+ * how many events and letters; and when we first saw them and last saw
+ * them do something.
  */
 export function supporterColumns(search: SupportersSearch): ListColumn<SupporterRow>[] {
   const sort = parseSort(SUPPORTER_SORTS, "active", search.sort, search.dir);
@@ -101,22 +103,6 @@ export function supporterColumns(search: SupportersSearch): ListColumn<Supporter
       ),
     },
     {
-      key: "first",
-      label: copy.columns.firstSeen,
-      heading: heading("first", copy.columns.firstSeen),
-      short: true,
-      text: (s) => s.firstSeenAt,
-      cell: (s) => s.firstSeenAt && staffDate(s.firstSeenAt),
-    },
-    {
-      key: "active",
-      label: copy.columns.lastActive,
-      heading: heading("active", copy.columns.lastActive),
-      short: true,
-      text: (s) => s.lastActiveAt,
-      cell: (s) => s.lastActiveAt && staffDate(s.lastActiveAt),
-    },
-    {
       key: "events",
       label: copy.columns.events,
       heading: heading("events", copy.columns.events),
@@ -132,7 +118,53 @@ export function supporterColumns(search: SupportersSearch): ListColumn<Supporter
       text: (s) => s.letters,
       cell: (s) => s.letters,
     },
+    {
+      key: "first",
+      label: copy.columns.firstSeen,
+      heading: heading("first", copy.columns.firstSeen),
+      short: true,
+      text: (s) => s.firstSeenAt,
+      cell: (s) => s.firstSeenAt && staffDate(s.firstSeenAt),
+    },
+    {
+      key: "active",
+      label: copy.columns.lastActive,
+      heading: heading("active", copy.columns.lastActive),
+      short: true,
+      text: (s) => s.lastActiveAt,
+      cell: (s) => s.lastActiveAt && staffDate(s.lastActiveAt),
+    },
   ];
+}
+
+/**
+ * A supporter as a contact card (lib/vcard.ts): their name, every email,
+ * the newest first, their phone, where they are, and in the note what
+ * they are to us, what we'd email them about, when we first and last saw
+ * them, and how many events and letters.
+ */
+export function supporterContact(s: SupporterRow): Contact {
+  const emails = [s.email, ...s.emails.filter((e) => e !== s.email)].filter((e): e is string => Boolean(e));
+  const note = [
+    supporterBadgeWords(s) && `${copy.columns.badges}: ${supporterBadgeWords(s)}`,
+    subscriptionWords(s.permissions) && `${copy.columns.subscriptions}: ${subscriptionWords(s.permissions)}`,
+    s.firstSeenAt && `${copy.columns.firstSeen}: ${staffDate(s.firstSeenAt)}`,
+    s.lastActiveAt && `${copy.columns.lastActive}: ${staffDate(s.lastActiveAt)}`,
+    `${copy.columns.events}: ${s.events}`,
+    `${copy.columns.letters}: ${s.letters}`,
+  ].filter((line): line is string => Boolean(line));
+  return {
+    name: s.name,
+    emails,
+    phones: s.phone ? [s.phone] : [],
+    address: {
+      locality: s.place?.name,
+      postcode: s.postcode,
+      country: s.place?.country && staffCopy.countries[s.place.country],
+    },
+    note,
+    url: `${PATH}/${s.id}`,
+  };
 }
 
 /** The supporters found, in the list frame: a row each, their downloads and the way through the pages. */
@@ -147,6 +179,7 @@ export default function SupportersTable({ page, search }: { page: SupportersPage
       pageSize={SUPPORTERS_PAGE_SIZE}
       href={(n) => filtersPath(PATH, filters, pageParam(n))}
       download={(format) => filtersPath(`${PATH}/download`, filters, { format })}
+      formats={["csv", "json", "vcf"]}
       columns={supporterColumns(search)}
       rows={page.supporters}
       rowKey={(s) => s.id}

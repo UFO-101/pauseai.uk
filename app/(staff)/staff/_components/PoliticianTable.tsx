@@ -4,9 +4,11 @@ import { POLITICIAN_SORTS, type PoliticianSort } from "@/lib/politician-sort";
 import type { Ask } from "@/lib/server/asks";
 import type { Politician } from "@/lib/server/politicians";
 import { firstOf, valuesOf, type Params } from "@/lib/staff-search";
+import { staffDate } from "@/lib/staff-time";
 import { parseSort, sortHref } from "@/lib/staff-sort";
 import SortHeading from "./SortHeading";
 import { ListTable, type ListColumn } from "./ui/ListFrame";
+import type { Contact } from "@/lib/vcard";
 import styles from "./PoliticianTable.module.css";
 import { Muted } from "@/components/ui/Text";
 import Tag from "@/components/ui/Tag";
@@ -54,10 +56,11 @@ function shows(politicians: Politician[], value: (p: Politician) => string): boo
 }
 
 /**
- * The politicians list's columns: their name, house, constituency and party,
- * whether they're in office, Airtable's markers, how many letters they've
- * had and answered, and their answer to each ask they've answered, a line
- * each. A column that would say the same for every row is left out, as is
+ * The politicians list's columns: who they are (name, house, constituency
+ * and party), how they stand (whether they're in office, Airtable's
+ * markers, their answer to each ask they've answered, a line each), how
+ * many letters they've had and answered, and when they first and last did
+ * anything with us. A column that would say the same for every row is left out, as is
  * one the filters fix: a house, a party, or one status, those in office
  * unless another or any is chosen. A download has the same columns, from
  * every row it has.
@@ -73,6 +76,7 @@ export function politicianColumns(
     party: valuesOf(search.party).length !== 1 && shows(politicians, (p) => p.party),
     status: firstOf(search.status ?? "any") === "any" && shows(politicians, (p) => p.status),
     marked: shows(politicians, marks),
+    activity: shows(politicians, (p) => String(p.lastActivityAt ?? "")),
   };
   const { sort, dir, ...filters } = search;
   const current = parseSort(POLITICIAN_SORTS, "name", firstOf(sort), firstOf(dir));
@@ -147,24 +151,6 @@ export function politicianColumns(
       ),
     },
     {
-      key: "letters",
-      label: staffCopy.politicians.columns.letters,
-      heading: heading("letters", staffCopy.politicians.columns.letters),
-      short: true,
-      className: styles.count,
-      text: (p) => p.letters,
-      cell: (p) => p.letters,
-    },
-    {
-      key: "replies",
-      label: staffCopy.politicians.columns.replies,
-      heading: heading("replies", staffCopy.politicians.columns.replies),
-      short: true,
-      className: styles.count,
-      text: (p) => p.replies,
-      cell: (p) => p.replies,
-    },
-    {
       key: "asks",
       label: staffCopy.politicians.columns.asks,
       heading: heading("asks", staffCopy.politicians.columns.asks),
@@ -186,8 +172,69 @@ export function politicianColumns(
           <Muted>{staffCopy.politicians.noAsks}</Muted>
         ),
     },
+    {
+      key: "letters",
+      label: staffCopy.politicians.columns.letters,
+      heading: heading("letters", staffCopy.politicians.columns.letters),
+      short: true,
+      className: styles.count,
+      text: (p) => p.letters,
+      cell: (p) => p.letters,
+    },
+    {
+      key: "replies",
+      label: staffCopy.politicians.columns.replies,
+      heading: heading("replies", staffCopy.politicians.columns.replies),
+      short: true,
+      className: styles.count,
+      text: (p) => p.replies,
+      cell: (p) => p.replies,
+    },
+    show.activity && {
+      key: "first",
+      label: staffCopy.politicians.columns.first,
+      heading: heading("first", staffCopy.politicians.columns.first),
+      short: true,
+      text: (p) => p.firstActivityAt,
+      cell: (p) => p.firstActivityAt && staffDate(p.firstActivityAt),
+    },
+    show.activity && {
+      key: "active",
+      label: staffCopy.politicians.columns.last,
+      heading: heading("active", staffCopy.politicians.columns.last),
+      short: true,
+      text: (p) => p.lastActivityAt,
+      cell: (p) => p.lastActivityAt && staffDate(p.lastActivityAt),
+    },
   ];
   return columns.filter((column) => column !== false);
+}
+
+/**
+ * A politician as a contact card (lib/vcard.ts): their name and email,
+ * their house and party, their constituency and nation, and in the note
+ * whether they're in office, Airtable's markers, their letters and replies,
+ * and their answer to each ask.
+ */
+export function politicianContact(asks: Ask[]): (p: Politician) => Contact {
+  return (p) => ({
+    name: p.name,
+    emails: p.email ? [p.email] : [],
+    phones: [],
+    org: staffCopy.houses[p.house],
+    title: p.party || null,
+    address: { locality: p.constituency, country: p.country && staffCopy.countries[p.country] },
+    note: [
+      staffCopy.personStatuses[p.status],
+      marks(p),
+      `${staffCopy.politicians.columns.letters}: ${p.letters}`,
+      `${staffCopy.politicians.columns.replies}: ${p.replies}`,
+      ...asks
+        .filter((ask) => p.statuses[ask.slug])
+        .map((ask) => `${staffCopy.statuses[p.statuses[ask.slug].status]}: ${ask.title}`),
+    ].filter(Boolean),
+    url: `/staff/politicians/${p.id}`,
+  });
 }
 
 /** Politicians, a row each, in the list's columns; or that there are none. */

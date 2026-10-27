@@ -798,9 +798,7 @@ describe("PoliticiansList", () => {
     );
     await expect.element(page.getByText(copy.total(150))).toBeVisible();
     await expect.element(page.getByRole("link", { name: "Polly Placeholder" })).toBeVisible();
-    await expect
-      .element(page.getByRole("link", { name: staffCopy.lists.formats.csv }))
-      .toHaveAttribute("href", "/staff/politicians/download?q=pol&format=csv");
+    expect(await downloads()).toContain("/staff/politicians/download?q=pol&format=vcf");
     await expect
       .element(page.getByRole("link", { name: staffCopy.paging.previous }))
       .toHaveAttribute("href", "/staff/politicians?q=pol");
@@ -1931,12 +1929,8 @@ describe("PoliticianTable", () => {
     // Whether they're in office, the counts of letters and replies, each heading a sort, and their answer to each
     // ask they've answered, a line each, in the asks' order, the answer in bold first.
     const flags = staffCopy.politicians.flags;
-    expect(cells("Polly Placeholder").slice(4, 8)).toEqual([
-      staffCopy.personStatuses.in_office,
-      flags.important,
-      "4",
-      "1",
-    ]);
+    expect(cells("Polly Placeholder").slice(4, 6)).toEqual([staffCopy.personStatuses.in_office, flags.important]);
+    expect(cells("Polly Placeholder").slice(7, 9)).toEqual(["4", "1"]);
     // Airtable's markers as lozenges.
     expect(cells("Nora Nothing")[5]).toBe(`${flags.connection}${flags.removed}`);
     expect(cells("Testy McTestface MP")[5]).toBe("");
@@ -1960,7 +1954,7 @@ describe("PoliticianTable", () => {
       `${staffCopy.statuses.signed} ${ask("frontier-ai-letter").title}`,
     ]);
     expect(cells("Testy McTestface MP")[4]).toBe(staffCopy.personStatuses.retired);
-    expect(cells("Nora Nothing").at(-1)).toBe(staffCopy.politicians.noAsks);
+    expect(cells("Nora Nothing")[6]).toBe(staffCopy.politicians.noAsks);
     expect(
       getComputedStyle(page.getByRole("cell", { name: staffCopy.personStatuses.retired }).first().element()).whiteSpace,
     ).toBe("nowrap");
@@ -1984,9 +1978,9 @@ describe("PoliticianTable", () => {
     expect(headings()).toEqual([
       staffCopy.fields.name,
       staffCopy.fields.constituency,
+      staffCopy.politicians.columns.asks,
       staffCopy.politicians.columns.letters,
       staffCopy.politicians.columns.replies,
-      staffCopy.politicians.columns.asks,
     ]);
     // A column the filters fix, however few rows: a house, a party, one status.
     await rerender(
@@ -1998,9 +1992,9 @@ describe("PoliticianTable", () => {
     );
     expect(headings()).toEqual([
       staffCopy.fields.name,
+      staffCopy.politicians.columns.asks,
       staffCopy.politicians.columns.letters,
       staffCopy.politicians.columns.replies,
-      staffCopy.politicians.columns.asks,
     ]);
     // A row on its own shows what it has, but not a blank.
     await rerender(<PoliticianTable politicians={[{ ...plain, constituency: null }]} asks={[]} />);
@@ -2009,9 +2003,9 @@ describe("PoliticianTable", () => {
       staffCopy.fields.house,
       staffCopy.fields.party,
       staffCopy.politicians.columns.status,
+      staffCopy.politicians.columns.asks,
       staffCopy.politicians.columns.letters,
       staffCopy.politicians.columns.replies,
-      staffCopy.politicians.columns.asks,
     ]);
   });
 });
@@ -2362,9 +2356,10 @@ describe("ChangesTable", () => {
     const fields = staffCopy.fields;
     const labels = copy.labels;
     await expect.element(page.getByText(copy.total(exampleChanges.length))).toBeVisible();
-    await expect
-      .element(page.getByRole("link", { name: staffCopy.lists.formats.json }))
-      .toHaveAttribute("href", "/staff/audit-log/download?format=json");
+    expect(await downloads()).toEqual([
+      "/staff/audit-log/download?format=csv",
+      "/staff/audit-log/download?format=json",
+    ]);
     const rows = page
       .getByRole("row")
       .all()
@@ -2557,9 +2552,12 @@ describe("SupportersTable", () => {
     await expect.element(page.getByText(copy.total(120))).toBeVisible();
     await expect.element(page.getByRole("cell", { name: `jane.e@example.org ${copy.moreEmails(1)}` })).toBeVisible();
     await expect.element(page.getByRole("cell", { name: "+447700900001" }).first()).toBeVisible();
-    await expect
-      .element(page.getByRole("link", { name: staffCopy.lists.formats.csv }))
-      .toHaveAttribute("href", "/staff/supporters/download?q=j&format=csv");
+    expect(await downloads()).toEqual([
+      "/staff/supporters/download?q=j&format=csv",
+      "/staff/supporters/download?q=j&format=json",
+      "/staff/supporters/download?q=j&format=vcf",
+    ]);
+    await userEvent.keyboard("{Escape}");
     await expect
       .element(page.getByRole("link", { name: "Jane Example" }))
       .toHaveAttribute("href", "/staff/supporters/7");
@@ -2650,7 +2648,7 @@ describe("SupporterDetails", () => {
         }),
       )
       .toBeVisible();
-    await expect.element(page.getByText("1 Mar 2026", { exact: true })).toBeVisible();
+    await expect.element(page.getByText("1 Mar 2026 – 12 Oct 2026", { exact: true })).toBeVisible();
     // The history, folded until opened: what, linked, with a status only when it isn't approved.
     await page.getByText(copy.detail.showHistory(exampleSupporterDetails.activity.length)).click();
     const history = page.getByRole("list", { name: copy.detail.activityTitle });
@@ -2954,6 +2952,13 @@ describe("SupporterDetails, a member", () => {
   });
 });
 
+/** Opens a list's Download menu, and gives its links' addresses. */
+async function downloads() {
+  await page.getByRole("button", { name: staffCopy.lists.download }).click();
+  const box = document.querySelector<HTMLElement>("[popover]:popover-open")!;
+  return [...box.querySelectorAll("a")].map((a) => a.getAttribute("href"));
+}
+
 /** Opens every folded part of the page, such as a supporter's history. */
 function openHistory() {
   for (const details of document.querySelectorAll("details")) details.open = true;
@@ -3192,8 +3197,8 @@ describe("PoliticianFilters", () => {
       staffCopy.politician.country,
       copy.status,
       staffCopy.fields.email,
-      copy.ask,
       copy.flag,
+      copy.ask,
     ]);
     expect(page.getByRole("link", { name: staffCopy.resetFilters }).query()).toBeNull();
   });

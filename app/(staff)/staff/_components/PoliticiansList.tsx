@@ -63,6 +63,7 @@ export default function PoliticiansList({
           pageSize={list.pageSize}
           href={(n) => filtersPath(PATH, search, pageParam(n))}
           download={(format) => filtersPath(`${PATH}/download`, filters, { format })}
+          formats={["csv", "json", "vcf"]}
           columns={politicianColumns(list.politicians, asks, filters)}
           rows={list.politicians}
           rowKey={(p) => p.id}

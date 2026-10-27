@@ -1,10 +1,11 @@
 import Link from "next/link";
-import type { ReactNode } from "react";
-import { ButtonAnchor, ButtonLink } from "@/components/ui/Button";
+import { useId, type ReactNode } from "react";
+import { ButtonLink, buttonClass } from "@/components/ui/Button";
 import Table from "@/components/ui/Table";
 import { Muted } from "@/components/ui/Text";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { pageRange, type DownloadColumn, type DownloadFormat } from "@/lib/staff-list";
+import Menu from "./Menu";
 import styles from "./ListFrame.module.css";
 
 /**
@@ -105,6 +106,8 @@ type Props<Row> = {
   href: (page: number) => string;
   /** The URL of every row the list's filters find, in a format; none for a list with no downloads. */
   download?: (format: DownloadFormat) => string;
+  /** The formats it offers: a spreadsheet's and JSON, and vCards for a list of people. */
+  formats?: DownloadFormat[];
   columns: ListColumn<Row>[];
   rows: Row[];
   rowKey: (row: Row) => string | number;
@@ -114,8 +117,8 @@ type Props<Row> = {
 
 /**
  * Every staff list (docs/style-guide.md, "Lists"): over the table, how
- * many and which of them this page shows, and buttons to download all of
- * them, every page; the striped table; and under it, which rows these are and the way
+ * many and which of them this page shows, and a Download button whose
+ * menu has each format of every page; the striped table; and under it, which rows these are and the way
  * to the other pages. It's as wide as the window, past the content's
  * width, so a wide table wraps less.
  */
@@ -127,11 +130,13 @@ export default function ListFrame<Row>({
   pageSize,
   href,
   download,
+  formats = ["csv", "json"],
   columns,
   rows,
   rowKey,
   empty,
 }: Props<Row>) {
+  const menuId = useId();
   if (total === 0) return <p>{empty}</p>;
   const copy = staffCopy.lists;
   const from = (page - 1) * pageSize + 1;
@@ -144,9 +149,11 @@ export default function ListFrame<Row>({
           {pages > 1 && <Muted> · {copy.showing(from, to)}</Muted>}
         </p>
         {download && (
-          <div className={styles.downloads}>
-            {(["csv", "json"] as const).map((format) => (
-              <ButtonAnchor key={format} variant="ghost" size="small" fit href={download(format)} download>
+          <Menu
+            id={`download-${menuId}`}
+            trigger={buttonClass({ variant: "ghost", size: "small", fit: true, className: styles.download })}
+            label={
+              <>
                 <svg
                   width="14"
                   height="14"
@@ -159,10 +166,20 @@ export default function ListFrame<Row>({
                 >
                   <path d="M12 4v12M6 11l6 6 6-6M5 20h14" />
                 </svg>
-                {copy.formats[format]}
-              </ButtonAnchor>
-            ))}
-          </div>
+                {copy.download}
+              </>
+            }
+          >
+            <ul className={styles.formats}>
+              {formats.map((format) => (
+                <li key={format}>
+                  <a href={download(format)} download>
+                    {copy.formats[format]}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </Menu>
         )}
       </div>
       <ListTable columns={columns} rows={rows} rowKey={rowKey} />

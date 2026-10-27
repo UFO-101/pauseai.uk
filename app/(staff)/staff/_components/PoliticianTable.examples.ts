@@ -66,6 +66,8 @@ export const examplePolitician: Politician = {
   personalConnection: false,
   isTest: false,
   emailBlocked: false,
+  firstActivityAt: null,
+  lastActivityAt: null,
   letters: 4,
   replies: 1,
   statuses: {

@@ -10,7 +10,7 @@ const copy = staffCopy.politicians;
 /**
  * The politicians list's filters, among `parties` and `asks`: the table's
  * columns in its order, with the nation after the party and whether we can
- * email them after the status, then Airtable's markers. Status is those in
+ * email them after the status. Status is those in
  * office unless another is chosen. An answer is offered once there's an
  * ask, from those its kind allows, and goes with it. Party, nation, email
  * and the markers can each be chosen more than once.
@@ -48,6 +48,12 @@ export function politicianFilters(search: PoliticiansSearch, parties: string[], 
       options: EMAIL_STATES.map((state) => ({ value: state, label: copy.emailStates[state] })),
     },
     {
+      name: "flag",
+      label: copy.flag,
+      repeat: true,
+      options: POLITICIAN_FLAGS.map((flag) => ({ value: flag, label: copy.flags[flag] })),
+    },
+    {
       name: "ask",
       label: copy.ask,
       options: asks.map((a) => ({ value: a.slug, label: a.title })),
@@ -65,12 +71,6 @@ export function politicianFilters(search: PoliticiansSearch, parties: string[], 
         })),
         { value: "none", label: copy.noAnswer },
       ],
-    },
-    {
-      name: "flag",
-      label: copy.flag,
-      repeat: true,
-      options: POLITICIAN_FLAGS.map((flag) => ({ value: flag, label: copy.flags[flag] })),
     },
   ];
 }
