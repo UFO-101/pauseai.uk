@@ -15,8 +15,9 @@
   align-items: end;
 }
 
+/* Wide enough for the fields it searches, which are its placeholder. */
 .search > :first-child {
-  width: 16rem;
+  width: 20rem;
 }
 
 /* On a phone, the search takes the row, its box what the button leaves

@@ -172,10 +172,11 @@ test("the politicians list pages through many, a count and downloads over it", a
   await expect(page.getByText(staffCopy.paging.range(101, 200, 250))).toBeVisible();
   await frame(page, "the second page");
 
-  await page
-    .getByRole("navigation", { name: staffCopy.paging.label })
-    .getByRole("link", { name: staffCopy.paging.page(3) })
-    .click();
+  // On to the last: by its number, or on a phone, where the numbers give way to "Page 2 of 3", by Next.
+  const last = page.getByRole("navigation", { name: staffCopy.paging.label }).getByRole("link", {
+    name: staffCopy.paging.page(3),
+  });
+  await ((await last.isVisible()) ? last : pages.getByRole("link", { name: staffCopy.paging.next })).click();
   await expect(page).toHaveURL(/status=any&page=3/);
   await expect(page.getByText(staffCopy.paging.range(201, 250, 250))).toBeVisible();
   await frame(page, "the last page: no Next");
@@ -185,7 +186,7 @@ test("the politicians list pages through many, a count and downloads over it", a
     .getByRole("navigation", { name: staffCopy.fields.house })
     .getByRole("link", { name: staffCopy.houses.lords })
     .click();
-  await expect(page).toHaveURL(`${BASE}/staff/politicians?status=any&house=lords`);
+  await expect(page).toHaveURL(`${BASE}/staff/politicians?house=lords&status=any`);
 });
 
 test("searching the politicians: each word anywhere, those not in office, and the nearest to a typo", async ({

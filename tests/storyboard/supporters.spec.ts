@@ -32,6 +32,11 @@ async function logInWithSupporters(page: Page, database: string) {
 
 const copy = staffCopy.supporters;
 
+/** Opens a supporter's history, folded at the foot of their page. */
+async function openHistory(page: Page) {
+  await page.locator("summary", { hasText: copy.detail.showHistory(0).replace(/0$/, "") }).click();
+}
+
 test("without the supporters permission, the list is closed and the home page doesn't offer it", async ({
   page,
   flowDatabase,
@@ -125,9 +130,11 @@ test("a supporter's page: who they are, what they gave, their history, and an op
   await expect(page.getByText("+447700900001", { exact: false })).toBeVisible();
   const reasons = copy.detail.permissions.reasons;
   await expect(page.getByText(reasons["luma-calendar"].unsubscribed("16 Oct 2026"), { exact: false })).toBeVisible();
+  await frame(page, "Jane's page: opted out of the calendar's emails, with her phone, postcode and registrations");
+  await openHistory(page);
   const history = page.getByRole("list", { name: copy.detail.activityTitle });
   await expect(history.getByText(copy.detail.kinds["opted-out"], { exact: false }).first()).toBeVisible();
-  await frame(page, "Jane's page: opted out of the calendar's emails, with her phone, postcode and registrations");
+  await frame(page, "her history, opened under the events and letters");
 
   // Subscribing again closes the opt-out, and both show in the history.
   expect(
@@ -138,14 +145,18 @@ test("a supporter's page: who they are, what they gave, their history, and an op
   await page.reload();
   // A contact again, since before Luma's webhook: we can't be sure.
   await expect(page.getByText(reasons["luma-calendar"].following("20 Sept 2026"), { exact: false })).toBeVisible();
+  await openHistory(page);
   await expect(history.getByText(copy.detail.kinds.resubscribed, { exact: false })).toBeVisible();
   await frame(page, "subscribed again: the list says so, and the history keeps both");
 
-  // Looking is logged.
+  // Downloading them, as cards for WhatsApp, is logged; looking isn't.
+  const cards = await page.request.get(`${BASE}/staff/supporters/download?format=vcf`);
+  expect(await cards.text()).toMatch(/^FN:PauseAI \w{4} - Jane Fixture$/m);
   addStaffAccount(flowDatabase, staffEmail(), ["admin", "supporters"]);
   await page.goto(`${BASE}/staff/audit-log`);
-  await expect(page.getByRole("cell", { name: "view supporter" }).first()).toBeVisible();
-  await frame(page, "the audit log: each viewing of a supporter");
+  await expect(page.getByRole("cell", { name: "download supporters" }).first()).toBeVisible();
+  await expect(page.getByRole("cell", { name: "view supporter" })).toHaveCount(0);
+  await frame(page, "the audit log: the download of supporters, and no viewing");
 });
 
 test("a letter writer is a supporter too, linked from the letters page", async ({
@@ -201,11 +212,12 @@ test("a member who also wrote to their MP is one supporter, with how they joined
   await lee.getByRole("link").first().click();
   await expect(page).toHaveURL(/\/staff\/supporters\/\d+$/);
   await expect(page.getByRole("heading", { level: 1 })).toContainText(copy.badges.member);
-  await expect(page.getByText("29 Nov 2025", { exact: true }).first()).toBeVisible();
+  await expect(page.getByText("29 Nov 2025", { exact: false }).first()).toBeVisible();
   // Joined before "Keep me informed" was a choice: on the updates.
   await expect(
     page.getByText(copy.detail.permissions.reasons["pauseai-updates"].joined("29 Nov 2025"), { exact: false }),
   ).toBeVisible();
+  await openHistory(page);
   const history = page.getByRole("list", { name: copy.detail.activityTitle });
   await expect(history.getByText(copy.detail.kinds["member-joined"], { exact: false })).toBeVisible();
   await expect(history.getByText(copy.detail.kinds.letter, { exact: false })).toBeVisible();
@@ -249,6 +261,7 @@ test("a member who left Keep me informed unticked won't get the updates", async 
     page.getByText(copy.detail.permissions.reasons["pauseai-updates"].declined("6 Oct 2026"), { exact: false }),
   ).toBeVisible();
   await expect(page.getByText(copy.detail.permissions.no).first()).toBeVisible();
+  await openHistory(page);
   await expect(
     page.getByText(`${copy.detail.joinedOn("pauseai.uk")}, ${copy.detail.intents["Act now"]}`),
   ).toBeVisible();
