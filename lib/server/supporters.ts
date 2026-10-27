@@ -14,6 +14,7 @@ import type {
 import { SUPPORTERS_PAGE_SIZE } from "@/lib/supporters";
 import { query, transaction, type Queryable } from "./db";
 import { permissionsFor } from "./email-permissions";
+import { optedOutOfLuma } from "./opt-outs";
 import { refreshSupporterFacts } from "./supporter-facts";
 import { SUPPORTER_SOURCES } from "./supporter-sources";
 import { contains, everyWord } from "./search";
@@ -84,12 +85,19 @@ export async function linkSupporters(db?: Queryable): Promise<LinkResult> {
 }
 
 /**
+ * Whether supporter `s` is a contact of the Luma calendar's now: they follow
+ * it, and haven't opted out of its emails. The opt-out is looked up as the
+ * list is read, not kept with it, so Luma's webhook saying so shows at once.
+ */
+const LUMA_CONTACT = `(s.luma_follows AND NOT ${optedOutOfLuma("s.emails")})`;
+
+/**
  * A supporter's summary as staff see it, from `s`, a row shaped as
  * supporters_listed's: who they are, their newest email, what they've done,
  * and where they are (a place's name and what it's from), or nulls.
  */
 const SUMMARY_COLUMNS = `s.id::int AS id, s.name, coalesce(s.emails, '{}') AS emails, s.email, s.phone, s.postcode,
-  coalesce(s.sources, '{}') AS sources, s.luma_contact AS "lumaContact", s.first_seen_at AS "firstSeenAt",
+  coalesce(s.sources, '{}') AS sources, ${LUMA_CONTACT} AS "lumaContact", s.first_seen_at AS "firstSeenAt",
   s.last_active_at AS "lastActiveAt", s.events, s.letters, s.member,
   CASE WHEN s.basis IS NULL THEN NULL
   ELSE json_build_object('name', s.place, 'basis', s.basis, 'given', s.given, 'country', s.country) END AS place`;
@@ -106,7 +114,7 @@ const LIVE_SUMMARY = `(SELECT s.*,
 /** When a supporter has each lozenge in the Activities column, as SupporterBadges shows them. */
 const BADGE_CONDITIONS: Record<SupporterBadge, string> = {
   member: "s.member",
-  lumaContact: "s.luma_contact",
+  lumaContact: LUMA_CONTACT,
   registered: "s.events > 0",
   letter: "s.letters > 0",
   march: "'march-2026-11' = ANY(s.sources)",

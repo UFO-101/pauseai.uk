@@ -317,6 +317,24 @@ describeWithDatabase("listSupporters and getSupporter", () => {
     expect(await names({})).toContain("Janet");
   });
 
+  it("shows an opt-out from the Luma calendar, and its end, at once, between refreshes", async () => {
+    await people();
+    await refreshSupportersList();
+    const contacts = () => names({ activity: ["lumaContact"] });
+    expect(await contacts()).toEqual(["Jane"]);
+    await query(
+      `INSERT INTO opt_outs (address, list, source, source_ref, unsubscribed_at)
+       VALUES ('jane@example.com', 'luma-calendar', 'luma-webhook', 'w2', '2026-10-15T00:00:00Z')`,
+    );
+    expect(await contacts()).toEqual([]);
+    expect(
+      (await listSupporters({ sort: "active", dir: "desc", page: 1 })).supporters.find((s) => s.name === "Jane")!
+        .lumaContact,
+    ).toBe(false);
+    await query("UPDATE opt_outs SET resubscribed_at = '2026-10-16T00:00:00Z' WHERE source_ref = 'w2'");
+    expect(await contacts()).toEqual(["Jane"]);
+  });
+
   it("filters by name, email or phone, activities, subscriptions, first sign-up and postcode, and sorts", async () => {
     await people();
     expect(await names({ search: "JANE" })).toEqual(["Jane"]);

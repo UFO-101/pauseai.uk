@@ -182,7 +182,9 @@ supporter's summary and place, refreshed by `refreshSupportersList()` at
 the end of each import that links supporters and by an erasure, and anyone
 added since, worked out as it's read. So a supporter's counts, tags and
 place in the list are as of the last import, up to an hour old (overnight,
-until 06:17); their own page is always as they are now. When a supporter was first seen, the earliest `seen_at` of their
+until 06:17), but for whether they're a Luma contact: an opt-out from the
+calendar, or its end, is looked up as the list is read
+(`optedOutOfLuma()`). Their own page is always as they are now. When a supporter was first seen, the earliest `seen_at` of their
 records (`supporter_first_seen`), is kept on the supporter
 (`supporters.first_seen_at`) by `refreshSupporterFacts()`
 (`lib/server/supporter-facts.ts`), which `linkSupporters()` runs, so the

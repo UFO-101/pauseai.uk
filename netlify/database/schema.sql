@@ -720,7 +720,8 @@ CREATE VIEW public.supporters_summary AS
     act.last_active_at,
     COALESCE(act.events, 0) AS events,
     COALESCE(act.letters, 0) AS letters,
-    (mem.supporter_id IS NOT NULL) AS member
+    (mem.supporter_id IS NOT NULL) AS member,
+    COALESCE(act.luma_contact, false) AS luma_follows
    FROM ((((public.supporters s
      LEFT JOIN ident ON ((ident.supporter_id = s.id)))
      LEFT JOIN act ON ((act.supporter_id = s.id)))
@@ -743,7 +744,7 @@ CREATE MATERIALIZED VIEW public.supporters_list AS
     s.phone,
     s.postcode,
     s.sources,
-    s.luma_contact,
+    s.luma_follows,
     s.first_seen_at,
     s.last_active_at,
     s.events,
@@ -772,7 +773,7 @@ BEGIN
     SELECT s.id, s.name, s.emails,
       (SELECT i.email FROM supporter_identity i WHERE i.supporter_id = s.id
        ORDER BY i.seen_at DESC NULLS LAST, i.email LIMIT 1) AS email,
-      s.phone, s.postcode, s.sources, s.luma_contact, s.first_seen_at, s.last_active_at, s.events, s.letters, s.member,
+      s.phone, s.postcode, s.sources, s.luma_follows, s.first_seen_at, s.last_active_at, s.events, s.letters, s.member,
       sp.place, sp.basis, sp.given, sp.country, sp.latitude, sp.longitude
     FROM supporters_summary s LEFT JOIN supporter_place sp ON sp.supporter_id = s.id
     WHERE s.id = n.id OFFSET 0
@@ -1263,7 +1264,7 @@ CREATE VIEW public.supporters_listed AS
     supporters_list.phone,
     supporters_list.postcode,
     supporters_list.sources,
-    supporters_list.luma_contact,
+    supporters_list.luma_follows,
     supporters_list.first_seen_at,
     supporters_list.last_active_at,
     supporters_list.events,
@@ -1284,7 +1285,7 @@ UNION ALL
     supporters_added.phone,
     supporters_added.postcode,
     supporters_added.sources,
-    supporters_added.luma_contact,
+    supporters_added.luma_follows,
     supporters_added.first_seen_at,
     supporters_added.last_active_at,
     supporters_added.events,
@@ -1296,7 +1297,7 @@ UNION ALL
     supporters_added.country,
     supporters_added.latitude,
     supporters_added.longitude
-   FROM public.supporters_added() supporters_added(id, name, emails, email, phone, postcode, sources, luma_contact, first_seen_at, last_active_at, events, letters, member, place, basis, given, country, latitude, longitude);
+   FROM public.supporters_added() supporters_added(id, name, emails, email, phone, postcode, sources, luma_follows, first_seen_at, last_active_at, events, letters, member, place, basis, given, country, latitude, longitude);
 
 --
 -- Name: ask_kind_statuses ask_kind_statuses_pkey; Type: CONSTRAINT; Schema: public; Owner: -
