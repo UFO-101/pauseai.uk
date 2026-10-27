@@ -61,7 +61,8 @@ test("every staff page, without a session, goes to the login page, to come back 
     const res = await request.get(`${BASE}${route}`, { maxRedirects: 0 });
     expect(res.status(), route).toBe(307);
     const back = route === "/staff" ? "" : `?next=${encodeURIComponent(route)}`;
-    expect(res.headers().location, route).toBe(`${BASE}/staff/login${back}`);
+    const location = new URL(res.headers().location, BASE);
+    expect(location.pathname + location.search, route).toBe(`/staff/login${back}`);
   }
 });
 

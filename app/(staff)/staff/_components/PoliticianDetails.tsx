@@ -133,31 +133,42 @@ function pauseaiEntries(letters: PauseaiLetter[]): Entry[] {
   }));
 }
 
+/** Stands in for the answer in the copy's words, to put the answer's link there. */
+const ANSWER = "\u0000";
+
 /**
  * What an entry of the audit log about them says, beyond its kind: the
- * status, the note, the reason. An ask leads to everyone who answered it;
- * a blocked address, to the politicians' blocked emails, searched for it.
+ * status, the note, the reason. An answer leads to everyone who gave it to
+ * that ask, and the ask to the letter or event; a blocked address, to the
+ * politicians' blocked emails, searched for it.
  */
 function Detail({ change, asks }: { change: PoliticianChange; asks: Ask[] }) {
   const { details } = change;
   const text = (key: string) => (typeof details[key] === "string" ? (details[key] as string) : "");
   switch (change.action) {
     case "set status": {
-      const words =
-        details.status === null
-          ? copy.statusCleared
-          : copy.statusSet(staffCopy.statuses[text("status")] ?? text("status"));
+      const ask = asks.find((a) => a.slug === details.ask);
+      const label = staffCopy.statuses[text("status")] ?? text("status");
+      // The answer, where the copy puts it, leads to everyone who gave it to the ask.
+      const answer =
+        details.ask && details.status ? (
+          <Link
+            href={`/staff/politicians?ask=${encodeURIComponent(text("ask"))}&answer=${encodeURIComponent(text("status"))}`}
+          >
+            {label}
+          </Link>
+        ) : (
+          label
+        );
+      const words = details.status === null ? copy.statusCleared : copy.statusSet(ANSWER);
+      const [lead, rest = ""] = words.before.split(ANSWER);
       return (
         <>
-          {words.before}
-          {/* Logged by ask, or, before asks, by campaign. */}
-          {details.ask ? (
-            <Link href={`/staff/politicians?ask=${encodeURIComponent(text("ask"))}`}>
-              {asks.find((ask) => ask.slug === details.ask)?.title ?? text("ask")}
-            </Link>
-          ) : (
-            <CampaignName slug={text("campaign")} />
-          )}
+          {lead}
+          {words.before.includes(ANSWER) && answer}
+          {rest}
+          {/* Logged by ask, or, before asks, by campaign. The ask leads where it does in the asks card. */}
+          {ask ? <AskTitle ask={ask} /> : details.ask ? text("ask") : <CampaignName slug={text("campaign")} />}
           {words.after}
           {text("note") && <Muted> · {text("note")}</Muted>}
         </>

@@ -1194,10 +1194,15 @@ describe("PoliticianDetails", () => {
       `2026-07-01 08:00${copy.letter} Old Writer · old-campaign · queued`,
       `2026-06-01 08:00${copy["pauseai-letter"]} Example Mailing`,
     ]);
-    // An ask leads to everyone who answered it, PauseAI's email to its mailing, an address to its block.
+    // An answer leads to everyone who gave it, the ask to the letter as in the asks card, PauseAI's email to its
+    // mailing, an address to its block.
+    const historyList = page.getByRole("list", { name: staffCopy.politician.historyTitle });
     await expect
-      .element(page.getByRole("link", { name: ask("frontier-ai-letter").title }).last())
-      .toHaveAttribute("href", "/staff/politicians?ask=frontier-ai-letter");
+      .element(historyList.getByRole("link", { name: staffCopy.statuses.signed }).first())
+      .toHaveAttribute("href", "/staff/politicians?ask=frontier-ai-letter&answer=signed");
+    await expect
+      .element(historyList.getByRole("link", { name: ask("frontier-ai-letter").title }))
+      .toHaveAttribute("href", ask("frontier-ai-letter").url!);
     await expect
       .element(page.getByRole("link", { name: "Example Mailing" }).first())
       .toHaveAttribute("href", "/staff/mailings/3");
