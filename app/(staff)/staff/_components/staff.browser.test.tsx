@@ -498,6 +498,11 @@ describe("DevLogin", () => {
     expect(getComputedStyle(box.element()).borderTopStyle).toBe("dashed");
   });
 
+  it("passes on the page to go to once logged in", async () => {
+    await render(<DevLogin accounts={[{ email: "jo@pauseai.uk", description: "no account" }]} next="/staff/letters" />);
+    expect(document.querySelector<HTMLInputElement>('input[name="next"]')!.value).toBe("/staff/letters");
+  });
+
   it("is nothing outside a fixture build, where there are no accounts to offer", async () => {
     await render(<DevLogin accounts={undefined} />);
     await expect.element(page.getByRole("region", { name: staffCopy.devLogin.title })).not.toBeInTheDocument();
@@ -834,6 +839,12 @@ describe("LoginForm", () => {
     await expect.element(page.getByRole("checkbox", { name: staffCopy.login.keep })).not.toBeChecked();
     await expect.element(page.getByText(staffCopy.login.failed)).not.toBeInTheDocument();
     await expect.element(page.getByText(staffCopy.login.elsewhere)).not.toBeInTheDocument();
+    expect(document.querySelector('input[name="next"]')).toBeNull();
+  });
+
+  it("passes on the page to go to once logged in", async () => {
+    await render(<LoginForm next="/staff/letters" />);
+    expect(document.querySelector<HTMLInputElement>('input[name="next"]')!.value).toBe("/staff/letters");
   });
 
   it("says why the last link didn't work", async () => {
@@ -2139,13 +2150,22 @@ describe("RunList", () => {
 });
 
 describe("ChangesTable", () => {
-  it("lists who changed what, when on one line, and every field each logged, in words, linked where there's a page", async () => {
+  it("lists who changed what under a heading for each day, and every field each logged, in words, linked where there's a page", async () => {
     await render(<ChangesTable changes={exampleChanges} airtableTable="https://airtable.com/app/tbl" />);
     const copy = staffCopy.changes;
     const fields = staffCopy.fields;
     const labels = copy.labels;
-    const rows = page.getByRole("row").all().slice(1);
-    expect(getComputedStyle(rows[0].element().querySelector("td")!).whiteSpace).toBe("nowrap");
+    expect(
+      page
+        .getByRole("heading")
+        .all()
+        .map((h) => h.element().textContent),
+    ).toEqual(["12 Oct 2026", "11 Oct 2026"]);
+    const rows = page
+      .getByRole("row")
+      .all()
+      .filter((row) => row.element().querySelector("td"));
+    expect(rows[0].element().children[0].textContent).toBe("09:59");
     expect(rows[0].element().children[1].textContent).toBe("jo@pauseai.uk");
     const details = rows.map((row) => row.element().children[3].textContent);
     const signed = staffCopy.politician.statusSet(staffCopy.statuses.signed);

@@ -151,15 +151,15 @@ export const staffCopy = {
           "not-following": "Luma: not a contact",
         },
         "pauseai-updates": {
-          asked: "Updates: asked",
-          joined: "Updates: joined before July 2026",
-          declined: "Updates: declined",
-          unsubscribed: "Updates: unsubscribed",
-          removed: "Updates: removed",
+          asked: "PauseAI: asked",
+          joined: "PauseAI: joined before July 2026",
+          declined: "PauseAI: declined",
+          unsubscribed: "PauseAI: unsubscribed",
+          removed: "PauseAI: removed",
         },
         "events-and-ways-to-help": {
-          asked: "Events: agreed",
-          declined: "Events: didn't agree",
+          asked: "Letter writing: agreed",
+          declined: "Letter writing: didn't agree",
         },
       } as Record<string, Record<string, string>>,
     },
@@ -186,8 +186,8 @@ export const staffCopy = {
     subscriptions: {
       topics: {
         "luma-calendar": "Luma",
-        "pauseai-updates": "Updates",
-        "events-and-ways-to-help": "Events and help",
+        "pauseai-updates": "PauseAI",
+        "events-and-ways-to-help": "Letter writing",
       } as Record<string, string>,
       // A yes that an unsubscribe we can't see may have undone.
       unsure: (topic: string) => `${topic}, unsure`,
@@ -225,7 +225,7 @@ export const staffCopy = {
         topics: {
           "luma-calendar": "Luma calendar emails",
           "pauseai-updates": "PauseAI updates",
-          "events-and-ways-to-help": "Events and ways to help",
+          "events-and-ways-to-help": "Letter writing updates",
         } as Record<string, string>,
         yes: "Will email",
         no: "Won't email",

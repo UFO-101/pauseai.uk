@@ -8,21 +8,23 @@ import StaffNav from "../_components/StaffNav";
 import StaffPage from "../_components/ui/StaffPage";
 
 // Open to anyone: it's where staff log in, so it doesn't call requireStaff().
-// In a fixture build, the dev login sits under the card.
+// In a fixture build, the dev login sits under the card. Both log in to the
+// page in `next`, if it's a staff page.
 export const metadata: Metadata = { title: staffCopy.login.title };
 
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ sent?: string; failed?: string; elsewhere?: string }>;
+  searchParams: Promise<{ sent?: string; failed?: string; elsewhere?: string; next?: string }>;
 }) {
+  const params = await searchParams;
   return (
     <StaffPage>
       <StaffNav />
       <LoginCard title={staffCopy.login.title}>
-        <LoginForm {...await searchParams} />
+        <LoginForm {...params} />
       </LoginCard>
-      <DevLogin accounts={await devLoginAccounts()} />
+      <DevLogin accounts={await devLoginAccounts()} next={params.next} />
     </StaffPage>
   );
 }

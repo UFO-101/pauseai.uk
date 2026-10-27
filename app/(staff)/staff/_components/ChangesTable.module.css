@@ -1,8 +1,3 @@
-/* When, on one line: a date and time split over two read badly. */
-.when {
-  white-space: nowrap;
-}
-
 /* The JSON column's heading: for a screen reader, not to widen the column. */
 .hidden {
   position: absolute;

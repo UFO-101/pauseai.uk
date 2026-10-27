@@ -632,7 +632,8 @@ CREATE TABLE public.staff_login_links (
     expires_at timestamp with time zone NOT NULL,
     used_at timestamp with time zone,
     browser_hash text,
-    remember boolean DEFAULT false NOT NULL
+    remember boolean DEFAULT false NOT NULL,
+    next text DEFAULT '/staff'::text NOT NULL
 );
 
 --

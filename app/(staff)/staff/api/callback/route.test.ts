@@ -26,7 +26,7 @@ function open(token?: string, browser: string | null = BROWSER) {
 }
 
 /** Emails jo@pauseai.uk a login link, asked for from BROWSER, and returns its token. */
-async function linkToken(remember = false): Promise<string> {
+async function linkToken(remember = false, next?: string): Promise<string> {
   let body = "";
   server.use(
     http.post("https://api.postmarkapp.com/email", async ({ request }) => {
@@ -34,7 +34,7 @@ async function linkToken(remember = false): Promise<string> {
       return HttpResponse.json({ ErrorCode: 0, MessageID: crypto.randomUUID() });
     }),
   );
-  await sendLoginLink("jo@pauseai.uk", new Request("https://pauseai.uk/staff/api/login"), BROWSER, remember);
+  await sendLoginLink("jo@pauseai.uk", new Request("https://pauseai.uk/staff/api/login"), BROWSER, { remember, next });
   return body.match(/token=([\w-]+)/)![1];
 }
 
@@ -63,6 +63,11 @@ describeWithDatabase("GET /staff/api/callback", () => {
     expect(res.headers.getSetCookie().find((c) => c.startsWith("staff_login="))).toMatch(
       /^staff_login=; Path=\/staff; .*(Max-Age=0|Expires=Thu, 01 Jan 1970)/,
     );
+  });
+
+  it("goes to the page the link was asked for from", async () => {
+    const res = await open(await linkToken(false, "/staff/politicians/7"));
+    expect(res.headers.get("location")).toBe("https://pauseai.uk/staff/politicians/7");
   });
 
   it('with "Keep me signed in", sets the cookie for 30 days, with the marker that renews it', async () => {

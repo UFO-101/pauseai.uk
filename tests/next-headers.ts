@@ -1,7 +1,12 @@
 // Stands in for next/headers in Node tests, which run outside a request:
 // vi.mock("next/headers", () => import("@/tests/next-headers")). Tests put
-// the request's cookies in requestCookies.
+// the request's cookies in requestCookies, and its headers in requestHeaders.
 export const requestCookies = new Map<string, string>();
+export const requestHeaders = new Headers();
+
+export async function headers() {
+  return requestHeaders;
+}
 
 export async function cookies() {
   return {

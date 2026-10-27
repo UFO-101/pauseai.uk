@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/Button";
 import { Muted } from "@/components/ui/Text";
 import { staffCopy } from "@/lib/content/staff-interface";
 import type { DevLoginChoice } from "@/lib/server/dev-login";
-import { DEV_LOGIN_PATH } from "@/lib/staff-session";
+import { DEV_LOGIN_PATH, NEXT_PARAM } from "@/lib/staff-session";
 import styles from "./DevLogin.module.css";
 
 const copy = staffCopy.devLogin;
@@ -11,11 +11,12 @@ const copy = staffCopy.devLogin;
  * The dev login, only in a fixture build (DATA_FIXTURES=1): under the
  * login card, a box in the development colour, a line per address with a
  * button that signs in as them at once, with no email, and what they are:
- * their permissions, an account with none, or no account. Given no
- * addresses, as outside a fixture build (lib/server/dev-login.ts), it's
- * nothing; the route refuses it there too.
+ * their permissions, an account with none, or no account, and goes to
+ * `next`, as the emailed link would. Given no addresses, as outside a
+ * fixture build (lib/server/dev-login.ts), it's nothing; the route refuses
+ * it there too.
  */
-export default function DevLogin({ accounts }: { accounts: DevLoginChoice[] | undefined }) {
+export default function DevLogin({ accounts, next }: { accounts: DevLoginChoice[] | undefined; next?: string }) {
   if (!accounts) return null;
   return (
     <section className={styles.dev} aria-label={copy.title}>
@@ -26,6 +27,7 @@ export default function DevLogin({ accounts }: { accounts: DevLoginChoice[] | un
           <li key={email}>
             <form method="post" action={DEV_LOGIN_PATH}>
               <input type="hidden" name="email" value={email} />
+              {next && <input type="hidden" name={NEXT_PARAM} value={next} />}
               <Button variant="ghost" size="small" type="submit">
                 {email}
               </Button>

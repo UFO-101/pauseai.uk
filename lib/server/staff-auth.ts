@@ -1,9 +1,9 @@
 import "server-only";
 import { createHash, randomBytes } from "node:crypto";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import type { Permission } from "@/lib/staff-permissions";
-import { KEEP_DAYS, LOGIN_PATH, SESSION_COOKIE, SESSION_HOURS } from "@/lib/staff-session";
+import { KEEP_DAYS, loginPath, SESSION_COOKIE, SESSION_HOURS, STAFF_PATH_HEADER } from "@/lib/staff-session";
 import { logChange } from "./audit";
 import { query } from "./db";
 import { accountOf, accountOnLogin } from "./staff-accounts";
@@ -128,7 +128,7 @@ export async function requireStaff(needs: StaffNeeds = "account"): Promise<Staff
   const token = (await cookies()).get(SESSION_COOKIE)?.value;
   const session = token ? await sessionOf(token) : undefined;
   const account = session ? await accountOf(session.email) : undefined;
-  if (!token || !session || !account) redirect(LOGIN_PATH);
+  if (!token || !session || !account) redirect(loginPath((await headers()).get(STAFF_PATH_HEADER) ?? undefined));
   if (needs !== "account" && !account.permissions.includes(needs)) redirect(STAFF_HOME);
   return { email: session.email, token, permissions: account.permissions, sessions: session.sessions };
 }

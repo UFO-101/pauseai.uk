@@ -8,6 +8,11 @@ export function staffTime(at: string): string {
   return new Date(at).toISOString().slice(0, 16).replace("T", " ");
 }
 
+/** The time of day, to the minute, in UTC, for a row under a heading that gives the day. "10:34". */
+export function staffClock(at: string): string {
+  return new Date(at).toISOString().slice(11, 16);
+}
+
 /** The day as a heading reads it: weekday, day and month, in UTC. "Friday 16 October". */
 export function staffDay(at: string): string {
   return new Date(at).toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" });

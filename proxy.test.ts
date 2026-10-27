@@ -22,10 +22,13 @@ describe("proxy", () => {
     expect(matches("/staffing")).toBe(false);
   });
 
-  it("sends staff pages without a session cookie to the login page", () => {
-    const res = visit("/staff/politicians/1");
+  it("sends staff pages without a session cookie to the login page, to come back to once logged in", () => {
+    const res = visit("/staff/politicians/1?tab=x");
     expect(res.status).toBe(307);
-    expect(res.headers.get("location")).toBe("https://pauseai.uk/staff/login");
+    expect(res.headers.get("location")).toBe(
+      "https://pauseai.uk/staff/login?next=%2Fstaff%2Fpoliticians%2F1%3Ftab%3Dx",
+    );
+    expect(visit("/staff").headers.get("location")).toBe("https://pauseai.uk/staff/login");
   });
 
   it("answers staff API routes without a session cookie with 401", async () => {
@@ -39,6 +42,11 @@ describe("proxy", () => {
       expect(visit(path).headers.get("x-middleware-next")).toBe("1");
     }
     expect(visit("/staff", "staff_session=anything").headers.get("x-middleware-next")).toBe("1");
+  });
+
+  it("tells requireStaff() the page asked for, in case the session has ended", () => {
+    const res = visit("/staff/letters?page=2", "staff_session=anything");
+    expect(res.headers.get("x-middleware-request-x-staff-path")).toBe("/staff/letters?page=2");
   });
 
   it("renews a kept session's cookies for another 30 days on every request, and leaves a browser session's alone", () => {
