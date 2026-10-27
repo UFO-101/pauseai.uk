@@ -1,5 +1,5 @@
 // A letter's formatting: paragraphs, bold, italic and bullet lists, and
-// nothing else. The form's editor (Tiptap) sends its document as JSON; the
+// nothing else. In the HTML, an email address in the text is a mailto: link. The form's editor (Tiptap) sends its document as JSON; the
 // server checks it against what's allowed here, then writes the HTML and the
 // plain text itself, so nothing else can get into a letter.
 //
@@ -103,6 +103,10 @@ export function checkDoc(value: unknown): LetterDoc | undefined {
   return blocks.every(Boolean) ? { type: "doc", content: blocks as Block[] } : undefined;
 }
 
+// An email address: what's before the @, then dot-separated labels ending in
+// a top-level domain, so a full stop after it ends the sentence, not the address.
+const EMAIL = /[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}/g;
+
 const escape = (text: string) =>
   text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
@@ -110,7 +114,8 @@ function inlineHtml(inline: Inline[] = []): string {
   return inline
     .map((node) => {
       if (node.type === "hardBreak") return "<br>";
-      let html = escape(node.text);
+      // Escaping leaves an address as it was: it has no & < > or ".
+      let html = escape(node.text).replace(EMAIL, (address) => `<a href="mailto:${address}">${address}</a>`);
       if (node.marks?.some((mark) => mark.type === "italic")) html = `<em>${html}</em>`;
       if (node.marks?.some((mark) => mark.type === "bold")) html = `<strong>${html}</strong>`;
       return html;

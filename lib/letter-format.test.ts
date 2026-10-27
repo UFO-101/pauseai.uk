@@ -102,6 +102,16 @@ describe("toHtml and toText", () => {
     );
   });
 
+  it("links each email address in the HTML, and leaves the text as it is", () => {
+    const signing = doc(
+      p(text("Email policy@pauseai.uk. Or "), text("a.b+c@mail.example.org", "bold"), text(", not @ or x@y.")),
+    );
+    expect(toHtml(signing)).toBe(
+      '<p>Email <a href="mailto:policy@pauseai.uk">policy@pauseai.uk</a>. Or <strong><a href="mailto:a.b+c@mail.example.org">a.b+c@mail.example.org</a></strong>, not @ or x@y.</p>',
+    );
+    expect(toText(signing)).toBe("Email policy@pauseai.uk. Or a.b+c@mail.example.org, not @ or x@y.");
+  });
+
   it("writes plain text, with bullets as dashes", () => {
     expect(toText(letter)).toBe('Dear <Ms> & "Co",\n\n\n\n- one\n  more on one\n  - nested\n- two\n- \n\nName\nStreet');
   });
@@ -115,13 +125,14 @@ describe("toHtml and toText", () => {
 // Whether Gmail and Outlook can show a letter's HTML, from the Can I email
 // tables (https://www.caniemail.com), through doiuse-email: their apps strip
 // what they don't support, which a browser never shows. The letter uses only
-// paragraphs, line breaks, bold, italic and bullet lists, with no styles.
+// paragraphs, line breaks, bold, italic, bullet lists and mailto: links, with no styles.
 describe("the letter's HTML in Gmail and Outlook", () => {
   const CLIENTS = { emailClients: ["gmail.*", "outlook.*"] };
 
   it("uses nothing they don't support", () => {
     const letter = doc(
       p(text("Dear MP,"), { type: "hardBreak" }, text("bold", "bold"), text(" and "), text("italic", "italic")),
+      p(text("To sign, email policy@pauseai.uk.")),
       list([p(text("a reason")), list([p(text("a reason inside it"))])]),
     );
     const result = doIUseEmail(toHtml(letter), CLIENTS);
