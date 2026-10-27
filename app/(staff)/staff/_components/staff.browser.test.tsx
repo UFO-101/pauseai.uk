@@ -3001,11 +3001,14 @@ describe("EmailPermissionTiles", () => {
     await render(<EmailPermissionTiles permissions={exampleSupporterDetails.permissions} />);
     expect(tiles().map((tile) => tile.dataset.send)).toEqual(["no", "yes"]);
     expect(tiles()[0].textContent).toBe(
-      `${copy.topics["luma-calendar"]}: ${copy.no}${copy.reasons["luma-calendar"].unsubscribed("12 Oct 2026")}?${copy.details["luma-calendar"]}`,
+      `${copy.topics["luma-calendar"]}: ${copy.no}?${copy.reasons["luma-calendar"].unsubscribed("12 Oct 2026")}${copy.details["luma-calendar"]}`,
     );
-    expect(tiles()[1].querySelector("span")!.textContent).toBe(
+    expect(tiles()[1].querySelector("span > span")!.textContent).toBe(
       `${copy.topics["events-and-ways-to-help"]}: ${copy.yes}`,
     );
+    // The ? at the top right, out of the reason's way.
+    const top = tiles()[0].querySelector("button")!.getBoundingClientRect().top;
+    expect(top).toBeLessThan(tiles()[0].querySelector("[class*=reason]")!.getBoundingClientRect().top);
     // Green we'd email them, plain we wouldn't; an answer, so no warning icon.
     expect(tiles()[1].firstElementChild!.className).toMatch(/green/);
     expect(tiles()[0].firstElementChild!.className).not.toMatch(/green|amber|red|undefined/);
@@ -3019,7 +3022,7 @@ describe("EmailPermissionTiles", () => {
   it("says don't know where an unsubscribe may not have reached us", async () => {
     await render(<EmailPermissionTiles permissions={exampleMemberDetails.permissions} />);
     expect(tiles()[1].dataset.send).toBe("unsure");
-    expect(tiles()[1].querySelector("span")!.textContent).toContain(copy.unsure);
+    expect(tiles()[1].querySelector("span > span")!.textContent).toContain(copy.unsure);
     expect(tiles()[1].firstElementChild!.className).toMatch(/amber/);
   });
 
@@ -3034,7 +3037,7 @@ describe("EmailPermissionTiles", () => {
       />,
     );
     expect(tiles()[0].textContent).toContain(`${copy.topics["luma-calendar"]} · jane@example.com`);
-    expect(tiles()[0].textContent).toContain(`${copy.no}joined`);
+    expect(tiles()[0].textContent).toContain(`${copy.no}?joined`);
     expect(tiles()[1].textContent).toContain("other@example.com");
   });
 
@@ -3142,12 +3145,13 @@ describe("each list's download values and contact cards", () => {
     expect(exampleMailings.map((m) => values(mailingColumns, m).sender)).toEqual([null, staffCopy.mailings.imported]);
   });
 
-  it("politicians: every column, and as cards, with what they have", () => {
+  it("politicians: every column, and as cards, with what they have", async () => {
     const rows = [
       { ...examplePolitician, firstActivityAt: "2026-09-01T00:00:00Z", lastActivityAt: "2026-10-01T00:00:00Z" },
       {
         ...examplePolitician,
         id: 8,
+        constituency: null,
         house: "lords" as const,
         email: null,
         party: "",
@@ -3160,9 +3164,14 @@ describe("each list's download values and contact cards", () => {
       house: staffCopy.houses.commons,
       party: examplePolitician.party,
       status: staffCopy.personStatuses.in_office,
+      constituency: examplePolitician.constituency,
       first: "2026-09-01T00:00:00Z",
       active: "2026-10-01T00:00:00Z",
     });
+    // On the page, the days of their first and last activity; none for one without.
+    await render(<PoliticianTable politicians={rows} asks={exampleAsks} search={{ status: "any" }} />);
+    await expect.element(page.getByRole("cell", { name: "1 Sept 2026" })).toBeVisible();
+    await expect.element(page.getByRole("cell", { name: "1 Oct 2026" })).toBeVisible();
     expect(String(values(columns, rows[0]).asks)).toContain(": ");
     const card = politicianContact(exampleAsks);
     expect(card(rows[0])).toMatchObject({ emails: [examplePolitician.email], title: examplePolitician.party });
