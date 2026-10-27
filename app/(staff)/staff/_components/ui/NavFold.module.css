@@ -1,14 +1,15 @@
 /* The sidebar's fold button: a small round tab across the rule at the
    sidebar's edge (StaffPage's .side, whose padding --side-inline gives
-   the distance), level with the foot of the navigation, a chevron in it;
+   the distance), level with the pause symbol at the top, a chevron in it;
    folded, the chevron turned to point out. Placed against the navigation
    (StaffNav's .nav), so it stays with it as the page scrolls. */
 .fold {
   --size: 1.625rem;
 
   position: absolute;
+  /* The pause symbol is 1.75rem high (StaffNav's .mark). */
+  top: calc((1.75rem - var(--size)) / 2);
   right: calc(-1 * var(--side-inline, 0px) - var(--size) / 2);
-  bottom: 0;
   z-index: 1;
   display: grid;
   place-items: center;

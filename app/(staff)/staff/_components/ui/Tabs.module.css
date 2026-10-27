@@ -22,8 +22,16 @@
   color: var(--text);
 }
 
-.tabs a[aria-current="page"] {
+.tabs a[aria-current="page"],
+.tabs a[data-pending] {
   border-bottom-color: var(--accent);
   color: var(--text);
   font-weight: 600;
+}
+
+/* A tab clicked (StaffLink): chosen at once, the one it was no longer, while its list loads. */
+.tabs:has(a[data-pending]) a[aria-current="page"]:not([data-pending]) {
+  border-bottom-color: transparent;
+  color: var(--text-secondary);
+  font-weight: inherit;
 }

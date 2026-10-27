@@ -16,6 +16,45 @@
   box-sizing: border-box;
 }
 
+/* While a page or a change to a list loads (a link or search marked
+   data-pending: StaffLink, FormPending), once it has taken a moment: a thin
+   line along the top of the window, sliding while it waits. A quick one
+   never shows it. */
+.page:has([data-pending])::before {
+  content: "";
+  position: fixed;
+  inset: 0 0 auto;
+  z-index: 10;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent) 0 0 / 40% 100% no-repeat;
+  animation:
+    appear 0.15s 0.3s both,
+    slide 1.2s 0.3s ease-in-out infinite;
+}
+
+@keyframes appear {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes slide {
+  from {
+    background-position: -40% 0;
+  }
+
+  to {
+    background-position: 140% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page:has([data-pending])::before {
+    background: var(--accent);
+    animation: appear 0.15s 0.3s both;
+  }
+}
+
 /* The page's own column. Its side padding matches .container's. */
 .content {
   min-width: 0;
@@ -48,6 +87,12 @@
 
   /* --side-inline: the padding between the navigation and the rule, which
      the fold button (NavFold) sits across. */
+  /* Beside the sidebar, the page's heading starts higher, level with the
+     pause symbol at the top of the sidebar, its line being taller. */
+  .withNav .content {
+    padding-top: var(--space-4);
+  }
+
   .side {
     --side-inline: var(--space-5);
 
@@ -56,9 +101,9 @@
     border-right: 1px solid var(--border);
   }
 
-  /* Folded (NavFold): a strip as wide as the pause symbol, and a little more. */
+  /* Folded (NavFold): a strip as wide as the pause symbol, with room for the fold button beside it. */
   :global(:root[data-staff-nav="folded"]) .withNav {
-    grid-template-columns: 3.5rem minmax(0, 1fr);
+    grid-template-columns: 4rem minmax(0, 1fr);
   }
 
   :global(:root[data-staff-nav="folded"]) .side {

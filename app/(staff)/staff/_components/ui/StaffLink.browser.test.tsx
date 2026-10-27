@@ -3,7 +3,7 @@ import { render } from "vitest-browser-react";
 import { page } from "vitest/browser";
 import type { ComponentProps } from "react";
 import { navigation } from "@/tests/browser/navigation";
-import ListLink from "./ListLink";
+import StaffLink from "./StaffLink";
 import Menu from "./Menu";
 
 // Outside Next's app router a Link is a plain link, and following it would
@@ -24,11 +24,11 @@ vi.mock("next/link", () => ({
   ),
 }));
 
-describe("ListLink", () => {
+describe("StaffLink", () => {
   it("goes to its list as a transition, closing the menu it's in", async () => {
     await render(
       <Menu id="choices" label="Choose">
-        <ListLink href="/staff/supporters?activity=member">Members</ListLink>
+        <StaffLink href="/staff/supporters?activity=member">Members</StaffLink>
       </Menu>,
     );
     await page.getByRole("button", { name: "Choose" }).click();
@@ -38,7 +38,7 @@ describe("ListLink", () => {
   });
 
   it("goes outside a menu too", async () => {
-    await render(<ListLink href="/staff/politicians?sort=name&dir=desc">Name</ListLink>);
+    await render(<StaffLink href="/staff/politicians?sort=name&dir=desc">Name</StaffLink>);
     await page.getByRole("link", { name: "Name" }).click();
     await vi.waitFor(() => expect(navigation.pushed).toEqual(["/staff/politicians?sort=name&dir=desc"]));
   });

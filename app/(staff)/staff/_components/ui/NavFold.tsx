@@ -15,7 +15,7 @@ const subscribe = (change: () => void) => {
 const isFolded = () => document.documentElement.dataset.staffNav === "folded";
 
 /**
- * The round button on the staff sidebar's edge, by its foot, that folds it
+ * The round button on the staff sidebar's edge, by its title, that folds it
  * to a rail of icons, and unfolds it: on <html>, and remembered in this
  * browser (lib/staff-nav.ts). A chevron, pointing the way the sidebar will
  * go. Wider screens only; a phone has the bar instead.

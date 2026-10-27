@@ -5,7 +5,7 @@ import { staffCopy } from "@/lib/content/staff-interface";
 import { filtersPath, firstOf, NOT, notValue, valuesOf, type Params } from "@/lib/staff-search";
 import ChoiceSearch from "./ChoiceSearch";
 import FormPending from "./FormPending";
-import ListLink from "./ListLink";
+import StaffLink from "./StaffLink";
 import Menu from "./Menu";
 import styles from "./FilterBar.module.css";
 
@@ -83,9 +83,9 @@ function Choices({
       <ul className={styles.choices} data-search={search ? "empty" : undefined}>
         {options.map((option) => (
           <li key={option.value}>
-            <ListLink href={href(option.value)} aria-current={option.value === current ? "true" : undefined}>
+            <StaffLink href={href(option.value)} aria-current={option.value === current ? "true" : undefined}>
               {option.label}
-            </ListLink>
+            </StaffLink>
           </li>
         ))}
       </ul>
@@ -242,16 +242,16 @@ export default function FilterBar({
         {(filter.repeat || !second) && (
           <p className={styles.actions}>
             {filter.repeat && (
-              <ListLink href={href({ [filter.name]: [...others, not ? plain : NOT + plain] })}>
+              <StaffLink href={href({ [filter.name]: [...others, not ? plain : NOT + plain] })}>
                 {not ? copy.onlyInstead : copy.exceptInstead}
-              </ListLink>
+              </StaffLink>
             )}
             {!second && (
-              <ListLink
+              <StaffLink
                 href={filter.repeat && others.length > 0 ? href({ [filter.name]: others }) : href(without(filter.name))}
               >
                 {copy.remove}
-              </ListLink>
+              </StaffLink>
             )}
           </p>
         )}
@@ -292,9 +292,9 @@ export default function FilterBar({
             placeholder={search.label}
           />
           {values[search.name] && (
-            <ListLink href={href({ [search.name]: "" })} className={styles.clear} aria-label={copy.clearSearch}>
+            <StaffLink href={href({ [search.name]: "" })} className={styles.clear} aria-label={copy.clearSearch}>
               ×
-            </ListLink>
+            </StaffLink>
           )}
         </span>
         {hidden.map(([name, value]) => (
@@ -350,9 +350,9 @@ export default function FilterBar({
           </Menu>
         ))}
       {(on.length > 0 || values[search.name]) && (
-        <ListLink href={filtersPath(path, kept)} className={styles.clearAll}>
+        <StaffLink href={filtersPath(path, kept)} className={styles.clearAll}>
           {staffCopy.resetFilters}
-        </ListLink>
+        </StaffLink>
       )}
     </div>
   );

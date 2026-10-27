@@ -99,9 +99,16 @@ button.page:hover {
 }
 
 /* The current page, or the list a page belongs to: bold, in the text's colour, still a link. */
-.group a[aria-current="page"] {
+.group a[aria-current="page"],
+.group a[data-pending] {
   font-weight: 700;
   color: var(--text);
+}
+
+/* A page clicked (StaffLink): marked as the current one at once, and the one it was no longer, while it loads. */
+.nav:has(a[data-pending]) .group a[aria-current="page"]:not([data-pending]) {
+  font-weight: 500;
+  color: var(--accent);
 }
 
 /* Who's logged in, on one line, cut short if it's long, so the sidebar
@@ -283,9 +290,18 @@ button.page:hover {
     border-radius: var(--radius-sm);
   }
 
-  :global(:root[data-staff-nav="folded"]) .sidebar .page[aria-current="page"] {
+  :global(:root[data-staff-nav="folded"]) .sidebar .page[aria-current="page"],
+  :global(:root[data-staff-nav="folded"]) .sidebar .page[data-pending] {
     background: rgb(var(--text-rgb) / 0.08);
     box-shadow: 0 0 0 var(--space-1) rgb(var(--text-rgb) / 0.08);
+  }
+
+  :global(:root[data-staff-nav="folded"])
+    .nav:has(a[data-pending])
+    .sidebar
+    .page[aria-current="page"]:not([data-pending]) {
+    background: none;
+    box-shadow: none;
   }
 
   :global(:root[data-staff-nav="folded"]) .sidebar .label {

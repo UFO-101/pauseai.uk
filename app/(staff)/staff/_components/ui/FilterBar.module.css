@@ -230,9 +230,16 @@
   background: var(--surface-2);
 }
 
-.choices a[aria-current] {
+.choices a[aria-current],
+.choices a[data-pending] {
   background: var(--accent-light);
   font-weight: 700;
+}
+
+/* A choice clicked (StaffLink): chosen at once, the one it was no longer; the menu closes when the list arrives. */
+.choices:has(a[data-pending]) a[aria-current]:not([data-pending]) {
+  background: none;
+  font-weight: inherit;
 }
 
 /* Under a chip's choices, ruled off from them: turning it the other way and

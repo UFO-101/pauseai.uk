@@ -119,40 +119,49 @@ async function holdNextPage(page: Page): Promise<{ release: () => Promise<void> 
   };
 }
 
-test("a list dims as soon as a sort or search is chosen, and stays put until the new one arrives", async ({
+/** Whether the line along the top of the page, while something loads, is showing (StaffPage). */
+const loadingLine = (page: Page) =>
+  page.evaluate(() => getComputedStyle(document.querySelector("main")!, "::before").opacity);
+
+test("a sort or search shows chosen at once, the list staying put until the new one arrives", async ({
   page,
   flowDatabase,
 }) => {
+  // The line along the top slides while it waits; held still, so each frame of it is the same.
+  await page.emulateMedia({ reducedMotion: "reduce" });
   await logIn(page, flowDatabase, ["supporters", "admin"]);
   await page.goto(`${BASE}/staff/politicians`);
-  const list = page.locator("[class*=frame]").first();
-  await frame(page, "the politicians list");
+  await frame(page, "the politicians list, by name, A to Z");
 
-  // A sort heading.
+  // A sort heading: its arrow turns at once; the rows stay as they were.
   let next = await holdNextPage(page);
-  await page.getByRole("table").getByRole("link", { name: staffCopy.fields.name }).click();
-  await expect(list).toHaveCSS("opacity", "0.45");
-  await frame(page, "a sort chosen: the list dims at once while the new order loads");
+  const name = page.getByRole("table").getByRole("link", { name: staffCopy.fields.name });
+  await name.click();
+  await expect(name).toHaveAttribute("data-pending", "true");
+  await expect(name).toContainText("▼");
+  await expect.poll(() => loadingLine(page)).toBe("1");
+  await frame(page, "Name clicked again: its arrow turned at once, a line along the top while Z to A loads");
   await next.release();
   await expect(page).toHaveURL(/sort=name&dir=desc/);
-  await expect(list).toHaveCSS("opacity", "1");
+  await expect.poll(() => loadingLine(page)).toBe("0");
 
   // A search, sent from its box without leaving the page.
   next = await holdNextPage(page);
   await page.getByRole("searchbox").fill("Testy");
   await page.getByRole("button", { name: staffCopy.search }).click();
-  await expect(list).toHaveCSS("opacity", "0.45");
-  await frame(page, "a search sent: the list dims while it looks");
+  await expect.poll(() => loadingLine(page)).toBe("1");
+  await frame(page, "a search sent: the list as it was, a line along the top while it looks");
   await next.release();
   await expect(page).toHaveURL(/q=Testy/);
   await expect(page.getByRole("table").getByRole("row")).toHaveCount(2);
   await frame(page, "what the search found");
 });
 
-test("another page shows its skeleton at once, beside the sidebar, which marks where it's going", async ({
+test("another page shows chosen in the sidebar at once, the page staying put until the next arrives", async ({
   page,
   flowDatabase,
 }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
   await logIn(page, flowDatabase, ["supporters", "admin"]);
   await page.goto(`${BASE}/staff/politicians`);
   // In the sidebar; on a phone, behind the bar's menu.
@@ -164,12 +173,13 @@ test("another page shows its skeleton at once, beside the sidebar, which marks w
   // The Asks page waits on its table, as on a slow database.
   const release = await lockTable(flowDatabase, "asks");
   await asks.filter({ visible: true }).click();
-  await expect(page.getByRole("status")).toHaveText(staffCopy.loading);
-  await expect(page.locator("[aria-busy=true]")).toHaveCSS("opacity", "1");
-  await frame(page, "another page chosen: its skeleton beside the sidebar while it loads");
+  await expect(asks.filter({ visible: true })).toHaveAttribute("data-pending", "true");
+  await expect(page.getByRole("heading", { level: 1, name: staffCopy.politicians.title })).toBeVisible();
+  await expect.poll(() => loadingLine(page)).toBe("1");
+  await frame(page, "Asks clicked: marked in the sidebar at once, the politicians still there, a line along the top");
   await release();
   await expect(page.getByRole("heading", { level: 1, name: staffCopy.asks.title })).toBeVisible();
-  await frame(page, "the page arrived");
+  await frame(page, "the Asks page arrived");
 });
 
 test("every staff page, without a session, goes to the login page, to come back to once logged in", async ({

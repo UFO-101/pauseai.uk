@@ -8,20 +8,6 @@
   max-width: none;
 }
 
-/* While a change to the list loads (a link or search marked data-pending:
-   ListLink, FormPending), the list, or what it says when empty, dims at
-   once, and stays where it is until the new one arrives. */
-:global([data-density="compact"]:has([data-pending])) :is(.frame, .empty) {
-  opacity: 0.45;
-  cursor: progress;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  :global([data-density="compact"]:has([data-pending])) :is(.frame, .empty) {
-    transition: opacity 0.15s;
-  }
-}
-
 /* Over the table: the count at the left, the downloads at the right,
    wrapping under it on a phone; ruled off from what's above. */
 .bar,
@@ -114,10 +100,18 @@
   background: var(--surface-2);
 }
 
-.current {
+.current,
+.number[data-pending] {
   background: var(--text);
   color: var(--surface);
   font-weight: 600;
+}
+
+/* A page clicked (StaffLink): marked at once, the one it was no longer, while it loads. */
+.numbers:has([data-pending]) .current {
+  background: none;
+  color: var(--text);
+  font-weight: inherit;
 }
 
 .gap {

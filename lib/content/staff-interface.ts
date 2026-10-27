@@ -33,7 +33,7 @@ export const staffCopy = {
   nav: {
     // At the left of the bar, and the way to the home page.
     title: "PauseAI Staff",
-    // The round button on the sidebar's edge, at its foot, that folds it to a strip, and back, for a screen reader.
+    // The round button on the sidebar's edge, by its title, that folds it to a strip, and back, for a screen reader.
     fold: "Fold the menu",
     unfold: "Unfold the menu",
     home: "Dashboard",
@@ -983,8 +983,6 @@ export const staffCopy = {
     // Beside a letter sent through pauseai.info's old form, copied from Airtable.
     imported: "pauseai.info",
   },
-  // Read out, unseen, while a page loads, its skeleton showing.
-  loading: "Loading the page",
   // The button beside a list's search box; its other filters apply as soon as they're chosen.
   search: "Search",
   // After a list's filters: the list with none.

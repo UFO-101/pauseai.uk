@@ -9,7 +9,6 @@ import Menu from "./Menu";
 import ListFrame, { ListTable, type ListColumn } from "./ListFrame";
 import NavFold from "./NavFold";
 import FormPending from "./FormPending";
-import PageSkeleton from "./PageSkeleton";
 
 import { renderToString } from "react-dom/server";
 import { NAV_FOLD_KEY } from "@/lib/staff-nav";
@@ -580,13 +579,5 @@ describe("FormPending", () => {
     await vi.waitFor(() => expect(mark()).not.toBeNull());
     finish();
     await vi.waitFor(() => expect(mark()).toBeNull());
-  });
-});
-
-describe("PageSkeleton", () => {
-  it("is busy, and says it's loading to a screen reader", async () => {
-    await render(<PageSkeleton />);
-    await expect.element(page.getByRole("status")).toHaveTextContent(staffCopy.loading);
-    expect(document.querySelector('[aria-busy="true"]')).not.toBeNull();
   });
 });
