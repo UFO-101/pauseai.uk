@@ -137,7 +137,8 @@ export const staffCopy = {
   supporters: {
     title: "Supporters",
     none: "Nobody found.",
-    count: (total: number, page: number, pages: number) => `${total} supporters; page ${page} of ${pages}.`,
+    count: (total: number, page: number, pages: number) =>
+      `${total} ${total === 1 ? "supporter" : "supporters"}; page ${page} of ${pages}.`,
     filters: {
       search: "Name, email or phone",
       // The other filters are named after their columns.
@@ -403,7 +404,8 @@ export const staffCopy = {
     noAnswer: "Not answered",
     none: "None found.",
     // Over the list: how many there are, and the page.
-    count: (total: number, page: number, pages: number) => `${total} politicians; page ${page} of ${pages}.`,
+    count: (total: number, page: number, pages: number) =>
+      `${total} ${total === 1 ? "politician" : "politicians"}; page ${page} of ${pages}.`,
     // Under the list, when a search of those in office finds others too, linked to them all.
     outOfOffice: (n: number) => `${n} ${n === 1 ? "match" : "matches"} found for politicians not in office`,
     // The same, when a search of one house finds no one there, linked to every house.
@@ -864,7 +866,8 @@ export const staffCopy = {
   letters: {
     title: "Letters to MPs",
     // Over the list: how many there are, and the page.
-    count: (total: number, page: number, pages: number) => `${total} letters; page ${page} of ${pages}.`,
+    count: (total: number, page: number, pages: number) =>
+      `${total} ${total === 1 ? "letter" : "letters"}; page ${page} of ${pages}.`,
     search: "Sender or MP",
     // The Answered filter: whether the MP replied.
     answered: { yes: "Answered", no: "Not answered" },

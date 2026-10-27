@@ -65,6 +65,8 @@ describe("the lists' counts", () => {
     expect(politicians.outOfOffice(1)).not.toBe(politicians.outOfOffice(2).replace("2", "1"));
     expect(politicians.otherHouses(1)).not.toBe(politicians.otherHouses(2).replace("2", "1"));
     expect(emails.count(1)).not.toBe(emails.count(2).replace("2", "1"));
-    expect(letters.count(150, 1, 2)).toContain("150");
+    for (const list of [letters, politicians, staffCopy.supporters]) {
+      expect(list.count(1, 1, 1)).not.toBe(list.count(2, 1, 1).replace("2", "1"));
+    }
   });
 });

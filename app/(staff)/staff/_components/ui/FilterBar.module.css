@@ -20,6 +20,18 @@
   width: 16rem;
 }
 
+/* On a phone, the search takes the row, its box what the button leaves. */
+@media (max-width: 40rem) {
+  .search {
+    width: 100%;
+  }
+
+  .search > :first-child {
+    flex: 1;
+    width: auto;
+  }
+}
+
 /* The × inside the box, at its right, while there's a search. */
 .box {
   position: relative;
