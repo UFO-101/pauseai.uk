@@ -109,13 +109,13 @@ async function saveState(list: ImportList, cursor: string, finished: boolean, db
 /** Upserts an event, listed again if it was removed; returns whether anything was new or different. */
 async function upsertEvent(event: CalendarEvent, db: Queryable): Promise<boolean> {
   const rows = await query(
-    `INSERT INTO luma_events (id, name, url, start_at, access, city, latitude, longitude)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+    `INSERT INTO luma_events (id, name, url, start_at, access, city, latitude, longitude, tags)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
      ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, url = EXCLUDED.url, start_at = EXCLUDED.start_at,
        access = EXCLUDED.access, city = EXCLUDED.city, latitude = EXCLUDED.latitude, longitude = EXCLUDED.longitude,
-       removed_at = NULL, changed_at = now()
-     WHERE (luma_events.name, luma_events.url, luma_events.start_at, luma_events.access, luma_events.city, luma_events.latitude, luma_events.longitude, luma_events.removed_at)
-       IS DISTINCT FROM (EXCLUDED.name, EXCLUDED.url, EXCLUDED.start_at, EXCLUDED.access, EXCLUDED.city, EXCLUDED.latitude, EXCLUDED.longitude, NULL)
+       tags = EXCLUDED.tags, removed_at = NULL, changed_at = now()
+     WHERE (luma_events.name, luma_events.url, luma_events.start_at, luma_events.access, luma_events.city, luma_events.latitude, luma_events.longitude, luma_events.tags, luma_events.removed_at)
+       IS DISTINCT FROM (EXCLUDED.name, EXCLUDED.url, EXCLUDED.start_at, EXCLUDED.access, EXCLUDED.city, EXCLUDED.latitude, EXCLUDED.longitude, EXCLUDED.tags, NULL)
      RETURNING id`,
     [
       event.id,
@@ -126,6 +126,7 @@ async function upsertEvent(event: CalendarEvent, db: Queryable): Promise<boolean
       event.geo_address_info?.city ?? null,
       event.place?.latitude ?? null,
       event.place?.longitude ?? null,
+      event.tags,
     ],
     db,
   );

@@ -15,7 +15,17 @@
         "address": "Whitehall, London",
         "region": "England",
         "country": "United Kingdom"
-      }
+      },
+      "tags": [
+        {
+          "id": "tag-fixture-big-events",
+          "name": "Big events"
+        },
+        {
+          "id": "tag-fixture-london",
+          "name": "London"
+        }
+      ]
     },
     {
       "id": "evt-fixture-past-glasgow-stall",
@@ -27,7 +37,17 @@
       "visibility": "public",
       "access": "manage",
       "platform": "luma",
-      "geo_address_json": { "city": "Glasgow", "region": "Scotland", "country": "United Kingdom" }
+      "geo_address_json": {
+        "city": "Glasgow",
+        "region": "Scotland",
+        "country": "United Kingdom"
+      },
+      "tags": [
+        {
+          "id": "tag-fixture-scotland",
+          "name": "Scotland"
+        }
+      ]
     }
   ],
   "has_more": false

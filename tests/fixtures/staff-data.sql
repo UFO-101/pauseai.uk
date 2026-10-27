@@ -259,6 +259,52 @@ INSERT INTO members (id, email, name, phone, city, postcode, joined_at, created_
 -- Airtable's table: the import skips her.
 INSERT INTO members_erased (id, erased_at) VALUES ('recMemberErased', now() - interval '15 days');
 
+-- --------------------------------------------------------------- places
+
+-- Where postcodes.io placed the postcodes and towns above, as the hourly
+-- lookup stores them; the test postcodes it doesn't know.
+INSERT INTO postcode_places (postcode, latitude, longitude, place, country) VALUES
+  ('BS11AA', 51.4545, -2.5879, 'Bristol, City of', 'england'),
+  ('E16AN', 51.5205, -0.0726, 'Tower Hamlets', 'england'),
+  ('E151AA', 51.5413, -0.0039, 'Newham', 'england'),
+  ('EC1A1BB', 51.5202, -0.0978, 'City of London', 'england'),
+  ('G11AA', 55.8609, -4.249, 'Glasgow City', 'scotland'),
+  ('HU11AA', 53.7443, -0.3326, 'Kingston upon Hull, City of', 'england'),
+  ('LE11AA', 52.6345, -1.13, 'Leicester', 'england'),
+  ('LS11AA', 53.797, -1.5492, 'Leeds', 'england'),
+  ('LS27EY', 53.8079, -1.5566, 'Leeds', 'england'),
+  ('M11AE', 53.4794, -2.2353, 'Manchester', 'england'),
+  ('M41HQ', 53.484, -2.237, 'Manchester', 'england'),
+  ('M202RN', 53.4317, -2.2303, 'Manchester', 'england'),
+  ('NR11AA', 52.6286, 1.2925, 'Norwich', 'england'),
+  ('OX11AA', 51.752, -1.2577, 'Oxford', 'england'),
+  ('SE17PB', 51.5007, -0.1167, 'Lambeth', 'england'),
+  ('SK41AA', 53.4106, -2.1575, 'Stockport', 'england'),
+  ('YO17HH', 53.9617, -1.0817, 'York', 'england'),
+  ('SW1A1AA', 51.501009, -0.141588, 'Westminster', 'england'),
+  ('ZZ99ZB', NULL, NULL, NULL, NULL),
+  ('ZZ99ZH', NULL, NULL, NULL, NULL),
+  ('ZZ99ZN', NULL, NULL, NULL, NULL),
+  ('ZZ99ZS', NULL, NULL, NULL, NULL),
+  ('ZZ99ZZ', NULL, NULL, NULL, NULL);
+INSERT INTO named_places (name, latitude, longitude, place, country) VALUES
+  ('manchester', 53.4794, -2.2453, 'Manchester', 'england'),
+  ('london', 51.5072, -0.1276, 'London', 'england'),
+  ('bristol', 51.4545, -2.5879, 'Bristol', 'england'),
+  ('cardiff', 51.4816, -3.1791, 'Cardiff', 'wales'),
+  ('oxford', 51.752, -1.2577, 'Oxford', 'england'),
+  ('leeds', 53.7997, -1.5492, 'Leeds', 'england'),
+  ('glasgow', 55.8642, -4.2518, 'Glasgow', 'scotland'),
+  ('leicester', 52.6369, -1.1398, 'Leicester', 'england');
+-- The calendar's tags: big days and online events, which say nothing of where people live.
+UPDATE luma_events SET tags = '{Big events,London}' WHERE id IN ('evt-fixture-past-london-march', 'evt-fixture-london-protest');
+UPDATE luma_events SET tags = '{Online}' WHERE id IN ('evt-seed-online-training', 'evt-fixture-online-intro');
+UPDATE luma_events SET tags = '{Scotland}' WHERE id IN ('evt-fixture-past-glasgow-stall', 'evt-fixture-scotland-meeting');
+UPDATE luma_events SET tags = '{Manchester}' WHERE id IN ('evt-seed-manchester-talk', 'evt-fixture-manchester-social');
+UPDATE luma_events SET tags = '{Oxford}' WHERE id = 'evt-fixture-oxford-talk';
+UPDATE luma_events SET tags = '{West of England}' WHERE id = 'evt-fixture-bristol-leafleting';
+UPDATE luma_events SET tags = '{Leicester}' WHERE id = 'evt-fixture-leicester-meetup';
+
 -- -------------------------------------------------------------- letters
 
 -- Letters to the test MPs in every state. Seven sent in the last week and

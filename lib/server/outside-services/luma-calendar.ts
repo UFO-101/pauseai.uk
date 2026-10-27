@@ -23,6 +23,8 @@ type ApiEvent = {
   coordinate?: { latitude?: number; longitude?: number } | null;
   /** "guests-only" when only those registered should see where it is. */
   location_visibility?: string;
+  /** The calendar's tags on it: a local group, Big events, Online. */
+  tags?: ({ name?: string } | null)[] | null;
 };
 
 /** `date` moved back to midnight UTC. */
@@ -109,11 +111,12 @@ function toLumaEvent(event: ApiEvent, url: string, start_at: string): LumaEvent 
   };
 }
 
-/** An event as the import keeps it: the site's shape, plus Luma's ID and whether we manage it. */
+/** An event as the import keeps it: the site's shape, plus Luma's ID, whether we manage it, and its tags' names. */
 export type CalendarEvent = LumaEvent & {
   id: string;
   /** 'manage' for our own events; 'view' for one another calendar runs, whose guests Luma doesn't show us. */
   access: "manage" | "view";
+  tags: string[];
 };
 
 /**
@@ -136,7 +139,12 @@ export async function listCalendarEvents(cursor?: string): Promise<LumaPage<Cale
       const id = event?.id ?? event?.api_id;
       if (event?.visibility !== "public" || !id || !event.url || !event.start_at) return [];
       return [
-        { ...toLumaEvent(event, event.url, event.start_at), id, access: event.access === "view" ? "view" : "manage" },
+        {
+          ...toLumaEvent(event, event.url, event.start_at),
+          id,
+          access: event.access === "view" ? "view" : "manage",
+          tags: (event.tags ?? []).flatMap((tag) => (tag?.name ? [tag.name] : [])),
+        },
       ];
     }),
   };
