@@ -112,6 +112,9 @@ export type SupporterSort = keyof typeof SUPPORTER_SORTS;
 /** How far from a place the Near filter reaches, in miles. */
 export const NEAR_MILES = [5, 10, 25, 50] as const;
 
+/** The filters that repeat, which can leave out as well as find. */
+export type NegatableSupporterFilter = "activity" | "subscription" | "event" | "country";
+
 /** The list's filters, as the server applies them. A filter that repeats finds those with any of its values. */
 export type SupporterFilter = {
   /** Over names, emails and phones. */
@@ -125,8 +128,6 @@ export type SupporterFilter = {
   email?: boolean;
   /** Registered for any of these Luma events, by ID, but for declined. */
   event?: string[];
-  /** Registered for none of these, or declined: not at any of them. */
-  notEvent?: string[];
   /** Wrote a letter in this campaign, by slug; or, with `wrote` false, never did. */
   campaign?: string;
   wrote?: boolean;
@@ -134,6 +135,8 @@ export type SupporterFilter = {
   country?: string[];
   /** Within `miles` of what was typed: a postcode, the first half of one, or a town. */
   near?: { text: string; miles: number };
+  /** Those with none of these, each a filter above that repeats. */
+  not?: Pick<SupporterFilter, NegatableSupporterFilter>;
   sort: SupporterSort;
   dir: SortDirection;
   page: number;

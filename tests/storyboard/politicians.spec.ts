@@ -92,7 +92,14 @@ test("the politicians list, filtered by status, marker and an answer to an ask, 
   await expect(rows).toHaveCount(2);
   await frame(page, "only personal connections");
 
-  await changeFilter(page, `${filters.flag}: ${filters.flags.connection}`);
+  // A chip's menu turns its choice to one the list leaves out.
+  await changeFilter(page, `${filters.flag}: ${filters.flags.connection}`, staffCopy.filters.exceptInstead);
+  await expect(page).toHaveURL(/flag=%21connection/);
+  await expect(rows.filter({ hasText: "Morag Example" })).toHaveCount(0);
+  await expect(rows.filter({ hasText: "Polly Placeholder" })).toBeVisible();
+  await frame(page, "all but personal connections, by the chip's Except this instead");
+
+  await changeFilter(page, staffCopy.filters.notChip(filters.flag, filters.flags.connection));
   await expect(page).toHaveURL(`${BASE}/staff/politicians`);
   await addFilter(page, filters.ask, "Edinburgh conference");
   await expect(page).toHaveURL(/ask=edinburgh-conference-2026$/);

@@ -105,7 +105,7 @@ test("the supporters list after the Luma import, filtered, reset and sorted", as
   await frame(page, "sorted by name, reversed, by clicking the heading twice");
 });
 
-test("the supporters not at an event: the guest who declined it, and the contact who never registered", async ({
+test("the supporters not at an event, by Except: the guest who declined it, and the contact who never registered", async ({
   page,
   request,
   flowDatabase,
@@ -115,20 +115,30 @@ test("the supporters not at an event: the guest who declined it, and the contact
   await page.goto(`${BASE}/staff/supporters`);
   await expect(page.getByText(copy.total(6))).toBeVisible();
   const march = copy.filters.eventChoice("PauseAI London March", staffDate("2026-02-14T12:00:00Z"));
-  await page.getByRole("button", { name: staffCopy.filters.add }).click();
-  await page.locator("[popover]:popover-open summary", { hasText: new RegExp(`^${copy.filters.notEvent}$`) }).click();
+  await page.getByRole("button", { name: staffCopy.filters.except }).click();
+  await expect(page.locator("[popover]:popover-open").getByText(staffCopy.filters.exceptHeading)).toBeVisible();
+  await frame(page, "Except open: the filters that repeat, to choose one to leave out");
+  await page.locator("[popover]:popover-open summary", { hasText: new RegExp(`^${copy.filters.event}$`) }).click();
   // Its events show once something's typed in its box.
   await page.locator("[popover]:popover-open").getByRole("searchbox", { name: staffCopy.filters.narrow }).fill("march");
   await expect(page.locator("[popover]:popover-open").getByRole("link", { name: march, exact: true })).toBeVisible();
-  await frame(page, '+ Filter\'s events not at, narrowed to those with "march"');
+  await frame(page, 'Except\'s events, narrowed to those with "march"');
   await page.locator("[popover]:popover-open").getByRole("link", { name: march, exact: true }).click();
-  await expect(page).toHaveURL(/\/staff\/supporters\?notEvent=/);
+  await expect(page).toHaveURL(/\/staff\/supporters\?event=%21/);
   // Four guests were approved for it; Dee declined, and Fay follows the calendar but never registered.
   await expect(page.getByText(copy.total(2))).toBeVisible();
   expect(await page.locator("tbody").getByRole("link").allTextContents()).toEqual(
     expect.arrayContaining(["Dee Clined", "Fay Follower"]),
   );
   await frame(page, "not at the London March: Dee, who declined, and Fay, who never registered");
+  await page.getByRole("button", { name: staffCopy.filters.notChip(copy.filters.event, march) }).click();
+  await expect(
+    page.locator("[popover]:popover-open").getByRole("link", { name: staffCopy.filters.onlyInstead }),
+  ).toBeVisible();
+  await frame(page, "its chip's menu: the event, Only this instead, and Remove");
+  await page.locator("[popover]:popover-open").getByRole("link", { name: staffCopy.filters.onlyInstead }).click();
+  await expect(page.getByText(copy.total(4))).toBeVisible();
+  await frame(page, "only those at the London March: the four approved");
 });
 
 test("a supporter's page: who they are, what they gave, their history, and an opt-out from Luma's webhook", async ({

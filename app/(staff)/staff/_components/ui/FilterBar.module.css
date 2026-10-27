@@ -93,18 +93,35 @@
   content: " ▾" / "";
 }
 
+/* A chip that leaves its choice out: white, its edge dashed, and a circle
+   struck through before its words. */
+.chip.not {
+  border-style: dashed;
+  background: var(--surface);
+}
+
+.notIcon {
+  margin-right: var(--space-1);
+  fill: none;
+  stroke: currentcolor;
+  stroke-width: 2;
+  vertical-align: -2px;
+}
+
 /* A filter and the one after it: one lozenge, cut down the middle. */
 .pair {
   display: flex;
   max-width: 100%;
 }
 
-.pair > .chip:first-of-type {
+.pair > .chip:first-of-type,
+.pair > .add:first-of-type {
   border-right-width: 0;
   border-radius: 999px 0 0 999px;
 }
 
-.pair > .chip:last-of-type {
+.pair > .chip:last-of-type,
+.pair > .add:last-of-type {
   border-radius: 0 999px 999px 0;
 }
 
@@ -205,11 +222,18 @@
   font-weight: 700;
 }
 
+/* Under a chip's choices: turning it the other way, and removing it, ruled off from them. */
+.flip,
 .remove {
   display: block;
   margin-top: var(--space-2);
   padding-top: var(--space-2);
   border-top: 1px solid var(--border);
+}
+
+.flip + .remove {
+  padding-top: 0;
+  border-top: 0;
 }
 
 /* A place filter's form: the words, how far, and its button, in a row. */

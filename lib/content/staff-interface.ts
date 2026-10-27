@@ -158,7 +158,6 @@ export const staffCopy = {
       failed: (text: string) => `${text} (couldn't look it up)`,
       // The Event filter's choices: an event and its day.
       event: "Event",
-      notEvent: "Not at event",
       eventChoice: (name: string, day: string) => `${name}, ${day}`,
       // The Campaign filter, and its second half: whether they wrote in it.
       campaign: "Campaign",
@@ -971,6 +970,13 @@ export const staffCopy = {
   filters: {
     clearSearch: "Clear the search",
     add: "+ Filter",
+    // The other half of + Filter: adds a choice the list leaves out. Its menu's heading, and a left-out choice's chip.
+    except: "⁂ Except",
+    exceptHeading: "⁂ Leave out those with",
+    notChip: (label: string, value: string) => `⁂ ${label}: not ${value}`,
+    // In a chip's menu: the same choice, left out instead of found, or found instead of left out.
+    exceptInstead: "⁂ Except this instead",
+    onlyInstead: "⁂ Only this instead",
     remove: "Remove",
     // Over a long list of a filter's choices: narrows them as it's typed in.
     narrow: "Search these",

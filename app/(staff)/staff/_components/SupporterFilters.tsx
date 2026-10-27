@@ -18,11 +18,10 @@ function nearWords(text: string, near: SupportersPage["near"]): string {
  * The supporters list's filters, each named after the column it filters
  * on, in the columns' order: whether we have their email and phone; their
  * nation and how near somewhere they are; their activities and
- * subscriptions; the events they registered for, and those they're not
- * at, both from `events`; and whether they wrote in a campaign. A
- * subscription's choices are each topic's reasons, then blocked.
- * Activities, subscriptions, nations and both kinds of event can each be
- * chosen more than once.
+ * subscriptions; the events they registered for, from `events`; and
+ * whether they wrote in a campaign. A subscription's choices are each
+ * topic's reasons, then blocked. Activities, subscriptions, nations and
+ * events can each be chosen more than once.
  */
 export function supporterFilters(
   search: Pick<SupportersSearch, "near">,
@@ -31,10 +30,6 @@ export function supporterFilters(
 ): Filter[] {
   const copy = staffCopy.supporters.filters;
   const { columns } = staffCopy.supporters;
-  const eventOptions = events.map((event) => ({
-    value: event.id,
-    label: copy.eventChoice(event.name, staffDate(event.startAt)),
-  }));
   return [
     {
       name: "email",
@@ -93,14 +88,10 @@ export function supporterFilters(
       label: copy.event,
       repeat: true,
       searchable: true,
-      options: eventOptions,
-    },
-    {
-      name: "notEvent",
-      label: copy.notEvent,
-      repeat: true,
-      searchable: true,
-      options: eventOptions,
+      options: events.map((event) => ({
+        value: event.id,
+        label: copy.eventChoice(event.name, staffDate(event.startAt)),
+      })),
     },
     {
       name: "campaign",

@@ -106,6 +106,37 @@ export function valuesOf(value: ParamValue | undefined): string[] {
   return (Array.isArray(value) ? value : [value ?? ""]).filter(Boolean);
 }
 
+/** The mark before a value a filter leaves out, in its URL: `event=!evt-2` is those not at evt-2. */
+export const NOT = "!";
+
+/** A filter's value without its mark, and whether it's one the filter leaves out. */
+export function notValue(value: string): { value: string; not: boolean } {
+  return value.startsWith(NOT) ? { value: value.slice(NOT.length), not: true } : { value, not: false };
+}
+
+/**
+ * A repeating filter's values, split: those it finds any of, then those it
+ * leaves out, each read by `read`, which drops what it doesn't know; a
+ * list with none is undefined.
+ */
+export function anyAndNone<T>(values: string[], read: (values: string[]) => T[]): [T[] | undefined, T[] | undefined] {
+  const [any, none] = [false, true].map((not) =>
+    read(
+      values
+        .map(notValue)
+        .filter((one) => one.not === not && one.value)
+        .map((one) => one.value),
+    ),
+  );
+  return [any.length ? any : undefined, none.length ? none : undefined];
+}
+
+/** The fields of `fields` that are on, or undefined if none is: what a filter leaves out. */
+export function notOf<T extends object>(fields: T): Partial<T> | undefined {
+  const on = Object.entries(fields).filter(([, value]) => value !== undefined);
+  return on.length ? (Object.fromEntries(on) as Partial<T>) : undefined;
+}
+
 /** A parameter that takes one value: its first, or blank. */
 export function firstOf(value: ParamValue | undefined): string {
   return valuesOf(value)[0] ?? "";
@@ -147,9 +178,8 @@ export type SupportersSearch = {
   /** "yes" or "no". */
   phone: string;
   email: string;
-  /** Luma event IDs: those registered for any, and those at none. */
+  /** Luma event IDs. */
   event: string[];
-  notEvent: string[];
   /** A campaign's slug; with `wrote` "no", those who didn't write in it. */
   campaign: string;
   wrote: string;
@@ -171,26 +201,29 @@ export function supportersSearch(
   const [q, phone, email, campaign, wrote, near, within, sort, dir, page, erased] = (
     ["q", "phone", "email", "campaign", "wrote", "near", "within", "sort", "dir", "page", "erased"] as const
   ).map((name) => firstOf(params[name]));
-  const [activity, subscription, event, notEvent, country] = (
-    ["activity", "subscription", "event", "notEvent", "country"] as const
-  ).map((name) => valuesOf(params[name]));
+  const [activity, subscription, event, country] = (["activity", "subscription", "event", "country"] as const).map(
+    (name) => valuesOf(params[name]),
+  );
   const sorting = parseSort(SUPPORTER_SORTS, "active", sort, dir);
-  const badges = activity.filter(isSupporterBadge);
-  const states = subscription.flatMap((value) => emailState(value) ?? []);
-  const countries = country.filter((value) => Object.hasOwn(staffCopy.countries, value));
+  const [badges, notBadges] = anyAndNone(activity, (values) => values.filter(isSupporterBadge));
+  const [states, notStates] = anyAndNone(subscription, (values) => values.flatMap((value) => emailState(value) ?? []));
+  const [events, notEvents] = anyAndNone(event, (values) => values);
+  const [countries, notCountries] = anyAndNone(country, (values) =>
+    values.filter((value) => Object.hasOwn(staffCopy.countries, value)),
+  );
   const miles = NEAR_MILES.find((n) => String(n) === within) ?? NEAR_MILES[1];
   const filter: SupporterFilter = {
     search: q.trim() || undefined,
-    activity: badges.length ? badges : undefined,
-    subscription: states.length ? states : undefined,
+    activity: badges,
+    subscription: states,
     phone: yesOrNo(phone),
     email: yesOrNo(email),
-    event: event.length ? event : undefined,
-    notEvent: notEvent.length ? notEvent : undefined,
+    event: events,
     campaign: campaignBySlug(campaign)?.slug,
     wrote: campaignBySlug(campaign) ? wrote !== "no" : undefined,
-    country: countries.length ? countries : undefined,
+    country: countries,
     near: near.trim() ? { text: near.trim(), miles } : undefined,
+    not: notOf({ activity: notBadges, subscription: notStates, event: notEvents, country: notCountries }),
     sort: sorting.key,
     dir: sorting.dir,
     page: pageNumber(page),
@@ -202,7 +235,6 @@ export function supportersSearch(
     phone,
     email,
     event,
-    notEvent,
     campaign,
     wrote,
     country,

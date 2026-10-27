@@ -3271,7 +3271,7 @@ const chips = () =>
     .getByRole("button")
     .all()
     .map((b) => b.element().textContent)
-    .filter((text) => text !== staffCopy.search && text !== staffCopy.filters.add);
+    .filter((text) => ![staffCopy.search, staffCopy.filters.add, staffCopy.filters.except].includes(text!));
 
 /** Opens a filter's menu, by its button, and gives its links' words and addresses. */
 async function menu(button: string) {
@@ -3350,7 +3350,7 @@ describe("PoliticianFilters", () => {
 
   it("offers an answer only once there's an ask", async () => {
     await render(<PoliticianFilters search={emptyPoliticiansSearch} asks={exampleAsks} parties={["Green"]} />);
-    const groups = () => [...document.querySelectorAll("[popover] details > summary")].map((p) => p.textContent);
+    const groups = () => [...document.querySelectorAll("#filter-add details > summary")].map((p) => p.textContent);
     await page.getByRole("button", { name: staffCopy.filters.add }).click();
     expect(groups()).toEqual([
       staffCopy.fields.party,
@@ -3429,9 +3429,9 @@ describe("SupporterFilters", () => {
       `${copy.columns.badges}: ${copy.badges.registered}`,
       `${copy.columns.subscriptions}: ${copy.filters.states["pauseai-updates"].declined}`,
     ]);
-    // Each topic's reasons, then blocked; the erased notice goes.
+    // Each topic's reasons, then blocked, then turning it the other way and Remove; the erased notice goes.
     const choices = await menu(`${copy.columns.subscriptions}: ${copy.filters.states["pauseai-updates"].declined}`);
-    expect(choices.at(-2)).toEqual([
+    expect(choices.at(-3)).toEqual([
       copy.subscriptions.blocked,
       "/staff/supporters?activity=registered&subscription=blocked",
     ]);
@@ -3442,7 +3442,7 @@ describe("SupporterFilters", () => {
     void filter;
     await render(<SupporterFilters search={search} events={events} />);
     await page.getByRole("button", { name: staffCopy.filters.add }).click();
-    expect([...document.querySelectorAll("[popover] details > summary")].map((p) => p.textContent)).toEqual([
+    expect([...document.querySelectorAll("#filter-add details > summary")].map((p) => p.textContent)).toEqual([
       copy.columns.email,
       copy.columns.phone,
       staffCopy.politician.country,
@@ -3450,7 +3450,6 @@ describe("SupporterFilters", () => {
       copy.columns.badges,
       copy.columns.subscriptions,
       copy.filters.event,
-      copy.filters.notEvent,
       copy.filters.campaign,
     ]);
     const links = await menu(staffCopy.filters.add);
@@ -3458,21 +3457,37 @@ describe("SupporterFilters", () => {
       copy.filters.eventChoice("Oxford talk", "12 Oct 2026"),
       "/staff/supporters?event=evt-2",
     ]);
-    expect(links).toContainEqual([
-      copy.filters.eventChoice("Oxford talk", "12 Oct 2026"),
-      "/staff/supporters?notEvent=evt-2",
-    ]);
     expect(links).toContainEqual([copy.filters.phone.no, "/staff/supporters?phone=no"]);
+    // Except offers the filters that repeat, each choice to leave out.
+    await menu(staffCopy.filters.except);
+    expect([...document.querySelectorAll("#filter-except details > summary")].map((p) => p.textContent)).toEqual([
+      staffCopy.politician.country,
+      copy.columns.badges,
+      copy.columns.subscriptions,
+      copy.filters.event,
+    ]);
+    expect(await menu(staffCopy.filters.except)).toContainEqual([
+      copy.filters.eventChoice("Oxford talk", "12 Oct 2026"),
+      "/staff/supporters?event=%21evt-2",
+    ]);
   });
 
-  it("has a chip for the events they're at and one for those they're not", async () => {
-    const { filter, ...search } = supportersSearch({ event: "evt-1", notEvent: "evt-2" });
+  it("has a chip for the events they're at and one, marked, for those they're not", async () => {
+    const { filter, ...search } = supportersSearch({ event: ["evt-1", "!evt-2"] });
     void filter;
     await render(<SupporterFilters search={search} events={events} />);
-    expect(chips()).toEqual([
-      `${copy.filters.event}: ${copy.filters.eventChoice("Leeds social", "20 Oct 2026")}`,
-      `${copy.filters.notEvent}: ${copy.filters.eventChoice("Oxford talk", "12 Oct 2026")}`,
+    const leeds = copy.filters.eventChoice("Leeds social", "20 Oct 2026");
+    const oxford = copy.filters.eventChoice("Oxford talk", "12 Oct 2026");
+    expect(chips()).toEqual([`${copy.filters.event}: ${leeds}`, staffCopy.filters.notChip(copy.filters.event, oxford)]);
+    // A chip turns its choice the other way; a choice in a left-out chip stays left out.
+    expect(await menu(`${copy.filters.event}: ${leeds}`)).toContainEqual([
+      staffCopy.filters.exceptInstead,
+      "/staff/supporters?event=%21evt-2&event=%21evt-1",
     ]);
+    const out = await menu(staffCopy.filters.notChip(copy.filters.event, oxford));
+    expect(out).toContainEqual([staffCopy.filters.onlyInstead, "/staff/supporters?event=evt-1&event=evt-2"]);
+    expect(out).toContainEqual([leeds, "/staff/supporters?event=evt-1&event=%21evt-1"]);
+    expect(out.at(-1)).toEqual([staffCopy.filters.remove, "/staff/supporters?event=evt-1"]);
   });
 
   it("says what Near found, or that it found nothing, or couldn't look", async () => {

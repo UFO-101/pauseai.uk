@@ -161,6 +161,20 @@ const EXAMPLE_FILTERS = [
   },
 ];
 
+// A filter that repeats, so it can leave out as well as find.
+const EXAMPLE_NATIONS = [
+  {
+    name: "country",
+    label: "Nation",
+    repeat: true,
+    options: [
+      { value: "england", label: "England" },
+      { value: "scotland", label: "Scotland" },
+      { value: "wales", label: "Wales" },
+    ],
+  },
+];
+
 // Every page the navigation can mark as current, so a new one is a type error until it's here.
 const PAGES: Record<StaffPageName, true> = {
   home: true,
@@ -1585,6 +1599,19 @@ export const staff: Group = {
                 values={{ q: "example.org", kind: "hard" }}
                 search={{ name: "q", label: "Address" }}
                 filters={EXAMPLE_FILTERS}
+              />
+            </StaffPage>
+          ),
+        },
+        {
+          label: "A filter that repeats: one choice found, one left out, and + Filter cut in two with Except",
+          render: () => (
+            <StaffPage as="div">
+              <FilterBar
+                path="#"
+                values={{ country: ["scotland", "!wales"] }}
+                search={{ name: "q", label: "Name" }}
+                filters={EXAMPLE_NATIONS}
               />
             </StaffPage>
           ),

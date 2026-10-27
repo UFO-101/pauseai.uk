@@ -1,5 +1,6 @@
 import "server-only";
 import type {
+  NegatableSupporterFilter,
   SupporterActivity,
   SupporterBadge,
   SupporterContact,
@@ -114,6 +115,33 @@ const milesFrom = (lat: string, lon: string) =>
      + cos(radians(${lat})) * cos(radians(sp.latitude)) * power(sin(radians(sp.longitude - ${lon}) / 2), 2)))`;
 
 /**
+ * The conditions of the filters that repeat, those that are on: each finds
+ * those with any of its values. An event is one they registered for, but
+ * for declined.
+ */
+function anyOf(filter: Pick<SupporterFilter, NegatableSupporterFilter>, add: (value: unknown) => string): string[] {
+  const conditions: string[] = [];
+  if (filter.activity) conditions.push(filter.activity.map((badge) => BADGE_CONDITIONS[badge]).join(" OR "));
+  if (filter.subscription) {
+    const states = filter.subscription.map(
+      ({ topic, reason }) => `(p.reason = ${add(reason)}${topic ? ` AND p.topic = ${add(topic)}` : ""})`,
+    );
+    conditions.push(
+      `s.id IN (SELECT i.supporter_id FROM supporter_identity i JOIN email_permissions p ON p.address = i.email
+       WHERE ${states.join(" OR ")})`,
+    );
+  }
+  if (filter.event) {
+    conditions.push(
+      `EXISTS (SELECT 1 FROM luma_guests g JOIN supporter_links k ON k.luma_user_id = g.user_id
+       WHERE k.supporter_id = s.id AND g.event_id = ANY(${add(filter.event)}) AND g.approval_status <> 'declined')`,
+    );
+  }
+  if (filter.country) conditions.push(`sp.country = ANY(${add(filter.country)})`);
+  return conditions.map((condition) => `(${condition})`);
+}
+
+/**
  * One page of the list, filtered and sorted; with a `limit` of null, every
  * one, for a download. The Near filter's words are looked up at
  * postcodes.io; a place it can't find finds no one.
@@ -138,31 +166,17 @@ export async function listSupporters(
       ),
     );
   }
-  if (filter.activity) where.push(`(${filter.activity.map((badge) => BADGE_CONDITIONS[badge]).join(" OR ")})`);
-  if (filter.subscription) {
-    const states = filter.subscription.map(
-      ({ topic, reason }) => `(p.reason = ${add(reason)}${topic ? ` AND p.topic = ${add(topic)}` : ""})`,
-    );
-    where.push(
-      `s.id IN (SELECT i.supporter_id FROM supporter_identity i JOIN email_permissions p ON p.address = i.email
-       WHERE ${states.join(" OR ")})`,
-    );
-  }
+  where.push(...anyOf(filter, add));
+  // What's left out: a filter's condition not true, so one with no value, such as no nation, is kept.
+  if (filter.not) where.push(...anyOf(filter.not, add).map((condition) => `(${condition}) IS NOT TRUE`));
   if (filter.phone !== undefined) where.push(`s.phone IS ${filter.phone ? "NOT " : ""}NULL`);
   if (filter.email !== undefined) where.push(`coalesce(cardinality(s.emails), 0) ${filter.email ? ">" : "="} 0`);
-  // Registered for an event, but for declined; and its opposite, for the events not at.
-  const registered = (events: string[]) =>
-    `EXISTS (SELECT 1 FROM luma_guests g JOIN supporter_links k ON k.luma_user_id = g.user_id
-     WHERE k.supporter_id = s.id AND g.event_id = ANY(${add(events)}) AND g.approval_status <> 'declined')`;
-  if (filter.event) where.push(registered(filter.event));
-  if (filter.notEvent) where.push(`NOT ${registered(filter.notEvent)}`);
   if (filter.campaign) {
     where.push(
       `${filter.wrote ? "" : "NOT "}EXISTS (SELECT 1 FROM supporter_links k JOIN supporter_letters l ON l.id = k.letter_id
        WHERE k.supporter_id = s.id AND l.campaign = ${add(filter.campaign)})`,
     );
   }
-  if (filter.country) where.push(`sp.country = ANY(${add(filter.country)})`);
   // What the Near filter's words are: a place, null for none, "failed"; or undefined with no Near filter.
   const near = filter.near ? await placeFor(filter.near.text) : undefined;
   if (near === null || near === "failed") where.push("false");

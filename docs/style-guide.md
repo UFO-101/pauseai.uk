@@ -351,6 +351,14 @@ are:
 - A filter that makes sense more than once (`repeat`: a party, a nation,
   an event) can be chosen again, a chip each, and finds what has any of
   them; different filters must all match. An ask's answer doesn't repeat.
+- A filter that repeats can leave out, too. "+ Filter" is cut in two,
+  "+ Filter | Except", and Except lists those filters to choose one to
+  leave out. A chip that leaves out sits among the others, white with a
+  dashed edge and a struck-through circle, and its words say "not". The
+  list has none of what's left out and any of what's chosen. Each chip's
+  menu, above Remove, turns its choice the other way: "Except this
+  instead", or "Only this instead". In the URL a choice left out is the
+  same parameter, its value marked `!`: `event=!evt-2`.
 - A filter with too many choices to read (`searchable`: the events) has a
   box over them, and shows none until something's typed.
 - A place filter (`place`: Near) is a small form, words and how far, and

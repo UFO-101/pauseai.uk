@@ -2,7 +2,7 @@ import "server-only";
 import type { AskStatus } from "@/lib/asks";
 import type { Mp, MpStatuses } from "@/lib/email-your-mp";
 import { parseSort, type SortSpec } from "@/lib/staff-sort";
-import { firstOf, pageNumber, valuesOf, type ParamValue } from "@/lib/staff-search";
+import { anyAndNone, firstOf, notOf, pageNumber, valuesOf, type ParamValue } from "@/lib/staff-search";
 import { POLITICIAN_COLUMNS, POLITICIAN_SORTS, type PoliticianSort } from "@/lib/politician-sort";
 import {
   COUNTRIES,
@@ -145,6 +145,9 @@ function toPolitician({ statuses, ...row }: Row): Politician {
   return { ...row, statuses: statuses ?? {} };
 }
 
+/** The filters that repeat, which can leave out as well as find. */
+type NegatablePoliticianFilter = "party" | "flags" | "country" | "email";
+
 export type PoliticianFilter = {
   /** Every word is in their name, constituency, party or email. */
   search?: string;
@@ -163,6 +166,8 @@ export type PoliticianFilter = {
   ask?: string;
   /** Only those who gave this answer, to `ask` or, without one, to any ask; "none" for those who gave none. */
   answer?: string;
+  /** Those with none of these, each a filter above that repeats. */
+  not?: Pick<PoliticianFilter, NegatablePoliticianFilter>;
   sort?: SortSpec<PoliticianSort>;
   /** Which page of POLITICIANS_PAGE_SIZE, from 1. */
   page?: number;
@@ -187,10 +192,9 @@ export type PoliticiansSearch = {
   page: string;
 };
 
-/** The values of `list` that are among `known`, or undefined for none. */
-function among<T extends string>(list: string[], known: readonly T[]): T[] | undefined {
-  const found = list.filter((value): value is T => (known as readonly string[]).includes(value));
-  return found.length ? found : undefined;
+/** The values of `list` that are among `known`. */
+function among<T extends string>(list: string[], known: readonly T[]): T[] {
+  return list.filter((value): value is T => (known as readonly string[]).includes(value));
 }
 
 /**
@@ -208,16 +212,21 @@ export function politiciansSearch(params: Partial<Record<keyof PoliticiansSearch
   const [party, flag, country, email] = (["party", "flag", "country", "email"] as const).map((name) =>
     valuesOf(params[name]),
   );
+  const [parties, notParties] = anyAndNone(party, (values) => values);
+  const [flags, notFlags] = anyAndNone(flag, (values) => among(values, POLITICIAN_FLAGS));
+  const [countries, notCountries] = anyAndNone(country, (values) => among(values, COUNTRIES));
+  const [emails, notEmails] = anyAndNone(email, (values) => among(values, EMAIL_STATES));
   const filter: PoliticianFilter = {
     search: q.trim() || undefined,
     house: isHouse(house) ? house : undefined,
     status: isPersonStatus(status) ? status : status === "any" ? undefined : "in_office",
-    party: party.length ? party : undefined,
-    flags: among(flag, POLITICIAN_FLAGS),
-    country: among(country, COUNTRIES),
-    email: among(email, EMAIL_STATES),
+    party: parties,
+    flags,
+    country: countries,
+    email: emails,
     ask: ask || undefined,
     answer: answer || undefined,
+    not: notOf({ party: notParties, flags: notFlags, country: notCountries, email: notEmails }),
     sort: parseSort(POLITICIAN_SORTS, "name", sort, dir),
     page: pageNumber(page),
   };
@@ -239,6 +248,16 @@ const EMAIL_CONDITIONS: Record<EmailState, string> = {
   blocked: BLOCKED,
 };
 
+/** The conditions of the filters that repeat, those that are on: each finds those with any of its values. */
+function anyOf(filter: Pick<PoliticianFilter, NegatablePoliticianFilter>, value: (v: unknown) => string): string[] {
+  const conditions: string[] = [];
+  if (filter.party) conditions.push(`p.party = ANY(${value(filter.party)})`);
+  if (filter.flags) conditions.push(filter.flags.map((flag) => FLAG_CONDITIONS[flag]).join(" OR "));
+  if (filter.country) conditions.push(`p.country = ANY(${value(filter.country)})`);
+  if (filter.email) conditions.push(filter.email.map((state) => EMAIL_CONDITIONS[state]).join(" OR "));
+  return conditions.map((condition) => `(${condition})`);
+}
+
 /**
  * The WHERE clause for `filter`, its values added with `value`. With
  * `closest`, the search is left out, for closestPoliticians to rank by.
@@ -255,10 +274,9 @@ function politicianWhere(filter: PoliticianFilter, value: (v: unknown) => string
   if (filter.house) where.push(`p.house = ${value(filter.house)}`);
   if (filter.status === "out") where.push("n.status <> 'in_office'");
   else if (filter.status) where.push(`n.status = ${value(filter.status)}`);
-  if (filter.party) where.push(`p.party = ANY(${value(filter.party)})`);
-  if (filter.flags) where.push(`(${filter.flags.map((flag) => FLAG_CONDITIONS[flag]).join(" OR ")})`);
-  if (filter.country) where.push(`p.country = ANY(${value(filter.country)})`);
-  if (filter.email) where.push(`(${filter.email.map((state) => EMAIL_CONDITIONS[state]).join(" OR ")})`);
+  where.push(...anyOf(filter, value));
+  // What's left out: a filter's condition not true, so one with no value, such as no party, is kept.
+  if (filter.not) where.push(...anyOf(filter.not, value).map((condition) => `${condition} IS NOT TRUE`));
   if (filter.ask || filter.answer) {
     const ask = filter.ask ? ` AND a.ask = ${value(filter.ask)}` : "";
     if (filter.answer === "none") {
