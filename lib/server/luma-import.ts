@@ -3,7 +3,7 @@ import type { LumaImportResult } from "@/lib/import-runs";
 import { query, transaction, type Queryable } from "./db";
 import { keepingFailure, recordRun } from "./import-runs";
 import { recordContactsPass } from "./opt-outs";
-import { refreshSupporterFacts } from "./supporter-facts";
+import { refreshSupporterFacts, refreshSupportersList } from "./supporter-facts";
 import { lookUpPlaces } from "./supporter-places";
 import { linkSupporters } from "./supporters";
 import { LumaRateLimited, type LumaPage } from "./outside-services/luma-api";
@@ -445,6 +445,7 @@ function run(startedBy: string, budgetMs: number): Promise<LumaImportResult> {
     result.supportersAdded = links.supportersAdded;
     result.linked = links.linked;
     result.places = await lookUpPlaces(db);
+    await refreshSupportersList(db);
     result.requests = budget.requests;
     if (budget.stoppedBy) result.stoppedBy = budget.stoppedBy;
     const changed =

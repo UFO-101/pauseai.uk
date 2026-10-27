@@ -97,94 +97,6 @@ SET default_tablespace = '';
 SET default_table_access_method = heap;
 
 --
--- Name: ask_kind_statuses; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.ask_kind_statuses (
-    kind text NOT NULL,
-    status text NOT NULL,
-    CONSTRAINT ask_kind_statuses_kind_check CHECK ((kind = ANY (ARRAY['letter'::text, 'event'::text])))
-);
-
---
--- Name: ask_statuses; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.ask_statuses (
-    notable_person_id bigint NOT NULL,
-    ask text NOT NULL,
-    ask_kind text NOT NULL,
-    status text NOT NULL,
-    status_date date,
-    note text DEFAULT ''::text NOT NULL,
-    updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    updated_by text NOT NULL
-);
-
---
--- Name: asks; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.asks (
-    slug text NOT NULL,
-    title text NOT NULL,
-    kind text NOT NULL,
-    date date,
-    url text,
-    asked_by text[] DEFAULT '{}'::text[] NOT NULL,
-    CONSTRAINT asks_asked_by_check CHECK ((asked_by <@ ARRAY['supporters'::text, 'pauseai'::text, 'controlai'::text])),
-    CONSTRAINT asks_kind_check CHECK ((kind = ANY (ARRAY['letter'::text, 'event'::text]))),
-    CONSTRAINT asks_slug_check CHECK ((slug ~ '^[a-z0-9]+(-[a-z0-9]+)*$'::text)),
-    CONSTRAINT asks_url_check CHECK ((url ~ '^(https://|/)'::text))
-);
-
---
--- Name: audit_log; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.audit_log (
-    id bigint NOT NULL,
-    at timestamp with time zone DEFAULT now() NOT NULL,
-    actor text NOT NULL,
-    action text NOT NULL,
-    details jsonb DEFAULT '{}'::jsonb NOT NULL
-);
-
---
--- Name: audit_log_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
-
-ALTER TABLE public.audit_log ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
-    SEQUENCE NAME public.audit_log_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1
-);
-
---
--- Name: campaigns; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.campaigns (
-    slug text NOT NULL,
-    title text NOT NULL,
-    ask text,
-    CONSTRAINT campaigns_slug_check CHECK ((slug ~ '^[a-z0-9]+(-[a-z0-9]+)*$'::text))
-);
-
---
--- Name: email_blocks; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.email_blocks (
-    address text NOT NULL,
-    problem_id bigint NOT NULL,
-    CONSTRAINT email_blocks_address_check CHECK ((address = lower(address)))
-);
-
---
 -- Name: form_entries; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -204,179 +116,6 @@ CREATE TABLE public.form_entries (
 );
 
 --
--- Name: luma_people; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.luma_people (
-    user_id text NOT NULL,
-    email text NOT NULL,
-    name text DEFAULT ''::text NOT NULL,
-    contact_since timestamp with time zone,
-    changed_at timestamp with time zone DEFAULT now() NOT NULL,
-    contact_seen_at timestamp with time zone,
-    CONSTRAINT luma_people_email_check CHECK ((email = lower(email)))
-);
-
---
--- Name: members; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.members (
-    id text NOT NULL,
-    email text NOT NULL,
-    name text DEFAULT ''::text NOT NULL,
-    phone text,
-    city text,
-    postcode text,
-    joined_at timestamp with time zone NOT NULL,
-    created_at timestamp with time zone NOT NULL,
-    keep_informed boolean NOT NULL,
-    share_permission boolean NOT NULL,
-    source_page text,
-    intent text,
-    source_modified_at timestamp with time zone NOT NULL,
-    first_seen_at timestamp with time zone DEFAULT now() NOT NULL,
-    changed_at timestamp with time zone DEFAULT now() NOT NULL,
-    removed_at timestamp with time zone,
-    CONSTRAINT members_email_check CHECK ((email = lower(email)))
-);
-
---
--- Name: opt_outs; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.opt_outs (
-    id bigint NOT NULL,
-    address text NOT NULL,
-    list text NOT NULL,
-    source text NOT NULL,
-    source_ref text NOT NULL,
-    unsubscribed_at timestamp with time zone NOT NULL,
-    resubscribed_at timestamp with time zone,
-    CONSTRAINT opt_outs_address_check CHECK ((address = lower(address))),
-    CONSTRAINT opt_outs_list_check CHECK ((list = ANY (ARRAY['luma-calendar'::text, 'pauseai-updates'::text]))),
-    CONSTRAINT opt_outs_source_check CHECK ((source = ANY (ARRAY['luma-webhook'::text, 'luma-contacts'::text])))
-);
-
---
--- Name: email_permissions; Type: VIEW; Schema: public; Owner: -
---
-
-CREATE VIEW public.email_permissions AS
- SELECT t.topic,
-    t.address,
-    d.send,
-    d.reason,
-    d.at,
-    d.source
-   FROM (( SELECT 'luma-calendar'::text AS topic,
-            luma_people.email AS address
-           FROM public.luma_people
-        UNION
-         SELECT 'pauseai-updates'::text,
-            members.email
-           FROM public.members
-        UNION
-         SELECT 'site-forms'::text,
-            lower(TRIM(BOTH FROM form_entries.email)) AS lower
-           FROM public.form_entries
-        UNION
-         SELECT opt_outs.list,
-            opt_outs.address
-           FROM public.opt_outs
-          WHERE (opt_outs.resubscribed_at IS NULL)) t
-     CROSS JOIN LATERAL public.email_permission(t.topic, t.address) d(send, reason, at, source));
-
---
--- Name: email_problems; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.email_problems (
-    id bigint NOT NULL,
-    at timestamp with time zone DEFAULT now() NOT NULL,
-    address text NOT NULL,
-    message_id text,
-    kind text NOT NULL,
-    reason text DEFAULT ''::text NOT NULL,
-    can_reset boolean NOT NULL,
-    details jsonb DEFAULT '{}'::jsonb NOT NULL,
-    CONSTRAINT email_problems_address_check CHECK ((address = lower(address))),
-    CONSTRAINT email_problems_check CHECK (((kind <> 'complaint'::text) OR (NOT can_reset))),
-    CONSTRAINT email_problems_kind_check CHECK ((kind = ANY (ARRAY['hard'::text, 'soft'::text, 'complaint'::text])))
-);
-
---
--- Name: email_problems_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
-
-ALTER TABLE public.email_problems ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
-    SEQUENCE NAME public.email_problems_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1
-);
-
---
--- Name: email_sends; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.email_sends (
-    id bigint NOT NULL,
-    at timestamp with time zone DEFAULT now() NOT NULL,
-    purpose text NOT NULL,
-    letter_id bigint,
-    address text NOT NULL,
-    outcome text NOT NULL,
-    message_id text,
-    CONSTRAINT email_sends_check CHECK (((outcome = 'sent'::text) = (message_id IS NOT NULL))),
-    CONSTRAINT email_sends_outcome_check CHECK ((outcome = ANY (ARRAY['sent'::text, 'refused'::text, 'failed'::text]))),
-    CONSTRAINT email_sends_purpose_check CHECK ((purpose = ANY (ARRAY['letter'::text, 'forwarded-reply'::text, 'staff-login'::text, 'staff-alert'::text])))
-);
-
---
--- Name: email_sends_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
-
-ALTER TABLE public.email_sends ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
-    SEQUENCE NAME public.email_sends_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1
-);
-
---
--- Name: email_unsubscribes; Type: VIEW; Schema: public; Owner: -
---
-
-CREATE VIEW public.email_unsubscribes AS
- SELECT o.list AS topic,
-    o.address,
-    d.send,
-    d.reason,
-    d.at,
-    d.source
-   FROM (public.opt_outs o
-     CROSS JOIN LATERAL public.email_permission(o.list, o.address) d(send, reason, at, source))
-  WHERE ((o.resubscribed_at IS NULL) AND (d.reason = 'unsubscribed'::text));
-
---
--- Name: form_entries_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
-
-ALTER TABLE public.form_entries ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
-    SEQUENCE NAME public.form_entries_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1
-);
-
---
 -- Name: form_entry_luma; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -385,63 +124,6 @@ CREATE TABLE public.form_entry_luma (
     event_id text NOT NULL,
     status text NOT NULL,
     CONSTRAINT form_entry_luma_status_check CHECK ((status = ANY (ARRAY['added'::text, 'skipped'::text, 'not-configured'::text, 'failed'::text])))
-);
-
---
--- Name: import_runs; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.import_runs (
-    id bigint NOT NULL,
-    at timestamp with time zone DEFAULT now() NOT NULL,
-    job text NOT NULL,
-    started_by text,
-    status text NOT NULL,
-    error text,
-    result jsonb DEFAULT '{}'::jsonb NOT NULL,
-    decided_by text,
-    decided_at timestamp with time zone,
-    CONSTRAINT import_runs_check CHECK (((status = 'failed'::text) = (error IS NOT NULL))),
-    CONSTRAINT import_runs_job_check CHECK ((job = ANY (ARRAY['sync-politicians'::text, 'check-mps'::text, 'import-controlai'::text, 'import-signatories'::text, 'import-luma'::text, 'import-members'::text, 'sync-emails'::text, 'import-web-form-letters'::text, 'import-go-to-parliament'::text]))),
-    CONSTRAINT import_runs_status_check CHECK ((status = ANY (ARRAY['ok'::text, 'failed'::text, 'unchanged'::text, 'held'::text, 'applied'::text, 'discarded'::text])))
-);
-
---
--- Name: import_runs_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
-
-ALTER TABLE public.import_runs ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
-    SEQUENCE NAME public.import_runs_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1
-);
-
---
--- Name: letter_events; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.letter_events (
-    id bigint NOT NULL,
-    letter_id bigint NOT NULL,
-    at timestamp with time zone DEFAULT now() NOT NULL,
-    status text NOT NULL,
-    details jsonb DEFAULT '{}'::jsonb NOT NULL
-);
-
---
--- Name: letter_events_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
-
-ALTER TABLE public.letter_events ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
-    SEQUENCE NAME public.letter_events_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1
 );
 
 --
@@ -458,28 +140,6 @@ CREATE TABLE public.letters (
     kind text NOT NULL,
     CONSTRAINT letters_kind_check CHECK ((kind = ANY (ARRAY['supporter'::text, 'pauseai'::text]))),
     CONSTRAINT letters_status_check CHECK (((status = ANY (ARRAY['sending'::text, 'sent'::text, 'not_sent'::text, 'bounced'::text, 'spam_complaint'::text])) OR ((kind = 'pauseai'::text) AND (status = ANY (ARRAY['scheduled'::text, 'cancelled'::text])))))
-);
-
---
--- Name: letters_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
-
-ALTER TABLE public.letters ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
-    SEQUENCE NAME public.letters_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1
-);
-
---
--- Name: luma_erased; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.luma_erased (
-    user_id text NOT NULL,
-    erased_at timestamp with time zone DEFAULT now() NOT NULL
 );
 
 --
@@ -524,49 +184,41 @@ CREATE TABLE public.luma_guests (
 );
 
 --
--- Name: luma_import_state; Type: TABLE; Schema: public; Owner: -
+-- Name: luma_people; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public.luma_import_state (
-    list text NOT NULL,
-    full_pass_at timestamp with time zone,
-    cursor text DEFAULT ''::text NOT NULL,
-    pass_started_at timestamp with time zone,
-    CONSTRAINT luma_import_state_list_check CHECK ((list = ANY (ARRAY['events'::text, 'contacts'::text])))
+CREATE TABLE public.luma_people (
+    user_id text NOT NULL,
+    email text NOT NULL,
+    name text DEFAULT ''::text NOT NULL,
+    contact_since timestamp with time zone,
+    changed_at timestamp with time zone DEFAULT now() NOT NULL,
+    contact_seen_at timestamp with time zone,
+    CONSTRAINT luma_people_email_check CHECK ((email = lower(email)))
 );
 
 --
--- Name: mailings; Type: TABLE; Schema: public; Owner: -
+-- Name: members; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public.mailings (
-    id bigint NOT NULL,
-    title text NOT NULL,
-    ask text,
-    airtable_field text NOT NULL,
-    created_at timestamp with time zone DEFAULT now() NOT NULL
-);
-
---
--- Name: mailings_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
-
-ALTER TABLE public.mailings ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
-    SEQUENCE NAME public.mailings_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1
-);
-
---
--- Name: members_erased; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.members_erased (
+CREATE TABLE public.members (
     id text NOT NULL,
-    erased_at timestamp with time zone DEFAULT now() NOT NULL
+    email text NOT NULL,
+    name text DEFAULT ''::text NOT NULL,
+    phone text,
+    city text,
+    postcode text,
+    joined_at timestamp with time zone NOT NULL,
+    created_at timestamp with time zone NOT NULL,
+    keep_informed boolean NOT NULL,
+    share_permission boolean NOT NULL,
+    source_page text,
+    intent text,
+    source_modified_at timestamp with time zone NOT NULL,
+    first_seen_at timestamp with time zone DEFAULT now() NOT NULL,
+    changed_at timestamp with time zone DEFAULT now() NOT NULL,
+    removed_at timestamp with time zone,
+    CONSTRAINT members_email_check CHECK ((email = lower(email)))
 );
 
 --
@@ -608,61 +260,20 @@ CREATE TABLE public.notable_people (
 );
 
 --
--- Name: notable_people_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+-- Name: opt_outs; Type: TABLE; Schema: public; Owner: -
 --
 
-ALTER TABLE public.notable_people ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
-    SEQUENCE NAME public.notable_people_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1
-);
-
---
--- Name: opt_outs_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
-
-ALTER TABLE public.opt_outs ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
-    SEQUENCE NAME public.opt_outs_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1
-);
-
---
--- Name: pauseai_letters; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.pauseai_letters (
+CREATE TABLE public.opt_outs (
     id bigint NOT NULL,
-    kind text DEFAULT 'pauseai'::text NOT NULL,
-    mailing_id bigint NOT NULL,
-    airtable_id text,
-    personalised boolean DEFAULT false NOT NULL,
-    CONSTRAINT pauseai_letters_kind_check CHECK ((kind = 'pauseai'::text))
-);
-
---
--- Name: politicians; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.politicians (
-    id bigint NOT NULL,
-    house text NOT NULL,
-    constituency text,
-    party text DEFAULT ''::text NOT NULL,
-    is_test boolean DEFAULT false NOT NULL,
-    test_postcode text,
-    kind text DEFAULT 'politician'::text NOT NULL,
-    country text,
-    CONSTRAINT politicians_country_check CHECK ((country = ANY (ARRAY['england'::text, 'scotland'::text, 'wales'::text, 'northern-ireland'::text]))),
-    CONSTRAINT politicians_house_check CHECK ((house = ANY (ARRAY['commons'::text, 'lords'::text, 'scottish-parliament'::text, 'senedd'::text, 'ni-assembly'::text, 'other'::text]))),
-    CONSTRAINT politicians_kind_check CHECK ((kind = 'politician'::text)),
-    CONSTRAINT politicians_test_postcode CHECK ((is_test = (test_postcode IS NOT NULL)))
+    address text NOT NULL,
+    list text NOT NULL,
+    source text NOT NULL,
+    source_ref text NOT NULL,
+    unsubscribed_at timestamp with time zone NOT NULL,
+    resubscribed_at timestamp with time zone,
+    CONSTRAINT opt_outs_address_check CHECK ((address = lower(address))),
+    CONSTRAINT opt_outs_list_check CHECK ((list = ANY (ARRAY['luma-calendar'::text, 'pauseai-updates'::text]))),
+    CONSTRAINT opt_outs_source_check CHECK ((source = ANY (ARRAY['luma-webhook'::text, 'luma-contacts'::text])))
 );
 
 --
@@ -678,50 +289,6 @@ CREATE TABLE public.postcode_places (
     looked_up_at timestamp with time zone DEFAULT now() NOT NULL,
     CONSTRAINT postcode_places_check CHECK (((latitude IS NULL) = (longitude IS NULL))),
     CONSTRAINT postcode_places_postcode_check CHECK ((postcode = upper(replace(postcode, ' '::text, ''::text))))
-);
-
---
--- Name: staff_accounts; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.staff_accounts (
-    email text NOT NULL,
-    permissions text[] DEFAULT '{}'::text[] NOT NULL,
-    added_by text NOT NULL,
-    added_at timestamp with time zone DEFAULT now() NOT NULL,
-    last_login_at timestamp with time zone,
-    last_seen_at timestamp with time zone,
-    CONSTRAINT staff_accounts_email_check CHECK ((email = lower(email))),
-    CONSTRAINT staff_accounts_email_pauseai CHECK ((email ~ '^[^@[:space:]]+@pauseai\.uk$'::text)),
-    CONSTRAINT staff_accounts_permissions_check CHECK ((permissions <@ ARRAY['admin'::text, 'supporters'::text]))
-);
-
---
--- Name: staff_login_links; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.staff_login_links (
-    token_hash text NOT NULL,
-    email text NOT NULL,
-    created_at timestamp with time zone DEFAULT now() NOT NULL,
-    expires_at timestamp with time zone NOT NULL,
-    used_at timestamp with time zone,
-    browser_hash text,
-    remember boolean DEFAULT false NOT NULL,
-    next text DEFAULT '/staff'::text NOT NULL
-);
-
---
--- Name: staff_sessions; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.staff_sessions (
-    token_hash text NOT NULL,
-    email text NOT NULL,
-    created_at timestamp with time zone DEFAULT now() NOT NULL,
-    expires_at timestamp with time zone NOT NULL,
-    remember boolean DEFAULT false NOT NULL,
-    user_agent text
 );
 
 --
@@ -782,32 +349,6 @@ UNION ALL
           WHERE (s.entry_id = f.id))));
 
 --
--- Name: supporter_activity_luma; Type: VIEW; Schema: public; Owner: -
---
-
-CREATE VIEW public.supporter_activity_luma AS
- SELECT p.user_id AS source_id,
-    p.contact_since AS at,
-    'luma-contact'::text AS kind,
-    NULL::text AS title,
-    NULL::text AS detail,
-    NULL::text AS href,
-    NULL::text AS status
-   FROM public.luma_people p
-  WHERE (p.contact_since IS NOT NULL)
-UNION ALL
- SELECT g.user_id AS source_id,
-    g.registered_at AS at,
-    'luma-registered'::text AS kind,
-    e.name AS title,
-    g.approval_status AS detail,
-    ('https://luma.com/'::text || e.url) AS href,
-    NULL::text AS status
-   FROM (public.luma_guests g
-     JOIN public.luma_events e ON ((e.id = g.event_id)))
-  WHERE (g.removed_at IS NULL);
-
---
 -- Name: supporter_activity_member; Type: VIEW; Schema: public; Owner: -
 --
 
@@ -846,14 +387,28 @@ CREATE TABLE public.supporter_links (
 CREATE VIEW public.supporter_activity AS
  SELECT k.supporter_id,
     'luma'::text AS source,
-    a.at,
-    a.kind,
-    a.title,
-    a.detail,
-    a.href,
-    a.status
-   FROM (public.supporter_activity_luma a
-     JOIN public.supporter_links k ON ((k.luma_user_id = a.source_id)))
+    p.contact_since AS at,
+    'luma-contact'::text AS kind,
+    NULL::text AS title,
+    NULL::text AS detail,
+    NULL::text AS href,
+    NULL::text AS status
+   FROM (public.luma_people p
+     JOIN public.supporter_links k ON ((k.luma_user_id = p.user_id)))
+  WHERE (p.contact_since IS NOT NULL)
+UNION ALL
+ SELECT k.supporter_id,
+    'luma'::text AS source,
+    g.registered_at AS at,
+    'luma-registered'::text AS kind,
+    e.name AS title,
+    g.approval_status AS detail,
+    ('https://luma.com/'::text || e.url) AS href,
+    NULL::text AS status
+   FROM ((public.luma_guests g
+     JOIN public.luma_events e ON ((e.id = g.event_id)))
+     JOIN public.supporter_links k ON ((k.luma_user_id = g.user_id)))
+  WHERE (g.removed_at IS NULL)
 UNION ALL
  SELECT k.supporter_id,
     f.form AS source,
@@ -1053,40 +608,6 @@ UNION ALL
      JOIN public.supporter_links k ON ((k.member_id = s.source_id)));
 
 --
--- Name: supporters; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.supporters (
-    id bigint NOT NULL,
-    created_at timestamp with time zone DEFAULT now() NOT NULL,
-    first_seen_at timestamp with time zone
-);
-
---
--- Name: supporter_first_seen; Type: VIEW; Schema: public; Owner: -
---
-
-CREATE VIEW public.supporter_first_seen AS
- SELECT id AS supporter_id,
-    ( SELECT min(i.seen_at) AS min
-           FROM public.supporter_identity i
-          WHERE (i.supporter_id = s.id)) AS first_seen_at
-   FROM public.supporters s;
-
---
--- Name: supporter_links_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
-
-ALTER TABLE public.supporter_links ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
-    SEQUENCE NAME public.supporter_links_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1
-);
-
---
 -- Name: supporter_place; Type: VIEW; Schema: public; Owner: -
 --
 
@@ -1145,16 +666,13 @@ CREATE VIEW public.supporter_place AS
   ORDER BY supporter_id, rank, at DESC;
 
 --
--- Name: supporters_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+-- Name: supporters; Type: TABLE; Schema: public; Owner: -
 --
 
-ALTER TABLE public.supporters ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
-    SEQUENCE NAME public.supporters_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1
+CREATE TABLE public.supporters (
+    id bigint NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    first_seen_at timestamp with time zone
 );
 
 --
@@ -1208,6 +726,577 @@ CREATE VIEW public.supporters_summary AS
      LEFT JOIN act ON ((act.supporter_id = s.id)))
      LEFT JOIN contact ON ((contact.supporter_id = s.id)))
      LEFT JOIN mem ON ((mem.supporter_id = s.id)));
+
+--
+-- Name: supporters_list; Type: MATERIALIZED VIEW; Schema: public; Owner: -
+--
+
+CREATE MATERIALIZED VIEW public.supporters_list AS
+ SELECT s.id,
+    s.name,
+    s.emails,
+    ( SELECT i.email
+           FROM public.supporter_identity i
+          WHERE (i.supporter_id = s.id)
+          ORDER BY i.seen_at DESC NULLS LAST, i.email
+         LIMIT 1) AS email,
+    s.phone,
+    s.postcode,
+    s.sources,
+    s.luma_contact,
+    s.first_seen_at,
+    s.last_active_at,
+    s.events,
+    s.letters,
+    s.member,
+    sp.place,
+    sp.basis,
+    sp.given,
+    sp.country,
+    sp.latitude,
+    sp.longitude
+   FROM (public.supporters_summary s
+     LEFT JOIN public.supporter_place sp ON ((sp.supporter_id = s.id)))
+  WITH NO DATA;
+
+--
+-- Name: supporters_added(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.supporters_added() RETURNS SETOF public.supporters_list
+    LANGUAGE plpgsql STABLE ROWS 10
+    AS $$
+BEGIN
+  RETURN QUERY
+  SELECT x.* FROM supporters n CROSS JOIN LATERAL (
+    SELECT s.id, s.name, s.emails,
+      (SELECT i.email FROM supporter_identity i WHERE i.supporter_id = s.id
+       ORDER BY i.seen_at DESC NULLS LAST, i.email LIMIT 1) AS email,
+      s.phone, s.postcode, s.sources, s.luma_contact, s.first_seen_at, s.last_active_at, s.events, s.letters, s.member,
+      sp.place, sp.basis, sp.given, sp.country, sp.latitude, sp.longitude
+    FROM supporters_summary s LEFT JOIN supporter_place sp ON sp.supporter_id = s.id
+    WHERE s.id = n.id OFFSET 0
+  ) x
+  WHERE n.id > (SELECT coalesce(max(l.id), 0) FROM supporters_list l);
+END
+$$;
+
+--
+-- Name: ask_kind_statuses; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.ask_kind_statuses (
+    kind text NOT NULL,
+    status text NOT NULL,
+    CONSTRAINT ask_kind_statuses_kind_check CHECK ((kind = ANY (ARRAY['letter'::text, 'event'::text])))
+);
+
+--
+-- Name: ask_statuses; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.ask_statuses (
+    notable_person_id bigint NOT NULL,
+    ask text NOT NULL,
+    ask_kind text NOT NULL,
+    status text NOT NULL,
+    status_date date,
+    note text DEFAULT ''::text NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_by text NOT NULL
+);
+
+--
+-- Name: asks; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.asks (
+    slug text NOT NULL,
+    title text NOT NULL,
+    kind text NOT NULL,
+    date date,
+    url text,
+    asked_by text[] DEFAULT '{}'::text[] NOT NULL,
+    CONSTRAINT asks_asked_by_check CHECK ((asked_by <@ ARRAY['supporters'::text, 'pauseai'::text, 'controlai'::text])),
+    CONSTRAINT asks_kind_check CHECK ((kind = ANY (ARRAY['letter'::text, 'event'::text]))),
+    CONSTRAINT asks_slug_check CHECK ((slug ~ '^[a-z0-9]+(-[a-z0-9]+)*$'::text)),
+    CONSTRAINT asks_url_check CHECK ((url ~ '^(https://|/)'::text))
+);
+
+--
+-- Name: audit_log; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.audit_log (
+    id bigint NOT NULL,
+    at timestamp with time zone DEFAULT now() NOT NULL,
+    actor text NOT NULL,
+    action text NOT NULL,
+    details jsonb DEFAULT '{}'::jsonb NOT NULL
+);
+
+--
+-- Name: audit_log_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+ALTER TABLE public.audit_log ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public.audit_log_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+--
+-- Name: campaigns; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.campaigns (
+    slug text NOT NULL,
+    title text NOT NULL,
+    ask text,
+    CONSTRAINT campaigns_slug_check CHECK ((slug ~ '^[a-z0-9]+(-[a-z0-9]+)*$'::text))
+);
+
+--
+-- Name: email_blocks; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.email_blocks (
+    address text NOT NULL,
+    problem_id bigint NOT NULL,
+    CONSTRAINT email_blocks_address_check CHECK ((address = lower(address)))
+);
+
+--
+-- Name: email_permissions; Type: VIEW; Schema: public; Owner: -
+--
+
+CREATE VIEW public.email_permissions AS
+ SELECT t.topic,
+    t.address,
+    d.send,
+    d.reason,
+    d.at,
+    d.source
+   FROM (( SELECT 'luma-calendar'::text AS topic,
+            luma_people.email AS address
+           FROM public.luma_people
+        UNION
+         SELECT 'pauseai-updates'::text,
+            members.email
+           FROM public.members
+        UNION
+         SELECT 'site-forms'::text,
+            lower(TRIM(BOTH FROM form_entries.email)) AS lower
+           FROM public.form_entries
+        UNION
+         SELECT opt_outs.list,
+            opt_outs.address
+           FROM public.opt_outs
+          WHERE (opt_outs.resubscribed_at IS NULL)) t
+     CROSS JOIN LATERAL public.email_permission(t.topic, t.address) d(send, reason, at, source));
+
+--
+-- Name: email_problems; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.email_problems (
+    id bigint NOT NULL,
+    at timestamp with time zone DEFAULT now() NOT NULL,
+    address text NOT NULL,
+    message_id text,
+    kind text NOT NULL,
+    reason text DEFAULT ''::text NOT NULL,
+    can_reset boolean NOT NULL,
+    details jsonb DEFAULT '{}'::jsonb NOT NULL,
+    CONSTRAINT email_problems_address_check CHECK ((address = lower(address))),
+    CONSTRAINT email_problems_check CHECK (((kind <> 'complaint'::text) OR (NOT can_reset))),
+    CONSTRAINT email_problems_kind_check CHECK ((kind = ANY (ARRAY['hard'::text, 'soft'::text, 'complaint'::text])))
+);
+
+--
+-- Name: email_problems_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+ALTER TABLE public.email_problems ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public.email_problems_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+--
+-- Name: email_sends; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.email_sends (
+    id bigint NOT NULL,
+    at timestamp with time zone DEFAULT now() NOT NULL,
+    purpose text NOT NULL,
+    letter_id bigint,
+    address text NOT NULL,
+    outcome text NOT NULL,
+    message_id text,
+    CONSTRAINT email_sends_check CHECK (((outcome = 'sent'::text) = (message_id IS NOT NULL))),
+    CONSTRAINT email_sends_outcome_check CHECK ((outcome = ANY (ARRAY['sent'::text, 'refused'::text, 'failed'::text]))),
+    CONSTRAINT email_sends_purpose_check CHECK ((purpose = ANY (ARRAY['letter'::text, 'forwarded-reply'::text, 'staff-login'::text, 'staff-alert'::text])))
+);
+
+--
+-- Name: email_sends_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+ALTER TABLE public.email_sends ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public.email_sends_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+--
+-- Name: email_unsubscribes; Type: VIEW; Schema: public; Owner: -
+--
+
+CREATE VIEW public.email_unsubscribes AS
+ SELECT o.list AS topic,
+    o.address,
+    d.send,
+    d.reason,
+    d.at,
+    d.source
+   FROM (public.opt_outs o
+     CROSS JOIN LATERAL public.email_permission(o.list, o.address) d(send, reason, at, source))
+  WHERE ((o.resubscribed_at IS NULL) AND (d.reason = 'unsubscribed'::text));
+
+--
+-- Name: form_entries_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+ALTER TABLE public.form_entries ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public.form_entries_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+--
+-- Name: import_runs; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.import_runs (
+    id bigint NOT NULL,
+    at timestamp with time zone DEFAULT now() NOT NULL,
+    job text NOT NULL,
+    started_by text,
+    status text NOT NULL,
+    error text,
+    result jsonb DEFAULT '{}'::jsonb NOT NULL,
+    decided_by text,
+    decided_at timestamp with time zone,
+    CONSTRAINT import_runs_check CHECK (((status = 'failed'::text) = (error IS NOT NULL))),
+    CONSTRAINT import_runs_job_check CHECK ((job = ANY (ARRAY['sync-politicians'::text, 'check-mps'::text, 'import-controlai'::text, 'import-signatories'::text, 'import-luma'::text, 'import-members'::text, 'sync-emails'::text, 'import-web-form-letters'::text, 'import-go-to-parliament'::text]))),
+    CONSTRAINT import_runs_status_check CHECK ((status = ANY (ARRAY['ok'::text, 'failed'::text, 'unchanged'::text, 'held'::text, 'applied'::text, 'discarded'::text])))
+);
+
+--
+-- Name: import_runs_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+ALTER TABLE public.import_runs ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public.import_runs_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+--
+-- Name: letter_events; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.letter_events (
+    id bigint NOT NULL,
+    letter_id bigint NOT NULL,
+    at timestamp with time zone DEFAULT now() NOT NULL,
+    status text NOT NULL,
+    details jsonb DEFAULT '{}'::jsonb NOT NULL
+);
+
+--
+-- Name: letter_events_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+ALTER TABLE public.letter_events ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public.letter_events_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+--
+-- Name: letters_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+ALTER TABLE public.letters ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public.letters_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+--
+-- Name: luma_erased; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.luma_erased (
+    user_id text NOT NULL,
+    erased_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+--
+-- Name: luma_import_state; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.luma_import_state (
+    list text NOT NULL,
+    full_pass_at timestamp with time zone,
+    cursor text DEFAULT ''::text NOT NULL,
+    pass_started_at timestamp with time zone,
+    CONSTRAINT luma_import_state_list_check CHECK ((list = ANY (ARRAY['events'::text, 'contacts'::text])))
+);
+
+--
+-- Name: mailings; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.mailings (
+    id bigint NOT NULL,
+    title text NOT NULL,
+    ask text,
+    airtable_field text NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+--
+-- Name: mailings_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+ALTER TABLE public.mailings ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public.mailings_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+--
+-- Name: members_erased; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.members_erased (
+    id text NOT NULL,
+    erased_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+--
+-- Name: notable_people_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+ALTER TABLE public.notable_people ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public.notable_people_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+--
+-- Name: opt_outs_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+ALTER TABLE public.opt_outs ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public.opt_outs_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+--
+-- Name: pauseai_letters; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.pauseai_letters (
+    id bigint NOT NULL,
+    kind text DEFAULT 'pauseai'::text NOT NULL,
+    mailing_id bigint NOT NULL,
+    airtable_id text,
+    personalised boolean DEFAULT false NOT NULL,
+    CONSTRAINT pauseai_letters_kind_check CHECK ((kind = 'pauseai'::text))
+);
+
+--
+-- Name: politicians; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.politicians (
+    id bigint NOT NULL,
+    house text NOT NULL,
+    constituency text,
+    party text DEFAULT ''::text NOT NULL,
+    is_test boolean DEFAULT false NOT NULL,
+    test_postcode text,
+    kind text DEFAULT 'politician'::text NOT NULL,
+    country text,
+    CONSTRAINT politicians_country_check CHECK ((country = ANY (ARRAY['england'::text, 'scotland'::text, 'wales'::text, 'northern-ireland'::text]))),
+    CONSTRAINT politicians_house_check CHECK ((house = ANY (ARRAY['commons'::text, 'lords'::text, 'scottish-parliament'::text, 'senedd'::text, 'ni-assembly'::text, 'other'::text]))),
+    CONSTRAINT politicians_kind_check CHECK ((kind = 'politician'::text)),
+    CONSTRAINT politicians_test_postcode CHECK ((is_test = (test_postcode IS NOT NULL)))
+);
+
+--
+-- Name: staff_accounts; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.staff_accounts (
+    email text NOT NULL,
+    permissions text[] DEFAULT '{}'::text[] NOT NULL,
+    added_by text NOT NULL,
+    added_at timestamp with time zone DEFAULT now() NOT NULL,
+    last_login_at timestamp with time zone,
+    last_seen_at timestamp with time zone,
+    CONSTRAINT staff_accounts_email_check CHECK ((email = lower(email))),
+    CONSTRAINT staff_accounts_email_pauseai CHECK ((email ~ '^[^@[:space:]]+@pauseai\.uk$'::text)),
+    CONSTRAINT staff_accounts_permissions_check CHECK ((permissions <@ ARRAY['admin'::text, 'supporters'::text]))
+);
+
+--
+-- Name: staff_login_links; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.staff_login_links (
+    token_hash text NOT NULL,
+    email text NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    expires_at timestamp with time zone NOT NULL,
+    used_at timestamp with time zone,
+    browser_hash text,
+    remember boolean DEFAULT false NOT NULL,
+    next text DEFAULT '/staff'::text NOT NULL
+);
+
+--
+-- Name: staff_sessions; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.staff_sessions (
+    token_hash text NOT NULL,
+    email text NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    expires_at timestamp with time zone NOT NULL,
+    remember boolean DEFAULT false NOT NULL,
+    user_agent text
+);
+
+--
+-- Name: supporter_first_seen; Type: VIEW; Schema: public; Owner: -
+--
+
+CREATE VIEW public.supporter_first_seen AS
+ SELECT id AS supporter_id,
+    ( SELECT min(i.seen_at) AS min
+           FROM public.supporter_identity i
+          WHERE (i.supporter_id = s.id)) AS first_seen_at
+   FROM public.supporters s;
+
+--
+-- Name: supporter_links_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+ALTER TABLE public.supporter_links ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public.supporter_links_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+--
+-- Name: supporters_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+ALTER TABLE public.supporters ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public.supporters_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+--
+-- Name: supporters_listed; Type: VIEW; Schema: public; Owner: -
+--
+
+CREATE VIEW public.supporters_listed AS
+ SELECT supporters_list.id,
+    supporters_list.name,
+    supporters_list.emails,
+    supporters_list.email,
+    supporters_list.phone,
+    supporters_list.postcode,
+    supporters_list.sources,
+    supporters_list.luma_contact,
+    supporters_list.first_seen_at,
+    supporters_list.last_active_at,
+    supporters_list.events,
+    supporters_list.letters,
+    supporters_list.member,
+    supporters_list.place,
+    supporters_list.basis,
+    supporters_list.given,
+    supporters_list.country,
+    supporters_list.latitude,
+    supporters_list.longitude
+   FROM public.supporters_list
+UNION ALL
+ SELECT supporters_added.id,
+    supporters_added.name,
+    supporters_added.emails,
+    supporters_added.email,
+    supporters_added.phone,
+    supporters_added.postcode,
+    supporters_added.sources,
+    supporters_added.luma_contact,
+    supporters_added.first_seen_at,
+    supporters_added.last_active_at,
+    supporters_added.events,
+    supporters_added.letters,
+    supporters_added.member,
+    supporters_added.place,
+    supporters_added.basis,
+    supporters_added.given,
+    supporters_added.country,
+    supporters_added.latitude,
+    supporters_added.longitude
+   FROM public.supporters_added() supporters_added(id, name, emails, email, phone, postcode, sources, luma_contact, first_seen_at, last_active_at, events, letters, member, place, basis, given, country, latitude, longitude);
 
 --
 -- Name: ask_kind_statuses ask_kind_statuses_pkey; Type: CONSTRAINT; Schema: public; Owner: -
@@ -1660,6 +1749,12 @@ CREATE INDEX luma_people_email ON public.luma_people USING btree (email);
 CREATE INDEX members_email ON public.members USING btree (email);
 
 --
+-- Name: notable_people_email; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX notable_people_email ON public.notable_people USING btree (lower(email));
+
+--
 -- Name: opt_outs_open; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -1706,6 +1801,18 @@ CREATE INDEX supporter_links_supporter ON public.supporter_links USING btree (su
 --
 
 CREATE INDEX supporters_first_seen ON public.supporters USING btree (first_seen_at);
+
+--
+-- Name: supporters_list_active; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX supporters_list_active ON public.supporters_list USING btree (last_active_at DESC NULLS LAST, id DESC);
+
+--
+-- Name: supporters_list_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX supporters_list_id ON public.supporters_list USING btree (id);
 
 --
 -- Name: ask_statuses ask_statuses_ask_ask_kind_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -

@@ -3,7 +3,7 @@ import type { MembersImportResult } from "@/lib/import-runs";
 import { query, transaction, type Queryable } from "./db";
 import { keepingFailure, recordRun } from "./import-runs";
 import { airtableToken, fetchMembers, type MemberToImport } from "./outside-services/airtable";
-import { refreshSupporterFacts } from "./supporter-facts";
+import { refreshSupporterFacts, refreshSupportersList } from "./supporter-facts";
 import { linkSupporters } from "./supporters";
 
 // Copies PauseAI's UK members whom we may hold into `members`: hourly
@@ -89,6 +89,7 @@ export function importMembers(startedBy: string): Promise<MembersImportResult> {
       };
       // A record already linked may have changed, so everyone's facts, not only the newly linked.
       await refreshSupporterFacts(db);
+      await refreshSupportersList(db);
       const anything = added + changed + result.removed + result.linked;
       await recordRun(JOB, startedBy, anything > 0 ? "ok" : "unchanged", result, db);
       return result;

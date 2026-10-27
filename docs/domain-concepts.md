@@ -174,8 +174,15 @@ shape, made in the migrations: `supporter_source_<name>` (`source_id`,
 history, and `supporter_contact_<name>` (`source_id`, `at`, `phone`,
 `postcode`, `latitude`, `longitude`, `city`) for contact details and places.
 `supporter_identity`, `supporter_activity` and `supporter_contact` union
-them by supporter, and `supporters_summary` is one row per supporter for
-the list. When a supporter was first seen, the earliest `seen_at` of their
+them by supporter (Luma's activity is two arms of `supporter_activity`
+itself, as Postgres can't narrow a union inside a join to one supporter),
+and `supporters_summary` is one row per supporter. The list reads
+`supporters_listed`: `supporters_list`, a materialized view of every
+supporter's summary and place, refreshed by `refreshSupportersList()` at
+the end of each import that links supporters and by an erasure, and anyone
+added since, worked out as it's read. So a supporter's counts, tags and
+place in the list are as of the last import, up to an hour old (overnight,
+until 06:17); their own page is always as they are now. When a supporter was first seen, the earliest `seen_at` of their
 records (`supporter_first_seen`), is kept on the supporter
 (`supporters.first_seen_at`) by `refreshSupporterFacts()`
 (`lib/server/supporter-facts.ts`), which `linkSupporters()` runs, so the

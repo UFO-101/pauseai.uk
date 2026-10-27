@@ -4,6 +4,7 @@ import { logChange } from "./audit";
 import { query, transaction } from "./db";
 import { keepingFailure, recordRun } from "./import-runs";
 import { airtableToken, fetchWebFormLetters } from "./outside-services/airtable";
+import { refreshSupportersList } from "./supporter-facts";
 import { linkSupporters } from "./supporters";
 
 // Copies, once, the letters supporters sent through pauseai.info's old UK
@@ -100,6 +101,7 @@ export function importWebFormLetters(startedBy: string): Promise<WebFormImportRe
         result.imported++;
       }
       Object.assign(result, await linkSupporters(db));
+      await refreshSupportersList(db);
       const { imported, skipped, alreadyHere, noPolitician } = result;
       await logChange(startedBy, "import web form letters", { imported, skipped, alreadyHere, noPolitician }, db);
       await recordRun(JOB, startedBy, "ok", result, db);

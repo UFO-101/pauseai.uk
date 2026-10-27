@@ -279,7 +279,10 @@ need no thought. Two kinds of query do, and get it when they're written:
   activity). It groups each source once and joins the results, rather than
   running a subquery per column for every row (`supporters_summary`).
   Subqueries over views of views, once per row, are what the planner prices
-  highest.
+  highest. A list sorted or filtered by what that works out can't use an
+  index on it, so keep it (a materialized view, as `supporters_list`) and
+  read the kept rows; and take the page's rows before building their
+  columns, or they're built for every row the sort reads.
 
 For either, check it before calling it done: fill a throwaway database to
 about the size the real data will reach in a year (`scripts/fresh-database.mjs`

@@ -62,6 +62,8 @@ export function useTestDatabase(extraTables: string[] = []) {
   });
   beforeEach(async () => {
     await query(`TRUNCATE ${[...TABLES, ...extraTables].join(", ")} RESTART IDENTITY CASCADE`);
+    // The kept supporters list, emptied with the tables it's made from.
+    await query("REFRESH MATERIALIZED VIEW supporters_list");
   });
   afterAll(async () => {
     await closeDb();

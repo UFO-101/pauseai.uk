@@ -1,6 +1,7 @@
 import "server-only";
 import { logChange } from "./audit";
 import { query, transaction } from "./db";
+import { refreshSupportersList } from "./supporter-facts";
 
 // Erasing a supporter, when they ask to be forgotten: for each source,
 // what that source holds about them goes. A form entry goes with its letter,
@@ -60,6 +61,8 @@ export async function eraseSupporter(id: number, reference: string, by: string):
     await query("INSERT INTO members_erased (id) SELECT unnest($1::text[]) ON CONFLICT DO NOTHING", [members], db);
     await query("DELETE FROM members WHERE id = ANY($1::text[])", [members], db);
     await query("DELETE FROM supporters WHERE id = $1", [id], db);
+    // Off the list now, not at the next import.
+    await refreshSupportersList(db);
     const result: ErasureResult = {
       lumaUsers: lumaUsers.length,
       formEntries: entries.length,
