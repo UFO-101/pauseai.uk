@@ -448,7 +448,7 @@ export const staffCopy = {
       answers: "Answers",
     },
     kinds: { letter: "Sign letter", event: "Attend event" } as Record<string, string>,
-    askedBy: { supporters: "Supporters", pauseai: "PauseAI" },
+    askedBy: { supporters: "Supporters", pauseai: "PauseAI", controlai: "ControlAI" },
     noAnswers: "No answers yet",
     // Each answer's count links to the politicians who gave it.
     count: (status: string, n: number) => `${status}: ${n}`,

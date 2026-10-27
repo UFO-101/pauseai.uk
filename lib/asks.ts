@@ -12,8 +12,8 @@ export const ASK_STATUSES = {
 export type AskKind = keyof typeof ASK_STATUSES;
 export type AskStatus = (typeof ASK_STATUSES)[AskKind][number];
 
-/** Who asks it: supporters, in their letters or in person, or PauseAI, in its own emails. */
-export type Asker = "supporters" | "pauseai";
+/** Who asks it: supporters, in their letters or in person, PauseAI, in its own emails, or ControlAI. */
+export type Asker = "supporters" | "pauseai" | "controlai";
 
 /** Each ask's status for one person, keyed by the ask's slug. */
 export type AskStatuses = Partial<Record<string, AskStatus>>;

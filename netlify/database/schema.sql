@@ -109,7 +109,7 @@ CREATE TABLE public.asks (
     date date,
     url text,
     asked_by text[] DEFAULT '{}'::text[] NOT NULL,
-    CONSTRAINT asks_asked_by_check CHECK ((asked_by <@ ARRAY['supporters'::text, 'pauseai'::text])),
+    CONSTRAINT asks_asked_by_check CHECK ((asked_by <@ ARRAY['supporters'::text, 'pauseai'::text, 'controlai'::text])),
     CONSTRAINT asks_kind_check CHECK ((kind = ANY (ARRAY['letter'::text, 'event'::text]))),
     CONSTRAINT asks_slug_check CHECK ((slug ~ '^[a-z0-9]+(-[a-z0-9]+)*$'::text)),
     CONSTRAINT asks_url_check CHECK ((url ~ '^(https://|/)'::text))

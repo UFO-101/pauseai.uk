@@ -25,7 +25,7 @@ export const exampleAsks: Ask[] = [
     kind: "letter",
     date: "2026-09-11",
     url: "https://example.org/letter",
-    askedBy: ["supporters"],
+    askedBy: ["controlai"],
   },
   {
     slug: "frontier-ai-letter",

@@ -54,8 +54,8 @@ describeWithDatabase("asks and campaigns", () => {
     expect(by).toEqual({
       "frontier-ai-letter": ["supporters"],
       "deepmind-letter": ["supporters"],
-      "controlai-statement": [],
-      "controlai-letter": ["supporters"],
+      "controlai-statement": ["controlai"],
+      "controlai-letter": ["controlai"],
       "edinburgh-conference-2026": ["pauseai"],
       "go-to-parliament-oct-2026": ["supporters"],
     });

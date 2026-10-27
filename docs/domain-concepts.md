@@ -71,7 +71,8 @@ Something we ask notable people to do whose answer we record: sign a
 letter, come to an event (`asks`, `lib/asks.ts`). Each has a slug, a title,
 a kind (`letter` or `event`), a date, a link to the letter or the
 event, and who asks it: supporters, in their letters or in person, PauseAI,
-in its own emails, or both. A migration adds each.
+in its own emails, ControlAI, for its own statement and letter, or more than
+one. A migration adds each.
 
 A person's answer to an ask is a status (`ask_statuses`): one row per
 person per ask, with a status, a date, a note, and who set it; no answer,

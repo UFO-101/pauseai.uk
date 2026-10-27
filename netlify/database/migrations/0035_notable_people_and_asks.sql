@@ -72,14 +72,14 @@ INSERT INTO ask_kind_statuses (kind, status) VALUES
 -- `date` is the event's, or the letter's: when it was published, or first
 -- asked for. `url` is where to read it or see the event: a page of ours, by
 -- its path, or another site's. `asked_by` is who asks it: supporters, in
--- their letters or in person, and PauseAI, in its own emails.
+-- their letters or in person, PauseAI, in its own emails, and ControlAI.
 CREATE TABLE asks (
   slug text PRIMARY KEY CHECK (slug ~ '^[a-z0-9]+(-[a-z0-9]+)*$'),
   title text NOT NULL,
   kind text NOT NULL CHECK (kind IN ('letter', 'event')),
   date date,
   url text CHECK (url ~ '^(https://|/)'),
-  asked_by text[] NOT NULL DEFAULT '{}' CHECK (asked_by <@ ARRAY['supporters', 'pauseai']),
+  asked_by text[] NOT NULL DEFAULT '{}' CHECK (asked_by <@ ARRAY['supporters', 'pauseai', 'controlai']),
   UNIQUE (slug, kind)
 );
 INSERT INTO asks (slug, title, kind, date, url, asked_by) VALUES
@@ -88,9 +88,9 @@ INSERT INTO asks (slug, title, kind, date, url, asked_by) VALUES
   ('deepmind-letter', 'DeepMind letter to Sir Demis Hassabis', 'letter', '2025-08-29',
     '/campaigns/dear-sir-demis-2025', '{supporters}'),
   ('controlai-statement', 'ControlAI''s campaign statement', 'letter', '2025-02-06',
-    'https://controlai.org/statement', '{}'),
+    'https://controlai.org/statement', '{controlai}'),
   ('controlai-letter', 'ControlAI''s letter to the Prime Minister', 'letter', '2026-09-11',
-    'https://controlai.org/uk-pm-letter', '{supporters}'),
+    'https://controlai.org/uk-pm-letter', '{controlai}'),
   ('edinburgh-conference-2026', 'Edinburgh conference, November 2026', 'event', '2026-11-01',
     'https://luma.com/6jp2nqe9', '{pauseai}'),
   ('go-to-parliament-oct-2026', 'Constituent meetings at Parliament, October 2026', 'event', '2026-10-20',
