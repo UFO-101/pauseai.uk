@@ -115,6 +115,8 @@ describe.skipIf(process.env.NETLIFY === "true")("copying a database", () => {
         );
         expect(tables.length).toBeGreaterThan(15);
         for (const table of tables) expect(runSql(name, `SELECT count(*) FROM ${table}`), table).not.toEqual(["0"]);
+        // No two politicians share a name, so a list of them never shows the same row twice.
+        expect(runSql(name, "SELECT name FROM notable_people GROUP BY name HAVING count(*) > 1")).toEqual([]);
         // One supporter per email, with nothing left unlinked, and every kind of supporter among them.
         expect(runSql(name, "SELECT count(*) FROM supporters")).toEqual(
           runSql(name, "SELECT count(DISTINCT matched_value) FROM supporter_links"),
