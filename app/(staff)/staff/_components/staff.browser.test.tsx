@@ -1053,7 +1053,8 @@ describe("PoliticianDetails", () => {
       `2026-10-12 09:10${copy["block address"]} ${staffCopy.emails.kinds.hard} · postmark`,
       `2026-10-12 09:00${copy.letter} ${exampleLetter.senderName} · ${pm.title} · ${staffCopy.letters.status.bounced}`,
       `2026-10-03 08:00${copy["pauseai-letter"]} Example Mailing · ${staffCopy.politician.personalised}`,
-      `2026-10-02 10:00${statusLine(staffCopy.politician.statusSet(staffCopy.statuses.signed), ask("frontier-ai-letter").title)}, 2026-10-01 · Told us at the march · jo@pauseai.uk`,
+      // Dated the day before it was recorded, so on that day.
+      `2026-10-01${statusLine(staffCopy.politician.statusSet(staffCopy.statuses.signed), ask("frontier-ai-letter").title)} · Told us at the march · jo@pauseai.uk`,
       `2026-09-30 10:00${copy["edit politician"]} Polly Placeholder · polly.placeholder.mp@parliament.uk · sam@pauseai.uk`,
       `2026-09-02 08:00${copy["pauseai-letter"]} Example Mailing · ${staffCopy.politician.aiGenerated}`,
       `2026-09-01 10:00${statusLine(staffCopy.politician.statusCleared, "gone")} · jo@pauseai.uk`,

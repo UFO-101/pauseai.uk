@@ -35,8 +35,19 @@ function Fact({ label, children }: { label: string; children: React.ReactNode })
   );
 }
 
-/** One line of the history: when, and what, already in words. */
-type Entry = { key: string; at: string; what: ReactNode };
+/** One line of the history: when, to the minute or, with `day`, only the day, and what, already in words. */
+type Entry = { key: string; at: string; day?: boolean; what: ReactNode };
+
+/**
+ * When an entry of the audit log happened: an answer dated before it was
+ * recorded, as those an import finds already there are, on that day; anything
+ * else when it was logged.
+ */
+function whenOf(change: PoliticianChange): { at: string; day: boolean } {
+  const date = change.action === "set status" && typeof change.details.date === "string" ? change.details.date : "";
+  const logged = new Date(change.at).toISOString();
+  return date && date < logged.slice(0, 10) ? { at: date, day: true } : { at: logged, day: false };
+}
 
 /** A letter: who wrote it, linked to their supporter once they're one, the campaign, and how it ended. */
 function Sender({ letter }: { letter: LetterSummary }) {
@@ -145,7 +156,6 @@ function Detail({ change, asks }: { change: PoliticianChange; asks: Ask[] }) {
             <CampaignName slug={text("campaign")} />
           )}
           {words.after}
-          {text("date") && `, ${text("date")}`}
           {text("note") && <Muted> · {text("note")}</Muted>}
         </>
       );
@@ -354,7 +364,7 @@ export default function PoliticianDetails({
     ...pauseaiEntries(pauseaiLetters),
     ...history.map((change) => ({
       key: `change-${change.id}`,
-      at: change.at,
+      ...whenOf(change),
       what: (
         <>
           {change.action !== "set status" && <>{copy.history[change.action] ?? change.action} </>}
@@ -464,7 +474,7 @@ export default function PoliticianDetails({
             <ol className={styles.history} aria-label={copy.historyTitle}>
               {entries.map((entry) => (
                 <li key={entry.key}>
-                  <span className={styles.when}>{staffTime(entry.at)}</span>
+                  <span className={styles.when}>{entry.day ? entry.at : staffTime(entry.at)}</span>
                   <span>{entry.what}</span>
                 </li>
               ))}

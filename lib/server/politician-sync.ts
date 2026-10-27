@@ -171,7 +171,10 @@ async function applyPoliticians(politicians: SyncedPolitician[], db: Queryable):
  * sets those it records, changes those it set, and takes away those it set
  * that it no longer records, for the asks the records answer
  * (AIRTABLE_ASKS). A status set by anyone else, staff or another import, is
- * left alone. Each change is logged against the politician.
+ * left alone. Each change is logged against the politician. A status is
+ * dated the day it's set or changed, except those already ticked when the
+ * sync first copies an ask, which Airtable doesn't date: they get the ask's
+ * own date, or today if that's still to come.
  */
 async function applyStatuses(records: PoliticianRecord[], db: Queryable): Promise<StatusCounts> {
   const wanted = records.flatMap(({ politician, statuses }) =>
@@ -185,19 +188,23 @@ async function applyStatuses(records: PoliticianRecord[], db: Queryable): Promis
     [JSON.stringify(wanted)],
     db,
   );
-  const added = await query<{ politicianId: number; ask: string; status: string }>(
-    `INSERT INTO ask_statuses (notable_person_id, ask, ask_kind, status, updated_by)
-     SELECT person, ask, kind, status, $1 FROM airtable_statuses
+  const added = await query<{ politicianId: number; ask: string; status: string; date: string }>(
+    `INSERT INTO ask_statuses (notable_person_id, ask, ask_kind, status, status_date, updated_by)
+     SELECT w.person, w.ask, w.kind, w.status,
+       CASE WHEN EXISTS (SELECT 1 FROM ask_statuses s WHERE s.ask = w.ask AND s.updated_by = $1) THEN now()::date
+         ELSE least(a.date, now()::date) END,
+       $1
+     FROM airtable_statuses w JOIN asks a ON a.slug = w.ask
      ON CONFLICT (notable_person_id, ask) DO NOTHING
-     RETURNING notable_person_id::int AS "politicianId", ask, status`,
+     RETURNING notable_person_id::int AS "politicianId", ask, status, to_char(status_date, 'YYYY-MM-DD') AS date`,
     [AIRTABLE],
     db,
   );
-  const changed = await query<{ politicianId: number; ask: string; status: string }>(
-    `UPDATE ask_statuses s SET status = w.status, updated_at = now()
+  const changed = await query<{ politicianId: number; ask: string; status: string; date: string }>(
+    `UPDATE ask_statuses s SET status = w.status, status_date = now()::date, updated_at = now()
      FROM airtable_statuses w
      WHERE s.notable_person_id = w.person AND s.ask = w.ask AND s.updated_by = $1 AND s.status <> w.status
-     RETURNING s.notable_person_id::int AS "politicianId", s.ask, s.status`,
+     RETURNING s.notable_person_id::int AS "politicianId", s.ask, s.status, to_char(s.status_date, 'YYYY-MM-DD') AS date`,
     [AIRTABLE],
     db,
   );
@@ -209,8 +216,8 @@ async function applyStatuses(records: PoliticianRecord[], db: Queryable): Promis
     db,
   );
   await query("DROP TABLE airtable_statuses", [], db);
-  for (const { politicianId, ask, status } of [...added, ...changed]) {
-    await logChange(AIRTABLE, "set status", { politicianId, ask, status, date: null, note: "" }, db);
+  for (const { politicianId, ask, status, date } of [...added, ...changed]) {
+    await logChange(AIRTABLE, "set status", { politicianId, ask, status, date, note: "" }, db);
   }
   for (const { politicianId, ask } of removed) {
     await logChange(AIRTABLE, "set status", { politicianId, ask, status: null, date: null, note: "" }, db);

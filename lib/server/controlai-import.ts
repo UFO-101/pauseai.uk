@@ -38,11 +38,15 @@ export function importControlAiLetter(startedBy: string): Promise<ControlAiImpor
       );
       const { matched, problems } = matchSignatories(signatories, candidates);
       const ids = [...matched.keys()];
-      const added = await query<{ politicianId: number }>(
-        `INSERT INTO ask_statuses (notable_person_id, ask, ask_kind, status, updated_by)
-         SELECT id, $2, 'letter', 'signed', $3 FROM unnest($1::bigint[]) AS id
-         ON CONFLICT (notable_person_id, ask) DO NOTHING RETURNING notable_person_id::int AS "politicianId"`,
-        [ids, CONTROLAI_LETTER_ASK, CONTROLAI],
+      // Dated the letter's day for those who signed it before it was delivered, and today for those added since.
+      const added = await query<{ politicianId: number; date: string }>(
+        `INSERT INTO ask_statuses (notable_person_id, ask, ask_kind, status, status_date, updated_by)
+         SELECT u.id, $2, 'letter', 'signed',
+           CASE WHEN u.later THEN now()::date ELSE least((SELECT date FROM asks WHERE slug = $2), now()::date) END, $3
+         FROM unnest($1::bigint[], $4::boolean[]) AS u (id, later)
+         ON CONFLICT (notable_person_id, ask) DO NOTHING
+         RETURNING notable_person_id::int AS "politicianId", to_char(status_date, 'YYYY-MM-DD') AS date`,
+        [ids, CONTROLAI_LETTER_ASK, CONTROLAI, ids.map((id) => matched.get(id)!.addedLater)],
         db,
       );
       const removed = await query<{ politicianId: number }>(
@@ -67,11 +71,11 @@ export function importControlAiLetter(startedBy: string): Promise<ControlAiImpor
           db,
         );
         // And one entry per politician, as setting a status by hand logs it, so their page can tell it.
-        for (const { politicianId } of added) {
+        for (const { politicianId, date } of added) {
           await logChange(
             CONTROLAI,
             "set status",
-            { politicianId, ask: CONTROLAI_LETTER_ASK, status: "signed", date: null, note: "" },
+            { politicianId, ask: CONTROLAI_LETTER_ASK, status: "signed", date, note: "" },
             db,
           );
         }

@@ -54,6 +54,10 @@ describeWithDatabase("importGoToParliament", () => {
         [ASK],
       ),
     ).toEqual([{ n: 3 }]);
+    // Each dated the day of the event, which Airtable's sheet doesn't date.
+    expect(await query("SELECT DISTINCT status_date::text AS date FROM ask_statuses WHERE ask = $1", [ASK])).toEqual([
+      { date: "2026-10-20" },
+    ]);
     expect(await query("SELECT actor, details FROM audit_log WHERE action = 'import Go to Parliament'")).toEqual([
       { actor: JO, details: { added: 3, changed: 0 } },
     ]);

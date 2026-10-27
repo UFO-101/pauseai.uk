@@ -62,19 +62,21 @@ DROP TABLE seed_politicians;
 -- the peer backs the bill, from ControlAI's letter, the week before; Backy
 -- McTestface MP's bill status (lib/test-mps.json) was already there. Then
 -- Airtable's, as the sync sets them: each letter and the statement, and every answer an event
--- allows, across the conference and Go to Parliament.
+-- allows, across the conference and Go to Parliament, all there when the
+-- sync first copied each ask, 20 days ago, so dated the ask's day, or that
+-- day if the ask's is still to come.
 INSERT INTO ask_statuses (notable_person_id, ask, ask_kind, status, status_date, note, updated_by, updated_at)
 SELECT id, 'frontier-ai-letter', 'letter', 'signed', (now() - interval '35 days')::date, 'Told us at the march', 'jo@pauseai.uk', now() - interval '34 days' FROM notable_people WHERE airtable_id = 'recPlaceholder';
 INSERT INTO ask_statuses (notable_person_id, ask, ask_kind, status, status_date, note, updated_by, updated_at)
 SELECT id, 'frontier-ai-letter', 'letter', 'signed', (now() - interval '2 days')::date, '', 'sam@pauseai.uk', now() - interval '2 days' FROM notable_people WHERE airtable_id = 'recDummy';
 INSERT INTO ask_statuses (notable_person_id, ask, ask_kind, status, status_date, note, updated_by, updated_at)
-SELECT id, 'controlai-letter', 'letter', 'signed', NULL, '', 'controlai', now() - interval '10 days' FROM notable_people WHERE name = 'Lord Seedling of Example';
+SELECT id, 'controlai-letter', 'letter', 'signed', '2026-09-11', '', 'controlai', now() - interval '10 days' FROM notable_people WHERE name = 'Lord Seedling of Example';
 INSERT INTO ask_statuses (notable_person_id, ask, ask_kind, status, status_date, note, updated_by, updated_at)
 SELECT id, 'controlai-letter', 'letter', 'signed', (now() - interval '3 days')::date, '', 'jo@pauseai.uk', now() - interval '3 days' FROM politicians WHERE test_postcode = 'ZZ99ZZ';
 INSERT INTO ask_statuses (notable_person_id, ask, ask_kind, status, status_date, note, updated_by, updated_at)
 SELECT id, 'frontier-ai-letter', 'letter', 'signed', (now() - interval '1 day')::date, 'Confirmed by their office', 'jo@pauseai.uk', now() - interval '1 day' FROM politicians WHERE test_postcode = 'ZZ99ZH';
-INSERT INTO ask_statuses (notable_person_id, ask, ask_kind, status, updated_by, updated_at)
-SELECT n.id, a.ask, a.kind, a.status, 'airtable', now() - interval '20 days'
+INSERT INTO ask_statuses (notable_person_id, ask, ask_kind, status, status_date, updated_by, updated_at)
+SELECT n.id, a.ask, a.kind, a.status, least(k.date, (now() - interval '20 days')::date), 'airtable', now() - interval '20 days'
 FROM (VALUES
   ('recPlaceholder', 'controlai-statement', 'letter', 'signed'),
   ('recPlaceholder', 'edinburgh-conference-2026', 'event', 'declined'),
@@ -87,7 +89,7 @@ FROM (VALUES
   ('recDeparted', 'edinburgh-conference-2026', 'event', 'passed_on'),
   ('recDeparted', 'deepmind-letter', 'letter', 'signed'),
   ('recRetired', 'frontier-ai-letter', 'letter', 'signed')
-) AS a (airtable_id, ask, kind, status) JOIN notable_people n USING (airtable_id);
+) AS a (airtable_id, ask, kind, status) JOIN notable_people n USING (airtable_id) JOIN asks k ON k.slug = a.ask;
 
 -- ----------------------------------------------------------------- luma
 
@@ -400,7 +402,7 @@ INSERT INTO audit_log (at, actor, action, details) VALUES
   (now() - interval '18 days', 'sync', 'remove politician', '{"id": 0, "name": "Gordon Gone"}'),
   (now() - interval '18 days', 'admin@pauseai.uk', 'apply held MP sync', '{"id": 8}'),
   (now() - interval '10 days', 'controlai', 'import ControlAI letter', '{"added": 1, "removed": 0, "problems": 1}'),
-  (now() - interval '10 days', 'controlai', 'set status', '{"politicianId": 0, "ask": "controlai-letter", "status": "signed", "date": null, "note": ""}'),
+  (now() - interval '10 days', 'controlai', 'set status', '{"politicianId": 0, "ask": "controlai-letter", "status": "signed", "date": "2026-09-11", "note": ""}'),
   (now() - interval '9 days', 'sync', 'edit politician', '{"id": 0, "airtableId": "recPlaceholder", "house": "commons", "name": "Polly Placeholder", "salutation": "Ms Placeholder", "constituency": "Cities of London and Westminster", "party": "Labour (Co-op)", "email": "polly.placeholder.mp@parliament.uk"}'),
   (now() - interval '15 days', 'jo@pauseai.uk', 'erase supporter', '{"id": 99, "reference": "GDPR-2026-014", "letters": 1, "lumaUsers": 1, "members": 1}'),
   (now() - interval '12 days', 'sam@pauseai.uk', 'edit politician', '{"id": 0, "house": "lords", "name": "Lord Seedling of Example", "salutation": "Lord Seedling", "constituency": null, "party": "Crossbench", "email": null}'),
@@ -420,6 +422,7 @@ INSERT INTO audit_log (at, actor, action, details) VALUES
   (now() - interval '6 days', 'sync', 'remove politician', '{"id": 0, "name": "Rob Removed"}'),
   (now() - interval '1 hour' + interval '5 minutes', 'sync', 'hold politician sync', '{"added": 1, "removed": 22, "changed": 1}'),
   (now() - interval '20 days', 'airtable', 'set status', '{"politicianId": 0, "ask": "edinburgh-conference-2026", "status": "declined", "date": null, "note": ""}'),
+  (now() - interval '20 days', 'airtable', 'set status', '{"politicianId": 0, "ask": "controlai-statement", "status": "signed", "date": "2025-02-06", "note": ""}'),
   (now() - interval '5 days', 'admin@pauseai.uk', 'import web form letters', '{"imported": 3, "skipped": 3, "alreadyHere": 1, "noPolitician": 1}'),
   (now() - interval '5 days' + interval '2 minutes', 'admin@pauseai.uk', 'import Go to Parliament', '{"added": 3, "changed": 0}'),
   (now() - interval '1 day' + interval '1 hour' + interval '1 minute', 'sync', 'copy PauseAI emails', '{"added": 4}');
@@ -427,8 +430,8 @@ INSERT INTO audit_log (at, actor, action, details) VALUES
 UPDATE audit_log a SET details = jsonb_set(a.details, '{id}', to_jsonb(p.id)) FROM notable_people p
   WHERE a.action IN ('add politician', 'edit politician', 'remove politician') AND p.name = a.details->>'name';
 UPDATE audit_log SET details = jsonb_set(details, '{politicianId}', to_jsonb((SELECT id FROM notable_people WHERE name = 'Lord Seedling of Example'))) WHERE action = 'set status' AND actor = 'controlai';
-UPDATE audit_log SET details = jsonb_set(details, '{politicianId}', to_jsonb((SELECT id FROM politicians WHERE test_postcode = 'ZZ99ZZ'))) WHERE action = 'set status' AND details->>'ask' = 'controlai-letter';
-UPDATE audit_log SET details = jsonb_set(details, '{politicianId}', to_jsonb((SELECT id FROM notable_people WHERE airtable_id = 'recDummy'))) WHERE action = 'set status' AND details->>'note' = '';
+UPDATE audit_log SET details = jsonb_set(details, '{politicianId}', to_jsonb((SELECT id FROM politicians WHERE test_postcode = 'ZZ99ZZ'))) WHERE action = 'set status' AND details->>'ask' = 'controlai-letter' AND actor = 'jo@pauseai.uk';
+UPDATE audit_log SET details = jsonb_set(details, '{politicianId}', to_jsonb((SELECT id FROM notable_people WHERE airtable_id = 'recDummy'))) WHERE action = 'set status' AND details->>'note' = '' AND actor = 'sam@pauseai.uk';
 UPDATE audit_log SET details = jsonb_set(details, '{politicianId}', to_jsonb((SELECT id FROM politicians WHERE test_postcode = 'ZZ99ZH'))) WHERE action = 'set status' AND details->>'note' = 'Confirmed by their office';
 UPDATE audit_log SET details = jsonb_set(details, '{politicianId}', to_jsonb((SELECT id FROM notable_people WHERE airtable_id = 'recPlaceholder'))) WHERE action = 'set status' AND actor = 'airtable';
 

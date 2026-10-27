@@ -75,15 +75,22 @@ describeWithDatabase("importControlAiLetter", () => {
     ]);
     expect(
       await query(
-        `SELECT p.name, a.details->>'status' AS status FROM audit_log a JOIN notable_people p ON p.id = (a.details->>'politicianId')::bigint
+        `SELECT p.name, a.details->>'status' AS status, a.details->>'date' AS date
+         FROM audit_log a JOIN notable_people p ON p.id = (a.details->>'politicianId')::bigint
          WHERE a.action = 'set status' AND a.actor = 'controlai' ORDER BY p.name`,
       ),
     ).toEqual([
-      { name: "Lord Example", status: "signed" },
-      { name: "Ms Dora Dummy", status: "signed" },
-      { name: "Polly Placeholder", status: "signed" },
-      { name: "Sam Smith", status: "signed" },
+      // Those who signed before the letter was delivered on its day; Sam Smith, who signed later, today.
+      { name: "Lord Example", status: "signed", date: "2026-09-11" },
+      { name: "Ms Dora Dummy", status: "signed", date: "2026-09-11" },
+      { name: "Polly Placeholder", status: "signed", date: "2026-09-11" },
+      { name: "Sam Smith", status: "signed", date: (await query<{ d: string }>("SELECT now()::date::text AS d"))[0].d },
     ]);
+    expect(
+      await query("SELECT DISTINCT status_date::text AS date FROM ask_statuses WHERE ask = $1 ORDER BY 1", [
+        CONTROLAI_LETTER_ASK,
+      ]),
+    ).toHaveLength(2);
   });
 
   it("makes the table match the letter: statuses it set go when the name does, others stay", async () => {

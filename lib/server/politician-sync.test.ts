@@ -37,6 +37,18 @@ const people = () =>
      FROM notable_people n JOIN politicians p ON p.id = n.id ORDER BY p.is_test, n.name`,
   );
 
+/** The date of each status Airtable set, by name and ask, and today's date as the database has it. */
+const dates = async () =>
+  Object.fromEntries(
+    (
+      await query<{ key: string; date: string }>(
+        `SELECT n.name || ' ' || s.ask AS key, s.status_date::text AS date
+         FROM ask_statuses s JOIN notable_people n ON n.id = s.notable_person_id WHERE s.updated_by = 'airtable'`,
+      )
+    ).map((row) => [row.key, row.date]),
+  );
+const today = async () => (await query<{ today: string }>("SELECT now()::date::text AS today"))[0].today;
+
 const statuses = () =>
   query<{ name: string; ask: string; status: string; by: string }>(
     `SELECT n.name, s.ask, s.status, s.updated_by AS by FROM ask_statuses s JOIN notable_people n ON n.id = s.notable_person_id
@@ -122,6 +134,13 @@ describeWithDatabase("syncPoliticians", () => {
       { name: "Rita Retired", ask: "frontier-ai-letter", status: "signed", by: "airtable" },
       { name: "Signy McTestface MP", ask: "frontier-ai-letter", status: "signed", by: "sync" },
     ]);
+    // Airtable doesn't date them, so those there when an ask is first copied get its date, or today if that's to come.
+    expect(await dates()).toMatchObject({
+      "Lord Seedling of Example deepmind-letter": "2025-08-29",
+      "Polly Placeholder controlai-statement": "2025-02-06",
+      "Rita Retired frontier-ai-letter": "2026-06-18",
+    });
+    expect((await dates())["Morag Example edinburgh-conference-2026"]).toBe([await today(), "2026-11-01"].sort()[0]);
     // Everything the sync copies, for one of them.
     expect(
       await query(
@@ -294,12 +313,18 @@ describeWithDatabase("syncPoliticians", () => {
         ...polly,
         fields: { ...polly.fields, "ControlAI Signatory": false, "Edinburgh Conference November 2026": "Going" },
       },
-      seedling,
+      // The peer signs the Frontier AI letter, after the sync first copied it.
+      { ...seedling, fields: { ...seedling.fields, "Signed Frontier AI Letter": true } },
       { ...morag, fields: { ...morag.fields, "Edinburgh Conference November 2026": "Declined" } },
       ...rest,
     ]);
     const result = await syncPoliticians(NIGHTLY);
-    expect(result).toMatchObject({ status: "applied", statuses: { added: 0, changed: 1, removed: 1 } });
+    expect(result).toMatchObject({ status: "applied", statuses: { added: 1, changed: 1, removed: 1 } });
+    // A status set or changed after an ask's first copy is dated the day it was.
+    expect(await dates()).toMatchObject({
+      "Lord Seedling of Example frontier-ai-letter": await today(),
+      "Polly Placeholder edinburgh-conference-2026": await today(),
+    });
     expect(await statuses()).toEqual(
       expect.arrayContaining([
         { name: "Ms Dora Dummy", ask: "frontier-ai-letter", status: "signed", by: JO },
@@ -314,11 +339,12 @@ describeWithDatabase("syncPoliticians", () => {
     expect(
       await query(
         `SELECT details->>'ask' AS ask, details->>'status' AS status FROM audit_log
-         WHERE action = 'set status' AND actor = 'airtable' ORDER BY id DESC LIMIT 2`,
+         WHERE action = 'set status' AND actor = 'airtable' ORDER BY id DESC LIMIT 3`,
       ),
     ).toEqual([
       { ask: "controlai-statement", status: null },
       { ask: "edinburgh-conference-2026", status: "going" },
+      { ask: "frontier-ai-letter", status: "signed" },
     ]);
   });
 

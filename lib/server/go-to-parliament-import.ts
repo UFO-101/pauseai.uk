@@ -61,13 +61,15 @@ export function importGoToParliament(startedBy: string): Promise<GoToParliamentI
           result.notFound++;
           continue;
         }
-        const [set] = await query<{ added: boolean }>(
-          `INSERT INTO ask_statuses (notable_person_id, ask, ask_kind, status, updated_by)
-           VALUES ($1, $2, 'event', $3, $4)
-           ON CONFLICT (notable_person_id, ask) DO UPDATE SET status = $3, updated_at = now()
+        // Dated the event's day, which Airtable's sheet was made for, or today if that's still to come.
+        const [set] = await query<{ added: boolean; date: string }>(
+          `INSERT INTO ask_statuses (notable_person_id, ask, ask_kind, status, status_date, updated_by)
+           VALUES ($1, $2, 'event', $3, least((SELECT date FROM asks WHERE slug = $2), now()::date), $4)
+           ON CONFLICT (notable_person_id, ask) DO UPDATE SET status = $3, status_date = EXCLUDED.status_date,
+             updated_at = now()
            WHERE ask_statuses.updated_by = $4 AND ask_statuses.status <> $3
            -- xmax is 0 on a row this statement inserted, not on one it updated.
-           RETURNING xmax = 0 AS added`,
+           RETURNING xmax = 0 AS added, to_char(status_date, 'YYYY-MM-DD') AS date`,
           [person.id, GO_TO_PARLIAMENT_ASK, status, AIRTABLE],
           db,
         );
@@ -76,7 +78,7 @@ export function importGoToParliament(startedBy: string): Promise<GoToParliamentI
         await logChange(
           AIRTABLE,
           "set status",
-          { politicianId: person.id, ask: GO_TO_PARLIAMENT_ASK, status, date: null, note: "" },
+          { politicianId: person.id, ask: GO_TO_PARLIAMENT_ASK, status, date: set.date, note: "" },
           db,
         );
       }
