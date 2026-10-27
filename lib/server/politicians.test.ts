@@ -31,7 +31,7 @@ const PEER = {
   email: null,
 };
 /** A peer, as the signatory import adds them. */
-const addPeer = () => addTestPolitician({ ...PEER, airtableId: null, forename: null, surname: null });
+const addPeer = () => addTestPolitician({ ...PEER, airtableId: null });
 
 describe("isHouse", () => {
   it("knows the houses", () => {
@@ -206,8 +206,6 @@ describeWithDatabase("politicians", () => {
       airtableRemovedAt: null,
       house: "commons",
       name: "Polly Placeholder",
-      forename: "Polly",
-      surname: "Placeholder",
       salutation: "Ms Placeholder",
       constituency: "Cities of London and Westminster",
       party: "Labour (Co-op)",

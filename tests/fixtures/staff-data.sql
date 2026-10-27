@@ -39,19 +39,19 @@ INSERT INTO staff_login_links (token_hash, email, browser_hash, created_at, expi
 -- personal connection; one who retired and one who left office. Then a peer
 -- the signatory import added, whom the sync takes to be Airtable's; a peer
 -- who died; and an MP whose record is gone from Airtable, kept.
-CREATE TEMP TABLE seed_politicians (airtable_id text, house text, name text, forename text, surname text, salutation text, constituency text, party text, country text, city text, email text, status text, notes text, important boolean, connection boolean, removed interval, created interval, updated interval);
+CREATE TEMP TABLE seed_politicians (airtable_id text, house text, name text, salutation text, constituency text, party text, country text, city text, email text, status text, notes text, important boolean, connection boolean, removed interval, created interval, updated interval);
 INSERT INTO seed_politicians VALUES
-  ('recDummy', 'commons', 'Ms Dora Dummy', 'Dora', 'Dummy', 'Ms Dummy', 'Hackney North and Stoke Newington', 'Labour', 'england', 'London', 'mp90001.office@parliament.uk', 'in_office', '', false, false, NULL, '60 days', '60 days'),
-  ('recPlaceholder', 'commons', 'Polly Placeholder', 'Polly', 'Placeholder', 'Ms Placeholder', 'Cities of London and Westminster', 'Labour (Co-op)', 'england', NULL, 'polly.placeholder.mp@parliament.uk', 'in_office', E'Met at the example fair.\nRecommended', true, false, NULL, '60 days', '9 days'),
-  ('recMorag', 'scottish-parliament', 'Morag Example', 'Morag', 'Example', 'Ms Example', 'Exampleshire North', 'Example Party', 'scotland', 'Edinburgh', 'morag.example.msp@parliament.example', 'in_office', '', false, true, NULL, '40 days', '40 days'),
-  ('recRetired', 'commons', 'Rita Retired', 'Rita', 'Retired', 'Ms Retired', 'Old Seat', 'Independent', 'wales', NULL, NULL, 'retired', '', false, false, NULL, '40 days', '40 days'),
-  ('recGone', 'commons', 'Gordon Gone', 'Gordon', 'Gone', 'Mr Gone', 'Former Seat', 'Independent', 'england', NULL, 'gordon.gone.mp@parliament.uk', 'left_office', '', false, false, NULL, '60 days', '20 days'),
-  (NULL, 'lords', 'Lord Seedling of Example', NULL, NULL, 'Lord Seedling', NULL, 'Crossbench', NULL, NULL, NULL, 'in_office', '', false, false, NULL, '30 days', '12 days'),
-  ('recDeparted', 'lords', 'Lord Departed of Example', NULL, NULL, 'Lord Departed', NULL, 'Crossbench', NULL, NULL, NULL, 'died', '', false, false, NULL, '40 days', '25 days'),
-  ('recRemoved', 'commons', 'Rob Removed', 'Rob', 'Removed', 'Mr Removed', 'Removed Seat', 'Example Party', 'england', NULL, 'rob.removed.mp@parliament.uk', 'in_office', '', false, false, '6 days', '40 days', '6 days');
+  ('recDummy', 'commons', 'Ms Dora Dummy', 'Ms Dummy', 'Hackney North and Stoke Newington', 'Labour', 'england', 'London', 'mp90001.office@parliament.uk', 'in_office', '', false, false, NULL, '60 days', '60 days'),
+  ('recPlaceholder', 'commons', 'Polly Placeholder', 'Ms Placeholder', 'Cities of London and Westminster', 'Labour (Co-op)', 'england', NULL, 'polly.placeholder.mp@parliament.uk', 'in_office', E'Met at the example fair.\nRecommended', true, false, NULL, '60 days', '9 days'),
+  ('recMorag', 'scottish-parliament', 'Morag Example', 'Ms Example', 'Exampleshire North', 'Example Party', 'scotland', 'Edinburgh', 'morag.example.msp@parliament.example', 'in_office', '', false, true, NULL, '40 days', '40 days'),
+  ('recRetired', 'commons', 'Rita Retired', 'Ms Retired', 'Old Seat', 'Independent', 'wales', NULL, NULL, 'retired', '', false, false, NULL, '40 days', '40 days'),
+  ('recGone', 'commons', 'Gordon Gone', 'Mr Gone', 'Former Seat', 'Independent', 'england', NULL, 'gordon.gone.mp@parliament.uk', 'left_office', '', false, false, NULL, '60 days', '20 days'),
+  (NULL, 'lords', 'Lord Seedling of Example', 'Lord Seedling', NULL, 'Crossbench', NULL, NULL, NULL, 'in_office', '', false, false, NULL, '30 days', '12 days'),
+  ('recDeparted', 'lords', 'Lord Departed of Example', 'Lord Departed', NULL, 'Crossbench', NULL, NULL, NULL, 'died', '', false, false, NULL, '40 days', '25 days'),
+  ('recRemoved', 'commons', 'Rob Removed', 'Mr Removed', 'Removed Seat', 'Example Party', 'england', NULL, 'rob.removed.mp@parliament.uk', 'in_office', '', false, false, '6 days', '40 days', '6 days');
 WITH people AS (
-  INSERT INTO notable_people (kind, airtable_id, name, forename, surname, salutation, email, status, notes, important_target, personal_connection, airtable_removed_at, created_at, updated_at)
-  SELECT 'politician', airtable_id, name, forename, surname, salutation, email, status, notes, important, connection, now() - removed, now() - created, now() - updated
+  INSERT INTO notable_people (kind, airtable_id, name, salutation, email, status, notes, important_target, personal_connection, airtable_removed_at, created_at, updated_at)
+  SELECT 'politician', airtable_id, name, salutation, email, status, notes, important, connection, now() - removed, now() - created, now() - updated
   FROM seed_politicians RETURNING id, name
 )
 INSERT INTO politicians (id, house, constituency, party, country, city)
@@ -349,7 +349,7 @@ INSERT INTO import_runs (at, job, started_by, status, error, result, decided_by)
   (now() - interval '19 days', 'sync-politicians', 'nightly', 'discarded', NULL, '{"changes": {"added": [], "removed": [{"airtableId": "recGone", "name": "Gordon Gone", "salutation": "Mr Gone", "constituency": "Former Seat", "party": "Independent", "email": "gordon.gone.mp@parliament.uk"}], "changed": []}}', 'jo@pauseai.uk'),
   (now() - interval '18 days', 'sync-politicians', 'jo@pauseai.uk', 'applied', NULL, '{"changes": {"added": [], "removed": [{"airtableId": "recGone", "name": "Gordon Gone", "salutation": "Mr Gone", "constituency": "Former Seat", "party": "Independent", "email": "gordon.gone.mp@parliament.uk"}], "changed": []}}', 'admin@pauseai.uk'),
   (now() - interval '1 day' + interval '1 hour', 'sync-politicians', 'nightly', 'unchanged', NULL, '{"changes": {"added": [], "removed": [], "changed": []}, "renamed": [], "statuses": {"added": 0, "changed": 0, "removed": 0}}', NULL),
-  (now() - interval '6 days', 'sync-politicians', 'nightly', 'applied', NULL, '{"changes": {"added": [], "removed": [{"airtableId": "recRemoved", "name": "Rob Removed", "forename": "Rob", "surname": "Removed", "salutation": "Mr Removed", "email": "rob.removed.mp@parliament.uk", "status": "in_office", "house": "commons", "constituency": "Removed Seat", "party": "Example Party", "country": "england", "city": null, "notes": "", "importantTarget": false, "personalConnection": false}], "changed": []}, "renamed": [], "statuses": {"added": 2, "changed": 1, "removed": 0}}', NULL),
+  (now() - interval '6 days', 'sync-politicians', 'nightly', 'applied', NULL, '{"changes": {"added": [], "removed": [{"airtableId": "recRemoved", "name": "Rob Removed", "salutation": "Mr Removed", "email": "rob.removed.mp@parliament.uk", "status": "in_office", "house": "commons", "constituency": "Removed Seat", "party": "Example Party", "country": "england", "city": null, "notes": "", "importantTarget": false, "personalConnection": false}], "changed": []}, "renamed": [], "statuses": {"added": 2, "changed": 1, "removed": 0}}', NULL),
   (now() - interval '1 day' + interval '1 hour' + interval '1 minute', 'sync-emails', 'nightly', 'ok', NULL, '{"read": 6, "added": 4, "waiting": 0, "noPolitician": 1, "unplaced": [{"airtableId": "recEmailNewBox", "mailings": []}]}', NULL),
   (now() - interval '2 days' + interval '1 hour' + interval '1 minute', 'sync-emails', 'nightly', 'unchanged', NULL, '{"read": 2, "added": 0, "waiting": 0, "noPolitician": 0, "unplaced": []}', NULL),
   (now() - interval '5 days', 'import-web-form-letters', 'admin@pauseai.uk', 'ok', NULL, '{"read": 8, "imported": 3, "skipped": 3, "alreadyHere": 1, "noPolitician": 1, "supportersAdded": 2, "linked": 3}', NULL),
@@ -370,15 +370,14 @@ INSERT INTO import_runs (at, job, started_by, status, error, result, decided_by)
 UPDATE import_runs SET result = jsonb_set(result, '{records}', (
   SELECT jsonb_agg(r) FROM (
     SELECT jsonb_build_object(
-      'politician', jsonb_build_object('airtableId', n.airtable_id, 'name', n.name, 'forename', n.forename,
-        'surname', n.surname, 'salutation', n.salutation, 'email', n.email, 'status', n.status, 'house', p.house,
+      'politician', jsonb_build_object('airtableId', n.airtable_id, 'name', n.name, 'salutation', n.salutation, 'email', n.email, 'status', n.status, 'house', p.house,
         'constituency', p.constituency, 'party', p.party, 'country', p.country, 'city', p.city, 'notes', n.notes,
         'importantTarget', n.important_target, 'personalConnection', n.personal_connection),
       'statuses', coalesce((SELECT jsonb_object_agg(s.ask, s.status) FROM ask_statuses s
         WHERE s.notable_person_id = n.id AND s.updated_by = 'airtable' AND s.ask <> 'go-to-parliament-oct-2026'), '{}')) AS r
     FROM notable_people n JOIN politicians p USING (id) WHERE n.airtable_id IS NOT NULL AND n.airtable_removed_at IS NULL
     UNION ALL
-    SELECT '{"politician": {"airtableId": "recNew", "name": "Nina New", "forename": "Nina", "surname": "New", "salutation": "Ms New", "email": "nina.new.mp@parliament.uk", "status": "in_office", "house": "commons", "constituency": "New Seat", "party": "Green", "country": "england", "city": null, "notes": "", "importantTarget": false, "personalConnection": false}, "statuses": {}}'::jsonb
+    SELECT '{"politician": {"airtableId": "recNew", "name": "Nina New", "salutation": "Ms New", "email": "nina.new.mp@parliament.uk", "status": "in_office", "house": "commons", "constituency": "New Seat", "party": "Green", "country": "england", "city": null, "notes": "", "importantTarget": false, "personalConnection": false}, "statuses": {}}'::jsonb
   ) records))
 WHERE job = 'sync-politicians' AND status = 'held';
 

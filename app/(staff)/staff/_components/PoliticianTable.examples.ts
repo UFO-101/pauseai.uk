@@ -55,8 +55,6 @@ export const examplePolitician: Politician = {
   airtableRemovedAt: null,
   house: "commons",
   name: "Polly Placeholder",
-  forename: "Polly",
-  surname: "Placeholder",
   salutation: "Ms Placeholder",
   constituency: "Cities of London and Westminster",
   party: "Labour (Co-op)",

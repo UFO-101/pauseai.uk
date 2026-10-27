@@ -40,7 +40,7 @@ export type SyncResult = {
   statuses: StatusCounts;
 };
 
-const SYNCED_COLUMNS = `n.airtable_id AS "airtableId", n.name, n.forename, n.surname, n.salutation, n.email, n.status,
+const SYNCED_COLUMNS = `n.airtable_id AS "airtableId", n.name, n.salutation, n.email, n.status,
   p.house, p.constituency, p.party, p.country, p.city, n.notes, n.important_target AS "importantTarget",
   n.personal_connection AS "personalConnection"`;
 
@@ -110,23 +110,11 @@ async function ensureTestMps(db: Queryable): Promise<void> {
 /** Writes one politician's details over their rows, and marks their record as in Airtable. */
 async function writePolitician(id: number, p: SyncedPolitician, db: Queryable): Promise<void> {
   await query(
-    `UPDATE notable_people SET airtable_id = $2, name = $3, forename = $4, surname = $5, salutation = $6, email = $7,
-       status = $8, notes = $9, important_target = $10, personal_connection = $11, airtable_removed_at = NULL,
+    `UPDATE notable_people SET airtable_id = $2, name = $3, salutation = $4, email = $5,
+       status = $6, notes = $7, important_target = $8, personal_connection = $9, airtable_removed_at = NULL,
        updated_at = now()
      WHERE id = $1`,
-    [
-      id,
-      p.airtableId,
-      p.name,
-      p.forename,
-      p.surname,
-      p.salutation,
-      p.email,
-      p.status,
-      p.notes,
-      p.importantTarget,
-      p.personalConnection,
-    ],
+    [id, p.airtableId, p.name, p.salutation, p.email, p.status, p.notes, p.importantTarget, p.personalConnection],
     db,
   );
   await query(

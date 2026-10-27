@@ -47,8 +47,6 @@ export type Politician = {
   airtableRemovedAt: string | null;
   house: House;
   name: string;
-  forename: string | null;
-  surname: string | null;
   salutation: string;
   constituency: string | null;
   party: string;
@@ -107,7 +105,7 @@ type Row = Omit<Politician, "statuses"> & { statuses: Record<string, StatusRecor
 
 const SELECT_POLITICIANS = `
   SELECT n.id::int AS id, n.airtable_id AS "airtableId", n.airtable_removed_at AS "airtableRemovedAt", p.house,
-    n.name, n.forename, n.surname, n.salutation, p.constituency, p.party, p.country, p.city, n.email, n.status,
+    n.name, n.salutation, p.constituency, p.party, p.country, p.city, n.email, n.status,
     n.notes, n.important_target AS "importantTarget", n.personal_connection AS "personalConnection",
     p.is_test AS "isTest",
     EXISTS (SELECT 1 FROM email_blocks b WHERE b.address = lower(n.email)) AS "emailBlocked",

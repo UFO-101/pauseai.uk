@@ -34,9 +34,9 @@ Everyone we campaign at is a notable person (`notable_people`): for now,
 only politicians, MPs, peers, MSPs, members of the Senedd and the Northern
 Ireland Assembly, and others (`HOUSES` in `lib/server/politicians.ts`). A
 notable person has what all kinds share: a name as they're known in public,
-with any title that's part of it ("Lord McFall of Alcluith"); a forename and
-surname, both or neither, as a peer has only their title; a salutation,
-which follows "Dear"; an email if we know it; notes; Airtable's markers
+with any title that's part of it ("Lord McFall of Alcluith"); a salutation,
+which follows "Dear" and is written by hand, as no rule makes it from the
+name ("Sir Iain", "Bishop"); an email if we know it; notes; Airtable's markers
 (important target, personal connection); and a status, `in_office`, `died`,
 `retired` or `left_office`. A politician (`politicians`) adds a house, a
 constituency if they have one, a party, a country and a city. The child row

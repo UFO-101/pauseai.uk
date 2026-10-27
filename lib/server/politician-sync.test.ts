@@ -125,14 +125,12 @@ describeWithDatabase("syncPoliticians", () => {
     // Everything the sync copies, for one of them.
     expect(
       await query(
-        `SELECT n.forename, n.surname, n.salutation, n.email, n.notes, n.important_target AS "importantTarget",
+        `SELECT n.salutation, n.email, n.notes, n.important_target AS "importantTarget",
            n.personal_connection AS "personalConnection", p.constituency, p.party, p.country, p.city
          FROM notable_people n JOIN politicians p USING (id) WHERE n.airtable_id = 'recPlaceholder'`,
       ),
     ).toEqual([
       {
-        forename: "Polly",
-        surname: "Placeholder",
         salutation: "Ms Placeholder",
         email: "polly.placeholder.mp@parliament.uk",
         notes: "Met at the example fair.\nRecommended",
@@ -223,8 +221,6 @@ describeWithDatabase("syncPoliticians", () => {
       name: "Lord Seedling of Example",
       house: "lords",
       constituency: null,
-      forename: null,
-      surname: null,
     });
     await syncPoliticians(NIGHTLY);
     expect(

@@ -7,9 +7,6 @@ export type SyncedPolitician = {
   /** Airtable's record ID. */
   airtableId: string;
   name: string;
-  /** Both, or neither: a peer has only their title. */
-  forename: string | null;
-  surname: string | null;
   salutation: string;
   email: string | null;
   status: "in_office" | "died" | "retired" | "left_office";

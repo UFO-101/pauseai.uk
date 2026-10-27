@@ -43,8 +43,6 @@ describe("fetchPoliticians", () => {
           record(
             {
               "Full name or Title": "Zed MSP",
-              Forename: "Zed",
-              Surname: "Zedson",
               Salutation: "Mr Zedson",
               Email: " zed@parliament.example ",
               Body: "Scottish Parliament",
@@ -69,8 +67,8 @@ describe("fetchPoliticians", () => {
       },
       {
         records: [
-          // A peer: no Body, no constituency, only their title; a forename without a surname is neither.
-          record({ "Full name or Title": "Lord Ann", Forename: "Ann", Status: "Died" }, "recA"),
+          // A peer: no Body, no constituency, only their title.
+          record({ "Full name or Title": "Lord Ann", Status: "Died" }, "recA"),
           // Someone with a constituency but no Body, and every answer to the conference.
           record({ "Full name or Title": "Bea", Constituency: "Bury", Status: "Retired" }, "recB"),
           record({ "Full name or Title": "Cy", Body: "Welsh Parliament", Status: "No longer in office" }, "recC"),
@@ -118,8 +116,6 @@ describe("fetchPoliticians", () => {
       politician: {
         airtableId: "recZ",
         name: "Zed MSP",
-        forename: "Zed",
-        surname: "Zedson",
         salutation: "Mr Zedson",
         email: "zed@parliament.example",
         status: "in_office",
@@ -143,8 +139,6 @@ describe("fetchPoliticians", () => {
       politician: {
         airtableId: "recA",
         name: "Lord Ann",
-        forename: null,
-        surname: null,
         salutation: "",
         email: null,
         status: "died",

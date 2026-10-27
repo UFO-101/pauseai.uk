@@ -4,8 +4,6 @@ import { changeCount, comparePoliticians, renamedIn, type SyncedPolitician } fro
 const politician = (id: number, more: Partial<SyncedPolitician> = {}): SyncedPolitician => ({
   airtableId: `rec${id}`,
   name: `MP ${id}`,
-  forename: "A",
-  surname: `MP ${id}`,
   salutation: "Mr A",
   email: "a@parliament.uk",
   status: "in_office",

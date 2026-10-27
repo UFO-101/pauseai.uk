@@ -91,8 +91,6 @@ type MpRow = {
   airtableId?: string | null;
   house?: string;
   name?: string;
-  forename?: string | null;
-  surname?: string | null;
   salutation?: string;
   constituency?: string | null;
   party?: string;
@@ -105,13 +103,11 @@ type MpRow = {
 /** Adds a politician straight into the tables, and returns their ID. */
 export async function addTestPolitician(row: MpRow = {}): Promise<number> {
   const [{ id }] = await query<{ id: number }>(
-    `INSERT INTO notable_people (kind, airtable_id, name, forename, surname, salutation, email, status)
-     VALUES ('politician', $1, $2, $3, $4, $5, $6, $7) RETURNING id::int AS id`,
+    `INSERT INTO notable_people (kind, airtable_id, name, salutation, email, status)
+     VALUES ('politician', $1, $2, $3, $4, $5) RETURNING id::int AS id`,
     [
       row.airtableId === undefined ? "recPlaceholder" : row.airtableId,
       row.name ?? "Polly Placeholder",
-      row.forename === undefined ? "Polly" : row.forename,
-      row.surname === undefined ? "Placeholder" : row.surname,
       row.salutation ?? "Ms Placeholder",
       row.email === undefined ? "polly.placeholder.mp@parliament.uk" : row.email,
       row.status ?? "in_office",

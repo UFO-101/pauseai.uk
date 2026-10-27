@@ -65,15 +65,15 @@ else.
 ### People
 
 - **`notable_people`**: everyone we campaign at. Kind (`politician` for
-  now), name, forename, surname, salutation, email, status, notes,
+  now), name, salutation, email, status, notes,
   `important_target`, `personal_connection`, `airtable_id`,
   `airtable_removed_at`.
   - **Name** is what they're known as in public, with any title that's
     part of it: "Claire Coutinho", "Sir John Hayes", "Lord McFall of
     Alcluith". Required; it's what staff pages show.
-  - **Forename and surname** are for sorting and mail merge. Nullable,
-    with a CHECK for both or neither: peers have only their title. Open
-    question (below).
+  - No forename or surname: nothing used them, peers have neither, and
+    the salutation can't be made from them. Airtable keeps them, if a
+    `{forename}` merge field or sorting by surname is ever wanted.
   - **Salutation** follows "Dear": "Ms Coutinho", "Sir John", "Lord
     McFall".
   - **Status** replaces `sitting`: `in_office`, `died`, `retired` or
@@ -202,7 +202,6 @@ the only file that talks to Airtable, and lists the fields it reads.
    | Our column            | Airtable field                                      |
    | --------------------- | --------------------------------------------------- |
    | name                  | Full name or Title                                  |
-   | forename, surname     | Forename, Surname; empty becomes null               |
    | salutation            | Salutation                                          |
    | email                 | Email                                               |
    | status                | Status: blank `in_office`, Died `died`, Retired `retired`, No longer in office `left_office` |
@@ -318,7 +317,7 @@ the only file that talks to Airtable, and lists the fields it reads.
 ### Tests
 
 The politicians filters. A politician's page with statuses from Airtable,
-one who has left office, a peer with no forename, and imported PauseAI
+one who has left office, a peer, and imported PauseAI
 letters. A sync held for a changed name, and one for a new Emails tick
 box. A staff status the sync leaves alone. Each one-off import, including
 blank consent and a duplicate skipped.
@@ -533,29 +532,6 @@ Data protection, agreed before building and recorded in
 ## Open questions
 
 ### Phase 1
-
-- **Forename and surname.** Every notable person has a name and a
-  salutation, but only some have a forename and surname, which isn't
-  uniform. In Airtable:
-
-  | Full name or Title    | Forename | Surname    | Salutation  |
-  | --------------------- | -------- | ---------- | ----------- |
-  | Luke Myer             | Luke     | Myer       | Mr Myer     |
-  | Dr Beccy Cooper       | Beccy    | Cooper     | Dr Cooper   |
-  | Sir Gavin Williamson  | Gavin    | Williamson | Sir Gavin   |
-  | Dame Jackie Baillie   | Jackie   | Baillie    | Dame Jackie |
-  | Lord Bird             |          |            | Lord Bird   |
-  | Lord King of Lothbury |          |            | Lord King   |
-
-  Every MP, MSP, MS and MLA has both; no peer has either, as their
-  surname is inside the title. The salutation follows no one rule from
-  the name ("Dr Cooper" but "Sir Gavin"), so it stays its own field
-  either way. The choice:
-  - keep forename and surname, both or neither, for sorting and a
-    `{forename}` merge field (the plan as written);
-  - drop them, so everyone has just name and salutation, and add a
-    required `sort_name` ("King of Lothbury, Lord") if sorting by
-    surname is wanted.
 
 - **Who agrees the data protection** for the web form senders, before
   step 6.

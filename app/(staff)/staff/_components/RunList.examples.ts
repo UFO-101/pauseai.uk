@@ -56,8 +56,6 @@ export const exampleFailedRun = <Job extends ImportJob>(
 export const exampleSyncedMp = (id: number, email: string | null = "a@parliament.uk"): SyncedPolitician => ({
   airtableId: `rec${id}`,
   name: `MP ${id}`,
-  forename: null,
-  surname: null,
   salutation: "",
   email,
   status: "in_office",

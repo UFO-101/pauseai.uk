@@ -13,17 +13,14 @@
 -- ------------------------------------------------------------ notable people
 
 -- `name` is how they're known in public, with any title that's part of it
--- ("Lord McFall of Alcluith"); `salutation` follows "Dear". Forename and
--- surname are for sorting and mail merge, both or neither: a peer has only
--- their title. One who leaves office is marked by `status`, never deleted.
+-- ("Lord McFall of Alcluith"); `salutation` follows "Dear", written by hand,
+-- as no rule makes it from the name ("Bishop", "Sir Iain"). One who leaves office is marked by `status`, never deleted.
 -- `airtable_removed_at` is when a record copied from Airtable was no longer
 -- there.
 CREATE TABLE notable_people (
   id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   kind text NOT NULL CHECK (kind IN ('politician')),
   name text NOT NULL,
-  forename text,
-  surname text,
   salutation text NOT NULL DEFAULT '',
   email text,
   status text NOT NULL DEFAULT 'in_office' CHECK (status IN ('in_office', 'died', 'retired', 'left_office')),
@@ -35,8 +32,6 @@ CREATE TABLE notable_people (
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now(),
   UNIQUE (id, kind),
-  CHECK ((forename IS NULL) = (surname IS NULL)),
-  CHECK (forename IS NULL OR (forename <> '' AND surname <> '')),
   CHECK (airtable_removed_at IS NULL OR airtable_id IS NOT NULL)
 );
 

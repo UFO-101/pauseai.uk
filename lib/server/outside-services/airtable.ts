@@ -103,8 +103,6 @@ const ASK_FIELDS: Record<string, { ask: string; statuses: Record<string, AskStat
 /** The only fields read from a politician's record. */
 export const POLITICIAN_FIELDS = [
   "Full name or Title",
-  "Forename",
-  "Surname",
   "Salutation",
   "Email",
   "Status",
@@ -145,7 +143,7 @@ const COUNTRIES: Record<string, SyncedPolitician["country"]> = {
 /**
  * One record as a politician. Without a Body, someone with no constituency
  * is a peer; a Status or Country it doesn't know is refused, so the sync
- * fails rather than guess. Forename and surname are both kept, or neither.
+ * fails rather than guess.
  */
 function politicianFrom(record: AirtableRecord): SyncedPolitician {
   const body = text(record, "Body");
@@ -154,14 +152,9 @@ function politicianFrom(record: AirtableRecord): SyncedPolitician {
   if (!status) throw new AirtableRequestError(`Unknown Status "${text(record, "Status")}" on ${record.id}`);
   const country = text(record, "Country");
   if (country && !COUNTRIES[country]) throw new AirtableRequestError(`Unknown Country "${country}" on ${record.id}`);
-  const forename = text(record, "Forename");
-  const surname = text(record, "Surname");
-  const named = forename !== "" && surname !== "";
   return {
     airtableId: record.id,
     name: text(record, "Full name or Title"),
-    forename: named ? forename : null,
-    surname: named ? surname : null,
     salutation: text(record, "Salutation"),
     email: text(record, "Email") || null,
     status,

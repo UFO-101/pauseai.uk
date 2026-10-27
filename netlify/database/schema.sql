@@ -530,8 +530,6 @@ CREATE TABLE public.notable_people (
     id bigint NOT NULL,
     kind text NOT NULL,
     name text NOT NULL,
-    forename text,
-    surname text,
     salutation text DEFAULT ''::text NOT NULL,
     email text,
     status text DEFAULT 'in_office'::text NOT NULL,
@@ -542,9 +540,7 @@ CREATE TABLE public.notable_people (
     airtable_removed_at timestamp with time zone,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    CONSTRAINT notable_people_check CHECK (((forename IS NULL) = (surname IS NULL))),
-    CONSTRAINT notable_people_check1 CHECK (((forename IS NULL) OR ((forename <> ''::text) AND (surname <> ''::text)))),
-    CONSTRAINT notable_people_check2 CHECK (((airtable_removed_at IS NULL) OR (airtable_id IS NOT NULL))),
+    CONSTRAINT notable_people_check CHECK (((airtable_removed_at IS NULL) OR (airtable_id IS NOT NULL))),
     CONSTRAINT notable_people_kind_check CHECK ((kind = 'politician'::text)),
     CONSTRAINT notable_people_status_check CHECK ((status = ANY (ARRAY['in_office'::text, 'died'::text, 'retired'::text, 'left_office'::text])))
 );
