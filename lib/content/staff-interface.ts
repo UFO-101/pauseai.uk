@@ -613,7 +613,7 @@ export const staffCopy = {
     intro: {
       before: "MPs and peers who signed ",
       link: "the letter",
-      after: "are marked as having signed “ControlAI's letter to the Prime Minister”. This can't be changed by hand.",
+      after: " are marked as having signed “ControlAI's letter to the Prime Minister”. This can't be changed by hand.",
     },
     importNow: "Import ControlAI letter now",
     never: "Not read yet.",
