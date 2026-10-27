@@ -1,7 +1,8 @@
 import { expect, it } from "vitest";
 import { migrate } from "@/scripts/db-migrate.mjs";
-import { describeWithDatabase, useDatabaseUpTo } from "@/tests/database";
+import { addTestLetter, addTestMp, describeWithDatabase, useDatabaseUpTo, useTestDatabase } from "@/tests/database";
 import { query } from "./db";
+import { addFormEntry } from "./form-entries";
 import { linkSupporters } from "./supporters";
 
 /** Every row each supporter view gives, in a fixed order, to compare before and after a migration. */
@@ -236,6 +237,95 @@ describeWithDatabase("migration 0043_form_entries", () => {
     await linkSupporters();
     expect(await query("SELECT source, kind, title FROM supporter_activity WHERE kind = 'form-entry'")).toEqual([
       { source: "web-form", kind: "form-entry", title: "web-form" },
+    ]);
+  });
+});
+
+describeWithDatabase("migration 0044_form_entry_luma", () => {
+  const db = useDatabaseUpTo("0043");
+
+  it("takes the march's entries, with what Luma said, as a line of the history; a letter's entry is still its letter", async () => {
+    const [{ id: mp }] = await query<{ id: number }>(
+      `INSERT INTO notable_people (kind, name) VALUES ('politician', 'Polly Placeholder') RETURNING id::int AS id`,
+    );
+    await query("INSERT INTO politicians (id, house) VALUES ($1, 'commons')", [mp]);
+    await query(
+      `INSERT INTO form_entries (id, form, created_at, name, email, contact_consent) OVERRIDING SYSTEM VALUE
+       VALUES (1, 'email-your-mp', '2026-10-01', 'Jane', 'jane@example.com', true)`,
+    );
+    await query(
+      `INSERT INTO letters (id, kind, notable_person_id, status, created_at) OVERRIDING SYSTEM VALUE
+       VALUES (1, 'supporter', $1, 'sent', '2026-10-01')`,
+      [mp],
+    );
+    await query(
+      "INSERT INTO supporter_letters (id, entry_id, campaign, subject, reply_hash) VALUES (1, 1, 'regulate-letter-pm', 'S', 'r1')",
+    );
+    await expect(
+      query(
+        "INSERT INTO form_entries (form, name, email, contact_consent) VALUES ('march-2026-11', 'Sam', 'sam@example.com', true)",
+      ),
+    ).rejects.toThrow(/form_entries_form_check/);
+
+    expect(migrate(db.url, { appliedUpTo: "0043" })).toContain("0044_form_entry_luma");
+
+    const [{ id: sam }] = await query<{ id: number }>(
+      `INSERT INTO form_entries (form, created_at, name, email, contact_consent, utm_source)
+       VALUES ('march-2026-11', '2026-10-20', 'Sam', 'sam@example.com', true, 'nl') RETURNING id::int AS id`,
+    );
+    await query("INSERT INTO form_entry_luma (entry_id, event_id, status) VALUES ($1, 'evt-march', 'skipped')", [sam]);
+    await query(
+      "INSERT INTO form_entries (form, name, email, contact_consent) VALUES ('march-2026-11', 'Ali', 'ali@example.com', false)",
+    );
+    await linkSupporters();
+    expect(await query("SELECT source, kind, title, detail, status FROM supporter_activity ORDER BY at, kind")).toEqual(
+      [
+        {
+          source: "email-your-mp",
+          kind: "letter",
+          title: "regulate-letter-pm",
+          detail: "Polly Placeholder",
+          status: "sent",
+        },
+        { source: "march-2026-11", kind: "form-entry", title: "march-2026-11", detail: "nl", status: "skipped" },
+        { source: "march-2026-11", kind: "form-entry", title: "march-2026-11", detail: null, status: null },
+      ],
+    );
+    await expect(
+      query("INSERT INTO form_entry_luma (entry_id, event_id, status) VALUES ($1, 'evt-march', 'maybe')", [sam]),
+    ).rejects.toThrow();
+    // What Luma said goes with its entry.
+    await query("DELETE FROM form_entries WHERE id = $1", [sam]);
+    expect(await query("SELECT * FROM form_entry_luma")).toEqual([]);
+  });
+});
+
+describeWithDatabase("addFormEntry", () => {
+  useTestDatabase();
+
+  it("keeps an entry, links its supporter to the one with that email, and keeps what Luma said only if it was asked", async () => {
+    await addTestLetter({ politicianId: await addTestMp(), senderEmail: "jane@example.com" });
+    await linkSupporters();
+    const entry = {
+      name: "Jane",
+      email: "Jane@Example.com",
+      phone: "07700 900000",
+      city: "Leeds",
+      postcode: "LS1 1AA",
+      consent: true,
+      utmSource: null,
+    };
+    const id = await addFormEntry("march-2026-11", entry);
+    expect(await query("SELECT * FROM form_entry_luma")).toEqual([]);
+    expect(
+      await query(`SELECT DISTINCT k.supporter_id::int AS id FROM supporter_links k WHERE k.form_entry_id IS NOT NULL`),
+    ).toHaveLength(1);
+    expect(await query("SELECT form, email, phone FROM form_entries WHERE id = $1", [id])).toEqual([
+      { form: "march-2026-11", email: "Jane@Example.com", phone: "07700 900000" },
+    ]);
+    await addFormEntry("march-2026-11", entry, { eventId: "evt-march", status: "added" });
+    expect(await query("SELECT event_id, status FROM form_entry_luma")).toEqual([
+      { event_id: "evt-march", status: "added" },
     ]);
   });
 });

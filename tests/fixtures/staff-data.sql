@@ -427,6 +427,20 @@ INSERT INTO supporter_letters (id, entry_id, campaign, subject, airtable_id)
 SELECT w.id, w.id, w.campaign, w.subject, w.airtable_id FROM seeded_web_form w JOIN letters l ON l.id = w.id;
 SELECT setval(pg_get_serial_sequence('form_entries', 'id'), (SELECT max(id) FROM form_entries));
 
+-- ---------------------------------------------------- march sign-ups
+
+-- Two sign-ups for the march, as the route keeps them: Ben, who also wrote
+-- to his MP, came by the newsletter's link, ticked the box and is on Luma's
+-- list; Mo came by no link, didn't tick it, and Luma skipped them.
+WITH entries AS (
+  INSERT INTO form_entries (form, created_at, name, email, phone, city, postcode, contact_consent, utm_source) VALUES
+    ('march-2026-11', now() - interval '2 days', 'Ben Seed', 'ben.seed@example.com', '07700 900111', 'Bristol', 'BS1 1AA', true, 'nl'),
+    ('march-2026-11', now() - interval '1 day', 'Mo March', 'mo.march@example.com', NULL, 'Leeds', NULL, false, NULL)
+  RETURNING id, email
+)
+INSERT INTO form_entry_luma (entry_id, event_id, status)
+SELECT id, 'evt-hfOj1RR5K1gBNEW', CASE WHEN email LIKE 'mo.%' THEN 'skipped' ELSE 'added' END FROM entries;
+
 -- PauseAI's emails, as the Emails sync copies them (airtable-emails.json):
 -- one of each mailing, personalised or not.
 CREATE TEMP TABLE seed_emails (airtable_id text, politician text, mailing text, personalised boolean, sent interval) ON COMMIT DROP;

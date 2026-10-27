@@ -29,7 +29,29 @@ afterEach(() => {
 });
 
 describe("SignupForm", () => {
-  it("sends the name and email, then tells GA and moves on", async () => {
+  it("sends the box ticked, and the utm_source of the link they came by", async () => {
+    const sent: unknown[] = [];
+    window.history.replaceState(null, "", "?utm_source=nl");
+    try {
+      await render(
+        <SignupForm
+          {...formProps}
+          register={async (input) => {
+            sent.push(input);
+            return { ok: true };
+          }}
+        />,
+      );
+      await fillIn();
+      await page.getByRole("checkbox").click();
+      await page.getByRole("button", { name: "Register" }).click();
+      await expect.poll(() => sent).toEqual([expect.objectContaining({ consent: true, utmSource: "nl" })]);
+    } finally {
+      window.history.replaceState(null, "", window.location.pathname);
+    }
+  });
+
+  it("sends what was filled in, then tells GA and moves on", async () => {
     const onRegistered = vi.fn();
     const sent: unknown[] = [];
     let finish: (result: MarchRegisterResult) => void = () => {};
@@ -49,7 +71,18 @@ describe("SignupForm", () => {
     await page.getByLabelText(/Postcode/).fill("SW1A 0AA");
     await page.getByRole("button", { name: "Register" }).click();
     await expect.element(page.getByRole("button", { name: "Registering…" })).toBeDisabled();
-    expect(sent).toEqual([{ name: "Testy McTestface", email: "testy@example.org", website: "" }]);
+    expect(sent).toEqual([
+      {
+        name: "Testy McTestface",
+        email: "testy@example.org",
+        phone: "07700 900000",
+        city: "London",
+        postcode: "SW1A 0AA",
+        consent: false,
+        utmSource: "",
+        website: "",
+      },
+    ]);
     expect(pushed()).toEqual([]);
     finish({ ok: true });
     await expect.poll(() => onRegistered.mock.calls.length).toBe(1);

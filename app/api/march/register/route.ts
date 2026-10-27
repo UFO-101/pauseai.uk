@@ -1,10 +1,11 @@
-// The march sign-up's endpoint (SignupForm posts to it): checks the name and
-// email, then adds the person to the march's Luma event, which emails them
-// its confirmation. A route rather than a Server Action: an action's ID
+// The march sign-up's endpoint (SignupForm posts to it): checks the form,
+// adds the person to the march's Luma event, which emails them its
+// confirmation, and keeps what they gave as a form entry, whatever Luma said. A route rather than a Server Action: an action's ID
 // changes with every build, so a page opened before a deploy couldn't
 // register after it, where this address stays put.
 import { NextResponse } from "next/server";
 import { checkMarchRegistration, type MarchRegisterResult } from "@/lib/march-registration";
+import { addFormEntry } from "@/lib/server/form-entries";
 import { addLumaGuest } from "@/lib/server/outside-services/luma-guests";
 
 /**
@@ -36,7 +37,13 @@ async function register(input: unknown): Promise<MarchRegisterResult> {
   const check = checkMarchRegistration(raw);
   if (!check.ok) return { ...check, reason: "invalid" };
 
-  const result = await addLumaGuest(MARCH_EVENT_ID, check.registration);
+  const { registration } = check;
+  const result = await addLumaGuest(MARCH_EVENT_ID, { name: registration.name, email: registration.email });
+  // Kept even when Luma didn't take them: they gave us their details. If it
+  // can't be kept, Luma's answer still stands.
+  await addFormEntry("march-2026-11", registration, { eventId: MARCH_EVENT_ID, status: result.status }).catch(
+    (error: Error) => console.error(`[march] Couldn't keep the sign-up: ${error.message}`),
+  );
   switch (result.status) {
     case "added":
       return { ok: true };

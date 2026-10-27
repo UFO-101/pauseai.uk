@@ -4,15 +4,15 @@ import { staffCopy } from "./content/staff-interface";
 import type { EmailPermission, EmailState } from "./email-permissions";
 import type { SortColumns, SortDirection } from "./staff-sort";
 
-/** Where a supporter came from: Luma, the members, or one of our forms (form_entries.form): Email your MP, or pauseai.info's old letter form. */
-export const SUPPORTER_SOURCES = ["luma", "member", "email-your-mp", "web-form"] as const;
+/** Where a supporter came from: Luma, the members, or one of our forms (form_entries.form): Email your MP, pauseai.info's old letter form, or the march sign-up. */
+export const SUPPORTER_SOURCES = ["luma", "member", "email-your-mp", "web-form", "march-2026-11"] as const;
 export type SupporterSource = (typeof SUPPORTER_SOURCES)[number];
 
 /** What a supporter_links row points at (lib/server/supporter-sources.ts): a Luma user, a form entry or a member. */
 export type SupporterLinkSource = "luma" | "form" | "member";
 
-/** The lozenges in the list's Activities column, in its order: a member, a contact of the Luma calendar, registered for events, wrote to their MP. */
-export const SUPPORTER_BADGES = ["member", "lumaContact", "registered", "letter"] as const;
+/** The lozenges in the list's Activities column, in its order: a member, a contact of the Luma calendar, registered for events, wrote to their MP, signed up for the march. */
+export const SUPPORTER_BADGES = ["member", "lumaContact", "registered", "letter", "march"] as const;
 export type SupporterBadge = (typeof SUPPORTER_BADGES)[number];
 
 export function isSupporterBadge(value: string): value is SupporterBadge {

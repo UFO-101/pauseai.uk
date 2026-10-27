@@ -37,10 +37,12 @@ async function janeWithEverything(mp: number): Promise<number> {
   await query(
     `INSERT INTO opt_outs (address, list, source, source_ref, unsubscribed_at) VALUES ('jane.fixture@example.com', 'luma-calendar', 'luma-webhook', 'w', now())`,
   );
-  // An entry with no letter, as a form that only asks for details makes.
+  // A march sign-up: an entry with no letter, and what Luma said.
   await query(
-    `INSERT INTO form_entries (form, name, email, phone, contact_consent)
-     VALUES ('web-form', 'Jane', 'jane.fixture@example.com', '07700 900000', true)`,
+    `WITH entry AS (
+       INSERT INTO form_entries (form, name, email, phone, contact_consent)
+       VALUES ('march-2026-11', 'Jane', 'jane.fixture@example.com', '07700 900000', true) RETURNING id)
+     INSERT INTO form_entry_luma (entry_id, event_id, status) SELECT id, 'evt-march', 'added' FROM entry`,
   );
   await linkSupporters();
   const [{ id }] = await query<{ id: number }>(
@@ -69,6 +71,7 @@ describeWithDatabase("eraseSupporter", () => {
     expect(await query("SELECT 1 FROM luma_guests WHERE user_id = 'usr-fixture-1'")).toEqual([]);
     expect(await query("SELECT 1 FROM form_entries WHERE email = 'jane.fixture@example.com'")).toEqual([]);
     expect(await query("SELECT 1 FROM supporter_letters")).toEqual([]);
+    expect(await query("SELECT 1 FROM form_entry_luma")).toEqual([]);
     expect(await query("SELECT count(*)::int AS n FROM letter_events")).toEqual([{ n: 0 }]);
     // The letter's own send and the copy to the shared inbox stay, without their letter; the one to Jane goes.
     expect(await query("SELECT address, letter_id FROM email_sends ORDER BY id")).toEqual([

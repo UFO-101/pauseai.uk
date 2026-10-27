@@ -2,16 +2,44 @@ import { describe, expect, it } from "vitest";
 import { checkMarchRegistration } from "./march-registration";
 
 const valid = { name: "Testy McTestface", email: "testy@example.org" };
+const blank = { phone: null, city: null, postcode: null, consent: false, utmSource: null };
 
 describe("checkMarchRegistration", () => {
-  it("takes a name and an email, trimmed, and nothing else", () => {
+  it("takes a name and an email, trimmed, and the optional fields as given", () => {
     const result = checkMarchRegistration({
       name: "  Testy McTestface ",
       email: " testy@example.org ",
-      phone: "0",
-      postcode: "SW1A 0AA",
+      phone: " 07700 900000 ",
+      city: "Leeds",
+      postcode: "sw1a 0aa",
+      consent: true,
+      utmSource: "nl",
+      website: "",
     });
-    expect(result).toEqual({ ok: true, registration: valid });
+    expect(result).toEqual({
+      ok: true,
+      registration: {
+        ...valid,
+        phone: "07700 900000",
+        city: "Leeds",
+        postcode: "SW1A 0AA",
+        consent: true,
+        utmSource: "nl",
+      },
+    });
+  });
+
+  it("takes a blank optional field, or one it won't keep, as none, and only true as agreeing", () => {
+    expect(checkMarchRegistration({ ...valid, phone: " ", city: "", consent: "on" })).toEqual({
+      ok: true,
+      registration: { ...valid, ...blank },
+    });
+    for (const odd of ["x".repeat(101), "Lee\nds", 7]) {
+      expect(checkMarchRegistration({ ...valid, city: odd, postcode: odd, utmSource: odd }), String(odd)).toEqual({
+        ok: true,
+        registration: { ...valid, ...blank },
+      });
+    }
   });
 
   it("asks for each field that's missing", () => {

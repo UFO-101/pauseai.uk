@@ -4,8 +4,21 @@
 // directly.
 import { marchSignupCopy } from "@/lib/content/march-signup";
 
-/** A sign-up: the name and email Luma gets. */
-export type MarchRegistration = { name: string; email: string };
+/**
+ * A sign-up: the name and email Luma gets, and what else the form asks,
+ * kept as a form entry. An optional field left blank is null.
+ */
+export type MarchRegistration = {
+  name: string;
+  email: string;
+  phone: string | null;
+  city: string | null;
+  postcode: string | null;
+  /** The box to hear from us by email and phone. */
+  consent: boolean;
+  /** The page's utm_source, where the link they followed came from. */
+  utmSource: string | null;
+};
 
 export type MarchRegistrationCheck =
   { ok: true; registration: MarchRegistration } | { ok: false; errors: Partial<Record<"name" | "email", string>> };
@@ -20,11 +33,23 @@ export type MarchRegisterResult =
 const MAX_NAME_LENGTH = 100;
 /** The longest address SMTP allows. */
 const MAX_EMAIL_LENGTH = 254;
+/** Longer than any real phone number, city, postcode or utm_source. */
+const MAX_OPTIONAL_LENGTH = 100;
 /** Loose: one @, something either side, a dot in the domain, no spaces. Luma checks it properly. */
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const CONTROL_CHARS = /[\u0000-\u001f\u007f]/;
 
 const text = (input: unknown) => (typeof input === "string" ? input.trim() : "");
+
+/**
+ * An optional field as kept: null when blank, and null too when it's too
+ * long or has control characters in it, as such a field is worth less than
+ * the sign-up, which mustn't fail on it.
+ */
+function optional(input: unknown): string | null {
+  const value = text(input);
+  return value && value.length <= MAX_OPTIONAL_LENGTH && !CONTROL_CHARS.test(value) ? value : null;
+}
 
 export function checkMarchRegistration(input: unknown): MarchRegistrationCheck {
   const raw = (input && typeof input === "object" ? input : {}) as Record<string, unknown>;
@@ -41,5 +66,16 @@ export function checkMarchRegistration(input: unknown): MarchRegistrationCheck {
     errors.email = words.emailInvalid;
 
   if (Object.keys(errors).length > 0) return { ok: false, errors };
-  return { ok: true, registration: { name, email } };
+  return {
+    ok: true,
+    registration: {
+      name,
+      email,
+      phone: optional(raw.phone),
+      city: optional(raw.city),
+      postcode: optional(raw.postcode)?.toUpperCase() ?? null,
+      consent: raw.consent === true,
+      utmSource: optional(raw.utmSource),
+    },
+  };
 }

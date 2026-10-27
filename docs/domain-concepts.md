@@ -145,15 +145,16 @@ A letter's ask is its campaign's or its mailing's, never its own.
 One person filling in one of our forms once (`form_entries`): their name,
 email, phone, address, city and postcode as they gave them, the box to hear
 from us (`contact_consent`), where they came from (`utm_source`) and when.
-`form` says which form: `email-your-mp`, or
+`form` says which form: `email-your-mp`, `march-2026-11`, or
 `web-form` for pauseai.info's old letter form. What only some forms make
 hangs off the entry, one to one: a letter's sender is the entry its
 `supporter_letters` row points at.
 
 A new form is a value in the `CHECK` on `form`, a label in the staff
 interface's `sources`, and, if it makes more than an entry, a child table
-pointing at `form_entries`. What a form's box said when someone ticked it is
-its wording in git at the entry's `created_at`.
+pointing at `form_entries`, as `form_entry_luma` holds what Luma said to a
+form that registers people for an event. What a form's box said when
+someone ticked it is its wording in git at the entry's `created_at`.
 
 ## Supporters
 

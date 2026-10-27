@@ -99,6 +99,7 @@ const BADGE_CONDITIONS: Record<SupporterBadge, string> = {
   lumaContact: "s.luma_contact",
   registered: "s.events > 0",
   letter: "s.letters > 0",
+  march: "'march-2026-11' = ANY(s.sources)",
 };
 
 export type SupportersPage = {

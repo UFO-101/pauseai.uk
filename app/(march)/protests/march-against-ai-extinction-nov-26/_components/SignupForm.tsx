@@ -22,9 +22,8 @@ function errorFor(result: Exclude<MarchRegisterResult, { ok: true }> | "unreacha
 /**
  * The registration form, the register band's first card. `register` sends it
  * to app/api/march/register (./register.ts), which adds the person to the
- * Luma event; once it has, `onRegistered` moves on to the share card.
- * Phone, city, postcode and the mailing list opt-in are asked for, but not
- * sent yet.
+ * Luma event and keeps the rest; once Luma has them, `onRegistered` moves on
+ * to the share card.
  */
 export default function SignupForm({
   register,
@@ -47,6 +46,11 @@ export default function SignupForm({
     const signup = {
       name: value("name"),
       email: value("email"),
+      phone: value("phone"),
+      city: value("city"),
+      postcode: value("postcode"),
+      consent: form.get("consent") === "on",
+      utmSource: new URLSearchParams(window.location.search).get("utm_source") ?? "",
       // Empty for people, filled in by bots. The server checks it.
       website: value("website"),
     };
@@ -109,8 +113,8 @@ export default function SignupForm({
       </div>
 
       <label className={m("check")}>
-        <input id="mailingList" name="mailingList" type="checkbox" />
-        <span>{copy.mailingList}</span>
+        <input id="consent" name="consent" type="checkbox" />
+        <span>{copy.consent}</span>
       </label>
 
       {/* The honeypot: off-screen rather than display:none, which some bots

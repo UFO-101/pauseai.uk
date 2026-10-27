@@ -200,7 +200,7 @@ CREATE TABLE public.form_entries (
     postcode text,
     contact_consent boolean NOT NULL,
     utm_source text,
-    CONSTRAINT form_entries_form_check CHECK ((form = ANY (ARRAY['email-your-mp'::text, 'web-form'::text])))
+    CONSTRAINT form_entries_form_check CHECK ((form = ANY (ARRAY['email-your-mp'::text, 'web-form'::text, 'march-2026-11'::text])))
 );
 
 --
@@ -374,6 +374,17 @@ ALTER TABLE public.form_entries ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY
     NO MINVALUE
     NO MAXVALUE
     CACHE 1
+);
+
+--
+-- Name: form_entry_luma; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.form_entry_luma (
+    entry_id bigint NOT NULL,
+    event_id text NOT NULL,
+    status text NOT NULL,
+    CONSTRAINT form_entry_luma_status_check CHECK ((status = ANY (ARRAY['added'::text, 'skipped'::text, 'not-configured'::text, 'failed'::text])))
 );
 
 --
@@ -763,8 +774,9 @@ UNION ALL
     f.form AS title,
     f.utm_source AS detail,
     NULL::text AS href,
-    NULL::text AS status
-   FROM public.form_entries f
+    g.status
+   FROM (public.form_entries f
+     LEFT JOIN public.form_entry_luma g ON ((g.entry_id = f.id)))
   WHERE (NOT (EXISTS ( SELECT 1
            FROM public.supporter_letters s
           WHERE (s.entry_id = f.id))));
@@ -1275,6 +1287,13 @@ ALTER TABLE ONLY public.form_entries
     ADD CONSTRAINT form_entries_pkey PRIMARY KEY (id);
 
 --
+-- Name: form_entry_luma form_entry_luma_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.form_entry_luma
+    ADD CONSTRAINT form_entry_luma_pkey PRIMARY KEY (entry_id);
+
+--
 -- Name: import_runs import_runs_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1729,6 +1748,13 @@ ALTER TABLE ONLY public.email_blocks
 
 ALTER TABLE ONLY public.email_sends
     ADD CONSTRAINT email_sends_letter_id_fkey FOREIGN KEY (letter_id) REFERENCES public.letters(id) ON DELETE SET NULL;
+
+--
+-- Name: form_entry_luma form_entry_luma_entry_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.form_entry_luma
+    ADD CONSTRAINT form_entry_luma_entry_id_fkey FOREIGN KEY (entry_id) REFERENCES public.form_entries(id) ON DELETE CASCADE;
 
 --
 -- Name: letter_events letter_events_letter_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -

@@ -171,15 +171,15 @@ export const staffCopy = {
           "not-following": "Luma: not a contact",
         },
         "pauseai-updates": {
-          asked: "PauseAI: asked",
-          joined: "PauseAI: joined before July 2026",
-          declined: "PauseAI: declined",
-          unsubscribed: "PauseAI: unsubscribed",
-          removed: "PauseAI: removed",
+          asked: "PauseAI global: asked",
+          joined: "PauseAI global: joined before July 2026",
+          declined: "PauseAI global: declined",
+          unsubscribed: "PauseAI global: unsubscribed",
+          removed: "PauseAI global: removed",
         },
         "site-forms": {
-          asked: "Our forms: agreed",
-          declined: "Our forms: didn't agree",
+          asked: "PauseAI UK: agreed",
+          declined: "PauseAI UK: didn't agree",
         },
       } as Record<string, Record<string, string>>,
     },
@@ -203,24 +203,31 @@ export const staffCopy = {
       registered: "Luma events",
       letter: "Wrote to MP",
       member: "Member",
+      march: "March sign-up",
     },
     // In the list, a lozenge per topic we'd email them about.
     subscriptions: {
       topics: {
         "luma-calendar": "Luma",
-        "pauseai-updates": "PauseAI",
-        "site-forms": "Our forms",
+        "pauseai-updates": "PauseAI global",
+        "site-forms": "PauseAI UK",
       } as Record<string, string>,
       // A yes that an unsubscribe we can't see may have undone.
       unsure: (topic: string) => `${topic}, unsure`,
       // Every address they have is blocked.
       blocked: "Blocked",
     },
-    sources: { luma: "Luma", "email-your-mp": "Letter", "web-form": "pauseai.info letter", member: "Member" } as Record<
+    sources: {
+      luma: "Luma",
+      "email-your-mp": "Letter",
+      "web-form": "pauseai.info letter",
+      "march-2026-11": "March sign-up",
+      member: "Member",
+    } as Record<string, string>,
+    lists: { "luma-calendar": "Luma calendar emails", "pauseai-updates": "PauseAI global updates" } as Record<
       string,
       string
     >,
-    lists: { "luma-calendar": "Luma calendar emails", "pauseai-updates": "PauseAI updates" } as Record<string, string>,
     // A supporter's page: one box of what we know, then the history.
     detail: {
       emails: "Email",
@@ -244,8 +251,8 @@ export const staffCopy = {
       permissions: {
         topics: {
           "luma-calendar": "Luma calendar emails",
-          "pauseai-updates": "PauseAI updates",
-          "site-forms": "Our forms' updates",
+          "pauseai-updates": "PauseAI global updates",
+          "site-forms": "PauseAI UK updates",
         } as Record<string, string>,
         yes: "Will email",
         no: "Won't email",
@@ -266,11 +273,19 @@ export const staffCopy = {
             unsubscribed: (when: string) => `Unsubscribed ${when}`,
             removed: () => "No longer shared with us",
           },
+          // `form` is the form the box was on, in the words of `forms` below.
           "site-forms": {
-            asked: (when: string) => `Agreed on their newest form, ${when}`,
-            declined: (when: string) => `Didn't agree on their newest form, ${when}`,
+            asked: (when: string, form?: string) => `Agreed on ${form}, ${when}`,
+            declined: (when: string, form?: string) => `Didn't agree on ${form}, ${when}`,
           },
-        } as Record<string, Record<string, (when: string) => string>>,
+        } as Record<string, Record<string, (when: string, form?: string) => string>>,
+        // The form a box was on, by form_entries.form; one not here is "their newest form".
+        forms: {
+          "email-your-mp": "their letter to their MP",
+          "web-form": "their pauseai.info letter",
+          "march-2026-11": "the march sign-up",
+        } as Record<string, string>,
+        otherForm: "their newest form",
         // Behind "Why?": how we know, and what we can't.
         details: {
           "luma-calendar":
@@ -278,7 +293,7 @@ export const staffCopy = {
           "pauseai-updates":
             "“Keep me informed” on the join form has been optional since 30 June 2026. Before then everyone who joined was on the list. Unsubscribes since joining are in CiviCRM, which we don't read yet, so we usually have to put “Don't know” here.",
           "site-forms":
-            "The box on the newest of our forms they filled in: on Email your MP, “Tell me about events where I can talk to my MP and ways to help PauseAI”.",
+            "There are several UK specific forms which have ways of opting in to contact. For example, when emailing your MP or signing up on this site to a march.",
         } as Record<string, string>,
         // One tile in place of the topics', when the address is blocked.
         blocked: "Won't email: address blocked",
@@ -322,9 +337,18 @@ export const staffCopy = {
         "luma-registered": "Registered for",
         letter: "Wrote to",
         "letter-replied": "Letter answered by",
+        "form-entry": "Filled in",
         "member-joined": "Joined PauseAI",
         "opted-out": "Unsubscribed from",
         resubscribed: "Subscribed again to",
+      } as Record<string, string>,
+      // After a form entry's form: the link they came by, and what Luma said if the form adds people to an event.
+      cameFrom: (source: string) => `came by “${source}”`,
+      luma: {
+        added: "added to Luma",
+        skipped: "Luma skipped them",
+        "not-configured": "not sent to Luma",
+        failed: "Luma failed",
       } as Record<string, string>,
       // A registration's status, shown only when it isn't approved.
       statuses: {

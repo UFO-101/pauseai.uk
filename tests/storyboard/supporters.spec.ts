@@ -1,4 +1,5 @@
 import type { Page } from "@playwright/test";
+import { marchSignupCopy } from "@/lib/content/march-signup";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { staffDate } from "@/lib/staff-time";
 import { TEST_MPS } from "@/lib/test-mps";
@@ -225,6 +226,47 @@ test("a letter writer is a supporter too, linked from the letters page", async (
   await frame(page, "their letters");
   await page.getByRole("navigation", { name: "Jane Smith" }).getByRole("link").click();
   await expect(page.getByRole("heading", { level: 1 })).toContainText("Jane Smith");
+});
+
+test("a march sign-up is a supporter, with what they gave and the link they came by", async ({
+  page,
+  flowDatabase,
+}, testInfo) => {
+  const email = `march-${testInfo.testId}@example.org`;
+  const form = marchSignupCopy.form;
+  await page.goto(`${BASE}/protests/march-against-ai-extinction-nov-26?utm_source=nl#register`);
+  await page.getByLabel(form.name).fill("Marta Marcher");
+  await page.getByLabel(form.email).fill(email);
+  await page.getByRole("textbox", { name: new RegExp(`^${form.phone}`) }).fill("07700 900123");
+  await page.getByRole("textbox", { name: new RegExp(`^${form.city}`) }).fill("Leeds");
+  await page.getByRole("textbox", { name: new RegExp(`^${form.postcode}`) }).fill("ls1 1aa");
+  await page.getByLabel(form.consent).check();
+  await page.getByRole("button", { name: form.submit, exact: true }).click();
+  await expect(page.getByRole("heading", { name: marchSignupCopy.share.title })).toBeVisible();
+
+  await logInWithSupporters(page, flowDatabase);
+  await page.goto(`${BASE}/staff/supporters`);
+  const marta = page.getByRole("row").filter({ hasText: email });
+  await expect(marta).toContainText(copy.badges.march);
+  await frame(page, "the list: Marta, who signed up for the march");
+
+  await marta.getByRole("link").first().click();
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("Marta Marcher");
+  await expect(page.getByText("07700 900123", { exact: false })).toBeVisible();
+  await expect(page.getByText("LS1 1AA", { exact: false })).toBeVisible();
+  await expect(
+    page.getByText(
+      copy.detail.permissions.reasons["site-forms"].asked(
+        "16 Oct 2026",
+        copy.detail.permissions.forms["march-2026-11"],
+      ),
+      { exact: false },
+    ),
+  ).toBeVisible();
+  await openHistory(page);
+  const history = page.getByRole("list", { name: copy.detail.activityTitle });
+  await expect(history.getByText(copy.detail.cameFrom("nl"), { exact: false })).toBeVisible();
+  await frame(page, "Marta's page: her phone, city and postcode, the box she ticked, and the sign-up in her history");
 });
 
 test("a member who also wrote to their MP is one supporter, with how they joined", async ({

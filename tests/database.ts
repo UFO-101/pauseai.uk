@@ -28,6 +28,7 @@ const TABLES = [
   "letter_events",
   "letters",
   "form_entries",
+  "form_entry_luma",
   "luma_erased",
   "luma_events",
   "luma_guests",

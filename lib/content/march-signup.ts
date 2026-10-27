@@ -61,7 +61,7 @@ export const marchSignupCopy = {
     phoneHint: "For text updates on the day",
     cityHint: "For local group updates",
     postcodeHint: "For constituency-based campaigns",
-    mailingList: "Keep me in the loop about future campaigns and developments. (You can unsubscribe at any time.)",
+    consent: "Keep me in the loop about future campaigns by email and phone. (You can unsubscribe at any time.)",
     honeypot: "Leave this empty",
     submit: "Register",
     submitting: "Registering…",

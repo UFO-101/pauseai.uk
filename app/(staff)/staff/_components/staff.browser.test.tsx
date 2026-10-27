@@ -2550,6 +2550,11 @@ describe("SupporterBadges", () => {
     expect(document.body.textContent!.trim()).toBe("");
   });
 
+  it("marks a march sign-up", async () => {
+    await render(<SupporterBadges supporter={{ ...exampleSupporter, sources: ["march-2026-11"] }} />);
+    await expect.element(page.getByText(staffCopy.supporters.badges.march)).toBeVisible();
+  });
+
   it("marks a member, but not a member no longer", async () => {
     const badges = staffCopy.supporters.badges;
     const member = exampleMemberDetails.summary;
@@ -2958,6 +2963,48 @@ describe("SupporterDetails", () => {
   });
 });
 
+describe("SupporterDetails, a march sign-up", () => {
+  const copy = staffCopy.supporters;
+  const entry = {
+    source: "march-2026-11",
+    at: "2026-10-20T10:00:00Z",
+    kind: "form-entry" as const,
+    title: "march-2026-11",
+    detail: "nl",
+    href: null,
+    status: "skipped",
+  };
+
+  it("says the form in the history, the link they came by and what Luma said, where there's either", async () => {
+    await render(
+      <SupporterDetails
+        supporter={{
+          ...exampleMemberDetails,
+          activity: [
+            entry,
+            { ...entry, detail: null },
+            { ...entry, detail: null, status: null, title: "a-new-form" },
+            { ...entry, detail: null, status: null, title: null },
+          ],
+        }}
+      />,
+    );
+    openHistory();
+    const lines = page
+      .getByRole("list", { name: copy.detail.activityTitle })
+      .getByRole("listitem")
+      .all()
+      .map((item) => item.element().textContent!.replace(/^\d+ \w+ \d{4}, \d\d:\d\d/, ""));
+    const form = `${copy.detail.kinds["form-entry"]} ${copy.sources["march-2026-11"]}`;
+    expect(lines).toEqual([
+      `${form} · ${copy.detail.cameFrom("nl")} · ${copy.detail.luma.skipped}`,
+      `${form} · ${copy.detail.luma.skipped}`,
+      `${copy.detail.kinds["form-entry"]} a-new-form`,
+      `${copy.detail.kinds["form-entry"]} `,
+    ]);
+  });
+});
+
 describe("SupporterDetails, a member", () => {
   const copy = staffCopy.supporters;
   const joined = exampleMemberDetails.activity[0];
@@ -3043,6 +3090,37 @@ describe("EmailPermissionTiles", () => {
     await expect.element(page.getByText(copy.details["luma-calendar"])).toBeVisible();
   });
 
+  it("names the form whose box answered for our forms, or the newest form for one it has no name for", async () => {
+    const at = "2026-10-16T12:00:00Z";
+    const forms = (source: string | null, reason: "asked" | "declined" = "asked") => ({
+      topic: "site-forms" as const,
+      address: `${source}@example.org`,
+      send: reason === "asked" ? ("yes" as const) : ("no" as const),
+      reason,
+      at,
+      source,
+    });
+    await render(
+      <EmailPermissionTiles
+        permissions={[
+          forms("march-2026-11"),
+          forms("email-your-mp", "declined"),
+          forms("web-form"),
+          forms("a-new-form"),
+          forms(null),
+        ]}
+      />,
+    );
+    const reasons = tiles().map((tile) => tile.querySelector("[class*=reason]")!.textContent);
+    expect(reasons).toEqual([
+      copy.reasons["site-forms"].asked("16 Oct 2026", copy.forms["march-2026-11"]),
+      copy.reasons["site-forms"].declined("16 Oct 2026", copy.forms["email-your-mp"]),
+      copy.reasons["site-forms"].asked("16 Oct 2026", copy.forms["web-form"]),
+      copy.reasons["site-forms"].asked("16 Oct 2026", copy.otherForm),
+      copy.reasons["site-forms"].asked("16 Oct 2026", copy.otherForm),
+    ]);
+  });
+
   it("says don't know where an unsubscribe may not have reached us", async () => {
     await render(<EmailPermissionTiles permissions={exampleMemberDetails.permissions} />);
     expect(tiles()[1].dataset.send).toBe("unsure");
@@ -3089,7 +3167,8 @@ describe("EmailPermissionTiles", () => {
     await render(<EmailPermissionTiles permissions={permissions} />);
     for (const [topic, reasons] of Object.entries(copy.reasons))
       for (const words of Object.values(reasons))
-        expect(document.body.textContent, topic).toContain(words("12 Sept 2026"));
+        // The example's source is Luma's, a form it has no name for.
+        expect(document.body.textContent, topic).toContain(words("12 Sept 2026", copy.otherForm));
   });
 
   it("says a bounce blocked an address, and nothing of a block it can't date", async () => {
@@ -3209,12 +3288,21 @@ describe("each list's download values and contact cards", () => {
 
   it("supporters: what they are, what they get, and as cards, with what they have", () => {
     const [jane, sam, gus] = exampleSupporterRows;
-    expect(supporterBadgeWords({ ...sam, lumaContact: true, events: 1, letters: 1 })).toBe(
+    expect(
+      supporterBadgeWords({
+        ...sam,
+        lumaContact: true,
+        events: 1,
+        letters: 1,
+        sources: [...sam.sources, "march-2026-11"],
+      }),
+    ).toBe(
       Object.values({
         m: staffCopy.supporters.badges.member,
         c: staffCopy.supporters.badges.lumaContact,
         r: staffCopy.supporters.badges.registered,
         l: staffCopy.supporters.badges.letter,
+        march: staffCopy.supporters.badges.march,
       }).join("; "),
     );
     expect(subscriptionWords(sam.permissions)).toContain(staffCopy.supporters.subscriptions.unsure(""));

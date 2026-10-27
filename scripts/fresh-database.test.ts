@@ -146,12 +146,14 @@ describe.skipIf(process.env.NETLIFY === "true")("copying a database", () => {
             'SELECT s FROM (SELECT DISTINCT sources::text AS s FROM supporters_summary) d ORDER BY s COLLATE "C"',
           ),
         ).toEqual([
+          "{email-your-mp,luma,march-2026-11}",
           "{email-your-mp,luma,member}",
           "{email-your-mp,luma}",
           "{email-your-mp,member}",
           "{email-your-mp}",
           "{luma,member}",
           "{luma}",
+          "{march-2026-11}",
           "{member}",
           "{web-form}",
         ]);
