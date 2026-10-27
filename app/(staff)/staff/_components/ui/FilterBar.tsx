@@ -111,7 +111,6 @@ function PlaceForm({
   const place = filter.place!;
   return (
     <Form action={path} className={styles.placeForm}>
-      <FormPending />
       {others.map(([name, value]) => (
         <input key={`${name}-${value}`} type="hidden" name={name} value={value} />
       ))}
@@ -137,6 +136,7 @@ function PlaceForm({
       <Button variant="primary" size="small" fit type="submit">
         {staffCopy.search}
       </Button>
+      <FormPending />
     </Form>
   );
 }
@@ -283,7 +283,6 @@ export default function FilterBar({
     // Keyed on the filters, so the menu chosen from closes when they change.
     <div key={filtersPath(path, values)} className={styles.bar}>
       <Form action={path} className={styles.search} role="search">
-        <FormPending />
         <span className={styles.box}>
           <TextInput
             type="search"
@@ -304,6 +303,7 @@ export default function FilterBar({
         <Button variant="primary" size="small" fit type="submit">
           {staffCopy.search}
         </Button>
+        <FormPending />
       </Form>
       {on
         .filter((filter) => !(filter.after && chosen(filter.after).length > 0))
