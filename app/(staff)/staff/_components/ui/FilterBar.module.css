@@ -222,18 +222,15 @@
   font-weight: 700;
 }
 
-/* Under a chip's choices: turning it the other way, and removing it, ruled off from them. */
-.flip,
-.remove {
-  display: block;
-  margin-top: var(--space-2);
+/* Under a chip's choices, ruled off from them: turning it the other way and
+   removing it, side by side, wrapping if the menu is narrow. */
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-4);
+  margin: var(--space-2) 0 0;
   padding-top: var(--space-2);
   border-top: 1px solid var(--border);
-}
-
-.flip + .remove {
-  padding-top: 0;
-  border-top: 0;
 }
 
 /* A place filter's form: the words, how far, and its button, in a row. */

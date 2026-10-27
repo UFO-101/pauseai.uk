@@ -356,7 +356,7 @@ are:
   leave out. A chip that leaves out sits among the others, white with a
   dashed edge and a struck-through circle, and its words say "not". The
   list has none of what's left out and any of what's chosen. Each chip's
-  menu, above Remove, turns its choice the other way: "Except this
+  menu, beside Remove, turns its choice the other way: "Except this
   instead", or "Only this instead". In the URL a choice left out is the
   same parameter, its value marked `!`: `event=!evt-2`.
 - A filter with too many choices to read (`searchable`: the events) has a

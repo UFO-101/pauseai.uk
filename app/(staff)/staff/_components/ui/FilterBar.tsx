@@ -236,18 +236,21 @@ export default function FilterBar({
             search={filter.searchable ? copy.narrow : undefined}
           />
         )}
-        {filter.repeat && (
-          <Link href={href({ [filter.name]: [...others, not ? plain : NOT + plain] })} className={styles.flip}>
-            {not ? copy.onlyInstead : copy.exceptInstead}
-          </Link>
-        )}
-        {!second && (
-          <Link
-            href={filter.repeat && others.length > 0 ? href({ [filter.name]: others }) : href(without(filter.name))}
-            className={styles.remove}
-          >
-            {copy.remove}
-          </Link>
+        {(filter.repeat || !second) && (
+          <p className={styles.actions}>
+            {filter.repeat && (
+              <Link href={href({ [filter.name]: [...others, not ? plain : NOT + plain] })}>
+                {not ? copy.onlyInstead : copy.exceptInstead}
+              </Link>
+            )}
+            {!second && (
+              <Link
+                href={filter.repeat && others.length > 0 ? href({ [filter.name]: others }) : href(without(filter.name))}
+              >
+                {copy.remove}
+              </Link>
+            )}
+          </p>
         )}
       </Menu>
     );
