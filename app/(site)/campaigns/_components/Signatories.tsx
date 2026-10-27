@@ -15,7 +15,7 @@ export default function Signatories() {
         </h2>
         <p className={styles.howToSignText}>
           If you&rsquo;re an MP or a member of the House of Lords and would like to add your name to this letter, please
-          send us a quick email at <a href={`mailto:${site.contactEmail}`}>{site.contactEmail}</a>.
+          send us a quick email at <a href={`mailto:${site.policyEmail}`}>{site.policyEmail}</a>.
         </p>
         <p className={styles.pressNote}>
           <strong>Note for journalists:</strong> we&rsquo;re planning a public announcement about this letter at a later

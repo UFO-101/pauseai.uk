@@ -6,6 +6,8 @@ export const site = {
   openLetterPath: "/campaigns/dear-sir-demis-2025",
   contactEmail: "hello@pauseai.uk",
   pressEmail: "press@pauseai.uk",
+  // Where MPs and peers email to sign the letter to the PM, as its PDF says.
+  policyEmail: "policy@pauseai.uk",
   social: {
     instagram: "https://instagram.com/pauseai_uk",
     tiktok: "https://tiktok.com/@pauseai_uk",

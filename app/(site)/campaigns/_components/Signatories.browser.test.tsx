@@ -14,8 +14,8 @@ describe("Signatories", () => {
     await expect.element(page.getByText("No signatories yet.")).toBeVisible();
     await expect.element(page.getByRole("heading", { name: "How to sign" })).toBeVisible();
     await expect
-      .element(page.getByRole("link", { name: site.contactEmail }))
-      .toHaveAttribute("href", `mailto:${site.contactEmail}`);
+      .element(page.getByRole("link", { name: site.policyEmail }))
+      .toHaveAttribute("href", `mailto:${site.policyEmail}`);
     await expect
       .element(page.getByRole("link", { name: site.pressEmail }))
       .toHaveAttribute("href", `mailto:${site.pressEmail}`);
