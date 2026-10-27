@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
         staffCopy.houses[search.house as keyof typeof staffCopy.houses] ?? "",
         ...filterWords(politicianFilters(search, parties, asks), filters, "q"),
       ],
-      columns: politicianColumns(politicians, asks, filters),
+      columns: politicianColumns(asks, filters),
       rows: politicians,
       contact: politicianContact(asks),
     };

@@ -1970,43 +1970,50 @@ describe("PoliticianTable", () => {
     await expect.element(page.getByText(staffCopy.politicians.none)).toBeVisible();
   });
 
-  it("leaves out a column that's the same in every row, or blank in all of them", async () => {
+  it("leaves out only a column the filters fix, however alike the rows are", async () => {
     const plain = { ...MP, importantTarget: false };
     const headings = () => [...document.querySelectorAll("th")].map((th) => th.textContent!.replace(/ [▲▼]$/, ""));
-    const { rerender } = await render(
-      <PoliticianTable politicians={[plain, { ...plain, id: 8, name: "Other", constituency: "Ipswich" }]} asks={[]} />,
-    );
+    const { columns } = staffCopy.politicians;
+    const after = [
+      staffCopy.politicians.flag,
+      columns.asks,
+      columns.letters,
+      columns.replies,
+      columns.first,
+      columns.last,
+    ];
+    // Rows that agree on everything still show every column, with no filter fixing one.
+    const rows = [plain, { ...plain, id: 8, name: "Other" }];
+    const { rerender } = await render(<PoliticianTable politicians={rows} asks={[]} search={{ status: "any" }} />);
+    const { fields } = staffCopy;
     expect(headings()).toEqual([
-      staffCopy.fields.name,
-      staffCopy.fields.constituency,
-      staffCopy.politicians.columns.asks,
-      staffCopy.politicians.columns.letters,
-      staffCopy.politicians.columns.replies,
+      fields.name,
+      fields.house,
+      fields.constituency,
+      fields.party,
+      columns.status,
+      ...after,
     ]);
-    // A column the filters fix, however few rows: a house, a party, one status.
+    // A house, one party found, and one status (those in office, with none chosen) are fixed.
     await rerender(
       <PoliticianTable
-        politicians={[{ ...plain, constituency: null }]}
+        politicians={rows}
         asks={[]}
         search={{ house: "commons", party: "Labour (Co-op)", status: "" }}
       />,
     );
+    expect(headings()).toEqual([fields.name, fields.constituency, ...after]);
+    // Peers have no constituency. A party left out, or two found, fix nothing.
+    await rerender(<PoliticianTable politicians={rows} asks={[]} search={{ house: "lords", party: "!Reform UK" }} />);
+    expect(headings()).toEqual([fields.name, fields.party, columns.status, ...after]);
+    await rerender(<PoliticianTable politicians={rows} asks={[]} search={{ party: ["Labour", "Green"] }} />);
     expect(headings()).toEqual([
-      staffCopy.fields.name,
-      staffCopy.politicians.columns.asks,
-      staffCopy.politicians.columns.letters,
-      staffCopy.politicians.columns.replies,
-    ]);
-    // A row on its own shows what it has, but not a blank.
-    await rerender(<PoliticianTable politicians={[{ ...plain, constituency: null }]} asks={[]} />);
-    expect(headings()).toEqual([
-      staffCopy.fields.name,
-      staffCopy.fields.house,
-      staffCopy.fields.party,
-      staffCopy.politicians.columns.status,
-      staffCopy.politicians.columns.asks,
-      staffCopy.politicians.columns.letters,
-      staffCopy.politicians.columns.replies,
+      fields.name,
+      fields.house,
+      fields.constituency,
+      fields.party,
+      columns.status,
+      ...after,
     ]);
   });
 });
@@ -3176,7 +3183,7 @@ describe("each list's download values and contact cards", () => {
         status: "retired" as const,
       },
     ];
-    const columns = politicianColumns(rows, exampleAsks, { status: "any" });
+    const columns = politicianColumns(exampleAsks, { status: "any" });
     expect(values(columns, rows[0])).toMatchObject({
       house: staffCopy.houses.commons,
       party: examplePolitician.party,
@@ -3185,6 +3192,11 @@ describe("each list's download values and contact cards", () => {
       first: "2026-09-01T00:00:00Z",
       active: "2026-10-01T00:00:00Z",
     });
+    // Airtable's markers in words, each one they have; none for one with none.
+    const { flags } = staffCopy.politicians;
+    const marked = { ...rows[0], importantTarget: true, personalConnection: true, airtableRemovedAt: "2026-10-20" };
+    expect(values(columns, marked).marked).toBe(`${flags.important}; ${flags.connection}; ${flags.removed}`);
+    expect(values(columns, { ...rows[0], importantTarget: false }).marked).toBe("");
     // On the page, the days of their first and last activity; none for one without.
     await render(<PoliticianTable politicians={rows} asks={exampleAsks} search={{ status: "any" }} />);
     await expect.element(page.getByRole("cell", { name: "1 Sept 2026" })).toBeVisible();

@@ -383,8 +383,10 @@ its name. Fold, at its foot, folds it to a rail of the icons on wider
 screens, the sections a rule apart, each name showing beside its icon on
 hover or focus; the browser remembers it (`lib/staff-nav.ts`).
 
-**Columns that say nothing** are left out: one the same in every row, as
-when a filter fixes it, or blank in all of them (the politicians table).
+**Columns the filters fix** are left out: a house tab, one party found,
+one status (the politicians table). It's the filters that decide, never
+the rows on the page, which may agree by chance; a choice left out fixes
+nothing.
 
 The gallery's staff group shows each piece and each page built from them.
 

@@ -3,7 +3,7 @@ import { staffCopy } from "@/lib/content/staff-interface";
 import { POLITICIAN_SORTS, type PoliticianSort } from "@/lib/politician-sort";
 import type { Ask } from "@/lib/server/asks";
 import type { Politician } from "@/lib/server/politicians";
-import { firstOf, valuesOf, type Params } from "@/lib/staff-search";
+import { anyAndNone, firstOf, valuesOf, type Params } from "@/lib/staff-search";
 import { staffDate } from "@/lib/staff-time";
 import { parseSort, sortHref } from "@/lib/staff-sort";
 import SortHeading from "./SortHeading";
@@ -46,37 +46,25 @@ const marks = (p: Politician) => {
 };
 
 /**
- * Whether a column tells the rows apart: not when every row has the same
- * value, as when the list is filtered by it, nor when it's blank in all of
- * them. A row on its own shows whatever it has.
- */
-function shows(politicians: Politician[], value: (p: Politician) => string): boolean {
-  const values = new Set(politicians.map(value));
-  return values.size > 1 || (politicians.length === 1 && !values.has(""));
-}
-
-/**
  * The politicians list's columns: who they are (name, house, constituency
  * and party), how they stand (whether they're in office, Airtable's
  * markers, their answer to each ask they've answered, a line each), how
  * many letters they've had and answered, and when they first and last did
- * anything with us. A column that would say the same for every row is left out, as is
- * one the filters fix: a house, a party, or one status, those in office
- * unless another or any is chosen. A download has the same columns, from
- * every row it has.
+ * anything with us. Which show is the filters' doing, not the rows': a
+ * column is left out only when the filters fix it for every row there
+ * could be. That's a house (and for peers, the constituency they don't
+ * have), one party found (one left out doesn't fix it), or one status,
+ * those in office unless another or any is chosen. A download has the same
+ * columns.
  */
-export function politicianColumns(
-  politicians: Politician[],
-  asks: Ask[],
-  search: Params = {},
-): ListColumn<Politician>[] {
+export function politicianColumns(asks: Ask[], search: Params = {}): ListColumn<Politician>[] {
+  const house = firstOf(search.house);
+  const [parties] = anyAndNone(valuesOf(search.party), (values) => values);
   const show = {
-    house: !Object.hasOwn(staffCopy.houses, firstOf(search.house)) && shows(politicians, (p) => p.house),
-    constituency: shows(politicians, (p) => p.constituency ?? ""),
-    party: valuesOf(search.party).length !== 1 && shows(politicians, (p) => p.party),
-    status: firstOf(search.status ?? "any") === "any" && shows(politicians, (p) => p.status),
-    marked: shows(politicians, marks),
-    activity: shows(politicians, (p) => String(p.lastActivityAt ?? "")),
+    house: !Object.hasOwn(staffCopy.houses, house),
+    constituency: house !== "lords",
+    party: parties?.length !== 1,
+    status: firstOf(search.status ?? "any") === "any",
   };
   const { sort, dir, ...filters } = search;
   const current = parseSort(POLITICIAN_SORTS, "name", firstOf(sort), firstOf(dir));
@@ -140,7 +128,7 @@ export function politicianColumns(
           <Muted>{staffCopy.personStatuses[p.status]}</Muted>
         ),
     },
-    show.marked && {
+    {
       key: "marked",
       label: staffCopy.politicians.flag,
       text: marks,
@@ -190,7 +178,7 @@ export function politicianColumns(
       text: (p) => p.replies,
       cell: (p) => p.replies,
     },
-    show.activity && {
+    {
       key: "first",
       label: staffCopy.politicians.columns.first,
       heading: heading("first", staffCopy.politicians.columns.first),
@@ -198,7 +186,7 @@ export function politicianColumns(
       text: (p) => p.firstActivityAt,
       cell: (p) => p.firstActivityAt && staffDate(p.firstActivityAt),
     },
-    show.activity && {
+    {
       key: "active",
       label: staffCopy.politicians.columns.last,
       heading: heading("active", staffCopy.politicians.columns.last),
@@ -240,5 +228,5 @@ export function politicianContact(asks: Ask[]): (p: Politician) => Contact {
 /** Politicians, a row each, in the list's columns; or that there are none. */
 export default function PoliticianTable({ politicians, asks, search = {} }: Props) {
   if (politicians.length === 0) return <p>{staffCopy.politicians.none}</p>;
-  return <ListTable columns={politicianColumns(politicians, asks, search)} rows={politicians} rowKey={(p) => p.id} />;
+  return <ListTable columns={politicianColumns(asks, search)} rows={politicians} rowKey={(p) => p.id} />;
 }
