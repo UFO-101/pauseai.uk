@@ -465,13 +465,10 @@ still does there.
   up with every ask once all are editable. Today it shows every ask staff
   can set (`trackedAsks`) and any other they've answered, so the Frontier
   AI letter shows "Not signed" for MSPs who were never sent it.
-  - Who was asked comes from the mailings: each records who got it and
-    names its ask. The Edinburgh invitation went to 186 people, the 129
-    MSPs and Scotland's 57 MPs, which a list of houses on the ask couldn't
-    say.
-  - An ask with no answer shows only to those it was sent to. An ask with
-    no mailing (ControlAI's, supporters' letters, Go to Parliament) shows
-    once there's an answer.
+  - How we know who was asked is an open question (below, "Who an ask
+    was put to").
+  - An ask with no answer shows only to those it was put to; one we can't
+    say that for shows once there's an answer.
   - "Add an answer" on the page lists the other asks, so staff can record
     any answer.
   - The Asks page counts how many were asked, beside each answer.
@@ -559,5 +556,16 @@ Data protection, agreed before building and recorded in
 - **Adding asks in the site.** A migration adds each ask until phase 3,
   so a new event needs a developer. Should staff add them on
   `/staff/asks`, and from which phase?
+- **Who an ask was put to.** Needed by phase 3, so a politician's page
+  shows only their asks, and the Asks page can count how many were asked.
+  Not settled; to discuss. What we know:
+  - A list of houses on the ask isn't enough. The Edinburgh invitation
+    went to 186 people: the 129 MSPs and Scotland's 57 MPs, not all MPs.
+  - The mailings record exactly who got each one, and name their ask, but
+    reading "asked" from them feels wrong, and only covers asks we
+    mailed. ControlAI's, supporters' letters and Go to Parliament have no
+    mailing.
+  - Airtable's "Edinburgh Conference Invitation" attachment is on every
+    record, so it says nothing about who was invited.
 - **Parliament's member IDs.** Worth storing in phase 3, so a re-elected
   member's two records can be merged?
