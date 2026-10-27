@@ -44,6 +44,8 @@ Running one Vitest project (`npm run test:node`, `npm run test:browser`) or one 
 
 A title, then a bullet or two per change: what it does and why, in plain words. Leave out what the diff or the commits already say (file lists, how it was tested beyond "the CI gate passes") and anything left for later but a line saying so.
 
+When you give one in a reply, write it as plain Markdown, not quoted with `>` or put in a code block, so it can be copied and pasted straight into GitHub.
+
 ## The storyboard
 
 `tests/storyboard/` is one Playwright suite that drives every flow on fixture data (`docs/testing.md`, "The storyboard"). A spec file is a section, a test a flow, and each `await frame(page, "caption")` a frame: a caption and, in the review, a screenshot (the whole page at the top, the window once scrolled). `docs/testing.md`, "What the storyboard covers", lists what each section drives; a new spec file or route handler needs a line there.
