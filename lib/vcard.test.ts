@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { vcardCode, vcardFile } from "./vcard";
 
 describe("vcardCode", () => {
@@ -6,6 +6,12 @@ describe("vcardCode", () => {
     expect(vcardCode(() => 0)).toBe("AAAA");
     expect(vcardCode(() => 0.999)).toBe("9999");
     expect(vcardCode()).toMatch(/^[A-HJKMNP-Z2-9]{4}$/);
+  });
+
+  it("is the same every time in a fixture build", () => {
+    vi.stubEnv("DATA_FIXTURES", "1");
+    expect(vcardCode()).toBe(vcardCode());
+    vi.unstubAllEnvs();
   });
 });
 
