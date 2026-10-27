@@ -7,19 +7,12 @@
 }
 
 /* A row's buttons: ending its sessions, then removing it, side by side,
-   each on one line, their tops level, so a warning under the first hangs
-   below both. */
+   each on one line. */
 .buttons {
   display: flex;
   gap: var(--space-3);
-  align-items: start;
+  align-items: center;
   white-space: nowrap;
-}
-
-/* Under Log out everywhere on your own row: that it logs you out too, small, on its own line. */
-.warning {
-  margin: var(--space-1) 0 0;
-  font-size: var(--text-xs);
 }
 
 /* Under the last row: the address of someone to add, Add, and why it

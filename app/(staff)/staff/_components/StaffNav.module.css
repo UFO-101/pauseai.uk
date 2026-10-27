@@ -262,7 +262,11 @@ button.page:hover {
     visibility: visible;
   }
 
-  :global(:root[data-staff-nav="folded"]) .nav,
+  /* The pause symbol in the middle of the rail, as the icons are. */
+  :global(:root[data-staff-nav="folded"]) .nav {
+    align-items: center;
+  }
+
   :global(:root[data-staff-nav="folded"]) .sidebar,
   :global(:root[data-staff-nav="folded"]) .foot {
     justify-items: center;

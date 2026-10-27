@@ -612,12 +612,14 @@ describe("StaffAccountsTable", () => {
     ]);
   });
 
-  it("ends an account's sessions from its row, only where it has some, warning on your own row that it ends yours", async () => {
+  it("ends an account's sessions from its row, only where it has some, saying on your own row that it logs you out", async () => {
     const { end } = await renderTable();
     const form = (email: string) => page.getByRole("form", { name: `${staffCopy.accounts.endSessions}: ${email}` });
     await expect.element(form("jo@pauseai.uk")).not.toBeInTheDocument();
-    await expect.element(form("admin@pauseai.uk").getByText(staffCopy.accounts.endsYours)).toBeVisible();
-    await expect.element(form("sam@pauseai.uk").getByText(staffCopy.accounts.endsYours)).not.toBeInTheDocument();
+    await expect
+      .element(form("admin@pauseai.uk").getByRole("button"))
+      .toHaveTextContent(staffCopy.accounts.endMySessions);
+    await expect.element(form("sam@pauseai.uk").getByRole("button")).toHaveTextContent(staffCopy.accounts.endSessions);
     await form("sam@pauseai.uk").getByRole("button").click();
     await vi.waitFor(() => expect(end.sent).toEqual([{ email: "sam@pauseai.uk" }]));
   });

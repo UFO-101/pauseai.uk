@@ -401,9 +401,9 @@ export const staffCopy = {
     addedByLogin: "by login",
     // For an account that has never logged in or been seen.
     never: "Never",
-    // On each row with sessions open: ends them all; on your own row, the warning beside it.
-    endSessions: "Log out everywhere",
-    endsYours: "This logs you out too.",
+    // On each row with sessions open: ends them all; on your own row, it says so, as it logs you out too.
+    endSessions: "Log out all",
+    endMySessions: "Log me out all",
     // Under the last row: the field for the address of someone new (its
     // label, read aloud) and its button, which adds them as a row, saved
     // with the others.
