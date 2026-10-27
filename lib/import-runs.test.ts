@@ -29,9 +29,6 @@ it("gives each job a page of its own, and finds the job from its page's slug", (
 
 it("says a Luma import that left work for later is incomplete, in place of done or unchanged, but not failed", () => {
   expect(runStatus(exampleRun("import-luma", { ...exampleLumaResult, stoppedBy: "time" }))).toBe("incomplete");
-  expect(
-    runStatus(exampleRun("import-luma", { ...exampleLumaResult, contactsPassGoing: true }, { status: "unchanged" })),
-  ).toBe("incomplete");
   const placesFailed = { postcodes: 0, towns: 0, failed: true };
   expect(runStatus(exampleRun("import-luma", { ...exampleLumaResult, places: placesFailed }))).toBe("incomplete");
   expect(
@@ -54,8 +51,10 @@ it("colours a run by how it ended: green done, applied or unchanged, amber held 
   expect(runTone(exampleHeldSync)).toBe("amber");
   expect(runTone(exampleRun("import-luma", { ...exampleLumaResult, stoppedBy: "time" }))).toBe("amber");
   expect(runTone(exampleRun("import-luma", exampleLumaResult))).toBe("green");
-  // The contacts still being read leaves work for later too.
-  expect(runTone(exampleRun("import-luma", { ...exampleLumaResult, contactsPassGoing: true }))).toBe("amber");
+  // postcodes.io failing leaves work for later too.
+  expect(
+    runTone(exampleRun("import-luma", { ...exampleLumaResult, places: { postcodes: 0, towns: 0, failed: true } })),
+  ).toBe("amber");
   expect(runTone(exampleFailedRun("check-mps", "boom", {}))).toBe("red");
   expect(runTone(exampleRun("import-luma", exampleLumaResult, { status: "unchanged" }))).toBe("green");
   expect(runTone(exampleRun("check-mps", { problems: [] }, { status: "discarded" }))).toBeUndefined();

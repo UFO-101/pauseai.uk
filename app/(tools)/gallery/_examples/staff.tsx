@@ -226,14 +226,14 @@ const RUNS: Record<ImportJob, Variant> = {
     ),
   },
   "import-luma": {
-    label: "A Luma import cut short by its time, and one still reading every contact",
+    label: "A Luma import cut short by its time, and one that looked up places",
     render: () => (
       <StaffPage as="div">
         <Run run={exampleRun("import-luma", { ...exampleLumaResult, eventsLeft: 4, stoppedBy: "time" })} />
         <Run
           run={exampleRun(
             "import-luma",
-            { ...exampleLumaResult, contactPages: 10, contactsPassGoing: true },
+            { ...exampleLumaResult, contactPages: 10, places: { postcodes: 12, towns: 3, failed: false } },
             { id: 2 },
           )}
         />

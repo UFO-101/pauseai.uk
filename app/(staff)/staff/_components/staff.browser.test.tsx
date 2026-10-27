@@ -2273,18 +2273,15 @@ describe("RunList", () => {
       );
   });
 
-  it("says how many pages of contacts a Luma run read, and that the contacts are still being read", async () => {
+  it("says how many pages of contacts a Luma run read", async () => {
     await render(
-      <RunList
-        runs={[ran("import-luma", { ...exampleLumaResult, contactPages: 10, contactsPassGoing: true }, { id: 1 })]}
-        none="None"
-      />,
+      <RunList runs={[ran("import-luma", { ...exampleLumaResult, contactPages: 10 }, { id: 1 })]} none="None" />,
     );
     const [run] = page.getByRole("status").all();
     expect(run.element().textContent).toContain(
-      `${staffCopy.luma.result(exampleLumaResult)} ${staffCopy.luma.contactPages(10)} ${staffCopy.luma.contactsPassGoing}`,
+      `${staffCopy.luma.result(exampleLumaResult)} ${staffCopy.luma.contactPages(10)}`,
     );
-    expect(run.element().textContent).toMatch(new RegExp(`^${staffCopy.runs.status.incomplete} `));
+    expect(run.element().textContent).toMatch(new RegExp(`^${staffCopy.runs.status.ok} `));
   });
 
   it("says how many postcodes and towns a Luma run looked up, and when postcodes.io failed", async () => {

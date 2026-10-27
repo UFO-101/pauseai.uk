@@ -117,10 +117,6 @@ const optOuts = () =>
   query<{ address: string; source: string; resubscribed_at: Date | null }>(
     "SELECT address, source, resubscribed_at FROM opt_outs ORDER BY id",
   );
-/** Makes the contacts' full pass due. */
-const passDue = () =>
-  query("UPDATE luma_import_state SET full_pass_at = now() - interval '21 hours' WHERE list = 'contacts'");
-
 const runs = () =>
   query<{ status: string; error: string | null; result: Record<string, unknown> }>(
     "SELECT status, error, result FROM import_runs ORDER BY id",
@@ -375,9 +371,8 @@ describeWithDatabase("importLuma", () => {
       guestsChanged: 0,
       people: 0,
       contacts: 0,
-      // A full pass over the contacts is due, and none of it read.
+      // A pass over the contacts begins, and none of it read.
       contactPages: 0,
-      contactsPassGoing: true,
       supportersAdded: 0,
       linked: 0,
       places: { postcodes: 0, towns: 0, failed: false },
@@ -406,7 +401,7 @@ describeWithDatabase("importLuma", () => {
     ]);
   });
 
-  it("reads contacts until a page holds nothing new, and every 20 hours every page, ten a run", async () => {
+  it("reads every contact, ten pages a run, one pass after another, and the newest first while a pass is going", async () => {
     const contacts = Array.from({ length: 12 }, (_, i) => contact(i + 1));
     const luma = fakeLuma({ contacts, pageSize: 1 });
     const contactRequests = () => luma.requests.filter((r) => r.startsWith("contacts"));
@@ -415,46 +410,51 @@ describeWithDatabase("importLuma", () => {
       "INSERT INTO luma_people (user_id, email, contact_since) VALUES ('usr-99', 'person99@example.com', now())",
     );
 
-    // The first run starts the first full pass: ten pages, and the cursor kept, still going.
-    expect(await importLuma("jo@pauseai.uk")).toMatchObject({
-      contacts: 10,
-      contactPages: 10,
-      contactsPassGoing: true,
-    });
+    // The first run starts the first pass: ten pages, and the cursor kept.
+    expect(await importLuma("jo@pauseai.uk")).toMatchObject({ contacts: 10, contactPages: 10 });
     expect(contactRequests()).toHaveLength(10);
     expect(await query("SELECT cursor, full_pass_at FROM luma_import_state WHERE list = 'contacts'")).toEqual([
       { cursor: "10", full_pass_at: null },
     ]);
     expect(await optOuts()).toEqual([]);
 
-    // The next finishes it: two contacts more, and the one it never listed opted out.
+    // The next reads the newest page, nothing new on it, then finishes the pass: two contacts more,
+    // and the one it never listed opted out.
     luma.requests.length = 0;
-    const second = await importLuma("jo@pauseai.uk");
-    expect(second).toMatchObject({ contacts: 3, contactPages: 2 });
+    expect(await importLuma("jo@pauseai.uk")).toMatchObject({ contacts: 3, contactPages: 3 });
     expect(await optOuts()).toMatchObject([{ address: "person99@example.com", resubscribed_at: null }]);
-    expect(second.contactsPassGoing).toBeUndefined();
-    expect(contactRequests()).toEqual(["contacts@10", "contacts@11"]);
+    expect(contactRequests()).toEqual(["contacts", "contacts@10", "contacts@11"]);
     const [state] = await query<{ cursor: string; full_pass_at: Date | null }>(
       "SELECT cursor, full_pass_at FROM luma_import_state WHERE list = 'contacts'",
     );
     expect(state.cursor).toBe("");
     expect(state.full_pass_at).not.toBeNull();
 
-    // Between passes, the first page with nothing new ends it; a new contact at the top is read.
+    // The run after starts the next pass at once.
     luma.requests.length = 0;
-    expect((await importLuma("jo@pauseai.uk")).contacts).toBe(0);
-    expect(contactRequests()).toEqual(["contacts"]);
+    expect(await importLuma("jo@pauseai.uk")).toMatchObject({ contacts: 0, contactPages: 10 });
+    expect(contactRequests()[0]).toBe("contacts");
+
+    // A new contact at the top is read before the pass carries on, and the newest stop at a page with nothing new.
     luma.contacts.unshift(contact(13));
     luma.requests.length = 0;
-    expect((await importLuma("jo@pauseai.uk")).contacts).toBe(1);
-    expect(contactRequests()).toEqual(["contacts", "contacts@1"]);
+    expect(await importLuma("jo@pauseai.uk")).toMatchObject({ contacts: 1, contactPages: 5 });
+    expect(contactRequests()).toEqual(["contacts", "contacts@1", "contacts@10", "contacts@11", "contacts@12"]);
 
-    // Between passes, every page new reads to the end of the list, and no pass is going.
+    // The newest every page new are read to the end of the list, then the pass from its cursor.
     luma.contacts = [contact(14), contact(15)];
+    await query("UPDATE luma_import_state SET cursor = '1' WHERE list = 'contacts'");
     luma.requests.length = 0;
-    const toTheEnd = await importLuma("jo@pauseai.uk");
-    expect(toTheEnd).toMatchObject({ contacts: 2, contactPages: 2 });
-    expect(toTheEnd.contactsPassGoing).toBeUndefined();
+    expect(await importLuma("jo@pauseai.uk")).toMatchObject({ contacts: 2, contactPages: 3 });
+    expect(contactRequests()).toEqual(["contacts", "contacts@1", "contacts@1"]);
+  });
+
+  it("reads no more than ten pages of the newest while a pass is going", async () => {
+    const luma = fakeLuma({ contacts: Array.from({ length: 12 }, (_, i) => contact(i + 1)), pageSize: 1 });
+    await query("INSERT INTO luma_import_state (list, cursor, pass_started_at) VALUES ('contacts', '5', now())");
+    expect(await importLuma("jo@pauseai.uk")).toMatchObject({ contacts: 10, contactPages: 10 });
+    expect(luma.requests.filter((r) => r.startsWith("contacts"))).toHaveLength(10);
+    expect(await query("SELECT cursor FROM luma_import_state WHERE list = 'contacts'")).toEqual([{ cursor: "5" }]);
   });
 
   it("doesn't count a full pass of the contacts as done when the run ran out before reading any", async () => {
@@ -480,13 +480,12 @@ describeWithDatabase("importLuma", () => {
     expect((await importLuma("jo@pauseai.uk")).contacts).toBe(2);
     expect(luma.requests).toEqual(["events", "contacts", "contacts@1"]);
 
-    // Between passes, a failure is just a failure.
-    await query("UPDATE luma_import_state SET full_pass_at = now() WHERE list = 'contacts'");
-    luma.failContactsCursor = undefined;
+    // Reading the newest, ahead of the pass, a failure is just a failure: the pass's cursor is kept.
+    await query("UPDATE luma_import_state SET cursor = '2' WHERE list = 'contacts'");
     luma.contacts.unshift(contact(3));
     luma.failContactsCursor = "1";
     await expect(importLuma("jo@pauseai.uk")).rejects.toThrow("Luma answered 500");
-    expect(await query("SELECT cursor FROM luma_import_state WHERE list = 'contacts'")).toEqual([{ cursor: "" }]);
+    expect(await query("SELECT cursor FROM luma_import_state WHERE list = 'contacts'")).toEqual([{ cursor: "2" }]);
   });
   it("opts out a contact a full pass doesn't list, once, and ends that when a later pass lists them again", async () => {
     const luma = fakeLuma({ contacts: [contact(1), contact(2), contact(3)] });
@@ -497,19 +496,16 @@ describeWithDatabase("importLuma", () => {
 
     // Person 2 unsubscribes: Luma stops listing them, and the next pass opts them out.
     luma.contacts = [contact(1), contact(3)];
-    await passDue();
     expect((await importLuma("jo@pauseai.uk")).contacts).toBe(1);
     expect(await optOuts()).toEqual([
       { address: "person2@example.com", source: "luma-contacts", resubscribed_at: null },
     ]);
     // The pass after changes nothing: they're opted out already.
-    await passDue();
     expect((await importLuma("jo@pauseai.uk")).contacts).toBe(0);
     expect(await optOuts()).toHaveLength(1);
 
     // They follow again: Luma lists them as before, and the next pass ends the opt-out.
     luma.contacts = [contact(1), contact(2), contact(3)];
-    await passDue();
     expect((await importLuma("jo@pauseai.uk")).contacts).toBe(1);
     const [back] = await optOuts();
     expect(back.resubscribed_at).not.toBeNull();
@@ -528,7 +524,6 @@ describeWithDatabase("importLuma", () => {
       "INSERT INTO luma_people (user_id, email, contact_since) VALUES ('usr-20', 'person2@example.com', now())",
     );
     luma.contacts = [contact(1), contact(2)];
-    await passDue();
     expect((await importLuma("jo@pauseai.uk")).contacts).toBe(0);
     expect(await optOuts()).toEqual([
       { address: "person1@example.com", source: "luma-webhook", resubscribed_at: null },
@@ -541,7 +536,8 @@ describeWithDatabase("importLuma", () => {
     await query(
       "INSERT INTO luma_people (user_id, email, contact_since) VALUES ('usr-5', 'person5@example.com', now())",
     );
-    expect(await importLuma("jo@pauseai.uk")).toMatchObject({ contacts: 1, contactPages: 1 });
+    // The newest first, both new, then the pass's last page.
+    expect(await importLuma("jo@pauseai.uk")).toMatchObject({ contacts: 2, contactPages: 3 });
     expect(await optOuts()).toEqual([]);
   });
 });

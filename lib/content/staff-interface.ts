@@ -771,8 +771,6 @@ export const staffCopy = {
     places: (p: { postcodes: number; towns: number }) => `⁂ ${p.postcodes} postcodes, ${p.towns} towns looked up.`,
     // After that, when postcodes.io failed partway: the next run carries on.
     placesFailed: "⁂ Postcodes.io failed: the next run carries on.",
-    // After that, while a full pass over the contacts is part-way through.
-    contactsPassGoing: "Still reading every contact: the next runs read the rest.",
     stoppedBy: {
       time: "Stopped: out of time.",
       "rate-limit": "Stopped: near Luma's rate limit.",
