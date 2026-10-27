@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { renderToString } from "react-dom/server";
 import { render } from "vitest-browser-react";
 import { page } from "vitest/browser";
+import { march } from "@/lib/content/march";
 import { AI_IMPACTS_SURVEY_URL, marchSignupCopy } from "@/lib/content/march-signup";
 import MarchSignupFrame from "./MarchSignupFrame";
 import ShareCard, { appRowFade } from "./ShareCard";
@@ -32,10 +33,10 @@ beforeEach(() => {
 
 const shareEvent = (share_method: string) => ({ event: "march_share", share_method });
 
-async function renderCard(onFinish = () => {}) {
+async function renderCard(onRegisterAnother = () => {}) {
   return render(
     <MarchSignupFrame>
-      <ShareCard onFinish={onFinish} motion="still" onLeft={() => {}} />
+      <ShareCard email="testy@example.org" onRegisterAnother={onRegisterAnother} motion="still" onLeft={() => {}} />
     </MarchSignupFrame>,
   );
 }
@@ -55,6 +56,16 @@ describe("appRowFade", () => {
 });
 
 describe("ShareCard", () => {
+  it("says first that they're registered, with the address they gave, and takes the focus there", async () => {
+    await renderCard();
+    await expect.element(page.getByText(copy.registered)).toBeVisible();
+    // When and where, and the address they gave.
+    await expect.element(page.getByText(copy.inTouch("testy@example.org"))).toBeVisible();
+    expect(copy.inTouch("testy@example.org")).toContain(march.dateLong);
+    const first = page.getByText(copy.registered).element().closest("[data-focus-first]")!;
+    expect(first.compareDocumentPosition(page.getByRole("heading").element())).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+  });
+
   it("says why to share, linking the 18% to the survey, in bold", async () => {
     await renderCard();
     await expect.element(page.getByRole("heading", { name: "Double your impact" })).toBeVisible();
@@ -171,15 +182,17 @@ describe("ShareCard", () => {
   });
 
   it("renders on the server with no share sheet", () => {
-    const html = renderToString(<ShareCard onFinish={() => {}} motion="still" onLeft={() => {}} />);
+    const html = renderToString(
+      <ShareCard email="testy@example.org" onRegisterAnother={() => {}} motion="still" onLeft={() => {}} />,
+    );
     expect(html).toContain(copy.copy);
     expect(html).not.toContain(`${copy.share}<`);
   });
 
-  it("moves on when they can't think of anywhere else", async () => {
-    const onFinish = vi.fn();
-    await renderCard(onFinish);
-    await page.getByRole("button", { name: copy.finish }).click();
-    expect(onFinish).toHaveBeenCalledOnce();
+  it("starts again for someone else", async () => {
+    const onRegisterAnother = vi.fn();
+    await renderCard(onRegisterAnother);
+    await page.getByRole("button", { name: copy.registerAnother }).click();
+    expect(onRegisterAnother).toHaveBeenCalledOnce();
   });
 });

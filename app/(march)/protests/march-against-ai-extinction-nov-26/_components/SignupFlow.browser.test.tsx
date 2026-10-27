@@ -22,7 +22,8 @@ async function register() {
 }
 
 const shareHeading = () => page.getByRole("heading", { name: copy.share.title });
-const thanksHeading = () => page.getByRole("heading", { name: "Thank you for registering" });
+/** Where focus lands on the share card: its confirmation, above the heading. */
+const shareFocus = () => shareHeading().element().parentElement!.querySelector("[data-focus-first]");
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -30,19 +31,15 @@ afterEach(() => {
 });
 
 describe("SignupFlow", () => {
-  it("turns the form into the share card, then the thank-you, then the form again", async () => {
+  it("turns the form into the share card, then the form again for someone else", async () => {
     await renderFlow();
     expect(document.activeElement).toBe(document.body);
     await register();
     await expect.element(shareHeading()).toBeVisible();
-    await expect.poll(() => document.activeElement).toBe(shareHeading().element());
+    await expect.poll(() => document.activeElement).toBe(shareFocus());
     expect(page.getByLabelText("Full name").query()).toBeNull();
 
-    await page.getByRole("button", { name: copy.share.finish }).click();
-    await expect.element(thanksHeading()).toBeVisible();
-    await expect.poll(() => document.activeElement).toBe(thanksHeading().element());
-
-    await page.getByRole("button", { name: copy.thanks.registerAnother }).click();
+    await page.getByRole("button", { name: copy.share.registerAnother }).click();
     const name = page.getByLabelText("Full name");
     await expect.element(name).toHaveValue("");
     await expect.poll(() => document.activeElement).toBe(name.element());
@@ -100,6 +97,6 @@ describe("SignupFlow", () => {
     await register();
     await expect.element(shareHeading()).toBeVisible();
     expect(shareHeading().element().closest("[data-motion]")).toBeNull();
-    await expect.poll(() => document.activeElement).toBe(shareHeading().element());
+    await expect.poll(() => document.activeElement).toBe(shareFocus());
   });
 });

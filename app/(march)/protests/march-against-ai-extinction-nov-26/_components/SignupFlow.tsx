@@ -7,16 +7,15 @@ import { m } from "./classes";
 import ShareCard from "./ShareCard";
 import SignupForm from "./SignupForm";
 import { registerForMarch } from "./register";
-import ThanksCard from "./ThanksCard";
 
-type Card = "form" | "share" | "thanks";
+type Card = "form" | "share";
 
 const reducedMotion = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 /**
  * The register band's cards, one at a time, each swapped in place for the
- * next: the form, then, once registered, the share card, then a thank-you,
- * which can start the form again for someone else. `register` sends the
+ * next: the form, then, once registered, the share card, which can start the
+ * form again for someone else. `register` sends the
  * form; it's app/api/march/register unless a test or the gallery gives one.
  */
 export default function SignupFlow({
@@ -29,6 +28,8 @@ export default function SignupFlow({
   const [next, setNext] = useState<Card>("form");
   // How many swaps there have been, so the first card isn't scrolled to or focused.
   const [swaps, setSwaps] = useState(0);
+  // Who registered last, for the share card to say so.
+  const [email, setEmail] = useState("");
   const wrap = useRef<HTMLDivElement>(null);
 
   function arrive(to: Card) {
@@ -59,10 +60,19 @@ export default function SignupFlow({
   return (
     <div ref={wrap} className={m("card-wrap")}>
       {card === "form" && (
-        <SignupForm register={register} onRegistered={() => goTo("share")} motion={motion} onLeft={onLeft} />
+        <SignupForm
+          register={register}
+          onRegistered={(given) => {
+            setEmail(given);
+            goTo("share");
+          }}
+          motion={motion}
+          onLeft={onLeft}
+        />
       )}
-      {card === "share" && <ShareCard onFinish={() => goTo("thanks")} motion={motion} onLeft={onLeft} />}
-      {card === "thanks" && <ThanksCard onRegisterAnother={() => goTo("form")} motion={motion} onLeft={onLeft} />}
+      {card === "share" && (
+        <ShareCard email={email} onRegisterAnother={() => goTo("form")} motion={motion} onLeft={onLeft} />
+      )}
     </div>
   );
 }

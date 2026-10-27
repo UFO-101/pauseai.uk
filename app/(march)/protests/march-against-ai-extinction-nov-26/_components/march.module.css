@@ -1313,9 +1313,11 @@
   }
 }
 
-/* Focus lands on a card's heading after a swap, so screen readers announce
-   it; it isn't interactive, so it doesn't need a ring. */
-.share-panel h2:focus {
+/* Focus lands on a card's heading, or the share card's confirmation, after
+   a swap, so screen readers announce it; it isn't interactive, so it doesn't
+   need a ring. */
+.share-panel h2:focus,
+.share-registered:focus {
   outline: none;
 }
 /* The cards sit on the ink band, whose headings are white. */
@@ -1378,6 +1380,43 @@
 }
 .share-icon {
   flex: 0 0 auto;
+}
+
+/* ─── That they're registered, above the ask ─── */
+.share-registered {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  margin: 0 0 24px;
+  padding: 0 0 20px;
+  border-bottom: var(--march-stroke) solid var(--march-ink);
+}
+.share-registered-mark {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  background: var(--march-orange);
+  color: var(--march-ink);
+  border: var(--march-stroke) solid var(--march-ink);
+}
+.share-registered-mark .share-icon {
+  width: 22px;
+  height: 22px;
+}
+.share-panel p.share-registered-title {
+  margin: 0;
+  font-family: var(--march-display);
+  font-size: 26px;
+  line-height: 1.1;
+  text-transform: uppercase;
+  color: var(--march-on-paper);
+}
+.share-panel p.share-registered-detail {
+  margin: 4px 0 0;
+  overflow-wrap: anywhere;
+  color: var(--march-on-paper-soft);
 }
 
 /* ─── The app row: scrolls sideways, on desktop too ─── */
@@ -1491,29 +1530,6 @@
 .share-finish .btn {
   font-size: 12px;
   padding: 14px 20px;
-}
-
-/* ─── Closing panel ───
-   Sized to its copy rather than the share card's 780px, so it doesn't trail
-   off into an empty right half. */
-.share-panel-done {
-  width: fit-content;
-}
-.share-panel-done p {
-  max-width: calc(58 * var(--march-ch));
-  margin: 18px 0 0;
-  color: var(--march-on-paper-soft);
-}
-.share-panel-done p.share-panel-done-date {
-  font-weight: 800;
-  color: var(--march-on-paper);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-/* Under the card's text, and in line with it. */
-.share-panel-done .share-secondary {
-  margin-top: 18px;
-  padding-inline: 0;
 }
 
 /* ─── Mobile ─── */

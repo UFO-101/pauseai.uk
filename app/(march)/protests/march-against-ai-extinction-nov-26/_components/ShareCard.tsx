@@ -115,16 +115,20 @@ export function appRowFade(row: { scrollLeft: number; clientWidth: number; scrol
 }
 
 /**
- * The card after registering: why sharing matters, the places to post the
- * message, and the share or copy button, until "I can't think of anywhere
- * else" moves on (`onFinish`).
+ * The last card, after registering: that they're registered, and when and
+ * where; why sharing matters, the places to post the message, and the share
+ * or copy button; then starting the form again for someone else
+ * (`onRegisterAnother`).
  */
 export default function ShareCard({
-  onFinish,
+  email,
+  onRegisterAnother,
   motion,
   onLeft,
 }: {
-  onFinish: () => void;
+  /** The address they registered with. */
+  email: string;
+  onRegisterAnother: () => void;
   motion: CardMotion;
   onLeft: () => void;
 }) {
@@ -178,9 +182,17 @@ export default function ShareCard({
 
   return (
     <div className={m("share-panel")} {...cardMotionProps(motion, onLeft)}>
-      <h2 className={m("h-md")} tabIndex={-1} data-focus-first>
-        {copy.title}
-      </h2>
+      {/* That it went through, first: focus lands here after the swap, so a screen reader says it first too. */}
+      <div className={m("share-registered")} tabIndex={-1} data-focus-first>
+        <span className={m("share-registered-mark")}>
+          <Icon name="check" />
+        </span>
+        <div>
+          <p className={m("share-registered-title")}>{copy.registered}</p>
+          <p className={m("share-registered-detail")}>{copy.inTouch(email)}</p>
+        </div>
+      </div>
+      <h2 className={m("h-md")}>{copy.title}</h2>
       <p className={m("share-text")}>
         {copy.impact.before}
         <a className={m("inline-link")} href={AI_IMPACTS_SURVEY_URL} target="_blank" rel="noreferrer">
@@ -234,8 +246,8 @@ export default function ShareCard({
       </div>
 
       <div className={m("share-finish")}>
-        <button type="button" className={m("btn ghost")} onClick={onFinish}>
-          {copy.finish}
+        <button type="button" className={m("btn ghost")} onClick={onRegisterAnother}>
+          {copy.registerAnother}
         </button>
       </div>
     </div>

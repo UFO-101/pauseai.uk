@@ -8,7 +8,6 @@ import MarchSignupFrame from "@/app/(march)/protests/march-against-ai-extinction
 import ShareCard from "@/app/(march)/protests/march-against-ai-extinction-nov-26/_components/ShareCard";
 import SignupForm from "@/app/(march)/protests/march-against-ai-extinction-nov-26/_components/SignupForm";
 import SignupRegister from "@/app/(march)/protests/march-against-ai-extinction-nov-26/_components/SignupRegister";
-import ThanksCard from "@/app/(march)/protests/march-against-ai-extinction-nov-26/_components/ThanksCard";
 import type { ReactNode } from "react";
 import { Logged } from "../_components/wiring";
 
@@ -61,14 +60,17 @@ export function SignupFormExample() {
 
 export function ShareCardExample() {
   return (
-    <Logged>{(log) => card(<ShareCard onFinish={log("onFinish")} motion="still" onLeft={log("onLeft")} />)}</Logged>
-  );
-}
-
-export function ThanksCardExample() {
-  return (
     <Logged>
-      {(log) => card(<ThanksCard onRegisterAnother={log("onRegisterAnother")} motion="still" onLeft={log("onLeft")} />)}
+      {(log) =>
+        card(
+          <ShareCard
+            email="testy@example.org"
+            onRegisterAnother={log("onRegisterAnother")}
+            motion="still"
+            onLeft={log("onLeft")}
+          />,
+        )
+      }
     </Logged>
   );
 }

@@ -11,7 +11,7 @@ import SignupHeroScroll from "@/app/(march)/protests/march-against-ai-extinction
 import SignupPhotos from "@/app/(march)/protests/march-against-ai-extinction-nov-26/_components/SignupPhotos";
 import SignupTurnout from "@/app/(march)/protests/march-against-ai-extinction-nov-26/_components/SignupTurnout";
 import type { Group } from "../_components/types";
-import { ShareCardExample, SignupFormExample, SignupRegisterExample, ThanksCardExample } from "./march-signup.client";
+import { ShareCardExample, SignupFormExample, SignupRegisterExample } from "./march-signup.client";
 
 const inFrame = (children: ReactNode) => <MarchSignupFrame>{children}</MarchSignupFrame>;
 
@@ -102,11 +102,6 @@ export const marchSignup: Group = {
       name: "ShareCard",
       file: "app/(march)/protests/march-against-ai-extinction-nov-26/_components/ShareCard.tsx",
       variants: [{ label: "The share card, after registering", render: () => <ShareCardExample /> }],
-    },
-    {
-      name: "ThanksCard",
-      file: "app/(march)/protests/march-against-ai-extinction-nov-26/_components/ThanksCard.tsx",
-      variants: [{ label: "The thank-you card", render: () => <ThanksCardExample /> }],
     },
   ],
 };

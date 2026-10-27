@@ -5,9 +5,11 @@ import { hydrated, layoutSettled, scrollSettled } from "./settle";
 
 // The march sign-up (app/(march)/): its own header, which drops in past the
 // hero; the form, which adds the person to the Luma event; and the cards it
-// turns into, in place: the share card, then the thank-you.
+// turns into, in place: the share card.
 
 const header = (page: Page) => page.getByRole("banner");
+/** The share card's confirmation, where focus lands after registering. */
+const registered = (page: Page) => page.locator("[data-focus-first]", { hasText: copy.share.registered });
 
 type DataLayerWindow = Window & { dataLayer?: ArrayLike<unknown>[] };
 
@@ -61,13 +63,14 @@ test("registering, and the form turns into the share card", { tag: "@phone" }, a
   await frame(page, "the form, filled in, under the header that dropped in");
 
   await page.getByRole("button", { name: copy.form.submit, exact: true }).click();
-  const title = page.getByRole("heading", { name: copy.share.title });
-  await expect(title).toBeFocused();
+  const confirmation = registered(page);
+  await expect(confirmation).toBeFocused();
+  await expect(confirmation).toContainText(`march-${testInfo.testId}@example.org`);
   await expect(page).toHaveURL(`${BASE}/protests/march-against-ai-extinction-nov-26#register`);
   await expect(page.getByRole("link", { name: copy.share.impact.link })).toBeVisible();
   await scrollSettled(page);
-  await expectBelowHeader(page, title);
-  await frame(page, "the share card, where the form was");
+  await expectBelowHeader(page, confirmation);
+  await frame(page, "the share card, where the form was, saying they're registered");
 });
 
 test("a registration Luma doesn't take", { tag: "@phone" }, async ({ page }) => {
@@ -100,12 +103,12 @@ test("the scroll cue glides past the hero, and the header comes with it", async 
   await frame(page, "past the hero, the header in");
 });
 
-test("sharing, then calling it a day, then registering someone new", { tag: "@phone" }, async ({ page, context }) => {
+test("sharing, then registering someone new", { tag: "@phone" }, async ({ page, context }) => {
   await context.grantPermissions(["clipboard-read", "clipboard-write"]);
   await openSignup(page);
   await fillIn(page, "testy@example.org");
   await page.getByRole("button", { name: copy.form.submit, exact: true }).click();
-  await expect(page.getByRole("heading", { name: copy.share.title })).toBeFocused();
+  await expect(registered(page)).toBeFocused();
   // The card glides into place first: pressing Copy mid-glide would scroll the
   // button into view and stop the page wherever the glide had got to.
   await scrollSettled(page);
@@ -121,13 +124,7 @@ test("sharing, then calling it a day, then registering someone new", { tag: "@ph
   await scrollSettled(page);
   await frame(page, "the message copied");
 
-  await page.getByRole("button", { name: copy.share.finish }).click();
-  await expect(page.getByRole("heading", { name: "Thank you for registering" })).toBeFocused();
-  await scrollSettled(page);
-  await expectBelowHeader(page, page.getByRole("heading", { name: "Thank you for registering" }));
-  await frame(page, "the thank-you card");
-
-  await page.getByRole("button", { name: copy.thanks.registerAnother }).click();
+  await page.getByRole("button", { name: copy.share.registerAnother }).click();
   await expect(page.getByLabel(copy.form.name)).toBeFocused();
   await expect(page.getByLabel(copy.form.email)).toHaveValue("");
   await scrollSettled(page);
@@ -151,11 +148,13 @@ test("tapping Register leaves no app highlighted under the finger", { tag: "@pho
   await openSignup(page);
   await fillIn(page, "testy@example.org");
   await page.getByRole("button", { name: copy.form.submit, exact: true }).tap();
-  await expect(page.getByRole("heading", { name: copy.share.title })).toBeFocused();
+  await expect(registered(page)).toBeFocused();
   await scrollSettled(page);
-  // A tap leaves the hover where the finger was, which is now over the app
-  // row: the button's place in the form is Telegram's in the share card.
+  // A tap leaves the hover where the finger was; one left over an app, as
+  // the next tap on the card can, mustn't lift it.
   const apps = page.getByRole("list").filter({ has: page.getByRole("link", { name: "WhatsApp" }) });
+  await apps.scrollIntoViewIfNeeded();
+  await scrollSettled(page);
   const telegram = (await apps.getByRole("link", { name: "Telegram" }).boundingBox())!;
   await page.mouse.move(telegram.x + telegram.width / 2, telegram.y + telegram.height / 2);
   expect(await page.evaluate(() => matchMedia("(hover: hover)").matches)).toBe(false);

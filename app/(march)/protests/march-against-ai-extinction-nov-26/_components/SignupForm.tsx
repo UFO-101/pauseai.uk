@@ -23,7 +23,7 @@ function errorFor(result: Exclude<MarchRegisterResult, { ok: true }> | "unreacha
  * The registration form, the register band's first card. `register` sends it
  * to app/api/march/register (./register.ts), which adds the person to the
  * Luma event and keeps the rest; once Luma has them, `onRegistered` moves on
- * to the share card.
+ * to the share card, with the email they gave.
  */
 export default function SignupForm({
   register,
@@ -32,7 +32,7 @@ export default function SignupForm({
   onLeft,
 }: {
   register: (input: unknown) => Promise<MarchRegisterResult>;
-  onRegistered: () => void;
+  onRegistered: (email: string) => void;
   motion: CardMotion;
   onLeft: () => void;
 }) {
@@ -70,7 +70,7 @@ export default function SignupForm({
       return;
     }
     track({ event: "march_signup" });
-    onRegistered();
+    onRegistered(signup.email);
   }
 
   return (

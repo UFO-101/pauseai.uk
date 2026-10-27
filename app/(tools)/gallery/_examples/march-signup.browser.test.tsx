@@ -2,7 +2,7 @@
 import { describe, expect, it } from "vitest";
 import { render } from "vitest-browser-react";
 import { page } from "vitest/browser";
-import { ShareCardExample, SignupFormExample, SignupRegisterExample, ThanksCardExample } from "./march-signup.client";
+import { ShareCardExample, SignupFormExample, SignupRegisterExample } from "./march-signup.client";
 
 describe("the march sign-up group's examples", () => {
   it.each([
@@ -21,12 +21,11 @@ describe("the march sign-up group's examples", () => {
     await expect.element(page.getByRole("alert")).toBeVisible();
   });
 
-  it.each([
-    ["the share card", ShareCardExample, "I can’t think of anywhere else", "onFinish(event)"],
-    ["the thank-you card", ThanksCardExample, "Register someone new", "onRegisterAnother(event)"],
-  ])("logs what %s calls", async (_, Example, button, call) => {
-    await render(<Example />);
-    await page.getByRole("button", { name: button }).click();
-    await expect.element(page.getByRole("list", { name: "Event log" }).getByRole("listitem")).toHaveTextContent(call);
+  it("logs what the share card calls", async () => {
+    await render(<ShareCardExample />);
+    await page.getByRole("button", { name: "Register someone new" }).click();
+    await expect
+      .element(page.getByRole("list", { name: "Event log" }).getByRole("listitem"))
+      .toHaveTextContent("onRegisterAnother(event)");
   });
 });

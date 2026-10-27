@@ -1,5 +1,5 @@
 // Every word the march sign-up's cards show (app/(march)/): the form, the
-// share card and the thank-you card. The page's own text is in its components.
+// share card. The page's own text is in its components.
 import { march } from "./march";
 import { site } from "./site";
 
@@ -78,6 +78,11 @@ export const marchSignupCopy = {
     emailInvalid: "Please enter a valid email address.",
   },
   share: {
+    /** At the top of the card, so it's clear the form went through. */
+    registered: "You’re registered. Thank you!",
+    /** Under it: when and where, and what will arrive, at the address they gave, so they can spot a typo. */
+    inTouch: (email: string) =>
+      `See you on ${march.dateLong} in ${march.city}. Luma will email ${email} a calendar invite, and we’ll send more details closer to the day.`,
     title: "Double your impact",
     /** "The average AI researcher puts an [18% chance] on …", the link to the survey that found it. */
     impact: {
@@ -106,9 +111,6 @@ export const marchSignupCopy = {
     share: "Share",
     copy: "Copy message",
     copied: "Message copied",
-    finish: "I can’t think of anywhere else",
-  },
-  thanks: {
     registerAnother: "Register someone new",
   },
 };
