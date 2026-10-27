@@ -23,7 +23,11 @@ export function HouseTabs({ search }: { search: PoliticiansSearch }) {
     })),
   ];
   return (
-    <Tabs label={staffCopy.fields.house} tabs={tabs} current={search.house in staffCopy.houses ? search.house : ""} />
+    <Tabs
+      label={staffCopy.fields.house}
+      tabs={tabs}
+      current={Object.hasOwn(staffCopy.houses, search.house) ? search.house : ""}
+    />
   );
 }
 

@@ -30,6 +30,11 @@
   padding-right: 2rem;
 }
 
+/* Ours instead of the browser's own, which Chrome and Safari draw too. */
+.box input::-webkit-search-cancel-button {
+  appearance: none;
+}
+
 .clear {
   position: absolute;
   right: 6px;

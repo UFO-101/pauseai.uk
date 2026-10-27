@@ -2,8 +2,8 @@ import "server-only";
 
 // A search typed into a staff list. Every word typed must be somewhere in
 // the row, ignoring case and accents: "Tris Osborne" finds Tristan Osborne,
-// and "Sian" finds Siân. When nothing does, closeTo() ranks rows by how near
-// a field is to what was typed, which forgives a typo. unaccent and pg_trgm
+// and "Sian" finds Siân. When nothing does, a list can rank rows by how near
+// a field is to what was typed (closeness()), which forgives a typo. unaccent and pg_trgm
 // are Postgres extensions (migration 0038).
 
 /** The words typed, each a LIKE pattern matching it anywhere, its % and _ taken literally. */

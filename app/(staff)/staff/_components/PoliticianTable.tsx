@@ -56,7 +56,7 @@ function shows(politicians: Politician[], value: (p: Politician) => string): boo
 export default function PoliticianTable({ politicians, asks, search = {} }: Props) {
   if (politicians.length === 0) return <p>{staffCopy.politicians.none}</p>;
   const show = {
-    house: !(search.house in staffCopy.houses) && shows(politicians, (p) => p.house),
+    house: !Object.hasOwn(staffCopy.houses, search.house ?? "") && shows(politicians, (p) => p.house),
     constituency: shows(politicians, (p) => p.constituency ?? ""),
     party: !search.party && shows(politicians, (p) => p.party),
     status: (search.status ?? "any") === "any" && shows(politicians, (p) => p.status),
