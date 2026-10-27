@@ -457,6 +457,15 @@ describeWithDatabase("importLuma", () => {
     expect(await query("SELECT cursor FROM luma_import_state WHERE list = 'contacts'")).toEqual([{ cursor: "5" }]);
   });
 
+  it("keeps a pass's cursor when the run runs out before reading the newest", async () => {
+    // Luma's rate limit is near after the events' page, so no contacts are read.
+    const luma = fakeLuma({ contacts: [contact(1), contact(2)], pageSize: 1, remaining: 10 });
+    await query("INSERT INTO luma_import_state (list, cursor, pass_started_at) VALUES ('contacts', '1', now())");
+    expect(await importLuma("jo@pauseai.uk")).toMatchObject({ contactPages: 0, stoppedBy: "rate-limit" });
+    expect(luma.requests.filter((r) => r.startsWith("contacts"))).toEqual([]);
+    expect(await query("SELECT cursor FROM luma_import_state WHERE list = 'contacts'")).toEqual([{ cursor: "1" }]);
+  });
+
   it("doesn't count a full pass of the contacts as done when the run ran out before reading any", async () => {
     // Luma's rate limit is near after the events' page, so the contacts aren't read.
     const luma = fakeLuma({ contacts: [contact(1), contact(2)], pageSize: 1, remaining: 10 });
