@@ -355,7 +355,10 @@ staff email), how it ended, why it failed, and the job's own account of
 what it found. A run can be held for staff to decide on, as a large politician sync
 is. `/staff/import-data` shows each job's newest run on a card, and each
 job's own page (`/staff/import-data/<slug>`, `importPath()` in
-`lib/import-runs.ts`) its button and every run.
+`lib/import-runs.ts`) its button and every run it keeps: a week of an
+hourly job's, a month of a nightly one's, a one-off job's last 50, and
+always its newest and a held run (`lib/server/log-retention.ts`, run
+nightly).
 
 A new job is a name in `IMPORT_JOBS` and the `import_runs` CHECK, a result
 type, a function that records its run, a slug in `IMPORT_SLUGS`, its
