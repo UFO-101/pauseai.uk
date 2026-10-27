@@ -1086,7 +1086,9 @@ describe("PoliticianDetails", () => {
     const facts = page.getByRole("definition").all();
     expect(facts.map((d) => d.element().textContent)).toEqual([staffCopy.politicians.noEmail, MP.salutation]);
     await expect.element(page.getByRole("heading", { name: staffCopy.politician.writing })).toBeVisible();
-    await expect.element(page.getByText(staffCopy.politician.sources.staff)).toBeVisible();
+    await expect
+      .element(page.getByText(`${staffCopy.politician.source} ${staffCopy.politician.sources.staff}`))
+      .toBeVisible();
     // The notes keep their lines.
     expect(getComputedStyle(page.getByText(/example fair/).element()).whiteSpace).toBe("pre-line");
     await expect.element(page.getByRole("region", { name: staffCopy.politician.statusesTitle })).toBeVisible();
@@ -1103,10 +1105,10 @@ describe("PoliticianDetails", () => {
     await expect.element(page.getByRole("heading", { name: staffCopy.politician.notes })).not.toBeInTheDocument();
   });
 
-  it("links their address, to write to them, and has no party or country for someone with none", async () => {
+  it("links their address, to write to them, and has no party, country or salutation for someone with none", async () => {
     await render(
       <PoliticianDetails
-        politician={{ ...MP, party: "", country: null, status: "retired" }}
+        politician={{ ...MP, party: "", country: null, status: "retired", salutation: "" }}
         unblock={vi.fn()}
         {...none}
       />,
@@ -1115,6 +1117,13 @@ describe("PoliticianDetails", () => {
     expect([...document.querySelectorAll("small")].map((small) => small.textContent)).toEqual([
       staffCopy.politician.status,
     ]);
+    // No salutation, no line for it.
+    expect(
+      page
+        .getByRole("term")
+        .all()
+        .map((dt) => dt.element().textContent),
+    ).toEqual([staffCopy.fields.email]);
   });
 
   it("sends Airtable's politicians to Airtable, saying if their record has gone; each says where they came from", async () => {
@@ -1131,7 +1140,7 @@ describe("PoliticianDetails", () => {
         await expect.element(page.getByText(staffCopy.politician.editInAirtable, { exact: false })).toBeVisible();
       } else {
         await expect.element(record).not.toBeInTheDocument();
-        await expect.element(page.getByText(source)).toBeVisible();
+        await expect.element(page.getByText(`${staffCopy.politician.source} ${source}`)).toBeVisible();
         expect(page.getByRole("heading", { level: 1 }).element().textContent).toBe(
           `${MP.name}${staffCopy.politicians.testMp}`,
         );
@@ -3059,6 +3068,7 @@ const chips = () =>
 
 /** Opens a filter's menu, by its button, and gives its links' words and addresses. */
 async function menu(button: string) {
+  await userEvent.keyboard("{Escape}");
   await page.getByRole("button", { name: button }).click();
   const box = document.querySelector<HTMLElement>("[popover]:popover-open")!;
   return [...box.querySelectorAll("a")].map((a) => [a.textContent, a.getAttribute("href")]);
@@ -3091,22 +3101,22 @@ describe("PoliticianFilters", () => {
     page: "2",
   };
 
-  it("has a chip for each filter on, the answer named after its ask, and Clear all keeping the house", async () => {
+  it("has a chip for each filter on, the ask and its answer one, and Clear filters keeping the house", async () => {
     await render(<PoliticianFilters search={search} asks={exampleAsks} parties={["Green", "Labour"]} />);
     const edinburgh = ask("edinburgh-conference-2026").title;
     expect(chips()).toEqual([
       `${staffCopy.fields.party}: Labour`,
       `${copy.status}: ${staffCopy.personStatuses.retired}`,
-      `${copy.ask}: ${edinburgh}`,
-      `${edinburgh}: ${staffCopy.statuses.declined}`,
+      edinburgh,
+      staffCopy.statuses.declined,
     ]);
-    // The answers are the ask's kind's, and none; another ask takes the answer away.
-    expect((await menu(`${edinburgh}: ${staffCopy.statuses.declined}`)).map(([text]) => text)).toEqual([
+    // Any answer, then the answers of the ask's kind, and none; another ask takes the answer away.
+    expect((await menu(staffCopy.statuses.declined)).map(([text]) => text)).toEqual([
+      copy.anyAnswer,
       ...ASK_STATUSES.event.map((s) => staffCopy.statuses[s]),
       copy.noAnswer,
-      staffCopy.filters.remove,
     ]);
-    const asks = await menu(`${copy.ask}: ${edinburgh}`);
+    const asks = await menu(edinburgh);
     expect(asks.find(([text]) => text === ask("frontier-ai-letter").title)![1]).toBe(
       "/staff/politicians?q=blake&house=lords&status=retired&party=Labour&ask=frontier-ai-letter&sort=asks&dir=asc",
     );

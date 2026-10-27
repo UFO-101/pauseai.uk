@@ -1,8 +1,8 @@
-/* A menu's box: over the page, a card's border and shadow, scrolling when
-   its choices are many. */
+/* A menu's box: over the page, a card's border and shadow, scrolling only
+   when its choices are more than the window holds. */
 .menu {
   max-width: min(22rem, calc(100vw - 2 * var(--space-4)));
-  max-height: min(28rem, 80vh);
+  max-height: calc(100vh - 2 * var(--space-4));
   padding: var(--space-3);
   overflow: auto;
   border: 1px solid var(--border-strong);
@@ -11,6 +11,10 @@
   box-shadow: 0 6px 24px rgb(var(--text-rgb) / 0.15);
   color: var(--text);
   font-size: var(--text-sm);
+}
+
+.wide {
+  max-width: min(48rem, calc(100vw - 2 * var(--space-4)));
 }
 
 /* Hung from its button's bottom left, where the browser can anchor it. */

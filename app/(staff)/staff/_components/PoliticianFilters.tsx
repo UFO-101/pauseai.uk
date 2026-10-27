@@ -11,7 +11,7 @@ const copy = staffCopy.politicians;
  * search, then the table's columns in its order, then Airtable's markers.
  * Status is those in office unless another is chosen. An answer is offered
  * once there's an ask, from those its kind allows, and goes with it. The
- * house is the tabs over the list, which Clear all keeps.
+ * house is the tabs over the list, which Clear filters keeps.
  */
 export default function PoliticianFilters({
   search,
@@ -49,8 +49,8 @@ export default function PoliticianFilters({
       name: "answer",
       label: ask?.title ?? copy.answer,
       after: "ask",
-      chip: (choice) => `${ask?.title ?? copy.answer}: ${choice}`,
       options: [
+        { value: "", label: copy.anyAnswer },
         // With no ask, as a link from the dashboard can have it, any ask's answers.
         ...(ask ? ASK_STATUSES[ask.kind] : [...new Set(Object.values(ASK_STATUSES).flat())]).map((value) => ({
           value,

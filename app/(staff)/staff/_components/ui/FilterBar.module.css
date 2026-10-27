@@ -1,4 +1,4 @@
-/* A list's filters: the search, then the chips, + Filter and Clear all,
+/* A list's filters: the search, then the chips, + Filter and Clear filters,
    in a row that wraps, lined up along their bottoms. */
 .bar {
   display: flex;
@@ -8,8 +8,7 @@
   margin-block: var(--space-4);
 }
 
-/* The search box and its button, side by side, the box wide enough for a
-   label that names what it searches. */
+/* The search box and its button, side by side. */
 .search {
   display: flex;
   gap: var(--space-3);
@@ -84,14 +83,32 @@
   content: " ▾" / "";
 }
 
+/* A filter and the one after it: one lozenge, cut down the middle. */
+.pair {
+  display: flex;
+}
+
+.pair > .chip:first-of-type {
+  border-right-width: 0;
+  border-radius: 999px 0 0 999px;
+}
+
+.pair > .chip:last-of-type {
+  border-radius: 0 999px 999px 0;
+}
+
 /* + Filter: plain, as the small ghost button. */
 .add {
   border-color: var(--border-strong);
   background: transparent;
 }
 
+/* Clear filters: the chips' height, so its text is level with theirs. */
 .clearAll {
-  align-self: center;
+  display: flex;
+  align-items: center;
+  height: 36px;
+  margin-left: var(--space-1);
   font-size: var(--text-sm);
 }
 
@@ -101,8 +118,11 @@
   font-weight: 700;
 }
 
-.group + .group {
-  margin-top: var(--space-3);
+/* + Filter's filters, side by side as the menu's width allows. */
+.groups {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3) var(--space-5);
 }
 
 .choices {
@@ -111,6 +131,20 @@
   margin: 0;
   padding: 0;
   list-style: none;
+}
+
+/* Many choices: in two columns, but on a phone. */
+@media (min-width: 721px) {
+  .many {
+    display: block;
+    columns: 2;
+    column-gap: var(--space-5);
+  }
+}
+
+.many li {
+  margin-bottom: 2px;
+  break-inside: avoid;
 }
 
 .choices a {

@@ -307,24 +307,28 @@ accounts table, your sessions).
 above it, and a list's own filters component only says what its filters
 are:
 
-- The search box comes first, labelled with what it searches, and its
-  button beside it. A search waits for the button, or Enter, so the list
+- The search box comes first, "Search" in it until something's typed (its
+  accessible name says what it searches), and its button beside it. A search waits for the button, or Enter, so the list
   doesn't change while someone types. While there's a search, an × in the
   box empties it.
 - Only the filters that are on show, each as a chip: the filter's name
   and its choice, "Party: Labour". A chip opens its choices, and Remove.
+  A filter with more than a dozen choices shows them in two columns, in a
+  wider menu, so a menu scrolls only on a phone.
   A filter that isn't at its default is on, so a glance at the chips says
   what the list is filtered by.
 - "+ Filter" opens every other filter, its name and its choices; a choice
   applies at once. A filter has the name of the column it filters, and
   they come in the columns' order. Not every column gets one, only those
   someone will filter by.
-- A filter can come after another (`after`): it's offered only once that
-  one is on, goes when it does, and its chip can name it after the other.
-  An answer comes after its ask, "Edinburgh conference: Declined".
-- Clear all, last, while anything is on, empties the search and every
+- A filter can come after another (`after`): once that one is on, the
+  two are one chip in two halves, each opening its own choices, and it
+  goes when that one does. An ask's chip is "Edinburgh conference |
+  Declined", "Any answer" in the second half until one is chosen. On its
+  own, as from a link, it's an ordinary chip, "Answer: Signed".
+- Clear filters, last, while anything is on, empties the search and every
   filter, and the sort. A tab over the list, such as the politicians'
-  houses, isn't a filter: Clear all keeps it.
+  houses, isn't a filter: Clear filters keeps it.
 - Every choice is a link, so the URL holds the filters; a new filter
   starts from the first page. A chip's menu is a popover (`ui/Menu`).
 

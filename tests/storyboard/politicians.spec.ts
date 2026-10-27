@@ -96,8 +96,9 @@ test("the politicians list, filtered by status, marker and an answer to an ask, 
   await expect(page).toHaveURL(`${BASE}/staff/politicians`);
   await addFilter(page, filters.ask, "Edinburgh conference");
   await expect(page).toHaveURL(/ask=edinburgh-conference-2026$/);
-  // An answer is offered once there's an ask, named after it.
-  await addFilter(page, "Edinburgh conference", filters.noAnswer);
+  await frame(page, "the ask's chip, its second half for an answer");
+  // The answer is chosen in the second half of the ask's chip.
+  await changeFilter(page, filters.anyAnswer, filters.noAnswer);
   await expect(page).toHaveURL(/ask=edinburgh-conference-2026&answer=none/);
   await expect(rows.filter({ hasText: "Polly Placeholder" })).toHaveCount(0);
   await expect(rows.filter({ hasText: "Ms Dora Dummy" })).toBeVisible();

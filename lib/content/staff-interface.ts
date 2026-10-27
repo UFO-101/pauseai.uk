@@ -399,8 +399,11 @@ export const staffCopy = {
       removed: "No longer in Airtable",
     } as Record<string, string>,
     ask: "Ask",
-    // An answer to the ask chosen, offered once there's an ask; the filter and its chip are named after the ask.
+    // An answer to the ask chosen, in the second half of the ask's chip, its menu named after the ask. With no
+    // ask, as a link from the dashboard can have it, its own chip.
     answer: "Answer",
+    // In the second half of the ask's chip, before an answer is chosen.
+    anyAnswer: "Any answer",
     noAnswer: "Not answered",
     none: "None found.",
     // Over the list: how many there are, and the page.
@@ -508,9 +511,9 @@ export const staffCopy = {
     askedThem: (who: string, kind: string) =>
       `${who ? `${who} asked` : "Asked"} them to ${kind === "letter" ? "sign" : "attend"}`,
     // The box at the top of their page: where they came from, and each campaign's status.
-    source: "Source",
+    source: "Source:",
     sources: {
-      airtable: "Airtable's UK Parliamentarians",
+      airtable: "Airtable",
       staff: "Added by staff",
       test: "A test MP",
     },
@@ -529,7 +532,7 @@ export const staffCopy = {
     country: "Country",
     notes: "Notes",
     // Over how to write to them: their address and salutation.
-    writing: "⁂ Writing to them",
+    writing: "Writing to them",
     // Airtable's markers, as tags by their name.
     importantTarget: "Important target",
     personalConnection: "Personal connection",
@@ -563,7 +566,7 @@ export const staffCopy = {
       confirm: "Delete for good",
     },
     // On an MP from Airtable, after the source, which links to their record there.
-    editInAirtable: ", update name / email there.",
+    editInAirtable: ", update there.",
     // On an ask that isn't set by hand: where its statuses come from.
     importedAsk: "set each night by an import",
     personalised: "personalised",
@@ -901,13 +904,13 @@ export const staffCopy = {
   // The button beside a list's search box; its other filters apply as soon as they're chosen.
   search: "Search",
   // After a list's filters: the list with none.
-  resetFilters: "Reset filters",
+  resetFilters: "Clear filters",
   // A list's filters: the × in the search box, + Filter, which offers the filters not on, and on a filter's
   // chip, the way to take it off.
   filters: {
-    clearSearch: "⁂ Clear the search",
-    add: "⁂ + Filter",
-    remove: "⁂ Remove",
+    clearSearch: "Clear the search",
+    add: "+ Filter",
+    remove: "Remove",
   },
   // Under a list of more than one page.
   paging: {

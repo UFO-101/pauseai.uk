@@ -65,9 +65,10 @@
   text-transform: uppercase;
 }
 
-/* Where they came from, small, at the foot of the box. */
+/* Where they came from, small, in the box's bottom right corner. */
 .source {
-  margin: var(--space-4) 0 0;
+  margin: var(--space-2) 0 0;
+  text-align: right;
   color: var(--text-secondary);
   font-size: var(--text-sm);
 }
@@ -182,6 +183,7 @@
 
 /* Notes kept as they were written, a line each. */
 .notes {
+  margin: 0;
   white-space: pre-line;
 }
 

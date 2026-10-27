@@ -502,6 +502,7 @@ export default function PoliticianDetails({
             </section>
           )}
           <p className={styles.source}>
+            {copy.source}{" "}
             {politician.airtableId ? (
               <>
                 <a href={`${airtableTable}/${politician.airtableId}`} target="_blank" rel="noreferrer">

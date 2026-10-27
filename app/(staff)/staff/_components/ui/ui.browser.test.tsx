@@ -111,7 +111,15 @@ describe("FilterBar", () => {
   const filters: Filter[] = [
     { name: "kind", label: "Kind", options: [{ value: "a", label: "A" }] },
     { name: "ask", label: "Ask", options: [{ value: "x", label: "X" }] },
-    { name: "answer", label: "Answer", after: "ask", options: [{ value: "yes", label: "Yes" }] },
+    {
+      name: "answer",
+      label: "Answer",
+      after: "ask",
+      options: [
+        { value: "", label: "Any" },
+        { value: "yes", label: "Yes" },
+      ],
+    },
   ];
   const bar = (values: Record<string, string>) => (
     <FilterBar path="/list" values={values} search={{ name: "q", label: "Search" }} filters={filters} keep={["tab"]} />
@@ -130,30 +138,74 @@ describe("FilterBar", () => {
     expect([form.method, form.getAttribute("action"), new FormData(form).get("tab")]).toEqual(["get", "/list", "t"]);
   });
 
-  it("with filters on: a chip each, an unknown value as it is; removing one removes what comes after it", async () => {
+  it("with filters on: a chip each, the one after another its second half; removing one removes what comes after it", async () => {
     await render(bar({ q: "jo", ask: "x", answer: "maybe", page: "3", tab: "t" }));
     await expect
       .element(page.getByRole("link", { name: staffCopy.filters.clearSearch }))
       .toHaveAttribute("href", "/list?ask=x&answer=maybe&tab=t");
     const form = page.getByRole("search").element() as HTMLFormElement;
     expect(new FormData(form).has("page")).toBe(false);
-    await page.getByRole("button", { name: "Ask: X" }).click();
+    // One lozenge, named for the first, its halves the choices made, an unknown one as it is.
+    const pair = page.getByRole("group", { name: "Ask" });
+    expect(
+      pair
+        .getByRole("button")
+        .all()
+        .map((b) => b.element().textContent),
+    ).toEqual(["X", "maybe"]);
+    await pair.getByRole("button", { name: "X" }).click();
     expect(links()).toEqual(["/list?q=jo&ask=x&tab=t", "/list?q=jo&tab=t"]);
-    await page.getByRole("button", { name: "Answer: maybe" }).click();
-    expect(links()).toEqual(["/list?q=jo&ask=x&answer=yes&tab=t", "/list?q=jo&ask=x&tab=t"]);
+    // The second half has no remove: its blank choice takes it off.
+    await pair.getByRole("button", { name: "maybe" }).click();
+    expect(links()).toEqual(["/list?q=jo&ask=x&tab=t", "/list?q=jo&ask=x&answer=yes&tab=t"]);
     expect(document.querySelector("[popover]:popover-open a[aria-current]")).toBeNull();
     await expect
       .element(page.getByRole("link", { name: staffCopy.resetFilters }))
       .toHaveAttribute("href", "/list?tab=t");
   });
 
-  it("has no + Filter once every filter is on, and Clear all for a search alone", async () => {
+  it("names the second half by its blank choice until one is made, and one after nothing on is its own chip", async () => {
+    const { rerender } = await render(bar({ ask: "x" }));
+    expect(
+      page
+        .getByRole("group", { name: "Ask" })
+        .getByRole("button")
+        .all()
+        .map((b) => b.element().textContent),
+    ).toEqual(["X", "Any"]);
+    await rerender(bar({ answer: "yes" }));
+    await page.getByRole("button", { name: "Answer: Yes" }).click();
+    expect(links()).toEqual(["/list", "/list?answer=yes", "/list"]);
+  });
+
+  it("has no + Filter once every filter is on, and Clear filters for a search alone", async () => {
     const { rerender } = await render(bar({ kind: "a", ask: "x", answer: "yes" }));
     await expect.element(page.getByRole("button", { name: staffCopy.filters.add })).not.toBeInTheDocument();
     await page.getByRole("button", { name: "Kind: A" }).click();
     expect(document.querySelector("[popover]:popover-open a[aria-current]")!.textContent).toBe("A");
     await rerender(bar({ q: "jo" }));
     await expect.element(page.getByRole("link", { name: staffCopy.resetFilters })).toHaveAttribute("href", "/list");
+  });
+
+  it("puts many choices in a wider menu, in columns", async () => {
+    const options = Array.from({ length: 13 }, (_, i) => ({ value: `${i}`, label: `Choice ${i}` }));
+    await render(
+      <FilterBar
+        path="/list"
+        values={{ many: "1" }}
+        search={{ name: "q", label: "Search" }}
+        filters={[
+          { name: "many", label: "Many", options },
+          { name: "few", label: "Few", options: options.slice(0, 2) },
+        ]}
+      />,
+    );
+    await page.getByRole("button", { name: "Many: Choice 1" }).click();
+    const lists = () => [...document.querySelectorAll("[popover]:popover-open ul")];
+    expect(lists().map((ul) => getComputedStyle(ul).columnCount)).toEqual(["2"]);
+    await userEvent.keyboard("{Escape}");
+    await page.getByRole("button", { name: staffCopy.filters.add }).click();
+    expect(lists().map((ul) => getComputedStyle(ul).columnCount)).toEqual(["auto"]);
   });
 });
 

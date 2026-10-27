@@ -1287,7 +1287,7 @@ export const staff: Group = {
       file: "app/(staff)/staff/_components/PoliticianFilters.tsx",
       variants: [
         {
-          label: "Empty, and filled in",
+          label: "Empty, filled in, and an ask with no answer chosen",
           render: () => (
             <StaffPage as="div">
               <PoliticianFilters search={EMPTY_POLITICIAN_FILTERS} asks={exampleAsks} parties={parties} />
@@ -1302,6 +1302,11 @@ export const staff: Group = {
                   ask: "edinburgh-conference-2026",
                   answer: "declined",
                 }}
+                asks={exampleAsks}
+                parties={parties}
+              />
+              <PoliticianFilters
+                search={{ ...EMPTY_POLITICIAN_FILTERS, ask: "edinburgh-conference-2026" }}
                 asks={exampleAsks}
                 parties={parties}
               />
@@ -1403,7 +1408,7 @@ export const staff: Group = {
           ),
         },
         {
-          label: "A search and a filter on, each removable, and Clear all",
+          label: "A search and a filter on, each removable, and Clear filters",
           render: () => (
             <StaffPage as="div">
               <FilterBar

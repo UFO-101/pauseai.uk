@@ -1,17 +1,17 @@
-/* A row of tabs over a list, on a rule, the chosen one underlined in the
+/* A row of tabs over a list, on a rule (a shadow, so it's inside the box
+   that scrolls them sideways on a phone), the chosen one underlined in the
    accent colour over it. */
 .tabs {
   display: flex;
   gap: var(--space-4);
   margin-bottom: var(--space-4);
-  overflow-x: auto;
-  border-bottom: 1px solid var(--border);
+  overflow: auto hidden;
+  box-shadow: inset 0 -1px var(--border);
   font-size: var(--text-sm);
   white-space: nowrap;
 }
 
 .tabs a {
-  margin-bottom: -1px;
   padding: var(--space-2) 0;
   border-bottom: 2px solid transparent;
   color: var(--text-secondary);
