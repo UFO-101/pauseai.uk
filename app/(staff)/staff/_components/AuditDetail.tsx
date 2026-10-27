@@ -113,6 +113,7 @@ export default function AuditDetail({ change, airtableTable }: { change: LoggedC
     case "add politician":
     case "edit politician":
     case "remove politician":
+    case "delete politician":
       take("politicianId", "id", "name");
       lead.push(
         <Who

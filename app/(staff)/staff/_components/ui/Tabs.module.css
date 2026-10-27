@@ -1,0 +1,29 @@
+/* A row of tabs over a list, on a rule, the chosen one underlined in the
+   accent colour over it. */
+.tabs {
+  display: flex;
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
+  overflow-x: auto;
+  border-bottom: 1px solid var(--border);
+  font-size: var(--text-sm);
+  white-space: nowrap;
+}
+
+.tabs a {
+  margin-bottom: -1px;
+  padding: var(--space-2) 0;
+  border-bottom: 2px solid transparent;
+  color: var(--text-secondary);
+  text-decoration: none;
+}
+
+.tabs a:hover {
+  color: var(--text);
+}
+
+.tabs a[aria-current="page"] {
+  border-bottom-color: var(--accent);
+  color: var(--text);
+  font-weight: 600;
+}

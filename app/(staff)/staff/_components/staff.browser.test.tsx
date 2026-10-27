@@ -58,6 +58,7 @@ import AccountsNotice from "./AccountsNotice";
 import Alert from "./Alert";
 import Breadcrumb from "./Breadcrumb";
 import EraseLink from "./EraseLink";
+import DeletePolitician from "./DeletePolitician";
 import ImportCard, { ImportCards } from "./ImportCard";
 import DevLogin from "./DevLogin";
 import KeepSignedIn from "./KeepSignedIn";
@@ -753,6 +754,20 @@ describe("EraseLink", () => {
       .element(page.getByRole("link", { name: staffCopy.erase.title }))
       .toHaveAttribute("href", "/staff/supporters/7/erase");
     await expect.element(page.getByText(staffCopy.erase.note)).toBeVisible();
+  });
+});
+
+describe("DeletePolitician", () => {
+  it("is the red button with its note, opening a box that asks to be sure, whose button sends their ID", async () => {
+    const { fn, sent } = action();
+    await render(<DeletePolitician politician={{ id: 7, name: "Polly Placeholder" }} action={fn} />);
+    const copy = staffCopy.politician.delete;
+    await expect.element(page.getByText(copy.note)).toBeVisible();
+    await expect.element(page.getByText(copy.sure("Polly Placeholder"))).not.toBeVisible();
+    await page.getByRole("button", { name: copy.button, exact: true }).click();
+    await expect.element(page.getByText(copy.sure("Polly Placeholder"))).toBeVisible();
+    await page.getByRole("button", { name: copy.confirm }).click();
+    await expect.poll(() => sent).toEqual([{ politicianId: "7" }]);
   });
 });
 
@@ -1631,6 +1646,7 @@ describe("PoliticianFilters", () => {
     answer: "declined",
     sort: "asks",
     dir: "asc",
+    page: "2",
   };
 
   it("is a GET form to the list, filled in with the current filters and keeping the sort", async () => {
@@ -1640,7 +1656,6 @@ describe("PoliticianFilters", () => {
     const select = (name: string) => page.getByRole("combobox", { name, exact: true });
     const options = (name: string) => [...(select(name).element() as HTMLSelectElement).options].map((o) => o.value);
     for (const [label, value] of [
-      [staffCopy.fields.house, "lords"],
       [staffCopy.fields.party, "Labour"],
       [copy.status, "retired"],
       [copy.ask, "edinburgh-conference-2026"],
@@ -1650,12 +1665,17 @@ describe("PoliticianFilters", () => {
       await expect.element(select(label)).toHaveValue(value);
     }
     expect(options(staffCopy.fields.party)).toEqual(["", "Green", "Labour"]);
+    // In office unless another status is chosen, or any.
+    expect(options(copy.status)).toEqual(["", "died", "retired", "left_office", "any"]);
     expect(options(copy.ask)).toEqual(["", ...exampleAsks.map((a) => a.slug)]);
     // Every answer any ask allows, and none.
     expect(options(copy.answer)).toEqual(["", "signed", ...ASK_STATUSES.event, "none"]);
     const form = page.getByRole("searchbox").element().closest("form")!;
     expect(form.getAttribute("method")).toBe("get");
     expect(form.getAttribute("action")).toBe("/staff/politicians");
+    expect(new FormData(form).get("house")).toBe("lords");
+    // A new filter starts from the first page.
+    expect(new FormData(form).has("page")).toBe(false);
     expect(new FormData(form).get("sort")).toBe("asks");
     expect(new FormData(form).get("dir")).toBe("asc");
     // Reset is the list with no filter.
@@ -1665,8 +1685,16 @@ describe("PoliticianFilters", () => {
   });
 
   it("sends no sort when the list has its default one", async () => {
-    await render(<PoliticianFilters search={{ ...search, sort: "", dir: "" }} asks={[]} parties={[]} />);
+    await render(
+      <PoliticianFilters
+        search={{ ...search, house: "", status: "in_office", sort: "", dir: "" }}
+        asks={[]}
+        parties={[]}
+      />,
+    );
+    await expect.element(page.getByRole("combobox", { name: staffCopy.politicians.status })).toHaveValue("");
     const form = page.getByRole("searchbox").element().closest("form")!;
+    expect(new FormData(form).has("house")).toBe(false);
     expect(new FormData(form).has("sort")).toBe(false);
     expect(new FormData(form).has("dir")).toBe(false);
   });
@@ -1743,6 +1771,9 @@ describe("PoliticianTable", () => {
       status: "retired" as const,
       emailBlocked: true,
       house: "lords" as const,
+      constituency: null,
+      party: "Crossbench",
+      importantTarget: false,
     };
     await render(
       <PoliticianTable
@@ -1756,7 +1787,14 @@ describe("PoliticianTable", () => {
               "frontier-ai-letter": { ...MP.statuses["frontier-ai-letter"], updatedBy: "airtable" },
             },
           },
-          { ...testMp, id: 9, name: "Nora Nothing", statuses: {} },
+          {
+            ...testMp,
+            id: 9,
+            name: "Nora Nothing",
+            statuses: {},
+            personalConnection: true,
+            airtableRemovedAt: "2026-10-20T02:00:00Z",
+          },
         ]}
       />,
     );
@@ -1775,7 +1813,16 @@ describe("PoliticianTable", () => {
         .map((c) => c.element().textContent);
     // Whether they're in office, the counts of letters and replies, each heading a sort, and their answer to each
     // ask they've answered, a line each, in the asks' order, the answer in bold first.
-    expect(cells("Polly Placeholder").slice(4, 7)).toEqual([staffCopy.personStatuses.in_office, "4", "1"]);
+    const flags = staffCopy.politicians.flags;
+    expect(cells("Polly Placeholder").slice(4, 8)).toEqual([
+      staffCopy.personStatuses.in_office,
+      flags.important,
+      "4",
+      "1",
+    ]);
+    // Airtable's markers as lozenges.
+    expect(cells("Nora Nothing")[5]).toBe(`${flags.connection}${flags.removed}`);
+    expect(cells("Testy McTestface MP")[5]).toBe("");
     const answers = (name: string) =>
       page
         .getByRole("row")
@@ -1809,6 +1856,46 @@ describe("PoliticianTable", () => {
   it("says when nobody matches", async () => {
     await render(<PoliticianTable politicians={[]} asks={exampleAsks} />);
     await expect.element(page.getByText(staffCopy.politicians.none)).toBeVisible();
+  });
+
+  it("leaves out a column that's the same in every row, or blank in all of them", async () => {
+    const plain = { ...MP, importantTarget: false };
+    const headings = () => [...document.querySelectorAll("th")].map((th) => th.textContent!.replace(/ [▲▼]$/, ""));
+    const { rerender } = await render(
+      <PoliticianTable politicians={[plain, { ...plain, id: 8, name: "Other", constituency: "Ipswich" }]} asks={[]} />,
+    );
+    expect(headings()).toEqual([
+      staffCopy.fields.name,
+      staffCopy.fields.constituency,
+      staffCopy.politicians.columns.letters,
+      staffCopy.politicians.columns.replies,
+      staffCopy.politicians.columns.asks,
+    ]);
+    // A column the filters fix, however few rows: a house, a party, one status.
+    await rerender(
+      <PoliticianTable
+        politicians={[{ ...plain, constituency: null }]}
+        asks={[]}
+        search={{ house: "commons", party: "Labour (Co-op)", status: "" }}
+      />,
+    );
+    expect(headings()).toEqual([
+      staffCopy.fields.name,
+      staffCopy.politicians.columns.letters,
+      staffCopy.politicians.columns.replies,
+      staffCopy.politicians.columns.asks,
+    ]);
+    // A row on its own shows what it has, but not a blank.
+    await rerender(<PoliticianTable politicians={[{ ...plain, constituency: null }]} asks={[]} />);
+    expect(headings()).toEqual([
+      staffCopy.fields.name,
+      staffCopy.fields.house,
+      staffCopy.fields.party,
+      staffCopy.politicians.columns.status,
+      staffCopy.politicians.columns.letters,
+      staffCopy.politicians.columns.replies,
+      staffCopy.politicians.columns.asks,
+    ]);
   });
 });
 

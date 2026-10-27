@@ -6,6 +6,7 @@ import {
   lettersSearch,
   pageNumber,
   pagePath,
+  filtersPath,
   politicianId,
   supporterId,
   supportersSearch,
@@ -111,6 +112,18 @@ describe("pageNumber", () => {
   it("reads a page from 1, or the first page", () => {
     expect(pageNumber("3")).toBe(3);
     for (const page of ["0", "x", "", undefined]) expect(pageNumber(page)).toBe(1);
+  });
+});
+
+describe("filtersPath", () => {
+  it("keeps the filters given, with the changes, and leaves out the blank ones", () => {
+    expect(filtersPath("/staff/politicians", { q: "jo", house: "lords", party: "" }, { house: "" })).toBe(
+      "/staff/politicians?q=jo",
+    );
+    expect(filtersPath("/staff/politicians", { q: "jo" }, { status: "any" })).toBe(
+      "/staff/politicians?q=jo&status=any",
+    );
+    expect(filtersPath("/staff/politicians", {})).toBe("/staff/politicians");
   });
 });
 

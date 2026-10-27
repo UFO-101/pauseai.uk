@@ -3,6 +3,7 @@ import { render } from "vitest-browser-react";
 import { page } from "vitest/browser";
 import { TextInput } from "@/components/ui/Controls";
 import StaffPage from "./StaffPage";
+import Tabs from "./Tabs";
 
 describe("StaffPage", () => {
   it("is the page's main landmark, the full width", async () => {
@@ -61,5 +62,26 @@ describe("StaffPage", () => {
     const height = (name: string) => page.getByRole("textbox", { name }).element().getBoundingClientRect().height;
     expect(height("Outside")).toBe(48);
     expect(height("Inside")).toBe(36);
+  });
+});
+
+describe("Tabs", () => {
+  it("is a row of links, the chosen one marked as the page", async () => {
+    await render(
+      <Tabs
+        label="House"
+        current="lords"
+        tabs={[
+          { key: "", label: "All", href: "/staff/politicians" },
+          { key: "lords", label: "Lords", href: "/staff/politicians?house=lords" },
+        ]}
+      />,
+    );
+    const nav = page.getByRole("navigation", { name: "House" });
+    await expect.element(nav.getByRole("link", { name: "All" })).not.toHaveAttribute("aria-current");
+    await expect.element(nav.getByRole("link", { name: "Lords" })).toHaveAttribute("aria-current", "page");
+    await expect
+      .element(nav.getByRole("link", { name: "Lords" }))
+      .toHaveAttribute("href", "/staff/politicians?house=lords");
   });
 });

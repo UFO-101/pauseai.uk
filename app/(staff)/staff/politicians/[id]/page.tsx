@@ -5,10 +5,11 @@ import { listAsks } from "@/lib/server/asks";
 import { blockOn } from "@/lib/server/email";
 import { pauseaiLetters, politicianLetters } from "@/lib/server/letters";
 import { PARLIAMENTARIANS_TABLE_URL } from "@/lib/server/outside-services/airtable";
-import { getPolitician, politicianHistory } from "@/lib/server/politicians";
+import { canDeletePolitician, getPolitician, politicianHistory } from "@/lib/server/politicians";
 import { requireStaff } from "@/lib/server/staff-auth";
 import { politicianId } from "@/lib/staff-search";
-import { setAskStatus, unblockAddress } from "../../actions";
+import { deletePoliticianNow, setAskStatus, unblockAddress } from "../../actions";
+import DeletePolitician from "../../_components/DeletePolitician";
 import PoliticianDetails from "../../_components/PoliticianDetails";
 import Breadcrumb from "../../_components/Breadcrumb";
 import StaffNav from "../../_components/StaffNav";
@@ -25,12 +26,13 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
 export default async function PoliticianPage({ params }: Params) {
   const { email, permissions, sessions } = await requireStaff();
   const politician = found(await getPolitician(found(politicianId((await params).id))));
-  const [asks, block, letters, fromPauseai, history] = await Promise.all([
+  const [asks, block, letters, fromPauseai, history, deletable] = await Promise.all([
     listAsks(),
     blockOn(politician.email),
     politicianLetters(politician.id, permissions),
     pauseaiLetters(politician.id),
     politicianHistory(politician.id, politician.email),
+    canDeletePolitician(politician.id),
   ]);
   return (
     <StaffPage nav={<StaffNav email={email} permissions={permissions} sessions={sessions} current="politicians" />}>
@@ -46,6 +48,7 @@ export default async function PoliticianPage({ params }: Params) {
         history={history}
         airtableTable={PARLIAMENTARIANS_TABLE_URL}
       />
+      {deletable && <DeletePolitician politician={politician} action={deletePoliticianNow} />}
     </StaffPage>
   );
 }

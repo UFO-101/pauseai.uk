@@ -12,6 +12,8 @@ const copy = staffCopy.politicians;
 /**
  * Search and filter the politicians list, among `parties` and `asks`: the
  * search, then the table's columns in its order, then Airtable's markers.
+ * The house is the tabs over it, and the form keeps it. Status is those in
+ * office unless another is chosen.
  * The answers to choose from are every kind's. The column headings sort
  * it; the form keeps that sort. Keyed on the filters, so a new URL, such as
  * Reset's, gives a fresh form, not the old choices.
@@ -34,16 +36,6 @@ export default function PoliticianFilters({
       <Button variant="primary" size="small" type="submit">
         {staffCopy.search}
       </Button>
-      <Field label={staffCopy.fields.house}>
-        <Select name="house" defaultValue={search.house}>
-          <option value="">{copy.allHouses}</option>
-          {Object.entries(staffCopy.houses).map(([value, label]) => (
-            <option key={value} value={value}>
-              {label}
-            </option>
-          ))}
-        </Select>
-      </Field>
       <Field label={staffCopy.fields.party}>
         <Select name="party" defaultValue={search.party}>
           <option value="">{copy.allParties}</option>
@@ -55,13 +47,16 @@ export default function PoliticianFilters({
         </Select>
       </Field>
       <Field label={copy.status}>
-        <Select name="status" defaultValue={search.status}>
-          <option value="">{copy.anyStatus}</option>
-          {Object.entries(staffCopy.personStatuses).map(([value, label]) => (
-            <option key={value} value={value}>
-              {label}
-            </option>
-          ))}
+        <Select name="status" defaultValue={search.status === "in_office" ? "" : search.status}>
+          <option value="">{staffCopy.personStatuses.in_office}</option>
+          {Object.entries(staffCopy.personStatuses)
+            .filter(([value]) => value !== "in_office")
+            .map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          <option value="any">{copy.anyStatus}</option>
         </Select>
       </Field>
       <Field label={copy.ask}>
@@ -95,6 +90,7 @@ export default function PoliticianFilters({
           ))}
         </Select>
       </Field>
+      {search.house && <input type="hidden" name="house" value={search.house} />}
       {search.sort && <input type="hidden" name="sort" value={search.sort} />}
       {search.dir && <input type="hidden" name="dir" value={search.dir} />}
       <ButtonLink variant="ghost" size="small" href="/staff/politicians">

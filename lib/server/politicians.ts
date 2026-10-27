@@ -2,9 +2,11 @@ import "server-only";
 import type { AskStatus } from "@/lib/asks";
 import type { Mp, MpStatuses } from "@/lib/email-your-mp";
 import { parseSort, type SortSpec } from "@/lib/staff-sort";
+import { pageNumber } from "@/lib/staff-search";
 import { POLITICIAN_COLUMNS, POLITICIAN_SORTS, type PoliticianSort } from "@/lib/politician-sort";
 import { query, transaction, type Queryable } from "./db";
 import { type AuditEntry, logChange } from "./audit";
+import { CLOSE_ENOUGH, closeness, contains, everyWord } from "./search";
 
 // Politicians, the notable people who are in a parliament or were, and
 // their answer to each ask. A politician is a row of notable_people, with
@@ -122,10 +124,11 @@ function toPolitician({ statuses, ...row }: Row): Politician {
 }
 
 export type PoliticianFilter = {
-  /** Matches name, constituency, party or email. */
+  /** Every word is in their name, constituency, party or email. */
   search?: string;
   house?: House;
-  status?: PersonStatus;
+  /** Those with this status, or, with "out", every status but in office. */
+  status?: PersonStatus | "out";
   party?: string;
   importantTarget?: boolean;
   personalConnection?: boolean;
@@ -136,12 +139,17 @@ export type PoliticianFilter = {
   /** Only those who gave this answer, to `ask` or, without one, to any ask; "none" for those who gave none. */
   answer?: string;
   sort?: SortSpec<PoliticianSort>;
+  /** Which page of POLITICIANS_PAGE_SIZE, from 1. */
+  page?: number;
 };
+
+export const POLITICIANS_PAGE_SIZE = 100;
 
 /** The politicians page's filters, each as typed in its URL. */
 export type PoliticiansSearch = {
   q: string;
   house: string;
+  /** Blank for those in office, "any" for everyone. */
   status: string;
   party: string;
   /** "important", "connection" or "removed": the boxes ticked in Airtable, and those it no longer has. */
@@ -150,11 +158,13 @@ export type PoliticiansSearch = {
   answer: string;
   sort: string;
   dir: string;
+  page: string;
 };
 
 /**
  * The politicians page's filter, from its URL: each field as typed, for the
- * form, and the filter they make, leaving out what's blank or unknown.
+ * form, and the filter they make, leaving out what's blank or unknown, but
+ * for the status: those in office unless it's given.
  */
 export function politiciansSearch({
   q = "",
@@ -166,11 +176,12 @@ export function politiciansSearch({
   answer = "",
   sort = "",
   dir = "",
+  page = "",
 }: Partial<PoliticiansSearch>): PoliticiansSearch & { filter: PoliticianFilter } {
   const filter: PoliticianFilter = {
-    search: q || undefined,
+    search: q.trim() || undefined,
     house: isHouse(house) ? house : undefined,
-    status: isPersonStatus(status) ? status : undefined,
+    status: isPersonStatus(status) ? status : status === "any" ? undefined : "in_office",
     party: party || undefined,
     importantTarget: flag === "important" || undefined,
     personalConnection: flag === "connection" || undefined,
@@ -178,26 +189,27 @@ export function politiciansSearch({
     ask: ask || undefined,
     answer: answer || undefined,
     sort: parseSort(POLITICIAN_SORTS, "name", sort, dir),
+    page: pageNumber(page),
   };
-  return { q, house, status, party, flag, ask, answer, sort, dir, filter };
+  return { q, house, status, party, flag, ask, answer, sort, dir, page, filter };
 }
 
-/** Politicians for the staff interface: the test MPs first, then by the column asked for, by name to start. */
-export async function listPoliticians(filter: PoliticianFilter = {}, limit = 200): Promise<Politician[]> {
+/**
+ * The WHERE clause for `filter`, its values added with `value`. With
+ * `closest`, the search is left out, for closestPoliticians to rank by.
+ */
+function politicianWhere(filter: PoliticianFilter, value: (v: unknown) => string, closest = false): string {
   const where: string[] = [];
-  const values: unknown[] = [];
-  const value = (v: unknown) => {
-    values.push(v);
-    return `$${values.length}`;
-  };
-  if (filter.search) {
-    const like = value(`%${filter.search}%`);
+  if (filter.search && !closest) {
     where.push(
-      `(n.name ILIKE ${like} OR p.constituency ILIKE ${like} OR p.party ILIKE ${like} OR n.email ILIKE ${like})`,
+      everyWord(filter.search, value, (like) =>
+        ["n.name", "p.constituency", "p.party", "n.email"].map((column) => contains(column, like)).join(" OR "),
+      ),
     );
   }
   if (filter.house) where.push(`p.house = ${value(filter.house)}`);
-  if (filter.status) where.push(`n.status = ${value(filter.status)}`);
+  if (filter.status === "out") where.push("n.status <> 'in_office'");
+  else if (filter.status) where.push(`n.status = ${value(filter.status)}`);
   if (filter.party) where.push(`p.party = ${value(filter.party)}`);
   if (filter.importantTarget) where.push("n.important_target");
   if (filter.personalConnection) where.push("n.personal_connection");
@@ -211,9 +223,66 @@ export async function listPoliticians(filter: PoliticianFilter = {}, limit = 200
       where.push(`EXISTS (SELECT 1 FROM ask_statuses a WHERE a.notable_person_id = n.id${ask}${answer})`);
     }
   }
+  return where.length ? `WHERE ${where.join(" AND ")}` : "";
+}
+
+/** A query's values, and the function that adds one and gives its parameter. */
+function parameters(): [unknown[], (v: unknown) => string] {
+  const values: unknown[] = [];
+  return [
+    values,
+    (v) => {
+      values.push(v);
+      return `$${values.length}`;
+    },
+  ];
+}
+
+/**
+ * A page of politicians for the staff interface: the test MPs first, then by
+ * the column asked for, by name to start.
+ */
+export async function listPoliticians(
+  filter: PoliticianFilter = {},
+  limit = POLITICIANS_PAGE_SIZE,
+): Promise<Politician[]> {
+  const [values, value] = parameters();
+  const offset = ((filter.page ?? 1) - 1) * limit;
   const rows = await query<Row>(
-    `${SELECT_POLITICIANS} ${where.length ? `WHERE ${where.join(" AND ")}` : ""}
-     GROUP BY n.id, p.id ORDER BY p.is_test DESC, ${POLITICIAN_COLUMNS[filter.sort?.key ?? "name"]} ${filter.sort?.dir === "desc" ? "DESC" : "ASC"} NULLS LAST, n.name LIMIT ${value(limit)}`,
+    `${SELECT_POLITICIANS} ${politicianWhere(filter, value)}
+     GROUP BY n.id, p.id ORDER BY p.is_test DESC, ${POLITICIAN_COLUMNS[filter.sort?.key ?? "name"]} ${filter.sort?.dir === "desc" ? "DESC" : "ASC"} NULLS LAST, n.name, n.id
+     LIMIT ${value(limit)} OFFSET ${value(offset)}`,
+    values,
+  );
+  return rows.map(toPolitician);
+}
+
+/** How many politicians `filter` finds. */
+export async function countPoliticians(filter: PoliticianFilter): Promise<number> {
+  const [values, value] = parameters();
+  const [{ count }] = await query<{ count: number }>(
+    `SELECT count(*)::int AS count FROM ${POLITICIANS} ${politicianWhere(filter, value)}`,
+    values,
+  );
+  return count;
+}
+
+/**
+ * For a search that finds no one: the politicians `filter`'s other filters
+ * find whose name or constituency is nearest what was typed, nearest first,
+ * leaving out any not near enough.
+ */
+export async function closestPoliticians(
+  filter: PoliticianFilter & { search: string },
+  limit = 5,
+): Promise<Politician[]> {
+  const [values, value] = parameters();
+  const text = value(filter.search);
+  const near = `greatest(${closeness("n.name", text)}, ${closeness("p.constituency", text)})`;
+  const where = politicianWhere(filter, value, true);
+  const rows = await query<Row>(
+    `${SELECT_POLITICIANS} ${where ? `${where} AND` : "WHERE"} ${near} >= ${CLOSE_ENOUGH}
+     GROUP BY n.id, p.id ORDER BY ${near} DESC, n.name LIMIT ${value(limit)}`,
     values,
   );
   return rows.map(toPolitician);
@@ -263,6 +332,38 @@ export async function listParties(): Promise<string[]> {
 export async function getPolitician(id: number): Promise<Politician | undefined> {
   const [row] = await query<Row>(`${SELECT_POLITICIANS} WHERE n.id = $1 GROUP BY n.id, p.id`, [id]);
   return row && toPolitician(row);
+}
+
+/**
+ * Whether a politician can be deleted: their record has gone from Airtable
+ * (so never a test MP, which has none), and no letter has been written to
+ * them, which would lose its politician.
+ */
+const DELETABLE = `n.airtable_removed_at IS NOT NULL
+  AND NOT EXISTS (SELECT 1 FROM letters l WHERE l.notable_person_id = n.id)`;
+
+/** Whether this politician can be deleted (DELETABLE). */
+export async function canDeletePolitician(id: number): Promise<boolean> {
+  const rows = await query(`SELECT 1 FROM ${POLITICIANS} WHERE n.id = $1 AND ${DELETABLE}`, [id]);
+  return rows.length > 0;
+}
+
+/**
+ * Deletes a politician whose record has gone from Airtable, with their
+ * answers, if they can be deleted, logging who they were. Says whether
+ * they were.
+ */
+export async function deletePolitician(id: number, staff: string): Promise<boolean> {
+  return transaction(async (db) => {
+    const [gone] = await query<{ id: number; name: string; airtableId: string }>(
+      `DELETE FROM notable_people WHERE id = (SELECT n.id FROM ${POLITICIANS} WHERE n.id = $1 AND ${DELETABLE} FOR UPDATE)
+       RETURNING id::int AS id, name, airtable_id AS "airtableId"`,
+      [id],
+      db,
+    );
+    if (gone) await logChange(staff, "delete politician", gone, db);
+    return Boolean(gone);
+  });
 }
 
 export type StatusChange = { status: AskStatus | null; date: string | null; note: string };

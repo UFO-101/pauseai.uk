@@ -88,6 +88,18 @@ export function pagePath(path: string, page: number): string {
   return page > 1 ? `${path}?page=${page}` : path;
 }
 
+/** A list's URL with its filters as typed, `changes` made to them, leaving out the blank ones. */
+export function filtersPath(
+  path: string,
+  filters: Record<string, string>,
+  changes: Record<string, string> = {},
+): string {
+  const params = new URLSearchParams();
+  for (const [name, value] of Object.entries({ ...filters, ...changes })) if (value) params.set(name, value);
+  const query = params.toString();
+  return query ? `${path}?${query}` : path;
+}
+
 /** A letter's ID from its page's URL: a whole number, or undefined. */
 export function letterId(id: string): number | undefined {
   return politicianId(id);

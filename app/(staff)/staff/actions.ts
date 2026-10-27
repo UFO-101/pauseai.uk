@@ -17,7 +17,7 @@ import { decideHeldSync, syncPoliticians } from "@/lib/server/politician-sync";
 import { syncEmails } from "@/lib/server/emails-sync";
 import { importGoToParliament } from "@/lib/server/go-to-parliament-import";
 import { importWebFormLetters } from "@/lib/server/web-form-import";
-import { setStatus } from "@/lib/server/politicians";
+import { deletePolitician, setStatus } from "@/lib/server/politicians";
 import { requireStaff } from "@/lib/server/staff-auth";
 import {
   type AccountChange,
@@ -40,6 +40,16 @@ export async function setAskStatus(form: FormData): Promise<void> {
   );
   revalidatePath("/staff/politicians");
   revalidatePath(`/staff/politicians/${parsed.politicianId}`);
+}
+
+/** The button on the page of a politician gone from Airtable: deletes them, and goes back to the list. */
+export async function deletePoliticianNow(form: FormData): Promise<void> {
+  const { email } = await requireStaff();
+  const id = idFrom(form, "politicianId");
+  if (id && (await deletePolitician(id, email))) {
+    revalidatePath("/staff/politicians");
+    redirect("/staff/politicians");
+  }
 }
 
 /** Refreshes the pages that show a job's runs: its own, the overview of every job, and the home page's actions. */

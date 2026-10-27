@@ -38,7 +38,9 @@ INSERT INTO staff_login_links (token_hash, email, browser_hash, created_at, expi
 -- by the same IDs): two MPs, one an important target with notes; an MSP, a
 -- personal connection; one who retired and one who left office. Then a peer
 -- the signatory import added, whom the sync takes to be Airtable's; a peer
--- who died; and an MP whose record is gone from Airtable, kept.
+-- who died; and an MP whose record is gone from Airtable, kept. Then made-up
+-- ones for every other body, varying in party, status, markers and whether
+-- we have an address, with accents to search for.
 CREATE TEMP TABLE seed_politicians (airtable_id text, house text, name text, salutation text, constituency text, party text, country text, city text, email text, status text, notes text, important boolean, connection boolean, removed interval, created interval, updated interval);
 INSERT INTO seed_politicians VALUES
   ('recDummy', 'commons', 'Ms Dora Dummy', 'Ms Dummy', 'Hackney North and Stoke Newington', 'Labour', 'england', 'London', 'mp90001.office@parliament.uk', 'in_office', '', false, false, NULL, '60 days', '60 days'),
@@ -48,7 +50,16 @@ INSERT INTO seed_politicians VALUES
   ('recGone', 'commons', 'Gordon Gone', 'Mr Gone', 'Former Seat', 'Independent', 'england', NULL, 'gordon.gone.mp@parliament.uk', 'left_office', '', false, false, NULL, '60 days', '20 days'),
   (NULL, 'lords', 'Lord Seedling of Example', 'Lord Seedling', NULL, 'Crossbench', NULL, NULL, NULL, 'in_office', '', false, false, NULL, '30 days', '12 days'),
   ('recDeparted', 'lords', 'Lord Departed of Example', 'Lord Departed', NULL, 'Crossbench', NULL, NULL, NULL, 'died', '', false, false, NULL, '40 days', '25 days'),
-  ('recRemoved', 'commons', 'Rob Removed', 'Mr Removed', 'Removed Seat', 'Example Party', 'england', NULL, 'rob.removed.mp@parliament.uk', 'in_office', '', false, false, '6 days', '40 days', '6 days');
+  ('recRemoved', 'commons', 'Rob Removed', 'Mr Removed', 'Removed Seat', 'Example Party', 'england', NULL, 'rob.removed.mp@parliament.uk', 'in_office', '', false, false, '6 days', '40 days', '6 days'),
+  ('recSeedBaroness', 'lords', 'Baroness Sample of Testwick', 'Baroness Sample', NULL, 'Conservative', NULL, NULL, 'sampleb@parliament.example', 'in_office', 'Spoke in the AI debate.', true, false, NULL, '30 days', '30 days'),
+  ('recSeedAngus', 'scottish-parliament', 'Angus Placeholder', 'Mr Placeholder', 'Glen Example', 'Scottish National Party', 'scotland', 'Inverness', 'angus.placeholder.msp@parliament.example', 'retired', '', false, false, NULL, '50 days', '50 days'),
+  ('recSeedSian', 'senedd', 'Siân Enghraifft', 'Ms Enghraifft', 'Ceredigion Example', 'Plaid Cymru', 'wales', 'Aberystwyth', 'sian.enghraifft.ms@senedd.example', 'in_office', 'Writes back in Welsh.', false, true, NULL, '45 days', '10 days'),
+  ('recSeedDafydd', 'senedd', 'Dafydd Dummy', 'Mr Dummy', 'Cardiff Example', 'Welsh Labour', 'wales', 'Cardiff', 'dafydd.dummy.ms@senedd.example', 'in_office', '', true, false, NULL, '45 days', '45 days'),
+  ('recSeedRhys', 'senedd', 'Rhys Ymadawedig', 'Mr Ymadawedig', 'Old Valley', 'Welsh Conservatives', 'wales', NULL, NULL, 'left_office', '', false, false, NULL, '70 days', '70 days'),
+  ('recSeedAoife', 'ni-assembly', 'Aoife Ó Sampla', 'Ms Ó Sampla', 'Belfast Example', 'Sinn Féin', 'northern-ireland', 'Belfast', 'aoife.osampla.mla@niassembly.example', 'in_office', '', false, false, NULL, '35 days', '35 days'),
+  ('recSeedWilliam', 'ni-assembly', 'William Example', 'Mr Example', 'Lagan Example', 'DUP', 'northern-ireland', 'Lisburn', NULL, 'in_office', '', true, true, NULL, '35 days', '35 days'),
+  ('recSeedMayor', 'other', 'Mayor Mo Mockup', 'Mayor Mockup', 'Greater Example', 'Labour', 'england', 'Manchester', 'mayor@greaterexample.example', 'in_office', 'Metro mayor.', false, false, NULL, '25 days', '25 days'),
+  ('recSeedCllr', 'other', 'Cllr Fiona Fixture', 'Cllr Fixture', 'Example Ward', 'Green', 'england', 'Bristol', 'fiona.fixture@council.example', 'in_office', '', false, false, '3 days', '25 days', '3 days');
 WITH people AS (
   INSERT INTO notable_people (kind, airtable_id, name, salutation, email, status, notes, important_target, personal_connection, airtable_removed_at, created_at, updated_at)
   SELECT 'politician', airtable_id, name, salutation, email, status, notes, important, connection, now() - removed, now() - created, now() - updated

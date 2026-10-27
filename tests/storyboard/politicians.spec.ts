@@ -19,9 +19,9 @@ async function logIn(page: Page, database: string, permissions: string[] = []) {
   return logInAsStaff(page, BASE, staffEmail());
 }
 
-/** Opens a politician's page from the list. */
+/** Opens a politician's page from the list of everyone, in office or not. */
 async function openPolitician(page: Page, name: string) {
-  await page.goto(`${BASE}/staff/politicians`);
+  await page.goto(`${BASE}/staff/politicians?status=any`);
   await page.getByRole("link", { name, exact: true }).click();
   await expect(page.getByRole("heading", { level: 1 })).toContainText(name);
 }
@@ -73,6 +73,9 @@ test("the politicians list, filtered by status, marker and an answer to an ask, 
   const filters = staffCopy.politicians;
   const rows = page.getByRole("row");
   // Each filter applies as soon as it's chosen.
+  // Those in office, to start.
+  await expect(rows.filter({ hasText: "Polly Placeholder" })).toBeVisible();
+  await expect(rows.filter({ hasText: "Rita Retired" })).toHaveCount(0);
   await page.getByRole("combobox", { name: filters.status, exact: true }).selectOption("retired");
   await expect(page).toHaveURL(/status=retired/);
   await expect(rows.filter({ hasText: "Rita Retired" })).toBeVisible();
@@ -100,6 +103,137 @@ test("the politicians list, filtered by status, marker and an answer to an ask, 
   await page.getByRole("link", { name: staffCopy.resetFilters }).click();
   await expect(page).toHaveURL(`${BASE}/staff/politicians`);
   await expect(rows.filter({ hasText: "Polly Placeholder" })).toBeVisible();
+});
+
+test("the politicians list's houses are tabs, each keeping the other filters", async ({
+  page,
+  request,
+  flowDatabase,
+}) => {
+  await syncPoliticians(request, BASE);
+  await logIn(page, flowDatabase);
+  await page.goto(`${BASE}/staff/politicians?status=any`);
+  const houses = page.getByRole("navigation", { name: staffCopy.fields.house });
+  const rows = page.getByRole("row");
+  await expect(houses.getByRole("link", { name: staffCopy.politicians.allHouses })).toHaveAttribute(
+    "aria-current",
+    "page",
+  );
+  await frame(page, "every house, in office or not");
+
+  await houses.getByRole("link", { name: staffCopy.houses.commons }).click();
+  await expect(page).toHaveURL(/house=commons&status=any/);
+  await expect(rows.filter({ hasText: "Gordon Gone" })).toBeVisible();
+  await expect(rows.filter({ hasText: "Morag Example" })).toHaveCount(0);
+  // Every row is in the Commons, so there's no column saying so.
+  await expect(page.getByRole("columnheader", { name: staffCopy.fields.house })).toHaveCount(0);
+  await frame(page, "only the Commons, with no house column");
+
+  await houses.getByRole("link", { name: staffCopy.houses["scottish-parliament"] }).click();
+  await expect(rows.filter({ hasText: "Morag Example" })).toBeVisible();
+  await expect(rows).toHaveCount(2);
+  await frame(page, "only the Scottish Parliament");
+});
+
+test("the politicians list pages through many, a count over it", async ({ page, request, flowDatabase }) => {
+  await syncPoliticians(request, BASE);
+  runSql(
+    flowDatabase,
+    `WITH n AS (
+       INSERT INTO notable_people (kind, name, salutation, status)
+       SELECT 'politician', 'Lord Member ' || lpad(i::text, 3, '0'), '', 'in_office' FROM generate_series(1, 120) i
+       RETURNING id
+     ) INSERT INTO politicians (id, house, party) SELECT id, 'lords', 'Crossbench' FROM n`,
+  );
+  await logIn(page, flowDatabase);
+  await page.goto(`${BASE}/staff/politicians?house=lords`);
+  const copy = staffCopy.politicians;
+  await expect(page.getByText(copy.count(121, 1, 2))).toBeVisible();
+  await page.getByRole("link", { name: staffCopy.paging.next }).scrollIntoViewIfNeeded();
+  await frame(page, "the first hundred peers, and the way to the next page");
+
+  await page.getByRole("link", { name: staffCopy.paging.next }).click();
+  await expect(page).toHaveURL(/house=lords&page=2/);
+  await expect(page.getByText(copy.count(121, 2, 2))).toBeVisible();
+  await expect(page.getByRole("link", { name: "Lord Member 120" })).toBeVisible();
+  await frame(page, "the second page");
+
+  // Another house starts from the first page.
+  await page
+    .getByRole("navigation", { name: staffCopy.fields.house })
+    .getByRole("link", { name: copy.allHouses })
+    .click();
+  await expect(page).toHaveURL(`${BASE}/staff/politicians`);
+});
+
+test("searching the politicians: each word anywhere, those not in office, and the nearest to a typo", async ({
+  page,
+  request,
+  flowDatabase,
+}) => {
+  await syncPoliticians(request, BASE);
+  await logIn(page, flowDatabase);
+  await page.goto(`${BASE}/staff/politicians`);
+  const copy = staffCopy.politicians;
+  const rows = page.getByRole("row");
+  const search = async (text: string) => {
+    await page.getByRole("searchbox").fill(text);
+    await page.getByRole("button", { name: staffCopy.search }).click();
+    await expect(page).toHaveURL(new RegExp(`q=${encodeURIComponent(text).replace(/%20/g, "\\+")}`));
+  };
+  await search("Pol Westminster");
+  await expect(rows.filter({ hasText: "Polly Placeholder" })).toBeVisible();
+  await expect(rows).toHaveCount(2);
+  await frame(page, "two words, part of her name and her constituency, find Polly");
+
+  await search("Independent");
+  await expect(page.getByText(copy.none)).toBeVisible();
+  await page.getByRole("link", { name: copy.outOfOffice(2) }).click();
+  await expect(page).toHaveURL(/q=Independent&status=any/);
+  await expect(rows.filter({ hasText: "Rita Retired" })).toBeVisible();
+  await expect(rows.filter({ hasText: "Gordon Gone" })).toBeVisible();
+  await frame(page, "no one in office is Independent, but two who left are: one click finds them");
+
+  await page.goto(`${BASE}/staff/politicians`);
+  await search("Dorra Dumy");
+  await expect(page.getByText(copy.closest)).toBeVisible();
+  await expect(rows.filter({ hasText: "Ms Dora Dummy" })).toBeVisible();
+  await frame(page, "a typo finds no one, so the nearest names are offered");
+
+  await page.goto(`${BASE}/staff/politicians?house=lords`);
+  await search("Morag");
+  await expect(page.getByText(copy.none)).toBeVisible();
+  await page.getByRole("link", { name: copy.otherHouses(1) }).click();
+  await expect(page).toHaveURL(/q=Morag$/);
+  await expect(rows.filter({ hasText: "Morag Example" })).toBeVisible();
+  await frame(page, "no one in the Lords is Morag, but one in another house is: one click finds her");
+});
+
+test("a politician whose record has gone from Airtable, and who's had no letters, is deleted", async ({
+  page,
+  request,
+  flowDatabase,
+}) => {
+  await syncPoliticians(request, BASE);
+  runSql(flowDatabase, "UPDATE notable_people SET airtable_removed_at = now() WHERE name = 'Rita Retired'");
+  await logIn(page, flowDatabase);
+  // Anyone still in Airtable can't be.
+  await openPolitician(page, "Polly Placeholder");
+  await expect(page.getByRole("button", { name: copy.delete.button, exact: true })).toHaveCount(0);
+
+  await openPolitician(page, "Rita Retired");
+  await page.getByRole("button", { name: copy.delete.button, exact: true }).scrollIntoViewIfNeeded();
+  await frame(page, "Rita, gone from Airtable: the button to delete her, at the foot");
+
+  await page.getByRole("button", { name: copy.delete.button, exact: true }).click();
+  await expect(page.getByText(copy.delete.sure("Rita Retired"))).toBeVisible();
+  await frame(page, "asked to be sure");
+
+  await page.getByRole("button", { name: copy.delete.confirm }).click();
+  await expect(page).toHaveURL(`${BASE}/staff/politicians`);
+  await page.goto(`${BASE}/staff/politicians?status=any`);
+  await expect(page.getByRole("link", { name: "Rita Retired" })).toHaveCount(0);
+  await frame(page, "the list of everyone, without her");
 });
 
 test("the asks page counts each answer, and an answer leads to who gave it", async ({

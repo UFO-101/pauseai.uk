@@ -72,6 +72,7 @@ import { supportersSearch } from "@/lib/staff-search";
 import StaffPage from "@/app/(staff)/staff/_components/ui/StaffPage";
 import Grid, { Card } from "@/app/(staff)/staff/_components/ui/Grid";
 import Strip from "@/app/(staff)/staff/_components/ui/Strip";
+import Tabs from "@/app/(staff)/staff/_components/ui/Tabs";
 import Tag from "@/components/ui/Tag";
 import { campaigns } from "@/lib/content/email-your-mp";
 import { exampleAsks, exampleAsksWithCounts } from "@/app/(staff)/staff/_components/PoliticianTable.examples";
@@ -87,6 +88,7 @@ import {
   PoliticianDetailsExample,
   PoliticianTableEmptyExample,
   PoliticianTableExample,
+  DeletePoliticianExample,
   EraseFormExample,
   StaffAccountsTableExample,
   RemoveAccountFormExample,
@@ -108,6 +110,7 @@ const EMPTY_POLITICIAN_FILTERS = {
   answer: "",
   sort: "",
   dir: "",
+  page: "",
 };
 
 // Every page the navigation can mark as current, so a new one is a type error until it's here.
@@ -305,6 +308,29 @@ export const staff: Group = {
                   <p>A line under it.</p>
                 </Card>
               </Grid>
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "Tabs",
+      file: "app/(staff)/staff/_components/ui/Tabs.tsx",
+      variants: [
+        {
+          label: "A list's houses, Lords chosen",
+          render: () => (
+            <StaffPage as="div">
+              <Tabs
+                label="House"
+                current="lords"
+                tabs={[
+                  { key: "", label: "All houses", href: "#" },
+                  { key: "commons", label: "House of Commons", href: "#" },
+                  { key: "lords", label: "House of Lords", href: "#" },
+                  { key: "senedd", label: "Senedd", href: "#" },
+                ]}
+              />
             </StaffPage>
           ),
         },
@@ -854,6 +880,20 @@ export const staff: Group = {
           render: () => (
             <StaffPage as="div">
               <EraseLink supporterId={7} />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "DeletePolitician",
+      file: "app/(staff)/staff/_components/DeletePolitician.tsx",
+      variants: [
+        {
+          label: "At the foot of the page of a politician gone from Airtable",
+          render: () => (
+            <StaffPage as="div">
+              <DeletePoliticianExample />
             </StaffPage>
           ),
         },

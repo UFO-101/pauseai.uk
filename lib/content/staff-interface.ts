@@ -409,6 +409,14 @@ export const staffCopy = {
     anyAnswer: "Answered",
     noAnswer: "Not answered",
     none: "None found.",
+    // Over the list: how many there are, and the page.
+    count: (total: number, page: number, pages: number) => `⁂ ${total} politicians; page ${page} of ${pages}.`,
+    // Under the list, when a search of those in office finds others too, linked to them all.
+    outOfOffice: (n: number) => `${n} ${n === 1 ? "match" : "matches"} found for politicians not in office`,
+    // The same, when a search of one house finds no one there, linked to every house.
+    otherHouses: (n: number) => `${n} ${n === 1 ? "match" : "matches"} found for politicians in other houses`,
+    // Over the nearest names, when a search finds no one.
+    closest: "No one matches exactly. These are close matches:",
     testMp: "Test",
     // The counts in the list: letters written to them, and how many of those got a reply.
     columns: {
@@ -505,6 +513,13 @@ export const staffCopy = {
       "block address": "Address blocked",
       "unblock address": "Address unblocked",
     } as Record<string, string>,
+    // At the foot of the page of one whose record has gone from Airtable, and who's had no letters.
+    delete: {
+      button: "Delete",
+      note: "Their record has gone from Airtable and nobody has written to them, so they can be deleted here too.",
+      sure: (name: string) => `Delete ${name}, and their answers to asks, for good?`,
+      confirm: "Delete for good",
+    },
     // On an MP from Airtable, after the source, which links to their record there.
     editInAirtable: ", update name / email there.",
     // On an ask that isn't set by hand: where its statuses come from.
@@ -691,8 +706,7 @@ export const staffCopy = {
   goToParliament: {
     title: "Go to Parliament event, 20 October 2026",
     intro: {
-      before:
-        "Stores in each MP's record their answer to “Constituent meetings at Parliament, October 2026”. Reads from the ",
+      before: "Stores in each MP's record their answer to “Constituent meetings at Parliament”. Reads from the ",
       link: "Go to Parliament table in Airtable",
       after: ".",
     },
@@ -728,7 +742,7 @@ export const staffCopy = {
       before: "Every politician in every body is copied from the ",
       link: "UK Parliamentarians table in Airtable",
       after:
-        ", except the Airtable test MPs. Stores their answers to “Frontier AI letter to the Prime Minister”, “DeepMind letter to Sir Demis Hassabis”, “ControlAI's campaign statement” and “Edinburgh conference, November 2026”. Runs that change lots of data are held for checking.",
+        ", except the Airtable test MPs. Stores their answers to “Frontier AI letter to the Prime Minister”, “DeepMind letter to Sir Demis Hassabis”, “ControlAI's campaign statement” and “Edinburgh conference”. Runs that change lots of data are held for checking.",
     },
     /** The test MPs (lib/test-mps.json) aren't in Airtable; every import adds any that are missing. */
     testMps: "Each import also adds our own test MPs, who aren’t in Airtable, if any are missing.",
