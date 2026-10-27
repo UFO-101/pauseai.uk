@@ -13,6 +13,25 @@
 } /* Last on the page: room before the footer. */
 .signatories:last-child {
   padding-bottom: 72px;
+} /* How an MP or peer adds their name, under the list. */
+.signatories h2.howToSign {
+  margin-top: 40px;
+}
+.howToSignText {
+  max-width: 900px;
+  margin: 0;
+  font-size: 17px;
+  line-height: 1.6;
+  color: var(--text);
+}
+.howToSignText a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+.howToSignText a:hover {
+  color: var(--pause-orange);
 } /* Small note under the list of names, for the press. */
 .pressNote {
   max-width: 900px;

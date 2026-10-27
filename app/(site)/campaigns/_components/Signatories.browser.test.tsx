@@ -8,10 +8,14 @@ import SignatoriesList from "./SignatoriesList";
 afterEach(() => vi.restoreAllMocks());
 
 describe("Signatories", () => {
-  it("lists the signatories, with a note for journalists", async () => {
+  it("lists the signatories, says how to sign, with a note for journalists", async () => {
     vi.spyOn(window, "fetch").mockResolvedValue(new Response("[]"));
     await render(<Signatories />);
     await expect.element(page.getByText("No signatories yet.")).toBeVisible();
+    await expect.element(page.getByRole("heading", { name: "How to sign" })).toBeVisible();
+    await expect
+      .element(page.getByRole("link", { name: site.contactEmail }))
+      .toHaveAttribute("href", `mailto:${site.contactEmail}`);
     await expect
       .element(page.getByRole("link", { name: site.pressEmail }))
       .toHaveAttribute("href", `mailto:${site.pressEmail}`);
