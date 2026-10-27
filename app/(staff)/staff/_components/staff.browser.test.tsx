@@ -47,7 +47,8 @@ import {
   exampleSyncedMp,
   exampleWebFormResult,
 } from "./RunList.examples";
-import StaffNav from "./StaffNav";
+import StaffNav, { staffPageAt } from "./StaffNav";
+import { navigation } from "@/tests/browser/navigation";
 import StaffSessions from "./StaffSessions";
 import { spanClass } from "./ui/Grid";
 import StaffDashboard from "./StaffDashboard";
@@ -186,6 +187,30 @@ describe("StaffNav", () => {
       "/staff/letters",
       "/staff/supporters/blocked-emails",
     ]);
+  });
+});
+
+describe("StaffNav in the signed-in pages' layout", () => {
+  it("marks the page the URL is, or is under, and closes the phone's menu when the page changes", async () => {
+    navigation.pathname = "/staff/letters/supporter/3";
+    const nav = () => <StaffNav email="jo@pauseai.uk" permissions={["supporters"]} />;
+    const { rerender } = await render(nav());
+    const current = () => document.querySelector('nav a[aria-current="page"]')?.textContent;
+    expect(current()).toBe(staffCopy.nav.supporters);
+    const menu = () => page.getByRole("group").element() as HTMLDetailsElement;
+    await page.getByRole("group").getByText(staffCopy.nav.supporters, { exact: true }).first().click();
+    expect(menu().open).toBe(true);
+    navigation.pathname = "/staff/letters/7";
+    await rerender(nav());
+    expect(current()).toBe(staffCopy.nav.letters);
+    expect(menu().open).toBe(false);
+  });
+
+  it("marks home at /staff and your sessions at theirs", async () => {
+    expect(staffPageAt("/staff")).toBe("home");
+    expect(staffPageAt("/staff/sessions")).toBe("sessions");
+    expect(staffPageAt("/staff/politicians/blocked-emails")).toBe("mpEmails");
+    expect(staffPageAt("/staff/login")).toBeUndefined();
   });
 });
 

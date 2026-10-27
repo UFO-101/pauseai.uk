@@ -48,7 +48,7 @@ export function testServerUrl(env = process.env, envFile = ".env.local") {
 }
 
 /** The URL of database `name` on the configured server. */
-function databaseUrl(name) {
+export function databaseUrl(name) {
   const server = testServerUrl();
   if (server) {
     const url = new URL(server);

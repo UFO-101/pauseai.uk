@@ -58,6 +58,7 @@ export default defineConfig({
         resolve: {
           alias: {
             "next/link": path.resolve(import.meta.dirname, "node_modules/next/dist/esm/client/link.js"),
+            "next/form": path.resolve(import.meta.dirname, "node_modules/next/dist/esm/client/form.js"),
             "next/image": path.resolve(import.meta.dirname, "node_modules/next/dist/esm/shared/lib/image-external.js"),
             "next/script": path.resolve(import.meta.dirname, "node_modules/next/dist/esm/client/script.js"),
           },
@@ -73,6 +74,7 @@ export default defineConfig({
             "react-dom/server",
             "react/jsx-dev-runtime",
             "next/link",
+            "next/form",
             "next/image",
             "next/navigation",
             "next/script",

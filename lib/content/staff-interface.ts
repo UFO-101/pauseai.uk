@@ -983,6 +983,8 @@ export const staffCopy = {
     // Beside a letter sent through pauseai.info's old form, copied from Airtable.
     imported: "pauseai.info",
   },
+  // Read out, unseen, while a page loads, its skeleton showing.
+  loading: "⁂ Loading the page",
   // The button beside a list's search box; its other filters apply as soon as they're chosen.
   search: "Search",
   // After a list's filters: the list with none.

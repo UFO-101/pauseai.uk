@@ -1,4 +1,4 @@
-import Link from "next/link";
+import ListLink from "./ListLink";
 import styles from "./Tabs.module.css";
 
 export type Tab = { key: string; label: string; href: string };
@@ -12,9 +12,9 @@ export default function Tabs({ label, tabs, current }: { label: string; tabs: Ta
   return (
     <nav aria-label={label} className={styles.tabs}>
       {tabs.map((tab) => (
-        <Link key={tab.key} href={tab.href} aria-current={tab.key === current ? "page" : undefined}>
+        <ListLink key={tab.key} href={tab.href} aria-current={tab.key === current ? "page" : undefined}>
           {tab.label}
-        </Link>
+        </ListLink>
       ))}
     </nav>
   );

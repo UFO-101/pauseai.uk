@@ -45,7 +45,7 @@ SELECT s.id, s.name, s.emails,
   sp.place, sp.basis, sp.given, sp.country, sp.latitude, sp.longitude
 FROM supporters_summary s LEFT JOIN supporter_place sp ON sp.supporter_id = s.id;
 
--- Unique, so it can be refreshed while pages read it (CONCURRENTLY).
+-- Unique, so it can be refreshed while pages go on reading it.
 CREATE UNIQUE INDEX supporters_list_id ON supporters_list (id);
 -- The list's default order, newest activity first.
 CREATE INDEX supporters_list_active ON supporters_list (last_active_at DESC NULLS LAST, id DESC);

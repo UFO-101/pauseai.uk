@@ -1,9 +1,11 @@
-import Link from "next/link";
+import Form from "next/form";
 import { Button } from "@/components/ui/Button";
 import { Select, TextInput } from "@/components/ui/Controls";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { filtersPath, firstOf, NOT, notValue, valuesOf, type Params } from "@/lib/staff-search";
 import ChoiceSearch from "./ChoiceSearch";
+import FormPending from "./FormPending";
+import ListLink from "./ListLink";
 import Menu from "./Menu";
 import styles from "./FilterBar.module.css";
 
@@ -81,9 +83,9 @@ function Choices({
       <ul className={styles.choices} data-search={search ? "empty" : undefined}>
         {options.map((option) => (
           <li key={option.value}>
-            <Link href={href(option.value)} aria-current={option.value === current ? "true" : undefined}>
+            <ListLink href={href(option.value)} aria-current={option.value === current ? "true" : undefined}>
               {option.label}
-            </Link>
+            </ListLink>
           </li>
         ))}
       </ul>
@@ -108,7 +110,8 @@ function PlaceForm({
 }) {
   const place = filter.place!;
   return (
-    <form method="get" action={path} className={styles.placeForm}>
+    <Form action={path} className={styles.placeForm}>
+      <FormPending />
       {others.map(([name, value]) => (
         <input key={`${name}-${value}`} type="hidden" name={name} value={value} />
       ))}
@@ -134,7 +137,7 @@ function PlaceForm({
       <Button variant="primary" size="small" fit type="submit">
         {staffCopy.search}
       </Button>
-    </form>
+    </Form>
   );
 }
 
@@ -239,16 +242,16 @@ export default function FilterBar({
         {(filter.repeat || !second) && (
           <p className={styles.actions}>
             {filter.repeat && (
-              <Link href={href({ [filter.name]: [...others, not ? plain : NOT + plain] })}>
+              <ListLink href={href({ [filter.name]: [...others, not ? plain : NOT + plain] })}>
                 {not ? copy.onlyInstead : copy.exceptInstead}
-              </Link>
+              </ListLink>
             )}
             {!second && (
-              <Link
+              <ListLink
                 href={filter.repeat && others.length > 0 ? href({ [filter.name]: others }) : href(without(filter.name))}
               >
                 {copy.remove}
-              </Link>
+              </ListLink>
             )}
           </p>
         )}
@@ -279,7 +282,8 @@ export default function FilterBar({
   return (
     // Keyed on the filters, so the menu chosen from closes when they change.
     <div key={filtersPath(path, values)} className={styles.bar}>
-      <form method="get" action={path} className={styles.search} role="search">
+      <Form action={path} className={styles.search} role="search">
+        <FormPending />
         <span className={styles.box}>
           <TextInput
             type="search"
@@ -289,9 +293,9 @@ export default function FilterBar({
             placeholder={search.label}
           />
           {values[search.name] && (
-            <Link href={href({ [search.name]: "" })} className={styles.clear} aria-label={copy.clearSearch}>
+            <ListLink href={href({ [search.name]: "" })} className={styles.clear} aria-label={copy.clearSearch}>
               ×
-            </Link>
+            </ListLink>
           )}
         </span>
         {hidden.map(([name, value]) => (
@@ -300,7 +304,7 @@ export default function FilterBar({
         <Button variant="primary" size="small" fit type="submit">
           {staffCopy.search}
         </Button>
-      </form>
+      </Form>
       {on
         .filter((filter) => !(filter.after && chosen(filter.after).length > 0))
         .flatMap((filter) => {
@@ -346,9 +350,9 @@ export default function FilterBar({
           </Menu>
         ))}
       {(on.length > 0 || values[search.name]) && (
-        <Link href={filtersPath(path, kept)} className={styles.clearAll}>
+        <ListLink href={filtersPath(path, kept)} className={styles.clearAll}>
           {staffCopy.resetFilters}
-        </Link>
+        </ListLink>
       )}
     </div>
   );

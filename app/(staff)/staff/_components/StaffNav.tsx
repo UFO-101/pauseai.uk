@@ -1,14 +1,24 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { staffCopy } from "@/lib/content/staff-interface";
 import type { Permission } from "@/lib/staff-permissions";
-import { sectionsFor, type StaffPageId } from "@/lib/staff-sections";
+import { sectionsFor, staffPageOf, type StaffPageId } from "@/lib/staff-sections";
 import NavIcon from "./NavIcon";
 import NavFold from "./ui/NavFold";
 import styles from "./StaffNav.module.css";
 
 /** The pages the navigation can mark as current: the home page, your sessions, or any page in a section. */
 export type StaffPage = "home" | "sessions" | StaffPageId;
+
+/** The page the navigation marks at `path`: the home page, your sessions, or the page in a section it's under. */
+export function staffPageAt(path: string): StaffPage | undefined {
+  if (path === "/staff") return "home";
+  if (path === "/staff/sessions") return "sessions";
+  return staffPageOf(path)?.id;
+}
 
 type Props = {
   /** Who's logged in. Without it, on the login page, just the title. */
@@ -17,6 +27,7 @@ type Props = {
   permissions?: Permission[];
   /** How many sessions they have open: with more than one, a faint link under Log out to the page of them. */
   sessions?: number;
+  /** The page to mark, as the component gallery shows it; otherwise the one the URL is (staffPageAt). */
   current?: StaffPage;
 };
 
@@ -30,9 +41,13 @@ type Props = {
  * name showing beside its icon on hover. Under Log out, with
  * more than one session open, a faint link to the page of them. Each page shows
  * only to those with its permission (lib/staff-sections.ts). The pause symbol and name at the top are the
- * way to the home page.
+ * way to the home page. It's drawn once, by the signed-in pages' layout, and
+ * stays as they change, marking the page the URL is; the phone's dropdown
+ * closes when it does.
  */
-export default function StaffNav({ email, permissions = [], sessions = 1, current }: Props) {
+export default function StaffNav({ email, permissions = [], sessions = 1, current: shown }: Props) {
+  const path = usePathname();
+  const current = shown ?? staffPageAt(path);
   // The pause symbol and the name: the way home, except at home.
   const mark = (
     <>
@@ -109,7 +124,7 @@ export default function StaffNav({ email, permissions = [], sessions = 1, curren
         </div>
       </div>
       {/* A phone: a dropdown at the right of the bar, the current page with an arrow. */}
-      <details className={styles.menu}>
+      <details key={path} className={styles.menu}>
         <summary>{current && (current === "sessions" ? staffCopy.sessions.title : staffCopy.nav[current])}</summary>
         <div>
           {home}

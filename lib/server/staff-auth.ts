@@ -2,6 +2,7 @@ import "server-only";
 import { createHash, randomBytes } from "node:crypto";
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { cache } from "react";
 import type { Permission } from "@/lib/staff-permissions";
 import { KEEP_DAYS, loginPath, SESSION_COOKIE, SESSION_HOURS, STAFF_PATH_HEADER } from "@/lib/staff-session";
 import { logChange } from "./audit";
@@ -44,9 +45,10 @@ export async function createSession(email: string, remember = false, userAgent: 
  * then seen now, with how many sessions they have open, this one included,
  * and their account's permissions, or null if their account has gone. A
  * kept session is renewed for another 30 days. One query, as every staff
- * page waits on it.
+ * page waits on it, and once a request (React's cache), as the signed-in
+ * pages' layout and the page both ask.
  */
-async function sessionOf(
+const sessionOf = cache(async function sessionOf(
   token: string,
 ): Promise<{ email: string; sessions: number; permissions: Permission[] | null } | undefined> {
   const [row] = await query<{ email: string; sessions: number; permissions: Permission[] | null }>(
@@ -63,7 +65,7 @@ async function sessionOf(
     [hash(token)],
   );
   return row;
-}
+});
 
 /** The staff member a session token belongs to, if it's current (sessionOf). */
 export async function sessionEmail(token: string): Promise<string | undefined> {

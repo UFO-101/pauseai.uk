@@ -1,4 +1,4 @@
-import type { APIRequestContext, Page } from "@playwright/test";
+import type { APIRequestContext, Page, Route } from "@playwright/test";
 import { campaigns, copy } from "@/lib/content/email-your-mp";
 import { jobTitles, staffCopy } from "@/lib/content/staff-interface";
 import type { ImportJob } from "@/lib/import-runs";
@@ -15,6 +15,7 @@ import {
   fillLetter,
   logInAsStaff,
   loginLinkFor,
+  lockTable,
   lookUpTestMp,
   newestEmail,
   newestEmailTo,
@@ -92,6 +93,84 @@ test(
     await expect(nav.getByRole("heading", { name: staffCopy.nav.sections.admin })).toBeVisible();
   },
 );
+
+/**
+ * Holds the next request for a page's data (a navigation's, not a
+ * prefetch), so a flow can picture the page while it waits; `release` lets
+ * it through.
+ */
+async function holdNextPage(page: Page): Promise<{ release: () => Promise<void> }> {
+  let open = () => {};
+  const held = new Promise<void>((done) => (open = done));
+  let holding = true;
+  const matches = (url: URL) => url.searchParams.has("_rsc");
+  const handler = async (route: Route) => {
+    if (!holding || route.request().headers()["next-router-prefetch"]) return route.continue();
+    holding = false;
+    await held;
+    await route.continue();
+  };
+  await page.route(matches, handler);
+  return {
+    release: async () => {
+      open();
+      await page.unroute(matches, handler);
+    },
+  };
+}
+
+test("a list dims as soon as a sort or search is chosen, and stays put until the new one arrives", async ({
+  page,
+  flowDatabase,
+}) => {
+  await logIn(page, flowDatabase, ["supporters", "admin"]);
+  await page.goto(`${BASE}/staff/politicians`);
+  const list = page.locator("[class*=frame]").first();
+  await frame(page, "the politicians list");
+
+  // A sort heading.
+  let next = await holdNextPage(page);
+  await page.getByRole("table").getByRole("link", { name: staffCopy.fields.name }).click();
+  await expect(list).toHaveCSS("opacity", "0.45");
+  await frame(page, "a sort chosen: the list dims at once while the new order loads");
+  await next.release();
+  await expect(page).toHaveURL(/sort=name&dir=desc/);
+  await expect(list).toHaveCSS("opacity", "1");
+
+  // A search, sent from its box without leaving the page.
+  next = await holdNextPage(page);
+  await page.getByRole("searchbox").fill("Testy");
+  await page.getByRole("button", { name: staffCopy.search }).click();
+  await expect(list).toHaveCSS("opacity", "0.45");
+  await frame(page, "a search sent: the list dims while it looks");
+  await next.release();
+  await expect(page).toHaveURL(/q=Testy/);
+  await expect(page.getByRole("table").getByRole("row")).toHaveCount(2);
+  await frame(page, "what the search found");
+});
+
+test("another page shows its skeleton at once, beside the sidebar, which marks where it's going", async ({
+  page,
+  flowDatabase,
+}) => {
+  await logIn(page, flowDatabase, ["supporters", "admin"]);
+  await page.goto(`${BASE}/staff/politicians`);
+  // In the sidebar; on a phone, behind the bar's menu.
+  const asks = page
+    .getByRole("navigation", { name: staffCopy.nav.title })
+    .getByRole("link", { name: staffCopy.nav.asks });
+  if (!(await asks.first().isVisible())) await page.locator("nav details > summary").click();
+
+  // The Asks page waits on its table, as on a slow database.
+  const release = await lockTable(flowDatabase, "asks");
+  await asks.filter({ visible: true }).click();
+  await expect(page.getByRole("status")).toHaveText(staffCopy.loading);
+  await expect(page.locator("[aria-busy=true]")).toHaveCSS("opacity", "1");
+  await frame(page, "another page chosen: its skeleton beside the sidebar while it loads");
+  await release();
+  await expect(page.getByRole("heading", { level: 1, name: staffCopy.asks.title })).toBeVisible();
+  await frame(page, "the page arrived");
+});
 
 test("every staff page, without a session, goes to the login page, to come back to once logged in", async ({
   request,

@@ -50,6 +50,9 @@ import { exampleMailing, exampleMailings } from "@/app/(staff)/staff/_components
 import ListFrame, { ListTable, type ListColumn } from "@/app/(staff)/staff/_components/ui/ListFrame";
 import ChoiceSearch from "@/app/(staff)/staff/_components/ui/ChoiceSearch";
 import NavFold from "@/app/(staff)/staff/_components/ui/NavFold";
+import FormPending from "@/app/(staff)/staff/_components/ui/FormPending";
+import ListLink from "@/app/(staff)/staff/_components/ui/ListLink";
+import PageSkeleton from "@/app/(staff)/staff/_components/ui/PageSkeleton";
 import NavIcon from "@/app/(staff)/staff/_components/NavIcon";
 import PoliticiansList, { HouseTabs } from "@/app/(staff)/staff/_components/PoliticiansList";
 import ErasedNotice from "@/app/(staff)/staff/_components/ErasedNotice";
@@ -371,6 +374,50 @@ export const staff: Group = {
                   <p>A line under it.</p>
                 </Card>
               </Grid>
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "PageSkeleton",
+      file: "app/(staff)/staff/_components/ui/PageSkeleton.tsx",
+      variants: [
+        {
+          label: "A page while it loads: its heading, filters and rows as bars, beside the navigation",
+          render: () => (
+            <StaffPage as="div">
+              <PageSkeleton />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "ListLink",
+      file: "app/(staff)/staff/_components/ui/ListLink.tsx",
+      variants: [
+        {
+          label: "A link that changes a list: the list dims from the click until the new one arrives (ListFrame)",
+          render: () => (
+            <StaffPage as="div">
+              <ListLink href="/gallery/staff">Next page</ListLink>
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "FormPending",
+      file: "app/(staff)/staff/_components/ui/FormPending.tsx",
+      variants: [
+        {
+          label: "Unseen, in a list's search form: marks it pending while its search loads, which dims the list",
+          render: () => (
+            <StaffPage as="div">
+              <form>
+                <FormPending />
+              </form>
             </StaffPage>
           ),
         },
@@ -1062,6 +1109,25 @@ export const staff: Group = {
                 pageSize={100}
                 href={(n) => `#page-${n}`}
                 download={(format) => `#download-${format}`}
+                columns={exampleColumns}
+                rows={exampleRows}
+                rowKey={nameOf}
+                empty="Nothing found."
+              />
+            </StaffPage>
+          ),
+        },
+        {
+          label: "While a change to it loads: dimmed (a link or search marked data-pending: ListLink, FormPending)",
+          render: () => (
+            <StaffPage as="div">
+              <span hidden data-pending />
+              <ListFrame
+                count="4 rows"
+                total={4}
+                page={1}
+                pages={1}
+                pageSize={100}
                 columns={exampleColumns}
                 rows={exampleRows}
                 rowKey={nameOf}

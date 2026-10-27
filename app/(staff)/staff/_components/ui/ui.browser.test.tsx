@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { render } from "vitest-browser-react";
 import { page, userEvent } from "vitest/browser";
 import { TextInput } from "@/components/ui/Controls";
@@ -8,6 +8,9 @@ import FilterBar, { filterWords, type Filter } from "./FilterBar";
 import Menu from "./Menu";
 import ListFrame, { ListTable, type ListColumn } from "./ListFrame";
 import NavFold from "./NavFold";
+import FormPending from "./FormPending";
+import PageSkeleton from "./PageSkeleton";
+
 import { renderToString } from "react-dom/server";
 import { NAV_FOLD_KEY } from "@/lib/staff-nav";
 import { staffCopy } from "@/lib/content/staff-interface";
@@ -559,5 +562,31 @@ describe("a searchable filter's chip", () => {
 describe("NavFold on the server", () => {
   it("draws open, as the page's script folds it before it shows", () => {
     expect(renderToString(<NavFold />)).toContain(`aria-expanded="true"`);
+  });
+});
+
+describe("FormPending", () => {
+  it("marks its form pending while it submits", async () => {
+    let finish = () => {};
+    await render(
+      <form action={() => new Promise<void>((done) => (finish = done))}>
+        <FormPending />
+        <button type="submit">Search</button>
+      </form>,
+    );
+    const mark = () => document.querySelector("[data-pending]");
+    expect(mark()).toBeNull();
+    await page.getByRole("button", { name: "Search" }).click();
+    await vi.waitFor(() => expect(mark()).not.toBeNull());
+    finish();
+    await vi.waitFor(() => expect(mark()).toBeNull());
+  });
+});
+
+describe("PageSkeleton", () => {
+  it("is busy, and says it's loading to a screen reader", async () => {
+    await render(<PageSkeleton />);
+    await expect.element(page.getByRole("status")).toHaveTextContent(staffCopy.loading);
+    expect(document.querySelector('[aria-busy="true"]')).not.toBeNull();
   });
 });

@@ -1,4 +1,4 @@
-import Link from "next/link";
+import ListLink from "./ui/ListLink";
 import type { SortSpec } from "@/lib/staff-sort";
 import styles from "./SortHeading.module.css";
 
@@ -19,10 +19,10 @@ export default function SortHeading<Key extends string>({ sortKey, current, href
   const active = current.key === sortKey;
   return (
     <th aria-sort={active ? (current.dir === "asc" ? "ascending" : "descending") : undefined}>
-      <Link href={href} className={styles.heading}>
+      <ListLink href={href} className={styles.heading}>
         {children}
         {active && <span aria-hidden="true">{current.dir === "asc" ? " ▲" : " ▼"}</span>}
-      </Link>
+      </ListLink>
     </th>
   );
 }
