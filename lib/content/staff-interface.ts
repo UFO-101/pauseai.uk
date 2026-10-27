@@ -410,7 +410,7 @@ export const staffCopy = {
     noAnswer: "Not answered",
     none: "None found.",
     // Over the list: how many there are, and the page.
-    count: (total: number, page: number, pages: number) => `⁂ ${total} politicians; page ${page} of ${pages}.`,
+    count: (total: number, page: number, pages: number) => `${total} politicians; page ${page} of ${pages}.`,
     // Under the list, when a search of those in office finds others too, linked to them all.
     outOfOffice: (n: number) => `${n} ${n === 1 ? "match" : "matches"} found for politicians not in office`,
     // The same, when a search of one house finds no one there, linked to every house.
@@ -573,6 +573,8 @@ export const staffCopy = {
       supporters: "Supporters' blocked emails",
     },
     intro: "Nothing is sent to these addresses until they're unblocked.",
+    // Over the list: how many are blocked, of those the filters find.
+    count: (n: number) => `⁂ ${n} blocked ${n === 1 ? "address" : "addresses"}.`,
     // Instead of the table, when no address is blocked, or none of the cause filtered for.
     noBlocks: "No addresses are blocked.",
     // Instead of the history, when nothing has bounced or been complained about.
@@ -823,6 +825,8 @@ export const staffCopy = {
   },
   letters: {
     title: "Letters to MPs",
+    // Over the list: how many there are, and the page.
+    count: (total: number, page: number, pages: number) => `⁂ ${total} letters; page ${page} of ${pages}.`,
     allStatuses: "All",
     search: "Sender or MP",
     // The Answered filter: whether the MP replied.

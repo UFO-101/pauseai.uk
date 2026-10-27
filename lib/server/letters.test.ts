@@ -1,10 +1,24 @@
 import { expect, it } from "vitest";
 import { addTestLetter, addTestMp, describeWithDatabase, useTestDatabase } from "@/tests/database";
 import { query } from "./db";
-import { pauseaiLetters, politicianLetters, recentLetters } from "./letters";
+import { LETTERS_PAGE_SIZE, listLetters, pauseaiLetters, politicianLetters, recentLetters } from "./letters";
 
 describeWithDatabase("recentLetters", () => {
   useTestDatabase();
+
+  it("pages the letters page's list, with how many there are in all", async () => {
+    const mp = await addTestMp();
+    for (let i = 0; i <= LETTERS_PAGE_SIZE; i++) await addTestLetter({ politicianId: mp, replyHash: `h${i}` });
+    const first = await listLetters({});
+    expect([first.letters.length, first.total, first.pages]).toEqual([LETTERS_PAGE_SIZE, LETTERS_PAGE_SIZE + 1, 2]);
+    const second = await listLetters({ page: 2 });
+    expect([second.letters.length, second.total]).toEqual([1, LETTERS_PAGE_SIZE + 1]);
+    expect(second.letters[0]).not.toHaveProperty("total");
+    // Past the end, none, but still the count.
+    expect(await listLetters({ page: 3 })).toEqual({ letters: [], total: LETTERS_PAGE_SIZE + 1, pages: 2 });
+    expect(await listLetters({ status: "replied" })).toEqual({ letters: [], total: 0, pages: 1 });
+    expect(await listLetters({ status: "replied", page: 2 })).toEqual({ letters: [], total: 0, pages: 1 });
+  });
 
   it("lists letters newest first, with their history, filtered by status", async () => {
     const mp = await addTestMp();

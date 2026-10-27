@@ -13,18 +13,40 @@ import {
 } from "./staff-search";
 
 describe("lettersSearch", () => {
-  const none = { status: undefined, search: undefined, answered: undefined, campaign: undefined, consent: undefined };
+  const none = {
+    status: undefined,
+    search: undefined,
+    answered: undefined,
+    campaign: undefined,
+    consent: undefined,
+    page: 1,
+  };
 
   it("filters by a status, a search, whether answered, a campaign and consent", () => {
     expect(
-      lettersSearch({ status: "sent", q: " jane ", answered: "yes", campaign: "regulate-letter-pm", consent: "yes" }),
+      lettersSearch({
+        status: "sent",
+        q: " jane ",
+        answered: "yes",
+        campaign: "regulate-letter-pm",
+        consent: "yes",
+        page: "2",
+      }),
     ).toEqual({
       status: "sent",
       q: " jane ",
       answered: "yes",
       campaign: "regulate-letter-pm",
       consent: "yes",
-      filter: { status: "sent", search: "jane", answered: true, campaign: "regulate-letter-pm", consent: true },
+      page: "2",
+      filter: {
+        status: "sent",
+        search: "jane",
+        answered: true,
+        campaign: "regulate-letter-pm",
+        consent: true,
+        page: 2,
+      },
     });
     expect(lettersSearch({ answered: "no", consent: "no" }).filter).toEqual({
       ...none,
@@ -34,7 +56,15 @@ describe("lettersSearch", () => {
   });
 
   it("filters by nothing when each is blank or unknown", () => {
-    expect(lettersSearch({})).toEqual({ status: "", q: "", answered: "", campaign: "", consent: "", filter: none });
+    expect(lettersSearch({})).toEqual({
+      status: "",
+      q: "",
+      answered: "",
+      campaign: "",
+      consent: "",
+      page: "",
+      filter: none,
+    });
     expect(
       lettersSearch({ status: "nope", q: "  ", answered: "maybe", campaign: "nope", consent: "maybe" }).filter,
     ).toEqual(none);

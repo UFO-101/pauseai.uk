@@ -1604,7 +1604,14 @@ export const staff: Group = {
           render: () => (
             <StaffPage as="div">
               <LetterFilters
-                search={{ status: "bounced", q: "", answered: "", campaign: "regulate-letter-pm", consent: "yes" }}
+                search={{
+                  status: "bounced",
+                  q: "",
+                  answered: "",
+                  campaign: "regulate-letter-pm",
+                  consent: "yes",
+                  page: "",
+                }}
               />
             </StaffPage>
           ),

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Muted } from "@/components/ui/Text";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { listBlocks, recentProblems } from "@/lib/server/email";
 import { requireStaff } from "@/lib/server/staff-auth";
@@ -26,6 +27,11 @@ export default async function SupporterEmailsPage({
       <h1>{staffCopy.emails.titles.supporters}</h1>
       <p>{staffCopy.emails.intro}</p>
       <EmailBlockFilters q={q} kind={kind} action="/staff/supporters/blocked-emails" />
+      {blocks.length > 0 && (
+        <p>
+          <Muted>{staffCopy.emails.count(blocks.length)}</Muted>
+        </p>
+      )}
       <EmailBlocksTable blocks={blocks} unblock={unblockAddress} letterLinks />
       <h2>{staffCopy.emails.problemsTitle}</h2>
       <EmailProblemsTable problems={problems} letterLinks />

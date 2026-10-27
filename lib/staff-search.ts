@@ -17,6 +17,7 @@ export type LettersSearch = {
   campaign: string;
   /** "yes" or "no". */
   consent: string;
+  page: string;
 };
 
 /** Which letters the letters page lists (recentLetters in lib/server/letters.ts). */
@@ -49,7 +50,8 @@ export function lettersSearch({
   answered = "",
   campaign = "",
   consent = "",
-}: Partial<LettersSearch>): LettersSearch & { filter: LetterFilter } {
+  page = "",
+}: Partial<LettersSearch>): LettersSearch & { filter: LetterFilter & { page: number } } {
   const filter: LetterFilter = {
     status: Object.hasOwn(staffCopy.letters.status, status) ? status : undefined,
     search: q.trim() || undefined,
@@ -57,7 +59,7 @@ export function lettersSearch({
     campaign: campaignBySlug(campaign)?.slug,
     consent: yesOrNo(consent),
   };
-  return { status, q, answered, campaign, consent, filter };
+  return { status, q, answered, campaign, consent, page, filter: { ...filter, page: pageNumber(page) } };
 }
 
 /** A politician's ID from their page's URL: a whole number, or undefined. */
