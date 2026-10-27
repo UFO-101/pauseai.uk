@@ -95,14 +95,31 @@ export function pagePath(path: string, page: number): string {
   return page > 1 ? `${path}?page=${page}` : path;
 }
 
-/** A list's URL with its filters as typed, `changes` made to them, leaving out the blank ones. */
-export function filtersPath(
-  path: string,
-  filters: Record<string, string>,
-  changes: Record<string, string> = {},
-): string {
+/** A URL parameter's value: one, or a list, for a filter chosen more than once, its name repeated in the URL. */
+export type ParamValue = string | string[];
+
+/** A list's parameters, each as typed. */
+export type Params = Record<string, ParamValue>;
+
+/** Every value of a parameter, the blanks left out. */
+export function valuesOf(value: ParamValue | undefined): string[] {
+  return (Array.isArray(value) ? value : [value ?? ""]).filter(Boolean);
+}
+
+/** A parameter that takes one value: its first, or blank. */
+export function firstOf(value: ParamValue | undefined): string {
+  return valuesOf(value)[0] ?? "";
+}
+
+/**
+ * A list's URL with its filters as typed, `changes` made to them, leaving
+ * out the blank ones; a list's values each as the parameter again.
+ */
+export function filtersPath(path: string, filters: Params, changes: Params = {}): string {
   const params = new URLSearchParams();
-  for (const [name, value] of Object.entries({ ...filters, ...changes })) if (value) params.set(name, value);
+  for (const [name, value] of Object.entries({ ...filters, ...changes })) {
+    for (const one of valuesOf(value)) params.append(name, one);
+  }
   const query = params.toString();
   return query ? `${path}?${query}` : path;
 }

@@ -2,8 +2,16 @@ import "server-only";
 import type { AskStatus } from "@/lib/asks";
 import type { Mp, MpStatuses } from "@/lib/email-your-mp";
 import { parseSort, type SortSpec } from "@/lib/staff-sort";
-import { pageNumber } from "@/lib/staff-search";
+import { firstOf, pageNumber, valuesOf, type ParamValue } from "@/lib/staff-search";
 import { POLITICIAN_COLUMNS, POLITICIAN_SORTS, type PoliticianSort } from "@/lib/politician-sort";
+import {
+  COUNTRIES,
+  EMAIL_STATES,
+  POLITICIAN_FLAGS,
+  type Country,
+  type EmailState,
+  type PoliticianFlag,
+} from "@/lib/politician-filters";
 import { query, transaction, type Queryable } from "./db";
 import { type AuditEntry, logChange } from "./audit";
 import { CLOSE_ENOUGH, closeness, contains, everyWord } from "./search";
@@ -29,8 +37,8 @@ export function isPersonStatus(value: string): value is PersonStatus {
   return (PERSON_STATUSES as readonly string[]).includes(value);
 }
 
-export const COUNTRIES = ["england", "scotland", "wales", "northern-ireland"] as const;
-export type Country = (typeof COUNTRIES)[number];
+export { COUNTRIES, EMAIL_STATES, POLITICIAN_FLAGS } from "@/lib/politician-filters";
+export type { Country, EmailState, PoliticianFlag } from "@/lib/politician-filters";
 
 export type StatusRecord = {
   status: AskStatus;
@@ -128,11 +136,14 @@ export type PoliticianFilter = {
   house?: House;
   /** Those with this status, or, with "out", every status but in office. */
   status?: PersonStatus | "out";
-  party?: string;
-  importantTarget?: boolean;
-  personalConnection?: boolean;
-  /** Only those whose record is no longer in Airtable. */
-  airtableRemoved?: boolean;
+  /** Those in any of these parties. */
+  party?: string[];
+  /** Those with any of these: Airtable's markers, or a record no longer in Airtable. */
+  flags?: PoliticianFlag[];
+  /** Those in any of these nations. */
+  country?: Country[];
+  /** Those with any of these: an address, none, or one that's blocked. */
+  email?: EmailState[];
   /** Only those who answered this ask: in the way `answer` says, if given. */
   ask?: string;
   /** Only those who gave this answer, to `ask` or, without one, to any ask; "none" for those who gave none. */
@@ -144,15 +155,16 @@ export type PoliticianFilter = {
 
 const POLITICIANS_PAGE_SIZE = 100;
 
-/** The politicians page's filters, each as typed in its URL. */
+/** The politicians page's filters, each as typed in its URL; those that repeat, a list. */
 export type PoliticiansSearch = {
   q: string;
   house: string;
   /** Blank for those in office, "any" for everyone. */
   status: string;
-  party: string;
-  /** "important", "connection" or "removed": the boxes ticked in Airtable, and those it no longer has. */
-  flag: string;
+  party: string[];
+  flag: string[];
+  country: string[];
+  email: string[];
   ask: string;
   answer: string;
   sort: string;
@@ -160,38 +172,57 @@ export type PoliticiansSearch = {
   page: string;
 };
 
+/** The values of `list` that are among `known`, or undefined for none. */
+function among<T extends string>(list: string[], known: readonly T[]): T[] | undefined {
+  const found = list.filter((value): value is T => (known as readonly string[]).includes(value));
+  return found.length ? found : undefined;
+}
+
 /**
  * The politicians page's filter, from its URL: each field as typed, for the
  * form, and the filter they make, leaving out what's blank or unknown, but
- * for the status: those in office unless it's given.
+ * for the status: those in office unless it's given. A filter that repeats
+ * finds those with any of its values.
  */
-export function politiciansSearch({
-  q = "",
-  house = "",
-  status = "",
-  party = "",
-  flag = "",
-  ask = "",
-  answer = "",
-  sort = "",
-  dir = "",
-  page = "",
-}: Partial<PoliticiansSearch>): PoliticiansSearch & { filter: PoliticianFilter } {
+export function politiciansSearch(params: Partial<Record<keyof PoliticiansSearch, ParamValue>>): PoliticiansSearch & {
+  filter: PoliticianFilter;
+} {
+  const [q, house, status, ask, answer, sort, dir, page] = (
+    ["q", "house", "status", "ask", "answer", "sort", "dir", "page"] as const
+  ).map((name) => firstOf(params[name]));
+  const [party, flag, country, email] = (["party", "flag", "country", "email"] as const).map((name) =>
+    valuesOf(params[name]),
+  );
   const filter: PoliticianFilter = {
     search: q.trim() || undefined,
     house: isHouse(house) ? house : undefined,
     status: isPersonStatus(status) ? status : status === "any" ? undefined : "in_office",
-    party: party || undefined,
-    importantTarget: flag === "important" || undefined,
-    personalConnection: flag === "connection" || undefined,
-    airtableRemoved: flag === "removed" || undefined,
+    party: party.length ? party : undefined,
+    flags: among(flag, POLITICIAN_FLAGS),
+    country: among(country, COUNTRIES),
+    email: among(email, EMAIL_STATES),
     ask: ask || undefined,
     answer: answer || undefined,
     sort: parseSort(POLITICIAN_SORTS, "name", sort, dir),
     page: pageNumber(page),
   };
-  return { q, house, status, party, flag, ask, answer, sort, dir, page, filter };
+  return { q, house, status, party, flag, country, email, ask, answer, sort, dir, page, filter };
 }
+
+/** When a politician has each marker. */
+const FLAG_CONDITIONS: Record<PoliticianFlag, string> = {
+  important: "n.important_target",
+  connection: "n.personal_connection",
+  removed: "n.airtable_removed_at IS NOT NULL",
+};
+
+/** When we can write to a politician, or not. */
+const BLOCKED = "EXISTS (SELECT 1 FROM email_blocks b WHERE b.address = lower(n.email))";
+const EMAIL_CONDITIONS: Record<EmailState, string> = {
+  yes: `(coalesce(n.email, '') <> '' AND NOT ${BLOCKED})`,
+  none: "coalesce(n.email, '') = ''",
+  blocked: BLOCKED,
+};
 
 /**
  * The WHERE clause for `filter`, its values added with `value`. With
@@ -209,10 +240,10 @@ function politicianWhere(filter: PoliticianFilter, value: (v: unknown) => string
   if (filter.house) where.push(`p.house = ${value(filter.house)}`);
   if (filter.status === "out") where.push("n.status <> 'in_office'");
   else if (filter.status) where.push(`n.status = ${value(filter.status)}`);
-  if (filter.party) where.push(`p.party = ${value(filter.party)}`);
-  if (filter.importantTarget) where.push("n.important_target");
-  if (filter.personalConnection) where.push("n.personal_connection");
-  if (filter.airtableRemoved) where.push("n.airtable_removed_at IS NOT NULL");
+  if (filter.party) where.push(`p.party = ANY(${value(filter.party)})`);
+  if (filter.flags) where.push(`(${filter.flags.map((flag) => FLAG_CONDITIONS[flag]).join(" OR ")})`);
+  if (filter.country) where.push(`p.country = ANY(${value(filter.country)})`);
+  if (filter.email) where.push(`(${filter.email.map((state) => EMAIL_CONDITIONS[state]).join(" OR ")})`);
   if (filter.ask || filter.answer) {
     const ask = filter.ask ? ` AND a.ask = ${value(filter.ask)}` : "";
     if (filter.answer === "none") {

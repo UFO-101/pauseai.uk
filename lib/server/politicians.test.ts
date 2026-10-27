@@ -53,13 +53,15 @@ describe("isPersonStatus", () => {
 });
 
 describe("politiciansSearch", () => {
-  it("keeps what was typed, and filters by it", () => {
+  it("keeps what was typed, and filters by it, a repeated filter by any of its values", () => {
     const typed = {
       q: "Jo",
       house: "lords",
       status: "retired",
-      party: "Crossbench",
-      flag: "important",
+      party: ["Crossbench", "Labour"],
+      flag: ["important", "removed"],
+      country: ["wales"],
+      email: ["none", "blocked"],
       ask: BILL,
       answer: "signed",
       sort: "party",
@@ -72,18 +74,20 @@ describe("politiciansSearch", () => {
         search: "Jo",
         house: "lords",
         status: "retired",
-        party: "Crossbench",
-        importantTarget: true,
-        personalConnection: undefined,
-        airtableRemoved: undefined,
+        party: ["Crossbench", "Labour"],
+        flags: ["important", "removed"],
+        country: ["wales"],
+        email: ["none", "blocked"],
         ask: BILL,
         answer: "signed",
         sort: { key: "party", dir: "desc" },
         page: 3,
       },
     });
-    expect(politiciansSearch({ flag: "connection" }).filter).toMatchObject({ personalConnection: true });
-    expect(politiciansSearch({ flag: "removed" }).filter).toMatchObject({ airtableRemoved: true });
+    // One of a filter that repeats, as the URL gives it, is a list of one; one that doesn't, given twice, its first.
+    const once = politiciansSearch({ party: "Green", q: ["a", "b"] });
+    expect(once.party).toEqual(["Green"]);
+    expect(once.filter).toMatchObject({ party: ["Green"], search: "a" });
   });
 
   it("filters by nothing that's blank, missing or unknown", () => {
@@ -92,9 +96,9 @@ describe("politiciansSearch", () => {
       house: undefined,
       status: "in_office",
       party: undefined,
-      importantTarget: undefined,
-      personalConnection: undefined,
-      airtableRemoved: undefined,
+      flags: undefined,
+      country: undefined,
+      email: undefined,
       ask: undefined,
       answer: undefined,
       sort: { key: "name", dir: "asc" },
@@ -104,8 +108,10 @@ describe("politiciansSearch", () => {
       q: "",
       house: "",
       status: "",
-      party: "",
-      flag: "",
+      party: [],
+      flag: [],
+      country: [],
+      email: [],
       ask: "",
       answer: "",
       sort: "",
@@ -116,7 +122,9 @@ describe("politiciansSearch", () => {
     const unknown = {
       house: "hogwarts",
       status: "sitting",
-      flag: "other",
+      flag: ["other"],
+      country: ["atlantis"],
+      email: ["maybe"],
       sort: "age",
     };
     expect(politiciansSearch(unknown)).toEqual({ ...blank, ...unknown, filter: none });
@@ -274,7 +282,7 @@ describeWithDatabase("politicians", () => {
     expect(await byParty("asc")).toEqual([...(await byParty("asc"))].sort());
     expect(await byParty("desc")).toEqual([...(await byParty("asc"))].reverse());
     expect((await listPoliticians({ ask: PM })).map((p) => p.id)).toEqual([peer]);
-    expect((await listPoliticians({ party: (await getPolitician(peer))!.party })).map((p) => p.id)).toEqual([peer]);
+    expect((await listPoliticians({ party: [(await getPolitician(peer))!.party] })).map((p) => p.id)).toEqual([peer]);
     expect(await listPoliticians({}, 1)).toHaveLength(1);
     // A page further on.
     expect((await listPoliticians({ page: 2 }, 1)).map((p) => p.name)).toEqual(["Lord Example"]);
@@ -351,10 +359,24 @@ describeWithDatabase("politicians", () => {
       (await listPoliticians(filter)).map((p) => p.id).sort();
     expect(await ids({ status: "retired" })).toEqual([retired]);
     expect(await ids({ status: "in_office" })).toEqual([mp, peer].sort());
-    expect(await ids({ party: "Crossbench" })).toEqual([peer]);
-    expect(await ids({ importantTarget: true })).toEqual([mp]);
-    expect(await ids({ personalConnection: true })).toEqual([peer]);
-    expect(await ids({ airtableRemoved: true })).toEqual([retired]);
+    expect(await ids({ party: ["Crossbench"] })).toEqual([peer]);
+    expect(await ids({ party: ["Crossbench", "Labour (Co-op)"] })).toEqual([mp, peer].sort());
+    expect(await ids({ flags: ["important"] })).toEqual([mp]);
+    expect(await ids({ flags: ["connection"] })).toEqual([peer]);
+    expect(await ids({ flags: ["removed"] })).toEqual([retired]);
+    expect(await ids({ flags: ["important", "removed"] })).toEqual([mp, retired].sort());
+    // By nation; and by whether we can write to them: an address, none, or a blocked one.
+    await query("UPDATE politicians SET country = 'wales' WHERE id = $1", [peer]);
+    expect(await ids({ country: ["wales"] })).toEqual([peer]);
+    expect(await ids({ country: ["wales", "scotland"], status: undefined })).toEqual([peer]);
+    await query("UPDATE notable_people SET email = NULL WHERE id = $1", [retired]);
+    await query("UPDATE notable_people SET email = 'Peer@Example.org' WHERE id = $1", [peer]);
+    await query("UPDATE notable_people SET email = 'mp@example.org' WHERE id = $1", [mp]);
+    await recordProblem({ address: "peer@example.org", messageId: null, kind: "hard", reason: "gone", canReset: true });
+    expect(await ids({ email: ["none"] })).toEqual([retired]);
+    expect(await ids({ email: ["blocked"] })).toEqual([peer]);
+    expect(await ids({ email: ["yes"] })).toEqual([mp]);
+    expect(await ids({ email: ["yes", "none"] })).toEqual([mp, retired].sort());
     expect(await ids({ ask: EDINBURGH })).toEqual([mp, peer].sort());
     expect(await ids({ ask: EDINBURGH, answer: "going" })).toEqual([peer]);
     expect(await ids({ ask: EDINBURGH, answer: "none" })).toEqual([retired]);

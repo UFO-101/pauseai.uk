@@ -3095,7 +3095,7 @@ describe("PoliticianFilters", () => {
     q: "blake",
     house: "lords",
     status: "retired",
-    party: "Labour",
+    party: ["Labour"],
     ask: "edinburgh-conference-2026",
     answer: "declined",
     sort: "asks",
@@ -3127,8 +3127,17 @@ describe("PoliticianFilters", () => {
       staffCopy.personStatuses.in_office,
       "/staff/politicians?q=blake&house=lords&party=Labour&ask=edinburgh-conference-2026&answer=declined&sort=asks&dir=asc",
     ]);
-    // Only Marked is left to add.
-    expect((await menu(staffCopy.filters.add)).map(([text]) => text)).toEqual(Object.values(copy.flags));
+    // The party can be chosen again, from those not chosen; the other filters not on are there too.
+    const add = await menu(staffCopy.filters.add);
+    expect(add.map(([text]) => text)).toEqual([
+      "Green",
+      ...Object.values(staffCopy.countries),
+      ...Object.values(copy.emailStates),
+      ...Object.values(copy.flags),
+    ]);
+    expect(add[0][1]).toBe(
+      "/staff/politicians?q=blake&house=lords&status=retired&party=Labour&party=Green&ask=edinburgh-conference-2026&answer=declined&sort=asks&dir=asc",
+    );
     await expect
       .element(page.getByRole("link", { name: staffCopy.resetFilters }))
       .toHaveAttribute("href", "/staff/politicians?house=lords");
@@ -3138,8 +3147,42 @@ describe("PoliticianFilters", () => {
     await render(<PoliticianFilters search={emptyPoliticiansSearch} asks={exampleAsks} parties={["Green"]} />);
     const groups = () => [...document.querySelectorAll("[popover] section > p")].map((p) => p.textContent);
     await page.getByRole("button", { name: staffCopy.filters.add }).click();
-    expect(groups()).toEqual([staffCopy.fields.party, copy.status, copy.ask, copy.flag]);
+    expect(groups()).toEqual([
+      staffCopy.fields.party,
+      staffCopy.politician.country,
+      copy.status,
+      staffCopy.fields.email,
+      copy.ask,
+      copy.flag,
+    ]);
     expect(page.getByRole("link", { name: staffCopy.resetFilters }).query()).toBeNull();
+  });
+});
+
+describe("PoliticianFilters, chosen more than once", () => {
+  it("has a chip for each party, each changing or removing only its own", async () => {
+    await render(
+      <PoliticianFilters
+        search={{ ...emptyPoliticiansSearch, party: ["Green", "Labour"] }}
+        asks={exampleAsks}
+        parties={["Green", "Labour", "Reform UK"]}
+      />,
+    );
+    const party = staffCopy.fields.party;
+    expect(chips()).toEqual([`${party}: Green`, `${party}: Labour`]);
+    const green = await menu(`${party}: Green`);
+    expect(green.find(([text]) => text === "Reform UK")![1]).toBe("/staff/politicians?party=Labour&party=Reform+UK");
+    expect(green.find(([text]) => text === staffCopy.filters.remove)![1]).toBe("/staff/politicians?party=Labour");
+    // + Filter offers the party not yet chosen.
+    expect((await menu(staffCopy.filters.add)).map(([text]) => text)).toContain("Reform UK");
+  });
+
+  it("removes the last of a repeated filter altogether", async () => {
+    await render(
+      <PoliticianFilters search={{ ...emptyPoliticiansSearch, flag: ["important"] }} asks={exampleAsks} parties={[]} />,
+    );
+    const chip = `${staffCopy.politicians.flag}: ${staffCopy.politicians.flags.important}`;
+    expect((await menu(chip)).find(([text]) => text === staffCopy.filters.remove)![1]).toBe("/staff/politicians");
   });
 });
 

@@ -34,8 +34,8 @@ export const staffCopy = {
     // At the left of the bar, and the way to the home page.
     title: "PauseAI Staff",
     // The button at the top of the sidebar that folds it to a strip, and back, for a screen reader.
-    fold: "⁂ Fold the menu",
-    unfold: "⁂ Unfold the menu",
+    fold: "Fold the menu",
+    unfold: "Unfold the menu",
     home: "Dashboard",
     accounts: "Staff accounts",
     // The sections the pages are in, in the sidebar.
@@ -396,6 +396,12 @@ export const staffCopy = {
     // The filters: in office or not, Airtable's markers, and an answer to an ask.
     status: "Status",
     anyStatus: "Any status",
+    // The Email filter's choices: whether we can write to them.
+    emailStates: {
+      yes: "Has an address",
+      none: "No address",
+      blocked: "Address blocked",
+    } as Record<string, string>,
     flag: "Marked",
     flags: {
       important: "Important target",
@@ -450,7 +456,7 @@ export const staffCopy = {
     intro: "Emails PauseAI has sent to many notable people at once.",
     none: "No mailings yet.",
     // Over the list: how many there are.
-    total: (n: number) => `⁂ ${n} ${n === 1 ? "mailing" : "mailings"}`,
+    total: (n: number) => `${n} ${n === 1 ? "mailing" : "mailings"}`,
     columns: {
       title: "Mailing",
       ask: "Ask",
@@ -497,8 +503,8 @@ export const staffCopy = {
     title: "Asks",
     intro: "What we ask notable people to do when writing to them. Make a PR to add a new ask.",
     // Over the list: how many there are.
-    total: (n: number) => `⁂ ${n} ${n === 1 ? "ask" : "asks"}`,
-    none: "⁂ No asks yet.",
+    total: (n: number) => `${n} ${n === 1 ? "ask" : "asks"}`,
+    none: "No asks yet.",
     columns: {
       ask: "Title",
       kind: "Kind",
@@ -924,27 +930,27 @@ export const staffCopy = {
     previous: "Previous",
     next: "Next",
     // The paging's name, for a screen reader.
-    label: "⁂ Pages",
+    label: "Pages",
     // A page's number, for a screen reader.
-    page: (n: number) => `⁂ Page ${n}`,
+    page: (n: number) => `Page ${n}`,
     // On a phone, between Previous and Next.
-    of: (page: number, pages: number) => `⁂ Page ${page} of ${pages}`,
+    of: (page: number, pages: number) => `Page ${page} of ${pages}`,
     // Under the list: the rows on this page, of how many.
-    range: (from: number, to: number, total: number) => `⁂ ${from}–${to} of ${total}`,
+    range: (from: number, to: number, total: number) => `${from}–${to} of ${total}`,
   },
   // Over a list, after its count: the rows on this page, when there's more than one; then its downloads.
   lists: {
-    showing: (from: number, to: number) => `⁂ showing ${from}–${to}`,
-    downloadAll: (n: number) => `⁂ Download all ${n}`,
+    showing: (from: number, to: number) => `showing ${from}–${to}`,
+    downloadAll: (n: number) => `Download all ${n}`,
     formats: { csv: "CSV", json: "JSON" },
   },
   changes: {
     title: "Audit log",
     // Over the list: how many entries there are.
-    total: (n: number) => `⁂ ${n} ${n === 1 ? "entry" : "entries"}`,
-    none: "⁂ Nothing logged yet.",
+    total: (n: number) => `${n} ${n === 1 ? "entry" : "entries"}`,
+    none: "Nothing logged yet.",
     // The column of the day, before the time.
-    day: "⁂ Date",
+    day: "Date",
     at: "When",
     actor: "Who",
     action: "What",

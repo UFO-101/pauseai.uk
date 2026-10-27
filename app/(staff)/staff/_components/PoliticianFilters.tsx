@@ -1,6 +1,7 @@
 import { ASK_STATUSES } from "@/lib/asks";
 import { staffCopy } from "@/lib/content/staff-interface";
 import type { Ask } from "@/lib/server/asks";
+import { COUNTRIES, EMAIL_STATES, POLITICIAN_FLAGS } from "@/lib/politician-filters";
 import type { PoliticiansSearch } from "@/lib/server/politicians";
 import FilterBar, { type Filter } from "./ui/FilterBar";
 
@@ -8,9 +9,11 @@ const copy = staffCopy.politicians;
 
 /**
  * The politicians list's filters, among `parties` and `asks`: the table's
- * columns in its order, then Airtable's markers. Status is those in office
- * unless another is chosen. An answer is offered once there's an ask, from
- * those its kind allows, and goes with it.
+ * columns in its order, with the nation after the party and whether we can
+ * email them after the status, then Airtable's markers. Status is those in
+ * office unless another is chosen. An answer is offered once there's an
+ * ask, from those its kind allows, and goes with it. Party, nation, email
+ * and the markers can each be chosen more than once.
  */
 export function politicianFilters(search: PoliticiansSearch, parties: string[], asks: Ask[]): Filter[] {
   const ask = asks.find((a) => a.slug === search.ask);
@@ -18,7 +21,14 @@ export function politicianFilters(search: PoliticiansSearch, parties: string[], 
     {
       name: "party",
       label: staffCopy.fields.party,
+      repeat: true,
       options: parties.map((party) => ({ value: party, label: party })),
+    },
+    {
+      name: "country",
+      label: staffCopy.politician.country,
+      repeat: true,
+      options: COUNTRIES.map((country) => ({ value: country, label: staffCopy.countries[country] })),
     },
     {
       name: "status",
@@ -30,6 +40,12 @@ export function politicianFilters(search: PoliticiansSearch, parties: string[], 
           .map(([value, label]) => ({ value, label })),
         { value: "any", label: copy.anyStatus },
       ],
+    },
+    {
+      name: "email",
+      label: staffCopy.fields.email,
+      repeat: true,
+      options: EMAIL_STATES.map((state) => ({ value: state, label: copy.emailStates[state] })),
     },
     {
       name: "ask",
@@ -53,7 +69,8 @@ export function politicianFilters(search: PoliticiansSearch, parties: string[], 
     {
       name: "flag",
       label: copy.flag,
-      options: Object.entries(copy.flags).map(([value, label]) => ({ value, label })),
+      repeat: true,
+      options: POLITICIAN_FLAGS.map((flag) => ({ value: flag, label: copy.flags[flag] })),
     },
   ];
 }

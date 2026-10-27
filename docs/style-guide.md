@@ -307,8 +307,9 @@ accounts table, your sessions).
 above it, and a list's own filters component only says what its filters
 are:
 
-- The search box comes first, "Search" in it until something's typed (its
-  accessible name says what it searches), and its button beside it. A search waits for the button, or Enter, so the list
+- The search box comes first, the fields it searches in it until
+  something's typed ("Name, email or phone"), which is its accessible name
+  too, and its button, Search, beside it. A search waits for the button, or Enter, so the list
   doesn't change while someone types. While there's a search, an × in the
   box empties it.
 - Only the filters that are on show, each as a chip: the filter's name

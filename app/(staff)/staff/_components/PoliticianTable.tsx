@@ -3,6 +3,7 @@ import { staffCopy } from "@/lib/content/staff-interface";
 import { POLITICIAN_SORTS, type PoliticianSort } from "@/lib/politician-sort";
 import type { Ask } from "@/lib/server/asks";
 import type { Politician } from "@/lib/server/politicians";
+import { firstOf, valuesOf, type Params } from "@/lib/staff-search";
 import { parseSort, sortHref } from "@/lib/staff-sort";
 import SortHeading from "./SortHeading";
 import { ListTable, type ListColumn } from "./ui/ListFrame";
@@ -15,7 +16,7 @@ type Props = {
   /** Every ask, for their titles, in the order the asks page lists them. */
   asks: Ask[];
   /** The list's filters and sort as typed, for the headings' links. */
-  search?: Record<string, string>;
+  search?: Params;
 };
 
 /** Airtable's markers on them, and whether their record has gone from it, as lozenges. */
@@ -64,17 +65,17 @@ function shows(politicians: Politician[], value: (p: Politician) => string): boo
 export function politicianColumns(
   politicians: Politician[],
   asks: Ask[],
-  search: Record<string, string> = {},
+  search: Params = {},
 ): ListColumn<Politician>[] {
   const show = {
-    house: !Object.hasOwn(staffCopy.houses, search.house ?? "") && shows(politicians, (p) => p.house),
+    house: !Object.hasOwn(staffCopy.houses, firstOf(search.house)) && shows(politicians, (p) => p.house),
     constituency: shows(politicians, (p) => p.constituency ?? ""),
-    party: !search.party && shows(politicians, (p) => p.party),
-    status: (search.status ?? "any") === "any" && shows(politicians, (p) => p.status),
+    party: valuesOf(search.party).length !== 1 && shows(politicians, (p) => p.party),
+    status: firstOf(search.status ?? "any") === "any" && shows(politicians, (p) => p.status),
     marked: shows(politicians, marks),
   };
   const { sort, dir, ...filters } = search;
-  const current = parseSort(POLITICIAN_SORTS, "name", sort, dir);
+  const current = parseSort(POLITICIAN_SORTS, "name", firstOf(sort), firstOf(dir));
   const heading = (key: PoliticianSort, label: string) => (
     <SortHeading
       key={key}
