@@ -887,7 +887,7 @@ describe("MailingDetails", () => {
   const copy = staffCopy.mailings;
 
   it("is what the mailing was, that it has no text, and each recipient's outcome, linked to them", async () => {
-    await render(<MailingDetails mailing={exampleMailing} />);
+    const { rerender } = await render(<MailingDetails mailing={exampleMailing} />);
     await expect.element(page.getByRole("heading", { level: 1 })).toHaveTextContent(exampleMailing.title);
     await expect.element(page.getByText(copy.counts(2, 1))).toBeVisible();
     await expect.element(page.getByText(copy.noText)).toBeVisible();
@@ -914,6 +914,13 @@ describe("MailingDetails", () => {
     await expect
       .element(page.getByRole("link", { name: "Morag Example" }))
       .toHaveAttribute("href", "/staff/politicians/8");
+    // A status nobody knows any more, as it's stored.
+    await rerender(
+      <MailingDetails
+        mailing={{ ...exampleMailing, recipients: [{ ...exampleMailing.recipients[0], status: "queued" }] }}
+      />,
+    );
+    expect(cells("Polly")[1]).toBe("queued");
   });
 
   it("says when there's no ask, and when it isn't sent yet", async () => {

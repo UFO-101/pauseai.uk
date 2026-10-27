@@ -3,6 +3,7 @@ import {
   accountsSearch,
   emailsSearch,
   letterId,
+  mailingId,
   lettersSearch,
   pageNumber,
   pagePath,
@@ -176,6 +177,13 @@ describe("letterId", () => {
   it("is a whole number from the URL", () => {
     expect(letterId("17")).toBe(17);
     expect(letterId("x")).toBeUndefined();
+  });
+});
+
+describe("mailingId", () => {
+  it("is a whole number from the URL", () => {
+    expect(mailingId("3")).toBe(3);
+    expect(mailingId("x")).toBeUndefined();
   });
 });
 
