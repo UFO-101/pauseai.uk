@@ -768,9 +768,9 @@ export const staffCopy = {
     // After the counts, how many pages of contacts the run read (runs kept before this was recorded don't say).
     contactPages: (pages: number) => `${pages} pages of contacts read.`,
     // After that, the postcodes and towns looked up at postcodes.io for where supporters are (runs kept before this was recorded don't say).
-    places: (p: { postcodes: number; towns: number }) => `⁂ ${p.postcodes} postcodes, ${p.towns} towns looked up.`,
+    places: (p: { postcodes: number; towns: number }) => `${p.postcodes} postcodes, ${p.towns} towns looked up.`,
     // After that, when postcodes.io failed partway: the next run carries on.
-    placesFailed: "⁂ Postcodes.io failed: the next run carries on.",
+    placesFailed: "Postcodes.io failed: the next run carries on.",
     stoppedBy: {
       time: "Stopped: out of time.",
       "rate-limit": "Stopped: near Luma's rate limit.",
