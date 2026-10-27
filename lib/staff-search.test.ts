@@ -7,6 +7,7 @@ import {
   pageNumber,
   pagePath,
   filtersPath,
+  pageParam,
   politicianId,
   supporterId,
   supportersSearch,
@@ -142,6 +143,13 @@ describe("pageNumber", () => {
   it("reads a page from 1, or the first page", () => {
     expect(pageNumber("3")).toBe(3);
     for (const page of ["0", "x", "", undefined]) expect(pageNumber(page)).toBe(1);
+  });
+});
+
+describe("pageParam", () => {
+  it("is the page's number in a list's URL, and nothing for the first", () => {
+    expect(pageParam(2)).toEqual({ page: "2" });
+    expect(pageParam(1)).toEqual({ page: "" });
   });
 });
 

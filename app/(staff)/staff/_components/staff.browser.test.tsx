@@ -59,6 +59,9 @@ import Alert from "./Alert";
 import Breadcrumb from "./Breadcrumb";
 import EraseLink from "./EraseLink";
 import DeletePolitician from "./DeletePolitician";
+import ListCount from "./ListCount";
+import PoliticiansList, { HouseTabs } from "./PoliticiansList";
+import { emptyPoliticiansSearch, examplePoliticiansPage } from "./PoliticianTable.examples";
 import MailingDetails from "./MailingDetails";
 import MailingsTable from "./MailingsTable";
 import { exampleMailing, exampleMailings } from "./MailingsTable.examples";
@@ -760,6 +763,80 @@ describe("EraseLink", () => {
   });
 });
 
+describe("ListCount", () => {
+  it("says how many faintly, and nothing when there are none", async () => {
+    const { rerender } = await render(<ListCount total={3}>3 things</ListCount>);
+    await expect.element(page.getByText("3 things")).toBeVisible();
+    await rerender(<ListCount total={0}>0 things</ListCount>);
+    await expect.element(page.getByText("0 things")).not.toBeInTheDocument();
+  });
+});
+
+describe("HouseTabs", () => {
+  it("is a tab per house and All, keeping the filters but the page, the house chosen marked", async () => {
+    await render(<HouseTabs search={{ ...emptyPoliticiansSearch, q: "jo", house: "lords", page: "3" }} />);
+    const tabs = page.getByRole("navigation", { name: staffCopy.fields.house });
+    await expect
+      .element(tabs.getByRole("link", { name: staffCopy.politicians.allHouses }))
+      .toHaveAttribute("href", "/staff/politicians?q=jo");
+    const lords = tabs.getByRole("link", { name: staffCopy.houses.lords });
+    await expect.element(lords).toHaveAttribute("aria-current", "page");
+    await expect
+      .element(tabs.getByRole("link", { name: staffCopy.houses.senedd }))
+      .toHaveAttribute("href", "/staff/politicians?q=jo&house=senedd");
+  });
+
+  it("marks All for no house, or one it doesn't know", async () => {
+    await render(<HouseTabs search={{ ...emptyPoliticiansSearch, house: "hogwarts" }} />);
+    await expect
+      .element(page.getByRole("link", { name: staffCopy.politicians.allHouses }))
+      .toHaveAttribute("aria-current", "page");
+  });
+});
+
+describe("PoliticiansList", () => {
+  const copy = staffCopy.politicians;
+  const search = { ...emptyPoliticiansSearch, q: "pol", page: "2" };
+
+  it("is the count, the table and the pages, and links to those the search finds elsewhere", async () => {
+    await render(
+      <PoliticiansList
+        list={{ ...examplePoliticiansPage, total: 150, page: 2, pages: 2, outOfOffice: 3, otherHouses: 2 }}
+        search={search}
+        asks={exampleAsks}
+      />,
+    );
+    await expect.element(page.getByText(copy.count(150, 2, 2))).toBeVisible();
+    await expect.element(page.getByRole("link", { name: "Polly Placeholder" })).toBeVisible();
+    await expect
+      .element(page.getByRole("link", { name: staffCopy.paging.previous }))
+      .toHaveAttribute("href", "/staff/politicians?q=pol");
+    await expect
+      .element(page.getByRole("link", { name: copy.otherHouses(2) }))
+      .toHaveAttribute("href", "/staff/politicians?q=pol");
+    await expect
+      .element(page.getByRole("link", { name: copy.outOfOffice(3) }))
+      .toHaveAttribute("href", "/staff/politicians?q=pol&status=any");
+  });
+
+  it("offers the nearest names when a search finds no one, and nothing more when there's nothing", async () => {
+    const { rerender } = await render(
+      <PoliticiansList
+        list={{ ...examplePoliticiansPage, politicians: [], total: 0, closest: examplePoliticiansPage.politicians }}
+        search={search}
+        asks={exampleAsks}
+      />,
+    );
+    await expect.element(page.getByText(copy.closest)).toBeVisible();
+    await expect.element(page.getByRole("link", { name: "Polly Placeholder" })).toBeVisible();
+    await rerender(
+      <PoliticiansList list={{ ...examplePoliticiansPage, politicians: [], total: 0 }} search={search} asks={[]} />,
+    );
+    await expect.element(page.getByText(copy.none)).toBeVisible();
+    expect(page.getByRole("link").all()).toHaveLength(0);
+  });
+});
+
 describe("MailingsTable", () => {
   const copy = staffCopy.mailings;
   const cells = (title: string) =>
@@ -858,6 +935,11 @@ describe("DeletePolitician", () => {
     await expect.element(page.getByText(copy.sure("Polly Placeholder"))).toBeVisible();
     await page.getByRole("button", { name: copy.confirm }).click();
     await expect.poll(() => sent).toEqual([{ politicianId: "7" }]);
+  });
+
+  it("is nothing for a politician who can't be deleted", async () => {
+    await render(<DeletePolitician politician={{ id: 7, name: "Polly" }} deletable={false} action={vi.fn()} />);
+    expect(page.getByRole("button").all()).toHaveLength(0);
   });
 });
 

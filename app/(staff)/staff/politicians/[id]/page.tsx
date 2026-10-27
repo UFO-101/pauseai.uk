@@ -48,7 +48,7 @@ export default async function PoliticianPage({ params }: Params) {
         history={history}
         airtableTable={PARLIAMENTARIANS_TABLE_URL}
       />
-      {deletable && <DeletePolitician politician={politician} action={deletePoliticianNow} />}
+      <DeletePolitician politician={politician} deletable={deletable} action={deletePoliticianNow} />
     </StaffPage>
   );
 }

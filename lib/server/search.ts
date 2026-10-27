@@ -7,7 +7,7 @@ import "server-only";
 // are Postgres extensions (migration 0038).
 
 /** The words typed, each a LIKE pattern matching it anywhere, its % and _ taken literally. */
-export function searchPatterns(text: string): string[] {
+function searchPatterns(text: string): string[] {
   return text
     .split(/\s+/)
     .filter(Boolean)

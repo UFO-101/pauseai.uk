@@ -143,7 +143,7 @@ export type PoliticianFilter = {
   page?: number;
 };
 
-export const POLITICIANS_PAGE_SIZE = 100;
+const POLITICIANS_PAGE_SIZE = 100;
 
 /** The politicians page's filters, each as typed in its URL. */
 export type PoliticiansSearch = {
@@ -256,6 +256,34 @@ export async function listPoliticians(
   );
   return rows.map(toPolitician);
 }
+
+/**
+ * What the politicians page shows for `filter`: its page of them, how many
+ * there are and on how many pages; and for a search, how many it finds out
+ * of office, while it's of those in office, and in other houses, when one
+ * house has none, and the nearest names, when it finds none at all.
+ */
+export async function politiciansPage(filter: PoliticianFilter) {
+  const [politicians, total] = await Promise.all([listPoliticians(filter), countPoliticians(filter)]);
+  const { search } = filter;
+  const none = Boolean(search) && politicians.length === 0;
+  const [outOfOffice, otherHouses, closest] = await Promise.all([
+    search && filter.status === "in_office" ? countPoliticians({ ...filter, status: "out" }) : 0,
+    none && filter.house ? countPoliticians({ ...filter, house: undefined }) : 0,
+    search && none ? closestPoliticians({ ...filter, search }) : [],
+  ]);
+  return {
+    politicians,
+    total,
+    page: filter.page ?? 1,
+    pages: Math.max(1, Math.ceil(total / POLITICIANS_PAGE_SIZE)),
+    outOfOffice,
+    otherHouses,
+    closest,
+  };
+}
+
+export type PoliticiansPage = Awaited<ReturnType<typeof politiciansPage>>;
 
 /** How many politicians `filter` finds. */
 export async function countPoliticians(filter: PoliticianFilter): Promise<number> {

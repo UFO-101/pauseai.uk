@@ -107,6 +107,11 @@ export function filtersPath(
   return query ? `${path}?${query}` : path;
 }
 
+/** The `page` of a list's URL at page `n`: none for the first. */
+export function pageParam(n: number): { page: string } {
+  return { page: n > 1 ? String(n) : "" };
+}
+
 /** A letter's ID from its page's URL: a whole number, or undefined. */
 export function letterId(id: string): number | undefined {
   return politicianId(id);

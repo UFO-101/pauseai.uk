@@ -48,6 +48,8 @@ import EraseLink from "@/app/(staff)/staff/_components/EraseLink";
 import MailingDetails from "@/app/(staff)/staff/_components/MailingDetails";
 import MailingsTable from "@/app/(staff)/staff/_components/MailingsTable";
 import { exampleMailing, exampleMailings } from "@/app/(staff)/staff/_components/MailingsTable.examples";
+import ListCount from "@/app/(staff)/staff/_components/ListCount";
+import PoliticiansList, { HouseTabs } from "@/app/(staff)/staff/_components/PoliticiansList";
 import ErasedNotice from "@/app/(staff)/staff/_components/ErasedNotice";
 import ImportCard, { ImportCards } from "@/app/(staff)/staff/_components/ImportCard";
 import KeepSignedIn from "@/app/(staff)/staff/_components/KeepSignedIn";
@@ -78,7 +80,12 @@ import Strip from "@/app/(staff)/staff/_components/ui/Strip";
 import Tabs from "@/app/(staff)/staff/_components/ui/Tabs";
 import Tag from "@/components/ui/Tag";
 import { campaigns } from "@/lib/content/email-your-mp";
-import { exampleAsks, exampleAsksWithCounts } from "@/app/(staff)/staff/_components/PoliticianTable.examples";
+import {
+  exampleAsks,
+  exampleAsksWithCounts,
+  examplePolitician,
+  examplePoliticiansPage,
+} from "@/app/(staff)/staff/_components/PoliticianTable.examples";
 import AsksTable from "@/app/(staff)/staff/_components/AsksTable";
 import { staffCopy } from "@/lib/content/staff-interface";
 import type { ImportJob } from "@/lib/import-runs";
@@ -884,6 +891,64 @@ export const staff: Group = {
           render: () => (
             <StaffPage as="div">
               <EraseLink supporterId={7} />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "ListCount",
+      file: "app/(staff)/staff/_components/ListCount.tsx",
+      variants: [
+        {
+          label: "Over a list",
+          render: () => (
+            <StaffPage as="div">
+              <ListCount total={150}>150 politicians; page 1 of 2.</ListCount>
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "HouseTabs",
+      file: "app/(staff)/staff/_components/PoliticiansList.tsx",
+      variants: [
+        {
+          label: "The Lords chosen",
+          render: () => (
+            <StaffPage as="div">
+              <HouseTabs search={{ ...EMPTY_POLITICIAN_FILTERS, house: "lords" }} />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "PoliticiansList",
+      file: "app/(staff)/staff/_components/PoliticiansList.tsx",
+      variants: [
+        {
+          label: "A search's page of politicians, with more in other houses and out of office",
+          render: () => (
+            <StaffPage as="div">
+              <PoliticiansList
+                list={{ ...examplePoliticiansPage, total: 150, pages: 2, outOfOffice: 3, otherHouses: 2 }}
+                search={{ ...EMPTY_POLITICIAN_FILTERS, q: "pol" }}
+                asks={exampleAsks}
+              />
+            </StaffPage>
+          ),
+        },
+        {
+          label: "A search that finds no one, with the nearest names",
+          render: () => (
+            <StaffPage as="div">
+              <PoliticiansList
+                list={{ ...examplePoliticiansPage, politicians: [], total: 0, closest: [examplePolitician] }}
+                search={{ ...EMPTY_POLITICIAN_FILTERS, q: "Polly Plaseholder" }}
+                asks={exampleAsks}
+              />
             </StaffPage>
           ),
         },

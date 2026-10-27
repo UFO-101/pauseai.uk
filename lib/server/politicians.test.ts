@@ -15,6 +15,7 @@ import {
   listParties,
   listPoliticians,
   politicianHistory,
+  politiciansPage,
   politiciansSearch,
   setStatus,
   signatories,
@@ -209,6 +210,24 @@ describeWithDatabase("politicians", () => {
     expect(await query("SELECT actor, details FROM audit_log WHERE action = 'delete politician'")).toEqual([
       { actor: "jo@pauseai.uk", details: { id: gone, name: "Polly Placeholder", airtableId: "recGone" } },
     ]);
+  });
+
+  it("gives the politicians page: the list, its count and pages, and for a search, the others it finds", async () => {
+    await addTestPolitician({ name: "Polly Placeholder" });
+    await addTestPolitician({ name: "Peter Placeholder", status: "retired", airtableId: "recPeter" });
+    await addTestPolitician({ ...PEER, name: "Lord Placeholder", airtableId: "recLord" });
+    const page = (filter: Parameters<typeof politiciansPage>[0]) => politiciansPage(filter);
+
+    expect(await page({ status: "in_office" })).toMatchObject({ total: 2, page: 1, pages: 1, closest: [] });
+    // A search of those in office: how many are out of it.
+    expect(await page({ search: "placeholder", status: "in_office" })).toMatchObject({ total: 2, outOfOffice: 1 });
+    // A search of one house that finds no one there: how many in others, and the nearest names.
+    const lords = await page({ search: "Polly", house: "lords", status: "in_office" });
+    expect(lords).toMatchObject({ total: 0, otherHouses: 1, outOfOffice: 0 });
+    const typo = await page({ search: "Plaseholder", house: "lords" });
+    expect(typo.closest.map((p) => p.name)).toEqual(["Lord Placeholder"]);
+    expect(await page({ search: "zzz", status: "in_office" })).toMatchObject({ otherHouses: 0, closest: [] });
+    expect(await page({ page: 2 })).toMatchObject({ page: 2, politicians: [] });
   });
 
   it("finds those in office, or out of it, and counts them", async () => {

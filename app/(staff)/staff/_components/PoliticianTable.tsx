@@ -19,7 +19,7 @@ type Props = {
 };
 
 /** Airtable's markers on them, and whether their record has gone from it, as lozenges. */
-export function Marks({ politician }: { politician: Politician }) {
+function Marks({ politician }: { politician: Politician }) {
   const { flags } = staffCopy.politicians;
   return (
     <>
