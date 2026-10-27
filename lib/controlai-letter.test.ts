@@ -23,7 +23,7 @@ describe("pdfUrlIn", () => {
 
 describe("signedControlAiLetter", () => {
   it("is the bill's signed status, and nothing else", () => {
-    expect(signedControlAiLetter({ "controlai-statement": "signed" })).toBe(true);
+    expect(signedControlAiLetter({ "controlai-letter": "signed" })).toBe(true);
     expect(signedControlAiLetter({ "frontier-ai-letter": "signed" })).toBe(false);
     expect(signedControlAiLetter({})).toBe(false);
   });

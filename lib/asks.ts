@@ -22,8 +22,10 @@ export type AskStatuses = Partial<Record<string, AskStatus>>;
 export const FRONTIER_AI_LETTER_ASK = "frontier-ai-letter";
 /** PauseAI's 2025 letter to Sir Demis Hassabis of Google DeepMind. */
 export const DEEPMIND_LETTER_ASK = "deepmind-letter";
-/** ControlAI's statement backing the Artificial Superintelligence Bill. */
+/** ControlAI's campaign statement, which parliamentarians have signed since February 2025. */
 export const CONTROLAI_STATEMENT_ASK = "controlai-statement";
+/** ControlAI's letter to the Prime Minister backing the Artificial Superintelligence Bill. */
+export const CONTROLAI_LETTER_ASK = "controlai-letter";
 /** The conference in Edinburgh, November 2026. */
 export const EDINBURGH_CONFERENCE_ASK = "edinburgh-conference-2026";
 /** Go to Parliament, 20 October 2026. */

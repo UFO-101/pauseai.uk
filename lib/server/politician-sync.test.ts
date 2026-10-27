@@ -114,7 +114,7 @@ describeWithDatabase("syncPoliticians", () => {
       "Testy McTestface MP",
     ]);
     expect(await statuses()).toEqual([
-      { name: "Backy McTestface MP", ask: "controlai-statement", status: "signed", by: "sync" },
+      { name: "Backy McTestface MP", ask: "controlai-letter", status: "signed", by: "sync" },
       { name: "Lord Seedling of Example", ask: "deepmind-letter", status: "signed", by: "airtable" },
       { name: "Morag Example", ask: "edinburgh-conference-2026", status: "going", by: "airtable" },
       { name: "Polly Placeholder", ask: "controlai-statement", status: "signed", by: "airtable" },
@@ -293,7 +293,7 @@ describeWithDatabase("syncPoliticians", () => {
     const [dora, polly, seedling, morag, ...rest] = fixture.records;
     airtableHas([
       { ...dora, fields: { ...dora.fields, "Signed Frontier AI Letter": false } },
-      // Polly now goes to the conference, and no longer backs ControlAI's statement.
+      // Polly now goes to the conference, and no longer backs ControlAI's campaign statement.
       {
         ...polly,
         fields: { ...polly.fields, "ControlAI Signatory": false, "Edinburgh Conference November 2026": "Going" },

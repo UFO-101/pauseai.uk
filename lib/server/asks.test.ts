@@ -14,9 +14,10 @@ describeWithDatabase("asks and campaigns", () => {
     expect(asks.map((ask) => [ask.slug, ask.date])).toEqual([
       ["edinburgh-conference-2026", "2026-11-01"],
       ["go-to-parliament-oct-2026", "2026-10-20"],
-      ["controlai-statement", "2026-09-11"],
+      ["controlai-letter", "2026-09-11"],
       ["frontier-ai-letter", "2026-06-18"],
       ["deepmind-letter", "2025-08-29"],
+      ["controlai-statement", "2025-02-06"],
     ]);
     expect(asks[0]).toEqual({
       slug: "edinburgh-conference-2026",
@@ -28,6 +29,7 @@ describeWithDatabase("asks and campaigns", () => {
     });
     expect(asks.map((ask) => ask.slug).sort()).toEqual(
       [
+        "controlai-letter",
         "controlai-statement",
         "deepmind-letter",
         "edinburgh-conference-2026",
@@ -52,7 +54,8 @@ describeWithDatabase("asks and campaigns", () => {
     expect(by).toEqual({
       "frontier-ai-letter": ["supporters"],
       "deepmind-letter": ["supporters"],
-      "controlai-statement": ["supporters"],
+      "controlai-statement": [],
+      "controlai-letter": ["supporters"],
       "edinburgh-conference-2026": ["pauseai"],
       "go-to-parliament-oct-2026": ["supporters"],
     });
@@ -149,7 +152,7 @@ describeWithDatabase("migration 0035_notable_people_and_asks", () => {
          FROM ask_statuses ORDER BY notable_person_id, ask`,
       ),
     ).toEqual([
-      { id: mp, ask: "controlai-statement", status: "signed", note: "", updatedBy: "controlai" },
+      { id: mp, ask: "controlai-letter", status: "signed", note: "", updatedBy: "controlai" },
       { id: mp, ask: "frontier-ai-letter", status: "signed", note: "newer", updatedBy: "jo@pauseai.uk" },
       { id: gone, ask: "a-mystery", status: "signed", note: "", updatedBy: "jo@pauseai.uk" },
     ]);

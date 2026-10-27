@@ -37,7 +37,7 @@ test("a politician from Airtable: their markers, notes, answers and PauseAI's em
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(`Polly Placeholder${copy.importantTarget}`);
   await expect(page.getByText("Met at the example fair.")).toBeVisible();
   const asks = page.getByRole("region", { name: copy.statusesTitle });
-  // ControlAI's statement and her answer to the conference, both from Airtable.
+  // ControlAI's campaign statement and her answer to the conference, both from Airtable.
   await expect(asks.getByText(staffCopy.statuses.declined)).toBeVisible();
   await expect(asks.getByText(copy.fromImport.airtable).first()).toBeVisible();
   // The conference's invitation, personalised.

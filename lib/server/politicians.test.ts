@@ -20,7 +20,7 @@ import { recordProblem } from "./email";
 import { logChange } from "./audit";
 
 const PM = "frontier-ai-letter";
-const BILL = "controlai-statement";
+const BILL = "controlai-letter";
 const EDINBURGH = "edinburgh-conference-2026";
 const PEER = {
   house: "lords" as const,

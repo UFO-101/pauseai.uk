@@ -3,7 +3,7 @@
 // own words (app/(site)/campaigns/<slug>/page.tsx).
 
 // Relative, as next.config.ts imports this file and its loader resolves only its own "@/" imports.
-import { CONTROLAI_STATEMENT_ASK, FRONTIER_AI_LETTER_ASK, type AskStatus, type AskStatuses } from "../asks";
+import { CONTROLAI_LETTER_ASK, FRONTIER_AI_LETTER_ASK, type AskStatus, type AskStatuses } from "../asks";
 import { signedControlAiLetter } from "../controlai-letter";
 
 /** The MP's answer to each ask, keyed by the ask's slug (lib/asks.ts). */
@@ -123,7 +123,7 @@ ${d.senderName}`,
   {
     slug: "support-sobel-bill",
     title: "Support the Artificial Superintelligence Bill",
-    ask: CONTROLAI_STATEMENT_ASK,
+    ask: CONTROLAI_LETTER_ASK,
     // No "done": everyone is asked to go to the debate, so it's always there
     // to move on to.
     subject: "Request to support the Artificial Superintelligence Bill",

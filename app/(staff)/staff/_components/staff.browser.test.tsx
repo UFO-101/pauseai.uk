@@ -1733,7 +1733,7 @@ describe("PoliticianTable", () => {
           {
             ...testMp,
             statuses: {
-              "controlai-statement": { ...MP.statuses["frontier-ai-letter"], updatedBy: "controlai" },
+              "controlai-letter": { ...MP.statuses["frontier-ai-letter"], updatedBy: "controlai" },
               "frontier-ai-letter": { ...MP.statuses["frontier-ai-letter"], updatedBy: "airtable" },
             },
           },
@@ -1773,7 +1773,7 @@ describe("PoliticianTable", () => {
         .tagName,
     ).toBe("STRONG");
     expect(answers("Testy McTestface MP")).toEqual([
-      `${staffCopy.statuses.signed} ${ask("controlai-statement").title}`,
+      `${staffCopy.statuses.signed} ${ask("controlai-letter").title}`,
       `${staffCopy.statuses.signed} ${ask("frontier-ai-letter").title}`,
     ]);
     expect(cells("Testy McTestface MP")[4]).toBe(staffCopy.personStatuses.retired);
@@ -2146,7 +2146,7 @@ describe("ChangesTable", () => {
     const count = (n: number, key: string) => `${n} ${copy.counts[key]}`;
     expect(details).toEqual([
       `Polly Placeholder · ${signed.before}${pm.title}${signed.after}, 2026-10-01 · ${labels.note} By email`,
-      `${copy.gone("99")} · ${cleared.before}controlai-statement${cleared.after}`,
+      `${copy.gone("99")} · ${cleared.before}controlai-letter${cleared.after}`,
       `Polly Placeholder · ${labels.airtableId} recPolly · ${fields.party} Labour → Independent · ${fields.email} ${copy.empty} → polly@example.org`,
       `Polly Placeholder · ${labels.airtableId} recPolly · ${fields.house} ${staffCopy.houses.commons} · ${fields.salutation} Ms Placeholder · ${fields.constituency} Ipswich · ${fields.party} Labour`,
       "Old MP",

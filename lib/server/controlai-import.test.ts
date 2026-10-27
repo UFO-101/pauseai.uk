@@ -3,7 +3,7 @@ import { PDFDocument, StandardFonts } from "pdf-lib";
 import { http, HttpResponse } from "msw";
 import { server } from "@/tests/fixtures/msw";
 import { addTestMp, addTestPolitician, describeWithDatabase, useTestDatabase } from "@/tests/database";
-import { CONTROLAI_STATEMENT_ASK } from "@/lib/asks";
+import { CONTROLAI_LETTER_ASK } from "@/lib/asks";
 import { CONTROLAI_LETTER_PAGE } from "@/lib/controlai-letter";
 import { NIGHTLY } from "@/lib/import-runs";
 import { importControlAiLetter } from "./controlai-import";
@@ -28,7 +28,7 @@ const statuses = () =>
   query<{ name: string; updatedBy: string }>(
     `SELECT p.name, s.updated_by AS "updatedBy" FROM ask_statuses s JOIN notable_people p ON p.id = s.notable_person_id
      WHERE s.ask = $1 ORDER BY p.name`,
-    [CONTROLAI_STATEMENT_ASK],
+    [CONTROLAI_LETTER_ASK],
   );
 
 describeWithDatabase("importControlAiLetter", () => {
@@ -94,7 +94,7 @@ describeWithDatabase("importControlAiLetter", () => {
       `INSERT INTO ask_statuses (notable_person_id, ask, ask_kind, status, updated_by) VALUES
        ($1, $4, 'letter', 'signed', 'controlai'), ($2, $4, 'letter', 'signed', 'controlai'), ($3, $4, 'letter', 'signed', 'sync'),
        ($1, 'frontier-ai-letter', 'letter', 'signed', 'jo@pauseai.uk')`,
-      [polly, gone, byHand, CONTROLAI_STATEMENT_ASK],
+      [polly, gone, byHand, CONTROLAI_LETTER_ASK],
     );
 
     const result = await importControlAiLetter(NIGHTLY);

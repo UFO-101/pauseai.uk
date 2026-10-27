@@ -87,7 +87,9 @@ INSERT INTO asks (slug, title, kind, date, url, asked_by) VALUES
     '/pdfs/Frontier-AI-Open-Letter.pdf', '{supporters}'),
   ('deepmind-letter', 'DeepMind letter to Sir Demis Hassabis', 'letter', '2025-08-29',
     '/campaigns/dear-sir-demis-2025', '{supporters}'),
-  ('controlai-statement', 'ControlAI''s statement to the Prime Minister', 'letter', '2026-09-11',
+  ('controlai-statement', 'ControlAI''s campaign statement', 'letter', '2025-02-06',
+    'https://controlai.org/statement', '{}'),
+  ('controlai-letter', 'ControlAI''s letter to the Prime Minister', 'letter', '2026-09-11',
     'https://controlai.org/uk-pm-letter', '{supporters}'),
   ('edinburgh-conference-2026', 'Edinburgh conference, November 2026', 'event', '2026-11-01',
     'https://luma.com/6jp2nqe9', '{pauseai}'),
@@ -104,7 +106,7 @@ CREATE TABLE campaigns (
 );
 INSERT INTO campaigns (slug, title, ask) VALUES
   ('regulate-letter-pm', 'Regulate AI developers now', 'frontier-ai-letter'),
-  ('support-sobel-bill', 'Support the Artificial Superintelligence Bill', 'controlai-statement'),
+  ('support-sobel-bill', 'Support the Artificial Superintelligence Bill', 'controlai-letter'),
   ('pauseai-info-frontier-ai', 'Frontier AI letter, from pauseai.info', 'frontier-ai-letter'),
   ('pauseai-info-liability', 'Liability letter, from pauseai.info', NULL),
   ('pauseai-info-deepmind', 'DeepMind letter, from pauseai.info', 'deepmind-letter');
@@ -135,7 +137,7 @@ CREATE INDEX ask_statuses_ask ON ask_statuses (ask, status);
 CREATE TEMP TABLE status_asks AS
   SELECT DISTINCT s.campaign,
     CASE WHEN s.campaign IN ('regulate-letter-pm', 'letter-to-the-prime-minister') THEN 'frontier-ai-letter'
-      WHEN s.campaign IN ('support-sobel-bill', 'support-the-bill') THEN 'controlai-statement'
+      WHEN s.campaign IN ('support-sobel-bill', 'support-the-bill') THEN 'controlai-letter'
       ELSE s.campaign END AS ask
   FROM campaign_statuses s;
 INSERT INTO asks (slug, title, kind)

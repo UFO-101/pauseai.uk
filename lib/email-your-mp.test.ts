@@ -60,7 +60,7 @@ describe("campaigns", () => {
   });
 
   it("finds the campaign that makes an ask", () => {
-    expect(campaignForAsk("controlai-statement")).toBe(bill);
+    expect(campaignForAsk("controlai-letter")).toBe(bill);
     expect(campaignForAsk("deepmind-letter")).toBeUndefined();
   });
 

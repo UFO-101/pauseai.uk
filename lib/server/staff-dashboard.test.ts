@@ -35,8 +35,8 @@ describeWithDatabase("dashboard", () => {
       `INSERT INTO ask_statuses (notable_person_id, ask, ask_kind, status, updated_by, updated_at)
        VALUES ($1, 'frontier-ai-letter', 'letter', 'signed', 'x', '2026-10-15T00:00:00Z'),
               ($1, 'deepmind-letter', 'letter', 'signed', 'x', '2026-10-17T00:00:00Z'),
-              ($1, 'controlai-statement', 'letter', 'signed', 'airtable', '2026-10-18T00:00:00Z'),
-              ($2, 'controlai-statement', 'letter', 'signed', 'x', '2026-10-16T00:00:00Z')`,
+              ($1, 'controlai-letter', 'letter', 'signed', 'airtable', '2026-10-18T00:00:00Z'),
+              ($2, 'controlai-letter', 'letter', 'signed', 'x', '2026-10-16T00:00:00Z')`,
       [real, test],
     );
     // Supporters first seen this week, the week before, and five weeks ago; and two linked this week, one first
@@ -150,7 +150,7 @@ describeWithDatabase("dashboard", () => {
     });
     await query(
       `INSERT INTO ask_statuses (notable_person_id, ask, ask_kind, status, updated_by, updated_at)
-       VALUES ($1, 'controlai-statement', 'letter', 'signed', 'x', '2026-10-17T00:00:00Z')`,
+       VALUES ($1, 'controlai-letter', 'letter', 'signed', 'x', '2026-10-17T00:00:00Z')`,
       [peer],
     );
     expect((await dashboard(7)).signedMp).toBeNull();

@@ -612,8 +612,7 @@ export const staffCopy = {
     intro: {
       before: "MPs and peers who signed ",
       link: "the letter",
-      after:
-        "are marked as having signed “ControlAI's statement to the Prime Minister”. This can't be changed by hand.",
+      after: "are marked as having signed “ControlAI's letter to the Prime Minister”. This can't be changed by hand.",
     },
     importNow: "Import ControlAI letter now",
     never: "Not read yet.",
@@ -728,7 +727,7 @@ export const staffCopy = {
       before: "Every politician in every body is copied from the ",
       link: "UK Parliamentarians table in Airtable",
       after:
-        ", except the Airtable test MPs. Stores their answers to “Frontier AI letter to the Prime Minister”, “DeepMind letter to Sir Demis Hassabis”, “ControlAI's statement to the Prime Minister” and “Edinburgh conference, November 2026”. Runs that change lots of data are held for checking.",
+        ", except the Airtable test MPs. Stores their answers to “Frontier AI letter to the Prime Minister”, “DeepMind letter to Sir Demis Hassabis”, “ControlAI's campaign statement” and “Edinburgh conference, November 2026”. Runs that change lots of data are held for checking.",
     },
     /** The test MPs (lib/test-mps.json) aren't in Airtable; every import adds any that are missing. */
     testMps: "Each import also adds our own test MPs, who aren’t in Airtable, if any are missing.",

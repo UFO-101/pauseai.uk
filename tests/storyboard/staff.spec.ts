@@ -189,7 +189,9 @@ test("staff log in, set a status that shows on /campaigns, and log out", async (
   await expect(page.getByText(/6 names/)).toBeVisible();
   await frame(page, "ControlAI's letter imported");
   await page.goto(`${BASE}/staff/politicians`);
-  await expect(page.getByRole("row").filter({ hasText: "Polly Placeholder" })).toContainText("ControlAI's statement");
+  await expect(page.getByRole("row").filter({ hasText: "Polly Placeholder" })).toContainText(
+    "ControlAI's campaign statement",
+  );
   await frame(page, "the politicians list says who signed ControlAI's letter");
 
   // The fixture Airtable gives Polly Placeholder an email Parliament doesn't list.

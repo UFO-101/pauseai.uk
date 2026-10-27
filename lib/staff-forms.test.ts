@@ -34,8 +34,8 @@ describe("statusFrom", () => {
     expect(statusFrom(form({ ...base, politicianId: "x" }))).toBeUndefined();
     expect(statusFrom(form({ ...base, ask: "nope" }))).toBeUndefined();
     expect(statusFrom(form({ ...base, status: "maybe" }))).toBeUndefined();
-    // ControlAI's statement is set from its letter, never by hand.
-    expect(statusFrom(form({ ...base, ask: "controlai-statement" }))).toBeUndefined();
+    // ControlAI's letter is set from its PDF, never by hand.
+    expect(statusFrom(form({ ...base, ask: "controlai-letter" }))).toBeUndefined();
   });
 });
 

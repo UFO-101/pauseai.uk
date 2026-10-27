@@ -20,11 +20,11 @@ export const exampleAsks: Ask[] = [
     askedBy: [],
   },
   {
-    slug: "controlai-statement",
-    title: "Example Statement",
+    slug: "controlai-letter",
+    title: "Example Letter Backing the Bill",
     kind: "letter",
     date: "2026-09-11",
-    url: "https://example.org/statement",
+    url: "https://example.org/letter",
     askedBy: ["supporters"],
   },
   {

@@ -85,9 +85,9 @@ Who set a status decides who may change it. Staff set statuses by hand, with
 a note, for the asks of the campaigns they track (`trackedAsks`). An import
 owns the statuses it sets, and changes or removes only those, leaving alone
 a status set by staff or another import: the ControlAI import sets
-ControlAI's statement from its letter (`updated_by` `controlai`,
-`lib/server/controlai-import.ts`); the politician sync sets the letters and
-the conference Airtable records (`airtable`, `AIRTABLE_ASKS`); the one-off
+ControlAI's letter to the Prime Minister from its PDF (`updated_by`
+`controlai`, `lib/server/controlai-import.ts`); the politician sync sets the
+letters, ControlAI's campaign statement and the conference Airtable records (`airtable`, `AIRTABLE_ASKS`); the one-off
 Go to Parliament import its meetings (`airtable`,
 `lib/server/go-to-parliament-import.ts`). `/staff/asks` lists the asks, newest
 first, who asks each, and how many gave each answer.

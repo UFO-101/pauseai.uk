@@ -91,8 +91,8 @@ describeWithDatabase("staff Server Actions", () => {
     });
     expect(revalidatePath).toHaveBeenCalledWith("/staff/politicians");
 
-    // ControlAI's statement is the import's alone.
-    await setAskStatus(form({ politicianId: String(id), ask: "controlai-statement", status: "signed" }));
+    // ControlAI's letter is the import's alone.
+    await setAskStatus(form({ politicianId: String(id), ask: "controlai-letter", status: "signed" }));
     expect(await statusCount()).toBe(1);
 
     await setAskStatus(form({ politicianId: String(id), ask: PM, status: "", note: "Kept" }));
@@ -105,7 +105,7 @@ describeWithDatabase("staff Server Actions", () => {
   it("importControlAiNow reads ControlAI's letter as the staff member, and keeps a failure rather than crashing the page", async () => {
     const id = await addTestPolitician();
     await importControlAiNow();
-    expect((await getPolitician(id))!.statuses["controlai-statement"]).toMatchObject({ updatedBy: "controlai" });
+    expect((await getPolitician(id))!.statuses["controlai-letter"]).toMatchObject({ updatedBy: "controlai" });
     expect(revalidatePath).toHaveBeenCalledWith("/staff/import-data");
     // Its own page, the overview, and the home page's actions.
     expect(revalidatePath).toHaveBeenCalledWith("/staff/import-data/controlai");

@@ -29,7 +29,7 @@ function LoggedPoliticianTable({ politicians }: { politicians: Politician[] }) {
   return <PoliticianTable politicians={politicians} asks={exampleAsks} />;
 }
 
-/** An MP who signed the letter to the PM, and a test peer, retired, whose address is blocked, who signed ControlAI's statement. */
+/** An MP who signed the letter to the PM, and a test peer, retired, whose address is blocked, who signed ControlAI's letter. */
 export function PoliticianTableExample() {
   return (
     <LoggedPoliticianTable
@@ -45,7 +45,7 @@ export function PoliticianTableExample() {
           house: "lords",
           constituency: null,
           statuses: {
-            "controlai-statement": { ...examplePolitician.statuses["frontier-ai-letter"], updatedBy: "controlai" },
+            "controlai-letter": { ...examplePolitician.statuses["frontier-ai-letter"], updatedBy: "controlai" },
           },
         },
       ]}

@@ -125,7 +125,7 @@ letter, come to an event.
   | Campaign                   | Ask                   | In code |
   | -------------------------- | --------------------- | ------- |
   | `regulate-letter-pm`       | `frontier-ai-letter`  | yes     |
-  | `support-sobel-bill`       | `controlai-statement` | yes     |
+  | `support-sobel-bill`       | `controlai-letter` | yes     |
   | `pauseai-info-frontier-ai` | `frontier-ai-letter`  | no      |
   | `pauseai-info-liability`   |                       | no      |
   | `pauseai-info-deepmind`    | `deepmind-letter`     | no      |
@@ -134,7 +134,7 @@ letter, come to an event.
   it now reads them by campaign: a campaign whose ask the MP has met is
   skipped for the next (`isDone`), and a letter's text can depend on any
   ask, as the Sobel bill letter thanks an MP who signed
-  `controlai-statement` (`signedControlAiLetter`).
+  `controlai-letter` (`signedControlAiLetter`).
 
 ### Letters
 
@@ -227,8 +227,11 @@ the only file that talks to Airtable, and lists the fields it reads.
    | --------------------------- | ----------------------------------------------------------------- | ---------------------------------- | --------------------------------- |
    | `frontier-ai-letter`        | Our open letter to the Prime Minister on frontier AI              | Signed Frontier AI Letter          | 10                                |
    | `deepmind-letter`           | Our 2025 letter to Sir Demis Hassabis (`/campaigns/dear-sir-demis-2025`) | Signed DeepMind Letter             | 63                                |
-   | `controlai-statement`       | ControlAI's statement, imported from ControlAI as now             | ControlAI Signatory                | 167                               |
+   | `controlai-statement`       | ControlAI's campaign statement, since 6 Feb 2025 (controlai.org/statement) | ControlAI Signatory                | 167                               |
    | `edinburgh-conference-2026` | A conference in Edinburgh, November 2026                          | Edinburgh Conference November 2026 | 50 Declined, 1 Passed on request  |
+
+   ControlAI's letter to the Prime Minister (`controlai-letter`, 11 Sep
+   2026) isn't in Airtable: the ControlAI import reads it from the PDF.
 
    Edinburgh's answers map Going to `going`, Declined to `declined` and
    Passed on request to `passed_on`.

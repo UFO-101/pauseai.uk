@@ -1,5 +1,5 @@
 import "server-only";
-import { CONTROLAI_STATEMENT_ASK } from "@/lib/asks";
+import { CONTROLAI_LETTER_ASK } from "@/lib/asks";
 import { CONTROLAI, matchSignatories, signatoriesIn, type Candidate } from "@/lib/controlai-letter";
 import type { ControlAiImportResult } from "@/lib/import-runs";
 import { logChange } from "./audit";
@@ -8,7 +8,7 @@ import { keepingFailure, recordRun } from "./import-runs";
 import { fetchLetter } from "./outside-services/controlai";
 
 // Copies the signatories of ControlAI's letter to the PM into the statuses
-// of its ask (CONTROLAI_STATEMENT_ASK), nightly (app/api/cron/import-controlai) or when staff ask, and
+// of its ask (CONTROLAI_LETTER_ASK), nightly (app/api/cron/import-controlai) or when staff ask, and
 // keeps each run, failures included, in the import log (import-runs.ts, as
 // "import-controlai") for /staff/import-data.
 // The table is made to match the letter: statuses it set for names no
@@ -42,13 +42,13 @@ export function importControlAiLetter(startedBy: string): Promise<ControlAiImpor
         `INSERT INTO ask_statuses (notable_person_id, ask, ask_kind, status, updated_by)
          SELECT id, $2, 'letter', 'signed', $3 FROM unnest($1::bigint[]) AS id
          ON CONFLICT (notable_person_id, ask) DO NOTHING RETURNING notable_person_id::int AS "politicianId"`,
-        [ids, CONTROLAI_STATEMENT_ASK, CONTROLAI],
+        [ids, CONTROLAI_LETTER_ASK, CONTROLAI],
         db,
       );
       const removed = await query<{ politicianId: number }>(
         `DELETE FROM ask_statuses WHERE ask = $2 AND updated_by = $3 AND NOT (notable_person_id = ANY($1::bigint[]))
          RETURNING notable_person_id::int AS "politicianId"`,
-        [ids, CONTROLAI_STATEMENT_ASK, CONTROLAI],
+        [ids, CONTROLAI_LETTER_ASK, CONTROLAI],
         db,
       );
       const result: ControlAiImportResult = {
@@ -71,7 +71,7 @@ export function importControlAiLetter(startedBy: string): Promise<ControlAiImpor
           await logChange(
             CONTROLAI,
             "set status",
-            { politicianId, ask: CONTROLAI_STATEMENT_ASK, status: "signed", date: null, note: "" },
+            { politicianId, ask: CONTROLAI_LETTER_ASK, status: "signed", date: null, note: "" },
             db,
           );
         }
@@ -79,7 +79,7 @@ export function importControlAiLetter(startedBy: string): Promise<ControlAiImpor
           await logChange(
             CONTROLAI,
             "set status",
-            { politicianId, ask: CONTROLAI_STATEMENT_ASK, status: null, date: null, note: "" },
+            { politicianId, ask: CONTROLAI_LETTER_ASK, status: null, date: null, note: "" },
             db,
           );
         }
