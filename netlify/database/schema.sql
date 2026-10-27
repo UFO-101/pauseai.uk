@@ -621,7 +621,6 @@ CREATE TABLE public.politicians (
     test_postcode text,
     kind text DEFAULT 'politician'::text NOT NULL,
     country text,
-    city text,
     CONSTRAINT politicians_country_check CHECK ((country = ANY (ARRAY['england'::text, 'scotland'::text, 'wales'::text, 'northern-ireland'::text]))),
     CONSTRAINT politicians_house_check CHECK ((house = ANY (ARRAY['commons'::text, 'lords'::text, 'scottish-parliament'::text, 'senedd'::text, 'ni-assembly'::text, 'other'::text]))),
     CONSTRAINT politicians_kind_check CHECK ((kind = 'politician'::text)),

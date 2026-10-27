@@ -59,7 +59,6 @@ export const examplePolitician: Politician = {
   constituency: "Cities of London and Westminster",
   party: "Labour (Co-op)",
   country: "england",
-  city: "London",
   email: "polly.placeholder.mp@parliament.uk",
   status: "in_office",
   notes: "Met at the example fair.\nRecommended",

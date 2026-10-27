@@ -293,7 +293,6 @@ describeWithDatabase("politicians", () => {
       constituency: "Cities of London and Westminster",
       party: "Labour (Co-op)",
       country: null,
-      city: null,
       email: "polly.placeholder.mp@parliament.uk",
       status: "in_office",
       notes: "",

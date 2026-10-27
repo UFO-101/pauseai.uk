@@ -39,7 +39,7 @@ which follows "Dear" and is written by hand, as no rule makes it from the
 name ("Sir Iain", "Bishop"); an email if we know it; notes; Airtable's markers
 (important target, personal connection); and a status, `in_office`, `died`,
 `retired` or `left_office`. A politician (`politicians`) adds a house, a
-constituency if they have one, a party, a country and a city. The child row
+constituency if they have one, a party and a country. The child row
 joins its parent by a composite foreign key `(id, kind)`, so it can only be
 the kind its parent says, and everything else points at the parent: a new
 kind, such as journalists, is a new kind and a child table, and changes

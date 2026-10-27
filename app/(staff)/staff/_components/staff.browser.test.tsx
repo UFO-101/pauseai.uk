@@ -1080,7 +1080,6 @@ describe("PoliticianDetails", () => {
       MP.constituency,
       MP.party,
       staffCopy.countries.england,
-      MP.city,
       staffCopy.politicians.noEmail,
       MP.salutation,
       MP.notes,
@@ -1093,7 +1092,7 @@ describe("PoliticianDetails", () => {
     // A personal connection is a tag too; none of the rest is there for someone without them.
     await render(
       <PoliticianDetails
-        politician={{ ...MP, importantTarget: false, personalConnection: true, country: null, city: null, notes: "" }}
+        politician={{ ...MP, importantTarget: false, personalConnection: true, country: null, notes: "" }}
         unblock={vi.fn()}
         {...none}
       />,
@@ -1148,8 +1147,8 @@ describe("PoliticianDetails", () => {
   });
 
   it("tells one history of the letters to them, the replies, and what the audit log says about them, newest first", async () => {
-    // A peer: no constituency, country, city or notes, so no line for them.
-    const peer = { ...MP, constituency: null, country: null, city: null, notes: "" };
+    // A peer: no constituency, country or notes, so no line for them.
+    const peer = { ...MP, constituency: null, country: null, notes: "" };
     const fromPauseai = {
       mailingId: 3,
       mailing: "Example Mailing",

@@ -145,7 +145,7 @@ describeWithDatabase("syncPoliticians", () => {
     expect(
       await query(
         `SELECT n.salutation, n.email, n.notes, n.important_target AS "importantTarget",
-           n.personal_connection AS "personalConnection", p.constituency, p.party, p.country, p.city
+           n.personal_connection AS "personalConnection", p.constituency, p.party, p.country
          FROM notable_people n JOIN politicians p USING (id) WHERE n.airtable_id = 'recPlaceholder'`,
       ),
     ).toEqual([
@@ -158,7 +158,6 @@ describeWithDatabase("syncPoliticians", () => {
         constituency: "Cities of London and Westminster",
         party: "Labour (Co-op)",
         country: "england",
-        city: null,
       },
     ]);
     const [sync] = await recentSyncs();

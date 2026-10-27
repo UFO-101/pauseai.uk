@@ -14,7 +14,6 @@ export type SyncedPolitician = {
   constituency: string | null;
   party: string;
   country: "england" | "scotland" | "wales" | "northern-ireland" | null;
-  city: string | null;
   notes: string;
   importantTarget: boolean;
   personalConnection: boolean;

@@ -63,7 +63,6 @@ export const exampleSyncedMp = (id: number, email: string | null = "a@parliament
   constituency: `Seat ${id}`,
   party: "",
   country: null,
-  city: null,
   notes: "",
   importantTarget: false,
   personalConnection: false,

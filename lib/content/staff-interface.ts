@@ -533,7 +533,6 @@ export const staffCopy = {
     // The fields of the box at the top.
     status: "Status",
     country: "Country",
-    city: "City",
     notes: "Notes",
     // Airtable's markers, as tags by their name.
     importantTarget: "Important target",

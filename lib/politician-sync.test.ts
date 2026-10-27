@@ -11,7 +11,6 @@ const politician = (id: number, more: Partial<SyncedPolitician> = {}): SyncedPol
   constituency: `Seat ${id}`,
   party: "P",
   country: "england",
-  city: null,
   notes: "",
   importantTarget: false,
   personalConnection: false,
