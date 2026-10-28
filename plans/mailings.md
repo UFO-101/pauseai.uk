@@ -215,7 +215,10 @@ https://claude.ai/artifact/3qi42XAhd2qwYBTRYVGZoz
   draft; sending, ticking each recipient as it goes, with Stop, which
   sends no more; and sent, with each recipient's outcome, the counts and
   its filter as read-only pills. A sent mailing can't be deleted.
-- The list of mailings, with a Drafts tab.
+- The list of mailings, in three parts (chosen on the canvas): drafts,
+  each with Delete draft; coming up, each with Stop; and a table of
+  those sent, with how many were sent, bounced, replied and answered
+  the ask.
 
 ## Phase 3: Messages
 
