@@ -18,6 +18,31 @@ function reason(permission: ContactPermission): string {
 /** A topic's answer as a strip's colour: green we'd contact them, plain we wouldn't, amber we don't know. */
 const TONES = { yes: "green", no: "plain", unsure: "amber" } as const;
 
+/**
+ * What's behind a strip's "?": the topic's name, what it is, then when it's
+ * a yes, when a no and, for some, what we can't see, each under its label.
+ */
+function TopicDetails({ topic, details }: { topic: string; details: (typeof copy.details)["email"][string] }) {
+  return (
+    <>
+      <strong className={styles.topicTitle}>{copy.topicTitle(topic)}</strong>
+      <p>{details.about}</p>
+      <dl className={styles.when}>
+        <dt>{copy.whenYes}</dt>
+        <dd>{details.yes}</dd>
+        <dt>{copy.whenNo}</dt>
+        <dd>{details.no}</dd>
+        {details.caveat && (
+          <>
+            <dt>{copy.caveat}</dt>
+            <dd>{details.caveat}</dd>
+          </>
+        )}
+      </dl>
+    </>
+  );
+}
+
 /** The address or number a strip is for, smaller, after a tiny envelope or phone. */
 function Address({ channel, address }: { channel: Channel; address: string }) {
   return (
@@ -83,7 +108,7 @@ function Tile({ permission }: { permission: ContactPermission }) {
         className={styles.popover}
         style={{ positionAnchor: `--${id}` } as React.CSSProperties}
       >
-        {copy.details[permission.channel][permission.topic]}
+        <TopicDetails topic={topic} details={copy.details[permission.channel][permission.topic]} />
       </div>
     </li>
   );

@@ -345,27 +345,59 @@ export const staffCopy = {
           "march-2026-11": "the march sign-up",
         } as Record<string, string>,
         otherForm: "their newest form",
-        // Behind "Why?": how we know, and what we can't, by channel and topic.
+        // Behind a strip's "?": the topic, what it is, when it's a yes and when a no, and what we can't see, by
+        // channel and topic.
+        topicTitle: (topic: string) => `⁂ Topic: ${topic}`,
+        whenYes: "⁂ Yes when",
+        whenNo: "⁂ No when",
+        caveat: "⁂ Bear in mind",
         details: {
           email: {
-            "luma-calendar":
-              "Luma sends emails to the calendar's 'contacts'. Registering for an event or following the calendar makes someone a contact; unsubscribing from a Luma email takes them off the list, as does being removed or blocked. We hear of an unsubscribe at once, but annoyingly we have to poll for hours to find out about anyone coming back. Confusingly, unfollowing the calendar doesn't change whether Luma emails them.",
-            "pauseai-updates":
-              "“Keep me informed” on the join form has been optional since 30 June 2026. Before then everyone who joined was on the list. Unsubscribes since joining are in CiviCRM, which we don't read yet, so we usually have to put “Don't know” here.",
-            "site-forms":
-              "There are several UK specific forms which have ways of opting in to contact. For example, when emailing your MP or signing up on this site to a march.",
+            "luma-calendar": {
+              about: "⁂ Luma's emails to the calendar's contacts: new events and reminders.",
+              yes: "⁂ They registered for an event or followed the calendar.",
+              no: "⁂ They unsubscribed from a Luma email, or we removed or blocked them in Luma.",
+              caveat:
+                "⁂ Unfollowing the calendar doesn't stop Luma's emails. We hear of an unsubscribe at once, but of someone coming back only hours later.",
+            },
+            "pauseai-updates": {
+              about: "⁂ PauseAI global's newsletter, sent from CiviCRM.",
+              yes: "⁂ They ticked “Keep me informed” when joining, or joined before 30 June 2026, when everyone was added.",
+              no: "⁂ They left it unticked, or they're no longer a member the global team shares with us.",
+              caveat:
+                "⁂ Unsubscribes since joining are in CiviCRM, which we don't read yet, so a yes is usually “Don't know”.",
+            },
+            "site-forms": {
+              about: "⁂ PauseAI UK's own updates.",
+              yes: "⁂ They ticked the box on one of our forms, such as Email your MP or the march sign-up.",
+              no: "⁂ They left it unticked on the newest of our forms they filled in.",
+            },
           },
           phone: {
-            "luma-calendar":
-              "⁂ A number given when registering for a Luma event, which Luma asks for to text reminders. So we only text it, and only while that Luma account is a contact of the calendar: unsubscribing from a Luma email stops it too.",
-            "site-forms":
-              "⁂ There are several UK specific forms which have ways of opting in to contact. The march sign-up's box says “by email and phone”, so we may call or text a number given with it ticked.",
-            volunteering:
-              "⁂ The join form asks for a phone number only of those who choose to volunteer regularly, so we may call or text them about volunteering. A number from an older form, given with another choice, is a Don't know.",
-            "march-day":
-              "⁂ The march sign-up asks for a number for text updates on the day. Without the box ticked, we can use it only until the day is over.",
+            "luma-calendar": {
+              about:
+                "⁂ Texts to a number given when registering for a Luma event, which Luma asks for its reminders. Texts only, never calls.",
+              yes: "⁂ The Luma account that gave it is a contact of the calendar.",
+              no: "⁂ That account unsubscribed from a Luma email, or isn't a contact.",
+            },
+            "site-forms": {
+              about: "⁂ Calls or texts from PauseAI UK.",
+              yes: "⁂ They gave the number on one of our forms with the box ticked. The march sign-up's says “by email and phone”.",
+              no: "⁂ They left the box unticked on the newest of our forms that gave it.",
+            },
+            volunteering: {
+              about: "⁂ Calls or texts about volunteering.",
+              yes: "⁂ They gave it on the join form choosing to volunteer regularly, the only choice it's asked for.",
+              no: "⁂ They're no longer a member the global team shares with us.",
+              caveat: "⁂ A number from an older form, given with another choice, is “Don't know”.",
+            },
+            "march-day": {
+              about: "⁂ Texts on the day of the march.",
+              yes: "⁂ They gave a number on the march sign-up, which asks for one for text updates on the day.",
+              no: "⁂ The day is over. If they ticked the box, PauseAI UK updates carries on.",
+            },
           },
-        } as Record<Channel, Record<string, string>>,
+        } as Record<Channel, Record<string, { about: string; yes: string; no: string; caveat?: string }>>,
         // One tile in place of the topics', when the address is blocked: in place of a topic, then the answer.
         everyTopic: "⁂ Every topic",
         blocked: "⁂ Won't email: blocked",

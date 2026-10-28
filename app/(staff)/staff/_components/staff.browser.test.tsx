@@ -3191,8 +3191,8 @@ describe("PermissionTiles", () => {
   it("is a strip a topic: its name and the answer, the address, why in a few words, and how we know behind the ?", async () => {
     await render(<PermissionTiles permissions={exampleSupporterDetails.permissions} />);
     expect(tiles().map((tile) => tile.dataset.send)).toEqual(["no", "yes", "no"]);
-    expect(tiles()[0].textContent).toBe(
-      `${copy.topics.email["luma-calendar"]}${copy.answers.email.no}?jane@example.com${copy.reasons["luma-calendar"].unsubscribed("12 Oct 2026")}${copy.details.email["luma-calendar"]}`,
+    expect(tiles()[0].querySelector("[class*=strip]")!.textContent).toBe(
+      `${copy.topics.email["luma-calendar"]}${copy.answers.email.no}?jane@example.com${copy.reasons["luma-calendar"].unsubscribed("12 Oct 2026")}`,
     );
     expect(title(tiles()[1])).toBe(`${copy.topics.email["site-forms"]}${copy.answers.email.yes}?`);
     // The address after an envelope, a number after a phone, each named for a screen reader.
@@ -3201,7 +3201,7 @@ describe("PermissionTiles", () => {
     expect(address(tiles()[2]).querySelector("svg")!.getAttribute("aria-label")).toBe(copy.phone);
     // A number's answer is in the words of the ways its topic allows, and how we know in a phone's words.
     expect(title(tiles()[2])).toBe(`${copy.topics.phone["luma-calendar"]}${copy.answers.text.no}?`);
-    expect(tiles()[2].textContent).toContain(copy.details.phone["luma-calendar"]);
+    expect(tiles()[2].textContent).toContain(copy.details.phone["luma-calendar"].about);
     // The answer on the topic's line, the address under it.
     const line = (selector: string) => tiles()[0].querySelector(selector)!.getBoundingClientRect().top;
     expect(line("[class*=answer]")).toBeLessThan(line("[class*=address]"));
@@ -3213,9 +3213,22 @@ describe("PermissionTiles", () => {
     expect(tiles()[0].firstElementChild!.className).not.toMatch(/green|amber|red|undefined/);
     expect(tiles()[0].querySelectorAll("svg")).toHaveLength(1);
     // How we know shows when the ? is clicked.
-    await expect.element(page.getByText(copy.details.email["luma-calendar"]).first()).not.toBeVisible();
+    const luma = copy.details.email["luma-calendar"];
+    await expect.element(page.getByText(luma.about).first()).not.toBeVisible();
     await page.getByRole("button", { name: copy.why }).first().click();
-    await expect.element(page.getByText(copy.details.email["luma-calendar"]).first()).toBeVisible();
+    // The topic by name, what it is, then when it's a yes, a no, and what we can't see, each labelled.
+    const popover = document.querySelector("[popover]")!;
+    expect(popover.querySelector("strong")!.textContent).toBe(copy.topicTitle(copy.topics.email["luma-calendar"]));
+    expect([...popover.querySelectorAll("dt")].map((dt) => dt.textContent)).toEqual([
+      copy.whenYes,
+      copy.whenNo,
+      copy.caveat,
+    ]);
+    expect([...popover.querySelectorAll("dd")].map((dd) => dd.textContent)).toEqual([luma.yes, luma.no, luma.caveat]);
+    await expect.element(page.getByText(luma.about).first()).toBeVisible();
+    // A topic with nothing we can't see has no third label.
+    await page.getByRole("button", { name: copy.why }).nth(1).click();
+    expect(document.querySelectorAll("[popover]")[1].querySelectorAll("dt")).toHaveLength(2);
   });
 
   it("names the form whose box answered for our forms, or the newest form for one it has no name for", async () => {
