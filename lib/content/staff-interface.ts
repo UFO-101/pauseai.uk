@@ -658,10 +658,20 @@ export const staffCopy = {
     bold: "⁂ Bold",
     italic: "⁂ Italic",
     bulletList: "⁂ Bullet point",
-    // Before the buttons that put a merge field at the cursor.
-    insert: "⁂ Insert",
-    // The menu that wraps the paragraphs at the cursor in a part only some get.
-    onlyFor: "⁂ Only for…",
+    // The toolbar over the letter, for screen readers.
+    formatting: "⁂ Formatting",
+    // Over the merge fields beside the letter, to click or drag in.
+    fieldsHeading: "⁂ Fields",
+    // On hovering a field or a condition beside the letter.
+    dragHint: "⁂ Click to put it at the cursor, or drag it into the letter",
+    // On hovering a field some recipients have no value for, which can't be used.
+    lacking: (n: number) => `⁂ ${n} ${n === 1 ? "recipient has" : "recipients have"} none, so it can't be used`,
+    // Over who a part can be only for: those who gave each answer to an ask.
+    onlyFor: "⁂ Only for those who…",
+    // Instead of them, when no recipient has answered an ask.
+    noConditions: "⁂ No recipient has answered an ask yet.",
+    // After each: how many recipients gave that answer.
+    covers: (n: number) => `⁂ ${n}`,
     // On the box round such a part: who gets it.
     onlyForLabel: (who: string) => `⁂ Only for those who ${who}`,
     // Takes the part at the cursor out of its box, so everyone gets it.

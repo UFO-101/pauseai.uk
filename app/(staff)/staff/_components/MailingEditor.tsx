@@ -4,23 +4,24 @@ import { EditorContent, Node, useEditor, useEditorState, type Editor, type JSONC
 import { useMemo, useRef, useState } from "react";
 import { letterExtensions } from "@/lib/letter-extensions";
 import { staffCopy } from "@/lib/content/staff-interface";
+import type { MailingChoice } from "@/lib/mailing-fields";
 import styles from "./MailingEditor.module.css";
 
 const copy = staffCopy.mailingEditor;
 
-/** Something the editor offers by its ID, shown by its label: a merge field, or who a part is for. */
-export type Choice = { id: string; label: string };
-
 type Props = {
   initial: JSONContent;
   onChange: (doc: JSONContent) => void;
-  /** The merge fields it offers. */
-  fields: Choice[];
-  /** Who a part can be only for, such as those who signed an ask. */
-  conditions: Choice[];
+  /** The merge fields it offers; those some recipients lack a value for, ghosted. */
+  fields: MailingChoice[];
+  /** Who a part can be only for, such as those who signed an ask, each with how many it covers. */
+  conditions: MailingChoice[];
   /** The ID of the label naming it. */
   labelledBy: string;
 };
+
+/** Whether every recipient has a value for a field, so it can be used. */
+const usable = (field: MailingChoice) => !field.lacking;
 
 /** A choice's label, or its ID when it has none, as for a field no longer offered. */
 function labelOf(choices: Record<string, string>, id: string): string {
@@ -96,8 +97,8 @@ const OnlyFor = Node.create<{ labels: Record<string, string> }>({
   },
 });
 
-/** Bold, italic and bullets, a button for each merge field, and who a part is for. */
-function Toolbar({ editor, fields, conditions }: { editor: Editor; fields: Choice[]; conditions: Choice[] }) {
+/** Bold, italic and bullets, and in a part for only some, the button that makes it for everyone. */
+function Toolbar({ editor }: { editor: Editor }) {
   const active = useEditorState({
     editor,
     selector: ({ editor }) => ({
@@ -128,7 +129,7 @@ function Toolbar({ editor, fields, conditions }: { editor: Editor; fields: Choic
     },
   ];
   return (
-    <div className={styles.toolbar} role="toolbar" aria-label={copy.insert}>
+    <div className={styles.toolbar} role="toolbar" aria-label={copy.formatting}>
       {marks.map((mark) => (
         <button
           key={mark.title}
@@ -141,51 +142,98 @@ function Toolbar({ editor, fields, conditions }: { editor: Editor; fields: Choic
           {mark.label}
         </button>
       ))}
-      <span className={styles.insert}>{copy.insert}</span>
-      {fields.map((field) => (
-        <button
-          key={field.id}
-          type="button"
-          className={styles.fieldButton}
-          onClick={() =>
-            editor
-              .chain()
-              .focus()
-              .insertContent({ type: "field", attrs: { field: field.id } })
-              .run()
-          }
-        >
-          {field.label}
-        </button>
-      ))}
-      {active.onlyFor ? (
+      {active.onlyFor && (
         <button type="button" onClick={() => editor.chain().focus().lift("onlyFor").run()}>
           {copy.forEveryone}
         </button>
-      ) : (
-        <select
-          aria-label={copy.onlyFor}
-          value=""
-          onChange={(event) => editor.chain().focus().wrapIn("onlyFor", { condition: event.target.value }).run()}
-        >
-          <option value="" disabled>
-            {copy.onlyFor}
-          </option>
-          {conditions.map((condition) => (
-            <option key={condition.id} value={condition.id}>
-              {condition.label}
-            </option>
-          ))}
-        </select>
       )}
     </div>
   );
 }
 
 /**
+ * The lozenges beside the letter, to click or drag in: the merge fields,
+ * those some recipients lack a value for ghosted, saying how many; then who
+ * a part can be only for, each with how many it covers. Clicking one of
+ * those puts the paragraphs at the cursor in a box for them, or changes who
+ * the box the cursor is in is for.
+ */
+function Sidebar({
+  editor,
+  fields,
+  conditions,
+}: {
+  editor: Editor;
+  fields: MailingChoice[];
+  conditions: MailingChoice[];
+}) {
+  const inBox = useEditorState({ editor, selector: ({ editor }) => editor.isActive("onlyFor") });
+  return (
+    <div className={styles.sidebar}>
+      <p className={styles.sideHeading}>{copy.fieldsHeading}</p>
+      <ul className={styles.lozenges}>
+        {fields.map((field) => (
+          <li key={field.id}>
+            <button
+              type="button"
+              className={styles.fieldLozenge}
+              aria-disabled={!usable(field) || undefined}
+              title={usable(field) ? copy.dragHint : copy.lacking(field.lacking!)}
+              draggable={usable(field)}
+              onDragStart={(event) =>
+                event.dataTransfer.setData("text/html", `<span data-field="${field.id}">${field.label}</span>`)
+              }
+              onClick={() =>
+                usable(field) &&
+                editor
+                  .chain()
+                  .focus()
+                  .insertContent({ type: "field", attrs: { field: field.id } })
+                  .run()
+              }
+            >
+              {field.label}
+            </button>
+          </li>
+        ))}
+      </ul>
+      <p className={styles.sideHeading}>{copy.onlyFor}</p>
+      {conditions.length === 0 && <p className={styles.sideNote}>{copy.noConditions}</p>}
+      <ul className={styles.lozenges}>
+        {conditions.map((condition) => (
+          <li key={condition.id}>
+            <button
+              type="button"
+              className={styles.conditionLozenge}
+              title={copy.dragHint}
+              draggable
+              onDragStart={(event) =>
+                event.dataTransfer.setData(
+                  "text/html",
+                  `<div data-condition="${condition.id}"><div data-body><p></p></div></div>`,
+                )
+              }
+              onClick={() =>
+                inBox
+                  ? editor.chain().focus().updateAttributes("onlyFor", { condition: condition.id }).run()
+                  : editor.chain().focus().wrapIn("onlyFor", { condition: condition.id }).run()
+              }
+            >
+              {condition.label}
+              <span className={styles.covers}>{copy.covers(condition.covers ?? 0)}</span>
+            </button>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+/**
  * A mailing's letter: bold, italic and bullets as in a supporter's letter,
- * merge fields as chips, and parts in a box that only some recipients get.
- * Typing { offers the fields at the cursor.
+ * merge fields as chips, and parts in a box that only some recipients get,
+ * with the fields and who a part can be for beside it. Typing { offers the
+ * fields every recipient has at the cursor.
  */
 export default function MailingEditor({ initial, onChange, fields, conditions, labelledBy }: Props) {
   const frame = useRef<HTMLDivElement>(null);
@@ -207,7 +255,7 @@ export default function MailingEditor({ initial, onChange, fields, conditions, l
     editorProps: {
       attributes: { role: "textbox", "aria-multiline": "true", "aria-labelledby": labelledBy, class: styles.editor },
       handleTextInput: (view, from, to, text) => {
-        if (text !== "{") return false;
+        if (text !== "{" || !fields.some(usable)) return false;
         const at = view.coordsAtPos(from);
         const box = frame.current!.getBoundingClientRect();
         setPicker({ from, to, top: at.bottom - box.top, left: at.left - box.left });
@@ -223,44 +271,50 @@ export default function MailingEditor({ initial, onChange, fields, conditions, l
   }
 
   return (
-    <div className={styles.editorFrame} ref={frame}>
-      {editor && <Toolbar editor={editor} fields={fields} conditions={conditions} />}
-      <EditorContent editor={editor} />
-      {picker && (
-        <div
-          className={styles.picker}
-          role="menu"
-          aria-label={copy.pickField}
-          style={{ top: picker.top, left: picker.left }}
-          onKeyDown={(event) => {
-            if (event.key === "Escape") return close();
-            const step = { ArrowDown: 1, ArrowUp: -1 }[event.key];
-            if (!step) return;
-            event.preventDefault();
-            const items = [...event.currentTarget.querySelectorAll("button")];
-            const at = items.indexOf(document.activeElement as HTMLButtonElement);
-            items[(at + step + items.length) % items.length].focus();
-          }}
-        >
-          {fields.map((field, i) => (
-            <button
-              key={field.id}
-              type="button"
-              role="menuitem"
-              autoFocus={i === 0}
-              onClick={() => {
-                editor!
-                  .chain()
-                  .insertContentAt({ from: picker.from, to: picker.to }, { type: "field", attrs: { field: field.id } })
-                  .run();
-                close();
-              }}
-            >
-              {field.label}
-            </button>
-          ))}
-        </div>
-      )}
+    <div className={styles.layout}>
+      <div className={styles.editorFrame} ref={frame}>
+        {editor && <Toolbar editor={editor} />}
+        <EditorContent editor={editor} />
+        {picker && (
+          <div
+            className={styles.picker}
+            role="menu"
+            aria-label={copy.pickField}
+            style={{ top: picker.top, left: picker.left }}
+            onKeyDown={(event) => {
+              if (event.key === "Escape") return close();
+              const step = { ArrowDown: 1, ArrowUp: -1 }[event.key];
+              if (!step) return;
+              event.preventDefault();
+              const items = [...event.currentTarget.querySelectorAll("button")];
+              const at = items.indexOf(document.activeElement as HTMLButtonElement);
+              items[(at + step + items.length) % items.length].focus();
+            }}
+          >
+            {fields.filter(usable).map((field, i) => (
+              <button
+                key={field.id}
+                type="button"
+                role="menuitem"
+                autoFocus={i === 0}
+                onClick={() => {
+                  editor!
+                    .chain()
+                    .insertContentAt(
+                      { from: picker.from, to: picker.to },
+                      { type: "field", attrs: { field: field.id } },
+                    )
+                    .run();
+                  close();
+                }}
+              >
+                {field.label}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+      {editor && <Sidebar editor={editor} fields={fields} conditions={conditions} />}
     </div>
   );
 }

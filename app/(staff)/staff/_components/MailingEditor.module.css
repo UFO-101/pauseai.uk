@@ -1,7 +1,17 @@
 /* A mailing's editor: the toolbar on top, then the letter, as the letter's
    editor on Email your MP (LetterEditor.module.css), with merge fields as
-   chips and parts for only some recipients in a box. */
+   chips and parts for only some recipients in a box; beside it, or under it
+   where there's no room, the lozenges to put in. */
+.layout {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--space-4);
+}
+
 .editorFrame {
+  flex: 1 1 28rem;
+  min-width: 0;
   position: relative;
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-md);
@@ -22,8 +32,7 @@
   border-bottom: 1px solid var(--border-strong);
 }
 
-.toolbar button,
-.toolbar select {
+.toolbar button {
   min-width: 2.25rem;
   padding: var(--space-1) var(--space-2);
   border: 1px solid var(--border-strong);
@@ -45,19 +54,74 @@
   color: var(--white);
 }
 
-.insert {
-  margin-left: var(--space-2);
+.sidebar {
+  flex: 0 1 15rem;
+}
+
+.sideHeading {
+  margin: 0 0 var(--space-2);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.sideNote {
+  margin: 0 0 var(--space-3);
   font-size: var(--text-sm);
   color: var(--text-secondary);
 }
 
-/* A button that puts a field in looks like the field it puts in. */
-.toolbar .fieldButton {
+.lozenges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-4);
+  padding: 0;
+  list-style: none;
+}
+
+/* A lozenge looks like what it puts in: a field's chip, or a part's box. */
+.fieldLozenge,
+.conditionLozenge {
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid transparent;
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  text-align: left;
+  cursor: grab;
+}
+
+.fieldLozenge {
   border-radius: var(--radius-pill);
   background: var(--status-blue-bg);
-  border-color: var(--status-blue-bg);
   color: var(--status-blue);
-  font-weight: 600;
+}
+
+/* A field some recipients have no value for, which can't be used. */
+.fieldLozenge[aria-disabled="true"] {
+  border-style: dashed;
+  border-color: var(--border-strong);
+  background: none;
+  color: var(--text-secondary);
+  cursor: not-allowed;
+}
+
+.conditionLozenge {
+  border: 1px dashed var(--status-green);
+  border-radius: var(--radius-md);
+  background: var(--status-green-bg);
+  color: var(--status-green);
+}
+
+.fieldLozenge:not([aria-disabled="true"]):hover,
+.conditionLozenge:hover {
+  border-color: var(--accent);
+}
+
+.covers {
+  margin-left: var(--space-2);
+  font-weight: 400;
 }
 
 .editor {

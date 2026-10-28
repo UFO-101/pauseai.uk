@@ -8,16 +8,20 @@ import MailingEditor from "./MailingEditor";
 const copy = staffCopy.mailingEditor;
 
 const fields = [
-  { id: "salutation", label: "salutation" },
+  { id: "salutation", label: "salutation", lacking: 0 },
   { id: "name", label: "name" },
+  { id: "constituency", label: "constituency", lacking: 2 },
 ];
-const conditions = [{ id: "signed:frontier-ai-letter", label: "signed the Frontier AI letter" }];
+const conditions = [
+  { id: "frontier-ai-letter:signed", label: "signed the Frontier AI letter", covers: 12 },
+  { id: "edinburgh:going", label: "are going to Edinburgh" },
+];
 
 const paragraph = (...content: JSONContent[]): JSONContent => ({ type: "paragraph", content });
 const text = (value: string): JSONContent => ({ type: "text", text: value });
 const field = (id: string): JSONContent => ({ type: "field", attrs: { field: id } });
 
-function renderEditor(content: JSONContent[]) {
+function renderEditor(content: JSONContent[], offered = { fields, conditions }) {
   const onChange = vi.fn<(doc: JSONContent) => void>();
   render(
     <>
@@ -25,8 +29,8 @@ function renderEditor(content: JSONContent[]) {
       <MailingEditor
         initial={{ type: "doc", content }}
         onChange={onChange}
-        fields={fields}
-        conditions={conditions}
+        fields={offered.fields}
+        conditions={offered.conditions}
         labelledBy="label"
       />
     </>,
@@ -77,20 +81,57 @@ describe("MailingEditor", () => {
     expect(JSON.stringify(last(onChange))).toContain('"bulletList"');
   });
 
-  it("puts a field in at the cursor from its button", async () => {
+  it("puts a field in at the cursor from its lozenge, but not one some recipients lack", async () => {
     const onChange = renderEditor([paragraph(text("Dear "))]);
     await toEnd();
     await page.getByRole("button", { name: "name", exact: true }).click();
     expect(last(onChange).content![0].content).toContainEqual(field("name"));
+    const ghost = page.getByRole("button", { name: "constituency", exact: true });
+    await expect.element(ghost).toHaveAttribute("aria-disabled", "true");
+    await expect.element(ghost).toHaveAttribute("title", copy.lacking(2));
+    await expect.element(ghost).toHaveAttribute("draggable", "false");
+    (ghost.element() as HTMLElement).click();
+    expect(JSON.stringify(last(onChange))).not.toContain("constituency");
+    await expect
+      .element(page.getByRole("button", { name: "salutation", exact: true }))
+      .toHaveAttribute("title", copy.dragHint);
   });
 
-  it("makes a paragraph only for some, then for everyone again", async () => {
+  it("makes a paragraph only for some, changes who for, then for everyone again", async () => {
     const onChange = renderEditor([paragraph(text("Thank you."))]);
+    await expect.element(page.getByText(copy.covers(12))).toBeVisible();
     await toEnd();
-    await page.getByRole("combobox", { name: copy.onlyFor }).selectOptions(conditions[0].id);
+    await page.getByRole("button", { name: new RegExp(conditions[0].label) }).click();
     expect(last(onChange).content![0]).toMatchObject({ type: "onlyFor", attrs: { condition: conditions[0].id } });
+    await page.getByRole("button", { name: new RegExp(conditions[1].label) }).click();
+    expect(last(onChange).content![0]).toMatchObject({ type: "onlyFor", attrs: { condition: conditions[1].id } });
     await page.getByRole("button", { name: copy.forEveryone }).click();
     expect(last(onChange).content![0]).toMatchObject({ type: "paragraph" });
+  });
+
+  it("drags a field or a part in as the editor reads it", async () => {
+    renderEditor([paragraph(text("Dear "))]);
+    for (const [button, html] of [
+      [page.getByRole("button", { name: "name", exact: true }), '<span data-field="name">name</span>'],
+      [
+        page.getByRole("button", { name: new RegExp(conditions[0].label) }),
+        `<div data-condition="${conditions[0].id}"><div data-body><p></p></div></div>`,
+      ],
+    ] as const) {
+      await expect.element(button).toBeVisible();
+      const dragged = new DataTransfer();
+      button.element().dispatchEvent(new DragEvent("dragstart", { dataTransfer: dragged, bubbles: true }));
+      expect(dragged.getData("text/html")).toBe(html);
+    }
+  });
+
+  it("says when no recipient has answered an ask, and types { when no field can be used", async () => {
+    const onChange = renderEditor([paragraph(text("Dear"))], { fields: [fields[2]], conditions: [] });
+    await expect.element(page.getByText(copy.noConditions)).toBeVisible();
+    await toEnd();
+    await userEvent.keyboard("{{");
+    await expect.element(page.getByRole("menu")).not.toBeInTheDocument();
+    expect(last(onChange).content![0].content).toEqual([text("Dear{")]);
   });
 
   it("offers the fields when { is typed, and puts the one picked where it was typed", async () => {
@@ -104,7 +145,7 @@ describe("MailingEditor", () => {
     expect(last(onChange).content![0].content).toEqual([text("Dear "), field("salutation")]);
   });
 
-  it("moves through the menu of fields with the arrow keys, round from either end", async () => {
+  it("moves through the menu of fields every recipient has with the arrow keys, round from either end", async () => {
     const onChange = renderEditor([paragraph(text("Dear "))]);
     await toEnd();
     await userEvent.keyboard("{{");

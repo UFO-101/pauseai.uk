@@ -247,15 +247,15 @@ export function EraseFormExample() {
   );
 }
 
-/** The merge fields and who a part can be for, as a mailing to politicians offers them. */
+/** The merge fields and who a part can be for, as a mailing to politicians offers them: two lords have no constituency. */
 const mailingFields = [
-  { id: "salutation", label: "salutation" },
-  { id: "name", label: "name" },
-  { id: "constituency", label: "constituency" },
+  { id: "salutation", label: "salutation", lacking: 0 },
+  { id: "name", label: "name", lacking: 0 },
+  { id: "constituency", label: "constituency", lacking: 2 },
 ];
 const mailingConditions = [
-  { id: "signed:frontier-ai-letter", label: "signed the Frontier AI letter" },
-  { id: "going:edinburgh-conference-2026", label: "are going to the Edinburgh conference" },
+  { id: "frontier-ai-letter:signed", label: "signed the Frontier AI letter", covers: 12 },
+  { id: "edinburgh-conference-2026:going", label: "are going to the Edinburgh conference", covers: 3 },
 ];
 
 /** An invitation with a salutation, and a thank-you only for those who signed. */
@@ -276,7 +276,7 @@ const mailingLetter: JSONContent = {
     },
     {
       type: "onlyFor",
-      attrs: { condition: "signed:frontier-ai-letter" },
+      attrs: { condition: "frontier-ai-letter:signed" },
       content: [
         {
           type: "paragraph",
