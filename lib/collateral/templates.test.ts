@@ -1,10 +1,11 @@
-import { existsSync, readFileSync } from "fs";
+import { existsSync } from "fs";
 import { join } from "path";
 import { describe, expect, it } from "vitest";
+import { CANVAS_FONTS } from "./canvasFonts";
+import { CAPTION_FONTS } from "./qrCaption";
 import { defaultValues, FONT_LOADS, TEMPLATES } from "./templates";
 
 const root = process.cwd();
-const css = readFileSync(join(root, "components/tools/kit/Studio.module.css"), "utf8");
 
 describe.each(TEMPLATES)("template $id", (template) => {
   it("has unique field keys", () => {
@@ -38,14 +39,18 @@ describe("template ids", () => {
 
 describe("canvas fonts", () => {
   // Canvas text silently falls back to a system font if a face is not declared or its file is missing.
-  it.each(FONT_LOADS)("%s is declared in the studio's stylesheet", (load) => {
+  it.each(FONT_LOADS)("%s is a canvas font", (load) => {
     const family = /"([^"]+)"/.exec(load)![1];
-    expect(css).toContain(`font-family: "${family}"`);
+    expect(CANVAS_FONTS.map((f) => f.family)).toContain(family);
+  });
+
+  it("gives the QR caption the canvas fonts' families and files", () => {
+    for (const { family, file } of Object.values(CAPTION_FONTS)) {
+      expect(CANVAS_FONTS).toContainEqual(expect.objectContaining({ family, file }));
+    }
   });
 
   it("only points at font files that exist in public/", () => {
-    const files = [...css.matchAll(/url\("(\/fonts\/[^"]+)"\)/g)].map((m) => m[1]);
-    expect(files.length).toBeGreaterThan(0);
-    for (const file of files) expect(existsSync(join(root, "public", file)), file).toBe(true);
+    for (const { file } of CANVAS_FONTS) expect(existsSync(join(root, "public", file)), file).toBe(true);
   });
 });

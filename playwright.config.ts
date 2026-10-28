@@ -1,6 +1,6 @@
 import os from "node:os";
 import { defineConfig, devices } from "@playwright/test";
-import { fixtureEnv, LOCAL_URL, OUTBOX_DIR, SERVER_DATABASE, TEST_MP_EMAIL } from "./tests/fixture-env.mjs";
+import { LOCAL_URL } from "./tests/fixture-env.mjs";
 
 // The storyboard (tests/storyboard/, docs/testing.md): one suite that drives
 // the site's flows end to end on fixture data. Two ways to run it:
@@ -78,13 +78,7 @@ export default defineConfig({
     },
   ],
   webServer: {
-    // A fresh database of its own, with the test MPs, for requests that carry
-    // no flow's cookie (tests/storyboard/fixtures.ts). Never the real one.
-    // `next build` directly, as scripts/serve-main.mjs builds main: `npm run
-    // build` runs the unit tests and the linters first, which CI's other job
-    // and the pre-commit hook already do.
-    command: `export NETLIFY_DB_URL="$(node scripts/fresh-database.mjs ${SERVER_DATABASE} --test-mp ${TEST_MP_EMAIL})" && npx next build && npx next start --port ${LOCAL_PORT}`,
-    env: fixtureEnv({ outboxDir: OUTBOX_DIR }),
+    command: `node scripts/serve-fixture.mjs --port ${LOCAL_PORT}`,
     url: LOCAL_URL,
     reuseExistingServer: !process.env.CI,
     // CI always builds from cold (reuseExistingServer is off there), and a

@@ -403,19 +403,12 @@ npm run format                  # Prettier, on everything but plans/ (format:che
   purpose: placeholders can't be deployed (AGENTS.md).
 - **The storyboard** builds and starts the site itself on port 3100, unless
   a server is already running there. Your dev server, on 3000, is left
-  alone. To skip rebuilding each run, start one yourself, with the same
-  settings `playwright.config.ts` uses for its `webServer`
-  (`fixtureEnv()` in `tests/fixture-env.mjs`):
+  alone. To skip rebuilding each run, start one yourself, as
+  `playwright.config.ts` does for its `webServer`, and leave it running:
 
   ```bash
-  export NETLIFY_DB_URL=$(node scripts/fresh-database.mjs pauseai_storyboard --test-mp test-mp@example.org)
-  DATA_FIXTURES=1 FIXTURE_NOW=2026-10-16T12:00:00.000Z ANALYTICS=1 LUMA_API_KEY=fixture AIRTABLE_TOKEN=fixture STRIPE_WALL_OF_THANKS_KEY=fixture \
-    TURNSTILE_SECRET_KEY=fixture NEXT_PUBLIC_TURNSTILE_SITE_KEY=fixture TEST_MP_EMAIL=test-mp@example.org \
-    CRON_SECRET=fixture-cron-secret LUMA_WEBHOOK_SECRET=fixture-luma-webhook-secret \
-    POSTMARK_SERVER_TOKEN=fixture POSTMARK_WEBHOOK_USER=postmark POSTMARK_WEBHOOK_PASSWORD=fixture-webhook-password \
-    REPLIES_INBOX=replies@example.org OUTBOX_DIR=/tmp/pauseai-storyboard-outbox \
-    npx next build
-  # ...then the same variables with `npx next start --port 3100`, and in another terminal:
+  node scripts/serve-fixture.mjs --port 3100
+  # ...and in another terminal:
   npm run test:storyboard
   ```
 

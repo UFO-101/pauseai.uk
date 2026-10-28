@@ -7,12 +7,14 @@ import {
   listedFlows,
   mergeRun,
   missingFlows,
+  picturedFlows,
   runFolder,
   selectFlows,
 } from "./storyboard-main.mjs";
 
-const run = (flow: string, extra: Partial<{ viewport: string; status: string; png: string }> = {}) => ({
+const run = (flow: string, extra: Partial<{ viewport: string; status: string; png: string; spec: string }> = {}) => ({
   section: "staff",
+  spec: extra.spec ?? "s1",
   flow,
   viewport: extra.viewport ?? "desktop",
   line: 1,
@@ -21,7 +23,7 @@ const run = (flow: string, extra: Partial<{ viewport: string; status: string; pn
 });
 
 describe("listedFlows", () => {
-  it("keys every test Playwright lists, in nested describes too, by viewport, section and title", () => {
+  it("keys every test Playwright lists, in nested describes too, by viewport, section and title, with its test-list line", () => {
     const list = {
       suites: [
         {
@@ -32,12 +34,21 @@ describe("listedFlows", () => {
               tests: [{ projectName: "desktop" }, { projectName: "phone" }],
             },
           ],
-          suites: [{ specs: [{ title: "a menu", file: "mobile-nav.spec.ts", tests: [{ projectName: "phone" }] }] }],
+          suites: [
+            {
+              title: "mobile nav",
+              specs: [{ title: "a menu", file: "mobile-nav.spec.ts", tests: [{ projectName: "phone" }] }],
+            },
+          ],
         },
         {},
       ],
     };
-    expect([...listedFlows(list)]).toEqual(["desktop|staff|log in", "phone|staff|log in", "phone|mobile-nav|a menu"]);
+    expect([...listedFlows(list)]).toEqual([
+      ["desktop|staff|log in", "[desktop] › staff.spec.ts › log in"],
+      ["phone|staff|log in", "[phone] › staff.spec.ts › log in"],
+      ["phone|mobile-nav|a menu", "[phone] › mobile-nav.spec.ts › mobile nav › a menu"],
+    ]);
     expect(listedFlows({}).size).toBe(0);
   });
 });
@@ -70,10 +81,15 @@ describe("missingFlows and selectFlows", () => {
   const cached = { frames: [run("log in"), run("letters")] };
 
   it("finds what a run wants that the cache doesn't have", () => {
-    expect(missingFlows(cached, new Set(["desktop|staff|log in"]))).toEqual([]);
-    expect(missingFlows(cached, new Set(["desktop|staff|log in", "phone|staff|log in"]))).toEqual([
+    expect(missingFlows(cached, new Set(["desktop|staff|log in"]), { staff: "s1" })).toEqual([]);
+    expect(missingFlows(cached, new Set(["desktop|staff|log in", "phone|staff|log in"]), { staff: "s1" })).toEqual([
       "phone|staff|log in",
     ]);
+  });
+
+  it("finds what the cache has from another version of its spec file", () => {
+    expect(missingFlows(cached, new Set(["desktop|staff|log in"]), { staff: "s2" })).toEqual(["desktop|staff|log in"]);
+    expect(missingFlows(cached, new Set(["desktop|staff|log in"]), {})).toEqual(["desktop|staff|log in"]);
   });
 
   it("keeps only the flows a run selected", () => {
@@ -133,17 +149,34 @@ describe("mergeRun", () => {
   it("replaces the flows a fresh run has, adds new ones, and moves their pictures into the cache", () => {
     const cached = { frames: [run("log in", { png: "../cache/frames/old.png" }), run("letters")] };
     const fresh = { frames: [run("log in"), run("history"), { ...run("blank"), frames: [{ caption: "none" }] }] };
-    const merged = mergeRun(cached, fresh, "main-run/", "../cache/");
-    expect(merged.frames.map((r) => [r.flow, r.frames[0].png])).toEqual([
-      ["letters", "main-run/frames/letters/frame-1.png"],
-      ["log in", "../cache/frames/log in/frame-1.png"],
-      ["history", "../cache/frames/history/frame-1.png"],
-      ["blank", undefined],
+    const merged = mergeRun(cached, fresh, "main-run/", "../cache/", { staff: "s2" });
+    expect(merged.frames.map((r) => [r.flow, r.frames[0].png, r.spec])).toEqual([
+      ["letters", "main-run/frames/letters/frame-1.png", "s1"],
+      ["log in", "../cache/frames/log in/frame-1.png", "s2"],
+      ["history", "../cache/frames/history/frame-1.png", "s2"],
+      ["blank", undefined, "s2"],
     ]);
   });
 
   it("keeps a flow main failed, as main may not have it yet, but not one that timed out", () => {
     const fresh = { frames: [run("new flow", { status: "failed" }), run("slow", { status: "timedOut" })] };
-    expect(mergeRun({ frames: [] }, fresh, "main-run/", "../cache/").frames.map((r) => r.flow)).toEqual(["new flow"]);
+    expect(mergeRun({ frames: [] }, fresh, "main-run/", "../cache/", {}).frames.map((r) => r.flow)).toEqual([
+      "new flow",
+    ]);
+  });
+});
+
+describe("picturedFlows", () => {
+  it("keeps the flows a run wants that took a picture on this branch", () => {
+    const branch = {
+      frames: [
+        run("log in"),
+        { ...run("redirects"), frames: [] },
+        { ...run("blank"), frames: [{ caption: "none" }] },
+        run("not wanted"),
+      ],
+    };
+    const wanted = ["log in", "redirects", "blank", "absent"].map((flow) => flowKey(run(flow)));
+    expect([...picturedFlows(branch, wanted)]).toEqual([flowKey(run("log in"))]);
   });
 });

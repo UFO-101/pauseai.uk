@@ -150,7 +150,9 @@ tests know nothing about main.
 A frame pictures the whole page when the page is at the top, so its layout
 can be looked over, and only the window once a person, or a step, has
 scrolled: where they are is then the point, and a full-page picture of a
-scrolled page puts the sticky header wherever the scroll was. A flow with
+scrolled page puts the sticky header wherever the scroll was. The same
+while a menu or a dialog is open, as it's placed against the window, which
+a full-page picture resizes. A flow with
 no frames (the redirects, a scroll position, a header) says so on the page:
 "Passed. No frames: this flow only checks."
 
@@ -163,12 +165,16 @@ npm run test:report       # Playwright's own report, with the trace of a failed 
 **The gate** is what CI runs. It fails only on a flow's checks, never on
 how a page looks.
 
-**The review** (`scripts/storyboard.mjs`) builds and serves main
+**The review** (`scripts/storyboard.mjs`) runs the suite against this
+branch with screenshots, then builds and serves main
 (`scripts/serve-main.mjs`: a git worktree of where this branch left origin/main, the merge base a pull request compares with, kept in your temp folder; nothing is fetched,
-with its own `npm ci` when its lockfile changes), runs the suite against it
-with screenshots (its failures are just missing frames), then against this
-branch, pairs the frames by section, flow and caption, diffs them pixel by
-pixel, and opens `test-results/storyboard/index.html`, which goes to the
+with its own `npm ci` when its lockfile changes) and runs against it the
+flows that took pictures on this branch (its failures are just missing
+frames; a flow without frames has nothing to compare). Then
+`tests/storyboard/report/board.ts` pairs the frames by section, flow and
+caption, diffs them pixel by pixel, a few at a time and without decoding a
+pair whose files are the same, and the review opens
+`test-results/storyboard/index.html`, which goes to the
 newest run's page: the flows in
 sections, each frame captioned and pictured on desktop and phone, with this
 branch's picture, main's and the diff, a lightbox, a phone/desktop toggle
@@ -197,14 +203,19 @@ that's gone from the suite, renamed or deleted, isn't carried, and a full
 run starts empty.
 
 **Main is run once.** Main's frames are kept in
-`test-results/storyboard-main/`, under main's commit and a hash of this
-branch's suite (`tests/`, `playwright.config.ts`, `lib/content/`, the
+`test-results/storyboard-main/`, under main's commit and a hash of what
+this branch's suite shares (`tests/` but for the spec files, Vitest's tests
+and the review page's code, `playwright.config.ts`, `lib/content/`, the
 pages' paths, `app/sitemap.ts`, the migrations, `scripts/fresh-database.mjs`,
 `scripts/serve-main.mjs` and Playwright's version: the suite drives main's
-server, so a change to it changes main's frames). A run lists its flows first (`playwright test --list`,
-which builds nothing); if main's are all kept, it doesn't build or run main
-at all. Otherwise it runs main for its selection and keeps the result. So
-after one full review, every partial run against the same main is fast.
+server, so a change to it changes main's frames), and each flow's under a
+hash of its spec file. A run lists its flows first (`playwright test --list`,
+which builds nothing). After this branch's run, if main's frames of every
+flow that took pictures are kept, it doesn't build or run main at all.
+Otherwise it runs main for just the flows that aren't
+(`playwright test --test-list`) and keeps the result. So a change to one
+spec file reruns only that section on main, and after one full review,
+every partial run against the same main is fast.
 It won't start main's server while something already answers on main's port
 (3001), such as a server left from an earlier review: stop it, or pass
 `--main-server=` to use it on purpose.
@@ -216,8 +227,9 @@ counted as changed, by the rule toucan's snapshot gallery uses
 (https://git.sr.ht/~frabcus/toucan, `platform/snapshots/png.ts`). A pixel
 differs when a colour channel moves by more than 4 levels. A frame has
 changed when its differing pixels' moves add up to more than 2,000, or more
-than 1,000 pixels differ, both per CSS pixel, so nine times that on the
-phone's 3× screen. Antialiasing on a few glyphs comes to a few thousand; a
+than 1,000 pixels differ. Every frame is pictured a pixel to a CSS pixel,
+the phone's too, though its screen is 3×: the layout is what a frame shows,
+and it's a ninth of the pixels to take, keep and compare. Antialiasing on a few glyphs comes to a few thousand; a
 line that moves by a pixel, millions. A frame under the limits reads "same
 as main, but for noise" and still shows its diff, so you can see what fell
 under them. The limits are `CHANNEL_NOISE`, `NOISE_TOTAL` and
@@ -417,9 +429,13 @@ not a mock.
   runs a Postgres service.
 - **Netlify's build has no Postgres**, so `npm run build` skips these tests
   there (`NETLIFY=true`). CI runs them.
-- **The storyboard** builds against its own database, `pauseai_storyboard`,
-  made fresh by the `webServer` command, and gives each flow a copy of a
-  template database (above). Flows that need politicians call `syncPoliticians()`
+- **The storyboard** builds against its own database, made fresh by the
+  `webServer` command (`scripts/serve-fixture.mjs`), and gives each flow a
+  copy of a template database (above). Each checkout has its own: the
+  names in `tests/checkout.mjs`, for the databases, the outboxes and main's
+  worktree, end with a hash of the checkout's path, so worktrees can run
+  the storyboard at the same time. Not on the same port, though: give each
+  its own with `LOCAL_URL` and `--server`. Flows that need politicians call `syncPoliticians()`
   (`tests/steps.ts`), which runs the nightly sync's route against the
   Parliament fixture.
 - **Staff screens** are tested by logging in as staff do: asking for a

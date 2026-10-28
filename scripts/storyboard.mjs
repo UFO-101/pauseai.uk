@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 // The storyboard review (docs/testing.md): runs the suite with screenshots,
-// on both viewports, against a build of main as well as this branch, and
-// opens the page that pairs every frame with main's. Main is where this
+// on both viewports, on this branch and then on a build of main, and opens
+// the page that pairs every frame with main's. Main runs only the flows
+// that took pictures here: a flow without frames has nothing to compare. Main is where this
 // branch started from: the merge base of origin/main and HEAD, as a pull
 // request compares. Nothing is fetched; origin/main is as last fetched.
 //
@@ -29,8 +30,9 @@
 // empty.
 //
 // Main's frames are kept in test-results/storyboard-main/, under main's
-// commit and a hash of the suite (scripts/storyboard-main.mjs): a run whose
-// flows are all there doesn't build or run main.
+// commit and a hash of the suite's shared files, each flow with a hash of
+// its spec file (scripts/storyboard-main.mjs): main runs only the flows that
+// aren't there, and a run whose flows all are doesn't build main.
 //
 // A difference never fails; only this branch's checks do, and the exit code
 // is theirs.
@@ -47,9 +49,12 @@ import {
   symlinkSync,
   writeFileSync,
 } from "node:fs";
+import { createHash } from "node:crypto";
 import { platform } from "node:os";
 import { basename, dirname, join, relative, resolve } from "node:path";
-import { LOCAL_URL, MAIN_OUTBOX_DIR, MAIN_URL } from "../tests/fixture-env.mjs";
+import { MAIN_OUTBOX_DIR } from "../tests/checkout.mjs";
+import { LOCAL_URL, MAIN_URL } from "../tests/fixture-env.mjs";
+import { writeStoryboard } from "../tests/storyboard/report/board.ts";
 import {
   cacheKey,
   carryable,
@@ -57,6 +62,7 @@ import {
   listedFlows,
   mergeRun,
   missingFlows,
+  picturedFlows,
   runFolder,
   selectFlows,
 } from "./storyboard-main.mjs";
@@ -95,11 +101,18 @@ const runAt = new Date().toISOString();
 const runDir = join(RUNS, runFolder(runAt));
 
 /** Runs the suite against `url`, with screenshots, its frames going to runDir/<side>. Returns the exit code. */
-function runSuite(side, url, extraEnv = {}) {
+function runSuite(side, url, extraEnv = {}, extraArgs = []) {
   console.log(`\n▶ Storyboard: ${side} (${url})\n`);
   const result = spawnSync(
     "npx",
-    ["playwright", "test", `--output=test-results/playwright-storyboard-${side}`, ...options.projects, ...passThrough],
+    [
+      "playwright",
+      "test",
+      `--output=test-results/playwright-storyboard-${side}`,
+      ...options.projects,
+      ...passThrough,
+      ...extraArgs,
+    ],
     {
       stdio: "inherit",
       env: {
@@ -147,8 +160,10 @@ function listFlows(args) {
 /**
  * Where main's frames for this run are kept: main's commit (fetched first,
  * as serve-main.mjs does) and everything of this branch's that decides what
- * the suite does against it. The pages' paths count, not their code: the
- * route list comes from them.
+ * every flow does against it. The pages' paths count, not their code: the
+ * route list comes from them. Each spec file is a flow's own, in
+ * specHashes(), and Vitest's tests and the page the reporter's frames go
+ * into decide nothing.
  */
 function mainCacheDir(commit) {
   const files = git(
@@ -167,13 +182,26 @@ function mainCacheDir(commit) {
     "app/sitemap.ts",
   )
     .split("\n")
-    .filter((path) => path && existsSync(path))
+    .filter((path) => path && existsSync(path) && !SPEC.test(path) && !/\.test\.tsx?$/.test(path))
+    .filter((path) => !path.startsWith("tests/storyboard/report/") || path.endsWith("/reporter.ts"))
     .map((path) => [path, readFileSync(path, "utf8")]);
   const pages = git("ls-files", "-co", "--exclude-standard", "--", "app/**/page.tsx")
     .split("\n")
     .map((path) => [path, ""]);
   const playwright = ["@playwright/test", readJson("node_modules/@playwright/test/package.json").version];
   return join(MAIN_CACHE, cacheKey(commit, [...files, ...pages, playwright]));
+}
+
+const SPEC = /^tests\/storyboard\/[^/]+\.spec\.ts$/;
+
+/** Each section's spec file's hash, which a flow's kept frames of main are good for. */
+function specHashes() {
+  const specs = {};
+  for (const path of git("ls-files", "-co", "--exclude-standard", "--", "tests/storyboard").split("\n")) {
+    if (!SPEC.test(path) || !existsSync(path)) continue;
+    specs[basename(path, ".spec.ts")] = createHash("sha256").update(readFileSync(path)).digest("hex").slice(0, 12);
+  }
+  return specs;
 }
 
 /** Drops all but the newest `keep` folders in `dir`, never `current`. */
@@ -186,7 +214,7 @@ function prune(dir, keep, current) {
 }
 
 /** Moves a fresh run of main (runDir/main-run) into the cache, replacing the flows it ran. */
-function keepMainRun(cacheDir, cached) {
+function keepMainRun(cacheDir, cached, specs) {
   const run = join(runDir, "main-run");
   const fresh = readJson(join(run, "frames.json"));
   mkdirSync(join(cacheDir, "frames"), { recursive: true });
@@ -199,7 +227,7 @@ function keepMainRun(cacheDir, cached) {
   }
   rmSync(run, { recursive: true, force: true });
   // In the cache, pictures' paths are relative to its folder.
-  const merged = mergeRun(cached, fresh, "main-run/", "");
+  const merged = mergeRun(cached, fresh, "main-run/", "", specs);
   writeJson(join(cacheDir, "frames.json"), merged);
   return merged;
 }
@@ -235,7 +263,7 @@ for (const old of ["branch", "main", "main-run", "diff", "storyboard.json"]) {
 // some of the suite out, whatever the arguments that did it.
 const suite = listFlows([]);
 const wanted = listFlows([...options.projects, ...passThrough]);
-const partial = [...suite].some((key) => !wanted.has(key));
+const partial = [...suite.keys()].some((key) => !wanted.has(key));
 // A server someone started for main may not be the ref's commit: no cache then.
 const usesCache = options.main !== undefined && !options.mainServer;
 
@@ -259,18 +287,25 @@ if (carried) {
   }
 }
 
-if (options.main !== undefined) {
+const code = runSuite("branch", options.server);
+
+const branchFrames = join(runDir, "branch", "frames.json");
+if (options.main !== undefined && existsSync(branchFrames)) {
+  const pictured = picturedFlows(readJson(branchFrames), wanted.keys());
   const base = git("merge-base", options.main, "HEAD");
   console.log(`\n▶ Storyboard: main is ${git("log", "-1", "--format=%h %s", base)}\n`);
   const cacheDir = usesCache ? mainCacheDir(base) : undefined;
   const cacheFile = cacheDir && join(cacheDir, "frames.json");
   let cached = !options.freshMain && cacheFile && existsSync(cacheFile) ? readJson(cacheFile) : { frames: [] };
-  const missing = missingFlows(cached, wanted);
+  const specs = specHashes();
+  const missing = cacheDir ? missingFlows(cached, pictured, specs) : [...pictured];
 
-  if (cacheDir && missing.length === 0) {
-    console.log(`\n▶ Storyboard: main's ${wanted.size} flows are kept in ${cacheDir}; not running main.\n`);
+  if (missing.length === 0) {
+    console.log(`\n▶ Storyboard: main's frames of the ${pictured.size} pictured flows are kept; not running main.\n`);
   } else {
-    if (cacheDir) console.log(`\n▶ Storyboard: running main for ${missing.length} flows it hasn't kept.\n`);
+    console.log(`\n▶ Storyboard: running main for the ${missing.length} pictured flows it hasn't kept.\n`);
+    const testList = join(runDir, "main-tests.txt");
+    writeFileSync(testList, missing.map((key) => wanted.get(key)).join("\n"));
     let mainServer;
     let mainUrl = options.mainServer;
     if (!mainUrl) {
@@ -286,23 +321,24 @@ if (options.main !== undefined) {
       await waitFor(mainUrl, mainServer, 900_000);
     }
     // Main may lack a flow, or a step of one: its failures are missing frames, not ours.
-    runSuite("main-run", mainUrl, { OUTBOX_DIR: MAIN_OUTBOX_DIR });
+    runSuite("main-run", mainUrl, { OUTBOX_DIR: MAIN_OUTBOX_DIR }, [`--test-list=${testList}`]);
+    rmSync(testList);
     if (mainServer) {
       mainServer.kill("SIGTERM");
       await new Promise((done) => mainServer.on("exit", done));
     }
     if (cacheDir) {
-      cached = keepMainRun(cacheDir, cached);
+      cached = keepMainRun(cacheDir, cached, specs);
       prune(MAIN_CACHE, MAIN_CACHE_KEEP, cacheDir);
     } else {
       // No cache: the pictures stay in this run's folder, where the reporter put them.
       cached = readJson(join(runDir, "main-run", "frames.json"));
     }
   }
-  // What the branch's reporter pairs with: this run's flows, and a carried run's main frames for the rest.
+  // What board.ts pairs this branch's frames with: this run's flows, and a carried run's main frames for the rest.
   // Main's pictures are linked into the run, so every path stays inside its folder: latest/ works, and
   // pruning the cache never breaks a run.
-  const selected = selectFlows(cached, wanted, cacheDir ? "main/" : "");
+  const selected = selectFlows(cached, pictured, cacheDir ? "main/" : "");
   if (cacheDir) {
     for (const run of selected.frames) {
       for (const { png } of run.frames) {
@@ -323,7 +359,14 @@ if (options.main !== undefined) {
   );
 }
 
-const code = runSuite("branch", options.server);
+if (existsSync(branchFrames)) {
+  const { summary, withMain } = await writeStoryboard(runDir);
+  console.log(
+    `\nStoryboard: ${summary.frames} frames in ${summary.flows} flows, ${
+      withMain ? `${summary.changed} changed against main` : "no run of main to compare with"
+    }${summary.failed ? `, ${summary.failed} failed` : ""}. ${join(runDir, "index.html")}\n`,
+  );
+}
 
 const page = join(runDir, "index.html");
 if (existsSync(page)) {

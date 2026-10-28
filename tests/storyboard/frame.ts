@@ -15,7 +15,9 @@ import { LOCAL_URL } from "../fixture-env.mjs";
  * person has scrolled, or a step has scrolled them (to a form field, an
  * anchor), only the window is pictured: where they are is the point of the
  * frame, and a full-page picture of a scrolled page puts the sticky header
- * wherever the scroll was.
+ * wherever the scroll was. So too while a menu or a dialog is open: it's
+ * placed against the window, and a full-page picture, which Chromium takes
+ * by resizing the window, sometimes caught it placed against a passing size.
  *
  * `of` pictures one element, exactly (the component gallery's variants), with
  * the page at the top so the sticky header is never over it. `window`
@@ -40,7 +42,7 @@ export async function frame(
   // Images below the fold load first, and the fonts, so the picture is of the
   // finished page; and any smooth scroll (a field scrolled into view, an
   // anchor) has come to rest, so it's of the place it ends up.
-  const scrolled = await page
+  const inWindow = await page
     .evaluate(async () => {
       for (const img of document.querySelectorAll("img[loading=lazy]")) img.setAttribute("loading", "eager");
       await document.fonts.ready;
@@ -67,7 +69,7 @@ export async function frame(
         last = window.scrollY;
         await tick();
       }
-      return window.scrollY > 0;
+      return window.scrollY > 0 || document.querySelector(":popover-open, dialog:modal") !== null;
     })
     .catch(() => {
       // An image that never loads, or a page that navigated away: take the picture anyway.
@@ -78,15 +80,22 @@ export async function frame(
     const box = (await of.boundingBox())!;
     const body = await page.screenshot({
       fullPage: true,
-      animations: "disabled",
+      ...SHOT,
       clip: { x: box.x, y: box.y, width: box.width, height: box.height },
     });
     await info.attach(`frame ${index}: ${caption}`, { body, contentType: "image/png" });
     return;
   }
-  const body = scrolled || windowOnly ? await page.screenshot({ animations: "disabled" }) : await wholePage(page);
+  const body = inWindow || windowOnly ? await page.screenshot(SHOT) : await wholePage(page);
   await info.attach(`frame ${index}: ${caption}`, { body, contentType: "image/png" });
 }
+
+/**
+ * Every picture is a pixel to a CSS pixel, on a phone's high-density screen
+ * too: the layout is what a frame is for, and a phone's at its own density
+ * is nine times the pixels to take, store and compare.
+ */
+const SHOT = { animations: "disabled", scale: "css" } as const;
 
 /** The tallest piece of a page, in CSS pixels, that Chromium pictures in one go. */
 const SLICE = 4000;
@@ -102,19 +111,17 @@ async function wholePage(page: Page): Promise<Buffer> {
     width: document.documentElement.scrollWidth,
     height: document.documentElement.scrollHeight,
   }));
-  if (height <= SLICE) return page.screenshot({ fullPage: true, animations: "disabled" });
+  if (height <= SLICE) return page.screenshot({ fullPage: true, ...SHOT });
   const slices: { top: number; body: Buffer }[] = [];
   for (let top = 0; top < height; top += SLICE) {
     const clip = { x: 0, y: top, width, height: Math.min(SLICE, height - top) };
-    slices.push({ top, body: await page.screenshot({ fullPage: true, animations: "disabled", clip }) });
+    slices.push({ top, body: await page.screenshot({ fullPage: true, ...SHOT, clip }) });
   }
-  const { width: pixels } = await sharp(slices[0].body).metadata();
-  const scale = pixels! / width;
   return sharp({
-    create: { width: pixels!, height: Math.round(height * scale), channels: 4, background: "#00000000" },
+    create: { width, height, channels: 4, background: "#00000000" },
     limitInputPixels: false,
   })
-    .composite(slices.map(({ top, body }) => ({ input: body, left: 0, top: Math.round(top * scale) })))
+    .composite(slices.map(({ top, body }) => ({ input: body, left: 0, top })))
     .png()
     .toBuffer();
 }

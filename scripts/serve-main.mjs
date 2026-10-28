@@ -13,9 +13,9 @@
 // test build, and serves it until stopped.
 import { execFileSync, spawn } from "node:child_process";
 import { existsSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { fixtureEnv, MAIN_OUTBOX_DIR } from "../tests/fixture-env.mjs";
+import { MAIN_DATABASE, MAIN_OUTBOX_DIR, MAIN_WORKTREE } from "../tests/checkout.mjs";
+import { fixtureEnv } from "../tests/fixture-env.mjs";
 import { testServerUrl } from "./fresh-database.mjs";
 
 function option(name, fallback) {
@@ -27,7 +27,7 @@ const port = option("port", "3001");
 const run = (command, args, options = {}) => execFileSync(command, args, { stdio: "inherit", ...options });
 const ref =
   option("ref", undefined) ?? execFileSync("git", ["merge-base", "origin/main", "HEAD"], { encoding: "utf8" }).trim();
-const dir = join(tmpdir(), "pauseai-storyboard-main-worktree");
+const dir = MAIN_WORKTREE;
 
 // The commit, in a worktree kept between runs so its node_modules can stay
 // inside it. One the repo no longer knows (pruned, or
@@ -64,14 +64,10 @@ if (testServer) env.TEST_DATABASE_URL = testServer;
 // A fresh database, if this version of the site has one.
 const freshDatabase = join(dir, "scripts", "fresh-database.mjs");
 if (existsSync(freshDatabase)) {
-  env.NETLIFY_DB_URL = execFileSync(
-    "node",
-    [freshDatabase, "pauseai_storyboard_main", "--test-mp", env.TEST_MP_EMAIL],
-    {
-      cwd: dir,
-      encoding: "utf8",
-    },
-  ).trim();
+  env.NETLIFY_DB_URL = execFileSync("node", [freshDatabase, MAIN_DATABASE, "--test-mp", env.TEST_MP_EMAIL], {
+    cwd: dir,
+    encoding: "utf8",
+  }).trim();
 }
 
 // next build directly, not npm run build, which runs the unit tests first.

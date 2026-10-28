@@ -1,3 +1,4 @@
+import { declareCanvasFonts } from "./canvasFonts";
 import { PHOTO_TINTS, type QrSize } from "./design";
 import { renderSize, showsQrCodes, type Format } from "./formats";
 import { LintCollector, lintLinksInText, lintUnreadableUrl, type LintIssue } from "./lint";
@@ -14,6 +15,7 @@ import type { QrCode } from "./qr";
 import type { Theme } from "./themes";
 
 export async function loadFonts(): Promise<void> {
+  declareCanvasFonts();
   await Promise.all(FONT_LOADS.map((f) => document.fonts.load(f)));
 }
 
