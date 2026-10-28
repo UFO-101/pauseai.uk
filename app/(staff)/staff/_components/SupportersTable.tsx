@@ -39,14 +39,14 @@ function Place({ place }: { place: SupporterPlaceName }) {
   return place.basis === "event" ? <Muted>{place.name}</Muted> : place.name;
 }
 
-/** The answers the Subscriptions filter finds, but those it leaves out. */
-function subscriptionStates(search: Pick<SupportersSearch, "subscription">): ContactState[] {
-  return anyAndNone(valuesOf(search.subscription), (values) => values.flatMap((v) => contactState(v) ?? []))[0] ?? [];
+/** The answers the Contact filter finds, but those it leaves out. */
+function contactStates(search: Pick<SupportersSearch, "contact">): ContactState[] {
+  return anyAndNone(valuesOf(search.contact), (values) => values.flatMap((v) => contactState(v) ?? []))[0] ?? [];
 }
 
 /**
  * A supporter's addresses, or numbers, by `channel`, that have an answer
- * the Subscriptions filter finds (`states`), each once.
+ * the Contact filter finds (`states`), each once.
  */
 function contactsFound(states: ContactState[], channel: Channel, s: SupporterRow): string[] {
   const found = s.permissions.filter(
@@ -81,7 +81,7 @@ function Addresses({ addresses }: { addresses: string[] }) {
  */
 export function supporterColumns(search: SupportersSearch): ListColumn<SupporterRow>[] {
   const [events] = anyAndNone(valuesOf(search.event), (values) => values);
-  const states = subscriptionStates(search);
+  const states = contactStates(search);
   const named = (events?.length ?? 0) > 1;
   const wrote = Boolean(campaignBySlug(search.campaign)) && search.wrote !== "no";
   const sort = parseSort(SUPPORTER_SORTS, "active", search.sort, search.dir);
@@ -206,17 +206,17 @@ export function supporterColumns(search: SupportersSearch): ListColumn<Supporter
 
 /**
  * Supporters as contact cards (lib/vcard.ts), for the list's filters: a
- * supporter's name; the addresses and numbers the Subscriptions filter
+ * supporter's name; the addresses and numbers the Contact filter
  * finds, as the columns, none without it; where they are; and in the note
  * what they are to us, what we'd email them about, when we first and last
  * saw them, and how many events and letters.
  */
-export function supporterContact(search: Pick<SupportersSearch, "subscription">) {
-  const states = subscriptionStates(search);
+export function supporterContact(search: Pick<SupportersSearch, "contact">) {
+  const states = contactStates(search);
   return (s: SupporterRow): Contact => contactCard(states, s);
 }
 
-/** A supporter's card, with the addresses and numbers the Subscriptions filter finds (`states`), as the columns. */
+/** A supporter's card, with the addresses and numbers the Contact filter finds (`states`), as the columns. */
 function contactCard(states: ContactState[], s: SupporterRow): Contact {
   const emails = contactsFound(states, "email", s);
   const note = [

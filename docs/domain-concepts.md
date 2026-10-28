@@ -296,8 +296,8 @@ number about each topic, and why: `contact_permission()`
 reason is explained), read through the `email_permissions` and
 `phone_permissions` views and `contact_permissions`, both of them.
 Everything that asks reads those: the supporter's page and the list's
-Subscriptions, Email and Phone columns, through `permissionsFor()` in
-`lib/server/contact-permissions.ts`; the list's Subscriptions filter;
+Contact, Email and Phone columns, through `permissionsFor()` in
+`lib/server/contact-permissions.ts`; the list's Contact filter;
 and the staff home's count of Luma unsubscribes, through the
 `contact_unsubscribes` view. Nothing else
 reads `opt_outs` to answer it, and `tests/checks/opt-outs.test.ts` fails if
@@ -348,7 +348,7 @@ in force, by its channel, is no; then the topic's source.
 Unsure is a yes that an unsubscribe we can't see may have undone: every
 member on the updates, which CiviCRM sends. A topic the address or number
 has had nothing to do with has no row. The list shows an Email or Phone
-column only with the Subscriptions filter by that channel, and in it the
+column only with the Contact filter by that channel, and in it the
 addresses or numbers whose answer the filter finds; a download, vCards
 too, has the same. The supporter's page shows every address and number,
 marking a number no topic lets us use.

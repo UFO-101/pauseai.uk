@@ -34,7 +34,7 @@ function nearWords(text: string, near: SupportersPage["near"]): string {
  * The supporters list's filters, each named after the column it filters
  * on, in the columns' order: their nation and how near somewhere they
  * are; their activities and subscriptions; the events they registered for,
- * from `events`; and whether they wrote in a campaign. A subscription's
+ * from `events`; and whether they wrote in a campaign. A contact filter's
  * choices are each topic, then blocked, a topic chosen as those we can
  * contact about it and another answer in its chip's second half; one by
  * email or phone shows that column.
@@ -72,7 +72,7 @@ export function supporterFilters(
       options: SUPPORTER_BADGES.map((badge) => ({ value: badge, label: staffCopy.supporters.badges[badge] })),
     },
     {
-      name: "subscription",
+      name: "contact",
       label: columns.subscriptions,
       repeat: true,
       // Each topic under its channel's heading, chosen as those we can contact about it; then in its chip's second

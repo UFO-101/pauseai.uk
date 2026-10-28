@@ -174,7 +174,7 @@ export type SupportersSearch = {
   q: string;
   activity: string[];
   /** Each "email:blocked", or "<channel>:<topic>", with ":<answer>" or ":<reason>" after it, for one. */
-  subscription: string[];
+  contact: string[];
   /** Luma event IDs. */
   event: string[];
   /** A campaign's slug; with `wrote` "no", those who didn't write in it. */
@@ -198,14 +198,12 @@ export function supportersSearch(
   const [q, campaign, wrote, near, within, sort, dir, page, erased] = (
     ["q", "campaign", "wrote", "near", "within", "sort", "dir", "page", "erased"] as const
   ).map((name) => firstOf(params[name]));
-  const [activity, subscription, event, country] = (["activity", "subscription", "event", "country"] as const).map(
-    (name) => valuesOf(params[name]),
+  const [activity, contact, event, country] = (["activity", "contact", "event", "country"] as const).map((name) =>
+    valuesOf(params[name]),
   );
   const sorting = parseSort(SUPPORTER_SORTS, "active", sort, dir);
   const [badges, notBadges] = anyAndNone(activity, (values) => values.filter(isSupporterBadge));
-  const [states, notStates] = anyAndNone(subscription, (values) =>
-    values.flatMap((value) => contactState(value) ?? []),
-  );
+  const [states, notStates] = anyAndNone(contact, (values) => values.flatMap((value) => contactState(value) ?? []));
   const [events, notEvents] = anyAndNone(event, (values) => values);
   const [countries, notCountries] = anyAndNone(country, (values) =>
     values.filter((value) => Object.hasOwn(staffCopy.countries, value)),
@@ -214,13 +212,13 @@ export function supportersSearch(
   const filter: SupporterFilter = {
     search: q.trim() || undefined,
     activity: badges,
-    subscription: states,
+    contact: states,
     event: events,
     campaign: campaignBySlug(campaign)?.slug,
     wrote: campaignBySlug(campaign) ? wrote !== "no" : undefined,
     country: countries,
     near: near.trim() ? { text: near.trim(), miles } : undefined,
-    not: notOf({ activity: notBadges, subscription: notStates, event: notEvents, country: notCountries }),
+    not: notOf({ activity: notBadges, contact: notStates, event: notEvents, country: notCountries }),
     sort: sorting.key,
     dir: sorting.dir,
     page: pageNumber(page),
@@ -228,7 +226,7 @@ export function supportersSearch(
   return {
     q,
     activity,
-    subscription,
+    contact,
     event,
     campaign,
     wrote,

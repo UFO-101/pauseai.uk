@@ -25,10 +25,6 @@ export type SupporterSummary = {
   /** The newest name any source gave, or null when none did. */
   name: string | null;
   emails: string[];
-  /** The address any source gave most recently. */
-  email: string | null;
-  /** The newest number any source gave that a topic lets us use, or might. */
-  phone: string | null;
   /** Every number any source gave, as phone_number() writes them, newest first, whether we may use them or not. */
   phones: string[];
   postcode: string | null;
@@ -140,7 +136,7 @@ export type SupporterSort = keyof typeof SUPPORTER_SORTS;
 export const NEAR_MILES = [5, 10, 25, 50] as const;
 
 /** The filters that repeat, which can leave out as well as find. */
-export type NegatableSupporterFilter = "activity" | "subscription" | "event" | "country";
+export type NegatableSupporterFilter = "activity" | "contact" | "event" | "country";
 
 /** The list's filters, as the server applies them. A filter that repeats finds those with any of its values. */
 export type SupporterFilter = {
@@ -149,7 +145,7 @@ export type SupporterFilter = {
   /** Has any of these lozenges in the Activities column. */
   activity?: SupporterBadge[];
   /** Has any of these answers about a topic by a channel, or is blocked, at any of their addresses or numbers. */
-  subscription?: ContactState[];
+  contact?: ContactState[];
   /** Registered for any of these Luma events, by ID, but for declined. */
   event?: string[];
   /** Wrote a letter in this campaign, by slug; or, with `wrote` false, never did. */

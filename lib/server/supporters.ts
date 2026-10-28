@@ -94,20 +94,12 @@ export async function linkSupporters(db?: Queryable): Promise<LinkResult> {
 const LUMA_CONTACT = `(s.luma_follows AND NOT ${optedOutOfLuma("s.emails")})`;
 
 /**
- * The newest of supporter `s`'s numbers that a topic lets us use, or might,
- * or null: worked out as it's read, so an unsubscribe shows at once.
- */
-const USABLE_PHONE = `(SELECT u.number FROM unnest(s.phones) WITH ORDINALITY u (number, n)
-  WHERE phone_usable(u.number) ORDER BY u.n LIMIT 1)`;
-
-/**
  * A supporter's summary as staff see it, from `s`, a row shaped as
- * supporters_listed's: who they are, their newest email and the newest
- * number we may use, what they've done, and where they are (a place's name,
- * what it's from and where it is), or nulls.
+ * supporters_listed's: who they are, their addresses and numbers, what
+ * they've done, and where they are (a place's name, what it's from and
+ * where it is), or nulls.
  */
-const SUMMARY_COLUMNS = `s.id::int AS id, s.name, coalesce(s.emails, '{}') AS emails, s.email,
-  ${USABLE_PHONE} AS phone, s.phones, s.postcode,
+const SUMMARY_COLUMNS = `s.id::int AS id, s.name, coalesce(s.emails, '{}') AS emails, s.phones, s.postcode,
   coalesce(s.sources, '{}') AS sources, ${LUMA_CONTACT} AS "lumaContact", s.first_seen_at AS "firstSeenAt",
   s.last_active_at AS "lastActiveAt", s.events, s.letters, s.member,
   CASE WHEN s.basis IS NULL THEN NULL
@@ -119,7 +111,6 @@ const SUMMARY_COLUMNS = `s.id::int AS id, s.name, coalesce(s.emails, '{}') AS em
  * the views rather than read from the list's last refresh: for their page.
  */
 const LIVE_SUMMARY = `(SELECT s.*,
-    (SELECT i.email FROM supporter_identity i WHERE i.supporter_id = s.id ORDER BY i.seen_at DESC NULLS LAST, i.email LIMIT 1) AS email,
     sp.place, sp.basis, sp.given, sp.country, sp.latitude, sp.longitude
   FROM supporters_summary s LEFT JOIN supporter_place sp ON sp.supporter_id = s.id WHERE s.id = $1) s`;
 
@@ -148,17 +139,17 @@ const milesFrom = (lat: string, lon: string) =>
 /**
  * The conditions of the filters that repeat, those that are on: each finds
  * those with any of its values. An event is one they registered for, but
- * for declined. A subscription is an answer for any of their addresses, or
+ * for declined. A contact one is an answer for any of their addresses, or
  * any of their numbers, by its channel: any for a topic, or one answer, or
  * one reason.
  */
 function anyOf(filter: Pick<SupporterFilter, NegatableSupporterFilter>, add: (value: unknown) => string): string[] {
   const conditions: string[] = [];
   if (filter.activity) conditions.push(filter.activity.map((badge) => BADGE_CONDITIONS[badge]).join(" OR "));
-  if (filter.subscription) {
+  if (filter.contact) {
     const states = (channel: Channel) =>
       filter
-        .subscription!.filter((state) => state.channel === channel)
+        .contact!.filter((state) => state.channel === channel)
         .map(({ topic, send, reason }) => {
           const parts = [
             topic && `p.topic = ${add(topic)}`,

@@ -371,11 +371,13 @@ are:
   own, as from a link, it's an ordinary chip, "Answer: Signed".
 - A filter that repeats can have choices in two parts (an option's
   `seconds`): "+ Filter" and Except offer the first, and its chip is in
-  two halves, the second narrowing it. A subscription's chip is
-  "Subscriptions: PauseAI UK email | Won't email", "Any answer" until one
-  is chosen; the first half changes the topic, and turns it the other
-  way or removes it. Its value is one parameter, the topic alone or
-  narrowed: `subscription=email:site-forms:no`.
+  two halves, the second choosing among the first's. A choice list can
+  have headings (an option's `group`, its icon once) and a quiet `detail`
+  after a choice. The Contact filter's topics come under Email and Phone;
+  chosen, a topic is those we can contact about it, "Contact: PauseAI UK |
+  Can email", and its second half turns it to Not sure or Can't email.
+  The first half changes the topic, and turns it the other way or removes
+  it. Its value is one parameter: `contact=email:site-forms:yes`.
 - Clear filters, last, while anything is on, empties the search and every
   filter, and the sort. A tab over the list, such as the politicians'
   houses, isn't a filter: Clear filters keeps it.
