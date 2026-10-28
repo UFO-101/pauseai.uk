@@ -177,6 +177,7 @@ export default function MailingWriter({
   const [attachments, setAttachments] = useState(draft?.attachments ?? []);
   const [saveState, setSaveState] = useState<SaveState>(draft ? "saved" : "new");
   const [fileProblem, setFileProblem] = useState("");
+  const [dayPicked, setDayPicked] = useState("");
   const pending = useRef<Partial<Changes>>({});
   const saving = useRef(false);
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
@@ -292,8 +293,11 @@ export default function MailingWriter({
   }, []);
 
   const body = useMemo(() => checkMailingDoc(values.body) ?? EMPTY_MAILING_DOC, [values.body]);
-  const when = values.dueAt ? londonDayHour(values.dueAt) : { day: "", hour: 9 };
   const earliest = londonDayHour(earliestHour());
+  // Before an hour's chosen, the day picked, or the first it can go, and no hour.
+  const when: { day: string; hour: number | null } = values.dueAt
+    ? londonDayHour(values.dueAt)
+    : { day: dayPicked || earliest.day, hour: null };
   const lacking = data.fields.filter((field) => field.lacking).map((field) => field.id);
   const written = !unwritten(body);
   const problems = scheduleProblems({
@@ -452,6 +456,8 @@ export default function MailingWriter({
                   value={when.day}
                   onChange={(event) => {
                     const day = event.target.value;
+                    setDayPicked(day);
+                    if (when.hour === null) return;
                     // On the first day it can go, an hour too soon moves on to the first it can go at.
                     const hour = day === earliest.day && when.hour < earliest.hour ? earliest.hour : when.hour;
                     change({ dueAt: day ? fromLondon(day, hour) : null });
@@ -460,10 +466,11 @@ export default function MailingWriter({
               </Field>
               <Field label={copy.hour} className={styles.hour}>
                 <Select
-                  value={when.hour}
+                  value={when.hour ?? ""}
                   disabled={!when.day}
                   onChange={(event) => change({ dueAt: fromLondon(when.day, Number(event.target.value)) })}
                 >
+                  {when.hour === null && <option value="" disabled />}
                   {Array.from({ length: 24 }, (_, hour) => (
                     // On the first day it can go, the hours too soon can't be chosen.
                     <option key={hour} value={hour} disabled={when.day === earliest.day && hour < earliest.hour}>

@@ -283,33 +283,36 @@ describe("MailingWriter", () => {
     await expect.element(page.getByText(copy.noOne)).toBeVisible();
   });
 
-  it("sets when it goes, in London's day and hour, never before now, moving an hour gone to the next", async () => {
+  it("sets when it goes, in London's day and hour, starting today with no hour, never too soon", async () => {
     vi.useFakeTimers({ now: new Date("2026-07-01T10:30:00Z"), toFake: ["Date"] });
     try {
       const { actions } = renderWriter({ draft: { ...exampleWrittenMailing, dueAt: null } });
       const when = region(copy.sections.when);
       const day = when.getByLabelText(new RegExp(`^${copy.day}`));
       const hour = when.getByRole("combobox");
-      await expect.element(hour).toBeDisabled();
+      await expect.element(day).toHaveValue("2026-07-01");
       await expect.element(day).toHaveAttribute("min", "2026-07-01");
-      // It's 11:30 in London: nine o'clock has gone, so today it moves to noon.
-      await day.fill("2026-07-01");
-      await expect.poll(() => actions.save.mock.calls.length, WAIT).toBe(1);
-      expect(actions.save.mock.calls[0][2]).toEqual({ dueAt: "2026-07-01T11:00:00.000Z" });
+      await expect.element(hour).toHaveValue("");
+      // It's 11:30 in London: noon is the first hour it can go at.
       const option = (h: number) => when.getByRole("option", { name: `${String(h).padStart(2, "0")}:00` });
       await expect.element(option(11)).toBeDisabled();
       await expect.element(option(12)).not.toBeDisabled();
-      await hour.selectOptions("14");
-      await expect.poll(() => actions.save.mock.calls.length, WAIT).toBe(2);
-      expect(actions.save.mock.calls[1][2]).toEqual({ dueAt: "2026-07-01T13:00:00.000Z" });
-      await expect.element(page.getByText(copy.summary(2, "jo@pauseai.uk", "Wednesday 1 July at 14:00"))).toBeVisible();
-      // Another day keeps the hour.
+      // Another day, still with no hour, saves nothing.
       await day.fill("2026-07-03");
-      await expect.poll(() => actions.save.mock.calls.length, WAIT).toBe(3);
-      expect(actions.save.mock.calls[2][2]).toEqual({ dueAt: "2026-07-03T13:00:00.000Z" });
+      await pause(1200);
+      expect(actions.save).not.toHaveBeenCalled();
+      await hour.selectOptions("14");
+      await expect.poll(() => actions.save.mock.calls.length, WAIT).toBe(1);
+      expect(actions.save.mock.calls[0][2]).toEqual({ dueAt: "2026-07-03T13:00:00.000Z" });
+      await expect.element(page.getByText(copy.summary(2, "jo@pauseai.uk", "Friday 3 July at 14:00"))).toBeVisible();
+      // Back to today, an hour too soon moves on to the first it can go at; another keeps it.
+      await hour.selectOptions("9");
+      await day.fill("2026-07-01");
+      await expect.poll(() => actions.save.mock.calls.length, WAIT).toBe(2);
+      expect(actions.save.mock.calls[1][2]).toEqual({ dueAt: "2026-07-01T11:00:00.000Z" });
       await day.fill("");
-      await expect.poll(() => actions.save.mock.calls.length, WAIT).toBe(4);
-      expect(actions.save.mock.calls[3][2]).toEqual({ dueAt: null });
+      await expect.poll(() => actions.save.mock.calls.length, WAIT).toBe(3);
+      expect(actions.save.mock.calls[2][2]).toEqual({ dueAt: null });
     } finally {
       vi.useRealTimers();
     }
