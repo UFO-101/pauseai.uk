@@ -495,7 +495,13 @@
   vertical-align: -0.2em;
 }
 
+/* The button, with how many have registered beside it, as tall as the
+   button, clear of its shadow. */
 .hero-cta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 24px;
   margin: 40px 0 0;
 }
 
@@ -978,12 +984,61 @@
   padding: 32px;
   box-shadow: var(--panel-shadow) var(--panel-shadow) 0 var(--march-orange);
 }
-.signup-head {
+/* The form's title, with the count of those registered in the corner across
+   from it. */
+.signup-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
   margin: 0 0 24px;
+}
+.signup-head {
+  margin: 0;
   font-family: var(--march-display);
   font-size: clamp(28px, 3vw, 38px);
   line-height: 1;
   letter-spacing: -0.015em;
+  text-transform: uppercase;
+}
+/* A block of ink, like a stamp on the paper: the number in the display
+   face, what it counts under it. */
+.signup-count {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  flex: 0 0 auto;
+  gap: 4px;
+  margin: 0;
+  padding: 8px 12px;
+  text-align: right;
+  color: var(--march-paper);
+  background: var(--march-ink);
+}
+.signup-count-figure {
+  font-family: var(--march-display);
+  font-size: clamp(24px, 2.4vw, 30px);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  letter-spacing: -0.01em;
+  color: var(--march-orange-hot);
+}
+/* Beside the hero's button: its number and label to the left, by the
+   button, and centred down it. */
+.signup-count-on-ink {
+  justify-content: center;
+  align-items: flex-start;
+  text-align: left;
+  padding: 8px 14px;
+}
+/* Narrow, so a longer label wraps under the number rather than widening the
+   block until it squeezes the form's title onto two lines on a phone. */
+.signup-count-label {
+  max-width: 10em;
+  font-size: 11px; /* the size of the fields' Optional tags */
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
 }
 .signup-row {
@@ -1165,8 +1220,17 @@
   .hero-fact-label {
     margin-bottom: 10px;
   }
+  /* The button fills what the count leaves of the row rather than the whole
+     width, so the count stays beside it on the first screen; on a screen
+     too narrow for both, the count goes under it. */
   .hero-cta {
+    gap: 16px;
     margin-top: 24px;
+  }
+  .hero-cta .btn {
+    flex: 1 0 auto;
+    width: auto;
+    white-space: nowrap;
   }
   .hero-scroll {
     bottom: 8px;

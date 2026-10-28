@@ -3,7 +3,9 @@ import { render } from "vitest-browser-react";
 import { page } from "vitest/browser";
 import { marchSignupCopy as copy } from "@/lib/content/march-signup";
 import MarchSignupFrame from "./MarchSignupFrame";
+import MarchSignups from "./MarchSignups";
 import SignupFlow from "./SignupFlow";
+import { SIGNUPS_REFRESH_MS } from "./signups";
 
 async function renderFlow() {
   await render(
@@ -26,6 +28,7 @@ const shareHeading = () => page.getByRole("heading", { name: copy.share.title })
 const shareFocus = () => shareHeading().element().parentElement!.querySelector("[data-focus-first]");
 
 afterEach(() => {
+  vi.useRealTimers();
   vi.restoreAllMocks();
   scrollTo({ top: 0, behavior: "instant" });
 });
@@ -43,6 +46,24 @@ describe("SignupFlow", () => {
     const name = page.getByLabelText("Full name");
     await expect.element(name).toHaveValue("");
     await expect.poll(() => document.activeElement).toBe(name.element());
+  });
+
+  it("shows the count around it in the form's corner, kept up to date while the cards change", async () => {
+    vi.useFakeTimers({ toFake: ["setInterval", "clearInterval"] });
+    await render(
+      <MarchSignupFrame>
+        <MarchSignups signups={1234} load={async () => 1240}>
+          <SignupFlow register={async () => ({ ok: true })} />
+        </MarchSignups>
+      </MarchSignupFrame>,
+    );
+    await expect.element(page.getByText(`1,234 ${copy.form.count}`)).toBeVisible();
+    await vi.advanceTimersByTimeAsync(SIGNUPS_REFRESH_MS);
+    await expect.element(page.getByText(`1,240 ${copy.form.count}`)).toBeVisible();
+
+    await register();
+    await page.getByRole("button", { name: copy.share.registerAnother }).click();
+    await expect.element(page.getByText(`1,240 ${copy.form.count}`)).toBeVisible();
   });
 
   it("sends the form to the march's endpoint when not given a register", async () => {

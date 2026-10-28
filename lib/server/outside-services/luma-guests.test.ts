@@ -1,10 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { http, HttpResponse } from "msw";
 import { server } from "@/tests/fixtures/msw";
-import { addLumaGuest, getRaceCounts, getSourceCounts, listEventGuests } from "./luma-guests";
+import { addLumaGuest, getEventGuestCount, getRaceCounts, getSourceCounts, listEventGuests } from "./luma-guests";
 
 const TAGS = ["stratford", "brixton"] as const;
 const GUESTS = "https://public-api.luma.com/v1/events/guests/list";
+const EVENT = "https://public-api.luma.com/v1/events/get";
 
 // The page shows its "check the Luma access settings" note whenever this is null.
 describe("getSourceCounts", () => {
@@ -263,5 +264,62 @@ describe("addLumaGuest", () => {
       status: "failed",
       reason: "Luma did not respond within 20ms",
     });
+  });
+});
+
+describe("getEventGuestCount", () => {
+  afterEach(() => vi.unstubAllEnvs());
+
+  it("counts the guests Luma has approved, asking for the event with the key", async () => {
+    vi.stubEnv("LUMA_API_KEY", "k");
+    const requests: Request[] = [];
+    server.use(
+      http.get(EVENT, ({ request }) => {
+        requests.push(request);
+        return HttpResponse.json({
+          guest_counts: { approved: { guests: 42, tickets: 45 }, pending_approval: { guests: 3, tickets: 3 } },
+        });
+      }),
+    );
+    expect(await getEventGuestCount("evt-x")).toBe(42);
+    expect(new URL(requests[0].url).searchParams.get("event_id")).toBe("evt-x");
+    expect(requests[0].headers.get("x-luma-api-key")).toBe("k");
+  });
+
+  it("reads the shared fixture by default", async () => {
+    vi.stubEnv("LUMA_API_KEY", "k");
+    expect(await getEventGuestCount("evt-x")).toBe(1234);
+  });
+
+  it("returns null without an API key, without calling Luma", async () => {
+    vi.stubEnv("LUMA_API_KEY", "");
+    let called = false;
+    server.use(
+      http.get(EVENT, () => {
+        called = true;
+        return HttpResponse.json({});
+      }),
+    );
+    expect(await getEventGuestCount("evt-x")).toBeNull();
+    expect(called).toBe(false);
+  });
+
+  it("returns null when Luma errs, or the request throws", async () => {
+    vi.stubEnv("LUMA_API_KEY", "k");
+    server.use(http.get(EVENT, () => new HttpResponse(null, { status: 404 })));
+    expect(await getEventGuestCount("evt-x")).toBeNull();
+    server.use(http.get(EVENT, () => HttpResponse.error()));
+    expect(await getEventGuestCount("evt-x")).toBeNull();
+  });
+
+  // Luma gives the counts only for an event our calendar manages.
+  it("returns null when Luma gives no count", async () => {
+    vi.stubEnv("LUMA_API_KEY", "k");
+    server.use(http.get(EVENT, () => HttpResponse.json({ access: "view" })));
+    expect(await getEventGuestCount("evt-x")).toBeNull();
+    server.use(http.get(EVENT, () => HttpResponse.json({ guest_counts: { approved: {} } })));
+    expect(await getEventGuestCount("evt-x")).toBeNull();
+    server.use(http.get(EVENT, () => HttpResponse.json({ guest_counts: {} })));
+    expect(await getEventGuestCount("evt-x")).toBeNull();
   });
 });

@@ -1,9 +1,11 @@
 import JsonLd from "@/components/layout/JsonLd";
 import { march, marchEventJsonLd } from "@/lib/content/march";
 import { pageMetadata } from "@/lib/metadata";
+import { getMarchSignupCount } from "@/lib/server/march-event";
 import SignupCase from "./_components/SignupCase";
 import SignupDay from "./_components/SignupDay";
 import SignupDemand from "./_components/SignupDemand";
+import MarchSignups from "./_components/MarchSignups";
 import SignupHero from "./_components/SignupHero";
 import SignupPhotos from "./_components/SignupPhotos";
 import SignupRegister from "./_components/SignupRegister";
@@ -22,17 +24,20 @@ export const metadata = pageMetadata({
   },
 });
 
-export default function MarchSignupPage() {
+export default async function MarchSignupPage() {
+  const signups = await getMarchSignupCount();
   return (
     <main id="main">
       <JsonLd data={marchEventJsonLd()} />
-      <SignupHero />
-      <SignupCase />
-      <SignupDemand />
-      <SignupTurnout />
-      <SignupPhotos />
-      <SignupDay />
-      <SignupRegister />
+      <MarchSignups signups={signups}>
+        <SignupHero />
+        <SignupCase />
+        <SignupDemand />
+        <SignupTurnout />
+        <SignupPhotos />
+        <SignupDay />
+        <SignupRegister />
+      </MarchSignups>
     </main>
   );
 }

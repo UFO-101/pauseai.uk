@@ -6,20 +6,8 @@
 import { NextResponse } from "next/server";
 import { checkMarchRegistration, type MarchRegisterResult } from "@/lib/march-registration";
 import { addFormEntry } from "@/lib/server/form-entries";
+import { marchEventId } from "@/lib/server/march-event";
 import { addLumaGuest } from "@/lib/server/outside-services/luma-guests";
-
-/** The march's Luma event (https://luma.com/pauseai-nov26), which production adds registrants to. */
-const MARCH_EVENT_ID = "evt-1HKCXSHaJqGO3Bg";
-
-/**
- * "Luma API Testing" (https://luma.com/qry332td), a test event on the PauseAI
- * UK calendar, which every other deploy adds them to, so the sign-up can be
- * checked end to end on a deploy preview without joining the march.
- */
-const TEST_EVENT_ID = "evt-hfOj1RR5K1gBNEW";
-
-/** DEPLOY_CONTEXT is Netlify's CONTEXT, fixed at build time by next.config.ts. */
-const eventId = () => (process.env.DEPLOY_CONTEXT === "production" ? MARCH_EVENT_ID : TEST_EVENT_ID);
 
 /** The form's honeypot field: hidden from people, filled in by bots that fill in everything. */
 const HONEYPOT_FIELD = "website";
@@ -43,7 +31,7 @@ async function register(input: unknown): Promise<MarchRegisterResult> {
   if (!check.ok) return { ...check, reason: "invalid" };
 
   const { registration } = check;
-  const event = eventId();
+  const event = marchEventId();
   const result = await addLumaGuest(event, { name: registration.name, email: registration.email });
   // Kept even when Luma didn't take them: they gave us their details. If it
   // can't be kept, Luma's answer still stands.

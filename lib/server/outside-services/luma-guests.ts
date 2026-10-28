@@ -3,8 +3,9 @@ import { tallySources, type GuestEntry, type SourceCounts } from "@/lib/trackers
 import { LUMA_PAGE_SIZE, lumaList, type LumaPage } from "./luma-api";
 import { outsideFetch } from "./outside-fetch";
 
-// An event's guest list, through Luma's official API: for the flyering
-// trackers' tallies, and for the import, which keeps each guest.
+// An event's guests, through Luma's official API: the list, for the flyering
+// trackers' tallies and for the import, which keeps each guest; how many are
+// going, for the march's count; and adding one, for the march's sign-up.
 
 /** A guest as Luma lists them, as far as we read them: bare, or wrapped as { guest }. */
 type ApiGuest = {
@@ -69,6 +70,38 @@ export function getRaceCounts(
   close: Date,
 ): Promise<[SourceCounts | null, SourceCounts | null]> {
   return Promise.all([getSourceCounts(eventApiId, tags, open, close), getSourceCounts(eventApiId, tags, close)]);
+}
+
+/** How long Next keeps an event's guest count before asking Luma again, in seconds. */
+const GUEST_COUNT_REVALIDATE = 60;
+
+/**
+ * How many guests are going to an event: those Luma has approved, as its
+ * event page counts them, from the event's details
+ * (https://docs.luma.com/reference/get_v1-events-get), which give the counts
+ * only for an event our calendar manages. Cached for a minute, so however
+ * many visitors ask, Luma is asked about once a minute. Null when
+ * LUMA_API_KEY is missing, Luma errs or gives no count, so the page can show
+ * nothing rather than a misleading zero.
+ */
+export async function getEventGuestCount(eventId: string): Promise<number | null> {
+  const key = process.env.LUMA_API_KEY;
+  if (!key) return null;
+  try {
+    const res = await outsideFetch(
+      `https://public-api.luma.com/v1/events/get?${new URLSearchParams({ event_id: eventId })}`,
+      {
+        headers: { "x-luma-api-key": key, accept: "application/json" },
+        next: { revalidate: GUEST_COUNT_REVALIDATE },
+      },
+    );
+    if (!res.ok) return null;
+    const data = (await res.json()) as { guest_counts?: { approved?: { guests?: unknown } } };
+    const going = data.guest_counts?.approved?.guests;
+    return typeof going === "number" ? going : null;
+  } catch {
+    return null;
+  }
 }
 
 /** A guest as the import keeps them. */

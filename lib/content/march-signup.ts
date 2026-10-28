@@ -52,6 +52,8 @@ export const AI_IMPACTS_SURVEY_URL = "https://aiimpacts.org/wp-content/uploads/2
 export const marchSignupCopy = {
   form: {
     head: "Count me in",
+    /** After the number of people registered, in the form's corner. */
+    count: "so far",
     name: "Full name",
     email: "Email address",
     phone: "Phone",

@@ -206,7 +206,7 @@ your machine. You need no keys:
 
 | Service                  | What the fixture does                                                                                                                                                                           |
 | ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Luma                     | A few made-up events and guests                                                                                                                                                                 |
+| Luma                     | A few made-up events and guests, and every event's guest counts (1,234 going)                                                                                                                   |
 | postcodes.io             | Knows only SW1A 1AA (Cities of London and Westminster); every other postcode is "not found". The test postcodes never ask it.                                                                   |
 | Airtable                 | A politician of each body, one retired and one who left, with their statuses; PauseAI's emails to them; the old form's letters; Go to Parliament's meetings                                     |
 | Parliament's Members API | The same two MPs, with an office email each. Polly Placeholder's differs from Airtable's, so the MP check has something to show.                                                                |
@@ -313,11 +313,17 @@ Delete `DATA_FIXTURES` from `.env.local`, and fill in the keys you need. Each is
 ### The march sign-up and Luma
 
 The march sign-up adds each person who registers to a Luma event as a
-guest. It needs `LUMA_API_KEY`, from the calendar that owns the event (Luma
-Plus). The event is `MARCH_EVENT_ID` in `app/api/march/register/route.ts`,
-its API ID (`evt-…`): on Luma, open the event's manage page, and it's in the
-address (`luma.com/event/manage/evt-…`). When registering fails, the server
-logs a `[march]` line saying why.
+guest, and shows how many Luma has approved beside the hero's button and in
+the form's corner. It needs `LUMA_API_KEY`, from the calendar that owns the
+event (Luma Plus). The event
+is `MARCH_EVENT_ID` in `lib/server/march-event.ts`, its API ID (`evt-…`): on
+Luma, open the event's manage page, and it's in the address
+(`luma.com/event/manage/evt-…`). Other deploys register people for the test
+event beside it, but every deploy counts the march's own. When registering
+fails, the server logs a `[march]` line saying why. The
+count is Luma's, cached for a minute: the page is rendered with it, and an
+open page asks `/api/march/signups` again each minute. When Luma can't say,
+the page shows no count.
 
 To try it end to end, register with a real address. Luma drops addresses
 at throwaway mail services without saying so: it answers that none were

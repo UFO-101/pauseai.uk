@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest";
 import { render } from "vitest-browser-react";
 import { page } from "vitest/browser";
 import { m } from "./classes";
+import { marchSignupCopy as copy } from "@/lib/content/march-signup";
 import MarchSignupFrame from "./MarchSignupFrame";
+import MarchSignups from "./MarchSignups";
 import SignupCase from "./SignupCase";
 import SignupDay from "./SignupDay";
 import SignupDemand from "./SignupDemand";
@@ -39,6 +41,19 @@ describe("the sign-up's sections", () => {
     await render(<SignupHero />);
     await expect.element(page.getByRole("heading", { level: 1, name: /March Against AI Extinction/ })).toBeVisible();
     await expect.element(page.getByRole("link", { name: "Register now" })).toHaveAttribute("href", "#register");
+    // Nothing around it says how many have registered, so it says nothing.
+    expect(page.getByText(copy.form.count).query()).toBeNull();
+  });
+
+  it("says how many have registered beside the hero's button", async () => {
+    await render(
+      <MarchSignups signups={1234}>
+        <SignupHero />
+      </MarchSignups>,
+    );
+    const button = page.getByRole("link", { name: "Register now" }).element();
+    await expect.element(page.getByText(`1,234 ${copy.form.count}`)).toBeVisible();
+    expect(button.nextElementSibling).toBe(page.getByText(`1,234 ${copy.form.count}`).element());
   });
 
   it("says what we want", async () => {
@@ -95,9 +110,14 @@ describe("the sign-up's sections", () => {
   });
 
   it("puts the form in the register band", async () => {
-    await render(<SignupRegister register={async () => ({ ok: true })} />);
+    await render(
+      <MarchSignups signups={1234}>
+        <SignupRegister register={async () => ({ ok: true })} />
+      </MarchSignups>,
+    );
     await expect.element(page.getByRole("heading", { name: "Register for the march" })).toBeVisible();
     await expect.element(page.getByRole("button", { name: "Register" })).toBeVisible();
+    await expect.element(page.getByText("1,234")).toBeVisible();
     // What to expect, in its order.
     const expectations = page
       .getByRole("listitem")
