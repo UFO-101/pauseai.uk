@@ -180,7 +180,7 @@ export const staffCopy = {
       phone: "Phone",
       place: "Place",
       badges: "Activities",
-      subscriptions: "Subscriptions",
+      subscriptions: "⁂ Contact",
       firstSeen: "First sign-up",
       lastActive: "Last activity",
       events: "Luma events",
@@ -277,9 +277,9 @@ export const staffCopy = {
         // By the ways the topic lets us contact them (TOPIC_WAYS), so the answer says the channel. Unsure is a
         // yes an unsubscribe we can't see may have undone.
         answers: {
-          email: { yes: "Will email", no: "Won't email", unsure: "May email?" },
-          text: { yes: "Will text", no: "Won't text", unsure: "May text?" },
-          "call-or-text": { yes: "Will call or text", no: "Won't call or text", unsure: "May call or text?" },
+          email: { yes: "Can email", no: "Can't email", unsure: "Not sure" },
+          text: { yes: "Can text", no: "Can't text", unsure: "Not sure" },
+          "call-or-text": { yes: "Can call or text", no: "Can't call or text", unsure: "Not sure" },
         } as Record<string, Record<"yes" | "no" | "unsure", string>>,
         // By the address or number, so a screen reader says what it is.
         email: "Email",
@@ -326,9 +326,9 @@ export const staffCopy = {
         topicTitle: (topic: string) => `Topic: ${topic}`,
         // The labels over when it's a yes and when a no, in the words of the ways the topic allows (TOPIC_WAYS).
         when: {
-          email: { yes: "Will email when", no: "Won't email when" },
-          text: { yes: "Will text when", no: "Won't text when" },
-          "call-or-text": { yes: "Will call or text when", no: "Won't call or text when" },
+          email: { yes: "Can email when", no: "Can't email when" },
+          text: { yes: "Can text when", no: "Can't text when" },
+          "call-or-text": { yes: "Can call or text when", no: "Can't call or text when" },
         } as Record<string, { yes: string; no: string }>,
         caveat: "Note",
         details: {
@@ -344,8 +344,7 @@ export const staffCopy = {
               about: "PauseAI newsletters sent via CiviCRM, either by the global team or the UK team.",
               yes: "They ticked “Keep me informed” when they joined, or joined before 30 June 2026, when everyone was signed up.",
               no: "They left “Keep me informed” unticked, or the global team no longer shares their membership with us.",
-              caveat:
-                "Unsubscribes are in CiviCRM, which we can't read, so even a yes shows as “May email?” right now.",
+              caveat: "Unsubscribes are in CiviCRM, which we can't read, so even a yes shows as “Not sure” right now.",
             },
             "site-forms": {
               about: "Emails from PauseAI UK.",
@@ -368,7 +367,7 @@ export const staffCopy = {
               about: "Calls and texts about volunteering.",
               yes: "They gave the number on the PauseAI join form after choosing to volunteer regularly, the only choice it asks a number for, or on the Tally volunteer sign-up form the join page had before 30 June 2026.",
               no: "The global team no longer shares their membership with us.",
-              caveat: "A number given with any other choice shows as “May call or text?”.",
+              caveat: "A number given with any other choice shows as “Not sure”.",
             },
             "march-day": {
               about: "Texts on the day of the march.",
@@ -379,7 +378,7 @@ export const staffCopy = {
         } as Record<Channel, Record<string, { about: string; yes: string; no: string; caveat?: string }>>,
         // One tile in place of the topics', when the address is blocked: in place of a topic, then the answer.
         everyTopic: "Every topic",
-        blocked: "Won't email: blocked",
+        blocked: "Can't email: blocked",
         blockedBecause: {
           hard: (when: string) => `An email to it bounced, ${when}.`,
           complaint: (when: string) => `They marked an email as spam, ${when}.`,
