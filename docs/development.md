@@ -330,7 +330,7 @@ curl -X POST -H "Authorization: Bearer dev" localhost:3000/api/cron/sync-politic
 curl -X POST -H "Authorization: Bearer dev" localhost:3000/api/cron/check-mps
 curl -X POST -H "Authorization: Bearer dev" localhost:3000/api/cron/import-luma   # the hourly Luma import; with fixtures, the fixture calendar
 curl -X POST -H "Authorization: Bearer dev" localhost:3000/api/cron/import-members   # the hourly members import; with fixtures, the fixture members
-curl -X POST -H "Authorization: Bearer dev" localhost:3000/api/cron/tidy-logs   # deletes what the import and audit logs no longer keep
+curl -X POST -H "Authorization: Bearer dev" localhost:3000/api/cron/tidy-logs   # deletes what the import and audit logs no longer keep, and empty drafts
 ```
 
 **Postmark's webhooks.** Set `POSTMARK_WEBHOOK_USER=postmark` and

@@ -9,7 +9,8 @@ import { refreshSupportersList } from "./supporter-facts";
 // Luma user goes with
 // their registrations and contact, and their Luma ID is kept in
 // luma_erased so the import never copies them back; a member's record goes
-// the same way, its ID kept in members_erased. What stays is what
+// the same way, its ID kept in members_erased; a message of a mailing
+// sent to them loses its address and merge values. What stays is what
 // exists to stop us mailing the address: email_problems, email_blocks and
 // opt_outs. The audit log entry carries the supporter's ID and the
 // request's reference, never a name or address. Luma's own copy is left
@@ -60,6 +61,12 @@ export async function eraseSupporter(id: number, reference: string, by: string):
     await query("DELETE FROM luma_people WHERE user_id = ANY($1::text[])", [lumaUsers], db);
     await query("INSERT INTO members_erased (id) SELECT unnest($1::text[]) ON CONFLICT DO NOTHING", [members], db);
     await query("DELETE FROM members WHERE id = ANY($1::text[])", [members], db);
+    // A message they were sent keeps only that it was.
+    await query(
+      "UPDATE messages_to_supporters SET supporter_id = NULL, address = NULL, merge_values = NULL WHERE supporter_id = $1",
+      [id],
+      db,
+    );
     await query("DELETE FROM supporters WHERE id = $1", [id], db);
     // Off the list now, not at the next import.
     await refreshSupportersList(db);

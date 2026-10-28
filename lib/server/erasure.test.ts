@@ -59,6 +59,16 @@ describeWithDatabase("eraseSupporter", () => {
   it("deletes what each source holds, keeps what stops us mailing the address, blocks the Luma user from coming back, and logs it", async () => {
     const mp = await addTestMp();
     const id = await janeWithEverything(mp);
+    // A mailing that went to her.
+    await query(
+      `WITH m AS (
+         INSERT INTO mailings (title, audience, channel, topic, filter, body, created_by, sent_from, from_name, due_at, state)
+         VALUES ('Events', 'supporters', 'email', 'luma-calendar', '{}', '{}', 'jo@pauseai.uk', 'jo@pauseai.uk', 'PauseAI UK', now(), 'sent')
+         RETURNING id)
+       INSERT INTO messages_to_supporters (mailing_id, supporter_id, address, status, merge_values, sent_at)
+       SELECT id, $1, 'jane.fixture@example.com', 'delivered', '{"name": "Jane"}', now() FROM m`,
+      [id],
+    );
 
     expect(await eraseSupporter(id, "ICO-123", "jo@pauseai.uk")).toEqual({
       lumaUsers: 1,
@@ -85,6 +95,10 @@ describeWithDatabase("eraseSupporter", () => {
     expect(await query("SELECT user_id FROM luma_erased")).toEqual([{ user_id: "usr-fixture-1" }]);
     expect(await query("SELECT 1 FROM members WHERE email = 'jane.fixture@example.com'")).toEqual([]);
     expect(await query("SELECT id FROM members_erased")).toEqual([{ id: "recMemberJane" }]);
+    // The message stays, as one delivered, without who to or what it said.
+    expect(await query("SELECT supporter_id, address, merge_values, status FROM messages_to_supporters")).toEqual([
+      { supporter_id: null, address: null, merge_values: null, status: "delivered" },
+    ]);
     expect(await query("SELECT actor, action, details FROM audit_log ORDER BY id DESC LIMIT 1")).toEqual([
       {
         actor: "jo@pauseai.uk",

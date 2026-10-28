@@ -58,13 +58,15 @@ export function docFromMarkup(markup: string): LetterDoc {
   return { type: "doc", content };
 }
 
-function paragraph(content: Inline[]): Paragraph {
+export function paragraph(content: Inline[]): Paragraph {
   return content.length > 0 ? { type: "paragraph", content } : { type: "paragraph" };
 }
 
-const isObject = (value: unknown): value is Record<string, unknown> => typeof value === "object" && value !== null;
+export const isObject = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null;
 
-function checkInline(node: unknown): Inline | undefined {
+/** One inline node of a letter, if it's text or a line break with only the marks allowed. */
+export function checkInline(node: unknown): Inline | undefined {
   if (!isObject(node)) return undefined;
   if (node.type === "hardBreak") return { type: "hardBreak" };
   if (node.type !== "text" || typeof node.text !== "string") return undefined;

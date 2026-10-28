@@ -57,6 +57,7 @@ const HOOKS: Record<Purpose, Hook> = {
   "forwarded-reply": nothing,
   "staff-login": nothing,
   "staff-alert": nothing,
+  "mailing-test": nothing,
 };
 
 /**

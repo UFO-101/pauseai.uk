@@ -668,6 +668,16 @@ export const staffCopy = {
     forEveryone: "⁂ For everyone",
     // The menu typing { opens, of the merge fields.
     pickField: "⁂ Insert a field",
+    // Each merge field of a mailing to politicians, as its chip says it.
+    fields: {
+      salutation: "⁂ Salutation",
+      name: "⁂ Name",
+      constituency: "⁂ Constituency",
+      party: "⁂ Party",
+      house: "⁂ House",
+    },
+    // Who a part is for: those who gave an answer to an ask, as in "Only for those who signed the Frontier AI letter".
+    answered: (answer: string, ask: string) => `⁂ ${answer.toLowerCase()} ${ask}`,
   },
   // The asks page: each ask, its kind and date, and how many gave each answer.
   asks: {
@@ -833,6 +843,7 @@ export const staffCopy = {
       "forwarded-reply": "Forwarded reply",
       "staff-login": "Staff login link",
       "staff-alert": "Staff alert",
+      "mailing-test": "⁂ Test copy of a mailing",
     } as Record<string, string>,
     // A complaint can't be undone by staff, only by the person.
     cantReset: "Can't be unblocked: they marked our email as spam.",

@@ -148,7 +148,8 @@ function toPolitician({ statuses, ...row }: Row): Politician {
 /** The filters that repeat, which can leave out as well as find. */
 type NegatablePoliticianFilter = "party" | "flags" | "country" | "email";
 
-export type PoliticianFilter = {
+/** Who the politicians list shows. */
+export type PoliticianWho = {
   /** Every word is in their name, constituency, party or email. */
   search?: string;
   house?: House;
@@ -167,7 +168,11 @@ export type PoliticianFilter = {
   /** Only those who gave this answer, to `ask` or, without one, to any ask; "none" for those who gave none. */
   answer?: string;
   /** Those with none of these, each a filter above that repeats. */
-  not?: Pick<PoliticianFilter, NegatablePoliticianFilter>;
+  not?: Pick<PoliticianWho, NegatablePoliticianFilter>;
+};
+
+/** Who the politicians list shows, and how: its sort and page. */
+export type PoliticianFilter = PoliticianWho & {
   sort?: SortSpec<PoliticianSort>;
   /** Which page of POLITICIANS_PAGE_SIZE, from 1. */
   page?: number;
@@ -256,7 +261,7 @@ const EMAIL_CONDITIONS: Record<EmailState, string> = {
 };
 
 /** The conditions of the filters that repeat, those that are on: each finds those with any of its values. */
-function anyOf(filter: Pick<PoliticianFilter, NegatablePoliticianFilter>, value: (v: unknown) => string): string[] {
+function anyOf(filter: Pick<PoliticianWho, NegatablePoliticianFilter>, value: (v: unknown) => string): string[] {
   const conditions: string[] = [];
   if (filter.party) conditions.push(`p.party = ANY(${value(filter.party)})`);
   if (filter.flags) conditions.push(filter.flags.map((flag) => FLAG_CONDITIONS[flag]).join(" OR "));
@@ -269,7 +274,7 @@ function anyOf(filter: Pick<PoliticianFilter, NegatablePoliticianFilter>, value:
  * The WHERE clause for `filter`, its values added with `value`. With
  * `closest`, the search is left out, for closestPoliticians to rank by.
  */
-function politicianWhere(filter: PoliticianFilter, value: (v: unknown) => string, closest = false): string {
+function politicianWhere(filter: PoliticianWho, value: (v: unknown) => string, closest = false): string {
   const where: string[] = [];
   if (filter.search && !closest) {
     where.push(
@@ -527,5 +532,32 @@ export async function politicianHistory(id: number, email: string | null): Promi
         OR (action IN ('block address', 'unblock address') AND $2::text IS NOT NULL AND details->>'address' = lower($2))
      ORDER BY at DESC, id DESC`,
     [id, email],
+  );
+}
+
+/** A politician a mailing could go to: what its merge fields and conditions are made from. */
+export type MailingPolitician = {
+  id: number;
+  name: string;
+  salutation: string;
+  constituency: string | null;
+  party: string;
+  house: House;
+  email: string | null;
+  blocked: boolean;
+  /** Each answer they've given, as "<ask>:<status>". */
+  answers: string[];
+};
+
+/** Every politician `who` finds, by name, for a mailing to them. */
+export async function mailingPoliticians(who: PoliticianWho): Promise<MailingPolitician[]> {
+  const [values, value] = parameters();
+  return query<MailingPolitician>(
+    `SELECT n.id::int AS id, n.name, n.salutation, p.constituency, p.party, p.house, n.email, ${BLOCKED} AS blocked,
+       coalesce(array_agg(s.ask || ':' || s.status ORDER BY s.ask) FILTER (WHERE s.ask IS NOT NULL), '{}') AS answers
+     FROM ${POLITICIANS} LEFT JOIN ask_statuses s ON s.notable_person_id = n.id
+     ${politicianWhere(who, value)}
+     GROUP BY n.id, p.id ORDER BY n.name, n.id`,
+    values,
   );
 }
