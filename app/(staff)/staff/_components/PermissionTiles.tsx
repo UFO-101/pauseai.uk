@@ -90,8 +90,10 @@ function Tile({ permission }: { permission: ContactPermission }) {
     <li data-send={permission.send}>
       <Strip tone={TONES[permission.send]} icon={false}>
         <span className={styles.title}>
-          <span>{topic}</span>
-          <span className={styles.answer}>{answer}</span>
+          <span className={styles.words}>
+            <span>{topic}</span>
+            <span className={styles.answer}>{answer}</span>
+          </span>
           <button
             type="button"
             className={styles.help}
@@ -124,8 +126,10 @@ function Blocked({ permission }: { permission: ContactPermission }) {
     <li data-send="no">
       <Strip tone="red">
         <span className={styles.title}>
-          <span>{copy.everyTopic}</span>
-          <span className={styles.answer}>{copy.blocked}</span>
+          <span className={styles.words}>
+            <span>{copy.everyTopic}</span>
+            <span className={styles.answer}>{copy.blocked}</span>
+          </span>
         </span>
         <Address channel="email" address={permission.address} />
         <span className={styles.reason}>

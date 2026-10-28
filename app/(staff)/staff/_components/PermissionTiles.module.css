@@ -12,16 +12,20 @@
   font-size: var(--text-sm);
 }
 
-/* The topic, then the answer at the right, before the "?" at the top right,
-   out of the reason's way. */
+/* The topic, then the answer at the right, or under it when both don't
+   fit, before the "?" at the top right, out of the reason's way. */
 .title {
   display: flex;
   gap: var(--space-2);
-  align-items: baseline;
+  align-items: flex-start;
 }
 
-.title > span:first-child {
+.words {
+  display: flex;
   flex: 1;
+  flex-wrap: wrap;
+  gap: 0 var(--space-3);
+  justify-content: space-between;
   min-width: 0;
 }
 
@@ -114,10 +118,20 @@
   font-size: var(--text-sm);
 }
 
+/* On a wide screen it opens leftward, as the "?" is at the strip's right,
+   and above it when there's no room below; on a phone, too narrow to open
+   beside it, in the middle of the window. */
 @supports (position-area: bottom) {
-  .popover {
-    margin: var(--space-1) 0 0;
-    position-area: bottom span-right;
-    position-try-fallbacks: flip-inline;
+  @media (width >= 40rem) {
+    .popover {
+      box-sizing: border-box;
+      width: 24rem;
+      margin: var(--space-1) 0;
+      position-area: bottom span-left;
+      position-try-fallbacks:
+        flip-inline,
+        flip-block,
+        flip-block flip-inline;
+    }
   }
 }

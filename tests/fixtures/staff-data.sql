@@ -292,6 +292,14 @@ INSERT INTO postcode_places (postcode, latitude, longitude, place, country) VALU
   ('ZZ99ZN', NULL, NULL, NULL, NULL),
   ('ZZ99ZS', NULL, NULL, NULL, NULL),
   ('ZZ99ZZ', NULL, NULL, NULL, NULL);
+-- And each one's constituency, where a fixture MP has it: Jane's in
+-- Manchester is the first made-up MP's, there being no fixture MP there.
+UPDATE postcode_places SET constituency_checked = true,
+  constituency = CASE postcode WHEN 'EC1A1BB' THEN 'Cities of London and Westminster' END;
+UPDATE postcode_places SET constituency = (
+  SELECT p.constituency FROM politicians p JOIN notable_people n ON n.id = p.id
+  WHERE n.airtable_id LIKE 'recMade%' AND p.house = 'commons' AND n.status = 'in_office' ORDER BY p.id LIMIT 1
+) WHERE postcode = 'M11AE';
 INSERT INTO named_places (name, latitude, longitude, place, country) VALUES
   ('manchester', 53.4794, -2.2453, 'Manchester', 'england'),
   ('london', 51.5072, -0.1276, 'London', 'england'),
