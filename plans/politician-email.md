@@ -74,7 +74,13 @@ Francis about a shared account (see the open questions).
 8. Rename `REPLIES_INBOX` to a name that says it is for politicians'
    mail. Everything sent there is about politicians: copies of
    supporters' letters, MPs' replies and bounce alerts.
-9. Staff pages:
+9. Drop the views `supporter_letters` and `pauseai_letters`, in a new
+   migration. Migration 0056 renamed those tables and kept the old names
+   as views only for the site deployed before it, which has long since
+   been replaced. Rename the tables' not-null constraints, which still
+   carry the old names (`supporter_letters_id_not_null` and so on), in
+   the same migration.
+10. Staff pages:
    - On your account page, connect or disconnect Gmail. The page says
      what the site reads in your mailbox and how many emails you have
      sent today against the limit.
