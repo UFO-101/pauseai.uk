@@ -817,6 +817,7 @@ export const staff: Group = {
             <StaffPage as="div">
               <SupporterDetails
                 supporter={{
+                  mp: null,
                   summary: {
                     ...exampleSupporter,
                     name: null,

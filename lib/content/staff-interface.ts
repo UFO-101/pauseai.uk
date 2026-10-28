@@ -421,9 +421,14 @@ export const staffCopy = {
         city: () => "from the city they gave",
         event: (given: string) => `from where ${given} was`,
       } as Record<string, (given: string) => string>,
+      // In the band at the top: their MP, linked to their page, how they first came, under when they were active,
+      // and how many events they registered for and letters they wrote, each linked to its table.
+      theirMp: "⁂ Their MP",
+      firstVia: (source: string) => `⁂ first came via ${source}`,
+      eventsCounted: (n: number) => (n === 1 ? "⁂ event" : "⁂ events"),
+      lettersCounted: (n: number) => (n === 1 ? "⁂ letter to an MP" : "⁂ letters to MPs"),
       // Beside the box of what we hold: the events they registered for, and their letters, a table each.
       eventsTitle: "Events",
-      eventsCount: (registered: number) => `${registered} registered`,
       noEvents: "No events.",
       lettersTitle: "Letters to MPs",
       noLetters: "No letters.",

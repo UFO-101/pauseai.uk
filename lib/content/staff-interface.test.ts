@@ -65,6 +65,8 @@ describe("the lists' counts", () => {
     expect(politicians.outOfOffice(1)).not.toBe(politicians.outOfOffice(2).replace("2", "1"));
     expect(politicians.otherHouses(1)).not.toBe(politicians.otherHouses(2).replace("2", "1"));
     expect(politicians.tests(1)).not.toBe(politicians.tests(2).replace("2", "1"));
+    expect(staffCopy.supporters.detail.eventsCounted(1)).not.toBe(staffCopy.supporters.detail.eventsCounted(2));
+    expect(staffCopy.supporters.detail.lettersCounted(1)).not.toBe(staffCopy.supporters.detail.lettersCounted(2));
     expect(emails.count(1)).not.toBe(emails.count(2).replace("2", "1"));
     for (const list of [
       letters,

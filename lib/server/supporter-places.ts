@@ -4,7 +4,8 @@ import { query, type Queryable } from "./db";
 import { placeNamed, placesForPostcodes, POSTCODES_AT_ONCE, type FoundPlace } from "./outside-services/postcodes";
 
 // Where supporters are (the supporter_place view): each postcode and town
-// they or their events gave, looked up at postcodes.io once, and kept, at
+// they or their events gave, and each postcode's constituency, looked up at
+// postcodes.io once, and kept, at
 // the end of each Luma import (luma-import.ts). A run looks up a few hundred
 // postcodes and a few dozen towns, so a big import catches up over a few
 // hours rather than holding up one run.
@@ -13,12 +14,31 @@ import { placeNamed, placesForPostcodes, POSTCODES_AT_ONCE, type FoundPlace } fr
 const POSTCODES_A_RUN = 5 * POSTCODES_AT_ONCE;
 const TOWNS_A_RUN = 40;
 
-/** Stores a place found, or that there's none, under `key` in `table`. */
-async function store(table: "postcode_places" | "named_places", key: string, found: FoundPlace | null, db?: Queryable) {
+/** Stores a town found, or that there's none, under its name. */
+async function storeTown(name: string, found: FoundPlace | null, db?: Queryable) {
   await query(
-    `INSERT INTO ${table} (${table === "postcode_places" ? "postcode" : "name"}, latitude, longitude, place, country)
-     VALUES ($1, $2, $3, $4, $5) ON CONFLICT DO NOTHING`,
-    [key, found?.latitude ?? null, found?.longitude ?? null, found?.place ?? null, found?.country ?? null],
+    `INSERT INTO named_places (name, latitude, longitude, place, country) VALUES ($1, $2, $3, $4, $5) ON CONFLICT DO NOTHING`,
+    [name, found?.latitude ?? null, found?.longitude ?? null, found?.place ?? null, found?.country ?? null],
+    db,
+  );
+}
+
+/** Stores a postcode found, with its constituency, or that there's none, over what an earlier lookup stored. */
+async function storePostcode(postcode: string, found: FoundPlace | null, db?: Queryable) {
+  await query(
+    `INSERT INTO postcode_places (postcode, latitude, longitude, place, country, constituency, constituency_checked)
+     VALUES ($1, $2, $3, $4, $5, $6, true)
+     ON CONFLICT (postcode) DO UPDATE SET latitude = EXCLUDED.latitude, longitude = EXCLUDED.longitude,
+       place = EXCLUDED.place, country = EXCLUDED.country, constituency = EXCLUDED.constituency,
+       constituency_checked = true, looked_up_at = now()`,
+    [
+      postcode,
+      found?.latitude ?? null,
+      found?.longitude ?? null,
+      found?.place ?? null,
+      found?.country ?? null,
+      found?.constituency ?? null,
+    ],
     db,
   );
 }
@@ -36,7 +56,9 @@ export async function lookUpPlaces(db?: Queryable): Promise<PlacesLookup> {
     await query<{ postcode: string }>(
       `SELECT DISTINCT upper(replace(c.postcode, ' ', '')) AS postcode FROM supporter_contact c
        WHERE c.postcode IS NOT NULL AND upper(replace(c.postcode, ' ', '')) <> ''
-         AND NOT EXISTS (SELECT 1 FROM postcode_places p WHERE p.postcode = upper(replace(c.postcode, ' ', '')))
+         AND NOT EXISTS (
+           SELECT 1 FROM postcode_places p WHERE p.postcode = upper(replace(c.postcode, ' ', '')) AND p.constituency_checked
+         )
        ORDER BY 1 LIMIT $1`,
       [POSTCODES_A_RUN],
       db,
@@ -57,11 +79,11 @@ export async function lookUpPlaces(db?: Queryable): Promise<PlacesLookup> {
   try {
     for (let i = 0; i < postcodes.length; i += POSTCODES_AT_ONCE) {
       const found = await placesForPostcodes(postcodes.slice(i, i + POSTCODES_AT_ONCE));
-      for (const [postcode, place] of found) await store("postcode_places", postcode, place, db);
+      for (const [postcode, place] of found) await storePostcode(postcode, place, db);
       result.postcodes += found.size;
     }
     for (const town of towns) {
-      await store("named_places", town, await placeNamed(town), db);
+      await storeTown(town, await placeNamed(town), db);
       result.towns++;
     }
   } catch {

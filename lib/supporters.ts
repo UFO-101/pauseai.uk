@@ -111,8 +111,13 @@ export type SupporterLink = {
   linkedAt: string;
 };
 
+/** A supporter's MP: the one in office for the constituency of the postcode that places them. */
+export type SupporterMp = { id: number; name: string; constituency: string; party: string };
+
 export type SupporterDetails = {
   summary: SupporterSummary;
+  /** Their MP, when a postcode places them and its constituency has one in office; else null. */
+  mp: SupporterMp | null;
   identities: SupporterIdentity[];
   contacts: SupporterContact[];
   links: SupporterLink[];

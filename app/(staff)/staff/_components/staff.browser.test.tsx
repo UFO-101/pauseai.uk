@@ -2757,9 +2757,20 @@ describe("SupporterDetails", () => {
       .toBeVisible();
     await expect.element(page.getByText("+447700900001", { exact: false }).first()).toBeVisible();
     await expect.element(page.getByText("M1 1AE", { exact: false }).first()).toBeVisible();
-    // Where she is, from her postcode, on a map.
-    await expect.element(page.getByText(`Manchester ${copy.detail.placeFrom.postcode("M1 1AE")}`)).toBeVisible();
-    expect(document.querySelector("dd svg circle")).not.toBeNull();
+    // In the band over the card: where she is, from her postcode, on a map; her MP; when she was active, and
+    // how she first came; and how many events and letters, each linked to its table.
+    const band = page.getByText(copy.detail.theirMp).element().closest("[class*=band]")!;
+    expect(band.querySelector("svg circle")).not.toBeNull();
+    await expect.element(page.getByText("Manchester, England", { exact: true })).toBeVisible();
+    await expect.element(page.getByText(copy.detail.placeFrom.postcode("M1 1AE"), { exact: true })).toBeVisible();
+    expect(band.querySelector("a[href='/staff/politicians/1']")!.textContent).toBe("Polly Placeholder");
+    expect(band.textContent).toContain("Manchester Central · Labour (Co-op)");
+    expect(band.textContent).toContain(copy.detail.firstVia(copy.sources.luma));
+    const counts = [...band.querySelectorAll("[class*=counts] a")];
+    expect(counts.map((a) => [a.getAttribute("href"), a.textContent])).toEqual([
+      ["#events", `2 ${copy.detail.eventsCounted(2)}`],
+      ["#letters", `1 ${copy.detail.lettersCounted(1)}`],
+    ]);
     // Her number, given to Luma, is one we may not use since she unsubscribed: marked, and no link.
     await expect.element(page.getByText(copy.detail.unusable)).toBeVisible();
     await expect.element(page.getByRole("link", { name: "+447700900001" })).not.toBeInTheDocument();
@@ -2884,6 +2895,7 @@ describe("SupporterDetails", () => {
     await render(
       <SupporterDetails
         supporter={{
+          mp: null,
           summary: {
             ...exampleSupporter,
             name: null,
@@ -2990,9 +3002,8 @@ describe("SupporterDetails", () => {
       summary: { ...exampleSupporter, place: { name: "Leicester", basis, given, country: "england" } },
     });
     const { rerender } = await render(<SupporterDetails supporter={place("postcode", "LE1 1AA")} />);
-    await expect
-      .element(page.getByText(`Leicester ${copy.detail.placeFrom.postcode("LE1 1AA")}`, { exact: true }))
-      .toBeVisible();
+    await expect.element(page.getByText("Leicester, England", { exact: true })).toBeVisible();
+    await expect.element(page.getByText(copy.detail.placeFrom.postcode("LE1 1AA"), { exact: true })).toBeVisible();
     await rerender(<SupporterDetails supporter={place("event", "PauseAI Leicester meetup")} />);
     await expect
       .element(page.getByText(copy.detail.placeFrom.event("PauseAI Leicester meetup"), { exact: true }))
@@ -3018,7 +3029,7 @@ describe("SupporterDetails", () => {
         place: { name: "Leeds", basis: "city" as const, given: "Leeds", country: "england", latitude, longitude },
       },
     });
-    const map = () => document.querySelector("dd svg");
+    const map = () => document.querySelector("[class*=band] > svg");
     const { rerender } = await render(<SupporterDetails supporter={at(53.8, -1.55)} />);
     expect(map()!.querySelector("path")!.getAttribute("d")).toMatch(/^M/);
     const dot = map()!.querySelector("circle")!;
@@ -3036,6 +3047,26 @@ describe("SupporterDetails", () => {
       await rerender(<SupporterDetails supporter={at(latitude, longitude)} />);
       expect(map()).toBeNull();
     }
+  });
+
+  it("leaves out of the band what it doesn't know: a nation, an MP's party, how they first came", async () => {
+    const copy = staffCopy.supporters;
+    await render(
+      <SupporterDetails
+        supporter={{
+          ...exampleSupporterDetails,
+          summary: { ...exampleSupporter, place: { name: "Douglas", basis: "city", given: "Douglas", country: null } },
+          mp: { id: 2, name: "Ivy Independent", constituency: "Somewhere", party: "" },
+          identities: [],
+          activity: [],
+        }}
+      />,
+    );
+    await expect.element(page.getByText("Douglas", { exact: true })).toBeVisible();
+    await expect.element(page.getByText("Somewhere", { exact: true })).toBeVisible();
+    expect(document.body.textContent).not.toContain(copy.detail.firstVia(copy.sources.luma));
+    // Nothing counted is a nought, so the box keeps its shape.
+    await expect.element(page.getByRole("link", { name: `0 ${copy.detail.eventsCounted(0)}` })).toBeVisible();
   });
 
   it("says when there are no events or letters", async () => {

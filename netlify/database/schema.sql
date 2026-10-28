@@ -355,6 +355,8 @@ CREATE TABLE public.postcode_places (
     place text,
     country text,
     looked_up_at timestamp with time zone DEFAULT now() NOT NULL,
+    constituency text,
+    constituency_checked boolean DEFAULT false NOT NULL,
     CONSTRAINT postcode_places_check CHECK (((latitude IS NULL) = (longitude IS NULL))),
     CONSTRAINT postcode_places_postcode_check CHECK ((postcode = upper(replace(postcode, ' '::text, ''::text))))
 );

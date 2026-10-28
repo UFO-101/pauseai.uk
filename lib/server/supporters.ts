@@ -5,6 +5,7 @@ import type {
   SupporterBadge,
   SupporterContact,
   SupporterDetails,
+  SupporterMp,
   SupporterFilter,
   SupporterIdentity,
   SupporterLink,
@@ -300,7 +301,8 @@ export async function eventChoices(): Promise<EventChoice[]> {
 export async function getSupporter(id: number): Promise<SupporterDetails | undefined> {
   const [summary] = await query<SupporterSummary>(`SELECT ${SUMMARY_COLUMNS} FROM ${LIVE_SUMMARY}`, [id]);
   if (!summary) return undefined;
-  const [identities, contacts, links, activity, permissions] = await Promise.all([
+  const postcode = summary.place?.basis === "postcode" ? summary.place.given : null;
+  const [identities, contacts, links, activity, permissions, [mp]] = await Promise.all([
     query<SupporterIdentity>(
       `SELECT source, email, name, seen_at AS "seenAt" FROM supporter_identity WHERE supporter_id = $1 ORDER BY seen_at NULLS LAST, email`,
       [id],
@@ -323,6 +325,16 @@ export async function getSupporter(id: number): Promise<SupporterDetails | undef
       [id],
     ),
     permissionsFor(summary.emails, summary.phones),
+    // Their MP, in office for their postcode's constituency.
+    postcode
+      ? query<SupporterMp>(
+          `SELECT n.id::int AS id, n.name, p.constituency, p.party FROM postcode_places pp
+           JOIN politicians p ON p.constituency = pp.constituency AND p.house = 'commons' AND NOT p.is_test
+           JOIN notable_people n ON n.id = p.id AND n.status = 'in_office'
+           WHERE pp.postcode = upper(replace($1, ' ', '')) LIMIT 1`,
+          [postcode],
+        )
+      : [],
   ]);
-  return { summary, identities, contacts, links, activity, permissions };
+  return { summary, mp: mp ?? null, identities, contacts, links, activity, permissions };
 }

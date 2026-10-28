@@ -1,6 +1,6 @@
 import { expect, it } from "vitest";
 import { query, transaction } from "@/lib/server/db";
-import { addTestLetter, addTestMp, describeWithDatabase, useTestDatabase } from "@/tests/database";
+import { addTestLetter, addTestMp, addTestPolitician, describeWithDatabase, useTestDatabase } from "@/tests/database";
 import type { SupporterFilter } from "@/lib/supporters";
 import { http, HttpResponse } from "msw";
 import { server } from "@/tests/fixtures/msw";
@@ -516,6 +516,30 @@ describeWithDatabase("listSupporters and getSupporter", () => {
        VALUES ('M11AE', 53.4794, -2.2353, 'Manchester', 'england')`,
     );
     expect(await names({ not: { country: ["england"] } })).toEqual(["Sam", "Pat", "Old"]);
+  });
+
+  it("gives a supporter's MP, in office for the constituency of the postcode that places them, and none without one", async () => {
+    await people();
+    const id = await supporterWith("jane@example.com");
+    await query(
+      `INSERT INTO postcode_places (postcode, latitude, longitude, place, country, constituency, constituency_checked)
+       VALUES ('M11AE', 53.4794, -2.2353, 'Manchester', 'england', 'Manchester Central', true)`,
+    );
+    expect((await getSupporter(id))!.mp).toBeNull();
+    const mp = await addTestPolitician({
+      name: "Mo Manchester",
+      constituency: "Manchester Central",
+      airtableId: "recMo",
+    });
+    expect((await getSupporter(id))!.mp).toEqual({
+      id: mp,
+      name: "Mo Manchester",
+      constituency: "Manchester Central",
+      party: "Labour (Co-op)",
+    });
+    // One out of office isn't their MP.
+    await query("UPDATE notable_people SET status = 'retired' WHERE id = $1", [mp]);
+    expect((await getSupporter(id))!.mp).toBeNull();
   });
 
   it("gives one supporter's details: identities, contact details, links, activity and each list's opt-out", async () => {

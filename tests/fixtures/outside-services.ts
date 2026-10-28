@@ -146,8 +146,13 @@ export function fixtureResponse(url: string, init?: RequestInit): Response | und
     return json({
       status: 200,
       result: postcodes.map((query) => {
-        const place = PLACES[query.replace(/\s+/g, "").toUpperCase()];
-        return { query, result: place ? { postcode: query, ...place } : null };
+        const key = query.replace(/\s+/g, "").toUpperCase();
+        const place = PLACES[key];
+        const constituency = POSTCODES[key] && {
+          parliamentary_constituency: POSTCODES[key],
+          codes: { parliamentary_constituency: "E14001172" },
+        };
+        return { query, result: place ? { postcode: query, ...place, ...constituency } : null };
       }),
     });
   }

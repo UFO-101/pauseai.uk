@@ -57,9 +57,9 @@ describeWithDatabase("lookUpPlaces and supporter_place", () => {
     await linkSupporters();
 
     expect(await lookUpPlaces()).toEqual({ postcodes: 2, towns: 3, failed: false });
-    expect(await query("SELECT postcode, place FROM postcode_places ORDER BY 1")).toEqual([
-      { postcode: "M11AE", place: "Manchester" },
-      { postcode: "ZZ99ZZ", place: null },
+    expect(await query("SELECT postcode, place, constituency_checked FROM postcode_places ORDER BY 1")).toEqual([
+      { postcode: "M11AE", place: "Manchester", constituency_checked: true },
+      { postcode: "ZZ99ZZ", place: null, constituency_checked: true },
     ]);
     expect((await query("SELECT name FROM named_places ORDER BY 1")).map((r) => r.name)).toEqual([
       "cardiff",
@@ -79,6 +79,20 @@ describeWithDatabase("lookUpPlaces and supporter_place", () => {
     ]);
     // Nothing new to look up.
     expect(await lookUpPlaces()).toEqual({ postcodes: 0, towns: 0, failed: false });
+  });
+
+  it("looks up again a postcode looked up before constituencies were kept, for its constituency", async () => {
+    await member("westminster", "London", "SW1A 1AA");
+    await linkSupporters();
+    await query(
+      `INSERT INTO postcode_places (postcode, latitude, longitude, place, country)
+       VALUES ('SW1A1AA', 51.5, -0.14, 'Westminster', 'england')`,
+    );
+    expect(await lookUpPlaces()).toMatchObject({ postcodes: 1 });
+    expect(await query("SELECT constituency, constituency_checked FROM postcode_places")).toEqual([
+      { constituency: "Cities of London and Westminster", constituency_checked: true },
+    ]);
+    expect(await lookUpPlaces()).toMatchObject({ postcodes: 0 });
   });
 
   it("stops when postcodes.io fails, keeping what it stored", async () => {
