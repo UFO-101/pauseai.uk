@@ -809,19 +809,21 @@ export const staffCopy = {
       "unknown-filter": "⁂ Its filter has values the site no longer knows.",
       "no-recipients": "There's nobody to send to.",
       "field-lacking": "It uses a field some recipients have no value for.",
-      "no-sender": "Choose who to send the message from⁂ To.",
+      "no-sender": "Choose who to send the message from.",
       "no-time": "Choose what time it will be sent.",
       "time-passed": "You can't send it into the past!",
       "cannot-send": "Sending isn't built yet.",
     } as Record<string, string>,
     // The list of mailings.
-    // Before a link to the politicians list.
-    intro: "⁂ To start one, filter the politicians and press Mail these:",
+    // Under the drafts: how to start a mailing, then a link to the politicians list.
+    howToStart:
+      "To start a new mailing, filter the politicians list to those it's for, then press Mail these over the list.",
+    toPoliticians: "⁂ Go to the politicians",
     drafts: "Drafts",
     comingUp: "Coming up",
     sent: "Sent",
-    noDrafts: "⁂ No drafts.",
-    noneComing: "⁂ Nothing scheduled.",
+    noDrafts: "No drafts.",
+    noneComing: "Nothing scheduled.",
     draftLine: (by: string, n: number) => `${by} · to ${n} ${n === 1 ? "person" : "people"}`,
     comingLine: (by: string, when: string, n: number) => `⁂ ${by} · ${when} · to ${n} ${n === 1 ? "person" : "people"}`,
     stop: "Stop",

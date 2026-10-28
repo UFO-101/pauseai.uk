@@ -126,7 +126,7 @@ describe("MailingsOverview", () => {
     await expect.element(page.getByRole("button", { name: copy.stop })).toBeVisible();
     await expect.element(page.getByText("Jo Example")).toBeVisible();
     await expect
-      .element(page.getByRole("link", { name: staffCopy.nav.politicians }))
+      .element(page.getByRole("link", { name: copy.toPoliticians }))
       .toHaveAttribute("href", "/staff/politicians");
   });
 

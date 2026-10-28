@@ -1,7 +1,8 @@
-/* The mailings not sent yet: a row each, its title taking the room, then
-   who and when, then its button. */
+/* The mailings not sent yet: a row each, as wide as the measure, its title
+   taking the room, then who and when, then its button. */
 .rows {
   display: grid;
+  max-width: var(--staff-measure);
   gap: var(--space-2);
   margin: 0;
   padding: 0;

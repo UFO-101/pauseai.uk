@@ -27,8 +27,8 @@ function Row({ mailing, children, action }: { mailing: MailingSummary; children:
 
 /**
  * The list of mailings, in three parts: the drafts, each with Delete
- * draft; those coming up, soonest first, each with Stop; and a table of
- * those sent. How to start one, from the politicians list, first.
+ * draft, then how to start another, from the politicians list; those coming
+ * up, soonest first, each with Stop; and a table of those sent.
  */
 export default function MailingsOverview({
   drafts,
@@ -45,9 +45,6 @@ export default function MailingsOverview({
 }) {
   return (
     <>
-      <p>
-        {copy.intro} <Link href="/staff/politicians">{staffCopy.nav.politicians}</Link>
-      </p>
       <h2>{copy.drafts}</h2>
       {drafts.length === 0 ? (
         <p>
@@ -62,6 +59,9 @@ export default function MailingsOverview({
           ))}
         </ul>
       )}
+      <p>
+        {copy.howToStart} <Link href="/staff/politicians">{copy.toPoliticians}</Link>
+      </p>
       <h2>{copy.comingUp}</h2>
       {comingUp.length === 0 ? (
         <p>
