@@ -168,15 +168,36 @@ don't change it.
    - A "Mail these" button on the politicians list, and on the
      supporters list "Email these" or "Text these", following the
      Contact filter.
-   - A page for a new mailing: the recipients, each of whom can be
-     unticked; the channel; the template; a preview as any recipient;
-     the cost; and buttons to schedule and cancel.
-   - A dry run, which shows who the mailing would go to and who would
-     be skipped and why. Nothing is recorded as sent.
-   - A test send, which sends one real message to your own pauseai.uk
-     address by Postmark, as a chosen recipient would get it. It is
-     logged as `mailing-test` and doesn't check permissions. Once a
-     channel is built, test sends go by that channel.
+   - A new mailing in four steps, with a bar of the steps at the top
+     and Back and Next in a bar fixed to the bottom of the window.
+     Done steps link back; a step that can't be reached yet is greyed
+     and says what it needs.
+     1. Who: the count, the filter as read-only pills, and a few of
+        the recipients. "Change who" goes back to the list with the
+        filter filled in, where the button updates this draft's
+        recipients instead of starting a new mailing.
+     2. Write: the template, merge fields and attachments, with a
+        preview as any recipient.
+     3. Check: a dry run, which shows who the mailing would go to and
+        who would be skipped and why, with nothing recorded as sent;
+        and a test send, one real message to your own pauseai.uk
+        address by Postmark, as a chosen recipient would get it,
+        logged as `mailing-test`, skipping permissions. Once a channel
+        is built, test sends go by it. "Leave out" takes one person out
+        of this mailing, with a reason saved with it.
+     4. Schedule: when it goes, and a summary with the sender and the
+        cost.
+   - Drafts. A mailing becomes a draft at the first change worth
+     keeping: writing in the subject or letter, attaching a file, or
+     leaving someone out. Until then nothing is saved. A draft saves
+     itself a moment after each change, with a version number so a
+     second person editing it is told rather than overwritten. A draft
+     with no subject or letter is deleted after a day unopened. "Delete
+     draft" deletes it after one confirmation; a draft has sent
+     nothing, so it isn't archived.
+   - A scheduled mailing's page has Stop, which turns it back into a
+     draft, or once sending has started sends no more. A sent mailing
+     can't be deleted.
    - A mailing's page, with each recipient's outcome, the counts, and
-     the filter in words.
-   - The mailings list, with both audiences.
+     its filter as read-only pills.
+   - The mailings list, with both audiences and a Drafts tab.
