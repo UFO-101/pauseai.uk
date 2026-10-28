@@ -86,8 +86,10 @@ Francis about a shared account (see the open questions).
    the same migration.
 10. Staff pages:
    - On your account page, connect or disconnect Gmail. The page says
-     what the site reads in your mailbox and how many emails you have
-     sent today against the limit.
+     what the site reads in your mailbox, that any staff member can
+     then send mailings from it, and how many emails you have sent
+     today against the limit. Connecting from "Sent from" says the
+     same before going to Google.
    - On the new mailing page, "Sent from" lists the connected accounts
      with today's sends, and offers "Connect Gmail" for your own if it
      isn't yet (`plans/mailings.md`, phase 2).
@@ -117,6 +119,3 @@ limit, journalists, and what politicians did in Parliament.
 
 1. Should there be a shared account as well as each person's own? It
    would be a new Google account, as the policy@ group has no mailbox.
-2. Can staff send from a colleague's connected Gmail, as the mock-up
-   shows, or only from their own and shared ones? Sending as someone
-   else should probably need their say-so.
