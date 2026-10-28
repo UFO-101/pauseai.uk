@@ -180,7 +180,7 @@ export const staffCopy = {
       phone: "Phone",
       place: "Place",
       badges: "Activities",
-      subscriptions: "⁂ Contact",
+      subscriptions: "Contact",
       firstSeen: "First sign-up",
       lastActive: "Last activity",
       events: "Luma events",
@@ -251,14 +251,19 @@ export const staffCopy = {
       /** Where a detail came from and when: "Luma, 26 Sept 2026". */
       from: (sources: string, when: string) => `${sources}, ${when}`,
       // The box under the band: a row per topic and address, saying whether we'd contact them about it, and why.
-      listsTitle: "⁂ Can we contact them?",
-      // Folded at the foot of the page, after the history: every detail they gave and where it came from, and the
-      // records joined to make them one person, each by the address that matched and when.
+      listsTitle: "Can we contact them?",
+      // Folded at the foot of the page, after the history, a table: each record joined to make them one person,
+      // by the address that matched it, then every value each source record gave, as it gave it.
       everythingTitle: "⁂ Everything we hold",
-      showEverything: "⁂ Show all",
-      linkedTitle: "⁂ Records joined as this person",
+      showEverything: (n: number) => `⁂ Show all ${n}`,
+      held: {
+        columns: { when: "⁂ When", what: "⁂ What", value: "⁂ Value", from: "⁂ From" },
+        record: "⁂ Record",
+        name: "⁂ Name",
+        point: "⁂ Point",
+      },
       linkSources: { luma: "⁂ Luma account", form: "⁂ Form entry", member: "⁂ Membership" } as Record<string, string>,
-      linkedBy: (address: string, when: string) => `⁂ matched by ${address}, ${when}`,
+      linkedBy: (address: string) => `⁂ matched by ${address}`,
       permissions: {
         // By channel: each topic's name, and the answers. Unsure is a yes that an unsubscribe we can't see may have undone.
         topics: {

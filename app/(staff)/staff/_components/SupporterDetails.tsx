@@ -1,13 +1,13 @@
+import type { ReactNode } from "react";
 import Link from "next/link";
 import { Muted } from "@/components/ui/Text";
 import Tag from "@/components/ui/Tag";
 import { campaignBySlug, campaignPath, displayPostcode } from "@/lib/email-your-mp";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { staffDate, staffTime } from "@/lib/staff-time";
-import { givenPlaces } from "@/lib/supporter-place";
 import { UK_MAP_HEIGHT, UK_MAP_WIDTH, ukMapPoint, ukOutline } from "@/lib/uk-map";
 import { registrationStatus } from "@/lib/supporters";
-import type { SupporterActivity, SupporterDetails as Details, SupporterLink, SupporterSource } from "@/lib/supporters";
+import type { SupporterActivity, SupporterDetails as Details, SupporterSource } from "@/lib/supporters";
 import PermissionTiles from "./PermissionTiles";
 import Grid, { Card, spanClass } from "./ui/Grid";
 import { ListTable, type ListColumn } from "./ui/ListFrame";
@@ -15,120 +15,81 @@ import styles from "./Details.module.css";
 
 const copy = staffCopy.supporters;
 
-/** One value we hold, and where and when it came from: the sources that gave it, and the first time. */
-type Given = { value: string; sources: Set<SupporterSource>; since: string };
+/** One thing we hold about them, a row of Everything we hold: what it is, its value, where it came from, and when. */
+type Held = { key: string; what: string; value: ReactNode; from: string; at: string | null };
 
 /**
- * The distinct values of a detail, each with its sources and when it was
- * first given, oldest first. `canon` says which values are the same thing
- * and how to show them: postcodes typed differently are one postcode.
+ * Everything we hold about a supporter, as Everything we hold's rows:
+ * each record joined to make them one person, by the address that matched
+ * it; then every value each source record gave, as it gave it, a kind at a
+ * time, oldest first; a number no topic lets us use marked, the rest of
+ * the addresses and numbers links.
  */
-function distinct(
-  items: { value: string | null; source: SupporterSource; at: string | null }[],
-  canon: (value: string) => string = (value) => value,
-): Given[] {
-  const given = new Map<string, Given>();
-  for (const raw of items) {
-    if (!raw.value) continue;
-    const item = { ...raw, value: canon(raw.value) };
-    // The database gives a Date, the examples a string: one shape, to compare and sort.
-    const at = item.at ? new Date(item.at).toISOString() : "";
-    const seen = given.get(item.value);
-    if (seen) {
-      seen.sources.add(item.source);
-      if (at && (!seen.since || at < seen.since)) seen.since = at;
-    } else {
-      given.set(item.value, { value: item.value, sources: new Set([item.source]), since: at });
-    }
-  }
-  return [...given.values()].sort((a, b) => a.since.localeCompare(b.since));
+function held(supporter: Details, usable: Set<string>): Held[] {
+  const d = copy.detail;
+  const from = (source: SupporterSource) => copy.sources[source];
+  const byTime = (a: { at: string | null }, b: { at: string | null }) =>
+    String(a.at ?? "").localeCompare(String(b.at ?? ""));
+  const records = supporter.links.map((l, i) => ({
+    key: `record-${i}`,
+    what: d.held.record,
+    value: (
+      <>
+        {d.linkSources[l.source]} <code>{l.sourceId}</code>
+      </>
+    ),
+    from: d.linkedBy(l.matchedValue),
+    at: l.linkedAt,
+  }));
+  const identities = [...supporter.identities].sort((a, b) => byTime({ at: a.seenAt }, { at: b.seenAt }));
+  const names = identities
+    .filter((i) => i.name)
+    .map((i, n) => ({ key: `name-${n}`, what: d.held.name, value: i.name, from: from(i.source), at: i.seenAt }));
+  const emails = identities.map((i, n) => ({
+    key: `email-${n}`,
+    what: d.emails,
+    value: <a href={`mailto:${i.email}`}>{i.email}</a>,
+    from: from(i.source),
+    at: i.seenAt,
+  }));
+  const contacts = [...supporter.contacts].sort(byTime);
+  const each = (what: string, value: (c: (typeof contacts)[number]) => ReactNode | null) =>
+    contacts.flatMap((c, n) => {
+      const shown = value(c);
+      return shown === null ? [] : [{ key: `${what}-${n}`, what, value: shown, from: from(c.source), at: c.at }];
+    });
+  return [
+    ...records,
+    ...names,
+    ...emails,
+    ...each(d.phone, (c) =>
+      c.phone === null ? null : usable.has(c.phone) ? (
+        <a href={`tel:${c.phone}`}>{c.phone}</a>
+      ) : (
+        <>
+          {c.phone} <Tag>{d.unusable}</Tag>
+        </>
+      ),
+    ),
+    ...each(d.postcode, (c) => (c.postcode === null ? null : displayPostcode(c.postcode))),
+    ...each(d.city, (c) => c.city),
+    ...each(d.held.point, (c) =>
+      c.latitude === null || c.longitude === null ? null : (
+        <code>
+          {c.latitude.toFixed(4)}, {c.longitude.toFixed(4)}
+        </code>
+      ),
+    ),
+  ];
 }
 
-/** Where a value came from and when, in words. */
-function origin(given: Given): string {
-  const sources = [...given.sources].map((source) => copy.sources[source]).join(", ");
-  return given.since ? copy.detail.from(sources, staffDate(given.since)) : sources;
-}
-
-/** The icons by the profile's details, one each: an envelope, a phone, buildings, a map. */
-const ICONS = {
-  email: (
-    <>
-      <rect x="3" y="5" width="18" height="14" rx="2" />
-      <path d="M3 7l9 6 9-6" />
-    </>
-  ),
-  phone: <path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2" />,
-  // Buildings.
-  city: <path d="M3 21h18M5 21V8l5-3v16M10 21V10h9v11M13 13h1M16 13h1M13 16h1M16 16h1M7 11h1M7 14h1M7 17h1" />,
-  // A folded map.
-  postcode: <path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2-6-2zM9 4v14M15 6v14" />,
-};
-
-/** A detail's label, with its icon. */
-function Label({ label, icon }: { label: string; icon: keyof typeof ICONS }) {
-  return (
-    <dt>
-      <svg
-        width="16"
-        height="16"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        aria-hidden="true"
-      >
-        {ICONS[icon]}
-      </svg>
-      {label}
-    </dt>
-  );
-}
-
-/**
- * One detail of the profile: its label, then each value, with where it
- * came from under it; with `href`, each value a link, as an email or a
- * phone number is, but for one `unusable` says no topic lets us use,
- * which is marked so.
- */
-function Fact({
-  label,
-  values,
-  icon,
-  href,
-  unusable = () => false,
-}: {
-  label: string;
-  values: Given[];
-  icon: keyof typeof ICONS;
-  href?: (value: string) => string;
-  unusable?: (value: string) => boolean;
-}) {
-  if (values.length === 0) return null;
-  return (
-    <>
-      <Label label={label} icon={icon} />
-      <dd>
-        {values.map((given) => (
-          <div key={given.value}>
-            {unusable(given.value) ? (
-              <>
-                {given.value} <Tag>{copy.detail.unusable}</Tag>
-              </>
-            ) : href ? (
-              <a href={href(given.value)}>{given.value}</a>
-            ) : (
-              given.value
-            )}{" "}
-            <span className={styles.origin}>{origin(given)}</span>
-          </div>
-        ))}
-      </dd>
-    </>
-  );
-}
+/** Everything we hold's columns: when, what it is, its value, and where it came from. */
+const heldColumns: ListColumn<Held>[] = [
+  { key: "at", label: copy.detail.held.columns.when, short: true, cell: (h) => h.at && staffDate(h.at) },
+  { key: "what", label: copy.detail.held.columns.what, short: true, cell: (h) => h.what },
+  { key: "value", label: copy.detail.held.columns.value, cell: (h) => h.value },
+  { key: "from", label: copy.detail.held.columns.from, cell: (h) => h.from },
+];
 
 /** What an activity was about: the event, the MP and campaign, the form, or the list. `letters` lists the supporter's letters. */
 function Subject({ item, letters }: { item: SupporterActivity; letters: string }) {
@@ -273,24 +234,6 @@ function Band({ supporter, events, letters }: { supporter: Details; events: numb
   );
 }
 
-/** The records joined to make them one person: what each is, its ID, and the address that matched it and when. */
-function Linked({ links }: { links: SupporterLink[] }) {
-  if (links.length === 0) return null;
-  return (
-    <>
-      <h3 className={styles.partTitle}>{copy.detail.linkedTitle}</h3>
-      <ul className={styles.linked}>
-        {links.map((link) => (
-          <li key={`${link.source}-${link.sourceId}`}>
-            {copy.detail.linkSources[link.source]} <code>{link.sourceId}</code>{" "}
-            <span className={styles.origin}>{copy.detail.linkedBy(link.matchedValue, staffDate(link.linkedAt))}</span>
-          </li>
-        ))}
-      </ul>
-    </>
-  );
-}
-
 /** The events they registered for, newest first: when, which, and how it stands. */
 const eventColumns: ListColumn<SupporterActivity>[] = [
   { key: "at", label: copy.detail.columns.date, short: true, cell: (a) => staffDate(a.at) },
@@ -342,15 +285,9 @@ function letterColumns(letters: string): ListColumn<SupporterActivity>[] {
  * newest first, folded.
  */
 export default function SupporterDetails({ supporter }: { supporter: Details }) {
-  const { summary, identities, contacts, activity, permissions } = supporter;
-  const emails = distinct(identities.map((i) => ({ value: i.email, source: i.source, at: i.seenAt })));
-  const phones = distinct(contacts.map((c) => ({ value: c.phone, source: c.source, at: c.at })));
+  const { summary, activity, permissions } = supporter;
   const usable = new Set(permissions.filter((p) => p.channel === "phone" && p.send !== "no").map((p) => p.address));
-  const postcodes = distinct(
-    contacts.map((c) => ({ value: c.postcode, source: c.source, at: c.at })),
-    displayPostcode,
-  );
-  const cities = distinct(givenPlaces(contacts).map((c) => ({ value: c.city, source: c.source, at: c.at })));
+  const holding = held(supporter, usable);
   const events = activity.filter((a) => a.kind === "luma-registered");
   const letters = activity.filter((a) => a.kind === "letter");
   const lettersPage = `/staff/letters/supporter/${summary.id}`;
@@ -402,20 +339,8 @@ export default function SupporterDetails({ supporter }: { supporter: Details }) 
           <section aria-labelledby="everything">
             <h2 id="everything">{copy.detail.everythingTitle}</h2>
             <details className={styles.folded}>
-              <summary>{copy.detail.showEverything}</summary>
-              <dl className={styles.profile}>
-                <Fact label={copy.detail.emails} values={emails} icon="email" href={(email) => `mailto:${email}`} />
-                <Fact
-                  label={copy.detail.phone}
-                  values={phones}
-                  icon="phone"
-                  href={(phone) => `tel:${phone.replace(/\s+/g, "")}`}
-                  unusable={(phone) => !usable.has(phone)}
-                />
-                <Fact label={copy.detail.postcode} values={postcodes} icon="postcode" />
-                <Fact label={copy.detail.city} values={cities} icon="city" />
-              </dl>
-              <Linked links={supporter.links} />
+              <summary>{copy.detail.showEverything(holding.length)}</summary>
+              <ListTable columns={heldColumns} rows={holding} rowKey={(h) => h.key} />
             </details>
           </section>
         </div>
