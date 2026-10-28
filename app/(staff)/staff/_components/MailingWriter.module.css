@@ -279,13 +279,18 @@
 }
 
 /* The bar with the title and whether it's saved, at the top of the window
-   once the title has scrolled off: a sticky frame of no height, so it takes
-   no room in the page, and the bar in it, slid up out of sight until then. */
+   once the title has scrolled off: a frame of no height, so it takes no room
+   in the page, and the bar in it, showing only whether it's saved until then. */
 .barFrame {
-  position: sticky;
-  top: 0;
+  position: relative;
   z-index: 5;
   height: 0;
+}
+
+/* Until the title has gone, it scrolls with the page; then it stays at the top. */
+.barFrame[data-shown] {
+  position: sticky;
+  top: 0;
 }
 
 .bar {
@@ -307,7 +312,7 @@
 
 /* Until then, only whether it's saved shows, at the title's top right,
    a little lower, level with the title's words. */
-.bar:not([data-shown]) {
+.barFrame:not([data-shown]) .bar {
   padding-top: var(--space-4);
 }
 
@@ -319,14 +324,14 @@
   visibility: hidden;
 }
 
-.bar[data-shown] {
+.barFrame[data-shown] .bar {
   border-color: var(--border);
   background: var(--surface);
   box-shadow: 0 2px 8px rgb(var(--text-rgb) / 0.1);
   pointer-events: auto;
 }
 
-.bar[data-shown] strong {
+.barFrame[data-shown] .bar strong {
   visibility: visible;
 }
 

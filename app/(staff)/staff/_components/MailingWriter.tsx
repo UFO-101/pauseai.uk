@@ -309,10 +309,10 @@ export default function MailingWriter({
 
   return (
     <>
-      {/* Whether it's saved, at the top right; once the title has scrolled off, in a bar at the top of
-          the window with the title, in the same place. */}
-      <div className={styles.barFrame}>
-        <div className={styles.bar} data-shown={titleGone || undefined}>
+      {/* Whether it's saved, at the top right, scrolling away with the title; once the title has
+          scrolled off, in a bar at the top of the window with the title, in the same place. */}
+      <div className={styles.barFrame} data-shown={titleGone || undefined}>
+        <div className={styles.bar}>
           <strong aria-hidden="true">{title}</strong>
           <span role="status">
             <SaveState state={saveState} />
