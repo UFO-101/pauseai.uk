@@ -33,13 +33,14 @@ export type WriterData = FilterWordsData & {
   leftOut: LeftOut[];
   fields: MailingChoice[];
   conditions: MailingChoice[];
-  /** The staff accounts it can be sent from. */
+  /** The staff accounts it can be sent from, and the one writing it, whose a new mailing is from to start with. */
   senders: string[];
+  me: string;
   /** Whether a mailing can be sent yet. */
   sends: boolean;
 };
 
-async function writerData(filter: StoredFilter): Promise<WriterData> {
+async function writerData(filter: StoredFilter, me: string): Promise<WriterData> {
   const [audience, unknown, asks, parties, accounts] = await Promise.all([
     politicianAudience(filter),
     filterProblems(filter),
@@ -64,13 +65,14 @@ async function writerData(filter: StoredFilter): Promise<WriterData> {
     fields: audience.fields,
     conditions: audience.conditions,
     senders: accounts.map((account) => account.email),
+    me,
     sends: Boolean(mailingChannel("email")?.sendsMailings),
   };
 }
 
-/** A new mailing to the politicians the list's `params` find. */
-export async function newMailingData(params: Params): Promise<WriterData> {
-  return writerData(storedFilter("politicians", params));
+/** A new mailing to the politicians the list's `params` find, written by `me`. */
+export async function newMailingData(params: Params, me: string): Promise<WriterData> {
+  return writerData(storedFilter("politicians", params), me);
 }
 
 export type MailingPageData =
@@ -81,16 +83,18 @@ export type MailingPageData =
 /**
  * A mailing's page: one imported from Airtable; a draft, to write, which
  * opening keeps from being tidied away; or one written here and scheduled
- * or sent, with a page of its recipients in a tab. Undefined for none.
+ * or sent, with a page of its recipients in a tab; as `me`, the staff member
+ * looking. Undefined for none.
  */
 export async function mailingPageData(
   id: number,
   search: { page?: string | string[]; tab?: string | string[] },
+  me: string,
 ): Promise<MailingPageData | undefined> {
   const written = await getWrittenMailing(id);
   if (written?.state === "draft") {
     const draft = (await openWrittenMailing(id))!;
-    return { kind: "draft", draft, ...(await writerData(draft.filter)) };
+    return { kind: "draft", draft, ...(await writerData(draft.filter, me)) };
   }
   const tab = RECIPIENT_TABS.find((one) => one === firstOf(search.tab)) ?? "all";
   const mailing = await getMailing(id, pageNumber(firstOf(search.page)), tab as RecipientTab);

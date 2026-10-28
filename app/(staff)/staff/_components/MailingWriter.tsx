@@ -170,7 +170,8 @@ export default function MailingWriter({
     subject: draft?.subject ?? "",
     body: draft?.body ?? start,
     ask: draft?.ask ?? null,
-    sentFrom: draft?.sentFrom ?? null,
+    // A new mailing's from the one writing it, to start with.
+    sentFrom: draft ? draft.sentFrom : data.me,
     dueAt: draft?.dueAt ?? null,
   }));
   const latest = useRef(values);
@@ -430,11 +431,12 @@ export default function MailingWriter({
         <Card span={6} title={<Numbered n={4}>{copy.sections.from}</Numbered>} id="from-title">
           <div className={styles.withHint}>
             <Field label={copy.fromLegend} className={styles.sender}>
-              <Select
-                value={values.sentFrom ?? ""}
-                onChange={(event) => change({ sentFrom: event.target.value || null })}
-              >
-                <option value="" />
+              <Select value={values.sentFrom ?? ""} onChange={(event) => change({ sentFrom: event.target.value })}>
+                {!values.sentFrom && (
+                  <option value="" disabled>
+                    {copy.choose}
+                  </option>
+                )}
                 {data.senders.map((sender) => (
                   <option key={sender} value={sender}>
                     {sender}
@@ -451,6 +453,8 @@ export default function MailingWriter({
             <Field label={copy.day} className={styles.day}>
               <TextInput
                 type="date"
+                // Always a day, so Firefox shows no button to clear it.
+                required
                 min={earliest.day}
                 value={when.day}
                 onChange={(event) => {
@@ -469,7 +473,11 @@ export default function MailingWriter({
                 disabled={!when.day}
                 onChange={(event) => change({ dueAt: fromLondon(when.day, Number(event.target.value)) })}
               >
-                {when.hour === null && <option value="" disabled />}
+                {when.hour === null && (
+                  <option value="" disabled>
+                    {copy.choose}
+                  </option>
+                )}
                 {Array.from({ length: 24 }, (_, hour) => (
                   // On the first day it can go, the hours too soon can't be chosen.
                   <option key={hour} value={hour} disabled={when.day === earliest.day && hour < earliest.hour}>

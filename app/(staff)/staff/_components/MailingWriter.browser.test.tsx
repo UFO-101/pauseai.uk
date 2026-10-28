@@ -68,7 +68,12 @@ describe("MailingWriter", () => {
     await subject().fill("Hello");
     await expect.poll(() => actions.start.mock.calls.length, WAIT).toBe(1);
     expect(actions.start.mock.calls[0][0]).toEqual(exampleWriterData.filter.params);
-    expect(actions.start.mock.calls[0][1]).toMatchObject({ subject: "Hello", ask: "frontier-ai-letter" });
+    // From the one writing it, to start with.
+    expect(actions.start.mock.calls[0][1]).toMatchObject({
+      subject: "Hello",
+      ask: "frontier-ai-letter",
+      sentFrom: "jo@pauseai.uk",
+    });
     await expect.element(status()).toHaveTextContent(copy.savePill.saved);
     expect(location.pathname).toBe("/staff/mailings/21");
     history.replaceState(null, "", "/");
@@ -83,9 +88,9 @@ describe("MailingWriter", () => {
     await field(copy.ask).selectOptions("");
     await expect.poll(() => actions.save.mock.calls.length, WAIT).toBe(1);
     expect(actions.save.mock.calls[0]).toEqual([21, 1, { sentFrom: "sam@pauseai.uk", ask: null }]);
-    await field(copy.fromLegend).selectOptions("");
+    await field(copy.fromLegend).selectOptions("jo@pauseai.uk");
     await expect.poll(() => actions.save.mock.calls.length, WAIT).toBe(2);
-    expect(actions.save.mock.calls[1]).toEqual([21, 2, { sentFrom: null }]);
+    expect(actions.save.mock.calls[1]).toEqual([21, 2, { sentFrom: "jo@pauseai.uk" }]);
   });
 
   it("greets by name when not everyone has a salutation, and with no field when neither is had by all", async () => {
@@ -334,6 +339,8 @@ describe("MailingWriter", () => {
     const send = region(copy.sections.send);
     await expect.element(send.getByRole("button", { name: copy.schedule(2) })).toBeDisabled();
     await expect.element(send.getByText(copy.problems["no-sender"])).toBeVisible();
+    await expect.element(field(copy.fromLegend)).toHaveValue("");
+    await expect.element(page.getByRole("option", { name: copy.choose }).first()).toBeDisabled();
     await expect.element(send.getByText(copy.problems["field-lacking"])).toBeVisible();
     await expect.element(send.getByText(copy.cantSend)).toBeVisible();
     await expect.element(send.getByText(copy.problems["cannot-send"])).not.toBeInTheDocument();

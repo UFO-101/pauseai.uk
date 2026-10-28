@@ -791,6 +791,8 @@ export const staffCopy = {
     // Under the test button, while the letter is empty or only its greeting.
     testNeedsDraft: "Write something first!",
     testFailed: "It couldn't be sent. Try again in a minute.",
+    // The first entry of a list while nothing in it is chosen.
+    choose: "⁂ Choose…",
     fromLegend: "Whose Gmail to send it from",
     notConnected: "Gmail connection isn't implemented yet.",
     // In the preview, who it's from: the name comes from the Gmail account.

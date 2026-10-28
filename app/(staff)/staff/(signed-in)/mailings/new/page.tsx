@@ -20,8 +20,8 @@ export const metadata: Metadata = { title: staffCopy.mailingPages.newTitle };
 
 /** A new mailing to the politicians the list's filters, in the URL, find; saved once something's written. */
 export default async function NewMailingPage({ searchParams }: { searchParams: Promise<Params> }) {
-  await requireStaff();
-  const data = await newMailingData(await searchParams);
+  const { email } = await requireStaff();
+  const data = await newMailingData(await searchParams, email);
   return (
     <>
       <Breadcrumb href="/staff/mailings">{staffCopy.nav.mailings}</Breadcrumb>

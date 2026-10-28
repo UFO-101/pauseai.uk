@@ -31,8 +31,8 @@ export async function generateMetadata({ params }: Pick<Params, "params">): Prom
 
 /** A mailing: one imported, with a page of its recipients; a draft, to write; or one scheduled or sent. */
 export default async function MailingPage({ params, searchParams }: Params) {
-  await requireStaff();
-  const data = found(await mailingPageData(found(mailingId((await params).id)), await searchParams));
+  const { email } = await requireStaff();
+  const data = found(await mailingPageData(found(mailingId((await params).id)), await searchParams, email));
   return (
     <>
       <Breadcrumb href="/staff/mailings">{staffCopy.nav.mailings}</Breadcrumb>

@@ -94,6 +94,7 @@ export const exampleWriterData: WriterData = {
     },
   ],
   senders: ["jo@pauseai.uk", "sam@pauseai.uk"],
+  me: "jo@pauseai.uk",
   sends: false,
 };
 
