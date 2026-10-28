@@ -3716,26 +3716,56 @@ describe("SupporterFilters", () => {
     { id: "evt-2", name: "Oxford talk", startAt: "2026-10-12T18:00:00Z" },
   ];
 
-  it("has a chip for each filter on, a subscription by its topic and reason", async () => {
+  it("has a chip for each filter on, a subscription in two halves, its topic then its answer or reason", async () => {
     const { filter, ...search } = supportersSearch({
       activity: "registered",
-      subscription: "email:pauseai-updates:declined",
+      subscription: ["email:pauseai-updates:declined", "!phone:march-day", "email:blocked"],
       erased: "1",
     });
     void filter;
     await render(<SupporterFilters search={search} events={events} />);
+    const { topics } = copy.subscriptions;
+    const answers = copy.detail.permissions.answers;
     expect(chips()).toEqual([
       `${copy.columns.badges}: ${copy.badges.registered}`,
-      `${copy.columns.subscriptions}: ${copy.filters.states.email["pauseai-updates"].declined}`,
+      `${copy.columns.subscriptions}: ${topics.email["pauseai-updates"]}`,
+      copy.filters.states.email["pauseai-updates"].declined,
+      staffCopy.filters.notChip(copy.columns.subscriptions, topics.phone["march-day"]),
+      copy.filters.anyAnswer,
+      `${copy.columns.subscriptions}: ${copy.subscriptions.blocked}`,
     ]);
-    // Each topic's reasons, then blocked, then turning it the other way and Remove; the erased notice goes.
-    const choices = await menu(
-      `${copy.columns.subscriptions}: ${copy.filters.states.email["pauseai-updates"].declined}`,
-    );
-    expect(choices.at(-3)).toEqual([
-      copy.subscriptions.blocked,
-      "/staff/supporters?activity=registered&subscription=email%3Ablocked",
+    // The first half: each topic, choosing one for any answer, then turning it the other way and Remove; the
+    // erased notice goes.
+    const others = "subscription=%21phone%3Amarch-day&subscription=email%3Ablocked";
+    const first = await menu(`${copy.columns.subscriptions}: ${topics.email["pauseai-updates"]}`);
+    expect(first).toContainEqual([
+      topics.email["site-forms"],
+      `/staff/supporters?activity=registered&${others}&subscription=email%3Asite-forms`,
     ]);
+    expect(first.at(-1)![0]).toBe(staffCopy.filters.remove);
+    // The second: any answer, each answer in the topic's words, then each reason; no Remove.
+    const second = await menu(copy.filters.states.email["pauseai-updates"].declined);
+    expect(second.map(([words]) => words)).toEqual([
+      copy.filters.anyAnswer,
+      answers.email.yes,
+      answers.email.unsure,
+      answers.email.no,
+      ...Object.values(copy.filters.states.email["pauseai-updates"]),
+    ]);
+    expect(second[3]).toEqual([
+      answers.email.no,
+      `/staff/supporters?activity=registered&${others}&subscription=email%3Apauseai-updates%3Ano`,
+    ]);
+    // A number's answers in the words of the ways its topic allows, kept left out.
+    const march = await menu(copy.filters.anyAnswer);
+    expect(march[1]).toEqual([
+      answers.text.yes,
+      "/staff/supporters?activity=registered&subscription=email%3Apauseai-updates%3Adeclined&subscription=email%3Ablocked&subscription=%21phone%3Amarch-day%3Ayes",
+    ]);
+    // + Filter offers the topics not taken.
+    const add = await menu(staffCopy.filters.add);
+    expect(add.map(([words]) => words)).toContain(topics.phone.volunteering);
+    expect(add.map(([words]) => words)).not.toContain(topics.email["pauseai-updates"]);
   });
 
   it("offers every filter in the columns' order, events by name and day", async () => {

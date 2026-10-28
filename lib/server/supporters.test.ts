@@ -384,6 +384,19 @@ describeWithDatabase("listSupporters and getSupporter", () => {
        INSERT INTO email_blocks (address, problem_id) SELECT 'sam@example.com', id FROM p`,
     );
     expect(await names({ subscription: [{ channel: "email", reason: "blocked" }] })).toEqual(["Sam"]);
+    // Any answer for a topic, and one answer.
+    expect(await names({ subscription: [{ channel: "email", topic: "pauseai-updates", send: "no" }] })).toEqual([
+      "Old",
+    ]);
+    expect(await names({ subscription: [{ channel: "email", topic: "pauseai-updates" }] })).toEqual(
+      await names({
+        subscription: [
+          { channel: "email", topic: "pauseai-updates", send: "yes" },
+          { channel: "email", topic: "pauseai-updates", send: "unsure" },
+          { channel: "email", topic: "pauseai-updates", send: "no" },
+        ],
+      }),
+    );
     expect(await names({ subscription: [...unsubscribed] })).toEqual([]);
     expect(await names({ sort: "first", dir: "asc" })).toEqual(["Old", "Sam", "Jane", "Pat"]);
     expect(await names({ sort: "first", dir: "desc" })).toEqual(["Pat", "Jane", "Sam", "Old"]);

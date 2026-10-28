@@ -162,44 +162,46 @@ export const staffCopy = {
       campaign: "Campaign",
       wrote: { "": "Wrote", no: "Didn't write" } as Record<string, string>,
       // The other filters are named after their columns.
-      // A choice in the Subscriptions filter, and its chip: by channel, a topic and a reason it gives, short.
+      // The Subscriptions filter is a topic, named as the list's lozenges name it, then in its chip's second half
+      // any answer, one answer (as a supporter's page words it), or one reason, by channel and topic, short.
+      anyAnswer: "⁂ Any answer",
       states: {
         email: {
           "luma-calendar": {
-            following: "⁂ Email, Luma: contact",
-            unsubscribed: "⁂ Email, Luma: unsubscribed",
-            "not-following": "⁂ Email, Luma: not a contact",
+            following: "⁂ Contact",
+            unsubscribed: "⁂ Unsubscribed",
+            "not-following": "⁂ Not a contact",
           },
           "pauseai-updates": {
-            asked: "⁂ Email, PauseAI global: asked",
-            joined: "⁂ Email, PauseAI global: joined before July 2026",
-            declined: "⁂ Email, PauseAI global: declined",
-            unsubscribed: "⁂ Email, PauseAI global: unsubscribed",
-            removed: "⁂ Email, PauseAI global: removed",
+            asked: "⁂ Asked",
+            joined: "⁂ Joined before July 2026",
+            declined: "⁂ Declined",
+            unsubscribed: "⁂ Unsubscribed",
+            removed: "⁂ Removed",
           },
           "site-forms": {
-            asked: "⁂ Email, PauseAI UK: agreed",
-            declined: "⁂ Email, PauseAI UK: didn't agree",
+            asked: "⁂ Agreed",
+            declined: "⁂ Didn't agree",
           },
         },
         phone: {
           "luma-calendar": {
-            following: "⁂ Phone, Luma: contact",
-            unsubscribed: "⁂ Phone, Luma: unsubscribed",
-            "not-following": "⁂ Phone, Luma: not a contact",
+            following: "⁂ Contact",
+            unsubscribed: "⁂ Unsubscribed",
+            "not-following": "⁂ Not a contact",
           },
           volunteering: {
-            volunteered: "⁂ Phone, volunteering: volunteered",
-            "gave-number": "⁂ Phone, volunteering: gave a number, not as a volunteer",
-            removed: "⁂ Phone, volunteering: removed",
+            volunteered: "⁂ Volunteered",
+            "gave-number": "⁂ Gave a number, not volunteering",
+            removed: "⁂ Removed",
           },
           "site-forms": {
-            asked: "⁂ Phone, PauseAI UK: agreed",
-            declined: "⁂ Phone, PauseAI UK: didn't agree",
+            asked: "⁂ Agreed",
+            declined: "⁂ Didn't agree",
           },
           "march-day": {
-            "gave-number": "⁂ Phone, march day: gave a number",
-            ended: "⁂ Phone, march day: over",
+            "gave-number": "⁂ Gave a number",
+            ended: "⁂ Day over",
           },
         },
       } as Record<Channel, Record<string, Record<string, string>>>,
@@ -216,9 +218,9 @@ export const staffCopy = {
       events: "Luma events",
       letters: "Letters to MP",
       // Added by the Event filter: how their registration for the event stands, each event named when there are several.
-      registrations: "⁂ At the event",
+      registrations: "At the event",
       // Added by the Campaign filter: when they first wrote in the campaign.
-      wrote: "⁂ Wrote",
+      wrote: "Wrote",
     },
     noName: "(no name)",
     moreEmails: (n: number) => `+${n}`,
@@ -240,8 +242,8 @@ export const staffCopy = {
         },
         phone: {
           "luma-calendar": "Luma texts",
-          volunteering: "⁂ Volunteer calls & texts",
-          "site-forms": "⁂ PauseAI UK calls & texts",
+          volunteering: "Volunteer calls & texts",
+          "site-forms": "PauseAI UK calls & texts",
           "march-day": "March day texts",
         },
       } as Record<Channel, Record<string, string>>,
@@ -266,7 +268,7 @@ export const staffCopy = {
       emails: "Email",
       phone: "Phone",
       // By a number no topic lets us use.
-      unusable: "⁂ Don't use",
+      unusable: "Don't use",
       postcode: "Postcode",
       city: "City",
       /** Where the join form was: through our own site, or on another. */
@@ -390,7 +392,7 @@ export const staffCopy = {
             },
             volunteering: {
               about: "Calls and texts about volunteering.",
-              yes: "⁂ They gave the number on the PauseAI join form after choosing to volunteer regularly, the only choice it asks a number for, or on the join form before 30 June 2026, which didn't ask what they wanted to do.",
+              yes: "⁂ They gave the number on the PauseAI join form after choosing to volunteer regularly, the only choice it asks a number for, or on the volunteer sign-up form the join page had before 30 June 2026.",
               no: "The global team no longer shares their membership with us.",
               caveat: "A number given with any other choice shows as “May call or text?”.",
             },
@@ -424,8 +426,8 @@ export const staffCopy = {
       // and how many events they registered for and letters they wrote, each linked to its table.
       theirMp: "Their MP",
       firstVia: (source: string) => `⁂ first came via ${source}`,
-      eventsCounted: (n: number) => (n === 1 ? "⁂ event" : "⁂ events"),
-      lettersCounted: (n: number) => (n === 1 ? "⁂ letter to an MP" : "⁂ letters to MPs"),
+      eventsCounted: (n: number) => (n === 1 ? "event" : "events"),
+      lettersCounted: (n: number) => (n === 1 ? "letter to an MP" : "letters to MPs"),
       // Beside the box of what we hold: the events they registered for, and their letters, a table each.
       eventsTitle: "Events",
       noEvents: "No events.",
@@ -921,7 +923,7 @@ export const staffCopy = {
   pauseaiEmails: {
     title: "PauseAI's emails to politicians",
     intro: {
-      before: "⁂ Copies each email that PauseAI has sent a politician, of every year, from the ",
+      before: "Copies each email that PauseAI has sent a politician, of every year, from the ",
       link: "Emails table in Airtable",
       after: ". Only transfers known ones, the import code needs updating if a new mailing is added.",
     },

@@ -149,7 +149,8 @@ const milesFrom = (lat: string, lon: string) =>
  * The conditions of the filters that repeat, those that are on: each finds
  * those with any of its values. An event is one they registered for, but
  * for declined. A subscription is an answer for any of their addresses, or
- * any of their numbers, by its channel.
+ * any of their numbers, by its channel: any for a topic, or one answer, or
+ * one reason.
  */
 function anyOf(filter: Pick<SupporterFilter, NegatableSupporterFilter>, add: (value: unknown) => string): string[] {
   const conditions: string[] = [];
@@ -158,7 +159,14 @@ function anyOf(filter: Pick<SupporterFilter, NegatableSupporterFilter>, add: (va
     const states = (channel: Channel) =>
       filter
         .subscription!.filter((state) => state.channel === channel)
-        .map(({ topic, reason }) => `(p.reason = ${add(reason)}${topic ? ` AND p.topic = ${add(topic)}` : ""})`);
+        .map(({ topic, send, reason }) => {
+          const parts = [
+            topic && `p.topic = ${add(topic)}`,
+            send && `p.send = ${add(send)}`,
+            reason && `p.reason = ${add(reason)}`,
+          ];
+          return `(${parts.filter(Boolean).join(" AND ")})`;
+        });
     const [emails, phones] = [states("email"), states("phone")];
     const found = [
       emails.length &&

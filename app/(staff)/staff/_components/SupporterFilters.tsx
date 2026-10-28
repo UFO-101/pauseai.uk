@@ -1,6 +1,6 @@
 import { staffCopy } from "@/lib/content/staff-interface";
 import type { SupportersSearch } from "@/lib/staff-search";
-import { CHANNELS, TOPIC_REASONS, stateValue, topicsOf, type Reason } from "@/lib/contact-permissions";
+import { CHANNELS, SENDS, TOPIC_REASONS, stateValue, topicsOf, waysKey, type Reason } from "@/lib/contact-permissions";
 import { campaigns } from "@/lib/content/email-your-mp";
 import type { EventChoice, SupportersPage } from "@/lib/server/supporters";
 import { staffDate } from "@/lib/staff-time";
@@ -73,14 +73,25 @@ export function supporterFilters(
       name: "subscription",
       label: columns.subscriptions,
       repeat: true,
+      // A topic, then in its chip's second half any answer, one answer, or one reason.
       options: [
         ...CHANNELS.flatMap((channel) =>
-          topicsOf(channel).flatMap((topic) =>
-            (TOPIC_REASONS[channel] as Record<string, readonly Reason[]>)[topic].map((reason) => ({
-              value: stateValue({ channel, topic, reason }),
-              label: copy.states[channel][topic][reason],
-            })),
-          ),
+          topicsOf(channel).map((topic) => {
+            const answers = staffCopy.supporters.detail.permissions.answers[waysKey(channel, topic)];
+            const reasons = (TOPIC_REASONS[channel] as Record<string, readonly Reason[]>)[topic];
+            return {
+              value: stateValue({ channel, topic }),
+              label: staffCopy.supporters.subscriptions.topics[channel][topic],
+              seconds: [
+                { value: stateValue({ channel, topic }), label: copy.anyAnswer },
+                ...SENDS.map((send) => ({ value: stateValue({ channel, topic, send }), label: answers[send] })),
+                ...reasons.map((reason) => ({
+                  value: stateValue({ channel, topic, reason }),
+                  label: copy.states[channel][topic][reason],
+                })),
+              ],
+            };
+          }),
         ),
         {
           value: stateValue({ channel: "email", reason: "blocked" }),

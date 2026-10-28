@@ -21,6 +21,10 @@ describe("contactState", () => {
     expect(contactState("email:luma-calendar:blocked")).toBeUndefined();
     expect(contactState("post:luma-calendar:following")).toBeUndefined();
     expect(contactState("email:toString:asked")).toBeUndefined();
+    // A topic alone is any answer for it; with yes, unsure or no, that answer.
+    expect(contactState("phone:march-day")).toEqual({ channel: "phone", topic: "march-day" });
+    expect(contactState("email:site-forms:unsure")).toEqual({ channel: "email", topic: "site-forms", send: "unsure" });
+    expect(contactState("email:site-forms:asked:no")).toBeUndefined();
     // Only an email address is blocked; and a topic and reason need their channel.
     expect(contactState("phone:blocked")).toBeUndefined();
     expect(contactState("blocked")).toBeUndefined();
@@ -30,7 +34,13 @@ describe("contactState", () => {
   });
 
   it("writes a state as its form value", () => {
-    for (const value of ["email:blocked", "email:site-forms:asked", "phone:march-day:ended"]) {
+    for (const value of [
+      "email:blocked",
+      "phone:volunteering",
+      "email:luma-calendar:no",
+      "email:site-forms:asked",
+      "phone:march-day:ended",
+    ]) {
       expect(stateValue(contactState(value)!)).toBe(value);
     }
   });

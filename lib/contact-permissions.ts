@@ -74,27 +74,37 @@ export function topicsOf(channel: Channel): Topic[] {
   return Object.keys(TOPIC_REASONS[channel]) as Topic[];
 }
 
-/** A reason one topic gave by one channel, or an email address blocked, whatever the topic. */
-export type ContactState = { channel: Channel; topic?: Topic; reason: Reason };
+/** Our answer for an address about a topic: we'd contact them, we don't know, or we wouldn't. */
+export const SENDS = ["yes", "unsure", "no"] as const;
+export type Send = (typeof SENDS)[number];
 
 /**
- * A state from its form value: "<channel>:<topic>:<reason>" for a reason
- * the channel's topic can give, or "email:blocked".
+ * What the Subscriptions filter finds: an answer for one topic by one
+ * channel, any answer, one of yes, unsure or no (`send`), or one reason;
+ * or an email address blocked, whatever the topic.
+ */
+export type ContactState = { channel: Channel; topic?: Topic; send?: Send; reason?: Reason };
+
+/**
+ * A state from its form value: "<channel>:<topic>" for any answer,
+ * "<channel>:<topic>:<send>" for one answer, "<channel>:<topic>:<reason>"
+ * for a reason the channel's topic can give, or "email:blocked".
  */
 export function contactState(value: string): ContactState | undefined {
   if (value === "email:blocked") return { channel: "email", reason: "blocked" };
-  const [channel, topic, reason] = value.split(":");
-  if (!Object.hasOwn(TOPIC_REASONS, channel)) return undefined;
+  const [channel, topic, last, ...rest] = value.split(":");
+  if (rest.length > 0 || !Object.hasOwn(TOPIC_REASONS, channel)) return undefined;
   const topics: Partial<Record<string, readonly string[]>> = TOPIC_REASONS[channel as Channel];
   if (!Object.hasOwn(topics, topic)) return undefined;
-  return topics[topic]!.includes(reason)
-    ? { channel: channel as Channel, topic: topic as Topic, reason: reason as Reason }
-    : undefined;
+  const state = { channel: channel as Channel, topic: topic as Topic };
+  if (last === undefined) return state;
+  if ((SENDS as readonly string[]).includes(last)) return { ...state, send: last as Send };
+  return topics[topic]!.includes(last) ? { ...state, reason: last as Reason } : undefined;
 }
 
 /** A state's form value, which contactState reads back. */
 export function stateValue(state: ContactState): string {
-  return [state.channel, state.topic, state.reason].filter(Boolean).join(":");
+  return [state.channel, state.topic, state.send ?? state.reason].filter(Boolean).join(":");
 }
 
 /** Whether we may contact `address` by `channel` about `topic`, why, since when, and which source told us. */
@@ -104,7 +114,7 @@ export type ContactPermission = {
   /** An email address, or a phone number as phone_number() writes it. */
   address: string;
   /** Yes, no, or unsure: a yes we can't be sure still holds, as an unsubscribe may not have reached us. */
-  send: "yes" | "no" | "unsure";
+  send: Send;
   reason: Reason;
   at: string | null;
   source: string | null;

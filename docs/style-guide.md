@@ -369,6 +369,13 @@ are:
   goes when that one does. An ask's chip is "Edinburgh conference |
   Declined", "Any answer" in the second half until one is chosen. On its
   own, as from a link, it's an ordinary chip, "Answer: Signed".
+- A filter that repeats can have choices in two parts (an option's
+  `seconds`): "+ Filter" and Except offer the first, and its chip is in
+  two halves, the second narrowing it. A subscription's chip is
+  "Subscriptions: PauseAI UK email | Won't email", "Any answer" until one
+  is chosen; the first half changes the topic, and turns it the other
+  way or removes it. Its value is one parameter, the topic alone or
+  narrowed: `subscription=email:site-forms:no`.
 - Clear filters, last, while anything is on, empties the search and every
   filter, and the sort. A tab over the list, such as the politicians'
   houses, isn't a filter: Clear filters keeps it.
