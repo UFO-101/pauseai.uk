@@ -1,11 +1,27 @@
 import { staffCopy } from "@/lib/content/staff-interface";
 import type { SupportersSearch } from "@/lib/staff-search";
-import { CHANNELS, SENDS, TOPIC_REASONS, stateValue, topicsOf, waysKey, type Reason } from "@/lib/contact-permissions";
+import { SENDS, stateValue, waysKey, type Channel, type Topic } from "@/lib/contact-permissions";
 import { campaigns } from "@/lib/content/email-your-mp";
 import type { EventChoice, SupportersPage } from "@/lib/server/supporters";
 import { staffDate } from "@/lib/staff-time";
 import { NEAR_MILES, SUPPORTER_BADGES } from "@/lib/supporters";
+import ChannelIcon from "./ChannelIcon";
 import FilterBar, { type Filter } from "./ui/FilterBar";
+
+/**
+ * The Subscriptions filter's topics, in its order: email's, then phone's,
+ * each ours first, then Luma's, then the rest, so the same one sits on the
+ * same row under each heading.
+ */
+export const SUBSCRIPTION_ORDER: [Channel, Topic][] = [
+  ["email", "site-forms"],
+  ["email", "luma-calendar"],
+  ["email", "pauseai-updates"],
+  ["phone", "site-forms"],
+  ["phone", "luma-calendar"],
+  ["phone", "volunteering"],
+  ["phone", "march-day"],
+];
 
 /** The words in the Near chip: where it found, or that it couldn't. */
 function nearWords(text: string, near: SupportersPage["near"]): string {
@@ -20,7 +36,7 @@ function nearWords(text: string, near: SupportersPage["near"]): string {
  * nation and how near somewhere they are; their activities and
  * subscriptions; the events they registered for, from `events`; and
  * whether they wrote in a campaign. A subscription's choices are each
- * topic's reasons, then blocked. Activities, subscriptions, nations and
+ * topic, then blocked, and a topic's answers in its chip's second half. Activities, subscriptions, nations and
  * events can each be chosen more than once.
  */
 export function supporterFilters(
@@ -73,29 +89,27 @@ export function supporterFilters(
       name: "subscription",
       label: columns.subscriptions,
       repeat: true,
-      // A topic, then in its chip's second half any answer, one answer, or one reason.
+      // Each topic under its channel's heading; then in its chip's second half any answer or one answer.
       options: [
-        ...CHANNELS.flatMap((channel) =>
-          topicsOf(channel).map((topic) => {
-            const answers = staffCopy.supporters.detail.permissions.answers[waysKey(channel, topic)];
-            const reasons = (TOPIC_REASONS[channel] as Record<string, readonly Reason[]>)[topic];
-            return {
-              value: stateValue({ channel, topic }),
-              label: staffCopy.supporters.subscriptions.topics[channel][topic],
-              seconds: [
-                { value: stateValue({ channel, topic }), label: copy.anyAnswer },
-                ...SENDS.map((send) => ({ value: stateValue({ channel, topic, send }), label: answers[send] })),
-                ...reasons.map((reason) => ({
-                  value: stateValue({ channel, topic, reason }),
-                  label: copy.states[channel][topic][reason],
-                })),
-              ],
-            };
-          }),
-        ),
+        ...SUBSCRIPTION_ORDER.map(([channel, topic]) => {
+          const ways = waysKey(channel, topic);
+          const answers = staffCopy.supporters.detail.permissions.answers[ways];
+          return {
+            value: stateValue({ channel, topic }),
+            label: copy.topics[topic],
+            group: { label: copy.channels[channel], icon: <ChannelIcon channel={channel} /> },
+            detail: copy.ways[ways],
+            seconds: [
+              { value: stateValue({ channel, topic }), label: copy.anyAnswer },
+              ...SENDS.map((send) => ({ value: stateValue({ channel, topic, send }), label: answers[send] })),
+            ],
+          };
+        }),
+        // Blocked, last of email's.
         {
           value: stateValue({ channel: "email", reason: "blocked" }),
           label: staffCopy.supporters.subscriptions.blocked,
+          group: { label: copy.channels.email, icon: <ChannelIcon channel="email" /> },
         },
       ],
     },

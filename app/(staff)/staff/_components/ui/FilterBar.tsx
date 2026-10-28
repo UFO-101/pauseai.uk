@@ -1,3 +1,4 @@
+import { Fragment, type ReactNode } from "react";
 import Form from "next/form";
 import { Button } from "@/components/ui/Button";
 import { Select, TextInput } from "@/components/ui/Controls";
@@ -10,11 +11,19 @@ import Menu from "./Menu";
 import styles from "./FilterBar.module.css";
 
 /**
- * A choice. One with `seconds` is in two parts: chosen, its chip is in two
+ * A choice. Choices in a `group` come under its heading, its icon once,
+ * the group named on the chip too; a `detail` is said quietly after the
+ * words. One with `seconds` is in two parts: chosen, its chip is in two
  * halves, the second offering `seconds`, the first of which is this choice
  * alone and the rest narrow it.
  */
-export type FilterOption = { value: string; label: string; seconds?: FilterOption[] };
+export type FilterOption = {
+  value: string;
+  label: string;
+  group?: { label: string; icon: ReactNode };
+  detail?: string;
+  seconds?: FilterOption[];
+};
 
 /**
  * One of a list's filters: its URL parameter, its name, and its choices. A
@@ -55,7 +64,7 @@ function parts(filter: Filter, value: string): { first?: FilterOption; second?: 
 function valueWords(filter: Filter, value: string, join: string): string {
   const { value: plain, not } = notValue(value);
   const { first, second } = parts(filter, plain);
-  const choice = first ? [first.label, second?.label].filter(Boolean).join(", ") : plain;
+  const choice = first ? [first.group?.label, first.label, second?.label].filter(Boolean).join(", ") : plain;
   return not ? copy.notChip(filter.label, choice) : `${filter.label}${join}${choice}`;
 }
 
@@ -97,12 +106,21 @@ function Choices({
     <>
       {search && <ChoiceSearch label={search} />}
       <ul className={styles.choices} data-search={search ? "empty" : undefined}>
-        {options.map((option) => (
-          <li key={option.value}>
-            <StaffLink href={href(option.value)} aria-current={option.value === current ? "true" : undefined}>
-              {option.label}
-            </StaffLink>
-          </li>
+        {options.map((option, i) => (
+          <Fragment key={option.value}>
+            {option.group && option.group.label !== options[i - 1]?.group?.label && (
+              <li className={styles.choiceGroup}>
+                {option.group.icon}
+                {option.group.label}
+              </li>
+            )}
+            <li className={option.group ? styles.inGroup : undefined}>
+              <StaffLink href={href(option.value)} aria-current={option.value === current ? "true" : undefined}>
+                {option.label}
+                {option.detail && <span className={styles.detail}>{option.detail}</span>}
+              </StaffLink>
+            </li>
+          </Fragment>
         ))}
       </ul>
     </>
@@ -232,7 +250,7 @@ export default function FilterBar({
   const chip = (
     filter: Filter,
     value: string,
-    text: string,
+    text: ReactNode,
     second = false,
     seconds?: { options: FilterOption[]; current: string },
   ) => {
@@ -352,7 +370,25 @@ export default function FilterBar({
             const { first, second } = parts(filter, plain);
             if (!first?.seconds) return chip(filter, one, valueWords(filter, one, ": "));
             // A choice in two parts: one lozenge in two halves, the second narrowing the first.
-            const words = not ? copy.notChip(filter.label, first.label) : `${filter.label}: ${first.label}`;
+            // Its group's icon before its words, so "PauseAI UK" says which.
+            const named = first.group ? (
+              <>
+                <span className={styles.chipIcon}>{first.group.icon}</span>
+                {first.label}
+              </>
+            ) : (
+              first.label
+            );
+            const words = not ? (
+              <>
+                {copy.notChip(filter.label, "")}
+                {named}
+              </>
+            ) : (
+              <>
+                {filter.label}: {named}
+              </>
+            );
             return (
               <span key={`${filter.name}-${one}`} className={styles.pair} role="group" aria-label={filter.label}>
                 {chip(filter, one, words)}

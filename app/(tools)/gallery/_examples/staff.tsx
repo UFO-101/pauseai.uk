@@ -66,6 +66,7 @@ import { exampleDashboard, exampleQuietDashboard } from "@/app/(staff)/staff/_co
 import Sparkline from "@/app/(staff)/staff/_components/Sparkline";
 import SupporterBadges from "@/app/(staff)/staff/_components/SupporterBadges";
 import SubscriptionBadges from "@/app/(staff)/staff/_components/SubscriptionBadges";
+import ChannelIcon from "@/app/(staff)/staff/_components/ChannelIcon";
 import PermissionTiles from "@/app/(staff)/staff/_components/PermissionTiles";
 import SupporterDetails from "@/app/(staff)/staff/_components/SupporterDetails";
 import SupporterFilters from "@/app/(staff)/staff/_components/SupporterFilters";
@@ -735,6 +736,23 @@ export const staff: Group = {
           render: () => (
             <StaffPage as="div">
               <SubscriptionBadges permissions={exampleBlockedPermissions} />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "ChannelIcon",
+      file: "app/(staff)/staff/_components/ChannelIcon.tsx",
+      variants: [
+        {
+          label: "Email and phone, named, and as decoration",
+          render: () => (
+            <StaffPage as="div">
+              <p>
+                <ChannelIcon channel="email" label="Email" /> <ChannelIcon channel="phone" label="Phone" />{" "}
+                <ChannelIcon channel="email" /> <ChannelIcon channel="phone" />
+              </p>
             </StaffPage>
           ),
         },

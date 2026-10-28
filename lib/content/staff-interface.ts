@@ -162,49 +162,19 @@ export const staffCopy = {
       campaign: "Campaign",
       wrote: { "": "Wrote", no: "Didn't write" } as Record<string, string>,
       // The other filters are named after their columns.
-      // The Subscriptions filter is a topic, named as the list's lozenges name it, then in its chip's second half
-      // any answer, one answer (as a supporter's page words it), or one reason, by channel and topic, short.
-      anyAnswer: "⁂ Any answer",
-      states: {
-        email: {
-          "luma-calendar": {
-            following: "⁂ Contact",
-            unsubscribed: "⁂ Unsubscribed",
-            "not-following": "⁂ Not a contact",
-          },
-          "pauseai-updates": {
-            asked: "⁂ Asked",
-            joined: "⁂ Joined before July 2026",
-            declined: "⁂ Declined",
-            unsubscribed: "⁂ Unsubscribed",
-            removed: "⁂ Removed",
-          },
-          "site-forms": {
-            asked: "⁂ Agreed",
-            declined: "⁂ Didn't agree",
-          },
-        },
-        phone: {
-          "luma-calendar": {
-            following: "⁂ Contact",
-            unsubscribed: "⁂ Unsubscribed",
-            "not-following": "⁂ Not a contact",
-          },
-          volunteering: {
-            volunteered: "⁂ Volunteered",
-            "gave-number": "⁂ Gave a number, not volunteering",
-            removed: "⁂ Removed",
-          },
-          "site-forms": {
-            asked: "⁂ Agreed",
-            declined: "⁂ Didn't agree",
-          },
-          "march-day": {
-            "gave-number": "⁂ Gave a number",
-            ended: "⁂ Day over",
-          },
-        },
-      } as Record<Channel, Record<string, Record<string, string>>>,
+      // The Subscriptions filter: its topics under their channel's heading, each named short, a phone's with how
+      // we'd contact them after it; then in its chip's second half any answer, or one answer, as a supporter's
+      // page words it.
+      channels: { email: "⁂ Email", phone: "⁂ Phone" } as Record<Channel, string>,
+      topics: {
+        "luma-calendar": "⁂ Luma",
+        "pauseai-updates": "⁂ PauseAI global",
+        "site-forms": "⁂ PauseAI UK",
+        volunteering: "⁂ Volunteering",
+        "march-day": "⁂ March day",
+      } as Record<string, string>,
+      ways: { text: "⁂ texts", "call-or-text": "⁂ calls & texts" } as Record<string, string>,
+      anyAnswer: "Any answer",
     },
     columns: {
       name: "Name",
@@ -308,8 +278,8 @@ export const staffCopy = {
           "call-or-text": { yes: "Will call or text", no: "Won't call or text", unsure: "May call or text?" },
         } as Record<string, Record<"yes" | "no" | "unsure", string>>,
         // By the address or number, so a screen reader says what it is.
-        email: "⁂ Email",
-        phone: "⁂ Phone",
+        email: "Email",
+        phone: "Phone",
         why: "details",
         // The short reason under the answer, by topic and reason, with when.
         reasons: {
@@ -392,7 +362,7 @@ export const staffCopy = {
             },
             volunteering: {
               about: "Calls and texts about volunteering.",
-              yes: "⁂ They gave the number on the PauseAI join form after choosing to volunteer regularly, the only choice it asks a number for, or on the volunteer sign-up form the join page had before 30 June 2026.",
+              yes: "They gave the number on the PauseAI join form after choosing to volunteer regularly, the only choice it asks a number for, or on the Tally volunteer sign-up form the join page had before 30 June 2026.",
               no: "The global team no longer shares their membership with us.",
               caveat: "A number given with any other choice shows as “May call or text?”.",
             },
@@ -425,7 +395,7 @@ export const staffCopy = {
       // In the band at the top: their MP, linked to their page, how they first came, under when they were active,
       // and how many events they registered for and letters they wrote, each linked to its table.
       theirMp: "Their MP",
-      firstVia: (source: string) => `⁂ first came via ${source}`,
+      firstVia: (source: string) => `first came via ${source}`,
       eventsCounted: (n: number) => (n === 1 ? "event" : "events"),
       lettersCounted: (n: number) => (n === 1 ? "letter to an MP" : "letters to MPs"),
       // Beside the box of what we hold: the events they registered for, and their letters, a table each.

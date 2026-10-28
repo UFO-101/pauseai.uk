@@ -324,8 +324,8 @@ test("the list says what each supporter gets, and filters by it", async ({ page,
   await frame(page, "the list, with what each supporter gets by topic");
 
   // A topic first, then in the chip's second half, one of its reasons.
-  await addFilter(page, copy.columns.subscriptions, copy.subscriptions.topics.email["luma-calendar"]);
-  await changeFilter(page, copy.filters.anyAnswer, copy.filters.states.email["luma-calendar"].unsubscribed);
+  await addFilter(page, copy.columns.subscriptions, copy.filters.topics["luma-calendar"]);
+  await changeFilter(page, copy.filters.anyAnswer, copy.detail.permissions.answers.email.no);
   await expect(page.getByText(copy.total(1))).toBeVisible();
   await expect(page.getByRole("row").filter({ hasText: "Jane Fixture" })).toBeVisible();
   // Owen left Keep me informed unticked, which isn't an unsubscribe.
@@ -335,10 +335,10 @@ test("the list says what each supporter gets, and filters by it", async ({ page,
   // Another topic, from the chip's first half, then its reason.
   await changeFilter(
     page,
-    `${copy.columns.subscriptions}: ${copy.subscriptions.topics.email["luma-calendar"]}`,
-    copy.subscriptions.topics.email["pauseai-updates"],
+    `${copy.columns.subscriptions}: ${copy.filters.topics["luma-calendar"]}`,
+    copy.filters.topics["pauseai-updates"],
   );
-  await changeFilter(page, copy.filters.anyAnswer, copy.filters.states.email["pauseai-updates"].declined);
+  await changeFilter(page, copy.filters.anyAnswer, copy.detail.permissions.answers.email.no);
   await expect(page).toHaveURL(/subscription=email%3Apauseai-updates%3Adeclined/);
   await expect(page.getByRole("row").filter({ hasText: "Owen Member" })).toBeVisible();
   await expect(page.getByRole("row").filter({ hasText: "Jane Fixture" })).toHaveCount(0);
