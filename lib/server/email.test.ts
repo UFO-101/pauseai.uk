@@ -6,6 +6,7 @@ import {
   addTestMp,
   addTestPolitician,
   describeWithDatabase,
+  MAKES_DATABASES,
   useDatabaseUpTo,
   useTestDatabase,
 } from "@/tests/database";
@@ -296,7 +297,7 @@ describeWithDatabase("listBlocks, blockOn and recentProblems", () => {
   });
 });
 
-describeWithDatabase("migration 0014_email_deliverability", () => {
+describeWithDatabase("migration 0014_email_deliverability", MAKES_DATABASES, () => {
   const db = useDatabaseUpTo("0013");
 
   it("logs the letters already sent, so their bounces find them, and drops their message IDs", async () => {

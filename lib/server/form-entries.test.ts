@@ -1,6 +1,13 @@
 import { expect, it } from "vitest";
 import { migrate } from "@/scripts/db-migrate.mjs";
-import { addTestLetter, addTestMp, describeWithDatabase, useDatabaseUpTo, useTestDatabase } from "@/tests/database";
+import {
+  addTestLetter,
+  addTestMp,
+  describeWithDatabase,
+  MAKES_DATABASES,
+  useDatabaseUpTo,
+  useTestDatabase,
+} from "@/tests/database";
 import { query } from "./db";
 import { addFormEntry } from "./form-entries";
 import { linkSupporters } from "./supporters";
@@ -47,7 +54,7 @@ const renamed = (rows: Row[]): Row[] =>
     }),
   }));
 
-describeWithDatabase("migration 0043_form_entries", () => {
+describeWithDatabase("migration 0043_form_entries", MAKES_DATABASES, () => {
   const db = useDatabaseUpTo("0042");
 
   it("makes each letter's sender a form entry, links the supporter to it, and every view says what it said", async () => {
@@ -241,7 +248,7 @@ describeWithDatabase("migration 0043_form_entries", () => {
   });
 });
 
-describeWithDatabase("migration 0044_form_entry_luma", () => {
+describeWithDatabase("migration 0044_form_entry_luma", MAKES_DATABASES, () => {
   const db = useDatabaseUpTo("0043");
 
   it("takes the march's entries, with what Luma said, as a line of the history; a letter's entry is still its letter", async () => {

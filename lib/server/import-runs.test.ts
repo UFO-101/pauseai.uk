@@ -1,5 +1,5 @@
 import { expect, it } from "vitest";
-import { describeWithDatabase, useDatabaseUpTo, useTestDatabase } from "@/tests/database";
+import { describeWithDatabase, MAKES_DATABASES, useDatabaseUpTo, useTestDatabase } from "@/tests/database";
 import { migrate } from "@/scripts/db-migrate.mjs";
 import { query } from "./db";
 import { keepingFailure, latestRun, listRuns, recordFailure, recordRun } from "./import-runs";
@@ -43,7 +43,7 @@ describeWithDatabase("the import log", () => {
   });
 });
 
-describeWithDatabase("migration 0013_import_runs", () => {
+describeWithDatabase("migration 0013_import_runs", MAKES_DATABASES, () => {
   const db = useDatabaseUpTo("0012");
 
   it("copies the old tables' runs into the log, keeping only a held sync's MP list, then drops them", async () => {

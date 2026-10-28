@@ -1,7 +1,13 @@
 import { expect, it } from "vitest";
 import { migrate } from "@/scripts/db-migrate.mjs";
 import { campaigns, copy } from "@/lib/content/email-your-mp";
-import { addTestPolitician, describeWithDatabase, useDatabaseUpTo, useTestDatabase } from "@/tests/database";
+import {
+  addTestPolitician,
+  describeWithDatabase,
+  MAKES_DATABASES,
+  useDatabaseUpTo,
+  useTestDatabase,
+} from "@/tests/database";
 import { asksWithCounts, listAsks, listCampaigns } from "./asks";
 import { query } from "./db";
 import { setStatus } from "./politicians";
@@ -78,7 +84,7 @@ describeWithDatabase("asks and campaigns", () => {
   });
 });
 
-describeWithDatabase("migration 0035_notable_people_and_asks", () => {
+describeWithDatabase("migration 0035_notable_people_and_asks", MAKES_DATABASES, () => {
   const db = useDatabaseUpTo("0034");
 
   it("moves politicians, letters and statuses into the new tables, keeping their IDs", async () => {
