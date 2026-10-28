@@ -9,28 +9,41 @@ import { airtableToken, fetchEmails, fetchTestPoliticianIds } from "./outside-se
 // into pauseai_letters, nightly (app/api/cron/sync-politicians, after the
 // politicians) or when staff ask, each run in the import log as
 // "sync-emails". An email is added once, by its record's ID, as a letter of
-// the mailing whose tick box is ticked, to the politician it links to; it's
-// never changed after. Airtable has no text, Message-ID or thread for it.
-// One to a politician ticked Test in Airtable is skipped, as the politicians
-// sync skips them. One whose politician isn't here yet waits for the next run. One with no
-// box of a known mailing ticked, or several, is held back and reported, not
-// guessed at: a new tick box is a new mailings row, added by a migration.
+// the mailing whose tick box is ticked, or with no box ticked, of the one
+// whose dates it was sent in (a mailing with no box, such as summer 2025's),
+// to the politician it links to; it's never changed after. Airtable has no
+// text, Message-ID or thread for it. One to a politician ticked Test in
+// Airtable is skipped, as the politicians sync skips them. One whose
+// politician isn't here yet waits for the next run. One with no mailing
+// found, or several boxes ticked, is held back and reported, not guessed at:
+// a new tick box, or a new mailing's dates, is a new mailings row, added by
+// a migration.
 
 const JOB = "sync-emails";
 
 /** Copies the emails not copied yet, keeping the run. `startedBy` is NIGHTLY or the staff member's email. */
 export function syncEmails(startedBy: string): Promise<EmailSyncResult> {
   return keepingFailure(JOB, startedBy, async () => {
-    const mailings = await query<{ id: number; field: string }>(
-      "SELECT id::int AS id, airtable_field AS field FROM mailings ORDER BY id",
+    const mailings = await query<{ id: number; field: string | null; from: Date | null; before: Date | null }>(
+      `SELECT id::int AS id, airtable_field AS field,
+         lower(airtable_sent_between) AS "from", upper(airtable_sent_between) AS "before"
+       FROM mailings ORDER BY id`,
     );
+    const boxes = mailings.filter((mailing) => mailing.field !== null);
     const token = airtableToken();
     const emails = await fetchEmails(
       token,
-      mailings.map((mailing) => mailing.field),
+      boxes.map((mailing) => mailing.field!),
     );
     const tests = new Set(await fetchTestPoliticianIds(token));
-    const mailingIds = new Map(mailings.map((mailing) => [mailing.field, mailing.id]));
+    const mailingIds = new Map(boxes.map((mailing) => [mailing.field!, mailing.id]));
+    // The mailing an email belongs to: its box's, or with none ticked, the one whose dates it was sent in.
+    const mailingOf = (email: (typeof emails)[number]) => {
+      if (email.mailings.length > 1) return undefined;
+      if (email.mailings.length === 1) return mailingIds.get(email.mailings[0]);
+      const at = new Date(email.at).getTime();
+      return mailings.find((m) => m.from && m.before && m.from.getTime() <= at && at < m.before.getTime())?.id;
+    };
     return transaction(async (db) => {
       const result: EmailSyncResult = { read: emails.length, added: 0, waiting: 0, noPolitician: 0, unplaced: [] };
       const known = new Set(
@@ -49,7 +62,8 @@ export function syncEmails(startedBy: string): Promise<EmailSyncResult> {
           continue;
         }
         if (tests.has(email.politicians[0])) continue;
-        if (email.mailings.length !== 1) {
+        const mailing = mailingOf(email);
+        if (mailing === undefined) {
           result.unplaced.push({ airtableId: email.airtableId, mailings: email.mailings });
           continue;
         }
@@ -70,7 +84,7 @@ export function syncEmails(startedBy: string): Promise<EmailSyncResult> {
         );
         await query(
           `INSERT INTO pauseai_letters (id, mailing_id, airtable_id, personalised) VALUES ($1, $2, $3, $4)`,
-          [id, mailingIds.get(email.mailings[0]), email.airtableId, email.personalised],
+          [id, mailing, email.airtableId, email.personalised],
           db,
         );
         result.added++;

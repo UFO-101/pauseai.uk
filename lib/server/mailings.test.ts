@@ -40,6 +40,7 @@ describeWithDatabase("mailings", () => {
     const mailings = await listMailings();
     // The unsent first, the newest made first.
     expect(mailings.map((m) => [m.title, m.sent, m.skipped, m.bounced, m.replied])).toEqual([
+      ["DeepMind letter", 0, 0, 0, 0],
       ["Frontier AI", 0, 0, 0, 0],
       ["Liability Bill", 0, 0, 0, 0],
       ["Westminster Hall Debate Invitation", 0, 0, 0, 0],
@@ -48,13 +49,15 @@ describeWithDatabase("mailings", () => {
       [EDINBURGH, 2, 1, 1, 1],
       [CSRB, 1, 0, 0, 0],
     ]);
-    expect(mailings[5]).toMatchObject({
+    expect(mailings[6]).toMatchObject({
       ask: "edinburgh-conference-2026",
       askTitle: "Edinburgh conference",
       imported: true,
       sentAt: new Date("2026-10-01"),
     });
-    expect(mailings[0]).toMatchObject({ ask: null, askTitle: null, sentAt: null });
+    expect(mailings[1]).toMatchObject({ ask: null, askTitle: null, sentAt: null });
+    // One found by when its emails were sent is imported too, and its ask is the DeepMind letter.
+    expect(mailings[0]).toMatchObject({ ask: "deepmind-letter", imported: true, sentAt: null });
   });
 
   it("gives one mailing with each recipient's outcome, by name; or nothing for no such mailing", async () => {

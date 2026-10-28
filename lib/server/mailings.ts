@@ -36,7 +36,7 @@ export type MailingRecipient = {
 export type Mailing = MailingSummary & { recipients: MailingRecipient[] };
 
 const SELECT_MAILINGS = `
-  SELECT m.id::int AS id, m.title, m.ask, a.title AS "askTitle", m.airtable_field IS NOT NULL AS imported,
+  SELECT m.id::int AS id, m.title, m.ask, a.title AS "askTitle", (m.airtable_field IS NOT NULL OR m.airtable_sent_between IS NOT NULL) AS imported,
     min(l.sent_at) AS "sentAt",
     count(l.id) FILTER (WHERE l.status IN ('sent', 'bounced', 'spam_complaint'))::int AS sent,
     count(l.id) FILTER (WHERE l.status IN ('not_sent', 'cancelled'))::int AS skipped,

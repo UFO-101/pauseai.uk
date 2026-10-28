@@ -1246,8 +1246,10 @@ CREATE TABLE public.mailings (
     id bigint NOT NULL,
     title text NOT NULL,
     ask text,
-    airtable_field text NOT NULL,
-    created_at timestamp with time zone DEFAULT now() NOT NULL
+    airtable_field text,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    airtable_sent_between tstzrange,
+    CONSTRAINT mailings_box_or_dates CHECK (((airtable_field IS NULL) <> (airtable_sent_between IS NULL)))
 );
 
 --

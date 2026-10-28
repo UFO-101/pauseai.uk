@@ -326,7 +326,10 @@ test("PauseAI's emails: copied once, with one held back for a mailing nobody has
   await page.goto(`${BASE}/staff/import-data/emails`);
   await expect(page.getByRole("heading", { level: 1 })).toContainText(jobTitles["sync-emails"]);
   await expect(page.getByText("recEmailNewBox", { exact: false }).first()).toBeVisible();
-  await frame(page, "the Emails sync's page: four copied, one held back with no mailing we know");
+  await frame(
+    page,
+    "the Emails sync's page: five copied, summer 2025's by its dates, one held back with no mailing we know",
+  );
   await page.getByRole("button", { name: staffCopy.pauseaiEmails.importNow }).click();
   await expect(page.getByText(staffCopy.runs.status.incomplete).first()).toBeVisible();
   expect(runSql(flowDatabase, "SELECT count(*) FROM pauseai_letters")).toEqual(["4"]);
