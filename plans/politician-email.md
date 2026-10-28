@@ -87,9 +87,9 @@ Francis about a shared account (see the open questions).
    a status for it, and it can only be deleted while nothing refers to
    it. The asks named in `lib/asks.ts` can't be edited. Adding a new
    status for a kind still needs a migration.
-8. Rename `REPLIES_INBOX` to a name that says it is for politicians'
-   mail. Everything sent there is about politicians: copies of
-   supporters' letters, MPs' replies and bounce alerts.
+8. Rename `REPLIES_INBOX` to `POLICY_INBOX`. Everything sent there is
+   about politicians: copies of supporters' letters, MPs' replies and
+   bounce alerts.
 9. Drop the views `supporter_letters` and `pauseai_letters`, in a new
    migration. Migration 0056 renamed those tables and kept the old names
    as views only for the site deployed before it, which has long since
