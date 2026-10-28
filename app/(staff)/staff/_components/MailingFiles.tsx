@@ -70,13 +70,18 @@ function Paperclip() {
   );
 }
 
+/** An image's own small picture, or its sheet if it can't be loaded. */
+function ImageThumb({ file, href }: { file: MailingAttachmentSummary; href: string }) {
+  const [failed, setFailed] = useState(false);
+  if (failed) return <Sheet extension={extensionOf(file.filename) || "?"} />;
+  // A file a staff member attached, served by our own route, so no next/image.
+  // eslint-disable-next-line @next/next/no-img-element
+  return <img src={href} alt="" className={styles.thumb} onError={() => setFailed(true)} />;
+}
+
 /** A small picture of a file: an image itself, a PDF's first page, or a sheet with its kind. */
 function Thumbnail({ file, href }: { file: MailingAttachmentSummary; href: string }) {
-  if (file.contentType.startsWith("image/")) {
-    // A file a staff member attached, served by our own route, so no next/image.
-    // eslint-disable-next-line @next/next/no-img-element
-    return <img src={href} alt="" className={styles.thumb} />;
-  }
+  if (file.contentType.startsWith("image/")) return <ImageThumb file={file} href={href} />;
   if (file.contentType === "application/pdf") return <PdfPage href={href} />;
   return <Sheet extension={extensionOf(file.filename) || "?"} />;
 }
@@ -90,14 +95,14 @@ function Thumbnail({ file, href }: { file: MailingAttachmentSummary; href: strin
  */
 export default function MailingFiles({
   files,
-  href,
+  base,
   onAdd,
   onRemove,
   problem,
 }: {
   files: MailingAttachmentSummary[];
-  /** Where each file can be opened. */
-  href: (id: number) => string;
+  /** Where the files can be opened: each at this, then its ID. A string, as a server page hands it in. */
+  base: string;
   onAdd?: (files: File[]) => void;
   onRemove?: (id: number) => void;
   /** What's wrong with the last file added, if anything. */
@@ -112,8 +117,8 @@ export default function MailingFiles({
         <ul className={styles.list} aria-label={copy.attachments}>
           {files.map((file) => (
             <li key={file.id}>
-              <a href={href(file.id)} target="_blank" rel="noreferrer">
-                <Thumbnail file={file} href={href(file.id)} />
+              <a href={`${base}/${file.id}`} target="_blank" rel="noreferrer">
+                <Thumbnail file={file} href={`${base}/${file.id}`} />
                 <span className={styles.text}>
                   <strong>
                     <Paperclip />

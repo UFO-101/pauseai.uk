@@ -227,7 +227,7 @@ export default function MailingView({
           <p>
             <strong>{written.subject}</strong>
           </p>
-          <MailingFiles files={written.attachments} href={(file) => `/staff/mailings/${written.id}/files/${file}`} />
+          <MailingFiles files={written.attachments} base={`/staff/mailings/${written.id}/files`} />
           <MailingLetter doc={written.body} {...letterLabels(asks)} />
           <h3 className={styles.subheading}>{copy.whoTitle}</h3>
           {who}

@@ -395,7 +395,7 @@ export default function MailingWriter({
             <p className={styles.label}>{copy.attachments}</p>
             <MailingFiles
               files={attachments}
-              href={(file) => `/staff/mailings/${savedId}/files/${file}`}
+              base={`/staff/mailings/${savedId}/files`}
               onAdd={(files) => void attach(files)}
               onRemove={async (file) => void attached(await actions.detach(id.current!, version.current, file))}
               problem={fileProblem}

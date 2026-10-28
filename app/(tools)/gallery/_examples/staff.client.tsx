@@ -481,14 +481,18 @@ export function ChangeWhoListExample() {
   );
 }
 
-/** A mailing's files: a PDF, an image and a file of no kind to draw; with the box for more, and each to take off. */
+/**
+ * A mailing's files: a PDF, an image and a file of no kind to draw; with the
+ * box for more, and each to take off. There's no mailing to serve them in the
+ * gallery, so each shows the sheet with its kind.
+ */
 export function MailingFilesExample({ editable }: { editable: boolean }) {
   return (
     <Logged>
       {(log) => (
         <MailingFiles
           files={exampleWrittenMailing.attachments}
-          href={(id) => `/pdfs/${id === 2 ? "Frontier-AI-Open-Letter.jpg" : "Frontier-AI-Open-Letter.pdf"}`}
+          base="/staff/mailings/12/files"
           onAdd={editable ? log("onAdd") : undefined}
           onRemove={editable ? log("onRemove") : undefined}
         />
