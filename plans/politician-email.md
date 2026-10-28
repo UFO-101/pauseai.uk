@@ -44,7 +44,13 @@ Francis about a shared account (see the open questions).
    ([quota](https://developers.google.com/workspace/gmail/api/reference/quota)).
    `email_sends` records the backend and sender, and gets two new
    purposes, `mailing` and `mailing-test`.
-4. Read bounces and threads hourly. `users.history.list`
+4. The `send-mailings` job. It runs hourly, during the database wake
+   that the other jobs share, and sends any mailing that's due. A
+   scheduled function has only 30 seconds, about 30 emails at Gmail's
+   pace, so a due mailing would start a Netlify background function,
+   which runs for up to 15 minutes and sends at the channel's own pace,
+   marking each recipient as it goes (see the open questions).
+5. Read bounces and threads hourly. `users.history.list`
    ([docs](https://developers.google.com/workspace/gmail/api/reference/rest/v1/users.history/list))
    lists the messages that arrived since the last `historyId`. The site
    fetches only the ones in our letters' threads, and bounces:
@@ -56,19 +62,19 @@ Francis about a shared account (see the open questions).
    - Any other message is stored in full, gzipped, in Netlify Blobs,
      with a row in a new `letter_replies` table. A row there is any later
      message in the thread: the politician's reply, or our answer.
-5. Back up the stored messages. The backup Worker fetches new ones
+6. Back up the stored messages. The backup Worker fetches new ones
    through a read-only route on the site.
-6. Let staff add asks, on `/staff/asks` or while making a mailing. An
+7. Let staff add asks, on `/staff/asks` or while making a mailing. An
    ask needs a title and a kind, and can have a date, a link and who is
    asking. Its slug is made from the title and date and can't be
    changed after it is saved. Its kind can't be changed once anyone has
    a status for it, and it can only be deleted while nothing refers to
    it. The asks named in `lib/asks.ts` can't be edited. Adding a new
    status for a kind still needs a migration.
-7. Rename `REPLIES_INBOX` to a name that says it is for politicians'
+8. Rename `REPLIES_INBOX` to a name that says it is for politicians'
    mail. Everything sent there is about politicians: copies of
    supporters' letters, MPs' replies and bounce alerts.
-8. Staff pages:
+9. Staff pages:
    - On your account page, connect or disconnect Gmail. The page says
      what the site reads in your mailbox and how many emails you have
      sent today against the limit.
@@ -106,3 +112,5 @@ limit, journalists, and what politicians did in Parliament.
 2. Can staff send from a colleague's connected Gmail, as the mock-up
    shows, or only from their own and shared ones? Sending as someone
    else should probably need their say-so.
+3. Are Netlify background functions included in our plan, for the send
+   job? ([docs](https://docs.netlify.com/build/functions/background-functions/))

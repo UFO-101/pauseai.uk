@@ -10,8 +10,8 @@ mailing needs. Sending by each channel is in its own plan:
 
 It is three pull requests, none depending on anything outside the site:
 
-1. Data: the tables, stored filters, templates, channels and the send
-   job, with nothing new for staff to see but the editor in the gallery.
+1. Data: the tables, stored filters, templates and channels, with
+   nothing new for staff to see but the editor in the gallery.
 2. Mailings: the staff pages for mailings to politicians.
 3. Messages: the staff pages for messages to supporters.
 
@@ -169,7 +169,13 @@ don't change it.
    as it checks letters, and one function writes a recipient's HTML and
    plain text from it, for the preview, test sends and sending. Only
    merge fields every recipient has a value for can be used: the others
-   are offered ghosted, saying how many lack one.
+   are offered ghosted, saying how many lack one. For politicians the
+   fields are salutation, name, constituency, party and house. The
+   "Only for those who…" choices are one per answer an ask has had,
+   such as "signed the Frontier AI letter" or "are going to the
+   Edinburgh conference", from `ask_statuses`. The editor and its
+   toolbar exist (`app/(staff)/staff/_components/MailingEditor.tsx`);
+   dragging a lozenge in from a sidebar, and ghosting, don't yet.
 5. Channels. `Channel` is a type with four functions: send one message,
    say how many more can be sent today, say what one message costs, and
    turn a provider's report into an event. Each channel also has a fake
@@ -178,10 +184,10 @@ don't change it.
    can report deliveries, failures, bounces, opt-outs and replies
    through the same code as the real webhook. This plan uses the fake
    email channel that already exists.
-6. The `send-mailings` job runs hourly, during the database wake that
-   the other jobs share. Each run sends what it can in 30 seconds and
-   leaves the rest for the next run. That is too slow for Gmail's pace
-   of about 60 a minute (see the open question).
+6. Tidying: the daily `tidy-logs` job deletes drafts with no subject or
+   letter that nobody has opened for a day. The job that sends is built
+   with the first channel that really sends, in
+   `plans/politician-email.md`.
 
 ## Phase 2: Mailings
 
@@ -218,6 +224,10 @@ https://claude.ai/artifact/3qi42XAhd2qwYBTRYVGZoz
   5. When: a day and an hour; it goes on the hour.
   6. Send: one sentence of what will go, to whom, from whom and when,
      and the button to schedule it.
+
+  Until a channel really sends, the page shows "Mailings can't be sent
+  yet" at the top, and the schedule button is greyed and says so.
+  Everything else works, including the test send by Postmark.
 - Drafts. A mailing becomes a draft at the first change worth keeping:
   writing in the subject or letter, or attaching a file. Until then nothing is saved. A draft saves itself a
   moment after each change. A draft with no subject or letter is
@@ -253,9 +263,10 @@ built on phase 2's. To be designed once phase 2's are settled.
 - A message's page and the list of messages, with delivered, failed,
   opted out, replies and cost.
 
-## Open questions
+## Done means
 
-1. The send job's 30 seconds an hour sends about 30 emails by Gmail, so
-   126 would take five hours. Should a due mailing start a Netlify
-   background function, which runs for up to 15 minutes, and send at
-   the channel's own pace?
+For each phase, as `AGENTS.md` asks: 100% test coverage; a storyboard
+flow for each thing a person does on the new pages, with a line for it
+in `docs/testing.md`; a gallery example for each new component; copy as
+⁂ placeholders for a person to write; and `docs/data-protection.md`
+updated for what's stored about recipients.
