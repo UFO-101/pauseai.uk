@@ -1,7 +1,7 @@
 import type React from "react";
 import Link from "next/link";
 import { staffCopy } from "@/lib/content/staff-interface";
-import { waysKey, type Channel, type ContactPermission } from "@/lib/contact-permissions";
+import { CHANNELS, waysKey, type Channel, type ContactPermission, type Topic } from "@/lib/contact-permissions";
 import { staffDate } from "@/lib/staff-time";
 import ChannelIcon from "./ChannelIcon";
 import Tag from "@/components/ui/Tag";
@@ -20,29 +20,42 @@ function reason(permission: ContactPermission): string {
 const TONES = { yes: "green", unsure: "amber", no: undefined } as const;
 
 /**
- * What's behind a strip's "?": the topic's name, what it is, then when we
- * would contact them and when not, in the words of the ways it allows, and,
- * for some, what we can't see, each under its label.
+ * What's behind a row's "?": the topic's name, then for each channel it
+ * has here, named when there's more than one, what it is, when we would
+ * contact them and when not, in the words of the ways it allows, and, for
+ * some, what we can't see, each under its label.
  */
-function TopicDetails({ permission, topic }: { permission: ContactPermission; topic: string }) {
-  const details = copy.details[permission.channel][permission.topic];
-  const when = copy.when[waysKey(permission.channel, permission.topic)];
+function TopicDetails({ topic, channels, name }: { topic: Topic; channels: Channel[]; name: string }) {
   return (
     <>
-      <strong className={styles.topicTitle}>{copy.topicTitle(topic)}</strong>
-      <p>{details.about}</p>
-      <dl className={styles.when}>
-        <dt>{when.yes}</dt>
-        <dd>{details.yes}</dd>
-        <dt>{when.no}</dt>
-        <dd>{details.no}</dd>
-        {details.caveat && (
-          <>
-            <dt>{copy.caveat}</dt>
-            <dd>{details.caveat}</dd>
-          </>
-        )}
-      </dl>
+      <strong className={styles.topicTitle}>{copy.topicTitle(name)}</strong>
+      {channels.map((channel) => {
+        const details = copy.details[channel][topic];
+        const when = copy.when[waysKey(channel, topic)];
+        return (
+          <div key={channel} className={styles.channel}>
+            {channels.length > 1 && (
+              <p className={styles.channelName}>
+                <ChannelIcon channel={channel} />
+                {staffCopy.supporters.filters.channels[channel]}
+              </p>
+            )}
+            <p>{details.about}</p>
+            <dl className={styles.when}>
+              <dt>{when.yes}</dt>
+              <dd>{details.yes}</dd>
+              <dt>{when.no}</dt>
+              <dd>{details.no}</dd>
+              {details.caveat && (
+                <>
+                  <dt>{copy.caveat}</dt>
+                  <dd>{details.caveat}</dd>
+                </>
+              )}
+            </dl>
+          </div>
+        );
+      })}
     </>
   );
 }
@@ -61,20 +74,20 @@ function Address({ channel, address, link }: { channel: Channel; address: string
 }
 
 /**
- * One topic, a row: its name, then whether we'd contact them about it, in
- * the words of the ways it allows, a lozenge in the answer's colour, and
- * the "?" with how we know; under them the address or number it's for,
- * then why in a few words.
+ * One topic, a row: its name and the "?" with how we know; then each
+ * address or number it has an answer for, by email before phone, with that
+ * answer in its words and colour; then why, once if every answer has the
+ * same reason, else under each.
  */
-function Tile({ permission }: { permission: ContactPermission }) {
-  const id = `why-${permission.channel}-${permission.topic}-${permission.address.replace(/\W/g, "-")}`;
-  const topic = copy.topics[permission.channel][permission.topic];
-  const answer = copy.answers[waysKey(permission.channel, permission.topic)][permission.send];
+function TopicRow({ topic, permissions }: { topic: Topic; permissions: ContactPermission[] }) {
+  const id = `why-${topic}`;
+  const name = copy.topics[permissions[0].channel][topic];
+  const reasons = permissions.map(reason);
+  const shared = reasons.every((r) => r === reasons[0]);
   return (
-    <li data-send={permission.send} className={styles.item}>
+    <li className={styles.item}>
       <span className={styles.head}>
-        <span className={styles.topic}>{topic}</span>
-        <Tag tone={TONES[permission.send]}>{answer}</Tag>
+        <span className={styles.topic}>{name}</span>
         <button
           type="button"
           className={styles.help}
@@ -85,15 +98,23 @@ function Tile({ permission }: { permission: ContactPermission }) {
           ?
         </button>
       </span>
-      <Address channel={permission.channel} address={permission.address} link={permission.send !== "no"} />
-      <span className={styles.reason}>{reason(permission)}</span>
+      {permissions.map((permission, i) => (
+        <span key={`${permission.channel}-${permission.address}`} className={styles.answer} data-send={permission.send}>
+          <span className={styles.line}>
+            <Address channel={permission.channel} address={permission.address} link={permission.send !== "no"} />
+            <Tag tone={TONES[permission.send]}>{copy.answers[waysKey(permission.channel, topic)][permission.send]}</Tag>
+          </span>
+          {!shared && <span className={styles.reason}>{reasons[i]}</span>}
+        </span>
+      ))}
+      {shared && <span className={styles.reason}>{reasons[0]}</span>}
       <div
         id={id}
         popover="auto"
         className={styles.popover}
         style={{ positionAnchor: `--${id}` } as React.CSSProperties}
       >
-        <TopicDetails permission={permission} topic={topic} />
+        <TopicDetails topic={topic} channels={[...new Set(permissions.map((p) => p.channel))]} name={name} />
       </div>
     </li>
   );
@@ -117,21 +138,29 @@ function Blocked({ permission }: { permission: ContactPermission }) {
   );
 }
 
+/** The topics in the order the rows go: ours first, then Luma's, then the rest. */
+const ORDER: Topic[] = ["site-forms", "luma-calendar", "pauseai-updates", "volunteering", "march-day"];
+
 /**
- * Whether we'd contact a supporter about each topic, a strip each, for each
- * of their addresses, then each of their numbers, each strip naming the one
- * it's for; an address that's blocked gets one.
+ * Whether we'd contact a supporter about each topic, a row each, every
+ * address and number it has an answer for in it, email before phone; then
+ * a row for each address that's blocked, which none of the topics' have.
  */
 export default function PermissionTiles({ permissions }: { permissions: ContactPermission[] }) {
-  const keys = [...new Set(permissions.map((p) => `${p.channel} ${p.address}`))];
+  const blocked = permissions.filter((p) => p.reason === "blocked");
+  const out = new Set(blocked.map((p) => p.address));
+  const open = permissions.filter((p) => !(p.channel === "email" && out.has(p.address)));
+  const byChannel = (a: ContactPermission, b: ContactPermission) =>
+    CHANNELS.indexOf(a.channel) - CHANNELS.indexOf(b.channel);
   return (
     <ul className={styles.list}>
-      {keys.flatMap((key) => {
-        const own = permissions.filter((p) => `${p.channel} ${p.address}` === key);
-        const blocked = own.find((p) => p.reason === "blocked");
-        if (blocked) return [<Blocked key={key} permission={blocked} />];
-        return own.map((p) => <Tile key={`${key}-${p.topic}`} permission={p} />);
+      {ORDER.flatMap((topic) => {
+        const own = open.filter((p) => p.topic === topic).sort(byChannel);
+        return own.length > 0 ? [<TopicRow key={topic} topic={topic} permissions={own} />] : [];
       })}
+      {[...new Map(blocked.map((p) => [p.address, p])).values()].map((p) => (
+        <Blocked key={p.address} permission={p} />
+      ))}
     </ul>
   );
 }

@@ -1,5 +1,5 @@
-/* A row per topic down the card, each ruled from the next; no tint, the
-   colour on the answer alone. */
+/* A row per topic down the card, each ruled from the next, its addresses
+   and numbers in it; no tint, the colour on the answers alone. */
 .list {
   display: grid;
   margin: 0;
@@ -9,7 +9,7 @@
 
 .item {
   display: grid;
-  gap: 2px;
+  gap: var(--space-1);
   padding: var(--space-3) 0;
 }
 
@@ -42,6 +42,37 @@
 .topic {
   flex: 1 1 auto;
   min-width: 0;
+  font-weight: 600;
+}
+
+/* Each address or number the topic has an answer for, its answer at the
+   right, under it when both don't fit; its own reason under it when the
+   answers' reasons differ. */
+.answer {
+  display: grid;
+  gap: 2px;
+}
+
+.line {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-2);
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* In the "?" box, a channel's part, named by its icon when there's more
+   than one. */
+.channel + .channel {
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border);
+}
+
+.channelName {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
   font-weight: 600;
 }
 
