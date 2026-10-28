@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import { declareCanvasFonts } from "@/lib/collateral/canvasFonts";
 import { canvasToPngBlob, downloadCanvasPng, downloadText } from "@/lib/collateral/export";
 import { isWebAddress, qrFilenameStem, qrMinPrintMm, qrTarget } from "@/lib/collateral/qr";
 import {
@@ -45,6 +46,7 @@ const measureCaption: CaptionMeasure = (kind, text, fontSize) => {
 /** Loads the caption fonts into the page, for measuring and the PNG, and returns them inlined, for the SVG. */
 async function loadCaptionFonts(): Promise<string> {
   const kinds = Object.keys(CAPTION_FONTS) as (keyof typeof CAPTION_FONTS)[];
+  declareCanvasFonts();
   const [css] = await Promise.all([captionFontCss(), ...kinds.map((k) => document.fonts.load(captionFont(k, 40)))]);
   return css;
 }

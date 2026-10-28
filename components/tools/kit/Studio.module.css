@@ -1,46 +1,4 @@
-/* The studios' layout: the preview column and the form column, and the
-   fonts the previews draw with. */
-
-/* Fonts drawn into the canvas. Separate family names so they never clash with next/font. */
-@font-face {
-  font-family: "PAI Lato";
-  font-style: normal;
-  font-weight: 700;
-  font-display: block;
-  src: url("/fonts/lato-latin-700-normal.woff2") format("woff2");
-}
-
-@font-face {
-  font-family: "PAI Lato";
-  font-style: normal;
-  font-weight: 900;
-  font-display: block;
-  src: url("/fonts/lato-latin-900-normal.woff2") format("woff2");
-}
-
-@font-face {
-  font-family: "PAI Inter";
-  font-style: normal;
-  font-weight: 100 900;
-  font-display: block;
-  src: url("/fonts/inter-latin-wght-normal.woff2") format("woff2-variations");
-}
-
-@font-face {
-  font-family: "PAI Permanent Marker";
-  font-style: normal;
-  font-weight: 400;
-  font-display: block;
-  src: url("/fonts/permanent-marker-latin-400-normal.woff2") format("woff2");
-}
-
-@font-face {
-  font-family: "PAI Montserrat";
-  font-style: normal;
-  font-weight: 800;
-  font-display: block;
-  src: url("/fonts/montserrat-latin-800-normal.woff2") format("woff2");
-}
+/* The studios' layout: the preview column and the form column. */
 
 .studio {
   display: grid;
