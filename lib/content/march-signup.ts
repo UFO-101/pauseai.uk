@@ -82,7 +82,7 @@ export const marchSignupCopy = {
     registered: "You’re registered. Thank you!",
     /** Under it: when and where, and what will arrive, at the address they gave, so they can spot a typo. */
     inTouch: (email: string) =>
-      `See you on ${march.dateLong} in ${march.city}. Luma will email ${email} a calendar invite, and we’ll send more details closer to the day.`,
+      `You should receive an email at ${email} shortly with a calendar invite. We’ll send an update with more info closer to the date. See you on ${march.dateLong} in ${march.city}.`,
     title: "Double your impact",
     /** "The average AI researcher puts an [18% chance] on …", the link to the survey that found it. */
     impact: {
