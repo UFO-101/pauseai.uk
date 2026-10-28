@@ -225,11 +225,26 @@ export default function MailingView({
           />
         </Card>
         <Card span={2} look="aside" title={copy.emailTitle} id="email-title">
-          <p>
-            <strong>{written.subject}</strong>
-          </p>
-          <MailingFiles files={written.attachments} base={`/staff/mailings/${written.id}/files`} />
-          <MailingLetter doc={written.body} {...letterLabels(asks)} />
+          <div className={styles.email}>
+            <dl className={styles.headers}>
+              <dt>{copy.from}</dt>
+              <dd>{written.fromName ? `${written.fromName} <${written.sentFrom}>` : written.sentFrom}</dd>
+              <dt>{copy.to}</dt>
+              <dd>
+                <Muted>{copy.toEach}</Muted>
+              </dd>
+              <dt>{copy.subject}</dt>
+              <dd>
+                <strong>{written.subject}</strong>
+              </dd>
+            </dl>
+            <div className={styles.body}>
+              <MailingLetter doc={written.body} {...letterLabels(asks)} />
+              {written.attachments.length > 0 && (
+                <MailingFiles files={written.attachments} base={`/staff/mailings/${written.id}/files`} />
+              )}
+            </div>
+          </div>
           <h3 className={styles.subheading}>{copy.whoTitle}</h3>
           {who}
         </Card>

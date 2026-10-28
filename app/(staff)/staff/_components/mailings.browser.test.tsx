@@ -177,7 +177,11 @@ describe("MailingView", () => {
     await expect.element(page.getByRole("cell", { name: staffCopy.statuses.going })).toBeInTheDocument();
     expect(headings()).toContain("Edinburgh conference");
     await expect.element(page.getByText(copy.skipReasons["left-office"])).toBeVisible();
-    await expect.element(page.getByText("Come to the example conference · programme.pdf")).toBeVisible();
+    // The email as a mail app shows one: from, to and the subject, then the letter and its files.
+    await expect.element(page.getByText("Jo Example <jo@pauseai.uk>")).toBeVisible();
+    await expect.element(page.getByText(copy.toEach)).toBeVisible();
+    await expect.element(page.getByText("Come to the example conference")).toBeVisible();
+    await expect.element(page.getByRole("list", { name: copy.attachments })).toBeVisible();
     await expect.element(page.getByText(staffCopy.mailingEditor.fields.salutation)).toBeVisible();
     await expect.element(page.getByText("who")).toBeVisible();
   });

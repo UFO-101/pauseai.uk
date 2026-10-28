@@ -860,6 +860,8 @@ export const staffCopy = {
     },
     tab: (label: string, n: number) => `${label} ${n}`,
     tabsLabel: "⁂ Which recipients",
+    // In a mailing's email, who it's to: each recipient, as it's a letter to many.
+    toEach: "⁂ Each recipient, by name and address",
     emailTitle: "⁂ The email",
     whoTitle: "⁂ Who it was for",
     skipReasons: {

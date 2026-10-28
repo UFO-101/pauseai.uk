@@ -44,3 +44,36 @@
   display: grid;
   gap: var(--space-3);
 }
+
+/* The email, as a mail app shows one: who from and to and the subject,
+   then the letter, with its fields as chips, and its files under it. */
+.email {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+}
+
+.headers {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--space-1) var(--space-3);
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--border);
+  font-size: var(--text-sm);
+}
+
+.headers dt {
+  color: var(--text-secondary);
+}
+
+.headers dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.body {
+  display: grid;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+}
