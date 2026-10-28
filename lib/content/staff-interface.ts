@@ -816,9 +816,8 @@ export const staffCopy = {
     } as Record<string, string>,
     // The list of mailings.
     // Under the drafts: how to start a mailing, then a link to the politicians list.
-    howToStart:
-      "To start a new mailing, filter the politicians list to those it's for, then press Mail these over the list.",
-    toPoliticians: "⁂ Go to the politicians",
+    howToStart: "To start a new mailing, filter the politicians list, and choose the “Mail these” button.",
+    toPoliticians: "Go to the politicians",
     drafts: "Drafts",
     comingUp: "Coming up",
     sent: "Sent",
