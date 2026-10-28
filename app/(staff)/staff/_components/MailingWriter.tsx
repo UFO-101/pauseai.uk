@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useId, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { Button } from "@/components/ui/Button";
 import { Select, TextInput } from "@/components/ui/Controls";
-import { Field, Hint } from "@/components/ui/Field";
+import { Field, Hint, Label } from "@/components/ui/Field";
 import { Muted } from "@/components/ui/Text";
 import { staffCopy } from "@/lib/content/staff-interface";
 import {
@@ -156,6 +156,7 @@ export default function MailingWriter({
   const router = useRouter();
   const letterLabel = useId();
   const askHelp = `ask-help-${useId().replace(/\W/g, "")}`;
+  const askId = useId();
   const id = useRef(draft?.id ?? null);
   const version = useRef(draft?.version ?? 0);
   const [savedId, setSavedId] = useState(draft?.id ?? null);
@@ -365,20 +366,26 @@ export default function MailingWriter({
           <Field label={copy.subject}>
             <TextInput value={values.subject} onChange={(event) => change({ subject: event.target.value })} />
           </Field>
-          <div className={styles.withHelp}>
-            <Field label={copy.ask} className={styles.ask}>
-              <Select value={values.ask ?? ""} onChange={(event) => change({ ask: event.target.value || null })}>
-                <option value="">{copy.noAsk}</option>
-                {data.asks.map((ask) => (
-                  <option key={ask.slug} value={ask.slug}>
-                    {ask.title}
-                  </option>
-                ))}
-              </Select>
-            </Field>
-            <Help id={askHelp} label={copy.askHelpLabel}>
-              {copy.askHelp}
-            </Help>
+          <div className={styles.ask}>
+            {/* The ? beside the word, outside the label, as a label holds only its own control. */}
+            <div className={styles.withHelp}>
+              <Label htmlFor={askId}>{copy.ask}</Label>
+              <Help id={askHelp} label={copy.askHelpLabel}>
+                {copy.askHelp}
+              </Help>
+            </div>
+            <Select
+              id={askId}
+              value={values.ask ?? ""}
+              onChange={(event) => change({ ask: event.target.value || null })}
+            >
+              <option value="">{copy.noAsk}</option>
+              {data.asks.map((ask) => (
+                <option key={ask.slug} value={ask.slug}>
+                  {ask.title}
+                </option>
+              ))}
+            </Select>
           </div>
           <p id={letterLabel} className={styles.label}>
             {copy.letter}

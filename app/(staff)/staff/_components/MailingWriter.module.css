@@ -78,24 +78,20 @@
   max-width: 7rem;
 }
 
-/* A field with its "?" after it. */
+/* A field's label with its "?" just after it. */
 .withHelp {
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   gap: var(--space-2);
-}
-
-.withHelp > :first-child {
-  flex: 1 1 auto;
 }
 
 .help {
   display: inline-grid;
   place-items: center;
-  width: 1.5rem;
-  height: 1.5rem;
+  width: 1.25rem;
+  height: 1.25rem;
   flex: none;
-  margin-bottom: var(--space-2);
+  margin-bottom: var(--field-gap);
   padding: 0;
   border: 1px solid var(--border-strong);
   border-radius: 50%;
