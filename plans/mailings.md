@@ -189,17 +189,18 @@ https://claude.ai/artifact/3qi42XAhd2qwYBTRYVGZoz
 - A "Mail these" button on the politicians list, beside Download over
   the table, with the count in it ("Mail these 129…") (chosen on the
   canvas).
-- A new mailing in three steps, with a bar of the steps at the top and
+- A new mailing in two steps, with a bar of the steps at the top and
   Back and Next in a bar fixed to the bottom of the window. Done steps
   link back; a step that can't be reached yet is greyed and says what
-  it needs.
-  1. Who: the count, the filter as read-only pills, and a few of the
-     recipients. "Change who" goes back to the list with the filter
-     filled in, where the button updates this draft's recipients
-     instead of starting a new mailing.
-  2. Write: the editor, with the details at the side. No preview here:
-     the Schedule step shows each recipient's email.
-  3. Schedule: a checklist. A dry run, run as the page opens, of who
+  it needs. There's no step for who: staff have just chosen them on the
+  list, so the mailing opens on Write.
+  1. Write: at the top, who it's to: the count, the filter as
+     read-only pills, and "Change who", which goes back to the list
+     with the filter filled in, where the button updates this draft's
+     recipients instead of starting a new mailing. Then the editor,
+     with the details at the side. No preview here: the Schedule step
+     shows each recipient's email.
+  2. Schedule: a checklist. A dry run, run as the page opens, of who
      the mailing would go to and who would be skipped and why, with
      nothing recorded as sent. "Leave out" takes one person out, with a
      reason saved with the mailing. Each recipient's email, stepped
@@ -232,7 +233,7 @@ built on phase 2's. To be designed once phase 2's are settled.
 - "Email these" or "Text these" on the supporters list, following its
   Contact filter. Without a "Can email" or "Can text" filter the button
   is dotted, and clicking it explains which filter to add.
-- The same three steps, with the channel and topic fixed by the filter,
+- The same two steps, with the channel and topic fixed by the filter,
   a count of texts and their cost, and opt-outs among the reasons to be
   skipped.
 - A message's page and the list of messages, with delivered, failed,
