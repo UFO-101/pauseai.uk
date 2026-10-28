@@ -339,7 +339,7 @@ checks blocks and logs to `email_sends`. `send()` takes a backend:
 
 Mailings to politicians go by Gmail only. They're like one letter with a
 big BCC, so they have no unsubscribe link. Postmark's broadcast stream is
-for bulk mail to supporters (`plans/supporters-email.html`), which uses
+for bulk mail to supporters (`plans/supporters-email.md`), which uses
 the same backends.
 
 In code, `MailBackend` is a type (send one email; how many more today),
@@ -548,7 +548,7 @@ Data protection, agreed before building and recorded in
   `voted_for` and `voted_against`, filled by scraping Hansard and the
   division after the day. Hansard records speakers and votes, not who was
   in the chamber. Then it could be the campaign's ask.
-- Bulk mail to supporters (`plans/supporters-email.html`).
+- Bulk mail to supporters (`plans/supporters-email.md`).
 
 ## Waiting on Joseph
 

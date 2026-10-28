@@ -92,7 +92,7 @@
 /* The arrow after a no-break space, so a chip that wraps keeps it with its
    last word rather than alone on a line. */
 .chip::after {
-  content: "\00a0▾" / "";
+  content: " ▾" / "";
 }
 
 /* A chip that leaves its choice out: white, its edge dashed, and a circle

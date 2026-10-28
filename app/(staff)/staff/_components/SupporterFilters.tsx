@@ -1,6 +1,6 @@
 import { staffCopy } from "@/lib/content/staff-interface";
 import type { SupportersSearch } from "@/lib/staff-search";
-import { SENDS, stateValue, waysKey, type Channel, type Topic } from "@/lib/contact-permissions";
+import { CHANNELS, SENDS, stateValue, waysKey, type Channel, type Topic } from "@/lib/contact-permissions";
 import { campaigns } from "@/lib/content/email-your-mp";
 import type { EventChoice, SupportersPage } from "@/lib/server/supporters";
 import { staffDate } from "@/lib/staff-time";
@@ -76,9 +76,9 @@ export function supporterFilters(
       label: columns.subscriptions,
       repeat: true,
       // Each topic under its channel's heading, chosen as those we can contact about it; then in its chip's second
-      // half, another answer.
-      options: [
-        ...SUBSCRIPTION_ORDER.map(([channel, topic]) => {
+      // half, another answer. Blocked is last of email's.
+      options: CHANNELS.flatMap((channel) => [
+        ...SUBSCRIPTION_ORDER.filter(([c]) => c === channel).map(([, topic]) => {
           const ways = waysKey(channel, topic);
           const answers = staffCopy.supporters.detail.permissions.answers[ways];
           return {
@@ -89,13 +89,16 @@ export function supporterFilters(
             seconds: SENDS.map((send) => ({ value: stateValue({ channel, topic, send }), label: answers[send] })),
           };
         }),
-        // Blocked, last of email's.
-        {
-          value: stateValue({ channel: "email", reason: "blocked" }),
-          label: staffCopy.supporters.subscriptions.blocked,
-          group: { label: copy.channels.email, icon: <ChannelIcon channel="email" /> },
-        },
-      ],
+        ...(channel === "email"
+          ? [
+              {
+                value: stateValue({ channel, reason: "blocked" }),
+                label: staffCopy.supporters.subscriptions.blocked,
+                group: { label: copy.channels.email, icon: <ChannelIcon channel="email" /> },
+              },
+            ]
+          : []),
+      ]),
     },
     {
       name: "event",

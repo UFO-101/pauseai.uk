@@ -246,8 +246,6 @@ export const staffCopy = {
       } as Record<string, string>,
       // From when we first saw them to their last activity.
       active: "Active",
-      /** Where a detail came from and when: "Luma, 26 Sept 2026". */
-      from: (sources: string, when: string) => `${sources}, ${when}`,
       // The box under the band: a row per topic and address, saying whether we'd contact them about it, and why.
       listsTitle: "Can we contact them?",
       // Folded at the foot of the page, after the history, a table: each record joined to make them one person,
