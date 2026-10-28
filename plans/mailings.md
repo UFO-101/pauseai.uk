@@ -186,7 +186,9 @@ drafts and sending with Messages. Designed first as mock-ups on the
 real staff components, on a design canvas:
 https://claude.ai/artifact/3qi42XAhd2qwYBTRYVGZoz
 
-- A "Mail these" button on the politicians list.
+- A "Mail these" button on the politicians list, beside Download over
+  the table, with the count in it ("Mail these 129…") (chosen on the
+  canvas).
 - A new mailing in three steps, with a bar of the steps at the top and
   Back and Next in a bar fixed to the bottom of the window. Done steps
   link back; a step that can't be reached yet is greyed and says what
