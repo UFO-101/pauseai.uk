@@ -36,7 +36,7 @@ const copy = staffCopy.supporters;
 
 /** Opens a supporter's history, folded at the foot of their page. */
 async function openHistory(page: Page) {
-  await page.locator("summary", { hasText: copy.detail.showHistory(0).replace(/0$/, "") }).click();
+  await page.locator("summary", { has: page.getByRole("heading", { name: copy.detail.activityTitle }) }).click();
 }
 
 test("without the supporters permission, the list is closed and the home page doesn't offer it", async ({
@@ -323,23 +323,24 @@ test("the list says what each supporter gets, and filters by it", async ({ page,
   await expect(page.getByRole("columnheader", { name: copy.columns.subscriptions })).toBeVisible();
   await frame(page, "the list, with what each supporter gets by topic");
 
-  // A topic first, then in the chip's second half, one of its reasons.
+  // A topic first, those we can email about it, then in the chip's second half, those we can't.
+  const answers = copy.detail.permissions.answers;
   await addFilter(page, copy.columns.subscriptions, copy.filters.topics["luma-calendar"]);
-  await changeFilter(page, copy.filters.anyAnswer, copy.detail.permissions.answers.email.no);
+  await changeFilter(page, answers.email.yes, answers.email.no);
   await expect(page.getByText(copy.total(1))).toBeVisible();
   await expect(page.getByRole("row").filter({ hasText: "Jane Fixture" })).toBeVisible();
   // Owen left Keep me informed unticked, which isn't an unsubscribe.
   await expect(page.getByRole("row").filter({ hasText: "Owen Member" })).toHaveCount(0);
-  await frame(page, "filtered to those who unsubscribed: Jane, whom Luma told us of");
+  await frame(page, "Luma by email, can't: Jane, who unsubscribed, as Luma told us");
 
-  // Another topic, from the chip's first half, then its reason.
+  // Another topic, from the chip's first half, then its answer.
   await changeFilter(
     page,
     `${copy.columns.subscriptions}: ${copy.filters.topics["luma-calendar"]}`,
     copy.filters.topics["pauseai-updates"],
   );
-  await changeFilter(page, copy.filters.anyAnswer, copy.detail.permissions.answers.email.no);
-  await expect(page).toHaveURL(/contact=email%3Apauseai-updates%3Adeclined/);
+  await changeFilter(page, answers.email.yes, answers.email.no);
+  await expect(page).toHaveURL(/contact=email%3Apauseai-updates%3Ano/);
   await expect(page.getByRole("row").filter({ hasText: "Owen Member" })).toBeVisible();
   await expect(page.getByRole("row").filter({ hasText: "Jane Fixture" })).toHaveCount(0);
   await frame(page, "filtered to those who left Keep me informed unticked: Owen");

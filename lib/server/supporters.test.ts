@@ -268,8 +268,6 @@ describeWithDatabase("listSupporters and getSupporter", () => {
       id: expect.any(Number),
       name: "Jane",
       emails: ["jane@example.com"],
-      email: "jane@example.com",
-      phone: "+447700900001",
       phones: ["+447700900001"],
       postcode: "M1 1AE",
       sources: ["luma"],
@@ -412,7 +410,7 @@ describeWithDatabase("listSupporters and getSupporter", () => {
       `INSERT INTO opt_outs (address, list, source, source_ref, unsubscribed_at)
        VALUES ('jane@example.com', 'luma-calendar', 'luma-webhook', 'w3', '2026-10-15T00:00:00Z')`,
     );
-    expect(await jane()).toMatchObject({ phone: null, phones: ["+447700900001"] });
+    expect(await jane()).toMatchObject({ phones: ["+447700900001"] });
     const lumaPhone = { channel: "phone", topic: "luma-calendar" } as const;
     expect(await names({ contact: [{ ...lumaPhone, reason: "unsubscribed" }] })).toEqual(["Jane"]);
     expect(await names({ contact: [{ ...lumaPhone, reason: "following" }] })).toEqual([]);
@@ -423,7 +421,7 @@ describeWithDatabase("listSupporters and getSupporter", () => {
       intent: "Volunteer",
     });
     await linkSupporters();
-    expect(await jane()).toMatchObject({ phone: "+447700900001" });
+    expect(await jane()).toMatchObject({ phones: ["+447700900001"] });
     const volunteered = { channel: "phone", topic: "volunteering", reason: "volunteered" } as const;
     expect(await names({ contact: [volunteered] })).toEqual(["Jane"]);
     expect(await names({ contact: [volunteered, { channel: "email", topic: "site-forms", reason: "asked" }] })).toEqual(
@@ -655,7 +653,7 @@ describeWithDatabase("members as supporters", () => {
     expect(jane.summary).toMatchObject({
       sources: ["email-your-mp", "member"],
       member: true,
-      phone: "+447700900123",
+      phones: ["+447700900123"],
       firstSeenAt: new Date("2024-03-23T00:00:00Z"),
     });
     expect(jane.contacts).toContainEqual({

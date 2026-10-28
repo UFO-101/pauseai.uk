@@ -2796,7 +2796,7 @@ describe("SupporterDetails", () => {
       .toHaveLength(2);
     await expect.element(page.getByText("1 Mar 2026 – 12 Oct 2026", { exact: true })).toBeVisible();
     // The history, folded until opened: what, linked, with a status only when it isn't approved.
-    await page.getByText(copy.detail.showHistory(exampleSupporterDetails.activity.length)).click();
+    await page.getByRole("heading", { name: copy.detail.activityTitle }).click();
     const history = page.getByRole("list", { name: copy.detail.activityTitle });
     await expect
       .element(history.getByRole("link", { name: "PauseAI Manchester Social" }))
@@ -3711,67 +3711,74 @@ describe("SupporterFilters", () => {
     { id: "evt-2", name: "Oxford talk", startAt: "2026-10-12T18:00:00Z" },
   ];
 
-  it("has a chip for each filter on, a subscription in two halves, its topic then its answer or reason", async () => {
+  it("has a chip for each filter on, a contact one in two halves, its topic then its answer", async () => {
     const { filter, ...search } = supportersSearch({
       activity: "registered",
-      contact: ["email:pauseai-updates:no", "!phone:march-day", "email:blocked", "email:site-forms:asked"],
+      contact: ["email:pauseai-updates:no", "!phone:march-day:yes", "email:blocked", "email:site-forms:asked"],
       erased: "1",
     });
     void filter;
     await render(<SupporterFilters search={search} events={events} />);
-    const { topics } = copy.subscriptions;
+    const { topics, channels, ways } = copy.filters;
+    const label = copy.columns.subscriptions;
     const answers = copy.detail.permissions.answers;
     expect(chips()).toEqual([
       `${copy.columns.badges}: ${copy.badges.registered}`,
-      `${copy.columns.subscriptions}: ${topics.email["pauseai-updates"]}`,
+      `${label}: ${topics["pauseai-updates"]}`,
       answers.email.no,
-      staffCopy.filters.notChip(copy.columns.subscriptions, topics.phone["march-day"]),
-      copy.filters.anyAnswer,
-      `${copy.columns.subscriptions}: ${copy.subscriptions.blocked}`,
+      staffCopy.filters.notChip(label, topics["march-day"]),
+      answers.text.yes,
+      `${label}: ${channels.email}, ${copy.subscriptions.blocked}`,
       // A reason, as an older link has it, is no choice offered: the chip says it as it is.
-      `${copy.columns.subscriptions}: email:site-forms:asked`,
+      `${label}: email:site-forms:asked`,
     ]);
-    // The first half: each topic, choosing one for any answer, then turning it the other way and Remove; the
-    // erased notice goes.
-    const others = "contact=%21phone%3Amarch-day&contact=email%3Ablocked&contact=email%3Asite-forms%3Aasked";
-    const first = await menu(`${copy.columns.subscriptions}: ${topics.email["pauseai-updates"]}`);
+    // The topic's icon in its chip, before its name.
+    expect(
+      page
+        .getByRole("button", { name: `${label}: ${topics["pauseai-updates"]}` })
+        .element()
+        .querySelector("svg"),
+    ).not.toBeNull();
+    // The first half: each topic, choosing one finds those we can contact about it, then turning it the other way
+    // and Remove; the erased notice goes.
+    const others = "contact=%21phone%3Amarch-day%3Ayes&contact=email%3Ablocked&contact=email%3Asite-forms%3Aasked";
+    const first = await menu(`${label}: ${topics["pauseai-updates"]}`);
     expect(first).toContainEqual([
-      topics.email["site-forms"],
-      `/staff/supporters?activity=registered&${others}&contact=email%3Asite-forms`,
+      topics["site-forms"],
+      `/staff/supporters?activity=registered&${others}&contact=email%3Asite-forms%3Ayes`,
     ]);
     expect(first.at(-1)![0]).toBe(staffCopy.filters.remove);
-    // The second: any answer, then each answer in the topic's words; no Remove.
-    const second = await menu(answers.email.no);
-    expect(second.map(([words]) => words)).toEqual([
-      copy.filters.anyAnswer,
-      answers.email.yes,
-      answers.email.unsure,
-      answers.email.no,
+    // Under its channel's heading, each once, a phone's ways quiet after it.
+    const box = document.querySelector("[popover]:popover-open")!;
+    expect([...box.querySelectorAll("li[class*=choiceGroup]")].map((li) => li.textContent)).toEqual([
+      channels.email,
+      channels.phone,
     ]);
-    expect(second[1]).toEqual([
+    expect(first.map(([words]) => words)).toContain(`${topics.volunteering}${ways["call-or-text"]}`);
+    // The second: each answer in the topic's words; no Remove.
+    const second = await menu(answers.email.no);
+    expect(second.map(([words]) => words)).toEqual([answers.email.yes, answers.email.unsure, answers.email.no]);
+    expect(second[0]).toEqual([
       answers.email.yes,
       `/staff/supporters?activity=registered&${others}&contact=email%3Apauseai-updates%3Ayes`,
     ]);
     // A number's answers in the words of the ways its topic allows, kept left out.
-    const march = await menu(copy.filters.anyAnswer);
-    expect(march[1]).toEqual([
-      answers.text.yes,
-      "/staff/supporters?activity=registered&contact=email%3Apauseai-updates%3Ano&contact=email%3Ablocked&contact=email%3Asite-forms%3Aasked&contact=%21phone%3Amarch-day%3Ayes",
+    const march = await menu(answers.text.yes);
+    expect(march[2]).toEqual([
+      answers.text.no,
+      "/staff/supporters?activity=registered&contact=email%3Apauseai-updates%3Ano&contact=email%3Ablocked&contact=email%3Asite-forms%3Aasked&contact=%21phone%3Amarch-day%3Ano",
     ]);
-    // + Filter offers the topics not taken, each email beside its phone, each with its channel's icon.
+    // + Filter offers the topics not taken.
     const add = await menu(staffCopy.filters.add);
-    expect(add.map(([words]) => words)).toContain(topics.phone.volunteering);
-    expect(add.map(([words]) => words)).not.toContain(topics.email["pauseai-updates"]);
-    const volunteering = [...document.querySelectorAll("[popover]:popover-open a")].find(
-      (a) => a.textContent === topics.phone.volunteering,
-    )!;
-    expect(volunteering.querySelector("svg")!.getAttribute("aria-hidden")).toBe("true");
+    expect(add.map(([words]) => words)).toContain(`${topics.volunteering}${ways["call-or-text"]}`);
+    expect(add.map(([href]) => href)).not.toContain(topics["pauseai-updates"]);
   });
 
-  it("offers every topic once in the Subscriptions filter, ours first, each email beside its phone", () => {
+  it("offers every topic once in the Contact filter, email's then phone's, ours first", () => {
     expect(SUBSCRIPTION_ORDER.map(([channel, topic]) => `${channel}:${topic}`).sort()).toEqual(
       CHANNELS.flatMap((channel) => topicsOf(channel).map((topic) => `${channel}:${topic}`)).sort(),
     );
+    expect(SUBSCRIPTION_ORDER.map(([channel]) => channel)).toEqual([...SUBSCRIPTION_ORDER.map(([c]) => c)].sort());
     expect(SUBSCRIPTION_ORDER[0]).toEqual(["email", "site-forms"]);
   });
 
@@ -3781,8 +3788,6 @@ describe("SupporterFilters", () => {
     await render(<SupporterFilters search={search} events={events} />);
     await page.getByRole("button", { name: staffCopy.filters.add }).click();
     expect([...document.querySelectorAll("#filter-add details > summary")].map((p) => p.textContent)).toEqual([
-      copy.columns.email,
-      copy.columns.phone,
       staffCopy.politician.country,
       copy.filters.near,
       copy.columns.badges,

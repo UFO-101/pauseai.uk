@@ -10,6 +10,7 @@ import {
   type DownloadColumn,
   type DownloadFormat,
 } from "@/lib/staff-list";
+import { firstOf, type ParamValue } from "@/lib/staff-search";
 import { vcardCode, vcardFile, type Contact } from "@/lib/vcard";
 import { logChange } from "./audit";
 
@@ -73,11 +74,18 @@ export type Download<Row> = {
 export async function staffDownload<Row>(
   request: NextRequest,
   email: string,
-  load: (params: Record<string, string>) => Promise<Download<Row>>,
+  load: (params: Record<string, ParamValue>) => Promise<Download<Row>>,
   log?: string,
 ): Promise<Response> {
-  const params = Object.fromEntries(request.nextUrl.searchParams);
-  const format = downloadFormat(params.format ?? null);
+  // Each parameter, a list where it repeats, as a page's search params have it.
+  const search = request.nextUrl.searchParams;
+  const params = Object.fromEntries(
+    [...new Set(search.keys())].map((key) => {
+      const all = search.getAll(key);
+      return [key, all.length > 1 ? all : all[0]];
+    }),
+  );
+  const format = downloadFormat(firstOf(params.format) || null);
   if (!format) return new Response(null, { status: 404 });
   const { what, filters, columns, rows, contact } = await load(params);
   if (format === "vcf" && !contact) return new Response(null, { status: 404 });
