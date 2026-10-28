@@ -60,7 +60,9 @@ export default function MailingsOverview({
         </ul>
       )}
       <p>
-        {copy.howToStart} <Link href="/staff/politicians">{copy.toPoliticians}</Link>
+        {copy.howToStart.before}
+        <Link href="/staff/politicians">{copy.howToStart.link}</Link>
+        {copy.howToStart.after}
       </p>
       <h2>{copy.comingUp}</h2>
       {comingUp.length === 0 ? (

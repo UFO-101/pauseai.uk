@@ -815,9 +815,12 @@ export const staffCopy = {
       "cannot-send": "Sending isn't built yet.",
     } as Record<string, string>,
     // The list of mailings.
-    // Under the drafts: how to start a mailing, then a link to the politicians list.
-    howToStart: "To start a new mailing, filter the politicians list, and choose the “Mail these” button.",
-    toPoliticians: "Go to the politicians",
+    // Under the drafts: how to start a mailing, around a link to the politicians list.
+    howToStart: {
+      before: "⁂ To start one, choose who it's for on the ",
+      link: "⁂ politicians list",
+      after: "⁂ , then press “Mail these”.",
+    },
     drafts: "Drafts",
     comingUp: "Coming up",
     sent: "Sent",
