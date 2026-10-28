@@ -13,15 +13,21 @@ const fields = [
   { id: "constituency", label: "constituency", lacking: 2 },
 ];
 const conditions = [
-  { id: "frontier-ai-letter:signed", label: "signed the Frontier AI letter", covers: 12 },
-  { id: "edinburgh:going", label: "are going to Edinburgh" },
+  {
+    id: "frontier-ai-letter:signed",
+    label: "signed the Frontier AI letter",
+    covers: 12,
+    group: "Frontier AI letter",
+    option: "Signed",
+  },
+  { id: "edinburgh:going", label: "are going to Edinburgh", covers: 3, group: "Edinburgh", option: "Going" },
 ];
 
 const paragraph = (...content: JSONContent[]): JSONContent => ({ type: "paragraph", content });
 const text = (value: string): JSONContent => ({ type: "text", text: value });
 const field = (id: string): JSONContent => ({ type: "field", attrs: { field: id } });
 
-function renderEditor(content: JSONContent[], offered = { fields, conditions }) {
+function renderEditor(content: JSONContent[], offered = { fields, conditions }, recipients?: number) {
   const onChange = vi.fn<(doc: JSONContent) => void>();
   render(
     <>
@@ -31,6 +37,7 @@ function renderEditor(content: JSONContent[], offered = { fields, conditions }) 
         onChange={onChange}
         fields={offered.fields}
         conditions={offered.conditions}
+        recipients={recipients}
         labelledBy="label"
       />
     </>,
@@ -99,30 +106,45 @@ describe("MailingEditor", () => {
 
   it("makes a paragraph only for some, changes who for, then for everyone again", async () => {
     const onChange = renderEditor([paragraph(text("Thank you."))]);
-    await expect.element(page.getByText(copy.covers(12))).toBeVisible();
     await toEnd();
-    await page.getByRole("button", { name: new RegExp(conditions[0].label) }).click();
+    const only = page.getByRole("menu", { name: copy.addOnlyFor });
+    await page.getByRole("button", { name: copy.addOnlyFor }).click();
+    await only.getByRole("menuitem", { name: "Edinburgh" }).click();
+    await expect.element(only.getByText("Edinburgh", { exact: true })).toBeVisible();
+    await only.getByRole("button", { name: copy.backToAsks }).click();
+    await only.getByRole("menuitem", { name: "Frontier AI letter" }).click();
+    const signed = only.getByRole("menuitem", { name: /Signed/ });
+    await expect.element(signed.getByText(copy.covers(12), { exact: true })).toBeVisible();
+    await signed.click();
+    expect(document.querySelector(":popover-open")).toBeNull();
     expect(last(onChange).content![0]).toMatchObject({ type: "onlyFor", attrs: { condition: conditions[0].id } });
-    await page.getByRole("button", { name: new RegExp(conditions[1].label) }).click();
-    expect(last(onChange).content![0]).toMatchObject({ type: "onlyFor", attrs: { condition: conditions[1].id } });
+    await page.getByRole("button", { name: copy.except }).click();
+    const except = page.getByRole("menu", { name: copy.except });
+    await except.getByRole("menuitem", { name: "Edinburgh" }).click();
+    await except.getByRole("menuitem", { name: /Going/ }).click();
+    expect(last(onChange).content![0]).toMatchObject({ type: "onlyFor", attrs: { condition: `!${conditions[1].id}` } });
     await page.getByRole("button", { name: copy.forEveryone }).click();
     expect(last(onChange).content![0]).toMatchObject({ type: "paragraph" });
   });
 
-  it("drags a field or a part in as the editor reads it", async () => {
+  it("counts those an except part leaves in, out of the recipients", async () => {
+    renderEditor([paragraph(text("Thank you."))], { fields, conditions }, 20);
+    await page.getByRole("button", { name: copy.except }).click();
+    const except = page.getByRole("menu", { name: copy.except });
+    await except.getByRole("menuitem", { name: "Frontier AI letter" }).click();
+    await expect
+      .element(except.getByRole("menuitem", { name: /Signed/ }).getByText(copy.covers(8), { exact: true }))
+      .toBeVisible();
+  });
+
+  it("drags a field in as the editor reads it", async () => {
     renderEditor([paragraph(text("Dear "))]);
-    for (const [button, html] of [
-      [page.getByRole("button", { name: "name", exact: true }), '<span data-field="name">name</span>'],
-      [
-        page.getByRole("button", { name: new RegExp(conditions[0].label) }),
-        `<div data-condition="${conditions[0].id}"><div data-body><p></p></div></div>`,
-      ],
-    ] as const) {
-      await expect.element(button).toBeVisible();
-      const dragged = new DataTransfer();
-      button.element().dispatchEvent(new DragEvent("dragstart", { dataTransfer: dragged, bubbles: true }));
-      expect(dragged.getData("text/html")).toBe(html);
-    }
+    const button = page.getByRole("button", { name: "name", exact: true });
+    await expect.element(button).toBeVisible();
+    const dragged = new DataTransfer();
+    button.element().dispatchEvent(new DragEvent("dragstart", { dataTransfer: dragged, bubbles: true }));
+    expect(dragged.getData("text/html")).toBe('<span data-field="name">name</span>');
+    expect(dragged.getData("text/plain")).toBe("name");
   });
 
   it("says when no recipient has answered an ask, and types { when no field can be used", async () => {

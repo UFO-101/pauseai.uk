@@ -240,7 +240,7 @@ describe("MailingView, for a mailing imported from Airtable", () => {
     await imported();
     await expect.element(page.getByRole("heading", { level: 1 })).toHaveTextContent(exampleMailing.title);
     await expect.element(page.getByText(mailings.imported)).toBeVisible();
-    await expect.element(page.getByText(copy.importedLine("1 Oct 2026, 09:00"))).toBeVisible();
+    await expect.element(page.getByText(new RegExp(`^${copy.importedLine("1 Oct 2026, 09:00")}`))).toBeVisible();
     await expect.element(page.getByText(`2${copy.counts.sent}`)).toBeVisible();
     await expect.element(page.getByText(mailings.noText)).toBeVisible();
     await expect.element(page.getByText(copy.whoTitle)).not.toBeInTheDocument();
@@ -254,7 +254,7 @@ describe("MailingView, for a mailing imported from Airtable", () => {
 
   it("says when it hasn't been sent, and a status nobody knows any more as it's stored", async () => {
     await imported({ sentAt: null, recipients: [{ ...exampleMailing.recipients[0], status: "queued" }] });
-    await expect.element(page.getByText(mailings.notSent)).toBeVisible();
+    await expect.element(page.getByText(new RegExp(`^${mailings.notSent}`))).toBeVisible();
     await expect.element(page.getByRole("cell", { name: "queued" })).toBeInTheDocument();
   });
 

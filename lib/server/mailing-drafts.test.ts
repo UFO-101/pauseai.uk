@@ -122,7 +122,9 @@ describeWithDatabase("mailing drafts", () => {
     expect(await addAttachment(id, 1, file)).toEqual({ saved: true, version: 2 });
     expect(await addAttachment(id, 1, file)).toEqual({ saved: false, reason: "conflict" });
     const { attachments } = (await getWrittenMailing(id))!;
-    expect(attachments).toEqual([{ id: expect.any(Number), filename: "brief.pdf", size: 4 }]);
+    expect(attachments).toEqual([
+      { id: expect.any(Number), filename: "brief.pdf", contentType: "application/pdf", size: 4 },
+    ]);
     expect(await removeAttachment(id, 1, attachments[0].id)).toEqual({ saved: false, reason: "conflict" });
     expect(await removeAttachment(id, 2, attachments[0].id)).toEqual({ saved: true, version: 3 });
     expect((await getWrittenMailing(id))!.attachments).toEqual([]);

@@ -34,13 +34,13 @@ describe("LetterWrite", () => {
       .element(page.getByRole("link", { name: copy.sobelBill.signedNote.link }))
       .toHaveAttribute("href", "https://controlai.org/uk-pm-letter");
     await expect.element(editor().getByText(copy.sobelBill.letterThanks)).toBeVisible();
-    signed.unmount();
+    await signed.unmount();
 
     saveLookup({ ...LOOKUP, campaign: bill.slug });
     const unsigned = await render(<LetterWrite campaignSlug={bill.slug} />);
     await expect.element(editor()).toBeVisible();
     await expect.element(page.getByText(copy.sobelBill.signedNote.after, { exact: false })).not.toBeInTheDocument();
-    unsigned.unmount();
+    await unsigned.unmount();
 
     saveLookup({ ...LOOKUP, statuses: { [CONTROLAI_LETTER_ASK]: "signed" } });
     await render(<LetterWrite campaignSlug={letterToPm.slug} />);

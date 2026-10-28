@@ -180,6 +180,7 @@ function ConditionMenu({
   const id = `${useId().replace(/:/g, "")}-${not ? "except" : "only"}`;
   // The ask chosen, whose answers the menu now offers; none for the list of asks.
   const [ask, setAsk] = useState<string>();
+  const menu = useRef<HTMLDivElement>(null);
   const asks = [...new Set(conditions.map((condition) => condition.group!))];
   // So the letter keeps its cursor while the menu is used.
   const keep = (event: React.MouseEvent) => event.preventDefault();
@@ -196,6 +197,7 @@ function ConditionMenu({
         {not ? copy.except : copy.addOnlyFor}
       </button>
       <div
+        ref={menu}
         id={id}
         popover="auto"
         className={styles.partMenu}
@@ -235,10 +237,10 @@ function ConditionMenu({
                       <button
                         type="button"
                         role="menuitem"
-                        popoverTarget={id}
-                        popoverTargetAction="hide"
                         onMouseDown={keep}
                         onClick={() => {
+                          // Not popoverTargetAction: by then the asks have replaced this button.
+                          menu.current?.hidePopover();
                           setAsk(undefined);
                           choose(`${not ? NOT_CONDITION : ""}${condition.id}`);
                         }}
