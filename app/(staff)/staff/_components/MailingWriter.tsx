@@ -82,11 +82,11 @@ function Numbered({ n, children }: { n: number; children: ReactNode }) {
 }
 
 /**
- * Whether the draft is saved: before anything's written, that it will be
- * once something is, quietly; saving, grey; saved, green; not saved, red.
+ * Whether the draft is saved: nothing before anything's written; saving,
+ * grey; saved, green; not saved, red.
  */
 function SaveState({ state }: { state: SaveState }) {
-  if (state === "new") return <Muted>{copy.saveStates.new}</Muted>;
+  if (state === "new") return null;
   return (
     <span className={styles.saveState} data-state={state}>
       <span className={styles.saveDot} aria-hidden="true" />

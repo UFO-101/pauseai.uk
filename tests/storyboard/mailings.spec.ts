@@ -74,7 +74,7 @@ test("a new mailing from the politicians list: written, saved as a draft, previe
 
   await page.getByRole("link", { name: copy.mailThese(1) }).click();
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(copy.newTitle);
-  await expect(page.getByRole("status").first()).toHaveText(copy.saveStates.new);
+  await expect(page.getByRole("status").first()).toHaveText("");
   await frame(page, "a new mailing to them: who, write, preview, sent from, when and send; nothing saved yet");
 
   await page.getByLabel(copy.subject).fill("Edinburgh: one week to go");

@@ -720,7 +720,6 @@ export const staffCopy = {
     cantSend: "Mailings can't be sent yet. Everything else should work, and you can send a test copy to yourself.",
     // Beside the title: whether the draft is saved.
     saveStates: {
-      new: "⁂ Not saved yet: it's kept once you write something.",
       conflict:
         "⁂ Someone else has changed this draft since you opened it. Reload the page to see their changes; what you've done since isn't saved.",
     } as Record<string, string>,

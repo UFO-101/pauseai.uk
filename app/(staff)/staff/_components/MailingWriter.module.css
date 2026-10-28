@@ -1,10 +1,16 @@
 /* A new mailing, on one page: its title and whether it's saved, then its
    numbered sections, each a card. */
+/* The title, and whether it's saved at the row's top right. */
 .heading {
   display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
+  align-items: flex-start;
+  justify-content: space-between;
   gap: var(--space-2) var(--space-4);
+}
+
+.heading > [role="status"] {
+  flex: none;
+  padding-top: var(--space-1);
 }
 
 .heading h1 {
