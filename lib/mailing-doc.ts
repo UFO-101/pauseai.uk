@@ -40,7 +40,11 @@ export function meetsCondition(recipient: MailingRecipientValues, condition: str
  */
 export function greetingLetter(greeting: string, field: string | undefined): MailingDoc {
   const opening: MailingInline[] = field
-    ? [{ type: "text", text: `${greeting} ` }, { type: "field", attrs: { field } }, { type: "text", text: "," }]
+    ? [
+        { type: "text", text: `${greeting} ` },
+        { type: "field", attrs: { field } },
+        { type: "text", text: "," },
+      ]
     : [{ type: "text", text: `${greeting},` }];
   return { type: "doc", content: [{ type: "paragraph", content: opening }, { type: "paragraph" }] };
 }

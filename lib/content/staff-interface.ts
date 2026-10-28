@@ -823,8 +823,7 @@ export const staffCopy = {
     noDrafts: "⁂ No drafts.",
     noneComing: "⁂ Nothing scheduled.",
     draftLine: (by: string, n: number) => `${by} · to ${n} ${n === 1 ? "person" : "people"}`,
-    comingLine: (by: string, when: string, n: number) =>
-      `⁂ ${by} · ${when} · to ${n} ${n === 1 ? "person" : "people"}`,
+    comingLine: (by: string, when: string, n: number) => `⁂ ${by} · ${when} · to ${n} ${n === 1 ? "person" : "people"}`,
     stop: "Stop",
     // On the politicians list, beside Download.
     mailThese: (n: number) => `⁂ Mail these ${n}…`,

@@ -11,19 +11,18 @@ const WAIT = { timeout: 3000 };
 const FILE = { id: 3, filename: "a.pdf", contentType: "application/pdf", size: 1 };
 
 /** Server Actions that answer as a draft's would, each a mock to change. */
+/** A Server Action's stand-in, taking anything, answering as `answer` does. */
+const action = (answer: () => unknown) => vi.fn<(...args: unknown[]) => Promise<unknown>>(async () => answer());
+
 function fakeActions() {
   let version = 1;
   return {
-    start: vi.fn(async (..._: unknown[]) => ({ id: 21, version: 1 })),
-    save: vi.fn(async (..._: unknown[]): Promise<unknown> => ({ saved: true, version: ++version })),
-    attach: vi.fn(async (..._: unknown[]): Promise<unknown> => ({
-      saved: true,
-      version: ++version,
-      attachments: [FILE],
-    })),
-    detach: vi.fn(async (..._: unknown[]) => ({ saved: true as const, version: ++version, attachments: [] })),
-    sendTest: vi.fn(async (..._: unknown[]): Promise<unknown> => ({ sent: true, id: "m", to: "jo@pauseai.uk" })),
-    schedule: vi.fn(async (..._: unknown[]): Promise<unknown> => ({ scheduled: true })),
+    start: action(() => ({ id: 21, version: 1 })),
+    save: action(() => ({ saved: true, version: ++version })),
+    attach: action(() => ({ saved: true, version: ++version, attachments: [FILE] })),
+    detach: action(() => ({ saved: true, version: ++version, attachments: [] })),
+    sendTest: action(() => ({ sent: true, id: "m", to: "jo@pauseai.uk" })),
+    schedule: action(() => ({ scheduled: true })),
     deleteDraft: vi.fn(async () => {}),
   };
 }

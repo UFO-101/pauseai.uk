@@ -45,15 +45,7 @@ describe("scheduleProblems", () => {
         unknown: ["party=Gone"],
         sends: false,
       }),
-    ).toEqual([
-      "no-subject",
-      "no-letter",
-      "unknown-filter",
-      "no-recipients",
-      "no-sender",
-      "no-time",
-      "cannot-send",
-    ]);
+    ).toEqual(["no-subject", "no-letter", "unknown-filter", "no-recipients", "no-sender", "no-time", "cannot-send"]);
   });
 
   it("refuses a field someone lacks, and a time gone by", () => {
