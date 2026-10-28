@@ -49,3 +49,13 @@
 .onlyFor > :last-child {
   margin-bottom: 0;
 }
+
+/* A part all but some get, grey. */
+.onlyFor[data-except] {
+  border-color: var(--text-secondary);
+  background: var(--surface-2);
+}
+
+.onlyFor[data-except] .onlyForLabel {
+  color: var(--text-secondary);
+}

@@ -16,9 +16,12 @@ export function FilterPills({ data }: { data: FilterWordsData }) {
   const { params } = data.filter;
   // The house is the list's tabs, not one of its filters, so it comes first, on its own.
   const house = staffCopy.houses[firstOf(params.house)];
+  // The search in quotes, so it reads as what was typed.
+  const search = firstOf(params.q);
   const words = [
     ...(house ? [house] : []),
-    ...filterWords(politicianFilters(firstOf(params.ask), data.parties, data.asks), params, "q"),
+    ...(search ? [copy.searchPill(search)] : []),
+    ...filterWords(politicianFilters(firstOf(params.ask), data.parties, data.asks), { ...params, q: "" }, "q"),
   ];
   if (words.length === 0) return <p className={styles.everyone}>{copy.everyone}</p>;
   return (

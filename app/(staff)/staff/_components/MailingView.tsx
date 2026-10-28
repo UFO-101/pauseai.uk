@@ -7,13 +7,14 @@ import { SubmitButton } from "@/components/ui/SubmitButton";
 import Tag, { type TagTone } from "@/components/ui/Tag";
 import { Muted } from "@/components/ui/Text";
 import { staffCopy } from "@/lib/content/staff-interface";
-import { POLITICIAN_FIELDS } from "@/lib/mailing-fields";
+import { answerLabels, POLITICIAN_FIELDS } from "@/lib/mailing-fields";
 import type { Ask } from "@/lib/server/asks";
 import type { MailingState, WrittenMailing } from "@/lib/server/mailing-drafts";
 import type { Mailing, MailingRecipient } from "@/lib/server/mailings";
 import { filtersPath, pageParam } from "@/lib/staff-search";
 import { londonDayHour, londonWhen, staffDate, staffTime } from "@/lib/staff-time";
 import { StopMailing } from "./MailingButtons";
+import MailingFiles from "./MailingFiles";
 import { MailingLetter } from "./MailingLetter";
 import { MailingCounts } from "./MailingParts";
 import Grid, { Card } from "./ui/Grid";
@@ -36,15 +37,9 @@ const STATE_TONES: Record<MailingState, TagTone | undefined> = {
 
 /** Each merge field's label, and each answer to an ask's, as a part only for them says it. */
 function letterLabels(asks: Ask[]): { fields: Record<string, string>; conditions: Record<string, string> } {
-  const conditions: Record<string, string> = {};
-  for (const ask of asks) {
-    for (const [status, words] of Object.entries(staffCopy.statuses)) {
-      conditions[`${ask.slug}:${status}`] = staffCopy.mailingEditor.answered(words, ask.title);
-    }
-  }
   return {
     fields: Object.fromEntries(POLITICIAN_FIELDS.map((f) => [f, staffCopy.mailingEditor.fields[f]])),
-    conditions,
+    conditions: answerLabels(asks),
   };
 }
 
@@ -145,7 +140,7 @@ function Standing({
         >
           <strong>{copy.sends(londonWhen(written.dueAt!))}</strong>
           <br />
-          {copy.scheduledLine(mailing.to, written.fromName!)}
+          {copy.scheduledLine(mailing.to, written.fromName ?? written.sentFrom!)}
         </Strip>
         <p>
           <Muted>{copy.stopNote}</Muted>
@@ -163,7 +158,7 @@ function Standing({
   }
   return (
     <p>
-      {copy.sentLine(staffTime(mailing.sentAt ?? written.dueAt!), written.fromName!)}
+      {copy.sentLine(staffTime(mailing.sentAt ?? written.dueAt!), written.fromName ?? written.sentFrom!)}
       {mailing.ask && (
         <>
           {" · "}
@@ -230,8 +225,9 @@ export default function MailingView({
         </Card>
         <Card span={2} look="aside" title={copy.emailTitle} id="email-title">
           <p>
-            <Muted>{[written.subject, ...written.attachments.map((file) => file.filename)].join(" · ")}</Muted>
+            <strong>{written.subject}</strong>
           </p>
+          <MailingFiles files={written.attachments} href={(file) => `/staff/mailings/${written.id}/files/${file}`} />
           <MailingLetter doc={written.body} {...letterLabels(asks)} />
           <h3 className={styles.subheading}>{copy.whoTitle}</h3>
           {who}

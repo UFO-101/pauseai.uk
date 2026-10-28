@@ -18,7 +18,6 @@ const READY: SchedulingMailing = {
   subject: "Hello",
   body: LETTER,
   sentFrom: "jo@pauseai.uk",
-  fromName: "Jo",
   dueAt: "2026-11-02T09:00:00Z",
   recipients: 2,
   lacking: ["constituency"],
@@ -40,7 +39,6 @@ describe("scheduleProblems", () => {
         subject: " ",
         body: { type: "doc", content: [] },
         sentFrom: null,
-        fromName: null,
         dueAt: null,
         recipients: 0,
         lacking: [],
@@ -53,15 +51,15 @@ describe("scheduleProblems", () => {
       "unknown-filter",
       "no-recipients",
       "no-sender",
-      "no-name",
       "no-time",
       "cannot-send",
     ]);
   });
 
-  it("refuses a field someone lacks, a blank name, and a time gone by", () => {
-    expect(
-      scheduleProblems({ ...READY, lacking: ["salutation"], fromName: "  ", dueAt: "2026-11-01T09:00:00Z" }),
-    ).toEqual(["field-lacking", "no-name", "time-passed"]);
+  it("refuses a field someone lacks, and a time gone by", () => {
+    expect(scheduleProblems({ ...READY, lacking: ["salutation"], dueAt: "2026-11-01T09:00:00Z" })).toEqual([
+      "field-lacking",
+      "time-passed",
+    ]);
   });
 });

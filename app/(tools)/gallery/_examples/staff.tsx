@@ -46,6 +46,7 @@ import Breadcrumb from "@/app/(staff)/staff/_components/Breadcrumb";
 import EraseLink from "@/app/(staff)/staff/_components/EraseLink";
 import MailingDetails from "@/app/(staff)/staff/_components/MailingDetails";
 import MailingsTable from "@/app/(staff)/staff/_components/MailingsTable";
+import NotIcon from "@/app/(staff)/staff/_components/ui/NotIcon";
 import { MailingLetter } from "@/app/(staff)/staff/_components/MailingLetter";
 import { FilterPills, MailingCounts } from "@/app/(staff)/staff/_components/MailingParts";
 import { exampleMailingLetter, exampleWriterData } from "@/app/(staff)/staff/_components/MailingWriter.examples";
@@ -105,6 +106,7 @@ import {
   JobActionsExample,
   MailingEditorExample,
   MailingButtonsExample,
+  MailingFilesExample,
   MailingForExample,
   MailingsOverviewExample,
   MailingViewExample,
@@ -1291,6 +1293,45 @@ export const staff: Group = {
                   pageSize: 100,
                 }}
               />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "MailingFiles",
+      file: "app/(staff)/staff/_components/MailingFiles.tsx",
+      variants: [
+        {
+          label: "A draft's: a PDF, an image and a file of no kind to draw, with the box for more",
+          render: () => (
+            <StaffPage as="div">
+              <MailingFilesExample editable />
+            </StaffPage>
+          ),
+        },
+        {
+          label: "A mailing sent's, to open",
+          render: () => (
+            <StaffPage as="div">
+              <MailingFilesExample editable={false} />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "NotIcon",
+      file: "app/(staff)/staff/_components/ui/NotIcon.tsx",
+      variants: [
+        {
+          label: "Before Except, and a condition the preview shows those who don't meet",
+          render: () => (
+            <StaffPage as="div">
+              <p>
+                <NotIcon />
+                Except
+              </p>
             </StaffPage>
           ),
         },

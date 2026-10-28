@@ -1,7 +1,8 @@
 import type { ReactNode } from "react";
 import type { Mark } from "@/lib/letter-format";
 import type { MailingBlock, MailingDoc, MailingInline, OnlyForNode } from "@/lib/mailing-doc";
-import { staffCopy } from "@/lib/content/staff-interface";
+import { NOT_CONDITION } from "@/lib/mailing-doc";
+import { partFor } from "@/lib/mailing-fields";
 import styles from "./MailingLetter.module.css";
 
 /** A choice's label, or its ID when there's none, as for a field no longer offered. */
@@ -82,10 +83,8 @@ function OnlyFor({
   conditions: Record<string, string>;
 }) {
   return (
-    <div className={styles.onlyFor}>
-      <p className={styles.onlyForLabel}>
-        {staffCopy.mailingEditor.onlyForLabel(labelOf(conditions, block.attrs.condition))}
-      </p>
+    <div className={styles.onlyFor} data-except={block.attrs.condition.startsWith(NOT_CONDITION) || undefined}>
+      <p className={styles.onlyForLabel}>{partFor(block.attrs.condition, conditions)}</p>
       {block.content.map((inner, i) => (
         <Block key={i} block={inner} fields={fields} />
       ))}

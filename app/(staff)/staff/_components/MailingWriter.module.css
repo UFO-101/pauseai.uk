@@ -53,40 +53,92 @@
   padding-left: var(--space-5);
 }
 
-/* Fields side by side, wrapping on a phone. */
-.fields {
+/* Each field as wide as what goes in it, not the card. */
+.ask {
+  max-width: 24rem;
+}
+
+.sender {
+  max-width: 22rem;
+}
+
+/* The day and hour, with the note on the hour close under them. */
+.whenGroup {
+  display: grid;
+}
+
+.when {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-3) var(--space-4);
 }
 
-.fields > * {
-  flex: 1 1 14rem;
+.day {
+  max-width: 11rem;
+}
+
+.hour {
+  max-width: 7rem;
+}
+
+/* A field with its "?" after it. */
+.withHelp {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-2);
+}
+
+.withHelp > :first-child {
+  flex: 1 1 auto;
+}
+
+.help {
+  display: inline-grid;
+  place-items: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  flex: none;
+  margin-bottom: var(--space-2);
+  padding: 0;
+  border: 1px solid var(--border-strong);
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: var(--text-xs);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.help:hover,
+.help:focus-visible {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.helpBox {
+  max-width: min(22rem, calc(100vw - 2 * var(--space-4)));
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  box-shadow: 0 6px 24px rgb(var(--text-rgb) / 0.15);
+  color: var(--text);
+  font-size: var(--text-sm);
+}
+
+@supports (position-area: bottom) {
+  .helpBox {
+    margin: var(--space-1) 0;
+    position-area: bottom span-right;
+    position-try-fallbacks: flip-inline;
+  }
 }
 
 .label {
   margin: 0 0 var(--space-1);
   font-size: var(--text-sm);
   font-weight: 600;
-}
-
-.files {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-  margin: 0 0 var(--space-2);
-  padding: 0;
-  list-style: none;
-}
-
-.files li {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  padding-left: var(--space-3);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  background: var(--surface);
 }
 
 .send {
@@ -102,31 +154,45 @@
   color: var(--text-secondary);
 }
 
-/* Who the preview's search finds, each a button that shows their email. */
-.matches {
+/* Over the preview, a button for each condition the letter's parts use:
+   green while it shows those who meet it, grey and struck through while
+   it shows those who don't, as the parts' boxes are. */
+/* The choice of whose email the preview shows, a name's width. */
+.whoShown {
+  max-width: 28rem;
+}
+
+.toggles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
   margin: 0;
   padding: 0;
   list-style: none;
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius-md);
-  background: var(--surface);
 }
 
-.matches button {
-  display: block;
-  width: 100%;
-  padding: var(--space-2) var(--space-3);
-  border: 0;
-  background: none;
+.toggles button {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-1) var(--space-3);
+  border: 1px dashed var(--text-secondary);
+  border-radius: var(--radius-md);
+  background: var(--surface-2);
+  color: var(--text-secondary);
   font: inherit;
-  text-align: left;
-  color: inherit;
+  font-size: var(--text-sm);
+  font-weight: 600;
   cursor: pointer;
 }
 
-.matches button:hover,
-.matches button[aria-pressed="true"] {
-  background: var(--table-stripe);
+.toggles button[aria-pressed="true"] {
+  border-color: var(--status-green);
+  background: var(--status-green-bg);
+  color: var(--status-green);
+}
+
+.toggles button:hover {
+  border-style: solid;
 }
 
 /* The email, as a mail app shows one: who to and the subject, then the letter. */

@@ -1,7 +1,7 @@
 import type { Page } from "@playwright/test";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { runSql } from "@/scripts/fresh-database.mjs";
-import { addStaffAccount, logInAsStaff, newestEmailTo, syncPoliticians } from "../steps";
+import { addStaffAccount, logInAsStaff, newestEmail, syncPoliticians } from "../steps";
 import { BASE, emailFrame, expect, frame, test } from "./fixtures";
 
 // Mailings to politicians written on the site: started from the politicians
@@ -78,28 +78,31 @@ test("a new mailing from the politicians list: written, saved as a draft, previe
   await frame(page, "a new mailing to them: who, write, preview, sent from, when and send; nothing saved yet");
 
   await page.getByLabel(copy.subject).fill("Edinburgh: one week to go");
-  await page.getByRole("textbox", { name: copy.letter }).click();
-  await page.keyboard.type("Dear ");
-  await page.getByRole("button", { name: staffCopy.mailingEditor.fields.salutation, exact: true }).click();
-  await page.keyboard.type(", we hope to see you there.");
-  await page.getByLabel(copy.fromName, { exact: false }).fill("Jo Example");
+  // The letter starts with its greeting; the rest is written under it.
+  const letter = page.getByRole("textbox", { name: copy.letter });
+  await expect(letter).toContainText(`${copy.greeting} ${staffCopy.mailingEditor.fields.salutation},`);
+  await letter.click();
+  await page.keyboard.press("Control+End");
+  await page.keyboard.type("We hope to see you there.");
+  await page.getByLabel(copy.fromLegend, { exact: false }).selectOption(staffEmail());
   await expect(page.getByRole("status").first()).toHaveText(copy.saveStates.saved);
   await expect(page).toHaveURL(/\/staff\/mailings\/\d+$/);
   const preview = page.getByRole("region", { name: copy.sections.preview });
-  await expect(preview.getByText("Dear Ms Example, we hope to see you there.")).toBeVisible();
-  await frame(page, "written: a field in the letter, saved as a draft, and the preview filled in");
+  await expect(preview.getByText("We hope to see you there.")).toBeVisible();
+  await expect(preview.getByText("Dear Ms Example,")).toBeVisible();
+  await frame(page, "written under the greeting, saved as a draft, and the preview filled in");
 
   await preview.getByRole("button", { name: copy.sendTest }).click();
-  await expect(preview.getByText(copy.testSent)).toBeVisible();
-  const email = newestEmailTo(staffEmail())!;
+  await expect(preview.getByText(copy.testSent(staffEmail()))).toBeVisible();
+  const email = newestEmail((one) => one.To === `"Morag Example" <${staffEmail()}>`)!;
   expect(email.Subject).toBe("Edinburgh: one week to go");
-  expect(email.TextBody).toBe("Dear Ms Example, we hope to see you there.");
+  expect(email.TextBody).toBe("Dear Ms Example,\n\nWe hope to see you there.");
   await emailFrame(page, email, "the test copy, as Morag would get it, sent to yourself");
 
   // Reopened, it's the draft as it was.
   await page.reload();
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Edinburgh: one week to go");
-  await expect(page.getByLabel(copy.fromName, { exact: false })).toHaveValue("Jo Example");
+  await expect(page.getByLabel(copy.fromLegend, { exact: false })).toHaveValue(staffEmail());
 });
 
 test("Change who: a draft goes to who the list finds instead; then it's deleted", async ({
@@ -124,8 +127,8 @@ test("Change who: a draft goes to who the list finds instead; then it's deleted"
   await frame(page, "the draft, now to the Lords");
 
   await page.getByRole("button", { name: copy.deleteDraft }).click();
-  await expect(page.getByText(copy.confirmDelete)).toBeVisible();
-  await frame(page, "Delete draft asks to be sure", { window: true });
+  await expect(page.getByRole("button", { name: copy.deleteIt })).toBeFocused();
+  await frame(page, "Delete draft turns red, asking to be pressed again", { window: true });
   await page.getByRole("button", { name: copy.deleteIt }).click();
   await expect(page).toHaveURL(`${BASE}/staff/mailings`);
   await expect(page.getByText(copy.noDrafts)).toBeVisible();

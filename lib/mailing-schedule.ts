@@ -11,7 +11,6 @@ export type ScheduleProblem =
   | "no-recipients"
   | "field-lacking"
   | "no-sender"
-  | "no-name"
   | "no-time"
   | "time-passed"
   | "cannot-send";
@@ -21,7 +20,6 @@ export type SchedulingMailing = {
   subject: string;
   body: MailingDoc;
   sentFrom: string | null;
-  fromName: string | null;
   dueAt: string | null;
   /** How many it goes to. */
   recipients: number;
@@ -42,7 +40,6 @@ export function scheduleProblems(mailing: SchedulingMailing): ScheduleProblem[] 
     ["no-recipients", mailing.recipients === 0],
     ["field-lacking", fieldsIn(mailing.body).some((field) => mailing.lacking.includes(field))],
     ["no-sender", !mailing.sentFrom],
-    ["no-name", !mailing.fromName?.trim()],
     ["no-time", !mailing.dueAt],
     ["time-passed", Boolean(mailing.dueAt) && new Date(mailing.dueAt!) <= now()],
     ["cannot-send", !mailing.sends],

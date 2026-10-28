@@ -64,7 +64,7 @@ describe("MailingCounts", () => {
 });
 
 describe("DeleteDraft and StopMailing", () => {
-  it("delete after asking to be sure, and stop at once, each the mailing named", async () => {
+  it("delete when pressed twice, and stop at once, each the mailing named", async () => {
     const forms: FormData[] = [];
     const action = vi.fn(async (form: FormData) => void forms.push(form));
     await render(
@@ -74,9 +74,33 @@ describe("DeleteDraft and StopMailing", () => {
       </>,
     );
     await page.getByRole("button", { name: copy.deleteDraft }).click();
+    await expect.element(page.getByRole("button", { name: copy.deleteIt })).toHaveFocus();
     await page.getByRole("button", { name: copy.deleteIt }).click();
     await page.getByRole("button", { name: "Stop" }).click();
     await expect.poll(() => forms.map((form) => form.get("id"))).toEqual(["5", "6"]);
+  });
+
+  it("turns back if the second press doesn't come, or focus goes elsewhere", async () => {
+    const action = vi.fn();
+    await render(
+      <>
+        <DeleteDraft id={5} action={action} />
+        <button type="button">Elsewhere</button>
+      </>,
+    );
+    await page.getByRole("button", { name: copy.deleteDraft }).click();
+    await page.getByRole("button", { name: "Elsewhere" }).click();
+    await expect.element(page.getByRole("button", { name: copy.deleteDraft })).toBeVisible();
+    vi.useFakeTimers();
+    try {
+      await page.getByRole("button", { name: copy.deleteDraft }).click();
+      await expect.element(page.getByRole("button", { name: copy.deleteIt })).toBeVisible();
+      await vi.advanceTimersByTimeAsync(5000);
+    } finally {
+      vi.useRealTimers();
+    }
+    await expect.element(page.getByRole("button", { name: copy.deleteDraft })).toBeVisible();
+    expect(action).not.toHaveBeenCalled();
   });
 });
 

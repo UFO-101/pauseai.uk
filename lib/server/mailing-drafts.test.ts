@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { addTestPolitician, describeWithDatabase, useTestDatabase } from "@/tests/database";
 import { server } from "@/tests/fixtures/msw";
 import { http, HttpResponse } from "msw";
+import { staffCopy } from "@/lib/content/staff-interface";
 import type { MailingDoc } from "@/lib/mailing-doc";
 import { query } from "./db";
 import type { MailingChannel } from "./mailing-channels";
@@ -256,9 +257,9 @@ describeWithDatabase("mailing drafts", () => {
     );
     expect(await sendTestCopy(mailing, polly, STAFF)).toEqual({ sent: true, id: "test-copy" });
     expect(sent).toMatchObject({
-      From: '"Jo Staff" <noreply@notify.pauseai.uk>',
-      ReplyTo: STAFF,
-      To: STAFF,
+      From: `"${staffCopy.mailingPages.testFromName}" <noreply@notify.pauseai.uk>`,
+      ReplyTo: `"${staffCopy.mailingPages.testFromName}" <${STAFF}>`,
+      To: `"Polly Placeholder" <${STAFF}>`,
       Subject: "Hello",
       Attachments: [
         { Name: "brief.pdf", Content: Buffer.from("%PDF").toString("base64"), ContentType: "application/pdf" },
@@ -268,9 +269,6 @@ describeWithDatabase("mailing drafts", () => {
     expect(await query("SELECT purpose, address FROM email_sends")).toEqual([
       { purpose: "mailing-test", address: STAFF },
     ]);
-    // With no name yet, it's from the staff member.
-    await sendTestCopy({ ...mailing, fromName: null }, polly, STAFF);
-    expect(sent.From).toBe(`"${STAFF}" <noreply@notify.pauseai.uk>`);
   });
 
   it("won't schedule a letter with a field a recipient has no value for", async () => {

@@ -1,10 +1,12 @@
 "use client";
 
 import { EditorContent, Node, useEditor, useEditorState, type Editor, type JSONContent } from "@tiptap/react";
-import { useMemo, useRef, useState } from "react";
+import { useId, useMemo, useRef, useState } from "react";
 import { letterExtensions } from "@/lib/letter-extensions";
 import { staffCopy } from "@/lib/content/staff-interface";
-import type { MailingChoice } from "@/lib/mailing-fields";
+import { NOT_CONDITION } from "@/lib/mailing-doc";
+import { partFor, type MailingChoice } from "@/lib/mailing-fields";
+import NotIcon from "./ui/NotIcon";
 import styles from "./MailingEditor.module.css";
 
 const copy = staffCopy.mailingEditor;
@@ -16,6 +18,8 @@ type Props = {
   fields: MailingChoice[];
   /** Who a part can be only for, such as those who signed an ask, each with how many it covers. */
   conditions: MailingChoice[];
+  /** How many recipients there are, to say how many all but some is. */
+  recipients?: number;
   /** The ID of the label naming it. */
   labelledBy: string;
 };
@@ -86,11 +90,15 @@ const OnlyFor = Node.create<{ labels: Record<string, string> }>({
   renderHTML({ node, HTMLAttributes }) {
     return [
       "div",
-      { ...HTMLAttributes, class: styles.onlyFor },
+      {
+        ...HTMLAttributes,
+        class: styles.onlyFor,
+        "data-except": node.attrs.condition.startsWith(NOT_CONDITION) ? "" : undefined,
+      },
       [
         "p",
         { class: styles.onlyForLabel, contenteditable: "false" },
-        copy.onlyForLabel(labelOf(this.options.labels, node.attrs.condition)),
+        partFor(node.attrs.condition, this.options.labels),
       ],
       ["div", { "data-body": "" }, 0],
     ];
@@ -152,20 +160,118 @@ function Toolbar({ editor }: { editor: Editor }) {
 }
 
 /**
- * The lozenges beside the letter, to click or drag in: the merge fields,
- * those some recipients lack a value for ghosted, saying how many; then who
- * a part can be only for, each with how many it covers. Clicking one of
- * those puts the paragraphs at the cursor in a box for them, or changes who
- * the box the cursor is in is for.
+ * "+ Only for those who…", or "Except those who…": a button that opens the
+ * asks, as the filter bar's Answer does, then the answers to the one
+ * chosen, each with how many recipients it takes in. Choosing one puts the
+ * paragraphs at the cursor in a box for them, or changes who the box the
+ * cursor is in is for.
+ */
+function ConditionMenu({
+  not,
+  conditions,
+  recipients,
+  choose,
+}: {
+  not: boolean;
+  conditions: MailingChoice[];
+  recipients?: number;
+  choose: (condition: string) => void;
+}) {
+  const id = `${useId().replace(/:/g, "")}-${not ? "except" : "only"}`;
+  // The ask chosen, whose answers the menu now offers; none for the list of asks.
+  const [ask, setAsk] = useState<string>();
+  const asks = [...new Set(conditions.map((condition) => condition.group!))];
+  // So the letter keeps its cursor while the menu is used.
+  const keep = (event: React.MouseEvent) => event.preventDefault();
+  return (
+    <>
+      <button
+        type="button"
+        className={not ? styles.exceptButton : styles.onlyButton}
+        popoverTarget={id}
+        onMouseDown={keep}
+        style={{ anchorName: `--${id}` } as React.CSSProperties}
+      >
+        {not && <NotIcon />}
+        {not ? copy.except : copy.addOnlyFor}
+      </button>
+      <div
+        id={id}
+        popover="auto"
+        className={styles.partMenu}
+        role="menu"
+        aria-label={not ? copy.except : copy.addOnlyFor}
+        style={{ positionAnchor: `--${id}` } as React.CSSProperties}
+      >
+        {ask === undefined ? (
+          <ul>
+            {asks.map((group) => (
+              <li key={group}>
+                <button
+                  type="button"
+                  role="menuitem"
+                  className={styles.toAsk}
+                  onMouseDown={keep}
+                  onClick={() => setAsk(group)}
+                >
+                  {group}
+                </button>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <>
+            <button type="button" className={styles.back} onMouseDown={keep} onClick={() => setAsk(undefined)}>
+              {copy.backToAsks}
+            </button>
+            <p className={styles.askTitle}>{ask}</p>
+            <ul>
+              {conditions
+                .filter((condition) => condition.group === ask)
+                .map((condition) => {
+                  const n = not && recipients !== undefined ? recipients - condition.covers! : condition.covers!;
+                  return (
+                    <li key={condition.id}>
+                      <button
+                        type="button"
+                        role="menuitem"
+                        popoverTarget={id}
+                        popoverTargetAction="hide"
+                        onMouseDown={keep}
+                        onClick={() => {
+                          setAsk(undefined);
+                          choose(`${not ? NOT_CONDITION : ""}${condition.id}`);
+                        }}
+                      >
+                        {condition.option}
+                        <span className={styles.covers}>{copy.covers(n)}</span>
+                      </button>
+                    </li>
+                  );
+                })}
+            </ul>
+          </>
+        )}
+      </div>
+    </>
+  );
+}
+
+/**
+ * Beside the letter: the merge fields as lozenges, to click or drag in,
+ * those some recipients lack a value for ghosted, saying how many; then the
+ * menus of who a part can be only for, or for all but.
  */
 function Sidebar({
   editor,
   fields,
   conditions,
+  recipients,
 }: {
   editor: Editor;
   fields: MailingChoice[];
   conditions: MailingChoice[];
+  recipients?: number;
 }) {
   const inBox = useEditorState({ editor, selector: ({ editor }) => editor.isActive("onlyFor") });
   return (
@@ -199,35 +305,26 @@ function Sidebar({
           </li>
         ))}
       </ul>
-      <p className={styles.sideHeading}>{copy.onlyFor}</p>
-      {conditions.length === 0 && <p className={styles.sideNote}>{copy.noConditions}</p>}
-      <ul className={styles.lozenges}>
-        {conditions.map((condition) => (
-          <li key={condition.id}>
-            <button
-              type="button"
-              className={styles.conditionLozenge}
-              title={copy.dragHint}
-              draggable
-              onMouseDown={(event) => event.preventDefault()}
-              onDragStart={(event) =>
-                event.dataTransfer.setData(
-                  "text/html",
-                  `<div data-condition="${condition.id}"><div data-body><p></p></div></div>`,
-                )
-              }
-              onClick={() =>
+      <p className={styles.sideHeading}>{copy.partsHeading}</p>
+      {conditions.length === 0 ? (
+        <p className={styles.sideNote}>{copy.noConditions}</p>
+      ) : (
+        <div className={styles.partMenus}>
+          {([false, true] as const).map((not) => (
+            <ConditionMenu
+              key={String(not)}
+              not={not}
+              conditions={conditions}
+              recipients={recipients}
+              choose={(condition) =>
                 inBox
-                  ? editor.chain().focus().updateAttributes("onlyFor", { condition: condition.id }).run()
-                  : editor.chain().focus().wrapIn("onlyFor", { condition: condition.id }).run()
+                  ? editor.chain().focus().updateAttributes("onlyFor", { condition }).run()
+                  : editor.chain().focus().wrapIn("onlyFor", { condition }).run()
               }
-            >
-              {condition.label}
-              <span className={styles.covers}>{copy.covers(condition.covers ?? 0)}</span>
-            </button>
-          </li>
-        ))}
-      </ul>
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -238,7 +335,7 @@ function Sidebar({
  * with the fields and who a part can be for beside it. Typing { offers the
  * fields every recipient has at the cursor.
  */
-export default function MailingEditor({ initial, onChange, fields, conditions, labelledBy }: Props) {
+export default function MailingEditor({ initial, onChange, fields, conditions, recipients, labelledBy }: Props) {
   const frame = useRef<HTMLDivElement>(null);
   // Where the { was typed, and where to show the menu of fields.
   const [picker, setPicker] = useState<{ from: number; to: number; top: number; left: number }>();
@@ -319,7 +416,7 @@ export default function MailingEditor({ initial, onChange, fields, conditions, l
           </div>
         )}
       </div>
-      {editor && <Sidebar editor={editor} fields={fields} conditions={conditions} />}
+      {editor && <Sidebar editor={editor} fields={fields} conditions={conditions} recipients={recipients} />}
     </div>
   );
 }

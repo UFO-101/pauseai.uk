@@ -31,6 +31,7 @@ import MailingEditor from "@/app/(staff)/staff/_components/MailingEditor";
 import ButtonRow from "@/components/ui/ButtonRow";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { DeleteDraft, StopMailing } from "@/app/(staff)/staff/_components/MailingButtons";
+import MailingFiles from "@/app/(staff)/staff/_components/MailingFiles";
 import MailingFor from "@/app/(staff)/staff/_components/MailingFor";
 import { FilterPills } from "@/app/(staff)/staff/_components/MailingParts";
 import MailingView from "@/app/(staff)/staff/_components/MailingView";
@@ -272,8 +273,27 @@ const mailingFields = [
   { id: "constituency", label: "constituency", lacking: 2 },
 ];
 const mailingConditions = [
-  { id: "frontier-ai-letter:signed", label: "signed the Frontier AI letter", covers: 12 },
-  { id: "edinburgh-conference-2026:going", label: "are going to the Edinburgh conference", covers: 3 },
+  {
+    id: "frontier-ai-letter:signed",
+    label: "signed the Frontier AI letter",
+    covers: 12,
+    group: "Frontier AI letter",
+    option: "Signed",
+  },
+  {
+    id: "edinburgh-conference-2026:going",
+    label: "are going to the Edinburgh conference",
+    covers: 3,
+    group: "Edinburgh conference",
+    option: "Going",
+  },
+  {
+    id: "edinburgh-conference-2026:declined",
+    label: "declined the Edinburgh conference",
+    covers: 5,
+    group: "Edinburgh conference",
+    option: "Declined",
+  },
 ];
 
 /** An invitation with a salutation, and a thank-you only for those who signed. */
@@ -347,7 +367,7 @@ function mailingActions(log: (name: string) => (...args: unknown[]) => void) {
       attachments: exampleWrittenMailing.attachments,
     }),
     detach: logged("detachFromMailing", { saved: true as const, version: 4, attachments: [] }),
-    sendTest: logged("sendMailingTest", { sent: true as const, id: "example" }),
+    sendTest: logged("sendMailingTest", { sent: true as const, id: "example", to: "jo@pauseai.uk" }),
     schedule: logged("scheduleMailingNow", { scheduled: true as const }),
     deleteDraft: logged("deleteMailingDraft", undefined),
     stop: logged("stopMailingNow", undefined),
@@ -455,6 +475,22 @@ export function ChangeWhoListExample() {
           search={{ ...emptyPoliticiansSearch, house: "commons", mailing: "12" }}
           asks={exampleAsks}
           changeWho={log("changeMailingWho") as (form: FormData) => Promise<void>}
+        />
+      )}
+    </Logged>
+  );
+}
+
+/** A mailing's files: a PDF, an image and a file of no kind to draw; with the box for more, and each to take off. */
+export function MailingFilesExample({ editable }: { editable: boolean }) {
+  return (
+    <Logged>
+      {(log) => (
+        <MailingFiles
+          files={exampleWrittenMailing.attachments}
+          href={(id) => `/pdfs/${id === 2 ? "Frontier-AI-Open-Letter.jpg" : "Frontier-AI-Open-Letter.pdf"}`}
+          onAdd={editable ? log("onAdd") : undefined}
+          onRemove={editable ? log("onRemove") : undefined}
         />
       )}
     </Logged>

@@ -14,12 +14,36 @@ export type MailingParagraph = { type: "paragraph"; content?: MailingInline[] };
 export type MailingListItem = { type: "listItem"; content: MailingBlock[] };
 export type MailingBulletList = { type: "bulletList"; content: MailingListItem[] };
 export type MailingBlock = MailingParagraph | MailingBulletList;
-/** A part only those who meet `condition` get. Only at the top level: a part isn't in a part. */
+/**
+ * A part only those who meet `condition` get, or with NOT_CONDITION before
+ * it, only those who don't. Only at the top level: a part isn't in a part.
+ */
 export type OnlyForNode = { type: "onlyFor"; attrs: { condition: string }; content: MailingBlock[] };
 export type MailingDoc = { type: "doc"; content: (MailingBlock | OnlyForNode)[] };
 
 /** An empty letter, to start from. */
 export const EMPTY_MAILING_DOC: MailingDoc = { type: "doc", content: [{ type: "paragraph" }] };
+
+/** The mark before a condition for a part only those who don't meet it get. */
+export const NOT_CONDITION = "!";
+
+/** Whether a recipient gets a part for `condition`: they meet it, or for one marked NOT_CONDITION, don't. */
+export function meetsCondition(recipient: MailingRecipientValues, condition: string): boolean {
+  return condition.startsWith(NOT_CONDITION)
+    ? !recipient.meets.includes(condition.slice(NOT_CONDITION.length))
+    : recipient.meets.includes(condition);
+}
+
+/**
+ * A new letter: `greeting`, then the first of `fields` that's offered, then a
+ * comma, as "Dear <salutation>,"; then a line to write on.
+ */
+export function greetingLetter(greeting: string, field: string | undefined): MailingDoc {
+  const opening: MailingInline[] = field
+    ? [{ type: "text", text: `${greeting} ` }, { type: "field", attrs: { field } }, { type: "text", text: "," }]
+    : [{ type: "text", text: `${greeting},` }];
+  return { type: "doc", content: [{ type: "paragraph", content: opening }, { type: "paragraph" }] };
+}
 
 /** What a recipient's letter is filled in with: their value for each field, and the conditions they meet. */
 export type MailingRecipientValues = { values: Record<string, string>; meets: string[] };
@@ -119,7 +143,7 @@ function fillBlock(block: MailingBlock, values: Record<string, string>): Block {
 export function letterFor(doc: MailingDoc, recipient: MailingRecipientValues): LetterDoc {
   const content = doc.content.flatMap((block) => {
     if (block.type !== "onlyFor") return [fillBlock(block, recipient.values)];
-    if (!recipient.meets.includes(block.attrs.condition)) return [];
+    if (!meetsCondition(recipient, block.attrs.condition)) return [];
     return block.content.map((inner) => fillBlock(inner, recipient.values));
   });
   return { type: "doc", content };

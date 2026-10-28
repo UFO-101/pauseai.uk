@@ -24,7 +24,7 @@ export type PoliticianAudience = {
   leftOut: LeftOut[];
   /** The merge fields, with how many recipients lack a value for each. */
   fields: MailingChoice[];
-  /** Each answer a recipient has given to an ask, with how many gave it. */
+  /** Each answer to each ask, with how many recipients gave it. */
   conditions: MailingChoice[];
 };
 
@@ -58,16 +58,18 @@ export async function politicianAudience(filter: StoredFilter): Promise<Politici
   for (const answer of recipients.flatMap((recipient) => recipient.meets)) {
     covers.set(answer, (covers.get(answer) ?? 0) + 1);
   }
-  // In the asks' order, newest first, then each kind's answers in order.
+  // Every answer to every ask, the asks newest first, each kind's answers in order.
   const conditions = asks.flatMap((ask) =>
-    (ASK_STATUSES[ask.kind] as readonly string[])
-      .map((status) => ({ status, id: answerCondition(ask.slug, status) }))
-      .filter(({ id }) => covers.has(id))
-      .map(({ status, id }) => ({
+    (ASK_STATUSES[ask.kind] as readonly string[]).map((status) => {
+      const id = answerCondition(ask.slug, status);
+      return {
         id,
         label: copy.answered(staffCopy.statuses[status], ask.title),
-        covers: covers.get(id)!,
-      })),
+        covers: covers.get(id) ?? 0,
+        group: ask.title,
+        option: staffCopy.statuses[status],
+      };
+    }),
   );
   return { recipients, leftOut, fields, conditions };
 }

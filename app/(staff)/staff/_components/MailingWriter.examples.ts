@@ -70,7 +70,29 @@ export const exampleWriterData: WriterData = {
     { id: "name", label: "name", lacking: 0 },
     { id: "constituency", label: "constituency", lacking: 1 },
   ],
-  conditions: [{ id: "frontier-ai-letter:signed", label: "signed the Example Letter to the PM", covers: 1 }],
+  conditions: [
+    {
+      id: "frontier-ai-letter:signed",
+      label: "signed the Example Letter to the PM",
+      covers: 1,
+      group: "Example Letter to the PM",
+      option: "Signed",
+    },
+    {
+      id: "edinburgh-conference-2026:going",
+      label: "going to the Example Conference",
+      covers: 0,
+      group: "Example Conference",
+      option: "Going",
+    },
+    {
+      id: "edinburgh-conference-2026:declined",
+      label: "declined the Example Conference",
+      covers: 0,
+      group: "Example Conference",
+      option: "Declined",
+    },
+  ],
   senders: ["jo@pauseai.uk", "sam@pauseai.uk"],
   sends: false,
 };
@@ -88,5 +110,9 @@ export const exampleWrittenMailing: WrittenMailing = {
   dueAt: "2026-12-01T09:00:00Z",
   state: "draft",
   version: 3,
-  attachments: [{ id: 1, filename: "programme.pdf", size: 1024 }],
+  attachments: [
+    { id: 1, filename: "programme.pdf", contentType: "application/pdf", size: 1024 },
+    { id: 2, filename: "venue.png", contentType: "image/png", size: 2_300_000 },
+    { id: 3, filename: "notes.docx", contentType: "application/octet-stream", size: 800 },
+  ],
 };

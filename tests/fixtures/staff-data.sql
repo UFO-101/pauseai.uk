@@ -484,7 +484,18 @@ FROM seed_letter b, (VALUES
   ('Edinburgh follow-up', '{"list": "politicians", "params": {}}', 'jo@pauseai.uk', 'Jo Seed', interval '-7 days', 'sent')
 ) m (title, filter, sent_from, from_name, due, state);
 INSERT INTO mailing_attachments (mailing_id, filename, content_type, content)
-SELECT id, 'briefing.pdf', 'application/pdf', convert_to('%PDF-1.4 seed', 'UTF8') FROM mailings WHERE title = 'Meet us in Westminster';
+-- A one-page PDF, the smallest a reader draws: "Briefing" on an A4 page.
+SELECT id, 'briefing.pdf', 'application/pdf', convert_to($pdf$%PDF-1.4
+1 0 obj <</Type /Catalog /Pages 2 0 R>> endobj
+2 0 obj <</Type /Pages /Kids [3 0 R] /Count 1>> endobj
+3 0 obj <</Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Contents 4 0 R /Resources <</Font <</F1 5 0 R>>>>>> endobj
+4 0 obj <</Length 39>> stream
+BT /F1 48 Tf 72 720 Td (Briefing) Tj ET
+endstream endobj
+5 0 obj <</Type /Font /Subtype /Type1 /BaseFont /Helvetica>> endobj
+trailer <</Root 1 0 R>>
+%%EOF
+$pdf$, 'UTF8') FROM mailings WHERE title = 'Meet us in Westminster';
 CREATE TEMP TABLE seed_written ON COMMIT DROP AS
 SELECT nextval(pg_get_serial_sequence('letters', 'id')) AS id, m.id AS mailing_id, m.state, m.due_at, n.id AS person,
   n.salutation, n.name, row_number() OVER (PARTITION BY m.id ORDER BY n.name) AS n

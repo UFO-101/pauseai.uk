@@ -662,30 +662,38 @@ export const staffCopy = {
     // The toolbar over the letter, for screen readers.
     formatting: "⁂ Formatting",
     // Over the merge fields beside the letter, to click or drag in.
-    fieldsHeading: "⁂ Fields",
+    fieldsHeading: "Fields",
     // On hovering a field or a condition beside the letter.
     dragHint: "⁂ Click to put it at the cursor, or drag it into the letter",
     // On hovering a field some recipients have no value for, which can't be used.
-    lacking: (n: number) => `⁂ ${n} ${n === 1 ? "recipient has" : "recipients have"} none, so it can't be used`,
-    // Over who a part can be only for: those who gave each answer to an ask.
-    onlyFor: "⁂ Only for those who…",
+    lacking: (n: number) => `${n} ${n === 1 ? "recipient has" : "recipients have"} none, so it can't be used`,
+    // Over the two menus of who a part of the letter is for.
+    partsHeading: "Conditional parts",
+    // The menu that puts the paragraphs at the cursor in a part only those who gave an answer get.
+    addOnlyFor: "+ Only for those who…",
+    // The menu that puts them in a part everyone but those who gave an answer gets.
+    except: "Except those who…",
+    // In the menu of an ask's answers, back to the asks.
+    backToAsks: "‹ Asks",
     // Instead of them, when no recipient has answered an ask.
     noConditions: "⁂ No recipient has answered an ask yet.",
     // After each: how many recipients gave that answer.
-    covers: (n: number) => `⁂ ${n}`,
+    covers: (n: number) => `${n}`,
     // On the box round such a part: who gets it.
-    onlyForLabel: (who: string) => `⁂ Only for those who ${who}`,
+    onlyForLabel: (who: string) => `Only for those who ${who}`,
+    // On the box round a part all but some get: who doesn't.
+    exceptLabel: (who: string) => `⁂ Except those who ${who}`,
     // Takes the part at the cursor out of its box, so everyone gets it.
     forEveryone: "⁂ For everyone",
     // The menu typing { opens, of the merge fields.
-    pickField: "⁂ Insert a field",
+    pickField: "Insert a field",
     // Each merge field of a mailing to politicians, as its chip says it.
     fields: {
-      salutation: "⁂ Salutation",
-      name: "⁂ Name",
-      constituency: "⁂ Constituency",
-      party: "⁂ Party",
-      house: "⁂ House",
+      salutation: "Salutation",
+      name: "Name",
+      constituency: "Constituency",
+      party: "Party",
+      house: "House",
     },
     // Who a part is for: those who gave an answer to an ask, as in "Only for those who signed the Frontier AI letter".
     answered: (answer: string, ask: string) => `⁂ ${answer.toLowerCase()} ${ask}`,
@@ -693,21 +701,23 @@ export const staffCopy = {
   // The pages for writing a mailing, its own page once it's scheduled, and the list of them.
   mailingPages: {
     // Who a mailing is to, when its filter has nothing chosen.
-    everyone: "⁂ Every politician in office",
-    whoLabel: "⁂ Who it's for",
+    everyone: "Every politician in office",
+    whoLabel: "Who it's for",
+    // A search, as a pill of who a mailing is to.
+    searchPill: (typed: string) => `⁂ Search "${typed}"`,
     // A mailing's coloured counts.
     counts: {
-      sent: "⁂ sent",
-      replied: "⁂ replied",
-      bounced: "⁂ bounced",
-      skipped: "⁂ skipped",
-      answered: "⁂ answered the ask",
+      sent: "sent",
+      replied: "replied",
+      bounced: "bounced",
+      skipped: "skipped",
+      answered: "answered the ask",
     },
     newTitle: "⁂ New mailing",
     // A draft with no subject yet, in the list and as its page's title.
     untitled: "⁂ Untitled draft",
     // At the top of a new mailing, until a channel sends.
-    cantSend: "⁂ Mailings can't be sent yet. Everything else here works, including a test copy to yourself.",
+    cantSend: "Mailings can't be sent yet. Everything else should work, and you can send a test copy to yourself.",
     // Beside the title: whether the draft is saved.
     saveStates: {
       new: "⁂ Not saved yet: it's kept once you write something.",
@@ -717,79 +727,105 @@ export const staffCopy = {
         "⁂ Someone else has changed this draft since you opened it. Reload the page to see their changes; what you've done since isn't saved.",
       failed: "⁂ Couldn't save. Check your connection: it'll try again at your next change.",
     } as Record<string, string>,
-    deleteDraft: "⁂ Delete draft",
-    confirmDelete: "⁂ Delete this draft? It can't be got back.",
-    deleteIt: "⁂ Delete it",
+    deleteDraft: "Delete draft",
+    // Delete draft after its first press, asking for a second.
+    deleteIt: "⁂ Press again to delete it",
     // The numbered sections of a new mailing.
     sections: {
-      who: "⁂ Who",
-      write: "⁂ Write",
-      preview: "⁂ Preview",
-      from: "⁂ Sent from",
-      when: "⁂ When",
-      send: "⁂ Send",
+      who: "Who",
+      write: "Write",
+      preview: "Preview",
+      from: "Sent from",
+      when: "When",
+      send: "Send",
     },
-    willGet: (n: number) => `⁂ ${n} ${n === 1 ? "politician" : "politicians"} will get it.`,
+    willGet: (n: number) => `${n} ${n === 1 ? "politician" : "politicians"} will be emailed.`,
+    // Who's left out: each part only when there are some.
     leftOut: (found: number, noAddress: number, blocked: number) =>
-      `⁂ Of the ${found} the filter finds, ${noAddress} ${noAddress === 1 ? "has" : "have"} no email address and ${blocked} ${blocked === 1 ? "has an address" : "have addresses"} that's blocked, so they're left out.`,
-    seeWho: "⁂ See who",
+      `Of the ${found} people the filter found, ${[
+        noAddress && `${noAddress} ${noAddress === 1 ? "has" : "have"} no email address`,
+        blocked && `${blocked} ${blocked === 1 ? "has an address that's blocked" : "have addresses that are blocked"}`,
+      ]
+        .filter(Boolean)
+        .join(" and ")}, so they're left out.`,
+    seeWho: "See who",
     leftOutReasons: {
-      "no-address": "⁂ no email address",
-      blocked: "⁂ address blocked",
+      "no-address": "no email address",
+      blocked: "address blocked",
     } as Record<string, string>,
-    changeWho: "⁂ Change who",
+    changeWho: "Change who",
     unknownFilter: (values: string) =>
       `⁂ The filter has values the site no longer knows (${values}), so it can't be sent until you change who it's for.`,
-    subject: "⁂ Subject",
-    ask: "⁂ Ask",
-    noAsk: "⁂ None",
-    letter: "⁂ Letter",
-    attachments: "⁂ Attachments",
-    addFile: "⁂ Add a file",
+    subject: "Subject",
+    ask: "Ask",
+    // Behind the ? beside Ask.
+    askHelpLabel: "⁂ What the ask is for",
+    askHelp:
+      "⁂ What this mailing asks them to do, such as come to an event or sign a letter. Their answers are recorded against the ask, so the mailing's page can count who answered.",
+    // The start of a new letter, before the salutation or name.
+    greeting: "Dear",
+    noAsk: "None",
+    letter: "Letter",
+    attachments: "Attachments",
+    addFiles: "Add files",
+    dropFiles: "Drop files here, or",
+    // A file's size.
+    bytes: (n: number) => `${n} bytes`,
+    kilobytes: (n: number) => `${n} KB`,
+    megabytes: (n: number) => `${n} MB`,
     removeFile: (name: string) => `⁂ Remove ${name}`,
     tooBig: "⁂ That file is too big: a file can be up to 4MB.",
-    previewAs: "⁂ Show the email to",
-    previewPlaceholder: "⁂ Name or constituency",
-    noMatch: "⁂ No one it goes to matches that.",
+    // The choice of whose email the preview shows, for screen readers.
+    previewAs: "⁂ Whose email to show",
     noOne: "⁂ No one to show: it goes to no one yet.",
-    to: "⁂ To",
-    sendTest: "⁂ Send this one to me",
-    testSent: "⁂ Sent: look in your inbox.",
-    testFailed: "⁂ It couldn't be sent. Try again in a minute.",
-    testNeedsDraft: "⁂ Write something first: the test is of the saved draft.",
-    fromLegend: "⁂ Whose Gmail it's sent from",
-    notConnected: "⁂ Gmail can't be connected yet.",
-    fromName: "⁂ Name it's from",
-    day: "⁂ Day",
-    hour: "⁂ Hour",
-    onTheHour: "⁂ It goes on the hour, London time.",
+    to: "To",
+    noSender: "Choose who below",
+    // Over the preview: a button for each condition the letter's parts use, pressed for those who meet it.
+    casesLabel: "⁂ Show it as for those who…",
+    // When no recipient has the answers chosen.
+    noOneMix: "⁂ No one it goes to gave these answers. This is the email they'd get.",
+    sendTest: "Send this one to me",
+    testSent: (address: string) => `⁂ Sent: look in the inbox of ${address}.`,
+    // Under the test button, while the letter is empty or only its greeting.
+    testNeedsDraft: "Write something first!",
+    testFailed: "It couldn't be sent. Try again in a minute.",
+    fromLegend: "Whose Gmail to send it from",
+    notConnected: "Gmail connection isn't implemented yet.",
+    // In the preview, who it's from: the name comes from the Gmail account.
+    from: "From",
+    fromGmail: (address: string) => `Your Gmail's name <${address}>`,
+    // The test copy's sender's name.
+    testFromName: "⁂ PauseAI UK mailing test",
+    day: "Day",
+    hour: "Hour",
+    onTheHour: "It will be sent on the hour, UK time.",
     summary: (n: number, from: string | null, when: string | null) =>
-      `⁂ ${n} ${n === 1 ? "email" : "emails"}, from ${from ?? "no one yet"}, ${when ? `on ${when}` : "at a time not chosen yet"}.`,
-    schedule: (n: number) => `⁂ Schedule ${n} ${n === 1 ? "email" : "emails"}`,
+      `${n} ${n === 1 ? "email" : "emails"}, from ${from ? `${from}'s Gmail` : "no one yet"}, ${when ? `on ${when}` : "at a time not yet chosen"}.`,
+    schedule: (n: number) => `Schedule ${n} ${n === 1 ? "email" : "emails"}`,
     // Why the schedule button can't be pressed.
     problems: {
-      "no-subject": "⁂ It has no subject.",
-      "no-letter": "⁂ It has no letter.",
+      "no-subject": "Fill in the subject.",
+      "no-letter": "Write the letter.",
       "unknown-filter": "⁂ Its filter has values the site no longer knows.",
-      "no-recipients": "⁂ It goes to no one.",
-      "field-lacking": "⁂ It uses a field some recipients have no value for.",
-      "no-sender": "⁂ Choose whose Gmail it's sent from.",
-      "no-name": "⁂ Give the name it's from.",
-      "no-time": "⁂ Choose when it goes.",
-      "time-passed": "⁂ The time it goes has passed.",
-      "cannot-send": "⁂ Sending isn't built yet.",
+      "no-recipients": "There's nobody to send to.",
+      "field-lacking": "It uses a field some recipients have no value for.",
+      "no-sender": "Choose who to send the message from⁂ To.",
+      "no-time": "Choose what time it will be sent.",
+      "time-passed": "You can't send it into the past!",
+      "cannot-send": "Sending isn't built yet.",
     } as Record<string, string>,
     // The list of mailings.
     // Before a link to the politicians list.
     intro: "⁂ To start one, filter the politicians and press Mail these:",
-    drafts: "⁂ Drafts",
-    comingUp: "⁂ Coming up",
-    sent: "⁂ Sent",
+    drafts: "Drafts",
+    comingUp: "Coming up",
+    sent: "Sent",
     noDrafts: "⁂ No drafts.",
     noneComing: "⁂ Nothing scheduled.",
-    draftLine: (by: string, n: number) => `⁂ ${by} · to ${n}`,
-    comingLine: (by: string, when: string, n: number) => `⁂ ${by} · ${when} · to ${n}`,
-    stop: "⁂ Stop",
+    draftLine: (by: string, n: number) => `${by} · to ${n} ${n === 1 ? "person" : "people"}`,
+    comingLine: (by: string, when: string, n: number) =>
+      `⁂ ${by} · ${when} · to ${n} ${n === 1 ? "person" : "people"}`,
+    stop: "Stop",
     // On the politicians list, beside Download.
     mailThese: (n: number) => `⁂ Mail these ${n}…`,
     useThese: (n: number) => `⁂ Use these ${n} for the draft`,
@@ -801,7 +837,7 @@ export const staffCopy = {
       sent: "⁂ Sent",
       cancelled: "⁂ Stopped",
     } as Record<string, string>,
-    sentLine: (when: string, from: string) => `⁂ Sent ${when}, from ${from}`,
+    sentLine: (when: string, from: string) => `Sent ${when}, from ${from}`,
     sends: (when: string) => `⁂ Sends ${when}`,
     scheduledLine: (n: number, from: string) => `⁂ ${n} ${n === 1 ? "email" : "emails"} from ${from}.`,
     changeTime: "⁂ Change the time",

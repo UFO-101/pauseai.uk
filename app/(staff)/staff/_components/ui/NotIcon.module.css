@@ -1,0 +1,8 @@
+.notIcon {
+  flex: none;
+  margin-right: var(--space-1);
+  fill: none;
+  stroke: currentcolor;
+  stroke-width: 2;
+  vertical-align: -2px;
+}

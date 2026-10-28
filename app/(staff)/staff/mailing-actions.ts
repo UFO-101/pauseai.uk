@@ -72,13 +72,13 @@ export async function detachFromMailing(id: number, version: number, attachmentI
   return { ...saved, attachments: (await getWrittenMailing(id))?.attachments ?? [] };
 }
 
-/** Sends the staff member one recipient's email of a draft, as they'd get it. */
+/** Sends the staff member one recipient's email of a draft, as they'd get it, and says where it went. */
 export async function sendMailingTest(id: number, politicianId: number) {
   const { email } = await requireStaff();
   const mailing = await getWrittenMailing(id);
   if (!mailing) return undefined;
   const recipient = (await politicianAudience(mailing.filter)).recipients.find((r) => r.id === politicianId);
-  return recipient && sendTestCopy(mailing, recipient, email);
+  return recipient && { ...(await sendTestCopy(mailing, recipient, email)), to: email };
 }
 
 /** Schedules a draft at its version, if nothing stops it. */

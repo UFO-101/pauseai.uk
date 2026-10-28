@@ -8,6 +8,7 @@ import ChoiceSearch from "./ChoiceSearch";
 import FormPending from "./FormPending";
 import StaffLink from "./StaffLink";
 import Menu from "./Menu";
+import NotIcon from "./NotIcon";
 import styles from "./FilterBar.module.css";
 
 /**
@@ -78,16 +79,6 @@ export function filterWords(filters: Filter[], values: Params, search: string): 
     for (const value of valuesOf(values[filter.name])) words.push(valueWords(filter, value, " "));
   }
   return words;
-}
-
-/** The mark on a chip that leaves out: a circle, struck through. */
-function NotIcon() {
-  return (
-    <svg className={styles.notIcon} width="14" height="14" viewBox="0 0 16 16" aria-hidden="true">
-      <circle cx="8" cy="8" r="6.5" />
-      <path d="M3.5 12.5l9-9" />
-    </svg>
-  );
 }
 
 /** A list of choices, each a link; the one chosen marked; with `search`, a box over it that narrows it. */

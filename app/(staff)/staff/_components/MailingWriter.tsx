@@ -2,23 +2,36 @@
 
 import type { JSONContent } from "@tiptap/react";
 import { useRouter } from "next/navigation";
-import { useId, useMemo, useRef, useState, type ReactNode } from "react";
+import { useEffect, useId, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { Button } from "@/components/ui/Button";
-import { FileInput, Select, TextInput } from "@/components/ui/Controls";
+import { Select, TextInput } from "@/components/ui/Controls";
 import { Field, Hint } from "@/components/ui/Field";
+import Tag from "@/components/ui/Tag";
 import { Muted } from "@/components/ui/Text";
 import { staffCopy } from "@/lib/content/staff-interface";
-import { checkMailingDoc, EMPTY_MAILING_DOC, isBlankMailing, letterFor, type MailingDoc } from "@/lib/mailing-doc";
+import {
+  checkMailingDoc,
+  conditionsIn,
+  EMPTY_MAILING_DOC,
+  greetingLetter,
+  isBlankMailing,
+  letterFor,
+  NOT_CONDITION,
+  type MailingDoc,
+} from "@/lib/mailing-doc";
+import { answerLabels } from "@/lib/mailing-fields";
 import { scheduleProblems } from "@/lib/mailing-schedule";
 import { filtersPath } from "@/lib/staff-search";
 import { fromLondon, londonDayHour, londonWhen } from "@/lib/staff-time";
 import type { ChannelResult } from "@/lib/server/mailing-channels";
 import type { MailingAttachmentSummary, SaveResult, ScheduleResult, WrittenMailing } from "@/lib/server/mailing-drafts";
-import type { PreviewRecipient, WriterData } from "@/lib/server/mailing-pages";
+import type { WriterData } from "@/lib/server/mailing-pages";
 import { DeleteDraft } from "./MailingButtons";
 import MailingEditor from "./MailingEditor";
+import MailingFiles from "./MailingFiles";
 import { MailingLetter } from "./MailingLetter";
 import Grid, { Card } from "./ui/Grid";
+import NotIcon from "./ui/NotIcon";
 import Strip from "./ui/Strip";
 import styles from "./MailingWriter.module.css";
 
@@ -27,16 +40,15 @@ const copy = staffCopy.mailingPages;
 /** How long after the last change a draft saves itself. */
 const SAVE_DELAY = 800;
 
-/** How many recipients the preview's search offers at once. */
-const MATCHES = 6;
+/** The fields a new letter's greeting can use, the first every recipient has. */
+const GREETING_FIELDS = ["salutation", "name"];
 
-/** What a new mailing's letter can say, before and after it's saved. */
+/** What a mailing's page can change, before and after it's saved. */
 type Changes = {
   subject: string;
   body: MailingDoc;
   ask: string | null;
   sentFrom: string | null;
-  fromName: string | null;
   dueAt: string | null;
 };
 
@@ -51,7 +63,7 @@ export type MailingWriterActions = {
   save: (id: number, version: number, changes: unknown) => Promise<SaveResult | undefined>;
   attach: (form: FormData) => Promise<AttachResult | undefined>;
   detach: (id: number, version: number, attachmentId: number) => Promise<AttachResult>;
-  sendTest: (id: number, politicianId: number) => Promise<ChannelResult | undefined>;
+  sendTest: (id: number, politicianId: number) => Promise<(ChannelResult & { to: string }) | undefined>;
   schedule: (id: number, version: number) => Promise<ScheduleResult>;
   deleteDraft: (form: FormData) => void | Promise<void>;
 };
@@ -70,24 +82,51 @@ function Numbered({ n, children }: { n: number; children: ReactNode }) {
   );
 }
 
-/** The recipients whose name or constituency has every word typed, the first few. */
-function matching(recipients: PreviewRecipient[], typed: string): PreviewRecipient[] {
-  const words = typed.toLowerCase().split(/\s+/).filter(Boolean);
-  return recipients
-    .filter((r) => words.every((word) => `${r.name} ${r.constituency ?? ""}`.toLowerCase().includes(word)))
-    .slice(0, MATCHES);
+/** A "?" that opens a few words on what the thing beside it is for. */
+function Help({ id, label, children }: { id: string; label: string; children: ReactNode }) {
+  return (
+    <>
+      <button
+        type="button"
+        className={styles.help}
+        popoverTarget={id}
+        aria-label={label}
+        style={{ anchorName: `--${id}` } as CSSProperties}
+      >
+        ?
+      </button>
+      <span id={id} popover="auto" className={styles.helpBox} style={{ positionAnchor: `--${id}` } as CSSProperties}>
+        {children}
+      </span>
+    </>
+  );
 }
+
+/** How close to the hour is too close to send on it. */
+const TOO_SOON = 5 * 60_000;
+
+/**
+ * The first whole hour it can go at, as an ISO string: one at least
+ * TOO_SOON away. London's hours start when UTC's do.
+ */
+function earliestHour(): string {
+  return new Date(Math.ceil((Date.now() + TOO_SOON) / 3_600_000) * 3_600_000).toISOString();
+}
+
+/** How often the page checks the time it goes hasn't become too soon. */
+const CHECK_EVERY = 30_000;
 
 /**
  * A new mailing, or a draft, on one page, in six numbered sections: who
  * it's to, the filter's pills with Change who, and who's left out; writing
- * it, its subject, ask, letter and files; a preview of one recipient's
- * email, with a test copy to yourself; whose Gmail it's from and the name;
- * when it goes; and what will go, with the button to schedule it, greyed
- * with the reasons while anything stops it. A new mailing is saved as a
- * draft at its first change worth keeping (a subject, a letter or a file),
- * and the address bar then names it; a draft saves itself a moment after
- * each change. Someone else saving it meanwhile stops the saving and says so.
+ * it, its subject, ask, letter and files; a preview of each recipient's
+ * email, a case at a time; whose Gmail it's from; when it goes, never in
+ * the past; and what will go, with the button to schedule it, greyed with
+ * the reasons while anything stops it. A new mailing starts with a greeting,
+ * and is saved as a draft at its first change worth keeping (a subject, a
+ * change to the letter, or a file); the address bar then names it. A draft
+ * saves itself a moment after each change. Someone else saving it meanwhile
+ * stops the saving and says so.
  */
 export default function MailingWriter({
   data,
@@ -103,17 +142,23 @@ export default function MailingWriter({
 }) {
   const router = useRouter();
   const letterLabel = useId();
+  const askHelp = `ask-help-${useId().replace(/\W/g, "")}`;
   const id = useRef(draft?.id ?? null);
   const version = useRef(draft?.version ?? 0);
   const [savedId, setSavedId] = useState(draft?.id ?? null);
-  const [values, setValues] = useState<Changes>({
+  const [start] = useState(() =>
+    greetingLetter(
+      copy.greeting,
+      GREETING_FIELDS.find((field) => data.fields.some((f) => f.id === field && !f.lacking)),
+    ),
+  );
+  const [values, setValues] = useState<Changes>(() => ({
     subject: draft?.subject ?? "",
-    body: draft?.body ?? EMPTY_MAILING_DOC,
+    body: draft?.body ?? start,
     ask: draft?.ask ?? null,
     sentFrom: draft?.sentFrom ?? null,
-    fromName: draft?.fromName ?? null,
     dueAt: draft?.dueAt ?? null,
-  });
+  }));
   const latest = useRef(values);
   const [attachments, setAttachments] = useState(draft?.attachments ?? []);
   const [saveState, setSaveState] = useState<SaveState>(draft ? "saved" : "new");
@@ -122,7 +167,9 @@ export default function MailingWriter({
   const saving = useRef(false);
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
 
-  const worthKeeping = (v: Changes) => Boolean(v.subject.trim()) || !isBlankMailing(v.body);
+  /** Whether a letter has nothing written in it yet: blank, or only the greeting it started with. */
+  const unwritten = (letter: MailingDoc) => isBlankMailing(letter) || JSON.stringify(letter) === JSON.stringify(start);
+  const worthKeeping = (v: Changes) => Boolean(v.subject.trim()) || !unwritten(v.body);
 
   /** Saves what's changed: makes the draft at the first change worth keeping, then saves to it. */
   async function flush(): Promise<void> {
@@ -184,34 +231,56 @@ export default function MailingWriter({
     return id.current!;
   }
 
-  async function attach(file: File) {
+  /** Attaches each file in turn, stopping at the first that isn't. */
+  async function attach(files: File[]) {
     setFileProblem("");
-    const form = new FormData();
-    form.set("id", String(await draftId()));
-    form.set("version", String(version.current));
-    form.set("file", file);
-    attached(await actions.attach(form));
+    for (const file of files) {
+      const form = new FormData();
+      form.set("id", String(await draftId()));
+      form.set("version", String(version.current));
+      form.set("file", file);
+      if (!attached(await actions.attach(form))) return;
+    }
   }
 
-  function attached(result: AttachResult | undefined) {
-    if (!result) return;
+  /** Shows what's attached after an attach or a detach; whether it was done. */
+  function attached(result: AttachResult | undefined): boolean {
+    if (!result) return false;
     setAttachments(result.attachments);
     if (result.saved) version.current = result.version;
     else if (result.reason === "too-big") setFileProblem(copy.tooBig);
     else setSaveState("conflict");
+    return result.saved;
   }
+
+  // A time too soon, or gone, when the draft is opened, or that becomes so
+  // while it's open, moves on to the first hour it can go at, and that's saved.
+  useEffect(() => {
+    const check = () => {
+      const due = latest.current.dueAt;
+      if (due && Date.parse(due) < Date.parse(earliestHour())) change({ dueAt: earliestHour() });
+    };
+    check();
+    const timer = setInterval(check, CHECK_EVERY);
+    return () => clearInterval(timer);
+    // The checks read what's latest, so they're set up once.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const body = useMemo(() => checkMailingDoc(values.body) ?? EMPTY_MAILING_DOC, [values.body]);
   const when = values.dueAt ? londonDayHour(values.dueAt) : { day: "", hour: 9 };
+  const earliest = londonDayHour(earliestHour());
   const lacking = data.fields.filter((field) => field.lacking).map((field) => field.id);
+  const written = !unwritten(body);
   const problems = scheduleProblems({
     ...values,
-    body,
+    // A letter of only its greeting is no letter.
+    body: written ? body : EMPTY_MAILING_DOC,
     recipients: data.recipients.length,
     lacking,
     unknown: data.unknown,
     sends: data.sends,
-  });
+  }).filter((problem) => problem !== "cannot-send");
   const noAddress = data.leftOut.filter((one) => one.reason === "no-address").length;
 
   return (
@@ -262,11 +331,11 @@ export default function MailingWriter({
         </Card>
 
         <Card span={6} title={<Numbered n={2}>{copy.sections.write}</Numbered>} id="write-title">
-          <div className={styles.fields}>
-            <Field label={copy.subject}>
-              <TextInput value={values.subject} onChange={(event) => change({ subject: event.target.value })} />
-            </Field>
-            <Field label={copy.ask}>
+          <Field label={copy.subject}>
+            <TextInput value={values.subject} onChange={(event) => change({ subject: event.target.value })} />
+          </Field>
+          <div className={styles.withHelp}>
+            <Field label={copy.ask} className={styles.ask}>
               <Select value={values.ask ?? ""} onChange={(event) => change({ ask: event.target.value || null })}>
                 <option value="">{copy.noAsk}</option>
                 {data.asks.map((ask) => (
@@ -276,6 +345,9 @@ export default function MailingWriter({
                 ))}
               </Select>
             </Field>
+            <Help id={askHelp} label={copy.askHelpLabel}>
+              {copy.askHelp}
+            </Help>
           </div>
           <p id={letterLabel} className={styles.label}>
             {copy.letter}
@@ -285,109 +357,93 @@ export default function MailingWriter({
             onChange={(doc) => change({ body: doc as MailingDoc })}
             fields={data.fields}
             conditions={data.conditions}
+            recipients={data.recipients.length}
             labelledBy={letterLabel}
           />
           <div>
             <p className={styles.label}>{copy.attachments}</p>
-            <ul className={styles.files}>
-              {attachments.map((file) => (
-                <li key={file.id}>
-                  {file.filename}
-                  <Button
-                    variant="ghost"
-                    size="small"
-                    fit
-                    aria-label={copy.removeFile(file.filename)}
-                    onClick={async () => attached(await actions.detach(id.current!, version.current, file.id))}
-                  >
-                    ✕
-                  </Button>
-                </li>
-              ))}
-            </ul>
-            <Field label={copy.addFile}>
-              <FileInput
-                onChange={(event) => {
-                  const file = event.target.files?.[0];
-                  event.target.value = "";
-                  if (file) void attach(file);
-                }}
-              />
-            </Field>
-            {fileProblem && <Hint>{fileProblem}</Hint>}
+            <MailingFiles
+              files={attachments}
+              href={(file) => `/staff/mailings/${savedId}/files/${file}`}
+              onAdd={(files) => void attach(files)}
+              onRemove={async (file) => void attached(await actions.detach(id.current!, version.current, file))}
+              problem={fileProblem}
+            />
           </div>
         </Card>
 
         <Card span={6} title={<Numbered n={3}>{copy.sections.preview}</Numbered>} id="preview-title">
-          <Preview data={data} body={body} subject={values.subject} draftId={savedId} sendTest={actions.sendTest} />
+          <Preview
+            data={data}
+            body={body}
+            subject={values.subject}
+            sentFrom={values.sentFrom}
+            written={written}
+            sendTest={async (recipient) => actions.sendTest(await draftId(), recipient)}
+          />
         </Card>
 
         <Card span={6} title={<Numbered n={4}>{copy.sections.from}</Numbered>} id="from-title">
-          <div className={styles.fields}>
-            <Field label={copy.fromLegend}>
-              <Select
-                value={values.sentFrom ?? ""}
-                onChange={(event) => change({ sentFrom: event.target.value || null })}
-              >
-                <option value="" />
-                {data.senders.map((sender) => (
-                  <option key={sender} value={sender}>
-                    {sender}
-                  </option>
-                ))}
-              </Select>
-            </Field>
-            <Field label={copy.fromName}>
-              <TextInput
-                value={values.fromName ?? ""}
-                onChange={(event) => change({ fromName: event.target.value || null })}
-              />
-            </Field>
-          </div>
+          <Field label={copy.fromLegend} className={styles.sender}>
+            <Select
+              value={values.sentFrom ?? ""}
+              onChange={(event) => change({ sentFrom: event.target.value || null })}
+            >
+              <option value="" />
+              {data.senders.map((sender) => (
+                <option key={sender} value={sender}>
+                  {sender}
+                </option>
+              ))}
+            </Select>
+          </Field>
           <Hint>{copy.notConnected}</Hint>
         </Card>
 
         <Card span={6} title={<Numbered n={5}>{copy.sections.when}</Numbered>} id="when-title">
-          <div className={styles.fields}>
-            <Field label={copy.day}>
-              <TextInput
-                type="date"
-                value={when.day}
-                onChange={(event) =>
-                  change({ dueAt: event.target.value ? fromLondon(event.target.value, when.hour) : null })
-                }
-              />
-            </Field>
-            <Field label={copy.hour}>
-              <Select
-                value={when.hour}
-                disabled={!when.day}
-                onChange={(event) => change({ dueAt: fromLondon(when.day, Number(event.target.value)) })}
-              >
-                {Array.from({ length: 24 }, (_, hour) => (
-                  <option key={hour} value={hour}>
-                    {`${String(hour).padStart(2, "0")}:00`}
-                  </option>
-                ))}
-              </Select>
-            </Field>
+          <div className={styles.whenGroup}>
+            <div className={styles.when}>
+              <Field label={copy.day} className={styles.day}>
+                <TextInput
+                  type="date"
+                  min={earliest.day}
+                  value={when.day}
+                  onChange={(event) => {
+                    const day = event.target.value;
+                    // On the first day it can go, an hour too soon moves on to the first it can go at.
+                    const hour = day === earliest.day && when.hour < earliest.hour ? earliest.hour : when.hour;
+                    change({ dueAt: day ? fromLondon(day, hour) : null });
+                  }}
+                />
+              </Field>
+              <Field label={copy.hour} className={styles.hour}>
+                <Select
+                  value={when.hour}
+                  disabled={!when.day}
+                  onChange={(event) => change({ dueAt: fromLondon(when.day, Number(event.target.value)) })}
+                >
+                  {Array.from({ length: 24 }, (_, hour) => (
+                    // On the first day it can go, the hours too soon can't be chosen.
+                    <option key={hour} value={hour} disabled={when.day === earliest.day && hour < earliest.hour}>
+                      {`${String(hour).padStart(2, "0")}:00`}
+                    </option>
+                  ))}
+                </Select>
+              </Field>
+            </div>
+            <Hint>{copy.onTheHour}</Hint>
           </div>
-          <Hint>{copy.onTheHour}</Hint>
         </Card>
 
         <Card span={6} title={<Numbered n={6}>{copy.sections.send}</Numbered>} id="send-title">
           <p className={styles.count}>
-            {copy.summary(
-              data.recipients.length,
-              values.fromName || values.sentFrom,
-              values.dueAt ? londonWhen(values.dueAt) : null,
-            )}
+            {copy.summary(data.recipients.length, values.sentFrom, values.dueAt ? londonWhen(values.dueAt) : null)}
           </p>
           <div className={styles.send}>
             <Button
               variant="primary"
               fit
-              disabled={problems.length > 0}
+              disabled={problems.length > 0 || !data.sends}
               onClick={async () => {
                 const result = await actions.schedule(savedId!, version.current);
                 if (result.scheduled) router.refresh();
@@ -404,6 +460,7 @@ export default function MailingWriter({
               ))}
             </ul>
           )}
+          {!data.sends && <Strip tone="amber">{copy.cantSend}</Strip>}
         </Card>
       </Grid>
     </>
@@ -411,90 +468,116 @@ export default function MailingWriter({
 }
 
 /**
- * One recipient's email, as they'll get it, picked by a search of names and
- * constituencies, the first to start with; and a test copy of it, sent to
- * yourself, once there's a draft to send it from.
+ * Each recipient's email, as they'll get it. Over it, a button for each
+ * condition the letter's parts use, pressed for those who meet it, unpressed
+ * for those who don't; then the recipients with those answers to choose
+ * from. With no one, the email is the one they'd get, with the first
+ * recipient's fields. Under it, a test copy, sent to yourself, once the
+ * letter has something written, which saves the draft first if it isn't yet.
  */
 function Preview({
   data,
   body,
   subject,
-  draftId,
+  sentFrom,
+  written,
   sendTest,
 }: {
   data: WriterData;
   body: MailingDoc;
   subject: string;
-  draftId: number | null;
-  sendTest: MailingWriterActions["sendTest"];
+  sentFrom: string | null;
+  /** Whether the letter has anything in it but its greeting, so there's something to test. */
+  written: boolean;
+  /** Sends the test copy of a recipient's email, saving the draft first if it isn't yet. */
+  sendTest: (recipient: number) => ReturnType<MailingWriterActions["sendTest"]>;
 }) {
-  const [typed, setTyped] = useState("");
   const [chosen, setChosen] = useState(data.recipients[0]?.id);
-  const [sent, setSent] = useState<{ ok: boolean } | undefined>();
+  // What each condition is set to, where it's been pressed; else as the recipient shown has it.
+  const [wanted, setWanted] = useState<Record<string, boolean>>({});
+  const [sent, setSent] = useState<{ to?: string } | undefined>();
   const [sending, setSending] = useState(false);
-  const recipient = data.recipients.find((r) => r.id === chosen);
-  if (!recipient) return <p>{copy.noOne}</p>;
-  const matches = typed.trim() ? matching(data.recipients, typed) : [];
+  const first = data.recipients[0];
+  if (!first) return <p>{copy.noOne}</p>;
+  const shown = data.recipients.find((r) => r.id === chosen) ?? first;
+  const used = [
+    ...new Set(conditionsIn(body).map((c) => (c.startsWith(NOT_CONDITION) ? c.slice(NOT_CONDITION.length) : c))),
+  ];
+  const meets = Object.fromEntries(used.map((c) => [c, wanted[c] ?? shown.meets.includes(c)]));
+  const fits = data.recipients.filter((r) => used.every((c) => r.meets.includes(c) === meets[c]));
+  const recipient = fits.find((r) => r.id === chosen) ?? fits[0];
+  const labels = answerLabels(data.asks);
+  const toggle = (condition: string) => {
+    setWanted({ ...meets, [condition]: !meets[condition] });
+    setSent(undefined);
+  };
   return (
     <>
-      <Field label={copy.previewAs}>
-        <TextInput
-          type="search"
-          value={typed}
-          placeholder={copy.previewPlaceholder}
-          onChange={(event) => setTyped(event.target.value)}
-        />
-      </Field>
-      {typed.trim() && matches.length === 0 && <Hint>{copy.noMatch}</Hint>}
-      {matches.length > 0 && (
-        <ul className={styles.matches}>
-          {matches.map((r) => (
-            <li key={r.id}>
-              <button
-                type="button"
-                aria-pressed={r.id === chosen}
-                onClick={() => {
-                  setChosen(r.id);
-                  setTyped("");
-                  setSent(undefined);
-                }}
-              >
-                {r.name}
-                {r.constituency && <Muted> · {r.constituency}</Muted>}
+      {used.length > 0 && (
+        <ul className={styles.toggles} aria-label={copy.casesLabel}>
+          {used.map((condition) => (
+            <li key={condition}>
+              <button type="button" aria-pressed={meets[condition]} onClick={() => toggle(condition)}>
+                {!meets[condition] && <NotIcon />}
+                {labels[condition] ?? condition}
               </button>
             </li>
           ))}
         </ul>
       )}
+      {recipient ? (
+        <div className={styles.whoShown}>
+          <Select
+            aria-label={copy.previewAs}
+            value={recipient.id}
+            onChange={(event) => {
+              setChosen(Number(event.target.value));
+              setSent(undefined);
+            }}
+          >
+            {fits.map((r) => (
+              <option key={r.id} value={r.id}>
+                {r.constituency ? `${r.name} · ${r.constituency}` : r.name}
+              </option>
+            ))}
+          </Select>
+        </div>
+      ) : (
+        <Hint>{copy.noOneMix}</Hint>
+      )}
       <div className={styles.email}>
         <dl className={styles.headers}>
+          <dt>{copy.from}</dt>
+          <dd>{sentFrom ? copy.fromGmail(sentFrom) : <Muted>{copy.noSender}</Muted>}</dd>
           <dt>{copy.to}</dt>
-          <dd>{`${recipient.name} <${recipient.email}>`}</dd>
+          <dd>{`${(recipient ?? first).name} <${(recipient ?? first).email}>`}</dd>
           <dt>{copy.subject}</dt>
           <dd>
             <strong>{subject}</strong>
           </dd>
         </dl>
-        <MailingLetter doc={letterFor(body, recipient)} />
+        <MailingLetter
+          doc={letterFor(body, { values: (recipient ?? first).values, meets: used.filter((c) => meets[c]) })}
+        />
       </div>
       <div className={styles.send}>
         <Button
           variant="ghost"
           fit
-          disabled={!draftId}
+          disabled={!written || !recipient}
           pending={sending}
           onClick={async () => {
             setSending(true);
-            const result = await sendTest(draftId!, recipient.id);
+            const result = await sendTest(recipient!.id);
             setSending(false);
-            setSent({ ok: Boolean(result?.sent) });
+            setSent({ to: result?.sent ? result.to : undefined });
           }}
         >
           {copy.sendTest}
         </Button>
         <Muted>
           <span role="status">
-            {!draftId ? copy.testNeedsDraft : sent && (sent.ok ? copy.testSent : copy.testFailed)}
+            {!written ? copy.testNeedsDraft : sent && (sent.to ? copy.testSent(sent.to) : copy.testFailed)}
           </span>
         </Muted>
       </div>

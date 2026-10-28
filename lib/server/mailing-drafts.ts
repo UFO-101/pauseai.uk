@@ -2,6 +2,7 @@ import "server-only";
 import { checkMailingDoc, isBlankMailing, letterFor, type MailingDoc } from "@/lib/mailing-doc";
 import { scheduleProblems, type ScheduleProblem } from "@/lib/mailing-schedule";
 import { toHtml, toText } from "@/lib/letter-format";
+import { staffCopy } from "@/lib/content/staff-interface";
 import { now } from "@/lib/now";
 import { logChange } from "./audit";
 import { query, transaction } from "./db";
@@ -19,7 +20,7 @@ import { checkStoredFilter, filterProblems } from "./stored-filters";
 
 export type MailingState = "draft" | "scheduled" | "sending" | "sent" | "cancelled";
 
-export type MailingAttachmentSummary = { id: number; filename: string; size: number };
+export type MailingAttachmentSummary = { id: number; filename: string; contentType: string; size: number };
 
 export type WrittenMailing = {
   id: number;
@@ -66,7 +67,7 @@ const MAX_ATTACHMENT_BYTES = 4 * 1024 * 1024;
 const SELECT_WRITTEN = `
   SELECT m.id::int AS id, m.filter, m.subject, m.body, m.ask, m.created_by AS "createdBy", m.sent_from AS "sentFrom",
     m.from_name AS "fromName", m.due_at AS "dueAt", m.state, m.version,
-    coalesce((SELECT json_agg(json_build_object('id', a.id, 'filename', a.filename, 'size', octet_length(a.content))
+    coalesce((SELECT json_agg(json_build_object('id', a.id, 'filename', a.filename, 'contentType', a.content_type, 'size', octet_length(a.content))
                 ORDER BY a.id) FROM mailing_attachments a WHERE a.mailing_id = m.id), '[]') AS attachments
   FROM mailings m WHERE m.body IS NOT NULL`;
 
@@ -195,6 +196,18 @@ export async function removeAttachment(id: number, version: number, attachmentId
     await query("DELETE FROM mailing_attachments WHERE id = $1 AND mailing_id = $2", [attachmentId, id], db);
     return { saved: true, version: row.version };
   });
+}
+
+/** One of a mailing's files, to open, or undefined for none. */
+export async function attachmentFile(
+  mailingId: number,
+  attachmentId: number,
+): Promise<{ filename: string; contentType: string; content: Buffer } | undefined> {
+  const [file] = await query<{ filename: string; contentType: string; content: Buffer }>(
+    `SELECT filename, content_type AS "contentType", content FROM mailing_attachments WHERE id = $2 AND mailing_id = $1`,
+    [mailingId, attachmentId],
+  );
+  return file;
 }
 
 /** A mailing's files, as they're sent. */
@@ -346,7 +359,8 @@ export function emailFor(mailing: WrittenMailing, recipient: PoliticianRecipient
 /**
  * Sends `to`, a staff member, one recipient's email of a mailing, as that
  * recipient would get it, attachments and all, whatever the recipient's
- * permissions; by Postmark, from the name the mailing is from.
+ * permissions; by Postmark, addressed to the recipient's name at the staff
+ * member's address.
  */
 export async function sendTestCopy(
   mailing: WrittenMailing,
@@ -357,8 +371,8 @@ export async function sendTestCopy(
   const email = emailFor(mailing, recipient);
   return channel.send(
     {
-      from: { name: mailing.fromName || to, address: to },
-      to,
+      from: { name: staffCopy.mailingPages.testFromName, address: to },
+      to: { name: recipient.name, address: to },
       ...email,
       attachments: await attachmentsOf(mailing.id),
     },

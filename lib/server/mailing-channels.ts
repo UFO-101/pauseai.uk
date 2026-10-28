@@ -11,9 +11,9 @@ import { headerName, notifyDomain, type Attachment } from "./outside-services/po
 
 /** One message, as a channel sends it. */
 export type ChannelMessage = {
-  /** The name it's from, and the account it's sent from. */
+  /** The name it's from, and the account it's sent from; and who it's to. Each always has a name. */
   from: { name: string; address: string };
-  to: string;
+  to: { name: string; address: string };
   subject: string;
   html: string;
   text: string;
@@ -47,8 +47,8 @@ export const postmarkEmail: MailingChannel = {
     send(
       {
         From: `"${headerName(message.from.name)}" <noreply@${notifyDomain()}>`,
-        ReplyTo: message.from.address,
-        To: message.to,
+        ReplyTo: `"${headerName(message.from.name)}" <${message.from.address}>`,
+        To: `"${headerName(message.to.name)}" <${message.to.address}>`,
         Subject: message.subject,
         TextBody: message.text,
         HtmlBody: message.html,

@@ -4,7 +4,7 @@ import { mailingChannel, postmarkEmail } from "./mailing-channels";
 describe("postmarkEmail", () => {
   const message = {
     from: { name: "Jo", address: "jo@pauseai.uk" },
-    to: "a@b.c",
+    to: { name: "A", address: "a@b.c" },
     subject: "",
     html: "",
     text: "",

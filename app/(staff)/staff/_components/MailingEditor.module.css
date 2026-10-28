@@ -80,9 +80,8 @@
   list-style: none;
 }
 
-/* A lozenge looks like what it puts in: a field's chip, or a part's box. */
-.fieldLozenge,
-.conditionLozenge {
+/* A lozenge looks like what it puts in: a field's chip. */
+.fieldLozenge {
   padding: var(--space-1) var(--space-3);
   border: 1px solid transparent;
   font: inherit;
@@ -90,9 +89,6 @@
   font-weight: 600;
   text-align: left;
   cursor: grab;
-}
-
-.fieldLozenge {
   border-radius: var(--radius-pill);
   background: var(--status-blue-bg);
   color: var(--status-blue);
@@ -107,15 +103,7 @@
   cursor: not-allowed;
 }
 
-.conditionLozenge {
-  border: 1px dashed var(--status-green);
-  border-radius: var(--radius-md);
-  background: var(--status-green-bg);
-  color: var(--status-green);
-}
-
-.fieldLozenge:not([aria-disabled="true"]):hover,
-.conditionLozenge:hover {
+.fieldLozenge:not([aria-disabled="true"]):hover {
   border-color: var(--accent);
 }
 
@@ -167,6 +155,15 @@
   background: var(--status-green-bg);
 }
 
+.onlyFor[data-except] {
+  border-color: var(--text-secondary);
+  background: var(--surface-2);
+}
+
+.onlyFor[data-except] .onlyForLabel {
+  color: var(--text-secondary);
+}
+
 .editor .onlyForLabel {
   margin: 0 0 var(--space-1);
   font-size: var(--text-xs);
@@ -207,5 +204,105 @@
 
 .picker button:hover,
 .picker button:focus-visible {
+  background: var(--table-stripe);
+}
+
+/* The two menus of who a part is for, one over the other, each in the
+   look of the box it makes round a part. */
+.partMenus {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-2);
+}
+
+.onlyButton,
+.exceptButton {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-1) var(--space-3);
+  border: 1px dashed var(--status-green);
+  border-radius: var(--radius-md);
+  background: var(--status-green-bg);
+  color: var(--status-green);
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* Except is grey, as are the parts it makes. */
+.exceptButton {
+  border-color: var(--text-secondary);
+  background: var(--surface-2);
+  color: var(--text-secondary);
+}
+
+.onlyButton:hover,
+.exceptButton:hover {
+  border-style: solid;
+}
+
+/* A menu's answers, hung under its button where the browser can anchor it. */
+.partMenu {
+  max-width: min(22rem, calc(100vw - 2 * var(--space-4)));
+  max-height: calc(100dvh - 2 * var(--space-4));
+  margin: 0;
+  padding: var(--space-2);
+  overflow: auto;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  box-shadow: 0 6px 24px rgb(var(--text-rgb) / 0.15);
+  color: var(--text);
+  font-size: var(--text-sm);
+}
+
+@supports (position-area: bottom) {
+  .partMenu {
+    margin: var(--space-2) 0 0;
+    position-area: bottom span-left;
+    position-try-fallbacks: flip-inline;
+  }
+}
+
+.partMenu ul {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* An ask, which opens its answers. */
+.toAsk::after {
+  content: " ›" / "";
+  color: var(--text-secondary);
+}
+
+.partMenu .back {
+  width: auto;
+  color: var(--text-secondary);
+}
+
+.askTitle {
+  margin: var(--space-1) var(--space-3) var(--space-1);
+  font-weight: 600;
+}
+
+.partMenu button {
+  display: block;
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.partMenu button:hover,
+.partMenu button:focus-visible {
   background: var(--table-stripe);
 }
