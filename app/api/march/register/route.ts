@@ -47,8 +47,9 @@ async function register(input: unknown): Promise<MarchRegisterResult> {
   const result = await addLumaGuest(event, { name: registration.name, email: registration.email });
   // Kept even when Luma didn't take them: they gave us their details. If it
   // can't be kept, Luma's answer still stands.
-  await addFormEntry("march-2026-11", registration, { eventId: event, status: result.status }).catch((error: Error) =>
-    console.error(`[march] Couldn't keep the sign-up: ${error.message}`),
+  await addFormEntry("march-2026-11", registration, { eventId: event, status: result.status }).then(
+    (id) => console.log(`[march] Kept sign-up ${id}: Luma ${result.status}.`),
+    (error: Error) => console.error(`[march] Couldn't keep the sign-up: ${error.message}`),
   );
   switch (result.status) {
     case "added":

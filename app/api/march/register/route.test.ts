@@ -26,6 +26,7 @@ const entries = () =>
 
 beforeEach(() => {
   vi.stubEnv("LUMA_API_KEY", "key");
+  vi.spyOn(console, "log").mockImplementation(() => {});
   vi.spyOn(console, "error").mockImplementation(() => {});
   vi.spyOn(console, "warn").mockImplementation(() => {});
 });
@@ -73,6 +74,7 @@ describeWithDatabase("POST /api/march/register", () => {
         status: "added",
       },
     ]);
+    expect(console.log).toHaveBeenCalledWith(expect.stringMatching(/^\[march\] Kept sign-up \d+: Luma added\.$/));
     // And they're a supporter.
     expect(await query("SELECT matched_value FROM supporter_links WHERE form_entry_id IS NOT NULL")).toEqual([
       { matched_value: "testy@example.org" },
