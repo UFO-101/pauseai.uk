@@ -173,11 +173,8 @@ export function supporterId(id: string): number | undefined {
 export type SupportersSearch = {
   q: string;
   activity: string[];
-  /** Each "blocked", or "<channel>:<topic>:<reason>" (an email one also "<topic>:<reason>"). */
+  /** Each "email:blocked", or "<channel>:<topic>", with ":<answer>" or ":<reason>" after it, for one. */
   subscription: string[];
-  /** "yes" or "no". */
-  phone: string;
-  email: string;
   /** Luma event IDs. */
   event: string[];
   /** A campaign's slug; with `wrote` "no", those who didn't write in it. */
@@ -198,8 +195,8 @@ export type SupportersSearch = {
 export function supportersSearch(
   params: Partial<Record<keyof SupportersSearch, ParamValue>>,
 ): SupportersSearch & { filter: SupporterFilter } {
-  const [q, phone, email, campaign, wrote, near, within, sort, dir, page, erased] = (
-    ["q", "phone", "email", "campaign", "wrote", "near", "within", "sort", "dir", "page", "erased"] as const
+  const [q, campaign, wrote, near, within, sort, dir, page, erased] = (
+    ["q", "campaign", "wrote", "near", "within", "sort", "dir", "page", "erased"] as const
   ).map((name) => firstOf(params[name]));
   const [activity, subscription, event, country] = (["activity", "subscription", "event", "country"] as const).map(
     (name) => valuesOf(params[name]),
@@ -218,8 +215,6 @@ export function supportersSearch(
     search: q.trim() || undefined,
     activity: badges,
     subscription: states,
-    phone: yesOrNo(phone),
-    email: yesOrNo(email),
     event: events,
     campaign: campaignBySlug(campaign)?.slug,
     wrote: campaignBySlug(campaign) ? wrote !== "no" : undefined,
@@ -234,8 +229,6 @@ export function supportersSearch(
     q,
     activity,
     subscription,
-    phone,
-    email,
     event,
     campaign,
     wrote,

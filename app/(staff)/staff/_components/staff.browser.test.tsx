@@ -2611,10 +2611,8 @@ describe("SupportersTable", () => {
       />,
     );
     await expect.element(page.getByText(copy.total(120))).toBeVisible();
-    await expect.element(page.getByRole("cell", { name: `jane.e@example.org ${copy.moreEmails(1)}` })).toBeVisible();
-    // The newest number we may use: none of Jane's, Sam's as a volunteer.
-    await expect.element(page.getByRole("cell", { name: "+447700900003" })).toBeVisible();
-    await expect.element(page.getByRole("cell", { name: "+447700900001" })).not.toBeInTheDocument();
+    // No email or phone column without the Subscriptions filter.
+    expect(page.getByText(copy.columns.email, { exact: true }).all()).toHaveLength(0);
     expect(await downloads()).toEqual([
       "/staff/supporters/download?q=j&format=csv",
       "/staff/supporters/download?q=j&format=json",
@@ -2625,7 +2623,6 @@ describe("SupportersTable", () => {
       .element(page.getByRole("link", { name: "Jane Example" }))
       .toHaveAttribute("href", "/staff/supporters/7");
     await expect.element(page.getByRole("link", { name: copy.noName })).toHaveAttribute("href", "/staff/supporters/8");
-    await expect.element(page.getByText(copy.moreEmails(1))).toBeVisible();
     await expect.element(page.getByText(copy.subscriptions.blocked)).toBeVisible();
     await expect.element(page.getByRole("cell", { name: "1 Mar 2026" }).first()).toBeVisible();
     await expect
@@ -3504,13 +3501,11 @@ describe("each list's download values and contact cards", () => {
       phone: "+447700900001",
       place: { name: "Leeds", basis: "postcode" as const, given: "LS1", country: "england" },
     };
-    expect(supporterContact(placed)).toMatchObject({
-      phones: ["+447700900001"],
-      address: { locality: "Leeds", country: staffCopy.countries.england },
-    });
-    expect(supporterContact({ ...sam, phone: null, email: null, place: null })).toMatchObject({
+    // Without the Subscriptions filter, a card has no address or number.
+    expect(supporterContact({ subscription: [] })(placed)).toMatchObject({
+      emails: [],
       phones: [],
-      emails: sam.emails,
+      address: { locality: "Leeds", country: staffCopy.countries.england },
     });
   });
 });
@@ -3801,7 +3796,6 @@ describe("SupporterFilters", () => {
       copy.filters.eventChoice("Oxford talk", "12 Oct 2026"),
       "/staff/supporters?event=evt-2",
     ]);
-    expect(links).toContainEqual([copy.filters.phone.no, "/staff/supporters?phone=no"]);
     // Except offers the filters that repeat, each choice to leave out.
     await menu(staffCopy.filters.except);
     expect([...document.querySelectorAll("#filter-except details > summary")].map((p) => p.textContent)).toEqual([

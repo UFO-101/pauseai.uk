@@ -146,8 +146,6 @@ export const staffCopy = {
     filters: {
       search: "Name, email or phone",
       // Whether we have a phone number, or an email, for them.
-      phone: { yes: "Has a phone number", no: "No phone number" },
-      email: { yes: "Has an email", no: "No email" },
       // The Near filter: a postcode or a town, and how far from it.
       near: "Near",
       nearPlaceholder: "Postcode or town",
@@ -193,7 +191,6 @@ export const staffCopy = {
       wrote: "Wrote",
     },
     noName: "(no name)",
-    moreEmails: (n: number) => `+${n}`,
     // The badges: the sources a supporter is in, and what they did there.
     badges: {
       lumaContact: "Luma contact",

@@ -150,9 +150,6 @@ export type SupporterFilter = {
   activity?: SupporterBadge[];
   /** Has any of these answers about a topic by a channel, or is blocked, at any of their addresses or numbers. */
   subscription?: ContactState[];
-  /** Whether we have a phone number for them we may use, and an email. */
-  phone?: boolean;
-  email?: boolean;
   /** Registered for any of these Luma events, by ID, but for declined. */
   event?: string[];
   /** Wrote a letter in this campaign, by slug; or, with `wrote` false, never did. */

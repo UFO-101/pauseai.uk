@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
         filters: filterWords(supporterFilters(search, events, near), supporterFiltersOf(search), "q"),
         columns: supporterColumns(search),
         rows: supporters,
-        contact: supporterContact,
+        contact: supporterContact(search),
       };
     },
     "download supporters",

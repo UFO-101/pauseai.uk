@@ -220,8 +220,6 @@ export async function listSupporters(
   where.push(...anyOf(filter, add));
   // What's left out: a filter's condition not true, so one with no value, such as no nation, is kept.
   if (filter.not) where.push(...anyOf(filter.not, add).map((condition) => `(${condition}) IS NOT TRUE`));
-  if (filter.phone !== undefined) where.push(`${USABLE_PHONE} IS ${filter.phone ? "NOT " : ""}NULL`);
-  if (filter.email !== undefined) where.push(`coalesce(cardinality(s.emails), 0) ${filter.email ? ">" : "="} 0`);
   if (filter.campaign) {
     where.push(
       `${filter.wrote ? "" : "NOT "}EXISTS (SELECT 1 FROM supporter_links k JOIN supporter_letters l ON l.entry_id = k.form_entry_id

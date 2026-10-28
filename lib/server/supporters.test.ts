@@ -417,7 +417,6 @@ describeWithDatabase("listSupporters and getSupporter", () => {
        VALUES ('jane@example.com', 'luma-calendar', 'luma-webhook', 'w3', '2026-10-15T00:00:00Z')`,
     );
     expect(await jane()).toMatchObject({ phone: null, phones: ["+447700900001"] });
-    expect(await names({ phone: true })).toEqual([]);
     const lumaPhone = { channel: "phone", topic: "luma-calendar" } as const;
     expect(await names({ subscription: [{ ...lumaPhone, reason: "unsubscribed" }] })).toEqual(["Jane"]);
     expect(await names({ subscription: [{ ...lumaPhone, reason: "following" }] })).toEqual([]);
@@ -429,7 +428,6 @@ describeWithDatabase("listSupporters and getSupporter", () => {
     });
     await linkSupporters();
     expect(await jane()).toMatchObject({ phone: "+447700900001" });
-    expect(await names({ phone: true })).toEqual(["Jane"]);
     const volunteered = { channel: "phone", topic: "volunteering", reason: "volunteered" } as const;
     expect(await names({ subscription: [volunteered] })).toEqual(["Jane"]);
     expect(
@@ -444,12 +442,8 @@ describeWithDatabase("listSupporters and getSupporter", () => {
     ]);
   });
 
-  it("filters by phone and email, events, campaigns, nation and nearness, and places each", async () => {
+  it("filters by events, campaigns, nation and nearness, and places each", async () => {
     await people();
-    expect(await names({ phone: true })).toEqual(["Jane"]);
-    expect(await names({ phone: false })).toEqual(["Sam", "Pat", "Old"]);
-    expect(await names({ email: true })).toEqual(["Sam", "Jane", "Pat", "Old"]);
-    expect(await names({ email: false })).toEqual([]);
     expect(await names({ event: ["evt-1"] })).toEqual(["Sam", "Jane", "Old"]);
     expect(await names({ event: ["evt-none", "evt-1"] })).toEqual(["Sam", "Jane", "Old"]);
     expect(await names({ event: ["evt-none"] })).toEqual([]);

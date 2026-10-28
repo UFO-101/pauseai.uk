@@ -32,12 +32,13 @@ function nearWords(text: string, near: SupportersPage["near"]): string {
 
 /**
  * The supporters list's filters, each named after the column it filters
- * on, in the columns' order: whether we have their email and phone; their
- * nation and how near somewhere they are; their activities and
- * subscriptions; the events they registered for, from `events`; and
- * whether they wrote in a campaign. A subscription's choices are each
- * topic, then blocked, and a topic's answers in its chip's second half. Activities, subscriptions, nations and
- * events can each be chosen more than once.
+ * on, in the columns' order: their nation and how near somewhere they
+ * are; their activities and subscriptions; the events they registered for,
+ * from `events`; and whether they wrote in a campaign. A subscription's
+ * choices are each topic, then blocked, and a topic's answers in its
+ * chip's second half; one by email or phone shows that column.
+ * Activities, subscriptions, nations and events can each be chosen more
+ * than once.
  */
 export function supporterFilters(
   search: Pick<SupportersSearch, "near">,
@@ -47,22 +48,6 @@ export function supporterFilters(
   const copy = staffCopy.supporters.filters;
   const { columns } = staffCopy.supporters;
   return [
-    {
-      name: "email",
-      label: columns.email,
-      options: [
-        { value: "yes", label: copy.email.yes },
-        { value: "no", label: copy.email.no },
-      ],
-    },
-    {
-      name: "phone",
-      label: columns.phone,
-      options: [
-        { value: "yes", label: copy.phone.yes },
-        { value: "no", label: copy.phone.no },
-      ],
-    },
     {
       name: "country",
       label: staffCopy.politician.country,
