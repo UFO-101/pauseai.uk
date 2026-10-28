@@ -1161,7 +1161,7 @@ describe("PoliticianDetails", () => {
         await expect.element(record).not.toBeInTheDocument();
         await expect.element(page.getByText(`${staffCopy.politician.source} ${source}`)).toBeVisible();
         expect(page.getByRole("heading", { level: 1 }).element().textContent).toBe(
-          `${MP.name}${staffCopy.politicians.testMp}`,
+          `${MP.name}${staffCopy.politicians.flags.test}`,
         );
       }
       await unmount();
@@ -1944,7 +1944,7 @@ describe("PoliticianTable", () => {
     await expect
       .element(page.getByRole("link", { name: "Polly Placeholder" }))
       .toHaveAttribute("href", "/staff/politicians/7");
-    await expect.element(page.getByText(staffCopy.politicians.testMp).first()).toBeVisible();
+    await expect.element(page.getByText(staffCopy.politicians.flags.test).first()).toBeVisible();
     await expect.element(page.getByText(staffCopy.politicians.emailBlocked).first()).toBeVisible();
     await expect.element(page.getByRole("cell", { name: staffCopy.houses.lords }).first()).toBeVisible();
     const cells = (name: string) =>
@@ -1959,9 +1959,9 @@ describe("PoliticianTable", () => {
     const flags = staffCopy.politicians.flags;
     expect(cells("Polly Placeholder").slice(4, 6)).toEqual([staffCopy.personStatuses.in_office, flags.important]);
     expect(cells("Polly Placeholder").slice(7, 9)).toEqual(["4", "1"]);
-    // Airtable's markers as lozenges.
-    expect(cells("Nora Nothing")[5]).toBe(`${flags.connection}${flags.removed}`);
-    expect(cells("Testy McTestface MP")[5]).toBe("");
+    // Airtable's markers as lozenges, and a test politician's.
+    expect(cells("Nora Nothing")[5]).toBe(`${flags.connection}${flags.removed}${flags.test}`);
+    expect(cells("Testy McTestface MP")[5]).toBe(flags.test);
     const answers = (name: string) =>
       page
         .getByRole("row")
@@ -2527,7 +2527,7 @@ describe("LettersTable", () => {
       .toBeInTheDocument();
     await expect.element(page.getByText(/strange/)).toBeInTheDocument();
     await expect.element(page.getByText('{"type":"HardBounce"}', { exact: false })).toBeInTheDocument();
-    expect(page.getByText(staffCopy.politicians.testMp).all()).toHaveLength(1);
+    expect(page.getByText(staffCopy.politicians.flags.test).all()).toHaveLength(1);
     await expect.element(page.getByRole("cell", { name: "13 Oct 2026, 09:00", exact: true })).toBeInTheDocument();
   });
 

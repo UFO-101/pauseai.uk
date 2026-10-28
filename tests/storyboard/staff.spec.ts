@@ -284,7 +284,9 @@ test("staff log in, set a status that shows on /campaigns, and log out", async (
   if (!(await politicians.first().isVisible())) await page.locator("nav details > summary").click();
   await politicians.filter({ visible: true }).click();
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(staffCopy.politicians.title);
-  await expect(page.getByRole("link", { name: "Testy McTestface MP" })).toBeVisible();
+  // The test politicians are left out until the Marked filter asks for them.
+  await expect(page.getByRole("link", { name: "Polly Placeholder" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Testy McTestface MP" })).toHaveCount(0);
   await frame(page, "the politicians list");
 
   // Signed on their page, in the ask's row of the panel beside their details, with a note.
@@ -468,12 +470,12 @@ test("the members import copies the UK members, skips one erased, and finds noth
 test("a politician's own page", async ({ page, request, flowDatabase }) => {
   await syncPoliticians(request, BASE);
   await logIn(page, flowDatabase);
-  await page.goto(`${BASE}/staff/politicians`);
+  await page.goto(`${BASE}/staff/politicians?flag=test`);
   await page.getByRole("link", { name: "Testy McTestface MP" }).click();
   // Their name, tagged as a test MP, and what they are; the box of what we hold; nothing in their history
   // yet.
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(
-    `Testy McTestface MP${staffCopy.politicians.testMp}`,
+    `Testy McTestface MP${staffCopy.politicians.flags.test}`,
   );
   await expect(
     page.getByText(staffCopy.politician.role(staffCopy.politician.roles.commons, "Testshire", true)),

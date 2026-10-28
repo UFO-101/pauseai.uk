@@ -21,7 +21,7 @@ type Props = {
   search?: Params;
 };
 
-/** Airtable's markers on them, and whether their record has gone from it, as lozenges. */
+/** Airtable's markers on them, whether their record has gone from it, and whether they're ours for testing, as lozenges. */
 function Marks({ politician }: { politician: Politician }) {
   const { flags } = staffCopy.politicians;
   return (
@@ -29,6 +29,7 @@ function Marks({ politician }: { politician: Politician }) {
       {politician.importantTarget && <Tag tone="amber">{flags.important}</Tag>}
       {politician.personalConnection && <Tag>{flags.connection}</Tag>}
       {politician.airtableRemovedAt && <Tag tone="amber">{flags.removed}</Tag>}
+      {politician.isTest && <Tag>{flags.test}</Tag>}
     </>
   );
 }
@@ -40,6 +41,7 @@ const marks = (p: Politician) => {
     p.importantTarget && flags.important,
     p.personalConnection && flags.connection,
     p.airtableRemovedAt && flags.removed,
+    p.isTest && flags.test,
   ]
     .filter(Boolean)
     .join("; ");
@@ -88,7 +90,6 @@ export function politicianColumns(asks: Ask[], search: Params = {}): ListColumn<
       cell: (p) => (
         <>
           <Link href={`/staff/politicians/${p.id}`}>{p.name}</Link>{" "}
-          {p.isTest && <Tag>{staffCopy.politicians.testMp}</Tag>}
           {p.emailBlocked && <Tag tone="amber">{staffCopy.politicians.emailBlocked}</Tag>}
         </>
       ),

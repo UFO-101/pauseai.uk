@@ -60,7 +60,7 @@ export const letterColumns: ListColumn<LetterSummary>[] = [
     cell: (l) => (
       <>
         <Link href={`/staff/politicians/${l.politicianId}`}>{l.mpName}</Link>{" "}
-        {l.isTest && <Tag>{staffCopy.politicians.testMp}</Tag>}
+        {l.isTest && <Tag>{staffCopy.politicians.flags.test}</Tag>}
       </>
     ),
   },

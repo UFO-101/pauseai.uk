@@ -471,6 +471,7 @@ export const staffCopy = {
       important: "Important target",
       connection: "Personal connection",
       removed: "No longer in Airtable",
+      test: "Test politician",
     } as Record<string, string>,
     ask: "Ask",
     // An answer to the ask chosen, in the second half of the ask's chip, its menu named after the ask. With no
@@ -488,7 +489,6 @@ export const staffCopy = {
     otherHouses: (n: number) => `${n} ${n === 1 ? "match" : "matches"} found for politicians in other houses`,
     // Over the nearest names, when a search finds no one.
     closest: "No one matches exactly. These are close matches:",
-    testMp: "Test",
     // The counts in the list: letters written to them, and how many of those got a reply.
     columns: {
       letters: "Letters",

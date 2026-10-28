@@ -409,7 +409,7 @@ export default function PoliticianDetails({
       <header className={styles.heading}>
         <h1>
           {politician.name}
-          {politician.isTest && <Tag>{staffCopy.politicians.testMp}</Tag>}
+          {politician.isTest && <Tag>{staffCopy.politicians.flags.test}</Tag>}
           {politician.importantTarget && <Tag tone="amber">{copy.importantTarget}</Tag>}
           {politician.personalConnection && <Tag>{copy.personalConnection}</Tag>}
         </h1>
