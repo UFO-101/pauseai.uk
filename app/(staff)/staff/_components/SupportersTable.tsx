@@ -2,7 +2,8 @@ import Link from "next/link";
 import { Muted } from "@/components/ui/Text";
 import { staffCopy } from "@/lib/content/staff-interface";
 import type { SupportersPage } from "@/lib/server/supporters";
-import { filtersPath, pageParam, type Params, type SupportersSearch } from "@/lib/staff-search";
+import { campaignBySlug } from "@/lib/email-your-mp";
+import { anyAndNone, filtersPath, pageParam, valuesOf, type Params, type SupportersSearch } from "@/lib/staff-search";
 import { staffDate } from "@/lib/staff-time";
 import { parseSort, sortHref } from "@/lib/staff-sort";
 import {
@@ -36,14 +37,23 @@ function Place({ place }: { place: SupporterPlaceName }) {
   return place.basis === "event" ? <Muted>{place.name}</Muted> : place.name;
 }
 
+/** A registration's status in words: Luma's, or registered for an approved one. */
+const registered = (status: string) => copy.detail.statuses[status] ?? copy.detail.registered;
+
 /**
  * The supporters list's columns: who they are (their name; their newest
  * email, and how many others they have; their newest phone; where they
  * are); what they are to us and what we'd email them about, as lozenges;
  * how many events and letters; and when we first saw them and last saw
- * them do something.
+ * them do something. The Event filter, finding those at events, adds how
+ * each registration for them stands, named when there's more than one
+ * event; the Campaign filter, finding those who wrote, when they first
+ * wrote in it. A download has the same columns.
  */
 export function supporterColumns(search: SupportersSearch): ListColumn<SupporterRow>[] {
+  const [events] = anyAndNone(valuesOf(search.event), (values) => values);
+  const named = (events?.length ?? 0) > 1;
+  const wrote = Boolean(campaignBySlug(search.campaign)) && search.wrote !== "no";
   const sort = parseSort(SUPPORTER_SORTS, "active", search.sort, search.dir);
   const heading = (key: SupporterSort, label: string) => (
     <SortHeading
@@ -55,7 +65,7 @@ export function supporterColumns(search: SupportersSearch): ListColumn<Supporter
       {label}
     </SortHeading>
   );
-  return [
+  const columns: (ListColumn<SupporterRow> | false)[] = [
     {
       key: "name",
       label: copy.columns.name,
@@ -110,6 +120,24 @@ export function supporterColumns(search: SupportersSearch): ListColumn<Supporter
       text: (s) => s.events,
       cell: (s) => s.events,
     },
+    Boolean(events) && {
+      key: "registrations",
+      label: copy.columns.registrations,
+      text: (s) =>
+        (s.registrations ?? [])
+          .map((r) => (named ? `${r.event}: ${registered(r.status)}` : registered(r.status)))
+          .join("; "),
+      cell: (s) => (
+        <ul className={styles.registrations}>
+          {(s.registrations ?? []).map((r, i) => (
+            <li key={i}>
+              {named && <Muted>{r.event}: </Muted>}
+              {registered(r.status)}
+            </li>
+          ))}
+        </ul>
+      ),
+    },
     {
       key: "letters",
       label: copy.columns.letters,
@@ -117,6 +145,13 @@ export function supporterColumns(search: SupportersSearch): ListColumn<Supporter
       short: true,
       text: (s) => s.letters,
       cell: (s) => s.letters,
+    },
+    wrote && {
+      key: "wrote",
+      label: copy.columns.wrote,
+      short: true,
+      text: (s) => s.wroteAt ?? null,
+      cell: (s) => s.wroteAt && staffDate(s.wroteAt),
     },
     {
       key: "first",
@@ -135,6 +170,7 @@ export function supporterColumns(search: SupportersSearch): ListColumn<Supporter
       cell: (s) => s.lastActiveAt && staffDate(s.lastActiveAt),
     },
   ];
+  return columns.filter((column) => column !== false);
 }
 
 /**

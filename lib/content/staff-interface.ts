@@ -215,6 +215,10 @@ export const staffCopy = {
       lastActive: "Last activity",
       events: "Luma events",
       letters: "Letters to MP",
+      // Added by the Event filter: how their registration for the event stands, each event named when there are several.
+      registrations: "⁂ At the event",
+      // Added by the Campaign filter: when they first wrote in the campaign.
+      wrote: "⁂ Wrote",
     },
     noName: "(no name)",
     moreEmails: (n: number) => `+${n}`,

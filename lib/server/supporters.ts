@@ -247,8 +247,38 @@ export async function listSupporters(
   );
   const theirs = (row: SupporterSummary) =>
     permissions.filter((p) => (p.channel === "email" ? row.emails : row.phones).includes(p.address));
+  const ids = rows.map((row) => row.id);
+  // For the columns the Event and Campaign filters add: the page's registrations for the events chosen, and when
+  // each first wrote in the campaign.
+  const [registrations, letters] = await Promise.all([
+    filter.event
+      ? query<{ id: number; event: string; status: string }>(
+          `SELECT k.supporter_id::int AS id, e.name AS event, g.approval_status AS status
+           FROM luma_guests g JOIN supporter_links k ON k.luma_user_id = g.user_id JOIN luma_events e ON e.id = g.event_id
+           WHERE k.supporter_id = ANY($1) AND g.event_id = ANY($2) ORDER BY e.start_at, e.id`,
+          [ids, filter.event],
+        )
+      : [],
+    filter.campaign && filter.wrote
+      ? query<{ id: number; at: string }>(
+          `SELECT k.supporter_id::int AS id, min(f.created_at) AS at
+           FROM supporter_links k JOIN supporter_letters l ON l.entry_id = k.form_entry_id
+           JOIN form_entries f ON f.id = l.entry_id
+           WHERE k.supporter_id = ANY($1) AND l.campaign = $2 GROUP BY k.supporter_id`,
+          [ids, filter.campaign],
+        )
+      : [],
+  ]);
   return {
-    supporters: rows.map((row) => ({ ...row, permissions: theirs(row) })),
+    supporters: rows.map((row) => ({
+      ...row,
+      permissions: theirs(row),
+      ...(filter.event && {
+        registrations: registrations.filter((r) => r.id === row.id).map(({ event, status }) => ({ event, status })),
+      }),
+      // The filter found only those who wrote in it, so every row has a letter.
+      ...(filter.campaign && filter.wrote && { wroteAt: letters.find((l) => l.id === row.id)!.at }),
+    })),
     total,
     pages: Math.max(1, Math.ceil(total / SUPPORTERS_PAGE_SIZE)),
     ...(near !== undefined && { near }),

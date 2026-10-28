@@ -444,6 +444,22 @@ describeWithDatabase("listSupporters and getSupporter", () => {
     const [{ campaign }] = await query<{ campaign: string }>("SELECT campaign FROM supporter_letters LIMIT 1");
     expect(await names({ campaign, wrote: true })).toEqual(["Pat"]);
     expect(await names({ campaign, wrote: false })).toEqual(["Sam", "Jane", "Old"]);
+    // The Event filter's rows have their registrations for its events and how each stands; the Campaign filter's
+    // writers, when they first wrote in it. Without the filter, neither.
+    await query("UPDATE luma_guests SET approval_status = 'waitlist' WHERE user_id = 'usr-2'");
+    const at = await listSupporters({ sort: "name", dir: "asc", page: 1, event: ["evt-1", "evt-none"] });
+    expect(at.supporters.map((s) => [s.name, s.registrations])).toEqual([
+      ["Jane", [{ event: "evt-1", status: "approved" }]],
+      ["Old", [{ event: "evt-1", status: "approved" }]],
+      ["Sam", [{ event: "evt-1", status: "waitlist" }]],
+    ]);
+    expect(at.supporters[0]).not.toHaveProperty("wroteAt");
+    await query("UPDATE luma_guests SET approval_status = 'approved' WHERE user_id = 'usr-2'");
+    const writers = await listSupporters({ sort: "name", dir: "asc", page: 1, campaign, wrote: true });
+    expect(writers.supporters.map((s) => [s.name, s.wroteAt])).toEqual([["Pat", new Date("2026-06-01T09:00:00Z")]]);
+    const others = await listSupporters({ sort: "name", dir: "asc", page: 1, campaign, wrote: false });
+    expect(others.supporters[0]).not.toHaveProperty("wroteAt");
+    expect(others.supporters[0]).not.toHaveProperty("registrations");
     // Jane's postcode places her in Manchester; the others' events are in London.
     await query(
       `INSERT INTO postcode_places (postcode, latitude, longitude, place, country)

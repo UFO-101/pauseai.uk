@@ -58,7 +58,13 @@ export type SupporterPlaceName = {
 };
 
 /** One row of the list, with whether we'd contact each of their addresses and numbers about each topic. */
-export type SupporterRow = SupporterSummary & { permissions: ContactPermission[] };
+export type SupporterRow = SupporterSummary & {
+  permissions: ContactPermission[];
+  /** With the Event filter on, their registrations for the events it finds: each event's name and how it stands. */
+  registrations?: { event: string; status: string }[];
+  /** With the Campaign filter finding those who wrote, when they first wrote in it. */
+  wroteAt?: string;
+};
 
 /** What a supporter did, from any source: `kind` says what, `title` and `detail` which and how. */
 export type SupporterActivity = {

@@ -139,7 +139,12 @@ test("the supporters not at an event, by Except: the guest who declined it, and 
   await frame(page, "its chip's menu: the event, Only this instead, and Remove");
   await page.locator("[popover]:popover-open").getByRole("link", { name: staffCopy.filters.onlyInstead }).click();
   await expect(page.getByText(copy.total(4))).toBeVisible();
-  await frame(page, "only those at the London March: the four approved");
+  await expect(page.getByRole("columnheader", { name: copy.columns.registrations })).toBeVisible();
+  await expect(page.locator("tbody").getByText(copy.detail.registered).first()).toBeVisible();
+  await frame(
+    page,
+    "only those at the London March: the four approved, each one's registration in a column of its own",
+  );
 });
 
 test("a supporter's page: who they are, what they gave, their history, and an opt-out from Luma's webhook", async ({

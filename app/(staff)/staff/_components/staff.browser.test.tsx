@@ -78,7 +78,7 @@ import SupporterBadges, { supporterBadgeWords } from "./SupporterBadges";
 import SupporterDetails from "./SupporterDetails";
 import SupporterFilters from "./SupporterFilters";
 import LetterFilters from "./LetterFilters";
-import SupportersTable, { supporterContact } from "./SupportersTable";
+import SupportersTable, { supporterColumns, supporterContact } from "./SupportersTable";
 import type { ListColumn } from "./ui/ListFrame";
 import {
   exampleBlockedPermissions,
@@ -2652,6 +2652,54 @@ describe("SupportersTable", () => {
     );
     await expect.element(page.getByRole("cell", { name: "Leeds" })).toBeVisible();
     expect(page.getByText("Oxford").element().className).toMatch(/muted/);
+  });
+
+  it("adds how each stands at the events the Event filter finds, named when several, and when each wrote in its campaign", async () => {
+    const copy = staffCopy.supporters;
+    const [jane, sam] = exampleSupporterRows;
+    const rows = [
+      {
+        ...jane,
+        registrations: [
+          { event: "Leeds meetup", status: "approved" },
+          { event: "Oxford talk", status: "waitlist" },
+        ],
+        wroteAt: "2026-10-03T09:00:00Z",
+      },
+      sam,
+    ];
+    const search = supportersSearch({ event: ["evt-1", "evt-2", "!evt-3"], campaign: "support-sobel-bill" });
+    await render(<SupportersTable search={search} page={{ supporters: rows, total: 2, pages: 1 }} />);
+    await expect.element(page.getByRole("columnheader", { name: copy.columns.registrations })).toBeVisible();
+    await expect.element(page.getByText("Oxford talk:")).toBeVisible();
+    await expect.element(page.getByText(copy.detail.statuses.waitlist)).toBeVisible();
+    await expect.element(page.getByRole("columnheader", { name: copy.columns.wrote })).toBeVisible();
+    await expect.element(page.getByRole("cell", { name: "3 Oct 2026" })).toBeVisible();
+    // A download has them too.
+    const text = (columns: ReturnType<typeof supporterColumns>, key: string, row: (typeof rows)[number]) =>
+      columns.find((c) => c.key === key)!.text!(row);
+    const columns = supporterColumns(search);
+    expect(text(columns, "registrations", rows[0])).toBe(
+      `Leeds meetup: ${copy.detail.registered}; Oxford talk: ${copy.detail.statuses.waitlist}`,
+    );
+    expect(text(columns, "registrations", rows[1])).toBe("");
+    expect(text(columns, "wrote", rows[0])).toBe("2026-10-03T09:00:00Z");
+    expect(text(columns, "wrote", rows[1])).toBeNull();
+    // With one event, its status alone.
+    expect(text(supporterColumns(supportersSearch({ event: "evt-1" })), "registrations", rows[0])).toBe(
+      `${copy.detail.registered}; ${copy.detail.statuses.waitlist}`,
+    );
+    // Neither filter, only an event left out, those who didn't write, or a campaign we don't have: neither column.
+    for (const params of [
+      {},
+      { event: "!evt-1" },
+      { campaign: "support-sobel-bill", wrote: "no" },
+      { campaign: "no-such-campaign" },
+    ]) {
+      const keys = supporterColumns(supportersSearch(params)).map((c) => c.key);
+      expect(keys).not.toContain("registrations");
+      expect(keys).not.toContain("wrote");
+    }
   });
 
   it("sorts by a heading, reversing when clicked again, and marks the current one", async () => {
