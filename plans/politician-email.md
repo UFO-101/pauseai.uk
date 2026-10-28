@@ -34,9 +34,10 @@ Francis about a shared account (see the open questions).
    asks for the `gmail.send` and `gmail.readonly` scopes
    ([scopes](https://developers.google.com/workspace/gmail/api/auth/scopes)).
    `staff_accounts` stores the refresh token, encrypted, and the last
-   `historyId` read. A staff member connects from their account page,
-   or from "Sent from" on the new mailing page, which goes to Google
-   once and comes back to the mailing.
+   `historyId` read. A staff member connects from their own page, or
+   from "Sent from" on the new mailing page. Either goes to Google
+   through a route of its own, whose callback stores the token and
+   goes back to the page it started from.
 3. Add a Gmail channel. `send()` takes a backend, either Postmark or
    Gmail. Gmail allows about 2,000 emails a day per account
    ([limits](https://support.google.com/a/answer/166852)) and 60 a
@@ -96,7 +97,10 @@ Francis about a shared account (see the open questions).
    carry the old names (`supporter_letters_id_not_null` and so on), in
    the same migration.
 10. Staff pages:
-   - On your account page, connect or disconnect Gmail. The page says
+   - A new page of your own, which your email address in the sidebar
+     links to, holds your sessions (now `/staff/sessions`, linked
+     only when you have more than one) and your Gmail. On it, connect
+     or disconnect Gmail. The page says
      what the site reads in your mailbox, that any staff member can
      then send mailings from it, and how many emails you have sent
      today against the limit. Connecting from "Sent from" says the
