@@ -65,10 +65,12 @@
   margin-top: 0;
 }
 
-/* Nothing wider than this, so the grid's six columns (ui/Grid) don't
-   stretch past reading on a big monitor. With no weight of its own
-   (:where), so anything narrower, such as the login card, keeps its width. */
-:where(.content > *) {
+/* On a page laid out on the grid, nothing wider than this, so its six
+   columns (ui/Grid) don't stretch past reading on a big monitor. A page
+   without one, a list, is the window's width, its filters with its table.
+   With no weight of its own (:where), so anything narrower, such as the
+   login card, keeps its width. */
+:where(.content:has([data-grid]) > *) {
   max-width: 88rem;
 }
 

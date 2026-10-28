@@ -260,8 +260,9 @@ of the row it takes: a sixth, a third, a half, two-thirds or all (`span`
 1, 2, 3, 4 or 6). On two columns, a sixth takes one and anything wider takes the row, so a phone has two of the dashboard's tiles a row and one card. Items are as
 tall as what's in them; a grid of things of one kind side by side (the
 dashboard's tiles, the import jobs) is `even`, each as tall as its row.
-The content is never wider than 88rem, so the columns don't stretch on a
-big monitor.
+On a page laid out on the grid, the content is never wider than 88rem, so
+the columns don't stretch on a big monitor. A page with no grid, a list,
+takes the whole width, its filters as wide as its table.
 
 **Widths.** A component never sets its own `max-width` or `width`: the
 grid gives a box its width, and anything read line by line (a form, a
@@ -315,7 +316,7 @@ heading, the cell, and the value in a download. The frame draws:
   for finding a download's contacts on a phone);
 - the striped table. A short column (a house, a date, a count) never
   wraps, so the long ones take the room. The frame is as wide as the
-  page's column, past the content's 88rem, so a list wraps less on a big
+  page's column, past the grid's 88rem on a page with one, so a list wraps less on a big
   screen;
 - under it, with more than one page: "101–200 of 250", then Previous, the
   first and last pages and two either side of this one, and Next; on a

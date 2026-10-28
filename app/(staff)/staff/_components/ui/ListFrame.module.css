@@ -1,7 +1,7 @@
 /* A staff list: the bar over its table, the table, and the paging under it. */
 
-/* As wide as the page's column, past the content's width: a list's columns
-   wrap less on a big screen. */
+/* As wide as the page's column, past the grid's width on a page with one: a
+   list's columns wrap less on a big screen. */
 .frame {
   display: grid;
   gap: var(--space-2);
