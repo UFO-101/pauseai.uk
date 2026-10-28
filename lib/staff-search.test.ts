@@ -120,7 +120,7 @@ describe("supportersSearch", () => {
     const all = supportersSearch({
       q: " jane ",
       activity: ["registered", "member", "!letter"],
-      subscription: ["luma-calendar:unsubscribed", "!blocked"],
+      subscription: ["email:luma-calendar:unsubscribed", "!email:blocked"],
       phone: "yes",
       email: "no",
       event: ["evt-1", "evt-2", "!evt-3"],
@@ -156,12 +156,7 @@ describe("supportersSearch", () => {
     });
     expect(all.q).toBe(" jane ");
     expect(all.activity).toEqual(["registered", "member", "!letter"]);
-    // An email subscription as older links have it is typed as the filter's choices have it.
-    expect(all.subscription).toEqual(["email:luma-calendar:unsubscribed", "!blocked"]);
-    expect(supportersSearch({ subscription: ["!phone:march-day:ended", "x"] }).subscription).toEqual([
-      "!phone:march-day:ended",
-      "x",
-    ]);
+    expect(all.subscription).toEqual(["email:luma-calendar:unsubscribed", "!email:blocked"]);
     // A campaign alone is those who wrote in it; Near alone is within 10 miles.
     expect(supportersSearch({ campaign: "support-sobel-bill", near: "M1" }).filter).toMatchObject({
       wrote: true,

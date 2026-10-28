@@ -18,13 +18,6 @@ function reason(permission: ContactPermission): string {
 /** A topic's answer as a strip's colour: green we'd contact them, plain we wouldn't, amber we don't know. */
 const TONES = { yes: "green", no: "plain", unsure: "amber" } as const;
 
-/** A topic's name and an answer, in the words of its channel. */
-function words(permission: ContactPermission): { topic: string; answer: string } {
-  if (permission.channel === "email") return { topic: copy.topics[permission.topic], answer: copy[permission.send] };
-  const answers = { yes: copy.phoneYes, no: copy.phoneNo, unsure: copy.unsure };
-  return { topic: copy.phoneTopics[permission.topic], answer: answers[permission.send] };
-}
-
 /**
  * One topic, a strip: its name, the address or number it's for, and
  * whether we'd contact them about it, then why in a few words; how we know
@@ -32,7 +25,8 @@ function words(permission: ContactPermission): { topic: string; answer: string }
  */
 function Tile({ permission }: { permission: ContactPermission }) {
   const id = `why-${permission.channel}-${permission.topic}-${permission.address.replace(/\W/g, "-")}`;
-  const { topic, answer } = words(permission);
+  const topic = copy.topics[permission.channel][permission.topic];
+  const answer = copy.answers[permission.channel][permission.send];
   return (
     <li data-send={permission.send}>
       <Strip tone={TONES[permission.send]} icon={false}>

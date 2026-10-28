@@ -32,7 +32,7 @@ function subscriptions(permissions: ContactPermission[]): "blocked" | Gets[] {
 /** A topic's name in the list, by its channel. */
 function name({ channel, topic, sure }: Gets): string {
   const copy = staffCopy.supporters.subscriptions;
-  const named = channel === "email" ? copy.topics[topic] : copy.phoneTopics[topic];
+  const named = copy.topics[channel][topic];
   return sure ? named : copy.unsure(named);
 }
 

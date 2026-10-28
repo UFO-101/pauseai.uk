@@ -128,16 +128,6 @@ ORDER BY r.rank LIMIT 1
 $$;
 
 --
--- Name: email_permission(text, text); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION public.email_permission(for_topic text, for_address text) RETURNS TABLE(send text, reason text, at timestamp with time zone, source text)
-    LANGUAGE sql STABLE
-    AS $$
-SELECT * FROM contact_permission(for_topic, 'email', for_address)
-$$;
-
---
 -- Name: phone_number(text); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -1053,6 +1043,22 @@ UNION ALL
    FROM public.phone_permissions;
 
 --
+-- Name: contact_unsubscribes; Type: VIEW; Schema: public; Owner: -
+--
+
+CREATE VIEW public.contact_unsubscribes AS
+ SELECT o.channel,
+    o.list AS topic,
+    o.address,
+    d.send,
+    d.reason,
+    d.at,
+    d.source
+   FROM (public.opt_outs o
+     CROSS JOIN LATERAL public.contact_permission(o.list, o.channel, o.address) d(send, reason, at, source))
+  WHERE ((o.resubscribed_at IS NULL) AND (d.reason = 'unsubscribed'::text));
+
+--
 -- Name: email_blocks; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -1122,21 +1128,6 @@ ALTER TABLE public.email_sends ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY 
     NO MAXVALUE
     CACHE 1
 );
-
---
--- Name: email_unsubscribes; Type: VIEW; Schema: public; Owner: -
---
-
-CREATE VIEW public.email_unsubscribes AS
- SELECT o.list AS topic,
-    o.address,
-    d.send,
-    d.reason,
-    d.at,
-    d.source
-   FROM (public.opt_outs o
-     CROSS JOIN LATERAL public.email_permission(o.list, o.address) d(send, reason, at, source))
-  WHERE ((o.resubscribed_at IS NULL) AND (d.reason = 'unsubscribed'::text));
 
 --
 -- Name: form_entries_id_seq; Type: SEQUENCE; Schema: public; Owner: -

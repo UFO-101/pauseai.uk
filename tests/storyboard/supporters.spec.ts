@@ -315,7 +315,7 @@ test("the list says what each supporter gets, and filters by it", async ({ page,
   await expect(page.getByRole("columnheader", { name: copy.columns.subscriptions })).toBeVisible();
   await frame(page, "the list, with what each supporter gets by topic");
 
-  await addFilter(page, copy.columns.subscriptions, copy.filters.states["luma-calendar"].unsubscribed);
+  await addFilter(page, copy.columns.subscriptions, copy.filters.states.email["luma-calendar"].unsubscribed);
   await expect(page.getByText(copy.total(1))).toBeVisible();
   await expect(page.getByRole("row").filter({ hasText: "Jane Fixture" })).toBeVisible();
   // Owen left Keep me informed unticked, which isn't an unsubscribe.
@@ -324,8 +324,8 @@ test("the list says what each supporter gets, and filters by it", async ({ page,
 
   await changeFilter(
     page,
-    `${copy.columns.subscriptions}: ${copy.filters.states["luma-calendar"].unsubscribed}`,
-    copy.filters.states["pauseai-updates"].declined,
+    `${copy.columns.subscriptions}: ${copy.filters.states.email["luma-calendar"].unsubscribed}`,
+    copy.filters.states.email["pauseai-updates"].declined,
   );
   await expect(page).toHaveURL(/subscription=email%3Apauseai-updates%3Adeclined/);
   await expect(page.getByRole("row").filter({ hasText: "Owen Member" })).toBeVisible();
@@ -341,7 +341,7 @@ test("a member who left Keep me informed unticked won't get the updates", async 
   await expect(
     page.getByText(copy.detail.permissions.reasons["pauseai-updates"].declined("6 Oct 2026"), { exact: false }),
   ).toBeVisible();
-  await expect(page.getByText(copy.detail.permissions.no).first()).toBeVisible();
+  await expect(page.getByText(copy.detail.permissions.answers.email.no).first()).toBeVisible();
   await openHistory(page);
   await expect(
     page.getByText(`${copy.detail.joinedOn("pauseai.uk")}, ${copy.detail.intents["Act now"]}`),

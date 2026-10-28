@@ -78,11 +78,14 @@ export function supporterFilters(
           topicsOf(channel).flatMap((topic) =>
             (TOPIC_REASONS[channel] as Record<string, readonly Reason[]>)[topic].map((reason) => ({
               value: stateValue({ channel, topic, reason }),
-              label: (channel === "email" ? copy.states : copy.phoneStates)[topic][reason],
+              label: copy.states[channel][topic][reason],
             })),
           ),
         ),
-        { value: "blocked", label: staffCopy.supporters.subscriptions.blocked },
+        {
+          value: stateValue({ channel: "email", reason: "blocked" }),
+          label: staffCopy.supporters.subscriptions.blocked,
+        },
       ],
     },
     {

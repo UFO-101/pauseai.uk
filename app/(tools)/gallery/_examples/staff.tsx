@@ -636,7 +636,7 @@ export const staff: Group = {
                 search={supportersSearch({
                   q: "jane",
                   activity: ["registered", "member"],
-                  subscription: "luma-calendar:unsubscribed",
+                  subscription: "email:luma-calendar:unsubscribed",
                   campaign: "support-sobel-bill",
                   wrote: "no",
                   near: "LS1",

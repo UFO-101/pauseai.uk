@@ -162,11 +162,11 @@ describeWithDatabase("permissionsFor", () => {
        VALUES ('blocked@example.com', 'hard', 'gone', true, '2026-10-24T00:00:00Z') RETURNING id::int AS id`,
     );
     await query("INSERT INTO email_blocks (address, problem_id) VALUES ('blocked@example.com', $1)", [id]);
-    // email_unsubscribes is the view's unsubscribes, found from the opt-outs.
-    const unsubscribes = "SELECT topic, address, send, reason, at, source FROM %s ORDER BY address";
-    const fromView = await query(unsubscribes.replace("%s", "email_permissions WHERE reason = 'unsubscribed'"));
+    // contact_unsubscribes is the views' unsubscribes, found from the opt-outs.
+    const unsubscribes = "SELECT channel, topic, address, send, reason, at, source FROM %s ORDER BY address";
+    const fromView = await query(unsubscribes.replace("%s", "contact_permissions WHERE reason = 'unsubscribed'"));
     expect(fromView.map((row) => row.address)).toEqual(["left@example.com", "stranger@example.com"]);
-    expect(await query(unsubscribes.replace("%s", "email_unsubscribes"))).toEqual(fromView);
+    expect(await query(unsubscribes.replace("%s", "contact_unsubscribes"))).toEqual(fromView);
   });
 
   it("is unsure of members who asked or joined before it was a choice, and says no to those who declined or left", async () => {

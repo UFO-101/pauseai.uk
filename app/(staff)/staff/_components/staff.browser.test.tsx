@@ -2542,10 +2542,10 @@ describe("SubscriptionBadges", () => {
 
   it("shows each topic we'd email them about, amber when we can't be sure, and nothing for a no", async () => {
     const { rerender } = await render(<SubscriptionBadges permissions={exampleSupporterRows[0].permissions} />);
-    expect(document.body.textContent!.trim()).toBe(copy.topics["site-forms"]);
+    expect(document.body.textContent!.trim()).toBe(copy.topics.email["site-forms"]);
     await rerender(<SubscriptionBadges permissions={exampleSupporterRows[1].permissions} />);
-    await expect.element(page.getByText(copy.topics["luma-calendar"], { exact: true })).toBeVisible();
-    await expect.element(page.getByText(copy.unsure(copy.topics["pauseai-updates"]))).toBeVisible();
+    await expect.element(page.getByText(copy.topics.email["luma-calendar"], { exact: true })).toBeVisible();
+    await expect.element(page.getByText(copy.unsure(copy.topics.email["pauseai-updates"]))).toBeVisible();
     await rerender(<SubscriptionBadges permissions={[]} />);
     expect(document.body.textContent!.trim()).toBe("");
   });
@@ -2561,7 +2561,7 @@ describe("SubscriptionBadges", () => {
         ]}
       />,
     );
-    expect(document.body.textContent!.trim()).toBe(copy.topics["luma-calendar"]);
+    expect(document.body.textContent!.trim()).toBe(copy.topics.email["luma-calendar"]);
     await rerender(<SubscriptionBadges permissions={exampleBlockedPermissions} />);
     expect(document.body.textContent!.trim()).toBe(copy.blocked);
   });
@@ -3138,14 +3138,14 @@ describe("PermissionTiles", () => {
     await render(<PermissionTiles permissions={exampleSupporterDetails.permissions} />);
     expect(tiles().map((tile) => tile.dataset.send)).toEqual(["no", "yes", "no"]);
     expect(tiles()[0].textContent).toBe(
-      `${copy.topics["luma-calendar"]} · jane@example.com: ${copy.no}?${copy.reasons["luma-calendar"].unsubscribed("12 Oct 2026")}${copy.details["luma-calendar"]}`,
+      `${copy.topics.email["luma-calendar"]} · jane@example.com: ${copy.answers.email.no}?${copy.reasons["luma-calendar"].unsubscribed("12 Oct 2026")}${copy.details["luma-calendar"]}`,
     );
     expect(tiles()[1].querySelector("span > span")!.textContent).toBe(
-      `${copy.topics["site-forms"]} · jane@example.com: ${copy.yes}`,
+      `${copy.topics.email["site-forms"]} · jane@example.com: ${copy.answers.email.yes}`,
     );
     // A phone number's topic and answer are in a phone's words.
     expect(tiles()[2].querySelector("span > span")!.textContent).toBe(
-      `${copy.phoneTopics["luma-calendar"]} · +447700900001: ${copy.phoneNo}`,
+      `${copy.topics.phone["luma-calendar"]} · +447700900001: ${copy.answers.phone.no}`,
     );
     // The ? at the top right, out of the reason's way.
     const top = tiles()[0].querySelector("button")!.getBoundingClientRect().top;
@@ -3195,15 +3195,15 @@ describe("PermissionTiles", () => {
   it("says don't know where an unsubscribe may not have reached us", async () => {
     await render(<PermissionTiles permissions={exampleMemberDetails.permissions} />);
     expect(tiles()[1].dataset.send).toBe("unsure");
-    expect(tiles()[1].querySelector("span > span")!.textContent).toContain(copy.unsure);
+    expect(tiles()[1].querySelector("span > span")!.textContent).toContain(copy.answers.email.unsure);
     expect(tiles()[1].firstElementChild!.className).toMatch(/amber/);
     // A volunteer's number, a yes; an unsure one is a don't know, as by email.
     expect(tiles()[2].querySelector("span > span")!.textContent).toBe(
-      `${copy.phoneTopics.volunteering} · +447700900002: ${copy.phoneYes}`,
+      `${copy.topics.phone.volunteering} · +447700900002: ${copy.answers.phone.yes}`,
     );
     const [, , phone] = exampleMemberDetails.permissions;
     await render(<PermissionTiles permissions={[{ ...phone, send: "unsure", reason: "gave-number" }]} />);
-    expect(tiles().at(-1)!.querySelector("span > span")!.textContent).toContain(copy.unsure);
+    expect(tiles().at(-1)!.querySelector("span > span")!.textContent).toContain(copy.answers.email.unsure);
   });
 
   it("names each address, and falls back to the reason's own name", async () => {
@@ -3216,8 +3216,8 @@ describe("PermissionTiles", () => {
         ]}
       />,
     );
-    expect(tiles()[0].textContent).toContain(`${copy.topics["luma-calendar"]} · jane@example.com`);
-    expect(tiles()[0].textContent).toContain(`${copy.no}?joined`);
+    expect(tiles()[0].textContent).toContain(`${copy.topics.email["luma-calendar"]} · jane@example.com`);
+    expect(tiles()[0].textContent).toContain(`${copy.answers.email.no}?joined`);
     expect(tiles()[1].textContent).toContain("other@example.com");
   });
 
@@ -3603,20 +3603,22 @@ describe("SupporterFilters", () => {
   it("has a chip for each filter on, a subscription by its topic and reason", async () => {
     const { filter, ...search } = supportersSearch({
       activity: "registered",
-      subscription: "pauseai-updates:declined",
+      subscription: "email:pauseai-updates:declined",
       erased: "1",
     });
     void filter;
     await render(<SupporterFilters search={search} events={events} />);
     expect(chips()).toEqual([
       `${copy.columns.badges}: ${copy.badges.registered}`,
-      `${copy.columns.subscriptions}: ${copy.filters.states["pauseai-updates"].declined}`,
+      `${copy.columns.subscriptions}: ${copy.filters.states.email["pauseai-updates"].declined}`,
     ]);
     // Each topic's reasons, then blocked, then turning it the other way and Remove; the erased notice goes.
-    const choices = await menu(`${copy.columns.subscriptions}: ${copy.filters.states["pauseai-updates"].declined}`);
+    const choices = await menu(
+      `${copy.columns.subscriptions}: ${copy.filters.states.email["pauseai-updates"].declined}`,
+    );
     expect(choices.at(-3)).toEqual([
       copy.subscriptions.blocked,
-      "/staff/supporters?activity=registered&subscription=blocked",
+      "/staff/supporters?activity=registered&subscription=email:blocked",
     ]);
   });
 

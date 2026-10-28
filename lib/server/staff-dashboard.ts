@@ -43,7 +43,7 @@ const SOURCES: Record<DashboardMetric, { from: string; at: string }> = {
   },
   eventsHeld: { from: "luma_events WHERE removed_at IS NULL", at: "start_at" },
   supportersAdded: { from: "supporters WHERE true", at: "first_seen_at" },
-  unsubscribes: { from: "email_unsubscribes WHERE topic = 'luma-calendar'", at: "at" },
+  unsubscribes: { from: "contact_unsubscribes WHERE channel = 'email' AND topic = 'luma-calendar'", at: "at" },
 };
 
 /** Letters to test MPs, counted apart from the letters tile's number. */

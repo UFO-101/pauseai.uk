@@ -53,14 +53,12 @@ export function topicsOf(channel: Channel): Topic[] {
 export type ContactState = { channel: Channel; topic?: Topic; reason: Reason };
 
 /**
- * A state from its form value: "blocked", "<channel>:<topic>:<reason>" for
- * a reason the channel's topic can give, or "<topic>:<reason>" for an
- * email one, as the list's links had them before phones had topics.
+ * A state from its form value: "<channel>:<topic>:<reason>" for a reason
+ * the channel's topic can give, or "email:blocked".
  */
 export function contactState(value: string): ContactState | undefined {
-  if (value === "blocked") return { channel: "email", reason: "blocked" };
-  const parts = value.split(":");
-  const [channel, topic, reason] = parts.length === 2 ? ["email", ...parts] : parts;
+  if (value === "email:blocked") return { channel: "email", reason: "blocked" };
+  const [channel, topic, reason] = value.split(":");
   if (!Object.hasOwn(TOPIC_REASONS, channel)) return undefined;
   const topics: Partial<Record<string, readonly string[]>> = TOPIC_REASONS[channel as Channel];
   if (!Object.hasOwn(topics, topic)) return undefined;
@@ -71,7 +69,7 @@ export function contactState(value: string): ContactState | undefined {
 
 /** A state's form value, which contactState reads back. */
 export function stateValue(state: ContactState): string {
-  return state.topic ? `${state.channel}:${state.topic}:${state.reason}` : state.reason;
+  return [state.channel, state.topic, state.reason].filter(Boolean).join(":");
 }
 
 /** Whether we may contact `address` by `channel` about `topic`, why, since when, and which source told us. */

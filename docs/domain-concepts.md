@@ -298,7 +298,8 @@ reason is explained), read through the `email_permissions` and
 Everything that asks reads those: the supporter's page and the list's
 Subscriptions and Phone columns, through `permissionsFor()` in
 `lib/server/contact-permissions.ts`; the list's Subscriptions and Phone
-filters; and the staff home's count of Luma unsubscribes. Nothing else
+filters; and the staff home's count of Luma unsubscribes, through the
+`contact_unsubscribes` view. Nothing else
 reads `opt_outs` to answer it, and `tests/checks/opt-outs.test.ts` fails if
 code outside `lib/server/opt-outs.ts` and erasure does.
 

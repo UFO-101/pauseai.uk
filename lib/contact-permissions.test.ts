@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 import { contactState, stateValue, topicsOf } from "./contact-permissions";
 
 describe("contactState", () => {
-  it("reads blocked, or a reason its channel's topic can give, and nothing else", () => {
-    expect(contactState("blocked")).toEqual({ channel: "email", reason: "blocked" });
+  it("reads a blocked email, or a reason its channel's topic can give, and nothing else", () => {
+    expect(contactState("email:blocked")).toEqual({ channel: "email", reason: "blocked" });
     expect(contactState("email:luma-calendar:unsubscribed")).toEqual({
       channel: "email",
       topic: "luma-calendar",
@@ -21,21 +21,16 @@ describe("contactState", () => {
     expect(contactState("email:luma-calendar:blocked")).toBeUndefined();
     expect(contactState("post:luma-calendar:following")).toBeUndefined();
     expect(contactState("email:toString:asked")).toBeUndefined();
+    // Only an email address is blocked; and a topic and reason need their channel.
+    expect(contactState("phone:blocked")).toBeUndefined();
+    expect(contactState("blocked")).toBeUndefined();
+    expect(contactState("pauseai-updates:removed")).toBeUndefined();
     expect(contactState("luma-calendar")).toBeUndefined();
     expect(contactState("")).toBeUndefined();
   });
 
-  it("reads a topic and reason with no channel as email's, as older links have them", () => {
-    expect(contactState("pauseai-updates:removed")).toEqual({
-      channel: "email",
-      topic: "pauseai-updates",
-      reason: "removed",
-    });
-    expect(contactState("march-day:ended")).toBeUndefined();
-  });
-
   it("writes a state as its form value", () => {
-    for (const value of ["blocked", "email:site-forms:asked", "phone:march-day:ended"]) {
+    for (const value of ["email:blocked", "email:site-forms:asked", "phone:march-day:ended"]) {
       expect(stateValue(contactState(value)!)).toBe(value);
     }
   });

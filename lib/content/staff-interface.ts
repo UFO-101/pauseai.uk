@@ -1,5 +1,6 @@
 // Every word the staff interface (/staff) shows.
 
+import type { Channel } from "@/lib/contact-permissions";
 import type { ImportJob } from "@/lib/import-runs";
 
 export const staffCopy = {
@@ -161,46 +162,47 @@ export const staffCopy = {
       campaign: "Campaign",
       wrote: { "": "Wrote", no: "Didn't write" } as Record<string, string>,
       // The other filters are named after their columns.
-      // A choice in the Subscriptions filter, and its chip: a topic and a reason it gives, short.
+      // A choice in the Subscriptions filter, and its chip: by channel, a topic and a reason it gives, short.
       states: {
-        "luma-calendar": {
-          following: "Luma: contact",
-          unsubscribed: "Luma: unsubscribed",
-          "not-following": "Luma: not a contact",
+        email: {
+          "luma-calendar": {
+            following: "Luma: contact",
+            unsubscribed: "Luma: unsubscribed",
+            "not-following": "Luma: not a contact",
+          },
+          "pauseai-updates": {
+            asked: "PauseAI global: asked",
+            joined: "PauseAI global: joined before July 2026",
+            declined: "PauseAI global: declined",
+            unsubscribed: "PauseAI global: unsubscribed",
+            removed: "PauseAI global: removed",
+          },
+          "site-forms": {
+            asked: "PauseAI UK: agreed",
+            declined: "PauseAI UK: didn't agree",
+          },
         },
-        "pauseai-updates": {
-          asked: "PauseAI global: asked",
-          joined: "PauseAI global: joined before July 2026",
-          declined: "PauseAI global: declined",
-          unsubscribed: "PauseAI global: unsubscribed",
-          removed: "PauseAI global: removed",
+        phone: {
+          "luma-calendar": {
+            following: "⁂ Phone, Luma: contact",
+            unsubscribed: "⁂ Phone, Luma: unsubscribed",
+            "not-following": "⁂ Phone, Luma: not a contact",
+          },
+          volunteering: {
+            volunteered: "⁂ Phone, volunteering: volunteered",
+            "gave-number": "⁂ Phone, volunteering: gave a number, not as a volunteer",
+            removed: "⁂ Phone, volunteering: removed",
+          },
+          "site-forms": {
+            asked: "⁂ Phone, PauseAI UK: agreed",
+            declined: "⁂ Phone, PauseAI UK: didn't agree",
+          },
+          "march-day": {
+            "gave-number": "⁂ Phone, march day: gave a number",
+            ended: "⁂ Phone, march day: over",
+          },
         },
-        "site-forms": {
-          asked: "PauseAI UK: agreed",
-          declined: "PauseAI UK: didn't agree",
-        },
-      } as Record<string, Record<string, string>>,
-      // The same for a phone number's answers.
-      phoneStates: {
-        "luma-calendar": {
-          following: "⁂ Phone, Luma: contact",
-          unsubscribed: "⁂ Phone, Luma: unsubscribed",
-          "not-following": "⁂ Phone, Luma: not a contact",
-        },
-        volunteering: {
-          volunteered: "⁂ Phone, volunteering: volunteered",
-          "gave-number": "⁂ Phone, volunteering: gave a number, not as a volunteer",
-          removed: "⁂ Phone, volunteering: removed",
-        },
-        "site-forms": {
-          asked: "⁂ Phone, PauseAI UK: agreed",
-          declined: "⁂ Phone, PauseAI UK: didn't agree",
-        },
-        "march-day": {
-          "gave-number": "⁂ Phone, march day: gave a number",
-          ended: "⁂ Phone, march day: over",
-        },
-      } as Record<string, Record<string, string>>,
+      } as Record<Channel, Record<string, Record<string, string>>>,
     },
     columns: {
       name: "Name",
@@ -224,20 +226,21 @@ export const staffCopy = {
       member: "Member",
       march: "March sign-up",
     },
-    // In the list, a lozenge per topic we'd email them about.
+    // In the list, a lozenge per topic we'd contact them about, by channel.
     subscriptions: {
       topics: {
-        "luma-calendar": "Luma",
-        "pauseai-updates": "PauseAI global",
-        "site-forms": "PauseAI UK",
-      } as Record<string, string>,
-      // A topic we may contact them about by phone.
-      phoneTopics: {
-        "luma-calendar": "⁂ Luma by phone",
-        volunteering: "⁂ Volunteer phone",
-        "site-forms": "⁂ PauseAI UK by phone",
-        "march-day": "⁂ March day texts",
-      } as Record<string, string>,
+        email: {
+          "luma-calendar": "Luma",
+          "pauseai-updates": "PauseAI global",
+          "site-forms": "PauseAI UK",
+        },
+        phone: {
+          "luma-calendar": "⁂ Luma by phone",
+          volunteering: "⁂ Volunteer phone",
+          "site-forms": "⁂ PauseAI UK by phone",
+          "march-day": "⁂ March day texts",
+        },
+      } as Record<Channel, Record<string, string>>,
       // A yes that an unsubscribe we can't see may have undone.
       unsure: (topic: string) => `${topic}, unsure`,
       // Every address they have is blocked.
@@ -274,27 +277,27 @@ export const staffCopy = {
       active: "Active",
       /** Where a detail came from and when: "Luma, 26 Sept 2026". */
       from: (sources: string, when: string) => `${sources}, ${when}`,
-      // Under the main box: a tile per topic, saying whether we'd email them about it, and why.
+      // Under the main box: a tile per topic and address, saying whether we'd contact them about it, and why.
       listsTitle: "Subscriptions",
       permissions: {
+        // By channel: each topic's name, and the answers. Unsure is a yes that an unsubscribe we can't see may have undone.
         topics: {
-          "luma-calendar": "Luma calendar emails",
-          "pauseai-updates": "PauseAI global updates",
-          "site-forms": "PauseAI UK updates",
-        } as Record<string, string>,
-        yes: "Will email",
-        no: "Won't email",
-        // The answers for a phone number.
-        phoneTopics: {
-          "luma-calendar": "⁂ Luma calendar, by phone",
-          volunteering: "⁂ Volunteer messages",
-          "site-forms": "⁂ PauseAI UK updates, by phone",
-          "march-day": "⁂ Texts on the march's day",
-        } as Record<string, string>,
-        phoneYes: "⁂ May contact",
-        phoneNo: "⁂ Won't contact",
-        // A yes that an unsubscribe we can't see may have undone.
-        unsure: "Don't know",
+          email: {
+            "luma-calendar": "Luma calendar emails",
+            "pauseai-updates": "PauseAI global updates",
+            "site-forms": "PauseAI UK updates",
+          },
+          phone: {
+            "luma-calendar": "⁂ Luma calendar, by phone",
+            volunteering: "⁂ Volunteer messages",
+            "site-forms": "⁂ PauseAI UK updates, by phone",
+            "march-day": "⁂ Texts on the march's day",
+          },
+        } as Record<Channel, Record<string, string>>,
+        answers: {
+          email: { yes: "Will email", no: "Won't email", unsure: "Don't know" },
+          phone: { yes: "⁂ May contact", no: "⁂ Won't contact", unsure: "Don't know" },
+        },
         why: "details",
         // The short reason under the answer, by topic and reason, with when.
         reasons: {
