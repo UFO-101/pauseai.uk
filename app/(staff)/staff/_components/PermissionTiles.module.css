@@ -12,12 +12,19 @@
   font-size: var(--text-sm);
 }
 
-/* The topic and its answer, with the "?" at the top right, out of the reason's way. */
+/* The topic, the address and the answer, with the "?" at the top right, out
+   of the reason's way. A long address breaks anywhere rather than widen the
+   card. */
 .title {
   display: flex;
   gap: var(--space-2);
   align-items: flex-start;
   justify-content: space-between;
+}
+
+.title > span:first-child {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 /* The "?", which opens how we know. */
