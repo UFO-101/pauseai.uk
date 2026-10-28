@@ -134,8 +134,8 @@ test("a sort or search shows chosen at once, the list staying put until the new 
   // The line along the top slides while it waits; held still, so each frame of it is the same.
   await page.emulateMedia({ reducedMotion: "reduce" });
   await logIn(page, flowDatabase, ["supporters", "admin"]);
-  await page.goto(`${BASE}/staff/politicians`);
-  await frame(page, "the politicians list, by name, A to Z");
+  await page.goto(`${BASE}/staff/politicians?flag=test`);
+  await frame(page, "the test politicians, by name, A to Z");
 
   // A sort heading: its arrow turns at once; the rows stay as they were.
   let next = await holdNextPage(page, /sort=name&dir=desc/);
@@ -661,7 +661,7 @@ test("an MP whose address bounced can't be written to until staff unblock it", a
   await page.getByRole("link", { name: staffCopy.home.dashboard.actions.openMp }).click();
   await expect(page.getByRole("heading", { level: 1, name: bouncy.name })).toBeVisible();
 
-  await page.goto(`${BASE}/staff/politicians`);
+  await page.goto(`${BASE}/staff/politicians?flag=test`);
   const bouncysRow = page.getByRole("row").filter({ hasText: bouncy.name });
   await expect(bouncysRow).toContainText(staffCopy.politicians.emailBlocked);
   await frame(page, "the politicians list marks their address as blocked");

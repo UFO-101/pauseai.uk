@@ -165,9 +165,10 @@ test("a supporter's page: who they are, what they gave, their history, and an op
   await jane.getByRole("link", { name: "Jane Fixture" }).click();
   await expect(page.getByRole("heading", { level: 1 })).toContainText("Jane Fixture");
   await expect(page.getByText(copy.badges.registered).first()).toBeVisible();
-  await expect(page.getByText("+447700900001", { exact: false })).toBeVisible();
+  await expect(page.getByText("+447700900001", { exact: false }).first()).toBeVisible();
   const reasons = copy.detail.permissions.reasons;
-  await expect(page.getByText(reasons["luma-calendar"].unsubscribed("16 Oct 2026"), { exact: false })).toBeVisible();
+  // Her email's answer, and her Luma number's with it.
+  await expect(page.getByText(reasons["luma-calendar"].unsubscribed("16 Oct 2026"), { exact: false })).toHaveCount(2);
   await frame(page, "Jane's page: opted out of the calendar's emails, with her phone, postcode and registrations");
   await openHistory(page);
   const history = page.getByRole("list", { name: copy.detail.activityTitle });
@@ -182,7 +183,7 @@ test("a supporter's page: who they are, what they gave, their history, and an op
   });
   await page.reload();
   // A contact again, since before Luma's webhook: we can't be sure.
-  await expect(page.getByText(reasons["luma-calendar"].following("20 Sept 2026"), { exact: false })).toBeVisible();
+  await expect(page.getByText(reasons["luma-calendar"].following("20 Sept 2026"), { exact: false })).toHaveCount(2);
   await openHistory(page);
   await expect(history.getByText(copy.detail.kinds.resubscribed, { exact: false })).toBeVisible();
   await frame(page, "subscribed again: the list says so, and the history keeps both");
@@ -252,7 +253,8 @@ test("a march sign-up is a supporter, with what they gave and the link they came
 
   await marta.getByRole("link").first().click();
   await expect(page.getByRole("heading", { level: 1 })).toContainText("Marta Marcher");
-  await expect(page.getByText("07700 900123", { exact: false })).toBeVisible();
+  // Her number as we compare numbers, a yes for texts on the march's day and, as she agreed, after.
+  await expect(page.getByText("+447700900123", { exact: false }).first()).toBeVisible();
   await expect(page.getByText("LS1 1AA", { exact: false })).toBeVisible();
   await expect(
     page.getByText(
@@ -262,7 +264,7 @@ test("a march sign-up is a supporter, with what they gave and the link they came
       ),
       { exact: false },
     ),
-  ).toBeVisible();
+  ).toHaveCount(2);
   await openHistory(page);
   const history = page.getByRole("list", { name: copy.detail.activityTitle });
   await expect(history.getByText(copy.detail.cameFrom("nl"), { exact: false })).toBeVisible();
@@ -325,7 +327,7 @@ test("the list says what each supporter gets, and filters by it", async ({ page,
     `${copy.columns.subscriptions}: ${copy.filters.states["luma-calendar"].unsubscribed}`,
     copy.filters.states["pauseai-updates"].declined,
   );
-  await expect(page).toHaveURL(/subscription=pauseai-updates%3Adeclined/);
+  await expect(page).toHaveURL(/subscription=email%3Apauseai-updates%3Adeclined/);
   await expect(page.getByRole("row").filter({ hasText: "Owen Member" })).toBeVisible();
   await expect(page.getByRole("row").filter({ hasText: "Jane Fixture" })).toHaveCount(0);
   await frame(page, "filtered to those who left Keep me informed unticked: Owen");

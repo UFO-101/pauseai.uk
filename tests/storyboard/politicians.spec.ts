@@ -147,12 +147,12 @@ test("the politicians list's houses are tabs, each keeping the other filters", a
 });
 
 test("the politicians list pages through many, a count and downloads over it", async ({ page, flowDatabase }) => {
-  // 245 made-up MPs, with the 5 test MPs 250: three pages.
+  // 250 made-up MPs, the test MPs left out: three pages.
   runSql(
     flowDatabase,
     `WITH n AS (
        INSERT INTO notable_people (kind, name, salutation, status)
-       SELECT 'politician', 'Example Member ' || lpad(i::text, 3, '0'), '', 'in_office' FROM generate_series(1, 245) i
+       SELECT 'politician', 'Example Member ' || lpad(i::text, 3, '0'), '', 'in_office' FROM generate_series(1, 250) i
        RETURNING id
      ) INSERT INTO politicians (id, house, constituency, party)
        SELECT id, 'commons', 'Exampleton ' || id, (ARRAY['Labour', 'Conservative', 'Green'])[1 + id % 3] FROM n`,
