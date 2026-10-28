@@ -59,10 +59,10 @@ describeWithDatabase("permissionsFor", () => {
     await letter(mp, "gus@example.com", true, "2026-10-05T00:00:00Z");
     const permissions = await permissionsFor(["gus@example.com", " Jane@example.com", "nobody@example.com"]);
     expect(permissions.map((p) => [p.address, p.topic])).toEqual([
-      ["gus@example.com", "events-and-ways-to-help"],
+      ["gus@example.com", "site-forms"],
       ["jane@example.com", "luma-calendar"],
       ["jane@example.com", "pauseai-updates"],
-      ["jane@example.com", "events-and-ways-to-help"],
+      ["jane@example.com", "site-forms"],
     ]);
     // Times come as text.
     expect(typeof permissions[0].at).toBe("string");
@@ -81,7 +81,7 @@ describeWithDatabase("permissionsFor", () => {
     const blocked = ["no", "blocked", "2026-10-06T00:00:00.000Z", "complaint"];
     expect(await answer("gus@example.com", "luma-calendar")).toEqual(blocked);
     expect(await answer("gus@example.com", "pauseai-updates")).toEqual(blocked);
-    expect(await answer("gus@example.com", "events-and-ways-to-help")).toEqual(blocked);
+    expect(await answer("gus@example.com", "site-forms")).toEqual(blocked);
   });
 
   it("emails the calendar's contacts, however long ago they joined, not those who unsubscribed or never were one", async () => {
@@ -170,23 +170,23 @@ describeWithDatabase("permissionsFor", () => {
     ]);
   });
 
-  it("sends news of events and ways to help to whoever agreed on their newest letter", async () => {
+  it("emails about our forms whoever agreed on the newest form they filled in", async () => {
     const mp = await addTestMp();
     await letter(mp, "agreed@example.com", false, "2026-10-01T00:00:00Z");
     await letter(mp, "agreed@example.com", true, "2026-10-05T00:00:00Z");
-    expect(await answer("agreed@example.com", "events-and-ways-to-help")).toEqual([
+    expect(await answer("agreed@example.com", "site-forms")).toEqual([
       "yes",
       "asked",
       "2026-10-05T00:00:00.000Z",
-      "letter",
+      "email-your-mp",
     ]);
     await letter(mp, "changed@example.com", true, "2026-10-01T00:00:00Z");
     await letter(mp, "changed@example.com", false, "2026-10-05T00:00:00Z");
-    expect(await answer("changed@example.com", "events-and-ways-to-help")).toEqual([
+    expect(await answer("changed@example.com", "site-forms")).toEqual([
       "no",
       "declined",
       "2026-10-05T00:00:00.000Z",
-      "letter",
+      "email-your-mp",
     ]);
   });
 });

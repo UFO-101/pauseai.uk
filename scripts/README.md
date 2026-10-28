@@ -29,6 +29,7 @@ where there's an npm script. Each file's opening comment has the details.
 | -------------------------------- | ------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `generate-ai-sentiment-data.mjs` | `npm run data:ai-sentiment`                       | Turns the AI Sentiment 2026 CSVs in `data/` into the JSON beside them, which `/global-ai-sentiment-2026` shows. Run it after editing a CSV.                                                               |
 | `detect-face-positions.mjs`      | `npm run data:story-image-detect-faces -- <file>` | Finds the face in a photo in `public/images/people/` and sets that person's `imageStyle` in `lib/content/people.ts`. `--dry-run` only prints it. Always name the file: without one, it resets everyone's. |
+| `march-preview.mjs`              | `npm run march:preview`                           | Remakes the march page's link preview, a picture of its hero, from the dev server. Run it after changing the march's date, time or route, or the hero.                                                    |
 
 `docs/development.md`, section 5, covers the photos.
 

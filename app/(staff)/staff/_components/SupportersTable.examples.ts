@@ -9,7 +9,7 @@ export const exampleSupporter: SupporterSummary = {
   email: "jane.e@example.org",
   phone: "+447700900001",
   postcode: "M1 1AE",
-  sources: ["letter", "luma"],
+  sources: ["email-your-mp", "luma"],
   lumaContact: true,
   firstSeenAt: "2026-03-01T10:00:00Z",
   lastActiveAt: "2026-10-12T18:30:00Z",
@@ -23,11 +23,11 @@ export const exampleSupporterDetails: SupporterDetails = {
   summary: exampleSupporter,
   identities: [
     { source: "luma", email: "jane@example.com", name: "Jane", seenAt: "2026-03-01T10:00:00Z" },
-    { source: "letter", email: "jane.e@example.org", name: "Jane Example", seenAt: "2026-10-05T09:00:00Z" },
+    { source: "email-your-mp", email: "jane.e@example.org", name: "Jane Example", seenAt: "2026-10-05T09:00:00Z" },
   ],
   contacts: [
     {
-      source: "letter",
+      source: "email-your-mp",
       at: "2026-10-05T09:00:00Z",
       phone: null,
       postcode: "M1 1AE",
@@ -54,7 +54,7 @@ export const exampleSupporterDetails: SupporterDetails = {
       linkedAt: "2026-10-01T03:17:00Z",
     },
     {
-      source: "letter",
+      source: "form",
       sourceId: "12",
       matchedBy: "email",
       matchedValue: "jane.e@example.org",
@@ -72,7 +72,7 @@ export const exampleSupporterDetails: SupporterDetails = {
       status: null,
     },
     {
-      source: "letter",
+      source: "email-your-mp",
       at: "2026-10-06T11:00:00Z",
       kind: "letter-replied",
       title: "regulate-letter-pm",
@@ -81,7 +81,7 @@ export const exampleSupporterDetails: SupporterDetails = {
       status: null,
     },
     {
-      source: "letter",
+      source: "email-your-mp",
       at: "2026-10-05T09:00:00Z",
       kind: "letter",
       title: "regulate-letter-pm",
@@ -118,12 +118,12 @@ export const exampleSupporterDetails: SupporterDetails = {
       source: "luma-webhook",
     },
     {
-      topic: "events-and-ways-to-help",
+      topic: "site-forms",
       address: "jane@example.com",
       send: "yes",
       reason: "asked",
       at: "2026-10-05T09:00:00Z",
-      source: "letter",
+      source: "email-your-mp",
     },
   ],
 };
@@ -196,16 +196,14 @@ export const exampleMemberDetails: SupporterDetails = {
 };
 
 /** A supporter whose only address is blocked: they marked a letter as spam. */
-export const exampleBlockedPermissions: EmailPermission[] = (["luma-calendar", "events-and-ways-to-help"] as const).map(
-  (topic) => ({
-    topic,
-    address: "gus@example.com",
-    send: "no",
-    reason: "blocked",
-    at: "2026-10-05T12:00:00Z",
-    source: "complaint",
-  }),
-);
+export const exampleBlockedPermissions: EmailPermission[] = (["luma-calendar", "site-forms"] as const).map((topic) => ({
+  topic,
+  address: "gus@example.com",
+  send: "no",
+  reason: "blocked",
+  at: "2026-10-05T12:00:00Z",
+  source: "complaint",
+}));
 
 /** Rows of the list: Jane, unsubscribed from the calendar's emails but agreed on her letter; Sam, a member and a contact of the calendar since before its webhook; Gus, blocked. */
 export const exampleSupporterRows: SupporterRow[] = [
@@ -245,7 +243,7 @@ export const exampleSupporterRows: SupporterRow[] = [
     id: 9,
     name: "Gus Blocked",
     emails: ["gus@example.com"],
-    sources: ["letter"],
+    sources: ["email-your-mp"],
     lumaContact: false,
     events: 0,
     permissions: exampleBlockedPermissions,

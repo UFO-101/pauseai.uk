@@ -2,16 +2,14 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { renderToString } from "react-dom/server";
 import { render } from "vitest-browser-react";
 import { page } from "vitest/browser";
-import { navigation } from "@/tests/browser/navigation";
 import MarchBanner from "./MarchBanner";
 
 afterEach(() => {
   vi.useRealTimers();
-  navigation.pathname = "/";
 });
 
 describe("MarchBanner", () => {
-  it("links to the march's page and to registering on Luma", async () => {
+  it("links its name and Register to the march's sign-up", async () => {
     vi.useFakeTimers({ now: new Date("2026-10-15T09:00:00Z"), toFake: ["Date"] });
     await render(<MarchBanner />);
     await expect.element(page.getByText("Sat 21 Nov · London")).toBeVisible();
@@ -20,13 +18,7 @@ describe("MarchBanner", () => {
       .toHaveAttribute("href", "/protests/march-against-ai-extinction-nov-26");
     await expect
       .element(page.getByRole("link", { name: "Register →" }))
-      .toHaveAttribute("href", "https://luma.com/pauseai-nov26");
-  });
-
-  it("isn't on the march's own page", async () => {
-    navigation.pathname = "/protests/march-against-ai-extinction-nov-26/";
-    const { container } = await render(<MarchBanner />);
-    expect(container.querySelector("aside")).toBeNull();
+      .toHaveAttribute("href", "/protests/march-against-ai-extinction-nov-26");
   });
 
   it("goes after the march", async () => {

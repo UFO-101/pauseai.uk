@@ -53,6 +53,12 @@ const REDIRECTS = [
     to: "/campaigns/regulate-letter-pm",
     permanent: false,
   },
+  {
+    name: "the march's short link, to its page",
+    from: "/march",
+    to: "/protests/march-against-ai-extinction-nov-26",
+    permanent: false,
+  },
 ];
 
 for (const { name, from, to, permanent = true } of REDIRECTS) {
@@ -65,6 +71,11 @@ for (const { name, from, to, permanent = true } of REDIRECTS) {
     expect(res.headers()["location"]).toBe(to);
   });
 }
+
+test("the march's short link keeps its utm_source, which GA counts visits by", async ({ request }) => {
+  const res = await request.get(`${BASE}/march?utm_source=in`, { maxRedirects: 0 });
+  expect(res.headers()["location"]).toBe("/protests/march-against-ai-extinction-nov-26?utm_source=in");
+});
 
 test("the destinations actually resolve", async ({ request }) => {
   // A redirect pointing at a 404 is no better than the broken link it

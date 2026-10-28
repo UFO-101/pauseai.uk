@@ -66,6 +66,7 @@ describe("redirects", () => {
     expect(redirects.filter((r) => !r.permanent)).toEqual([
       { source: "/protests", destination: "/protests/march-against-ai-extinction-nov-26", permanent: false },
       { source: "/campaigns", destination: `/campaigns/${campaigns[0].slug}`, permanent: false },
+      { source: "/march", destination: "/protests/march-against-ai-extinction-nov-26", permanent: false },
     ]);
   });
 });

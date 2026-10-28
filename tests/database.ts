@@ -27,6 +27,8 @@ const TABLES = [
   "import_runs",
   "letter_events",
   "letters",
+  "form_entries",
+  "form_entry_luma",
   "luma_erased",
   "luma_events",
   "luma_guests",
@@ -129,7 +131,7 @@ export async function addTestPolitician(row: MpRow = {}): Promise<number> {
   return id;
 }
 
-/** A letter from a supporter, straight into the tables: its row and its sender's. Returns its ID. */
+/** A letter from a supporter, straight into the tables: its row, and its sender's form entry. Returns its ID. */
 export async function addTestLetter(letter: {
   politicianId: number;
   campaign?: string;
@@ -155,17 +157,24 @@ export async function addTestLetter(letter: {
       letter.repliedAt ?? null,
     ],
   );
-  await query(
-    `INSERT INTO supporter_letters (id, campaign, sender_name, sender_email, sender_address, sender_postcode,
-       contact_consent, subject, reply_hash)
-     VALUES ($1, $2, $3, $4, '1 Example Street', $5, $6, $7, $8)`,
+  const [entry] = await query<{ id: number }>(
+    `INSERT INTO form_entries (form, created_at, name, email, address, postcode, contact_consent)
+     SELECT 'email-your-mp', created_at, $2, $3, '1 Example Street', $4, $5 FROM letters WHERE id = $1
+     RETURNING id::int AS id`,
     [
       id,
-      letter.campaign ?? "regulate-letter-pm",
       letter.senderName ?? "Sam Sender",
       letter.senderEmail ?? "sam@example.com",
       letter.senderPostcode ?? "SW1A 1AA",
       letter.contactConsent ?? false,
+    ],
+  );
+  await query(
+    "INSERT INTO supporter_letters (id, entry_id, campaign, subject, reply_hash) VALUES ($1, $2, $3, $4, $5)",
+    [
+      id,
+      entry.id,
+      letter.campaign ?? "regulate-letter-pm",
       letter.subject ?? "A letter",
       letter.replyHash ?? `reply-${id}`,
     ],

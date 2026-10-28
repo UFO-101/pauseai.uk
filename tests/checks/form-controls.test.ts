@@ -16,6 +16,8 @@ const OWN_CONTROLS: Record<string, string> = {
   "app/(tools)/tools/collateral/_components/Slider.tsx": "a range slider, the one control the kit hasn't",
   "components/tools/kit/Choices.tsx": "a choice card, with its checkbox in its corner",
   "app/(site)/campaigns/_components/LetterForm.tsx": "the honeypot field, hidden from people for bots to fill",
+  "app/(march)/protests/march-against-ai-extinction-nov-26/_components/SignupForm.tsx":
+    "the march sign-up's fields, in its own poster style, and its honeypot",
   "app/(site)/global-ai-sentiment-2026/_components/CountryExplorer.tsx":
     "the report's own controls, styled as a set with its bespoke dropdown",
   "app/(site)/global-ai-sentiment-2026/_components/DemographicsExplorer.tsx":

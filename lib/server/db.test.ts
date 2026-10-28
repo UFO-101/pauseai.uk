@@ -158,6 +158,10 @@ describeWithDatabase("the database", () => {
       // that on a busy machine, leaving nothing to cut off; its timer waits until the database is gone.
       vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
       try {
+        // The flow pool lets an idle connection go after a second, which a
+        // loaded machine can take to drop the database, leaving no connection
+        // to cut off. Its idle timer is a fake, so it never fires.
+        vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
         await pid();
         dropDatabase(flow);
         vi.useRealTimers();

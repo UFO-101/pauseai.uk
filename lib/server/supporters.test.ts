@@ -49,9 +49,11 @@ async function letter(email: string, name: string, mp: number, more: Record<stri
   });
 }
 
+/** Each link, with the letter its form entry sent, if it sent one. */
 const links = () =>
   query<{ supporter_id: number; luma_user_id: string | null; letter_id: number | null; matched_value: string }>(
-    "SELECT supporter_id::int AS supporter_id, luma_user_id, letter_id::int AS letter_id, matched_value FROM supporter_links ORDER BY id",
+    `SELECT k.supporter_id::int AS supporter_id, k.luma_user_id, s.id::int AS letter_id, k.matched_value
+     FROM supporter_links k LEFT JOIN supporter_letters s ON s.entry_id = k.form_entry_id ORDER BY k.id`,
   );
 
 describeWithDatabase("linkSupporters", () => {
@@ -129,7 +131,7 @@ describeWithDatabase("linkSupporters", () => {
       emails: ["jane@example.com"],
       phone: "+447700900001",
       postcode: "SW1A 1AA",
-      sources: ["letter", "luma"],
+      sources: ["email-your-mp", "luma"],
       // A contact, but not now: her second opt-out is still open.
       luma_contact: false,
       first_seen_at: new Date("2026-08-01T00:00:00Z"),
@@ -180,7 +182,7 @@ describeWithDatabase("linkSupporters", () => {
         status: null,
       },
       {
-        source: "letter",
+        source: "email-your-mp",
         kind: "letter",
         title: "regulate-letter-pm",
         detail: "Testy McTestface MP",
@@ -188,7 +190,7 @@ describeWithDatabase("linkSupporters", () => {
         status: "sent",
       },
       {
-        source: "letter",
+        source: "email-your-mp",
         kind: "letter-replied",
         title: "regulate-letter-pm",
         detail: "Testy McTestface MP",
@@ -207,7 +209,7 @@ describeWithDatabase("linkSupporters", () => {
     expect(await query("SELECT source, phone, postcode, latitude FROM supporter_contact ORDER BY at")).toEqual([
       { source: "luma", phone: "+447700900001", postcode: "M1 1AE", latitude: 51.5 },
       { source: "luma", phone: null, postcode: null, latitude: 51.5 },
-      { source: "letter", phone: null, postcode: "SW1A 1AA", latitude: null },
+      { source: "email-your-mp", phone: null, postcode: "SW1A 1AA", latitude: null },
     ]);
   });
 
@@ -309,10 +311,11 @@ describeWithDatabase("listSupporters and getSupporter", () => {
     const unsubscribed = [{ topic: "luma-calendar", reason: "unsubscribed" }] as const;
     expect(await names({ subscription: [...unsubscribed] })).toEqual(["Sam"]);
     expect(await names({ subscription: [{ topic: "luma-calendar", reason: "not-following" }] })).toEqual(["Old"]);
-    expect(await names({ subscription: [{ topic: "events-and-ways-to-help", reason: "asked" }] })).toEqual(["Pat"]);
-    expect(
-      await names({ subscription: [...unsubscribed, { topic: "events-and-ways-to-help", reason: "asked" }] }),
-    ).toEqual(["Sam", "Pat"]);
+    expect(await names({ subscription: [{ topic: "site-forms", reason: "asked" }] })).toEqual(["Pat"]);
+    expect(await names({ subscription: [...unsubscribed, { topic: "site-forms", reason: "asked" }] })).toEqual([
+      "Sam",
+      "Pat",
+    ]);
     // Leaving "Keep me informed" unticked isn't an unsubscribe.
     await query(
       `INSERT INTO members (id, email, name, joined_at, created_at, keep_informed, share_permission, source_modified_at)
@@ -396,7 +399,7 @@ describeWithDatabase("listSupporters and getSupporter", () => {
     expect(await names({ event: ["evt-1"], not: { event: ["evt-2"] } })).toEqual(["Sam", "Old"]);
     expect(await names({ event: ["evt-2"], not: { event: ["evt-2"] } })).toEqual([]);
     expect(await names({ not: { activity: ["letter", "lumaContact"] } })).toEqual(["Sam", "Old"]);
-    expect(await names({ not: { subscription: [{ topic: "events-and-ways-to-help", reason: "asked" }] } })).toEqual([
+    expect(await names({ not: { subscription: [{ topic: "site-forms", reason: "asked" }] } })).toEqual([
       "Jane",
       "Sam",
       "Old",
@@ -444,16 +447,16 @@ describeWithDatabase("listSupporters and getSupporter", () => {
     expect(sam.permissions.map((p) => [p.topic, p.send, p.reason])).toEqual([["luma-calendar", "no", "unsubscribed"]]);
 
     const [{ id: pat }] = await query<{ id: number }>(
-      "SELECT supporter_id::int AS id FROM supporter_links WHERE letter_id IS NOT NULL",
+      "SELECT supporter_id::int AS id FROM supporter_links WHERE form_entry_id IS NOT NULL",
     );
     const details = (await getSupporter(pat))!;
-    expect(details.links[0]).toMatchObject({ source: "letter", sourceId: expect.stringMatching(/^\d+$/) });
+    expect(details.links[0]).toMatchObject({ source: "form", sourceId: expect.stringMatching(/^\d+$/) });
     expect(details.permissions.map((p) => [p.address, p.topic, p.send])).toEqual([
-      ["pat@example.com", "events-and-ways-to-help", "yes"],
+      ["pat@example.com", "site-forms", "yes"],
     ]);
     expect(details.contacts).toEqual([
       {
-        source: "letter",
+        source: "email-your-mp",
         at: new Date("2026-06-01T09:00:00Z"),
         phone: null,
         postcode: "ZZ9 9ZZ",
@@ -515,7 +518,7 @@ describeWithDatabase("members as supporters", () => {
     expect(await linkSupporters()).toEqual({ supportersAdded: 1, linked: 2 });
     const jane = (await getSupporter(await supporterWith("jane@example.com")))!;
     expect(jane.summary).toMatchObject({
-      sources: ["letter", "member"],
+      sources: ["email-your-mp", "member"],
       member: true,
       phone: "+447700900123",
       firstSeenAt: new Date("2024-03-23T00:00:00Z"),
@@ -542,12 +545,12 @@ describeWithDatabase("members as supporters", () => {
       href: "https://airtable.com/appWPTGqZmUcs3NWu/tblL1icZBhTV1gQ9o/recJane",
       status: null,
     });
-    expect(jane.links.map((l) => l.source).sort()).toEqual(["letter", "member"]);
+    expect(jane.links.map((l) => l.source).sort()).toEqual(["form", "member"]);
 
     // A member no longer read is no longer one, though what they gave stays.
     await query("UPDATE members SET removed_at = now()");
     const removed = (await getSupporter(await supporterWith("jane@example.com")))!;
-    expect(removed.summary).toMatchObject({ member: false, sources: ["letter", "member"] });
+    expect(removed.summary).toMatchObject({ member: false, sources: ["email-your-mp", "member"] });
     expect(removed.permissions.find((p) => p.topic === "pauseai-updates")).toMatchObject({
       send: "no",
       reason: "removed",

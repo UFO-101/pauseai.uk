@@ -4,13 +4,15 @@ import { staffCopy } from "./content/staff-interface";
 import type { EmailPermission, EmailState } from "./email-permissions";
 import type { SortColumns, SortDirection } from "./staff-sort";
 
-/** Where a supporter's records come from (lib/server/supporter-sources.ts). */
-/** Where a supporter came from: Luma, a letter through the site or through pauseai.info's old form, or the members. */
-export const SUPPORTER_SOURCES = ["luma", "letter", "web-form", "member"] as const;
+/** Where a supporter came from: Luma, the members, or one of our forms (form_entries.form): Email your MP, pauseai.info's old letter form, or the march sign-up. */
+export const SUPPORTER_SOURCES = ["luma", "member", "email-your-mp", "web-form", "march-2026-11"] as const;
 export type SupporterSource = (typeof SUPPORTER_SOURCES)[number];
 
-/** The lozenges in the list's Activities column, in its order: a member, a contact of the Luma calendar, registered for events, wrote to their MP. */
-export const SUPPORTER_BADGES = ["member", "lumaContact", "registered", "letter"] as const;
+/** What a supporter_links row points at (lib/server/supporter-sources.ts): a Luma user, a form entry or a member. */
+export type SupporterLinkSource = "luma" | "form" | "member";
+
+/** The lozenges in the list's Activities column, in its order: a member, a contact of the Luma calendar, registered for events, wrote to their MP, signed up for the march. */
+export const SUPPORTER_BADGES = ["member", "lumaContact", "registered", "letter", "march"] as const;
 export type SupporterBadge = (typeof SUPPORTER_BADGES)[number];
 
 export function isSupporterBadge(value: string): value is SupporterBadge {
@@ -57,7 +59,14 @@ export type SupporterActivity = {
   source: string;
   at: string;
   kind:
-    "luma-contact" | "luma-registered" | "letter" | "letter-replied" | "member-joined" | "opted-out" | "resubscribed";
+    | "luma-contact"
+    | "luma-registered"
+    | "letter"
+    | "letter-replied"
+    | "form-entry"
+    | "member-joined"
+    | "opted-out"
+    | "resubscribed";
   title: string | null;
   /** Who or what it was with: the event's status, the MP's name, the site they joined on, or the address. */
   detail: string | null;
@@ -82,7 +91,7 @@ export type SupporterContact = {
 
 /** Why a source record is this supporter's. */
 export type SupporterLink = {
-  source: SupporterSource;
+  source: SupporterLinkSource;
   sourceId: string;
   matchedBy: "email";
   matchedValue: string;

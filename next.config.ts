@@ -151,6 +151,9 @@ const nextConfig: NextConfig = {
       // that redirects while rendering leaves the site's header and footer
       // with nothing between them for a moment on a client-side navigation.
       { source: "/campaigns", destination: `/campaigns/${campaigns[0].slug}`, permanent: false },
+      // The march's short link, keeping its utm_source. Temporary, so it can
+      // point to the next march.
+      { source: march.shortPath, destination: march.path, permanent: false },
       // Old backlink used a space instead of a hyphen in the filename.
       // Source matches the raw request path, so the space must stay percent-encoded.
       { source: "/pdfs/Donor%20Prospectus.pdf", destination: "/pdfs/Donor-Prospectus.pdf", permanent: true },

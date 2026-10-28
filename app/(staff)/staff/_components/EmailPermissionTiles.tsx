@@ -8,10 +8,11 @@ import styles from "./EmailPermissionTiles.module.css";
 
 const copy = staffCopy.supporters.detail.permissions;
 
-/** The short reason for an answer, with when; the reason itself where the copy has no words for it. */
+/** The short reason for an answer, with when and, for our forms', which form; the reason itself where the copy has no words for it. */
 function reason(permission: EmailPermission): string {
   const words = copy.reasons[permission.topic]?.[permission.reason];
-  return words ? words(permission.at ? staffDate(permission.at) : "") : permission.reason;
+  const form = copy.forms[permission.source ?? ""] ?? copy.otherForm;
+  return words ? words(permission.at ? staffDate(permission.at) : "", form) : permission.reason;
 }
 
 /** A topic's answer as a strip's colour: green we'd email them, plain we wouldn't, amber we don't know. */

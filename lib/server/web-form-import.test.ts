@@ -12,10 +12,11 @@ const JO = "jo@pauseai.uk";
 
 const imported = () =>
   query(
-    `SELECT s.airtable_id AS "airtableId", n.name AS "to", s.campaign, s.sender_name AS "senderName",
-       s.sender_email AS "senderEmail", s.sender_address AS address, s.sender_postcode AS postcode,
-       s.contact_consent AS consent, s.reply_hash AS "replyHash", l.status, l.created_at AS "createdAt", l.sent_at AS "sentAt"
-     FROM supporter_letters s JOIN letters l USING (id) JOIN notable_people n ON n.id = l.notable_person_id
+    `SELECT s.airtable_id AS "airtableId", n.name AS "to", s.campaign, f.form, f.name AS "senderName",
+       f.email AS "senderEmail", f.address, f.postcode, f.contact_consent AS consent, f.created_at AS "enteredAt",
+       s.reply_hash AS "replyHash", l.status, l.created_at AS "createdAt", l.sent_at AS "sentAt"
+     FROM supporter_letters s JOIN letters l USING (id) JOIN form_entries f ON f.id = s.entry_id
+       JOIN notable_people n ON n.id = l.notable_person_id
      WHERE s.airtable_id IS NOT NULL ORDER BY l.sent_at`,
   );
 
@@ -45,14 +46,17 @@ describeWithDatabase("importWebFormLetters", () => {
         airtableId: "recWebDee",
         to: "Lord Seedling of Example",
         campaign: "pauseai-info-deepmind",
+        form: "web-form",
         senderName: "Dee Deepmind",
         senderEmail: "dee.deepmind@example.com",
-        address: "",
+        // The old form asked for no address.
+        address: null,
         postcode: "M1 1AE",
         consent: false,
+        // Airtable has no time the form was sent, so it's when the letter was.
+        enteredAt: new Date("2025-07-20T09:00:30Z"),
         replyHash: null,
         status: "sent",
-        // Airtable has no time the form was sent, so it's when the letter was.
         createdAt: new Date("2025-07-20T09:00:30Z"),
         sentAt: new Date("2025-07-20T09:00:30Z"),
       },

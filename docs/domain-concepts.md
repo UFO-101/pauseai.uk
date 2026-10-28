@@ -118,8 +118,10 @@ was made and sent, and its status (`sending`, `sent`, `not_sent`,
 (`letter_events`), including replies and automatic replies. A child row
 adds what its kind has, joined as notable people are:
 
-- **A supporter's letter** (`supporter_letters`): the campaign, and the
-  sender's name, email, address, postcode and consent. Sent through the
+- **A supporter's letter** (`supporter_letters`): the campaign and subject,
+  and the form entry of the person who sent it (`entry_id`; "Form
+  entries", below), which holds their name, email, address, postcode and
+  consent. Sent through the
   site, it goes from an address of its own on `letters.pauseai.uk`
   (`reply_hash`), so a reply comes back to us, matched by that address, and
   is forwarded to the sender and the policy team. Its text isn't kept: the
@@ -138,16 +140,32 @@ adds what its kind has, joined as notable people are:
 
 A letter's ask is its campaign's or its mailing's, never its own.
 
+## Form entries
+
+One person filling in one of our forms once (`form_entries`): their name,
+email, phone, address, city and postcode as they gave them, the box to hear
+from us (`contact_consent`), where they came from (`utm_source`) and when.
+`form` says which form: `email-your-mp`, `march-2026-11`, or
+`web-form` for pauseai.info's old letter form. What only some forms make
+hangs off the entry, one to one: a letter's sender is the entry its
+`supporter_letters` row points at.
+
+A new form is a value in the `CHECK` on `form`, a label in the staff
+interface's `sources`, and, if it makes more than an entry, a child table
+pointing at `form_entries`, as `form_entry_luma` holds what Luma said to a
+form that registers people for an event. What a form's box said when
+someone ticked it is its wording in git at the entry's `created_at`.
+
 ## Supporters
 
 One row per person we know of (`supporters`), tied to each record about
 them in a source by `supporter_links`: a Luma user (`luma_user_id`), a
-supporter's letter (`letter_id`) or a member (`member_id`), matched by trimmed, lowercased email and nothing
+form entry (`form_entry_id`) or a member (`member_id`), matched by trimmed, lowercased email and nothing
 more, so `jane+luma@` and `jane@` are two people. The supporter holds no
 name, email, phone or place of its own: those come from the linked
 records, newest first. `linkSupporters()` (`lib/server/supporters.ts`)
 only adds links, runs at the end of each Luma and members import and when
-a letter is kept, and is set-based, so running it again does nothing.
+a form entry is kept, and is set-based, so running it again does nothing.
 
 Each source (`lib/server/supporter-sources.ts`) gives three views in one
 shape, made in the migrations: `supporter_source_<name>` (`source_id`,
@@ -175,11 +193,11 @@ Where they come from:
   last listed them. Luma's own IDs are the keys, and
   only the import writes these tables. The site's events pages still read
   Luma live.
-- **Letters.** The sender of each supporter's letter (`sender_name`,
-  `sender_email`, `sender_postcode`, `contact_consent` on
-  `supporter_letters`). One who wrote through pauseai.info's old form has
-  `web-form` as their source in `supporter_identity`; their consent box
-  arrived on 23 September 2026, so a letter from before it is no.
+- **Our forms.** Each form entry ("Form entries", above). Its source in
+  `supporter_identity`, `supporter_activity` and `supporter_contact` is its
+  form, so staff see which; a letter is activity of the entry that sent it.
+  pauseai.info's old form got its consent box on 23 September 2026, so an
+  entry from before it is no.
 - **Members.** PauseAI's members in the UK whom we may hold: those who
   ticked "Share your details with PauseAI UK" on the join form, or joined
   before it asked (from July 2026). The hourly import
@@ -200,8 +218,9 @@ supporters near somewhere would use it too.
 
 **Erasure.** When someone asks to be forgotten, staff erase the supporter
 from their page (`lib/server/erasure.ts`), under the request's reference.
-For each source, what that source holds goes: a letter with its events
-and the copies of replies forwarded to the sender; a Luma user with their
+For each source, what that source holds goes: a form entry, with its
+letter, the letter's events and the copies of replies forwarded to the
+sender; a Luma user with their
 registrations and contact; a member's record. What stays is what exists to stop us mailing
 the address: `email_problems`,
 `email_blocks` and `opt_outs`. The Luma user's ID goes in `luma_erased`,
@@ -272,8 +291,8 @@ staff home's count of Luma unsubscribes. Nothing else reads `opt_outs`
 to answer it, and `tests/checks/opt-outs.test.ts` fails if code outside
 `lib/server/opt-outs.ts` and erasure does.
 
-The topics are the Luma calendar's emails, the PauseAI updates, and news
-of events and ways to help from the consent box on a letter. Each answer
+The topics are the Luma calendar's emails, the PauseAI updates, and
+`site-forms`, what the box on our forms agrees to. Each answer
 is yes, no or unsure, with a reason from a short list, when, and which
 source said so. The first rule that matches wins:
 
@@ -283,12 +302,12 @@ source said so. The first rule that matches wins:
   registering for an event makes someone, as following it does, whenever
   they joined (Luma's list leaves out anyone who left); the newest member
   record's "Keep me informed" (a free choice from 30 June 2026; before,
-  everyone who joined was on the list); the newest letter's consent box.
+  everyone who joined was on the list); the newest form entry's box.
 
 Unsure is a yes that an unsubscribe we can't see may have undone: every
 member on the updates, which CiviCRM sends. A
 topic the address has had nothing to do with (no Luma account, never a
-member, no letter) has no row. Nothing sends email by it yet; when the
+member, no form entry) has no row. Nothing sends email by it yet; when the
 site mails supporters, `send()` asks it for the purpose's topic as it
 checks `email_blocks`.
 

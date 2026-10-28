@@ -130,7 +130,7 @@ describe.skipIf(process.env.NETLIFY === "true")("copying a database", () => {
         expect(
           runSql(
             name,
-            "SELECT count(*) FROM supporter_letters t WHERE NOT EXISTS (SELECT 1 FROM supporter_links l WHERE l.letter_id = t.id)",
+            "SELECT count(*) FROM form_entries f WHERE NOT EXISTS (SELECT 1 FROM supporter_links l WHERE l.form_entry_id = f.id)",
           ),
         ).toEqual(["0"]);
         expect(
@@ -146,12 +146,14 @@ describe.skipIf(process.env.NETLIFY === "true")("copying a database", () => {
             'SELECT s FROM (SELECT DISTINCT sources::text AS s FROM supporters_summary) d ORDER BY s COLLATE "C"',
           ),
         ).toEqual([
-          "{letter,luma,member}",
-          "{letter,luma}",
-          "{letter,member}",
-          "{letter}",
+          "{email-your-mp,luma,march-2026-11}",
+          "{email-your-mp,luma,member}",
+          "{email-your-mp,luma}",
+          "{email-your-mp,member}",
+          "{email-your-mp}",
           "{luma,member}",
           "{luma}",
+          "{march-2026-11}",
           "{member}",
           "{web-form}",
         ]);

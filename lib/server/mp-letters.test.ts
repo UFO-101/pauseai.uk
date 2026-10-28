@@ -152,7 +152,10 @@ describeWithDatabase("submitLetter", () => {
 
     expect(await submitLetter(FORM)).toEqual({ ok: true });
 
-    const [letter] = await query<Record<string, unknown>>("SELECT * FROM letters JOIN supporter_letters USING (id)");
+    const [letter] = await query<Record<string, unknown>>(
+      `SELECT l.*, s.campaign, s.reply_hash, f.form, f.email, f.postcode, f.contact_consent
+       FROM letters l JOIN supporter_letters s USING (id) JOIN form_entries f ON f.id = s.entry_id`,
+    );
     expect(letter.reply_hash).toMatch(/^jane\.smith\.\d{6}$/);
     const address = `${letter.reply_hash}@letters.pauseai.uk`;
     expect(sent).toHaveLength(1);
@@ -177,8 +180,9 @@ describeWithDatabase("submitLetter", () => {
     expect(sent[0].Attachments![0].ContentType).toBe("application/pdf");
     expect(letter).toMatchObject({
       campaign: "regulate-letter-pm",
-      sender_email: "jane@example.com",
-      sender_postcode: "ZZ9 9ZZ",
+      form: "email-your-mp",
+      email: "jane@example.com",
+      postcode: "ZZ9 9ZZ",
       contact_consent: true,
       status: "sent",
     });
@@ -195,9 +199,11 @@ describeWithDatabase("submitLetter", () => {
     expect(letter).not.toHaveProperty("body_html");
     expect(letter.sent_at).not.toBeNull();
     // The sender is a supporter from the moment the letter is kept.
-    expect(await query("SELECT letter_id::int AS letter_id, matched_value FROM supporter_links")).toEqual([
-      { letter_id: Number(letter.id), matched_value: "jane@example.com" },
-    ]);
+    expect(
+      await query(
+        "SELECT s.id::int AS letter_id, k.matched_value FROM supporter_links k JOIN supporter_letters s ON s.entry_id = k.form_entry_id",
+      ),
+    ).toEqual([{ letter_id: Number(letter.id), matched_value: "jane@example.com" }]);
     expect(
       (await query<{ status: string }>("SELECT status FROM letter_events ORDER BY id")).map((e) => e.status),
     ).toEqual(["sending", "sent"]);
@@ -314,6 +320,9 @@ describeWithDatabase("submitLetter", () => {
     postmark(() => HttpResponse.json({ ErrorCode: 300, Message: "Invalid email request" }, { status: 422 }));
     expect(await submitLetter(FORM)).toMatchObject({ status: 500, message: copy.errors.failed });
     expect(await query("SELECT id FROM letters")).toEqual([]);
+    // Nor the form entry made for it, nor the supporter's link to that.
+    expect(await query("SELECT id FROM form_entries")).toEqual([]);
+    expect(await query("SELECT id FROM supporter_links")).toEqual([]);
     // Nor its sender as first seen by it.
     expect(await query("SELECT first_seen_at FROM supporters")).toEqual([{ first_seen_at: null }]);
 

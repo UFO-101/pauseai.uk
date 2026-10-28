@@ -8,8 +8,8 @@ import { linkSupporters } from "./supporters";
 
 // Copies, once, the letters supporters sent through pauseai.info's old UK
 // form (/uk-email-mp, July 2025 to October 2026), which kept each in
-// Airtable's "Web form emails" for an automation to send, into
-// supporter_letters, so their senders become supporters. Each run is in the
+// Airtable's "Web form emails" for an automation to send: each a letter, and
+// its sender a form entry of the "web-form" form, so they become supporters. Each run is in the
 // import log, as "import-web-form-letters"; running it again adds nothing
 // twice. Never the message: only who, to whom, when, the subject and the
 // consent box, which before 23 September 2026 the form didn't have, so a
@@ -62,8 +62,9 @@ export function importWebFormLetters(startedBy: string): Promise<WebFormImportRe
         const campaign = CAMPAIGNS[letter.campaign];
         const [here] = await query(
           `SELECT 1 FROM supporter_letters s JOIN letters l ON l.id = s.id JOIN campaigns c ON c.slug = s.campaign
+             JOIN form_entries f ON f.id = s.entry_id
            WHERE s.airtable_id = $1
-              OR (lower(trim(s.sender_email)) = lower(trim($2)) AND l.notable_person_id = $3
+              OR (lower(trim(f.email)) = lower(trim($2)) AND l.notable_person_id = $3
                   AND (c.ask = (SELECT ask FROM campaigns WHERE slug = $4) OR (c.ask IS NULL AND c.slug = $4)))
            LIMIT 1`,
           [letter.airtableId, letter.senderEmail, person.id, campaign],
@@ -79,20 +80,21 @@ export function importWebFormLetters(startedBy: string): Promise<WebFormImportRe
           [person.id, letter.submittedAt ?? letter.sentAt, letter.sentAt],
           db,
         );
-        await query(
-          `INSERT INTO supporter_letters (id, campaign, sender_name, sender_email, sender_address, sender_postcode,
-             contact_consent, subject, airtable_id)
-           VALUES ($1, $2, $3, $4, '', $5, $6, $7, $8)`,
+        const [entry] = await query<{ id: number }>(
+          `INSERT INTO form_entries (form, created_at, name, email, postcode, contact_consent)
+           VALUES ('web-form', $1, $2, $3, nullif($4, ''), $5) RETURNING id::int AS id`,
           [
-            id,
-            campaign,
+            letter.submittedAt ?? letter.sentAt,
             letter.senderName,
             letter.senderEmail,
             letter.senderPostcode,
             letter.consent,
-            letter.subject,
-            letter.airtableId,
           ],
+          db,
+        );
+        await query(
+          `INSERT INTO supporter_letters (id, entry_id, campaign, subject, airtable_id) VALUES ($1, $2, $3, $4, $5)`,
+          [id, entry.id, campaign, letter.subject, letter.airtableId],
           db,
         );
         result.imported++;

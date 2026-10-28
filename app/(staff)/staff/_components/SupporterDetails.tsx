@@ -135,7 +135,7 @@ function Fact({
   );
 }
 
-/** What an activity was about: the event, the MP and campaign, or the list. `letters` lists the supporter's letters. */
+/** What an activity was about: the event, the MP and campaign, the form, or the list. `letters` lists the supporter's letters. */
 function Subject({ item, letters }: { item: SupporterActivity; letters: string }) {
   if (item.kind === "luma-registered") {
     const status = copy.detail.statuses[item.detail ?? ""];
@@ -175,6 +175,18 @@ function Subject({ item, letters }: { item: SupporterActivity; letters: string }
       <>
         {copy.lists[item.title ?? ""] ?? item.title}
         {item.detail && <Muted> · {item.detail}</Muted>}
+      </>
+    );
+  }
+  if (item.kind === "form-entry") {
+    // The form, then the link they came by and what Luma said, where there's either.
+    const said = [item.detail && copy.detail.cameFrom(item.detail), item.status && copy.detail.luma[item.status]]
+      .filter(Boolean)
+      .join(" · ");
+    return (
+      <>
+        {copy.sources[item.title ?? ""] ?? item.title}
+        {said && <Muted> · {said}</Muted>}
       </>
     );
   }

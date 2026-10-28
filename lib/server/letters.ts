@@ -77,23 +77,23 @@ async function letterRows({
   (LetterSummary & { total: number })[]
 > {
   return query<LetterSummary & { total: number }>(
-    `SELECT l.id::int AS id, s.campaign, l.status, s.sender_name AS "senderName", s.sender_email AS "senderEmail",
-       s.contact_consent AS "contactConsent", n.name AS "mpName", n.id::int AS "politicianId", p.is_test AS "isTest", s.airtable_id IS NOT NULL AS imported, l.created_at AS "createdAt", l.sent_at AS "sentAt", l.replied_at AS "repliedAt",
-       (SELECT k.supporter_id::int FROM supporter_links k WHERE k.letter_id = l.id) AS "supporterId",
+    `SELECT l.id::int AS id, s.campaign, l.status, f.name AS "senderName", f.email AS "senderEmail",
+       f.contact_consent AS "contactConsent", n.name AS "mpName", n.id::int AS "politicianId", p.is_test AS "isTest", s.airtable_id IS NOT NULL AS imported, l.created_at AS "createdAt", l.sent_at AS "sentAt", l.replied_at AS "repliedAt",
+       (SELECT k.supporter_id::int FROM supporter_links k WHERE k.form_entry_id = s.entry_id) AS "supporterId",
        coalesce((SELECT json_agg(json_build_object('at', e.at, 'status', e.status, 'details', e.details) ORDER BY e.at, e.id)
                  FROM letter_events e WHERE e.letter_id = l.id), '[]') AS events,
        count(*) OVER ()::int AS total
-     FROM supporter_letters s JOIN letters l ON l.id = s.id
+     FROM supporter_letters s JOIN letters l ON l.id = s.id JOIN form_entries f ON f.id = s.entry_id
        JOIN notable_people n ON n.id = l.notable_person_id JOIN politicians p ON p.id = n.id
      WHERE ($1::text IS NULL OR l.status = $1 OR ($1 = 'replied' AND l.replied_at IS NOT NULL)
        OR ($1 = 'auto_reply' AND EXISTS (SELECT 1 FROM letter_events e WHERE e.letter_id = l.id AND e.status = 'auto_reply')))
        AND ($3::bigint IS NULL OR l.notable_person_id = $3)
-       AND ($4::text IS NULL OR s.sender_name ILIKE $4 OR s.sender_email ILIKE $4 OR n.name ILIKE $4)
+       AND ($4::text IS NULL OR f.name ILIKE $4 OR f.email ILIKE $4 OR n.name ILIKE $4)
        AND ($5::boolean IS NULL OR (l.replied_at IS NOT NULL) = $5)
-       AND ($6::bigint IS NULL OR EXISTS (SELECT 1 FROM supporter_links k WHERE k.letter_id = l.id AND k.supporter_id = $6))
+       AND ($6::bigint IS NULL OR EXISTS (SELECT 1 FROM supporter_links k WHERE k.form_entry_id = s.entry_id AND k.supporter_id = $6))
        AND ($7::bigint IS NULL OR l.id = $7)
        AND ($8::text IS NULL OR s.campaign = $8)
-       AND ($9::boolean IS NULL OR s.contact_consent = $9)
+       AND ($9::boolean IS NULL OR f.contact_consent = $9)
      ORDER BY l.created_at DESC, l.id DESC LIMIT $2 OFFSET $10`,
     [
       status ?? null,

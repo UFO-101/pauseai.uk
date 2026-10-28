@@ -214,7 +214,7 @@ export const copy = {
     title: "Check your letter",
     to: "To",
     edit: "Edit",
-    consent: "Tell me about events where I can talk to my MP and ways to help PauseAI",
+    consent: "Keep me in the loop about future campaigns by email. (You can unsubscribe at any time.)",
     replyNotice: "A copy of the letter and responses will be sent to PauseAI UK.",
     send: "Send email",
     sending: "Sending",

@@ -186,7 +186,7 @@ psql postgresql://postgres:postgres@localhost:5432/pauseai_dev   # your NETLIFY_
 
 ```sql
 select name, constituency, email from politicians where is_test;
-select id, status, sender_email, created_at from letters order by id desc;
+select l.id, l.status, f.email, l.created_at from letters l join supporter_letters s using (id) join form_entries f on f.id = s.entry_id order by l.id desc;
 select * from letter_events order by id desc limit 20;
 ```
 
@@ -308,6 +308,15 @@ Delete `DATA_FIXTURES` from `.env.local`, and fill in the keys you need. Each is
   emails" and "Go to Parliament Oct 2026" tables, and to the members' base.
   They're for the politician and Emails syncs and the two one-off imports at
   `/staff/import-data`.
+
+### The march sign-up and Luma
+
+The march sign-up adds each person who registers to a Luma event as a
+guest. It needs `LUMA_API_KEY`, from the calendar that owns the event (Luma
+Plus). The event is `MARCH_EVENT_ID` in `app/api/march/register/route.ts`,
+its API ID (`evt-…`): on Luma, open the event's manage page, and it's in the
+address (`luma.com/event/manage/evt-…`). When registering fails, the server
+logs a `[march]` line saying why.
 
 ## 5. Things that run on a schedule, or from outside
 
