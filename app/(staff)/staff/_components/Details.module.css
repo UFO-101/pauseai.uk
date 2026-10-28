@@ -452,23 +452,56 @@
    everything we hold, each folded, above the erase button. */
 .foot {
   display: grid;
-  gap: var(--space-5);
-  margin-top: var(--space-6);
+  margin-top: var(--space-8);
+  border-top: 1px solid var(--border-strong);
+  font-size: var(--text-sm);
 }
 
-.tables h2,
-.foot h2 {
-  margin: 0 0 var(--space-2);
-  font-size: var(--text-lg);
+/* A row of the foot: a small grey heading in capitals with its count,
+   which opens what's under it in place; each ruled from the next. */
+.footRow {
+  padding-block: var(--space-3);
+  border-bottom: 1px solid var(--border);
 }
 
-/* The history, folded until opened. */
-.folded summary {
-  color: var(--accent);
+.footRow:last-child {
+  border-bottom: none;
+}
+
+.footRow h2 {
+  display: inline;
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
   font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.footRow summary {
   cursor: pointer;
 }
 
-.folded[open] summary {
+.footRow summary:hover h2 {
+  color: var(--text);
+}
+
+.footRow[open] summary {
   margin-bottom: var(--space-3);
+}
+
+/* The erase button, at the end of everything we hold. */
+.erase {
+  margin-top: var(--space-4);
+}
+
+.count {
+  color: var(--muted);
+  font-size: var(--text-xs);
+  font-variant-numeric: tabular-nums;
+}
+
+.tables h2 {
+  margin: 0 0 var(--space-2);
+  font-size: var(--text-lg);
 }

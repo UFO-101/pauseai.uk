@@ -3502,7 +3502,7 @@ describe("each list's download values and contact cards", () => {
       place: { name: "Leeds", basis: "postcode" as const, given: "LS1", country: "england" },
     };
     // Without the Subscriptions filter, a card has no address or number.
-    expect(supporterContact({ subscription: [] })(placed)).toMatchObject({
+    expect(supporterContact({ contact: [] })(placed)).toMatchObject({
       emails: [],
       phones: [],
       address: { locality: "Leeds", country: staffCopy.countries.england },
@@ -3714,7 +3714,7 @@ describe("SupporterFilters", () => {
   it("has a chip for each filter on, a subscription in two halves, its topic then its answer or reason", async () => {
     const { filter, ...search } = supportersSearch({
       activity: "registered",
-      subscription: ["email:pauseai-updates:no", "!phone:march-day", "email:blocked", "email:site-forms:asked"],
+      contact: ["email:pauseai-updates:no", "!phone:march-day", "email:blocked", "email:site-forms:asked"],
       erased: "1",
     });
     void filter;
@@ -3733,12 +3733,11 @@ describe("SupporterFilters", () => {
     ]);
     // The first half: each topic, choosing one for any answer, then turning it the other way and Remove; the
     // erased notice goes.
-    const others =
-      "subscription=%21phone%3Amarch-day&subscription=email%3Ablocked&subscription=email%3Asite-forms%3Aasked";
+    const others = "contact=%21phone%3Amarch-day&contact=email%3Ablocked&contact=email%3Asite-forms%3Aasked";
     const first = await menu(`${copy.columns.subscriptions}: ${topics.email["pauseai-updates"]}`);
     expect(first).toContainEqual([
       topics.email["site-forms"],
-      `/staff/supporters?activity=registered&${others}&subscription=email%3Asite-forms`,
+      `/staff/supporters?activity=registered&${others}&contact=email%3Asite-forms`,
     ]);
     expect(first.at(-1)![0]).toBe(staffCopy.filters.remove);
     // The second: any answer, then each answer in the topic's words; no Remove.
@@ -3751,13 +3750,13 @@ describe("SupporterFilters", () => {
     ]);
     expect(second[1]).toEqual([
       answers.email.yes,
-      `/staff/supporters?activity=registered&${others}&subscription=email%3Apauseai-updates%3Ayes`,
+      `/staff/supporters?activity=registered&${others}&contact=email%3Apauseai-updates%3Ayes`,
     ]);
     // A number's answers in the words of the ways its topic allows, kept left out.
     const march = await menu(copy.filters.anyAnswer);
     expect(march[1]).toEqual([
       answers.text.yes,
-      "/staff/supporters?activity=registered&subscription=email%3Apauseai-updates%3Ano&subscription=email%3Ablocked&subscription=email%3Asite-forms%3Aasked&subscription=%21phone%3Amarch-day%3Ayes",
+      "/staff/supporters?activity=registered&contact=email%3Apauseai-updates%3Ano&contact=email%3Ablocked&contact=email%3Asite-forms%3Aasked&contact=%21phone%3Amarch-day%3Ayes",
     ]);
     // + Filter offers the topics not taken, each email beside its phone, each with its channel's icon.
     const add = await menu(staffCopy.filters.add);

@@ -277,14 +277,13 @@ function letterColumns(letters: string): ListColumn<SupporterActivity>[] {
 }
 
 /**
- * A supporter's page: the band of what we've worked out about them, under
- * their name; a narrow card of what they gave, each detail with its icon
- * and where it came from, its email and phone links, a number we may not
- * use marked, then whether we'd contact them; beside it, tables of the
- * events they registered for and their letters, then everything they did,
- * newest first, folded.
+ * A supporter's page: the band of what we've worked out about them, with
+ * their name; a card of whether we'd contact them, a row per topic; beside
+ * it, tables of the events they registered for and their letters; then a
+ * quiet foot, each row folded: everything they did, newest first, and
+ * everything we hold, `erase` (the button to erase them) at its end.
  */
-export default function SupporterDetails({ supporter }: { supporter: Details }) {
+export default function SupporterDetails({ supporter, erase }: { supporter: Details; erase?: ReactNode }) {
   const { summary, activity, permissions } = supporter;
   const usable = new Set(permissions.filter((p) => p.channel === "phone" && p.send !== "no").map((p) => p.address));
   const holding = held(supporter, usable);
@@ -319,33 +318,36 @@ export default function SupporterDetails({ supporter }: { supporter: Details }) 
         </div>
       </Grid>
       <div className={styles.foot}>
-        <section aria-labelledby="history">
-          <h2 id="history">{copy.detail.activityTitle}</h2>
-          {activity.length === 0 ? (
-            <p className={styles.none}>{copy.detail.noActivity}</p>
-          ) : (
-            <details className={styles.folded}>
-              <summary>{copy.detail.showHistory(activity.length)}</summary>
-              <ol className={styles.history} aria-label={copy.detail.activityTitle}>
-                {activity.map((item, i) => (
-                  <li key={i}>
-                    <span className={styles.when}>{staffTime(item.at)}</span>
-                    <span>
-                      {copy.detail.kinds[item.kind]} <Subject item={item} letters={lettersPage} />
-                    </span>
-                  </li>
-                ))}
-              </ol>
-            </details>
-          )}
-        </section>
-        <section aria-labelledby="everything">
-          <h2 id="everything">{copy.detail.everythingTitle}</h2>
-          <details className={styles.folded}>
-            <summary>{copy.detail.showEverything(holding.length)}</summary>
-            <ListTable columns={heldColumns} rows={holding} rowKey={(h) => h.key} />
+        {activity.length === 0 ? (
+          <section aria-labelledby="history" className={styles.footRow}>
+            <h2 id="history">{copy.detail.activityTitle}</h2>{" "}
+            <span className={styles.none}>{copy.detail.noActivity}</span>
+          </section>
+        ) : (
+          <details className={styles.footRow}>
+            <summary>
+              <h2 id="history">{copy.detail.activityTitle}</h2> <span className={styles.count}>{activity.length}</span>
+            </summary>
+            <ol className={styles.history} aria-labelledby="history">
+              {activity.map((item, i) => (
+                <li key={i}>
+                  <span className={styles.when}>{staffTime(item.at)}</span>
+                  <span>
+                    {copy.detail.kinds[item.kind]} <Subject item={item} letters={lettersPage} />
+                  </span>
+                </li>
+              ))}
+            </ol>
           </details>
-        </section>
+        )}
+        <details className={styles.footRow}>
+          <summary>
+            <h2 id="everything">{copy.detail.everythingTitle}</h2>{" "}
+            <span className={styles.count}>{holding.length}</span>
+          </summary>
+          <ListTable columns={heldColumns} rows={holding} rowKey={(h) => h.key} />
+          {erase && <div className={styles.erase}>{erase}</div>}
+        </details>
       </div>
     </>
   );

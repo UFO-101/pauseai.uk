@@ -100,7 +100,7 @@ describe("supportersSearch", () => {
   const blank = {
     q: "",
     activity: [],
-    subscription: [],
+    contact: [],
     event: [],
     campaign: "",
     wrote: "",
@@ -118,7 +118,7 @@ describe("supportersSearch", () => {
     const all = supportersSearch({
       q: " jane ",
       activity: ["registered", "member", "!letter"],
-      subscription: ["email:luma-calendar:unsubscribed", "!email:blocked"],
+      contact: ["email:luma-calendar:unsubscribed", "!email:blocked"],
       event: ["evt-1", "evt-2", "!evt-3"],
       campaign: "support-sobel-bill",
       wrote: "no",
@@ -132,7 +132,7 @@ describe("supportersSearch", () => {
     expect(all.filter).toEqual({
       search: "jane",
       activity: ["registered", "member"],
-      subscription: [{ channel: "email", topic: "luma-calendar", reason: "unsubscribed" }],
+      contact: [{ channel: "email", topic: "luma-calendar", reason: "unsubscribed" }],
       event: ["evt-1", "evt-2"],
       campaign: "support-sobel-bill",
       wrote: false,
@@ -140,7 +140,7 @@ describe("supportersSearch", () => {
       near: { text: "Leeds", miles: 25 },
       not: {
         activity: ["letter"],
-        subscription: [{ channel: "email", reason: "blocked" }],
+        contact: [{ channel: "email", reason: "blocked" }],
         event: ["evt-3"],
         country: ["scotland"],
       },
@@ -150,7 +150,7 @@ describe("supportersSearch", () => {
     });
     expect(all.q).toBe(" jane ");
     expect(all.activity).toEqual(["registered", "member", "!letter"]);
-    expect(all.subscription).toEqual(["email:luma-calendar:unsubscribed", "!email:blocked"]);
+    expect(all.contact).toEqual(["email:luma-calendar:unsubscribed", "!email:blocked"]);
     // A campaign alone is those who wrote in it; Near alone is within 10 miles.
     expect(supportersSearch({ campaign: "support-sobel-bill", near: "M1" }).filter).toMatchObject({
       wrote: true,
@@ -161,7 +161,7 @@ describe("supportersSearch", () => {
   it("drops what it doesn't know", () => {
     const bad = supportersSearch({
       activity: ["x", "!x"],
-      subscription: "x",
+      contact: "x",
       event: "!",
       campaign: "no-such-campaign",
       wrote: "no",

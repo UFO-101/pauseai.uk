@@ -359,45 +359,41 @@ describeWithDatabase("listSupporters and getSupporter", () => {
     expect(await names({ activity: ["member"] })).toEqual([]);
     expect(await names({ activity: ["letter", "lumaContact"] })).toEqual(["Jane", "Pat"]);
     const unsubscribed = [{ channel: "email", topic: "luma-calendar", reason: "unsubscribed" }] as const;
-    expect(await names({ subscription: [...unsubscribed] })).toEqual(["Sam"]);
-    expect(
-      await names({ subscription: [{ channel: "email", topic: "luma-calendar", reason: "not-following" }] }),
-    ).toEqual(["Old"]);
-    expect(await names({ subscription: [{ channel: "email", topic: "site-forms", reason: "asked" }] })).toEqual([
-      "Pat",
+    expect(await names({ contact: [...unsubscribed] })).toEqual(["Sam"]);
+    expect(await names({ contact: [{ channel: "email", topic: "luma-calendar", reason: "not-following" }] })).toEqual([
+      "Old",
     ]);
+    expect(await names({ contact: [{ channel: "email", topic: "site-forms", reason: "asked" }] })).toEqual(["Pat"]);
     expect(
-      await names({ subscription: [...unsubscribed, { channel: "email", topic: "site-forms", reason: "asked" }] }),
+      await names({ contact: [...unsubscribed, { channel: "email", topic: "site-forms", reason: "asked" }] }),
     ).toEqual(["Sam", "Pat"]);
     // Leaving "Keep me informed" unticked isn't an unsubscribe.
     await query(
       `INSERT INTO members (id, email, name, joined_at, created_at, keep_informed, share_permission, source_modified_at)
        VALUES ('recOld', 'old@example.com', 'Old', '2026-09-01T00:00:00Z', '2026-09-01T00:00:00Z', false, true, '2026-09-01T00:00:00Z')`,
     );
-    expect(await names({ subscription: [...unsubscribed] })).toEqual(["Sam"]);
-    expect(await names({ subscription: [{ channel: "email", topic: "pauseai-updates", reason: "declined" }] })).toEqual(
-      ["Old"],
-    );
+    expect(await names({ contact: [...unsubscribed] })).toEqual(["Sam"]);
+    expect(await names({ contact: [{ channel: "email", topic: "pauseai-updates", reason: "declined" }] })).toEqual([
+      "Old",
+    ]);
     // A block is every topic's answer, and outranks the unsubscribe.
     await query(
       `WITH p AS (INSERT INTO email_problems (address, kind, at, can_reset) VALUES ('sam@example.com', 'hard', '2026-10-13T00:00:00Z', false) RETURNING id)
        INSERT INTO email_blocks (address, problem_id) SELECT 'sam@example.com', id FROM p`,
     );
-    expect(await names({ subscription: [{ channel: "email", reason: "blocked" }] })).toEqual(["Sam"]);
+    expect(await names({ contact: [{ channel: "email", reason: "blocked" }] })).toEqual(["Sam"]);
     // Any answer for a topic, and one answer.
-    expect(await names({ subscription: [{ channel: "email", topic: "pauseai-updates", send: "no" }] })).toEqual([
-      "Old",
-    ]);
-    expect(await names({ subscription: [{ channel: "email", topic: "pauseai-updates" }] })).toEqual(
+    expect(await names({ contact: [{ channel: "email", topic: "pauseai-updates", send: "no" }] })).toEqual(["Old"]);
+    expect(await names({ contact: [{ channel: "email", topic: "pauseai-updates" }] })).toEqual(
       await names({
-        subscription: [
+        contact: [
           { channel: "email", topic: "pauseai-updates", send: "yes" },
           { channel: "email", topic: "pauseai-updates", send: "unsure" },
           { channel: "email", topic: "pauseai-updates", send: "no" },
         ],
       }),
     );
-    expect(await names({ subscription: [...unsubscribed] })).toEqual([]);
+    expect(await names({ contact: [...unsubscribed] })).toEqual([]);
     expect(await names({ sort: "first", dir: "asc" })).toEqual(["Old", "Sam", "Jane", "Pat"]);
     expect(await names({ sort: "first", dir: "desc" })).toEqual(["Pat", "Jane", "Sam", "Old"]);
     expect(await names({ sort: "name", dir: "asc" })).toEqual(["Jane", "Old", "Pat", "Sam"]);
@@ -418,8 +414,8 @@ describeWithDatabase("listSupporters and getSupporter", () => {
     );
     expect(await jane()).toMatchObject({ phone: null, phones: ["+447700900001"] });
     const lumaPhone = { channel: "phone", topic: "luma-calendar" } as const;
-    expect(await names({ subscription: [{ ...lumaPhone, reason: "unsubscribed" }] })).toEqual(["Jane"]);
-    expect(await names({ subscription: [{ ...lumaPhone, reason: "following" }] })).toEqual([]);
+    expect(await names({ contact: [{ ...lumaPhone, reason: "unsubscribed" }] })).toEqual(["Jane"]);
+    expect(await names({ contact: [{ ...lumaPhone, reason: "following" }] })).toEqual([]);
     // The same number given on joining as a volunteer is one we may use; a number found by email or phone.
     await member("recJane", "jane@example.com", "2026-09-01T00:00:00Z", {
       name: "Jane",
@@ -429,10 +425,10 @@ describeWithDatabase("listSupporters and getSupporter", () => {
     await linkSupporters();
     expect(await jane()).toMatchObject({ phone: "+447700900001" });
     const volunteered = { channel: "phone", topic: "volunteering", reason: "volunteered" } as const;
-    expect(await names({ subscription: [volunteered] })).toEqual(["Jane"]);
-    expect(
-      await names({ subscription: [volunteered, { channel: "email", topic: "site-forms", reason: "asked" }] }),
-    ).toEqual(["Jane", "Pat"]);
+    expect(await names({ contact: [volunteered] })).toEqual(["Jane"]);
+    expect(await names({ contact: [volunteered, { channel: "email", topic: "site-forms", reason: "asked" }] })).toEqual(
+      ["Jane", "Pat"],
+    );
     // Her page has each number once, as phone_number() writes it.
     const details = (await getSupporter((await jane()).id))!;
     expect([...new Set(details.contacts.map((c) => c.phone).filter(Boolean))]).toEqual(["+447700900001"]);
@@ -514,9 +510,11 @@ describeWithDatabase("listSupporters and getSupporter", () => {
     expect(await names({ event: ["evt-1"], not: { event: ["evt-2"] } })).toEqual(["Sam", "Old"]);
     expect(await names({ event: ["evt-2"], not: { event: ["evt-2"] } })).toEqual([]);
     expect(await names({ not: { activity: ["letter", "lumaContact"] } })).toEqual(["Sam", "Old"]);
-    expect(
-      await names({ not: { subscription: [{ channel: "email", topic: "site-forms", reason: "asked" }] } }),
-    ).toEqual(["Jane", "Sam", "Old"]);
+    expect(await names({ not: { contact: [{ channel: "email", topic: "site-forms", reason: "asked" }] } })).toEqual([
+      "Jane",
+      "Sam",
+      "Old",
+    ]);
     // Jane's postcode places her in England; Pat has no place, so isn't in England either.
     await query(
       `INSERT INTO postcode_places (postcode, latitude, longitude, place, country)

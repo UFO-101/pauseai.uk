@@ -24,8 +24,7 @@ export default async function SupporterPage({ params }: Params) {
   return (
     <>
       <Breadcrumb href="/staff/supporters">{staffCopy.nav.supporters}</Breadcrumb>
-      <SupporterDetails supporter={supporter} />
-      <EraseLink supporterId={supporter.summary.id} />
+      <SupporterDetails supporter={supporter} erase={<EraseLink supporterId={supporter.summary.id} />} />
     </>
   );
 }

@@ -339,7 +339,7 @@ test("the list says what each supporter gets, and filters by it", async ({ page,
     copy.filters.topics["pauseai-updates"],
   );
   await changeFilter(page, copy.filters.anyAnswer, copy.detail.permissions.answers.email.no);
-  await expect(page).toHaveURL(/subscription=email%3Apauseai-updates%3Adeclined/);
+  await expect(page).toHaveURL(/contact=email%3Apauseai-updates%3Adeclined/);
   await expect(page.getByRole("row").filter({ hasText: "Owen Member" })).toBeVisible();
   await expect(page.getByRole("row").filter({ hasText: "Jane Fixture" })).toHaveCount(0);
   await frame(page, "filtered to those who left Keep me informed unticked: Owen");
