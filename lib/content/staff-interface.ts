@@ -779,6 +779,10 @@ export const staffCopy = {
     megabytes: (n: number) => `${n} MB`,
     removeFile: (name: string) => `⁂ Remove ${name}`,
     tooBig: "⁂ That file is too big: a file can be up to 4MB.",
+    // At the top of the preview: what it shows, and how to choose; for a letter with parts only some get, those too.
+    previewIntro: "⁂ Each person gets their own copy, with their details filled in. Choose whose to see.",
+    previewIntroParts:
+      "⁂ Each person gets their own copy, with their details filled in and only the parts that are for them. Press a button to see the email of those who meet it, or of those who don't, then choose whose to see.",
     // The choice of whose email the preview shows, for screen readers.
     previewAs: "⁂ Whose email to show",
     noOne: "⁂ No one to show: it goes to no one yet.",

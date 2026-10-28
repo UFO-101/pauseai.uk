@@ -516,6 +516,7 @@ function Preview({
   };
   return (
     <>
+      <p className={styles.previewIntro}>{used.length > 0 ? copy.previewIntroParts : copy.previewIntro}</p>
       {used.length > 0 && (
         <ul className={styles.toggles} aria-label={copy.casesLabel}>
           {used.map((condition) => (
