@@ -8,13 +8,18 @@ import { checkMarchRegistration, type MarchRegisterResult } from "@/lib/march-re
 import { addFormEntry } from "@/lib/server/form-entries";
 import { addLumaGuest } from "@/lib/server/outside-services/luma-guests";
 
+/** The march's Luma event (https://luma.com/pauseai-nov26), which production adds registrants to. */
+const MARCH_EVENT_ID = "evt-1HKCXSHaJqGO3Bg";
+
 /**
- * The Luma event registrants are added to: "Luma API Testing"
- * (https://luma.com/qry332td), a test event on the PauseAI UK calendar, so the
- * sign-up can be checked end to end on a deploy preview. Every deploy uses it,
- * production too, until it's the march's event.
+ * "Luma API Testing" (https://luma.com/qry332td), a test event on the PauseAI
+ * UK calendar, which every other deploy adds them to, so the sign-up can be
+ * checked end to end on a deploy preview without joining the march.
  */
-const MARCH_EVENT_ID = "evt-hfOj1RR5K1gBNEW";
+const TEST_EVENT_ID = "evt-hfOj1RR5K1gBNEW";
+
+/** DEPLOY_CONTEXT is Netlify's CONTEXT, fixed at build time by next.config.ts. */
+const eventId = () => (process.env.DEPLOY_CONTEXT === "production" ? MARCH_EVENT_ID : TEST_EVENT_ID);
 
 /** The form's honeypot field: hidden from people, filled in by bots that fill in everything. */
 const HONEYPOT_FIELD = "website";
@@ -38,11 +43,12 @@ async function register(input: unknown): Promise<MarchRegisterResult> {
   if (!check.ok) return { ...check, reason: "invalid" };
 
   const { registration } = check;
-  const result = await addLumaGuest(MARCH_EVENT_ID, { name: registration.name, email: registration.email });
+  const event = eventId();
+  const result = await addLumaGuest(event, { name: registration.name, email: registration.email });
   // Kept even when Luma didn't take them: they gave us their details. If it
   // can't be kept, Luma's answer still stands.
-  await addFormEntry("march-2026-11", registration, { eventId: MARCH_EVENT_ID, status: result.status }).catch(
-    (error: Error) => console.error(`[march] Couldn't keep the sign-up: ${error.message}`),
+  await addFormEntry("march-2026-11", registration, { eventId: event, status: result.status }).catch((error: Error) =>
+    console.error(`[march] Couldn't keep the sign-up: ${error.message}`),
   );
   switch (result.status) {
     case "added":

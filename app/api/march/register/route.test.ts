@@ -79,6 +79,20 @@ describeWithDatabase("POST /api/march/register", () => {
     ]);
   });
 
+  it("adds them to the march itself in production", async () => {
+    vi.stubEnv("DEPLOY_CONTEXT", "production");
+    let body: unknown;
+    server.use(
+      http.post(ADD, async ({ request }) => {
+        body = await request.json();
+        return HttpResponse.json({ skipped: [] });
+      }),
+    );
+    expect(await registerForMarch(person)).toEqual({ ok: true });
+    expect(body).toMatchObject({ event_id: "evt-1HKCXSHaJqGO3Bg" });
+    expect(await entries()).toMatchObject([{ eventId: "evt-1HKCXSHaJqGO3Bg", status: "added" }]);
+  });
+
   it("still says it worked when the sign-up can't be kept, as Luma has them", async () => {
     expect(await withDatabaseDown(() => registerForMarch(person))).toEqual({ ok: true });
     expect(console.error).toHaveBeenCalledWith(expect.stringMatching(/^\[march\] Couldn't keep the sign-up: /));
