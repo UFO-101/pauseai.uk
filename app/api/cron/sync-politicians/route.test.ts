@@ -26,7 +26,7 @@ describeWithDatabase("POST /api/cron/sync-politicians", () => {
       changed: 0,
       renamed: 0,
       statuses: { added: 5, changed: 0, removed: 0 },
-      emails: 4,
+      emails: 5,
     });
   });
 

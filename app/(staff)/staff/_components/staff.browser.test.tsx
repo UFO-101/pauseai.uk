@@ -6,7 +6,7 @@ import { campaignBySlug } from "@/lib/email-your-mp";
 import { campaigns } from "@/lib/content/email-your-mp";
 import { campaignPath } from "@/lib/email-your-mp";
 import { importPath } from "@/lib/import-runs";
-import { registrationStatus } from "@/lib/supporters";
+import { registrationStatus, type SupporterRow } from "@/lib/supporters";
 import { staffDate } from "@/lib/staff-time";
 import { jobTitles, staffCopy } from "@/lib/content/staff-interface";
 import type { AnyImportRun, ControlAiImport, MpCheck, PoliticianSync } from "@/lib/import-runs";
@@ -2893,6 +2893,14 @@ describe("SupporterDetails", () => {
     await unmount();
   });
 
+  it("puts what it's given to erase them at the end of everything we hold", async () => {
+    await render(<SupporterDetails supporter={exampleSupporterDetails} erase={<button type="button">Erase</button>} />);
+    openHistory();
+    expect(
+      page.getByRole("button", { name: "Erase" }).element().closest("details")!.querySelector("#everything"),
+    ).not.toBeNull();
+  });
+
   it("copes with a supporter who has no name, nothing given and no activity, and with unknown statuses, lists and campaigns", async () => {
     const copy = staffCopy.supporters;
     await render(
@@ -3715,6 +3723,34 @@ describe("LetterFilters", () => {
       copy.consent.yes,
       "/staff/letters?status=sent&q=jane&campaign=support-sobel-bill&consent=yes",
     ]);
+  });
+});
+
+describe("the supporters list's Email and Phone columns", () => {
+  const search = (contact: string[]) => {
+    const { filter, ...typed } = supportersSearch({ contact });
+    void filter;
+    return typed;
+  };
+  const text = (columns: ReturnType<typeof supporterColumns>, key: string, row: SupporterRow) =>
+    columns.find((c) => c.key === key)!.text!(row);
+
+  it("shows neither without the Contact filter, and with it, the addresses and numbers whose answer it finds", async () => {
+    expect(supporterColumns(search([])).map((c) => c.key)).not.toEqual(expect.arrayContaining(["email"]));
+    expect(supporterColumns(search(["!email:site-forms:yes"])).map((c) => c.key)).not.toContain("email");
+    // A value it can't read finds nothing to show.
+    expect(supporterColumns(search(["email:nonsense"])).map((c) => c.key)).not.toContain("email");
+    // An answer, a topic's any answer, and blocked, a reason; each channel's column, of its own.
+    const contact = ["email:luma-calendar:no", "phone:luma-calendar", "email:blocked"];
+    const columns = supporterColumns(search(contact));
+    const [jane] = exampleSupporterRows;
+    expect(text(columns, "email", jane)).toBe("jane@example.com");
+    expect(text(columns, "phone", jane)).toBe("+447700900001");
+    expect(text(columns, "email", { ...jane, permissions: exampleBlockedPermissions })).toBe("gus@example.com");
+    expect(text(columns, "phone", { ...jane, permissions: exampleBlockedPermissions })).toBe("");
+    await render(<SupportersTable search={search(contact)} page={{ supporters: [jane], total: 1, pages: 1 }} />);
+    await expect.element(page.getByRole("cell", { name: "jane@example.com" })).toBeVisible();
+    await expect.element(page.getByRole("cell", { name: "+447700900001" })).toBeVisible();
   });
 });
 
