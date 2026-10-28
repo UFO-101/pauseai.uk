@@ -5,7 +5,7 @@ import { query, transaction } from "./db";
 import { keepingFailure, recordRun } from "./import-runs";
 import { airtableToken, fetchEmails, fetchTestPoliticianIds } from "./outside-services/airtable";
 
-// Copies PauseAI's 2026 emails to politicians from Airtable's Emails table
+// Copies PauseAI's emails to politicians from Airtable's Emails table
 // into pauseai_letters, nightly (app/api/cron/sync-politicians, after the
 // politicians) or when staff ask, each run in the import log as
 // "sync-emails". An email is added once, by its record's ID, as a letter of

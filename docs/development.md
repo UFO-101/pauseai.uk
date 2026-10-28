@@ -281,7 +281,7 @@ Delete `DATA_FIXTURES` from `.env.local`, and fill in the keys you need. Each is
 
 - **Politicians.** The database starts with only the test MPs. With
   `AIRTABLE_TOKEN` set, copy the real politicians from Airtable, and
-  PauseAI's 2026 emails to them, then check the MPs against Parliament
+  PauseAI's emails to them, then check the MPs against Parliament
   (about 650 lookups, which takes a minute):
 
   ```bash

@@ -448,7 +448,11 @@ INSERT INTO seed_emails VALUES
   ('recEmailCsrb', 'recDummy', 'CSRB Iqbal Amendment', false, '138 days'),
   ('recEmailEdinburghPolly', 'recPlaceholder', 'Edinburgh Conference Nov 26 Invitation', true, '25 days'),
   ('recEmailEdinburghMorag', 'recMorag', 'Edinburgh Conference Nov 26 Invitation', false, '25 days'),
-  ('recEmailBenLake', 'recDummy', 'Ben Lake October 2026 Debate', false, '11 days');
+  ('recEmailBenLake', 'recDummy', 'Ben Lake October 2026 Debate', false, '11 days'),
+  ('recEmailDocumentary', 'recDummy', 'Documentary Invitation', false, '420 days'),
+  ('recEmailWestminster', 'recPlaceholder', 'Westminster Hall Debate Invitation', true, '390 days'),
+  ('recEmailLiability', 'recDummy', 'Liability Bill', false, '200 days'),
+  ('recEmailFrontier', 'recPlaceholder', 'Frontier AI', true, '160 days');
 CREATE TEMP TABLE seeded_emails ON COMMIT DROP AS
 SELECT nextval(pg_get_serial_sequence('letters', 'id')) AS id, e.* FROM seed_emails e;
 INSERT INTO letters (id, kind, notable_person_id, status, created_at, sent_at) OVERRIDING SYSTEM VALUE

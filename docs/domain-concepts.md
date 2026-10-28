@@ -133,7 +133,7 @@ adds what its kind has, joined as notable people are:
 - **PauseAI's letter** (`pauseai_letters`): one person's letter of a mailing
   (`mailings`), which may make an ask. Those sent before the site could send
   them are copied nightly from Airtable's Emails table
-  (`lib/server/emails-sync.ts`), from 2026 on: who, when, and whether it was
+  (`lib/server/emails-sync.ts`): who, when, and whether it was
   personalised, but no text. Each mailing there is a
   tick box, named by `mailings.airtable_field`; an email with no box we know
   is held back and reported until a migration adds its mailing.

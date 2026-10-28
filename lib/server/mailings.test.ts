@@ -38,12 +38,17 @@ describeWithDatabase("mailings", () => {
     await addLetter(CSRB, polly, { sent: "2026-06-01" });
 
     const mailings = await listMailings();
+    // The unsent first, the newest made first.
     expect(mailings.map((m) => [m.title, m.sent, m.skipped, m.bounced, m.replied])).toEqual([
+      ["Frontier AI", 0, 0, 0, 0],
+      ["Liability Bill", 0, 0, 0, 0],
+      ["Westminster Hall Debate Invitation", 0, 0, 0, 0],
+      ["Documentary Invitation", 0, 0, 0, 0],
       ["Ben Lake October 2026 Debate", 0, 0, 0, 0],
       [EDINBURGH, 2, 1, 1, 1],
       [CSRB, 1, 0, 0, 0],
     ]);
-    expect(mailings[1]).toMatchObject({
+    expect(mailings[5]).toMatchObject({
       ask: "edinburgh-conference-2026",
       askTitle: "Edinburgh conference",
       imported: true,

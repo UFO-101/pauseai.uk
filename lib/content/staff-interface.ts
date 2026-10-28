@@ -853,11 +853,11 @@ export const staffCopy = {
   },
   // The hourly copy of PauseAI's UK members (lib/server/members-import.ts),
   // on the import page.
-  // PauseAI's 2026 emails to politicians, from Airtable's Emails table.
+  // PauseAI's emails to politicians, from Airtable's Emails table.
   pauseaiEmails: {
     title: "PauseAI's emails to politicians",
     intro: {
-      before: "Copies each email that PauseAI has sent a politician since January 2026 from the ",
+      before: "⁂ Copies each email that PauseAI has sent a politician, of every year, from the ",
       link: "Emails table in Airtable",
       after: ". Only transfers known ones, the import code needs updating if a new mailing is added.",
     },

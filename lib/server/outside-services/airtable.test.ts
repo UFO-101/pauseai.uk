@@ -214,7 +214,7 @@ describe("fetchPoliticians", () => {
 });
 
 describe("fetchEmails", () => {
-  it("reads the 2026 emails, with the tick boxes of the mailings it's given", async () => {
+  it("reads every email with a time, with the tick boxes of the mailings it's given", async () => {
     const requests = serve({
       records: [
         record(
