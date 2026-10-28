@@ -11,7 +11,7 @@ import { syncPoliticians } from "./politician-sync";
 const letters = () =>
   query(
     `SELECT n.name, coalesce(m.airtable_field, m.title) AS mailing, l.status, l.sent_at AS "sentAt", p.personalised
-     FROM pauseai_letters p JOIN letters l USING (id) JOIN mailings m ON m.id = p.mailing_id
+     FROM letters_from_pauseai p JOIN letters l USING (id) JOIN mailings m ON m.id = p.mailing_id
        JOIN notable_people n ON n.id = l.notable_person_id
      ORDER BY p.airtable_id`,
   );

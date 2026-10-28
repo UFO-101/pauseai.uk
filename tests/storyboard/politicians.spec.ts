@@ -332,7 +332,7 @@ test("PauseAI's emails: copied once, with one held back for a mailing nobody has
   );
   await page.getByRole("button", { name: staffCopy.pauseaiEmails.importNow }).click();
   await expect(page.getByText(staffCopy.runs.status.incomplete).first()).toBeVisible();
-  expect(runSql(flowDatabase, "SELECT count(*) FROM pauseai_letters")).toEqual(["5"]);
+  expect(runSql(flowDatabase, "SELECT count(*) FROM letters_from_pauseai")).toEqual(["5"]);
 });
 
 test("the one-off imports: pauseai.info's letters and their senders, and Go to Parliament's meetings", async ({

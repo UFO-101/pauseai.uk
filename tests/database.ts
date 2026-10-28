@@ -46,7 +46,7 @@ const TABLES = [
   "staff_login_links",
   "staff_accounts",
   "staff_sessions",
-  "supporter_letters",
+  "letters_from_supporters",
   "supporter_links",
   "supporters",
 ];
@@ -174,7 +174,7 @@ export async function addTestLetter(letter: {
     ],
   );
   await query(
-    "INSERT INTO supporter_letters (id, entry_id, campaign, subject, reply_hash) VALUES ($1, $2, $3, $4, $5)",
+    "INSERT INTO letters_from_supporters (id, entry_id, campaign, subject, reply_hash) VALUES ($1, $2, $3, $4, $5)",
     [
       id,
       entry.id,

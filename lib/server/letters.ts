@@ -83,7 +83,7 @@ async function letterRows({
        coalesce((SELECT json_agg(json_build_object('at', e.at, 'status', e.status, 'details', e.details) ORDER BY e.at, e.id)
                  FROM letter_events e WHERE e.letter_id = l.id), '[]') AS events,
        count(*) OVER ()::int AS total
-     FROM supporter_letters s JOIN letters l ON l.id = s.id JOIN form_entries f ON f.id = s.entry_id
+     FROM letters_from_supporters s JOIN letters l ON l.id = s.id JOIN form_entries f ON f.id = s.entry_id
        JOIN notable_people n ON n.id = l.notable_person_id JOIN politicians p ON p.id = n.id
      WHERE ($1::text IS NULL OR l.status = $1 OR ($1 = 'replied' AND l.replied_at IS NOT NULL)
        OR ($1 = 'auto_reply' AND EXISTS (SELECT 1 FROM letter_events e WHERE e.letter_id = l.id AND e.status = 'auto_reply')))
@@ -125,7 +125,7 @@ export type PauseaiLetter = {
 export async function pauseaiLetters(politicianId: number): Promise<PauseaiLetter[]> {
   return query<PauseaiLetter>(
     `SELECT l.id::int AS id, m.id::int AS "mailingId", m.title AS mailing, l.status, coalesce(l.sent_at, l.created_at) AS at, p.personalised
-     FROM pauseai_letters p JOIN letters l USING (id) JOIN mailings m ON m.id = p.mailing_id
+     FROM letters_from_pauseai p JOIN letters l USING (id) JOIN mailings m ON m.id = p.mailing_id
      WHERE l.notable_person_id = $1 ORDER BY l.created_at DESC, l.id DESC`,
     [politicianId],
   );
@@ -142,7 +142,7 @@ export type PoliticianLetters =
 async function unsignedLetters(politicianId: number, limit = 200): Promise<UnsignedLetter[]> {
   return query<UnsignedLetter>(
     `SELECT l.id::int AS id, s.campaign, l.status, l.created_at AS "createdAt", l.replied_at AS "repliedAt"
-     FROM supporter_letters s JOIN letters l ON l.id = s.id
+     FROM letters_from_supporters s JOIN letters l ON l.id = s.id
      WHERE l.notable_person_id = $1 ORDER BY l.created_at DESC, l.id DESC LIMIT $2`,
     [politicianId, limit],
   );

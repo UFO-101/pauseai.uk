@@ -154,7 +154,7 @@ describeWithDatabase("submitLetter", () => {
 
     const [letter] = await query<Record<string, unknown>>(
       `SELECT l.*, s.campaign, s.reply_hash, f.form, f.email, f.postcode, f.contact_consent
-       FROM letters l JOIN supporter_letters s USING (id) JOIN form_entries f ON f.id = s.entry_id`,
+       FROM letters l JOIN letters_from_supporters s USING (id) JOIN form_entries f ON f.id = s.entry_id`,
     );
     expect(letter.reply_hash).toMatch(/^jane\.smith\.\d{6}$/);
     const address = `${letter.reply_hash}@letters.pauseai.uk`;
@@ -201,7 +201,7 @@ describeWithDatabase("submitLetter", () => {
     // The sender is a supporter from the moment the letter is kept.
     expect(
       await query(
-        "SELECT s.id::int AS letter_id, k.matched_value FROM supporter_links k JOIN supporter_letters s ON s.entry_id = k.form_entry_id",
+        "SELECT s.id::int AS letter_id, k.matched_value FROM supporter_links k JOIN letters_from_supporters s ON s.entry_id = k.form_entry_id",
       ),
     ).toEqual([{ letter_id: Number(letter.id), matched_value: "jane@example.com" }]);
     expect(
@@ -213,7 +213,7 @@ describeWithDatabase("submitLetter", () => {
     vi.stubEnv("REPLIES_INBOX", "");
     const sent = postmark();
     await submitLetter(FORM);
-    const [{ reply_hash }] = await query<{ reply_hash: string }>("SELECT reply_hash FROM supporter_letters");
+    const [{ reply_hash }] = await query<{ reply_hash: string }>("SELECT reply_hash FROM letters_from_supporters");
     expect(sent[0].Bcc).toBeUndefined();
     expect(sent[0].ReplyTo).toBe(
       `"Jane Smith" <jane@example.com>, "PauseAI Letters" <${reply_hash}@letters.pauseai.uk>`,
@@ -309,7 +309,7 @@ describeWithDatabase("submitLetter", () => {
     expect(await submitLetter(FORM)).toEqual({ ok: true });
     const digits = (seed: string) =>
       String(createHash("sha256").update(seed).digest().readUInt32BE() % 1_000_000).padStart(6, "0");
-    const letters = await query<{ reply_hash: string }>("SELECT reply_hash FROM supporter_letters ORDER BY id");
+    const letters = await query<{ reply_hash: string }>("SELECT reply_hash FROM letters_from_supporters ORDER BY id");
     expect(letters.map((l) => l.reply_hash)).toEqual([
       `jane.smith.${digits("letter jane@example.com 0")}`,
       `jane.smith.${digits("letter jane@example.com 1")}`,

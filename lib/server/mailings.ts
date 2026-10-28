@@ -2,7 +2,7 @@ import "server-only";
 import { query } from "./db";
 
 // PauseAI's mailings to politicians: one mail to many, each recipient's a
-// PauseAI letter (pauseai_letters). Those sent before the site could send
+// PauseAI letter (letters_from_pauseai). Those sent before the site could send
 // them are copied from Airtable's Emails table, which keeps only who got
 // each one, and whether it was personalised: no text, sender or attachments.
 
@@ -52,7 +52,7 @@ const SELECT_MAILINGS = `
     count(l.id) FILTER (WHERE l.status IN ('bounced', 'spam_complaint'))::int AS bounced,
     count(l.replied_at)::int AS replied
   FROM mailings m LEFT JOIN asks a ON a.slug = m.ask
-    LEFT JOIN pauseai_letters p ON p.mailing_id = m.id LEFT JOIN letters l ON l.id = p.id`;
+    LEFT JOIN letters_from_pauseai p ON p.mailing_id = m.id LEFT JOIN letters l ON l.id = p.id`;
 
 /** Every mailing, newest first, those not yet sent at the top. */
 export async function listMailings(): Promise<MailingSummary[]> {
@@ -75,11 +75,11 @@ export async function getMailing(id: number, page = 1): Promise<Mailing | undefi
     query<MailingRecipient>(
       `SELECT l.id::int AS "letterId", n.id::int AS "politicianId", n.name, l.status, l.sent_at AS "sentAt",
          l.replied_at AS "repliedAt", p.personalised
-       FROM pauseai_letters p JOIN letters l USING (id) JOIN notable_people n ON n.id = l.notable_person_id
+       FROM letters_from_pauseai p JOIN letters l USING (id) JOIN notable_people n ON n.id = l.notable_person_id
        WHERE p.mailing_id = $1 ORDER BY n.name, l.id LIMIT $2 OFFSET $3`,
       [id, RECIPIENTS_PAGE_SIZE, (page - 1) * RECIPIENTS_PAGE_SIZE],
     ),
-    query<{ total: number }>("SELECT count(*)::int AS total FROM pauseai_letters WHERE mailing_id = $1", [id]),
+    query<{ total: number }>("SELECT count(*)::int AS total FROM letters_from_pauseai WHERE mailing_id = $1", [id]),
   ]);
   return {
     ...mailing,

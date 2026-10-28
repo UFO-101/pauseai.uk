@@ -45,7 +45,7 @@ export async function eraseSupporter(id: number, reference: string, by: string):
       )
     ).map((row) => row.id);
     const letters = await query<{ id: number }>(
-      `DELETE FROM letters WHERE id IN (SELECT id FROM supporter_letters WHERE entry_id = ANY($1::bigint[])) RETURNING id::int AS id`,
+      `DELETE FROM letters WHERE id IN (SELECT id FROM letters_from_supporters WHERE entry_id = ANY($1::bigint[])) RETURNING id::int AS id`,
       [entries],
       db,
     );

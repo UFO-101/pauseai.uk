@@ -46,7 +46,7 @@ async function janeWithEverything(mp: number): Promise<number> {
   );
   await linkSupporters();
   const [{ id }] = await query<{ id: number }>(
-    `SELECT k.supporter_id::int AS id FROM supporter_links k JOIN supporter_letters s ON s.entry_id = k.form_entry_id
+    `SELECT k.supporter_id::int AS id FROM supporter_links k JOIN letters_from_supporters s ON s.entry_id = k.form_entry_id
      WHERE s.id = $1`,
     [letterId],
   );
@@ -70,7 +70,7 @@ describeWithDatabase("eraseSupporter", () => {
     expect(await query("SELECT 1 FROM luma_people WHERE user_id = 'usr-fixture-1'")).toEqual([]);
     expect(await query("SELECT 1 FROM luma_guests WHERE user_id = 'usr-fixture-1'")).toEqual([]);
     expect(await query("SELECT 1 FROM form_entries WHERE email = 'jane.fixture@example.com'")).toEqual([]);
-    expect(await query("SELECT 1 FROM supporter_letters")).toEqual([]);
+    expect(await query("SELECT 1 FROM letters_from_supporters")).toEqual([]);
     expect(await query("SELECT 1 FROM form_entry_luma")).toEqual([]);
     expect(await query("SELECT count(*)::int AS n FROM letter_events")).toEqual([{ n: 0 }]);
     // The letter's own send and the copy to the shared inbox stay, without their letter; the one to Jane goes.

@@ -54,7 +54,7 @@ async function letter(email: string, name: string, mp: number, more: Record<stri
 const links = () =>
   query<{ supporter_id: number; luma_user_id: string | null; letter_id: number | null; matched_value: string }>(
     `SELECT k.supporter_id::int AS supporter_id, k.luma_user_id, s.id::int AS letter_id, k.matched_value
-     FROM supporter_links k LEFT JOIN supporter_letters s ON s.entry_id = k.form_entry_id ORDER BY k.id`,
+     FROM supporter_links k LEFT JOIN letters_from_supporters s ON s.entry_id = k.form_entry_id ORDER BY k.id`,
   );
 
 describeWithDatabase("linkSupporters", () => {
@@ -442,7 +442,7 @@ describeWithDatabase("listSupporters and getSupporter", () => {
     expect(await names({ event: ["evt-none", "evt-1"] })).toEqual(["Sam", "Jane", "Old"]);
     expect(await names({ event: ["evt-none"] })).toEqual([]);
     expect(await eventChoices()).toEqual([{ id: "evt-1", name: "evt-1", startAt: new Date("2026-10-01T18:00:00Z") }]);
-    const [{ campaign }] = await query<{ campaign: string }>("SELECT campaign FROM supporter_letters LIMIT 1");
+    const [{ campaign }] = await query<{ campaign: string }>("SELECT campaign FROM letters_from_supporters LIMIT 1");
     expect(await names({ campaign, wrote: true })).toEqual(["Pat"]);
     expect(await names({ campaign, wrote: false })).toEqual(["Sam", "Jane", "Old"]);
     // The Event filter's rows have their registrations for its events and how each stands; the Campaign filter's

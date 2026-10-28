@@ -15,7 +15,7 @@ const imported = () =>
     `SELECT s.airtable_id AS "airtableId", n.name AS "to", s.campaign, f.form, f.name AS "senderName",
        f.email AS "senderEmail", f.address, f.postcode, f.contact_consent AS consent, f.created_at AS "enteredAt",
        s.reply_hash AS "replyHash", l.status, l.created_at AS "createdAt", l.sent_at AS "sentAt"
-     FROM supporter_letters s JOIN letters l USING (id) JOIN form_entries f ON f.id = s.entry_id
+     FROM letters_from_supporters s JOIN letters l USING (id) JOIN form_entries f ON f.id = s.entry_id
        JOIN notable_people n ON n.id = l.notable_person_id
      WHERE s.airtable_id IS NOT NULL ORDER BY l.sent_at`,
   );

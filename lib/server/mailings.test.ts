@@ -15,7 +15,7 @@ async function addLetter(
     [politicianId, status, sent, replied],
   );
   await query(
-    `INSERT INTO pauseai_letters (id, mailing_id, personalised)
+    `INSERT INTO letters_from_pauseai (id, mailing_id, personalised)
      SELECT $1, id, $3 FROM mailings WHERE title = $2`,
     [id, title, personalised],
   );

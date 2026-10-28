@@ -212,7 +212,7 @@ export async function listSupporters(
   if (filter.not) where.push(...anyOf(filter.not, add).map((condition) => `(${condition}) IS NOT TRUE`));
   if (filter.campaign) {
     where.push(
-      `${filter.wrote ? "" : "NOT "}EXISTS (SELECT 1 FROM supporter_links k JOIN supporter_letters l ON l.entry_id = k.form_entry_id
+      `${filter.wrote ? "" : "NOT "}EXISTS (SELECT 1 FROM supporter_links k JOIN letters_from_supporters l ON l.entry_id = k.form_entry_id
        WHERE k.supporter_id = s.id AND l.campaign = ${add(filter.campaign)})`,
     );
   }
@@ -259,7 +259,7 @@ export async function listSupporters(
     filter.campaign && filter.wrote
       ? query<{ id: number; at: string }>(
           `SELECT k.supporter_id::int AS id, min(f.created_at) AS at
-           FROM supporter_links k JOIN supporter_letters l ON l.entry_id = k.form_entry_id
+           FROM supporter_links k JOIN letters_from_supporters l ON l.entry_id = k.form_entry_id
            JOIN form_entries f ON f.id = l.entry_id
            WHERE k.supporter_id = ANY($1) AND l.campaign = $2 GROUP BY k.supporter_id`,
           [ids, filter.campaign],

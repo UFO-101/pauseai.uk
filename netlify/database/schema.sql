@@ -212,6 +212,22 @@ CREATE TABLE public.letters (
 );
 
 --
+-- Name: letters_from_supporters; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.letters_from_supporters (
+    id bigint CONSTRAINT supporter_letters_id_not_null NOT NULL,
+    kind text DEFAULT 'supporter'::text CONSTRAINT supporter_letters_kind_not_null NOT NULL,
+    campaign text CONSTRAINT supporter_letters_campaign_not_null NOT NULL,
+    subject text CONSTRAINT supporter_letters_subject_not_null NOT NULL,
+    reply_hash text,
+    airtable_id text,
+    entry_id bigint CONSTRAINT supporter_letters_entry_id_not_null NOT NULL,
+    CONSTRAINT letters_from_supporters_kind_check CHECK ((kind = 'supporter'::text)),
+    CONSTRAINT letters_from_supporters_reply_hash_check CHECK (((reply_hash IS NULL) = (airtable_id IS NOT NULL)))
+);
+
+--
 -- Name: luma_events; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -365,22 +381,6 @@ CREATE TABLE public.postcode_places (
 );
 
 --
--- Name: supporter_letters; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.supporter_letters (
-    id bigint NOT NULL,
-    kind text DEFAULT 'supporter'::text NOT NULL,
-    campaign text NOT NULL,
-    subject text NOT NULL,
-    reply_hash text,
-    airtable_id text,
-    entry_id bigint NOT NULL,
-    CONSTRAINT supporter_letters_kind_check CHECK ((kind = 'supporter'::text)),
-    CONSTRAINT supporter_letters_reply_hash_check CHECK (((reply_hash IS NULL) = (airtable_id IS NOT NULL)))
-);
-
---
 -- Name: supporter_activity_form; Type: VIEW; Schema: public; Owner: -
 --
 
@@ -392,7 +392,7 @@ CREATE VIEW public.supporter_activity_form AS
     p.name AS detail,
     ('/staff/politicians/'::text || p.id) AS href,
     l.status
-   FROM ((public.supporter_letters s
+   FROM ((public.letters_from_supporters s
      JOIN public.letters l ON ((l.id = s.id)))
      JOIN public.notable_people p ON ((p.id = l.notable_person_id)))
 UNION ALL
@@ -403,7 +403,7 @@ UNION ALL
     p.name AS detail,
     ('/staff/politicians/'::text || p.id) AS href,
     NULL::text AS status
-   FROM ((public.supporter_letters s
+   FROM ((public.letters_from_supporters s
      JOIN public.letters l ON ((l.id = s.id)))
      JOIN public.notable_people p ON ((p.id = l.notable_person_id)))
   WHERE (l.replied_at IS NOT NULL)
@@ -418,7 +418,7 @@ UNION ALL
    FROM (public.form_entries f
      LEFT JOIN public.form_entry_luma g ON ((g.entry_id = f.id)))
   WHERE (NOT (EXISTS ( SELECT 1
-           FROM public.supporter_letters s
+           FROM public.letters_from_supporters s
           WHERE (s.entry_id = f.id))));
 
 --
@@ -1205,6 +1205,19 @@ ALTER TABLE public.letter_events ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTIT
 );
 
 --
+-- Name: letters_from_pauseai; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.letters_from_pauseai (
+    id bigint CONSTRAINT pauseai_letters_id_not_null NOT NULL,
+    kind text DEFAULT 'pauseai'::text CONSTRAINT pauseai_letters_kind_not_null NOT NULL,
+    mailing_id bigint CONSTRAINT pauseai_letters_mailing_id_not_null NOT NULL,
+    airtable_id text,
+    personalised boolean DEFAULT false CONSTRAINT pauseai_letters_personalised_not_null NOT NULL,
+    CONSTRAINT letters_from_pauseai_kind_check CHECK ((kind = 'pauseai'::text))
+);
+
+--
 -- Name: letters_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
@@ -1301,17 +1314,16 @@ ALTER TABLE public.opt_outs ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
 );
 
 --
--- Name: pauseai_letters; Type: TABLE; Schema: public; Owner: -
+-- Name: pauseai_letters; Type: VIEW; Schema: public; Owner: -
 --
 
-CREATE TABLE public.pauseai_letters (
-    id bigint NOT NULL,
-    kind text DEFAULT 'pauseai'::text NOT NULL,
-    mailing_id bigint NOT NULL,
-    airtable_id text,
-    personalised boolean DEFAULT false NOT NULL,
-    CONSTRAINT pauseai_letters_kind_check CHECK ((kind = 'pauseai'::text))
-);
+CREATE VIEW public.pauseai_letters AS
+ SELECT id,
+    kind,
+    mailing_id,
+    airtable_id,
+    personalised
+   FROM public.letters_from_pauseai;
 
 --
 -- Name: politicians; Type: TABLE; Schema: public; Owner: -
@@ -1386,6 +1398,20 @@ CREATE VIEW public.supporter_first_seen AS
            FROM public.supporter_identity i
           WHERE (i.supporter_id = s.id)) AS first_seen_at
    FROM public.supporters s;
+
+--
+-- Name: supporter_letters; Type: VIEW; Schema: public; Owner: -
+--
+
+CREATE VIEW public.supporter_letters AS
+ SELECT id,
+    kind,
+    campaign,
+    subject,
+    reply_hash,
+    airtable_id,
+    entry_id
+   FROM public.letters_from_supporters;
 
 --
 -- Name: supporter_links_id_seq; Type: SEQUENCE; Schema: public; Owner: -
@@ -1568,6 +1594,48 @@ ALTER TABLE ONLY public.letter_events
     ADD CONSTRAINT letter_events_pkey PRIMARY KEY (id);
 
 --
+-- Name: letters_from_pauseai letters_from_pauseai_airtable_id_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.letters_from_pauseai
+    ADD CONSTRAINT letters_from_pauseai_airtable_id_key UNIQUE (airtable_id);
+
+--
+-- Name: letters_from_pauseai letters_from_pauseai_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.letters_from_pauseai
+    ADD CONSTRAINT letters_from_pauseai_pkey PRIMARY KEY (id);
+
+--
+-- Name: letters_from_supporters letters_from_supporters_airtable_id_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.letters_from_supporters
+    ADD CONSTRAINT letters_from_supporters_airtable_id_key UNIQUE (airtable_id);
+
+--
+-- Name: letters_from_supporters letters_from_supporters_entry_id_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.letters_from_supporters
+    ADD CONSTRAINT letters_from_supporters_entry_id_key UNIQUE (entry_id);
+
+--
+-- Name: letters_from_supporters letters_from_supporters_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.letters_from_supporters
+    ADD CONSTRAINT letters_from_supporters_pkey PRIMARY KEY (id);
+
+--
+-- Name: letters_from_supporters letters_from_supporters_reply_hash_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.letters_from_supporters
+    ADD CONSTRAINT letters_from_supporters_reply_hash_key UNIQUE (reply_hash);
+
+--
 -- Name: letters letters_id_kind_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1687,20 +1755,6 @@ ALTER TABLE ONLY public.opt_outs
     ADD CONSTRAINT opt_outs_source_source_ref_key UNIQUE (source, source_ref);
 
 --
--- Name: pauseai_letters pauseai_letters_airtable_id_key; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.pauseai_letters
-    ADD CONSTRAINT pauseai_letters_airtable_id_key UNIQUE (airtable_id);
-
---
--- Name: pauseai_letters pauseai_letters_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.pauseai_letters
-    ADD CONSTRAINT pauseai_letters_pkey PRIMARY KEY (id);
-
---
 -- Name: politicians politicians_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1741,34 +1795,6 @@ ALTER TABLE ONLY public.staff_login_links
 
 ALTER TABLE ONLY public.staff_sessions
     ADD CONSTRAINT staff_sessions_pkey PRIMARY KEY (token_hash);
-
---
--- Name: supporter_letters supporter_letters_airtable_id_key; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.supporter_letters
-    ADD CONSTRAINT supporter_letters_airtable_id_key UNIQUE (airtable_id);
-
---
--- Name: supporter_letters supporter_letters_entry_id_key; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.supporter_letters
-    ADD CONSTRAINT supporter_letters_entry_id_key UNIQUE (entry_id);
-
---
--- Name: supporter_letters supporter_letters_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.supporter_letters
-    ADD CONSTRAINT supporter_letters_pkey PRIMARY KEY (id);
-
---
--- Name: supporter_letters supporter_letters_reply_hash_key; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.supporter_letters
-    ADD CONSTRAINT supporter_letters_reply_hash_key UNIQUE (reply_hash);
 
 --
 -- Name: supporter_links supporter_links_form_entry_id_key; Type: CONSTRAINT; Schema: public; Owner: -
@@ -1890,6 +1916,12 @@ CREATE INDEX import_runs_job_at ON public.import_runs USING btree (job, at DESC,
 CREATE INDEX letter_events_letter_id ON public.letter_events USING btree (letter_id, at);
 
 --
+-- Name: letters_from_pauseai_mailing; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX letters_from_pauseai_mailing ON public.letters_from_pauseai USING btree (mailing_id);
+
+--
 -- Name: letters_notable_person; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -1948,12 +1980,6 @@ CREATE INDEX notable_people_email ON public.notable_people USING btree (lower(em
 --
 
 CREATE UNIQUE INDEX opt_outs_open ON public.opt_outs USING btree (channel, address, list) WHERE (resubscribed_at IS NULL);
-
---
--- Name: pauseai_letters_mailing; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX pauseai_letters_mailing ON public.pauseai_letters USING btree (mailing_id);
 
 --
 -- Name: politicians_commons_constituency; Type: INDEX; Schema: public; Owner: -
@@ -2060,6 +2086,41 @@ ALTER TABLE ONLY public.letter_events
     ADD CONSTRAINT letter_events_letter_id_fkey FOREIGN KEY (letter_id) REFERENCES public.letters(id) ON DELETE CASCADE;
 
 --
+-- Name: letters_from_pauseai letters_from_pauseai_id_kind_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.letters_from_pauseai
+    ADD CONSTRAINT letters_from_pauseai_id_kind_fkey FOREIGN KEY (id, kind) REFERENCES public.letters(id, kind) ON DELETE CASCADE;
+
+--
+-- Name: letters_from_pauseai letters_from_pauseai_mailing_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.letters_from_pauseai
+    ADD CONSTRAINT letters_from_pauseai_mailing_id_fkey FOREIGN KEY (mailing_id) REFERENCES public.mailings(id);
+
+--
+-- Name: letters_from_supporters letters_from_supporters_campaign_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.letters_from_supporters
+    ADD CONSTRAINT letters_from_supporters_campaign_fkey FOREIGN KEY (campaign) REFERENCES public.campaigns(slug);
+
+--
+-- Name: letters_from_supporters letters_from_supporters_entry_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.letters_from_supporters
+    ADD CONSTRAINT letters_from_supporters_entry_id_fkey FOREIGN KEY (entry_id) REFERENCES public.form_entries(id);
+
+--
+-- Name: letters_from_supporters letters_from_supporters_letter_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.letters_from_supporters
+    ADD CONSTRAINT letters_from_supporters_letter_fkey FOREIGN KEY (id, kind) REFERENCES public.letters(id, kind) ON DELETE CASCADE;
+
+--
 -- Name: letters letters_notable_person_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2088,46 +2149,11 @@ ALTER TABLE ONLY public.mailings
     ADD CONSTRAINT mailings_ask_fkey FOREIGN KEY (ask) REFERENCES public.asks(slug);
 
 --
--- Name: pauseai_letters pauseai_letters_id_kind_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.pauseai_letters
-    ADD CONSTRAINT pauseai_letters_id_kind_fkey FOREIGN KEY (id, kind) REFERENCES public.letters(id, kind) ON DELETE CASCADE;
-
---
--- Name: pauseai_letters pauseai_letters_mailing_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.pauseai_letters
-    ADD CONSTRAINT pauseai_letters_mailing_id_fkey FOREIGN KEY (mailing_id) REFERENCES public.mailings(id);
-
---
 -- Name: politicians politicians_notable_person_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.politicians
     ADD CONSTRAINT politicians_notable_person_fkey FOREIGN KEY (id, kind) REFERENCES public.notable_people(id, kind) ON DELETE CASCADE;
-
---
--- Name: supporter_letters supporter_letters_campaign_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.supporter_letters
-    ADD CONSTRAINT supporter_letters_campaign_fkey FOREIGN KEY (campaign) REFERENCES public.campaigns(slug);
-
---
--- Name: supporter_letters supporter_letters_entry_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.supporter_letters
-    ADD CONSTRAINT supporter_letters_entry_id_fkey FOREIGN KEY (entry_id) REFERENCES public.form_entries(id);
-
---
--- Name: supporter_letters supporter_letters_letter_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.supporter_letters
-    ADD CONSTRAINT supporter_letters_letter_fkey FOREIGN KEY (id, kind) REFERENCES public.letters(id, kind) ON DELETE CASCADE;
 
 --
 -- Name: supporter_links supporter_links_form_entry_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -

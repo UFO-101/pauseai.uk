@@ -358,16 +358,16 @@ FROM seeded_letters s JOIN politicians p ON p.test_postcode = s.postcode;
 INSERT INTO form_entries (id, form, created_at, name, email, address, postcode, contact_consent) OVERRIDING SYSTEM VALUE
 SELECT s.id, 'email-your-mp', l.created_at, s.sender, s.email, s.address, s.sender_postcode, s.consent
 FROM seeded_letters s JOIN letters l ON l.id = s.id;
-INSERT INTO supporter_letters (id, entry_id, campaign, subject, reply_hash)
+INSERT INTO letters_from_supporters (id, entry_id, campaign, subject, reply_hash)
 SELECT s.id, s.id, s.campaign, s.subject, 'seed-' || s.hash FROM seeded_letters s JOIN letters l ON l.id = s.id;
 -- Most of the recent letters went to Airtable's two MPs, so the dashboard,
 -- which leaves the test MPs out, counts them; the bounces stay on Bouncy's.
 UPDATE letters SET notable_person_id = (SELECT id FROM notable_people WHERE airtable_id = 'recDummy')
-WHERE id IN (SELECT id FROM supporter_letters WHERE reply_hash IN ('seed-prev-lee', 'seed-prev-li', 'seed-week-ben', 'seed-week-kwame', 'seed-week-noah'));
+WHERE id IN (SELECT id FROM letters_from_supporters WHERE reply_hash IN ('seed-prev-lee', 'seed-prev-li', 'seed-week-ben', 'seed-week-kwame', 'seed-week-noah'));
 UPDATE letters SET notable_person_id = (SELECT id FROM notable_people WHERE airtable_id = 'recPlaceholder')
-WHERE id IN (SELECT id FROM supporter_letters WHERE reply_hash IN ('seed-prev-omar', 'seed-week-sam', 'seed-week-grace', 'seed-week-mia'));
+WHERE id IN (SELECT id FROM letters_from_supporters WHERE reply_hash IN ('seed-prev-omar', 'seed-week-sam', 'seed-week-grace', 'seed-week-mia'));
 -- The seed letters, with their handles.
-CREATE TEMP VIEW seed_letter_rows AS SELECT l.*, s.reply_hash FROM letters l JOIN supporter_letters s USING (id) WHERE s.reply_hash LIKE 'seed-%';
+CREATE TEMP VIEW seed_letter_rows AS SELECT l.*, s.reply_hash FROM letters l JOIN letters_from_supporters s USING (id) WHERE s.reply_hash LIKE 'seed-%';
 
 -- Their history: sending, then sent, then what followed.
 INSERT INTO letter_events (letter_id, at, status, details) SELECT id, created_at, 'sending', '{}' FROM seed_letter_rows WHERE true;
@@ -431,7 +431,7 @@ SELECT w.id, 'supporter', n.id, 'sent', now() - w.sent, now() - w.sent + interva
 FROM seeded_web_form w JOIN notable_people n ON n.airtable_id = w.politician;
 INSERT INTO form_entries (id, form, created_at, name, email, postcode, contact_consent) OVERRIDING SYSTEM VALUE
 SELECT w.id, 'web-form', l.created_at, w.sender, w.email, w.postcode, w.consent FROM seeded_web_form w JOIN letters l ON l.id = w.id;
-INSERT INTO supporter_letters (id, entry_id, campaign, subject, airtable_id)
+INSERT INTO letters_from_supporters (id, entry_id, campaign, subject, airtable_id)
 SELECT w.id, w.id, w.campaign, w.subject, w.airtable_id FROM seeded_web_form w JOIN letters l ON l.id = w.id;
 SELECT setval(pg_get_serial_sequence('form_entries', 'id'), (SELECT max(id) FROM form_entries));
 
@@ -465,7 +465,7 @@ SELECT nextval(pg_get_serial_sequence('letters', 'id')) AS id, e.* FROM seed_ema
 INSERT INTO letters (id, kind, notable_person_id, status, created_at, sent_at) OVERRIDING SYSTEM VALUE
 SELECT e.id, 'pauseai', n.id, 'sent', now() - e.sent, now() - e.sent
 FROM seeded_emails e JOIN notable_people n ON n.airtable_id = e.politician;
-INSERT INTO pauseai_letters (id, mailing_id, airtable_id, personalised)
+INSERT INTO letters_from_pauseai (id, mailing_id, airtable_id, personalised)
 SELECT e.id, m.id, e.airtable_id, e.personalised FROM seeded_emails e
 JOIN mailings m ON coalesce(m.airtable_field, m.title) = e.mailing;
 
