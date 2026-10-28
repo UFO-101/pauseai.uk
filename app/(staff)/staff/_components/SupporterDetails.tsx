@@ -5,6 +5,7 @@ import { campaignBySlug, campaignPath, displayPostcode } from "@/lib/email-your-
 import { staffCopy } from "@/lib/content/staff-interface";
 import { staffDate, staffTime } from "@/lib/staff-time";
 import { givenPlaces } from "@/lib/supporter-place";
+import { UK_MAP_HEIGHT, UK_MAP_WIDTH, ukMapPoint, ukOutline } from "@/lib/uk-map";
 import type {
   SupporterActivity,
   SupporterDetails as Details,
@@ -224,7 +225,19 @@ function Active({ first, last }: { first: string | null; last: string | null }) 
   );
 }
 
-/** Where they are, and what it's from, or nothing if we don't know. */
+/** Where they are on a map of the UK, drawn as a line, with a dot at the place; nothing for a place off it, or none. */
+function PlaceMap({ latitude, longitude }: { latitude?: number | null; longitude?: number | null }) {
+  const point = latitude != null && longitude != null ? ukMapPoint(latitude, longitude) : undefined;
+  if (!point) return null;
+  return (
+    <svg className={styles.map} viewBox={`0 0 ${UK_MAP_WIDTH} ${UK_MAP_HEIGHT}`} aria-hidden="true">
+      <path d={ukOutline()} />
+      <circle cx={point.x} cy={point.y} r="2.2" />
+    </svg>
+  );
+}
+
+/** Where they are, and what it's from, with a map; nothing when no place is known. */
 function PlaceFact({ place }: { place: SupporterSummary["place"] }) {
   if (!place?.name) return null;
   return (
@@ -232,6 +245,7 @@ function PlaceFact({ place }: { place: SupporterSummary["place"] }) {
       <Label label={copy.detail.place} icon="place" />
       <dd>
         {place.name} <span className={styles.origin}>{copy.detail.placeFrom[place.basis](place.given)}</span>
+        <PlaceMap latitude={place.latitude} longitude={place.longitude} />
       </dd>
     </>
   );

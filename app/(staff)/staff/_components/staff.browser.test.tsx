@@ -2704,7 +2704,10 @@ describe("SupporterDetails", () => {
       .element(page.getByText(copy.detail.from(copy.sources.luma, "1 Mar 2026"), { exact: true }))
       .toBeVisible();
     await expect.element(page.getByText("+447700900001", { exact: false }).first()).toBeVisible();
-    await expect.element(page.getByText("M1 1AE", { exact: false })).toBeVisible();
+    await expect.element(page.getByText("M1 1AE", { exact: false }).first()).toBeVisible();
+    // Where she is, from her postcode, on a map.
+    await expect.element(page.getByText(`Manchester ${copy.detail.placeFrom.postcode("M1 1AE")}`)).toBeVisible();
+    expect(document.querySelector("dd svg circle")).not.toBeNull();
     // Her number, given to Luma, is one we may not use since she unsubscribed: marked, and no link.
     await expect.element(page.getByText(copy.detail.unusable)).toBeVisible();
     await expect.element(page.getByRole("link", { name: "+447700900001" })).not.toBeInTheDocument();
@@ -2789,6 +2792,7 @@ describe("SupporterDetails", () => {
       <SupporterDetails
         supporter={{
           ...exampleSupporterDetails,
+          summary: exampleSupporter,
           contacts: [
             {
               source: "email-your-mp",
@@ -2952,6 +2956,34 @@ describe("SupporterDetails", () => {
       />,
     );
     expect(page.getByText(copy.detail.place, { exact: true }).all()).toHaveLength(0);
+  });
+
+  it("puts the place on a map of the UK, a dot on the coast's line, when it's in the UK and we know where", async () => {
+    const at = (latitude?: number | null, longitude?: number | null) => ({
+      ...exampleSupporterDetails,
+      summary: {
+        ...exampleSupporter,
+        place: { name: "Leeds", basis: "city" as const, given: "Leeds", country: "england", latitude, longitude },
+      },
+    });
+    const map = () => document.querySelector("dd svg");
+    const { rerender } = await render(<SupporterDetails supporter={at(53.8, -1.55)} />);
+    expect(map()!.querySelector("path")!.getAttribute("d")).toMatch(/^M/);
+    const dot = map()!.querySelector("circle")!;
+    // Leeds is in the north of England: below the middle of the map's height, right of its middle.
+    expect(Number(dot.getAttribute("cy"))).toBeGreaterThan(50);
+    expect(Number(dot.getAttribute("cx"))).toBeGreaterThan(30);
+    const box = map()!.getBoundingClientRect();
+    expect(box.height).toBeGreaterThan(box.width);
+    for (const [latitude, longitude] of [
+      [40.7, -74],
+      [null, -1.55],
+      [53.8, null],
+      [undefined, undefined],
+    ]) {
+      await rerender(<SupporterDetails supporter={at(latitude, longitude)} />);
+      expect(map()).toBeNull();
+    }
   });
 
   it("says when there are no events or letters", async () => {

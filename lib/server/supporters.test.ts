@@ -279,7 +279,7 @@ describeWithDatabase("listSupporters and getSupporter", () => {
       events: 1,
       letters: 0,
       member: false,
-      place: { name: "London", basis: "event", given: "evt-1", country: null },
+      place: { name: "London", basis: "event", given: "evt-1", country: null, latitude: 51.5, longitude: -0.1 },
       permissions: [
         {
           topic: "luma-calendar",

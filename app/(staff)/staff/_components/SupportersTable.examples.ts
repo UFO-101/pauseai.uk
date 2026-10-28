@@ -25,7 +25,17 @@ export const exampleSupporter: SupporterSummary = {
 
 /** Everything a supporter's page shows, for Jane. */
 export const exampleSupporterDetails: SupporterDetails = {
-  summary: exampleSupporter,
+  summary: {
+    ...exampleSupporter,
+    place: {
+      name: "Manchester",
+      basis: "postcode",
+      given: "M1 1AE",
+      country: "england",
+      latitude: 53.4794,
+      longitude: -2.2353,
+    },
+  },
   identities: [
     { source: "luma", email: "jane@example.com", name: "Jane", seenAt: "2026-03-01T10:00:00Z" },
     { source: "email-your-mp", email: "jane.e@example.org", name: "Jane Example", seenAt: "2026-10-05T09:00:00Z" },

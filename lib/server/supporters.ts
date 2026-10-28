@@ -102,15 +102,16 @@ const USABLE_PHONE = `(SELECT u.number FROM unnest(s.phones) WITH ORDINALITY u (
 /**
  * A supporter's summary as staff see it, from `s`, a row shaped as
  * supporters_listed's: who they are, their newest email and the newest
- * number we may use, what they've done, and where they are (a place's name
- * and what it's from), or nulls.
+ * number we may use, what they've done, and where they are (a place's name,
+ * what it's from and where it is), or nulls.
  */
 const SUMMARY_COLUMNS = `s.id::int AS id, s.name, coalesce(s.emails, '{}') AS emails, s.email,
   ${USABLE_PHONE} AS phone, s.phones, s.postcode,
   coalesce(s.sources, '{}') AS sources, ${LUMA_CONTACT} AS "lumaContact", s.first_seen_at AS "firstSeenAt",
   s.last_active_at AS "lastActiveAt", s.events, s.letters, s.member,
   CASE WHEN s.basis IS NULL THEN NULL
-  ELSE json_build_object('name', s.place, 'basis', s.basis, 'given', s.given, 'country', s.country) END AS place`;
+  ELSE json_build_object('name', s.place, 'basis', s.basis, 'given', s.given, 'country', s.country,
+    'latitude', s.latitude, 'longitude', s.longitude) END AS place`;
 
 /**
  * Supporter $1's row, shaped as supporters_listed's, worked out now from
@@ -118,7 +119,7 @@ const SUMMARY_COLUMNS = `s.id::int AS id, s.name, coalesce(s.emails, '{}') AS em
  */
 const LIVE_SUMMARY = `(SELECT s.*,
     (SELECT i.email FROM supporter_identity i WHERE i.supporter_id = s.id ORDER BY i.seen_at DESC NULLS LAST, i.email LIMIT 1) AS email,
-    sp.place, sp.basis, sp.given, sp.country
+    sp.place, sp.basis, sp.given, sp.country, sp.latitude, sp.longitude
   FROM supporters_summary s LEFT JOIN supporter_place sp ON sp.supporter_id = s.id WHERE s.id = $1) s`;
 
 /** When a supporter has each lozenge in the Activities column, as SupporterBadges shows them. */

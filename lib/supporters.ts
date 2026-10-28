@@ -46,12 +46,15 @@ export type SupporterSummary = {
   place?: SupporterPlaceName | null;
 };
 
-/** A supporter's place: its name, what it's from and what that was (a postcode, a city, an event's name), its nation. */
+/** A supporter's place: its name, what it's from and what that was (a postcode, a city, an event's name), its nation, and where it is. */
 export type SupporterPlaceName = {
   name: string | null;
   basis: "postcode" | "city" | "event";
   given: string;
   country: string | null;
+  /** Where it is; left out where it isn't needed, as in a list's row. */
+  latitude?: number | null;
+  longitude?: number | null;
 };
 
 /** One row of the list, with whether we'd contact each of their addresses and numbers about each topic. */

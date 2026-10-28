@@ -364,6 +364,27 @@
   overflow-wrap: anywhere;
 }
 
+/* A supporter's place on a map of the UK: the coast as a thin line, the
+   place as a dot in the accent colour, as tall as a few lines of text. */
+.map {
+  display: block;
+  height: 7rem;
+  margin-top: var(--space-2);
+}
+
+.map path {
+  fill: none;
+  stroke: var(--text-secondary);
+  stroke-width: 0.4;
+  stroke-linejoin: round;
+}
+
+.map circle {
+  fill: var(--accent);
+  stroke: var(--surface);
+  stroke-width: 0.6;
+}
+
 .profile .origin {
   display: block;
   margin-left: 0;
