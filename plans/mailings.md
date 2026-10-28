@@ -172,6 +172,15 @@ don't change it.
    components on desktop and phone, and choose between them. The
    mock-ups are on a design canvas:
    https://claude.ai/artifact/3qi42XAhd2qwYBTRYVGZoz
+   - Two sets of pages that share everything underneath. Mail to
+     politicians is from a person, a letter at a time, with replies and
+     answers to an ask; mail to supporters is from PauseAI UK, by email
+     or text, with consent, opt-outs and a cost. So politicians have
+     Mailings, under Politicians in the menu, as now, and supporters
+     have Messages, under Supporters, seen only with the `supporters`
+     permission. Each has its own list, steps and page, showing what
+     fits its audience. The tables, the editor, the steps' bars, drafts,
+     the dry run and the send job are shared.
    - A "Mail these" button on the politicians list, and on the
      supporters list "Email these" or "Text these", following the
      Contact filter.
@@ -209,4 +218,5 @@ don't change it.
      can't be deleted.
    - A mailing's page, with each recipient's outcome, the counts, and
      its filter as read-only pills.
-   - The mailings list, with both audiences and a Drafts tab.
+   - The list of mailings, and the list of messages, each with a
+     Drafts tab.
