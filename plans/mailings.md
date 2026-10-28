@@ -8,10 +8,16 @@ mailing needs. Sending by each channel is in its own plan:
 - `plans/supporters-email.md`: email to supporters.
 - `plans/supporters-phone.md`: texts and WhatsApp to supporters.
 
-This plan is one pull request and doesn't depend on anything outside the
-site. After it, staff can make a mailing on the live site, see who it
-would go to, and send a test copy to themselves. They can schedule a
-mailing for a channel once that channel's plan is built.
+It is three pull requests, none depending on anything outside the site:
+
+1. Data: the tables, stored filters, templates, channels and the send
+   job, with nothing new for staff to see but the editor in the gallery.
+2. Mailings: the staff pages for mailings to politicians.
+3. Messages: the staff pages for messages to supporters.
+
+After phase 2, staff can make a mailing to politicians on the live
+site, see who it would go to, and send a test copy to themselves. They
+can schedule one once Gmail is built (`plans/politician-email.md`).
 
 ## What we have now
 
@@ -135,29 +141,30 @@ don't change it.
   mailing can't be scheduled until someone fixes it. Otherwise the
   filter would silently match more people.
 
-## Steps
+## Phase 1: Data
 
 1. Rename the tables, in a migration and a commit of their own, before
    anything else. `supporter_letters` is used in 22 files and
    `pauseai_letters` in 12, including erasure, supporter links, the
    supporter views, `contact_permission()`, the backup Worker's checks
    and the docs.
-2. Store filters. Separate who a list shows from how it is shown, for
-   both lists, as one validated value that a mailing stores as JSON. A
-   mailing's page shows its filter in words and can run it again to
-   show who it would choose now.
-3. Templates. Extend Email your MP's document (`lib/letter-format.ts`)
+2. Add the new columns to `mailings`, and the `messages_to_supporters`
+   and `message_events` tables. A draft is a `mailings` row in the
+   `draft` state, saved with a version number so a second person
+   editing it is told rather than overwritten.
+3. Store filters. Separate who a list shows from how it is shown, for
+   both lists, as one validated value that a mailing stores as JSON,
+   and that can be shown in words or run again.
+4. Templates. Extend Email your MP's document (`lib/letter-format.ts`)
    and its Tiptap editor with two nodes: a merge field, an inline chip
    that is deleted, copied and moved whole, which typing `{` offers; and
    a block shown only to some recipients, such as those who signed an
-   ask. Staff never see or type markup. The server checks the document
+   ask. Staff never see or type markup. The editor is built and in the
+   component gallery (`MailingEditor`). The server checks the document
    as it checks letters, and one function writes a recipient's HTML and
-   plain text from it, for the preview, the dry run, test sends and
-   sending. If a merge field can't be filled in for someone, they are
-   skipped. Build these first as a component gallery example on
-   fixture data, and try typing, deleting, pasting and dragging around
-   both nodes in Firefox, before choosing the Write step's layout.
-4. Channels. `Channel` is a type with four functions: send one message,
+   plain text from it, for the dry run, test sends and sending. If a
+   merge field can't be filled in for someone, they are skipped.
+5. Channels. `Channel` is a type with four functions: send one message,
    say how many more can be sent today, say what one message costs, and
    turn a provider's report into an event. Each channel also has a fake
    version for fixture builds, the dev server and tests. The fake writes
@@ -165,58 +172,70 @@ don't change it.
    can report deliveries, failures, bounces, opt-outs and replies
    through the same code as the real webhook. This plan uses the fake
    email channel that already exists.
-5. The `send-mailings` job runs hourly, during the database wake that
+6. The `send-mailings` job runs hourly, during the database wake that
    the other jobs share. Each run sends what it can in 30 seconds and
-   leaves the rest for the next run.
-6. Staff pages. Design them first, as mock-ups on the real staff
-   components on desktop and phone, and choose between them. The
-   mock-ups are on a design canvas:
-   https://claude.ai/artifact/3qi42XAhd2qwYBTRYVGZoz
-   - Two sets of pages that share everything underneath. Mail to
-     politicians is from a person, a letter at a time, with replies and
-     answers to an ask; mail to supporters is from PauseAI UK, by email
-     or text, with consent, opt-outs and a cost. So politicians have
-     Mailings, under Politicians in the menu, as now, and supporters
-     have Messages, under Supporters, seen only with the `supporters`
-     permission. Each has its own list, steps and page, showing what
-     fits its audience. The tables, the editor, the steps' bars, drafts,
-     the dry run and the send job are shared.
-   - A "Mail these" button on the politicians list, and on the
-     supporters list "Email these" or "Text these", following the
-     Contact filter.
-   - A new mailing in three steps, with a bar of the steps at the top
-     and Back and Next in a bar fixed to the bottom of the window.
-     Done steps link back; a step that can't be reached yet is greyed
-     and says what it needs.
-     1. Who: the count, the filter as read-only pills, and a few of
-        the recipients. "Change who" goes back to the list with the
-        filter filled in, where the button updates this draft's
-        recipients instead of starting a new mailing.
-     2. Write: the template, merge fields and attachments, written on
-        the page with the details at the side. No preview here: the
-        Schedule step shows each recipient's email.
-     3. Schedule: a dry run, run as the page opens, which shows who the
-        mailing would go to and who would be skipped and why, with
-        nothing recorded as sent; "Leave out" takes one person out of
-        this mailing, with a reason saved with it; each recipient's
-        email, stepped through one at a time, and a test send of the
-        one shown, one real message to your own pauseai.uk address by
-        Postmark, logged as
-        `mailing-test`, skipping permissions (once a channel is built,
-        test sends go by it); then when it goes, a summary with the
-        sender and the cost, and the button to schedule it.
-   - Drafts. A mailing becomes a draft at the first change worth
-     keeping: writing in the subject or letter, attaching a file, or
-     leaving someone out. Until then nothing is saved. A draft saves
-     itself a moment after each change, with a version number so a
-     second person editing it is told rather than overwritten. A draft
-     with no subject or letter is deleted after a day unopened. "Delete
-     draft" deletes it after one confirmation; a draft has sent
-     nothing, so it isn't archived.
-   - A scheduled mailing's page has Stop, which turns it back into a
-     draft, or once sending has started sends no more. A sent mailing
-     can't be deleted.
-   - A mailing's page, with each recipient's outcome, the counts, and
-     its filter as read-only pills.
-   - The list of mailings, and the list of messages, each with a
-     Drafts tab.
+   leaves the rest for the next run. That is too slow for Gmail's pace
+   of about 60 a minute (see the open question).
+
+## Phase 2: Mailings
+
+Mailings to politicians, under Politicians in the menu, as now. Mail to
+politicians is from a person, a letter at a time, with replies and
+answers to an ask, so it has its own pages, sharing the data, editor,
+drafts and sending with Messages. Designed first as mock-ups on the
+real staff components, on a design canvas:
+https://claude.ai/artifact/3qi42XAhd2qwYBTRYVGZoz
+
+- A "Mail these" button on the politicians list.
+- A new mailing in three steps, with a bar of the steps at the top and
+  Back and Next in a bar fixed to the bottom of the window. Done steps
+  link back; a step that can't be reached yet is greyed and says what
+  it needs.
+  1. Who: the count, the filter as read-only pills, and a few of the
+     recipients. "Change who" goes back to the list with the filter
+     filled in, where the button updates this draft's recipients
+     instead of starting a new mailing.
+  2. Write: the editor, with the details at the side. No preview here:
+     the Schedule step shows each recipient's email.
+  3. Schedule: a checklist. A dry run, run as the page opens, of who
+     the mailing would go to and who would be skipped and why, with
+     nothing recorded as sent. "Leave out" takes one person out, with a
+     reason saved with the mailing. Each recipient's email, stepped
+     through one at a time, and a test send of the one shown: one real
+     message to your own pauseai.uk address by Postmark, logged as
+     `mailing-test`, skipping permissions, or by Gmail once it's built.
+     Last, when it goes, with the schedule button in the bottom bar.
+- Drafts. A mailing becomes a draft at the first change worth keeping:
+  writing in the subject or letter, attaching a file, or leaving
+  someone out. Until then nothing is saved. A draft saves itself a
+  moment after each change. A draft with no subject or letter is
+  deleted after a day unopened. "Delete draft" deletes it after one
+  confirmation; a draft has sent nothing, so it isn't archived.
+- A mailing's page: scheduled, with Stop, which turns it back into a
+  draft; sending, ticking each recipient as it goes, with Stop, which
+  sends no more; and sent, with each recipient's outcome, the counts and
+  its filter as read-only pills. A sent mailing can't be deleted.
+- The list of mailings, with a Drafts tab.
+
+## Phase 3: Messages
+
+Messages to supporters, under Supporters in the menu, seen only with
+the `supporters` permission. They are from PauseAI UK, by email or
+text, with consent, opt-outs and a cost, so they have their own pages,
+built on phase 2's. To be designed once phase 2's are settled.
+
+- "Email these" or "Text these" on the supporters list, following its
+  Contact filter. Without a "Can email" or "Can text" filter the button
+  is dotted, and clicking it explains which filter to add.
+- The same three steps, with the channel and topic fixed by the filter,
+  a count of texts and their cost, and opt-outs among the reasons to be
+  skipped.
+- A message's page and the list of messages, with delivered, failed,
+  opted out, replies and cost.
+
+## Open questions
+
+1. The send job's 30 seconds an hour sends about 30 emails by Gmail, so
+   126 would take five hours. Should a due mailing start a Netlify
+   background function, which runs for up to 15 minutes, and send at
+   the channel's own pace?
