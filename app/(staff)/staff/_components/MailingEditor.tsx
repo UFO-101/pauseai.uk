@@ -274,34 +274,41 @@ function Sidebar({
   recipients?: number;
 }) {
   const inBox = useEditorState({ editor, selector: ({ editor }) => editor.isActive("onlyFor") });
+  const insert = (field: MailingChoice) =>
+    usable(field) &&
+    editor
+      .chain()
+      .focus()
+      .insertContent({ type: "field", attrs: { field: field.id } })
+      .run();
   return (
     <div className={styles.sidebar}>
       <p className={styles.sideHeading}>{copy.fieldsHeading}</p>
       <ul className={styles.lozenges}>
         {fields.map((field) => (
           <li key={field.id}>
-            <button
-              type="button"
+            {/* Not a <button>, which Firefox won't drag: a button's role, focus and keys. */}
+            <span
+              role="button"
+              tabIndex={0}
               className={styles.fieldLozenge}
               aria-disabled={!usable(field) || undefined}
               title={usable(field) ? copy.dragHint : copy.lacking(field.lacking!)}
               draggable={usable(field)}
-              // So the letter keeps its cursor, and Space goes to it, not this.
-              onMouseDown={(event) => event.preventDefault()}
-              onDragStart={(event) =>
-                event.dataTransfer.setData("text/html", `<span data-field="${field.id}">${field.label}</span>`)
-              }
-              onClick={() =>
-                usable(field) &&
-                editor
-                  .chain()
-                  .focus()
-                  .insertContent({ type: "field", attrs: { field: field.id } })
-                  .run()
-              }
+              onDragStart={(event) => {
+                event.dataTransfer.effectAllowed = "copy";
+                event.dataTransfer.setData("text/html", `<span data-field="${field.id}">${field.label}</span>`);
+                event.dataTransfer.setData("text/plain", field.label);
+              }}
+              onClick={() => insert(field)}
+              onKeyDown={(event) => {
+                if (event.key !== "Enter" && event.key !== " ") return;
+                event.preventDefault();
+                insert(field);
+              }}
             >
               {field.label}
-            </button>
+            </span>
           </li>
         ))}
       </ul>

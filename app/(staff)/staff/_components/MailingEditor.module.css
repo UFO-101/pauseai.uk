@@ -82,6 +82,7 @@
 
 /* A lozenge looks like what it puts in: a field's chip. */
 .fieldLozenge {
+  display: inline-block;
   padding: var(--space-1) var(--space-3);
   border: 1px solid transparent;
   font: inherit;
@@ -92,6 +93,12 @@
   border-radius: var(--radius-pill);
   background: var(--status-blue-bg);
   color: var(--status-blue);
+  user-select: none;
+}
+
+.fieldLozenge:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-offset);
 }
 
 /* A field some recipients have no value for, which can't be used. */
