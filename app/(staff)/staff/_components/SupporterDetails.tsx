@@ -7,7 +7,7 @@ import { staffDate, staffTime } from "@/lib/staff-time";
 import { givenPlaces } from "@/lib/supporter-place";
 import { UK_MAP_HEIGHT, UK_MAP_WIDTH, ukMapPoint, ukOutline } from "@/lib/uk-map";
 import { registrationStatus } from "@/lib/supporters";
-import type { SupporterActivity, SupporterDetails as Details, SupporterSource } from "@/lib/supporters";
+import type { SupporterActivity, SupporterDetails as Details, SupporterLink, SupporterSource } from "@/lib/supporters";
 import PermissionTiles from "./PermissionTiles";
 import Grid, { Card, spanClass } from "./ui/Grid";
 import { ListTable, type ListColumn } from "./ui/ListFrame";
@@ -273,6 +273,24 @@ function Band({ supporter, events, letters }: { supporter: Details; events: numb
   );
 }
 
+/** The records joined to make them one person: what each is, its ID, and the address that matched it and when. */
+function Linked({ links }: { links: SupporterLink[] }) {
+  if (links.length === 0) return null;
+  return (
+    <>
+      <h3 className={styles.partTitle}>{copy.detail.linkedTitle}</h3>
+      <ul className={styles.linked}>
+        {links.map((link) => (
+          <li key={`${link.source}-${link.sourceId}`}>
+            {copy.detail.linkSources[link.source]} <code>{link.sourceId}</code>{" "}
+            <span className={styles.origin}>{copy.detail.linkedBy(link.matchedValue, staffDate(link.linkedAt))}</span>
+          </li>
+        ))}
+      </ul>
+    </>
+  );
+}
+
 /** The events they registered for, newest first: when, which, and how it stands. */
 const eventColumns: ListColumn<SupporterActivity>[] = [
   { key: "at", label: copy.detail.columns.date, short: true, cell: (a) => staffDate(a.at) },
@@ -341,25 +359,8 @@ export default function SupporterDetails({ supporter }: { supporter: Details }) 
       <Band supporter={supporter} events={events.length} letters={letters.length} />
 
       <Grid>
-        <Card span={2} as="div">
-          <dl className={styles.profile}>
-            <Fact label={copy.detail.emails} values={emails} icon="email" href={(email) => `mailto:${email}`} />
-            <Fact
-              label={copy.detail.phone}
-              values={phones}
-              icon="phone"
-              href={(phone) => `tel:${phone.replace(/\s+/g, "")}`}
-              unusable={(phone) => !usable.has(phone)}
-            />
-            <Fact label={copy.detail.postcode} values={postcodes} icon="postcode" />
-            <Fact label={copy.detail.city} values={cities} icon="city" />
-          </dl>
-          <section aria-labelledby="subscriptions" className={styles.part}>
-            <h3 id="subscriptions" className={styles.partTitle}>
-              {copy.detail.listsTitle}
-            </h3>
-            <PermissionTiles permissions={permissions} />
-          </section>
+        <Card span={2} title={copy.detail.listsTitle} id="subscriptions">
+          <PermissionTiles permissions={permissions} />
         </Card>
         <div className={`${spanClass(4)} ${styles.tables}`}>
           <section aria-labelledby="events">
@@ -397,6 +398,25 @@ export default function SupporterDetails({ supporter }: { supporter: Details }) 
                 </ol>
               </details>
             )}
+          </section>
+          <section aria-labelledby="everything">
+            <h2 id="everything">{copy.detail.everythingTitle}</h2>
+            <details className={styles.folded}>
+              <summary>{copy.detail.showEverything}</summary>
+              <dl className={styles.profile}>
+                <Fact label={copy.detail.emails} values={emails} icon="email" href={(email) => `mailto:${email}`} />
+                <Fact
+                  label={copy.detail.phone}
+                  values={phones}
+                  icon="phone"
+                  href={(phone) => `tel:${phone.replace(/\s+/g, "")}`}
+                  unusable={(phone) => !usable.has(phone)}
+                />
+                <Fact label={copy.detail.postcode} values={postcodes} icon="postcode" />
+                <Fact label={copy.detail.city} values={cities} icon="city" />
+              </dl>
+              <Linked links={supporter.links} />
+            </details>
           </section>
         </div>
       </Grid>

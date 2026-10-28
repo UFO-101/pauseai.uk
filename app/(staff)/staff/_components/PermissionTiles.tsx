@@ -4,7 +4,7 @@ import { staffCopy } from "@/lib/content/staff-interface";
 import { waysKey, type Channel, type ContactPermission } from "@/lib/contact-permissions";
 import { staffDate } from "@/lib/staff-time";
 import ChannelIcon from "./ChannelIcon";
-import Strip from "./ui/Strip";
+import Tag from "@/components/ui/Tag";
 import styles from "./PermissionTiles.module.css";
 
 const copy = staffCopy.supporters.detail.permissions;
@@ -16,8 +16,8 @@ function reason(permission: ContactPermission): string {
   return words ? words(permission.at ? staffDate(permission.at) : "", form) : permission.reason;
 }
 
-/** A topic's answer as a strip's colour: green we'd contact them, plain we wouldn't, amber we don't know. */
-const TONES = { yes: "green", no: "plain", unsure: "amber" } as const;
+/** An answer's colour, on it alone: green we'd contact them, amber we don't know, plain we wouldn't. */
+const TONES = { yes: "green", unsure: "amber", no: undefined } as const;
 
 /**
  * What's behind a strip's "?": the topic's name, what it is, then when we
@@ -58,36 +58,32 @@ function Address({ channel, address }: { channel: Channel; address: string }) {
 }
 
 /**
- * One topic, a strip: its name and whether we'd contact them about it, in
- * the words of the ways it allows; under them the address or number it's
- * for, then why in a few words; how we know is behind the "?" at its top
- * right.
+ * One topic, a row: its name, then whether we'd contact them about it, in
+ * the words of the ways it allows, a lozenge in the answer's colour, and
+ * the "?" with how we know; under them the address or number it's for,
+ * then why in a few words.
  */
 function Tile({ permission }: { permission: ContactPermission }) {
   const id = `why-${permission.channel}-${permission.topic}-${permission.address.replace(/\W/g, "-")}`;
   const topic = copy.topics[permission.channel][permission.topic];
   const answer = copy.answers[waysKey(permission.channel, permission.topic)][permission.send];
   return (
-    <li data-send={permission.send}>
-      <Strip tone={TONES[permission.send]} icon={false}>
-        <span className={styles.title}>
-          <span className={styles.words}>
-            <span>{topic}</span>
-            <span className={styles.answer}>{answer}</span>
-          </span>
-          <button
-            type="button"
-            className={styles.help}
-            popoverTarget={id}
-            aria-label={copy.why}
-            style={{ anchorName: `--${id}` } as React.CSSProperties}
-          >
-            ?
-          </button>
-        </span>
-        <Address channel={permission.channel} address={permission.address} />
-        <span className={styles.reason}>{reason(permission)}</span>
-      </Strip>
+    <li data-send={permission.send} className={styles.item}>
+      <span className={styles.head}>
+        <span className={styles.topic}>{topic}</span>
+        <Tag tone={TONES[permission.send]}>{answer}</Tag>
+        <button
+          type="button"
+          className={styles.help}
+          popoverTarget={id}
+          aria-label={copy.why}
+          style={{ anchorName: `--${id}` } as React.CSSProperties}
+        >
+          ?
+        </button>
+      </span>
+      <Address channel={permission.channel} address={permission.address} />
+      <span className={styles.reason}>{reason(permission)}</span>
       <div
         id={id}
         popover="auto"
@@ -100,24 +96,20 @@ function Tile({ permission }: { permission: ContactPermission }) {
   );
 }
 
-/** A blocked address: one red strip in place of its topics', since nothing goes to it. */
+/** A blocked address: one row in place of its topics', its answer red, since nothing goes to it. */
 function Blocked({ permission }: { permission: ContactPermission }) {
   const because = copy.blockedBecause[permission.source ?? ""];
   return (
-    <li data-send="no">
-      <Strip tone="red">
-        <span className={styles.title}>
-          <span className={styles.words}>
-            <span>{copy.everyTopic}</span>
-            <span className={styles.answer}>{copy.blocked}</span>
-          </span>
-        </span>
-        <Address channel="email" address={permission.address} />
-        <span className={styles.reason}>
-          {because && `${because(staffDate(permission.at!))} `}
-          <Link href="/staff/supporters/blocked-emails">{copy.seeBlocked}</Link>
-        </span>
-      </Strip>
+    <li data-send="no" className={styles.item}>
+      <span className={styles.head}>
+        <span className={styles.topic}>{copy.everyTopic}</span>
+        <Tag tone="red">{copy.blocked}</Tag>
+      </span>
+      <Address channel="email" address={permission.address} />
+      <span className={styles.reason}>
+        {because && `${because(staffDate(permission.at!))} `}
+        <Link href="/staff/supporters/blocked-emails">{copy.seeBlocked}</Link>
+      </span>
     </li>
   );
 }

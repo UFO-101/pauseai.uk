@@ -479,6 +479,21 @@
 }
 
 /* After the profile, ruled off from it as one part from another: their subscriptions. */
+/* Everything we hold, folded open: the details, then the records joined,
+   each on a line, its ID in the code face. */
+.linked {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--text-sm);
+}
+
+.folded .profile {
+  margin-bottom: var(--space-4);
+}
+
 .profile + .part {
   margin-top: var(--space-4);
   padding-top: var(--space-4);
