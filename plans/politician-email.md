@@ -116,13 +116,7 @@ limit, journalists, and what politicians did in Parliament.
 ## Open questions
 
 1. Should there be a shared account as well as each person's own? It
-   would be a new Google account, not policy@pauseai.uk: that is a
-   group, which has no mailbox to sign in to, send from or read
-   replies in. A shared account keeps every thread in one place when
-   staff change; a personal one reads as being from a person. The new
-   mailing page lets staff pick either. Connecting either takes the
-   same OAuth code, if tokens are kept in a table of their own rather
-   than on `staff_accounts`.
+   would be a new Google account, as the policy@ group has no mailbox.
 2. Can staff send from a colleague's connected Gmail, as the mock-up
    shows, or only from their own and shared ones? Sending as someone
    else should probably need their say-so.
