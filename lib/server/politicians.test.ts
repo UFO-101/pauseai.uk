@@ -245,6 +245,18 @@ describeWithDatabase("politicians", () => {
     const typo = await page({ search: "Plaseholder", house: "lords" });
     expect(typo.closest.map((p) => p.name)).toEqual(["Lord Placeholder"]);
     expect(await page({ search: "zzz", status: "in_office" })).toMatchObject({ otherHouses: 0, closest: [] });
+    // A search that finds no one, as test politicians are left out: how many it finds among them, whatever
+    // else of Marked is left out; and none when it finds someone, or they aren't left out.
+    await addTestMp();
+    const hidden = {
+      search: "McTestface",
+      status: "in_office" as const,
+      not: { flags: ["removed" as const, "test" as const] },
+    };
+    expect(await page(hidden)).toMatchObject({ total: 0, tests: 1 });
+    expect(await page({ ...hidden, search: "placeholder" })).toMatchObject({ tests: 0 });
+    expect(await page({ ...hidden, not: undefined })).toMatchObject({ total: 1, tests: 0 });
+    expect(await page({ ...hidden, not: { flags: ["removed"] } })).toMatchObject({ total: 1, tests: 0 });
     expect(await page({ page: 2 })).toMatchObject({ page: 2, politicians: [] });
   });
 

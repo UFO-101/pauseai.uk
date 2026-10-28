@@ -196,7 +196,7 @@ test("the politicians list pages through many, a count and downloads over it", a
   await expect(page).toHaveURL(`${BASE}/staff/politicians?house=lords&status=any`);
 });
 
-test("searching the politicians: each word anywhere, those not in office, and the nearest to a typo", async ({
+test("searching the politicians: each word anywhere, those not in office or test politicians, and the nearest to a typo", async ({
   page,
   request,
   flowDatabase,
@@ -237,6 +237,13 @@ test("searching the politicians: each word anywhere, those not in office, and th
   await expect(page).toHaveURL(/q=Morag$/);
   await expect(rows.filter({ hasText: "Morag Example" })).toBeVisible();
   await frame(page, "no one in the Lords is Morag, but one in another house is: one click finds her");
+
+  await page.goto(`${BASE}/staff/politicians`);
+  await search("Testy McTestface");
+  await page.getByRole("link", { name: copy.tests(1) }).click();
+  await expect(page).toHaveURL(/q=Testy\+McTestface&flag=test$/);
+  await expect(rows.filter({ hasText: "Testy McTestface MP" })).toBeVisible();
+  await frame(page, "a test politician is left out of a search, but one click finds them");
 });
 
 test("a politician whose record has gone from Airtable, and who's had no letters, is deleted", async ({

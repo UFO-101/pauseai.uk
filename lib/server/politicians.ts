@@ -332,16 +332,21 @@ export async function listPoliticians(
  * What the politicians page shows for `filter`: its page of them, how many
  * there are and on how many pages; and for a search, how many it finds out
  * of office, while it's of those in office, and in other houses, when one
- * house has none, and the nearest names, when it finds none at all.
+ * house has none, and, when it finds none at all, the nearest names and how
+ * many test politicians it finds, while they're left out.
  */
 export async function politiciansPage(filter: PoliticianFilter) {
   const [politicians, total] = await Promise.all([listPoliticians(filter), countPoliticians(filter)]);
   const { search } = filter;
   const none = Boolean(search) && politicians.length === 0;
-  const [outOfOffice, otherHouses, closest] = await Promise.all([
+  const [outOfOffice, otherHouses, closest, tests] = await Promise.all([
     search && filter.status === "in_office" ? countPoliticians({ ...filter, status: "out" }) : 0,
     none && filter.house ? countPoliticians({ ...filter, house: undefined }) : 0,
     search && none ? closestPoliticians({ ...filter, search }) : [],
+    // As the Marked filter has them when only Test politician is chosen.
+    none && filter.not?.flags?.includes("test")
+      ? countPoliticians({ ...filter, flags: ["test"], not: { ...filter.not, flags: undefined } })
+      : 0,
   ]);
   return {
     politicians,
@@ -352,6 +357,7 @@ export async function politiciansPage(filter: PoliticianFilter) {
     outOfOffice,
     otherHouses,
     closest,
+    tests,
   };
 }
 

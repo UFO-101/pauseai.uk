@@ -1172,7 +1172,7 @@ export const staff: Group = {
           render: () => (
             <StaffPage as="div">
               <PoliticiansList
-                list={{ ...examplePoliticiansPage, total: 150, pages: 2, outOfOffice: 3, otherHouses: 2 }}
+                list={{ ...examplePoliticiansPage, total: 150, pages: 2, outOfOffice: 3, otherHouses: 2, tests: 1 }}
                 search={{ ...EMPTY_POLITICIAN_FILTERS, q: "pol" }}
                 asks={exampleAsks}
               />

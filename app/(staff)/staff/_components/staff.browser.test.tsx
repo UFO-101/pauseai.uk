@@ -819,7 +819,7 @@ describe("PoliticiansList", () => {
   it("is the count, the table and the pages, and links to those the search finds elsewhere", async () => {
     await render(
       <PoliticiansList
-        list={{ ...examplePoliticiansPage, total: 150, page: 2, pages: 2, outOfOffice: 3, otherHouses: 2 }}
+        list={{ ...examplePoliticiansPage, total: 150, page: 2, pages: 2, outOfOffice: 3, otherHouses: 2, tests: 1 }}
         search={search}
         asks={exampleAsks}
       />,
@@ -836,6 +836,9 @@ describe("PoliticiansList", () => {
     await expect
       .element(page.getByRole("link", { name: copy.outOfOffice(3) }))
       .toHaveAttribute("href", "/staff/politicians?q=pol&status=any");
+    await expect
+      .element(page.getByRole("link", { name: copy.tests(1) }))
+      .toHaveAttribute("href", "/staff/politicians?q=pol&flag=test");
   });
 
   it("offers the nearest names when a search finds no one, and nothing more when there's nothing", async () => {

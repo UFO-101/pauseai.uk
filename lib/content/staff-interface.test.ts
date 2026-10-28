@@ -64,6 +64,7 @@ describe("the lists' counts", () => {
     const { politicians, emails, letters } = staffCopy;
     expect(politicians.outOfOffice(1)).not.toBe(politicians.outOfOffice(2).replace("2", "1"));
     expect(politicians.otherHouses(1)).not.toBe(politicians.otherHouses(2).replace("2", "1"));
+    expect(politicians.tests(1)).not.toBe(politicians.tests(2).replace("2", "1"));
     expect(emails.count(1)).not.toBe(emails.count(2).replace("2", "1"));
     for (const list of [
       letters,

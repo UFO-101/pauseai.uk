@@ -34,7 +34,8 @@ export function HouseTabs({ search }: { search: PoliticiansSearch }) {
  * The politicians page's list, in the list frame: how many, its downloads,
  * the table and the way through its pages; or, when a search finds no one,
  * the nearest names. Under it, how
- * many the search finds in other houses or out of office, linked to them.
+ * many the search finds in other houses, out of office or among the test
+ * politicians, linked to them.
  * A new filter or sort starts from the first page.
  */
 export default function PoliticiansList({
@@ -78,6 +79,11 @@ export default function PoliticiansList({
       {list.outOfOffice > 0 && (
         <p>
           <Link href={filtersPath(PATH, filters, { status: "any" })}>{copy.outOfOffice(list.outOfOffice)}</Link>
+        </p>
+      )}
+      {list.tests > 0 && (
+        <p>
+          <Link href={filtersPath(PATH, filters, { flag: "test" })}>{copy.tests(list.tests)}</Link>
         </p>
       )}
     </>

@@ -542,6 +542,8 @@ export const staffCopy = {
     outOfOffice: (n: number) => `${n} ${n === 1 ? "match" : "matches"} found for politicians not in office`,
     // The same, when a search of one house finds no one there, linked to every house.
     otherHouses: (n: number) => `${n} ${n === 1 ? "match" : "matches"} found for politicians in other houses`,
+    // The same, when a search finds no one, but would among the test politicians, linked to them.
+    tests: (n: number) => `${n} ${n === 1 ? "match" : "matches"} found for test politicians`,
     // Over the nearest names, when a search finds no one.
     closest: "No one matches exactly. These are close matches:",
     // The counts in the list: letters written to them, and how many of those got a reply.
