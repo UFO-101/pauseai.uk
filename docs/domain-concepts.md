@@ -324,8 +324,10 @@ The topics, and the channels each goes by (`TOPIC_REASONS` in
 - **Site forms**, email and phone: the newest form entry's box, which on
   the march's says "by email and phone".
 - **Volunteering**, phone: the join form asks for a number only of those
-  who choose to volunteer regularly, for volunteers' messages; a number on
-  an older record with another intent is unsure.
+  who choose to volunteer regularly, for volunteers' messages. Before 30
+  June 2026 it was a Tally form with no choice, taken to be the same, so a
+  number on a record with no intent is a yes too; one with another intent
+  is unsure.
 - **March day**, phone: a number given for "text updates on the day" is a
   yes until the day ends (`day_texts`), then no, unless the box said yes
   to site forms.

@@ -234,19 +234,19 @@ export const staffCopy = {
     subscriptions: {
       topics: {
         email: {
-          "luma-calendar": "⁂ Luma email",
-          "pauseai-updates": "⁂ PauseAI global email",
-          "site-forms": "⁂ PauseAI UK email",
+          "luma-calendar": "Luma email",
+          "pauseai-updates": "PauseAI global email",
+          "site-forms": "PauseAI UK email",
         },
         phone: {
-          "luma-calendar": "⁂ Luma texts",
-          volunteering: "⁂ Volunteer calls",
-          "site-forms": "⁂ PauseAI UK calls",
-          "march-day": "⁂ March day texts",
+          "luma-calendar": "Luma texts",
+          volunteering: "Volunteer calls",
+          "site-forms": "PauseAI UK calls",
+          "march-day": "March day texts",
         },
       } as Record<Channel, Record<string, string>>,
       // A yes that an unsubscribe we can't see may have undone.
-      unsure: (topic: string) => `${topic}, unsure`,
+      unsure: (topic: string) => `${topic} (?)`,
       // Every address they have is blocked.
       blocked: "Blocked",
     },
@@ -287,23 +287,23 @@ export const staffCopy = {
         // By channel: each topic's name, and the answers. Unsure is a yes that an unsubscribe we can't see may have undone.
         topics: {
           email: {
-            "luma-calendar": "⁂ Luma calendar",
-            "pauseai-updates": "⁂ PauseAI global updates",
-            "site-forms": "⁂ PauseAI UK updates",
+            "luma-calendar": "Luma calendar",
+            "pauseai-updates": "PauseAI global updates",
+            "site-forms": "PauseAI UK updates",
           },
           phone: {
-            "luma-calendar": "⁂ Luma calendar",
-            volunteering: "⁂ Volunteering",
-            "site-forms": "⁂ PauseAI UK updates",
-            "march-day": "⁂ March day updates",
+            "luma-calendar": "Luma calendar",
+            volunteering: "Volunteering",
+            "site-forms": "PauseAI UK updates",
+            "march-day": "March day updates",
           },
         } as Record<Channel, Record<string, string>>,
         // By the ways the topic lets us contact them (TOPIC_WAYS), so the answer says the channel. Unsure is a
         // yes an unsubscribe we can't see may have undone.
         answers: {
-          email: { yes: "⁂ Will email", no: "⁂ Won't email", unsure: "⁂ May email?" },
-          text: { yes: "⁂ Will text", no: "⁂ Won't text", unsure: "⁂ May text?" },
-          "call-or-text": { yes: "⁂ Will call or text", no: "⁂ Won't call or text", unsure: "⁂ May call or text?" },
+          email: { yes: "Will email", no: "Won't email", unsure: "May email?" },
+          text: { yes: "Will text", no: "Won't text", unsure: "May text?" },
+          "call-or-text": { yes: "Will call or text", no: "Won't call or text", unsure: "May call or text?" },
         } as Record<string, Record<"yes" | "no" | "unsure", string>>,
         // By the address or number, so a screen reader says what it is.
         email: "⁂ Email",
@@ -329,13 +329,13 @@ export const staffCopy = {
             declined: (when: string, form?: string) => `Didn't agree on ${form}, ${when}`,
           },
           volunteering: {
-            volunteered: (when: string) => `⁂ Gave it when joining as a volunteer, ${when}`,
-            "gave-number": (when: string) => `⁂ Gave it when joining, not as a volunteer, ${when}`,
-            removed: () => "⁂ No longer shared with us",
+            volunteered: (when: string) => `Gave it when joining as a volunteer, ${when}`,
+            "gave-number": (when: string) => `Gave it when joining, not as a volunteer, ${when}`,
+            removed: () => "No longer shared with us",
           },
           "march-day": {
-            "gave-number": (when: string, form?: string) => `⁂ Gave it on ${form} for texts on the day, ${when}`,
-            ended: (_when: string, form?: string) => `⁂ Gave it on ${form} for texts on the day, which is over`,
+            "gave-number": (when: string, form?: string) => `Gave it on ${form} for texts on the day, ${when}`,
+            ended: (_when: string, form?: string) => `Gave it on ${form} for texts on the day, which is over`,
           },
         } as Record<string, Record<string, (when: string, form?: string) => string>>,
         // The form a box was on, by form_entries.form; one not here is "their newest form".
@@ -347,62 +347,63 @@ export const staffCopy = {
         otherForm: "their newest form",
         // Behind a strip's "?": the topic, what it is, when it's a yes and when a no, and what we can't see, by
         // channel and topic.
-        topicTitle: (topic: string) => `⁂ Topic: ${topic}`,
+        topicTitle: (topic: string) => `Topic: ${topic}`,
         // The labels over when it's a yes and when a no, in the words of the ways the topic allows (TOPIC_WAYS).
         when: {
-          email: { yes: "⁂ Will email when", no: "⁂ Won't email when" },
-          text: { yes: "⁂ Will text when", no: "⁂ Won't text when" },
-          "call-or-text": { yes: "⁂ Will call or text when", no: "⁂ Won't call or text when" },
+          email: { yes: "Will email when", no: "Won't email when" },
+          text: { yes: "Will text when", no: "Won't text when" },
+          "call-or-text": { yes: "Will call or text when", no: "Won't call or text when" },
         } as Record<string, { yes: string; no: string }>,
-        caveat: "⁂ Note",
+        caveat: "Note",
         details: {
           email: {
             "luma-calendar": {
-              about: "⁂ Emails Luma sends to the calendar's contacts.",
-              yes: "⁂ They're a contact of the calendar: they registered for an event or followed it.",
-              no: "⁂ They unsubscribed from one of Luma's emails, or were never a contact.",
+              about: "Emails Luma sends to the calendar's contacts.",
+              yes: "They're a contact of the calendar: they registered for an event or followed it.",
+              no: "They unsubscribed from one of Luma's emails, or were never a contact.",
               caveat:
-                "⁂ Unfollowing the calendar doesn't stop Luma's emails. Luma tells us of an unsubscribe straight away, but we only see someone resubscribe when we next check, a few hours later.",
+                "Unfollowing the calendar doesn't stop Luma's emails. Luma tells us of an unsubscribe straight away, but we only see someone resubscribe when we next check, a few hours later.",
             },
             "pauseai-updates": {
-              about: "⁂ The PauseAI global newsletter, which the global team sends from CiviCRM.",
-              yes: "⁂ They ticked “Keep me informed” when they joined, or joined before 30 June 2026, when everyone was signed up.",
-              no: "⁂ They left “Keep me informed” unticked, or the global team no longer shares their membership with us.",
-              caveat: "⁂ Unsubscribes are in CiviCRM, which we can't read, so even a yes shows as “May email?”.",
+              about: "PauseAI newsletters sent via CiviCRM, either by the global team or the UK team.",
+              yes: "They ticked “Keep me informed” when they joined, or joined before 30 June 2026, when everyone was signed up.",
+              no: "They left “Keep me informed” unticked, or the global team no longer shares their membership with us.",
+              caveat:
+                "Unsubscribes are in CiviCRM, which we can't read, so even a yes shows as “May email?” right now.",
             },
             "site-forms": {
-              about: "⁂ Emails from PauseAI UK.",
-              yes: "⁂ They ticked the contact box on the latest of our forms they filled in, such as Email your MP or the march sign-up.",
-              no: "⁂ They left that box unticked.",
+              about: "Emails from PauseAI UK.",
+              yes: "They ticked the contact box on the latest of our forms they filled in, such as Email your MP or the march sign-up.",
+              no: "They left that box unticked.",
             },
           },
           phone: {
             "luma-calendar": {
-              about: "⁂ Texts to a number given when registering for a Luma event. We text it, never call it.",
-              yes: "⁂ The Luma account that gave it is a contact of the calendar.",
-              no: "⁂ That account unsubscribed from Luma's emails, or was never a contact.",
+              about: "Texts to a number given when registering for a Luma event. We text it, never call it.",
+              yes: "The Luma account that gave it is a contact of the calendar.",
+              no: "That account unsubscribed from Luma's emails, or was never a contact.",
             },
             "site-forms": {
-              about: "⁂ Calls and texts from PauseAI UK.",
-              yes: "⁂ They ticked the contact box on the latest of our forms that has this number. The march sign-up's box says “by email and phone”.",
-              no: "⁂ They left that box unticked.",
+              about: "Calls and texts from PauseAI UK.",
+              yes: "They ticked the contact box on the latest of our forms that has this number. The march sign-up's box says “by email and phone”.",
+              no: "They left that box unticked.",
             },
             volunteering: {
-              about: "⁂ Calls and texts about volunteering.",
-              yes: "⁂ They gave the number on the PauseAI join form after choosing to volunteer regularly, the only choice it asks a number for.",
-              no: "⁂ The global team no longer shares their membership with us.",
-              caveat: "⁂ A number given with any other choice shows as “May call or text?”.",
+              about: "Calls and texts about volunteering.",
+              yes: "⁂ They gave the number on the PauseAI join form after choosing to volunteer regularly, the only choice it asks a number for, or on the join form before 30 June 2026, which didn't ask what they wanted to do.",
+              no: "The global team no longer shares their membership with us.",
+              caveat: "A number given with any other choice shows as “May call or text?”.",
             },
             "march-day": {
-              about: "⁂ Texts on the day of the march.",
-              yes: "⁂ They gave a number on the march sign-up, which asks for one “for text updates on the day”, and the day isn't over yet.",
-              no: "⁂ The day is over. If they ticked the box on the sign-up, PauseAI UK updates still covers the number.",
+              about: "Texts on the day of the march.",
+              yes: "They gave a number on the march sign-up, which asks for one “for text updates on the day”, and the day isn't over yet.",
+              no: "The day is over. If they ticked the box on the sign-up, PauseAI UK updates still covers the number.",
             },
           },
         } as Record<Channel, Record<string, { about: string; yes: string; no: string; caveat?: string }>>,
         // One tile in place of the topics', when the address is blocked: in place of a topic, then the answer.
-        everyTopic: "⁂ Every topic",
-        blocked: "⁂ Won't email: blocked",
+        everyTopic: "Every topic",
+        blocked: "Won't email: blocked",
         blockedBecause: {
           hard: (when: string) => `An email to it bounced, ${when}.`,
           complaint: (when: string) => `They marked an email as spam, ${when}.`,
@@ -421,7 +422,7 @@ export const staffCopy = {
       } as Record<string, (given: string) => string>,
       // In the band at the top: their MP, linked to their page, how they first came, under when they were active,
       // and how many events they registered for and letters they wrote, each linked to its table.
-      theirMp: "⁂ Their MP",
+      theirMp: "Their MP",
       firstVia: (source: string) => `⁂ first came via ${source}`,
       eventsCounted: (n: number) => (n === 1 ? "⁂ event" : "⁂ events"),
       lettersCounted: (n: number) => (n === 1 ? "⁂ letter to an MP" : "⁂ letters to MPs"),

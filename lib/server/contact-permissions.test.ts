@@ -266,7 +266,7 @@ describeWithDatabase("permissionsFor", () => {
     expect((await phoneAnswer("+447700900003", "site-forms"))?.slice(0, 2)).toEqual(["yes", "asked"]);
   });
 
-  it("takes a volunteer's number as a yes, another member's as unsure, and a removed member's as no", async () => {
+  it("takes a volunteer's number as a yes, as one from before the form asked, another member's as unsure, and a removed member's as no", async () => {
     await member("recV", "v@example.com", "2026-09-12T00:00:00Z", false, false, "+447700900010", "Volunteer");
     expect(await phoneAnswer("+447700900010", "volunteering")).toEqual([
       "yes",
@@ -274,6 +274,9 @@ describeWithDatabase("permissionsFor", () => {
       "2026-09-12T00:00:00.000Z",
       "member",
     ]);
+    // The join form before it asked what they wanted to do: a volunteer's.
+    await member("recT", "t@example.com", "2025-06-06T00:00:00Z", true, false, "+447700900013", null);
+    expect((await phoneAnswer("+447700900013", "volunteering"))?.slice(0, 2)).toEqual(["yes", "volunteered"]);
     await member("recO", "o@example.com", "2026-03-01T00:00:00Z", true, false, "+447700900011", "Act now");
     expect((await phoneAnswer("+447700900011", "volunteering"))?.slice(0, 2)).toEqual(["unsure", "gave-number"]);
     await member("recR", "r@example.com", "2026-09-12T00:00:00Z", true, true, "+447700900012", "Volunteer");

@@ -109,9 +109,12 @@ SELECT r.send, r.reason, r.at, r.source FROM (
   WHERE for_channel = 'phone' AND for_topic = 'luma-calendar'
   UNION ALL
   -- The newest member record that gave the number, one still shared first.
+  -- No intent is the join form before it asked one, taken as a volunteer's.
   SELECT 3,
-    CASE WHEN m.removed_at IS NOT NULL THEN 'no' WHEN m.intent = 'Volunteer' THEN 'yes' ELSE 'unsure' END,
-    CASE WHEN m.removed_at IS NOT NULL THEN 'removed' WHEN m.intent = 'Volunteer' THEN 'volunteered' ELSE 'gave-number' END,
+    CASE WHEN m.removed_at IS NOT NULL THEN 'no'
+      WHEN m.intent IS NULL OR m.intent = 'Volunteer' THEN 'yes' ELSE 'unsure' END,
+    CASE WHEN m.removed_at IS NOT NULL THEN 'removed'
+      WHEN m.intent IS NULL OR m.intent = 'Volunteer' THEN 'volunteered' ELSE 'gave-number' END,
     m.created_at, 'member'
   FROM (SELECT * FROM members m WHERE phone_number(m.phone) = for_address
         ORDER BY m.removed_at IS NOT NULL, m.created_at DESC, m.id LIMIT 1) m
