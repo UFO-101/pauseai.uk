@@ -42,6 +42,10 @@ Francis about a shared account (see the open questions).
    ([limits](https://support.google.com/a/answer/166852)) and 60 a
    minute
    ([quota](https://developers.google.com/workspace/gmail/api/reference/quota)).
+   The site sends at most 1,800 a day from one account, counting every
+   mailing, so the person's own email still goes. A mailing to more
+   than that can't be scheduled, and "Sent from" shows how many of
+   today's 1,800 each account has left.
    `email_sends` records the backend and sender, and gets two new
    purposes, `mailing` and `mailing-test`.
 4. The `send-mailings` job. It runs hourly, during the database wake
