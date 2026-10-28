@@ -175,7 +175,7 @@ don't change it.
    - A "Mail these" button on the politicians list, and on the
      supporters list "Email these" or "Text these", following the
      Contact filter.
-   - A new mailing in four steps, with a bar of the steps at the top
+   - A new mailing in three steps, with a bar of the steps at the top
      and Back and Next in a bar fixed to the bottom of the window.
      Done steps link back; a step that can't be reached yet is greyed
      and says what it needs.
@@ -185,15 +185,15 @@ don't change it.
         recipients instead of starting a new mailing.
      2. Write: the template, merge fields and attachments, with a
         preview as any recipient.
-     3. Check: a dry run, which shows who the mailing would go to and
-        who would be skipped and why, with nothing recorded as sent;
-        and a test send, one real message to your own pauseai.uk
-        address by Postmark, as a chosen recipient would get it,
-        logged as `mailing-test`, skipping permissions. Once a channel
-        is built, test sends go by it. "Leave out" takes one person out
-        of this mailing, with a reason saved with it.
-     4. Schedule: when it goes, and a summary with the sender and the
-        cost.
+     3. Schedule: a dry run, run as the page opens, which shows who the
+        mailing would go to and who would be skipped and why, with
+        nothing recorded as sent; "Leave out" takes one person out of
+        this mailing, with a reason saved with it; a test send, one
+        real message to your own pauseai.uk address by Postmark, as the
+        recipient shown in the preview would get it, logged as
+        `mailing-test`, skipping permissions (once a channel is built,
+        test sends go by it); then when it goes, a summary with the
+        sender and the cost, and the button to schedule it.
    - Drafts. A mailing becomes a draft at the first change worth
      keeping: writing in the subject or letter, attaching a file, or
      leaving someone out. Until then nothing is saved. A draft saves
