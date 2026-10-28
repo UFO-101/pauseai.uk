@@ -1,159 +1,179 @@
 # Texts and WhatsApp to supporters
 
-Supporters' mailings by text and WhatsApp. Builds on
-`plans/mailings.md`. Three pull requests:
+Mailings to supporters by text message and WhatsApp. This builds on
+`plans/mailings.md` and is three pull requests:
 
-1. **Phone groundwork**: consent, opt-outs and replies, shared by both.
-2. **Texts**, not blocked.
-3. **WhatsApp**, once Meta answers on political campaigns.
+1. The groundwork both channels need: consent, opt-outs and replies.
+2. Texts, which nothing outside blocks.
+3. WhatsApp, after Meta says whether its policy allows us.
 
-Whether texts come before WhatsApp is waiting on Joseph.
+Joseph hasn't yet said whether texts should come before WhatsApp.
 
-## What's there
+## What we have now
 
-- `phone_number()` writes numbers as we compare them, E.164 where it
-  can.
-- `contact_permission()` answers for phones, each topic with the ways it
-  allows (`TOPIC_WAYS` in `lib/contact-permissions.ts`): `volunteering`
-  and `site-forms` calls and texts, `march-day` and `luma-calendar`
-  texts. None allows WhatsApp.
-- The site sends no texts or WhatsApp. A giffgaff number has the
-  WhatsApp Business app on Reuben's phone, but its broadcast lists only
-  reach people who've saved the number, hence the API.
+- `phone_number()` writes each number in the form we compare them in,
+  E.164 where possible.
+- `contact_permission()` answers for phone numbers. Each topic lists
+  the ways it allows (`TOPIC_WAYS` in `lib/contact-permissions.ts`):
+  `volunteering` and `site-forms` allow calls and texts, and
+  `march-day` and `luma-calendar` allow texts. None allows WhatsApp.
+- The site doesn't send texts or WhatsApp messages. We have a giffgaff
+  number with the WhatsApp Business app on Reuben's phone, but the app's
+  broadcast lists only reach people who have saved our number. That's
+  why this plan uses the API.
 
 ## Rules
 
-- **Only to a yes for that way.** The ICO treats texts and WhatsApp as
-  electronic mail, with no soft opt-in for political campaigning
+- We only message someone in a way they said yes to. The ICO treats
+  texts and WhatsApp messages as electronic mail, and the soft opt-in
+  doesn't cover political campaigning
   ([ICO](https://ico.org.uk/for-organisations/direct-marketing-and-privacy-and-electronic-communications/guide-to-pecr/electronic-and-telephone-marketing/electronic-mail-marketing/)).
   A yes to texts isn't a yes to WhatsApp.
-- **Within what it was given for.** A `march-day` text is about the
-  march, on the day.
-- **Replies are on the site.** Shown on the supporter's page and
-  answered from there, so nobody needs the phone. STOP, or anything
-  like it, is an opt-out.
+- A message stays within what the person agreed to. For example, a
+  `march-day` text is about the march, sent on the day.
+- Replies are shown on the supporter's page and answered from the site,
+  so nobody needs the phone itself. A reply of STOP, or anything like
+  it, is an opt-out.
 
-## 1. Phone groundwork
+## 1. Groundwork
 
 ### The Luma checkbox
 
-Luma's phone field doesn't say what the number is for; that's up to the
-host. An event makes it off, optional or required, and with a number in
-someone's Luma profile the last two look the same. PauseCon required a
-number; the March made it optional and about one in six gave one. So a
-Luma number is a yes only to what the event said, usually its reminders.
+Luma's phone field doesn't tell people what their number will be used
+for; that's left to the host. Each event can make the field off,
+optional or required. If someone's Luma profile already has a number,
+optional and required look the same to them. PauseCon required a number.
+The march made it optional, and about one in six people gave one. So a
+number from Luma only allows what that event said it was for, which is
+usually its reminders.
 
-The proposal, to decide with Joseph: a checkbox on every event's
-registration that makes someone as good as a member, a yes to the
-weekly, texts about events, and later calls from volunteers. It only
-asks new registrations, so existing Luma people get a calendar
-newsletter linking to a yes page on pauseai.uk. We measure how many
-tick it per event, and narrow it (the weekly and event texts first) if
-too few do.
+The proposal, to be decided with Joseph, is a checkbox on every event's
+registration form. Ticking it would give the same permission as joining
+as a member: the weekly email, texts about events, and later calls from
+volunteers. It only reaches people as they register, so we would ask
+existing Luma contacts with a calendar newsletter linking to a page on
+pauseai.uk where they can say yes. We will measure what share tick it
+on each event. If it's low, we will ask for less, starting with the
+weekly and event texts.
 
 ### Steps
 
-1. **WhatsApp as a way**, beside call and text, with a topic whose yes
-   is an explicit opt-in for it.
-2. **Opt-ins**: the box on Email your MP and our other forms; the Luma
-   checkbox, read by the import as the postcode question is; staff
-   recording a yes given another way, with a note on how.
-3. **Opt-outs** from either channel, by reply or from the provider,
-   written to `contact_unsubscribes`.
-4. **Bad numbers**: one found not to be a mobile, or not on WhatsApp,
-   is marked and skipped.
-5. **Replies**: stored with the message they answer, shown on the
-   supporter's page, with a reply box for anyone with the `supporters`
-   permission. Each answer records who sent it.
+1. Add WhatsApp as a way to contact someone, alongside calls and texts,
+   with a topic that only an explicit WhatsApp opt-in says yes to.
+2. Collect opt-ins: the box on Email your MP and our other forms; the
+   Luma checkbox, which the import reads as it reads the postcode
+   question; and a way for staff to record a yes given in person or
+   elsewhere, with a note on how it was given.
+3. Record opt-outs from either channel, whether from a reply or from the
+   provider, in `contact_unsubscribes`.
+4. Mark a number that turns out not to be a mobile, or not to be on
+   WhatsApp, and skip it in future.
+5. Store each reply with the message it answers, and show it on the
+   supporter's page with a reply box. Anyone with the `supporters`
+   permission can reply, and each reply records who sent it.
 
 ## 2. Texts
 
-1. **A provider** in `lib/server/outside-services/`, and its fake,
-   sending from a real UK number, as a sender name ("PauseAI UK") can't
-   take replies.
-2. **Free text**, with no approval step. The composer counts 160
-   character segments, and the mailing's cost is per segment.
-3. **Its webhook**: delivered and failed as `message_events`, STOP as an
-   opt-out, other replies to the supporter's page.
-4. **Answering** has no time limit; each answer is charged as a text.
+1. Add a text provider in `lib/server/outside-services/`, with a fake
+   version for tests. Texts are sent from a real UK number, because
+   people can't reply to a sender name such as "PauseAI UK".
+2. Texts are free text, with no approval step. The composer counts
+   160-character segments, because each one is charged.
+3. The provider's webhook records deliveries and failures in
+   `message_events`, treats STOP as an opt-out, and stores other
+   replies for the supporter's page.
+4. Staff can reply to a text at any time. Each reply is charged as a
+   text.
 
 ## 3. WhatsApp
 
 ### Before building
 
-Meta's policy bars "Political Parties, Politicians, Political
-Candidates, and Political Campaigns" and "entities that offer services
+Meta's policy doesn't allow "Political Parties, Politicians, Political
+Candidates, and Political Campaigns", or "entities that offer services
 related to politics" ([policy](https://whatsappbusiness.com/policy/)).
-We're no party, but "political campaigns" isn't defined and we lobby
-MPs. Ask Meta, or a Solution Provider, first: a ban later takes the
-number and its history.
+PauseAI UK isn't a party, but the policy doesn't define "political
+campaigns", and we lobby MPs. We should ask Meta, or a Solution
+Provider, before building anything, because a ban later would lose the
+number and its message history.
 
-Then Francis sets up, with Joseph as a second admin:
+Then Francis sets up the account, with Joseph as a second admin:
 
-- a Meta business portfolio for Safe AI Alliance Ltd, verified with the
-  certificate of incorporation from Companies House and a document from
-  Joseph with the company's name and address, such as a bank statement.
-  Unverified, it can message 250 people a day; verified, 2,000
-  ([limits](https://developers.facebook.com/documentation/business-messaging/whatsapp/messaging-limits));
-- the number, with "PauseAI UK" approved as its display name;
-- a system user's permanent token, and a payment method.
+- A Meta business portfolio for Safe AI Alliance Ltd. To verify it, Meta
+  needs the certificate of incorporation, which is on Companies House,
+  and a document showing the company's name and address, such as a bank
+  statement, which Joseph can provide. An unverified account can
+  message 250 people a day, and a verified one 2,000
+  ([limits](https://developers.facebook.com/documentation/business-messaging/whatsapp/messaging-limits)).
+- The phone number, with "PauseAI UK" approved as its display name.
+- A system user with a permanent access token, and a payment method.
 
 ### Steps
 
-1. **The channel** in `lib/server/outside-services/whatsapp.ts`, and
-   its fake. Marketing templates go by the Marketing Messages API, as
-   Cloud API stops sending them on 13 October 2027
+1. Add the WhatsApp channel in `lib/server/outside-services/whatsapp.ts`,
+   with a fake version for tests. Marketing messages are sent through
+   the Marketing Messages API, because the Cloud API stops sending them
+   on 13 October 2027
    ([overview](https://developers.facebook.com/documentation/business-messaging/whatsapp/marketing-messages/overview.md)).
-   Meta charges per delivered message, by category
+   Meta charges for each delivered message, at a rate that depends on
+   its category
    ([rate card](https://whatsappbusiness.com/products/platform-pricing/)).
-2. **Templates**, written on the site (name, category, `en_GB`, body
-   with named parameters, a "Stop promotions" button on marketing ones)
-   and submitted to Meta, whose review takes up to 24 hours. They're
-   read back hourly and from Meta's status webhook, so a paused one
-   stops its mailings. Only approved ones send
+2. Templates. Staff write each template on the site, with a name, a
+   category, the language `en_GB`, a body with named parameters, and a
+   "Stop promotions" button on marketing templates. The site submits it
+   to Meta, whose review can take up to 24 hours. The site reads
+   templates back hourly and from Meta's status webhook, so a template
+   Meta pauses stops the mailings that use it. Only approved templates
+   can be sent
    ([templates](https://developers.facebook.com/documentation/business-messaging/whatsapp/templates/overview)).
-3. **The webhook**, `/api/whatsapp`, checked against
+3. The webhook at `/api/whatsapp` checks each request's
    `X-Hub-Signature-256`
-   ([webhooks](https://developers.facebook.com/documentation/business-messaging/whatsapp/webhooks/create-webhook-endpoint.md)):
-   - sent, delivered, read and failed become `message_events`;
-   - 131050 (stopped our marketing) and "Stop promotions" are opt-outs;
-     131026 marks a number not on WhatsApp; 131049 (WhatsApp's
-     per-person cap) fails without retry
-     ([errors](https://developers.facebook.com/documentation/business-messaging/whatsapp/support/error-codes));
-   - errors about us (template paused, payment, account restricted)
-     stop the mailing and alert staff;
-   - replies go to the supporter's page.
-4. **Answering**: free text, free of charge, within 24 hours of the
-   person's last message
-   ([pricing](https://developers.facebook.com/docs/whatsapp/pricing));
-   after that, an approved template.
-5. **First sends**: staff and a few volunteers, then one local group,
-   watching the template's quality rating.
+   ([webhooks](https://developers.facebook.com/documentation/business-messaging/whatsapp/webhooks/create-webhook-endpoint.md)).
+   - Sent, delivered, read and failed statuses are recorded in
+     `message_events`.
+   - Error 131050 (the person stopped our marketing) and the "Stop
+     promotions" button are opt-outs. Error 131026 means the number
+     isn't on WhatsApp. Error 131049 (WhatsApp's limit per person) is a
+     failure that isn't retried
+     ([errors](https://developers.facebook.com/documentation/business-messaging/whatsapp/support/error-codes)).
+   - Errors about our account, such as a paused template, a payment
+     problem or a restriction, stop the mailing and alert staff.
+   - Replies are stored for the supporter's page.
+4. Within 24 hours of the person's last message, staff can reply with
+   free text, at no charge
+   ([pricing](https://developers.facebook.com/docs/whatsapp/pricing)).
+   After that, a reply must use an approved template.
+5. Send first to staff and a few volunteers, then to one local group,
+   and watch the template's quality rating before sending more widely.
 
 ## Data protection
 
-A new use of phone numbers, only to a yes for that way; the new opt-in
-sources; the text provider and Meta as processors of numbers, messages
-and delivery receipts; read receipts from Meta, new data about a
-person; opt-outs kept after erasure; replies stored and shown to staff,
-deleted on erasure.
+Record in `docs/data-protection.md`: a new use of phone numbers, only
+for people who said yes to that way; the new opt-in sources; the text
+provider and Meta as processors of numbers, messages and delivery
+receipts; read receipts from Meta, which are new data about a person;
+opt-outs kept after erasure; and replies, stored and shown to staff,
+and deleted on erasure.
 
 ## Not in this plan
 
-WhatsApp groups and Communities; media and attachments; texts or
-WhatsApp to politicians.
+WhatsApp groups and Communities, pictures and attachments, and texts or
+WhatsApp messages to politicians.
 
 ## Open questions
 
-1. **Which text provider**, and can it take the giffgaff number by
-   porting, or does it need its own?
-2. **Does Meta count us as a political campaign?** Asked directly, or
-   through a Solution Provider?
-3. **One number for both?** The giffgaff number could be WhatsApp's on
-   the API, and stay in the Business app through Meta's Coexistence,
-   which unlinks WhatsApp Web until it's linked again
+1. Which text provider should we use? Can it take over the giffgaff
+   number, or does it need a number of its own?
+2. Does Meta count PauseAI UK as a political campaign? Should we ask
+   Meta directly, or through a Solution Provider?
+3. Should one number be used for both? The giffgaff number could be our
+   WhatsApp number on the API and stay in the WhatsApp Business app
+   through Meta's Coexistence feature. Connecting it unlinks WhatsApp
+   Web, which can then be linked again
    ([Infobip](https://www.infobip.com/docs/whatsapp/manage-integration/coexistence)).
-   It could be the texts' number too, if the provider takes it.
-4. **The checkbox's words**, the same on Luma and our forms, written by
-   a person. They name PauseAI UK and each way, as Meta's opt-in needs;
-   WhatsApp may need its own box.
+   It could also be our texting number, if the text provider can take
+   it over.
+4. What should the checkbox say? The same words should be used on Luma
+   and our own forms, and a person needs to write them. They need to
+   name PauseAI UK and each way we'd contact someone, as Meta requires.
+   WhatsApp may need a box of its own.

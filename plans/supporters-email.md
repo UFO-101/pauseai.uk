@@ -1,89 +1,101 @@
 # Email to supporters
 
-The UK weekly, and smaller mailings such as a local group's, sent from
-pauseai.uk instead of CiviCRM, so they can be personal (events near
-you, your MP) and the UK controls the list. Builds on
-`plans/mailings.md`. One pull request, once we can read CiviCRM.
+The UK weekly email, and smaller mailings such as one to a local group,
+will be sent from pauseai.uk instead of CiviCRM. That lets each email
+be personal, with events near the reader and their MP, and gives the UK
+control of its list. This builds on `plans/mailings.md` and is one pull
+request, which needs access to CiviCRM first.
 
-## Today
+## How it works now
 
 - Joseph writes the weekly in CiviCRM and sends it from
-  `hello@pauseai.uk` to the UK list. On 15 Oct: 1,262 recipients, 99.6%
-  delivered, 13.5% clicked, 9 unsubscribed. Besides his lead story it's
-  mostly Luma events, which we can generate (`eventMatchers` in
+  `hello@pauseai.uk` to the UK list. On 15 October it went to 1,262
+  people: 99.6% were delivered, 13.5% clicked a link and 9
+  unsubscribed. Apart from Joseph's lead story, most of it is Luma
+  events, which the site could fill in (`eventMatchers` in
   `lib/content/local-groups.ts`).
-- `contact_permission()` answers `pauseai-updates` for email. A
-  member's yes is unsure, since CiviCRM's unsubscribes are invisible to
-  us; a yes from our forms' box (`site-forms`) is sure.
-- Luma contacts are a yes for `luma-calendar` only, not the weekly. We
-  see Luma's unsubscribes: the webhook at once, and the daily contacts
-  pass for removals, blocks, spam reports and following again.
+- `contact_permission()` already answers `pauseai-updates` for email.
+  A member's yes is "unsure", because we can't see who unsubscribed in
+  CiviCRM. A yes from the box on our own forms (`site-forms`) is sure.
+- Following the Luma calendar is a yes for `luma-calendar` only, which
+  doesn't cover the weekly. We do see when people leave Luma's emails:
+  the webhook tells us about an unsubscribe at once, and the daily pass
+  over Luma's contacts finds removals, blocks, spam reports and people
+  who follow again.
 
 ## CiviCRM
 
-People leave the weekly in CiviCRM, by its footer link, by "stop all
-PauseAI email", or by being made do-not-email after a complaint or
-bounce. Airtable's "Keep me informed" never changes after sign-up. So
-moving the list needs CiviCRM's unsubscribes first.
+People stop the weekly in CiviCRM by using its unsubscribe link, by
+choosing to stop all PauseAI email, or by being marked do-not-email
+after a complaint or bounce. Airtable's "Keep me informed" is never
+updated after someone signs up. We can't move the list until we can see
+those unsubscribes.
 
-Maxime approved API access to CiviCRM, after a read key and an opt-out
-feed were refused on 19 Oct. Jakub is to set it up; there's no date
-yet. Only if it never comes: a button in the CiviCRM weekly to keep
-getting it from pauseai.uk.
+Global refused a read key and an opt-out feed on 19 October. Since
+then, Maxime has approved API access to CiviCRM, and Jakub is going to
+set it up. There's no date yet. If it never happens, the fallback is to
+put a button in the CiviCRM weekly for people to keep getting it from
+pauseai.uk.
 
-There's no agreement between PauseAI UK and Stichting PauseAI, so both
-follow good data protection practice. Someone who joined the UK through
-pauseai.info clearly meant us to have their details, so we use them,
-as the members import does. What we read from CiviCRM is used only to
-suppress. Global's draft [legal pack](https://github.com/PauseAI/legal-pack)
-isn't signed by the UK. Germany, France and Spain run their own lists;
-we keep passing signups to Global.
+There's no data agreement between PauseAI UK and Stichting PauseAI, so
+both need to follow good data protection practice. Someone who joined
+PauseAI UK through pauseai.info meant us to have their details, so we
+use them, as the members import already does. Anything we read from
+CiviCRM is used only to stop emails to people who opted out. Global's
+draft [legal pack](https://github.com/PauseAI/legal-pack) hasn't been
+signed by the UK. Germany, France and Spain already run their own
+lists, and we will keep passing new signups to Global.
 
 ## Steps
 
-1. **Read CiviCRM.** Explore the API first. Two things look like ours:
-   - bulk opt-out, a no to all bulk email, like our blocked;
-   - the UK chapter's mailing list, who's on it or has left it, like
-     the weekly.
+1. Read CiviCRM. Explore the API first to see what it holds. Two parts
+   seem to match what we have:
+   - its bulk opt-out, which stops all bulk email, like our blocked
+     addresses;
+   - membership of the UK chapter's mailing list, including who has
+     left it, which matches the weekly.
 
-   Import what fits, kept after erasure as opt-outs are. Then decide how
-   the topics fit together: whether `pauseai-updates` and the weekly
-   are one, and whether a Luma no or spam report stops the weekly.
-2. **A "UK weekly" topic** in `contact_permission()`.
-3. **The email channel for supporters**: Postmark's broadcast stream
-   ([streams](https://postmarkapp.com/message-streams)), apart from MP
-   letters, about $200–300 a year
-   ([pricing](https://postmarkapp.com/pricing)). Postmark vets
-   broadcast senders, so apply early. A small local mailing can go by
-   Gmail instead (`plans/politician-email.md`).
-4. **Unsubscribing**: a link in every message and a `List-Unsubscribe`
-   header, to a page offering less before nothing (weekly only, urgent
-   only, my local group, a three-month pause). Postmark's unsubscribe
-   and complaint webhooks write `contact_unsubscribes`.
-5. **The weekly's blocks**: headline events with sign-up counts, events
-   near you, your MP, filled per supporter.
-6. **Before the first send**: Postmaster Tools and DMARC reports.
-   Google wants complaints under 0.1%
-   ([sender guidelines](https://support.google.com/a/answer/81126)).
-   pauseai.uk's DMARC is `p=none` with no reports.
+   Import what fits, and keep it after erasure, as with other opt-outs.
+   Then decide how the topics fit together: whether `pauseai-updates`
+   and the weekly are the same topic, and whether unsubscribing from
+   Luma, or reporting a Luma email as spam, should stop the weekly too.
+2. Add a "UK weekly" topic to `contact_permission()`.
+3. Add an email channel for supporters, using Postmark's broadcast
+   stream ([streams](https://postmarkapp.com/message-streams)), kept
+   separate from letters to MPs. It costs about $200–300 a year
+   ([pricing](https://postmarkapp.com/pricing)). Postmark reviews new
+   broadcast senders, so apply early. A small local mailing can be sent
+   by Gmail instead (`plans/politician-email.md`).
+4. Add unsubscribing. Every email has an unsubscribe link and a
+   `List-Unsubscribe` header. The link goes to a page that offers fewer
+   emails before none: the weekly only, urgent emails only, my local
+   group only, or a three-month pause. Postmark's unsubscribe and
+   complaint webhooks write to `contact_unsubscribes`.
+5. Build the weekly's sections: the main events with how many have
+   signed up, events near the reader, and their MP.
+6. Before the first send, set up Google Postmaster Tools and DMARC
+   reports so we can see our spam rate. Google wants complaints below
+   0.1% ([sender guidelines](https://support.google.com/a/answer/81126)).
+   pauseai.uk's DMARC policy is `p=none`, with no reports.
 
-## More yeses and postcodes
+## Getting more people to say yes
 
-- **Our own join form** on pauseai.uk instead of pauseai.info's iframe,
-  with "PauseAI UK can email me", still passing people to Global.
-  pauseai.uk brought in 351 of 427 UK signups in October.
-- **The Luma checkbox** (`plans/supporters-phone.md`), if agreed,
-  covers the weekly. Registering alone isn't a yes: the charity soft
-  opt-in (PECR 22(3A), since 5 Feb 2026) is only for registered
-  charities, and Safe AI Alliance Ltd is a company limited by
-  guarantee.
-- **"Your postcode (the first half is fine)"** on every Luma event,
-  which the import already reads. Events near you need a town; your MP
-  needs a full postcode.
+- Replace pauseai.info's join form on pauseai.uk with our own, with a
+  "PauseAI UK can email me" box, and keep passing new members to
+  Global. pauseai.uk brought in 351 of the 427 UK signups in October.
+- If we add the Luma checkbox (`plans/supporters-phone.md`), it covers
+  the weekly. Registering for an event isn't a yes on its own. The new
+  soft opt-in for charities (PECR regulation 22(3A), in force since 5
+  February 2026) only applies to registered charities, and Safe AI
+  Alliance Ltd is a company limited by guarantee.
+- Ask "Your postcode (the first half is fine)" on every Luma event. The
+  import already reads it. Events near the reader need a town, and
+  their MP needs a full postcode.
 
 ## Data protection
 
-Unsubscribes read from CiviCRM, kept after erasure as opt-outs are; the
-weekly as a new use, with Postmark's broadcast stream; our join form as
-a new source. The privacy policy says we email those who said yes, and
-how to stop.
+Record in `docs/data-protection.md`: unsubscribes read from CiviCRM,
+kept after erasure like other opt-outs; the weekly as a new use, with
+Postmark's broadcast stream; and our join form as a new source. The
+privacy policy should say that we email people who said yes, and how to
+stop.

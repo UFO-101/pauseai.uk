@@ -1,98 +1,117 @@
 # Mailings
 
-Staff filter a list, press "Mail these", write a mailing and schedule
-it. This plan builds what every mailing shares. Each channel's sending
-has its own plan:
+Staff choose people from the politicians or supporters list, write a
+mailing to them and schedule it. This plan builds the parts every
+mailing needs. Sending by each channel is in its own plan:
 
-- `plans/politician-email.md`: politicians, by Gmail.
-- `plans/supporters-email.md`: supporters, by email.
-- `plans/supporters-phone.md`: supporters, by text and WhatsApp.
+- `plans/politician-email.md`: email to politicians, sent by Gmail.
+- `plans/supporters-email.md`: email to supporters.
+- `plans/supporters-phone.md`: texts and WhatsApp to supporters.
 
-One pull request, blocked by nothing. Once merged, staff on the live
-site can make a mailing, dry-run it and test-send it to themselves.
-Scheduling turns on for each channel as its plan lands.
+This plan is one pull request and doesn't depend on anything outside the
+site. After it, staff can make a mailing on the live site, see who it
+would go to, and send a test copy to themselves. They can schedule a
+mailing for a channel once that channel's plan is built.
 
-## What's there
+## What we have now
 
-- `mailings`: title, ask, and how Airtable's were found
-  (`airtable_field` or `airtable_sent_between`). Every row is imported.
-- `pauseai_letters`: one politician's letter of a mailing, a kind of
-  `letters`.
-- `/staff/mailings` and a mailing's page, for the imported ones
+- The `mailings` table holds the mailings imported from Airtable, with
+  their title and ask, and the tick box (`airtable_field`) or dates
+  (`airtable_sent_between`) that identify them in Airtable.
+- `pauseai_letters` holds each politician's letter in a mailing. It is
+  a kind of `letters`.
+- `/staff/mailings` lists the imported mailings, and each has a page
   (`lib/server/mailings.ts`).
-- `send()` in `lib/server/email.ts`: Postmark only; refuses blocked
-  addresses; logs to `email_sends`.
-- `contact_permission(topic, channel, address)`: yes, unsure or no, for
-  email and phone.
-- `SupporterFilter` and `PoliticianFilter`: each list's filters, read
-  from its URL, mixed with sort and page.
+- `send()` in `lib/server/email.ts` sends by Postmark, refuses blocked
+  addresses and logs each send to `email_sends`.
+- `contact_permission(topic, channel, address)` says whether we may
+  contact an email address or phone number about a topic: yes, unsure
+  or no.
+- `SupporterFilter` and `PoliticianFilter` hold each list's filters.
+  They are read from the page's URL, together with the sort order and
+  page number.
 
-## Model
+## Data model
 
-`mailings` is the parent. Recipients are a child table per audience, as
-`letters` has `supporter_letters` and `pauseai_letters`:
+`mailings` is the parent table. Each audience has its own table of
+recipients, in the same way that `letters` has `supporter_letters` and
+`pauseai_letters`:
 
 ```
 mailings ──┬── pauseai_letters      politicians (exists)
            └── supporter_messages   supporters (new)
 ```
 
-- **`mailings`** gains audience (`politicians`, `supporters`), channel
-  (`email`, `whatsapp`, `text`), the stored filter, the template and its
-  bindings, who made it, the sender, when it's due, and its state
-  (`draft`, `scheduled`, `sending`, `sent`, `cancelled`). A CHECK lets
-  only imported mailings lack a template.
-- **`supporter_messages`**: the supporter, the address or number,
-  status (`scheduled`, `sent`, `delivered`, `failed`, `skipped`), the
-  provider's ID, the merge values, and why it was skipped. Erasure
-  deletes the address and merge values and keeps the row.
-- **`message_events`**: what happened to a message after sending, for
-  either child.
+- `mailings` gets new columns: the audience (`politicians` or
+  `supporters`), the channel (`email`, `text` or `whatsapp`), the
+  stored filter, the template and its merge fields, who made it, who it
+  is sent from, when it is due, and its state (`draft`, `scheduled`,
+  `sending`, `sent` or `cancelled`). Only the imported mailings may
+  have no template.
+- `supporter_messages` has one row per supporter in a mailing: the
+  supporter, the address or number used, the status (`scheduled`,
+  `sent`, `delivered`, `failed` or `skipped`), the provider's message
+  ID, the merge values, and the reason if it was skipped. Erasure
+  deletes the address and merge values but keeps the row.
+- `message_events` records what happened to each message after it was
+  sent, for both tables of recipients.
 
-A message's text isn't stored. It's the template plus the recipient's
-merge values, and the mailing keeps the template as rendered when sent.
+We don't store each message's text. It can be rebuilt from the template
+and the recipient's merge values. The mailing keeps a copy of the
+template as it was when sent, so later changes to the template code
+don't change it.
 
 ## Rules
 
-- **Recipients are fixed at scheduling**, a row each, so who got it
-  never depends on rerunning a filter.
-- **Each send is checked again.** Supporters by `contact_permission()`
-  for the mailing's topic; politicians by blocks and being in office.
-  Anyone who fails is skipped, with the reason.
-- **Who can see a list can mail it.** Any staff account can mail
-  politicians; only the `supporters` permission can mail supporters.
-- **A stored filter is read strictly.** A value it doesn't recognise
-  stops the mailing, saying which, so a renamed topic or deleted event
-  can't widen the audience.
+- The recipients are fixed when the mailing is scheduled, with one row
+  each. Who received a mailing never depends on running its filter
+  again.
+- Each message is checked again just before it is sent. For a
+  supporter, `contact_permission()` must still say yes for the
+  mailing's topic. For a politician, their address must not be blocked
+  and they must still be in office. Anyone who fails the check is
+  skipped, and the reason is recorded.
+- Anyone who can see a list can send a mailing to it. Every staff
+  account can mail politicians. Only accounts with the `supporters`
+  permission can mail supporters.
+- A stored filter is read strictly. If it contains a value the site no
+  longer recognises, such as a renamed topic or a deleted event, the
+  mailing can't be scheduled until someone fixes it. Otherwise the
+  filter would silently match more people.
 
 ## Steps
 
-1. **Stored filters.** Who a list shows, split from how it's shown, as
-   one validated value for supporters and for politicians, stored as
-   JSON. A mailing's page shows it in words and can rerun it.
-2. **Templates.** Email your MP's format (`lib/letter-format.ts`) plus
-   merge fields and blocks only some see (`[if signed
-   frontier-ai-letter] … [end]`). Anyone a field can't be filled for is
-   skipped.
-3. **Channels.** `Channel` is a type: send one message, say how many
-   more today, say what a message costs, and turn a provider's report
-   into an event. Each has a fake for fixture builds, dev and tests,
-   which writes to the outbox (`tests/fixtures/outbox.ts`) and lets a
-   test report delivery, failure, bounces, opt-outs and replies through
-   the webhook's code. This plan uses the fake email that exists.
-4. **The `send-mailings` job**, hourly, in the shared database wake.
-   Each run sends what fits in 30 seconds.
-5. **Staff pages**, designed first as mock-ups on the real staff
-   components, desktop and phone:
-   - "Mail these" on Politicians and Supporters;
-   - a new mailing: recipients with untick boxes, channel, template,
-     preview as any recipient, what it will cost, schedule, cancel;
-   - **dry run**: who it would go to, who would be skipped and why,
-     with nothing recorded as sent;
-   - **test send to yourself**: a real message as a chosen recipient
-     would get it, to your pauseai.uk address by Postmark, logged as
-     `mailing-test`, skipping the permission check. Once a channel is
-     built, its test send uses it;
-   - a mailing's page: each recipient's outcome, counts, the filter in
-     words;
-   - Mailings: both audiences in one list.
+1. Store filters. Separate who a list shows from how it is shown, for
+   both lists, as one validated value that a mailing stores as JSON. A
+   mailing's page shows its filter in words and can run it again to
+   show who it would choose now.
+2. Templates. Use Email your MP's format (`lib/letter-format.ts`) and
+   add merge fields and sections shown only to some recipients, such as
+   `[if signed frontier-ai-letter] … [end]`. If a merge field can't be
+   filled in for someone, they are skipped.
+3. Channels. `Channel` is a type with four functions: send one message,
+   say how many more can be sent today, say what one message costs, and
+   turn a provider's report into an event. Each channel also has a fake
+   version for fixture builds, the dev server and tests. The fake writes
+   each message to the outbox (`tests/fixtures/outbox.ts`), and a test
+   can report deliveries, failures, bounces, opt-outs and replies
+   through the same code as the real webhook. This plan uses the fake
+   email channel that already exists.
+4. The `send-mailings` job runs hourly, during the database wake that
+   the other jobs share. Each run sends what it can in 30 seconds and
+   leaves the rest for the next run.
+5. Staff pages. Design them first, as mock-ups on the real staff
+   components on desktop and phone, and choose between them.
+   - A "Mail these" button on the politicians and supporters lists.
+   - A page for a new mailing: the recipients, each of whom can be
+     unticked; the channel; the template; a preview as any recipient;
+     the cost; and buttons to schedule and cancel.
+   - A dry run, which shows who the mailing would go to and who would
+     be skipped and why. Nothing is recorded as sent.
+   - A test send, which sends one real message to your own pauseai.uk
+     address by Postmark, as a chosen recipient would get it. It is
+     logged as `mailing-test` and doesn't check permissions. Once a
+     channel is built, test sends go by that channel.
+   - A mailing's page, with each recipient's outcome, the counts, and
+     the filter in words.
+   - The mailings list, with both audiences.
