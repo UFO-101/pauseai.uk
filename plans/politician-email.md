@@ -47,7 +47,11 @@ Francis about a shared account (see the open questions).
    than that can't be scheduled, and "Sent from" shows how many of
    today's 1,800 each account has left.
    `email_sends` records the backend and sender, and gets two new
-   purposes, `mailing` and `mailing-test`.
+   purposes, `mailing` and `mailing-test`. Each letter stores its own
+   `Message-ID`, whichever backend sent it, so a reply is matched to
+   it the same way if mailings later go by Postmark too, such as past
+   Gmail's limit. A letter sent by Postmark is Bcc'd to the sender, so
+   it is in their mailbox too.
 4. The `send-mailings` job. It runs hourly, during the database wake
    that the other jobs share, and sends any mailing that's due. A
    scheduled function has only 30 seconds, about 30 emails at Gmail's
@@ -60,8 +64,11 @@ Francis about a shared account (see the open questions).
    ([billing](https://docs.netlify.com/build/functions/usage-and-billing/)).
 5. Read bounces and threads hourly. `users.history.list`
    ([docs](https://developers.google.com/workspace/gmail/api/reference/rest/v1/users.history/list))
-   lists the messages that arrived since the last `historyId`. The site
-   fetches only the ones in our letters' threads, and bounces:
+   lists the messages that arrived since the last `historyId`. For
+   each, the site fetches only its `In-Reply-To` and `References`
+   headers (`format=metadata` with `metadataHeaders`), and from those
+   finds the replies to our letters, whichever backend sent them. It
+   fetches in full only those, and bounces:
    - A bounce from mailer-daemon or postmaster goes to
      `recordProblem()`, as Postmark bounces do. A bounce from another
      server may not be in the thread, so the site also searches for
@@ -107,7 +114,8 @@ Francis about a shared account (see the open questions).
 ## Data protection
 
 The `gmail.readonly` scope would let the site read a whole mailbox. The
-site reads only the IDs of new messages, and fetches only the messages
+site reads only the IDs and reply headers of new messages, and fetches
+only the messages
 in our threads and bounces. Tokens are encrypted and deleted when
 someone disconnects. Replies are kept even if they mention a
 constituent, and the privacy policy says so. Google processes staff
