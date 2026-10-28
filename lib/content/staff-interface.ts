@@ -855,7 +855,7 @@ export const staffCopy = {
     } as Record<string, string>,
     sentLine: (when: string, from: string) => `Sent ${when}, from ${from}`,
     // A mailing imported from Airtable, which kept when it went but not who from.
-    importedLine: (when: string) => `⁂ Sent ${when}, recorded in Airtable`,
+    importedLine: (when: string) => `Sent ${when}, recorded in Airtable`,
     sends: (when: string) => `Sends on ${when}`,
     scheduledLine: (n: number, from: string) => `${n} ${n === 1 ? "email" : "emails"} from ${from}.`,
     changeTime: "Change the time",
