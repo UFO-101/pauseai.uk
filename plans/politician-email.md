@@ -113,7 +113,8 @@ mail, as it already does for the policy inbox.
 
 A custom sentence or PDF for each person, open tracking, follow-up
 emails, recording what a reply said, mailings larger than Gmail's daily
-limit, journalists, and what politicians did in Parliament.
+limit, journalists, what politicians did in Parliament, and limiting
+who can send from whose Gmail.
 
 ## Open questions
 
