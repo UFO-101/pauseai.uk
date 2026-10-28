@@ -159,40 +159,42 @@ export default function ListFrame<Row>({
           <strong>{count}</strong>
           {pages > 1 && <Muted> · {copy.showing(from, to)}</Muted>}
         </p>
-        {actions}
-        {download && (
-          <Menu
-            id={`download-${menuId}`}
-            trigger={buttonClass({ variant: "ghost", size: "small", fit: true, className: styles.download })}
-            label={
-              <>
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  aria-hidden="true"
-                >
-                  <path d="M12 4v12M6 11l6 6 6-6M5 20h14" />
-                </svg>
-                {copy.download}
-              </>
-            }
-          >
-            <ul className={styles.formats}>
-              {formats.map((format) => (
-                <li key={format}>
-                  <a href={download(format)} download>
-                    {copy.formats[format]}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </Menu>
-        )}
+        <div className={styles.actions}>
+          {actions}
+          {download && (
+            <Menu
+              id={`download-${menuId}`}
+              trigger={buttonClass({ variant: "ghost", size: "small", fit: true, className: styles.download })}
+              label={
+                <>
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    aria-hidden="true"
+                  >
+                    <path d="M12 4v12M6 11l6 6 6-6M5 20h14" />
+                  </svg>
+                  {copy.download}
+                </>
+              }
+            >
+              <ul className={styles.formats}>
+                {formats.map((format) => (
+                  <li key={format}>
+                    <a href={download(format)} download>
+                      {copy.formats[format]}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </Menu>
+          )}
+        </div>
       </div>
       <ListTable columns={columns} rows={rows} rowKey={rowKey} />
       {pages > 1 && href && (
