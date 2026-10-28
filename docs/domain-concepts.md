@@ -330,6 +330,14 @@ The topics, and the channels each goes by (`TOPIC_REASONS` in
   yes until the day ends (`day_texts`), then no, unless the box said yes
   to site forms.
 
+A number is one channel, but a topic says which ways it allows
+(`TOPIC_WAYS` in `lib/contact-permissions.ts`), from what people were
+told when they gave it: Luma's and the march day's are for texts only,
+site forms' and volunteering's for calls and texts too. Calling someone
+without their consent is allowed in the UK only to a number that isn't
+on the Telephone Preference Service, so a calling tool reads the ways,
+not just the answer.
+
 Each answer is yes, no or unsure, with a reason from a short list, when,
 and which source said so. The first rule that matches wins: a blocked
 email address (`email_blocks`, below) is no to everything; then an opt-out

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { contactState, stateValue, topicsOf } from "./contact-permissions";
+import { TOPIC_REASONS, TOPIC_WAYS, contactState, stateValue, topicsOf, waysKey } from "./contact-permissions";
 
 describe("contactState", () => {
   it("reads a blocked email, or a reason its channel's topic can give, and nothing else", () => {
@@ -32,6 +32,16 @@ describe("contactState", () => {
   it("writes a state as its form value", () => {
     for (const value of ["email:blocked", "email:site-forms:asked", "phone:march-day:ended"]) {
       expect(stateValue(contactState(value)!)).toBe(value);
+    }
+  });
+
+  it("says the ways each topic lets us contact someone, as one key", () => {
+    expect(waysKey("email", "pauseai-updates")).toBe("email");
+    expect(waysKey("phone", "march-day")).toBe("text");
+    expect(waysKey("phone", "volunteering")).toBe("call-or-text");
+    // Every topic a channel has has its ways.
+    for (const channel of ["email", "phone"] as const) {
+      expect(Object.keys(TOPIC_WAYS[channel])).toEqual(Object.keys(TOPIC_REASONS[channel]));
     }
   });
 

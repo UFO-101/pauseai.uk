@@ -1,7 +1,7 @@
 import type React from "react";
 import Link from "next/link";
 import { staffCopy } from "@/lib/content/staff-interface";
-import type { ContactPermission } from "@/lib/contact-permissions";
+import { waysKey, type ContactPermission } from "@/lib/contact-permissions";
 import { staffDate } from "@/lib/staff-time";
 import Strip from "./ui/Strip";
 import styles from "./PermissionTiles.module.css";
@@ -26,7 +26,7 @@ const TONES = { yes: "green", no: "plain", unsure: "amber" } as const;
 function Tile({ permission }: { permission: ContactPermission }) {
   const id = `why-${permission.channel}-${permission.topic}-${permission.address.replace(/\W/g, "-")}`;
   const topic = copy.topics[permission.channel][permission.topic];
-  const answer = copy.answers[permission.channel][permission.send];
+  const answer = copy.answers[waysKey(permission.channel, permission.topic)][permission.send];
   return (
     <li data-send={permission.send}>
       <Strip tone={TONES[permission.send]} icon={false}>

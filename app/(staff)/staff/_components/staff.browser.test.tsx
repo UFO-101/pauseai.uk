@@ -3197,7 +3197,7 @@ describe("PermissionTiles", () => {
     );
     // A phone number's topic, answer and how we know are in a phone's words.
     expect(tiles()[2].querySelector("span > span")!.textContent).toBe(
-      `${copy.topics.phone["luma-calendar"]} · +447700900001: ${copy.answers.phone.no}`,
+      `${copy.topics.phone["luma-calendar"]} · +447700900001: ${copy.answers.text.no}`,
     );
     expect(tiles()[2].textContent).toContain(copy.details.phone["luma-calendar"]);
     // The ? at the top right, out of the reason's way.
@@ -3252,11 +3252,11 @@ describe("PermissionTiles", () => {
     expect(tiles()[1].firstElementChild!.className).toMatch(/amber/);
     // A volunteer's number, a yes; an unsure one is a don't know, as by email.
     expect(tiles()[2].querySelector("span > span")!.textContent).toBe(
-      `${copy.topics.phone.volunteering} · +447700900002: ${copy.answers.phone.yes}`,
+      `${copy.topics.phone.volunteering} · +447700900002: ${copy.answers["call-or-text"].yes}`,
     );
     const [, , phone] = exampleMemberDetails.permissions;
     await render(<PermissionTiles permissions={[{ ...phone, send: "unsure", reason: "gave-number" }]} />);
-    expect(tiles().at(-1)!.querySelector("span > span")!.textContent).toContain(copy.answers.phone.unsure);
+    expect(tiles().at(-1)!.querySelector("span > span")!.textContent).toContain(copy.answers["call-or-text"].unsure);
   });
 
   it("names each address, and falls back to the reason's own name", async () => {

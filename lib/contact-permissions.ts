@@ -44,6 +44,31 @@ export const TOPIC_REASONS = {
   },
 } as const satisfies Record<Channel, Partial<Record<Topic, readonly Reason[]>>>;
 
+/** How we'd reach someone at an address: by email, or at a number by calling or texting. */
+export type Way = "email" | "call" | "text";
+
+/**
+ * The ways each channel's topics let us contact someone, as they were told
+ * when they gave the address: the march sign-up asked for a number for
+ * texts on the day, Luma for its own reminders; our forms' box and the join
+ * form's volunteers are for calls as well.
+ */
+export const TOPIC_WAYS = {
+  email: { "luma-calendar": ["email"], "pauseai-updates": ["email"], "site-forms": ["email"] },
+  phone: {
+    "luma-calendar": ["text"],
+    volunteering: ["call", "text"],
+    "site-forms": ["call", "text"],
+    "march-day": ["text"],
+  },
+} as const satisfies { [C in Channel]: Record<keyof (typeof TOPIC_REASONS)[C], readonly Way[]> };
+
+/** The ways a channel's topic lets us contact someone, as one key for their words: "email", "text", "call-or-text". */
+export function waysKey(channel: Channel, topic: Topic): string {
+  const ways: Partial<Record<Topic, readonly Way[]>> = TOPIC_WAYS[channel];
+  return ways[topic]!.join("-or-");
+}
+
 /** A channel's topics, in TOPIC_REASONS's order. */
 export function topicsOf(channel: Channel): Topic[] {
   return Object.keys(TOPIC_REASONS[channel]) as Topic[];

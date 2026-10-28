@@ -239,10 +239,10 @@ export const staffCopy = {
           "site-forms": "⁂ PauseAI UK email",
         },
         phone: {
-          "luma-calendar": "⁂ Luma phone",
-          volunteering: "⁂ Volunteer phone",
-          "site-forms": "⁂ PauseAI UK phone",
-          "march-day": "⁂ March day phone",
+          "luma-calendar": "⁂ Luma texts",
+          volunteering: "⁂ Volunteer calls",
+          "site-forms": "⁂ PauseAI UK calls",
+          "march-day": "⁂ March day texts",
         },
       } as Record<Channel, Record<string, string>>,
       // A yes that an unsubscribe we can't see may have undone.
@@ -292,16 +292,18 @@ export const staffCopy = {
             "site-forms": "⁂ PauseAI UK updates, by email",
           },
           phone: {
-            "luma-calendar": "⁂ Luma calendar, by phone",
-            volunteering: "⁂ Volunteer messages, by phone",
-            "site-forms": "⁂ PauseAI UK updates, by phone",
-            "march-day": "⁂ March day updates, by phone",
+            "luma-calendar": "⁂ Luma calendar, by text",
+            volunteering: "⁂ Volunteering, by call or text",
+            "site-forms": "⁂ PauseAI UK updates, by call or text",
+            "march-day": "⁂ March day updates, by text",
           },
         } as Record<Channel, Record<string, string>>,
+        // By the ways the topic lets us contact them (TOPIC_WAYS).
         answers: {
           email: { yes: "Will email", no: "Won't email", unsure: "Don't know" },
-          phone: { yes: "⁂ Will phone", no: "⁂ Won't phone", unsure: "Don't know" },
-        },
+          text: { yes: "⁂ Will text", no: "⁂ Won't text", unsure: "Don't know" },
+          "call-or-text": { yes: "⁂ May call or text", no: "⁂ Won't call or text", unsure: "Don't know" },
+        } as Record<string, Record<"yes" | "no" | "unsure", string>>,
         why: "details",
         // The short reason under the answer, by topic and reason, with when.
         reasons: {
@@ -351,11 +353,11 @@ export const staffCopy = {
           },
           phone: {
             "luma-calendar":
-              "⁂ A number given when registering for a Luma event. We use it only while that Luma account is a contact of the calendar: unsubscribing from a Luma email stops it too.",
+              "⁂ A number given when registering for a Luma event, which Luma asks for to text reminders. So we only text it, and only while that Luma account is a contact of the calendar: unsubscribing from a Luma email stops it too.",
             "site-forms":
-              "There are several UK specific forms which have ways of opting in to contact. For example, when emailing your MP or signing up on this site to a march.",
+              "⁂ There are several UK specific forms which have ways of opting in to contact. The march sign-up's box says “by email and phone”, so we may call or text a number given with it ticked.",
             volunteering:
-              "⁂ The join form asks for a phone number only of those who choose to volunteer regularly, for volunteers' messages. A number from an older form, given with another choice, is a Don't know.",
+              "⁂ The join form asks for a phone number only of those who choose to volunteer regularly, so we may call or text them about volunteering. A number from an older form, given with another choice, is a Don't know.",
             "march-day":
               "⁂ The march sign-up asks for a number for text updates on the day. Without the box ticked, we can use it only until the day is over.",
           },
