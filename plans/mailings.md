@@ -125,6 +125,9 @@ don't change it.
   mailing's topic. For a politician, their address must not be blocked
   and they must still be in office. Anyone who fails the check is
   skipped, and the reason is recorded.
+- Someone with no address for the channel is never in a mailing: they
+  are left out when it starts, and its To line says how many, rather
+  than being skipped at sending.
 - Anyone who can see a list can send a mailing to it. Every staff
   account can mail politicians. Only accounts with the `supporters`
   permission can mail supporters.
@@ -162,8 +165,12 @@ don't change it.
    ask. Staff never see or type markup. The editor is built and in the
    component gallery (`MailingEditor`). The server checks the document
    as it checks letters, and one function writes a recipient's HTML and
-   plain text from it, for the dry run, test sends and sending. If a
-   merge field can't be filled in for someone, they are skipped.
+   plain text from it, for the dry run, test sends and sending. Every
+   merge field must have a value for every recipient: Write names those
+   missing one, with links to fix them, and Schedule can't be reached
+   until they're fixed or the field is taken out. So the only reasons
+   to skip someone at sending are ones that change after scheduling: a
+   blocked address, or leaving office.
 5. Channels. `Channel` is a type with four functions: send one message,
    say how many more can be sent today, say what one message costs, and
    turn a provider's report into an event. Each channel also has a fake
