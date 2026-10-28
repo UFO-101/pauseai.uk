@@ -1,6 +1,6 @@
 import { staffCopy } from "@/lib/content/staff-interface";
 import type { SupportersSearch } from "@/lib/staff-search";
-import { EMAIL_TOPIC_REASONS, EMAIL_TOPICS } from "@/lib/email-permissions";
+import { CHANNELS, TOPIC_REASONS, stateValue, topicsOf, type Reason } from "@/lib/contact-permissions";
 import { campaigns } from "@/lib/content/email-your-mp";
 import type { EventChoice, SupportersPage } from "@/lib/server/supporters";
 import { staffDate } from "@/lib/staff-time";
@@ -74,11 +74,13 @@ export function supporterFilters(
       label: columns.subscriptions,
       repeat: true,
       options: [
-        ...EMAIL_TOPICS.flatMap((topic) =>
-          EMAIL_TOPIC_REASONS[topic].map((reason) => ({
-            value: `${topic}:${reason}`,
-            label: copy.states[topic][reason],
-          })),
+        ...CHANNELS.flatMap((channel) =>
+          topicsOf(channel).flatMap((topic) =>
+            (TOPIC_REASONS[channel] as Record<string, readonly Reason[]>)[topic].map((reason) => ({
+              value: stateValue({ channel, topic, reason }),
+              label: (channel === "email" ? copy.states : copy.phoneStates)[topic][reason],
+            })),
+          ),
         ),
         { value: "blocked", label: staffCopy.supporters.subscriptions.blocked },
       ],

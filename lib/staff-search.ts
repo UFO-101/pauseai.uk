@@ -2,7 +2,7 @@
 // it filters by, leaving out anything blank or unknown. lib/staff-forms.ts
 // reads their forms.
 import { staffCopy } from "@/lib/content/staff-interface";
-import { emailState } from "@/lib/email-permissions";
+import { contactState, stateValue } from "@/lib/contact-permissions";
 import type { BlocksFilter } from "@/lib/server/email";
 import { campaignBySlug } from "@/lib/email-your-mp";
 import { parseSort } from "@/lib/staff-sort";
@@ -173,7 +173,7 @@ export function supporterId(id: string): number | undefined {
 export type SupportersSearch = {
   q: string;
   activity: string[];
-  /** Each "blocked", or "<topic>:<reason>". */
+  /** Each "blocked", or "<channel>:<topic>:<reason>" (an email one also "<topic>:<reason>"). */
   subscription: string[];
   /** "yes" or "no". */
   phone: string;
@@ -201,12 +201,20 @@ export function supportersSearch(
   const [q, phone, email, campaign, wrote, near, within, sort, dir, page, erased] = (
     ["q", "phone", "email", "campaign", "wrote", "near", "within", "sort", "dir", "page", "erased"] as const
   ).map((name) => firstOf(params[name]));
-  const [activity, subscription, event, country] = (["activity", "subscription", "event", "country"] as const).map(
-    (name) => valuesOf(params[name]),
+  const [activity, typed, event, country] = (["activity", "subscription", "event", "country"] as const).map((name) =>
+    valuesOf(params[name]),
   );
+  // An email subscription as older links have it, "<topic>:<reason>", as the filter's choices have it.
+  const subscription = typed.map((value) => {
+    const one = notValue(value);
+    const state = contactState(one.value);
+    return state ? `${one.not ? NOT : ""}${stateValue(state)}` : value;
+  });
   const sorting = parseSort(SUPPORTER_SORTS, "active", sort, dir);
   const [badges, notBadges] = anyAndNone(activity, (values) => values.filter(isSupporterBadge));
-  const [states, notStates] = anyAndNone(subscription, (values) => values.flatMap((value) => emailState(value) ?? []));
+  const [states, notStates] = anyAndNone(subscription, (values) =>
+    values.flatMap((value) => contactState(value) ?? []),
+  );
   const [events, notEvents] = anyAndNone(event, (values) => values);
   const [countries, notCountries] = anyAndNone(country, (values) =>
     values.filter((value) => Object.hasOwn(staffCopy.countries, value)),

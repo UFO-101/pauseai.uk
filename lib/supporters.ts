@@ -1,7 +1,7 @@
 // Supporters, as the staff pages show them: the shapes the server
 // (lib/server/supporters.ts) gives the components.
 import { staffCopy } from "./content/staff-interface";
-import type { EmailPermission, EmailState } from "./email-permissions";
+import type { ContactPermission, ContactState } from "./contact-permissions";
 import type { SortColumns, SortDirection } from "./staff-sort";
 
 /** Where a supporter came from: Luma, the members, or one of our forms (form_entries.form): Email your MP, pauseai.info's old letter form, or the march sign-up. */
@@ -27,7 +27,10 @@ export type SupporterSummary = {
   emails: string[];
   /** The address any source gave most recently. */
   email: string | null;
+  /** The newest number any source gave that a topic lets us use, or might. */
   phone: string | null;
+  /** Every number any source gave, as phone_number() writes them, newest first, whether we may use them or not. */
+  phones: string[];
   postcode: string | null;
   sources: SupporterSource[];
   /** Whether they're a contact of the Luma calendar now, as registering for an event or following it makes them, and unsubscribing undoes. */
@@ -51,8 +54,8 @@ export type SupporterPlaceName = {
   country: string | null;
 };
 
-/** One row of the list, with whether we'd email each of their addresses about each topic. */
-export type SupporterRow = SupporterSummary & { permissions: EmailPermission[] };
+/** One row of the list, with whether we'd contact each of their addresses and numbers about each topic. */
+export type SupporterRow = SupporterSummary & { permissions: ContactPermission[] };
 
 /** What a supporter did, from any source: `kind` says what, `title` and `detail` which and how. */
 export type SupporterActivity = {
@@ -82,6 +85,7 @@ export type SupporterIdentity = { source: SupporterSource; email: string; name: 
 export type SupporterContact = {
   source: SupporterSource;
   at: string;
+  /** As phone_number() writes it. */
   phone: string | null;
   postcode: string | null;
   latitude: number | null;
@@ -104,8 +108,8 @@ export type SupporterDetails = {
   contacts: SupporterContact[];
   links: SupporterLink[];
   activity: SupporterActivity[];
-  /** Whether we may email each of their addresses about each topic, and why. */
-  permissions: EmailPermission[];
+  /** Whether we may contact each of their addresses and numbers about each topic, and why. */
+  permissions: ContactPermission[];
 };
 
 /** What the list can be sorted by, a column heading or the Sort by field, and which way a first click goes. */
@@ -130,9 +134,9 @@ export type SupporterFilter = {
   search?: string;
   /** Has any of these lozenges in the Activities column. */
   activity?: SupporterBadge[];
-  /** Has any of these answers about a topic, or is blocked, at any of their addresses. */
-  subscription?: EmailState[];
-  /** Whether we have a phone number for them, and an email. */
+  /** Has any of these answers about a topic by a channel, or is blocked, at any of their addresses or numbers. */
+  subscription?: ContactState[];
+  /** Whether we have a phone number for them we may use, and an email. */
   phone?: boolean;
   email?: boolean;
   /** Registered for any of these Luma events, by ID, but for declined. */

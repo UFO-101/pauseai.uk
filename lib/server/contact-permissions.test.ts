@@ -1,8 +1,8 @@
 import { expect, it } from "vitest";
-import type { EmailTopic } from "@/lib/email-permissions";
+import type { Topic } from "@/lib/contact-permissions";
 import { addTestLetter, addTestMp, describeWithDatabase, useTestDatabase } from "@/tests/database";
 import { query } from "./db";
-import { permissionsFor } from "./email-permissions";
+import { permissionsFor } from "./contact-permissions";
 
 /** A Luma account, a contact of the calendar since `since` or not one. */
 async function luma(email: string, since: string | null) {
@@ -13,12 +13,41 @@ async function luma(email: string, since: string | null) {
   ]);
 }
 
-/** A member record: made at `createdAt`, with "Keep me informed" ticked or not, and removed or not. */
-async function member(id: string, email: string, createdAt: string, keepInformed: boolean, removed = false) {
+/** A member record: made at `createdAt`, with "Keep me informed" ticked or not, removed or not, and a phone and intent if given. */
+async function member(
+  id: string,
+  email: string,
+  createdAt: string,
+  keepInformed: boolean,
+  removed = false,
+  phone: string | null = null,
+  intent: string | null = null,
+) {
   await query(
-    `INSERT INTO members (id, email, name, joined_at, created_at, keep_informed, share_permission, source_modified_at, removed_at)
-     VALUES ($1, $2, 'X', $3, $3, $4, true, $3, $5)`,
-    [id, email, createdAt, keepInformed, removed ? createdAt : null],
+    `INSERT INTO members (id, email, name, joined_at, created_at, keep_informed, share_permission, source_modified_at, removed_at, phone, intent)
+     VALUES ($1, $2, 'X', $3, $3, $4, true, $3, $5, $6, $7)`,
+    [id, email, createdAt, keepInformed, removed ? createdAt : null, phone, intent],
+  );
+}
+
+/** A registration for an event by `email`'s Luma account, giving `phone`. */
+async function lumaGuest(email: string, phone: string) {
+  await query(
+    `INSERT INTO luma_events (id, name, url, start_at, access) VALUES ('evt-1', 'E', 'e', '2026-10-01T18:00:00Z', 'manage')
+     ON CONFLICT DO NOTHING`,
+  );
+  await query(
+    `INSERT INTO luma_guests (id, event_id, user_id, approval_status, registered_at, phone)
+     VALUES ($1, 'evt-1', $2, 'approved', '2026-09-30T00:00:00Z', $3)`,
+    [`gst-${email}-${phone}`, `usr-${email}`, phone],
+  );
+}
+
+/** An entry on `form` from `email`, giving `phone`, with the consent box ticked or not. */
+async function formEntry(email: string, form: string, phone: string, consent: boolean, at: string) {
+  await query(
+    `INSERT INTO form_entries (form, created_at, name, email, phone, contact_consent) VALUES ($1, $2, 'X', $3, $4, $5)`,
+    [form, at, email, phone, consent],
   );
 }
 
@@ -43,8 +72,14 @@ async function lumaOptOut(address: string, at: string, resubscribedAt: string | 
 }
 
 /** One address's answer for a topic, as [send, reason, at, source]; undefined when the topic doesn't apply. */
-async function answer(address: string, topic: EmailTopic) {
+async function answer(address: string, topic: Topic) {
   const found = (await permissionsFor([address])).find((p) => p.topic === topic);
+  return found && [found.send, found.reason, found.at && new Date(found.at).toISOString(), found.source];
+}
+
+/** One number's answer for a topic, as [send, reason, at, source]; undefined when the topic doesn't apply. */
+async function phoneAnswer(number: string, topic: Topic) {
+  const found = (await permissionsFor([], [number])).find((p) => p.topic === topic);
   return found && [found.send, found.reason, found.at && new Date(found.at).toISOString(), found.source];
 }
 
@@ -188,5 +223,104 @@ describeWithDatabase("permissionsFor", () => {
       "2026-10-05T00:00:00.000Z",
       "email-your-mp",
     ]);
+  });
+
+  it("answers each number by the sources that gave it, after the addresses", async () => {
+    await member("recVol", "vol@example.com", "2026-09-12T00:00:00Z", true, false, "07700 900123", "Volunteer");
+    await formEntry("site@example.com", "web-form", "+44 7700 900123", true, "2026-10-01T00:00:00Z");
+    const permissions = await permissionsFor(["vol@example.com"], ["+447700900123", "+447700900999"]);
+    expect(permissions.map((p) => [p.channel, p.address, p.topic])).toEqual([
+      ["email", "vol@example.com", "pauseai-updates"],
+      ["phone", "+447700900123", "site-forms"],
+      ["phone", "+447700900123", "volunteering"],
+    ]);
+  });
+
+  it("gives a Luma number its account's answer: yes while it follows the calendar, no once it unsubscribes", async () => {
+    await luma("pat@example.com", "2026-09-20T00:00:00Z");
+    await lumaGuest("pat@example.com", "+447700900001");
+    expect(await phoneAnswer("+447700900001", "luma-calendar")).toEqual([
+      "yes",
+      "following",
+      "2026-09-20T00:00:00.000Z",
+      "luma",
+    ]);
+    await lumaOptOut("pat@example.com", "2026-10-23T00:00:00Z");
+    expect(await phoneAnswer("+447700900001", "luma-calendar")).toEqual([
+      "no",
+      "unsubscribed",
+      "2026-10-23T00:00:00.000Z",
+      "luma",
+    ]);
+    // Another account that gave the same number and still follows is a yes.
+    await luma("pat2@example.com", "2026-10-01T00:00:00Z");
+    await lumaGuest("pat2@example.com", "+447700900001");
+    expect((await phoneAnswer("+447700900001", "luma-calendar"))?.slice(0, 2)).toEqual(["yes", "following"]);
+    // An account that registered but never followed.
+    await luma("drop@example.com", null);
+    await lumaGuest("drop@example.com", "+447700900002");
+    expect(await phoneAnswer("+447700900002", "luma-calendar")).toEqual(["no", "not-following", null, "luma"]);
+    // A Luma unsubscribe says nothing about the same number given elsewhere.
+    await lumaGuest("pat@example.com", "+447700900003");
+    await formEntry("pat@example.com", "web-form", "07700900003", true, "2026-10-01T00:00:00Z");
+    expect((await phoneAnswer("+447700900003", "site-forms"))?.slice(0, 2)).toEqual(["yes", "asked"]);
+  });
+
+  it("takes a volunteer's number as a yes, another member's as unsure, and a removed member's as no", async () => {
+    await member("recV", "v@example.com", "2026-09-12T00:00:00Z", false, false, "+447700900010", "Volunteer");
+    expect(await phoneAnswer("+447700900010", "volunteering")).toEqual([
+      "yes",
+      "volunteered",
+      "2026-09-12T00:00:00.000Z",
+      "member",
+    ]);
+    await member("recO", "o@example.com", "2026-03-01T00:00:00Z", true, false, "+447700900011", "Act now");
+    expect((await phoneAnswer("+447700900011", "volunteering"))?.slice(0, 2)).toEqual(["unsure", "gave-number"]);
+    await member("recR", "r@example.com", "2026-09-12T00:00:00Z", true, true, "+447700900012", "Volunteer");
+    expect((await phoneAnswer("+447700900012", "volunteering"))?.slice(0, 2)).toEqual(["no", "removed"]);
+  });
+
+  it("texts on the march's day whoever gave a number on its form, until the day ends; after, only those who agreed", async () => {
+    await formEntry("m@example.com", "march-2026-11", "07700 900020", false, "2026-10-20T00:00:00Z");
+    await formEntry("a@example.com", "march-2026-11", "07700 900021", true, "2026-10-20T00:00:00Z");
+    await query("UPDATE day_texts SET ends_at = now() + interval '1 day'");
+    expect(await phoneAnswer("+447700900020", "march-day")).toEqual([
+      "yes",
+      "gave-number",
+      "2026-10-20T00:00:00.000Z",
+      "march-2026-11",
+    ]);
+    expect((await phoneAnswer("+447700900020", "site-forms"))?.slice(0, 2)).toEqual(["no", "declined"]);
+    await query("UPDATE day_texts SET ends_at = now() - interval '1 day'");
+    expect((await phoneAnswer("+447700900020", "march-day"))?.slice(0, 2)).toEqual(["no", "ended"]);
+    expect((await phoneAnswer("+447700900021", "site-forms"))?.slice(0, 2)).toEqual(["yes", "asked"]);
+    // A number from another form has no march-day answer.
+    await formEntry("w@example.com", "web-form", "07700 900022", true, "2026-10-20T00:00:00Z");
+    expect(await phoneAnswer("+447700900022", "march-day")).toBeUndefined();
+  });
+
+  it("finds whether any topic lets us use a number", async () => {
+    await member("recV", "v@example.com", "2026-09-12T00:00:00Z", false, false, "+447700900030", "Volunteer");
+    await luma("gone@example.com", "2026-09-20T00:00:00Z");
+    await lumaGuest("gone@example.com", "+447700900031");
+    await lumaOptOut("gone@example.com", "2026-10-23T00:00:00Z");
+    const usable = async (number: string) =>
+      (await query<{ ok: boolean }>("SELECT phone_usable($1) AS ok", [number]))[0].ok;
+    expect(await usable("+447700900030")).toBe(true);
+    expect(await usable("+447700900031")).toBe(false);
+    expect(await usable("+447700900099")).toBe(false);
+  });
+
+  it("writes numbers the same way, however they were typed", async () => {
+    const written = async (raw: string | null) =>
+      (await query<{ n: string | null }>("SELECT phone_number($1) AS n", [raw]))[0].n;
+    for (const raw of ["07700 900123", "+44 (0)7700 900123", "0044 7700-900123", "447700900123", "+447700900123"]) {
+      expect(await written(raw)).toBe("+447700900123");
+    }
+    expect(await written("+1 (555) 000-0000")).toBe("+15550000000");
+    // One that can't be read as a number is kept as typed, trimmed; a blank is none.
+    expect(await written(" ext. 12 ")).toBe("ext. 12");
+    expect(await written("  ")).toBeNull();
+    expect(await written(null)).toBeNull();
   });
 });

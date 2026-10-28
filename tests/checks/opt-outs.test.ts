@@ -2,8 +2,8 @@ import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
-// Whether we'd email someone is decided in one place, the email_permissions
-// view (docs/domain-concepts.md, "Whether we'd email someone"). This fails
+// Whether we'd contact someone is decided in one place, contact_permission()
+// (docs/domain-concepts.md, "Whether we'd contact someone"). This fails
 // on code that reads opt_outs itself, so nothing works out its own answer:
 // only the code that records opt-outs, and erasure, which keeps them.
 const PATTERN = /\bopt_outs\b/;

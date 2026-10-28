@@ -1,33 +1,44 @@
 import type React from "react";
 import Link from "next/link";
 import { staffCopy } from "@/lib/content/staff-interface";
-import type { EmailPermission } from "@/lib/email-permissions";
+import type { ContactPermission } from "@/lib/contact-permissions";
 import { staffDate } from "@/lib/staff-time";
 import Strip from "./ui/Strip";
-import styles from "./EmailPermissionTiles.module.css";
+import styles from "./PermissionTiles.module.css";
 
 const copy = staffCopy.supporters.detail.permissions;
 
 /** The short reason for an answer, with when and, for our forms', which form; the reason itself where the copy has no words for it. */
-function reason(permission: EmailPermission): string {
+function reason(permission: ContactPermission): string {
   const words = copy.reasons[permission.topic]?.[permission.reason];
   const form = copy.forms[permission.source ?? ""] ?? copy.otherForm;
   return words ? words(permission.at ? staffDate(permission.at) : "", form) : permission.reason;
 }
 
-/** A topic's answer as a strip's colour: green we'd email them, plain we wouldn't, amber we don't know. */
+/** A topic's answer as a strip's colour: green we'd contact them, plain we wouldn't, amber we don't know. */
 const TONES = { yes: "green", no: "plain", unsure: "amber" } as const;
 
-/** One topic, a strip: its name and whether we'd email them about it, then why in a few words; how we know is behind the "?" at its top right. */
-function Tile({ permission, address }: { permission: EmailPermission; address?: string }) {
-  const id = `why-${permission.topic}-${permission.address.replace(/\W/g, "-")}`;
+/** A topic's name and an answer, in the words of its channel. */
+function words(permission: ContactPermission): { topic: string; answer: string } {
+  if (permission.channel === "email") return { topic: copy.topics[permission.topic], answer: copy[permission.send] };
+  const answers = { yes: copy.phoneYes, no: copy.phoneNo, unsure: copy.unsure };
+  return { topic: copy.phoneTopics[permission.topic], answer: answers[permission.send] };
+}
+
+/**
+ * One topic, a strip: its name, the address or number it's for, and
+ * whether we'd contact them about it, then why in a few words; how we know
+ * is behind the "?" at its top right.
+ */
+function Tile({ permission }: { permission: ContactPermission }) {
+  const id = `why-${permission.channel}-${permission.topic}-${permission.address.replace(/\W/g, "-")}`;
+  const { topic, answer } = words(permission);
   return (
     <li data-send={permission.send}>
       <Strip tone={TONES[permission.send]} icon={false}>
         <span className={styles.title}>
           <span>
-            {copy.topics[permission.topic]}
-            {address && ` · ${address}`}: {copy[permission.send]}
+            {topic} · {permission.address}: {answer}
           </span>
           <button
             type="button"
@@ -54,14 +65,13 @@ function Tile({ permission, address }: { permission: EmailPermission; address?: 
 }
 
 /** A blocked address: one red strip in place of its topics', since nothing goes to it. */
-function Blocked({ permission, address }: { permission: EmailPermission; address?: string }) {
+function Blocked({ permission }: { permission: ContactPermission }) {
   const because = copy.blockedBecause[permission.source ?? ""];
   return (
     <li data-send="no">
       <Strip tone="red">
         <span>
-          {address && `${address}: `}
-          {copy.blocked}
+          {permission.address}: {copy.blocked}
         </span>
         <span className={styles.reason}>
           {because && `${because(staffDate(permission.at!))} `}
@@ -73,21 +83,19 @@ function Blocked({ permission, address }: { permission: EmailPermission; address
 }
 
 /**
- * Whether we'd email a supporter about each topic, a strip each, for each
- * of their addresses; an address that's blocked gets one. The address is
- * named only when they have more than one.
+ * Whether we'd contact a supporter about each topic, a strip each, for each
+ * of their addresses, then each of their numbers, each strip naming the one
+ * it's for; an address that's blocked gets one.
  */
-export default function EmailPermissionTiles({ permissions }: { permissions: EmailPermission[] }) {
-  const addresses = [...new Set(permissions.map((p) => p.address))];
-  const named = addresses.length > 1;
+export default function PermissionTiles({ permissions }: { permissions: ContactPermission[] }) {
+  const keys = [...new Set(permissions.map((p) => `${p.channel} ${p.address}`))];
   return (
     <ul className={styles.list}>
-      {addresses.flatMap((address) => {
-        const own = permissions.filter((p) => p.address === address);
-        const label = named ? address : undefined;
+      {keys.flatMap((key) => {
+        const own = permissions.filter((p) => `${p.channel} ${p.address}` === key);
         const blocked = own.find((p) => p.reason === "blocked");
-        if (blocked) return [<Blocked key={address} permission={blocked} address={label} />];
-        return own.map((p) => <Tile key={`${address}-${p.topic}`} permission={p} address={label} />);
+        if (blocked) return [<Blocked key={key} permission={blocked} />];
+        return own.map((p) => <Tile key={`${key}-${p.topic}`} permission={p} />);
       })}
     </ul>
   );

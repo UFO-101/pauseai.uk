@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Muted } from "@/components/ui/Text";
+import Tag from "@/components/ui/Tag";
 import { campaignBySlug, campaignPath, displayPostcode } from "@/lib/email-your-mp";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { staffDate, staffTime } from "@/lib/staff-time";
@@ -10,7 +11,7 @@ import type {
   SupporterSource,
   SupporterSummary,
 } from "@/lib/supporters";
-import EmailPermissionTiles from "./EmailPermissionTiles";
+import PermissionTiles from "./PermissionTiles";
 import SupporterBadges from "./SupporterBadges";
 import Grid, { Card, spanClass } from "./ui/Grid";
 import { ListTable, type ListColumn } from "./ui/ListFrame";
@@ -106,18 +107,21 @@ function Label({ label, icon }: { label: string; icon: keyof typeof ICONS }) {
 /**
  * One detail of the profile: its label, then each value, with where it
  * came from under it; with `href`, each value a link, as an email or a
- * phone number is.
+ * phone number is, but for one `unusable` says no topic lets us use,
+ * which is marked so.
  */
 function Fact({
   label,
   values,
   icon,
   href,
+  unusable = () => false,
 }: {
   label: string;
   values: Given[];
   icon: keyof typeof ICONS;
   href?: (value: string) => string;
+  unusable?: (value: string) => boolean;
 }) {
   if (values.length === 0) return null;
   return (
@@ -126,7 +130,15 @@ function Fact({
       <dd>
         {values.map((given) => (
           <div key={given.value}>
-            {href ? <a href={href(given.value)}>{given.value}</a> : given.value}{" "}
+            {unusable(given.value) ? (
+              <>
+                {given.value} <Tag>{copy.detail.unusable}</Tag>
+              </>
+            ) : href ? (
+              <a href={href(given.value)}>{given.value}</a>
+            ) : (
+              given.value
+            )}{" "}
             <span className={styles.origin}>{origin(given)}</span>
           </div>
         ))}
@@ -270,14 +282,15 @@ function letterColumns(letters: string): ListColumn<SupporterActivity>[] {
 /**
  * A supporter's page (design C, the profile column): their name and
  * badges; a narrow card of who they are, each detail with its icon and
- * where it came from, its email and phone links, then whether we'd email
- * them; beside it, tables of the events they registered for and their
+ * where it came from, its email and phone links, a number we may not use
+ * marked, then whether we'd contact them; beside it, tables of the events they registered for and their
  * letters, then everything they did, newest first, folded.
  */
 export default function SupporterDetails({ supporter }: { supporter: Details }) {
   const { summary, identities, contacts, activity, permissions } = supporter;
   const emails = distinct(identities.map((i) => ({ value: i.email, source: i.source, at: i.seenAt })));
   const phones = distinct(contacts.map((c) => ({ value: c.phone, source: c.source, at: c.at })));
+  const usable = new Set(permissions.filter((p) => p.channel === "phone" && p.send !== "no").map((p) => p.address));
   const postcodes = distinct(
     contacts.map((c) => ({ value: c.postcode, source: c.source, at: c.at })),
     displayPostcode,
@@ -301,6 +314,7 @@ export default function SupporterDetails({ supporter }: { supporter: Details }) 
               values={phones}
               icon="phone"
               href={(phone) => `tel:${phone.replace(/\s+/g, "")}`}
+              unusable={(phone) => !usable.has(phone)}
             />
             <PlaceFact place={summary.place} />
             <Fact label={copy.detail.postcode} values={postcodes} icon="postcode" />
@@ -311,7 +325,7 @@ export default function SupporterDetails({ supporter }: { supporter: Details }) 
             <h3 id="subscriptions" className={styles.partTitle}>
               {copy.detail.listsTitle}
             </h3>
-            <EmailPermissionTiles permissions={permissions} />
+            <PermissionTiles permissions={permissions} />
           </section>
         </Card>
         <div className={`${spanClass(4)} ${styles.tables}`}>

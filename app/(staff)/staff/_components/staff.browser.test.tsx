@@ -87,8 +87,8 @@ import {
   exampleSupporterRows,
   exampleSupporterDetails,
 } from "./SupportersTable.examples";
-import EmailPermissionTiles from "./EmailPermissionTiles";
-import type { EmailReason, EmailTopic } from "@/lib/email-permissions";
+import PermissionTiles from "./PermissionTiles";
+import type { Reason, Topic } from "@/lib/contact-permissions";
 import { lettersSearch, supportersSearch } from "@/lib/staff-search";
 import Table from "@/components/ui/Table";
 
@@ -2608,7 +2608,9 @@ describe("SupportersTable", () => {
     );
     await expect.element(page.getByText(copy.total(120))).toBeVisible();
     await expect.element(page.getByRole("cell", { name: `jane.e@example.org ${copy.moreEmails(1)}` })).toBeVisible();
-    await expect.element(page.getByRole("cell", { name: "+447700900001" }).first()).toBeVisible();
+    // The newest number we may use: none of Jane's, Sam's as a volunteer.
+    await expect.element(page.getByRole("cell", { name: "+447700900003" })).toBeVisible();
+    await expect.element(page.getByRole("cell", { name: "+447700900001" })).not.toBeInTheDocument();
     expect(await downloads()).toEqual([
       "/staff/supporters/download?q=j&format=csv",
       "/staff/supporters/download?q=j&format=json",
@@ -2701,8 +2703,11 @@ describe("SupporterDetails", () => {
     await expect
       .element(page.getByText(copy.detail.from(copy.sources.luma, "1 Mar 2026"), { exact: true }))
       .toBeVisible();
-    await expect.element(page.getByText("+447700900001", { exact: false })).toBeVisible();
+    await expect.element(page.getByText("+447700900001", { exact: false }).first()).toBeVisible();
     await expect.element(page.getByText("M1 1AE", { exact: false })).toBeVisible();
+    // Her number, given to Luma, is one we may not use since she unsubscribed: marked, and no link.
+    await expect.element(page.getByText(copy.detail.unusable)).toBeVisible();
+    await expect.element(page.getByRole("link", { name: "+447700900001" })).not.toBeInTheDocument();
     // Beside the profile, her events and her letters, a table each.
     const events = page.getByRole("region", { name: copy.detail.eventsTitle, exact: false });
     await expect
@@ -2715,7 +2720,7 @@ describe("SupporterDetails", () => {
     await expect
       .element(letters.getByRole("link", { name: staffCopy.letters.status.sent }))
       .toHaveAttribute("href", `/staff/letters/supporter/${exampleSupporterDetails.summary.id}`);
-    // Beside the facts, whether we'd email her about each topic.
+    // Beside the facts, whether we'd contact her about each topic: by email, and by the phone she gave Luma.
     const subscriptions = page.getByRole("region", { name: copy.detail.listsTitle });
     await expect
       .element(
@@ -2723,7 +2728,7 @@ describe("SupporterDetails", () => {
           exact: false,
         }),
       )
-      .toBeVisible();
+      .toHaveLength(2);
     await expect.element(page.getByText("1 Mar 2026 – 12 Oct 2026", { exact: true })).toBeVisible();
     // The history, folded until opened: what, linked, with a status only when it isn't approved.
     await page.getByText(copy.detail.showHistory(exampleSupporterDetails.activity.length)).click();
@@ -3093,17 +3098,23 @@ function openHistory() {
   for (const details of document.querySelectorAll("details")) details.open = true;
 }
 
-describe("EmailPermissionTiles", () => {
+describe("PermissionTiles", () => {
   const copy = staffCopy.supporters.detail.permissions;
   const tiles = () => [...document.querySelectorAll("li")];
 
-  it("is a strip a topic: its name and the answer, why in a few words, and how we know behind the ?", async () => {
-    await render(<EmailPermissionTiles permissions={exampleSupporterDetails.permissions} />);
-    expect(tiles().map((tile) => tile.dataset.send)).toEqual(["no", "yes"]);
+  it("is a strip a topic: its name, the address and the answer, why in a few words, and how we know behind the ?", async () => {
+    await render(<PermissionTiles permissions={exampleSupporterDetails.permissions} />);
+    expect(tiles().map((tile) => tile.dataset.send)).toEqual(["no", "yes", "no"]);
     expect(tiles()[0].textContent).toBe(
-      `${copy.topics["luma-calendar"]}: ${copy.no}?${copy.reasons["luma-calendar"].unsubscribed("12 Oct 2026")}${copy.details["luma-calendar"]}`,
+      `${copy.topics["luma-calendar"]} · jane@example.com: ${copy.no}?${copy.reasons["luma-calendar"].unsubscribed("12 Oct 2026")}${copy.details["luma-calendar"]}`,
     );
-    expect(tiles()[1].querySelector("span > span")!.textContent).toBe(`${copy.topics["site-forms"]}: ${copy.yes}`);
+    expect(tiles()[1].querySelector("span > span")!.textContent).toBe(
+      `${copy.topics["site-forms"]} · jane@example.com: ${copy.yes}`,
+    );
+    // A phone number's topic and answer are in a phone's words.
+    expect(tiles()[2].querySelector("span > span")!.textContent).toBe(
+      `${copy.phoneTopics["luma-calendar"]} · +447700900001: ${copy.phoneNo}`,
+    );
     // The ? at the top right, out of the reason's way.
     const top = tiles()[0].querySelector("button")!.getBoundingClientRect().top;
     expect(top).toBeLessThan(tiles()[0].querySelector("[class*=reason]")!.getBoundingClientRect().top);
@@ -3112,15 +3123,16 @@ describe("EmailPermissionTiles", () => {
     expect(tiles()[0].firstElementChild!.className).not.toMatch(/green|amber|red|undefined/);
     expect(tiles()[0].querySelector("svg")).toBeNull();
     // How we know shows when the ? is clicked.
-    await expect.element(page.getByText(copy.details["luma-calendar"])).not.toBeVisible();
+    await expect.element(page.getByText(copy.details["luma-calendar"]).first()).not.toBeVisible();
     await page.getByRole("button", { name: copy.why }).first().click();
-    await expect.element(page.getByText(copy.details["luma-calendar"])).toBeVisible();
+    await expect.element(page.getByText(copy.details["luma-calendar"]).first()).toBeVisible();
   });
 
   it("names the form whose box answered for our forms, or the newest form for one it has no name for", async () => {
     const at = "2026-10-16T12:00:00Z";
     const forms = (source: string | null, reason: "asked" | "declined" = "asked") => ({
       topic: "site-forms" as const,
+      channel: "email" as const,
       address: `${source}@example.org`,
       send: reason === "asked" ? ("yes" as const) : ("no" as const),
       reason,
@@ -3128,7 +3140,7 @@ describe("EmailPermissionTiles", () => {
       source,
     });
     await render(
-      <EmailPermissionTiles
+      <PermissionTiles
         permissions={[
           forms("march-2026-11"),
           forms("email-your-mp", "declined"),
@@ -3149,16 +3161,23 @@ describe("EmailPermissionTiles", () => {
   });
 
   it("says don't know where an unsubscribe may not have reached us", async () => {
-    await render(<EmailPermissionTiles permissions={exampleMemberDetails.permissions} />);
+    await render(<PermissionTiles permissions={exampleMemberDetails.permissions} />);
     expect(tiles()[1].dataset.send).toBe("unsure");
     expect(tiles()[1].querySelector("span > span")!.textContent).toContain(copy.unsure);
     expect(tiles()[1].firstElementChild!.className).toMatch(/amber/);
+    // A volunteer's number, a yes; an unsure one is a don't know, as by email.
+    expect(tiles()[2].querySelector("span > span")!.textContent).toBe(
+      `${copy.phoneTopics.volunteering} · +447700900002: ${copy.phoneYes}`,
+    );
+    const [, , phone] = exampleMemberDetails.permissions;
+    await render(<PermissionTiles permissions={[{ ...phone, send: "unsure", reason: "gave-number" }]} />);
+    expect(tiles().at(-1)!.querySelector("span > span")!.textContent).toContain(copy.unsure);
   });
 
-  it("names the address when there's more than one, and falls back to the reason's own name", async () => {
+  it("names each address, and falls back to the reason's own name", async () => {
     const [luma] = exampleSupporterDetails.permissions;
     await render(
-      <EmailPermissionTiles
+      <PermissionTiles
         permissions={[
           { ...luma, reason: "joined", at: null },
           { ...luma, address: "other@example.com" },
@@ -3171,10 +3190,10 @@ describe("EmailPermissionTiles", () => {
   });
 
   it("gives a blocked address one tile, saying why and linking to the blocked emails", async () => {
-    await render(<EmailPermissionTiles permissions={exampleBlockedPermissions} />);
+    await render(<PermissionTiles permissions={exampleBlockedPermissions} />);
     expect(tiles()).toHaveLength(1);
     expect(tiles()[0].textContent).toBe(
-      `${copy.blocked}${copy.blockedBecause.complaint("5 Oct 2026")} ${copy.seeBlocked}`,
+      `gus@example.com: ${copy.blocked}${copy.blockedBecause.complaint("5 Oct 2026")} ${copy.seeBlocked}`,
     );
     await expect
       .element(page.getByRole("link", { name: copy.seeBlocked }))
@@ -3186,12 +3205,12 @@ describe("EmailPermissionTiles", () => {
     const permissions = Object.entries(copy.reasons).flatMap(([topic, reasons]) =>
       Object.keys(reasons).map((reason) => ({
         ...luma,
-        topic: topic as EmailTopic,
-        reason: reason as EmailReason,
+        topic: topic as Topic,
+        reason: reason as Reason,
         at: "2026-09-12T10:00:00Z",
       })),
     );
-    await render(<EmailPermissionTiles permissions={permissions} />);
+    await render(<PermissionTiles permissions={permissions} />);
     for (const [topic, reasons] of Object.entries(copy.reasons))
       for (const words of Object.values(reasons))
         // The example's source is Luma's, a form it has no name for.
@@ -3200,18 +3219,16 @@ describe("EmailPermissionTiles", () => {
 
   it("says a bounce blocked an address, and nothing of a block it can't date", async () => {
     const [blocked] = exampleBlockedPermissions;
-    const { rerender } = await render(<EmailPermissionTiles permissions={[{ ...blocked, source: "hard" }]} />);
+    const { rerender } = await render(<PermissionTiles permissions={[{ ...blocked, source: "hard" }]} />);
     expect(tiles()[0].textContent).toContain(copy.blockedBecause.hard("5 Oct 2026"));
-    await rerender(<EmailPermissionTiles permissions={[{ ...blocked, source: null }]} />);
-    expect(tiles()[0].textContent).toBe(`${copy.blocked}${copy.seeBlocked}`);
+    await rerender(<PermissionTiles permissions={[{ ...blocked, source: null }]} />);
+    expect(tiles()[0].textContent).toBe(`gus@example.com: ${copy.blocked}${copy.seeBlocked}`);
   });
 
   it("names a blocked address among several, and leaves out a cause it has no words for", async () => {
     const [blocked] = exampleBlockedPermissions;
     await render(
-      <EmailPermissionTiles
-        permissions={[{ ...blocked, source: "soft" }, { ...exampleSupporterDetails.permissions[1] }]}
-      />,
+      <PermissionTiles permissions={[{ ...blocked, source: "soft" }, { ...exampleSupporterDetails.permissions[1] }]} />,
     );
     expect(tiles()[0].textContent).toBe(`gus@example.com: ${copy.blocked}${copy.seeBlocked}`);
     expect(tiles()).toHaveLength(2);
@@ -3334,12 +3351,19 @@ describe("each list's download values and contact cards", () => {
     );
     expect(subscriptionWords(sam.permissions)).toContain(staffCopy.supporters.subscriptions.unsure(""));
     expect(subscriptionWords(gus.permissions)).toBe(staffCopy.supporters.subscriptions.blocked);
-    const placed = { ...jane, place: { name: "Leeds", basis: "postcode" as const, given: "LS1", country: "england" } };
+    const placed = {
+      ...jane,
+      phone: "+447700900001",
+      place: { name: "Leeds", basis: "postcode" as const, given: "LS1", country: "england" },
+    };
     expect(supporterContact(placed)).toMatchObject({
-      phones: [jane.phone],
+      phones: ["+447700900001"],
       address: { locality: "Leeds", country: staffCopy.countries.england },
     });
-    expect(supporterContact({ ...sam, email: null, place: null })).toMatchObject({ phones: [], emails: sam.emails });
+    expect(supporterContact({ ...sam, phone: null, email: null, place: null })).toMatchObject({
+      phones: [],
+      emails: sam.emails,
+    });
   });
 });
 

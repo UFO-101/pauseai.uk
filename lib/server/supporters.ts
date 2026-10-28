@@ -12,8 +12,9 @@ import type {
   SupporterSummary,
 } from "@/lib/supporters";
 import { SUPPORTERS_PAGE_SIZE } from "@/lib/supporters";
+import type { Channel } from "@/lib/contact-permissions";
 import { query, transaction, type Queryable } from "./db";
-import { permissionsFor } from "./email-permissions";
+import { permissionsFor } from "./contact-permissions";
 import { optedOutOfLuma } from "./opt-outs";
 import { refreshSupporterFacts } from "./supporter-facts";
 import { SUPPORTER_SOURCES } from "./supporter-sources";
@@ -92,11 +93,20 @@ export async function linkSupporters(db?: Queryable): Promise<LinkResult> {
 const LUMA_CONTACT = `(s.luma_follows AND NOT ${optedOutOfLuma("s.emails")})`;
 
 /**
- * A supporter's summary as staff see it, from `s`, a row shaped as
- * supporters_listed's: who they are, their newest email, what they've done,
- * and where they are (a place's name and what it's from), or nulls.
+ * The newest of supporter `s`'s numbers that a topic lets us use, or might,
+ * or null: worked out as it's read, so an unsubscribe shows at once.
  */
-const SUMMARY_COLUMNS = `s.id::int AS id, s.name, coalesce(s.emails, '{}') AS emails, s.email, s.phone, s.postcode,
+const USABLE_PHONE = `(SELECT u.number FROM unnest(s.phones) WITH ORDINALITY u (number, n)
+  WHERE phone_usable(u.number) ORDER BY u.n LIMIT 1)`;
+
+/**
+ * A supporter's summary as staff see it, from `s`, a row shaped as
+ * supporters_listed's: who they are, their newest email and the newest
+ * number we may use, what they've done, and where they are (a place's name
+ * and what it's from), or nulls.
+ */
+const SUMMARY_COLUMNS = `s.id::int AS id, s.name, coalesce(s.emails, '{}') AS emails, s.email,
+  ${USABLE_PHONE} AS phone, s.phones, s.postcode,
   coalesce(s.sources, '{}') AS sources, ${LUMA_CONTACT} AS "lumaContact", s.first_seen_at AS "firstSeenAt",
   s.last_active_at AS "lastActiveAt", s.events, s.letters, s.member,
   CASE WHEN s.basis IS NULL THEN NULL
@@ -136,19 +146,27 @@ const milesFrom = (lat: string, lon: string) =>
 /**
  * The conditions of the filters that repeat, those that are on: each finds
  * those with any of its values. An event is one they registered for, but
- * for declined.
+ * for declined. A subscription is an answer for any of their addresses, or
+ * any of their numbers, by its channel.
  */
 function anyOf(filter: Pick<SupporterFilter, NegatableSupporterFilter>, add: (value: unknown) => string): string[] {
   const conditions: string[] = [];
   if (filter.activity) conditions.push(filter.activity.map((badge) => BADGE_CONDITIONS[badge]).join(" OR "));
   if (filter.subscription) {
-    const states = filter.subscription.map(
-      ({ topic, reason }) => `(p.reason = ${add(reason)}${topic ? ` AND p.topic = ${add(topic)}` : ""})`,
-    );
-    conditions.push(
-      `s.id IN (SELECT i.supporter_id FROM supporter_identity i JOIN email_permissions p ON p.address = i.email
-       WHERE ${states.join(" OR ")})`,
-    );
+    const states = (channel: Channel) =>
+      filter
+        .subscription!.filter((state) => state.channel === channel)
+        .map(({ topic, reason }) => `(p.reason = ${add(reason)}${topic ? ` AND p.topic = ${add(topic)}` : ""})`);
+    const [emails, phones] = [states("email"), states("phone")];
+    const found = [
+      emails.length &&
+        `s.id IN (SELECT i.supporter_id FROM supporter_identity i
+           JOIN email_permissions p ON p.address = i.email WHERE ${emails.join(" OR ")})`,
+      phones.length &&
+        `s.id IN (SELECT c.supporter_id FROM supporter_contact c
+           JOIN phone_permissions p ON p.address = phone_number(c.phone) WHERE ${phones.join(" OR ")})`,
+    ].filter(Boolean);
+    conditions.push(found.join(" OR "));
   }
   if (filter.event) {
     conditions.push(
@@ -184,14 +202,15 @@ export async function listSupporters(
         filter.search,
         add,
         (like) =>
-          `${contains("s.name", like)} OR s.phone ILIKE ${like} OR EXISTS (SELECT 1 FROM unnest(s.emails) e WHERE e ILIKE ${like})`,
+          `${contains("s.name", like)} OR EXISTS (SELECT 1 FROM unnest(s.phones) n WHERE n ILIKE ${like})
+           OR EXISTS (SELECT 1 FROM unnest(s.emails) e WHERE e ILIKE ${like})`,
       ),
     );
   }
   where.push(...anyOf(filter, add));
   // What's left out: a filter's condition not true, so one with no value, such as no nation, is kept.
   if (filter.not) where.push(...anyOf(filter.not, add).map((condition) => `(${condition}) IS NOT TRUE`));
-  if (filter.phone !== undefined) where.push(`s.phone IS ${filter.phone ? "NOT " : ""}NULL`);
+  if (filter.phone !== undefined) where.push(`${USABLE_PHONE} IS ${filter.phone ? "NOT " : ""}NULL`);
   if (filter.email !== undefined) where.push(`coalesce(cardinality(s.emails), 0) ${filter.email ? ">" : "="} 0`);
   if (filter.campaign) {
     where.push(
@@ -221,9 +240,14 @@ export async function listSupporters(
     query<SupporterSummary>(page, values),
     query<{ total: number }>(`SELECT count(*)::int AS total ${filtered}`, counting),
   ]);
-  const permissions = await permissionsFor(rows.flatMap((row) => row.emails));
+  const permissions = await permissionsFor(
+    rows.flatMap((row) => row.emails),
+    rows.flatMap((row) => row.phones),
+  );
+  const theirs = (row: SupporterSummary) =>
+    permissions.filter((p) => (p.channel === "email" ? row.emails : row.phones).includes(p.address));
   return {
-    supporters: rows.map((row) => ({ ...row, permissions: permissions.filter((p) => row.emails.includes(p.address)) })),
+    supporters: rows.map((row) => ({ ...row, permissions: theirs(row) })),
     total,
     pages: Math.max(1, Math.ceil(total / SUPPORTERS_PAGE_SIZE)),
     ...(near !== undefined && { near }),
@@ -251,7 +275,7 @@ export async function getSupporter(id: number): Promise<SupporterDetails | undef
       [id],
     ),
     query<SupporterContact>(
-      `SELECT source, at, phone, postcode, latitude, longitude, city FROM supporter_contact
+      `SELECT source, at, phone_number(phone) AS phone, postcode, latitude, longitude, city FROM supporter_contact
        WHERE supporter_id = $1 AND (phone IS NOT NULL OR postcode IS NOT NULL OR latitude IS NOT NULL OR city IS NOT NULL)
        ORDER BY at DESC`,
       [id],
@@ -267,7 +291,7 @@ export async function getSupporter(id: number): Promise<SupporterDetails | undef
       "SELECT source, at, kind, title, detail, href, status FROM supporter_activity WHERE supporter_id = $1 ORDER BY at DESC, kind",
       [id],
     ),
-    permissionsFor(summary.emails),
+    permissionsFor(summary.emails, summary.phones),
   ]);
   return { summary, identities, contacts, links, activity, permissions };
 }

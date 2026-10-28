@@ -180,6 +180,27 @@ export const staffCopy = {
           declined: "PauseAI UK: didn't agree",
         },
       } as Record<string, Record<string, string>>,
+      // The same for a phone number's answers.
+      phoneStates: {
+        "luma-calendar": {
+          following: "⁂ Phone, Luma: contact",
+          unsubscribed: "⁂ Phone, Luma: unsubscribed",
+          "not-following": "⁂ Phone, Luma: not a contact",
+        },
+        volunteering: {
+          volunteered: "⁂ Phone, volunteering: volunteered",
+          "gave-number": "⁂ Phone, volunteering: gave a number, not as a volunteer",
+          removed: "⁂ Phone, volunteering: removed",
+        },
+        "site-forms": {
+          asked: "⁂ Phone, PauseAI UK: agreed",
+          declined: "⁂ Phone, PauseAI UK: didn't agree",
+        },
+        "march-day": {
+          "gave-number": "⁂ Phone, march day: gave a number",
+          ended: "⁂ Phone, march day: over",
+        },
+      } as Record<string, Record<string, string>>,
     },
     columns: {
       name: "Name",
@@ -210,6 +231,13 @@ export const staffCopy = {
         "pauseai-updates": "PauseAI global",
         "site-forms": "PauseAI UK",
       } as Record<string, string>,
+      // A topic we may contact them about by phone.
+      phoneTopics: {
+        "luma-calendar": "⁂ Luma by phone",
+        volunteering: "⁂ Volunteer phone",
+        "site-forms": "⁂ PauseAI UK by phone",
+        "march-day": "⁂ March day texts",
+      } as Record<string, string>,
       // A yes that an unsubscribe we can't see may have undone.
       unsure: (topic: string) => `${topic}, unsure`,
       // Every address they have is blocked.
@@ -230,6 +258,8 @@ export const staffCopy = {
     detail: {
       emails: "Email",
       phone: "Phone",
+      // By a number no topic lets us use.
+      unusable: "⁂ Don't use",
       postcode: "Postcode",
       city: "City",
       /** Where the join form was: through our own site, or on another. */
@@ -254,6 +284,15 @@ export const staffCopy = {
         } as Record<string, string>,
         yes: "Will email",
         no: "Won't email",
+        // The answers for a phone number.
+        phoneTopics: {
+          "luma-calendar": "⁂ Luma calendar, by phone",
+          volunteering: "⁂ Volunteer messages",
+          "site-forms": "⁂ PauseAI UK updates, by phone",
+          "march-day": "⁂ Texts on the march's day",
+        } as Record<string, string>,
+        phoneYes: "⁂ May contact",
+        phoneNo: "⁂ Won't contact",
         // A yes that an unsubscribe we can't see may have undone.
         unsure: "Don't know",
         why: "details",
@@ -276,6 +315,15 @@ export const staffCopy = {
             asked: (when: string, form?: string) => `Agreed on ${form}, ${when}`,
             declined: (when: string, form?: string) => `Didn't agree on ${form}, ${when}`,
           },
+          volunteering: {
+            volunteered: (when: string) => `⁂ Gave it when joining as a volunteer, ${when}`,
+            "gave-number": (when: string) => `⁂ Gave it when joining, not as a volunteer, ${when}`,
+            removed: () => "⁂ No longer shared with us",
+          },
+          "march-day": {
+            "gave-number": (when: string, form?: string) => `⁂ Gave it on ${form} for texts on the day, ${when}`,
+            ended: (_when: string, form?: string) => `⁂ Gave it on ${form} for texts on the day, which is over`,
+          },
         } as Record<string, Record<string, (when: string, form?: string) => string>>,
         // The form a box was on, by form_entries.form; one not here is "their newest form".
         forms: {
@@ -292,6 +340,10 @@ export const staffCopy = {
             "“Keep me informed” on the join form has been optional since 30 June 2026. Before then everyone who joined was on the list. Unsubscribes since joining are in CiviCRM, which we don't read yet, so we usually have to put “Don't know” here.",
           "site-forms":
             "There are several UK specific forms which have ways of opting in to contact. For example, when emailing your MP or signing up on this site to a march.",
+          volunteering:
+            "⁂ The join form asks for a phone number only of those who choose to volunteer regularly, for volunteers' messages. A number from an older form, given with another choice, is a Don't know.",
+          "march-day":
+            "⁂ The march sign-up asks for a number for text updates on the day. Without the box ticked, we can use it only until the day is over.",
         } as Record<string, string>,
         // One tile in place of the topics', when the address is blocked.
         blocked: "Won't email: address blocked",

@@ -136,7 +136,7 @@ describe("supportersSearch", () => {
     expect(all.filter).toEqual({
       search: "jane",
       activity: ["registered", "member"],
-      subscription: [{ topic: "luma-calendar", reason: "unsubscribed" }],
+      subscription: [{ channel: "email", topic: "luma-calendar", reason: "unsubscribed" }],
       phone: true,
       email: false,
       event: ["evt-1", "evt-2"],
@@ -144,13 +144,24 @@ describe("supportersSearch", () => {
       wrote: false,
       country: ["wales"],
       near: { text: "Leeds", miles: 25 },
-      not: { activity: ["letter"], subscription: [{ reason: "blocked" }], event: ["evt-3"], country: ["scotland"] },
+      not: {
+        activity: ["letter"],
+        subscription: [{ channel: "email", reason: "blocked" }],
+        event: ["evt-3"],
+        country: ["scotland"],
+      },
       sort: "name",
       dir: "desc",
       page: 3,
     });
     expect(all.q).toBe(" jane ");
     expect(all.activity).toEqual(["registered", "member", "!letter"]);
+    // An email subscription as older links have it is typed as the filter's choices have it.
+    expect(all.subscription).toEqual(["email:luma-calendar:unsubscribed", "!blocked"]);
+    expect(supportersSearch({ subscription: ["!phone:march-day:ended", "x"] }).subscription).toEqual([
+      "!phone:march-day:ended",
+      "x",
+    ]);
     // A campaign alone is those who wrote in it; Near alone is within 10 miles.
     expect(supportersSearch({ campaign: "support-sobel-bill", near: "M1" }).filter).toMatchObject({
       wrote: true,

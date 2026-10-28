@@ -66,7 +66,7 @@ import { exampleDashboard, exampleQuietDashboard } from "@/app/(staff)/staff/_co
 import Sparkline from "@/app/(staff)/staff/_components/Sparkline";
 import SupporterBadges from "@/app/(staff)/staff/_components/SupporterBadges";
 import SubscriptionBadges from "@/app/(staff)/staff/_components/SubscriptionBadges";
-import EmailPermissionTiles from "@/app/(staff)/staff/_components/EmailPermissionTiles";
+import PermissionTiles from "@/app/(staff)/staff/_components/PermissionTiles";
 import SupporterDetails from "@/app/(staff)/staff/_components/SupporterDetails";
 import SupporterFilters from "@/app/(staff)/staff/_components/SupporterFilters";
 import SupportersTable from "@/app/(staff)/staff/_components/SupportersTable";
@@ -741,14 +741,14 @@ export const staff: Group = {
       ],
     },
     {
-      name: "EmailPermissionTiles",
-      file: "app/(staff)/staff/_components/EmailPermissionTiles.tsx",
+      name: "PermissionTiles",
+      file: "app/(staff)/staff/_components/PermissionTiles.tsx",
       variants: [
         {
-          label: "Will and won't email, by topic",
+          label: "Will and won't email, by topic, and a phone number we may not use",
           render: () => (
             <StaffPage as="div">
-              <EmailPermissionTiles permissions={exampleSupporterDetails.permissions} />
+              <PermissionTiles permissions={exampleSupporterDetails.permissions} />
             </StaffPage>
           ),
         },
@@ -756,10 +756,11 @@ export const staff: Group = {
           label: "A contact of the calendar since its webhook, and don't know of the updates",
           render: () => (
             <StaffPage as="div">
-              <EmailPermissionTiles
+              <PermissionTiles
                 permissions={[
                   {
                     topic: "luma-calendar",
+                    channel: "email",
                     address: "nia@example.com",
                     send: "yes",
                     reason: "following",
@@ -773,10 +774,18 @@ export const staff: Group = {
           ),
         },
         {
+          label: "A volunteer's phone number",
+          render: () => (
+            <StaffPage as="div">
+              <PermissionTiles permissions={exampleMemberDetails.permissions.slice(2)} />
+            </StaffPage>
+          ),
+        },
+        {
           label: "A blocked address",
           render: () => (
             <StaffPage as="div">
-              <EmailPermissionTiles permissions={exampleBlockedPermissions} />
+              <PermissionTiles permissions={exampleBlockedPermissions} />
             </StaffPage>
           ),
         },
