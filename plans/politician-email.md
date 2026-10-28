@@ -52,9 +52,10 @@ Francis about a shared account (see the open questions).
    `Message-ID`, whichever backend sent it, so if mailings later go by
    Postmark too, such as past Gmail's limit, their replies are read
    the same way. Postmark would send from the same connected Gmail
-   address, verified in Postmark as a sender signature for that one
-   address ([signatures](https://postmarkapp.com/support/article/adding-sender-signatures)),
-   or pauseai.uk verified as a domain, which its DMARC may need anyway.
+   address, with pauseai.uk verified in Postmark as a domain, once by
+   hand, so it covers every address and the site never needs
+   Postmark's account token
+   ([domains](https://postmarkapp.com/developer/user-guide/managing-your-account/managing-sender-signatures)).
    Each is Bcc'd to that mailbox, so it is in the thread, and replies
    arrive there as they would for Gmail.
 4. The `send-mailings` job. It runs hourly, during the database wake
