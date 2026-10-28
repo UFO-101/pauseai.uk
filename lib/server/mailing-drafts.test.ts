@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { addTestPolitician, describeWithDatabase, useTestDatabase } from "@/tests/database";
 import { server } from "@/tests/fixtures/msw";
 import { http, HttpResponse } from "msw";
@@ -12,6 +12,7 @@ import {
   deleteForgottenDrafts,
   emailFor,
   getWrittenMailing,
+  mailingChangesFrom,
   openWrittenMailing,
   removeAttachment,
   rescheduleMailing,
@@ -270,5 +271,62 @@ describeWithDatabase("mailing drafts", () => {
     // With no name yet, it's from the staff member.
     await sendTestCopy({ ...mailing, fromName: null }, polly, STAFF);
     expect(sent.From).toBe(`"${STAFF}" <noreply@notify.pauseai.uk>`);
+  });
+
+  it("won't schedule a letter with a field a recipient has no value for", async () => {
+    await addTestPolitician({ salutation: "" });
+    const { id, version } = await readyDraft();
+    expect(await scheduleMailing(id, version, STAFF, SENDS)).toEqual({ scheduled: false, problems: ["field-lacking"] });
+  });
+
+  it("won't attach a file too big to send", async () => {
+    const { id } = await createDraft(STAFF, POLITICIANS, {});
+    const big = Buffer.alloc(4 * 1024 * 1024 + 1);
+    expect(await addAttachment(id, 1, { filename: "big.pdf", contentType: "application/pdf", content: big })).toEqual({
+      saved: false,
+      reason: "too-big",
+    });
+  });
+});
+
+describe("mailingChangesFrom", () => {
+  it("takes each change the editor makes, a sender's address lowercased and blanks as none", () => {
+    expect(
+      mailingChangesFrom({
+        subject: "Hi",
+        body: LETTER,
+        ask: "",
+        sentFrom: "Jo@PauseAI.uk",
+        fromName: "Jo",
+        dueAt: "2026-11-02T10:00:00Z",
+      }),
+    ).toEqual({
+      subject: "Hi",
+      body: LETTER,
+      ask: null,
+      sentFrom: STAFF,
+      fromName: "Jo",
+      dueAt: "2026-11-02T10:00:00Z",
+    });
+    expect(mailingChangesFrom({ sentFrom: null, fromName: null, dueAt: null, ask: "frontier-ai-letter" })).toEqual({
+      sentFrom: null,
+      fromName: null,
+      dueAt: null,
+      ask: "frontier-ai-letter",
+    });
+  });
+
+  it.each([
+    ["nothing", null],
+    ["a list", "hi"],
+    ["a subject that isn't text", { subject: 1 }],
+    ["a letter that isn't one", { body: { type: "doc", content: [{ type: "image" }] } }],
+    ["an ask that isn't text", { ask: 1 }],
+    ["a sender that isn't text", { sentFrom: 1 }],
+    ["a time that isn't one", { dueAt: "soon" }],
+    ["a time that isn't text", { dueAt: 5 }],
+    ["the filter", { filter: {} }],
+  ])("refuses %s", (_, value) => {
+    expect(mailingChangesFrom(value)).toBeUndefined();
   });
 });

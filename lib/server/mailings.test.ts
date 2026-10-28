@@ -1,6 +1,7 @@
 import { expect, it } from "vitest";
 import { addTestPolitician, describeWithDatabase, useTestDatabase } from "@/tests/database";
 import { query } from "./db";
+import { staffCopy } from "@/lib/content/staff-interface";
 import { createDraft, saveDraft } from "./mailing-drafts";
 import { getMailing, listMailings, mailingsOverview, mailingTitle } from "./mailings";
 
@@ -89,6 +90,9 @@ describeWithDatabase("mailings", () => {
     // Its title alone, for its page's title.
     expect(await mailingTitle(id)).toBe(EDINBURGH);
     expect(await mailingTitle(9999)).toBeUndefined();
+    // A draft with no subject yet says so.
+    const draft = await createDraft("jo@pauseai.uk", { list: "politicians", params: {} }, {});
+    expect(await mailingTitle(draft.id)).toBe(staffCopy.mailingPages.untitled);
   });
 
   it("lists a tab of the recipients: those who replied, bounced or were skipped, with their answer to its ask", async () => {

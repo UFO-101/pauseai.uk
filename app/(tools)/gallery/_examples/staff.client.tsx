@@ -11,6 +11,7 @@ import JobActions from "@/app/(staff)/staff/_components/JobActions";
 import PoliticianDetails from "@/app/(staff)/staff/_components/PoliticianDetails";
 import PoliticianTable from "@/app/(staff)/staff/_components/PoliticianTable";
 import {
+  emptyPoliticiansSearch,
   exampleAsks,
   examplePolitician,
   examplePoliticianHistory,
@@ -26,6 +27,22 @@ import { exampleFailedRun, exampleHeldSync, exampleRun } from "@/app/(staff)/sta
 import type { JSONContent } from "@tiptap/react";
 import { useId } from "react";
 import MailingEditor from "@/app/(staff)/staff/_components/MailingEditor";
+import ButtonRow from "@/components/ui/ButtonRow";
+import { staffCopy } from "@/lib/content/staff-interface";
+import { DeleteDraft, StopMailing } from "@/app/(staff)/staff/_components/MailingButtons";
+import MailingFor from "@/app/(staff)/staff/_components/MailingFor";
+import { FilterPills } from "@/app/(staff)/staff/_components/MailingParts";
+import MailingView from "@/app/(staff)/staff/_components/MailingView";
+import MailingWriter from "@/app/(staff)/staff/_components/MailingWriter";
+import { exampleWriterData, exampleWrittenMailing } from "@/app/(staff)/staff/_components/MailingWriter.examples";
+import MailingsOverview from "@/app/(staff)/staff/_components/MailingsOverview";
+import {
+  exampleDraft,
+  exampleMailing,
+  exampleMailings,
+  exampleScheduled,
+} from "@/app/(staff)/staff/_components/MailingsTable.examples";
+import { MailThese } from "@/app/(staff)/staff/_components/PoliticiansList";
 import { Controlled, Logged } from "../_components/wiring";
 
 /** The table of politicians: one function for both examples. */
@@ -305,5 +322,139 @@ export function MailingEditorExample() {
         </>
       )}
     </Controlled>
+  );
+}
+
+/** The mailing pages' actions, each logged; saves go through, as a draft's would. */
+function mailingActions(log: (name: string) => (...args: unknown[]) => void) {
+  let version = 3;
+  const logged =
+    <T,>(name: string, answer: T) =>
+    async (...args: unknown[]) => {
+      log(name)(...args);
+      return answer;
+    };
+  return {
+    start: logged("startMailing", { id: 12, version: 1 }),
+    save: async (...args: unknown[]) => {
+      log("saveMailing")(...args);
+      return { saved: true as const, version: ++version };
+    },
+    attach: logged("attachToMailing", {
+      saved: true as const,
+      version: 4,
+      attachments: exampleWrittenMailing.attachments,
+    }),
+    detach: logged("detachFromMailing", { saved: true as const, version: 4, attachments: [] }),
+    sendTest: logged("sendMailingTest", { sent: true as const, id: "example" }),
+    schedule: logged("scheduleMailingNow", { scheduled: true as const }),
+    deleteDraft: logged("deleteMailingDraft", undefined),
+    stop: logged("stopMailingNow", undefined),
+    reschedule: logged("rescheduleMailingNow", undefined),
+  };
+}
+
+/** A new mailing, or Jo's draft of it, with its actions logged. */
+export function MailingWriterExample({ draft }: { draft: boolean }) {
+  return (
+    <Logged>
+      {(log) => (
+        <MailingWriter
+          data={exampleWriterData}
+          draft={draft ? exampleWrittenMailing : null}
+          who={<FilterPills data={exampleWriterData} />}
+          actions={mailingActions(log)}
+        />
+      )}
+    </Logged>
+  );
+}
+
+/** A mailing's page in each state but draft. */
+export function MailingViewExample({ state }: { state: "scheduled" | "sending" | "sent" }) {
+  return (
+    <Logged>
+      {(log) => (
+        <MailingView
+          mailing={{ ...exampleMailing, ...exampleMailings[0] }}
+          written={{ ...exampleWrittenMailing, state }}
+          who={<FilterPills data={exampleWriterData} />}
+          asks={exampleAsks}
+          stop={log("stopMailingNow")}
+          reschedule={log("rescheduleMailingNow")}
+        />
+      )}
+    </Logged>
+  );
+}
+
+/** The list of mailings: two drafts, one coming up, and those sent; or none of the first two. */
+export function MailingsOverviewExample({ empty = false }: { empty?: boolean }) {
+  return (
+    <Logged>
+      {(log) => (
+        <MailingsOverview
+          drafts={empty ? [] : [exampleDraft, { ...exampleDraft, id: 7, title: "" }]}
+          comingUp={empty ? [] : [exampleScheduled]}
+          sent={exampleMailings}
+          deleteDraft={log("deleteMailingDraft")}
+          stop={log("stopMailingNow")}
+        />
+      )}
+    </Logged>
+  );
+}
+
+/** Delete draft and Stop, for draft `id`, each page's own, so two on a page don't share a box. */
+export function MailingButtonsExample({ id }: { id: number }) {
+  return (
+    <Logged>
+      {(log) => (
+        <ButtonRow>
+          <DeleteDraft id={id} action={log("deleteMailingDraft")} />
+          <StopMailing id={id} label={staffCopy.mailingPages.stop} action={log("stopMailingNow")} />
+        </ButtonRow>
+      )}
+    </Logged>
+  );
+}
+
+/** A mailing's page as it stands: a draft, or one sent. */
+export function MailingForExample({ kind }: { kind: "draft" | "written" }) {
+  return (
+    <Logged>
+      {(log) => (
+        <MailingFor
+          data={
+            kind === "draft"
+              ? { kind, draft: exampleWrittenMailing, ...exampleWriterData }
+              : {
+                  kind,
+                  mailing: exampleMailing,
+                  written: { ...exampleWrittenMailing, state: "sent" },
+                  filter: exampleWriterData.filter,
+                  parties: exampleWriterData.parties,
+                  asks: exampleAsks,
+                }
+          }
+          actions={mailingActions(log)}
+        />
+      )}
+    </Logged>
+  );
+}
+
+/** Mail these, over a list of 150; and after a draft's Change who, the button that changes who it's to. */
+export function MailTheseExample({ mailing }: { mailing: string }) {
+  return (
+    <Logged>
+      {(log) => (
+        <MailThese
+          search={{ ...emptyPoliticiansSearch, house: "commons", mailing }}
+          total={150}
+          changeWho={log("changeMailingWho") as (form: FormData) => Promise<void>}
+        />
+      )}
+    </Logged>
   );
 }

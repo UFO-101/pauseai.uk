@@ -8,7 +8,10 @@ import { navigation } from "./browser/navigation";
 // test. usePathname and useRouter use tests/browser/navigation.ts instead.
 vi.mock("next/navigation", () => ({
   usePathname: () => navigation.pathname,
-  useRouter: () => ({ push: (url: string) => navigation.pushed.push(url) }),
+  useRouter: () => ({
+    push: (url: string) => navigation.pushed.push(url),
+    refresh: () => navigation.refreshes++,
+  }),
   notFound: () => {
     throw new Error("NEXT_NOT_FOUND");
   },
@@ -17,6 +20,7 @@ vi.mock("next/navigation", () => ({
 afterEach(() => {
   navigation.pathname = "/";
   navigation.pushed = [];
+  navigation.refreshes = 0;
   document.body.removeAttribute("data-no-analytics");
   document.body.className = "";
 });
