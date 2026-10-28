@@ -24,7 +24,7 @@ import { filtersPath } from "@/lib/staff-search";
 import { fromLondon, londonDayHour, londonWhen } from "@/lib/staff-time";
 import type { ChannelResult } from "@/lib/server/mailing-channels";
 import type { MailingAttachmentSummary, SaveResult, ScheduleResult, WrittenMailing } from "@/lib/server/mailing-drafts";
-import type { WriterData } from "@/lib/server/mailing-pages";
+import type { PreviewRecipient, WriterData } from "@/lib/server/mailing-pages";
 import { DeleteDraft } from "./MailingButtons";
 import MailingEditor from "./MailingEditor";
 import MailingFiles from "./MailingFiles";
@@ -474,9 +474,12 @@ export default function MailingWriter({
 /**
  * Each recipient's email, as they'll get it. Over it, a button for each
  * condition the letter's parts use, pressed for those who meet it, unpressed
- * for those who don't; then the recipients with those answers to choose
- * from. With no one, no email, as there's no one to fill it in for. Under it, a test copy, sent to yourself, once the
- * letter has something written, which saves the draft first if it isn't yet.
+ * for those who don't, each press choosing the first recipient with the
+ * answers pressed; then the choice of every recipient, which sets the
+ * buttons to theirs. With no one with the answers pressed, no email, as
+ * there's no one to fill it in for. Under it, a test copy, sent to
+ * yourself, once the letter has something written, which saves the draft
+ * first if it isn't yet.
  */
 function Preview({
   data,
@@ -497,7 +500,7 @@ function Preview({
 }) {
   const findLabel = useId();
   const [chosen, setChosen] = useState(data.recipients[0]?.id);
-  // What each condition is set to, where it's been pressed; else as the recipient shown has it.
+  // The answers pressed, since someone was last chosen; else theirs.
   const [wanted, setWanted] = useState<Record<string, boolean>>({});
   const [sent, setSent] = useState<{ to?: string } | undefined>();
   const [sending, setSending] = useState(false);
@@ -508,63 +511,67 @@ function Preview({
     ...new Set(conditionsIn(body).map((c) => (c.startsWith(NOT_CONDITION) ? c.slice(NOT_CONDITION.length) : c))),
   ];
   const meets = Object.fromEntries(used.map((c) => [c, wanted[c] ?? shown.meets.includes(c)]));
-  const fits = data.recipients.filter((r) => used.every((c) => r.meets.includes(c) === meets[c]));
-  const recipient = fits.find((r) => r.id === chosen) ?? fits[0];
+  const fits = (r: PreviewRecipient, answers: Record<string, boolean>) =>
+    used.every((c) => r.meets.includes(c) === answers[c]);
+  const recipient = fits(shown, meets) ? shown : undefined;
   const labels = answerLabels(data.asks);
   const toggle = (condition: string) => {
-    setWanted({ ...meets, [condition]: !meets[condition] });
+    const answers = { ...meets, [condition]: !meets[condition] };
+    setWanted(answers);
+    const match = data.recipients.find((r) => fits(r, answers));
+    if (match) setChosen(match.id);
     setSent(undefined);
   };
   return (
     <>
       {used.length > 0 && (
-        <p id={findLabel} className={styles.label}>
-          {copy.findRecipient}
-        </p>
+        <div className={styles.find}>
+          <p id={findLabel} className={styles.label}>
+            {copy.findRecipient}
+          </p>
+          <ul className={styles.toggles} aria-labelledby={findLabel}>
+            {used.map((condition) => (
+              <li key={condition}>
+                <button type="button" aria-pressed={meets[condition]} onClick={() => toggle(condition)}>
+                  {!meets[condition] && <NotIcon />}
+                  {labels[condition] ?? condition}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
-      {used.length > 0 && (
-        <ul className={styles.toggles} aria-labelledby={findLabel}>
-          {used.map((condition) => (
-            <li key={condition}>
-              <button type="button" aria-pressed={meets[condition]} onClick={() => toggle(condition)}>
-                {!meets[condition] && <NotIcon />}
-                {labels[condition] ?? condition}
-              </button>
-            </li>
+      <Field label={copy.chooseRecipient} className={styles.whoShown}>
+        <Select
+          value={recipient?.id ?? ""}
+          onChange={(event) => {
+            setChosen(Number(event.target.value));
+            setWanted({});
+            setSent(undefined);
+          }}
+        >
+          {!recipient && <option value="" disabled />}
+          {data.recipients.map((r) => (
+            <option key={r.id} value={r.id}>
+              {r.constituency ? `${r.name} · ${r.constituency}` : r.name}
+            </option>
           ))}
-        </ul>
-      )}
+        </Select>
+      </Field>
       {recipient ? (
-        <>
-          <Field label={copy.chooseRecipient} className={styles.whoShown}>
-            <Select
-              value={recipient.id}
-              onChange={(event) => {
-                setChosen(Number(event.target.value));
-                setSent(undefined);
-              }}
-            >
-              {fits.map((r) => (
-                <option key={r.id} value={r.id}>
-                  {r.constituency ? `${r.name} · ${r.constituency}` : r.name}
-                </option>
-              ))}
-            </Select>
-          </Field>
-          <div className={styles.email}>
-            <dl className={styles.headers}>
-              <dt>{copy.from}</dt>
-              <dd>{sentFrom ? copy.fromGmail(sentFrom) : <Muted>{copy.noSender}</Muted>}</dd>
-              <dt>{copy.to}</dt>
-              <dd>{`${recipient.name} <${recipient.email}>`}</dd>
-              <dt>{copy.subject}</dt>
-              <dd>
-                <strong>{subject}</strong>
-              </dd>
-            </dl>
-            <MailingLetter doc={letterFor(body, recipient)} />
-          </div>
-        </>
+        <div className={styles.email}>
+          <dl className={styles.headers}>
+            <dt>{copy.from}</dt>
+            <dd>{sentFrom ? copy.fromGmail(sentFrom) : <Muted>{copy.noSender}</Muted>}</dd>
+            <dt>{copy.to}</dt>
+            <dd>{`${recipient.name} <${recipient.email}>`}</dd>
+            <dt>{copy.subject}</dt>
+            <dd>
+              <strong>{subject}</strong>
+            </dd>
+          </dl>
+          <MailingLetter doc={letterFor(body, recipient)} />
+        </div>
       ) : (
         // No one to fill it in for: no email, rather than one made up.
         <p className={styles.noEmail}>{copy.noOneMix}</p>

@@ -154,6 +154,16 @@
   color: var(--text-secondary);
 }
 
+/* "Find recipient who:" close over its buttons. */
+.find {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.find .label {
+  margin: 0;
+}
+
 /* Over the preview, a button for each condition the letter's parts use:
    green while it shows those who meet it, grey and struck through while
    it shows those who don't, as the parts' boxes are. */
