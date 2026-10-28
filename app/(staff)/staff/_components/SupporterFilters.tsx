@@ -35,8 +35,9 @@ function nearWords(text: string, near: SupportersPage["near"]): string {
  * on, in the columns' order: their nation and how near somewhere they
  * are; their activities and subscriptions; the events they registered for,
  * from `events`; and whether they wrote in a campaign. A subscription's
- * choices are each topic, then blocked, and a topic's answers in its
- * chip's second half; one by email or phone shows that column.
+ * choices are each topic, then blocked, a topic chosen as those we can
+ * contact about it and another answer in its chip's second half; one by
+ * email or phone shows that column.
  * Activities, subscriptions, nations and events can each be chosen more
  * than once.
  */
@@ -74,20 +75,18 @@ export function supporterFilters(
       name: "subscription",
       label: columns.subscriptions,
       repeat: true,
-      // Each topic under its channel's heading; then in its chip's second half any answer or one answer.
+      // Each topic under its channel's heading, chosen as those we can contact about it; then in its chip's second
+      // half, another answer.
       options: [
         ...SUBSCRIPTION_ORDER.map(([channel, topic]) => {
           const ways = waysKey(channel, topic);
           const answers = staffCopy.supporters.detail.permissions.answers[ways];
           return {
-            value: stateValue({ channel, topic }),
+            value: stateValue({ channel, topic, send: "yes" }),
             label: copy.topics[topic],
             group: { label: copy.channels[channel], icon: <ChannelIcon channel={channel} /> },
             detail: copy.ways[ways],
-            seconds: [
-              { value: stateValue({ channel, topic }), label: copy.anyAnswer },
-              ...SENDS.map((send) => ({ value: stateValue({ channel, topic, send }), label: answers[send] })),
-            ],
+            seconds: SENDS.map((send) => ({ value: stateValue({ channel, topic, send }), label: answers[send] })),
           };
         }),
         // Blocked, last of email's.

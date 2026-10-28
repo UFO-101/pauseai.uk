@@ -160,9 +160,8 @@ export const staffCopy = {
       campaign: "Campaign",
       wrote: { "": "Wrote", no: "Didn't write" } as Record<string, string>,
       // The other filters are named after their columns.
-      // The Subscriptions filter: its topics under their channel's heading, each named short, a phone's with how
-      // we'd contact them after it; then in its chip's second half any answer, or one answer, as a supporter's
-      // page words it.
+      // The Contact filter: its topics under their channel's heading, each named short, a phone's with how we'd
+      // contact them after it; then in its chip's second half, its answer, as a supporter's page words it.
       channels: { email: "Email", phone: "Phone" } as Record<Channel, string>,
       topics: {
         "luma-calendar": "Luma",
@@ -172,7 +171,6 @@ export const staffCopy = {
         "march-day": "March day",
       } as Record<string, string>,
       ways: { text: "texts", "call-or-text": "calls & texts" } as Record<string, string>,
-      anyAnswer: "Any answer",
     },
     columns: {
       name: "Name",
