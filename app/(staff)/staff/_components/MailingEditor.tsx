@@ -53,14 +53,27 @@ const MergeField = Node.create<{ labels: Record<string, string> }>({
 });
 
 // A part only some recipients get: paragraphs or a list in a box, with who
-// it's for on the box. Backspace at its start, or Enter on an empty last
-// line, takes the text out of it, as ProseMirror does for any such box.
+// it's for on the box. Enter on an empty last line takes it out of the box,
+// as ProseMirror does for any such box. So does Backspace at the box's start:
+// left to ProseMirror, it would join the box to one just before it, and its
+// text would quietly go to that box's recipients instead.
 const OnlyFor = Node.create<{ labels: Record<string, string> }>({
   name: "onlyFor",
   group: "block",
   content: "(paragraph | bulletList)+",
   defining: true,
   addOptions: () => ({ labels: {} }),
+  addKeyboardShortcuts() {
+    return {
+      Backspace: ({ editor }) => {
+        const { $from, empty } = editor.state.selection;
+        const box = $from.depth - 1;
+        if (!empty || $from.parentOffset > 0 || $from.node(box).type.name !== this.name || $from.index(box) > 0)
+          return false;
+        return editor.commands.lift(this.name);
+      },
+    };
+  },
   addAttributes: () => ({
     condition: {
       default: "",
@@ -220,7 +233,13 @@ export default function MailingEditor({ initial, onChange, fields, conditions, l
           aria-label={copy.pickField}
           style={{ top: picker.top, left: picker.left }}
           onKeyDown={(event) => {
-            if (event.key === "Escape") close();
+            if (event.key === "Escape") return close();
+            const step = { ArrowDown: 1, ArrowUp: -1 }[event.key];
+            if (!step) return;
+            event.preventDefault();
+            const items = [...event.currentTarget.querySelectorAll("button")];
+            const at = items.indexOf(document.activeElement as HTMLButtonElement);
+            items[(at + step + items.length) % items.length].focus();
           }}
         >
           {fields.map((field, i) => (

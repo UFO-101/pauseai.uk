@@ -99,11 +99,70 @@ describe("MailingEditor", () => {
     await userEvent.keyboard("{{");
     const menu = page.getByRole("menu", { name: copy.pickField });
     await expect.element(menu.getByRole("menuitem", { name: "salutation" })).toHaveFocus();
-    await userEvent.keyboard("{ArrowDown}");
-    await expect.element(menu).toBeVisible();
     await menu.getByRole("menuitem", { name: "salutation" }).click();
     await expect.element(menu).not.toBeInTheDocument();
     expect(last(onChange).content![0].content).toEqual([text("Dear "), field("salutation")]);
+  });
+
+  it("moves through the menu of fields with the arrow keys, round from either end", async () => {
+    const onChange = renderEditor([paragraph(text("Dear "))]);
+    await toEnd();
+    await userEvent.keyboard("{{");
+    const menu = page.getByRole("menu", { name: copy.pickField });
+    await expect.element(menu.getByRole("menuitem", { name: "salutation" })).toHaveFocus();
+    await userEvent.keyboard("{ArrowDown}");
+    await expect.element(menu.getByRole("menuitem", { name: "name" })).toHaveFocus();
+    await userEvent.keyboard("{ArrowDown}");
+    await expect.element(menu.getByRole("menuitem", { name: "salutation" })).toHaveFocus();
+    await userEvent.keyboard("{ArrowUp}");
+    await expect.element(menu.getByRole("menuitem", { name: "name" })).toHaveFocus();
+    await userEvent.keyboard("x");
+    await expect.element(menu.getByRole("menuitem", { name: "name" })).toHaveFocus();
+    await userEvent.keyboard("{Enter}");
+    expect(last(onChange).content![0].content).toEqual([text("Dear "), field("name")]);
+  });
+
+  describe("Backspace and a part for only some", () => {
+    const box = (condition: string, ...content: JSONContent[]): JSONContent => ({
+      type: "onlyFor",
+      attrs: { condition },
+      content,
+    });
+
+    it("at the start of a box, takes its text out rather than into a box just before it", async () => {
+      const onChange = renderEditor([
+        box(conditions[0].id, paragraph(text("Thanks."))),
+        box("going:edinburgh", paragraph(text("See you there."))),
+      ]);
+      await editor().getByText("See you there.").click();
+      await userEvent.keyboard("{Home}");
+      await userEvent.keyboard("{Backspace}");
+      expect(last(onChange).content).toEqual([
+        box(conditions[0].id, paragraph(text("Thanks."))),
+        paragraph(text("See you there.")),
+      ]);
+    });
+
+    it("inside a box, deletes as anywhere else: a letter, a selection, or the break before a second line", async () => {
+      const onChange = renderEditor([box(conditions[0].id, paragraph(text("One")), paragraph(text("Two")))]);
+      await editor().getByText("Two").click();
+      await userEvent.keyboard("{End}");
+      await userEvent.keyboard("{Backspace}");
+      expect(last(onChange).content).toEqual([box(conditions[0].id, paragraph(text("One")), paragraph(text("Tw")))]);
+      await userEvent.keyboard("{Shift>}{Home}{/Shift}");
+      await userEvent.keyboard("{Backspace}");
+      expect(last(onChange).content).toEqual([box(conditions[0].id, paragraph(text("One")), { type: "paragraph" })]);
+      await userEvent.keyboard("{Backspace}");
+      expect(last(onChange).content).toEqual([box(conditions[0].id, paragraph(text("One")))]);
+    });
+
+    it("at the start of a line in no box, joins it to the line before", async () => {
+      const onChange = renderEditor([paragraph(text("One")), paragraph(text("Two"))]);
+      await editor().getByText("Two").click();
+      await userEvent.keyboard("{Home}");
+      await userEvent.keyboard("{Backspace}");
+      expect(last(onChange).content).toEqual([paragraph(text("OneTwo"))]);
+    });
   });
 
   it("closes the menu of fields on Escape, typing no {", async () => {
