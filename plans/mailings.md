@@ -154,7 +154,9 @@ don't change it.
    the other jobs share. Each run sends what it can in 30 seconds and
    leaves the rest for the next run.
 6. Staff pages. Design them first, as mock-ups on the real staff
-   components on desktop and phone, and choose between them.
+   components on desktop and phone, and choose between them. The
+   mock-ups are on a design canvas:
+   https://claude.ai/artifact/3qi42XAhd2qwYBTRYVGZoz
    - A "Mail these" button on the politicians and supporters lists.
    - A page for a new mailing: the recipients, each of whom can be
      unticked; the channel; the template; a preview as any recipient;
