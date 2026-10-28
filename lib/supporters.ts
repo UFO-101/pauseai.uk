@@ -166,6 +166,16 @@ export type SupporterFilter = {
 
 export const SUPPORTERS_PAGE_SIZE = 100;
 
+/**
+ * A registration's status, as a table cell has it: Luma's, or registered
+ * for an approved one, starting with a capital, as the statuses are
+ * written to follow a dot in the history.
+ */
+export function registrationStatus(status: string | null): string {
+  const words = staffCopy.supporters.detail.statuses[status ?? ""] ?? staffCopy.supporters.detail.registered;
+  return words.charAt(0).toUpperCase() + words.slice(1);
+}
+
 /** A supporter's page's name: theirs, or the stand-in for one with none. */
 export function supporterTitle(summary: Pick<SupporterSummary, "name">): string {
   return summary.name ?? staffCopy.supporters.noName;

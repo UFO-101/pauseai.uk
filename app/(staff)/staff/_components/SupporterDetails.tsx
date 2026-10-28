@@ -6,6 +6,7 @@ import { staffCopy } from "@/lib/content/staff-interface";
 import { staffDate, staffTime } from "@/lib/staff-time";
 import { givenPlaces } from "@/lib/supporter-place";
 import { UK_MAP_HEIGHT, UK_MAP_WIDTH, ukMapPoint, ukOutline } from "@/lib/uk-map";
+import { registrationStatus } from "@/lib/supporters";
 import type {
   SupporterActivity,
   SupporterDetails as Details,
@@ -263,7 +264,7 @@ const eventColumns: ListColumn<SupporterActivity>[] = [
     key: "status",
     label: copy.detail.columns.status,
     short: true,
-    cell: (a) => copy.detail.statuses[a.detail ?? ""] ?? copy.detail.registered,
+    cell: (a) => registrationStatus(a.detail),
   },
 ];
 

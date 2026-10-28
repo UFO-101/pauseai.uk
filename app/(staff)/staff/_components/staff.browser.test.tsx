@@ -6,6 +6,7 @@ import { campaignBySlug } from "@/lib/email-your-mp";
 import { campaigns } from "@/lib/content/email-your-mp";
 import { campaignPath } from "@/lib/email-your-mp";
 import { importPath } from "@/lib/import-runs";
+import { registrationStatus } from "@/lib/supporters";
 import { staffDate } from "@/lib/staff-time";
 import { jobTitles, staffCopy } from "@/lib/content/staff-interface";
 import type { AnyImportRun, ControlAiImport, MpCheck, PoliticianSync } from "@/lib/import-runs";
@@ -2672,7 +2673,7 @@ describe("SupportersTable", () => {
     await render(<SupportersTable search={search} page={{ supporters: rows, total: 2, pages: 1 }} />);
     await expect.element(page.getByRole("columnheader", { name: copy.columns.registrations })).toBeVisible();
     await expect.element(page.getByText("Oxford talk:")).toBeVisible();
-    await expect.element(page.getByText(copy.detail.statuses.waitlist)).toBeVisible();
+    await expect.element(page.getByText(registrationStatus("waitlist"))).toBeVisible();
     await expect.element(page.getByRole("columnheader", { name: copy.columns.wrote })).toBeVisible();
     await expect.element(page.getByRole("cell", { name: "3 Oct 2026" })).toBeVisible();
     // A download has them too.
@@ -2680,14 +2681,14 @@ describe("SupportersTable", () => {
       columns.find((c) => c.key === key)!.text!(row);
     const columns = supporterColumns(search);
     expect(text(columns, "registrations", rows[0])).toBe(
-      `Leeds meetup: ${copy.detail.registered}; Oxford talk: ${copy.detail.statuses.waitlist}`,
+      `Leeds meetup: ${copy.detail.registered}; Oxford talk: ${registrationStatus("waitlist")}`,
     );
     expect(text(columns, "registrations", rows[1])).toBe("");
     expect(text(columns, "wrote", rows[0])).toBe("2026-10-03T09:00:00Z");
     expect(text(columns, "wrote", rows[1])).toBeNull();
     // With one event, its status alone.
     expect(text(supporterColumns(supportersSearch({ event: "evt-1" })), "registrations", rows[0])).toBe(
-      `${copy.detail.registered}; ${copy.detail.statuses.waitlist}`,
+      `${copy.detail.registered}; ${registrationStatus("waitlist")}`,
     );
     // Neither filter, only an event left out, those who didn't write, or a campaign we don't have: neither column.
     for (const params of [

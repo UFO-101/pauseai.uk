@@ -7,6 +7,7 @@ import { anyAndNone, filtersPath, pageParam, valuesOf, type Params, type Support
 import { staffDate } from "@/lib/staff-time";
 import { parseSort, sortHref } from "@/lib/staff-sort";
 import {
+  registrationStatus,
   SUPPORTER_SORTS,
   SUPPORTERS_PAGE_SIZE,
   type SupporterPlaceName,
@@ -36,9 +37,6 @@ export function supporterFiltersOf(search: SupportersSearch): Params {
 function Place({ place }: { place: SupporterPlaceName }) {
   return place.basis === "event" ? <Muted>{place.name}</Muted> : place.name;
 }
-
-/** A registration's status in words: Luma's, or registered for an approved one. */
-const registered = (status: string) => copy.detail.statuses[status] ?? copy.detail.registered;
 
 /**
  * The supporters list's columns: who they are (their name; their newest
@@ -125,14 +123,14 @@ export function supporterColumns(search: SupportersSearch): ListColumn<Supporter
       label: copy.columns.registrations,
       text: (s) =>
         (s.registrations ?? [])
-          .map((r) => (named ? `${r.event}: ${registered(r.status)}` : registered(r.status)))
+          .map((r) => (named ? `${r.event}: ${registrationStatus(r.status)}` : registrationStatus(r.status)))
           .join("; "),
       cell: (s) => (
         <ul className={styles.registrations}>
           {(s.registrations ?? []).map((r, i) => (
             <li key={i}>
               {named && <Muted>{r.event}: </Muted>}
-              {registered(r.status)}
+              {registrationStatus(r.status)}
             </li>
           ))}
         </ul>
