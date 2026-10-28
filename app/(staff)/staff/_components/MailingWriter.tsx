@@ -475,8 +475,7 @@ export default function MailingWriter({
  * Each recipient's email, as they'll get it. Over it, a button for each
  * condition the letter's parts use, pressed for those who meet it, unpressed
  * for those who don't; then the recipients with those answers to choose
- * from. With no one, the email is the one they'd get, with the first
- * recipient's fields. Under it, a test copy, sent to yourself, once the
+ * from. With no one, no email, as there's no one to fill it in for. Under it, a test copy, sent to yourself, once the
  * letter has something written, which saves the draft first if it isn't yet.
  */
 function Preview({
@@ -530,40 +529,41 @@ function Preview({
         </ul>
       )}
       {recipient ? (
-        <div className={styles.whoShown}>
-          <Select
-            aria-label={copy.previewAs}
-            value={recipient.id}
-            onChange={(event) => {
-              setChosen(Number(event.target.value));
-              setSent(undefined);
-            }}
-          >
-            {fits.map((r) => (
-              <option key={r.id} value={r.id}>
-                {r.constituency ? `${r.name} · ${r.constituency}` : r.name}
-              </option>
-            ))}
-          </Select>
-        </div>
+        <>
+          <div className={styles.whoShown}>
+            <Select
+              aria-label={copy.previewAs}
+              value={recipient.id}
+              onChange={(event) => {
+                setChosen(Number(event.target.value));
+                setSent(undefined);
+              }}
+            >
+              {fits.map((r) => (
+                <option key={r.id} value={r.id}>
+                  {r.constituency ? `${r.name} · ${r.constituency}` : r.name}
+                </option>
+              ))}
+            </Select>
+          </div>
+          <div className={styles.email}>
+            <dl className={styles.headers}>
+              <dt>{copy.from}</dt>
+              <dd>{sentFrom ? copy.fromGmail(sentFrom) : <Muted>{copy.noSender}</Muted>}</dd>
+              <dt>{copy.to}</dt>
+              <dd>{`${recipient.name} <${recipient.email}>`}</dd>
+              <dt>{copy.subject}</dt>
+              <dd>
+                <strong>{subject}</strong>
+              </dd>
+            </dl>
+            <MailingLetter doc={letterFor(body, recipient)} />
+          </div>
+        </>
       ) : (
-        <Hint>{copy.noOneMix}</Hint>
+        // No one to fill it in for: no email, rather than one made up.
+        <p className={styles.noEmail}>{copy.noOneMix}</p>
       )}
-      <div className={styles.email}>
-        <dl className={styles.headers}>
-          <dt>{copy.from}</dt>
-          <dd>{sentFrom ? copy.fromGmail(sentFrom) : <Muted>{copy.noSender}</Muted>}</dd>
-          <dt>{copy.to}</dt>
-          <dd>{`${(recipient ?? first).name} <${(recipient ?? first).email}>`}</dd>
-          <dt>{copy.subject}</dt>
-          <dd>
-            <strong>{subject}</strong>
-          </dd>
-        </dl>
-        <MailingLetter
-          doc={letterFor(body, { values: (recipient ?? first).values, meets: used.filter((c) => meets[c]) })}
-        />
-      </div>
       <div className={styles.send}>
         <Button
           variant="ghost"

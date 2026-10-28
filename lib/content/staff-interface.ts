@@ -787,7 +787,7 @@ export const staffCopy = {
     // Over the preview: a button for each condition the letter's parts use, pressed for those who meet it.
     casesLabel: "⁂ Show it as for those who…",
     // When no recipient has the answers chosen.
-    noOneMix: "⁂ No one it goes to gave these answers. This is the email they'd get.",
+    noOneMix: "⁂ No one this goes to has these answers, so there's no email to show.",
     sendTest: "Send this one to me",
     testSent: (address: string) => `⁂ Sent: look in the inbox of ${address}.`,
     // Under the test button, while the letter is empty or only its greeting.

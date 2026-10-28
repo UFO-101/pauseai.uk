@@ -219,7 +219,7 @@ describe("MailingWriter", () => {
     await expect.element(preview().getByText("Dear Lady Dummy,")).toBeVisible();
   });
 
-  it("says when no one gave the answers chosen, and shows the email they'd get", async () => {
+  it("says when no one gave the answers chosen, and shows no email", async () => {
     const part = (condition: string) => ({
       type: "onlyFor" as const,
       attrs: { condition },
@@ -237,7 +237,8 @@ describe("MailingWriter", () => {
     await expect.element(going).toHaveAttribute("aria-pressed", "false");
     await going.click();
     await expect.element(preview().getByText(copy.noOneMix)).toBeVisible();
-    await expect.element(preview().getByText("frontier-ai-letter:signed")).toBeVisible();
+    // No email at all, rather than one made up.
+    await expect.element(preview().getByText("frontier-ai-letter:signed")).not.toBeInTheDocument();
     await expect.element(preview().getByRole("button", { name: copy.sendTest })).toBeDisabled();
   });
 

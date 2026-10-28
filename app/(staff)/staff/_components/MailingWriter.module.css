@@ -195,6 +195,16 @@
   border-style: solid;
 }
 
+/* Where the email would be, when no one has the answers chosen. */
+.noEmail {
+  margin: 0;
+  padding: var(--space-6) var(--space-4);
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  text-align: center;
+}
+
 /* The email, as a mail app shows one: who to and the subject, then the letter. */
 .email {
   border: 1px solid var(--border);
