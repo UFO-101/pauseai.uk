@@ -387,17 +387,19 @@ export default function MailingWriter({
               ))}
             </Select>
           </div>
-          <p id={letterLabel} className={styles.label}>
-            {copy.letter}
-          </p>
-          <MailingEditor
-            initial={values.body as JSONContent}
-            onChange={(doc) => change({ body: doc as MailingDoc })}
-            fields={data.fields}
-            conditions={data.conditions}
-            recipients={data.recipients.length}
-            labelledBy={letterLabel}
-          />
+          <div className={styles.letter}>
+            <p id={letterLabel} className={styles.label}>
+              {copy.letter}
+            </p>
+            <MailingEditor
+              initial={values.body as JSONContent}
+              onChange={(doc) => change({ body: doc as MailingDoc })}
+              fields={data.fields}
+              conditions={data.conditions}
+              recipients={data.recipients.length}
+              labelledBy={letterLabel}
+            />
+          </div>
           <div>
             <p className={styles.label}>{copy.attachments}</p>
             <MailingFiles

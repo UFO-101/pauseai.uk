@@ -147,12 +147,14 @@
   color: var(--text-secondary);
 }
 
-/* "Find recipient who:" close over its buttons. */
+/* "Letter" close over the letter, and "Find recipient who:" over its buttons. */
+.letter,
 .find {
   display: grid;
   gap: var(--space-1);
 }
 
+.letter .label,
 .find .label {
   margin: 0;
 }
