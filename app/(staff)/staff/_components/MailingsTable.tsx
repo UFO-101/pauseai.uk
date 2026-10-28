@@ -43,6 +43,7 @@ export const mailingColumns: ListColumn<MailingSummary>[] = [
   {
     key: "sender",
     label: copy.columns.sender,
+    className: styles.sender,
     text: (m) => (m.imported ? copy.imported : m.fromName),
     cell: (m) => (m.imported ? <Tag>{copy.imported}</Tag> : (m.fromName ?? <Muted>{copy.notRecorded}</Muted>)),
   },

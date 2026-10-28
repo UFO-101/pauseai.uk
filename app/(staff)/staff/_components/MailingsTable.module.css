@@ -9,3 +9,8 @@
 .when {
   white-space: nowrap;
 }
+
+/* The sender, or the tag saying Airtable kept none, never broken in two. */
+.sender {
+  white-space: nowrap;
+}
