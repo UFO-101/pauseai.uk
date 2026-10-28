@@ -49,7 +49,11 @@ Francis about a shared account (see the open questions).
    scheduled function has only 30 seconds, about 30 emails at Gmail's
    pace, so a due mailing would start a Netlify background function,
    which runs for up to 15 minutes and sends at the channel's own pace,
-   marking each recipient as it goes (see the open questions).
+   marking each recipient as it goes. Credit-based plans, ours
+   included, have background functions
+   ([docs](https://docs.netlify.com/build/functions/background-functions/)),
+   charged as compute at 10 credits a GB-hour
+   ([billing](https://docs.netlify.com/build/functions/usage-and-billing/)).
 5. Read bounces and threads hourly. `users.history.list`
    ([docs](https://developers.google.com/workspace/gmail/api/reference/rest/v1/users.history/list))
    lists the messages that arrived since the last `historyId`. The site
@@ -118,5 +122,3 @@ limit, journalists, and what politicians did in Parliament.
 2. Can staff send from a colleague's connected Gmail, as the mock-up
    shows, or only from their own and shared ones? Sending as someone
    else should probably need their say-so.
-3. Are Netlify background functions included in our plan, for the send
-   job? ([docs](https://docs.netlify.com/build/functions/background-functions/))
