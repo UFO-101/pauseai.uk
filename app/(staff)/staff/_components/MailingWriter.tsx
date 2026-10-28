@@ -286,10 +286,15 @@ export default function MailingWriter({
     <>
       <div className={styles.heading}>
         <h1>{values.subject.trim() || copy.newTitle}</h1>
-        <Muted>
-          <span role="status">{copy.saveStates[saveState]}</span>
-        </Muted>
+        {saveState === "new" && <Muted>{copy.saveStates.new}</Muted>}
       </div>
+      {/* Whether it's saved, in a corner of the window, so it's in view wherever you're typing. A
+          new save restarts its fade. */}
+      {saveState !== "new" && (
+        <p role="status" className={styles.savePill} data-state={saveState} key={`${saveState}-${version.current}`}>
+          {copy.savePill[saveState]}
+        </p>
+      )}
       {!data.sends && <Strip tone="amber">{copy.cantSend}</Strip>}
       {saveState === "conflict" && (
         <Strip tone="red" announce>

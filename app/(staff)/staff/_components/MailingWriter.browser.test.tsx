@@ -61,7 +61,7 @@ describe("MailingWriter", () => {
   it("starts with a greeting by the salutation, and saves nothing until something's written", async () => {
     const { actions } = renderWriter();
     await expect.element(letter()).toHaveTextContent("Dear salutation,");
-    await expect.element(status()).toHaveTextContent(copy.saveStates.new);
+    await expect.element(page.getByText(copy.saveStates.new)).toBeVisible();
     await field(copy.ask).selectOptions("frontier-ai-letter");
     await pause(1200);
     expect(actions.start).not.toHaveBeenCalled();
@@ -69,7 +69,7 @@ describe("MailingWriter", () => {
     await expect.poll(() => actions.start.mock.calls.length, WAIT).toBe(1);
     expect(actions.start.mock.calls[0][0]).toEqual(exampleWriterData.filter.params);
     expect(actions.start.mock.calls[0][1]).toMatchObject({ subject: "Hello", ask: "frontier-ai-letter" });
-    await expect.element(status()).toHaveTextContent(copy.saveStates.saved);
+    await expect.element(status()).toHaveTextContent(copy.savePill.saved);
     expect(location.pathname).toBe("/staff/mailings/21");
     history.replaceState(null, "", "/");
     await expect.element(page.getByRole("heading", { level: 1 })).toHaveTextContent("Hello");
@@ -108,7 +108,7 @@ describe("MailingWriter", () => {
   it("says when someone else saved it first, and saves nothing more", async () => {
     const { actions } = renderWriter({ draft: exampleWrittenMailing });
     actions.save.mockResolvedValueOnce({ saved: false, reason: "conflict" });
-    await expect.element(status()).toHaveTextContent(copy.saveStates.saved);
+    await expect.element(status()).toHaveTextContent(copy.savePill.saved);
     await subject().fill("Mine");
     await expect.element(page.getByRole("alert")).toHaveTextContent(copy.saveStates.conflict);
     await subject().fill("Mine again");
@@ -120,7 +120,7 @@ describe("MailingWriter", () => {
     const { actions } = renderWriter({ draft: exampleWrittenMailing });
     actions.save.mockRejectedValueOnce(new Error("offline"));
     await subject().fill("One");
-    await expect.element(status()).toHaveTextContent(copy.saveStates.failed);
+    await expect.element(status()).toHaveTextContent(copy.savePill.failed);
     await field(copy.fromLegend).selectOptions("sam@pauseai.uk");
     await expect.poll(() => actions.save.mock.calls.length, WAIT).toBe(2);
     expect(actions.save.mock.calls[1][2]).toEqual({ subject: "One", sentFrom: "sam@pauseai.uk" });
@@ -133,7 +133,7 @@ describe("MailingWriter", () => {
       () => new Promise((resolve) => (finish = () => resolve({ saved: true, version: 4 }))),
     );
     await subject().fill("One");
-    await expect.element(status()).toHaveTextContent(copy.saveStates.saving);
+    await expect.element(status()).toHaveTextContent(copy.savePill.saving);
     await field(copy.fromLegend).selectOptions("sam@pauseai.uk");
     await pause(1200);
     expect(actions.save).toHaveBeenCalledTimes(1);

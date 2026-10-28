@@ -27,7 +27,7 @@ async function startDraft(page: Page, subject: string) {
   await page.getByRole("link", { name: /Mail these/ }).click();
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(copy.newTitle);
   await page.getByLabel(copy.subject).fill(subject);
-  await expect(page.getByRole("status").first()).toHaveText(copy.saveStates.saved);
+  await expect(page.getByRole("status").first()).toHaveText(copy.savePill.saved);
   await expect(page).toHaveURL(/\/staff\/mailings\/\d+$/);
 }
 
@@ -74,7 +74,7 @@ test("a new mailing from the politicians list: written, saved as a draft, previe
 
   await page.getByRole("link", { name: copy.mailThese(1) }).click();
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(copy.newTitle);
-  await expect(page.getByRole("status").first()).toHaveText(copy.saveStates.new);
+  await expect(page.getByText(copy.saveStates.new)).toBeVisible();
   await frame(page, "a new mailing to them: who, write, preview, sent from, when and send; nothing saved yet");
 
   await page.getByLabel(copy.subject).fill("Edinburgh: one week to go");
@@ -85,7 +85,7 @@ test("a new mailing from the politicians list: written, saved as a draft, previe
   await page.keyboard.press("Control+End");
   await page.keyboard.type("We hope to see you there.");
   await page.getByLabel(copy.fromLegend, { exact: false }).selectOption(staffEmail());
-  await expect(page.getByRole("status").first()).toHaveText(copy.saveStates.saved);
+  await expect(page.getByRole("status").first()).toHaveText(copy.savePill.saved);
   await expect(page).toHaveURL(/\/staff\/mailings\/\d+$/);
   const preview = page.getByRole("region", { name: copy.sections.preview });
   await expect(preview.getByText("We hope to see you there.")).toBeVisible();
@@ -160,7 +160,7 @@ test("a scheduled mailing: when it sends, a new time, then stopped and a draft a
 
   await page.getByRole("button", { name: copy.stopScheduled }).click();
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Edinburgh reminder");
-  await expect(page.getByRole("status").first()).toHaveText(copy.saveStates.saved);
+  await expect(page.getByRole("status").first()).toHaveText(copy.savePill.saved);
   await frame(page, "stopped: a draft again, to change and schedule again");
 });
 

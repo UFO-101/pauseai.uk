@@ -721,11 +721,15 @@ export const staffCopy = {
     // Beside the title: whether the draft is saved.
     saveStates: {
       new: "⁂ Not saved yet: it's kept once you write something.",
-      saving: "⁂ Saving…",
-      saved: "⁂ Draft saved.",
       conflict:
         "⁂ Someone else has changed this draft since you opened it. Reload the page to see their changes; what you've done since isn't saved.",
-      failed: "⁂ Couldn't save. Check your connection: it'll try again at your next change.",
+    } as Record<string, string>,
+    // In the window's corner, whether the draft is saved.
+    savePill: {
+      saving: "⁂ Saving…",
+      saved: "⁂ Saved",
+      failed: "⁂ Couldn't save: it'll try again at your next change",
+      conflict: "⁂ Not saved: someone else changed it",
     } as Record<string, string>,
     deleteDraft: "Delete draft",
     // Delete draft after its first press, asking for a second.
