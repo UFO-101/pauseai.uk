@@ -214,10 +214,15 @@ https://claude.ai/artifact/3qi42XAhd2qwYBTRYVGZoz
   moment after each change. A draft with no subject or letter is
   deleted after a day unopened. "Delete draft" deletes it after one
   confirmation; a draft has sent nothing, so it isn't archived.
-- A mailing's page: scheduled, with Stop, which turns it back into a
-  draft; sending, ticking each recipient as it goes, with Stop, which
-  sends no more; and sent, with each recipient's outcome, the counts and
-  its filter as read-only pills. A sent mailing can't be deleted.
+- A mailing's page (chosen on the canvas): its title and state, when
+  and from whom it went, and its ask; a coloured count each of sent,
+  replied, bounced, skipped and answered the ask; then the recipients
+  in a table, with tabs for all, replied, bounced and skipped, beside
+  the email and who it was for, as read-only pills. Scheduled, a band
+  says when it sends, with "Change the time" and Stop, which turns it
+  back into a draft. Sending, a progress bar and each recipient ticked
+  as it goes, with Stop, which sends no more. A sent mailing can't be
+  deleted.
 - The list of mailings, in three parts (chosen on the canvas): drafts,
   each with Delete draft; coming up, each with Stop; and a table of
   those sent, with how many were sent, bounced, replied and answered
