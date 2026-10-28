@@ -146,10 +146,17 @@ don't change it.
    both lists, as one validated value that a mailing stores as JSON. A
    mailing's page shows its filter in words and can run it again to
    show who it would choose now.
-3. Templates. Use Email your MP's format (`lib/letter-format.ts`) and
-   add merge fields and sections shown only to some recipients, such as
-   `[if signed frontier-ai-letter] … [end]`. If a merge field can't be
-   filled in for someone, they are skipped.
+3. Templates. Extend Email your MP's document (`lib/letter-format.ts`)
+   and its Tiptap editor with two nodes: a merge field, an inline chip
+   that is deleted, copied and moved whole, which typing `{` offers; and
+   a block shown only to some recipients, such as those who signed an
+   ask. Staff never see or type markup. The server checks the document
+   as it checks letters, and one function writes a recipient's HTML and
+   plain text from it, for the preview, the dry run, test sends and
+   sending. If a merge field can't be filled in for someone, they are
+   skipped. Build these first as a component gallery example on
+   fixture data, and try typing, deleting, pasting and dragging around
+   both nodes in Firefox, before choosing the Write step's layout.
 4. Channels. `Channel` is a type with four functions: send one message,
    say how many more can be sent today, say what one message costs, and
    turn a provider's report into an event. Each channel also has a fake
