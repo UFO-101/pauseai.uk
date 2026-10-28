@@ -2671,10 +2671,12 @@ describe("SupportersTable", () => {
     ];
     const search = supportersSearch({ event: ["evt-1", "evt-2", "!evt-3"], campaign: "support-sobel-bill" });
     await render(<SupportersTable search={search} page={{ supporters: rows, total: 2, pages: 1 }} />);
-    await expect.element(page.getByRole("columnheader", { name: copy.columns.registrations })).toBeVisible();
+    await expect.element(page.getByText(copy.columns.registrations, { exact: true })).toBeVisible();
     await expect.element(page.getByText("Oxford talk:")).toBeVisible();
-    await expect.element(page.getByText(registrationStatus("waitlist"))).toBeVisible();
-    await expect.element(page.getByRole("columnheader", { name: copy.columns.wrote })).toBeVisible();
+    await expect
+      .element(page.getByRole("listitem").filter({ hasText: "Oxford talk:" }))
+      .toHaveTextContent(`Oxford talk: ${registrationStatus("waitlist")}`);
+    await expect.element(page.getByText(copy.columns.wrote, { exact: true })).toBeVisible();
     await expect.element(page.getByRole("cell", { name: "3 Oct 2026" })).toBeVisible();
     // A download has them too.
     const text = (columns: ReturnType<typeof supporterColumns>, key: string, row: (typeof rows)[number]) =>
@@ -2759,7 +2761,7 @@ describe("SupporterDetails", () => {
     await expect.element(page.getByText("M1 1AE", { exact: false }).first()).toBeVisible();
     // In the band over the card: where she is, from her postcode, on a map; her MP; when she was active, and
     // how she first came; and how many events and letters, each linked to its table.
-    const band = page.getByText(copy.detail.theirMp).element().closest("[class*=band]")!;
+    const band = page.getByText(copy.detail.theirMp).element().closest("[class^=_band_]")!;
     expect(band.querySelector("svg circle")).not.toBeNull();
     await expect.element(page.getByText("Manchester, England", { exact: true })).toBeVisible();
     await expect.element(page.getByText(copy.detail.placeFrom.postcode("M1 1AE"), { exact: true })).toBeVisible();
@@ -2768,7 +2770,7 @@ describe("SupporterDetails", () => {
     expect(band.textContent).toContain(copy.detail.firstVia(copy.sources.luma));
     const counts = [...band.querySelectorAll("[class*=counts] a")];
     expect(counts.map((a) => [a.getAttribute("href"), a.textContent])).toEqual([
-      ["#events", `2 ${copy.detail.eventsCounted(2)}`],
+      ["#events", `1 ${copy.detail.eventsCounted(1)}`],
       ["#letters", `1 ${copy.detail.lettersCounted(1)}`],
     ]);
     // Her number, given to Luma, is one we may not use since she unsubscribed: marked, and no link.
@@ -3029,7 +3031,7 @@ describe("SupporterDetails", () => {
         place: { name: "Leeds", basis: "city" as const, given: "Leeds", country: "england", latitude, longitude },
       },
     });
-    const map = () => document.querySelector("[class*=band] > svg");
+    const map = () => document.querySelector("[class^=_band_] > svg");
     const { rerender } = await render(<SupporterDetails supporter={at(53.8, -1.55)} />);
     expect(map()!.querySelector("path")!.getAttribute("d")).toMatch(/^M/);
     const dot = map()!.querySelector("circle")!;
@@ -3258,6 +3260,7 @@ describe("PermissionTiles", () => {
     expect([...popover.querySelectorAll("dd")].map((dd) => dd.textContent)).toEqual([luma.yes, luma.no, luma.caveat]);
     await expect.element(page.getByText(luma.about).first()).toBeVisible();
     // A topic with nothing we can't see has no third label.
+    (popover as HTMLElement).hidePopover();
     await page.getByRole("button", { name: copy.why }).nth(1).click();
     expect(document.querySelectorAll("[popover]")[1].querySelectorAll("dt")).toHaveLength(2);
     // A number's labels are in the words of the ways its topic allows.
@@ -3340,6 +3343,8 @@ describe("PermissionTiles", () => {
     const permissions = Object.entries(copy.reasons).flatMap(([topic, reasons]) =>
       Object.keys(reasons).map((reason) => ({
         ...luma,
+        // A topic only phones have is a number's.
+        channel: topic === "volunteering" || topic === "march-day" ? ("phone" as const) : ("email" as const),
         topic: topic as Topic,
         reason: reason as Reason,
         at: "2026-09-12T10:00:00Z",
@@ -3357,7 +3362,7 @@ describe("PermissionTiles", () => {
     const { rerender } = await render(<PermissionTiles permissions={[{ ...blocked, source: "hard" }]} />);
     expect(tiles()[0].textContent).toContain(copy.blockedBecause.hard("5 Oct 2026"));
     await rerender(<PermissionTiles permissions={[{ ...blocked, source: null }]} />);
-    expect(tiles()[0].textContent).toBe(`gus@example.com: ${copy.blocked}${copy.seeBlocked}`);
+    expect(tiles()[0].textContent).toBe(`${copy.everyTopic}${copy.blocked}gus@example.com${copy.seeBlocked}`);
   });
 
   it("names a blocked address among several, and leaves out a cause it has no words for", async () => {
@@ -3365,7 +3370,7 @@ describe("PermissionTiles", () => {
     await render(
       <PermissionTiles permissions={[{ ...blocked, source: "soft" }, { ...exampleSupporterDetails.permissions[1] }]} />,
     );
-    expect(tiles()[0].textContent).toBe(`gus@example.com: ${copy.blocked}${copy.seeBlocked}`);
+    expect(tiles()[0].textContent).toBe(`${copy.everyTopic}${copy.blocked}gus@example.com${copy.seeBlocked}`);
     expect(tiles()).toHaveLength(2);
   });
 });
@@ -3450,10 +3455,18 @@ describe("each list's download values and contact cards", () => {
       first: "2026-09-01T00:00:00Z",
       active: "2026-10-01T00:00:00Z",
     });
-    // Airtable's markers in words, each one they have; none for one with none.
+    // The markers in words, each one they have; none for one with none.
     const { flags } = staffCopy.politicians;
-    const marked = { ...rows[0], importantTarget: true, personalConnection: true, airtableRemovedAt: "2026-10-20" };
-    expect(values(columns, marked).marked).toBe(`${flags.important}; ${flags.connection}; ${flags.removed}`);
+    const marked = {
+      ...rows[0],
+      importantTarget: true,
+      personalConnection: true,
+      airtableRemovedAt: "2026-10-20",
+      isTest: true,
+    };
+    expect(values(columns, marked).marked).toBe(
+      `${flags.important}; ${flags.connection}; ${flags.removed}; ${flags.test}`,
+    );
     expect(values(columns, { ...rows[0], importantTarget: false }).marked).toBe("");
     // On the page, the days of their first and last activity; none for one without.
     await render(<PoliticianTable politicians={rows} asks={exampleAsks} search={{ status: "any" }} />);
