@@ -44,9 +44,9 @@ import StaffNav, { type StaffPage as StaffPageName } from "@/app/(staff)/staff/_
 import AccountsNotice from "@/app/(staff)/staff/_components/AccountsNotice";
 import Breadcrumb from "@/app/(staff)/staff/_components/Breadcrumb";
 import EraseLink from "@/app/(staff)/staff/_components/EraseLink";
-import MailingDetails from "@/app/(staff)/staff/_components/MailingDetails";
 import MailingsTable from "@/app/(staff)/staff/_components/MailingsTable";
 import NotIcon from "@/app/(staff)/staff/_components/ui/NotIcon";
+import MailingView from "@/app/(staff)/staff/_components/MailingView";
 import { MailingLetter } from "@/app/(staff)/staff/_components/MailingLetter";
 import { FilterPills, MailingCounts } from "@/app/(staff)/staff/_components/MailingParts";
 import { exampleMailingLetter, exampleWriterData } from "@/app/(staff)/staff/_components/MailingWriter.examples";
@@ -1267,38 +1267,6 @@ export const staff: Group = {
       ],
     },
     {
-      name: "MailingDetails",
-      file: "app/(staff)/staff/_components/MailingDetails.tsx",
-      variants: [
-        {
-          label: "A mailing from Airtable, with no text, and its recipients",
-          render: () => (
-            <StaffPage as="div">
-              <MailingDetails mailing={exampleMailing} />
-            </StaffPage>
-          ),
-        },
-        {
-          label: "One with no ask, not sent yet",
-          render: () => (
-            <StaffPage as="div">
-              <MailingDetails
-                mailing={{
-                  ...exampleMailings[1],
-                  tab: "all",
-                  recipients: [],
-                  recipientsTotal: 0,
-                  page: 1,
-                  pages: 1,
-                  pageSize: 100,
-                }}
-              />
-            </StaffPage>
-          ),
-        },
-      ],
-    },
-    {
       name: "MailingFiles",
       file: "app/(staff)/staff/_components/MailingFiles.tsx",
       variants: [
@@ -1385,6 +1353,14 @@ export const staff: Group = {
       name: "MailingView",
       file: "app/(staff)/staff/_components/MailingView.tsx",
       variants: [
+        {
+          label: "One imported from Airtable: who got it and how it was written, no text",
+          render: () => (
+            <StaffPage as="div">
+              <MailingView mailing={exampleMailing} asks={[]} stop={noChangeWho} reschedule={noChangeWho} />
+            </StaffPage>
+          ),
+        },
         {
           label: "Scheduled, with Change the time and Stop",
           render: () => (

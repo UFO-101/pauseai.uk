@@ -74,6 +74,17 @@ function recipientColumns(mailing: Mailing): ListColumn<MailingRecipient>[] {
       short: true,
       cell: (r) => (r.repliedAt ? staffDate(r.repliedAt) : <Muted>–</Muted>),
     },
+    // Airtable kept how each was written.
+    ...(mailing.imported
+      ? [
+          {
+            key: "how",
+            label: staffCopy.mailings.recipientColumns.how,
+            cell: (r: MailingRecipient) =>
+              r.personalised ? staffCopy.mailings.personalised : <Muted>{staffCopy.mailings.asWritten}</Muted>,
+          },
+        ]
+      : []),
     ...(mailing.ask
       ? [
           {
@@ -91,11 +102,7 @@ function ChangeTime({ mailing, action }: { mailing: WrittenMailing; action: Form
   const { day, hour } = londonDayHour(mailing.dueAt!);
   return (
     <>
-      <Menu
-        id="change-time"
-        trigger={buttonClass({ variant: "ghost", size: "small", fit: true })}
-        label={copy.changeTime}
-      >
+      <Menu id="change-time" trigger={buttonClass({ variant: "ghost", fit: true })} label={copy.changeTime}>
         <form action={action} className={styles.changeTime}>
           <input type="hidden" name="id" value={mailing.id} />
           <Field label={copy.day}>
@@ -127,18 +134,18 @@ function Standing({
   reschedule,
 }: {
   mailing: Mailing;
-  written: WrittenMailing;
+  written?: WrittenMailing;
   stop: FormAction;
   reschedule: FormAction;
 }) {
-  if (written.state === "scheduled") {
+  if (written?.state === "scheduled") {
     return (
       <>
         <Strip
           action={
             <div className={styles.actions}>
               <ChangeTime mailing={written} action={reschedule} />
-              <StopMailing id={written.id} label={copy.unschedule} action={stop} />
+              <StopMailing id={written.id} label={copy.unschedule} action={stop} full />
             </div>
           }
         >
@@ -149,9 +156,15 @@ function Standing({
       </>
     );
   }
-  if (written.state === "sending") {
+  if (written?.state === "sending") {
     return (
-      <Strip action={<StopMailing id={written.id} label={copy.stopSending} action={stop} />}>
+      <Strip
+        action={
+          <div className={styles.actions}>
+            <StopMailing id={written.id} label={copy.stopSending} action={stop} full />
+          </div>
+        }
+      >
         <strong>{copy.sending(mailing.sent, mailing.to)}</strong>
         <progress className={styles.progress} max={mailing.to} value={mailing.sent} aria-label={copy.sentLabel} />
       </Strip>
@@ -159,7 +172,11 @@ function Standing({
   }
   return (
     <p>
-      {copy.sentLine(staffTime(mailing.sentAt ?? written.dueAt!), written.fromName ?? written.sentFrom!)}
+      {written
+        ? copy.sentLine(staffTime(mailing.sentAt ?? written.dueAt!), written.fromName ?? written.sentFrom!)
+        : mailing.sentAt
+          ? copy.importedLine(staffTime(mailing.sentAt))
+          : staffCopy.mailings.notSent}
       {mailing.ask && (
         <>
           {" · "}
@@ -171,11 +188,13 @@ function Standing({
 }
 
 /**
- * A mailing written here, once scheduled: its title and state; when it
- * sends, with Change the time and Stop, or how far it's got, with Stop, or
- * when and from whom it went; a coloured count each of sent, replied,
- * bounced, skipped and answered its ask; then its recipients, in tabs for
- * all, replied, bounced and skipped, beside the email and who it was for.
+ * A mailing's page, once scheduled: its title and state; when it sends,
+ * with Change the time and Unschedule, or how far it's got, with Stop
+ * sending, or when and from whom it went; a coloured count each of sent,
+ * replied, bounced, skipped and answered its ask; then its recipients, in
+ * tabs for all, replied, bounced and skipped, beside who it was for and the
+ * email. One imported from Airtable, with no `written`, has only what
+ * Airtable kept: who got it and how it was written, but no text or filter.
  */
 export default function MailingView({
   mailing,
@@ -186,9 +205,9 @@ export default function MailingView({
   reschedule,
 }: {
   mailing: Mailing;
-  written: WrittenMailing;
+  written?: WrittenMailing;
   /** Who it was for, as pills (FilterPills). */
-  who: ReactNode;
+  who?: ReactNode;
   asks: Ask[];
   stop: FormAction;
   reschedule: FormAction;
@@ -204,10 +223,14 @@ export default function MailingView({
     <div className={styles.page}>
       <div className={styles.heading}>
         <h1>{mailing.title}</h1>
-        <Tag tone={STATE_TONES[written.state]}>{copy.states[written.state]}</Tag>
+        {written ? (
+          <Tag tone={STATE_TONES[written.state]}>{copy.states[written.state]}</Tag>
+        ) : (
+          <Tag>{staffCopy.mailings.imported}</Tag>
+        )}
       </div>
       <Standing mailing={mailing} written={written} stop={stop} reschedule={reschedule} />
-      {written.state !== "scheduled" && <MailingCounts mailing={mailing} />}
+      {written?.state !== "scheduled" && <MailingCounts mailing={mailing} />}
       <Grid>
         <Card span={4} as="div">
           <Tabs label={copy.tabsLabel} tabs={tabs} current={mailing.tab} />
@@ -224,30 +247,36 @@ export default function MailingView({
             empty={staffCopy.mailings.noRecipients}
           />
         </Card>
-        <Card span={2} look="aside" title={copy.emailTitle} id="email-title">
-          <div className={styles.email}>
-            <dl className={styles.headers}>
-              <dt>{copy.from}</dt>
-              <dd>{written.fromName ? `${written.fromName} <${written.sentFrom}>` : written.sentFrom}</dd>
-              <dt>{copy.to}</dt>
-              <dd>
-                <Muted>{copy.toEach}</Muted>
-              </dd>
-              <dt>{copy.subject}</dt>
-              <dd>
-                <strong>{written.subject}</strong>
-              </dd>
-            </dl>
-            <div className={styles.body}>
-              <MailingLetter doc={written.body} {...letterLabels(asks)} />
-              {written.attachments.length > 0 && (
-                <MailingFiles files={written.attachments} base={`/staff/mailings/${written.id}/files`} />
-              )}
+        {written ? (
+          <Card span={2} look="aside" title={copy.whoTitle} id="who-title">
+            {who}
+            <h3 className={styles.subheading}>{copy.emailTitle}</h3>
+            <div className={styles.email}>
+              <dl className={styles.headers}>
+                <dt>{copy.from}</dt>
+                <dd>{written.fromName ? `${written.fromName} <${written.sentFrom}>` : written.sentFrom}</dd>
+                <dt>{copy.to}</dt>
+                <dd>
+                  <Muted>{copy.toEach}</Muted>
+                </dd>
+                <dt>{copy.subject}</dt>
+                <dd>
+                  <strong>{written.subject}</strong>
+                </dd>
+              </dl>
+              <div className={styles.body}>
+                <MailingLetter doc={written.body} {...letterLabels(asks)} />
+                {written.attachments.length > 0 && (
+                  <MailingFiles files={written.attachments} base={`/staff/mailings/${written.id}/files`} />
+                )}
+              </div>
             </div>
-          </div>
-          <h3 className={styles.subheading}>{copy.whoTitle}</h3>
-          {who}
-        </Card>
+          </Card>
+        ) : (
+          <Card span={2} look="aside" title={copy.emailTitle} id="email-title">
+            <p>{staffCopy.mailings.noText}</p>
+          </Card>
+        )}
       </Grid>
     </div>
   );

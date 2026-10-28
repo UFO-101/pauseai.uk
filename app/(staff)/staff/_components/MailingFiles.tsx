@@ -9,7 +9,7 @@ import styles from "./MailingFiles.module.css";
 const copy = staffCopy.mailingPages;
 
 /** A file's size in words: "800 bytes", "12 KB", "1.4 MB". */
-export function fileSize(bytes: number): string {
+function fileSize(bytes: number): string {
   if (bytes < 1024) return copy.bytes(bytes);
   if (bytes < 1024 * 1024) return copy.kilobytes(Math.round(bytes / 1024));
   return copy.megabytes(Math.round((bytes / (1024 * 1024)) * 10) / 10);
@@ -22,9 +22,10 @@ function PdfPage({ href }: { href: string }) {
   useEffect(() => {
     let gone = false;
     (async () => {
-      const data = new Uint8Array(await (await fetch(href)).arrayBuffer());
-      const { getDocumentProxy } = await import("unpdf");
-      const page = await (await getDocumentProxy(data)).getPage(1);
+      // pdf.js loads the file itself, from our own site.
+      const { getResolvedPDFJS } = await import("unpdf");
+      const pdfjs = await getResolvedPDFJS();
+      const page = await (await pdfjs.getDocument({ url: href }).promise).getPage(1);
       const viewport = page.getViewport({ scale: 180 / page.getViewport({ scale: 1 }).width });
       if (gone) return;
       const sheet = canvas.current!;

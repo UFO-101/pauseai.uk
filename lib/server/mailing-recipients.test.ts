@@ -64,12 +64,18 @@ describeWithDatabase("politicianAudience", () => {
       ["house", 0],
     ]);
     // Each answer given, the asks newest first, each kind's answers in their order.
-    expect(audience.conditions.map((c) => [c.id, c.covers])).toEqual([
+    expect(audience.conditions.filter((c) => c.covers).map((c) => [c.id, c.covers])).toEqual([
       ["edinburgh-conference-2026:going", 1],
       ["edinburgh-conference-2026:declined", 1],
       ["frontier-ai-letter:signed", 2],
     ]);
-    expect(audience.conditions[2].label).toContain("signed");
+    const signed = audience.conditions.find((c) => c.id === "frontier-ai-letter:signed")!;
+    expect(signed).toMatchObject({ group: "Frontier AI letter to the Prime Minister", option: "Signed" });
+    expect(signed.label).toContain("signed");
+    // Every answer to every ask is offered, those no one gave too.
+    expect(audience.conditions.find((c) => c.id === "edinburgh-conference-2026:passed_on")).toMatchObject({
+      covers: 0,
+    });
   });
 
   it("runs the stored filter, and finds no one with no address at all", async () => {
@@ -78,6 +84,6 @@ describeWithDatabase("politicianAudience", () => {
     const audience = await politicianAudience({ list: "politicians", params: { house: "lords" } });
     expect(audience.recipients).toEqual([]);
     expect(audience.leftOut).toEqual([{ id: lord, name: "Lord Test", reason: "no-address" }]);
-    expect(audience.conditions).toEqual([]);
+    expect(audience.conditions.every((c) => c.covers === 0)).toBe(true);
   });
 });

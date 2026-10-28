@@ -178,7 +178,8 @@ test("a mailing sending, and one sent: its counts, and its recipients that bounc
 
   const sent = addMailing(flowDatabase, "Edinburgh follow-up", "sent", ["sent", "bounced", "skipped", "sent"]);
   await page.goto(`${BASE}/staff/mailings/${sent}`);
-  await expect(page.getByText(copy.states.sent, { exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Edinburgh follow-up");
+  await expect(page.getByRole("list").filter({ hasText: copy.counts.answered })).toBeVisible();
   await frame(page, "sent: its counts, its recipients, and the email beside them");
 
   await page.getByRole("link", { name: copy.tab(copy.tabs.bounced, 1) }).click();

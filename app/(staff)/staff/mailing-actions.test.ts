@@ -113,8 +113,9 @@ describeWithDatabase("the mailing pages' Server Actions", () => {
     );
     const polly = await addTestPolitician();
     const { id } = (await startMailing({}, { subject: "Hi", body: LETTER }))!;
-    expect(await sendMailingTest(id, polly)).toEqual({ sent: true, id: "m" });
-    expect(to).toBe(JO);
+    expect(await sendMailingTest(id, polly)).toEqual({ sent: true, id: "m", to: JO });
+    // To the recipient's name, at the staff member's address.
+    expect(to).toBe(`"Polly Placeholder" <${JO}>`);
     expect(await sendMailingTest(id, polly + 1)).toBeUndefined();
     expect(await sendMailingTest(999, polly)).toBeUndefined();
   });

@@ -28,7 +28,7 @@ export const EMPTY_MAILING_DOC: MailingDoc = { type: "doc", content: [{ type: "p
 export const NOT_CONDITION = "!";
 
 /** Whether a recipient gets a part for `condition`: they meet it, or for one marked NOT_CONDITION, don't. */
-export function meetsCondition(recipient: MailingRecipientValues, condition: string): boolean {
+function meetsCondition(recipient: MailingRecipientValues, condition: string): boolean {
   return condition.startsWith(NOT_CONDITION)
     ? !recipient.meets.includes(condition.slice(NOT_CONDITION.length))
     : recipient.meets.includes(condition);

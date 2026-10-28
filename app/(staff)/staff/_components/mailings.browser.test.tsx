@@ -165,7 +165,7 @@ describe("MailingView", () => {
   it("once sent: when, from whom and its ask, its counts, its recipients in tabs with their answers, and the email", async () => {
     await view({});
     await expect.element(page.getByRole("heading", { level: 1 })).toHaveTextContent(mailing.title);
-    await expect.element(page.getByText(copy.states.sent)).toBeVisible();
+    await expect.element(page.getByText(copy.states.sent, { exact: true }).first()).toBeVisible();
     await expect
       .element(page.getByText(copy.sentLine("20 Oct 2026, 08:00", "Jo Example"), { exact: false }))
       .toBeVisible();
@@ -191,7 +191,7 @@ describe("MailingView", () => {
       mailing: { ...mailing, ask: null, askTitle: null, sentAt: null, tab: "bounced", page: 2, pages: 2 },
       written: { ...written, state: "cancelled" },
     });
-    await expect.element(page.getByText(copy.states.cancelled)).toBeVisible();
+    await expect.element(page.getByText(copy.states.cancelled, { exact: true }).first()).toBeVisible();
     await expect.element(page.getByText(copy.sentLine("1 Dec 2026, 09:00", "Jo Example"))).toBeVisible();
     await expect.element(page.getByRole("table")).toBeInTheDocument();
     expect(headings()).toHaveLength(4);
@@ -231,6 +231,42 @@ describe("MailingView", () => {
   });
 });
 
+describe("MailingView, for a mailing imported from Airtable", () => {
+  const mailings = staffCopy.mailings;
+  const imported = (props: Partial<Mailing> = {}) =>
+    render(<MailingView mailing={{ ...exampleMailing, ...props }} asks={[]} stop={noAction} reschedule={noAction} />);
+
+  it("is when it went, its counts, each recipient's outcome and how it was written, and that it has no text", async () => {
+    await imported();
+    await expect.element(page.getByRole("heading", { level: 1 })).toHaveTextContent(exampleMailing.title);
+    await expect.element(page.getByText(mailings.imported)).toBeVisible();
+    await expect.element(page.getByText(copy.importedLine("1 Oct 2026, 09:00"))).toBeVisible();
+    await expect.element(page.getByText(`2${copy.counts.sent}`)).toBeVisible();
+    await expect.element(page.getByText(mailings.noText)).toBeVisible();
+    await expect.element(page.getByText(copy.whoTitle)).not.toBeInTheDocument();
+    expect(headings()).toContain(mailings.recipientColumns.how);
+    await expect.element(page.getByRole("cell", { name: mailings.personalised })).toBeInTheDocument();
+    await expect.element(page.getByText(mailings.asWritten).first()).toBeInTheDocument();
+    await expect
+      .element(page.getByRole("link", { name: "Morag Example" }))
+      .toHaveAttribute("href", "/staff/politicians/8");
+  });
+
+  it("says when it hasn't been sent, and a status nobody knows any more as it's stored", async () => {
+    await imported({ sentAt: null, recipients: [{ ...exampleMailing.recipients[0], status: "queued" }] });
+    await expect.element(page.getByText(mailings.notSent)).toBeVisible();
+    await expect.element(page.getByRole("cell", { name: "queued" })).toBeInTheDocument();
+  });
+
+  it("pages its recipients, a hundred at a time, saying how many there are", async () => {
+    await imported({ recipientsTotal: 250, page: 2, pages: 3 });
+    await expect.element(page.getByText(mailings.recipientsCount(250))).toBeVisible();
+    await expect
+      .element(page.getByRole("link", { name: staffCopy.paging.next }))
+      .toHaveAttribute("href", `/staff/mailings/${exampleMailing.id}?page=3`);
+  });
+});
+
 describe("MailingFor", () => {
   const actions = {
     start: vi.fn(),
@@ -266,6 +302,6 @@ describe("MailingFor", () => {
         actions={actions}
       />,
     );
-    await expect.element(page.getByText(copy.states.sent)).toBeVisible();
+    await expect.element(page.getByText(copy.states.sent, { exact: true }).first()).toBeVisible();
   });
 });

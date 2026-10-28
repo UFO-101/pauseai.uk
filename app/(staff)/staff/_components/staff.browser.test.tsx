@@ -63,9 +63,8 @@ import EraseLink from "./EraseLink";
 import DeletePolitician from "./DeletePolitician";
 import PoliticiansList, { HouseTabs } from "./PoliticiansList";
 import { emptyPoliticiansSearch, examplePoliticiansPage } from "./PoliticianTable.examples";
-import MailingDetails from "./MailingDetails";
 import MailingsTable, { mailingColumns } from "./MailingsTable";
-import { exampleMailing, exampleMailings } from "./MailingsTable.examples";
+import { exampleMailings } from "./MailingsTable.examples";
 import ImportCard, { ImportCards } from "./ImportCard";
 import DevLogin from "./DevLogin";
 import KeepSignedIn from "./KeepSignedIn";
@@ -948,78 +947,6 @@ describe("MailingsTable", () => {
   it("says when there are none", async () => {
     await render(<MailingsTable mailings={[]} />);
     await expect.element(page.getByText(copy.none)).toBeVisible();
-  });
-});
-
-describe("MailingDetails", () => {
-  const copy = staffCopy.mailings;
-
-  it("is what the mailing was, that it has no text, and each recipient's outcome, linked to them", async () => {
-    const { rerender } = await render(<MailingDetails mailing={exampleMailing} />);
-    await expect.element(page.getByRole("heading", { level: 1 })).toHaveTextContent(exampleMailing.title);
-    await expect.element(page.getByText(copy.counts(2, 1))).toBeVisible();
-    await expect.element(page.getByText(copy.noText)).toBeVisible();
-    await expect.element(page.getByText(copy.imported)).toBeVisible();
-    await expect
-      .element(page.getByRole("link", { name: "Edinburgh conference" }).first())
-      .toHaveAttribute("href", "/staff/politicians?ask=edinburgh-conference-2026");
-    const cells = (name: string) =>
-      page
-        .getByRole("row")
-        .filter({ hasText: name })
-        .getByRole("cell")
-        .all()
-        .map((c) => c.element().textContent);
-    expect(cells("Polly")).toEqual([
-      "Polly Placeholder",
-      staffCopy.letters.status.sent,
-      "1 Oct 2026",
-      "3 Oct 2026",
-      copy.personalised,
-    ]);
-    expect(cells("Morag")[4]).toBe(copy.asWritten);
-    expect(cells("Dora")).toEqual(["Dora Dummy", staffCopy.letters.status.not_sent, "–", "–", copy.asWritten]);
-    await expect
-      .element(page.getByRole("link", { name: "Morag Example" }))
-      .toHaveAttribute("href", "/staff/politicians/8");
-    // A status nobody knows any more, as it's stored.
-    await rerender(
-      <MailingDetails
-        mailing={{ ...exampleMailing, recipients: [{ ...exampleMailing.recipients[0], status: "queued" }] }}
-      />,
-    );
-    expect(cells("Polly")[1]).toBe("queued");
-  });
-
-  it("pages its recipients, a hundred at a time, saying how many there are", async () => {
-    await render(<MailingDetails mailing={{ ...exampleMailing, recipientsTotal: 250, page: 2, pages: 3 }} />);
-    await expect.element(page.getByText(copy.recipientsCount(250))).toBeVisible();
-    await expect
-      .element(page.getByRole("link", { name: staffCopy.paging.next }))
-      .toHaveAttribute("href", `/staff/mailings/${exampleMailing.id}?page=3`);
-    await expect
-      .element(page.getByRole("link", { name: staffCopy.paging.previous }))
-      .toHaveAttribute("href", `/staff/mailings/${exampleMailing.id}`);
-  });
-
-  it("says when there's no ask, and when it isn't sent yet", async () => {
-    await render(
-      <MailingDetails
-        mailing={{
-          ...exampleMailings[1],
-          tab: "all",
-          recipients: [],
-          recipientsTotal: 0,
-          page: 1,
-          pages: 1,
-          pageSize: 100,
-        }}
-      />,
-    );
-    await expect.element(page.getByText(copy.noAsk)).toBeVisible();
-    await expect.element(page.getByText(copy.notSent)).toBeVisible();
-    await expect.element(page.getByText(copy.imported)).not.toBeInTheDocument();
-    await expect.element(page.getByText(copy.noRecipients)).toBeVisible();
   });
 });
 
