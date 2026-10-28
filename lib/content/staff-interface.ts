@@ -166,20 +166,20 @@ export const staffCopy = {
       states: {
         email: {
           "luma-calendar": {
-            following: "Luma: contact",
-            unsubscribed: "Luma: unsubscribed",
-            "not-following": "Luma: not a contact",
+            following: "⁂ Email, Luma: contact",
+            unsubscribed: "⁂ Email, Luma: unsubscribed",
+            "not-following": "⁂ Email, Luma: not a contact",
           },
           "pauseai-updates": {
-            asked: "PauseAI global: asked",
-            joined: "PauseAI global: joined before July 2026",
-            declined: "PauseAI global: declined",
-            unsubscribed: "PauseAI global: unsubscribed",
-            removed: "PauseAI global: removed",
+            asked: "⁂ Email, PauseAI global: asked",
+            joined: "⁂ Email, PauseAI global: joined before July 2026",
+            declined: "⁂ Email, PauseAI global: declined",
+            unsubscribed: "⁂ Email, PauseAI global: unsubscribed",
+            removed: "⁂ Email, PauseAI global: removed",
           },
           "site-forms": {
-            asked: "PauseAI UK: agreed",
-            declined: "PauseAI UK: didn't agree",
+            asked: "⁂ Email, PauseAI UK: agreed",
+            declined: "⁂ Email, PauseAI UK: didn't agree",
           },
         },
         phone: {
@@ -230,15 +230,15 @@ export const staffCopy = {
     subscriptions: {
       topics: {
         email: {
-          "luma-calendar": "Luma",
-          "pauseai-updates": "PauseAI global",
-          "site-forms": "PauseAI UK",
+          "luma-calendar": "⁂ Luma email",
+          "pauseai-updates": "⁂ PauseAI global email",
+          "site-forms": "⁂ PauseAI UK email",
         },
         phone: {
-          "luma-calendar": "⁂ Luma by phone",
+          "luma-calendar": "⁂ Luma phone",
           volunteering: "⁂ Volunteer phone",
-          "site-forms": "⁂ PauseAI UK by phone",
-          "march-day": "⁂ March day texts",
+          "site-forms": "⁂ PauseAI UK phone",
+          "march-day": "⁂ March day phone",
         },
       } as Record<Channel, Record<string, string>>,
       // A yes that an unsubscribe we can't see may have undone.
@@ -283,20 +283,20 @@ export const staffCopy = {
         // By channel: each topic's name, and the answers. Unsure is a yes that an unsubscribe we can't see may have undone.
         topics: {
           email: {
-            "luma-calendar": "Luma calendar emails",
-            "pauseai-updates": "PauseAI global updates",
-            "site-forms": "PauseAI UK updates",
+            "luma-calendar": "⁂ Luma calendar, by email",
+            "pauseai-updates": "⁂ PauseAI global updates, by email",
+            "site-forms": "⁂ PauseAI UK updates, by email",
           },
           phone: {
             "luma-calendar": "⁂ Luma calendar, by phone",
-            volunteering: "⁂ Volunteer messages",
+            volunteering: "⁂ Volunteer messages, by phone",
             "site-forms": "⁂ PauseAI UK updates, by phone",
-            "march-day": "⁂ Texts on the march's day",
+            "march-day": "⁂ March day updates, by phone",
           },
         } as Record<Channel, Record<string, string>>,
         answers: {
           email: { yes: "Will email", no: "Won't email", unsure: "Don't know" },
-          phone: { yes: "⁂ May contact", no: "⁂ Won't contact", unsure: "Don't know" },
+          phone: { yes: "⁂ Will phone", no: "⁂ Won't phone", unsure: "Don't know" },
         },
         why: "details",
         // The short reason under the answer, by topic and reason, with when.
@@ -335,19 +335,27 @@ export const staffCopy = {
           "march-2026-11": "the march sign-up",
         } as Record<string, string>,
         otherForm: "their newest form",
-        // Behind "Why?": how we know, and what we can't.
+        // Behind "Why?": how we know, and what we can't, by channel and topic.
         details: {
-          "luma-calendar":
-            "Luma sends emails to the calendar's 'contacts'. Registering for an event or following the calendar makes someone a contact; unsubscribing from a Luma email takes them off the list, as does being removed or blocked. We hear of an unsubscribe at once, but annoyingly we have to poll for hours to find out about anyone coming back. Confusingly, unfollowing the calendar doesn't change whether Luma emails them.",
-          "pauseai-updates":
-            "“Keep me informed” on the join form has been optional since 30 June 2026. Before then everyone who joined was on the list. Unsubscribes since joining are in CiviCRM, which we don't read yet, so we usually have to put “Don't know” here.",
-          "site-forms":
-            "There are several UK specific forms which have ways of opting in to contact. For example, when emailing your MP or signing up on this site to a march.",
-          volunteering:
-            "⁂ The join form asks for a phone number only of those who choose to volunteer regularly, for volunteers' messages. A number from an older form, given with another choice, is a Don't know.",
-          "march-day":
-            "⁂ The march sign-up asks for a number for text updates on the day. Without the box ticked, we can use it only until the day is over.",
-        } as Record<string, string>,
+          email: {
+            "luma-calendar":
+              "Luma sends emails to the calendar's 'contacts'. Registering for an event or following the calendar makes someone a contact; unsubscribing from a Luma email takes them off the list, as does being removed or blocked. We hear of an unsubscribe at once, but annoyingly we have to poll for hours to find out about anyone coming back. Confusingly, unfollowing the calendar doesn't change whether Luma emails them.",
+            "pauseai-updates":
+              "“Keep me informed” on the join form has been optional since 30 June 2026. Before then everyone who joined was on the list. Unsubscribes since joining are in CiviCRM, which we don't read yet, so we usually have to put “Don't know” here.",
+            "site-forms":
+              "There are several UK specific forms which have ways of opting in to contact. For example, when emailing your MP or signing up on this site to a march.",
+          },
+          phone: {
+            "luma-calendar":
+              "⁂ A number given when registering for a Luma event. We use it only while that Luma account is a contact of the calendar: unsubscribing from a Luma email stops it too.",
+            "site-forms":
+              "There are several UK specific forms which have ways of opting in to contact. For example, when emailing your MP or signing up on this site to a march.",
+            volunteering:
+              "⁂ The join form asks for a phone number only of those who choose to volunteer regularly, for volunteers' messages. A number from an older form, given with another choice, is a Don't know.",
+            "march-day":
+              "⁂ The march sign-up asks for a number for text updates on the day. Without the box ticked, we can use it only until the day is over.",
+          },
+        } as Record<Channel, Record<string, string>>,
         // One tile in place of the topics', when the address is blocked.
         blocked: "Won't email: address blocked",
         blockedBecause: {

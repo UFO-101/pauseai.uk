@@ -364,7 +364,7 @@ test("a member who re-joined and ticked Keep me informed is on the updates", asy
     page.getByText(copy.detail.permissions.reasons["pauseai-updates"].asked("11 Oct 2026"), { exact: false }),
   ).toBeVisible();
   await page.getByRole("button", { name: copy.detail.permissions.why }).first().click();
-  await expect(page.getByText(copy.detail.permissions.details["pauseai-updates"])).toBeVisible();
+  await expect(page.getByText(copy.detail.permissions.details.email["pauseai-updates"])).toBeVisible();
   await frame(page, "Rhea's page: asked for the updates on re-joining");
 });
 

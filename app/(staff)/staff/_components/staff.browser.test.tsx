@@ -3141,15 +3141,16 @@ describe("PermissionTiles", () => {
     await render(<PermissionTiles permissions={exampleSupporterDetails.permissions} />);
     expect(tiles().map((tile) => tile.dataset.send)).toEqual(["no", "yes", "no"]);
     expect(tiles()[0].textContent).toBe(
-      `${copy.topics.email["luma-calendar"]} · jane@example.com: ${copy.answers.email.no}?${copy.reasons["luma-calendar"].unsubscribed("12 Oct 2026")}${copy.details["luma-calendar"]}`,
+      `${copy.topics.email["luma-calendar"]} · jane@example.com: ${copy.answers.email.no}?${copy.reasons["luma-calendar"].unsubscribed("12 Oct 2026")}${copy.details.email["luma-calendar"]}`,
     );
     expect(tiles()[1].querySelector("span > span")!.textContent).toBe(
       `${copy.topics.email["site-forms"]} · jane@example.com: ${copy.answers.email.yes}`,
     );
-    // A phone number's topic and answer are in a phone's words.
+    // A phone number's topic, answer and how we know are in a phone's words.
     expect(tiles()[2].querySelector("span > span")!.textContent).toBe(
       `${copy.topics.phone["luma-calendar"]} · +447700900001: ${copy.answers.phone.no}`,
     );
+    expect(tiles()[2].textContent).toContain(copy.details.phone["luma-calendar"]);
     // The ? at the top right, out of the reason's way.
     const top = tiles()[0].querySelector("button")!.getBoundingClientRect().top;
     expect(top).toBeLessThan(tiles()[0].querySelector("[class*=reason]")!.getBoundingClientRect().top);
@@ -3158,9 +3159,9 @@ describe("PermissionTiles", () => {
     expect(tiles()[0].firstElementChild!.className).not.toMatch(/green|amber|red|undefined/);
     expect(tiles()[0].querySelector("svg")).toBeNull();
     // How we know shows when the ? is clicked.
-    await expect.element(page.getByText(copy.details["luma-calendar"]).first()).not.toBeVisible();
+    await expect.element(page.getByText(copy.details.email["luma-calendar"]).first()).not.toBeVisible();
     await page.getByRole("button", { name: copy.why }).first().click();
-    await expect.element(page.getByText(copy.details["luma-calendar"]).first()).toBeVisible();
+    await expect.element(page.getByText(copy.details.email["luma-calendar"]).first()).toBeVisible();
   });
 
   it("names the form whose box answered for our forms, or the newest form for one it has no name for", async () => {
@@ -3206,7 +3207,7 @@ describe("PermissionTiles", () => {
     );
     const [, , phone] = exampleMemberDetails.permissions;
     await render(<PermissionTiles permissions={[{ ...phone, send: "unsure", reason: "gave-number" }]} />);
-    expect(tiles().at(-1)!.querySelector("span > span")!.textContent).toContain(copy.answers.email.unsure);
+    expect(tiles().at(-1)!.querySelector("span > span")!.textContent).toContain(copy.answers.phone.unsure);
   });
 
   it("names each address, and falls back to the reason's own name", async () => {

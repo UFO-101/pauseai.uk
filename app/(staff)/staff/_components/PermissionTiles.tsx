@@ -52,7 +52,7 @@ function Tile({ permission }: { permission: ContactPermission }) {
         className={styles.popover}
         style={{ positionAnchor: `--${id}` } as React.CSSProperties}
       >
-        {copy.details[permission.topic]}
+        {copy.details[permission.channel][permission.topic]}
       </div>
     </li>
   );
