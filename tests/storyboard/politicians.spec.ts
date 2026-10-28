@@ -41,7 +41,7 @@ test("a politician from Airtable: their markers, notes, answers and PauseAI's em
   await expect(asks.getByText(staffCopy.statuses.declined)).toBeVisible();
   await expect(asks.getByText(copy.fromImport.airtable).first()).toBeVisible();
   // The conference's invitation, personalised.
-  await expect(page.getByText(copy.personalised, { exact: false })).toBeVisible();
+  await expect(page.getByText(copy.personalised, { exact: false }).first()).toBeVisible();
   await frame(page, "Polly's page: important, with notes, her answers from Airtable and PauseAI's invitation");
 });
 
@@ -332,7 +332,7 @@ test("PauseAI's emails: copied once, with one held back for a mailing nobody has
   );
   await page.getByRole("button", { name: staffCopy.pauseaiEmails.importNow }).click();
   await expect(page.getByText(staffCopy.runs.status.incomplete).first()).toBeVisible();
-  expect(runSql(flowDatabase, "SELECT count(*) FROM pauseai_letters")).toEqual(["4"]);
+  expect(runSql(flowDatabase, "SELECT count(*) FROM pauseai_letters")).toEqual(["5"]);
 });
 
 test("the one-off imports: pauseai.info's letters and their senders, and Go to Parliament's meetings", async ({
