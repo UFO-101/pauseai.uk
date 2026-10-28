@@ -904,7 +904,7 @@ describe("MailingsTable", () => {
 
   it("lists each mailing: its page, its ask's politicians, where it came from, when, and its counts", async () => {
     await render(<MailingsTable mailings={exampleMailings} />);
-    expect(cells("Edinburgh")).toEqual([
+    expect(cells("Nov 26")).toEqual([
       "Edinburgh Conference Nov 26 Invitation",
       "Edinburgh conference",
       copy.imported,
@@ -913,6 +913,18 @@ describe("MailingsTable", () => {
       "1",
       "1",
       "1",
+      "1",
+    ]);
+    expect(cells("AI safety conference")).toEqual([
+      "Invitation: AI safety conference, Edinburgh",
+      "Edinburgh conference",
+      "Jo Example",
+      "20 Oct 2026",
+      "11",
+      "1",
+      "1",
+      "2",
+      "3",
     ]);
     expect(cells("Ben Lake")).toEqual([
       "Ben Lake October 2026 Debate",
@@ -923,12 +935,13 @@ describe("MailingsTable", () => {
       "–",
       "–",
       "–",
+      "–",
     ]);
     await expect
       .element(page.getByRole("link", { name: "Edinburgh Conference Nov 26 Invitation" }))
       .toHaveAttribute("href", "/staff/mailings/2");
     await expect
-      .element(page.getByRole("link", { name: "Edinburgh conference" }))
+      .element(page.getByRole("link", { name: "Edinburgh conference" }).first())
       .toHaveAttribute("href", "/staff/politicians?ask=edinburgh-conference-2026");
   });
 
@@ -948,7 +961,7 @@ describe("MailingDetails", () => {
     await expect.element(page.getByText(copy.noText)).toBeVisible();
     await expect.element(page.getByText(copy.imported)).toBeVisible();
     await expect
-      .element(page.getByRole("link", { name: "Edinburgh conference" }))
+      .element(page.getByRole("link", { name: "Edinburgh conference" }).first())
       .toHaveAttribute("href", "/staff/politicians?ask=edinburgh-conference-2026");
     const cells = (name: string) =>
       page
@@ -3502,8 +3515,12 @@ describe("each list's download values and contact cards", () => {
     expect(typeof row.history).toBe("string");
   });
 
-  it("mailings: copied from Airtable, or no sender recorded", () => {
-    expect(exampleMailings.map((m) => values(mailingColumns, m).sender)).toEqual([null, staffCopy.mailings.imported]);
+  it("mailings: from whom, copied from Airtable, or no sender recorded", () => {
+    expect(exampleMailings.map((m) => values(mailingColumns, m).sender)).toEqual([
+      "Jo Example",
+      null,
+      staffCopy.mailings.imported,
+    ]);
   });
 
   it("politicians: every column, and as cards, with what they have", async () => {

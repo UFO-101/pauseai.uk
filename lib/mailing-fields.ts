@@ -4,7 +4,6 @@
 
 /** The merge fields of a mailing to politicians. */
 export const POLITICIAN_FIELDS = ["salutation", "name", "constituency", "party", "house"] as const;
-export type PoliticianField = (typeof POLITICIAN_FIELDS)[number];
 
 /** A condition that someone gave an answer to an ask: "<ask>:<status>". */
 export function answerCondition(ask: string, status: string): string {

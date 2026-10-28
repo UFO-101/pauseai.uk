@@ -35,7 +35,7 @@ const STATE_TONES: Record<MailingState, TagTone | undefined> = {
 };
 
 /** Each merge field's label, and each answer to an ask's, as a part only for them says it. */
-export function letterLabels(asks: Ask[]): { fields: Record<string, string>; conditions: Record<string, string> } {
+function letterLabels(asks: Ask[]): { fields: Record<string, string>; conditions: Record<string, string> } {
   const conditions: Record<string, string> = {};
   for (const ask of asks) {
     for (const [status, words] of Object.entries(staffCopy.statuses)) {

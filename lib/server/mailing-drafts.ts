@@ -61,7 +61,7 @@ export type SaveResult = { saved: true; version: number } | { saved: false; reas
  * The largest file a mailing can attach: it comes in one request, and
  * Netlify takes requests of up to 6MB.
  */
-export const MAX_ATTACHMENT_BYTES = 4 * 1024 * 1024;
+const MAX_ATTACHMENT_BYTES = 4 * 1024 * 1024;
 
 const SELECT_WRITTEN = `
   SELECT m.id::int AS id, m.filter, m.subject, m.body, m.ask, m.created_by AS "createdBy", m.sent_from AS "sentFrom",

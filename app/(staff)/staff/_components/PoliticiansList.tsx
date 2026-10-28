@@ -39,15 +39,7 @@ export type ChangeWho = (form: FormData) => Promise<void>;
  * them; or, after a draft's Change who (`search.mailing`), make that
  * draft go to them instead, by `changeWho`.
  */
-export function MailThese({
-  search,
-  total,
-  changeWho,
-}: {
-  search: PoliticiansSearch;
-  total: number;
-  changeWho: ChangeWho;
-}) {
+function MailThese({ search, total, changeWho }: { search: PoliticiansSearch; total: number; changeWho: ChangeWho }) {
   const who = storedFilter("politicians", search).params;
   if (!search.mailing) {
     return (

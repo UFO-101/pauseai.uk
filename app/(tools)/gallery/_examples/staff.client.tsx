@@ -13,6 +13,7 @@ import PoliticianTable from "@/app/(staff)/staff/_components/PoliticianTable";
 import {
   emptyPoliticiansSearch,
   exampleAsks,
+  examplePoliticiansPage,
   examplePolitician,
   examplePoliticianHistory,
 } from "@/app/(staff)/staff/_components/PoliticianTable.examples";
@@ -42,7 +43,7 @@ import {
   exampleMailings,
   exampleScheduled,
 } from "@/app/(staff)/staff/_components/MailingsTable.examples";
-import { MailThese } from "@/app/(staff)/staff/_components/PoliticiansList";
+import PoliticiansList from "@/app/(staff)/staff/_components/PoliticiansList";
 import { Controlled, Logged } from "../_components/wiring";
 
 /** The table of politicians: one function for both examples. */
@@ -444,14 +445,15 @@ export function MailingForExample({ kind }: { kind: "draft" | "written" }) {
   );
 }
 
-/** Mail these, over a list of 150; and after a draft's Change who, the button that changes who it's to. */
-export function MailTheseExample({ mailing }: { mailing: string }) {
+/** The politicians list after a draft's Change who: its button makes the draft go to these. */
+export function ChangeWhoListExample() {
   return (
     <Logged>
       {(log) => (
-        <MailThese
-          search={{ ...emptyPoliticiansSearch, house: "commons", mailing }}
-          total={150}
+        <PoliticiansList
+          list={examplePoliticiansPage}
+          search={{ ...emptyPoliticiansSearch, house: "commons", mailing: "12" }}
+          asks={exampleAsks}
           changeWho={log("changeMailingWho") as (form: FormData) => Promise<void>}
         />
       )}

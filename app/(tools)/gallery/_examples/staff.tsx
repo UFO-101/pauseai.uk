@@ -3,7 +3,6 @@
 // politicians, letters, runs and changes. Their links go to /staff pages,
 // which send anyone without a session to the login page.
 import { Button } from "@/components/ui/Button";
-import { changeMailingWho } from "@/app/(staff)/staff/mailing-actions";
 import ChangesTable from "@/app/(staff)/staff/_components/ChangesTable";
 import EmailBlockFilters from "@/app/(staff)/staff/_components/EmailBlockFilters";
 import FilterBar from "@/app/(staff)/staff/_components/ui/FilterBar";
@@ -110,7 +109,7 @@ import {
   MailingsOverviewExample,
   MailingViewExample,
   MailingWriterExample,
-  MailTheseExample,
+  ChangeWhoListExample,
   PoliticianDetailsExample,
   PoliticianTableEmptyExample,
   PoliticianTableExample,
@@ -148,6 +147,9 @@ const exampleEventChoices = [
 const parties = ["Conservative", "Green", "Labour", "Liberal Democrat"];
 
 /** The politicians list's filters, none chosen. */
+/** The list's Change who action, for the examples that show Mail these, which never call it. */
+const noChangeWho = async () => {};
+
 const EMPTY_POLITICIAN_FILTERS = {
   q: "",
   house: "",
@@ -1198,11 +1200,19 @@ export const staff: Group = {
       file: "app/(staff)/staff/_components/PoliticiansList.tsx",
       variants: [
         {
+          label: "After a draft's Change who: the button makes the draft go to these",
+          render: () => (
+            <StaffPage as="div">
+              <ChangeWhoListExample />
+            </StaffPage>
+          ),
+        },
+        {
           label: "A search's page of politicians, with more in other houses and out of office",
           render: () => (
             <StaffPage as="div">
               <PoliticiansList
-                changeWho={changeMailingWho}
+                changeWho={noChangeWho}
                 list={{ ...examplePoliticiansPage, total: 150, pages: 2, outOfOffice: 3, otherHouses: 2, tests: 1 }}
                 search={{ ...EMPTY_POLITICIAN_FILTERS, q: "pol" }}
                 asks={exampleAsks}
@@ -1215,7 +1225,7 @@ export const staff: Group = {
           render: () => (
             <StaffPage as="div">
               <PoliticiansList
-                changeWho={changeMailingWho}
+                changeWho={noChangeWho}
                 list={{ ...examplePoliticiansPage, politicians: [], total: 0, closest: [examplePolitician] }}
                 search={{ ...EMPTY_POLITICIAN_FILTERS, q: "Polly Plaseholder" }}
                 asks={exampleAsks}
@@ -1455,28 +1465,6 @@ export const staff: Group = {
           render: () => (
             <StaffPage as="div">
               <MailingButtonsExample id={6} />
-            </StaffPage>
-          ),
-        },
-      ],
-    },
-    {
-      name: "MailThese",
-      file: "app/(staff)/staff/_components/PoliticiansList.tsx",
-      variants: [
-        {
-          label: "Mail these 150, over the politicians list",
-          render: () => (
-            <StaffPage as="div">
-              <MailTheseExample mailing="" />
-            </StaffPage>
-          ),
-        },
-        {
-          label: "After a draft's Change who: use these for the draft",
-          render: () => (
-            <StaffPage as="div">
-              <MailTheseExample mailing="12" />
             </StaffPage>
           ),
         },
