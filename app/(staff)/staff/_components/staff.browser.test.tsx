@@ -3618,7 +3618,7 @@ describe("SupporterFilters", () => {
     );
     expect(choices.at(-3)).toEqual([
       copy.subscriptions.blocked,
-      "/staff/supporters?activity=registered&subscription=email:blocked",
+      "/staff/supporters?activity=registered&subscription=email%3Ablocked",
     ]);
   });
 
