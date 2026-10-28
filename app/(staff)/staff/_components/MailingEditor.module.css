@@ -1,0 +1,147 @@
+/* A mailing's editor: the toolbar on top, then the letter, as the letter's
+   editor on Email your MP (LetterEditor.module.css), with merge fields as
+   chips and parts for only some recipients in a box. */
+.editorFrame {
+  position: relative;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+}
+
+.editorFrame:focus-within {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-offset);
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  border-bottom: 1px solid var(--border-strong);
+}
+
+.toolbar button,
+.toolbar select {
+  min-width: 2.25rem;
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  font: inherit;
+  font-size: var(--text-sm);
+  background: var(--surface);
+  color: inherit;
+  cursor: pointer;
+}
+
+.toolbar button:hover {
+  border-color: var(--accent);
+}
+
+.toolbar button[aria-pressed="true"] {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--white);
+}
+
+.insert {
+  margin-left: var(--space-2);
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+/* A button that puts a field in looks like the field it puts in. */
+.toolbar .fieldButton {
+  border-radius: var(--radius-pill);
+  background: var(--status-blue-bg);
+  border-color: var(--status-blue-bg);
+  color: var(--status-blue);
+  font-weight: 600;
+}
+
+.editor {
+  min-height: 14rem;
+  padding: var(--space-4);
+  font-size: var(--text-md);
+  line-height: 1.6;
+  outline: none;
+}
+
+.editor p {
+  margin: 0 0 var(--space-3);
+}
+
+.editor ul {
+  margin: 0 0 var(--space-3);
+  padding-left: var(--space-5);
+}
+
+.editor li p {
+  margin: 0;
+}
+
+.field {
+  padding: 0 var(--space-1);
+  border-radius: var(--radius-sm);
+  background: var(--status-blue-bg);
+  color: var(--status-blue);
+  font-weight: 600;
+  cursor: grab;
+}
+
+/* A field picked out, as by clicking it or arrowing onto it. */
+.field:global(.ProseMirror-selectednode) {
+  outline: 2px solid var(--status-blue);
+}
+
+.onlyFor {
+  margin: 0 0 var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border: 1px dashed var(--status-green);
+  border-radius: var(--radius-md);
+  background: var(--status-green-bg);
+}
+
+.editor .onlyForLabel {
+  margin: 0 0 var(--space-1);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--status-green);
+  user-select: none;
+}
+
+.onlyFor > div > :last-child {
+  margin-bottom: 0;
+}
+
+/* The fields typing { offers, under the cursor. */
+.picker {
+  position: absolute;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 12rem;
+  margin-top: var(--space-1);
+  padding: var(--space-1);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  box-shadow: 0 4px 12px var(--shadow-strong);
+}
+
+.picker button {
+  padding: var(--space-2) var(--space-3);
+  border: 0;
+  border-radius: var(--radius-sm);
+  font: inherit;
+  text-align: left;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+}
+
+.picker button:hover,
+.picker button:focus-visible {
+  background: var(--table-stripe);
+}

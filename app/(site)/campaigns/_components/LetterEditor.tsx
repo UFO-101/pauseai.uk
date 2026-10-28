@@ -1,7 +1,7 @@
 "use client";
 
 import { EditorContent, useEditor, useEditorState, type Editor } from "@tiptap/react";
-import StarterKit from "@tiptap/starter-kit";
+import { letterExtensions } from "@/lib/letter-extensions";
 import type { LetterDoc } from "@/lib/letter-format";
 import styles from "./LetterEditor.module.css";
 
@@ -12,24 +12,6 @@ type Props = {
   labelledBy: string;
   describedBy: string;
 };
-
-// Only what a letter may have (lib/letter-format.ts): paragraphs, bold,
-// italic and bullet lists. Anything else pasted in becomes plain paragraphs.
-const extensions = [
-  StarterKit.configure({
-    blockquote: false,
-    code: false,
-    codeBlock: false,
-    heading: false,
-    horizontalRule: false,
-    link: false,
-    orderedList: false,
-    strike: false,
-    underline: false,
-    // It keeps an empty paragraph at the end, which would be sent.
-    trailingNode: false,
-  }),
-];
 
 /** Bold, italic and bullet points: the formatting a letter may have (lib/letter-format.ts). */
 function Toolbar({ editor, labelledBy }: { editor: Editor; labelledBy: string }) {
@@ -82,7 +64,7 @@ function Toolbar({ editor, labelledBy }: { editor: Editor; labelledBy: string })
 /** The letter, with bold, italic and bullets, and no preview: what you see is what's sent. */
 export default function LetterEditor({ initial, onChange, labelledBy, describedBy }: Props) {
   const editor = useEditor({
-    extensions,
+    extensions: letterExtensions,
     content: initial,
     // Rendered on the server too, where there's no editor yet.
     immediatelyRender: false,

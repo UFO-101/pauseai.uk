@@ -23,7 +23,10 @@ import RemoveAccountForm from "@/app/(staff)/staff/_components/RemoveAccountForm
 import StaffAccountsTable from "@/app/(staff)/staff/_components/StaffAccountsTable";
 import UnblockForm from "@/app/(staff)/staff/_components/UnblockForm";
 import { exampleFailedRun, exampleHeldSync, exampleRun } from "@/app/(staff)/staff/_components/RunList.examples";
-import { Logged } from "../_components/wiring";
+import type { JSONContent } from "@tiptap/react";
+import { useId } from "react";
+import MailingEditor from "@/app/(staff)/staff/_components/MailingEditor";
+import { Controlled, Logged } from "../_components/wiring";
 
 /** The table of politicians: one function for both examples. */
 function LoggedPoliticianTable({ politicians }: { politicians: Politician[] }) {
@@ -241,5 +244,66 @@ export function EraseFormExample() {
     <Logged>
       {(log) => <EraseForm supporter={{ id: 7, name: "Jane Example" }} action={log("eraseSupporterNow")} />}
     </Logged>
+  );
+}
+
+/** The merge fields and who a part can be for, as a mailing to politicians offers them. */
+const mailingFields = [
+  { id: "salutation", label: "salutation" },
+  { id: "name", label: "name" },
+  { id: "constituency", label: "constituency" },
+];
+const mailingConditions = [
+  { id: "signed:frontier-ai-letter", label: "signed the Frontier AI letter" },
+  { id: "going:edinburgh-conference-2026", label: "are going to the Edinburgh conference" },
+];
+
+/** An invitation with a salutation, and a thank-you only for those who signed. */
+const mailingLetter: JSONContent = {
+  type: "doc",
+  content: [
+    {
+      type: "paragraph",
+      content: [
+        { type: "text", text: "Dear " },
+        { type: "field", attrs: { field: "salutation" } },
+        { type: "text", text: "," },
+      ],
+    },
+    {
+      type: "paragraph",
+      content: [{ type: "text", text: "I'm writing to invite you to our conference on AI safety in Edinburgh." }],
+    },
+    {
+      type: "onlyFor",
+      attrs: { condition: "signed:frontier-ai-letter" },
+      content: [
+        {
+          type: "paragraph",
+          content: [{ type: "text", text: "Thank you again for signing our open letter to the Prime Minister." }],
+        },
+      ],
+    },
+    { type: "paragraph", content: [{ type: "text", text: "Yours sincerely," }] },
+  ],
+};
+
+export function MailingEditorExample() {
+  const label = useId();
+  return (
+    <Controlled initial={mailingLetter} show={(doc) => JSON.stringify(doc)}>
+      {(value, set) => (
+        <>
+          <p id={label}>Letter</p>
+          <MailingEditor
+            initial={value}
+            onChange={set}
+            fields={mailingFields}
+            conditions={mailingConditions}
+            labelledBy={label}
+          />
+        </>
+      )}
+    </Controlled>
   );
 }

@@ -653,6 +653,22 @@ export const staffCopy = {
     // Over a mailing's recipients: how many, and how many of those replied.
     counts: (sent: number, replied: number) => `Sent to ${sent}; ${replied} replied.`,
   },
+  // A mailing's editor: the letter, with merge fields and parts only some recipients get.
+  mailingEditor: {
+    bold: "⁂ Bold",
+    italic: "⁂ Italic",
+    bulletList: "⁂ Bullet point",
+    // Before the buttons that put a merge field at the cursor.
+    insert: "⁂ Insert",
+    // The menu that wraps the paragraphs at the cursor in a part only some get.
+    onlyFor: "⁂ Only for…",
+    // On the box round such a part: who gets it.
+    onlyForLabel: (who: string) => `⁂ Only for those who ${who}`,
+    // Takes the part at the cursor out of its box, so everyone gets it.
+    forEveryone: "⁂ For everyone",
+    // The menu typing { opens, of the merge fields.
+    pickField: "⁂ Insert a field",
+  },
   // The asks page: each ask, its kind and date, and how many gave each answer.
   asks: {
     title: "Asks",

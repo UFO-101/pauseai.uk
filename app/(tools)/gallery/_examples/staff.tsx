@@ -100,6 +100,7 @@ import {
   HeldSyncExample,
   ImportJobPageExample,
   JobActionsExample,
+  MailingEditorExample,
   PoliticianDetailsExample,
   PoliticianTableEmptyExample,
   PoliticianTableExample,
@@ -1206,6 +1207,20 @@ export const staff: Group = {
                 search={{ ...EMPTY_POLITICIAN_FILTERS, q: "Polly Plaseholder" }}
                 asks={exampleAsks}
               />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "MailingEditor",
+      file: "app/(staff)/staff/_components/MailingEditor.tsx",
+      variants: [
+        {
+          label: "A letter with a merge field and a part only for those who signed; type { for the fields",
+          render: () => (
+            <StaffPage as="div">
+              <MailingEditorExample />
             </StaffPage>
           ),
         },
