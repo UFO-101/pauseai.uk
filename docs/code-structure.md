@@ -314,6 +314,12 @@ brought them under:
   each up by ID in a loop, declared with a small `ROWS`, so the outer query
   is planned as if there are few (`supporters_added()`).
 
+A migration can't be changed once it's in, so the one fix left for a costly
+one is the statistics: `migrate()` analyses every table Postgres hasn't yet
+before each migration, as autovacuum has a live database's. Without that,
+creating `supporters_list` in 0045 and 0047 cost over 100,000, and a
+migration's test that runs every later migration timed out in CI.
+
 Beyond that, no speculative indexes: one costs every write to its table and
 is easy to add later, when a query that's actually used turns out slow.
 

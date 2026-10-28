@@ -452,6 +452,8 @@
    everything we hold, each folded, above the erase button. */
 .foot {
   display: grid;
+  /* As narrow as the window, a wide table scrolling inside its row, not widening the page. */
+  grid-template-columns: minmax(0, 1fr);
   margin-top: var(--space-8);
   border-top: 1px solid var(--border-strong);
   font-size: var(--text-sm);

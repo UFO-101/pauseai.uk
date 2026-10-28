@@ -1,14 +1,16 @@
 # Mailings
 
 Staff filter a list, press a button, write a mailing and schedule it.
-This plan builds what every mailing shares, sent to a fake channel. The
-channels come after, each in its own plan:
+This plan builds what every mailing shares, up to scheduling. Each
+channel's real sending comes after, in its own plan:
 
 - `plans/politician-email.md`: politicians, from a staff member's Gmail.
 - `plans/supporters-email.md`: supporters, by email.
-- `plans/supporters-whatsapp.md`: supporters, by WhatsApp.
+- `plans/supporters-phone.md`: supporters, by text and WhatsApp.
 
-One pull request. Nothing outside blocks it.
+One pull request. Nothing outside blocks it. Once it's merged, staff on
+the live site can make a mailing, dry-run it and test-send it to
+themselves; scheduling turns on for a channel when its plan lands.
 
 ## What's there
 
@@ -37,7 +39,7 @@ mailings ──┬── pauseai_letters      politicians (exists)
 ```
 
 - **`mailings`** gains: audience (`politicians`, `supporters`), channel
-  (`email`, `whatsapp`, `fixture`), the stored filter, the template and
+  (`email`, `whatsapp`), the stored filter, the template and
   what it binds, who made it, the sender, when it's due, and its state
   (`draft`, `scheduled`, `sending`, `sent`, `cancelled`). Imported
   mailings are `politicians` and `email`, and a CHECK lets only them lack
@@ -61,6 +63,9 @@ when sent, so a change to the renderer can't change it.
 - **Every send is checked again at send time.** Supporters by
   `contact_permission()` for the mailing's topic; politicians by blocks
   and being in office. Anyone who fails is skipped, with the reason.
+- **Who can send is who can see the list.** Any staff account can mail
+  politicians; only one with the `supporters` permission can mail
+  supporters. No new permission.
 - **A stored filter is read strictly.** A URL drops what it doesn't
   know; a mailing refuses the whole filter and says which value failed,
   so a renamed topic or deleted event can't widen the audience.
@@ -76,24 +81,29 @@ when sent, so a change to the renderer can't change it.
    frontier-ai-letter] … [end]`). A field the site can't fill for
    someone skips them.
 3. **Channels.** `Channel` is a type: send one message, how many more
-   today, and turn a provider's report into an event. The fixture
-   channel records sends and lets a test report delivery and failure.
+   today, and turn a provider's report into an event. Each real channel
+   has a fake one for fixture builds, dev and tests, which writes what it
+   would send to the outbox (`tests/fixtures/outbox.ts`) and lets a test
+   report what happens next (delivered, failed, bounced, opted out,
+   replied) through the same code a webhook uses. This plan uses the
+   fake email that exists.
 4. **The `send-mailings` job**, hourly, in the database wake the other
    jobs share. It sends what fits in 30 seconds and leaves the rest.
-5. **Staff pages**, on the fixture channel:
+5. **Staff pages**:
    - "Mail these" on Politicians and Supporters.
    - New mailing: recipients with untick boxes, channel, template,
-     preview as any recipient, test send to yourself, schedule, cancel.
+     preview as any recipient, schedule, cancel.
+   - **Dry run**, on any channel: who it would go to, who would be
+     skipped and why, then stop. Nothing is recorded as sent.
+   - **Test send to yourself**: a real message, rendered as a chosen
+     recipient would get it, to your own pauseai.uk address through
+     Postmark's ordinary stream, logged as `mailing-test`. It isn't a
+     recipient and skips the permission check. Once a channel is built,
+     its test send goes by that channel (from your Gmail, to your
+     WhatsApp).
    - A mailing's page: each recipient's outcome, counts, and the filter
      in words.
    - Mailings: both audiences together.
 
    Designed first, as mock-ups on the real staff components, desktop and
    phone, for staff to choose from.
-
-## Open questions
-
-1. Who can send a mailing: a new permission beside `supporters` and
-   `admin`, or anyone who can see the list?
-2. Can a fixture-channel mailing exist on a live site, so staff can try
-   the pages before a channel is built?

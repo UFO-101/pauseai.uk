@@ -71,6 +71,19 @@ function appliedMigrations(url) {
 
 const insert = (name) => `INSERT INTO ${LEDGER} (name) VALUES ('${name}') ON CONFLICT DO NOTHING`;
 
+// Analyses each table Postgres hasn't yet, before a migration, as autovacuum
+// has a live database's. Never analysed, a table is priced as if it had
+// rows, which put creating supporters_list (0045, 0047) over the JIT
+// threshold in a test's tiny database (docs/code-structure.md).
+const ANALYZE_NEW_TABLES = `DO $$
+DECLARE t regclass;
+BEGIN
+  FOR t IN SELECT c.oid FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
+           WHERE c.relkind = 'r' AND c.reltuples < 0 AND n.nspname = 'public' LOOP
+    EXECUTE format('ANALYZE %s', t);
+  END LOOP;
+END $$`;
+
 /** Records `files` as applied without applying them: for a database that already has them. */
 export function recordApplied(url, files) {
   makeLedger(url);
@@ -105,7 +118,7 @@ export function migrate(url, { appliedUpTo } = {}) {
   for (const file of pending) {
     const name = migrationName(file);
     console.log(`Applying ${name}`);
-    psql(url, "-1", "-f", file, "-c", insert(name));
+    psql(url, "-1", "-c", ANALYZE_NEW_TABLES, "-f", file, "-c", insert(name));
   }
   return pending.map(migrationName);
 }
