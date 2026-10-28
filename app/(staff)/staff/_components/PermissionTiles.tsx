@@ -47,12 +47,15 @@ function TopicDetails({ permission, topic }: { permission: ContactPermission; to
   );
 }
 
-/** The address or number a strip is for, smaller, after a tiny envelope or phone. */
-function Address({ channel, address }: { channel: Channel; address: string }) {
+/**
+ * The address or number a row is for, smaller, after a tiny envelope or
+ * phone; a link to write or ring with `link`, as where we may contact them.
+ */
+function Address({ channel, address, link }: { channel: Channel; address: string; link: boolean }) {
   return (
     <span className={styles.address}>
       <ChannelIcon channel={channel} label={copy[channel]} />
-      {address}
+      {link ? <a href={channel === "email" ? `mailto:${address}` : `tel:${address}`}>{address}</a> : address}
     </span>
   );
 }
@@ -82,7 +85,7 @@ function Tile({ permission }: { permission: ContactPermission }) {
           ?
         </button>
       </span>
-      <Address channel={permission.channel} address={permission.address} />
+      <Address channel={permission.channel} address={permission.address} link={permission.send !== "no"} />
       <span className={styles.reason}>{reason(permission)}</span>
       <div
         id={id}
@@ -105,7 +108,7 @@ function Blocked({ permission }: { permission: ContactPermission }) {
         <span className={styles.topic}>{copy.everyTopic}</span>
         <Tag tone="red">{copy.blocked}</Tag>
       </span>
-      <Address channel="email" address={permission.address} />
+      <Address channel="email" address={permission.address} link={false} />
       <span className={styles.reason}>
         {because && `${because(staffDate(permission.at!))} `}
         <Link href="/staff/supporters/blocked-emails">{copy.seeBlocked}</Link>
