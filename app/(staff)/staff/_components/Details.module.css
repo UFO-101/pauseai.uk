@@ -448,7 +448,16 @@
   gap: var(--space-5);
 }
 
-.tables h2 {
+/* Under the card and tables, the page's full width: the history, then
+   everything we hold, each folded, above the erase button. */
+.foot {
+  display: grid;
+  gap: var(--space-5);
+  margin-top: var(--space-6);
+}
+
+.tables h2,
+.foot h2 {
   margin: 0 0 var(--space-2);
   font-size: var(--text-lg);
 }

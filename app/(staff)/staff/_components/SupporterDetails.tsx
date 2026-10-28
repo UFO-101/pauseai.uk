@@ -316,35 +316,37 @@ export default function SupporterDetails({ supporter }: { supporter: Details }) 
               <p className={styles.none}>{copy.detail.noLetters}</p>
             )}
           </section>
-          <section aria-labelledby="history">
-            <h2 id="history">{copy.detail.activityTitle}</h2>
-            {activity.length === 0 ? (
-              <p className={styles.none}>{copy.detail.noActivity}</p>
-            ) : (
-              <details className={styles.folded}>
-                <summary>{copy.detail.showHistory(activity.length)}</summary>
-                <ol className={styles.history} aria-label={copy.detail.activityTitle}>
-                  {activity.map((item, i) => (
-                    <li key={i}>
-                      <span className={styles.when}>{staffTime(item.at)}</span>
-                      <span>
-                        {copy.detail.kinds[item.kind]} <Subject item={item} letters={lettersPage} />
-                      </span>
-                    </li>
-                  ))}
-                </ol>
-              </details>
-            )}
-          </section>
-          <section aria-labelledby="everything">
-            <h2 id="everything">{copy.detail.everythingTitle}</h2>
-            <details className={styles.folded}>
-              <summary>{copy.detail.showEverything(holding.length)}</summary>
-              <ListTable columns={heldColumns} rows={holding} rowKey={(h) => h.key} />
-            </details>
-          </section>
         </div>
       </Grid>
+      <div className={styles.foot}>
+        <section aria-labelledby="history">
+          <h2 id="history">{copy.detail.activityTitle}</h2>
+          {activity.length === 0 ? (
+            <p className={styles.none}>{copy.detail.noActivity}</p>
+          ) : (
+            <details className={styles.folded}>
+              <summary>{copy.detail.showHistory(activity.length)}</summary>
+              <ol className={styles.history} aria-label={copy.detail.activityTitle}>
+                {activity.map((item, i) => (
+                  <li key={i}>
+                    <span className={styles.when}>{staffTime(item.at)}</span>
+                    <span>
+                      {copy.detail.kinds[item.kind]} <Subject item={item} letters={lettersPage} />
+                    </span>
+                  </li>
+                ))}
+              </ol>
+            </details>
+          )}
+        </section>
+        <section aria-labelledby="everything">
+          <h2 id="everything">{copy.detail.everythingTitle}</h2>
+          <details className={styles.folded}>
+            <summary>{copy.detail.showEverything(holding.length)}</summary>
+            <ListTable columns={heldColumns} rows={holding} rowKey={(h) => h.key} />
+          </details>
+        </section>
+      </div>
     </>
   );
 }
