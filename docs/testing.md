@@ -400,6 +400,16 @@ not a mock.
   (`scripts/fresh-database.mjs`, the same way Netlify does), empties the
   tables before each test, and drops the database afterwards.
   `addTestPolitician()` and `addTestMp()` add rows.
+- **A data migration gets a test while its tables are still changing.** A
+  migration that moves or reshapes rows, not only tables, is tested with
+  `useDatabaseUpTo()`: a database up to the migration before it, filled
+  with rows the old way, then `migrate()`, which applies it and every
+  migration after it, and assertions on today's schema. So the test also
+  checks that later migrations, and today's code, cope with data shaped the
+  old way. It's slower with each migration added, so once production has
+  run the migration and nothing is changing the tables it touched, delete
+  its test. `netlify/database/migrations.test.ts` still applies every
+  migration to an empty database.
 - **Where Postgres is.** `TEST_DATABASE_URL` (from the environment, or
   that one line of `.env.local`): `db-test` in `docker-compose.yml`, say.
   Without it, the usual `PG*` variables; without `PGHOST`, the local

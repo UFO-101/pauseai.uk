@@ -1,15 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { http, HttpResponse } from "msw";
 import { server } from "@/tests/fixtures/msw";
-import {
-  addTestLetter,
-  addTestMp,
-  addTestPolitician,
-  describeWithDatabase,
-  useDatabaseUpTo,
-  useTestDatabase,
-} from "@/tests/database";
-import { migrate } from "@/scripts/db-migrate.mjs";
+import { addTestLetter, addTestMp, addTestPolitician, describeWithDatabase, useTestDatabase } from "@/tests/database";
 import { query } from "./db";
 import {
   bareAddress,
@@ -293,43 +285,5 @@ describeWithDatabase("listBlocks, blockOn and recentProblems", () => {
     expect(await isPoliticianAddress("polly@example.org")).toBe(true);
     expect(await isPoliticianAddress('"Polly" <POLLY@example.org>')).toBe(true);
     expect(await isPoliticianAddress("jane@example.com")).toBe(false);
-  });
-});
-
-describeWithDatabase("migration 0014_email_deliverability", () => {
-  const db = useDatabaseUpTo("0013");
-
-  it("logs the letters already sent, so their bounces find them, and drops their message IDs", async () => {
-    const [{ id: mp }] = await query<{ id: number }>(
-      `INSERT INTO politicians (house, name, email, is_test, test_postcode) VALUES ('commons', 'Testy', 'Test-MP@example.org', true, 'ZZ99ZZ')
-       RETURNING id::int AS id`,
-    );
-    await query(
-      `INSERT INTO letters (campaign, politician_id, sender_name, sender_email, sender_address, sender_postcode, contact_consent,
-         subject, reply_hash, status, postmark_message_id, sent_at)
-       VALUES ('regulate-letter-pm', $1, 'Jane', 'j@example.com', 'x', 'ZZ9 9ZZ', false, 'S', 'a', 'sent', 'msg-1', '2026-10-12T09:00:00Z'),
-              ('regulate-letter-pm', $1, 'Sam', 's@example.com', 'x', 'ZZ9 9ZZ', false, 'S', 'b', 'sending', NULL, NULL)`,
-      [mp],
-    );
-
-    expect(migrate(db.url, { appliedUpTo: "0013" })[0]).toBe("0014_email_deliverability");
-
-    expect(
-      await query(
-        `SELECT at, purpose, letter_id::int AS "letterId", address, outcome, message_id AS "messageId" FROM email_sends`,
-      ),
-    ).toEqual([
-      {
-        at: new Date("2026-10-12T09:00:00Z"),
-        purpose: "letter",
-        letterId: 1,
-        address: "test-mp@example.org",
-        outcome: "sent",
-        messageId: "msg-1",
-      },
-    ]);
-    expect(
-      await query("SELECT column_name FROM information_schema.columns WHERE column_name = 'postmark_message_id'"),
-    ).toEqual([]);
   });
 });

@@ -8,7 +8,6 @@ import type {
   SupporterMp,
   SupporterFilter,
   SupporterIdentity,
-  SupporterLink,
   SupporterRow,
   SupporterSummary,
 } from "@/lib/supporters";
@@ -299,7 +298,7 @@ export async function getSupporter(id: number): Promise<SupporterDetails | undef
   const [summary] = await query<SupporterSummary>(`SELECT ${SUMMARY_COLUMNS} FROM ${LIVE_SUMMARY}`, [id]);
   if (!summary) return undefined;
   const postcode = summary.place?.basis === "postcode" ? summary.place.given : null;
-  const [identities, contacts, links, activity, permissions, [mp]] = await Promise.all([
+  const [identities, contacts, activity, permissions, [mp]] = await Promise.all([
     query<SupporterIdentity>(
       `SELECT source, email, name, seen_at AS "seenAt" FROM supporter_identity WHERE supporter_id = $1 ORDER BY seen_at NULLS LAST, email`,
       [id],
@@ -308,13 +307,6 @@ export async function getSupporter(id: number): Promise<SupporterDetails | undef
       `SELECT source, at, phone_number(phone) AS phone, postcode, latitude, longitude, city FROM supporter_contact
        WHERE supporter_id = $1 AND (phone IS NOT NULL OR postcode IS NOT NULL OR latitude IS NOT NULL OR city IS NOT NULL)
        ORDER BY at DESC`,
-      [id],
-    ),
-    query<SupporterLink>(
-      `SELECT ${SUPPORTER_SOURCES.map((s) => `WHEN l.${s.column} IS NOT NULL THEN '${s.name}'`).reduce((sql, arm) => `${sql} ${arm}`, "CASE")} END AS source,
-         coalesce(${SUPPORTER_SOURCES.map((s) => `l.${s.column}::text`).join(", ")}) AS "sourceId",
-         l.matched_by AS "matchedBy", l.matched_value AS "matchedValue", l.linked_at AS "linkedAt"
-       FROM supporter_links l WHERE l.supporter_id = $1 ORDER BY l.id`,
       [id],
     ),
     query<SupporterActivity>(
@@ -333,5 +325,5 @@ export async function getSupporter(id: number): Promise<SupporterDetails | undef
         )
       : [],
   ]);
-  return { summary, mp: mp ?? null, identities, contacts, links, activity, permissions };
+  return { summary, mp: mp ?? null, identities, contacts, activity, permissions };
 }

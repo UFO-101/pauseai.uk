@@ -248,17 +248,13 @@ export const staffCopy = {
       active: "Active",
       // The box under the band: a row per topic and address, saying whether we'd contact them about it, and why.
       listsTitle: "Can we contact them?",
-      // Folded at the foot of the page, after the history, a table: each record joined to make them one person,
-      // by the address that matched it, then every value each source record gave, as it gave it.
+      // Folded at the foot of the page, after the history, a table: every value each source record gave, as it gave it.
       everythingTitle: "Everything we hold",
       held: {
         columns: { when: "When", what: "What", value: "Value", from: "From" },
-        record: "Record",
         name: "Name",
         point: "Point",
       },
-      linkSources: { luma: "Luma account", form: "Form entry", member: "Membership" } as Record<string, string>,
-      linkedBy: (address: string) => `matched by ${address}`,
       permissions: {
         // By channel: each topic's name, and the answers. Unsure is a yes that an unsubscribe we can't see may have undone.
         topics: {

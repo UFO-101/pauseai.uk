@@ -846,7 +846,6 @@ export const staff: Group = {
                   },
                   identities: [{ source: "luma", email: "x@example.com", name: "", seenAt: null }],
                   contacts: [],
-                  links: [],
                   activity: [],
                   permissions: [],
                 }}
