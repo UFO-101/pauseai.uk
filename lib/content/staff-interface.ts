@@ -240,8 +240,8 @@ export const staffCopy = {
         },
         phone: {
           "luma-calendar": "Luma texts",
-          volunteering: "Volunteer calls",
-          "site-forms": "PauseAI UK calls",
+          volunteering: "⁂ Volunteer calls & texts",
+          "site-forms": "⁂ PauseAI UK calls & texts",
           "march-day": "March day texts",
         },
       } as Record<Channel, Record<string, string>>,
