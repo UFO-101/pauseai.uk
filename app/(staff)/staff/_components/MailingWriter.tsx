@@ -447,40 +447,37 @@ export default function MailingWriter({
         </Card>
 
         <Card span={6} title={<Numbered n={5}>{copy.sections.when}</Numbered>} id="when-title">
-          <div className={styles.withHint}>
-            <div className={styles.when}>
-              <Field label={copy.day} className={styles.day}>
-                <TextInput
-                  type="date"
-                  min={earliest.day}
-                  value={when.day}
-                  onChange={(event) => {
-                    const day = event.target.value;
-                    setDayPicked(day);
-                    if (when.hour === null) return;
-                    // On the first day it can go, an hour too soon moves on to the first it can go at.
-                    const hour = day === earliest.day && when.hour < earliest.hour ? earliest.hour : when.hour;
-                    change({ dueAt: day ? fromLondon(day, hour) : null });
-                  }}
-                />
-              </Field>
-              <Field label={copy.hour} className={styles.hour}>
-                <Select
-                  value={when.hour ?? ""}
-                  disabled={!when.day}
-                  onChange={(event) => change({ dueAt: fromLondon(when.day, Number(event.target.value)) })}
-                >
-                  {when.hour === null && <option value="" disabled />}
-                  {Array.from({ length: 24 }, (_, hour) => (
-                    // On the first day it can go, the hours too soon can't be chosen.
-                    <option key={hour} value={hour} disabled={when.day === earliest.day && hour < earliest.hour}>
-                      {`${String(hour).padStart(2, "0")}:00`}
-                    </option>
-                  ))}
-                </Select>
-              </Field>
-            </div>
-            <Hint>{copy.onTheHour}</Hint>
+          <div className={styles.when}>
+            <Field label={copy.day} className={styles.day}>
+              <TextInput
+                type="date"
+                min={earliest.day}
+                value={when.day}
+                onChange={(event) => {
+                  const day = event.target.value;
+                  setDayPicked(day);
+                  if (when.hour === null) return;
+                  // On the first day it can go, an hour too soon moves on to the first it can go at.
+                  const hour = day === earliest.day && when.hour < earliest.hour ? earliest.hour : when.hour;
+                  change({ dueAt: day ? fromLondon(day, hour) : null });
+                }}
+              />
+            </Field>
+            <Field label={copy.hour} className={styles.hour}>
+              <Select
+                value={when.hour ?? ""}
+                disabled={!when.day}
+                onChange={(event) => change({ dueAt: fromLondon(when.day, Number(event.target.value)) })}
+              >
+                {when.hour === null && <option value="" disabled />}
+                {Array.from({ length: 24 }, (_, hour) => (
+                  // On the first day it can go, the hours too soon can't be chosen.
+                  <option key={hour} value={hour} disabled={when.day === earliest.day && hour < earliest.hour}>
+                    {`${String(hour).padStart(2, "0")}:00`}
+                  </option>
+                ))}
+              </Select>
+            </Field>
           </div>
         </Card>
 
