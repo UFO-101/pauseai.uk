@@ -10,6 +10,11 @@
   line-height: 1.5;
 }
 
+/* In a table, whole on a staff page, whose density says so (styles/tokens.css). */
+td .tag {
+  white-space: var(--table-tag-white-space, normal);
+}
+
 /* After a heading's words, it sits on their middle, at its own size and weight. */
 :is(h1, h2, h3) > .tag {
   margin-left: var(--space-2);

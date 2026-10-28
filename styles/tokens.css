@@ -188,6 +188,8 @@
   --form-gap: var(--space-3);
   --table-font-size: var(--text-sm);
   --table-cell-padding: var(--space-1) var(--space-2);
+  /* A lozenge in a table cell kept whole, so a narrow column doesn't split it (ui/Tag). */
+  --table-tag-white-space: nowrap;
   --tag-font-size: var(--text-xs);
   --tag-padding: 0 var(--space-2);
 }
