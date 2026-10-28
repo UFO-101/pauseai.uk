@@ -294,7 +294,11 @@ above 100,000 (`jit_above_cost`), Postgres compiles the query first where it
 has JIT, as CI's image does, which can take seconds
 for a query that runs in milliseconds. This container's Postgres has no JIT
 (`pg_jit_available()` is false), so a query too costly for CI still passes
-here; the cost is the only warning.
+here; the cost is the only warning. To see every query's cost as the tests
+run it, those a PL/pgSQL function runs included, which it plans apart: `ALTER
+ROLE dev SET session_preload_libraries = 'auto_explain'`, with
+`auto_explain.log_min_duration = 0` and `auto_explain.log_nested_statements =
+on`, run the tests, read the plans in Postgres's log, and reset the three.
 
 Beyond that, no speculative indexes: one costs every write to its table and
 is easy to add later, when a query that's actually used turns out slow.

@@ -736,11 +736,7 @@ CREATE MATERIALIZED VIEW public.supporters_list AS
  SELECT s.id,
     s.name,
     s.emails,
-    ( SELECT i.email
-           FROM public.supporter_identity i
-          WHERE (i.supporter_id = s.id)
-          ORDER BY i.seen_at DESC NULLS LAST, i.email
-         LIMIT 1) AS email,
+    newest.email,
     s.phone,
     s.postcode,
     s.sources,
@@ -756,8 +752,12 @@ CREATE MATERIALIZED VIEW public.supporters_list AS
     sp.country,
     sp.latitude,
     sp.longitude
-   FROM (public.supporters_summary s
+   FROM ((public.supporters_summary s
      LEFT JOIN public.supporter_place sp ON ((sp.supporter_id = s.id)))
+     LEFT JOIN ( SELECT DISTINCT ON (i.supporter_id) i.supporter_id,
+            i.email
+           FROM public.supporter_identity i
+          ORDER BY i.supporter_id, i.seen_at DESC NULLS LAST, i.email) newest ON ((newest.supporter_id = s.id)))
   WITH NO DATA;
 
 --
@@ -767,18 +767,20 @@ CREATE MATERIALIZED VIEW public.supporters_list AS
 CREATE FUNCTION public.supporters_added() RETURNS SETOF public.supporters_list
     LANGUAGE plpgsql STABLE ROWS 10
     AS $$
+DECLARE
+  newest_kept bigint := (SELECT coalesce(max(l.id), 0) FROM supporters_list l);
+  added bigint;
 BEGIN
-  RETURN QUERY
-  SELECT x.* FROM supporters n CROSS JOIN LATERAL (
+  FOR added IN SELECT n.id FROM supporters n WHERE n.id > newest_kept ORDER BY n.id LOOP
+    RETURN QUERY
     SELECT s.id, s.name, s.emails,
       (SELECT i.email FROM supporter_identity i WHERE i.supporter_id = s.id
-       ORDER BY i.seen_at DESC NULLS LAST, i.email LIMIT 1) AS email,
+       ORDER BY i.seen_at DESC NULLS LAST, i.email LIMIT 1),
       s.phone, s.postcode, s.sources, s.luma_follows, s.first_seen_at, s.last_active_at, s.events, s.letters, s.member,
       sp.place, sp.basis, sp.given, sp.country, sp.latitude, sp.longitude
     FROM supporters_summary s LEFT JOIN supporter_place sp ON sp.supporter_id = s.id
-    WHERE s.id = n.id OFFSET 0
-  ) x
-  WHERE n.id > (SELECT coalesce(max(l.id), 0) FROM supporters_list l);
+    WHERE s.id = added;
+  END LOOP;
 END
 $$;
 
