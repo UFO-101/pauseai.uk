@@ -3,8 +3,8 @@ import { IMPORT_JOBS, JOB_SCHEDULES, type ImportJob } from "@/lib/import-runs";
 import { query } from "./db";
 
 // How long the import log and the audit log keep what they hold, so neither
-// grows for ever. Run once a day, by the nightly politicians sync
-// (app/api/cron/sync-politicians).
+// grows for ever. Run once a day, by its own scheduled job
+// (app/api/cron/tidy-logs).
 //
 // An import run is kept for a week if its job runs hourly, a month if it
 // runs nightly, and a one-off job keeps its last 50 runs. Every job keeps its
