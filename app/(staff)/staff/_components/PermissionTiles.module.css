@@ -30,8 +30,7 @@
   font-size: var(--text-sm);
 }
 
-/* The topic, then its answer and the "?" at the right, the answer under
-   the topic when both don't fit. */
+/* The topic, then the "?" just after it. */
 .head {
   display: flex;
   flex-wrap: wrap;
@@ -40,7 +39,6 @@
 }
 
 .topic {
-  flex: 1 1 auto;
   min-width: 0;
   font-weight: 600;
 }
