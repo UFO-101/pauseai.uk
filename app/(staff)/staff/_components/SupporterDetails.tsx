@@ -9,7 +9,6 @@ import { UK_MAP_HEIGHT, UK_MAP_WIDTH, ukMapPoint, ukOutline } from "@/lib/uk-map
 import { registrationStatus } from "@/lib/supporters";
 import type { SupporterActivity, SupporterDetails as Details, SupporterSource } from "@/lib/supporters";
 import PermissionTiles from "./PermissionTiles";
-import SupporterBadges from "./SupporterBadges";
 import Grid, { Card, spanClass } from "./ui/Grid";
 import { ListTable, type ListColumn } from "./ui/ListFrame";
 import styles from "./Details.module.css";
@@ -225,10 +224,11 @@ function PlaceMap({ latitude, longitude }: { latitude?: number | null; longitude
 }
 
 /**
- * The band at the top of their page: where they are on a map; their name
- * and badges; then where they are and what it's from, their MP, when they
- * were active and how they first came, each when known; and how many
- * events they registered for and letters they wrote, linked to the tables.
+ * The band at the top of their page: where they are on a map; their name;
+ * then where they are and what it's from, their MP, when they were active
+ * and how they first came, each when known; and how many events they
+ * registered for and letters they wrote, linked to the tables, which say
+ * what the list's lozenges would.
  */
 function Band({ supporter, events, letters }: { supporter: Details; events: number; letters: number }) {
   const { summary, mp, identities } = supporter;
@@ -238,9 +238,7 @@ function Band({ supporter, events, letters }: { supporter: Details; events: numb
     <div className={styles.band}>
       {place && <PlaceMap latitude={place.latitude} longitude={place.longitude} />}
       <div className={styles.bandMain}>
-        <h1>
-          {summary.name ?? copy.noName} <SupporterBadges supporter={summary} />
-        </h1>
+        <h1>{summary.name ?? copy.noName}</h1>
         <div className={styles.bandRow}>
           <dl className={styles.bandFacts}>
             {place?.name && (

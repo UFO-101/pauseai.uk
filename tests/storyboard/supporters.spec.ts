@@ -169,7 +169,7 @@ test("a supporter's page: who they are, what they gave, their history, and an op
   const jane = page.getByRole("row").filter({ hasText: "Jane Fixture" });
   await jane.getByRole("link", { name: "Jane Fixture" }).click();
   await expect(page.getByRole("heading", { level: 1 })).toContainText("Jane Fixture");
-  await expect(page.getByText(copy.badges.registered).first()).toBeVisible();
+  await expect(page.getByText(copy.detail.firstVia(copy.sources.luma))).toBeVisible();
   await expect(page.getByText("+447700900001", { exact: false }).first()).toBeVisible();
   const reasons = copy.detail.permissions.reasons;
   // Her email's answer, and her Luma number's with it.
@@ -219,9 +219,10 @@ test("a letter writer is a supporter too, linked from the letters page", async (
   await page.goto(`${BASE}/staff/letters`);
   await page.getByRole("row").filter({ hasText: sender }).getByRole("link", { name: "Jane Smith" }).click();
   await expect(page.getByRole("heading", { level: 1 })).toContainText("Jane Smith");
-  // Exactly, as Next's route announcer reads out the heading, badge and all, after a navigation.
-  await expect(page.getByText(copy.badges.letter, { exact: true })).toBeVisible();
-  await expect(page.getByText(copy.detail.kinds.letter, { exact: false }).first()).toBeVisible();
+  await expect(page.getByRole("link", { name: `1 ${copy.detail.lettersCounted(1)}` })).toBeVisible();
+  await expect(
+    page.getByRole("region", { name: copy.detail.lettersTitle }).getByRole("link", { name: "Testy McTestface MP" }),
+  ).toBeVisible();
   await expect(page.getByText("ZZ9 9ZZ", { exact: false })).toBeVisible();
   await frame(page, "the letter writer's page: the letter, and the postcode they gave");
 
@@ -297,7 +298,9 @@ test("a member who also wrote to their MP is one supporter, with how they joined
 
   await lee.getByRole("link").first().click();
   await expect(page).toHaveURL(/\/staff\/supporters\/\d+$/);
-  await expect(page.getByRole("heading", { level: 1 })).toContainText(copy.badges.member);
+  // The letter's sender's name, as the newest; how they first came, as a member.
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Jane Smith");
+  await expect(page.getByText(copy.detail.firstVia(copy.sources.member))).toBeVisible();
   await expect(page.getByText("29 Nov 2025", { exact: false }).first()).toBeVisible();
   // Joined before "Keep me informed" was a choice: on the updates.
   await expect(
