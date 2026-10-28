@@ -89,8 +89,10 @@
   white-space: normal;
 }
 
+/* The arrow after a no-break space, so a chip that wraps keeps it with its
+   last word rather than alone on a line. */
 .chip::after {
-  content: " ▾" / "";
+  content: "\00a0▾" / "";
 }
 
 /* A chip that leaves its choice out: white, its edge dashed, and a circle
@@ -202,14 +204,13 @@
   padding-bottom: var(--space-2);
 }
 
-/* A filter's choices, a link a line; a long list scrolls. */
+/* A filter's choices, a link a line, all of them: the menu they're in is
+   as tall as they are, and scrolls only when the window is shorter. */
 .choices {
   display: grid;
   gap: 2px;
-  max-height: 18rem;
   margin: 0;
   padding: 0;
-  overflow-y: auto;
   list-style: none;
 }
 
