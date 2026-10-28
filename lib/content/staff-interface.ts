@@ -695,8 +695,19 @@ export const staffCopy = {
       party: "Party",
       house: "House",
     },
-    // Who a part is for: those who gave an answer to an ask, as in "Only for those who signed the Frontier AI letter".
-    answered: (answer: string, ask: string) => `⁂ ${answer.toLowerCase()} ${ask}`,
+    // Who a part is for: those who gave an answer to an ask, after "Only for those who", as in
+    // "Only for those who signed the Frontier AI letter". Each answer's words, then the ask's title.
+    answerWords: {
+      signed: "⁂ signed",
+      going: "⁂ are going to",
+      tentative: "⁂ are tentatively going to",
+      meeting_staff: "⁂ are sending staff to meet us instead of",
+      tentative_staff: "⁂ may send staff to",
+      declined: "⁂ declined",
+      declined_surgery: "⁂ declined, offering a surgery instead of",
+      passed_on: "⁂ passed on",
+    } as Record<string, string>,
+    answered: (words: string, ask: string) => `${words} ${ask}`,
   },
   // The pages for writing a mailing, its own page once it's scheduled, and the list of them.
   mailingPages: {

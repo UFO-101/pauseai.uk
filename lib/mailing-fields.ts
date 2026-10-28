@@ -47,7 +47,7 @@ export function partFor(condition: string, labels: Record<string, string>): stri
 export function answerLabels(asks: { slug: string; title: string }[]): Record<string, string> {
   const labels: Record<string, string> = {};
   for (const ask of asks) {
-    for (const [status, words] of Object.entries(staffCopy.statuses)) {
+    for (const [status, words] of Object.entries(staffCopy.mailingEditor.answerWords)) {
       labels[answerCondition(ask.slug, status)] = staffCopy.mailingEditor.answered(words, ask.title);
     }
   }

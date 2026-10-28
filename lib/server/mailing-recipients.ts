@@ -64,7 +64,7 @@ export async function politicianAudience(filter: StoredFilter): Promise<Politici
       const id = answerCondition(ask.slug, status);
       return {
         id,
-        label: copy.answered(staffCopy.statuses[status], ask.title),
+        label: copy.answered(copy.answerWords[status], ask.title),
         covers: covers.get(id) ?? 0,
         group: ask.title,
         option: staffCopy.statuses[status],
