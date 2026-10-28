@@ -49,10 +49,14 @@ Francis about a shared account (see the open questions).
    today's 1,800 each account has left.
    `email_sends` records the backend and sender, and gets two new
    purposes, `mailing` and `mailing-test`. Each letter stores its own
-   `Message-ID`, whichever backend sent it, so a reply is matched to
-   it the same way if mailings later go by Postmark too, such as past
-   Gmail's limit. A letter sent by Postmark is Bcc'd to the sender, so
-   it is in their mailbox too.
+   `Message-ID`, whichever backend sent it, so if mailings later go by
+   Postmark too, such as past Gmail's limit, their replies are read
+   the same way. Postmark would send from the same connected Gmail
+   address, verified in Postmark as a sender signature for that one
+   address ([signatures](https://postmarkapp.com/support/article/adding-sender-signatures)),
+   or pauseai.uk verified as a domain, which its DMARC may need anyway.
+   Each is Bcc'd to that mailbox, so it is in the thread, and replies
+   arrive there as they would for Gmail.
 4. The `send-mailings` job. It runs hourly, during the database wake
    that the other jobs share, and sends any mailing that's due. A
    scheduled function has only 30 seconds, about 30 emails at Gmail's
