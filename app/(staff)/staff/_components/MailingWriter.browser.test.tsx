@@ -253,7 +253,9 @@ describe("MailingWriter", () => {
       },
     };
     renderWriter({ draft: plain });
-    await preview().getByRole("combobox", { name: copy.previewAs }).selectOptions("8");
+    await preview()
+      .getByRole("combobox", { name: new RegExp(`^${copy.chooseRecipient}`) })
+      .selectOptions("8");
     await expect.element(preview().getByText("Dora Dummy <dora@example.org>")).toBeVisible();
     await expect.element(preview().getByText("Lady Dummy")).toBeVisible();
   });

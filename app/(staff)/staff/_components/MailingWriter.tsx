@@ -495,6 +495,7 @@ function Preview({
   /** Sends the test copy of a recipient's email, saving the draft first if it isn't yet. */
   sendTest: (recipient: number) => ReturnType<MailingWriterActions["sendTest"]>;
 }) {
+  const findLabel = useId();
   const [chosen, setChosen] = useState(data.recipients[0]?.id);
   // What each condition is set to, where it's been pressed; else as the recipient shown has it.
   const [wanted, setWanted] = useState<Record<string, boolean>>({});
@@ -516,9 +517,13 @@ function Preview({
   };
   return (
     <>
-      <p className={styles.previewIntro}>{used.length > 0 ? copy.previewIntroParts : copy.previewIntro}</p>
       {used.length > 0 && (
-        <ul className={styles.toggles} aria-label={copy.casesLabel}>
+        <p id={findLabel} className={styles.label}>
+          {copy.findRecipient}
+        </p>
+      )}
+      {used.length > 0 && (
+        <ul className={styles.toggles} aria-labelledby={findLabel}>
           {used.map((condition) => (
             <li key={condition}>
               <button type="button" aria-pressed={meets[condition]} onClick={() => toggle(condition)}>
@@ -531,9 +536,8 @@ function Preview({
       )}
       {recipient ? (
         <>
-          <div className={styles.whoShown}>
+          <Field label={copy.chooseRecipient} className={styles.whoShown}>
             <Select
-              aria-label={copy.previewAs}
               value={recipient.id}
               onChange={(event) => {
                 setChosen(Number(event.target.value));
@@ -546,7 +550,7 @@ function Preview({
                 </option>
               ))}
             </Select>
-          </div>
+          </Field>
           <div className={styles.email}>
             <dl className={styles.headers}>
               <dt>{copy.from}</dt>

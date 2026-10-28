@@ -195,11 +195,6 @@
   border-style: solid;
 }
 
-.previewIntro {
-  margin: 0;
-  color: var(--text-secondary);
-}
-
 /* Where the email would be, when no one has the answers chosen. */
 .noEmail {
   margin: 0;

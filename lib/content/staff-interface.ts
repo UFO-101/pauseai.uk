@@ -779,17 +779,12 @@ export const staffCopy = {
     megabytes: (n: number) => `${n} MB`,
     removeFile: (name: string) => `⁂ Remove ${name}`,
     tooBig: "⁂ That file is too big: a file can be up to 4MB.",
-    // At the top of the preview: what it shows, and how to choose; for a letter with parts only some get, those too.
-    previewIntro: "⁂ Each person gets their own copy, with their details filled in. Choose whose to see.",
-    previewIntroParts:
-      "⁂ Each person gets their own copy, with their details filled in and only the parts that are for them. Press a button to see the email of those who meet it, or of those who don't, then choose whose to see.",
-    // The choice of whose email the preview shows, for screen readers.
-    previewAs: "⁂ Whose email to show",
+    // Over the preview: before a button for each condition the letter's parts use, then over the choice of whose email it shows.
+    findRecipient: "Find recipient who:",
+    chooseRecipient: "Choose recipient:",
     noOne: "⁂ No one to show: it goes to no one yet.",
     to: "To",
     noSender: "Choose who below",
-    // Over the preview: a button for each condition the letter's parts use, pressed for those who meet it.
-    casesLabel: "⁂ Show it as for those who…",
     // When no recipient has the answers chosen.
     noOneMix: "⁂ No one this goes to has these answers, so there's no email to show.",
     sendTest: "Send this one to me",
