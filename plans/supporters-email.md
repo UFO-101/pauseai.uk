@@ -3,7 +3,8 @@
 The UK weekly email, and smaller mailings such as one to a local group,
 will be sent from pauseai.uk instead of CiviCRM. That lets each email
 be personal, with events near the reader and their MP, and gives the UK
-control of its list. This builds on `plans/mailings.md` and is one pull
+control of its list. This builds on `plans/mailings.md`, whose phase 3
+makes the staff pages for messages to supporters, and is one pull
 request, which needs access to CiviCRM first.
 
 ## How it works now
@@ -64,8 +65,9 @@ lists, and we will keep passing new signups to Global.
    stream ([streams](https://postmarkapp.com/message-streams)), kept
    separate from letters to MPs. It costs about $200–300 a year
    ([pricing](https://postmarkapp.com/pricing)). Postmark reviews new
-   broadcast senders, so apply early. A small local mailing can be sent
-   by Gmail instead (`plans/politician-email.md`).
+   broadcast senders, so apply early. A small local mailing could be
+   sent by Gmail instead, picked under "Sent from"
+   (`plans/politician-email.md`).
 4. Add unsubscribing. Every email has an unsubscribe link and a
    `List-Unsubscribe` header. The link goes to a page that offers fewer
    emails before none: the weekly only, urgent emails only, my local

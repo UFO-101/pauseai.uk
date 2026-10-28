@@ -1,7 +1,8 @@
 # Texts and WhatsApp to supporters
 
 Mailings to supporters by text message and WhatsApp. This builds on
-`plans/mailings.md` and is three pull requests:
+`plans/mailings.md`, whose phase 3 makes the staff pages for messages
+to supporters, and is three pull requests:
 
 1. The groundwork both channels need: consent, opt-outs and replies.
 2. Texts, which nothing outside blocks.
@@ -78,7 +79,7 @@ weekly and event texts.
 1. Add a text provider in `lib/server/outside-services/`, with a fake
    version for tests. Texts are sent from a real UK number, because
    people can't reply to a sender name such as "PauseAI UK".
-2. Texts are free text, with no approval step. The composer counts
+2. Texts are free text, with no approval step. The new message page counts
    160-character segments, because each one is charged.
 3. The provider's webhook records deliveries and failures in
    `message_events`, treats STOP as an opt-out, and stores other

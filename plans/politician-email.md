@@ -1,12 +1,12 @@
 # Email to politicians
 
 Mailings to politicians are sent by Gmail, and staff can read each
-whole thread in `/staff`. This builds on `plans/mailings.md` and is one
-pull request.
+whole thread in `/staff`. This builds on `plans/mailings.md`, phases 1
+and 2, and is one pull request. Once it's built, a mailing made on the
+new mailing page can be scheduled.
 
 Joseph needs to create the Google Cloud project, and to decide with
-Francis whose Gmail account the mailings come from (see the open
-question).
+Francis about a shared account (see the open questions).
 
 ## Rules
 
@@ -34,7 +34,9 @@ question).
    asks for the `gmail.send` and `gmail.readonly` scopes
    ([scopes](https://developers.google.com/workspace/gmail/api/auth/scopes)).
    `staff_accounts` stores the refresh token, encrypted, and the last
-   `historyId` read.
+   `historyId` read. A staff member connects from their account page,
+   or from "Sent from" on the new mailing page, which goes to Google
+   once and comes back to the mailing.
 3. Add a Gmail channel. `send()` takes a backend, either Postmark or
    Gmail. Gmail allows about 2,000 emails a day per account
    ([limits](https://support.google.com/a/answer/166852)) and 60 a
@@ -70,6 +72,9 @@ question).
    - On your account page, connect or disconnect Gmail. The page says
      what the site reads in your mailbox and how many emails you have
      sent today against the limit.
+   - On the new mailing page, "Sent from" lists the connected accounts
+     with today's sends, and offers "Connect Gmail" for your own if it
+     isn't yet (`plans/mailings.md`, phase 2).
    - On the politicians list, a filter for those not yet mailed about
      an ask.
    - On a politician's page, each letter opens its whole thread, with
@@ -94,8 +99,10 @@ limit, journalists, and what politicians did in Parliament.
 
 ## Open questions
 
-1. Should mailings come from each staff member's own Gmail account, or
-   from one shared account? A shared account keeps every thread in one
-   place when staff change. A personal account reads as being from a
-   person. The same choice applies to mailings to supporters sent by
-   Gmail.
+1. Should there be a shared account, such as policy@pauseai.uk, as well
+   as each person's own? A shared account keeps every thread in one
+   place when staff change; a personal one reads as being from a
+   person. The new mailing page lets staff pick either.
+2. Can staff send from a colleague's connected Gmail, as the mock-up
+   shows, or only from their own and shared ones? Sending as someone
+   else should probably need their say-so.
