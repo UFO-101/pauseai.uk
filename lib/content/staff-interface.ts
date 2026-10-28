@@ -165,15 +165,15 @@ export const staffCopy = {
       // The Subscriptions filter: its topics under their channel's heading, each named short, a phone's with how
       // we'd contact them after it; then in its chip's second half any answer, or one answer, as a supporter's
       // page words it.
-      channels: { email: "⁂ Email", phone: "⁂ Phone" } as Record<Channel, string>,
+      channels: { email: "Email", phone: "Phone" } as Record<Channel, string>,
       topics: {
-        "luma-calendar": "⁂ Luma",
-        "pauseai-updates": "⁂ PauseAI global",
-        "site-forms": "⁂ PauseAI UK",
-        volunteering: "⁂ Volunteering",
-        "march-day": "⁂ March day",
+        "luma-calendar": "Luma",
+        "pauseai-updates": "PauseAI global",
+        "site-forms": "PauseAI UK",
+        volunteering: "Volunteering",
+        "march-day": "March day",
       } as Record<string, string>,
-      ways: { text: "⁂ texts", "call-or-text": "⁂ calls & texts" } as Record<string, string>,
+      ways: { text: "texts", "call-or-text": "calls & texts" } as Record<string, string>,
       anyAnswer: "Any answer",
     },
     columns: {
