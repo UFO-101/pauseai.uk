@@ -33,7 +33,16 @@ export type MailingRecipient = {
   personalised: boolean;
 };
 
-export type Mailing = MailingSummary & { recipients: MailingRecipient[] };
+/** A mailing with a page of its recipients, of `recipientsTotal`, on `pages` pages of `pageSize`. */
+export type Mailing = MailingSummary & {
+  recipients: MailingRecipient[];
+  recipientsTotal: number;
+  page: number;
+  pages: number;
+  pageSize: number;
+};
+
+const RECIPIENTS_PAGE_SIZE = 100;
 
 const SELECT_MAILINGS = `
   SELECT m.id::int AS id, m.title, m.ask, a.title AS "askTitle", (m.airtable_field IS NOT NULL OR m.airtable_sent_between IS NOT NULL) AS imported,
@@ -52,16 +61,32 @@ export async function listMailings(): Promise<MailingSummary[]> {
   );
 }
 
-/** One mailing, with each recipient's outcome, by name. */
-export async function getMailing(id: number): Promise<Mailing | undefined> {
+/** A mailing's title, for its page's title, without its recipients; or undefined for no such mailing. */
+export async function mailingTitle(id: number): Promise<string | undefined> {
+  const [mailing] = await query<{ title: string }>("SELECT title FROM mailings WHERE id = $1", [id]);
+  return mailing?.title;
+}
+
+/** One mailing, with a page of its recipients' outcomes, by name, from 1. */
+export async function getMailing(id: number, page = 1): Promise<Mailing | undefined> {
   const [mailing] = await query<MailingSummary>(`${SELECT_MAILINGS} WHERE m.id = $1 GROUP BY m.id, a.title`, [id]);
   if (!mailing) return undefined;
-  const recipients = await query<MailingRecipient>(
-    `SELECT l.id::int AS "letterId", n.id::int AS "politicianId", n.name, l.status, l.sent_at AS "sentAt",
-       l.replied_at AS "repliedAt", p.personalised
-     FROM pauseai_letters p JOIN letters l USING (id) JOIN notable_people n ON n.id = l.notable_person_id
-     WHERE p.mailing_id = $1 ORDER BY n.name, l.id`,
-    [id],
-  );
-  return { ...mailing, recipients };
+  const [recipients, [{ total }]] = await Promise.all([
+    query<MailingRecipient>(
+      `SELECT l.id::int AS "letterId", n.id::int AS "politicianId", n.name, l.status, l.sent_at AS "sentAt",
+         l.replied_at AS "repliedAt", p.personalised
+       FROM pauseai_letters p JOIN letters l USING (id) JOIN notable_people n ON n.id = l.notable_person_id
+       WHERE p.mailing_id = $1 ORDER BY n.name, l.id LIMIT $2 OFFSET $3`,
+      [id, RECIPIENTS_PAGE_SIZE, (page - 1) * RECIPIENTS_PAGE_SIZE],
+    ),
+    query<{ total: number }>("SELECT count(*)::int AS total FROM pauseai_letters WHERE mailing_id = $1", [id]),
+  ]);
+  return {
+    ...mailing,
+    recipients,
+    recipientsTotal: total,
+    page,
+    pages: Math.max(1, Math.ceil(total / RECIPIENTS_PAGE_SIZE)),
+    pageSize: RECIPIENTS_PAGE_SIZE,
+  };
 }

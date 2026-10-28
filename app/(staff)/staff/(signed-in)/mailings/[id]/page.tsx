@@ -1,22 +1,24 @@
 import type { Metadata } from "next";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { found } from "@/lib/found";
-import { getMailing } from "@/lib/server/mailings";
+import { getMailing, mailingTitle } from "@/lib/server/mailings";
 import { requireStaff } from "@/lib/server/staff-auth";
-import { mailingId } from "@/lib/staff-search";
+import { firstOf, mailingId, pageNumber, type ParamValue } from "@/lib/staff-search";
 import Breadcrumb from "../../../_components/Breadcrumb";
 import MailingDetails from "../../../_components/MailingDetails";
 
-type Params = { params: Promise<{ id: string }> };
+type Params = { params: Promise<{ id: string }>; searchParams: Promise<{ page?: ParamValue }> };
 
-export async function generateMetadata({ params }: Params): Promise<Metadata> {
+export async function generateMetadata({ params }: Pick<Params, "params">): Promise<Metadata> {
   await requireStaff();
-  return { title: found(await getMailing(found(mailingId((await params).id)))).title };
+  return { title: found(await mailingTitle(found(mailingId((await params).id)))) };
 }
 
-export default async function MailingPage({ params }: Params) {
+/** A mailing, with a page of its recipients. */
+export default async function MailingPage({ params, searchParams }: Params) {
   await requireStaff();
-  const mailing = found(await getMailing(found(mailingId((await params).id))));
+  const page = pageNumber(firstOf((await searchParams).page));
+  const mailing = found(await getMailing(found(mailingId((await params).id)), page));
   return (
     <>
       <Breadcrumb href="/staff/mailings">{staffCopy.nav.mailings}</Breadcrumb>

@@ -641,6 +641,9 @@ export const staffCopy = {
     noText:
       "Text not avilable. This was imported from the Airtable's Emails table, which keeps only who got it and how it was written. It was sent with Gmail, look there.",
     recipientsTitle: "Recipients",
+    // Over the recipients: how many; instead of them, when there are none.
+    recipientsCount: (n: number) => `${n} ${n === 1 ? "recipient" : "recipients"}`,
+    noRecipients: "Nobody yet.",
     recipientColumns: {
       name: "Politician",
       status: "Outcome",

@@ -1,7 +1,7 @@
 import { expect, it } from "vitest";
 import { addTestPolitician, describeWithDatabase, useTestDatabase } from "@/tests/database";
 import { query } from "./db";
-import { getMailing, listMailings } from "./mailings";
+import { getMailing, listMailings, mailingTitle } from "./mailings";
 
 /** A PauseAI letter of the mailing titled `title`, to `politicianId`. */
 async function addLetter(
@@ -79,6 +79,12 @@ describeWithDatabase("mailings", () => {
         personalised: true,
       },
     ]);
+    expect(mailing).toMatchObject({ recipientsTotal: 2, page: 1, pages: 1, pageSize: 100 });
+    // A page past the last has no one on it, and the same count.
+    expect(await getMailing(id, 2)).toMatchObject({ recipients: [], recipientsTotal: 2, page: 2 });
     expect(await getMailing(9999)).toBeUndefined();
+    // Its title alone, for its page's title.
+    expect(await mailingTitle(id)).toBe(EDINBURGH);
+    expect(await mailingTitle(9999)).toBeUndefined();
   });
 });

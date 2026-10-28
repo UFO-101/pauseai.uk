@@ -946,11 +946,27 @@ describe("MailingDetails", () => {
     expect(cells("Polly")[1]).toBe("queued");
   });
 
+  it("pages its recipients, a hundred at a time, saying how many there are", async () => {
+    await render(<MailingDetails mailing={{ ...exampleMailing, recipientsTotal: 250, page: 2, pages: 3 }} />);
+    await expect.element(page.getByText(copy.recipientsCount(250))).toBeVisible();
+    await expect
+      .element(page.getByRole("link", { name: staffCopy.paging.next }))
+      .toHaveAttribute("href", `/staff/mailings/${exampleMailing.id}?page=3`);
+    await expect
+      .element(page.getByRole("link", { name: staffCopy.paging.previous }))
+      .toHaveAttribute("href", `/staff/mailings/${exampleMailing.id}`);
+  });
+
   it("says when there's no ask, and when it isn't sent yet", async () => {
-    await render(<MailingDetails mailing={{ ...exampleMailings[0], recipients: [] }} />);
+    await render(
+      <MailingDetails
+        mailing={{ ...exampleMailings[0], recipients: [], recipientsTotal: 0, page: 1, pages: 1, pageSize: 100 }}
+      />,
+    );
     await expect.element(page.getByText(copy.noAsk)).toBeVisible();
     await expect.element(page.getByText(copy.notSent)).toBeVisible();
     await expect.element(page.getByText(copy.imported)).not.toBeInTheDocument();
+    await expect.element(page.getByText(copy.noRecipients)).toBeVisible();
   });
 });
 

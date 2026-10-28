@@ -1243,7 +1243,16 @@ export const staff: Group = {
           label: "One with no ask, not sent yet",
           render: () => (
             <StaffPage as="div">
-              <MailingDetails mailing={{ ...exampleMailings[0], recipients: [] }} />
+              <MailingDetails
+                mailing={{
+                  ...exampleMailings[0],
+                  recipients: [],
+                  recipientsTotal: 0,
+                  page: 1,
+                  pages: 1,
+                  pageSize: 100,
+                }}
+              />
             </StaffPage>
           ),
         },
