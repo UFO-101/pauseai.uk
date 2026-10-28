@@ -301,10 +301,16 @@
   transition:
     background-color 0.2s ease,
     border-color 0.2s ease,
-    box-shadow 0.2s ease;
+    box-shadow 0.2s ease,
+    padding-top 0.2s ease;
 }
 
-/* Until then, only whether it's saved shows, at the title's top right. */
+/* Until then, only whether it's saved shows, at the title's top right,
+   a little lower, level with the title's words. */
+.bar:not([data-shown]) {
+  padding-top: var(--space-4);
+}
+
 .bar strong {
   min-width: 0;
   overflow: hidden;
