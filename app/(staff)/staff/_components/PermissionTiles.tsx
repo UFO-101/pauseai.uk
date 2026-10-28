@@ -19,18 +19,21 @@ function reason(permission: ContactPermission): string {
 const TONES = { yes: "green", no: "plain", unsure: "amber" } as const;
 
 /**
- * What's behind a strip's "?": the topic's name, what it is, then when it's
- * a yes, when a no and, for some, what we can't see, each under its label.
+ * What's behind a strip's "?": the topic's name, what it is, then when we
+ * would contact them and when not, in the words of the ways it allows, and,
+ * for some, what we can't see, each under its label.
  */
-function TopicDetails({ topic, details }: { topic: string; details: (typeof copy.details)["email"][string] }) {
+function TopicDetails({ permission, topic }: { permission: ContactPermission; topic: string }) {
+  const details = copy.details[permission.channel][permission.topic];
+  const when = copy.when[waysKey(permission.channel, permission.topic)];
   return (
     <>
       <strong className={styles.topicTitle}>{copy.topicTitle(topic)}</strong>
       <p>{details.about}</p>
       <dl className={styles.when}>
-        <dt>{copy.whenYes}</dt>
+        <dt>{when.yes}</dt>
         <dd>{details.yes}</dd>
-        <dt>{copy.whenNo}</dt>
+        <dt>{when.no}</dt>
         <dd>{details.no}</dd>
         {details.caveat && (
           <>
@@ -108,7 +111,7 @@ function Tile({ permission }: { permission: ContactPermission }) {
         className={styles.popover}
         style={{ positionAnchor: `--${id}` } as React.CSSProperties}
       >
-        <TopicDetails topic={topic} details={copy.details[permission.channel][permission.topic]} />
+        <TopicDetails permission={permission} topic={topic} />
       </div>
     </li>
   );

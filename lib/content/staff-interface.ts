@@ -348,8 +348,12 @@ export const staffCopy = {
         // Behind a strip's "?": the topic, what it is, when it's a yes and when a no, and what we can't see, by
         // channel and topic.
         topicTitle: (topic: string) => `⁂ Topic: ${topic}`,
-        whenYes: "⁂ Yes when",
-        whenNo: "⁂ No when",
+        // The labels over when it's a yes and when a no, in the words of the ways the topic allows (TOPIC_WAYS).
+        when: {
+          email: { yes: "⁂ Will email when", no: "⁂ Won't email when" },
+          text: { yes: "⁂ Will text when", no: "⁂ Won't text when" },
+          "call-or-text": { yes: "⁂ Will call or text when", no: "⁂ Won't call or text when" },
+        } as Record<string, { yes: string; no: string }>,
         caveat: "⁂ Bear in mind",
         details: {
           email: {

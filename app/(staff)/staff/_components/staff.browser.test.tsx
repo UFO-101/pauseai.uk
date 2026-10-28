@@ -3216,12 +3216,12 @@ describe("PermissionTiles", () => {
     const luma = copy.details.email["luma-calendar"];
     await expect.element(page.getByText(luma.about).first()).not.toBeVisible();
     await page.getByRole("button", { name: copy.why }).first().click();
-    // The topic by name, what it is, then when it's a yes, a no, and what we can't see, each labelled.
+    // The topic by name, what it is, then when we'd email them and when not, and what we can't see, each labelled.
     const popover = document.querySelector("[popover]")!;
     expect(popover.querySelector("strong")!.textContent).toBe(copy.topicTitle(copy.topics.email["luma-calendar"]));
     expect([...popover.querySelectorAll("dt")].map((dt) => dt.textContent)).toEqual([
-      copy.whenYes,
-      copy.whenNo,
+      copy.when.email.yes,
+      copy.when.email.no,
       copy.caveat,
     ]);
     expect([...popover.querySelectorAll("dd")].map((dd) => dd.textContent)).toEqual([luma.yes, luma.no, luma.caveat]);
@@ -3229,6 +3229,8 @@ describe("PermissionTiles", () => {
     // A topic with nothing we can't see has no third label.
     await page.getByRole("button", { name: copy.why }).nth(1).click();
     expect(document.querySelectorAll("[popover]")[1].querySelectorAll("dt")).toHaveLength(2);
+    // A number's labels are in the words of the ways its topic allows.
+    expect(document.querySelectorAll("[popover]")[2].querySelector("dt")!.textContent).toBe(copy.when.text.yes);
   });
 
   it("names the form whose box answered for our forms, or the newest form for one it has no name for", async () => {
