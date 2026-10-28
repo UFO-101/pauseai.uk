@@ -137,6 +137,13 @@ adds what its kind has, joined as notable people are:
   personalised, but no text. Each mailing there is a
   tick box, named by `mailings.airtable_field`; an email with no box we know
   is held back and reported until a migration adds its mailing.
+  A mailing written on the site (`lib/server/mailing-drafts.ts`) holds the
+  politicians list's filter that chose its recipients, as the list's URL
+  parameters (`StoredFilter`), and its letter, a document with merge fields
+  and parts only some recipients get (`lib/mailing-doc.ts`). It's a draft,
+  saved with a version number, until it's scheduled, which fixes its
+  recipients: a scheduled PauseAI letter each, keeping the values its
+  fields had. Those with no address, or a blocked one, are left out.
 
 A letter's ask is its campaign's or its mailing's, never its own.
 
