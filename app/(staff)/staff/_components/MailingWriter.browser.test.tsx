@@ -61,7 +61,7 @@ describe("MailingWriter", () => {
   it("starts with a greeting by the salutation, and saves nothing until something's written", async () => {
     const { actions } = renderWriter();
     await expect.element(letter()).toHaveTextContent("Dear salutation,");
-    await expect.element(page.getByText(copy.saveStates.new)).toBeVisible();
+    await expect.element(status()).toHaveTextContent(copy.saveStates.new);
     await field(copy.ask).selectOptions("frontier-ai-letter");
     await pause(1200);
     expect(actions.start).not.toHaveBeenCalled();

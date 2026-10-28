@@ -81,6 +81,20 @@ function Numbered({ n, children }: { n: number; children: ReactNode }) {
   );
 }
 
+/**
+ * Whether the draft is saved: before anything's written, that it will be
+ * once something is, quietly; saving, grey; saved, green; not saved, red.
+ */
+function SaveState({ state }: { state: SaveState }) {
+  if (state === "new") return <Muted>{copy.saveStates.new}</Muted>;
+  return (
+    <span className={styles.saveState} data-state={state}>
+      <span className={styles.saveDot} aria-hidden="true" />
+      {copy.savePill[state]}
+    </span>
+  );
+}
+
 /** A "?" that opens a few words on what the thing beside it is for. */
 function Help({ id, label, children }: { id: string; label: string; children: ReactNode }) {
   return (
@@ -165,6 +179,16 @@ export default function MailingWriter({
   const pending = useRef<Partial<Changes>>({});
   const saving = useRef(false);
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const heading = useRef<HTMLHeadingElement>(null);
+  const [titleGone, setTitleGone] = useState(false);
+  useEffect(() => {
+    // Gone once half of it has scrolled off.
+    const watch = new IntersectionObserver(([entry]) => setTitleGone(entry.intersectionRatio < 0.5), {
+      threshold: [0, 0.5, 1],
+    });
+    watch.observe(heading.current!);
+    return () => watch.disconnect();
+  }, []);
 
   /** Whether a letter has nothing written in it yet: blank, or only the greeting it started with. */
   const unwritten = (letter: MailingDoc) => isBlankMailing(letter) || JSON.stringify(letter) === JSON.stringify(start);
@@ -280,21 +304,24 @@ export default function MailingWriter({
     unknown: data.unknown,
     sends: data.sends,
   }).filter((problem) => problem !== "cannot-send");
+  const title = values.subject.trim() || copy.newTitle;
   const noAddress = data.leftOut.filter((one) => one.reason === "no-address").length;
 
   return (
     <>
-      <div className={styles.heading}>
-        <h1>{values.subject.trim() || copy.newTitle}</h1>
-        {saveState === "new" && <Muted>{copy.saveStates.new}</Muted>}
+      {/* Once the title has scrolled off, a bar at the top of the window with it and whether it's saved. */}
+      <div className={styles.barFrame} aria-hidden="true">
+        <div className={styles.bar} data-shown={titleGone || undefined}>
+          <strong>{title}</strong>
+          <SaveState state={saveState} />
+        </div>
       </div>
-      {/* Whether it's saved, in a corner of the window, so it's in view wherever you're typing. A
-          new save restarts its fade. */}
-      {saveState !== "new" && (
-        <p role="status" className={styles.savePill} data-state={saveState} key={`${saveState}-${version.current}`}>
-          {copy.savePill[saveState]}
-        </p>
-      )}
+      <div className={styles.heading}>
+        <h1 ref={heading}>{title}</h1>
+        <span role="status">
+          <SaveState state={saveState} />
+        </span>
+      </div>
       {!data.sends && <Strip tone="amber">{copy.cantSend}</Strip>}
       {saveState === "conflict" && (
         <Strip tone="red" announce>
