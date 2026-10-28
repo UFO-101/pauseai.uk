@@ -268,5 +268,5 @@ built on phase 2's. To be designed once phase 2's are settled.
 For each phase, as `AGENTS.md` asks: 100% test coverage; a storyboard
 flow for each thing a person does on the new pages, with a line for it
 in `docs/testing.md`; a gallery example for each new component; copy as
-⁂ placeholders for a person to write; and `docs/data-protection.md`
+placeholders, marked with the asterism, for a person to write; and `docs/data-protection.md`
 updated for what's stored about recipients.
