@@ -12,14 +12,16 @@ const copy = staffCopy.mailingPages;
 
 type FormAction = (form: FormData) => void | Promise<void>;
 
-/** One mailing not sent yet, a row: its title, linked to it, who wrote it and more, and its button. */
+/** One mailing not sent yet, a row: its title, linked to it, over who wrote it and more; its button at the right. */
 function Row({ mailing, children, action }: { mailing: MailingSummary; children: ReactNode; action: ReactNode }) {
   return (
     <li className={styles.row}>
-      <Link href={`/staff/mailings/${mailing.id}`} className={styles.title}>
-        {mailing.title || copy.untitled}
-      </Link>
-      <Muted>{children}</Muted>
+      <span className={styles.what}>
+        <Link href={`/staff/mailings/${mailing.id}`} className={styles.title}>
+          {mailing.title || copy.untitled}
+        </Link>
+        <Muted>{children}</Muted>
+      </span>
       {action}
     </li>
   );
