@@ -3,6 +3,7 @@
 // politicians, letters, runs and changes. Their links go to /staff pages,
 // which send anyone without a session to the login page.
 import { Button } from "@/components/ui/Button";
+import { changeMailingWho } from "@/app/(staff)/staff/mailing-actions";
 import ChangesTable from "@/app/(staff)/staff/_components/ChangesTable";
 import EmailBlockFilters from "@/app/(staff)/staff/_components/EmailBlockFilters";
 import FilterBar from "@/app/(staff)/staff/_components/ui/FilterBar";
@@ -151,6 +152,7 @@ const EMPTY_POLITICIAN_FILTERS = {
   sort: "",
   dir: "",
   page: "",
+  mailing: "",
 };
 
 // A blocked address list's filter, for the filter bar's examples.
@@ -1191,6 +1193,7 @@ export const staff: Group = {
           render: () => (
             <StaffPage as="div">
               <PoliticiansList
+                changeWho={changeMailingWho}
                 list={{ ...examplePoliticiansPage, total: 150, pages: 2, outOfOffice: 3, otherHouses: 2, tests: 1 }}
                 search={{ ...EMPTY_POLITICIAN_FILTERS, q: "pol" }}
                 asks={exampleAsks}
@@ -1203,6 +1206,7 @@ export const staff: Group = {
           render: () => (
             <StaffPage as="div">
               <PoliticiansList
+                changeWho={changeMailingWho}
                 list={{ ...examplePoliticiansPage, politicians: [], total: 0, closest: [examplePolitician] }}
                 search={{ ...EMPTY_POLITICIAN_FILTERS, q: "Polly Plaseholder" }}
                 asks={exampleAsks}
@@ -1259,7 +1263,8 @@ export const staff: Group = {
             <StaffPage as="div">
               <MailingDetails
                 mailing={{
-                  ...exampleMailings[0],
+                  ...exampleMailings[1],
+                  tab: "all",
                   recipients: [],
                   recipientsTotal: 0,
                   page: 1,

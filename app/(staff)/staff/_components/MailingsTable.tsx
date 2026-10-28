@@ -10,7 +10,7 @@ import styles from "./MailingsTable.module.css";
 const copy = staffCopy.mailings;
 
 /** A count, or a faint dash for none. */
-function count(key: "sent" | "skipped" | "bounced" | "replied"): ListColumn<MailingSummary> {
+function count(key: "sent" | "skipped" | "bounced" | "replied" | "answered"): ListColumn<MailingSummary> {
   return {
     key,
     label: copy.columns[key],
@@ -24,8 +24,8 @@ function count(key: "sent" | "skipped" | "bounced" | "replied"): ListColumn<Mail
 /**
  * The mailings' columns: its title, linked to its page, and the ask it
  * makes, linked to the politicians who answered it; who sent it and when;
- * how many it went to, skipped, bounced and got a reply from. One copied
- * from Airtable says so where its sender would be.
+ * how many it went to, skipped, bounced, got a reply from and had its ask
+ * answered by. One copied from Airtable says so where its sender would be.
  */
 export const mailingColumns: ListColumn<MailingSummary>[] = [
   {
@@ -43,8 +43,8 @@ export const mailingColumns: ListColumn<MailingSummary>[] = [
   {
     key: "sender",
     label: copy.columns.sender,
-    text: (m) => (m.imported ? copy.imported : null),
-    cell: (m) => (m.imported ? <Tag>{copy.imported}</Tag> : <Muted>{copy.notRecorded}</Muted>),
+    text: (m) => (m.imported ? copy.imported : m.fromName),
+    cell: (m) => (m.imported ? <Tag>{copy.imported}</Tag> : (m.fromName ?? <Muted>{copy.notRecorded}</Muted>)),
   },
   {
     key: "sentAt",
@@ -57,6 +57,7 @@ export const mailingColumns: ListColumn<MailingSummary>[] = [
   count("skipped"),
   count("bounced"),
   count("replied"),
+  count("answered"),
 ];
 
 /** Every mailing, in the list frame: how many, their downloads, and a row each. */

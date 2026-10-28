@@ -18,6 +18,8 @@ const ALLOWED: Record<string, string> = {
   "PermissionTiles.module.css .popover": "a popover",
   "Details.module.css .editPopover": "a popover",
   "DeletePolitician.module.css .confirm": "a popover",
+  "MailingButtons.module.css .confirm": "a popover",
+  "MailingView.module.css .popover": "a popover",
   "StaffNav.module.css .menu > div": "the menu's dropdown",
   // The login page: one card in the middle of the window, with no grid.
   "LoginCard.module.css .login": "the login page",

@@ -115,6 +115,7 @@ export const emptyPoliticiansSearch: PoliticiansSearch = {
   sort: "",
   dir: "",
   page: "",
+  mailing: "",
 };
 
 /** What the audit log says about Polly: her status set, her address blocked by Postmark and unblocked by staff. */

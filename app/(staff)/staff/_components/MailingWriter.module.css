@@ -1,0 +1,159 @@
+/* A new mailing, on one page: its title and whether it's saved, then its
+   numbered sections, each a card. */
+.heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-2) var(--space-4);
+}
+
+.heading h1 {
+  margin: 0;
+}
+
+/* A section's number, in a dark circle before its name. */
+.number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  margin-right: var(--space-3);
+  border-radius: 50%;
+  background: var(--text);
+  color: var(--surface);
+  font-size: var(--text-sm);
+  vertical-align: 0.1em;
+}
+
+.who {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.count {
+  margin: 0;
+  font-size: var(--text-lg);
+}
+
+.leftOut summary {
+  cursor: pointer;
+  color: var(--text-secondary);
+}
+
+.seeWho {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+.leftOut ul {
+  margin: var(--space-2) 0 0;
+  padding-left: var(--space-5);
+}
+
+/* Fields side by side, wrapping on a phone. */
+.fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3) var(--space-4);
+}
+
+.fields > * {
+  flex: 1 1 14rem;
+}
+
+.label {
+  margin: 0 0 var(--space-1);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.files {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-2);
+  padding: 0;
+  list-style: none;
+}
+
+.files li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding-left: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+}
+
+.send {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.problems {
+  margin: 0;
+  padding-left: var(--space-5);
+  color: var(--text-secondary);
+}
+
+/* Who the preview's search finds, each a button that shows their email. */
+.matches {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+}
+
+.matches button {
+  display: block;
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  border: 0;
+  background: none;
+  font: inherit;
+  text-align: left;
+  color: inherit;
+  cursor: pointer;
+}
+
+.matches button:hover,
+.matches button[aria-pressed="true"] {
+  background: var(--table-stripe);
+}
+
+/* The email, as a mail app shows one: who to and the subject, then the letter. */
+.email {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-2);
+}
+
+.headers {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--space-1) var(--space-3);
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--border);
+}
+
+.headers dt {
+  color: var(--text-secondary);
+}
+
+.headers dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.email > :last-child {
+  padding: var(--space-3) var(--space-4);
+}

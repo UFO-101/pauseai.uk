@@ -180,6 +180,8 @@ function Sidebar({
               aria-disabled={!usable(field) || undefined}
               title={usable(field) ? copy.dragHint : copy.lacking(field.lacking!)}
               draggable={usable(field)}
+              // So the letter keeps its cursor, and Space goes to it, not this.
+              onMouseDown={(event) => event.preventDefault()}
               onDragStart={(event) =>
                 event.dataTransfer.setData("text/html", `<span data-field="${field.id}">${field.label}</span>`)
               }
@@ -207,6 +209,7 @@ function Sidebar({
               className={styles.conditionLozenge}
               title={copy.dragHint}
               draggable
+              onMouseDown={(event) => event.preventDefault()}
               onDragStart={(event) =>
                 event.dataTransfer.setData(
                   "text/html",
@@ -262,7 +265,9 @@ export default function MailingEditor({ initial, onChange, fields, conditions, l
         return true;
       },
     },
-    onUpdate: ({ editor }) => onChange(editor.getJSON()),
+    // As plain JSON: ProseMirror's attributes are objects with no prototype,
+    // which a Server Action's arguments leave out.
+    onUpdate: ({ editor }) => onChange(JSON.parse(JSON.stringify(editor.getJSON()))),
   });
 
   function close() {

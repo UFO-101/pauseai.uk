@@ -1,7 +1,8 @@
 import { expect, it } from "vitest";
 import { addTestPolitician, describeWithDatabase, useTestDatabase } from "@/tests/database";
 import { query } from "./db";
-import { getMailing, listMailings, mailingTitle } from "./mailings";
+import { createDraft, saveDraft } from "./mailing-drafts";
+import { getMailing, listMailings, mailingsOverview, mailingTitle } from "./mailings";
 
 /** A PauseAI letter of the mailing titled `title`, to `politicianId`. */
 async function addLetter(
@@ -77,6 +78,8 @@ describeWithDatabase("mailings", () => {
         sentAt: new Date("2026-10-01"),
         repliedAt: new Date("2026-10-04"),
         personalised: true,
+        answer: null,
+        skipReason: null,
       },
     ]);
     expect(mailing).toMatchObject({ recipientsTotal: 2, page: 1, pages: 1, pageSize: 100 });
@@ -86,5 +89,66 @@ describeWithDatabase("mailings", () => {
     // Its title alone, for its page's title.
     expect(await mailingTitle(id)).toBe(EDINBURGH);
     expect(await mailingTitle(9999)).toBeUndefined();
+  });
+
+  it("lists a tab of the recipients: those who replied, bounced or were skipped, with their answer to its ask", async () => {
+    const polly = await addTestPolitician();
+    const dora = await addTestPolitician({ name: "Dora Dummy", airtableId: "recDora" });
+    const rob = await addTestPolitician({ name: "Rob Example", airtableId: "recRob" });
+    await addLetter(EDINBURGH, polly, { replied: "2026-10-04" });
+    await addLetter(EDINBURGH, dora, { status: "bounced" });
+    const skipped = await addLetter(EDINBURGH, rob, { status: "not_sent" });
+    await query("UPDATE letters_from_pauseai SET skip_reason = 'left-office' WHERE id = $1", [skipped]);
+    await query(
+      `INSERT INTO ask_statuses (notable_person_id, ask, ask_kind, status, updated_by) VALUES ($1, 'edinburgh-conference-2026', 'event', 'going', 'staff')`,
+      [polly],
+    );
+    const [{ id }] = await query<{ id: number }>("SELECT id::int AS id FROM mailings WHERE title = $1", [EDINBURGH]);
+    const names = async (tab: "replied" | "bounced" | "skipped") =>
+      (await getMailing(id, 1, tab))!.recipients.map((r) => [r.name, r.answer, r.skipReason]);
+    expect(await names("replied")).toEqual([["Polly Placeholder", "going", null]]);
+    expect(await names("bounced")).toEqual([["Dora Dummy", null, null]]);
+    expect(await names("skipped")).toEqual([["Rob Example", null, "left-office"]]);
+    expect(await getMailing(id, 1, "bounced")).toMatchObject({
+      tab: "bounced",
+      recipientsTotal: 1,
+      to: 3,
+      answered: 1,
+    });
+  });
+
+  it("puts the mailings in three parts: drafts, those coming up, and the rest", async () => {
+    await addTestPolitician({ house: "lords" });
+    await addTestPolitician({ name: "Dora Dummy", airtableId: "recDora" });
+    const lords = await createDraft(
+      "jo@pauseai.uk",
+      { list: "politicians", params: { house: "lords" } },
+      { subject: "Lords" },
+    );
+    const all = await createDraft("jo@pauseai.uk", { list: "politicians", params: {} }, { subject: "Everyone" });
+    await saveDraft(lords.id, 1, { subject: "To the Lords" });
+    const later = await createDraft("jo@pauseai.uk", { list: "politicians", params: {} }, { subject: "Later" });
+    const sooner = await createDraft("jo@pauseai.uk", { list: "politicians", params: {} }, { subject: "Sooner" });
+    await query(
+      "UPDATE mailings SET state = 'scheduled', due_at = '2026-12-01', sent_from = 'jo@pauseai.uk', from_name = 'Jo' WHERE id = $1",
+      [later.id],
+    );
+    await query(
+      "UPDATE mailings SET state = 'sending', due_at = '2026-11-01', sent_from = 'jo@pauseai.uk', from_name = 'Jo' WHERE id = $1",
+      [sooner.id],
+    );
+
+    const { drafts, comingUp, sent } = await mailingsOverview();
+    // The newest edited first, each with how many its filter finds now.
+    expect(drafts.map((m) => [m.title, m.to, m.state, m.createdBy])).toEqual([
+      ["To the Lords", 1, "draft", "jo@pauseai.uk"],
+      ["Everyone", 2, "draft", "jo@pauseai.uk"],
+    ]);
+    expect(drafts[1].id).toBe(all.id);
+    expect(comingUp.map((m) => m.title)).toEqual(["Sooner", "Later"]);
+    expect(sent.map((m) => m.title)).toContain(EDINBURGH);
+    expect(sent.map((m) => m.state)).not.toContain("draft");
+    // The list for the download leaves the drafts out.
+    expect((await listMailings()).map((m) => m.title)).not.toContain("Everyone");
   });
 });

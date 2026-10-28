@@ -618,6 +618,7 @@ export const staffCopy = {
       skipped: "Skipped",
       bounced: "Bounced",
       replied: "Replied",
+      answered: "⁂ Answered",
     },
     // A mailing copied from Airtable, which kept only who got it.
     imported: "From Airtable",
@@ -688,6 +689,142 @@ export const staffCopy = {
     },
     // Who a part is for: those who gave an answer to an ask, as in "Only for those who signed the Frontier AI letter".
     answered: (answer: string, ask: string) => `⁂ ${answer.toLowerCase()} ${ask}`,
+  },
+  // The pages for writing a mailing, its own page once it's scheduled, and the list of them.
+  mailingPages: {
+    // Who a mailing is to, when its filter has nothing chosen.
+    everyone: "⁂ Every politician in office",
+    whoLabel: "⁂ Who it's for",
+    // A mailing's coloured counts.
+    counts: {
+      sent: "⁂ sent",
+      replied: "⁂ replied",
+      bounced: "⁂ bounced",
+      skipped: "⁂ skipped",
+      answered: "⁂ answered the ask",
+    },
+    newTitle: "⁂ New mailing",
+    // A draft with no subject yet, in the list and as its page's title.
+    untitled: "⁂ Untitled draft",
+    // At the top of a new mailing, until a channel sends.
+    cantSend: "⁂ Mailings can't be sent yet. Everything else here works, including a test copy to yourself.",
+    // Beside the title: whether the draft is saved.
+    saveStates: {
+      new: "⁂ Not saved yet: it's kept once you write something.",
+      saving: "⁂ Saving…",
+      saved: "⁂ Draft saved.",
+      conflict:
+        "⁂ Someone else has changed this draft since you opened it. Reload the page to see their changes; what you've done since isn't saved.",
+      failed: "⁂ Couldn't save. Check your connection: it'll try again at your next change.",
+    } as Record<string, string>,
+    deleteDraft: "⁂ Delete draft",
+    confirmDelete: "⁂ Delete this draft? It can't be got back.",
+    deleteIt: "⁂ Delete it",
+    // The numbered sections of a new mailing.
+    sections: {
+      who: "⁂ Who",
+      write: "⁂ Write",
+      preview: "⁂ Preview",
+      from: "⁂ Sent from",
+      when: "⁂ When",
+      send: "⁂ Send",
+    },
+    willGet: (n: number) => `⁂ ${n} ${n === 1 ? "politician" : "politicians"} will get it.`,
+    leftOut: (found: number, noAddress: number, blocked: number) =>
+      `⁂ Of the ${found} the filter finds, ${noAddress} ${noAddress === 1 ? "has" : "have"} no email address and ${blocked} ${blocked === 1 ? "has an address" : "have addresses"} that's blocked, so they're left out.`,
+    seeWho: "⁂ See who",
+    leftOutReasons: {
+      "no-address": "⁂ no email address",
+      blocked: "⁂ address blocked",
+    } as Record<string, string>,
+    changeWho: "⁂ Change who",
+    unknownFilter: (values: string) =>
+      `⁂ The filter has values the site no longer knows (${values}), so it can't be sent until you change who it's for.`,
+    subject: "⁂ Subject",
+    ask: "⁂ Ask",
+    noAsk: "⁂ None",
+    letter: "⁂ Letter",
+    attachments: "⁂ Attachments",
+    addFile: "⁂ Add a file",
+    removeFile: (name: string) => `⁂ Remove ${name}`,
+    tooBig: "⁂ That file is too big: a file can be up to 4MB.",
+    previewAs: "⁂ Show the email to",
+    previewPlaceholder: "⁂ Name or constituency",
+    noMatch: "⁂ No one it goes to matches that.",
+    noOne: "⁂ No one to show: it goes to no one yet.",
+    to: "⁂ To",
+    sendTest: "⁂ Send this one to me",
+    testSent: "⁂ Sent: look in your inbox.",
+    testFailed: "⁂ It couldn't be sent. Try again in a minute.",
+    testNeedsDraft: "⁂ Write something first: the test is of the saved draft.",
+    fromLegend: "⁂ Whose Gmail it's sent from",
+    notConnected: "⁂ Gmail can't be connected yet.",
+    fromName: "⁂ Name it's from",
+    day: "⁂ Day",
+    hour: "⁂ Hour",
+    onTheHour: "⁂ It goes on the hour, London time.",
+    summary: (n: number, from: string | null, when: string | null) =>
+      `⁂ ${n} ${n === 1 ? "email" : "emails"}, from ${from ?? "no one yet"}, ${when ? `on ${when}` : "at a time not chosen yet"}.`,
+    schedule: (n: number) => `⁂ Schedule ${n} ${n === 1 ? "email" : "emails"}`,
+    // Why the schedule button can't be pressed.
+    problems: {
+      "no-subject": "⁂ It has no subject.",
+      "no-letter": "⁂ It has no letter.",
+      "unknown-filter": "⁂ Its filter has values the site no longer knows.",
+      "no-recipients": "⁂ It goes to no one.",
+      "field-lacking": "⁂ It uses a field some recipients have no value for.",
+      "no-sender": "⁂ Choose whose Gmail it's sent from.",
+      "no-name": "⁂ Give the name it's from.",
+      "no-time": "⁂ Choose when it goes.",
+      "time-passed": "⁂ The time it goes has passed.",
+      "cannot-send": "⁂ Sending isn't built yet.",
+    } as Record<string, string>,
+    // The list of mailings.
+    // Before a link to the politicians list.
+    intro: "⁂ To start one, filter the politicians and press Mail these:",
+    drafts: "⁂ Drafts",
+    comingUp: "⁂ Coming up",
+    sent: "⁂ Sent",
+    noDrafts: "⁂ No drafts.",
+    noneComing: "⁂ Nothing scheduled.",
+    draftLine: (by: string, n: number) => `⁂ ${by} · to ${n}`,
+    comingLine: (by: string, when: string, n: number) => `⁂ ${by} · ${when} · to ${n}`,
+    stop: "⁂ Stop",
+    // On the politicians list, beside Download.
+    mailThese: (n: number) => `⁂ Mail these ${n}…`,
+    useThese: (n: number) => `⁂ Use these ${n} for the draft`,
+    // A mailing's own page.
+    states: {
+      draft: "⁂ Draft",
+      scheduled: "⁂ Scheduled",
+      sending: "⁂ Sending",
+      sent: "⁂ Sent",
+      cancelled: "⁂ Stopped",
+    } as Record<string, string>,
+    sentLine: (when: string, from: string) => `⁂ Sent ${when}, from ${from}`,
+    sends: (when: string) => `⁂ Sends ${when}`,
+    scheduledLine: (n: number, from: string) => `⁂ ${n} ${n === 1 ? "email" : "emails"} from ${from}.`,
+    changeTime: "⁂ Change the time",
+    saveTime: "⁂ Change it",
+    stopScheduled: "⁂ Stop this mailing",
+    stopNote: "⁂ Stopping it sends nothing and makes it a draft again, to change and schedule again.",
+    sending: (n: number, of: number) => `⁂ ${n} of ${of} sent`,
+    stopSending: "⁂ Stop sending",
+    sentLabel: "⁂ Sent",
+    tabs: {
+      all: "⁂ All",
+      replied: "⁂ Replied",
+      bounced: "⁂ Bounced",
+      skipped: "⁂ Skipped",
+    },
+    tab: (label: string, n: number) => `${label} ${n}`,
+    tabsLabel: "⁂ Which recipients",
+    emailTitle: "⁂ The email",
+    whoTitle: "⁂ Who it was for",
+    skipReasons: {
+      blocked: "⁂ Skipped: address blocked",
+      "left-office": "⁂ Skipped: left office",
+    } as Record<string, string>,
   },
   // The asks page: each ask, its kind and date, and how many gave each answer.
   asks: {
@@ -1093,6 +1230,10 @@ export const staffCopy = {
       spam_complaint: "Spam complaint",
       replied: "Replied",
       auto_reply: "Auto-reply",
+      // PauseAI's letters of a mailing written here, before and instead of sending.
+      scheduled: "⁂ Scheduled",
+      cancelled: "⁂ Stopped",
+      skipped: "⁂ Skipped",
     } as Record<string, string>,
     columns: {
       created: "Created",

@@ -68,6 +68,7 @@ describe("politiciansSearch", () => {
       sort: "party",
       dir: "desc",
       page: "3",
+      mailing: "12",
     };
     expect(politiciansSearch(typed)).toEqual({
       ...typed,
@@ -120,8 +121,11 @@ describe("politiciansSearch", () => {
       sort: "",
       dir: "",
       page: "",
+      mailing: "",
     };
     expect(politiciansSearch({})).toEqual({ ...blank, filter: none });
+    // A draft's ID is a number.
+    expect(politiciansSearch({ mailing: "12x" }).mailing).toBe("");
     const unknown = {
       house: "hogwarts",
       status: "sitting",

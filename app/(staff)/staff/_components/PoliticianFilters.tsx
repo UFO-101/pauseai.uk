@@ -8,15 +8,16 @@ import FilterBar, { type Filter } from "./ui/FilterBar";
 const copy = staffCopy.politicians;
 
 /**
- * The politicians list's filters, among `parties` and `asks`: the table's
+ * The politicians list's filters, among `parties` and `asks`, with the
+ * answers of the ask chosen, `askSlug`: the table's
  * columns in its order, with the nation after the party and whether we can
  * email them after the status. Status is those in
  * office unless another is chosen. An answer is offered once there's an
  * ask, from those its kind allows, and goes with it. Party, nation, email
  * and the markers can each be chosen more than once.
  */
-export function politicianFilters(search: PoliticiansSearch, parties: string[], asks: Ask[]): Filter[] {
-  const ask = asks.find((a) => a.slug === search.ask);
+export function politicianFilters(askSlug: string, parties: string[], asks: Ask[]): Filter[] {
+  const ask = asks.find((a) => a.slug === askSlug);
   return [
     {
       name: "party",
@@ -93,7 +94,7 @@ export default function PoliticianFilters({
       path="/staff/politicians"
       values={search}
       search={{ name: "q", label: copy.search }}
-      filters={politicianFilters(search, parties, asks)}
+      filters={politicianFilters(search.ask, parties, asks)}
       keep={["house"]}
     />
   );

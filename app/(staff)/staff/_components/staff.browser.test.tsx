@@ -817,15 +817,41 @@ describe("PoliticiansList", () => {
   const copy = staffCopy.politicians;
   const search = { ...emptyPoliticiansSearch, q: "pol", page: "2" };
 
+  it("after a draft's Change who, makes the draft go to who the filters find", async () => {
+    const changeWho = vi.fn(async (form: FormData) => {
+      expect([...form.entries()]).toEqual([
+        ["id", "12"],
+        ["q", "pol"],
+        ["party", "Green"],
+        ["party", "!Labour"],
+      ]);
+    });
+    await render(
+      <PoliticiansList
+        list={{ ...examplePoliticiansPage, total: 150 }}
+        search={{ ...search, party: ["Green", "!Labour"], mailing: "12" }}
+        asks={exampleAsks}
+        changeWho={changeWho}
+      />,
+    );
+    await page.getByRole("button", { name: staffCopy.mailingPages.useThese(150) }).click();
+    await expect.poll(() => changeWho.mock.calls.length).toBe(1);
+  });
+
   it("is the count, the table and the pages, and links to those the search finds elsewhere", async () => {
     await render(
       <PoliticiansList
         list={{ ...examplePoliticiansPage, total: 150, page: 2, pages: 2, outOfOffice: 3, otherHouses: 2, tests: 1 }}
         search={search}
         asks={exampleAsks}
+        changeWho={vi.fn()}
       />,
     );
     await expect.element(page.getByText(copy.total(150))).toBeVisible();
+    // Mail these: a new mailing to who the list's filters find, without its page.
+    await expect
+      .element(page.getByRole("link", { name: staffCopy.mailingPages.mailThese(150) }))
+      .toHaveAttribute("href", "/staff/mailings/new?q=pol");
     await expect.element(page.getByRole("link", { name: "Polly Placeholder" })).toBeVisible();
     expect(await downloads()).toContain("/staff/politicians/download?q=pol&format=vcf");
     await expect
@@ -848,12 +874,18 @@ describe("PoliticiansList", () => {
         list={{ ...examplePoliticiansPage, politicians: [], total: 0, closest: examplePoliticiansPage.politicians }}
         search={search}
         asks={exampleAsks}
+        changeWho={vi.fn()}
       />,
     );
     await expect.element(page.getByText(copy.closest)).toBeVisible();
     await expect.element(page.getByRole("link", { name: "Polly Placeholder" })).toBeVisible();
     await rerender(
-      <PoliticiansList list={{ ...examplePoliticiansPage, politicians: [], total: 0 }} search={search} asks={[]} />,
+      <PoliticiansList
+        list={{ ...examplePoliticiansPage, politicians: [], total: 0 }}
+        search={search}
+        asks={[]}
+        changeWho={vi.fn()}
+      />,
     );
     await expect.element(page.getByText(copy.none)).toBeVisible();
     expect(page.getByRole("link").all()).toHaveLength(0);
@@ -960,7 +992,15 @@ describe("MailingDetails", () => {
   it("says when there's no ask, and when it isn't sent yet", async () => {
     await render(
       <MailingDetails
-        mailing={{ ...exampleMailings[0], recipients: [], recipientsTotal: 0, page: 1, pages: 1, pageSize: 100 }}
+        mailing={{
+          ...exampleMailings[1],
+          tab: "all",
+          recipients: [],
+          recipientsTotal: 0,
+          page: 1,
+          pages: 1,
+          pageSize: 100,
+        }}
       />,
     );
     await expect.element(page.getByText(copy.noAsk)).toBeVisible();

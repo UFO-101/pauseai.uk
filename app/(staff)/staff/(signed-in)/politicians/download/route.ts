@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
       what: staffCopy.politicians.title,
       filters: [
         staffCopy.houses[search.house as keyof typeof staffCopy.houses] ?? "",
-        ...filterWords(politicianFilters(search, parties, asks), filters, "q"),
+        ...filterWords(politicianFilters(search.ask, parties, asks), filters, "q"),
       ],
       columns: politicianColumns(asks, filters),
       rows: politicians,

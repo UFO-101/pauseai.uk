@@ -195,6 +195,8 @@ export type PoliticiansSearch = {
   sort: string;
   dir: string;
   page: string;
+  /** A draft mailing's ID, after its Change who: the list's button changes who it's to. */
+  mailing: string;
 };
 
 /** The values of `list` that are among `known`. */
@@ -212,8 +214,8 @@ function among<T extends string>(list: string[], known: readonly T[]): T[] {
 export function politiciansSearch(params: Partial<Record<keyof PoliticiansSearch, ParamValue>>): PoliticiansSearch & {
   filter: PoliticianFilter;
 } {
-  const [q, house, status, ask, answer, sort, dir, page] = (
-    ["q", "house", "status", "ask", "answer", "sort", "dir", "page"] as const
+  const [q, house, status, ask, answer, sort, dir, page, mailing] = (
+    ["q", "house", "status", "ask", "answer", "sort", "dir", "page", "mailing"] as const
   ).map((name) => firstOf(params[name]));
   const [party, flag, country, email] = (["party", "flag", "country", "email"] as const).map((name) =>
     valuesOf(params[name]),
@@ -241,7 +243,22 @@ export function politiciansSearch(params: Partial<Record<keyof PoliticiansSearch
     sort: parseSort(POLITICIAN_SORTS, "name", sort, dir),
     page: pageNumber(page),
   };
-  return { q, house, status, party, flag, country, email, ask, answer, sort, dir, page, filter };
+  return {
+    q,
+    house,
+    status,
+    party,
+    flag,
+    country,
+    email,
+    ask,
+    answer,
+    sort,
+    dir,
+    page,
+    mailing: /^\d+$/.test(mailing) ? mailing : "",
+    filter,
+  };
 }
 
 /** When a politician has each marker. */

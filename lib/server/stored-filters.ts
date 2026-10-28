@@ -4,41 +4,24 @@ import { contactState } from "@/lib/contact-permissions";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { campaignBySlug } from "@/lib/email-your-mp";
 import { COUNTRIES, EMAIL_STATES, POLITICIAN_FLAGS } from "@/lib/politician-filters";
-import { notValue, valuesOf, type Params } from "@/lib/staff-search";
+import {
+  FILTER_LISTS,
+  notValue,
+  storedFilter,
+  valuesOf,
+  WHO_PARAMS,
+  type FilterList,
+  type Params,
+  type StoredFilter,
+} from "@/lib/staff-search";
 import { NEAR_MILES, SUPPORTER_BADGES } from "@/lib/supporters";
 import { query } from "./db";
 import { HOUSES, PERSON_STATUSES } from "./politicians";
 
-// Who a list shows, kept apart from how it shows them (the sort and the
-// page), so a mailing can keep it and run it again. It's kept as the list's
-// URL parameters, which the list's own parser reads, its pills say in
-// words, and "Change who" puts back in the list's URL. Read strictly: a
-// value the site no longer knows, such as a deleted event or a renamed
-// party, is a problem to fix, as the parser would drop it and the filter
-// would quietly find more people.
-
-/** The lists a mailing can be to. */
-export const FILTER_LISTS = ["politicians", "supporters"] as const;
-export type FilterList = (typeof FILTER_LISTS)[number];
-
-/** Who a list shows: the list, and its parameters that choose who. */
-export type StoredFilter = { list: FilterList; params: Params };
-
-/** Each list's parameters that choose who it shows. */
-const WHO_PARAMS: Record<FilterList, readonly string[]> = {
-  politicians: ["q", "house", "status", "party", "flag", "country", "email", "ask", "answer"],
-  supporters: ["q", "activity", "contact", "event", "campaign", "wrote", "country", "near", "within"],
-};
-
-/** Who a list's URL parameters show, without the sort, the page or anything else, nor blanks. */
-export function storedFilter(list: FilterList, params: Partial<Record<string, string | string[]>>): StoredFilter {
-  const kept: Params = {};
-  for (const name of WHO_PARAMS[list]) {
-    const values = valuesOf(params[name]);
-    if (values.length) kept[name] = values.length === 1 ? values[0] : values;
-  }
-  return { list, params: kept };
-}
+// A mailing's stored filter (StoredFilter, lib/staff-search.ts), read back
+// strictly: a value the site no longer knows, such as a deleted event or a
+// renamed party, is a problem to fix, as the list's parser would drop it
+// and the filter would quietly find more people.
 
 /** A stored filter, as read back from JSON, if it is one; otherwise undefined. */
 export function checkStoredFilter(value: unknown): StoredFilter | undefined {

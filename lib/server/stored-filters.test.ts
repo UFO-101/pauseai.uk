@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { addTestPolitician, describeWithDatabase, useTestDatabase } from "@/tests/database";
 import { query } from "./db";
-import { checkStoredFilter, filterProblems, storedFilter } from "./stored-filters";
+import { storedFilter } from "@/lib/staff-search";
+import { checkStoredFilter, filterProblems } from "./stored-filters";
 
 describe("storedFilter", () => {
   it("keeps only who the list shows, without the sort, the page or blanks; a list where it repeats", () => {

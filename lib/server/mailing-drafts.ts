@@ -1,13 +1,15 @@
 import "server-only";
-import { checkMailingDoc, fieldsIn, isBlankMailing, letterFor, type MailingDoc } from "@/lib/mailing-doc";
+import { checkMailingDoc, isBlankMailing, letterFor, type MailingDoc } from "@/lib/mailing-doc";
+import { scheduleProblems, type ScheduleProblem } from "@/lib/mailing-schedule";
 import { toHtml, toText } from "@/lib/letter-format";
 import { now } from "@/lib/now";
 import { logChange } from "./audit";
 import { query, transaction } from "./db";
-import { mailingChannel, type ChannelResult, type MailingChannel } from "./mailing-channels";
-import { politicianAudience, type PoliticianAudience, type PoliticianRecipient } from "./mailing-recipients";
+import { mailingChannel, type ChannelResult } from "./mailing-channels";
+import { politicianAudience, type PoliticianRecipient } from "./mailing-recipients";
 import type { Attachment } from "./outside-services/postmark";
-import { checkStoredFilter, filterProblems, type StoredFilter } from "./stored-filters";
+import type { StoredFilter } from "@/lib/staff-search";
+import { checkStoredFilter, filterProblems } from "./stored-filters";
 
 // A mailing written on the site: a draft from the first change worth
 // keeping, saved with a version number so that a second person editing it
@@ -55,8 +57,11 @@ const COLUMNS: Record<keyof MailingChanges, string> = {
 /** A save, or why not: someone else saved since, it's no longer a draft, or it's gone. */
 export type SaveResult = { saved: true; version: number } | { saved: false; reason: "conflict" | "not-draft" | "gone" };
 
-/** The largest file a mailing can attach, as the database allows. */
-export const MAX_ATTACHMENT_BYTES = 10 * 1024 * 1024;
+/**
+ * The largest file a mailing can attach: it comes in one request, and
+ * Netlify takes requests of up to 6MB.
+ */
+export const MAX_ATTACHMENT_BYTES = 4 * 1024 * 1024;
 
 const SELECT_WRITTEN = `
   SELECT m.id::int AS id, m.filter, m.subject, m.body, m.ask, m.created_by AS "createdBy", m.sent_from AS "sentFrom",
@@ -78,6 +83,27 @@ function assignments(changes: MailingChanges, first: number): [string[], unknown
     name === "subject" ? [`subject = $${first + i}`, `title = $${first + i}`] : [`${COLUMNS[name]} = $${first + i}`],
   );
   return [sql, set.map((name) => columnValue(name, changes[name]))];
+}
+
+/**
+ * A save's changes as the editor sends them, if each is what it should be:
+ * the letter as a mailing's may be, a time that's a time. The filter isn't
+ * among them: it's changed from the list (Change who).
+ */
+export function mailingChangesFrom(value: unknown): MailingChanges | undefined {
+  if (typeof value !== "object" || value === null) return undefined;
+  const changes: MailingChanges = {};
+  const textOrNull = (one: unknown) => one === null || typeof one === "string";
+  for (const [name, one] of Object.entries(value)) {
+    if (name === "subject" && typeof one === "string") changes.subject = one;
+    else if (name === "body" && checkMailingDoc(one)) changes.body = checkMailingDoc(one);
+    else if ((name === "ask" || name === "fromName") && textOrNull(one)) changes[name] = (one as string | null) || null;
+    else if (name === "sentFrom" && textOrNull(one)) changes.sentFrom = (one as string | null)?.toLowerCase() || null;
+    else if (name === "dueAt" && (one === null || (typeof one === "string" && !Number.isNaN(Date.parse(one))))) {
+      changes.dueAt = one;
+    } else return undefined;
+  }
+  return changes;
 }
 
 /** Makes a draft to the politicians `filter` finds, by `by`, with its first changes. Returns its ID and version. */
@@ -132,12 +158,13 @@ export async function saveDraft(id: number, version: number, changes: MailingCha
   return row ? { saved: true, version: row.version } : notSaved(id);
 }
 
-/** Attaches a file to a draft at `version`, which counts as a save. */
+/** Attaches a file to a draft at `version`, which counts as a save; not one too big to send. */
 export async function addAttachment(
   id: number,
   version: number,
   file: { filename: string; contentType: string; content: Buffer },
-): Promise<SaveResult> {
+): Promise<SaveResult | { saved: false; reason: "too-big" }> {
+  if (file.content.length > MAX_ATTACHMENT_BYTES) return { saved: false, reason: "too-big" };
   return transaction(async (db) => {
     const [row] = await query<{ version: number }>(
       `UPDATE mailings SET version = version + 1, updated_at = now()
@@ -204,45 +231,6 @@ export async function deleteForgottenDrafts(): Promise<number> {
   return blank.length;
 }
 
-/** What stops a mailing being scheduled. */
-export type ScheduleProblem =
-  | "no-subject"
-  | "no-letter"
-  | "unknown-filter"
-  | "no-recipients"
-  | "field-lacking"
-  | "no-sender"
-  | "no-name"
-  | "no-time"
-  | "time-passed"
-  | "cannot-send";
-
-/**
- * What stops `mailing`, to `audience`, being scheduled: none, for one that
- * can be. A merge field it uses must have a value for every recipient.
- */
-export function scheduleProblems(
-  mailing: WrittenMailing,
-  audience: PoliticianAudience,
-  unknown: string[],
-  channel: MailingChannel | undefined,
-): ScheduleProblem[] {
-  const lacking = new Set(audience.fields.filter((field) => field.lacking).map((field) => field.id));
-  const checks: [ScheduleProblem, boolean][] = [
-    ["no-subject", !mailing.subject.trim()],
-    ["no-letter", isBlankMailing(mailing.body)],
-    ["unknown-filter", unknown.length > 0],
-    ["no-recipients", audience.recipients.length === 0],
-    ["field-lacking", fieldsIn(mailing.body).some((field) => lacking.has(field))],
-    ["no-sender", !mailing.sentFrom],
-    ["no-name", !mailing.fromName?.trim()],
-    ["no-time", !mailing.dueAt],
-    ["time-passed", Boolean(mailing.dueAt) && new Date(mailing.dueAt!) <= now()],
-    ["cannot-send", !channel?.sendsMailings],
-  ];
-  return checks.filter(([, fails]) => fails).map(([problem]) => problem);
-}
-
 export type ScheduleResult =
   | { scheduled: true }
   | { scheduled: false; problems: ScheduleProblem[] }
@@ -270,7 +258,13 @@ export async function scheduleMailing(
     if (locked.version !== version) return { scheduled: false, reason: "conflict" };
     const mailing = (await getWrittenMailing(id))!;
     const [audience, unknown] = await Promise.all([politicianAudience(mailing.filter), filterProblems(mailing.filter)]);
-    const problems = scheduleProblems(mailing, audience, unknown, channel);
+    const problems = scheduleProblems({
+      ...mailing,
+      recipients: audience.recipients.length,
+      lacking: audience.fields.filter((field) => field.lacking).map((field) => field.id),
+      unknown,
+      sends: Boolean(channel?.sendsMailings),
+    });
     if (problems.length) return { scheduled: false, problems };
     await query(
       "UPDATE mailings SET state = 'scheduled', version = version + 1, updated_at = now() WHERE id = $1",

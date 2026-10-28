@@ -17,10 +17,8 @@ import {
   rescheduleMailing,
   saveDraft,
   scheduleMailing,
-  scheduleProblems,
   sendTestCopy,
   stopMailing,
-  type WrittenMailing,
 } from "./mailing-drafts";
 import { politicianAudience } from "./mailing-recipients";
 
@@ -157,36 +155,6 @@ describeWithDatabase("mailing drafts", () => {
     const left = await query<{ id: number }>("SELECT id::int AS id FROM mailings WHERE body IS NOT NULL ORDER BY id");
     expect(left.map((row) => row.id)).toEqual([written, titled, attached, opened]);
     expect(blank).toBeLessThan(written);
-  });
-
-  it("says what stops a mailing being scheduled", async () => {
-    const dora = await addTestPolitician({ name: "Dora Dummy", salutation: "" });
-    const mailing = (await getWrittenMailing((await createDraft(STAFF, POLITICIANS, {})).id))!;
-    const audience = await politicianAudience(POLITICIANS);
-    expect(scheduleProblems(mailing, audience, ["party=Gone"], undefined)).toEqual([
-      "no-subject",
-      "no-letter",
-      "unknown-filter",
-      "no-sender",
-      "no-name",
-      "no-time",
-      "cannot-send",
-    ]);
-    const written: WrittenMailing = {
-      ...mailing,
-      subject: "Hi",
-      body: LETTER,
-      sentFrom: STAFF,
-      fromName: "Jo",
-      dueAt: "2026-11-01T08:00:00Z",
-    };
-    // Dora has no salutation, which the letter uses.
-    expect(scheduleProblems(written, audience, [], SENDS)).toEqual(["field-lacking", "time-passed"]);
-    await query("DELETE FROM politicians WHERE id = $1", [dora]);
-    expect(scheduleProblems(written, await politicianAudience(POLITICIANS), [], SENDS)).toEqual([
-      "no-recipients",
-      "time-passed",
-    ]);
   });
 
   it("schedules a draft, fixing its recipients with their values, and won't while anything stops it", async () => {

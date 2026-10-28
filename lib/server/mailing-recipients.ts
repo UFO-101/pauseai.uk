@@ -5,7 +5,7 @@ import { answerCondition, POLITICIAN_FIELDS, type MailingChoice } from "@/lib/ma
 import type { MailingRecipientValues } from "@/lib/mailing-doc";
 import { listAsks } from "./asks";
 import { mailingPoliticians, politiciansSearch, type MailingPolitician } from "./politicians";
-import type { StoredFilter } from "./stored-filters";
+import type { StoredFilter } from "@/lib/staff-search";
 
 // Who a mailing to politicians goes to: everyone its filter finds who has
 // an address we can write to. Those with none, or with one that's blocked,

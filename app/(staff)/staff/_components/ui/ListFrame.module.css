@@ -24,8 +24,9 @@
   border-top: 1px solid var(--border);
 }
 
+/* The count on the left; the actions and Download together at the right. */
 .count {
-  margin: 0;
+  margin: 0 auto 0 0;
 }
 
 /* The Download button: its arrow, its word, and a ▾ for its menu. */
